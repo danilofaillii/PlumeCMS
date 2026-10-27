@@ -2,7 +2,8 @@
 
 Un CMS in PHP e MySQL con un editor visuale a sezioni, colonne e widget, header e footer disegnati nell'editor, menu,
 stile del sito in un posto solo, SEO e AEO (sitemap, robots, JSON-LD, IndexNow, Search Console, llms.txt), newsletter
-con doppia conferma e flussi automatici, form, popup, utenti, pacchetti di aggiornamento.
+con doppia conferma e flussi automatici, form, popup, utenti, pacchetti di aggiornamento (con l'avviso della versione
+nuova), copia del sito scaricabile e ripristinabile, sezioni pronte nell'editor e kit di partenza nell'installatore.
 
 Nasce dal publisher di danilofailli.it: il nucleo è generico, quello che è di quel sito sta in `moduli/danilofailli/`.
 
