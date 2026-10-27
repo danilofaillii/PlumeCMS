@@ -1,0 +1,30 @@
+/* Contorni, strumenti e maniglie dentro la tela dell'editor. Si somma a sito.css. */
+.ed-pagina [data-ed-id]{position:relative;transition:outline-color .15s}
+.ed-pagina .ed-sezione{min-height:40px;outline:1px dashed transparent;outline-offset:-1px}
+.ed-pagina .ed-colonna{min-height:40px;outline:1px dashed rgba(34,211,238,.22);outline-offset:-1px}
+.ed-pagina .ed-widget{outline:1px solid transparent;outline-offset:2px;cursor:pointer}
+.ed-pagina .ed-sopra{outline-color:rgba(34,211,238,.7)}
+.ed-pagina .ed-selezionato{outline:2px solid #22d3ee!important;outline-offset:2px}
+.ed-pagina .ed-sezione.ed-selezionato{outline-offset:-2px}
+.ed-pagina .ed-colonna.ed-bersaglio{outline:2px dashed #a855f7;background:rgba(168,85,247,.08)}
+.ed-pagina .ed-fantasma{opacity:.4;outline:2px dashed #a855f7}
+.ed-pagina .ed-vuoto{display:block;border:1px dashed rgba(167,177,198,.5);border-radius:12px;padding:22px;text-align:center;color:#a7b1c6;font-size:14px}
+.ed-pagina .ed-colonna-vuota{margin:0;min-height:80px;display:flex;align-items:center;justify-content:center}
+.ed-maniglia-colonna{position:absolute;top:-1px;left:50%;transform:translateX(-50%);z-index:5;font-size:11px;line-height:1;padding:3px 10px;border-radius:0 0 8px 8px;background:rgba(34,211,238,.18);color:#22d3ee;cursor:grab;opacity:0;transition:opacity .15s;letter-spacing:-2px}
+.ed-colonna:hover>.ed-maniglia-colonna,.ed-colonna.ed-selezionato>.ed-maniglia-colonna{opacity:1}
+
+.ed-maniglia-sezione{position:absolute;top:0;right:0;z-index:5;font:600 10px/1 system-ui,sans-serif;letter-spacing:.08em;text-transform:uppercase;padding:5px 10px;border-radius:0 0 0 8px;background:rgba(168,85,247,.25);color:#d8b4fe;cursor:grab;opacity:0;transition:opacity .15s}
+.ed-sezione:hover>.ed-maniglia-sezione,.ed-sezione.ed-selezionato>.ed-maniglia-sezione{opacity:1}
+.ed-aggiungi{position:absolute;left:50%;bottom:-16px;transform:translateX(-50%);z-index:6;width:32px;height:32px;border-radius:50%;border:0;background:linear-gradient(180deg,#b874ff,#7c3aed);color:#fff;font:700 20px/1 sans-serif;cursor:pointer;opacity:0;transition:opacity .15s;box-shadow:0 4px 16px rgba(0,0,0,.4)}
+.ed-sezione:hover>.ed-aggiungi,.ed-sezione.ed-selezionato>.ed-aggiungi{opacity:1}
+.ed-pagina-vuota{padding:120px 24px;text-align:center;color:#a7b1c6}
+.ed-aggiungi-grande{position:static;transform:none;opacity:1;width:auto;height:auto;border-radius:12px;padding:14px 22px;font:700 14px/1 sans-serif;letter-spacing:.08em;text-transform:uppercase}
+.ed-strumenti{position:absolute;z-index:1000;display:flex;align-items:center;gap:2px;background:#22d3ee;color:#03121a;border-radius:6px 6px 6px 0;padding:2px 4px;font:600 11px/1 system-ui,sans-serif;box-shadow:0 2px 10px rgba(0,0,0,.35)}
+.ed-strumenti-sezione{background:#a855f7;color:#fff}
+.ed-strumenti-colonna{background:#4ade80}
+.ed-strumenti-nome{padding:4px 8px;letter-spacing:.08em;text-transform:uppercase}
+.ed-strumenti button{border:0;background:rgba(255,255,255,.25);color:inherit;border-radius:4px;width:24px;height:22px;cursor:pointer;font-size:12px;line-height:1}
+.ed-strumenti button:hover{background:rgba(255,255,255,.55)}
+.ed-strumenti[hidden]{display:none}
+.ed-pagina .ed-no-d,.ed-pagina .ed-no-t,.ed-pagina .ed-no-m{display:revert!important;opacity:.35}
+.ed-pagina .ed-video button{pointer-events:none}

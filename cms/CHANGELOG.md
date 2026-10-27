@@ -1,0 +1,134 @@
+# Novità
+
+Il prodotto si chiama **plumeCMS** (nome scelto il 26 ottobre 2026; prima, per poche ore, "CarbonaraCMS", e ancora prima il provvisorio "Officina": gli zip vecchi si chiamavano `officina-*` e `carbonaracms-*`).
+
+## 1.1.9 (27 ottobre 2026) - "Vedi sito" e la cartella che tornava alla radice
+
+- Fino alla 1.1.6 la cartella del CMS (`/test/`) veniva rimandata alla radice del dominio con un 301, cioè un rimando
+  permanente: il browser lo ricorda e continua a farlo anche dopo l'aggiornamento, senza più chiedere al server. Il
+  rimando che resta (cartella del solo pannello, come `/new/` di danilofailli.it) ora è un 302 con `no-store`, che il
+  browser non conserva. Chi ha visto la 1.1.6 deve svuotare una volta la cache del browser.
+- "Vedi sito" nel menu del pannello apre l'indirizzo del sito scritto in configurazione, invece della cartella sopra il
+  pannello.
+
+## 1.1.8 (27 ottobre 2026) - I file dello zip leggibili dal server web
+
+- Lo zip del prodotto salvava ogni file con permessi 0600. Estratto sul server, le pagine PHP funzionavano (girano con
+  l'utente del sito) ma il server web non poteva leggere fogli di stile, script e immagini e rispondeva 403: installatore e
+  pannello senza grafica e con i pulsanti fermi. Ora i file escono 0644 e le cartelle 0755.
+
+## 1.1.7 (26 ottobre 2026) - Installare in una cartella
+
+- L'installatore accettava come indirizzo del sito solo il dominio (`https://esempio.it`): installando in una cartella
+  (`https://esempio.it/test`) l'indirizzo con la cartella veniva rifiutato. Ora la propone già, la accetta e scrive
+  la cartella nel `config.local.php` (`CMS_BASE`), così il CMS non deve indovinarla.
+- Gli `.htaccess` dichiarano il tipo di fogli di stile, script, SVG e caratteri: alcuni server li mandano senza tipo
+  e il browser, con `nosniff`, li scarta, lasciando il pannello senza grafica.
+
+## 1.1.6 (26 ottobre 2026) - Pagina Aggiornamenti pulita
+
+- Il riquadro "Diagnosi articoli" nella pagina Aggiornamenti compare solo dove c'è il modulo che la contiene: su
+  un'installazione nuova non c'era la pagina e il link portava a un errore.
+
+## 1.1.5 (26 ottobre 2026) - Il pannello senza grafica con un indirizzo "sporco"
+
+- Con un pezzo in più dopo il nome del file (per esempio `/admin/index.php/`) il pannello si apriva ma cercava fogli
+  di stile e script nel posto sbagliato e appariva senza grafica. Ora ogni pagina del pannello torna da sola
+  all'indirizzo pulito, con la stessa query.
+
+## 1.1.4 (26 ottobre 2026) - La pagina SEO e AEO su PHP con short_open_tag
+
+- La pagina SEO e AEO dava errore 500 sui server con `short_open_tag` acceso, che è il valore predefinito di PHP
+  (Hostcare compreso). L'esempio del file BingSiteAuth.xml nel segnaposto cominciava con `<?xml` e PHP lo leggeva
+  come inizio di codice. Ora l'esempio è scritto con le entità.
+- `tools/pacchetto.py` e `tools/cms-pacchetto.py` controllano la sintassi di ogni file PHP con `short_open_tag` acceso
+  e rifiutano il pacchetto se c'è un errore.
+- Provato su PHP 8.4.27: tutte le pagine del pannello e le pagine pubbliche principali, senza errori.
+
+## 1.1.3 (26 ottobre 2026) - Sicurezza, quarta passata
+
+Le tre basse del terzo attacco:
+- Login: utente inesistente e password sbagliata rispondono nello stesso tempo. L'hash finto ha lo stesso algoritmo e lo
+  stesso costo degli account veri (argon2id 64 MB, 4 passate, o bcrypt 12 dove argon2id manca), calcolato una volta e
+  conservato nell'impostazione `sicurezza_hash_finto`.
+- Blocco per nome utente: 20 tentativi sbagliati in 15 minuti, da qualunque IP, bloccano il nome per 15 minuti (poi
+  raddoppia), con un'email all'amministratore. Durante il blocco entra lo stesso, con la password giusta, chi arriva da
+  un IP che ha gia fatto accessi riusciti con quell'utente e non e mai stato bloccato; resta la riga "Accesso durante un
+  blocco (IP di casa)" nel registro. Da un IP estraneo password giusta e sbagliata rispondono uguale. Il blocco per IP
+  resta com'era (5 tentativi, poi raddoppia).
+- Installatore: la password dell'amministratore passa da `sicurezza_password_errore()` come nel pannello (12 caratteri,
+  non comune, diversa da nome ed email, niente sequenze). Le funzioni delle password stanno in
+  `includes/sicurezza-password.php`, senza database.
+- `docs/sicurezza.md`: le regole dei blocchi, e perche i campi `~b64~` e il controllo dell'origine restano come sono.
+- `tools/sicurezza-prova.js`: 11 prove nuove (blocchi per nome utente con IP simulati, tempi del login, installatore).
+
+## 1.1.2 (26 ottobre 2026) - Sicurezza, terza passata
+
+- Ruoli applicati lato server con un elenco chiuso: il redattore gestisce solo articoli, pagine (e i tipi di contenuto dei
+  moduli), media, categorie e tag; newsletter, form, popup, menu, header e footer, Stile, temi, widget, impostazioni
+  dell'editor e le versioni di stile, modelli e menu sono dell'amministratore. Il menu e la dashboard seguono le stesse regole.
+  In `modelli.php` pubblica e predefinito rispettano anche "Chi pubblica".
+- Nessun file PHP dei moduli si chiama direttamente dal web (`.htaccess`, Nginx); gli script di manutenzione del modulo
+  danilofailli chiedono l'amministratore, e quelli che scrivono partono solo con POST e CSRF.
+- CSV senza formule: le celle che cominciano con = + - @, tab o a capo prendono un apice (`sicurezza_csv_cella`), in tutti
+  gli export del nucleo e del modulo.
+- Login e password dimenticata non mostrano piu dettagli del database a video (vanno nel log).
+- CSP del pannello solo a nonce, senza hash ricavati dall'output; le installazioni nuove partono con la CSP applicata su
+  sito e pannello.
+- Test del burnout (modulo): il report parte solo per un test fatto nella stessa sessione, una volta, con limiti per IP e per email.
+- `tools/sicurezza-prova.js`: giro di tutti i file PHP del pannello, delle API e dei moduli da anonimo e da redattore.
+
+## 1.1.1 (26 ottobre 2026) - Sicurezza, seconda passata
+
+Correzioni trovate dal collaudo di attacco sul prodotto pulito:
+- Newsletter: la firma dei link copre anche l'indirizzo di destinazione (niente rimando aperto da `api/nl.php`); i link
+  gia spediti portano solo dentro il sito.
+- Cron: `cron-daily.php` (come `cron-newsletter.php`) gira solo da riga di comando, o via web con `CMS_CRON_TOKEN`;
+  negato anche dal `.htaccess` e dalla regola Nginx.
+- Immagini caricate sempre nella cartella del CMS (`cms_uploads_dir()`/`cms_uploads_url()`): sul prodotto pulito finivano
+  fuori dalla radice web e la protezione era sulla cartella sbagliata. Ricodifica anche per le immagini della newsletter.
+- Ritorni `torna` del pannello solo interni.
+- Pannello senza gestori in linea (attributi `data-*` e `admin/assets/pannello.js`): la CSP non ripiega piu su
+  `'unsafe-inline'`, salvo tre pagine vecchie del modulo dichiarate con il filtro `csp_pannello_inline`.
+- Chiamate in uscita senza curl rifiutate (niente DNS rebinding).
+- Pacchetti: file eseguibili nella radice (`root/`) solo con firma o nella finestra di un'ora aperta con la password;
+  `tools/pacchetto.py --rifirma`.
+- Password dimenticata: limite per email e per IP a parte dal login (nessuno chiude fuori il proprietario).
+
+## 1.1.0 (26 ottobre 2026) - Sicurezza
+
+- **Autenticazione**: hash argon2id (o bcrypt costo 12) con migrazione trasparente al primo login; requisiti della
+  password (12 caratteri, diversa dal nome/email, non tra le più comuni); limite ai tentativi di login per IP e per
+  utente con blocco crescente e avviso email; registro degli accessi (riusciti, falliti, blocchi) con IP e browser.
+- **Secondo fattore TOTP** fatto in casa (QR in SVG generato dal server, otto codici di recupero, obbligatorio
+  opzionale per gli amministratori). Nasce spento, si attiva da "Il mio accesso".
+- **Sessione**: id rigenerato al login (niente session fixation), cookie HttpOnly/Secure/SameSite, scadenza assoluta
+  e per inattività, "esci da tutti i dispositivi", il cambio password chiude le altre sessioni.
+- **Password dimenticata** con token firmato monouso via email (30 minuti, senza rivelare se l'utente esiste).
+- **Lista IP consentiti** per il pannello (opzionale, nasce spenta).
+- **Intestazioni di sicurezza** su ogni risposta (nosniff, Referrer-Policy, X-Frame-Options, Permissions-Policy,
+  niente X-Powered-By) e **Content-Security-Policy a nonce** sul sito e sul pannello, con modalità "solo rapporto"
+  (endpoint api/csp.php) prima di "applica"; le sorgenti dei tag di analisi entrano solo se attivi nella voce SEO;
+  HSTS su https e COOP.
+- **Contenuti dell'editor**: sanificatore del testo ricco su parser DOM (niente script, on*, javascript:, data: nei
+  link); widget HTML e codice head/body solo amministratore (per i ruoli inferiori diventano testo pulito); CSS
+  personalizzato confinato a .ed-ID, senza import/expression/behavior/url() esterni; Attributi su lista stretta.
+- **Caricamenti**: controllo del tipo reale e nuova codifica delle immagini; SVG sanificato e servito in sandbox;
+  nomi con suffisso casuale.
+- **Pacchetti di aggiornamento**: controllo zip slip, dimensione massima, firma HMAC opzionale (tools/pacchetto.py
+  --firma); applicazione registrata nel log di sicurezza.
+- **Chiamate in uscita** con allowlist di host e blocco degli indirizzi privati (niente SSRF); redirect solo interni;
+  LIKE con escape dei jolly nella ricerca; cron-log svuotato solo in POST.
+- **Pagina Sicurezza** nel pannello (gruppo Impostazioni): checklist dello stato, impostazioni, registro con filtri,
+  sessioni per utente, rapporti CSP. Prove di attacco in tools/sicurezza-prova.js. Documento: docs/sicurezza.md.
+- **.htaccess del CMS rifatto**: nega includes, logs, aggiornamenti, sql, docs, tools, test, VERSIONE, *.md; PHP
+  spento in uploads/ con SVG in sandbox; esempi Apache e Nginx aggiornati.
+
+## 1.0.0 (26 ottobre 2026)
+
+- Prima versione del CMS come prodotto: nucleo generico (articoli, pagine, editor a sezioni e widget, header e footer come modelli, menu, Stile del sito, SEO e AEO, newsletter con flussi, form, popup, utenti, pacchetti di aggiornamento) separato dal modulo del sito di partenza.
+- Installatore da browser in install/: requisiti, database con prefisso a scelta, dati del sito e amministratore, contenuti di partenza.
+- Moduli in moduli/<nome>/modulo.php: tipi di contenuto, voci di menu, pagine del pannello, tabelle, passi del cron, widget, filtri ed eventi.
+- Il CMS gira nella radice del dominio o in una sottocartella (cms_base()), con le immagini in uploads/.
+- Pagina Informazioni nel pannello: versione, moduli, stato del server, tabelle, widget.
+- Pacchetto del prodotto e pacchetto di aggiornamento da tools/cms-pacchetto.py.

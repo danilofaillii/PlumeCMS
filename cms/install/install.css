@@ -1,0 +1,36 @@
+/* L'installatore: la stessa tavolozza del pannello (admin/assets/css/admin.css), senza dipendere dal database. */
+:root { --bg: #f4f1ec; --surface: #fff; --sidebar: #2d1b0e; --coral: #e8553e; --coral-hover: #d03f28; --sage: #6b8f71; --sage-light: #e8f0e9; --mustard: #e8a830; --mustard-light: #fef3d0; --text: #2d1b0e; --text-muted: #9c7b65; --border: #e8ddd0; --radius: 12px; }
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'Inter', system-ui, sans-serif; background: var(--bg); color: var(--text); line-height: 1.55; }
+.inst { max-width: 760px; margin: 0 auto; padding: 32px 16px 48px; }
+header h1 { font-size: 1.6rem; } header h1 small { font-size: .85rem; color: var(--text-muted); font-weight: 400; margin-left: 8px; }
+header p { color: var(--text-muted); margin-bottom: 20px; }
+.passi { list-style: none; display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 24px; }
+.passi li { font-size: .85rem; color: var(--text-muted); background: var(--surface); border: 1px solid var(--border); border-radius: 999px; padding: 4px 12px 4px 4px; display: flex; align-items: center; gap: 8px; }
+.passi li span { width: 24px; height: 24px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; background: var(--border); font-weight: 600; font-size: .8rem; }
+.passi li.attivo { color: var(--text); border-color: var(--coral); } .passi li.attivo span { background: var(--coral); color: #fff; }
+.passi li.fatto span { background: var(--sage); color: #fff; }
+main { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 28px; }
+main h2 { font-size: 1.3rem; margin-bottom: 14px; } main h3 { font-size: 1.05rem; margin: 22px 0 10px; color: var(--text-muted); }
+main p { margin: 10px 0; }
+.requisiti, .elenco { list-style: none; margin: 14px 0; }
+.requisiti li { padding: 8px 10px; border-bottom: 1px solid var(--border); display: flex; flex-wrap: wrap; gap: 10px; align-items: baseline; }
+.requisiti li b { min-width: 60px; font-size: .8rem; text-transform: uppercase; letter-spacing: .04em; }
+.requisiti li.ok b { color: var(--sage); } .requisiti li.no b { color: var(--coral); } .requisiti li.avviso b { color: var(--mustard); }
+.requisiti li small { flex-basis: 100%; color: var(--text-muted); }
+.elenco li { padding: 4px 0 4px 18px; position: relative; } .elenco li::before { content: ''; position: absolute; left: 4px; top: 13px; width: 6px; height: 6px; border-radius: 50%; background: var(--sage); }
+.elenco.piccolo { font-size: .9rem; color: var(--text-muted); columns: 2; } .elenco.piccolo li { break-inside: avoid; }
+.campo { margin: 12px 0; } .campo label { display: block; font-weight: 600; font-size: .92rem; margin-bottom: 4px; }
+.campo input, .campo select { width: 100%; padding: 10px 12px; border: 1px solid var(--border); border-radius: 8px; font: inherit; background: #fff; }
+.campo input:focus, .campo select:focus { outline: 2px solid var(--coral); outline-offset: 1px; border-color: transparent; }
+.campo small { display: block; color: var(--text-muted); font-size: .82rem; margin-top: 4px; }
+.campo.spunta label { font-weight: 400; display: flex; gap: 8px; align-items: center; } .campo.spunta input { width: auto; }
+.due { display: grid; grid-template-columns: 1fr 1fr; gap: 0 16px; } @media (max-width: 600px) { .due { grid-template-columns: 1fr; } .elenco.piccolo { columns: 1; } }
+.btn, .btn-filo { display: inline-block; padding: 10px 18px; border-radius: 8px; font: inherit; font-weight: 600; cursor: pointer; text-decoration: none; border: 1px solid transparent; }
+.btn { background: var(--coral); color: #fff; } .btn:hover { background: var(--coral-hover); }
+.btn-filo { background: transparent; color: var(--text); border-color: var(--border); } .btn-filo:hover { border-color: var(--text-muted); }
+.errore { background: #fde8e3; border: 1px solid #f3b9ae; border-radius: 8px; padding: 10px 14px; margin: 12px 0; } .errore ul { margin-left: 18px; }
+.nota { background: var(--mustard-light); border-radius: 8px; padding: 10px 14px; }
+.ok-grande { font-size: 1.25rem; color: var(--sage); font-weight: 600; }
+footer { color: var(--text-muted); font-size: .82rem; margin-top: 18px; text-align: center; }
+code { background: var(--bg); padding: 1px 5px; border-radius: 4px; font-size: .9em; }

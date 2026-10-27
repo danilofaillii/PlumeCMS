@@ -1,0 +1,93 @@
+/* Header, footer e widget del tema (includes/modelli.php, includes/editor-widget-tema.php).
+   Le regole riproducono la testata (.top) e il piede (.piede) di sito.css: con i valori di partenza niente cambia. */
+
+/* cornice dell'header: come .top */
+.ed-testata{position:sticky;top:0;z-index:40;backdrop-filter:blur(14px);background:rgba(6,10,23,.72);border-bottom:1px solid var(--bordo)}
+.ed-testata .ed-sezione{position:relative}
+.ed-testata .ed-riga{flex-wrap:nowrap;align-items:center;min-height:72px}
+.ed-testata .ed-colonna{flex-direction:row;align-items:center;gap:28px;flex-wrap:nowrap}
+.ed-testata .ed-colonna>.ed-widget{margin-bottom:0;min-width:0}
+.ed-testata .ed-colonna>.ed-widget.ed-w-menu_nav{min-width:0}
+
+/* cornice del footer: come .piede */
+.ed-piede{border-top:1px solid var(--bordo);margin-top:40px;font-size:15px}
+.ed-piede .ed-colonna>.ed-widget{margin-bottom:0}
+.ed-piede a{text-decoration:none}
+.ed-piede a:hover{color:var(--ciano)}
+.ed-piede .ed-descrizione-sito{margin:15px 0}
+
+/* marchio con immagine */
+.marchio.marchio-img{display:inline-flex;align-items:center;gap:12px}
+.marchio img{display:block;width:48px;height:auto}
+.marchio-testo{display:block;line-height:1.05}
+.ed-testata .ed-w-logo_sito>.marchio{display:inline-block;vertical-align:top}
+.ed-nome-sito{margin:0}
+.ed-nome-sito a{text-decoration:none}
+
+/* menu di navigazione */
+.mn{--mn-ind:var(--ciano)}
+.mn .mn-lista,.mn .mn-sotto{list-style:none;margin:0;padding:0}
+.mn a{text-decoration:none}
+.mn-titolo{font:600 12px var(--f-testo);letter-spacing:.18em;text-transform:uppercase;color:var(--testo);margin:0 0 14px}
+.mn-o>.mn-lista{display:flex;gap:26px;flex-wrap:wrap}
+.mn-o .mn-voce{position:relative;line-height:1}
+.mn-o .mn-lista a{display:block;font:500 13px/1 var(--f-testo);letter-spacing:.12em;text-transform:uppercase;color:var(--testo-2)}
+.mn-o .mn-lista a:hover,.mn-o .mn-attiva>a{color:var(--testo)}
+.mn-o .mn-freccia{display:inline-block;width:6px;height:6px;border-right:1.5px solid currentColor;border-bottom:1.5px solid currentColor;transform:rotate(45deg);margin:0 0 3px 7px}
+.mn-o .mn-sotto{position:absolute;top:100%;left:0;min-width:220px;padding:10px 0;background:var(--bg-2);border:1px solid var(--bordo);border-radius:12px;box-shadow:0 18px 40px rgba(0,0,0,.4);opacity:0;visibility:hidden;transform:translateY(8px);transition:opacity .2s,transform .2s,visibility .2s;z-index:50}
+.mn-o .mn-voce:hover>.mn-sotto,.mn-o .mn-voce:focus-within>.mn-sotto{opacity:1;visibility:visible;transform:translateY(0)}
+.mn-o .mn-sotto a{display:block;padding:9px 18px;text-transform:none;letter-spacing:0;font-size:14px}
+.mn-o .mn-sotto .mn-sotto{top:0;left:100%}
+.mn-v .mn-lista{display:flex;flex-direction:column;gap:0}
+.mn-v .mn-voce{padding:4px 0}
+.mn-v .mn-sotto{margin:6px 0 0 14px;display:flex;flex-direction:column;gap:6px}
+.mn-v .mn-freccia{display:none}
+/* segno della voce attiva */
+.mn-ind-linea .mn-lista a{position:relative}
+.mn-ind-linea .mn-attiva>a::after{content:"";position:absolute;left:0;right:0;bottom:-6px;height:2px;background:var(--mn-ind);border-radius:2px}
+.mn-ind-sfondo .mn-attiva>a{background:var(--mn-ind);color:var(--bg);padding:8px 12px;border-radius:8px}
+.mn-ind-punto .mn-attiva>a::before{content:"";display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--mn-ind);margin-right:8px;vertical-align:middle}
+/* pulsante del telefono e tendina: come details.menu di sito.css */
+.mn-h{position:static}
+.mn-h>summary{list-style:none;cursor:pointer;border:1px solid var(--bordo);border-radius:10px;padding:9px 12px;font:600 13px var(--f-testo);display:inline-flex;align-items:center;gap:8px;color:var(--testo)}
+.mn-h>summary::-webkit-details-marker{display:none}
+.mn-h-icona{width:18px;height:18px}
+.mn-h .mn-h-pannello{display:flex;flex-direction:column;gap:4px}
+.mn-h .mn-h-pannello a{padding:12px 4px;text-decoration:none;border-bottom:1px solid var(--bordo);color:var(--testo)}
+.mn-h .mn-h-pannello .mn-h-sotto{padding-left:20px}
+.mn-h[open] .mn-h-pannello{position:absolute;top:100%;left:0;right:0;background:var(--bg-2);border-bottom:1px solid var(--bordo);padding:8px 16px 16px;z-index:60}
+.mn-telefono{display:none}
+.mn-t .mn-h{position:relative;display:inline-block}
+.mn-t .mn-h[open] .mn-h-pannello{right:auto;min-width:240px;border:1px solid var(--bordo);border-radius:12px;margin-top:8px}
+
+/* ricerca */
+.ed-cerca{display:flex;gap:8px;max-width:420px}
+.ed-cerca input{flex:1;min-width:0;background:var(--vetro);border:1px solid var(--bordo);border-radius:12px;color:var(--testo);font:500 15px var(--f-testo);padding:11px 14px}
+.ed-cerca input:focus{outline:2px solid var(--ciano);outline-offset:2px}
+.ed-cerca button{border:1px solid var(--bordo);background:var(--vetro);color:var(--testo);border-radius:12px;padding:0 14px;cursor:pointer;font:600 14px var(--f-testo);display:inline-flex;align-items:center}
+.ed-cerca button:hover{border-color:var(--ciano);color:var(--ciano)}
+.ed-cerca-icona{width:18px;height:18px}
+
+/* contenuto corrente */
+.ed-titolo-contenuto{margin:0}
+h1.ed-titolo-contenuto{font-size:clamp(32px,4.6vw,56px);line-height:1.08}
+.ed-titolo-contenuto a{text-decoration:none}
+.ed-info-contenuto{align-items:center}
+.ed-info-contenuto a{text-decoration:none;color:inherit}
+.ed-info-contenuto a:hover{color:var(--ciano)}
+.ed-info-sep{font-style:normal;opacity:.6}
+.ed-immagine-evidenza img{border-radius:18px;height:auto}
+.ed-briciole ol{list-style:none;margin:0;padding:0;display:flex;flex-wrap:wrap;gap:6px;font:500 13px var(--f-testo);color:var(--testo-3)}
+.ed-briciole li+li::before{content:var(--sep,"›");margin-right:6px;color:var(--testo-3)}
+.ed-briciole a{text-decoration:none;color:var(--testo-2)}
+.ed-briciole a:hover{color:var(--ciano)}
+.ed-briciole [aria-current]{color:var(--testo)}
+.ed-copyright{margin:0;color:var(--testo-3);font-size:14px}
+
+/* tela dell'editor di un header o di un footer: il segnaposto del contenuto */
+.ed-segnaposto{padding:64px 24px 96px;color:var(--testo-3)}
+.ed-segnaposto-riga{height:14px;border-radius:7px;background:rgba(255,255,255,.07);margin:0 0 16px;max-width:720px}
+.ed-segnaposto-titolo{height:34px;max-width:520px;margin-bottom:28px;background:rgba(255,255,255,.1)}
+.ed-segnaposto-riga.corta{max-width:380px}
+.ed-segnaposto p{margin:28px 0 0;font-size:14px}
+.ed-modello-pagina:empty{min-height:72px}

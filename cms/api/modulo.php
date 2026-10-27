@@ -1,0 +1,47 @@
+<?php
+/**
+ * Arrivo dei moduli del sito: ebook gratuito, Laser Coaching, newsletter. Funziona anche senza JavaScript
+ * nel modulo (solo il captcha lo richiede): POST normale, poi redirect alla pagina giusta.
+ * Con un errore si torna alla pagina del modulo con ?modulo=errore-codice#modulo.
+ */
+require_once __DIR__ . '/../includes/moduli.php';
+require_once __DIR__ . '/../includes/newsletter.php';
+require_once __DIR__ . '/../includes/form.php';
+
+function modulo_torna(string $dove): never {
+    header('Location: ' . $dove, true, 303);
+    exit;
+}
+
+$tipo = (string)($_POST['modulo'] ?? '');
+// La pagina da cui arriva il modulo: solo percorsi interni.
+$pagina = (string)($_POST['pagina'] ?? '/');
+if (!preg_match('~^/[a-z0-9/-]*$~', $pagina)) $pagina = '/';
+
+$form = null;
+if (preg_match('/^form:(\d+)$/', $tipo, $m)) { $form = form_leggi((int)$m[1]); $tipo = 'form'; }
+// Il modulo stava dentro un popup: con un errore la pagina riapre quel popup.
+$popup = ctype_digit((string)($_POST['popup'] ?? '')) ? '&popup=' . (int)$_POST['popup'] : '';
+if ($_SERVER['REQUEST_METHOD'] !== 'POST' || !in_array($tipo, ['ebook', 'laser', 'newsletter', 'form'], true) || ($tipo === 'form' && !$form)) modulo_torna('/');
+
+try {
+    if ($tipo === 'form') {
+        $errore = form_ricevi($form, $_POST, $pagina);
+        if ($errore !== '') modulo_torna($pagina . '?modulo=' . rawurlencode($errore) . '&f=' . (int)$form['id'] . $popup . '#modulo-f' . (int)$form['id']);
+        modulo_torna(FORM_PAGINA_GRAZIE . '?f=' . (int)$form['id']);
+    }
+    [$dati, $errore] = moduli_leggi($_POST, $tipo !== 'newsletter');
+    if ($errore === '') {
+        $errore = match ($tipo) {
+            'ebook' => moduli_ebook_richiesta($dati, !empty($_POST['newsletter'])),
+            'laser' => moduli_laser_richiesta($dati, $pagina),
+            'newsletter' => newsletter_richiesta($dati),
+        };
+    }
+} catch (Throwable $e) {
+    error_log('modulo: ' . $e->getMessage());
+    $errore = 'posta';
+}
+
+if ($errore !== '') modulo_torna($pagina . '?modulo=' . $errore . $popup . '#modulo');
+modulo_torna(['ebook' => MODULI_PAGINA_EBOOK_ATTESA, 'laser' => MODULI_PAGINA_LASER_GRAZIE, 'newsletter' => NEWSLETTER_GRAZIE][$tipo]);

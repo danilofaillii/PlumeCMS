@@ -1,0 +1,30 @@
+# Nginx, CMS nella radice del dominio. Dentro il blocco server { } con root puntata alla cartella del CMS.
+index index.php;
+server_tokens off;
+
+# Sicurezza: cartelle e file che dal web non si leggono mai
+location ~ ^/(includes|logs|aggiornamenti|privato|data|sql|docs|tools|test|test-definizioni)(/|$) { deny all; return 404; }
+location ~ ^/moduli/[^/]+/(includes|sql|docs)(/|$) { deny all; return 404; }
+location ~ ^/moduli/.*\.(php|phtml|phar)$ { deny all; return 404; }
+location ~ ^/(VERSIONE|CHANGELOG\.md|README\.md|INSTALLA\.md|composer\.(json|lock)|package(-lock)?\.json)$ { deny all; return 404; }
+location ~ /\.(git|env|htpasswd|installato|gitkeep) { deny all; return 404; }
+location ~ \.(log|sql|md|lock|ini|sh|zip|gz|bak|old|orig|dist)$ { deny all; return 404; }
+
+# I cron si lanciano da riga di comando: dal web mai (con CMS_CRON_TOKEN e un cron via HTTP togli questa riga)
+location ~ ^/cron-[a-z-]+\.php$ { deny all; return 404; }
+
+# Nelle cartelle delle immagini e dei pacchetti non si esegue niente (PHP spento: nessun fastcgi_pass qui)
+location ~ ^/(uploads|aggiornamenti|logs|assets)/.*\.(php|phtml|php[0-9]|phps|phar|pl|py|cgi|sh)$ { deny all; return 404; }
+location ~ ^/uploads/.*\.svg$ { add_header Content-Security-Policy "sandbox; script-src 'none'; default-src 'self' data:"; add_header X-Content-Type-Options nosniff; }
+
+# Il pannello, le API e l'installatore sono cartelle con i loro file PHP
+location ~ ^/(admin|api|install|share)/ {
+    try_files $uri $uri/ $uri/index.php =404;
+    location ~ \.php$ { include fastcgi_params; fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name; fastcgi_pass unix:/run/php/php8.4-fpm.sock; fastcgi_hide_header X-Powered-By; }
+}
+# Tutto il resto: file veri, altrimenti index.php
+location / { try_files $uri /index.php$is_args$args; }
+location ~ \.php$ { include fastcgi_params; fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name; fastcgi_pass unix:/run/php/php8.4-fpm.sock; fastcgi_hide_header X-Powered-By; }
+
+# Le intestazioni di sicurezza delle pagine (CSP a nonce, frame, referrer, permissions) le manda il CMS. Per i file statici:
+add_header X-Content-Type-Options nosniff always;
