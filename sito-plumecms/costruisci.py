@@ -118,8 +118,10 @@ def home():
                         'Lo carichi sul server, apri il browser, rispondi a cinque domande. Il resto è il tuo sito.',
                   pulsanti=[{'testo': 'Scarica plumeCMS', 'link': '/scarica/', 'stile': 'viola'},
                             {'testo': 'Guarda cosa sa fare', 'link': '/funzionalita/', 'stile': 'filo'}],
-                  immagine=U + 'temi.webp', onda_mostra=False, etichetta_onda='', barre=[],
-                  foto_effetto='zoom')]], **spazi(64, 72))
+                  # La piuma disegnata da copertina.js, a colori (naturale: il velo colorato la farebbe grigia),
+                  # con lo zoom lento che la fa respirare (fermo per chi chiede meno movimento, sito.css).
+                  immagine=U + 'copertina.webp', onda_mostra=False, etichetta_onda='', barre=[],
+                  foto_trattamento='naturale', foto_effetto='zoom')]], **spazi(64, 72))
     # Il mondo di prima: il problema in cui ci si riconosce.
     p.sezione([(45, [titolo('Volevi un sito. *Ti sei ritrovato a fare il meccanico.*', 'Ti suona familiare?',
                             'Si parte con un\'idea chiara e si finisce la domenica pomeriggio a capire perché un aggiornamento '
@@ -402,7 +404,14 @@ def editor_json():
                         '.btn-viola,.btn-ciano{box-shadow:0 1px 2px rgba(27,31,51,.08),0 8px 22px rgba(91,69,224,.18)}\n'
                         '.btn-filo{box-shadow:none}\n'
                         'h1,h2,.sez-titolo{letter-spacing:-.02em}\n'
-                        '.ed-w-immagine img{border-radius:14px;box-shadow:0 1px 2px rgba(27,31,51,.06),0 18px 40px rgba(27,31,51,.12)}\n'},
+                        '.ed-w-immagine img{border-radius:14px;box-shadow:0 1px 2px rgba(27,31,51,.06),0 18px 40px rgba(27,31,51,.12)}\n'
+                        # La Copertina della home con la piuma (copertina.js): il disegno e gia scuro e calmo in basso a
+                        # sinistra, dove stanno le parole, quindi il velo scurisce solo li e lascia respirare la piuma.
+                        # Al telefono la foto si ritaglia in verticale: si guarda a destra, dove sta la piuma, e il velo
+                        # resta pieno sotto le parole (che li passano sopra la piuma).
+                        '@media (min-width:861px){.ed-w-hero .ed-hero-copertina .ed-hcop-velo{background:linear-gradient(90deg,rgba(0,0,0,.6) 0%,rgba(0,0,0,.45) 50%,rgba(0,0,0,.18) 70%,rgba(0,0,0,0) 85%),linear-gradient(0deg,rgba(0,0,0,.55) 0%,rgba(0,0,0,0) 55%)}}\n'
+                        '@media (max-width:860px){.ed-w-hero .ed-hero-copertina.ed-hero-v .finestra.ed-hcop-foto img{object-position:88% 30%}'
+                        '.ed-w-hero .ed-hero-copertina .ed-hcop-velo{background:linear-gradient(0deg,rgba(0,0,0,.88) 0%,rgba(0,0,0,.8) 50%,rgba(0,0,0,.62) 66%,rgba(0,0,0,.25) 80%,rgba(0,0,0,.08) 100%)}}\n'},
     }
     sez = lambda i, figli, **imp: {'id': i, 'tipo': 'sezione', 'impostazioni': imp, 'figli': figli}
     col = lambda i, figli, larg=100: {'id': i, 'tipo': 'colonna', 'impostazioni': {'larghezza': {'d': larg, 'm': 100}}, 'figli': figli}
@@ -443,7 +452,7 @@ def editor_json():
 
 
 # ------------------------------------------------------------------ file
-USATE = ['editor-ritratto', 'editor', 'aperture', 'stile', 'modelli', 'versioni', 'seo', 'flussi', 'download', 'sicurezza', 'aggiornamenti', 'temi',
+USATE = ['copertina', 'editor-ritratto', 'editor', 'aperture', 'stile', 'modelli', 'versioni', 'seo', 'flussi', 'download', 'sicurezza', 'aggiornamenti', 'temi',
          'tema-cosmo', 'tema-aria', 'tema-bottega']
 
 

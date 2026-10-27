@@ -1768,7 +1768,10 @@ Ordine, a ogni versione: `python3 tools/cms-pacchetto.py --aggiornamento`, `node
 `python3 sito-plumecms/costruisci.py`. Dalla 1.2.5 le pagine non scrivono il numero di versione: usano
 `{versione:plumecms-ultima}` e i link `/scarica/plumecms-ultima/`, quindi per una versione nuova del CMS basta caricare lo zip
 nuovo da Download (il pacchetto del sito serve solo quando cambiano le pagine). Le immagini stanno in `sito-plumecms/immagini/` e si rifanno dalle schermate
-con `--schermate <cartella>`. I testi delle novità per chi scarica sono in `NOVITA`, dentro il costruttore.
+con `--schermate <cartella>`. La foto della Copertina della home non è una schermata: è una piuma disegnata in SVG da
+`node sito-plumecms/copertina.js <cartella>` (colori del sito, nessuna risorsa esterna), che scrive `copertina.png` nella
+stessa cartella delle schermate; nella home esce a colori (trattamento naturale) con lo zoom lento, e il CSS del sito
+alleggerisce il velo dove non ci sono parole e, al telefono, sposta il ritaglio sulla piuma. I testi delle novità per chi scarica sono in `NOVITA`, dentro il costruttore.
 
 Ogni parte resta sotto 1900 KB (`--max-kb` per cambiarlo), perché molti hosting non accettano caricamenti più grandi di 2 MB
 (`upload_max_filesize` e `post_max_size`, mostrati nei Controlli della pagina Aggiornamenti): un pacchetto unico da 5 MB

@@ -130,7 +130,9 @@ Il sito di plumeCMS: carica e applica dal pannello il pacchetto di `sito-plumecm
 pagine da visitatore (titoli, menu, immagini, favicon) e scarica davvero gli zip e i PDF da `/scarica/<nome>/`.
 Serve un plumeCMS 1.2.3 o successivo.
 `node prove/prova-sito-plumecms.js <base> <cartella CMS> <utente> <password> <parte-1.zip,parte-2.zip,...> <versione>`: le parti si
-caricano e si applicano in ordine. Atteso: 36 su 36 con quattro parti (1.2.4). Provata con il server limitato a 2 MB
+caricano e si applicano in ordine. Atteso: 46 su 46 con quattro parti (notte del 27 ottobre 2026: anche la piuma della
+Copertina, il suo peso, il ritaglio al telefono, il contrasto delle parole bianche misurato sul fondo e la piuma ferma
+per chi chiede meno movimento). Provata con il server limitato a 2 MB
 (`php -d upload_max_filesize=2M -S ...`), il predefinito di PHP; nella 1.2.3 anche a 1,2 MB, con cinque parti.
 Si può rilanciare sullo stesso sito: la seconda volta le pagine si aggiornano invece di nascere.
 

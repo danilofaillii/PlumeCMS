@@ -16,6 +16,29 @@ const statoPacchetto = (nome) => {
   return s[0] || null;
 };
 
+// Per occhiello, titolo e testo della Copertina: [pezzo, contrasto del bianco sul fondo]. Il fondo e la pagina
+// fotografata con le parole nascoste; i pixel si leggono in un canvas, nella pagina stessa.
+async function contrastoParole(pg) {
+  const r = await pg.evaluate(() => [...document.querySelectorAll('.ed-hcop-parole .occhiello, .ed-hcop-parole h1, .ed-hcop-parole p.lead')]
+    .map(e => { const b = e.getBoundingClientRect(); return [e.tagName.toLowerCase(), Math.round(b.x), Math.round(b.y + scrollY), Math.round(b.width), Math.round(b.height)]; }));
+  const st = await pg.addStyleTag({ content: '.ed-hcop-parole{visibility:hidden}' });
+  const foto = (await pg.screenshot({ fullPage: true })).toString('base64');
+  await st.evaluate(e => e.remove());
+  return pg.evaluate(async ([foto, r]) => {
+    const im = new Image(); im.src = 'data:image/png;base64,' + foto; await im.decode();
+    const cv = document.createElement('canvas'); cv.width = im.width; cv.height = im.height;
+    const cx = cv.getContext('2d'); cx.drawImage(im, 0, 0);
+    const lin = v => { v /= 255; return v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4); };
+    const k = im.width / document.documentElement.clientWidth;      // pixel della foto per pixel CSS
+    return r.map(([t, x, y, w, h]) => {
+      const d = cx.getImageData(Math.round(x * k), Math.round(y * k), Math.round(w * k), Math.round(h * k)).data, l = [];
+      for (let i = 0; i < d.length; i += 4 * 3) l.push(0.2126 * lin(d[i]) + 0.7152 * lin(d[i + 1]) + 0.0722 * lin(d[i + 2]));
+      l.sort((a, b) => a - b);
+      return [t, Math.round(1.05 / (l[Math.floor(l.length * 0.99)] + 0.05) * 10) / 10];
+    });
+  }, [foto, r]);
+}
+
 (async () => {
   const br = await chromium.launch();
   const p = await (await br.newContext({ viewport: { width: 1360, height: 900 } })).newPage();
@@ -60,8 +83,31 @@ const statoPacchetto = (nome) => {
   const voci = (await v.locator('header nav a').allInnerTexts()).map(s => s.trim()).filter(Boolean);
   ok('menu: Home, Funzionalità, Temi, Documentazione, Installazione, Scarica', ['Home', 'Funzionalità', 'Temi', 'Documentazione', 'Installazione'].every(x => voci.some(y => y.toLowerCase() === x.toLowerCase())) && voci.some(y => /scarica/i.test(y)), voci);
   ok("l'onda non c'è nella home", await v.locator('.chip-onda').count() === 0);
-  // Dalla 1.2.6 la home apre con la Copertina: la pagina Temi a tutto sfondo, con il velo del sito e lo zoom lento.
-  ok('la home apre con la Copertina, foto a tutto sfondo con il velo e lo zoom', await v.locator('.ed-hero-copertina .finestra.ed-fx-zoom:not(.ed-foto-naturale) img[src*="temi.webp"]').count() === 1);
+  // Dalla 1.2.6 la home apre con la Copertina; dalla notte del 27 ottobre con la piuma di copertina.js, a colori
+  // (trattamento naturale) e con lo zoom lento. La foto deve essere caricata davvero e restare leggera.
+  ok('la home apre con la Copertina: la piuma a tutto sfondo, naturale, con lo zoom', await v.locator('.ed-hero-copertina .finestra.ed-foto-naturale.ed-fx-zoom img[src*="copertina.webp"]').count() === 1);
+  const cop = await v.evaluate(() => { const i = document.querySelector('.ed-hero-copertina img'); return i ? { w: i.naturalWidth, h: i.naturalHeight } : null; });
+  const copPeso = (await (await v.request.get(B + '/uploads/plumecms/copertina.webp')).body()).length;
+  ok('la piuma: caricata (1440 di larghezza) e sotto 150 KB', cop && cop.w === 1440 && copPeso < 150 * 1024, [cop, Math.round(copPeso / 1024) + ' KB']);
+  // Al telefono la foto si ritaglia: il CSS del sito sposta il punto di vista a destra, dove sta la piuma.
+  const tel = await (await br.newContext({ viewport: { width: 390, height: 844 }, isMobile: true, reducedMotion: 'reduce' })).newPage();
+  await tel.goto(B + '/', { waitUntil: 'networkidle' });
+  const posTel = await tel.evaluate(() => getComputedStyle(document.querySelector('.ed-hero-copertina img')).objectPosition);
+  ok('al telefono la Copertina guarda la piuma (object-position 88%)', /^88%/.test(posTel), posTel);
+  // Il contrasto delle parole bianche sulla piuma, misurato sul sito vero: si nascondono le parole, si fotografa il
+  // fondo e per occhiello, titolo e testo si prende la luminanza del fondo al 99% (i punti piu chiari dietro le lettere).
+  const pc = await (await br.newContext({ viewport: { width: 1440, height: 900 }, reducedMotion: 'reduce' })).newPage();
+  await pc.goto(B + '/', { waitUntil: 'networkidle' });
+  for (const [nome, pg] of [['computer', pc], ['telefono', tel]]) {
+    const c = await contrastoParole(pg);
+    ok(`Copertina al ${nome}: parole bianche leggibili sulla piuma (contrasto 4,5 o più)`, c.every(x => x[1] >= 4.5), c);
+  }
+  await pc.close(); await tel.close();
+  // Chi chiede meno movimento vede la piuma ferma (lo zoom lento si spegne, sito.css).
+  const fermo = await (await br.newContext({ reducedMotion: 'reduce' })).newPage();
+  await fermo.goto(B + '/', { waitUntil: 'networkidle' });
+  ok('con meno movimento la piuma sta ferma', await fermo.evaluate(() => getComputedStyle(document.querySelector('.ed-hero-copertina img')).animationName) === 'none');
+  await fermo.close();
   const imgRotte = await v.evaluate(() => [...document.images].filter(i => i.complete && i.naturalWidth === 0).map(i => i.src));
   ok('nessuna immagine rotta nella home', imgRotte.length === 0, imgRotte);
   await v.goto(B + '/funzionalita/', { waitUntil: 'networkidle' });
