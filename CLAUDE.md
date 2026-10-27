@@ -158,3 +158,11 @@ Errori veri, già pagati. Non ripeterli.
 Danilo è il proprietario e non è uno sviluppatore. Le istruzioni operative vanno
 scritte passo per passo, dicendo dove cliccare e cosa deve comparire. I risultati
 si riportano per quello che sono: se una cosa non è verificata, si dice.
+
+## Second brain
+Second brain: progetto plumecms
+
+- Memoria nel repository `danilofaillii/second-brain`, cartella `plumecms/`.
+- Istruzioni: skill `second-brain`. Se la skill non è installata (sessioni cloud), leggi `_sistema/skill/second-brain/SKILL.md` nel repository `second-brain` e seguila.
+- A inizio sessione esegui `riprendi`. Durante il lavoro `segna`. A fine sessione `salva`.
+- Non usare informazioni di altri progetti senza che Danilo lo chieda.
