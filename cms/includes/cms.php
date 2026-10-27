@@ -211,6 +211,10 @@ function cms_filtro(string $nome, $valore, ...$arg) {
         $f = $m['filtri'][$nome] ?? null;
         if ($f && is_callable($f)) $valore = $f($valore, ...$arg);
     }
+    // temi: il tema attivo del sito (includes/temi.php) passa per ultimo. Un suo errore spegne il tema, non il sito.
+    if (!empty($GLOBALS['tema_ganci']['filtri'][$nome]) && function_exists('temi_gancio') && ($f = temi_gancio('filtri', $nome))) {
+        try { $valore = $f($valore, ...$arg); } catch (Throwable $e) { temi_guasto($GLOBALS['tema_sito'], $e->getMessage() . " (filtro $nome)"); }
+    }
     return $valore;
 }
 
@@ -219,6 +223,9 @@ function cms_evento(string $nome, ...$arg): void {
     foreach (cms_moduli() as $m) {
         $f = $m['eventi'][$nome] ?? null;
         if ($f && is_callable($f)) $f(...$arg);
+    }
+    if (!empty($GLOBALS['tema_ganci']['eventi'][$nome]) && function_exists('temi_gancio') && ($f = temi_gancio('eventi', $nome))) {
+        try { $f(...$arg); } catch (Throwable $e) { temi_guasto($GLOBALS['tema_sito'], $e->getMessage() . " (evento $nome)"); }
     }
 }
 

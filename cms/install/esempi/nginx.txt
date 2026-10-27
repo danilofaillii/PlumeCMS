@@ -6,6 +6,7 @@ server_tokens off;
 location ~ ^/(includes|logs|aggiornamenti|privato|data|sql|docs|tools|test|test-definizioni)(/|$) { deny all; return 404; }
 location ~ ^/moduli/[^/]+/(includes|sql|docs)(/|$) { deny all; return 404; }
 location ~ ^/moduli/.*\.(php|phtml|phar)$ { deny all; return 404; }
+location ~* ^/temi/.*\.(php|phtml|phar|php[0-9]|phps)$ { deny all; return 404; }
 location ~ ^/(VERSIONE|CHANGELOG\.md|README\.md|INSTALLA\.md|composer\.(json|lock)|package(-lock)?\.json)$ { deny all; return 404; }
 location ~ /\.(git|env|htpasswd|installato|gitkeep) { deny all; return 404; }
 location ~ \.(log|sql|md|lock|ini|sh|zip|gz|bak|old|orig|dist)$ { deny all; return 404; }

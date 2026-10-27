@@ -22,6 +22,9 @@ require_once dirname(__DIR__) . '/includes/newsletter.php';
 // Anteprima dal pannello: con ?preview=1 e la sessione dell'admin, bozze e programmati si vedono come usciti.
 define('SITO_ANTEPRIMA', !empty($_GET['preview']) && is_admin_preview());
 if (SITO_ANTEPRIMA) header('Cache-Control: no-store');
+// temi: il tema attivo (o quello in anteprima) e il suo PHP. Solo qui, mai nel pannello.
+require_once dirname(__DIR__) . '/includes/temi.php';
+temi_avvia_sito();
 
 function sito_rispondi(int $codice, string $tipo, string $corpo, array $intestazioni = []): never {
     http_response_code($codice);

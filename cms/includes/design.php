@@ -216,6 +216,8 @@ function design_valori(bool $ricarica = false): array {
         if (in_array($k, DESIGN_SEZIONI, true)) $v[$k] = design_fondi($v[$k], $r);
     }
     $cache = design_pulisci($v);
+    // temi: durante l'anteprima di un tema (?preview=1&tema=nome) le sezioni dell'aspetto sono quelle del tema.
+    if (!empty($GLOBALS['tema_anteprima']) && function_exists('temi_stile_anteprima')) $cache = design_pulisci(temi_stile_anteprima($cache));
     return $cache;
 }
 
@@ -697,26 +699,29 @@ function design_css(?array $v = null): string {
     }
     // Gradienti dei pulsanti e verde d'accento: in sito.css sono i valori del tema di partenza. Si ricavano dal globale
     // solo quando il globale è diverso dal predefinito, così chi non ha toccato i colori vede il sito di sempre.
+    // In :where(:root), senza peso: il CSS di un tema (:root) li scavalca anche se viene prima.
+    $deriva = [];
     $pred = design_predefiniti()['colori']['sistema'];
     if (strcasecmp($sis['primario'], $pred['primario']) !== 0) {
-        $root[] = '--primario-chiaro:color-mix(in srgb,var(--g-colore-primario),#fff 18%)';
-        $root[] = '--primario-scuro:color-mix(in srgb,var(--g-colore-primario),#000 22%)';
+        $deriva[] = '--primario-chiaro:color-mix(in srgb,var(--g-colore-primario),#fff 18%)';
+        $deriva[] = '--primario-scuro:color-mix(in srgb,var(--g-colore-primario),#000 22%)';
     }
     if (strcasecmp($sis['secondario'], $pred['secondario']) !== 0) {
-        $root[] = '--secondario-chiaro:color-mix(in srgb,var(--g-colore-secondario),#fff 18%)';
-        $root[] = '--secondario-scuro:color-mix(in srgb,var(--g-colore-secondario),#000 22%)';
+        $deriva[] = '--secondario-chiaro:color-mix(in srgb,var(--g-colore-secondario),#fff 18%)';
+        $deriva[] = '--secondario-scuro:color-mix(in srgb,var(--g-colore-secondario),#000 22%)';
     }
-    if (strcasecmp($sis['accento'], $pred['accento']) !== 0) $root[] = '--accento:var(--g-colore-accento)';
+    if (strcasecmp($sis['accento'], $pred['accento']) !== 0) $deriva[] = '--accento:var(--g-colore-accento)';
     // I vetri (riquadri appena più chiari dello sfondo) sono bianco trasparente: su uno sfondo chiaro diventano nero trasparente.
     $bg = design_rgb((string)$sis['sfondo']);
     if ($bg !== null) {
         [$r, $g, $b] = array_map('intval', explode(',', $bg));
-        if (0.2126 * $r + 0.7152 * $g + 0.0722 * $b > 140) { $root[] = '--inchiostro:#000'; $root[] = '--inchiostro-rgb:0,0,0'; }
+        if (0.2126 * $r + 0.7152 * $g + 0.0722 * $b > 140) { $deriva[] = '--inchiostro:#000'; $deriva[] = '--inchiostro-rgb:0,0,0'; }
     }
     $root[] = '--f-titolo:var(--g-font-primario)';
     $root[] = '--f-testo:var(--g-font-testo)';
     $root[] = '--max:var(--g-larghezza)';
     $out = ':root{' . implode(';', $root) . '}';
+    if ($deriva) $out .= ':where(:root){' . implode(';', $deriva) . '}';
 
     $css = ['d' => [], 't' => [], 'm' => []];
     $sel = design_selettori();

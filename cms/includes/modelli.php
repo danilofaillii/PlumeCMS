@@ -423,6 +423,16 @@ function modelli_pezzo(string $tipo): ?array {
             [$html, $css] = editor_disegna($vs['albero'], modelli_contesto()['percorso'] ?: '/');
             return [modelli_cornice($tipo, $html, (int)($vs['id'] ?? 0)), $css];
         }
+        // temi: in anteprima di un tema (?preview=1&tema=nome) l'header e il footer sono quelli del tema, se li ha.
+        $ta = $GLOBALS['tema_anteprima']['modelli'][$tipo] ?? null;
+        if (is_array($ta)) {
+            require_once __DIR__ . '/editor.php';
+            $al = editor_valida($ta);
+            if ($al !== null) {
+                [$html, $css] = editor_disegna($al, modelli_contesto()['percorso'] ?: '/');
+                return [modelli_cornice($tipo, $html), $css];
+            }
+        }
         $m = modelli_scegli($tipo);
         if ($m === null) return null;
         if ($m === false) return ['', ''];

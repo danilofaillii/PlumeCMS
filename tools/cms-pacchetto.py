@@ -26,10 +26,10 @@ SITE = os.path.join(REPO, 'cms')
 NOME_PRODOTTO = 'plumecms'
 AVVISI = []   # provvisorio: CMS_NOME in includes/cms.php
 
-CARTELLE = ['includes', 'admin', 'sito', 'api', 'share', 'install', 'assets/css', 'moduli']
+CARTELLE = ['includes', 'admin', 'sito', 'api', 'share', 'install', 'assets/css', 'moduli', 'temi']
 FILE_RADICE = ['index.php', 'cron-daily.php', 'cron-newsletter.php', 'VERSIONE', 'CHANGELOG.md', 'README.md', 'INSTALLA.md']
-DOCS = ['cms.md', 'moduli.md', 'sicurezza.md', 'editor-pagine.md', 'stile-sito.md', 'header-footer-menu.md', 'seo.md', 'pannello.md', 'contenuti.md', 'newsletter.md', 'moduli.md', 'aggiornamenti.md']
-VUOTE = ['uploads', 'logs', 'aggiornamenti', 'moduli']
+DOCS = ['cms.md', 'moduli.md', 'sicurezza.md', 'editor-pagine.md', 'stile-sito.md', 'header-footer-menu.md', 'seo.md', 'pannello.md', 'contenuti.md', 'newsletter.md', 'moduli.md', 'aggiornamenti.md', 'temi.md']
+VUOTE = ['uploads', 'logs', 'aggiornamenti', 'moduli', 'temi']
 ESCLUDI_PREFISSI = ('moduli/danilofailli/', 'includes/config.local.php', 'install/.installato', 'admin/infographics/')
 # I file ponte verso il modulo di danilofailli.it: nel prodotto non c'è il modulo, quindi non ci sono nemmeno loro.
 SHIM = {

@@ -22,6 +22,8 @@ function sito_filtri_blog(): array {
 }
 // design: lo Stile del sito (variabili globali, tipografia, pulsanti...) entra nel <head> dopo sito.css.
 require_once dirname(__DIR__) . '/includes/design.php';
+// temi: il tema attivo (CSS, viste). Il suo PHP gira solo se il sito pubblico lo avvia (temi_avvia_sito in sito/index.php).
+require_once dirname(__DIR__) . '/includes/temi.php';
 
 function sito_versione_asset(string $f): string {
     $p = __DIR__ . '/assets/' . $f;
@@ -57,10 +59,7 @@ function vista_pagina(array $meta, string $corpo, string $jsonld = '', string $a
     $GLOBALS['sito_attivo'] = $attivo;
     [$testata, $piede, $cssModelli] = vista_header_footer($menu, $menuMobile);
 
-    return '<!DOCTYPE html>
-<html lang="it">
-<head>
-<meta charset="utf-8">
+    $testa = '<meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="cms-base" content="' . h(cms_base()) . '">
 <meta name="theme-color" content="' . design_theme_color() . '">
@@ -68,18 +67,32 @@ function vista_pagina(array $meta, string $corpo, string $jsonld = '', string $a
 <link rel="preload" href="' . SITO_ASSET . 'font/inter-latin.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="stylesheet" href="' . sito_versione_asset('sito.css') . '">
 <link rel="stylesheet" href="' . sito_versione_asset('tema.css') . '">
-' . design_head() . $cssModelli . '
+' . (function_exists('temi_css_link') && ($tl = temi_css_link()) !== '' ? $tl . "\n" : '') . design_head() . $cssModelli . '
 <link rel="icon" href="' . h(design_sito()['favicon']) . '">
 <link rel="alternate" type="application/rss+xml" title="' . h(SITO_NOME) . '" href="' . SITO_URL . '/feed/">
-' . $jsonld . '
+' . $jsonld;
+    $popup = vista_popup();
+    // temi: un tema può ridisegnare la pagina intera (viste/documento.php) con i pezzi già pronti.
+    $doc = vista_tema('documento', ['testa' => $testa, 'testata' => $testata, 'corpo' => $corpo, 'piede' => $piede, 'popup' => $popup, 'meta' => $meta]);
+    if ($doc !== null) return $doc;
+
+    return '<!DOCTYPE html>
+<html lang="it">
+<head>
+' . $testa . '
 </head>
 <body>
 <a class="salta" href="#contenuto">Vai al contenuto</a>
 ' . $testata . '
-<main id="contenuto">' . $corpo . '</main>' . vista_popup() . '
+<main id="contenuto">' . $corpo . '</main>' . $popup . '
 ' . $piede . '
 </body>
 </html>';
+}
+
+/** temi: la vista del tema attivo, se ne ha una con questo nome (includes/temi.php), altrimenti null. */
+function vista_tema(string $nome, array $variabili = []): ?string {
+    return function_exists('temi_vista') ? temi_vista($nome, $variabili) : null;
 }
 
 /**
@@ -204,6 +217,7 @@ function vista_articolo_editor(array &$c): array {
 
 function vista_articolo(array &$c): string {
     $html = sito_html_contenuto($c);
+    if (($t = vista_tema('articolo', ['c' => $c, 'html' => $html])) !== null) return $t;
     $voci = vista_voci_sommario($html);
     $toc = '';
     if (count($voci) >= 3) {
@@ -226,6 +240,7 @@ function vista_articolo(array &$c): string {
 /** Pagine fisse senza struttura dell'editor: il testo della scheda passa così com'è, dentro la grafica del sito. */
 function vista_pagina_generica(array &$c): string {
     if ($c['percorso'] === MODULI_PAGINA_EBOOK_ATTESA) return vista_ebook_attesa();
+    if (($t = vista_tema('pagina', ['c' => $c, 'html' => vista_moduli_in_pagina($c['percorso'], sito_html_contenuto($c))])) !== null) return $t;
     return '<div class="wrap"><article class="pagina-generica"><h1>' . h($c['titolo']) . '</h1>' . vista_in_breve($c['tldr'])
         . '<div class="corpo">' . vista_moduli_in_pagina($c['percorso'], sito_html_contenuto($c)) . '</div></article></div>';
 }
@@ -389,6 +404,7 @@ function vista_termine(array &$c): string {
 // ------------------------------------------------------------
 
 function vista_blog(array $v): string {
+    if (($t = vista_tema('blog', ['v' => $v])) !== null) return $t;
     $filtri = '<a href="' . SITO_PAGINA_BLOG . '">Tutti</a>';
     $cat = sito_categorie();
     foreach (sito_filtri_blog() as $s) if (isset($cat[$s])) $filtri .= '<a href="/category/' . $s . '/">' . h($cat[$s]['name']) . '</a>';
@@ -399,6 +415,7 @@ function vista_blog(array $v): string {
 }
 
 function vista_archivio(array $v): string {
+    if (($t = vista_tema('archivio', ['v' => $v])) !== null) return $t;
     $etichetta = ['category' => 'Categoria', 'tag' => 'Tag'][$v['tassonomia']] ?? 'Archivio';
     return '<div class="wrap" style="padding-top:56px;padding-bottom:40px">'
         . vista_testa_sezione($etichetta, h($v['nome']), h($v['descrizione']))
@@ -441,6 +458,7 @@ function vista_cerca(string $q): string {
     foreach ($trovati as $x) {
         $elenco .= '<a class="card" href="' . h($x['c']['percorso']) . '"><span class="card-titolo">' . h($x['c']['titolo']) . '</span><span class="card-meta">' . h($x['e']) . '</span></a>';
     }
+    if (($t = vista_tema('cerca', ['q' => $q, 'trovati' => $trovati])) !== null) return $t;
     if ($elenco === '' && mb_strlen($q) >= 2) $elenco = '<p class="vuoto">Nessun risultato per questa parola.</p>';
     return '<div class="wrap" style="padding-top:56px;padding-bottom:40px"><span class="occhiello">Cerca</span><h1 class="sez-titolo">Cosa stai cercando?</h1>'
         . '<form action="/" method="get" role="search"><input name="s" class="cerca" type="search" value="' . h($q) . '" placeholder="Burnout, capo tossico, confini…" aria-label="Cerca nel sito"></form>'
@@ -448,6 +466,7 @@ function vista_cerca(string $q): string {
 }
 
 function vista_404(): string {
+    if (($t = vista_tema('404')) !== null) return $t;
     return '<div class="wrap" style="padding:96px 0"><span class="occhiello">Errore 404</span><h1 class="sez-titolo">Questa pagina non c&#039;è.</h1>'
         . '<p class="sez-intro">Può darsi che l&#039;indirizzo sia scritto male. Da qui riparti in un clic.</p>'
         . '<p><a class="btn btn-viola" href="/blog-fuori-del-coso/">Vai al blog</a></p></div>';
@@ -462,6 +481,7 @@ function vista_home(): string {
     // altrimenti un'apertura essenziale con il nome, la frase e gli ultimi articoli.
     $html = cms_filtro('vista_home', null);
     if (is_string($html)) return $html;
+    if (($t = vista_tema('home')) !== null) return $t;
     $ultimi = sito_ultimi(3);
     return '<section class="hero"><div class="wrap"><div><span class="occhiello">' . h((string)cms_impostazione('sito_sottotitolo', '')) . '</span><h1>' . h((string)cms_impostazione('sito_nome', CMS_NOME)) . '</h1>'
         . '<p class="lead">' . h((string)cms_impostazione('sito_descrizione', '')) . '</p></div></div></section>'

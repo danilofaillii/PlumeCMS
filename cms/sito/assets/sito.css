@@ -9,12 +9,15 @@
   --bg:#060a17; --bg-2:#0a1024; --vetro:rgba(var(--inchiostro-rgb),.045); --vetro-2:rgba(var(--inchiostro-rgb),.08);
   --bordo:rgba(140,190,255,.16); --testo:#e6ebf5; --testo-2:#a7b1c6; --testo-3:#6f7a92;
   --ciano:#22d3ee; --viola:#a855f7; --grad:linear-gradient(100deg,var(--ciano),var(--viola));
+  --r:18px; --max:1180px;
+  --f-titolo:var(--font-titolo),system-ui,sans-serif; --f-testo:var(--font-testo),system-ui,sans-serif;
+}
+/* Valori ricavati dai colori del sito (temi, fase 1): :where() non pesa, cosi lo Stile del sito e i temi li scavalcano. */
+:where(:root){
   --viola-rgb:168,85,247; --ciano-rgb:34,211,238; --bg-rgb:6,10,23; --inchiostro-rgb:255,255,255; --errore-rgb:248,113,113; --successo-rgb:74,222,128;
   --inchiostro:#fff; --testo-corpo:#d5dcea; --accento:#4ade80;
   --primario-chiaro:#b874ff; --primario-scuro:#7c3aed; --secondario-chiaro:#38e1f5; --secondario-scuro:#0ea5c6; --su-secondario:#03121a;
   --successo:#4ade80; --successo-chiaro:#86efac; --errore:#f87171; --errore-chiaro:#fca5a5; --errore-testo:#fecaca;
-  --r:18px; --max:1180px;
-  --f-titolo:var(--font-titolo),system-ui,sans-serif; --f-testo:var(--font-testo),system-ui,sans-serif;
 }
 *{box-sizing:border-box}
 html{scroll-behavior:smooth}

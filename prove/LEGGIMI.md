@@ -51,3 +51,21 @@ Per cambiare CSS senza cambiare il sito. Nate con la fase 1 dei temi (colori di 
 
 Rumore noto: il widget Conto alla rovescia cambia i minuti fra due foto (circa 2.000 pixel su `widget-pc`, due zone
 di 30 per 30), e `blog-tel` ha a volte 1 livello di scarto su 17 pixel. Si vedono anche fra due foto dello stesso sito.
+
+## prova-temi.js (temi, fase 2)
+
+Il motore dei temi provato come un utente: anteprima solo per l'amministratore, attivazione, header e footer del tema,
+CSS, filtro PHP, vista 404 del tema, riattivazione senza doppioni, pannello che non esegue il PHP del tema, e i tre
+modi in cui un tema può rompersi (eccezione in una vista, errore di sintassi, errore fatale) con il ritorno
+all'aspetto di base.
+
+1. Installa il CMS (vedi sopra) e crea i temi di collaudo: `php prove/temi-collaudo.php <cartella CMS installato>`
+   (prova, rotto, fatale, mortale; mai nel prodotto).
+2. `node prove/prova-temi.js <base> <cartella CMS installato> <utente> <password>`. Usa `prove/tema-cli.php` per
+   attivare e disattivare i temi da riga di comando.
+3. Atteso: 32 su 32. Il controllo "errore fatale: la prima richiesta fallisce" è voluto: quella richiesta va persa, la
+   successiva risponde con l'aspetto di base.
+4. Alla fine la prova lascia il tema disattivato e lo stile ai predefiniti, ma restano i modelli "Header Prova" e
+   "Footer Prova" come predefiniti: per le foto prima e dopo rimetti predefiniti quelli di partenza.
+
+Il `.htaccess` dei temi (PHP vietato, CSS servito) va provato su Apache vero: il server integrato di PHP non lo legge.

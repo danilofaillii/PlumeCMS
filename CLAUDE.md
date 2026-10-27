@@ -34,11 +34,13 @@ cms/            il CMS: è esattamente quello che si carica sul server
   api/          endpoint pubblici (nl.php firma HMAC, csp.php rapporti)
   install/      l'installatore e gli esempi .htaccess / Nginx
   moduli/       i moduli del sito che installa (vuota nel prodotto)
+  temi/         i temi del sito (motore in includes/temi.php, docs/temi.md)
   docs/         la documentazione del CMS
   VERSIONE, CHANGELOG.md, README.md, INSTALLA.md
 tools/          cms-pacchetto.py (costruisce gli zip), pacchetto.py (pacchetti per il
                 pannello Aggiornamenti), sicurezza-prova.js (79 prove di attacco)
-prove/          prova-install.js (installazione da zero con Playwright)
+prove/          prova-install.js (installazione da zero con Playwright), prova-temi.js (motore dei temi),
+                foto-sito.js e quanto-foto.py (schermate prima e dopo, al pixel)
 ```
 
 Stato, decisioni, contesto e diario non stanno qui: stanno nel second brain
@@ -51,7 +53,8 @@ Stato, decisioni, contesto e diario non stanno qui: stanno nel second brain
 3. `cms/docs/editor-pagine.md`: l'editor (sezioni, colonne, widget, controlli di gruppo, schede Stile e Avanzate, i trenta widget extra, le infografiche `ig_*`, temi).
 4. `cms/docs/stile-sito.md`, `header-footer-menu.md`, `versioni.md`.
 5. `cms/docs/sicurezza.md`: cosa c'è, come si configura, cosa fare se ci si chiude fuori.
-6. `cms/docs/seo.md`, `newsletter.md`, `moduli.md` (form ebook e Laser, nati per danilofailli.it), `contenuti.md`, `pannello.md`, `aggiornamenti.md`.
+6. `cms/docs/temi.md`: i temi del sito (com'è fatto un tema, motore, errori, sicurezza).
+7. `cms/docs/seo.md`, `newsletter.md`, `moduli.md` (form ebook e Laser, nati per danilofailli.it), `contenuti.md`, `pannello.md`, `aggiornamenti.md`.
 
 ## Come si lavora
 
@@ -153,6 +156,8 @@ Errori veri, già pagati. Non ripeterli.
 | Il CMS installato in una cartella (`https://esempio.it/test`) | fino alla 1.1.6 l'installatore rifiutava l'indirizzo con la cartella, `index.php` rimandava ogni pagina alla radice e i link del sito partivano da `/`. Dalla 1.1.7 `CMS_BASE` scritto dall'installatore, sito servito quando `cms_sito_base() === cms_base()`, `cms_con_cartella()` sui link. Le prove d'installazione si fanno in radice **e** in cartella, su Apache vero |
 | Uno zip costruito con `zipfile.writestr()` | ogni file esce 0600: sul server PHP funziona (gira con l'utente del sito) ma il server web non legge CSS, JS e immagini e risponde 403. Pannello e installatore senza grafica sul primo server vero (27 ottobre 2026). Ora `scrivi_voce` mette 0644 e cartelle 0755. Le prove si fanno estraendo i file con un utente diverso da quello del server web |
 | Un 301 che dipende dalla configurazione | il browser lo ricorda e lo ripete senza chiedere più al server: fino alla 1.1.6 la cartella `/test/` andava alla radice con un 301, e dopo la correzione il browser ci andava ancora (la pagina si apriva solo con `?=0`). I rimandi che dipendono dalle impostazioni sono 302 con `no-store`; a chi ha già il 301 in memoria serve svuotare la cache |
+| Una chiave numerica scritta come testo in un array PHP (`'404' => ...`) | PHP la trasforma nel numero 404: `array_keys()` restituisce un intero e `in_array('404', ..., true)` dice di no. La vista 404 dei temi non partiva (27 ottobre 2026). Si confronta come testo: `(string)$n` |
+| `color-mix()` al posto di `rgba()` per una trasparenza | il colore esce in un altro spazio e i gradienti cambiano di 1-5 livelli: non si vede, ma il sito non è più identico. Per le trasparenze dei temi si usa `rgba(var(--x-rgb),a)` |
 | Fidarsi del resoconto di un agente | è successo che un agente dichiarasse lavoro mai scritto su disco. Si controllano i file veri e si rifanno le prove |
 
 ## Tono con l'utente
