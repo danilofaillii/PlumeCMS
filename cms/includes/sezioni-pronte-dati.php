@@ -13,8 +13,8 @@ $titoloCentro = fn(string $occhiello, string $titolo, string $sotto = '') => ['t
     'css_personalizzato' => 'selector .sez-intro{margin-left:auto;margin-right:auto}']];
 $titoloSinistra = fn(string $occhiello, string $titolo, string $sotto = '') => ['titolo', ['occhiello' => $occhiello, 'testo' => $titolo, 'livello' => 'h2', 'sottotitolo' => $sotto, 'margine_sotto' => ['d' => 28]]];
 // La sezione sopra e quella sotto di un blocco in due parti: la prima senza spazio sotto, la seconda senza spazio sopra.
-$sopra = ['spazio_sotto' => ['d' => 0]];
-$sotto = ['spazio_sopra' => ['d' => 0]];
+$sopra = ['spazio_sotto' => ['d' => 0, 'm' => 0]];
+$sotto = ['spazio_sopra' => ['d' => 0, 'm' => 0]];
 
 return [
 
