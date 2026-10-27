@@ -128,6 +128,8 @@ il sito. Serve una pagina con un'Apertura (foto ed etichetta dell'onda) e una Pr
 
 Il sito di plumeCMS: carica e applica dal pannello il pacchetto di `sito-plumecms/costruisci.py`, poi visita le sette
 pagine da visitatore (titoli, menu, immagini, favicon) e scarica davvero gli zip e i PDF da `/scarica/<nome>/`.
-Serve un plumeCMS 1.2.3 o successivo, con il server che accetta caricamenti di almeno 8 MB.
-`node prove/prova-sito-plumecms.js <base> <cartella CMS> <utente> <password> <sito-plumecms-X.zip> <versione>`. Atteso: 29 su 29.
+Serve un plumeCMS 1.2.3 o successivo.
+`node prove/prova-sito-plumecms.js <base> <cartella CMS> <utente> <password> <parte-1.zip,parte-2.zip,...> <versione>`: le parti si
+caricano e si applicano in ordine. Atteso: 37 su 37 con cinque parti. Provata anche con il server limitato a 1,2 MB
+(`php -d upload_max_filesize=1200K -S ...`), come il primo hosting vero.
 Si può rilanciare sullo stesso sito: la seconda volta le pagine si aggiornano invece di nascere.

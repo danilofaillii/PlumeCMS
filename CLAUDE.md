@@ -44,7 +44,7 @@ prove/          prova-install.js (installazione da zero con Playwright), prova-t
                 foto-sito.js e quanto-foto.py (schermate prima e dopo, al pixel)
 esempi/         tema-lavagna/: il tema d'esempio del manuale dei temi (provato, non entra nello zip)
 sito-plumecms/  il sito da cui si scarica plumeCMS, fatto con plumeCMS: costruisci.py scrive il pacchetto
-                releases/sito/sito-plumecms-<versione>.zip (pagine, stile, menu, zip e PDF da scaricare)
+                releases/sito/sito-plumecms-<versione>-parte-<k>-di-<n>.zip, ognuna sotto 1180 KB, da caricare in ordine
 tools/manuali-pdf.js  i due manuali in PDF (releases/manuali/)
 ```
 
@@ -113,7 +113,7 @@ Le decisioni complete, con data e perché, stanno nel second brain, `plumecms/de
 ## Stato al 27 ottobre 2026
 
 Fatto: plumeCMS 1.2.3: manuali in PDF, `/scarica/<nome>/`, pacchetti con pagine, stile e impostazioni, il sito di plumeCMS
-(`sito-plumecms/`, provato applicandolo dal pannello: `prove/prova-sito-plumecms.js` 29 su 29), pannello Revisioni che si
+(`sito-plumecms/`, provato applicandolo dal pannello: `prove/prova-sito-plumecms.js` 37 su 37, cinque parti, server limitato a 1,2 MB), pannello Revisioni che si
 chiude, sfondo colore globale delle sezioni. 1.2.2: sezione Foto di Apertura e Presentazione (trattamento, colori e intensità del velo, cinque effetti
 animati) e interruttore dell'onda; provata con `prove/prova-foto-effetti.js` (20 su 20) e foto identiche al pixel con i
 valori di partenza. 1.2.1: manuale tecnico e manuale dei temi.
@@ -190,7 +190,7 @@ Errori veri, già pagati. Non ripeterli.
 | `color-mix()` al posto di `rgba()` per una trasparenza | il colore esce in un altro spazio e i gradienti cambiano di 1-5 livelli: non si vede, ma il sito non è più identico. Per le trasparenze dei temi si usa `rgba(var(--x-rgb),a)` |
 | Un elemento con l'attributo `hidden` e un `display` nel suo CSS | il `display` vince e `hidden` non nasconde niente: il pannello Revisioni dell'editor non si chiudeva mai e toglieva 380 pixel alla tela (fino alla 1.2.2). A ogni `display` su un elemento che si nasconde, la regola `[hidden]{display:none}` |
 | Un valore di un controllo "scelta" che non sta fra le sue opzioni | `editor_valida` lo svuota in silenzio: un header importato con il menu `posizione:principale` usciva senza menu (prima della 1.2.3, quando il widget conosceva solo gli id) |
-| Un pacchetto più grande del limite di caricamento del server | PHP lo butta prima che arrivi al CMS e la pagina non dice niente di utile. Il limite si legge nei Controlli della pagina Aggiornamenti; il pacchetto del sito di plumeCMS pesa circa 5 MB |
+| Un pacchetto più grande del limite di caricamento del server | "Il file supera il limite di caricamento del server": il pacchetto unico del sito di plumeCMS (5 MB) è stato rifiutato dal primo hosting vero (27 ottobre 2026), che accetta 1,2 MB. Ora il costruttore lo divide in parti sotto 1180 KB. Anche i PDF: con i tag di accessibilità e Inter variabile pesavano il doppio |
 | Fidarsi del resoconto di un agente | è successo che un agente dichiarasse lavoro mai scritto su disco. Si controllano i file veri e si rifanno le prove |
 
 ## Tono con l'utente

@@ -1,5 +1,8 @@
 // I manuali in PDF (1.2.3, 27 ottobre 2026): docs/manuale-tecnico.md e docs/manuale-temi.md diventano
-// releases/manuali/<nome>.pdf, con copertina, indice cliccabile, numeri di pagina e caratteri Inter.
+// releases/manuali/<nome>.pdf, con copertina, indice cliccabile e numeri di pagina.
+// Peso: niente PDF "tagged" (i tag dell'accessibilita raddoppiavano il file, 2,1 MB il manuale tecnico) e il carattere
+// Carlito (Inter installato qui e variabile, e Chromium lo mette nel PDF lettera per lettera come disegni). Cosi il
+// manuale tecnico pesa sotto 1 MB e passa anche dai server che accettano caricamenti piccoli.
 // Il Markdown lo converte pandoc (gfm), il PDF lo stampa Chromium (Playwright): nessuna libreria nel CMS.
 // uso: node tools/manuali-pdf.js [cartella di uscita, predefinita releases/manuali]
 const { chromium } = require('playwright');
@@ -17,9 +20,9 @@ const MANUALI = [
 
 const CSS = `
 @page { size: A4; margin: 20mm 17mm 22mm 17mm; }
-html { font-family: Inter, 'DejaVu Sans', sans-serif; font-size: 10pt; color: #1d2433; line-height: 1.5; }
+html { font-family: Carlito, 'DejaVu Sans', sans-serif; font-size: 10pt; color: #1d2433; line-height: 1.5; }
 body { margin: 0; }
-h1, h2, h3, h4 { font-family: 'Inter Display', Inter, sans-serif; color: #141a33; line-height: 1.2; break-after: avoid; }
+h1, h2, h3, h4 { font-family: Carlito, sans-serif; color: #141a33; line-height: 1.2; break-after: avoid; }
 h2 { font-size: 17pt; margin: 0 0 10pt; padding-top: 4pt; border-bottom: 2px solid #e4e1f7; padding-bottom: 6pt; break-before: page; }
 h3 { font-size: 12.5pt; margin: 16pt 0 6pt; color: #3d2fb8; }
 h4 { font-size: 11pt; margin: 12pt 0 4pt; }
@@ -38,7 +41,7 @@ hr { display: none; }
 blockquote { margin: 8pt 0; padding: 6pt 10pt; border-left: 3px solid #7b6cf0; background: #f6f5fd; }
 .copertina { box-sizing: border-box; height: 252mm; display: flex; flex-direction: column; justify-content: space-between; break-after: page;
   background: linear-gradient(160deg, #141a33 0%, #2a1f6e 60%, #4a35c9 100%); color: #fff; margin: 0; padding: 26mm 18mm 20mm; border-radius: 10pt; }
-.copertina .marchio { font: 600 13pt 'Inter Display', Inter, sans-serif; letter-spacing: .08em; opacity: .9; }
+.copertina .marchio { font: 700 13pt Carlito, sans-serif; letter-spacing: .08em; opacity: .9; }
 .copertina .marchio b { color: #b8acff; }
 .copertina h1 { color: #fff; font-size: 38pt; margin: 0 0 12pt; letter-spacing: -.01em; }
 .copertina .sotto { font-size: 13pt; max-width: 135mm; opacity: .88; line-height: 1.45; }
@@ -82,11 +85,11 @@ ${corpo}</body></html>`;
   for (const m of MANUALI) {
     await p.setContent(html(m), { waitUntil: 'load' });
     await p.evaluate(() => document.fonts.ready);
-    const piede = `<div style="width:100%;font:8pt Inter,sans-serif;color:#8a86a3;padding:0 17mm;display:flex;justify-content:space-between">
+    const piede = `<div style="width:100%;font:8pt Carlito,sans-serif;color:#8a86a3;padding:0 17mm;display:flex;justify-content:space-between">
 <span>plumeCMS &middot; ${m.titolo}</span><span><span class="pageNumber"></span> / <span class="totalPages"></span></span></div>`;
     const file = path.join(USCITA, m.file + '.pdf');
     await p.pdf({ path: file, format: 'A4', printBackground: true, displayHeaderFooter: true, headerTemplate: '<span></span>', footerTemplate: piede,
-      margin: { top: '20mm', bottom: '22mm', left: '17mm', right: '17mm' }, outline: true, tagged: true });
+      margin: { top: '20mm', bottom: '22mm', left: '17mm', right: '17mm' }, outline: true, tagged: false });
     console.log(`${file}: ${Math.round(fs.statSync(file).size / 1024)} KB`);
   }
   await br.close();

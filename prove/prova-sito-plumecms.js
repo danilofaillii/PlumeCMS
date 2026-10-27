@@ -1,6 +1,7 @@
 // Il sito di plumeCMS (1.2.3, 27 ottobre 2026): il pacchetto di sito-plumecms/costruisci.py caricato e applicato dal
 // pannello Aggiornamenti come un utente, poi il sito visitato pagina per pagina e i file scaricati davvero.
-// uso: node prova-sito-plumecms.js <base> <cartella CMS installato> <utente> <password> <sito-plumecms-X.zip> <versione>
+// uso: node prova-sito-plumecms.js <base> <cartella CMS installato> <utente> <password> <parte-1.zip,parte-2.zip,...> <versione>
+// Le parti si caricano e si applicano una dopo l'altra, in ordine, come le carica chi gestisce il sito.
 const { chromium } = require('playwright');
 const fs = require('fs');
 const path = require('path');
@@ -8,10 +9,10 @@ const [B, DIR, UTENTE, PASSWORD, ZIP, V] = process.argv.slice(2);
 let n = 0, ko = 0; const ok = (t, c, extra = '') => { n++; if (!c) ko++; console.log((c ? 'OK  ' : 'KO  ') + t + (extra ? ' ' + JSON.stringify(extra).slice(0, 220) : '')); };
 
 // Lo stato del pacchetto si legge dal suo file in aggiornamenti/pacchetti (scritto dal motore alla fine).
-const statoPacchetto = () => {
+const statoPacchetto = (nome) => {
   const d = path.join(DIR, 'aggiornamenti', 'pacchetti');
   const s = fs.readdirSync(d).filter(f => f.endsWith('.json')).map(f => JSON.parse(fs.readFileSync(path.join(d, f), 'utf8')))
-    .filter(j => /Sito di plumeCMS/.test(j.nome || (j.manifest && j.manifest.nome) || '')).sort((a, b) => String(b.id).localeCompare(String(a.id)));
+    .filter(j => (j.nome || (j.manifest && j.manifest.nome) || '') === nome).sort((a, b) => String(b.id).localeCompare(String(a.id)));
   return s[0] || null;
 };
 
@@ -24,15 +25,21 @@ const statoPacchetto = () => {
   await Promise.all([p.waitForNavigation(), p.click('button[type=submit]')]);
   ok('login', !p.url().includes('login.php'), p.url());
 
-  await p.goto(B + '/admin/aggiornamenti.php', { waitUntil: 'networkidle' });
-  await p.setInputFiles('input[name=pacchetto]', ZIP);
-  await Promise.all([p.waitForNavigation(), p.click('form:has(input[name=pacchetto]) button[type=submit]')]);
-  ok('pacchetto del sito caricato', /Sito di plumeCMS/.test(await p.locator('body').innerText()));
-  await Promise.all([p.waitForNavigation({ timeout: 180000 }), p.locator('tr', { hasText: 'Sito di plumeCMS' }).locator('button:has-text("Applica ora")').first().click()]);
-  let st = null;
-  for (let i = 0; i < 120; i++) { st = statoPacchetto(); if (st && ['applicato', 'fallito'].includes(st.stato)) break; await p.waitForTimeout(1000); }
-  ok('pacchetto applicato', st && st.stato === 'applicato', st && (st.stato + ' ' + (st.log || []).slice(-3).join(' | ')));
-  const log = (st && st.log || []).join('\n');
+  const zips = ZIP.split(',');
+  let log = '';
+  for (const [k, z] of zips.entries()) {
+    const nome = `Sito di plumeCMS (${V}), parte ${k + 1} di ${zips.length}`;
+    await p.goto(B + '/admin/aggiornamenti.php', { waitUntil: 'networkidle' });
+    await p.setInputFiles('input[name=pacchetto]', z);
+    await Promise.all([p.waitForNavigation(), p.click('form:has(input[name=pacchetto]) button[type=submit]')]);
+    const testo = await p.locator('body').innerText();
+    ok(`parte ${k + 1}: caricata (${Math.round(fs.statSync(z).size / 1024)} KB)`, testo.includes(nome) && !/supera il limite/.test(testo), testo.slice(0, 160));
+    await Promise.all([p.waitForNavigation({ timeout: 180000 }), p.locator('tr', { hasText: nome }).locator('button:has-text("Applica ora")').first().click()]);
+    let st = null;
+    for (let i = 0; i < 120; i++) { st = statoPacchetto(nome); if (st && ['applicato', 'fallito'].includes(st.stato)) break; await p.waitForTimeout(1000); }
+    ok(`parte ${k + 1}: applicata`, st && st.stato === 'applicato', st && (st.stato + ' ' + (st.log || []).slice(-2).join(' | ')));
+    log += (st && st.log || []).join('\n') + '\n';
+  }
   ok('resoconto: nome del sito, stile, header e footer, menu', /Impostazioni del sito/.test(log) && /Stile del sito aggiornato/.test(log) && /Header e footer: 2/.test(log) && /Menu di navigazione: 3/.test(log), log.slice(0, 300));
   ok('resoconto: sette pagine', (log.match(/^Pagina \//gm) || []).length === 7);
   ok('nessun errore JavaScript nel pannello', err.length === 0, err);

@@ -1684,22 +1684,25 @@ righe `--` e senza caratteri a 4 byte, articoli, test).
 ### 23.4 `tools/manuali-pdf.js`
 
 `node tools/manuali-pdf.js` scrive `releases/manuali/manuale-tecnico.pdf` e `manuale-temi.pdf`: pandoc converte il
-Markdown, Chromium (Playwright) stampa il PDF A4 con copertina, indice cliccabile e numeri di pagina. Si rifà a ogni
+Markdown, Chromium (Playwright) stampa il PDF A4 con copertina, indice cliccabile e numeri di pagina. Carattere Carlito e
+niente tag di accessibilità nel PDF: con i tag e il carattere Inter (variabile) il manuale tecnico pesava 2,1 MB, così 0,9. Si rifà a ogni
 versione, dopo aver aggiornato i manuali.
 
 ### 23.5 Il sito di plumeCMS: `sito-plumecms/costruisci.py`
 
 Il sito da cui si scarica plumeCMS, fatto con plumeCMS. Il costruttore scrive le pagine (home, funzionalità, temi,
 documentazione, installazione, scarica, domande frequenti) come alberi dell'editor, lo stile, header, footer e menu, e
-mette insieme i file da scaricare: i due zip del CMS, i due PDF, il tema Lavagna. Il risultato è
-`releases/sito/sito-plumecms-<versione>.zip`, un pacchetto per Impostazioni > Aggiornamenti.
+mette insieme i file da scaricare: i due zip del CMS, i due PDF, il tema Lavagna. Il risultato sono più pacchetti
+per Impostazioni > Aggiornamenti, `releases/sito/sito-plumecms-<versione>-parte-<k>-di-<n>.zip`, da caricare in ordine:
+la parte 1 porta pagine, stile, menu e immagini, le altre i file da scaricare.
 
 Ordine, a ogni versione: `python3 tools/cms-pacchetto.py --aggiornamento`, `node tools/manuali-pdf.js`,
 `python3 sito-plumecms/costruisci.py`. Le immagini stanno in `sito-plumecms/immagini/` e si rifanno dalle schermate
 con `--schermate <cartella>`. I testi delle novità per chi scarica sono in `NOVITA`, dentro il costruttore.
 
-Il pacchetto pesa qualche megabyte: il server deve accettare caricamenti di quella misura (`upload_max_filesize` e
-`post_max_size`, mostrati nei Controlli della pagina Aggiornamenti).
+Ogni parte resta sotto 1180 KB (`--max-kb` per cambiarlo), perché molti hosting non accettano caricamenti più grandi
+(`upload_max_filesize` e `post_max_size`, mostrati nei Controlli della pagina Aggiornamenti): un pacchetto unico da 5 MB
+è stato rifiutato dal primo server vero, il 27 ottobre 2026.
 
 ### 23.3 `tools/sicurezza-prova.js`
 

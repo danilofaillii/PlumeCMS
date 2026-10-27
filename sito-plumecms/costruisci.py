@@ -7,9 +7,10 @@ Prima di lanciarlo:
   python3 tools/cms-pacchetto.py --aggiornamento     (gli zip del CMS da offrire)
   node tools/manuali-pdf.js                          (i due manuali in PDF)
 
-uso: python3 sito-plumecms/costruisci.py [--schermate <cartella di png>]
+uso: python3 sito-plumecms/costruisci.py [--schermate <cartella di png>] [--max-kb <KB>]
   --schermate rifà le immagini di sito-plumecms/immagini/ dalle schermate (vedi schermate.js).
-Scrive releases/sito/sito-plumecms-<versione>.zip.
+  --max-kb    il peso massimo di ogni parte (predefinito 1180: passa dove passa il pacchetto del CMS).
+Scrive releases/sito/sito-plumecms-<versione>-parte-<k>-di-<n>.zip: si caricano in ordine, dopo il CMS.
 
 Il pacchetto, applicato a un plumeCMS: nome e descrizioni del sito, Stile del sito, header e footer (predefiniti),
 menu Principale e Piede, le pagine home, funzionalita, temi, documentazione, installazione, scarica,
@@ -484,6 +485,9 @@ def pagine_pdf(f):
 
 
 def main():
+    global MAX_KB
+    if '--max-kb' in sys.argv:
+        MAX_KB = int(sys.argv[sys.argv.index('--max-kb') + 1])
     if '--schermate' in sys.argv:
         immagini_da_schermate(sys.argv[sys.argv.index('--schermate') + 1])
     zips = {n: os.path.join(REL, 'cms', n + '.zip') for n in (ZIP, ZIP_AGG)}
@@ -538,9 +542,66 @@ def main():
         'note': f'Richiede plumeCMS 1.2.3 o successivo: prima il pacchetto {ZIP_AGG}.zip, poi questo. '
                 'Cambia Stile del sito, header e footer predefiniti, menu Principale e la home; le altre pagine restano, fuori dal menu.',
     }
-    json.dump(manifest, open(os.path.join(out, 'manifest.json'), 'w', encoding='utf-8'), ensure_ascii=False, indent=1)
-    dest = os.path.join(REL, 'sito', f'sito-plumecms-{V}.zip')
-    subprocess.run([sys.executable, os.path.join(RADICE, 'tools', 'pacchetto.py'), out, dest], check=True)
+    dividi_e_costruisci(out, manifest, MAX_KB)
+
+
+# Il limite di caricamento dei server: su Hostcare passa un pacchetto da 1,2 MB e non uno da 5 (27 ottobre 2026).
+# Ogni parte resta sotto questa misura; con --max-kb si cambia (per esempio --max-kb 60000 per un pacchetto solo).
+MAX_KB = 1180
+
+
+def dividi_e_costruisci(out, manifest, max_kb):
+    """La prima parte porta pagine, stile, menu, nome del sito e quanti file ci stanno; i file che restano (gli zip e i
+    PDF da scaricare) vanno in parti di soli file, ognuna sotto max_kb. Si caricano in ordine: parte 1, 2, 3..."""
+    import glob
+    for vecchio in glob.glob(os.path.join(REL, 'sito', f'sito-plumecms-{V}*.zip')):
+        os.remove(vecchio)
+    peso = lambda voce: os.path.getsize(os.path.join(out, voce['da'])) // 1024 + 2
+    base = sum(os.path.getsize(os.path.join(out, p)) for p in manifest['pagine'] + [manifest['editor']]) // 4096 + 8  # JSON: si comprime circa 4 a 1
+    piccoli = sorted(manifest['file'], key=peso)
+    prima, resto, occupato = [], [], base
+    for v in piccoli:
+        if occupato + peso(v) <= max_kb and not v['da'].endswith(('.pdf',)) and not v['a'].startswith('uploads/scaricabili/plumecms-'):
+            prima.append(v); occupato += peso(v)
+        else:
+            resto.append(v)
+    parti = []
+    for v in sorted(resto, key=peso, reverse=True):
+        if peso(v) > max_kb:
+            errore(f"{v['da']} pesa {peso(v)} KB, piu del limite di {max_kb} KB: alza --max-kb o alleggerisci il file")
+        for p in parti:
+            if sum(map(peso, p)) + peso(v) <= max_kb:
+                p.append(v); break
+        else:
+            parti.append([v])
+    totale = 1 + len(parti)
+    elenco = []
+    for k, voci in enumerate([prima] + parti, start=1):
+        cartella = out + f'-{k}'
+        if os.path.isdir(cartella):
+            shutil.rmtree(cartella)
+        os.makedirs(cartella)
+        m = {'nome': f'Sito di plumeCMS ({V}), parte {k} di {totale}', 'creato': manifest['creato'], 'file': voci}
+        if k == 1:
+            m.update({x: manifest[x] for x in ('descrizione', 'impostazioni', 'editor', 'editor_ambiti', 'pagine', 'azioni')})
+            m['note'] = manifest['note'] + f' Dopo questa parte vanno caricate le altre ({totale - 1}), in ordine: portano i file da scaricare.'
+            for x in manifest['pagine'] + [manifest['editor']]:
+                os.makedirs(os.path.dirname(os.path.join(cartella, x)) or cartella, exist_ok=True)
+                shutil.copy(os.path.join(out, x), os.path.join(cartella, x))
+        else:
+            m['descrizione'] = 'File da scaricare del sito di plumeCMS: ' + ', '.join(os.path.basename(v['a']) for v in voci) + '.'
+        for v in voci:
+            os.makedirs(os.path.join(cartella, 'file'), exist_ok=True)
+            shutil.copy(os.path.join(out, v['da']), os.path.join(cartella, v['da']))
+        json.dump(m, open(os.path.join(cartella, 'manifest.json'), 'w', encoding='utf-8'), ensure_ascii=False, indent=1)
+        dest = os.path.join(REL, 'sito', f'sito-plumecms-{V}-parte-{k}-di-{totale}.zip')
+        subprocess.run([sys.executable, os.path.join(RADICE, 'tools', 'pacchetto.py'), cartella, dest], check=True)
+        if os.path.getsize(dest) // 1024 > max_kb:
+            errore(f'{dest} pesa {os.path.getsize(dest) // 1024} KB, oltre il limite di {max_kb} KB')
+        elenco.append(dest)
+    print('\nDa caricare in questo ordine, dopo il CMS ' + V + ':')
+    for d in elenco:
+        print(f'  {os.path.basename(d)}  ({os.path.getsize(d) // 1024} KB)')
 
 
 if __name__ == '__main__':
