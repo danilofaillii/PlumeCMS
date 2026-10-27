@@ -144,7 +144,8 @@ def home():
                     {'titolo': 'Lo carichi sul server', 'testo': 'Nella radice del sito o in una cartella, con il gestore dei file del tuo hosting. Basta un hosting con PHP 8.2 e MySQL.'},
                     {'titolo': 'Apri il browser', 'testo': 'L\'installatore ti fa cinque domande: database, nome del sito, il tuo utente. Due minuti, caffè compreso.'},
                     {'titolo': 'Scegli il vestito', 'testo': 'Tre temi pronti: Cosmo, Aria, Bottega. Un clic e il sito cambia aspetto. I tuoi testi restano dove sono.'},
-                    {'titolo': 'Scrivi e pubblica', 'testo': 'Trascini sezioni, colonne e widget, guardi l\'anteprima, premi Pubblica. Se sbagli, torni indietro: ogni modifica resta nelle versioni.'}])]],
+                    {'titolo': 'Scrivi e pubblica', 'testo': 'Trascini sezioni, colonne e widget, guardi l\'anteprima, premi Pubblica. Se sbagli, torni indietro: ogni modifica resta nelle versioni.'}]),
+                pulsanti(('Guarda l\'installatore, passo per passo', '/installazione/#passi', 'filo'), centro=True)]],
               **spazi(48, 72))
     p.sezione([[w('numeri', colonne={'d': 4, 't': 2, 'm': 2}, voci=[{'valore': '5', 'etichetta': 'passi per installarlo'}, {'valore': '80', 'etichetta': 'widget nell\'editor'},
                                   {'valore': '3', 'etichetta': 'temi pronti da indossare'}, {'valore': '0', 'etichetta': 'plugin da tenere aggiornati'}])]],
@@ -287,22 +288,49 @@ REQUISITI = [{'celle': 'Cosa | Serve'}, {'celle': 'PHP | 8.2 o più nuovo, con P
              {'celle': 'Spazio | pochi megabyte per il CMS, più le tue immagini'}]
 
 
+# I cinque passi dell'installatore, con la schermata vera di ognuno (installatore.js): la didascalia del carosello e
+# il testo lungo dei passi numerati dicono le stesse cose, il primo in breve.
+PASSI_INSTALLA = [
+    ('Requisiti', 'Controlla il server: PHP, database, cartelle. Tutto OK? Avanti.',
+     'Apri l\'indirizzo del sito nel browser: compare l\'installatore, con una lista di voci verdi. Se una è rossa, la pagina ti dice cosa manca e cosa chiedere al tuo hosting.'),
+    ('Database', 'Server, nome, utente e password del database che hai creato.',
+     'Scrivi host (di solito localhost), nome, utente e password del database. Il prefisso delle tabelle lascialo com\'è, a meno che nello stesso database ci sia già un altro sito.'),
+    ('Sito e amministratore', 'Il nome del sito, l\'indirizzo (lo trova da solo) e il tuo utente.',
+     'Nome del sito, una descrizione in una riga, l\'indirizzo e il tuo utente con una password di almeno 12 caratteri. Annotala: è la chiave di casa.'),
+    ('Installazione', 'Il riepilogo di quello che succede. Premi Installa adesso.',
+     'Prima di toccare qualcosa l\'installatore ti dice cosa farà: tabelle, amministratore, pagine di partenza, menu, header e footer. Premi Installa adesso e aspetti qualche secondo.'),
+    ('Fine', 'Il sito è pronto. Entri nel pannello e cominci.',
+     'Trovi il link al pannello e quello al sito, e le due righe per i compiti pianificati. Entri, scegli un tema e il sito è tuo.'),
+]
+
+
 def installazione():
+    """La pagina "Installalo in 5 minuti": invece di promettere, mostra l'installatore vero. In alto cosa serve prima
+    di cominciare e il carosello delle cinque schermate, che scorre da solo (fermo per chi chiede meno movimento:
+    widget.js non avvia lo scorrimento con prefers-reduced-motion); sotto i passi spiegati e i dettagli."""
     p = Pagina('installazione')
-    p.sezione([[titolo('Installare plumeCMS', 'Installazione',
-                       'Cinque passi dal browser. Qui sotto ci sono tutti, con quello che deve comparire a ogni passo.', livello='h1', centro=True)]],
+    p.sezione([[titolo('Installalo in *5 minuti.*', 'Installazione',
+                       'Niente da configurare a mano: carichi lo zip, apri il browser e l\'installatore ti accompagna in cinque passi. '
+                       'Eccoli, con le schermate vere.', livello='h1', centro=True)]],
               larghezza='stretta', **spazi(72, 24))
-    p.sezione([[titolo('Prima di cominciare', livello='h2'), w('tabella', intestazione=True, righe=REQUISITI),
-                ricco('Ti servono anche i dati del database: nome, utente e password. Li crei dal pannello del tuo hosting (in cPanel: <strong>Database MySQL</strong>).')]],
-              larghezza='stretta', **spazi(32, 48))
-    p.sezione([[titolo('I cinque passi', livello='h2', centro=True),
-                w('passi', voci=[
-                    {'titolo': 'Carica i file', 'testo': 'Estrai lo zip e carica il suo contenuto nella cartella del sito (di solito public_html), oppure in una sottocartella come /sito. Controlla che ci sia anche il file .htaccess: alcuni programmi nascondono i file che iniziano con il punto.'},
-                    {'titolo': 'Apri il sito nel browser', 'testo': 'Compare l\'installatore, al passo Requisiti: una lista di voci verdi. Se una è rossa, la pagina ti dice cosa manca.'},
-                    {'titolo': 'Database', 'testo': 'Scrivi host (di solito localhost), nome, utente e password del database. Il prefisso delle tabelle lascialo com\'è, a meno che nello stesso database ci sia già un altro sito.'},
-                    {'titolo': 'Sito e amministratore', 'testo': 'Nome del sito, indirizzo, il tuo nome utente e una password di almeno 12 caratteri. Annotala: è la chiave di casa.'},
-                    {'titolo': 'Installa e fine', 'testo': 'L\'installatore crea tabelle, pagine di partenza, menu, header e footer. Alla fine trovi il link al pannello: entri e il sito è tuo.'}])]],
+    prima = [('nuvola', 'Un hosting con PHP 8.2 e MySQL', 'Va bene un normale hosting condiviso con cPanel. MySQL 8 oppure MariaDB 10.6.'),
+             ('database', 'I dati del database', 'Nome, utente e password. Li crei dal pannello del tuo hosting, in cPanel alla voce Database MySQL.'),
+             ('upload', 'Lo zip di plumeCMS, caricato', 'Estrai lo zip e carica il contenuto nella cartella del sito, di solito public_html. Compreso il file .htaccess.')]
+    p.sezione([(40, [titolo('Prima di cominciare', 'Ti servono tre cose', livello='h2'),
+                     *[w('riquadro_icona', icona=ic, titolo=t, testo=d, livello='h3', vista='impilata', allineamento={'d': 'left'}) for ic, t, d in prima],
+                     pulsanti(('Scarica plumeCMS', '/scarica/', 'viola'))]),
+               (60, [w('carosello', immagini=[{'immagine': f'{U}installa-{k}.webp', 'alt': f'Installatore di plumeCMS, passo {k}: {n}',
+                                               'didascalia': f'{k}. {n}. {breve}', 'link': ''} for k, (n, breve, _) in enumerate(PASSI_INSTALLA, start=1)],
+                       per_vista={'d': 1, 't': 1, 'm': 1}, autoplay=True, intervallo=4500, pausa_hover=True, ciclo=True,
+                       frecce=True, pallini=True, proporzioni='4/3', didascalia='sotto', clic='lightbox', effetto_hover='',
+                       frecce_colore='globale:primario', frecce_sfondo='#ffffff', pallini_attivo='globale:primario')])],
+              allineamento_verticale='center', ancora='passi', **spazi(32, 64))
+    p.sezione([[titolo('I cinque passi, uno per uno', livello='h2', centro=True),
+                w('passi', voci=[{'titolo': n, 'testo': lungo} for n, _, lungo in PASSI_INSTALLA])]],
               **tinta(), **spazi(64, 64))
+    p.sezione([[titolo('I requisiti nel dettaglio', livello='h2'), w('tabella', intestazione=True, righe=REQUISITI),
+                ricco('Il primo passo dell\'installatore controlla tutto questo da solo: se manca qualcosa, te lo dice prima di cominciare.')]],
+              larghezza='stretta', **spazi(64, 32))
     p.sezione([(50, [titolo('Nella radice o in una cartella', livello='h3'),
                      ricco('plumeCMS funziona nella radice del dominio (<code>https://tuosito.it</code>) e in una cartella (<code>https://tuosito.it/nuovo</code>). '
                            'Lo capisce da solo: all\'installazione scrivi l\'indirizzo completo, con la cartella se c\'è.')]),
@@ -319,8 +347,8 @@ def installazione():
                 pulsanti(('Manuale tecnico (PDF)', '/scarica/manuale-tecnico/', 'filo'), ('Scarica plumeCMS', '/scarica/', 'viola'))]],
               larghezza='stretta', **spazi(32, 80))
     return dict(slug='installazione', titolo='Installazione', struttura=p.albero(),
-                seo_titolo='Come installare plumeCMS in cinque passi',
-                seo_descrizione='Requisiti, i cinque passi dell\'installatore, l\'installazione in una cartella e i compiti pianificati di plumeCMS.')
+                seo_titolo='Installa plumeCMS in 5 minuti: i cinque passi dell\'installatore',
+                seo_descrizione='Cosa serve, le schermate vere dei cinque passi dell\'installatore, l\'installazione in una cartella e i compiti pianificati di plumeCMS.')
 
 
 def scarica(note):
@@ -409,6 +437,10 @@ def editor_json():
                         # sinistra, dove stanno le parole, quindi il velo scurisce solo li e lascia respirare la piuma.
                         # Al telefono la foto si ritaglia in verticale: si guarda a destra, dove sta la piuma, e il velo
                         # resta pieno sotto le parole (che li passano sopra la piuma).
+                        # I tre riquadri di "Prima di cominciare" (pagina Installazione): icona a sinistra, testo allineato a
+                        # sinistra. Nel CMS 1.2.7 il riquadro con icona non lo permette: la sua "Posizione dell'icona" ha lo
+                        # stesso nome della Posizione della scheda Avanzate e si perde, e .ew-ribox centra sempre il testo.
+                        '#passi .ew-ribox{flex-direction:row;align-items:flex-start;text-align:left}\n'
                         '@media (min-width:861px){.ed-w-hero .ed-hero-copertina .ed-hcop-velo{background:linear-gradient(90deg,rgba(0,0,0,.6) 0%,rgba(0,0,0,.45) 50%,rgba(0,0,0,.18) 70%,rgba(0,0,0,0) 85%),linear-gradient(0deg,rgba(0,0,0,.55) 0%,rgba(0,0,0,0) 55%)}}\n'
                         '@media (max-width:860px){.ed-w-hero .ed-hero-copertina.ed-hero-v .finestra.ed-hcop-foto img{object-position:88% 30%}'
                         '.ed-w-hero .ed-hero-copertina .ed-hcop-velo{background:linear-gradient(0deg,rgba(0,0,0,.88) 0%,rgba(0,0,0,.8) 50%,rgba(0,0,0,.62) 66%,rgba(0,0,0,.25) 80%,rgba(0,0,0,.08) 100%)}}\n'},
@@ -452,7 +484,7 @@ def editor_json():
 
 
 # ------------------------------------------------------------------ file
-USATE = ['copertina', 'editor-ritratto', 'editor', 'aperture', 'stile', 'modelli', 'versioni', 'seo', 'flussi', 'download', 'sicurezza', 'aggiornamenti', 'temi',
+USATE = ['copertina', 'installa-1', 'installa-2', 'installa-3', 'installa-4', 'installa-5', 'editor-ritratto', 'editor', 'aperture', 'stile', 'modelli', 'versioni', 'seo', 'flussi', 'download', 'sicurezza', 'aggiornamenti', 'temi',
          'tema-cosmo', 'tema-aria', 'tema-bottega']
 
 

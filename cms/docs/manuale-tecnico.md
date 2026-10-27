@@ -1771,7 +1771,12 @@ nuovo da Download (il pacchetto del sito serve solo quando cambiano le pagine). 
 con `--schermate <cartella>`. La foto della Copertina della home non è una schermata: è una piuma disegnata in SVG da
 `node sito-plumecms/copertina.js <cartella>` (colori del sito, nessuna risorsa esterna), che scrive `copertina.png` nella
 stessa cartella delle schermate; nella home esce a colori (trattamento naturale) con lo zoom lento, e il CSS del sito
-alleggerisce il velo dove non ci sono parole e, al telefono, sposta il ritaglio sulla piuma. I testi delle novità per chi scarica sono in `NOVITA`, dentro il costruttore.
+alleggerisce il velo dove non ci sono parole e, al telefono, sposta il ritaglio sulla piuma. Anche le cinque schermate
+della pagina Installazione ("Installalo in 5 minuti", carosello che scorre da solo e si ferma con `prefers-reduced-motion`)
+hanno il loro script: `DBPASS=... node sito-plumecms/installatore.js <base> <cartella> <host:porta> <database> <utente>`,
+su un plumeCMS appena estratto e mai installato con un database vuoto, installa davvero e fotografa ogni passo
+(`installa-1.png` ... `installa-5.png`); nelle foto server, database, indirizzo e cartella diventano quelli d'esempio
+di `tuosito.it`. I testi delle novità per chi scarica sono in `NOVITA`, dentro il costruttore.
 
 Ogni parte resta sotto 1900 KB (`--max-kb` per cambiarlo), perché molti hosting non accettano caricamenti più grandi di 2 MB
 (`upload_max_filesize` e `post_max_size`, mostrati nei Controlli della pagina Aggiornamenti): un pacchetto unico da 5 MB

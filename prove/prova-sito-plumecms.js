@@ -72,7 +72,7 @@ async function contrastoParole(pg) {
   const errV = []; v.on('pageerror', e => errV.push(e.message.slice(0, 200)));
   v.on('console', m => { if (m.type() === 'error' && !/favicon/.test(m.text())) errV.push(m.text().slice(0, 200)); });
   const pagine = [['/', /leggero come una piuma/i], ['/funzionalita/', /vuoto/], ['/temi/', /Cambia vestito/], ['/documentazione/', /da leggere anche offline/],
-    ['/installazione/', /Installare plumeCMS/], ['/scarica/', new RegExp('Scarica plumeCMS ' + V.replace(/\./g, '\\.') + '$')], ['/domande-frequenti/', /Domande frequenti/]];
+    ['/installazione/', /Installalo in 5 minuti/], ['/scarica/', new RegExp('Scarica plumeCMS ' + V.replace(/\./g, '\\.') + '$')], ['/domande-frequenti/', /Domande frequenti/]];
   for (const [u, re] of pagine) {
     const r = await v.goto(B + u, { waitUntil: 'networkidle' });
     const h1 = (await v.locator('h1').first().innerText()).replace(/\s+/g, ' ');
@@ -116,6 +116,35 @@ async function contrastoParole(pg) {
   ok('Funzionalità: il blocco del download manager, con la schermata', await v.locator('#download img[src*="download.webp"]').count() === 1 && /Download manager/.test(await v.locator('#download').innerText()));
   ok('Funzionalità: il blocco delle undici aperture, con il foglio', await v.locator('#aperture img[src*="aperture.webp"]').count() === 1 && /Undici aperture/.test(await v.locator('#aperture').innerText()));
   ok('favicon del sito', await v.locator('link[rel=icon][href*="favicon.png"]').count() === 1);
+
+  // "Installalo in 5 minuti" (pagina Installazione): cosa serve prima e il carosello delle cinque schermate vere
+  // dell'installatore (sito-plumecms/installatore.js), che scorre da solo e si ferma per chi chiede meno movimento.
+  await v.goto(B + '/', { waitUntil: 'networkidle' });
+  ok('la home porta ai cinque passi dell\'installatore', await v.locator('a[href$="/installazione/#passi"]').count() >= 1);
+  await v.goto(B + '/installazione/', { waitUntil: 'networkidle' });
+  const prima = await v.locator('#passi').innerText();
+  ok('Installazione: prima di cominciare (hosting con PHP 8.2 e MySQL, i dati del database, lo zip)', /Prima di cominciare/.test(prima) && /PHP 8\.2/.test(prima) && /MySQL/.test(prima) && /dati del database/.test(prima) && /zip/i.test(prima));
+  const car = v.locator('#passi [data-ew-car]');
+  const passi = await car.locator('.ew-car-voce').evaluateAll(li => li.map(x => ({ src: x.querySelector('img').getAttribute('src'), did: (x.querySelector('figcaption') || {}).textContent || '' })));
+  ok('Installazione: il carosello dei cinque passi, con la didascalia di ognuno', passi.length === 5 && passi.every((x, k) => x.src.includes(`installa-${k + 1}.webp`) && x.did.startsWith(`${k + 1}. `)), passi.map(x => x.did));
+  const immInst = await v.evaluate(async () => { const im = [...document.querySelectorAll('#passi img')]; im.forEach(i => { i.loading = 'eager'; }); await Promise.all(im.map(i => i.decode().catch(() => null))); return im.map(i => i.naturalWidth); });
+  ok('Installazione: le cinque schermate caricate', immInst.length === 5 && immInst.every(x => x >= 1000), immInst);
+  const pesi = [];
+  for (let k = 1; k <= 5; k++) pesi.push(Math.round((await (await v.request.get(B + `/uploads/plumecms/installa-${k}.webp`)).body()).length / 1024));
+  ok('Installazione: ogni schermata sotto 150 KB', pesi.every(x => x < 150), pesi.map(x => x + ' KB'));
+  ok('Installazione: il carosello scorre da solo e si ferma al passaggio del mouse', await car.getAttribute('data-auto') !== null && await car.getAttribute('data-pausa') === '1');
+  const scorre = async (pg) => { await pg.mouse.move(0, 0); const t = pg.locator('#passi .ew-car-traccia'); const a = await t.evaluate(e => e.scrollLeft); await pg.waitForTimeout(6000); return [a, await t.evaluate(e => e.scrollLeft)]; };
+  const sv = await scorre(v);
+  ok('Installazione: dopo qualche secondo il carosello è andato avanti', sv[1] > sv[0], sv);
+  const piano = await (await br.newContext({ viewport: { width: 1280, height: 900 }, reducedMotion: 'reduce' })).newPage();
+  await piano.goto(B + '/installazione/', { waitUntil: 'networkidle' });
+  const sp = await scorre(piano);
+  ok('Installazione: con meno movimento il carosello resta fermo (si sfoglia con frecce e pallini)', sp[0] === sp[1] && await piano.locator('#passi .ew-car-next').isVisible(), sp);
+  await piano.close();
+  const telI = await (await br.newContext({ viewport: { width: 390, height: 844 }, isMobile: true })).newPage();
+  await telI.goto(B + '/installazione/', { waitUntil: 'networkidle' });
+  ok('Installazione al telefono: niente scorrimento orizzontale, carosello largo come lo schermo', await telI.evaluate(() => document.documentElement.scrollWidth <= innerWidth && document.querySelector('#passi .ew-car-voce').getBoundingClientRect().width > 300));
+  await telI.close();
 
   // I file da scaricare: i link delle pagine portano a file veri, con il tipo giusto.
   await v.goto(B + '/scarica/', { waitUntil: 'networkidle' });
