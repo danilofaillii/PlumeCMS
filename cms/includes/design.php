@@ -569,6 +569,33 @@ function design_css_valore(string $v, string $tipo = 'colore'): string {
     return design_colore_valido($v, false) ? $v : '';
 }
 
+/** I tre numeri di un colore ("168,85,247") per rgba(var(--x-rgb),a): hex, rgb(), rgba(), hsl(), hsla(). Null se non si ricava. */
+function design_rgb(string $c): ?string {
+    $c = trim($c);
+    if (preg_match('/^#([0-9a-f]{3,4}|[0-9a-f]{6}|[0-9a-f]{8})$/i', $c, $m)) {
+        $h = $m[1];
+        if (strlen($h) <= 4) $h = $h[0] . $h[0] . $h[1] . $h[1] . $h[2] . $h[2];
+        return hexdec(substr($h, 0, 2)) . ',' . hexdec(substr($h, 2, 2)) . ',' . hexdec(substr($h, 4, 2));
+    }
+    if (preg_match('/^rgba?\(\s*([\d.]+)(%?)\s*,\s*([\d.]+)(%?)\s*,\s*([\d.]+)(%?)/i', $c, $m)) {
+        $n = fn($x, $p) => (int)round(max(0, min(255, $p === '%' ? (float)$x * 2.55 : (float)$x)));
+        return $n($m[1], $m[2]) . ',' . $n($m[3], $m[4]) . ',' . $n($m[5], $m[6]);
+    }
+    if (preg_match('/^hsla?\(\s*([\d.]+)\s*,\s*([\d.]+)%\s*,\s*([\d.]+)%/i', $c, $m)) {
+        $h = fmod((float)$m[1], 360) / 360; $s = min(100, (float)$m[2]) / 100; $l = min(100, (float)$m[3]) / 100;
+        $q = $l < .5 ? $l * (1 + $s) : $l + $s - $l * $s; $p = 2 * $l - $q;
+        $k = function ($t) use ($p, $q) {
+            if ($t < 0) $t += 1; if ($t > 1) $t -= 1;
+            if ($t < 1 / 6) return $p + ($q - $p) * 6 * $t;
+            if ($t < 1 / 2) return $q;
+            if ($t < 2 / 3) return $p + ($q - $p) * (2 / 3 - $t) * 6;
+            return $p;
+        };
+        return implode(',', array_map(fn($t) => (int)round($k($t) * 255), [$h + 1 / 3, $h, $h - 1 / 3]));
+    }
+    return null;
+}
+
 /** Alias chiesto dall'agente modelli. */
 function design_colore(string $v): string {
     return design_css_valore($v, 'colore');
@@ -661,6 +688,30 @@ function design_css(?array $v = null): string {
     $ids = design_colori_id($v);
     foreach (['sfondo-2' => '--bg-2', 'testo-2' => '--testo-2', 'testo-3' => '--testo-3', 'bordo' => '--bordo'] as $id => $var) {
         if (in_array($id, $ids, true)) $root[] = "$var:var(--g-colore-$id)";
+    }
+    // temi: le trasparenze di sito.css sono rgba(var(--viola-rgb),.2) e seguono i globali con i tre numeri del colore.
+    $sis = $v['colori']['sistema'];
+    foreach (['primario' => '--viola-rgb', 'secondario' => '--ciano-rgb', 'sfondo' => '--bg-rgb'] as $id => $var) {
+        $rgb = design_rgb((string)$sis[$id]);
+        if ($rgb !== null) $root[] = "$var:$rgb";
+    }
+    // Gradienti dei pulsanti e verde d'accento: in sito.css sono i valori del tema di partenza. Si ricavano dal globale
+    // solo quando il globale è diverso dal predefinito, così chi non ha toccato i colori vede il sito di sempre.
+    $pred = design_predefiniti()['colori']['sistema'];
+    if (strcasecmp($sis['primario'], $pred['primario']) !== 0) {
+        $root[] = '--primario-chiaro:color-mix(in srgb,var(--g-colore-primario),#fff 18%)';
+        $root[] = '--primario-scuro:color-mix(in srgb,var(--g-colore-primario),#000 22%)';
+    }
+    if (strcasecmp($sis['secondario'], $pred['secondario']) !== 0) {
+        $root[] = '--secondario-chiaro:color-mix(in srgb,var(--g-colore-secondario),#fff 18%)';
+        $root[] = '--secondario-scuro:color-mix(in srgb,var(--g-colore-secondario),#000 22%)';
+    }
+    if (strcasecmp($sis['accento'], $pred['accento']) !== 0) $root[] = '--accento:var(--g-colore-accento)';
+    // I vetri (riquadri appena più chiari dello sfondo) sono bianco trasparente: su uno sfondo chiaro diventano nero trasparente.
+    $bg = design_rgb((string)$sis['sfondo']);
+    if ($bg !== null) {
+        [$r, $g, $b] = array_map('intval', explode(',', $bg));
+        if (0.2126 * $r + 0.7152 * $g + 0.0722 * $b > 140) { $root[] = '--inchiostro:#000'; $root[] = '--inchiostro-rgb:0,0,0'; }
     }
     $root[] = '--f-titolo:var(--g-font-primario)';
     $root[] = '--f-testo:var(--g-font-testo)';

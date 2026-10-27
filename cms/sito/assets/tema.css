@@ -2,7 +2,7 @@
    Le regole riproducono la testata (.top) e il piede (.piede) di sito.css: con i valori di partenza niente cambia. */
 
 /* cornice dell'header: come .top */
-.ed-testata{position:sticky;top:0;z-index:40;backdrop-filter:blur(14px);background:rgba(6,10,23,.72);border-bottom:1px solid var(--bordo)}
+.ed-testata{position:sticky;top:0;z-index:40;backdrop-filter:blur(14px);background:rgba(var(--bg-rgb),.72);border-bottom:1px solid var(--bordo)}
 .ed-testata .ed-sezione{position:relative}
 .ed-testata .ed-riga{flex-wrap:nowrap;align-items:center;min-height:72px}
 .ed-testata .ed-colonna{flex-direction:row;align-items:center;gap:28px;flex-wrap:nowrap}
@@ -86,8 +86,8 @@ h1.ed-titolo-contenuto{font-size:clamp(32px,4.6vw,56px);line-height:1.08}
 
 /* tela dell'editor di un header o di un footer: il segnaposto del contenuto */
 .ed-segnaposto{padding:64px 24px 96px;color:var(--testo-3)}
-.ed-segnaposto-riga{height:14px;border-radius:7px;background:rgba(255,255,255,.07);margin:0 0 16px;max-width:720px}
-.ed-segnaposto-titolo{height:34px;max-width:520px;margin-bottom:28px;background:rgba(255,255,255,.1)}
+.ed-segnaposto-riga{height:14px;border-radius:7px;background:rgba(var(--inchiostro-rgb),.07);margin:0 0 16px;max-width:720px}
+.ed-segnaposto-titolo{height:34px;max-width:520px;margin-bottom:28px;background:rgba(var(--inchiostro-rgb),.1)}
 .ed-segnaposto-riga.corta{max-width:380px}
 .ed-segnaposto p{margin:28px 0 0;font-size:14px}
 .ed-modello-pagina:empty{min-height:72px}

@@ -33,6 +33,18 @@ Solo l'amministratore la vede.
 - Validazione al salvataggio: colori (hex, rgb/rgba, hsl/hsla, transparent, globale), misure con unità, famiglie
   dall'elenco, scelte dalle liste; quello che non passa torna vuoto. Il CSS personalizzato passa intero, senza
   `</style>`.
-- Limite noto: i colori scritti in chiaro dentro `sito.css` (i gradienti dei pulsanti `#38e1f5/#0ea5c6` e
-  `#b874ff/#7c3aed`, le sfumature `rgba(168,85,247,...)`) non seguono i globali. La scheda Pulsanti permette di
-  imporre uno sfondo unico; il resto si cambia con il CSS personalizzato.
+- Dal 27 ottobre 2026 (temi, fase 1) `sito.css`, `widget.css` e `tema.css` non hanno più colori del sito scritti in
+  chiaro: le trasparenze sono `rgba(var(--viola-rgb),.2)` (anche `--ciano-rgb`, `--bg-rgb`, `--inchiostro-rgb`,
+  `--errore-rgb`, `--successo-rgb`), i gradienti dei pulsanti `--primario-chiaro/--primario-scuro` e
+  `--secondario-chiaro/--secondario-scuro`, poi `--su-secondario`, `--accento`, `--successo*`, `--errore*`,
+  `--testo-corpo`, `--inchiostro`. I valori di partenza in `:root` sono quelli di prima: sito identico al pixel
+  (20 schermate confrontate con `prove/confronta-foto.py`). Si usa `rgba(var(--x-rgb),a)` e non `color-mix()`, perché
+  `color-mix()` fa calcolare le sfumature in un altro spazio colore e cambia i pixel di 1-5 livelli.
+- Il ponte di `design_css()` scrive sempre `--viola-rgb`, `--ciano-rgb`, `--bg-rgb` dai globali (`design_rgb()` legge
+  hex, rgb, hsl). I gradienti dei pulsanti e `--accento` si ricavano dal globale solo quando è diverso dal predefinito
+  (così un sito che non ha toccato i colori resta com'era). Con uno sfondo chiaro `--inchiostro` diventa nero: i vetri
+  si vedono grigi invece che bianchi.
+- Restano fissi apposta: ombre nere, il bianco dietro le immagini, i colori ufficiali dei social, le stelle, la lightbox,
+  le testate colorate della Scheda, la grafica della home di danilofailli (`.finestra`, `.ritratto`, `.chip`), le
+  infografiche (`.igx`, si legano al tema nella fase 4). I colori di partenza scritti nelle impostazioni dei widget
+  (per esempio la CTA verde scuro) non sono CSS: li cambia il tema.
