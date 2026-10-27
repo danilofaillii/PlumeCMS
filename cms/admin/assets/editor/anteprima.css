@@ -28,3 +28,6 @@
 .ed-strumenti[hidden]{display:none}
 .ed-pagina .ed-no-d,.ed-pagina .ed-no-t,.ed-pagina .ed-no-m{display:revert!important;opacity:.35}
 .ed-pagina .ed-video button{pointer-events:none}
+/* 1.3.0: dove si posa una sezione pronta trascinata dal pannello Sezioni */
+.ed-linea-sezione{position:absolute;left:0;right:0;height:4px;background:linear-gradient(90deg,#b874ff,#22d3ee);box-shadow:0 0 12px rgba(184,116,255,.7);z-index:50;pointer-events:none}
+.ed-linea-sezione[hidden]{display:none}

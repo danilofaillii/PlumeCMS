@@ -238,3 +238,61 @@ button,input,select,textarea{font:inherit;color:inherit}
 .ed-sfondo-img{margin-top:6px}
 .ed-seo{margin:0 22px 12px;border:1px solid var(--ed-bordo);border-radius:8px;padding:10px 12px;font-size:13px;max-height:260px;overflow:auto}
 .ed-seo:empty{display:none}
+/* 1.3.0: pannello Sezioni, con l'anteprima schematica di ogni variante (disegnata da editor.js con i suoi widget) */
+#ed-cerca-sezioni{width:100%;padding:8px 10px;border:1px solid var(--ed-bordo);border-radius:8px;margin-bottom:12px}
+.ed-gruppo-sezioni{margin-bottom:16px}
+.ed-gruppo-sezioni[hidden]{display:none}
+.ed-gruppo-sezioni h4{margin:0 0 8px;font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--ed-muto)}
+.ed-sezione-voce{display:block;width:100%;text-align:left;padding:8px;margin:0 0 8px;border:1px solid var(--ed-bordo);border-radius:10px;background:#fff;cursor:grab;user-select:none}
+.ed-sezione-voce:hover,.ed-sezione-voce:focus-visible{border-color:var(--ed-primo);box-shadow:0 0 0 3px rgba(124,58,237,.12);outline:0}
+.ed-sezione-voce.ed-nascosto{display:none}
+.ed-sezione-voce b{display:block;font-size:13px;margin:8px 2px 2px}
+.ed-sezione-voce small{display:block;font-size:11.5px;color:var(--ed-muto);margin:0 2px;line-height:1.35}
+.ed-mini{border-radius:6px;overflow:hidden;background:#f6f4f9;border:1px solid #ece8f3}
+.ed-mini-sez{display:flex;gap:6px;padding:9px 10px;align-items:center}
+.ed-mini-sez+.ed-mini-sez{padding-top:0}
+.ed-mini-stretta{padding-left:22%;padding-right:22%}
+.ed-mini-sfondo-gradiente{background:linear-gradient(160deg,#e6dafb,#d9f3f8)}
+.ed-mini-sfondo-vetro{background:#ece9f2}
+.ed-mini-col{min-width:0;display:flex;flex-direction:column;gap:5px}
+.ed-mini-w{display:flex;flex-direction:column;gap:3px;align-items:flex-start}
+.ed-mini-w i{display:block;border-radius:2px;background:#cfc8dc}
+.ed-mini-centro{align-items:center;text-align:center}
+.ed-mini-occhiello{width:22px;height:3px;background:#22d3ee!important}
+.ed-mini-titolo{width:62%;height:6px;background:#8b7bb0!important}
+.ed-mini-grande{height:9px;width:78%}
+.ed-mini-media{width:50%}
+.ed-mini-riga{width:88%;height:3px}
+.ed-mini-corta{width:55%!important}
+.ed-mini-pulsanti{display:flex;gap:4px;margin-top:2px}
+.ed-mini-pill{width:26px;height:7px;border-radius:4px!important;background:#7c3aed!important}
+.ed-mini-pill+.ed-mini-pill{background:transparent!important;border:1px solid #22d3ee}
+.ed-mini-griglia{flex-direction:row;width:100%;gap:4px}
+.ed-mini-colonna{flex-direction:column}
+.ed-mini-scheda{flex:1;height:26px;border:1px solid #ddd6ea;background:#fff!important;border-radius:4px!important;width:auto}
+.ed-mini-cifre{height:20px;background:linear-gradient(#8b7bb0,#8b7bb0) center 6px/30% 5px no-repeat,#fff!important}
+.ed-mini-citazione{background:radial-gradient(circle at 20% 30%,#b874ff 0 2px,transparent 3px),#fff!important}
+.ed-mini-icona{width:12px;height:12px;border-radius:50%!important;background:#22d3ee!important}
+.ed-mini-cifra{width:22px;height:9px;background:#8b7bb0!important}
+.ed-mini-numeri{display:flex;gap:10px;margin-top:4px}
+.ed-mini-riga-box{width:100%;height:8px;border:1px solid #ddd6ea;background:#fff!important;border-radius:3px!important}
+.ed-mini-prezzo{display:flex;flex-direction:column;align-items:center;gap:3px;width:100%;padding:6px 4px;border:1px solid #ddd6ea;border-radius:5px;background:#fff}
+.ed-mini-prezzo .ed-mini-riga{width:70%}
+.ed-mini-evidenza{border-color:#b874ff;box-shadow:0 0 0 1px #b874ff}
+.ed-mini-voce{width:100%;height:3px;background:linear-gradient(90deg,#8b7bb0 0 45%,transparent 45% 80%,#22d3ee 80%)!important}
+.ed-mini-stelle{width:26px;height:4px;background:#f2b705!important}
+.ed-mini-chi{flex-direction:row;align-items:center;gap:8px;width:100%}
+.ed-mini-chi span{flex:1;display:flex;flex-direction:column;gap:3px}
+.ed-mini-ritratto{width:26px!important;height:26px;border-radius:50%!important;flex:0 0 26px}
+.ed-mini-form{width:100%;padding:5px;border:1px solid #ddd6ea;border-radius:5px;background:#fff}
+.ed-mini-campo{width:100%;height:5px;border:1px solid #ddd6ea;background:#faf9fc!important}
+.ed-mini-alto{height:11px}
+.ed-mini-barra{width:100%;height:4px;background:linear-gradient(90deg,#22d3ee,#b874ff 70%,#e8e3f0 70%)!important}
+.ed-mini-cornice{border:1px solid #ddd6ea;border-radius:5px;background:#fff;padding:6px}
+.ed-mini-w.ed-mini-cornice{width:100%}
+.ed-mini-hero{width:100%;padding:4px 0}
+.ed-mini-hero-diagonale{background:linear-gradient(120deg,#b98af5,#7cd9ea);clip-path:polygon(0 0,100% 0,100% 80%,0 100%);padding:8px;border-radius:4px}
+.ed-mini-hero-diagonale i{background:#fff!important}
+.ed-mini-hero-banner{flex-direction:row;flex-wrap:wrap;align-items:center;border:1px solid #ddd6ea;background:#fff;border-radius:5px;padding:6px}
+.ed-mini-hero-banner .ed-mini-grande{height:6px;width:45%}
+.ed-mini-hero-banner .ed-mini-grande+.ed-mini-grande,.ed-mini-hero-banner .ed-mini-riga{display:none}

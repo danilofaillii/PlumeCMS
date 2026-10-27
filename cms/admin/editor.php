@@ -16,6 +16,7 @@ require_once dirname(__DIR__) . '/includes/moduli.php';
 require_once dirname(__DIR__) . '/includes/editor.php';
 require_once dirname(__DIR__) . '/includes/editor-temi.php';
 require_once dirname(__DIR__) . '/includes/versioni.php'; // versioni
+require_once dirname(__DIR__) . '/includes/sezioni-pronte.php'; // 1.3.0: il pannello Sezioni
 if (is_file(dirname(__DIR__) . '/includes/seo.php')) require_once dirname(__DIR__) . '/includes/seo.php';
 editor_schema();
 require_once dirname(__DIR__) . '/includes/contenuti.php';
@@ -110,6 +111,8 @@ $dati = [
     'tablet' => editor_soglia('tablet'), 'telefono' => editor_soglia('telefono'),
     // menu: Impostazioni dell'editor (includes/editor-opzioni.php): widget spenti, colonne massime, chi pubblica.
     'widgetDisattivi' => editor_widget_disattivi(), 'colonneMax' => (int)editor_opzione('colonne_max'), 'puoPubblicare' => editor_puo_pubblicare(),
+    // 1.3.0: le sezioni pronte (includes/sezioni-pronte.php), non per header e footer.
+    'sezioniPronte' => $modello ? [] : sezioni_pronte_per_editor(), 'categorieSezioni' => sezioni_pronte_categorie(),
 ];
 ?>
 <!DOCTYPE html>
@@ -148,6 +151,7 @@ $dati = [
   <aside class="ed-pannello">
     <nav class="ed-schede-pannello">
       <button type="button" data-pannello="widget" class="attivo">Widget</button>
+      <?php if ($dati['sezioniPronte']): ?><button type="button" data-pannello="sezioni">Sezioni</button><?php endif; ?>
       <button type="button" data-pannello="modifica">Modifica</button>
       <button type="button" data-pannello="navigatore">Navigatore</button>
     </nav>
@@ -156,6 +160,13 @@ $dati = [
       <div id="ed-elenco-widget"></div>
       <p class="ed-aiuto">Trascina un widget nella pagina, oppure fai clic: entra sotto l'elemento selezionato.</p>
     </section>
+    <?php if ($dati['sezioniPronte']): ?>
+    <section class="ed-pannello-vista" id="ed-pannello-sezioni" hidden>
+      <input type="search" id="ed-cerca-sezioni" placeholder="Cerca una sezione…" aria-label="Cerca una sezione">
+      <div id="ed-elenco-sezioni"></div>
+      <p class="ed-aiuto">Fai clic su una sezione: entra sotto quella selezionata (o in fondo alla pagina). Oppure trascinala nel punto che vuoi. Una volta dentro è una sezione normale: cambi testi, colori e widget come sempre.</p>
+    </section>
+    <?php endif; ?>
     <section class="ed-pannello-vista" id="ed-pannello-modifica" hidden>
       <div class="ed-modifica-testa"><b id="ed-modifica-nome">Niente selezionato</b><span id="ed-modifica-azioni"></span></div>
       <nav class="ed-schede-controlli" id="ed-schede-controlli"></nav>
