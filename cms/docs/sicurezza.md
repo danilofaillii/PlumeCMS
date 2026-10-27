@@ -124,6 +124,12 @@ danilofailli.it (scrive `root/index.php`), ci sono due strade:
 2. **La firma**: `PACCHETTO_CHIAVE=<chiave> python3 tools/pacchetto.py --rifirma <pacchetto.zip>` scrive
    `<pacchetto>-firmato.zip`; la stessa chiave sta nel `config.local.php` del server come `CMS_FIRMA_PACCHETTI`.
 
+### Temi con PHP (dal 27 ottobre 2026)
+Un tema caricato da Editor, Temi che contiene codice PHP passa dalle stesse due strade: **la finestra di un'ora** qui
+sopra, oppure lo zip firmato con `PACCHETTO_CHIAVE=... python3 tools/pacchetto.py --rifirma tema.zip`. Con *I pacchetti
+devono essere firmati* spuntato, anche i temi senza PHP devono essere firmati. Nella cartella `temi/` il CMS scrive da
+solo un `.htaccess` che dal web non esegue niente (vedi `temi.md`); la scheda di stato lo controlla.
+
 ### Firma dei pacchetti di aggiornamento
 Se vuoi che il pannello accetti solo pacchetti firmati, scheda Impostazioni, spunta *I pacchetti devono essere
 firmati*. Chi costruisce il pacchetto lo firma con `python3 tools/pacchetto.py <cartella> [nome.zip] --firma`, dopo

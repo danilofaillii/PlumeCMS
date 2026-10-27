@@ -48,9 +48,10 @@ File nascosti ammessi: root/.htaccess, new/.htaccess, uploads/.htaccess (gli ult
 Firma (facoltativa): python3 tools/pacchetto.py <cartella> [nome.zip] --firma, con la chiave nella variabile
 d'ambiente PACCHETTO_CHIAVE (uguale a CMS_FIRMA_PACCHETTI in config.local.php sul server). Il manifest riceve "firma".
 Uno zip gia fatto si firma con: python3 tools/pacchetto.py --rifirma <pacchetto.zip>  (scrive <pacchetto>-firmato.zip).
+Vale anche per lo zip di un tema (Editor > Temi): senza manifest.json, se ne aggiunge uno con la sola firma.
 Un pacchetto che mette file eseguibili (.php) nella radice del sito (root/) il pannello lo accetta solo firmato.
 """
-import json, os, re, sys, zipfile
+import json, os, re, sys, time, zipfile
 
 RADICI = ('uploads/', 'new/', 'root/')
 HTACCESS_AMMESSI = ('root/.htaccess', 'new/.htaccess', 'uploads/.htaccess')
@@ -109,15 +110,22 @@ def rifirma(percorso_zip):
     if not chiave:
         errore('--rifirma: manca la variabile d\'ambiente PACCHETTO_CHIAVE (il valore di CMS_FIRMA_PACCHETTI del server)')
     with zipfile.ZipFile(percorso_zip) as z:
-        m = json.loads(z.read('manifest.json'))
+        # Un tema (cartella con tema.json, pagina Editor > Temi) non ha manifest: se ne crea uno solo per la firma.
+        m = json.loads(z.read('manifest.json')) if 'manifest.json' in z.namelist() else {'tipo': 'tema'}
         voci = {n: z.read(n) for n in z.namelist() if n != 'manifest.json' and not n.endswith('/')}
     righe = sorted(n + ' ' + hashlib.sha256(d).hexdigest() for n, d in voci.items())
     m['firma'] = hmac.new(chiave.encode('utf-8'), '\n'.join(righe).encode('utf-8'), hashlib.sha256).hexdigest()
     dest = re.sub(r'\.zip$', '', percorso_zip) + '-firmato.zip'
     with zipfile.ZipFile(dest, 'w', zipfile.ZIP_DEFLATED) as z:
-        z.writestr('manifest.json', json.dumps(m, ensure_ascii=False, indent=2))
+        # 0644: con writestr() e un nome semplice i file uscirebbero 0600 (trappola del 27 ottobre 2026, vedi CLAUDE.md).
+        def voce(n):
+            i = zipfile.ZipInfo(n, date_time=time.localtime()[:6])
+            i.external_attr = 0o644 << 16
+            i.compress_type = zipfile.ZIP_DEFLATED
+            return i
+        z.writestr(voce('manifest.json'), json.dumps(m, ensure_ascii=False, indent=2))
         for n, d in voci.items():
-            z.writestr(n, d)
+            z.writestr(voce(n), d)
     print(f'Pacchetto firmato: {dest}')
 
 

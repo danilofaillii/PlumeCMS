@@ -334,6 +334,9 @@ if ($passo === 4) {
             }
             $log[] = 'menu Principale, header e footer';
             if (function_exists('design_installa')) { design_installa(); $log[] = 'stile predefinito'; }
+            // temi: temi/.htaccess (dal web nella cartella dei temi non si esegue niente).
+            require_once dirname(__DIR__) . '/includes/temi.php';
+            if (temi_proteggi()) $log[] = 'protezione della cartella dei temi';
         } else {
             $log[] = 'pagine già presenti: nessun contenuto di partenza';
         }

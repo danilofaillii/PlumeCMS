@@ -893,6 +893,9 @@ function sicurezza_checklist(): array {
     $install = is_dir(cms_radice() . '/install');
     $installWeb = $install ? sicurezza_autoverifica('/install/') : 0;
     $v[] = ['install', !$install ? 'ok' : (is_file(cms_radice() . '/install/.installato') ? ($installWeb === 200 ? 'attenzione' : 'attenzione') : 'no'), 'Installatore', !$install ? 'La cartella install e stata rimossa.' : (is_file(cms_radice() . '/install/.installato') ? 'La cartella install c\'e ancora: si auto-blocca, ma e meglio toglierla (pulsante qui sotto).' : 'La cartella install c\'e e non risulta bloccata.')];
+    // temi: temi/.htaccess lo scrive il CMS da solo (includes/temi.php); qui si dice se c'è.
+    $temiHt = is_file(cms_radice() . '/temi/.htaccess');
+    $v[] = ['temi', $temiHt ? 'ok' : 'attenzione', 'PHP vietato dal web nella cartella dei temi', $temiHt ? 'C\'e un .htaccess in temi/.' : 'Manca temi/.htaccess (su Apache): si scrive da solo aprendo Editor, Temi. Su Nginx vale la regola in install/esempi/nginx.txt.'];
     $upl = cms_uploads_dir();
     $v[] = ['uploads', is_file($upl . '/.htaccess') ? 'ok' : 'attenzione', 'PHP spento nella cartella delle immagini', is_file($upl . '/.htaccess') ? 'C\'e un .htaccess in ' . basename($upl) . '/.' : 'Manca uploads/.htaccess (su Apache). Il pulsante qui sotto lo scrive; su Nginx vale la regola in INSTALLA.md.'];
     sicurezza_schema();

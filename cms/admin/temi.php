@@ -6,6 +6,9 @@
  *
  *   POST azione=attiva tema=<nome>     applica stile, header e footer del tema e lo rende attivo
  *   POST azione=base                   nessun tema: il sito usa sito.css e lo Stile del sito com'è
+ *   POST azione=carica file sostituisci  installa uno zip di tema (con PHP: firmato o finestra di Sicurezza aperta)
+ *   POST azione=elimina tema=<nome>    toglie un tema non in uso (copia in aggiornamenti/temi-precedenti)
+ *   GET  scarica=<nome>                lo zip di un tema;  GET scarica=attuale  l'aspetto di adesso come tema
  */
 require_once __DIR__ . '/includes/auth.php';
 require_once __DIR__ . '/includes/admin-functions.php';
@@ -13,6 +16,31 @@ require_once dirname(__DIR__) . '/includes/temi.php';
 require_admin(); // sicurezza (ruoli): solo amministratore
 $adminTitle = 'Temi';
 $autore = (string)(current_user()['username'] ?? '');
+
+// Scaricare: lo zip di un tema, oppure l'aspetto di adesso come tema nuovo. Il file provvisorio si cancella dopo l'invio.
+if (isset($_GET['scarica'])) {
+    $s = (string)$_GET['scarica'];
+    try {
+        if ($s === 'attuale') { $f = temi_zip_aspetto_attuale(); $nome = 'tema-il-mio-aspetto-' . date('Y-m-d') . '.zip'; }
+        else {
+            $t = temi_leggi($s);
+            if (!$t) throw new RuntimeException('Tema non trovato.');
+            $f = temi_zip_crea($s); $nome = 'tema-' . $s . '-' . preg_replace('/[^0-9A-Za-z.]+/', '-', $t['versione']) . '.zip';
+        }
+    } catch (RuntimeException $e) {
+        flash('error', $e->getMessage());
+        header('Location: temi.php');
+        exit;
+    }
+    while (ob_get_level()) ob_end_clean();
+    header('Content-Type: application/zip');
+    header('Content-Disposition: attachment; filename="' . $nome . '"');
+    header('Content-Length: ' . filesize($f));
+    header('Cache-Control: no-store');
+    readfile($f);
+    @unlink($f);
+    exit;
+}
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     verify_csrf();
@@ -31,6 +59,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 temi_disattiva();
                 flash('success', 'Nessun tema: il sito usa l\'aspetto di base con lo Stile del sito di adesso. Header e footer restano quelli predefiniti in Header e footer.');
                 break;
+            case 'carica':
+                $f = $_FILES['file'] ?? null;
+                $err = (int)($f['error'] ?? UPLOAD_ERR_NO_FILE);
+                if ($err === UPLOAD_ERR_INI_SIZE || $err === UPLOAD_ERR_FORM_SIZE) throw new RuntimeException('Lo zip supera la dimensione che il server accetta (' . ini_get('upload_max_filesize') . '). Si alza da cPanel, voce Select PHP Version, Options: upload_max_filesize.');
+                if ($err !== UPLOAD_ERR_OK || !is_uploaded_file((string)($f['tmp_name'] ?? ''))) throw new RuntimeException('Nessun file ricevuto: scegli lo zip del tema e riprova.');
+                if (strtolower(pathinfo((string)$f['name'], PATHINFO_EXTENSION)) !== 'zip') throw new RuntimeException('Il file deve essere uno zip (.zip).');
+                $r = temi_installa_zip((string)$f['tmp_name'], !empty($_POST['sostituisci']), $autore);
+                flash('success', implode(' ', $r['righe']) . ' Per vederlo sul sito: Anteprima, poi Attiva.');
+                break;
+            case 'elimina':
+                $copia = temi_elimina((string)($_POST['tema'] ?? ''), $autore);
+                flash('success', 'Tema tolto dalla cartella temi/. Una copia resta in aggiornamenti/temi-precedenti/' . $copia . ' (dal pannello non si vede; per riaverlo serve lo zip, oppure chi gestisce il server la rimette in temi/).');
+                break;
             default:
                 throw new RuntimeException('Azione sconosciuta.');
         }
@@ -41,6 +82,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     exit;
 }
 
+temi_proteggi(); // temi/.htaccess: dal web nella cartella dei temi non si esegue niente
 $temi = temi_elenco();
 $scelto = temi_scelto();
 $guasto = temi_guasto_info();
@@ -86,10 +128,17 @@ require_once __DIR__ . '/includes/admin-header.php';
 .tt-ig i{display:inline-block;width:14px;height:14px;border-radius:50%;border:1px solid rgba(0,0,0,.12)}
 .tt-azioni{display:flex;gap:.4rem;flex-wrap:wrap;margin-top:auto;padding-top:.4rem}
 .tt-azioni form{display:inline}
+.tt-barra{display:flex;gap:.5rem;flex-wrap:wrap;margin:0 0 .8rem}
+.tt-carica{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:1rem 1.1rem;margin-top:1.4rem;font-size:.88rem}
+.tt-carica h2{margin:0 0 .4rem;font-size:1.05rem}
+.tt-carica p{margin:.3rem 0;color:var(--text-muted)}
+.tt-carica-riga{display:flex;gap:.8rem;align-items:center;flex-wrap:wrap;margin-top:.6rem}
+.tt-carica-riga label{display:flex;gap:.35rem;align-items:center;font-size:.85rem}
 .tt-dove{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:1rem 1.1rem;margin-top:1.4rem;font-size:.86rem;color:var(--text-muted)}
 .tt-dove p{margin:.3rem 0}
 </style>
 
+<div class="tt-barra"><a class="btn btn-secondary btn-sm" href="temi.php?scarica=attuale">Scarica l'aspetto di adesso come tema</a><a class="btn btn-secondary btn-sm" href="#carica">Carica un tema</a></div>
 <p class="tt-intro">Un tema cambia l'aspetto del sito in un colpo solo: colori, caratteri, pulsanti, sfondo, header e footer. Pagine, articoli, menu e immagini non cambiano. Prima di attivarlo guardalo con <b>Anteprima</b>: si apre il sito vero con quel tema, solo per te. Dopo, ogni dettaglio si ritocca da <b>Stile del sito</b> e da <b>Header e footer</b>.</p>
 
 <?php if ($guasto): $tg = $temi[$guasto['slug']] ?? null; ?>
@@ -173,11 +222,32 @@ $baseAlPosto = !$baseAttivo && $guasto && $guasto['slug'] === $scelto;
         <?php else: ?>
         <a class="btn btn-secondary btn-sm" href="design.php">Personalizza</a>
         <?php endif; ?>
+        <a class="btn btn-secondary btn-sm" href="temi.php?scarica=<?= h($slug) ?>">Scarica</a>
+        <?php if (!$attivo): ?>
+        <form method="post" data-conferma="<?= h('Togliere il tema "' . $t['nome'] . '" dalla cartella temi/? Il sito non cambia (non è il tema in uso). Una copia resta sul server in aggiornamenti/temi-precedenti.') ?>"><input type="hidden" name="_csrf" value="<?= h($csrf) ?>"><input type="hidden" name="azione" value="elimina"><input type="hidden" name="tema" value="<?= h($slug) ?>"><button class="btn btn-danger btn-sm">Elimina</button></form>
+        <?php endif; ?>
       </div>
     </div>
   </div>
 <?php endforeach; ?>
 </div>
+
+<?php
+$cfgSic = [];
+try { require_once dirname(__DIR__) . '/includes/sicurezza.php'; $cfgSic = sicurezza_cfg(); } catch (Throwable $e) {}
+$finestra = (int)($cfgSic['root_php_fino'] ?? 0) > time();
+?>
+<form method="post" enctype="multipart/form-data" class="tt-carica" id="carica" data-senza-protezione>
+  <input type="hidden" name="_csrf" value="<?= h($csrf) ?>"><input type="hidden" name="azione" value="carica">
+  <h2>Carica un tema</h2>
+  <p>Scegli lo zip del tema (quello che si scarica da qui, da un'altra installazione o da chi l'ha disegnato) e premi <b>Carica</b>. Il tema arriva nella cartella <code>temi/</code> ma <b>non si attiva da solo</b>: prima lo guardi con Anteprima.</p>
+  <p>Dentro lo zip sono ammessi solo JSON, CSS, immagini (png, jpg, webp, gif, avif), caratteri, testo e PHP. <b>Un tema con PHP</b> esegue codice sul tuo server: si carica solo se lo zip è firmato con la chiave del sito (<code>tools/pacchetto.py --rifirma</code>), oppure se apri per un'ora la finestra in <a href="sicurezza.php">Impostazioni, Sicurezza</a>. <?= $finestra ? '<b>La finestra adesso è aperta fino alle ' . h(date('H:i', (int)$cfgSic['root_php_fino'])) . '.</b>' : 'Adesso la finestra è chiusa.' ?></p>
+  <div class="tt-carica-riga">
+    <input type="file" name="file" accept=".zip,application/zip" required aria-label="Zip del tema">
+    <label><input type="checkbox" name="sostituisci" value="1"> Sostituisci il tema con lo stesso nome (la versione di prima resta in una copia)</label>
+    <button class="btn btn-primary btn-sm">Carica</button>
+  </div>
+</form>
 
 <div class="tt-dove">
   <p><b>Dove stanno i temi.</b> Ogni tema è una cartella dentro <code>temi/</code>, nella cartella del CMS sul server. <?= $temi ? 'Qui ne vedi ' . count($temi) . '.' : 'Per ora non ce n\'è nessuno.' ?></p>

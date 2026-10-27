@@ -39,7 +39,8 @@ cms/            il CMS: è esattamente quello che si carica sul server
   VERSIONE, CHANGELOG.md, README.md, INSTALLA.md
 tools/          cms-pacchetto.py (costruisce gli zip), pacchetto.py (pacchetti per il
                 pannello Aggiornamenti), sicurezza-prova.js (79 prove di attacco)
-prove/          prova-install.js (installazione da zero con Playwright), prova-temi.js (motore dei temi),
+prove/          prova-install.js (installazione da zero con Playwright), prova-temi.js, prova-pannello-temi.js,
+                prova-temi-partenza.js, prova-carica-temi.js (temi),
                 foto-sito.js e quanto-foto.py (schermate prima e dopo, al pixel)
 ```
 

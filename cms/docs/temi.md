@@ -5,8 +5,8 @@ footer, CSS) e può contenere PHP, come i temi di WordPress. Menu, pagine, artic
 contenuti, non aspetto. Motore in `includes/temi.php`.
 
 Stato: fase 1 (colori del CSS in variabili, vedi `stile-sito.md`), fase 2 (motore) e fase 3 (pagina Editor > Temi,
-`admin/temi.php`, vedi `pannello.md`) fase 4 (colori delle infografiche dal tema) e fase 5 (i tre temi di partenza)
-fatte. Da fare: caricamento e download degli zip.
+`admin/temi.php`, vedi `pannello.md`) fase 4 (colori delle infografiche dal tema), fase 5 (i tre temi di partenza) e
+fase 6 (caricare, scaricare, eliminare) fatte.
 
 ## I temi di partenza
 
@@ -134,12 +134,39 @@ moduli: se un modulo e il tema cambiano la stessa cosa, vince il tema.
 - Dal browser i file PHP dentro `temi/` non si aprono mai: regola nel `.htaccess` del CMS e negli esempi di
   `install/esempi/` (`RewriteRule ^temi/.*\.(php|phtml|phar|php[0-9]|phps)$ - [F,L,NC]`), e in `nginx.txt`. Provata su
   Apache 2.4 con PHP 8.4.27: `.php` e `.PHP` 403, CSS 200. I `.json` erano già vietati da una regola generale.
-- Le installazioni esistenti hanno il `.htaccess` di prima, senza la regola dei temi: va aggiunta quando arriva la
-  versione con i temi (da fare con il pacchetto di aggiornamento, fase 6).
-- Caricare un tema con PHP da fuori (zip) passerà dalle stesse difese dei pacchetti: firma HMAC o finestra di un'ora
-  aperta da Sicurezza (fase 6).
+- **`temi/.htaccess`** (costante `TEMI_HTACCESS` in `includes/temi.php`): nella cartella dei temi niente PHP, script,
+  JSON, `.htaccess` e `.ini` dal web, maiuscole comprese, e niente elenco dei file. Lo scrive il CMS da solo quando manca
+  o è diverso (`temi_proteggi()`): aprendo la pagina Temi, attivando o caricando un tema, alla fine dell'installazione.
+  Serve alle installazioni esistenti, che hanno il `.htaccess` della radice di prima: il pannello Aggiornamenti non
+  accetta `.htaccess` in sottocartelle, quindi non può arrivare con un pacchetto. Provato su Apache 2.4 con PHP 8.4.27 e
+  il `.htaccess` della 1.1.9: PHP (anche in `viste/` e `.PHP`), JSON e `.htaccess` 403, CSS e immagini 200. La pagina
+  Sicurezza ne mostra lo stato.
+
+## Caricare, scaricare, eliminare (pagina Temi)
+
+- **Carica un tema** (`temi_installa_zip`): uno zip con `tema.json` nella radice o in un'unica cartella. Il nome della
+  cartella in `temi/` è quello della cartella nello zip, altrimenti `slug` di `tema.json`, altrimenti viene dal nome.
+  Prima di scrivere si controlla tutto lo zip (`temi_zip_leggi`): nomi puliti (niente `..`, percorsi assoluti, file
+  nascosti come `.htaccess` e `.user.ini`, spazi), solo i tipi di `TEMI_ZIP_ESTENSIONI` (JSON, CSS, png, jpg, webp,
+  gif, avif, caratteri, txt, md, PHP; niente SVG, che possono portare script), al massimo 400 file, 10 MB per file,
+  40 MB in tutto, niente compressioni sospette (zip bomba). I file si scrivono uno per uno (mai `extractTo`) in
+  `aggiornamenti/temi-nuovi/`, che dal web non si legge, con permessi 0644, poi la cartella si sposta in `temi/`.
+  Il tema caricato non si attiva da solo.
+- **Un tema con PHP** passa solo firmato con la chiave del sito oppure con la finestra di un'ora aperta in Sicurezza
+  (la stessa dei pacchetti che mettono PHP nella radice). Se Sicurezza chiede pacchetti sempre firmati, anche un tema
+  senza PHP deve esserlo. Firma: `PACCHETTO_CHIAVE=... python3 tools/pacchetto.py --rifirma tema.zip` scrive
+  `tema-firmato.zip` con un `manifest.json` che porta solo la firma (non si installa). Uno zip firmato e poi modificato
+  si rifiuta. Ogni caricamento resta nel registro di Sicurezza.
+- **Sostituisci**: un tema con lo stesso nome si sostituisce solo spuntando la casella; la versione di prima va in
+  `aggiornamenti/temi-precedenti/<nome>-<data>`. Se è il tema attivo, per applicare stile, header e footer nuovi si
+  preme di nuovo Attiva.
+- **Scarica**: lo zip di un tema, con la sua cartella. **Scarica l'aspetto di adesso come tema**
+  (`temi_zip_aspetto_attuale`): lo Stile del sito (sezioni dell'aspetto), header e footer predefiniti con il menu per
+  posizione, il CSS del tema attivo e il CSS personalizzato in `tema.css`, i colori delle infografiche del tema attivo.
+  Il PHP del tema attivo non entra. Ricaricato su un altro sito (o sullo stesso) diventa il tema "Il mio aspetto".
+- **Elimina**: solo un tema non scelto; la cartella va in `aggiornamenti/temi-precedenti/`.
 
 ## Prove
 
-`prove/prova-temi.js` (40 controlli, il motore e le infografiche), `prove/prova-temi-partenza.js` (36 controlli: i tre temi attivati, pagine, menu, contrasto del testo almeno 4,5 a 1) e `prove/prova-pannello-temi.js` (31 controlli, la pagina del pannello come un utente,
+`prove/prova-temi.js` (40 controlli, il motore e le infografiche), `prove/prova-temi-partenza.js` (36 controlli: i tre temi attivati, pagine, menu, contrasto del testo almeno 4,5 a 1) `prove/prova-carica-temi.js` (45 controlli: caricare, sostituire, firma, finestra, zip malevoli, scaricare, eliminare) e `prove/prova-pannello-temi.js` (32 controlli, la pagina del pannello come un utente,
 anche con un redattore che non deve entrare), con i temi di collaudo creati da `prove/temi-collaudo.php`. Vedi `prove/LEGGIMI.md`.
