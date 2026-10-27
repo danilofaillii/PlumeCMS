@@ -40,7 +40,7 @@ cms/            il CMS: è esattamente quello che si carica sul server
 tools/          cms-pacchetto.py (costruisce gli zip), pacchetto.py (pacchetti per il
                 pannello Aggiornamenti), sicurezza-prova.js (79 prove di attacco)
 prove/          prova-install.js (installazione da zero con Playwright), prova-temi.js, prova-pannello-temi.js,
-                prova-temi-partenza.js, prova-carica-temi.js (temi),
+                prova-temi-partenza.js, prova-carica-temi.js (temi), prova-foto-effetti.js (velo ed effetti delle foto),
                 foto-sito.js e quanto-foto.py (schermate prima e dopo, al pixel)
 esempi/         tema-lavagna/: il tema d'esempio del manuale dei temi (provato, non entra nello zip)
 ```
@@ -71,7 +71,7 @@ Stato, decisioni, contesto e diario non stanno qui: stanno nel second brain
 - **Pacchetto di aggiornamento** per un'installazione esistente:
   `python3 tools/cms-pacchetto.py --aggiornamento`. Si carica dal pannello,
   Impostazioni, Aggiornamenti.
-- **Versione**: `cms/VERSIONE` (oggi 1.2.1) e una voce in `cms/CHANGELOG.md` a ogni
+- **Versione**: `cms/VERSIONE` (oggi 1.2.2) e una voce in `cms/CHANGELOG.md` a ogni
   zip con contenuto diverso. Mai cambiare il contenuto di una versione già data.
 - **Prove** prima di dire finito:
   - `php -n -d short_open_tag=1 -l` su ogni file PHP toccato, `node --check` sui js;
@@ -107,14 +107,16 @@ Le decisioni complete, con data e perché, stanno nel second brain, `plumecms/de
 
 ## Stato al 27 ottobre 2026
 
-Fatto: plumeCMS 1.2.1 (solo documentazione: manuale tecnico e manuale dei temi; il codice è quello della 1.2.0).
+Fatto: plumeCMS 1.2.2: sezione Foto di Apertura e Presentazione (trattamento, colori e intensità del velo, cinque effetti
+animati) e interruttore dell'onda; provata con `prove/prova-foto-effetti.js` (20 su 20) e foto identiche al pixel con i
+valori di partenza. 1.2.1: manuale tecnico e manuale dei temi.
 plumeCMS 1.2.0 con i temi (Editor > Temi, `docs/temi.md`): tre temi di partenza (Cosmo, Aria,
 Bottega), temi con PHP protetti, caricamento e download da zip. Installazione provata da zero in radice e in
 sottocartella; aggiornamento 1.1.9 -> 1.2.0 dal pannello provato con sito identico al pixel prima e dopo;
 78 prove di attacco respinte (la 79esima è del modulo danilofailli). Le prove del CMS girano su PHP 8.3 con
 MySQL 8.0: su PHP 8.4.27 sono provate la sintassi di ogni file e i `.htaccess` su Apache, non il CMS intero
 (senza `pdo_mysql` nell'immagine, e i pacchetti Debian bloccati dalla rete della sessione).
-Prima installazione vera su `https://duhtron.it/test` (cartella), funzionante con la 1.1.9: da aggiornare alla 1.2.1 (lo zip di aggiornamento porta il codice della 1.2.0 e i manuali).
+Prima installazione vera su `https://duhtron.it/test` (cartella), funzionante con la 1.1.9: da aggiornare alla 1.2.2.
 Dal 27 ottobre plumeCMS vive nel suo progetto e repository (`SPOSTARE.md`).
 
 Aperto:
@@ -130,6 +132,8 @@ Aperto:
 - favicon di partenza (l'installazione pulita risponde 404 su `/favicon.ico`);
 - `vista_404()` del nucleo punta a `/blog-fuori-del-coso/` (resto di danilofailli.it), da rendere neutro;
 - i temi a danilofailli.it arrivano solo con un pacchetto `--sito` dal suo repository (mai lo zip del prodotto).
+- la 1.2.2 (sezione Foto, interruttore dell'onda: `includes/editor-widget.php`, `sito/assets/sito.css`) va riportata su
+  danilofailli.it con un pacchetto `--sito`: lì Apertura e Presentazione sono le foto della home e di Chi sono.
 
 ## Rapporto con danilofailli.it
 

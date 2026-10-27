@@ -68,7 +68,7 @@ h1,h2,h3{font-family:var(--f-titolo);letter-spacing:-.01em;margin:0}
 .finestra{position:absolute;inset:6% 0 8% 8%;border-radius:22px;background:linear-gradient(160deg,rgba(255,255,255,.09),rgba(255,255,255,.02));border:1px solid rgba(160,200,255,.28);box-shadow:0 0 0 1px rgba(var(--viola-rgb),.15),0 30px 80px rgba(0,0,0,.5),0 0 60px rgba(var(--viola-rgb),.25);overflow:hidden}
 .finestra::before{content:"";position:absolute;top:14px;left:16px;width:48px;height:10px;background:radial-gradient(circle at 5px 5px,#6b7280 4px,transparent 5px),radial-gradient(circle at 24px 5px,#6b7280 4px,transparent 5px),radial-gradient(circle at 43px 5px,#6b7280 4px,transparent 5px);z-index:2}
 .finestra img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:50% 20%;filter:grayscale(1) contrast(1.25)}
-.finestra::after{content:"";position:absolute;inset:0;background:linear-gradient(165deg,#1aa7c4 0%,#5b21b6 70%,#2e1065 100%);mix-blend-mode:multiply}
+.finestra::after{content:"";position:absolute;inset:0;background:linear-gradient(165deg,var(--velo-1,#1aa7c4) 0%,var(--velo-2,#5b21b6) 70%,var(--velo-3,#2e1065) 100%);mix-blend-mode:multiply;opacity:var(--velo-o,1)}
 .chip{position:absolute;z-index:3;background:rgba(10,16,36,.78);backdrop-filter:blur(12px);border:1px solid rgba(160,200,255,.25);border-radius:14px;padding:14px 16px;font:600 11px/1.2 var(--f-testo);letter-spacing:.14em;text-transform:uppercase;color:var(--testo-2)}
 .chip-onda{left:-8%;top:44%;width:190px}
 .onda{display:flex;gap:3px;align-items:center;height:38px;margin-top:10px}
@@ -104,7 +104,7 @@ h1,h2,h3{font-family:var(--f-titolo);letter-spacing:-.01em;margin:0}
 .chi{display:grid;grid-template-columns:auto 1fr;gap:40px;align-items:center}
 .ritratto{position:relative;width:180px;height:180px;border-radius:50%;overflow:hidden;box-shadow:0 0 0 2px var(--viola),0 0 40px rgba(var(--viola-rgb),.4)}
 .ritratto img{width:100%;height:100%;object-fit:cover;object-position:50% 15%;filter:grayscale(1) contrast(1.25);transform:scale(1.25)}
-.ritratto::after{content:"";position:absolute;inset:0;background:linear-gradient(165deg,#1aa7c4,#5b21b6);mix-blend-mode:multiply}
+.ritratto::after{content:"";position:absolute;inset:0;background:linear-gradient(165deg,var(--velo-1,#1aa7c4),var(--velo-2,#5b21b6));mix-blend-mode:multiply;opacity:var(--velo-o,1)}
 .chi dl{display:grid;grid-template-columns:auto 1fr;gap:6px 18px;margin:20px 0 0}
 .chi dt{font:600 12px/1.9 var(--f-testo);letter-spacing:.16em;text-transform:uppercase;color:var(--ciano)}
 .chi dd{margin:0;color:var(--testo-2)}
@@ -764,3 +764,23 @@ hr.ed-divisore-linea{background:var(--bordo)}
   .igx .igx-fasi-piene .igx-fase{flex-direction:column}
   .igx .igx-pd-freccia .igx-pd-voce{grid-template-columns:1fr}.igx .igx-pd-freccia .igx-pd-freccia{padding:.3rem;transform:rotate(90deg)}
 }
+
+/* Foto di Apertura e Presentazione (1.2.2): trattamento ed effetti animati scelti nella scheda Stile, sezione Foto.
+   --fx-1 e --fx-2 sono i colori dell'effetto (di partenza ciano e viola del sito), --fx-v moltiplica la durata. */
+.ed-foto-bn::after,.ed-foto-naturale::after{display:none}
+.ed-foto-naturale img{filter:none}
+.ed-fx-luce{position:absolute;inset:0;z-index:1;pointer-events:none;border-radius:inherit}
+.ed-fx-zoom img{animation:ed-fx-zoom calc(18s * var(--fx-v,1)) ease-in-out infinite alternate}
+.ritratto.ed-fx-zoom img{animation-name:ed-fx-zoom-r}
+@keyframes ed-fx-zoom{from{transform:scale(1)}to{transform:scale(1.14)}}
+@keyframes ed-fx-zoom-r{from{transform:scale(1.25)}to{transform:scale(1.42)}}
+.ed-fx-bagliore .ed-fx-luce{background:linear-gradient(110deg,transparent 35%,rgba(255,255,255,.38) 50%,transparent 65%);background-size:250% 100%;mix-blend-mode:screen;animation:ed-fx-bagliore calc(4.5s * var(--fx-v,1)) ease-in-out infinite}
+@keyframes ed-fx-bagliore{0%{background-position:120% 0}55%,100%{background-position:-120% 0}}
+@property --ed-fx-giro{syntax:"<angle>";inherits:false;initial-value:0deg}
+.ed-fx-cornice .ed-fx-luce{padding:3px;background:conic-gradient(from var(--ed-fx-giro),var(--fx-1,var(--ciano)),var(--fx-2,var(--viola)),transparent 55%,var(--fx-1,var(--ciano)));-webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask:linear-gradient(#000 0 0) content-box exclude,linear-gradient(#000 0 0);animation:ed-fx-giro calc(5s * var(--fx-v,1)) linear infinite}
+@keyframes ed-fx-giro{to{--ed-fx-giro:360deg}}
+.ed-fx-alone{animation:ed-fx-alone calc(3.2s * var(--fx-v,1)) ease-in-out infinite}
+@keyframes ed-fx-alone{0%,100%{box-shadow:0 0 0 2px var(--fx-2,var(--viola)),0 0 24px 2px var(--fx-1,var(--ciano))}50%{box-shadow:0 0 0 2px var(--fx-1,var(--ciano)),0 0 70px 14px var(--fx-2,var(--viola))}}
+.ed-fx-scintille .ed-fx-luce{background-image:radial-gradient(circle,var(--fx-1,var(--ciano)) 0 2px,transparent 3px),radial-gradient(circle,var(--fx-2,#fff) 0 1.5px,transparent 2.5px),radial-gradient(circle,var(--fx-1,var(--ciano)) 0 1px,transparent 2px);background-size:90px 120px,130px 170px,60px 80px;background-position:10px 0,50px 30px,25px 60px;mix-blend-mode:screen;opacity:.9;animation:ed-fx-scintille calc(9s * var(--fx-v,1)) linear infinite}
+@keyframes ed-fx-scintille{to{background-position:10px -240px,50px -310px,25px -100px}}
+@media (prefers-reduced-motion:reduce){.ed-fx img,.ed-fx,.ed-fx .ed-fx-luce{animation:none}}

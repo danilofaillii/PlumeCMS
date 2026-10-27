@@ -1,6 +1,6 @@
 # Manuale per creare i temi di plumeCMS
 
-Versione del manuale: 1.0, per plumeCMS 1.2.1 (27 ottobre 2026). I temi funzionano dalla 1.2.0.
+Versione del manuale: 1.1, per plumeCMS 1.2.2 (27 ottobre 2026). I temi funzionano dalla 1.2.0; le variabili del velo e degli effetti delle foto dalla 1.2.2.
 
 Questo manuale è per chi vuole disegnare il proprio tema: un aspetto nuovo per un sito fatto con plumeCMS, da usare
 sul proprio sito o da regalare e vendere ad altri. Serve saper scrivere un po' di CSS. Il PHP è facoltativo: la
@@ -475,6 +475,12 @@ viene dopo e le riscrive).
 | `--successo`, `--successo-chiaro`, `--errore`, `--errore-chiaro`, `--errore-testo` (e `-rgb`) | messaggi dei moduli, liste con spunta | verde e rosso |
 | `--r` | raggio degli angoli di card e riquadri | 18px |
 | `--grad` | gradiente dei titoli (`linear-gradient(100deg,var(--ciano),var(--viola))`) | |
+| `--velo-1`, `--velo-2`, `--velo-3` | i colori del velo sulle foto di Apertura (tre) e Presentazione (i primi due) | `#1aa7c4`, `#5b21b6`, `#2e1065` |
+| `--velo-o` | l'intensità del velo, da 0 a 1 | 1 |
+| `--fx-1`, `--fx-2` | i colori degli effetti animati delle foto (cornice, alone, scintille) | `--ciano` e `--viola` |
+
+Le variabili del velo e degli effetti non sono in `:where(:root)`: il tema le scrive in `:root{...}` e valgono su
+tutte le foto; chi usa il sito le cambia poi widget per widget dalla scheda Stile, sezione Foto, che vince sul tema.
 
 ### 7.3 Le classi del sito
 

@@ -1,6 +1,6 @@
 # plumeCMS: manuale tecnico
 
-Versione del manuale: 1.0, per plumeCMS 1.2.1 (27 ottobre 2026).
+Versione del manuale: 1.1, per plumeCMS 1.2.2 (27 ottobre 2026).
 
 Questo manuale descrive come è fatto plumeCMS e come funziona, pezzo per pezzo. È scritto leggendo il codice:
 ogni numero, limite e nome di funzione viene dai file veri, con il riferimento `file:riga` quando serve a chi
@@ -63,7 +63,7 @@ Niente librerie esterne: SortableJS e Quill sono serviti dal CMS stesso, le icon
 index.php           front controller: tutte le richieste del sito passano da qui
 cron-daily.php      compiti del giorno (pacchetti programmati, moduli, IndexNow)
 cron-newsletter.php invio della newsletter a giri, coda IndexNow
-VERSIONE            il numero di versione (oggi 1.2.1)
+VERSIONE            il numero di versione (oggi 1.2.2)
 CHANGELOG.md, README.md, INSTALLA.md
 .htaccess           regole di Apache (copia di install/esempi/htaccess-radice.txt)
 
@@ -693,6 +693,19 @@ Settantanove widget, in cinque famiglie.
   frequenti, video, infografica, tabella, scheda riassuntiva.
 - Dal sito: ultimi articoli, modulo (newsletter, ebook, laser, `form:ID`), invito, riquadro del test, leggi anche.
 - Avanzati: HTML.
+
+Apertura e Presentazione hanno nella scheda Stile la sezione **Foto** (dalla 1.2.2, `es_foto()` in
+`includes/editor-widget.php`):
+- trattamento: velo colorato sul bianco e nero (come prima), solo bianco e nero, foto naturale;
+- colori del velo (tre per l'Apertura, due per la Presentazione) e intensità (0-100%), scritti come variabili
+  `--velo-1`, `--velo-2`, `--velo-3`, `--velo-o` lette da `sito.css`;
+- effetto animato: zoom lento, bagliore che attraversa, cornice luminosa che gira, alone che pulsa, scintille che
+  salgono; con i suoi due colori (`--fx-1`, `--fx-2`, di partenza ciano e viola del sito) e la velocità (`--fx-v`).
+  Trattamento ed effetto diventano classi sulla foto (`ed-foto-<x>`, `ed-fx ed-fx-<x>`, `editor_foto_classi()`);
+  gli effetti si fermano per chi chiede meno movimento al sistema (`prefers-reduced-motion`).
+
+L'Apertura ha anche l'interruttore **Mostra l'onda sopra la foto** (scheda Contenuto): spento, il riquadro con
+le barre che ondeggiano non compare. Con i valori di partenza le due foto sono identiche a quelle della 1.2.1.
 
 **Infografiche** (14, prefisso `ig_`): passi, timeline, checklist, tabella, liste, numeri, card, mappa, flusso,
 fasi, barre, prima e dopo, zone, domande. Usano i colori `--ig-*` della tavolozza (capitolo 12).
@@ -1673,6 +1686,7 @@ Istruzioni in `prove/LEGGIMI.md`. Le principali:
 | `prova-pannello-temi.js` | la pagina Temi |
 | `prova-temi-partenza.js` | ogni tema di partenza: pagine, menu nell'header, contrasto del testo, nessun errore |
 | `prova-carica-temi.js` | caricare e scaricare temi da zip, con e senza PHP, firmati e no |
+| `prova-foto-effetti.js` | sezione Foto di Apertura e Presentazione e interruttore dell'onda, dall'editor al sito |
 | `prova-aggiornamento.js` | aggiornare dal pannello con il pacchetto del prodotto |
 | `foto-sito.js`, `quanto-foto.py` | schermate prima e dopo, confrontate al pixel |
 | `router-php-s.php` | router per `php -S` che imita l'`.htaccess` |

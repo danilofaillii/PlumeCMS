@@ -37,6 +37,38 @@ function es_testo(string $prefisso, string $et, string $sel, string $sez, string
     return [es_col($prefisso . '_colore', 'Colore' . ($et !== '' ? ' ' . $et : ''), $sel, $sez, 'color', $predColore), es_tip($prefisso . '_tipografia', 'Tipografia' . ($et !== '' ? ' ' . $et : ''), $sel, $sez, $predTip)];
 }
 
+/**
+ * La sezione "Foto" della scheda Stile per i widget con la foto velata (Apertura e Presentazione, 1.2.2): trattamento
+ * (velo colorato, bianco e nero, naturale), colori e intensità del velo, effetto animato con i suoi colori e la velocità.
+ * $sel: il contenitore della foto (' .finestra' o ' .ritratto'); $coloriVelo: le etichette dei colori del velo, in ordine.
+ * Il CSS dei colori esce come variabili (--velo-N, --velo-o, --fx-1, --fx-2, --fx-v) lette da sito.css; trattamento ed
+ * effetto diventano classi nel disegno del widget (editor_foto_classi). Con i valori di partenza la foto è quella di prima.
+ */
+function es_foto(string $sel, array $coloriVelo): array {
+    $velo = ['condizione' => ['foto_trattamento' => 'velo']];
+    $fx = ['condizione' => ['!foto_effetto' => '']];
+    $c = [ec('foto_trattamento', 'scelta', 'Trattamento della foto', 'velo', 'stile', ['sezione' => 'Foto', 'opzioni' => EDITOR_FOTO_TRATTAMENTI])];
+    foreach (array_values($coloriVelo) as $i => $et) $c[] = es_col('velo_colore_' . ($i + 1), $et, $sel, 'Foto', '--velo-' . ($i + 1), '', $velo);
+    $c[] = ec('velo_intensita', 'numero', 'Intensità del velo (%)', 100, 'stile', ['sezione' => 'Foto', 'min' => 0, 'max' => 100, 'unita' => '%', 'selettore' => $sel, 'proprieta' => '--velo-o'] + $velo);
+    $c[] = ec('foto_effetto', 'scelta', 'Effetto animato', '', 'stile', ['sezione' => 'Foto', 'opzioni' => EDITOR_FOTO_EFFETTI]);
+    $c[] = es_col('effetto_colore_1', "Primo colore dell'effetto", $sel, 'Foto', '--fx-1', '', $fx);
+    $c[] = es_col('effetto_colore_2', "Secondo colore dell'effetto", $sel, 'Foto', '--fx-2', '', $fx);
+    $c[] = ec('effetto_velocita', 'scelta', "Velocità dell'effetto", '', 'stile', ['sezione' => 'Foto', 'opzioni' => ['lenta' => 'Lenta', '' => 'Normale', 'veloce' => 'Veloce'],
+        'selettore' => $sel, 'proprieta' => '--fx-v', 'mappa' => ['lenta' => '1.6', 'veloce' => '.55']] + $fx);
+    return $c;
+}
+
+/** Le classi della foto velata secondo trattamento ed effetto; vuote con i valori di partenza. */
+function editor_foto_classi(array $v): string {
+    $t = (string)($v['foto_trattamento'] ?? 'velo');
+    $e = (string)($v['foto_effetto'] ?? '');
+    return (isset(EDITOR_FOTO_TRATTAMENTI[$t]) && $t !== 'velo' ? ' ed-foto-' . $t : '') . ($e !== '' && isset(EDITOR_FOTO_EFFETTI[$e]) ? ' ed-fx ed-fx-' . $e : '');
+}
+
+const EDITOR_FOTO_TRATTAMENTI = ['velo' => 'Velo colorato sul bianco e nero', 'bn' => 'Solo bianco e nero', 'naturale' => 'Foto naturale, a colori'];
+const EDITOR_FOTO_EFFETTI = ['' => 'Nessuno', 'zoom' => 'Zoom lento', 'bagliore' => 'Bagliore che attraversa', 'cornice' => 'Cornice luminosa che gira',
+    'alone' => 'Alone che pulsa', 'scintille' => 'Scintille che salgono'];
+
 const EDITOR_ALLINEAMENTI = ['' => 'Come la sezione', 'left' => 'Sinistra', 'center' => 'Centro', 'right' => 'Destra'];
 const EDITOR_STILI_PULSANTE = ['viola' => 'Pieno viola', 'ciano' => 'Pieno ciano', 'filo' => 'Contorno'];
 
@@ -227,6 +259,7 @@ function editor_definizioni(): array {
             ...es_testo('occhiello', "dell'occhiello", ' .occhiello', 'Occhiello'),
             ...es_testo('titolo', 'del titolo', ' .sez-titolo', 'Titolo'),
             ...es_testo('testo', 'del testo', ' .sez-intro', 'Testo'),
+            ...es_foto(' .ritratto', ['Colore del velo in alto', 'Colore del velo in basso']),
             ...es_testo('etichette', 'delle etichette', ' dt', 'Voci'),
             ...es_testo('valori', 'dei valori', ' dd', 'Voci'),
         ]],
@@ -237,12 +270,14 @@ function editor_definizioni(): array {
             ec('pulsanti', 'ripetitore', 'Pulsanti', [['testo' => "Laser Coaching 15'", 'link' => '/laser-coaching/', 'stile' => 'viola']], 'contenuto', ['campi' => [
                 ec('testo', 'testo', 'Testo', ''), ec('link', 'testo', 'Link', ''), ec('stile', 'scelta', 'Stile', 'viola', 'contenuto', ['opzioni' => EDITOR_STILI_PULSANTE])], 'titolo_voce' => 'testo']),
             ec('immagine', 'immagine', 'Foto', (string)cms_impostazione('w_hero_foto', '')),
-            ec('etichetta_onda', 'testo', "Etichetta dell'onda", (string)cms_impostazione('w_onda_etichetta', '')),
+            ec('onda_mostra', 'interruttore', "Mostra l'onda sopra la foto", true, 'contenuto', ['aiuto' => "Il riquadro con le barre che ondeggiano. Spento, sulla foto restano solo velo ed effetto."]),
+            ec('etichetta_onda', 'testo', "Etichetta dell'onda", (string)cms_impostazione('w_onda_etichetta', ''), 'contenuto', ['condizione' => ['onda_mostra' => true]]),
             ec('barre', 'ripetitore', 'Barre', [['etichetta' => 'Meno carico', 'valore' => 78]], 'contenuto', ['campi' => [ec('etichetta', 'testo', 'Etichetta', ''), ec('valore', 'numero', 'Valore (%)', 50, 'contenuto', ['min' => 0, 'max' => 100])], 'titolo_voce' => 'etichetta']),
             ...es_testo('occhiello', "dell'occhiello", ' .occhiello', 'Occhiello'),
             ...es_testo('titolo', 'del titolo', ' h1', 'Titolo'),
             es_col('colore_evidenza', 'Colore della parte tra asterischi (vuoto = gradiente)', ' h1 em', 'Titolo', 'background'),
             ...es_testo('testo', 'del testo', ' .lead', 'Testo'),
+            ...es_foto(' .finestra', ['Colore del velo in alto a sinistra', 'Colore del velo al centro', 'Colore del velo in basso a destra']),
             es_mis('spazio_pulsanti', 'Spazio fra i pulsanti', ' .azioni', 'Pulsanti', 'gap', [], ['px'], ['intervalli' => ['px' => [0, 60, 1]]]),
             es_tip('pulsanti_tipografia', 'Tipografia dei pulsanti', ' .btn', 'Pulsanti'),
             es_bor('pulsanti_bordo', 'Bordo dei pulsanti', ' .btn', 'Pulsanti'),
@@ -550,7 +585,7 @@ function editor_disegna_widget(string $tipo, array $v): string {
             }, (array)$v['voci'])) . '</div>';
         case 'presentazione':
             $dl = implode('', array_map(fn($x) => '<dt>' . h($x['etichetta'] ?? '') . '</dt><dd>' . h($x['valore'] ?? '') . '</dd>', (array)$v['voci']));
-            return '<div class="chi">' . ($v['immagine'] !== '' ? '<div class="ritratto"><img src="' . h($v['immagine']) . '" alt="' . h($v['titolo']) . '" width="300" height="300" loading="lazy"></div>' : '')
+            return '<div class="chi">' . ($v['immagine'] !== '' ? '<div class="ritratto' . editor_foto_classi($v) . '"><img src="' . h($v['immagine']) . '" alt="' . h($v['titolo']) . '" width="300" height="300" loading="lazy">' . (($v['foto_effetto'] ?? '') !== '' ? '<span class="ed-fx-luce"></span>' : '') . '</div>' : '')
                 . '<div>' . ($v['occhiello'] !== '' ? '<span class="occhiello">' . h($v['occhiello']) . '</span>' : '') . '<h2 class="sez-titolo">' . editor_evidenza($v['titolo']) . '</h2>'
                 . ($v['testo'] !== '' ? '<div class="sez-intro" style="margin:0">' . editor_paragrafi($v['testo']) . '</div>' : '') . ($dl !== '' ? "<dl>$dl</dl>" : '') . '</div></div>';
         case 'hero':
@@ -561,8 +596,8 @@ function editor_disegna_widget(string $tipo, array $v): string {
                 . ($v['occhiello'] !== '' ? '<span class="occhiello">' . h($v['occhiello']) . '</span>' : '')
                 . '<h1>' . editor_evidenza($v['titolo']) . '</h1>' . ($v['testo'] !== '' ? '<p class="lead">' . h($v['testo']) . '</p>' : '')
                 . ($pulsanti !== '' ? '<div class="azioni">' . $pulsanti . '</div>' : '') . '</div>'
-                . ($v['immagine'] !== '' ? '<div class="scena" aria-hidden="true"><div class="finestra"><img src="' . h($v['immagine']) . '" alt="" width="768" height="768" fetchpriority="high"></div>'
-                    . ($v['etichetta_onda'] !== '' ? '<div class="chip chip-onda">' . h($v['etichetta_onda']) . '<div class="onda">' . $onda . '</div></div>' : '')
+                . ($v['immagine'] !== '' ? '<div class="scena" aria-hidden="true"><div class="finestra' . editor_foto_classi($v) . '"><img src="' . h($v['immagine']) . '" alt="" width="768" height="768" fetchpriority="high">' . (($v['foto_effetto'] ?? '') !== '' ? '<span class="ed-fx-luce"></span>' : '') . '</div>'
+                    . (($v['onda_mostra'] ?? true) && $v['etichetta_onda'] !== '' ? '<div class="chip chip-onda">' . h($v['etichetta_onda']) . '<div class="onda">' . $onda . '</div></div>' : '')
                     . ($barre !== '' ? '<div class="chip chip-barre">' . $barre . '</div>' : '') . '</div>' : '')
                 . '</div></div>';
         case 'numeri':

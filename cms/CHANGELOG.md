@@ -2,6 +2,20 @@
 
 Il prodotto si chiama **plumeCMS** (nome scelto il 26 ottobre 2026; prima, per poche ore, "CarbonaraCMS", e ancora prima il provvisorio "Officina": gli zip vecchi si chiamavano `officina-*` e `carbonaracms-*`).
 
+## 1.2.2 (27 ottobre 2026) - Velo ed effetti sulle foto
+
+- **Apertura (hero)** e **Presentazione**: nella scheda Stile c'è la sezione nuova **Foto**.
+  - **Trattamento della foto**: velo colorato sul bianco e nero (com'era), solo bianco e nero, oppure foto naturale.
+  - **Colori del velo** (tre nell'Apertura, due nella Presentazione), anche presi dai colori globali, e
+    **intensità del velo** da 0 a 100%.
+  - **Effetto animato**, cinque a scelta: zoom lento, bagliore che attraversa, cornice luminosa che gira, alone che
+    pulsa, scintille che salgono. Ognuno con due colori e la velocità (lenta, normale, veloce). Chi ha chiesto al
+    proprio sistema meno movimento vede la foto ferma.
+- **Apertura**: interruttore **Mostra l'onda sopra la foto** (scheda Contenuto) per tenere o togliere il riquadro
+  con le barre che ondeggiano.
+- Le pagine già fatte non cambiano: con i valori di partenza le foto sono identiche al pixel a quelle di prima.
+- Un tema può dare i suoi colori al velo e agli effetti con le variabili `--velo-*` e `--fx-*` (`docs/manuale-temi.md`).
+
 ## 1.2.1 (27 ottobre 2026) - I due manuali
 
 Solo documentazione: il codice è quello della 1.2.0.
