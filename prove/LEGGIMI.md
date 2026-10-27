@@ -123,3 +123,11 @@ La sezione Foto di Apertura e Presentazione e l'interruttore dell'onda, dall'edi
 l'onda, sceglie foto naturale e cornice sull'Apertura, velo al 40% e alone sulla Presentazione, pubblica e controlla
 il sito. Serve una pagina con un'Apertura (foto ed etichetta dell'onda) e una Presentazione (foto), valori di partenza.
 `node prove/prova-foto-effetti.js <base> <utente> <password> <id della pagina> <percorso pubblico>`. Atteso: 20 su 20.
+
+## prova-sito-plumecms.js (1.2.3)
+
+Il sito di plumeCMS: carica e applica dal pannello il pacchetto di `sito-plumecms/costruisci.py`, poi visita le sette
+pagine da visitatore (titoli, menu, immagini, favicon) e scarica davvero gli zip e i PDF da `/scarica/<nome>/`.
+Serve un plumeCMS 1.2.3 o successivo, con il server che accetta caricamenti di almeno 8 MB.
+`node prove/prova-sito-plumecms.js <base> <cartella CMS> <utente> <password> <sito-plumecms-X.zip> <versione>`. Atteso: 29 su 29.
+Si può rilanciare sullo stesso sito: la seconda volta le pagine si aggiornano invece di nascere.

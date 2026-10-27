@@ -2,6 +2,22 @@
 
 Il prodotto si chiama **plumeCMS** (nome scelto il 26 ottobre 2026; prima, per poche ore, "CarbonaraCMS", e ancora prima il provvisorio "Officina": gli zip vecchi si chiamavano `officina-*` e `carbonaracms-*`).
 
+## 1.2.3 (27 ottobre 2026) - Il sito di plumeCMS e i manuali in PDF
+
+- **Manuali in PDF**: `tools/manuali-pdf.js` stampa il manuale tecnico e quello dei temi, con copertina, indice
+  cliccabile e numeri di pagina.
+- **File da scaricare**: gli zip e i PDF in `uploads/scaricabili/` si aprono da `/scarica/<nome>/` (il `.htaccess`
+  vieta gli zip dal web, quindi passano da PHP).
+- **Pacchetti che portano un sito**: voci nuove del manifest `pagine` (pagine dell'editor), `editor` (stile, header,
+  footer, menu nel formato di Esporta) e `impostazioni` (nome e descrizioni del sito). Con l'azione
+  `sito-pagine-e-stile`, che fa rifiutare il pacchetto ai motori più vecchi.
+- **Il sito di plumeCMS**, fatto con plumeCMS: `sito-plumecms/costruisci.py` scrive il pacchetto.
+- Widget Menu di navigazione: si può scegliere "quello in posizione: ...", qualunque sia l'id del menu.
+- Correzioni:
+  - nell'editor il pannello **Revisioni** non si chiudeva mai e toglieva 380 pixel alla tela;
+  - lo sfondo **Colore** di una sezione non funzionava con i colori globali;
+  - il pannello si presentava come "DF Pannello": ora "plumeCMS".
+
 ## 1.2.2 (27 ottobre 2026) - Velo ed effetti sulle foto
 
 - **Apertura (hero)** e **Presentazione**: nella scheda Stile c'è la sezione nuova **Foto**.

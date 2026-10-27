@@ -43,6 +43,9 @@ prove/          prova-install.js (installazione da zero con Playwright), prova-t
                 prova-temi-partenza.js, prova-carica-temi.js (temi), prova-foto-effetti.js (velo ed effetti delle foto),
                 foto-sito.js e quanto-foto.py (schermate prima e dopo, al pixel)
 esempi/         tema-lavagna/: il tema d'esempio del manuale dei temi (provato, non entra nello zip)
+sito-plumecms/  il sito da cui si scarica plumeCMS, fatto con plumeCMS: costruisci.py scrive il pacchetto
+                releases/sito/sito-plumecms-<versione>.zip (pagine, stile, menu, zip e PDF da scaricare)
+tools/manuali-pdf.js  i due manuali in PDF (releases/manuali/)
 ```
 
 Stato, decisioni, contesto e diario non stanno qui: stanno nel second brain
@@ -68,10 +71,12 @@ Stato, decisioni, contesto e diario non stanno qui: stanno nel second brain
   `releases/cms/plumecms-<VERSIONE>.zip`. Rifiuta: errori di sintassi PHP
   (controllati con `short_open_tag` acceso), il prefisso `newdf_` scritto nel
   codice fuori da `cms.php` e `db.php`, il dominio danilofailli.it nel codice.
+- **A ogni versione, anche il sito di plumeCMS**: `python3 tools/cms-pacchetto.py --aggiornamento`, poi
+  `node tools/manuali-pdf.js`, poi `python3 sito-plumecms/costruisci.py` (aggiorna anche `NOVITA` lì dentro).
 - **Pacchetto di aggiornamento** per un'installazione esistente:
   `python3 tools/cms-pacchetto.py --aggiornamento`. Si carica dal pannello,
   Impostazioni, Aggiornamenti.
-- **Versione**: `cms/VERSIONE` (oggi 1.2.2) e una voce in `cms/CHANGELOG.md` a ogni
+- **Versione**: `cms/VERSIONE` (oggi 1.2.3) e una voce in `cms/CHANGELOG.md` a ogni
   zip con contenuto diverso. Mai cambiare il contenuto di una versione già data.
 - **Prove** prima di dire finito:
   - `php -n -d short_open_tag=1 -l` su ogni file PHP toccato, `node --check` sui js;
@@ -107,7 +112,9 @@ Le decisioni complete, con data e perché, stanno nel second brain, `plumecms/de
 
 ## Stato al 27 ottobre 2026
 
-Fatto: plumeCMS 1.2.2: sezione Foto di Apertura e Presentazione (trattamento, colori e intensità del velo, cinque effetti
+Fatto: plumeCMS 1.2.3: manuali in PDF, `/scarica/<nome>/`, pacchetti con pagine, stile e impostazioni, il sito di plumeCMS
+(`sito-plumecms/`, provato applicandolo dal pannello: `prove/prova-sito-plumecms.js` 29 su 29), pannello Revisioni che si
+chiude, sfondo colore globale delle sezioni. 1.2.2: sezione Foto di Apertura e Presentazione (trattamento, colori e intensità del velo, cinque effetti
 animati) e interruttore dell'onda; provata con `prove/prova-foto-effetti.js` (20 su 20) e foto identiche al pixel con i
 valori di partenza. 1.2.1: manuale tecnico e manuale dei temi.
 plumeCMS 1.2.0 con i temi (Editor > Temi, `docs/temi.md`): tre temi di partenza (Cosmo, Aria,
@@ -116,7 +123,7 @@ sottocartella; aggiornamento 1.1.9 -> 1.2.0 dal pannello provato con sito identi
 78 prove di attacco respinte (la 79esima è del modulo danilofailli). Le prove del CMS girano su PHP 8.3 con
 MySQL 8.0: su PHP 8.4.27 sono provate la sintassi di ogni file e i `.htaccess` su Apache, non il CMS intero
 (senza `pdo_mysql` nell'immagine, e i pacchetti Debian bloccati dalla rete della sessione).
-Prima installazione vera su `https://duhtron.it/test` (cartella), funzionante con la 1.1.9: da aggiornare alla 1.2.2.
+Prima installazione vera su `https://duhtron.it/test` (cartella), funzionante con la 1.1.9: da aggiornare alla 1.2.3.
 Dal 27 ottobre plumeCMS vive nel suo progetto e repository (`SPOSTARE.md`).
 
 Aperto:
@@ -132,6 +139,9 @@ Aperto:
 - favicon di partenza (l'installazione pulita risponde 404 su `/favicon.ico`);
 - `vista_404()` del nucleo punta a `/blog-fuori-del-coso/` (resto di danilofailli.it), da rendere neutro;
 - i temi a danilofailli.it arrivano solo con un pacchetto `--sito` dal suo repository (mai lo zip del prodotto).
+- la licenza di plumeCMS non è scritta da nessuna parte: il sito di plumeCMS offre il download senza dire a quali condizioni;
+- la 1.2.3 (menu per posizione, pannello Revisioni, sfondo colore delle sezioni, `/scarica/`, voci nuove dei pacchetti) va
+  riportata su danilofailli.it, come la 1.2.2;
 - la 1.2.2 (sezione Foto, interruttore dell'onda: `includes/editor-widget.php`, `sito/assets/sito.css`) va riportata su
   danilofailli.it con un pacchetto `--sito`: lì Apertura e Presentazione sono le foto della home e di Chi sono.
 
@@ -143,6 +153,8 @@ Aperto:
   `tools/cms-pacchetto.py --sito <commit> <nome>` (contengono anche il modulo).
 - **Lo zip di aggiornamento del prodotto non va mai applicato a danilofailli.it**: non
   contiene il modulo e romperebbe le sue pagine.
+- **Nemmeno il pacchetto del sito di plumeCMS** (`sito-plumecms-*.zip`): sostituisce home, stile, header, footer e menu.
+  Va solo sul sito da cui si scarica plumeCMS.
 - Una correzione fatta qui va riportata anche lì, e viceversa, finché i due repository
   non condividono il nucleo in un modo automatico.
 
@@ -176,6 +188,9 @@ Errori veri, già pagati. Non ripeterli.
 | Un 301 che dipende dalla configurazione | il browser lo ricorda e lo ripete senza chiedere più al server: fino alla 1.1.6 la cartella `/test/` andava alla radice con un 301, e dopo la correzione il browser ci andava ancora (la pagina si apriva solo con `?=0`). I rimandi che dipendono dalle impostazioni sono 302 con `no-store`; a chi ha già il 301 in memoria serve svuotare la cache |
 | Una chiave numerica scritta come testo in un array PHP (`'404' => ...`) | PHP la trasforma nel numero 404: `array_keys()` restituisce un intero e `in_array('404', ..., true)` dice di no. La vista 404 dei temi non partiva (27 ottobre 2026). Si confronta come testo: `(string)$n` |
 | `color-mix()` al posto di `rgba()` per una trasparenza | il colore esce in un altro spazio e i gradienti cambiano di 1-5 livelli: non si vede, ma il sito non è più identico. Per le trasparenze dei temi si usa `rgba(var(--x-rgb),a)` |
+| Un elemento con l'attributo `hidden` e un `display` nel suo CSS | il `display` vince e `hidden` non nasconde niente: il pannello Revisioni dell'editor non si chiudeva mai e toglieva 380 pixel alla tela (fino alla 1.2.2). A ogni `display` su un elemento che si nasconde, la regola `[hidden]{display:none}` |
+| Un valore di un controllo "scelta" che non sta fra le sue opzioni | `editor_valida` lo svuota in silenzio: un header importato con il menu `posizione:principale` usciva senza menu (prima della 1.2.3, quando il widget conosceva solo gli id) |
+| Un pacchetto più grande del limite di caricamento del server | PHP lo butta prima che arrivi al CMS e la pagina non dice niente di utile. Il limite si legge nei Controlli della pagina Aggiornamenti; il pacchetto del sito di plumeCMS pesa circa 5 MB |
 | Fidarsi del resoconto di un agente | è successo che un agente dichiarasse lavoro mai scritto su disco. Si controllano i file veri e si rifanno le prove |
 
 ## Tono con l'utente

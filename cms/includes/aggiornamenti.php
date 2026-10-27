@@ -21,7 +21,9 @@ require_once __DIR__ . '/sito.php';
 
 // Azioni che un pacchetto può chiedere per nome. Solo queste: un pacchetto non esegue codice a piacere.
 // 'attiva-sito-nuovo' era il pacchetto del passaggio: ormai il sito legge sempre da qui.
-const AGG_AZIONI = ['attiva-sito-nuovo' => 'agg_azione_nulla'];
+// 'sito-pagine-e-stile' (1.2.3) non fa niente da sola: la mette il pacchetto di un sito (voci "pagine" ed "editor"),
+// cosi un motore piu vecchio, che quelle voci non le conosce e le salterebbe in silenzio, rifiuta il pacchetto.
+const AGG_AZIONI = ['attiva-sito-nuovo' => 'agg_azione_nulla', 'sito-pagine-e-stile' => 'agg_azione_sito'];
 
 /** Le azioni ammesse: quelle del nucleo più quelle dichiarate dai moduli (danilofailli.it: la conversione degli articoli, il vecchio test). */
 function agg_azioni(): array {
@@ -35,6 +37,16 @@ function agg_azione_nulla(): string {
     sito_viste();
     return 'Niente da fare: il sito pubblico legge già da questo pannello.';
 }
+
+function agg_azione_sito(): string {
+    return 'Motore pronto per le pagine e lo stile del pacchetto.';
+}
+
+/** Gli ambiti dell'editor che un pacchetto puo scrivere con la voce "editor" (quelli di Editor > Impostazioni, Importa). */
+const AGG_EDITOR_AMBITI = ['stile', 'modelli', 'menu', 'temi'];
+
+/** Le impostazioni del sito che un pacchetto puo scrivere con la voce "impostazioni" (1.2.3): solo nome e descrizioni. */
+const AGG_IMPOSTAZIONI = ['sito_nome', 'sito_titolo', 'sito_sottotitolo', 'sito_descrizione', 'home_descrizione'];
 
 const AGG_SNAPSHOT_DA_TENERE = 5;
 
@@ -159,6 +171,10 @@ function agg_leggi_manifest(string $zipPath): array {
         'articoli'    => [],
         'test'        => [],
         'azioni'      => [],
+        'pagine'      => [],
+        'editor'      => '',
+        'editor_ambiti' => ['stile', 'modelli', 'menu'],
+        'impostazioni' => [],
         'note'        => trim((string)($m['note'] ?? '')),
         'firmato'     => $firma !== '',
     ];
@@ -202,7 +218,21 @@ function agg_leggi_manifest(string $zipPath): array {
         if (!isset(agg_azioni()[$a])) { $zip->close(); throw new RuntimeException("Azione sconosciuta: $a"); }
         $out['azioni'][] = (string)$a;
     }
-    foreach (['articoli', 'test'] as $chiave) {
+    // Stile, header e footer, menu nel formato di Editor > Impostazioni, Esporta (1.2.3).
+    if (!empty($m['editor'])) {
+        $f = (string)$m['editor'];
+        $raw = $zip->getFromName($f);
+        if ($raw === false) { $zip->close(); throw new RuntimeException("File assente nello zip: $f"); }
+        require_once __DIR__ . '/editor-opzioni.php';
+        try { editor_importa_leggi($raw); } catch (RuntimeException $e) { $zip->close(); throw new RuntimeException("$f: " . $e->getMessage()); }
+        $out['editor'] = $f;
+        if (isset($m['editor_ambiti'])) $out['editor_ambiti'] = array_values(array_intersect(AGG_EDITOR_AMBITI, (array)$m['editor_ambiti']));
+    }
+    foreach ((array)($m['impostazioni'] ?? []) as $k => $v) {
+        if (!in_array($k, AGG_IMPOSTAZIONI, true) || !is_string($v)) { $zip->close(); throw new RuntimeException("Impostazione non ammessa in un pacchetto: $k (solo " . implode(', ', AGG_IMPOSTAZIONI) . ')'); }
+        $out['impostazioni'][$k] = mb_substr(trim($v), 0, 300);
+    }
+    foreach (['articoli', 'test', 'pagine'] as $chiave) {
         foreach ((array)($m[$chiave] ?? []) as $f) {
             $f = (string)$f;
             $raw = $zip->getFromName($f);
@@ -574,7 +604,8 @@ function agg_applica(string $id): array {
     try {
         agg_sql_mode();
         $m = agg_leggi_manifest($zipPath);
-        $totale = 4 + count($m['file']) + count($m['elimina']) + count($m['sql']) + count($m['articoli']) + count($m['test']) + count($m['azioni']) + count($m['redirect']);
+        $totale = 4 + count($m['file']) + count($m['elimina']) + count($m['sql']) + count($m['articoli']) + count($m['test']) + count($m['azioni']) + count($m['redirect'])
+            + count($m['pagine']) + ($m['editor'] !== '' ? 1 : 0) + ($m['impostazioni'] ? 1 : 0);
         agg_progresso($id, ++$passo, $totale, 'Pacchetto letto: ' . count($m['file']) . ' file, ' . count($m['sql']) . ' file SQL, ' . count($m['articoli']) . ' articoli');
         $log[] = 'Pacchetto letto: ' . count($m['file']) . ' file, ' . count($m['sql']) . ' file SQL, ' . count($m['articoli']) . ' articoli, ' . count($m['redirect']) . ' redirect.';
 
@@ -644,6 +675,21 @@ function agg_applica(string $id): array {
         foreach ($m['articoli'] as $f) {
             $log[] = sito_importa_articolo(json_decode($zip->getFromName($f), true));
             agg_progresso($id, ++$passo, $totale, 'Articolo: ' . basename($f, '.json'));
+        }
+        // 3c. nome e descrizioni del sito, stile, header e footer, menu; poi le pagine fatte con l'editor (1.2.3)
+        if ($m['impostazioni']) {
+            foreach ($m['impostazioni'] as $k => $v) save_setting($k, sito_senza_4byte($v));
+            $log[] = 'Impostazioni del sito: ' . implode(', ', array_keys($m['impostazioni'])) . '.';
+            agg_progresso($id, ++$passo, $totale, 'Nome e descrizioni del sito');
+        }
+        if ($m['editor'] !== '') {
+            require_once __DIR__ . '/editor-opzioni.php';
+            foreach (editor_importa(editor_importa_leggi($zip->getFromName($m['editor'])), $m['editor_ambiti'], 'pacchetto') as $r) $log[] = $r;
+            agg_progresso($id, ++$passo, $totale, 'Stile, header, footer e menu');
+        }
+        foreach ($m['pagine'] as $f) {
+            $log[] = sito_importa_pagina(json_decode($zip->getFromName($f), true));
+            agg_progresso($id, ++$passo, $totale, 'Pagina: ' . basename($f, '.json'));
         }
         $zip->close();
 

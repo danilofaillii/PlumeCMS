@@ -1,6 +1,6 @@
 # Manuale per creare i temi di plumeCMS
 
-Versione del manuale: 1.1, per plumeCMS 1.2.2 (27 ottobre 2026). I temi funzionano dalla 1.2.0; le variabili del velo e degli effetti delle foto dalla 1.2.2.
+Versione del manuale: 1.1, per plumeCMS 1.2.3 (27 ottobre 2026). I temi funzionano dalla 1.2.0; le variabili del velo e degli effetti delle foto dalla 1.2.2.
 
 Questo manuale è per chi vuole disegnare il proprio tema: un aspetto nuovo per un sito fatto con plumeCMS, da usare
 sul proprio sito o da regalare e vendere ad altri. Serve saper scrivere un po' di CSS. Il PHP è facoltativo: la

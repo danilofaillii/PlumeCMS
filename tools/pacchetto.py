@@ -206,8 +206,40 @@ def main():
             if not j.get(k):
                 errore(f'{t}: manca "{k}"')
         dentro.append(t)
+    # Pagine fatte con l'editor e stile, header, footer, menu (motore 1.2.3): chi le usa mette anche l'azione
+    # sito-pagine-e-stile, cosi un motore piu vecchio rifiuta il pacchetto invece di saltarle in silenzio.
+    for pg in m.get('pagine', []):
+        p = os.path.join(cartella, pg)
+        if not os.path.exists(p):
+            errore('pagina mancante: ' + pg)
+        testo = open(p, encoding='utf-8').read()
+        try:
+            j = json.loads(testo)
+        except ValueError as e:
+            errore(f'{pg}: JSON non valido ({e})')
+        if not re.match(r'^[a-z0-9-]{1,100}$', j.get('slug', '')):
+            errore(f'{pg}: slug non valido')
+        if not j.get('titolo'):
+            errore(f'{pg}: manca il titolo')
+        if not isinstance(j.get('struttura'), dict) or not j['struttura'].get('elementi'):
+            errore(f'{pg}: manca la struttura dell\'editor')
+        if any(ord(ch) > 0xFFFF for ch in testo) or '\u2014' in json.dumps(j, ensure_ascii=False):
+            errore(f'{pg}: caratteri a 4 byte o trattini lunghi')
+        dentro.append(pg)
+    if m.get('editor'):
+        p = os.path.join(cartella, m['editor'])
+        if not os.path.exists(p):
+            errore('file dell\'editor mancante: ' + m['editor'])
+        if json.load(open(p, encoding='utf-8')).get('formato') != 'editor-impostazioni':
+            errore(m['editor'] + ': non e un\'esportazione di Editor > Impostazioni (formato editor-impostazioni)')
+        dentro.append(m['editor'])
+    for k, v in (m.get('impostazioni') or {}).items():
+        if k not in ('sito_nome', 'sito_titolo', 'sito_sottotitolo', 'sito_descrizione', 'home_descrizione') or not isinstance(v, str):
+            errore(f'impostazione non ammessa in un pacchetto: {k}')
+    if (m.get('pagine') or m.get('editor') or m.get('impostazioni')) and 'sito-pagine-e-stile' not in m.get('azioni', []):
+        errore('con "pagine" o "editor" serve anche l\'azione "sito-pagine-e-stile" (motore 1.2.3 o successivo)')
     for a in m.get('azioni', []):
-        if a not in ('importa-vecchio-test-burnout', 'attiva-sito-nuovo', 'converti-articoli-editor'):
+        if a not in ('importa-vecchio-test-burnout', 'attiva-sito-nuovo', 'converti-articoli-editor', 'sito-pagine-e-stile'):
             errore(f'azione sconosciuta: {a}')
     for r in m.get('redirect', []):
         if not isinstance(r, dict) or 'da' not in r or 'a' not in r:
@@ -234,7 +266,7 @@ def main():
             z.write(os.path.join(cartella, d), d)
     dim = os.path.getsize(nome_zip)
     print(f'Pacchetto scritto: {nome_zip} ({dim // 1024} KB)' + (' firmato' if firma else ''))
-    print(f'  {len(m.get("articoli", []))} articoli, {len(m.get("file", []))} file, {len(m.get("sql", []))} SQL, {len(m.get("redirect", []))} redirect, {len(m.get("elimina", []))} da togliere' + (f', applica dal {m["applica_dal"]}' if m.get('applica_dal') else ''))
+    print(f'  {len(m.get("pagine", []))} pagine, {len(m.get("articoli", []))} articoli, {len(m.get("file", []))} file, {len(m.get("sql", []))} SQL, {len(m.get("redirect", []))} redirect, {len(m.get("elimina", []))} da togliere' + (f', applica dal {m["applica_dal"]}' if m.get('applica_dal') else ''))
 
 
 if __name__ == '__main__':

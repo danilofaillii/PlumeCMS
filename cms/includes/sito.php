@@ -201,6 +201,76 @@ function sito_robots_articolo(array $a): string {
 // ------------------------------------------------------------
 
 /**
+ * Una pagina fatta con l'editor, da un pacchetto di aggiornamento (1.2.3, voce "pagine" del manifest).
+ * JSON: {slug, titolo, struttura (albero dell'editor), seo_titolo, seo_descrizione, robots, estratto}.
+ * La pagina con lo stesso slug si aggiorna (se era nel cestino ne esce), altrimenti nasce; esce pubblicata.
+ * L'albero passa da editor_valida come quello dell'editor, e il salvataggio lascia una versione: quella di prima
+ * resta in Editor > Versioni.
+ */
+function sito_importa_pagina(array $j): string {
+    require_once __DIR__ . '/editor-controlli.php';
+    require_once __DIR__ . '/editor.php';
+    editor_carica_widget_esterni();
+    $slug = trim((string)($j['slug'] ?? ''));
+    if (!preg_match('/^[a-z0-9-]{1,100}$/', $slug)) throw new RuntimeException("Pagina: slug non valido: $slug");
+    $titolo = sito_senza_4byte(trim((string)($j['titolo'] ?? '')));
+    if ($titolo === '') throw new RuntimeException("Pagina $slug senza titolo");
+    $albero = editor_valida(is_array($j['struttura'] ?? null) ? $j['struttura'] : null);
+    if ($albero === null || !$albero['elementi']) throw new RuntimeException("Pagina $slug: struttura dell'editor mancante o non valida");
+    $campi = [
+        'title' => $titolo,
+        'status' => 'published',
+        'seo_title' => mb_substr(sito_senza_4byte((string)($j['seo_titolo'] ?? '')), 0, 255),
+        'seo_description' => sito_senza_4byte((string)($j['seo_descrizione'] ?? '')),
+        'meta_description' => mb_substr(sito_senza_4byte((string)($j['seo_descrizione'] ?? '')), 0, 500),
+        'robots' => in_array($j['robots'] ?? '', ['index', 'noindex'], true) ? $j['robots'] : '',
+        'excerpt' => sito_senza_4byte((string)($j['estratto'] ?? '')),
+    ];
+    $pdo = db();
+    $st = $pdo->prepare('SELECT id FROM ' . tbl('pages') . ' WHERE slug = ?');
+    $st->execute([$slug]);
+    $id = (int)$st->fetchColumn();
+    if ($id) {
+        $set = implode(', ', array_map(fn($k) => "`$k` = ?", array_keys($campi)));
+        $pdo->prepare('UPDATE ' . tbl('pages') . " SET $set, cestino = NULL WHERE id = ?")->execute([...array_values($campi), $id]);
+        $esito = 'aggiornata';
+    } else {
+        $campi['slug'] = $slug;
+        $campi['publish_at'] = date('Y-m-d H:i:s');
+        $pdo->prepare('INSERT INTO ' . tbl('pages') . ' (`' . implode('`, `', array_keys($campi)) . '`) VALUES (' . implode(', ', array_fill(0, count($campi), '?')) . ')')->execute(array_values($campi));
+        $id = (int)$pdo->lastInsertId();
+        $esito = 'creata';
+    }
+    editor_salva($id, $albero, true, 'pacchetto', 'dal pacchetto di aggiornamento');
+    return "Pagina /$slug/ $esito (" . count($albero['elementi']) . ' sezioni).';
+}
+
+/**
+ * I file da scaricare dal sito (1.2.3): stanno in uploads/scaricabili/ e si aprono da /scarica/<nome>/, senza
+ * estensione nell'indirizzo (il .htaccess del CMS vieta gli .zip, e cosi l'indirizzo non dipende dal server).
+ * Il nome trova il primo file <nome>.zip o <nome>.pdf. Ritorna il percorso, oppure null.
+ */
+const SITO_SCARICABILI = ['zip' => 'application/zip', 'pdf' => 'application/pdf'];
+
+function sito_scaricabile(string $nome): ?string {
+    if (!preg_match('/^[a-z0-9][a-z0-9._-]{0,120}$/', $nome) || str_contains($nome, '..')) return null;
+    $dir = cms_uploads_dir() . '/scaricabili';
+    foreach (array_keys(SITO_SCARICABILI) as $ext) if (is_file("$dir/$nome.$ext")) return "$dir/$nome.$ext";
+    return null;
+}
+
+/** Manda un file scaricabile: tipo giusto, come allegato, una cache di un'ora. */
+function sito_manda_scaricabile(string $file): void {
+    $ext = strtolower(pathinfo($file, PATHINFO_EXTENSION));
+    header('Content-Type: ' . SITO_SCARICABILI[$ext]);
+    header('Content-Disposition: attachment; filename="' . basename($file) . '"');
+    header('Content-Length: ' . filesize($file));
+    header('Cache-Control: public, max-age=3600');
+    if ($ext === 'zip') header('X-Robots-Tag: noindex');
+    readfile($file);
+}
+
+/**
  * Inserisce o aggiorna un articolo da un pacchetto.
  * Campi del JSON: slug, titolo, corpo_html o corpo_markdown, pubblicazione (AAAA-MM-GGTHH:MM),
  * stato (published|draft), categoria, categorie[], tag[], tipo (pillar|cluster),

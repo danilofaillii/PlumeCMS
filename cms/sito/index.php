@@ -153,6 +153,12 @@ try {
         if ($f) sito_html(200, ['titolo' => 'Ricevuto - ' . SITO_NOME] + $cortesia, form_grazie_html($f));
     }
 
+    // File da scaricare (1.2.3): /scarica/<nome>/ manda uploads/scaricabili/<nome>.zip o .pdf; se non c'è, 404 come le altre pagine.
+    if (preg_match('~^/scarica/([a-z0-9][a-z0-9._-]{0,120})/?$~', $percorso, $sc) && ($file = sito_scaricabile($sc[1]))) {
+        sito_manda_scaricabile($file);
+        exit;
+    }
+
     // 4. File calcolati. robots.txt, sitemap e llms.txt passano dal pannello SEO e AEO (con i predefiniti sono quelli di sempre).
     switch ($percorso) {
         case '/robots.txt': sito_rispondi(200, 'text/plain', seo_robots_txt());

@@ -1,6 +1,6 @@
 # plumeCMS: manuale tecnico
 
-Versione del manuale: 1.1, per plumeCMS 1.2.2 (27 ottobre 2026).
+Versione del manuale: 1.2, per plumeCMS 1.2.3 (27 ottobre 2026).
 
 Questo manuale descrive come è fatto plumeCMS e come funziona, pezzo per pezzo. È scritto leggendo il codice:
 ogni numero, limite e nome di funzione viene dai file veri, con il riferimento `file:riga` quando serve a chi
@@ -63,7 +63,7 @@ Niente librerie esterne: SortableJS e Quill sono serviti dal CMS stesso, le icon
 index.php           front controller: tutte le richieste del sito passano da qui
 cron-daily.php      compiti del giorno (pacchetti programmati, moduli, IndexNow)
 cron-newsletter.php invio della newsletter a giri, coda IndexNow
-VERSIONE            il numero di versione (oggi 1.2.2)
+VERSIONE            il numero di versione (oggi 1.2.3)
 CHANGELOG.md, README.md, INSTALLA.md
 .htaccess           regole di Apache (copia di install/esempi/htaccess-radice.txt)
 
@@ -282,6 +282,7 @@ Poi decide, **in quest'ordine** (`sito/index.php`):
 | 7 | `/grazie/?f=ID` | ringraziamento di un form |
 | 8 | `/robots.txt`, `/sitemap.xml`, `/llms.txt` | file calcolati (16.6) |
 | 9 | file speciali SEO: verifica Google, `BingSiteAuth.xml`, chiave IndexNow, sitemap divise, `llms-full.txt` | 200 o 404 |
+| 9b | `/scarica/<nome>/` (dalla 1.2.3) | il file `uploads/scaricabili/<nome>.zip` o `.pdf`, come allegato; 404 se non c'è |
 | 10 | percorsi che finiscono con `/feed/` | feed RSS, o 404 |
 | 11 | il percorso è nella mappa del sito (`sito_mappa()`) | la pagina, secondo il genere (sotto) |
 | 12 | il percorso senza barra finale esiste con la barra | 301 con la barra |
@@ -881,7 +882,8 @@ header e footer del codice.
 - Indirizzi calcolati: categoria `/category/<slug>/`, pagina o articolo `/<slug>/`, la home `/`.
 
 Il menu si mette nell'header con il widget **Menu di navigazione** (`menu_nav`). Il widget può indicare un menu
-preciso oppure una posizione (`posizione:principale`): i temi usano sempre la posizione, perché gli id dei menu
+preciso oppure, dalla 1.2.3, "quello in posizione: ..." (valore `posizione:principale`, `posizione:piede-1`...): il menu
+che ha quella posizione, qualunque sia il suo id. Temi e pacchetti usano sempre la posizione, perché gli id dei menu
 cambiano da un sito all'altro.
 
 ---
@@ -1012,6 +1014,12 @@ Il redattore vede e ripristina solo le versioni dei contenuti.
 
 La cartella `uploads/` ha il suo `.htaccess` (capitolo 21) che vieta di eseguire script e chiude gli SVG in una
 sandbox.
+
+**File da scaricare** (dalla 1.2.3): gli zip e i PDF offerti ai visitatori stanno in `uploads/scaricabili/` e si
+aprono da `/scarica/<nome>/`, senza estensione (`sito_scaricabile()`, `sito_manda_scaricabile()` in
+`includes/sito.php`). Il CMS cerca `<nome>.zip`, poi `<nome>.pdf`, e lo manda come allegato. L'indirizzo passa da
+PHP perché il `.htaccess` del CMS vieta di aprire gli `.zip` dal web. Ci arrivano con un pacchetto (voce `file`,
+destinazione `uploads/scaricabili/...`) o con il gestore dei file del server.
 
 ---
 
@@ -1478,6 +1486,19 @@ tabella `<prefisso>sicurezza_tentativi` dal database.
   giorno.
 - Ogni file citato deve esserci nello zip; `azioni` devono esistere nel CMS o nei moduli.
 
+**Pagine, stile e impostazioni** (dalla 1.2.3): un pacchetto può portare un sito intero.
+
+| Voce | Cosa contiene | Cosa fa |
+|---|---|---|
+| `impostazioni` | `{"sito_nome": "...", ...}`; ammesse solo `sito_nome`, `sito_titolo`, `sito_sottotitolo`, `sito_descrizione`, `home_descrizione` | le scrive nelle impostazioni |
+| `editor` | un JSON nel formato di Editor > Impostazioni, Esporta (`formato: "editor-impostazioni"`) | lo importa come il pulsante Importa |
+| `editor_ambiti` | quali parti di `editor` importare: `stile`, `modelli`, `menu`, `temi` | predefinito: stile, modelli, menu |
+| `pagine` | un JSON per pagina: `{slug, titolo, struttura, seo_titolo, seo_descrizione, robots, estratto}` | crea la pagina o aggiorna quella con lo stesso slug, pubblicata; la versione di prima resta in Versioni (`sito_importa_pagina()`) |
+
+Chi usa queste voci mette anche l'azione `sito-pagine-e-stile`, che da sola non fa niente: un motore più vecchio
+della 1.2.3 non la conosce e rifiuta il pacchetto, invece di saltare in silenzio le voci che non sa leggere.
+`tools/pacchetto.py` lo pretende. Un esempio completo è il sito di plumeCMS (`sito-plumecms/costruisci.py`, 23.5).
+
 **Ordine di applicazione** (`agg_applica()`):
 1. snapshot: copia del database intero e dei file che il pacchetto tocca;
 2. aggiornamento delle tabelle (`sito_schema_aggiorna` e `schema` dei moduli);
@@ -1487,7 +1508,8 @@ tabella `<prefisso>sicurezza_tentativi` dal database.
 6. test;
 7. azioni;
 8. articoli;
-9. redirect.
+9. impostazioni, editor (stile, header e footer, menu), pagine;
+10. redirect.
 
 Se un passo fallisce, il CMS **ripristina lo snapshot** e il pacchetto resta "fallito"; si può rimettere in
 attesa.
@@ -1659,6 +1681,26 @@ righe `--` e senza caratteri a 4 byte, articoli, test).
   del sito, o a `CMS_SEGRETO` se quella manca).
 - `--rifirma <zip>`: firma uno zip già fatto, anche quello di un tema; scrive `<nome>-firmato.zip`.
 
+### 23.4 `tools/manuali-pdf.js`
+
+`node tools/manuali-pdf.js` scrive `releases/manuali/manuale-tecnico.pdf` e `manuale-temi.pdf`: pandoc converte il
+Markdown, Chromium (Playwright) stampa il PDF A4 con copertina, indice cliccabile e numeri di pagina. Si rifà a ogni
+versione, dopo aver aggiornato i manuali.
+
+### 23.5 Il sito di plumeCMS: `sito-plumecms/costruisci.py`
+
+Il sito da cui si scarica plumeCMS, fatto con plumeCMS. Il costruttore scrive le pagine (home, funzionalità, temi,
+documentazione, installazione, scarica, domande frequenti) come alberi dell'editor, lo stile, header, footer e menu, e
+mette insieme i file da scaricare: i due zip del CMS, i due PDF, il tema Lavagna. Il risultato è
+`releases/sito/sito-plumecms-<versione>.zip`, un pacchetto per Impostazioni > Aggiornamenti.
+
+Ordine, a ogni versione: `python3 tools/cms-pacchetto.py --aggiornamento`, `node tools/manuali-pdf.js`,
+`python3 sito-plumecms/costruisci.py`. Le immagini stanno in `sito-plumecms/immagini/` e si rifanno dalle schermate
+con `--schermate <cartella>`. I testi delle novità per chi scarica sono in `NOVITA`, dentro il costruttore.
+
+Il pacchetto pesa qualche megabyte: il server deve accettare caricamenti di quella misura (`upload_max_filesize` e
+`post_max_size`, mostrati nei Controlli della pagina Aggiornamenti).
+
 ### 23.3 `tools/sicurezza-prova.js`
 
 Le prove di attacco, con Playwright:
@@ -1686,6 +1728,7 @@ Istruzioni in `prove/LEGGIMI.md`. Le principali:
 | `prova-pannello-temi.js` | la pagina Temi |
 | `prova-temi-partenza.js` | ogni tema di partenza: pagine, menu nell'header, contrasto del testo, nessun errore |
 | `prova-carica-temi.js` | caricare e scaricare temi da zip, con e senza PHP, firmati e no |
+| `prova-sito-plumecms.js` | il pacchetto del sito di plumeCMS applicato dal pannello, poi ogni pagina e ogni file da scaricare |
 | `prova-foto-effetti.js` | sezione Foto di Apertura e Presentazione e interruttore dell'onda, dall'editor al sito |
 | `prova-aggiornamento.js` | aggiornare dal pannello con il pacchetto del prodotto |
 | `foto-sito.js`, `quanto-foto.py` | schermate prima e dopo, confrontate al pixel |

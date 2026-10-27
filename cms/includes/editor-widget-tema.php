@@ -148,6 +148,8 @@ editor_registra_widget('descrizione_sito', ['etichetta' => 'Frase del sito', 'ic
 function tema_menu_opzioni(): array {
     $o = ['' => 'Scegli un menu'];
     try { foreach (menu_opzioni() as $id => $nome) $o[$id] = $nome; } catch (Throwable $e) { /* prove a secco */ }
+    // 1.2.3: il menu che sta in una posizione, qualunque sia il suo id (header e footer che viaggiano da un sito all'altro).
+    if (defined('MENU_POSIZIONI')) foreach (MENU_POSIZIONI as $p => $nome) if ($p !== '') $o['posizione:' . $p] = 'Quello in posizione: ' . $nome;
     return $o;
 }
 
@@ -187,7 +189,10 @@ editor_registra_widget('menu_nav', ['etichetta' => 'Menu di navigazione', 'icona
     ec('p_tipografia', 'tipografia', 'Tipografia delle voci nel pannello', [], 'stile', ['sezione' => 'Menu del telefono', 'selettore' => ' .mn-h-pannello a']),
 ]], function (array $v, array $ctx): string {
     $menu = null;
-    try { $menu = $v['menu'] !== '' ? menu_leggi((int)$v['menu']) : null; } catch (Throwable $e) { $menu = null; }
+    try {
+        $menu = str_starts_with((string)$v['menu'], 'posizione:') ? menu_per_posizione(substr((string)$v['menu'], 10))
+            : ($v['menu'] !== '' ? menu_leggi((int)$v['menu']) : null);
+    } catch (Throwable $e) { $menu = null; }
     if (!$menu) return $ctx['anteprima'] ? '<div class="ed-vuoto">Scegli un menu nel pannello (o crealo dalla voce Menu di navigazione)</div>' : '';
     $voci = menu_voci_risolte($menu);
     if (!$v['sottomenu']) $voci = array_map(fn($x) => ['figli' => []] + $x, $voci);

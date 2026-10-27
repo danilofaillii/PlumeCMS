@@ -98,7 +98,7 @@ if (!$sonoAdminMenu) {
 <div class="admin-layout">
   <aside class="admin-sidebar">
     <div class="admin-logo">
-      <strong>DF</strong> Pannello
+      <strong>plume</strong>CMS
     </div>
     <nav class="admin-nav">
       <?php foreach ($menu as $v): [$nome, $href, $icona, $attivo] = $v; $sotto = $v[4] ?? []; ?>

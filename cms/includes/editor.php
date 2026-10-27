@@ -290,7 +290,7 @@ function editor_disegna(array $albero, string $percorso = '/', bool $anteprima =
         editor_css_aggiungi($css, "$sel>.ed-contenitore>.ed-riga", 'gap', $sv['spazio_colonne'], $px, '32px');
         if ($sv['allineamento_verticale'] !== 'stretch') $css['d']["$sel>.ed-contenitore>.ed-riga"]['align-items'] = $sv['allineamento_verticale'];
         switch ($sv['sfondo']) {
-            case 'colore': if ($sv['colore_sfondo'] !== '') $css['d'][$sel]['background'] = $sv['colore_sfondo']; break;
+            case 'colore': if ($sv['colore_sfondo'] !== '') $css['d'][$sel]['background'] = editor_colore_css($sv['colore_sfondo']); break; // anche globale:<id> (1.2.3)
             case 'immagine':
                 if ($sv['immagine_sfondo'] !== '') {
                     $velo = max(0, min(95, (int)$sv['velo'])) / 100;
