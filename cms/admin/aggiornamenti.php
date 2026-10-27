@@ -2,7 +2,20 @@
 require_once __DIR__ . '/includes/auth.php';
 require_once __DIR__ . '/includes/admin-functions.php';
 require_once dirname(__DIR__) . '/includes/aggiornamenti.php';
+require_once dirname(__DIR__) . '/includes/versione-nuova.php'; // 1.3.0: c'e una versione nuova?
 require_admin();
+
+// 1.3.0: il controllo della versione chiesto dal browser (dashboard e questa pagina), dopo il caricamento: risponde in JSON.
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'versione_controlla' && !empty($_SERVER['HTTP_X_CSRF'])) {
+    verify_csrf();
+    session_write_close();
+    header('Content-Type: application/json; charset=utf-8');
+    header('Cache-Control: no-store');
+    $c = versione_controlla(!empty($_POST['forza']));
+    $nuova = versione_nuova();
+    echo json_encode(['nuova' => (bool)$nuova, 'versione' => $nuova['versione'] ?? '', 'installata' => cms_versione(), 'errore' => (string)($c['errore'] ?? '')], JSON_UNESCAPED_UNICODE);
+    exit;
+}
 
 // Avanzamento di un'operazione lunga. Il pannello lo chiede ogni secondo
 // mentre applica o ripristina, cosi si vede a che punto e invece di
@@ -80,6 +93,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         } elseif ($action === 'elimina_snapshot') {
             agg_elimina_snapshot($_POST['id'] ?? '');
             flash('success', 'Snapshot eliminato.');
+        } elseif ($action === 'versione_controlla') {
+            $c = versione_controlla(true);
+            if ($c['errore'] !== '') flash('error', 'Controllo della versione non riuscito: ' . $c['errore']);
+            elseif ($nv = versione_nuova()) flash('success', CMS_NOME . ' ' . $nv['versione'] . ' è disponibile (hai la ' . cms_versione() . '). Premi "Scarica e prepara".');
+            else flash('success', 'Hai già l\'ultima versione di ' . CMS_NOME . ' (' . cms_versione() . ').');
+        } elseif ($action === 'versione_prepara') {
+            $id = versione_scarica_e_prepara();
+            $p = agg_leggi_stato($id);
+            flash('success', 'Aggiornamento "' . ($p['nome'] ?? $id) . '" scaricato e controllato (dimensione e sha256): è nella lista qui sotto. Leggi il riepilogo e premi "Applica ora".');
+        } elseif ($action === 'versione_interruttore') {
+            save_setting('versione_controllo', !empty($_POST['attivo']) ? '1' : '0');
+            flash('success', !empty($_POST['attivo']) ? 'Il pannello controllerà da solo, una volta al giorno, se c\'è una versione nuova.' : 'Controllo automatico della versione spento.');
         } elseif ($action === 'applica_scaduti') {
             $righe = agg_applica_in_attesa();
             $esito = ['ok' => true, 'titolo' => 'Pacchetti in scadenza', 'log' => $righe ?: ['Nessun pacchetto da applicare oggi.']];
@@ -90,6 +115,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 }
 
 $controlli  = agg_controlli();
+$versioneCache = versione_cache();
+$versioneNuova = versione_nuova();
+$versioneInCoda = $versioneNuova ? versione_in_coda($versioneNuova) : null;
 $pacchetti  = agg_lista_pacchetti();
 $snapshots  = agg_lista_snapshot();
 $daApplicare = agg_pacchetti_da_applicare();
@@ -130,6 +158,7 @@ details summary{cursor:pointer;font-size:0.82rem;color:var(--text-muted)}
 .agg-passo{font-size:0.9rem;margin:0;min-height:2.4em}
 .agg-tempo{font-size:0.78rem;color:var(--text-muted);margin:0.5rem 0 0}
 .agg-lavoro-box.ko .agg-barra i{background:#a8322a}
+.agg-versione.nuova{border-color:#2d5a5f;box-shadow:0 0 0 3px rgba(45,90,95,.12)}
 </style>
 
 <?php if (cms_modulo('danilofailli')): /* la Diagnosi articoli e del modulo danilofailli */ ?><p class="agg-note" style="margin:0 0 1rem"><a class="agg-btn" href="diagnosi-articoli.php">&#129514; Diagnosi articoli</a> <span>Legge tutti gli articoli e dice quali sono rotti. Sola lettura.</span></p><?php endif; ?>
@@ -140,6 +169,30 @@ details summary{cursor:pointer;font-size:0.82rem;color:var(--text-muted)}
   <pre class="agg-log"><?= h(implode("\n", $esito['log'])) ?></pre>
 </div>
 <?php endif; ?>
+
+<div class="agg-card agg-versione<?= $versioneNuova ? ' nuova' : '' ?>" style="margin-bottom:1.2rem" id="agg-versione">
+  <h2><?= $versioneNuova ? h(CMS_NOME . ' ' . $versioneNuova['versione'] . ' è disponibile') : 'Versione' ?></h2>
+  <p class="agg-note" style="margin-top:0">Hai <?= h(CMS_NOME) ?> <b><?= h(cms_versione()) ?></b>.
+    <?php if (!versione_attivo()): ?>Il controllo automatico è spento.
+    <?php elseif (!$versioneCache): ?>Ancora nessun controllo: lo faccio adesso.
+    <?php elseif ($versioneCache['errore'] !== ''): ?>Ultimo controllo il <?= h(date('d/m/Y H:i', (int)$versioneCache['quando'])) ?>: <?= h($versioneCache['errore']) ?>
+    <?php elseif ($versioneNuova): ?>La versione nuova pesa <?= h(agg_fmt_bytes((int)$versioneNuova['dimensione'])) ?> (controllato il <?= h(date('d/m/Y H:i', (int)$versioneCache['quando'])) ?>).
+    <?php else: ?>È l'ultima (controllato il <?= h(date('d/m/Y H:i', (int)$versioneCache['quando'])) ?>).<?php endif; ?></p>
+  <div style="display:flex;gap:.5rem;flex-wrap:wrap;align-items:center;margin-top:.7rem">
+    <?php if ($versioneNuova && !$versioneInCoda): ?>
+    <form method="post" data-conferma="Scarico <?= h(CMS_NOME . ' ' . $versioneNuova['versione']) ?> dal sito ufficiale e lo metto nella lista dei pacchetti? Il sito non cambia finché non premi Applica ora.">
+      <?= csrf_field() ?><input type="hidden" name="action" value="versione_prepara">
+      <button class="agg-btn primary" type="submit">Scarica e prepara</button>
+    </form>
+    <?php elseif ($versioneInCoda): ?><span class="agg-stato in_attesa">già scaricato: è nella lista qui sotto, premi Applica ora</span><?php endif; ?>
+    <form method="post"><?= csrf_field() ?><input type="hidden" name="action" value="versione_controlla"><button class="agg-btn" type="submit">Controlla adesso</button></form>
+    <form method="post" style="margin-left:auto"><?= csrf_field() ?><input type="hidden" name="action" value="versione_interruttore">
+      <label class="agg-note" style="display:flex;gap:.4rem;align-items:center;margin:0"><input type="checkbox" name="attivo" value="1"<?= versione_attivo() ? ' checked' : '' ?> data-invia-subito> Controlla da solo, una volta al giorno</label>
+      <noscript><button class="agg-btn" type="submit">Salva</button></noscript>
+    </form>
+  </div>
+  <p class="agg-note">Il pannello chiede a <code><?= h(versione_sito()) ?></code> qual è l'ultima versione. Lo zip si scarica solo da lì, in HTTPS, e si usa solo se dimensione e impronta sha256 sono quelle annunciate.</p>
+</div>
 
 <?php if ($daApplicare): ?>
 <div class="agg-esito ko">
@@ -267,13 +320,21 @@ details summary{cursor:pointer;font-size:0.82rem;color:var(--text-muted)}
   </div>
 </div>
 
+<?php if ($_SERVER['REQUEST_METHOD'] === 'GET' && versione_da_controllare()): /* 1.3.0: il controllo del giorno, dopo il caricamento della pagina */ ?>
 <script<?= nonce_attr() ?>>
+fetch('aggiornamenti.php', { method: 'POST', credentials: 'same-origin', headers: { 'X-CSRF': <?= json_encode(csrf_token()) ?> }, body: new URLSearchParams({ action: 'versione_controlla', _csrf: <?= json_encode(csrf_token()) ?> }) })
+  .then(function (r) { return r.json(); }).then(function () { location.reload(); }).catch(function () {});
+</script>
+<?php endif; ?>
+<script<?= nonce_attr() ?>>
+document.querySelectorAll('[data-invia-subito]').forEach(function (c) { c.addEventListener('change', function () { c.form.submit(); }); });
 (function () {
   var AZIONI = {
     applica:         'Applico il pacchetto',
     ripristina:      'Ripristino lo snapshot',
     applica_scaduti: 'Applico i pacchetti in scadenza',
     carica:          'Carico il pacchetto',
+    versione_prepara: 'Scarico la versione nuova dal sito ufficiale',
     snapshot:        'Creo lo snapshot'
   };
   var overlay = document.getElementById('agg-lavoro');

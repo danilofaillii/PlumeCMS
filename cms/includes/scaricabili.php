@@ -17,6 +17,7 @@
  *   scaricabili_conta($nome)                   un download in piu (non per i robot)
  *   scaricabili_serie()                        le serie: per ognuna l'ultima versione (1.2.5)
  *   scaricabili_versioni_nel_testo($html)      {versione:<serie>} diventa il numero dell'ultima versione (1.2.5)
+ *   scaricabili_sha256($file)                  l'impronta SHA-256 di un file, ricordata finche il file non cambia (1.3.0, api/versione.php)
  *
  * Serie (1.2.5): un file con la versione nel nome (plumecms-1.2.4.zip, plumecms-1.2.4-aggiornamento.zip) fa parte di
  * una serie, il cui nome e quello del file con "ultima" al posto della versione (plumecms-ultima,
@@ -245,4 +246,25 @@ function scaricabili_conta(string $file): void {
     } catch (Throwable $e) {
         error_log('scaricabili: conteggio non salvato: ' . $e->getMessage());
     }
+}
+
+/**
+ * L'impronta SHA-256 di un file di uploads/scaricabili/ (1.3.0): la chiede api/versione.php, cosi chi scarica un
+ * aggiornamento controlla che il file sia arrivato intero. Si calcola una volta e si ricorda nell'impostazione
+ * scaricabili_impronte, con data e peso del file: se il file cambia, si ricalcola.
+ */
+function scaricabili_sha256(string $file): string {
+    $p = scaricabili_dir() . '/' . basename($file);
+    if (!is_file($p)) return '';
+    $chiave = basename($file) . '|' . filemtime($p) . '|' . filesize($p);
+    $mappa = json_decode((string)get_setting('scaricabili_impronte', '{}'), true);
+    if (!is_array($mappa)) $mappa = [];
+    if (isset($mappa[$chiave]) && preg_match('/^[a-f0-9]{64}$/', (string)$mappa[$chiave])) return $mappa[$chiave];
+    $h = (string)hash_file('sha256', $p);
+    // Solo le impronte dei file che ci sono ancora, piu quella nuova.
+    $vivi = [];
+    foreach ($mappa as $k => $v) if (is_file(scaricabili_dir() . '/' . explode('|', (string)$k)[0])) $vivi[$k] = $v;
+    $vivi[$chiave] = $h;
+    save_setting('scaricabili_impronte', json_encode(array_slice($vivi, -200, null, true)));
+    return $h;
 }
