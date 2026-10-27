@@ -42,6 +42,7 @@ tools/          cms-pacchetto.py (costruisce gli zip), pacchetto.py (pacchetti p
 prove/          prova-install.js (installazione da zero con Playwright), prova-temi.js, prova-pannello-temi.js,
                 prova-temi-partenza.js, prova-carica-temi.js (temi),
                 foto-sito.js e quanto-foto.py (schermate prima e dopo, al pixel)
+esempi/         tema-lavagna/: il tema d'esempio del manuale dei temi (provato, non entra nello zip)
 ```
 
 Stato, decisioni, contesto e diario non stanno qui: stanno nel second brain
@@ -49,6 +50,10 @@ Stato, decisioni, contesto e diario non stanno qui: stanno nel second brain
 
 ## Documenti, in quest'ordine
 
+0. `cms/docs/manuale-tecnico.md`: il manuale tecnico, tutto il CMS scritto leggendo il codice, con `file:riga`.
+   Se un documento qui sotto dice una cosa diversa, vale il manuale (appendice A: i punti superati).
+   `cms/docs/manuale-temi.md`: il manuale per chi costruisce un tema, con il tema d'esempio Lavagna.
+   Quando si cambia il codice, si aggiorna anche il manuale tecnico.
 1. `cms/docs/cms.md`: architettura (nucleo, moduli, prefisso, base URL, installatore, pacchetti).
 2. `cms/docs/cms-moduli.md`: come si scrive un modulo (manifest `modulo.php`, filtri, eventi, tipi di contenuto, menu, cron).
 3. `cms/docs/editor-pagine.md`: l'editor (sezioni, colonne, widget, controlli di gruppo, schede Stile e Avanzate, i trenta widget extra, le infografiche `ig_*`, temi).
@@ -66,7 +71,7 @@ Stato, decisioni, contesto e diario non stanno qui: stanno nel second brain
 - **Pacchetto di aggiornamento** per un'installazione esistente:
   `python3 tools/cms-pacchetto.py --aggiornamento`. Si carica dal pannello,
   Impostazioni, Aggiornamenti.
-- **Versione**: `cms/VERSIONE` (oggi 1.2.0) e una voce in `cms/CHANGELOG.md` a ogni
+- **Versione**: `cms/VERSIONE` (oggi 1.2.1) e una voce in `cms/CHANGELOG.md` a ogni
   zip con contenuto diverso. Mai cambiare il contenuto di una versione già data.
 - **Prove** prima di dire finito:
   - `php -n -d short_open_tag=1 -l` su ogni file PHP toccato, `node --check` sui js;
@@ -102,19 +107,21 @@ Le decisioni complete, con data e perché, stanno nel second brain, `plumecms/de
 
 ## Stato al 27 ottobre 2026
 
-Fatto: plumeCMS 1.2.0 con i temi (Editor > Temi, `docs/temi.md`): tre temi di partenza (Cosmo, Aria,
+Fatto: plumeCMS 1.2.1 (solo documentazione: manuale tecnico e manuale dei temi; il codice è quello della 1.2.0).
+plumeCMS 1.2.0 con i temi (Editor > Temi, `docs/temi.md`): tre temi di partenza (Cosmo, Aria,
 Bottega), temi con PHP protetti, caricamento e download da zip. Installazione provata da zero in radice e in
 sottocartella; aggiornamento 1.1.9 -> 1.2.0 dal pannello provato con sito identico al pixel prima e dopo;
 78 prove di attacco respinte (la 79esima è del modulo danilofailli). Le prove del CMS girano su PHP 8.3 con
 MySQL 8.0: su PHP 8.4.27 sono provate la sintassi di ogni file e i `.htaccess` su Apache, non il CMS intero
 (senza `pdo_mysql` nell'immagine, e i pacchetti Debian bloccati dalla rete della sessione).
-Prima installazione vera su `https://duhtron.it/test` (cartella), funzionante con la 1.1.9: da aggiornare alla 1.2.0.
+Prima installazione vera su `https://duhtron.it/test` (cartella), funzionante con la 1.1.9: da aggiornare alla 1.2.1 (lo zip di aggiornamento porta il codice della 1.2.0 e i manuali).
 Dal 27 ottobre plumeCMS vive nel suo progetto e repository (`SPOSTARE.md`).
 
 Aperto:
 - qualche testo d'esempio dei widget (Apertura, Schede, Prezzi, riquadro del test) ancora
   pensato per danilofailli.it, da rendere neutro;
 - commenti nel codice che citano danilofailli.it come esempio (innocui, da ripulire);
+- i documenti vecchi di `docs/` superati in alcuni punti (elenco nell'appendice A del manuale tecnico), da allineare;
 - `CMS_PREFISSO` ha come valore predefinito `newdf_` perché danilofailli.it non lo
   scrive nel suo config. L'installatore lo scrive sempre, quindi le installazioni
   nuove non ne risentono. Se un giorno si cambia il predefinito, prima va aggiunto

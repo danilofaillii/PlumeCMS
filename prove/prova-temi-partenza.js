@@ -1,11 +1,11 @@
 // I tre temi di partenza (cosmo, aria, bottega) attivati uno per uno (fase 5, 27 ottobre 2026): pagine che rispondono,
 // menu Principale nell'header (il tema lo indica come "posizione:principale"), contrasto leggibile del testo, nessun errore.
 // Il contrasto si misura come le norme WCAG: almeno 4,5 a 1 fra testo e sfondo dietro.
-// uso: node prova-temi-partenza.js <base> <cartella CMS installato>
+// uso: node prova-temi-partenza.js <base> <cartella CMS installato> [temi separati da virgola, predefinito cosmo,aria,bottega]
 const { chromium } = require('playwright');
 const { execFileSync } = require('child_process');
 const path = require('path');
-const [B, DIR] = process.argv.slice(2);
+const [B, DIR, TEMI = 'cosmo,aria,bottega'] = process.argv.slice(2);
 const cli = (...a) => execFileSync('php', [path.join(__dirname, 'tema-cli.php'), DIR, ...a], { encoding: 'utf8' });
 let n = 0, ko = 0; const ok = (t, c, extra = '') => { n++; if (!c) ko++; console.log((c ? 'OK  ' : 'KO  ') + t + (extra ? ' ' + JSON.stringify(extra).slice(0, 220) : '')); };
 
@@ -24,7 +24,7 @@ const contrasto = (p, sel) => p.evaluate((sel) => {
 
 (async () => {
   const br = await chromium.launch();
-  for (const tema of ['cosmo', 'aria', 'bottega']) {
+  for (const tema of TEMI.split(',')) {
     const att = cli('attiva', tema);
     ok(`${tema}: attivato`, att.includes('Tema attivo'), att.split('\n').pop());
     const p = await (await br.newContext({ viewport: { width: 1280, height: 900 } })).newPage();

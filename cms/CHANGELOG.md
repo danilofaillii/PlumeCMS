@@ -2,6 +2,21 @@
 
 Il prodotto si chiama **plumeCMS** (nome scelto il 26 ottobre 2026; prima, per poche ore, "CarbonaraCMS", e ancora prima il provvisorio "Officina": gli zip vecchi si chiamavano `officina-*` e `carbonaracms-*`).
 
+## 1.2.1 (27 ottobre 2026) - I due manuali
+
+Solo documentazione: il codice è quello della 1.2.0.
+
+- **Manuale tecnico** (`docs/manuale-tecnico.md`): tutto il CMS pezzo per pezzo, scritto leggendo il codice.
+  Installazione, configurazione e costanti, percorso di una richiesta, cartelle e base URL, database e tabelle,
+  pannello e ruoli, contenuti, editor (albero, limiti, controlli, schede, i 79 widget, come se ne scrive uno nuovo),
+  Stile del sito, header, footer e menu, temi, versioni, media, form, popup, newsletter, posta, SEO e AEO, moduli con
+  l'elenco completo di filtri ed eventi, sicurezza, aggiornamenti, cron, `.htaccess` e Nginx, log, strumenti e prove,
+  risoluzione dei problemi, riferimento delle funzioni. In appendice, i punti in cui i documenti più vecchi non
+  corrispondono più al codice.
+- **Manuale dei temi** (`docs/manuale-temi.md`): come si costruisce un tema da zero, file per file, con un tema
+  d'esempio completo (Lavagna) provato su un plumeCMS vero.
+- Nello zip entrano anche `docs/cms-moduli.md` e `docs/versioni.md`, che prima restavano fuori.
+
 ## 1.2.0 (27 ottobre 2026) - I temi
 
 - **Editor > Temi**, pagina nuova (solo amministratore): un tema cambia l'aspetto intero del sito in un colpo solo,
