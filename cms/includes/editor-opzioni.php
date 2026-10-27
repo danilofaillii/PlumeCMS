@@ -21,7 +21,7 @@
 const EDITOR_OPZIONI_PREDEFINITE = ['versioni_limite' => 50, 'pubblica' => 'tutti', 'colonne_max' => 4, 'animazioni' => 1, 'widget_disattivi' => []];
 const EDITOR_ESPORTA_FORMATO = 'editor-impostazioni';
 const EDITOR_ESPORTA_VERSIONE = 1;
-const EDITOR_ESPORTA_AMBITI = ['stile' => 'Stile del sito', 'modelli' => 'Header e footer', 'menu' => 'Menu di navigazione', 'temi' => 'Temi delle infografiche', 'impostazioni' => "Impostazioni dell'editor", 'widget_disattivi' => 'Widget attivi'];
+const EDITOR_ESPORTA_AMBITI = ['stile' => 'Stile del sito', 'modelli' => 'Header e footer', 'menu' => 'Menu di navigazione', 'temi' => 'Colori delle infografiche', 'impostazioni' => "Impostazioni dell'editor", 'widget_disattivi' => 'Widget attivi'];
 
 /** Tutte le opzioni, con i predefiniti per quelle mai salvate. Cache per richiesta. */
 function editor_opzioni(bool $ricarica = false): array {
@@ -337,7 +337,7 @@ function editor_importa(array $d, array $ambiti, string $autore = ''): array {
             }
             $n++;
         }
-        $log[] = "Temi delle infografiche: $n temi scritti.";
+        $log[] = "Colori delle infografiche: $n temi scritti.";
     }
     $opz = [];
     if (in_array('impostazioni', $ambiti, true) && isset($d['impostazioni'])) $opz = array_intersect_key($d['impostazioni'], array_flip(['versioni_limite', 'pubblica', 'colonne_max', 'animazioni']));

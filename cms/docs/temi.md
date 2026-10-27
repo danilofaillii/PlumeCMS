@@ -4,8 +4,9 @@ Decisi con Danilo il 27 ottobre 2026: un tema cambia l'aspetto intero del sito (
 footer, CSS) e può contenere PHP, come i temi di WordPress. Menu, pagine, articoli e immagini non si toccano: sono
 contenuti, non aspetto. Motore in `includes/temi.php`.
 
-Stato: fase 1 (colori del CSS in variabili, vedi `stile-sito.md`) e fase 2 (motore) fatte. Da fare: pagina
-Editor > Temi nel pannello, colori delle infografiche dal tema, i tre temi di partenza, caricamento e download degli zip.
+Stato: fase 1 (colori del CSS in variabili, vedi `stile-sito.md`), fase 2 (motore) e fase 3 (pagina Editor > Temi,
+`admin/temi.php`, vedi `pannello.md`) fatte. Da fare: colori delle infografiche dal tema, i tre temi di partenza,
+caricamento e download degli zip.
 
 ## Com'è fatto un tema
 
@@ -87,4 +88,5 @@ moduli: se un modulo e il tema cambiano la stessa cosa, vince il tema.
 
 ## Prove
 
-`prove/prova-temi.js` (32 controlli) con i temi di collaudo creati da `prove/temi-collaudo.php`. Vedi `prove/LEGGIMI.md`.
+`prove/prova-temi.js` (32 controlli, il motore) e `prove/prova-pannello-temi.js` (31 controlli, la pagina del pannello come un utente,
+anche con un redattore che non deve entrare), con i temi di collaudo creati da `prove/temi-collaudo.php`. Vedi `prove/LEGGIMI.md`.

@@ -6,7 +6,7 @@ $ctTipo = $_GET['tipo'] ?? '';
 $ctQui = in_array($qui, ['contenuti.php', 'contenuto.php', 'editor.php'], true);
 $sonoAdminMenu = is_admin();
 // Le pagine del gruppo Editor: con una di queste aperta il gruppo si apre da solo.
-const EDITOR_MENU_PAGINE = ['design.php', 'modelli.php', 'menu.php', 'editor-temi.php', 'editor-widget.php', 'versioni.php', 'editor-impostazioni.php', 'informazioni.php'];
+const EDITOR_MENU_PAGINE = ['temi.php', 'design.php', 'modelli.php', 'menu.php', 'editor-temi.php', 'editor-widget.php', 'versioni.php', 'editor-impostazioni.php', 'informazioni.php'];
 $homeId = (int)db()->query('SELECT id FROM ' . tbl('pages') . ' WHERE slug = ' . db()->quote((string)get_setting('pagina_home', '')))->fetchColumn();
 
 /**
@@ -32,10 +32,11 @@ $menu = [
     ]],
     // menu (26 ottobre): tutto quello che è dell'editor in un gruppo solo. Le pagine nuove: Temi, Widget, Versioni (agente versioni), Impostazioni dell'editor.
     ['Editor', 'design.php', '&#9998;', in_array($qui, EDITOR_MENU_PAGINE, true), array_values(array_filter([
+        $sonoAdminMenu ? ['Temi', 'temi.php', $qui === 'temi.php'] : null,
         ['Stile del sito', 'design.php', $qui === 'design.php'],
         ['Header e footer', 'modelli.php', $qui === 'modelli.php'],
         ['Menu di navigazione', 'menu.php', $qui === 'menu.php'],
-        ['Temi delle infografiche', 'editor-temi.php', $qui === 'editor-temi.php'],
+        ['Colori delle infografiche', 'editor-temi.php', $qui === 'editor-temi.php'],
         $sonoAdminMenu ? ['Widget', 'editor-widget.php', $qui === 'editor-widget.php'] : null,
         ['Versioni', 'versioni.php', $qui === 'versioni.php'],
         $sonoAdminMenu ? ['Impostazioni dell\'editor', 'editor-impostazioni.php', $qui === 'editor-impostazioni.php'] : null,

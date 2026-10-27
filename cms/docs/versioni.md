@@ -13,7 +13,7 @@ pagina del pannello **Editor > Versioni** (`admin/versioni.php`).
 | Header e footer | *Pubblica* e *Salva bozza* nell'editor del modello; la stellina del predefinito; pubblica / metti in bozza; le condizioni | `predefinito: Header 2 al posto di Header del sito` (e una riga sul modello che non lo è più), `condizioni cambiate` |
 | Stile del sito | ogni *Salva*, *Versione precedente*, *Ripristina predefiniti* | `versione precedente richiamata`, `ripristinati i predefiniti` |
 | Menu di navigazione | ogni *Salva il menu*; l'eliminazione (così si può ricreare) | `eliminato (un ripristino lo ricrea)` |
-| Temi delle infografiche | salva, rinomina, elimina | `creato`, `rinominato`, `eliminato (un ripristino lo ricrea)` |
+| Colori delle infografiche | salva, rinomina, elimina | `creato`, `rinominato`, `eliminato (un ripristino lo ricrea)` |
 | Impostazioni dell'editor | ogni salvataggio della pagina Impostazioni dell'editor | |
 
 Una versione nasce **solo se qualcosa è cambiato davvero**: di ogni salvataggio si calcola un'impronta (sha1 dei dati con le chiavi in

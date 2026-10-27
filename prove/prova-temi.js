@@ -32,8 +32,11 @@ const varCss = (p, v) => p.evaluate((v) => getComputedStyle(document.documentEle
   ok('anteprima: CSS del tema caricato e vince su sito.css', await varCss(p, '--primario-chiaro') === '#ff8a00', await varCss(p, '--primario-chiaro'));
   await p.goto(B + '/non-esiste/?preview=1&tema=prova', { waitUntil: 'networkidle' });
   ok('anteprima: vista 404 del tema', (await p.locator('main').innerText()).includes('404 del tema Prova'));
+  // Un visitatore che scrive lo stesso indirizzo vede la pagina normale: stesso sfondo, stesso header, nessun CSS di tema.
+  await anonimo.goto(B + '/', { waitUntil: 'networkidle' });
+  const headerNormale = await anonimo.locator('header').innerText();
   await anonimo.goto(B + '/?preview=1&tema=prova', { waitUntil: 'networkidle' });
-  ok('anteprima chiesta da un visitatore: ignorata', await sfondo(anonimo) === sfondoBase && !(await anonimo.content()).includes('tema Prova'));
+  ok('anteprima chiesta da un visitatore: ignorata', await sfondo(anonimo) === sfondoBase && await anonimo.locator('header').innerText() === headerNormale && await anonimo.locator('#tema-css').count() === 0);
   await p.goto(B + '/', { waitUntil: 'networkidle' });
   ok('dopo l\'anteprima il sito dell\'amministratore resta di base', await sfondo(p) === sfondoBase);
   ok('anteprima: niente salvato', /scelto= attivo=/.test(cli('stato')) && /primario=#a855f7/.test(cli('stato')), cli('stato'));

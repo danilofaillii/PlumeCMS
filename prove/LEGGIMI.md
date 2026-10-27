@@ -69,3 +69,11 @@ all'aspetto di base.
    "Footer Prova" come predefiniti: per le foto prima e dopo rimetti predefiniti quelli di partenza.
 
 Il `.htaccess` dei temi (PHP vietato, CSS servito) va provato su Apache vero: il server integrato di PHP non lo legge.
+
+## prova-pannello-temi.js (temi, fase 3)
+
+La pagina Editor > Temi come un utente: voce di menu, schede, Anteprima in una scheda nuova, Attiva con la conferma
+prima rifiutata e poi accettata, messaggio, Versioni, avviso di tema guasto, ritorno all'aspetto di base, POST senza
+token CSRF e con un nome `../`, redattore che non vede la voce e viene rimandato indietro.
+`node prove/prova-pannello-temi.js <base> <cartella CMS installato> <utente> <password> <cartella schermate>`.
+Atteso: 31 su 31. Crea l'utente `redattore-prova` (con `tema-cli.php redattore`). Lascia quattro schermate.

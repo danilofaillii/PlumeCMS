@@ -1,6 +1,6 @@
 <?php
 /**
- * Temi delle infografiche (gruppo Editor): l'elenco dei temi dei widget ig_* con l'anteprima dei colori.
+ * Colori delle infografiche (gruppo Editor): l'elenco dei temi dei widget ig_* con l'anteprima dei colori.
  * I dieci preimpostati si vedono e si possono duplicare; quelli salvati (tabella editor_temi) si rinominano,
  * si duplicano, si eliminano con conferma, si esportano in JSON e si importano da un JSON.
  *
@@ -14,7 +14,7 @@ require_once __DIR__ . '/includes/admin-functions.php';
 require_once dirname(__DIR__) . '/includes/editor.php';
 require_once dirname(__DIR__) . '/includes/editor-temi.php';
 require_admin(); // sicurezza (ruoli): solo amministratore
-$adminTitle = 'Temi delle infografiche';
+$adminTitle = 'Colori delle infografiche';
 $autore = (string)(current_user()['username'] ?? '');
 
 /** Un tema come viaggia nel JSON: nome, descrizione e i valori di stile. */

@@ -144,7 +144,7 @@ function versioni_ambiti(): array {
     } catch (Throwable $e) {
         $a['contenuto:pagine'] = 'Pagine'; $a['contenuto:articoli'] = 'Articoli';
     }
-    return $a + ['modello' => 'Header e footer', 'menu' => 'Menu di navigazione', 'stile' => 'Stile del sito', 'tema' => 'Temi delle infografiche', 'impostazioni' => 'Impostazioni dell\'editor'];
+    return $a + ['modello' => 'Header e footer', 'menu' => 'Menu di navigazione', 'stile' => 'Stile del sito', 'tema' => 'Colori delle infografiche', 'impostazioni' => 'Impostazioni dell\'editor'];
 }
 
 function versioni_ambito_etichetta(string $ambito): string {

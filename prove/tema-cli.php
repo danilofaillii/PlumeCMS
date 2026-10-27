@@ -1,5 +1,5 @@
 <?php
-// uso: php tema-cli.php <cartella CMS> elenco | attiva <nome> | disattiva | stato | ripristina-stile
+// uso: php tema-cli.php <cartella CMS> elenco | attiva <nome> | disattiva | stato | ripristina-stile | redattore <password>
 $_SERVER['HTTP_HOST'] = '127.0.0.1'; $_SERVER['REQUEST_URI'] = '/';
 require $argv[1] . '/includes/config.php';
 require_once $argv[1] . '/includes/temi.php';
@@ -9,6 +9,14 @@ switch ($argv[2]) {
         break;
     case 'attiva': foreach (temi_attiva($argv[3], 'collaudo') as $r) echo "  $r\n"; break;
     case 'disattiva': temi_disattiva(); echo "nessun tema\n"; break;
+    case 'redattore':
+        // Un utente con il ruolo di redattore per le prove dei permessi (redattore-prova), con la password data.
+        require_once $argv[1] . '/includes/sicurezza.php';
+        db()->prepare('DELETE FROM ' . tbl('users') . ' WHERE username = ?')->execute(['redattore-prova']);
+        db()->prepare('INSERT INTO ' . tbl('users') . ' (username, email, display_name, role, password_hash) VALUES (?,?,?,?,?)')
+            ->execute(['redattore-prova', 'redattore@esempio.it', 'Redattore di prova', 'editor', sicurezza_password_hash($argv[3])]);
+        echo "redattore-prova creato\n";
+        break;
     case 'ripristina-stile': design_ripristina(); echo "stile predefinito\n"; break;
     case 'stato':
         echo 'scelto=', temi_scelto(), ' attivo=', temi_attivo(), ' guasto=', json_encode(temi_guasto_info(), JSON_UNESCAPED_UNICODE), "\n";

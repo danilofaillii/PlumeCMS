@@ -251,7 +251,7 @@ senza scorrimento orizzontale) e `prova-editor.js` (23 controlli nell'editor: ta
 
 ## Widget e Impostazioni dell'editor (26 ottobre 2026)
 
-Il gruppo **Editor** del menu (`docs/pannello.md`) ha due pagine nuove che parlano con l'editor, più i Temi delle infografiche e le Versioni.
+Il gruppo **Editor** del menu (`docs/pannello.md`) ha due pagine nuove che parlano con l'editor, più i Colori delle infografiche e le Versioni.
 
 **Widget** (`admin/editor-widget.php`): l'elenco di `editor_definizioni()` senza sezione e colonna, per gruppo, con la provenienza. `editor_registra_widget()` scrive nella definizione la chiave `origine` (`nucleo`, oppure `modulo:<nome>` quando il file che registra sta in `moduli/<nome>/`); i widget scritti direttamente in `editor-widget.php` (base, contenuto, `ig_*`) sono del nucleo. L'interruttore salva i tipi spenti in `editor_widget_disattivi`; `admin/editor.php` li passa all'editor come `D.widgetDisattivi` e `disegnaElencoWidget()` in `editor.js` li salta. Niente altro cambia: `editor_disegna()` continua a disegnare ogni widget che trova nell'albero, la scheda Modifica si apre anche su un widget spento, e un tipo spento che un modulo non registra più resta spento finché il modulo torna.
 
