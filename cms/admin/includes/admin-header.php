@@ -21,6 +21,7 @@ $menu = [
     ['Categorie', 'categories.php', '📁', $qui === 'categories.php' && ($_GET['tipo'] ?? '') !== 'tag'],
     ['Tag', 'categories.php?tipo=tag', '🏷', $qui === 'categories.php' && ($_GET['tipo'] ?? '') === 'tag'],
     ['Media', 'media.php', '🖼', $qui === 'media.php'],
+    $sonoAdminMenu ? ['Download', 'scaricabili.php', '&#11015;', $qui === 'scaricabili.php'] : null, // download manager (1.2.4)
     $sonoAdminMenu ? ['Utenti', 'utenti.php', '👤', $qui === 'utenti.php'] : null,
     ['Newsletter e contatti', 'newsletter.php', '✉️', in_array($qui, ['newsletter.php', 'newsletter-campagna.php', 'contatti.php', 'newsletter-flussi.php', 'newsletter-statistiche.php', 'form-submissions.php'], true), [
         ['Campagne', 'newsletter.php', in_array($qui, ['newsletter.php', 'newsletter-campagna.php'], true) && !in_array($_GET['scheda'] ?? '', ['iscritti', 'liste', 'impostazioni'], true)],

@@ -246,27 +246,27 @@ function sito_importa_pagina(array $j): string {
 }
 
 /**
- * I file da scaricare dal sito (1.2.3): stanno in uploads/scaricabili/ e si aprono da /scarica/<nome>/, senza
- * estensione nell'indirizzo (il .htaccess del CMS vieta gli .zip, e cosi l'indirizzo non dipende dal server).
- * Il nome trova il primo file <nome>.zip o <nome>.pdf. Ritorna il percorso, oppure null.
+ * I file da scaricare dal sito (1.2.3; download manager dalla 1.2.4, includes/scaricabili.php): stanno in
+ * uploads/scaricabili/ e si aprono da /scarica/<nome>/, senza estensione nell'indirizzo (il .htaccess del CMS vieta gli
+ * .zip, e cosi l'indirizzo non dipende dal server). Ritorna il percorso del file, oppure null.
  */
-const SITO_SCARICABILI = ['zip' => 'application/zip', 'pdf' => 'application/pdf'];
-
 function sito_scaricabile(string $nome): ?string {
     if (!preg_match('/^[a-z0-9][a-z0-9._-]{0,120}$/', $nome) || str_contains($nome, '..')) return null;
-    $dir = cms_uploads_dir() . '/scaricabili';
-    foreach (array_keys(SITO_SCARICABILI) as $ext) if (is_file("$dir/$nome.$ext")) return "$dir/$nome.$ext";
-    return null;
+    require_once __DIR__ . '/scaricabili.php';
+    $x = scaricabili_leggi($nome);
+    return $x ? scaricabili_dir() . '/' . $x['file'] : null;
 }
 
-/** Manda un file scaricabile: tipo giusto, come allegato, una cache di un'ora. */
+/** Manda un file scaricabile: tipo giusto, come allegato, una cache di un'ora; e lo conta (non per i robot). */
 function sito_manda_scaricabile(string $file): void {
+    require_once __DIR__ . '/scaricabili.php';
     $ext = strtolower(pathinfo($file, PATHINFO_EXTENSION));
-    header('Content-Type: ' . SITO_SCARICABILI[$ext]);
+    header('Content-Type: ' . SCARICABILI_TIPI[$ext][0]);
     header('Content-Disposition: attachment; filename="' . basename($file) . '"');
     header('Content-Length: ' . filesize($file));
     header('Cache-Control: public, max-age=3600');
-    if ($ext === 'zip') header('X-Robots-Tag: noindex');
+    header('X-Robots-Tag: noindex');
+    scaricabili_conta($file);
     readfile($file);
 }
 

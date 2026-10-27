@@ -508,6 +508,10 @@
   function selectDa(opzioni, valore, salva) {
     var c = document.createElement('select');
     Object.keys(opzioni).forEach(function (k) { var o = document.createElement('option'); o.value = k; o.textContent = opzioni[k]; c.appendChild(o); });
+    // Un valore che non sta nell'elenco (un file del widget Download eliminato, o non ancora arrivato) si vede, non si perde.
+    if (valore !== undefined && valore !== null && String(valore) !== '' && !Object.prototype.hasOwnProperty.call(opzioni, String(valore))) {
+      var x = document.createElement('option'); x.value = String(valore); x.textContent = String(valore) + ' (non trovato)'; c.appendChild(x);
+    }
     c.value = valore === undefined || valore === null ? '' : String(valore);
     if (c.value !== String(valore === undefined || valore === null ? '' : valore)) c.value = '';
     c.addEventListener('change', function () { salva(c.value); });

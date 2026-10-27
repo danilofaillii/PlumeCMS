@@ -159,12 +159,12 @@ function cms_installa_tutto(): array {
     $log = [];
     foreach (cms_schema_base() as $nome => $sql) { db()->exec($sql); $log[] = "tabella $nome"; }
     $inc = dirname(__DIR__) . '/includes/';
-    foreach (['functions', 'sito', 'contenuti', 'editor', 'editor-temi', 'design', 'menu-nav', 'modelli', 'seo', 'form', 'popup', 'moduli', 'newsletter', 'newsletter-flussi', 'media', 'versioni'] as $f) {
+    foreach (['functions', 'sito', 'contenuti', 'editor', 'editor-temi', 'design', 'menu-nav', 'modelli', 'seo', 'form', 'popup', 'moduli', 'newsletter', 'newsletter-flussi', 'media', 'versioni', 'scaricabili'] as $f) {
         if (is_file($inc . $f . '.php')) require_once $inc . $f . '.php';
     }
     foreach (sito_schema_aggiorna() as $r) $log[] = $r;
     foreach (array_merge(contenuti_schema_tabelle(), sito_schema_tabelle()) as $nome => $sql) { db()->exec($sql); $log[] = "tabella $nome"; }
-    foreach (['editor_temi_schema', 'design_installa', 'menu_installa', 'modelli_installa', 'seo_installa', 'form_schema', 'popup_schema', 'moduli_schema', 'newsletter_schema', 'newsletter_flussi_schema', 'versioni_installa'] as $fn) {
+    foreach (['editor_temi_schema', 'design_installa', 'menu_installa', 'modelli_installa', 'seo_installa', 'form_schema', 'popup_schema', 'moduli_schema', 'newsletter_schema', 'newsletter_flussi_schema', 'versioni_installa', 'scaricabili_installa'] as $fn) {
         if (function_exists($fn)) { $fn(); $log[] = $fn; }
     }
     sito_viste(); $log[] = 'viste degli articoli';

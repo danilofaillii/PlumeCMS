@@ -71,6 +71,7 @@ const statoPacchetto = (nome) => {
   // I file da scaricare: i link delle pagine portano a file veri, con il tipo giusto.
   await v.goto(B + '/scarica/', { waitUntil: 'networkidle' });
   const link = await v.locator('a[href*="/scarica/"]').evaluateAll(as => [...new Set(as.map(a => a.getAttribute('href')).filter(h => /\/scarica\/[^/]+\/$/.test(h)))]);
+  ok('la pagina Scarica, widget Download: cinque file, tutti presenti', await v.locator('.ed-dl-voce').count() === 5 && await v.locator('.ed-dl-mancante').count() === 0, await v.locator('.ed-dl-titolo').allInnerTexts());
   ok('la pagina Scarica ha i due zip', link.some(h => h.includes(`plumecms-${V}/`)) && link.some(h => h.includes(`plumecms-${V}-aggiornamento/`)), link);
   for (const [u, tipo, min] of [[`/scarica/plumecms-${V}/`, 'application/zip', 500000], [`/scarica/plumecms-${V}-aggiornamento/`, 'application/zip', 500000],
     ['/scarica/manuale-tecnico/', 'application/pdf', 300000], ['/scarica/manuale-temi/', 'application/pdf', 300000], ['/scarica/tema-lavagna/', 'application/zip', 1000]]) {

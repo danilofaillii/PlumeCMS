@@ -67,6 +67,8 @@ function editor_pulisci_valore(array $ctl, $val) {
             return editor_pulisci_colore($val);
         case 'scelta':
             $val = (string)$val;
+            // 'accetta' (1.2.4): un'espressione regolare per i valori buoni anche fuori elenco (un file che arriva dopo la pagina).
+            if (!array_key_exists($val, $ctl['opzioni']) && !empty($ctl['accetta']) && preg_match($ctl['accetta'], $val)) return $val;
             return array_key_exists($val, $ctl['opzioni']) ? $val : (string)(is_array($ctl['predefinito']) ? ($ctl['predefinito']['d'] ?? '') : $ctl['predefinito']);
         case 'immagine':
             $val = trim((string)$val);

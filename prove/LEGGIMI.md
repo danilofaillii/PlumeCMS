@@ -40,7 +40,7 @@ Per cambiare CSS senza cambiare il sito. Nate con la fase 1 dei temi (colori di 
 
 1. Installa il CMS (vedi sopra) e avvialo con `php -S 127.0.0.1:8099 -t <cartella> prove/router-php-s.php`
    (il router fa quello che fa il `.htaccess`: file veri serviti, il resto a `index.php`).
-2. `php prove/pagina-widget.php <cartella>` crea la pagina `/tutti-i-widget/` con un widget per tipo (79), valori di partenza.
+2. `php prove/pagina-widget.php <cartella>` crea la pagina `/tutti-i-widget/` con un widget per tipo (80 dalla 1.2.4), valori di partenza.
 3. `node prove/foto-sito.js http://127.0.0.1:8099 <foto-prima>`; poi cambia il CSS nella cartella installata e
    `node prove/foto-sito.js http://127.0.0.1:8099 <foto-dopo>`.
 4. `python3 -I prove/quanto-foto.py <foto-prima> <foto-dopo>`: per ogni pagina lo scarto massimo e quanti pixel
@@ -130,6 +130,15 @@ Il sito di plumeCMS: carica e applica dal pannello il pacchetto di `sito-plumecm
 pagine da visitatore (titoli, menu, immagini, favicon) e scarica davvero gli zip e i PDF da `/scarica/<nome>/`.
 Serve un plumeCMS 1.2.3 o successivo.
 `node prove/prova-sito-plumecms.js <base> <cartella CMS> <utente> <password> <parte-1.zip,parte-2.zip,...> <versione>`: le parti si
-caricano e si applicano in ordine. Atteso: 37 su 37 con cinque parti. Provata anche con il server limitato a 1,2 MB
-(`php -d upload_max_filesize=1200K -S ...`), come il primo hosting vero.
+caricano e si applicano in ordine. Atteso: 36 su 36 con quattro parti (1.2.4). Provata con il server limitato a 2 MB
+(`php -d upload_max_filesize=2M -S ...`), il predefinito di PHP; nella 1.2.3 anche a 1,2 MB, con cinque parti.
 Si può rilanciare sullo stesso sito: la seconda volta le pagine si aggiornano invece di nascere.
+
+## prova-download.js (1.2.4)
+
+Il download manager come un utente: carica un PDF con titolo, descrizione e versione dalla pagina Download; prova i
+caricamenti che vanno rifiutati (stesso nome senza Sostituisci, un testo chiamato .pdf, un .php, uno .zip con lo stesso
+nome del PDF); sostituisce il file e controlla che titolo e versione restino; cambia il titolo; mette il widget in una
+pagina (`prove/pagina-download.php`); guarda la pagina da visitatore; scarica come persona e come Googlebot e controlla
+che conti solo la persona; elimina il file. Serve il file manuale-tecnico in Download (il sito di plumeCMS lo ha).
+`node prove/prova-download.js <base> <cartella CMS> <utente> <password>`. Atteso: 27 su 27.

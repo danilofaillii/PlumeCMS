@@ -60,7 +60,7 @@ function editor_carica_widget_esterni(): void {
     if ($r['caricato']) return;
     $r['caricato'] = true;
     $file = [];
-    foreach (['editor-widget-tema.php', 'editor-widget-extra.php'] as $f) $file[] = __DIR__ . '/' . $f;
+    foreach (['editor-widget-tema.php', 'editor-widget-extra.php', 'editor-widget-download.php'] as $f) $file[] = __DIR__ . '/' . $f;
     foreach (cms_moduli_elenco('widget') as $x) $file[] = (string)$x['valore']; // i widget dichiarati dai moduli
     foreach ($file as $f) {
         if (!is_file($f)) continue;

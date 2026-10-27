@@ -257,7 +257,7 @@ def main():
             errore('--firma: manca la variabile d\'ambiente PACCHETTO_CHIAVE (il valore di CMS_FIRMA_PACCHETTI del server)')
         firma = firma_pacchetto(cartella, dentro, chiave)
         m['firma'] = firma
-    with zipfile.ZipFile(nome_zip, 'w', zipfile.ZIP_DEFLATED) as z:
+    with zipfile.ZipFile(nome_zip, 'w', zipfile.ZIP_DEFLATED, compresslevel=9) as z:
         if firma:
             z.writestr('manifest.json', json.dumps(m, ensure_ascii=False, indent=2))
         else:

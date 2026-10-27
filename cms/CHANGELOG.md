@@ -2,6 +2,18 @@
 
 Il prodotto si chiama **plumeCMS** (nome scelto il 26 ottobre 2026; prima, per poche ore, "CarbonaraCMS", e ancora prima il provvisorio "Officina": gli zip vecchi si chiamavano `officina-*` e `carbonaracms-*`).
 
+## 1.2.4 (27 ottobre 2026) - Download manager
+
+- **Pannello, voce Download** (sotto Media, solo amministratore): i file che il sito offre da scaricare. Carichi un file
+  con titolo, descrizione e versione; con **Sostituisci** metti la versione nuova allo stesso indirizzo; vedi quante
+  volte è stato scaricato e quando l'ultima; copi l'indirizzo con un clic; elimini.
+- **Widget Download** (gruppo "Dal sito"): i file scelti, o gli ultimi caricati, con icona del tipo, titolo,
+  descrizione, tipo e peso, versione, data, quante volte è stato scaricato e il pulsante. A elenco o a schede.
+- Tipi ammessi: pdf, zip, epub, docx, xlsx, pptx, odt, ods, mp3, txt, csv. Il contenuto si controlla: un file con il nome
+  sbagliato non entra.
+- Il conteggio è delle persone: i robot dei motori di ricerca e i programmi automatici non contano.
+- Ogni file si scarica da `/scarica/<nome>/`, come nella 1.2.3.
+
 ## 1.2.3 (27 ottobre 2026) - Il sito di plumeCMS e i manuali in PDF
 
 - **Manuali in PDF**: `tools/manuali-pdf.js` stampa il manuale tecnico e quello dei temi, con copertina, indice

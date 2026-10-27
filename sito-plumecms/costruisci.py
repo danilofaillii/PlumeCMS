@@ -9,7 +9,7 @@ Prima di lanciarlo:
 
 uso: python3 sito-plumecms/costruisci.py [--schermate <cartella di png>] [--max-kb <KB>]
   --schermate rifà le immagini di sito-plumecms/immagini/ dalle schermate (vedi schermate.js).
-  --max-kb    il peso massimo di ogni parte (predefinito 1180: passa dove passa il pacchetto del CMS).
+  --max-kb    il peso massimo di ogni parte (predefinito 1900: sotto i 2 MB, il limite predefinito di PHP).
 Scrive releases/sito/sito-plumecms-<versione>-parte-<k>-di-<n>.zip: si caricano in ordine, dopo il CMS.
 
 Il pacchetto, applicato a un plumeCMS: nome e descrizioni del sito, Stile del sito, header e footer (predefiniti),
@@ -140,12 +140,12 @@ def home():
                     {'titolo': 'Scegli il vestito', 'testo': 'Tre temi pronti: Cosmo, Aria, Bottega. Un clic e il sito cambia aspetto. I tuoi testi restano dove sono.'},
                     {'titolo': 'Scrivi e pubblica', 'testo': 'Trascini sezioni, colonne e widget, guardi l\'anteprima, premi Pubblica. Se sbagli, torni indietro: ogni modifica resta nelle versioni.'}])]],
               **spazi(48, 72))
-    p.sezione([[w('numeri', colonne={'d': 4, 't': 2, 'm': 2}, voci=[{'valore': '5', 'etichetta': 'passi per installarlo'}, {'valore': '79', 'etichetta': 'widget nell\'editor'},
+    p.sezione([[w('numeri', colonne={'d': 4, 't': 2, 'm': 2}, voci=[{'valore': '5', 'etichetta': 'passi per installarlo'}, {'valore': '80', 'etichetta': 'widget nell\'editor'},
                                   {'valore': '3', 'etichetta': 'temi pronti da indossare'}, {'valore': '0', 'etichetta': 'plugin da tenere aggiornati'}])]],
               **tinta(), **spazi(56, 56))
     # Le armi del viaggio: cosa c'è dentro.
     funzioni = [
-        ('pennello', 'Editor visuale', 'Sezioni, colonne e 79 widget, con le schede Contenuto, Stile e Avanzate per ogni elemento. Vedi quello che fai mentre lo fai.', '/funzionalita/#editor'),
+        ('pennello', 'Editor visuale', 'Sezioni, colonne e 80 widget, con le schede Contenuto, Stile e Avanzate per ogni elemento. Vedi quello che fai mentre lo fai.', '/funzionalita/#editor'),
         ('tavolozza', 'Temi', 'Tre temi pronti e un manuale per disegnarti il tuo. Il tema cambia l\'aspetto, mai i contenuti.', '/temi/'),
         ('storia', 'Versioni', 'Ogni salvataggio lascia una versione: la confronti, la guardi in anteprima, ci torni con un clic.', '/funzionalita/#versioni'),
         ('grafico-su', 'SEO e AEO', 'Sitemap, robots, dati strutturati, llms.txt, IndexNow e Search Console. Per Google e per le intelligenze artificiali.', '/funzionalita/#seo'),
@@ -175,7 +175,7 @@ def funzionalita():
     blocchi = [
         ('editor', 'editor.webp', 'L\'editor visuale: sezioni, colonne, widget',
          ['Costruisci le pagine trascinando sezioni, colonne e widget. Ogni elemento ha le sue tre schede, come negli editor che conosci: <strong>Contenuto</strong>, <strong>Stile</strong> e <strong>Avanzate</strong>.',
-          '<ul><li>79 widget: titoli, testi, immagini, pulsanti, gallerie, caroselli, prezzi, domande frequenti, contatori, mappe e 14 infografiche.</li>'
+          '<ul><li>80 widget: titoli, testi, immagini, pulsanti, gallerie, caroselli, prezzi, domande frequenti, contatori, mappe e 14 infografiche.</li>'
           '<li>Anteprima per computer, tablet e telefono, con valori diversi per ogni misura.</li>'
           '<li>Colori e caratteri globali: cambi il colore principale e cambia ovunque.</li>'
           '<li>Foto con velo, bianco e nero ed effetti animati, dalla 1.2.2.</li></ul>']),
@@ -320,6 +320,15 @@ def scarica(note):
                [w('invito_libero', icona='freccia-ricarica', titolo='Hai già plumeCMS', livello='h2',
                   testo='Il pacchetto di aggiornamento: lo carichi da Impostazioni, Aggiornamenti e premi Applica. Prima di cambiare qualcosa il pannello fa una copia di sicurezza.',
                   pulsante_testo='Scarica l\'aggiornamento', link={'url': f'/scarica/{ZIP_AGG}/', 'nuova': False})]], **spazi(24, 64))
+    # Tutti i file, con il widget Download (1.2.4): titoli e descrizioni scritti qui, peso e tipo dal download manager.
+    p.sezione([[titolo('Tutti i file', 'Da scaricare', 'Il CMS, i manuali e il tema d\'esempio. Ogni file ha il suo indirizzo: puoi condividerlo.', centro=True),
+                w('download', origine='scelti', disposizione='elenco', mostra_versione=False, voci=[
+                    {'file': ZIP, 'titolo': f'plumeCMS {V}', 'descrizione': 'Lo zip completo per un sito nuovo: estrai, carica sul server, apri il browser.'},
+                    {'file': ZIP_AGG, 'titolo': f'plumeCMS {V}, aggiornamento', 'descrizione': 'Per chi ha già plumeCMS: si carica da Impostazioni, Aggiornamenti.'},
+                    {'file': 'manuale-tecnico', 'titolo': 'Manuale tecnico', 'descrizione': 'Tutto il CMS, pezzo per pezzo.'},
+                    {'file': 'manuale-temi', 'titolo': 'Manuale dei temi', 'descrizione': 'Come si costruisce un tema da zero.'},
+                    {'file': 'tema-lavagna', 'titolo': 'Tema Lavagna', 'descrizione': 'Il tema d\'esempio del manuale: verde ardesia e testo color gesso.'}])]],
+              larghezza='stretta', **spazi(16, 64))
     p.sezione([(50, [titolo('Cosa serve', livello='h2'), w('tabella', intestazione=True, righe=REQUISITI),
                      pulsanti(('Guida all\'installazione', '/installazione/', 'filo'))]),
                (50, [titolo(f'Novità', livello='h2'), ricco(note)])], **tinta(), **spazi(64, 64))
@@ -466,6 +475,8 @@ def zip_lavagna(dest):
 
 # Le novità per chi scarica: brevi, scritte qui (il CHANGELOG è per chi sviluppa). Da aggiornare a ogni versione.
 NOVITA = [
+    ('1.2.4', 'Download manager', ['Una pagina del pannello per i file da scaricare: carichi, aggiorni, vedi quante volte sono stati scaricati.',
+                                  'Il widget Download: i tuoi file in una pagina, con icona, peso, versione e pulsante.']),
     ('1.2.3', 'Il sito e i manuali', ['I manuali in PDF, da scaricare.', 'Il pannello Revisioni dell\'editor ora si chiude davvero e lascia tutta la tela.',
                                      'Un pacchetto di aggiornamento può portare pagine, stile e menu: questo sito è arrivato così.']),
     ('1.2.2', 'Velo ed effetti sulle foto', ['Foto naturali, in bianco e nero o con il velo dei colori che scegli tu.',
@@ -545,9 +556,10 @@ def main():
     dividi_e_costruisci(out, manifest, MAX_KB)
 
 
-# Il limite di caricamento dei server: su Hostcare passa un pacchetto da 1,2 MB e non uno da 5 (27 ottobre 2026).
-# Ogni parte resta sotto questa misura; con --max-kb si cambia (per esempio --max-kb 60000 per un pacchetto solo).
-MAX_KB = 1180
+# Il limite di caricamento dei server: su Hostcare passa un pacchetto da 1,2 MB e non uno da 5 (27 ottobre 2026); il
+# predefinito di PHP e 2 MB (upload_max_filesize = 2M), quindi ogni parte resta sotto 1900 KB. Con --max-kb si cambia
+# (per esempio --max-kb 60000 per un pacchetto solo, su un server che accetta file grandi).
+MAX_KB = 1900
 
 
 def dividi_e_costruisci(out, manifest, max_kb):

@@ -1,6 +1,6 @@
 # plumeCMS: manuale tecnico
 
-Versione del manuale: 1.2, per plumeCMS 1.2.3 (27 ottobre 2026).
+Versione del manuale: 1.3, per plumeCMS 1.2.4 (27 ottobre 2026).
 
 Questo manuale descrive come è fatto plumeCMS e come funziona, pezzo per pezzo. È scritto leggendo il codice:
 ogni numero, limite e nome di funzione viene dai file veri, con il riferimento `file:riga` quando serve a chi
@@ -63,7 +63,7 @@ Niente librerie esterne: SortableJS e Quill sono serviti dal CMS stesso, le icon
 index.php           front controller: tutte le richieste del sito passano da qui
 cron-daily.php      compiti del giorno (pacchetti programmati, moduli, IndexNow)
 cron-newsletter.php invio della newsletter a giri, coda IndexNow
-VERSIONE            il numero di versione (oggi 1.2.3)
+VERSIONE            il numero di versione (oggi 1.2.4)
 CHANGELOG.md, README.md, INSTALLA.md
 .htaccess           regole di Apache (copia di install/esempi/htaccess-radice.txt)
 
@@ -282,7 +282,7 @@ Poi decide, **in quest'ordine** (`sito/index.php`):
 | 7 | `/grazie/?f=ID` | ringraziamento di un form |
 | 8 | `/robots.txt`, `/sitemap.xml`, `/llms.txt` | file calcolati (16.6) |
 | 9 | file speciali SEO: verifica Google, `BingSiteAuth.xml`, chiave IndexNow, sitemap divise, `llms-full.txt` | 200 o 404 |
-| 9b | `/scarica/<nome>/` (dalla 1.2.3) | il file `uploads/scaricabili/<nome>.zip` o `.pdf`, come allegato; 404 se non c'è |
+| 9b | `/scarica/<nome>/` (dalla 1.2.3) | il file `<nome>.<estensione>` di `uploads/scaricabili/`, come allegato, e lo conta (14.1); 404 se non c'è |
 | 10 | percorsi che finiscono con `/feed/` | feed RSS, o 404 |
 | 11 | il percorso è nella mappa del sito (`sito_mappa()`) | la pagina, secondo il genere (sotto) |
 | 12 | il percorso senza barra finale esiste con la barra | 301 con la barra |
@@ -426,6 +426,8 @@ Tutte con il prefisso davanti. Le colonne sono quelle principali.
 | `newsletter_campagne`, `newsletter_coda` | campagne e coda di invio |
 | `newsletter_eventi`, `newsletter_flussi`, `newsletter_corsi` | aperture e clic, flussi automatici, persone dentro un flusso |
 
+**Download**: `scaricabili` (titolo, descrizione, versione, conteggio dei file da scaricare; dalla 1.2.4).
+
 **SEO**: `seo_coda` (coda IndexNow), `seo_log`, `seo_url` (ispezioni di Search Console), `seo_404`.
 
 **Sicurezza**: `sicurezza_log` (registro), `sicurezza_tentativi` (blocchi), `sicurezza_sessioni`,
@@ -480,6 +482,7 @@ admin), `is_admin()`, `current_user()`.
 | Popup | `popup.php` | admin |
 | Categorie, Tag | `categories.php`, `categories.php?tipo=tag` | tutti |
 | Media | `media.php` | tutti |
+| Download | `scaricabili.php`: i file da scaricare (14.1) | admin |
 | Utenti | `utenti.php` | admin |
 | Newsletter e contatti | `newsletter.php` (Campagne, Iscritti e liste), `contatti.php`, `form-submissions.php`, `newsletter-flussi.php`, `newsletter-statistiche.php` | admin |
 | Editor > Temi | `temi.php` | admin |
@@ -625,6 +628,7 @@ Limiti dei valori (`editor_pulisci_valore`, `includes/editor.php:37-94`):
 | immagine | solo indirizzi `http(s)://` o che cominciano con `/` |
 | link | `http(s)://`, `/`, `#`, `mailto:`, `tel:` |
 | ripetitore (elenchi di voci) | 40 voci |
+| scelta (tendina) | solo i valori dell'elenco; dalla 1.2.4 un controllo può dichiarare `accetta` (espressione regolare) per tenere valori fuori elenco, come i file del widget Download che arrivano dopo la pagina |
 | colore | esadecimale, `rgb()`/`rgba()`, `hsl()`/`hsla()`, `transparent`, `globale:<id>`, `ig:<id>` |
 
 ### 9.3 I colori globali
@@ -686,13 +690,14 @@ Ogni controllo appartiene a una scheda. La scheda Avanzate è uguale per tutti g
 
 ### 9.7 I widget
 
-Settantanove widget, in cinque famiglie.
+Ottanta widget, in cinque famiglie.
 
 **Nucleo** (`includes/editor-widget.php`)
 - Base: titolo, testo, immagine, pulsanti, spazio, linea, elenco.
 - Contenuto: frase in evidenza, passi, schede con link, presentazione, apertura (hero), numeri, domande
   frequenti, video, infografica, tabella, scheda riassuntiva.
-- Dal sito: ultimi articoli, modulo (newsletter, ebook, laser, `form:ID`), invito, riquadro del test, leggi anche.
+- Dal sito: ultimi articoli, modulo (newsletter, ebook, laser, `form:ID`), invito, riquadro del test, leggi anche,
+  download (dalla 1.2.4, `includes/editor-widget-download.php`, capitolo 14.1).
 - Avanzati: HTML.
 
 Apertura e Presentazione hanno nella scheda Stile la sezione **Foto** (dalla 1.2.2, `es_foto()` in
@@ -1015,11 +1020,33 @@ Il redattore vede e ripristina solo le versioni dei contenuti.
 La cartella `uploads/` ha il suo `.htaccess` (capitolo 21) che vieta di eseguire script e chiude gli SVG in una
 sandbox.
 
-**File da scaricare** (dalla 1.2.3): gli zip e i PDF offerti ai visitatori stanno in `uploads/scaricabili/` e si
-aprono da `/scarica/<nome>/`, senza estensione (`sito_scaricabile()`, `sito_manda_scaricabile()` in
-`includes/sito.php`). Il CMS cerca `<nome>.zip`, poi `<nome>.pdf`, e lo manda come allegato. L'indirizzo passa da
-PHP perché il `.htaccess` del CMS vieta di aprire gli `.zip` dal web. Ci arrivano con un pacchetto (voce `file`,
-destinazione `uploads/scaricabili/...`) o con il gestore dei file del server.
+### 14.1 Download manager (dalla 1.2.4)
+
+I file che il sito offre da scaricare: manuali, ebook, listini, programmi. Motore `includes/scaricabili.php`, pagina
+**Download** del pannello (`admin/scaricabili.php`, solo admin), widget **Download** dell'editor.
+
+- **Dove stanno**: `uploads/scaricabili/`. Il disco è la verità: un file messo lì con il gestore dei file o con un
+  pacchetto compare da solo. La tabella `scaricabili` tiene solo titolo, descrizione, versione, conteggio e data
+  dell'ultimo download.
+- **Indirizzo**: `/scarica/<nome>/`, dove `<nome>` è il nome del file senza estensione (`Listino 2026.pdf` diventa
+  `listino-2026.pdf` e si scarica da `/scarica/listino-2026/`). Per questo due file con lo stesso nome ed estensioni
+  diverse non possono convivere. L'indirizzo passa da PHP perché il `.htaccess` del CMS vieta gli `.zip` dal web; il file
+  parte come allegato, con `X-Robots-Tag: noindex`.
+- **Tipi ammessi** (`SCARICABILI_TIPI`): pdf, zip, epub, docx, xlsx, pptx, odt, ods, mp3, txt, csv. Al caricamento si
+  controlla anche l'inizio del file (un PDF comincia con `%PDF`, gli zip e i documenti Office con `PK`, un testo non ha
+  byte nulli né `<?php` o `<script`): un file con il nome sbagliato si rifiuta.
+- **Versione nuova**: si carica un file con lo stesso nome spuntando **Sostituisci**. L'indirizzo resta, il conteggio
+  resta; titolo, descrizione e versione cambiano solo se scritti.
+- **Conteggio** (`scaricabili_conta()`): una richiesta GET intera di una persona. Non contano i robot (user agent con bot,
+  crawl, spider, headless, curl, wget, python e simili) né i pezzi di un download ripreso.
+- **Limite**: il pannello mostra il limite di caricamento del server; un file più grande si mette nella cartella con il
+  gestore dei file dell'hosting.
+
+**Widget Download** (gruppo "Dal sito"): i file scelti uno per uno, ognuno con titolo e descrizione propri se servono,
+oppure gli ultimi N caricati. Mostra a scelta icona del tipo, descrizione, tipo e peso, versione, data, conteggio (con il
+testo `{n} download`). Disposizione a elenco o a schede (da 1 a 4 per riga, per misura). Il CSS sta in
+`sito/assets/download.css` e si carica solo nelle pagine che hanno il widget. Un file eliminato sparisce dal sito; nella
+tela dell'editor compare l'avviso "File non trovato".
 
 ---
 
@@ -1700,7 +1727,7 @@ Ordine, a ogni versione: `python3 tools/cms-pacchetto.py --aggiornamento`, `node
 `python3 sito-plumecms/costruisci.py`. Le immagini stanno in `sito-plumecms/immagini/` e si rifanno dalle schermate
 con `--schermate <cartella>`. I testi delle novità per chi scarica sono in `NOVITA`, dentro il costruttore.
 
-Ogni parte resta sotto 1180 KB (`--max-kb` per cambiarlo), perché molti hosting non accettano caricamenti più grandi
+Ogni parte resta sotto 1900 KB (`--max-kb` per cambiarlo), perché molti hosting non accettano caricamenti più grandi di 2 MB
 (`upload_max_filesize` e `post_max_size`, mostrati nei Controlli della pagina Aggiornamenti): un pacchetto unico da 5 MB
 è stato rifiutato dal primo server vero, il 27 ottobre 2026.
 
@@ -1731,6 +1758,7 @@ Istruzioni in `prove/LEGGIMI.md`. Le principali:
 | `prova-pannello-temi.js` | la pagina Temi |
 | `prova-temi-partenza.js` | ogni tema di partenza: pagine, menu nell'header, contrasto del testo, nessun errore |
 | `prova-carica-temi.js` | caricare e scaricare temi da zip, con e senza PHP, firmati e no |
+| `prova-download.js` | download manager: caricamenti buoni e cattivi, widget, conteggio, eliminazione |
 | `prova-sito-plumecms.js` | il pacchetto del sito di plumeCMS applicato dal pannello, poi ogni pagina e ogni file da scaricare |
 | `prova-foto-effetti.js` | sezione Foto di Apertura e Presentazione e interruttore dell'onda, dall'editor al sito |
 | `prova-aggiornamento.js` | aggiornare dal pannello con il pacchetto del prodotto |
@@ -1841,6 +1869,7 @@ può stare dentro una pagina che risponde 200.
 | Funzione | Cosa fa |
 |---|---|
 | `media_carica($file, $cartella, $maxMb)` | caricamento di un'immagine |
+| `scaricabili_elenco()`, `scaricabili_carica($file, $info, $sostituisci)`, `scaricabili_salva_info()`, `scaricabili_elimina()` | download manager |
 | `media_elimina($url)` | cancellazione |
 | `posta_invia(...)` | invio di un'email (SMTP o `mail()`) |
 

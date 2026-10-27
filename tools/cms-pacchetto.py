@@ -125,13 +125,13 @@ def scrivi_voce(z, nome, dati):
     info = zipfile.ZipInfo(nome, date_time=__import__('time').localtime()[:6])
     info.compress_type = zipfile.ZIP_DEFLATED
     info.external_attr = 0o100644 << 16
-    z.writestr(info, dati)
+    z.writestr(info, dati, compresslevel=9)
 
 
 def scrivi_prodotto(versione, dest):
     file = elenco_file()
     os.makedirs(os.path.dirname(dest), exist_ok=True)
-    with zipfile.ZipFile(dest, 'w', zipfile.ZIP_DEFLATED) as z:
+    with zipfile.ZipFile(dest, 'w', zipfile.ZIP_DEFLATED, compresslevel=9) as z:
         for rel in file:
             with open(os.path.join(SITE, rel), 'rb') as f:
                 dati = f.read()
@@ -156,7 +156,7 @@ def scrivi_aggiornamento(versione, file, dest):
         'file': [{'da': f'file/{rel}', 'a': f'new/{rel}'} for rel in file if rel != 'README.md' and rel != 'INSTALLA.md'],
         'note': f'Versione {versione}. Il pacchetto sostituisce i file del CMS e lascia moduli, immagini, configurazione e database.',
     }
-    with zipfile.ZipFile(dest, 'w', zipfile.ZIP_DEFLATED) as z:
+    with zipfile.ZipFile(dest, 'w', zipfile.ZIP_DEFLATED, compresslevel=9) as z:
         z.writestr('manifest.json', json.dumps(manifest, ensure_ascii=False, indent=2))
         for rel in file:
             z.write(os.path.join(SITE, rel), f'file/{rel}')
