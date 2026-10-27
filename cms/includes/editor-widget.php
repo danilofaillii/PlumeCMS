@@ -69,6 +69,9 @@ const EDITOR_FOTO_TRATTAMENTI = ['velo' => 'Velo colorato sul bianco e nero', 'b
 const EDITOR_FOTO_EFFETTI = ['' => 'Nessuno', 'zoom' => 'Zoom lento', 'bagliore' => 'Bagliore che attraversa', 'cornice' => 'Cornice luminosa che gira',
     'alone' => 'Alone che pulsa', 'scintille' => 'Scintille che salgono'];
 
+// Le dieci disposizioni dell'Apertura in piu della classica (1.2.6).
+require_once __DIR__ . '/editor-hero.php';
+
 const EDITOR_ALLINEAMENTI = ['' => 'Come la sezione', 'left' => 'Sinistra', 'center' => 'Centro', 'right' => 'Destra'];
 const EDITOR_STILI_PULSANTE = ['viola' => 'Pieno viola', 'ciano' => 'Pieno ciano', 'filo' => 'Contorno'];
 
@@ -264,6 +267,7 @@ function editor_definizioni(): array {
             ...es_testo('valori', 'dei valori', ' dd', 'Voci'),
         ]],
         'hero' => ['etichetta' => 'Apertura (hero)', 'icona' => '★', 'gruppo' => 'Contenuto', 'controlli' => [
+            ec('disposizione', 'scelta', 'Disposizione', 'classica', 'contenuto', ['opzioni' => EDITOR_HERO_DISPOSIZIONI, 'aiuto' => 'Undici modi di mettere insieme le stesse parole e la stessa foto. Cambiando disposizione i testi restano.']),
             ec('occhiello', 'testo', 'Occhiello', (string)cms_impostazione('w_hero_occhiello', cms_impostazione('sito_sottotitolo', ''))),
             ec('titolo', 'testo', 'Titolo (H1)', 'Quando il ruolo pesa più del lavoro, *il problema non è il team.*', 'contenuto', ['aiuto' => 'Tra *asterischi* la parte con il gradiente.']),
             ec('testo', 'testolungo', 'Testo', ''),
@@ -589,6 +593,8 @@ function editor_disegna_widget(string $tipo, array $v): string {
                 . '<div>' . ($v['occhiello'] !== '' ? '<span class="occhiello">' . h($v['occhiello']) . '</span>' : '') . '<h2 class="sez-titolo">' . editor_evidenza($v['titolo']) . '</h2>'
                 . ($v['testo'] !== '' ? '<div class="sez-intro" style="margin:0">' . editor_paragrafi($v['testo']) . '</div>' : '') . ($dl !== '' ? "<dl>$dl</dl>" : '') . '</div></div>';
         case 'hero':
+            $disp = (string)($v['disposizione'] ?? 'classica');
+            if ($disp !== 'classica' && isset(EDITOR_HERO_DISPOSIZIONI[$disp]) && function_exists('editor_hero_' . $disp)) return ('editor_hero_' . $disp)($v);
             $pulsanti = implode('', array_map(fn($p) => '<a class="btn btn-' . (array_key_exists($p['stile'] ?? '', EDITOR_STILI_PULSANTE) ? $p['stile'] : 'viola') . '" href="' . h(editor_link_sicuro((string)($p['link'] ?? '')) ?: '#') . '">' . h($p['testo'] ?? '') . '</a>', (array)$v['pulsanti']));
             $onda = implode('', array_map(fn($x) => '<span style="animation-delay:' . $x . 's"></span>', [0, .2, .4, .1, .5, .3, .6, .15, .45, .25]));
             $barre = implode('', array_map(fn($b) => '<div class="barra">' . h($b['etichetta'] ?? '') . '<div style="--w:' . max(0, min(100, (int)($b['valore'] ?? 0))) . '%"></div></div>', (array)$v['barre']));

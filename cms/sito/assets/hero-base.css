@@ -1,0 +1,11 @@
+/* Disposizioni dell'Apertura (1.2.6): le regole comuni. Ogni disposizione ha il suo contenitore .ed-hero-<id>;
+   la classica (.ed-hero senza .ed-hero-v) non e toccata da niente qui. Colori solo dalle variabili del sito, cosi
+   seguono lo Stile del sito e i temi chiari e scuri. */
+.ed-hero-v{position:relative}
+.ed-hero-v .finestra.ed-hero-foto{position:relative;inset:auto;display:block;width:100%;border-radius:var(--r,18px);overflow:hidden;aspect-ratio:4/5}
+.ed-hero-v .finestra.ed-hero-foto::before{display:none}
+.ed-hero-v .finestra.ed-hero-foto img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.ed-hero-v .chip{position:static}
+.ed-hero-numeri{display:flex;flex-wrap:wrap;gap:18px 40px;margin-top:28px}
+.ed-hero-numero b{display:block;font:700 clamp(28px,3.4vw,44px)/1 var(--f-titolo);color:var(--testo)}
+.ed-hero-numero span{display:block;margin-top:6px;font-size:13px;letter-spacing:.08em;text-transform:uppercase;color:var(--testo-3)}

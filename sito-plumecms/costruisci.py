@@ -183,6 +183,9 @@ def funzionalita():
           '<li>Anteprima per computer, tablet e telefono, con valori diversi per ogni misura.</li>'
           '<li>Colori e caratteri globali: cambi il colore principale e cambia ovunque.</li>'
           '<li>Foto con velo, bianco e nero ed effetti animati, dalla 1.2.2.</li></ul>']),
+        ('aperture', 'aperture.webp', 'Undici aperture fra cui scegliere',
+         ['La prima cosa che si vede di una pagina è la sua apertura. In plumeCMS la scegli con una tendina, fra undici disposizioni: testo e foto affiancati, tutto al centro, foto a tutto sfondo, divisa a metà, da rivista, in una scheda con il ritratto rotondo, solo parole, a mosaico, con la foto inclinata, a fascia bassa per le pagine interne, con il colore tagliato in diagonale.',
+          'Cambi disposizione e i testi restano dove sono: provi, guardi, scegli. Tutte seguono i colori del tuo sito e dei temi, e si leggono bene anche al telefono.']),
         ('stile', 'stile.webp', 'Stile del sito: colori e caratteri in un posto solo',
          ['Colori, caratteri, titoli, pulsanti, campi dei moduli, larghezza della pagina: tutto in una pagina sola, con l\'anteprima accanto.',
           'Le pagine usano i colori globali, quindi una modifica qui arriva su tutto il sito. Senza cercare il blu sbagliato pagina per pagina.']),
@@ -440,7 +443,7 @@ def editor_json():
 
 
 # ------------------------------------------------------------------ file
-USATE = ['editor-ritratto', 'editor', 'stile', 'modelli', 'versioni', 'seo', 'flussi', 'download', 'sicurezza', 'aggiornamenti', 'temi',
+USATE = ['editor-ritratto', 'editor', 'aperture', 'stile', 'modelli', 'versioni', 'seo', 'flussi', 'download', 'sicurezza', 'aggiornamenti', 'temi',
          'tema-cosmo', 'tema-aria', 'tema-bottega']
 
 
@@ -486,6 +489,8 @@ def zip_lavagna(dest):
 
 # Le novità per chi scarica: brevi, scritte qui (il CHANGELOG è per chi sviluppa). Da aggiornare a ogni versione.
 NOVITA = [
+    ('1.2.6', 'Undici aperture', ['L\'apertura delle pagine si sceglie fra undici disposizioni: centrata, a tutto sfondo, divisa, rivista, scheda, minimale, mosaico, inclinata, banner, diagonale e la classica.',
+                                'Cambi disposizione con una tendina e i testi restano dove sono.']),
     ('1.2.5', 'Sempre l\'ultima versione', ['Un file con la versione nel nome ha un indirizzo che porta sempre alla versione più recente.',
                                            'Nelle pagine il numero di versione si scrive da solo: carichi il file nuovo e pulsanti e titoli si aggiornano.',
                                            'Temi con codice PHP: il pannello spiega passo per passo come caricarli.']),

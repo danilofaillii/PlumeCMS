@@ -77,6 +77,8 @@ function editor_carica_widget_esterni(): void {
             $r['file_corrente'] = '';
         }
     }
+    // I fogli delle disposizioni dell'Apertura (1.2.6): solo nelle pagine che hanno un'Apertura.
+    if (!isset($r['asset']['hero']) && defined('EDITOR_HERO_CSS')) $r['asset']['hero'] = ['css' => EDITOR_HERO_CSS];
     // Compatibilità con la forma a tre funzioni dell'agente modelli: editor_tema_definizioni(), editor_tema_disegna($tipo, $v), editor_tema_css($tipo, $v, $sel, &$css).
     if (function_exists('editor_tema_definizioni')) {
         foreach ((array)editor_tema_definizioni() as $tipo => $def) {
@@ -108,7 +110,8 @@ function editor_asset_pagina(string $html): array {
     $out = ['css' => [], 'js' => []];
     foreach (editor_registro()['asset'] as $tipo => $a) {
         if (!str_contains($html, 'ed-w-' . $tipo)) continue;
-        foreach (['css', 'js'] as $k) if (!empty($a[$k]) && !in_array($a[$k], $out[$k], true)) $out[$k][] = $a[$k];
+        // Un widget puo avere piu file (1.2.6: le disposizioni dell'Apertura): 'css' => ['a.css', 'b.css'].
+        foreach (['css', 'js'] as $k) foreach ((array)($a[$k] ?? []) as $f) if ($f !== '' && !in_array($f, $out[$k], true)) $out[$k][] = $f;
     }
     return $out;
 }

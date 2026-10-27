@@ -2,6 +2,15 @@
 
 Il prodotto si chiama **plumeCMS** (nome scelto il 26 ottobre 2026; prima, per poche ore, "CarbonaraCMS", e ancora prima il provvisorio "Officina": gli zip vecchi si chiamavano `officina-*` e `carbonaracms-*`).
 
+## 1.2.6 (27 ottobre 2026) - Undici aperture
+
+- **Apertura (hero), tendina Disposizione**: oltre alla classica, dieci disposizioni nuove. Centrata, Copertina (foto a
+  tutto sfondo), Divisa a metà, Rivista, Scheda (ritratto rotondo), Minimale (solo parole), Mosaico, Inclinata, Banner
+  (fascia bassa per le pagine interne), Diagonale. Stessi campi per tutte: cambiando disposizione i testi restano.
+- Tutte seguono i colori e i caratteri del sito e dei temi, chiari e scuri, e si leggono al telefono.
+- La classica è identica al pixel alla 1.2.5: i siti che ci sono non cambiano.
+- Per chi scrive widget: `editor_registra_asset()` accetta più file CSS o JS in un elenco.
+
 ## 1.2.5 (27 ottobre 2026) - Sempre l'ultima versione
 
 - **Download, serie**: un file con la versione nel nome (`guida-1.2.pdf`) entra in una serie. `/scarica/guida-ultima/`

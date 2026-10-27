@@ -1,6 +1,6 @@
 # plumeCMS: manuale tecnico
 
-Versione del manuale: 1.4, per plumeCMS 1.2.5 (27 ottobre 2026).
+Versione del manuale: 1.5, per plumeCMS 1.2.6 (27 ottobre 2026).
 
 Questo manuale descrive come è fatto plumeCMS e come funziona, pezzo per pezzo. È scritto leggendo il codice:
 ogni numero, limite e nome di funzione viene dai file veri, con il riferimento `file:riga` quando serve a chi
@@ -63,7 +63,7 @@ Niente librerie esterne: SortableJS e Quill sono serviti dal CMS stesso, le icon
 index.php           front controller: tutte le richieste del sito passano da qui
 cron-daily.php      compiti del giorno (pacchetti programmati, moduli, IndexNow)
 cron-newsletter.php invio della newsletter a giri, coda IndexNow
-VERSIONE            il numero di versione (oggi 1.2.5)
+VERSIONE            il numero di versione (oggi 1.2.6)
 CHANGELOG.md, README.md, INSTALLA.md
 .htaccess           regole di Apache (copia di install/esempi/htaccess-radice.txt)
 
@@ -713,6 +713,36 @@ Apertura e Presentazione hanno nella scheda Stile la sezione **Foto** (dalla 1.2
 L'Apertura ha anche l'interruttore **Mostra l'onda sopra la foto** (scheda Contenuto): spento, il riquadro con
 le barre che ondeggiano non compare. Con i valori di partenza le due foto sono identiche a quelle della 1.2.1.
 
+Dalla 1.2.6 l'Apertura ha la tendina **Disposizione** (scheda Contenuto, primo controllo): undici modi di mettere
+insieme gli stessi campi (occhiello, titolo con l'evidenza, testo, pulsanti, foto con la sezione Foto, onda, barre).
+Cambiando disposizione i testi restano.
+
+| Disposizione | Com'è fatta |
+|---|---|
+| `classica` | testo a sinistra, foto a destra: quella di sempre, identica al pixel alla 1.2.5 (resta in `editor-widget.php`) |
+| `centrata` | tutto al centro, foto larga e bassa sotto |
+| `copertina` | foto a tutto sfondo con un velo scuro, testo bianco sopra |
+| `divisa` | testo su un fondo di colore, foto fino al bordo |
+| `rivista` | titolo enorme a tutta larghezza, testo e numeri a lato, foto a nastro |
+| `scheda` | tutto in un riquadro, ritratto rotondo con l'anello di colore |
+| `minimale` | niente foto: parole grandi e i numeri delle barre sotto una linea sottile |
+| `mosaico` | parole a sinistra, a destra una griglia di riquadri: foto, onda, barre |
+| `inclinata` | foto ruotata di qualche grado su forme di colore |
+| `banner` | fascia bassa per le pagine interne, titolo moderato e pulsanti sulla stessa riga |
+| `diagonale` | fondo con il gradiente dei due colori del sito, tagliato in obliquo |
+
+Come è fatto (`includes/editor-hero.php`):
+- l'elenco è `EDITOR_HERO_DISPOSIZIONI`; il `case 'hero'` di `editor-widget.php` chiama `editor_hero_<id>($v)` per
+  ogni disposizione che non è la classica;
+- le funzioni sono in `editor-hero-a.php` (centrata, copertina, divisa, rivista, scheda) e `editor-hero-b.php`
+  (le altre cinque), costruite con i pezzi comuni: `editor_hero_apri()`, `editor_hero_parole()`,
+  `editor_hero_pulsanti()`, `editor_hero_foto()`, `editor_hero_onda()`, `editor_hero_barre()`, `editor_hero_numeri()`;
+- ogni disposizione esce dentro `<div class="hero ed-hero ed-hero-v ed-hero-<id>">`, con le classi della classica
+  (`.occhiello`, `.lead`, `.azioni`, `.btn`, `.chip`): i colori, i caratteri e i controlli della scheda Stile valgono
+  anche per lei;
+- il CSS è in `sito/assets/hero-base.css`, `hero-a.css`, `hero-b.css`, ogni regola sotto `.ed-hero-<id>`, colori solo
+  dalle variabili del sito (quindi segue i temi chiari e scuri); si carica solo nelle pagine con un'Apertura.
+
 **Infografiche** (14, prefisso `ig_`): passi, timeline, checklist, tabella, liste, numeri, card, mappa, flusso,
 fasi, barre, prima e dopo, zone, domande. Usano i colori `--ig-*` della tavolozza (capitolo 12).
 
@@ -752,6 +782,7 @@ editor_registra_widget('saluto', [
 });
 
 editor_registra_asset('saluto', ['css' => 'saluto.css']);   // file in sito/assets/
+// dalla 1.2.6 anche più file: ['css' => ['saluto.css', 'saluto-varianti.css']]
 ```
 
 Regole:
@@ -1770,6 +1801,7 @@ Istruzioni in `prove/LEGGIMI.md`. Le principali:
 | `prova-carica-temi.js` | caricare e scaricare temi da zip, con e senza PHP, firmati e no |
 | `prova-download.js` | download manager: caricamenti buoni e cattivi, widget, conteggio, eliminazione |
 | `prova-sito-plumecms.js` | il pacchetto del sito di plumeCMS applicato dal pannello, poi ogni pagina e ogni file da scaricare |
+| `prova-hero.js` | le undici disposizioni dell'Apertura al computer e al telefono: un solo h1, niente scorrimento orizzontale, foto caricate, contrasto di titolo e testo, pulsanti visibili (pagine create da `pagina-hero.php`) |
 | `prova-foto-effetti.js` | sezione Foto di Apertura e Presentazione e interruttore dell'onda, dall'editor al sito |
 | `prova-aggiornamento.js` | aggiornare dal pannello con il pacchetto del prodotto |
 | `foto-sito.js`, `quanto-foto.py` | schermate prima e dopo, confrontate al pixel |
