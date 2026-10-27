@@ -2,6 +2,26 @@
 
 Il prodotto si chiama **plumeCMS** (nome scelto il 26 ottobre 2026; prima, per poche ore, "CarbonaraCMS", e ancora prima il provvisorio "Officina": gli zip vecchi si chiamavano `officina-*` e `carbonaracms-*`).
 
+## 1.2.0 (27 ottobre 2026) - I temi
+
+- **Editor > Temi**, pagina nuova (solo amministratore): un tema cambia l'aspetto intero del sito in un colpo solo,
+  cioè colori, caratteri, pulsanti, sfondo, header, footer e colori delle infografiche. Pagine, articoli, menu e immagini
+  non cambiano. **Anteprima** apre il sito con il tema solo per te; **Attiva** chiede conferma e spiega cosa cambia; lo
+  stile di prima resta nelle Versioni e gli header e footer di prima restano in Header e footer.
+- Tre temi di partenza: **Cosmo** (l'aspetto di sempre: attivarlo lascia il sito identico), **Aria** (chiaro, un solo
+  blu) e **Bottega** (carta crema, titoli con le grazie, terracotta e salvia).
+- Un tema può contenere PHP, come in WordPress (filtri, eventi, pagine ridisegnate). Il pannello non lo esegue mai; se
+  il PHP del tema sbaglia, il tema si segna come guasto e il sito torna da solo all'aspetto di base.
+- **Carica un tema** da zip, **Scarica** un tema, **Scarica l'aspetto di adesso come tema**, **Elimina**. Un tema con PHP
+  si carica solo firmato con la chiave del sito o con la finestra di un'ora aperta in Sicurezza. Nella cartella `temi/`
+  il CMS scrive da solo un `.htaccess` che dal web non esegue niente.
+- Le infografiche prendono i colori del tema attivo; i colori scelti a mano su un'infografica restano. "Temi delle
+  infografiche" si chiama ora **Colori delle infografiche**, e Carta "segue il tema del sito".
+- Lo Stile del sito arriva dappertutto: i gradienti dei pulsanti, le sfumature, i vetri e il riquadro CTA seguono i
+  colori globali (prima restavano viola e ciano). Con i colori di partenza il sito è identico al pixel.
+- Correzione: con uno sfondo chiaro nello Stile del sito il testo degli articoli era quasi invisibile; ora segue il
+  colore del testo.
+
 ## 1.1.9 (27 ottobre 2026) - "Vedi sito" e la cartella che tornava alla radice
 
 - Fino alla 1.1.6 la cartella del CMS (`/test/`) veniva rimandata alla radice del dominio con un 301, cioè un rimando
