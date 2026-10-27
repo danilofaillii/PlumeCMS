@@ -11,7 +11,7 @@ Costruisce i pacchetti del CMS (il prodotto, senza il modulo di danilofailli.it 
                                                    (codice, SQL di cms/sql/<nome>*.sql, file spostati da togliere) e
                                                    <nome>-b.zip (i .htaccess, che solo il motore nuovo accetta: vedi sotto)
 
-Dentro il prodotto: includes/, admin/, sito/, api/, share/, install/, assets/css, i cron, index.php, VERSIONE, CHANGELOG.md,
+Dentro il prodotto: includes/, admin/, sito/, api/, share/, install/, assets/css, i cron, index.php, VERSIONE, CHANGELOG.md, LICENSE,
 README.md, INSTALLA.md, i documenti del CMS in docs/, un .htaccess per la radice del dominio, le cartelle vuote uploads/,
 logs/, aggiornamenti/, moduli/. Fuori: moduli/danilofailli/, config.local.php, sql/, data/, test/, test-definizioni/,
 privato/, le immagini degli articoli, i file ponte (shim) che rimandano al modulo, i vecchi file di radice del publisher.
@@ -27,7 +27,7 @@ NOME_PRODOTTO = 'plumecms'
 AVVISI = []   # provvisorio: CMS_NOME in includes/cms.php
 
 CARTELLE = ['includes', 'admin', 'sito', 'api', 'share', 'install', 'assets/css', 'moduli', 'temi']
-FILE_RADICE = ['index.php', 'cron-daily.php', 'cron-newsletter.php', 'VERSIONE', 'CHANGELOG.md', 'README.md', 'INSTALLA.md']
+FILE_RADICE = ['index.php', 'cron-daily.php', 'cron-newsletter.php', 'VERSIONE', 'CHANGELOG.md', 'README.md', 'INSTALLA.md', 'LICENSE']
 DOCS = ['manuale-tecnico.md', 'manuale-temi.md', 'cms.md', 'cms-moduli.md', 'moduli.md', 'sicurezza.md', 'editor-pagine.md', 'stile-sito.md', 'header-footer-menu.md', 'versioni.md', 'seo.md', 'pannello.md', 'contenuti.md', 'newsletter.md', 'aggiornamenti.md', 'temi.md']
 VUOTE = ['uploads', 'logs', 'aggiornamenti', 'moduli', 'temi']
 ESCLUDI_PREFISSI = ('moduli/danilofailli/', 'includes/config.local.php', 'install/.installato', 'admin/infographics/')
@@ -148,12 +148,19 @@ def scrivi_prodotto(versione, dest):
     return file
 
 
+# I file tolti dal nucleo: il pacchetto di aggiornamento li cancella dal server (prima finiscono nello snapshot, e un
+# file che non c'e si salta). 1.2.8: i pezzi del primo sito (ebook e Laser, test, aforismi, header e footer di prima).
+TOLTI = ['admin/contatti.php', 'admin/aforismi.php', 'admin/aforisma-edit.php', 'admin/aforisma-delete.php',
+         'includes/header.php', 'includes/footer.php', 'sito/assets/test.js']
+
+
 def scrivi_aggiornamento(versione, file, dest):
     """Lo stesso codice come pacchetto per il pannello Aggiornamenti: ogni file va in new/<percorso> (la cartella del CMS)."""
     manifest = {
         'nome': f'{NOME_PRODOTTO} {versione}', 'descrizione': f'Aggiornamento del CMS alla versione {versione}: tutti i file del nucleo.',
         'creato': __import__('datetime').date.today().isoformat(),
         'file': [{'da': f'file/{rel}', 'a': f'new/{rel}'} for rel in file if rel != 'README.md' and rel != 'INSTALLA.md'],
+        'elimina': [f'new/{rel}' for rel in TOLTI if rel not in file],
         'note': f'Versione {versione}. Il pacchetto sostituisce i file del CMS e lascia moduli, immagini, configurazione e database.',
     }
     with zipfile.ZipFile(dest, 'w', zipfile.ZIP_DEFLATED, compresslevel=9) as z:

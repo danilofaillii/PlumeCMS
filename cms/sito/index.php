@@ -1,12 +1,12 @@
 <?php
 /**
- * Il sito pubblico di danilofailli.it. Ogni indirizzo che non è un file passa da qui
+ * Il sito pubblico. Ogni indirizzo che non è un file passa da qui
  * (lo manda il .htaccess della radice, vedi sito-nuovo/radice/.htaccess).
  *
  * Ordine, lo stesso del sito di prima:
  *  1. indirizzi speciali con query string: /?p=ID, /?redirect_to=random, /?s=parola
  *  2. vecchi indirizzi del publisher /articoli/slug/
- *  3. redirect della tabella newdf_redirect (quelli di Rank Math e quelli dei pillar)
+ *  3. redirect della tabella <prefisso>redirect (anche quelli importati da un sito di prima)
  *  4. file calcolati: robots.txt, sitemap.xml, llms.txt, feed
  *  5. la mappa degli indirizzi: articoli, pagine, archivi, glossario, blog
  *  6. indirizzo senza slash finale che esiste con lo slash: 301
@@ -90,7 +90,7 @@ parse_str($query, $q);
 $GLOBALS['sito_percorso_404'] = $percorso;
 
 try {
-    // I moduli rispondono prima di tutto a una query loro (danilofailli.it: /?redirect_to=random, la roulette degli aforismi).
+    // I moduli rispondono prima di tutto a una query loro (per esempio /?a_caso=1 per un contenuto a caso).
     if ($query !== '') cms_evento('sito_query', $q, $percorso);
     // 1. Query string sulla home
     if ($percorso === '/' && $query !== '') {
@@ -109,30 +109,14 @@ try {
         }
     }
 
-    // 2. Vecchi indirizzi del publisher
-    if (preg_match('~^/articoli/(.+)$~', $percorso, $m)) sito_vai('/' . $m[1]);
-
     // 3. Redirect
     if ($r = sito_redirect_per($percorso, $query)) sito_vai($r['a'], $r['codice'] ?: 301);
     if ($percorso === '/wp-sitemap.xml') sito_vai('/sitemap.xml');
 
-    // 3b. Percorso dei moduli: conferma dell'email, download dell'ebook, pagina di cortesia della laser coaching.
+    // 3b. Gli indirizzi dei moduli del sito (conferme, download, pagine di cortesia): il modulo risponde e chiude.
+    cms_evento('sito_percorso', $percorso, $q);
+    // Le pagine di cortesia della newsletter.
     $cortesia = ['titolo' => '', 'descrizione' => '', 'robots' => 'noindex', 'canonical' => '', 'og' => []];
-    if ($percorso === '/conferma-ebook/') {
-        $r = moduli_ebook_conferma((string)($q['t'] ?? ''));
-        sito_html(200, ['titolo' => 'Indirizzo confermato - ' . SITO_NOME] + $cortesia, $r ? vista_ebook_confermato($r['email_partita']) : vista_link_scaduto());
-    }
-    if ($percorso === '/scarica-ebook/') {
-        [$file, $perche] = moduli_ebook_scarica((string)($q['t'] ?? ''));
-        if (!$file) sito_html(410, ['titolo' => 'Link scaduto - ' . SITO_NOME] + $cortesia, vista_link_scaduto($perche));
-        header('Content-Type: application/pdf');
-        header('Content-Disposition: attachment; filename="' . basename(moduli_ebook_config()['nome_file']) . '"');
-        header('Content-Length: ' . filesize($file));
-        header('X-Robots-Tag: noindex');
-        header('Cache-Control: private, no-store');
-        readfile($file);
-        exit;
-    }
     if ($percorso === NEWSLETTER_GRAZIE) sito_html(200, ['titolo' => 'Conferma la tua email - ' . SITO_NOME] + $cortesia, vista_newsletter_grazie());
     if ($percorso === NEWSLETTER_CONFERMA) {
         sito_html(200, ['titolo' => 'Iscrizione confermata - ' . SITO_NOME] + $cortesia, vista_newsletter_confermata(newsletter_conferma((string)($q['t'] ?? ''))));
@@ -144,9 +128,6 @@ try {
         $fatto = $iscritto && ($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST';
         if ($fatto) newsletter_esci((int)$iscritto['id']);
         sito_html(200, ['titolo' => 'Uscita dalla newsletter - ' . SITO_NOME] + $cortesia, vista_newsletter_esci($iscritto, $fatto, $i, $t));
-    }
-    if ($percorso === MODULI_PAGINA_LASER_GRAZIE) {
-        sito_html(200, ['titolo' => 'Richiesta arrivata - ' . SITO_NOME] + $cortesia, vista_laser_grazie());
     }
 
     // Pagina di ringraziamento dei form costruiti dal pannello.
@@ -214,7 +195,7 @@ try {
                 }
                 if ($c['tipo'] === 'glossario') {
                     $nodi = [sito_jsonld_pagina($c['percorso'], $c['titolo'], $c['tldr']), sito_jsonld_termine($c),
-                        sito_jsonld_briciole([['Home', '/'], ['Glossario PNL', '/glossario/'], [$c['titolo'], $c['percorso']]])];
+                        sito_jsonld_briciole([['Home', '/'], [(string)cms_impostazione('glossario_titolo', 'Glossario'), '/glossario/'], [$c['titolo'], $c['percorso']]])];
                     sito_html(200, $meta, vista_termine($c), sito_jsonld_script($nodi), '/glossario/');
                 }
                 // Quello che arriva dal pannello vince sui valori di partenza.
@@ -233,11 +214,11 @@ try {
                 sito_html(200, $meta, vista_blog($v), sito_jsonld_script([sito_jsonld_pagina(SITO_PAGINA_BLOG, (string)cms_impostazione('blog_nome', 'Blog'), '')]), SITO_PAGINA_BLOG);
             case 'glossario':
                 sito_html(200, $meta, vista_glossario($v['termini']),
-                    sito_jsonld_script([sito_jsonld_pagina('/glossario/', 'Glossario PNL', ''), sito_jsonld_glossario($v['termini'])]), '/glossario/');
+                    sito_jsonld_script([sito_jsonld_pagina('/glossario/', (string)cms_impostazione('glossario_titolo', 'Glossario'), ''), sito_jsonld_glossario($v['termini'])]), '/glossario/');
             case 'archivio':
                 sito_html(200, $meta, vista_archivio($v));
             default:
-                // Un genere di un modulo (danilofailli.it: "test"): il modulo risponde e chiude.
+                // Un genere di un modulo (per esempio "test"): il modulo risponde e chiude.
                 cms_evento('sito_genere', $v, $meta);
         }
     }

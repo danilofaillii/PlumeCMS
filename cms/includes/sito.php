@@ -18,7 +18,7 @@ require_once __DIR__ . '/infographic.php';
 const SITO_ORA_PREDEFINITA = '06:00:00';
 // L'indirizzo del sito: impostazione sito_url, poi il modulo del sito, poi la richiesta (includes/cms.php).
 define('SITO_URL', cms_url_sito());
-/** Categorie i cui contenuti e archivi sono noindex: le dicono i moduli (danilofailli.it: le categorie degli aforismi). */
+/** Categorie i cui contenuti e archivi sono noindex: le dicono i moduli del sito. */
 function sito_categorie_noindex(): array {
     static $c = null;
     return $c ??= array_values(array_unique((array)cms_filtro('categorie_noindex', [])));
@@ -71,9 +71,9 @@ function sito_schema_aggiorna(): array {
             'robots' => "VARCHAR(10) NOT NULL DEFAULT ''",
         ],
     ];
-    // Le colonne dei tipi di contenuto dei moduli (danilofailli.it: la tabella aforismi).
+    // Le colonne dei tipi di contenuto dei moduli (per esempio la tabella di un catalogo).
     $colonne = cms_filtro('schema_colonne', $colonne);
-    // Articoli, pagine e aforismi gestiti allo stesso modo (cestino, revisioni, editor visuale).
+    // Articoli, pagine e tipi dei moduli gestiti allo stesso modo (cestino, revisioni, editor visuale).
     require_once __DIR__ . '/contenuti.php';
     foreach (contenuti_schema_colonne() as $tab => $cols) $colonne[$tab] = ($colonne[$tab] ?? []) + $cols;
     $colonne['pagine_revisioni'] = ['tipo' => "VARCHAR(20) NOT NULL DEFAULT 'pagine'"];
@@ -320,7 +320,7 @@ function sito_importa_articolo(array $j): string {
         'immagine_url' => (string)($j['immagine'] ?? ''),
         'cta' => (string)($j['cta'] ?? ''),
     ];
-    // Un modulo può prendersi il contenuto (danilofailli.it: "tipo": "aforisma" va nella tabella degli aforismi).
+    // Un modulo può prendersi il contenuto (per esempio "tipo": "ricetta" va nella tabella delle ricette).
     $esito = cms_filtro('importa_contenuto', null, $j, $riga, $categoria);
     if (is_string($esito)) return $esito;
     $cols = array_keys($riga);

@@ -4,8 +4,8 @@
  * messaggio di ringraziamento. Si mettono nelle pagine con il widget Modulo dell'editor visuale,
  * e arrivano dallo stesso ingresso dei moduli fissi (api/modulo.php, con "modulo=form:ID").
  *
- *   newdf_moduli         la definizione: nome, slug, campi (JSON), cosa succede dopo
- *   newdf_moduli_invii   ogni compilazione, con i dati in JSON
+ *   <prefisso>moduli         la definizione: nome, slug, campi (JSON), cosa succede dopo
+ *   <prefisso>moduli_invii   ogni compilazione, con i dati in JSON
  */
 
 require_once __DIR__ . '/moduli.php';
@@ -266,7 +266,7 @@ function form_ricevi(array $m, array $p, string $pagina): string {
         $a = posta_notifica_email();
         if ($a !== '') {
             $righe = implode('', array_map(fn($k, $v) => '<p style="margin:0 0 10px"><b>' . h($k) . ':</b> ' . nl2br(h($v)) . '</p>', array_keys($dati), $dati));
-            [$oggetto, $corpo] = ['Nuova compilazione: ' . $m['nome'], moduli_email_html('Form «' . $m['nome'] . '»', $righe . '<p style="color:#888;font-size:13px">Dalla pagina ' . h($pagina) . ', il ' . date('d/m/Y H:i') . '.</p>', 'Apri nel pannello', MODULI_URL . '/new/admin/form-submissions.php?modulo=' . (int)$m['id'])];
+            [$oggetto, $corpo] = ['Nuova compilazione: ' . $m['nome'], moduli_email_html('Form «' . $m['nome'] . '»', $righe . '<p style="color:#888;font-size:13px">Dalla pagina ' . h($pagina) . ', il ' . date('d/m/Y H:i') . '.</p>', 'Apri nel pannello', cms_url_pannello() . 'form-submissions.php?modulo=' . (int)$m['id'])];
             if (!posta_invia($a, $oggetto, $corpo, moduli_intestazioni($email))) error_log('form: avviso non partito: ' . posta_errore());
         }
     }

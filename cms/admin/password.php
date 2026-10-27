@@ -1,6 +1,6 @@
 <?php
 /**
- * Nome utente e password del pannello: si entra da /new/admin/login.php.
+ * Nome utente e password del pannello: si entra da <cartella del CMS>/admin/login.php.
  */
 require_once __DIR__ . '/includes/auth.php';
 require_once __DIR__ . '/includes/admin-functions.php';

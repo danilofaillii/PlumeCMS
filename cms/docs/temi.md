@@ -1,6 +1,6 @@
 # I temi del sito
 
-Decisi con Danilo il 27 ottobre 2026: un tema cambia l'aspetto intero del sito (colori, caratteri, pulsanti, header,
+Deciso il 27 ottobre 2026: un tema cambia l'aspetto intero del sito (colori, caratteri, pulsanti, header,
 footer, CSS) e può contenere PHP, come i temi di WordPress. Menu, pagine, articoli e immagini non si toccano: sono
 contenuti, non aspetto. Motore in `includes/temi.php`.
 
@@ -64,7 +64,7 @@ dalle viste: il loro aspetto lo danno lo stile, il CSS e i widget.
 
 ### Le infografiche
 
-Deciso con Danilo il 27 ottobre 2026: le infografiche hanno i colori del tema attivo. Come funziona:
+Dal 27 ottobre 2026 le infografiche hanno i colori del tema attivo. Come funziona:
 
 - Nei widget `ig_*` i colori con un nome (le voci rosso, oro, verde...; le testate scuro, verde, rosso...; il corpo
   crema; gli occhielli) sono variabili `--ig-*` di `sito.css`, con i valori di Carta in `:where(:root)`. **Il tema

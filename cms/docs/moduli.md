@@ -1,45 +1,31 @@
-# Moduli del sito: ebook gratuito e Laser Coaching
+# Moduli da compilare: newsletter e form
 
 > I **moduli del CMS** (cartella `moduli/`, manifesto `modulo.php`) sono un'altra cosa: `docs/cms-moduli.md`.
 
-Deciso il 2026-10-23: al posto dei moduli Brevo, un sistema nel pannello. Dati nel database del sito,
-email spedite dalla posta SMTP della scheda Posta. Codice in `includes/moduli.php`.
+Il nucleo ha due moduli da compilare: l'iscrizione alla **newsletter** (`newsletter.md`) e i **form** costruiti
+dal pannello, voce Form (`includes/form.php`). Tutti e due arrivano a `api/modulo.php` e si mettono nelle pagine
+con il widget Modulo. I pezzi comuni stanno in `includes/moduli.php`. Dati nel database del sito, email spedite
+dalla posta SMTP della scheda Posta (`posta_invia()`).
 
-## Ebook (doppia conferma dell'email)
+## I pezzi comuni (`includes/moduli.php`)
 
-1. Modulo su `/ebook/`: nome, cognome, email, cellulare, consenso privacy (necessario),
-   newsletter (facoltativo), captcha. I pulsanti della pagina che portavano a `/fuori-dagli-schemi/`
-   (indirizzo Brevo) ora portano al modulo; `/fuori-dagli-schemi/` fa 301 su `/ebook/`.
-2. Invio: `new/api/modulo.php` salva la richiesta in `newdf_iscrizioni_ebook` e manda l'email
-   "Conferma il tuo indirizzo". Si arriva su `/fuori-dagli-schemi-download/`, la pagina "Ci sei quasi".
-3. Clic sul link (valido 7 giorni): `/conferma-ebook/?t=...` segna la conferma e manda la seconda email
-   con il link per scaricare (valido 30 giorni).
-4. `/scarica-ebook/?t=...` scarica il PDF, che sta in `new/privato/` (cartella protetta) e si carica dal
-   pannello, voce Contatti. Ogni download si conta.
-
-Stessa email richiesta di nuovo: si aggiorna la riga e parte un link nuovo; il vecchio smette di valere.
-
-## Laser Coaching
-
-Modulo su `/fuoridalcoso-laser-coaching/` (al posto del modulo Brevo, tra i segnaposti
-`Begin/End Brevo Form`) e in fondo a `/laser-coaching/`. Invio: riga in `newdf_richieste_laser`,
-email immediata a Danilo (indirizzo di notifica della scheda Posta) con nome, cellulare cliccabile,
-email e la scadenza delle 24 ore; pagina di cortesia `/laser-coaching-grazie/`.
-Nel pannello, Contatti: le richieste da chiamare in cima, stato e note, CSV.
-
-## Difese
-
-- Captcha fatto in casa: il browser chiede una sfida a `new/api/captcha.php` e cerca il numero n con
-  sha256(sale + n) = sfida (in media meno di mezzo secondo). Sfida firmata con HMAC, valida 20 minuti,
-  usabile una volta (`newdf_captcha_usati`). Nessun servizio esterno, nessun cookie.
-- Campo esca `sito_web`, invisibile alle persone.
-- Massimo 5 invii l'ora per indirizzo IP e per modulo.
-- Token di conferma e di download salvati solo come hash sha256.
+- **Captcha fatto in casa**: spuntando "Sono una persona" il browser chiede una sfida a `api/captcha.php` e cerca
+  il numero n con sha256(sale + n) = sfida (in media meno di mezzo secondo). Sfida firmata con HMAC, valida
+  20 minuti, usabile una volta (`<prefisso>captcha_usati`). Nessun servizio esterno, nessun cookie.
+- **Campo esca** `sito_web`, invisibile alle persone: chi lo riempie è un programma e viene respinto.
+- **Limite di invii**: massimo 5 l'ora per indirizzo IP e per modulo (`MODULI_LIMITE_ORA`).
+- **Campi**: `moduli_leggi()` controlla nome, cognome, email, consenso privacy e captcha, e toglie i caratteri a 4 byte.
+- **Email**: `moduli_email_html()` le impagina tutte allo stesso modo, con la riga in testa (`email_intestazione`,
+  altrimenti il nome del sito) e la firma in fondo (`email_firma`).
 - Il ritorno dopo l'invio accetta solo percorsi interni.
 
-## Aperto
+## Un modulo da compilare portato da un modulo del sito
 
-- Informativa privacy da aggiornare: dati raccolti dai due moduli, consenso alla newsletter, IP salvato
-  come prova del consenso.
-- La newsletter non usa più Brevo: vedi `newsletter.md`. Chi dà il consenso nel modulo dell'ebook
-  diventa iscritto attivo quando conferma l'email.
+Un modulo con un percorso suo (un download dopo la conferma, una richiesta da richiamare) lo porta il modulo del
+sito, con i suoi filtri ed eventi (`cms-moduli.md`):
+
+- `moduli_disponibili` aggiunge la sua voce alla tendina del widget Modulo; `modulo_html` lo disegna. Se nessuno
+  conosce più quel tipo, sul sito non esce niente e nell'editor compare un avviso.
+- `pagina_moduli` lo aggiunge al testo delle pagine scritte nella scheda classica.
+- l'evento `sito_percorso` (con `$percorso` e la query) gli fa rispondere ai suoi indirizzi: conferme, download,
+  pagine di cortesia.

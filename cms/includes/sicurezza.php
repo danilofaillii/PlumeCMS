@@ -237,7 +237,7 @@ function sicurezza_chiavi_tentativi(string $utente): array {
 }
 
 /**
- * Blocchi del login (1.1.3, decisione di Danilo dopo l'attacco 3):
+ * Blocchi del login (1.1.3, decisi dopo il terzo giro di attacco):
  *  - per IP: tentativi_max sbagliati (di partenza 5) e parte un blocco che raddoppia a ogni tentativo in piu;
  *  - per nome utente: 20 sbagliati in 15 minuti, da qualunque IP, e parte un blocco di 15 minuti che raddoppia, con
  *    un'email all'amministratore. Durante questo blocco entra lo stesso, con la password giusta, chi arriva da un IP

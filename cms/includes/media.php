@@ -2,18 +2,19 @@
 /**
  * La libreria dei media: tutto quello che il sito può mostrare, da dove viene.
  *
- *   wp-content/uploads/AAAA/MM/   l'archivio delle immagini per anno e mese (e le loro miniature -300x300)
- *   wp-content/uploads/contenuti/ le immagini dei pillar, arrivate con i pacchetti
- *   wp-content/uploads/pagine/    quelle caricate dall'editor delle pagine
- *   wp-content/uploads/newsletter/ quelle delle email
- *   new/assets/img/articles/      le copertine SVG generate dal pannello
- *   new/assets/img/uploads/       i caricamenti vecchi del pannello
+ *   <immagini>/AAAA/MM/      l'archivio delle immagini per anno e mese (e le loro miniature -300x300)
+ *   <immagini>/contenuti/    le immagini dei contenuti, arrivate con i pacchetti
+ *   <immagini>/pagine/       quelle caricate dall'editor delle pagine
+ *   <immagini>/newsletter/   quelle delle email
+ *   assets/img/articles/     le copertine SVG generate dal pannello (nella cartella del CMS)
+ *   assets/img/uploads/      i caricamenti vecchi del pannello
+ * <immagini> è cms_uploads_dir(): uploads/ nella cartella del CMS, oppure dove dice CMS_UPLOADS.
  *
  * Usata dalla voce Media del pannello e dalla finestra "Scegli" dell'editor.
  */
 
 const MEDIA_ESTENSIONI = ['jpg', 'jpeg', 'png', 'webp', 'gif', 'svg', 'avif'];
-define('MEDIA_RADICE_UPLOADS', cms_uploads_url());        // le immagini caricate (danilofailli.it: /wp-content/uploads)
+define('MEDIA_RADICE_UPLOADS', cms_uploads_url());        // le immagini caricate (anche fuori dalla cartella del CMS)
 define('MEDIA_RADICE_PANNELLO', cms_base() . '/assets/img'); // le immagini generate dal pannello
 
 /** Le cartelle di primo livello, con l'etichetta che si mostra. */
@@ -91,7 +92,7 @@ function media_filtra(string $cartella = '', string $cerca = '', bool $miniature
 }
 
 /**
- * Carica un'immagine in <cartella delle immagini>/<cartella>/AAAA/MM/ (cms_uploads_dir(); su danilofailli.it wp-content/uploads). Ritorna ['url' => ...] oppure ['errore' => ...].
+ * Carica un'immagine in <cartella delle immagini>/<cartella>/AAAA/MM/ (cms_uploads_dir(); può stare fuori dalla cartella del CMS). Ritorna ['url' => ...] oppure ['errore' => ...].
  * Il tipo si legge dal file, non dall'estensione dichiarata. SVG accettato solo senza script.
  */
 function media_carica(?array $f, string $cartella = 'pagine', int $maxMb = 8): array {

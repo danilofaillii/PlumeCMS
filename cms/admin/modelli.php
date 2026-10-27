@@ -120,7 +120,7 @@ dialog.md-dialogo::backdrop{background:rgba(0,0,0,.4)}
 <div class="ct-testa">
   <p style="color:var(--text-muted);font-size:.88rem;margin:0;max-width:720px">
     Puoi avere più <?= $tipo ?>: quello con la stellina è il predefinito ed esce dappertutto. Con le <b>Condizioni</b> un modello esce solo dove dici tu
-    (tutti gli articoli, una categoria, una pagina precisa). Ogni articolo, pagina o aforisma può poi scegliere il suo nella propria scheda.
+    (tutti gli articoli, una categoria, una pagina precisa). Ogni articolo o pagina può poi scegliere il suo nella propria scheda.
     <?php if ($nelCestino): ?> · <a href="modelli.php?tipo=<?= $tipo ?>&amp;cestino=1">Cestino (<?= $nelCestino ?>)</a><?php endif; ?>
     <?php if ($cestino): ?> · <a href="modelli.php?tipo=<?= $tipo ?>">Torna all'elenco</a><?php endif; ?>
   </p>

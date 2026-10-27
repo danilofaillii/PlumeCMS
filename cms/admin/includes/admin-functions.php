@@ -98,12 +98,4 @@ function admin_count_by_status(): array {
     return $counts;
 }
 
-function admin_get_categories_list(): array {
-    return [
-        'stress-da-lavoro', 'burnout', 'colleghi-tossici', 'capo-tossico',
-        'mobbing', 'conflitti-e-comunicazione', 'ansia-e-confini',
-        'coaching-e-pnl', 'autosabotaggio', 'crescita-e-cambiamento',
-    ];
-}
-
 // sicurezza: handle_upload() (si fidava del tipo dichiarato dal browser) e stata tolta: i caricamenti passano da media_carica() in includes/media.php.

@@ -2,10 +2,10 @@
 /**
  * Menu di navigazione, come Aspetto > Menu di WordPress.
  *
- * Un menu è una riga di newdf_menu: nome, posizione (un'etichetta libera: principale, piede...) e le voci
+ * Un menu è una riga di <prefisso>menu: nome, posizione (un'etichetta libera: principale, piede...) e le voci
  * in un solo JSON ad albero, così il trascinamento annidato del pannello salva tutto in un colpo:
  *   [{"id":"a1b2c3d","etichetta":"Blog","tipo":"pagina|articolo|categoria|link","rif":"slug o indirizzo",
- *     "url":"/blog-fuori-del-coso/","nuova":false,"classi":"","figli":[...]}]
+ *     "url":"/blog/","nuova":false,"classi":"","figli":[...]}]
  * Le voci che puntano a una pagina, a un articolo o a una categoria ricordano lo slug (rif): se l'indirizzo
  * cambia, menu_voci_risolte() lo ricalcola dalla mappa del sito.
  *
@@ -38,7 +38,7 @@ function menu_installa(): void {
     save_setting('menu_schema', MENU_VERSIONE_SCHEMA);
 }
 
-/** I menu di partenza: il modulo del sito dà i suoi (danilofailli.it: testata e tre colonne del piede); altrimenti Home e blog. */
+/** I menu di partenza: il modulo del sito dà i suoi (per esempio testata e tre colonne del piede); altrimenti Home e blog. */
 function menu_crea_di_partenza(): void {
     $v = fn(string $etichetta, string $url, string $tipo = 'link', string $rif = '') => ['id' => menu_id_voce(), 'etichetta' => $etichetta, 'tipo' => $tipo, 'rif' => $rif, 'url' => $url, 'nuova' => false, 'classi' => '', 'figli' => []];
     $voci = [$v('Home', '/')];

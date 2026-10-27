@@ -75,14 +75,14 @@ require_once __DIR__ . '/editor-hero.php';
 const EDITOR_ALLINEAMENTI = ['' => 'Come la sezione', 'left' => 'Sinistra', 'center' => 'Centro', 'right' => 'Destra'];
 const EDITOR_STILI_PULSANTE = ['viola' => 'Pieno viola', 'ciano' => 'Pieno ciano', 'filo' => 'Contorno'];
 
-/** I moduli che il widget Modulo può mostrare: i tre fissi più i form del pannello. */
+/** I moduli che il widget Modulo può mostrare: la newsletter, i form del pannello e quelli dei moduli del sito (filtro moduli_disponibili). */
 function editor_moduli_disponibili(): array {
-    $o = ['laser' => 'Laser Coaching', 'ebook' => 'Ebook gratuito', 'newsletter' => 'Newsletter'];
+    $o = ['newsletter' => 'Newsletter'];
     try {
         require_once __DIR__ . '/form.php';
         foreach (form_tutti() as $f) $o['form:' . $f['id']] = 'Form: ' . $f['nome'] . ($f['attivo'] ? '' : ' (spento)');
-    } catch (Throwable $e) { /* senza database (prove a secco) restano i tre fissi */ }
-    return $o;
+    } catch (Throwable $e) { /* senza database (prove a secco) resta la newsletter */ }
+    return (array)cms_filtro('moduli_disponibili', $o);
 }
 
 /** Controlli che hanno tutti i widget, nella scheda Avanzate (come Elementor: layout, movimento, trasformazione, sfondo, bordo, posizione, responsive, attributi, CSS). */
@@ -183,7 +183,7 @@ function editor_definizioni(): array {
             es_all('didascalia_allineamento', 'Allineamento della didascalia', ' figcaption', 'Didascalia'),
         ]],
         'pulsanti' => ['etichetta' => 'Pulsanti', 'icona' => '⬭', 'gruppo' => 'Base', 'controlli' => [
-            ec('voci', 'ripetitore', 'Pulsanti', [['testo' => 'Prenota la Laser Coaching', 'link' => '/laser-coaching/', 'stile' => 'viola', 'nuova' => false]], 'contenuto', ['campi' => [
+            ec('voci', 'ripetitore', 'Pulsanti', [['testo' => 'Scopri di più', 'link' => '#', 'stile' => 'viola', 'nuova' => false]], 'contenuto', ['campi' => [
                 ec('testo', 'testo', 'Testo', 'Pulsante'), ec('link', 'testo', 'Link', '/'), ec('stile', 'scelta', 'Stile', 'viola', 'contenuto', ['opzioni' => EDITOR_STILI_PULSANTE]),
                 ec('nuova', 'interruttore', 'Apri in una nuova scheda', false),
             ], 'titolo_voce' => 'testo']),
@@ -215,7 +215,7 @@ function editor_definizioni(): array {
             ...es_testo('testo', 'del testo', ' li', 'Elenco'),
         ]],
         'frase' => ['etichetta' => 'Frase in evidenza', 'icona' => '❝', 'gruppo' => 'Contenuto', 'controlli' => [
-            ec('testo', 'testolungo', 'Frase', 'Non lavoro per renderti più forte. *Lavoro per farti portare meno peso.*', 'contenuto', ['aiuto' => 'Tra *asterischi* la parte con il gradiente.']),
+            ec('testo', 'testolungo', 'Frase', 'Una frase che resta in mente, *con la parte che conta in evidenza.*', 'contenuto', ['aiuto' => 'Tra *asterischi* la parte con il gradiente.']),
             ec('autore', 'testo', 'Firma (facoltativa)', ''),
             es_col('colore', 'Colore della frase', ' .frase', 'Frase'),
             es_col('colore_evidenza', 'Colore della parte tra asterischi (vuoto = gradiente)', ' .frase em', 'Frase', 'background'),
@@ -237,7 +237,7 @@ function editor_definizioni(): array {
             ...es_testo('testo', 'del testo', ' .passo p', 'Testo'),
         ]],
         'schede' => ['etichetta' => 'Schede con link', 'icona' => '▤', 'gruppo' => 'Contenuto', 'controlli' => [
-            ec('voci', 'ripetitore', 'Schede', [['titolo' => 'Laser Coaching · 15 minuti', 'testo' => 'Descrizione.', 'link' => '/laser-coaching/', 'invito' => 'Prenota →', 'evidenza' => true]], 'contenuto',
+            ec('voci', 'ripetitore', 'Schede', [['titolo' => 'Il tuo servizio', 'testo' => 'Descrizione.', 'link' => '#', 'invito' => 'Scopri →', 'evidenza' => true]], 'contenuto',
                 ['campi' => [ec('titolo', 'testo', 'Titolo', ''), ec('testo', 'testolungo', 'Testo', ''), ec('link', 'testo', 'Link', ''), ec('invito', 'testo', 'Invito (in fondo)', 'Scopri →'), ec('evidenza', 'interruttore', 'In evidenza', false)], 'titolo_voce' => 'titolo']),
             $colonne(3) + ['sezione' => 'Griglia'],
             es_mis('spazio', 'Spazio fra le schede', ' .ed-griglia', 'Griglia', 'gap', [], ['px', 'em'], ['intervalli' => ['px' => [0, 80, 1]]]),
@@ -269,14 +269,14 @@ function editor_definizioni(): array {
         'hero' => ['etichetta' => 'Apertura (hero)', 'icona' => '★', 'gruppo' => 'Contenuto', 'controlli' => [
             ec('disposizione', 'scelta', 'Disposizione', 'classica', 'contenuto', ['opzioni' => EDITOR_HERO_DISPOSIZIONI, 'aiuto' => 'Undici modi di mettere insieme le stesse parole e la stessa foto. Cambiando disposizione i testi restano.']),
             ec('occhiello', 'testo', 'Occhiello', (string)cms_impostazione('w_hero_occhiello', cms_impostazione('sito_sottotitolo', ''))),
-            ec('titolo', 'testo', 'Titolo (H1)', 'Quando il ruolo pesa più del lavoro, *il problema non è il team.*', 'contenuto', ['aiuto' => 'Tra *asterischi* la parte con il gradiente.']),
+            ec('titolo', 'testo', 'Titolo (H1)', 'Il titolo della pagina, *con le parole che contano.*', 'contenuto', ['aiuto' => 'Tra *asterischi* la parte con il gradiente.']),
             ec('testo', 'testolungo', 'Testo', ''),
-            ec('pulsanti', 'ripetitore', 'Pulsanti', [['testo' => "Laser Coaching 15'", 'link' => '/laser-coaching/', 'stile' => 'viola']], 'contenuto', ['campi' => [
+            ec('pulsanti', 'ripetitore', 'Pulsanti', [['testo' => 'Scopri di più', 'link' => '#', 'stile' => 'viola']], 'contenuto', ['campi' => [
                 ec('testo', 'testo', 'Testo', ''), ec('link', 'testo', 'Link', ''), ec('stile', 'scelta', 'Stile', 'viola', 'contenuto', ['opzioni' => EDITOR_STILI_PULSANTE])], 'titolo_voce' => 'testo']),
             ec('immagine', 'immagine', 'Foto', (string)cms_impostazione('w_hero_foto', '')),
             ec('onda_mostra', 'interruttore', "Mostra l'onda sopra la foto", true, 'contenuto', ['aiuto' => "Il riquadro con le barre che ondeggiano. Spento, sulla foto restano solo velo ed effetto."]),
             ec('etichetta_onda', 'testo', "Etichetta dell'onda", (string)cms_impostazione('w_onda_etichetta', ''), 'contenuto', ['condizione' => ['onda_mostra' => true]]),
-            ec('barre', 'ripetitore', 'Barre', [['etichetta' => 'Meno carico', 'valore' => 78]], 'contenuto', ['campi' => [ec('etichetta', 'testo', 'Etichetta', ''), ec('valore', 'numero', 'Valore (%)', 50, 'contenuto', ['min' => 0, 'max' => 100])], 'titolo_voce' => 'etichetta']),
+            ec('barre', 'ripetitore', 'Barre', [['etichetta' => 'Avanzamento', 'valore' => 78]], 'contenuto', ['campi' => [ec('etichetta', 'testo', 'Etichetta', ''), ec('valore', 'numero', 'Valore (%)', 50, 'contenuto', ['min' => 0, 'max' => 100])], 'titolo_voce' => 'etichetta']),
             ...es_testo('occhiello', "dell'occhiello", ' .occhiello', 'Occhiello'),
             ...es_testo('titolo', 'del titolo', ' h1', 'Titolo'),
             es_col('colore_evidenza', 'Colore della parte tra asterischi (vuoto = gradiente)', ' h1 em', 'Titolo', 'background'),
@@ -287,7 +287,7 @@ function editor_definizioni(): array {
             es_bor('pulsanti_bordo', 'Bordo dei pulsanti', ' .btn', 'Pulsanti'),
         ]],
         'numeri' => ['etichetta' => 'Numeri', 'icona' => '#', 'gruppo' => 'Contenuto', 'controlli' => [
-            ec('voci', 'ripetitore', 'Numeri', [['valore' => '15', 'etichetta' => 'minuti per il primo passo']], 'contenuto', ['campi' => [ec('valore', 'testo', 'Numero', ''), ec('etichetta', 'testo', 'Etichetta', '')], 'titolo_voce' => 'valore']),
+            ec('voci', 'ripetitore', 'Numeri', [['valore' => '3', 'etichetta' => 'passi per cominciare']], 'contenuto', ['campi' => [ec('valore', 'testo', 'Numero', ''), ec('etichetta', 'testo', 'Etichetta', '')], 'titolo_voce' => 'valore']),
             $colonne(3) + ['sezione' => 'Griglia'],
             es_mis('spazio', 'Spazio fra i riquadri', ' .ed-griglia', 'Griglia', 'gap', [], ['px', 'em'], ['intervalli' => ['px' => [0, 80, 1]]]),
             es_sfo('sfondo_card', 'Sfondo del riquadro', ' .ed-numero', 'Riquadro'),
@@ -338,7 +338,7 @@ function editor_definizioni(): array {
             ...es_testo('meta', 'di categoria e data', ' .card-meta', 'Meta'),
         ]],
         'modulo' => ['etichetta' => 'Modulo', 'icona' => '✉', 'gruppo' => 'Dal sito', 'controlli' => [
-            ec('tipo', 'scelta', 'Quale modulo', 'laser', 'contenuto', ['opzioni' => editor_moduli_disponibili(), 'aiuto' => 'I form li crei dal pannello, voce Form.']),
+            ec('tipo', 'scelta', 'Quale modulo', 'newsletter', 'contenuto', ['opzioni' => editor_moduli_disponibili(), 'accetta' => '/^[a-z][a-z0-9_:-]{0,40}$/', 'aiuto' => 'I form li crei dal pannello, voce Form.']),
             es_sfo('sfondo', 'Sfondo del riquadro', ' .modulo', 'Riquadro', [], false),
             es_bor('bordo', 'Bordo del riquadro', ' .modulo', 'Riquadro', [], false),
             es_pad('riquadro_padding', 'Spazio interno del riquadro', ' .modulo', 'Riquadro'),
@@ -412,11 +412,11 @@ function editor_definizioni(): array {
             ...es_testo('nota', 'della nota', ' .scheda-nota', 'Nota'),
         ]],
         // I tre riquadri "dal sito": i valori di partenza dei controlli sono l'aspetto di oggi (il CSS esce dai controlli, niente stili inline).
-        'cta' => ['etichetta' => 'Invito (Laser Coaching)', 'icona' => '★', 'gruppo' => 'Dal sito', 'controlli' => array_merge([
-            ec('titolo', 'testo', 'Titolo', 'Fai chiarezza in 15 minuti'),
-            ec('testo', 'testolungo', 'Testo', 'Prenota una Laser Coaching gratuita: mi racconti una situazione specifica e usciamo con almeno una cosa concreta da fare.'),
-            ec('pulsante_testo', 'testo', 'Testo del pulsante', 'Prenota i tuoi 15 minuti gratuiti'),
-            ec('pulsante_link', 'testo', 'Link del pulsante', '/laser-coaching/'),
+        'cta' => ['etichetta' => 'Invito', 'icona' => '★', 'gruppo' => 'Dal sito', 'controlli' => array_merge([
+            ec('titolo', 'testo', 'Titolo', 'Hai un progetto in mente?'),
+            ec('testo', 'testolungo', 'Testo', 'Scrivici due righe: ti rispondiamo entro un giorno con una proposta concreta.'),
+            ec('pulsante_testo', 'testo', 'Testo del pulsante', 'Scrivici'),
+            ec('pulsante_link', 'testo', 'Link del pulsante', '/contatti/'),
         ], editor_controlli_riquadro_cta('.ed-cta', [
             'sfondo' => ['tipo' => 'sfumatura', 'sfumatura' => ['colore1' => 'ig:ciano-2', 'posizione1' => 0, 'colore2' => 'ig:ciano-profondo', 'posizione2' => 100, 'tipo' => 'linear', 'angolo' => 135]],
             'raggio' => 16, 'padding' => el_(2, null, null, null, 'rem'), 'margine' => el_(2.5, 0, 1, 0, 'rem'),
@@ -424,11 +424,11 @@ function editor_definizioni(): array {
             'testo_colore' => 'rgba(255,255,255,.85)', 'testo_tip' => ['dimensione' => em_(0.95, 'rem')], 'testo_larghezza' => em_(520),
             'pulsante_sfondo' => 'ig:rosso', 'pulsante_colore' => '#ffffff', 'pulsante_tip' => ['dimensione' => em_(1, 'rem'), 'peso' => '700'], 'pulsante_padding' => el_(0.85, 2, 0.85, 2, 'rem'), 'pulsante_raggio' => 10,
         ]))],
-        'riquadro_test' => ['etichetta' => 'Riquadro del test', 'icona' => '✓', 'gruppo' => 'Dal sito', 'controlli' => array_merge([
-            ec('titolo', 'testo', 'Titolo', 'Quanto sei vicino al burnout, in numeri?'),
-            ec('testo', 'testolungo', 'Testo', '3 minuti, 12 domande, risultato immediato. Il test che centinaia di professionisti stanno usando per dare un nome a quello che sentono.'),
-            ec('pulsante_testo', 'testo', 'Testo del pulsante', 'Fai il test adesso'),
-            ec('pulsante_link', 'testo', 'Link del pulsante', '/test-burnout/'),
+        'riquadro_test' => ['etichetta' => 'Riquadro in evidenza', 'icona' => '✓', 'gruppo' => 'Dal sito', 'controlli' => array_merge([
+            ec('titolo', 'testo', 'Titolo', 'Mettiti alla prova in tre minuti'),
+            ec('testo', 'testolungo', 'Testo', 'Poche domande, risultato subito: scopri a che punto sei.'),
+            ec('pulsante_testo', 'testo', 'Testo del pulsante', 'Comincia'),
+            ec('pulsante_link', 'testo', 'Link del pulsante', '#'),
         ], editor_controlli_riquadro_cta('.ed-test', [
             'sfondo' => ['tipo' => 'classico', 'colore' => 'ig:sfondo'], 'bordo' => ['tipo' => 'solid', 'larghezza' => el_(2), 'colore' => 'ig:oro'],
             'raggio' => 16, 'padding' => el_(1.8, 2, 1.8, 2, 'rem'), 'margine' => el_(2.5, 0, 0.5, 0, 'rem'),
@@ -624,8 +624,12 @@ function editor_disegna_widget(string $tipo, array $v): string {
             $art = sito_ultimi(max(1, min(12, (int)$v['numero'])), fn($a) => (!$v['solo_pillar'] || $a['pillar']) && ($cat === '' || in_array($cat, $a['categorie'], true)));
             return $art ? '<div class="griglia">' . implode('', array_map('vista_scheda', $art)) . '</div>' : '<div class="ed-vuoto">Ancora nessun articolo da mostrare con questi filtri.</div>';
         case 'modulo':
-            $t = preg_match('/^(laser|ebook|newsletter|form:\d+)$/', (string)$v['tipo']) ? $v['tipo'] : 'laser';
-            return vista_modulo($t, $GLOBALS['editor_percorso'] ?? '/');
+            // Un tipo che non è newsletter né un form lo disegna il modulo del sito che lo conosce (vista_modulo).
+            $t = preg_match('/^[a-z][a-z0-9_:-]{0,40}$/', (string)$v['tipo']) ? $v['tipo'] : 'newsletter';
+            $html = vista_modulo($t, $GLOBALS['editor_percorso'] ?? '/');
+            // Nell'editor un modulo che nessuno conosce più (era di un modulo del sito tolto) si vede e si spiega; sul sito non esce.
+            if ($html === '' && !empty($GLOBALS['editor_ctx']['anteprima'])) $html = '<div class="ed-vuoto">' . (str_starts_with($t, 'form:') ? 'Questo form è spento o è stato eliminato' : 'Il modulo «' . h($t) . '» non c&#039;è più') . ': scegli la newsletter o un form nella scheda Contenuto.</div>';
+            return $html;
         case 'infografica':
             if (!function_exists('render_infographic')) require_once __DIR__ . '/infographic.php';
             $voci = (array)$v['voci'];
@@ -661,14 +665,14 @@ function editor_disegna_widget(string $tipo, array $v): string {
             return $out . '</div>';
         case 'cta':
             return '<div class="article-cta-box ed-cta"><p class="ed-cta-titolo">' . h($v['titolo']) . '</p><p class="ed-cta-testo">' . h($v['testo']) . '</p>'
-                . '<p><a class="ed-cta-pulsante" href="' . h(editor_link_sicuro((string)$v['pulsante_link']) ?: '/laser-coaching/') . '">' . h($v['pulsante_testo']) . '</a></p></div>';
+                . '<p><a class="ed-cta-pulsante" href="' . h(editor_link_sicuro((string)$v['pulsante_link']) ?: '#') . '">' . h($v['pulsante_testo']) . '</a></p></div>';
         case 'riquadro_test':
-            return '<div class="df-test-box ed-test"><p class="ed-test-titolo">' . h($v['titolo']) . '</p><p class="ed-test-testo">' . h($v['testo']) . '</p>'
-                . '<p><a class="ed-test-pulsante" href="' . h(editor_link_sicuro((string)$v['pulsante_link']) ?: '/test-burnout/') . '">' . h($v['pulsante_testo']) . '</a></p></div>';
+            return '<div class="ed-riquadro-box ed-test"><p class="ed-test-titolo">' . h($v['titolo']) . '</p><p class="ed-test-testo">' . h($v['testo']) . '</p>'
+                . '<p><a class="ed-test-pulsante" href="' . h(editor_link_sicuro((string)$v['pulsante_link']) ?: '#') . '">' . h($v['pulsante_testo']) . '</a></p></div>';
         case 'leggi_anche':
             $voci = array_filter((array)$v['voci'], fn($x) => trim((string)($x['titolo'] ?? '')) !== '' && editor_link_sicuro((string)($x['link'] ?? '')) !== '');
             if (!$voci) return '<div class="ed-vuoto">Aggiungi gli articoli da consigliare</div>';
-            return '<div class="df-leggi-anche ed-leggi">' . ($v['mostra_linea'] ? '<hr class="ed-leggi-linea">' : '')
+            return '<div class="ed-leggi-anche-box ed-leggi">' . ($v['mostra_linea'] ? '<hr class="ed-leggi-linea">' : '')
                 . '<p class="ed-leggi-titolo">' . h($v['titolo']) . '</p><div class="ed-leggi-griglia">'
                 . implode('', array_map(fn($x) => '<a class="ed-leggi-voce" href="' . h(editor_link_sicuro((string)$x['link'])) . '">' . h(rtrim(trim((string)$x['titolo']), ' →')) . ' →</a>', $voci))
                 . '</div></div>';

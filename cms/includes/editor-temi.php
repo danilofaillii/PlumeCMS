@@ -2,8 +2,8 @@
 /**
  * I temi delle infografiche (widget ig_*): un tema è un insieme di valori per i campi di stile
  * (testata, testo della testata, sfondo e bordo della card, angoli, ombra, dimensione del testo,
- * carattere, palette delle voci). Dieci temi preimpostati più quelli salvati da Danilo dal pannello,
- * nella tabella newdf_editor_temi. "Carta" è l'aspetto originale delle infografiche degli articoli:
+ * carattere, palette delle voci). Dieci temi preimpostati più quelli salvati dal pannello,
+ * nella tabella <prefisso>editor_temi. "Carta" è l'aspetto originale delle infografiche degli articoli:
  * un widget senza tema, o con i valori di partenza, si vede così.
  */
 
@@ -48,7 +48,7 @@ function editor_temi_schema(): void {
     )");
 }
 
-/** I temi salvati da Danilo: chiave "t<id>" → nome, valori, id. */
+/** I temi salvati dal pannello: chiave "t<id>" → nome, valori, id. */
 function editor_temi_salvati(): array {
     try {
         editor_temi_schema();

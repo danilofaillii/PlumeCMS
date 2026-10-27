@@ -535,7 +535,7 @@ function temi_installa_zip(string $percorso, bool $sostituisci, string $autore =
     try { $cfg = sicurezza_cfg(); } catch (Throwable $e) {}
     if (!$z['firmato'] && !empty($cfg['firma_pacchetti'])) throw new RuntimeException('Tema senza firma: la pagina Sicurezza richiede pacchetti firmati. Firmalo con tools/pacchetto.py --rifirma.');
     if ($z['php'] && !$z['firmato'] && (int)($cfg['root_php_fino'] ?? 0) <= time()) {
-        // 1.2.5: i passi esatti, per chi non sa cosa sia una firma (Danilo, 27 ottobre 2026, con il tema Lavagna).
+        // 1.2.5: i passi esatti, per chi non sa cosa sia una firma (27 ottobre 2026, con il tema Lavagna).
         throw new RuntimeException('Il tema "' . $z['nome'] . '" contiene codice PHP, che gira sul tuo server: per sicurezza si carica solo con un permesso di un\'ora. '
             . 'Vai in Impostazioni > Sicurezza, scheda Impostazioni, riquadro in fondo "Finestra di un\'ora per i file PHP": scrivi la tua password e premi "Apri la finestra per un\'ora". '
             . 'Poi torna qui e carica di nuovo lo zip. Fallo solo se il tema viene da una fonte di cui ti fidi. '

@@ -2,7 +2,7 @@
 
 Voce di menu **SEO e AEO** (solo amministratore). Motore in `includes/seo.php`, pagina `admin/seo.php`,
 chiamate `admin/seo-api.php`, tabelle in `sql/seo.sql` (le crea da sola `seo_installa()` al primo uso).
-Impostazioni in `newdf_settings`: `seo_config` (JSON di tutto), `seo_indexnow_chiave`, `seo_google_sa`
+Impostazioni in `<prefisso>settings`: `seo_config` (JSON di tutto), `seo_indexnow_chiave`, `seo_google_sa`
 (la chiave del service account, mai mostrata), `seo_google_token` (cache del token).
 
 Regola di fondo: **con i valori di partenza il sito esce identico a prima.** Titoli, robots, canonical,
@@ -26,7 +26,7 @@ indirizzi (`verifica_contratto.py`) resta a zero differenze.
 ## Google Search Console: verifica della proprieta
 
 1. Vai su search.google.com/search-console, **Aggiungi proprieta**, scegli **Prefisso URL** e scrivi
-   `https://www.danilofailli.it/`.
+   l'indirizzo del sito, per esempio `https://www.esempio.it/`.
 2. Fra i metodi di verifica scegli **Tag HTML**. Google mostra una riga tipo
    `<meta name="google-site-verification" content="abc123...">`: copiala tutta.
 3. Nel pannello, SEO e AEO, scheda **Motori di ricerca**, riquadro Verifica della proprieta: incolla nel
@@ -55,10 +55,10 @@ loro la leggono subito invece di aspettare la prossima scansione. Lo usano **Bin
 e si passano le notifiche a vicenda. **Google non lo usa.**
 
 Come si accende: scheda Motori, riquadro IndexNow, **Genera la chiave**. Il pannello crea una chiave casuale e
-il sito la pubblica in `https://www.danilofailli.it/<chiave>.txt` (il protocollo chiede solo questo, nessuna
+il sito la pubblica in `https://www.esempio.it/<chiave>.txt` (il protocollo chiede solo questo, nessuna
 registrazione). Da quel momento:
 
-- ogni articolo, pagina o aforisma **pubblicato o modificato** dal pannello va nella coda `newdf_seo_coda` e,
+- ogni articolo, pagina o contenuto di un tipo dei moduli **pubblicato o modificato** dal pannello va nella coda `<prefisso>seo_coda` e,
   con "Invio immediato" acceso, parte subito;
 - la coda si svuota anche dal cron: `cron-newsletter.php` ogni 5 minuti e `cron-daily.php` alle 06:00;
 - **Invia tutta la sitemap adesso** mette in coda tutti gli indirizzi della sitemap e li manda in una chiamata
@@ -75,7 +75,7 @@ Cloud con una chiave JSON. La chiave si salva nel database del pannello e non si
 solo l'email). I passi, uno per uno:
 
 1. Apri console.cloud.google.com con l'account Google che ha Search Console. **Crea progetto**, nome a piacere
-   (per esempio `danilofailli-seo`).
+   (per esempio `esempio-seo`).
 2. Menu a sinistra, **API e servizi**, **Libreria**: cerca **Google Search Console API** e premi **Abilita**.
 3. Menu, **IAM e amministrazione**, **Service account**, **Crea service account**. Nome a piacere. Alla
    richiesta dei ruoli non serve niente: **Fine**.
@@ -87,12 +87,12 @@ solo l'email). I passi, uno per uno:
 6. Vai in Search Console, **Impostazioni**, **Utenti e autorizzazioni**, **Aggiungi utente**: incolla quella
    email, autorizzazione **Completa** (serve per l'ispezione degli URL). Aggiungi.
 7. Nel pannello controlla che **Proprieta di Search Console** sia scritta come in Search Console:
-   `https://www.danilofailli.it/` (prefisso URL, con la barra finale) oppure `sc-domain:danilofailli.it`
+   `https://www.esempio.it/` (prefisso URL, con la barra finale) oppure `sc-domain:esempio.it`
    (proprieta Dominio). Premi **Prova il collegamento**: deve dire quali proprieta vede.
 
 Se dice 403: il service account non e stato aggiunto in Search Console oppure l'API non e abilitata.
 Se dice 404: la proprieta e scritta diversa da come sta in Search Console.
-Se dice che il server non raggiunge Internet: la rete dell'hosting e chiusa verso Google, da chiedere a Hostcare.
+Se dice che il server non raggiunge Internet: la rete dell'hosting e chiusa verso Google, da chiedere al fornitore dell'hosting.
 
 Il token si firma in casa con OpenSSL (JWT RS256) e si scambia con `oauth2.googleapis.com`: nessuna libreria.
 
@@ -100,7 +100,7 @@ Il token si firma in casa con OpenSSL (JWT RS256) e si scambia con `oauth2.googl
 
 Il problema storico del sito sono le pagine "Scansionata, al momento non indicizzata". La scheda Copertura
 chiede a Search Console il verdetto di ogni indirizzo (`urlInspection/index:inspect`) e lo salva in
-`newdf_seo_url`: verdetto, stato di copertura in italiano, ultima scansione di Google, canonical scelto da Google,
+`<prefisso>seo_url`: verdetto, stato di copertura in italiano, ultima scansione di Google, canonical scelto da Google,
 stato in robots.txt. Un indirizzo alla volta o a lotti (10, 25, 50, 100): i lotti partono dagli indirizzi mai
 controllati o controllati da piu tempo. La quota di Google e di **2000 ispezioni al giorno**: il contatore e in
 alto. I filtri in alto dividono indicizzati, scansionati non indicizzati, esclusi.
@@ -139,11 +139,12 @@ scegliere "Carica subito, senza banner".
 
 ## Globale SEO
 
-- **Titoli**: formato per tipo con `%titolo% %sep% %sito%`. Partenza: `Titolo - Danilo Failli - D.O.C.`, quello di
-  oggi. Il titolo per Google scritto nel singolo contenuto vince sempre.
+- **Titoli**: formato per tipo con `%titolo% %sep% %sito%`. Partenza: `Titolo - Nome del sito` (il titolo del sito,
+  `sito_titolo`, oppure il suo nome). I tipi di contenuto dei moduli hanno ognuno il suo formato, da soli
+  (`seo_tipi_moduli()`). Il titolo per Google scritto nel singolo contenuto vince sempre.
 - **Descrizione e immagine predefinite** per le pagine che non ne hanno; account X per `twitter:site`.
 - **Meta robots avanzato**: `max-snippet:-1, max-image-preview:large, max-video-preview:-1` (oggi acceso).
-- **Indicizzazione per tipo**: Automatica = la regola di oggi. Forzare index o noindex vale per tutto il tipo.
+- **Indicizzazione per tipo**: Automatica = la regola di oggi. Forzare index o noindex vale per tutto il tipo. Anche qui i tipi dei moduli compaiono da soli.
 - **robots.txt**: il predefinito e `extra_robots()` di prima. Scrivendo nel campo, il sito serve quel testo;
   "Ripristina" torna al predefinito. Sotto, un interruttore per ogni **crawler AI** (GPTBot, OAI-SearchBot,
   ChatGPT-User, ClaudeBot, Google-Extended, PerplexityBot, CCBot, Bytespider, Applebot-Extended,
@@ -186,15 +187,16 @@ riquadro.
 
 ## Redirect e 404
 
-Il front controller registra ogni 404 vero (niente sonde, niente file di sistema) in `newdf_seo_404` con
+Il front controller registra ogni 404 vero (niente sonde, niente file di sistema) in `<prefisso>seo_404` con
 conteggio, provenienza, prima e ultima volta. Il pulsante **Crea redirect** compila il modulo; il redirect va
-nella stessa tabella `newdf_redirect` dei pacchetti e dei cambi di slug, e l'indirizzo viene notificato a
+nella stessa tabella `<prefisso>redirect` dei pacchetti e dei cambi di slug, e l'indirizzo viene notificato a
 IndexNow. Dall'elenco si spegne, riaccende o elimina ogni redirect.
 
 ## Tabelle
 
-`newdf_seo_coda` (coda IndexNow), `newdf_seo_log` (registro, si pulisce dopo 90 giorni), `newdf_seo_url`
-(copertura), `newdf_seo_404` (monitor, tiene le ultime 3000 righe). SQL leggibile in `sql/seo.sql`.
+`<prefisso>seo_coda` (coda IndexNow), `<prefisso>seo_log` (registro, si pulisce dopo 90 giorni), `<prefisso>seo_url`
+(copertura), `<prefisso>seo_404` (monitor, tiene le ultime 3000 righe). Si creano da sole: `seo_schema_tabelle()` in
+`includes/seo.php`.
 
 ## Dove il sito legge il pannello
 

@@ -105,7 +105,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
     if ($azione === 'lista_elimina') {
         $id = (int)($_POST['id'] ?? 0);
-        if (in_array($id, [newsletter_lista_principale(), newsletter_lista_ebook()], true)) {
+        if ($id === newsletter_lista_principale()) {
             flash('error', 'Questa lista la usa il sito per le iscrizioni: si può rinominare, non eliminare.');
         } else {
             db()->prepare('DELETE FROM ' . tbl('newsletter_iscritti_liste') . ' WHERE lista_id = ?')->execute([$id]);
@@ -301,7 +301,7 @@ require_once __DIR__ . '/includes/admin-header.php';
   <p style="font-size:.85rem;color:var(--text-muted)">Un iscritto può stare in più liste. Una campagna va alle liste che scegli, e chi sta in due di quelle liste la riceve una volta sola. Chi esce dalla newsletter esce da tutte.</p>
   <div style="overflow-x:auto"><table class="table">
     <tr><th>Nome e descrizione</th><th>Attivi</th><th>In tutto</th><th></th></tr>
-    <?php $sistema = [newsletter_lista_principale() => 'iscrizioni dal sito', newsletter_lista_ebook() => "iscrizioni dall'ebook"];
+    <?php $sistema = [newsletter_lista_principale() => 'iscrizioni dal sito'];
     foreach ($liste as $l): ?>
     <tr>
       <td><form method="post" class="nl-riga"><?= csrf_field() ?><input type="hidden" name="azione" value="lista_rinomina"><input type="hidden" name="id" value="<?= (int)$l['id'] ?>">
@@ -317,7 +317,7 @@ require_once __DIR__ . '/includes/admin-header.php';
   </table></div>
   <h3 style="margin-top:1.5rem">Nuova lista</h3>
   <form method="post" class="nl-riga"><?= csrf_field() ?><input type="hidden" name="azione" value="lista_crea">
-    <input type="text" name="nome" maxlength="100" placeholder="Nome, per esempio: Clienti percorso D.O.C." required style="padding:.4rem .6rem;border:1px solid var(--border);border-radius:6px;min-width:280px">
+    <input type="text" name="nome" maxlength="100" placeholder="Nome, per esempio: Clienti" required style="padding:.4rem .6rem;border:1px solid var(--border);border-radius:6px;min-width:280px">
     <input type="text" name="descrizione" maxlength="255" placeholder="Descrizione (facoltativa)" style="padding:.4rem .6rem;border:1px solid var(--border);border-radius:6px;min-width:260px">
     <button class="btn btn-primary btn-sm" type="submit">Crea</button>
   </form>
@@ -335,7 +335,7 @@ require_once __DIR__ . '/includes/admin-header.php';
     <button class="btn btn-primary" type="submit">Salva</button>
   </form>
   <p style="font-size:.85rem;color:var(--text-muted);margin-top:1rem">
-    Cron da aggiungere in cPanel, ogni 5 minuti:<br><code>/usr/local/bin/php /home/UTENTE/public_html/new/cron-newsletter.php</code>
+    Cron da aggiungere in cPanel, ogni 5 minuti:<br><code>/usr/local/bin/php <?= h(cms_radice()) ?>/cron-newsletter.php</code>
   </p>
 </div>
 <?php endif; ?>

@@ -1,6 +1,6 @@
 <?php
 /**
- * Editor visuale delle pagine, degli articoli e degli aforismi.
+ * Editor visuale delle pagine, degli articoli e dei tipi dei moduli.
  *
  * Una pagina è un albero: sezioni, dentro colonne, dentro widget. Ogni elemento ha un id e le sue impostazioni.
  *   {"versione":1,"elementi":[{"id":"a1b2c3d","tipo":"sezione","impostazioni":{...},"figli":[
@@ -429,7 +429,7 @@ function editor_tipo_valido(?string $tipo): string {
     return 'pagine';
 }
 
-/** Un tipo "di lettura" (articoli, aforismi) nasce con una sezione "Articolo" a colonna stretta; una pagina no. */
+/** Un tipo "di lettura" (articoli, i tipi da leggere dei moduli) nasce con una sezione "Articolo" a colonna stretta; una pagina no. */
 function editor_tipo_lettura(string $tipo): bool {
     if ($tipo === 'pagine' || $tipo === 'modelli') return false;
     require_once __DIR__ . '/contenuti.php';
@@ -518,31 +518,25 @@ function editor_widget(string $tipo, array $imp = []): array {
 
 /**
  * Il contenuto di prima dentro l'editor: niente si perde, si rifà con calma.
- * L'HTML resta intero in widget HTML; i moduli Brevo diventano widget Modulo, come li mostra oggi il sito
- * (vista_moduli_in_pagina). Stessa larghezza e stessi spazi della pagina di prima.
+ * L'HTML resta intero in widget HTML; i moduli Brevo (newsletter) diventano widget Modulo della newsletter.
+ * Stessa larghezza e stessi spazi della pagina di prima.
  */
 function editor_albero_da_html(string $titolo, string $html, string $percorso = '/', string $tldr = ''): array {
     $w = [editor_widget('titolo', ['testo' => $titolo, 'livello' => 'h1', 'margine_sotto' => ['d' => 28]])];
     if (trim($tldr) !== '' && function_exists('vista_in_breve')) $w[] = editor_widget('html', ['codice' => vista_in_breve($tldr), 'margine_sotto' => ['d' => 0]]);
-    $ebook = defined('MODULI_PAGINA_EBOOK') && $percorso === MODULI_PAGINA_EBOOK;
-    if ($ebook) $html = preg_replace('~href="(?:' . preg_quote(defined('SITO_URL') ? SITO_URL : cms_url_sito(), '~') . ')?/fuori-dagli-schemi/"~', 'href="#modulo"', $html);
     $pezzi = preg_split('~(<!--\s*Begin Brevo Form\s*-->[\s\S]*?<!--\s*End Brevo Form\s*-->)~i', $html, -1, PREG_SPLIT_DELIM_CAPTURE | PREG_SPLIT_NO_EMPTY);
-    $moduli = 0;
     foreach ($pezzi as $p) {
         if (preg_match('~^<!--\s*Begin Brevo Form~i', $p)) {
-            $w[] = editor_widget('modulo', ['tipo' => str_contains($p, 'name="SMS"') ? 'laser' : 'newsletter']);
-            $moduli++;
+            $w[] = editor_widget('modulo', ['tipo' => 'newsletter']);
         } elseif (trim($p) !== '') {
             $w[] = editor_widget('html', ['codice' => $p, 'classe' => 'corpo']);
         }
     }
-    if ($ebook) $w[] = editor_widget('modulo', ['tipo' => 'ebook']);
-    elseif (!$moduli && $percorso === '/laser-coaching/') $w[] = editor_widget('modulo', ['tipo' => 'laser']);
     return editor_valida(['elementi' => [editor_sezione($w, ['larghezza' => 'stretta', 'spazio_sopra' => ['d' => 56], 'spazio_sotto' => ['d' => 80]])]]);
 }
 
 /**
- * Un articolo nell'editor. Il modulo del sito può convertirlo in blocchi (danilofailli.it: editor-articoli.php, un widget
+ * Un articolo nell'editor. Il modulo del sito può convertirlo in blocchi (per esempio un widget
  * per capitolo, testo, immagine, tabella...); altrimenti il testo entra in una sezione di lettura con un widget HTML.
  */
 function editor_albero_da_articolo(array $a): array {

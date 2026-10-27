@@ -22,9 +22,20 @@ function sito_robots_meta(string $r): string {
     return seo_robots_meta($r);
 }
 
-/** Il tipo di un contenuto per il pannello SEO: articolo, aforisma, pagina. */
+/** Il tipo di un contenuto per il pannello SEO: articolo, pagina, o il nome di un tipo di un modulo ("uno", per esempio ricetta). */
 function sito_tipo_seo(array $c): string {
-    return match ($c['fonte'] ?? '') { 'articles' => 'articolo', 'aforismi' => 'aforisma', 'pages' => 'pagina', default => 'altro' };
+    $fonte = (string)($c['fonte'] ?? '');
+    if ($fonte === 'articles') return 'articolo';
+    if ($fonte === 'pages') return 'pagina';
+    foreach (seo_tipi_moduli() as $t) if (($t['tabella'] ?? '') === $fonte) return (string)$t['uno'];
+    return 'altro';
+}
+
+/** La regola di indicizzazione di un tipo SEO: articoli, pagine, o la chiave del tipo del modulo. */
+function sito_robots_chiave(string $tipoSeo): string {
+    if ($tipoSeo === 'articolo') return 'articoli';
+    foreach (seo_tipi_moduli() as $k => $t) if (($t['uno'] ?? '') === $tipoSeo) return (string)$k;
+    return 'pagine';
 }
 
 /** Titolo, descrizione, robots, canonical e Open Graph di un indirizzo. */
@@ -36,7 +47,7 @@ function sito_meta(string $percorso, array $v): array {
         $titolo = $c['seo']['titolo'] ?: seo_titolo($v['genere'] === 'home' ? (string)cms_impostazione('home_titolo', cms_impostazione('sito_nome', CMS_NOME)) : $c['titolo'], $tipoSeo);
         $immagine = $c['seo']['immagine_social'] ?: ($c['immagine']['url'] ?? seo_og_immagine_predefinita());
         $robots = $c['seo']['robots'];
-        if ($v['genere'] === 'contenuto') $robots = seo_robots_tipo(['articolo' => 'articoli', 'aforisma' => 'aforismi', 'pagina' => 'pagine'][$tipoSeo] ?? 'pagine', $robots);
+        if ($v['genere'] === 'contenuto') $robots = seo_robots_tipo(sito_robots_chiave($tipoSeo), $robots);
         return [
             'titolo' => $titolo,
             'descrizione' => $c['seo']['descrizione'] ?: (mb_substr($c['estratto'], 0, 160) ?: seo_descrizione_predefinita()),
@@ -129,7 +140,8 @@ function sito_jsonld_servizio(array $c): array {
             'hasCourseInstance' => array_filter(['@type' => 'CourseInstance', 'courseMode' => $modo, 'courseWorkload' => $s['durata'] ?? null, 'instructor' => ['@id' => seo_jsonld_id('persona')]])]);
     }
     return array_filter(['@type' => 'Service', '@id' => "$u#servizio", 'name' => $c['titolo'], 'description' => $c['tldr'] ?: $c['seo']['descrizione'], 'url' => $u,
-        'provider' => ['@id' => seo_jsonld_id('servizio')], 'serviceType' => 'Coaching', 'areaServed' => ['@type' => 'Country', 'name' => 'Italia'], 'offers' => $offerta]);
+        'provider' => ['@id' => seo_jsonld_id('servizio')], 'serviceType' => (string)cms_impostazione('servizio_tipo', '') ?: null,
+        'areaServed' => ($zona = (string)cms_impostazione('servizio_zona', '')) !== '' ? ['@type' => 'Country', 'name' => $zona] : null, 'offers' => $offerta]);
 }
 
 function sito_jsonld_termine(array $c): array {
@@ -139,7 +151,7 @@ function sito_jsonld_termine(array $c): array {
 }
 
 function sito_jsonld_glossario(array $termini): array {
-    return ['@type' => 'DefinedTermSet', '@id' => SITO_URL . '/glossario/#insieme', 'name' => 'Glossario PNL', 'url' => SITO_URL . '/glossario/',
+    return ['@type' => 'DefinedTermSet', '@id' => SITO_URL . '/glossario/#insieme', 'name' => (string)cms_impostazione('glossario_titolo', 'Glossario'), 'url' => SITO_URL . '/glossario/',
         'hasDefinedTerm' => array_map(fn($t) => ['@id' => sito_assoluto($t['percorso']) . '#termine'], $termini)];
 }
 

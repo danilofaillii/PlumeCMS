@@ -3,12 +3,12 @@
  * Header e footer del sito (Theme Builder): più modelli, uno predefinito per tipo, condizioni come in Elementor,
  * scelta per singolo contenuto.
  *
- * Un modello è una riga di newdf_modelli: tipo (header | footer), nome, struttura dell'editor visuale
+ * Un modello è una riga di <prefisso>modelli: tipo (header | footer), nome, struttura dell'editor visuale
  * (le stesse sezioni, colonne e widget delle pagine: includes/editor.php), bozza, stato, stellina del predefinito,
- * condizioni in JSON e priorità. Le revisioni stanno in newdf_pagine_revisioni con tipo "modelli".
+ * condizioni in JSON e priorità. Le revisioni stanno in <prefisso>pagine_revisioni con tipo "modelli".
  *
  * Chi decide quale modello esce su una pagina (modelli_scegli):
- *   1. la scelta del contenuto: colonne header_id e footer_id su articoli, pagine e aforismi
+ *   1. la scelta del contenuto: colonne header_id e footer_id su articoli, pagine e tipi dei moduli
  *      (0 = predefinito, -1 = nessuno, > 0 = quel modello);
  *   2. le condizioni dei modelli pubblicati: tutto il sito, un tipo di contenuto, una categoria, un contenuto;
  *      vince la più specifica, a parità la priorità più alta; una condizione "escludi" toglie il modello;
@@ -255,7 +255,7 @@ function modelli_elimina(int $id): void {
     }
 }
 
-/** Le condizioni: [{"dove":"sito|articoli|pagine|aforismi|archivi|categoria|contenuto","valore":"","escludi":false}]. */
+/** Le condizioni: [{"dove":"sito|articoli|pagine|<tipo di un modulo>|archivi|categoria|contenuto","valore":"","escludi":false}]. */
 function modelli_pulisci_condizioni($c): array {
     $out = [];
     foreach (is_array($c) ? array_slice($c, 0, 40) : [] as $r) {
@@ -298,7 +298,7 @@ function modelli_nome_contenuto(string $rif): string {
 // ------------------------------------------------------------
 
 /**
- * Il contenuto che il sito sta mostrando: tipo (articoli, pagine, aforismi, altro), la riga del database,
+ * Il contenuto che il sito sta mostrando: tipo (articoli, pagine, un tipo di un modulo, altro), la riga del database,
  * le categorie, il percorso, il titolo. Dal front controller arriva $GLOBALS['sito_percorso']; dal pannello
  * (anteprima nell'editor) arriva direttamente la riga in $GLOBALS['sito_contenuto_riga'].
  */

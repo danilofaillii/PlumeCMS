@@ -7,14 +7,14 @@ Solo l'amministratore la vede.
 
 ## Come funziona
 
-- I valori stanno nella tabella `newdf_design` (una riga per scheda, JSON; la riga `_precedente` tiene l'insieme
+- I valori stanno nella tabella `<prefisso>design` (una riga per scheda, JSON; la riga `_precedente` tiene l'insieme
   salvato prima dell'ultimo salvataggio). La tabella si crea da sola alla prima lettura.
 - `design_head()` scrive nel `<head>` di ogni pagina, dopo `sito.css`, lo `<style id="g-css">` con le variabili
   `--g-colore-*`, `--g-font-*`, `--g-larghezza`... e il ponte con le variabili di `sito.css`
   (`--viola: var(--g-colore-primario)`, `--ciano`, `--testo`, `--bg`, `--bordo`, `--f-titolo`, `--f-testo`, `--max`).
   Così tutto il foglio di stile segue i globali senza essere toccato.
 - **Con i valori di partenza il sito è identico a prima**: i globali ripetono i colori e i caratteri di `sito.css`
-  e le regole per elemento (body, p, a, h1..h6, .btn, img, campi) escono solo per i valori che Danilo ha scritto.
+  e le regole per elemento (body, p, a, h1..h6, .btn, img, campi) escono solo per i valori che l'amministratore ha scritto.
   Un campo vuoto vuol dire "come il sito".
 - L'anteprima nel pannello è il sito vero dentro un riquadro: a ogni modifica il JavaScript chiede al server il CSS
   (`POST azione=css`, senza salvare) e lo mette nell'iframe. Il sito cambia solo con **Salva**.
@@ -48,6 +48,6 @@ Solo l'amministratore la vede.
   sfondo scuro) segue il testo: prima su uno sfondo chiaro gli articoli erano quasi invisibili (27 ottobre 2026). Con un
   secondario diverso, `--su-secondario` diventa bianco su un secondario scuro e quasi nero su uno chiaro.
 - Restano fissi apposta: ombre nere, il bianco dietro le immagini, i colori ufficiali dei social, le stelle, la lightbox,
-  le testate colorate della Scheda, la grafica della home di danilofailli (`.finestra`, `.ritratto`, `.chip`), le
+  le testate colorate della Scheda, la grafica della home di partenza (`.finestra`, `.ritratto`, `.chip`), le
   infografiche (`.igx`: dalla fase 4 hanno le loro variabili `--ig-*`, vedi `temi.md`). I colori di partenza scritti nelle impostazioni dei widget
   (per esempio la CTA verde scuro) non sono CSS: li cambia il tema.

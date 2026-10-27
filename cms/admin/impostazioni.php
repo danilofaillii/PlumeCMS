@@ -43,7 +43,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     exit;
 }
 
-$smtp = (json_decode((string)get_setting('posta_smtp', ''), true) ?: []) + ['host' => '', 'porta' => 465, 'sicurezza' => 'ssl', 'utente' => '', 'password' => '', 'mittente' => '', 'nome' => 'Danilo Failli'];
+$smtp = (json_decode((string)get_setting('posta_smtp', ''), true) ?: []) + ['host' => '', 'porta' => 465, 'sicurezza' => 'ssl', 'utente' => '', 'password' => '', 'mittente' => '', 'nome' => (string)cms_impostazione('sito_nome', CMS_NOME)];
 $notifica = posta_notifica_email();
 
 require_once __DIR__ . '/includes/admin-header.php';
@@ -88,7 +88,7 @@ require_once __DIR__ . '/includes/admin-header.php';
     <h3>Sito pubblico</h3>
     <p style="font-size:0.85rem;color:var(--text-muted);margin:0">
       Il sito legge da questo pannello a ogni visita: una modifica si vede subito, un articolo programmato compare da solo alla sua data e ora.
-      Grafica e contenuti si cambiano da <a href="contenuti.php?tipo=pagine">Pagine</a>, <a href="contenuti.php?tipo=articoli">Articoli</a> e <a href="contenuti.php?tipo=aforismi">Aforismi</a>, con l'editor visuale.
+      Grafica e contenuti si cambiano da <a href="contenuti.php?tipo=pagine">Pagine</a> e <a href="contenuti.php?tipo=articoli">Articoli</a>, con l'editor visuale.
     </p>
   </div>
 </div>

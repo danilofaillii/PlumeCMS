@@ -1,9 +1,9 @@
 <?php
 /**
- * Newsletter FuoriDalCoso, al posto di Brevo.
+ * La newsletter del sito, senza servizi esterni.
  *
- * Iscritti: modulo con doppia conferma dell'email (stesso captcha dei moduli), oppure consenso dato nel
- * modulo dell'ebook (l'email lì è già confermata), oppure importazione dei contatti esportati da Brevo.
+ * Iscritti: modulo con doppia conferma dell'email (stesso captcha dei moduli), oppure importazione dei contatti
+ * esportati da un altro servizio (per esempio Brevo).
  * Campagne: scritte nell'editor del pannello, inviate da una coda a ritmo controllato da cron-newsletter.php
  * (i server condivisi limitano le email per ora). Ogni email ha l'uscita in un clic, anche dall'intestazione
  * List-Unsubscribe che leggono Gmail e Outlook.
@@ -14,7 +14,7 @@ require_once __DIR__ . '/moduli.php';
 define('NEWSLETTER_PAGINA', (string)cms_impostazione('newsletter_pagina', '/newsletter/'));
 const NEWSLETTER_GRAZIE = '/newsletter-grazie/';
 
-/** "Newsletter FuoriDalCoso", oppure "Newsletter": il nome della newsletter del sito (lista principale, email). */
+/** Il nome della newsletter ("Newsletter" se non è impostato): il nome della newsletter del sito (lista principale, email). */
 function newsletter_nome(): string {
     $n = trim((string)cms_impostazione('newsletter_nome', ''));
     return $n !== '' ? "Newsletter $n" : 'Newsletter';
@@ -92,9 +92,8 @@ function newsletter_schema(): void {
         $c = db()->query("SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = '" . DB_PREFIX . "newsletter_campagne' AND COLUMN_NAME = 'liste'")->fetchColumn();
         if (!$c) db()->exec('ALTER TABLE ' . tbl('newsletter_campagne') . " ADD COLUMN `liste` VARCHAR(255) NOT NULL DEFAULT '' AFTER `errori`");
         $fatto = true;
-        // Le due liste di partenza. Chi era iscritto prima delle liste entra nella principale.
+        // La lista di partenza. Chi era iscritto prima delle liste entra nella principale.
         $principale = newsletter_lista_di_sistema('principale', newsletter_nome(), 'Chi si iscrive dal sito, e gli iscritti di prima delle liste');
-        newsletter_lista_di_sistema('ebook', 'Lettori ebook', "Chi ha chiesto l'ebook e ha dato il consenso alla newsletter");
         db()->prepare('INSERT IGNORE INTO ' . tbl('newsletter_iscritti_liste') . ' (iscritto_id, lista_id, aggiunto) SELECT i.id, ?, NOW() FROM ' . tbl('newsletter_iscritti') . ' i
             WHERE NOT EXISTS (SELECT 1 FROM ' . tbl('newsletter_iscritti_liste') . ' l WHERE l.iscritto_id = i.id)')->execute([$principale]);
         db()->prepare('UPDATE ' . tbl('newsletter_campagne') . " SET liste = ? WHERE liste = ''")->execute([(string)$principale]);
@@ -107,7 +106,7 @@ function newsletter_schema(): void {
 // Liste
 // ------------------------------------------------------------
 
-/** Una lista di sistema (principale, ebook): l'id sta nelle impostazioni, il nome si può cambiare dal pannello. */
+/** Una lista di sistema (la principale, o quella di un modulo): l'id sta nelle impostazioni, il nome si può cambiare dal pannello. */
 function newsletter_lista_di_sistema(string $chiave, string $nome, string $descrizione): int {
     $id = (int)get_setting('newsletter_lista_' . $chiave, 0);
     if ($id && db()->query('SELECT COUNT(*) FROM ' . tbl('newsletter_liste') . ' WHERE id = ' . $id)->fetchColumn()) return $id;
@@ -125,11 +124,6 @@ function newsletter_lista_di_sistema(string $chiave, string $nome, string $descr
 function newsletter_lista_principale(): int {
     newsletter_schema();
     return newsletter_lista_di_sistema('principale', newsletter_nome(), '');
-}
-
-function newsletter_lista_ebook(): int {
-    newsletter_schema();
-    return newsletter_lista_di_sistema('ebook', 'Lettori ebook', '');
 }
 
 /** Tutte le liste, con quanti iscritti attivi e quanti in tutto. */
@@ -223,19 +217,6 @@ function newsletter_conferma(string $token): bool {
         foreach ($l->fetchAll(PDO::FETCH_COLUMN) as $lista) newsletter_flussi_innesco('lista', (int)$lista, $id);
     }
     return true;
-}
-
-/** Consenso dato nel modulo dell'ebook: l'email è confermata con il link dell'ebook, quindi l'iscritto è attivo. */
-function newsletter_da_ebook(array $r): void {
-    newsletter_schema();
-    $ora = moduli_adesso();
-    db()->prepare('INSERT INTO ' . tbl('newsletter_iscritti') . " (email, nome, cognome, stato, fonte, consenso_versione, consenso_at, ip, creato, aggiornato)
-        VALUES (?, ?, ?, 'attivo', 'ebook', ?, NOW(), ?, ?, ?)
-        ON DUPLICATE KEY UPDATE stato = 'attivo', consenso_versione = VALUES(consenso_versione), consenso_at = NOW(), uscito_at = NULL, aggiornato = VALUES(aggiornato)")
-        ->execute([$r['email'], $r['nome'], $r['cognome'], $r['consenso_versione'], $r['ip'], $ora, $ora]);
-    $id = newsletter_id_da_email($r['email']);
-    newsletter_in_lista($id, newsletter_lista_principale());
-    newsletter_in_lista($id, newsletter_lista_ebook());
 }
 
 function newsletter_token_uscita(int $id): string {

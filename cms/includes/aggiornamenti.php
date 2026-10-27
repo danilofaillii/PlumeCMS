@@ -8,7 +8,7 @@
  * database piu i file che verranno sovrascritti). Se un passo fallisce,
  * ripristina lo snapshot da solo.
  *
- * Cartella di lavoro: /new/aggiornamenti/ (protetta da .htaccess)
+ * Cartella di lavoro: aggiornamenti/ nella cartella del CMS (protetta da .htaccess)
  *   pacchetti/<id>.zip   il pacchetto caricato
  *   pacchetti/<id>.json  stato, log, date
  *   snapshot/<id>/       db.sql.gz, files/, meta.json
@@ -25,7 +25,7 @@ require_once __DIR__ . '/sito.php';
 // cosi un motore piu vecchio, che quelle voci non le conosce e le salterebbe in silenzio, rifiuta il pacchetto.
 const AGG_AZIONI = ['attiva-sito-nuovo' => 'agg_azione_nulla', 'sito-pagine-e-stile' => 'agg_azione_sito'];
 
-/** Le azioni ammesse: quelle del nucleo più quelle dichiarate dai moduli (danilofailli.it: la conversione degli articoli, il vecchio test). */
+/** Le azioni ammesse: quelle del nucleo più quelle dichiarate dai moduli (per esempio la conversione dei contenuti di un sito vecchio). */
 function agg_azioni(): array {
     $a = AGG_AZIONI;
     foreach (cms_moduli_elenco('azioni') as $x) if (is_callable($x['valore'])) $a[(string)$x['chiave']] = $x['valore'];
@@ -69,7 +69,7 @@ function agg_dir(string $sub = ''): string {
 /** Radice del sito, dove sta wp-config.php. */
 function agg_site_root(): string {
     // La radice del dominio. CMS nella radice (installazione nuova): la cartella del CMS. CMS in una sottocartella con le
-    // immagini fuori (danilofailli.it: /new con wp-content/uploads nella radice): la cartella sopra. CMS_RADICE_SITO la fissa.
+    // immagini fuori (un CMS in /cms con le immagini nella radice del sito): la cartella sopra. CMS_RADICE_SITO la fissa.
     if (defined('CMS_RADICE_SITO')) return rtrim((string)CMS_RADICE_SITO, '/');
     return str_starts_with(cms_uploads_dir(), cms_radice() . '/') ? cms_radice() : dirname(cms_radice());
 }
@@ -290,7 +290,7 @@ function agg_lista_pacchetti(): array {
     return array_values($out);
 }
 
-/** Un pacchetto fallito torna "in attesa": il cron lo riprova alla sua data, o Danilo lo riapplica. */
+/** Un pacchetto fallito torna "in attesa": il cron lo riprova alla sua data, o l'amministratore lo riapplica. */
 function agg_rimetti_in_attesa(string $id): void {
     $s = agg_leggi_stato($id);
     if (!$s) throw new RuntimeException('Pacchetto non trovato.');
@@ -556,7 +556,7 @@ function agg_split_sql(string $sql): array {
  */
 /**
  * Avanzamento di un'operazione lunga (applica, ripristina).
- * Il pannello legge questo file mentre l'operazione gira, cosi Danilo vede
+ * Il pannello legge questo file mentre l'operazione gira, cosi chi lo ha avviato vede
  * a che punto siamo invece di guardare una pagina ferma.
  */
 function agg_progresso_file(string $id): string {

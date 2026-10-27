@@ -1,10 +1,10 @@
 <?php
 /**
- * Articoli, pagine e aforismi gestiti allo stesso modo: stessi stati (bozza, programmato,
+ * Articoli, pagine e tipi dei moduli gestiti allo stesso modo: stessi stati (bozza, programmato,
  * pubblicato, cestino), stesso elenco con filtri e azioni di massa, stessa scheda di modifica,
  * stesse revisioni, stesso editor visuale.
  *
- * Due tabelle restano due (newdf_articles, newdf_pages): qui si descrivono una volta sola le
+ * Due tabelle restano due (<prefisso>articles, <prefisso>pages): qui si descrivono una volta sola le
  * differenze, e tutto il resto le tratta uguali.
  */
 
@@ -29,7 +29,7 @@ function contenuti_tipi(): array {
             'campo_contenuto' => 'html', 'tassonomie' => false, 'attributi' => false, 'kw' => false, 'citazione' => false,
         ],
     ];
-    // I tipi dichiarati dai moduli (danilofailli.it: gli aforismi), con le stesse chiavi.
+    // I tipi dichiarati dai moduli (per esempio un catalogo), con le stesse chiavi.
     foreach (cms_moduli_elenco('tipi_contenuto') as $x) {
         if (is_array($x['valore']) && !isset($tipi[$x['chiave']])) $tipi[(string)$x['chiave']] = $x['valore'] + ['tassonomie' => false, 'attributi' => false, 'kw' => false, 'citazione' => false, 'campo_contenuto' => 'content'];
     }
@@ -280,7 +280,9 @@ function contenuti_salva(string $tipo, int $id, array $d, string $autore = ''): 
 
     $stato = ($d['stato'] ?? 'bozza') === 'pubblicato' ? 'published' : 'draft';
     $data = preg_match('/^\d{4}-\d{2}-\d{2}$/', (string)($d['data'] ?? '')) ? $d['data'] : date('Y-m-d');
-    $ora = preg_match('/^\d{2}:\d{2}$/', (string)($d['ora'] ?? '')) ? $d['ora'] . ':00' : SITO_ORA_PREDEFINITA;
+    // Senza ora: un contenuto che c'è tiene la sua, uno nuovo prende quella di adesso (fino alla 1.2.7 le 06:00, nel futuro
+    // per chi scriveva di notte: la pagina appena pubblicata dall'editor restava programmata fino al mattino).
+    $ora = preg_match('/^\d{2}:\d{2}$/', (string)($d['ora'] ?? '')) ? $d['ora'] . ':00' : (($prima && ($q = contenuti_quando($tipo, $prima)) !== '') ? substr($q, 11, 8) : date('H:i:s'));
     // sicurezza: il testo grezzo (HTML) lo scrive solo l'amministratore. Un redattore che cambia il testo lo passa dal sanificatore
     // (restano titoli, tabelle, immagini, classi; via script, eventi, stili pericolosi); se non lo ha toccato, resta com'era.
     $contenuto = (string)($d['contenuto'] ?? '');
@@ -492,7 +494,7 @@ function contenuti_elimina(string $tipo, array $ids): int {
     $in = implode(',', array_map('intval', $ids));
     $n = db()->exec('DELETE FROM ' . tbl($t['tabella']) . " WHERE id IN ($in) AND cestino IS NOT NULL");
     db()->exec('DELETE FROM ' . tbl('revisioni') . " WHERE tipo = " . db()->quote($tipo) . " AND contenuto_id IN ($in) AND contenuto_id NOT IN (SELECT id FROM " . tbl($t['tabella']) . ')');
-    // Anche le revisioni dell'editor visuale, che hanno il loro tipo (pagine, articoli, aforismi).
+    // Anche le revisioni dell'editor visuale, che hanno il loro tipo (pagine, articoli, tipi dei moduli).
     db()->exec('DELETE FROM ' . tbl('pagine_revisioni') . " WHERE tipo = " . db()->quote($tipo) . " AND pagina_id IN ($in) AND pagina_id NOT IN (SELECT id FROM " . tbl($t['tabella']) . ')');
     return $n;
 }

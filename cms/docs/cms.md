@@ -1,13 +1,13 @@
 # Il CMS: com'è fatto
 
-Scritto il 26 ottobre 2026 (agente *pacchetto*, brief 4 rivisto). Danilo: "Voglio che mettendolo su una root di un sito
-io possa installarlo come fosse un CMS con editor pazzesco."
+Scritto il 26 ottobre 2026. L'obiettivo: caricarlo nella radice di un sito (o in una sottocartella) e installarlo
+dal browser, come un CMS qualunque, con l'editor visuale al centro.
 
 ## In una frase
 
-`php-site/` è il CMS. Il **nucleo** (`includes/`, `admin/`, `sito/`, `api/`, `share/`, `cron-*.php`, `install/`) è generico:
-non sa niente di danilofailli.it. Tutto ciò che è di quel sito sta nel **modulo** `moduli/danilofailli/`. Il nome del
-prodotto è **plumeCMS** (scelto da Danilo il 26 ottobre 2026, dopo "CarbonaraCMS"): `CMS_NOME` in `includes/cms.php`, compare solo dove serve un nome.
+`cms/` è il CMS. Il **nucleo** (`includes/`, `admin/`, `sito/`, `api/`, `cron-*.php`, `install/`) è generico:
+non sa niente del sito su cui gira. Ciò che è proprio di un sito sta in un **modulo** (`moduli/<nome>/`, `cms-moduli.md`).
+Il nome del prodotto è **plumeCMS**: `CMS_NOME` in `includes/cms.php`, compare solo dove serve un nome.
 
 ## I pezzi
 
@@ -26,32 +26,31 @@ prodotto è **plumeCMS** (scelto da Danilo il 26 ottobre 2026, dopo "CarbonaraCM
 
 Lo scrive l'installatore. Dentro: `DB_HOST`, `DB_NAME`, `DB_USER`, `DB_PASS`, `DB_CHARSET`, `CMS_PREFISSO`, `CMS_SEGRETO`,
 `CMS_FUSO`; a scelta `CMS_BASE` (se il rilevamento della sottocartella sbaglia), `CMS_UPLOADS` e `CMS_UPLOADS_URL` (immagini
-altrove), `CMS_RADICE_SITO` (la radice del dominio per i pacchetti, quando il CMS sta in una sottocartella). Su danilofailli.it
-il file resta quello di oggi: prefisso `newdf_`, immagini in `wp-content/uploads` dichiarate dal modulo.
+altrove), `CMS_RADICE_SITO` (la radice del dominio per i pacchetti, quando il CMS sta in una sottocartella). Un modulo
+può dichiarare dove stanno le immagini (`uploads_url` fra le sue `impostazioni`).
 
 ## Radice o sottocartella
 
-`cms_base()` confronta `DOCUMENT_ROOT` con `cms_radice()`: `''` nella radice, `/new` su danilofailli.it. Il sito la scrive
+`cms_base()` confronta `DOCUMENT_ROOT` con `cms_radice()`: `''` nella radice, `/cms` se il CMS sta in `/cms/`. Il sito la scrive
 in `<meta name="cms-base">` per i JS. `index.php` del CMS serve il sito se sta nella radice, altrimenti rimanda a `/` (il sito
 vive nella radice con `install/esempi/index-radice.php`). Nessun percorso assoluto nel codice: tutto parte da `cms_radice()`.
 
 ## Prefisso delle tabelle
 
-`CMS_PREFISSO` (default `newdf_` per compatibilità con il sito di oggi; l'installatore scrive `cms_`). `db.php` lo copia in
+`CMS_PREFISSO` (predefinito `newdf_`, per le installazioni di prima che non lo scrivono nel config; l'installatore propone `cms_`
+e lo scrive sempre). `db.php` lo copia in
 `DB_PREFIX` e `tbl('nome')` lo aggiunge. Nel nucleo la parola `newdf_` compare solo in `cms.php` e `db.php`: lo controlla
 `tools/cms-pacchetto.py`, che rifiuta il pacchetto se la trova altrove nel codice.
 
 ## Impostazioni con fallback
 
 `cms_impostazione('chiave', $default)`: prima la tabella delle impostazioni, poi il valore dichiarato da un modulo
-(`impostazioni` nel manifesto), poi `$default`. Così il sito di Danilo resta identico senza righe nuove nel database, e
-un'installazione nuova prende i valori scritti dall'installatore. L'elenco delle chiavi: `docs/cms-moduli.md`.
+(`impostazioni` nel manifesto), poi `$default`. Così un sito con un modulo prende i valori del modulo senza righe nuove nel
+database, e un'installazione nuova prende i valori scritti dall'installatore. L'elenco delle chiavi: `docs/cms-moduli.md`.
 
 ## Cosa resta da fare (26 ottobre 2026)
 
 - Alcuni testi predefiniti dei widget dell'editor (per esempio il titolo di esempio dell'Apertura, le voci di esempio delle
   Schede e dei Prezzi) restano scritti nel nucleo: cambiano solo l'esempio che si vede aggiungendo un widget nuovo.
-- `includes/functions.php`, `header.php`, `footer.php`, `corpo-articolo.php` sono del publisher di prima (le CTA degli
-  articoli classici): hanno ancora i testi del sito di partenza e vanno spostati nel modulo o ripuliti.
-- I 61 pacchetti del pannello Aggiornamenti usano le radici `new/`, `uploads/`, `root/`: nel CMS valgono ancora
-  (`new/` = cartella del CMS, `uploads/` = `cms_uploads_dir()`, `root/` = radice del dominio).
+- I pacchetti del pannello Aggiornamenti usano le radici `new/`, `uploads/`, `root/`: il nome `new/` è storico e vuol dire
+  la cartella del CMS (`uploads/` = `cms_uploads_dir()`, `root/` = radice del dominio).

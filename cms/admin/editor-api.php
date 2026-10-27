@@ -149,7 +149,7 @@ switch ($azione) {
         api_esci(['ok' => true, 'slug' => $nuova['slug'], 'percorso' => editor_percorso_pagina($nuova)]);
 
     case 'temi':
-        // I temi delle infografiche salvati da Danilo: salva (nome + valori JSON), rinomina (tema, nome), elimina (tema). Risponde con l'elenco aggiornato.
+        // I temi delle infografiche salvati dal pannello: salva (nome + valori JSON), rinomina (tema, nome), elimina (tema). Risponde con l'elenco aggiornato.
         try {
             $cosa = (string)($_POST['cosa'] ?? '');
             $temaId = (int)preg_replace('/\D/', '', (string)($_POST['tema'] ?? ''));

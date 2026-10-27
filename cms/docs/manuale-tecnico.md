@@ -1,6 +1,6 @@
 # plumeCMS: manuale tecnico
 
-Versione del manuale: 1.5, per plumeCMS 1.2.7 (27 ottobre 2026).
+Versione del manuale: 1.6, per plumeCMS 1.2.8 (27 ottobre 2026).
 
 Questo manuale descrive come è fatto plumeCMS e come funziona, pezzo per pezzo. È scritto leggendo il codice:
 ogni numero, limite e nome di funzione viene dai file veri, con il riferimento `file:riga` quando serve a chi
@@ -57,13 +57,17 @@ attraverso filtri ed eventi (capitolo 17). Nel prodotto la cartella `moduli/` è
 
 Niente librerie esterne: SortableJS e Quill sono serviti dal CMS stesso, le icone sono disegnate in casa.
 
+plumeCMS è software libero, con licenza **GNU GPL versione 3 o successiva** (dalla 1.2.8): il testo è in `LICENSE`, nella
+cartella del CMS. Chi lo ridistribuisce, anche modificato, lo fa con la stessa licenza e con il codice sorgente; i siti
+fatti con plumeCMS, i loro contenuti e i temi e moduli che non ne copiano il codice restano di chi li fa.
+
 ### 1.1 Le cartelle
 
 ```
 index.php           front controller: tutte le richieste del sito passano da qui
 cron-daily.php      compiti del giorno (pacchetti programmati, moduli, IndexNow)
 cron-newsletter.php invio della newsletter a giri, coda IndexNow
-VERSIONE            il numero di versione (oggi 1.2.7)
+VERSIONE            il numero di versione (oggi 1.2.8)
 CHANGELOG.md, README.md, INSTALLA.md
 .htaccess           regole di Apache (copia di install/esempi/htaccess-radice.txt)
 
@@ -211,7 +215,7 @@ web non lo serve mai (`.htaccess`, capitolo 21). Non va messo in un repository.
 | `CMS_SICUREZZA_SPEGNI` | riga di emergenza: spegne 2FA e lista IP (capitolo 18.11) | spenta |
 
 Note:
-- `CMS_PREFISSO` vale `newdf_` quando manca perché il primo sito (danilofailli.it) non lo scrive nel suo config.
+- `CMS_PREFISSO` vale `newdf_` quando manca perché le installazioni di prima dell'installatore non lo scrivono nel loro config.
   L'installatore lo scrive sempre, quindi le installazioni nuove non ne risentono.
 - Costanti interne, da non toccare: `CMS_NOME` (`plumeCMS`), `CMS_ADMIN` (cartella del pannello sul disco),
   `DB_PREFIX` (copia di `CMS_PREFISSO`), `CMS_INSTALLER` (siamo nell'installatore), `PUBLISHER_ERRORI` (chi
@@ -278,7 +282,7 @@ Poi decide, **in quest'ordine** (`sito/index.php`):
 | 3 | `/articoli/qualcosa` | 301 a `/qualcosa` |
 | 4 | un redirect della tabella `redirect` (16.5) | il codice del redirect, di solito 301 |
 | 5 | `/wp-sitemap.xml` | 301 a `/sitemap.xml` |
-| 6 | percorsi fissi: `/conferma-ebook/`, `/scarica-ebook/`, `/newsletter-grazie/`, `/newsletter-conferma/`, `/newsletter-esci/`, `/laser-coaching-grazie/` | pagine dei moduli del nucleo (15) |
+| 6 | gli indirizzi dei moduli del sito (evento `sito_percorso`), poi i percorsi fissi della newsletter: `/newsletter-grazie/`, `/newsletter-conferma/`, `/newsletter-esci/` | pagine dei moduli (15) |
 | 7 | `/grazie/?f=ID` | ringraziamento di un form |
 | 8 | `/robots.txt`, `/sitemap.xml`, `/llms.txt` | file calcolati (16.6) |
 | 9 | file speciali SEO: verifica Google, `BingSiteAuth.xml`, chiave IndexNow, sitemap divise, `llms-full.txt` | 200 o 404 |
@@ -421,7 +425,7 @@ Tutte con il prefisso davanti. Le colonne sono quelle principali.
 |---|---|
 | `moduli`, `moduli_invii` | i form del costruttore e i loro invii |
 | `popup` | i popup |
-| `iscrizioni_ebook`, `richieste_laser`, `captcha_usati` | moduli fissi del nucleo (ebook, richiesta di contatto Laser) e captcha già usati |
+| `captcha_usati` | captcha già usati (dalla 1.2.8 il nucleo non crea più `iscrizioni_ebook` e `richieste_laser`: chi le ha le tiene, senza che il nucleo le usi) |
 | `newsletter_iscritti`, `newsletter_liste`, `newsletter_iscritti_liste` | iscritti e liste |
 | `newsletter_campagne`, `newsletter_coda` | campagne e coda di invio |
 | `newsletter_eventi`, `newsletter_flussi`, `newsletter_corsi` | aperture e clic, flussi automatici, persone dentro un flusso |
@@ -440,8 +444,8 @@ Le tabelle di base, della sicurezza e `editor_versioni` sono in `utf8mb4`; molte
 Per questo i caratteri a 4 byte (emoji) nei dati si salvano come entità HTML o come `\uXXXX` nel JSON: in
 modalità stretta MySQL rifiuterebbe la riga (errore 1366).
 
-Due tabelle usate da vecchie funzioni di `db.php` (`form_submissions` e `aforismi`) nel nucleo non si creano: le
-porta il modulo del primo sito. Le funzioni che le leggono sono avvolte in try e non rompono niente.
+La tabella `form_submissions`, usata da una vecchia funzione di `db.php`, nel nucleo non si crea: la porta un modulo che
+ne ha bisogno. La funzione che la scrive non è chiamata dal nucleo.
 
 ---
 
@@ -484,7 +488,7 @@ admin), `is_admin()`, `current_user()`.
 | Media | `media.php` | tutti |
 | Download | `scaricabili.php`: i file da scaricare (14.1) | admin |
 | Utenti | `utenti.php` | admin |
-| Newsletter e contatti | `newsletter.php` (Campagne, Iscritti e liste), `contatti.php`, `form-submissions.php`, `newsletter-flussi.php`, `newsletter-statistiche.php` | admin |
+| Newsletter e form | `newsletter.php` (Campagne, Iscritti e liste), `form-submissions.php`, `newsletter-flussi.php`, `newsletter-statistiche.php` | admin |
 | Editor > Temi | `temi.php` | admin |
 | Editor > Stile del sito | `design.php` | admin |
 | Editor > Header e footer | `modelli.php` | admin |
@@ -696,7 +700,7 @@ Ottanta widget, in cinque famiglie.
 - Base: titolo, testo, immagine, pulsanti, spazio, linea, elenco.
 - Contenuto: frase in evidenza, passi, schede con link, presentazione, apertura (hero), numeri, domande
   frequenti, video, infografica, tabella, scheda riassuntiva.
-- Dal sito: ultimi articoli, modulo (newsletter, ebook, laser, `form:ID`), invito, riquadro del test, leggi anche,
+- Dal sito: ultimi articoli, modulo (newsletter, `form:ID` e i moduli dei moduli del sito), invito, riquadro in evidenza, leggi anche,
   download (dalla 1.2.4, `includes/editor-widget-download.php`, capitolo 14.1).
 - Avanzati: HTML.
 
@@ -1123,7 +1127,7 @@ formule, capitolo 18.10).
 - Dove: tutte le pagine, home, articoli, pagine, percorsi scelti.
 - Quando: dopo N secondi, a una percentuale di scorrimento, all'uscita (il mouse va verso la barra).
 - Valore dell'innesco 0-600; frequenza 0-365 giorni, ricordata nel browser del visitatore (`localStorage`).
-- Dentro un popup può stare un modulo: newsletter, ebook, laser, `form:ID`.
+- Dentro un popup può stare un modulo: newsletter, `form:ID` o un modulo di un modulo del sito.
 
 ### 15.3 Posta
 
@@ -1134,17 +1138,24 @@ formule, capitolo 18.10).
 - Gli avvisi (form, sicurezza) vanno all'indirizzo `notifica_email`.
 - La password SMTP è salvata nel database insieme alle altre impostazioni della posta.
 
-### 15.4 Moduli fissi del nucleo: ebook, laser, captcha
+### 15.4 I pezzi comuni dei moduli: captcha, campi, limiti
 
-`includes/moduli.php`. Sono i moduli che il widget Modulo chiama `ebook` e `laser`, nati per il primo sito:
-- ebook: iscrizione con doppio consenso; link di conferma valido 7 giorni, link di download 30 giorni; download
-  da `/scarica-ebook/` (PDF, non indicizzato, 410 se il link è scaduto);
-- laser: richiesta di contatto salvata in `richieste_laser`, letta in Newsletter e contatti > Laser;
+`includes/moduli.php` dà a newsletter e form del costruttore (15.1) le stesse cose:
+- lettura e controllo dei campi (nome, cognome, email, privacy), campo esca invisibile alle persone;
 - limite: 5 invii l'ora per IP e per modulo;
+- l'impaginazione delle email (`moduli_email_html`, intestazione e firma dalle impostazioni);
 - captcha a prova di lavoro: il browser risolve un piccolo calcolo, la sfida vale 1200 secondi e non si può
   riusare (`captcha_usati`).
 
 Il segreto che firma captcha e link della newsletter è l'impostazione `moduli_segreto`, creata da sola.
+
+Fino alla 1.2.7 qui c'erano anche i moduli ebook e Laser Coaching, nati per il primo sito: dalla 1.2.8 non sono più
+nel nucleo. Un modulo del sito che ha moduli suoi li porta così:
+- nel widget Modulo e nei popup: filtro `moduli_disponibili` (aggiunge le voci) e `modulo_html` (li disegna);
+  un tipo che nessuno conosce sul sito non esce, nell'editor compare un avviso;
+- nel testo delle pagine della scheda classica: filtro `pagina_moduli`;
+- i suoi indirizzi (conferma, download, pagina di cortesia): evento `sito_percorso`, prima dei percorsi della
+  newsletter; il modulo risponde e chiude.
 
 ### 15.5 Newsletter
 
@@ -1153,8 +1164,7 @@ Il segreto che firma captcha e link della newsletter è l'impostazione `moduli_s
 **Iscritti e liste.** Stati: in attesa, attivo, uscito. Un iscritto può stare in più liste.
 
 **Doppio consenso.** L'iscrizione salva l'indirizzo in attesa con un token e manda l'email di conferma; il clic
-su `/newsletter-conferma/` lo attiva e fa partire i flussi "iscrizione" e "lista". Chi arriva dall'ebook ha già
-confermato e diventa attivo subito.
+su `/newsletter-conferma/` lo attiva e fa partire i flussi "iscrizione" e "lista".
 
 **Uscita.** Ogni email ha un link di uscita firmato (HMAC) e le intestazioni `List-Unsubscribe` e
 `List-Unsubscribe-Post` (uscita con un clic dai programmi di posta). L'uscita vera avviene con un POST su
@@ -1315,7 +1325,7 @@ Elenco completo dei filtri e degli eventi chiamati nel codice:
 |---|---|---|---|
 | `categorie_protette` | filtro | elenco di slug (`senza-categoria`) | `admin/categories.php:59` |
 | `redattore_pagine` | filtro | elenco di pagine in più per il redattore | `admin/includes/auth.php:75` |
-| `dashboard_numeri` | filtro | numeri in più sulla dashboard | `admin/index.php:34` |
+| `dashboard_numeri` | filtro | numeri in più sulla dashboard | `admin/index.php:32` |
 | `pacchetto_test` | filtro | `null`, definizione di un test | `includes/aggiornamenti.php:636` |
 | `design_predefiniti` | filtro | predefiniti dello Stile del sito | `includes/design.php:153` |
 | `editor_albero_articolo` | filtro | `null`, articolo | `includes/editor.php:545` |
@@ -1342,8 +1352,12 @@ Elenco completo dei filtri e degli eventi chiamati nel codice:
 | `blog_filtri` | filtro | categorie mostrate come filtri del blog | `sito/viste.php:21` |
 | `testata_fissa` | filtro | `null`, menu, menu del telefono | `sito/viste.php:104` |
 | `vista_home` | filtro | `null` | `sito/viste.php:482` |
-| `sito_query` | evento | query string, percorso | `sito/index.php:91` |
-| `sito_genere` | evento | voce della mappa, metadati | `sito/index.php:232` |
+| `moduli_disponibili` | filtro | moduli del widget Modulo e dei popup (1.2.8) | `includes/editor-widget.php:85` |
+| `pagina_moduli` | filtro | HTML di una pagina della scheda classica, percorso (1.2.8) | `sito/viste.php:267` |
+| `modulo_html` | filtro | `''`, tipo, percorso: disegna un modulo di un modulo (1.2.8) | `sito/viste.php:284` |
+| `sito_query` | evento | query string, percorso | `sito/index.php:94` |
+| `sito_percorso` | evento | percorso, query: un modulo risponde ai suoi indirizzi (1.2.8) | `sito/index.php:117` |
+| `sito_genere` | evento | voce della mappa, metadati | `sito/index.php:222` |
 
 Un tema può usare solo quelli del sito pubblico (`docs/manuale-temi.md`, capitolo 9).
 
@@ -1625,8 +1639,8 @@ immagini, pdf, css, js, caratteri, json, webmanifest, map) e `root/.htaccess`.
 3. "Applica ora", si conferma, si aspetta la fine.
 4. Si controlla in Editor > Informazioni che la versione sia quella nuova.
 
-Il pacchetto del prodotto non contiene moduli: non va mai applicato a un sito che ha moduli suoi nel nucleo
-(come danilofailli.it), che ha i suoi pacchetti costruiti con `--sito`.
+Il pacchetto del prodotto non contiene moduli: non va mai applicato a un sito che ha moduli suoi nel nucleo:
+quel sito ha i suoi pacchetti costruiti con `--sito`.
 
 ---
 
@@ -1727,13 +1741,13 @@ Nel repository, fuori dalla cartella del CMS.
 - `--aggiornamento`: scrive anche `plumecms-<VERSIONE>-aggiornamento.zip`, il pacchetto per il pannello
   Aggiornamenti (tutti i file in `new/`, senza `.htaccess` e senza firma).
 - `--sito <commit> <nome>`: pacchetto con i soli file cambiati da un commit; serve al repository di un sito con
-  moduli (danilofailli.it).
+  moduli suoi.
 
 Prima di scrivere lo zip controlla e rifiuta:
 - errori di sintassi PHP, con `php -n -d short_open_tag=1 -l` (come sui server veri, dove `short_open_tag` è
   acceso);
 - il prefisso `newdf_` nel codice fuori da `includes/cms.php` e `includes/db.php`;
-- il dominio danilofailli.it nel codice (commenti esclusi).
+- il dominio del primo sito nel codice (commenti esclusi).
 
 Avvisa (senza rifiutare) per i caratteri a 4 byte. Ogni file nello zip esce con permessi 0644 e ogni cartella
 0755: con 0600 il server web non legge CSS e immagini.

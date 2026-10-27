@@ -5,12 +5,12 @@
  *  - impostazioni: una sola voce JSON (seo_config) con i valori di partenza uguali a come il sito esce oggi;
  *    con i predefiniti il contratto dei 1.005 indirizzi resta a zero differenze
  *  - verifica della proprieta: meta tag o file in radice per Google, Bing, Yandex, Pinterest
- *  - IndexNow: chiave, file /<chiave>.txt, coda (newdf_seo_coda) e log (newdf_seo_log)
+ *  - IndexNow: chiave, file /<chiave>.txt, coda (<prefisso>seo_coda) e log (<prefisso>seo_log)
  *  - Google: service account, token con JWT firmato da openssl, Search Console (ispezione, prestazioni,
  *    sitemap) e Indexing API (spenta per scelta)
- *  - copertura: verdetti di Search Console per indirizzo (newdf_seo_url)
+ *  - copertura: verdetti di Search Console per indirizzo (<prefisso>seo_url)
  *  - analisi e tag: GA4, Tag Manager, Meta Pixel, Clarity, codice libero, con consenso
- *  - robots.txt, llms.txt, llms-full.txt, sitemap, 404 (newdf_seo_404)
+ *  - robots.txt, llms.txt, llms-full.txt, sitemap, 404 (<prefisso>seo_404)
  *  - seo_analisi(): il punteggio di un contenuto, come Rank Math
  *
  * Credenziali e chiavi stanno solo nel database. Niente in questo file.
@@ -100,7 +100,7 @@ function seo_schema_tabelle(): array {
     ];
 }
 
-/** Crea le tabelle che mancano. Una query di controllo per volta, poi niente (impronta in newdf_settings). */
+/** Crea le tabelle che mancano. Una query di controllo per volta, poi niente (impronta in <prefisso>settings). */
 function seo_installa(): void {
     static $fatto = false;
     if ($fatto) return;
@@ -133,10 +133,10 @@ function seo_predefiniti(): array {
             'codice_head' => '', 'codice_body_inizio' => '', 'codice_body_fine' => ''],
         // Titoli: %titolo% %sep% %sito%. Il nome del sito e quello dei <title> di oggi.
         'titolo' => ['sep' => '-', 'sito' => SEO_NOME_SITO, 'home' => '%titolo% %sep% %sito%', 'articolo' => '%titolo% %sep% %sito%',
-            'pagina' => '%titolo% %sep% %sito%', 'aforisma' => '%titolo% %sep% %sito%', 'archivio' => '%titolo% %sep% %sito%', 'altro' => '%titolo% %sep% %sito%'],
+            'pagina' => '%titolo% %sep% %sito%', 'archivio' => '%titolo% %sep% %sito%', 'altro' => '%titolo% %sep% %sito%'],
         'meta' => ['descrizione' => '', 'og_immagine' => '', 'twitter_account' => '', 'robots_avanzati' => 1],
         // Robots per tipo: 'auto' = la regola di oggi (quella del contratto). Si cambia solo con cognizione di causa.
-        'robots' => ['articoli' => 'auto', 'pagine' => 'auto', 'aforismi' => 'auto', 'categorie' => 'auto', 'tag' => 'auto', 'autore' => 'auto', 'cerca' => 'auto', 'paginazione' => 'auto', 'data' => 'auto'],
+        'robots' => ['articoli' => 'auto', 'pagine' => 'auto', 'categorie' => 'auto', 'tag' => 'auto', 'autore' => 'auto', 'cerca' => 'auto', 'paginazione' => 'auto', 'data' => 'auto'],
         'robots_txt' => ['personale' => '', 'ai' => []],
         'llms' => ['personale' => '', 'full' => 1],
         'sitemap' => ['pagine' => 1, 'categorie' => 1, 'immagini' => 0, 'divisa' => 0],
@@ -507,7 +507,7 @@ function seo_gsc_prova(): array {
     return seo_google_chiama(SEO_GSC_API, [SEO_AMBITO_GSC]);
 }
 
-/** Ispeziona un indirizzo e salva il verdetto in newdf_seo_url. Ritorna la riga salvata oppure ['errore' => ...]. */
+/** Ispeziona un indirizzo e salva il verdetto in <prefisso>seo_url. Ritorna la riga salvata oppure ['errore' => ...]. */
 function seo_gsc_ispeziona(string $url): array {
     seo_installa();
     $url = sito_assoluto_seo($url);
@@ -748,7 +748,16 @@ function seo_inietta_html(string $html): string {
 // Titoli, meta, robots
 // ------------------------------------------------------------
 
-/** Il <title> secondo il formato del tipo: %titolo% %sep% %sito%. Con i predefiniti: "Titolo - Danilo Failli - D.O.C.". */
+/** Il <title> secondo il formato del tipo: %titolo% %sep% %sito%. Con i predefiniti: "Titolo - Nome del sito". */
+/**
+ * I tipi di contenuto dei moduli del sito, oltre ad articoli e pagine (contenuti_tipi): ognuno ha il suo formato del
+ * titolo (chiave "uno", per esempio "ricetta") e la sua regola di indicizzazione (chiave del tipo, "ricette").
+ */
+function seo_tipi_moduli(): array {
+    require_once __DIR__ . '/contenuti.php';
+    return array_diff_key(contenuti_tipi(), ['articoli' => 1, 'pagine' => 1]);
+}
+
 function seo_titolo(string $titolo, string $tipo = 'altro'): string {
     $t = seo_cfg()['titolo'];
     $formato = $t[$tipo] ?? $t['altro'];

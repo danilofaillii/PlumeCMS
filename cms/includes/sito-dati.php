@@ -1,6 +1,6 @@
 <?php
 /**
- * I contenuti pubblici del sito, come li vede chi visita: articoli, aforismi, pagine, glossario,
+ * I contenuti pubblici del sito, come li vede chi visita: articoli, pagine, glossario, i tipi dei moduli,
  * categorie, tag, redirect. Usati dal sito nuovo (sito/).
  *
  * Ogni contenuto è un array con la stessa forma per tutti i tipi. L'HTML si calcola solo quando
@@ -100,7 +100,7 @@ function sito_contenuti(): array {
         ];
     }
 
-    // I contenuti dei moduli (danilofailli.it: gli aforismi), nello stesso formato.
+    // I contenuti dei moduli (per esempio un catalogo), nello stesso formato.
     $tutti = cms_filtro('sito_contenuti', $tutti, $daRedirect);
 
     $home = (string)get_setting('pagina_home', '');
@@ -160,7 +160,7 @@ function sito_html_contenuto(array &$c): string {
             if (!empty($c['editor'])) return $c['html'] = sito_pagina_editor($c)[0];
             return $c['html'] = sito_campo('pages', 'html', $id);
         default:
-            // Un tipo di un modulo (danilofailli.it: aforismi) disegna il suo HTML; altrimenti la colonna html.
+            // Un tipo di un modulo (per esempio un catalogo) disegna il suo HTML; altrimenti la colonna html.
             $html = cms_filtro('sito_html_contenuto', null, $c);
             if (is_string($html)) return $c['html'] = $html;
             if (!empty($c['editor'])) return $c['html'] = sito_pagina_editor($c)[0];
@@ -180,7 +180,7 @@ function sito_pagina_editor(array &$c): array {
     return $c['editor_disegno'] = [$html, $css, editor_faq($albero)];
 }
 
-/** Categorie con robots: quello salvato, oppure noindex se vuota o di aforismi. */
+/** Categorie con robots: quello salvato, oppure noindex se vuota o se un modulo la nasconde. */
 function sito_categorie(): array {
     static $c = null;
     if ($c !== null) return $c;

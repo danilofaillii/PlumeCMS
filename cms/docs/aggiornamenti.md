@@ -1,12 +1,12 @@
 # Pannello Aggiornamenti
 
-Dall'11 settembre 2026 ogni consegna al sito è un pacchetto zip. Danilo lo
-carica dalla voce **Gestione Contenuti, Aggiornamenti** di WordPress, il
+Ogni consegna al sito è un pacchetto zip. Chi amministra il sito lo
+carica dal pannello, **Impostazioni, Aggiornamenti**; il
 pannello fa uno snapshot, applica tutto e, se qualcosa va storto, rimette il
 sito com'era. Niente più FTP, Importa SQL, risincronizzazione con il token,
 caricamento di immagini in Media.
 
-## Come funziona, per Danilo
+## Come funziona, per chi amministra il sito
 
 1. **Carica.** Aggiornamenti, "Carica un pacchetto", scegli lo zip, Carica.
    Compare nell'elenco con lo stato "in attesa".
@@ -28,9 +28,9 @@ caricamento di immagini in Media.
    dopo quello snapshot, compresi articoli pubblicati nel frattempo, torna
    indietro: è l'unica cosa da tenere a mente.
 
-Si tengono gli ultimi cinque snapshot. Le immagini dei pillar vivono in
-`wp-content/uploads/contenuti/<tema>/`, cartella fissa, indirizzo
-prevedibile.
+Si tengono gli ultimi cinque snapshot. Le immagini portate dai pacchetti
+vivono in `uploads/contenuti/<argomento>/` (dentro la cartella delle
+immagini), cartella fissa, indirizzo prevedibile.
 
 ## Come funziona, per chi prepara i pacchetti
 
@@ -41,12 +41,12 @@ nei file SQL.
 
 ```json
 {
-  "nome": "Pillar 1, burnout lavorativo",
-  "descrizione": "una riga per Danilo",
+  "nome": "Guida 1, la potatura",
+  "descrizione": "una riga per chi lo applica",
   "creato": "2026-09-11",
   "applica_dal": "2026-10-06",
   "sql": ["sql/01-pillar.sql", "sql/02-bozze.sql"],
-  "file": [{"da": "file/x.png", "a": "uploads/contenuti/burnout/x.png"}],
+  "file": [{"da": "file/x.png", "a": "uploads/contenuti/potatura/x.png"}],
   "redirect": [{"da": "/vecchio-slug/", "a": "/nuovo-slug/"}],
   "sincronizza": [{"slug": "nuovo-slug", "aggiorna_data": true}],
   "note": "cosa controllare dopo"
@@ -56,8 +56,9 @@ nei file SQL.
 Ordine di applicazione: snapshot, file, SQL nell'ordine dato, redirect,
 sincronizzazione WordPress. Ogni errore ferma tutto e ripristina.
 
-- **file**: `a` ammette tre radici. `uploads/` è `wp-content/uploads/`,
-  `new/` è il publisher, `root/` è la radice del sito. Vietati `..`, la
+- **file**: `a` ammette tre radici. `uploads/` è la cartella delle immagini
+  (`cms_uploads_dir()`), `new/` è la cartella del CMS (il nome è storico),
+  `root/` è la radice del sito. Vietati `..`, la
   cartella `new/aggiornamenti/` e `new/includes/config.local.php`.
 - **sql**: si eseguono con la connessione del publisher. Lo spezzatore
   tiene conto delle stringhe e toglie le righe `--`. Restano le regole:
@@ -78,14 +79,11 @@ sincronizzazione WordPress. Ogni errore ferma tutto e ripristina.
 
 | File | Cosa fa |
 |---|---|
-| `php-site/includes/aggiornamenti.php` | il motore: manifest, snapshot, applica, ripristina, redirect, avanzamento |
-| `php-site/includes/wp-sync.php` | tutto il dialogo con WordPress, usato anche dal cron |
-| `php-site/admin/aggiornamenti.php` | la pagina del pannello |
-| `php-site/cron-daily.php` | alle 06:00 applica i pacchetti in scadenza, poi pubblica come sempre |
-| `php-site/wordpress/danilo-admin-panel.php` | il plugin che mostra il pannello dentro WordPress, voce Aggiornamenti |
+| `includes/aggiornamenti.php` | il motore: manifest, snapshot, applica, ripristina, redirect, avanzamento |
+| `admin/aggiornamenti.php` | la pagina del pannello |
+| `cron-daily.php` | alle 06:00 applica i pacchetti in scadenza |
 | `tools/pacchetto.py` | costruisce e controlla lo zip |
-| `releases/pacchetti/` | i pacchetti consegnati |
-| `/new/aggiornamenti/` sul server | pacchetti caricati, stati, snapshot; protetta da `.htaccess` |
+| `aggiornamenti/` nella cartella del CMS, sul server | pacchetti caricati, stati, snapshot; protetta da `.htaccess` |
 
 ## Come funziona la barra
 
@@ -124,12 +122,6 @@ dentro `ob_start()`: quello che PHP scrive finisce in fondo al log come
 "Avvisi di PHP durante il lavoro, non bloccanti", e la pagina resta pulita.
 La sessione si riapre solo se e davvero chiusa.
 
-Restano con `curl_close()` alcuni script di servizio che non fanno parte
-della catena giornaliera (`update-aforismi-batch*.php`,
-`import-glossario-wp.php`, `upload-og-images-wp.php` e simili): se un
-giorno li si rilancia, stamperanno gli stessi avvisi senza altre
-conseguenze.
-
 ## Limiti conosciuti
 
 - Lo snapshot del database gira dentro una richiesta web: con il database
@@ -155,7 +147,7 @@ Il motore si sceglie in Impostazioni, tab **Sito pubblico**, oppure lo accende i
 
 | | motore `wordpress` (oggi) | motore `php` (dopo il passaggio) |
 |---|---|---|
-| redirect | tabella `newdf_redirect` e Rank Math | solo `newdf_redirect` |
+| redirect | tabella `<prefisso>redirect` e Rank Math | solo `<prefisso>redirect` |
 | sincronizza | spinge su WordPress | saltato, lo scrive nel log |
 | cron delle 06:00 | `cron-publish-wp.php` | niente: il sito legge dal database e un articolo esce da solo alla sua ora |
 
@@ -163,12 +155,12 @@ Il sito nuovo legge dal database a ogni visita: un pacchetto applicato o un arti
 
 ## Test e azioni (dal 23 ottobre 2026)
 
-- **test**: elenco di definizioni JSON (`test-definizioni/<slug>-v<n>.json`), importate con `test_importa_definizione()`. Una versione con risposte non si può riscrivere nelle domande: serve la versione dopo.
-- **azioni**: azioni con nome, solo quelle in `AGG_AZIONI` (oggi `importa-vecchio-test-burnout` e `attiva-sito-nuovo`). Un pacchetto non esegue codice a piacere. `attiva-sito-nuovo` si rifiuta se nella radice c'è `wp-config.php`: un errore ferma il pacchetto e rimette a posto i file appena copiati.
+- **test**: elenco di definizioni JSON, passate al filtro `pacchetto_test`: le importa il modulo del sito che ha i test. Senza un modulo che le conosca non succede niente.
+- **azioni**: azioni con nome, solo quelle in `AGG_AZIONI` (nel nucleo `attiva-sito-nuovo` e `sito-pagine-e-stile`) più quelle dichiarate dai moduli (chiave `azioni` del manifest). Un pacchetto non esegue codice a piacere. `attiva-sito-nuovo` si rifiuta se nella radice c'è `wp-config.php`: un errore ferma il pacchetto e rimette a posto i file appena copiati.
 - **root/.htaccess**: l'unico file nascosto che un pacchetto può scrivere. Serve al pacchetto che accende il sito nuovo.
 - **new/.htaccess e uploads/.htaccess** (dal pacchetto 16, CMS 1.1.3): con `root/.htaccess` sono gli unici file nascosti che un pacchetto può scrivere (`AGG_HTACCESS_AMMESSI` in `includes/aggiornamenti.php`, `HTACCESS_AMMESSI` in `tools/pacchetto.py`). Il motore di prima li rifiuta e scarta tutto il pacchetto ("Destinazione non ammessa"): per questo il 16 è diviso in due, `2026-10-26-cms-sicurezza.zip` (codice, applicato dal motore vecchio) e `2026-10-26-cms-sicurezza-b.zip` (i due `.htaccess`, applicato dal motore nuovo). Si costruiscono con `python3 tools/cms-pacchetto.py --sito <commit di partenza> <nome>`.
 - **Lo spezzatore SQL del motore** tiene conto delle stringhe fra apici anche dentro i commenti `/* */`: un apostrofo in un commento apre una stringa che non si chiude, e il file SQL fallisce (successo alla prima prova del 16). Nei commenti dei file SQL niente apostrofi e niente punti e virgola.
-- Un articolo con `"tipo": "aforisma"` finisce nella tabella degli aforismi.
+- Un articolo con un `"tipo"` di un modulo (per esempio `"tipo": "ricetta"`) lo prende il modulo con il filtro `importa_contenuto` e finisce nella sua tabella.
 
 Ordine di applicazione aggiornato: snapshot, schema, file, SQL, contenuti, test, azioni, articoli, redirect, sincronizzazione WordPress.
 
@@ -182,5 +174,5 @@ Ordine di applicazione aggiornato: snapshot, schema, file, SQL, contenuti, test,
   per uno zip gia fatto. Se c'e, il pannello la verifica; se la pagina Sicurezza la esige, senza firma il pacchetto non entra.
 - Un file eseguibile (`.php` e simili) nella radice del sito (`root/`) entra solo con un pacchetto firmato, oppure durante
   la finestra di un'ora che l'amministratore apre con la sua password da Impostazioni, Sicurezza. Senza firma, in `root/`
-  passano i file statici e il `.htaccess`. Vale per esempio per `2026-10-23-accendi-sito-nuovo.zip` (scrive `root/index.php`).
+  passano i file statici e il `.htaccess`. Vale per esempio per un pacchetto che scrive `root/index.php`.
 - Nomi con `..` o percorsi assoluti, file oltre 200 MB o pacchetti oltre 600 MB estratti: rifiutati. Guida in `docs/sicurezza.md`.

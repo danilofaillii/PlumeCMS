@@ -10,7 +10,7 @@ require_once __DIR__ . '/sito-dati.php';
 const SITO_PER_PAGINA = 10;        // archivi: categorie, tag, date
 const SITO_BLOG_PER_PAGINA = 12;   // pagina blog
 define('SITO_PAGINA_BLOG', (string)cms_impostazione('pagina_blog', '/blog/')); // l'archivio del blog: impostazione pagina_blog
-define('SITO_PAGINE_GLOSSARIO', (int)cms_impostazione('glossario_pagine', 0));  // /glossario/page/2/ ... rispondono (danilofailli.it: 15)
+define('SITO_PAGINE_GLOSSARIO', (int)cms_impostazione('glossario_pagine', 0));  // /glossario/page/2/ ... rispondono
 const SITO_MESI = ['gennaio', 'febbraio', 'marzo', 'aprile', 'maggio', 'giugno', 'luglio', 'agosto', 'settembre', 'ottobre', 'novembre', 'dicembre'];
 
 function sito_paginato(string $base, int $n): string {
@@ -36,7 +36,7 @@ function sito_mappa(): array {
         if ($c['percorso'] === SITO_PAGINA_BLOG) continue;
         $m[$c['percorso']] = ['genere' => 'contenuto', 'c' => $c];
     }
-    // I moduli possono cambiare il genere di una voce o aggiungerne (danilofailli.it: le pagine con un test diventano "test").
+    // I moduli possono cambiare il genere di una voce o aggiungerne (per esempio le pagine con un questionario diventano "test").
     $m = cms_filtro('sito_mappa', $m, $attivi);
 
     // Blog: solo articoli indicizzati, 12 per pagina.

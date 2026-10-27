@@ -6,7 +6,7 @@
 
 define('SITO_ASSET', cms_base() . '/sito/assets/');   // gli asset del sito, dalla cartella del CMS
 define('SITO_U', cms_uploads_url());                   // le immagini caricate
-/** "newsletter FuoriDalCoso", oppure solo "newsletter": il nome con cui il sito chiama la sua newsletter. */
+/** "newsletter Novità", oppure solo "newsletter": il nome con cui il sito chiama la sua newsletter. */
 function sito_newsletter_nome(): string {
     $n = trim((string)cms_impostazione('newsletter_nome', ''));
     return $n !== '' ? "newsletter $n" : 'newsletter';
@@ -194,9 +194,9 @@ function vista_articolo_editor(array &$c): array {
     if (function_exists('editor_serve_script') ? editor_serve_script($html) : str_contains($html, 'class="ed-video"')) $html .= '<script src="' . sito_versione_asset('editor-pagina.js') . '" defer></script>';
     // widget-extra: foglio di stile e script dei widget registrati (icone, caroselli, schede...), solo se la pagina ne contiene uno.
     if (function_exists('editor_asset_pagina')) { $asset = editor_asset_pagina($html); foreach ($asset['css'] ?? [] as $f) $testa = '<link rel="stylesheet" href="' . sito_versione_asset($f) . '">' . $testa; foreach ($asset['js'] ?? [] as $f) $html .= '<script src="' . sito_versione_asset($f) . '" defer></script>'; }
-    // L'autore della frase di un aforisma (scheda Citazione) si firma anche sotto le sezioni dell'editor.
+    // L'autore della frase di un contenuto con la scheda Citazione si firma anche sotto le sezioni dell'editor.
     $autore = trim((string)($c['riga']['author_quote'] ?? ''));
-    $firma = $autore !== '' ? '<p class="aforisma-autore">' . h($autore) . '</p>' : '';
+    $firma = $autore !== '' ? '<p class="citazione-autore">' . h($autore) . '</p>' : '';
     $soloArticolo = $html !== '' && !preg_match('~<div class="ed-contenitore (?!ed-articolo)~', $html);
     if ($soloArticolo) {
         $voci = vista_voci_sommario($html);
@@ -239,7 +239,6 @@ function vista_articolo(array &$c): string {
 
 /** Pagine fisse senza struttura dell'editor: il testo della scheda passa così com'è, dentro la grafica del sito. */
 function vista_pagina_generica(array &$c): string {
-    if ($c['percorso'] === MODULI_PAGINA_EBOOK_ATTESA) return vista_ebook_attesa();
     if (($t = vista_tema('pagina', ['c' => $c, 'html' => vista_moduli_in_pagina($c['percorso'], sito_html_contenuto($c))])) !== null) return $t;
     return '<div class="wrap"><article class="pagina-generica"><h1>' . h($c['titolo']) . '</h1>' . vista_in_breve($c['tldr'])
         . '<div class="corpo">' . vista_moduli_in_pagina($c['percorso'], sito_html_contenuto($c)) . '</div></article></div>';
@@ -260,24 +259,18 @@ function vista_pagina_editor(array &$c): array {
 }
 
 // ------------------------------------------------------------
-// Moduli: ebook e Laser Coaching (motore in includes/moduli.php)
+// Moduli nelle pagine: newsletter e form del costruttore (motore in includes/moduli.php e includes/form.php)
 // ------------------------------------------------------------
 
-/** Mette i moduli nelle loro pagine. Il modulo Brevo della laser coaching lascia il posto al nostro. */
+/** Il testo di una pagina scritta nella scheda classica, con i moduli che un modulo del sito vuole aggiungervi (filtro pagina_moduli). */
 function vista_moduli_in_pagina(string $percorso, string $html): string {
-    if ($percorso === MODULI_PAGINA_EBOOK) {
-        // I pulsanti della pagina portavano a un indirizzo Brevo che non esiste più: ora portano al modulo.
-        $html = preg_replace('~href="(?:' . preg_quote(SITO_URL, '~') . ')?/fuori-dagli-schemi/"~', 'href="#modulo"', $html);
-        return $html . vista_modulo('ebook', $percorso);
-    }
-    // Brevo è dismesso: ogni suo modulo lascia il posto al nostro. Con il campo cellulare (SMS) era una
-    // richiesta di Laser Coaching, senza era l'iscrizione alla newsletter.
-    $html = preg_replace_callback('~<!--\s*Begin Brevo Form\s*-->[\s\S]*?<!--\s*End Brevo Form\s*-->~i',
-        fn($m) => vista_modulo(str_contains($m[0], 'name="SMS"') ? 'laser' : 'newsletter', $percorso), $html, -1, $n);
-    if (!$n && $percorso === '/laser-coaching/') $html .= vista_modulo('laser', $percorso);
-    return $html;
+    return (string)cms_filtro('pagina_moduli', $html, $percorso);
 }
 
+/**
+ * Un modulo da compilare: "newsletter" o "form:<id>" (i form del costruttore). Un altro tipo, rimasto in una pagina o in
+ * un popup, lo disegna il modulo del sito che lo conosce (filtro modulo_html); se nessuno lo conosce non esce niente.
+ */
 function vista_modulo(string $tipo, string $percorso): string {
     $codice = (string)($_GET['modulo'] ?? '');
     if (preg_match('/^form:(\d+)$/', $tipo, $m)) {
@@ -288,65 +281,40 @@ function vista_modulo(string $tipo, string $percorso): string {
         [$errore, $campo] = isset($_GET['f']) && (int)$_GET['f'] === (int)$f['id'] ? form_errore($codice) : ['', ''];
         return form_html($f, $percorso, $errore, $campo);
     }
-    $errore = MODULI_ERRORI[$codice] ?? '';
-    if (isset($_GET['f'])) $errore = '';
-    $ebook = $tipo === 'ebook';
-    $titolo = ['ebook' => 'Ricevi l&#039;ebook gratuito', 'laser' => 'Prenota la tua Laser Coaching gratuita', 'newsletter' => 'Iscriviti alla ' . h(sito_newsletter_nome())][$tipo];
-    $intro = [
-        'ebook' => 'Lasciami i tuoi recapiti. Ti scrivo subito per confermare l&#039;indirizzo email, poi ti arriva il link per scaricare «' . h(moduli_ebook_config()['titolo']) . '».',
-        'laser' => '15 minuti al telefono. Lasciami i tuoi recapiti: entro 24 ore ti chiama un coach certificato.',
-        'newsletter' => h((string)cms_impostazione('newsletter_descrizione', 'Ti scrivo quando esce qualcosa di nuovo.')) . ' Prima ti mando un&#039;email per confermare l&#039;indirizzo.',
-    ][$tipo];
-    $scopo = ['ebook' => 'per ricevere l&#039;ebook', 'laser' => 'per essere ricontattato', 'newsletter' => 'per ricevere la newsletter'][$tipo];
+    if ($tipo !== 'newsletter') {
+        $html = (string)cms_filtro('modulo_html', '', $tipo, $percorso);
+        // Fino alla 1.2.7 la pagina Contatti dell'installatore usciva con il modulo "laser" al posto del suo form:
+        // se nessun modulo del sito lo conosce, al suo posto va il form Contatti, quello che la pagina doveva avere.
+        if ($html === '' && $tipo === 'laser') {
+            require_once dirname(__DIR__) . '/includes/form.php';
+            foreach (form_tutti() as $f) if ($f['attivo'] && mb_strtolower($f['nome']) === 'contatti') return vista_modulo('form:' . (int)$f['id'], $percorso);
+        }
+        return $html;
+    }
+    $errore = isset($_GET['f']) ? '' : (MODULI_ERRORI[$codice] ?? '');
     $campo = fn($nome, $etichetta, $tipoInput, $auto, $extra = '') => '<label><span>' . $etichetta . '</span><input name="' . $nome . '" type="' . $tipoInput
         . '" autocomplete="' . $auto . '" required ' . $extra . '></label>';
-    return '<section class="modulo" id="modulo" aria-labelledby="modulo-titolo"><h2 id="modulo-titolo">' . $titolo . '</h2><p>' . $intro . '</p>'
+    return '<section class="modulo" id="modulo" aria-labelledby="modulo-titolo"><h2 id="modulo-titolo">Iscriviti alla ' . h(sito_newsletter_nome()) . '</h2>'
+        . '<p>' . h((string)cms_impostazione('newsletter_descrizione', 'Ti scrivo quando esce qualcosa di nuovo.')) . ' Prima ti mando un&#039;email per confermare l&#039;indirizzo.</p>'
         . ($errore !== '' ? '<p class="modulo-errore" role="alert">' . h($errore) . '</p>' : '')
         . '<form method="post" action="' . cms_base() . '/api/modulo.php" data-captcha>'
-        . '<input type="hidden" name="modulo" value="' . $tipo . '"><input type="hidden" name="pagina" value="' . h($percorso) . '"><input type="hidden" name="captcha" value="">'
+        . '<input type="hidden" name="modulo" value="newsletter"><input type="hidden" name="pagina" value="' . h($percorso) . '"><input type="hidden" name="captcha" value="">'
         . '<div class="modulo-campi">'
         . $campo('nome', 'Nome', 'text', 'given-name', 'maxlength="100"')
         . $campo('cognome', 'Cognome', 'text', 'family-name', 'maxlength="100"')
         . $campo('email', 'Email', 'email', 'email', 'maxlength="190"')
-        . ($tipo !== 'newsletter' ? $campo('cellulare', 'Cellulare', 'tel', 'tel', 'maxlength="30" placeholder="+39 333 123 4567"') : '')
         . '</div>'
         // Campo esca: invisibile alle persone, i programmi automatici lo riempiono.
         . '<div class="esca" aria-hidden="true"><label>Sito web <input name="sito_web" tabindex="-1" autocomplete="off"></label></div>'
-        . '<label class="spunta"><input type="checkbox" name="privacy" value="1" required> <span>Ho letto l&#039;<a href="/privacy-policy/" target="_blank">informativa privacy</a> e accetto il trattamento dei miei dati ' . $scopo . '.</span></label>'
-        . ($ebook ? '<label class="spunta"><input type="checkbox" name="newsletter" value="1"> <span>Voglio ricevere anche la ' . h(sito_newsletter_nome()) . ', ' . h((string)cms_impostazione('newsletter_promessa', 'con gli articoli nuovi')) . '. Facoltativo.</span></label>' : '')
+        . '<label class="spunta"><input type="checkbox" name="privacy" value="1" required> <span>Ho letto l&#039;<a href="/privacy-policy/" target="_blank">informativa privacy</a> e accetto il trattamento dei miei dati per ricevere la newsletter.</span></label>'
         . '<label class="captcha"><input type="checkbox"> <span>Sono una persona</span> <span class="captcha-stato" aria-live="polite"></span></label>'
-        . '<button class="btn btn-viola" type="submit">' . ['ebook' => 'Mandami l&#039;ebook', 'laser' => 'Prenota la chiamata', 'newsletter' => 'Iscrivimi'][$tipo] . '</button>'
+        . '<button class="btn btn-viola" type="submit">Iscrivimi</button>'
         . '</form><script src="' . sito_versione_asset('moduli.js') . '" defer></script></section>';
 }
 
 function vista_cortesia(string $occhiello, string $titolo, string $testo, string $azione = ''): string {
     return '<div class="wrap"><article class="pagina-generica cortesia"><span class="occhiello">' . $occhiello . '</span><h1>' . $titolo . '</h1>'
         . '<div class="corpo">' . $testo . '</div>' . $azione . '</article></div>';
-}
-
-function vista_ebook_attesa(): string {
-    return vista_cortesia('Ebook gratuito', 'Ci sei quasi.',
-        '<p>Ti ho appena scritto all&#039;indirizzo che hai indicato. Apri l&#039;email e premi <b>«Confermo il mio indirizzo»</b>: subito dopo ti arriva la seconda, con il link per scaricare l&#039;ebook.</p>'
-        . '<p>Se entro qualche minuto la casella è vuota, guarda nella cartella spam o in quella delle promozioni.</p>');
-}
-
-function vista_ebook_confermato(bool $partita): string {
-    return $partita
-        ? vista_cortesia('Ebook gratuito', 'Indirizzo confermato.',
-            '<p>Ti ho appena mandato l&#039;email con il link per scaricare l&#039;ebook. Il link resta attivo ' . MODULI_DOWNLOAD_GIORNI . ' giorni.</p>'
-            . '<p>Quando dalla lettura nasce una domanda sul tuo lavoro, portala in una Laser Coaching: 15 minuti al telefono, gratuita.</p>',
-            '<p><a class="btn btn-viola" href="/laser-coaching/">Scopri la Laser Coaching</a></p>')
-        : vista_cortesia('Ebook gratuito', 'Indirizzo confermato.',
-            '<p>L&#039;indirizzo è confermato, ma l&#039;email con l&#039;ebook si è fermata per un problema del server di posta. Riprova a richiederlo tra qualche minuto: ti arriva un link nuovo.</p>',
-            '<p><a class="btn btn-viola" href="/ebook/#modulo">Richiedi di nuovo</a></p>');
-}
-
-function vista_link_scaduto(string $perche = 'link'): string {
-    return $perche === 'file'
-        ? vista_cortesia('Ebook gratuito', 'Il link è valido.', '<p>Il file dell&#039;ebook in questo momento è fuori linea. Riprova più tardi con lo stesso link: resta attivo ' . MODULI_DOWNLOAD_GIORNI . ' giorni.</p>')
-        : vista_cortesia('Ebook gratuito', 'Questo link è scaduto.',
-            '<p>Il link è scaduto oppure è già stato sostituito da uno più recente. Richiedi di nuovo l&#039;ebook: ti arriva un link nuovo in un minuto.</p>',
-            '<p><a class="btn btn-viola" href="/ebook/#modulo">Richiedi l&#039;ebook</a></p>');
 }
 
 function vista_newsletter_grazie(): string {
@@ -359,7 +327,7 @@ function vista_newsletter_confermata(bool $ok): string {
     return $ok
         ? vista_cortesia('Newsletter', 'Sei dentro.',
             '<p>Da adesso ricevi la ' . h(sito_newsletter_nome()) . '. In fondo a ogni email c&#039;è il link per uscire, in un clic.</p>',
-            '<p><a class="btn btn-viola" href="/blog-fuori-del-coso/">Intanto, leggi il blog</a></p>')
+            '<p><a class="btn btn-viola" href="' . h(SITO_PAGINA_BLOG) . '">Intanto, leggi il blog</a></p>')
         : vista_cortesia('Newsletter', 'Questo link è scaduto.',
             '<p>Il link è scaduto oppure è già stato usato. Iscriviti di nuovo: ti arriva un link nuovo in un minuto.</p>',
             '<p><a class="btn btn-viola" href="' . NEWSLETTER_PAGINA . '#modulo">Iscriviti</a></p>');
@@ -380,19 +348,12 @@ function vista_newsletter_esci(?array $iscritto, bool $fatto, string $i, string 
         '<form method="post" action="' . NEWSLETTER_ESCI . '?i=' . h($i) . '&amp;t=' . h($t) . '"><button class="btn btn-viola" type="submit">Sì, toglimi dall&#039;elenco</button></form>');
 }
 
-function vista_laser_grazie(): string {
-    return vista_cortesia('Laser Coaching', 'Richiesta arrivata.',
-        '<p>Nelle prossime 24 ore ti chiama un coach certificato, al numero che hai indicato. Tieni il telefono a portata di mano.</p>'
-        . '<p>Intanto scegli la domanda da portare nei 15 minuti. Una sola: quella che oggi pesa di più.</p>',
-        '<p><a class="btn btn-filo" href="/blog-fuori-del-coso/">Leggi il blog nell&#039;attesa</a></p>');
-}
-
 function vista_termine(array &$c): string {
     // Il primo paragrafo è la definizione: si mostra già nel riquadro, si toglie dal corpo.
     $corpo = preg_replace('~<h2[^>]*>[^<]*</h2>\s*<p>[\s\S]*?</p>~', '', sito_html_contenuto($c), 1);
     $t = mb_strtolower($c['titolo']);
     $collegato = sito_ultimi(1, fn($a) => str_contains(mb_strtolower($a['titolo']), $t))[0] ?? null;
-    return '<div class="wrap"><article class="termine"><a href="/glossario/" class="occhiello" style="text-decoration:none">← Glossario PNL</a>'
+    return '<div class="wrap"><article class="termine"><a href="/glossario/" class="occhiello" style="text-decoration:none">← ' . h((string)cms_impostazione('glossario_titolo', 'Glossario')) . '</a>'
         . '<h1>' . h($c['titolo']) . '</h1>' . ($c['tldr'] !== '' ? '<p class="definizione">' . h($c['tldr']) . '</p>' : '')
         . '<div class="corpo">' . $corpo . '</div>'
         . ($collegato ? '<h2>Da leggere</h2><div class="collegati">' . vista_scheda($collegato) . '</div>' : '')
@@ -433,9 +394,9 @@ function vista_glossario(array $termini): string {
             . implode('', array_map(fn($t) => '<li><a href="' . h($t['percorso']) . '">' . h($t['titolo']) . '</a></li>', $voci)) . '</ul></section>';
     }
     return '<div class="wrap" style="padding-top:56px;padding-bottom:40px">'
-        . vista_testa_sezione('Glossario PNL', 'Le parole del metodo, spiegate semplici.',
-            count($termini) . ' termini di PNL, coaching e lavoro. Ognuno con la definizione, a cosa serve e come si usa in ufficio.')
-        . '<input class="cerca" type="search" placeholder="Cerca un termine: ancoraggio, rapport, swish…" aria-label="Cerca nel glossario" id="cerca-glossario">'
+        . vista_testa_sezione((string)cms_impostazione('glossario_titolo', 'Glossario'), (string)cms_impostazione('glossario_sottotitolo', 'Le parole del sito, spiegate semplici.'),
+            count($termini) . ' termini, ognuno con la sua definizione.')
+        . '<input class="cerca" type="search" placeholder="Cerca un termine…" aria-label="Cerca nel glossario" id="cerca-glossario">'
         . '<nav class="lettere" aria-label="Lettere">' . $lettere . '</nav><div>' . $sezioni . '</div>'
         . '<script' . sicurezza_nonce_attr() . '>(function(){var c=document.getElementById("cerca-glossario");c&&c.addEventListener("input",function(){var q=c.value.trim().toLowerCase();document.querySelectorAll(".g-gruppo").forEach(function(g){var n=0;g.querySelectorAll("li").forEach(function(li){var ok=li.textContent.toLowerCase().indexOf(q)>-1;li.hidden=!ok;if(ok)n++});g.hidden=n===0})})})();</script>'
         . '</div>';
@@ -461,7 +422,7 @@ function vista_cerca(string $q): string {
     if (($t = vista_tema('cerca', ['q' => $q, 'trovati' => $trovati])) !== null) return $t;
     if ($elenco === '' && mb_strlen($q) >= 2) $elenco = '<p class="vuoto">Nessun risultato per questa parola.</p>';
     return '<div class="wrap" style="padding-top:56px;padding-bottom:40px"><span class="occhiello">Cerca</span><h1 class="sez-titolo">Cosa stai cercando?</h1>'
-        . '<form action="/" method="get" role="search"><input name="s" class="cerca" type="search" value="' . h($q) . '" placeholder="Burnout, capo tossico, confini…" aria-label="Cerca nel sito"></form>'
+        . '<form action="/" method="get" role="search"><input name="s" class="cerca" type="search" value="' . h($q) . '" placeholder="Scrivi una parola…" aria-label="Cerca nel sito"></form>'
         . '<div class="griglia" style="margin-top:24px">' . $elenco . '</div></div>';
 }
 
@@ -469,7 +430,7 @@ function vista_404(): string {
     if (($t = vista_tema('404')) !== null) return $t;
     return '<div class="wrap" style="padding:96px 0"><span class="occhiello">Errore 404</span><h1 class="sez-titolo">Questa pagina non c&#039;è.</h1>'
         . '<p class="sez-intro">Può darsi che l&#039;indirizzo sia scritto male. Da qui riparti in un clic.</p>'
-        . '<p><a class="btn btn-viola" href="/blog-fuori-del-coso/">Vai al blog</a></p></div>';
+        . '<p><a class="btn btn-viola" href="' . h(SITO_PAGINA_BLOG) . '">Vai al blog</a></p></div>';
 }
 
 // ------------------------------------------------------------

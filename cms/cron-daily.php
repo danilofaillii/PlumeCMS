@@ -3,7 +3,7 @@
  * Cron giornaliero: applica i pacchetti in scadenza, manda l'email del mattino con gli articoli
  * che escono oggi (escono da soli alla loro ora) e manda i testi social.
  *
- * cPanel, Processi cron: una riga al giorno alle 06:00 ora italiana che lancia new/cron-daily.php
+ * cPanel, Processi cron: una riga al giorno alle 06:00 ora italiana che lancia cron-daily.php nella cartella del CMS
  */
 
 // sicurezza (attacco 2): il cron gira da riga di comando (cPanel, Processi cron: /usr/local/bin/php .../cron-daily.php).
@@ -43,7 +43,7 @@ if (file_exists($aggScript)) {
 
 // Step 1: l'email del mattino con gli articoli che escono oggi. Gli articoli escono da soli alla loro ora.
 require_once __DIR__ . '/includes/sito.php';
-// I passi dei moduli (danilofailli.it: l'email del mattino con gli articoli che escono oggi e i testi social del pillar).
+// I passi dei moduli del sito (per esempio un'email del mattino con gli articoli che escono oggi).
 foreach (cms_moduli_elenco('cron') as $x) {
     try {
         $esito = ($x['valore'])();

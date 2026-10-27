@@ -67,17 +67,17 @@ $v = design_valori();
 $globali = design_globali();
 $schedaAperta = preg_replace('/[^a-z]/', '', (string)($_GET['scheda'] ?? '')) ?: 'colori';
 
-// Le pagine dell'anteprima: home, l'ultimo articolo uscito, una pagina, il blog.
+// Le pagine dell'anteprima: home, l'ultimo articolo uscito, le prime pagine pubblicate, il blog.
 $anteprime = [['/', 'Home']];
 try {
     $a = db()->query('SELECT slug, title FROM ' . tbl('articles') . " WHERE status = 'published' AND publish_date <= CURDATE() ORDER BY publish_date DESC, id DESC LIMIT 1")->fetch();
     if ($a) $anteprime[] = ['/' . $a['slug'] . '/', 'Articolo: ' . mb_substr($a['title'], 0, 40)];
-    foreach (db()->query('SELECT slug, title FROM ' . tbl('pages') . " WHERE status = 'published' AND slug IN ('laser-coaching', 'percorso-doc', 'contatti', 'ebook') ORDER BY FIELD(slug, 'laser-coaching', 'percorso-doc', 'contatti', 'ebook')") as $p) {
+    foreach (db()->query('SELECT slug, title FROM ' . tbl('pages') . " WHERE status = 'published' AND slug <> " . db()->quote((string)get_setting('pagina_home', '')) . ' ORDER BY id LIMIT 3') as $p) {
         $anteprime[] = ['/' . $p['slug'] . '/', 'Pagina: ' . mb_substr($p['title'], 0, 40)];
     }
 } catch (Throwable $e) {
 }
-$anteprime[] = ['/blog-fuori-del-coso/', 'Blog'];
+$anteprime[] = [(string)cms_impostazione('pagina_blog', '/blog/'), 'Blog'];
 
 // ------------------------------------------------------------
 // Pezzi del modulo
@@ -273,7 +273,7 @@ $contenuto['immagini'] = $o;
 
 // Campi dei moduli
 $c = $v['campi'];
-$o = '<p class="dg-intro">I campi dei moduli del sito: Laser Coaching, ebook, newsletter, i form del costruttore, la ricerca del glossario e i test.</p>';
+$o = '<p class="dg-intro">I campi dei moduli del sito: newsletter, i form del costruttore, la ricerca del glossario e quelli dei moduli.</p>';
 $o .= dg_scatola('Etichetta', dg_colore('campi.etichetta.colore', $c['etichetta']['colore'], 'Colore') . dg_tipografia('campi.etichetta.tipografia', $c['etichetta']['tipografia']));
 $o .= dg_scatola('Campo', dg_tipografia('campi.campo.tipografia', $c['campo']['tipografia']) . dg_colore('campi.campo.colore', $c['campo']['colore'], 'Colore del testo') . dg_colore('campi.campo.sfondo', $c['campo']['sfondo'], 'Sfondo') . dg_colore('campi.campo.bordo_colore', $c['campo']['bordo_colore'], 'Colore del bordo') . '<div class="dg-due">' . dg_testo('campi.campo.bordo_larghezza', $c['campo']['bordo_larghezza'], 'Larghezza del bordo', 'oggi 1px') . dg_testo('campi.campo.raggio', $c['campo']['raggio'], 'Raggio degli angoli', 'oggi 12px') . '</div>' . dg_testo('campi.campo.padding', $c['campo']['padding'], 'Spazio interno', 'oggi 14px 16px'));
 $o .= dg_scatola('A fuoco (mentre si scrive)', dg_colore('campi.fuoco.colore', $c['fuoco']['colore'], 'Colore del testo') . dg_colore('campi.fuoco.sfondo', $c['fuoco']['sfondo'], 'Sfondo') . dg_colore('campi.fuoco.bordo_colore', $c['fuoco']['bordo_colore'], 'Colore del bordo') . dg_colore('campi.fuoco.contorno', $c['fuoco']['contorno'], 'Colore del contorno di fuoco', true, 'Oggi è il ciano del sito.'), false);
@@ -296,7 +296,7 @@ $contenuto['sfondo'] = $o;
 // Identità del sito
 $id = $v['sito'];
 $o = '<p class="dg-intro">Nome, sottotitolo, logo e icona del sito. Li leggono la testata e il piede costruiti con l\'editor e la scheda del browser.</p>';
-$o .= dg_scatola('Identità', dg_testo('sito.nome', $id['nome'], 'Nome del sito', (string)cms_impostazione('sito_nome', CMS_NOME), 'Nella testata oggi è scritto in maiuscolo. I titoli delle pagine (la scheda del browser) tengono il nome di oggi.') . dg_testo('sito.sottotitolo', $id['sottotitolo'], 'Sottotitolo', 'Deep Office Coach') . dg_testo('sito.descrizione', $id['descrizione'], 'Descrizione in una riga', '') . dg_immagine('sito.logo', $id['logo'], 'Logo', 'Vuoto = la testata scrive il nome in lettere, come oggi.') . dg_immagine('sito.favicon', $id['favicon'], 'Icona del sito (favicon)', 'L\'icona nella scheda del browser. Meglio quadrata, almeno 64 px.'));
+$o .= dg_scatola('Identità', dg_testo('sito.nome', $id['nome'], 'Nome del sito', (string)cms_impostazione('sito_nome', CMS_NOME), 'Nella testata oggi è scritto in maiuscolo. I titoli delle pagine (la scheda del browser) tengono il nome di oggi.') . dg_testo('sito.sottotitolo', $id['sottotitolo'], 'Sottotitolo', 'Una frase su cosa fai') . dg_testo('sito.descrizione', $id['descrizione'], 'Descrizione in una riga', '') . dg_immagine('sito.logo', $id['logo'], 'Logo', 'Vuoto = la testata scrive il nome in lettere, come oggi.') . dg_immagine('sito.favicon', $id['favicon'], 'Icona del sito (favicon)', 'L\'icona nella scheda del browser. Meglio quadrata, almeno 64 px.'));
 $contenuto['sito'] = $o;
 
 // CSS personalizzato

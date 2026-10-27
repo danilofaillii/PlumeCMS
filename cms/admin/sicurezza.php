@@ -82,7 +82,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             case 'scrivi_htaccess_uploads':
                 $dir = cms_uploads_dir();
                 if (!is_dir($dir)) throw new RuntimeException("La cartella delle immagini ($dir) non esiste.");
-                // Il modello sta con l'installatore. Dove install/ non c'e (danilofailli.it), il file arriva con un pacchetto.
+                // Il modello sta con l'installatore. Dove install/ non c'e (un sito che l'ha tolta), il file arriva con un pacchetto.
                 $modello = cms_radice() . '/install/esempi/htaccess-uploads.txt';
                 if (!is_file($modello)) throw new RuntimeException('Su questa installazione manca il modello (install/esempi/htaccess-uploads.txt): il file uploads/.htaccess si consegna con un pacchetto del pannello Aggiornamenti.');
                 $testo = (string)file_get_contents($modello);

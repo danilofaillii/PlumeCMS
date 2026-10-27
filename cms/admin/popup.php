@@ -60,7 +60,7 @@ require_once __DIR__ . '/includes/admin-header.php';
         <label>Titolo</label><input type="text" name="titolo" value="<?= h($v['titolo']) ?>">
         <label>Testo (HTML semplice: paragrafi, grassetto, link)</label><textarea name="testo" rows="5"><?= h($v['testo']) ?></textarea>
         <label>Immagine (indirizzo, dalla libreria Media)</label><input type="text" name="immagine" value="<?= h($v['immagine']) ?>" placeholder="/wp-content/uploads/…">
-        <div class="sc-riga"><div><label>Testo del pulsante</label><input type="text" name="pulsante_testo" value="<?= h($v['pulsante_testo']) ?>"></div><div><label>Link del pulsante</label><input type="text" name="pulsante_link" value="<?= h($v['pulsante_link']) ?>" placeholder="/laser-coaching/"></div></div>
+        <div class="sc-riga"><div><label>Testo del pulsante</label><input type="text" name="pulsante_testo" value="<?= h($v['pulsante_testo']) ?>"></div><div><label>Link del pulsante</label><input type="text" name="pulsante_link" value="<?= h($v['pulsante_link']) ?>" placeholder="/contatti/"></div></div>
         <label>Modulo dentro il popup</label>
         <select name="modulo"><option value="">Nessuno</option><?php foreach ($moduli as $k => $n): ?><option value="<?= h($k) ?>" <?= $v['modulo'] === $k ? 'selected' : '' ?>><?= h($n) ?></option><?php endforeach; ?></select>
       </div></div>
@@ -74,7 +74,7 @@ require_once __DIR__ . '/includes/admin-header.php';
       <div class="sc-scatola"><h3>Dove e quando</h3><div class="sc-corpo">
         <label>Su quali pagine</label>
         <select name="dove"><?php foreach (POPUP_DOVE as $k => $n): ?><option value="<?= $k ?>" <?= $v['dove'] === $k ? 'selected' : '' ?>><?= h($n) ?></option><?php endforeach; ?></select>
-        <label>Indirizzi (uno per riga, solo per "indirizzi elencati")</label><textarea name="percorsi" rows="3" placeholder="/laser-coaching/&#10;/percorso-doc/"><?= h($v['percorsi']) ?></textarea>
+        <label>Indirizzi (uno per riga, solo per "indirizzi elencati")</label><textarea name="percorsi" rows="3" placeholder="/contatti/&#10;/servizi/"><?= h($v['percorsi']) ?></textarea>
         <label>Quando compare</label>
         <select name="innesco"><?php foreach (POPUP_INNESCHI as $k => $n): ?><option value="<?= $k ?>" <?= $v['innesco'] === $k ? 'selected' : '' ?>><?= h($n) ?></option><?php endforeach; ?></select>
         <label>Secondi, oppure percentuale della pagina</label><input type="number" name="valore" value="<?= (int)$v['valore'] ?>" min="0" max="600">

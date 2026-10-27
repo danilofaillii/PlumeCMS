@@ -1,6 +1,6 @@
 <?php
 /**
- * La scheda di un articolo, di una pagina o di un aforisma: titolo e permalink,
+ * La scheda di un articolo, di una pagina o di un contenuto di un modulo: titolo e permalink,
  * editor Visuale/Testo, estratto; a destra Pubblica (stato, data, ora, anteprima), Categorie, Tag,
  * Immagine in evidenza, Attributi; sotto SEO, risposte dirette, revisioni.
  *   contenuto.php?tipo=articoli&id=12      contenuto.php?tipo=pagine (nuova)
@@ -70,7 +70,8 @@ $sc = [
 ];
 $quando = $r && !empty($r['id']) ? contenuti_quando($tipo, $r) : '';
 $sc['data'] = $r['data'] ?? (substr($quando, 0, 10) ?: date('Y-m-d'));
-$sc['ora'] = $r['ora'] ?? (substr($quando, 11, 5) ?: '06:00');
+// Un contenuto nuovo parte da adesso: "Pubblica" lo mette online subito (fino alla 1.2.7 partiva dalle 06:00 di oggi).
+$sc['ora'] = $r['ora'] ?? (substr($quando, 11, 5) ?: date('H:i'));
 $stato = $r && !empty($r['id']) ? contenuti_stato($tipo, $r) : 'bozza';
 $sc['stato'] = $r['stato'] ?? ($stato === 'bozza' ? 'bozza' : 'pubblicato');
 $cats = $T['tassonomie'] ? ($r && !empty($r['id']) ? contenuti_categorie_di($r) : (array)($r['categorie'] ?? [])) : [];
@@ -161,7 +162,7 @@ require_once __DIR__ . '/includes/admin-header.php';
           </div>
           <?php endif; ?>
           <label>Indicizzazione</label>
-          <select name="robots"><option value="" <?= $sc['robots'] === '' ? 'selected' : '' ?>>Automatica (visibile a Google<?= $T['tassonomie'] ? ', categoria aforismi nascosta' : '' ?>)</option><option value="index" <?= $sc['robots'] === 'index' ? 'selected' : '' ?>>Sempre visibile</option><option value="noindex" <?= $sc['robots'] === 'noindex' ? 'selected' : '' ?>>Nascosto a Google (noindex)</option></select>
+          <select name="robots"><option value="" <?= $sc['robots'] === '' ? 'selected' : '' ?>>Automatica (visibile a Google)</option><option value="index" <?= $sc['robots'] === 'index' ? 'selected' : '' ?>>Sempre visibile</option><option value="noindex" <?= $sc['robots'] === 'noindex' ? 'selected' : '' ?>>Nascosto a Google (noindex)</option></select>
         </div>
       </div>
 
@@ -295,8 +296,6 @@ require_once __DIR__ . '/includes/admin-header.php';
         <h3>Attributi dell'articolo</h3>
         <div class="sc-corpo">
           <label>Tipo</label><select name="type"><option value="cluster" <?= $sc['type'] === 'cluster' ? 'selected' : '' ?>>Cluster</option><option value="pillar" <?= $sc['type'] === 'pillar' ? 'selected' : '' ?>>Pillar (guida completa)</option></select>
-          <label>Invito finale (CTA)</label>
-          <select name="cta"><option value="">Nessuno</option><?php foreach (['laser coaching 15 min' => 'Laser Coaching 15 min', 'percorso D.O.C.' => 'Percorso D.O.C.', 'ebook gratuito' => 'Ebook gratuito', 'workshop tensioni' => 'Workshop tensioni', 'workshop comunicazione' => 'Workshop comunicazione'] as $k => $n): ?><option value="<?= h($k) ?>" <?= $sc['cta'] === $k ? 'selected' : '' ?>><?= h($n) ?></option><?php endforeach; ?></select>
           <label>Pillar padre (slug)</label><input type="text" name="pillar_ref" value="<?= h($sc['pillar_ref']) ?>">
           <label>Titolo del pillar padre</label><input type="text" name="pillar_title" value="<?= h($sc['pillar_title']) ?>">
         </div>

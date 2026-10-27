@@ -284,6 +284,7 @@ if ($passo === 4) {
         require_once $radice . '/includes/modelli.php';
         if ((int)db()->query('SELECT COUNT(*) FROM ' . tbl('pages'))->fetchColumn() === 0) {
             $autore = $s['nome'];
+            // Oggi alle 0:00, già passato: con le 6:00 chi installava fra mezzanotte e l'alba trovava il sito vuoto (fino alla 1.2.7).
             $oggi = date('Y-m-d');
             // Il form dei contatti.
             $formId = form_salva(0, ['nome' => 'Contatti', 'titolo' => 'Scrivimi', 'intro' => 'Rispondo appena posso.', 'pulsante' => 'Invia', 'attivo' => 1, 'avviso' => 1,
@@ -292,7 +293,7 @@ if ($passo === 4) {
             $log[] = 'form Contatti';
             // Le pagine.
             $pagina = function (string $titolo, string $slug, array $albero, string $testo = '') use ($autore, $oggi): int {
-                $id = contenuti_salva('pagine', 0, ['title' => $titolo, 'slug' => $slug, 'stato' => 'pubblicato', 'data' => $oggi, 'ora' => '06:00', 'contenuto' => $testo, 'robots' => 'index'], $autore);
+                $id = contenuti_salva('pagine', 0, ['title' => $titolo, 'slug' => $slug, 'stato' => 'pubblicato', 'data' => $oggi, 'ora' => '00:00', 'contenuto' => $testo, 'robots' => 'index'], $autore);
                 editor_salva($id, editor_valida(['elementi' => $albero]), true, $autore, 'Pagina di partenza', 'pagine');
                 return $id;
             };
@@ -318,7 +319,7 @@ if ($passo === 4) {
                 editor_widget('testo', ['testo' => '<p>Scrivimi dal modulo qui sotto: arriva all\'indirizzo email del sito.</p>']), editor_widget('modulo', ['tipo' => 'form:' . $formId])], ['larghezza' => 'articolo'])]);
             $log[] = 'pagina Contatti con il form';
             // L'articolo di benvenuto.
-            $art = contenuti_salva('articoli', 0, ['title' => 'Benvenuto nel tuo nuovo sito', 'slug' => 'benvenuto', 'stato' => 'pubblicato', 'data' => $oggi, 'ora' => '06:00', 'content_format' => 'html', 'categorie' => ['notizie'],
+            $art = contenuti_salva('articoli', 0, ['title' => 'Benvenuto nel tuo nuovo sito', 'slug' => 'benvenuto', 'stato' => 'pubblicato', 'data' => $oggi, 'ora' => '00:00', 'content_format' => 'html', 'categorie' => ['notizie'],
                 'contenuto' => '<h2>Il primo articolo</h2><p>Questo articolo lo ha scritto l\'installatore. Serve a far vedere come esce un articolo sul sito: titolo, data, testo, i capitoli nel sommario.</p><h2>Cosa fare adesso</h2><p>Aprilo dal pannello (voce Articoli), cambia il testo oppure cestinalo e scrivi il tuo. Ogni articolo ha una data e un\'ora di uscita: puoi programmarlo e uscirà da solo.</p>',
                 'excerpt' => 'Il primo articolo del sito, scritto dall\'installatore: aprilo, cambialo o cestinalo.', 'robots' => 'index'], $autore);
             $log[] = 'articolo di benvenuto (' . $art . ')';

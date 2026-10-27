@@ -23,10 +23,9 @@ $menu = [
     ['Media', 'media.php', '🖼', $qui === 'media.php'],
     $sonoAdminMenu ? ['Download', 'scaricabili.php', '&#11015;', $qui === 'scaricabili.php'] : null, // download manager (1.2.4)
     $sonoAdminMenu ? ['Utenti', 'utenti.php', '👤', $qui === 'utenti.php'] : null,
-    ['Newsletter e contatti', 'newsletter.php', '✉️', in_array($qui, ['newsletter.php', 'newsletter-campagna.php', 'contatti.php', 'newsletter-flussi.php', 'newsletter-statistiche.php', 'form-submissions.php'], true), [
+    ['Newsletter e form', 'newsletter.php', '✉️', in_array($qui, ['newsletter.php', 'newsletter-campagna.php', 'newsletter-flussi.php', 'newsletter-statistiche.php', 'form-submissions.php'], true), [
         ['Campagne', 'newsletter.php', in_array($qui, ['newsletter.php', 'newsletter-campagna.php'], true) && !in_array($_GET['scheda'] ?? '', ['iscritti', 'liste', 'impostazioni'], true)],
         ['Iscritti e liste', 'newsletter.php?scheda=iscritti', $qui === 'newsletter.php' && in_array($_GET['scheda'] ?? '', ['iscritti', 'liste', 'impostazioni'], true)],
-        ['Contatti (Laser, ebook)', 'contatti.php', $qui === 'contatti.php'],
         ['Invii dei form', 'form-submissions.php', $qui === 'form-submissions.php'],
         ['Flussi automatici', 'newsletter-flussi.php', $qui === 'newsletter-flussi.php'],
         ['Statistiche', 'newsletter-statistiche.php', $qui === 'newsletter-statistiche.php'],
@@ -62,7 +61,7 @@ $menu = [
     ]))],
 ];
 $menu = array_values(array_filter($menu));
-// Le voci dei moduli (danilofailli.it: Aforismi, Test, Social copy, Importa SQL, Diagnosi articoli).
+// Le voci dei moduli del sito: ogni modulo aggiunge le sue pagine al menu (chiave menu del manifest).
 $menu = cms_menu_integra($menu, $qui, (string)$ctTipo, $sonoAdminMenu);
 // Ruoli: il redattore vede solo le voci che puo aprire (le stesse regole di require_login, auth_redattore_puo).
 if (!$sonoAdminMenu) {

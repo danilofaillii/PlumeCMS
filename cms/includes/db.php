@@ -2,7 +2,7 @@
 require_once __DIR__ . '/config.php';
 
 // Prefisso centralizzato per ogni tabella/view
-// Il prefisso delle tabelle: CMS_PREFISSO dal config.local.php (l'installatore lo scrive; su danilofailli.it resta newdf_).
+// Il prefisso delle tabelle: CMS_PREFISSO dal config.local.php (l'installatore lo scrive; il predefinito newdf_ resta per le installazioni di prima che non lo scrivono).
 if (!defined('DB_PREFIX')) define('DB_PREFIX', CMS_PREFISSO);
 
 function tbl(string $name): string {
@@ -154,23 +154,4 @@ function save_form_submission(string $formType, array $data): int {
         ':ip'    => $_SERVER['REMOTE_ADDR'] ?? '',
     ]);
     return (int)db()->lastInsertId();
-}
-
-function count_downloads(string $slug): int {
-    $stmt = db()->prepare('SELECT COUNT(*) FROM ' . tbl('form_submissions') . ' WHERE form_type = "ebook" AND page_slug = :s');
-    $stmt->execute([':s' => $slug]);
-    return (int)$stmt->fetchColumn();
-}
-
-function get_random_aforismi(int $count = 3, string $category = ''): array {
-    $sql = 'SELECT * FROM ' . tbl('aforismi') . ' WHERE status = "published"';
-    $params = [];
-    if ($category) {
-        $sql .= ' AND category = :cat';
-        $params[':cat'] = $category;
-    }
-    $sql .= ' ORDER BY RAND() LIMIT ' . (int)$count;
-    $stmt = db()->prepare($sql);
-    $stmt->execute($params);
-    return $stmt->fetchAll();
 }

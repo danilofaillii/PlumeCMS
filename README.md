@@ -11,3 +11,17 @@ Si carica nella radice di un sito, si apre il browser e un installatore in cinqu
 - `SPOSTARE.md`: come aprirlo come repository e progetto Claude a sé.
 
 Versione: vedi `cms/VERSIONE`. Novità: `cms/CHANGELOG.md`.
+
+## Licenza
+
+plumeCMS è software libero: puoi usarlo, studiarlo, modificarlo e ridistribuirlo secondo i termini della
+GNU General Public License, versione 3 o (a tua scelta) una versione successiva, pubblicata dalla Free Software
+Foundation. Il testo completo è nel file `LICENSE` (copiato anche in `cms/LICENSE`, che entra nello zip).
+
+Chi ridistribuisce plumeCMS, anche modificato, deve farlo con la stessa licenza e con il codice sorgente. I siti fatti
+con plumeCMS, i loro contenuti e i temi e moduli che non ne copiano il codice restano di chi li fa.
+
+plumeCMS è distribuito sperando che sia utile, ma SENZA ALCUNA GARANZIA, nemmeno implicita di COMMERCIABILITÀ o di
+IDONEITÀ A UNO SCOPO PARTICOLARE. Per i dettagli, la GNU General Public License.
+
+Copyright (C) 2026 Danilo Failli.

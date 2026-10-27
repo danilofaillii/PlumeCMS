@@ -306,7 +306,7 @@ ewx_registra('titolo_animato', 'Titolo animato', 'bacchetta', 'Marketing', [
 
 // ---------------- Listino (Price List)
 ewx_registra('listino', 'Listino', 'euro', 'Marketing', [
-    ec('voci', 'ripetitore', 'Voci', [['titolo' => 'Laser Coaching', 'prezzo' => 'Gratis', 'testo' => '15 minuti, una situazione vera, una cosa concreta da fare.', 'immagine' => '', 'link' => ''], ['titolo' => 'Percorso D.O.C.', 'prezzo' => 'Su misura', 'testo' => 'Un percorso per rimettere assetto, confini e conversazioni.', 'immagine' => '', 'link' => '']], 'contenuto', ['campi' => [
+    ec('voci', 'ripetitore', 'Voci', [['titolo' => 'Prima voce', 'prezzo' => '25 €', 'testo' => 'Cosa comprende, in una riga.', 'immagine' => '', 'link' => ''], ['titolo' => 'Seconda voce', 'prezzo' => 'Su misura', 'testo' => 'Una descrizione breve e concreta.', 'immagine' => '', 'link' => '']], 'contenuto', ['campi' => [
         ec('titolo', 'testo', 'Titolo', 'Nuova voce'), ec('prezzo', 'testo', 'Prezzo', ''), ec('testo', 'testolungo', 'Descrizione', ''), ec('immagine', 'immagine', 'Immagine', ''), ec('link', 'testo', 'Link (facoltativo)', ''),
     ], 'titolo_voce' => 'titolo', 'sezione' => 'Voci']),
     ec('separatore', 'scelta', 'Fra titolo e prezzo', 'puntini', 'contenuto', ['opzioni' => ['puntini' => 'Puntini', 'linea' => 'Linea', 'nessuno' => 'Niente'], 'sezione' => 'Aspetto']),
@@ -420,8 +420,18 @@ ewx_registra('sommario', 'Sommario', 'elenco', 'Interazione', [
 });
 
 // ---------------- Griglia di contenuti (Posts)
+/** Cosa può mostrare la griglia: gli articoli, i tipi da leggere dei moduli del sito, tutti insieme. Chiave => [nome, tabella]. */
+function ewx_fonti_griglia(): array {
+    $f = ['articoli' => ['Articoli', 'articles']];
+    if (function_exists('seo_tipi_moduli') || is_file(__DIR__ . '/seo.php')) {
+        require_once __DIR__ . '/seo.php';
+        foreach (seo_tipi_moduli() as $k => $t) $f[$k] = [(string)$t['Tanti'], (string)$t['tabella']];
+    }
+    if (count($f) > 1) $f['tutti'] = ['Tutti i contenuti da leggere', ''];
+    return $f;
+}
 ewx_registra('griglia_contenuti', 'Griglia di articoli', 'giornale', 'Dal sito', [
-    ec('fonte', 'scelta', 'Cosa mostrare', 'articoli', 'contenuto', ['opzioni' => ['articoli' => 'Articoli', 'aforismi' => 'Aforismi', 'tutti' => 'Articoli e aforismi'], 'sezione' => 'Interrogazione']),
+    ec('fonte', 'scelta', 'Cosa mostrare', 'articoli', 'contenuto', ['opzioni' => array_map(fn($x) => $x[0], ewx_fonti_griglia()), 'sezione' => 'Interrogazione']),
     ec('categoria', 'testo', 'Solo una categoria (slug)', '', 'contenuto', ['sezione' => 'Interrogazione']),
     ec('tag', 'testo', 'Solo un tag (slug)', '', 'contenuto', ['sezione' => 'Interrogazione']),
     ec('solo_pillar', 'interruttore', 'Solo i pillar', false, 'contenuto', ['sezione' => 'Interrogazione']),
@@ -460,9 +470,10 @@ ewx_registra('griglia_contenuti', 'Griglia di articoli', 'giornale', 'Dal sito',
     $percorso = $ctx['percorso'] ?? '/';
     $tutti = [];
     try { $contenuti = sito_contenuti(); } catch (Throwable $e) { return ewx_vuoto('Gli articoli si vedono quando il database risponde'); }
+    $tabella = ewx_fonti_griglia()[$v['fonte']][1] ?? 'articles';
     foreach ($contenuti as $c) {
         if ($c['tipo'] !== 'post' || $c['rediretto'] || $c['seo']['robots'] !== 'index') continue;
-        if ($v['fonte'] !== 'tutti' && $c['fonte'] !== ($v['fonte'] === 'aforismi' ? 'aforismi' : 'articles')) continue;
+        if ($tabella !== '' && $c['fonte'] !== $tabella) continue;
         if ($v['solo_pillar'] && !$c['pillar']) continue;
         if ($cat !== '' && !in_array($cat, $c['categorie'], true)) continue;
         if ($tag !== '' && !in_array($tag, $c['tag'], true)) continue;

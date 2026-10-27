@@ -18,7 +18,7 @@ Endpoint dei rapporti CSP: `api/csp.php`. Accesso dell'utente: `admin/account.ph
   anche per la password dell'amministratore scelta nell'installatore (prima bastavano 10 caratteri qualunque): il
   controllo sta in `includes/sicurezza-password.php`, che non tocca il database e lo usano sia il pannello sia
   l'installatore.
-- **Limite ai tentativi di login** (regole della 1.1.3, decise da Danilo dopo il terzo attacco). Due conteggi separati:
+- **Limite ai tentativi di login** (regole della 1.1.3, decise dopo il terzo giro di attacco). Due conteggi separati:
   - **per indirizzo IP**: dopo 5 tentativi sbagliati (valore di "Tentativi sbagliati prima del blocco" nella pagina Sicurezza)
     quell'indirizzo è bloccato per i minuti scelti, e il blocco raddoppia a ogni tentativo in più. Il blocco per IP
     ferma tutto, anche la password giusta. Un'email avvisa l'amministratore.
@@ -74,15 +74,15 @@ Endpoint dei rapporti CSP: `api/csp.php`. Accesso dell'utente: `admin/account.ph
 - **Cron** (dalla 1.1.1): `cron-daily.php` e `cron-newsletter.php` girano solo da riga di comando; dal web rispondono 403
   e il `.htaccess` li nega. Un hosting che sa chiamare il cron solo via HTTP: nel `config.local.php`
   `define('CMS_CRON_TOKEN', '<almeno 32 caratteri a caso>');`, si chiama `cron-daily.php?token=<lo stesso>` e si toglie
-  la riga `cron-` dal `.htaccess`. Su danilofailli.it il cron di cPanel usa la riga di comando: niente da cambiare.
+  la riga `cron-` dal `.htaccess`. Con il cron di cPanel, che usa la riga di comando, non c'è niente da cambiare.
 - **Password dimenticata** (dalla 1.1.1): al massimo 3 richieste l'ora per email e 10 per IP, con un conteggio a parte:
   chi conosce la tua email non ti blocca il login.
 - **Immagini caricate** (dalla 1.1.1): finiscono sempre nella cartella del CMS (`cms_uploads_dir()`, di norma `uploads/`;
-  su danilofailli.it `wp-content/uploads`), la stessa che proteggono il `.htaccess` e la pagina Sicurezza.
+  un modulo del sito la può spostare, per esempio in `wp-content/uploads`), la stessa che proteggono il `.htaccess` e la pagina Sicurezza.
 - **Chiamate in uscita senza curl**: rifiutate (non si puo fissare l'IP controllato); curl c'e su ogni hosting cPanel.
 - **Pannello senza gestori in linea**: i pulsanti usano attributi `data-*` agganciati da `admin/assets/pannello.js`, cosi la
-  CSP del pannello resta senza `'unsafe-inline'`. Fanno eccezione tre pagine vecchie del modulo di danilofailli.it
-  (Social copy, Importa SQL, Dashboard del burnout), dichiarate dal modulo con il filtro `csp_pannello_inline`.
+  CSP del pannello resta senza `'unsafe-inline'`. Un modulo del sito con pagine vecchie che ne hanno bisogno le dichiara
+  con il filtro `csp_pannello_inline`.
 
 ## Configurare passo per passo
 
@@ -116,8 +116,8 @@ connessione di casa cambia IP (succede spesso), ti ritrovi chiuso fuori. In quel
 ### File .php nella radice del sito (pacchetti del trasloco)
 Un pacchetto che scrive un file eseguibile (`.php` e simili) nella radice del sito (destinazione `root/`) il pannello lo
 accetta solo se e **firmato**. Senza firma, nella radice passano solo file statici (robots.txt, immagini, css, js, html)
-e il `.htaccess`. Per un pacchetto non firmato che ne ha bisogno, come `2026-10-23-accendi-sito-nuovo.zip` di
-danilofailli.it (scrive `root/index.php`), ci sono due strade:
+e il `.htaccess`. Per un pacchetto non firmato che ne ha bisogno (per esempio uno che scrive `root/index.php` per
+accendere il sito nella radice), ci sono due strade:
 1. **La finestra di un'ora** (la piu semplice): Impostazioni, Sicurezza, scheda Impostazioni, riquadro *Finestra per i
    pacchetti del trasloco*: scrivi la tua password e clicca *Apri la finestra per un'ora*. Poi carichi e applichi il
    pacchetto dal pannello Aggiornamenti come sempre. Dopo un'ora la finestra si chiude da sola (o con *Chiudi adesso*).

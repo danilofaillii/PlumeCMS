@@ -9,7 +9,7 @@ pagina del pannello **Editor > Versioni** (`admin/versioni.php`).
 
 | Ambito | Quando nasce una versione | Nota automatica |
 |---|---|---|
-| Pagine, articoli, aforismi (e ogni tipo di contenuto dei moduli) | ogni *Salva bozza* e ogni *Pubblica* nell'editor; il cambio dell'header o del footer scelti per il contenuto; ogni salvataggio della scheda classica | `bozza`, `pubblicato`, `header: Header 2 al posto di Predefinito`, `scheda: prima della modifica` |
+| Pagine, articoli (e ogni tipo di contenuto dei moduli) | ogni *Salva bozza* e ogni *Pubblica* nell'editor; il cambio dell'header o del footer scelti per il contenuto; ogni salvataggio della scheda classica | `bozza`, `pubblicato`, `header: Header 2 al posto di Predefinito`, `scheda: prima della modifica` |
 | Header e footer | *Pubblica* e *Salva bozza* nell'editor del modello; la stellina del predefinito; pubblica / metti in bozza; le condizioni | `predefinito: Header 2 al posto di Header del sito` (e una riga sul modello che non lo è più), `condizioni cambiate` |
 | Stile del sito | ogni *Salva*, *Versione precedente*, *Ripristina predefiniti* | `versione precedente richiamata`, `ripristinati i predefiniti` |
 | Menu di navigazione | ogni *Salva il menu*; l'eliminazione (così si può ricreare) | `eliminato (un ripristino lo ricrea)` |
@@ -24,7 +24,7 @@ dell'editor). Le versioni **pubblicate** e quelle con una **nota scritta a mano*
 
 ## La pagina Versioni
 
-Filtro per **ambito** (tutti, tutti i contenuti, articoli, pagine, aforismi, header e footer, menu, stile, temi, impostazioni) e, dentro
+Filtro per **ambito** (tutti, tutti i contenuti, articoli, pagine, i tipi dei moduli, header e footer, menu, stile, temi, impostazioni) e, dentro
 un ambito, per **oggetto** (quale pagina, quale header, quale menu). Ogni riga: quando, l'oggetto con il link per aprirlo, la nota, chi,
 e **cosa è cambiato** rispetto alla versione prima ("1 widget aggiunto, 2 widget modificati", "1 impostazione cambiata", "prima versione").
 

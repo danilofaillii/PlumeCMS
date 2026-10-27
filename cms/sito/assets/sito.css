@@ -191,7 +191,7 @@ h1,h2,h3{font-family:var(--f-titolo);letter-spacing:-.01em;margin:0}
 .in-breve b{display:block;font:700 12px var(--f-testo);letter-spacing:.18em;text-transform:uppercase;color:var(--ciano);margin-bottom:8px}
 .in-breve p{margin:0;font-size:19px;line-height:1.6;color:var(--testo)}
 .corpo a{color:var(--ciano)}
-.aforisma-autore{margin:1.5em 0 0;font:600 15px/1.4 var(--f-testo);letter-spacing:.08em;text-transform:uppercase;color:var(--testo-3)}
+.citazione-autore{margin:1.5em 0 0;font:600 15px/1.4 var(--f-testo);letter-spacing:.08em;text-transform:uppercase;color:var(--testo-3)}
 .corpo img{height:auto;border-radius:12px;background:#fff}
 .corpo table{width:100%;border-collapse:collapse;font-size:15px;margin:0 0 1.5em;display:block;overflow-x:auto}
 .corpo th,.corpo td{text-align:left;padding:8px 10px;border-bottom:1px solid var(--bordo);vertical-align:top}
@@ -259,7 +259,7 @@ details.menu nav a{padding:12px 4px;text-decoration:none;border-bottom:1px solid
 .test-report div{display:flex;gap:10px;flex-wrap:wrap}
 .test-report input{flex:1;min-width:200px}
 
-/* moduli: ebook e laser coaching */
+/* moduli da compilare: la newsletter e quelli dei moduli del sito */
 .modulo{margin:48px 0 16px;padding:32px;border:1px solid var(--bordo);border-radius:var(--r);background:linear-gradient(160deg,rgba(var(--viola-rgb),.10),rgba(var(--ciano-rgb),.05));backdrop-filter:blur(10px);scroll-margin-top:96px}
 .modulo h2{font-size:clamp(24px,3vw,32px);margin:0 0 10px}
 .modulo>p{color:var(--testo-2);margin:0 0 22px}

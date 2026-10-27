@@ -9,7 +9,7 @@
  *   descrizione_sito   la frase del sito (quella sotto il marchio nel piede)
  *   menu_nav           un menu di navigazione (admin/menu.php): orizzontale, verticale o a tendina, con il menu del telefono
  *   ricerca            il modulo di ricerca del sito (/?s=parola)
- *   titolo_contenuto   il titolo della pagina, dell'articolo o dell'aforisma corrente
+ *   titolo_contenuto   il titolo della pagina, dell'articolo o del contenuto corrente
  *   testo_contenuto    il corpo del contenuto corrente (per i modelli di singolo articolo)
  *   immagine_evidenza  l'immagine in evidenza del contenuto corrente
  *   info_contenuto     autore, data, categorie, minuti di lettura
@@ -255,7 +255,7 @@ editor_registra_widget('ricerca', ['etichetta' => 'Ricerca', 'icona' => '?', 'gr
 // ------------------------------------------------------------
 
 editor_registra_widget('titolo_contenuto', ['etichetta' => 'Titolo del contenuto', 'icona' => 'T', 'gruppo' => 'Tema', 'controlli' => [
-    ec('livello', 'scelta', 'Tag', 'h1', 'contenuto', ['sezione' => 'Titolo', 'opzioni' => ['h1' => 'H1', 'h2' => 'H2', 'h3' => 'H3', 'p' => 'Paragrafo', 'span' => 'Testo in linea'], 'aiuto' => 'Il titolo della pagina, dell\'articolo o dell\'aforisma su cui esce il modello.']),
+    ec('livello', 'scelta', 'Tag', 'h1', 'contenuto', ['sezione' => 'Titolo', 'opzioni' => ['h1' => 'H1', 'h2' => 'H2', 'h3' => 'H3', 'p' => 'Paragrafo', 'span' => 'Testo in linea'], 'aiuto' => 'Il titolo della pagina o dell\'articolo su cui esce il modello.']),
     ec('prima', 'testo', 'Testo prima del titolo', '', 'contenuto', ['sezione' => 'Titolo']),
     ec('dopo', 'testo', 'Testo dopo il titolo', '', 'contenuto', ['sezione' => 'Titolo']),
     ec('link', 'interruttore', 'Link al contenuto', false, 'contenuto', ['sezione' => 'Titolo']),
@@ -273,7 +273,7 @@ editor_registra_widget('titolo_contenuto', ['etichetta' => 'Titolo del contenuto
 });
 
 editor_registra_widget('testo_contenuto', ['etichetta' => 'Testo del contenuto', 'icona' => 'P', 'gruppo' => 'Tema', 'controlli' => [
-    ec('nota', 'intestazione', 'Il corpo del contenuto corrente', '', 'contenuto', ['sezione' => 'Testo', 'aiuto' => 'Mostra il testo dell\'articolo, della pagina o dell\'aforisma su cui esce il modello. Serve ai modelli di singolo contenuto; dentro una pagina normale non mostra niente.']),
+    ec('nota', 'intestazione', 'Il corpo del contenuto corrente', '', 'contenuto', ['sezione' => 'Testo', 'aiuto' => 'Mostra il testo dell\'articolo o della pagina su cui esce il modello. Serve ai modelli di singolo contenuto; dentro una pagina normale non mostra niente.']),
     ec('testo_colore', 'colore', 'Colore del testo', '', 'stile', ['sezione' => 'Testo', 'selettore' => ' .ed-testo-contenuto', 'proprieta' => 'color']),
     ec('testo_tipografia', 'tipografia', 'Tipografia', [], 'stile', ['sezione' => 'Testo', 'selettore' => ' .ed-testo-contenuto']),
     ec('link_colore', 'colore', 'Colore dei link', '', 'stile', ['sezione' => 'Link', 'stati' => true, 'hover_su' => 'elemento', 'selettore' => ' .ed-testo-contenuto a', 'proprieta' => 'color']),
@@ -282,7 +282,7 @@ editor_registra_widget('testo_contenuto', ['etichetta' => 'Testo del contenuto',
     if ($dentro) return '';
     $c = tema_contesto();
     if (tema_esempio() || !$c['c'] || !function_exists('sito_html_contenuto')) {
-        return $ctx['anteprima'] ? '<div class="ed-testo-contenuto corpo"><p>Qui esce il testo del contenuto su cui si applica il modello.</p><p>Nel sito prende il corpo dell\'articolo, della pagina o dell\'aforisma corrente.</p></div>' : '';
+        return $ctx['anteprima'] ? '<div class="ed-testo-contenuto corpo"><p>Qui esce il testo del contenuto su cui si applica il modello.</p><p>Nel sito prende il corpo dell\'articolo o della pagina corrente.</p></div>' : '';
     }
     $dentro = true;
     try { $html = sito_html_contenuto($c['c']); } finally { $dentro = false; }
@@ -363,7 +363,7 @@ editor_registra_widget('breadcrumb', ['etichetta' => 'Briciole di pane', 'icona'
     if (tema_esempio() || ($c['tipo'] === 'altro' && $ctx['anteprima'] && $c['titolo'] === '')) {
         $voci[] = ['Blog', defined('SITO_PAGINA_BLOG') ? SITO_PAGINA_BLOG : (string)cms_impostazione('pagina_blog', '/blog/')];
         $voci[] = ['Titolo della pagina', ''];
-    } elseif ($c['tipo'] === 'articoli' || $c['tipo'] === 'aforismi') {
+    } elseif (!in_array($c['tipo'], ['pagine', 'altro'], true)) { // articoli e i tipi da leggere dei moduli
         $voci[] = ['Blog', defined('SITO_PAGINA_BLOG') ? SITO_PAGINA_BLOG : (string)cms_impostazione('pagina_blog', '/blog/')];
         $cat = $c['categorie'][0] ?? '';
         if ($cat !== '') $voci[] = [function_exists('sito_categorie') ? (sito_categorie()[$cat]['name'] ?? $cat) : $cat, "/category/$cat/"];

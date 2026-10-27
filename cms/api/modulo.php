@@ -1,6 +1,6 @@
 <?php
 /**
- * Arrivo dei moduli del sito: ebook gratuito, Laser Coaching, newsletter. Funziona anche senza JavaScript
+ * Arrivo dei moduli del sito: la newsletter e i form costruiti dal pannello. Funziona anche senza JavaScript
  * nel modulo (solo il captcha lo richiede): POST normale, poi redirect alla pagina giusta.
  * Con un errore si torna alla pagina del modulo con ?modulo=errore-codice#modulo.
  */
@@ -22,7 +22,7 @@ $form = null;
 if (preg_match('/^form:(\d+)$/', $tipo, $m)) { $form = form_leggi((int)$m[1]); $tipo = 'form'; }
 // Il modulo stava dentro un popup: con un errore la pagina riapre quel popup.
 $popup = ctype_digit((string)($_POST['popup'] ?? '')) ? '&popup=' . (int)$_POST['popup'] : '';
-if ($_SERVER['REQUEST_METHOD'] !== 'POST' || !in_array($tipo, ['ebook', 'laser', 'newsletter', 'form'], true) || ($tipo === 'form' && !$form)) modulo_torna('/');
+if ($_SERVER['REQUEST_METHOD'] !== 'POST' || !in_array($tipo, ['newsletter', 'form'], true) || ($tipo === 'form' && !$form)) modulo_torna('/');
 
 try {
     if ($tipo === 'form') {
@@ -30,18 +30,12 @@ try {
         if ($errore !== '') modulo_torna($pagina . '?modulo=' . rawurlencode($errore) . '&f=' . (int)$form['id'] . $popup . '#modulo-f' . (int)$form['id']);
         modulo_torna(FORM_PAGINA_GRAZIE . '?f=' . (int)$form['id']);
     }
-    [$dati, $errore] = moduli_leggi($_POST, $tipo !== 'newsletter');
-    if ($errore === '') {
-        $errore = match ($tipo) {
-            'ebook' => moduli_ebook_richiesta($dati, !empty($_POST['newsletter'])),
-            'laser' => moduli_laser_richiesta($dati, $pagina),
-            'newsletter' => newsletter_richiesta($dati),
-        };
-    }
+    [$dati, $errore] = moduli_leggi($_POST, false);
+    if ($errore === '') $errore = newsletter_richiesta($dati);
 } catch (Throwable $e) {
     error_log('modulo: ' . $e->getMessage());
     $errore = 'posta';
 }
 
 if ($errore !== '') modulo_torna($pagina . '?modulo=' . $errore . $popup . '#modulo');
-modulo_torna(['ebook' => MODULI_PAGINA_EBOOK_ATTESA, 'laser' => MODULI_PAGINA_LASER_GRAZIE, 'newsletter' => NEWSLETTER_GRAZIE][$tipo]);
+modulo_torna(NEWSLETTER_GRAZIE);

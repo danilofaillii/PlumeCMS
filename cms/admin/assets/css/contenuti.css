@@ -1,4 +1,4 @@
-/* Elenco e scheda di articoli, pagine e aforismi */
+/* Elenco e scheda di articoli, pagine e tipi dei moduli */
 .ct-testa{display:flex;justify-content:space-between;align-items:center;gap:1rem;flex-wrap:wrap;margin-bottom:.8rem}
 .ct-schede{display:flex;gap:.2rem;flex-wrap:wrap;font-size:.88rem}
 .ct-schede a{text-decoration:none;color:var(--text);padding:.35rem .6rem;border-radius:6px}

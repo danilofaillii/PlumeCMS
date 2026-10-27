@@ -2,6 +2,29 @@
 
 Il prodotto si chiama **plumeCMS** (nome scelto il 26 ottobre 2026; prima, per poche ore, "CarbonaraCMS", e ancora prima il provvisorio "Officina": gli zip vecchi si chiamavano `officina-*` e `carbonaracms-*`).
 
+## 1.2.8 (27 ottobre 2026) - Software libero, di tutti
+
+- **Licenza**: plumeCMS è software libero con la GNU GPL, versione 3 o successiva. Il testo è nel file `LICENSE` e la
+  pagina Informazioni del pannello lo dice.
+- **Niente più cose di un sito solo**: plumeCMS nasce dal pannello di danilofailli.it, e se ne portava dietro dei pezzi.
+  Ora sono fuori dal prodotto:
+  - i moduli ebook e Laser Coaching (motore, pagina Contatti del pannello, pagine di conferma e di download);
+  - l'invito finale con le offerte di quel sito nella scheda articolo, e il box del test sul burnout negli articoli;
+  - i testi d'esempio dei widget (Apertura, Frase, Schede, Numeri, Invito, Riquadro in evidenza, Listino, Pulsanti):
+    ora sono neutri, e i siti che usavano quelli di partenza li vedono cambiare;
+  - il nome del mittente delle email di partenza, ora il nome del sito; "Glossario PNL", ora "Glossario"
+    (impostazione `glossario_titolo`); il tipo "Coaching" nei dati strutturati dei servizi;
+  - gli aforismi come tipo fisso: SEO e widget Griglia elencano da soli i tipi di contenuto dei moduli.
+- Per chi scrive moduli: filtri `moduli_disponibili`, `modulo_html`, `pagina_moduli` ed evento `sito_percorso`, per
+  portare nel proprio modulo i moduli da compilare e le pagine che il nucleo non ha più (manuale tecnico, 15.4).
+- **Correzioni**: in un sito installato nella radice il captcha di newsletter e form chiedeva la sfida a un indirizzo
+  sbagliato; nel pannello la scheda articolo non è più ingrandita dal vecchio foglio delle infografiche.
+- **Installazione di notte**: l'installatore pubblicava le pagine di partenza "oggi alle 6:00"; chi installava fra mezzanotte
+  e le sei trovava il sito vuoto (pagina non trovata) fino al mattino. Ora escono subito.
+- **Pubblica vuol dire adesso**: un articolo o una pagina nuova parte con l'ora di adesso, non più con le 6:00 di oggi
+  (prima, di notte, "Pubblica" lo programmava per il mattino). Per programmarlo si cambiano data e ora, come sempre.
+- Nella pagina Newsletter il percorso del cron è quello vero della tua installazione.
+
 ## 1.2.7 (27 ottobre 2026) - Il margine delle aperture
 
 - **Apertura**: Centrata, Copertina, Rivista e Scheda ritrovano il loro margine interno. Nella 1.2.6 una regola del
@@ -109,7 +132,7 @@ Solo documentazione: il codice è quello della 1.2.0.
 
 - Fino alla 1.1.6 la cartella del CMS (`/test/`) veniva rimandata alla radice del dominio con un 301, cioè un rimando
   permanente: il browser lo ricorda e continua a farlo anche dopo l'aggiornamento, senza più chiedere al server. Il
-  rimando che resta (cartella del solo pannello, come `/new/` di danilofailli.it) ora è un 302 con `no-store`, che il
+  rimando che resta (cartella del solo pannello, con il sito nella radice) ora è un 302 con `no-store`, che il
   browser non conserva. Chi ha visto la 1.1.6 deve svuotare una volta la cache del browser.
 - "Vedi sito" nel menu del pannello apre l'indirizzo del sito scritto in configurazione, invece della cartella sopra il
   pannello.
@@ -171,8 +194,8 @@ Le tre basse del terzo attacco:
   moduli), media, categorie e tag; newsletter, form, popup, menu, header e footer, Stile, temi, widget, impostazioni
   dell'editor e le versioni di stile, modelli e menu sono dell'amministratore. Il menu e la dashboard seguono le stesse regole.
   In `modelli.php` pubblica e predefinito rispettano anche "Chi pubblica".
-- Nessun file PHP dei moduli si chiama direttamente dal web (`.htaccess`, Nginx); gli script di manutenzione del modulo
-  danilofailli chiedono l'amministratore, e quelli che scrivono partono solo con POST e CSRF.
+- Nessun file PHP dei moduli si chiama direttamente dal web (`.htaccess`, Nginx); gli script di manutenzione dei moduli
+  chiedono l'amministratore, e quelli che scrivono partono solo con POST e CSRF.
 - CSV senza formule: le celle che cominciano con = + - @, tab o a capo prendono un apice (`sicurezza_csv_cella`), in tutti
   gli export del nucleo e del modulo.
 - Login e password dimenticata non mostrano piu dettagli del database a video (vanno nel log).

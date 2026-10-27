@@ -41,7 +41,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         case 'prova':
             $a = trim((string)($_POST['prova_a'] ?? ''));
             if (!filter_var($a, FILTER_VALIDATE_EMAIL)) { flash('error', 'Indirizzo per la prova non valido.'); break; }
-            [$ogg, $html, $intest] = newsletter_email($c, ['id' => 0, 'nome' => trim((string)($_POST['prova_nome'] ?? '')) ?: 'Danilo', 'email' => $a]);
+            [$ogg, $html, $intest] = newsletter_email($c, ['id' => 0, 'nome' => trim((string)($_POST['prova_nome'] ?? '')) ?: 'Giulia', 'email' => $a]);
             posta_invia($a, '[PROVA] ' . $ogg, $html, $intest)
                 ? flash('success', "Prova spedita a $a.") : flash('error', 'Prova non partita: ' . posta_errore());
             break;
@@ -78,7 +78,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     exit;
 }
 
-[$oggProva, $htmlProva] = newsletter_email($c, ['id' => 0, 'nome' => 'Danilo', 'email' => '']);
+[$oggProva, $htmlProva] = newsletter_email($c, ['id' => 0, 'nome' => 'Giulia', 'email' => '']);
 $liste = newsletter_liste();
 $scelte = newsletter_liste_campagna($c);
 $destinatari = newsletter_destinatari($scelte);
@@ -142,7 +142,7 @@ require_once __DIR__ . '/includes/admin-header.php';
     </form>
   </div>
   <div>
-    <p style="font-size:.85rem;color:var(--text-muted);margin:0 0 .5rem">Anteprima dell'ultima versione salvata, con il nome "Danilo".</p>
+    <p style="font-size:.85rem;color:var(--text-muted);margin:0 0 .5rem">Anteprima dell'ultima versione salvata, con il nome "Giulia".</p>
     <iframe title="Anteprima" sandbox srcdoc="<?= h($htmlProva) ?>"></iframe>
   </div>
 </div>

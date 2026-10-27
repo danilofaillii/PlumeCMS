@@ -5,12 +5,12 @@
  * Colori e caratteri globali, tipografia per elemento (corpo, paragrafi, link, H1..H6), pulsanti, immagini,
  * campi dei moduli, layout (larghezza, spazi, punti di rottura), sfondo del sito, identità del sito, CSS personalizzato.
  *
- * Tabella newdf_design: una riga per sezione (chiave = nome della sezione, valore = JSON), più la riga `_precedente`
+ * Tabella <prefisso>design: una riga per sezione (chiave = nome della sezione, valore = JSON), più la riga `_precedente`
  * con l'insieme salvato prima dell'ultimo salvataggio (per tornare indietro). La crea design_installa() alla prima lettura.
  *
  * Regola di fondo: con i valori di partenza il sito è identico a oggi. design_css() scrive le variabili --g-* su :root,
  * fa da ponte con le variabili di sito.css (--viola, --ciano, --testo, --bg, --f-titolo...) e scrive una regola per
- * elemento solo quando Danilo ha impostato un valore. Un valore vuoto vuol dire "come il sito".
+ * elemento solo quando nel pannello è impostato un valore. Un valore vuoto vuol dire "come il sito".
  *
  * Contratto per gli altri file: $S/audit3/DESIGN-CONTRATTO.md (riassunto nei commenti qui sotto).
  *   design_valori()                 tutti i valori (salvati fusi sui predefiniti), cache per richiesta

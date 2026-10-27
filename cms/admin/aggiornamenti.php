@@ -132,7 +132,7 @@ details summary{cursor:pointer;font-size:0.82rem;color:var(--text-muted)}
 .agg-lavoro-box.ko .agg-barra i{background:#a8322a}
 </style>
 
-<?php if (cms_modulo('danilofailli')): /* la Diagnosi articoli e del modulo danilofailli */ ?><p class="agg-note" style="margin:0 0 1rem"><a class="agg-btn" href="diagnosi-articoli.php">&#129514; Diagnosi articoli</a> <span>Legge tutti gli articoli e dice quali sono rotti. Sola lettura.</span></p><?php endif; ?>
+
 
 <?php if ($esito): ?>
 <div class="agg-esito <?= $esito['ok'] ? 'ok' : 'ko' ?>">

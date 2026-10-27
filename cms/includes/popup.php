@@ -1,14 +1,14 @@
 <?php
 /**
  * Popup del sito: una finestra che compare dopo qualche secondo, a metà pagina o quando il mouse esce,
- * con un titolo, un testo, un pulsante e, se si vuole, un modulo (newsletter, ebook, Laser Coaching o un form).
+ * con un titolo, un testo, un pulsante e, se si vuole, un modulo (la newsletter, un form o un modulo del sito).
  * Si decide su quali pagine, e ogni quanti giorni la stessa persona la rivede (ricordato nel suo browser).
  */
 
 require_once __DIR__ . '/form.php';
 require_once __DIR__ . '/editor-widget.php';
 
-const POPUP_DOVE = ['tutte' => 'Tutte le pagine', 'home' => 'Solo la home', 'articoli' => 'Solo gli articoli e gli aforismi', 'pagine' => 'Solo le pagine fisse', 'percorsi' => 'Solo gli indirizzi elencati'];
+const POPUP_DOVE = ['tutte' => 'Tutte le pagine', 'home' => 'Solo la home', 'articoli' => 'Solo gli articoli (e gli altri contenuti da leggere)', 'pagine' => 'Solo le pagine fisse', 'percorsi' => 'Solo gli indirizzi elencati'];
 const POPUP_INNESCHI = ['secondi' => 'Dopo un certo numero di secondi', 'scroll' => 'Quando si scorre fino a una percentuale della pagina', 'uscita' => 'Quando il mouse esce dalla pagina (solo desktop)'];
 
 function popup_schema(): void {
@@ -70,7 +70,7 @@ function popup_salva(int $id, array $d): int {
         'occhiello' => mb_substr(trim((string)($d['occhiello'] ?? '')), 0, 100), 'titolo' => mb_substr(trim((string)($d['titolo'] ?? '')), 0, 255),
         'testo' => newsletter_4byte_dentro(trim((string)($d['testo'] ?? ''))), 'immagine' => mb_substr(trim((string)($d['immagine'] ?? '')), 0, 500),
         'pulsante_testo' => mb_substr(trim((string)($d['pulsante_testo'] ?? '')), 0, 100), 'pulsante_link' => mb_substr(trim((string)($d['pulsante_link'] ?? '')), 0, 500),
-        'modulo' => preg_match('/^(newsletter|ebook|laser|form:\d+)$/', (string)($d['modulo'] ?? '')) ? $d['modulo'] : '',
+        'modulo' => preg_match('/^[a-z][a-z0-9_:-]{0,40}$/', (string)($d['modulo'] ?? '')) ? $d['modulo'] : '',
         'dove' => isset(POPUP_DOVE[$d['dove'] ?? '']) ? $d['dove'] : 'tutte', 'percorsi' => trim((string)($d['percorsi'] ?? '')),
         'innesco' => isset(POPUP_INNESCHI[$d['innesco'] ?? '']) ? $d['innesco'] : 'secondi', 'valore' => max(0, min(600, (int)($d['valore'] ?? 8))),
         'frequenza_giorni' => max(0, min(365, (int)($d['frequenza_giorni'] ?? 7))),
@@ -107,7 +107,7 @@ function popup_per(string $percorso, string $genere): array {
     return $out;
 }
 
-/** Un indirizzo scritto a mano, con o senza slash finale o dominio, nella forma del sito: /laser-coaching/ */
+/** Un indirizzo scritto a mano, con o senza slash finale o dominio, nella forma del sito: /contatti/ */
 function popup_percorso_pulito(string $p): string {
     $p = trim($p);
     if ($p === '') return '';

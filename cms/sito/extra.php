@@ -92,7 +92,7 @@ function extra_llms(): string {
     ], fn($r) => $r !== null), $tuttiConTldr);
     return implode("\n", array_merge($intestazione, $servizi ? ['## Servizi'] : [], array_map($riga, array_values($servizi)), ['', '## Guide complete (pillar)'], array_map($riga, array_values($pillar)),
         ['', '## Articoli'], array_map($riga, array_values($altri)), ['', '## Glossario',
-        '- [Glossario PNL](' . SITO_URL . "/glossario/): $termini termini di PNL, coaching e lavoro, con definizione breve e uso in ufficio.", '',
+        '- [' . cms_impostazione('glossario_titolo', 'Glossario') . '](' . SITO_URL . "/glossario/): $termini termini con la definizione breve.", '',
         '## Optional', '- [Feed RSS](' . SITO_URL . '/feed/): gli ultimi articoli', '- [Sitemap](' . SITO_URL . '/sitemap.xml): tutte le pagine indicizzabili', '']));
 }
 

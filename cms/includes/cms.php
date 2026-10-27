@@ -6,15 +6,15 @@
  * leggono le impostazioni passano da get_setting() quando il database c'è e, se manca una voce, dal predefinito
  * che i moduli dichiarano (moduli/<nome>/modulo.php, chiave 'impostazioni'). Così il nucleo non contiene niente
  * scritto fisso di un sito: il nome, l'indirizzo, l'email, le pagine speciali li dice l'installazione (impostazioni)
- * oppure il modulo del sito (danilofailli.it: moduli/danilofailli/).
+ * oppure il modulo del sito (moduli/<nome>/).
  *
  * Il CMS gira nella radice del dominio o in una sottocartella: cms_base() è il percorso della sua cartella
- * ('' nella radice, '/new' su danilofailli.it), ricavato da DOCUMENT_ROOT o fissato con CMS_BASE nel config.local.php.
+ * ('' nella radice, per esempio '/cms' in una sottocartella), ricavato da DOCUMENT_ROOT o fissato con CMS_BASE nel config.local.php.
  */
 
 // Chi carica questo file prima di config.php (i file ponte dei moduli, index.php) trova comunque le costanti del config.local.php.
 if (!defined('DB_NAME') && !defined('CMS_INSTALLER') && is_file(__DIR__ . '/config.local.php')) require_once __DIR__ . '/config.local.php';
-if (!defined('CMS_NOME')) define('CMS_NOME', 'plumeCMS');          // nome del prodotto, scelto da Danilo il 26 ottobre 2026
+if (!defined('CMS_NOME')) define('CMS_NOME', 'plumeCMS');          // nome del prodotto, scelto il 26 ottobre 2026
 if (!defined('CMS_PREFISSO')) define('CMS_PREFISSO', 'newdf_');     // il prefisso delle tabelle; l'installatore lo scrive nel config.local.php
 
 /** La cartella del CMS sul disco (quella con includes/, admin/, sito/). */
@@ -38,7 +38,7 @@ function cms_installato(): bool {
 }
 
 /**
- * Il percorso della cartella del CMS nell'indirizzo: '' se sta nella radice del dominio, '/new' se sta in /new/.
+ * Il percorso della cartella del CMS nell'indirizzo: '' se sta nella radice del dominio, '/cms' se sta in /cms/.
  * Da CMS_BASE se il config lo dice; altrimenti dalla posizione della cartella rispetto a DOCUMENT_ROOT; in ultimo
  * dallo script in esecuzione. Da riga di comando, senza altre informazioni, ''.
  */
@@ -106,7 +106,7 @@ function cms_sito_base(): string {
     return rtrim($p, '/');
 }
 
-/** L'indirizzo assoluto del pannello, per esempio https://www.danilofailli.it/new/admin/. */
+/** L'indirizzo assoluto del pannello, per esempio https://www.esempio.it/cms/admin/. */
 function cms_url_pannello(): string {
     $o = cms_url_sito();
     $origine = preg_replace('~^(https?://[^/]+).*$~', '$1', $o) ?: cms_origine();

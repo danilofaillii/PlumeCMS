@@ -17,7 +17,7 @@ $adminTitle = 'Dashboard';
 $n = fn(string $sql) => (int)db()->query($sql)->fetchColumn();
 $art = contenuti_conteggi('articoli');
 $pag = contenuti_conteggi('pagine');
-// I tipi dei moduli (danilofailli.it: aforismi), con i loro conteggi e il pulsante "+ Nuovo".
+// I tipi di contenuto dei moduli (per esempio un catalogo o delle ricette), con i loro conteggi e il pulsante "+ Nuovo".
 $tipiExtra = array_diff_key(contenuti_tipi(), ['articoli' => 1, 'pagine' => 1]);
 $contExtra = [];
 foreach (array_keys($tipiExtra) as $k) $contExtra[$k] = contenuti_conteggi($k);
@@ -26,11 +26,9 @@ $ultimi = db()->query('SELECT id, title, slug, updated_at FROM ' . tbl('articles
 $nl = newsletter_numeri();
 $ultimaCampagna = db()->query('SELECT * FROM ' . tbl('newsletter_campagne') . " WHERE stato IN ('inviata','in_invio') ORDER BY invio_at DESC, id DESC LIMIT 1")->fetch();
 $eventi = $ultimaCampagna ? newsletter_conteggio_eventi((int)$ultimaCampagna['id']) : null;
-$laser = $n('SELECT COUNT(*) FROM ' . tbl('richieste_laser') . " WHERE stato = 'da_chiamare'");
 $inviiNuovi = $n('SELECT COUNT(*) FROM ' . tbl('moduli_invii') . ' WHERE letto = 0');
 $inviiSettimana = $n('SELECT COUNT(*) FROM ' . tbl('moduli_invii') . ' WHERE creato > DATE_SUB(NOW(), INTERVAL 7 DAY)');
-$ebookAttesa = $n('SELECT COUNT(*) FROM ' . tbl('iscrizioni_ebook') . ' WHERE confermato_at IS NULL');
-// Numeri in più dai moduli (danilofailli.it: le compilazioni del test negli ultimi 7 giorni): [['valore' => n, 'etichetta' => '...']].
+// Numeri in più dai moduli (per esempio le richieste ricevute negli ultimi 7 giorni): [['valore' => n, 'etichetta' => '...']].
 $numeriModuli = (array)cms_filtro('dashboard_numeri', []);
 $cronLog = dirname(__DIR__) . '/logs/cron-daily.log';
 $cronUltimo = is_file($cronLog) ? filemtime($cronLog) : 0;
@@ -41,7 +39,6 @@ try { require_once dirname(__DIR__) . '/includes/aggiornamenti.php'; $pacchettiA
 $avvisi = [];
 $dbAdmin = is_admin(); // sicurezza (ruoli): il redattore vede solo i contenuti; newsletter, richieste, sistema e avvisi sono dell'amministratore
 if ($cronFermo) $avvisi[] = ['Il cron del mattino non gira da ' . ($cronUltimo ? date('d/m H:i', $cronUltimo) : 'mai') . ': controlla la riga in cPanel.', 'cron-log.php'];
-if ($laser) $avvisi[] = ["$laser " . ($laser === 1 ? 'persona aspetta la chiamata' : 'persone aspettano la chiamata') . ' della Laser Coaching.', 'contatti.php'];
 if ($inviiNuovi) $avvisi[] = ["$inviiNuovi " . ($inviiNuovi === 1 ? 'compilazione nuova' : 'compilazioni nuove') . ' dai form.', 'form-submissions.php'];
 if ($pacchettiAttesa) $avvisi[] = ["$pacchettiAttesa " . ($pacchettiAttesa === 1 ? 'pacchetto caricato e non ancora applicato' : 'pacchetti caricati e non ancora applicati') . '.', 'aggiornamenti.php'];
 if (posta_notifica_email() === '') $avvisi[] = ["Manca l'indirizzo degli avvisi: senza, niente email del mattino.", 'impostazioni.php'];
@@ -119,8 +116,6 @@ require_once __DIR__ . '/includes/admin-header.php';
   <div class="db-scatola">
     <h3>Richieste e form <a href="form-submissions.php">vedi</a></h3>
     <div class="db-numeri">
-      <div><b><?= $laser ?></b><span>da richiamare</span></div>
-      <div><b><?= $ebookAttesa ?></b><span>ebook da confermare</span></div>
       <div><b><?= $inviiSettimana ?></b><span>form, 7 giorni</span></div>
 <?php foreach ($numeriModuli as $nm): ?>      <div><b><?= h((string)($nm['valore'] ?? '')) ?></b><span><?= h((string)($nm['etichetta'] ?? '')) ?></span></div>
 <?php endforeach; ?>

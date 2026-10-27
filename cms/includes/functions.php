@@ -91,33 +91,3 @@ function site_url(string $path = ''): string {
     return rtrim(SITE_URL, '/') . '/' . ltrim($path, '/');
 }
 
-function cta_info(string $cta): array {
-    $map = [
-        'laser coaching 15 min' => [
-            'label' => 'Prenota la tua Laser Coaching gratuita da 15 minuti',
-            'href'  => site_url('laser-coaching/'),
-            'desc'  => '15 minuti per fare chiarezza su 1 situazione specifica.',
-        ],
-        'percorso D.O.C.' => [
-            'label' => 'Scopri il Percorso D.O.C.',
-            'href'  => site_url('percorso-doc/'),
-            'desc'  => 'Un percorso strutturato per cambiare il modo in cui stai al lavoro.',
-        ],
-        'ebook gratuito' => [
-            'label' => "Scarica l'Ebook Gratuito",
-            'href'  => site_url('ebook/'),
-            'desc'  => '"Fuori dagli schemi" — confini, presenza, dialogo, responsabilità.',
-        ],
-        'workshop tensioni' => [
-            'label' => 'Info Workshop',
-            'href'  => site_url('workshop/'),
-            'desc'  => 'Lavoro pratico su conflitti, fiducia e ruoli.',
-        ],
-        'workshop comunicazione' => [
-            'label' => 'Info Workshop',
-            'href'  => site_url('workshop/'),
-            'desc'  => 'Lavoro pratico su comunicazione e dinamiche di gruppo.',
-        ],
-    ];
-    return $map[$cta] ?? $map['laser coaching 15 min'];
-}

@@ -90,7 +90,7 @@ require_once __DIR__ . '/includes/admin-header.php';
         <label class="ed-spunta" style="display:flex;gap:.5rem;align-items:center;font-weight:400"><input type="checkbox" name="avviso" value="1" <?= $v['avviso'] ? 'checked' : '' ?>> Avvisami via email a ogni compilazione</label>
         <label>Titolo della pagina di ringraziamento</label><input type="text" name="grazie_titolo" value="<?= h($v['grazie_titolo']) ?>">
         <label>Testo</label><textarea name="grazie_testo" rows="3"><?= h($v['grazie_testo']) ?></textarea>
-        <label>Link del pulsante "Continua" (facoltativo)</label><input type="text" name="grazie_link" value="<?= h($v['grazie_link']) ?>" placeholder="/ebook/">
+        <label>Link del pulsante "Continua" (facoltativo)</label><input type="text" name="grazie_link" value="<?= h($v['grazie_link']) ?>" placeholder="/grazie/">
       </div></div>
     </aside>
   </div>

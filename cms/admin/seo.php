@@ -14,6 +14,12 @@ require_once dirname(__DIR__) . '/includes/moduli.php';
 require_once dirname(__DIR__) . '/includes/seo.php';
 require_admin();
 seo_installa();
+// I tipi con il loro formato del titolo e la loro regola di indicizzazione: articoli e pagine, più i tipi dei moduli del sito.
+$seoTitoli = ['home' => 'Home', 'articolo' => 'Articoli', 'pagina' => 'Pagine'];
+$seoRobots = ['articoli' => 'Articoli', 'pagine' => 'Pagine'];
+foreach (seo_tipi_moduli() as $k => $tm) { $seoTitoli[(string)$tm['uno']] = (string)$tm['Tanti']; $seoRobots[$k] = (string)$tm['Tanti']; }
+$seoTitoli += ['archivio' => 'Categorie, tag, archivi', 'altro' => 'Altre pagine (cerca, 404, glossario)'];
+$seoRobots += ['categorie' => 'Categorie', 'tag' => 'Tag', 'data' => 'Archivi per data', 'cerca' => 'Pagina di ricerca', 'paginazione' => 'Pagine 2, 3... degli archivi e del blog'];
 
 $adminTitle = 'SEO e AEO';
 $schede = ['panoramica' => 'Panoramica', 'motori' => 'Motori di ricerca', 'copertura' => 'Copertura', 'prestazioni' => 'Prestazioni',
@@ -124,14 +130,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             // ---- Globale
             case 'salva_titoli':
                 $t = $_POST['titolo'] ?? []; $m = $_POST['meta'] ?? [];
-                foreach (['home', 'articolo', 'pagina', 'aforisma', 'archivio', 'altro'] as $k) if (!str_contains((string)($t[$k] ?? ''), '%titolo%')) throw new RuntimeException("Il formato del titolo ($k) deve contenere %titolo%.");
-                seo_salva('titolo', ['sep' => trim((string)($t['sep'] ?? '-')) ?: '-', 'sito' => trim((string)($t['sito'] ?? '')) ?: SITO_NOME] + array_intersect_key($t, array_flip(['home', 'articolo', 'pagina', 'aforisma', 'archivio', 'altro'])));
+                $tipiTitolo = array_keys($seoTitoli);
+                foreach ($tipiTitolo as $k) if (!str_contains((string)($t[$k] ?? ''), '%titolo%')) throw new RuntimeException("Il formato del titolo ($k) deve contenere %titolo%.");
+                seo_salva('titolo', ['sep' => trim((string)($t['sep'] ?? '-')) ?: '-', 'sito' => trim((string)($t['sito'] ?? '')) ?: SITO_NOME] + array_intersect_key($t, array_flip($tipiTitolo)));
                 seo_salva('meta', ['descrizione' => (string)($m['descrizione'] ?? ''), 'og_immagine' => (string)($m['og_immagine'] ?? ''), 'twitter_account' => ltrim(trim((string)($m['twitter_account'] ?? '')), '@'), 'robots_avanzati' => !empty($m['robots_avanzati']) ? 1 : 0]);
                 flash('success', 'Titoli e meta salvati.');
                 break;
             case 'salva_robots':
                 $r = [];
-                foreach (['articoli', 'pagine', 'aforismi', 'categorie', 'tag', 'data', 'cerca', 'paginazione'] as $k) $r[$k] = in_array($_POST['robots'][$k] ?? '', ['index', 'noindex'], true) ? $_POST['robots'][$k] : 'auto';
+                foreach (array_keys($seoRobots) as $k) $r[$k] = in_array($_POST['robots'][$k] ?? '', ['index', 'noindex'], true) ? $_POST['robots'][$k] : 'auto';
                 seo_salva('robots', $r);
                 flash('success', 'Regole di indicizzazione salvate.');
                 break;
@@ -340,7 +347,7 @@ pre.seo-pre{background:#1d1510;color:#f3e9dd;padding:.9rem;border-radius:8px;fon
         <form method="post"><?= csrf_field() ?><input type="hidden" name="azione" value="indexnow_sitemap"><button class="btn btn-primary btn-sm" type="submit">Invia tutta la sitemap adesso</button></form>
       </div>
       <form method="post" class="seo-inline" style="margin-top:.8rem"><?= csrf_field() ?><input type="hidden" name="azione" value="indexnow_url">
-        <div class="form-group"><label>Un indirizzo da inviare</label><input type="text" name="url" placeholder="/burnout-lavorativo-come-uscirne/"></div><button class="btn btn-secondary btn-sm" type="submit">Invia</button></form>
+        <div class="form-group"><label>Un indirizzo da inviare</label><input type="text" name="url" placeholder="/una-pagina-del-sito/"></div><button class="btn btn-secondary btn-sm" type="submit">Invia</button></form>
       <?php $ultimi = seo_log_elenco(5, 'indexnow'); if ($ultimi): ?><p class="hint" style="margin-top:.8rem">Ultimi esiti:</p><ul style="font-size:.8rem;padding-left:1.1rem"><?php foreach ($ultimi as $l): ?><li><?= h($l['quando']) ?> <?= h($l['azione']) ?> <b class="<?= $l['esito'] === 'ok' ? 'seo-ok' : 'seo-no' ?>"><?= h($l['esito']) ?></b> <?= $l['quanti'] ? $l['quanti'] . ' url, ' : '' ?><?= h(mb_substr(strtok((string)$l['dettaglio'], "\n") ?: '', 0, 140)) ?></li><?php endforeach; ?></ul><?php endif; ?>
     <?php endif; ?>
   </div>
@@ -405,7 +412,7 @@ pre.seo-pre{background:#1d1510;color:#f3e9dd;padding:.9rem;border-radius:8px;fon
   <p class="seo-nota">Il problema storico del sito: pagine note a Google e fuori dall'indice ("Scansionata, al momento non indicizzata"). Qui si chiede a Search Console il verdetto di ogni indirizzo e si salva: verdetto, stato di copertura, ultima scansione, canonical scelto da Google. La quota di Google e di <?= SEO_QUOTA_ISPEZIONI ?> ispezioni al giorno: i lotti partono dagli indirizzi mai controllati o controllati da piu tempo.</p>
   <?php if (!$sa): ?><p class="seo-att" style="font-size:.86rem">Serve il service account Google: scheda <a href="?scheda=motori">Motori di ricerca</a>.</p><?php else: ?>
   <div style="display:flex;gap:1rem;flex-wrap:wrap;align-items:flex-end">
-    <form method="post" class="seo-inline"><?= csrf_field() ?><input type="hidden" name="azione" value="ispeziona"><div class="form-group"><label>Un indirizzo</label><input type="text" name="url" placeholder="/burnout-lavorativo-come-uscirne/"></div><button class="btn btn-primary btn-sm" type="submit">Ispeziona</button></form>
+    <form method="post" class="seo-inline"><?= csrf_field() ?><input type="hidden" name="azione" value="ispeziona"><div class="form-group"><label>Un indirizzo</label><input type="text" name="url" placeholder="/una-pagina-del-sito/"></div><button class="btn btn-primary btn-sm" type="submit">Ispeziona</button></form>
     <form method="post" class="seo-inline"><?= csrf_field() ?><input type="hidden" name="azione" value="ispeziona_lotto"><div class="form-group" style="min-width:120px"><label>Lotto</label><select name="quanti"><option value="10">10 indirizzi</option><option value="25" selected>25 indirizzi</option><option value="50">50 indirizzi</option><option value="100">100 indirizzi</option></select></div><button class="btn btn-secondary btn-sm" type="submit">Ispeziona i prossimi</button></form>
   </div>
   <p class="hint" style="margin-top:.5rem">Un lotto da 100 dura un paio di minuti: ogni ispezione e una chiamata a Google. Se il server taglia la richiesta, usa lotti da 25.</p>
@@ -494,8 +501,8 @@ pre.seo-pre{background:#1d1510;color:#f3e9dd;padding:.9rem;border-radius:8px;fon
     <form method="post"><?= csrf_field() ?><input type="hidden" name="azione" value="salva_titoli">
       <p class="seo-nota">Segnaposto: <code>%titolo%</code>, <code>%sep%</code>, <code>%sito%</code>. Con i valori di partenza i titoli restano quelli di oggi ("Titolo - <?= h(SITO_NOME) ?>"). Il titolo per Google scritto in un contenuto vince sempre sul formato.</p>
       <div class="seo-inline"><div class="form-group"><label>Separatore</label><input type="text" name="titolo[sep]" value="<?= h($t['sep']) ?>" maxlength="5"></div><div class="form-group" style="flex:3"><label>Nome del sito nei titoli</label><input type="text" name="titolo[sito]" value="<?= h($t['sito']) ?>"></div></div>
-      <?php foreach (['home' => 'Home', 'articolo' => 'Articoli', 'pagina' => 'Pagine', 'aforisma' => 'Aforismi', 'archivio' => 'Categorie, tag, archivi', 'altro' => 'Altre pagine (cerca, 404, glossario)'] as $k => $nome): ?>
-      <div class="form-group" style="margin-top:.8rem"><label><?= $nome ?></label><input type="text" name="titolo[<?= $k ?>]" value="<?= h($t[$k]) ?>"></div>
+      <?php foreach ($seoTitoli as $k => $nome): ?>
+      <div class="form-group" style="margin-top:.8rem"><label><?= $nome ?></label><input type="text" name="titolo[<?= $k ?>]" value="<?= h($t[$k] ?? '%titolo% %sep% %sito%') ?>"></div>
       <?php endforeach; ?>
       <div class="form-group"><label>Descrizione predefinita</label><textarea name="meta[descrizione]" rows="2" maxlength="300"><?= h($m['descrizione']) ?></textarea><div class="hint">Per le pagine senza descrizione ne estratto. Vuota = nessun meta description (Google sceglie da solo).</div></div>
       <div class="form-group"><label>Immagine social predefinita (Open Graph)</label><input type="text" name="meta[og_immagine]" value="<?= h($m['og_immagine']) ?>" placeholder="https://..."><div class="hint">Per i contenuti senza immagine in evidenza. La card Twitter resta summary_large_image.</div></div>
@@ -508,9 +515,9 @@ pre.seo-pre{background:#1d1510;color:#f3e9dd;padding:.9rem;border-radius:8px;fon
   <div class="seo-card">
     <h3>Indicizzazione per tipo</h3>
     <form method="post"><?= csrf_field() ?><input type="hidden" name="azione" value="salva_robots">
-      <p class="seo-nota"><b>Automatica</b> e la regola di oggi, quella su cui regge il contratto dei 1.005 indirizzi: articoli e pagine index (salvo scelta nel contenuto), categorie di aforismi e vuote noindex, tag noindex, archivi per data noindex, ricerca noindex. Forzare un valore qui vale per tutto il tipo: fallo solo con una ragione.</p>
-      <?php foreach (['articoli' => 'Articoli', 'pagine' => 'Pagine', 'aforismi' => 'Aforismi', 'categorie' => 'Categorie', 'tag' => 'Tag', 'data' => 'Archivi per data', 'cerca' => 'Pagina di ricerca', 'paginazione' => 'Pagine 2, 3... degli archivi e del blog'] as $k => $nome): ?>
-      <div class="form-group"><label><?= $nome ?></label><select name="robots[<?= $k ?>]"><option value="auto" <?= $sel($rb[$k], 'auto') ?>>Automatica (come oggi)</option><option value="index" <?= $sel($rb[$k], 'index') ?>>Sempre index</option><option value="noindex" <?= $sel($rb[$k], 'noindex') ?>>Sempre noindex</option></select></div>
+      <p class="seo-nota"><b>Automatica</b> è la regola di partenza: articoli e pagine index (salvo scelta nel contenuto), categorie vuote o nascoste da un modulo noindex, tag noindex, archivi per data noindex, ricerca noindex. Forzare un valore qui vale per tutto il tipo: fallo solo con una ragione.</p>
+      <?php foreach ($seoRobots as $k => $nome): ?>
+      <div class="form-group"><label><?= $nome ?></label><select name="robots[<?= $k ?>]"><option value="auto" <?= $sel($rb[$k] ?? 'auto', 'auto') ?>>Automatica (come oggi)</option><option value="index" <?= $sel($rb[$k] ?? 'auto', 'index') ?>>Sempre index</option><option value="noindex" <?= $sel($rb[$k] ?? 'auto', 'noindex') ?>>Sempre noindex</option></select></div>
       <?php endforeach; ?>
       <p class="hint">Canonical: sempre sul dominio con www (<?= SITO_URL ?>), come oggi. Il singolo contenuto si imposta nella sua scheda, voce Indicizzazione.</p>
       <button class="btn btn-primary" type="submit">Salva</button>
@@ -601,7 +608,7 @@ pre.seo-pre{background:#1d1510;color:#f3e9dd;padding:.9rem;border-radius:8px;fon
 <div class="seo-griglia" style="margin-top:1rem">
   <div class="seo-card">
     <h3>Anteprima del JSON-LD di un indirizzo</h3>
-    <div class="seo-inline"><div class="form-group"><label>Indirizzo del sito</label><input type="text" id="seo-jsonld-url" value="/" placeholder="/burnout-lavorativo-come-uscirne/"></div><button class="btn btn-primary btn-sm" type="button" id="seo-jsonld-vai">Mostra</button></div>
+    <div class="seo-inline"><div class="form-group"><label>Indirizzo del sito</label><input type="text" id="seo-jsonld-url" value="/" placeholder="/una-pagina-del-sito/"></div><button class="btn btn-primary btn-sm" type="button" id="seo-jsonld-vai">Mostra</button></div>
     <p class="hint" style="margin:.5rem 0" id="seo-jsonld-esito"></p>
     <pre class="seo-pre" id="seo-jsonld-pre" hidden></pre>
     <p class="hint">Verifica esterna: <a id="seo-rrt" href="https://search.google.com/test/rich-results?url=<?= rawurlencode(SITO_URL . '/') ?>" target="_blank">Test dei risultati avanzati di Google</a> &middot; <a id="seo-sv" href="https://validator.schema.org/#url=<?= rawurlencode(SITO_URL . '/') ?>" target="_blank">Schema Markup Validator</a> (aprono l'indirizzo pubblico: funzionano sul sito vivo).</p>

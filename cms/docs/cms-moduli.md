@@ -1,10 +1,10 @@
 # I moduli del CMS
 
-(`docs/moduli.md` racconta i moduli ebook e Laser Coaching del sito, cioè `includes/moduli.php`: altra cosa.)
+(`docs/moduli.md` racconta i moduli da compilare del sito, newsletter e form, cioè `includes/moduli.php`: altra cosa.)
 
 Un modulo è una cartella `moduli/<nome>/` con un file `modulo.php` che **restituisce un array**, il manifesto. Il nucleo lo
 legge a ogni richiesta (`cms_moduli()`) prima del database: nel manifesto niente query, solo dichiarazioni e funzioni anonime
-che caricano i file veri quando servono (`$carica('aforismi.php')`). Un file `DISATTIVO` nella cartella spegne il modulo.
+che caricano i file veri quando servono (`require_once __DIR__ . '/includes/ricette.php'`). Un file `DISATTIVO` nella cartella spegne il modulo.
 
 ## Le chiavi del manifesto
 
@@ -12,10 +12,10 @@ che caricano i file veri quando servono (`$carica('aforismi.php')`). Un file `DI
 |---|---|---|
 | `etichetta`, `versione`, `descrizione` | testo | pagina Informazioni |
 | `impostazioni` | `['chiave' => valore]` | `cms_impostazione()` come fallback. `uploads_dir` e `uploads_url` spostano le immagini |
-| `tipi_contenuto` | `['aforismi' => ['tabella' => 'aforismi', 'uno' => 'aforisma', 'tanti' => 'aforismi', 'Uno', 'Tanti', 'nuovo' => 'Nuovo aforisma', 'campo_contenuto' => 'content', 'tassonomie' => true, 'attributi' => false, 'kw' => false, 'citazione' => true, 'lettura' => true, 'genere' => 'm', 'icona' => '&#128142;']]` | `contenuti_tipi()`: elenco, scheda, editor, modelli ("Tutti gli aforismi"), menu di navigazione |
+| `tipi_contenuto` | `['ricette' => ['tabella' => 'ricette', 'uno' => 'ricetta', 'tanti' => 'ricette', 'Uno', 'Tanti', 'nuovo' => 'Nuova ricetta', 'campo_contenuto' => 'content', 'tassonomie' => true, 'attributi' => false, 'kw' => false, 'citazione' => false, 'lettura' => true, 'genere' => 'f', 'icona' => '&#127858;']]` | `contenuti_tipi()`: elenco, scheda, editor, modelli ("Tutte le ricette"), menu di navigazione; da soli anche titoli e indicizzazione per tipo della SEO (`seo_tipi_moduli()`) e il widget Griglia di contenuti |
 | `menu` | voci `['nome', 'url', 'icona', 'attivo' => [file che la accendono], 'attivo_tipo' => '?tipo=', 'sotto' => [...], 'admin' => bool, 'dopo' => 'Voce del nucleo' oppure 'gruppo' => 'Gruppo del nucleo' (+ 'dopo' dentro il gruppo)]` | `cms_menu_integra()` nel menu del pannello |
 | `pannello` | `['nome-pagina' => '/percorso/file.php']` | lo shim `admin/<nome-pagina>.php` fa `cms_pagina_modulo('<modulo>', '<nome-pagina>')` |
-| `api` | come `pannello`, per `api/*.php` e `share/*.php` | idem |
+| `api` | come `pannello`, per `api/*.php` | idem |
 | `installa` | funzione che crea le tabelle del modulo | installatore, `cms_moduli_installa()` |
 | `schema` | `['nome' => funzione che torna righe di log]` | pannello Aggiornamenti, dopo lo snapshot |
 | `cron` | `['nome del passo' => funzione]` | `cron-daily.php`, un passo per voce, errori nel log |
@@ -46,23 +46,27 @@ Dai file in `moduli/<nome>/includes/`, `dirname(__DIR__, 3)` è la cartella del 
 | `editor_albero_home(null)`, `editor_albero_articolo(null, $a)` | `editor.php` | alberi di partenza nell'editor |
 | `modelli_partenza([...])`, `menu_partenza([...])`, `menu_scelte_speciali([...])` | `modelli.php`, `menu-nav.php` | header, footer e menu creati la prima volta |
 | `pacchetto_test(null, $def)` | `aggiornamenti.php` | importa la definizione di un test |
-| evento `sito_query($q, $percorso)` | `sito/index.php` | una query del sito (la roulette degli aforismi) |
-| evento `sito_genere($v, $meta)` | `sito/index.php` | un genere della mappa che il nucleo non conosce (il test) |
+| `moduli_disponibili($o)`, `modulo_html('', $tipo, $percorso)` | `editor-widget.php`, `viste.php` | moduli da compilare in più nel widget Modulo, e il loro HTML (`moduli.md`) |
+| `pagina_moduli($html, $percorso)` | `viste.php` | moduli aggiunti al testo di una pagina scritta nella scheda classica |
+| `categorie_protette([...])`, `redattore_pagine([])`, `dashboard_numeri([])` | pannello | categorie che non si eliminano, pagine del pannello aperte al redattore, numeri della bacheca |
+| `sicurezza_predefiniti($p)`, `csp_pannello_inline([])`, `csp_pannello_sorgenti([])`, `uscita_host($h)` | `sicurezza.php`, `sicurezza-html.php` | predefiniti della sicurezza, eccezioni della CSP del pannello, siti esterni ammessi nei link |
+| evento `sito_query($q, $percorso)` | `sito/index.php` | una query del sito (per esempio `/?a_caso=1` per un contenuto a caso) |
+| evento `sito_percorso($percorso, $q)` | `sito/index.php` | gli indirizzi del modulo (conferme, download, pagine di cortesia): il modulo risponde e chiude |
+| evento `sito_genere($v, $meta)` | `sito/index.php` | un genere della mappa che il nucleo non conosce |
 
 ## Le impostazioni che il nucleo legge
 
 `sito_url`, `sito_nome`, `sito_titolo`, `sito_sottotitolo`, `sito_descrizione`, `sito_frase`, `sito_favicon`, `sito_lingua`,
 `autore_predefinito`, `pagina_blog`, `blog_nome`, `blog_occhiello`, `blog_titolo`, `blog_intro`, `home_titolo`, `home_descrizione`,
-`glossario_pagine`, `newsletter_nome`, `newsletter_pagina`, `newsletter_promessa`, `newsletter_intestazione`, `newsletter_firma`,
-`email_intestazione`, `email_firma`, `ebook_titolo`, `ebook_nome_file`, `jsonld_id_persona`, `jsonld_id_organizzazione`,
+`glossario_titolo`, `glossario_sottotitolo`, `glossario_pagine`, `newsletter_nome`, `newsletter_pagina`, `newsletter_descrizione`,
+`newsletter_intestazione`, `newsletter_firma`, `email_intestazione`, `email_firma`, `jsonld_id_persona`, `jsonld_id_organizzazione`,
+`servizio_tipo`, `servizio_zona`, `editor_versioni_limite`,
 `citazione_autore`, `whatsapp_messaggio`, `w_ritratto`, `w_chi_sono_titolo`, `w_hero_occhiello`, `w_hero_foto`,
 `w_onda_etichetta`, `w_firma`, `w_prezzi_titolo`. L'installatore scrive le prime (`sito_*`, `autore_predefinito`, `pagina_blog`,
-`blog_*`, `pagina_home`, `home_descrizione`); le altre hanno un default generico e il modulo danilofailli dà i suoi.
+`blog_*`, `pagina_home`, `home_descrizione`); le altre hanno un default generico e un modulo può dare i suoi.
 
-## Il modulo danilofailli
+## Un modulo d'esempio
 
-`moduli/danilofailli/modulo.php` è l'esempio completo: aforismi come tipo di contenuto (`aforismi.php`), i valori di partenza
-del sito (`sito.php`: home, header e footer fissi, alberi dell'editor, menu, stile), test e statistiche, social del pillar,
-email del mattino, conversione degli articoli in blocchi (`includes/`), le pagine del pannello (`admin/`), le API (`api/`,
-`share/`). Nel nucleo restano i file ponte agli stessi indirizzi di prima (`admin/test.php`, `api/random-aforisma.php`,
-`includes/test.php`...): una riga che chiama il modulo, così link e documenti continuano a valere.
+Il prodotto non ne contiene: la cartella `moduli/` è vuota. Un modulo completo tiene i suoi file in `includes/`, le pagine
+del pannello in `admin/` (servite da `pannello`), le API in `api/`, e dichiara nel manifesto tipi di contenuto, valori di
+partenza del sito (home, header e footer, menu, stile, con i filtri qui sopra), passi del cron e widget.

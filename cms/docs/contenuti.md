@@ -1,6 +1,6 @@
 # Articoli e pagine come in WordPress
 
-Richiesta di Danilo, 23 ottobre 2026: "voglio che la gestione delle pagine sia al pari di WordPress. Stessa cosa per gli articoli. Devono essere identiche queste due aree anche nella gestione dei contenuti". Da qui: un solo elenco, una sola scheda, un solo editor visuale, per tutti e due. Le tabelle restano due (`newdf_articles`, `newdf_pages`); le differenze stanno in `contenuti_tipi()` dentro `includes/contenuti.php` e il resto le tratta uguali.
+Deciso il 23 ottobre 2026: pagine e articoli si gestiscono come in WordPress, e le due aree sono identiche. Da qui: un solo elenco, una sola scheda, un solo editor visuale, per tutti e due. Le tabelle restano due (`<prefisso>articles`, `<prefisso>pages`); le differenze stanno in `contenuti_tipi()` dentro `includes/contenuti.php` e il resto le tratta uguali. Un modulo del sito può aggiungere tipi suoi (chiave `tipi_contenuto` del manifest, `cms-moduli.md`), che entrano negli stessi elenchi, scheda ed editor.
 
 ## Dove sta
 
@@ -30,7 +30,7 @@ Schede per stato con il conteggio; cerca; filtri per mese, categoria, pillar o c
 
 Titolo e permalink (l'indirizzo si cambia in riga). Editor con due schede, **Visuale** e **Testo**, come il classico di WordPress: Visuale è un contenteditable con la barra (formato, grassetto, corsivo, elenchi, link, linea, annulla), che lascia stare l'HTML che non conosce (le infografiche dei pillar, le tabelle, i div) e pulisce quello che arriva incollato da Word; Testo è l'HTML. Pulsanti **+ Infografica** (il configuratore di prima) e **+ Immagine** (dalla libreria Media). Un articolo ancora in Markdown lo si vede convertito in Visuale: al primo salvataggio da Visuale diventa HTML, da Testo resta Markdown.
 
-A destra, come in WordPress: **Pubblica** (stato, data e ora, autore, Salva bozza, Anteprima, Pubblica o Aggiorna, Sposta nel cestino), **Categorie** (spunte, più una nuova al volo), **Tag** (chip, Invio o virgola, suggerimenti), **Immagine in evidenza** (dalla libreria), **Attributi** (tipo pillar o cluster, CTA, pillar padre). Sotto: Estratto, SEO e Google, Risposte dirette (In breve e FAQ), Revisioni.
+A destra, come in WordPress: **Pubblica** (stato, data e ora, autore, Salva bozza, Anteprima, Pubblica o Aggiorna, Sposta nel cestino), **Categorie** (spunte, più una nuova al volo), **Tag** (chip, Invio o virgola, suggerimenti), **Immagine in evidenza** (dalla libreria), **Attributi** (tipo pillar o cluster, pillar padre e il suo titolo). Sotto: Estratto, SEO e Google, Risposte dirette (In breve e FAQ), Revisioni.
 
 Le pagine hanno tutto tranne categorie, tag e attributi dell'articolo: WordPress fa lo stesso.
 
@@ -38,11 +38,11 @@ Le pagine hanno tutto tranne categorie, tag e attributi dell'articolo: WordPress
 
 **Anteprima**: `/indirizzo/?preview=1` con la sessione del pannello mostra bozze e programmati come fossero usciti (`SITO_ANTEPRIMA` in `sito/index.php`, con `Cache-Control: no-store`). Senza la sessione, 404 come sempre.
 
-**Revisioni**: a ogni salvataggio dalla scheda, la riga com'era prima finisce in `newdf_revisioni` (tipo, contenuto_id, dati JSON, autore, data; le ultime 20). Ripristina riporta titolo, testo, indirizzo e il resto a quella versione, e la versione di adesso finisce nelle revisioni. Le revisioni dell'editor visuale stanno a parte, in `newdf_pagine_revisioni` (ora con la colonna `tipo`).
+**Revisioni**: a ogni salvataggio dalla scheda, la riga com'era prima finisce in `<prefisso>revisioni` (tipo, contenuto_id, dati JSON, autore, data; le ultime 20). Ripristina riporta titolo, testo, indirizzo e il resto a quella versione, e la versione di adesso finisce nelle revisioni. Le revisioni dell'editor visuale stanno a parte, in `<prefisso>pagine_revisioni` (ora con la colonna `tipo`).
 
 ## L'editor visuale anche sugli articoli
 
-`newdf_articles` ha le stesse tre colonne delle pagine: `struttura`, `struttura_bozza`, `struttura_aggiornata`. Un articolo con `struttura` esce composto dall'editor: la testata dell'articolo (occhiello con la categoria, titolo, data, minuti di lettura) e il riquadro In breve restano quelli dell'articolo, sotto vengono le sezioni. Le FAQ dei widget si sommano a quelle della scheda nel JSON-LD. Si parte dal testo di oggi (intero in un widget HTML dentro una sezione stretta) o da un articolo vuoto. Il testo della scheda resta come riserva e per le ricerche.
+`<prefisso>articles` ha le stesse tre colonne delle pagine: `struttura`, `struttura_bozza`, `struttura_aggiornata`. Un articolo con `struttura` esce composto dall'editor: la testata dell'articolo (occhiello con la categoria, titolo, data, minuti di lettura) e il riquadro In breve restano quelli dell'articolo, sotto vengono le sezioni. Le FAQ dei widget si sommano a quelle della scheda nel JSON-LD. Si parte dal testo di oggi (intero in un widget HTML dentro una sezione stretta) o da un articolo vuoto. Il testo della scheda resta come riserva e per le ricerche.
 
 ## Trappola pagata il 23 ottobre
 

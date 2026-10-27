@@ -1,6 +1,6 @@
 <?php
 /**
- * L'elenco di articoli, pagine e aforismi: schede per stato, cerca, filtri per
+ * L'elenco di articoli, pagine e tipi dei moduli: schede per stato, cerca, filtri per
  * data e categoria, azioni di massa, modifica rapida nella riga, cestino, duplica, anteprima.
  *   contenuti.php?tipo=articoli    contenuti.php?tipo=pagine
  */

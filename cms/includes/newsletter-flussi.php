@@ -3,13 +3,13 @@
  * Newsletter, parte seconda: aperture e clic delle email, e i flussi automatici.
  *
  * Aperture e clic: ogni email porta un'immagine di un pixel e i link passano da api/nl.php, che segna
- * l'evento in newdf_newsletter_eventi e rimanda alla pagina vera. Il conteggio è per persona (una apertura
+ * l'evento in <prefisso>newsletter_eventi e rimanda alla pagina vera. Il conteggio è per persona (una apertura
  * conta una volta). Chi blocca le immagini non risulta: i numeri sono per difetto, come ovunque.
  *
  * Flussi: un grafo. Parte da un innesco (iscrizione, ingresso in una lista, form compilato, apertura o clic di
  * una campagna, nessuna interazione da tanti giorni) e passa di nodo in nodo lungo gli archi: email (con più
  * uscite: subito dopo, se apre, se clicca, se non fa niente entro un tempo), attesa, bivio su condizione, fine.
- * Ogni persona in cammino è una riga di newdf_newsletter_corsi: il nodo dove sta, quando si muove, se è in
+ * Ogni persona in cammino è una riga di <prefisso>newsletter_corsi: il nodo dove sta, quando si muove, se è in
  * ascolto di un'apertura o un clic. Le email le manda lo stesso cron della newsletter, dentro lo stesso limite;
  * aperture e clic la spostano subito (newsletter_flusso_evento). Un flusso vecchio, scritto come sequenza,
  * si converte in grafo alla lettura (newsletter_flusso_grafo).

@@ -1,6 +1,6 @@
 <?php
 /**
- * Caricamento delle immagini dell'editor della newsletter. Vanno in <cartella delle immagini>/newsletter/AAAA/MM/ (cms_uploads_dir(); su danilofailli.it wp-content/uploads),
+ * Caricamento delle immagini dell'editor della newsletter. Vanno in <cartella delle immagini>/newsletter/AAAA/MM/ (cms_uploads_dir(); può stare fuori dalla cartella del CMS),
  * con un indirizzo pubblico: le email le mostrano da lì.
  */
 require_once __DIR__ . '/includes/auth.php';

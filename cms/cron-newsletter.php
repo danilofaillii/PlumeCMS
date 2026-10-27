@@ -1,7 +1,7 @@
 <?php
 /**
  * Invio della newsletter, a piccoli giri. Va messo nel cron di cPanel ogni 5 minuti:
- *   /usr/local/bin/php /home/UTENTE/public_html/new/cron-newsletter.php
+ *   /usr/local/bin/php /home/UTENTE/public_html/cron-newsletter.php   (la cartella del CMS)
  * Ogni giro avvia le campagne arrivate alla loro ora e manda fino a 40 email, senza superare
  * il limite orario scelto nel pannello (Newsletter, Impostazioni). Senza niente da fare, finisce subito.
  */
