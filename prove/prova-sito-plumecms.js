@@ -60,7 +60,8 @@ const statoPacchetto = (nome) => {
   const voci = (await v.locator('header nav a').allInnerTexts()).map(s => s.trim()).filter(Boolean);
   ok('menu: Home, Funzionalità, Temi, Documentazione, Installazione, Scarica', ['Home', 'Funzionalità', 'Temi', 'Documentazione', 'Installazione'].every(x => voci.some(y => y.toLowerCase() === x.toLowerCase())) && voci.some(y => /scarica/i.test(y)), voci);
   ok("l'onda non c'è nella home", await v.locator('.chip-onda').count() === 0);
-  ok('la foto della home è naturale, con la cornice', await v.locator('.finestra.ed-foto-naturale.ed-fx-cornice').count() === 1);
+  // Dalla 1.2.6 la home apre con la Copertina: la pagina Temi a tutto sfondo, con il velo del sito e lo zoom lento.
+  ok('la home apre con la Copertina, foto a tutto sfondo con il velo e lo zoom', await v.locator('.ed-hero-copertina .finestra.ed-fx-zoom:not(.ed-foto-naturale) img[src*="temi.webp"]').count() === 1);
   const imgRotte = await v.evaluate(() => [...document.images].filter(i => i.complete && i.naturalWidth === 0).map(i => i.src));
   ok('nessuna immagine rotta nella home', imgRotte.length === 0, imgRotte);
   await v.goto(B + '/funzionalita/', { waitUntil: 'networkidle' });

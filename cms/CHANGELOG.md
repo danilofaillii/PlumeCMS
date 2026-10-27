@@ -2,6 +2,12 @@
 
 Il prodotto si chiama **plumeCMS** (nome scelto il 26 ottobre 2026; prima, per poche ore, "CarbonaraCMS", e ancora prima il provvisorio "Officina": gli zip vecchi si chiamavano `officina-*` e `carbonaracms-*`).
 
+## 1.2.7 (27 ottobre 2026) - Il margine delle aperture
+
+- **Apertura**: Centrata, Copertina, Rivista e Scheda ritrovano il loro margine interno. Nella 1.2.6 una regola del
+  foglio del sito lo azzerava: nella Copertina testo e pulsanti toccavano il bordo del riquadro.
+- Le altre sette disposizioni non cambiano.
+
 ## 1.2.6 (27 ottobre 2026) - Undici aperture
 
 - **Apertura (hero), tendina Disposizione**: oltre alla classica, dieci disposizioni nuove. Centrata, Copertina (foto a

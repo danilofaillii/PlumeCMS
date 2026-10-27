@@ -1,6 +1,6 @@
 # plumeCMS: manuale tecnico
 
-Versione del manuale: 1.5, per plumeCMS 1.2.6 (27 ottobre 2026).
+Versione del manuale: 1.5, per plumeCMS 1.2.7 (27 ottobre 2026).
 
 Questo manuale descrive come è fatto plumeCMS e come funziona, pezzo per pezzo. È scritto leggendo il codice:
 ogni numero, limite e nome di funzione viene dai file veri, con il riferimento `file:riga` quando serve a chi
@@ -63,7 +63,7 @@ Niente librerie esterne: SortableJS e Quill sono serviti dal CMS stesso, le icon
 index.php           front controller: tutte le richieste del sito passano da qui
 cron-daily.php      compiti del giorno (pacchetti programmati, moduli, IndexNow)
 cron-newsletter.php invio della newsletter a giri, coda IndexNow
-VERSIONE            il numero di versione (oggi 1.2.6)
+VERSIONE            il numero di versione (oggi 1.2.7)
 CHANGELOG.md, README.md, INSTALLA.md
 .htaccess           regole di Apache (copia di install/esempi/htaccess-radice.txt)
 
@@ -741,7 +741,9 @@ Come è fatto (`includes/editor-hero.php`):
   (`.occhiello`, `.lead`, `.azioni`, `.btn`, `.chip`): i colori, i caratteri e i controlli della scheda Stile valgono
   anche per lei;
 - il CSS è in `sito/assets/hero-base.css`, `hero-a.css`, `hero-b.css`, ogni regola sotto `.ed-hero-<id>`, colori solo
-  dalle variabili del sito (quindi segue i temi chiari e scuri); si carica solo nelle pagine con un'Apertura.
+  dalle variabili del sito (quindi segue i temi chiari e scuri); si carica solo nelle pagine con un'Apertura;
+- le regole sul contenitore si scrivono `.ed-hero.ed-hero-<id>`: `sito.css` ha `.ed-w-hero .hero{padding:0}`, che con
+  un solo nome di classe vince e toglie il margine (successo nella 1.2.6, corretto nella 1.2.7).
 
 **Infografiche** (14, prefisso `ig_`): passi, timeline, checklist, tabella, liste, numeri, card, mappa, flusso,
 fasi, barre, prima e dopo, zone, domande. Usano i colori `--ig-*` della tavolozza (capitolo 12).

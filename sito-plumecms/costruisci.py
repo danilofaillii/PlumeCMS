@@ -111,15 +111,15 @@ def tinta():
 # ------------------------------------------------------------------ le pagine
 def home():
     p = Pagina('home')
-    p.sezione([[w('hero',
+    p.sezione([[w('hero', disposizione='copertina',
                   occhiello=f'plumeCMS {VU} · PHP e MySQL',
                   titolo='Il tuo sito, *leggero come una piuma.*',
                   testo='Un CMS con l\'editor visuale a sezioni e colonne, i temi, la SEO e la newsletter già dentro. '
                         'Lo carichi sul server, apri il browser, rispondi a cinque domande. Il resto è il tuo sito.',
                   pulsanti=[{'testo': 'Scarica plumeCMS', 'link': '/scarica/', 'stile': 'viola'},
                             {'testo': 'Guarda cosa sa fare', 'link': '/funzionalita/', 'stile': 'filo'}],
-                  immagine=U + 'editor-ritratto.webp', onda_mostra=False, etichetta_onda='', barre=[],
-                  foto_trattamento='naturale', foto_effetto='cornice')]], **spazi(64, 72))
+                  immagine=U + 'temi.webp', onda_mostra=False, etichetta_onda='', barre=[],
+                  foto_effetto='zoom')]], **spazi(64, 72))
     # Il mondo di prima: il problema in cui ci si riconosce.
     p.sezione([(45, [titolo('Volevi un sito. *Ti sei ritrovato a fare il meccanico.*', 'Ti suona familiare?',
                             'Si parte con un\'idea chiara e si finisce la domenica pomeriggio a capire perché un aggiornamento '
@@ -489,6 +489,7 @@ def zip_lavagna(dest):
 
 # Le novità per chi scarica: brevi, scritte qui (il CHANGELOG è per chi sviluppa). Da aggiornare a ogni versione.
 NOVITA = [
+    ('1.2.7', 'Aperture con il loro respiro', ['Copertina, Centrata, Rivista e Scheda ritrovano il margine interno: il testo non tocca più il bordo.']),
     ('1.2.6', 'Undici aperture', ['L\'apertura delle pagine si sceglie fra undici disposizioni: centrata, a tutto sfondo, divisa, rivista, scheda, minimale, mosaico, inclinata, banner, diagonale e la classica.',
                                 'Cambi disposizione con una tendina e i testi restano dove sono.']),
     ('1.2.5', 'Sempre l\'ultima versione', ['Un file con la versione nel nome ha un indirizzo che porta sempre alla versione più recente.',

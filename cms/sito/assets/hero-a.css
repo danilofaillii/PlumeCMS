@@ -4,7 +4,7 @@
 .ed-hero-centrata.ed-hero-v .chip,.ed-hero-divisa.ed-hero-v .chip,.ed-hero-rivista.ed-hero-v .chip,.ed-hero-scheda.ed-hero-v .chip{background:rgba(var(--bg-rgb),.88);border:1px solid var(--bordo);color:var(--testo-2);box-shadow:0 12px 30px rgba(0,0,0,.18)}
 
 /* Centrata: parole al centro, foto larga e bassa sotto, riquadri a cavallo del bordo basso. */
-.ed-hero-centrata{text-align:center;padding:24px 0 8px}
+.ed-hero.ed-hero-centrata{text-align:center;padding:24px 0 8px}
 .ed-hero-centrata .ed-hc-parole{max-width:900px;margin:0 auto}
 .ed-hero-centrata h1{font-size:clamp(38px,6.6vw,86px);margin:20px auto 22px}
 .ed-hero-centrata p.lead{margin:0 auto 34px;max-width:640px}
@@ -18,7 +18,7 @@
 .ed-hero-centrata.ed-hero-v .chip-onda{width:190px}
 .ed-hero-centrata.ed-hero-v .chip-barre{width:250px}
 @media (max-width:760px){
-  .ed-hero-centrata{padding-top:8px}
+  .ed-hero.ed-hero-centrata{padding-top:8px}
   .ed-hero-centrata .ed-hc-scena{margin-top:36px;padding-bottom:0}
   .ed-hero-centrata.ed-hero-v .finestra.ed-hc-foto{aspect-ratio:4/3}
   .ed-hero-centrata .ed-hc-chip{position:static;margin-top:14px;gap:10px;flex-wrap:nowrap;align-items:stretch}
@@ -27,7 +27,7 @@
 }
 
 /* Copertina: la foto e lo sfondo, il velo scuro garantisce il contrasto delle parole in bianco. */
-.ed-hero-copertina{position:relative;isolation:isolate;overflow:hidden;min-height:min(78vh,760px);display:flex;flex-direction:column;justify-content:flex-end;padding:clamp(28px,5vw,72px);border-radius:calc(var(--r,18px) + 6px);background-color:var(--primario-scuro,var(--viola));background-image:radial-gradient(120% 90% at 85% 0%,rgba(var(--ciano-rgb),.35),transparent 60%),linear-gradient(160deg,rgba(var(--viola-rgb),.9),rgba(0,0,0,.35));color:#fff}
+.ed-hero.ed-hero-copertina{position:relative;isolation:isolate;overflow:hidden;min-height:min(78vh,760px);display:flex;flex-direction:column;justify-content:flex-end;padding:clamp(28px,5vw,72px);border-radius:calc(var(--r,18px) + 6px);background-color:var(--primario-scuro,var(--viola));background-image:radial-gradient(120% 90% at 85% 0%,rgba(var(--ciano-rgb),.35),transparent 60%),linear-gradient(160deg,rgba(var(--viola-rgb),.9),rgba(0,0,0,.35));color:#fff}
 .ed-hero-copertina.ed-hero-v .finestra.ed-hcop-foto{position:absolute;inset:0;z-index:-2;aspect-ratio:auto;width:auto;height:auto;border:0;border-radius:0;box-shadow:none}
 .ed-hero-copertina.ed-hero-v .finestra.ed-hcop-foto img{object-position:50% 25%}
 .ed-hero-copertina .ed-hcop-velo{position:absolute;inset:0;z-index:-1;pointer-events:none;background:linear-gradient(0deg,rgba(0,0,0,.9) 0%,rgba(0,0,0,.78) 45%,rgba(0,0,0,.45) 80%,rgba(0,0,0,.3) 100%),linear-gradient(90deg,rgba(0,0,0,.45) 0%,rgba(0,0,0,0) 75%)}
@@ -43,7 +43,7 @@
 .ed-hero-copertina.ed-hero-v .chip-barre{width:240px}
 .ed-hero-copertina .barra div{background:rgba(255,255,255,.22)}
 @media (max-width:860px){
-  .ed-hero-copertina{min-height:min(86vh,720px);padding:24px 20px 28px}
+  .ed-hero.ed-hero-copertina{min-height:min(86vh,720px);padding:24px 20px 28px}
   .ed-hero-copertina .ed-hcop-chip{display:none}
   .ed-hero-copertina p.lead{font-size:17px}
   .ed-hero-copertina h1{font-size:clamp(32px,9vw,44px)}
@@ -71,7 +71,7 @@
 }
 
 /* Rivista: impaginazione editoriale, titolo enorme fra due filetti, foto a nastro, due colonne sotto. */
-.ed-hero-rivista{text-align:left;padding:8px 0}
+.ed-hero.ed-hero-rivista{text-align:left;padding:8px 0}
 .ed-hero-rivista .ed-hr-testa{border-top:3px solid var(--testo);padding-top:20px}
 .ed-hero-rivista .occhiello{display:block}
 .ed-hero-rivista h1{font-size:clamp(44px,9.4vw,136px);line-height:.92;letter-spacing:-.03em;margin:18px 0 30px;max-width:none;text-wrap:balance}
@@ -91,7 +91,7 @@
 }
 
 /* Scheda: tutto in un riquadro, ritratto rotondo con l'anello di colore. */
-.ed-hero-scheda{padding:12px 0}
+.ed-hero.ed-hero-scheda{padding:12px 0}
 .ed-hero-scheda .ed-hs-riquadro{display:grid;grid-template-columns:minmax(200px,300px) 1fr;gap:clamp(28px,4.5vw,60px);align-items:center;max-width:1040px;margin:0 auto;padding:clamp(28px,4vw,52px);border:1px solid var(--bordo);border-radius:calc(var(--r,18px) + 10px);background-color:var(--bg-2);background-image:radial-gradient(90% 120% at 0% 0%,rgba(var(--viola-rgb),.12),transparent 60%);box-shadow:0 1px 2px rgba(0,0,0,.06),0 18px 48px rgba(0,0,0,.14)}
 .ed-hero-scheda .ed-hs-riquadro.ed-hs-senza-foto{grid-template-columns:1fr}
 .ed-hero-scheda .ed-hs-anello{padding:7px;border-radius:50%;background:var(--grad);box-shadow:0 14px 40px rgba(var(--viola-rgb),.28)}
