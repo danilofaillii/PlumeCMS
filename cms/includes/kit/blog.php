@@ -16,7 +16,7 @@ return [
         ]],
         ['widget' => [
             ['titolo', ['occhiello' => 'Gli ultimi', 'testo' => 'Appena usciti', 'livello' => 'h2', 'margine_sotto' => ['d' => 28]]],
-            ['griglia_contenuti', ['fonte' => 'articoli', 'quanti' => 6, 'aspetto' => 'schede', 'colonne' => ['d' => 3, 't' => 2, 'm' => 1], 'escludi_corrente' => false, 'mostra_immagine' => false, 'margine_sotto' => ['d' => 0]]],
+            ['griglia_contenuti', ['fonte' => 'articoli', 'quanti' => 6, 'aspetto' => 'classico', 'colonne' => ['d' => 3, 't' => 2, 'm' => 1], 'escludi_corrente' => false, 'mostra_immagine' => false, 'margine_sotto' => ['d' => 0]]],
         ]],
         ['imp' => ['larghezza' => 'stretta'], 'widget' => [
             ['presentazione', ['immagine' => '', 'occhiello' => 'Chi scrive', 'titolo' => 'Due righe su di te',
