@@ -168,6 +168,11 @@ async function contrastoParole(pg) {
   ok('/scarica/ di un file che non c\'è: 404', r404.status() === 404, r404.status());
   const rFuga = await v.request.get(B + '/scarica/..%2Fconfig/');
   ok('/scarica/ non esce dalla cartella', rFuga.status() === 404, rFuga.status());
+  // 1.2.8: la licenza detta dove si scarica e nelle domande frequenti.
+  await v.goto(B + '/scarica/', { waitUntil: 'networkidle' });
+  ok('Scarica: la licenza GNU GPL, con il link', /GNU GPL versione 3/.test(await v.locator('body').innerText()) && await v.locator('a[href*="gnu.org/licenses/gpl-3.0"]').count() >= 1);
+  await v.goto(B + '/domande-frequenti/', { waitUntil: 'networkidle' });
+  ok('Domande frequenti: quanto costa e a quali condizioni', /A quali condizioni lo uso\?/.test(await v.locator('body').innerText()));
   ok('nessun errore JavaScript sul sito', errV.length === 0, errV);
   await br.close();
   console.log(`\n${n - ko} su ${n} OK`);

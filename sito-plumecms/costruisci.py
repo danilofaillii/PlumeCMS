@@ -374,6 +374,11 @@ def scarica(note):
     p.sezione([(50, [titolo('Cosa serve', livello='h2'), w('tabella', intestazione=True, righe=REQUISITI),
                      pulsanti(('Guida all\'installazione', '/installazione/', 'filo'))]),
                (50, [titolo(f'Novità', livello='h2'), ricco(note)])], **tinta(), **spazi(64, 64))
+    p.sezione([[titolo('Software libero', livello='h3'),
+                ricco('plumeCMS si scarica e si usa senza pagare, con la licenza <a href="https://www.gnu.org/licenses/gpl-3.0.html">GNU GPL versione 3</a>: '
+                      'per tutti i siti che vuoi, da modificare come ti serve. Chi lo ridistribuisce lo fa con la stessa licenza. '
+                      'Il testo completo è nel file LICENSE, dentro lo zip.')]],
+              larghezza='stretta', **spazi(56, 0))
     p.sezione([[titolo('Un consiglio, prima di aggiornare', livello='h3'),
                 ricco('Il pacchetto di aggiornamento è fatto per i siti nati con lo zip di plumeCMS. Se il tuo sito ha moduli suoi, '
                       'cioè pezzi di codice scritti apposta per lui, l\'aggiornamento va preparato insieme a quei moduli.')]],
@@ -388,6 +393,7 @@ def faq():
     p.sezione([[titolo('Domande frequenti', 'Prima di partire', 'Le domande che arrivano più spesso, con risposte brevi.', livello='h1', centro=True)]],
               larghezza='stretta', **spazi(72, 24))
     voci = [
+        ('Quanto costa? A quali condizioni lo uso?', 'Niente: plumeCMS è software libero, con licenza GNU GPL versione 3. Lo usi per tutti i siti che vuoi, tuoi o dei tuoi clienti, lo modifichi e lo ridistribuisci. Una sola regola: chi lo ridistribuisce, anche modificato, lo fa con la stessa licenza. I tuoi siti, i contenuti e i temi che disegni restano tuoi.'),
         ('Devo saper programmare?', 'No. Installi dal browser, costruisci le pagine trascinando i widget, cambi colori e caratteri da una pagina sola. Il codice serve solo se vuoi costruire un tema o un modulo tuo.'),
         ('Che hosting serve?', 'Un hosting con PHP 8.2 o più nuovo e MySQL 8 (o MariaDB 10.6). Va bene un normale hosting condiviso con cPanel: non servono server dedicati.'),
         ('Posso installarlo in una cartella del mio dominio?', 'Sì. All\'installazione scrivi l\'indirizzo con la cartella, per esempio https://tuosito.it/nuovo, e plumeCMS sistema da solo link e percorsi.'),
@@ -530,6 +536,9 @@ def zip_lavagna(dest):
 
 # Le novità per chi scarica: brevi, scritte qui (il CHANGELOG è per chi sviluppa). Da aggiornare a ogni versione.
 NOVITA = [
+    ('1.2.8', 'Software libero, di tutti', ['plumeCMS ha la sua licenza: GNU GPL versione 3. Lo usi, lo modifichi, lo condividi.',
+                                            'Testi d\'esempio neutri e niente più pezzi del sito da cui è nato.',
+                                            'Corretti il controllo "Sono una persona" nei siti installati nella radice e la pubblicazione di notte.']),
     ('1.2.7', 'Aperture con il loro respiro', ['Copertina, Centrata, Rivista e Scheda ritrovano il margine interno: il testo non tocca più il bordo.']),
     ('1.2.6', 'Undici aperture', ['L\'apertura delle pagine si sceglie fra undici disposizioni: centrata, a tutto sfondo, divisa, rivista, scheda, minimale, mosaico, inclinata, banner, diagonale e la classica.',
                                 'Cambi disposizione con una tendina e i testi restano dove sono.']),

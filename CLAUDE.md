@@ -85,7 +85,7 @@ Stato, decisioni, contesto e diario non stanno qui: stanno nel second brain
 - **Pacchetto di aggiornamento** per un'installazione esistente:
   `python3 tools/cms-pacchetto.py --aggiornamento`. Si carica dal pannello,
   Impostazioni, Aggiornamenti.
-- **Versione**: `cms/VERSIONE` (oggi 1.2.7) e una voce in `cms/CHANGELOG.md` a ogni
+- **Versione**: `cms/VERSIONE` (oggi 1.2.8) e una voce in `cms/CHANGELOG.md` a ogni
   zip con contenuto diverso. Mai cambiare il contenuto di una versione già data.
 - **Prove** prima di dire finito:
   - `php -n -d short_open_tag=1 -l` su ogni file PHP toccato, `node --check` sui js;
@@ -121,7 +121,10 @@ Le decisioni complete, con data e perché, stanno nel second brain, `plumecms/de
 
 ## Stato al 27 ottobre 2026
 
-Fatto: plumeCMS 1.2.7: margine di Centrata, Copertina, Rivista e Scheda; la home del sito di plumeCMS apre con la Copertina (scelta di Danilo). 1.2.6: tendina Disposizione dell'Apertura, dieci disposizioni nuove più la classica (identica al pixel
+Fatto: plumeCMS 1.2.8: licenza GNU GPL 3 o successiva (`LICENSE`); tolto dal prodotto tutto ciò che era di danilofailli.it
+(moduli ebook e Laser, CTA, box del burnout, aforismi come tipo fisso, testi d'esempio, glossario PNL, mittente); agganci
+`moduli_disponibili`, `modulo_html`, `pagina_moduli`, `sito_percorso`; corretti captcha nella radice, Contatti con il modulo laser,
+pubblicazione di notte. Il sito di plumeCMS ha la piuma disegnata in copertina e "Installalo in 5 minuti" con le schermate vere. 1.2.7: margine di Centrata, Copertina, Rivista e Scheda; la home del sito di plumeCMS apre con la Copertina (scelta di Danilo). 1.2.6: tendina Disposizione dell'Apertura, dieci disposizioni nuove più la classica (identica al pixel
 alla 1.2.5), `prove/prova-hero.js` 154 su 154 con base, Cosmo, Aria e Bottega, anche senza foto. 1.2.5: serie nel download manager (`/scarica/<nome>-ultima/`, `{versione:<serie>}` nei testi), il sito di
 plumeCMS segue da solo l'ultima versione caricata; messaggi chiari per i temi con PHP. 1.2.4: download manager (pannello Download, widget Download, conteggio senza robot; `prove/prova-download.js`
 27 su 27). 1.2.3: manuali in PDF, `/scarica/<nome>/`, pacchetti con pagine, stile e impostazioni, il sito di plumeCMS
@@ -135,13 +138,10 @@ sottocartella; aggiornamento 1.1.9 -> 1.2.0 dal pannello provato con sito identi
 78 prove di attacco respinte (la 79esima è del modulo danilofailli). Le prove del CMS girano su PHP 8.3 con
 MySQL 8.0: su PHP 8.4.27 sono provate la sintassi di ogni file e i `.htaccess` su Apache, non il CMS intero
 (senza `pdo_mysql` nell'immagine, e i pacchetti Debian bloccati dalla rete della sessione).
-Prima installazione vera su `https://duhtron.it/test` (cartella), funzionante con la 1.1.9: da aggiornare alla 1.2.7.
+Prima installazione vera su `https://duhtron.it/test` (cartella), funzionante con la 1.1.9: da aggiornare alla 1.2.8.
 Dal 27 ottobre plumeCMS vive nel suo progetto e repository (`SPOSTARE.md`).
 
 Aperto:
-- qualche testo d'esempio dei widget (Apertura, Schede, Prezzi, riquadro del test) ancora
-  pensato per danilofailli.it, da rendere neutro;
-- commenti nel codice che citano danilofailli.it come esempio (innocui, da ripulire);
 - i documenti vecchi di `docs/` superati in alcuni punti (elenco nell'appendice A del manuale tecnico), da allineare;
 - `CMS_PREFISSO` ha come valore predefinito `newdf_` perché danilofailli.it non lo
   scrive nel suo config. L'installatore lo scrive sempre, quindi le installazioni
@@ -149,9 +149,13 @@ Aperto:
   `define('CMS_PREFISSO', 'newdf_');` al `config.local.php` di danilofailli.it;
 - prova vera delle chiamate a Google Search Console e IndexNow da un server con rete aperta;
 - favicon di partenza (l'installazione pulita risponde 404 su `/favicon.ico`);
-- `vista_404()` del nucleo punta a `/blog-fuori-del-coso/` (resto di danilofailli.it), da rendere neutro;
+- **danilofailli.it e la 1.2.8**: lì ebook, Laser, CTA, box del test e aforismi servono ancora. Quando si porta il nucleo 1.2.8, il
+  modulo `moduli/danilofailli/` deve ridarli con i filtri e l'evento nuovi (manuale tecnico 15.4), e i file tolti (`admin/contatti.php`...)
+  tornano nel modulo. Mai lo zip del prodotto là: il pacchetto di aggiornamento 1.2.8 li cancella (`TOLTI` in `tools/cms-pacchetto.py`);
+- widget Riquadro con icona: "Posizione dell'icona" si perde al salvataggio (stesso nome di "Posizione" delle Avanzate,
+  `editor-widget-extra-a.php:28` e `:60` contro `editor-controlli.php:714`), e `.ew-ribox{text-align:center}` vince sull'allineamento;
+- `tools/` e `prove/` hanno ancora riferimenti a danilofailli.it (strumenti di sviluppo, non vanno nello zip): `--sito`, la prova del burnout;
 - i temi a danilofailli.it arrivano solo con un pacchetto `--sito` dal suo repository (mai lo zip del prodotto).
-- la licenza di plumeCMS non è scritta da nessuna parte: il sito di plumeCMS offre il download senza dire a quali condizioni;
 - la 1.2.3 (menu per posizione, pannello Revisioni, sfondo colore delle sezioni, `/scarica/`, voci nuove dei pacchetti) e la
   1.2.4 (download manager) vanno riportate su danilofailli.it, come la 1.2.2;
 - la 1.2.2 (sezione Foto, interruttore dell'onda: `includes/editor-widget.php`, `sito/assets/sito.css`) va riportata su
