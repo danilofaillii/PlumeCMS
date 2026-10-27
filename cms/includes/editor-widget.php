@@ -379,11 +379,11 @@ function editor_definizioni(): array {
             ec('pulsante_testo', 'testo', 'Testo del pulsante', 'Prenota i tuoi 15 minuti gratuiti'),
             ec('pulsante_link', 'testo', 'Link del pulsante', '/laser-coaching/'),
         ], editor_controlli_riquadro_cta('.ed-cta', [
-            'sfondo' => ['tipo' => 'sfumatura', 'sfumatura' => ['colore1' => '#2d5a5f', 'posizione1' => 0, 'colore2' => '#1a3a3e', 'posizione2' => 100, 'tipo' => 'linear', 'angolo' => 135]],
+            'sfondo' => ['tipo' => 'sfumatura', 'sfumatura' => ['colore1' => 'ig:ciano-2', 'posizione1' => 0, 'colore2' => 'ig:ciano-profondo', 'posizione2' => 100, 'tipo' => 'linear', 'angolo' => 135]],
             'raggio' => 16, 'padding' => el_(2, null, null, null, 'rem'), 'margine' => el_(2.5, 0, 1, 0, 'rem'),
             'titolo_colore' => '#ffffff', 'titolo_tip' => ['dimensione' => em_(1.25, 'rem'), 'peso' => '800'],
             'testo_colore' => 'rgba(255,255,255,.85)', 'testo_tip' => ['dimensione' => em_(0.95, 'rem')], 'testo_larghezza' => em_(520),
-            'pulsante_sfondo' => '#e8553e', 'pulsante_colore' => '#ffffff', 'pulsante_tip' => ['dimensione' => em_(1, 'rem'), 'peso' => '700'], 'pulsante_padding' => el_(0.85, 2, 0.85, 2, 'rem'), 'pulsante_raggio' => 10,
+            'pulsante_sfondo' => 'ig:rosso', 'pulsante_colore' => '#ffffff', 'pulsante_tip' => ['dimensione' => em_(1, 'rem'), 'peso' => '700'], 'pulsante_padding' => el_(0.85, 2, 0.85, 2, 'rem'), 'pulsante_raggio' => 10,
         ]))],
         'riquadro_test' => ['etichetta' => 'Riquadro del test', 'icona' => '✓', 'gruppo' => 'Dal sito', 'controlli' => array_merge([
             ec('titolo', 'testo', 'Titolo', 'Quanto sei vicino al burnout, in numeri?'),
@@ -391,11 +391,11 @@ function editor_definizioni(): array {
             ec('pulsante_testo', 'testo', 'Testo del pulsante', 'Fai il test adesso'),
             ec('pulsante_link', 'testo', 'Link del pulsante', '/test-burnout/'),
         ], editor_controlli_riquadro_cta('.ed-test', [
-            'sfondo' => ['tipo' => 'classico', 'colore' => '#fef9f0'], 'bordo' => ['tipo' => 'solid', 'larghezza' => el_(2), 'colore' => '#e8a830'],
+            'sfondo' => ['tipo' => 'classico', 'colore' => 'ig:sfondo'], 'bordo' => ['tipo' => 'solid', 'larghezza' => el_(2), 'colore' => 'ig:oro'],
             'raggio' => 16, 'padding' => el_(1.8, 2, 1.8, 2, 'rem'), 'margine' => el_(2.5, 0, 0.5, 0, 'rem'),
-            'titolo_colore' => '#2d1b0e', 'titolo_tip' => ['dimensione' => em_(1.15, 'rem'), 'peso' => '800'],
-            'testo_colore' => '#6b4c35', 'testo_tip' => ['dimensione' => em_(0.92, 'rem')], 'testo_larghezza' => em_(480),
-            'pulsante_sfondo' => '#e8a830', 'pulsante_colore' => '#2d1b0e', 'pulsante_tip' => ['dimensione' => em_(0.95, 'rem'), 'peso' => '700'], 'pulsante_padding' => el_(0.75, 1.8, 0.75, 1.8, 'rem'), 'pulsante_raggio' => 10,
+            'titolo_colore' => 'ig:titolo', 'titolo_tip' => ['dimensione' => em_(1.15, 'rem'), 'peso' => '800'],
+            'testo_colore' => 'ig:testo', 'testo_tip' => ['dimensione' => em_(0.92, 'rem')], 'testo_larghezza' => em_(480),
+            'pulsante_sfondo' => 'ig:oro', 'pulsante_colore' => 'ig:scuro', 'pulsante_tip' => ['dimensione' => em_(0.95, 'rem'), 'peso' => '700'], 'pulsante_padding' => el_(0.75, 1.8, 0.75, 1.8, 'rem'), 'pulsante_raggio' => 10,
         ]))],
         // Leggi anche: colori di partenza leggibili sul fondo scuro del sito (prima il titolo era marrone su blu scuro), tutti modificabili.
         'leggi_anche' => ['etichetta' => 'Leggi anche', 'icona' => '→', 'gruppo' => 'Dal sito', 'controlli' => [

@@ -1,0 +1,29 @@
+{
+  "nome": "Aria",
+  "versione": "1.0",
+  "autore": "plumeCMS",
+  "anteprima": "anteprima.png",
+  "css": "tema.css",
+  "stile": "stile.json",
+  "modelli": "modelli.json",
+  "descrizione": "Chiaro e pulito: bianco, un solo blu, molto spazio. Per chi vuole che parlino i contenuti.",
+  "infografiche": {
+    "sfondo": "#f8fafc",
+    "bianco": "#ffffff",
+    "bordo": "#e2e8f0",
+    "riga": "#eef2f6",
+    "titolo": "#0f172a",
+    "testo": "#334155",
+    "muto": "#64748b",
+    "situazione": "#f1f5f9",
+    "su_scuro": "#cbd5e1",
+    "voci": {
+      "rosso": "#e11d48",
+      "oro": "#f59e0b",
+      "verde": "#10b981",
+      "ciano": "#0ea5e9",
+      "viola": "#6366f1",
+      "scuro": "#1e293b"
+    }
+  }
+}

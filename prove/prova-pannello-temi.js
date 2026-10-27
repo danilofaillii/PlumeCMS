@@ -32,7 +32,9 @@ const sfondo = (p) => p.evaluate(() => getComputedStyle(document.body).backgroun
 
   // 2. Schede
   const schede = await p.locator('.tt-card').count();
-  ok('schede: aspetto di base più i quattro temi di collaudo', schede === 5, schede);
+  const quanti = cli('elenco').trim().split('\n').length;
+  ok('schede: aspetto di base più un tema per cartella', schede === 1 + quanti, [schede, quanti]);
+  ok('i temi di partenza hanno l\'immagine di anteprima', await p.locator('#tema-aria img.tt-immagine, #tema-bottega img.tt-immagine, #tema-cosmo img.tt-immagine').count() === 3 || quanti < 7);
   ok('aspetto di base attivo', await p.locator('#tema-base .badge', { hasText: 'attivo' }).count() === 1);
   ok('tema Prova: etichetta PHP e nome della cartella', await p.locator('#tema-prova .badge', { hasText: 'PHP' }).count() === 1 && (await p.locator('#tema-prova .tt-meta').innerText()).includes('temi/prova'));
   ok('tema Prova: anteprima dei colori (sfondo bianco del suo stile)', await p.locator('#tema-prova .tt-finto').evaluate(e => getComputedStyle(e).backgroundColor) === 'rgb(255, 255, 255)');

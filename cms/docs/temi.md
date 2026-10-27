@@ -5,8 +5,28 @@ footer, CSS) e può contenere PHP, come i temi di WordPress. Menu, pagine, artic
 contenuti, non aspetto. Motore in `includes/temi.php`.
 
 Stato: fase 1 (colori del CSS in variabili, vedi `stile-sito.md`), fase 2 (motore) e fase 3 (pagina Editor > Temi,
-`admin/temi.php`, vedi `pannello.md`) e fase 4 (colori delle infografiche dal tema) fatte. Da fare: i tre temi di
-partenza, caricamento e download degli zip.
+`admin/temi.php`, vedi `pannello.md`) fase 4 (colori delle infografiche dal tema) e fase 5 (i tre temi di partenza)
+fatte. Da fare: caricamento e download degli zip.
+
+## I temi di partenza
+
+| Tema | Aspetto | Cosa contiene |
+|---|---|---|
+| **Cosmo** (`temi/cosmo`) | lo scuro di plumeCMS: notte blu, ciano e viola, sfumature e stelle | stile vuoto (i predefiniti), header e footer di partenza, infografiche Carta. **Attivarlo lascia il sito identico al pixel** (provato con le 20 schermate): è il punto da cui tornare |
+| **Aria** (`temi/aria`) | chiaro e pulito: bianco, un solo blu (`#2563eb`), Inter ovunque, niente sfumature né bagliori, card bianche con bordo | stile, header e footer (testo del footer in `globale:testo-2`), `tema.css`, infografiche ardesia e colori vivi |
+| **Bottega** (`temi/bottega`) | caldo editoriale: carta crema, titoli Georgia (carattere di sistema, nessuna chiamata a Google), terracotta `#b4532a` e verde salvia `#3f6b5a` | stile, header e footer, `tema.css`, infografiche calde intonate |
+
+Ogni tema ha `anteprima.png` (800 per 500, la home del tema con il nome "Il tuo sito"). Nessuno dei tre contiene PHP.
+Nei temi il menu dell'header si indica con `"menu": "posizione:principale"`: all'attivazione (e in anteprima)
+`temi_albero_locale()` lo traduce nell'id del menu con quella posizione su quel sito.
+
+### Colori di partenza dei widget che seguono il tema
+
+Un colore di un controllo dell'editor può essere `ig:<nome>` (per esempio `ig:ciano-2`): diventa `var(--ig-<nome>)`,
+la tavolozza delle infografiche. I valori di partenza della CTA (sfumatura `ig:ciano-2` e `ig:ciano-profondo`,
+pulsante `ig:rosso`) e del Riquadro del test (`ig:sfondo`, `ig:oro`, `ig:titolo`, `ig:testo`, `ig:scuro`) sono così:
+senza tema sono gli stessi colori di prima (identico al pixel), con un tema prendono i suoi. Un colore scelto a mano
+nel widget resta quello. Anche la testata della Scheda (`.scheda-testa`) usa `--ig-scuro`.
 
 ## Com'è fatto un tema
 
@@ -121,5 +141,5 @@ moduli: se un modulo e il tema cambiano la stessa cosa, vince il tema.
 
 ## Prove
 
-`prove/prova-temi.js` (40 controlli, il motore e le infografiche) e `prove/prova-pannello-temi.js` (31 controlli, la pagina del pannello come un utente,
+`prove/prova-temi.js` (40 controlli, il motore e le infografiche), `prove/prova-temi-partenza.js` (36 controlli: i tre temi attivati, pagine, menu, contrasto del testo almeno 4,5 a 1) e `prove/prova-pannello-temi.js` (31 controlli, la pagina del pannello come un utente,
 anche con un redattore che non deve entrare), con i temi di collaudo creati da `prove/temi-collaudo.php`. Vedi `prove/LEGGIMI.md`.

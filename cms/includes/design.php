@@ -711,6 +711,13 @@ function design_css(?array $v = null): string {
         $deriva[] = '--secondario-scuro:color-mix(in srgb,var(--g-colore-secondario),#000 22%)';
     }
     if (strcasecmp($sis['accento'], $pred['accento']) !== 0) $deriva[] = '--accento:var(--g-colore-accento)';
+    // Il testo degli articoli (.corpo) è una sfumatura del testo pensata per lo sfondo scuro: con un altro testo segue quello.
+    if (strcasecmp($sis['testo'], $pred['testo']) !== 0) $deriva[] = '--testo-corpo:var(--g-colore-testo)';
+    // Il testo sopra il colore secondario (pulsanti ciano, icone impilate): bianco su un secondario scuro, quasi nero su uno chiaro.
+    if (strcasecmp($sis['secondario'], $pred['secondario']) !== 0 && ($rgb2 = design_rgb((string)$sis['secondario'])) !== null) {
+        [$r2, $g2, $b2] = array_map('intval', explode(',', $rgb2));
+        $deriva[] = '--su-secondario:' . (0.2126 * $r2 + 0.7152 * $g2 + 0.0722 * $b2 > 150 ? '#03121a' : '#fff');
+    }
     // I vetri (riquadri appena più chiari dello sfondo) sono bianco trasparente: su uno sfondo chiaro diventano nero trasparente.
     $bg = design_rgb((string)$sis['sfondo']);
     if ($bg !== null) {

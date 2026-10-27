@@ -44,6 +44,9 @@ Solo l'amministratore la vede.
   hex, rgb, hsl). I gradienti dei pulsanti e `--accento` si ricavano dal globale solo quando è diverso dal predefinito
   (così un sito che non ha toccato i colori resta com'era). Con uno sfondo chiaro `--inchiostro` diventa nero: i vetri
   si vedono grigi invece che bianchi.
+- Con un colore del testo diverso dal predefinito, `--testo-corpo` (il testo degli articoli, una sfumatura pensata per lo
+  sfondo scuro) segue il testo: prima su uno sfondo chiaro gli articoli erano quasi invisibili (27 ottobre 2026). Con un
+  secondario diverso, `--su-secondario` diventa bianco su un secondario scuro e quasi nero su uno chiaro.
 - Restano fissi apposta: ombre nere, il bianco dietro le immagini, i colori ufficiali dei social, le stelle, la lightbox,
   le testate colorate della Scheda, la grafica della home di danilofailli (`.finestra`, `.ritratto`, `.chip`), le
   infografiche (`.igx`: dalla fase 4 hanno le loro variabili `--ig-*`, vedi `temi.md`). I colori di partenza scritti nelle impostazioni dei widget

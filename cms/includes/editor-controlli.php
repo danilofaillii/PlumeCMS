@@ -201,7 +201,7 @@ function editor_design_c(): bool {
     return $c = function_exists('design_css_valore');
 }
 
-/** Un colore salvato → CSS. '' → null. globale:x → var(--g-colore-x). */
+/** Un colore salvato → CSS. '' → null. globale:x → var(--g-colore-x). ig:x → var(--ig-x), un colore della tavolozza delle infografiche (temi). */
 function editor_colore_css($c): ?string {
     $c = trim((string)$c);
     if ($c === '') return null;
@@ -210,6 +210,8 @@ function editor_colore_css($c): ?string {
         $rip = editor_globali_ripiego()['colori'][$m[1]] ?? null;
         return 'var(--g-colore-' . $m[1] . ($rip ? ',' . $rip : '') . ')';
     }
+    // temi: i colori di partenza di alcuni widget (CTA, riquadro del test) sono quelli di Carta: con ig: li cambia il tema.
+    if (preg_match('/^ig:([a-z0-9-]+)$/', $c, $m)) return 'var(--ig-' . $m[1] . ')';
     return $c;
 }
 
@@ -251,7 +253,7 @@ function editor_misura_css($m): ?string {
 /** Pulisce un colore: esadecimale, rgba, transparent, globale:chiave. */
 function editor_pulisci_colore($val): string {
     $val = trim((string)$val);
-    if ($val === 'transparent' || preg_match('/^globale:[a-z0-9-]{1,40}$/', $val)) return $val;
+    if ($val === 'transparent' || preg_match('/^(globale|ig):[a-z0-9-]{1,40}$/', $val)) return $val;
     return preg_match('/^(#[0-9a-fA-F]{3,8}|rgba?\(\s*[\d.]+\s*,\s*[\d.]+\s*,\s*[\d.]+\s*(,\s*[\d.]+\s*)?\)|hsla?\(\s*[\d.]+\s*,\s*[\d.]+%\s*,\s*[\d.]+%\s*(,\s*[\d.]+\s*)?\))$/', $val) ? $val : '';
 }
 

@@ -57,7 +57,7 @@ const varCss = (p, v) => p.evaluate((v) => getComputedStyle(document.documentEle
   const modelli1 = (cli('stato').match(/modelli nel database=(\d+)/) || [])[1];
   cli('attiva', 'prova');
   const modelli2 = (cli('stato').match(/modelli nel database=(\d+)/) || [])[1];
-  ok('riattivare lo stesso tema non duplica header e footer', modelli1 === modelli2 && modelli1 === '4', [modelli1, modelli2]);
+  ok('riattivare lo stesso tema non duplica header e footer', modelli1 === modelli2 && +modelli1 >= 4, [modelli1, modelli2]);
   const php = await anonimo.request.get(B + '/temi/prova/funzioni.php');
   const corpo = await php.text();
   ok('il PHP del tema non si legge come testo dal browser', !corpo.includes('llms_intestazione'), php.status());

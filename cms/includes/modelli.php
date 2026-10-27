@@ -427,7 +427,7 @@ function modelli_pezzo(string $tipo): ?array {
         $ta = $GLOBALS['tema_anteprima']['modelli'][$tipo] ?? null;
         if (is_array($ta)) {
             require_once __DIR__ . '/editor.php';
-            $al = editor_valida($ta);
+            $al = editor_valida(function_exists('temi_albero_locale') ? temi_albero_locale($ta) : $ta);
             if ($al !== null) {
                 [$html, $css] = editor_disegna($al, modelli_contesto()['percorso'] ?: '/');
                 return [modelli_cornice($tipo, $html), $css];

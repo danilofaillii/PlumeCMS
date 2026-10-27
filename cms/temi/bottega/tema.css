@@ -1,0 +1,9 @@
+/* Bottega: caldo editoriale. Solo ritocchi: i colori stanno in stile.json. */
+:root{--r:8px}
+.top,.ed-testata{background:rgba(250,246,239,.9)}
+.btn{border-radius:6px;letter-spacing:.06em}
+.btn-viola,.btn-ciano{box-shadow:none}
+.btn-filo{box-shadow:none}
+h1,h2,h3,.sez-titolo{font-weight:700;letter-spacing:-.01em}
+.occhiello{letter-spacing:.16em}
+.corpo{font-size:19px}

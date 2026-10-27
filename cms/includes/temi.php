@@ -6,7 +6,7 @@
  * Un tema è una cartella temi/<nome>/ (nome: lettere minuscole, cifre e trattini):
  *   tema.json      obbligatorio: nome, versione, autore, descrizione, anteprima, css, stile, modelli (i file sono facoltativi)
  *   stile.json     lo Stile del sito del tema (stesso formato di design_valori(), solo le sezioni dell'aspetto)
- *   modelli.json   {"header": albero dell'editor, "footer": albero}
+ *   modelli.json   {"header": albero dell'editor, "footer": albero}; un menu si indica con "posizione:principale"
  *   tema.css       CSS in più, caricato dopo sito.css e prima dello Stile del sito
  *   infografiche   (dentro tema.json) i colori delle infografiche: superfici e i sei colori principali (TEMI_IG_*)
  *   funzioni.php   facoltativo: ritorna ['filtri' => [...], 'eventi' => [...]] come un modulo
@@ -301,7 +301,7 @@ function temi_ig_css(array $ig): string {
         $v['giallo'] = $mix('oro', '#ff0', 25); $v['giallo-2'] = $mix('giallo', '#000', 15);
     }
     if (isset($voci['verde'])) { $v['verde-scuro'] = $mix('verde', '#000', 30); $v['verde-scuro-2'] = $mix('verde', '#000', 45); }
-    if (isset($voci['ciano'])) { $v['ciano-scuro'] = $mix('ciano', '#000', 30); $v['ciano-scuro-2'] = $mix('ciano', '#000', 45); }
+    if (isset($voci['ciano'])) { $v['ciano-scuro'] = $mix('ciano', '#000', 30); $v['ciano-scuro-2'] = $mix('ciano', '#000', 45); $v['ciano-profondo'] = $mix('ciano', '#000', 58); }
     if (isset($voci['viola'])) $v['lilla'] = $mix('viola', '#fff', 62);
     if (isset($voci['scuro'])) {
         $v['marrone'] = $mix('scuro', '#fff', 25); $v['marrone-2'] = 'var(--ig-scuro-2)';
@@ -326,6 +326,28 @@ function temi_stile_anteprima(array $valori): array {
 // ------------------------------------------------------------
 // Pannello: attivare, tornare all'aspetto di base
 // ------------------------------------------------------------
+
+/**
+ * Un albero di header o footer del tema adattato a questo sito: nei widget, "menu": "posizione:<nome>" diventa l'id del
+ * menu con quella posizione (il numero del menu cambia da un sito all'altro). Va chiamato prima di editor_valida.
+ */
+function temi_albero_locale(array $albero): array {
+    require_once __DIR__ . '/menu-nav.php';
+    $giro = function (array $nodi) use (&$giro): array {
+        foreach ($nodi as &$n) {
+            if (!is_array($n)) continue;
+            $m = $n['impostazioni']['menu'] ?? null;
+            if (is_string($m) && str_starts_with($m, 'posizione:')) {
+                $menu = menu_per_posizione(substr($m, 10));
+                $n['impostazioni']['menu'] = $menu ? (string)$menu['id'] : '';
+            }
+            if (isset($n['figli']) && is_array($n['figli'])) $n['figli'] = $giro($n['figli']);
+        }
+        return $nodi;
+    };
+    if (isset($albero['elementi']) && is_array($albero['elementi'])) $albero['elementi'] = $giro($albero['elementi']);
+    return $albero;
+}
 
 /** I modelli creati da ogni tema: {slug: {header: id, footer: id}}. Servono per non duplicarli a ogni attivazione. */
 function temi_modelli_creati(): array {
@@ -358,7 +380,7 @@ function temi_attiva(string $slug, string $autore = ''): array {
             $id = (int)($creati[$slug][$tipo] ?? 0);
             $esiste = $id ? modelli_leggi($id) : null;
             if (!$esiste || !empty($esiste['cestino'])) {
-                $valido = editor_valida($albero);
+                $valido = editor_valida(temi_albero_locale($albero));
                 if ($valido === null) { $log[] = ucfirst($tipo) . ' del tema non valido: lasciato quello di prima.'; continue; }
                 $id = modelli_crea($tipo, ucfirst($tipo) . ' ' . $t['nome'], $valido);
                 db()->prepare('UPDATE ' . tbl('modelli') . ' SET struttura = struttura_bozza, struttura_bozza = NULL WHERE id = ?')->execute([$id]);
