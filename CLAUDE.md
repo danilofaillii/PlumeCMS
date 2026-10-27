@@ -39,8 +39,10 @@ cms/            il CMS: è esattamente quello che si carica sul server
 tools/          cms-pacchetto.py (costruisce gli zip), pacchetto.py (pacchetti per il
                 pannello Aggiornamenti), sicurezza-prova.js (79 prove di attacco)
 prove/          prova-install.js (installazione da zero con Playwright)
-memoria/        stato, decisioni, contesto, diario (formato del second brain)
 ```
+
+Stato, decisioni, contesto e diario non stanno qui: stanno nel second brain
+(`danilofaillii/second-brain`, cartella `plumecms/`), unica copia.
 
 ## Documenti, in quest'ordine
 
@@ -78,7 +80,7 @@ memoria/        stato, decisioni, contesto, diario (formato del second brain)
 
 ## Decisioni prese
 
-Le decisioni complete, con data e perché, stanno in `memoria/decisioni.md`. In breve:
+Le decisioni complete, con data e perché, stanno nel second brain, `plumecms/decisioni.md`. In breve:
 
 - **L'editor è la copia di Elementor** (25 ottobre 2026): controlli di gruppo,
   schede Stile e Avanzate per ogni elemento, colori e caratteri globali, Theme

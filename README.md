@@ -6,7 +6,7 @@ Si carica nella radice di un sito, si apre il browser e un installatore in cinqu
 - `cms/`: il CMS. È quello che si carica sul server. Guida per chi installa: `cms/INSTALLA.md`.
 - `tools/`: per costruire gli zip del prodotto e degli aggiornamenti, e per le prove di attacco.
 - `prove/`: la prova automatica dell'installazione.
-- `memoria/`: stato, decisioni, contesto e diario del progetto.
+- Memoria (stato, decisioni, contesto, diario): repository `danilofaillii/second-brain`, cartella `plumecms/`.
 - `CLAUDE.md`: la memoria di progetto per chi ci lavora con Claude.
 - `SPOSTARE.md`: come aprirlo come repository e progetto Claude a sé.
 
