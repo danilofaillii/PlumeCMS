@@ -16,6 +16,29 @@ const statoPacchetto = (nome) => {
   return s[0] || null;
 };
 
+// Per occhiello, titolo e testo della Copertina: [pezzo, contrasto del bianco sul fondo]. Il fondo e la pagina
+// fotografata con le parole nascoste; i pixel si leggono in un canvas, nella pagina stessa.
+async function contrastoParole(pg) {
+  const r = await pg.evaluate(() => [...document.querySelectorAll('.ed-hcop-parole .occhiello, .ed-hcop-parole h1, .ed-hcop-parole p.lead')]
+    .map(e => { const b = e.getBoundingClientRect(); return [e.tagName.toLowerCase(), Math.round(b.x), Math.round(b.y + scrollY), Math.round(b.width), Math.round(b.height)]; }));
+  const st = await pg.addStyleTag({ content: '.ed-hcop-parole{visibility:hidden}' });
+  const foto = (await pg.screenshot({ fullPage: true })).toString('base64');
+  await st.evaluate(e => e.remove());
+  return pg.evaluate(async ([foto, r]) => {
+    const im = new Image(); im.src = 'data:image/png;base64,' + foto; await im.decode();
+    const cv = document.createElement('canvas'); cv.width = im.width; cv.height = im.height;
+    const cx = cv.getContext('2d'); cx.drawImage(im, 0, 0);
+    const lin = v => { v /= 255; return v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4); };
+    const k = im.width / document.documentElement.clientWidth;      // pixel della foto per pixel CSS
+    return r.map(([t, x, y, w, h]) => {
+      const d = cx.getImageData(Math.round(x * k), Math.round(y * k), Math.round(w * k), Math.round(h * k)).data, l = [];
+      for (let i = 0; i < d.length; i += 4 * 3) l.push(0.2126 * lin(d[i]) + 0.7152 * lin(d[i + 1]) + 0.0722 * lin(d[i + 2]));
+      l.sort((a, b) => a - b);
+      return [t, Math.round(1.05 / (l[Math.floor(l.length * 0.99)] + 0.05) * 10) / 10];
+    });
+  }, [foto, r]);
+}
+
 (async () => {
   const br = await chromium.launch();
   const p = await (await br.newContext({ viewport: { width: 1360, height: 900 } })).newPage();
@@ -49,7 +72,7 @@ const statoPacchetto = (nome) => {
   const errV = []; v.on('pageerror', e => errV.push(e.message.slice(0, 200)));
   v.on('console', m => { if (m.type() === 'error' && !/favicon/.test(m.text())) errV.push(m.text().slice(0, 200)); });
   const pagine = [['/', /leggero come una piuma/i], ['/funzionalita/', /vuoto/], ['/temi/', /Cambia vestito/], ['/documentazione/', /da leggere anche offline/],
-    ['/installazione/', /Installare plumeCMS/], ['/scarica/', new RegExp('Scarica plumeCMS ' + V.replace(/\./g, '\\.') + '$')], ['/domande-frequenti/', /Domande frequenti/]];
+    ['/installazione/', /Installalo in 5 minuti/], ['/scarica/', new RegExp('Scarica plumeCMS ' + V.replace(/\./g, '\\.') + '$')], ['/domande-frequenti/', /Domande frequenti/]];
   for (const [u, re] of pagine) {
     const r = await v.goto(B + u, { waitUntil: 'networkidle' });
     const h1 = (await v.locator('h1').first().innerText()).replace(/\s+/g, ' ');
@@ -60,8 +83,31 @@ const statoPacchetto = (nome) => {
   const voci = (await v.locator('header nav a').allInnerTexts()).map(s => s.trim()).filter(Boolean);
   ok('menu: Home, Funzionalità, Temi, Documentazione, Installazione, Scarica', ['Home', 'Funzionalità', 'Temi', 'Documentazione', 'Installazione'].every(x => voci.some(y => y.toLowerCase() === x.toLowerCase())) && voci.some(y => /scarica/i.test(y)), voci);
   ok("l'onda non c'è nella home", await v.locator('.chip-onda').count() === 0);
-  // Dalla 1.2.6 la home apre con la Copertina: la pagina Temi a tutto sfondo, con il velo del sito e lo zoom lento.
-  ok('la home apre con la Copertina, foto a tutto sfondo con il velo e lo zoom', await v.locator('.ed-hero-copertina .finestra.ed-fx-zoom:not(.ed-foto-naturale) img[src*="temi.webp"]').count() === 1);
+  // Dalla 1.2.6 la home apre con la Copertina; dalla notte del 27 ottobre con la piuma di copertina.js, a colori
+  // (trattamento naturale) e con lo zoom lento. La foto deve essere caricata davvero e restare leggera.
+  ok('la home apre con la Copertina: la piuma a tutto sfondo, naturale, con lo zoom', await v.locator('.ed-hero-copertina .finestra.ed-foto-naturale.ed-fx-zoom img[src*="copertina.webp"]').count() === 1);
+  const cop = await v.evaluate(() => { const i = document.querySelector('.ed-hero-copertina img'); return i ? { w: i.naturalWidth, h: i.naturalHeight } : null; });
+  const copPeso = (await (await v.request.get(B + '/uploads/plumecms/copertina.webp')).body()).length;
+  ok('la piuma: caricata (1440 di larghezza) e sotto 150 KB', cop && cop.w === 1440 && copPeso < 150 * 1024, [cop, Math.round(copPeso / 1024) + ' KB']);
+  // Al telefono la foto si ritaglia: il CSS del sito sposta il punto di vista a destra, dove sta la piuma.
+  const tel = await (await br.newContext({ viewport: { width: 390, height: 844 }, isMobile: true, reducedMotion: 'reduce' })).newPage();
+  await tel.goto(B + '/', { waitUntil: 'networkidle' });
+  const posTel = await tel.evaluate(() => getComputedStyle(document.querySelector('.ed-hero-copertina img')).objectPosition);
+  ok('al telefono la Copertina guarda la piuma (object-position 88%)', /^88%/.test(posTel), posTel);
+  // Il contrasto delle parole bianche sulla piuma, misurato sul sito vero: si nascondono le parole, si fotografa il
+  // fondo e per occhiello, titolo e testo si prende la luminanza del fondo al 99% (i punti piu chiari dietro le lettere).
+  const pc = await (await br.newContext({ viewport: { width: 1440, height: 900 }, reducedMotion: 'reduce' })).newPage();
+  await pc.goto(B + '/', { waitUntil: 'networkidle' });
+  for (const [nome, pg] of [['computer', pc], ['telefono', tel]]) {
+    const c = await contrastoParole(pg);
+    ok(`Copertina al ${nome}: parole bianche leggibili sulla piuma (contrasto 4,5 o più)`, c.every(x => x[1] >= 4.5), c);
+  }
+  await pc.close(); await tel.close();
+  // Chi chiede meno movimento vede la piuma ferma (lo zoom lento si spegne, sito.css).
+  const fermo = await (await br.newContext({ reducedMotion: 'reduce' })).newPage();
+  await fermo.goto(B + '/', { waitUntil: 'networkidle' });
+  ok('con meno movimento la piuma sta ferma', await fermo.evaluate(() => getComputedStyle(document.querySelector('.ed-hero-copertina img')).animationName) === 'none');
+  await fermo.close();
   const imgRotte = await v.evaluate(() => [...document.images].filter(i => i.complete && i.naturalWidth === 0).map(i => i.src));
   ok('nessuna immagine rotta nella home', imgRotte.length === 0, imgRotte);
   await v.goto(B + '/funzionalita/', { waitUntil: 'networkidle' });
@@ -70,6 +116,35 @@ const statoPacchetto = (nome) => {
   ok('Funzionalità: il blocco del download manager, con la schermata', await v.locator('#download img[src*="download.webp"]').count() === 1 && /Download manager/.test(await v.locator('#download').innerText()));
   ok('Funzionalità: il blocco delle undici aperture, con il foglio', await v.locator('#aperture img[src*="aperture.webp"]').count() === 1 && /Undici aperture/.test(await v.locator('#aperture').innerText()));
   ok('favicon del sito', await v.locator('link[rel=icon][href*="favicon.png"]').count() === 1);
+
+  // "Installalo in 5 minuti" (pagina Installazione): cosa serve prima e il carosello delle cinque schermate vere
+  // dell'installatore (sito-plumecms/installatore.js), che scorre da solo e si ferma per chi chiede meno movimento.
+  await v.goto(B + '/', { waitUntil: 'networkidle' });
+  ok('la home porta ai cinque passi dell\'installatore', await v.locator('a[href$="/installazione/#passi"]').count() >= 1);
+  await v.goto(B + '/installazione/', { waitUntil: 'networkidle' });
+  const prima = await v.locator('#passi').innerText();
+  ok('Installazione: prima di cominciare (hosting con PHP 8.2 e MySQL, i dati del database, lo zip)', /Prima di cominciare/.test(prima) && /PHP 8\.2/.test(prima) && /MySQL/.test(prima) && /dati del database/.test(prima) && /zip/i.test(prima));
+  const car = v.locator('#passi [data-ew-car]');
+  const passi = await car.locator('.ew-car-voce').evaluateAll(li => li.map(x => ({ src: x.querySelector('img').getAttribute('src'), did: (x.querySelector('figcaption') || {}).textContent || '' })));
+  ok('Installazione: il carosello dei cinque passi, con la didascalia di ognuno', passi.length === 5 && passi.every((x, k) => x.src.includes(`installa-${k + 1}.webp`) && x.did.startsWith(`${k + 1}. `)), passi.map(x => x.did));
+  const immInst = await v.evaluate(async () => { const im = [...document.querySelectorAll('#passi img')]; im.forEach(i => { i.loading = 'eager'; }); await Promise.all(im.map(i => i.decode().catch(() => null))); return im.map(i => i.naturalWidth); });
+  ok('Installazione: le cinque schermate caricate', immInst.length === 5 && immInst.every(x => x >= 1000), immInst);
+  const pesi = [];
+  for (let k = 1; k <= 5; k++) pesi.push(Math.round((await (await v.request.get(B + `/uploads/plumecms/installa-${k}.webp`)).body()).length / 1024));
+  ok('Installazione: ogni schermata sotto 150 KB', pesi.every(x => x < 150), pesi.map(x => x + ' KB'));
+  ok('Installazione: il carosello scorre da solo e si ferma al passaggio del mouse', await car.getAttribute('data-auto') !== null && await car.getAttribute('data-pausa') === '1');
+  const scorre = async (pg) => { await pg.mouse.move(0, 0); const t = pg.locator('#passi .ew-car-traccia'); const a = await t.evaluate(e => e.scrollLeft); await pg.waitForTimeout(6000); return [a, await t.evaluate(e => e.scrollLeft)]; };
+  const sv = await scorre(v);
+  ok('Installazione: dopo qualche secondo il carosello è andato avanti', sv[1] > sv[0], sv);
+  const piano = await (await br.newContext({ viewport: { width: 1280, height: 900 }, reducedMotion: 'reduce' })).newPage();
+  await piano.goto(B + '/installazione/', { waitUntil: 'networkidle' });
+  const sp = await scorre(piano);
+  ok('Installazione: con meno movimento il carosello resta fermo (si sfoglia con frecce e pallini)', sp[0] === sp[1] && await piano.locator('#passi .ew-car-next').isVisible(), sp);
+  await piano.close();
+  const telI = await (await br.newContext({ viewport: { width: 390, height: 844 }, isMobile: true })).newPage();
+  await telI.goto(B + '/installazione/', { waitUntil: 'networkidle' });
+  ok('Installazione al telefono: niente scorrimento orizzontale, carosello largo come lo schermo', await telI.evaluate(() => document.documentElement.scrollWidth <= innerWidth && document.querySelector('#passi .ew-car-voce').getBoundingClientRect().width > 300));
+  await telI.close();
 
   // I file da scaricare: i link delle pagine portano a file veri, con il tipo giusto.
   await v.goto(B + '/scarica/', { waitUntil: 'networkidle' });
