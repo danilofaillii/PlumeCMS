@@ -15,6 +15,14 @@
  *   scaricabili_salva_info($nome, $info)       titolo, descrizione, versione
  *   scaricabili_elimina($nome)                 file e riga
  *   scaricabili_conta($nome)                   un download in piu (non per i robot)
+ *   scaricabili_serie()                        le serie: per ognuna l'ultima versione (1.2.5)
+ *   scaricabili_versioni_nel_testo($html)      {versione:<serie>} diventa il numero dell'ultima versione (1.2.5)
+ *
+ * Serie (1.2.5): un file con la versione nel nome (plumecms-1.2.4.zip, plumecms-1.2.4-aggiornamento.zip) fa parte di
+ * una serie, il cui nome e quello del file con "ultima" al posto della versione (plumecms-ultima,
+ * plumecms-ultima-aggiornamento). /scarica/<serie>/ manda sempre il file con la versione piu alta: per pubblicare una
+ * versione nuova basta caricare il file, e i link, i pulsanti e i testi con {versione:<serie>} la seguono da soli.
+ * Un numero solo (listino-2026) non e una versione: servono almeno due numeri separati da un punto.
  */
 
 require_once __DIR__ . '/db.php';
@@ -101,12 +109,14 @@ function scaricabili_elenco(): array {
         $nome = substr($f, 0, -strlen($ext) - 1);
         if (!preg_match('/^[a-z0-9][a-z0-9._-]{0,120}$/', $nome) || isset($out[$nome])) continue;
         $r = $righe[$f] ?? [];
+        [$vNome, $serie] = scaricabili_versione_da_nome($nome);
         $out[$nome] = [
             'nome' => $nome, 'file' => $f, 'ext' => $ext, 'tipo' => SCARICABILI_TIPI[$ext][1], 'icona' => SCARICABILI_TIPI[$ext][2],
             'peso' => (int)filesize("$dir/$f"), 'data' => (int)filemtime("$dir/$f"),
             'titolo' => trim((string)($r['titolo'] ?? '')) ?: scaricabili_titolo_da_nome($nome),
             'titolo_scritto' => trim((string)($r['titolo'] ?? '')),
-            'descrizione' => (string)($r['descrizione'] ?? ''), 'versione' => (string)($r['versione'] ?? ''),
+            'descrizione' => (string)($r['descrizione'] ?? ''), 'versione' => trim((string)($r['versione'] ?? '')) ?: $vNome,
+            'versione_nome' => $vNome, 'serie' => $serie,
             'conteggio' => (int)($r['conteggio'] ?? 0), 'ultimo' => (string)($r['ultimo'] ?? ''),
             'url' => '/scarica/' . $nome . '/',
         ];
@@ -115,8 +125,37 @@ function scaricabili_elenco(): array {
     return $out;
 }
 
+/** Un file per nome; se il nome e quello di una serie, l'ultima versione della serie (con l'indirizzo della serie). */
 function scaricabili_leggi(string $nome): ?array {
-    return scaricabili_elenco()[$nome] ?? null;
+    $tutti = scaricabili_elenco();
+    if (isset($tutti[$nome])) return $tutti[$nome];
+    $x = scaricabili_serie($tutti)[$nome] ?? null;
+    if ($x) $x['url'] = '/scarica/' . $nome . '/';
+    return $x;
+}
+
+/** La versione scritta nel nome del file e il nome della serie: ['1.2.4', 'plumecms-ultima'], oppure ['', '']. */
+function scaricabili_versione_da_nome(string $nome): array {
+    if (!preg_match('/(?<![a-z0-9])v?(\d+(?:\.\d+){1,3})(?![a-z0-9])/', $nome, $m, PREG_OFFSET_CAPTURE)) return ['', ''];
+    return [$m[1][0], substr_replace($nome, 'ultima', $m[0][1], strlen($m[0][0]))];
+}
+
+/** Le serie: nome della serie => il file con la versione piu alta (a pari versione, il piu recente). */
+function scaricabili_serie(?array $tutti = null): array {
+    $out = [];
+    foreach ($tutti ?? scaricabili_elenco() as $x) {
+        if ($x['serie'] === '') continue;
+        $c = $out[$x['serie']] ?? null;
+        if (!$c || version_compare($x['versione_nome'], $c['versione_nome'], '>') || ($x['versione_nome'] === $c['versione_nome'] && $x['data'] > $c['data'])) $out[$x['serie']] = $x;
+    }
+    return $out;
+}
+
+/** Nei testi del sito {versione:plumecms-ultima} diventa la versione dell'ultimo file della serie (vuoto se la serie non c'e). */
+function scaricabili_versioni_nel_testo(string $html): string {
+    if (!str_contains($html, '{versione:')) return $html;
+    try { $serie = scaricabili_serie(); } catch (Throwable $e) { $serie = []; }
+    return preg_replace_callback('/\{versione:([a-z0-9][a-z0-9._-]{0,120})\}/', fn($m) => isset($serie[$m[1]]) ? htmlspecialchars($serie[$m[1]]['versione_nome']) : '', $html);
 }
 
 /** Il peso in parole: 900 KB, 1,2 MB. */

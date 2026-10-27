@@ -338,6 +338,8 @@ function editor_disegna(array $albero, string $percorso = '/', bool $anteprima =
             . ($anteprima ? ' data-ed-id="' . $s['id'] . '" data-ed-tipo="sezione"' : '') . '>'
             . '<div class="ed-contenitore ' . $contenitore . '"><div class="ed-riga">' . $colonne . '</div></div></' . $tag . '>';
     }
+    // Nella tela dell'editor {versione:<serie>} mostra gia il numero (sul sito lo fa sito_html su tutta la pagina). 1.2.5
+    if ($anteprima && str_contains($html, '{versione:')) { require_once __DIR__ . '/scaricabili.php'; $html = scaricabili_versioni_nel_testo($html); }
     return [$html, editor_css_testo($css)];
 }
 

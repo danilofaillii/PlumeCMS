@@ -177,12 +177,12 @@ $schede = ['stato' => 'Stato', 'impostazioni' => 'Impostazioni', 'registro' => '
     <div style="margin-top:1.2rem"><button class="btn btn-primary">Salva le impostazioni</button></div>
   </form>
   <form method="post" class="form-card sic-form" style="margin-top:1rem"><?= csrf_field() ?>
-    <h3>Finestra per i pacchetti del trasloco</h3>
+    <h3>Finestra di un'ora per i file PHP (pacchetti e temi)</h3>
     <?php if ((int)$cfg['root_php_fino'] > time()): ?>
       <p style="font-size:.88rem">Aperta fino alle <strong><?= h(date('H:i', (int)$cfg['root_php_fino'])) ?></strong>.</p>
       <input type="hidden" name="azione" value="root_php_chiudi"><button class="btn btn-secondary btn-sm">Chiudi adesso</button>
     <?php else: ?>
-      <p style="font-size:.88rem;color:var(--text-muted)">Serve solo per un pacchetto non firmato che scrive file .php nella radice (il pannello Aggiornamenti te lo dice). Dopo un'ora si chiude da sola.</p>
+      <p style="font-size:.88rem;color:var(--text-muted)">Serve in due casi, e il pannello te lo dice: per caricare in Editor &gt; Temi un tema che contiene codice PHP (come Lavagna, il tema d'esempio), e per un pacchetto non firmato che scrive file .php nella radice del sito. Aprila, carica, e dopo un'ora si chiude da sola.</p>
       <input type="hidden" name="azione" value="root_php_apri">
       <div class="form-group"><label>La tua password</label><input type="password" name="password" autocomplete="current-password" required></div>
       <button class="btn btn-secondary btn-sm">Apri la finestra per un'ora</button>

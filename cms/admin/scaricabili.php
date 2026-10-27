@@ -31,6 +31,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 }
 
 $file = scaricabili_elenco();
+$serie = scaricabili_serie($file);
 $totale = array_sum(array_column($file, 'conteggio'));
 $limite = ini_get('upload_max_filesize');
 $base = rtrim(cms_url_sito(), '/');
@@ -68,6 +69,10 @@ require_once __DIR__ . '/includes/admin-header.php';
               <small style="color:var(--text-muted)"><?= h($x['file']) ?> &middot; caricato il <?= h(date('d/m/Y', $x['data'])) ?></small>
               <?php if ($x['descrizione'] !== ''): ?><br><small><?= h(mb_strimwidth($x['descrizione'], 0, 140, '…')) ?></small><?php endif; ?>
               <input type="text" readonly value="<?= h($base . $x['url']) ?>" data-copia-se-stesso title="Clic per copiare l'indirizzo" style="margin-top:.4rem;width:100%;font-size:.78rem">
+              <?php if ($x['serie'] !== '' && ($serie[$x['serie']]['nome'] ?? '') === $x['nome']): ?>
+                <small class="dl-serie" style="display:block;margin-top:.4rem;color:var(--text-muted)">Sempre l'ultima versione (cambia da sola quando carichi la prossima):</small>
+                <input type="text" readonly value="<?= h($base . '/scarica/' . $x['serie'] . '/') ?>" data-copia-se-stesso title="Clic per copiare l'indirizzo" style="width:100%;font-size:.78rem">
+              <?php endif; ?>
             </td>
             <td><?= h($x['tipo']) ?><br><small style="color:var(--text-muted)"><?= h(scaricabili_peso($x['peso'])) ?></small></td>
             <td><b class="dl-conteggio"><?= number_format($x['conteggio'], 0, ',', '.') ?></b> volte<?= $x['ultimo'] !== '' ? '<br><small style="color:var(--text-muted)">ultima il ' . h(date('d/m/Y H:i', strtotime($x['ultimo']))) . '</small>' : '' ?></td>
@@ -107,6 +112,9 @@ require_once __DIR__ . '/includes/admin-header.php';
       </form>
       <p class="hint" style="margin-top:.8rem">Tipi ammessi: <?= h(implode(', ', array_keys(SCARICABILI_TIPI))) ?>.
         Il nome del file diventa l'indirizzo: <code>Listino 2026.pdf</code> si scarica da <code>/scarica/listino-2026/</code>.</p>
+      <p class="hint">Con la versione nel nome (<code>guida-1.2.zip</code>) il file entra in una serie: <code>/scarica/guida-ultima/</code>
+        porta sempre alla versione più alta, e nei testi delle pagine <code>{versione:guida-ultima}</code> diventa il suo numero.
+        Per una versione nuova carica il file nuovo (<code>guida-1.3.zip</code>): link e pagine la seguono da soli.</p>
       <p class="hint">Il tuo server accetta file fino a <b><?= h((string)$limite) ?></b>. Un file più grande lo metti nella cartella
         <code>uploads/scaricabili/</code> con il gestore dei file dell'hosting: compare qui da solo.</p>
     </div></div>

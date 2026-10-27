@@ -20,6 +20,8 @@ const pdf = scrivi('Listino 2026.pdf', '%PDF-1.4\n1 0 obj<<>>endobj\ntrailer<<>>
 const finto = scrivi('finto.pdf', 'Non sono un PDF, sono testo con un nome bugiardo.');
 const php = scrivi('attacco.php', '<?php echo "no"; ?>');
 const doppio = scrivi('listino-2026.zip', 'PK\x03\x04' + 'x'.repeat(100));
+const guida10 = scrivi('guida-1.0.pdf', '%PDF-1.4\n% guida 1.0\n%%EOF\n');
+const guida11 = scrivi('guida-1.1.pdf', '%PDF-1.4\n% guida 1.1\n%%EOF\n');
 
 (async () => {
   const br = await chromium.launch();
@@ -96,6 +98,29 @@ const doppio = scrivi('listino-2026.zip', 'PK\x03\x04' + 'x'.repeat(100));
   ok('conteggio: 1 download (la persona sì, Googlebot no)', /\b1 download/.test(conta), conta);
   await p.goto(B + '/admin/scaricabili.php', { waitUntil: 'networkidle' });
   ok('il pannello dice 1 volta', (await p.locator('#dl-listino-2026 .dl-conteggio').innerText()).trim() === '1');
+
+  // Serie (1.2.5): due versioni della guida, l'indirizzo "ultima" e il numero nel testo della pagina.
+  await carica(guida10); await carica(guida11);
+  await p.goto(B + '/admin/scaricabili.php', { waitUntil: 'networkidle' });
+  ok('serie: il pannello dà l\'indirizzo "sempre l\'ultima" accanto alla 1.1', await p.locator('#dl-guida-1\\.1 input[value$="/scarica/guida-ultima/"]').count() === 1 && await p.locator('#dl-guida-1\\.0 .dl-serie').count() === 0);
+  const rG = await v.request.get(B + '/scarica/guida-ultima/');
+  ok('serie: /scarica/guida-ultima/ manda guida-1.1.pdf', rG.status() === 200 && /guida-1\.1\.pdf/.test(rG.headers()['content-disposition'] || ''), rG.headers()['content-disposition']);
+  await v.reload({ waitUntil: 'networkidle' });
+  ok('serie: nella pagina "versione 1.1" scritto da solo e il widget mostra "Guida 1.1"', await v.locator('h2', { hasText: 'La guida è alla versione 1.1' }).count() === 1 && await v.locator('.ed-dl-elenco .ed-dl-titolo', { hasText: /^Guida 1\.1$/ }).count() === 1);
+  ok('serie: il pulsante del widget usa l\'indirizzo della serie', await v.locator('.ed-dl-elenco .ed-dl-voce', { hasText: 'Guida 1.1' }).locator('a.ed-dl-btn').getAttribute('href') === '/scarica/guida-ultima/');
+  ok('serie: nessun segnaposto rimasto nella pagina', !/\{versione/.test(await v.content()));
+  await p.goto(`${B}/admin/editor.php?tipo=pagine&id=${id}`, { waitUntil: 'networkidle' });
+  ok('serie: la tela dell\'editor scrive già 1.1', await p.frameLocator('iframe').first().locator('h2', { hasText: 'versione 1.1' }).count() === 1);
+  await p.frameLocator('iframe').first().locator('[data-ed-tipo="download"]').first().click(); await p.waitForTimeout(400);
+  await p.click('.ed-schede-pannello button[data-pannello="modifica"]');
+  await p.locator('#ed-controlli .ed-voce-testa b').first().click(); await p.waitForTimeout(300);
+  const opz2 = await p.locator('#ed-controlli select').evaluateAll(ss => ss.flatMap(s => [...s.options].map(o => o.textContent)));
+  ok('serie: la tendina offre "Sempre l\'ultima: guida-ultima (oggi 1.1)"', opz2.includes("Sempre l'ultima: guida-ultima (oggi 1.1)"), opz2.filter(o => /ultima/.test(o)));
+  await p.goto(B + '/admin/scaricabili.php', { waitUntil: 'networkidle' });
+  await Promise.all([p.waitForNavigation(), p.locator('#dl-guida-1\\.1 button', { hasText: 'Elimina' }).click()]);
+  await v.reload({ waitUntil: 'networkidle' });
+  ok('serie: tolta la 1.1, la pagina torna da sola alla 1.0', await v.locator('h2', { hasText: 'La guida è alla versione 1.0' }).count() === 1);
+  await Promise.all([p.waitForNavigation(), p.locator('#dl-guida-1\\.0 button', { hasText: 'Elimina' }).click()]);
 
   // Eliminare.
   await Promise.all([p.waitForNavigation(), p.locator('#dl-listino-2026 button', { hasText: 'Elimina' }).click()]);

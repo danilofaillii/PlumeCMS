@@ -49,7 +49,7 @@ const statoPacchetto = (nome) => {
   const errV = []; v.on('pageerror', e => errV.push(e.message.slice(0, 200)));
   v.on('console', m => { if (m.type() === 'error' && !/favicon/.test(m.text())) errV.push(m.text().slice(0, 200)); });
   const pagine = [['/', /leggero come una piuma/i], ['/funzionalita/', /vuoto/], ['/temi/', /Cambia vestito/], ['/documentazione/', /da leggere anche offline/],
-    ['/installazione/', /Installare plumeCMS/], ['/scarica/', new RegExp('Scarica plumeCMS')], ['/domande-frequenti/', /Domande frequenti/]];
+    ['/installazione/', /Installare plumeCMS/], ['/scarica/', new RegExp('Scarica plumeCMS ' + V.replace(/\./g, '\\.') + '$')], ['/domande-frequenti/', /Domande frequenti/]];
   for (const [u, re] of pagine) {
     const r = await v.goto(B + u, { waitUntil: 'networkidle' });
     const h1 = (await v.locator('h1').first().innerText()).replace(/\s+/g, ' ');
@@ -73,7 +73,12 @@ const statoPacchetto = (nome) => {
   await v.goto(B + '/scarica/', { waitUntil: 'networkidle' });
   const link = await v.locator('a[href*="/scarica/"]').evaluateAll(as => [...new Set(as.map(a => a.getAttribute('href')).filter(h => /\/scarica\/[^/]+\/$/.test(h)))]);
   ok('la pagina Scarica, widget Download: cinque file, tutti presenti', await v.locator('.ed-dl-voce').count() === 5 && await v.locator('.ed-dl-mancante').count() === 0, await v.locator('.ed-dl-titolo').allInnerTexts());
-  ok('la pagina Scarica ha i due zip', link.some(h => h.includes(`plumecms-${V}/`)) && link.some(h => h.includes(`plumecms-${V}-aggiornamento/`)), link);
+  // Dalla 1.2.5 i link sono quelli della serie, che porta sempre all'ultima versione caricata.
+  ok('la pagina Scarica punta alle serie (sempre l\'ultima versione)', link.some(h => h.endsWith('/plumecms-ultima/')) && link.some(h => h.endsWith('/plumecms-ultima-aggiornamento/')), link);
+  ok('nessun segnaposto {versione:...} rimasto nella pagina', !/\{versione:/.test(await v.content()));
+  ok(`il pulsante dice "Scarica plumeCMS ${V}"`, await v.locator('a', { hasText: `Scarica plumeCMS ${V}` }).count() >= 1);
+  const rSerie = await v.request.get(B + '/scarica/plumecms-ultima/');
+  ok(`/scarica/plumecms-ultima/ manda plumecms-${V}.zip`, rSerie.status() === 200 && (rSerie.headers()['content-disposition'] || '').includes(`plumecms-${V}.zip`), rSerie.headers()['content-disposition']);
   for (const [u, tipo, min] of [[`/scarica/plumecms-${V}/`, 'application/zip', 500000], [`/scarica/plumecms-${V}-aggiornamento/`, 'application/zip', 500000],
     ['/scarica/manuale-tecnico/', 'application/pdf', 300000], ['/scarica/manuale-temi/', 'application/pdf', 300000], ['/scarica/tema-lavagna/', 'application/zip', 1000]]) {
     const r = await v.request.get(B + u);

@@ -2,6 +2,17 @@
 
 Il prodotto si chiama **plumeCMS** (nome scelto il 26 ottobre 2026; prima, per poche ore, "CarbonaraCMS", e ancora prima il provvisorio "Officina": gli zip vecchi si chiamavano `officina-*` e `carbonaracms-*`).
 
+## 1.2.5 (27 ottobre 2026) - Sempre l'ultima versione
+
+- **Download, serie**: un file con la versione nel nome (`guida-1.2.pdf`) entra in una serie. `/scarica/guida-ultima/`
+  porta sempre alla versione più alta caricata, e nelle pagine `{versione:guida-ultima}` diventa il suo numero (anche nel
+  titolo della scheda). Per pubblicare una versione nuova basta caricare il file nuovo: link, pulsanti e titoli la seguono.
+- Il widget Download offre le serie ("Sempre l'ultima") e `{versione}` nei titoli; la pagina Download mostra l'indirizzo
+  "sempre l'ultima versione" da copiare.
+- **Temi con PHP**: il messaggio di Editor > Temi dice i passi esatti; il riquadro di Sicurezza si chiama "Finestra di un'ora
+  per i file PHP (pacchetti e temi)" e spiega che serve anche per i temi.
+- Il sito di plumeCMS usa le serie: le sue pagine non vanno più ricostruite a ogni versione del CMS.
+
 ## 1.2.4 (27 ottobre 2026) - Download manager
 
 - **Pannello, voce Download** (sotto Media, solo amministratore): i file che il sito offre da scaricare. Carichi un file

@@ -46,7 +46,10 @@ function sito_vai(string $dove, int $codice = 301): never {
 
 function sito_html(int $codice, array $meta, string $corpo, string $jsonld = '', string $attivo = ''): never {
     // Il pannello SEO e AEO aggiunge i suoi tag (verifica, statistiche, codice libero) al documento finito.
-    sito_rispondi($codice, 'text/html', cms_con_cartella(seo_inietta_html(vista_pagina($meta, $corpo, $jsonld, $attivo))));
+    // {versione:<serie>} nei testi (titolo della scheda compreso) diventa l'ultima versione caricata in Download (1.2.5).
+    $html = seo_inietta_html(vista_pagina($meta, $corpo, $jsonld, $attivo));
+    if (str_contains($html, '{versione:')) { require_once dirname(__DIR__) . '/includes/scaricabili.php'; $html = scaricabili_versioni_nel_testo($html); }
+    sito_rispondi($codice, 'text/html', cms_con_cartella($html));
 }
 
 function sito_non_trovato(): never {

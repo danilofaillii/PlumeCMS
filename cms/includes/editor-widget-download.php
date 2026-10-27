@@ -11,7 +11,10 @@ require_once __DIR__ . '/scaricabili.php';
 function editor_download_opzioni(): array {
     $o = ['' => 'Scegli un file'];
     try {
-        foreach (scaricabili_elenco() as $x) $o[$x['nome']] = $x['titolo'] . ' (' . $x['tipo'] . ', ' . scaricabili_peso($x['peso']) . ')';
+        $tutti = scaricabili_elenco();
+        // 1.2.5: prima le serie, che puntano sempre all'ultima versione caricata.
+        foreach (scaricabili_serie($tutti) as $serie => $x) $o[$serie] = 'Sempre l\'ultima: ' . $serie . ' (oggi ' . $x['versione_nome'] . ')';
+        foreach ($tutti as $x) $o[$x['nome']] = $x['titolo'] . ' (' . $x['tipo'] . ', ' . scaricabili_peso($x['peso']) . ')';
     } catch (Throwable $e) { /* senza database o senza cartella: solo la voce vuota */ }
     return $o;
 }
@@ -22,7 +25,7 @@ editor_registra_widget('download', ['etichetta' => 'Download', 'icona' => '&#110
     ec('voci', 'ripetitore', 'File', [['file' => '', 'titolo' => '', 'descrizione' => '']], 'contenuto', ['sezione' => 'File', 'condizione' => ['origine' => 'scelti'],
         // 'accetta': un nome di file valido resta anche se il file non c'e ancora (un pacchetto porta la pagina prima dei file).
         'campi' => [ec('file', 'scelta', 'File', '', 'contenuto', ['opzioni' => editor_download_opzioni(), 'accetta' => '/^[a-z0-9][a-z0-9._-]{0,120}$/']),
-                    ec('titolo', 'testo', 'Titolo (vuoto = quello del pannello)', ''),
+                    ec('titolo', 'testo', 'Titolo (vuoto = quello del pannello; {versione} = il numero)', ''),
                     ec('descrizione', 'testolungo', 'Descrizione (vuota = quella del pannello)', '')], 'titolo_voce' => 'titolo']),
     ec('quanti', 'numero', 'Quanti file', 6, 'contenuto', ['sezione' => 'File', 'min' => 1, 'max' => 50, 'condizione' => ['origine' => 'ultimi']]),
     ec('pulsante_testo', 'testo', 'Testo del pulsante', 'Scarica', 'contenuto', ['sezione' => 'Cosa mostrare']),
@@ -55,7 +58,7 @@ editor_registra_widget('download', ['etichetta' => 'Download', 'icona' => '&#110
         foreach (array_slice($tutti, 0, max(1, (int)$v['quanti'])) as $x) $voci[] = $x;
     } else {
         foreach ((array)$v['voci'] as $s) {
-            $x = $tutti[(string)($s['file'] ?? '')] ?? null;
+            $x = scaricabili_leggi((string)($s['file'] ?? '')); // un file, oppure l'ultima versione di una serie
             if (!$x) {
                 if ($ctx['anteprima'] && ($s['file'] ?? '') !== '') $voci[] = ['mancante' => (string)$s['file']];
                 continue;
@@ -65,6 +68,9 @@ editor_registra_widget('download', ['etichetta' => 'Download', 'icona' => '&#110
             $voci[] = $x;
         }
     }
+    // {versione} nel titolo e nella descrizione: la versione del file mostrato (1.2.5).
+    foreach ($voci as &$x) if (!isset($x['mancante'])) foreach (['titolo', 'descrizione'] as $k) $x[$k] = str_replace('{versione}', (string)$x['versione'], (string)$x[$k]);
+    unset($x);
     if (!$voci) return $ctx['anteprima'] ? '<div class="ed-vuoto">Scegli i file da mostrare (si caricano dal pannello, voce Download)</div>' : '';
     $stile = array_key_exists($v['pulsante_stile'] ?? '', EDITOR_STILI_PULSANTE) ? $v['pulsante_stile'] : 'viola';
     $html = '';

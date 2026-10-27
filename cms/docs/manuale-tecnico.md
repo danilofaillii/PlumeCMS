@@ -1,6 +1,6 @@
 # plumeCMS: manuale tecnico
 
-Versione del manuale: 1.3, per plumeCMS 1.2.4 (27 ottobre 2026).
+Versione del manuale: 1.4, per plumeCMS 1.2.5 (27 ottobre 2026).
 
 Questo manuale descrive come è fatto plumeCMS e come funziona, pezzo per pezzo. È scritto leggendo il codice:
 ogni numero, limite e nome di funzione viene dai file veri, con il riferimento `file:riga` quando serve a chi
@@ -63,7 +63,7 @@ Niente librerie esterne: SortableJS e Quill sono serviti dal CMS stesso, le icon
 index.php           front controller: tutte le richieste del sito passano da qui
 cron-daily.php      compiti del giorno (pacchetti programmati, moduli, IndexNow)
 cron-newsletter.php invio della newsletter a giri, coda IndexNow
-VERSIONE            il numero di versione (oggi 1.2.4)
+VERSIONE            il numero di versione (oggi 1.2.5)
 CHANGELOG.md, README.md, INSTALLA.md
 .htaccess           regole di Apache (copia di install/esempi/htaccess-radice.txt)
 
@@ -282,7 +282,7 @@ Poi decide, **in quest'ordine** (`sito/index.php`):
 | 7 | `/grazie/?f=ID` | ringraziamento di un form |
 | 8 | `/robots.txt`, `/sitemap.xml`, `/llms.txt` | file calcolati (16.6) |
 | 9 | file speciali SEO: verifica Google, `BingSiteAuth.xml`, chiave IndexNow, sitemap divise, `llms-full.txt` | 200 o 404 |
-| 9b | `/scarica/<nome>/` (dalla 1.2.3) | il file `<nome>.<estensione>` di `uploads/scaricabili/`, come allegato, e lo conta (14.1); 404 se non c'è |
+| 9b | `/scarica/<nome>/` (dalla 1.2.3) | il file `<nome>.<estensione>` di `uploads/scaricabili/`, oppure l'ultima versione della serie `<nome>`, come allegato, e lo conta (14.1); 404 se non c'è |
 | 10 | percorsi che finiscono con `/feed/` | feed RSS, o 404 |
 | 11 | il percorso è nella mappa del sito (`sito_mappa()`) | la pagina, secondo il genere (sotto) |
 | 12 | il percorso senza barra finale esiste con la barra | 301 con la barra |
@@ -1041,8 +1041,16 @@ I file che il sito offre da scaricare: manuali, ebook, listini, programmi. Motor
   crawl, spider, headless, curl, wget, python e simili) né i pezzi di un download ripreso.
 - **Limite**: il pannello mostra il limite di caricamento del server; un file più grande si mette nella cartella con il
   gestore dei file dell'hosting.
+- **Serie e ultima versione** (dalla 1.2.5): un file con la versione nel nome (due o più numeri separati da punti, con
+  o senza `v` davanti: `plumecms-1.2.4.zip`, `guida-v2.0.pdf`) fa parte di una serie, il cui nome è quello del file con
+  `ultima` al posto della versione (`plumecms-ultima`, `plumecms-ultima-aggiornamento`, `guida-ultima`).
+  `/scarica/<serie>/` manda il file con la versione più alta (`version_compare`; a pari versione il più recente). Nei testi
+  delle pagine, titolo della scheda e meta compresi, `{versione:<serie>}` diventa quel numero (`scaricabili_versioni_nel_testo()`,
+  chiamata da `sito_html()` e, nella tela dell'editor, da `editor_disegna()`); una serie che non c'è dà un testo vuoto.
+  Così una versione nuova si pubblica caricando solo il file. Un numero solo (`listino-2026`) non è una versione.
 
-**Widget Download** (gruppo "Dal sito"): i file scelti uno per uno, ognuno con titolo e descrizione propri se servono,
+**Widget Download** (gruppo "Dal sito"): i file scelti uno per uno (o una serie, "Sempre l'ultima"; `{versione}` nel
+titolo diventa il numero del file mostrato), ognuno con titolo e descrizione propri se servono,
 oppure gli ultimi N caricati. Mostra a scelta icona del tipo, descrizione, tipo e peso, versione, data, conteggio (con il
 testo `{n} download`). Disposizione a elenco o a schede (da 1 a 4 per riga, per misura). Il CSS sta in
 `sito/assets/download.css` e si carica solo nelle pagine che hanno il widget. Un file eliminato sparisce dal sito; nella
@@ -1724,7 +1732,9 @@ per Impostazioni > Aggiornamenti, `releases/sito/sito-plumecms-<versione>-parte-
 la parte 1 porta pagine, stile, menu e immagini, le altre i file da scaricare.
 
 Ordine, a ogni versione: `python3 tools/cms-pacchetto.py --aggiornamento`, `node tools/manuali-pdf.js`,
-`python3 sito-plumecms/costruisci.py`. Le immagini stanno in `sito-plumecms/immagini/` e si rifanno dalle schermate
+`python3 sito-plumecms/costruisci.py`. Dalla 1.2.5 le pagine non scrivono il numero di versione: usano
+`{versione:plumecms-ultima}` e i link `/scarica/plumecms-ultima/`, quindi per una versione nuova del CMS basta caricare lo zip
+nuovo da Download (il pacchetto del sito serve solo quando cambiano le pagine). Le immagini stanno in `sito-plumecms/immagini/` e si rifanno dalle schermate
 con `--schermate <cartella>`. I testi delle novità per chi scarica sono in `NOVITA`, dentro il costruttore.
 
 Ogni parte resta sotto 1900 KB (`--max-kb` per cambiarlo), perché molti hosting non accettano caricamenti più grandi di 2 MB

@@ -33,6 +33,10 @@ IMG = os.path.join(QUI, 'immagini')
 U = '/uploads/plumecms/'          # dove finiscono le immagini sul sito
 ZIP = f'plumecms-{V}'
 ZIP_AGG = f'plumecms-{V}-aggiornamento'
+# Dalla 1.2.5 le pagine non scrivono la versione: la prende il sito dall'ultimo zip caricato in Download (serie
+# plumecms-ultima). Per pubblicare una versione nuova basta caricare plumecms-X.Y.Z.zip dalla pagina Download.
+VU = '{versione:plumecms-ultima}'
+SERIE, SERIE_AGG = 'plumecms-ultima', 'plumecms-ultima-aggiornamento'
 
 
 def errore(msg):
@@ -108,7 +112,7 @@ def tinta():
 def home():
     p = Pagina('home')
     p.sezione([[w('hero',
-                  occhiello=f'plumeCMS {V} · PHP e MySQL',
+                  occhiello=f'plumeCMS {VU} · PHP e MySQL',
                   titolo='Il tuo sito, *leggero come una piuma.*',
                   testo='Un CMS con l\'editor visuale a sezioni e colonne, i temi, la SEO e la newsletter già dentro. '
                         'Lo carichi sul server, apri il browser, rispondi a cinque domande. Il resto è il tuo sito.',
@@ -196,7 +200,7 @@ def funzionalita():
           'Le email partono dal tuo server, a giri, senza servizi esterni da pagare.']),
         ('download', 'download.webp', 'Download manager: i tuoi file, a portata di clic',
          ['Manuali, ebook, listini, programmi: li carichi dalla pagina Download del pannello, con titolo, descrizione e versione. Ogni file ha il suo indirizzo da condividere.',
-          'Una versione nuova prende il posto della vecchia allo stesso indirizzo, così i link già in giro continuano a funzionare. E vedi quante volte ogni file è stato scaricato: le persone sì, i robot no.',
+          'Con la versione nel nome (guida-1.2.pdf) il file entra in una serie: un indirizzo porta sempre alla versione più recente, e nelle pagine il numero si scrive da solo. Carichi la versione nuova e tutto il sito la segue. E vedi quante volte ogni file è stato scaricato: le persone sì, i robot no.',
           'Nelle pagine li mostri con il widget Download, a elenco o a schede, con icona, peso e pulsante. Come nella <a href="/scarica/">pagina Scarica</a> di questo sito.']),
         ('sicurezza', 'sicurezza.webp', 'Sicurezza, senza doverci pensare ogni giorno',
          ['Password robuste, accesso a due fattori, blocchi automatici contro chi prova a indovinare, sessioni che scadono, Content Security Policy, registro degli eventi.',
@@ -231,7 +235,8 @@ def temi():
                              'Un tema è una cartella con qualche file: i colori in un JSON, header e footer, un po\' di CSS. Il PHP è facoltativo.'),
                      ricco('Il manuale dei temi ti accompagna dal foglio bianco al tema attivo, file per file. Alla fine c\'è un tema completo, '
                            '<strong>Lavagna</strong>: verde ardesia, testo color gesso. Lo scarichi, lo smonti, lo rifai tuo.',
-                           'Lavagna contiene un piccolo file PHP: per caricarlo apri prima per un\'ora la finestra in <strong>Impostazioni, Sicurezza</strong>.'),
+                           'Lavagna contiene un piccolo file PHP, quindi il pannello chiede un permesso: in <strong>Impostazioni &gt; Sicurezza</strong>, scheda Impostazioni, '
+                           'riquadro in fondo, scrivi la tua password e premi <strong>Apri la finestra per un\'ora</strong>. Poi in <strong>Editor &gt; Temi</strong> carica lo zip.'),
                      pulsanti(('Manuale dei temi (PDF)', '/scarica/manuale-temi/', 'viola'), ('Tema Lavagna (zip)', '/scarica/tema-lavagna/', 'filo'))]),
                (50, [immagine('temi.webp', 'La pagina Temi del pannello di plumeCMS')])],
               allineamento_verticale='center', **tinta(), **spazi(72, 72))
@@ -315,20 +320,20 @@ def installazione():
 
 def scarica(note):
     p = Pagina('scarica')
-    p.sezione([[titolo(f'Scarica plumeCMS *{V}*', 'Download',
+    p.sezione([[titolo(f'Scarica plumeCMS *{VU}*', 'Download',
                        'Scegli lo zip giusto: quello completo per un sito nuovo, quello di aggiornamento se plumeCMS ce l\'hai già.',
                        livello='h1', centro=True)]], larghezza='stretta', **spazi(72, 24))
     p.sezione([[w('invito_libero', icona='download', titolo='Sito nuovo', livello='h2', nastro='Per cominciare',
                   testo='Lo zip completo: lo estrai, lo carichi sul server e apri il browser. L\'installatore fa il resto in cinque passi.',
-                  pulsante_testo=f'Scarica plumeCMS {V}', link={'url': f'/scarica/{ZIP}/', 'nuova': False})],
+                  pulsante_testo=f'Scarica plumeCMS {VU}', link={'url': f'/scarica/{SERIE}/', 'nuova': False})],
                [w('invito_libero', icona='freccia-ricarica', titolo='Hai già plumeCMS', livello='h2',
                   testo='Il pacchetto di aggiornamento: lo carichi da Impostazioni, Aggiornamenti e premi Applica. Prima di cambiare qualcosa il pannello fa una copia di sicurezza.',
-                  pulsante_testo='Scarica l\'aggiornamento', link={'url': f'/scarica/{ZIP_AGG}/', 'nuova': False})]], **spazi(24, 64))
+                  pulsante_testo='Scarica l\'aggiornamento', link={'url': f'/scarica/{SERIE_AGG}/', 'nuova': False})]], **spazi(24, 64))
     # Tutti i file, con il widget Download (1.2.4): titoli e descrizioni scritti qui, peso e tipo dal download manager.
     p.sezione([[titolo('Tutti i file', 'Da scaricare', 'Il CMS, i manuali e il tema d\'esempio. Ogni file ha il suo indirizzo: puoi condividerlo.', centro=True),
                 w('download', origine='scelti', disposizione='elenco', mostra_versione=False, voci=[
-                    {'file': ZIP, 'titolo': f'plumeCMS {V}', 'descrizione': 'Lo zip completo per un sito nuovo: estrai, carica sul server, apri il browser.'},
-                    {'file': ZIP_AGG, 'titolo': f'plumeCMS {V}, aggiornamento', 'descrizione': 'Per chi ha già plumeCMS: si carica da Impostazioni, Aggiornamenti.'},
+                    {'file': SERIE, 'titolo': 'plumeCMS {versione}', 'descrizione': 'Lo zip completo per un sito nuovo: estrai, carica sul server, apri il browser.'},
+                    {'file': SERIE_AGG, 'titolo': 'plumeCMS {versione}, aggiornamento', 'descrizione': 'Per chi ha già plumeCMS: si carica da Impostazioni, Aggiornamenti.'},
                     {'file': 'manuale-tecnico', 'titolo': 'Manuale tecnico', 'descrizione': 'Tutto il CMS, pezzo per pezzo.'},
                     {'file': 'manuale-temi', 'titolo': 'Manuale dei temi', 'descrizione': 'Come si costruisce un tema da zero.'},
                     {'file': 'tema-lavagna', 'titolo': 'Tema Lavagna', 'descrizione': 'Il tema d\'esempio del manuale: verde ardesia e testo color gesso.'}])]],
@@ -341,8 +346,8 @@ def scarica(note):
                       'cioè pezzi di codice scritti apposta per lui, l\'aggiornamento va preparato insieme a quei moduli.')]],
               larghezza='stretta', **spazi(56, 80))
     return dict(slug='scarica', titolo='Scarica', struttura=p.albero(),
-                seo_titolo=f'Scarica plumeCMS {V}',
-                seo_descrizione=f'Scarica plumeCMS {V}: lo zip completo per un sito nuovo o il pacchetto di aggiornamento per chi lo usa già.')
+                seo_titolo=f'Scarica plumeCMS {VU}',
+                seo_descrizione=f'Scarica plumeCMS {VU}: lo zip completo per un sito nuovo o il pacchetto di aggiornamento per chi lo usa già.')
 
 
 def faq():
@@ -359,6 +364,8 @@ def faq():
         ('Funziona con le intelligenze artificiali?', 'plumeCMS prepara il sito anche per le risposte delle intelligenze artificiali: llms.txt, dati strutturati, riassunti e risposte brevi in testa agli articoli.'),
         ('Chi può entrare nel pannello?', 'Gli utenti che crei tu, con due ruoli: amministratore (tutto) e redattore (contenuti, immagini, categorie). Per chi vuole c\'è l\'accesso a due fattori.'),
         ('Mi sono chiuso fuori. E adesso?', 'Se hai dimenticato la password, c\'è il link per reimpostarla. Se ti blocca l\'accesso a due fattori o la lista degli indirizzi permessi, il manuale tecnico spiega la riga da aggiungere al file di configurazione per rientrare.'),
+        ('Carico un tema e il pannello dice che contiene codice PHP. Che faccio?', 'È una protezione: un tema con PHP esegue codice sul tuo server, quindi serve un permesso. In Impostazioni > Sicurezza, scheda Impostazioni, riquadro in fondo, scrivi la tua password e premi "Apri la finestra per un\'ora". Poi torna in Editor > Temi e carica di nuovo lo zip. Fallo solo con temi di cui ti fidi.'),
+        ('Come pubblico la versione nuova di un file da scaricare?', 'Dalla pagina Download del pannello carichi il file nuovo. Se il nome contiene la versione (guida-1.3.pdf), l\'indirizzo "ultima" e le pagine che la citano passano da soli alla versione nuova.'),
         ('Posso costruirmi un tema mio?', 'Sì: c\'è un manuale apposta, con un tema d\'esempio completo da smontare e rifare tuo.'),
     ]
     p.sezione([[w('faq', voci=[{'domanda': d, 'risposta': r} for d, r in voci], prima_aperta=True)]], larghezza='stretta', **spazi(24, 56))
@@ -423,7 +430,7 @@ def editor_json():
              voce('plp04', 'Domande frequenti', 'domande-frequenti'), voce('plp05', 'Scarica', 'scarica')]
     link = lambda i, e, u: {'id': i, 'etichetta': e, 'tipo': 'link', 'rif': '', 'url': u, 'nuova': False, 'classi': '', 'figli': []}
     manuali = [link('plq01', 'Manuale tecnico (PDF)', '/scarica/manuale-tecnico/'), link('plq02', 'Manuale dei temi (PDF)', '/scarica/manuale-temi/'),
-               link('plq03', f'plumeCMS {V} (zip)', f'/scarica/{ZIP}/'), link('plq04', 'Tema Lavagna (zip)', '/scarica/tema-lavagna/')]
+               link('plq03', f'plumeCMS {VU} (zip)', f'/scarica/{SERIE}/'), link('plq04', 'Tema Lavagna (zip)', '/scarica/tema-lavagna/')]
     return {'formato': 'editor-impostazioni', 'versione': 1, 'cms': V, 'creato': '',
             'stile': stile,
             'modelli': [{'tipo': 'header', 'nome': 'Header plumeCMS', 'status': 'published', 'predefinito': 1, 'condizioni': [], 'priorita': 0, 'struttura': header, 'struttura_bozza': None},
@@ -479,6 +486,9 @@ def zip_lavagna(dest):
 
 # Le novità per chi scarica: brevi, scritte qui (il CHANGELOG è per chi sviluppa). Da aggiornare a ogni versione.
 NOVITA = [
+    ('1.2.5', 'Sempre l\'ultima versione', ['Un file con la versione nel nome ha un indirizzo che porta sempre alla versione più recente.',
+                                           'Nelle pagine il numero di versione si scrive da solo: carichi il file nuovo e pulsanti e titoli si aggiornano.',
+                                           'Temi con codice PHP: il pannello spiega passo per passo come caricarli.']),
     ('1.2.4', 'Download manager', ['Una pagina del pannello per i file da scaricare: carichi, aggiorni, vedi quante volte sono stati scaricati.',
                                   'Il widget Download: i tuoi file in una pagina, con icona, peso, versione e pulsante.']),
     ('1.2.3', 'Il sito e i manuali', ['I manuali in PDF, da scaricare.', 'Il pannello Revisioni dell\'editor ora si chiude davvero e lascia tutta la tela.',

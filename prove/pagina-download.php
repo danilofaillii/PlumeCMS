@@ -15,5 +15,10 @@ $pdo = db();
 $st = $pdo->prepare('SELECT id FROM ' . tbl('pages') . ' WHERE slug = ?'); $st->execute(['prova-download']);
 $id = (int)$st->fetchColumn();
 if (!$id) { $pdo->prepare('INSERT INTO ' . tbl('pages') . " (title, slug, status) VALUES ('Prova download', 'prova-download', 'published')")->execute(); $id = (int)$pdo->lastInsertId(); }
-editor_salva($id, editor_valida(['elementi' => [$sez($scelti), $sez($ultimi)]]), true, 'prova', 'pagina di prova');
+// 1.2.5: una serie (sempre l'ultima guida) e il numero di versione scritto in un titolo.
+$serie = editor_widget('download');
+$serie['impostazioni'] = ['origine' => 'scelti', 'voci' => [['file' => 'guida-ultima', 'titolo' => 'Guida {versione}', 'descrizione' => '']]] + $serie['impostazioni'];
+$titolo = editor_widget('titolo');
+$titolo['impostazioni'] = ['testo' => 'La guida è alla versione {versione:guida-ultima}', 'livello' => 'h2'] + $titolo['impostazioni'];
+editor_salva($id, editor_valida(['elementi' => [$sez($scelti), $sez($ultimi), $sez($titolo), $sez($serie)]]), true, 'prova', 'pagina di prova');
 echo $id . "\n";
