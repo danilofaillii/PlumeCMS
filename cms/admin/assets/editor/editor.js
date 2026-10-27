@@ -132,6 +132,7 @@
       case 'azione': azione(m.azione, m.id); break;
       case 'aggiungi-sezione': aggiungiSezione(m.dopo); break;
       case 'aggiungi-widget': aggiungiWidget(m.widget, m.colonna, m.indice); break;
+      case 'aggiungi-pronta': inserisciPronta(m.pronta, m.indice); break;
       case 'sposta': sposta(m.id, m.genitore, m.indice); break;
     }
   });
@@ -225,6 +226,88 @@
       var q = this.value.trim().toLowerCase();
       $$('.ed-widget-voce').forEach(function (v) { v.classList.toggle('ed-nascosto', q !== '' && v.dataset.nome.indexOf(q) < 0 && v.dataset.tipo.indexOf(q) < 0); });
     });
+  }
+
+  // ------------------------------------------------------------ sezioni pronte (1.3.0)
+  // Blocchi già impaginati (includes/sezioni-pronte-dati.php) che entrano nella pagina come sezioni normali: con un
+  // clic sotto la sezione selezionata (o in fondo), oppure trascinati nella tela. L'anteprima è un disegno schematico
+  // fatto dai widget della variante: leggero, niente immagini, niente richieste al server.
+  var PRONTE = {};
+  (D.sezioniPronte || []).forEach(function (v) { sistemaAlbero({ elementi: v.elementi }); PRONTE[v.id] = v; });
+  function miniWidget(w) {
+    var v = w.impostazioni || {}, t = w.tipo, l = function (c, n) { var o = ''; for (var i = 0; i < (n || 1); i++) o += '<i class="' + c + '"></i>'; return o; };
+    var allinea = (v.allineamento && v.allineamento.d === 'center') ? ' ed-mini-centro' : '';
+    switch (t) {
+      case 'titolo': return '<div class="ed-mini-w' + allinea + '">' + (v.occhiello ? l('ed-mini-occhiello') : '') + l('ed-mini-titolo') + (v.sottotitolo ? l('ed-mini-riga ed-mini-corta') : '') + '</div>';
+      case 'hero':
+        var d = v.disposizione || 'classica', centro = ['centrata', 'minimale'].indexOf(d) >= 0;
+        var parole = l('ed-mini-occhiello') + l('ed-mini-titolo ed-mini-grande') + l('ed-mini-titolo ed-mini-grande ed-mini-corta') + l('ed-mini-riga ed-mini-corta') + '<span class="ed-mini-pulsanti">' + l('ed-mini-pill', Math.max(1, (v.pulsanti || []).length)) + '</span>';
+        if (d === 'minimale') parole += '<span class="ed-mini-numeri">' + l('ed-mini-cifra', (v.barre || []).length || 3) + '</span>';
+        return '<div class="ed-mini-w ed-mini-hero ed-mini-hero-' + d + (centro ? ' ed-mini-centro' : '') + '">' + parole + '</div>';
+      case 'testo': case 'frase': case 'citazione': return '<div class="ed-mini-w' + (t !== 'testo' ? ' ed-mini-centro' : '') + '">' + l('ed-mini-riga', t === 'testo' ? 3 : 2) + l('ed-mini-riga ed-mini-corta') + '</div>';
+      case 'pulsanti': case 'pulsante': return '<div class="ed-mini-w' + allinea + '"><span class="ed-mini-pulsanti">' + l('ed-mini-pill', Math.max(1, (v.voci || [1]).length)) + '</span></div>';
+      case 'schede': case 'passi': return '<div class="ed-mini-w ed-mini-griglia">' + l('ed-mini-scheda', Math.min(4, (v.voci || [1, 1, 1]).length)) + '</div>';
+      case 'riquadro_icona': case 'contatore': return '<div class="ed-mini-w ed-mini-centro">' + l(t === 'contatore' ? 'ed-mini-cifra' : 'ed-mini-icona') + l('ed-mini-riga ed-mini-media') + l('ed-mini-riga ed-mini-corta') + '</div>';
+      case 'numeri': return '<div class="ed-mini-w ed-mini-griglia' + ((v.colonne && v.colonne.d === 1) ? ' ed-mini-colonna' : '') + '">' + l('ed-mini-scheda ed-mini-cifre', Math.min(4, (v.voci || [1, 1, 1]).length)) + '</div>';
+      case 'faq': case 'fisarmonica': return '<div class="ed-mini-w">' + l('ed-mini-riga-box', Math.min(4, (v.voci || [1, 1, 1]).length)) + '</div>';
+      case 'tabella_prezzi': return '<div class="ed-mini-w"><span class="ed-mini-prezzo' + (v.evidenza ? ' ed-mini-evidenza' : '') + '">' + l('ed-mini-cifra') + l('ed-mini-riga', 3) + l('ed-mini-pill') + '</span></div>';
+      case 'listino': case 'elenco_icone': case 'elenco': return '<div class="ed-mini-w">' + l('ed-mini-voce', Math.min(4, (v.voci || [1, 1, 1]).length)) + '</div>';
+      case 'testimonianza': return '<div class="ed-mini-w ed-mini-centro">' + l('ed-mini-stelle') + l('ed-mini-riga', 2) + l('ed-mini-riga ed-mini-corta') + '</div>';
+      case 'carosello_testimonianze': return '<div class="ed-mini-w ed-mini-griglia">' + l('ed-mini-scheda ed-mini-citazione', 3) + '</div>';
+      case 'presentazione': return '<div class="ed-mini-w ed-mini-chi">' + l('ed-mini-ritratto') + '<span>' + l('ed-mini-titolo') + l('ed-mini-riga', 2) + '</span></div>';
+      case 'modulo': return '<div class="ed-mini-w ed-mini-form">' + l('ed-mini-campo', 2) + l('ed-mini-campo ed-mini-alto') + l('ed-mini-pill') + '</div>';
+      case 'barra_avanzamento': return '<div class="ed-mini-w">' + l('ed-mini-riga ed-mini-corta') + l('ed-mini-barra') + '</div>';
+      case 'invito_libero': return '<div class="ed-mini-w ed-mini-centro ed-mini-cornice">' + l('ed-mini-icona') + l('ed-mini-titolo ed-mini-media') + l('ed-mini-riga') + l('ed-mini-pill') + '</div>';
+      default: return '<div class="ed-mini-w">' + l('ed-mini-riga', 2) + '</div>';
+    }
+  }
+  function miniatura(elementi) {
+    return '<div class="ed-mini" aria-hidden="true">' + elementi.map(function (s) {
+      var si = s.impostazioni || {};
+      return '<div class="ed-mini-sez ed-mini-sfondo-' + (si.sfondo || 'nessuno') + (si.larghezza === 'stretta' ? ' ed-mini-stretta' : '') + '">' + s.figli.map(function (c) {
+        var lg = c.impostazioni && c.impostazioni.larghezza && c.impostazioni.larghezza.d;
+        return '<div class="ed-mini-col' + (c.impostazioni && c.impostazioni.riquadro ? ' ed-mini-cornice' : '') + '" style="flex:' + (lg || 100) + ' 1 0">' + c.figli.map(miniWidget).join('') + '</div>';
+      }).join('') + '</div>';
+    }).join('') + '</div>';
+  }
+  function disegnaElencoSezioni() {
+    var box = $('#ed-elenco-sezioni');
+    if (!box) return;
+    var cat = D.categorieSezioni || {}, html = '';
+    Object.keys(cat).forEach(function (c) {
+      var voci = (D.sezioniPronte || []).filter(function (v) { return v.categoria === c; });
+      if (!voci.length) return;
+      html += '<div class="ed-gruppo-sezioni" data-categoria="' + c + '"><h4>' + escapeHtml(cat[c]) + '</h4>';
+      voci.forEach(function (v) {
+        html += '<button type="button" class="ed-sezione-voce" draggable="true" data-id="' + escapeHtml(v.id) + '" data-cerca="' + escapeHtml((cat[c] + ' ' + v.nome + ' ' + v.descrizione).toLowerCase()) + '" title="' + escapeHtml(v.descrizione) + '">'
+          + miniatura(v.elementi) + '<b>' + escapeHtml(v.nome) + '</b><small>' + escapeHtml(v.descrizione) + '</small></button>';
+      });
+      html += '</div>';
+    });
+    box.innerHTML = html;
+    $$('.ed-sezione-voce', box).forEach(function (b) {
+      b.addEventListener('dragstart', function (e) { e.dataTransfer.setData('text/ed-sezione', b.dataset.id); e.dataTransfer.effectAllowed = 'copy'; });
+      b.addEventListener('click', function () {
+        var p = selezionato ? trova(selezionato) : null;
+        while (p && p.el.tipo !== 'sezione') p = p.genitore ? trova(p.genitore.id) : null;
+        inserisciPronta(b.dataset.id, p ? p.indice + 1 : albero.elementi.length);
+      });
+    });
+    $('#ed-cerca-sezioni').addEventListener('input', function () {
+      var q = this.value.trim().toLowerCase();
+      $$('.ed-sezione-voce', box).forEach(function (v) { v.classList.toggle('ed-nascosto', q !== '' && v.dataset.cerca.indexOf(q) < 0); });
+      $$('.ed-gruppo-sezioni', box).forEach(function (g) { g.hidden = !$$('.ed-sezione-voce:not(.ed-nascosto)', g).length; });
+    });
+  }
+  // Le sezioni della variante entrano copiate, con id nuovi: si può mettere la stessa variante più volte.
+  function inserisciPronta(id, indice) {
+    var v = PRONTE[id];
+    if (!v) return;
+    var nuove = v.elementi.map(clona);
+    if (indice === null || indice === undefined || indice > albero.elementi.length) indice = albero.elementi.length;
+    Array.prototype.splice.apply(albero.elementi, [indice, 0].concat(nuove));
+    cambiato(nuove[0].id); apriPannello('modifica'); mostraControlli();
+    stato('Sezione "' + v.nome + '" aggiunta', 'ok');
   }
 
   function apriPannello(nome) {
@@ -1164,6 +1247,7 @@
 
   // ------------------------------------------------------------ avvio
   disegnaElencoWidget();
+  disegnaElencoSezioni();
   disegnaNavigatore();
   mostraControlli();
   aggiornaStato();

@@ -2,6 +2,28 @@
 
 Il prodotto si chiama **plumeCMS** (nome scelto il 26 ottobre 2026; prima, per poche ore, "CarbonaraCMS", e ancora prima il provvisorio "Officina": gli zip vecchi si chiamavano `officina-*` e `carbonaracms-*`).
 
+## 1.3.0 (28 ottobre 2026) - Si parte con un sito vero
+
+- **Installazione, "Che sito vuoi fare?"**: all'ultimo passo si sceglie Vuoto (il sito di sempre), Personale, Attività,
+  Blog o Portfolio. Il CMS parte con la home, le pagine principali e il menu dell'header già fatti con l'editor, e testi
+  d'esempio brevi che dicono cosa scriverci. Dove servono immagini ci sono disegni astratti, da sostituire con le tue foto
+  dalla libreria. Funziona anche con il CMS in una cartella. Se non si sceglie niente, resta Vuoto.
+- **Editor, linguetta Sezioni**: 30 sezioni già impaginate in nove gruppi (apertura, servizi, chi siamo, numeri,
+  testimonianze, prezzi, domande frequenti, contatti, invito all'azione), con un'anteprima piccola. Un clic la mette sotto
+  la sezione selezionata, oppure la trascini nel punto che vuoi. Una volta dentro è una sezione normale: cambi testi,
+  colori e widget come sempre. Seguono i colori del sito e dei temi, chiari e scuri.
+- **Aggiornamenti, "C'è una versione nuova"**: una volta al giorno il pannello chiede al sito di plumeCMS qual è l'ultima
+  versione. Se è più nuova, lo dice nella dashboard e in Aggiornamenti; con **Scarica e prepara** lo zip arriva da solo,
+  controllato (HTTPS, dimensione e impronta sha256), nella lista dei pacchetti, dove premi Applica ora come sempre. Si spegne
+  dalla stessa pagina. Senza rete il pannello funziona come prima.
+- **Impostazioni, Copia del sito**: "Prepara la copia" mette in uno zip database, immagini e file caricati, temi e moduli
+  (la password del database no); poi la scarichi. "Ripristina" rimette tutto da una copia, caricata o già sul server, dopo
+  averne fatta una del sito di adesso. Per i siti con un limite di caricamento basso, la copia si mette nella cartella
+  `aggiornamenti/copie/` con il gestore dei file e si ripristina dall'elenco. Da una copia di un altro sito i file con
+  codice PHP non entrano.
+- **Per chi fa siti con plumeCMS**: `api/versione.php?serie=<serie>` dice versione, nome, sha256 e dimensione dell'ultimo
+  file di una serie del download manager.
+
 ## 1.2.8 (27 ottobre 2026) - Software libero, di tutti
 
 - **Licenza**: plumeCMS è software libero con la GNU GPL, versione 3 o successiva. Il testo è nel file `LICENSE` e la

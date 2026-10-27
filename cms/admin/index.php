@@ -44,6 +44,9 @@ if ($pacchettiAttesa) $avvisi[] = ["$pacchettiAttesa " . ($pacchettiAttesa === 1
 if (posta_notifica_email() === '') $avvisi[] = ["Manca l'indirizzo degli avvisi: senza, niente email del mattino.", 'impostazioni.php'];
 
 if (!$dbAdmin) $avvisi = [];
+// 1.3.0: c'e una versione nuova di plumeCMS? Solo per l'amministratore, da quello che il pannello sa gia (includes/versione-nuova.php).
+$versioneNuova = null; $versioneDaControllare = false;
+if ($dbAdmin) { try { require_once dirname(__DIR__) . '/includes/versione-nuova.php'; $versioneNuova = versione_nuova(); $versioneDaControllare = versione_da_controllare(); } catch (Throwable $e) {} }
 require_once __DIR__ . '/includes/admin-header.php';
 ?>
 <style>
@@ -62,6 +65,9 @@ require_once __DIR__ . '/includes/admin-header.php';
 .db-avvisi{background:#fff3cd;border:1px solid #f1dfae;border-radius:var(--radius);padding:.8rem 1.2rem}
 .db-avvisi a{color:#7a5a00;font-weight:600}
 .db-azioni{display:flex;gap:.5rem;flex-wrap:wrap;margin-bottom:1rem}
+.db-versione{display:flex;gap:.4rem 1rem;flex-wrap:wrap;align-items:center;background:#e8f3f1;border:1px solid #b9dad3;border-radius:var(--radius);padding:.8rem 1.2rem;margin-bottom:1rem;color:#1f4a45}
+.db-versione[hidden]{display:none}
+.db-versione span{font-size:.88rem;flex:1 1 280px}
 </style>
 
 <div class="db-azioni">
@@ -73,6 +79,20 @@ require_once __DIR__ . '/includes/admin-header.php';
 <?php endif; ?>
   <a class="btn btn-secondary btn-sm" href="<?= $homeId ? 'editor.php?id=' . $homeId : 'contenuti.php?tipo=pagine' ?>">Home nell'editor</a>
 </div>
+
+<div class="db-versione" id="db-versione"<?= $versioneNuova ? '' : ' hidden' ?>>
+  <b><?= h(CMS_NOME) ?> <span id="db-versione-numero"><?= h($versioneNuova['versione'] ?? '') ?></span> è disponibile.</b>
+  <span>Hai la <?= h(cms_versione()) ?>. Da Aggiornamenti la scarichi e la prepari con un clic; il sito cambia solo quando premi Applica.</span>
+  <a class="btn btn-primary btn-sm" href="aggiornamenti.php#agg-versione">Vai ad Aggiornamenti</a>
+</div>
+<?php if ($versioneDaControllare): /* il controllo del giorno, dopo il caricamento: la dashboard non aspetta la rete */ ?>
+<script<?= nonce_attr() ?>>
+fetch('aggiornamenti.php', { method: 'POST', credentials: 'same-origin', headers: { 'X-CSRF': <?= json_encode(csrf_token()) ?> }, body: new URLSearchParams({ action: 'versione_controlla', _csrf: <?= json_encode(csrf_token()) ?> }) })
+  .then(function (r) { return r.json(); })
+  .then(function (j) { if (j.nuova) { document.getElementById('db-versione-numero').textContent = j.versione; document.getElementById('db-versione').hidden = false; } })
+  .catch(function () {});
+</script>
+<?php endif; ?>
 
 <?php if ($avvisi): ?>
 <div class="db-avvisi">

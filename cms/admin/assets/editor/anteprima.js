@@ -85,6 +85,35 @@
   // ---- trascinamento dal pannello (HTML5, attraverso l'iframe)
   var bersaglio = null;
   function puliBersaglio() { if (bersaglio) { bersaglio.classList.remove('ed-bersaglio'); bersaglio = null; } }
+  // Una sezione pronta (1.3.0) si posa fra due sezioni: prima o dopo quella sotto il puntatore, con una linea che lo mostra.
+  var lineaSezione = document.createElement('div');
+  lineaSezione.className = 'ed-linea-sezione'; lineaSezione.hidden = true;
+  document.body.appendChild(lineaSezione);
+  function puntoSezione(e) {
+    var sezioni = Array.prototype.slice.call(pagina.querySelectorAll(':scope > .ed-sezione'));
+    var s = e.target.closest && e.target.closest('.ed-sezione');
+    if (!s || sezioni.indexOf(s) < 0) return { indice: sezioni.length, y: sezioni.length ? sezioni[sezioni.length - 1].getBoundingClientRect().bottom : 0 };
+    var r = s.getBoundingClientRect(), dopo = e.clientY > r.top + r.height / 2;
+    return { indice: sezioni.indexOf(s) + (dopo ? 1 : 0), y: dopo ? r.bottom : r.top };
+  }
+  function haTipo(e, t) { var tipi = e.dataTransfer && e.dataTransfer.types; return !!tipi && Array.prototype.indexOf.call(tipi, t) >= 0; }
+  pagina.addEventListener('dragover', function (e) {
+    if (!haTipo(e, 'text/ed-sezione')) return;
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'copy';
+    var p = puntoSezione(e);
+    lineaSezione.style.top = (p.y + window.scrollY - 2) + 'px';
+    lineaSezione.hidden = false;
+  });
+  pagina.addEventListener('drop', function (e) {
+    var id = e.dataTransfer && e.dataTransfer.getData('text/ed-sezione');
+    if (!id) return;
+    e.preventDefault();
+    lineaSezione.hidden = true;
+    manda({ tipo: 'aggiungi-pronta', pronta: id, indice: puntoSezione(e).indice });
+  });
+  document.addEventListener('dragleave', function (e) { if (!e.relatedTarget) lineaSezione.hidden = true; });
+  document.addEventListener('dragend', function () { lineaSezione.hidden = true; });
   pagina.addEventListener('dragover', function (e) {
     var tipi = e.dataTransfer && e.dataTransfer.types;
     if (!tipi || Array.prototype.indexOf.call(tipi, 'text/ed-widget') < 0) return;

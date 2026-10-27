@@ -11,9 +11,11 @@
    (`uploads/`, `includes/`, `aggiornamenti/`, `logs/`).
 4. **Compila i tre passi**: database (con il prefisso delle tabelle, di norma `cms_`), sito (nome, descrizione, indirizzo
    rilevato e modificabile, lingua, fuso orario, email) e amministratore (nome utente, email, password di almeno 12 caratteri, non tra le più comuni).
-5. **Installa.** L'installatore scrive `includes/config.local.php`, crea le tabelle, l'amministratore e i contenuti di
-   partenza: la home nell'editor, le pagine *Chi sono* e *Contatti* con un form, un articolo di benvenuto, header e footer
-   con il menu Principale, lo stile predefinito. Da quel momento `/install/` rimanda al pannello (`/admin/`).
+5. **Scegli che sito vuoi fare e installa.** Vuoto (le pagine di sempre), Personale, Attività, Blog o Portfolio: con un
+   kit il CMS parte con la home, le pagine principali e il menu già costruiti con l'editor, e testi d'esempio da
+   sostituire. L'installatore scrive `includes/config.local.php`, crea le tabelle, l'amministratore e i contenuti di
+   partenza: la home nell'editor, le pagine con un form dei contatti, un articolo di benvenuto, header e footer con il
+   menu Principale, lo stile predefinito. Da quel momento `/install/` rimanda al pannello (`/admin/`).
 
 ## Dopo l'installazione
 

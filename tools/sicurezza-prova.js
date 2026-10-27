@@ -122,7 +122,7 @@ async function post(p, url, body, headers = {}) {
   //          gli endpoint pubblici dichiarati qui sotto.
   const PUBBLICI = ['admin/login.php', 'admin/password-dimenticata.php', 'admin/password-reimposta.php', 'admin/logout.php',
     'api/nl.php', 'api/csp.php', 'api/modulo.php', 'api/captcha.php', 'api/random-aforisma.php', 'api/burnout-test.php', 'api/test.php',
-    'api/esporta.php', 'api/scadenze.php'];
+    'api/esporta.php', 'api/scadenze.php', 'api/versione.php' /* 1.3.0: pubblico per scelta, solo dati gia pubblici (prove al punto 17) */];
   const fs = require('fs'), path = require('path');
   const elenca = (dir) => { try { return fs.readdirSync(dir).filter(f => f.endsWith('.php')); } catch (e) { return []; } };
   const DIR = process.env.CMS_DIR || '';
@@ -344,7 +344,7 @@ echo json_encode($o);
   // === 7. Accesso diretto ai file sensibili (vale dove il web server applica le regole .htaccess/Nginx)
   {
     const prova = async (percorso) => admin.p.evaluate(async (u) => { const r = await fetch(u, { credentials: 'include', redirect: 'manual' }); return r.status; }, BASE + percorso);
-    for (const [perc, nome] of [[PAN + '/includes/config.local.php', 'config.local.php'], [PAN + '/logs/php-errori.log', 'logs'], [PAN + '/VERSIONE', 'VERSIONE'], [PAN + '/includes/sicurezza.php', 'includes'], [PAN + '/uploads/x.php', 'uploads/x.php']]) {
+    for (const [perc, nome] of [[PAN + '/includes/config.local.php', 'config.local.php'], [PAN + '/logs/php-errori.log', 'logs'], [PAN + '/VERSIONE', 'VERSIONE'], [PAN + '/includes/sicurezza.php', 'includes'], [PAN + '/uploads/x.php', 'uploads/x.php'], [PAN + '/aggiornamenti/copie/', 'aggiornamenti/copie/ (copie del sito, 1.3.0)']]) {
       const s = await prova(perc);
       ok('accesso diretto a ' + nome + ' negato (403/404)', s === 403 || s === 404, { status: s, nota: 'richiede le regole del web server; sul server di prova le emula il router' });
     }
@@ -439,7 +439,7 @@ echo json_encode($o);
   }
 
   // === 15. (attacco 5) CSP del pannello senza 'unsafe-inline' e pagine del nucleo senza gestori in linea
-  for (const pag of ['index.php', 'contenuti.php?tipo=articoli', 'versioni.php', 'sicurezza.php', 'account.php', 'utenti.php', 'media.php', 'modelli.php', 'menu.php', 'form.php', 'seo.php']) {
+  for (const pag of ['index.php', 'contenuti.php?tipo=articoli', 'versioni.php', 'sicurezza.php', 'account.php', 'utenti.php', 'media.php', 'modelli.php', 'menu.php', 'form.php', 'seo.php', 'copia-sito.php', 'aggiornamenti.php']) {
     const r = await admin.ctx.request.get(ADMIN + '/' + pag);
     const h = r.headers(); const csp = (h['content-security-policy'] || '') + ' ' + (h['content-security-policy-report-only'] || '');
     const html = await r.text();
@@ -462,6 +462,45 @@ echo json_encode($o);
       }, { base: ADMIN, zipB64, t });
       ok('pacchetto senza firma con .php in root/: rifiutato', /serve un pacchetto firmato/.test(txt) && !/Prova sicurezza root php[^<]*<\/(td|strong|b)>/.test(txt));
     } else console.log('--  pacchetto root/php: saltata (manca python3)');
+  }
+
+  // === 17. (1.3.0) Copia del sito e controllo della versione: pagine dell'amministratore, token, nomi di file, endpoint pubblico
+  {
+    const anon = await browser.newContext();
+    const ra = await anon.request.get(ADMIN + '/copia-sito.php', { maxRedirects: 0 });
+    ok('copia del sito senza login: rimanda al login', [302, 303].includes(ra.status()) && /login/.test(ra.headers()['location'] || ''), { status: ra.status() });
+    const rs = await anon.request.post(ADMIN + '/copia-sito.php', { form: { azione: 'crea' }, maxRedirects: 0 });
+    ok('copia del sito senza login, POST crea: niente copia (rimanda al login)', rs.status() !== 200, { status: rs.status() });
+    await anon.close();
+    if (red.dentro) {
+      const rr = await red.ctx.request.get(ADMIN + '/copia-sito.php', { maxRedirects: 0 });
+      ok('copia del sito: il redattore non entra', rr.status() !== 200 || !/Prepara la copia/.test(await rr.text()), { status: rr.status() });
+      const tr = await tokenDi(red.p, ADMIN + '/index.php');
+      const sr = await post(red.p, ADMIN + '/copia-sito.php', new URLSearchParams({ _csrf: tr, azione: 'scarica', file: 'x' }).toString(), { 'Content-Type': 'application/x-www-form-urlencoded' });
+      ok('copia del sito: il redattore non scarica niente', !sr.body.startsWith('PK') && !/manifest\.json|db\.sql/.test(sr.body), { status: sr.status });
+      const vr = await post(red.p, ADMIN + '/aggiornamenti.php', new URLSearchParams({ _csrf: tr, action: 'versione_prepara' }).toString(), { 'Content-Type': 'application/x-www-form-urlencoded' });
+      ok('Scarica e prepara: il redattore non puo', !/scaricato e controllato/.test(vr.body), { status: vr.status });
+    }
+    const senza = await post(admin.p, ADMIN + '/copia-sito.php', new URLSearchParams({ azione: 'crea' }).toString(), { 'Content-Type': 'application/x-www-form-urlencoded' });
+    ok('copia del sito: POST senza token rifiutato (403)', senza.status === 403, { status: senza.status });
+    const t = await tokenDi(admin.p, ADMIN + '/copia-sito.php');
+    const est = await admin.ctx.request.post(ADMIN + '/copia-sito.php', { headers: { 'Origin': 'https://evil.example' }, form: { _csrf: t, azione: 'crea' }, maxRedirects: 0 });
+    ok('copia del sito: POST con Origin esterno rifiutato (403)', est.status() === 403, { status: est.status() });
+    for (const f of ['../../includes/config.local.php', '../aggiornamenti/.htaccess', 'copia-20260101-000000-x.zip/../../../includes/config.local.php', '/etc/passwd']) {
+      const r = await admin.ctx.request.post(ADMIN + '/copia-sito.php', { form: { _csrf: t, azione: 'scarica', file: f }, maxRedirects: 0 });
+      const ct = r.headers()['content-type'] || '';
+      ok('copia del sito: scarica "' + f + '" respinto', !/zip|octet/.test(ct) && !/DB_PASS|root:/.test(await r.text()), { status: r.status(), ct });
+    }
+    const rip = await admin.ctx.request.post(ADMIN + '/copia-sito.php', { form: { _csrf: t, azione: 'ripristina', file: '../../includes/config.local.php', conferma: '1' }, maxRedirects: 0 });
+    ok('copia del sito: ripristina un file fuori dalle copie respinto', !/Sito ripristinato/.test(await rip.text()));
+    const vs = await post(admin.p, ADMIN + '/aggiornamenti.php', new URLSearchParams({ action: 'versione_prepara' }).toString(), { 'Content-Type': 'application/x-www-form-urlencoded' });
+    ok('Scarica e prepara: POST senza token rifiutato (403)', vs.status === 403, { status: vs.status });
+    const vc = await post(admin.p, ADMIN + '/aggiornamenti.php', new URLSearchParams({ action: 'versione_controlla' }).toString(), { 'Content-Type': 'application/x-www-form-urlencoded', 'X-CSRF': 'sbagliato' });
+    ok('controllo della versione con un token sbagliato: rifiutato (403)', vc.status === 403, { status: vc.status });
+    const api = await admin.ctx.request.get(BASE + PAN + '/api/versione.php?serie=' + encodeURIComponent("../../includes/config.local.php"));
+    ok('api/versione.php: una serie con ../ respinta (400), senza percorsi nella risposta', api.status() === 400 && !/\/includes\/|\/home\/|\/tmp\//.test(await api.text()), { status: api.status() });
+    const api2 = await admin.ctx.request.get(BASE + PAN + '/api/versione.php?serie=' + encodeURIComponent("x' OR '1'='1-ultima"));
+    ok('api/versione.php: una serie con apici respinta (400)', api2.status() === 400, { status: api2.status() });
   }
 
   // === pulizia: elimina il redattore di prova

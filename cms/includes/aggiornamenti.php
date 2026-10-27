@@ -356,14 +356,18 @@ function agg_sql_val($v): string {
     return "'" . strtr((string)$v, ["\\" => "\\\\", "'" => "\\'", "\0" => "\\0", "\n" => "\\n", "\r" => "\\r", "\x1a" => "\\Z"]) . "'";
 }
 
-/** Scrive tutto il database in un file .sql.gz, una istruzione per riga. Ritorna statistiche. */
-function agg_dump_db(string $gzPath): array {
+/**
+ * Scrive tutto il database in un file .sql.gz, una istruzione per riga. Ritorna statistiche.
+ * Con $prefisso (1.3.0, la copia del sito) solo le tabelle che cominciano con quel prefisso.
+ */
+function agg_dump_db(string $gzPath, string $prefisso = ''): array {
     $pdo = db();
     $gz = gzopen($gzPath, 'wb6');
     if (!$gz) throw new RuntimeException('Impossibile scrivere ' . $gzPath);
     gzwrite($gz, "SET SESSION sql_mode = 'NO_ENGINE_SUBSTITUTION';\n");
     gzwrite($gz, "SET FOREIGN_KEY_CHECKS=0;\n");
     $tables = $pdo->query('SHOW TABLES')->fetchAll(PDO::FETCH_COLUMN);
+    if ($prefisso !== '') $tables = array_values(array_filter($tables, fn($t) => str_starts_with((string)$t, $prefisso)));
     $righe = 0;
     foreach ($tables as $t) {
         $create = $pdo->query('SHOW CREATE TABLE `' . str_replace('`', '``', $t) . '`')->fetch(PDO::FETCH_NUM);

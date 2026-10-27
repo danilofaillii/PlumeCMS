@@ -1,6 +1,6 @@
 # plumeCMS: manuale tecnico
 
-Versione del manuale: 1.6, per plumeCMS 1.2.8 (27 ottobre 2026).
+Versione del manuale: 1.7, per plumeCMS 1.3.0 (28 ottobre 2026).
 
 Questo manuale descrive come è fatto plumeCMS e come funziona, pezzo per pezzo. È scritto leggendo il codice:
 ogni numero, limite e nome di funzione viene dai file veri, con il riferimento `file:riga` quando serve a chi
@@ -67,7 +67,7 @@ fatti con plumeCMS, i loro contenuti e i temi e moduli che non ne copiano il cod
 index.php           front controller: tutte le richieste del sito passano da qui
 cron-daily.php      compiti del giorno (pacchetti programmati, moduli, IndexNow)
 cron-newsletter.php invio della newsletter a giri, coda IndexNow
-VERSIONE            il numero di versione (oggi 1.2.8)
+VERSIONE            il numero di versione (oggi 1.3.0)
 CHANGELOG.md, README.md, INSTALLA.md
 .htaccess           regole di Apache (copia di install/esempi/htaccess-radice.txt)
 
@@ -80,6 +80,8 @@ includes/           il motore
   sito*.php         dati, mappa degli indirizzi, SEO delle pagine
   contenuti.php     articoli, pagine, stati, revisioni, cestino
   editor*.php       editor: albero, validazione, disegno, controlli, widget
+  sezioni-pronte*.php  le sezioni pronte dell'editor: motore e dati (9.11)
+  kit-partenza.php, kit/  i kit di partenza dell'installatore: motore e un file di dati per kit (2.2)
   design.php        Stile del sito
   modelli.php       header e footer
   menu-nav.php      menu di navigazione
@@ -90,15 +92,18 @@ includes/           il motore
   seo.php           SEO e AEO
   sicurezza*.php    sessioni, password, 2FA, CSP, sanificatori
   aggiornamenti.php pacchetti di aggiornamento
+  versione-nuova.php  "c'e una versione nuova": controllo e Scarica e prepara (19.6)
+  copia-sito.php    copia del sito: scarica e ripristina (19.7)
 admin/              il pannello
 sito/               il sito pubblico: index.php (instradamento), viste.php, extra.php (feed, robots, llms), assets/
-api/                endpoint pubblici: nl.php (aperture e clic della newsletter, firma HMAC), csp.php (rapporti CSP)
+api/                endpoint pubblici: nl.php (aperture e clic della newsletter, firma HMAC), csp.php (rapporti CSP),
+                    versione.php (l'ultima versione di una serie del download manager, 19.6)
 install/            l'installatore e gli esempi di .htaccess e Nginx
 moduli/             i moduli (vuota nel prodotto)
 temi/               i temi del sito (Cosmo, Aria, Bottega di partenza)
 uploads/            le immagini caricate
 logs/               i log
-aggiornamenti/      pacchetti caricati, snapshot, avanzamento
+aggiornamenti/      pacchetti caricati, snapshot, avanzamento, copie/ (le copie del sito, 19.7)
 docs/               la documentazione
 ```
 
@@ -149,15 +154,19 @@ Si caricano i file nella cartella scelta e si apre l'indirizzo nel browser. Finc
 3. **Sito e amministratore.** Nome del sito (obbligatorio), descrizione, indirizzo (`https://dominio` oppure
    `https://dominio/cartella`, senza barra finale), lingua (2 lettere), fuso orario, email. Amministratore:
    nome utente (3-100 caratteri `A-Za-z0-9._-`), email, password secondo le regole del capitolo 18.3.
-4. **Installazione.** In due richieste:
+4. **Installazione.** Prima la domanda **"Che sito vuoi fare?"** (dalla 1.3.0): cinque carte, Vuoto (scelto se non si
+   tocca niente), Personale, Attività, Blog, Portfolio (`kit_elenco()`, `includes/kit-partenza.php:27`). Poi, in due richieste:
    - scrive `includes/config.local.php` (2.3);
    - crea tutte le tabelle con `cms_installa_tutto()` (capitolo 6), salva le impostazioni del sito, crea
      l'amministratore (solo se `users` è vuota) e i contenuti di partenza (solo se `pages` è vuota):
-     - form "Contatti" (Nome, Email, Messaggio, consenso);
-     - pagine fatte con l'editor: Home (slug `home`), Blog, Chi sono, Contatti;
-     - articolo "Benvenuto nel tuo nuovo sito" (slug `benvenuto`, categoria `notizie`);
-     - menu "principale" con Home, Chi sono, Blog, Contatti; header e footer di partenza; stile di partenza;
+     - form "Contatti" (Nome, Email, Messaggio, consenso; titolo e frase dal kit);
+     - con Vuoto, pagine fatte con l'editor: Home (slug `home`), Blog, Chi sono, Contatti; con un kit, la Home, Blog e
+       le pagine del kit (vedi sotto);
+     - articolo "Benvenuto nel tuo nuovo sito" (slug `benvenuto`, categoria `notizie`), piu gli articoli d'esempio del kit;
+     - menu "principale" con Home, Chi sono, Blog, Contatti (o le voci del kit); header e footer di partenza; stile di partenza;
      - `temi/.htaccess` (scritto da `temi_proteggi()`).
+   - Pagine e articoli escono alle 00:00 del giorno dell'installazione (fino alla 1.2.7 alle 06:00: installando di
+     notte la home rispondeva 404 fino alle 6).
    - Alla fine scrive `install/.installato` con la data.
    - Se qualcosa va storto: scrive l'errore nel log, **cancella `config.local.php`** (se `.installato` non c'è)
      e mostra l'errore. Si può ripetere l'installazione.
@@ -170,6 +179,27 @@ Dopo l'installazione:
 - dalla pagina Sicurezza si può togliere la cartella `install/` (azione `rimuovi_install`).
 
 L'installatore non scrive file `robots.txt` o `sitemap.xml`: sono calcolati a ogni richiesta (capitolo 16.6).
+
+**I kit di partenza** (1.3.0, `includes/kit-partenza.php`). Ogni kit è un file di soli dati, `includes/kit/<id>.php`, che
+ritorna un array: `nome`, `descrizione`, `ordine`, `form` (titolo e frase del form dei contatti), `home` e `pagine` (le
+sezioni, nella forma corta delle sezioni pronte, 9.11, oppure `['pronta' => '<id>']` per una sezione pronta così com'è),
+`menu` (le voci del menu Principale), `articoli` (articoli d'esempio, usciti uno per giorno prima dell'installazione).
+
+| Kit | Home | Pagine | Menu |
+|---|---|---|---|
+| Vuoto | quella di sempre | Blog, Chi sono, Contatti | Home, Chi sono, Blog, Contatti |
+| Personale | Apertura Scheda (ritratto), tre servizi, testimonianze, ultimi articoli, invito | Blog, Chi sono, Contatti | Home, Chi sono, Blog, Contatti |
+| Attività | Apertura Copertina, numeri, tre servizi con icone, carosello di testimonianze, invito | Blog, Servizi (con prezzi e domande), Chi siamo, Contatti | Home, Servizi, Chi siamo, Blog, Contatti |
+| Blog | Apertura Minimale, griglia degli articoli, chi scrive, invito | Blog, Chi sono, Contatti; due articoli d'esempio in più | Home, Blog, Chi sono, Contatti |
+| Portfolio | Apertura Mosaico, tre lavori, testimonianza, come lavoro, invito | Blog, Lavori (galleria), Chi sono, Contatti | Home, Lavori, Chi sono, Blog, Contatti |
+
+- Nei testi `{sito}` diventa il nome del sito, `{descrizione}` la descrizione in una riga (o una frase che spiega dove
+  scriverla); nelle immagini `{immagine:N}` (1-8) diventa un disegno astratto SVG che `kit_immagini()`
+  (`includes/kit-partenza.php:70`) scrive in `uploads/kit/disegno-N.svg`: sfondo sfumato, aloni e forme nei colori di
+  partenza, sempre uguali da un'installazione all'altra. Nessuna immagine da fuori.
+- Ogni pagina ha un solo h1 (l'Apertura, anche in forma di Banner nelle pagine interne).
+- I link si scrivono dalla radice (`/contatti/`): con il CMS in una cartella li porta lì `cms_con_cartella()` (capitolo 5).
+- Un kit rotto o mancante non ferma l'installatore: semplicemente non compare fra le carte.
 
 ### 2.3 Cosa scrive l'installatore in `config.local.php`
 
@@ -213,6 +243,8 @@ web non lo serve mai (`.htaccess`, capitolo 21). Non va messo in un repository.
 | `CMS_RADICE_SITO` | radice del dominio per i pacchetti (`root/`) | rilevata (capitolo 19.2) |
 | `CMS_PROXY_FIDATO` | crede all'intestazione `X-Forwarded-For` (CMS dietro un proxy) | spenta: vale solo `REMOTE_ADDR` |
 | `CMS_SICUREZZA_SPEGNI` | riga di emergenza: spegne 2FA e lista IP (capitolo 18.11) | spenta |
+| `CMS_AGGIORNAMENTI_URL` | il sito a cui chiedere l'ultima versione (un plumeCMS, senza barra finale; 19.6) | `VERSIONE_SITO_UFFICIALE` |
+| `CMS_AGGIORNAMENTI_HTTP_PROVA` | solo per le prove: con `true` il controllo della versione accetta anche `http://` | spenta (solo HTTPS) |
 
 Note:
 - `CMS_PREFISSO` vale `newdf_` quando manca perché le installazioni di prima dell'installatore non lo scrivono nel loro config.
@@ -238,7 +270,8 @@ Impostazioni scritte dall'installatore: `sito_nome`, `sito_titolo`, `sito_descri
 
 Altre impostazioni importanti, scritte dal pannello: `sicurezza_cfg` (capitolo 18), `seo_config` (16),
 `posta_smtp` e `notifica_email` (15), `editor_*` (9.10), `tema_attivo` e `tema_guasto` (12), `moduli_segreto`
-(segreto di newsletter e captcha, 15).
+(segreto di newsletter e captcha, 15), `versione_controllo` e `versione_controllo_cache` (19.6),
+`scaricabili_impronte` (gli sha256 dei file da scaricare, 14.1).
 
 ---
 
@@ -499,7 +532,7 @@ admin), `is_admin()`, `current_user()`.
 | Editor > Impostazioni | `editor-impostazioni.php` | admin |
 | Editor > Informazioni | `informazioni.php` | admin |
 | SEO e AEO | `seo.php` con le schede panoramica, motori, copertura, prestazioni, analisi, globale, schema, redirect, registro | admin |
-| Impostazioni | `impostazioni.php` (email e SMTP), `sicurezza.php`, `aggiornamenti.php`, `cron-log.php` | admin |
+| Impostazioni | `impostazioni.php` (email e SMTP), `sicurezza.php`, `aggiornamenti.php`, `copia-sito.php` (19.7), `cron-log.php` | admin |
 
 Pagine fuori dal menu: `contenuto.php` (scheda classica di un contenuto), `editor.php` (editor visuale),
 `editor-api.php` (le chiamate JSON dell'editor), `editor-anteprima.php` (la tela dentro l'iframe), `seo-api.php`
@@ -840,6 +873,31 @@ footer, menu, tavolozze, impostazioni e widget spenti. Importa legge al massimo 
 applica solo le parti scelte: header e footer si abbinano per tipo e nome, menu e tavolozze per nome; quelli con
 lo stesso nome si aggiornano, gli altri si aggiungono.
 
+
+### 9.11 Sezioni pronte (dalla 1.3.0)
+
+Nel pannello dell'editor la linguetta **Sezioni** (accanto a Widget) offre 30 sezioni già impaginate, in nove gruppi:
+Apertura (4), Servizi (4), Chi siamo (3), Numeri (3), Testimonianze (3), Prezzi (3), Domande frequenti (3), Contatti (3),
+Invito all'azione (4). Ognuna ha un'anteprima schematica, il nome e una riga di descrizione; c'è la ricerca.
+
+- **Clic**: la variante entra sotto la sezione selezionata (o sotto quella che contiene l'elemento selezionato), altrimenti
+  in fondo alla pagina (`inserisciPronta()`, `admin/assets/editor/editor.js:303`). **Trascinamento**: si posa prima o dopo
+  la sezione sotto il puntatore, con una linea che lo mostra (`text/ed-sezione`, `admin/assets/editor/anteprima.js:101`).
+- Le sezioni entrano copiate, con id nuovi: sono sezioni normali, con colonne e widget esistenti, tutte modificabili.
+  Alcune varianti sono fatte di due sezioni (il titolo sopra, le colonne sotto, senza spazio fra le due).
+- **Dati**: `includes/sezioni-pronte-dati.php`, solo array, nella forma corta di `includes/sezioni-pronte.php`:
+  `['imp' => [sezione], 'colonne' => [[widget, ...], ['imp' => [colonna], 'widget' => [...]]]]`, un widget è
+  `[tipo, [impostazioni]]`; senza larghezze, le colonne si dividono come fa l'editor. `sezioni_pronte_costruisci()`
+  (`includes/sezioni-pronte.php:92`) le trasforma in sezioni dell'editor, `sezioni_pronte_elementi()` le valida con
+  `editor_valida()`, `sezioni_pronte_per_editor()` le mette nel JSON della pagina dell'editor (`admin/editor.php:115`).
+- **Colori**: solo quelli che seguono il sito e i temi (i predefiniti dei widget, gli sfondi Vetro e Gradiente della
+  sezione). Provate con il tema di base, Cosmo, Aria e Bottega: contrasto del testo sopra 4,5 a 1.
+- **Form**: `form:contatti` nei dati diventa il form Contatti del sito (o il primo attivo); senza form il widget non entra.
+- Testi d'esempio neutri, che dicono cosa scriverci. Nessuna immagine: dove servirebbe una foto il campo resta vuoto.
+- Header e footer (Editor > Header e footer) non hanno la linguetta.
+
+Un modulo può aggiungere varianti? Non ancora: i dati sono un file solo del nucleo.
+
 ---
 
 ## 10. Stile del sito
@@ -1085,6 +1143,12 @@ I file che il sito offre da scaricare: manuali, ebook, listini, programmi. Motor
   delle pagine, titolo della scheda e meta compresi, `{versione:<serie>}` diventa quel numero (`scaricabili_versioni_nel_testo()`,
   chiamata da `sito_html()` e, nella tela dell'editor, da `editor_disegna()`); una serie che non c'è dà un testo vuoto.
   Così una versione nuova si pubblica caricando solo il file. Un numero solo (`listino-2026`) non è una versione.
+
+- **Impronta e versione per gli altri siti** (dalla 1.3.0): `api/versione.php?serie=<serie>` risponde in JSON con versione,
+  nome del file, titolo, `sha256`, dimensione, indirizzo `/scarica/<nome>/` e data dell'ultimo file della serie. Lo sha256
+  si calcola una volta (`scaricabili_sha256()`, `includes/scaricabili.php:256`) e si ricorda nell'impostazione
+  `scaricabili_impronte` finché il file non cambia. Accetta solo GET e nomi di serie (con `ultima`); 400, 404, 405
+  altrimenti. È così che il sito di plumeCMS dice da sé qual è l'ultima versione (19.6).
 
 **Widget Download** (gruppo "Dal sito"): i file scelti uno per uno (o una serie, "Sempre l'ultima"; `{versione}` nel
 titolo diventa il numero del file mostrato), ognuno con titolo e descrizione propri se servono,
@@ -1642,6 +1706,62 @@ immagini, pdf, css, js, caratteri, json, webmanifest, map) e `root/.htaccess`.
 Il pacchetto del prodotto non contiene moduli: non va mai applicato a un sito che ha moduli suoi nel nucleo:
 quel sito ha i suoi pacchetti costruiti con `--sito`.
 
+### 19.6 "C'è una versione nuova" (dalla 1.3.0)
+
+Motore `includes/versione-nuova.php`. Il pannello chiede al sito ufficiale di plumeCMS (`CMS_AGGIORNAMENTI_URL`, altrimenti
+`VERSIONE_SITO_UFFICIALE`, `includes/versione-nuova.php:27`) l'ultima versione della serie `plumecms-ultima-aggiornamento`
+con `api/versione.php` (14.1). Il sito ufficiale non ha niente di speciale: è un plumeCMS che ha lo zip di aggiornamento
+nel suo download manager.
+
+- **Quando**: al massimo una volta al giorno (`VERSIONE_OGNI`); la risposta, buona o di errore, si ricorda in
+  `versione_controllo_cache`. Mai durante il caricamento di una pagina: dashboard e Aggiornamenti mostrano quello che il
+  pannello sa e, se è vecchio, il browser chiede il controllo dopo (`aggiornamenti.php`, azione `versione_controlla`, con
+  il token nell'intestazione `X-CSRF`). Solo per l'amministratore. **Controlla adesso** lo rifà subito.
+- **Dove si vede**: nella dashboard una fascia "plumeCMS X è disponibile" con il link; in Aggiornamenti la scheda
+  Versione, con **Scarica e prepara** e la casella "Controlla da solo, una volta al giorno" (`versione_controllo`).
+- **Scarica e prepara** (`versione_scarica_e_prepara()`, `includes/versione-nuova.php:157`): richiede di nuovo i dati,
+  scarica lo zip, controlla che la lunghezza e lo sha256 siano quelli annunciati e lo registra con
+  `agg_registra_pacchetto()`, come uno zip caricato a mano: da lì "Applica ora" (19.4). Una versione già in coda non si
+  scarica due volte.
+- **Sicurezza** (`versione_http()`, `includes/versione-nuova.php:65`): solo HTTPS con il certificato verificato (http
+  solo con `CMS_AGGIORNAMENTI_HTTP_PROVA`, per le prove); nessun redirect seguito; il file si scarica solo dallo stesso
+  host (schema e porta compresi) del sito ufficiale; risposta JSON di al massimo 16 KB, zip di al massimo 50 MB e mai più
+  lungo di quanto annunciato; timeout di 5 secondi per il JSON e 60 per lo zip; ogni errore diventa un messaggio, il
+  pannello va avanti. Nella coda lo zip passa da `agg_leggi_manifest()`: se Sicurezza vuole i pacchetti firmati, uno zip
+  senza firma non entra. Nessuna chiave privata nel CMS: la garanzia è HTTPS più l'impronta.
+- Il registro della sicurezza annota ogni pacchetto scaricato così.
+
+### 19.7 Copia del sito (dalla 1.3.0)
+
+Motore `includes/copia-sito.php`, pagina **Impostazioni > Copia del sito** (`admin/copia-sito.php`), solo per
+l'amministratore, ogni azione in POST con il token CSRF.
+
+- **Prepara la copia** (`copia_crea()`, `includes/copia-sito.php:114`): uno zip in `aggiornamenti/copie/` con
+  `manifest.json` (formato `plumecms-copia`, versione del CMS, prefisso, sito, quante tabelle, righe e file), `db.sql.gz`
+  (le sole tabelle con il prefisso del sito, `agg_dump_db($file, $prefisso)`, stesso formato degli snapshot) e le cartelle
+  `uploads/`, `temi/`, `moduli/`. Fuori: `includes/config.local.php` e ogni file o cartella nascosti. Il manifest ha la
+  firma HMAC-SHA256 dell'impronta dello zip (`sicurezza_pacchetto_impronta()`) con la chiave dei pacchetti di questo sito.
+  Lo zip ha permessi 0600; si scarica solo dal pannello (**Scarica**), la cartella è vietata al web. Se ne tengono 6.
+- **Ripristina** (`copia_ripristina()`, `includes/copia-sito.php:253`): da una copia caricata (che entra fra quelle sul
+  server) o già sul server; serve la spunta di conferma. Prima fa una copia del sito com'è (`prima-del-ripristino`), poi:
+  - nomi dello zip controllati (`copia_nome_voce_ok()`): solo `manifest.json`, `db.sql.gz` e file dentro `uploads/`,
+    `temi/`, `moduli/`, niente `..`, percorsi assoluti, barre rovesce, parti nascoste; 300 MB per file, 2 GB in tutto,
+    rapporto di compressione sotto controllo;
+  - database (`copia_ripristina_db()`, `includes/copia-sito.php:214`): passano solo `DROP TABLE IF EXISTS`, `CREATE TABLE
+    (...)` e `INSERT INTO ... VALUES` su tabelle con il prefisso della copia, una istruzione per riga, riscritte con il
+    prefisso di questo sito; tutto il resto si salta e si conta. Le viste le crea lo schema del sito. L'impostazione
+    `sito_url` resta quella di questa installazione;
+  - file: si scrivono sopra quelli che ci sono (quelli in più restano). Un file eseguibile (`.php`, `.phtml`, `.phar`,
+    `.php.jpg` e simili) entra solo da una copia firmata da questo sito e mai in `uploads/`; da una copia di un altro sito
+    si salta, e il pannello lo dice;
+  - alla fine `temi/.htaccess` si riscrive (`temi_proteggi()`). Se l'utente collegato non c'è più fra quelli della copia,
+    si torna al login.
+- **Limite di caricamento**: la pagina mostra il limite del server; il browser avvisa prima di mandare un file troppo
+  grande, e il server spiega anche quando il file supera `post_max_size` (la richiesta arriva vuota, senza token). Una
+  copia grande si mette con il gestore dei file in `aggiornamenti/copie/` (nome `copia-AAAAMMGG-HHMMSS-nome.zip`) e si
+  ripristina dall'elenco.
+- La pagina dice in un riquadro che la copia contiene dati sensibili e che la password del database non c'è.
+
 ---
 
 ## 20. Cron
@@ -1828,6 +1948,10 @@ Istruzioni in `prove/LEGGIMI.md`. Le principali:
 | `prova-hero.js` | le undici disposizioni dell'Apertura al computer e al telefono: un solo h1, niente scorrimento orizzontale, foto caricate, contrasto di titolo e testo, pulsanti visibili (pagine create da `pagina-hero.php`) |
 | `prova-foto-effetti.js` | sezione Foto di Apertura e Presentazione e interruttore dell'onda, dall'editor al sito |
 | `prova-aggiornamento.js` | aggiornare dal pannello con il pacchetto del prodotto |
+| `prova-kit.js` | (1.3.0) installazione con un kit di partenza, poi ogni pagina del menu al computer e al telefono, in radice e in cartella |
+| `prova-sezioni.js` | (1.3.0) la linguetta Sezioni dell'editor: clic, trascinamento, modifica, pubblicazione; `/sezioni-pronte/` (`pagina-sezioni.php`) con il contrasto |
+| `prova-copia.js` | (1.3.0) copia del sito: prepara, scarica, ripristina, e gli zip da respingere (`zip-copie-prova.py`) |
+| `prova-versione.js` | (1.3.0) "c'è una versione nuova" con due installazioni e un sito ufficiale finto che si comporta male (`finto-ufficiale.php`) |
 | `foto-sito.js`, `quanto-foto.py` | schermate prima e dopo, confrontate al pixel |
 | `router-php-s.php` | router per `php -S` che imita l'`.htaccess` |
 | `tema-cli.php` | attiva, disattiva, ripristina lo stile da riga di comando, per le prove |
@@ -1938,6 +2062,19 @@ può stare dentro una pagina che risponde 200.
 | `scaricabili_elenco()`, `scaricabili_carica($file, $info, $sostituisci)`, `scaricabili_salva_info()`, `scaricabili_elimina()` | download manager |
 | `media_elimina($url)` | cancellazione |
 | `posta_invia(...)` | invio di un'email (SMTP o `mail()`) |
+
+
+**Novità della 1.3.0** (`includes/sezioni-pronte.php`, `includes/kit-partenza.php`, `includes/versione-nuova.php`, `includes/copia-sito.php`)
+
+| Funzione | Cosa fa |
+|---|---|
+| `sezioni_pronte()`, `sezioni_pronte_elementi($id)`, `sezioni_pronte_per_editor()` | le sezioni pronte: dati, una variante validata, l'elenco per l'editor |
+| `sezioni_pronte_costruisci($sezioni)` | forma corta -> sezioni dell'editor |
+| `kit_elenco()`, `kit_leggi($id)`, `kit_sezioni($blocchi, $mappa)`, `kit_immagini()`, `kit_mappa($sito, $descr)` | i kit di partenza |
+| `versione_controlla($forza)`, `versione_nuova()`, `versione_scarica_e_prepara()` | il controllo della versione e "Scarica e prepara" |
+| `copia_crea($etichetta)`, `copia_ripristina($file)`, `copia_elenco()`, `copia_leggi_manifest($zip)` | la copia del sito |
+| `agg_dump_db($file, $prefisso)` | il database in un file; con il prefisso, solo le tabelle del sito |
+| `scaricabili_sha256($file)` | l'impronta di un file da scaricare, ricordata |
 
 ---
 
