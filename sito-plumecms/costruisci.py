@@ -194,6 +194,10 @@ def funzionalita():
         ('newsletter', 'flussi.webp', 'Newsletter, form e popup',
          ['Iscrizioni con doppia conferma, liste, campagne programmate, flussi automatici (benvenuto, promemoria, bivi), aperture e clic contati. I form li costruisci nel pannello, i popup decidi tu quando e dove.',
           'Le email partono dal tuo server, a giri, senza servizi esterni da pagare.']),
+        ('download', 'download.webp', 'Download manager: i tuoi file, a portata di clic',
+         ['Manuali, ebook, listini, programmi: li carichi dalla pagina Download del pannello, con titolo, descrizione e versione. Ogni file ha il suo indirizzo da condividere.',
+          'Una versione nuova prende il posto della vecchia allo stesso indirizzo, così i link già in giro continuano a funzionare. E vedi quante volte ogni file è stato scaricato: le persone sì, i robot no.',
+          'Nelle pagine li mostri con il widget Download, a elenco o a schede, con icona, peso e pulsante. Come nella <a href="/scarica/">pagina Scarica</a> di questo sito.']),
         ('sicurezza', 'sicurezza.webp', 'Sicurezza, senza doverci pensare ogni giorno',
          ['Password robuste, accesso a due fattori, blocchi automatici contro chi prova a indovinare, sessioni che scadono, Content Security Policy, registro degli eventi.',
           'Prima di uscire, plumeCMS è stato messo alla prova con 79 attacchi: tutti respinti. La pagina Sicurezza ti dice in verde e in rosso come sta il tuo sito.']),
@@ -429,7 +433,7 @@ def editor_json():
 
 
 # ------------------------------------------------------------------ file
-USATE = ['editor-ritratto', 'editor', 'stile', 'modelli', 'versioni', 'seo', 'flussi', 'sicurezza', 'aggiornamenti', 'temi',
+USATE = ['editor-ritratto', 'editor', 'stile', 'modelli', 'versioni', 'seo', 'flussi', 'download', 'sicurezza', 'aggiornamenti', 'temi',
          'tema-cosmo', 'tema-aria', 'tema-bottega']
 
 

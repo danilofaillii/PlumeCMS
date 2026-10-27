@@ -71,8 +71,15 @@ Stato, decisioni, contesto e diario non stanno qui: stanno nel second brain
   `releases/cms/plumecms-<VERSIONE>.zip`. Rifiuta: errori di sintassi PHP
   (controllati con `short_open_tag` acceso), il prefisso `newdf_` scritto nel
   codice fuori da `cms.php` e `db.php`, il dominio danilofailli.it nel codice.
-- **A ogni versione, anche il sito di plumeCMS**: `python3 tools/cms-pacchetto.py --aggiornamento`, poi
-  `node tools/manuali-pdf.js`, poi `python3 sito-plumecms/costruisci.py` (aggiorna anche `NOVITA` lì dentro).
+- **Regola di Danilo (27 ottobre 2026): ogni funzionalità nuova aggiorna tre cose, sempre, senza che lo chieda.**
+  1. *Il progetto*: codice, prove, `cms/CHANGELOG.md`, `cms/VERSIONE`, il manuale tecnico (e quello dei temi, se tocca i temi).
+  2. *I PDF*: `node tools/manuali-pdf.js`, dopo aver aggiornato i manuali.
+  3. *Il sito di plumeCMS* (`sito-plumecms/costruisci.py`): `NOVITA`; un blocco nella pagina Funzionalità con la schermata
+     (pagina aggiunta a `sito-plumecms/schermate.js`, immagine in `USATE`); home, Domande frequenti o Installazione se la
+     funzionalità le cambia; i numeri scritti nei testi (widget, attacchi). Poi le schermate rifatte sul sito di prova e
+     `--schermate`, le parti ricostruite, `prove/prova-sito-plumecms.js` con un controllo per il blocco nuovo.
+  Ordine dei comandi: `python3 tools/cms-pacchetto.py --aggiornamento`, `node tools/manuali-pdf.js`,
+  `python3 sito-plumecms/costruisci.py`. A Danilo si consegnano l'aggiornamento del CMS, le parti del sito e i PDF.
 - **Pacchetto di aggiornamento** per un'installazione esistente:
   `python3 tools/cms-pacchetto.py --aggiornamento`. Si carica dal pannello,
   Impostazioni, Aggiornamenti.

@@ -25,7 +25,7 @@ const [B, D, UTENTE, PASSWORD] = process.argv.slice(2);
   await foto('editor-ritratto', '/admin/editor.php?tipo=pagine&id=1', () => editor(1, 'hero', 'stile', true));
   await p.setViewportSize({ width: 1440, height: 900 });
   for (const [n, u] of [['dashboard', '/admin/index.php'], ['stile', '/admin/design.php'], ['modelli', '/admin/modelli.php'], ['versioni', '/admin/versioni.php'],
-    ['seo', '/admin/seo.php'], ['flussi', '/admin/newsletter-flussi.php'], ['sicurezza', '/admin/sicurezza.php'], ['aggiornamenti', '/admin/aggiornamenti.php'],
+    ['seo', '/admin/seo.php'], ['flussi', '/admin/newsletter-flussi.php'], ['sicurezza', '/admin/sicurezza.php'], ['aggiornamenti', '/admin/aggiornamenti.php'], ['download', '/admin/scaricabili.php'],
     ['temi', '/admin/temi.php'], ['menu', '/admin/menu.php'], ['form', '/admin/form.php']]) await foto(n, u);
   await p.setViewportSize({ width: 1280, height: 800 });
   for (const t of ['cosmo', 'aria', 'bottega']) await foto('tema-' + t, `/?preview=1&tema=${t}`);
