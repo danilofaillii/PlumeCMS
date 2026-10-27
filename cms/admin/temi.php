@@ -82,6 +82,8 @@ require_once __DIR__ . '/includes/admin-header.php';
 .tt-meta{font-size:.78rem;color:var(--text-muted);margin:0}
 .tt-desc{font-size:.86rem;margin:0;color:var(--text)}
 .tt-errori{font-size:.8rem;color:#a12a1c;margin:0}
+.tt-ig{display:flex;align-items:center;gap:5px;font-size:.76rem;color:var(--text-muted);margin:0}
+.tt-ig i{display:inline-block;width:14px;height:14px;border-radius:50%;border:1px solid rgba(0,0,0,.12)}
 .tt-azioni{display:flex;gap:.4rem;flex-wrap:wrap;margin-top:auto;padding-top:.4rem}
 .tt-azioni form{display:inline}
 .tt-dove{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:1rem 1.1rem;margin-top:1.4rem;font-size:.86rem;color:var(--text-muted)}
@@ -162,6 +164,7 @@ $baseAlPosto = !$baseAttivo && $guasto && $guasto['slug'] === $scelto;
       </h3>
       <p class="tt-meta">Versione <?= h($t['versione']) ?><?= $t['autore'] !== '' ? ' &middot; ' . h($t['autore']) : '' ?> &middot; cartella temi/<?= h($slug) ?></p>
       <?php if ($t['descrizione'] !== ''): ?><p class="tt-desc"><?= h($t['descrizione']) ?></p><?php endif; ?>
+      <?php if ($t['infografiche']['voci']): ?><p class="tt-ig" title="I colori che il tema dà alle infografiche">Infografiche:<?php foreach ($t['infografiche']['voci'] as $k => $c): ?> <i style="background:<?= h($c) ?>" title="<?= h($k) ?>"></i><?php endforeach; ?></p><?php endif; ?>
       <?php if ($t['errori']): ?><p class="tt-errori"><?= h(implode(' ', $t['errori'])) ?></p><?php endif; ?>
       <div class="tt-azioni">
         <a class="btn btn-secondary btn-sm" href="<?= h($anteprima($slug)) ?>" target="_blank" rel="noopener">Anteprima</a>

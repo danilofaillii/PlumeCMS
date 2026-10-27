@@ -63,7 +63,7 @@ all'aspetto di base.
    (prova, rotto, fatale, mortale; mai nel prodotto).
 2. `node prove/prova-temi.js <base> <cartella CMS installato> <utente> <password>`. Usa `prove/tema-cli.php` per
    attivare e disattivare i temi da riga di comando.
-3. Atteso: 32 su 32. Il controllo "errore fatale: la prima richiesta fallisce" è voluto: quella richiesta va persa, la
+3. Atteso: 40 su 40 (anche i colori delle infografiche: con il tema, senza tema, colori liberi). `temi-collaudo.php` crea anche la pagina `/infografiche-tema/`. Il controllo "errore fatale: la prima richiesta fallisce" è voluto: quella richiesta va persa, la
    successiva risponde con l'aspetto di base.
 4. Alla fine la prova lascia il tema disattivato e lo stile ai predefiniti, ma restano i modelli "Header Prova" e
    "Footer Prova" come predefiniti: per le foto prima e dopo rimetti predefiniti quelli di partenza.

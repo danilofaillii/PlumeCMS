@@ -8,6 +8,7 @@
  *   stile.json     lo Stile del sito del tema (stesso formato di design_valori(), solo le sezioni dell'aspetto)
  *   modelli.json   {"header": albero dell'editor, "footer": albero}
  *   tema.css       CSS in più, caricato dopo sito.css e prima dello Stile del sito
+ *   infografiche   (dentro tema.json) i colori delle infografiche: superfici e i sei colori principali (TEMI_IG_*)
  *   funzioni.php   facoltativo: ritorna ['filtri' => [...], 'eventi' => [...]] come un modulo
  *   viste/*.php    facoltativo: ridisegna una pagina (vedi TEMI_VISTE); ritorna l'HTML come stringa
  *
@@ -20,6 +21,12 @@ require_once __DIR__ . '/design.php';
 
 /** Le sezioni dello Stile del sito che un tema imposta. Identità del sito (nome, logo, favicon) e CSS personalizzato restano di chi li ha scritti. */
 const TEMI_SEZIONI_STILE = ['colori', 'font', 'tipografia', 'pulsanti', 'immagini', 'campi', 'layout', 'sfondo'];
+/** Infografiche: le superfici che un tema può dare (chiave in tema.json -> variabile di sito.css). */
+const TEMI_IG_SUPERFICI = ['sfondo' => 'sfondo', 'bianco' => 'bianco', 'bordo' => 'bordo', 'riga' => 'riga', 'titolo' => 'titolo', 'testo' => 'testo',
+    'muto' => 'muto', 'situazione' => 'situazione', 'su_testata' => 'su-testata', 'su_scuro' => 'su-scuro'];
+/** Infografiche: i sei colori principali. Gli altri della tavolozza (arancio, giallo, versioni scure, tinte chiare) si ricavano da questi. */
+const TEMI_IG_VOCI = ['rosso', 'oro', 'verde', 'ciano', 'viola', 'scuro'];
+
 /** Le pagine che un tema può ridisegnare con viste/<nome>.php, e le variabili che riceve. */
 const TEMI_VISTE = [
     'documento' => 'la pagina intera: $testa (dentro <head>), $testata, $corpo, $piede, $popup, $meta',
@@ -93,6 +100,7 @@ function temi_leggi(string $slug): ?array {
         if ($v === null) $t['errori'][] = "Header e footer ($m) non si leggono.";
         else foreach (['header', 'footer'] as $tipo) if (is_array($v[$tipo] ?? null)) $t['modelli'][$tipo] = $v[$tipo];
     }
+    $t['infografiche'] = temi_ig_leggi((array)($j['infografiche'] ?? []));
     $t['viste'] = [];
     // (string): la chiave '404' in PHP diventa il numero 404, e in_array(..., true) non la riconoscerebbe più.
     foreach (array_keys(TEMI_VISTE) as $n) if (is_file("$dir/viste/$n.php")) $t['viste'][] = (string)$n;
@@ -237,9 +245,73 @@ function temi_controllo_fatale(): void {
 function temi_css_link(): string {
     // Nel pannello (tela dell'editor, anteprime) temi_avvia_sito non gira: il CSS del tema attivo si legge da tema.json, senza PHP.
     $t = array_key_exists('tema_sito', $GLOBALS) ? temi_sito() : (($s = temi_attivo()) !== '' ? temi_leggi($s) : null);
-    if ($t === null || $t['css'] === '') return '';
-    $f = $t['cartella'] . '/' . $t['css'];
-    return '<link rel="stylesheet" id="tema-css" href="' . h(temi_url($t['slug']) . '/' . $t['css'] . '?v=' . (is_file($f) ? filemtime($f) : 0)) . '">';
+    if ($t === null) return '';
+    $out = '';
+    $ig = temi_ig_css($t['infografiche']);
+    if ($ig !== '') $out .= '<style id="tema-ig">' . $ig . '</style>';
+    if ($t['css'] !== '') {
+        $f = $t['cartella'] . '/' . $t['css'];
+        $out .= '<link rel="stylesheet" id="tema-css" href="' . h(temi_url($t['slug']) . '/' . $t['css'] . '?v=' . (is_file($f) ? filemtime($f) : 0)) . '">';
+    }
+    return $out;
+}
+
+// ------------------------------------------------------------
+// Infografiche: i colori dal tema (fase 4)
+// ------------------------------------------------------------
+
+/**
+ * Il blocco "infografiche" di tema.json, ripulito: superfici (TEMI_IG_SUPERFICI), voci (TEMI_IG_VOCI) e "variabili"
+ * (qualsiasi --ig-* di sito.css scritta a mano, senza il prefisso: {"mattone": "#b5523a"}). Solo colori validi.
+ */
+function temi_ig_leggi(array $j): array {
+    $col = fn($x) => is_string($x) && trim($x) !== '' && design_colore_valido(trim($x), false) ? trim($x) : null;
+    $out = ['superfici' => [], 'voci' => [], 'variabili' => []];
+    foreach (TEMI_IG_SUPERFICI as $k => $var) if (($c = $col($j[$k] ?? null)) !== null) $out['superfici'][$var] = $c;
+    foreach (TEMI_IG_VOCI as $k) if (($c = $col($j['voci'][$k] ?? null)) !== null) $out['voci'][$k] = $c;
+    foreach ((array)($j['variabili'] ?? []) as $k => $v) {
+        if (is_string($k) && preg_match('/^[a-z][a-z0-9-]{0,30}$/', $k) && ($c = $col($v)) !== null) $out['variabili'][$k] = $c;
+    }
+    return $out;
+}
+
+/**
+ * Le variabili --ig-* del tema: le superfici e le voci date, le tinte ricavate dalle voci (seconda tinta più scura,
+ * tinte chiare per gli occhielli, arancio, giallo, versioni scure, mattone, lilla, marrone), poi quelle scritte a mano.
+ * Stanno in :root, che vince sui valori di Carta di sito.css (:where(:root)). Vuoto se il tema non dà niente.
+ */
+function temi_ig_css(array $ig): string {
+    $v = [];
+    foreach ($ig['superfici'] ?? [] as $k => $c) $v[$k] = $c;
+    $voci = $ig['voci'] ?? [];
+    $mix = fn(string $a, string $b, int $p) => "color-mix(in srgb,var(--ig-$a)," . $b . " $p%)";
+    foreach ($voci as $k => $c) {
+        $v[$k] = $c;
+        // La seconda tinta: più scura; per lo scuro (testate e riquadri) un po' più chiara, come in Carta.
+        $v["$k-2"] = $k === 'scuro' ? $mix('scuro', '#fff', 14) : $mix($k, '#000', 22);
+        if ($k !== 'scuro') $v["$k-chiaro"] = $mix($k, '#fff', 72);
+    }
+    if (isset($voci['rosso'])) {
+        $v['rosso-scuro'] = $mix('rosso', '#000', 18); $v['rosso-scuro-2'] = $mix('rosso', '#000', 30);
+        $v['mattone'] = $mix('rosso', '#000', 12); $v['mattone-2'] = $mix('rosso', '#000', 32); $v['mattone-chiaro'] = $mix('rosso', '#fff', 66);
+    }
+    if (isset($voci['rosso'], $voci['oro'])) { $v['arancio'] = 'color-mix(in srgb,var(--ig-rosso),var(--ig-oro))'; $v['arancio-2'] = $mix('arancio', '#000', 20); }
+    if (isset($voci['oro'])) {
+        $v['oro-scuro'] = $mix('oro', '#000', 25); $v['oro-scuro-2'] = $mix('oro', '#000', 42); $v['oro-scuro-chiaro'] = $mix('oro', '#fff', 35);
+        $v['giallo'] = $mix('oro', '#ff0', 25); $v['giallo-2'] = $mix('giallo', '#000', 15);
+    }
+    if (isset($voci['verde'])) { $v['verde-scuro'] = $mix('verde', '#000', 30); $v['verde-scuro-2'] = $mix('verde', '#000', 45); }
+    if (isset($voci['ciano'])) { $v['ciano-scuro'] = $mix('ciano', '#000', 30); $v['ciano-scuro-2'] = $mix('ciano', '#000', 45); }
+    if (isset($voci['viola'])) $v['lilla'] = $mix('viola', '#fff', 62);
+    if (isset($voci['scuro'])) {
+        $v['marrone'] = $mix('scuro', '#fff', 25); $v['marrone-2'] = 'var(--ig-scuro-2)';
+        if (!isset($v['su-scuro'])) $v['su-scuro'] = $mix('scuro', '#fff', 70);
+    }
+    foreach ($ig['variabili'] ?? [] as $k => $c) $v[$k] = $c;
+    if (!$v) return '';
+    $righe = [];
+    foreach ($v as $k => $c) $righe[] = "--ig-$k:$c";
+    return ':root{' . implode(';', $righe) . '}';
 }
 
 /** Lo stile del tema in anteprima, sopra quello salvato (design_valori lo usa solo durante un'anteprima). */

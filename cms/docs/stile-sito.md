@@ -46,5 +46,5 @@ Solo l'amministratore la vede.
   si vedono grigi invece che bianchi.
 - Restano fissi apposta: ombre nere, il bianco dietro le immagini, i colori ufficiali dei social, le stelle, la lightbox,
   le testate colorate della Scheda, la grafica della home di danilofailli (`.finestra`, `.ritratto`, `.chip`), le
-  infografiche (`.igx`, si legano al tema nella fase 4). I colori di partenza scritti nelle impostazioni dei widget
+  infografiche (`.igx`: dalla fase 4 hanno le loro variabili `--ig-*`, vedi `temi.md`). I colori di partenza scritti nelle impostazioni dei widget
   (per esempio la CTA verde scuro) non sono CSS: li cambia il tema.

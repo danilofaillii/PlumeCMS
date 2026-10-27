@@ -62,6 +62,24 @@ const varCss = (p, v) => p.evaluate((v) => getComputedStyle(document.documentEle
   const corpo = await php.text();
   ok('il PHP del tema non si legge come testo dal browser', !corpo.includes('llms_intestazione'), php.status());
 
+  // 3b. Infografiche: i colori con un nome li dà il tema, quelli liberi restano
+  const ig = async (pag) => pag.evaluate(() => {
+    const [a, b] = document.querySelectorAll('.igx');
+    const cs = (e) => getComputedStyle(e);
+    return { rosso: cs(document.documentElement).getPropertyValue('--ig-rosso').trim(), sfondoCorpo: cs(a.querySelector('.igx-corpo')).backgroundColor,
+      testataA: cs(a.querySelector('.igx-testa')).backgroundImage, testataB: cs(b.querySelector('.igx-testa')).backgroundImage,
+      voceB: cs(b.querySelector('.igx-num')).backgroundColor, mattone: cs(document.documentElement).getPropertyValue('--ig-mattone').trim(),
+      sbagliata: cs(document.documentElement).getPropertyValue('--ig-sbagliata').trim() };
+  });
+  await anonimo.goto(B + '/infografiche-tema/', { waitUntil: 'networkidle' });
+  const igTema = await ig(anonimo);
+  ok('infografiche con il tema: il rosso è quello del tema', igTema.rosso === '#dc2626', igTema);
+  ok('infografiche con il tema: corpo della card del tema', igTema.sfondoCorpo === 'rgb(248, 250, 252)', igTema.sfondoCorpo);
+  ok('infografiche con il tema: testata scura del tema (non più marrone)', igTema.testataA.includes('rgb(30, 41, 59)') && !igTema.testataA.includes('rgb(45, 27, 14)'), igTema.testataA);
+  ok('infografiche con il tema: i colori liberi restano', igTema.testataB.includes('rgb(18, 52, 86)') && igTema.voceB === 'rgb(101, 67, 33)', [igTema.testataB, igTema.voceB]);
+  ok('infografiche con il tema: tinta scritta a mano dal tema', igTema.mattone === '#b45309', igTema.mattone);
+  ok('infografiche con il tema: un valore che non è un colore viene scartato', igTema.sbagliata === '', igTema.sbagliata);
+
   // 4. Pannello: con un tema attivo l'editor carica il CSS del tema, mai il suo PHP
   await p.goto(B + '/admin/index.php', { waitUntil: 'networkidle' });
   ok('pannello aperto con il tema attivo', p.url().includes('/admin/index.php') && !(await p.content()).includes('Fatal error'));
@@ -96,6 +114,10 @@ const varCss = (p, v) => p.evaluate((v) => getComputedStyle(document.documentEle
   cli('disattiva'); cli('ripristina-stile');
   await anonimo.goto(B + '/', { waitUntil: 'networkidle' });
   ok('disattivato e stile ripristinato: sfondo di base', await sfondo(anonimo) === sfondoBase);
+  await anonimo.goto(B + '/infografiche-tema/', { waitUntil: 'networkidle' });
+  const igBase = await ig(anonimo);
+  ok('infografiche senza tema: Carta (rosso, corpo crema, testata marrone)', igBase.rosso === '#e8553e' && igBase.sfondoCorpo === 'rgb(254, 249, 240)' && igBase.testataA.includes('rgb(45, 27, 14)'), igBase);
+  ok('infografiche senza tema: i colori liberi sono gli stessi', igBase.testataB === igTema.testataB && igBase.voceB === igTema.voceB);
   ok('nessun errore JavaScript nelle pagine', err.length === 0, err);
   await br.close();
   console.log(`\n${n - ko} su ${n} OK`);

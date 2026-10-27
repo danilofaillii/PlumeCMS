@@ -9,6 +9,7 @@ $_SERVER['HTTP_HOST'] = '127.0.0.1'; $_SERVER['REQUEST_URI'] = '/';
 $cms = rtrim($argv[1] ?? '', '/');
 require $cms . '/includes/config.php';
 require_once $cms . '/includes/modelli.php';
+require_once $cms . '/includes/editor-controlli.php';
 require_once $cms . '/includes/editor.php';
 $t = $cms . '/temi';
 $scrivi = function (string $f, string $testo) use ($t) {
@@ -21,7 +22,10 @@ $h = modelli_albero_header_partenza();
 $h['elementi'][] = editor_sezione([editor_widget('testo', ['contenuto' => '<p>Questo header viene dal tema Prova</p>'])]);
 $scrivi('prova/modelli.json', $json(['header' => $h, 'footer' => modelli_albero_footer_partenza()]));
 $scrivi('prova/tema.json', $json(['nome' => 'Prova', 'versione' => '0.1', 'autore' => 'Collaudo', 'descrizione' => 'Tema di collaudo: chiaro, rosso, header suo, 404 suo.',
-    'css' => 'tema.css', 'stile' => 'stile.json', 'modelli' => 'modelli.json']));
+    'css' => 'tema.css', 'stile' => 'stile.json', 'modelli' => 'modelli.json',
+    'infografiche' => ['sfondo' => '#f8fafc', 'bordo' => '#cbd5e1', 'titolo' => '#0f172a', 'testo' => '#334155',
+        'voci' => ['rosso' => '#dc2626', 'oro' => '#d97706', 'verde' => '#059669', 'ciano' => '#0891b2', 'viola' => '#7c3aed', 'scuro' => '#1e293b'],
+        'variabili' => ['mattone' => '#b45309', 'sbagliata' => 'url(javascript:alert(1))']]]));
 $scrivi('prova/stile.json', $json([
     'colori' => ['sistema' => ['primario' => '#e11d48', 'secondario' => '#0d9488', 'testo' => '#1f2937', 'accento' => '#16a34a', 'sfondo' => '#ffffff'],
         'personalizzati' => [['id' => 'sfondo-2', 'nome' => 'Sfondo secondario', 'valore' => '#f3f4f6'], ['id' => 'testo-2', 'nome' => 'Testo attenuato', 'valore' => '#4b5563'],
@@ -39,4 +43,13 @@ $scrivi('fatale/tema.json', $json(['nome' => 'Fatale', 'descrizione' => 'Errore 
 $scrivi('fatale/funzioni.php', "<?php\nreturn [ \"filtri\" => \n");
 $scrivi('mortale/tema.json', $json(['nome' => 'Mortale', 'descrizione' => 'Ridefinisce una funzione del CMS: errore fatale che try/catch non prende.']));
 $scrivi('mortale/funzioni.php', "<?php\nfunction h(\$s) { return \$s; }\nreturn [];\n");
-echo "temi di collaudo scritti in $t\n";
+// La pagina /infografiche-tema/: un'infografica con i colori con un nome (seguono il tema) e una con colori liberi (restano).
+$albero = editor_valida(['elementi' => [editor_sezione([
+    editor_widget('ig_passi', ['titolo' => 'Colori del tema']),
+    editor_widget('ig_passi', ['titolo' => 'Colori liberi', 'testata_colore' => '#123456', 'colore_libero' => '#654321']),
+])]]);
+$st = db()->prepare('SELECT id FROM ' . tbl('pages') . ' WHERE slug = ?'); $st->execute(['infografiche-tema']);
+$id = (int)$st->fetchColumn();
+if (!$id) { db()->prepare('INSERT INTO ' . tbl('pages') . " (title, slug, status) VALUES ('Infografiche e tema', 'infografiche-tema', 'published')")->execute(); $id = (int)db()->lastInsertId(); }
+editor_salva($id, $albero, true, 'collaudo', 'pagina di prova dei colori delle infografiche');
+echo "temi di collaudo scritti in $t, pagina /infografiche-tema/ ($id)\n";

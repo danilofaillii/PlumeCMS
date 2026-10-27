@@ -158,6 +158,7 @@ require_once __DIR__ . '/includes/admin-header.php';
   <a class="btn btn-secondary btn-sm" href="editor-temi.php?esporta=1">Esporta i temi salvati (JSON)</a>
   <a class="btn btn-secondary btn-sm" href="versioni.php?ambito=tema">Cronologia</a>
   <p>Un tema è un insieme di colori e forme per le infografiche (testata, corpo, bordo, angoli, carattere, palette delle voci). Si applica dal campo <b>Tema</b> di ogni widget infografica nell'editor; da lì, con "Salva come tema", nasce un tema nuovo. I dieci preimpostati restano sempre; quelli salvati da te si rinominano, si duplicano e si eliminano qui.</p>
+  <p><b>Con i temi del sito</b> (Editor, Temi): i colori con un nome (rosso, oro, verde, testata scura, corpo crema...) li decide il tema attivo, così le infografiche stanno bene con il resto del sito. I colori liberi scritti a mano (per esempio <code>#1b1340</code>) restano sempre quelli. Carta usa solo colori con un nome: segue il tema. Gli altri preimpostati hanno colori scritti a mano: restano uguali con ogni tema.</p>
 </div>
 
 <div class="tm-griglia">
