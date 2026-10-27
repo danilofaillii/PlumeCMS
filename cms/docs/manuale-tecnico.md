@@ -782,7 +782,7 @@ editor_registra_widget('saluto', [
 });
 
 editor_registra_asset('saluto', ['css' => 'saluto.css']);   // file in sito/assets/
-// dalla 1.2.6 anche più file: ['css' => ['saluto.css', 'saluto-varianti.css']]
+// dalla 1.2.6 anche più file, caricati nell'ordine scritto: ['css' => ['saluto.css', 'saluto-varianti.css']]
 ```
 
 Regole:

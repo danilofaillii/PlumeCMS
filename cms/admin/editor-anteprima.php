@@ -36,7 +36,9 @@ $html = vista_pagina($meta, $corpo, $testa, editor_percorso_pagina($pagina));
 // Niente link del sito: gli script dell'editor e Sortable vanno in fondo.
 $html = str_replace('</body>', '<script src="assets/editor/Sortable.min.js"></script><script src="assets/editor/anteprima.js"></script></body>', $html);
 // Gli script dei widget registrati (schede, fisarmonica, contatori...) servono anche nella tela.
-$asset = editor_asset_pagina('ed-w-' . implode(' ed-w-', array_keys(editor_widget_registrati())));
-foreach ($asset['css'] as $f) if (is_file(dirname(__DIR__) . '/sito/assets/' . $f)) $html = str_replace('</head>', '<link rel="stylesheet" href="' . h(sito_versione_asset($f)) . '"></head>', $html);
+// I widget registrati (esterni) e l'Apertura, l'unico widget del nucleo con fogli suoi (le disposizioni, 1.2.6).
+$asset = editor_asset_pagina('ed-w-' . implode(' ed-w-', array_merge(array_keys(editor_widget_registrati()), ['hero'])));
+// Al contrario, come le viste del sito (che mettono ogni <link> davanti): stesso ordine dei fogli nell'editor e sul sito.
+foreach (array_reverse($asset['css']) as $f) if (is_file(dirname(__DIR__) . '/sito/assets/' . $f)) $html = str_replace('</head>', '<link rel="stylesheet" href="' . h(sito_versione_asset($f)) . '"></head>', $html);
 foreach ($asset['js'] as $f) if (is_file(dirname(__DIR__) . '/sito/assets/' . $f)) $html = str_replace('</body>', '<script src="' . h(sito_versione_asset($f)) . '" defer></script></body>', $html);
 echo $html;

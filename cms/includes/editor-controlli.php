@@ -111,7 +111,12 @@ function editor_asset_pagina(string $html): array {
     foreach (editor_registro()['asset'] as $tipo => $a) {
         if (!str_contains($html, 'ed-w-' . $tipo)) continue;
         // Un widget puo avere piu file (1.2.6: le disposizioni dell'Apertura): 'css' => ['a.css', 'b.css'].
-        foreach (['css', 'js'] as $k) foreach ((array)($a[$k] ?? []) as $f) if ($f !== '' && !in_array($f, $out[$k], true)) $out[$k][] = $f;
+        // Le viste mettono ogni <link> davanti al precedente: i fogli dello stesso widget si danno al contrario, cosi
+        // nella pagina escono nell'ordine scritto (hero-base.css prima di hero-a.css e hero-b.css).
+        foreach (['css', 'js'] as $k) {
+            $file = (array)($a[$k] ?? []);
+            foreach ($k === 'css' ? array_reverse($file) : $file as $f) if ($f !== '' && !in_array($f, $out[$k], true)) $out[$k][] = $f;
+        }
     }
     return $out;
 }

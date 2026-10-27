@@ -2,10 +2,12 @@
 // una foto al computer (1280) e al telefono (390) e i controlli: un solo h1, niente scorrimento orizzontale, foto
 // caricata (se la disposizione la mostra), titolo e testo leggibili (contrasto almeno 4,5 per il testo, 3 per il
 // titolo grande), pulsanti visibili, nessun errore JavaScript.
-// uso: node prova-hero.js <base> <cartella delle foto> [id,id,...]
+// Con utente, password e id della pagina /hero-classica/ prova anche la tendina Disposizione nell'editor: le undici
+// voci, la tela che cambia disposizione con i fogli caricati, i testi che restano. Non salva niente.
+// uso: node prova-hero.js <base> <cartella delle foto> [id,id,...] [utente password id-pagina]
 const { chromium } = require('playwright');
 const fs = require('fs');
-const [B, D, IDS] = process.argv.slice(2);
+const [B, D, IDS, UTENTE, PASSWORD, PAGINA] = process.argv.slice(2);
 const ids = (IDS || 'classica,centrata,copertina,divisa,rivista,scheda,minimale,mosaico,inclinata,banner,diagonale').split(',');
 let n = 0, ko = 0; const ok = (t, c, extra = '') => { n++; if (!c) ko++; console.log((c ? 'OK  ' : 'KO  ') + t + (extra ? ' ' + JSON.stringify(extra).slice(0, 200) : '')); };
 const contrasto = (p, sel) => p.evaluate((sel) => {
@@ -46,6 +48,31 @@ const contrasto = (p, sel) => p.evaluate((sel) => {
       ok(`${pre} nessun errore JavaScript`, err.length === 0, err);
       await p.context().close();
     }
+  }
+  if (UTENTE) {
+    // La tendina nell'editor, come un utente: si sceglie, la tela cambia, i testi restano.
+    const p = await (await br.newContext({ viewport: { width: 1440, height: 950 } })).newPage();
+    const err = []; p.on('pageerror', e => err.push(e.message.slice(0, 200))); p.on('dialog', d => d.accept());
+    await p.goto(B + '/admin/login.php'); await p.fill('#username', UTENTE); await p.fill('#password', PASSWORD);
+    await Promise.all([p.waitForNavigation(), p.click('button[type=submit]')]);
+    await p.goto(`${B}/admin/editor.php?tipo=pagine&id=${PAGINA}`, { waitUntil: 'networkidle' });
+    await p.waitForTimeout(1200);
+    if (await p.locator('#ed-chiudi-revisioni').isVisible()) await p.click('#ed-chiudi-revisioni');
+    const tela = p.frameLocator('iframe').first();
+    await tela.locator('[data-ed-tipo="hero"]').first().click(); await p.waitForTimeout(400);
+    await p.click('.ed-schede-pannello button[data-pannello="modifica"]'); await p.waitForTimeout(200);
+    const tendina = p.locator('#ed-controlli .ed-controllo', { hasText: 'Disposizione' }).first().locator('select');
+    const voci = await tendina.locator('option').evaluateAll(os => os.map(o => o.value));
+    ok('editor: la tendina Disposizione ha le undici voci, la classica scelta', voci.length === 11 && await tendina.inputValue() === 'classica', voci);
+    const fogli = await tela.locator('link[href*="hero-"]').evaluateAll(ls => ls.map(l => l.getAttribute('href').replace(/.*\//, '').replace(/\?.*/, '')));
+    ok('editor: nella tela i fogli delle disposizioni, in ordine', fogli.join(',') === 'hero-base.css,hero-a.css,hero-b.css', fogli);
+    for (const d of ['copertina', 'mosaico', 'banner', 'classica']) {
+      await tendina.selectOption(d); await p.waitForTimeout(1200);
+      const h1 = await tela.locator('.ed-w-hero h1').first().innerText();
+      const giusta = d === 'classica' ? await tela.locator('.ed-w-hero .ed-hero-v').count() === 0 : await tela.locator(`.ed-w-hero .ed-hero-${d}`).count() === 1;
+      ok(`editor: scelta "${d}", la tela la mostra e il titolo resta`, giusta && /leggero come una piuma/i.test(h1), h1);
+    }
+    ok('editor: nessun errore JavaScript', err.length === 0, err);
   }
   await br.close();
   console.log(`\n${n - ko} su ${n} OK`);
