@@ -45,7 +45,8 @@ prove/          prova-install.js (installazione da zero con Playwright), prova-t
 esempi/         tema-lavagna/: il tema d'esempio del manuale dei temi (provato, non entra nello zip)
 sito-plumecms/  il sito da cui si scarica plumeCMS, fatto con plumeCMS: costruisci.py scrive il pacchetto
                 releases/sito/sito-plumecms-<versione>-parte-<k>-di-<n>.zip, ognuna sotto 1900 KB, da caricare in ordine
-tools/manuali-pdf.js  i tre manuali in PDF (releases/manuali/); tools/manuale-uso-schermate.js le schermate del manuale d'uso
+tools/manuali-pdf.js  i tre manuali in PDF (releases/manuali/); tools/manuale-uso-schermate.js le schermate del manuale d'uso;
+tools/consegna.py     lo zip unico da dare a Danilo (releases/consegna/)
 ```
 
 Stato, decisioni, contesto e diario non stanno qui: stanno nel second brain
@@ -86,7 +87,9 @@ Stato, decisioni, contesto e diario non stanno qui: stanno nel second brain
   Dalla 1.2.5 il numero di versione nelle pagine è automatico (`{versione:plumecms-ultima}`): per una versione del CMS
   senza pagine nuove Danilo carica solo i due zip da Download; le parti del sito servono quando cambiano le pagine.
   Ordine dei comandi: `python3 tools/cms-pacchetto.py --aggiornamento`, `node tools/manuali-pdf.js`,
-  `python3 sito-plumecms/costruisci.py`. A Danilo si consegnano l'aggiornamento del CMS, le parti del sito e i PDF.
+  `python3 sito-plumecms/costruisci.py`, `python3 tools/consegna.py`. **Regola di Danilo (28 ottobre 2026): a lui si consegna
+  un solo zip**, `releases/consegna/plumecms-<versione>-consegna.zip`, con dentro l'aggiornamento e lo zip completo del CMS,
+  le parti del sito, i tre PDF e un LEGGIMI con l'ordine di caricamento. Non più i file uno per uno.
 - **Pacchetto di aggiornamento** per un'installazione esistente:
   `python3 tools/cms-pacchetto.py --aggiornamento`. Si carica dal pannello,
   Impostazioni, Aggiornamenti.
