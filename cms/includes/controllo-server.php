@@ -49,7 +49,7 @@ function server_controlli(): array {
     // PHP e le estensioni
     $php = [];
     $php[] = $c('PHP ' . PHP_VERSION, version_compare(PHP_VERSION, '8.2.0', '>=') ? 'ok' : 'ko', 'Il sito gira con PHP ' . PHP_VERSION . '.',
-        version_compare(PHP_VERSION, '8.2.0', '>=') ? '' : 'Serve PHP 8.2 o piu recente: in cPanel si cambia da "Seleziona versione PHP" (Select PHP Version).');
+        version_compare(PHP_VERSION, '8.2.0', '>=') ? '' : 'Serve PHP 8.2 o più recente: in cPanel si cambia da "Seleziona versione PHP" (Select PHP Version).');
     $estensioni = [
         'pdo_mysql' => ['il database', true], 'mbstring' => ['i testi con gli accenti', true], 'openssl' => ['le connessioni sicure e le password', true],
         'json' => ['i dati dell\'editor', true], 'zlib' => ['le copie del sito', true], 'zip' => ['i pacchetti di aggiornamento e le copie', true],
@@ -62,20 +62,20 @@ function server_controlli(): array {
     }
     $mysql = '';
     try { $mysql = (string)db()->query('SELECT VERSION()')->fetchColumn(); } catch (Throwable $e) {}
-    $php[] = $c('Database', $mysql !== '' ? 'ok' : 'ko', $mysql !== '' ? 'MySQL ' . $mysql . ' risponde.' : 'Il database non risponde.', $mysql !== '' ? '' : 'Controlla i dati del database in includes/config.local.php, o chiedi all\'hosting se il database e acceso.');
+    $php[] = $c('Database', $mysql !== '' ? 'ok' : 'ko', $mysql !== '' ? 'MySQL ' . $mysql . ' risponde.' : 'Il database non risponde.', $mysql !== '' ? '' : 'Controlla i dati del database in includes/config.local.php, o chiedi all\'hosting se il database è acceso.');
     $g['PHP e database'] = $php;
 
     // L'indirizzo del sito: HTTPS e risposta vera
     $sito = cms_url_sito();
     $ind = [];
     if (!str_starts_with($sito, 'https://')) {
-        $ind[] = $c('HTTPS', 'ko', 'L\'indirizzo del sito e ' . $sito . ': senza https il browser lo segna come "non sicuro" e i motori di ricerca lo penalizzano.',
+        $ind[] = $c('HTTPS', 'ko', 'L\'indirizzo del sito è ' . $sito . ': senza https il browser lo segna come "non sicuro" e i motori di ricerca lo penalizzano.',
             'Attiva il certificato gratuito dall\'hosting (in cPanel: SSL/TLS Status, "Run AutoSSL"), poi scrivi l\'indirizzo con https:// nell\'installazione (impostazione sito_url) o chiedi a chi ti segue il sito.');
     } else {
         [$cod, , $err] = server_http($sito . '/robots.txt');
         $ind[] = $cod === 200
             ? $c('HTTPS', 'ok', 'Il sito risponde in https con un certificato valido (' . $sito . ').')
-            : $c('HTTPS', 'ko', $err === 'certificato non valido' ? 'Il certificato di ' . $sito . ' non e valido o e scaduto.' : 'L\'indirizzo ' . $sito . ' non risponde come dovrebbe (' . ($cod ?: $err) . ').',
+            : $c('HTTPS', 'ko', $err === 'certificato non valido' ? 'Il certificato di ' . $sito . ' non è valido o è scaduto.' : 'L\'indirizzo ' . $sito . ' non risponde come dovrebbe (' . ($cod ?: $err) . ').',
                 'Controlla il certificato dal pannello dell\'hosting (in cPanel: SSL/TLS Status) e che il dominio punti a questo server.');
     }
     $g['Indirizzo del sito'] = $ind;
@@ -94,18 +94,18 @@ function server_controlli(): array {
     // L'email
     $p = server_email_ultima();
     $g['Email'] = [$p === null
-        ? $c('Email che partono', 'avviso', 'Non e ancora stata mandata un\'email di prova.', 'Premi "Manda un\'email di prova": arriva al tuo indirizzo di amministratore.')
-        : ($p['ok'] ? $c('Email che partono', 'ok', 'L\'email di prova a ' . $p['a'] . ' e partita il ' . date('d/m/Y \a\l\l\e H:i', (int)$p['quando']) . '.', 'Se non ti e arrivata, guarda nello spam: se e li, configura il server SMTP in Impostazioni, Configurazione email.', 'impostazioni.php')
-                    : $c('Email che partono', 'ko', 'L\'ultima prova (' . date('d/m/Y H:i', (int)$p['quando']) . ') non e partita: ' . $p['errore'], 'In Impostazioni, Configurazione email, metti i dati SMTP della casella del tuo hosting (server, porta, utente, password).', 'impostazioni.php'))];
+        ? $c('Email che partono', 'avviso', 'Non è ancora stata mandata un\'email di prova.', 'Premi "Manda un\'email di prova": arriva al tuo indirizzo di amministratore.')
+        : ($p['ok'] ? $c('Email che partono', 'ok', 'L\'email di prova a ' . $p['a'] . ' è partita il ' . date('d/m/Y \a\l\l\e H:i', (int)$p['quando']) . '.', 'Se non ti è arrivata, guarda nello spam: se è lì, configura il server SMTP in Impostazioni, Configurazione email.', 'impostazioni.php')
+                    : $c('Email che partono', 'ko', 'L\'ultima prova (' . date('d/m/Y H:i', (int)$p['quando']) . ') non è partita: ' . $p['errore'], 'In Impostazioni, Configurazione email, metti i dati SMTP della casella del tuo hosting (server, porta, utente, password).', 'impostazioni.php'))];
 
     // Il sito degli aggiornamenti
     require_once __DIR__ . '/versione-nuova.php';
     $uff = versione_sito();
     try {
         $v = versione_chiedi();
-        $agg = $c('Sito degli aggiornamenti', 'ok', $uff . ' risponde: l\'ultima versione e la ' . $v['versione'] . ' (questa e la ' . cms_versione() . ').', '', 'aggiornamenti.php');
+        $agg = $c('Sito degli aggiornamenti', 'ok', $uff . ' risponde: l\'ultima versione è la ' . $v['versione'] . ' (questa è la ' . cms_versione() . ').', '', 'aggiornamenti.php');
     } catch (Throwable $e) {
-        $agg = $c('Sito degli aggiornamenti', 'avviso', $uff . ': ' . $e->getMessage(), 'Il sito funziona lo stesso: solo l\'avviso "c\'e una versione nuova" non arriva. Controlla l\'indirizzo in Impostazioni, Aggiornamenti; se e giusto, l\'hosting puo bloccare le connessioni in uscita.', 'aggiornamenti.php');
+        $agg = $c('Sito degli aggiornamenti', 'avviso', $uff . ': ' . $e->getMessage(), 'Il sito funziona lo stesso: solo l\'avviso "c\'è una versione nuova" non arriva. Controlla l\'indirizzo in Impostazioni, Aggiornamenti; se è giusto, l\'hosting può bloccare le connessioni in uscita.', 'aggiornamenti.php');
     }
     $g['Aggiornamenti'] = [$agg];
 
