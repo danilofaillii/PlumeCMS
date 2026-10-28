@@ -58,6 +58,12 @@ let n = 0, ko = 0; const ok = (t, c, extra = '') => { n++; if (!c) ko++; console
   const sm = await p.goto(B + '/sitemap.xml'); const smT = await sm.text(); ok('sitemap.xml con home e articolo', sm.status() === 200 && smT.includes('<urlset') && smT.includes('/benvenuto/'));
   const rb = await p.goto(B + '/robots.txt'); const rbT = await rb.text(); ok('robots.txt con la sitemap', rb.status() === 200 && /Sitemap:/.test(rbT), rbT.split('\n').slice(0, 4));
   const no = await p.goto(B + '/pagina-che-non-esiste/'); ok('404 su una pagina inesistente', no.status() === 404);
+  // 1.4.0: l'icona di partenza, a /favicon.ico e nel <link rel="icon">, anche con il CMS in una cartella.
+  await p.goto(B + '/', { waitUntil: 'networkidle' });
+  const icone = await p.$$eval('link[rel=icon]', l => l.map(x => x.getAttribute('href')));
+  const fi = await p.request.get(B + '/favicon.ico'); const fiB = await fi.body();
+  const fl = await p.request.get(new URL(icone[0] || '/', B).href);
+  ok('favicon di partenza: /favicon.ico 200 (ICO) e link rel=icon nella cartella del sito', fi.status() === 200 && fiB.readUInt16LE(2) === 1 && fl.status() === 200 && icone.length >= 1 && icone.every(h => h.startsWith(new URL(B).pathname.replace(/\/$/, '') + '/')), { stato: fi.status(), icone });
   // 6. pannello
   await p.goto(B + CMSB + '/admin/login.php'); await p.fill('#username', 'prova'); await p.fill('#password', 'Collaudo-Officina-2026');
   await Promise.all([p.waitForNavigation(), p.click('button[type=submit]')]);

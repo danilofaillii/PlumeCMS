@@ -88,7 +88,13 @@ function sito_favicon(): never {
         sito_vai(preg_match('~^https?://~', $f) ? $f : cms_origine_o_sito() . $f, 302);
     }
     $file = __DIR__ . '/assets/favicon.ico';
-    sito_rispondi(200, 'image/x-icon', (string)file_get_contents($file), ['Cache-Control: public, max-age=86400', 'Content-Length: ' . filesize($file)]);
+    // Non con sito_rispondi: un'immagine non ha il charset.
+    header('Content-Type: image/x-icon');
+    header('Cache-Control: public, max-age=86400');
+    header('Content-Length: ' . filesize($file));
+    sicurezza_intestazioni_base();
+    if (($_SERVER['REQUEST_METHOD'] ?? 'GET') !== 'HEAD') readfile($file);
+    exit;
 }
 
 /** Lo schema e l'host del sito, per un indirizzo che comincia con "/". */
