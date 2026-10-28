@@ -2186,7 +2186,7 @@ Il prefisso del pannello predefinito è `/new`; per un CMS nella radice si passa
 pagine aperte senza login, CSV, open redirect, forza bruta, blocchi per nome utente e IP di casa, upload di PHP e
 SVG, file protetti, SQL injection, intestazioni, session fixation, cron dal web, firma della newsletter, CSP del
 pannello, pacchetti non firmati, copia del sito, aspetto del pannello e impostazioni delle foto, import da WordPress (SSRF, rimandi,
-file PHP mascherati, HTML con script; serve `prove/finto-wp.php` con `FINTO_WP`) (1.4.0); il gruppo 21 la pagina Social (ruolo, token, Origin, contenuti inventati, titolo con HTML, immagine con `javascript:`) (1.5.0). Oggi: 177 prove respinte, due saltate (il test del burnout, del modulo danilofailli, e la newsletter firmata senza `SEGRETO`).
+file PHP mascherati, HTML con script; serve `prove/finto-wp.php` con `FINTO_WP`) (1.4.0); il gruppo 21 la pagina Social (ruolo, token, Origin, contenuti inventati, titolo con HTML, immagine con `javascript:`) (1.5.0); il gruppo 22 il riquadro di fine articolo (pagina senza login, ruolo, token, Origin, editor, editor-api e versioni del riquadro per il redattore, bozza in anteprima per il redattore e per chi non è entrato) (1.6.0). Oggi: 201 prove respinte, due saltate (il test del burnout, del modulo danilofailli, e la newsletter firmata senza `SEGRETO`).
 
 Dopo la prova l'IP di chi l'ha lanciata è bloccato: prima di altre prove si svuota la tabella
 `<prefisso>sicurezza_tentativi`.
@@ -2581,8 +2581,9 @@ e non esce in cima o in fondo alla pagina ma dentro l'articolo.
 
 **Struttura di partenza** (`modelli_crea()`, `includes/modelli.php:178`): una sezione larga quanto
 l'articolo (`larghezza` `articolo`), senza spazio sopra e sotto (lo spazio lo dà la cornice), con un Titolo h3
-"Prima di andare" e un Testo da riscrivere con `margine_sotto` 0. Un widget aggiunto dopo il Testo gli sta quindi
-attaccato finché non si dà uno Spazio sotto al Testo (il manuale d'uso lo dice).
+"Prima di andare" e un Testo da riscrivere (chiave `contenuto`, quella del widget Testo). Gli spazi dei widget restano
+quelli di partenza: il margine sopra il primo titolo e quello sotto l'ultimo widget li toglie il CSS del riquadro (28.2),
+così un pulsante aggiunto sotto il Testo ha il suo spazio e il riquadro non ha un vuoto in fondo.
 
 **Acceso e spento.** Non c'è una colonna nuova: acceso vuol dire pubblicato. Pubblica nell'editor chiama
 `modelli_stato($id, true)` (`admin/editor-api.php`, come per header e footer); Spegni chiama `modelli_stato($id, false)`,
@@ -2605,14 +2606,26 @@ Un riquadro che disegnato non ha né testo né immagini, video, form, pulsanti o
 `vista_articolo_editor()` o `vista_articolo()`: `[$corpo, $cssFine] = vista_fine_articolo($corpo)`, e il CSS va
 nell'head. Pagine, home, archivi, glossario non lo ricevono.
 
-`vista_fine_articolo($corpo)` (`sito/viste.php:245`) mette il riquadro **prima dell'ultimo
-`</article>`**, quindi dentro la colonna di lettura, dopo il testo e le domande frequenti. Un articolo senza `<article>`
-(sezioni dell'editor tutte a tutta pagina, o la vista di un tema che non lo scrive) lo riceve dopo il corpo, dentro
-`<div class="wrap ed-stretta fine-articolo-fuori">`. Il CSS dell'editor esce in `<style id="ed-css-fine">`.
+`vista_fine_articolo($corpo)` (`sito/viste.php:245`) cerca l'`<article class="corpo">` (la colonna di lettura) e mette
+il riquadro **prima del `</article>` che lo chiude**, dopo il testo e le domande frequenti: `vista_chiusura_article()`
+conta gli `<article>` annidati, così il riquadro non finisce dentro l'ultima scheda di una Griglia di articoli. Senza
+colonna di lettura:
+- un articolo dell'editor a tutta pagina (sezioni non "Articolo") lo riceve dopo il corpo, dentro
+  `<div class="wrap ed-stretta fine-articolo-fuori"><div class="corpo">`, largo quanto la lettura (748 px) e con i
+  caratteri della lettura, come nella tela dell'editor;
+- la vista di un tema che non scrive `class="corpo"` né `ed-pagina` lo riceve prima del suo ultimo `</article>` (o in
+  fondo, se non ne ha).
+Il CSS dell'editor esce in `<style id="ed-css-fine">`.
 
 L'aspetto (`sito/assets/sito.css`, `sito/assets/sito.css:194`): margine sopra 3em, padding 28px 30px
 (22px 18px sotto i 640 px), `border-radius: var(--r)`, sfondo `var(--bg-2)`, bordo `var(--bordo)`, due ombre. Sono le
-variabili dello Stile del sito: i temi che le ridefiniscono cambiano anche il riquadro senza saperlo.
+variabili dello Stile del sito: i temi che le ridefiniscono cambiano anche il riquadro senza saperlo. Dentro il
+riquadro il primo titolo non ha margine sopra e l'ultimo widget non ha margine sotto. I link: la regola dei link
+dell'articolo è diventata `.corpo a:not(:where(.fine-articolo a)),:where(.fine-articolo) .corpo a`, con lo stesso peso
+di prima (fuori dal riquadro non cambia niente); dentro il riquadro i widget tengono i loro colori come in una pagina
+(un pulsante Pieno viola ha il testo bianco, non il ciano dei link), i link del testo restano quelli dell'articolo.
+Valgono invece le altre regole di `.corpo` (per esempio `.corpo img{background:#fff}`: un PNG trasparente esce su
+bianco, come negli articoli dell'editor).
 
 ### 28.3 Nel pannello
 

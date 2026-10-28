@@ -764,8 +764,6 @@ bozza** si vedono solo nelle anteprime (quella della pagina del riquadro e Vedi 
 - *Il riquadro non esce sul sito.* Guarda la pagina del riquadro: se dice **Spento**, non l'hai mai pubblicato
   (Modifica nell'editor, poi Pubblica) o l'hai spento (premi Accendi). Esce solo sotto gli articoli, non nelle pagine.
 - *Accendi dice che il riquadro non è ancora stato pubblicato.* La prima volta si accende con **Pubblica** nell'editor.
-- *Il pulsante è troppo attaccato al testo.* Fai doppio clic sul testo, scheda **Avanzate**, gruppo Layout:
-  in **Spazio sotto (px)** scrivi per esempio 20.
 - *Non vedo la linguetta.* È solo dell'amministratore: entra con un utente amministratore.
 
 ---

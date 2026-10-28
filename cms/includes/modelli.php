@@ -181,7 +181,7 @@ function modelli_crea(string $tipo, string $nome, ?array $albero = null): int {
         require_once __DIR__ . '/editor.php';
         $albero = editor_valida(['elementi' => [editor_sezione([
             editor_widget('titolo', ['testo' => 'Prima di andare', 'livello' => 'h3']),
-            editor_widget('testo', ['testo' => '<p>Questo riquadro esce in fondo a ogni articolo. Scrivi qui quello che vuoi far trovare a chi ha letto fino alla fine: un invito alla newsletter, un contatto, un consiglio di lettura.</p>', 'margine_sotto' => ['d' => 0]]),
+            editor_widget('testo', ['contenuto' => '<p>Questo riquadro esce in fondo a ogni articolo. Scrivi qui quello che vuoi far trovare a chi ha letto fino alla fine: un invito alla newsletter, un contatto, un consiglio di lettura.</p>']),
         ], ['larghezza' => 'articolo', 'spazio_sopra' => ['d' => 0, 'm' => 0], 'spazio_sotto' => ['d' => 0, 'm' => 0]])]]);
     }
     if ($albero === null) {
@@ -355,13 +355,30 @@ function modelli_condizione_peso(array $c, array $ctx): ?int {
 }
 
 /**
+ * 1.6.0: l'anteprima di un modello in bozza (?preview=1&header=ID, &footer=ID, &fine=ID) è dell'amministratore.
+ * SITO_ANTEPRIMA vale per chiunque sia entrato nel pannello (anche il redattore, per i suoi contenuti); i modelli no.
+ */
+function modelli_anteprima_admin(): bool {
+    static $si = null;
+    if ($si !== null) return $si;
+    if (!defined('SITO_ANTEPRIMA') || !SITO_ANTEPRIMA || empty($_SESSION['admin_user_id'])) return $si = false;
+    try {
+        $st = db()->prepare('SELECT role FROM ' . tbl('users') . ' WHERE id = ?');
+        $st->execute([(int)$_SESSION['admin_user_id']]);
+        return $si = $st->fetchColumn() === 'admin';
+    } catch (Throwable $e) {
+        return $si = false;
+    }
+}
+
+/**
  * Il modello di un tipo per il contesto. Ritorna la riga, false se il contenuto ha scelto "nessuno",
  * null se non c'è nessun modello (si torna al codice di prima).
  */
 function modelli_scegli(string $tipo, ?array $ctx = null) {
     $ctx = $ctx ?? modelli_contesto();
     // Anteprima dal pannello: ?header=ID o ?footer=ID forzano un modello (anche in bozza) per vederlo sul sito.
-    if (defined('SITO_ANTEPRIMA') && SITO_ANTEPRIMA && isset($_GET[$tipo]) && ctype_digit((string)$_GET[$tipo])) {
+    if (modelli_anteprima_admin() && isset($_GET[$tipo]) && ctype_digit((string)$_GET[$tipo])) {
         $m = modelli_leggi((int)$_GET[$tipo]);
         if ($m && $m['tipo'] === $tipo) return $m;
     }
@@ -511,7 +528,7 @@ function modelli_fine_articolo(): ?array {
         }
         $m = null;
         $bozza = false;
-        if (defined('SITO_ANTEPRIMA') && SITO_ANTEPRIMA && isset($_GET['fine']) && ctype_digit((string)$_GET['fine'])) {
+        if (modelli_anteprima_admin() && isset($_GET['fine']) && ctype_digit((string)$_GET['fine'])) {
             $f = modelli_leggi((int)$_GET['fine']);
             if ($f && $f['tipo'] === 'fine') { $m = $f; $bozza = true; }
         }

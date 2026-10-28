@@ -736,6 +736,87 @@ echo json_encode($o);
     if (idx) await post(admin.p, ADMIN + '/social.php?scheda=calendario', form({ _csrf: t, azione: 'programmato_elimina', id: idx }), CT);
   }
 
+  // === 22. (1.6.0) Articoli > Aggiungi sempre alla fine: la pagina e il riquadro sono dell'amministratore, ogni azione vuole
+  // il token, la bozza si vede in anteprima solo dall'amministratore.
+  {
+    const form = (o) => new URLSearchParams(o).toString();
+    const CT = { 'Content-Type': 'application/x-www-form-urlencoded' };
+    const PAG = ADMIN + '/fine-articolo.php';
+    const anon = await browser.newContext();
+    const ra = await anon.request.get(PAG, { maxRedirects: 0 });
+    ok('1.6.0: fine-articolo.php senza login: rimanda al login', [302, 303].includes(ra.status()) && /login/.test(ra.headers()['location'] || ''), { status: ra.status() });
+    const rpa = await anon.request.post(PAG, { form: { azione: 'crea' }, maxRedirects: 0 });
+    ok('1.6.0: fine-articolo.php crea senza login: rifiutato', rpa.status() !== 200 && !/editor\.php/.test(rpa.headers()['location'] || ''), { status: rpa.status(), location: rpa.headers()['location'] });
+    // Senza token, dall'amministratore: niente riquadro creato, acceso o spento.
+    for (const az of ['crea', 'accendi', 'spegni']) {
+      const r = await post(admin.p, PAG, form({ azione: az }), CT);
+      ok('1.6.0: fine-articolo.php ' + az + ' senza token: 403', r.status === 403, { status: r.status });
+    }
+    // Il token si prende dalla pagina, che ha sempre un form (Crea, Accendi o Spegni).
+    let t = await tokenDi(admin.p, PAG);
+    ok('1.6.0: (preparazione) token della pagina letto', t !== '');
+    for (const az of ['crea', 'spegni']) {
+      const est = await admin.ctx.request.post(PAG, { headers: { 'Origin': 'https://evil.example' }, form: { _csrf: t, azione: az }, maxRedirects: 0 });
+      ok('1.6.0: fine-articolo.php ' + az + ' con Origin esterno: 403', est.status() === 403, { status: est.status() });
+    }
+    // Il riquadro: se manca lo crea la prova (in bozza: sul sito non esce), com'era prima lo rimette alla fine.
+    let id = 0, creato = false;
+    const leggi = async () => { await admin.p.goto(PAG, { waitUntil: 'networkidle' }); const h = await admin.p.locator('#fa-modifica').getAttribute('href').catch(() => null); return h ? +(h.match(/id=(\d+)/) || [0, 0])[1] : 0; };
+    id = await leggi();
+    if (!id) { t = await tokenDi(admin.p, PAG); await post(admin.p, PAG, form({ _csrf: t, azione: 'crea' }), CT); id = await leggi(); creato = true; }
+    ok('1.6.0: (preparazione) il riquadro esiste', id > 0, { id });
+    const acceso = await admin.p.locator('#fa-spegni').count() > 0;
+    const dove = await admin.p.locator('a:has-text("Vedi sotto l\'ultimo articolo")').getAttribute('href').catch(() => null);
+    if (acceso) { t = await tokenDi(admin.p, PAG); await post(admin.p, PAG, form({ _csrf: t, azione: 'spegni' }), CT); }
+    if (red.dentro) {
+      await red.p.goto(PAG, { waitUntil: 'networkidle' });
+      const fuori = !/fine-articolo\.php/.test(red.p.url()) && ((await red.p.content()).includes('riservata') || /index\.php|login\.php/.test(red.p.url()));
+      ok('1.6.0: il redattore non apre Aggiungi sempre alla fine: torna alla dashboard', fuori, { url: red.p.url() });
+      await red.p.goto(ADMIN + '/contenuti.php?tipo=articoli', { waitUntil: 'networkidle' });
+      ok('1.6.0: il redattore non vede la linguetta nella lista degli articoli', await red.p.locator('#ct-fine-articolo').count() === 0 && await red.p.locator('a[href*="fine-articolo.php"]').count() === 0);
+      const tr = await tokenDi(red.p, ADMIN + '/contenuti.php?tipo=articoli');
+      for (const az of ['crea', 'accendi', 'spegni']) {
+        const r = await post(red.p, PAG, form({ _csrf: tr, azione: az }), CT);
+        ok('1.6.0: il redattore, fine-articolo.php ' + az + ' con il suo token: 403', r.status === 403, { status: r.status });
+      }
+      const ed = await red.ctx.request.get(ADMIN + '/editor.php?tipo=modelli&id=' + id, { maxRedirects: 0 });
+      ok('1.6.0: il redattore non apre il riquadro nell\'editor', ed.status() !== 200, { status: ed.status() });
+      const ea = await red.ctx.request.get(ADMIN + '/editor-anteprima.php?tipo=modelli&id=' + id, { maxRedirects: 0 });
+      ok('1.6.0: il redattore non apre la tela del riquadro', ea.status() !== 200 || !/fine-articolo/.test(await ea.text()), { status: ea.status() });
+      for (const [az, extra] of [['salva', { albero: JSON.stringify({ elementi: [] }), pubblica: '1' }], ['impostazioni', { titolo: 'x', stato: 'published' }]]) {
+        const r = await post(red.p, ADMIN + '/editor-api.php', form({ _csrf: tr, azione: az, tipo: 'modelli', id: String(id), ...extra }), CT);
+        ok('1.6.0: il redattore, editor-api ' + az + ' sul riquadro: 403', r.status === 403, { status: r.status });
+      }
+      await red.p.goto(ADMIN + '/versioni.php?ambito=modello&oggetto=' + id, { waitUntil: 'networkidle' });
+      ok('1.6.0: il redattore non vede le versioni del riquadro', await red.p.locator('a[href*="tipo=modelli&id=' + id + '"], a[href*="tipo=modelli&amp;id=' + id + '"]').count() === 0);
+      if (dove) {
+        await red.p.goto(new URL(dove, ADMIN + '/').href.replace(/#.*$/, ''), { waitUntil: 'networkidle' });
+        ok('1.6.0: il redattore con ?preview=1&fine=ID non vede il riquadro in bozza', await red.p.locator('aside.fine-articolo').count() === 0);
+      }
+    }
+    if (dove) {
+      const u = new URL(dove, ADMIN + '/').href.replace(/#.*$/, '');
+      const ap = await anon.newPage();
+      await ap.goto(u, { waitUntil: 'networkidle' });
+      ok('1.6.0: un visitatore con ?preview=1&fine=ID non vede il riquadro in bozza', await ap.locator('aside.fine-articolo').count() === 0 && !(await ap.content()).includes('data-modello="' + id + '"'));
+      await ap.goto(u.replace(/fine=\d+/, 'fine=' + id + '%20OR%201=1'), { waitUntil: 'networkidle' });
+      ok('1.6.0: ?fine= con SQL: nessun riquadro, nessun errore', await ap.locator('aside.fine-articolo').count() === 0 && !/SQLSTATE|Fatal error|Warning:/.test(await ap.content()));
+      // L'amministratore sì (la prova sopra non è vuota) e, con l'id di un header, non esce un header al posto del riquadro.
+      await admin.p.goto(u, { waitUntil: 'networkidle' });
+      ok('1.6.0: (controllo) l\'amministratore vede la bozza in anteprima', await admin.p.locator('aside.fine-articolo').count() === 1);
+      await admin.p.goto(u.replace(/fine=\d+/, 'fine=1'), { waitUntil: 'networkidle' });
+      ok('1.6.0: ?fine= con l\'id di un altro modello (header): nessun riquadro', id === 1 || await admin.p.locator('aside.fine-articolo').count() === 0);
+    } else console.log('--  anteprima del riquadro: saltata (nessun articolo pubblicato)');
+    await anon.close();
+    // Com'era prima.
+    if (acceso) { t = await tokenDi(admin.p, PAG); await post(admin.p, PAG, form({ _csrf: t, azione: 'accendi' }), CT); }
+    if (creato) {
+      t = await tokenDi(admin.p, ADMIN + '/modelli.php');
+      await post(admin.p, ADMIN + '/modelli.php', form({ _csrf: t, azione: 'cestina', id: String(id) }), CT);
+      await post(admin.p, ADMIN + '/modelli.php', form({ _csrf: t, azione: 'elimina', id: String(id), cestino: '1' }), CT);
+    }
+  }
+
   // === pulizia: elimina il redattore di prova
   {
     await admin.p.goto(ADMIN + '/utenti.php', { waitUntil: 'networkidle' });

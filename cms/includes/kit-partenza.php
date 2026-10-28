@@ -259,9 +259,9 @@ function kit_costruisci(string $kitId, string $sito, string $descrizione, string
         // La pagina del blog: l'indirizzo esiste perché esiste la pagina; l'elenco degli articoli lo disegna il sito.
         if ($pagina('Blog', 'blog', $blog)) $log[] = 'pagina Blog (/blog/)';
         if ($pagina('Chi sono', 'chi-sono', [editor_sezione([editor_widget('titolo', ['testo' => 'Chi sono', 'livello' => 'h1']),
-            editor_widget('testo', ['testo' => '<p>Qui racconti chi sei e cosa fai. Due o tre paragrafi bastano: cosa offri, a chi, perché ti si può dare fiducia.</p><p>Questa pagina è un esempio: aprila nell\'editor e riscrivila.</p>'])], ['larghezza' => 'articolo'])])) $log[] = 'pagina Chi sono';
+            editor_widget('testo', ['contenuto' => '<p>Qui racconti chi sei e cosa fai. Due o tre paragrafi bastano: cosa offri, a chi, perché ti si può dare fiducia.</p><p>Questa pagina è un esempio: aprila nell\'editor e riscrivila.</p>'])], ['larghezza' => 'articolo'])])) $log[] = 'pagina Chi sono';
         if ($pagina('Contatti', 'contatti', [editor_sezione([editor_widget('titolo', ['testo' => 'Contatti', 'livello' => 'h1']),
-            editor_widget('testo', ['testo' => '<p>Scrivimi dal modulo qui sotto: arriva all\'indirizzo email del sito.</p>']), editor_widget('modulo', ['tipo' => 'form:' . $formId])], ['larghezza' => 'articolo'])])) $log[] = 'pagina Contatti con il form';
+            editor_widget('testo', ['contenuto' => '<p>Scrivimi dal modulo qui sotto: arriva all\'indirizzo email del sito.</p>']), editor_widget('modulo', ['tipo' => 'form:' . $formId])], ['larghezza' => 'articolo'])])) $log[] = 'pagina Contatti con il form';
     }
 
     // Gli articoli: quello di benvenuto e quelli d'esempio del kit.

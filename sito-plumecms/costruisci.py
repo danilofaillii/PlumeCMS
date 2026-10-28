@@ -157,7 +157,7 @@ def home():
         ('storia', 'Versioni', 'Ogni salvataggio lascia una versione: la confronti, la guardi in anteprima, ci torni con un clic.', '/funzionalita/#versioni'),
         ('grafico-su', 'SEO e AEO', 'Sitemap, robots, dati strutturati, llms.txt, IndexNow e Search Console. Per Google e per le intelligenze artificiali.', '/funzionalita/#seo'),
         ('email', 'Newsletter, form e social', 'Iscrizioni con doppia conferma, campagne, flussi automatici, form e popup. E ogni mattina i post pronti per i social.', '/funzionalita/#social'),
-        ('scudo-spunta', 'Sicurezza', 'Due fattori, blocchi contro i tentativi, CSP, pacchetti firmati. Messo alla prova con 177 attacchi.', '/funzionalita/#sicurezza'),
+        ('scudo-spunta', 'Sicurezza', 'Due fattori, blocchi contro i tentativi, CSP, pacchetti firmati. Messo alla prova con 201 attacchi.', '/funzionalita/#sicurezza'),
     ]
     riq = lambda f: w('riquadro_icona', icona=f[0], titolo=f[1], testo=f[2], link={'url': f[3], 'nuova': False}, livello='h3', vista='impilata', allineamento={'d': 'left'})
     p.sezione([[titolo('Tutto quello che serve, *già dentro.*', 'Nello zaino', 'Niente da installare a parte, niente abbonamenti da ricordare.', centro=True)]], **spazi(80, 8))
@@ -238,7 +238,7 @@ def funzionalita():
           'Nelle pagine li mostri con il widget Download, a elenco o a schede, con icona, peso e pulsante. Come nella <a href="/scarica/">pagina Scarica</a> di questo sito.']),
         ('sicurezza', 'sicurezza.webp', 'Sicurezza, senza doverci pensare ogni giorno',
          ['Password robuste, accesso a due fattori, blocchi automatici contro chi prova a indovinare, sessioni che scadono, Content Security Policy, registro degli eventi.',
-          'Prima di uscire, plumeCMS è stato messo alla prova con 177 attacchi: tutti respinti. La pagina Sicurezza ti dice in verde e in rosso come sta il tuo sito.']),
+          'Prima di uscire, plumeCMS è stato messo alla prova con 201 attacchi: tutti respinti. La pagina Sicurezza ti dice in verde e in rosso come sta il tuo sito.']),
         ('aggiornamenti', 'aggiornamenti.webp', 'Aggiornamenti dal pannello, con la rete sotto',
          ['Un aggiornamento è uno zip: lo carichi da Impostazioni, Aggiornamenti, e premi Applica. Prima di toccare qualunque cosa il pannello fa una copia di sicurezza del database e dei file.',
           'Se qualcosa va storto, rimette tutto com\'era da solo. Puoi anche programmare l\'aggiornamento per la notte.',

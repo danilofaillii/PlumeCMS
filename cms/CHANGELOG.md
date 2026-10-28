@@ -19,10 +19,15 @@ Il prodotto si chiama **plumeCMS** (nome scelto il 26 ottobre 2026; prima, per p
 - **Esporta e importa** delle impostazioni dell'editor portano il riquadro insieme a header e footer (uno solo: chi
   importa aggiorna quello che c'è).
 - Header e footer non dà più avvisi con il tipo di modello nuovo.
+- Sicurezza: l'anteprima di un header, di un footer o del riquadro in bozza (indirizzo con `?preview=1&header=`,
+  `&footer=`, `&fine=`) la vede solo l'amministratore. Prima bastava essere entrati nel pannello, anche da redattore.
+- Corretto: con il kit vuoto le pagine Chi sono e Contatti mostravano "Scrivi qui il testo." al posto del testo
+  d'esempio (c'era dalla 1.3.0).
 - Tolte tre emoji scritte nei file (Newsletter > Flussi, anteprima dell'editor, menu di navigazione): ora sono entità
   HTML, a schermo uguali.
 - Manuale d'uso: capitolo 16 nuovo, "Un riquadro in fondo a ogni articolo" (ora i capitoli sono 31). Manuale tecnico:
-  capitolo 28. Prove: `prove/prova-fine-articolo.js`, ATTACCHI_DA_RIEMPIRE.
+  capitolo 28. Prove: `prove/prova-fine-articolo.js` (41 controlli), 24 prove di attacco nuove (201 in tutto, tutte
+  passate).
 
 ## 1.5.0 (28 ottobre 2026) - I social, ogni mattina
 

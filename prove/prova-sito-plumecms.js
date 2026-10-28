@@ -122,7 +122,7 @@ async function contrastoParole(pg) {
     ok(`Funzionalità (1.4.0): il blocco ${id}, con la schermata`, await v.locator(`#${id} img[src*="${img}"]`).count() === 1 && re.test(await v.locator(`#${id}`).innerText()));
   ok('Funzionalità (1.6.0): il blocco del riquadro in fondo agli articoli, con la schermata', await v.locator('#fine-articolo img[src*="fine-articolo.webp"]').count() === 1 && /Aggiungi sempre alla fine/.test(await v.locator('#fine-articolo').innerText()));
   ok('Funzionalità (1.5.0): il blocco dei social, con l\'email del mattino', await v.locator('#social img[src*="social.webp"]').count() === 1 && /pronti ogni mattina/.test(await v.locator('#social').innerText()));
-  ok('Funzionalità: 177 attacchi respinti, non più 163', /177 attacchi/.test(await v.locator('#sicurezza').innerText()));
+  ok('Funzionalità: 201 attacchi respinti, non più 177', /201 attacchi/.test(await v.locator('#sicurezza').innerText()));
   ok('favicon del sito', await v.locator('link[rel=icon][href*="favicon.png"]').count() === 1);
 
   // "Installalo in 5 minuti" (pagina Installazione): cosa serve prima e il carosello delle cinque schermate vere

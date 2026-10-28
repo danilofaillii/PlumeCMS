@@ -193,9 +193,12 @@ h1,h2,h3{font-family:var(--f-titolo);letter-spacing:-.01em;margin:0}
 /* 1.6.0: il riquadro "Aggiungi sempre alla fine" in fondo a ogni articolo (includes/modelli.php, vista_fine_articolo) */
 .fine-articolo{margin:3em 0 0;padding:28px 30px;border-radius:var(--r);background:var(--bg-2);border:1px solid var(--bordo);box-shadow:0 16px 44px rgba(0,0,0,.24),0 2px 8px rgba(0,0,0,.12)}
 .fine-articolo>.ed-pagina>:first-child,.fine-articolo>:first-child{margin-top:0}
-.fine-articolo-fuori{margin-bottom:3em}
+.fine-articolo .ed-sezione:first-of-type .ed-colonna>.ed-widget:first-of-type>:first-child,.fine-articolo .ed-sezione:first-of-type .ed-colonna>.ed-widget:first-of-type .ed-testo>:first-child{margin-top:0}
+.fine-articolo .ed-sezione:last-of-type .ed-colonna>.ed-widget:last-of-type{margin-bottom:0}
+.wrap.fine-articolo-fuori{max-width:748px;margin-bottom:3em}
 @media (max-width:640px){.fine-articolo{padding:22px 18px}}
-.corpo a{color:var(--ciano)}
+/* 1.6.0: nel riquadro di fine articolo i widget tengono i loro colori (pulsanti, icone, social), come in una pagina; i link del testo restano quelli dell'articolo */
+.corpo a:not(:where(.fine-articolo a)),:where(.fine-articolo) .corpo a{color:var(--ciano)}
 .citazione-autore{margin:1.5em 0 0;font:600 15px/1.4 var(--f-testo);letter-spacing:.08em;text-transform:uppercase;color:var(--testo-3)}
 .corpo img{height:auto;border-radius:12px;background:#fff}
 .corpo table{width:100%;border-collapse:collapse;font-size:15px;margin:0 0 1.5em;display:block;overflow-x:auto}

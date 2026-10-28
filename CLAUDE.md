@@ -39,7 +39,7 @@ cms/            il CMS: è esattamente quello che si carica sul server
   VERSIONE, CHANGELOG.md, README.md, INSTALLA.md
 tools/          cms-pacchetto.py (costruisce gli zip), pacchetto.py (pacchetti per il
                 pannello Aggiornamenti), sicurezza-prova.js (79 prove di attacco)
-prove/          prova-install.js (installazione da zero con Playwright), prova-social.js (social ed email del mattino), prova-temi.js, prova-pannello-temi.js,
+prove/          prova-install.js (installazione da zero con Playwright), prova-social.js (social ed email del mattino), prova-fine-articolo.js (il riquadro in fondo agli articoli), prova-temi.js, prova-pannello-temi.js,
                 prova-temi-partenza.js, prova-carica-temi.js (temi), prova-foto-effetti.js (velo ed effetti delle foto), prova-hero.js (le undici aperture),
                 foto-sito.js e quanto-foto.py (schermate prima e dopo, al pixel)
 esempi/         tema-lavagna/: il tema d'esempio del manuale dei temi (provato, non entra nello zip)
@@ -93,7 +93,7 @@ Stato, decisioni, contesto e diario non stanno qui: stanno nel second brain
 - **Pacchetto di aggiornamento** per un'installazione esistente:
   `python3 tools/cms-pacchetto.py --aggiornamento`. Si carica dal pannello,
   Impostazioni, Aggiornamenti.
-- **Versione**: `cms/VERSIONE` (oggi 1.5.0) e una voce in `cms/CHANGELOG.md` a ogni
+- **Versione**: `cms/VERSIONE` (oggi 1.6.0) e una voce in `cms/CHANGELOG.md` a ogni
   zip con contenuto diverso. Mai cambiare il contenuto di una versione già data.
 - **Prove** prima di dire finito:
   - `php -n -d short_open_tag=1 -l` su ogni file PHP toccato, `node --check` sui js;
@@ -129,7 +129,17 @@ Le decisioni complete, con data e perché, stanno nel second brain, `plumecms/de
 
 ## Stato al 28 ottobre 2026
 
-Fatto: plumeCMS 1.5.0 (28 ottobre): email del mattino "Oggi sul sito" e testi social del giorno portati dal modulo di
+Fatto: plumeCMS 1.6.0 (28 ottobre): Articoli > linguetta "Aggiungi sempre alla fine" (richiesta di Danilo): un riquadro
+ombreggiato composto con l'editor visuale che esce in fondo a ogni articolo. Modello di tipo `fine` (`includes/modelli.php`,
+uno solo, acceso quando è pubblicato), pagina `admin/fine-articolo.php`, `vista_fine_articolo()` e `vista_chiusura_article()`
+in `sito/viste.php` (dentro `<article class="corpo">`, fuori per gli articoli a tutta pagina), `.fine-articolo` in `sito.css`
+(i link dell'articolo non colorano più i widget del riquadro). Anteprime dei modelli in bozza solo all'amministratore
+(`modelli_anteprima_admin()`, anche header e footer). Corretti il testo d'esempio del kit vuoto (chiave `contenuto`) e tre
+emoji scritte nei file. Manuale d'uso capitolo 16 (31 capitoli), tecnico capitolo 28. Prove: install radice e cartella 37/37,
+`prova-fine-articolo.js` 41/41 (38 senza l'articolo largo), attacchi 201/201 (gruppo 22), social 28/28, aggiornamento
+1.5.0 -> 1.6.0 13/13 (sito uguale tranne il conto alla rovescia), aspetti 56/56, sito di plumeCMS in sei parti 81/81, file del
+pannello 6/6. Lavoro fatto con due agenti (prove, manuali) e controllato rifacendo le prove principali.
+1.5.0 (28 ottobre): email del mattino "Oggi sul sito" e testi social del giorno portati dal modulo di
 danilofailli.it nel CMS, per qualunque sito (`includes/social.php`, `admin/social.php`, riquadro Social della scheda, passo
 del cron; tabelle `social_contenuti` e `social_programmati`; immagini 1200x630 e 1080x1350 con GD; i dati vecchi del
 modulo, `articles.social_summary` e `social_pillar`, entrano da soli una volta). Capitolo 20 del manuale d'uso, 27 del

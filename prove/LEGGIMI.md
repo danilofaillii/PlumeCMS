@@ -20,7 +20,8 @@ Installa plumeCMS da zero con il browser (Playwright) e controlla sito e pannell
 
 
 
-Le prove di attacco: ogni OK è un attacco respinto (177 nella 1.5.0, con FINTO_WP; 118 nella 1.4.0, con `CMS_DIR` e `SEGRETO`; le 21 nuove sono sul
+Le prove di attacco: ogni OK è un attacco respinto (201 nella 1.6.0, con FINTO_WP: le 24 nuove, gruppo 22, sono su Aggiungi sempre alla
+fine; 177 nella 1.5.0; 118 nella 1.4.0, con `CMS_DIR` e `SEGRETO`; le 21 nuove sono sul
 tipo di sito in prova, i primi passi, Esegui adesso del cron e Controlla il server). Si lanciano contro un'installazione locale, mai contro un sito vero:
 `CMS_DIR=<cartella del CMS installato> node tools/sicurezza-prova.js <base> <utente> <password> [prefisso-pannello]`.
 Le prove del modulo danilofailli (burnout) si saltano da sole dove il modulo non c'è.
@@ -351,3 +352,20 @@ partenza com'erano, posizione e allineamento scelti nell'editor che restano dopo
 Installazione 1.3.1 (`releases/cms/plumecms-1.3.1.zip`, kit Personale), `pagina-widget.php`, foto; `prova-aggiornamento.js`
 con `plumecms-1.4.0-aggiornamento.zip` (ora controlla anche che la dashboard non abbia i riquadri delle installazioni
 nuove); foto; rientro da zero dopo l'aggiornamento (1.4.1). 28 ottobre 2026: 12 su 12, sito identico al pixel tranne i minuti del Conto alla rovescia.
+
+## prova-fine-articolo.js (1.6.0)
+
+Articoli > Aggiungi sempre alla fine, come un utente, su un plumeCMS appena installato (`prova-install.js`, due articoli
+pubblicati). Prima `php prove/articolo-largo.php <cartella CMS>`: crea `/articolo-largo/`, un articolo fatto con sezioni
+dell'editor a tutta larghezza e una Griglia di articoli in fondo (le sue schede sono `<article>`).
+`node prove/prova-fine-articolo.js <base> <utente> <password> /benvenuto/ /secondo-articolo-di-prova/ [cartella schermate] [/articolo-largo/]`.
+Linguetta nella lista degli articoli (non in quella delle pagine) e menu Articoli acceso; Crea apre l'editor con un articolo
+finto e il riquadro in fondo, con il testo di partenza; in bozza il sito non lo mostra e l'anteprima della pagina sì;
+Accendi prima di pubblicare rifiutato; Pubblica: in fondo a ogni articolo, dentro la colonna di lettura, ombreggiato, senza
+spazio in più sopra il titolo, non nella home; nell'articolo largo dopo le sezioni, largo quanto la lettura e al centro,
+mai dentro una scheda della griglia; un pulsante aggiunto (dall'API dell'editor) ha il colore che ha in una pagina, non
+quello dei link dell'articolo, staccato dal testo e senza spazio in più in fondo; telefono a 390 px senza scorrimento di
+lato; Spegni e Accendi; versioni con l'anteprima; Header e footer senza il riquadro. Atteso: 41 su 41, in radice e in
+cartella (base `http://127.0.0.1:<porta>/test`). Una volta sola per installazione. Lascia `fine-*.png`.
+Le prove di attacco del riquadro sono il gruppo 22 di `tools/sicurezza-prova.js`; `prova-aspetti.js` apre anche
+`fine-articolo.php` nei quattro aspetti.

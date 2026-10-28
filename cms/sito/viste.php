@@ -249,9 +249,28 @@ function vista_fine_articolo(string $corpo): array {
     if ($f === null) return [$corpo, ''];
     [$html, $css] = $f;
     $css = $css !== '' ? '<style id="ed-css-fine">' . str_replace('</', '<\\/', $css) . '</style>' : '';
-    $i = strrpos($corpo, '</article>');
+    // Si cerca la chiusura dell'<article class="corpo"> (contando gli <article> dentro, come le schede di una Griglia di
+    // articoli); senza la colonna di lettura, un articolo dell'editor a tutta pagina lo riceve fuori, mai dentro l'ultima
+    // scheda di un widget. La vista di un tema (niente "corpo", niente ed-pagina) lo riceve prima dell'ultimo </article>.
+    $a = strpos($corpo, '<article class="corpo"');
+    if ($a !== false) $i = vista_chiusura_article($corpo, $a);
+    elseif (!str_contains($corpo, 'class="ed-pagina')) $i = strrpos($corpo, '</article>');
+    else $i = false;
     if ($i !== false) return [substr($corpo, 0, $i) . $html . substr($corpo, $i), $css];
-    return [$corpo . '<div class="wrap ed-stretta fine-articolo-fuori">' . $html . '</div>', $css];
+    // Fuori dall'articolo resta dentro un div.corpo: titoli e testi escono come nella colonna di lettura (e nella tela dell'editor).
+    return [$corpo . '<div class="wrap ed-stretta fine-articolo-fuori"><div class="corpo">' . $html . '</div></div>', $css];
+}
+
+/** La posizione del </article> che chiude l'<article> che comincia in $da, contando quelli annidati; false se manca. */
+function vista_chiusura_article(string $html, int $da): int|false {
+    $livello = 0;
+    $pos = $da;
+    while (preg_match('~<(/?)article\b~i', $html, $m, PREG_OFFSET_CAPTURE, $pos)) {
+        $livello += $m[1][0] === '/' ? -1 : 1;
+        if ($livello === 0) return $m[0][1];
+        $pos = $m[0][1] + strlen($m[0][0]);
+    }
+    return false;
 }
 
 /** Pagine fisse senza struttura dell'editor: il testo della scheda passa così com'è, dentro la grafica del sito. */

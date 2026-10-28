@@ -1,6 +1,6 @@
 // Gli aspetti del pannello (1.4.0) provati come un utente: per ognuno dei quattro (Aria, Bottega, Cosmo, Lavagna) lo sceglie
 // in "Il mio accesso", poi apre tutte le pagine del pannello (le voci del menu, le loro schede, la scheda di un articolo,
-// l'editor) e per ognuna controlla: attributo data-pannello scritto dal server (nessun JavaScript), nessun errore PHP o
+// l'editor, Aggiungi sempre alla fine della 1.6.0) e per ognuna controlla: attributo data-pannello scritto dal server (nessun JavaScript), nessun errore PHP o
 // JavaScript, contrasto di ogni testo visibile (WCAG: 4,5 a 1, 3 a 1 per il testo grande), e fa una foto.
 // Poi: le variabili di sempre definite in tutti e quattro, il login e le pagine senza utente in Aria, i colori rimasti
 // scritti a mano nei fogli e nelle pagine del pannello (cms/admin), e alla fine rimette Aria.
@@ -108,7 +108,7 @@ function coloriAMano() {
   const menu = await p.$$eval('.admin-nav a[href], .admin-sidebar-footer a[href]', as => as.map(a => a.getAttribute('href')).filter(h => h && !/^https?:|logout\.php/.test(h) && !h.endsWith('/')));
   await p.goto(B + '/admin/contenuti.php?tipo=articoli');
   const articolo = await p.$eval('a.ct-nome', a => a.getAttribute('href')).catch(() => '');
-  const pagine = [...new Set([...menu, articolo, 'newsletter-campagna.php', 'newsletter.php?scheda=liste', 'newsletter.php?scheda=impostazioni', 'popup.php?id=0&nuovo=1', 'seo.php?scheda=prestazioni', 'utenti.php', 'password.php', 'account.php', 'informazioni.php'].filter(Boolean))];
+  const pagine = [...new Set([...menu, articolo, 'newsletter-campagna.php', 'newsletter.php?scheda=liste', 'newsletter.php?scheda=impostazioni', 'popup.php?id=0&nuovo=1', 'seo.php?scheda=prestazioni', 'utenti.php', 'password.php', 'account.php', 'informazioni.php', 'fine-articolo.php'].filter(Boolean))];
   const editor = menu.find(h => /^editor\.php\?id=\d+/.test(h)) || '';
 
   for (const asp of ASPETTI) {
