@@ -159,19 +159,15 @@ Aperto:
 - copia del sito: il ripristino non toglie i file che stanno nel sito ma non nella copia; con due installazioni nello stesso database
   e prefissi che cominciano uguale (`cms_` e `cms_b_`) la copia prende anche le tabelle dell'altra;
 - "c'è una versione nuova" provato solo in http locale (`CMS_AGGIORNAMENTI_HTTP_PROVA`): HTTPS vero da provare su un server;
-- **danilofailli.it e la 1.2.8**: lì ebook, Laser, CTA, box del test e aforismi servono ancora. Quando si porta il nucleo 1.2.8, il
-  modulo `moduli/danilofailli/` deve ridarli con i filtri e l'evento nuovi (manuale tecnico 15.4), e i file tolti (`admin/contatti.php`...)
-  tornano nel modulo. Mai lo zip del prodotto là: il pacchetto di aggiornamento 1.2.8 li cancella (`TOLTI` in `tools/cms-pacchetto.py`);
 - widget Riquadro con icona: "Posizione dell'icona" si perde al salvataggio (stesso nome di "Posizione" delle Avanzate,
   `editor-widget-extra-a.php:28` e `:60` contro `editor-controlli.php:714`), e `.ew-ribox{text-align:center}` vince sull'allineamento;
 - `tools/` e `prove/` hanno ancora riferimenti a danilofailli.it (strumenti di sviluppo, non vanno nello zip): `--sito`, la prova del burnout;
 - i temi a danilofailli.it arrivano solo con un pacchetto `--sito` dal suo repository (mai lo zip del prodotto).
-- la 1.2.3 (menu per posizione, pannello Revisioni, sfondo colore delle sezioni, `/scarica/`, voci nuove dei pacchetti) e la
-  1.2.4 (download manager) vanno riportate su danilofailli.it, come la 1.2.2;
-- la 1.2.2 (sezione Foto, interruttore dell'onda: `includes/editor-widget.php`, `sito/assets/sito.css`) va riportata su
-  danilofailli.it con un pacchetto `--sito`: lì Apertura e Presentazione sono le foto della home e di Chi sono.
 
 ## Rapporto con danilofailli.it
+
+**Regola di Danilo (28 ottobre 2026): non chiedergli più nulla di danilofailli.it.** Se servono informazioni, le dà lui.
+Il 28 ottobre ha detto di aver già aggiornato tutto su danilofailli.it.
 
 - danilofailli.it usa plumeCMS con il CMS in `/new/` e il modulo `moduli/danilofailli/`.
 - Le versioni nuove di plumeCMS arrivano a danilofailli.it come pacchetti del suo
