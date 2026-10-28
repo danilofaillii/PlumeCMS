@@ -24,7 +24,7 @@ Il prodotto si chiama **plumeCMS** (nome scelto il 26 ottobre 2026; prima, per p
 - **Impostazioni, Log cron, riscritta**: cosa fa il cron di plumeCMS (il giro del mattino e quello della newsletter), le due
   righe da mettere nel cron dell'hosting con il percorso vero dell'installazione, quando è andato l'ultimo giro e cosa ha
   fatto, e **Esegui adesso** per chi il cron non l'ha ancora impostato. Via le istruzioni rimaste dal sito di prima
-  ("Test connessione WP", "Dry run"), e gli altri resti che parlavano del sito come se fosse WordPress.
+  (prove di connessione e di pubblicazione che in plumeCMS non esistono), e gli altri resti di quel sito nel pannello.
 - **Impostazioni, Controlla il server** (anche da Informazioni): con un clic il pannello prova davvero, dal server dove
   gira, PHP ed estensioni, il database, HTTPS dell'indirizzo del sito, il cron, l'invio delle email, il sito degli
   aggiornamenti, le cartelle in cui scrive e le protezioni del `.htaccess` (chiede al sito stesso i file vietati). Verde,
