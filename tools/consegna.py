@@ -4,6 +4,7 @@
 # Lo zip si apre sul computer: sul server si caricano i file che contiene, uno per uno, come dice il LEGGIMI.
 # uso: python3 tools/consegna.py
 import glob
+import hashlib
 import os
 import sys
 import zipfile
@@ -46,6 +47,11 @@ def main():
     os.makedirs(os.path.join(REL, 'consegna'), exist_ok=True)
     out = os.path.join(REL, 'consegna', f'plumecms-{V}-consegna.zip')
     with zipfile.ZipFile(out, 'w', zipfile.ZIP_STORED) as z:  # dentro ci sono zip e PDF già compressi
+        # Le voci delle cartelle, come negli zip fatti a mano: qualche programma per aprire gli zip le vuole (1.5.0).
+        for d in ('cms/', 'sito/', 'manuali/'):
+            info = zipfile.ZipInfo(d, date_time=(2026, 1, 1, 0, 0, 0))
+            info.external_attr = (0o40755 << 16) | 0x10
+            z.writestr(info, b'')
         def metti(da, a):
             info = zipfile.ZipInfo.from_file(da, a)
             info.external_attr = 0o644 << 16
@@ -60,7 +66,13 @@ def main():
         info = zipfile.ZipInfo('LEGGIMI.txt', date_time=(2026, 1, 1, 0, 0, 0))
         info.external_attr = 0o644 << 16
         z.writestr(info, '\r\n'.join(righe) + '\r\n')
-    print(f'{out}: {round(os.path.getsize(out) / 1024)} KB, {2 + n + len(manuali) + 1} file')
+    with zipfile.ZipFile(out) as z:
+        rotto = z.testzip()
+    if rotto:
+        sys.exit(f'{out}: il file {rotto} dentro lo zip non torna')
+    impronta = hashlib.sha256(open(out, 'rb').read()).hexdigest()
+    print(f'{out}: {os.path.getsize(out)} byte ({round(os.path.getsize(out) / 1024)} KB), {2 + n + len(manuali) + 1} file')
+    print(f'SHA-256 {impronta}')
 
 
 if __name__ == '__main__':
