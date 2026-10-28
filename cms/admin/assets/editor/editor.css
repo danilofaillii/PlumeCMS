@@ -1,5 +1,4 @@
 /* L'editor delle pagine: barra in alto, pannello a sinistra, tela al centro. */
-@import url("../css/aspetti.css");
 /* 1.4.0: i colori dell'interfaccia seguono l'aspetto del pannello (aspetti.css). La tela no: mostra il sito com'e. */
 :root{--ed-bg:var(--bg);--ed-pannello:var(--surface);--ed-bordo:var(--border);--ed-testo:var(--text);--ed-muto:var(--text-muted);--ed-primo:var(--coral);--ed-primo-2:var(--coral-hover);--ed-su-primo:var(--su-accento);--ed-rosso:var(--errore-testo);--ed-campo:var(--campo);--ed-font:var(--font)}
 *{box-sizing:border-box}

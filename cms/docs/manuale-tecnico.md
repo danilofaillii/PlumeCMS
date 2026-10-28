@@ -634,8 +634,9 @@ cambia: non sono i temi del sito (capitolo 12), ne prendono solo i nomi e i colo
   ancora chi è); l'installatore ha i colori di Aria nel suo foglio (`install/install.css`). Nessun JavaScript: il foglio
   arriva prima del contenuto, la pagina nasce con i colori giusti.
 - **I colori**: tutti in `admin/assets/css/aspetti.css`, un blocco di variabili per aspetto su `[data-pannello="..."]`
-  (Aria anche su `:root`). `admin.css` e `editor.css` lo importano (`@import`), così ogni pagina che usa i fogli del
-  pannello ha le variabili. Le regole valgono su qualunque elemento: le miniature della scelta sono pannelli veri in
+  (Aria anche su `:root`). Dalla 1.4.1 ogni pagina lo collega da sé, prima di `admin.css` o di `editor.css`
+  (`admin-header.php`, le due radici di `editor.php`, login, password dimenticata e reimpostata): nella 1.4.0 lo importavano
+  `admin.css` e `editor.css` con `@import`, che non può portare la data nell'indirizzo (vedi 7.5). Le regole valgono su qualunque elemento: le miniature della scelta sono pannelli veri in
   piccolo con `data-pannello` sullo `span`.
 - **Le variabili**: restano quelle di sempre (`--bg`, `--surface`, `--text`, `--text-muted`, `--border`, `--coral`,
   `--coral-light`, `--coral-hover`, `--sage`, `--sage-light`, `--mustard`, `--mustard-light`, `--sidebar`,
@@ -663,6 +664,7 @@ cambia: non sono i temi del sito (capitolo 12), ne prendono solo i nomi e i colo
   definiva le sue variabili su `:root` e copriva `--coral` e `--border` del pannello su quella pagina: dalla 1.4.0
   valgono solo dentro `#ig-preview` e `.te-visuale`.
 
+
 ### 7.4 Controlla il server (dalla 1.4.0)
 
 Impostazioni > Controlla il server (`admin/controlla-server.php`, link anche da Informazioni). Prima del clic solo la
@@ -688,6 +690,16 @@ Le richieste: timeout di 5-6 secondi, nessun redirect seguito, al massimo 64 KB 
 al timeout.
 
 ---
+
+### 7.5 Fogli e script del pannello con la data (dalla 1.4.1)
+
+Ogni foglio e script del pannello si scrive con `pannello_file('assets/...')` (`admin/includes/auth.php`), che aggiunge
+`?v=` e la data del file: `assets/css/admin.css?v=1730112345`. Il `.htaccess` fa tenere CSS e JS un mese al browser
+(`mod_expires`); senza la data, dopo un aggiornamento il browser usava i fogli vecchi. È successo con la 1.4.0 sul primo
+sito aggiornato: pannello con i colori della 1.3 e i quattro aspetti tutti uguali (finché non si ricaricava con
+Cmd+Maiusc+R). Il file nuovo, scritto dal pacchetto, ha una data nuova e quindi un indirizzo nuovo. È lo stesso modo del
+sito (`sito_versione_asset()`, `sito/viste.php:28`). Niente `@import` fra i fogli del pannello: un foglio importato non
+porta la data. La prova è `prove/prova-file-pannello.js`.
 
 ## 8. Contenuti: articoli, pagine, categorie, tag
 

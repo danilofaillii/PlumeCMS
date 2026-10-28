@@ -95,7 +95,7 @@ $modifica = isset($_GET['modifica']) ? array_values(array_filter($voci, fn($v) =
 
 require_once __DIR__ . '/includes/admin-header.php';
 ?>
-<link rel="stylesheet" href="assets/css/contenuti.css">
+<link rel="stylesheet" href="<?= pannello_file('assets/css/contenuti.css') ?>">
 <div class="ct-testa">
   <div class="ct-schede">
     <a href="categories.php" class="<?= $tipo === 'categorie' ? 'attivo' : '' ?>">Categorie</a>

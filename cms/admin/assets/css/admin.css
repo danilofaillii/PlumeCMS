@@ -1,5 +1,4 @@
 /* I colori stanno in aspetti.css: un insieme di variabili per ognuno dei quattro aspetti del pannello (1.4.0). */
-@import url("aspetti.css");
 
 * { box-sizing: border-box; margin: 0; padding: 0; }
 body { font-family: var(--font); background: var(--bg); color: var(--text); }

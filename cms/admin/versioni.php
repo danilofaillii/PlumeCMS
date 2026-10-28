@@ -145,7 +145,7 @@ $linkOggetto = function (array $r): string {
 };
 require_once __DIR__ . '/includes/admin-header.php';
 ?>
-<link rel="stylesheet" href="assets/css/contenuti.css">
+<link rel="stylesheet" href="<?= pannello_file('assets/css/contenuti.css') ?>">
 <style>
 <?= versioni_confronto_css() ?>
 .vs-filtri{display:flex;gap:.5rem;align-items:center;flex-wrap:wrap;margin-bottom:1rem}

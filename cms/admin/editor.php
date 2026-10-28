@@ -80,7 +80,7 @@ $adminTitle = 'Editor: ' . $pagina['title'];
 if ($albero === null): ?>
 <!DOCTYPE html>
 <html lang="it" data-pannello="<?= h(pannello_aspetto()) ?>"><head><meta charset="utf-8"><title>Editor: <?= h($pagina['title']) ?></title>
-<link rel="stylesheet" href="assets/css/admin.css"><link rel="stylesheet" href="assets/editor/editor.css"><script src="assets/campi-protetti.js"></script></head>
+<link rel="stylesheet" href="<?= pannello_file('assets/css/aspetti.css') ?>"><link rel="stylesheet" href="<?= pannello_file('assets/css/admin.css') ?>"><link rel="stylesheet" href="<?= pannello_file('assets/editor/editor.css') ?>"><script src="<?= pannello_file('assets/campi-protetti.js') ?>"></script></head>
 <body class="ed-scelta-pagina">
 <div class="ed-scelta">
   <p class="ed-scelta-sopra"><a href="<?= h($scheda) ?>">← Torna alla scheda</a></p>
@@ -121,11 +121,12 @@ $dati = [
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Editor: <?= h($pagina['title']) ?></title>
-<link rel="stylesheet" href="assets/quill/quill.snow.css">
-<link rel="stylesheet" href="assets/editor/editor.css">
+<link rel="stylesheet" href="<?= pannello_file('assets/quill/quill.snow.css') ?>">
+<link rel="stylesheet" href="<?= pannello_file('assets/css/aspetti.css') ?>">
+<link rel="stylesheet" href="<?= pannello_file('assets/editor/editor.css') ?>">
 <style>.ed-tela[data-misura=t]{width:<?= (int)$dati['tablet'] ?>px}.ed-tela[data-misura=m]{width:<?= min(400, (int)$dati['telefono']) ?>px}
 <?= versioni_confronto_css() /* versioni: il confronto nel pannello Revisioni */ ?></style>
-<script src="assets/campi-protetti.js"></script>
+<script src="<?= pannello_file('assets/campi-protetti.js') ?>"></script>
 </head>
 <body class="ed-app">
 <header class="ed-barra">
@@ -234,8 +235,8 @@ $dati = [
 </dialog>
 
 <script id="ed-dati" type="application/json"><?= str_replace('</', '<\/', json_encode($dati, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES)) ?></script>
-<script src="assets/quill/quill.js"></script>
-<script src="assets/editor/Sortable.min.js"></script>
-<script src="assets/editor/editor.js"></script>
+<script src="<?= pannello_file('assets/quill/quill.js') ?>"></script>
+<script src="<?= pannello_file('assets/editor/Sortable.min.js') ?>"></script>
+<script src="<?= pannello_file('assets/editor/editor.js') ?>"></script>
 </body>
 </html>

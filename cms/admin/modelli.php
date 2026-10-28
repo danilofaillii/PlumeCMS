@@ -95,7 +95,7 @@ foreach (contenuti_tipi() as $k => $def) {
 $csrf = csrf_token();
 require_once __DIR__ . '/includes/admin-header.php';
 ?>
-<link rel="stylesheet" href="assets/css/contenuti.css">
+<link rel="stylesheet" href="<?= pannello_file('assets/css/contenuti.css') ?>">
 <style>
 .md-schede{display:flex;gap:.25rem;border-bottom:1px solid var(--border);margin-bottom:1rem}
 .md-schede a{padding:.6rem 1rem;text-decoration:none;color:var(--text-muted);border-bottom:2px solid transparent;font-weight:600}

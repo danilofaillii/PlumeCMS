@@ -49,7 +49,7 @@ $invii = $st->fetchAll();
 try { $vecchi = db()->query('SELECT * FROM ' . tbl('form_submissions') . ' ORDER BY id DESC LIMIT 100')->fetchAll(); } catch (PDOException $e) { $vecchi = []; }
 require_once __DIR__ . '/includes/admin-header.php';
 ?>
-<link rel="stylesheet" href="assets/css/contenuti.css">
+<link rel="stylesheet" href="<?= pannello_file('assets/css/contenuti.css') ?>">
 <div class="ct-testa">
   <div class="ct-schede">
     <a href="form-submissions.php" class="<?= !$modulo ? 'attivo' : '' ?>">Tutti</a>

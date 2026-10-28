@@ -96,9 +96,9 @@ if (!$sonoAdminMenu) {
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title><?= htmlspecialchars($adminTitle) ?> &middot; Pannello</title>
-  <link rel="stylesheet" href="assets/css/admin.css">
-  <script src="assets/campi-protetti.js"></script>
-  <script src="assets/pannello.js" defer></script>
+  <link rel="stylesheet" href="<?= pannello_file('assets/css/aspetti.css') ?>"><link rel="stylesheet" href="<?= pannello_file('assets/css/admin.css') ?>">
+  <script src="<?= pannello_file('assets/campi-protetti.js') ?>"></script>
+  <script src="<?= pannello_file('assets/pannello.js') ?>" defer></script>
 </head>
 <body class="admin-body">
 <div class="admin-sidebar-overlay" data-menu-mobile></div>

@@ -307,7 +307,7 @@ $contenuto['css'] = $o;
 
 require_once __DIR__ . '/includes/admin-header.php';
 ?>
-<link rel="stylesheet" href="assets/css/design.css">
+<link rel="stylesheet" href="<?= pannello_file('assets/css/design.css') ?>">
 <form method="post" id="dg-form" class="dg" data-scheda="<?= h($schedaAperta) ?>">
   <?= csrf_field() ?>
   <input type="hidden" name="scheda" id="dg-scheda" value="<?= h($schedaAperta) ?>">
@@ -361,5 +361,5 @@ require_once __DIR__ . '/includes/admin-header.php';
 </dialog>
 
 <script id="dg-dati" type="application/json"><?= str_replace('</', '<\/', json_encode(['globali' => $globali, 'tablet' => (int)$l['tablet'], 'telefono' => (int)$l['telefono'], 'famiglieCss' => $globali['famiglie_css']], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES)) ?></script>
-<script src="assets/design.js"></script>
+<script src="<?= pannello_file('assets/design.js') ?>"></script>
 <?php require_once __DIR__ . '/includes/admin-footer.php'; ?>

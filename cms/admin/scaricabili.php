@@ -38,7 +38,7 @@ $base = rtrim(cms_url_sito(), '/');
 
 require_once __DIR__ . '/includes/admin-header.php';
 ?>
-<link rel="stylesheet" href="assets/css/contenuti.css">
+<link rel="stylesheet" href="<?= pannello_file('assets/css/contenuti.css') ?>">
 <style>
 .dl-tabella td{vertical-align:top}
 .dl-tabella input[readonly]{border:1px solid var(--border);border-radius:6px;padding:.25rem .4rem;background:var(--campo);color:var(--text);cursor:copy}

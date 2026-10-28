@@ -18,6 +18,17 @@ require_once __DIR__ . '/../../includes/db.php';
 require_once __DIR__ . '/../../includes/sicurezza.php';
 require_once __DIR__ . '/../../includes/pannello-aspetto.php'; // 1.4.0: gli aspetti del pannello
 
+/**
+ * Indirizzo di un foglio o di uno script del pannello con la sua data nell'indirizzo (1.4.1): "assets/css/admin.css?v=1730112345".
+ * I fogli restano un mese nella memoria del browser (.htaccess, mod_expires): senza la data, dopo un aggiornamento il browser
+ * continuava a usare quelli vecchi (il pannello 1.4.0 con i colori della 1.3, i quattro aspetti tutti uguali). Il file
+ * nuovo arriva con una data nuova, quindi con un indirizzo nuovo. Come sito_versione_asset() nel sito.
+ */
+function pannello_file(string $rel): string {
+    $p = dirname(__DIR__) . '/' . $rel;
+    return htmlspecialchars($rel . (is_file($p) ? '?v=' . filemtime($p) : ''), ENT_QUOTES, 'UTF-8'); // niente h(): login.php non carica functions.php
+}
+
 // Indirizzo pulito. Con un pezzo in più dopo il nome del file (/admin/index.php/qualcosa) Apache apre lo stesso la pagina,
 // ma i fogli di stile e gli script, scritti relativi, si cercano dentro "index.php/" e il pannello appare senza grafica
 // (26 ottobre 2026, prima installazione di plumeCMS sul server). Si torna all'indirizzo del file, con la stessa query.

@@ -219,6 +219,14 @@ mostrano il sito), e una schermata `<aspetto>-<pagina>.png`; l'editor della home
 rimette Aria e cerca i colori scritti a mano rimasti in `cms/admin` (le eccezioni volute hanno un commento `fisso`).
 Atteso: 56 su 56. Dura circa 8 minuti. Non crea contenuti.
 
+## prova-file-pannello.js (1.4.1)
+
+Fogli e script del pannello con la data nell'indirizzo. `node prove/prova-file-pannello.js <base> <utente> <password>`.
+Fa il browser con la memoria vecchia: ogni foglio o script del pannello chiesto senza `?v=` riceve i colori della 1.3.
+Sceglie Cosmo, Lavagna, Bottega e Aria in Il mio accesso e controlla che la barra laterale cambi ogni volta, che le
+quattro miniature siano diverse, che nessuna pagina (dashboard, stile, articoli, flussi, editor, accesso) chieda un file
+senza data. Sulla 1.4.0 dà 1 su 6 (il caso di Danilo); atteso: 6 su 6. Lascia l'utente su Aria.
+
 ## prova-foto-leggere.js (1.4.0)
 
 Foto più leggere. Prima `php prove/foto-prova.php <cartella foto>` (una foto 4000x3000 salvata di lato con orientamento
@@ -312,4 +320,4 @@ partenza com'erano, posizione e allineamento scelti nell'editor che restano dopo
 
 Installazione 1.3.1 (`releases/cms/plumecms-1.3.1.zip`, kit Personale), `pagina-widget.php`, foto; `prova-aggiornamento.js`
 con `plumecms-1.4.0-aggiornamento.zip` (ora controlla anche che la dashboard non abbia i riquadri delle installazioni
-nuove); foto. 28 ottobre 2026: 12 su 12, sito identico al pixel tranne i minuti del Conto alla rovescia.
+nuove); foto; rientro da zero dopo l'aggiornamento (1.4.1). 28 ottobre 2026: 12 su 12, sito identico al pixel tranne i minuti del Conto alla rovescia.

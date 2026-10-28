@@ -18,7 +18,7 @@ $dettaglio = isset($_GET['campagna']) ? (int)$_GET['campagna'] : 0;
 $tot = ['inviate' => array_sum(array_column($campagne, 'inviate')), 'aperture' => array_sum(array_column($campagne, 'aperture')), 'clic' => array_sum(array_column($campagne, 'clic'))];
 require_once __DIR__ . '/includes/admin-header.php';
 ?>
-<link rel="stylesheet" href="assets/css/contenuti.css">
+<link rel="stylesheet" href="<?= pannello_file('assets/css/contenuti.css') ?>">
 <div class="stats-grid">
   <div class="stat-card stat-card-accent"><div class="stat-card-value"><?= (int)($numeri['attivo'] ?? 0) ?></div><div class="stat-card-label">Iscritti attivi</div></div>
   <div class="stat-card"><div class="stat-card-value"><?= $tot['inviate'] ?></div><div class="stat-card-label">Email inviate (campagne)</div></div>

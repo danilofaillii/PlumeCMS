@@ -45,6 +45,12 @@ let n = 0, ko = 0; const ok = (t, c, extra = '') => { n++; if (!c) ko++; console
   // 1.4.0: un sito che si aggiorna non vede il tipo di sito in prova ne i primi passi (sono delle installazioni nuove).
   await p.goto(B + '/admin/index.php', { waitUntil: 'networkidle' });
   ok('dashboard: niente riquadro del tipo di sito ne primi passi', await p.locator('#tipo-sito').count() === 0 && await p.locator('#primi-passi').count() === 0);
+  // 1.4.1: si rientra da zero, in un browser nuovo. La pagina di accesso non carica tutte le funzioni del pannello:
+  // un errore li vale solo per lei, e chi era gia collegato non lo vede.
+  const nuovo = await (await br.newContext()).newPage();
+  await nuovo.goto(B + '/admin/login.php'); await nuovo.fill('#username', UTENTE); await nuovo.fill('#password', PASSWORD);
+  await Promise.all([nuovo.waitForNavigation(), nuovo.click('button[type=submit]')]);
+  ok('dopo l\'aggiornamento si rientra da zero', !nuovo.url().includes('login.php'), nuovo.url());
   ok('nessun errore JavaScript', err.length === 0, err);
   await br.close();
   console.log(`\n${n - ko} su ${n} OK`);

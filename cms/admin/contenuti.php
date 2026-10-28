@@ -70,7 +70,7 @@ $colonne = 5 + ($T['tassonomie'] ? 2 : 0) + ($T['kw'] ? 1 : 0);
 
 require_once __DIR__ . '/includes/admin-header.php';
 ?>
-<link rel="stylesheet" href="assets/css/contenuti.css">
+<link rel="stylesheet" href="<?= pannello_file('assets/css/contenuti.css') ?>">
 
 <div class="ct-testa">
   <div class="ct-schede">

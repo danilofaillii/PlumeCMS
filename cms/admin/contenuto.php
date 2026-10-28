@@ -84,7 +84,7 @@ $csrf = csrf_token();
 
 require_once __DIR__ . '/includes/admin-header.php';
 ?>
-<link rel="stylesheet" href="assets/css/contenuti.css">
+<link rel="stylesheet" href="<?= pannello_file('assets/css/contenuti.css') ?>">
 
 <form method="post" id="sc-form" enctype="multipart/form-data">
   <?= csrf_field() ?>
@@ -176,7 +176,7 @@ require_once __DIR__ . '/includes/admin-header.php';
           <div style="display:flex;justify-content:space-between;align-items:center;margin-top:.6rem;gap:.5rem;flex-wrap:wrap"><span class="hint">Le soglie (densita 1,8% e 1,5%, parole del primo paragrafo, In breve) stanno in <a href="seo.php?scheda=schema">SEO e AEO</a>.</span><button type="button" class="btn btn-secondary btn-sm" id="seo-ricontrolla">Ricontrolla</button></div>
         </div>
       </div>
-      <script src="assets/seo-controllo.js" defer></script>
+      <script src="<?= pannello_file('assets/seo-controllo.js') ?>" defer></script>
 
       <div class="sc-scatola">
         <h3>Risposte dirette (motori di ricerca e IA)</h3>
@@ -324,7 +324,7 @@ require_once __DIR__ . '/includes/admin-header.php';
 </dialog>
 
 <script<?= nonce_attr() ?>>window.SC = <?= json_encode(['csrf' => $csrf, 'tipo' => $tipo, 'id' => $id, 'formato' => $sc['content_format'], 'nuovo' => $nuovo], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?>;</script>
-<script src="assets/infografica.js"></script>
-<script src="assets/contenuto.js"></script>
+<script src="<?= pannello_file('assets/infografica.js') ?>"></script>
+<script src="<?= pannello_file('assets/contenuto.js') ?>"></script>
 
 <?php require_once __DIR__ . '/includes/admin-footer.php'; ?>

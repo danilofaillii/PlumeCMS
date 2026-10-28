@@ -86,7 +86,7 @@ $prova = posta_notifica_email(); // l'indirizzo degli avvisi (Impostazioni, Conf
 $adminTitle = 'Newsletter: ' . (newsletter_4byte_fuori($c['oggetto']) ?: 'nuova campagna');
 require_once __DIR__ . '/includes/admin-header.php';
 ?>
-<link href="assets/quill/quill.snow.css" rel="stylesheet">
+<link href="<?= pannello_file('assets/quill/quill.snow.css') ?>" rel="stylesheet">
 <style>
 .nlc{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:1.25rem;align-items:start}
 @media(max-width:1100px){.nlc{grid-template-columns:1fr}}
@@ -147,7 +147,7 @@ require_once __DIR__ . '/includes/admin-header.php';
   </div>
 </div>
 
-<script src="assets/quill/quill.js"></script>
+<script src="<?= pannello_file('assets/quill/quill.js') ?>"></script>
 <script<?= nonce_attr() ?>>
 (function () {
   var quill = new Quill('#editor', {

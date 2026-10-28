@@ -2,6 +2,15 @@
 
 Il prodotto si chiama **plumeCMS** (nome scelto il 26 ottobre 2026; prima, per poche ore, "CarbonaraCMS", e ancora prima il provvisorio "Officina": gli zip vecchi si chiamavano `officina-*` e `carbonaracms-*`).
 
+## 1.4.1 (28 ottobre 2026) - Il pannello nuovo si vede subito
+
+- **Dopo un aggiornamento il pannello si vede con i fogli nuovi.** Il browser tiene CSS e JavaScript del pannello per un
+  mese: dopo la 1.4.0 chi aggiornava vedeva ancora i colori della 1.3, e i quattro aspetti in Il mio accesso sembravano
+  non cambiare niente (finché non ricaricava con Cmd+Maiusc+R). Ora ogni foglio e script del pannello porta nell'indirizzo
+  la data del file (`?v=`): un file nuovo ha un indirizzo nuovo e il browser lo scarica. Il foglio degli aspetti si
+  collega da ogni pagina invece di essere importato da `admin.css` ed `editor.css`.
+- Prova nuova `prove/prova-file-pannello.js`: un browser con la memoria della 1.3 sceglie i quattro aspetti e li vede cambiare.
+
 ## 1.4.0 (28 ottobre 2026) - Il sito si prova, il pannello si sceglie, WordPress si porta qui
 
 - **Impostazioni, Importa da WordPress**: scrivi indirizzo, utente e password per le applicazioni del sito WordPress (la

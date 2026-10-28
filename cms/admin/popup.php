@@ -29,7 +29,7 @@ if ($id && !$p) { http_response_code(404); exit('Popup non trovato.'); }
 $moduli = editor_moduli_disponibili();
 require_once __DIR__ . '/includes/admin-header.php';
 ?>
-<link rel="stylesheet" href="assets/css/contenuti.css">
+<link rel="stylesheet" href="<?= pannello_file('assets/css/contenuti.css') ?>">
 <?php if (!$p && !$nuovo): $tutti = popup_tutti(); ?>
 <div class="ct-testa"><p style="color:var(--text-muted);font-size:.88rem;margin:0">Una finestra che compare sopra la pagina: dopo qualche secondo, a una certa profondità, o quando il mouse esce. Chi la chiude non la rivede per i giorni che scegli.</p><a href="popup.php?nuovo=1" class="btn btn-primary">+ Nuovo popup</a></div>
 <div class="admin-table-wrap ct-tabella">

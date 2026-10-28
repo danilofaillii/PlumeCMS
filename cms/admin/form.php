@@ -36,7 +36,7 @@ $f = $daPost ?: ($id ? form_leggi($id) : null);
 if ($id && !$f) { http_response_code(404); exit('Form non trovato.'); }
 require_once __DIR__ . '/includes/admin-header.php';
 ?>
-<link rel="stylesheet" href="assets/css/contenuti.css">
+<link rel="stylesheet" href="<?= pannello_file('assets/css/contenuti.css') ?>">
 <?php if (!$f && !$nuovo): $tutti = form_tutti(); ?>
 <div class="ct-testa"><p style="color:var(--text-muted);font-size:.88rem;margin:0">Un form raccoglie i campi che decidi tu. Le compilazioni finiscono in <a href="form-submissions.php">Invii dei form</a>, e se vuoi la persona entra in una lista della newsletter.</p><a href="form.php?nuovo=1" class="btn btn-primary">+ Nuovo form</a></div>
 <div class="admin-table-wrap ct-tabella">
@@ -95,7 +95,7 @@ require_once __DIR__ . '/includes/admin-header.php';
     </aside>
   </div>
 </form>
-<script src="assets/editor/Sortable.min.js"></script>
+<script src="<?= pannello_file('assets/editor/Sortable.min.js') ?>"></script>
 <script<?= nonce_attr() ?>>
 var fmTipi = <?= json_encode(FORM_TIPI_CAMPO, JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP) ?>;
 var fmCampi = <?= json_encode($v['campi'], JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP) ?>;

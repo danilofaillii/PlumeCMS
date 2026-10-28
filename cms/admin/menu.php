@@ -42,7 +42,7 @@ $scelte = menu_scelte();
 $csrf = csrf_token();
 require_once __DIR__ . '/includes/admin-header.php';
 ?>
-<link rel="stylesheet" href="assets/css/contenuti.css">
+<link rel="stylesheet" href="<?= pannello_file('assets/css/contenuti.css') ?>">
 <style>
 .mn-testa{display:flex;gap:.6rem;align-items:center;flex-wrap:wrap;margin-bottom:1rem}
 .mn-griglia{display:grid;grid-template-columns:300px minmax(0,1fr);gap:1.2rem;align-items:start}
@@ -150,7 +150,7 @@ require_once __DIR__ . '/includes/admin-header.php';
   </li>
 </template>
 
-<script src="assets/editor/Sortable.min.js"></script>
+<script src="<?= pannello_file('assets/editor/Sortable.min.js') ?>"></script>
 <script<?= nonce_attr() ?>>
 (function () {
   var VOCI = <?= json_encode($m['voci'], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?>;

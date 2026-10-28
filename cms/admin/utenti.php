@@ -74,7 +74,7 @@ foreach (db()->query('SELECT utente_id, COUNT(*) n FROM ' . tbl('sicurezza_sessi
 $modifica = isset($_GET['modifica']) ? array_values(array_filter($utenti, fn($u) => (int)$u['id'] === (int)$_GET['modifica']))[0] ?? null : null;
 require_once __DIR__ . '/includes/admin-header.php';
 ?>
-<link rel="stylesheet" href="assets/css/contenuti.css">
+<link rel="stylesheet" href="<?= pannello_file('assets/css/contenuti.css') ?>">
 <div style="display:grid;grid-template-columns:320px minmax(0,1fr);gap:1.2rem;align-items:start">
   <div class="sc-scatola">
     <h3><?= $modifica ? 'Modifica utente' : 'Aggiungi utente' ?></h3>

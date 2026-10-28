@@ -20,7 +20,7 @@ if ($tipo === 'modelli') $GLOBALS['modelli_anteprima'] = ['tipo' => (string)($pa
 $GLOBALS['editor_contesto'] = ['tipo' => $tipo, 'id' => $id, 'titolo' => (string)$pagina['title'], 'percorso' => editor_percorso_pagina($pagina)];
 
 $meta = ['titolo' => 'Anteprima: ' . $pagina['title'], 'descrizione' => '', 'robots' => 'noindex', 'canonical' => '', 'og' => []];
-$testa = '<style id="ed-css"></style><link rel="stylesheet" href="assets/editor/anteprima.css">';
+$testa = '<style id="ed-css"></style><link rel="stylesheet" href="' . pannello_file('assets/editor/anteprima.css') . '">';
 // Un articolo tiene la sua testata (titolo, data) sopra le sezioni, come sul sito.
 $corpo = ($tipo !== 'pagine' && $tipo !== 'modelli' ? vista_articolo_testa(['titolo' => $pagina['title'], 'data' => sito_iso((string)($pagina['publish_date'] ?: date('Y-m-d')), (string)$pagina['publish_time']), 'pillar' => ($pagina['type'] ?? '') === 'pillar', 'categorie' => sito_lista($pagina['categorie'] ?? '') ?: array_filter([(string)$pagina['category']])], '') : '')
     . '<div class="ed-pagina" id="ed-pagina"></div>';
@@ -34,7 +34,7 @@ if ($tipo !== 'pagine' && $tipo !== 'modelli') {
 }
 $html = vista_pagina($meta, $corpo, $testa, editor_percorso_pagina($pagina));
 // Niente link del sito: gli script dell'editor e Sortable vanno in fondo.
-$html = str_replace('</body>', '<script src="assets/editor/Sortable.min.js"></script><script src="assets/editor/anteprima.js"></script></body>', $html);
+$html = str_replace('</body>', '<script src="' . pannello_file('assets/editor/Sortable.min.js') . '"></script><script src="' . pannello_file('assets/editor/anteprima.js') . '"></script></body>', $html);
 // Gli script dei widget registrati (schede, fisarmonica, contatori...) servono anche nella tela.
 // I widget registrati (esterni) e l'Apertura, l'unico widget del nucleo con fogli suoi (le disposizioni, 1.2.6).
 $asset = editor_asset_pagina('ed-w-' . implode(' ed-w-', array_merge(array_keys(editor_widget_registrati()), ['hero'])));

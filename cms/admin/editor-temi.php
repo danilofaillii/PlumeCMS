@@ -128,7 +128,7 @@ try {
 $csrf = csrf_token();
 require_once __DIR__ . '/includes/admin-header.php';
 ?>
-<link rel="stylesheet" href="assets/css/contenuti.css">
+<link rel="stylesheet" href="<?= pannello_file('assets/css/contenuti.css') ?>">
 <style>
 .tm-testa{display:flex;gap:.6rem;align-items:center;flex-wrap:wrap;margin-bottom:1rem}
 .tm-testa p{margin:0;font-size:.88rem;color:var(--text-muted);flex:1 1 100%}

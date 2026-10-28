@@ -51,9 +51,9 @@ $campagne = db()->query('SELECT id, oggetto FROM ' . tbl('newsletter_campagne') 
 $inneschiCosa = ['iscrizione' => [], 'lista' => array_column($liste, 'nome', 'id'), 'form' => array_column($forms, 'nome', 'id'), 'apertura' => array_column($campagne, 'oggetto', 'id'), 'clic' => array_column($campagne, 'oggetto', 'id')];
 require_once __DIR__ . '/includes/admin-header.php';
 ?>
-<link rel="stylesheet" href="assets/css/contenuti.css">
-<link rel="stylesheet" href="assets/quill/quill.snow.css">
-<link rel="stylesheet" href="assets/css/flussi.css">
+<link rel="stylesheet" href="<?= pannello_file('assets/css/contenuti.css') ?>">
+<link rel="stylesheet" href="<?= pannello_file('assets/quill/quill.snow.css') ?>">
+<link rel="stylesheet" href="<?= pannello_file('assets/css/flussi.css') ?>">
 <?php if (!$f && !$nuovo): $tutti = newsletter_flussi(); ?>
 <div class="ct-testa"><p style="color:var(--text-muted);font-size:.88rem;margin:0">Un flusso parte da un innesco (iscrizione, ingresso in una lista, form compilato, apertura o clic di una campagna, nessuna interazione da tanti giorni) e si disegna su una tela: blocchi Email, Attesa, Bivio e Fine collegati fra loro. Ogni email ha più uscite: subito dopo, se apre, se clicca, se non fa niente entro un tempo. Le email le manda il cron della newsletter, dentro il limite orario.</p><a href="newsletter-flussi.php?nuovo=1" class="btn btn-primary">+ Nuovo flusso</a></div>
 <div class="admin-table-wrap ct-tabella">
@@ -115,7 +115,7 @@ $inviateNodo = $v['id'] ? db()->query('SELECT passo, COUNT(DISTINCT iscritto_id)
     <aside class="fl-pannello" id="fl-pannello"><div class="fl-pannello-vuoto">Clicca un blocco per modificarlo.<br><br>Per cancellare un collegamento, clicca la linea e premi Canc.</div></aside>
   </div>
 </form>
-<script src="assets/quill/quill.js"></script>
+<script src="<?= pannello_file('assets/quill/quill.js') ?>"></script>
 <script<?= nonce_attr() ?>>
 var FL_DATI = {
   grafo: <?= json_encode($v['grafo'], JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP) ?>,
@@ -133,6 +133,6 @@ var FL_DATI = {
   appenaSalvato: <?= $appenaSalvato ? 'true' : 'false' ?>
 };
 </script>
-<script src="assets/flussi.js"></script>
+<script src="<?= pannello_file('assets/flussi.js') ?>"></script>
 <?php endif; ?>
 <?php require_once __DIR__ . '/includes/admin-footer.php'; ?>
