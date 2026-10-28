@@ -210,6 +210,11 @@ Aperto:
 Il 28 ottobre ha detto di aver già aggiornato tutto su danilofailli.it.
 
 - danilofailli.it usa plumeCMS con il CMS in `/new/` e il modulo `moduli/danilofailli/`.
+- **28 ottobre 2026, sera**: Danilo ha applicato lo zip di aggiornamento del prodotto 1.6.0 a danilofailli.it e il pannello
+  lo ha preso. Visto da fuori: le pagine pubbliche (home, blog, laser, glossario, newsletter) le serve ancora WordPress, e
+  `/new/` è un sito statico (`/new/styles/global.css`): plumeCMS lì fa solo da pannello e cron. Rischio: email del mattino
+  doppie (CMS e modulo); pagine del modulo nel pannello da controllare. Consigliato a Danilo: spegnere le due email in
+  Social > Impostazioni finché il modulo non è portato alla 1.6.0; se il pannello si rompe, Aggiornamenti > Snapshot > Ripristina.
 - Le versioni nuove di plumeCMS arrivano a danilofailli.it come pacchetti del suo
   pannello Aggiornamenti, costruiti nel suo repository con
   `tools/cms-pacchetto.py --sito <commit> <nome>` (contengono anche il modulo).
