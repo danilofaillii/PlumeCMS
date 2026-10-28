@@ -157,7 +157,7 @@ def home():
         ('storia', 'Versioni', 'Ogni salvataggio lascia una versione: la confronti, la guardi in anteprima, ci torni con un clic.', '/funzionalita/#versioni'),
         ('grafico-su', 'SEO e AEO', 'Sitemap, robots, dati strutturati, llms.txt, IndexNow e Search Console. Per Google e per le intelligenze artificiali.', '/funzionalita/#seo'),
         ('email', 'Newsletter e form', 'Iscrizioni con doppia conferma, campagne, flussi automatici, form e popup. Senza servizi esterni.', '/funzionalita/#newsletter'),
-        ('scudo-spunta', 'Sicurezza', 'Due fattori, blocchi contro i tentativi, CSP, pacchetti firmati. Messo alla prova con 79 attacchi.', '/funzionalita/#sicurezza'),
+        ('scudo-spunta', 'Sicurezza', 'Due fattori, blocchi contro i tentativi, CSP, pacchetti firmati. Messo alla prova con 163 attacchi.', '/funzionalita/#sicurezza'),
     ]
     riq = lambda f: w('riquadro_icona', icona=f[0], titolo=f[1], testo=f[2], link={'url': f[3], 'nuova': False}, livello='h3', vista='impilata', allineamento={'d': 'left'})
     p.sezione([[titolo('Tutto quello che serve, *già dentro.*', 'Nello zaino', 'Niente da installare a parte, niente abbonamenti da ricordare.', centro=True)]], **spazi(80, 8))
@@ -185,10 +185,21 @@ def funzionalita():
           '<ul><li>80 widget: titoli, testi, immagini, pulsanti, gallerie, caroselli, prezzi, domande frequenti, contatori, mappe e 14 infografiche.</li>'
           '<li>Anteprima per computer, tablet e telefono, con valori diversi per ogni misura.</li>'
           '<li>Colori e caratteri globali: cambi il colore principale e cambia ovunque.</li>'
-          '<li>Foto con velo, bianco e nero ed effetti animati, dalla 1.2.2.</li></ul>']),
+          '<li>Foto con velo, bianco e nero ed effetti animati, dalla 1.2.2.</li>'
+          '<li>Foto leggere: dalla 1.4.0 la foto del telefono si raddrizza, si rimpicciolisce se è enorme, perde i dati nascosti (anche la posizione GPS) e accanto nasce la sua versione WebP, più piccola, per i browser che la leggono.</li></ul>']),
+        ('wordpress', 'importa-wp.webp', 'Vieni da WordPress? Porti tutto con te',
+         ['In Impostazioni, Importa da WordPress, scrivi l\'indirizzo del vecchio sito, il tuo utente e una password per le applicazioni. plumeCMS guarda tutto il sito e ti fa il report: quanti articoli, pagine, immagini, categorie, tag, menu, cosa diventano qui e cosa resta fuori, con il perché.',
+          'Spunti quello che vuoi portare e premi Importa: la barra ti dice a che punto è. I vecchi indirizzi diventano redirect, così i link sparsi per il web e su Google continuano a funzionare.',
+          'Tutto entra <strong>in prova</strong>: i visitatori non vedono niente, tu giri il sito nuovo nell\'anteprima. Ti piace? Conferma. Non ti convince? Annulla, e il sito torna com\'era.']),
         ('kit', 'installa-4.webp', 'Si parte con un sito vero, non con una pagina bianca',
          ['All\'ultimo passo l\'installatore ti chiede che sito vuoi fare: personale, attività, blog, portfolio, oppure vuoto.',
           'Scegli, e plumeCMS parte con la home, le pagine principali e il menu già costruiti, con testi d\'esempio che ti dicono cosa scriverci. Tu cambi le parole e metti le tue foto: il sito c\'è già.']),
+        ('tipo-sito', 'tipo-sito.webp', 'Non sei sicuro del tipo di sito? Provali',
+         ['Dopo l\'installazione il sito resta in prova: dalla dashboard passi da personale ad attività, a blog, a portfolio con un clic, e guardi come viene. Prima di cambiare, il pannello fa una copia del sito. Le pagine che hai già scritto restano.',
+          'Quando hai trovato quello giusto premi <strong>Definitivo</strong>: il riquadro sparisce e da lì in poi cambi tutto con l\'editor, pagina per pagina.']),
+        ('primi-passi', 'primi-passi.webp', 'Primi passi: cosa manca perché il sito sia pronto',
+         ['Nella dashboard sei caselle: nome e logo, i tuoi colori, le email che partono, il cron, la prima pagina scritta, il tipo di sito deciso. Ognuna con il link alla pagina giusta.',
+          'Si spuntano da sole quando le hai fatte. Tutte verdi? Le nascondi e la dashboard torna pulita.']),
         ('sezioni', 'sezioni.webp', 'Sezioni pronte: trenta modi di riempire una pagina',
          ['Nell\'editor c\'è la linguetta Sezioni: prezzi, testimonianze, chi siamo, servizi, numeri, domande frequenti, contatti, inviti. Trenta sezioni già impaginate, in nove gruppi, ognuna con la sua anteprima.',
           'Un clic e la sezione entra nella pagina, oppure la trascini dove vuoi. Da lì è una sezione come le altre: cambi testi, colori e widget. E segue i colori del tuo sito e del tema.']),
@@ -198,6 +209,9 @@ def funzionalita():
         ('stile', 'stile.webp', 'Stile del sito: colori e caratteri in un posto solo',
          ['Colori, caratteri, titoli, pulsanti, campi dei moduli, larghezza della pagina: tutto in una pagina sola, con l\'anteprima accanto.',
           'Le pagine usano i colori globali, quindi una modifica qui arriva su tutto il sito. Senza cercare il blu sbagliato pagina per pagina.']),
+        ('aspetti', 'aspetti.webp', 'Il pannello con l\'aspetto che preferisci',
+         ['Il pannello parte chiaro, con l\'aspetto Aria. Se ti trovi meglio con altro, in Il mio accesso scegli fra quattro: Aria (chiaro, bianco e blu), Bottega (caldo, carta crema e terracotta), Cosmo (scuro, notte blu e viola), Lavagna (scuro, verde ardesia e gesso).',
+          'Ogni utente sceglie il suo, e i testi restano leggibili in tutti e quattro: i contrasti sono misurati, non scelti a occhio.']),
         ('header', 'modelli.webp', 'Header, footer e menu fatti con l\'editor',
          ['Disegni testata e piede con lo stesso editor delle pagine. Con le condizioni decidi dove vale ciascuno: tutto il sito, una categoria, una pagina sola.',
           'I menu si costruiscono trascinando le voci, fino a tre livelli, con posizioni per la testata, il piede e il telefono.']),
@@ -216,11 +230,14 @@ def funzionalita():
           'Nelle pagine li mostri con il widget Download, a elenco o a schede, con icona, peso e pulsante. Come nella <a href="/scarica/">pagina Scarica</a> di questo sito.']),
         ('sicurezza', 'sicurezza.webp', 'Sicurezza, senza doverci pensare ogni giorno',
          ['Password robuste, accesso a due fattori, blocchi automatici contro chi prova a indovinare, sessioni che scadono, Content Security Policy, registro degli eventi.',
-          'Prima di uscire, plumeCMS è stato messo alla prova con 97 attacchi: tutti respinti. La pagina Sicurezza ti dice in verde e in rosso come sta il tuo sito.']),
+          'Prima di uscire, plumeCMS è stato messo alla prova con 163 attacchi: tutti respinti. La pagina Sicurezza ti dice in verde e in rosso come sta il tuo sito.']),
         ('aggiornamenti', 'aggiornamenti.webp', 'Aggiornamenti dal pannello, con la rete sotto',
          ['Un aggiornamento è uno zip: lo carichi da Impostazioni, Aggiornamenti, e premi Applica. Prima di toccare qualunque cosa il pannello fa una copia di sicurezza del database e dei file.',
           'Se qualcosa va storto, rimette tutto com\'era da solo. Puoi anche programmare l\'aggiornamento per la notte.',
           'Dalla 1.3.0 non devi nemmeno cercarlo: quando esce una versione nuova la dashboard te lo dice, e con Scarica e prepara lo zip arriva da solo, controllato, pronto da applicare.']),
+        ('server', 'controlla-server.webp', 'Controlla il server: il tuo hosting va bene?',
+         ['In Impostazioni, Controlla il server: il pannello prova tutto quello che serve a plumeCMS. Versione di PHP, estensioni, HTTPS, cron, email, cartelle, protezioni dei file. Non cambia niente: guarda e ti dice.',
+          'Ogni voce ha il suo segno: a posto, da sapere, da sistemare, con la spiegazione in parole semplici. Con il pulsante accanto mandi un\'email di prova e vedi se arriva.']),
         ('copia', 'copia.webp', 'La copia del tuo sito, con un clic',
          ['In Impostazioni, Copia del sito: Prepara la copia mette in uno zip il database, le immagini, i temi e i moduli. La scarichi e la tieni al sicuro.',
           'Se un giorno serve tornare indietro, o spostare il sito su un altro hosting, Ripristina rimette tutto com\'era. Prima, per sicurezza, fa da sola una copia del sito di adesso.']),
@@ -235,7 +252,7 @@ def funzionalita():
                   pulsante_testo='Scarica plumeCMS', link={'url': '/scarica/', 'nuova': False})]], larghezza='stretta', **spazi(72, 80))
     return dict(slug='funzionalita', titolo='Funzionalità', struttura=p.albero(),
                 seo_titolo='Funzionalità di plumeCMS: editor, temi, versioni, SEO, newsletter',
-                seo_descrizione='Cosa c\'è dentro plumeCMS: editor visuale con 79 widget, stile globale, header e footer, versioni, SEO e AEO, newsletter, sicurezza, aggiornamenti dal pannello.')
+                seo_descrizione='Cosa c\'è dentro plumeCMS: editor visuale con 80 widget, import da WordPress, stile globale, header e footer, versioni, SEO e AEO, newsletter, sicurezza, aggiornamenti dal pannello.')
 
 
 def temi():
@@ -350,6 +367,9 @@ def installazione():
                            'Il percorso esatto te lo mostra l\'installatore all\'ultimo passo.')])], **spazi(64, 32))
     p.sezione([[titolo('Dopo l\'installazione', livello='h3'),
                 w('elenco_icone', voci=[{'testo': t, 'icona': 'freccia-destra', 'link': ''} for t in [
+                    'Nella dashboard trovi i Primi passi: sei caselle che si spuntano da sole quando il sito è pronto.',
+                    'Il tipo di sito resta in prova: dalla dashboard lo cambi con un clic, finché non premi Definitivo.',
+                    'In Impostazioni, Controlla il server guarda se all\'hosting manca qualcosa.',
                     'In Impostazioni, Sicurezza togli la cartella install/ con il pulsante apposito.',
                     'In Impostazioni, Configurazione email imposta il server di posta (SMTP), se il tuo hosting lo chiede.',
                     'In Editor, Temi guarda i tre temi in anteprima e scegli il vestito.',
@@ -404,6 +424,7 @@ def faq():
               larghezza='stretta', **spazi(72, 24))
     voci = [
         ('Quanto costa? A quali condizioni lo uso?', 'Niente: plumeCMS è software libero, con licenza GNU GPL versione 3. Lo usi per tutti i siti che vuoi, tuoi o dei tuoi clienti, lo modifichi e lo ridistribuisci. Una sola regola: chi lo ridistribuisce, anche modificato, lo fa con la stessa licenza. I tuoi siti, i contenuti e i temi che disegni restano tuoi.'),
+        ('Vengo da WordPress. Devo rifare tutto?', 'No. In Impostazioni, Importa da WordPress, scrivi l\'indirizzo del sito, il tuo utente e una password per le applicazioni (la crei in WordPress, nel tuo profilo). plumeCMS porta articoli, pagine, immagini, categorie, tag, menu e titoli SEO, e mette i redirect dai vecchi indirizzi. Prima guardi tutto in prova, poi confermi. La grafica di WordPress e i plugin non si portano: la rifai con l\'editor e i temi.'),
         ('Devo saper programmare?', 'No. Installi dal browser, costruisci le pagine trascinando i widget, cambi colori e caratteri da una pagina sola. Il codice serve solo se vuoi costruire un tema o un modulo tuo.'),
         ('Devo partire da una pagina bianca?', 'No. All\'installazione scegli che sito vuoi fare (personale, attività, blog, portfolio) e plumeCMS parte con la home, le pagine e il menu già fatti. Poi, nell\'editor, la linguetta Sezioni ti dà trenta sezioni pronte da aggiungere con un clic.'),
         ('Che hosting serve?', 'Un hosting con PHP 8.2 o più nuovo e MySQL 8 (o MariaDB 10.6). Va bene un normale hosting condiviso con cPanel: non servono server dedicati.'),
@@ -501,7 +522,7 @@ def editor_json():
 
 
 # ------------------------------------------------------------------ file
-USATE = ['copertina', 'sezioni', 'copia', 'installa-1', 'installa-2', 'installa-3', 'installa-4', 'installa-5', 'editor-ritratto', 'editor', 'aperture', 'stile', 'modelli', 'versioni', 'seo', 'flussi', 'download', 'sicurezza', 'aggiornamenti', 'temi',
+USATE = ['copertina', 'importa-wp', 'tipo-sito', 'primi-passi', 'aspetti', 'controlla-server', 'sezioni', 'copia', 'installa-1', 'installa-2', 'installa-3', 'installa-4', 'installa-5', 'editor-ritratto', 'editor', 'aperture', 'stile', 'modelli', 'versioni', 'seo', 'flussi', 'download', 'sicurezza', 'aggiornamenti', 'temi',
          'tema-cosmo', 'tema-aria', 'tema-bottega']
 
 
@@ -547,6 +568,12 @@ def zip_lavagna(dest):
 
 # Le novità per chi scarica: brevi, scritte qui (il CHANGELOG è per chi sviluppa). Da aggiornare a ogni versione.
 NOVITA = [
+    ('1.4.0', 'Il sito si prova, il pannello si sceglie, WordPress si porta qui', [
+        'Importa da WordPress: report di quello che c\'è, scegli cosa portare, guardi tutto in prova, poi confermi o annulli.',
+        'Il tipo di sito resta in prova finché non premi Definitivo: personale, attività, blog o portfolio, con un clic dalla dashboard.',
+        'Il pannello parte chiaro, e ogni utente sceglie il suo aspetto: Aria, Bottega, Cosmo, Lavagna.',
+        'Primi passi nella dashboard, la pagina Controlla il server, foto più leggere in WebP, l\'icona del sito già pronta.',
+        'Il Log cron dice cosa ha fatto ogni giro, in parole chiare.']),
     ('1.3.1', 'Il sito degli aggiornamenti si sceglie', ['In Impostazioni, Aggiornamenti scrivi da quale sito arrivano le versioni nuove: non è più fisso nel codice.']),
     ('1.3.0', 'Si parte con un sito vero', ['All\'installazione scegli che sito vuoi fare: personale, attività, blog, portfolio. Parte già fatto.',
                                            'Nell\'editor, trenta sezioni pronte da mettere nella pagina con un clic.',

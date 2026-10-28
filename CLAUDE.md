@@ -85,7 +85,7 @@ Stato, decisioni, contesto e diario non stanno qui: stanno nel second brain
 - **Pacchetto di aggiornamento** per un'installazione esistente:
   `python3 tools/cms-pacchetto.py --aggiornamento`. Si carica dal pannello,
   Impostazioni, Aggiornamenti.
-- **Versione**: `cms/VERSIONE` (oggi 1.3.1) e una voce in `cms/CHANGELOG.md` a ogni
+- **Versione**: `cms/VERSIONE` (oggi 1.4.0) e una voce in `cms/CHANGELOG.md` a ogni
   zip con contenuto diverso. Mai cambiare il contenuto di una versione già data.
 - **Prove** prima di dire finito:
   - `php -n -d short_open_tag=1 -l` su ogni file PHP toccato, `node --check` sui js;
@@ -119,9 +119,15 @@ Le decisioni complete, con data e perché, stanno nel second brain, `plumecms/de
   Il redattore gestisce solo contenuti, media, categorie e tag.
 - **Nome: plumeCMS** (26 ottobre 2026).
 
-## Stato al 27 ottobre 2026
+## Stato al 28 ottobre 2026
 
-Fatto: plumeCMS 1.3.1: l'indirizzo del sito ufficiale è un parametro (Aggiornamenti, impostazione `versione_sito`; `CMS_AGGIORNAMENTI_URL`
+Fatto: plumeCMS 1.4.0 (28 ottobre): import da WordPress (`includes/importa-wp*.php`, `admin/importa-wordpress.php`: report, scelta,
+import a giri, prova, conferma o annulla; password per le applicazioni, protezione SSRF), tipo di sito in prova fino a Definitivo
+(`admin/tipo-sito.php`, solo installazioni nuove), quattro aspetti del pannello per utente (Aria predefinito, `users.pannello_aspetto`),
+Primi passi nella dashboard, Controlla il server, foto leggere (WebP, `includes/foto.php`), favicon di partenza, Log cron in parole
+chiare (`includes/cron.php`), riquadri con la posizione salvata (`'prima'=>'posizione'`). 163 attacchi respinti (2 saltati: burnout,
+newsletter firmata senza `SEGRETO`); install radice e cartella 37/37; import contro un WordPress 6.6.2 vero 76/76; aggiornamento
+1.3.1 -> 1.4.0 12/12; sito di plumeCMS in quattro parti 69/69. 1.3.1: l'indirizzo del sito ufficiale è un parametro (Aggiornamenti, impostazione `versione_sito`; `CMS_AGGIORNAMENTI_URL`
 nel config vince); `prova-versione-sito.js` 7 su 7. 1.3.0 (notte del 27 ottobre, un agente con il ciclo PDCA): kit di partenza nell'installatore (`includes/kit-partenza.php`,
 `includes/kit/`), 30 sezioni pronte nell'editor (`includes/sezioni-pronte*.php`), "c'è una versione nuova" (`includes/versione-nuova.php`,
 `api/versione.php`), copia del sito (`includes/copia-sito.php`, Impostazioni > Copia del sito); prove `prova-kit.js`, `prova-sezioni.js`,
@@ -152,15 +158,15 @@ Aperto:
   nuove non ne risentono. Se un giorno si cambia il predefinito, prima va aggiunto
   `define('CMS_PREFISSO', 'newdf_');` al `config.local.php` di danilofailli.it;
 - prova vera delle chiamate a Google Search Console e IndexNow da un server con rete aperta;
-- favicon di partenza (l'installazione pulita risponde 404 su `/favicon.ico`);
 - **indirizzo del sito ufficiale** per "c'è una versione nuova": dalla 1.3.1 si sceglie in Aggiornamenti; il predefinito
   `VERSIONE_SITO_UFFICIALE` (`includes/versione-nuova.php`) vale ancora `https://duhtron.it/test`, da confermare con Danilo; quel sito
   deve avere la 1.3.0 o più nuova (per `api/versione.php`);
 - copia del sito: il ripristino non toglie i file che stanno nel sito ma non nella copia; con due installazioni nello stesso database
   e prefissi che cominciano uguale (`cms_` e `cms_b_`) la copia prende anche le tabelle dell'altra;
 - "c'è una versione nuova" provato solo in http locale (`CMS_AGGIORNAMENTI_HTTP_PROVA`): HTTPS vero da provare su un server;
-- widget Riquadro con icona: "Posizione dell'icona" si perde al salvataggio (stesso nome di "Posizione" delle Avanzate,
-  `editor-widget-extra-a.php:28` e `:60` contro `editor-controlli.php:714`), e `.ew-ribox{text-align:center}` vince sull'allineamento;
+- stessa famiglia del Riquadro con icona (corretto nella 1.4.0): "Animazione delle parole" del Titolo animato e `padding` di Social,
+  Condividi, Avviso e Flip box hanno lo stesso nome di un controllo delle Avanzate;
+- import da WordPress provato contro un WordPress locale, non su un hosting vero; Apache, HTTPS vero, SMTP vero e Imagick non provati per la 1.4.0;
 - `tools/` e `prove/` hanno ancora riferimenti a danilofailli.it (strumenti di sviluppo, non vanno nello zip): `--sito`, la prova del burnout;
 - i temi a danilofailli.it arrivano solo con un pacchetto `--sito` dal suo repository (mai lo zip del prodotto).
 

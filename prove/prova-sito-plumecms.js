@@ -117,6 +117,10 @@ async function contrastoParole(pg) {
   ok('Funzionalità: il blocco delle undici aperture, con il foglio', await v.locator('#aperture img[src*="aperture.webp"]').count() === 1 && /Undici aperture/.test(await v.locator('#aperture').innerText()));
   for (const [id, img, re] of [['kit', 'installa-4.webp', /sito vero/], ['sezioni', 'sezioni.webp', /Sezioni pronte/], ['copia', 'copia.webp', /copia del tuo sito/]])
     ok(`Funzionalità (1.3.0): il blocco ${id}, con la schermata`, await v.locator(`#${id} img[src*="${img}"]`).count() === 1 && re.test(await v.locator(`#${id}`).innerText()));
+  for (const [id, img, re] of [['wordpress', 'importa-wp.webp', /Vieni da WordPress/], ['tipo-sito', 'tipo-sito.webp', /Definitivo/], ['primi-passi', 'primi-passi.webp', /Primi passi/],
+    ['aspetti', 'aspetti.webp', /Lavagna/], ['server', 'controlla-server.webp', /Controlla il server/]])
+    ok(`Funzionalità (1.4.0): il blocco ${id}, con la schermata`, await v.locator(`#${id} img[src*="${img}"]`).count() === 1 && re.test(await v.locator(`#${id}`).innerText()));
+  ok('Funzionalità: 163 attacchi respinti, non più 97', /163 attacchi/.test(await v.locator('#sicurezza').innerText()));
   ok('favicon del sito', await v.locator('link[rel=icon][href*="favicon.png"]').count() === 1);
 
   // "Installalo in 5 minuti" (pagina Installazione): cosa serve prima e il carosello delle cinque schermate vere
@@ -175,6 +179,11 @@ async function contrastoParole(pg) {
   ok('Scarica: la licenza GNU GPL, con il link', /GNU GPL versione 3/.test(await v.locator('body').innerText()) && await v.locator('a[href*="gnu.org/licenses/gpl-3.0"]').count() >= 1);
   await v.goto(B + '/domande-frequenti/', { waitUntil: 'networkidle' });
   ok('Domande frequenti: quanto costa e a quali condizioni', /A quali condizioni lo uso\?/.test(await v.locator('body').innerText()));
+  ok('Domande frequenti (1.4.0): chi viene da WordPress', /Vengo da WordPress\. Devo rifare tutto\?/.test(await v.locator('body').innerText()));
+  await v.goto(B + '/scarica/', { waitUntil: 'networkidle' });
+  ok('Scarica: le novità della 1.4.0', /1\.4\.0: Il sito si prova/.test(await v.locator('body').innerText()));
+  await v.goto(B + '/installazione/', { waitUntil: 'networkidle' });
+  ok('Installazione (1.4.0): dopo l\'installazione, Primi passi e Controlla il server', /Primi passi/.test(await v.locator('body').innerText()) && /Controlla il server/.test(await v.locator('body').innerText()));
   ok('nessun errore JavaScript sul sito', errV.length === 0, errV);
   await br.close();
   console.log(`\n${n - ko} su ${n} OK`);

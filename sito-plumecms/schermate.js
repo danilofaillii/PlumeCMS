@@ -2,6 +2,9 @@
 // Si fanno su un plumeCMS a cui e gia stato applicato il pacchetto del sito (cosi l'editor e i temi mostrano plumeCMS).
 // uso: node sito-plumecms/schermate.js <base> <cartella> <utente> <password>
 // poi: python3 sito-plumecms/costruisci.py --schermate <cartella>. La home ha id 1, come in ogni installazione nuova.
+// 1.4.0: importa-wp, tipo-sito, primi-passi, aspetti e controlla-server vengono dalle prove (servono stati che qui non ci sono:
+// un WordPress collegato, un sito ancora in prova, i primi passi fatti): prova-importa-wp.js, prova-tipo-sito.js,
+// prova-primi-passi.js, prova-aspetti.js, prova-controlla-server.js, tagliate in alto e messe nella cartella delle schermate.
 const { chromium } = require('playwright');
 const [B, D, UTENTE, PASSWORD] = process.argv.slice(2);
 (async () => {
