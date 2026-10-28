@@ -1,6 +1,6 @@
 # Manuale d'uso di plumeCMS
 
-Versione del manuale: plumeCMS 1.5.0, 28 ottobre 2026.
+Versione del manuale: plumeCMS 1.6.0, 28 ottobre 2026.
 
 ## Prima di cominciare
 
@@ -58,7 +58,7 @@ Dopo l'accesso arrivi alla **Dashboard**: la pagina che ti dice come sta il sito
 
 Sotto trovi i riquadri del **tipo di sito** e dei **Primi passi** (capitoli 2 e 3), gli avvisi in giallo, e i numeri
 del sito: articoli online, programmati e in bozza, iscritti alla newsletter, form compilati, ultime modifiche, e un
-riquadro **Sistema** che dice quando sono girati per l'ultima volta i compiti automatici (il cron, capitolo 25).
+riquadro **Sistema** che dice quando sono girati per l'ultima volta i compiti automatici (il cron, capitolo 26).
 
 ### Il menu in basso
 
@@ -228,6 +228,9 @@ Più in basso, a sinistra:
 
 ![L'articolo sul sito](immagini/manuale-uso/04-sul-sito.jpg)
 
+Vuoi che sotto ogni articolo esca sempre lo stesso invito (passa in negozio, iscriviti alla newsletter)? Non va
+scritto in ogni articolo: lo prepari una volta sola con **Aggiungi sempre alla fine**, capitolo 16.
+
 **Checklist**
 
 - [ ] Il titolo è quello giusto e l'indirizzo è corto e leggibile.
@@ -275,7 +278,7 @@ Sulla dashboard, nel riquadro **Contenuti**, la voce **Prossime uscite** ti rico
 
 - [ ] Visibilità "Pubblicato" e una data futura.
 - [ ] Nell'elenco l'articolo è "Programmato".
-- [ ] Il cron è attivo (capitolo 25): avvisa i motori di ricerca delle pagine nuove.
+- [ ] Il cron è attivo (capitolo 26): avvisa i motori di ricerca delle pagine nuove.
 
 **Se qualcosa non va**
 
@@ -495,7 +498,7 @@ Premi **Pubblica** e conferma.
 
 ![La pagina sul sito](immagini/manuale-uso/09-sul-sito.jpg)
 
-Manca una cosa: nessuno la trova, perché non è nel menu. Lo sistemi nel capitolo 16.
+Manca una cosa: nessuno la trova, perché non è nel menu. Lo sistemi nel capitolo 17.
 
 **Checklist**
 
@@ -504,7 +507,7 @@ Manca una cosa: nessuno la trova, perché non è nel menu. Lo sistemi nel capito
 - [ ] Ho guardato la pagina anche al telefono.
 - [ ] I pulsanti portano dove devono (provali sul sito).
 - [ ] Ho premuto Pubblica.
-- [ ] La pagina è nel menu (capitolo 16).
+- [ ] La pagina è nel menu (capitolo 17).
 
 **Se qualcosa non va**
 
@@ -688,7 +691,86 @@ il ciano). Per costruirne uno tuo c'è il **Manuale dei temi**.
 
 ---
 
-## 16. Il menu
+## 16. Un riquadro in fondo a ogni articolo
+
+**A cosa serve.** Chi arriva alla fine di un articolo è la persona più interessata che hai. Con **Aggiungi sempre alla
+fine** prepari una volta sola un riquadro ombreggiato che esce sotto **ogni** articolo, anche quelli che hai già
+pubblicato: un invito a passare in negozio, l'iscrizione alla newsletter, un contatto, un libro da consigliare. Lo
+componi con l'editor visuale, come una pagina (capitolo 8). Non esce nelle pagine né nella home, solo negli articoli.
+
+Lo prepara e lo cambia solo l'**amministratore**: il redattore non ha la linguetta.
+
+**Esempio.** Lo Studio Prova vuole che chi legge un articolo trovi in fondo un invito a passare in negozio, con un
+pulsante per prenotare una visita.
+
+### Creare il riquadro
+
+![La linguetta Aggiungi sempre alla fine](immagini/manuale-uso/15f-linguetta.jpg)
+
+1. Nel menu a sinistra apri **Articoli**. In alto, dopo Tutti, Pubblicati, Programmati, Bozze e Cestino, premi la
+   linguetta **Aggiungi sempre alla fine**.
+
+![La pagina del riquadro, la prima volta](immagini/manuale-uso/15f-crea.jpg)
+
+La pagina dice **Non ancora creato**.
+
+2. Premi **Crea il riquadro**. Si apre l'editor visuale con il riquadro già pronto: un titolo, "Prima di andare", e un
+   testo da riscrivere. Sopra vedi le righe grigie che fanno la parte dell'articolo; il riquadro sta sotto, con i colori
+   del tuo sito.
+
+### Scriverci dentro
+
+3. Fai doppio clic sul titolo nella tela. A sinistra, nella casella **Titolo**, scrivi *Ti è stato utile? Vieni a
+   trovarci*.
+4. Fai doppio clic sul testo e scrivi il tuo: *Siamo in negozio dal martedì al sabato, dalle 9 alle 19. Se vuoi un
+   consiglio con calma, prenota una visita: ti dedichiamo mezz'ora solo per te.*
+
+![Il pulsante e Pubblica, nell'editor](immagini/manuale-uso/15f-editor.jpg)
+
+5. Con il testo ancora selezionato, apri la linguetta **Widget** e scegli **Pulsanti**: il pulsante entra subito sotto
+   il testo. Nel pannello **Modifica** scrivi il **Testo** (*Prenota una visita*) e il **Link** (*/contatti/*).
+6. Premi **Pubblica**. Finché non lo fai il riquadro resta una bozza e sul sito non esce.
+
+Dentro il riquadro puoi mettere qualunque widget dell'editor: una foto, l'iscrizione alla newsletter (capitolo 20), più
+colonne. Tieni però il riquadro corto: tre o quattro righe e un pulsante funzionano meglio di una pagina intera.
+
+### Acceso e spento
+
+![Il riquadro acceso](immagini/manuale-uso/15f-acceso.jpg)
+
+7. Premi la freccia in alto a sinistra dell'editor: torni alla pagina del riquadro, che ora dice **Acceso**. Più sotto
+   c'è l'**anteprima**: l'ultimo articolo pubblicato con il riquadro in fondo.
+8. **Spegni** toglie il riquadro da tutti gli articoli senza perdere niente; **Accendi** lo rimette. Da qui hai anche
+   **Modifica nell'editor**, **Vedi sotto l'ultimo articolo** (il sito vero, in una scheda nuova) e **Versioni** (le
+   versioni di prima, da confrontare e ripristinare, capitolo 12).
+
+![Il riquadro sul sito, sotto l'articolo](immagini/manuale-uso/15f-sul-sito.jpg)
+
+Sul sito il riquadro esce dopo il testo di ogni articolo, nella stessa colonna, con l'ombra, il bordo e gli angoli
+tondi. I colori vengono dallo Stile del sito e dal tema (capitoli 13 e 14): se li cambi, il riquadro li segue.
+
+**Quando lo cambi.** Apri **Modifica nell'editor**, cambia e premi **Pubblica**. Le modifiche salvate con **Salva
+bozza** si vedono solo nelle anteprime (quella della pagina del riquadro e Vedi sotto l'ultimo articolo), non sul sito.
+
+**Checklist**
+
+- [ ] Il riquadro ha un titolo, due o tre righe e al massimo un pulsante.
+- [ ] Il pulsante porta a una pagina che esiste (prova a premerlo dal sito).
+- [ ] Ho premuto **Pubblica** nell'editor e la pagina del riquadro dice **Acceso**.
+- [ ] Ho aperto un articolo dal telefono e il riquadro si legge bene.
+
+**Se qualcosa non va**
+
+- *Il riquadro non esce sul sito.* Guarda la pagina del riquadro: se dice **Spento**, non l'hai mai pubblicato
+  (Modifica nell'editor, poi Pubblica) o l'hai spento (premi Accendi). Esce solo sotto gli articoli, non nelle pagine.
+- *Accendi dice che il riquadro non è ancora stato pubblicato.* La prima volta si accende con **Pubblica** nell'editor.
+- *Il pulsante è troppo attaccato al testo.* Fai doppio clic sul testo, scheda **Avanzate**, gruppo Layout:
+  in **Spazio sotto (px)** scrivi per esempio 20.
+- *Non vedo la linguetta.* È solo dell'amministratore: entra con un utente amministratore.
+
+---
+
+## 17. Il menu
 
 **A cosa serve.** Il **menu** è l'elenco di voci della testata (Home, Servizi, Chi siamo...). Si cambia da **Editor >
 Menu di navigazione**.
@@ -721,7 +803,7 @@ menu** ne fa uno nuovo.
 
 ---
 
-## 17. I form
+## 18. I form
 
 **A cosa serve.** Un **form** raccoglie dati da chi visita: richieste di preventivo, candidature, prenotazioni. Le
 compilazioni arrivano nel pannello e, se vuoi, anche via email.
@@ -767,11 +849,11 @@ Excel o Numbers.
 - [ ] Il form chiede solo quello che serve davvero.
 - [ ] Il campo Email è di tipo **Email** (serve per risponderti e per la newsletter).
 - [ ] Ho compilato il form dal sito, una volta, e la compilazione è arrivata.
-- [ ] Le email partono (capitolo 24), se voglio l'avviso a ogni compilazione.
+- [ ] Le email partono (capitolo 25), se voglio l'avviso a ogni compilazione.
 
 ---
 
-## 18. I popup
+## 19. I popup
 
 **A cosa serve.** Una finestra che compare sopra la pagina: un'offerta, un avviso, un invito a iscriversi. Si apre da
 **Popup**, **+ Nuovo popup**.
@@ -795,15 +877,15 @@ Excel o Numbers.
 
 ---
 
-## 19. La newsletter
+## 20. La newsletter
 
 **A cosa serve.** Scrivere alle persone che si sono iscritte, dal tuo sito, senza servizi esterni da pagare. Le email
-partono dal tuo server, a giri, grazie al cron (capitolo 25).
+partono dal tuo server, a giri, grazie al cron (capitolo 26).
 
 ### Gli iscritti
 
 **Newsletter e form > Iscritti e liste**: l'elenco degli iscritti, le liste (Newsletter, Clienti...), chi deve ancora
-confermare e chi è uscito. Le persone si iscrivono da sole con un form (capitolo 17) e confermano con un'email
+confermare e chi è uscito. Le persone si iscrivono da sole con un form (capitolo 18) e confermano con un'email
 (doppio consenso).
 
 ![Iscritti e liste](immagini/manuale-uso/19-iscritti.jpg)
@@ -837,13 +919,13 @@ un'email diversa a chi ha aperto e a chi no. Si disegnano su una tela con quattr
 
 **Checklist**
 
-- [ ] Le email partono (capitolo 24) e il cron è attivo (capitolo 25).
+- [ ] Le email partono (capitolo 25) e il cron è attivo (capitolo 26).
 - [ ] Ho mandato la prova a me stesso prima di ogni campagna.
 - [ ] Ogni email ha il link per uscire dalla newsletter (lo mette plumeCMS da solo).
 
 ---
 
-## 20. I social e l'email del mattino
+## 21. I social e l'email del mattino
 
 **A cosa serve.** Ogni mattina ti arriva un'email con tutto pronto per i social: cosa esce oggi sul sito, il testo per
 ogni canale con il link e gli hashtag, le due immagini della misura giusta. Copi, incolli, pubblichi: cinque minuti con il
@@ -857,7 +939,7 @@ il giorno dopo serve un promemoria.
 ![Social, Impostazioni](immagini/manuale-uso/19s-impostazioni.jpg)
 
 1. **Le email del mattino**: "Oggi sul sito" (i contenuti che escono oggi) e "Social di oggi" (i testi del calendario).
-   Arrivano all'indirizzo degli avvisi di Impostazioni > Configurazione email (capitolo 24).
+   Arrivano all'indirizzo degli avvisi di Impostazioni > Configurazione email (capitolo 25).
 2. **I canali** su cui pubblichi: LinkedIn, Facebook, Instagram, WhatsApp e Telegram, Substack. Quelli spenti spariscono
    dalle email e dalle pagine.
 3. **Hashtag fissi**, uno per canale: escono in fondo a ogni testo (per esempio quello del tuo marchio).
@@ -884,7 +966,7 @@ Premi **Aggiorna** (o Pubblica).
 
 ### Ogni mattina: l'email "Oggi sul sito"
 
-Il giorno in cui esce un articolo, al giro del mattino del cron (capitolo 25), ti arriva **"Oggi sul sito tuosito.it:
+Il giorno in cui esce un articolo, al giro del mattino del cron (capitolo 26), ti arriva **"Oggi sul sito tuosito.it:
 1 articolo"**. Per ogni contenuto che esce quel giorno: il titolo, le due immagini con i pulsanti per scaricarle, un
 riquadro per ogni canale con il testo pronto, e i pulsanti **Condividi su LinkedIn**, **Condividi su Facebook**,
 **Invia su WhatsApp**, **Invia su Telegram**.
@@ -932,8 +1014,8 @@ ripartire domattina, **Mandalo adesso a me** te lo manda subito senza toccare il
 
 **Checklist**
 
-- [ ] L'indirizzo degli avvisi è scritto e le email partono (capitolo 24).
-- [ ] Il cron gira (capitolo 25): senza, le email del mattino non partono da sole.
+- [ ] L'indirizzo degli avvisi è scritto e le email partono (capitolo 25).
+- [ ] Il cron gira (capitolo 26): senza, le email del mattino non partono da sole.
 - [ ] Ho scelto i canali e scritto gli hashtag fissi.
 - [ ] Ogni articolo ha il suo testo per i social e un'immagine in evidenza.
 - [ ] Ho guardato l'anteprima dell'email del giorno prima di dormirci sopra.
@@ -949,7 +1031,7 @@ ripartire domattina, **Mandalo adesso a me** te lo manda subito senza toccare il
 
 ---
 
-## 21. I file da scaricare
+## 22. I file da scaricare
 
 **A cosa serve.** Manuali, listini, moduli, programmi: i file che offri da scaricare, con un indirizzo fisso e il conto
 di quante volte sono stati scaricati (le persone sì, i robot no). Si apre da **Download**.
@@ -974,7 +1056,7 @@ l'indirizzo `/scarica/guida-ultima/` porta sempre al più recente. Carichi la ve
 
 ---
 
-## 22. Farsi trovare: SEO e AEO
+## 23. Farsi trovare: SEO e AEO
 
 **A cosa serve.** Fare in modo che Google e le intelligenze artificiali capiscano di cosa parla ogni pagina e la
 mostrino a chi la cerca. Molto lo fa plumeCMS da solo: la mappa del sito, i dati strutturati, i redirect quando cambi un
@@ -1014,7 +1096,7 @@ rimandi dove devono andare.
 
 ---
 
-## 23. Utenti e ruoli
+## 24. Utenti e ruoli
 
 **A cosa serve.** Far lavorare altre persone sul sito, ognuna con il suo nome e la sua password. Si apre da **Utenti**.
 
@@ -1037,10 +1119,10 @@ email; al primo accesso potrà cambiarla da **Password**.
 
 ---
 
-## 24. Le email del sito
+## 25. Le email del sito
 
 **A cosa serve.** Il sito manda email: conferme di iscrizione, avvisi dei form, la newsletter, le email del mattino con i social
-(capitolo 20).
+(capitolo 21).
 Perché arrivino (e non finiscano fra lo spam) conviene farle partire da una casella vera del tuo dominio. Si apre da
 **Impostazioni > Configurazione email**.
 
@@ -1069,13 +1151,13 @@ Premi **Salva**, poi manda l'email di prova (anche dai Primi passi, sulla dashbo
 
 ---
 
-## 25. Il cron: i compiti automatici
+## 26. Il cron: i compiti automatici
 
 **A cosa serve.** Il **cron** è una sveglia che l'hosting suona al sito a orari fissi. Senza, il sito fa le cose solo
 quando qualcuno lo visita. Con il cron:
 
 - le campagne programmate partono alla loro ora e la newsletter va a piccoli giri, ogni 5 minuti;
-- ogni mattina ti arrivano le email "Oggi sul sito" e "Social di oggi" (capitolo 20);
+- ogni mattina ti arrivano le email "Oggi sul sito" e "Social di oggi" (capitolo 21);
 - ogni mattina il sito applica gli aggiornamenti programmati, avvisa i motori di ricerca (IndexNow) delle pagine nuove o
   cambiate e fa i compiti dei moduli installati;
 - i flussi automatici della newsletter vanno avanti (il benvenuto ai nuovi iscritti, i promemoria).
@@ -1105,7 +1187,7 @@ Fai lo stesso per la seconda riga. Il giorno dopo, la stessa pagina ti dice com'
 
 ---
 
-## 26. La sicurezza
+## 27. La sicurezza
 
 **A cosa serve.** plumeCMS è protetto già all'installazione: blocca chi prova a indovinare le password, chiude le porte
 che non servono, controlla quello che entra. **Impostazioni > Sicurezza** ti fa vedere come sta il sito, a colori.
@@ -1142,14 +1224,14 @@ sul tuo telefono. Chi ruba la password resta fuori.
 **Se qualcosa non va**
 
 - *Ho dimenticato la password.* Nella pagina di accesso usa il link per reimpostarla: arriva un'email (serve che le
-  email partano, capitolo 24).
+  email partano, capitolo 25).
 - *Ho perso il telefono del secondo fattore.* Entra con uno dei codici di recupero, poi rigenera il secondo fattore.
 - *Mi sono chiuso fuori del tutto.* Chiedi a chi gestisce l'hosting, o a chi ha installato il sito: il manuale tecnico
   (capitolo "Se ci si chiude fuori") spiega la riga da aggiungere al file di configurazione per rientrare.
 
 ---
 
-## 27. Aggiornare plumeCMS
+## 28. Aggiornare plumeCMS
 
 **A cosa serve.** Le versioni nuove portano funzioni e correzioni. Un aggiornamento è uno zip che carichi dal pannello:
 prima di toccare qualunque cosa il pannello fa una copia di sicurezza, e se qualcosa va storto rimette tutto com'era da
@@ -1176,7 +1258,7 @@ all'ultima: non serve passare da quelle in mezzo.
 
 **Checklist**
 
-- [ ] Prima di aggiornare ho una copia del sito recente (capitolo 28; il pannello ne fa comunque una).
+- [ ] Prima di aggiornare ho una copia del sito recente (capitolo 29; il pannello ne fa comunque una).
 - [ ] Dopo l'aggiornamento il numero di versione è quello nuovo.
 - [ ] Ho aperto il sito e qualche pagina del pannello: tutto come prima.
 
@@ -1189,7 +1271,7 @@ all'ultima: non serve passare da quelle in mezzo.
 
 ---
 
-## 28. La copia del sito
+## 29. La copia del sito
 
 **A cosa serve.** Una copia completa del sito (database, immagini, temi, moduli) in un solo file, da tenere al sicuro.
 Serve se qualcosa si rompe, o per spostare il sito su un altro hosting. Si apre da **Impostazioni > Copia del sito**.
@@ -1211,7 +1293,7 @@ email.
 
 ---
 
-## 29. Controlla il server
+## 30. Controlla il server
 
 **A cosa serve.** Sapere se l'hosting ha tutto quello che serve a plumeCMS: versione di PHP, estensioni, HTTPS, cron,
 email, cartelle scrivibili, protezioni dei file. Non cambia niente: guarda e ti dice. Si apre da **Impostazioni >
@@ -1229,7 +1311,7 @@ semplici. **Controlla di nuovo** rifà i controlli; **Manda un'email di prova** 
 
 ---
 
-## 30. Portare qui un sito WordPress
+## 31. Portare qui un sito WordPress
 
 **A cosa serve.** Se hai un sito WordPress, plumeCMS lo legge e porta qui articoli, pagine, immagini, categorie, tag,
 menu e titoli SEO, con i redirect dai vecchi indirizzi. Il sito WordPress non viene toccato. Si apre da **Impostazioni >
@@ -1299,9 +1381,10 @@ Dopo la conferma puoi cancellare la password per le applicazioni da WordPress, d
 |---|---|
 | Ho cambiato una pagina ma sul sito non si vede | Nell'editor hai premuto Salva bozza: premi **Pubblica**. Se l'hai fatto, ricarica la pagina del sito |
 | Il pannello ha i colori di prima dopo un aggiornamento | Ricarica con **Cmd + Maiusc + R** (Mac) o **Ctrl + Maiusc + R** (Windows) |
-| Stamattina non è arrivata l'email "Oggi sul sito" | Quel giorno non usciva niente, o il cron non gira, o manca l'indirizzo degli avvisi (capitolo 20) |
+| Stamattina non è arrivata l'email "Oggi sul sito" | Quel giorno non usciva niente, o il cron non gira, o manca l'indirizzo degli avvisi (capitolo 21) |
+| Ho fatto il riquadro in fondo agli articoli ma sul sito non c'è | Non l'hai pubblicato (nell'editor premi **Pubblica**) o è spento: Articoli > Aggiungi sempre alla fine, **Accendi** (capitolo 16) |
 | Un articolo programmato non è uscito | Controlla data e ora nella scheda; controlla che il cron giri (Log cron) |
-| Le email non arrivano | Configurazione email, email di prova; guarda lo spam (capitolo 24) |
+| Le email non arrivano | Configurazione email, email di prova; guarda lo spam (capitolo 25) |
 | "Il file supera il limite di caricamento del server" | File troppo grande per l'hosting: rimpiccioliscilo o chiedi all'hosting di alzare il limite |
 | Una pagina è sparita dal menu | Editor > Menu di navigazione: rimettila e premi Salva il menu |
 | Ho rovinato una pagina | Editor > Revisioni: carica la versione di prima e pubblica |

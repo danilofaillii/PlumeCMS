@@ -2,6 +2,28 @@
 
 Il prodotto si chiama **plumeCMS** (nome scelto il 26 ottobre 2026; prima, per poche ore, "CarbonaraCMS", e ancora prima il provvisorio "Officina": gli zip vecchi si chiamavano `officina-*` e `carbonaracms-*`).
 
+## 1.6.0 (28 ottobre 2026) - Un riquadro in fondo a ogni articolo
+
+- **Articoli, linguetta "Aggiungi sempre alla fine"** (accanto a Tutti, Pubblicati, Programmati, Bozze, Cestino; solo
+  per l'amministratore). Apre una pagina nuova da cui si crea un riquadro che esce **sotto ogni articolo**, anche sotto
+  quelli già pubblicati: un invito alla newsletter, un contatto, un libro da consigliare.
+- **Il riquadro si compone con l'editor visuale**, come una pagina: qualunque widget, colori, pulsanti. Parte con un
+  titolo ("Prima di andare") e un testo da riscrivere. Ha bozza, versioni e anteprima come header e footer: esce sul sito
+  quando lo si pubblica con **Pubblica** nell'editor.
+- **Acceso e spento**: la pagina del riquadro dice com'è (Non ancora creato, Spento, Acceso), e ha Modifica nell'editor,
+  Accendi o Spegni, Vedi sotto l'ultimo articolo, Versioni. Spegni lo toglie dagli articoli senza perdere il lavoro;
+  Accendi lo rimette (se è già stato pubblicato una volta). Più sotto, l'anteprima dell'ultimo articolo con il
+  riquadro in fondo, anche con le modifiche non ancora pubblicate.
+- **Sul sito** il riquadro sta dentro la colonna di lettura, dopo il testo, con ombra, bordo e angoli tondi che seguono
+  i colori dello Stile del sito e dei temi. Non esce nelle pagine né nella home.
+- **Esporta e importa** delle impostazioni dell'editor portano il riquadro insieme a header e footer (uno solo: chi
+  importa aggiorna quello che c'è).
+- Header e footer non dà più avvisi con il tipo di modello nuovo.
+- Tolte tre emoji scritte nei file (Newsletter > Flussi, anteprima dell'editor, menu di navigazione): ora sono entità
+  HTML, a schermo uguali.
+- Manuale d'uso: capitolo 16 nuovo, "Un riquadro in fondo a ogni articolo" (ora i capitoli sono 31). Manuale tecnico:
+  capitolo 28. Prove: `prove/prova-fine-articolo.js`, ATTACCHI_DA_RIEMPIRE.
+
 ## 1.5.0 (28 ottobre 2026) - I social, ogni mattina
 
 Prima stavano nel modulo di danilofailli.it, scritti per quel sito. Ora sono del CMS, per qualunque sito.

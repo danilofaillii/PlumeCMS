@@ -354,6 +354,42 @@ capitoli['15'] = async () => {
   await foto('15-modelli', { clip: { x: 240, y: 56, width: 960, height: 440 }, segni: [{ sel: '.md-stella.on', n: 1 }] });
 };
 
+// 15f. Un riquadro in fondo a ogni articolo (1.6.0): Articoli > Aggiungi sempre alla fine, sotto "Chiusi per ferie" del capitolo 4.
+capitoli['15f'] = async () => {
+  await vai('contenuti.php?tipo=articoli');
+  await foto('15f-linguetta', { clip: { x: 240, y: 56, width: 960, height: 230 }, segni: [{ sel: '#ct-fine-articolo', n: 1 }] });
+  await Promise.all([p.waitForNavigation(), p.click('#ct-fine-articolo')]);
+  await p.waitForLoadState('networkidle');
+  await foto('15f-crea', { sel: '#fa-stato', segni: [{ sel: '#fa-stato .badge', n: '' }, { sel: '#fa-crea', n: 2 }] });
+  await Promise.all([p.waitForNavigation(), p.click('#fa-crea')]);
+  await apriEditor(p.url().split('/admin/')[1]);
+  // Il titolo e il testo di partenza, riscritti
+  // Doppio clic a sinistra: al centro della sezione, senza spazi sopra e sotto, sta il "+" che aggiunge una sezione.
+  await tela().locator('.ed-w-titolo').first().dblclick({ position: { x: 16, y: 10 } }); await dorme(500);
+  await scriviCtl('Titolo', 'Ti è stato utile? Vieni a trovarci');
+  await tela().locator('.ed-w-testo').first().dblclick({ position: { x: 16, y: 10 } }); await dorme(500);
+  await p.locator('#ed-controlli .ql-editor').click(); await p.keyboard.press('Control+A');
+  await p.keyboard.type('Siamo in negozio dal martedì al sabato, dalle 9 alle 19. Se vuoi un consiglio con calma, prenota una visita: ti dedichiamo mezz\'ora solo per te.');
+  await dorme(600);
+  // Un pulsante sotto il testo (il testo è selezionato: il widget nuovo va subito dopo)
+  await widget('pulsanti');
+  await voce(0, { Testo: 'Prenota una visita', Link: '/contatti/' });
+  await dorme(800);
+  await foto('15f-editor', { clip: { x: 0, y: 0, width: 1200, height: 700 }, segni: [{ sel: '#ed-controlli .ed-voce-corpo', n: 5 }, { sel: '#ed-pubblica', n: 6 }] });
+  await p.click('#ed-pubblica');
+  await p.waitForFunction(() => /Pubblicata alle/.test(document.querySelector('#ed-stato').textContent));
+  // Indietro: la pagina del riquadro dice Acceso
+  await Promise.all([p.waitForNavigation(), p.click('a.ed-indietro')]);
+  await p.waitForLoadState('networkidle');
+  if (!(await p.locator('#fa-stato .badge-published').count())) throw new Error('15f: il riquadro pubblicato non risulta Acceso');
+  await foto('15f-acceso', { sel: '#fa-stato', segni: [{ sel: '#fa-stato .badge-published', n: 7 }, { sel: '#fa-spegni', n: 8 }] });
+  // Sul sito, sotto l'articolo
+  await p.goto(B + '/chiusi-per-ferie/', { waitUntil: 'networkidle' });
+  if (!(await p.locator('article #fine-articolo a', { hasText: 'Prenota una visita' }).count())) throw new Error('15f: sul sito il riquadro non c\'è sotto l\'articolo');
+  const r = await p.locator('#fine-articolo').boundingBox();
+  await foto('15f-sul-sito', { clip: { x: Math.max(0, r.x - 40), y: Math.max(0, r.y - 170), width: Math.min(1200, r.width + 80), height: r.height + 210 } });
+};
+
 // 16. Menu: "Lavora con noi" nel menu principale
 capitoli['16'] = async () => {
   await vai('menu.php');

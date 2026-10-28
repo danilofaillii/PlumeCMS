@@ -1,6 +1,6 @@
 # plumeCMS: manuale tecnico
 
-Versione del manuale: 1.11, per plumeCMS 1.5.0 (28 ottobre 2026).
+Versione del manuale: 1.12, per plumeCMS 1.6.0 (28 ottobre 2026).
 
 Questo manuale descrive come è fatto plumeCMS e come funziona, pezzo per pezzo. È scritto leggendo il codice:
 ogni numero, limite e nome di funzione viene dai file veri, con il riferimento `file:riga` quando serve a chi
@@ -41,6 +41,8 @@ pagine, gestire il sito) c'è il manuale d'uso, `docs/manuale-uso.md`, con le sc
 24. Risoluzione dei problemi
 25. Riferimento rapido delle funzioni
 26. Import da WordPress (dalla 1.4.0)
+27. Social e email del mattino (dalla 1.5.0)
+28. Aggiungi sempre alla fine: il riquadro in fondo agli articoli (dalla 1.6.0)
 
 Appendice A. Dove i documenti vecchi non corrispondono al codice
 
@@ -69,7 +71,7 @@ fatti con plumeCMS, i loro contenuti e i temi e moduli che non ne copiano il cod
 index.php           front controller: tutte le richieste del sito passano da qui
 cron-daily.php      compiti del giorno (pacchetti programmati, moduli, IndexNow)
 cron-newsletter.php invio della newsletter a giri, coda IndexNow
-VERSIONE            il numero di versione (oggi 1.4.0)
+VERSIONE            il numero di versione (oggi 1.6.0)
 CHANGELOG.md, README.md, INSTALLA.md
 .htaccess           regole di Apache (copia di install/esempi/htaccess-radice.txt)
 
@@ -88,7 +90,7 @@ includes/           il motore
   cron.php          i due giri del cron, il loro stato e le righe da copiare (20)
   controllo-server.php  Controlla il server e l'email di prova (7.4)
   design.php        Stile del sito
-  modelli.php       header e footer
+  modelli.php       header, footer e il riquadro in fondo agli articoli (28)
   menu-nav.php      menu di navigazione
   temi.php          motore dei temi
   versioni.php      versioni di ogni modifica
@@ -519,7 +521,7 @@ Tutte con il prefisso davanti. Le colonne sono quelle principali.
 |---|---|
 | `design` | Stile del sito: una riga per sezione, in JSON |
 | `editor_temi` | tavolozze dei colori delle infografiche |
-| `modelli` | header e footer: struttura, stato, predefinito, condizioni, priorità |
+| `modelli` | header, footer e il riquadro in fondo agli articoli (tipo `fine`, 28): struttura, stato, predefinito, condizioni, priorità |
 | `menu` | menu: nome, posizione, voci in JSON |
 | `editor_versioni` | le versioni di ogni modifica (capitolo 13) |
 
@@ -565,8 +567,8 @@ Due ruoli (`admin/utenti.php:12`):
 
 Il redattore può aprire solo queste pagine (`AUTH_REDATTORE_PAGINE`, `admin/includes/auth.php:69-70`):
 `index`, `contenuti`, `contenuto`, `editor`, `editor-api`, `editor-anteprima`, `seo-api`, `media`,
-`categories`, `versioni`, `account`, `password`, `logout`, `login`. L'editor con `tipo=modelli` (header e
-footer) è sempre negato. Un modulo aggiunge pagine con il filtro `redattore_pagine`.
+`categories`, `versioni`, `account`, `password`, `logout`, `login`. L'editor con `tipo=modelli` (header,
+footer e il riquadro in fondo agli articoli) è sempre negato. Un modulo aggiunge pagine con il filtro `redattore_pagine`.
 
 Fuori dal suo elenco il redattore viene rimandato alla dashboard; un POST o una pagina `*-api.php` ricevono 403.
 Il menu gli mostra solo le voci permesse.
@@ -587,6 +589,7 @@ admin), `is_admin()`, `current_user()`.
 |---|---|---|
 | Dashboard | `index.php` | tutti |
 | Articoli | `contenuti.php?tipo=articoli` | tutti |
+| Articoli > Aggiungi sempre alla fine | `fine-articolo.php`: il riquadro in fondo a ogni articolo (28) | admin |
 | Pagine (e "Home nell'editor") | `contenuti.php?tipo=pagine`, `editor.php?id=home` | tutti |
 | Form | `form.php` | admin |
 | Popup | `popup.php` | admin |
@@ -1046,8 +1049,8 @@ Le azioni di `admin/editor-api.php`, tutte in POST con il token CSRF e risposta 
 Ogni salvataggio delle impostazioni crea una versione (ambito `impostazioni`).
 
 **Esporta e importa.** Esporta scrive un JSON (`formato: "editor-impostazioni"`, versione 1) con stile, header e
-footer, menu, tavolozze, impostazioni e widget spenti. Importa legge al massimo 20 MB, mostra un'anteprima e
-applica solo le parti scelte: header e footer si abbinano per tipo e nome, menu e tavolozze per nome; quelli con
+footer (e, dalla 1.6.0, il riquadro in fondo agli articoli, 28.4), menu, tavolozze, impostazioni e widget spenti. Importa legge al massimo 20 MB, mostra un'anteprima e
+applica solo le parti scelte: header e footer si abbinano per tipo e nome (il riquadro in fondo agli articoli solo per tipo: è uno), menu e tavolozze per nome; quelli con
 lo stesso nome si aggiornano, gli altri si aggiungono.
 
 
@@ -1143,6 +1146,9 @@ categoria, un contenuto preciso; ogni condizione può anche escludere. Al massim
    condizione "escludi" toglie il modello;
 4. il modello predefinito;
 5. nessun modello: header e footer scritti nel codice (`vista_header_footer()`, filtro `testata_fissa`).
+
+Dalla 1.6.0 c'è un terzo tipo di modello, `fine`: il riquadro che esce in fondo a ogni articolo (Articoli > Aggiungi
+sempre alla fine). Non passa da `modelli_scegli()` e non ha condizioni né predefinito: capitolo 28.
 
 Cornici sul sito: `<header class="ed-testata ed-modello" id="testata">` e
 `<footer class="ed-piede ed-modello" id="piede">`. Un modello con un errore finisce nel log e il sito torna a
@@ -1245,7 +1251,7 @@ server web di eseguire il PHP dentro `temi/`.
 | Ambito | Oggetto |
 |---|---|
 | `contenuto:<tipo>` | un articolo, una pagina (editor e scheda classica) |
-| `modello` | un header o un footer |
+| `modello` | un header, un footer o il riquadro in fondo agli articoli (28) |
 | `menu` | un menu |
 | `stile` | lo Stile del sito |
 | `tema` | una tavolozza delle infografiche |
@@ -2135,10 +2141,10 @@ la didascalia (il testo alternativo); le checklist (`- [ ]`) diventano caselle. 
 persona, su un plumeCMS appena installato con il kit Attività (`prove/prova-kit.js ... attivita ...`), e fotografa ogni
 passo con i pallini rossi numerati: scrive l'articolo "Chiusi per ferie" nell'editor e lo pubblica dalla scheda, ne
 programma un altro, costruisce la pagina "Lavora con noi" (sezione a due colonne, immagine, elenco, pulsante, sezione
-pronta, form), la mette nel menu, crea un form, un popup, una campagna, un utente, un download. Se un passo non si può
+pronta, form), la mette nel menu, compone il riquadro in fondo agli articoli (1.6.0), crea un form, un popup, una campagna, un utente, un download. Se un passo non si può
 fare, si ferma: il manuale e il pannello restano d'accordo. `node tools/manuale-uso-schermate.js <base> <utente>
-<password> [capitolo]`. Le foto nascono PNG in `/tmp/manuale-uso-png` e diventano JPEG una volta sola (800 px, qualità
-38) in `docs/immagini/manuale-uso/`; `--stringi` rifà solo la conversione. Le foto d'esempio (disegnate, niente foto di
+<password> [capitolo]`. Le foto nascono PNG in `/tmp/manuale-uso-png` e diventano JPEG una volta sola (760 px, qualità
+34) in `docs/immagini/manuale-uso/`; `--stringi` rifà solo la conversione. Le foto d'esempio (disegnate, niente foto di
 terzi) e il report dell'import da WordPress (dalla prova contro un WordPress vero) stanno in `esempi/manuale-uso/`.
 Le immagini non entrano nello zip del CMS (solo il Markdown, in `docs/`).
 
@@ -2213,6 +2219,7 @@ Istruzioni in `prove/LEGGIMI.md`. Le principali:
 | `prova-cron.js` | (1.4.0) la pagina Log cron, Esegui adesso, il cron vero, gli attacchi, e nessuna pagina del pannello che parla di WordPress |
 | `prova-controlla-server.js` | (1.4.0) Controlla il server: i sette gruppi, protezioni spente (`logs/controllo-aperto` per il router), email, attacchi |
 | `prova-favicon.js` | (1.4.0) l'icona di partenza e quella dello Stile, in radice e in cartella |
+| `prova-fine-articolo.js` | (1.6.0) Aggiungi sempre alla fine: linguetta, crea, editor, pubblica, spegni e accendi, il riquadro sotto gli articoli del sito (28) |
 | `prova-riquadri.js` | (1.4.0) Riquadri e Pulsante fisso: posizione e allineamento dall'editor al sito (`pagina-riquadri.php`) |
 | `foto-sito.js`, `quanto-foto.py` | schermate prima e dopo, confrontate al pixel |
 | `router-php-s.php` | router per `php -S` che imita l'`.htaccess` |
@@ -2306,6 +2313,7 @@ può stare dentro una pagina che risponde 200.
 | `ec(...)` | definizione di un controllo |
 | `design_valori()`, `design_salva()`, `design_css()`, `design_head()` | Stile del sito |
 | `modelli_scegli()` | header e footer della pagina |
+| `modelli_fine()`, `modelli_fine_acceso()`, `modelli_fine_articolo()`, `vista_fine_articolo($corpo)` | il riquadro in fondo agli articoli (28) |
 | `menu_url_voce($voce)` | indirizzo di una voce di menu |
 | `editor_versione_ripristina(...)` | ripristino di una versione |
 
@@ -2547,6 +2555,91 @@ del pannello da cui è nato plumeCMS, se ci sono: la colonna `articles.social_su
 ancora, i tre testi, le immagini relative a `uploads`, lo stato di invio), solo se il calendario è vuoto. La prova:
 `prove/social-dati-vecchi.sql`. Su danilofailli.it, dopo l'aggiornamento, i passi `cron` "email del mattino" e "social
 del pillar" del modulo vanno tolti, se no le email arrivano due volte.
+
+## 28. Aggiungi sempre alla fine: il riquadro in fondo agli articoli (dalla 1.6.0)
+
+Una richiesta di Danilo: in Articoli una linguetta che apre una pagina da cui si compone un riquadro ombreggiato che esce
+sempre sotto gli articoli. Non è un meccanismo nuovo: il riquadro è un **modello dell'editor** (capitolo 11) di un tipo
+in più, `fine`, accanto a `header` e `footer`. Ne eredita tutto: albero dell'editor, bozza e pubblicazione, versioni
+(ambito `modello`), anteprima, esporta e importa. Le differenze sono tre: è uno solo, non ha condizioni né predefinito,
+e non esce in cima o in fondo alla pagina ma dentro l'articolo.
+
+### 28.1 Il modello `fine`
+
+`MODELLI_TIPI` (`includes/modelli.php:28`) vale `header`, `footer`, `fine` ("Fine articolo"). La tabella
+`modelli` non cambia: il tipo è una colonna di testo.
+
+| Funzione | Cosa fa |
+|---|---|
+| `modelli_fine()` (`includes/modelli.php:483`) | il riquadro: il primo modello `fine` fuori dal cestino, o `null` |
+| `modelli_fine_crea()` (`includes/modelli.php:489`) | lo crea se manca (in bozza, nome "Fine articolo") e ritorna l'id: due clic su Crea non ne fanno due |
+| `modelli_fine_acceso($m)` (`includes/modelli.php:495`) | esce sul sito: `status = 'published'`, una struttura pubblicata, fuori dal cestino |
+| `modelli_fine_dove_vederlo()` (`includes/modelli.php:501`) | `/slug/` dell'ultimo articolo pubblicato e già uscito (data e ora non nel futuro), o `''` |
+| `modelli_cornice_fine($dentro, $id)` (`includes/modelli.php:511`) | la cornice: `<aside class="fine-articolo ed-modello" id="fine-articolo" aria-label="In fondo all'articolo">` |
+| `modelli_fine_articolo()` (`includes/modelli.php:520`) | `[html, css]` del riquadro per l'articolo che si mostra, o `null` |
+| `modelli_segnaposto_fine()` (`includes/modelli.php:557`) | la tela dell'editor: un articolo finto (righe grigie) con la cornice e, dentro, `#ed-pagina` |
+
+**Struttura di partenza** (`modelli_crea()`, `includes/modelli.php:178`): una sezione larga quanto
+l'articolo (`larghezza` `articolo`), senza spazio sopra e sotto (lo spazio lo dà la cornice), con un Titolo h3
+"Prima di andare" e un Testo da riscrivere con `margine_sotto` 0. Un widget aggiunto dopo il Testo gli sta quindi
+attaccato finché non si dà uno Spazio sotto al Testo (il manuale d'uso lo dice).
+
+**Acceso e spento.** Non c'è una colonna nuova: acceso vuol dire pubblicato. Pubblica nell'editor chiama
+`modelli_stato($id, true)` (`admin/editor-api.php`, come per header e footer); Spegni chiama `modelli_stato($id, false)`,
+che rimette `status` a `draft` e lascia la struttura pubblicata dov'è; Accendi la rimette a `published`, solo se una
+struttura pubblicata c'è. Ogni cambio di stato scrive una versione ("pubblicato", "messo in bozza").
+
+**Quando esce** (`modelli_fine_articolo()`), in quest'ordine:
+1. l'anteprima di una versione (Editor > Versioni, `$GLOBALS['modelli_versione']` di tipo `fine`): disegna quella;
+2. `?preview=1&fine=ID` aperto da un amministratore (`modelli_anteprima_admin()`, `includes/modelli.php:361`:
+   `SITO_ANTEPRIMA` e il ruolo `admin` letto dal database): disegna la **bozza** di quel modello, anche spento. È
+   quello che usano l'anteprima della pagina e la tela dell'editor;
+3. altrimenti il riquadro, solo se `modelli_fine_acceso()`.
+
+Un riquadro che disegnato non ha né testo né immagini, video, form, pulsanti o link non esce. Un errore finisce nel log
+(`modelli fine: ...`) e l'articolo esce senza riquadro.
+
+### 28.2 Sul sito
+
+`sito/index.php` (`sito/index.php:225`), solo per gli articoli (genere `contenuto`, `$c['tipo'] === 'post'`), dopo
+`vista_articolo_editor()` o `vista_articolo()`: `[$corpo, $cssFine] = vista_fine_articolo($corpo)`, e il CSS va
+nell'head. Pagine, home, archivi, glossario non lo ricevono.
+
+`vista_fine_articolo($corpo)` (`sito/viste.php:245`) mette il riquadro **prima dell'ultimo
+`</article>`**, quindi dentro la colonna di lettura, dopo il testo e le domande frequenti. Un articolo senza `<article>`
+(sezioni dell'editor tutte a tutta pagina, o la vista di un tema che non lo scrive) lo riceve dopo il corpo, dentro
+`<div class="wrap ed-stretta fine-articolo-fuori">`. Il CSS dell'editor esce in `<style id="ed-css-fine">`.
+
+L'aspetto (`sito/assets/sito.css`, `sito/assets/sito.css:194`): margine sopra 3em, padding 28px 30px
+(22px 18px sotto i 640 px), `border-radius: var(--r)`, sfondo `var(--bg-2)`, bordo `var(--bordo)`, due ombre. Sono le
+variabili dello Stile del sito: i temi che le ridefiniscono cambiano anche il riquadro senza saperlo.
+
+### 28.3 Nel pannello
+
+- **La linguetta** in Articoli (`admin/contenuti.php`, `admin/contenuti.php:82`, `#ct-fine-articolo`), solo
+  se `is_admin()`.
+- **La pagina** `admin/fine-articolo.php`, `require_admin()` (il redattore non la apre: non è in `AUTH_REDATTORE_PAGINE`),
+  ogni POST con `verify_csrf()`. Ripete le linguette di Articoli con i conteggi, poi lo stato (Non ancora creato, Spento,
+  Acceso) e le azioni: `crea` (`modelli_fine_crea()` e redirect all'editor), `accendi` (solo con un riquadro già
+  pubblicato e se `editor_puo_pubblicare()`, l'opzione "Chi pubblica" del 9.10), `spegni`. Pulsanti: `#fa-crea`,
+  `#fa-modifica`, `#fa-accendi`, `#fa-spegni`, Vedi sotto l'ultimo articolo, Versioni (`versioni.php?ambito=modello`).
+  Sotto, l'iframe `#fa-anteprima` sull'ultimo articolo con `?preview=1&fine=ID#fine-articolo`.
+- **L'editor** (`admin/editor.php`, `admin/editor.php:51`): per un modello `fine` la freccia e
+  l'elenco tornano a `fine-articolo.php`, e "Vedi sul sito" apre l'ultimo articolo con `?preview=1&fine=ID`
+  (la home se non ci sono articoli). La tela (`admin/editor-anteprima.php`) usa `modelli_segnaposto_fine()`.
+- **Header e footer** (`admin/modelli.php`) conta solo header e footer: il riquadro non compare lì e non dà avvisi.
+
+### 28.4 Esporta e importa
+
+`editor_esporta()` mette il riquadro fra i `modelli` del file, con tipo `fine`. All'import
+`editor_importa_chiave_modello()` (`includes/editor-opzioni.php:164`) gli dà la chiave
+`fine|`, qualunque sia il nome: c'è un solo riquadro, e il file aggiorna quello che c'è (o lo crea). Un tipo sconosciuto
+resta un header, come prima della 1.6.0.
+
+### 28.5 Prove
+
+`prove/prova-fine-articolo.js`: dal pannello al sito, nel browser. Il capitolo 16 del manuale d'uso lo esegue anche
+`tools/manuale-uso-schermate.js` (chiave `15f`).
 
 ## Appendice A. Dove i documenti vecchi non corrispondono al codice
 

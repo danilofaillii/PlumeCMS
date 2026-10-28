@@ -54,7 +54,7 @@ Stato, decisioni, contesto e diario non stanno qui: stanno nel second brain
 
 ## Documenti, in quest'ordine
 
-0. `cms/docs/manuale-uso.md`: il manuale d'uso per chi usa plumeCMS (30 capitoli, esempio, schermate con i passi
+0. `cms/docs/manuale-uso.md`: il manuale d'uso per chi usa plumeCMS (31 capitoli, esempio, schermate con i passi
    numerati, checklist). Le schermate le fa `tools/manuale-uso-schermate.js` eseguendo gli esempi su un sito di prova
    (kit Attività, in `/home/studioprova/public_html`): **quando cambia il pannello si rifanno le schermate e si
    ricontrolla il capitolo**. Il PDF deve restare sotto 1900 KB (oggi 1,8 MB).

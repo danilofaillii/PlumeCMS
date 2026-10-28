@@ -1,6 +1,6 @@
 # Manuale per creare i temi di plumeCMS
 
-Versione del manuale: 1.1, per plumeCMS 1.2.3 (27 ottobre 2026). I temi funzionano dalla 1.2.0; le variabili del velo e degli effetti delle foto dalla 1.2.2.
+Versione del manuale: 1.2, per plumeCMS 1.6.0 (28 ottobre 2026). I temi funzionano dalla 1.2.0; le variabili del velo e degli effetti delle foto dalla 1.2.2; il riquadro in fondo agli articoli dalla 1.6.0.
 
 Questo manuale è per chi vuole disegnare il proprio tema: un aspetto nuovo per un sito fatto con plumeCMS, da usare
 sul proprio sito o da regalare e vendere ad altri. Serve saper scrivere un po' di CSS. Il PHP è facoltativo: la
@@ -494,6 +494,7 @@ Il sito usa classi italiane e stabili. Le principali:
 | Testate di sezione | `.occhiello`, `.sez-titolo`, `.sez-intro`, `.hero`, `.lead` |
 | Elenchi di articoli | `.griglia`, `.card`, `.card-titolo`, `.card-meta`, `.filtri`, `.paginazione` |
 | Articolo | `.art`, `.art-testa`, `.art-meta`, `.toc` (sommario), `.corpo` (il testo), `.in-breve`, `.cta-box` |
+| Riquadro in fondo agli articoli (1.6.0) | `aside.fine-articolo#fine-articolo` (Articoli > Aggiungi sempre alla fine): sfondo `var(--bg-2)`, bordo `var(--bordo)`, angoli `var(--r)`, ombra. Se il tema ridefinisce queste variabili il riquadro le segue da solo; per cambiargli l'ombra o lo spazio interno si scrive una regola su `.fine-articolo` |
 | Pagine dell'editor | `.ed-pagina`, `.ed-sezione`, `.ed-contenitore`, `.ed-riga`, `.ed-colonna`, `.ed-widget`, `.ed-w-<tipo>` (un widget di un tipo), `.ed-<id>` (un elemento preciso) |
 | Moduli | `.modulo`, `.modulo-campi`, `.cerca` |
 | Widget extra | `.ew-*` (vedi `sito/assets/widget.css`) |
@@ -671,6 +672,10 @@ stringa, il CMS usa la sua vista.
 | `viste/404.php` | la pagina non trovata (il codice resta 404) | nessuna |
 
 Le pagine fatte con l'editor visuale non passano dalle viste: il loro aspetto lo danno stile, CSS e widget.
+
+Dalla 1.6.0, se l'amministratore ha acceso il riquadro in fondo agli articoli, il CMS lo mette prima dell'ultimo
+`</article>` dell'HTML che ritorna `viste/articolo.php`. Una vista dell'articolo che non scrive `<article>` lo riceve
+subito dopo, largo quanto la colonna di lettura: non serve fare niente, ma con `<article>` il riquadro sta dove deve.
 
 Funzioni del CMS utili nelle viste:
 

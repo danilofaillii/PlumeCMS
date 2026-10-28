@@ -228,6 +228,10 @@ def funzionalita():
          ['Il giorno in cui esce un articolo ti arriva un\'email: <strong>"Oggi sul sito"</strong>. Dentro c\'è tutto per pubblicarlo: le due immagini della misura giusta, 1200x630 per LinkedIn e Facebook e 1080x1350 per Instagram, e il testo pronto per ogni canale, con il link e i tuoi hashtag. Copi, incolli, pubblichi.',
           'Il testo lo scrivi una volta, nella scheda dell\'articolo; se vuoi, uno diverso per LinkedIn, per Facebook e Instagram, per WhatsApp. Le immagini le ritaglia plumeCMS dalla foto in evidenza.',
           'Per un articolo importante c\'è il <strong>calendario</strong>: prepari i post dei giorni dopo, e ogni mattina arriva quello del giorno, con il link al punto giusto della pagina.']),
+        ('fine-articolo', 'fine-articolo.webp', 'Un riquadro in fondo a ogni articolo',
+         ['Chi arriva alla fine di un articolo è il lettore più interessato che hai. In Articoli, la linguetta <strong>Aggiungi sempre alla fine</strong>: prepari una volta sola un riquadro che esce sotto ogni articolo, anche sotto quelli già pubblicati. Un invito alla newsletter, un contatto, una prenotazione, un libro da consigliare.',
+          'Lo componi con l\'editor visuale, come una pagina: titoli, testi, foto, pulsanti. Esce quando premi Pubblica, con l\'ombra, il bordo e i colori del tuo sito e del tema.',
+          'Lo spegni e lo riaccendi con un clic, senza perdere il lavoro. Ogni modifica lascia una versione, e nella sua pagina vedi l\'anteprima sotto l\'ultimo articolo prima di pubblicare.']),
         ('download', 'download.webp', 'Download manager: i tuoi file, a portata di clic',
          ['Manuali, ebook, listini, programmi: li carichi dalla pagina Download del pannello, con titolo, descrizione e versione. Ogni file ha il suo indirizzo da condividere.',
           'Con la versione nel nome (guida-1.2.pdf) il file entra in una serie: un indirizzo porta sempre alla versione più recente, e nelle pagine il numero si scrive da solo. Carichi la versione nuova e tutto il sito la segue. E vedi quante volte ogni file è stato scaricato: le persone sì, i robot no.',
@@ -450,7 +454,8 @@ def faq():
         ('Carico un tema e il pannello dice che contiene codice PHP. Che faccio?', 'È una protezione: un tema con PHP esegue codice sul tuo server, quindi serve un permesso. In Impostazioni > Sicurezza, scheda Impostazioni, riquadro in fondo, scrivi la tua password e premi "Apri la finestra per un\'ora". Poi torna in Editor > Temi e carica di nuovo lo zip. Fallo solo con temi di cui ti fidi.'),
         ('Come pubblico la versione nuova di un file da scaricare?', 'Dalla pagina Download del pannello carichi il file nuovo. Se il nome contiene la versione (guida-1.3.pdf), l\'indirizzo "ultima" e le pagine che la citano passano da soli alla versione nuova.'),
         ('Mi aiuta anche con i social?', 'Sì. Scrivi il testo nel riquadro Social dell\'articolo e il giorno in cui esce ti arriva un\'email con il testo pronto per ogni canale, il link, i tuoi hashtag e le due immagini della misura giusta. Per i giorni dopo c\'è il calendario dei post. Pubblicare resta a te: plumeCMS non entra nei tuoi account.'),
-        ('C\'è una guida per imparare a usarlo?', 'Sì: il manuale d\'uso, in PDF. Trenta capitoli, dal primo accesso alla checklist prima di andare online, ognuno con un esempio vero, le schermate con i passi numerati e una checklist per sapere quando hai finito.'),
+        ('Posso mettere lo stesso invito sotto tutti gli articoli?', 'Sì. In Articoli premi la linguetta Aggiungi sempre alla fine e componi il riquadro con l\'editor: un invito alla newsletter, un pulsante per prenotare, un contatto. Quando premi Pubblica esce in fondo a ogni articolo, anche a quelli già online. Se lo spegni non perdi niente: con Accendi torna com\'era.'),
+        ('C\'è una guida per imparare a usarlo?', 'Sì: il manuale d\'uso, in PDF. Trentuno capitoli, dal primo accesso alla checklist prima di andare online, ognuno con un esempio vero, le schermate con i passi numerati e una checklist per sapere quando hai finito.'),
         ('Posso costruirmi un tema mio?', 'Sì: c\'è un manuale apposta, con un tema d\'esempio completo da smontare e rifare tuo.'),
     ]
     p.sezione([[w('faq', voci=[{'domanda': d, 'risposta': r} for d, r in voci], prima_aperta=True)]], larghezza='stretta', **spazi(24, 56))
@@ -536,7 +541,7 @@ def editor_json():
 
 
 # ------------------------------------------------------------------ file
-USATE = ['copertina', 'social', 'importa-wp', 'tipo-sito', 'primi-passi', 'aspetti', 'controlla-server', 'sezioni', 'copia', 'installa-1', 'installa-2', 'installa-3', 'installa-4', 'installa-5', 'editor-ritratto', 'editor', 'aperture', 'stile', 'modelli', 'versioni', 'seo', 'flussi', 'download', 'sicurezza', 'aggiornamenti', 'temi',
+USATE = ['copertina', 'social', 'fine-articolo', 'importa-wp', 'tipo-sito', 'primi-passi', 'aspetti', 'controlla-server', 'sezioni', 'copia', 'installa-1', 'installa-2', 'installa-3', 'installa-4', 'installa-5', 'editor-ritratto', 'editor', 'aperture', 'stile', 'modelli', 'versioni', 'seo', 'flussi', 'download', 'sicurezza', 'aggiornamenti', 'temi',
          'tema-cosmo', 'tema-aria', 'tema-bottega']
 
 
@@ -582,6 +587,9 @@ def zip_lavagna(dest):
 
 # Le novità per chi scarica: brevi, scritte qui (il CHANGELOG è per chi sviluppa). Da aggiornare a ogni versione.
 NOVITA = [
+    ('1.6.0', 'Un riquadro in fondo a ogni articolo', ['In Articoli, la linguetta Aggiungi sempre alla fine: un riquadro ombreggiato che esce sotto ogni articolo, anche sotto quelli già pubblicati.',
+                                                     'Si compone con l\'editor visuale, come una pagina, ed esce quando lo pubblichi. Si spegne e si riaccende con un clic.',
+                                                     'Il manuale d\'uso ha un capitolo nuovo, con l\'esempio: ora i capitoli sono 31.']),
     ('1.5.0', 'I social, ogni mattina', ['L\'email "Oggi sul sito": i contenuti che escono oggi, con le due immagini per i social e il testo pronto per LinkedIn, Facebook, Instagram, WhatsApp e Telegram.',
                                          'Il calendario dei post: un testo per ogni giorno, che arriva la mattina con il link e le immagini.',
                                          'Nella scheda di ogni articolo il riquadro Social; le immagini le ritaglia plumeCMS dalla foto in evidenza.']),
