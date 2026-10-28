@@ -26,6 +26,8 @@ $base = preg_replace('/[^a-z0-9-]+/', '-', strtolower(pathinfo($f['name'], PATHI
 $nome = trim(substr($base, 0, 60), '-') . '-' . substr(bin2hex(random_bytes(4)), 0, 6) . '.' . $tipi[$info[2]];
 if (!move_uploaded_file($f['tmp_name'], "$dir/$nome")) exit(json_encode(['errore' => 'Il file non si è salvato.']));
 require_once dirname(__DIR__) . '/includes/sicurezza-html.php';
-sicurezza_immagine_ricodifica("$dir/$nome", $tipi[$info[2]]); // sicurezza: via metadati e qualunque cosa nascosta dopo i pixel
+require_once dirname(__DIR__) . '/includes/foto.php';
+// 1.4.0: lato massimo e orientamento come nella libreria, ma senza WebP (molti programmi di posta non la mostrano).
+if (!foto_alleggerisci("$dir/$nome", $tipi[$info[2]], false)['fatto']) sicurezza_immagine_ricodifica("$dir/$nome", $tipi[$info[2]]); // sicurezza: via metadati e qualunque cosa nascosta dopo i pixel
 @chmod("$dir/$nome", 0644);
 echo json_encode(['url' => cms_url_sito() . cms_uploads_url() . '/' . $rel . '/' . $nome]);

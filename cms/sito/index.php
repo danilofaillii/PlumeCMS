@@ -49,7 +49,12 @@ function sito_html(int $codice, array $meta, string $corpo, string $jsonld = '',
     // {versione:<serie>} nei testi (titolo della scheda compreso) diventa l'ultima versione caricata in Download (1.2.5).
     $html = seo_inietta_html(vista_pagina($meta, $corpo, $jsonld, $attivo));
     if (str_contains($html, '{versione:')) { require_once dirname(__DIR__) . '/includes/scaricabili.php'; $html = scaricabili_versioni_nel_testo($html); }
-    sito_rispondi($codice, 'text/html', cms_con_cartella($html));
+    $html = cms_con_cartella($html);
+    // 1.4.0: le foto con la loro WebP accanto si servono in WebP a chi la accetta; la pagina dipende allora da Accept.
+    require_once dirname(__DIR__) . '/includes/foto.php';
+    $vary = [];
+    if (foto_impostazioni()['attivo']) { $vary = ['Vary: Accept']; if (foto_browser_webp()) $html = foto_webp_nel_html($html); }
+    sito_rispondi($codice, 'text/html', $html, $vary);
 }
 
 function sito_non_trovato(): never {

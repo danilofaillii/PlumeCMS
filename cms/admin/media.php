@@ -12,12 +12,22 @@ $adminTitle = 'Libreria Media';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     verify_csrf();
-    if (isset($_POST['elimina'])) {
+    if (($_POST['azione'] ?? '') === 'foto_impostazioni') {
+        // 1.4.0: foto piu leggere, acceso o spento e lato massimo. Solo l'amministratore.
+        if (!is_admin()) { http_response_code(403); exit('Solo l\'amministratore cambia questa impostazione.'); }
+        $lato = (int)($_POST['foto_lato_max'] ?? 0);
+        if ($lato < 800 || $lato > 8000) flash('error', 'Il lato massimo va da 800 a 8000 pixel.');
+        else {
+            save_setting('foto_leggere', !empty($_POST['foto_leggere']) ? '1' : '0');
+            save_setting('foto_lato_max', (string)$lato);
+            flash('success', !empty($_POST['foto_leggere']) ? "Foto più leggere: acceso, lato massimo $lato px." : 'Foto più leggere: spento. Le foto nuove restano come arrivano.');
+        }
+    } elseif (isset($_POST['elimina'])) {
         $ok = media_elimina((string)$_POST['elimina']);
         flash($ok ? 'success' : 'error', ($ok ? 'Cancellata: ' : 'Non si è potuta cancellare: ') . (string)$_POST['elimina']);
     } else {
         $r = media_carica($_FILES['file'] ?? null, 'pagine');
-        if (isset($r['url'])) flash('success', 'Caricata: ' . $r['url']);
+        if (isset($r['url'])) flash('success', 'Caricata: ' . $r['url'] . (!empty($r['webp']) ? ' (con la versione WebP accanto)' : ''));
         else flash('error', $r['errore']);
     }
     header('Location: media.php?' . http_build_query(array_intersect_key($_GET, array_flip(['cartella', 'q', 'miniature']))));
@@ -50,6 +60,20 @@ require_once __DIR__ . '/includes/admin-header.php';
   </form>
 </div>
 
+<?php if (is_admin()): $fotoCfg = foto_impostazioni(); $motore = foto_motore(); ?>
+<details class="form-card md-foto" id="foto-leggere"<?= isset($_GET['foto']) ? ' open' : '' ?>>
+  <summary><b>Foto più leggere</b> <span class="badge <?= $fotoCfg['attivo'] && $motore ? 'badge-published' : 'badge-draft' ?>"><?= $fotoCfg['attivo'] && $motore ? 'acceso' : 'spento' ?></span></summary>
+  <p class="hint" style="margin:.6rem 0 1rem">Quando carichi una foto (qui, nell'editor o nella newsletter) il CMS la raddrizza se il telefono l'ha scattata di lato, la rimpicciolisce se il lato lungo supera il limite, toglie i dati nascosti (anche la posizione GPS) e prepara accanto una versione WebP, più leggera, che il sito manda ai browser che la accettano. le foto già caricate non cambiano.</p>
+  <?php if ($motore === ''): ?><div class="flash flash-info">Su questo server mancano GD e Imagick: le foto restano come arrivano. Chiedi al fornitore dello spazio di attivare l'estensione GD di PHP.</div><?php endif; ?>
+  <form method="post" class="md-foto-campi"><?= csrf_field() ?><input type="hidden" name="azione" value="foto_impostazioni">
+    <label class="md-spunta"><input type="checkbox" name="foto_leggere" value="1"<?= $fotoCfg['attivo'] ? ' checked' : '' ?>> Alleggerisci le foto nuove</label>
+    <label>Lato massimo <input type="number" name="foto_lato_max" min="800" max="8000" step="10" value="<?= (int)$fotoCfg['lato'] ?>" style="width:7rem"> pixel</label>
+    <button class="btn btn-primary btn-sm">Salva</button>
+  </form>
+  <p class="hint" style="margin-top:.7rem">Lavora con: <b><?= $motore === 'gd' ? 'GD' : ($motore === 'imagick' ? 'Imagick' : 'nessuno') ?></b><?= $motore !== '' ? (foto_webp_possibile() ? ', WebP disponibile' : ', WebP non disponibile su questo server (le foto si rimpiccioliscono lo stesso)') : '' ?>. 2560 pixel bastano per uno schermo grande.</p>
+</details>
+<style>.md-foto{margin-bottom:1rem;padding:1rem 1.25rem}.md-foto summary{cursor:pointer;display:flex;gap:.6rem;align-items:center}.md-foto-campi{display:flex;flex-wrap:wrap;gap:1rem 1.5rem;align-items:center;font-size:.9rem}.md-foto-campi label{display:flex;gap:.5rem;align-items:center}.md-foto-campi input[type=number]{padding:.4rem .6rem;border:1px solid var(--border);border-radius:8px;font:inherit}</style>
+<?php endif; ?>
 <div style="display:flex;flex-wrap:wrap;gap:0.4rem;margin-bottom:0.8rem">
   <a href="<?= h($link(['cartella' => ''])) ?>" class="btn btn-sm <?= $cartella === '' ? 'btn-primary' : 'btn-secondary' ?>" style="font-size:0.78rem">Tutte (<?= array_sum($conta) ?>)</a>
   <?php foreach (media_cartelle() as $k => $nome): if (empty($conta[$k])) continue; ?>
