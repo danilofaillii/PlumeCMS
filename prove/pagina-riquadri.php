@@ -16,6 +16,7 @@ $vecchio = editor_widget('riquadro_icona', ['titolo' => 'Riquadro salvato dalla 
 $albero = editor_valida(['elementi' => [$sez([$icona]), $sez([$immagine]), $sez([$fisso])]]);
 // Il quarto, con il nome di prima, aggiunto dopo la validazione: com'era scritto nel database prima della 1.4.0.
 $vecchio['impostazioni']['posizione'] = 'sinistra';
+$albero['versione'] = 1; // dalla 1.4.1 il nome di prima vale solo negli alberi salvati prima (versione 1)
 $albero['elementi'][] = $sez([$vecchio]);
 $pdo = db();
 $st = $pdo->prepare('SELECT id FROM ' . tbl('pages') . " WHERE slug = 'riquadri'"); $st->execute();

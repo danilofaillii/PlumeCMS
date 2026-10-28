@@ -2,6 +2,22 @@
 
 Il prodotto si chiama **plumeCMS** (nome scelto il 26 ottobre 2026; prima, per poche ore, "CarbonaraCMS", e ancora prima il provvisorio "Officina": gli zip vecchi si chiamavano `officina-*` e `carbonaracms-*`).
 
+## 1.4.1 (28 ottobre 2026) - Ogni controllo con il suo nome
+
+- **Titolo animato, "Animazione delle parole"**: si chiamava come "Animazione all'ingresso" della scheda Avanzate e al
+  salvataggio restava solo Zoom, che in più faceva entrare il titolo con lo zoom. Scrittura a macchina, Scorri dal basso
+  e Gira non arrivavano mai al sito: le parole si dissolvevano sempre. Ora le due scelte sono separate e restano. Il valore
+  di partenza è Dissolvenza, cioè quello che le pagine hanno sempre mostrato; un titolo salvato in Zoom resta in Zoom, con
+  l'ingresso in zoom come prima (si toglie dalle Avanzate, e le parole restano in Zoom).
+- **Condividi, Avviso, Flip box, "Spazio interno" della scheda Stile**: era lo stesso valore dello "Spazio interno
+  (padding)" delle Avanzate, quindi finiva due volte: dentro (pulsanti, riquadro dell'avviso, contenuto del flip box) e
+  intorno al widget intero. Ora sono due valori distinti. Chi ne aveva messo uno trova lo stesso numero in tutte e due le
+  schede, così la pagina resta com'era; da lì si cambiano uno alla volta.
+- **Icone social, "Spazio intorno all'icona"**: si perdeva sempre al salvataggio e restavano i 10 px di partenza. Ora resta.
+  Lo "Spazio interno (padding)" delle Avanzate, l'unico che funzionava, non cambia.
+- Le pagine esistenti non cambiano di un pixel (provato con le foto prima e dopo, anche su una pagina salvata dalla 1.4.0
+  con questi valori). Gli alberi dell'editor salvati da qui in avanti hanno `"versione": 2`.
+
 ## 1.4.0 (28 ottobre 2026) - Il sito si prova, il pannello si sceglie, WordPress si porta qui
 
 - **Impostazioni, Importa da WordPress**: scrivi indirizzo, utente e password per le applicazioni del sito WordPress (la

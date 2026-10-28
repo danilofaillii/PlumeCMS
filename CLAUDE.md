@@ -41,6 +41,7 @@ tools/          cms-pacchetto.py (costruisce gli zip), pacchetto.py (pacchetti p
                 pannello Aggiornamenti), sicurezza-prova.js (79 prove di attacco)
 prove/          prova-install.js (installazione da zero con Playwright), prova-temi.js, prova-pannello-temi.js,
                 prova-temi-partenza.js, prova-carica-temi.js (temi), prova-foto-effetti.js (velo ed effetti delle foto), prova-hero.js (le undici aperture),
+                prova-riquadri.js e prova-nomi-doppi.js (controlli con lo stesso nome di uno delle Avanzate),
                 foto-sito.js e quanto-foto.py (schermate prima e dopo, al pixel)
 esempi/         tema-lavagna/: il tema d'esempio del manuale dei temi (provato, non entra nello zip)
 sito-plumecms/  il sito da cui si scarica plumeCMS, fatto con plumeCMS: costruisci.py scrive il pacchetto
@@ -85,7 +86,7 @@ Stato, decisioni, contesto e diario non stanno qui: stanno nel second brain
 - **Pacchetto di aggiornamento** per un'installazione esistente:
   `python3 tools/cms-pacchetto.py --aggiornamento`. Si carica dal pannello,
   Impostazioni, Aggiornamenti.
-- **Versione**: `cms/VERSIONE` (oggi 1.4.0) e una voce in `cms/CHANGELOG.md` a ogni
+- **Versione**: `cms/VERSIONE` (oggi 1.4.1) e una voce in `cms/CHANGELOG.md` a ogni
   zip con contenuto diverso. Mai cambiare il contenuto di una versione già data.
 - **Prove** prima di dire finito:
   - `php -n -d short_open_tag=1 -l` su ogni file PHP toccato, `node --check` sui js;
@@ -121,7 +122,10 @@ Le decisioni complete, con data e perché, stanno nel second brain, `plumecms/de
 
 ## Stato al 28 ottobre 2026
 
-Fatto: plumeCMS 1.4.0 (28 ottobre): import da WordPress (`includes/importa-wp*.php`, `admin/importa-wordpress.php`: report, scelta,
+Fatto: plumeCMS 1.4.1 (28 ottobre): ogni controllo dei widget ha un nome diverso da quelli delle Avanzate (Titolo animato
+`animazione_parole`, Condividi `pulsanti_padding`, Avviso `avviso_padding`, Flip box `contenuto_padding`, Icone social `icona_padding`);
+albero dell'editor `"versione": 2`, i nomi di prima passano solo negli alberi con versione 1; `prova-nomi-doppi.js` 22/22, foto identiche.
+plumeCMS 1.4.0 (28 ottobre): import da WordPress (`includes/importa-wp*.php`, `admin/importa-wordpress.php`: report, scelta,
 import a giri, prova, conferma o annulla; password per le applicazioni, protezione SSRF), tipo di sito in prova fino a Definitivo
 (`admin/tipo-sito.php`, solo installazioni nuove), quattro aspetti del pannello per utente (Aria predefinito, `users.pannello_aspetto`),
 Primi passi nella dashboard, Controlla il server, foto leggere (WebP, `includes/foto.php`), favicon di partenza, Log cron in parole
@@ -164,8 +168,7 @@ Aperto:
 - copia del sito: il ripristino non toglie i file che stanno nel sito ma non nella copia; con due installazioni nello stesso database
   e prefissi che cominciano uguale (`cms_` e `cms_b_`) la copia prende anche le tabelle dell'altra;
 - "c'è una versione nuova" provato solo in http locale (`CMS_AGGIORNAMENTI_HTTP_PROVA`): HTTPS vero da provare su un server;
-- stessa famiglia del Riquadro con icona (corretto nella 1.4.0): "Animazione delle parole" del Titolo animato e `padding` di Social,
-  Condividi, Avviso e Flip box hanno lo stesso nome di un controllo delle Avanzate;
+- la 1.4.1 (nomi doppi con le Avanzate) non ha ancora l'aggiornamento provato dal pannello (`prova-aggiornamento.js`) né i PDF rifatti;
 - import da WordPress provato contro un WordPress locale, non su un hosting vero; Apache, HTTPS vero, SMTP vero e Imagick non provati per la 1.4.0;
 - `tools/` e `prove/` hanno ancora riferimenti a danilofailli.it (strumenti di sviluppo, non vanno nello zip): `--sito`, la prova del burnout;
 - i temi a danilofailli.it arrivano solo con un pacchetto `--sito` dal suo repository (mai lo zip del prodotto).
@@ -222,6 +225,7 @@ Errori veri, già pagati. Non ripeterli.
 | `editor_widget_registrati()` per sapere quali fogli caricare | dà solo i widget esterni, non quelli del nucleo: l'anteprima dell'editor non caricava i fogli delle disposizioni dell'Apertura e le mostrava senza stile (1.2.6, trovato dalla prova dell'editor, non da quella del sito). E le viste mettono ogni `<link>` davanti al precedente: l'ordine dei fogli di un widget si capovolge se non lo si dà al contrario |
 | Una regola di un foglio nuovo con un solo nome di classe (`.ed-hero-copertina{padding:...}`) | perde contro `.ed-w-hero .hero{padding:0}` di `sito.css`: nella 1.2.6 testo e pulsanti della Copertina toccavano il bordo, e nessuna prova lo vedeva (passavano tutte). Le regole sul contenitore di una disposizione si scrivono `.ed-hero.ed-hero-<id>`; le foto si guardano anche sul sito vero, non solo sulla pagina di prova |
 | Cercare i resti di un sito con le sue parole (danilofailli, laser, ebook) | sfuggono le frasi: i widget extra avevano ancora "Non lavoro per renderti più forte", "Fai chiarezza in 15 minuti", un listino a incontri. Si guarda la pagina con tutti i widget, a occhio |
+| Un controllo di un widget con lo stesso nome di uno delle Avanzate (`posizione`, `animazione`, `padding`) | i due valori finiscono nella stessa chiave e vince quello delle Avanzate: scelte svuotate in silenzio o CSS scritto due volte (Riquadri 1.4.0, Titolo animato, Condividi, Avviso, Flip box e Icone social 1.4.1). Un nome nuovo, con `'prima'` per le pagine salvate prima; si controlla con `editor_definizioni()` cercando i nomi doppi (manuale tecnico, 9.2) |
 | Fidarsi del resoconto di un agente | è successo che un agente dichiarasse lavoro mai scritto su disco. Si controllano i file veri e si rifanno le prove |
 
 ## Tono con l'utente

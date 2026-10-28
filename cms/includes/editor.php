@@ -16,7 +16,8 @@
 require_once __DIR__ . '/sito-mappa.php';
 require_once __DIR__ . '/editor-widget.php';
 
-const EDITOR_VERSIONE = 1;
+// 2 (1.4.1): i controlli rinominati hanno già il nome nuovo; un albero con versione 1 passa da editor_nomi_di_prima().
+const EDITOR_VERSIONE = 2;
 const EDITOR_REVISIONI = 30;
 const EDITOR_TABLET = 1024;
 const EDITOR_TELEFONO = 767;
@@ -95,10 +96,10 @@ function editor_pulisci_valore(array $ctl, $val) {
     }
 }
 
-function editor_pulisci_impostazioni(string $tipo, $imp): array {
+function editor_pulisci_impostazioni(string $tipo, $imp, bool $nomiDiPrima = false): array {
     $out = [];
     $imp = is_array($imp) ? $imp : [];
-    $imp = editor_nomi_di_prima($tipo, $imp);
+    if ($nomiDiPrima) $imp = editor_nomi_di_prima($tipo, $imp);
     foreach (editor_definizioni()[$tipo]['controlli'] as $ctl) {
         if ($ctl['tipo'] === 'intestazione' || !array_key_exists($ctl['nome'], $imp)) continue;
         $x = editor_pulisci_valore($ctl, $imp[$ctl['nome']]);
@@ -109,16 +110,19 @@ function editor_pulisci_impostazioni(string $tipo, $imp): array {
 }
 
 /**
- * Un controllo rinominato (1.4.0) dichiara 'prima' => il nome di prima: un valore salvato con quel nome, se e fra le
- * opzioni del controllo, passa al nome nuovo. Nato per "Posizione dell'icona" dei Riquadri, che si chiamava "posizione"
- * come il Posizionamento delle Avanzate e al salvataggio si perdeva (editor-widget-extra-a.php).
+ * Un controllo rinominato dichiara 'prima' => il nome di prima: un valore salvato con quel nome passa al nome nuovo, se il
+ * nome nuovo manca e (per una scelta) se è fra le sue opzioni. Il valore di prima resta dov'è: lo stesso nome lo usava
+ * anche un controllo delle Avanzate, che lo tiene. Nato nella 1.4.0 per "Posizione dell'icona" dei Riquadri (si chiamava
+ * "posizione" come il Posizionamento delle Avanzate e al salvataggio si perdeva); nella 1.4.1 Titolo animato, Condividi,
+ * Avviso e Flip box. Vale solo per gli alberi salvati prima della 1.4.1 (versione 1, editor_valida): in un albero nuovo
+ * un widget senza il nome nuovo ha solo il valore delle Avanzate, che non va copiato.
  */
 function editor_nomi_di_prima(string $tipo, array $imp): array {
     foreach (editor_definizioni()[$tipo]['controlli'] ?? [] as $ctl) {
         $prima = (string)($ctl['prima'] ?? '');
         if ($prima === '' || array_key_exists($ctl['nome'], $imp) || !array_key_exists($prima, $imp)) continue;
         $x = $imp[$prima];
-        if (is_string($x) && isset($ctl['opzioni']) && array_key_exists($x, $ctl['opzioni'])) $imp[$ctl['nome']] = $x;
+        if (isset($ctl['opzioni']) ? is_string($x) && array_key_exists($x, $ctl['opzioni']) : is_array($x)) $imp[$ctl['nome']] = $x;
     }
     return $imp;
 }
@@ -166,6 +170,8 @@ function editor_puo_codice(): bool {
 function editor_valida($albero): ?array {
     if (!is_array($albero) || !isset($albero['elementi']) || !is_array($albero['elementi'])) return null;
     $def = editor_definizioni();
+    // Senza versione è un albero scritto dal codice di oggi (kit, sezioni pronte, modelli di partenza): nomi già nuovi.
+    $prima = (int)($albero['versione'] ?? EDITOR_VERSIONE) < 2;
     $visti = [];
     $id = function ($x) use (&$visti) {
         $i = is_string($x['id'] ?? null) && preg_match('/^[a-z0-9]{4,12}$/', $x['id']) && !isset($visti[$x['id']]) ? $x['id'] : editor_id();
@@ -182,7 +188,7 @@ function editor_valida($albero): ?array {
             foreach (array_slice((array)($c['figli'] ?? []), 0, 100) as $w) {
                 $t = (string)($w['tipo'] ?? '');
                 if (!isset($def[$t]) || in_array($t, ['sezione', 'colonna'], true)) continue;
-                $widget[] = ['id' => $id($w), 'tipo' => $t, 'impostazioni' => editor_pulisci_impostazioni($t, $w['impostazioni'] ?? [])];
+                $widget[] = ['id' => $id($w), 'tipo' => $t, 'impostazioni' => editor_pulisci_impostazioni($t, $w['impostazioni'] ?? [], $prima)];
             }
             $colonne[] = ['id' => $id($c), 'tipo' => 'colonna', 'impostazioni' => editor_pulisci_impostazioni('colonna', $c['impostazioni'] ?? []), 'figli' => $widget];
         }
@@ -202,7 +208,6 @@ function editor_valida($albero): ?array {
  * {"normale": ..., "hover": ...} (hover vuoto se non impostato).
  */
 function editor_valori(string $tipo, array $imp): array {
-    $imp = editor_nomi_di_prima($tipo, $imp);
     $v = [];
     foreach (editor_definizioni()[$tipo]['controlli'] as $ctl) {
         if ($ctl['tipo'] === 'intestazione') continue;

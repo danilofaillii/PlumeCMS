@@ -772,7 +772,7 @@ Una pagina dell'editor è un JSON (`includes/editor.php:5-9`):
 
 ```json
 {
-  "versione": 1,
+  "versione": 2,
   "elementi": [
     { "id": "a1b2c3d", "tipo": "sezione", "impostazioni": { },
       "figli": [
@@ -785,19 +785,20 @@ Una pagina dell'editor è un JSON (`includes/editor.php:5-9`):
 }
 ```
 
-Tre livelli fissi: sezione, colonna, widget. Niente widget dentro altri widget.
+Tre livelli fissi: sezione, colonna, widget. Niente widget dentro altri widget. `versione` è 2 dalla 1.4.1 (i controlli
+rinominati, capitolo 9.2); gli alberi con `versione` 1 si leggono ancora.
 
 Il JSON si salva con i caratteri a 4 byte scritti come `\uXXXX` (`editor_json()`).
 
 ### 9.2 La validazione
 
-Ogni albero che arriva al server passa da `editor_valida()` (`includes/editor.php:148-175`):
+Ogni albero che arriva al server passa da `editor_valida()` (`includes/editor.php:170-199`):
 - al massimo **200 sezioni**, **6 colonne** per sezione, **100 widget** per colonna: il resto si scarta;
 - gli id validi sono 4-12 caratteri `a-z0-9`, unici; gli altri si rigenerano (7 caratteri esadecimali);
 - i tipi di widget sconosciuti si scartano; una sezione senza colonne ne riceve una vuota;
 - ogni impostazione passa dal pulitore del suo controllo.
 
-Limiti dei valori (`editor_pulisci_valore`, `includes/editor.php:37-94`):
+Limiti dei valori (`editor_pulisci_valore`, `includes/editor.php:38-97`):
 
 | Controllo | Limite |
 |---|---|
@@ -811,18 +812,54 @@ Limiti dei valori (`editor_pulisci_valore`, `includes/editor.php:37-94`):
 | scelta (tendina) | solo i valori dell'elenco; dalla 1.2.4 un controllo può dichiarare `accetta` (espressione regolare) per tenere valori fuori elenco, come i file del widget Download che arrivano dopo la pagina |
 | colore | esadecimale, `rgb()`/`rgba()`, `hsl()`/`hsla()`, `transparent`, `globale:<id>`, `ig:<id>` |
 
-**Nomi dei controlli** (1.4.0). Un controllo di un widget non deve chiamarsi come uno delle schede Avanzate
-(`editor-controlli.php`: `posizione`, `animazione`, `padding`, `sticky`...): i valori dei due finiscono nella stessa
-chiave e, alla validazione, quello che non sta fra le opzioni dell'altro si svuota in silenzio. Era il caso di "Posizione
-dell'icona" (Riquadro con icona), "Posizione dell'immagine" (Riquadro con immagine) e "Angolo" (Pulsante fisso): dalla
-1.4.0 si chiamano `posizione_icona`, `posizione_immagine` e `posizione_angolo`. Un controllo rinominato dichiara
-`'prima' => '<nome di prima>'`: `editor_nomi_di_prima()` (`includes/editor.php:116`), chiamata da
-`editor_pulisci_impostazioni()` e `editor_valori()`, passa al nome nuovo il valore salvato con quello vecchio se è fra le
-opzioni. Nei Riquadri anche l'allineamento scelto vale per il testo: `ewx_css_allinea_ribox()`
+**Nomi dei controlli** (1.4.0, completato nella 1.4.1). Un controllo di un widget non deve chiamarsi come uno delle
+schede Avanzate (`editor_controlli_avanzate()`, `includes/editor-controlli.php:683`: `posizione`, `animazione`,
+`padding`, `margine`, `sticky`...): i valori dei due finiscono nella stessa chiave delle impostazioni,
+`editor_pulisci_impostazioni()` li pulisce uno dopo l'altro e vale l'ultimo, quello delle Avanzate. Cosa succedeva:
+
+| Widget | Controllo | Nome di prima | Nome dalla | Cosa succedeva |
+|---|---|---|---|---|
+| Riquadro con icona | Posizione dell'icona | `posizione` | `posizione_icona` (1.4.0) | il valore non stava fra le opzioni del Posizionamento e si svuotava |
+| Riquadro con immagine | Posizione dell'immagine | `posizione` | `posizione_immagine` (1.4.0) | idem |
+| Pulsante fisso | Angolo | `posizione` | `posizione_angolo` (1.4.0) | idem |
+| Titolo animato | Animazione delle parole | `animazione` | `animazione_parole` (1.4.1) | restava solo Zoom, che accendeva anche l'ingresso; le altre scelte diventavano vuote e le parole si dissolvevano |
+| Condividi | Spazio interno (Stile, pulsanti) | `padding` | `pulsanti_padding` (1.4.1) | stesso tipo (`dimensioni`): il CSS usciva due volte, sui pulsanti e sul widget intero |
+| Avviso | Spazio interno (Stile) | `padding` | `avviso_padding` (1.4.1) | idem, su `.ew-avviso` e sul widget |
+| Flip box | Spazio interno (Stile) | `padding` | `contenuto_padding` (1.4.1) | idem, su `.ew-flip-contenuto` e sul widget |
+| Icone social | Spazio intorno all'icona | `padding` | `icona_padding` (1.4.1) | tipo diverso (`misura` contro `dimensioni`): il valore si svuotava sempre, `--ew-pad` non usciva e valeva il ripiego di 10 px di `widget.css` |
+
+Per trovarli: `editor_carica_widget_esterni(); editor_definizioni()` e, per ogni tipo, i nomi che compaiono più di una
+volta fra i controlli (esclusi `intestazione`). Dopo la 1.4.1 resta solo `spazio` del Carosello, che compare due volte
+nella scheda Stile (`ewx_controlli_galleria_stile()` e `ewx_controlli_carosello()`, `includes/editor-widget-extra-b.php`):
+stesso tipo e stessa variabile `--ew-gap`, quindi niente si perde (i due cursori mostrano lo stesso valore).
+
+Un controllo rinominato dichiara `'prima' => '<nome di prima>'`. `editor_nomi_di_prima()` (`includes/editor.php:120`)
+passa al nome nuovo il valore salvato con quello vecchio, se il nome nuovo manca: per una scelta solo se è fra le sue
+opzioni, per gli altri tipi se è un array (come un valore `dimensioni`). Il valore vecchio resta dov'è, perché lo usa
+anche il controllo delle Avanzate. Così le pagine esistenti restano identiche: un Titolo animato salvato in Zoom ha le
+parole in Zoom e l'ingresso in zoom come prima; un Condividi con 30 px ha 30 px sia nei pulsanti sia sul widget.
+L'Icona social non ha `'prima'`: il valore salvato in `padding` è sempre stato quello delle Avanzate.
+
+Il passaggio vale solo per gli **alberi salvati prima della 1.4.1**: `EDITOR_VERSIONE` (`includes/editor.php:20`) è 2 e
+`editor_valida()` (`includes/editor.php:174`) chiama `editor_nomi_di_prima()` (attraverso
+`editor_pulisci_impostazioni($tipo, $imp, true)`) solo se l'albero ha `"versione"` minore di 2. Un albero senza
+`versione` (kit, sezioni pronte, modelli di partenza, scritti dal codice di oggi) conta come nuovo. Il motivo: un widget
+nuovo nasce con le impostazioni vuote e l'editor scrive solo i valori toccati, quindi in un albero nuovo un Titolo
+animato con il solo ingresso "Zoom" delle Avanzate non ha `animazione_parole`, e copiarlo sarebbe di nuovo il bug. Nella
+1.4.0 `editor_nomi_di_prima()` era chiamata sempre, anche da `editor_valori()`; dalla 1.4.1 no: ogni albero che si
+disegna passa prima da `editor_valida()` (`editor_decodifica()`), che lo restituisce con i nomi nuovi e `"versione": 2`.
+
+Il valore di partenza di "Animazione delle parole" è `dissolvi` (prima `scrittura`): `animazione` salvato valeva sempre
+`''` o un valore delle Avanzate, quindi la classe era `ew-anim-` (o `ew-anim-dissolvenza`, `ew-anim-dal_basso`...), che
+non ha regole in `widget.css`: le parole si alternavano con la sola dissolvenza di `.ew-tanim-parola`. `ew-anim-dissolvi`
+fa lo stesso, al pixel.
+
+Nei Riquadri anche l'allineamento scelto vale per il testo: `ewx_css_allinea_ribox()`
 (`includes/editor-widget-extra.php:278`) scrive `--ew-ta`, che `.ew-ribox` usa per `text-align` (prima il `center` di
-`widget.css` vinceva su tutto); con l'icona o l'immagine di lato, "Centro" resta il "a sinistra" di sempre. Restano, da sistemare in una versione prossima senza cambiare le pagine che ci sono, due
-nomi doppi: `animazione` del Titolo animato (la sua "Animazione delle parole" perde tutto tranne Zoom) e `padding` di Social, Condividi, Avviso e
-Flip box.
+`widget.css` vinceva su tutto); con l'icona o l'immagine di lato, "Centro" resta il "a sinistra" di sempre.
+
+Prove: `prove/prova-riquadri.js` e `prove/prova-nomi-doppi.js` (con `prove/pagina-nomi-doppi.php`, alberi scritti come
+li salvava la 1.4.0).
 
 ### 9.3 I colori globali
 

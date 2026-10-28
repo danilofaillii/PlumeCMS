@@ -1,8 +1,10 @@
-// Fotografa le pagine del sito (computer e telefono) a pagina intera, orologio fermo e scorrimento immediato. uso: node foto-sito.js <base> <cartella>
+// Fotografa le pagine del sito (computer e telefono) a pagina intera, orologio fermo e scorrimento immediato.
+// uso: node foto-sito.js <base> <cartella> [altri percorsi, es. /nomi-doppi/]
 const { chromium } = require('playwright');
-const [B, OUT] = process.argv.slice(2);
+const [B, OUT, ...ALTRE] = process.argv.slice(2);
 const PAGINE = { home: '/', blog: '/blog/', articolo: '/benvenuto/', articolo2: '/secondo-articolo-di-prova/', chi: '/chi-sono/',
   contatti: '/contatti/', prova: '/pagina-di-prova/', widget: '/tutti-i-widget/', cerca: '/?s=prova', e404: '/non-esiste/' };
+for (const u of ALTRE) PAGINE[u.replace(/[^a-z0-9]+/gi, '-').replace(/^-|-$/g, '')] = u;
 const MISURE = { pc: { width: 1280, height: 900 }, tel: { width: 390, height: 844 } };
 (async () => {
   const br = await chromium.launch();

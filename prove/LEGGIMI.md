@@ -307,6 +307,18 @@ partenza. Atteso: 7 su 7, in radice e in cartella.
 `php prove/pagina-riquadri.php <cartella CMS>` (crea `/riquadri/`, stampa l'id; il quarto riquadro è scritto come lo
 scriveva la 1.3.1), poi `node prove/prova-riquadri.js <base> <utente> <password> <id> <cartella schermate>`: valori di
 partenza com'erano, posizione e allineamento scelti nell'editor che restano dopo Pubblica e arrivano al sito. Atteso: 11 su 11.
+Dalla 1.4.1 `pagina-riquadri.php` salva l'albero con `"versione": 1`, come la 1.3.1: il nome di prima vale solo lì.
+
+### prova-nomi-doppi.js (1.4.1)
+
+`php prove/pagina-nomi-doppi.php <cartella CMS>` (crea `/nomi-doppi/`, stampa l'id; gli alberi sono scritti come li
+salvava la 1.4.0: Titolo animato con `animazione` vuota e in Zoom, Condividi, Avviso e Flip box con `padding` a 30 px,
+Icone social con il `padding` delle Avanzate, più un Titolo animato, un Condividi e delle Icone social nuovi), poi
+`node prove/prova-nomi-doppi.js <base> <utente> <password> <id> <cartella schermate>`: la pagina della 1.4.0 com'era,
+poi nell'editor parole "Scrittura a macchina" e ingresso "Dal basso", ingresso tolto al titolo in Zoom, 20 px nei
+pulsanti di Condividi, 16 px intorno alle icone social; Pubblica, editor riaperto, sito misurato nel browser.
+Atteso: 22 su 22 (con il codice della 1.4.0: 12 su 22). Le foto prima e dopo della pagina:
+`node prove/foto-sito.js <base> <cartella> /nomi-doppi/` (dalla 1.4.1 `foto-sito.js` accetta altri percorsi in fondo).
 
 ### Aggiornamento 1.3.1 -> 1.4.0
 
