@@ -53,11 +53,12 @@ $menu = [
         ['Redirect e 404', 'seo.php?scheda=redirect', $qui === 'seo.php' && ($_GET['scheda'] ?? '') === 'redirect'],
     ]] : null,
     // Il redattore vede solo Log cron e Diagnosi: posta, aggiornamenti e SQL sono dell'amministratore.
-    ['Impostazioni', $sonoAdminMenu ? 'impostazioni.php' : 'cron-log.php', '⚙', in_array($qui, ['impostazioni.php', 'aggiornamenti.php', 'copia-sito.php', 'cron-log.php', 'sicurezza.php'], true), array_values(array_filter([
+    ['Impostazioni', $sonoAdminMenu ? 'impostazioni.php' : 'cron-log.php', '⚙', in_array($qui, ['impostazioni.php', 'aggiornamenti.php', 'copia-sito.php', 'importa-wordpress.php', 'cron-log.php', 'sicurezza.php'], true), array_values(array_filter([
         $sonoAdminMenu ? ['Configurazione email', 'impostazioni.php', $qui === 'impostazioni.php'] : null,
         $sonoAdminMenu ? ['Sicurezza', 'sicurezza.php', $qui === 'sicurezza.php'] : null, // sicurezza: checklist, 2FA, blocchi, CSP, registro
         $sonoAdminMenu ? ['Aggiornamenti', 'aggiornamenti.php', $qui === 'aggiornamenti.php'] : null,
         $sonoAdminMenu ? ['Copia del sito', 'copia-sito.php', $qui === 'copia-sito.php'] : null, // 1.3.0: scarica e ripristina tutto il sito
+        $sonoAdminMenu ? ['Importa da WordPress', 'importa-wordpress.php', $qui === 'importa-wordpress.php'] : null, // 1.4.0
         ['Log cron', 'cron-log.php', $qui === 'cron-log.php'],
     ]))],
 ];

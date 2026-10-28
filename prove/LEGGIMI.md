@@ -17,7 +17,7 @@ Installa plumeCMS da zero con il browser (Playwright) e controlla sito e pannell
 
 ## tools/sicurezza-prova.js
 
-79 prove di attacco: ogni OK è un attacco respinto. Si lanciano contro un'installazione locale, mai contro un sito vero:
+Le prove di attacco (125 dalla 1.4.0): ogni OK è un attacco respinto. Si lanciano contro un'installazione locale, mai contro un sito vero:
 `CMS_DIR=<cartella del CMS installato> node tools/sicurezza-prova.js <base> <utente> <password> [prefisso-pannello]`.
 Le prove del modulo danilofailli (burnout) si saltano da sole dove il modulo non c'è.
 Dopo, svuota la tabella `<prefisso>sicurezza_tentativi`: la prova della forza bruta blocca 127.0.0.1 per qualche minuto.
@@ -202,3 +202,30 @@ cambio perché l'opcache del server lo rilegga; alla fine toglie le sue righe e 
 L'indirizzo del sito ufficiale come parametro di Aggiornamenti: rifiuta http e gli indirizzi con `?`, salva quello giusto
 senza la barra finale, vuoto torna al predefinito. Serve un sito senza `CMS_AGGIORNAMENTI_URL` nel config.
 `node prove/prova-versione-sito.js <base> <utente> <password>`. Atteso: 7 su 7.
+
+## prova-importa-wp.js (1.4.0)
+
+L'import da WordPress come un utente, contro un WordPress vero (6.6.2) sul server integrato di PHP.
+
+1. Una copia di WordPress in una cartella tua (mai l'originale scaricato) e un database vuoto, poi
+   `DBPASS=... php prove/wp-installa.php <cartella WP> http://127.0.0.1:8071 <database>` (wp-config con
+   `WP_ENVIRONMENT_TYPE` local, che permette le password per le applicazioni senza HTTPS; cron spento; permalink con la data;
+   il plugin di prova `wp-plugin-prova.php`, che imita Yoast nella REST e con `WP_REST_CHIUSA=1` chiude la REST) e
+   `php prove/wp-riempi.php <cartella WP> <cartella segreti>` (33 articoli: 27 pubblicati, 4 bozze, 1 in revisione, 1
+   programmato; 6 pagine con una figlia; categorie annidate, 8 tag, 15 immagini GD e un PDF, un menu con sottovoci nella
+   posizione Primary, 5 commenti, un'emoji, uno shortcode, una pagina "Elementor", SEO nei meta di Yoast). Nella cartella dei
+   segreti (fuori dal repository): `app.txt` (la password per le applicazioni, nuova a ogni giro), `login.txt`,
+   `atteso.json`. Si rilanciano tutti e due quando si vuole un WordPress da capo.
+2. Due server per WordPress, con piu processi (WordPress chiama se stesso):
+   `DBPASS=... PHP_CLI_SERVER_WORKERS=4 php -S 127.0.0.1:8071 -t <cartella WP> prove/router-wp.php` e, per la REST chiusa,
+   lo stesso con `WP_REST_CHIUSA=1` sulla 8072.
+3. Un plumeCMS installato da zero (`prova-install.js`), anche in una cartella (`CMS_CARTELLA=/test`).
+4. `node prove/prova-importa-wp.js <base CMS> <cartella CMS> <utente> <password> http://127.0.0.1:8071 <cartella segreti> <cartella schermate> http://127.0.0.1:8072`.
+   La prova scrive nel `config.local.php` del CMS `CMS_IMPORTA_WP_LOCALE` (gli host:porta di prova) e `CMS_IMPORTA_WP_GIRO`
+   0.3 (giri corti, per interrompere e riprendere). Usa `prove/importa-wp-cli.php` per leggere database e file.
+   Atteso: 75 su 75, in radice e in cartella. Lascia `importa-*.png` (collegamento, errore, report, avanzamento, fermo,
+   riepilogo, anteprima, confermato). Alla fine il sito ha l'import confermato: per rifarla serve un CMS nuovo.
+
+Per le prove di attacco dell'import (punto 18 di `tools/sicurezza-prova.js`): `php -S 127.0.0.1:8073 prove/finto-wp.php`
+(un WordPress finto e cattivo), `127.0.0.1:8073` in `CMS_IMPORTA_WP_LOCALE`, e `FINTO_WP=http://127.0.0.1:8073` e `CMS_DIR`
+nell'ambiente. Senza `FINTO_WP` le prove con il sito cattivo si saltano; quelle di SSRF, CSRF e ruoli girano lo stesso.

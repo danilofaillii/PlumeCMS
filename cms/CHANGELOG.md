@@ -2,6 +2,29 @@
 
 Il prodotto si chiama **plumeCMS** (nome scelto il 26 ottobre 2026; prima, per poche ore, "CarbonaraCMS", e ancora prima il provvisorio "Officina": gli zip vecchi si chiamavano `officina-*` e `carbonaracms-*`).
 
+## 1.4.0 (28 ottobre 2026) - Porta qui il tuo sito WordPress
+
+- **Impostazioni, Importa da WordPress**: scrivi indirizzo, utente e password per le applicazioni del sito WordPress (la
+  pagina spiega in tre passi dove si crea, in Utenti > Profilo). Se qualcosa non va lo dice in parole semplici: password
+  normale al posto di quella per le applicazioni, utente sbagliato, sito che non esiste o non risponde, certificato non
+  valido, REST chiusa da un plugin, sito in http.
+- **Il report**: plumeCMS legge tutto il sito (anche bozze e programmati) e mostra quanti articoli, pagine, categorie, tag,
+  media (con il peso), menu, autori, titoli SEO di Yoast o Rank Math, redirect, e per ognuno cosa diventa. Dice anche cosa
+  non si può portare e perché: commenti, page builder come Elementor e Divi (entra il testo), shortcode di plugin, campi
+  personalizzati, prodotti di WooCommerce e altri tipi personalizzati, contenuti con un indirizzo già usato.
+- **Scegli e importa**: tutto o una parte (anche solo le pagine, o gli articoli senza le bozze). Prima si fa da sola una
+  copia del sito; poi l'import va a giri brevi con la barra dell'avanzamento, regge i limiti degli hosting condivisi e, se
+  chiudi la pagina, riprende da dove era. Il testo arriva pulito (i video di YouTube e Vimeo restano video), le immagini si
+  scaricano nella libreria e i link puntano ai nuovi indirizzi.
+- **In prova, poi Conferma o Annulla**: quello che entra è invisibile ai visitatori finché non confermi; lo guardi
+  nell'anteprima del sito, con il riepilogo di cosa è entrato e cosa no. **Conferma** pubblica tutto come era su WordPress
+  (pubblicati, bozze, programmati), accende i redirect 301 dai vecchi indirizzi (con la data, `?p=123`, pagine e categorie
+  annidate) e, se vuoi, mette il menu di WordPress nell'header. **Annulla** toglie tutto quello che è entrato.
+- Sicurezza: solo l'amministratore; la password per le applicazioni resta cifrata solo per la durata dell'import e non
+  compare mai; il CMS chiama solo il sito dato (niente indirizzi interni, niente rimandi verso altri siti, certificato
+  controllato); i file si controllano dal contenuto (un PHP chiamato foto.jpg non entra); i testi passano dal sanificatore.
+  30 prove di attacco nuove.
+
 ## 1.3.1 (28 ottobre 2026) - Il sito degli aggiornamenti si sceglie
 
 - **Aggiornamenti, "Indirizzo del sito da cui arrivano gli aggiornamenti"**: il sito a cui il pannello chiede se c'è una
