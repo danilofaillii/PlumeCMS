@@ -42,6 +42,9 @@ let n = 0, ko = 0; const ok = (t, c, extra = '') => { n++; if (!c) ko++; console
   ok('aprendo la pagina Temi si è scritto temi/.htaccess', fs.existsSync(path.join(DIR, 'temi', '.htaccess')));
   await p.goto(B + '/admin/editor-temi.php', { waitUntil: 'networkidle' });
   ok('il menu dice "Colori delle infografiche"', (await p.locator('nav, aside').first().innerText()).includes('Colori delle infografiche'));
+  // 1.4.0: un sito che si aggiorna non vede il tipo di sito in prova ne i primi passi (sono delle installazioni nuove).
+  await p.goto(B + '/admin/index.php', { waitUntil: 'networkidle' });
+  ok('dashboard: niente riquadro del tipo di sito ne primi passi', await p.locator('#tipo-sito').count() === 0 && await p.locator('#primi-passi').count() === 0);
   ok('nessun errore JavaScript', err.length === 0, err);
   await br.close();
   console.log(`\n${n - ko} su ${n} OK`);

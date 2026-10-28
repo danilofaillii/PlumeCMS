@@ -5,7 +5,7 @@ const [B, OUT, PRE, DB, CMSB = ''] = process.argv.slice(2);
 let n = 0, ko = 0; const ok = (t, c, extra = '') => { n++; if (!c) ko++; console.log((c ? 'OK  ' : 'KO  ') + t + (extra ? ' ' + JSON.stringify(extra).slice(0, 200) : '')); };
 (async () => {
   const br = await chromium.launch(); const ctx = await br.newContext({ viewport: { width: 1280, height: 900 } }); const p = await ctx.newPage();
-  const err = []; p.on('pageerror', e => err.push(e.message.slice(0, 200))); p.on('console', m => { if (m.type() === 'error') err.push(m.text().slice(0, 200)); });
+  const err = []; p.on('pageerror', e => err.push(e.message.slice(0, 200))); p.on('console', m => { if (m.type() === 'error' && !(m.location().url || '').includes('/pagina-che-non-esiste/')) err.push(m.text().slice(0, 200) + ' ' + (m.location().url || '')); }); // il 404 cercato apposta non e un errore
   const shot = (nome) => p.screenshot({ path: `${OUT}/${PRE}-${nome}.png`, fullPage: false });
   // 1. la home rimanda all'installatore
   const r = await p.goto(B + '/', { waitUntil: 'networkidle' });
