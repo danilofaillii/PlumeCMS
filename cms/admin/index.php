@@ -47,6 +47,18 @@ if (!$dbAdmin) $avvisi = [];
 // 1.3.0: c'e una versione nuova di plumeCMS? Solo per l'amministratore, da quello che il pannello sa gia (includes/versione-nuova.php).
 $versioneNuova = null; $versioneDaControllare = false;
 if ($dbAdmin) { try { require_once dirname(__DIR__) . '/includes/versione-nuova.php'; $versioneNuova = versione_nuova(); $versioneDaControllare = versione_da_controllare(); } catch (Throwable $e) {} }
+// 1.4.0: il tipo di sito in prova e i primi passi, solo nelle installazioni nuove (impostazioni scritte dall'installatore
+// della 1.4.0: un sito che si aggiorna non le ha) e solo per l'amministratore. Le azioni vanno a tipo-sito.php.
+$kitProva = null; $kitTutti = []; $passi = [];
+if ($dbAdmin) {
+    try {
+        require_once dirname(__DIR__) . '/includes/kit-partenza.php';
+        $kitProva = kit_in_prova() ? kit_prova() : null;
+        if ($kitProva) $kitTutti = kit_elenco();
+        require_once dirname(__DIR__) . '/includes/primi-passi.php';
+        if (primi_passi_attivi()) $passi = primi_passi();
+    } catch (Throwable $e) { error_log('dashboard, tipo di sito e primi passi: ' . $e->getMessage()); }
+}
 require_once __DIR__ . '/includes/admin-header.php';
 ?>
 <style>
@@ -68,6 +80,58 @@ require_once __DIR__ . '/includes/admin-header.php';
 .db-versione{display:flex;gap:.4rem 1rem;flex-wrap:wrap;align-items:center;background:var(--info-chiaro);border:1px solid var(--info-bordo);border-radius:var(--radius);padding:.8rem 1.2rem;margin-bottom:1rem;color:var(--info-testo)}
 .db-versione[hidden]{display:none}
 .db-versione span{font-size:.88rem;flex:1 1 280px}
+/* 1.4.0: tipo di sito in prova e primi passi. Solo le variabili del pannello, niente colori scritti qui. */
+.db-kit,.db-passi{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:1.1rem 1.25rem;margin-bottom:1rem}
+.db-kit h2,.db-passi h2{font-size:1.1rem;margin:0 0 .3rem}
+.db-kit>p,.db-passi>p{font-size:.88rem;color:var(--text-muted);margin:0 0 .9rem;max-width:62rem}
+.db-kit-carte{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:.75rem}
+.db-kit-carta{margin:0}
+.db-kit-carta button{all:unset;box-sizing:border-box;display:flex;flex-direction:column;gap:.3rem;width:100%;height:100%;padding:.7rem;border:1.5px solid var(--border);border-radius:var(--radius);background:var(--surface);cursor:pointer;color:var(--text)}
+.db-kit-carta button:hover{border-color:var(--coral)}
+.db-kit-carta button:focus-visible{outline:2px solid var(--coral);outline-offset:2px}
+.db-kit-carta.attuale button{border-color:var(--coral);background:var(--coral-light);cursor:default}
+.db-kit-carta b{font-size:.95rem}
+.db-kit-carta small{font-size:.78rem;color:var(--text-muted);line-height:1.35}
+.db-kit-carta em{font-style:normal;font-size:.72rem;font-weight:600;color:var(--coral);text-transform:uppercase;letter-spacing:.05em}
+.db-kit-disegno{position:relative;display:block;height:58px;border-radius:8px;background:var(--bg);border:1px solid var(--border);overflow:hidden;margin-bottom:.2rem}
+.db-kit-disegno i{position:absolute;display:block;border-radius:3px;background:var(--border)}
+.db-k-vuoto i:nth-child(1){left:10px;top:11px;width:60%;height:8px;background:var(--text-muted)}
+.db-k-vuoto i:nth-child(2){left:10px;top:26px;width:40%;height:5px}
+.db-k-vuoto i:nth-child(3){left:10px;top:38px;width:24%;height:9px;border-radius:5px;background:var(--coral)}
+.db-k-vuoto i:nth-child(4){display:none}
+.db-k-personale i:nth-child(1){right:12px;top:9px;width:40px;height:40px;border-radius:50%;background:var(--sage)}
+.db-k-personale i:nth-child(2){left:10px;top:13px;width:46%;height:8px;background:var(--text-muted)}
+.db-k-personale i:nth-child(3){left:10px;top:27px;width:34%;height:5px}
+.db-k-personale i:nth-child(4){left:10px;top:38px;width:22%;height:9px;border-radius:5px;background:var(--coral)}
+.db-k-attivita i:nth-child(1){inset:0 0 20px 0;border-radius:0;background:var(--sage-light)}
+.db-k-attivita i:nth-child(2){left:10px;top:11px;width:46%;height:8px;background:var(--sage)}
+.db-k-attivita i:nth-child(3){left:10px;bottom:5px;width:26%;height:10px}
+.db-k-attivita i:nth-child(4){right:10px;bottom:5px;width:26%;height:10px}
+.db-k-blog i:nth-child(1){left:10px;top:9px;width:56%;height:8px;background:var(--text-muted)}
+.db-k-blog i:nth-child(2){left:10px;top:24px;width:26%;height:24px}
+.db-k-blog i:nth-child(3){left:37%;top:24px;width:26%;height:24px}
+.db-k-blog i:nth-child(4){right:10px;top:24px;width:26%;height:24px}
+.db-k-portfolio i{top:8px;height:42px;width:29%}
+.db-k-portfolio i:nth-child(1){left:7px;background:var(--mustard-light)}
+.db-k-portfolio i:nth-child(2){left:35.5%;height:19px;background:var(--coral-light)}
+.db-k-portfolio i:nth-child(3){left:35.5%;top:31px;height:19px;background:var(--sage-light)}
+.db-k-portfolio i:nth-child(4){right:7px;background:var(--mustard)}
+.db-kit-tenuti{margin:.9rem 0 0;padding:.7rem 1rem;border-radius:var(--radius);background:var(--sage-light);font-size:.85rem}
+.db-kit-tenuti ul{margin:.3rem 0 0 1.1rem}
+.db-kit-piede{display:flex;flex-wrap:wrap;gap:.6rem 1rem;align-items:center;justify-content:space-between;margin-top:1rem;padding-top:.9rem;border-top:1px solid var(--border);font-size:.85rem;color:var(--text-muted)}
+.db-kit-piede span{flex:1 1 320px}
+.db-passi-conta{font-size:.8rem;font-weight:600;color:var(--text-muted);margin-left:.4rem}
+.db-passi ol{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:.6rem}
+.db-passi li{display:flex;gap:.7rem;align-items:flex-start;padding:.65rem .8rem;border:1px solid var(--border);border-radius:var(--radius)}
+.db-passi li.fatto{background:var(--sage-light);border-color:var(--sage-light)}
+.db-passi-segno{flex:none;width:22px;height:22px;border-radius:50%;border:2px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:.75rem;font-weight:700;color:var(--surface)}
+.db-passi li.fatto .db-passi-segno{background:var(--sage);border-color:var(--sage)}
+.db-passi li b{display:block;font-size:.9rem}
+.db-passi li small{display:block;font-size:.8rem;color:var(--text-muted);margin:.15rem 0 .35rem}
+.db-passi li a{font-size:.8rem;font-weight:600;color:var(--coral);text-decoration:none}
+.db-passi li form{display:block;margin-top:.45rem}
+.db-passi-fine{display:flex;justify-content:flex-end;margin-top:.8rem}
+.db-passi .sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
 </style>
 
 <div class="db-azioni">
@@ -92,6 +156,60 @@ fetch('aggiornamenti.php', { method: 'POST', credentials: 'same-origin', headers
   .then(function (j) { if (j.nuova) { document.getElementById('db-versione-numero').textContent = j.versione; document.getElementById('db-versione').hidden = false; } })
   .catch(function () {});
 </script>
+<?php endif; ?>
+
+<?php if ($kitProva): $kitNome = $kitTutti[$kitProva['kit']]['nome'] ?? $kitProva['kit']; ?>
+<section class="db-kit" id="tipo-sito" aria-labelledby="tipo-sito-titolo">
+  <h2 id="tipo-sito-titolo">Stai provando il sito <?= h($kitNome) ?></h2>
+  <p>Il sito è partito con pagine, menu e testi d'esempio. Finché non premi <b>Definitivo</b> puoi cambiare tipo di sito con un clic: prima il pannello fa da solo una copia del sito, poi cambia solo quello che il kit aveva preparato e che non hai toccato. Le pagine e gli articoli che hai scritto o cambiato restano.</p>
+  <div class="db-kit-carte">
+<?php foreach ($kitTutti as $kid => $k): $kitQui = $kid === $kitProva['kit']; ?>
+    <form method="post" action="tipo-sito.php" class="db-kit-carta<?= $kitQui ? ' attuale' : '' ?>"<?= $kitQui ? '' : ' data-conferma="' . h('Il sito diventa ' . $k['nome'] . '. Le pagine che hai scritto o cambiato restano. Prima del cambio il pannello fa una copia del sito.') . '"' ?>>
+      <?= csrf_field() ?><input type="hidden" name="azione" value="cambia"><input type="hidden" name="kit" value="<?= h($kid) ?>">
+      <button type="submit"<?= $kitQui ? ' disabled aria-current="true"' : '' ?> data-kit="<?= h($kid) ?>">
+        <span class="db-kit-disegno db-k-<?= h($kid) ?>" aria-hidden="true"><i></i><i></i><i></i><i></i></span>
+        <?php if ($kitQui): ?><em>In prova adesso</em><?php endif; ?>
+        <b><?= h($k['nome']) ?></b><small><?= h($k['descrizione']) ?></small>
+      </button>
+    </form>
+<?php endforeach; ?>
+  </div>
+<?php if ($kitProva['storia']): ?>
+  <div class="db-kit-tenuti" id="tipo-sito-tenuti">
+    <?php if ($kitProva['tenuti']): ?><b>Cosa è rimasto com'era</b>
+    <ul><?php foreach ($kitProva['tenuti'] as $t): ?><li><?= h($t) ?></li><?php endforeach; ?></ul>
+    <?php else: ?><b>Cambio fatto.</b> Tutto quello che il sito di prima aveva preparato era ancora intatto ed è stato sostituito; quello che avevi scritto tu è rimasto.<?php endif; ?>
+  </div>
+<?php endif; ?>
+  <div class="db-kit-piede">
+    <span>Ti piace così? Con Definitivo il riquadro sparisce e il tipo di sito non si cambia più da qui: il resto lo cambi con l'editor, pagina per pagina.</span>
+    <form method="post" action="tipo-sito.php" data-conferma="<?= h('Il sito resta ' . $kitNome . '. Il riquadro sparisce e il tipo di sito non si potrà più cambiare da qui. Confermi?') ?>">
+      <?= csrf_field() ?><input type="hidden" name="azione" value="definitivo">
+      <button type="submit" class="btn btn-primary btn-sm" id="kit-definitivo">Definitivo</button>
+    </form>
+  </div>
+</section>
+<?php endif; ?>
+
+<?php if ($passi): $fatti = count(array_filter($passi, fn($x) => $x['fatto'])); ?>
+<section class="db-passi" id="primi-passi" aria-labelledby="primi-passi-titolo">
+  <h2 id="primi-passi-titolo">Primi passi <span class="db-passi-conta"><?= $fatti ?> su <?= count($passi) ?></span></h2>
+  <p>Le cose da fare perché il sito sia pronto. Si spuntano da sole quando sono fatte.</p>
+  <ol>
+<?php foreach ($passi as $x): ?>
+    <li class="<?= $x['fatto'] ? 'fatto' : '' ?>" data-passo="<?= h($x['chiave']) ?>">
+      <span class="db-passi-segno" aria-hidden="true"><?= $x['fatto'] ? '&#10003;' : '' ?></span>
+      <div><b><?= h($x['titolo']) ?><span class="sr-only"><?= $x['fatto'] ? ' (fatto)' : ' (da fare)' ?></span></b><small><?= h($x['detto']) ?></small>
+        <a href="<?= h($x['link']) ?>"><?= h($x['invito']) ?></a>
+        <?php if ($x['chiave'] === 'email'): ?><form method="post" action="tipo-sito.php"><?= csrf_field() ?><input type="hidden" name="azione" value="email_prova"><button type="submit" class="btn btn-secondary btn-sm" id="passi-email">Manda un'email di prova</button></form><?php endif; ?>
+      </div>
+    </li>
+<?php endforeach; ?>
+  </ol>
+<?php if ($fatti === count($passi)): ?>
+  <div class="db-passi-fine"><form method="post" action="tipo-sito.php"><?= csrf_field() ?><input type="hidden" name="azione" value="nascondi_passi"><button type="submit" class="btn btn-secondary btn-sm">Tutto fatto: nascondi</button></form></div>
+<?php endif; ?>
+</section>
 <?php endif; ?>
 
 <?php if ($avvisi): ?>

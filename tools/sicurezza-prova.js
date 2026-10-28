@@ -640,6 +640,59 @@ echo json_encode($o);
     } else console.log('--  import WordPress dal sito cattivo: saltate (manca FINTO_WP, vedi prove/finto-wp.php)');
   }
 
+  // === 20. (1.4.0) Tipo di sito in prova, primi passi, Esegui adesso del cron, Controlla il server: solo l'amministratore,
+  //          solo con il token, niente da fuori, nessun cambio dopo il Definitivo. Con CMS_DIR legge lo stato vero.
+  {
+    const { execFileSync } = require('child_process');
+    const path = require('path');
+    const fs = require('fs');
+    const DIR = process.env.CMS_DIR || '';
+    const stato = () => { try { return JSON.parse(execFileSync('php', [path.join(__dirname, '..', 'prove', 'tipo-sito-cli.php'), DIR, 'stato']).toString()); } catch (e) { return null; } };
+    const giri = () => { try { return (fs.readFileSync(path.join(DIR, 'logs', 'cron-daily.log'), 'utf8').match(/\| Cron avviato/g) || []).length; } catch (e) { return 0; } };
+    const prima = DIR ? JSON.stringify(stato()) : '';
+    const giri0 = giri();
+    const form = (o) => new URLSearchParams(o).toString();
+    const CT = { 'Content-Type': 'application/x-www-form-urlencoded' };
+    const anon = await browser.newContext();
+    for (const [pag, corpo] of [['tipo-sito.php', { azione: 'cambia', kit: 'blog' }], ['tipo-sito.php', { azione: 'definitivo' }], ['cron-log.php', { azione: 'esegui' }], ['controlla-server.php', {}]]) {
+      const r = await anon.request.post(ADMIN + '/' + pag, { form: corpo, maxRedirects: 0 });
+      ok('1.4.0: ' + pag + ' ' + (corpo.azione || 'controlla') + ' senza login: rimanda al login', [302, 303].includes(r.status()) && /login/.test(r.headers()['location'] || ''), { status: r.status() });
+    }
+    await anon.close();
+    if (red.dentro) {
+      const tr = await tokenDi(red.p, ADMIN + '/index.php');
+      ok('1.4.0: il redattore non vede il riquadro del tipo di sito ne i primi passi', !(await red.p.content()).includes('id="tipo-sito"') && !(await red.p.content()).includes('id="primi-passi"'));
+      for (const [pag, corpo] of [['tipo-sito.php', { azione: 'cambia', kit: 'blog' }], ['tipo-sito.php', { azione: 'definitivo' }], ['tipo-sito.php', { azione: 'email_prova' }], ['tipo-sito.php', { azione: 'nascondi_passi' }], ['cron-log.php', { azione: 'esegui' }], ['controlla-server.php', {}]]) {
+        const r = await post(red.p, ADMIN + '/' + pag, form({ _csrf: tr, ...corpo }), CT);
+        ok('1.4.0: redattore, ' + pag + ' ' + (corpo.azione || 'controlla') + ': 403', r.status === 403, { status: r.status });
+      }
+    }
+    for (const [pag, corpo] of [['tipo-sito.php', { azione: 'cambia', kit: 'blog' }], ['tipo-sito.php', { azione: 'definitivo' }], ['tipo-sito.php', { azione: 'email_prova' }], ['cron-log.php', { azione: 'esegui' }], ['controlla-server.php', {}]]) {
+      const r = await post(admin.p, ADMIN + '/' + pag, form(corpo), CT);
+      ok('1.4.0: ' + pag + ' ' + (corpo.azione || 'controlla') + ' senza token: 403', r.status === 403, { status: r.status });
+    }
+    const t = await tokenDi(admin.p, ADMIN + '/index.php');
+    const est = await admin.ctx.request.post(ADMIN + '/tipo-sito.php', { headers: { 'Origin': 'https://evil.example' }, form: { _csrf: t, azione: 'cambia', kit: 'blog' }, maxRedirects: 0 });
+    ok('1.4.0: cambio del tipo di sito con Origin esterno: 403', est.status() === 403, { status: est.status() });
+    const estc = await admin.ctx.request.post(ADMIN + '/cron-log.php', { headers: { 'Origin': 'https://evil.example' }, form: { _csrf: t, azione: 'esegui' }, maxRedirects: 0 });
+    ok('1.4.0: Esegui adesso con Origin esterno: 403', estc.status() === 403, { status: estc.status() });
+    for (const k of ['../../includes/config.local', '../kit/blog', 'vuoto/../../x', 'BLOG']) {
+      await admin.ctx.request.post(ADMIN + '/tipo-sito.php', { form: { _csrf: t, azione: 'cambia', kit: k }, maxRedirects: 0 });
+    }
+    if (DIR) {
+      ok('1.4.0: tipi di sito inventati (../, maiuscole) respinti, niente cambiato', JSON.stringify(stato()) === prima, stato());
+      ok('1.4.0: nessun giro del cron partito dagli attacchi', giri() === giri0, { prima: giri0, dopo: giri() });
+      // Dopo il Definitivo (se il sito ha un tipo di sito in prova lo si preme qui: e un sito di prova) il cambio e rifiutato.
+      const s = stato();
+      if (s && s.stato === 'prova') await admin.ctx.request.post(ADMIN + '/tipo-sito.php', { form: { _csrf: t, azione: 'definitivo' }, maxRedirects: 0 });
+      const s2 = stato();
+      const rc = await admin.ctx.request.post(ADMIN + '/tipo-sito.php', { form: { _csrf: t, azione: 'cambia', kit: s2 && s2.kit === 'blog' ? 'attivita' : 'blog' } });
+      ok('1.4.0: cambio del tipo di sito dopo il Definitivo (o senza tipo in prova), con il token giusto: rifiutato', JSON.stringify(stato()) === JSON.stringify(s2) && /definitivo|non ha un tipo di sito/.test(await rc.text()), stato());
+    } else {
+      ok('1.4.0: (senza CMS_DIR lo stato del tipo di sito non si legge: prove del cambio saltate)', true);
+    }
+  }
+
   // === pulizia: elimina il redattore di prova
   {
     await admin.p.goto(ADMIN + '/utenti.php', { waitUntil: 'networkidle' });

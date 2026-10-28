@@ -526,7 +526,8 @@ ewx_registra('pulsante_fisso', 'Pulsante fisso (torna su)', 'torna-su', 'Element
     ewx_link('link', 'Link'),
     ec('numero', 'testo', 'Numero WhatsApp (con prefisso, es. 39333...)', '', 'contenuto', ['condizione' => ['tipo' => 'whatsapp'], 'sezione' => 'Pulsante']),
     ec('messaggio', 'testo', 'Messaggio precompilato', (string)cms_impostazione('whatsapp_messaggio', 'Ciao, '), 'contenuto', ['condizione' => ['tipo' => 'whatsapp'], 'sezione' => 'Pulsante']),
-    ec('posizione', 'scelta', 'Angolo', 'destra', 'contenuto', ['opzioni' => ['destra' => 'In basso a destra', 'sinistra' => 'In basso a sinistra'], 'sezione' => 'Posizione']),
+    // 1.4.0: "posizione_angolo" (prima "posizione", come il Posizionamento delle Avanzate: "In basso a sinistra" si perdeva).
+    ec('posizione_angolo', 'scelta', 'Angolo', 'destra', 'contenuto', ['opzioni' => ['destra' => 'In basso a destra', 'sinistra' => 'In basso a sinistra'], 'sezione' => 'Posizione', 'prima' => 'posizione']),
     ec('mostra_dopo', 'numero', 'Compare dopo (px di scorrimento, 0: sempre)', 400, 'contenuto', ['min' => 0, 'max' => 3000, 'sezione' => 'Posizione']),
     ewx_var('distanza_basso', 'Distanza dal basso', '--ew-b', 'Posizione', ['d' => ['v' => 24, 'u' => 'px']]),
     ewx_var('distanza_lato', 'Distanza dal lato', '--ew-l', 'Posizione', ['d' => ['v' => 24, 'u' => 'px']]),
@@ -541,8 +542,8 @@ ewx_registra('pulsante_fisso', 'Pulsante fisso (torna su)', 'torna-su', 'Element
     if ($tipo === 'link') $href = editor_link_sicuro((string)($v['link']['url'] ?? '')) ?: '#';
     if ($tipo === 'whatsapp') $href = 'https://wa.me/' . preg_replace('/\D/', '', $v['numero']) . (trim($v['messaggio']) !== '' ? '?text=' . rawurlencode($v['messaggio']) : '');
     $ic = ewx_ic((string)$v['icona']) ?: icona_svg($tipo === 'whatsapp' ? 'whatsapp' : 'freccia-su');
-    $cl = 'ew-fisso ew-fisso-' . $tipo . ' ew-fisso-' . ($v['posizione'] === 'sinistra' ? 'sinistra' : 'destra') . (trim($v['etichetta']) !== '' ? ' ew-fisso-eti' : '');
+    $cl = 'ew-fisso ew-fisso-' . $tipo . ' ew-fisso-' . ($v['posizione_angolo'] === 'sinistra' ? 'sinistra' : 'destra') . (trim($v['etichetta']) !== '' ? ' ew-fisso-eti' : '');
     $extra = ($tipo !== 'su' && str_starts_with($href, 'http') ? ' target="_blank" rel="noopener"' : '') . ' aria-label="' . h($v['aria']) . '"' . ($ctx['anteprima'] ? ' data-anteprima="1"' : '');
     return '<a class="' . $cl . '" href="' . h($href) . '" data-ew-fisso="' . $tipo . '" data-dopo="' . max(0, (int)$v['mostra_dopo']) . '"' . $extra . '>' . $ic . (trim($v['etichetta']) !== '' ? '<span>' . h($v['etichetta']) . '</span>' : '') . '</a>'
-        . ($ctx['anteprima'] ? '<div class="ew-fisso-segnaposto">Pulsante fisso: sul sito sta nell\'angolo in basso' . ($v['posizione'] === 'sinistra' ? ' a sinistra' : ' a destra') . '.</div>' : '');
+        . ($ctx['anteprima'] ? '<div class="ew-fisso-segnaposto">Pulsante fisso: sul sito sta nell\'angolo in basso' . ($v['posizione_angolo'] === 'sinistra' ? ' a sinistra' : ' a destra') . '.</div>' : '');
 });

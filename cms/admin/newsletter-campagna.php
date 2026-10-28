@@ -82,7 +82,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 $liste = newsletter_liste();
 $scelte = newsletter_liste_campagna($c);
 $destinatari = newsletter_destinatari($scelte);
-$prova = (json_decode((string)get_setting('wp_api_config', ''), true) ?: [])['notification_email'] ?? '';
+$prova = posta_notifica_email(); // l'indirizzo degli avvisi (Impostazioni, Configurazione email)
 $adminTitle = 'Newsletter: ' . (newsletter_4byte_fuori($c['oggetto']) ?: 'nuova campagna');
 require_once __DIR__ . '/includes/admin-header.php';
 ?>

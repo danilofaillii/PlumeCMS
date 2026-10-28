@@ -66,7 +66,7 @@ function agg_dir(string $sub = ''): string {
     return $base . ($sub ? '/' . trim($sub, '/') : '');
 }
 
-/** Radice del sito, dove sta wp-config.php. */
+/** Radice del sito: la cartella del CMS, o quella sopra quando le immagini stanno fuori dal CMS. */
 function agg_site_root(): string {
     // La radice del dominio. CMS nella radice (installazione nuova): la cartella del CMS. CMS in una sottocartella con le
     // immagini fuori (un CMS in /cms con le immagini nella radice del sito): la cartella sopra. CMS_RADICE_SITO la fissa.
@@ -76,7 +76,7 @@ function agg_site_root(): string {
 
 /**
  * Traduce una destinazione del manifest in un percorso assoluto.
- * Radici ammesse: uploads/ (wp-content/uploads), new/ (il publisher), root/ (radice del sito).
+ * Radici ammesse: uploads/ (la cartella delle immagini), new/ (la cartella del CMS), root/ (radice del sito).
  */
 /** Cancella una cartella con tutto quello che contiene. */
 function agg_rimuovi_cartella(string $dir): void {

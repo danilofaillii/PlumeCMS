@@ -18,7 +18,9 @@ $vieta = [
     '~^(uploads|aggiornamenti|logs|assets)/.*\.(php|phtml|php[0-9]|phps|phar|pl|py|cgi|sh)$~',
     '~^temi/.*\.(php|phtml|php[0-9]|phps|phar|pht|pl|py|cgi|sh|shtml|json|htaccess|ini)$~i',
 ];
-foreach ($vieta as $re) if (preg_match($re, $r)) { http_response_code(403); exit; }
+// 1.4.0: con logs/controllo-aperto il router fa come un server che non legge il .htaccess (prova-controlla-server.js).
+$aperto = is_file($_SERVER['DOCUMENT_ROOT'] . $cartella . '/logs/controllo-aperto');
+if (!$aperto) foreach ($vieta as $re) if (preg_match($re, $r)) { http_response_code(403); exit; }
 if ($u !== '/' && $u !== $cartella . '/' && (is_file($f) || (is_dir($f) && is_file(rtrim($f, '/') . '/index.php')))) return false;
 $_SERVER['SCRIPT_NAME'] = $cartella . '/index.php';
 require $_SERVER['DOCUMENT_ROOT'] . $cartella . '/index.php';

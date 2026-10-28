@@ -2,7 +2,7 @@
 
 Il prodotto si chiama **plumeCMS** (nome scelto il 26 ottobre 2026; prima, per poche ore, "CarbonaraCMS", e ancora prima il provvisorio "Officina": gli zip vecchi si chiamavano `officina-*` e `carbonaracms-*`).
 
-## 1.4.0 (28 ottobre 2026) - Porta qui il tuo sito WordPress
+## 1.4.0 (28 ottobre 2026) - Il sito si prova, il pannello si sceglie, WordPress si porta qui
 
 - **Impostazioni, Importa da WordPress**: scrivi indirizzo, utente e password per le applicazioni del sito WordPress (la
   pagina spiega in tre passi dove si crea, in Utenti > Profilo). Se qualcosa non va lo dice in parole semplici: password
@@ -42,6 +42,32 @@ Il prodotto si chiama **plumeCMS** (nome scelto il 26 ottobre 2026; prima, per p
   codice (l'attributo `hidden` non nascondeva niente nel pannello): ora si vede solo con la scheda Testo.
 - Corretto: nella scheda di un articolo il foglio dell'anteprima delle infografiche cambiava i colori del pannello
   (pulsanti rossi anche con altri colori).
+- **Dashboard, "Stai provando il sito ..."** (solo nelle installazioni nuove): le cinque carte dell'installatore e il tipo
+  di sito scelto segnato. Un clic su un'altra carta, una conferma ("Il sito diventa Portfolio. Le pagine che hai scritto o
+  cambiato restano."), e il sito cambia: prima il pannello fa da solo una copia del sito, poi toglie e rifà solo quello
+  che il kit aveva preparato e che nessuno ha toccato (pagine, home, menu, form dei contatti, articoli d'esempio, disegni).
+  Il riquadro dice in parole semplici cosa è rimasto com'era. **Definitivo**: il riquadro sparisce e il tipo di sito non
+  si cambia più, nemmeno con una richiesta fatta a mano. Un sito che si aggiorna non vede niente.
+- **Dashboard, Primi passi** (solo nelle installazioni nuove): sei cose da fare che si spuntano da sole guardando lo stato
+  vero del sito: logo, colori, email che partono (con il pulsante "Manda un'email di prova" all'indirizzo
+  dell'amministratore), cron attivo, la prima pagina o il primo articolo, il tipo di sito definitivo. Ogni voce porta dove
+  si fa la cosa; quando sono tutte fatte, "Tutto fatto: nascondi".
+- **Icona del sito di partenza**: una piuma bianca su un quadrato grafite, nella scheda del browser e a `/favicon.ico`
+  (prima un'installazione nuova rispondeva 404). L'icona scelta in Stile del sito, Identità, continua a vincere. Vale anche
+  per i siti che si aggiornano e non hanno un'icona loro, e con il CMS in una cartella.
+- **Riquadro con icona, Riquadro con immagine, Pulsante fisso**: "Posizione dell'icona", "Posizione dell'immagine" e
+  "Angolo" si perdevano al salvataggio (avevano lo stesso nome di "Posizione" della scheda Avanzate); ora restano. E
+  l'allineamento scelto vale anche per il testo dei riquadri (prima restava sempre centrato). Le pagine fatte con i valori
+  di partenza non cambiano di un pixel.
+- **Impostazioni, Log cron, riscritta**: cosa fa il cron di plumeCMS (il giro del mattino e quello della newsletter), le due
+  righe da mettere nel cron dell'hosting con il percorso vero dell'installazione, quando è andato l'ultimo giro e cosa ha
+  fatto, e **Esegui adesso** per chi il cron non l'ha ancora impostato. Via le istruzioni rimaste dal sito di prima
+  (prove di connessione e di pubblicazione che in plumeCMS non esistono), e gli altri resti di quel sito nel pannello.
+- **Impostazioni, Controlla il server** (anche da Informazioni): con un clic il pannello prova davvero, dal server dove
+  gira, PHP ed estensioni, il database, HTTPS dell'indirizzo del sito, il cron, l'invio delle email, il sito degli
+  aggiornamenti, le cartelle in cui scrive e le protezioni del `.htaccess` (chiede al sito stesso i file vietati). Verde,
+  giallo o rosso, con cosa fare scritto per chi non è tecnico.
+- Corretto il testo dell'email di prova di Impostazioni, Configurazione email (mostrava un pezzo di codice).
 
 ## 1.3.1 (28 ottobre 2026) - Il sito degli aggiornamenti si sceglie
 

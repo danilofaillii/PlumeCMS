@@ -299,76 +299,19 @@ if ($passo === 4) {
             $autore = $s['nome'];
             // Oggi alle 0:00, già passato: con le 6:00 chi installava fra mezzanotte e l'alba trovava il sito vuoto (fino alla 1.2.7).
             $oggi = date('Y-m-d');
-            // 1.3.0: il kit scelto al passo 4 (null = Vuoto, il sito di sempre).
+            // 1.3.0: il kit scelto al passo 4 (Vuoto e il sito di sempre). Dalla 1.4.0 lo costruisce kit_costruisci(),
+            // la stessa funzione del cambio di tipo di sito dalla dashboard, e cio che crea entra nel registro kit_prova.
             $kitId = (string)($d['kit'] ?? 'vuoto');
-            $kitDati = $kitId !== 'vuoto' ? kit_leggi($kitId) : null;
-            // Il form dei contatti.
-            $formId = form_salva(0, ['nome' => 'Contatti', 'titolo' => (string)($kitDati['form']['titolo'] ?? 'Scrivimi'), 'intro' => (string)($kitDati['form']['intro'] ?? 'Rispondo appena posso.'), 'pulsante' => 'Invia', 'attivo' => 1, 'avviso' => 1,
-                'campi' => [['etichetta' => 'Nome', 'tipo' => 'testo', 'obbligatorio' => 1, 'meta' => 'nome'], ['etichetta' => 'Email', 'tipo' => 'email', 'obbligatorio' => 1, 'meta' => 'email'], ['etichetta' => 'Messaggio', 'tipo' => 'testolungo', 'obbligatorio' => 1]],
-                'consenso' => 'Acconsento al trattamento dei dati per ricevere una risposta.', 'grazie_titolo' => 'Grazie, ricevuto.', 'grazie_testo' => 'Ti rispondo al più presto.']);
-            $log[] = 'form Contatti';
-            // Le pagine.
-            $pagina = function (string $titolo, string $slug, array $albero, string $testo = '') use ($autore, $oggi): int {
-                $id = contenuti_salva('pagine', 0, ['title' => $titolo, 'slug' => $slug, 'stato' => 'pubblicato', 'data' => $oggi, 'ora' => '00:00', 'contenuto' => $testo, 'robots' => 'index'], $autore);
-                editor_salva($id, editor_valida(['elementi' => $albero]), true, $autore, 'Pagina di partenza', 'pagine');
-                return $id;
-            };
-            if ($kitDati) {
-                // Le pagine del kit: la home, Blog (l'elenco lo disegna il sito) e le pagine del kit, tutte con l'editor.
-                $mappa = kit_mappa($s['nome'], $s['descrizione']);
-                $pagina('Home', 'home', kit_sezioni((array)$kitDati['home'], $mappa));
-                $log[] = 'kit ' . $kitDati['nome'] . ': pagina Home (impostata come home)';
-                $pagina('Blog', 'blog', [editor_sezione([editor_widget('titolo', ['testo' => 'Blog', 'livello' => 'h1'])])]);
-                $log[] = 'pagina Blog (/blog/)';
-                foreach ((array)($kitDati['pagine'] ?? []) as $pk) {
-                    $pagina((string)$pk['titolo'], (string)$pk['slug'], kit_sezioni((array)$pk['sezioni'], $mappa));
-                    $log[] = 'pagina ' . $pk['titolo'];
-                }
-            } else {
-                $pagina('Home', 'home', [
-                    editor_sezione([editor_widget('hero', ['occhiello' => $s['descrizione'] !== '' ? '' : 'Benvenuto', 'titolo' => $s['nome'] . ', *benvenuto.*', 'testo' => $s['descrizione'] ?: 'Questa è la tua home: aprila nell\'editor e cambia testi, colori e blocchi come vuoi.',
-                        'pulsanti' => [['testo' => 'Leggi il blog', 'link' => '/blog/', 'stile' => 'viola'], ['testo' => 'Contatti', 'link' => '/contatti/', 'stile' => 'filo']], 'immagine' => '', 'etichetta_onda' => '', 'barre' => [], 'margine_sotto' => ['d' => 0]])], ['spazio_sopra' => ['d' => 64], 'spazio_sotto' => ['d' => 40]]),
-                    editor_sezione([editor_widget('titolo', ['occhiello' => 'Da dove cominciare', 'testo' => 'Tre cose da fare adesso', 'livello' => 'h2', 'margine_sotto' => ['d' => 28]]),
-                        editor_widget('schede', ['voci' => [
-                            ['titolo' => 'Cambia la grafica', 'testo' => 'Colori, caratteri e spaziature in un posto solo: Stile del sito.', 'link' => cms_base() . '/admin/design.php', 'invito' => 'Apri lo Stile →', 'evidenza' => true],
-                            ['titolo' => 'Scrivi il primo articolo', 'testo' => 'Dal pannello, voce Articoli: titolo, testo, immagine in evidenza, data di uscita.', 'link' => cms_base() . '/admin/contenuti.php?tipo=articoli', 'invito' => 'Vai agli articoli →', 'evidenza' => false],
-                            ['titolo' => 'Sistema header e footer', 'testo' => 'La testata e il piede sono modelli dell\'editor, con il menu Principale.', 'link' => cms_base() . '/admin/modelli.php', 'invito' => 'Apri i modelli →', 'evidenza' => false],
-                        ], 'colonne' => ['d' => 3, 't' => 2, 'm' => 1], 'margine_sotto' => ['d' => 0]])]),
-                    editor_sezione([editor_widget('titolo', ['occhiello' => 'Blog', 'testo' => 'Gli ultimi articoli', 'livello' => 'h2', 'margine_sotto' => ['d' => 28]]), editor_widget('articoli', ['numero' => 3, 'solo_pillar' => false, 'margine_sotto' => ['d' => 0]])]),
-                ]);
-                $log[] = 'pagina Home (impostata come home)';
-                // La pagina del blog: l'indirizzo esiste perché esiste la pagina; l'elenco degli articoli lo disegna il sito.
-                $pagina('Blog', 'blog', [editor_sezione([editor_widget('titolo', ['testo' => 'Blog', 'livello' => 'h1'])])]);
-                $log[] = 'pagina Blog (/blog/)';
-                $pagina('Chi sono', 'chi-sono', [editor_sezione([editor_widget('titolo', ['testo' => 'Chi sono', 'livello' => 'h1']),
-                    editor_widget('testo', ['testo' => '<p>Qui racconti chi sei e cosa fai. Due o tre paragrafi bastano: cosa offri, a chi, perché ti si può dare fiducia.</p><p>Questa pagina è un esempio: aprila nell\'editor e riscrivila.</p>'])], ['larghezza' => 'articolo'])]);
-                $log[] = 'pagina Chi sono';
-                $pagina('Contatti', 'contatti', [editor_sezione([editor_widget('titolo', ['testo' => 'Contatti', 'livello' => 'h1']),
-                    editor_widget('testo', ['testo' => '<p>Scrivimi dal modulo qui sotto: arriva all\'indirizzo email del sito.</p>']), editor_widget('modulo', ['tipo' => 'form:' . $formId])], ['larghezza' => 'articolo'])]);
-                $log[] = 'pagina Contatti con il form';
-            }
-            // L'articolo di benvenuto.
-            $art = contenuti_salva('articoli', 0, ['title' => 'Benvenuto nel tuo nuovo sito', 'slug' => 'benvenuto', 'stato' => 'pubblicato', 'data' => $oggi, 'ora' => '00:00', 'content_format' => 'html', 'categorie' => ['notizie'],
-                'contenuto' => '<h2>Il primo articolo</h2><p>Questo articolo lo ha scritto l\'installatore. Serve a far vedere come esce un articolo sul sito: titolo, data, testo, i capitoli nel sommario.</p><h2>Cosa fare adesso</h2><p>Aprilo dal pannello (voce Articoli), cambia il testo oppure cestinalo e scrivi il tuo. Ogni articolo ha una data e un\'ora di uscita: puoi programmarlo e uscirà da solo.</p>',
-                'excerpt' => 'Il primo articolo del sito, scritto dall\'installatore: aprilo, cambialo o cestinalo.', 'robots' => 'index'], $autore);
-            $log[] = 'articolo di benvenuto (' . $art . ')';
-            foreach ((array)($kitDati['articoli'] ?? []) as $k => $a) {
-                // Gli articoli d'esempio del kit escono un giorno prima l'uno dell'altro, cosi l'ordine del blog e quello scritto.
-                contenuti_salva('articoli', 0, ['title' => $a['titolo'], 'slug' => $a['slug'], 'stato' => 'pubblicato', 'data' => date('Y-m-d', strtotime('-' . ($k + 1) . ' day')), 'ora' => '00:00', 'content_format' => 'html',
-                    'categorie' => ['notizie'], 'contenuto' => $a['contenuto'], 'excerpt' => $a['estratto'], 'robots' => 'index'], $autore);
-                $log[] = 'articolo d\'esempio: ' . $a['titolo'];
-            }
-            // Menu e modelli (header e footer) di partenza, poi lo stile.
+            if ($kitId !== 'vuoto' && !kit_leggi($kitId)) $kitId = 'vuoto';
+            // Menu e modelli (header e footer) di partenza prima dei contenuti: il kit scrive le sue voci nel menu Principale.
             menu_installa(); modelli_installa();
             if ((int)db()->query('SELECT COUNT(*) FROM ' . tbl('menu'))->fetchColumn() === 0) menu_crea_di_partenza();
             if ((int)db()->query('SELECT COUNT(*) FROM ' . tbl('modelli'))->fetchColumn() === 0) modelli_crea_di_partenza();
-            // Il menu Principale con le pagine di partenza.
-            $m = menu_per_posizione('principale');
-            if ($m) {
-                $v = fn(string $e, string $u) => ['id' => menu_id_voce(), 'etichetta' => $e, 'tipo' => 'link', 'rif' => '', 'url' => $u, 'nuova' => false, 'classi' => '', 'figli' => []];
-                $voci = $kitDati ? array_map(fn($x) => $v((string)$x[0], (string)$x[1]), (array)$kitDati['menu']) : [$v('Home', '/'), $v('Chi sono', '/chi-sono/'), $v('Blog', '/blog/'), $v('Contatti', '/contatti/')];
-                menu_salva((int)$m['id'], 'Principale', 'principale', $voci);
-            }
+            $costruito = kit_costruisci($kitId, $s['nome'], $s['descrizione'], $autore, ['oggi' => $oggi]);
+            foreach ($costruito['log'] as $r) $log[] = $r;
+            // 1.4.0: il tipo di sito resta "in prova" finche non si preme Definitivo nella dashboard; e i primi passi.
+            kit_prova_inizia($kitId, $costruito['creati']);
+            save_setting('primi_passi', 'mostra');
             $log[] = 'menu Principale, header e footer';
             if (function_exists('design_installa')) { design_installa(); $log[] = 'stile predefinito'; }
             // temi: temi/.htaccess (dal web nella cartella dei temi non si esegue niente).

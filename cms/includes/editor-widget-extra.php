@@ -270,6 +270,16 @@ function ewx_css_allinea(array $ctx, $allineamento): void {
     ewx_css_var($ctx, '--ew-just', $allineamento, fn($x) => ['left' => 'flex-start', 'center' => 'center', 'right' => 'flex-end'][$x] ?? null);
 }
 
+/**
+ * I Riquadri con icona e con immagine (1.4.0): l'allineamento scelto vale anche per il testo (--ew-ta). Prima
+ * .ew-ribox{text-align:center} vinceva su tutto. Con l'icona o l'immagine di lato il centro resta il predefinito "a
+ * sinistra" di sempre (un testo centrato accanto all'icona non lo vuole nessuno); sinistra, destra e giustificato valgono.
+ */
+function ewx_css_allinea_ribox(array $ctx, $allineamento, string $pos): void {
+    ewx_css_allinea($ctx, $allineamento);
+    ewx_css_var($ctx, '--ew-ta', $allineamento, fn($x) => in_array($x, ['left', 'center', 'right', 'justify'], true) && !($pos !== 'sopra' && $x === 'center') ? $x : null);
+}
+
 function ewx_url_pagina(array $ctx): string {
     $base = defined('SITO_URL') ? SITO_URL : '';
     return $base . ($ctx['percorso'] ?? '/');

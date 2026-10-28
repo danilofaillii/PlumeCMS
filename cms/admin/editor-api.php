@@ -9,7 +9,7 @@
  *   nota         versione, testo → una nota scritta a mano (la versione non si pota più)
  *   impostazioni titolo, slug, seo, robots, stato
  *   togli        il contenuto torna al testo della scheda (le revisioni restano)
- *   carica       un'immagine in wp-content/uploads/pagine/AAAA/MM/
+ *   carica       un'immagine in uploads/pagine/AAAA/MM/ (la cartella delle immagini del CMS)
  *   media        le immagini già caricate
  */
 require_once __DIR__ . '/includes/auth.php';

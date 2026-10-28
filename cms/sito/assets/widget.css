@@ -13,9 +13,9 @@
 .ew-icona-link{display:inline-block;text-decoration:none;line-height:0}
 
 /* ---- Riquadro con icona e con immagine */
-.ew-ribox{display:flex;flex-direction:column;align-items:var(--ew-just,center);gap:var(--ew-gap,16px);text-align:center}
-.ew-ribox.ew-pos-sinistra{flex-direction:row;text-align:left;align-items:flex-start}
-.ew-ribox.ew-pos-destra{flex-direction:row-reverse;text-align:left;align-items:flex-start}
+.ew-ribox{display:flex;flex-direction:column;align-items:var(--ew-just,center);gap:var(--ew-gap,16px);text-align:var(--ew-ta,center)}
+.ew-ribox.ew-pos-sinistra{flex-direction:row;text-align:var(--ew-ta,left);align-items:flex-start}
+.ew-ribox.ew-pos-destra{flex-direction:row-reverse;text-align:var(--ew-ta,left);align-items:flex-start}
 .ew-ribox.ew-ic-centro{align-items:center}
 .ew-ribox-icona{flex:none;line-height:0}
 .ew-ribox-corpo{min-width:0;flex:1}

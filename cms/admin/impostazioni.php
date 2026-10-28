@@ -33,7 +33,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $a = trim($_POST['prova_a'] ?? '');
         if (!filter_var($a, FILTER_VALIDATE_EMAIL)) {
             flash('error', 'Indirizzo di prova non valido.');
-        } elseif (posta_invia($a, 'Prova di spedizione dal pannello', "Se leggi questa email, il pannello di ' . (parse_url(cms_url_sito(), PHP_URL_HOST) ?: CMS_NOME) . ' spedisce correttamente.\n\nInviata il " . date('d/m/Y \a\l\l\e H:i') . '.')) {
+        } elseif (posta_invia($a, 'Prova di spedizione dal pannello', "Se leggi questa email, il pannello di " . (parse_url(cms_url_sito(), PHP_URL_HOST) ?: CMS_NOME) . " spedisce correttamente.\n\nInviata il " . date('d/m/Y \a\l\l\e H:i') . '.')) {
             flash('success', "Email di prova spedita a $a. Controlla anche nello spam.");
         } else {
             flash('error', 'Spedizione non riuscita: ' . posta_errore());
