@@ -142,7 +142,7 @@ function menu_salva(int $id, string $nome, string $posizione, array $voci): int 
     if ($nome === '') throw new RuntimeException('Il menu ha bisogno di un nome.');
     if (!array_key_exists($posizione, MENU_POSIZIONI)) $posizione = '';
     $json = json_encode(menu_pulisci_voci($voci), JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
-    // Le emoji restano come 😀: la colonna è utf8 a 3 byte.
+    // Le emoji restano come &#128512;: la colonna è utf8 a 3 byte.
     $json = preg_replace_callback('/[\x{10000}-\x{10FFFF}]/u', function ($m) {
         $c = mb_ord($m[0]) - 0x10000;
         return sprintf('\\u%04x\\u%04x', 0xD800 + ($c >> 10), 0xDC00 + ($c & 0x3FF));

@@ -14,7 +14,7 @@ $homeId = (int)db()->query('SELECT id FROM ' . tbl('pages') . ' WHERE slug = ' .
  */
 $menu = [
     ['Dashboard', 'index.php', 'grafico-barre', $qui === 'index.php'],
-    ['Articoli', 'contenuti.php?tipo=articoli', 'documento-testo', $ctQui && ($ctTipo === '' || $ctTipo === 'articoli')],
+    ['Articoli', 'contenuti.php?tipo=articoli', 'documento-testo', ($ctQui && ($ctTipo === '' || $ctTipo === 'articoli')) || $qui === 'fine-articolo.php'],
     ['Pagine', 'contenuti.php?tipo=pagine', 'documento', $ctQui && $ctTipo === 'pagine', [['Home nell\'editor', $homeId ? 'editor.php?id=' . $homeId : 'contenuti.php?tipo=pagine', false]]],
     ['Form', 'form.php', 'lista-spunte', $qui === 'form.php'],
     ['Popup', 'popup.php', 'finestra', $qui === 'popup.php'],

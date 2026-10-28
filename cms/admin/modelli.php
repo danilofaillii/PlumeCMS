@@ -75,7 +75,7 @@ $cestino = !empty($_GET['cestino']);
 $tutti = array_values(array_filter(modelli_tutti(), fn($m) => $m['tipo'] === $tipo && (bool)$m['cestino'] === $cestino));
 $nelCestino = count(array_filter(modelli_tutti(), fn($m) => $m['tipo'] === $tipo && $m['cestino']));
 $conteggi = ['header' => 0, 'footer' => 0];
-foreach (modelli_tutti() as $m) if (!$m['cestino']) $conteggi[$m['tipo']]++;
+foreach (modelli_tutti() as $m) if (!$m['cestino'] && isset($conteggi[$m['tipo']])) $conteggi[$m['tipo']]++; // il riquadro di fine articolo (1.6.0) ha la sua pagina
 
 // Quanti contenuti hanno scelto ogni modello (header_id / footer_id = id).
 $inUso = [];

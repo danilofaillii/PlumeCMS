@@ -221,6 +221,9 @@ try {
                     } else {
                         $corpo = vista_articolo($c);
                     }
+                    // 1.6.0: il riquadro "Aggiungi sempre alla fine", se è acceso.
+                    [$corpo, $cssFine] = vista_fine_articolo($corpo);
+                    $testa .= $cssFine;
                     $nodi = array_merge(sito_jsonld_articolo($c), [sito_jsonld_briciole($briciole)]);
                     sito_html(200, $meta, $corpo, sito_jsonld_script($nodi) . $testa, SITO_PAGINA_BLOG);
                 }

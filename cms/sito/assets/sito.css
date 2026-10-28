@@ -190,6 +190,11 @@ h1,h2,h3{font-family:var(--f-titolo);letter-spacing:-.01em;margin:0}
 .in-breve{margin:0 0 2em;padding:22px 24px;border-radius:var(--r);background:linear-gradient(140deg,rgba(var(--ciano-rgb),.12),rgba(var(--viola-rgb),.10));border:1px solid rgba(var(--ciano-rgb),.35)}
 .in-breve b{display:block;font:700 12px var(--f-testo);letter-spacing:.18em;text-transform:uppercase;color:var(--ciano);margin-bottom:8px}
 .in-breve p{margin:0;font-size:19px;line-height:1.6;color:var(--testo)}
+/* 1.6.0: il riquadro "Aggiungi sempre alla fine" in fondo a ogni articolo (includes/modelli.php, vista_fine_articolo) */
+.fine-articolo{margin:3em 0 0;padding:28px 30px;border-radius:var(--r);background:var(--bg-2);border:1px solid var(--bordo);box-shadow:0 16px 44px rgba(0,0,0,.24),0 2px 8px rgba(0,0,0,.12)}
+.fine-articolo>.ed-pagina>:first-child,.fine-articolo>:first-child{margin-top:0}
+.fine-articolo-fuori{margin-bottom:3em}
+@media (max-width:640px){.fine-articolo{padding:22px 18px}}
 .corpo a{color:var(--ciano)}
 .citazione-autore{margin:1.5em 0 0;font:600 15px/1.4 var(--f-testo);letter-spacing:.08em;text-transform:uppercase;color:var(--testo-3)}
 .corpo img{height:auto;border-radius:12px;background:#fff}

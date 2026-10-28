@@ -25,7 +25,7 @@ $testa = '<style id="ed-css"></style><link rel="stylesheet" href="' . pannello_f
 $corpo = ($tipo !== 'pagine' && $tipo !== 'modelli' ? vista_articolo_testa(['titolo' => $pagina['title'], 'data' => sito_iso((string)($pagina['publish_date'] ?: date('Y-m-d')), (string)$pagina['publish_time']), 'pillar' => ($pagina['type'] ?? '') === 'pillar', 'categorie' => sito_lista($pagina['categorie'] ?? '') ?: array_filter([(string)$pagina['category']])], '') : '')
     . '<div class="ed-pagina" id="ed-pagina"></div>';
 // modelli: la tela sta nell'header (o nel footer); al posto del contenuto un segnaposto.
-if ($tipo === 'modelli') $corpo = modelli_segnaposto_contenuto((string)($pagina['tipo'] ?? 'header'));
+if ($tipo === 'modelli') $corpo = ($pagina['tipo'] ?? '') === 'fine' ? modelli_segnaposto_fine() : modelli_segnaposto_contenuto((string)($pagina['tipo'] ?? 'header'));
 // Un articolo fatto di sezioni "Articolo" (la conversione a blocchi) sta nella colonna di lettura, come sul sito.
 if ($tipo !== 'pagine' && $tipo !== 'modelli') {
     $albero = editor_decodifica((string)($pagina['struttura_bozza'] ?: $pagina['struttura'])) ?? ['elementi' => []];

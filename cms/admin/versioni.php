@@ -76,6 +76,14 @@ if (!empty($_GET['anteprima'])) {
         $tipoModello = (string)($v['dati']['tipo'] ?? (modelli_leggi((int)$v['oggetto_id'])['tipo'] ?? 'header'));
         $GLOBALS['sito_percorso'] = '/';
         $GLOBALS['modelli_versione'] = ['tipo' => $tipoModello, 'id' => (int)$v['oggetto_id'], 'albero' => $albero];
+        if ($tipoModello === 'fine') {
+            // 1.6.0: il riquadro di fine articolo si vede in fondo a un articolo d'esempio.
+            [$corpo, $cssFine] = vista_fine_articolo('<div class="wrap"><div class="art" style="grid-template-columns:minmax(0,1fr)"><article class="corpo">'
+                . '<p style="opacity:.7">Qui c\'è il testo dell\'articolo. Sotto, il riquadro che esce in fondo a ogni articolo, con la versione ' . (int)$v['id'] . '.</p></article></div></div>');
+            $html = vista_pagina(['titolo' => 'Anteprima della versione ' . (int)$v['id'], 'descrizione' => '', 'robots' => 'noindex', 'canonical' => '', 'og' => []], $corpo, $cssFine, '/');
+            echo preg_replace('~(<body[^>]*>)~', '$1' . $fascia, $html, 1);
+            exit;
+        }
         $corpo = '<div class="wrap" style="padding:72px 0;text-align:center"><p style="opacity:.7">Qui sotto e qui sopra: l\'header e il footer come li vedrebbe chi visita il sito, con la versione ' . (int)$v['id'] . ' del ' . h($tipoModello) . '.</p></div>';
         $html = vista_pagina(['titolo' => 'Anteprima della versione ' . (int)$v['id'], 'descrizione' => '', 'robots' => 'noindex', 'canonical' => '', 'og' => []], $corpo, '', '/');
         echo preg_replace('~(<body[^>]*>)~', '$1' . $fascia, $html, 1);

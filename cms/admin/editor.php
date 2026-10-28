@@ -48,8 +48,9 @@ if (!$pagina) {
 }
 // modelli: header e footer del Theme Builder si aprono con lo stesso editor; la scheda di ritorno è l'elenco dei modelli.
 $modello = $tipo === 'modelli';
-$elenco = $modello ? 'modelli.php' : 'contenuti.php?tipo=' . $tipo;
-$scheda = $modello ? 'modelli.php' : 'contenuto.php?tipo=' . $tipo . '&id=' . $id;
+$fine = $modello && ($pagina['tipo'] ?? '') === 'fine'; // 1.6.0: il riquadro di fine articolo torna alla sua pagina
+$elenco = $fine ? 'fine-articolo.php' : ($modello ? 'modelli.php' : 'contenuti.php?tipo=' . $tipo);
+$scheda = $fine ? 'fine-articolo.php' : ($modello ? 'modelli.php' : 'contenuto.php?tipo=' . $tipo . '&id=' . $id);
 // Le tendine Header e Footer del contenuto (includes/modelli.php), se il Theme Builder c'è.
 $opzioniModelli = null;
 if (!$modello && is_file(dirname(__DIR__) . '/includes/modelli.php')) {
@@ -57,6 +58,7 @@ if (!$modello && is_file(dirname(__DIR__) . '/includes/modelli.php')) {
     if (function_exists('modelli_opzioni_scelta')) { try { $opzioniModelli = ['header' => modelli_opzioni_scelta('header'), 'footer' => modelli_opzioni_scelta('footer')]; } catch (Throwable $e) { $opzioniModelli = null; } }
 }
 $percorso = $modello ? '/?preview=1&' . h($pagina['tipo']) . '=' . $id : editor_percorso_pagina($pagina); // modelli: l'anteprima sul sito forza questo modello
+if ($fine) $percorso = (modelli_fine_dove_vederlo() ?: '/') . '?preview=1&fine=' . $id; // sotto l'ultimo articolo pubblicato
 $home = !$modello && editor_e_home($pagina);
 
 // Prima apertura: da dove partire. Nessuna pagina cambia da sola.

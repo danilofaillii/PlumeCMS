@@ -237,6 +237,23 @@ function vista_articolo(array &$c): string {
         . '<article class="corpo">' . vista_in_breve($c['tldr']) . '<div>' . $html . '</div>' . $faq . '</article></div></div>';
 }
 
+/**
+ * 1.6.0: il riquadro "Aggiungi sempre alla fine" (includes/modelli.php, modelli_fine_articolo) in fondo all'articolo.
+ * Dentro la colonna di lettura, prima della chiusura di <article>; un articolo a tutta pagina (sezioni dell'editor non
+ * "Articolo", o la vista di un tema senza <article>) lo riceve in fondo, largo quanto la lettura. Ritorna [corpo, css].
+ */
+function vista_fine_articolo(string $corpo): array {
+    if (!is_file(dirname(__DIR__) . '/includes/modelli.php')) return [$corpo, ''];
+    require_once dirname(__DIR__) . '/includes/modelli.php';
+    $f = modelli_fine_articolo();
+    if ($f === null) return [$corpo, ''];
+    [$html, $css] = $f;
+    $css = $css !== '' ? '<style id="ed-css-fine">' . str_replace('</', '<\\/', $css) . '</style>' : '';
+    $i = strrpos($corpo, '</article>');
+    if ($i !== false) return [substr($corpo, 0, $i) . $html . substr($corpo, $i), $css];
+    return [$corpo . '<div class="wrap ed-stretta fine-articolo-fuori">' . $html . '</div>', $css];
+}
+
 /** Pagine fisse senza struttura dell'editor: il testo della scheda passa così com'è, dentro la grafica del sito. */
 function vista_pagina_generica(array &$c): string {
     if (($t = vista_tema('pagina', ['c' => $c, 'html' => vista_moduli_in_pagina($c['percorso'], sito_html_contenuto($c))])) !== null) return $t;

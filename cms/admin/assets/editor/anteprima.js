@@ -22,7 +22,7 @@
   strumenti.className = 'ed-strumenti';
   strumenti.innerHTML = '<span class="ed-strumenti-nome"></span>'
     + '<button type="button" data-az="su" title="Sposta su">↑</button><button type="button" data-az="giu" title="Sposta giù">↓</button>'
-    + '<button type="button" data-az="duplica" title="Duplica">⧉</button><button type="button" data-az="elimina" title="Elimina">🗑</button>';
+    + '<button type="button" data-az="duplica" title="Duplica">⧉</button><button type="button" data-az="elimina" title="Elimina">&#128465;</button>';
   document.body.appendChild(strumenti);
   strumenti.addEventListener('click', function (e) {
     var b = e.target.closest('button');

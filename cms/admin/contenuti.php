@@ -78,6 +78,9 @@ require_once __DIR__ . '/includes/admin-header.php';
       $n = $conteggi[$k === '' ? 'tutti' : $k]; if ($k !== '' && $n === 0) continue; ?>
       <a href="<?= h($qs(['stato' => $k, 'pagina' => 1, 'q' => '', 'categoria' => '', 'mese' => '', 'tipo_articolo' => ''])) ?>" class="<?= $filtri['stato'] === $k ? 'attivo' : '' ?>"><?= $nome ?> <span>(<?= $n ?>)</span></a>
     <?php endforeach; ?>
+    <?php if ($tipo === 'articoli' && is_admin()): // 1.6.0: il riquadro in fondo a ogni articolo (admin/fine-articolo.php) ?>
+      <a href="fine-articolo.php" id="ct-fine-articolo">Aggiungi sempre alla fine</a>
+    <?php endif; ?>
   </div>
   <a href="editor.php?nuova=1&amp;tipo=<?= $tipo ?>" class="btn btn-primary">+ Aggiungi <?= $T['uno'] ?></a>
 </div>

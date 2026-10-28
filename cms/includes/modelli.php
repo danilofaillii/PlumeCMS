@@ -23,7 +23,9 @@ require_once __DIR__ . '/sito.php';
 require_once __DIR__ . '/menu-nav.php';
 
 const MODELLI_VERSIONE_SCHEMA = '1';
-const MODELLI_TIPI = ['header' => 'Header', 'footer' => 'Footer'];
+// 1.6.0: "fine" è il riquadro che esce in fondo a ogni articolo (Articoli > Aggiungi sempre alla fine, admin/fine-articolo.php).
+// Uno solo: lo sceglie modelli_fine(), non le condizioni; acceso quando è pubblicato.
+const MODELLI_TIPI = ['header' => 'Header', 'footer' => 'Footer', 'fine' => 'Fine articolo'];
 /** Dove può uscire un modello: tutto il sito, ogni tipo di contenuto (anche dei moduli), gli archivi, una categoria, un contenuto preciso. */
 function modelli_dove(): array {
     static $d = null;
@@ -173,6 +175,15 @@ function modelli_crea(string $tipo, string $nome, ?array $albero = null): int {
     modelli_installa();
     if (!isset(MODELLI_TIPI[$tipo])) throw new RuntimeException('Tipo di modello sconosciuto.');
     $nome = mb_substr(trim($nome), 0, 150) ?: MODELLI_TIPI[$tipo] . ' nuovo';
+    if ($albero === null && $tipo === 'fine') {
+        // Il riquadro di fine articolo parte con un titolo e un testo da riscrivere, nella larghezza dell'articolo
+        // (nessun margine suo: lo spazio intorno lo dà il riquadro).
+        require_once __DIR__ . '/editor.php';
+        $albero = editor_valida(['elementi' => [editor_sezione([
+            editor_widget('titolo', ['testo' => 'Prima di andare', 'livello' => 'h3']),
+            editor_widget('testo', ['testo' => '<p>Questo riquadro esce in fondo a ogni articolo. Scrivi qui quello che vuoi far trovare a chi ha letto fino alla fine: un invito alla newsletter, un contatto, un consiglio di lettura.</p>', 'margine_sotto' => ['d' => 0]]),
+        ], ['larghezza' => 'articolo', 'spazio_sopra' => ['d' => 0, 'm' => 0], 'spazio_sotto' => ['d' => 0, 'm' => 0]])]]);
+    }
     if ($albero === null) {
         // Un modello nuovo parte da una sezione vuota senza spazi sopra e sotto (un header è alto quanto il suo contenuto).
         require_once __DIR__ . '/editor.php';
@@ -446,10 +457,90 @@ function modelli_pezzo(string $tipo): ?array {
 }
 
 function modelli_header_per(): ?array { return modelli_pezzo('header'); }
+
+// ------------------------------------------------------------
+// Fine articolo (1.6.0)
+// ------------------------------------------------------------
+
+/** Il riquadro di fine articolo (il primo modello "fine" fuori dal cestino), o null se non è ancora stato creato. */
+function modelli_fine(): ?array {
+    foreach (modelli_tutti() as $m) if ($m['tipo'] === 'fine' && !$m['cestino']) return $m;
+    return null;
+}
+
+/** Il riquadro di fine articolo, creato se manca (in bozza: sul sito non esce finché non lo si pubblica). Ritorna l'id. */
+function modelli_fine_crea(): int {
+    $m = modelli_fine();
+    return $m ? (int)$m['id'] : modelli_crea('fine', 'Fine articolo');
+}
+
+/** Esce sul sito? Pubblicato, con una struttura pubblicata, fuori dal cestino. */
+function modelli_fine_acceso(?array $m = null): bool {
+    $m = $m ?? modelli_fine();
+    return $m !== null && $m['status'] === 'published' && !$m['cestino'] && !empty($m['pubblicata']);
+}
+
+/** Dove vederlo sul sito: il percorso dell'ultimo articolo pubblicato ('/slug/'), o '' se non ce n'è uno. */
+function modelli_fine_dove_vederlo(): string {
+    try {
+        $slug = db()->query('SELECT slug FROM ' . tbl('articles') . " WHERE status = 'published' AND cestino IS NULL AND TIMESTAMP(publish_date, publish_time) <= NOW() ORDER BY publish_date DESC, publish_time DESC, id DESC LIMIT 1")->fetchColumn();
+        return $slug !== false && $slug !== '' ? '/' . $slug . '/' : '';
+    } catch (Throwable $e) {
+        return '';
+    }
+}
+
+/** La cornice del riquadro: un <aside> ombreggiato, dentro le sezioni dell'editor (o la tela, nell'editor). */
+function modelli_cornice_fine(string $dentro, int $id = 0): string {
+    return '<aside class="fine-articolo ed-modello" id="fine-articolo" aria-label="In fondo all\'articolo"' . ($id ? ' data-modello="' . $id . '"' : '') . '>' . $dentro . '</aside>';
+}
+
+/**
+ * Il riquadro per l'articolo che si sta mostrando: [html, css], oppure null se non deve uscire.
+ * Come header e footer: ?preview=1&fine=ID mostra anche una bozza (al solo amministratore, SITO_ANTEPRIMA),
+ * e l'anteprima di una versione (GLOBALS modelli_versione) disegna quella.
+ */
+function modelli_fine_articolo(): ?array {
+    try {
+        require_once __DIR__ . '/editor.php';
+        $percorso = modelli_contesto()['percorso'] ?: '/';
+        $vs = $GLOBALS['modelli_versione'] ?? null;
+        if (is_array($vs) && ($vs['tipo'] ?? '') === 'fine' && is_array($vs['albero'] ?? null)) {
+            [$html, $css] = editor_disegna($vs['albero'], $percorso);
+            return [modelli_cornice_fine($html, (int)($vs['id'] ?? 0)), $css];
+        }
+        $m = null;
+        $bozza = false;
+        if (defined('SITO_ANTEPRIMA') && SITO_ANTEPRIMA && isset($_GET['fine']) && ctype_digit((string)$_GET['fine'])) {
+            $f = modelli_leggi((int)$_GET['fine']);
+            if ($f && $f['tipo'] === 'fine') { $m = $f; $bozza = true; }
+        }
+        if ($m === null) {
+            $m = modelli_fine();
+            if (!modelli_fine_acceso($m)) return null;
+        }
+        [$html, $css] = modelli_disegna($m, $bozza);
+        if (trim(strip_tags($html, '<img><iframe><video><svg><form><input><button><a>')) === '') return null;
+        return [modelli_cornice_fine($html, (int)$m['id']), $css];
+    } catch (Throwable $e) {
+        // Un riquadro rotto non deve spegnere l'articolo: si salta e si lascia traccia nel log.
+        error_log('modelli fine: ' . $e->getMessage());
+        return null;
+    }
+}
 function modelli_footer_per(): ?array { return modelli_pezzo('footer'); }
 
 /** Il segnaposto del contenuto nella tela dell'editor di un header o di un footer. */
 function modelli_segnaposto_contenuto(string $tipo): string {
     return '<div class="wrap ed-segnaposto" aria-hidden="true"><div class="ed-segnaposto-riga ed-segnaposto-titolo"></div><div class="ed-segnaposto-riga"></div><div class="ed-segnaposto-riga"></div><div class="ed-segnaposto-riga corta"></div>'
         . '<p>Qui va il contenuto della pagina. ' . ($tipo === 'header' ? "L'header che stai componendo sta sopra." : 'Il footer che stai componendo sta sotto.') . '</p></div>';
+}
+
+/** La tela dell'editor del riquadro di fine articolo: un articolo finto e, in fondo, il riquadro con la tela dentro. */
+function modelli_segnaposto_fine(): string {
+    return '<div class="wrap"><div class="art" style="grid-template-columns:minmax(0,1fr)"><article class="corpo">'
+        . '<div class="ed-segnaposto" aria-hidden="true"><div class="ed-segnaposto-riga ed-segnaposto-titolo"></div><div class="ed-segnaposto-riga"></div><div class="ed-segnaposto-riga"></div><div class="ed-segnaposto-riga corta"></div>'
+        . '<p>Qui va il testo dell\'articolo. Il riquadro che stai componendo esce sotto, in fondo a ogni articolo.</p></div>'
+        . modelli_cornice_fine('<div class="ed-pagina ed-modello-pagina" id="ed-pagina"></div>')
+        . '</article></div></div>';
 }

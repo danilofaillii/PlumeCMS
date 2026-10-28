@@ -162,7 +162,10 @@ function editor_importa_albero($x): ?array {
 
 /** Una chiave per riconoscere un modello: tipo e nome. */
 function editor_importa_chiave_modello(array $m): string {
-    return (($m['tipo'] ?? 'header') === 'footer' ? 'footer' : 'header') . '|' . mb_strtolower(trim((string)($m['nome'] ?? '')));
+    // 1.6.0: anche il riquadro di fine articolo ("fine"); un tipo che non si conosce resta un header, come prima.
+    $tipo = (string)($m['tipo'] ?? 'header');
+    if ($tipo === 'fine') return 'fine|'; // il riquadro è uno solo: si aggiorna quello che c'è, con qualunque nome
+    return (in_array($tipo, ['footer', 'fine'], true) ? $tipo : 'header') . '|' . mb_strtolower(trim((string)($m['nome'] ?? '')));
 }
 
 /** Le differenze fra due array, come elenco di righe "sezione.chiave: prima -> dopo". */

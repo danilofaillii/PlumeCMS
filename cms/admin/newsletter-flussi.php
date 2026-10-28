@@ -100,7 +100,7 @@ $inviateNodo = $v['id'] ? db()->query('SELECT passo, COUNT(DISTINCT iscritto_id)
       <p class="hint">Trascinali sulla tela, o clicca per aggiungerli. Poi tira dal pallino di un'uscita fino a un altro blocco per collegarli.</p>
       <div class="fl-pezzo" data-tipo="email" draggable="false"><b>✉️ Email</b><small>Manda un'email. Uscite: subito dopo, se apre, se clicca, se non fa niente</small></div>
       <div class="fl-pezzo" data-tipo="attesa"><b>⏳ Attesa</b><small>Aspetta minuti, ore o giorni</small></div>
-      <div class="fl-pezzo" data-tipo="bivio"><b>🔀 Bivio</b><small>Sì o No secondo una condizione</small></div>
+      <div class="fl-pezzo" data-tipo="bivio"><b>&#128256; Bivio</b><small>Sì o No secondo una condizione</small></div>
       <div class="fl-pezzo" data-tipo="fine"><b>⏹ Fine</b><small>Il cammino si chiude qui</small></div>
       <h4 style="margin-top:1rem">Parte quando</h4>
       <select name="innesco" id="fl-innesco"><?php foreach (NL_INNESCHI as $k => $n): ?><option value="<?= $k ?>" <?= $v['innesco'] === $k ? 'selected' : '' ?>><?= h($n) ?></option><?php endforeach; ?></select>
