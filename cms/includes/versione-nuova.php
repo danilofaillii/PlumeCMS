@@ -4,8 +4,9 @@
  * versione e, se e piu nuova di questa, l'amministratore la scarica e la mette nella coda di Aggiornamenti con un clic.
  * Da li si applica come uno zip caricato a mano: snapshot, file, ripristino da solo se qualcosa va storto.
  *
- * Da dove: CMS_AGGIORNAMENTI_URL nel config.local.php (l'indirizzo di un plumeCMS, senza barra finale), altrimenti
- * VERSIONE_SITO_UFFICIALE. Il sito ufficiale risponde con api/versione.php per la serie VERSIONE_SERIE del suo
+ * Da dove (1.3.1: un parametro): CMS_AGGIORNAMENTI_URL nel config.local.php se c'e (vince e il pannello non lo cambia),
+ * altrimenti l'indirizzo scritto in Aggiornamenti (impostazione versione_sito), altrimenti VERSIONE_SITO_UFFICIALE.
+ * Ognuno e l'indirizzo di un plumeCMS, senza barra finale. Il sito ufficiale risponde con api/versione.php per la serie VERSIONE_SERIE del suo
  * download manager: versione, nome, sha256 e dimensione del file.
  *
  * Quando: al massimo una volta al giorno (la risposta si ricorda nell'impostazione versione_controllo_cache), mai
@@ -31,10 +32,24 @@ const VERSIONE_MAX_ZIP = 52428800;      // 50 MB
 const VERSIONE_TIMEOUT = 5;             // secondi per la risposta JSON
 const VERSIONE_TIMEOUT_ZIP = 60;        // secondi per lo zip
 
-/** L'indirizzo del sito ufficiale (senza barra finale). */
+/** L'indirizzo del sito ufficiale (senza barra finale): la costante del config, poi quello del pannello, poi il predefinito. */
 function versione_sito(): string {
-    $u = defined('CMS_AGGIORNAMENTI_URL') ? (string)CMS_AGGIORNAMENTI_URL : VERSIONE_SITO_UFFICIALE;
-    return rtrim(trim($u), '/');
+    if (defined('CMS_AGGIORNAMENTI_URL')) return rtrim(trim((string)CMS_AGGIORNAMENTI_URL), '/');
+    $u = trim((string)get_setting('versione_sito', ''));
+    return rtrim($u !== '' ? $u : VERSIONE_SITO_UFFICIALE, '/');
+}
+
+/**
+ * Cambia l'indirizzo del sito ufficiale dal pannello: '' torna al predefinito. Ritorna '' oppure il motivo per cui non va.
+ * Un indirizzo nuovo dimentica la risposta di prima (che era di un altro sito).
+ */
+function versione_sito_salva(string $u): string {
+    if (defined('CMS_AGGIORNAMENTI_URL')) return 'L\'indirizzo è fissato nel file config.local.php (CMS_AGGIORNAMENTI_URL): si cambia lì.';
+    $u = rtrim(trim($u), '/');
+    if ($u !== '' && (!versione_url_ok($u) || strlen($u) > 300 || preg_match('/[\s"<>?#]/', $u))) return 'Scrivi l\'indirizzo completo di un sito plumeCMS, che comincia con https:// (per esempio https://www.plumecms.it), senza ? né #.';
+    save_setting('versione_sito', $u);
+    save_setting('versione_controllo_cache', '');
+    return '';
 }
 
 /** Il controllo e acceso? (Aggiornamenti, "Controlla da solo") */

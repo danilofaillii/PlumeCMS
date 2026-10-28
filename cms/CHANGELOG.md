@@ -2,6 +2,12 @@
 
 Il prodotto si chiama **plumeCMS** (nome scelto il 26 ottobre 2026; prima, per poche ore, "CarbonaraCMS", e ancora prima il provvisorio "Officina": gli zip vecchi si chiamavano `officina-*` e `carbonaracms-*`).
 
+## 1.3.1 (28 ottobre 2026) - Il sito degli aggiornamenti si sceglie
+
+- **Aggiornamenti, "Indirizzo del sito da cui arrivano gli aggiornamenti"**: il sito a cui il pannello chiede se c'è una
+  versione nuova non è più scritto nel codice. Si scrive in Impostazioni, Aggiornamenti (solo indirizzi https); vuoto torna
+  a quello di partenza. Chi lo fissa nel `config.local.php` (`CMS_AGGIORNAMENTI_URL`) vince, e la pagina lo dice.
+
 ## 1.3.0 (28 ottobre 2026) - Si parte con un sito vero
 
 - **Installazione, "Che sito vuoi fare?"**: all'ultimo passo si sceglie Vuoto (il sito di sempre), Personale, Attività,

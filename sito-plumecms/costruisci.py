@@ -547,6 +547,7 @@ def zip_lavagna(dest):
 
 # Le novità per chi scarica: brevi, scritte qui (il CHANGELOG è per chi sviluppa). Da aggiornare a ogni versione.
 NOVITA = [
+    ('1.3.1', 'Il sito degli aggiornamenti si sceglie', ['In Impostazioni, Aggiornamenti scrivi da quale sito arrivano le versioni nuove: non è più fisso nel codice.']),
     ('1.3.0', 'Si parte con un sito vero', ['All\'installazione scegli che sito vuoi fare: personale, attività, blog, portfolio. Parte già fatto.',
                                            'Nell\'editor, trenta sezioni pronte da mettere nella pagina con un clic.',
                                            'Il pannello ti dice quando esce una versione nuova, e la prepara da solo.',

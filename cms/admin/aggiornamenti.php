@@ -102,6 +102,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $id = versione_scarica_e_prepara();
             $p = agg_leggi_stato($id);
             flash('success', 'Aggiornamento "' . ($p['nome'] ?? $id) . '" scaricato e controllato (dimensione e sha256): è nella lista qui sotto. Leggi il riepilogo e premi "Applica ora".');
+        } elseif ($action === 'versione_sito') {
+            $perche = versione_sito_salva((string)($_POST['sito'] ?? ''));
+            if ($perche !== '') flash('error', $perche);
+            else flash('success', 'Da adesso il pannello chiede le versioni nuove a ' . versione_sito() . '. Premi "Controlla adesso" per provarlo.');
         } elseif ($action === 'versione_interruttore') {
             save_setting('versione_controllo', !empty($_POST['attivo']) ? '1' : '0');
             flash('success', !empty($_POST['attivo']) ? 'Il pannello controllerà da solo, una volta al giorno, se c\'è una versione nuova.' : 'Controllo automatico della versione spento.');
@@ -192,6 +196,12 @@ details summary{cursor:pointer;font-size:0.82rem;color:var(--text-muted)}
     </form>
   </div>
   <p class="agg-note">Il pannello chiede a <code><?= h(versione_sito()) ?></code> qual è l'ultima versione. Lo zip si scarica solo da lì, in HTTPS, e si usa solo se dimensione e impronta sha256 sono quelle annunciate.</p>
+  <?php if (defined('CMS_AGGIORNAMENTI_URL')): ?><p class="agg-note">L'indirizzo è fissato nel file <code>config.local.php</code> (<code>CMS_AGGIORNAMENTI_URL</code>): si cambia lì.</p>
+  <?php else: ?><form method="post" class="agg-riga" style="display:flex;gap:.5rem;align-items:flex-end;flex-wrap:wrap"><?= csrf_field() ?><input type="hidden" name="action" value="versione_sito">
+    <label class="agg-note" style="flex:1;min-width:16rem;margin:0">Indirizzo del sito da cui arrivano gli aggiornamenti<br>
+      <input type="url" name="sito" value="<?= h((string)get_setting('versione_sito', '')) ?>" placeholder="<?= h(VERSIONE_SITO_UFFICIALE) ?>" maxlength="300" style="width:100%"></label>
+    <button class="agg-btn" type="submit">Salva l'indirizzo</button>
+  </form><p class="agg-note">Vuoto vuol dire quello di partenza (<code><?= h(VERSIONE_SITO_UFFICIALE) ?></code>). Deve essere un sito plumeCMS 1.3.0 o più nuovo, con lo zip di aggiornamento nella pagina Download.</p><?php endif; ?>
 </div>
 
 <?php if ($daApplicare): ?>

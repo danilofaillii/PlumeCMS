@@ -85,7 +85,7 @@ Stato, decisioni, contesto e diario non stanno qui: stanno nel second brain
 - **Pacchetto di aggiornamento** per un'installazione esistente:
   `python3 tools/cms-pacchetto.py --aggiornamento`. Si carica dal pannello,
   Impostazioni, Aggiornamenti.
-- **Versione**: `cms/VERSIONE` (oggi 1.3.0) e una voce in `cms/CHANGELOG.md` a ogni
+- **Versione**: `cms/VERSIONE` (oggi 1.3.1) e una voce in `cms/CHANGELOG.md` a ogni
   zip con contenuto diverso. Mai cambiare il contenuto di una versione già data.
 - **Prove** prima di dire finito:
   - `php -n -d short_open_tag=1 -l` su ogni file PHP toccato, `node --check` sui js;
@@ -121,7 +121,8 @@ Le decisioni complete, con data e perché, stanno nel second brain, `plumecms/de
 
 ## Stato al 27 ottobre 2026
 
-Fatto: plumeCMS 1.3.0 (notte del 27 ottobre, un agente con il ciclo PDCA): kit di partenza nell'installatore (`includes/kit-partenza.php`,
+Fatto: plumeCMS 1.3.1: l'indirizzo del sito ufficiale è un parametro (Aggiornamenti, impostazione `versione_sito`; `CMS_AGGIORNAMENTI_URL`
+nel config vince); `prova-versione-sito.js` 7 su 7. 1.3.0 (notte del 27 ottobre, un agente con il ciclo PDCA): kit di partenza nell'installatore (`includes/kit-partenza.php`,
 `includes/kit/`), 30 sezioni pronte nell'editor (`includes/sezioni-pronte*.php`), "c'è una versione nuova" (`includes/versione-nuova.php`,
 `api/versione.php`), copia del sito (`includes/copia-sito.php`, Impostazioni > Copia del sito); prove `prova-kit.js`, `prova-sezioni.js`,
 `prova-copia.js`, `prova-versione.js`; 97 attacchi respinti. 1.2.8: licenza GNU GPL 3 o successiva (`LICENSE`); tolto dal prodotto tutto ciò che era di danilofailli.it
@@ -141,7 +142,7 @@ sottocartella; aggiornamento 1.1.9 -> 1.2.0 dal pannello provato con sito identi
 78 prove di attacco respinte (la 79esima è del modulo danilofailli). Le prove del CMS girano su PHP 8.3 con
 MySQL 8.0: su PHP 8.4.27 sono provate la sintassi di ogni file e i `.htaccess` su Apache, non il CMS intero
 (senza `pdo_mysql` nell'immagine, e i pacchetti Debian bloccati dalla rete della sessione).
-Prima installazione vera su `https://duhtron.it/test` (cartella), funzionante con la 1.1.9: da aggiornare alla 1.3.0.
+Prima installazione vera su `https://duhtron.it/test` (cartella), funzionante con la 1.1.9: da aggiornare alla 1.3.1.
 Dal 27 ottobre plumeCMS vive nel suo progetto e repository (`SPOSTARE.md`).
 
 Aperto:
@@ -152,8 +153,9 @@ Aperto:
   `define('CMS_PREFISSO', 'newdf_');` al `config.local.php` di danilofailli.it;
 - prova vera delle chiamate a Google Search Console e IndexNow da un server con rete aperta;
 - favicon di partenza (l'installazione pulita risponde 404 su `/favicon.ico`);
-- **indirizzo del sito ufficiale** per "c'è una versione nuova": `VERSIONE_SITO_UFFICIALE` in `includes/versione-nuova.php` vale
-  `https://duhtron.it/test`, provvisorio, da confermare con Danilo; quel sito deve avere la 1.3.0 (per `api/versione.php`);
+- **indirizzo del sito ufficiale** per "c'è una versione nuova": dalla 1.3.1 si sceglie in Aggiornamenti; il predefinito
+  `VERSIONE_SITO_UFFICIALE` (`includes/versione-nuova.php`) vale ancora `https://duhtron.it/test`, da confermare con Danilo; quel sito
+  deve avere la 1.3.0 o più nuova (per `api/versione.php`);
 - copia del sito: il ripristino non toglie i file che stanno nel sito ma non nella copia; con due installazioni nello stesso database
   e prefissi che cominciano uguale (`cms_` e `cms_b_`) la copia prende anche le tabelle dell'altra;
 - "c'è una versione nuova" provato solo in http locale (`CMS_AGGIORNAMENTI_HTTP_PROVA`): HTTPS vero da provare su un server;

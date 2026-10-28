@@ -196,3 +196,9 @@ La prova scrive il pacchetto finto 1.3.1 (cambia solo `VERSIONE`) nel download m
 `config.local.php` del cliente (`CMS_AGGIORNAMENTI_URL`, `CMS_AGGIORNAMENTI_HTTP_PROVA`), aspettando 2 secondi a ogni
 cambio perché l'opcache del server lo rilegga; alla fine toglie le sue righe e rimette `VERSIONE` a 1.3.0.
 `CMS_AGGIORNAMENTI_HTTP_PROVA` serve solo qui: su un sito vero il controllo vuole HTTPS. Atteso: 28 su 28.
+
+## prova-versione-sito.js (1.3.1)
+
+L'indirizzo del sito ufficiale come parametro di Aggiornamenti: rifiuta http e gli indirizzi con `?`, salva quello giusto
+senza la barra finale, vuoto torna al predefinito. Serve un sito senza `CMS_AGGIORNAMENTI_URL` nel config.
+`node prove/prova-versione-sito.js <base> <utente> <password>`. Atteso: 7 su 7.

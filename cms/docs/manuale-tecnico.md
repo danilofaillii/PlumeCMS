@@ -1,6 +1,6 @@
 # plumeCMS: manuale tecnico
 
-Versione del manuale: 1.7, per plumeCMS 1.3.0 (28 ottobre 2026).
+Versione del manuale: 1.8, per plumeCMS 1.3.1 (28 ottobre 2026).
 
 Questo manuale descrive come è fatto plumeCMS e come funziona, pezzo per pezzo. È scritto leggendo il codice:
 ogni numero, limite e nome di funzione viene dai file veri, con il riferimento `file:riga` quando serve a chi
@@ -67,7 +67,7 @@ fatti con plumeCMS, i loro contenuti e i temi e moduli che non ne copiano il cod
 index.php           front controller: tutte le richieste del sito passano da qui
 cron-daily.php      compiti del giorno (pacchetti programmati, moduli, IndexNow)
 cron-newsletter.php invio della newsletter a giri, coda IndexNow
-VERSIONE            il numero di versione (oggi 1.3.0)
+VERSIONE            il numero di versione (oggi 1.3.1)
 CHANGELOG.md, README.md, INSTALLA.md
 .htaccess           regole di Apache (copia di install/esempi/htaccess-radice.txt)
 
@@ -243,7 +243,7 @@ web non lo serve mai (`.htaccess`, capitolo 21). Non va messo in un repository.
 | `CMS_RADICE_SITO` | radice del dominio per i pacchetti (`root/`) | rilevata (capitolo 19.2) |
 | `CMS_PROXY_FIDATO` | crede all'intestazione `X-Forwarded-For` (CMS dietro un proxy) | spenta: vale solo `REMOTE_ADDR` |
 | `CMS_SICUREZZA_SPEGNI` | riga di emergenza: spegne 2FA e lista IP (capitolo 18.11) | spenta |
-| `CMS_AGGIORNAMENTI_URL` | il sito a cui chiedere l'ultima versione (un plumeCMS, senza barra finale; 19.6) | `VERSIONE_SITO_UFFICIALE` |
+| `CMS_AGGIORNAMENTI_URL` | il sito a cui chiedere l'ultima versione (un plumeCMS, senza barra finale; 19.6); vince sul campo del pannello | l'indirizzo scritto in Aggiornamenti, poi `VERSIONE_SITO_UFFICIALE` |
 | `CMS_AGGIORNAMENTI_HTTP_PROVA` | solo per le prove: con `true` il controllo della versione accetta anche `http://` | spenta (solo HTTPS) |
 
 Note:
@@ -1708,9 +1708,12 @@ quel sito ha i suoi pacchetti costruiti con `--sito`.
 
 ### 19.6 "C'è una versione nuova" (dalla 1.3.0)
 
-Motore `includes/versione-nuova.php`. Il pannello chiede al sito ufficiale di plumeCMS (`CMS_AGGIORNAMENTI_URL`, altrimenti
-`VERSIONE_SITO_UFFICIALE`, `includes/versione-nuova.php:27`) l'ultima versione della serie `plumecms-ultima-aggiornamento`
-con `api/versione.php` (14.1). Il sito ufficiale non ha niente di speciale: è un plumeCMS che ha lo zip di aggiornamento
+Motore `includes/versione-nuova.php`. Il pannello chiede al sito ufficiale di plumeCMS l'ultima versione della serie
+`plumecms-ultima-aggiornamento`. Quale sito è un parametro (dalla 1.3.1, `versione_sito()`), in quest'ordine:
+`CMS_AGGIORNAMENTI_URL` nel `config.local.php` (vince, e il pannello lo dice); l'indirizzo scritto in Aggiornamenti, campo
+"Indirizzo del sito da cui arrivano gli aggiornamenti" (impostazione `versione_sito`, solo https, senza `?` e `#`; cambiarlo
+dimentica la risposta di prima; vuoto torna al predefinito); `VERSIONE_SITO_UFFICIALE` (`includes/versione-nuova.php:28`). La
+domanda passa da `api/versione.php` (14.1). Il sito ufficiale non ha niente di speciale: è un plumeCMS che ha lo zip di aggiornamento
 nel suo download manager.
 
 - **Quando**: al massimo una volta al giorno (`VERSIONE_OGNI`); la risposta, buona o di errore, si ricorda in
