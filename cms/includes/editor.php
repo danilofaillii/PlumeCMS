@@ -97,7 +97,7 @@ function editor_pulisci_valore(array $ctl, $val) {
 
 function editor_pulisci_impostazioni(string $tipo, $imp): array {
     $out = [];
-    $imp = is_array($imp) ? $imp : [];
+    $imp = editor_posizione_css_vecchia(is_array($imp) ? $imp : []);
     foreach (editor_definizioni()[$tipo]['controlli'] as $ctl) {
         if ($ctl['tipo'] === 'intestazione' || !array_key_exists($ctl['nome'], $imp)) continue;
         $x = editor_pulisci_valore($ctl, $imp[$ctl['nome']]);

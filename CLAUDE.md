@@ -160,8 +160,8 @@ Aperto:
 - **danilofailli.it e la 1.2.8**: lì ebook, Laser, CTA, box del test e aforismi servono ancora. Quando si porta il nucleo 1.2.8, il
   modulo `moduli/danilofailli/` deve ridarli con i filtri e l'evento nuovi (manuale tecnico 15.4), e i file tolti (`admin/contatti.php`...)
   tornano nel modulo. Mai lo zip del prodotto là: il pacchetto di aggiornamento 1.2.8 li cancella (`TOLTI` in `tools/cms-pacchetto.py`);
-- widget Riquadro con icona: "Posizione dell'icona" si perde al salvataggio (stesso nome di "Posizione" delle Avanzate,
-  `editor-widget-extra-a.php:28` e `:60` contro `editor-controlli.php:714`), e `.ew-ribox{text-align:center}` vince sull'allineamento;
+- widget Riquadro con icona: `.ew-ribox{text-align:center}` vince sull'allineamento (la "Posizione dell'icona" che si perdeva
+  al salvataggio è corretta nella 1.3.0: la Posizione delle Avanzate ora si chiama `posizione_css`);
 - `tools/` e `prove/` hanno ancora riferimenti a danilofailli.it (strumenti di sviluppo, non vanno nello zip): `--sito`, la prova del burnout;
 - i temi a danilofailli.it arrivano solo con un pacchetto `--sito` dal suo repository (mai lo zip del prodotto).
 - la 1.2.3 (menu per posizione, pannello Revisioni, sfondo colore delle sezioni, `/scarica/`, voci nuove dei pacchetti) e la

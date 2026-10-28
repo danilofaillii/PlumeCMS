@@ -714,7 +714,7 @@ telefono) e per stato (`normale`, `hover`).
 ### 9.6 Le schede Contenuto, Stile, Avanzate
 
 Ogni controllo appartiene a una scheda. La scheda Avanzate è uguale per tutti gli elementi
-(`editor_controlli_avanzate`, `includes/editor-controlli.php:675-725`):
+(`editor_controlli_avanzate`, `includes/editor-controlli.php:683-734`):
 
 - **Layout**: margine, padding, spazio sotto, larghezza, z-index, ancora (id), classe CSS, tag HTML (solo sezione
   e colonna).
@@ -724,6 +724,19 @@ Ogni controllo appartiene a una scheda. La scheda Avanzate è uguale per tutti g
 - **Attributi**: solo `data-*`, `aria-*`, `title`, `lang`, `role`, `tabindex`, `rel`, `itemprop`, al massimo 20.
 - **CSS personalizzato**: al massimo 20000 caratteri, ripulito; la parola `selector` diventa `.ed-<id>` e ogni
   regola resta confinata nell'elemento.
+
+I nomi dei controlli delle Avanzate valgono per tutti i widget, quindi un widget non deve usarli per i suoi:
+`editor_pulisci_impostazioni` (`includes/editor.php:98`) pulisce i controlli in ordine, le Avanzate per ultime, e a
+parità di nome vince la loro pulizia. Fino alla 1.3.0 la Posizione delle Avanzate si chiamava `posizione`, come
+"Posizione dell'icona" di Riquadro con icona, "Posizione dell'immagine" di Riquadro con immagine e "Angolo" del
+Pulsante fisso: `sinistra` e `destra` non sono fra le opzioni delle Avanzate e diventavano `''`, cioè la scelta si
+perdeva al salvataggio. Dalla 1.3.0 la Posizione delle Avanzate si chiama `posizione_css` (`''`, `absolute`,
+`fixed`, `includes/editor-controlli.php:716`) e `posizione` resta ai tre widget. I salvataggi vecchi passano da
+`editor_posizione_css_vecchia()` (`includes/editor-controlli.php:741`), chiamata all'inizio di
+`editor_pulisci_impostazioni`: un `posizione` uguale a `absolute` o `fixed`, senza `posizione_css`, passa in
+`posizione_css`, e `posizione` torna al valore di partenza del widget, come si vedeva prima. Anche
+`editor_css_avanzate` legge il vecchio `posizione` se vale `absolute` o `fixed` e `posizione_css` è vuoto. Le pagine
+salvate prima restano identiche al pixel (provato con `prove/pagina-widget.php` e una pagina con le posizioni vecchie).
 
 ### 9.7 I widget
 

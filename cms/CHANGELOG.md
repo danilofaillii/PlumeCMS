@@ -23,6 +23,10 @@ Il prodotto si chiama **plumeCMS** (nome scelto il 26 ottobre 2026; prima, per p
   codice PHP non entrano.
 - Gli ultimi testi d'esempio pensati per il primo sito, nei widget Testimonianza, Carosello di testimonianze, Citazione,
   Titolo animato, Invito libero e Tabella prezzi, ora sono neutri.
+- **Riquadro con icona, Riquadro con immagine e Pulsante fisso**: "A sinistra" e "A destra" (posizione dell'icona e
+  dell'immagine) e "In basso a sinistra" (angolo del pulsante) ora restano dopo il salvataggio. Si perdevano perché la
+  Posizione della scheda Avanzate aveva lo stesso nome e cancellava la scelta; ora si chiama `posizione_css`, e le pagine
+  già salvate con una posizione assoluta o fissa restano come sono.
 - **Per chi fa siti con plumeCMS**: `api/versione.php?serie=<serie>` dice versione, nome, sha256 e dimensione dell'ultimo
   file di una serie del download manager.
 

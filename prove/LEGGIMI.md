@@ -196,3 +196,12 @@ La prova scrive il pacchetto finto 1.3.1 (cambia solo `VERSIONE`) nel download m
 `config.local.php` del cliente (`CMS_AGGIORNAMENTI_URL`, `CMS_AGGIORNAMENTI_HTTP_PROVA`), aspettando 2 secondi a ogni
 cambio perché l'opcache del server lo rilegga; alla fine toglie le sue righe e rimette `VERSIONE` a 1.3.0.
 `CMS_AGGIORNAMENTI_HTTP_PROVA` serve solo qui: su un sito vero il controllo vuole HTTPS. Atteso: 28 su 28.
+
+## prova-posizione.php (1.3.0)
+
+La Posizione delle Avanzate (`posizione_css`) non cancella più "Posizione dell'icona" e "Posizione dell'immagine" dei
+riquadri e "Angolo" del Pulsante fisso, e i widget salvati prima con la Posizione delle Avanzate nel vecchio campo
+`posizione` (`absolute` o `fixed`) restano assoluti o fissi, con il widget come prima.
+`php prove/prova-posizione.php <cartella CMS installato>`. Atteso: 27 su 27. Non scrive niente nel database.
+Il 28 ottobre 2026 foto prima e dopo (`foto-sito.js`, con `pagina-widget.php` e una pagina di widget salvati con le
+posizioni vecchie) identiche al pixel, a parte il rumore noto della pagina dei widget.

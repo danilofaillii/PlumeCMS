@@ -711,11 +711,13 @@ function editor_controlli_avanzate(string $per = 'widget'): array {
         $c[] = ec('ombra_av', 'ombra', 'Ombra', [], $A, ['sezione' => 'Bordo', 'stati' => true, 'selettore' => '']);
         $c[] = ec('transizione', 'numero', 'Durata della transizione al passaggio (ms)', '', $A, ['sezione' => 'Bordo', 'min' => 0, 'max' => 3000, 'passo' => 50]);
         // Posizionamento
-        $c[] = ec('posizione', 'scelta', 'Posizione', '', $A, ['sezione' => 'Posizionamento', 'opzioni' => ['' => 'Normale', 'absolute' => 'Assoluta (dentro la sezione)', 'fixed' => 'Fissa (rispetto alla finestra)']]);
-        $c[] = ec('posizione_x_da', 'scelta_icone', 'Orizzontale da', 'sinistra', $A, ['sezione' => 'Posizionamento', 'opzioni' => ['sinistra' => 'Sinistra', 'destra' => 'Destra'], 'condizione' => ['!posizione' => '']]);
-        $c[] = ec('posizione_x', 'misura', 'Spostamento orizzontale', ['d' => ['v' => 0, 'u' => 'px']], $A, ['sezione' => 'Posizionamento', 'responsive' => true, 'unita' => ['px', '%', 'vw'], 'intervalli' => ['px' => [-1000, 1000, 1], '%' => [-100, 100, 1], 'vw' => [-100, 100, 1]], 'condizione' => ['!posizione' => '']]);
-        $c[] = ec('posizione_y_da', 'scelta_icone', 'Verticale da', 'alto', $A, ['sezione' => 'Posizionamento', 'opzioni' => ['alto' => 'Alto', 'basso' => 'Basso'], 'condizione' => ['!posizione' => '']]);
-        $c[] = ec('posizione_y', 'misura', 'Spostamento verticale', ['d' => ['v' => 0, 'u' => 'px']], $A, ['sezione' => 'Posizionamento', 'responsive' => true, 'unita' => ['px', '%', 'vh'], 'intervalli' => ['px' => [-1000, 1000, 1], '%' => [-100, 100, 1], 'vh' => [-100, 100, 1]], 'condizione' => ['!posizione' => '']]);
+        // 1.3.0: si chiamava "posizione", come la Posizione dell'icona e dell'immagine dei riquadri e l'Angolo del pulsante fisso,
+        // e la pulizia di questa cancellava quelle. I salvataggi vecchi passano da editor_posizione_css_vecchia().
+        $c[] = ec('posizione_css', 'scelta', 'Posizione', '', $A, ['sezione' => 'Posizionamento', 'opzioni' => ['' => 'Normale', 'absolute' => 'Assoluta (dentro la sezione)', 'fixed' => 'Fissa (rispetto alla finestra)']]);
+        $c[] = ec('posizione_x_da', 'scelta_icone', 'Orizzontale da', 'sinistra', $A, ['sezione' => 'Posizionamento', 'opzioni' => ['sinistra' => 'Sinistra', 'destra' => 'Destra'], 'condizione' => ['!posizione_css' => '']]);
+        $c[] = ec('posizione_x', 'misura', 'Spostamento orizzontale', ['d' => ['v' => 0, 'u' => 'px']], $A, ['sezione' => 'Posizionamento', 'responsive' => true, 'unita' => ['px', '%', 'vw'], 'intervalli' => ['px' => [-1000, 1000, 1], '%' => [-100, 100, 1], 'vw' => [-100, 100, 1]], 'condizione' => ['!posizione_css' => '']]);
+        $c[] = ec('posizione_y_da', 'scelta_icone', 'Verticale da', 'alto', $A, ['sezione' => 'Posizionamento', 'opzioni' => ['alto' => 'Alto', 'basso' => 'Basso'], 'condizione' => ['!posizione_css' => '']]);
+        $c[] = ec('posizione_y', 'misura', 'Spostamento verticale', ['d' => ['v' => 0, 'u' => 'px']], $A, ['sezione' => 'Posizionamento', 'responsive' => true, 'unita' => ['px', '%', 'vh'], 'intervalli' => ['px' => [-1000, 1000, 1], '%' => [-100, 100, 1], 'vh' => [-100, 100, 1]], 'condizione' => ['!posizione_css' => '']]);
     }
     // Responsive
     $c[] = ec('nascondi_d', 'interruttore', 'Nascondi su desktop', false, $A, ['sezione' => 'Responsive']);
@@ -729,6 +731,19 @@ function editor_controlli_avanzate(string $per = 'widget'): array {
     $c[] = ec('attributi', 'testolungo', 'Attributi (chiave=valore, uno per riga)', '', $A, ['sezione' => 'Attributi', 'aiuto' => 'Ammessi: data-*, aria-*, title, lang, role, tabindex, rel, itemprop.']);
     $c[] = ec('css_personalizzato', 'codice', 'CSS personalizzato', '', $A, ['sezione' => 'CSS personalizzato', 'aiuto' => 'Scrivi "selector" per indicare questo elemento: selector .titolo { color: red }. Ogni regola vale solo dentro questo elemento.']);
     return $c;
+}
+
+/**
+ * Fino alla 1.3.0 la Posizione delle Avanzate si salvava in "posizione", lo stesso nome della Posizione dell'icona o
+ * dell'immagine (riquadri) e dell'Angolo (pulsante fisso). Un "absolute" o "fixed" senza "posizione_css" viene da li:
+ * passa in "posizione_css" e "posizione" torna libera (il widget riprende il suo valore di partenza, come prima).
+ */
+function editor_posizione_css_vecchia(array $imp): array {
+    if (!array_key_exists('posizione_css', $imp) && in_array($imp['posizione'] ?? null, ['absolute', 'fixed'], true)) {
+        $imp['posizione_css'] = $imp['posizione'];
+        unset($imp['posizione']);
+    }
+    return $imp;
 }
 
 /** Pulizia dei campi speciali della scheda Avanzate (dopo editor_pulisci_valore). */
@@ -787,7 +802,8 @@ function editor_css_avanzate(array &$css, string $sel, array $v, string $per = '
             }
         }
         editor_css_resp($css, $sel, $v['allineamento_widget'] ?? ['d' => ''], fn($x) => ['align-self' => $x === '' ? null : $x]);
-        $pos = $v['posizione'] ?? '';
+        $pos = $v['posizione_css'] ?? '';
+        if ($pos === '' && in_array($v['posizione'] ?? '', ['absolute', 'fixed'], true)) $pos = $v['posizione']; // valori di prima della 1.3.0
         if ($pos === 'absolute' || $pos === 'fixed') {
             $css['d'][$sel]['position'] = $pos;
             $px = ($v['posizione_x_da'] ?? 'sinistra') === 'destra' ? 'right' : 'left';
