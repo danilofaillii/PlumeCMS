@@ -603,6 +603,7 @@ NOVITA = [
         'Il pannello parte chiaro, e ogni utente sceglie il suo aspetto: Aria, Bottega, Cosmo, Lavagna.',
         'Primi passi nella dashboard, la pagina Controlla il server, foto più leggere in WebP, l\'icona del sito già pronta.',
         'Il Log cron dice cosa ha fatto ogni giro, in parole chiare.']),
+    ('1.6.2', 'L\'indirizzo degli aggiornamenti arriva da solo', ['Ogni installazione chiede le versioni nuove a plumecms.danilofailli.it: non c\'è più niente da scrivere in Aggiornamenti, l\'indirizzo viaggia con gli aggiornamenti.']),
     ('1.3.1', 'Il sito degli aggiornamenti si sceglie', ['In Impostazioni, Aggiornamenti scrivi da quale sito arrivano le versioni nuove: non è più fisso nel codice.']),
     ('1.3.0', 'Si parte con un sito vero', ['All\'installazione scegli che sito vuoi fare: personale, attività, blog, portfolio. Parte già fatto.',
                                            'Nell\'editor, trenta sezioni pronte da mettere nella pagina con un clic.',

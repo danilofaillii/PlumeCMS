@@ -2,6 +2,15 @@
 
 Il prodotto si chiama **plumeCMS** (nome scelto il 26 ottobre 2026; prima, per poche ore, "CarbonaraCMS", e ancora prima il provvisorio "Officina": gli zip vecchi si chiamavano `officina-*` e `carbonaracms-*`).
 
+## 1.6.2 (28 ottobre 2026) - L'indirizzo degli aggiornamenti arriva con gli aggiornamenti
+
+- **Decisione di Danilo**: tutte le installazioni chiedono le versioni nuove a `https://plumecms.danilofailli.it`, e
+  nessuno scrive più quell'indirizzo a mano. In Impostazioni > Aggiornamenti il campo "Indirizzo del sito da cui arrivano gli
+  aggiornamenti" (nato nella 1.3.1) non c'è più; se un sito ci aveva scritto un indirizzo suo, da questa versione lo ignora.
+  L'indirizzo sta nel codice e cambia solo con un aggiornamento.
+- Nient'altro cambia nel pannello e nel sito. Prove: `prova-versione-sito.js` riscritta (5 controlli), `prova-versione.js` e
+  il sito ufficiale finto valgono per qualunque versione (28 su 28 sulla 1.6.2).
+
 ## 1.6.1 (28 ottobre 2026) - Il sito ufficiale cambia indirizzo
 
 - Il sito da cui plumeCMS si scarica, e a cui il pannello chiede "c'è una versione nuova?", diventa

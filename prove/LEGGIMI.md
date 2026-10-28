@@ -197,16 +197,21 @@ Ripristina il sito più volte: alla fine il sito è quello della copia fatta all
 (`<base ufficiale>`, installazione qualunque della 1.3.0). Più `prove/finto-ufficiale.php`, un sito ufficiale che si
 comporta male: `FINTO_ZIP=<cartella schermate>/plumecms-1.3.1-aggiornamento.zip FINTO_CONTA=<file> php -S 127.0.0.1:8084 prove/finto-ufficiale.php`.
 `node prove/prova-versione.js <base cliente> <cartella CMS cliente> <base ufficiale> <cartella CMS ufficiale> <base finto> <file FINTO_CONTA> <utente> <password> <cartella schermate>`.
-La prova scrive il pacchetto finto 1.3.1 (cambia solo `VERSIONE`) nel download manager del sito ufficiale e cambia il
+La prova scrive il pacchetto finto (la versione del cliente più uno, cambia solo `VERSIONE`) nel download manager del sito
+ufficiale e cambia il
 `config.local.php` del cliente (`CMS_AGGIORNAMENTI_URL`, `CMS_AGGIORNAMENTI_HTTP_PROVA`), aspettando 2 secondi a ogni
 cambio perché l'opcache del server lo rilegga; alla fine toglie le sue righe e rimette `VERSIONE` a 1.3.0.
-`CMS_AGGIORNAMENTI_HTTP_PROVA` serve solo qui: su un sito vero il controllo vuole HTTPS. Atteso: 28 su 28.
+`CMS_AGGIORNAMENTI_HTTP_PROVA` serve solo qui: su un sito vero il controllo vuole HTTPS. Atteso: 28 su 28. Fino alla 1.6.1 le
+versioni 1.3.0 e 1.3.1 erano scritte nella prova e nel sito finto, che quindi passavano solo allora: dalla 1.6.2 il finto legge
+la versione dal nome del file in `FINTO_ZIP` (`plumecms-<versione del cliente più uno>-aggiornamento.zip`).
 
-## prova-versione-sito.js (1.3.1)
+## prova-versione-sito.js (1.3.1, riscritta nella 1.6.2)
 
-L'indirizzo del sito ufficiale come parametro di Aggiornamenti: rifiuta http e gli indirizzi con `?`, salva quello giusto
-senza la barra finale, vuoto torna al predefinito. Serve un sito senza `CMS_AGGIORNAMENTI_URL` nel config.
-`node prove/prova-versione-sito.js <base> <utente> <password>`. Atteso: 7 su 7.
+L'indirizzo del sito ufficiale non si scrive più nel pannello: il campo della 1.3.1 non c'è, la pagina dice che chiede a
+`https://plumecms.danilofailli.it`, il vecchio POST `versione_sito` non fa niente e un'impostazione `versione_sito` salvata
+in passato viene ignorata (scritta e tolta con `prove/settings-cli.php`, che legge e scrive un'impostazione di un CMS
+installato). Serve un sito senza `CMS_AGGIORNAMENTI_URL` nel config.
+`node prove/prova-versione-sito.js <base> <utente> <password> [cartella CMS installato]`. Atteso: 5 su 5.
 
 ## prova-aspetti.js (1.4.0)
 

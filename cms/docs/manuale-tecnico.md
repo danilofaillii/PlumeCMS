@@ -1,6 +1,6 @@
 # plumeCMS: manuale tecnico
 
-Versione del manuale: 1.13, per plumeCMS 1.6.1 (28 ottobre 2026).
+Versione del manuale: 1.14, per plumeCMS 1.6.2 (28 ottobre 2026).
 
 Questo manuale descrive come è fatto plumeCMS e come funziona, pezzo per pezzo. È scritto leggendo il codice:
 ogni numero, limite e nome di funzione viene dai file veri, con il riferimento `file:riga` quando serve a chi
@@ -303,7 +303,7 @@ web non lo serve mai (`.htaccess`, capitolo 21). Non va messo in un repository.
 | `CMS_RADICE_SITO` | radice del dominio per i pacchetti (`root/`) | rilevata (capitolo 19.2) |
 | `CMS_PROXY_FIDATO` | crede all'intestazione `X-Forwarded-For` (CMS dietro un proxy) | spenta: vale solo `REMOTE_ADDR` |
 | `CMS_SICUREZZA_SPEGNI` | riga di emergenza: spegne 2FA e lista IP (capitolo 18.11) | spenta |
-| `CMS_AGGIORNAMENTI_URL` | il sito a cui chiedere l'ultima versione (un plumeCMS, senza barra finale; 19.6); vince sul campo del pannello | l'indirizzo scritto in Aggiornamenti, poi `VERSIONE_SITO_UFFICIALE` |
+| `CMS_AGGIORNAMENTI_URL` | solo per le prove: il sito a cui chiedere l'ultima versione al posto di quello ufficiale (19.6) | `VERSIONE_SITO_UFFICIALE` |
 | `CMS_AGGIORNAMENTI_HTTP_PROVA` | solo per le prove: con `true` il controllo della versione accetta anche `http://` | spenta (solo HTTPS) |
 | `CMS_IMPORTA_WP_LOCALE` | solo per le prove in locale: elenco `host:porta` (separati da virgole) da cui l'import da WordPress accetta indirizzi interni e `http://` (capitolo 26) | spenta: solo siti pubblici, porte 80 e 443, credenziali solo in HTTPS |
 | `CMS_IMPORTA_WP_GIRO` | solo per le prove: i secondi di un giro dell'import (anche decimali, minimo 0.2) | 8 secondi |
@@ -1931,10 +1931,11 @@ quel sito ha i suoi pacchetti costruiti con `--sito`.
 ### 19.6 "C'è una versione nuova" (dalla 1.3.0)
 
 Motore `includes/versione-nuova.php`. Il pannello chiede al sito ufficiale di plumeCMS l'ultima versione della serie
-`plumecms-ultima-aggiornamento`. Quale sito è un parametro (dalla 1.3.1, `versione_sito()`), in quest'ordine:
-`CMS_AGGIORNAMENTI_URL` nel `config.local.php` (vince, e il pannello lo dice); l'indirizzo scritto in Aggiornamenti, campo
-"Indirizzo del sito da cui arrivano gli aggiornamenti" (impostazione `versione_sito`, solo https, senza `?` e `#`; cambiarlo
-dimentica la risposta di prima; vuoto torna al predefinito); `VERSIONE_SITO_UFFICIALE` (`includes/versione-nuova.php:29`, dalla 1.6.1 `https://plumecms.danilofailli.it`; prima `https://duhtron.it/test`). La
+`plumecms-ultima-aggiornamento`. Quale sito lo dice il codice (`versione_sito()`): `VERSIONE_SITO_UFFICIALE`
+(`includes/versione-nuova.php:30`, `https://plumecms.danilofailli.it`; fino alla 1.6.0 `https://duhtron.it/test`), e l'indirizzo
+arriva quindi con gli aggiornamenti stessi. Dalla 1.3.1 alla 1.6.1 c'era un campo in Aggiornamenti ("Indirizzo del sito da cui
+arrivano gli aggiornamenti", impostazione `versione_sito`): dalla 1.6.2 non c'è più, decisione di Danilo, e l'impostazione di un
+sito che l'aveva salvata si ignora. Solo per le prove, `CMS_AGGIORNAMENTI_URL` nel `config.local.php` lo sostituisce. La
 domanda passa da `api/versione.php` (14.1). Il sito ufficiale non ha niente di speciale: è un plumeCMS che ha lo zip di aggiornamento
 nel suo download manager.
 

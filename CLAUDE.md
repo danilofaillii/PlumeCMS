@@ -93,7 +93,7 @@ Stato, decisioni, contesto e diario non stanno qui: stanno nel second brain
 - **Pacchetto di aggiornamento** per un'installazione esistente:
   `python3 tools/cms-pacchetto.py --aggiornamento`. Si carica dal pannello,
   Impostazioni, Aggiornamenti.
-- **Versione**: `cms/VERSIONE` (oggi 1.6.1) e una voce in `cms/CHANGELOG.md` a ogni
+- **Versione**: `cms/VERSIONE` (oggi 1.6.2) e una voce in `cms/CHANGELOG.md` a ogni
   zip con contenuto diverso. Mai cambiare il contenuto di una versione già data.
 - **Prove** prima di dire finito:
   - `php -n -d short_open_tag=1 -l` su ogni file PHP toccato, `node --check` sui js;
@@ -129,7 +129,13 @@ Le decisioni complete, con data e perché, stanno nel second brain, `plumecms/de
 
 ## Stato al 28 ottobre 2026
 
-Fatto: plumeCMS 1.6.1 (28 ottobre, sera): il sito ufficiale diventa `https://plumecms.danilofailli.it` (decisione di Danilo:
+Fatto: plumeCMS 1.6.2 (28 ottobre, sera): l'indirizzo del sito ufficiale non si scrive più nel pannello (decisione di Danilo:
+"non inseriranno più manualmente il dominio, gli verrà passato dagli aggiornamenti"): via il campo della 1.3.1 e `versione_sito_salva()`,
+l'impostazione `versione_sito` vecchia si ignora, `CMS_AGGIORNAMENTI_URL` resta solo per le prove. `prova-versione-sito.js` riscritta
+(5 controlli, con `prove/settings-cli.php`); `prova-versione.js` e `finto-ufficiale.php` non hanno più le versioni scritte dentro
+(28/28 sulla 1.6.2). Schermata 26 del manuale d'uso rifatta. Prove: install 37/37, aggiornamento 1.6.1 -> 1.6.2 13/13 (anche con un
+indirizzo salvato a mano, ignorato) e 1.6.0 -> 1.6.2 13/13, sito di plumeCMS 81/81.
+1.6.1 (28 ottobre, sera): il sito ufficiale diventa `https://plumecms.danilofailli.it` (decisione di Danilo:
 trasferire il sito da duhtron.it/test a un sottodominio suo). `VERSIONE_SITO_UFFICIALE` cambiata; il costruttore rifiuta ancora
 `danilofailli.it` nel nucleo ma ammette il sottodominio. Il trasloco si fa con Copia del sito: provato qui (sito in `/test` con
 le sei parti, copia ripristinata su un'installazione nuova in radice, 13 pagine uguali, download ok). Prove 1.6.1: install
@@ -197,9 +203,9 @@ Aperto:
   nuove non ne risentono. Se un giorno si cambia il predefinito, prima va aggiunto
   `define('CMS_PREFISSO', 'newdf_');` al `config.local.php` di danilofailli.it;
 - prova vera delle chiamate a Google Search Console e IndexNow da un server con rete aperta;
-- **indirizzo del sito ufficiale** per "c'è una versione nuova": dalla 1.3.1 si sceglie in Aggiornamenti; il predefinito
-  `VERSIONE_SITO_UFFICIALE` (`includes/versione-nuova.php`) dalla 1.6.1 vale `https://plumecms.danilofailli.it`: finché il
-  trasloco non è fatto, un'installazione nuova non trova il sito ufficiale (dice "non raggiungibile", nient'altro);
+- **indirizzo del sito ufficiale** per "c'è una versione nuova": dalla 1.6.2 è solo `VERSIONE_SITO_UFFICIALE`
+  (`includes/versione-nuova.php`, `https://plumecms.danilofailli.it`), nessun campo nel pannello (decisione di Danilo); finché
+  il trasloco non è fatto, le installazioni non trovano il sito ufficiale (dicono "non raggiungibile", nient'altro);
 - copia del sito: il ripristino non toglie i file che stanno nel sito ma non nella copia; con due installazioni nello stesso database
   e prefissi che cominciano uguale (`cms_` e `cms_b_`) la copia prende anche le tabelle dell'altra;
 - "c'è una versione nuova" provato solo in http locale (`CMS_AGGIORNAMENTI_HTTP_PROVA`): HTTPS vero da provare su un server;
@@ -267,6 +273,7 @@ Errori veri, già pagati. Non ripeterli.
 | Una regola di un foglio nuovo con un solo nome di classe (`.ed-hero-copertina{padding:...}`) | perde contro `.ed-w-hero .hero{padding:0}` di `sito.css`: nella 1.2.6 testo e pulsanti della Copertina toccavano il bordo, e nessuna prova lo vedeva (passavano tutte). Le regole sul contenitore di una disposizione si scrivono `.ed-hero.ed-hero-<id>`; le foto si guardano anche sul sito vero, non solo sulla pagina di prova |
 | Cercare i resti di un sito con le sue parole (danilofailli, laser, ebook) | sfuggono le frasi: i widget extra avevano ancora "Non lavoro per renderti più forte", "Fai chiarezza in 15 minuti", un listino a incontri. Si guarda la pagina con tutti i widget, a occhio |
 | Una consegna in un solo zip da 15 MB | arrivata rotta a Danilo due volte (1.5.0 e 1.6.0) pur essendo integra qui; anche i pezzi da 4,8 MB lo hanno confuso (li ha caricati nel pannello: "supera il limite"). Funziona mandare **i file uno per uno** (aggiornamento, parti del sito, PDF), ognuno sotto 1,9 MB, nell'ordine di caricamento (28 ottobre 2026) |
+| `open(f, 'w').write(f(open(f).read()))` in Python | `open(f, 'w')` svuota il file prima che la lettura avvenga: il `config.local.php` di un sito di prova è finito vuoto (28 ottobre 2026) e la prova dopo falliva in modo incomprensibile. Prima si legge in una variabile, poi si scrive |
 | Fidarsi del resoconto di un agente | è successo che un agente dichiarasse lavoro mai scritto su disco. Si controllano i file veri e si rifanno le prove |
 
 ## Tono con l'utente
