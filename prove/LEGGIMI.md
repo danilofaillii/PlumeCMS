@@ -190,9 +190,20 @@ Ripristina il sito più volte: alla fine il sito è quello della copia fatta all
 
 "C'è una versione nuova" con due installazioni: il sito (`<base cliente>`) e un plumeCMS che fa da sito ufficiale
 (`<base ufficiale>`, installazione qualunque della 1.3.0). Più `prove/finto-ufficiale.php`, un sito ufficiale che si
-comporta male: `FINTO_ZIP=<cartella schermate>/plumecms-1.3.1-aggiornamento.zip FINTO_CONTA=<file> php -S 127.0.0.1:8084 prove/finto-ufficiale.php`.
+comporta male: `FINTO_ZIP=<cartella schermate>/plumecms-1.3.2-aggiornamento.zip FINTO_CONTA=<file> php -S 127.0.0.1:8084 prove/finto-ufficiale.php`.
 `node prove/prova-versione.js <base cliente> <cartella CMS cliente> <base ufficiale> <cartella CMS ufficiale> <base finto> <file FINTO_CONTA> <utente> <password> <cartella schermate>`.
-La prova scrive il pacchetto finto 1.3.1 (cambia solo `VERSIONE`) nel download manager del sito ufficiale e cambia il
+La prova scrive il pacchetto finto 1.3.2 (cambia solo `VERSIONE`) nel download manager del sito ufficiale e cambia il
 `config.local.php` del cliente (`CMS_AGGIORNAMENTI_URL`, `CMS_AGGIORNAMENTI_HTTP_PROVA`), aspettando 2 secondi a ogni
-cambio perché l'opcache del server lo rilegga; alla fine toglie le sue righe e rimette `VERSIONE` a 1.3.0.
+cambio perché l'opcache del server lo rilegga; alla fine toglie le sue righe e rimette `VERSIONE` com'era.
 `CMS_AGGIORNAMENTI_HTTP_PROVA` serve solo qui: su un sito vero il controllo vuole HTTPS. Atteso: 28 su 28.
+
+## prova-notte.js (1.3.1)
+
+Pubblicare fra mezzanotte e le sei, a qualunque ora si lanci la prova: scrive in `config.local.php` un `CMS_FUSO` in cui
+adesso sono le due (o l'una, o le tre) e alla fine lo rimette com'era. PHP e MySQL seguono quel fuso (`includes/db.php`),
+quindi per il sito è notte davvero. Crea le sue pagine e i suoi articoli (indirizzi `notte-...`) e li cancella alla fine.
+`node prove/prova-notte.js <base> <cartella del CMS installato> <utente> <password> [cartella schermate]`.
+Controlla, ogni volta aprendo la pagina come visitatore: Pubblica nell'editor su una pagina nuova e su bozze "vecchie"
+(oggi alle 06:00, come le lasciava la 1.2.7), Impostazioni dell'editor, scheda classica, modifica rapida, Pubblica in
+massa; poi che la programmazione resti (un'ora scelta più tardi, una data futura, l'editor e Pubblica in massa su una pagina programmata).
+Atteso: tutto OK (35 su 35). Con il codice della 1.3.0: 21 su 35.

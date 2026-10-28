@@ -121,7 +121,9 @@ Le decisioni complete, con data e perché, stanno nel second brain, `plumecms/de
 
 ## Stato al 27 ottobre 2026
 
-Fatto: plumeCMS 1.3.0 (notte del 27 ottobre, un agente con il ciclo PDCA): kit di partenza nell'installatore (`includes/kit-partenza.php`,
+Fatto: plumeCMS 1.3.1 (28 ottobre): Pubblica senza un'ora scelta non programma più (le bozze delle 06:00 di oggi pubblicate di
+notte escono subito: editor, scheda, modifica rapida, massa; `contenuti_sql_adesso()`, `ora_proposta`), `prove/prova-notte.js`
+finge la notte con `CMS_FUSO`. plumeCMS 1.3.0 (notte del 27 ottobre, un agente con il ciclo PDCA): kit di partenza nell'installatore (`includes/kit-partenza.php`,
 `includes/kit/`), 30 sezioni pronte nell'editor (`includes/sezioni-pronte*.php`), "c'è una versione nuova" (`includes/versione-nuova.php`,
 `api/versione.php`), copia del sito (`includes/copia-sito.php`, Impostazioni > Copia del sito); prove `prova-kit.js`, `prova-sezioni.js`,
 `prova-copia.js`, `prova-versione.js`; 97 attacchi respinti. 1.2.8: licenza GNU GPL 3 o successiva (`LICENSE`); tolto dal prodotto tutto ciò che era di danilofailli.it

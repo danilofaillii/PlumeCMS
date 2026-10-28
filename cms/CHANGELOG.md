@@ -2,6 +2,13 @@
 
 Il prodotto si chiama **plumeCMS** (nome scelto il 26 ottobre 2026; prima, per poche ore, "CarbonaraCMS", e ancora prima il provvisorio "Officina": gli zip vecchi si chiamavano `officina-*` e `carbonaracms-*`).
 
+## 1.3.1 (28 ottobre 2026) - Pubblica, anche di notte
+
+- **Pubblica vuol dire adesso, anche per le bozze vecchie**: una bozza con la data di oggi e le 6:00 (quelle create di notte
+  fino alla 1.2.7), pubblicata fra mezzanotte e le sei, restava programmata e chi apriva la pagina trovava "pagina non
+  trovata" fino al mattino. Ora esce subito, da qualunque parte premi Pubblica: editor, scheda, modifica rapida, azioni di
+  gruppo. Se scegli tu un'ora più tardi o un altro giorno, resta programmata come sempre.
+
 ## 1.3.0 (28 ottobre 2026) - Si parte con un sito vero
 
 - **Installazione, "Che sito vuoi fare?"**: all'ultimo passo si sceglie Vuoto (il sito di sempre), Personale, Attività,

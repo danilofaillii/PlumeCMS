@@ -279,10 +279,17 @@ function contenuti_salva(string $tipo, int $id, array $d, string $autore = ''): 
     if (!contenuti_slug_libero($tipo, $slug, $id)) throw new RuntimeException("C'è già " . ($tipo === 'pagine' ? 'una pagina' : 'un articolo') . " con l'indirizzo /$slug/.");
 
     $stato = ($d['stato'] ?? 'bozza') === 'pubblicato' ? 'published' : 'draft';
-    $data = preg_match('/^\d{4}-\d{2}-\d{2}$/', (string)($d['data'] ?? '')) ? $d['data'] : date('Y-m-d');
-    // Senza ora: un contenuto che c'è tiene la sua, uno nuovo prende quella di adesso (fino alla 1.2.7 le 06:00, nel futuro
-    // per chi scriveva di notte: la pagina appena pubblicata dall'editor restava programmata fino al mattino).
-    $ora = preg_match('/^\d{2}:\d{2}$/', (string)($d['ora'] ?? '')) ? $d['ora'] . ':00' : (($prima && ($q = contenuti_quando($tipo, $prima)) !== '') ? substr($q, 11, 8) : date('H:i:s'));
+    // Senza data e ora: un contenuto che c'è tiene le sue, uno nuovo prende quelle di adesso (fino alla 1.2.7 le 06:00, nel
+    // futuro per chi scriveva di notte: la pagina appena pubblicata dall'editor restava programmata fino al mattino).
+    $q = $prima ? contenuti_quando($tipo, $prima) : '';
+    $data = preg_match('/^\d{4}-\d{2}-\d{2}$/', (string)($d['data'] ?? '')) ? $d['data'] : (substr($q, 0, 10) ?: date('Y-m-d'));
+    $ora = preg_match('/^\d{2}:\d{2}$/', (string)($d['ora'] ?? '')) ? $d['ora'] . ':00' : (substr($q, 11, 8) ?: date('H:i:s'));
+    // Pubblica senza un'ora scelta non programma (1.3.1). Una bozza con la data di oggi e un'ora che non è ancora arrivata (le
+    // 06:00 delle bozze fatte di notte fino alla 1.2.7) esce adesso. L'ora è scelta se chi pubblica l'ha scritta: la scheda e
+    // la modifica rapida mandano in 'ora_proposta' quella che mostravano, e se torna uguale nessuno l'ha toccata.
+    // Una data futura resta programmata, e così un contenuto già pubblicato o programmato.
+    $oraScelta = preg_match('/^\d{2}:\d{2}$/', (string)($d['ora'] ?? '')) && (string)$d['ora'] !== (string)($d['ora_proposta'] ?? '');
+    if ($stato === 'published' && !$oraScelta && ($prima['status'] ?? 'draft') !== 'published' && $data === date('Y-m-d') && $ora > date('H:i:s')) $ora = date('H:i:s');
     // sicurezza: il testo grezzo (HTML) lo scrive solo l'amministratore. Un redattore che cambia il testo lo passa dal sanificatore
     // (restano titoli, tabelle, immagini, classi; via script, eventi, stili pericolosi); se non lo ha toccato, resta com'era.
     $contenuto = (string)($d['contenuto'] ?? '');
@@ -383,7 +390,8 @@ function contenuti_salva_rapido(string $tipo, int $id, array $d): void {
     $r = contenuti_leggi($tipo, $id);
     if (!$r) throw new RuntimeException('Contenuto non trovato.');
     $base = ['title' => $d['title'] ?? $r['title'], 'slug' => $d['slug'] ?? $r['slug'], 'stato' => $d['stato'] ?? (contenuti_stato($tipo, $r) === 'bozza' ? 'bozza' : 'pubblicato'),
-        'data' => $d['data'] ?? substr(contenuti_quando($tipo, $r), 0, 10), 'ora' => $d['ora'] ?? substr(contenuti_quando($tipo, $r), 11, 5),
+        // Senza data e ora (le Impostazioni dell'editor non le hanno) contenuti_salva tiene quelle salvate, e nessuno le ha scelte.
+        'data' => $d['data'] ?? '', 'ora' => $d['ora'] ?? '', 'ora_proposta' => $d['ora_proposta'] ?? null,
         'contenuto' => $r[$t['campo_contenuto']], 'excerpt' => $r['excerpt'], 'author' => $r['author'] ?? (string)cms_impostazione('autore_predefinito', ''),
         'seo_title' => $r['seo_title'], 'seo_description' => $r['seo_description'], 'meta_description' => $r['meta_description'],
         'robots' => $r['robots'], 'tldr' => $r['tldr'], 'faq' => $r['faq'], 'immagine' => $r['immagine_url'] ?: ($r['featured_image'] ?? '')];
@@ -510,9 +518,24 @@ function contenuti_stato_massa(string $tipo, array $ids, string $stato): int {
     }
     $in = implode(',', array_map('intval', $ids));
     $s = $stato === 'bozza' ? 'draft' : 'published';
-    // Chi viene pubblicato senza una data ne riceve una adesso: senza, il sito non lo mostrerebbe mai.
-    $data = $s === 'draft' ? '' : ($tipo === 'pagine' ? ', publish_at = COALESCE(publish_at, NOW())' : ', publish_date = COALESCE(publish_date, CURDATE())');
-    return db()->exec('UPDATE ' . tbl(contenuti_tipo($tipo)['tabella']) . " SET status = '$s'$data WHERE id IN ($in) AND cestino IS NULL");
+    $data = $s === 'draft' ? '' : contenuti_sql_adesso($tipo) . ', ';
+    return db()->exec('UPDATE ' . tbl(contenuti_tipo($tipo)['tabella']) . " SET {$data}status = '$s' WHERE id IN ($in) AND cestino IS NULL");
+}
+
+/**
+ * Le colonne di data e ora per "Pubblica" senza data né ora (editor, Pubblica in massa), da mettere in un UPDATE. Chi non
+ * ha una data la riceve adesso: senza, il sito non lo mostrerebbe mai. Una bozza con la data di oggi e un'ora non ancora
+ * arrivata (le 06:00 delle bozze fatte di notte fino alla 1.2.7) esce adesso (1.3.1). Una data futura resta, e così un
+ * contenuto già pubblicato o programmato (Pubblica in massa li prende insieme alle bozze).
+ * MySQL assegna in ordine e ogni espressione vede i valori già cambiati: questo pezzo va prima di "status =", e l'ora
+ * prima della data.
+ */
+function contenuti_sql_adesso(string $tipo): string {
+    if ($tipo === 'pagine') {
+        $presto = "(publish_at IS NULL OR (status <> 'published' AND DATE(publish_at) = CURDATE() AND publish_at > NOW()))";
+        return "publish_time = IF($presto, CURTIME(), publish_time), publish_at = IF($presto, NOW(), publish_at)";
+    }
+    return "publish_time = IF(publish_date IS NULL OR (status <> 'published' AND publish_date = CURDATE() AND publish_time > CURTIME()), CURTIME(), publish_time), publish_date = COALESCE(publish_date, CURDATE())";
 }
 
 /** Una copia in bozza, con "-copia" nell'indirizzo. Ritorna l'id nuovo. */

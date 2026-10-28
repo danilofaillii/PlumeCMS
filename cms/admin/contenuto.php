@@ -213,7 +213,7 @@ require_once __DIR__ . '/includes/admin-header.php';
           <label>Visibilità</label>
           <select name="stato" id="sc-stato"><option value="pubblicato" <?= $sc['stato'] === 'pubblicato' ? 'selected' : '' ?>>Pubblicato</option><option value="bozza" <?= $sc['stato'] === 'bozza' ? 'selected' : '' ?>>Bozza</option></select>
           <label>Data e ora di uscita</label>
-          <div class="sc-riga"><input type="date" name="data" value="<?= h($sc['data']) ?>"><input type="time" name="ora" value="<?= h($sc['ora']) ?>" step="60"></div>
+          <div class="sc-riga"><input type="date" name="data" value="<?= h($sc['data']) ?>"><input type="time" name="ora" value="<?= h($sc['ora']) ?>" step="60"><input type="hidden" name="ora_proposta" value="<?= h($r['ora_proposta'] ?? $sc['ora']) ?>"></div>
           <div class="hint">Pubblicato con una data futura = programmato: esce da solo a quell'ora, al minuto.</div>
           <label>Autore</label><input type="text" name="author" value="<?= h($sc['author']) ?>" maxlength="100">
           <div class="sc-pubblica-azioni">

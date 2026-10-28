@@ -73,8 +73,8 @@ switch ($azione) {
             // modelli: Pubblica nell'editor pubblica anche il modello (la tabella non ha publish_date).
             modelli_stato($id, true);
         } elseif ($pubblica && $pagina['status'] !== 'published') {
-            if ($tipo === 'pagine') db()->prepare('UPDATE ' . $tab . " SET status = 'published', publish_at = COALESCE(publish_at, NOW()) WHERE id = ?")->execute([$id]);
-            else db()->prepare('UPDATE ' . $tab . " SET status = 'published', publish_date = COALESCE(publish_date, CURDATE()) WHERE id = ?")->execute([$id]);
+            // L'editor non ha data né ora: una bozza esce adesso, anche se aveva le 06:00 di oggi (1.3.1); una data futura resta.
+            db()->prepare('UPDATE ' . $tab . ' SET ' . contenuti_sql_adesso($tipo) . ", status = 'published' WHERE id = ?")->execute([$id]);
         }
         api_esci(['ok' => true, 'quando' => date('H:i'), 'pubblicata' => $pubblica, 'h1' => editor_ha_h1($a)]);
 

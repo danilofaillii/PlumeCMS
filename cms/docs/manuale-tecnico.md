@@ -1,6 +1,6 @@
 # plumeCMS: manuale tecnico
 
-Versione del manuale: 1.7, per plumeCMS 1.3.0 (28 ottobre 2026).
+Versione del manuale: 1.8, per plumeCMS 1.3.1 (28 ottobre 2026).
 
 Questo manuale descrive come è fatto plumeCMS e come funziona, pezzo per pezzo. È scritto leggendo il codice:
 ogni numero, limite e nome di funzione viene dai file veri, con il riferimento `file:riga` quando serve a chi
@@ -575,8 +575,30 @@ si vede nasce da questi (`contenuti_stato()`, `includes/contenuti.php:99-104`):
 | programmato | `status = published` con data e ora future |
 | pubblicato | `status = published` con data e ora passate |
 
-Gli articoli hanno data (`publish_date`) e ora (`publish_time`, predefinita 06:00); le pagine hanno
-`publish_at`. Un contenuto programmato diventa pubblico da solo quando arriva l'ora: non serve il cron.
+Gli articoli hanno data (`publish_date`) e ora (`publish_time`); le pagine hanno `publish_at` (e una copia
+dell'ora in `publish_time`). Il sito confronta con `NOW()` di MySQL (`sito_contenuti()`, `includes/sito-dati.php`), che
+segue il fuso di PHP (`db()`, `includes/db.php`). Un contenuto programmato diventa pubblico da solo quando arriva l'ora:
+non serve il cron.
+
+Il predefinito 06:00 di `publish_time` nello schema (`includes/schema-base.php`) e `SITO_ORA_PREDEFINITA` restano per le
+righe scritte senza ora, ma nessuna strada del pannello lo usa più: un contenuto nuovo prende l'ora di adesso (dalla
+1.2.8), l'installatore le 00:00. Fino alla 1.2.7 un contenuto creato fra mezzanotte e le sei riceveva "oggi alle
+06:00", nel futuro: pubblicato restava programmato e il visitatore trovava un 404 fino al mattino.
+
+**Pubblica senza un'ora scelta non programma** (1.3.1). Quando una bozza (o un contenuto nuovo) passa a pubblicato e
+nessuno ha scelto l'ora, una data di oggi con un'ora non ancora arrivata diventa adesso:
+
+| Da dove | Ora "scelta" | Codice |
+|---|---|---|
+| Pubblica nell'editor | mai: l'editor non ha data né ora | `contenuti_sql_adesso()` in `admin/editor-api.php:77` |
+| Azione di massa Pubblica | mai | `contenuti_sql_adesso()` in `contenuti_stato_massa()` |
+| Impostazioni dell'editor, Stato Pubblicata | mai | `contenuti_salva_rapido()` senza data né ora |
+| Scheda classica, Modifica rapida | solo se il campo Ora è stato cambiato | campo nascosto `ora_proposta` |
+
+Resta programmato: una data futura (un altro giorno), un'ora cambiata a mano nella scheda o nella modifica rapida,
+e un contenuto già pubblicato o programmato (l'editor su una pagina programmata aggiorna il contenuto, non la data).
+Un caso perso: una bozza salvata con un'ora più tardi oggi e poi pubblicata senza toccare l'ora esce subito; per
+programmarla si cambia l'ora quando si preme Pubblica, o si sceglie una data futura.
 
 ### 8.3 L'elenco
 
@@ -587,9 +609,12 @@ cestino e non torna mai in bozza.
 
 ### 8.4 Il salvataggio
 
-`contenuti_salva($tipo, $id, $dati, $autore)` (`includes/contenuti.php:271-366`):
+`contenuti_salva($tipo, $id, $dati, $autore)` (`includes/contenuti.php:271-375`):
 - titolo obbligatorio; slug in ASCII minuscolo, unico per tipo;
 - stato solo `bozza` o `pubblicato` (programmato nasce dalla data); data `AAAA-MM-GG`, ora `HH:MM`;
+- senza data o senza ora: un contenuto che c'è tiene le sue, uno nuovo prende quelle di adesso. Se in `ora_proposta`
+  arriva l'ora che il modulo mostrava ed è uguale a `ora`, l'ora non è scelta. Con l'ora non scelta, una bozza che
+  diventa pubblicata con la data di oggi e un'ora futura esce adesso (`includes/contenuti.php:284-292`, 8.2);
 - campi SEO: titolo SEO (255 caratteri), meta descrizione (500), robots `index` o `noindex`, riassunto
   (`tldr`), domande frequenti (JSON), immagine;
 - solo articoli: tipo pillar o cluster, keyword principale e secondarie, invito, pillar di riferimento, formato
@@ -1952,6 +1977,7 @@ Istruzioni in `prove/LEGGIMI.md`. Le principali:
 | `prova-sezioni.js` | (1.3.0) la linguetta Sezioni dell'editor: clic, trascinamento, modifica, pubblicazione; `/sezioni-pronte/` (`pagina-sezioni.php`) con il contrasto |
 | `prova-copia.js` | (1.3.0) copia del sito: prepara, scarica, ripristina, e gli zip da respingere (`zip-copie-prova.py`) |
 | `prova-versione.js` | (1.3.0) "c'è una versione nuova" con due installazioni e un sito ufficiale finto che si comporta male (`finto-ufficiale.php`) |
+| `prova-notte.js` | (1.3.1) pubblicare alle due di notte (fuso cambiato in `config.local.php`): editor, scheda, modifica rapida, massa, Impostazioni dell'editor, e la programmazione che resta |
 | `foto-sito.js`, `quanto-foto.py` | schermate prima e dopo, confrontate al pixel |
 | `router-php-s.php` | router per `php -S` che imita l'`.htaccess` |
 | `tema-cli.php` | attiva, disattiva, ripristina lo stile da riga di comando, per le prove |

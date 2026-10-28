@@ -26,7 +26,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     try {
         switch ($_POST['azione'] ?? '') {
             case 'rapido':
-                $d = ['title' => (string)($_POST['title'] ?? ''), 'slug' => (string)($_POST['slug'] ?? ''), 'stato' => (string)($_POST['stato'] ?? 'bozza'), 'data' => (string)($_POST['data'] ?? ''), 'ora' => (string)($_POST['ora'] ?? ''), 'autore' => $autore];
+                $d = ['title' => (string)($_POST['title'] ?? ''), 'slug' => (string)($_POST['slug'] ?? ''), 'stato' => (string)($_POST['stato'] ?? 'bozza'), 'data' => (string)($_POST['data'] ?? ''), 'ora' => (string)($_POST['ora'] ?? ''), 'ora_proposta' => (string)($_POST['ora_proposta'] ?? ''), 'autore' => $autore];
                 if ($T['tassonomie']) { $d['categorie'] = (array)($_POST['categorie'] ?? []); $d['tags'] = (string)($_POST['tags'] ?? ''); }
                 contenuti_salva_rapido($tipo, $ids[0], $d);
                 flash('success', $T['Uno'] . ' aggiornato.');
@@ -155,7 +155,7 @@ require_once __DIR__ . '/includes/admin-header.php';
       $rk = $T['kw'] ? contenuti_kw_correlate($r['content'] ?? '', $r['keywords_secondarie'] ?? '') : null;
     ?>
       <tr class="ct-riga" id="ct-riga-<?= $r['id'] ?>" data-id="<?= $r['id'] ?>" data-title="<?= h($r['title']) ?>" data-slug="<?= h($r['slug']) ?>" data-stato="<?= $stato === 'bozza' ? 'bozza' : 'pubblicato' ?>"
-          data-data="<?= h(substr($quando, 0, 10)) ?>" data-ora="<?= h(substr($quando, 11, 5) ?: '06:00') ?>" data-categorie="<?= h(implode(',', $cats)) ?>" data-tags="<?= h(implode(', ', $tagNomi)) ?>">
+          data-data="<?= h(substr($quando, 0, 10)) ?>" data-ora="<?= h(substr($quando, 11, 5)) ?>" data-categorie="<?= h(implode(',', $cats)) ?>" data-tags="<?= h(implode(', ', $tagNomi)) ?>">
         <td class="ct-col-sel"><input type="checkbox" class="ct-sel" name="ids[]" value="<?= $r['id'] ?>"></td>
         <td class="ct-titolo">
           <a class="ct-nome" href="<?= h($modifica) ?>"><?= h($r['title']) ?></a>
@@ -216,7 +216,7 @@ require_once __DIR__ . '/includes/admin-header.php';
 <!-- Modifica rapida: il modulo si sposta sotto la riga scelta -->
 <form method="post" id="ct-rapido" class="ct-rapido" hidden>
   <?= csrf_field() ?>
-  <input type="hidden" name="azione" value="rapido"><input type="hidden" name="uno" value=""><input type="hidden" name="torna" value="<?= h($qs()) ?>">
+  <input type="hidden" name="azione" value="rapido"><input type="hidden" name="uno" value=""><input type="hidden" name="ora_proposta" value=""><input type="hidden" name="torna" value="<?= h($qs()) ?>">
   <div class="ct-rapido-griglia">
     <label>Titolo<input name="title" required></label>
     <label>Indirizzo<span class="ct-slug"><i>/</i><input name="slug" pattern="[a-z0-9\-]+"><i>/</i></span></label>
@@ -243,7 +243,7 @@ function ctRapido(id) {
   ctChiudiRapido();
   var riga = document.getElementById('ct-riga-' + id), f = document.getElementById('ct-rapido');
   f.uno.value = id; f.title.value = riga.dataset.title; f.slug.value = riga.dataset.slug; f.stato.value = riga.dataset.stato;
-  f.data.value = riga.dataset.data; f.ora.value = riga.dataset.ora;
+  f.data.value = riga.dataset.data; f.ora.value = f.ora_proposta.value = riga.dataset.ora;
   if (f.tags) { f.tags.value = riga.dataset.tags; var cats = riga.dataset.categorie.split(','); f.querySelectorAll('[name="categorie[]"]').forEach(function (c) { c.checked = cats.indexOf(c.value) >= 0; }); }
   var tr = document.createElement('tr'); tr.id = 'ct-rapido-riga';
   var td = document.createElement('td'); td.colSpan = <?= $colonne ?>; tr.appendChild(td);
