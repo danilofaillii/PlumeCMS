@@ -2,6 +2,27 @@
 
 Il prodotto si chiama **plumeCMS** (nome scelto il 26 ottobre 2026; prima, per poche ore, "CarbonaraCMS", e ancora prima il provvisorio "Officina": gli zip vecchi si chiamavano `officina-*` e `carbonaracms-*`).
 
+## 1.4.0 (28 ottobre 2026)
+
+- **Il pannello ha quattro aspetti, e ognuno sceglie il suo**: Aria (chiaro, bianco e blu, con molto spazio), Bottega
+  (carta crema, terracotta e verde salvia), Cosmo (scuro, notte e viola) e Lavagna (scuro, verde ardesia e testo color
+  gesso). Si sceglie in **Il mio accesso**, riquadro "Aspetto del pannello": clic su una delle quattro miniature, poi
+  "Usa questo aspetto". Vale solo per te: gli altri utenti tengono il loro, il sito non cambia. Dopo l'aggiornamento
+  tutti partono da Aria. Seguono l'aspetto tutte le pagine del pannello e l'interfaccia dell'editor (la tela no: mostra
+  il sito com'è). Login, password dimenticata e installatore sono sempre Aria.
+- I testi del pannello si leggono meglio: in tutti e quattro gli aspetti il contrasto di ogni testo, anche quello piccolo
+  e grigio, è almeno 4,5 a 1, misurato su ogni pagina. Il menu ha icone disegnate al posto delle emoji, e il pannello
+  usa il carattere Inter servito dal sito stesso.
+- **Foto più leggere da sole**: quando carichi una foto (pagina Media, editor, newsletter) il CMS la raddrizza se il
+  telefono l'ha scattata di lato, la rimpicciolisce se il lato lungo supera 2560 pixel, toglie i dati nascosti (anche la
+  posizione GPS) e prepara accanto una versione WebP, molto più leggera, che il sito manda ai browser che la accettano.
+  Gli indirizzi delle foto non cambiano. Le foto già caricate restano come sono. Si spegne, e si cambia il lato
+  massimo, nella pagina Media, riquadro "Foto più leggere" (solo l'amministratore).
+- Corretto: nella scheda di un articolo, con la scheda Visuale aperta, sotto il testo compariva anche la casella del
+  codice (l'attributo `hidden` non nascondeva niente nel pannello): ora si vede solo con la scheda Testo.
+- Corretto: nella scheda di un articolo il foglio dell'anteprima delle infografiche cambiava i colori del pannello
+  (pulsanti rossi anche con altri colori).
+
 ## 1.3.1 (28 ottobre 2026) - Il sito degli aggiornamenti si sceglie
 
 - **Aggiornamenti, "Indirizzo del sito da cui arrivano gli aggiornamenti"**: il sito a cui il pannello chiede se c'è una

@@ -1,6 +1,6 @@
 # plumeCMS: manuale tecnico
 
-Versione del manuale: 1.8, per plumeCMS 1.3.1 (28 ottobre 2026).
+Versione del manuale: 1.9, per plumeCMS 1.4.0 (28 ottobre 2026).
 
 Questo manuale descrive come è fatto plumeCMS e come funziona, pezzo per pezzo. È scritto leggendo il codice:
 ogni numero, limite e nome di funzione viene dai file veri, con il riferimento `file:riga` quando serve a chi
@@ -67,7 +67,7 @@ fatti con plumeCMS, i loro contenuti e i temi e moduli che non ne copiano il cod
 index.php           front controller: tutte le richieste del sito passano da qui
 cron-daily.php      compiti del giorno (pacchetti programmati, moduli, IndexNow)
 cron-newsletter.php invio della newsletter a giri, coda IndexNow
-VERSIONE            il numero di versione (oggi 1.3.1)
+VERSIONE            il numero di versione (oggi 1.4.0)
 CHANGELOG.md, README.md, INSTALLA.md
 .htaccess           regole di Apache (copia di install/esempi/htaccess-radice.txt)
 
@@ -430,7 +430,7 @@ Tutte con il prefisso davanti. Le colonne sono quelle principali.
 | `categories` | slug, nome, descrizione, ordine, robots |
 | `tags` | slug, nome |
 | `media` | file caricati: nome, percorso, alt, didascalia, tipo, dimensioni |
-| `users` | utenti: nome utente, email, hash della password, nome visibile, ruolo (`admin` o `editor`), ultimo accesso, più le colonne della 2FA e della sessione |
+| `users` | utenti: nome utente, email, hash della password, nome visibile, ruolo (`admin` o `editor`), ultimo accesso, più le colonne della 2FA e della sessione e, dalla 1.4.0, `pannello_aspetto` (7.3) |
 | `settings` | impostazioni chiave e valore |
 
 **Contenuti e sito**
@@ -543,6 +543,54 @@ Le voci dei moduli si aggiungono al menu con la chiave `menu` del manifest (capi
 
 Alcune pagine vecchie (`articles.php`, `pages.php`, `page-edit.php`, e simili) esistono solo come redirect 301
 verso `contenuti.php`, per i segnalibri.
+
+### 7.3 Gli aspetti del pannello (dalla 1.4.0)
+
+Ogni utente sceglie i colori del suo pannello, per sé: **Aria** (chiaro, bianco e blu, il predefinito), **Bottega**
+(carta crema, terracotta e salvia), **Cosmo** (scuro, notte e viola), **Lavagna** (scuro, ardesia e gesso). Il sito non
+cambia: non sono i temi del sito (capitolo 12), ne prendono solo i nomi e i colori.
+
+- **Dove si sceglie**: Il mio accesso (`admin/account.php`), riquadro "Aspetto del pannello": quattro miniature
+  cliccabili e "Usa questo aspetto". Il POST (`azione=aspetto`) passa da `verify_csrf()` e salva solo per l'utente
+  della sessione (`$io['id']`, mai un id dal modulo) con `pannello_aspetto_salva()`, che rifiuta ogni valore fuori
+  dai quattro (`includes/pannello-aspetto.php:31`). Il redattore può: `account.php` è fra le sue pagine.
+- **Dove si salva**: colonna `users.pannello_aspetto varchar(12) NOT NULL DEFAULT 'aria'`, creata da
+  `sicurezza_schema()` (`includes/sicurezza.php:113`, elenco `$colonne`) al primo accesso dopo l'aggiornamento. Chi
+  c'era prima parte da Aria.
+- **Come si applica**: `pannello_aspetto()` (`includes/pannello-aspetto.php:25`) dà l'aspetto dell'utente collegato
+  (Aria se manca o non vale); `admin/includes/admin-header.php:92` e le due radici di `admin/editor.php` lo scrivono
+  come `<html data-pannello="cosmo">`. Login, password dimenticata e reimpostata scrivono sempre `aria` (non si sa
+  ancora chi è); l'installatore ha i colori di Aria nel suo foglio (`install/install.css`). Nessun JavaScript: il foglio
+  arriva prima del contenuto, la pagina nasce con i colori giusti.
+- **I colori**: tutti in `admin/assets/css/aspetti.css`, un blocco di variabili per aspetto su `[data-pannello="..."]`
+  (Aria anche su `:root`). `admin.css` e `editor.css` lo importano (`@import`), così ogni pagina che usa i fogli del
+  pannello ha le variabili. Le regole valgono su qualunque elemento: le miniature della scelta sono pannelli veri in
+  piccolo con `data-pannello` sullo `span`.
+- **Le variabili**: restano quelle di sempre (`--bg`, `--surface`, `--text`, `--text-muted`, `--border`, `--coral`,
+  `--coral-light`, `--coral-hover`, `--sage`, `--sage-light`, `--mustard`, `--mustard-light`, `--sidebar`,
+  `--sidebar-hover`, `--radius`, `--font`), definite in tutti e quattro; `--coral` è l'accento dell'aspetto (blu, terracotta,
+  viola, giallo gesso). Le nuove, per significato: `--fondo-2`, `--campo`, `--riga-hover`, `--bordo-forte`,
+  `--su-accento` (testo sopra `--coral`: bianco nei chiari, scuro nei due scuri), `--accento-testo`, `--link`,
+  `--successo-testo`/`-bordo`, `--errore`/`-chiaro`/`-testo`/`-bordo`, `--attenzione-testo`/`-bordo`,
+  `--info-chiaro`/`-testo`/`-bordo`, `--sidebar-testo`, `--sidebar-testo-2`, `--sidebar-attivo`, `--sidebar-su-attivo`,
+  `--sidebar-bordo`, `--logo`, `--logo-accento`, `--codice-fondo`/`-testo`, `--ombra`, `--ombra-grande`, `--velo`,
+  `--fuoco`, `--tela-fondo`, `--font-titolo`, `--font-codice`, `--cat-verde`/`-viola`/`-ambra`/`-blu`/`-grigio`.
+  **Attenzione**: in Aria `--sidebar` è bianca. Il testo sopra la barra laterale usa `--sidebar-testo`, quello sopra
+  un pulsante pieno `--su-accento`: mai `#fff` scritto a mano.
+- **Una pagina nuova del pannello** usa solo variabili: nessun colore scritto a mano. Le eccezioni volute (etichette
+  bianche sopra le foto, colori di categoria, il fondo bianco del codice QR, le anteprime del sito) portano un commento
+  `fisso` sulla stessa riga; `prove/prova-aspetti.js` cerca tutti gli altri.
+- **Editor**: l'interfaccia (barra, pannello, dialoghi, sezioni pronte) segue l'aspetto con le sue `--ed-*` che
+  puntano alle variabili del pannello (`admin/assets/editor/editor.css:3`); la tela no, perché mostra il sito.
+- **Icone del menu**: dalla 1.4.0 sono le icone disegnate del set (`includes/icone.php`, `icona_svg()`) al posto delle
+  emoji, del colore del testo. Una voce di un modulo può ancora dare un'icona sua come entità HTML.
+- **Carattere**: il pannello usa Inter servito in casa (`sito/assets/font/`), Bottega e Lavagna hanno un carattere
+  loro per i titoli (`--font-titolo`: Georgia, Trebuchet MS).
+- **Contrasto**: misurato da `prove/prova-aspetti.js` su ogni testo visibile di ogni pagina, in tutti e quattro:
+  almeno 4,5 a 1 (3 a 1 per il testo grande), anche `--text-muted` e i messaggi di successo, errore e avviso.
+- **Correzione insieme**: `assets/css/style.css` (le infografiche dell'anteprima, caricato nella scheda di un articolo)
+  definiva le sue variabili su `:root` e copriva `--coral` e `--border` del pannello su quella pagina: dalla 1.4.0
+  valgono solo dentro `#ig-preview` e `.te-visuale`.
 
 ---
 
@@ -1106,9 +1154,12 @@ Il redattore vede e ripristina solo le versioni dei contenuti.
   - il tipo si legge dal contenuto, non dal nome: JPEG, PNG, GIF, WebP, AVIF; l'SVG passa dal sanificatore;
   - destinazione `uploads/<cartella>/AAAA/MM/`;
   - nome: lo slug del nome originale (fino a 60 caratteri), un trattino, 6 caratteri casuali, l'estensione.
-- **Ricodifica**: ogni immagine si riscrive con GD per togliere i metadati (JPEG e WebP qualità 90, PNG livello
-  6, AVIF 70) e si raddrizza secondo l'orientamento EXIF. Le GIF animate restano come sono. Non c'è
-  ridimensionamento: l'immagine resta delle sue misure.
+- **Ricodifica**: dalla 1.4.0 JPEG e PNG passano da `foto_alleggerisci()` (14.2): raddrizzate, rimpicciolite oltre il
+  lato massimo, senza metadati, con la WebP accanto. Le altre (e JPEG e PNG con "Foto più leggere" spento o senza GD e
+  Imagick) si riscrivono come prima con `sicurezza_immagine_ricodifica()`: GD, via i metadati (JPEG e WebP qualità 90,
+  PNG livello 6, AVIF 70), orientamento EXIF 3, 6 e 8. Le GIF animate restano come sono.
+- **Le WebP accanto** (`foto.jpg.webp`) non compaiono nella libreria (`foto_e_webp_compagna()`, `includes/media.php:57`)
+  e si cancellano con la foto (`media_elimina()`, `includes/media.php:146`).
 - **Cancellazione**: il pulsante compare per le cartelle pagine, pannello e newsletter. Lato server
   `media_elimina()` accetta solo file dentro la cartella uploads e le due cartelle immagini del pannello.
 
@@ -1158,6 +1209,42 @@ testo `{n} download`). Disposizione a elenco o a schede (da 1 a 4 per riga, per 
 tela dell'editor compare l'avviso "File non trovato".
 
 ---
+
+### 14.2 Foto più leggere (dalla 1.4.0)
+
+`includes/foto.php`. Al caricamento di una foto JPEG o PNG dalla pagina Media, dall'editor (`editor-api.php`, azione
+`carica`) o dalla newsletter (`admin/newsletter-immagine.php`):
+
+1. **Orientamento**: `foto_orientamento()` (`includes/foto.php:55`) legge il tag EXIF Orientation dai byte del JPEG
+   (non serve l'estensione exif); `foto_gd_raddrizza()` applica tutti gli otto casi, anche quelli allo specchio.
+2. **Lato massimo**: se il lato lungo supera `foto_lato_max` (2560 di partenza, da 800 a 8000) la foto si rimpicciolisce
+   con le stesse proporzioni (`imagecopyresampled`, trasparenza tenuta nelle PNG).
+3. **Riscrittura**: JPEG qualità 85, PNG livello 6. Spariscono tutti i metadati (posizione GPS, modello del telefono) e
+   qualunque cosa nascosta dopo i pixel, come con la ricodifica di sempre.
+4. **WebP accanto**: `<nome>.jpg.webp` (o `.png.webp`) qualità 80, tenuta solo se pesa meno dell'originale. Non per la
+   newsletter: molti programmi di posta non la mostrano.
+
+`foto_alleggerisci()` (`includes/foto.php:108`) ritorna `fatto => false` e lascia il file com'è se l'impostazione è
+spenta, se manca un motore (`foto_motore()`: GD, altrimenti Imagick), se la foto non si legge o se la memoria non basta
+(`foto_memoria_basta()` prova ad alzare `memory_limit`); chi chiama ripiega sulla ricodifica di sempre. Nessun errore a
+video, il motivo va nel log. Con Imagick (`foto_con_imagick()`) il percorso è lo stesso: **non provato** su un server
+vero, l'ambiente delle prove ha solo GD.
+
+**Sul sito**: `sito_html()` (`sito/index.php:56`), con l'impostazione accesa, manda `Vary: Accept` e, se il browser
+dichiara `image/webp` nell'intestazione Accept della pagina, passa la pagina da `foto_webp_nel_html()`
+(`includes/foto.php:199`): negli attributi `src`, `srcset`, `data-src`, `data-srcset`, `style` e nei blocchi `<style>`
+(gli sfondi delle sezioni dell'editor) l'indirizzo di una foto della cartella delle immagini diventa quello della sua
+WebP, solo se la WebP c'è sul disco. Link, `og:image` e dati strutturati non cambiano. Gli indirizzi di prima restano
+validi: la foto originale non si sposta. Chrome, Edge e i browser basati su Chromium dichiarano la WebP; chi non la
+dichiara nella richiesta della pagina (Safari, per esempio) riceve l'originale, già rimpicciolito.
+
+**Impostazioni**: pagina Media, riquadro "Foto più leggere", solo per l'amministratore (il POST di un redattore riceve
+403): interruttore (`foto_leggere`, `'1'` o `'0'`) e lato massimo (`foto_lato_max`). Il riquadro dice con che cosa lavora
+il server (GD, Imagick o nessuno) e se la WebP è disponibile.
+
+**Le foto già caricate non si toccano**: nessuna nasce rimpicciolita o con la WebP dopo l'aggiornamento, quindi il sito
+resta identico al pixel. Non c'è un pulsante per alleggerire quelle vecchie (scelta voluta: cambierebbe le foto del sito
+in un colpo solo).
 
 ## 15. Form, popup, newsletter e posta
 
@@ -1930,7 +2017,7 @@ CMS_DIR=<cartella del CMS installato> node tools/sicurezza-prova.js <base> <uten
 Il prefisso del pannello predefinito è `/new`; per un CMS nella radice si passa `""`. Prova XSS, CSRF, ruoli,
 pagine aperte senza login, CSV, open redirect, forza bruta, blocchi per nome utente e IP di casa, upload di PHP e
 SVG, file protetti, SQL injection, intestazioni, session fixation, cron dal web, firma della newsletter, CSP del
-pannello, pacchetti non firmati. Oggi: 78 prove respinte (la 79esima è del modulo del primo sito).
+pannello, pacchetti non firmati, copia del sito, aspetto del pannello e impostazioni delle foto (1.4.0). Oggi: 111 prove respinte (con `SEGRETO` nell'ambiente anche la newsletter firmata), più quelle del modulo del primo sito che si saltano da sole.
 
 Dopo la prova l'IP di chi l'ha lanciata è bloccato: prima di altre prove si svuota la tabella
 `<prefisso>sicurezza_tentativi`.
@@ -1955,6 +2042,8 @@ Istruzioni in `prove/LEGGIMI.md`. Le principali:
 | `prova-sezioni.js` | (1.3.0) la linguetta Sezioni dell'editor: clic, trascinamento, modifica, pubblicazione; `/sezioni-pronte/` (`pagina-sezioni.php`) con il contrasto |
 | `prova-copia.js` | (1.3.0) copia del sito: prepara, scarica, ripristina, e gli zip da respingere (`zip-copie-prova.py`) |
 | `prova-versione.js` | (1.3.0) "c'è una versione nuova" con due installazioni e un sito ufficiale finto che si comporta male (`finto-ufficiale.php`) |
+| `prova-aspetti.js` | (1.4.0) i quattro aspetti del pannello: scelta in Il mio accesso, ogni pagina del menu e l'editor in ognuno, contrasto di ogni testo, colori rimasti scritti a mano |
+| `prova-foto-leggere.js` | (1.4.0) foto più leggere: foto grande girata con il GPS, PNG piccola, WebP sul sito e originale per chi non la accetta, lato massimo, spento, newsletter, redattore, cancellazione (`foto-prova.php`, `pagina-foto.php`) |
 | `foto-sito.js`, `quanto-foto.py` | schermate prima e dopo, confrontate al pixel |
 | `router-php-s.php` | router per `php -S` che imita l'`.htaccess` |
 | `tema-cli.php` | attiva, disattiva, ripristina lo stile da riga di comando, per le prove |

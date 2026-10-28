@@ -93,6 +93,8 @@ let n = 0, ko = 0; const ok = (t, c, extra = '') => { n++; if (!c) ko++; console
   // Articolo nuovo dalla scheda classica
   await p.goto(B + CMSB + '/admin/contenuto.php?tipo=articoli&scheda=1', { waitUntil: 'networkidle' });
   await p.fill('input[name=title]', 'Secondo articolo di prova');
+  // dalla 1.4.0 la casella del codice si vede solo con la scheda Testo aperta (prima l'attributo hidden non nascondeva niente)
+  if (await p.locator('.te-schede button[data-scheda=testo]').count() && !(await p.locator('#te-testo').isVisible())) await p.click('.te-schede button[data-scheda=testo]');
   const ta = p.locator('textarea[name=contenuto], textarea[name=content]').first(); if (await ta.count()) await ta.fill('<p>Testo del secondo articolo.</p>');
   const pubblica = p.locator('.sc-pubblica-azioni .btn-primary, button[name=azione][value=pubblica]').first();
   if (await pubblica.count()) { await Promise.all([p.waitForNavigation(), pubblica.click()]); }

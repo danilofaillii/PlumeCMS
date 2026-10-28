@@ -202,3 +202,29 @@ cambio perché l'opcache del server lo rilegga; alla fine toglie le sue righe e 
 L'indirizzo del sito ufficiale come parametro di Aggiornamenti: rifiuta http e gli indirizzi con `?`, salva quello giusto
 senza la barra finale, vuoto torna al predefinito. Serve un sito senza `CMS_AGGIORNAMENTI_URL` nel config.
 `node prove/prova-versione-sito.js <base> <utente> <password>`. Atteso: 7 su 7.
+
+## prova-aspetti.js (1.4.0)
+
+I quattro aspetti del pannello. `node prove/prova-aspetti.js <base> <utente> <password> <cartella schermate> [cartella cms]`.
+Login e password dimenticata in Aria (e il loro contrasto); poi per Aria, Bottega, Cosmo e Lavagna: la scelta in Il mio
+accesso con un clic sulla miniatura, l'attributo `data-pannello` scritto dal server nell'HTML (nessun JavaScript), le 16
+variabili di sempre definite, tutte le voci del menu con le sottovoci e qualche pagina interna (scheda di un articolo,
+campagna, popup, utenti, password, account), ognuna senza errori PHP o JavaScript, con il contrasto di ogni testo
+visibile (4,5 a 1, 3 a 1 per il testo grande; si saltano i testi su immagini o gradienti, i controlli spenti e le zone che
+mostrano il sito), e una schermata `<aspetto>-<pagina>.png`; l'editor della home, anche con un widget aperto. Alla fine
+rimette Aria e cerca i colori scritti a mano rimasti in `cms/admin` (le eccezioni volute hanno un commento `fisso`).
+Atteso: 56 su 56. Dura circa 8 minuti. Non crea contenuti.
+
+## prova-foto-leggere.js (1.4.0)
+
+Foto più leggere. Prima `php prove/foto-prova.php <cartella foto>` (una foto 4000x3000 salvata di lato con orientamento
+EXIF 6 e un dato GPS, una 3600x2400, una PNG 600x400 trasparente), poi
+`node prove/prova-foto-leggere.js <base> <cartella CMS installato> <utente> <password> <cartella foto>`.
+Carica dalla pagina Media e controlla sul disco del sito misure, orientamento (il quadrante rosso deve finire in alto a
+destra), metadati e WebP; crea la pagina `/prova-foto/` (`prove/pagina-foto.php`) e la guarda con Chromium (WebP) e con
+una richiesta senza `image/webp` in Accept (JPEG); lato massimo 1200, valore 50 rifiutato, spento, newsletter senza WebP,
+redattore respinto (lo crea `tema-cli.php redattore`), cancellazione con la WebP. Atteso: 31 su 31. Lascia accese le foto
+più leggere con 2560, la pagina `/prova-foto/` e le foto caricate.
+
+Le prove di attacco della 1.4.0 (`tools/sicurezza-prova.js`, gruppo 18) controllano anche la scelta dell'aspetto (un
+utente non cambia quello di un altro, valori non ammessi, token e Origin) e le impostazioni delle foto (redattore, token).

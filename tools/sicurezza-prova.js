@@ -503,6 +503,54 @@ echo json_encode($o);
     ok('api/versione.php: una serie con apici respinta (400)', api2.status() === 400, { status: api2.status() });
   }
 
+  // === 18. (1.4.0) Aspetto del pannello e foto più leggere: ognuno cambia solo il suo aspetto, valori ammessi, token, ruoli
+  {
+    const aspettoDi = async (p) => { await p.goto(ADMIN + '/index.php', { waitUntil: 'domcontentloaded' }); return p.getAttribute('html', 'data-pannello'); };
+    // l'amministratore passa a Bottega: un valore rifiutato non deve riportarlo ad Aria (il predefinito)
+    const t0 = await tokenDi(admin.p, ADMIN + '/account.php');
+    await post(admin.p, ADMIN + '/account.php', new URLSearchParams({ _csrf: t0, azione: 'aspetto', aspetto: 'bottega' }).toString(), { 'Content-Type': 'application/x-www-form-urlencoded' });
+    const prima = await aspettoDi(admin.p);
+    ok('aspetto: l\'amministratore sceglie Bottega (valore ammesso)', prima === 'bottega', { prima });
+    if (red.dentro) {
+      const tr = await tokenDi(red.p, ADMIN + '/account.php');
+      // il redattore prova a cambiare l'aspetto dell'amministratore passando un id (il server usa solo la sessione)
+      for (const campo of ['id', 'utente_id', 'user_id', 'utente']) {
+        await post(red.p, ADMIN + '/account.php', new URLSearchParams({ _csrf: tr, azione: 'aspetto', aspetto: 'lavagna', [campo]: '1' }).toString(), { 'Content-Type': 'application/x-www-form-urlencoded' });
+      }
+      ok('aspetto: il redattore non cambia quello dell\'amministratore (con id, utente_id, user_id, utente)', await aspettoDi(admin.p) === prima, { prima });
+      ok('aspetto: ...e cambia solo il suo', await aspettoDi(red.p) === 'lavagna');
+    }
+    const t = await tokenDi(admin.p, ADMIN + '/account.php');
+    for (const v of ['cosmo"><script>alert(1)</script>', '../../includes/config', 'ARIA', '', 'aria ', 'notte', 'cosmo;']) {
+      const r = await post(admin.p, ADMIN + '/account.php', new URLSearchParams({ _csrf: t, azione: 'aspetto', aspetto: v }).toString(), { 'Content-Type': 'application/x-www-form-urlencoded' });
+      const att = await aspettoDi(admin.p);
+      const html = await admin.p.content();
+      ok('aspetto: valore non ammesso "' + v.slice(0, 30) + '" rifiutato', att === prima && !html.includes('<script>alert(1)'), { status: r.status, att });
+    }
+    const senza = await post(admin.p, ADMIN + '/account.php', new URLSearchParams({ azione: 'aspetto', aspetto: 'cosmo' }).toString(), { 'Content-Type': 'application/x-www-form-urlencoded' });
+    ok('aspetto: POST senza token rifiutato (403) e aspetto invariato', senza.status === 403 && await aspettoDi(admin.p) === prima, { status: senza.status });
+    const est = await admin.ctx.request.post(ADMIN + '/account.php', { headers: { 'Origin': 'https://evil.example' }, form: { _csrf: t, azione: 'aspetto', aspetto: 'cosmo' }, maxRedirects: 0 });
+    ok('aspetto: POST con Origin esterno rifiutato (403)', est.status() === 403 && await aspettoDi(admin.p) === prima, { status: est.status() });
+    const anon = await browser.newContext();
+    const ra = await anon.request.post(ADMIN + '/account.php', { form: { azione: 'aspetto', aspetto: 'cosmo' }, maxRedirects: 0 });
+    ok('aspetto: senza login nessun cambio (rimanda al login)', ra.status() !== 200 && /login/.test(ra.headers()['location'] || ''), { status: ra.status() });
+    const t1 = await tokenDi(admin.p, ADMIN + '/account.php');
+    await post(admin.p, ADMIN + '/account.php', new URLSearchParams({ _csrf: t1, azione: 'aspetto', aspetto: 'aria' }).toString(), { 'Content-Type': 'application/x-www-form-urlencoded' });
+    // foto più leggere: solo l'amministratore, con il token
+    const fa = await anon.request.post(ADMIN + '/media.php', { form: { azione: 'foto_impostazioni', foto_leggere: '0', foto_lato_max: '900' }, maxRedirects: 0 });
+    ok('foto: impostazioni senza login respinte', fa.status() !== 200 && /login/.test(fa.headers()['location'] || ''), { status: fa.status() });
+    await anon.close();
+    if (red.dentro) {
+      const tr = await tokenDi(red.p, ADMIN + '/media.php');
+      const fr = await post(red.p, ADMIN + '/media.php', new URLSearchParams({ _csrf: tr, azione: 'foto_impostazioni', foto_leggere: '0', foto_lato_max: '900' }).toString(), { 'Content-Type': 'application/x-www-form-urlencoded' });
+      ok('foto: il redattore non cambia le impostazioni (403)', fr.status === 403, { status: fr.status });
+    }
+    const fs2 = await post(admin.p, ADMIN + '/media.php', new URLSearchParams({ azione: 'foto_impostazioni', foto_leggere: '0', foto_lato_max: '900' }).toString(), { 'Content-Type': 'application/x-www-form-urlencoded' });
+    ok('foto: impostazioni senza token rifiutate (403)', fs2.status === 403, { status: fs2.status });
+    await admin.p.goto(ADMIN + '/media.php?foto=1', { waitUntil: 'domcontentloaded' });
+    ok('foto: dopo gli attacchi le impostazioni non sono cambiate', await admin.p.locator('input[name=foto_lato_max]').inputValue().catch(() => '') !== '900');
+  }
+
   // === pulizia: elimina il redattore di prova
   {
     await admin.p.goto(ADMIN + '/utenti.php', { waitUntil: 'networkidle' });
