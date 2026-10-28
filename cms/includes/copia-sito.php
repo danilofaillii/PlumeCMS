@@ -10,14 +10,14 @@
  *
  *   manifest.json   formato "plumecms-copia", versione, versione del CMS, prefisso, sito, data, quanti file,
  *                   e la firma: l'HMAC-SHA256 dell'impronta dello zip (stesso calcolo dei pacchetti firmati,
- *                   sicurezza_pacchetto_impronta) con la chiave di questo sito, che nella copia non c'e
+ *                   sicurezza_pacchetto_impronta) con la chiave di questo sito, che nella copia non c'è
  *   db.sql.gz       il database
  *   uploads/... temi/... moduli/...
  *
  * Le copie stanno in aggiornamenti/copie/, cartella che il server web non serve mai (.htaccess di agg_dir(), regole
- * della radice): si scaricano solo dal pannello. Se ne tengono COPIA_DA_TENERE, le piu vecchie si cancellano.
+ * della radice): si scaricano solo dal pannello. Se ne tengono COPIA_DA_TENERE, le più vecchie si cancellano.
  *
- * Ripristino: prima una copia del sito com'e adesso ("prima del ripristino"), poi il database e i file. Le regole:
+ * Ripristino: prima una copia del sito com'è adesso ("prima del ripristino"), poi il database e i file. Le regole:
  *   - ogni nome nello zip e controllato: niente "..", niente percorsi assoluti, solo uploads/, temi/, moduli/ (zip slip);
  *   - del database passano solo le istruzioni del formato delle copie (DROP TABLE, CREATE TABLE, INSERT INTO) sulle
  *     tabelle con il prefisso della copia, riscritte con il prefisso di questo sito: niente altro SQL;
@@ -61,7 +61,7 @@ function copia_nome_valido(string $f): bool {
     return (bool)preg_match('/^copia-\d{8}-\d{6}-[a-z0-9-]{1,40}\.zip$/', $f);
 }
 
-/** Le copie sul server, dalla piu recente: file, peso, data, e il manifest se si legge. */
+/** Le copie sul server, dalla più recente: file, peso, data, e il manifest se si legge. */
 function copia_elenco(): array {
     $out = [];
     foreach ((array)@scandir(copia_dir()) as $f) {
@@ -124,7 +124,7 @@ function copia_crea(string $etichetta = 'manuale'): string {
         $zip = new ZipArchive();
         if ($zip->open($zipPath, ZipArchive::CREATE | ZipArchive::OVERWRITE) !== true) throw new RuntimeException('Non riesco a scrivere la copia in ' . copia_dir());
         $zip->addFile($tmpDb, 'db.sql.gz');
-        $zip->setCompressionName('db.sql.gz', ZipArchive::CM_STORE); // gia compresso
+        $zip->setCompressionName('db.sql.gz', ZipArchive::CM_STORE); // già compresso
         $quanti = 0; $peso = 0;
         foreach (COPIA_CARTELLE as $c) {
             foreach (copia_file_di($c) as $dentro => $vero) {
@@ -165,8 +165,8 @@ function copia_leggi_manifest(string $zipPath): array {
     try {
         $m = json_decode((string)$zip->getFromName('manifest.json'), true);
         if (!is_array($m) || ($m['formato'] ?? '') !== COPIA_FORMATO) throw new RuntimeException('Questo zip non e una copia del sito fatta da ' . CMS_NOME . ' (manca manifest.json con il formato "' . COPIA_FORMATO . '"). Un pacchetto di aggiornamento si carica da Aggiornamenti.');
-        if ((int)($m['versione'] ?? 0) > COPIA_VERSIONE) throw new RuntimeException('La copia e stata fatta da una versione piu nuova di ' . CMS_NOME . ': aggiorna prima questo sito.');
-        if (!preg_match('/^[a-z0-9_]{1,30}$/', (string)($m['prefisso'] ?? ''))) throw new RuntimeException('Il prefisso delle tabelle nella copia non e valido.');
+        if ((int)($m['versione'] ?? 0) > COPIA_VERSIONE) throw new RuntimeException('La copia è stata fatta da una versione più nuova di ' . CMS_NOME . ': aggiorna prima questo sito.');
+        if (!preg_match('/^[a-z0-9_]{1,30}$/', (string)($m['prefisso'] ?? ''))) throw new RuntimeException('Il prefisso delle tabelle nella copia non è valido.');
         if ($zip->locateName('db.sql.gz') === false) throw new RuntimeException('Nella copia manca il database (db.sql.gz).');
         // sicurezza: zip slip e zip bomba. Ogni nome e relativo, senza "..", dentro una delle cartelle della copia.
         $totale = 0;
@@ -196,7 +196,7 @@ function copia_nome_voce_ok(string $n): bool {
     return true;
 }
 
-/** La copia e firmata da questo sito? (stessa chiave dei pacchetti, che nella copia non c'e) */
+/** La copia e firmata da questo sito? (stessa chiave dei pacchetti, che nella copia non c'è) */
 function copia_firmata(string $zipPath, array $m): bool {
     $firma = (string)($m['firma'] ?? '');
     if (!preg_match('/^[a-f0-9]{64}$/', $firma)) return false;
@@ -247,7 +247,7 @@ function copia_ripristina_db(string $gzPath, string $prefissoCopia): array {
 }
 
 /**
- * Ripristina il sito da una copia sul server (aggiornamenti/copie/<file>). Prima fa una copia del sito com'e adesso.
+ * Ripristina il sito da una copia sul server (aggiornamenti/copie/<file>). Prima fa una copia del sito com'è adesso.
  * Ritorna ['ok', 'log' => righe, 'prima' => la copia di sicurezza].
  */
 function copia_ripristina(string $file): array {
@@ -258,7 +258,7 @@ function copia_ripristina(string $file): array {
     $firmata = copia_firmata($zipPath, $m);
     $log = [];
     $log[] = 'Copia letta: fatta il ' . ($m['creato'] ?? '?') . ' da ' . CMS_NOME . ' ' . ($m['cms_versione'] ?? '?') . ' su ' . ($m['sito'] ?? '?') . ', ' . (int)($m['tabelle'] ?? 0) . ' tabelle, ' . (int)($m['file'] ?? 0) . ' file.';
-    $log[] = $firmata ? 'Firmata da questo sito: entrano anche i temi e i moduli con PHP.' : 'Non firmata da questo sito (viene da un altro sito, o e stata modificata): i file eseguibili (.php e simili) si saltano.';
+    $log[] = $firmata ? 'Firmata da questo sito: entrano anche i temi e i moduli con PHP.' : 'Non firmata da questo sito (viene da un altro sito, o è stata modificata): i file eseguibili (.php e simili) si saltano.';
     // 1. La rete di sicurezza: il sito di adesso, in una copia.
     $prima = copia_crea('prima-del-ripristino');
     $log[] = 'Copia di sicurezza del sito di prima: ' . $prima . ' (la trovi nell\'elenco, si ripristina come le altre).';
@@ -317,7 +317,7 @@ function copia_registra_caricata(string $tmp): string {
     return $nome;
 }
 
-/** Il limite di caricamento del server, in byte (il piu piccolo fra upload_max_filesize e post_max_size). */
+/** Il limite di caricamento del server, in byte (il più piccolo fra upload_max_filesize e post_max_size). */
 function copia_limite_caricamento(): int {
     $b = function (string $v): int {
         $v = trim($v); if ($v === '') return 0;

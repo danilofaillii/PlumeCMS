@@ -342,7 +342,7 @@ function icona_esiste(string $id): bool {
     return isset(icone_dati()[$id]);
 }
 
-/** L'SVG inline dell'icona, con la classe "ico ico-ID" e quelle in piu. Stringa vuota se l'id non esiste. */
+/** L'SVG inline dell'icona, con la classe "ico ico-ID" e quelle in più. Stringa vuota se l'id non esiste. */
 function icona_svg(string $id, string $classe = ''): string {
     $r = icone_dati()[$id] ?? null;
     if ($r === null) return '';

@@ -1,6 +1,6 @@
 <?php
 /**
- * Spedizione delle email del publisher: report del test, email del mattino, testi social.
+ * Spedizione delle email del sito: email del mattino, avvisi dei form, newsletter, email di prova.
  *
  * Con i dati SMTP compilati in Impostazioni, tab Posta, spedisce dal server di posta
  * (accesso con utente e password, SSL sulla 465 o STARTTLS sulla 587). Senza, usa mail() di PHP.
@@ -134,7 +134,7 @@ function posta_smtp(array $c, string $a, string $oggetto, string $corpo, string 
 }
 
 /**
- * L'indirizzo dove arrivano l'email del mattino, i testi social e gli avvisi dei moduli.
+ * L'indirizzo dove arrivano l'email del mattino e gli avvisi dei form.
  * Impostazione `notifica_email`; se manca, legge quella salvata dal pannello di prima.
  */
 function posta_notifica_email(): string {

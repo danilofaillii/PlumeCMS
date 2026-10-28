@@ -18,7 +18,7 @@ const IMPORTA_WP_SHORTCODE_NUCLEO = ['caption', 'wp_caption', 'gallery', 'audio'
 const IMPORTA_WP_MIME_OK = ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/avif', 'image/svg+xml', 'application/pdf', 'video/mp4', 'audio/mpeg'];
 
 /**
- * Un passo dell'analisi. Ritorna vero quando l'analisi e finita (lo stato passa a "pronto" con il report).
+ * Un passo dell'analisi. Ritorna vero quando l'analisi è finita (lo stato passa a "pronto" con il report).
  */
 function importa_wp_analisi_passo(array &$s): bool {
     $a = &$s['analisi'];
@@ -124,7 +124,7 @@ function importa_wp_voce_indice(array $s, array $x, string $passo): array {
     if (!empty($x['acf']) || (is_array($x['meta'] ?? null) && array_filter($x['meta'], fn($v, $k) => $k !== 'footnotes' && $v !== '' && $v !== [] && $v !== false, ARRAY_FILTER_USE_BOTH))) $note['campi'] = 1;
     $titolo = importa_wp_testo((string)($x['title']['raw'] ?? $x['title']['rendered'] ?? ''));
     [$seoT, $seoD] = importa_wp_seo($s, $x, $titolo);
-    // Lo slug di WordPress puo avere caratteri codificati (%f0%9f... per un'emoji): si decodifica e i caratteri a 4 byte si tolgono.
+    // Lo slug di WordPress può avere caratteri codificati (%f0%9f... per un'emoji): si decodifica e i caratteri a 4 byte si tolgono.
     $slug = (string)preg_replace('/[\x{10000}-\x{10FFFF}]/u', '', rawurldecode((string)($x['slug'] ?: ($x['generated_slug'] ?? ''))));
     $slug = trim($slug, '-');
     if ($slug === '') $slug = contenuti_slug($titolo);
@@ -248,7 +248,7 @@ function importa_wp_seo(array $s, array $x, string $titolo): array {
     return [mb_substr($t, 0, 255), mb_substr($d, 0, 500)];
 }
 
-/** Lo slug e gia occupato in plumeCMS (un contenuto, anche in bozza o nel cestino, o un indirizzo del sito)? Ritorna il motivo o ''. */
+/** Lo slug e già occupato in plumeCMS (un contenuto, anche in bozza o nel cestino, o un indirizzo del sito)? Ritorna il motivo o ''. */
 function importa_wp_slug_occupato(string $slug): string {
     static $occupati = null;
     if ($occupati === null) {

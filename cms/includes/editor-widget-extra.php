@@ -1,6 +1,6 @@
 <?php
 /**
- * I widget in piu dell'editor (quelli di Elementor free e Pro che mancavano): icona, riquadri, elenchi con icone,
+ * I widget in più dell'editor (quelli di Elementor free e Pro che mancavano): icona, riquadri, elenchi con icone,
  * valutazione, contatore, barra, testimonianze, galleria, caroselli, fisarmonica, schede, social, mappa, avviso,
  * conto alla rovescia, invito all'azione, tabelle e listini prezzi, flip box, titolo animato, condividi, sommario,
  * citazione, griglia di articoli, torna su.
@@ -9,16 +9,16 @@
  * HTML con classi ew-*, aspetto in sito/assets/widget.css, comportamento in sito/assets/widget.js (caricati solo
  * quando la pagina contiene uno di questi widget). I controlli di stile scrivono variabili CSS (--ew-*) sul
  * contenitore del widget tramite `selettore` + `proprieta`: il foglio di stile le legge con un valore di partenza,
- * cosi un controllo vuoto lascia l'aspetto di oggi.
+ * così un controllo vuoto lascia l'aspetto di oggi.
  *
- * Finche il framework dei controlli di gruppo non c'e (function_exists('editor_css_gruppo') falso) il file traduce
+ * Finché il framework dei controlli di gruppo non c'è (function_exists('editor_css_gruppo') falso) il file traduce
  * i tipi nuovi in tipi semplici e genera da solo il CSS dei controlli semplici con `selettore`.
  */
 
 require_once __DIR__ . '/icone.php';
 
 // ------------------------------------------------------------
-// Registro di ripiego (vale finche il framework non definisce le stesse funzioni)
+// Registro di ripiego (vale finché il framework non definisce le stesse funzioni)
 // ------------------------------------------------------------
 
 if (!function_exists('editor_registra_widget')) {
@@ -45,7 +45,7 @@ if (!function_exists('editor_icona')) {
     function editor_icona(string $nome, string $classe = ''): string { return icona_svg($nome, $classe); }
 }
 
-/** Il framework dei controlli di gruppo c'e? */
+/** Il framework dei controlli di gruppo c'è? */
 function ewx_fw(): bool {
     return function_exists('editor_css_gruppo');
 }
@@ -232,7 +232,7 @@ function ewx_ic(string $id, string $classe = ''): string {
     return $id !== '' ? icona_svg($id, $classe) : '';
 }
 
-/** Apre un <a> se il link c'e, altrimenti il tag di ripiego. Ritorna [apertura, chiusura]. */
+/** Apre un <a> se il link c'è, altrimenti il tag di ripiego. Ritorna [apertura, chiusura]. */
 function ewx_a($link, string $classe, string $ripiego = 'div', string $extra = ''): array {
     $url = is_array($link) ? editor_link_sicuro((string)($link['url'] ?? '')) : editor_link_sicuro((string)$link);
     if ($url === '') return ["<$ripiego class=\"$classe\"$extra>", "</$ripiego>"];

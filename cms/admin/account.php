@@ -34,9 +34,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             unset($_SESSION['totp_bozza']);
             $_SESSION['recupero_mostra'] = $chiaro;
             sicurezza_log('2fa_attivato', (string)$io['username'], (int)$io['id']);
-            flash('success', 'Secondo fattore attivo. Salva adesso i codici di recupero: non si rivedono piu.');
+            flash('success', 'Secondo fattore attivo. Salva adesso i codici di recupero: non si rivedono più.');
         } elseif ($azione === 'totp_spegni') {
-            if ($obbligatorio || (sicurezza_cfg()['totp_admin'] && $io['role'] === 'admin')) throw new RuntimeException('Il secondo fattore e obbligatorio per gli amministratori: lo decide la pagina Sicurezza.');
+            if ($obbligatorio || (sicurezza_cfg()['totp_admin'] && $io['role'] === 'admin')) throw new RuntimeException('Il secondo fattore è obbligatorio per gli amministratori: lo decide la pagina Sicurezza.');
             if (!sicurezza_password_verifica($io, (string)($_POST['password'] ?? ''))) throw new RuntimeException('Password sbagliata.');
             db()->prepare('UPDATE ' . tbl('users') . ' SET totp_segreto = \'\', totp_attivo = 0, totp_recupero = NULL WHERE id = ?')->execute([(int)$io['id']]);
             sicurezza_log('2fa_disattivato', (string)$io['username'], (int)$io['id']);
@@ -46,7 +46,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             [$chiaro, $hash] = sicurezza_recupero_genera();
             db()->prepare('UPDATE ' . tbl('users') . ' SET totp_recupero = ? WHERE id = ?')->execute([json_encode($hash), (int)$io['id']]);
             $_SESSION['recupero_mostra'] = $chiaro;
-            flash('success', 'Codici di recupero nuovi: quelli vecchi non valgono piu.');
+            flash('success', 'Codici di recupero nuovi: quelli vecchi non valgono più.');
         } elseif ($azione === 'esci_tutti') {
             $n = sicurezza_sessioni_chiudi((int)$io['id'], true);
             flash('success', "Chiuse $n altre sessioni. Questa resta aperta.");
@@ -96,7 +96,7 @@ require_once __DIR__ . '/includes/admin-header.php';
 .asp-mini-scheda em { display:block; margin-top:auto; width:42%; height:11px; border-radius:4px; background:var(--coral) }
 </style>
 <?php if ($obbligatorio): ?>
-<div class="flash flash-error">Il secondo fattore e obbligatorio per gli amministratori di questo sito. Finche non lo attivi qui sotto, il resto del pannello resta chiuso.</div>
+<div class="flash flash-error">Il secondo fattore è obbligatorio per gli amministratori di questo sito. Finché non lo attivi qui sotto, il resto del pannello resta chiuso.</div>
 <?php endif; ?>
 <?php if ($codiciNuovi): ?>
 <div class="form-card" style="max-width:720px;border:2px solid var(--attenzione-bordo)">
@@ -138,7 +138,7 @@ require_once __DIR__ . '/includes/admin-header.php';
       <form method="post" style="margin-top:1rem" data-conferma="Spegnere il secondo fattore? Il pannello tornera a chiedere solo la password."><?= csrf_field() ?><input type="hidden" name="azione" value="totp_spegni">
         <div class="form-group"><label>La tua password (per spegnere)</label><input type="password" name="password" autocomplete="current-password" required></div>
         <button class="btn btn-danger btn-sm">Spegni il secondo fattore</button></form>
-      <?php else: ?><p style="font-size:.85rem;color:var(--text-muted);margin-top:1rem">Obbligatorio per gli amministratori: non si puo spegnere da qui.</p><?php endif; ?>
+      <?php else: ?><p style="font-size:.85rem;color:var(--text-muted);margin-top:1rem">Obbligatorio per gli amministratori: non si può spegnere da qui.</p><?php endif; ?>
     <?php elseif ($bozza !== ''): ?>
       <p style="font-size:.9rem"><strong>Passo 1.</strong> Apri sul telefono un'app di autenticazione (Google Authenticator, Microsoft Authenticator, Aegis, 1Password, Bitwarden...) e scegli "aggiungi account" leggendo questo codice QR.</p>
       <div class="acc-qr">

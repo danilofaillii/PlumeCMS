@@ -2,7 +2,7 @@
  * Controllo SEO nella scheda classica del contenuto (admin/contenuto.php): il riquadro #seo-controllo mostra il
  * punteggio calcolato dal server all'apertura; il pulsante "Ricontrolla" rimanda i campi del modulo a seo-api.php
  * (azione analisi) e ridisegna, senza salvare. Il testo arriva dalla scheda Testo (textarea name=contenuto) o,
- * se c'e, dalla scheda Visuale.
+ * se c'è, dalla scheda Visuale.
  */
 (function () {
   var box = document.getElementById('seo-controllo');

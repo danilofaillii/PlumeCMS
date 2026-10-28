@@ -71,6 +71,11 @@ require_once __DIR__ . '/includes/admin-header.php';
 .mn-dettagli .mn-azioni-voce{margin-top:.6rem;display:flex;gap:.8rem;font-size:.8rem}
 .mn-dettagli .mn-azioni-voce a{color:var(--errore-testo);cursor:pointer}
 .sortable-ghost{opacity:.4}
+/* 1.4.2: i campi con lo stile del pannello (prima uscivano con quello del browser) */
+.mn-testa select,.mn-corpo input[type=text],.mn-corpo select,.mn-cerca,.mn-dettagli input[type=text],.mn-lista-scelte input[type=text]{padding:.45rem .6rem;border:1px solid var(--border);border-radius:8px;font:inherit;font-size:.88rem;background:var(--campo);color:var(--text)}
+.mn-corpo .sc-riga input[type=text],.mn-corpo .sc-riga select{width:100%}
+.mn-corpo .sc-riga label{display:block;font-size:.8rem;font-weight:600;color:var(--text-muted);margin-bottom:.25rem}
+.mn-testa label{font-size:.88rem;font-weight:600;display:flex;gap:.5rem;align-items:center}
 .mn-vuoto{border:1px dashed var(--border);border-radius:8px;padding:1.2rem;text-align:center;color:var(--text-muted);font-size:.86rem}
 </style>
 
@@ -95,7 +100,7 @@ require_once __DIR__ . '/includes/admin-header.php';
         <summary><?= $nome ?></summary>
         <div class="mn-lista-scelte" data-gruppo="<?= $k ?>">
           <input type="search" class="mn-cerca" placeholder="Cerca…" data-al-input="mnFiltra(this)">
-          <?php if ($k === 'pagine'): foreach ($scelte['speciali'] as $s): ?>
+          <?php if ($k === 'pagine'): foreach ($scelte['speciali'] as $s): if (in_array($s['url'], array_column($scelte['pagine'], 'url'), true)) continue; // 1.4.2: la Home una volta sola ?>
           <label><input type="checkbox" data-tipo="link" data-rif="" data-url="<?= h($s['url']) ?>" data-nome="<?= h($s['title']) ?>"> <?= h($s['title']) ?></label>
           <?php endforeach; endif; ?>
           <?php foreach ($scelte[$k] as $s): ?>

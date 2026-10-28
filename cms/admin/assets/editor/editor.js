@@ -1137,6 +1137,8 @@
     if (!fImp.slug.disabled) campi.slug = fImp.slug.value;
     if (fImp.header_id) { campi.header_id = fImp.header_id.value; campi.footer_id = fImp.footer_id.value; }
     api('impostazioni', campi).then(function (j) {
+      // 1.4.2: il titolo di un articolo sta nella testata della tela, scritta dal server: con un titolo nuovo la tela si ricarica.
+      if (campi.titolo !== D.titolo) { telaPronta = false; $('#ed-iframe').contentWindow.location.reload(); }
       D.titolo = campi.titolo; D.slug = j.slug; D.percorso = j.percorso; D.stato = campi.stato;
       if (fImp.header_id) { D.headerId = Number(campi.header_id); D.footerId = Number(campi.footer_id); disegna(); }
       D.seo = { titolo: campi.seo_titolo, descrizione: campi.seo_descrizione, robots: campi.robots };

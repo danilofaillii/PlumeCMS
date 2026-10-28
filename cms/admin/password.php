@@ -19,7 +19,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         flash('error', 'Nome utente: da 3 a 50 caratteri, solo lettere, numeri, punto, trattino.');
     } elseif (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
         flash('error', 'Email non valida.');
-    } elseif (($errPw = sicurezza_password_errore($p1, $nome, $email)) !== '') { // sicurezza: lunghezza, non uguale al nome, non fra le piu comuni
+    } elseif (($errPw = sicurezza_password_errore($p1, $nome, $email)) !== '') { // sicurezza: lunghezza, non uguale al nome, non fra le più comuni
         flash('error', $errPw);
     } elseif ($p1 !== $p2) {
         flash('error', 'Le due password sono diverse.');

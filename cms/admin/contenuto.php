@@ -45,7 +45,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 if (($d['invio'] ?? '') === 'bozza') $d['stato'] = 'bozza';
                 elseif (($d['invio'] ?? '') === 'pubblica') $d['stato'] = 'pubblicato';
                 if ($home && ($d['stato'] ?? '') === 'bozza') throw new RuntimeException('La home non può andare in bozza.');
+                $eraBozza = !$id || contenuti_stato($tipo, contenuti_leggi($tipo, $id) ?: []) === 'bozza';
                 $id = contenuti_salva($tipo, $id, $d, $autore);
+                // 1.4.2: "Pubblica" su un contenuto in bozza pubblica anche quello che c'è nell'editor visuale. Prima la bozza
+                // dell'editor restava indietro: l'articolo scritto nell'editor (Salva bozza) e pubblicato da qui usciva senza testo.
+                // "Aggiorna" su un contenuto già online no: una bozza dell'editor in lavorazione resta bozza.
+                if ($eraBozza && ($d['invio'] ?? '') === 'pubblica') {
+                    $bozzaEditor = editor_decodifica(editor_pagina($id, $tipo)['struttura_bozza'] ?? null);
+                    if ($bozzaEditor !== null) editor_salva($id, $bozzaEditor, true, $autore, 'pubblicato dalla scheda', $tipo);
+                }
                 $salvato = contenuti_leggi($tipo, $id);
                 $stato = contenuti_stato($tipo, $salvato);
                 flash('success', $nuovo ? $T['Uno'] . ' creato' . ($stato === 'bozza' ? ' in bozza.' : ($stato === 'programmato' ? ' e programmato.' : ' e pubblicato.')) : $T['Uno'] . ' aggiornato.');
@@ -248,6 +256,7 @@ require_once __DIR__ . '/includes/admin-header.php';
         <h3>Categorie</h3>
         <div class="sc-corpo">
           <div class="sc-cat-lista">
+            <?php if (!contenuti_categorie()): ?><span class="hint">Ancora nessuna categoria: scrivine una qui sotto.</span><?php endif; ?>
             <?php foreach (contenuti_categorie() as $slug => $c): ?>
             <label><input type="checkbox" name="categorie[]" value="<?= h($slug) ?>" <?= in_array($slug, $cats, true) ? 'checked' : '' ?>> <?= h($c['name']) ?></label>
             <?php endforeach; ?>

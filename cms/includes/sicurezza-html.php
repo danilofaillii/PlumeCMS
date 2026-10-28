@@ -20,7 +20,7 @@ function sicurezza_url_pulito(string $url, bool $immagine = false): string {
     return '';
 }
 
-/** Un redirect puo andare solo dentro il sito: percorso che comincia con una barra sola. Altrimenti la home. */
+/** Un redirect può andare solo dentro il sito: percorso che comincia con una barra sola. Altrimenti la home. */
 function sicurezza_percorso_interno(string $p, string $altrimenti = '/'): string {
     $p = trim($p);
     if ($p === '' || !preg_match('~^/(?!/)[^\s\x00-\x1F\\\\]*$~', $p)) return $altrimenti;
@@ -199,7 +199,7 @@ function sicurezza_css_pulisci(string $css): string {
 /**
  * Confina un CSS a un elemento: ogni selettore viene preceduto da $sel (la parola "selector" indica l'elemento stesso);
  * @media e @supports si attraversano; le altre regole @ (font-face, keyframes, import) non entrano.
- * Cosi "body{display:none}" diventa ".ed-x body{...}" e non tocca piu niente fuori dall'elemento.
+ * Così "body{display:none}" diventa ".ed-x body{...}" e non tocca più niente fuori dall'elemento.
  */
 function sicurezza_css_confina(string $css, string $sel): string {
     $css = sicurezza_css_pulisci($css);
@@ -289,13 +289,13 @@ function sicurezza_svg_pulito(string $svg): ?string {
 
 /**
  * Riapre un'immagine con GD e la riscrive: via i metadati, via qualunque cosa nascosta dopo i pixel.
- * Ritorna vero se il file e stato riscritto, falso se GD non puo (formato non supportato, GIF animata): il file resta com'e.
+ * Ritorna vero se il file è stato riscritto, falso se GD non può (formato non supportato, GIF animata): il file resta com'è.
  */
 function sicurezza_immagine_ricodifica(string $file, string $ext): bool {
     if (!function_exists('imagecreatefromstring')) return false;
     $ext = strtolower($ext);
     if ($ext === 'gif') {
-        // Una GIF animata ha piu di un blocco immagine: ricodificarla la fermerebbe. Si lascia stare (PHP e spento in uploads/).
+        // Una GIF animata ha più di un blocco immagine: ricodificarla la fermerebbe. Si lascia stare (PHP è spento in uploads/).
         $d = (string)file_get_contents($file);
         if (preg_match_all('/\x00\x21\xF9\x04/', $d) > 1) return false;
     }
@@ -330,7 +330,7 @@ function sicurezza_immagine_ricodifica(string $file, string $ext): bool {
 // Chiamate in uscita (SSRF)
 // ------------------------------------------------------------
 
-/** Gli host verso cui il CMS puo fare chiamate HTTP (IndexNow, Google, verifica dei motori). I moduli e la pagina Sicurezza ne aggiungono. */
+/** Gli host verso cui il CMS può fare chiamate HTTP (IndexNow, Google, verifica dei motori). I moduli e la pagina Sicurezza ne aggiungono. */
 function sicurezza_uscita_host_base(): array {
     return ['api.indexnow.org', 'www.bing.com', 'bing.com', 'yandex.com', 'oauth2.googleapis.com', 'www.googleapis.com', 'searchconsole.googleapis.com', 'indexing.googleapis.com', 'www.google.com', 'google.com'];
 }

@@ -53,7 +53,7 @@ require_once __DIR__ . '/includes/admin-header.php';
   <div class="form-card">
     <h3>Posta in uscita</h3>
     <p style="font-size:0.85rem;color:var(--text-muted);margin-bottom:1rem">
-      Da qui partono l'email del mattino, i testi social, gli avvisi dei moduli, la newsletter e il report del test.
+      Da qui partono l'email del mattino, gli avvisi dei form, la newsletter e le conferme di iscrizione.
       I dati sono quelli della casella email che spedisce, li trovi nel pannello dell'hosting (cPanel, Account email, "Connetti dispositivi").
       Se lasci vuoto il server, il pannello prova con mail() di PHP.
     </p>
@@ -73,7 +73,7 @@ require_once __DIR__ . '/includes/admin-header.php';
         <div class="hint">Resta salvata nel database del pannello. Gli asterischi vogliono dire che c'è già: se non la cambi, resta quella.</div></div>
       <div class="form-group"><label for="smtp_mittente">Indirizzo del mittente</label><input type="text" id="smtp_mittente" name="smtp_mittente" value="<?= h($smtp['mittente']) ?>" placeholder="uguale all'utente"></div>
       <div class="form-group"><label for="smtp_nome">Nome del mittente</label><input type="text" id="smtp_nome" name="smtp_nome" value="<?= h($smtp['nome']) ?>"></div>
-      <div class="form-group"><label for="notification_email">Dove arrivano l'email del mattino, i testi social e gli avvisi dei moduli</label><input type="text" id="notification_email" name="notification_email" value="<?= h($notifica) ?>" placeholder="tuaemail@esempio.it"></div>
+      <div class="form-group"><label for="notification_email">Dove arrivano l'email del mattino e gli avvisi dei form</label><input type="text" id="notification_email" name="notification_email" value="<?= h($notifica) ?>" placeholder="tuaemail@esempio.it"></div>
       <div style="margin-top:1rem"><button type="submit" class="btn btn-primary">Salva</button></div>
     </form>
     <form method="post" style="margin-top:1.5rem;display:flex;gap:0.75rem;align-items:flex-end;flex-wrap:wrap">

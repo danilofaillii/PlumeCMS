@@ -5,7 +5,7 @@
  * I file stanno in uploads/scaricabili/ e si aprono da /scarica/<nome>/ (sito/index.php): <nome> e il nome del file
  * senza estensione, quindi due file con lo stesso nome e estensioni diverse non possono convivere. Il disco e la verita:
  * un file messo li con il gestore dei file o con un pacchetto compare da solo. La tabella {prefisso}scaricabili tiene
- * solo quello che il disco non sa: titolo, descrizione, versione, quante volte e stato scaricato e quando l'ultima.
+ * solo quello che il disco non sa: titolo, descrizione, versione, quante volte è stato scaricato e quando l'ultima.
  *
  * Pannello: admin/scaricabili.php (voce Download). Widget: includes/editor-widget-download.php.
  *
@@ -14,14 +14,14 @@
  *   scaricabili_carica($file, $info, $sostituisci)   da $_FILES: ['nome' => ...] oppure ['errore' => ...]
  *   scaricabili_salva_info($nome, $info)       titolo, descrizione, versione
  *   scaricabili_elimina($nome)                 file e riga
- *   scaricabili_conta($nome)                   un download in piu (non per i robot)
+ *   scaricabili_conta($nome)                   un download in più (non per i robot)
  *   scaricabili_serie()                        le serie: per ognuna l'ultima versione (1.2.5)
  *   scaricabili_versioni_nel_testo($html)      {versione:<serie>} diventa il numero dell'ultima versione (1.2.5)
- *   scaricabili_sha256($file)                  l'impronta SHA-256 di un file, ricordata finche il file non cambia (1.3.0, api/versione.php)
+ *   scaricabili_sha256($file)                  l'impronta SHA-256 di un file, ricordata finché il file non cambia (1.3.0, api/versione.php)
  *
  * Serie (1.2.5): un file con la versione nel nome (plumecms-1.2.4.zip, plumecms-1.2.4-aggiornamento.zip) fa parte di
  * una serie, il cui nome e quello del file con "ultima" al posto della versione (plumecms-ultima,
- * plumecms-ultima-aggiornamento). /scarica/<serie>/ manda sempre il file con la versione piu alta: per pubblicare una
+ * plumecms-ultima-aggiornamento). /scarica/<serie>/ manda sempre il file con la versione più alta: per pubblicare una
  * versione nuova basta caricare il file, e i link, i pulsanti e i testi con {versione:<serie>} la seguono da soli.
  * Un numero solo (listino-2026) non e una versione: servono almeno due numeri separati da un punto.
  */
@@ -98,7 +98,7 @@ function scaricabili_righe(): array {
     }
 }
 
-/** Tutti i file da scaricare, dal piu recente: nome (senza estensione), file, ext, tipo, icona, peso, data, titolo, descrizione, versione, conteggio, ultimo, url. */
+/** Tutti i file da scaricare, dal più recente: nome (senza estensione), file, ext, tipo, icona, peso, data, titolo, descrizione, versione, conteggio, ultimo, url. */
 function scaricabili_elenco(): array {
     $dir = scaricabili_dir();
     $righe = scaricabili_righe();
@@ -141,7 +141,7 @@ function scaricabili_versione_da_nome(string $nome): array {
     return [$m[1][0], substr_replace($nome, 'ultima', $m[0][1], strlen($m[0][0]))];
 }
 
-/** Le serie: nome della serie => il file con la versione piu alta (a pari versione, il piu recente). */
+/** Le serie: nome della serie => il file con la versione più alta (a pari versione, il più recente). */
 function scaricabili_serie(?array $tutti = null): array {
     $out = [];
     foreach ($tutti ?? scaricabili_elenco() as $x) {
@@ -152,7 +152,7 @@ function scaricabili_serie(?array $tutti = null): array {
     return $out;
 }
 
-/** Nei testi del sito {versione:plumecms-ultima} diventa la versione dell'ultimo file della serie (vuoto se la serie non c'e). */
+/** Nei testi del sito {versione:plumecms-ultima} diventa la versione dell'ultimo file della serie (vuoto se la serie non c'è). */
 function scaricabili_versioni_nel_testo(string $html): string {
     if (!str_contains($html, '{versione:')) return $html;
     try { $serie = scaricabili_serie(); } catch (Throwable $e) { $serie = []; }
@@ -181,7 +181,7 @@ function scaricabili_contenuto_ok(string $percorso, string $ext): bool {
 
 /**
  * Un file caricato dal pannello ($_FILES['file']). $info: titolo, descrizione, versione. Con $sostituisci un file con
- * lo stesso nome si rimpiazza (il conteggio resta): e cosi che si pubblica una versione nuova allo stesso indirizzo.
+ * lo stesso nome si rimpiazza (il conteggio resta): e così che si pubblica una versione nuova allo stesso indirizzo.
  */
 function scaricabili_carica($f, array $info = [], bool $sostituisci = false): array {
     if (!is_array($f) || ($f['error'] ?? UPLOAD_ERR_NO_FILE) === UPLOAD_ERR_NO_FILE) return ['errore' => 'Scegli un file.'];
@@ -220,7 +220,7 @@ function scaricabili_salva_info(string $nome, array $info): bool {
     return true;
 }
 
-/** Le colonne della tabella sono utf8mb4, ma i caratteri a 4 byte si salvano lo stesso come entita: il resto del CMS fa cosi. */
+/** Le colonne della tabella sono utf8mb4, ma i caratteri a 4 byte si salvano lo stesso come entita: il resto del CMS fa così. */
 function scaricabili_testo(string $s): string {
     return function_exists('sito_senza_4byte') ? sito_senza_4byte($s) : preg_replace('/[\x{10000}-\x{10FFFF}]/u', '', $s);
 }
@@ -234,7 +234,7 @@ function scaricabili_elimina(string $nome): bool {
     return $ok;
 }
 
-/** Un download in piu: solo richieste GET intere di una persona (non i robot, non i pezzi di un download ripreso). */
+/** Un download in più: solo richieste GET intere di una persona (non i robot, non i pezzi di un download ripreso). */
 function scaricabili_conta(string $file): void {
     if (($_SERVER['REQUEST_METHOD'] ?? 'GET') !== 'GET') return;
     $ua = (string)($_SERVER['HTTP_USER_AGENT'] ?? '');
@@ -249,7 +249,7 @@ function scaricabili_conta(string $file): void {
 }
 
 /**
- * L'impronta SHA-256 di un file di uploads/scaricabili/ (1.3.0): la chiede api/versione.php, cosi chi scarica un
+ * L'impronta SHA-256 di un file di uploads/scaricabili/ (1.3.0): la chiede api/versione.php, così chi scarica un
  * aggiornamento controlla che il file sia arrivato intero. Si calcola una volta e si ricorda nell'impostazione
  * scaricabili_impronte, con data e peso del file: se il file cambia, si ricalcola.
  */
@@ -261,7 +261,7 @@ function scaricabili_sha256(string $file): string {
     if (!is_array($mappa)) $mappa = [];
     if (isset($mappa[$chiave]) && preg_match('/^[a-f0-9]{64}$/', (string)$mappa[$chiave])) return $mappa[$chiave];
     $h = (string)hash_file('sha256', $p);
-    // Solo le impronte dei file che ci sono ancora, piu quella nuova.
+    // Solo le impronte dei file che ci sono ancora, più quella nuova.
     $vivi = [];
     foreach ($mappa as $k => $v) if (is_file(scaricabili_dir() . '/' . explode('|', (string)$k)[0])) $vivi[$k] = $v;
     $vivi[$chiave] = $h;

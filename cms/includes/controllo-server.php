@@ -4,12 +4,12 @@
  * Impostazioni > Controlla il server (admin/controlla-server.php), e l'email di prova dei Primi passi della dashboard.
  *
  * Ogni controllo e ['titolo', 'esito' => 'ok' | 'avviso' | 'ko', 'detto' => cosa si e visto, 'fare' => cosa fare,
- * in parole per chi non e tecnico, 'link' => la pagina del pannello dove si fa, se c'e]. 'avviso' e per le cose che
+ * in parole per chi non e tecnico, 'link' => la pagina del pannello dove si fa, se c'è]. 'avviso' e per le cose che
  * servono solo ad alcune funzioni (senza curl, per esempio, il sito va lo stesso).
  *
  * Le richieste HTTP vanno al sito stesso (HTTPS, .htaccess) e al sito ufficiale degli aggiornamenti: timeout brevi,
  * nessun redirect seguito, al massimo 64 KB letti. Con il server di prova di PHP (php -S) le richieste al sito stesso
- * vogliono piu processi: PHP_CLI_SERVER_WORKERS=4 nell'ambiente, altrimenti il server aspetta se stesso.
+ * vogliono più processi: PHP_CLI_SERVER_WORKERS=4 nell'ambiente, altrimenti il server aspetta se stesso.
  */
 
 require_once __DIR__ . '/config.php';
@@ -86,7 +86,7 @@ function server_controlli(): array {
     $quando = fn(int $t) => $t ? date('d/m/Y \a\l\l\e H:i', $t) : 'mai';
     $cron = [];
     $cron[] = $c('Cron del mattino', $a['giornaliero'] ? 'ok' : 'ko', 'Ultimo giro arrivato dal cron: ' . $quando($a['giornaliero_quando']) . '.',
-        $a['giornaliero'] ? '' : 'Metti la riga di cron-daily.php nei Processi cron dell\'hosting: la pagina Log cron la scrive gia pronta.', 'cron-log.php');
+        $a['giornaliero'] ? '' : 'Metti la riga di cron-daily.php nei Processi cron dell\'hosting: la pagina Log cron la scrive già pronta.', 'cron-log.php');
     $cron[] = $c('Cron della newsletter', $a['newsletter'] ? 'ok' : 'ko', 'Ultimo giro arrivato dal cron: ' . $quando($a['newsletter_quando']) . '.',
         $a['newsletter'] ? '' : 'Metti la riga di cron-newsletter.php (ogni 5 minuti) nei Processi cron dell\'hosting: senza, la newsletter e i flussi non partono.', 'cron-log.php');
     $g['Cron'] = $cron;
@@ -149,7 +149,7 @@ function server_email_ultima(): ?array {
     return is_array($p) && isset($p['quando']) ? $p : null;
 }
 
-/** Manda l'email di prova a $a e ricorda com'e andata. Ritorna [ok, frase da mostrare]. */
+/** Manda l'email di prova a $a e ricorda com'è andata. Ritorna [ok, frase da mostrare]. */
 function server_email_prova(string $a): array {
     require_once __DIR__ . '/posta.php';
     if (!filter_var($a, FILTER_VALIDATE_EMAIL)) return [false, 'Il tuo utente non ha un indirizzo email valido: scrivilo in Utenti.'];

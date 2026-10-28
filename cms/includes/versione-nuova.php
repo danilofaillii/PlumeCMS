@@ -1,10 +1,10 @@
 <?php
 /**
- * "C'e una versione nuova" (1.3.0, 27 ottobre 2026): il pannello chiede al sito ufficiale di plumeCMS qual e l'ultima
- * versione e, se e piu nuova di questa, l'amministratore la scarica e la mette nella coda di Aggiornamenti con un clic.
+ * "C'è una versione nuova" (1.3.0, 27 ottobre 2026): il pannello chiede al sito ufficiale di plumeCMS qual e l'ultima
+ * versione e, se e più nuova di questa, l'amministratore la scarica e la mette nella coda di Aggiornamenti con un clic.
  * Da li si applica come uno zip caricato a mano: snapshot, file, ripristino da solo se qualcosa va storto.
  *
- * Da dove (1.3.1: un parametro): CMS_AGGIORNAMENTI_URL nel config.local.php se c'e (vince e il pannello non lo cambia),
+ * Da dove (1.3.1: un parametro): CMS_AGGIORNAMENTI_URL nel config.local.php se c'è (vince e il pannello non lo cambia),
  * altrimenti l'indirizzo scritto in Aggiornamenti (impostazione versione_sito), altrimenti VERSIONE_SITO_UFFICIALE.
  * Ognuno e l'indirizzo di un plumeCMS, senza barra finale. Il sito ufficiale risponde con api/versione.php per la serie VERSIONE_SERIE del suo
  * download manager: versione, nome, sha256 e dimensione del file.
@@ -17,7 +17,7 @@
  * Sicurezza: solo HTTPS (con il certificato verificato), timeout brevi, nessun redirect seguito, risposta JSON di al
  * massimo 16 KB, zip di al massimo VERSIONE_MAX_ZIP, lunghezza e sha256 controllati prima di metterlo in coda; in coda
  * passa da agg_leggi_manifest come ogni pacchetto (firma obbligatoria se la pagina Sicurezza la chiede). Se la rete non
- * c'e, il controllo dice "non raggiungibile" e il pannello funziona come prima.
+ * c'è, il controllo dice "non raggiungibile" e il pannello funziona come prima.
  *
  * Solo per le prove: con CMS_AGGIORNAMENTI_HTTP_PROVA definita a true nel config.local.php si accetta anche http://
  * (due installazioni locali, prove/prova-versione.js). Su un sito vero non va mai definita.
@@ -57,7 +57,7 @@ function versione_attivo(): bool {
     return (string)get_setting('versione_controllo', '1') !== '0';
 }
 
-/** Un indirizzo che si puo chiamare: https (o http solo con la costante delle prove), con un host. */
+/** Un indirizzo che si può chiamare: https (o http solo con la costante delle prove), con un host. */
 function versione_url_ok(string $u): bool {
     $p = parse_url($u);
     if (!is_array($p) || empty($p['host']) || isset($p['user']) || isset($p['pass'])) return false;
@@ -102,9 +102,9 @@ function versione_http(string $url, int $max, int $timeout, ?string $verso = nul
         while (!feof($h)) {
             $pezzo = fread($h, 65536);
             if ($pezzo === false) break;
-            if (stream_get_meta_data($h)['timed_out'] ?? false) throw new RuntimeException('Il sito ufficiale e troppo lento: riprova piu tardi.');
+            if (stream_get_meta_data($h)['timed_out'] ?? false) throw new RuntimeException('Il sito ufficiale è troppo lento: riprova più tardi.');
             $letti += strlen($pezzo);
-            if ($letti > $max) throw new RuntimeException('La risposta e piu grande del previsto: interrotta.');
+            if ($letti > $max) throw new RuntimeException('La risposta e più grande del previsto: interrotta.');
             if ($out) fwrite($out, $pezzo); else $testo .= $pezzo;
         }
         if ($out) fclose($out);
@@ -151,7 +151,7 @@ function versione_controlla(bool $forza = false): array {
     return $c;
 }
 
-/** La versione nuova, se quella che si sa e piu nuova di questa: i dati, altrimenti null. */
+/** La versione nuova, se quella che si sa e più nuova di questa: i dati, altrimenti null. */
 function versione_nuova(): ?array {
     if (!versione_attivo()) return null;
     $c = versione_cache();
@@ -159,7 +159,7 @@ function versione_nuova(): ?array {
     return is_array($d) && version_compare((string)$d['versione'], cms_versione(), '>') ? $d : null;
 }
 
-/** Il pacchetto di questa versione e gia nella coda? (cosi "Scarica e prepara" non lo mette due volte) */
+/** Il pacchetto di questa versione e già nella coda? (così "Scarica e prepara" non lo mette due volte) */
 function versione_in_coda(array $d): ?array {
     foreach (agg_lista_pacchetti() as $p) if (($p['file_zip'] ?? '') === $d['nome'] && ($p['stato'] ?? '') !== 'applicato') return $p;
     return null;
@@ -173,7 +173,7 @@ function versione_scarica_e_prepara(): string {
     $c = versione_controlla(true); // si riparte sempre dai dati di adesso: il file potrebbe essere cambiato
     $d = $c['dati'] ?? null;
     if (!$d) throw new RuntimeException('Non riesco a sapere qual e l\'ultima versione: ' . ($c['errore'] ?: 'nessuna risposta') . '.');
-    if (!version_compare($d['versione'], cms_versione(), '>')) throw new RuntimeException('Hai gia l\'ultima versione (' . cms_versione() . ').');
+    if (!version_compare($d['versione'], cms_versione(), '>')) throw new RuntimeException('Hai già l\'ultima versione (' . cms_versione() . ').');
     if ($p = versione_in_coda($d)) return $p['id'];
     @set_time_limit(VERSIONE_TIMEOUT_ZIP + 60);
     $tmp = agg_dir('pacchetti') . '/.scarico-' . bin2hex(random_bytes(6)) . '.zip';

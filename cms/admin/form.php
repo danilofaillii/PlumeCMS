@@ -140,6 +140,9 @@ document.getElementById('fm-form').addEventListener('submit', function () {
 .fm-riga input[type=text]{flex:1;padding:.4rem .6rem;border:1px solid var(--border);border-radius:6px;font:inherit;font-size:.85rem}
 .fm-riga select{padding:.4rem .5rem;border:1px solid var(--border);border-radius:6px;font:inherit;font-size:.82rem}
 .fm-riga textarea.fm-opzioni{flex:1;min-height:0;padding:.4rem .6rem;border:1px solid var(--border);border-radius:6px;font:inherit;font-size:.85rem;resize:vertical}
+/* 1.4.2: dentro .sc-corpo le tendine erano larghe 100% e schiacciavano la casella dell'etichetta a pochi pixel */
+.sc-corpo .fm-riga select{width:auto;flex:0 0 auto}
+.sc-corpo .fm-riga input[type=text]{width:auto;flex:1 1 8rem;min-width:8rem}
 .fm-obb{font-size:.78rem;color:var(--text-muted);display:flex;gap:.3rem;align-items:center;white-space:nowrap;margin:0}
 .fm-maniglia{cursor:grab;color:var(--text-muted)}.fm-via{border:0;background:none;color:var(--errore-testo);font-size:1.1rem;cursor:pointer}
 </style>

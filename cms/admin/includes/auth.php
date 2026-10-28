@@ -73,7 +73,7 @@ function is_logged_in(): bool {
 }
 
 /**
- * sicurezza (attacco 2, ruoli): le sole pagine del pannello che un redattore puo aprire. Tutto il resto e dell'amministratore,
+ * sicurezza (attacco 2, ruoli): le sole pagine del pannello che un redattore può aprire. Tutto il resto e dell'amministratore,
  * per ogni pagina e ogni azione (require_login lo controlla, anche se la pagina dimentica require_admin).
  * Il redattore gestisce articoli, pagine (e i tipi di contenuto dei moduli), media, categorie e tag; non i modelli.
  * Un modulo aggiunge le sue pagine con il filtro 'redattore_pagine'.
@@ -81,7 +81,7 @@ function is_logged_in(): bool {
 const AUTH_REDATTORE_PAGINE = ['index.php', 'contenuti.php', 'contenuto.php', 'editor.php', 'editor-api.php', 'editor-anteprima.php', 'seo-api.php',
     'media.php', 'categories.php', 'versioni.php', 'account.php', 'password.php', 'logout.php', 'login.php'];
 
-/** Il redattore puo aprire questa pagina (nome del file, con il ?tipo= se serve)? Lo usano require_login e il menu. */
+/** Il redattore può aprire questa pagina (nome del file, con il ?tipo= se serve)? Lo usano require_login e il menu. */
 function auth_redattore_puo(string $pagina, string $tipo = ''): bool {
     $pagine = AUTH_REDATTORE_PAGINE;
     if (function_exists('cms_filtro')) $pagine = array_merge($pagine, (array)cms_filtro('redattore_pagine', []));
@@ -91,7 +91,7 @@ function auth_redattore_puo(string $pagina, string $tipo = ''): bool {
     return true;
 }
 
-/** Le pagine che un utente puo aprire anche con la sessione "a meta" (2FA da configurare): il suo accesso e l'uscita. */
+/** Le pagine che un utente può aprire anche con la sessione "a meta" (2FA da configurare): il suo accesso e l'uscita. */
 const AUTH_PAGINE_LIBERE = ['account.php', 'logout.php', 'login.php'];
 
 function require_login(): void {
@@ -206,7 +206,7 @@ function login_esteso(string $username, string $password, int &$secondi = 0): st
         // Password giusta durante il blocco del nome utente: passa solo da un IP di casa, e resta una riga nel registro.
         // Da un altro IP la risposta e la stessa di prima ("troppi tentativi"): la password giusta non si distingue.
         if (!sicurezza_ip_fidato((int)$user['id'])) { $secondi = $blocchi['utente']; sicurezza_log('login_bloccato', $username, (int)$user['id'], 'password giusta da un IP non di casa durante il blocco del nome utente'); return 'bloccato'; }
-        sicurezza_log('login_durante_blocco', (string)$user['username'], (int)$user['id'], 'IP gia usato per accessi riusciti, mai bloccato');
+        sicurezza_log('login_durante_blocco', (string)$user['username'], (int)$user['id'], 'IP già usato per accessi riusciti, mai bloccato');
         $GLOBALS['sic_durante_blocco'] = true;
     }
     if (sicurezza_2fa_richiesto($user)) {

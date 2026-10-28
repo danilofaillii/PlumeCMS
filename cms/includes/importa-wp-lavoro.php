@@ -5,12 +5,12 @@
  * - articoli e pagine come bozze (lo stato di WordPress si ricorda nella tabella delle voci, colonna stato_finale);
  * - categorie e tag nuovi nascosti ai visitatori (impostazione importa_wp_nascosti, letta da sito_categorie e sito_tag);
  * - redirect spenti (attivo = 0), menu senza posizione;
- * - i file stanno gia in uploads/ (con un nome a caso in coda: nessuno li trova senza l'indirizzo).
- * L'anteprima dell'amministratore (?preview=1) mostra tutto come sara.
+ * - i file stanno già in uploads/ (con un nome a caso in coda: nessuno li trova senza l'indirizzo).
+ * L'anteprima dell'amministratore (?preview=1) mostra tutto come sarà.
  * Conferma: pubblicati pubblicati, programmati programmati, bozze bozze; redirect accesi; menu principale se scelto.
- * Annulla: via tutto quello che e entrato, voce per voce (il resto del sito non si tocca). Prima di cominciare c'e
+ * Annulla: via tutto quello che è entrato, voce per voce (il resto del sito non si tocca). Prima di cominciare c'è
  * comunque una copia del sito (Impostazioni > Copia del sito), per ogni evenienza.
- * Ogni giro e ripetibile: una voce gia entrata (tabella importa_wp_voci) non entra due volte.
+ * Ogni giro è ripetibile: una voce già entrata (tabella importa_wp_voci) non entra due volte.
  */
 
 require_once __DIR__ . '/importa-wp-analisi.php';
@@ -47,8 +47,8 @@ function importa_wp_avvia(array &$s, array $sc): void {
     $m = []; $visti = [];
     foreach (['pagine', 'articoli'] as $t) foreach ($s['indice'][$t] ?? [] as $x) {
         if (!in_array($x['id'], $s['coda'][$t], true) || isset($visti[$x['slug']])) continue;
-        // Un contenuto che non entra perche l'indirizzo c'e gia: i link verso di lui portano a quello che c'e in plumeCMS
-        // (stesso indirizzo), meglio che a un sito che verra chiuso. Il report lo dice.
+        // Un contenuto che non entra perché l'indirizzo c'è già: i link verso di lui portano a quello che c'è in plumeCMS
+        // (stesso indirizzo), meglio che a un sito che verrà chiuso. Il report lo dice.
         $visti[$x['slug']] = true;
         $m[$x['percorso']] = '/' . $x['slug'] . '/';
         $m['/?p=' . $x['id']] = '/' . $x['slug'] . '/';
@@ -80,7 +80,7 @@ function importa_wp_avanzamento(array $s): array {
     return [$fatti, max(1, $tot), $testo];
 }
 
-/** Lavora fino a $fino (microtime(true)). Ritorna vero quando l'import e finito e tutto e in prova. */
+/** Lavora fino a $fino (microtime(true)). Ritorna vero quando l'import è finito e tutto e in prova. */
 function importa_wp_import_giro(array &$s, float $fino): bool {
     while (microtime(true) < $fino) {
         $c = &$s['cursore'];
@@ -129,7 +129,7 @@ function importa_wp_import_giro(array &$s, float $fino): bool {
                 $perId = [];
                 foreach ($r['json'] as $x) if (is_array($x) && isset($x['id'])) $perId[(int)$x['id']] = $x;
                 foreach ($lotto as $k => $id) {
-                    if ($k > 0 && microtime(true) >= $fino) break 2; // il giro e finito: il prossimo riparte da questo contenuto (almeno uno per giro)
+                    if ($k > 0 && microtime(true) >= $fino) break 2; // il giro è finito: il prossimo riparte da questo contenuto (almeno uno per giro)
                     if (isset($perId[$id])) importa_wp_contenuto($s, $lavoro, $passo, $perId[$id]);
                     else importa_wp_saltato($s, $passo === 'pagine' ? 'Pagina' : 'Articolo', importa_wp_titolo_indice($s, $passo, $id), 'non c\'è più su WordPress');
                     $c['i']++;
@@ -191,9 +191,9 @@ function importa_wp_slug_libero_ora(string $slug): string {
     return $r !== '' ? $r . ': questo non entra' : '';
 }
 
-/** Un redirect spento (si accende con la conferma). Uno che esiste gia con lo stesso "da" non si tocca. */
+/** Un redirect spento (si accende con la conferma). Uno che esiste già con lo stesso "da" non si tocca. */
 function importa_wp_redirect(array &$s, string $lavoro, string $da, string $a): void {
-    // Il sito confronta il percorso decodificato (sito/index.php): si salva cosi. Con caratteri a 4 byte (emoji) la colonna
+    // Il sito confronta il percorso decodificato (sito/index.php): si salva così. Con caratteri a 4 byte (emoji) la colonna
     // utf8 non lo terrebbe: quel redirect si salta.
     $da = rawurldecode($da);
     if (preg_match('/[\x{10000}-\x{10FFFF}]/u', $da) || !mb_check_encoding($da, 'UTF-8')) { $s['esito']['avvisi']['redirect_emoji'] = ($s['esito']['avvisi']['redirect_emoji'] ?? 0) + 1; return; }
@@ -214,7 +214,7 @@ function importa_wp_nascondi(string $chiave, string $slug): void {
     save_setting('importa_wp_nascosti', json_encode($n));
 }
 
-/** Una categoria o un tag. Se lo slug c'e gia in plumeCMS si usa quello che c'e. */
+/** Una categoria o un tag. Se lo slug c'è già in plumeCMS si usa quello che c'è. */
 function importa_wp_termine(array &$s, string $lavoro, string $tipo, array $t): void {
     $genere = $tipo === 'tag' ? 'tag' : 'categoria';
     if (importa_wp_voce($lavoro, $genere, $t['id'])) return;
@@ -244,7 +244,7 @@ function importa_wp_slug_termine(string $lavoro, string $genere, int $wpId): str
     return $v ? (string)$v['plume_rif'] : '';
 }
 
-/** La data e l'ora di WordPress nel fuso del CMS (da date_gmt, se c'e). [AAAA-MM-GG, HH:MM] */
+/** La data e l'ora di WordPress nel fuso del CMS (da date_gmt, se c'è). [AAAA-MM-GG, HH:MM] */
 function importa_wp_quando(array $x): array {
     $g = (string)($x['date_gmt'] ?? '');
     try {
@@ -304,7 +304,7 @@ function importa_wp_contenuto(array &$s, string $lavoro, string $passo, array $x
         importa_wp_redirect($s, $lavoro, '/?p=' . $wpId, $nuovo);
         if ($passo === 'pagine') importa_wp_redirect($s, $lavoro, '/?page_id=' . $wpId, $nuovo);
     }
-    // Quello che non e entrato, per il riepilogo (in parole semplici).
+    // Quello che non è entrato, per il riepilogo (in parole semplici).
     $av = [];
     if (!empty($iv['note']['builder'])) $av[] = 'fatto con ' . $iv['note']['builder'] . ': entra il testo, la grafica va rifatta nell\'editor';
     if (!empty($note['shortcode'])) $av[] = 'tolti gli shortcode ' . implode(', ', array_map(fn($n) => "[$n]", array_keys($note['shortcode'])));
@@ -440,7 +440,7 @@ function importa_wp_menu(array &$s, string $lavoro, array $m): void {
         if ($voce['url'] === '' || !preg_match('~^(https?://|/|#|mailto:|tel:)~i', $voce['url'])) $voce['url'] = '#';
         $nodi[$v['id']] = ['voce' => $voce, 'padre' => $v['padre']];
     }
-    // L'albero: al massimo tre livelli (quelli piu profondi salgono al terzo).
+    // L'albero: al massimo tre livelli (quelli più profondi salgono al terzo).
     $livello = function ($id) use (&$nodi, &$livello) { $p = $nodi[$id]['padre']; return $p && isset($nodi[$p]) ? 1 + $livello($p) : 0; };
     foreach (array_keys($nodi) as $id) while ($livello($id) > 2) $nodi[$id]['padre'] = $nodi[$nodi[$id]['padre']]['padre'];
     $figli = [];
@@ -463,7 +463,7 @@ function importa_wp_menu(array &$s, string $lavoro, array $m): void {
 // Conferma e annulla
 // ------------------------------------------------------------
 
-/** Quello che e entrato, contato dalla tabella (la verita, anche dopo una ripresa). */
+/** Quello che è entrato, contato dalla tabella (la verita, anche dopo una ripresa). */
 function importa_wp_conteggi(string $lavoro): array {
     $st = db()->prepare('SELECT genere, stato_finale, COUNT(*) AS n FROM ' . tbl('importa_wp_voci') . ' WHERE lavoro = ? GROUP BY genere, stato_finale');
     $st->execute([$lavoro]);
@@ -517,7 +517,7 @@ function importa_wp_conferma(array &$s, int $menuPrincipale = 0): void {
     if (function_exists('sicurezza_log')) sicurezza_log('importa_wp', (string)($_SESSION['admin_username'] ?? ''), (int)($_SESSION['admin_user_id'] ?? 0), 'import da ' . $s['base'] . ' confermato');
 }
 
-/** Annulla: via tutto quello che e entrato con questo lavoro. Ritorna quante cose ha tolto. */
+/** Annulla: via tutto quello che è entrato con questo lavoro. Ritorna quante cose ha tolto. */
 function importa_wp_annulla(array &$s): int {
     $lavoro = (string)($s['lavoro'] ?? '');
     $tolti = 0;

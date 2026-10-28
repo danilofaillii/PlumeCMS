@@ -20,7 +20,7 @@ try {
     if ($azione === 'cambia') {
         $nuovo = (string)($_POST['kit'] ?? '');
         $nome = kit_elenco()[$nuovo]['nome'] ?? '';
-        session_write_close(); // la copia del sito puo durare: le altre schede del pannello non aspettano
+        session_write_close(); // la copia del sito può durare: le altre schede del pannello non aspettano
         ob_start();
         $r = kit_cambia($nuovo, $autore);
         ob_end_clean();

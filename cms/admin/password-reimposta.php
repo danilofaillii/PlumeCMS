@@ -40,10 +40,10 @@ if ($uid && $_SERVER['REQUEST_METHOD'] === 'POST') {
 <div class="login-box">
   <h1>Scegli la password nuova</h1>
   <?php if (!$uid): ?>
-    <p>Questo link non e valido o e scaduto (vale 30 minuti e si usa una volta sola).</p>
+    <p>Questo link non è valido o è scaduto (vale 30 minuti e si usa una volta sola).</p>
     <p><a href="password-dimenticata.php">Chiedi un link nuovo</a></p>
   <?php else: ?>
-    <p>Almeno 12 caratteri, diversa dal nome utente e dalle password piu comuni. Dopo il salvataggio tutte le sessioni aperte si chiudono.</p>
+    <p>Almeno 12 caratteri, diversa dal nome utente e dalle password più comuni. Dopo il salvataggio tutte le sessioni aperte si chiudono.</p>
     <?php if ($error): ?><div class="login-error"><?= h($error) ?></div><?php endif; ?>
     <form method="post">
       <input type="hidden" name="t" value="<?= h($t) ?>">

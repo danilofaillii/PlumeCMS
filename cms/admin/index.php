@@ -38,13 +38,13 @@ $pacchettiAttesa = 0;
 try { require_once dirname(__DIR__) . '/includes/aggiornamenti.php'; $pacchettiAttesa = count(array_filter(agg_lista_pacchetti(), fn($p) => ($p['stato'] ?? '') !== 'applicato')); } catch (Throwable $e) {}
 $avvisi = [];
 $dbAdmin = is_admin(); // sicurezza (ruoli): il redattore vede solo i contenuti; newsletter, richieste, sistema e avvisi sono dell'amministratore
-if ($cronFermo) $avvisi[] = ['Il cron del mattino non gira da ' . ($cronUltimo ? date('d/m H:i', $cronUltimo) : 'mai') . ': controlla la riga in cPanel.', 'cron-log.php'];
+if ($cronFermo) $avvisi[] = [($cronUltimo ? 'Il cron del mattino non gira dal ' . date('d/m H:i', $cronUltimo) : 'Il cron del mattino non è mai partito') . ': controlla la riga in cPanel.', 'cron-log.php'];
 if ($inviiNuovi) $avvisi[] = ["$inviiNuovi " . ($inviiNuovi === 1 ? 'compilazione nuova' : 'compilazioni nuove') . ' dai form.', 'form-submissions.php'];
 if ($pacchettiAttesa) $avvisi[] = ["$pacchettiAttesa " . ($pacchettiAttesa === 1 ? 'pacchetto caricato e non ancora applicato' : 'pacchetti caricati e non ancora applicati') . '.', 'aggiornamenti.php'];
 if (posta_notifica_email() === '') $avvisi[] = ["Manca l'indirizzo degli avvisi: senza, niente email del mattino.", 'impostazioni.php'];
 
 if (!$dbAdmin) $avvisi = [];
-// 1.3.0: c'e una versione nuova di plumeCMS? Solo per l'amministratore, da quello che il pannello sa gia (includes/versione-nuova.php).
+// 1.3.0: c'è una versione nuova di plumeCMS? Solo per l'amministratore, da quello che il pannello sa già (includes/versione-nuova.php).
 $versioneNuova = null; $versioneDaControllare = false;
 if ($dbAdmin) { try { require_once dirname(__DIR__) . '/includes/versione-nuova.php'; $versioneNuova = versione_nuova(); $versioneDaControllare = versione_da_controllare(); } catch (Throwable $e) {} }
 // 1.4.0: il tipo di sito in prova e i primi passi, solo nelle installazioni nuove (impostazioni scritte dall'installatore

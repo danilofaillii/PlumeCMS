@@ -60,7 +60,7 @@
 .sc-corpo{padding:.9rem 1rem}
 .sc-corpo label{display:block;font-size:.78rem;font-weight:600;color:var(--text-muted);margin:.6rem 0 .25rem}
 .sc-corpo label:first-child{margin-top:0}
-.sc-corpo input[type=text],.sc-corpo input[type=url],.sc-corpo input[type=date],.sc-corpo input[type=time],.sc-corpo select,.sc-corpo textarea{width:100%;padding:.45rem .6rem;border:1px solid var(--border);border-radius:8px;font:inherit;font-size:.88rem;background:var(--campo);color:var(--text)}
+.sc-corpo input[type=text],.sc-corpo input[type=password],.sc-corpo input[type=email],.sc-corpo input[type=number],.sc-corpo input[type=url],.sc-corpo input[type=date],.sc-corpo input[type=time],.sc-corpo select,.sc-corpo textarea{width:100%;padding:.45rem .6rem;border:1px solid var(--border);border-radius:8px;font:inherit;font-size:.88rem;background:var(--campo);color:var(--text)}
 .sc-corpo textarea{min-height:70px;resize:vertical;font-family:var(--font)}
 .sc-corpo .hint{font-size:.74rem;color:var(--text-muted);margin-top:.25rem}
 .sc-riga{display:flex;gap:.5rem}.sc-riga>*{flex:1}

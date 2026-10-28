@@ -26,7 +26,7 @@ const SEO_GSC_API = 'https://www.googleapis.com/webmasters/v3/sites/';
 const SEO_GSC_ISPEZIONE = 'https://searchconsole.googleapis.com/v1/urlInspection/index:inspect';
 const SEO_GOOGLE_INDEXING = 'https://indexing.googleapis.com/v3/urlNotifications:publish';
 const SEO_QUOTA_ISPEZIONI = 2000;
-// Il nome del sito nei titoli di oggi (lo stesso di SITO_NOME in sito-seo.php, che pero non e sempre caricato nel pannello).
+// Il nome del sito nei titoli di oggi (lo stesso di SITO_NOME in sito-seo.php, che però non e sempre caricato nel pannello).
 define('SEO_NOME_SITO', (string)cms_impostazione('sito_titolo', cms_impostazione('sito_nome', CMS_NOME)));
 
 /** Gli @id dei nodi fissi del JSON-LD (persona, servizio/organizzazione, sito): il modulo del sito può darne di suoi. */
@@ -38,7 +38,7 @@ function seo_jsonld_id(string $quale): string {
 const SEO_CRAWLER_AI = [
     'GPTBot' => ['OpenAI (ChatGPT)', 'Raccoglie pagine per addestrare i modelli di OpenAI. Bloccarlo non toglie il sito dalle risposte di ChatGPT con ricerca, che usa OAI-SearchBot.'],
     'OAI-SearchBot' => ['OpenAI, ricerca', 'Serve a ChatGPT per cercare e citare pagine in tempo reale. Lasciarlo passare aiuta a essere citati.'],
-    'ChatGPT-User' => ['OpenAI, su richiesta', 'Apre una pagina quando un utente di ChatGPT la chiede. Senza, ChatGPT non puo leggere il sito su richiesta.'],
+    'ChatGPT-User' => ['OpenAI, su richiesta', 'Apre una pagina quando un utente di ChatGPT la chiede. Senza, ChatGPT non può leggere il sito su richiesta.'],
     'ClaudeBot' => ['Anthropic (Claude)', 'Raccoglie pagine per addestrare Claude. Claude-User e Claude-SearchBot restano separati.'],
     'Google-Extended' => ['Google, Gemini', 'Non e un crawler: e un segnale che dice a Google di non usare le pagine per addestrare Gemini. Googlebot e la ricerca non cambiano.'],
     'PerplexityBot' => ['Perplexity', 'Indicizza per il motore di risposta Perplexity. Lasciarlo passare aiuta a comparire fra le fonti citate.'],
@@ -123,7 +123,7 @@ function seo_predefiniti(): array {
     $p = [
         // Verifica della proprieta: valore del meta tag, oppure nome del file HTML (google...html) che il sito serve in radice.
         'verifica' => ['google' => '', 'bing' => '', 'bing_file' => '', 'yandex' => '', 'pinterest' => ''],
-        // IndexNow: attivo appena c'e una chiave. Invio immediato al salvataggio, il resto dal cron.
+        // IndexNow: attivo appena c'è una chiave. Invio immediato al salvataggio, il resto dal cron.
         'indexnow' => ['attivo' => 1, 'subito' => 1],
         // Google: proprieta di Search Console e Indexing API (spenta: Google la ammette solo per JobPosting e BroadcastEvent).
         'google' => ['proprieta' => SITO_URL . '/', 'indexing_attivo' => 0],
@@ -157,7 +157,7 @@ function seo_predefiniti(): array {
     return cms_filtro('seo_predefiniti', $p);
 }
 
-/** La configurazione completa: quello che e salvato sopra i predefiniti. Una query per richiesta; $azzera rilegge dopo un salvataggio. */
+/** La configurazione completa: quello che è salvato sopra i predefiniti. Una query per richiesta; $azzera rilegge dopo un salvataggio. */
 function seo_cfg(bool $azzera = false): array {
     static $c = null;
     if ($c === null || $azzera) {
@@ -249,15 +249,15 @@ function seo_http(string $url, string $metodo = 'GET', ?string $corpo = null, ar
         curl_close($ch);
         return $out;
     }
-    // sicurezza (attacco 6): senza curl la chiamata non puo fissare l'IP appena controllato (il DNS si risolverebbe di nuovo,
-    // finestra di DNS rebinding). Meglio rifiutare con un messaggio chiaro: curl c'e su ogni hosting cPanel.
+    // sicurezza (attacco 6): senza curl la chiamata non può fissare l'IP appena controllato (il DNS si risolverebbe di nuovo,
+    // finestra di DNS rebinding). Meglio rifiutare con un messaggio chiaro: curl c'è su ogni hosting cPanel.
     $out['errore'] = "Manca l'estensione PHP curl: senza, le chiamate esterne (IndexNow, Search Console) restano spente. Si accende da cPanel, Select PHP Version.";
     return $out;
 }
 
 function seo_errore_rete(string $grezzo): string {
     $g = strtolower($grezzo);
-    if (str_contains($g, 'resolve') || str_contains($g, 'getaddrinfo') || str_contains($g, 'name or service')) return 'Il server non raggiunge Internet (il nome del servizio non si risolve). Riprova piu tardi o controlla la rete dell\'hosting.';
+    if (str_contains($g, 'resolve') || str_contains($g, 'getaddrinfo') || str_contains($g, 'name or service')) return 'Il server non raggiunge Internet (il nome del servizio non si risolve). Riprova più tardi o controlla la rete dell\'hosting.';
     if (str_contains($g, 'timed out') || str_contains($g, 'timeout')) return 'Il servizio non ha risposto in tempo.';
     if (str_contains($g, 'ssl') || str_contains($g, 'certificate')) return 'Problema di certificato nel collegamento sicuro: ' . $grezzo;
     return 'Collegamento non riuscito: ' . ($grezzo !== '' ? $grezzo : 'nessuna risposta');
@@ -267,7 +267,7 @@ function seo_errore_rete(string $grezzo): string {
 // Verifica della proprieta e file speciali in radice
 // ------------------------------------------------------------
 
-/** I meta tag di verifica per il <head>. Vuoto se non c'e niente da verificare. */
+/** I meta tag di verifica per il <head>. Vuoto se non c'è niente da verificare. */
 function seo_meta_verifica(): string {
     $v = seo_cfg()['verifica'];
     $righe = [];
@@ -319,7 +319,7 @@ function seo_indexnow_attivo(): bool {
     return seo_indexnow_chiave() !== '' && !empty(seo_cfg()['indexnow']['attivo']);
 }
 
-/** Mette un indirizzo in coda. Un indirizzo gia in coda si aggiorna (tentativi azzerati). */
+/** Mette un indirizzo in coda. Un indirizzo già in coda si aggiorna (tentativi azzerati). */
 function seo_coda_aggiungi(string $url, string $motivo = ''): void {
     seo_installa();
     $url = sito_assoluto_seo($url);
@@ -369,7 +369,7 @@ function seo_indexnow_invia(array $urls, int $timeout = 10): array {
     $corpo = json_encode(['host' => $host, 'key' => $chiave, 'keyLocation' => SITO_URL . "/$chiave.txt", 'urlList' => array_values($urls)], JSON_UNESCAPED_SLASHES);
     $r = seo_http(SEO_INDEXNOW_API, 'POST', $corpo, ['Content-Type: application/json; charset=utf-8'], $timeout);
     $spiega = [200 => 'ricevuto', 202 => 'ricevuto, chiave da verificare', 400 => 'richiesta non valida', 403 => 'chiave non valida o file della chiave non raggiungibile',
-        422 => 'indirizzi non del dominio o chiave non corrispondente', 429 => 'troppe richieste: riprova piu tardi'];
+        422 => 'indirizzi non del dominio o chiave non corrispondente', 429 => 'troppe richieste: riprova più tardi'];
     $ok = in_array($r['codice'], [200, 202], true);
     $msg = $r['errore'] !== '' ? $r['errore'] : ('codice ' . $r['codice'] . ($spiega[$r['codice']] ?? false ? ', ' . $spiega[$r['codice']] : '') . ($r['corpo'] !== '' && !$ok ? ': ' . mb_substr(strip_tags($r['corpo']), 0, 200) : ''));
     seo_log('indexnow', 'invio', $ok ? 'ok' : 'errore', $r['codice'], $msg . "\n" . implode("\n", array_slice($urls, 0, 50)), count($urls));
@@ -420,7 +420,7 @@ function seo_google_sa_salva(string $json): string {
     if (!is_array($j) || ($j['type'] ?? '') !== 'service_account' || empty($j['client_email']) || empty($j['private_key'])) {
         throw new RuntimeException('Il file non sembra la chiave JSON di un service account Google (servono type = service_account, client_email e private_key).');
     }
-    if (!function_exists('openssl_sign')) throw new RuntimeException('Su questo server PHP non ha OpenSSL: la firma del token non e possibile.');
+    if (!function_exists('openssl_sign')) throw new RuntimeException('Su questo server PHP non ha OpenSSL: la firma del token non è possibile.');
     $k = openssl_pkey_get_private($j['private_key']);
     if ($k === false) throw new RuntimeException('La chiave privata nel JSON non si legge.');
     save_setting('seo_google_sa', json_encode($j, JSON_UNESCAPED_SLASHES));
@@ -480,7 +480,7 @@ function seo_google_chiama(string $url, array $ambiti, string $metodo = 'GET', ?
     if ($r['codice'] >= 400 || !is_array($j)) {
         $m = is_array($j) ? (string)($j['error']['message'] ?? $j['error'] ?? '') : '';
         $spiega = match ($r['codice']) {
-            403 => ' Di solito: il service account non e stato aggiunto come utente della proprieta in Search Console, oppure l\'API non e abilitata nel progetto Google Cloud.',
+            403 => ' Di solito: il service account non è stato aggiunto come utente della proprieta in Search Console, oppure l\'API non e abilitata nel progetto Google Cloud.',
             404 => ' La proprieta indicata non esiste con questo nome esatto: controlla "Proprieta di Search Console" (con https:// e la barra finale, oppure sc-domain:dominio).',
             429 => ' Quota giornaliera esaurita: si riprende domani.',
             default => '',
@@ -542,7 +542,7 @@ function seo_gsc_ispezioni_oggi(): int {
 }
 
 /**
- * Ispeziona a lotti: i prossimi N indirizzi della sitemap mai controllati o controllati da piu tempo.
+ * Ispeziona a lotti: i prossimi N indirizzi della sitemap mai controllati o controllati da più tempo.
  * Ritorna [quanti fatti, errore o ''].
  */
 function seo_gsc_ispeziona_lotto(int $n = 20): array {
@@ -587,7 +587,7 @@ function seo_copertura_numeri(): array {
     return $n;
 }
 
-/** Traduzione dei verdetti e degli stati di copertura piu comuni. */
+/** Traduzione dei verdetti e degli stati di copertura più comuni. */
 function seo_copertura_italiano(string $s): string {
     $t = [
         'PASS' => 'Indicizzato', 'NEUTRAL' => 'Escluso', 'FAIL' => 'Errore', 'VERDICT_UNSPECIFIED' => 'Sconosciuto',
@@ -664,7 +664,7 @@ function seo_google_indexing(string $url, string $tipo = 'URL_UPDATED'): array {
 // Analisi e tag nel sito
 // ------------------------------------------------------------
 
-/** Tutto quello che va nel <head> per statistiche e tag, piu i meta di verifica e il codice libero. */
+/** Tutto quello che va nel <head> per statistiche e tag, più i meta di verifica e il codice libero. */
 function seo_head_html(): string {
     $a = seo_cfg()['analisi'];
     $parti = [];
@@ -789,7 +789,7 @@ function seo_og_immagine_predefinita(): string {
     return (string)seo_cfg()['meta']['og_immagine'];
 }
 
-/** Il meta twitter:site, se nel pannello c'e l'account (la card summary_large_image la mette gia la pagina). */
+/** Il meta twitter:site, se nel pannello c'è l'account (la card summary_large_image la mette già la pagina). */
 function seo_meta_twitter(): string {
     $a = seo_cfg()['meta']['twitter_account'];
     return $a !== '' ? '<meta name="twitter:site" content="@' . h(ltrim($a, '@')) . '">' : '';
@@ -799,7 +799,7 @@ function seo_meta_twitter(): string {
 // robots.txt, llms.txt, sitemap
 // ------------------------------------------------------------
 
-/** Il robots.txt predefinito piu le righe dei crawler AI bloccati. */
+/** Il robots.txt predefinito più le righe dei crawler AI bloccati. */
 function seo_robots_txt_predefinito(): string {
     $base = function_exists('extra_robots') ? extra_robots() : "User-agent: *\nAllow: /\n\nSitemap: " . SITO_URL . "/sitemap.xml\n";
     $ai = seo_cfg()['robots_txt']['ai'] ?? [];
@@ -825,7 +825,7 @@ function seo_llms(): string {
     return function_exists('extra_llms') ? extra_llms() : '';
 }
 
-/** llms-full.txt: l'indice piu il testo intero dei pillar e degli articoli indicizzati, in testo semplice. */
+/** llms-full.txt: l'indice più il testo intero dei pillar e degli articoli indicizzati, in testo semplice. */
 function seo_llms_full(): string {
     $out = [seo_llms(), '', '---', '', '# Testi completi', ''];
     $articoli = array_values(array_filter(sito_contenuti(), fn($c) => $c['tipo'] === 'post' && !$c['rediretto'] && $c['seo']['robots'] === 'index'));
@@ -1124,7 +1124,7 @@ function seo_analisi(array $c): array {
         $v('kw_h2', count($hh[1] ?? []) ? $ok(seo_contiene($titoli, $kw)) : 'attenzione', !count($hh[1] ?? []) ? 'Il testo non ha sottotitoli (H2, H3).' : (seo_contiene($titoli, $kw) ? 'La keyword e in almeno un sottotitolo.' : 'La keyword non compare nei sottotitoli H2 e H3.'), 6);
         $d = contenuti_kw_density($testo, $kw);
         $stato = $d['density'] >= 1.8 ? 'ok' : ($d['density'] >= 1.0 ? 'attenzione' : 'no');
-        $v('densita', $stato, 'Densita della keyword: ' . $d['density'] . '% (' . $d['exact_count'] . ' volte esatta). Obiettivo 1,8%.' . ($d['density'] > 3.5 ? ' Sopra il 3,5% e troppo.' : ''), 10);
+        $v('densita', $stato, 'Densita della keyword: ' . $d['density'] . '% (' . $d['exact_count'] . ' volte esatta). Obiettivo 1,8%.' . ($d['density'] > 3.5 ? ' Sopra il 3,5% è troppo.' : ''), 10);
         if ($d['density'] > 3.5) $voci[count($voci) - 1]['stato'] = 'attenzione';
         if ($correlate !== '') {
             $rk = contenuti_kw_correlate($testo, $correlate);
@@ -1140,7 +1140,7 @@ function seo_analisi(array $c): array {
         $lt === 0 ? 'Manca il titolo.' : "Titolo per Google: $lt caratteri, circa $pxT px" . ($pxT > 580 ? ' (Google taglia intorno ai 580 px).' : ($lt < 30 ? ' (corto: sotto i 30 caratteri).' : '.')), 6);
     $ld = mb_strlen($descrizione); $pxD = seo_pixel($descrizione, 7.0);
     $v('descrizione_lunghezza', $ld === 0 ? 'no' : (($ld >= 120 && $ld <= 160) ? 'ok' : 'attenzione'),
-        $ld === 0 ? 'Manca la descrizione per Google: lo snippet lo decide Google.' : "Descrizione: $ld caratteri, circa $pxD px" . ($ld > 160 ? ' (sopra i 160 Google taglia).' : ($ld < 120 ? ' (sotto i 120: c\'e spazio per dire di piu).' : '.')), 6);
+        $ld === 0 ? 'Manca la descrizione per Google: lo snippet lo decide Google.' : "Descrizione: $ld caratteri, circa $pxD px" . ($ld > 160 ? ' (sopra i 160 Google taglia).' : ($ld < 120 ? ' (sotto i 120: c\'è spazio per dire di più).' : '.')), 6);
 
     // Immagini
     $v('immagine', $immagine === '' ? 'no' : ($alt === '' ? 'attenzione' : 'ok'), $immagine === '' ? 'Manca l\'immagine in evidenza.' : ($alt === '' ? 'Immagine in evidenza senza testo alternativo (alt).' : 'Immagine in evidenza con testo alternativo.'), 6);

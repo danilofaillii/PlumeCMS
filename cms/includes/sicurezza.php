@@ -25,7 +25,7 @@ require_once __DIR__ . '/sicurezza-password.php';
 function sicurezza_predefiniti(): array {
     return [
         'tentativi_max' => 5,          // tentativi falliti prima del blocco (per IP e per utente)
-        'blocco_minuti' => 10,         // durata del primo blocco; poi raddoppia a ogni tentativo in piu
+        'blocco_minuti' => 10,         // durata del primo blocco; poi raddoppia a ogni tentativo in più
         'sessione_ore' => 12,          // scadenza assoluta della sessione del pannello
         'inattivita_minuti' => 120,    // scadenza per inattivita
         'totp_admin' => 0,             // 2FA obbligatorio per gli amministratori
@@ -33,14 +33,14 @@ function sicurezza_predefiniti(): array {
         'ip_elenco' => '',             // un IP o una rete (CIDR) per riga
         'csp_sito' => 'applica',       // spenta | rapporto | applica (dalla 1.1.2 applicata: verificata a zero violazioni)
         'csp_pannello' => 'applica',   // spenta | rapporto | applica
-        'csp_extra' => '',             // sorgenti in piu, una per riga: "script-src https://esempio.it"
+        'csp_extra' => '',             // sorgenti in più, una per riga: "script-src https://esempio.it"
         'hsts' => 0,                   // Strict-Transport-Security (solo su https)
         'html_widget' => 'admin',      // chi usa il widget HTML e il testo grezzo: admin | nessuno
         'codice_libero' => 'admin',    // chi usa il codice head/body del pannello SEO: admin | nessuno
         'avvisi_email' => 1,           // email all'amministratore su blocchi e accessi da IP nuovi
         'firma_pacchetti' => 0,        // i pacchetti del pannello Aggiornamenti devono essere firmati
-        'uscita_host' => '',           // host in piu ammessi per le chiamate in uscita, uno per riga
-        'root_php_fino' => 0,          // fino a quando (timestamp) un pacchetto non firmato puo mettere file .php nella radice
+        'uscita_host' => '',           // host in più ammessi per le chiamate in uscita, uno per riga
+        'root_php_fino' => 0,          // fino a quando (timestamp) un pacchetto non firmato può mettere file .php nella radice
     ];
 }
 
@@ -48,7 +48,7 @@ function sicurezza_cfg(bool $azzera = false): array {
     static $c = null;
     if ($c === null || $azzera) {
         $s = json_decode((string)get_setting('sicurezza_cfg', ''), true);
-        // Un modulo puo cambiare i valori di partenza (per esempio la CSP di un sito che ha ancora script vecchi).
+        // Un modulo può cambiare i valori di partenza (per esempio la CSP di un sito che ha ancora script vecchi).
         $pred = sicurezza_predefiniti();
         if (function_exists('cms_filtro')) $pred = array_intersect_key((array)cms_filtro('sicurezza_predefiniti', $pred), $pred) + $pred;
         $c = (is_array($s) ? array_intersect_key($s, $pred) : []) + $pred;
@@ -109,7 +109,7 @@ function sicurezza_schema(): void {
     $colonne = ['users' => [
         'totp_segreto' => "varchar(64) NOT NULL DEFAULT ''", 'totp_attivo' => 'tinyint NOT NULL DEFAULT 0', 'totp_recupero' => 'text',
         'totp_ultimo' => 'int NOT NULL DEFAULT 0', 'sessione_epoca' => 'int NOT NULL DEFAULT 0', 'password_cambiata' => 'datetime DEFAULT NULL',
-        // 1.4.0: l'aspetto del pannello scelto dall'utente (includes/pannello-aspetto.php). Chi c'era gia parte da Aria.
+        // 1.4.0: l'aspetto del pannello scelto dall'utente (includes/pannello-aspetto.php). Chi c'era già parte da Aria.
         'pannello_aspetto' => "varchar(12) NOT NULL DEFAULT 'aria'",
     ]];
     $impronta = md5(serialize([$tabelle, $colonne, DB_NAME]));
@@ -175,7 +175,7 @@ function sicurezza_log(string $evento, string $utente = '', int $utenteId = 0, s
         sicurezza_schema();
         db()->prepare('INSERT INTO ' . tbl('sicurezza_log') . ' (evento, utente, utente_id, ip, user_agent, dettagli, creato) VALUES (?,?,?,?,?,?,NOW())')
             ->execute([mb_substr($evento, 0, 40), mb_substr($utente, 0, 100), $utenteId, sicurezza_ip(), sicurezza_user_agent(), mb_substr($dettagli, 0, 2000)]);
-        // Il registro non cresce all'infinito: ogni tanto si potano le righe piu vecchie di sei mesi.
+        // Il registro non cresce all'infinito: ogni tanto si potano le righe più vecchie di sei mesi.
         if (random_int(1, 200) === 1) db()->exec('DELETE FROM ' . tbl('sicurezza_log') . ' WHERE creato < DATE_SUB(NOW(), INTERVAL 180 DAY)');
     } catch (Throwable $e) {
         error_log('sicurezza_log: ' . $e->getMessage());
@@ -199,7 +199,7 @@ function sicurezza_log_elenco(array $f, int $pagina = 1, int $per = 50): array {
     return [$st->fetchAll(), $tot];
 }
 
-/** I jolly di LIKE (% e _) sfuggiti: la ricerca trova quello che l'utente ha scritto, non di piu. */
+/** I jolly di LIKE (% e _) sfuggiti: la ricerca trova quello che l'utente ha scritto, non di più. */
 function sicurezza_like(string $s): string {
     return addcslashes($s, '%_\\');
 }
@@ -240,11 +240,11 @@ function sicurezza_chiavi_tentativi(string $utente): array {
 
 /**
  * Blocchi del login (1.1.3, decisi dopo il terzo giro di attacco):
- *  - per IP: tentativi_max sbagliati (di partenza 5) e parte un blocco che raddoppia a ogni tentativo in piu;
+ *  - per IP: tentativi_max sbagliati (di partenza 5) e parte un blocco che raddoppia a ogni tentativo in più;
  *  - per nome utente: 20 sbagliati in 15 minuti, da qualunque IP, e parte un blocco di 15 minuti che raddoppia, con
  *    un'email all'amministratore. Durante questo blocco entra lo stesso, con la password giusta, chi arriva da un IP
- *    mai bloccato che ha gia fatto accessi riusciti con quell'utente (riga "Accesso durante un blocco" nel registro):
- *    cosi un anonimo che sbaglia apposta non chiude fuori il proprietario.
+ *    mai bloccato che ha già fatto accessi riusciti con quell'utente (riga "Accesso durante un blocco" nel registro):
+ *    così un anonimo che sbaglia apposta non chiude fuori il proprietario.
  */
 const SICUREZZA_UTENTE_MAX = 20;
 const SICUREZZA_UTENTE_FINESTRA = 15; // minuti: la finestra in cui si contano i 20 tentativi, e la durata del primo blocco
@@ -263,14 +263,14 @@ function sicurezza_login_blocchi(string $utente): array {
     return $out;
 }
 
-/** Compatibilita: il blocco piu lungo fra IP e nome utente. */
+/** Compatibilita: il blocco più lungo fra IP e nome utente. */
 function sicurezza_login_bloccato(string $utente): int {
     return max(sicurezza_login_blocchi($utente));
 }
 
 /**
- * Questo IP e "di casa" per l'utente? Ha gia fatto almeno un accesso riuscito con lui (registro degli accessi),
- * non e mai stato bloccato (nessuna riga "blocco" per ip:<ip>) e non e bloccato adesso.
+ * Questo IP e "di casa" per l'utente? Ha già fatto almeno un accesso riuscito con lui (registro degli accessi),
+ * non e mai stato bloccato (nessuna riga "blocco" per ip:<ip>) e non è bloccato adesso.
  */
 function sicurezza_ip_fidato(int $utenteId): bool {
     if ($utenteId <= 0) return false;
@@ -315,8 +315,8 @@ function sicurezza_login_fallito(string $utente): void {
                 db()->prepare('UPDATE ' . tbl('sicurezza_tentativi') . ' SET avvisato = 1 WHERE chiave = ?')->execute([$k]);
                 sicurezza_log('blocco', $utente, 0, "$k bloccato per $minuti minuti dopo $n tentativi");
                 sicurezza_avvisa($perUtente ? 'Nome utente del pannello bloccato' : 'Accessi falliti al pannello: blocco attivo', $perUtente
-                    ? "Dopo $n tentativi sbagliati in " . SICUREZZA_UTENTE_FINESTRA . " minuti, da uno o piu indirizzi, il nome utente \"$utente\" e bloccato per $minuti minuti. Nessuno e entrato: la password non ha funzionato. Il proprietario entra lo stesso dai computer da cui ha gia fatto accesso. Dettagli nella pagina Sicurezza del pannello."
-                    : "Dopo $n tentativi sbagliati l'accesso da questo indirizzo e bloccato per $minuti minuti ($k). Se non eri tu, nessuno e entrato: la password non ha funzionato. Puoi vedere i tentativi nella pagina Sicurezza del pannello.");
+                    ? "Dopo $n tentativi sbagliati in " . SICUREZZA_UTENTE_FINESTRA . " minuti, da uno o più indirizzi, il nome utente \"$utente\" è bloccato per $minuti minuti. Nessuno è entrato: la password non ha funzionato. Il proprietario entra lo stesso dai computer da cui ha già fatto accesso. Dettagli nella pagina Sicurezza del pannello."
+                    : "Dopo $n tentativi sbagliati l'accesso da questo indirizzo è bloccato per $minuti minuti ($k). Se non eri tu, nessuno è entrato: la password non ha funzionato. Puoi vedere i tentativi nella pagina Sicurezza del pannello.");
             }
         }
     }
@@ -336,8 +336,8 @@ function sicurezza_login_riuscito(string $utente, bool $tieniUtente = false): vo
 
 /**
  * Password dimenticata (sicurezza, attacco 8): un conteggio a parte, per IP e per email, che non tocca quello del login.
- * Cosi chi conosce l'email di un utente puo al massimo fermare le richieste di reset per quell'email, mai il suo accesso.
- * Limiti: 3 richieste l'ora per email, 10 l'ora per IP. Ritorna i secondi d'attesa (0 = si puo).
+ * Così chi conosce l'email di un utente può al massimo fermare le richieste di reset per quell'email, mai il suo accesso.
+ * Limiti: 3 richieste l'ora per email, 10 l'ora per IP. Ritorna i secondi d'attesa (0 = si può).
  */
 function sicurezza_reset_attesa(string $email): int {
     sicurezza_schema();
@@ -394,7 +394,7 @@ function sicurezza_sblocca(string $chiave): void {
 /**
  * sicurezza (attacco 3): l'hash finto per il ramo "utente che non esiste" del login, con lo stesso algoritmo e gli stessi
  * parametri degli account veri (sicurezza_password_hash). Si calcola una volta e resta nelle impostazioni; se l'algoritmo
- * del server cambia (password_needs_rehash), si rifa. Cosi verificare un utente vero o uno inventato costa lo stesso tempo.
+ * del server cambia (password_needs_rehash), si rifa. Così verificare un utente vero o uno inventato costa lo stesso tempo.
  */
 function sicurezza_hash_finto(): string {
     static $h = null;
@@ -467,7 +467,7 @@ function sicurezza_login_completa(array $user): void {
             $visti = array_unique(array_column($st->fetchAll(), 'ip'));
             if ($visti && !in_array(sicurezza_ip(), $visti, true)) {
                 sicurezza_log('nuovo_ip', (string)$user['username'], (int)$user['id']);
-                sicurezza_avvisa('Accesso amministratore da un indirizzo nuovo', 'L\'utente ' . $user['username'] . ' e entrato nel pannello da un IP mai usato prima. Se non eri tu, cambia subito la password dal pannello e usa "Esci da tutti i dispositivi" nella pagina Sicurezza.');
+                sicurezza_avvisa('Accesso amministratore da un indirizzo nuovo', 'L\'utente ' . $user['username'] . ' è entrato nel pannello da un IP mai usato prima. Se non eri tu, cambia subito la password dal pannello e usa "Esci da tutti i dispositivi" nella pagina Sicurezza.');
             }
         } catch (Throwable $e) { error_log('nuovo_ip: ' . $e->getMessage()); }
     }
@@ -653,13 +653,13 @@ function sicurezza_recupero_usa(array $user, string $codice): bool {
     return true;
 }
 
-/** Il 2FA e richiesto a questo utente (attivo per lui, oppure obbligatorio per gli admin)? */
+/** Il 2FA è richiesto a questo utente (attivo per lui, oppure obbligatorio per gli admin)? */
 function sicurezza_2fa_richiesto(array $user): bool {
     if (sicurezza_spento()) return false;
     return !empty($user['totp_attivo']);
 }
 
-/** Un amministratore senza 2FA quando il 2FA e obbligatorio: deve configurarlo prima di fare altro. */
+/** Un amministratore senza 2FA quando il 2FA è obbligatorio: deve configurarlo prima di fare altro. */
 function sicurezza_2fa_da_configurare(array $user): bool {
     if (sicurezza_spento()) return false;
     return sicurezza_cfg()['totp_admin'] && ($user['role'] ?? '') === 'admin' && empty($user['totp_attivo']);
@@ -756,7 +756,7 @@ function sicurezza_csp(string $contesto): string {
         'frame-src' => $contesto === 'pannello' ? ["'self'"] : ["'self'", 'https://www.youtube-nocookie.com', 'https://www.youtube.com', 'https://player.vimeo.com', 'https://www.google.com', 'https://www.openstreetmap.org'],
     ];
     if ($contesto === 'pannello') {
-        // Le pagine del nucleo non hanno piu gestori in linea (onclick="..."): li aggancia admin/assets/pannello.js dagli attributi data-*.
+        // Le pagine del nucleo non hanno più gestori in linea (onclick="..."): li aggancia admin/assets/pannello.js dagli attributi data-*.
         // Le pagine vecchie dei moduli che ne hanno ancora molti (o li generano in JavaScript) si dichiarano con il filtro
         // 'csp_pannello_inline' e solo su quelle si ammettono gli script in linea. Altrove, un gestore rimasto passa con il suo hash.
         // sicurezza (attacco 2): nessun hash ricavato dall'output (un gestore iniettato si autorizzerebbe da solo). Solo il nonce;
@@ -782,7 +782,7 @@ function sicurezza_csp(string $contesto): string {
         if (preg_match('/^[a-z0-9]{6,20}$/i', (string)($a['clarity'] ?? ''))) { array_push($d['script-src'], 'https://www.clarity.ms', 'https://*.clarity.ms'); $d['connect-src'][] = 'https://*.clarity.ms'; }
         if (sicurezza_https()) $d['upgrade-insecure-requests'] = [];
     }
-    // Sorgenti in piu scritte nella pagina Sicurezza: "direttiva sorgente" per riga.
+    // Sorgenti in più scritte nella pagina Sicurezza: "direttiva sorgente" per riga.
     foreach (preg_split('/\r?\n/', (string)$cfg['csp_extra']) ?: [] as $r) {
         if (!preg_match('/^\s*([a-z-]+-src)\s+(\S.*)$/', trim($r), $m) || !isset($d[$m[1]])) continue;
         foreach (preg_split('/\s+/', trim($m[2])) as $s) if (preg_match('~^(https?://[A-Za-z0-9*.:-]+|\'[a-z-]+\'|data:|blob:)$~', $s)) $d[$m[1]][] = $s;
@@ -878,7 +878,7 @@ function sicurezza_checklist(): array {
     $cfg = sicurezza_cfg();
     $v = [];
     $https = sicurezza_https();
-    $v[] = ['https', $https ? 'ok' : 'no', 'Connessione https', $https ? 'Il pannello e aperto in https.' : 'Il pannello e aperto in http: la password viaggia in chiaro. Attiva il certificato nell\'hosting e la riga "forza https" nel .htaccess.'];
+    $v[] = ['https', $https ? 'ok' : 'no', 'Connessione https', $https ? 'Il pannello è aperto in https.' : 'Il pannello è aperto in http: la password viaggia in chiaro. Attiva il certificato nell\'hosting e la riga "forza https" nel .htaccess.'];
     $v[] = ['csp_sito', $cfg['csp_sito'] === 'applica' ? 'ok' : ($cfg['csp_sito'] === 'rapporto' ? 'attenzione' : 'no'), 'Content-Security-Policy del sito', ['spenta' => 'Spenta.', 'rapporto' => 'In modalita "solo rapporto": il browser segnala, non blocca. Guarda la scheda Rapporti CSP e poi passa ad "applica".', 'applica' => 'Applicata: gli script non previsti vengono bloccati.'][$cfg['csp_sito']]];
     $v[] = ['csp_pannello', $cfg['csp_pannello'] === 'applica' ? 'ok' : ($cfg['csp_pannello'] === 'rapporto' ? 'attenzione' : 'no'), 'Content-Security-Policy del pannello', ['spenta' => 'Spenta.', 'rapporto' => 'In modalita "solo rapporto".', 'applica' => 'Applicata.'][$cfg['csp_pannello']]];
     $v[] = ['hsts', $https ? ($cfg['hsts'] ? 'ok' : 'attenzione') : 'info', 'Strict-Transport-Security', $https ? ($cfg['hsts'] ? 'Attiva: il browser usa sempre https.' : 'Spenta: si accende nelle impostazioni qui sotto, solo quando il certificato funziona bene.') : 'Vale solo su https.'];
@@ -887,25 +887,25 @@ function sicurezza_checklist(): array {
     $v[] = ['expose_php', ini_get('expose_php') ? 'attenzione' : 'ok', 'expose_php', ini_get('expose_php') ? 'PHP annuncia la sua versione: il CMS toglie l\'intestazione X-Powered-By, ma conviene spegnere expose_php nel php.ini.' : 'Spento.'];
     $cfgFile = cms_radice() . '/includes/config.local.php';
     $perm = is_file($cfgFile) ? fileperms($cfgFile) & 0777 : 0;
-    $v[] = ['permessi', $perm && ($perm & 0007) ? 'attenzione' : 'ok', 'Permessi di config.local.php: ' . ($perm ? decoct($perm) : 'n.d.'), $perm & 0007 ? 'Il file e leggibile da tutti gli utenti del server: chmod 640 (o 600) dal file manager di cPanel.' : 'Il file non e leggibile da altri utenti del server.'];
+    $v[] = ['permessi', $perm && ($perm & 0007) ? 'attenzione' : 'ok', 'Permessi di config.local.php: ' . ($perm ? decoct($perm) : 'n.d.'), $perm & 0007 ? 'Il file è leggibile da tutti gli utenti del server: chmod 640 (o 600) dal file manager di cPanel.' : 'Il file non è leggibile da altri utenti del server.'];
     $cfgWeb = sicurezza_autoverifica('/includes/config.local.php');
     $v[] = ['config_web', $cfgWeb === 0 ? 'info' : (in_array($cfgWeb, [403, 404], true) ? 'ok' : 'no'), 'config.local.php dal web', $cfgWeb === 0 ? 'Non verificabile da qui (il server non raggiunge se stesso).' : ($cfgWeb === 200 ? 'RISPONDE 200: il web server lo serve. Controlla il .htaccess (voce includes negata) o la regola Nginx.' : "Negato ($cfgWeb).")];
     $logWeb = sicurezza_autoverifica('/logs/php-errori.log');
-    $v[] = ['logs_web', $logWeb === 0 ? 'info' : (in_array($logWeb, [403, 404], true) ? 'ok' : 'no'), 'Cartella logs dal web', $logWeb === 0 ? 'Non verificabile da qui.' : ($logWeb === 200 ? 'Il log degli errori e leggibile da chiunque: nega la cartella logs nel .htaccess.' : "Negata ($logWeb).")];
+    $v[] = ['logs_web', $logWeb === 0 ? 'info' : (in_array($logWeb, [403, 404], true) ? 'ok' : 'no'), 'Cartella logs dal web', $logWeb === 0 ? 'Non verificabile da qui.' : ($logWeb === 200 ? 'Il log degli errori è leggibile da chiunque: nega la cartella logs nel .htaccess.' : "Negata ($logWeb).")];
     $install = is_dir(cms_radice() . '/install');
     $installWeb = $install ? sicurezza_autoverifica('/install/') : 0;
-    $v[] = ['install', !$install ? 'ok' : (is_file(cms_radice() . '/install/.installato') ? ($installWeb === 200 ? 'attenzione' : 'attenzione') : 'no'), 'Installatore', !$install ? 'La cartella install e stata rimossa.' : (is_file(cms_radice() . '/install/.installato') ? 'La cartella install c\'e ancora: si auto-blocca, ma e meglio toglierla (pulsante qui sotto).' : 'La cartella install c\'e e non risulta bloccata.')];
+    $v[] = ['install', !$install ? 'ok' : (is_file(cms_radice() . '/install/.installato') ? ($installWeb === 200 ? 'attenzione' : 'attenzione') : 'no'), 'Installatore', !$install ? 'La cartella install è stata rimossa.' : (is_file(cms_radice() . '/install/.installato') ? 'La cartella install c\'è ancora: si auto-blocca, ma e meglio toglierla (pulsante qui sotto).' : 'La cartella install c\'è e non risulta bloccata.')];
     // temi: temi/.htaccess lo scrive il CMS da solo (includes/temi.php); qui si dice se c'è.
     $temiHt = is_file(cms_radice() . '/temi/.htaccess');
-    $v[] = ['temi', $temiHt ? 'ok' : 'attenzione', 'PHP vietato dal web nella cartella dei temi', $temiHt ? 'C\'e un .htaccess in temi/.' : 'Manca temi/.htaccess (su Apache): si scrive da solo aprendo Editor, Temi. Su Nginx vale la regola in install/esempi/nginx.txt.'];
+    $v[] = ['temi', $temiHt ? 'ok' : 'attenzione', 'PHP vietato dal web nella cartella dei temi', $temiHt ? 'C\'è un .htaccess in temi/.' : 'Manca temi/.htaccess (su Apache): si scrive da solo aprendo Editor, Temi. Su Nginx vale la regola in install/esempi/nginx.txt.'];
     $upl = cms_uploads_dir();
-    $v[] = ['uploads', is_file($upl . '/.htaccess') ? 'ok' : 'attenzione', 'PHP spento nella cartella delle immagini', is_file($upl . '/.htaccess') ? 'C\'e un .htaccess in ' . basename($upl) . '/.' : 'Manca uploads/.htaccess (su Apache). Il pulsante qui sotto lo scrive; su Nginx vale la regola in INSTALLA.md.'];
+    $v[] = ['uploads', is_file($upl . '/.htaccess') ? 'ok' : 'attenzione', 'PHP spento nella cartella delle immagini', is_file($upl . '/.htaccess') ? 'C\'è un .htaccess in ' . basename($upl) . '/.' : 'Manca uploads/.htaccess (su Apache). Il pulsante qui sotto lo scrive; su Nginx vale la regola in INSTALLA.md.'];
     sicurezza_schema();
     $admin = db()->query('SELECT COUNT(*) FROM ' . tbl('users') . " WHERE role = 'admin'")->fetchColumn();
     $admin2fa = db()->query('SELECT COUNT(*) FROM ' . tbl('users') . " WHERE role = 'admin' AND totp_attivo = 1")->fetchColumn();
     $v[] = ['2fa', $admin2fa == $admin ? 'ok' : ($admin2fa > 0 ? 'attenzione' : 'no'), "Secondo fattore degli amministratori: $admin2fa su $admin", $cfg['totp_admin'] ? 'Obbligatorio per gli amministratori.' : 'Facoltativo. Ogni utente lo attiva da "Il mio accesso"; qui sotto puoi renderlo obbligatorio.'];
     $v[] = ['ip', $cfg['ip_attivo'] ? 'ok' : 'info', 'IP consentiti per il pannello', $cfg['ip_attivo'] ? 'Attiva: entra solo chi viene dagli indirizzi in elenco.' : 'Spenta: il pannello risponde da qualunque indirizzo (protetto da password, limite ai tentativi ed eventuale 2FA).'];
-    if (sicurezza_spento()) $v[] = ['spegni', 'no', 'CMS_SICUREZZA_SPEGNI attivo', 'In config.local.php c\'e la riga di emergenza che spegne 2FA e lista IP. Toglila appena sei rientrato.'];
+    if (sicurezza_spento()) $v[] = ['spegni', 'no', 'CMS_SICUREZZA_SPEGNI attivo', 'In config.local.php c\'è la riga di emergenza che spegne 2FA e lista IP. Toglila appena sei rientrato.'];
     $falliti = (int)db()->query('SELECT COUNT(*) FROM ' . tbl('sicurezza_log') . " WHERE evento IN ('login_fallito','login_bloccato') AND creato > DATE_SUB(NOW(), INTERVAL 1 DAY)")->fetchColumn();
     $v[] = ['falliti', $falliti > 20 ? 'attenzione' : 'info', "Accessi falliti nelle ultime 24 ore: $falliti", $falliti > 20 ? 'Molti tentativi: qualcuno prova le password. Il blocco crescente li rallenta; con la lista IP li fermi del tutto.' : 'Nella norma.'];
     $blocchi = count(sicurezza_blocchi_attivi());

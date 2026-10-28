@@ -2,6 +2,26 @@
 
 Il prodotto si chiama **plumeCMS** (nome scelto il 26 ottobre 2026; prima, per poche ore, "CarbonaraCMS", e ancora prima il provvisorio "Officina": gli zip vecchi si chiamavano `officina-*` e `carbonaracms-*`).
 
+## 1.4.2 (28 ottobre 2026) - Il manuale d'uso
+
+- **Manuale d'uso** (`docs/manuale-uso.md`, e in PDF): come si fa ogni cosa con plumeCMS, in 29 capitoli. Ogni capitolo
+  ha un esempio vero fatto sul sito di prova "Studio Prova", le schermate con i passi numerati, una checklist e i
+  problemi più frequenti. Le schermate le fa `tools/manuale-uso-schermate.js`, che esegue gli esempi come una persona:
+  se un passo del manuale smette di funzionare, lo script si ferma.
+- **Pubblica dalla scheda pubblica anche il testo scritto nell'editor.** Un articolo nuovo scritto nell'editor (Salva
+  bozza) e pubblicato dalla scheda usciva senza testo: la bozza dell'editor restava indietro. Ora "Pubblica" su un
+  contenuto in bozza pubblica anche l'editor; "Aggiorna" su un contenuto già online lascia stare una bozza in lavorazione.
+- Nell'editor, il titolo nuovo di un articolo (Impostazioni) si vede subito nella tela.
+- "1 minuto di lettura", non più "1 minuti".
+- Menu di navigazione: i campi con lo stile del pannello (uscivano con quello del browser) e la Home una volta sola
+  nell'elenco delle pagine.
+- Form: la casella dell'etichetta di ogni campo era larga pochi pixel; ora si legge e si scrive.
+- Utenti e le altre schede: le caselle della password, dell'email e dei numeri con lo stile del pannello.
+- Configurazione email: niente più "testi social" e "report del test" (erano del sito da cui è nato plumeCMS).
+- Dashboard: "Il cron del mattino non è mai partito" al posto di "non gira da mai".
+- Accenti rimessi in tutto il pannello: può, più, già, perché, così, c'è, è stato (227 righe in 54 file, solo testi).
+- Scheda di un articolo, quando non ci sono ancora categorie: dice "Ancora nessuna categoria" invece di un riquadro vuoto.
+
 ## 1.4.1 (28 ottobre 2026) - Il pannello nuovo si vede subito
 
 - **Dopo un aggiornamento il pannello si vede con i fogli nuovi.** Il browser tiene CSS e JavaScript del pannello per un

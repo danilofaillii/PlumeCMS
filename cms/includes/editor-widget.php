@@ -69,7 +69,7 @@ const EDITOR_FOTO_TRATTAMENTI = ['velo' => 'Velo colorato sul bianco e nero', 'b
 const EDITOR_FOTO_EFFETTI = ['' => 'Nessuno', 'zoom' => 'Zoom lento', 'bagliore' => 'Bagliore che attraversa', 'cornice' => 'Cornice luminosa che gira',
     'alone' => 'Alone che pulsa', 'scintille' => 'Scintille che salgono'];
 
-// Le dieci disposizioni dell'Apertura in piu della classica (1.2.6).
+// Le dieci disposizioni dell'Apertura in più della classica (1.2.6).
 require_once __DIR__ . '/editor-hero.php';
 
 const EDITOR_ALLINEAMENTI = ['' => 'Come la sezione', 'left' => 'Sinistra', 'center' => 'Centro', 'right' => 'Destra'];

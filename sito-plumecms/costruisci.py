@@ -165,8 +165,8 @@ def home():
     p.sezione([[riq(funzioni[3])], [riq(funzioni[4])], [riq(funzioni[5])]], **spazi(24, 80))
     # Il ritorno.
     p.sezione([[w('invito_libero', icona='razzo', titolo='Il tuo sito può essere online stasera.', livello='h2',
-                  testo='Scarica plumeCMS, caricalo sul server e rispondi a cinque domande. Se ti blocchi c\'è il manuale. '
-                        'Se il manuale non basta, ce n\'è un secondo.',
+                  testo='Scarica plumeCMS, caricalo sul server e rispondi a cinque domande. Se ti blocchi c\'è il manuale d\'uso, con le schermate. '
+                        'Se il manuale non basta, ce ne sono altri due.',
                   pulsante_testo='Scarica plumeCMS', link={'url': '/scarica/', 'nuova': False})]],
               larghezza='stretta', **tinta(), **spazi(72, 72))
     return dict(slug='home', titolo='plumeCMS', struttura=p.albero(),
@@ -281,21 +281,28 @@ def temi():
 def documentazione(pagine_pdf):
     p = Pagina('documentazione')
     p.sezione([[titolo('I manuali, *da leggere anche offline.*', 'Documentazione',
-                       'Due manuali in PDF, scritti leggendo il codice. Uno per capire come funziona tutto, uno per costruirti il tuo tema.',
+                       'Tre manuali in PDF. Uno per usare plumeCMS, con le schermate vere; uno per capire com\'è fatto dentro; uno per costruirti il tuo tema.',
                        livello='h1', centro=True)]], larghezza='stretta', **spazi(72, 24))
-    man = [('libro-aperto', 'Manuale tecnico', pagine_pdf['manuale-tecnico'], 'manuale-tecnico',
+    man = [('lista-spunte', 'Manuale d\'uso', pagine_pdf['manuale-uso'], 'manuale-uso',
+            'Come si fa ogni cosa: articoli, pagine con l\'editor, menu, form, newsletter, sicurezza, aggiornamenti. Ogni capitolo ha un esempio vero, le schermate con i passi numerati e una checklist.'),
+           ('ingranaggi', 'Manuale tecnico', pagine_pdf['manuale-tecnico'], 'manuale-tecnico',
             'Tutto plumeCMS, pezzo per pezzo: installazione, configurazione, database, editor, temi, SEO, newsletter, sicurezza, aggiornamenti, risoluzione dei problemi.'),
            ('tavolozza', 'Manuale dei temi', pagine_pdf['manuale-temi'], 'manuale-temi',
             'Come si costruisce un tema da zero: cartella, colori, header e footer, CSS, infografiche, PHP, prove, distribuzione. Con il tema d\'esempio Lavagna.')]
     p.sezione([[w('invito_libero', icona=ic, titolo=n, livello='h2', testo=f'{d} {pag} pagine.', pulsante_testo='Scarica il PDF',
                   link={'url': f'/scarica/{f}/', 'nuova': False})] for ic, n, pag, f, d in man], **spazi(24, 56))
-    p.sezione([(50, [titolo('Cosa c\'è nel manuale tecnico', livello='h3'),
+    p.sezione([(34, [titolo('Cosa c\'è nel manuale d\'uso', livello='h3'),
+                     w('elenco_icone', voci=[{'testo': t, 'icona': 'spunta', 'link': ''} for t in
+                                             ['Il pannello in cinque minuti', 'Il primo articolo, e come programmarlo', 'Una pagina con l\'editor, dall\'inizio alla fine',
+                                              'Menu, header, footer, stile e temi', 'Form, popup, newsletter, download', 'SEO, utenti, email, cron, sicurezza',
+                                              'Aggiornare, copiare il sito, portare qui WordPress', 'La checklist prima di andare online']])]),
+               (33, [titolo('Cosa c\'è nel manuale tecnico', livello='h3'),
                      w('elenco_icone', voci=[{'testo': t, 'icona': 'spunta', 'link': ''} for t in
                                              ['Requisiti e installazione, anche in una cartella', 'Il percorso di una richiesta, dal browser al database',
                                               'Le tabelle del database, una per una', 'L\'editor: albero, limiti, controlli, come scrivere un widget',
                                               'Moduli, filtri ed eventi', 'Sicurezza: cosa c\'è e cosa fare se ti chiudi fuori',
                                               'Aggiornamenti, pacchetti, cron, server', 'Cosa fare quando qualcosa non va']])]),
-               (50, [titolo('Cosa c\'è nel manuale dei temi', livello='h3'),
+               (33, [titolo('Cosa c\'è nel manuale dei temi', livello='h3'),
                      w('elenco_icone', voci=[{'testo': t, 'icona': 'spunta', 'link': ''} for t in
                                              ['Il percorso, dal foglio bianco al tema attivo', 'tema.json, stile.json, modelli.json',
                                               'Le variabili CSS e le classi del sito', 'I colori delle infografiche',
@@ -305,8 +312,8 @@ def documentazione(pagine_pdf):
     p.sezione([[ricco('I manuali sono anche dentro lo zip di plumeCMS, nella cartella <code>docs/</code>, insieme agli altri documenti del CMS.')]],
               larghezza='stretta', **spazi(48, 80))
     return dict(slug='documentazione', titolo='Documentazione', struttura=p.albero(),
-                seo_titolo='Documentazione di plumeCMS: manuale tecnico e manuale dei temi in PDF',
-                seo_descrizione='Scarica in PDF il manuale tecnico di plumeCMS e il manuale per costruire i temi.')
+                seo_titolo='Documentazione di plumeCMS: manuale d\'uso, manuale tecnico e manuale dei temi in PDF',
+                seo_descrizione='Scarica in PDF il manuale d\'uso di plumeCMS (con le schermate), il manuale tecnico e il manuale per costruire i temi.')
 
 
 REQUISITI = [{'celle': 'Cosa | Serve'}, {'celle': 'PHP | 8.2 o più nuovo, con PDO MySQL, mbstring, openssl, json'},
@@ -374,7 +381,7 @@ def installazione():
                     'In Impostazioni, Configurazione email imposta il server di posta (SMTP), se il tuo hosting lo chiede.',
                     'In Editor, Temi guarda i tre temi in anteprima e scegli il vestito.',
                     'In Editor, Stile del sito metti i tuoi colori, il logo e l\'icona del sito.']]),
-                pulsanti(('Manuale tecnico (PDF)', '/scarica/manuale-tecnico/', 'filo'), ('Scarica plumeCMS', '/scarica/', 'viola'))]],
+                pulsanti(('Manuale d\'uso (PDF)', '/scarica/manuale-uso/', 'filo'), ('Scarica plumeCMS', '/scarica/', 'viola'))]],
               larghezza='stretta', **spazi(32, 80))
     return dict(slug='installazione', titolo='Installazione', struttura=p.albero(),
                 seo_titolo='Installa plumeCMS in 5 minuti: i cinque passi dell\'installatore',
@@ -397,6 +404,7 @@ def scarica(note):
                 w('download', origine='scelti', disposizione='elenco', mostra_versione=False, voci=[
                     {'file': SERIE, 'titolo': 'plumeCMS {versione}', 'descrizione': 'Lo zip completo per un sito nuovo: estrai, carica sul server, apri il browser.'},
                     {'file': SERIE_AGG, 'titolo': 'plumeCMS {versione}, aggiornamento', 'descrizione': 'Per chi ha già plumeCMS: si carica da Impostazioni, Aggiornamenti.'},
+                    {'file': 'manuale-uso', 'titolo': 'Manuale d\'uso', 'descrizione': 'Come si fa ogni cosa, con esempi, schermate e checklist.'},
                     {'file': 'manuale-tecnico', 'titolo': 'Manuale tecnico', 'descrizione': 'Tutto il CMS, pezzo per pezzo.'},
                     {'file': 'manuale-temi', 'titolo': 'Manuale dei temi', 'descrizione': 'Come si costruisce un tema da zero.'},
                     {'file': 'tema-lavagna', 'titolo': 'Tema Lavagna', 'descrizione': 'Il tema d\'esempio del manuale: verde ardesia e testo color gesso.'}])]],
@@ -437,12 +445,13 @@ def faq():
         ('Mi sono chiuso fuori. E adesso?', 'Se hai dimenticato la password, c\'è il link per reimpostarla. Se ti blocca l\'accesso a due fattori o la lista degli indirizzi permessi, il manuale tecnico spiega la riga da aggiungere al file di configurazione per rientrare.'),
         ('Carico un tema e il pannello dice che contiene codice PHP. Che faccio?', 'È una protezione: un tema con PHP esegue codice sul tuo server, quindi serve un permesso. In Impostazioni > Sicurezza, scheda Impostazioni, riquadro in fondo, scrivi la tua password e premi "Apri la finestra per un\'ora". Poi torna in Editor > Temi e carica di nuovo lo zip. Fallo solo con temi di cui ti fidi.'),
         ('Come pubblico la versione nuova di un file da scaricare?', 'Dalla pagina Download del pannello carichi il file nuovo. Se il nome contiene la versione (guida-1.3.pdf), l\'indirizzo "ultima" e le pagine che la citano passano da soli alla versione nuova.'),
+        ('C\'è una guida per imparare a usarlo?', 'Sì: il manuale d\'uso, in PDF. Ventinove capitoli, dal primo accesso alla checklist prima di andare online, ognuno con un esempio vero, le schermate con i passi numerati e una checklist per sapere quando hai finito.'),
         ('Posso costruirmi un tema mio?', 'Sì: c\'è un manuale apposta, con un tema d\'esempio completo da smontare e rifare tuo.'),
     ]
     p.sezione([[w('faq', voci=[{'domanda': d, 'risposta': r} for d, r in voci], prima_aperta=True)]], larghezza='stretta', **spazi(24, 56))
     p.sezione([[w('invito_libero', icona='domanda', titolo='Non trovi la risposta?', livello='h2',
-                  testo='Nel manuale tecnico c\'è un capitolo intero su cosa fare quando qualcosa non va.',
-                  pulsante_testo='Scarica il manuale tecnico', link={'url': '/scarica/manuale-tecnico/', 'nuova': False})]],
+                  testo='Nel manuale d\'uso ogni capitolo finisce con "Se qualcosa non va", e in fondo ci sono i problemi più frequenti.',
+                  pulsante_testo='Scarica il manuale d\'uso', link={'url': '/scarica/manuale-uso/', 'nuova': False})]],
               larghezza='stretta', **tinta(), **spazi(64, 80))
     return dict(slug='domande-frequenti', titolo='Domande frequenti', struttura=p.albero(),
                 seo_titolo='Domande frequenti su plumeCMS',
@@ -511,7 +520,7 @@ def editor_json():
     piede = [voce('plp01', 'Funzionalità', 'funzionalita'), voce('plp02', 'Temi', 'temi'), voce('plp03', 'Installazione', 'installazione'),
              voce('plp04', 'Domande frequenti', 'domande-frequenti'), voce('plp05', 'Scarica', 'scarica')]
     link = lambda i, e, u: {'id': i, 'etichetta': e, 'tipo': 'link', 'rif': '', 'url': u, 'nuova': False, 'classi': '', 'figli': []}
-    manuali = [link('plq01', 'Manuale tecnico (PDF)', '/scarica/manuale-tecnico/'), link('plq02', 'Manuale dei temi (PDF)', '/scarica/manuale-temi/'),
+    manuali = [link('plq00', 'Manuale d\'uso (PDF)', '/scarica/manuale-uso/'), link('plq01', 'Manuale tecnico (PDF)', '/scarica/manuale-tecnico/'), link('plq02', 'Manuale dei temi (PDF)', '/scarica/manuale-temi/'),
                link('plq03', f'plumeCMS {VU} (zip)', f'/scarica/{SERIE}/'), link('plq04', 'Tema Lavagna (zip)', '/scarica/tema-lavagna/')]
     return {'formato': 'editor-impostazioni', 'versione': 1, 'cms': V, 'creato': '',
             'stile': stile,
@@ -568,6 +577,10 @@ def zip_lavagna(dest):
 
 # Le novità per chi scarica: brevi, scritte qui (il CHANGELOG è per chi sviluppa). Da aggiornare a ogni versione.
 NOVITA = [
+    ('1.4.2', 'Il manuale d\'uso', ['Un manuale nuovo, per chi usa plumeCMS: 29 capitoli, ognuno con un esempio vero, le schermate con i passi numerati e una checklist.',
+                                    'Un articolo scritto nell\'editor e pubblicato dalla scheda esce con il suo testo.',
+                                    'Form, menu e utenti con i campi giusti; accenti rimessi in tutto il pannello.']),
+    ('1.4.1', 'Il pannello nuovo si vede subito', ['Dopo un aggiornamento il browser prende da solo i colori e gli script nuovi del pannello: gli aspetti cambiano al primo clic.']),
     ('1.4.0', 'Il sito si prova, il pannello si sceglie, WordPress si porta qui', [
         'Importa da WordPress: report di quello che c\'è, scegli cosa portare, guardi tutto in prova, poi confermi o annulli.',
         'Il tipo di sito resta in prova finché non premi Definitivo: personale, attività, blog o portfolio, con un clic dalla dashboard.',
@@ -615,7 +628,7 @@ def main():
     if '--schermate' in sys.argv:
         immagini_da_schermate(sys.argv[sys.argv.index('--schermate') + 1])
     zips = {n: os.path.join(REL, 'cms', n + '.zip') for n in (ZIP, ZIP_AGG)}
-    pdf = {n: os.path.join(REL, 'manuali', n + '.pdf') for n in ('manuale-tecnico', 'manuale-temi')}
+    pdf = {n: os.path.join(REL, 'manuali', n + '.pdf') for n in ('manuale-uso', 'manuale-tecnico', 'manuale-temi')}
     for n, f in list(zips.items()) + list(pdf.items()):
         if not os.path.exists(f):
             errore(f'manca {f}: prima python3 tools/cms-pacchetto.py --aggiornamento e node tools/manuali-pdf.js')

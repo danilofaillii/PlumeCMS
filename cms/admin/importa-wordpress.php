@@ -64,7 +64,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             if (in_array($fase, ['importa', 'prova'], true)) throw new ImportaWpErrore('C\'è già un import in corso: confermalo o annullalo prima di cominciarne un altro.');
             $_SESSION['importa_wp_form'] = ['indirizzo' => mb_substr((string)($_POST['indirizzo'] ?? ''), 0, 300), 'utente' => mb_substr((string)($_POST['utente'] ?? ''), 0, 100)];
             $nuovo = importa_wp_collega((string)($_POST['indirizzo'] ?? ''), (string)($_POST['utente'] ?? ''), (string)($_POST['password'] ?? ''));
-            // Le voci di un lavoro vecchio (confermato o annullato) non servono piu.
+            // Le voci di un lavoro vecchio (confermato o annullato) non servono più.
             if (!empty($s['lavoro'])) db()->prepare('DELETE FROM ' . tbl('importa_wp_voci') . ' WHERE lavoro = ?')->execute([(string)$s['lavoro']]);
             importa_wp_stato_salva($nuovo);
             unset($_SESSION['importa_wp_form']);

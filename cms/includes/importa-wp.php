@@ -8,7 +8,7 @@
  *   2. analisi: il CMS legge tutto il sito con la REST (wp-json/wp/v2), a giri brevi, e scrive il report (importa-wp-analisi.php);
  *   3. scelta delle voci; 4. import a giri, dopo una copia del sito (importa-wp-lavoro.php, importa-wp-converti.php);
  *   5. tutto entra "in prova": bozze invisibili ai visitatori, visibili nell'anteprima dell'amministratore;
- *   6. Conferma (pubblica come era su WordPress) oppure Annulla (toglie tutto quello che e entrato).
+ *   6. Conferma (pubblica come era su WordPress) oppure Annulla (toglie tutto quello che è entrato).
  *
  * Sicurezza:
  * - le chiamate vanno solo all'host dato (stesso host e porta; da http a https sullo stesso host si'), mai seguendo un rimando
@@ -40,7 +40,7 @@ function importa_wp_giro(): float {
     return defined('CMS_IMPORTA_WP_GIRO') ? max(0.2, (float)CMS_IMPORTA_WP_GIRO) : (float)IMPORTA_WP_GIRO;
 }
 
-/** Un errore da mostrare com'e a chi usa il pannello. $tipo: dns, irraggiungibile, lento, certificato, interno, altro_host, rest_chiusa, ... */
+/** Un errore da mostrare com'è a chi usa il pannello. $tipo: dns, irraggiungibile, lento, certificato, interno, altro_host, rest_chiusa, ... */
 class ImportaWpErrore extends RuntimeException {
     public string $tipo;
     public function __construct(string $messaggio, string $tipo = 'altro') { parent::__construct($messaggio); $this->tipo = $tipo; }
@@ -76,7 +76,7 @@ function importa_wp_voce_aggiungi(string $lavoro, string $genere, int $wpId, str
         ->execute([$lavoro, $genere, $wpId, mb_substr($wpRif, 0, 500), $plumeId, mb_substr($plumeRif, 0, 500), $statoFinale]);
 }
 
-/** La voce gia entrata per questo id di WordPress (o per questo indirizzo), oppure null. Rende ogni giro ripetibile senza doppioni. */
+/** La voce già entrata per questo id di WordPress (o per questo indirizzo), oppure null. Rende ogni giro ripetibile senza doppioni. */
 function importa_wp_voce(string $lavoro, string $genere, int $wpId = 0, string $wpRif = ''): ?array {
     if ($wpId) {
         $st = db()->prepare('SELECT * FROM ' . tbl('importa_wp_voci') . ' WHERE lavoro = ? AND genere = ? AND wp_id = ? LIMIT 1');
@@ -110,12 +110,12 @@ function importa_wp_stato_salva(array $s): void {
     save_setting('importa_wp_stato', (string)json_encode($s, JSON_UNESCAPED_SLASHES | JSON_INVALID_UTF8_SUBSTITUTE));
 }
 
-/** Toglie la password dallo stato (a lavoro finito, annullato, o fermo da piu di un giorno). */
+/** Toglie la password dallo stato (a lavoro finito, annullato, o fermo da più di un giorno). */
 function importa_wp_dimentica_password(array &$s): void {
     unset($s['segreto']);
 }
 
-/** Un lavoro fermo da piu di IMPORTA_WP_SCADENZA: la password si dimentica (per riprendere si riscrive). */
+/** Un lavoro fermo da più di IMPORTA_WP_SCADENZA: la password si dimentica (per riprendere si riscrive). */
 function importa_wp_scadenza(): void {
     $s = importa_wp_stato();
     if (isset($s['segreto']) && (int)($s['toccato'] ?? 0) < time() - IMPORTA_WP_SCADENZA) {
@@ -433,7 +433,7 @@ function importa_wp_testo(string $s): string {
     return trim(html_entity_decode(strip_tags($s), ENT_QUOTES | ENT_HTML5, 'UTF-8'));
 }
 
-/** Il percorso di un indirizzo del vecchio sito, rispetto alla home di WordPress (che puo stare in una cartella). */
+/** Il percorso di un indirizzo del vecchio sito, rispetto alla home di WordPress (che può stare in una cartella). */
 function importa_wp_percorso(array $s, string $url): string {
     $home = (string)($s['sito']['home'] ?? $s['base']);
     $p = (string)(parse_url($url, PHP_URL_PATH) ?? '/');

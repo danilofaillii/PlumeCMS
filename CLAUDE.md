@@ -45,7 +45,7 @@ prove/          prova-install.js (installazione da zero con Playwright), prova-t
 esempi/         tema-lavagna/: il tema d'esempio del manuale dei temi (provato, non entra nello zip)
 sito-plumecms/  il sito da cui si scarica plumeCMS, fatto con plumeCMS: costruisci.py scrive il pacchetto
                 releases/sito/sito-plumecms-<versione>-parte-<k>-di-<n>.zip, ognuna sotto 1900 KB, da caricare in ordine
-tools/manuali-pdf.js  i due manuali in PDF (releases/manuali/)
+tools/manuali-pdf.js  i tre manuali in PDF (releases/manuali/); tools/manuale-uso-schermate.js le schermate del manuale d'uso
 ```
 
 Stato, decisioni, contesto e diario non stanno qui: stanno nel second brain
@@ -53,7 +53,11 @@ Stato, decisioni, contesto e diario non stanno qui: stanno nel second brain
 
 ## Documenti, in quest'ordine
 
-0. `cms/docs/manuale-tecnico.md`: il manuale tecnico, tutto il CMS scritto leggendo il codice, con `file:riga`.
+0. `cms/docs/manuale-uso.md`: il manuale d'uso per chi usa plumeCMS (29 capitoli, esempio, schermate con i passi
+   numerati, checklist). Le schermate le fa `tools/manuale-uso-schermate.js` eseguendo gli esempi su un sito di prova
+   (kit Attività, in `/home/studioprova/public_html`): **quando cambia il pannello si rifanno le schermate e si
+   ricontrolla il capitolo**. Il PDF deve restare sotto 1900 KB (oggi 1,8 MB).
+   `cms/docs/manuale-tecnico.md`: il manuale tecnico, tutto il CMS scritto leggendo il codice, con `file:riga`.
    Se un documento qui sotto dice una cosa diversa, vale il manuale (appendice A: i punti superati).
    `cms/docs/manuale-temi.md`: il manuale per chi costruisce un tema, con il tema d'esempio Lavagna.
    Quando si cambia il codice, si aggiorna anche il manuale tecnico.
@@ -72,7 +76,8 @@ Stato, decisioni, contesto e diario non stanno qui: stanno nel second brain
   (controllati con `short_open_tag` acceso), il prefisso `newdf_` scritto nel
   codice fuori da `cms.php` e `db.php`, il dominio danilofailli.it nel codice.
 - **Regola di Danilo (27 ottobre 2026): ogni funzionalità nuova aggiorna tre cose, sempre, senza che lo chieda.**
-  1. *Il progetto*: codice, prove, `cms/CHANGELOG.md`, `cms/VERSIONE`, il manuale tecnico (e quello dei temi, se tocca i temi).
+  1. *Il progetto*: codice, prove, `cms/CHANGELOG.md`, `cms/VERSIONE`, il manuale tecnico (e quello dei temi, se tocca i temi),
+     il manuale d'uso se cambia quello che vede chi usa il pannello (capitolo, passi e schermate con `tools/manuale-uso-schermate.js`).
   2. *I PDF*: `node tools/manuali-pdf.js`, dopo aver aggiornato i manuali.
   3. *Il sito di plumeCMS* (`sito-plumecms/costruisci.py`): `NOVITA`; un blocco nella pagina Funzionalità con la schermata
      (pagina aggiunta a `sito-plumecms/schermate.js`, immagine in `USATE`); home, Domande frequenti o Installazione se la
@@ -85,7 +90,7 @@ Stato, decisioni, contesto e diario non stanno qui: stanno nel second brain
 - **Pacchetto di aggiornamento** per un'installazione esistente:
   `python3 tools/cms-pacchetto.py --aggiornamento`. Si carica dal pannello,
   Impostazioni, Aggiornamenti.
-- **Versione**: `cms/VERSIONE` (oggi 1.4.0) e una voce in `cms/CHANGELOG.md` a ogni
+- **Versione**: `cms/VERSIONE` (oggi 1.4.2) e una voce in `cms/CHANGELOG.md` a ogni
   zip con contenuto diverso. Mai cambiare il contenuto di una versione già data.
 - **Prove** prima di dire finito:
   - `php -n -d short_open_tag=1 -l` su ogni file PHP toccato, `node --check` sui js;
@@ -121,7 +126,14 @@ Le decisioni complete, con data e perché, stanno nel second brain, `plumecms/de
 
 ## Stato al 28 ottobre 2026
 
-Fatto: plumeCMS 1.4.0 (28 ottobre): import da WordPress (`includes/importa-wp*.php`, `admin/importa-wordpress.php`: report, scelta,
+Fatto: plumeCMS 1.4.2 (28 ottobre): il manuale d'uso (richiesta di Danilo: "deve spiegare come fare qualsiasi cosa con il
+CMS, con esempi pratici, immagini e checklist precise"), e quello che lo script delle schermate ha trovato eseguendo gli
+esempi: articolo scritto nell'editor e pubblicato dalla scheda usciva senza testo, titolo dell'articolo non aggiornato nella
+tela, campi senza stile in Menu, Form (etichetta larga pochi pixel) e Utenti, "testi social" nella pagina Email, accenti
+mancanti in 54 file. Prove: install radice e cartella 37/37, attacchi 163/163, aggiornamento 1.4.1 -> 1.4.2 13/13 (sito
+uguale tranne "1 minuto di lettura" e il conto alla rovescia), sito di plumeCMS in cinque parti 74/74, file del pannello 6/6.
+1.4.1: fogli e script del pannello con la data nell'indirizzo (gli aspetti non cambiavano sul primo sito aggiornato:
+memoria del browser), `prova-file-pannello.js`. 1.4.0 (28 ottobre): import da WordPress (`includes/importa-wp*.php`, `admin/importa-wordpress.php`: report, scelta,
 import a giri, prova, conferma o annulla; password per le applicazioni, protezione SSRF), tipo di sito in prova fino a Definitivo
 (`admin/tipo-sito.php`, solo installazioni nuove), quattro aspetti del pannello per utente (Aria predefinito, `users.pannello_aspetto`),
 Primi passi nella dashboard, Controlla il server, foto leggere (WebP, `includes/foto.php`), favicon di partenza, Log cron in parole

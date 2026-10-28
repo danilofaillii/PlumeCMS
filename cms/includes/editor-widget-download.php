@@ -1,7 +1,7 @@
 <?php
 /**
  * Widget Download (1.2.4, 27 ottobre 2026): i file del download manager (includes/scaricabili.php, pannello Download)
- * in una pagina. Ogni file con icona del tipo, titolo, descrizione, tipo, peso, versione, data, quante volte e stato
+ * in una pagina. Ogni file con icona del tipo, titolo, descrizione, tipo, peso, versione, data, quante volte è stato
  * scaricato e il pulsante. Si scelgono i file uno per uno (con titolo e descrizione propri, se servono) oppure si
  * mostrano gli ultimi caricati. Disposizione a elenco o a schede. CSS in sito/assets/download.css.
  */
@@ -23,7 +23,7 @@ editor_registra_widget('download', ['etichetta' => 'Download', 'icona' => '&#110
     ec('origine', 'scelta', 'Quali file', 'scelti', 'contenuto', ['sezione' => 'File', 'opzioni' => ['scelti' => 'Quelli che scelgo qui sotto', 'ultimi' => 'Gli ultimi caricati'],
         'aiuto' => 'I file si caricano dal pannello, voce Download.']),
     ec('voci', 'ripetitore', 'File', [['file' => '', 'titolo' => '', 'descrizione' => '']], 'contenuto', ['sezione' => 'File', 'condizione' => ['origine' => 'scelti'],
-        // 'accetta': un nome di file valido resta anche se il file non c'e ancora (un pacchetto porta la pagina prima dei file).
+        // 'accetta': un nome di file valido resta anche se il file non c'è ancora (un pacchetto porta la pagina prima dei file).
         'campi' => [ec('file', 'scelta', 'File', '', 'contenuto', ['opzioni' => editor_download_opzioni(), 'accetta' => '/^[a-z0-9][a-z0-9._-]{0,120}$/']),
                     ec('titolo', 'testo', 'Titolo (vuoto = quello del pannello; {versione} = il numero)', ''),
                     ec('descrizione', 'testolungo', 'Descrizione (vuota = quella del pannello)', '')], 'titolo_voce' => 'titolo']),

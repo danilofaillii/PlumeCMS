@@ -219,6 +219,17 @@ mostrano il sito), e una schermata `<aspetto>-<pagina>.png`; l'editor della home
 rimette Aria e cerca i colori scritti a mano rimasti in `cms/admin` (le eccezioni volute hanno un commento `fisso`).
 Atteso: 56 su 56. Dura circa 8 minuti. Non crea contenuti.
 
+## tools/manuale-uso-schermate.js (1.4.2)
+
+Le schermate del manuale d'uso, ed è anche una prova: esegue gli esempi del manuale come una persona (articolo scritto
+nell'editor e pubblicato dalla scheda, articolo programmato, pagina "Lavora con noi" con colonne, immagine, elenco,
+pulsante, sezione pronta e form compilato dal sito, menu, popup, campagna, utente, download) e si ferma al primo passo
+che non riesce. Serve un plumeCMS appena installato con il kit Attività (`prova-kit.js <base> attivita <db> ...`), in una
+cartella con un nome che si può mostrare (le schermate di Log cron e Aggiornamenti mostrano il percorso: si usa
+`/home/studioprova/public_html`). `node tools/manuale-uso-schermate.js <base> prova Collaudo-Officina-2026`. Dura circa
+5 minuti. Atteso: nessun "FERMO", 70 immagini, sotto 1450 KB in tutto; poi `node tools/manuali-pdf.js` e il manuale
+d'uso sotto 1900 KB.
+
 ## prova-file-pannello.js (1.4.1)
 
 Fogli e script del pannello con la data nell'indirizzo. `node prove/prova-file-pannello.js <base> <utente> <password>`.

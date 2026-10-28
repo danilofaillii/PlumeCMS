@@ -13,7 +13,7 @@ $adminTitle = 'Libreria Media';
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     verify_csrf();
     if (($_POST['azione'] ?? '') === 'foto_impostazioni') {
-        // 1.4.0: foto piu leggere, acceso o spento e lato massimo. Solo l'amministratore.
+        // 1.4.0: foto più leggere, acceso o spento e lato massimo. Solo l'amministratore.
         if (!is_admin()) { http_response_code(403); exit('Solo l\'amministratore cambia questa impostazione.'); }
         $lato = (int)($_POST['foto_lato_max'] ?? 0);
         if ($lato < 800 || $lato > 8000) flash('error', 'Il lato massimo va da 800 a 8000 pixel.');

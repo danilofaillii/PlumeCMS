@@ -248,7 +248,7 @@ function sito_importa_pagina(array $j): string {
 /**
  * I file da scaricare dal sito (1.2.3; download manager dalla 1.2.4, includes/scaricabili.php): stanno in
  * uploads/scaricabili/ e si aprono da /scarica/<nome>/, senza estensione nell'indirizzo (il .htaccess del CMS vieta gli
- * .zip, e cosi l'indirizzo non dipende dal server). Ritorna il percorso del file, oppure null.
+ * .zip, e così l'indirizzo non dipende dal server). Ritorna il percorso del file, oppure null.
  */
 function sito_scaricabile(string $nome): ?string {
     if (!preg_match('/^[a-z0-9][a-z0-9._-]{0,120}$/', $nome) || str_contains($nome, '..')) return null;

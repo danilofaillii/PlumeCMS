@@ -12,7 +12,7 @@
  *   'articoli' => [['titolo', 'slug', 'estratto', 'contenuto'], ...]   articoli d'esempio, oltre a quello di benvenuto
  *   'form'     => ['titolo' => ..., 'intro' => ...]   come si presenta il form dei contatti
  * Un blocco e una sezione nella forma corta di includes/sezioni-pronte.php, oppure ['pronta' => '<id>'] per una delle
- * sezioni pronte dell'editor, cosi com'e. Nei testi {sito} diventa il nome del sito e {descrizione} la sua descrizione;
+ * sezioni pronte dell'editor, così com'è. Nei testi {sito} diventa il nome del sito e {descrizione} la sua descrizione;
  * nelle immagini {immagine:N} diventa l'indirizzo di un disegno astratto che il kit scrive in uploads/kit/ (niente
  * immagini da fuori: le disegna kit_immagini(), sono SVG semplici e si sostituiscono dalla libreria come ogni foto).
  *
@@ -21,7 +21,7 @@
  */
 
 // sezioni-pronte.php (e con lui l'editor) si carica solo per costruire: l'elenco dei kit serve all'installatore prima
-// che esista il config.local.php, quando il motore non si puo ancora caricare.
+// che esista il config.local.php, quando il motore non si può ancora caricare.
 
 /** I kit che ci sono: id => ['nome', 'descrizione']. "vuoto" e sempre il primo e non ha un file. */
 function kit_elenco(): array {
@@ -36,7 +36,7 @@ function kit_elenco(): array {
     return $out;
 }
 
-/** I dati di un kit, o null. Un file rotto non ferma l'installatore: il kit semplicemente non c'e. */
+/** I dati di un kit, o null. Un file rotto non ferma l'installatore: il kit semplicemente non c'è. */
 function kit_leggi(string $id): ?array {
     if (!preg_match('/^[a-z0-9-]{2,40}$/', $id) || !is_file(__DIR__ . '/kit/' . $id . '.php')) return null;
     try { $k = require __DIR__ . '/kit/' . $id . '.php'; } catch (Throwable $e) { error_log('kit ' . $id . ': ' . $e->getMessage()); return null; }
@@ -114,7 +114,7 @@ function kit_mappa(string $sito, string $descrizione): array {
 //
 // Il kit si costruisce con kit_costruisci(), la stessa funzione per l'installatore e per il cambio dalla dashboard.
 // Ogni cosa che il kit crea entra in un registro (impostazione kit_prova, JSON) con la sua impronta: lo sha1 dei campi
-// che una persona puo cambiare, preso subito dopo averla creata. Al cambio di kit si toglie solo cio che ha ancora la
+// che una persona può cambiare, preso subito dopo averla creata. Al cambio di kit si toglie solo cio che ha ancora la
 // stessa impronta (il kit l'ha fatto e nessuno l'ha toccato); il resto resta, e il riquadro lo dice.
 //
 //   kit_prova = {"kit": "portfolio", "stato": "prova"|"definitivo", "dal": "AAAA-MM-GG HH:MM:SS",
@@ -126,7 +126,7 @@ function kit_mappa(string $sito, string $descrizione): array {
 
 const KIT_IMPOSTAZIONE = 'kit_prova';
 
-/** I campi di una pagina o di un articolo che una persona puo cambiare (il resto lo scrive il CMS da solo). */
+/** I campi di una pagina o di un articolo che una persona può cambiare (il resto lo scrive il CMS da solo). */
 const KIT_CAMPI_IMPRONTA = ['title', 'slug', 'status', 'html', 'content', 'excerpt', 'struttura', 'struttura_bozza', 'seo_title', 'seo_description',
     'meta_description', 'robots', 'tldr', 'faq', 'immagine_url', 'featured_image', 'featured_image_alt', 'header_id', 'footer_id', 'publish_at',
     'publish_date', 'publish_time', 'categorie', 'tags', 'tag_slugs', 'author', 'type', 'keyword_target', 'cta', 'content_format'];
@@ -143,13 +143,13 @@ function kit_prova_salva(array $s): void {
     save_setting(KIT_IMPOSTAZIONE, json_encode($s, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES));
 }
 
-/** Vero finche si puo ancora cambiare tipo di sito: installazione della 1.4.0 o successiva, e niente Definitivo. */
+/** Vero finché si può ancora cambiare tipo di sito: installazione della 1.4.0 o successiva, e niente Definitivo. */
 function kit_in_prova(): bool {
     $s = kit_prova();
     return $s !== null && $s['stato'] === 'prova';
 }
 
-/** L'impronta di quello che una voce del registro e adesso; null se non c'e piu. */
+/** L'impronta di quello che una voce del registro e adesso; null se non c'è più. */
 function kit_impronta(array $voce): ?string {
     $t = (string)($voce['t'] ?? '');
     if ($t === 'pagina' || $t === 'articolo') {
@@ -201,11 +201,11 @@ function kit_vuoto_home(string $sito, string $descrizione): array {
 
 /**
  * Costruisce i contenuti di un kit: il form dei contatti, le pagine (home compresa), gli articoli, il menu Principale.
- * La usano l'installatore (database vuoto) e il cambio di tipo di sito (kit_cambia). Servono gia caricati contenuti.php,
- * editor.php, form.php, menu-nav.php e modelli.php, e il menu Principale gia creato (menu_installa).
- * Un indirizzo gia occupato (una pagina che la persona ha scritto o cambiato) non si tocca: la pagina del kit si salta.
- * $opz: 'form_id' => il form da usare (gia esistente), 'form_nostro' => true se e ancora quello del kit e si puo
- *       riscrivere titolo e intro; 'menu' => false per lasciare il menu com'e; 'oggi' => la data di uscita.
+ * La usano l'installatore (database vuoto) e il cambio di tipo di sito (kit_cambia). Servono già caricati contenuti.php,
+ * editor.php, form.php, menu-nav.php e modelli.php, e il menu Principale già creato (menu_installa).
+ * Un indirizzo già occupato (una pagina che la persona ha scritto o cambiato) non si tocca: la pagina del kit si salta.
+ * $opz: 'form_id' => il form da usare (già esistente), 'form_nostro' => true se e ancora quello del kit e si può
+ *       riscrivere titolo e intro; 'menu' => false per lasciare il menu com'è; 'oggi' => la data di uscita.
  * Ritorna ['log' => [...], 'creati' => [voci del registro], 'saltati' => [['tipo', 'titolo', 'slug'], ...]].
  */
 function kit_costruisci(string $kitId, string $sito, string $descrizione, string $autore, array $opz = []): array {
@@ -235,7 +235,7 @@ function kit_costruisci(string $kitId, string $sito, string $descrizione, string
         }
     }
 
-    // Le pagine. Un indirizzo gia preso resta di chi lo ha.
+    // Le pagine. Un indirizzo già preso resta di chi lo ha.
     $pagina = function (string $titolo, string $slug, array $albero, string $testo = '') use ($autore, $oggi, &$creati, &$saltati, &$log): int {
         if (!contenuti_slug_libero('pagine', $slug, 0)) { $saltati[] = ['pagina', $titolo, $slug]; return 0; }
         $id = contenuti_salva('pagine', 0, ['title' => $titolo, 'slug' => $slug, 'stato' => 'pubblicato', 'data' => $oggi, 'ora' => '00:00', 'contenuto' => $testo, 'robots' => 'index'], $autore);
@@ -252,7 +252,7 @@ function kit_costruisci(string $kitId, string $sito, string $descrizione, string
         foreach ((array)($kitDati['pagine'] ?? []) as $pk) {
             if ($pagina((string)$pk['titolo'], (string)$pk['slug'], kit_sezioni((array)$pk['sezioni'], $mappa))) $log[] = 'pagina ' . $pk['titolo'];
         }
-        // I disegni del kit, nel registro: si tolgono quando nessun kit li usa piu e nessuno li ha cambiati.
+        // I disegni del kit, nel registro: si tolgono quando nessun kit li usa più e nessuno li ha cambiati.
         foreach (array_keys(kit_immagini()) as $n) $creati[] = ['t' => 'immagine', 'file' => 'kit/disegno-' . $n . '.svg', 'nome' => 'disegno ' . $n];
     } else {
         if ($pagina('Home', 'home', kit_vuoto_home($sito, $descrizione))) $log[] = 'pagina Home (impostata come home)';
@@ -276,7 +276,7 @@ function kit_costruisci(string $kitId, string $sito, string $descrizione, string
         'excerpt' => 'Il primo articolo del sito, scritto dall\'installatore: aprilo, cambialo o cestinalo.']);
     if ($art) $log[] = 'articolo di benvenuto (' . $art . ')';
     foreach ((array)($kitDati['articoli'] ?? []) as $k => $a) {
-        // Gli articoli d'esempio del kit escono un giorno prima l'uno dell'altro, cosi l'ordine del blog e quello scritto.
+        // Gli articoli d'esempio del kit escono un giorno prima l'uno dell'altro, così l'ordine del blog e quello scritto.
         if ($articolo(['title' => $a['titolo'], 'slug' => $a['slug'], 'data' => date('Y-m-d', strtotime($oggi . ' -' . ($k + 1) . ' day')), 'contenuto' => $a['contenuto'], 'excerpt' => $a['estratto']])) $log[] = 'articolo d\'esempio: ' . $a['titolo'];
     }
 
@@ -303,7 +303,7 @@ function kit_togli_contenuto(string $tipo, int $id): void {
     $tab = tbl($tipo === 'pagine' ? 'pages' : 'articles');
     db()->prepare('DELETE FROM ' . $tab . ' WHERE id = ?')->execute([$id]);
     db()->prepare('DELETE FROM ' . tbl('revisioni') . ' WHERE tipo = ? AND contenuto_id = ?')->execute([$tipo, $id]);
-    try { db()->prepare('DELETE FROM ' . tbl('pagine_revisioni') . ' WHERE tipo = ? AND pagina_id = ?')->execute([$tipo, $id]); } catch (Throwable $e) { /* tabella vecchia, puo mancare */ }
+    try { db()->prepare('DELETE FROM ' . tbl('pagine_revisioni') . ' WHERE tipo = ? AND pagina_id = ?')->execute([$tipo, $id]); } catch (Throwable $e) { /* tabella vecchia, può mancare */ }
 }
 
 /** Un disegno del kit e ancora usato da qualche pagina, articolo o modello? */
@@ -326,8 +326,8 @@ function kit_immagine_usata(string $file): bool {
 /**
  * Cambia il tipo di sito. Prima una copia del sito (includes/copia-sito.php), poi: via quello che il kit di adesso ha
  * creato e nessuno ha toccato, dentro il kit nuovo. Quello che la persona ha scritto o cambiato resta.
- * Ritorna ['copia' => nome dello zip, 'tenuti' => [frasi], 'kit' => id nuovo]. Eccezione se non si puo (Definitivo, kit
- * che non c'e, stesso kit): in quel caso non si e toccato niente.
+ * Ritorna ['copia' => nome dello zip, 'tenuti' => [frasi], 'kit' => id nuovo]. Eccezione se non si può (Definitivo, kit
+ * che non c'è, stesso kit): in quel caso non si e toccato niente.
  */
 function kit_cambia(string $nuovo, string $autore): array {
     $s = kit_prova();
@@ -359,7 +359,7 @@ function kit_cambia_dopo_copia(array $s, string $nuovo, string $autore, string $
         $uguale = $adesso !== null && $adesso === (string)($c['impronta'] ?? '');
         switch ($c['t']) {
             case 'pagina': case 'articolo':
-                if ($adesso === null) break; // l'ha gia tolta la persona
+                if ($adesso === null) break; // l'ha già tolta la persona
                 if ($uguale) kit_togli_contenuto($c['t'] === 'pagina' ? 'pagine' : 'articoli', (int)$c['id']);
                 else { $tenutiSlug[] = $c['t'] . ':' . ($c['slug'] ?? ''); $tenuti[] = ($c['slug'] ?? '') === 'home' && $c['t'] === 'pagina' ? 'La home: l\'hai cambiata ed è rimasta la tua. Le altre pagine sono del sito ' . $kit[$nuovo]['nome'] . '.' : (($c['t'] === 'pagina' ? 'La pagina «' : 'L\'articolo «') . $c['nome'] . '»: ' . ($c['t'] === 'pagina' ? 'l\'hai cambiata ed è rimasta' : 'l\'hai cambiato ed è rimasto') . ' com\'era.'); }
                 break;
@@ -380,13 +380,13 @@ function kit_cambia_dopo_copia(array $s, string $nuovo, string $autore, string $
     }
     $r = kit_costruisci($nuovo, (string)cms_impostazione('sito_nome', CMS_NOME), (string)cms_impostazione('sito_descrizione', ''), $autore, $opz);
     foreach ($r['saltati'] as [$tipo, $titolo, $slug]) {
-        if (in_array($tipo . ':' . $slug, $tenutiSlug, true)) continue; // gia detto: e la pagina cambiata dalla persona
+        if (in_array($tipo . ':' . $slug, $tenutiSlug, true)) continue; // già detto: e la pagina cambiata dalla persona
         $tenuti[] = $slug === 'home'
             ? 'La home: è rimasta la tua, perché l\'avevi cambiata. Le altre pagine sono del sito ' . $kit[$nuovo]['nome'] . '.'
             : ($tipo === 'pagina' ? 'La pagina «' . $titolo . '» del sito ' . $kit[$nuovo]['nome'] . ' non è stata creata: all\'indirizzo /' . $slug . '/ c\'è già la tua.'
                                   : 'L\'articolo d\'esempio «' . $titolo . '» non è stato creato: all\'indirizzo /' . $slug . '/ c\'è già il tuo.');
     }
-    // I disegni del kit di prima che il kit nuovo non usa e che nessuna pagina mostra piu.
+    // I disegni del kit di prima che il kit nuovo non usa e che nessuna pagina mostra più.
     $nuoviFile = array_column(array_filter($r['creati'], fn($c) => $c['t'] === 'immagine'), 'file');
     foreach ($immaginiVecchie as $f) {
         if (in_array($f, $nuoviFile, true) || kit_immagine_usata($f)) continue;
@@ -405,7 +405,7 @@ function kit_cambia_dopo_copia(array $s, string $nuovo, string $autore, string $
     return ['copia' => $copia, 'tenuti' => $tenuti, 'kit' => $nuovo];
 }
 
-/** Definitivo: il tipo di sito resta questo, il riquadro sparisce e il cambio non si puo piu fare. */
+/** Definitivo: il tipo di sito resta questo, il riquadro sparisce e il cambio non si può più fare. */
 function kit_definitivo(string $autore): void {
     $s = kit_prova();
     if (!$s) throw new RuntimeException('Questo sito non ha un tipo di sito in prova.');

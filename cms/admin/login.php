@@ -9,7 +9,7 @@ $error = '';
 $avviso = '';
 if (isset($_GET['annulla'])) { unset($_SESSION['sic_pre']); header('Location: login.php'); exit; }
 $passo2 = !empty($_SESSION['sic_pre']) && time() - (int)$_SESSION['sic_pre']['quando'] <= 300;
-$motivi = ['scaduta' => 'La sessione e scaduta: entra di nuovo.', 'inattiva' => 'Sei rimasto fermo troppo a lungo: entra di nuovo.', 'revocata' => 'Questa sessione e stata chiusa (cambio password o "Esci da tutti i dispositivi"): entra di nuovo.',
+$motivi = ['scaduta' => 'La sessione è scaduta: entra di nuovo.', 'inattiva' => 'Sei rimasto fermo troppo a lungo: entra di nuovo.', 'revocata' => 'Questa sessione è stata chiusa (cambio password o "Esci da tutti i dispositivi"): entra di nuovo.',
     'ip' => 'Il tuo indirizzo IP non e fra quelli consentiti per il pannello.', 'reimpostata' => 'Password reimpostata: entra con quella nuova.'];
 if (isset($_GET['motivo']) && isset($motivi[$_GET['motivo']])) $avviso = $motivi[$_GET['motivo']];
 

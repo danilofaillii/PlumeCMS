@@ -51,7 +51,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $scheda = 'sessioni';
                 break;
             case 'root_php_apri':
-                // Una finestra di un'ora in cui un pacchetto non firmato puo mettere file .php nella radice del sito (trasloco).
+                // Una finestra di un'ora in cui un pacchetto non firmato può mettere file .php nella radice del sito (trasloco).
                 // Serve la password: chi ha rubato solo la sessione non la apre.
                 if (!sicurezza_password_verifica($io, (string)($_POST['password'] ?? ''))) throw new RuntimeException('Password sbagliata: la finestra resta chiusa.');
                 sicurezza_salva_cfg(['root_php_fino' => time() + 3600]);
@@ -71,7 +71,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 break;
             case 'rimuovi_install':
                 $dir = cms_radice() . '/install';
-                if (!is_dir($dir)) throw new RuntimeException('La cartella install non c\'e gia piu.');
+                if (!is_dir($dir)) throw new RuntimeException('La cartella install non c\'è già più.');
                 if (!is_file($dir . '/.installato')) throw new RuntimeException('Questa installazione non risulta fatta dall\'installatore: togli la cartella a mano, dal file manager.');
                 require_once dirname(__DIR__) . '/includes/aggiornamenti.php';
                 agg_rimuovi_cartella($dir);
@@ -82,7 +82,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             case 'scrivi_htaccess_uploads':
                 $dir = cms_uploads_dir();
                 if (!is_dir($dir)) throw new RuntimeException("La cartella delle immagini ($dir) non esiste.");
-                // Il modello sta con l'installatore. Dove install/ non c'e (un sito che l'ha tolta), il file arriva con un pacchetto.
+                // Il modello sta con l'installatore. Dove install/ non c'è (un sito che l'ha tolta), il file arriva con un pacchetto.
                 $modello = cms_radice() . '/install/esempi/htaccess-uploads.txt';
                 if (!is_file($modello)) throw new RuntimeException('Su questa installazione manca il modello (install/esempi/htaccess-uploads.txt): il file uploads/.htaccess si consegna con un pacchetto del pannello Aggiornamenti.');
                 $testo = (string)file_get_contents($modello);
@@ -119,12 +119,12 @@ $schede = ['stato' => 'Stato', 'impostazioni' => 'Impostazioni', 'registro' => '
 <div class="sic-schede"><?php foreach ($schede as $k => $n): ?><a href="sicurezza.php?scheda=<?= $k ?>" class="<?= $scheda === $k ? 'attiva' : '' ?>"><?= h($n) ?></a><?php endforeach; ?></div>
 
 <?php if ($scheda === 'stato'): ?>
-  <p style="font-size:.9rem;color:var(--text-muted);max-width:900px;margin-bottom:1rem">Un colpo d'occhio su come e protetto il sito. Verde: a posto. Giallo: funziona ma si puo stringere. Rosso: da sistemare. Grigio: informazione.</p>
+  <p style="font-size:.9rem;color:var(--text-muted);max-width:900px;margin-bottom:1rem">Un colpo d'occhio su come è protetto il sito. Verde: a posto. Giallo: funziona ma si può stringere. Rosso: da sistemare. Grigio: informazione.</p>
   <div class="sic-lista">
   <?php foreach (sicurezza_checklist() as [$k, $esito, $titolo, $testo]): ?>
     <div class="sic-voce"><div class="sic-pallino sic-<?= $esito ?>"></div><div><b><?= h($titolo) ?></b><span><?= h($testo) ?></span>
       <?php if ($k === 'install' && is_dir(cms_radice() . '/install') && is_file(cms_radice() . '/install/.installato')): ?>
-        <form method="post" style="margin-top:.5rem" data-conferma="Rimuovere la cartella install? Non serve piu dopo l'installazione."><?= csrf_field() ?><input type="hidden" name="azione" value="rimuovi_install"><button class="btn btn-secondary btn-sm">Rimuovi la cartella install</button></form>
+        <form method="post" style="margin-top:.5rem" data-conferma="Rimuovere la cartella install? Non serve più dopo l'installazione."><?= csrf_field() ?><input type="hidden" name="azione" value="rimuovi_install"><button class="btn btn-secondary btn-sm">Rimuovi la cartella install</button></form>
       <?php elseif ($k === 'uploads' && $esito !== 'ok'): ?>
         <form method="post" style="margin-top:.5rem"><?= csrf_field() ?><input type="hidden" name="azione" value="scrivi_htaccess_uploads"><button class="btn btn-secondary btn-sm">Scrivi uploads/.htaccess</button></form>
       <?php endif; ?>
@@ -136,15 +136,15 @@ $schede = ['stato' => 'Stato', 'impostazioni' => 'Impostazioni', 'registro' => '
   <form method="post" class="form-card sic-form"><?= csrf_field() ?><input type="hidden" name="azione" value="salva">
     <h3>Come si entra nel pannello</h3>
     <div class="form-group"><label>Tentativi sbagliati prima del blocco (per indirizzo IP)</label><input type="number" name="cfg[tentativi_max]" min="3" max="20" value="<?= (int)$cfg['tentativi_max'] ?>">
-      <div class="hint">Contati per indirizzo IP. Al blocco parte un'attesa di <strong><?= (int)$cfg['blocco_minuti'] ?> minuti</strong>, che raddoppia a ogni tentativo in piu (fino a un giorno). Un accesso riuscito azzera il conteggio.
-      Per nome utente vale una regola fissa: <strong>20 tentativi sbagliati in 15 minuti</strong>, da qualunque indirizzo, bloccano quel nome per 15 minuti (poi raddoppia) e ti arriva un'email; durante quel blocco entri lo stesso, con la password giusta, dai computer da cui hai gia fatto accesso.</div></div>
+      <div class="hint">Contati per indirizzo IP. Al blocco parte un'attesa di <strong><?= (int)$cfg['blocco_minuti'] ?> minuti</strong>, che raddoppia a ogni tentativo in più (fino a un giorno). Un accesso riuscito azzera il conteggio.
+      Per nome utente vale una regola fissa: <strong>20 tentativi sbagliati in 15 minuti</strong>, da qualunque indirizzo, bloccano quel nome per 15 minuti (poi raddoppia) e ti arriva un'email; durante quel blocco entri lo stesso, con la password giusta, dai computer da cui hai già fatto accesso.</div></div>
     <div class="form-group"><label>Durata del primo blocco (minuti)</label><input type="number" name="cfg[blocco_minuti]" min="1" max="1440" value="<?= (int)$cfg['blocco_minuti'] ?>"></div>
     <div class="form-group"><label>La sessione scade comunque dopo (ore)</label><input type="number" name="cfg[sessione_ore]" min="1" max="720" value="<?= (int)$cfg['sessione_ore'] ?>"><div class="hint">Anche se continui a lavorare: alla scadenza il pannello chiede di rientrare.</div></div>
     <div class="form-group"><label>La sessione scade se resti fermo per (minuti)</label><input type="number" name="cfg[inattivita_minuti]" min="5" max="1440" value="<?= (int)$cfg['inattivita_minuti'] ?>"></div>
     <div class="form-group"><label><input type="checkbox" name="cfg[avvisi_email]" value="1" <?= $cfg['avvisi_email'] ? 'checked' : '' ?>> Avvisami per email quando scatta un blocco o un amministratore entra da un IP mai visto</label><div class="hint">All'indirizzo degli avvisi (Impostazioni, Configurazione email).</div></div>
 
     <h4>Secondo fattore (2FA)</h4>
-    <div class="sic-riquadro"><strong>Prima di renderlo obbligatorio</strong>: attiva il secondo fattore sul tuo accesso da <a href="account.php">Il mio accesso</a> e salva gli otto codici di recupero. Se perdi il telefono e i codici, un altro amministratore puo azzerare il tuo 2FA dalla voce Utenti; se sei l'unico, la riga di emergenza da mettere in <code>includes/config.local.php</code> e <code>define('CMS_SICUREZZA_SPEGNI', true);</code> (poi la togli).</div>
+    <div class="sic-riquadro"><strong>Prima di renderlo obbligatorio</strong>: attiva il secondo fattore sul tuo accesso da <a href="account.php">Il mio accesso</a> e salva gli otto codici di recupero. Se perdi il telefono e i codici, un altro amministratore può azzerare il tuo 2FA dalla voce Utenti; se sei l'unico, la riga di emergenza da mettere in <code>includes/config.local.php</code> e <code>define('CMS_SICUREZZA_SPEGNI', true);</code> (poi la togli).</div>
     <div class="form-group"><label><input type="checkbox" name="cfg[totp_admin]" value="1" <?= $cfg['totp_admin'] ? 'checked' : '' ?> <?= empty($io['totp_attivo']) ? 'disabled title="Prima attiva il tuo secondo fattore"' : '' ?>> Secondo fattore obbligatorio per tutti gli amministratori</label>
       <div class="hint">Un amministratore senza 2FA, al prossimo accesso, deve configurarlo prima di fare altro. I redattori restano liberi di attivarlo.</div></div>
 
@@ -154,16 +154,16 @@ $schede = ['stato' => 'Stato', 'impostazioni' => 'Impostazioni', 'registro' => '
     <div class="form-group"><label>Indirizzi o reti ammessi (uno per riga, anche in forma 192.168.1.0/24 o 2001:db8::/32)</label><textarea name="cfg[ip_elenco]" placeholder="<?= h(sicurezza_ip()) ?>"><?= h($cfg['ip_elenco']) ?></textarea></div>
 
     <h4>Intestazioni di sicurezza e Content-Security-Policy</h4>
-    <div class="hint" style="margin-bottom:.6rem">La CSP dice al browser da dove possono arrivare script, stili, immagini e frame. In modalita <em>solo rapporto</em> il browser segnala le violazioni (scheda Rapporti CSP) senza bloccare niente: lasciala cosi qualche giorno, guarda i rapporti, poi passa ad <em>applica</em>. Gli script dei tag di analisi (GA4, Tag Manager, Pixel, Clarity) entrano nella CSP solo se sono accesi nella voce SEO.</div>
+    <div class="hint" style="margin-bottom:.6rem">La CSP dice al browser da dove possono arrivare script, stili, immagini e frame. In modalita <em>solo rapporto</em> il browser segnala le violazioni (scheda Rapporti CSP) senza bloccare niente: lasciala così qualche giorno, guarda i rapporti, poi passa ad <em>applica</em>. Gli script dei tag di analisi (GA4, Tag Manager, Pixel, Clarity) entrano nella CSP solo se sono accesi nella voce SEO.</div>
     <?php foreach (['csp_sito' => 'CSP del sito pubblico', 'csp_pannello' => 'CSP del pannello'] as $k => $et): ?>
     <div class="form-group"><label><?= $et ?></label><select name="cfg[<?= $k ?>]">
       <?php foreach (['spenta' => 'Spenta', 'rapporto' => 'Solo rapporto (il browser segnala, non blocca)', 'applica' => 'Applica (il browser blocca)'] as $v => $n): ?><option value="<?= $v ?>" <?= $cfg[$k] === $v ? 'selected' : '' ?>><?= $n ?></option><?php endforeach; ?>
     </select></div>
     <?php endforeach; ?>
-    <div class="form-group"><label>Sorgenti in piu (una per riga: direttiva e indirizzo, per esempio <code>frame-src https://www.google.com</code>)</label><textarea name="cfg[csp_extra]" placeholder="script-src https://esempio.it"><?= h($cfg['csp_extra']) ?></textarea><div class="hint">Serve se un widget HTML carica uno script o un frame da un sito che la CSP non conosce (lo vedi nei rapporti).</div></div>
+    <div class="form-group"><label>Sorgenti in più (una per riga: direttiva e indirizzo, per esempio <code>frame-src https://www.google.com</code>)</label><textarea name="cfg[csp_extra]" placeholder="script-src https://esempio.it"><?= h($cfg['csp_extra']) ?></textarea><div class="hint">Serve se un widget HTML carica uno script o un frame da un sito che la CSP non conosce (lo vedi nei rapporti).</div></div>
     <div class="form-group"><label><input type="checkbox" name="cfg[hsts]" value="1" <?= $cfg['hsts'] ? 'checked' : '' ?>> Strict-Transport-Security (il browser usa sempre https per sei mesi)</label><div class="hint">Solo quando il certificato funziona bene: se poi https si rompe, i browser non aprono il sito in http.</div></div>
 
-    <h4>Chi puo scrivere codice grezzo</h4>
+    <h4>Chi può scrivere codice grezzo</h4>
     <div class="form-group"><label>Widget HTML dell'editor e scheda Testo in HTML</label><select name="cfg[html_widget]"><option value="admin" <?= $cfg['html_widget'] === 'admin' ? 'selected' : '' ?>>Solo gli amministratori (i redattori vedono il blocco ma, se lo cambiano, diventa testo pulito)</option><option value="nessuno" <?= $cfg['html_widget'] === 'nessuno' ? 'selected' : '' ?>>Nessuno: anche l'amministratore salva solo testo pulito</option></select></div>
     <div class="form-group"><label>Codice libero head/body del pannello SEO</label><select name="cfg[codice_libero]"><option value="admin" <?= $cfg['codice_libero'] === 'admin' ? 'selected' : '' ?>>Attivo (lo scrive l'amministratore, esce su ogni pagina)</option><option value="nessuno" <?= $cfg['codice_libero'] === 'nessuno' ? 'selected' : '' ?>>Spento: il codice resta salvato ma non esce sul sito</option></select>
       <div class="hint">E HTML grezzo che finisce in ogni pagina del sito: incolla solo codice di cui conosci la provenienza.</div></div>
@@ -173,7 +173,7 @@ $schede = ['stato' => 'Stato', 'impostazioni' => 'Impostazioni', 'registro' => '
     <?php $finestraRoot = (int)$cfg['root_php_fino'] > time(); ?>
     <div class="sic-riquadro"><strong>File .php nella radice del sito e nei temi.</strong> Un pacchetto che mette un file eseguibile (.php) nella radice (destinazione <code>root/</code>, per esempio il pacchetto del trasloco), e un tema con codice PHP caricato da Editor, Temi, passano solo se sono firmati, oppure durante una finestra di un'ora che apri qui sotto con la tua password.
       <?= $finestraRoot ? '<br><strong>Finestra aperta fino alle ' . h(date('H:i', (int)$cfg['root_php_fino'])) . '.</strong>' : '' ?></div>
-    <div class="form-group"><label>Altri host verso cui il CMS puo fare chiamate (uno per riga)</label><textarea name="cfg[uscita_host]" placeholder="api.esempio.it"><?= h($cfg['uscita_host']) ?></textarea><div class="hint">Di base: IndexNow, Bing, Google (Search Console). Mai verso indirizzi privati del server.</div></div>
+    <div class="form-group"><label>Altri host verso cui il CMS può fare chiamate (uno per riga)</label><textarea name="cfg[uscita_host]" placeholder="api.esempio.it"><?= h($cfg['uscita_host']) ?></textarea><div class="hint">Di base: IndexNow, Bing, Google (Search Console). Mai verso indirizzi privati del server.</div></div>
     <div style="margin-top:1.2rem"><button class="btn btn-primary">Salva le impostazioni</button></div>
   </form>
   <form method="post" class="form-card sic-form" style="margin-top:1rem"><?= csrf_field() ?>
@@ -228,7 +228,7 @@ $schede = ['stato' => 'Stato', 'impostazioni' => 'Impostazioni', 'registro' => '
 
 <?php else: ?>
   <?php $rap = db()->query('SELECT * FROM ' . tbl('sicurezza_csp') . ' ORDER BY ultimo DESC LIMIT 300')->fetchAll(); ?>
-  <p style="font-size:.9rem;color:var(--text-muted);max-width:900px">Quello che i browser dei visitatori hanno segnalato come fuori dalla Content-Security-Policy. Con la CSP in "solo rapporto" niente di questo e stato bloccato: e l'elenco di cosa si romperebbe passando ad "applica". Uno script tuo che compare qui si aggiunge nelle Sorgenti in piu; uno sconosciuto e un'estensione del browser di qualcuno (frequente: <code>chrome-extension</code>, <code>moz-extension</code>) oppure un tentativo di iniezione.</p>
+  <p style="font-size:.9rem;color:var(--text-muted);max-width:900px">Quello che i browser dei visitatori hanno segnalato come fuori dalla Content-Security-Policy. Con la CSP in "solo rapporto" niente di questo è stato bloccato: e l'elenco di cosa si romperebbe passando ad "applica". Uno script tuo che compare qui si aggiunge nelle Sorgenti in più; uno sconosciuto e un'estensione del browser di qualcuno (frequente: <code>chrome-extension</code>, <code>moz-extension</code>) oppure un tentativo di iniezione.</p>
   <form method="post" style="margin-bottom:1rem"><?= csrf_field() ?><input type="hidden" name="azione" value="csp_svuota"><button class="btn btn-secondary btn-sm">Svuota i rapporti</button></form>
   <div class="admin-table-wrap"><table class="sic-tab"><thead><tr><th>Dove</th><th>Direttiva</th><th>Bloccato</th><th>Pagina</th><th>Volte</th><th>Ultimo</th></tr></thead><tbody>
   <?php foreach ($rap as $r): ?><tr><td><?= h($r['contesto']) ?></td><td class="sic-mono"><?= h($r['direttiva']) ?></td><td class="sic-mono" style="word-break:break-all"><?= h($r['bloccato']) ?></td><td class="sic-mono" style="word-break:break-all"><?= h($r['documento']) ?></td><td><?= (int)$r['conteggio'] ?></td><td><?= h(date('d/m H:i', strtotime($r['ultimo']))) ?></td></tr><?php endforeach; ?>

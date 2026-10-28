@@ -179,7 +179,7 @@ function vista_articolo_testa(array $c, string $html): string {
         . ($cat ? ' · <a href="/category/' . h($cat['slug']) . '/" style="text-decoration:none">' . h($cat['name']) . '</a>' : '');
     return '<div class="wrap"><header class="art-testa"><span class="occhiello">' . $occhiello . '</span><h1>' . h($c['titolo']) . '</h1>'
         . '<div class="art-meta">' . (cms_impostazione('autore_predefinito', '') !== '' ? '<span>' . h((string)cms_impostazione('autore_predefinito')) . '</span>' : '') . '<time datetime="' . h($c['data']) . '">' . sito_data_estesa($c['data']) . '</time>'
-        . ($html !== '' ? '<span>' . sito_minuti_lettura($html) . ' minuti di lettura</span>' : '') . '</div></header></div>';
+        . ($html !== '' ? '<span>' . (($m = sito_minuti_lettura($html)) === 1 ? '1 minuto' : $m . ' minuti') . ' di lettura</span>' : '') . '</div></header></div>';
 }
 
 /**
@@ -450,7 +450,7 @@ function vista_home(): string {
 }
 
 /**
- * L'icona del sito nella scheda del browser (1.4.0). Quella dello Stile del sito, se c'e; altrimenti l'icona di
+ * L'icona del sito nella scheda del browser (1.4.0). Quella dello Stile del sito, se c'è; altrimenti l'icona di
  * partenza di plumeCMS (sito/assets/favicon.svg, e favicon.ico per i browser che non leggono l'SVG), servita anche a
  * /favicon.ico dal sito (sito/index.php). Con il CMS in una cartella gli indirizzi la portano (SITO_ASSET, cms_base).
  */

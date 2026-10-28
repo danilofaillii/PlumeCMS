@@ -28,7 +28,7 @@ function sicurezza_qr_svg(string $testo, int $scala = 5, int $margine = 4): stri
     return $out . '"/></svg>';
 }
 
-/** La matrice dei moduli (array di righe di 0/1), oppure null se il testo e troppo lungo. */
+/** La matrice dei moduli (array di righe di 0/1), oppure null se il testo è troppo lungo. */
 function sicurezza_qr_matrice(string $testo): ?array {
     // Versione, totale codeword, codeword di correzione per blocco, blocchi [n, dati] del gruppo 1 e 2 (livello M).
     $tab = [
@@ -138,7 +138,7 @@ function sicurezza_qr_matrice(string $testo): ?array {
         $su = !$su;
     }
 
-    // 5. Maschera: si prova ognuna delle otto e si tiene quella con la penalita piu bassa (regole 1 e 2).
+    // 5. Maschera: si prova ognuna delle otto e si tiene quella con la penalita più bassa (regole 1 e 2).
     $formato = [0x5412, 0x5125, 0x5E7C, 0x5B4B, 0x45F9, 0x40CE, 0x4F97, 0x4AA0]; // livello M, maschere 0-7
     $migliore = null; $minPen = PHP_INT_MAX;
     for ($mask = 0; $mask < 8; $mask++) {
@@ -171,7 +171,7 @@ function sicurezza_qr_matrice(string $testo): ?array {
     return $migliore;
 }
 
-/** Penalita delle regole 1 (file di 5 o piu moduli uguali) e 2 (blocchi 2x2 uguali). */
+/** Penalita delle regole 1 (file di 5 o più moduli uguali) e 2 (blocchi 2x2 uguali). */
 function sicurezza_qr_penalita(array $m, int $n): int {
     $p = 0;
     for ($r = 0; $r < $n; $r++) {

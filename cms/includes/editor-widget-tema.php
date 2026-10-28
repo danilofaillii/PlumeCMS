@@ -342,7 +342,7 @@ editor_registra_widget('info_contenuto', ['etichetta' => 'Autore, data e categor
             static $dentro = false;
             if (!$dentro) { $dentro = true; try { $min = sito_minuti_lettura(sito_html_contenuto($c['c'])); } finally { $dentro = false; } }
         }
-        if ($min > 0) $pezzi[] = '<span>' . $min . ' minuti di lettura</span>';
+        if ($min > 0) $pezzi[] = '<span>' . ($min === 1 ? '1 minuto' : $min . ' minuti') . ' di lettura</span>';
     }
     if (!$pezzi) return '';
     $sep = $v['separatore'] !== '' ? '<i class="ed-info-sep" aria-hidden="true">' . h($v['separatore']) . '</i>' : '';

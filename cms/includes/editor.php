@@ -125,8 +125,8 @@ function editor_nomi_di_prima(string $tipo, array $imp): array {
 
 /**
  * sicurezza: i widget che emettono codice grezzo (html) sono dell'amministratore. Per chi non lo e, ogni widget html dell'albero
- * nuovo deve esistere identico nell'albero gia salvato ($precedente): se e nuovo o cambiato, il suo codice passa dal sanificatore
- * e diventa testo. Cosi un redattore non inietta script, e non perde i blocchi HTML che l'amministratore aveva messo.
+ * nuovo deve esistere identico nell'albero già salvato ($precedente): se e nuovo o cambiato, il suo codice passa dal sanificatore
+ * e diventa testo. Così un redattore non inietta script, e non perde i blocchi HTML che l'amministratore aveva messo.
  */
 function editor_blinda_codice(array $albero, ?array $precedente): array {
     $noti = [];
@@ -154,9 +154,9 @@ function editor_blinda_codice(array $albero, ?array $precedente): array {
     return $albero;
 }
 
-/** Chi puo usare il widget HTML e il codice grezzo: l'amministratore (impostazione html_widget della pagina Sicurezza), oppure nessuno. */
+/** Chi può usare il widget HTML e il codice grezzo: l'amministratore (impostazione html_widget della pagina Sicurezza), oppure nessuno. */
 function editor_puo_codice(): bool {
-    if (!function_exists('is_logged_in') || !is_logged_in()) return true; // fuori dal pannello (cron, importazioni): codice gia fidato
+    if (!function_exists('is_logged_in') || !is_logged_in()) return true; // fuori dal pannello (cron, importazioni): codice già fidato
     $chi = 'admin';
     if (function_exists('sicurezza_cfg')) { try { $chi = (string)sicurezza_cfg()['html_widget']; } catch (Throwable $e) {} }
     return $chi === 'admin' && function_exists('is_admin') && is_admin();
@@ -355,7 +355,7 @@ function editor_disegna(array $albero, string $percorso = '/', bool $anteprima =
             . ($anteprima ? ' data-ed-id="' . $s['id'] . '" data-ed-tipo="sezione"' : '') . '>'
             . '<div class="ed-contenitore ' . $contenitore . '"><div class="ed-riga">' . $colonne . '</div></div></' . $tag . '>';
     }
-    // Nella tela dell'editor {versione:<serie>} mostra gia il numero (sul sito lo fa sito_html su tutta la pagina). 1.2.5
+    // Nella tela dell'editor {versione:<serie>} mostra già il numero (sul sito lo fa sito_html su tutta la pagina). 1.2.5
     if ($anteprima && str_contains($html, '{versione:')) { require_once __DIR__ . '/scaricabili.php'; $html = scaricabili_versioni_nel_testo($html); }
     return [$html, editor_css_testo($css)];
 }

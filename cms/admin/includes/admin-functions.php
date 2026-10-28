@@ -98,4 +98,4 @@ function admin_count_by_status(): array {
     return $counts;
 }
 
-// sicurezza: handle_upload() (si fidava del tipo dichiarato dal browser) e stata tolta: i caricamenti passano da media_carica() in includes/media.php.
+// sicurezza: handle_upload() (si fidava del tipo dichiarato dal browser) è stata tolta: i caricamenti passano da media_carica() in includes/media.php.

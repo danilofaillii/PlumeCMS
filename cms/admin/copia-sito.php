@@ -64,7 +64,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             @session_start();
             if ($rumore !== '') $r['log'][] = 'Avvisi di PHP durante il lavoro, non bloccanti: ' . mb_substr($rumore, 0, 1500);
             $esito = ['ok' => $r['ok'], 'titolo' => ($r['ok'] ? 'Sito ripristinato dalla copia ' : 'Ripristino con errori dalla copia ') . $file, 'log' => $r['log']];
-            // Il database nuovo puo avere altri utenti: se questo non c'e piu, si rientra con quelli della copia.
+            // Il database nuovo può avere altri utenti: se questo non c'è più, si rientra con quelli della copia.
             $st = db()->prepare('SELECT COUNT(*) FROM ' . tbl('users') . " WHERE id = ? AND username = ? AND role = 'admin'");
             $st->execute([(int)($_SESSION['admin_user_id'] ?? 0), (string)($_SESSION['admin_username'] ?? '')]);
             if (!(int)$st->fetchColumn()) logout(); // al login si entra con gli utenti della copia

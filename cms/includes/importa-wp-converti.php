@@ -1,8 +1,8 @@
 <?php
 /**
- * Import da WordPress (1.4.0): il testo di un articolo o di una pagina diventa HTML semplice e sicuro.
+ * Import da WordPress (1.4.0): il testo di un articolo o di una pagina diventa HTML semplice è sicuro.
  *
- * Si parte dall'HTML che WordPress stesso disegna (content.rendered): i blocchi di Gutenberg sono gia paragrafi, titoli,
+ * Si parte dall'HTML che WordPress stesso disegna (content.rendered): i blocchi di Gutenberg sono già paragrafi, titoli,
  * figure, liste, citazioni e tabelle. Poi, con il parser DOM:
  * - gli embed di YouTube e Vimeo restano video (un iframe costruito qui, con l'id controllato); gli altri embed diventano link;
  * - le immagini del vecchio sito si scaricano nella libreria (importa_wp_media) e l'indirizzo si riscrive; via srcset e sizes,
@@ -34,10 +34,10 @@ function importa_wp_shortcode_nomi(string $raw): array {
 }
 
 /**
- * Il testo nuovo. $voce: la voce dell'indice (per le note), $note: si riempie con quello che non e entrato.
+ * Il testo nuovo. $voce: la voce dell'indice (per le note), $note: si riempie con quello che non è entrato.
  */
 function importa_wp_html(array $s, string $lavoro, string $html, string $raw, array &$note): string {
-    // Shortcode che WordPress non ha eseguito: restano scritti cosi nel testo disegnato. Via il comando, resta quello che c'era dentro.
+    // Shortcode che WordPress non ha eseguito: restano scritti così nel testo disegnato. Via il comando, resta quello che c'era dentro.
     foreach (importa_wp_shortcode_nomi($raw) as $n) {
         $q = preg_quote($n, '~');
         $prima = $html;

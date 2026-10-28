@@ -23,7 +23,7 @@ let n = 0, ko = 0; const ok = (t, c, extra = '') => { n++; if (!c) ko++; console
   ok('indirizzo del sito rilevato', urlRilevato === B, urlRilevato);
   await p.fill('#nome', 'Bottega di prova'); await p.fill('#descrizione', 'Un sito di prova installato dall\'installatore.'); await p.fill('#email', 'sito@esempio.it');
   // 1.1.3: la password dell'amministratore passa dalle stesse regole del pannello (prima bastavano 10 caratteri)
-  for (const [debole, attesa] of [['password1234', /piu usate/], ['prova-di-casa-2026', /nome utente/], ['qwertyuiop12', /tastiera/]]) {
+  for (const [debole, attesa] of [['password1234', /più usate/], ['prova-di-casa-2026', /nome utente/], ['qwertyuiop12', /tastiera/]]) {
     await p.fill('#admin_nome', 'prova'); await p.fill('#admin_email', 'prova@esempio.it'); await p.fill('#admin_password', debole); await p.fill('#admin_password2', debole);
     await Promise.all([p.waitForNavigation(), p.click('button[type=submit]')]);
     const e = await p.locator('.errore').innerText().catch(() => '');

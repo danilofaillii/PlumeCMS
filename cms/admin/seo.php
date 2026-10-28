@@ -55,7 +55,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 break;
             case 'indexnow_genera':
                 seo_indexnow_genera();
-                flash('success', 'Chiave IndexNow generata. Il sito la serve gia in /' . seo_indexnow_chiave() . '.txt.');
+                flash('success', 'Chiave IndexNow generata. Il sito la serve già in /' . seo_indexnow_chiave() . '.txt.');
                 break;
             case 'salva_indexnow':
                 seo_salva('indexnow', ['attivo' => !empty($_POST['indexnow']['attivo']) ? 1 : 0, 'subito' => !empty($_POST['indexnow']['subito']) ? 1 : 0]);
@@ -314,7 +314,7 @@ pre.seo-pre{background:var(--codice-fondo);color:var(--codice-testo);padding:.9r
       <div class="form-group"><label>Google Search Console</label><input type="text" name="verifica[google]" value="<?= h($cfg['verifica']['google']) ?>" placeholder="codice del meta tag, oppure google1234abcd.html" autocomplete="off">
         <div class="hint">Search Console, Aggiungi proprieta, Prefisso URL <code><?= SITO_URL ?>/</code>, metodo <b>Tag HTML</b>: incolla il tag intero o solo il codice. Oppure metodo File HTML: scrivi il nome del file (google....html) e il sito lo serve in radice.</div></div>
       <div class="form-group"><label>Bing Webmaster Tools</label><input type="text" name="verifica[bing]" value="<?= h($cfg['verifica']['bing']) ?>" placeholder="codice del meta tag msvalidate.01" autocomplete="off">
-        <div class="hint">Bing Webmaster Tools, Aggiungi sito, opzione <b>Meta tag HTML</b>. In alternativa Bing si puo collegare importando la proprieta da Search Console, senza codice.</div></div>
+        <div class="hint">Bing Webmaster Tools, Aggiungi sito, opzione <b>Meta tag HTML</b>. In alternativa Bing si può collegare importando la proprieta da Search Console, senza codice.</div></div>
       <div class="form-group"><label>Bing: contenuto di BingSiteAuth.xml (facoltativo)</label><textarea name="verifica[bing_file]" rows="3" placeholder="&lt;?xml version=&quot;1.0&quot;?&gt;&lt;users&gt;&lt;user&gt;CODICE&lt;/user&gt;&lt;/users&gt;"><?= h($cfg['verifica']['bing_file']) ?></textarea>
         <div class="hint">Solo se scegli il metodo del file XML: il sito risponde a /BingSiteAuth.xml con questo contenuto.</div></div>
       <div class="form-group"><label>Yandex Webmaster</label><input type="text" name="verifica[yandex]" value="<?= h($cfg['verifica']['yandex']) ?>" placeholder="codice del meta tag yandex-verification" autocomplete="off"></div>
@@ -354,7 +354,7 @@ pre.seo-pre{background:var(--codice-fondo);color:var(--codice-testo);padding:.9r
 
   <div class="seo-card">
     <h3>Google: service account per Search Console</h3>
-    <p class="seo-nota">Per leggere i dati di Search Console da qui (copertura, prestazioni, sitemap) serve un <b>service account</b> di Google Cloud, un utente tecnico con una chiave JSON. La chiave resta nel database del pannello e non si vede piu: qui compare solo l'email.</p>
+    <p class="seo-nota">Per leggere i dati di Search Console da qui (copertura, prestazioni, sitemap) serve un <b>service account</b> di Google Cloud, un utente tecnico con una chiave JSON. La chiave resta nel database del pannello e non si vede più: qui compare solo l'email.</p>
     <?php if ($sa): ?>
       <p style="font-size:.86rem">Service account: <b><?= h($sa['client_email']) ?></b><br>Progetto: <?= h((string)($sa['project_id'] ?? '')) ?><br>Chiave privata: salvata (mascherata)</p>
       <div style="display:flex;gap:.5rem;flex-wrap:wrap;margin:.6rem 0">
@@ -379,7 +379,7 @@ pre.seo-pre{background:var(--codice-fondo);color:var(--codice-testo);padding:.9r
     <form method="post" style="margin-top:1rem"><?= csrf_field() ?><input type="hidden" name="azione" value="salva_google">
       <div class="form-group"><label>Proprieta di Search Console</label><input type="text" name="google[proprieta]" value="<?= h($cfg['google']['proprieta']) ?>">
         <div class="hint">Come e scritta in Search Console: <code><?= SITO_URL ?>/</code> per una proprieta Prefisso URL, oppure <code>sc-domain:<?= h((string)preg_replace('/^www\./', '', (string)parse_url(SITO_URL, PHP_URL_HOST))) ?></code> per una proprieta Dominio.</div></div>
-      <div class="seo-interruttori"><label><input type="checkbox" name="google[indexing_attivo]" value="1" <?= $chk($cfg['google']['indexing_attivo']) ?>><span>Google Indexing API al salvataggio (da usare con giudizio)<small>Google la ammette ufficialmente solo per pagine JobPosting e BroadcastEvent. Su un blog funziona a volte, ma fuori dalle regole: per questo e spenta. Quota 200 notifiche al giorno. Richiede la Web Search Indexing API abilitata e il service account come proprietario in Search Console.</small></span></label></div>
+      <div class="seo-interruttori"><label><input type="checkbox" name="google[indexing_attivo]" value="1" <?= $chk($cfg['google']['indexing_attivo']) ?>><span>Google Indexing API al salvataggio (da usare con giudizio)<small>Google la ammette ufficialmente solo per pagine JobPosting e BroadcastEvent. Su un blog funziona a volte, ma fuori dalle regole: per questo è spenta. Quota 200 notifiche al giorno. Richiede la Web Search Indexing API abilitata e il service account come proprietario in Search Console.</small></span></label></div>
       <button class="btn btn-primary btn-sm" type="submit" style="margin-top:.6rem">Salva</button>
     </form>
     <?php if ($sa && !empty($cfg['google']['indexing_attivo'])): ?>
@@ -390,7 +390,7 @@ pre.seo-pre{background:var(--codice-fondo);color:var(--codice-testo);padding:.9r
 
   <div class="seo-card">
     <h3>Sitemap e Google</h3>
-    <p class="seo-nota">La sitemap e <a href="<?= SITO_URL ?>/sitemap.xml" target="_blank"><?= SITO_URL ?>/sitemap.xml</a>, con <?= count(seo_sitemap_voci()) ?> indirizzi, ricalcolata a ogni richiesta. In Search Console va inviata una volta (Sitemap, Aggiungi nuova sitemap): poi Google la rilegge da solo. Il vecchio indirizzo di "ping" (<code>google.com/ping?sitemap=</code>) e stato chiuso da Google nel 2023 e non va piu usato.</p>
+    <p class="seo-nota">La sitemap e <a href="<?= SITO_URL ?>/sitemap.xml" target="_blank"><?= SITO_URL ?>/sitemap.xml</a>, con <?= count(seo_sitemap_voci()) ?> indirizzi, ricalcolata a ogni richiesta. In Search Console va inviata una volta (Sitemap, Aggiungi nuova sitemap): poi Google la rilegge da solo. Il vecchio indirizzo di "ping" (<code>google.com/ping?sitemap=</code>) è stato chiuso da Google nel 2023 e non va più usato.</p>
     <?php if ($sa): $sm = seo_gsc_sitemaps(); if (isset($sm['errore'])): ?><p class="seo-no" style="font-size:.84rem"><?= h($sm['errore']) ?></p><?php else: ?>
       <table class="seo-tab"><thead><tr><th>Sitemap in Search Console</th><th>Ultima lettura</th><th>Indirizzi</th><th>Errori</th></tr></thead><tbody>
       <?php foreach ($sm['dati']['sitemap'] ?? [] as $x): ?><tr><td><?= h($x['path'] ?? '') ?></td><td><?= h(substr((string)($x['lastDownloaded'] ?? ''), 0, 16)) ?></td><td><?= (int)(($x['contents'][0]['submitted'] ?? 0)) ?> inviati, <?= (int)(($x['contents'][0]['indexed'] ?? 0)) ?> indicizzati</td><td><?= (int)($x['errors'] ?? 0) ?> errori, <?= (int)($x['warnings'] ?? 0) ?> avvisi</td></tr><?php endforeach; ?>
@@ -409,7 +409,7 @@ pre.seo-pre{background:var(--codice-fondo);color:var(--codice-testo);padding:.9r
 </div>
 <div class="seo-card" style="margin-bottom:1rem">
   <h3>Ispezione degli indirizzi (Search Console)</h3>
-  <p class="seo-nota">Il problema storico del sito: pagine note a Google e fuori dall'indice ("Scansionata, al momento non indicizzata"). Qui si chiede a Search Console il verdetto di ogni indirizzo e si salva: verdetto, stato di copertura, ultima scansione, canonical scelto da Google. La quota di Google e di <?= SEO_QUOTA_ISPEZIONI ?> ispezioni al giorno: i lotti partono dagli indirizzi mai controllati o controllati da piu tempo.</p>
+  <p class="seo-nota">Il problema storico del sito: pagine note a Google e fuori dall'indice ("Scansionata, al momento non indicizzata"). Qui si chiede a Search Console il verdetto di ogni indirizzo e si salva: verdetto, stato di copertura, ultima scansione, canonical scelto da Google. La quota di Google e di <?= SEO_QUOTA_ISPEZIONI ?> ispezioni al giorno: i lotti partono dagli indirizzi mai controllati o controllati da più tempo.</p>
   <?php if (!$sa): ?><p class="seo-att" style="font-size:.86rem">Serve il service account Google: scheda <a href="?scheda=motori">Motori di ricerca</a>.</p><?php else: ?>
   <div style="display:flex;gap:1rem;flex-wrap:wrap;align-items:flex-end">
     <form method="post" class="seo-inline"><?= csrf_field() ?><input type="hidden" name="azione" value="ispeziona"><div class="form-group"><label>Un indirizzo</label><input type="text" name="url" placeholder="/una-pagina-del-sito/"></div><button class="btn btn-primary btn-sm" type="submit">Ispeziona</button></form>
@@ -477,15 +477,15 @@ pre.seo-pre{background:var(--codice-fondo);color:var(--codice-testo);padding:.9r
     <h3>Consenso ai cookie</h3>
     <p class="seo-nota">Il sito oggi non ha un banner dei cookie. Statistiche e pixel usano cookie, e in Italia servono il consenso: con la scelta qui sotto il sito mostra un banner leggero fatto in casa (Accetta / Rifiuta, scelta ricordata nel browser) e carica i tag <b>solo dopo il si</b>. Prima del consenso non parte niente.</p>
     <div class="seo-interruttori">
-      <label><input type="radio" name="analisi[consenso]" value="banner" <?= $a['consenso'] !== 'subito' ? 'checked' : '' ?>><span>Carica i tag solo dopo il consenso (banner del sito)<small>Consigliato. Il banner compare solo se c'e almeno un tag.</small></span></label>
+      <label><input type="radio" name="analisi[consenso]" value="banner" <?= $a['consenso'] !== 'subito' ? 'checked' : '' ?>><span>Carica i tag solo dopo il consenso (banner del sito)<small>Consigliato. Il banner compare solo se c'è almeno un tag.</small></span></label>
       <label><input type="radio" name="analisi[consenso]" value="subito" <?= $a['consenso'] === 'subito' ? 'checked' : '' ?>><span>Carica subito, senza banner<small>Solo se il consenso lo raccoglie un altro strumento, che poi chiama <code>seoTagAvvia()</code>.</small></span></label>
     </div>
     <div class="form-group" style="margin-top:.8rem"><label>Testo del banner</label><textarea name="analisi[banner_testo]" rows="2"><?= h($a['banner_testo']) ?></textarea></div>
   </div>
   <div class="seo-card">
     <h3>Codice personalizzato</h3>
-    <p class="seo-nota">Per tag che non stanno nelle caselle sopra. Viaggia protetto fino al pannello (ModSecurity non lo ferma). Il codice entra cosi com'e: un errore qui si vede su tutto il sito.</p>
-    <p class="seo-nota" style="color:var(--attenzione-testo)"><strong>Attenzione:</strong> questo e HTML grezzo, inserito in ogni pagina senza controlli. Mettici solo codice di cui conosci la provenienza. Chi puo scriverlo si decide in Impostazioni, Sicurezza (voce "Codice libero head/body"): se e spento, il codice resta salvato ma non esce sul sito.</p>
+    <p class="seo-nota">Per tag che non stanno nelle caselle sopra. Viaggia protetto fino al pannello (ModSecurity non lo ferma). Il codice entra così com'è: un errore qui si vede su tutto il sito.</p>
+    <p class="seo-nota" style="color:var(--attenzione-testo)"><strong>Attenzione:</strong> questo e HTML grezzo, inserito in ogni pagina senza controlli. Mettici solo codice di cui conosci la provenienza. Chi può scriverlo si decide in Impostazioni, Sicurezza (voce "Codice libero head/body"): se è spento, il codice resta salvato ma non esce sul sito.</p>
     <div class="form-group"><label>Nel &lt;head&gt;</label><textarea name="analisi[codice_head]" class="codice" rows="4"><?= h($a['codice_head']) ?></textarea></div>
     <div class="form-group"><label>Subito dopo &lt;body&gt;</label><textarea name="analisi[codice_body_inizio]" class="codice" rows="3"><?= h($a['codice_body_inizio']) ?></textarea></div>
     <div class="form-group"><label>Prima di &lt;/body&gt;</label><textarea name="analisi[codice_body_fine]" class="codice" rows="3"><?= h($a['codice_body_fine']) ?></textarea></div>
@@ -507,7 +507,7 @@ pre.seo-pre{background:var(--codice-fondo);color:var(--codice-testo);padding:.9r
       <div class="form-group"><label>Descrizione predefinita</label><textarea name="meta[descrizione]" rows="2" maxlength="300"><?= h($m['descrizione']) ?></textarea><div class="hint">Per le pagine senza descrizione ne estratto. Vuota = nessun meta description (Google sceglie da solo).</div></div>
       <div class="form-group"><label>Immagine social predefinita (Open Graph)</label><input type="text" name="meta[og_immagine]" value="<?= h($m['og_immagine']) ?>" placeholder="https://..."><div class="hint">Per i contenuti senza immagine in evidenza. La card Twitter resta summary_large_image.</div></div>
       <div class="form-group"><label>Account X / Twitter del sito</label><input type="text" name="meta[twitter_account]" value="<?= h($m['twitter_account']) ?>" placeholder="nomeaccount"></div>
-      <div class="seo-interruttori"><label><input type="checkbox" name="meta[robots_avanzati]" value="1" <?= $chk($m['robots_avanzati']) ?>><span>Direttive avanzate nel meta robots<small><code>max-snippet:-1, max-image-preview:large, max-video-preview:-1</code>: Google puo mostrare snippet lunghi e immagini grandi (anche nelle risposte IA). Oggi acceso.</small></span></label></div>
+      <div class="seo-interruttori"><label><input type="checkbox" name="meta[robots_avanzati]" value="1" <?= $chk($m['robots_avanzati']) ?>><span>Direttive avanzate nel meta robots<small><code>max-snippet:-1, max-image-preview:large, max-video-preview:-1</code>: Google può mostrare snippet lunghi e immagini grandi (anche nelle risposte IA). Oggi acceso.</small></span></label></div>
       <button class="btn btn-primary" type="submit" style="margin-top:.8rem">Salva titoli e meta</button>
     </form>
   </div>
@@ -527,7 +527,7 @@ pre.seo-pre{background:var(--codice-fondo);color:var(--codice-testo);padding:.9r
   <div class="seo-card">
     <h3>robots.txt</h3>
     <form method="post"><?= csrf_field() ?><input type="hidden" name="azione" value="salva_robots_txt">
-      <p class="seo-nota">Il predefinito e quello di oggi (pannello, cron, log, api, feed e ricerca chiusi; due sitemap dichiarate). Se scrivi qui sotto, il sito serve esattamente il tuo testo. Vuoto = predefinito piu i crawler AI fermati qui sotto.</p>
+      <p class="seo-nota">Il predefinito e quello di oggi (pannello, cron, log, api, feed e ricerca chiusi; due sitemap dichiarate). Se scrivi qui sotto, il sito serve esattamente il tuo testo. Vuoto = predefinito più i crawler AI fermati qui sotto.</p>
       <div class="form-group"><label>robots.txt personalizzato</label><textarea name="robots_txt" class="codice" rows="10" placeholder="<?= h(seo_robots_txt_predefinito()) ?>"><?= h($cfg['robots_txt']['personale']) ?></textarea></div>
       <details><summary style="cursor:pointer;font-size:.84rem">Anteprima di quello che il sito serve adesso</summary><pre class="seo-pre"><?= h(seo_robots_txt()) ?></pre></details>
       <h3 style="margin-top:1rem">Crawler delle intelligenze artificiali</h3>
@@ -561,7 +561,7 @@ pre.seo-pre{background:var(--codice-fondo);color:var(--codice-testo);padding:.9r
 <div class="seo-griglia">
   <div class="seo-card">
     <h3>Organizzazione (JSON-LD)</h3>
-    <p class="seo-nota">Il nodo che ogni pagina dichiara su chi pubblica il sito. I valori di partenza sono quelli gia in uso.</p>
+    <p class="seo-nota">Il nodo che ogni pagina dichiara su chi pubblica il sito. I valori di partenza sono quelli già in uso.</p>
     <div class="form-group"><label>Tipo di attivita (schema.org)</label><input type="text" name="org[tipo]" value="<?= h($o['tipo']) ?>"><div class="hint">ProfessionalService (oggi), Organization, LocalBusiness, Person...</div></div>
     <div class="form-group"><label>Nome</label><input type="text" name="org[nome]" value="<?= h($o['nome']) ?>"></div>
     <div class="form-group"><label>Nome del sito (WebSite)</label><input type="text" name="org[nome_sito]" value="<?= h($o['nome_sito']) ?>"></div>
@@ -576,7 +576,7 @@ pre.seo-pre{background:var(--codice-fondo);color:var(--codice-testo);padding:.9r
   </div>
   <div class="seo-card">
     <h3>Persona (E-E-A-T)</h3>
-    <p class="seo-nota">L'autore degli articoli. Piu e preciso, piu i motori capiscono chi parla e con quale competenza.</p>
+    <p class="seo-nota">L'autore degli articoli. Più è preciso, più i motori capiscono chi parla e con quale competenza.</p>
     <div class="form-group"><label>Nome</label><input type="text" name="persona[nome]" value="<?= h($p['nome']) ?>"></div>
     <div class="form-group"><label>Ruolo</label><input type="text" name="persona[ruolo]" value="<?= h($p['ruolo']) ?>"></div>
     <div class="form-group"><label>Foto (indirizzo)</label><input type="text" name="persona[immagine]" value="<?= h($p['immagine']) ?>"></div>
@@ -597,9 +597,9 @@ pre.seo-pre{background:var(--codice-fondo);color:var(--codice-testo);padding:.9r
       <label><input type="checkbox" name="schema[breadcrumb]" value="1" <?= $chk($s['breadcrumb']) ?>><span>BreadcrumbList (Home, Blog, categoria, articolo)</span></label>
       <label><input type="checkbox" name="schema[speakable]" value="1" <?= $chk($s['speakable']) ?>><span>Speakable sulla WebPage<small>Indica agli assistenti vocali e alle IA le parti da leggere: il riquadro In breve e il titolo. Oggi spento.</small></span></label>
     </div>
-    <p class="hint" style="margin-top:.6rem">HowTo: non c'e un interruttore perche nessun contenuto ha passi strutturati come dati; se un giorno servira, si aggiunge un widget "passi" con i dati e il nodo si emette da li.</p>
+    <p class="hint" style="margin-top:.6rem">HowTo: non c'è un interruttore perché nessun contenuto ha passi strutturati come dati; se un giorno servira, si aggiunge un widget "passi" con i dati e il nodo si emette da li.</p>
     <h3 style="margin-top:1rem">Risposte dirette (AEO)</h3>
-    <p class="seo-nota">I motori di risposta (ChatGPT, Perplexity, le AI Overview di Google) pescano la frase che risponde subito. Nella scheda di ogni contenuto ci sono gia <b>In breve</b> (diventa <code>abstract</code> nell'Article e il riquadro in cima) e le <b>Domande frequenti</b> (FAQPage). Qui le soglie dei controlli.</p>
+    <p class="seo-nota">I motori di risposta (ChatGPT, Perplexity, le AI Overview di Google) pescano la frase che risponde subito. Nella scheda di ogni contenuto ci sono già <b>In breve</b> (diventa <code>abstract</code> nell'Article e il riquadro in cima) e le <b>Domande frequenti</b> (FAQPage). Qui le soglie dei controlli.</p>
     <div class="seo-inline"><div class="form-group"><label>Primo paragrafo: massimo parole</label><input type="number" name="aeo[parole_primo_paragrafo]" value="<?= (int)$ae['parole_primo_paragrafo'] ?>" min="20"></div><div class="form-group"><label>In breve: da</label><input type="number" name="aeo[tldr_min]" value="<?= (int)$ae['tldr_min'] ?>" min="10"></div><div class="form-group"><label>a parole</label><input type="number" name="aeo[tldr_max]" value="<?= (int)$ae['tldr_max'] ?>" min="20"></div></div>
     <div style="margin-top:1rem"><button class="btn btn-primary" type="submit">Salva schema e AEO</button></div>
   </div>

@@ -1,6 +1,6 @@
 # plumeCMS: manuale tecnico
 
-Versione del manuale: 1.9, per plumeCMS 1.4.0 (28 ottobre 2026).
+Versione del manuale: 1.10, per plumeCMS 1.4.2 (28 ottobre 2026).
 
 Questo manuale descrive come è fatto plumeCMS e come funziona, pezzo per pezzo. È scritto leggendo il codice:
 ogni numero, limite e nome di funzione viene dai file veri, con il riferimento `file:riga` quando serve a chi
@@ -10,7 +10,8 @@ l'elenco di quei punti sta nell'appendice A.
 I percorsi sono relativi alla cartella del CMS, quella che si carica sul server (nel repository è `cms/`).
 `includes/sito.php` vuol dire `cms/includes/sito.php`.
 
-Per costruire un tema c'è un manuale a parte: `docs/manuale-temi.md`.
+Per costruire un tema c'è un manuale a parte: `docs/manuale-temi.md`. Per **usare** plumeCMS (scrivere, costruire
+pagine, gestire il sito) c'è il manuale d'uso, `docs/manuale-uso.md`, con le schermate: questo racconta come è fatto dentro.
 
 ## Indice
 
@@ -753,6 +754,11 @@ cestino e non torna mai in bozza.
 - se cambia lo slug di un contenuto già pubblicato crea da solo un redirect 301 dal vecchio indirizzo al nuovo,
   senza catene;
 - alla fine avvisa i motori con IndexNow, se il contenuto è pubblico e indicizzabile (16.8).
+
+Dalla 1.4.2 la scheda (`admin/contenuto.php`, azione `salva` con `invio=pubblica`), quando il contenuto **era in bozza**,
+pubblica anche la bozza dell'editor visuale: `editor_salva(..., true, ..., 'pubblicato dalla scheda')` con
+`struttura_bozza`. Prima l'articolo scritto nell'editor (Salva bozza) e pubblicato dalla scheda usciva con la
+struttura iniziale, senza testo. "Aggiorna" su un contenuto già pubblicato non tocca una bozza dell'editor in lavorazione.
 
 ### 8.5 Categorie e tag
 
@@ -2111,10 +2117,26 @@ righe `--` e senza caratteri a 4 byte, articoli, test).
 
 ### 23.4 `tools/manuali-pdf.js`
 
-`node tools/manuali-pdf.js` scrive `releases/manuali/manuale-tecnico.pdf` e `manuale-temi.pdf`: pandoc converte il
+`node tools/manuali-pdf.js` scrive `releases/manuali/manuale-uso.pdf` (dalla 1.4.2), `manuale-tecnico.pdf` e `manuale-temi.pdf`: pandoc converte il
 Markdown, Chromium (Playwright) stampa il PDF A4 con copertina, indice cliccabile e numeri di pagina. Carattere Carlito e
 niente tag di accessibilità nel PDF: con i tag e il carattere Inter (variabile) il manuale tecnico pesava 2,1 MB, così 0,9. Si rifà a ogni
 versione, dopo aver aggiornato i manuali.
+
+Il manuale d'uso ha le schermate: la pagina si apre da un file scritto accanto al Markdown (`docs/.stampa-<nome>.html`,
+tolto subito dopo), così `immagini/manuale-uso/...` si trova; ogni immagine sola in un paragrafo diventa una figura con
+la didascalia (il testo alternativo); le checklist (`- [ ]`) diventano caselle. Il PDF deve restare sotto 1900 KB
+(il limite delle parti del sito di plumeCMS): oggi 1,8 MB.
+
+**`tools/manuale-uso-schermate.js` (1.4.2).** Le schermate del manuale d'uso. Esegue gli esempi del manuale come una
+persona, su un plumeCMS appena installato con il kit Attività (`prove/prova-kit.js ... attivita ...`), e fotografa ogni
+passo con i pallini rossi numerati: scrive l'articolo "Chiusi per ferie" nell'editor e lo pubblica dalla scheda, ne
+programma un altro, costruisce la pagina "Lavora con noi" (sezione a due colonne, immagine, elenco, pulsante, sezione
+pronta, form), la mette nel menu, crea un form, un popup, una campagna, un utente, un download. Se un passo non si può
+fare, si ferma: il manuale e il pannello restano d'accordo. `node tools/manuale-uso-schermate.js <base> <utente>
+<password> [capitolo]`. Le foto nascono PNG in `/tmp/manuale-uso-png` e diventano JPEG una volta sola (800 px, qualità
+38) in `docs/immagini/manuale-uso/`; `--stringi` rifà solo la conversione. Le foto d'esempio (disegnate, niente foto di
+terzi) e il report dell'import da WordPress (dalla prova contro un WordPress vero) stanno in `esempi/manuale-uso/`.
+Le immagini non entrano nello zip del CMS (solo il Markdown, in `docs/`).
 
 ### 23.5 Il sito di plumeCMS: `sito-plumecms/costruisci.py`
 

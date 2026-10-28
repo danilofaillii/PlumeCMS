@@ -16,11 +16,11 @@
  * come fa l'editor (impostaColonne in editor.js): uguali al computer, metà sul tablet da tre colonne in su, piene sul telefono.
  *
  * Colori: solo i globali (globale:primario, globale:sfondo-2...) e gli sfondi della sezione che seguono il tema
- * (vetro, gradiente). Cosi un blocco sta bene con il tema chiaro e con quello scuro.
+ * (vetro, gradiente). Così un blocco sta bene con il tema chiaro e con quello scuro.
  *
  *   sezioni_pronte_categorie()          le categorie, nell'ordine del pannello
  *   sezioni_pronte()                    tutte le varianti, per id (dati grezzi)
- *   sezioni_pronte_elementi($id)        le sezioni dell'editor di una variante, validate (null se non c'e)
+ *   sezioni_pronte_elementi($id)        le sezioni dell'editor di una variante, validate (null se non c'è)
  *   sezioni_pronte_per_editor()         l'elenco per il pannello Sezioni: id, categoria, nome, descrizione, elementi
  *   sezioni_pronte_costruisci($sezioni) forma corta -> sezioni dell'editor (non validate)
  */
@@ -60,7 +60,7 @@ function sezioni_pronte(): array {
     return $d;
 }
 
-/** Un widget della forma corta. "form:contatti" diventa il form Contatti del sito (o il primo che c'e): l'id cambia da sito a sito. */
+/** Un widget della forma corta. "form:contatti" diventa il form Contatti del sito (o il primo che c'è): l'id cambia da sito a sito. */
 function sezioni_pronte_widget(array $w): ?array {
     $tipo = (string)($w[0] ?? '');
     $imp = is_array($w[1] ?? null) ? $w[1] : [];

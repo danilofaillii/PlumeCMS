@@ -1,7 +1,7 @@
 <?php
 /**
  * Log cron (1.4.0, riscritta): cosa fa il cron di plumeCMS, le due righe da mettere nel cron dell'hosting con il percorso
- * vero di questa installazione, com'e andato l'ultimo giro di ognuno, il registro del giro del mattino e il pulsante
+ * vero di questa installazione, com'è andato l'ultimo giro di ognuno, il registro del giro del mattino e il pulsante
  * "Esegui adesso" per chi il cron non l'ha ancora messo. Solo amministratore; le azioni in POST con il token CSRF.
  * Il lavoro sta in includes/cron.php, lo stesso di cron-daily.php e cron-newsletter.php.
  */
@@ -39,7 +39,7 @@ $cronStato = cron_stato();
 $cronAttivo = cron_attivo();
 $righe = cron_righe();
 $logContent = is_file($logFile) ? (string)file_get_contents($logFile) : '';
-// Del registro si mostrano gli ultimi 60 giri, il piu recente in alto.
+// Del registro si mostrano gli ultimi 60 giri, il più recente in alto.
 $giri = array_slice(array_reverse(array_values(array_filter(preg_split('/\n\n+/', trim($logContent)), fn($x) => trim($x) !== ''))), 0, 60);
 $quando = fn(int $t) => $t ? date('d/m/Y \a\l\l\e H:i', $t) : 'mai';
 

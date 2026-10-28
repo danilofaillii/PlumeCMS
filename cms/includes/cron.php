@@ -1,6 +1,6 @@
 <?php
 /**
- * Il cron di plumeCMS (1.4.0: le due passate in funzioni, cosi il pannello le lancia con "Esegui adesso").
+ * Il cron di plumeCMS (1.4.0: le due passate in funzioni, così il pannello le lancia con "Esegui adesso").
  *
  * Due righe nel cron dell'hosting (cPanel, Processi cron), con il PHP da riga di comando:
  *   cron-daily.php       una volta al giorno (per esempio alle 06:00): applica i pacchetti di aggiornamento programmati
@@ -89,7 +89,7 @@ function cron_newsletter(string $da = 'cron'): array {
     $inizio = microtime(true);
     require_once __DIR__ . '/newsletter.php';
     $righe = [];
-    // Ogni giro svuota anche la coda di IndexNow (pannello SEO e AEO), se c'e qualcosa e la rete risponde.
+    // Ogni giro svuota anche la coda di IndexNow (pannello SEO e AEO), se c'è qualcosa e la rete risponde.
     try {
         require_once __DIR__ . '/seo.php';
         if (seo_coda_conta() > 0) { $r = seo_coda_invia(10000, 15); @file_put_contents(cms_radice() . '/logs/seo.log', date('Y-m-d H:i:s') . ' | ' . $r . "\n", FILE_APPEND); $righe[] = 'IndexNow: ' . $r; }

@@ -1,12 +1,12 @@
 <?php
 /**
- * L'ultima versione di una serie del download manager (1.3.0), in JSON, per chi vuole sapere se c'e qualcosa di nuovo:
+ * L'ultima versione di una serie del download manager (1.3.0), in JSON, per chi vuole sapere se c'è qualcosa di nuovo:
  *   GET /api/versione.php?serie=plumecms-ultima-aggiornamento
  *   {"serie":..., "versione":"1.3.1", "nome":"plumecms-1.3.1-aggiornamento.zip", "sha256":..., "dimensione":123456,
  *    "url":"https://sito/scarica/plumecms-1.3.1-aggiornamento/", "data":"2026-10-27T12:00:00+01:00"}
- * Generico: vale per ogni serie (includes/scaricabili.php: un file con la versione nel nome). Cosi il sito da cui si
+ * Generico: vale per ogni serie (includes/scaricabili.php: un file con la versione nel nome). Così il sito da cui si
  * scarica plumeCMS (che e un plumeCMS) dice da se qual e l'ultima versione, e i pannelli degli altri siti la chiedono
- * (includes/versione-nuova.php). Solo dati gia pubblici: gli stessi file che /scarica/ offre a tutti.
+ * (includes/versione-nuova.php). Solo dati già pubblici: gli stessi file che /scarica/ offre a tutti.
  */
 require_once dirname(__DIR__) . '/includes/config.php';
 require_once dirname(__DIR__) . '/includes/db.php';

@@ -65,12 +65,12 @@ $menu = [
 ];
 $menu = array_values(array_filter($menu));
 // 1.4.0: le icone del menu sono quelle disegnate del set (includes/icone.php), del colore del testo: seguono l'aspetto.
-// Una voce di un modulo puo ancora dare un'icona sua (un'entita HTML): passa com'e.
+// Una voce di un modulo può ancora dare un'icona sua (un'entita HTML): passa com'è.
 require_once dirname(__DIR__, 2) . '/includes/icone.php';
 $iconaMenu = fn(string $i): string => preg_match('/^[a-z-]+$/', $i) && icona_esiste($i) ? icona_svg($i, 'nav-svg') : $i;
 // Le voci dei moduli del sito: ogni modulo aggiunge le sue pagine al menu (chiave menu del manifest).
 $menu = cms_menu_integra($menu, $qui, (string)$ctTipo, $sonoAdminMenu);
-// Ruoli: il redattore vede solo le voci che puo aprire (le stesse regole di require_login, auth_redattore_puo).
+// Ruoli: il redattore vede solo le voci che può aprire (le stesse regole di require_login, auth_redattore_puo).
 if (!$sonoAdminMenu) {
     $puo = function (string $url): bool {
         $pag = basename((string)parse_url($url, PHP_URL_PATH));

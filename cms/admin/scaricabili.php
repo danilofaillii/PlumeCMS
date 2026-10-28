@@ -1,7 +1,7 @@
 <?php
 /**
  * Download (1.2.4): i file che il sito offre da scaricare. Carica, sostituisci con una versione nuova, scrivi titolo,
- * descrizione e versione, guarda quante volte e stato scaricato, elimina. Motore in includes/scaricabili.php; i file si
+ * descrizione e versione, guarda quante volte è stato scaricato, elimina. Motore in includes/scaricabili.php; i file si
  * mostrano sul sito con il widget Download dell'editor e si aprono da /scarica/<nome>/.
  */
 require_once __DIR__ . '/includes/auth.php';

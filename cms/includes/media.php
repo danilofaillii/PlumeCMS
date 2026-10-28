@@ -119,14 +119,14 @@ function media_carica(?array $f, string $cartella = 'pagine', int $maxMb = 8): a
     $rel = $cartella . '/' . date('Y/m');
     $dir = cms_uploads_dir() . '/' . $rel;
     if (!is_dir($dir) && !@mkdir($dir, 0755, true)) return ['errore' => 'La cartella delle immagini non è scrivibile.'];
-    // sicurezza: nome leggibile piu un suffisso casuale (nessuno indovina l'indirizzo di un file dal suo nome originale).
+    // sicurezza: nome leggibile più un suffisso casuale (nessuno indovina l'indirizzo di un file dal suo nome originale).
     $base = trim(substr(preg_replace('/[^a-z0-9-]+/', '-', strtolower(pathinfo($f['name'], PATHINFO_FILENAME))), 0, 60), '-') ?: 'immagine';
     $nome = $base . '-' . substr(bin2hex(random_bytes(3)), 0, 6) . '.' . $ext;
     while (file_exists("$dir/$nome")) $nome = $base . '-' . substr(bin2hex(random_bytes(4)), 0, 8) . '.' . $ext;
     if (!move_uploaded_file($f['tmp_name'], "$dir/$nome")) return ['errore' => 'Il file non si è salvato.'];
     if ($ext === 'svg') file_put_contents("$dir/$nome", $svgPulito);
     else {
-        // 1.4.0: foto piu leggere (lato massimo, orientamento, WebP accanto); se non si puo, la ripulitura di sempre.
+        // 1.4.0: foto più leggere (lato massimo, orientamento, WebP accanto); se non si può, la ripulitura di sempre.
         $foto = foto_alleggerisci("$dir/$nome", $ext);
         if (!$foto['fatto']) { require_once __DIR__ . '/sicurezza-html.php'; sicurezza_immagine_ricodifica("$dir/$nome", $ext); } // via metadati e qualunque cosa nascosta dopo i pixel
         elseif ($foto['larghezza']) { $info[0] = $foto['larghezza']; $info[1] = $foto['altezza']; }

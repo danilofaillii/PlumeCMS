@@ -5,7 +5,7 @@
  * Un pacchetto e uno zip con dentro un manifest.json, file da copiare sul
  * sito, file SQL da eseguire, redirect da creare, articoli e test in JSON.
  * Prima di applicarlo il motore fa uno snapshot (tutto il
- * database piu i file che verranno sovrascritti). Se un passo fallisce,
+ * database più i file che verranno sovrascritti). Se un passo fallisce,
  * ripristina lo snapshot da solo.
  *
  * Cartella di lavoro: aggiornamenti/ nella cartella del CMS (protetta da .htaccess)
@@ -22,7 +22,7 @@ require_once __DIR__ . '/sito.php';
 // Azioni che un pacchetto può chiedere per nome. Solo queste: un pacchetto non esegue codice a piacere.
 // 'attiva-sito-nuovo' era il pacchetto del passaggio: ormai il sito legge sempre da qui.
 // 'sito-pagine-e-stile' (1.2.3) non fa niente da sola: la mette il pacchetto di un sito (voci "pagine" ed "editor"),
-// cosi un motore piu vecchio, che quelle voci non le conosce e le salterebbe in silenzio, rifiuta il pacchetto.
+// così un motore più vecchio, che quelle voci non le conosce e le salterebbe in silenzio, rifiuta il pacchetto.
 const AGG_AZIONI = ['attiva-sito-nuovo' => 'agg_azione_nulla', 'sito-pagine-e-stile' => 'agg_azione_sito'];
 
 /** Le azioni ammesse: quelle del nucleo più quelle dichiarate dai moduli (per esempio la conversione dei contenuti di un sito vecchio). */
@@ -42,10 +42,10 @@ function agg_azione_sito(): string {
     return 'Motore pronto per le pagine e lo stile del pacchetto.';
 }
 
-/** Gli ambiti dell'editor che un pacchetto puo scrivere con la voce "editor" (quelli di Editor > Impostazioni, Importa). */
+/** Gli ambiti dell'editor che un pacchetto può scrivere con la voce "editor" (quelli di Editor > Impostazioni, Importa). */
 const AGG_EDITOR_AMBITI = ['stile', 'modelli', 'menu', 'temi'];
 
-/** Le impostazioni del sito che un pacchetto puo scrivere con la voce "impostazioni" (1.2.3): solo nome e descrizioni. */
+/** Le impostazioni del sito che un pacchetto può scrivere con la voce "impostazioni" (1.2.3): solo nome e descrizioni. */
 const AGG_IMPOSTAZIONI = ['sito_nome', 'sito_titolo', 'sito_sottotitolo', 'sito_descrizione', 'home_descrizione'];
 
 const AGG_SNAPSHOT_DA_TENERE = 5;
@@ -86,10 +86,10 @@ function agg_rimuovi_cartella(string $dir): void {
     @rmdir($dir);
 }
 
-/** Le estensioni che un pacchetto senza firma puo scrivere nella radice del sito (root/): file che il server non esegue. */
+/** Le estensioni che un pacchetto senza firma può scrivere nella radice del sito (root/): file che il server non esegue. */
 const AGG_ROOT_STATICI = ['txt', 'xml', 'html', 'htm', 'ico', 'png', 'jpg', 'jpeg', 'gif', 'webp', 'avif', 'pdf', 'css', 'js', 'woff', 'woff2', 'json', 'webmanifest', 'map'];
 
-/** I soli .htaccess che un pacchetto puo scrivere. */
+/** I soli .htaccess che un pacchetto può scrivere. */
 const AGG_HTACCESS_AMMESSI = ['root/.htaccess', 'new/.htaccess', 'uploads/.htaccess'];
 
 function agg_dest_path(string $dest): string {
@@ -151,12 +151,12 @@ function agg_leggi_manifest(string $zipPath): array {
         if ((int)($st['size'] ?? 0) > 200 * 1048576) { $zip->close(); throw new RuntimeException("File troppo grande nello zip: $nome"); }
     }
     if ($totaleByte > 600 * 1048576) { $zip->close(); throw new RuntimeException('Pacchetto troppo grande una volta estratto (oltre 600 MB).'); }
-    // sicurezza: firma HMAC del pacchetto (tools/pacchetto.py --firma). Se c'e si verifica; se la pagina Sicurezza la vuole obbligatoria, senza firma non si va avanti.
+    // sicurezza: firma HMAC del pacchetto (tools/pacchetto.py --firma). Se c'è si verifica; se la pagina Sicurezza la vuole obbligatoria, senza firma non si va avanti.
     require_once __DIR__ . '/sicurezza.php';
     $firma = trim((string)($m['firma'] ?? ''));
     $firmaObbligatoria = false;
     try { $firmaObbligatoria = (bool)sicurezza_cfg()['firma_pacchetti']; } catch (Throwable $e) {}
-    if ($firma !== '' && !sicurezza_pacchetto_firma_ok($zip, $firma)) { $zip->close(); throw new RuntimeException('La firma del pacchetto non corrisponde: il file e stato modificato o la chiave e diversa.'); }
+    if ($firma !== '' && !sicurezza_pacchetto_firma_ok($zip, $firma)) { $zip->close(); throw new RuntimeException('La firma del pacchetto non corrisponde: il file è stato modificato o la chiave e diversa.'); }
     if ($firma === '' && $firmaObbligatoria) { $zip->close(); throw new RuntimeException('Pacchetto senza firma: la pagina Sicurezza richiede pacchetti firmati (tools/pacchetto.py --firma).'); }
 
     $out = [
@@ -306,14 +306,14 @@ function agg_elimina_pacchetto(string $id): void {
     @unlink(agg_dir('pacchetti') . '/' . $id . '.json');
 }
 
-/** I pacchetti in attesa la cui data e arrivata. */
+/** I pacchetti in attesa la cui data è arrivata. */
 function agg_pacchetti_da_applicare(): array {
     $oggi = date('Y-m-d');
     $out = [];
     foreach (agg_lista_pacchetti() as $p) {
         if ($p['stato'] === 'in_attesa' && ($p['applica_dal'] === '' || $p['applica_dal'] <= $oggi)) $out[] = $p;
     }
-    // dal piu vecchio al piu nuovo
+    // dal più vecchio al più nuovo
     usort($out, fn($a, $b) => strcmp($a['id'], $b['id']));
     return $out;
 }
@@ -422,7 +422,7 @@ function agg_restore_db(string $gzPath): array {
 }
 
 /**
- * Crea uno snapshot: database intero piu copia dei file elencati in $destinazioni
+ * Crea uno snapshot: database intero più copia dei file elencati in $destinazioni
  * (destinazioni del manifest, es. "uploads/contenuti/x.png"). Ritorna l'id.
  */
 function agg_crea_snapshot(string $etichetta, array $destinazioni = []): string {
@@ -560,7 +560,7 @@ function agg_split_sql(string $sql): array {
  */
 /**
  * Avanzamento di un'operazione lunga (applica, ripristina).
- * Il pannello legge questo file mentre l'operazione gira, cosi chi lo ha avviato vede
+ * Il pannello legge questo file mentre l'operazione gira, così chi lo ha avviato vede
  * a che punto siamo invece di guardare una pagina ferma.
  */
 function agg_progresso_file(string $id): string {
@@ -585,7 +585,7 @@ function agg_progresso_leggi(string $id): ?array {
     return is_array($d) ? $d : null;
 }
 
-/** Toglie i file di avanzamento piu vecchi di un giorno. */
+/** Toglie i file di avanzamento più vecchi di un giorno. */
 function agg_progresso_pulisci(): void {
     foreach (glob(agg_dir() . '/progresso-*.json') ?: [] as $f) {
         if (filemtime($f) < time() - 86400) @unlink($f);
@@ -614,7 +614,7 @@ function agg_applica(string $id): array {
         $log[] = 'Pacchetto letto: ' . count($m['file']) . ' file, ' . count($m['sql']) . ' file SQL, ' . count($m['articoli']) . ' articoli, ' . count($m['redirect']) . ' redirect.';
 
         // 1. snapshot
-        agg_progresso($id, $passo, $totale, 'Creo lo snapshot del database, e il passo piu lento');
+        agg_progresso($id, $passo, $totale, 'Creo lo snapshot del database, e il passo più lento');
         $snapshotId = agg_crea_snapshot($m['nome'], array_merge(array_column($m['file'], 'a'), $m['elimina']));
         $snap = agg_leggi_snapshot($snapshotId);
         $log[] = 'Snapshot creato: ' . $snapshotId . ' (' . $snap['db']['tabelle'] . ' tabelle, ' . $snap['db']['righe'] . ' righe, ' . agg_fmt_bytes($snap['db']['dimensione']) . ').';
@@ -622,7 +622,7 @@ function agg_applica(string $id): array {
         agg_salva_stato($stato);
         agg_progresso($id, ++$passo, $totale, 'Snapshot creato: ' . $snap['db']['tabelle'] . ' tabelle, ' . number_format((int)$snap['db']['righe'], 0, ',', '.') . ' righe');
 
-        // Colonne e tabelle del sito nuovo: dopo lo snapshot, cosi un ripristino le toglie.
+        // Colonne e tabelle del sito nuovo: dopo lo snapshot, così un ripristino le toglie.
         $schema = sito_schema_aggiorna();
         foreach (cms_moduli_elenco('schema') as $x) if (is_callable($x['valore'])) $schema = array_merge($schema, (array)($x['valore'])()); // le tabelle dei moduli (i test)
         foreach ($schema as $r) $log[] = 'Schema: ' . $r;

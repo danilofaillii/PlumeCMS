@@ -189,7 +189,7 @@ if ($passo === 3) {
         if ($s['email'] !== '' && !filter_var($s['email'], FILTER_VALIDATE_EMAIL)) $errori[] = "L'email del sito non è valida.";
         if (!preg_match('/^[A-Za-z0-9._-]{3,100}$/', $s['admin_nome'])) $errori[] = "Il nome utente dell'amministratore: almeno 3 caratteri, solo lettere, numeri, punto, trattino.";
         if (!filter_var($s['admin_email'], FILTER_VALIDATE_EMAIL)) $errori[] = "L'email dell'amministratore non è valida (serve per recuperare la password).";
-        // sicurezza (attacco 3): come a regime, 12 caratteri, diversa dal nome e dall'email, non fra le piu comuni.
+        // sicurezza (attacco 3): come a regime, 12 caratteri, diversa dal nome e dall'email, non fra le più comuni.
         if (($errPw = sicurezza_password_errore($s['admin_password'], $s['admin_nome'], $s['admin_email'])) !== '') $errori[] = $errPw;
         if ((string)($_POST['admin_password2'] ?? '') !== $s['admin_password']) $errori[] = 'Le due password non coincidono.';
         if (!$errori) {
@@ -210,7 +210,7 @@ if ($passo === 3) {
         . '<h3>L\'amministratore</h3>'
         . inst_campo('admin_nome', 'Nome utente', $s['admin_nome'])
         . inst_campo('admin_email', 'Email', $s['admin_email'], 'email')
-        . '<div class="due">' . inst_campo('admin_password', 'Password (almeno 12 caratteri, non fra le piu comuni)', '', 'password') . inst_campo('admin_password2', 'Ripeti la password', '', 'password') . '</div>'
+        . '<div class="due">' . inst_campo('admin_password', 'Password (almeno 12 caratteri, non fra le più comuni)', '', 'password') . inst_campo('admin_password2', 'Ripeti la password', '', 'password') . '</div>'
         . '<p><a class="btn-filo" href="?passo=2">Indietro</a> <button class="btn" type="submit">Avanti: installa</button></p></form>', 3);
 }
 
@@ -309,7 +309,7 @@ if ($passo === 4) {
             if ((int)db()->query('SELECT COUNT(*) FROM ' . tbl('modelli'))->fetchColumn() === 0) modelli_crea_di_partenza();
             $costruito = kit_costruisci($kitId, $s['nome'], $s['descrizione'], $autore, ['oggi' => $oggi]);
             foreach ($costruito['log'] as $r) $log[] = $r;
-            // 1.4.0: il tipo di sito resta "in prova" finche non si preme Definitivo nella dashboard; e i primi passi.
+            // 1.4.0: il tipo di sito resta "in prova" finché non si preme Definitivo nella dashboard; e i primi passi.
             kit_prova_inizia($kitId, $costruito['creati']);
             save_setting('primi_passi', 'mostra');
             $log[] = 'menu Principale, header e footer';

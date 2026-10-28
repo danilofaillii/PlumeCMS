@@ -2,7 +2,7 @@
 require_once __DIR__ . '/includes/auth.php';
 require_once __DIR__ . '/includes/admin-functions.php';
 require_once dirname(__DIR__) . '/includes/aggiornamenti.php';
-require_once dirname(__DIR__) . '/includes/versione-nuova.php'; // 1.3.0: c'e una versione nuova?
+require_once dirname(__DIR__) . '/includes/versione-nuova.php'; // 1.3.0: c'è una versione nuova?
 require_admin();
 
 // 1.3.0: il controllo della versione chiesto dal browser (dashboard e questa pagina), dopo il caricamento: risponde in JSON.
@@ -18,7 +18,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'versi
 }
 
 // Avanzamento di un'operazione lunga. Il pannello lo chiede ogni secondo
-// mentre applica o ripristina, cosi si vede a che punto e invece di
+// mentre applica o ripristina, così si vede a che punto e invece di
 // guardare una pagina ferma. session_write_close() serve: senza, questa
 // richiesta resterebbe in coda dietro a quella che sta lavorando.
 if (isset($_GET['progresso'])) {
@@ -69,7 +69,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             if ($rumore !== '') $res['log'][] = 'Avvisi di PHP durante il lavoro, non bloccanti: ' . mb_substr($rumore, 0, 1500);
             $esito = ['ok' => $res['ok'], 'titolo' => ($res['ok'] ? 'Aggiornamento applicato: ' : 'Aggiornamento fallito: ') . $p['nome'], 'log' => $res['log']];
             if ($res['ok']) flash('success', 'Aggiornamento "' . $p['nome'] . '" applicato. ' . $res['riassunto'] . '.');
-            else flash('error', 'Aggiornamento "' . $p['nome'] . '" fallito: ' . $res['riassunto'] . '. Il sito e stato riportato allo stato precedente.');
+            else flash('error', 'Aggiornamento "' . $p['nome'] . '" fallito: ' . $res['riassunto'] . '. Il sito è stato riportato allo stato precedente.');
         } elseif ($action === 'elimina') {
             agg_elimina_pacchetto($_POST['id'] ?? '');
             flash('success', 'Pacchetto eliminato.');
@@ -292,7 +292,7 @@ details summary{cursor:pointer;font-size:0.82rem;color:var(--text-muted)}
 
 <div class="agg-card">
   <h2>Snapshot</h2>
-  <p class="agg-note">Si tengono gli ultimi <?= AGG_SNAPSHOT_DA_TENERE ?>. Ogni snapshot contiene il database intero piu una copia dei soli file che il pacchetto stava per sovrascrivere: uno snapshot manuale ha quindi zero file, ed e normale. Ripristinare rimette database e file: tutto quello che e cambiato dopo, compresi gli articoli pubblicati nel frattempo, torna indietro.</p>
+  <p class="agg-note">Si tengono gli ultimi <?= AGG_SNAPSHOT_DA_TENERE ?>. Ogni snapshot contiene il database intero più una copia dei soli file che il pacchetto stava per sovrascrivere: uno snapshot manuale ha quindi zero file, ed e normale. Ripristinare rimette database e file: tutto quello che è cambiato dopo, compresi gli articoli pubblicati nel frattempo, torna indietro.</p>
   <?php if (!$snapshots): ?>
     <p class="agg-note">Nessuno snapshot.</p>
   <?php else: ?>

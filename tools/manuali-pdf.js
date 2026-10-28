@@ -4,6 +4,9 @@
 // Carlito (Inter installato qui e variabile, e Chromium lo mette nel PDF lettera per lettera come disegni). Cosi il
 // manuale tecnico pesa sotto 1 MB e passa anche dai server che accettano caricamenti piccoli.
 // Il Markdown lo converte pandoc (gfm), il PDF lo stampa Chromium (Playwright): nessuna libreria nel CMS.
+// 1.4.2: il manuale d'uso ha le schermate (docs/immagini/manuale-uso/, JPEG piccoli fatti da tools/manuale-uso-schermate.js):
+// la pagina si apre da un file accanto al Markdown, così gli indirizzi delle immagini valgono; ogni immagine da sola in
+// un paragrafo diventa una figura con la didascalia (il testo alternativo).
 // uso: node tools/manuali-pdf.js [cartella di uscita, predefinita releases/manuali]
 const { chromium } = require('playwright');
 const { execFileSync } = require('child_process');
@@ -14,6 +17,7 @@ const RADICE = path.join(__dirname, '..');
 const USCITA = path.resolve(process.argv[2] || path.join(RADICE, 'releases', 'manuali'));
 const VERSIONE = fs.readFileSync(path.join(RADICE, 'cms', 'VERSIONE'), 'utf8').trim();
 const MANUALI = [
+  { file: 'manuale-uso', titolo: 'Manuale d\'uso', sotto: 'Come si fa ogni cosa con plumeCMS: articoli, pagine, menu, form, newsletter, sicurezza. Con esempi veri, schermate e checklist.' },
   { file: 'manuale-tecnico', titolo: 'Manuale tecnico', sotto: 'Tutto il CMS, pezzo per pezzo: com\'è fatto, come funziona, dove mettere le mani.' },
   { file: 'manuale-temi', titolo: 'Manuale dei temi', sotto: 'Come si costruisce un tema da zero, file per file, con un esempio completo.' },
 ];
@@ -54,6 +58,12 @@ nav.indice > ul > li { margin: 0 0 5pt; font-weight: 600; }
 nav.indice ul ul { padding-left: 14pt; font-weight: 400; margin-top: 3pt; }
 nav.indice ul ul li { margin: 1.5pt 0; font-size: 9pt; }
 nav.indice a { color: #1d2433; }
+figure { margin: 6pt 0 12pt; break-inside: avoid; text-align: center; }
+figure img { max-width: 100%; max-height: 180mm; border: 1px solid #d9d6ea; border-radius: 6px; }
+figcaption { font-size: 8.4pt; color: #5d5a78; margin-top: 3pt; font-style: italic; }
+ul.task-list { list-style: none; padding-left: 2pt; }
+ul.task-list li { margin: 2pt 0; }
+ul.task-list input { width: 9pt; height: 9pt; margin: 0 6pt 0 0; vertical-align: -1pt; }
 `;
 
 // Una piuma disegnata in SVG (niente immagini esterne).
@@ -70,12 +80,13 @@ function html(m) {
   const corpo = execFileSync('pandoc', ['-f', 'gfm', '-t', 'html5', '--toc', '--toc-depth=3', '--template', tpl, '--metadata', 'title=' + m.titolo],
     { input: md, encoding: 'utf8', maxBuffer: 64 * 1024 * 1024 });
   fs.unlinkSync(tpl);
+  const conFigure = corpo.replace(/<p><img src="([^"]+)" alt="([^"]*)" \/><\/p>/g, '<figure><img src="$1" alt="$2"><figcaption>$2</figcaption></figure>');
   const oggi = new Date().toLocaleDateString('it-IT', { day: 'numeric', month: 'long', year: 'numeric' });
   return `<!doctype html><html lang="it"><head><meta charset="utf-8"><title>plumeCMS - ${m.titolo}</title><style>${CSS}</style></head><body>
 <section class="copertina"><div class="marchio">plume<b>CMS</b></div>
 <div>${PIUMA}<h1>${m.titolo}</h1><p class="sotto">${m.sotto}</p></div>
 <div class="piede">plumeCMS ${VERSIONE} &middot; ${oggi}</div></section>
-${corpo}</body></html>`;
+${conFigure}</body></html>`;
 }
 
 (async () => {
@@ -83,7 +94,11 @@ ${corpo}</body></html>`;
   const br = await chromium.launch();
   const p = await br.newPage();
   for (const m of MANUALI) {
-    await p.setContent(html(m), { waitUntil: 'load' });
+    // Da un file accanto al Markdown: le immagini (immagini/...) si trovano.
+    const pagina = path.join(RADICE, 'cms', 'docs', '.stampa-' + m.file + '.html');
+    fs.writeFileSync(pagina, html(m));
+    await p.goto('file://' + pagina, { waitUntil: 'load' });
+    fs.unlinkSync(pagina);
     await p.evaluate(() => document.fonts.ready);
     const piede = `<div style="width:100%;font:8pt Carlito,sans-serif;color:#8a86a3;padding:0 17mm;display:flex;justify-content:space-between">
 <span>plumeCMS &middot; ${m.titolo}</span><span><span class="pageNumber"></span> / <span class="totalPages"></span></span></div>`;

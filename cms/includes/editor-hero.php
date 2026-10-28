@@ -25,7 +25,7 @@ const EDITOR_HERO_DISPOSIZIONI = [
     'diagonale' => 'Diagonale: colore pieno tagliato in obliquo',
 ];
 
-/** Il file CSS di ogni gruppo di disposizioni, caricati solo dove c'e un'Apertura. */
+/** Il file CSS di ogni gruppo di disposizioni, caricati solo dove c'è un'Apertura. */
 const EDITOR_HERO_CSS = ['hero-base.css', 'hero-a.css', 'hero-b.css'];
 
 /** I pulsanti dell'Apertura, come nella classica. Vuoto se non ce ne sono. */
@@ -45,8 +45,8 @@ function editor_hero_parole(array $v, bool $pulsanti = true): string {
 
 /**
  * La foto, con il trattamento e l'effetto della sezione Foto (velo, bianco e nero, naturale; zoom, bagliore...).
- * Ha la classe "finestra" perche i colori del velo della scheda Stile si scrivono su .finestra; hero-base.css la
- * toglie dalla posizione assoluta della classica. $classe: classi in piu della disposizione. Vuoto senza foto.
+ * Ha la classe "finestra" perché i colori del velo della scheda Stile si scrivono su .finestra; hero-base.css la
+ * toglie dalla posizione assoluta della classica. $classe: classi in più della disposizione. Vuoto senza foto.
  */
 function editor_hero_foto(array $v, string $classe = ''): string {
     if ((string)($v['immagine'] ?? '') === '') return '';
@@ -74,7 +74,7 @@ function editor_hero_numeri(array $v): string {
     return $n !== '' ? '<div class="ed-hero-numeri">' . $n . '</div>' : '';
 }
 
-/** Apre il contenitore comune: ogni disposizione comincia cosi e chiude con </div>. */
+/** Apre il contenitore comune: ogni disposizione comincia così e chiude con </div>. */
 function editor_hero_apri(string $id): string {
     return '<div class="hero ed-hero ed-hero-v ed-hero-' . $id . '">';
 }

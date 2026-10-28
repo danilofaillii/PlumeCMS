@@ -83,8 +83,8 @@ function sito_redirect_per(string $percorso, string $query): ?array {
 }
 
 /**
- * /favicon.ico (1.4.0): se nella cartella c'e un favicon.ico vero lo serve il server web e qui non si arriva. Altrimenti
- * l'icona dello Stile del sito (302, perche dipende dalle impostazioni), o quella di partenza di plumeCMS.
+ * /favicon.ico (1.4.0): se nella cartella c'è un favicon.ico vero lo serve il server web e qui non si arriva. Altrimenti
+ * l'icona dello Stile del sito (302, perché dipende dalle impostazioni), o quella di partenza di plumeCMS.
  */
 function sito_favicon(): never {
     $f = trim((string)design_sito()['favicon']);
