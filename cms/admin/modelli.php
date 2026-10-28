@@ -100,7 +100,7 @@ require_once __DIR__ . '/includes/admin-header.php';
 .md-schede{display:flex;gap:.25rem;border-bottom:1px solid var(--border);margin-bottom:1rem}
 .md-schede a{padding:.6rem 1rem;text-decoration:none;color:var(--text-muted);border-bottom:2px solid transparent;font-weight:600}
 .md-schede a.attiva{color:var(--text);border-bottom-color:var(--coral)}
-.md-stella{background:none;border:0;cursor:pointer;font-size:1.3rem;line-height:1;color:var(--bordo-forte);padding:0 .2rem}
+.md-stella{background:none;border:0;cursor:pointer;font-size:1.3rem;line-height:1;color:var(--text-muted);padding:0 .2rem}
 .md-stella.on{color:var(--mustard)}
 .md-azioni form{display:inline}
 .md-cond{font-size:.82rem;color:var(--text-muted)}
