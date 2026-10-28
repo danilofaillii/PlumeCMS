@@ -1,6 +1,6 @@
 # plumeCMS: manuale tecnico
 
-Versione del manuale: 1.8, per plumeCMS 1.3.1 (28 ottobre 2026).
+Versione del manuale: 1.9, per plumeCMS 1.4.0 (28 ottobre 2026).
 
 Questo manuale descrive come è fatto plumeCMS e come funziona, pezzo per pezzo. È scritto leggendo il codice:
 ogni numero, limite e nome di funzione viene dai file veri, con il riferimento `file:riga` quando serve a chi
@@ -67,7 +67,7 @@ fatti con plumeCMS, i loro contenuti e i temi e moduli che non ne copiano il cod
 index.php           front controller: tutte le richieste del sito passano da qui
 cron-daily.php      compiti del giorno (pacchetti programmati, moduli, IndexNow)
 cron-newsletter.php invio della newsletter a giri, coda IndexNow
-VERSIONE            il numero di versione (oggi 1.3.1)
+VERSIONE            il numero di versione (oggi 1.4.0)
 CHANGELOG.md, README.md, INSTALLA.md
 .htaccess           regole di Apache (copia di install/esempi/htaccess-radice.txt)
 
@@ -81,7 +81,10 @@ includes/           il motore
   contenuti.php     articoli, pagine, stati, revisioni, cestino
   editor*.php       editor: albero, validazione, disegno, controlli, widget
   sezioni-pronte*.php  le sezioni pronte dell'editor: motore e dati (9.11)
-  kit-partenza.php, kit/  i kit di partenza dell'installatore: motore e un file di dati per kit (2.2)
+  kit-partenza.php, kit/  i kit di partenza dell'installatore: motore e un file di dati per kit (2.2); il tipo di sito in prova (2.4)
+  primi-passi.php   i Primi passi della dashboard (2.4)
+  cron.php          i due giri del cron, il loro stato e le righe da copiare (20)
+  controllo-server.php  Controlla il server e l'email di prova (7.3)
   design.php        Stile del sito
   modelli.php       header e footer
   menu-nav.php      menu di navigazione
@@ -159,12 +162,16 @@ Si caricano i file nella cartella scelta e si apre l'indirizzo nel browser. Finc
    - scrive `includes/config.local.php` (2.3);
    - crea tutte le tabelle con `cms_installa_tutto()` (capitolo 6), salva le impostazioni del sito, crea
      l'amministratore (solo se `users` è vuota) e i contenuti di partenza (solo se `pages` è vuota):
+     - menu, header e footer di partenza, poi i contenuti del kit con `kit_costruisci()` (dalla 1.4.0,
+       `includes/kit-partenza.php:211`, la stessa funzione del cambio di tipo di sito dalla dashboard, 2.4):
      - form "Contatti" (Nome, Email, Messaggio, consenso; titolo e frase dal kit);
      - con Vuoto, pagine fatte con l'editor: Home (slug `home`), Blog, Chi sono, Contatti; con un kit, la Home, Blog e
        le pagine del kit (vedi sotto);
      - articolo "Benvenuto nel tuo nuovo sito" (slug `benvenuto`, categoria `notizie`), piu gli articoli d'esempio del kit;
      - menu "principale" con Home, Chi sono, Blog, Contatti (o le voci del kit); header e footer di partenza; stile di partenza;
-     - `temi/.htaccess` (scritto da `temi_proteggi()`).
+     - `temi/.htaccess` (scritto da `temi_proteggi()`);
+     - (1.4.0) il registro di quello che il kit ha creato, con le impronte (`kit_prova_inizia()`, impostazione `kit_prova`,
+       2.4) e `primi_passi` = `mostra`. Solo l'installatore scrive queste due impostazioni: un sito che si aggiorna non le ha.
    - Pagine e articoli escono alle 00:00 del giorno dell'installazione (fino alla 1.2.7 alle 06:00: installando di
      notte la home rispondeva 404 fino alle 6).
    - Alla fine scrive `install/.installato` con la data.
@@ -200,6 +207,55 @@ sezioni, nella forma corta delle sezioni pronte, 9.11, oppure `['pronta' => '<id
 - Ogni pagina ha un solo h1 (l'Apertura, anche in forma di Banner nelle pagine interne).
 - I link si scrivono dalla radice (`/contatti/`): con il CMS in una cartella li porta lì `cms_con_cartella()` (capitolo 5).
 - Un kit rotto o mancante non ferma l'installatore: semplicemente non compare fra le carte.
+
+### 2.4 Il tipo di sito in prova e i primi passi (dalla 1.4.0)
+
+Nelle installazioni nuove la dashboard (`admin/index.php`), solo per l'amministratore, ha due riquadri in più. Le azioni
+vanno a `admin/tipo-sito.php`: solo POST, `require_admin()` (non è fra le pagine del redattore, che riceve 403), token
+CSRF con `verify_csrf()` (anche il controllo dell'Origin).
+
+**"Stai provando il sito <kit>"** (`#tipo-sito`), finché `kit_in_prova()` (`includes/kit-partenza.php:147`). Le cinque
+carte di `kit_elenco()`; ognuna è un form con `azione=cambia`, `kit=<id>` e la conferma `data-conferma` ("Il sito diventa
+Portfolio. Le pagine che hai scritto o cambiato restano."). Il pulsante **Definitivo** (`azione=definitivo`) chiama
+`kit_definitivo()` (`:409`): `stato` diventa `definitivo` e il riquadro non compare più.
+
+Il registro, impostazione `kit_prova` (JSON): `kit`, `stato` (`prova` | `definitivo`), `dal`, `creati`, `tenuti` (le frasi
+dell'ultimo cambio), `storia` (da, a, quando, nome della copia). Ogni voce di `creati` è una cosa che il kit ha fatto,
+`t` = `pagina` | `articolo` | `form` | `menu` | `immagine`, con `id` (o `file` per i disegni) e la sua **impronta**:
+`kit_impronta()` (`:153`), lo sha1 dei campi che una persona può cambiare (`KIT_CAMPI_IMPRONTA` per pagine e articoli:
+titolo, indirizzo, stato, testi, struttura e bozza dell'editor, SEO, immagine, date, categorie; `KIT_CAMPI_FORM`; per il
+menu nome, posizione e voci; per un disegno lo sha1 del file), presa subito dopo averla creata. Le colonne che il CMS
+scrive da solo (`updated_at`, `struttura_aggiornata`, `cestino`) non contano: aprire una pagina nell'editor senza
+cambiarla non la "tocca".
+
+`kit_cambia($nuovo, $autore)` (`:332`):
+1. rifiuta (eccezione, niente toccato) senza registro, dopo il Definitivo, con un kit che non c'è o con lo stesso kit;
+2. fa una copia del sito con `copia_crea('prima-del-cambio')` (19.7);
+3. per ogni voce del registro: impronta uguale, la cosa si toglie (`kit_togli_contenuto()`, per sempre, con le sue
+   revisioni; la copia c'è); impronta diversa, resta e finisce nelle frasi di `tenuti`; non c'è più, niente. Il form dei
+   contatti non si toglie: se è ancora quello del kit gli si riscrivono titolo e frase, altrimenti resta com'è. Il menu
+   Principale si riscrive solo se è ancora quello del kit;
+4. `kit_costruisci()` del kit nuovo: un indirizzo già occupato (una pagina tenuta, o scritta dalla persona) non si tocca e
+   la pagina del kit si salta (con una frase, se non è già detta: "all'indirizzo /chi-sono/ c'è già la tua");
+5. i disegni del kit di prima che nessuna pagina, articolo o modello usa più (`kit_immagine_usata()`) si cancellano; quelli
+   ancora usati da una pagina tenuta restano nel registro;
+6. salva il registro nuovo. Se qualcosa si ferma dopo la copia, il messaggio dice il nome della copia da ripristinare.
+
+**Primi passi** (`#primi-passi`, `includes/primi-passi.php`), finché `primi_passi` = `mostra`. Sei voci calcolate a ogni
+apertura della dashboard (`primi_passi()`, `:17`):
+
+| Voce | Fatta quando |
+|---|---|
+| Nome e logo del sito | lo Stile del sito ha un logo o un'icona |
+| I tuoi colori | colori, caratteri, tipografia o pulsanti dello Stile diversi da quelli di partenza (anche per un tema) |
+| Le email partono | l'ultima email di prova è partita (impostazione `posta_prova`, scritta da `server_email_prova()`, 7.3) |
+| Il cron è attivo | tutti e due i giri arrivati dal cron vero di recente (`cron_attivo()`, capitolo 20) |
+| La prima pagina o il primo articolo | una pagina o un articolo fuori dal registro, o uno del kit cambiato (`kit_contenuto_scritto()`) |
+| Il tipo di sito è definitivo | `kit_prova` definitivo |
+
+"Manda un'email di prova" (`azione=email_prova`) scrive all'indirizzo dell'utente collegato. "Tutto fatto: nascondi"
+(`azione=nascondi_passi`) compare solo con sei voci fatte, e `primi_passi_nascondi()` lo ricontrolla sul server prima di
+scrivere `nascosto`.
 
 ### 2.3 Cosa scrive l'installatore in `config.local.php`
 
@@ -271,7 +327,8 @@ Impostazioni scritte dall'installatore: `sito_nome`, `sito_titolo`, `sito_descri
 Altre impostazioni importanti, scritte dal pannello: `sicurezza_cfg` (capitolo 18), `seo_config` (16),
 `posta_smtp` e `notifica_email` (15), `editor_*` (9.10), `tema_attivo` e `tema_guasto` (12), `moduli_segreto`
 (segreto di newsletter e captcha, 15), `versione_controllo` e `versione_controllo_cache` (19.6),
-`scaricabili_impronte` (gli sha256 dei file da scaricare, 14.1).
+`scaricabili_impronte` (gli sha256 dei file da scaricare, 14.1), `kit_prova` e `primi_passi` (2.4, solo dall'installatore
+della 1.4.0 in poi), `posta_prova` (l'ultima email di prova: quando, a chi, com'è andata, 7.3).
 
 ---
 
@@ -317,7 +374,7 @@ Poi decide, **in quest'ordine** (`sito/index.php`):
 | 5 | `/wp-sitemap.xml` | 301 a `/sitemap.xml` |
 | 6 | gli indirizzi dei moduli del sito (evento `sito_percorso`), poi i percorsi fissi della newsletter: `/newsletter-grazie/`, `/newsletter-conferma/`, `/newsletter-esci/` | pagine dei moduli (15) |
 | 7 | `/grazie/?f=ID` | ringraziamento di un form |
-| 8 | `/robots.txt`, `/sitemap.xml`, `/llms.txt` | file calcolati (16.6) |
+| 8 | `/robots.txt`, `/sitemap.xml`, `/llms.txt`, `/favicon.ico` | file calcolati (16.6); l'icona del sito (1.4.0, sotto) |
 | 9 | file speciali SEO: verifica Google, `BingSiteAuth.xml`, chiave IndexNow, sitemap divise, `llms-full.txt` | 200 o 404 |
 | 9b | `/scarica/<nome>/` (dalla 1.2.3) | il file `<nome>.<estensione>` di `uploads/scaricabili/`, oppure l'ultima versione della serie `<nome>`, come allegato, e lo conta (14.1); 404 se non c'è |
 | 10 | percorsi che finiscono con `/feed/` | feed RSS, o 404 |
@@ -334,6 +391,14 @@ l'evento `sito_genere($voce, $meta)`: è il modo in cui un modulo serve pagine s
 Ogni pagina HTML passa da `sito_html()`, che applica in ordine `vista_pagina()` (la cornice: head, header,
 footer), `seo_inietta_html()` (meta, JSON-LD, codici di analisi) e `cms_con_cartella()` (i link nella cartella,
 capitolo 5). La CSP del sito si aggiunge alla risposta (`sito/index.php:33`).
+
+**L'icona del sito** (1.4.0). `vista_favicon()` (`sito/viste.php:457`) scrive nell'head l'icona dello Stile del sito
+(`design_sito()['favicon']`) se c'è; altrimenti l'icona di partenza di plumeCMS, `sito/assets/favicon.ico` (16, 32 e 48
+pixel) e `sito/assets/favicon.svg`, con `SITO_ASSET` davanti (giusto anche con il CMS in una cartella). `/favicon.ico`,
+quando nella cartella non c'è un file vero con quel nome (lo servirebbe il server web), passa da `sito_favicon()`
+(`sito/index.php:84`): con un'icona nello Stile un 302 `no-store` a quella (dipende dalle impostazioni, 21: mai un 301),
+altrimenti l'icona di partenza, 200 `image/x-icon`, un giorno di cache. I due file li disegna `tools/favicon-partenza.py`
+(una piuma bianca su un quadrato grafite `#2f323d`); fino alla 1.3.1 un'installazione nuova rispondeva 404.
 
 ### 4.3 Il pannello
 
@@ -532,17 +597,42 @@ admin), `is_admin()`, `current_user()`.
 | Editor > Impostazioni | `editor-impostazioni.php` | admin |
 | Editor > Informazioni | `informazioni.php` | admin |
 | SEO e AEO | `seo.php` con le schede panoramica, motori, copertura, prestazioni, analisi, globale, schema, redirect, registro | admin |
-| Impostazioni | `impostazioni.php` (email e SMTP), `sicurezza.php`, `aggiornamenti.php`, `copia-sito.php` (19.7), `cron-log.php` | admin |
+| Impostazioni | `impostazioni.php` (email e SMTP), `sicurezza.php`, `aggiornamenti.php`, `copia-sito.php` (19.7), `cron-log.php` (20), `controlla-server.php` (7.3) | admin |
 
 Pagine fuori dal menu: `contenuto.php` (scheda classica di un contenuto), `editor.php` (editor visuale),
 `editor-api.php` (le chiamate JSON dell'editor), `editor-anteprima.php` (la tela dentro l'iframe), `seo-api.php`
 (analisi SEO, JSON-LD, ispezione), `newsletter-campagna.php`, `account.php` (2FA e dispositivi),
-`password.php`, `login.php`, `logout.php`, `password-dimenticata.php`, `password-reimposta.php`.
+`password.php`, `login.php`, `logout.php`, `password-dimenticata.php`, `password-reimposta.php`, `tipo-sito.php` (le
+azioni dei riquadri della dashboard, 2.4).
 
 Le voci dei moduli si aggiungono al menu con la chiave `menu` del manifest (capitolo 17).
 
 Alcune pagine vecchie (`articles.php`, `pages.php`, `page-edit.php`, e simili) esistono solo come redirect 301
 verso `contenuti.php`, per i segnalibri.
+
+### 7.3 Controlla il server (dalla 1.4.0)
+
+Impostazioni > Controlla il server (`admin/controlla-server.php`, link anche da Informazioni). Prima del clic solo la
+spiegazione; "Controlla adesso" (POST con il token) chiama `server_controlli()` (`includes/controllo-server.php:45`), che
+ritorna gruppi di controlli con esito `ok` (verde), `avviso` (giallo: serve solo ad alcune funzioni) o `ko` (rosso), una
+frase su cosa si è visto e una su cosa fare:
+
+- **PHP e database**: versione (8.2 o più), estensioni (`pdo_mysql`, `mbstring`, `openssl`, `json`, `zlib`, `zip`
+  necessarie; `dom`, `gd`/`imagick`, `curl` gialle se mancano), MySQL che risponde;
+- **Indirizzo del sito**: rosso se `sito_url` non è https; se lo è, una richiesta vera a `/robots.txt` con il certificato
+  verificato;
+- **Cron**: `cron_attivo()` (capitolo 20);
+- **Email**: l'ultima email di prova (`server_email_ultima()`); il pulsante "Manda un'email di prova" passa da
+  `tipo-sito.php` con `ritorno=controlla` e chiama `server_email_prova()` (`:153`), la stessa dei Primi passi;
+- **Aggiornamenti**: `versione_chiedi()` al sito ufficiale (19.6), giallo se non risponde;
+- **Cartelle**: una scrittura vera (e cancellata) in `uploads/`, `logs/`, `aggiornamenti/`, `temi/`;
+- **Protezioni (.htaccess)**: `server_http()` chiede al sito stesso (`server_base_web()`) `includes/config.local.php`,
+  un file scritto apposta in `logs/` con dentro una parola a caso, e `VERSIONE`: devono rispondere 403 (o 404) e la
+  parola non deve uscire. Se nessuna richiesta riceve risposta (server che non chiama se stesso) l'esito è giallo.
+
+Le richieste: timeout di 5-6 secondi, nessun redirect seguito, al massimo 64 KB letti. Con il server integrato di PHP
+(`php -S`) le richieste al sito stesso vogliono `PHP_CLI_SERVER_WORKERS=4`, altrimenti il server aspetta se stesso fino
+al timeout.
 
 ---
 
@@ -667,6 +757,19 @@ Limiti dei valori (`editor_pulisci_valore`, `includes/editor.php:37-94`):
 | ripetitore (elenchi di voci) | 40 voci |
 | scelta (tendina) | solo i valori dell'elenco; dalla 1.2.4 un controllo può dichiarare `accetta` (espressione regolare) per tenere valori fuori elenco, come i file del widget Download che arrivano dopo la pagina |
 | colore | esadecimale, `rgb()`/`rgba()`, `hsl()`/`hsla()`, `transparent`, `globale:<id>`, `ig:<id>` |
+
+**Nomi dei controlli** (1.4.0). Un controllo di un widget non deve chiamarsi come uno delle schede Avanzate
+(`editor-controlli.php`: `posizione`, `animazione`, `padding`, `sticky`...): i valori dei due finiscono nella stessa
+chiave e, alla validazione, quello che non sta fra le opzioni dell'altro si svuota in silenzio. Era il caso di "Posizione
+dell'icona" (Riquadro con icona), "Posizione dell'immagine" (Riquadro con immagine) e "Angolo" (Pulsante fisso): dalla
+1.4.0 si chiamano `posizione_icona`, `posizione_immagine` e `posizione_angolo`. Un controllo rinominato dichiara
+`'prima' => '<nome di prima>'`: `editor_nomi_di_prima()` (`includes/editor.php:116`), chiamata da
+`editor_pulisci_impostazioni()` e `editor_valori()`, passa al nome nuovo il valore salvato con quello vecchio se è fra le
+opzioni. Nei Riquadri anche l'allineamento scelto vale per il testo: `ewx_css_allinea_ribox()`
+(`includes/editor-widget-extra.php:278`) scrive `--ew-ta`, che `.ew-ribox` usa per `text-align` (prima il `center` di
+`widget.css` vinceva su tutto); con l'icona o l'immagine di lato, "Centro" resta il "a sinistra" di sempre. Restano, da sistemare in una versione prossima senza cambiare le pagine che ci sono, due
+nomi doppi: `animazione` del Titolo animato (la sua "Animazione delle parole" perde tutto tranne Zoom) e `padding` di Social, Condividi, Avviso e
+Flip box.
 
 ### 9.3 I colori globali
 
@@ -1769,7 +1872,10 @@ l'amministratore, ogni azione in POST con il token CSRF.
 
 ## 20. Cron
 
-Due file nella cartella del CMS, da lanciare dalla riga di comando del server:
+Due file nella cartella del CMS, da lanciare dalla riga di comando del server. Dalla 1.4.0 il lavoro sta in
+`includes/cron.php` (`cron_giornaliero()` `:44`, `cron_newsletter()` `:88`): i due file controllano chi chiama e la
+versione di PHP, poi chiamano quelle funzioni con `da = 'cron'`. Le stesse funzioni le chiama il pulsante **Esegui
+adesso** della pagina Log cron con `da = 'pannello'`.
 
 ```
 0 6 * * *    php /percorso/del/cms/cron-daily.php
@@ -1791,6 +1897,19 @@ Dal web i cron rispondono 403, a meno che:
 - e si tolga la riga dell'`.htaccess` che vieta `cron-*.php`.
 
 I cron controllano PHP 8.1 o più nuovo; il CMS ne chiede 8.2.
+
+**Lo stato** (1.4.0): ogni giro, da dove arrivi, scrive `logs/cron-stato.json` (`cron_segna()`): per `giornaliero` e
+`newsletter` quando, da dove, quanto è durato e le righe di quello che ha fatto; `giornaliero_cron` e `newsletter_cron`
+tengono l'ultimo arrivato dal cron vero. `cron_attivo()` (`:113`) dice "il cron gira" se il giro del mattino dal cron è
+più recente di 36 ore (`CRON_GIORNO_ORE`) e quello della newsletter di 60 minuti (`CRON_NEWSLETTER_MIN`): il pulsante non
+conta. La newsletter, prima, lasciava traccia solo quando mandava qualcosa.
+
+**La pagina Impostazioni > Log cron** (`admin/cron-log.php`, solo amministratore, azioni in POST con il token): cosa
+fanno i due giri; come si va (badge "il cron gira" / "il cron non gira", l'ultimo giro e le sue righe); le due righe da
+copiare con il percorso vero (`cron_righe()`, `:136`, con il PHP da riga di comando trovato da `cron_php()`: il `php`
+accanto a `PHP_BINARY`, poi `/usr/local/bin/php`, `/usr/bin/php`) e i passi di cPanel; il registro del giro del mattino,
+il più recente in alto, e "Svuota il registro". Fino alla 1.3.1 la pagina mostrava le istruzioni del sito da cui il CMS è
+nato ("Test connessione WP", "Dry run", "Pubblica ora").
 
 ---
 
@@ -1955,6 +2074,12 @@ Istruzioni in `prove/LEGGIMI.md`. Le principali:
 | `prova-sezioni.js` | (1.3.0) la linguetta Sezioni dell'editor: clic, trascinamento, modifica, pubblicazione; `/sezioni-pronte/` (`pagina-sezioni.php`) con il contrasto |
 | `prova-copia.js` | (1.3.0) copia del sito: prepara, scarica, ripristina, e gli zip da respingere (`zip-copie-prova.py`) |
 | `prova-versione.js` | (1.3.0) "c'è una versione nuova" con due installazioni e un sito ufficiale finto che si comporta male (`finto-ufficiale.php`) |
+| `prova-tipo-sito.js` | (1.4.0) il tipo di sito in prova dalla dashboard: cambio con la conferma, copia, pagine tenute e tolte, sito da visitatore, attacchi, Definitivo (`tipo-sito-cli.php`) |
+| `prova-primi-passi.js` | (1.4.0) i Primi passi: email di prova con un server di posta finto (`smtp-finto.py`), logo e colori, cron vero e pulsante, nascondi |
+| `prova-cron.js` | (1.4.0) la pagina Log cron, Esegui adesso, il cron vero, gli attacchi, e nessuna pagina del pannello che parla di WordPress |
+| `prova-controlla-server.js` | (1.4.0) Controlla il server: i sette gruppi, protezioni spente (`logs/controllo-aperto` per il router), email, attacchi |
+| `prova-favicon.js` | (1.4.0) l'icona di partenza e quella dello Stile, in radice e in cartella |
+| `prova-riquadri.js` | (1.4.0) Riquadri e Pulsante fisso: posizione e allineamento dall'editor al sito (`pagina-riquadri.php`) |
 | `foto-sito.js`, `quanto-foto.py` | schermate prima e dopo, confrontate al pixel |
 | `router-php-s.php` | router per `php -S` che imita l'`.htaccess` |
 | `tema-cli.php` | attiva, disattiva, ripristina lo stile da riga di comando, per le prove |
@@ -2008,6 +2133,20 @@ può stare dentro una pagina che risponde 200.
 | `tbl($nome)` | nome della tabella con il prefisso |
 | `get_setting($k, $pred)`, `save_setting($k, $v)` | impostazioni |
 | `is_admin_preview()` | amministratore in anteprima |
+
+**Tipo di sito, primi passi, cron, server** (1.4.0: `includes/kit-partenza.php`, `primi-passi.php`, `cron.php`, `controllo-server.php`)
+
+| Funzione | Cosa fa |
+|---|---|
+| `kit_costruisci($kit, $sito, $descr, $autore, $opz)` | costruisce form, pagine, articoli e menu di un kit; ritorna log, registro e pagine saltate |
+| `kit_prova()`, `kit_in_prova()` | il registro del tipo di sito; vero finché non c'è il Definitivo |
+| `kit_impronta($voce)` | l'impronta di adesso di una cosa creata dal kit (null se non c'è più) |
+| `kit_cambia($kit, $autore)`, `kit_definitivo($autore)` | cambia tipo di sito (con la copia prima); Definitivo |
+| `kit_contenuto_scritto()` | la persona ha scritto o cambiato una pagina o un articolo |
+| `primi_passi()`, `primi_passi_nascondi()` | le sei voci dei Primi passi; nascondi solo se tutte fatte |
+| `cron_giornaliero($da)`, `cron_newsletter($da)` | i due giri del cron (`cron` o `pannello`) |
+| `cron_stato()`, `cron_attivo()`, `cron_righe()` | ultime passate; il cron vero gira; le due righe da copiare |
+| `server_controlli()`, `server_email_prova($a)` | Controlla il server; l'email di prova |
 
 **Pannello** (`admin/includes/auth.php`)
 

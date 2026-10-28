@@ -13,11 +13,13 @@ Installa plumeCMS da zero con il browser (Playwright) e controlla sito e pannell
    `DBPASS=<password del database> node prove/prova-install.js http://127.0.0.1:8099 <cartella-schermate> <prefisso-schermate> <nome-database> [sottocartella]`
    La prova usa l'utente del database `danilo` e l'host `127.0.0.1:3308`, quelli dell'ambiente in cui è nata:
    cambiali in testa al file per il tuo ambiente. La password dell'amministratore che crea è `Collaudo-Officina-2026`.
-5. Atteso: tutto OK tranne il 404 di `/favicon.ico` (manca una favicon di partenza).
+5. Atteso (1.4.0): 37 su 37, in radice e in cartella (base `http://127.0.0.1:<porta>/test` con `CMS_CARTELLA=/test`), anche
+   l'icona di partenza a `/favicon.ico` e nel `<link rel="icon">`. Fino alla 1.3.1 l'unico KO era il 404 della favicon.
 
 ## tools/sicurezza-prova.js
 
-79 prove di attacco: ogni OK è un attacco respinto. Si lanciano contro un'installazione locale, mai contro un sito vero:
+Le prove di attacco: ogni OK è un attacco respinto (118 nella 1.4.0, con `CMS_DIR` e `SEGRETO`; le 21 nuove sono sul
+tipo di sito in prova, i primi passi, Esegui adesso del cron e Controlla il server). Si lanciano contro un'installazione locale, mai contro un sito vero:
 `CMS_DIR=<cartella del CMS installato> node tools/sicurezza-prova.js <base> <utente> <password> [prefisso-pannello]`.
 Le prove del modulo danilofailli (burnout) si saltano da sole dove il modulo non c'è.
 Dopo, svuota la tabella `<prefisso>sicurezza_tentativi`: la prova della forza bruta blocca 127.0.0.1 per qualche minuto.
@@ -202,3 +204,57 @@ cambio perché l'opcache del server lo rilegga; alla fine toglie le sue righe e 
 L'indirizzo del sito ufficiale come parametro di Aggiornamenti: rifiuta http e gli indirizzi con `?`, salva quello giusto
 senza la barra finale, vuoto torna al predefinito. Serve un sito senza `CMS_AGGIORNAMENTI_URL` nel config.
 `node prove/prova-versione-sito.js <base> <utente> <password>`. Atteso: 7 su 7.
+
+## Le prove della 1.4.0 (28 ottobre 2026)
+
+Il server di prova serve più richieste insieme: `PHP_CLI_SERVER_WORKERS=4 php -S ...` (Controlla il server chiede al sito
+stesso i file vietati; con un solo processo aspetterebbe se stesso). `tipo-sito-cli.php <cartella CMS> stato | pagina
+<slug> | articolo <slug> | copie | disegni | togli-prova` legge lo stato vero per le prove.
+
+### prova-tipo-sito.js
+
+Il tipo di sito in prova dalla dashboard. Serve un'installazione nuova con il kit Portfolio (`prova-kit.js ... portfolio
+...`), in radice o in cartella. `node prove/prova-tipo-sito.js <base> <cartella CMS> <utente> <password> <cartella
+schermate>`. La persona cambia Chi sono e scrive un articolo dalla scheda classica; il sito diventa Blog (prima la
+conferma rifiutata), poi Vuoto: copie "prima del cambio", pagine tenute e tolte, menu, blog e contatti da visitatore,
+disegni tolti, attacchi (senza CSRF, kit inventato, redattore), Definitivo e cambio rifiutato dopo. Atteso: 39 su 39, in
+radice e in cartella. Lascia `tipo-sito-*.png`.
+
+### prova-primi-passi.js
+
+Dopo `prova-tipo-sito.js`, sullo stesso sito, con il server di posta finto acceso:
+`python3 -I prove/smtp-finto.py <porta> <cartella posta> &` (scrive ogni messaggio in `<n>.eml`, mai su un server vero).
+`node prove/prova-primi-passi.js <base> <cartella CMS> <utente> <password> <porta smtp> <cartella posta> <cartella
+schermate>`. Email di prova senza server (rossa) e con il server scritto in Impostazioni (arrivata davvero), logo e colore
+dallo Stile, "Esegui adesso" che non conta e i due cron lanciati da riga di comando che contano, nascondi. Scrive nel sito
+il server SMTP finto: toglierlo dopo da Impostazioni. Atteso: 19 su 19.
+
+### prova-cron.js
+
+`node prove/prova-cron.js <base> <cartella CMS> <utente> <password> <cartella schermate>`: la pagina Log cron, le due
+righe con il percorso vero, Esegui adesso, il cron vero, gli attacchi, e 31 pagine del pannello senza frasi che parlino
+del sito come se fosse WordPress (restano i paragoni e l'import). Atteso: 13 su 13.
+
+### prova-controlla-server.js
+
+`node prove/prova-controlla-server.js <base> <cartella CMS> <utente> <password> <cartella schermate>`: i sette gruppi
+(sul sito di prova in http l'HTTPS è rosso, come deve), le protezioni spente con `logs/controllo-aperto` (il router fa
+come un server che non legge il `.htaccess`), l'email di prova, gli attacchi. Atteso: 19 su 19.
+
+### prova-favicon.js
+
+`node prove/prova-favicon.js <base> <utente> <password> <indirizzo di un'immagine del sito, es. /test/uploads/x.png>
+<cartella schermate>`: icona di partenza (link e `/favicon.ico`), icona dello Stile (link e 302), di nuovo quella di
+partenza. Atteso: 7 su 7, in radice e in cartella.
+
+### prova-riquadri.js
+
+`php prove/pagina-riquadri.php <cartella CMS>` (crea `/riquadri/`, stampa l'id; il quarto riquadro è scritto come lo
+scriveva la 1.3.1), poi `node prove/prova-riquadri.js <base> <utente> <password> <id> <cartella schermate>`: valori di
+partenza com'erano, posizione e allineamento scelti nell'editor che restano dopo Pubblica e arrivano al sito. Atteso: 11 su 11.
+
+### Aggiornamento 1.3.1 -> 1.4.0
+
+Installazione 1.3.1 (`releases/cms/plumecms-1.3.1.zip`, kit Personale), `pagina-widget.php`, foto; `prova-aggiornamento.js`
+con `plumecms-1.4.0-aggiornamento.zip` (ora controlla anche che la dashboard non abbia i riquadri delle installazioni
+nuove); foto. 28 ottobre 2026: 12 su 12, sito identico al pixel tranne i minuti del Conto alla rovescia.
