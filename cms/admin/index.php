@@ -163,12 +163,12 @@ fetch('aggiornamenti.php', { method: 'POST', credentials: 'same-origin', headers
   <h2 id="tipo-sito-titolo">Stai provando il sito <?= h($kitNome) ?></h2>
   <p>Il sito è partito con pagine, menu e testi d'esempio. Finché non premi <b>Definitivo</b> puoi cambiare tipo di sito con un clic: prima il pannello fa da solo una copia del sito, poi cambia solo quello che il kit aveva preparato e che non hai toccato. Le pagine e gli articoli che hai scritto o cambiato restano.</p>
   <div class="db-kit-carte">
-<?php foreach ($kitTutti as $kid => $k): $qui = $kid === $kitProva['kit']; ?>
-    <form method="post" action="tipo-sito.php" class="db-kit-carta<?= $qui ? ' attuale' : '' ?>"<?= $qui ? '' : ' data-conferma="' . h('Il sito diventa ' . $k['nome'] . '. Le pagine che hai scritto o cambiato restano. Prima del cambio il pannello fa una copia del sito.') . '"' ?>>
+<?php foreach ($kitTutti as $kid => $k): $kitQui = $kid === $kitProva['kit']; ?>
+    <form method="post" action="tipo-sito.php" class="db-kit-carta<?= $kitQui ? ' attuale' : '' ?>"<?= $kitQui ? '' : ' data-conferma="' . h('Il sito diventa ' . $k['nome'] . '. Le pagine che hai scritto o cambiato restano. Prima del cambio il pannello fa una copia del sito.') . '"' ?>>
       <?= csrf_field() ?><input type="hidden" name="azione" value="cambia"><input type="hidden" name="kit" value="<?= h($kid) ?>">
-      <button type="submit"<?= $qui ? ' disabled aria-current="true"' : '' ?> data-kit="<?= h($kid) ?>">
+      <button type="submit"<?= $kitQui ? ' disabled aria-current="true"' : '' ?> data-kit="<?= h($kid) ?>">
         <span class="db-kit-disegno db-k-<?= h($kid) ?>" aria-hidden="true"><i></i><i></i><i></i><i></i></span>
-        <?php if ($qui): ?><em>In prova adesso</em><?php endif; ?>
+        <?php if ($kitQui): ?><em>In prova adesso</em><?php endif; ?>
         <b><?= h($k['nome']) ?></b><small><?= h($k['descrizione']) ?></small>
       </button>
     </form>

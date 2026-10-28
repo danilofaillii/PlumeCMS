@@ -159,5 +159,5 @@ function server_email_prova(string $a): array {
     save_setting('posta_prova', json_encode(['quando' => time(), 'a' => $a, 'ok' => $ok, 'errore' => mb_substr($errore, 0, 300)], JSON_UNESCAPED_UNICODE));
     return $ok
         ? [true, 'Email di prova partita verso ' . $a . '. Controlla la casella (anche lo spam): se non arriva entro qualche minuto, configura il server SMTP in Impostazioni, Configurazione email.']
-        : [false, 'L\'email di prova non è partita: ' . $errore . '. In Impostazioni, Configurazione email, metti i dati SMTP della casella del tuo hosting.'];
+        : [false, 'L\'email di prova non è partita: ' . rtrim($errore, '. ') . '. In Impostazioni, Configurazione email, metti i dati SMTP della casella del tuo hosting.'];
 }

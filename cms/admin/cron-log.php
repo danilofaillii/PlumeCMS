@@ -35,8 +35,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     exit;
 }
 
-$stato = cron_stato();
-$attivo = cron_attivo();
+$cronStato = cron_stato();
+$cronAttivo = cron_attivo();
 $righe = cron_righe();
 $logContent = is_file($logFile) ? (string)file_get_contents($logFile) : '';
 // Del registro si mostrano gli ultimi 60 giri, il piu recente in alto.
@@ -52,7 +52,7 @@ require_once __DIR__ . '/includes/admin-header.php';
 .cr-card p,.cr-card li{font-size:.88rem;line-height:1.5}
 .cr-card ul,.cr-card ol{margin:.3rem 0 .5rem 1.2rem}
 .cr-card small{color:var(--text-muted)}
-.cr-riga{display:block;width:100%;font:.82rem/1.4 ui-monospace,Menlo,Consolas,monospace;padding:.5rem .6rem;border:1px solid var(--border);border-radius:8px;background:var(--bg);color:var(--text);margin:.25rem 0 .6rem}
+.cr-riga{display:block;width:100%;resize:none;word-break:break-all;font:.82rem/1.4 ui-monospace,Menlo,Consolas,monospace;padding:.5rem .6rem;border:1px solid var(--border);border-radius:8px;background:var(--bg);color:var(--text);margin:.25rem 0 .6rem}
 .cr-esito{font-size:.85rem;margin:.4rem 0 0;padding:.5rem .7rem;border-radius:8px;background:var(--bg)}
 .cr-esito li{font-size:.82rem}
 .cr-registro{background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:.8rem 1rem;font:.8rem/1.5 ui-monospace,Menlo,Consolas,monospace;max-height:460px;overflow:auto;white-space:pre-wrap;color:var(--text);margin:0}
@@ -79,10 +79,10 @@ require_once __DIR__ . '/includes/admin-header.php';
 
   <div class="cr-card">
     <h2>Come si va adesso</h2>
-<?php foreach (['giornaliero' => 'Giro del mattino', 'newsletter' => 'Giro della newsletter'] as $k => $nome): $u = $stato[$k] ?? null; $ok = $attivo[$k]; ?>
+<?php foreach (['giornaliero' => 'Giro del mattino', 'newsletter' => 'Giro della newsletter'] as $k => $nome): $u = $cronStato[$k] ?? null; $ok = $cronAttivo[$k]; ?>
     <p style="margin-top:.6rem"><b><?= h($nome) ?></b>
       <span class="badge <?= $ok ? 'badge-published' : 'badge-draft' ?>" data-cron="<?= h($k) ?>"><?= $ok ? 'il cron gira' : 'il cron non gira' ?></span></p>
-    <p><small>Ultimo giro dal cron dell'hosting: <?= h($quando((int)$attivo[$k . '_quando'])) ?>.
+    <p><small>Ultimo giro dal cron dell'hosting: <?= h($quando((int)$cronAttivo[$k . "_quando"])) ?>.
       <?php if ($u && ($u['da'] ?? '') === 'pannello'): ?>Ultimo giro in assoluto: <?= h($quando((int)$u['quando'])) ?>, dal pulsante Esegui adesso.<?php endif; ?></small></p>
 <?php if ($u): ?>
     <ul class="cr-esito"><?php foreach ((array)$u['righe'] as $r): ?><li><?= h((string)$r) ?></li><?php endforeach; ?></ul>
@@ -105,7 +105,7 @@ require_once __DIR__ . '/includes/admin-header.php';
   </ol>
 <?php foreach ($righe as [$intervallo, $comando, $spiega]): ?>
   <p style="margin:.6rem 0 0"><b><?= h(ucfirst($spiega)) ?></b> <small>(intervallo <code><?= h($intervallo) ?></code>)</small></p>
-  <input type="text" class="cr-riga" readonly value="<?= h($comando) ?>" data-copia-se-stesso aria-label="Comando del cron, <?= h($spiega) ?>">
+  <textarea class="cr-riga" rows="2" readonly data-copia-se-stesso aria-label="Comando del cron, <?= h($spiega) ?>"><?= h($comando) ?></textarea>
 <?php endforeach; ?>
   <p><small>Con un altro pannello (Plesk, DirectAdmin) o con il crontab a mano la riga completa è l'intervallo seguito dal comando, per esempio <code><?= h($righe[0][0] . ' ' . $righe[0][1]) ?></code>.
     Il comando usa <code><?= h(cron_php()) ?></code>: se il cron risponde con un errore di versione, usa il PHP della versione del sito (in cPanel di solito <code>/opt/cpanel/ea-php84/root/usr/bin/php</code>).
