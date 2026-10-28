@@ -102,7 +102,8 @@ def controlla(rel, dati):
         codice = re.sub(r'\s//[^\n]*', '', codice)
         if rel.endswith('.php') and 'newdf_' in codice and rel not in ('includes/cms.php', 'includes/db.php'):
             errore(f'prefisso newdf_ scritto nel nucleo: {rel}')
-        if 'danilofailli.it' in codice:
+        # 1.6.1: l'unico indirizzo ammesso è il sito ufficiale di plumeCMS (un sottodominio), non il sito di Danilo.
+        if 'danilofailli.it' in codice.replace('plumecms.danilofailli.it', ''):
             errore(f'riferimento fisso a danilofailli.it nel codice del nucleo: {rel}')
 
 

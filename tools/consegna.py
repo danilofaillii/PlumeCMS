@@ -31,7 +31,7 @@ def main():
         '',
         'Apri questo zip sul computer (doppio clic). Dentro ci sono altri zip: NON aprirli, si caricano così come sono.',
         '',
-        '1. Il CMS, su ogni sito con plumeCMS (il sito ufficiale e duhtron.it/test).',
+        '1. Il CMS, su ogni sito con plumeCMS (il sito ufficiale plumecms.danilofailli.it e gli altri).',
         '   Pannello > Impostazioni > Aggiornamenti > Carica un pacchetto:',
         f'   cms/plumecms-{V}-aggiornamento.zip, poi Applica ora. In alto deve comparire {V}.',
         '',

@@ -1,6 +1,6 @@
 # plumeCMS: manuale tecnico
 
-Versione del manuale: 1.12, per plumeCMS 1.6.0 (28 ottobre 2026).
+Versione del manuale: 1.13, per plumeCMS 1.6.1 (28 ottobre 2026).
 
 Questo manuale descrive come è fatto plumeCMS e come funziona, pezzo per pezzo. È scritto leggendo il codice:
 ogni numero, limite e nome di funzione viene dai file veri, con il riferimento `file:riga` quando serve a chi
@@ -1934,7 +1934,7 @@ Motore `includes/versione-nuova.php`. Il pannello chiede al sito ufficiale di pl
 `plumecms-ultima-aggiornamento`. Quale sito è un parametro (dalla 1.3.1, `versione_sito()`), in quest'ordine:
 `CMS_AGGIORNAMENTI_URL` nel `config.local.php` (vince, e il pannello lo dice); l'indirizzo scritto in Aggiornamenti, campo
 "Indirizzo del sito da cui arrivano gli aggiornamenti" (impostazione `versione_sito`, solo https, senza `?` e `#`; cambiarlo
-dimentica la risposta di prima; vuoto torna al predefinito); `VERSIONE_SITO_UFFICIALE` (`includes/versione-nuova.php:28`). La
+dimentica la risposta di prima; vuoto torna al predefinito); `VERSIONE_SITO_UFFICIALE` (`includes/versione-nuova.php:29`, dalla 1.6.1 `https://plumecms.danilofailli.it`; prima `https://duhtron.it/test`). La
 domanda passa da `api/versione.php` (14.1). Il sito ufficiale non ha niente di speciale: è un plumeCMS che ha lo zip di aggiornamento
 nel suo download manager.
 

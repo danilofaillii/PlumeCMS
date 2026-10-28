@@ -25,7 +25,8 @@
 
 require_once __DIR__ . '/aggiornamenti.php';
 
-const VERSIONE_SITO_UFFICIALE = 'https://duhtron.it/test';
+// 1.6.1: il sito ufficiale di plumeCMS, un sottodominio del sito di Danilo (prima https://duhtron.it/test, l'installazione di prova).
+const VERSIONE_SITO_UFFICIALE = 'https://plumecms.danilofailli.it';
 const VERSIONE_SERIE = 'plumecms-ultima-aggiornamento';
 const VERSIONE_OGNI = 86400;            // un controllo al giorno
 const VERSIONE_MAX_ZIP = 52428800;      // 50 MB

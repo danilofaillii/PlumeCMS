@@ -93,7 +93,7 @@ Stato, decisioni, contesto e diario non stanno qui: stanno nel second brain
 - **Pacchetto di aggiornamento** per un'installazione esistente:
   `python3 tools/cms-pacchetto.py --aggiornamento`. Si carica dal pannello,
   Impostazioni, Aggiornamenti.
-- **Versione**: `cms/VERSIONE` (oggi 1.6.0) e una voce in `cms/CHANGELOG.md` a ogni
+- **Versione**: `cms/VERSIONE` (oggi 1.6.1) e una voce in `cms/CHANGELOG.md` a ogni
   zip con contenuto diverso. Mai cambiare il contenuto di una versione già data.
 - **Prove** prima di dire finito:
   - `php -n -d short_open_tag=1 -l` su ogni file PHP toccato, `node --check` sui js;
@@ -129,7 +129,12 @@ Le decisioni complete, con data e perché, stanno nel second brain, `plumecms/de
 
 ## Stato al 28 ottobre 2026
 
-Fatto: plumeCMS 1.6.0 (28 ottobre): Articoli > linguetta "Aggiungi sempre alla fine" (richiesta di Danilo): un riquadro
+Fatto: plumeCMS 1.6.1 (28 ottobre, sera): il sito ufficiale diventa `https://plumecms.danilofailli.it` (decisione di Danilo:
+trasferire il sito da duhtron.it/test a un sottodominio suo). `VERSIONE_SITO_UFFICIALE` cambiata; il costruttore rifiuta ancora
+`danilofailli.it` nel nucleo ma ammette il sottodominio. Il trasloco si fa con Copia del sito: provato qui (sito in `/test` con
+le sei parti, copia ripristinata su un'installazione nuova in radice, 13 pagine uguali, download ok). Prove 1.6.1: install
+37/37, versione-sito 7/7, aggiornamento 1.6.0 -> 1.6.1 13/13.
+1.6.0 (28 ottobre): Articoli > linguetta "Aggiungi sempre alla fine" (richiesta di Danilo): un riquadro
 ombreggiato composto con l'editor visuale che esce in fondo a ogni articolo. Modello di tipo `fine` (`includes/modelli.php`,
 uno solo, acceso quando è pubblicato), pagina `admin/fine-articolo.php`, `vista_fine_articolo()` e `vista_chiusura_article()`
 in `sito/viste.php` (dentro `<article class="corpo">`, fuori per gli articoli a tutta pagina), `.fine-articolo` in `sito.css`
@@ -193,8 +198,8 @@ Aperto:
   `define('CMS_PREFISSO', 'newdf_');` al `config.local.php` di danilofailli.it;
 - prova vera delle chiamate a Google Search Console e IndexNow da un server con rete aperta;
 - **indirizzo del sito ufficiale** per "c'è una versione nuova": dalla 1.3.1 si sceglie in Aggiornamenti; il predefinito
-  `VERSIONE_SITO_UFFICIALE` (`includes/versione-nuova.php`) vale ancora `https://duhtron.it/test`, da confermare con Danilo; quel sito
-  deve avere la 1.3.0 o più nuova (per `api/versione.php`);
+  `VERSIONE_SITO_UFFICIALE` (`includes/versione-nuova.php`) dalla 1.6.1 vale `https://plumecms.danilofailli.it`: finché il
+  trasloco non è fatto, un'installazione nuova non trova il sito ufficiale (dice "non raggiungibile", nient'altro);
 - copia del sito: il ripristino non toglie i file che stanno nel sito ma non nella copia; con due installazioni nello stesso database
   e prefissi che cominciano uguale (`cms_` e `cms_b_`) la copia prende anche le tabelle dell'altra;
 - "c'è una versione nuova" provato solo in http locale (`CMS_AGGIORNAMENTI_HTTP_PROVA`): HTTPS vero da provare su un server;

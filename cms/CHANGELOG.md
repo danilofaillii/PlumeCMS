@@ -2,6 +2,13 @@
 
 Il prodotto si chiama **plumeCMS** (nome scelto il 26 ottobre 2026; prima, per poche ore, "CarbonaraCMS", e ancora prima il provvisorio "Officina": gli zip vecchi si chiamavano `officina-*` e `carbonaracms-*`).
 
+## 1.6.1 (28 ottobre 2026) - Il sito ufficiale cambia indirizzo
+
+- Il sito da cui plumeCMS si scarica, e a cui il pannello chiede "c'è una versione nuova?", diventa
+  `https://plumecms.danilofailli.it` (prima `https://duhtron.it/test`, l'installazione di prova). Vale per chi installa da
+  zero e per chi in Aggiornamenti ha lasciato il campo vuoto; chi ha scritto un indirizzo suo non cambia niente.
+- Nient'altro: nessuna modifica al pannello né al sito.
+
 ## 1.6.0 (28 ottobre 2026) - Un riquadro in fondo a ogni articolo
 
 - **Articoli, linguetta "Aggiungi sempre alla fine"** (accanto a Tutti, Pubblicati, Programmati, Bozze, Cestino; solo
