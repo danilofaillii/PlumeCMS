@@ -2017,7 +2017,7 @@ CMS_DIR=<cartella del CMS installato> node tools/sicurezza-prova.js <base> <uten
 Il prefisso del pannello predefinito è `/new`; per un CMS nella radice si passa `""`. Prova XSS, CSRF, ruoli,
 pagine aperte senza login, CSV, open redirect, forza bruta, blocchi per nome utente e IP di casa, upload di PHP e
 SVG, file protetti, SQL injection, intestazioni, session fixation, cron dal web, firma della newsletter, CSP del
-pannello, pacchetti non firmati, copia del sito, aspetto del pannello e impostazioni delle foto (1.4.0). Oggi: 111 prove respinte (con `SEGRETO` nell'ambiente anche la newsletter firmata), più quelle del modulo del primo sito che si saltano da sole.
+pannello, pacchetti non firmati, copia del sito, aspetto del pannello e impostazioni delle foto (1.4.0). Oggi: 114 prove respinte con `SEGRETO` nell'ambiente (112 senza: la newsletter firmata si salta), più quelle del modulo del primo sito che si saltano da sole.
 
 Dopo la prova l'IP di chi l'ha lanciata è bloccato: prima di altre prove si svuota la tabella
 `<prefisso>sicurezza_tentativi`.
