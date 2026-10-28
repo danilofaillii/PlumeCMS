@@ -18,9 +18,9 @@ Installa plumeCMS da zero con il browser (Playwright) e controlla sito e pannell
 
 ## tools/sicurezza-prova.js
 
-Le prove di attacco (125 dalla 1.4.0): ogni OK è un attacco respinto. Si lanciano contro un'installazione locale, mai contro un sito vero:
 
-Le prove di attacco: ogni OK è un attacco respinto (118 nella 1.4.0, con `CMS_DIR` e `SEGRETO`; le 21 nuove sono sul
+
+Le prove di attacco: ogni OK è un attacco respinto (177 nella 1.5.0, con FINTO_WP; 118 nella 1.4.0, con `CMS_DIR` e `SEGRETO`; le 21 nuove sono sul
 tipo di sito in prova, i primi passi, Esegui adesso del cron e Controlla il server). Si lanciano contro un'installazione locale, mai contro un sito vero:
 `CMS_DIR=<cartella del CMS installato> node tools/sicurezza-prova.js <base> <utente> <password> [prefisso-pannello]`.
 Le prove del modulo danilofailli (burnout) si saltano da sole dove il modulo non c'è.
@@ -219,6 +219,23 @@ mostrano il sito), e una schermata `<aspetto>-<pagina>.png`; l'editor della home
 rimette Aria e cerca i colori scritti a mano rimasti in `cms/admin` (le eccezioni volute hanno un commento `fisso`).
 Atteso: 56 su 56. Dura circa 8 minuti. Non crea contenuti.
 
+## prova-social.js (1.5.0)
+
+Social e email del mattino. Su un plumeCMS appena installato con un kit (l'articolo d'esempio ha id 1), con il server
+di posta finto acceso (`python3 -I prove/smtp-finto.py <porta> <cartella posta> &`):
+`node prove/prova-social.js <base> <utente> <password> <porta smtp> <cartella posta>`. Imposta la posta verso il server
+finto, gli hashtag e il link di WhatsApp (e un link con `javascript:` rifiutato); scrive nel riquadro Social
+dell'articolo un testo con un'emoji e uno script, un testo solo per LinkedIn, carica la foto in evidenza e misura le
+due immagini (1200x630 e 1080x1350); controlla i testi canale per canale in Testi dei contenuti; manda l'email del
+mattino e la legge dal server finto (oggetto, testi, immagini, script scappato); mette un testo nel calendario per oggi
+(e uno con un'immagine `javascript:`, rifiutato), lancia "Esegui adesso" e controlla le due email, l'ancora, lo stato
+"inviato", e che il secondo giro non mandi niente. Atteso: 28 su 28. Una volta sola per installazione (il giorno resta segnato).
+
+I dati del pannello di prima (danilofailli.it): `prove/social-dati-vecchi.sql` crea `social_pillar` e la colonna
+`social_summary` su un'installazione con prefisso `cms_` e toglie le tabelle dei social; poi
+`php -r 'require "includes/config.php"; require "includes/social.php"; social_installa();'` nella cartella del CMS, e le
+righe giuste devono essere nel calendario e nei testi (quella con uno slug che non esiste si salta).
+
 ## tools/manuale-uso-schermate.js (1.4.2)
 
 Le schermate del manuale d'uso, ed è anche una prova: esegue gli esempi del manuale come una persona (articolo scritto
@@ -226,7 +243,9 @@ nell'editor e pubblicato dalla scheda, articolo programmato, pagina "Lavora con 
 pulsante, sezione pronta e form compilato dal sito, menu, popup, campagna, utente, download) e si ferma al primo passo
 che non riesce. Serve un plumeCMS appena installato con il kit Attività (`prova-kit.js <base> attivita <db> ...`), in una
 cartella con un nome che si può mostrare (le schermate di Log cron e Aggiornamenti mostrano il percorso: si usa
-`/home/studioprova/public_html`). `node tools/manuale-uso-schermate.js <base> prova Collaudo-Officina-2026`. Dura circa
+`/home/studioprova/public_html`) e con l'indirizzo del sito `https://www.studioprova.it` (impostazione `sito_url`, scritta a mano
+nella tabella delle impostazioni dopo l'installazione: così i testi social e le email del manuale non mostrano 127.0.0.1).
+`node tools/manuale-uso-schermate.js <base> prova Collaudo-Officina-2026`. Dura circa
 5 minuti. Atteso: nessun "FERMO", 70 immagini, sotto 1450 KB in tutto; poi `node tools/manuali-pdf.js` e il manuale
 d'uso sotto 1900 KB.
 

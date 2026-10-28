@@ -71,7 +71,7 @@ async function apriEditor(u) {
 }
 
 // Da PNG a JPEG, una volta sola: al massimo LARGO px (nel PDF sono 17 cm), qualità QUALITA. Il PDF deve stare sotto 1900 KB.
-const LARGO = 800, QUALITA = 38;
+const LARGO = 760, QUALITA = 34;
 function stringi() {
   require('child_process').execFileSync('python3', ['-c', `
 import os, sys
@@ -447,6 +447,51 @@ capitoli['19'] = async () => {
   await foto('19-campagna', { clip: { x: 240, y: 56, width: 960, height: 760 }, segni: [{ sel: '[name=oggetto]', n: 1 }, { sel: '#editor', n: 2 }] });
   await vai('newsletter-flussi.php?nuovo=1');
   await foto('19-flussi', { clip: { x: 240, y: 56, width: 960, height: 600 } });
+};
+
+// 19s. I social e l'email del mattino (1.5.0), sull'articolo "Chiusi per ferie" del capitolo 4.
+capitoli['19s'] = async () => {
+  // L'indirizzo degli avvisi: senza, le email del mattino non partono (la pagina Social lo direbbe in rosso).
+  await vai('impostazioni.php');
+  await p.fill('#notification_email', 'negozio@studioprova.it');
+  await Promise.all([p.waitForNavigation(), p.click('form:has(input[value=save_posta]) button[type=submit]')]);
+  await vai('social.php?scheda=impostazioni');
+  await p.fill('#so-h-li', '#studioprova');
+  await p.fill('#so-h-fb', '#studioprova');
+  await p.fill('#so-h-ig', '#studioprova #negozio #bologna');
+  await p.fill('#so-h-cat', 'Avvisi: #avvisi #orari');
+  await p.fill('#so-wa-l', '/contatti/');
+  await p.fill('#so-wa-e', 'Per scriverci:');
+  await foto('19s-impostazioni', { clip: { x: 240, y: 56, width: 960, height: 760 }, segni: [{ sel: 'input[name=email_mattino]', n: 1 }, { sel: 'input[name="canale[linkedin]"]', n: 2 }, { sel: '#so-h-li', n: 3 }, { sel: '#so-h-cat', n: 4 }] });
+  await Promise.all([p.waitForNavigation(), p.click('form:has(input[value=impostazioni]) button.btn-primary')]);
+  // Il riquadro Social della scheda
+  await vai('contenuti.php?tipo=articoli');
+  await Promise.all([p.waitForNavigation(), p.locator('a', { hasText: 'Chiusi per ferie' }).first().click()]);
+  await p.waitForLoadState('networkidle');
+  await p.fill('[name=social_testo]', 'Dal 10 al 20 agosto il negozio chiude: andiamo a prendere il sole \u{1F30A} Ci vediamo lunedì 21, con gli orari di sempre.');
+  await p.locator('#social details summary').click();
+  await p.fill('[name=social_whatsapp]', 'Ciao! Ti avviso prima che tu passi: dal 10 al 20 agosto siamo chiusi.');
+  await Promise.all([p.waitForNavigation(), p.click('button[data-valore=pubblica]')]);
+  await p.waitForLoadState('networkidle');
+  await p.locator('#social').scrollIntoViewIfNeeded();
+  await foto('19s-scheda', { sel: '#social', segni: [{ sel: '[name=social_testo]', n: 1 }, { sel: '#social details summary', n: 2 }, { sel: '.sc-social-img', n: 3 }] });
+  // I testi pronti da copiare
+  await vai('social.php?scheda=testi');
+  await foto('19s-testi', { sel: '.so-carta', segni: [{ sel: '.so-carta .so-canale textarea', n: 1 }, { sel: '.so-carta .so-condividi', n: 2 }] });
+  // L'email del mattino
+  await vai('social.php?scheda=mattino');
+  await foto('19s-mattino', { clip: { x: 240, y: 56, width: 960, height: 760 }, segni: [{ sel: 'input[name=giorno]', n: 1 }, { sel: 'form:has(input[value=manda_mattino]) button', n: 2 }] });
+  // Il calendario
+  await vai('social.php?scheda=calendario&nuovo=1');
+  const domani = new Date(Date.now() + 86400000 - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 10);
+  await p.fill('#so-data', domani);
+  await p.selectOption('#so-cont', { label: 'Articolo: Chiusi per ferie dal 10 al 20 agosto' });
+  await p.fill('#so-tit', 'Promemoria: ultimi giorni prima delle ferie');
+  await p.fill('#so-li', 'Ultima settimana prima della pausa estiva: se ti serve qualcosa, passa entro sabato.');
+  await p.fill('#so-fb', 'Ultimi giorni prima delle ferie! Passa entro sabato \u{2600}\u{FE0F}');
+  await foto('19s-calendario-nuovo', { clip: { x: 240, y: 56, width: 960, height: 760 }, segni: [{ sel: '#so-data', n: 1 }, { sel: '#so-cont', n: 2 }, { sel: '#so-tit', n: 3 }, { sel: '#so-li', n: 4 }] });
+  await Promise.all([p.waitForNavigation(), p.click('form:has(input[value=programmato_salva]) button.btn-primary')]);
+  await foto('19s-calendario', { sel: '.so-tabella', margine: 10 });
 };
 
 // 20. Download

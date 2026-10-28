@@ -4,7 +4,8 @@
  *
  * Due righe nel cron dell'hosting (cPanel, Processi cron), con il PHP da riga di comando:
  *   cron-daily.php       una volta al giorno (per esempio alle 06:00): applica i pacchetti di aggiornamento programmati
- *                        (pannello Aggiornamenti), fa i compiti dei moduli (chiave cron del manifest), manda a IndexNow
+ *                        (pannello Aggiornamenti), fa i compiti dei moduli (chiave cron del manifest), manda le email del
+ *                        mattino (Social, includes/social.php: "Oggi sul sito" e i testi del calendario), manda a IndexNow
  *                        gli indirizzi in coda (pannello SEO e AEO). Scrive logs/cron-daily.log.
  *   cron-newsletter.php  ogni 5 minuti: avvia le campagne arrivate alla loro ora, manda un giro di email (fino a 40, nel
  *                        limite orario della newsletter), fa avanzare i flussi automatici, svuota la coda di IndexNow.
@@ -66,6 +67,15 @@ function cron_giornaliero(string $da = 'cron'): string {
         } catch (Throwable $e) {
             $righe[] = 'ERRORE ' . $x['chiave'] . ' (' . $x['modulo'] . '): ' . $e->getMessage();
         }
+    }
+
+    // 1.5.0: le email del mattino del CMS (Social): "Oggi sul sito" con i contenuti che escono oggi, e i testi social
+    // del calendario con la data di oggi. Prima le mandava il modulo di danilofailli.it.
+    try {
+        require_once __DIR__ . '/social.php';
+        foreach (social_cron() as $r) $righe[] = $r;
+    } catch (Throwable $e) {
+        $righe[] = 'ERRORE social: ' . $e->getMessage();
     }
 
     // 3. IndexNow: la coda degli indirizzi pubblicati o modificati (pannello SEO e AEO).

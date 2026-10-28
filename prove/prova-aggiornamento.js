@@ -17,6 +17,9 @@ let n = 0, ko = 0; const ok = (t, c, extra = '') => { n++; if (!c) ko++; console
   await Promise.all([p.waitForNavigation(), p.click('button[type=submit]')]);
   ok('login', !p.url().includes('login.php'), p.url());
   const prima = fs.readFileSync(path.join(DIR, 'VERSIONE'), 'utf8').trim();
+  // Il riquadro del tipo di sito e i primi passi prima dell'aggiornamento: dopo devono essere come prima.
+  await p.goto(B + '/admin/index.php', { waitUntil: 'networkidle' });
+  const riquadriPrima = [await p.locator('#tipo-sito').count(), await p.locator('#primi-passi').count()].join(',');
 
   await p.goto(B + '/admin/aggiornamenti.php', { waitUntil: 'networkidle' });
   await p.setInputFiles('input[name=pacchetto]', ZIP);
@@ -42,9 +45,11 @@ let n = 0, ko = 0; const ok = (t, c, extra = '') => { n++; if (!c) ko++; console
   ok('aprendo la pagina Temi si è scritto temi/.htaccess', fs.existsSync(path.join(DIR, 'temi', '.htaccess')));
   await p.goto(B + '/admin/editor-temi.php', { waitUntil: 'networkidle' });
   ok('il menu dice "Colori delle infografiche"', (await p.locator('nav, aside').first().innerText()).includes('Colori delle infografiche'));
-  // 1.4.0: un sito che si aggiorna non vede il tipo di sito in prova ne i primi passi (sono delle installazioni nuove).
+  // 1.4.0: un sito che si aggiorna non vede comparire il tipo di sito in prova ne i primi passi (sono delle installazioni
+  // nuove). Un sito nato con la 1.4.0 o dopo li ha gia: l'aggiornamento non deve cambiarli.
   await p.goto(B + '/admin/index.php', { waitUntil: 'networkidle' });
-  ok('dashboard: niente riquadro del tipo di sito ne primi passi', await p.locator('#tipo-sito').count() === 0 && await p.locator('#primi-passi').count() === 0);
+  const riquadriDopo = [await p.locator('#tipo-sito').count(), await p.locator('#primi-passi').count()].join(',');
+  ok('dashboard: tipo di sito e primi passi come prima dell\'aggiornamento' + (prima < '1.4.0' ? ' (nessuno dei due)' : ''), riquadriDopo === riquadriPrima && (prima >= '1.4.0' || riquadriDopo === '0,0'), { prima: riquadriPrima, dopo: riquadriDopo });
   // 1.4.1: si rientra da zero, in un browser nuovo. La pagina di accesso non carica tutte le funzioni del pannello:
   // un errore li vale solo per lei, e chi era gia collegato non lo vede.
   const nuovo = await (await br.newContext()).newPage();

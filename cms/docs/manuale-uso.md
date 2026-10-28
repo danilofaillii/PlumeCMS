@@ -1,6 +1,6 @@
 # Manuale d'uso di plumeCMS
 
-Versione del manuale: plumeCMS 1.4.2, 28 ottobre 2026.
+Versione del manuale: plumeCMS 1.5.0, 28 ottobre 2026.
 
 ## Prima di cominciare
 
@@ -58,7 +58,7 @@ Dopo l'accesso arrivi alla **Dashboard**: la pagina che ti dice come sta il sito
 
 Sotto trovi i riquadri del **tipo di sito** e dei **Primi passi** (capitoli 2 e 3), gli avvisi in giallo, e i numeri
 del sito: articoli online, programmati e in bozza, iscritti alla newsletter, form compilati, ultime modifiche, e un
-riquadro **Sistema** che dice quando sono girati per l'ultima volta i compiti automatici (il cron, capitolo 24).
+riquadro **Sistema** che dice quando sono girati per l'ultima volta i compiti automatici (il cron, capitolo 25).
 
 ### Il menu in basso
 
@@ -145,8 +145,8 @@ alla pagina giusta, e si spuntano da sole quando le hai fatte.
 |---|---|---|
 | Nome e logo del sito | Stile del sito, Identità: nome, logo, icona del browser | 13 |
 | I tuoi colori | Stile del sito, Colori globali | 13 |
-| Le email partono | Manda un'email di prova al tuo indirizzo | 23 |
-| Il cron è attivo | Le due righe nei Cron Job dell'hosting | 24 |
+| Le email partono | Manda un'email di prova al tuo indirizzo | 24 |
+| Il cron è attivo | Le due righe nei Cron Job dell'hosting | 25 |
 | La prima pagina o il primo articolo | Riscrivi una pagina d'esempio o scrivi un articolo | 4, 9 |
 | Il tipo di sito è definitivo | Premi Definitivo nel riquadro sopra | 2 |
 
@@ -275,7 +275,7 @@ Sulla dashboard, nel riquadro **Contenuti**, la voce **Prossime uscite** ti rico
 
 - [ ] Visibilità "Pubblicato" e una data futura.
 - [ ] Nell'elenco l'articolo è "Programmato".
-- [ ] Il cron è attivo (capitolo 24): avvisa i motori di ricerca delle pagine nuove.
+- [ ] Il cron è attivo (capitolo 25): avvisa i motori di ricerca delle pagine nuove.
 
 **Se qualcosa non va**
 
@@ -767,7 +767,7 @@ Excel o Numbers.
 - [ ] Il form chiede solo quello che serve davvero.
 - [ ] Il campo Email è di tipo **Email** (serve per risponderti e per la newsletter).
 - [ ] Ho compilato il form dal sito, una volta, e la compilazione è arrivata.
-- [ ] Le email partono (capitolo 23), se voglio l'avviso a ogni compilazione.
+- [ ] Le email partono (capitolo 24), se voglio l'avviso a ogni compilazione.
 
 ---
 
@@ -798,7 +798,7 @@ Excel o Numbers.
 ## 19. La newsletter
 
 **A cosa serve.** Scrivere alle persone che si sono iscritte, dal tuo sito, senza servizi esterni da pagare. Le email
-partono dal tuo server, a giri, grazie al cron (capitolo 24).
+partono dal tuo server, a giri, grazie al cron (capitolo 25).
 
 ### Gli iscritti
 
@@ -837,13 +837,119 @@ un'email diversa a chi ha aperto e a chi no. Si disegnano su una tela con quattr
 
 **Checklist**
 
-- [ ] Le email partono (capitolo 23) e il cron è attivo (capitolo 24).
+- [ ] Le email partono (capitolo 24) e il cron è attivo (capitolo 25).
 - [ ] Ho mandato la prova a me stesso prima di ogni campagna.
 - [ ] Ogni email ha il link per uscire dalla newsletter (lo mette plumeCMS da solo).
 
 ---
 
-## 20. I file da scaricare
+## 20. I social e l'email del mattino
+
+**A cosa serve.** Ogni mattina ti arriva un'email con tutto pronto per i social: cosa esce oggi sul sito, il testo per
+ogni canale con il link e gli hashtag, le due immagini della misura giusta. Copi, incolli, pubblichi: cinque minuti con il
+caffè, invece di mezz'ora a riscrivere la stessa cosa quattro volte. Si apre da **Social**, nel menu a sinistra.
+
+**Esempio.** L'articolo "Chiusi per ferie" del capitolo 4 deve arrivare su LinkedIn, Facebook, Instagram e WhatsApp, e
+il giorno dopo serve un promemoria.
+
+### Una volta: le impostazioni
+
+![Social, Impostazioni](immagini/manuale-uso/19s-impostazioni.jpg)
+
+1. **Le email del mattino**: "Oggi sul sito" (i contenuti che escono oggi) e "Social di oggi" (i testi del calendario).
+   Arrivano all'indirizzo degli avvisi di Impostazioni > Configurazione email (capitolo 24).
+2. **I canali** su cui pubblichi: LinkedIn, Facebook, Instagram, WhatsApp e Telegram, Substack. Quelli spenti spariscono
+   dalle email e dalle pagine.
+3. **Hashtag fissi**, uno per canale: escono in fondo a ogni testo (per esempio quello del tuo marchio).
+4. **Hashtag per categoria**: una riga per categoria, il nome, due punti, gli hashtag ("Avvisi: #avvisi #orari"). Un
+   articolo di quella categoria li prende in più.
+
+Sotto puoi mettere un **link in più nei testi di WhatsApp**, con la sua frase: per esempio la pagina per prenotare.
+Premi **Salva**.
+
+### Per ogni contenuto: il riquadro Social
+
+Nella scheda dell'articolo, sotto l'estratto, c'è il riquadro **Social**.
+
+![Il riquadro Social della scheda](immagini/manuale-uso/19s-scheda.jpg)
+
+1. **Testo per i social**: due o tre righe che fanno venire voglia di leggere. Va su tutti i canali; il link e gli
+   hashtag li aggiunge il CMS. Le emoji vanno bene. Se lo lasci vuoto, si usa l'estratto.
+2. **Un testo diverso per un canale**: si apre e ti dà tre caselle, LinkedIn, Facebook e Instagram, WhatsApp e Telegram.
+   Su WhatsApp, per esempio, scrivi come scriveresti a un amico.
+3. **Le due immagini**, fatte da sole dall'immagine in evidenza: 1200x630 per LinkedIn e Facebook, 1080x1350 per
+   Instagram. Se cambi la foto, cambiano anche loro.
+
+Premi **Aggiorna** (o Pubblica).
+
+### Ogni mattina: l'email "Oggi sul sito"
+
+Il giorno in cui esce un articolo, al giro del mattino del cron (capitolo 25), ti arriva **"Oggi sul sito tuosito.it:
+1 articolo"**. Per ogni contenuto che esce quel giorno: il titolo, le due immagini con i pulsanti per scaricarle, un
+riquadro per ogni canale con il testo pronto, e i pulsanti **Condividi su LinkedIn**, **Condividi su Facebook**,
+**Invia su WhatsApp**, **Invia su Telegram**.
+
+In **Social > Email del mattino** la vedi prima che parta:
+
+![L'email del mattino, in anteprima](immagini/manuale-uso/19s-mattino.jpg)
+
+1. Scegli il **giorno** e premi **Mostra**: vedi l'email di quel giorno, anche di un giorno futuro (gli articoli
+   programmati).
+2. **Mandala adesso** te la manda subito, per provarla. Al mattino parte comunque, una volta sola.
+
+### I testi pronti, in qualunque momento
+
+**Social > Testi dei contenuti** mostra i testi degli articoli più recenti, canale per canale, con le immagini.
+
+![I testi da copiare](immagini/manuale-uso/19s-testi.jpg)
+
+1. **Fai clic su un testo**: si seleziona e si copia. Lo incolli nel social.
+2. I link **Condividi** aprono il social con l'indirizzo già dentro.
+
+### Il calendario: un testo per ogni giorno
+
+Per un articolo importante un post solo non basta. Nel **Calendario** prepari i testi dei giorni dopo: ogni mattina
+arriva l'email **"Social di oggi"** con il testo di quel giorno, il link e le immagini. Per esempio una settimana di post
+su un articolo lungo, un capitolo al giorno.
+
+Premi **+ Un testo nel calendario**:
+
+![Un testo nuovo nel calendario](immagini/manuale-uso/19s-calendario-nuovo.jpg)
+
+1. **Giorno** in cui ti arriva.
+2. **Contenuto** a cui porta il link.
+3. **Titolo del giorno**: ti dice di cosa parla quel post (esce nell'oggetto dell'email).
+4. I testi per **LinkedIn**, **Facebook e Instagram**, **WhatsApp e Telegram**. Quelli vuoti prendono il testo del
+   riquadro Social del contenuto.
+
+Sotto: l'**ancora**, per portare il link a un punto preciso della pagina (l'id di un titolo), e due immagini diverse da
+quelle del contenuto, se le vuoi. Premi **Salva**.
+
+![Il calendario](immagini/manuale-uso/19s-calendario.jpg)
+
+Ogni riga dice se il testo è **In attesa** o **Inviato**. Un testo inviato non riparte; **Rimetti in attesa** lo fa
+ripartire domattina, **Mandalo adesso a me** te lo manda subito senza toccare il calendario.
+
+**Checklist**
+
+- [ ] L'indirizzo degli avvisi è scritto e le email partono (capitolo 24).
+- [ ] Il cron gira (capitolo 25): senza, le email del mattino non partono da sole.
+- [ ] Ho scelto i canali e scritto gli hashtag fissi.
+- [ ] Ogni articolo ha il suo testo per i social e un'immagine in evidenza.
+- [ ] Ho guardato l'anteprima dell'email del giorno prima di dormirci sopra.
+
+**Se qualcosa non va**
+
+- *Stamattina non è arrivata l'email.* Quel giorno non usciva niente (allora non parte), oppure il cron non gira
+  (Impostazioni > Log cron), oppure manca l'indirizzo degli avvisi. In Log cron il giro del mattino dice cosa ha fatto.
+- *Le immagini per i social non ci sono.* Serve un'immagine in evidenza caricata nel sito (Media). Da un indirizzo
+  esterno il CMS non può ritagliarle e usa la foto com'è.
+- *Il testo di Instagram ha il link.* Instagram non rende cliccabili i link nei post: se preferisci, cancellalo prima di
+  pubblicare e scrivi "link in bio".
+
+---
+
+## 21. I file da scaricare
 
 **A cosa serve.** Manuali, listini, moduli, programmi: i file che offri da scaricare, con un indirizzo fisso e il conto
 di quante volte sono stati scaricati (le persone sì, i robot no). Si apre da **Download**.
@@ -868,7 +974,7 @@ l'indirizzo `/scarica/guida-ultima/` porta sempre al più recente. Carichi la ve
 
 ---
 
-## 21. Farsi trovare: SEO e AEO
+## 22. Farsi trovare: SEO e AEO
 
 **A cosa serve.** Fare in modo che Google e le intelligenze artificiali capiscano di cosa parla ogni pagina e la
 mostrino a chi la cerca. Molto lo fa plumeCMS da solo: la mappa del sito, i dati strutturati, i redirect quando cambi un
@@ -908,7 +1014,7 @@ rimandi dove devono andare.
 
 ---
 
-## 22. Utenti e ruoli
+## 23. Utenti e ruoli
 
 **A cosa serve.** Far lavorare altre persone sul sito, ognuna con il suo nome e la sua password. Si apre da **Utenti**.
 
@@ -931,9 +1037,10 @@ email; al primo accesso potrà cambiarla da **Password**.
 
 ---
 
-## 23. Le email del sito
+## 24. Le email del sito
 
-**A cosa serve.** Il sito manda email: conferme di iscrizione, avvisi dei form, la newsletter, il riassunto del mattino.
+**A cosa serve.** Il sito manda email: conferme di iscrizione, avvisi dei form, la newsletter, le email del mattino con i social
+(capitolo 20).
 Perché arrivino (e non finiscano fra lo spam) conviene farle partire da una casella vera del tuo dominio. Si apre da
 **Impostazioni > Configurazione email**.
 
@@ -962,12 +1069,13 @@ Premi **Salva**, poi manda l'email di prova (anche dai Primi passi, sulla dashbo
 
 ---
 
-## 24. Il cron: i compiti automatici
+## 25. Il cron: i compiti automatici
 
 **A cosa serve.** Il **cron** è una sveglia che l'hosting suona al sito a orari fissi. Senza, il sito fa le cose solo
 quando qualcuno lo visita. Con il cron:
 
 - le campagne programmate partono alla loro ora e la newsletter va a piccoli giri, ogni 5 minuti;
+- ogni mattina ti arrivano le email "Oggi sul sito" e "Social di oggi" (capitolo 20);
 - ogni mattina il sito applica gli aggiornamenti programmati, avvisa i motori di ricerca (IndexNow) delle pagine nuove o
   cambiate e fa i compiti dei moduli installati;
 - i flussi automatici della newsletter vanno avanti (il benvenuto ai nuovi iscritti, i promemoria).
@@ -997,7 +1105,7 @@ Fai lo stesso per la seconda riga. Il giorno dopo, la stessa pagina ti dice com'
 
 ---
 
-## 25. La sicurezza
+## 26. La sicurezza
 
 **A cosa serve.** plumeCMS è protetto già all'installazione: blocca chi prova a indovinare le password, chiude le porte
 che non servono, controlla quello che entra. **Impostazioni > Sicurezza** ti fa vedere come sta il sito, a colori.
@@ -1034,14 +1142,14 @@ sul tuo telefono. Chi ruba la password resta fuori.
 **Se qualcosa non va**
 
 - *Ho dimenticato la password.* Nella pagina di accesso usa il link per reimpostarla: arriva un'email (serve che le
-  email partano, capitolo 23).
+  email partano, capitolo 24).
 - *Ho perso il telefono del secondo fattore.* Entra con uno dei codici di recupero, poi rigenera il secondo fattore.
 - *Mi sono chiuso fuori del tutto.* Chiedi a chi gestisce l'hosting, o a chi ha installato il sito: il manuale tecnico
   (capitolo "Se ci si chiude fuori") spiega la riga da aggiungere al file di configurazione per rientrare.
 
 ---
 
-## 26. Aggiornare plumeCMS
+## 27. Aggiornare plumeCMS
 
 **A cosa serve.** Le versioni nuove portano funzioni e correzioni. Un aggiornamento è uno zip che carichi dal pannello:
 prima di toccare qualunque cosa il pannello fa una copia di sicurezza, e se qualcosa va storto rimette tutto com'era da
@@ -1068,7 +1176,7 @@ all'ultima: non serve passare da quelle in mezzo.
 
 **Checklist**
 
-- [ ] Prima di aggiornare ho una copia del sito recente (capitolo 27; il pannello ne fa comunque una).
+- [ ] Prima di aggiornare ho una copia del sito recente (capitolo 28; il pannello ne fa comunque una).
 - [ ] Dopo l'aggiornamento il numero di versione è quello nuovo.
 - [ ] Ho aperto il sito e qualche pagina del pannello: tutto come prima.
 
@@ -1081,7 +1189,7 @@ all'ultima: non serve passare da quelle in mezzo.
 
 ---
 
-## 27. La copia del sito
+## 28. La copia del sito
 
 **A cosa serve.** Una copia completa del sito (database, immagini, temi, moduli) in un solo file, da tenere al sicuro.
 Serve se qualcosa si rompe, o per spostare il sito su un altro hosting. Si apre da **Impostazioni > Copia del sito**.
@@ -1103,7 +1211,7 @@ email.
 
 ---
 
-## 28. Controlla il server
+## 29. Controlla il server
 
 **A cosa serve.** Sapere se l'hosting ha tutto quello che serve a plumeCMS: versione di PHP, estensioni, HTTPS, cron,
 email, cartelle scrivibili, protezioni dei file. Non cambia niente: guarda e ti dice. Si apre da **Impostazioni >
@@ -1121,7 +1229,7 @@ semplici. **Controlla di nuovo** rifà i controlli; **Manda un'email di prova** 
 
 ---
 
-## 29. Portare qui un sito WordPress
+## 30. Portare qui un sito WordPress
 
 **A cosa serve.** Se hai un sito WordPress, plumeCMS lo legge e porta qui articoli, pagine, immagini, categorie, tag,
 menu e titoli SEO, con i redirect dai vecchi indirizzi. Il sito WordPress non viene toccato. Si apre da **Impostazioni >
@@ -1191,8 +1299,9 @@ Dopo la conferma puoi cancellare la password per le applicazioni da WordPress, d
 |---|---|
 | Ho cambiato una pagina ma sul sito non si vede | Nell'editor hai premuto Salva bozza: premi **Pubblica**. Se l'hai fatto, ricarica la pagina del sito |
 | Il pannello ha i colori di prima dopo un aggiornamento | Ricarica con **Cmd + Maiusc + R** (Mac) o **Ctrl + Maiusc + R** (Windows) |
+| Stamattina non è arrivata l'email "Oggi sul sito" | Quel giorno non usciva niente, o il cron non gira, o manca l'indirizzo degli avvisi (capitolo 20) |
 | Un articolo programmato non è uscito | Controlla data e ora nella scheda; controlla che il cron giri (Log cron) |
-| Le email non arrivano | Configurazione email, email di prova; guarda lo spam (capitolo 23) |
+| Le email non arrivano | Configurazione email, email di prova; guarda lo spam (capitolo 24) |
 | "Il file supera il limite di caricamento del server" | File troppo grande per l'hosting: rimpiccioliscilo o chiedi all'hosting di alzare il limite |
 | Una pagina è sparita dal menu | Editor > Menu di navigazione: rimettila e premi Salva il menu |
 | Ho rovinato una pagina | Editor > Revisioni: carica la versione di prima e pubblica |

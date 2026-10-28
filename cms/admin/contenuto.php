@@ -9,6 +9,7 @@ require_once __DIR__ . '/includes/auth.php';
 require_once __DIR__ . '/includes/admin-functions.php';
 require_once dirname(__DIR__) . '/includes/contenuti.php';
 require_once dirname(__DIR__) . '/includes/editor.php';
+require_once dirname(__DIR__) . '/includes/social.php'; // 1.5.0: il riquadro Social
 require_login();
 // Un contenuto nuovo nasce nell'editor visuale: la scheda classica serve solo ai contenuti che esistono già.
 if (empty($_GET['id']) && $_SERVER['REQUEST_METHOD'] !== 'POST' && !isset($_GET['scheda'])) { header('Location: editor.php?nuova=1&tipo=' . (isset(contenuti_tipi()[$_GET['tipo'] ?? '']) && ($_GET['tipo'] ?? '') !== 'pagine' ? $_GET['tipo'] : 'pagine')); exit; }
@@ -54,6 +55,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $bozzaEditor = editor_decodifica(editor_pagina($id, $tipo)['struttura_bozza'] ?? null);
                     if ($bozzaEditor !== null) editor_salva($id, $bozzaEditor, true, $autore, 'pubblicato dalla scheda', $tipo);
                 }
+                // 1.5.0: i testi del riquadro Social, nella loro tabella (un salvataggio rapido dall'elenco non li tocca).
+                if (array_key_exists('social_testo', $d)) social_contenuto_salva($tipo, $id, $d);
                 $salvato = contenuti_leggi($tipo, $id);
                 $stato = contenuti_stato($tipo, $salvato);
                 flash('success', $nuovo ? $T['Uno'] . ' creato' . ($stato === 'bozza' ? ' in bozza.' : ($stato === 'programmato' ? ' e programmato.' : ' e pubblicato.')) : $T['Uno'] . ' aggiornato.');
@@ -153,6 +156,29 @@ require_once __DIR__ . '/includes/admin-header.php';
         <div class="sc-corpo">
           <textarea name="excerpt" rows="3"><?= h($sc['excerpt']) ?></textarea>
           <div class="hint">Il riassunto breve per le schede e i social. Se resta vuoto, si usa la descrizione per Google.</div>
+        </div>
+      </div>
+
+      <?php // 1.5.0: i testi per i social, usati dall'email del mattino e da Social > Testi dei contenuti.
+      $soc = $id ? social_contenuto($tipo, $id) : ['testo' => '', 'linkedin' => '', 'facebook' => '', 'whatsapp' => ''];
+      $socImg = $id && $r ? social_immagini($tipo, $r) : ['og' => '', 'ig' => '']; ?>
+      <div class="sc-scatola" id="social">
+        <h3>Social</h3>
+        <div class="sc-corpo">
+          <label for="social_testo">Testo per i social</label>
+          <textarea name="social_testo" id="social_testo" rows="4" placeholder="Due o tre righe che fanno venire voglia di leggere. Il link e gli hashtag li aggiunge il CMS."><?= h(social_testo_vero($soc['testo'])) ?></textarea>
+          <div class="hint">Lo stesso testo va su tutti i canali, con il link e gli hashtag di Social &gt; Impostazioni. Se resta vuoto si usa l'estratto. Le emoji vanno bene.</div>
+          <details class="sc-social-canali"<?= $soc['linkedin'] . $soc['facebook'] . $soc['whatsapp'] !== '' ? ' open' : '' ?>>
+            <summary>Un testo diverso per un canale</summary>
+            <label for="social_linkedin">LinkedIn</label><textarea name="social_linkedin" id="social_linkedin" rows="3"><?= h(social_testo_vero($soc['linkedin'])) ?></textarea>
+            <label for="social_facebook">Facebook e Instagram</label><textarea name="social_facebook" id="social_facebook" rows="3"><?= h(social_testo_vero($soc['facebook'])) ?></textarea>
+            <label for="social_whatsapp">WhatsApp e Telegram</label><textarea name="social_whatsapp" id="social_whatsapp" rows="3"><?= h(social_testo_vero($soc['whatsapp'])) ?></textarea>
+            <div class="hint">Vuoto = il testo per i social qui sopra.</div>
+          </details>
+          <?php if ($socImg['og'] !== ''): ?>
+          <div class="sc-social-img"><a href="<?= h(social_relativo($socImg['og'])) ?>" target="_blank"><img src="<?= h(social_relativo($socImg['og'])) ?>" alt="Immagine per LinkedIn e Facebook"></a><a href="<?= h(social_relativo($socImg['ig'])) ?>" target="_blank"><img src="<?= h(social_relativo($socImg['ig'])) ?>" alt="Immagine per Instagram"></a></div>
+          <div class="hint">Le due immagini per i social, fatte dall'immagine in evidenza: 1200x630 per LinkedIn e Facebook, 1080x1350 per Instagram.</div>
+          <?php elseif ($id): ?><div class="hint">Con un'immagine in evidenza qui compaiono anche le due immagini per i social.</div><?php endif; ?>
         </div>
       </div>
 

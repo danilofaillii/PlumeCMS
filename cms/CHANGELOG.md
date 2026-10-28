@@ -2,6 +2,31 @@
 
 Il prodotto si chiama **plumeCMS** (nome scelto il 26 ottobre 2026; prima, per poche ore, "CarbonaraCMS", e ancora prima il provvisorio "Officina": gli zip vecchi si chiamavano `officina-*` e `carbonaracms-*`).
 
+## 1.5.0 (28 ottobre 2026) - I social, ogni mattina
+
+Prima stavano nel modulo di danilofailli.it, scritti per quel sito. Ora sono del CMS, per qualunque sito.
+
+- **Social**, voce nuova del pannello (amministratore), con quattro linguette: Email del mattino, Calendario, Testi dei
+  contenuti, Impostazioni.
+- **L'email del mattino "Oggi sul sito <dominio>"**: al giro del mattino del cron, i contenuti che escono quel giorno,
+  ognuno con le due immagini per i social (da scaricare), il testo pronto per LinkedIn, Facebook, Instagram, WhatsApp e
+  Telegram (e Substack, se acceso) e i pulsanti per condividere. Una volta al giorno. Si vede in anteprima, di
+  qualunque giorno, e si manda a mano con "Mandala adesso".
+- **Il calendario dei testi social**: un testo per un giorno, con il contenuto a cui porta, l'ancora, i testi per canale
+  e le immagini. Ogni mattina arriva "Social di oggi" per i testi di quel giorno e per quelli rimasti indietro; dopo
+  l'invio il testo è segnato e non riparte.
+- **Il riquadro Social nella scheda di ogni contenuto**: un testo per tutti i canali (le emoji vanno bene), e se serve
+  uno diverso per LinkedIn, per Facebook e Instagram, per WhatsApp e Telegram. Il link e gli hashtag li aggiunge il CMS.
+- **Le due immagini per i social**, fatte da sole dall'immagine in evidenza: 1200x630 per LinkedIn e Facebook,
+  1080x1350 per Instagram.
+- **Impostazioni**: canali accesi, hashtag fissi per canale, hashtag per categoria, un link in più nei testi di WhatsApp.
+- I colori dei canali nelle email sono leggibili: pulsanti e titoli passano 4,5 a 1 (il blu di Facebook e il verde di
+  WhatsApp dei marchi non ci arrivano, e sono un poco più scuri).
+- **I dati di prima entrano da soli**: i trafiletti social degli articoli e i testi del pillar del pannello di
+  danilofailli.it diventano i testi per i social e il calendario, con lo stato di invio.
+- Manuale d'uso: capitolo 20 nuovo, "I social e l'email del mattino" (ora i capitoli sono 30). Manuale tecnico:
+  capitolo 27. Prove: `prove/prova-social.js` (28 controlli), 14 prove di attacco nuove per la pagina Social (177 in tutto, tutte passate).
+
 ## 1.4.2 (28 ottobre 2026) - Il manuale d'uso
 
 - **Manuale d'uso** (`docs/manuale-uso.md`, e in PDF): come si fa ogni cosa con plumeCMS, in 29 capitoli. Ogni capitolo

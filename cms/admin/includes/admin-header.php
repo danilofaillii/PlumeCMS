@@ -30,6 +30,13 @@ $menu = [
         ['Flussi automatici', 'newsletter-flussi.php', $qui === 'newsletter-flussi.php'],
         ['Statistiche', 'newsletter-statistiche.php', $qui === 'newsletter-statistiche.php'],
     ]],
+    // 1.5.0: email del mattino, calendario e testi dei social (includes/social.php). Solo amministratore.
+    $sonoAdminMenu ? ['Social', 'social.php', 'megafono', $qui === 'social.php', [
+        ['Email del mattino', 'social.php?scheda=mattino', $qui === 'social.php' && in_array($_GET['scheda'] ?? 'mattino', ['mattino'], true)],
+        ['Calendario', 'social.php?scheda=calendario', $qui === 'social.php' && ($_GET['scheda'] ?? '') === 'calendario'],
+        ['Testi dei contenuti', 'social.php?scheda=testi', $qui === 'social.php' && ($_GET['scheda'] ?? '') === 'testi'],
+        ['Impostazioni', 'social.php?scheda=impostazioni', $qui === 'social.php' && ($_GET['scheda'] ?? '') === 'impostazioni'],
+    ]] : null,
     // menu (26 ottobre): tutto quello che è dell'editor in un gruppo solo. Le pagine nuove: Temi, Widget, Versioni (agente versioni), Impostazioni dell'editor.
     ['Editor', 'design.php', 'matita', in_array($qui, EDITOR_MENU_PAGINE, true), array_values(array_filter([
         $sonoAdminMenu ? ['Temi', 'temi.php', $qui === 'temi.php'] : null,

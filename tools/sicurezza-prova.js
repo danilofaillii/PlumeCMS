@@ -693,6 +693,49 @@ echo json_encode($o);
     }
   }
 
+  // === 21. (1.5.0) Social: la pagina è dell'amministratore, ogni azione vuole il token, i testi non diventano codice.
+  {
+    const form = (o) => new URLSearchParams(o).toString();
+    const CT = { 'Content-Type': 'application/x-www-form-urlencoded' };
+    const anon = await browser.newContext();
+    const ra = await anon.request.get(ADMIN + '/social.php', { maxRedirects: 0 });
+    ok('1.5.0: social.php senza login: rimanda al login', [302, 303].includes(ra.status()) && /login/.test(ra.headers()['location'] || ''), { status: ra.status() });
+    await anon.close();
+    if (red.dentro) {
+      await red.p.goto(ADMIN + '/social.php', { waitUntil: 'networkidle' });
+      const fuori = !/social\.php/.test(red.p.url()) && ((await red.p.content()).includes('riservata') || /index\.php|login\.php/.test(red.p.url()));
+      ok('1.5.0: il redattore non apre Social: torna alla dashboard', fuori, { url: red.p.url() });
+      const tr = await tokenDi(red.p, ADMIN + '/index.php');
+      const rp = await post(red.p, ADMIN + '/social.php', form({ _csrf: tr, azione: 'impostazioni', email_mattino: '1' }), CT);
+      ok('1.5.0: il redattore non cambia le impostazioni dei social: 403', rp.status === 403, { status: rp.status });
+    }
+    for (const az of ['impostazioni', 'manda_mattino', 'programmato_salva', 'programmato_elimina', 'programmato_manda']) {
+      const r = await post(admin.p, ADMIN + '/social.php', form({ azione: az, id: '1' }), CT);
+      ok('1.5.0: social.php ' + az + ' senza token: 403', r.status === 403, { status: r.status });
+    }
+    // Il calendario vuoto non ha form: il token si prende dal form di un testo nuovo.
+    const t = await tokenDi(admin.p, ADMIN + '/social.php?scheda=calendario&nuovo=1');
+    ok('1.5.0: (preparazione) token del pannello Social letto', t !== '');
+    const est = await admin.ctx.request.post(ADMIN + '/social.php', { headers: { 'Origin': 'https://evil.example' }, form: { _csrf: t, azione: 'manda_mattino' }, maxRedirects: 0 });
+    ok('1.5.0: Social con Origin esterno: 403', est.status() === 403, { status: est.status() });
+    const oggi = new Date().toISOString().slice(0, 10);
+    // I salvataggi partono dalla pagina del pannello (fetch con Origin), come un form vero.
+    const salva = (o) => post(admin.p, ADMIN + '/social.php?scheda=calendario', form({ _csrf: t, azione: 'programmato_salva', id: '0', data_invio: oggi, ...o }), CT);
+    for (const c of ['articoli:999999', '../../x:1', 'pagine:0', "articoli:1 OR 1=1"]) await salva({ contenuto: c, titolo: 'sic-prova-inventato' });
+    await admin.p.goto(ADMIN + '/social.php?scheda=calendario', { waitUntil: 'networkidle' });
+    ok('1.5.0: calendario con contenuti inventati (id inesistente, ../, SQL): nessuna riga', !(await admin.p.content()).includes('sic-prova-inventato'));
+    await salva({ contenuto: 'articoli:1', titolo: 'sic-prova-js', immagine_og: 'javascript:alert(1)' });
+    await salva({ contenuto: 'articoli:1', titolo: '<img src=x onerror=alert(77)>sic-prova-xss' });
+    await admin.p.goto(ADMIN + '/social.php?scheda=calendario', { waitUntil: 'networkidle' });
+    const html = await admin.p.content();
+    // La riga con l'HTML nel titolo deve esserci (il salvataggio vero è passato), e il tag solo come testo.
+    ok('1.5.0: titolo del calendario con HTML: salvato e mostrato come testo, mai eseguito', html.includes('sic-prova-xss') && !html.includes('<img src="x" onerror') && !html.includes('<img src=x onerror'));
+    ok('1.5.0: immagine con javascript: la riga è rifiutata', !html.includes('sic-prova-js'));
+    ok('1.5.0: immagine del calendario con javascript: mai salvata', !html.includes('javascript:alert'));
+    const idx = await admin.p.evaluate(() => { const r = [...document.querySelectorAll('tr')].find(x => /sic-prova-xss/.test(x.textContent)); const i = r && r.querySelector('input[name=id]'); return i ? i.value : ''; });
+    if (idx) await post(admin.p, ADMIN + '/social.php?scheda=calendario', form({ _csrf: t, azione: 'programmato_elimina', id: idx }), CT);
+  }
+
   // === pulizia: elimina il redattore di prova
   {
     await admin.p.goto(ADMIN + '/utenti.php', { waitUntil: 'networkidle' });

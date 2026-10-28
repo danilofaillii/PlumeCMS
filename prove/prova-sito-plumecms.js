@@ -120,7 +120,8 @@ async function contrastoParole(pg) {
   for (const [id, img, re] of [['wordpress', 'importa-wp.webp', /Vieni da WordPress/], ['tipo-sito', 'tipo-sito.webp', /Definitivo/], ['primi-passi', 'primi-passi.webp', /Primi passi/],
     ['aspetti', 'aspetti.webp', /Lavagna/], ['server', 'controlla-server.webp', /Controlla il server/]])
     ok(`Funzionalità (1.4.0): il blocco ${id}, con la schermata`, await v.locator(`#${id} img[src*="${img}"]`).count() === 1 && re.test(await v.locator(`#${id}`).innerText()));
-  ok('Funzionalità: 163 attacchi respinti, non più 97', /163 attacchi/.test(await v.locator('#sicurezza').innerText()));
+  ok('Funzionalità (1.5.0): il blocco dei social, con l\'email del mattino', await v.locator('#social img[src*="social.webp"]').count() === 1 && /pronti ogni mattina/.test(await v.locator('#social').innerText()));
+  ok('Funzionalità: 177 attacchi respinti, non più 163', /177 attacchi/.test(await v.locator('#sicurezza').innerText()));
   ok('favicon del sito', await v.locator('link[rel=icon][href*="favicon.png"]').count() === 1);
 
   // "Installalo in 5 minuti" (pagina Installazione): cosa serve prima e il carosello delle cinque schermate vere
@@ -188,6 +189,7 @@ async function contrastoParole(pg) {
   await v.goto(B + '/documentazione/', { waitUntil: 'networkidle' });
   ok('Documentazione (1.4.2): tre manuali, il primo è il manuale d\'uso', /Tre manuali/.test(await v.locator('body').innerText()) && await v.locator('a[href$="/scarica/manuale-uso/"]').count() >= 1);
   await v.goto(B + '/domande-frequenti/', { waitUntil: 'networkidle' });
+  ok('Domande frequenti (1.5.0): i social', /Mi aiuta anche con i social\?/.test(await v.locator('body').innerText()));
   ok('Domande frequenti (1.4.2): la guida per imparare a usarlo', /una guida per imparare a usarlo/.test(await v.locator('body').innerText()));
   ok('nessun errore JavaScript sul sito', errV.length === 0, errV);
   await br.close();

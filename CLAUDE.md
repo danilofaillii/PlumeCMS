@@ -39,7 +39,7 @@ cms/            il CMS: è esattamente quello che si carica sul server
   VERSIONE, CHANGELOG.md, README.md, INSTALLA.md
 tools/          cms-pacchetto.py (costruisce gli zip), pacchetto.py (pacchetti per il
                 pannello Aggiornamenti), sicurezza-prova.js (79 prove di attacco)
-prove/          prova-install.js (installazione da zero con Playwright), prova-temi.js, prova-pannello-temi.js,
+prove/          prova-install.js (installazione da zero con Playwright), prova-social.js (social ed email del mattino), prova-temi.js, prova-pannello-temi.js,
                 prova-temi-partenza.js, prova-carica-temi.js (temi), prova-foto-effetti.js (velo ed effetti delle foto), prova-hero.js (le undici aperture),
                 foto-sito.js e quanto-foto.py (schermate prima e dopo, al pixel)
 esempi/         tema-lavagna/: il tema d'esempio del manuale dei temi (provato, non entra nello zip)
@@ -54,7 +54,7 @@ Stato, decisioni, contesto e diario non stanno qui: stanno nel second brain
 
 ## Documenti, in quest'ordine
 
-0. `cms/docs/manuale-uso.md`: il manuale d'uso per chi usa plumeCMS (29 capitoli, esempio, schermate con i passi
+0. `cms/docs/manuale-uso.md`: il manuale d'uso per chi usa plumeCMS (30 capitoli, esempio, schermate con i passi
    numerati, checklist). Le schermate le fa `tools/manuale-uso-schermate.js` eseguendo gli esempi su un sito di prova
    (kit Attività, in `/home/studioprova/public_html`): **quando cambia il pannello si rifanno le schermate e si
    ricontrolla il capitolo**. Il PDF deve restare sotto 1900 KB (oggi 1,8 MB).
@@ -93,7 +93,7 @@ Stato, decisioni, contesto e diario non stanno qui: stanno nel second brain
 - **Pacchetto di aggiornamento** per un'installazione esistente:
   `python3 tools/cms-pacchetto.py --aggiornamento`. Si carica dal pannello,
   Impostazioni, Aggiornamenti.
-- **Versione**: `cms/VERSIONE` (oggi 1.4.2) e una voce in `cms/CHANGELOG.md` a ogni
+- **Versione**: `cms/VERSIONE` (oggi 1.5.0) e una voce in `cms/CHANGELOG.md` a ogni
   zip con contenuto diverso. Mai cambiare il contenuto di una versione già data.
 - **Prove** prima di dire finito:
   - `php -n -d short_open_tag=1 -l` su ogni file PHP toccato, `node --check` sui js;
@@ -129,7 +129,16 @@ Le decisioni complete, con data e perché, stanno nel second brain, `plumecms/de
 
 ## Stato al 28 ottobre 2026
 
-Fatto: plumeCMS 1.4.2 (28 ottobre): il manuale d'uso (richiesta di Danilo: "deve spiegare come fare qualsiasi cosa con il
+Fatto: plumeCMS 1.5.0 (28 ottobre): email del mattino "Oggi sul sito" e testi social del giorno portati dal modulo di
+danilofailli.it nel CMS, per qualunque sito (`includes/social.php`, `admin/social.php`, riquadro Social della scheda, passo
+del cron; tabelle `social_contenuti` e `social_programmati`; immagini 1200x630 e 1080x1350 con GD; i dati vecchi del
+modulo, `articles.social_summary` e `social_pillar`, entrano da soli una volta). Capitolo 20 del manuale d'uso, 27 del
+tecnico. Colori dei canali scuriti per il contrasto (4,5 a 1). Prove: install radice e cartella 37/37, `prova-social.js`
+28/28, attacchi 177/177 (gruppo 21, Social), aggiornamento 1.4.2 -> 1.5.0 13/13 su tre siti (sito uguale al pixel tranne
+il conto alla rovescia), aspetti 56/56, sito di plumeCMS in cinque parti 76/76, file del pannello 6/6.
+**Da fare quando si porta danilofailli.it alla 1.5.0**: togliere dal suo modulo i passi del cron "email del mattino" e
+"social del pillar" (altrimenti le email arrivano due volte) e rimettere hashtag e link del laser in Social > Impostazioni.
+1.4.2 (28 ottobre): il manuale d'uso (richiesta di Danilo: "deve spiegare come fare qualsiasi cosa con il
 CMS, con esempi pratici, immagini e checklist precise"), e quello che lo script delle schermate ha trovato eseguendo gli
 esempi: articolo scritto nell'editor e pubblicato dalla scheda usciva senza testo, titolo dell'articolo non aggiornato nella
 tela, campi senza stile in Menu, Form (etichetta larga pochi pixel) e Utenti, "testi social" nella pagina Email, accenti

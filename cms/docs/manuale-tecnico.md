@@ -1,6 +1,6 @@
 # plumeCMS: manuale tecnico
 
-Versione del manuale: 1.10, per plumeCMS 1.4.2 (28 ottobre 2026).
+Versione del manuale: 1.11, per plumeCMS 1.5.0 (28 ottobre 2026).
 
 Questo manuale descrive come è fatto plumeCMS e come funziona, pezzo per pezzo. È scritto leggendo il codice:
 ogni numero, limite e nome di funzione viene dai file veri, con il riferimento `file:riga` quando serve a chi
@@ -510,6 +510,8 @@ Tutte con il prefisso davanti. Le colonne sono quelle principali.
 | `glossario` | voci di glossario |
 | `redirect` | redirect: da, a, codice, tipo di confronto, attivo, origine |
 | `pagine_revisioni` | tabella storica delle revisioni dell'editor: oggi si importa una volta in `editor_versioni` |
+| `social_contenuti` | 1.5.0: i testi per i social di un contenuto (`tipo`, `contenuto_id`, `testo`, `linkedin`, `facebook`, `whatsapp`) |
+| `social_programmati` | 1.5.0: il calendario dei testi social (`data_invio`, contenuto, titolo, ancora, tre testi, due immagini, `inviato_at`) |
 
 **Editor**
 
@@ -602,6 +604,7 @@ admin), `is_admin()`, `current_user()`.
 | Editor > Versioni | `versioni.php` | tutti (il redattore solo per i contenuti) |
 | Editor > Impostazioni | `editor-impostazioni.php` | admin |
 | Editor > Informazioni | `informazioni.php` | admin |
+| Social | `social.php` con le schede mattino, calendario, testi, impostazioni (27) | admin |
 | SEO e AEO | `seo.php` con le schede panoramica, motori, copertura, prestazioni, analisi, globale, schema, redirect, registro | admin |
 | Impostazioni | `impostazioni.php` (email e SMTP), `sicurezza.php`, `aggiornamenti.php`, `copia-sito.php` (19.7), `importa-wordpress.php` (26), `cron-log.php` (20), `controlla-server.php` (7.4) | admin |
 
@@ -1995,7 +1998,8 @@ adesso** della pagina Log cron con `da = 'pannello'`.
 **`cron-daily.php`**, una volta al giorno:
 1. applica i pacchetti di aggiornamento programmati per oggi o prima;
 2. esegue i passi `cron` dei moduli, ognuno separato dagli altri (un errore non ferma i successivi);
-3. svuota la coda IndexNow.
+3. dalla 1.5.0, `social_cron()`: l'email "Oggi sul sito" e i testi del calendario (capitolo 27);
+4. svuota la coda IndexNow.
 Scrive in `logs/cron-daily.log`, che si legge da Impostazioni > Log cron.
 
 **`cron-newsletter.php`**, ogni 5 minuti: svuota la coda IndexNow (log in `logs/seo.log`) e fa un giro della
@@ -2176,7 +2180,7 @@ Il prefisso del pannello predefinito è `/new`; per un CMS nella radice si passa
 pagine aperte senza login, CSV, open redirect, forza bruta, blocchi per nome utente e IP di casa, upload di PHP e
 SVG, file protetti, SQL injection, intestazioni, session fixation, cron dal web, firma della newsletter, CSP del
 pannello, pacchetti non firmati, copia del sito, aspetto del pannello e impostazioni delle foto, import da WordPress (SSRF, rimandi,
-file PHP mascherati, HTML con script; serve `prove/finto-wp.php` con `FINTO_WP`) (1.4.0). Oggi: 163 prove respinte, due saltate (il test del burnout, del modulo danilofailli, e la newsletter firmata senza `SEGRETO`).
+file PHP mascherati, HTML con script; serve `prove/finto-wp.php` con `FINTO_WP`) (1.4.0); il gruppo 21 la pagina Social (ruolo, token, Origin, contenuti inventati, titolo con HTML, immagine con `javascript:`) (1.5.0). Oggi: 177 prove respinte, due saltate (il test del burnout, del modulo danilofailli, e la newsletter firmata senza `SEGRETO`).
 
 Dopo la prova l'IP di chi l'ha lanciata è bloccato: prima di altre prove si svuota la tabella
 `<prefisso>sicurezza_tentativi`.
@@ -2469,6 +2473,80 @@ immagini (JPEG, PNG, GIF, WebP, AVIF, SVG), PDF, MP4 o MP3.
   conviene fare prima la copia da Impostazioni > Copia del sito.
 
 ---
+
+## 27. Social e email del mattino (dalla 1.5.0)
+
+Prima stavano nel modulo di danilofailli.it (`includes/notifications.php`, `includes/social-pillar.php`,
+`admin/social-copy.php` del modulo), con indirizzi, hashtag e frasi di quel sito scritti nel codice. Dalla 1.5.0 sono del
+CMS, per qualunque sito: `includes/social.php` (motore), `admin/social.php` (pagina Social), il riquadro Social della
+scheda (`admin/contenuto.php`), un passo del cron del mattino (`includes/cron.php`).
+
+### 27.1 I testi
+
+- **Per contenuto**: tabella `social_contenuti`, chiave (`tipo`, `contenuto_id`). Un testo per tutti e tre facoltativi
+  (LinkedIn, Facebook e Instagram, WhatsApp e Telegram). La scheda li salva con `social_contenuto_salva()` dopo
+  `contenuti_salva()`, solo se il modulo manda `social_testo`: un salvataggio rapido dall'elenco non li tocca. Senza
+  testo vale il primo non vuoto fra estratto, In breve, descrizione SEO, meta descrizione, titolo.
+- **Costruzione** (`social_testi($tipo, $riga, $sopra, $ancora)`): per ogni canale acceso testo + link completo
+  (`cms_url_sito()` + percorso, con l'ancora) + hashtag. Hashtag = quelli fissi del canale + quelli della categoria
+  (`social_hashtag_categoria()`: righe "categoria: #a #b", per nome o slug). WhatsApp: in coda il link in più con la sua
+  frase. Substack: testo + "Puoi leggere tutto qui". Poi il filtro dei moduli `social_testi` (testi, riga, tipo).
+- **Emoji**: le colonne sono a 3 byte, quindi i caratteri a 4 byte si salvano come entità (`social_senza_4byte()`) e
+  tornano caratteri con `social_testo_vero()` (`html_entity_decode`) quando si mostrano o si copiano.
+- **Impostazioni**: `settings.social` in JSON (`social_impostazioni()`): canali (Substack spento di partenza), hashtag
+  fissi per LinkedIn, Facebook, Instagram, hashtag per categoria, link e frase di WhatsApp (solo `https://`, `http://` o
+  `/`), le due email accese o spente.
+- **Colori dei canali** (`SOCIAL_COLORI`): un po' più scuri di quelli dei marchi dove serviva, perché ognuno passi 4,5 a 1
+  sul bianco e con il testo bianco sopra (Facebook `#1465D8`, WhatsApp `#0E7A6E`, Telegram `#177BB0`, Substack
+  `#B8461A`). Valgono nelle email; nel pannello il colore è solo un pallino accanto al nome del canale, che usa il colore
+  del testo dell'aspetto (sui fondi scuri di Cosmo e Lavagna il blu non si leggeva). L'anteprima dell'email ha sfondi
+  fissi: mostra l'email com'è nella posta.
+
+### 27.2 Le immagini
+
+`social_immagini_da($url, $nome)`: se l'immagine sta in `uploads/` (`social_file_di()`, niente `..`, solo dentro
+`cms_uploads_url()`), GD la ritaglia riempiendo e tagliando al centro (`social_ritaglia()`) a 1200x630 (`SOCIAL_OG`) e
+1080x1350 (`SOCIAL_IG`), JPEG 86, in `uploads/social/<tipo>-<id>-<impronta>-og.jpg` e `-ig.jpg`. L'impronta (percorso,
+data e peso del file) cambia con la foto: si rifanno da sole, una volta. Un'immagine da fuori, o senza GD, si usa così
+com'è. Nelle email gli indirizzi sono completi (`social_assoluto()`); nel pannello tornano relativi (`social_relativo()`),
+così si vedono anche se il pannello si apre da un altro indirizzo.
+
+### 27.3 Le due email
+
+All'indirizzo degli avvisi (`posta_notifica_email()`), con `posta_invia()` (SMTP del pannello o `mail()`):
+
+- **"Oggi sul sito <dominio>: N articoli"** (`social_email_mattino($data)`): i contenuti non pagine con `publish_date`
+  quel giorno, non in bozza né nel cestino, anche se escono più tardi (`social_in_uscita()`); per ognuno titolo, link,
+  le due immagini con i pulsanti per scaricarle, un riquadro per canale, i pulsanti per condividere (LinkedIn
+  share-offsite, Facebook sharer, wa.me, t.me). "articolo/articoli" dal tipo, "contenuti" con tipi diversi. Una volta al
+  giorno: `settings.social_mattino_inviata` tiene la data.
+- **"Social di oggi: <titolo>"** (`social_email_programmato($riga)`): una per ogni riga di `social_programmati` con
+  `data_invio` fino a oggi e `inviato_at` vuoto (al massimo 30 per giro); dopo l'invio `inviato_at = NOW()`. Testi della
+  riga, o del contenuto se vuoti; immagini della riga, o del contenuto. Una riga il cui contenuto non c'è più si segna e
+  si salta.
+
+Tutto quello che arriva da chi scrive passa da `htmlspecialchars` nell'email e nel pannello. `social_cron()` ritorna le
+righe che finiscono in Log cron ("già inviata oggi", "niente nel calendario", gli errori della posta).
+
+### 27.4 La pagina Social
+
+`admin/social.php`, solo amministratore (`require_admin()`), ogni POST con `verify_csrf()`:
+- **Email del mattino**: anteprima del giorno scelto e "Mandala adesso" (non segna la data: il giro del mattino parte lo stesso);
+- **Calendario**: righe degli ultimi 30 giorni in avanti; nuovo, modifica, "Mandalo adesso a me", "Rimetti in attesa",
+  elimina. `social_programmato_salva()` vuole una data vera, un contenuto che esiste (`tipo:id` di un tipo noto, l'id fatto solo di cifre: `articoli:1 OR 1=1` è rifiutato),
+  immagini che cominciano con `/` o `https://`; l'ancora tiene solo lettere, cifre, `-` e `_`;
+- **Testi dei contenuti**: i 15 contenuti da leggere più recenti, i testi in `textarea readonly data-copia-se-stesso`
+  (un clic li copia, `assets/pannello.js`), le immagini, i link per condividere;
+- **Impostazioni**: 27.1.
+
+### 27.5 I dati di prima
+
+Alla nascita delle tabelle, una volta (`settings.social_dati_vecchi`), `social_porta_dati_vecchi()` porta dentro i dati
+del pannello da cui è nato plumeCMS, se ci sono: la colonna `articles.social_summary` diventa il testo per i social
+(`INSERT IGNORE`), la tabella `social_pillar` diventa il calendario (slug dell'articolo, "Giorno N di 7: capitolo",
+ancora, i tre testi, le immagini relative a `uploads`, lo stato di invio), solo se il calendario è vuoto. La prova:
+`prove/social-dati-vecchi.sql`. Su danilofailli.it, dopo l'aggiornamento, i passi `cron` "email del mattino" e "social
+del pillar" del modulo vanno tolti, se no le email arrivano due volte.
 
 ## Appendice A. Dove i documenti vecchi non corrispondono al codice
 

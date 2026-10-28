@@ -112,3 +112,9 @@
 .sc-media-griglia span{position:absolute;left:0;right:0;bottom:0;background:rgba(0,0,0,.72);color:#fff;font-size:10px; /* fisso: etichetta sopra la foto */padding:3px 5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-align:left}
 .sc-media-pagine{display:flex;gap:.3rem;justify-content:center;margin-top:.6rem;flex-wrap:wrap}
 .sc-media-azioni{display:flex;justify-content:flex-end;gap:.5rem;padding:.8rem 1.2rem;border-top:1px solid var(--border)}
+/* 1.5.0: il riquadro Social della scheda */
+.sc-social-canali{margin-top:.6rem}
+.sc-social-canali summary{cursor:pointer;font-size:.84rem;font-weight:600;color:var(--accento-testo)}
+.sc-social-canali label{display:block;margin-top:.5rem}
+.sc-social-img{display:flex;gap:.6rem;align-items:flex-start;margin-top:.8rem}
+.sc-social-img img{display:block;max-height:120px;width:auto;border:1px solid var(--border);border-radius:6px}

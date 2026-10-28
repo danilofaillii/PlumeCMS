@@ -156,8 +156,8 @@ def home():
         ('tavolozza', 'Temi', 'Tre temi pronti e un manuale per disegnarti il tuo. Il tema cambia l\'aspetto, mai i contenuti.', '/temi/'),
         ('storia', 'Versioni', 'Ogni salvataggio lascia una versione: la confronti, la guardi in anteprima, ci torni con un clic.', '/funzionalita/#versioni'),
         ('grafico-su', 'SEO e AEO', 'Sitemap, robots, dati strutturati, llms.txt, IndexNow e Search Console. Per Google e per le intelligenze artificiali.', '/funzionalita/#seo'),
-        ('email', 'Newsletter e form', 'Iscrizioni con doppia conferma, campagne, flussi automatici, form e popup. Senza servizi esterni.', '/funzionalita/#newsletter'),
-        ('scudo-spunta', 'Sicurezza', 'Due fattori, blocchi contro i tentativi, CSP, pacchetti firmati. Messo alla prova con 163 attacchi.', '/funzionalita/#sicurezza'),
+        ('email', 'Newsletter, form e social', 'Iscrizioni con doppia conferma, campagne, flussi automatici, form e popup. E ogni mattina i post pronti per i social.', '/funzionalita/#social'),
+        ('scudo-spunta', 'Sicurezza', 'Due fattori, blocchi contro i tentativi, CSP, pacchetti firmati. Messo alla prova con 177 attacchi.', '/funzionalita/#sicurezza'),
     ]
     riq = lambda f: w('riquadro_icona', icona=f[0], titolo=f[1], testo=f[2], link={'url': f[3], 'nuova': False}, livello='h3', vista='impilata', allineamento={'d': 'left'})
     p.sezione([[titolo('Tutto quello che serve, *già dentro.*', 'Nello zaino', 'Niente da installare a parte, niente abbonamenti da ricordare.', centro=True)]], **spazi(80, 8))
@@ -224,13 +224,17 @@ def funzionalita():
         ('newsletter', 'flussi.webp', 'Newsletter, form e popup',
          ['Iscrizioni con doppia conferma, liste, campagne programmate, flussi automatici (benvenuto, promemoria, bivi), aperture e clic contati. I form li costruisci nel pannello, i popup decidi tu quando e dove.',
           'Le email partono dal tuo server, a giri, senza servizi esterni da pagare.']),
+        ('social', 'social.webp', 'I social, pronti ogni mattina',
+         ['Il giorno in cui esce un articolo ti arriva un\'email: <strong>"Oggi sul sito"</strong>. Dentro c\'è tutto per pubblicarlo: le due immagini della misura giusta, 1200x630 per LinkedIn e Facebook e 1080x1350 per Instagram, e il testo pronto per ogni canale, con il link e i tuoi hashtag. Copi, incolli, pubblichi.',
+          'Il testo lo scrivi una volta, nella scheda dell\'articolo; se vuoi, uno diverso per LinkedIn, per Facebook e Instagram, per WhatsApp. Le immagini le ritaglia plumeCMS dalla foto in evidenza.',
+          'Per un articolo importante c\'è il <strong>calendario</strong>: prepari i post dei giorni dopo, e ogni mattina arriva quello del giorno, con il link al punto giusto della pagina.']),
         ('download', 'download.webp', 'Download manager: i tuoi file, a portata di clic',
          ['Manuali, ebook, listini, programmi: li carichi dalla pagina Download del pannello, con titolo, descrizione e versione. Ogni file ha il suo indirizzo da condividere.',
           'Con la versione nel nome (guida-1.2.pdf) il file entra in una serie: un indirizzo porta sempre alla versione più recente, e nelle pagine il numero si scrive da solo. Carichi la versione nuova e tutto il sito la segue. E vedi quante volte ogni file è stato scaricato: le persone sì, i robot no.',
           'Nelle pagine li mostri con il widget Download, a elenco o a schede, con icona, peso e pulsante. Come nella <a href="/scarica/">pagina Scarica</a> di questo sito.']),
         ('sicurezza', 'sicurezza.webp', 'Sicurezza, senza doverci pensare ogni giorno',
          ['Password robuste, accesso a due fattori, blocchi automatici contro chi prova a indovinare, sessioni che scadono, Content Security Policy, registro degli eventi.',
-          'Prima di uscire, plumeCMS è stato messo alla prova con 163 attacchi: tutti respinti. La pagina Sicurezza ti dice in verde e in rosso come sta il tuo sito.']),
+          'Prima di uscire, plumeCMS è stato messo alla prova con 177 attacchi: tutti respinti. La pagina Sicurezza ti dice in verde e in rosso come sta il tuo sito.']),
         ('aggiornamenti', 'aggiornamenti.webp', 'Aggiornamenti dal pannello, con la rete sotto',
          ['Un aggiornamento è uno zip: lo carichi da Impostazioni, Aggiornamenti, e premi Applica. Prima di toccare qualunque cosa il pannello fa una copia di sicurezza del database e dei file.',
           'Se qualcosa va storto, rimette tutto com\'era da solo. Puoi anche programmare l\'aggiornamento per la notte.',
@@ -445,7 +449,8 @@ def faq():
         ('Mi sono chiuso fuori. E adesso?', 'Se hai dimenticato la password, c\'è il link per reimpostarla. Se ti blocca l\'accesso a due fattori o la lista degli indirizzi permessi, il manuale tecnico spiega la riga da aggiungere al file di configurazione per rientrare.'),
         ('Carico un tema e il pannello dice che contiene codice PHP. Che faccio?', 'È una protezione: un tema con PHP esegue codice sul tuo server, quindi serve un permesso. In Impostazioni > Sicurezza, scheda Impostazioni, riquadro in fondo, scrivi la tua password e premi "Apri la finestra per un\'ora". Poi torna in Editor > Temi e carica di nuovo lo zip. Fallo solo con temi di cui ti fidi.'),
         ('Come pubblico la versione nuova di un file da scaricare?', 'Dalla pagina Download del pannello carichi il file nuovo. Se il nome contiene la versione (guida-1.3.pdf), l\'indirizzo "ultima" e le pagine che la citano passano da soli alla versione nuova.'),
-        ('C\'è una guida per imparare a usarlo?', 'Sì: il manuale d\'uso, in PDF. Ventinove capitoli, dal primo accesso alla checklist prima di andare online, ognuno con un esempio vero, le schermate con i passi numerati e una checklist per sapere quando hai finito.'),
+        ('Mi aiuta anche con i social?', 'Sì. Scrivi il testo nel riquadro Social dell\'articolo e il giorno in cui esce ti arriva un\'email con il testo pronto per ogni canale, il link, i tuoi hashtag e le due immagini della misura giusta. Per i giorni dopo c\'è il calendario dei post. Pubblicare resta a te: plumeCMS non entra nei tuoi account.'),
+        ('C\'è una guida per imparare a usarlo?', 'Sì: il manuale d\'uso, in PDF. Trenta capitoli, dal primo accesso alla checklist prima di andare online, ognuno con un esempio vero, le schermate con i passi numerati e una checklist per sapere quando hai finito.'),
         ('Posso costruirmi un tema mio?', 'Sì: c\'è un manuale apposta, con un tema d\'esempio completo da smontare e rifare tuo.'),
     ]
     p.sezione([[w('faq', voci=[{'domanda': d, 'risposta': r} for d, r in voci], prima_aperta=True)]], larghezza='stretta', **spazi(24, 56))
@@ -531,7 +536,7 @@ def editor_json():
 
 
 # ------------------------------------------------------------------ file
-USATE = ['copertina', 'importa-wp', 'tipo-sito', 'primi-passi', 'aspetti', 'controlla-server', 'sezioni', 'copia', 'installa-1', 'installa-2', 'installa-3', 'installa-4', 'installa-5', 'editor-ritratto', 'editor', 'aperture', 'stile', 'modelli', 'versioni', 'seo', 'flussi', 'download', 'sicurezza', 'aggiornamenti', 'temi',
+USATE = ['copertina', 'social', 'importa-wp', 'tipo-sito', 'primi-passi', 'aspetti', 'controlla-server', 'sezioni', 'copia', 'installa-1', 'installa-2', 'installa-3', 'installa-4', 'installa-5', 'editor-ritratto', 'editor', 'aperture', 'stile', 'modelli', 'versioni', 'seo', 'flussi', 'download', 'sicurezza', 'aggiornamenti', 'temi',
          'tema-cosmo', 'tema-aria', 'tema-bottega']
 
 
@@ -577,6 +582,9 @@ def zip_lavagna(dest):
 
 # Le novità per chi scarica: brevi, scritte qui (il CHANGELOG è per chi sviluppa). Da aggiornare a ogni versione.
 NOVITA = [
+    ('1.5.0', 'I social, ogni mattina', ['L\'email "Oggi sul sito": i contenuti che escono oggi, con le due immagini per i social e il testo pronto per LinkedIn, Facebook, Instagram, WhatsApp e Telegram.',
+                                         'Il calendario dei post: un testo per ogni giorno, che arriva la mattina con il link e le immagini.',
+                                         'Nella scheda di ogni articolo il riquadro Social; le immagini le ritaglia plumeCMS dalla foto in evidenza.']),
     ('1.4.2', 'Il manuale d\'uso', ['Un manuale nuovo, per chi usa plumeCMS: 29 capitoli, ognuno con un esempio vero, le schermate con i passi numerati e una checklist.',
                                     'Un articolo scritto nell\'editor e pubblicato dalla scheda esce con il suo testo.',
                                     'Form, menu e utenti con i campi giusti; accenti rimessi in tutto il pannello.']),
