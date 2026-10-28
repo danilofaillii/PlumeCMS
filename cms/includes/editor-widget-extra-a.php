@@ -25,8 +25,9 @@ ewx_registra('riquadro_icona', 'Riquadro con icona', 'lampadina', 'Elementi', [
     ec('testo', 'testolungo', 'Testo', 'Due righe che spiegano il punto. Brevi, concrete.', 'contenuto', ['sezione' => 'Testi']),
     ewx_livello('h3'),
     ewx_link(),
-    ec('posizione', 'scelta', 'Posizione dell\'icona', 'sopra', 'contenuto', ['opzioni' => ['sopra' => 'Sopra', 'sinistra' => 'A sinistra', 'destra' => 'A destra'], 'sezione' => 'Disposizione']),
-    ec('icona_in_alto', 'scelta', 'Icona allineata', 'inizio', 'contenuto', ['opzioni' => ['inizio' => 'In alto', 'center' => 'Al centro'], 'condizione' => ['!posizione' => 'sopra'], 'sezione' => 'Disposizione']),
+    // 1.4.0: "posizione_icona" (prima "posizione", lo stesso nome del Posizionamento delle Avanzate: al salvataggio si perdeva).
+    ec('posizione_icona', 'scelta', 'Posizione dell\'icona', 'sopra', 'contenuto', ['opzioni' => ['sopra' => 'Sopra', 'sinistra' => 'A sinistra', 'destra' => 'A destra'], 'sezione' => 'Disposizione', 'prima' => 'posizione']),
+    ec('icona_in_alto', 'scelta', 'Icona allineata', 'inizio', 'contenuto', ['opzioni' => ['inizio' => 'In alto', 'center' => 'Al centro'], 'condizione' => ['!posizione_icona' => 'sopra'], 'sezione' => 'Disposizione']),
     ewx_allinea('allineamento', 'Disposizione', 'center'),
     ...ewx_stile_icona('Icona', 44),
     ewx_var('icona_spazio', 'Spazio fra icona e testo', '--ew-gap', 'Icona', ['d' => ['v' => 16, 'u' => 'px']]),
@@ -36,9 +37,9 @@ ewx_registra('riquadro_icona', 'Riquadro con icona', 'lampadina', 'Elementi', [
     ...ewx_riquadro_stile(),
     ewx_hover(),
 ], function (array $v, array $ctx): string {
-    if (isset($v['allineamento'])) ewx_css_allinea($ctx, $v['allineamento']);
+    $pos = in_array($v['posizione_icona'], ['sinistra', 'destra'], true) ? $v['posizione_icona'] : 'sopra';
+    if (isset($v['allineamento'])) ewx_css_allinea_ribox($ctx, $v['allineamento'], $pos);
     $tag = ewx_tag($v);
-    $pos = in_array($v['posizione'], ['sinistra', 'destra'], true) ? $v['posizione'] : 'sopra';
     [$a, $z] = ewx_a($v['link'], 'ew-ribox-link', 'span');
     $ic = ewx_icona_html($v);
     $out = '<div class="ew-ribox ew-pos-' . $pos . ($v['icona_in_alto'] === 'center' ? ' ew-ic-centro' : '') . ($v['animazione_hover'] !== '' ? ' ew-hov-' . h($v['animazione_hover']) : '') . '">';
@@ -57,8 +58,9 @@ ewx_registra('riquadro_immagine', 'Riquadro con immagine', 'immagine', 'Elementi
     ec('testo', 'testolungo', 'Testo', 'Due righe che spiegano il punto.', 'contenuto', ['sezione' => 'Testi']),
     ewx_livello('h3'),
     ewx_link(),
-    ec('posizione', 'scelta', 'Posizione dell\'immagine', 'sopra', 'contenuto', ['opzioni' => ['sopra' => 'Sopra', 'sinistra' => 'A sinistra', 'destra' => 'A destra'], 'sezione' => 'Disposizione']),
-    ec('verticale', 'scelta', 'Allineamento verticale', 'inizio', 'contenuto', ['opzioni' => ['inizio' => 'In alto', 'center' => 'Al centro', 'fine' => 'In basso'], 'condizione' => ['!posizione' => 'sopra'], 'sezione' => 'Disposizione']),
+    // 1.4.0: "posizione_immagine" (prima "posizione", come il Posizionamento delle Avanzate).
+    ec('posizione_immagine', 'scelta', 'Posizione dell\'immagine', 'sopra', 'contenuto', ['opzioni' => ['sopra' => 'Sopra', 'sinistra' => 'A sinistra', 'destra' => 'A destra'], 'sezione' => 'Disposizione', 'prima' => 'posizione']),
+    ec('verticale', 'scelta', 'Allineamento verticale', 'inizio', 'contenuto', ['opzioni' => ['inizio' => 'In alto', 'center' => 'Al centro', 'fine' => 'In basso'], 'condizione' => ['!posizione_immagine' => 'sopra'], 'sezione' => 'Disposizione']),
     ewx_allinea('allineamento', 'Disposizione', 'center'),
     ewx_var('immagine_larghezza', 'Larghezza dell\'immagine', '--ew-imgw', 'Immagine', ['d' => ['v' => 100, 'u' => '%']], ['unita' => ['%', 'px'], 'intervalli' => ['%' => [5, 100, 1], 'px' => [20, 800, 1]]]),
     ewx_var('immagine_spazio', 'Spazio fra immagine e testo', '--ew-gap', 'Immagine', ['d' => ['v' => 16, 'u' => 'px']]),
@@ -70,9 +72,9 @@ ewx_registra('riquadro_immagine', 'Riquadro con immagine', 'immagine', 'Elementi
     ...ewx_riquadro_stile(),
     ewx_hover(),
 ], function (array $v, array $ctx): string {
-    if (isset($v['allineamento'])) ewx_css_allinea($ctx, $v['allineamento']);
+    $pos = in_array($v['posizione_immagine'], ['sinistra', 'destra'], true) ? $v['posizione_immagine'] : 'sopra';
+    if (isset($v['allineamento'])) ewx_css_allinea_ribox($ctx, $v['allineamento'], $pos);
     $tag = ewx_tag($v);
-    $pos = in_array($v['posizione'], ['sinistra', 'destra'], true) ? $v['posizione'] : 'sopra';
     [$a, $z] = ewx_a($v['link'], 'ew-ribox-link', 'span');
     $out = '<div class="ew-ribox ew-imgbox ew-pos-' . $pos . ' ew-v-' . h($v['verticale']) . ($v['animazione_hover'] !== '' ? ' ew-hov-' . h($v['animazione_hover']) : '') . '">';
     if ($v['immagine'] !== '') $out .= '<figure class="ew-ribox-immagine">' . $a . ewx_img($v['immagine'], $v['alt'] ?: $v['titolo']) . $z . '</figure>';

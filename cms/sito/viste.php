@@ -68,7 +68,7 @@ function vista_pagina(array $meta, string $corpo, string $jsonld = '', string $a
 <link rel="stylesheet" href="' . sito_versione_asset('sito.css') . '">
 <link rel="stylesheet" href="' . sito_versione_asset('tema.css') . '">
 ' . (function_exists('temi_css_link') && ($tl = temi_css_link()) !== '' ? $tl . "\n" : '') . design_head() . $cssModelli . '
-<link rel="icon" href="' . h(design_sito()['favicon']) . '">
+' . vista_favicon() . '
 <link rel="alternate" type="application/rss+xml" title="' . h(SITO_NOME) . '" href="' . SITO_URL . '/feed/">
 ' . $jsonld;
     $popup = vista_popup();
@@ -448,3 +448,15 @@ function vista_home(): string {
         . '<p class="lead">' . h((string)cms_impostazione('sito_descrizione', '')) . '</p></div></div></section>'
         . ($ultimi ? '<section class="sez"><div class="wrap"><span class="occhiello">' . h((string)cms_impostazione('blog_nome', 'Blog')) . '</span><h2 class="sez-titolo">Gli ultimi articoli</h2><div class="griglia" style="margin-top:28px">' . implode('', array_map('vista_scheda', $ultimi)) . '</div></div></section>' : '');
 }
+
+/**
+ * L'icona del sito nella scheda del browser (1.4.0). Quella dello Stile del sito, se c'e; altrimenti l'icona di
+ * partenza di plumeCMS (sito/assets/favicon.svg, e favicon.ico per i browser che non leggono l'SVG), servita anche a
+ * /favicon.ico dal sito (sito/index.php). Con il CMS in una cartella gli indirizzi la portano (SITO_ASSET, cms_base).
+ */
+function vista_favicon(): string {
+    $f = trim((string)design_sito()['favicon']);
+    if ($f !== '') return '<link rel="icon" href="' . h($f) . '">';
+    return '<link rel="icon" href="' . h(SITO_ASSET) . 'favicon.ico" sizes="48x48">' . "\n" . '<link rel="icon" href="' . h(SITO_ASSET) . 'favicon.svg" type="image/svg+xml">';
+}
+

@@ -59,7 +59,7 @@ require_once __DIR__ . '/includes/admin-header.php';
         <label>Occhiello</label><input type="text" name="occhiello" value="<?= h($v['occhiello']) ?>">
         <label>Titolo</label><input type="text" name="titolo" value="<?= h($v['titolo']) ?>">
         <label>Testo (HTML semplice: paragrafi, grassetto, link)</label><textarea name="testo" rows="5"><?= h($v['testo']) ?></textarea>
-        <label>Immagine (indirizzo, dalla libreria Media)</label><input type="text" name="immagine" value="<?= h($v['immagine']) ?>" placeholder="/wp-content/uploads/…">
+        <label>Immagine (indirizzo, dalla libreria Media)</label><input type="text" name="immagine" value="<?= h($v['immagine']) ?>" placeholder="<?= h(cms_uploads_url()) ?>/…">
         <div class="sc-riga"><div><label>Testo del pulsante</label><input type="text" name="pulsante_testo" value="<?= h($v['pulsante_testo']) ?>"></div><div><label>Link del pulsante</label><input type="text" name="pulsante_link" value="<?= h($v['pulsante_link']) ?>" placeholder="/contatti/"></div></div>
         <label>Modulo dentro il popup</label>
         <select name="modulo"><option value="">Nessuno</option><?php foreach ($moduli as $k => $n): ?><option value="<?= h($k) ?>" <?= $v['modulo'] === $k ? 'selected' : '' ?>><?= h($n) ?></option><?php endforeach; ?></select>

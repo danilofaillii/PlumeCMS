@@ -77,6 +77,25 @@ function sito_redirect_per(string $percorso, string $query): ?array {
     return null;
 }
 
+/**
+ * /favicon.ico (1.4.0): se nella cartella c'e un favicon.ico vero lo serve il server web e qui non si arriva. Altrimenti
+ * l'icona dello Stile del sito (302, perche dipende dalle impostazioni), o quella di partenza di plumeCMS.
+ */
+function sito_favicon(): never {
+    $f = trim((string)design_sito()['favicon']);
+    if ($f !== '') {
+        header('Cache-Control: no-store');
+        sito_vai(preg_match('~^https?://~', $f) ? $f : cms_origine_o_sito() . $f, 302);
+    }
+    $file = __DIR__ . '/assets/favicon.ico';
+    sito_rispondi(200, 'image/x-icon', (string)file_get_contents($file), ['Cache-Control: public, max-age=86400', 'Content-Length: ' . filesize($file)]);
+}
+
+/** Lo schema e l'host del sito, per un indirizzo che comincia con "/". */
+function cms_origine_o_sito(): string {
+    return (string)preg_replace('~^(https?://[^/]+).*$~', '$1', SITO_URL);
+}
+
 // ------------------------------------------------------------
 
 $uri = $_SERVER['REQUEST_URI'] ?? '/';
@@ -148,6 +167,7 @@ try {
         case '/robots.txt': sito_rispondi(200, 'text/plain', seo_robots_txt());
         case '/sitemap.xml': sito_rispondi(200, 'application/xml', seo_sitemap());
         case '/llms.txt': sito_rispondi(200, 'text/plain', seo_llms());
+        case '/favicon.ico': sito_favicon();
     }
     // File di verifica dei motori, chiave IndexNow, llms-full.txt, sitemap divise.
     if ($speciale = seo_file_speciale($percorso)) sito_rispondi(200, $speciale[0], $speciale[1]);

@@ -98,6 +98,7 @@ function editor_pulisci_valore(array $ctl, $val) {
 function editor_pulisci_impostazioni(string $tipo, $imp): array {
     $out = [];
     $imp = is_array($imp) ? $imp : [];
+    $imp = editor_nomi_di_prima($tipo, $imp);
     foreach (editor_definizioni()[$tipo]['controlli'] as $ctl) {
         if ($ctl['tipo'] === 'intestazione' || !array_key_exists($ctl['nome'], $imp)) continue;
         $x = editor_pulisci_valore($ctl, $imp[$ctl['nome']]);
@@ -105,6 +106,21 @@ function editor_pulisci_impostazioni(string $tipo, $imp): array {
     }
     editor_pulisci_avanzate($out);
     return $out;
+}
+
+/**
+ * Un controllo rinominato (1.4.0) dichiara 'prima' => il nome di prima: un valore salvato con quel nome, se e fra le
+ * opzioni del controllo, passa al nome nuovo. Nato per "Posizione dell'icona" dei Riquadri, che si chiamava "posizione"
+ * come il Posizionamento delle Avanzate e al salvataggio si perdeva (editor-widget-extra-a.php).
+ */
+function editor_nomi_di_prima(string $tipo, array $imp): array {
+    foreach (editor_definizioni()[$tipo]['controlli'] ?? [] as $ctl) {
+        $prima = (string)($ctl['prima'] ?? '');
+        if ($prima === '' || array_key_exists($ctl['nome'], $imp) || !array_key_exists($prima, $imp)) continue;
+        $x = $imp[$prima];
+        if (is_string($x) && isset($ctl['opzioni']) && array_key_exists($x, $ctl['opzioni'])) $imp[$ctl['nome']] = $x;
+    }
+    return $imp;
 }
 
 /**
@@ -186,6 +202,7 @@ function editor_valida($albero): ?array {
  * {"normale": ..., "hover": ...} (hover vuoto se non impostato).
  */
 function editor_valori(string $tipo, array $imp): array {
+    $imp = editor_nomi_di_prima($tipo, $imp);
     $v = [];
     foreach (editor_definizioni()[$tipo]['controlli'] as $ctl) {
         if ($ctl['tipo'] === 'intestazione') continue;

@@ -1,9 +1,11 @@
 <?php
 /**
- * Cron giornaliero: applica i pacchetti in scadenza, manda l'email del mattino con gli articoli
- * che escono oggi (escono da soli alla loro ora) e manda i testi social.
+ * Cron giornaliero: applica i pacchetti di aggiornamento programmati, fa i compiti dei moduli del sito, manda a
+ * IndexNow gli indirizzi in coda. Il lavoro sta in includes/cron.php (cron_giornaliero), lo stesso del pulsante
+ * "Esegui adesso" della pagina Log cron del pannello.
  *
- * cPanel, Processi cron: una riga al giorno alle 06:00 ora italiana che lancia cron-daily.php nella cartella del CMS
+ * cPanel, Processi cron: una riga al giorno (per esempio alle 06:00) che lancia cron-daily.php nella cartella del CMS.
+ * La riga con il percorso giusto la scrive la pagina Impostazioni, Log cron.
  */
 
 // sicurezza (attacco 2): il cron gira da riga di comando (cPanel, Processi cron: /usr/local/bin/php .../cron-daily.php).
@@ -18,55 +20,7 @@ if (PHP_SAPI !== 'cli') {
 // Il cron di cPanel usa il PHP di sistema, che può essere più vecchio di quello del sito: con uno prima dell'8.1
 // il codice non si legge nemmeno. Meglio una riga chiara nel log che un errore di sintassi.
 if (PHP_VERSION_ID < 80100) { fwrite(STDERR, "Questo cron richiede PHP 8.1 o successivo (qui " . PHP_VERSION . "). In cPanel, Processi cron, usa il binario della versione del sito, per esempio /opt/cpanel/ea-php84/root/usr/bin/php\n"); exit(1); }
-require_once __DIR__ . '/includes/config.php';
+require_once __DIR__ . '/includes/cron.php';
 
-$logFile = __DIR__ . '/logs/cron-daily.log';
-@mkdir(__DIR__ . '/logs', 0755, true);
-
-$log = date('Y-m-d H:i:s') . " | Cron avviato\n";
-
-// Step 0: applica i pacchetti di aggiornamento in scadenza (pannello Aggiornamenti)
-$aggScript = __DIR__ . '/includes/aggiornamenti.php';
-if (file_exists($aggScript)) {
-    try {
-        require_once $aggScript;
-        $righe = agg_applica_in_attesa();
-        if ($righe) {
-            foreach ($righe as $r) $log .= "  Aggiornamento: $r\n";
-        } else {
-            $log .= "  Nessun pacchetto di aggiornamento in scadenza\n";
-        }
-    } catch (Throwable $e) {
-        $log .= "  ERRORE aggiornamenti: " . $e->getMessage() . "\n";
-    }
-}
-
-// Step 1: l'email del mattino con gli articoli che escono oggi. Gli articoli escono da soli alla loro ora.
-require_once __DIR__ . '/includes/sito.php';
-// I passi dei moduli del sito (per esempio un'email del mattino con gli articoli che escono oggi).
-foreach (cms_moduli_elenco('cron') as $x) {
-    try {
-        $esito = ($x['valore'])();
-        $log .= '  ' . ucfirst((string)$x['chiave']) . ': ' . (is_string($esito) && $esito !== '' ? $esito : 'fatto') . "\n";
-    } catch (Throwable $e) {
-        $log .= '  ERRORE ' . $x['chiave'] . ' (' . $x['modulo'] . '): ' . $e->getMessage() . "\n";
-    }
-}
-
-// Step 3: IndexNow, la coda degli indirizzi pubblicati o modificati (pannello SEO e AEO)
-$seoScript = __DIR__ . '/includes/seo.php';
-if (file_exists($seoScript)) {
-    try {
-        require_once $seoScript;
-        $log .= '  IndexNow: ' . seo_coda_invia(10000, 20) . "\n";
-    } catch (Throwable $e) {
-        $log .= "  ERRORE IndexNow: " . $e->getMessage() . "\n";
-    }
-}
-
-$log .= "  Completato.\n\n";
-@file_put_contents($logFile, $log, FILE_APPEND | LOCK_EX);
-
-if (php_sapi_name() === 'cli') {
-    echo $log;
-}
+$log = cron_giornaliero('cron');
+if (PHP_SAPI === 'cli') echo $log;

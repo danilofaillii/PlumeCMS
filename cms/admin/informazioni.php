@@ -75,6 +75,7 @@ require_once __DIR__ . '/includes/admin-header.php';
       <?php foreach ($cartelle as $nome => $p): ?><tr><td>Cartella <?= h($nome) ?> scrivibile<br><small style="color:var(--text-muted)"><?= h($p) ?></small></td><td><?= $ok(is_dir($p) && is_writable($p)) ?></td></tr><?php endforeach; ?>
       <tr><td>Fuso orario</td><td><?= h(date_default_timezone_get()) ?></td></tr>
     </table>
+    <p style="margin-top:.7rem"><a class="btn btn-secondary btn-sm" href="controlla-server.php">Controlla il server</a> prova davvero HTTPS, cron, email, aggiornamenti e protezioni dei file.</p>
   </div>
   <div class="info-card">
     <h2>Tabelle (<?= count($tabelle) ?>)</h2>
