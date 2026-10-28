@@ -38,7 +38,7 @@ ewx_registra('ancora_menu', 'Ancora di menu', 'pin', 'Elementi', [
 // ---------------- Citazione (Blockquote)
 ewx_registra('citazione', 'Citazione', 'citazione-piena', 'Elementi', [
     ec('aspetto', 'scelta', 'Aspetto', 'bordo', 'contenuto', ['opzioni' => ['bordo' => 'Bordo a sinistra', 'virgolette' => 'Con le virgolette', 'riquadro' => 'Riquadro', 'pulito' => 'Pulito'], 'sezione' => 'Citazione']),
-    ec('testo', 'testolungo', 'Testo', 'Non lavoro per renderti piu forte. Lavoro per farti portare meno peso.', 'contenuto', ['sezione' => 'Citazione']),
+    ec('testo', 'testolungo', 'Testo', 'Le cose semplici, fatte bene, sono quelle che restano.', 'contenuto', ['sezione' => 'Citazione']),
     ec('autore', 'testo', 'Autore', (string)cms_impostazione('citazione_autore', cms_impostazione('autore_predefinito', '')), 'contenuto', ['sezione' => 'Citazione']),
     ewx_allinea('allineamento', 'Citazione', ''),
     ec('condividi_su', 'scelta', 'Pulsante di condivisione', '', 'contenuto', ['opzioni' => ['' => 'Nessuno', 'x-social' => 'X', 'linkedin' => 'LinkedIn', 'whatsapp' => 'WhatsApp', 'copia' => 'Copia il testo'], 'sezione' => 'Condivisione']),
@@ -79,10 +79,10 @@ ewx_registra('invito_libero', 'Invito all\'azione', 'megafono', 'Marketing', [
     ec('immagine', 'immagine', 'Immagine', '', 'contenuto', ['sezione' => 'Immagine']),
     ec('immagine_posizione', 'scelta', 'Posizione dell\'immagine', 'sopra', 'contenuto', ['opzioni' => ['sopra' => 'Sopra', 'sinistra' => 'A sinistra', 'destra' => 'A destra'], 'condizione' => ['aspetto' => 'classico'], 'sezione' => 'Immagine']),
     ex('icona', 'icona', 'Icona (facoltativa, sopra il titolo)', '', 'contenuto', ['sezione' => 'Contenuto']),
-    ec('titolo', 'testo', 'Titolo', 'Fai chiarezza in 15 minuti', 'contenuto', ['sezione' => 'Contenuto']),
+    ec('titolo', 'testo', 'Titolo', 'Parliamone', 'contenuto', ['sezione' => 'Contenuto']),
     ewx_livello('h3'),
-    ec('testo', 'testolungo', 'Testo', 'Una conversazione breve, su una situazione vera. Si esce con una cosa concreta da fare.', 'contenuto', ['sezione' => 'Contenuto']),
-    ec('pulsante_testo', 'testo', 'Testo del pulsante', 'Prenota', 'contenuto', ['sezione' => 'Pulsante']),
+    ec('testo', 'testolungo', 'Testo', 'Raccontaci cosa ti serve: ti rispondiamo con una proposta concreta.', 'contenuto', ['sezione' => 'Contenuto']),
+    ec('pulsante_testo', 'testo', 'Testo del pulsante', 'Scrivici', 'contenuto', ['sezione' => 'Pulsante']),
     ewx_link('link', 'Link'),
     ec('link_su', 'scelta', 'Il link vale su', 'pulsante', 'contenuto', ['opzioni' => ['pulsante' => 'Solo il pulsante', 'tutto' => 'Tutto il riquadro'], 'sezione' => 'Pulsante']),
     ec('nastro', 'testo', 'Nastro (facoltativo)', '', 'contenuto', ['sezione' => 'Nastro']),
@@ -258,9 +258,9 @@ ewx_registra('flip_box', 'Flip box', 'copia', 'Gallerie', [
 // ---------------- Titolo animato (Animated Headline)
 ewx_registra('titolo_animato', 'Titolo animato', 'bacchetta', 'Marketing', [
     ec('modo', 'scelta', 'Modo', 'evidenziato', 'contenuto', ['opzioni' => ['evidenziato' => 'Parola evidenziata (disegno)', 'rotante' => 'Parole che si alternano'], 'sezione' => 'Titolo']),
-    ec('prima', 'testo', 'Testo prima', 'Il problema non e', 'contenuto', ['sezione' => 'Titolo']),
-    ec('evidenziato', 'testo', 'Parola evidenziata', 'il team', 'contenuto', ['condizione' => ['modo' => 'evidenziato'], 'sezione' => 'Titolo']),
-    ec('rotanti', 'testolungo', 'Parole che si alternano (una per riga)', "il team\nil capo\nil carico", 'contenuto', ['condizione' => ['modo' => 'rotante'], 'sezione' => 'Titolo']),
+    ec('prima', 'testo', 'Testo prima', 'Un sito che è', 'contenuto', ['sezione' => 'Titolo']),
+    ec('evidenziato', 'testo', 'Parola evidenziata', 'tuo', 'contenuto', ['condizione' => ['modo' => 'evidenziato'], 'sezione' => 'Titolo']),
+    ec('rotanti', 'testolungo', 'Parole che si alternano (una per riga)', "veloce\nchiaro\ntuo", 'contenuto', ['condizione' => ['modo' => 'rotante'], 'sezione' => 'Titolo']),
     ec('dopo', 'testo', 'Testo dopo', '', 'contenuto', ['sezione' => 'Titolo']),
     ewx_livello('h2'),
     ewx_link(),
@@ -336,14 +336,14 @@ ewx_registra('listino', 'Listino', 'euro', 'Marketing', [
 // ---------------- Tabella prezzi (Price Table)
 ewx_registra('tabella_prezzi', 'Tabella prezzi', 'tabella', 'Marketing', [
     ec('titolo', 'testo', 'Titolo', (string)cms_impostazione('w_prezzi_titolo', 'I nostri piani'), 'contenuto', ['sezione' => 'Intestazione']),
-    ec('sottotitolo', 'testo', 'Sottotitolo', 'Tre mesi, un incontro a settimana', 'contenuto', ['sezione' => 'Intestazione']),
+    ec('sottotitolo', 'testo', 'Sottotitolo', 'Tutto quello che serve per cominciare', 'contenuto', ['sezione' => 'Intestazione']),
     ec('valuta', 'testo', 'Simbolo della valuta', 'EUR', 'contenuto', ['sezione' => 'Prezzo']),
     ec('valuta_posizione', 'scelta', 'Posizione della valuta', 'prima', 'contenuto', ['opzioni' => ['prima' => 'Prima del numero', 'dopo' => 'Dopo il numero'], 'sezione' => 'Prezzo']),
-    ec('prezzo', 'testo', 'Prezzo', '490', 'contenuto', ['sezione' => 'Prezzo']),
+    ec('prezzo', 'testo', 'Prezzo', '49', 'contenuto', ['sezione' => 'Prezzo']),
     ec('decimali', 'testo', 'Decimali (facoltativi)', '', 'contenuto', ['sezione' => 'Prezzo']),
     ec('prezzo_vecchio', 'testo', 'Prezzo barrato (facoltativo)', '', 'contenuto', ['sezione' => 'Prezzo']),
-    ec('periodo', 'testo', 'Periodo', '/ percorso', 'contenuto', ['sezione' => 'Prezzo']),
-    ec('voci', 'ripetitore', 'Cosa comprende', [['testo' => '12 incontri da un\'ora', 'icona' => 'spunta'], ['testo' => 'Messaggi fra un incontro e l\'altro', 'icona' => 'spunta'], ['testo' => 'Materiale di lavoro', 'icona' => 'spunta']], 'contenuto', ['campi' => [
+    ec('periodo', 'testo', 'Periodo', '/ mese', 'contenuto', ['sezione' => 'Prezzo']),
+    ec('voci', 'ripetitore', 'Cosa comprende', [['testo' => 'Prima cosa compresa', 'icona' => 'spunta'], ['testo' => 'Seconda cosa compresa', 'icona' => 'spunta'], ['testo' => 'Assistenza via email', 'icona' => 'spunta']], 'contenuto', ['campi' => [
         ec('testo', 'testo', 'Testo', 'Nuova voce'), ex('icona', 'icona', 'Icona', 'spunta'),
     ], 'titolo_voce' => 'testo', 'sezione' => 'Elenco']),
     ec('pulsante_testo', 'testo', 'Testo del pulsante', 'Scegli', 'contenuto', ['sezione' => 'Pulsante']),

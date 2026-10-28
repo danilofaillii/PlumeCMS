@@ -177,8 +177,6 @@ Nell'editor: linguetta, categorie e varianti, ricerca, clic sotto la sezione sel
 trascinamento costruiti nel browser: Playwright non trascina dal pannello dentro l'iframe), modifica, Pubblica; sul sito
 `/sezioni-pronte/` al computer e al telefono con il contrasto del testo. Atteso: 15 su 15, anche con
 `tema-cli.php attiva cosmo|aria|bottega`. Lascia una pagina "Nuova pagina" pubblicata: da cancellare dopo.
-Di notte (00-06) la pagina pubblicata si guarda con `?preview=1`: una pagina pubblicata in quelle ore esce alle 06:00
-(difetto noto del CMS, non delle sezioni pronte).
 
 ## prova-copia.js (1.3.0)
 

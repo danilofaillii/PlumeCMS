@@ -21,6 +21,8 @@ Il prodotto si chiama **plumeCMS** (nome scelto il 26 ottobre 2026; prima, per p
   averne fatta una del sito di adesso. Per i siti con un limite di caricamento basso, la copia si mette nella cartella
   `aggiornamenti/copie/` con il gestore dei file e si ripristina dall'elenco. Da una copia di un altro sito i file con
   codice PHP non entrano.
+- Gli ultimi testi d'esempio pensati per il primo sito, nei widget Testimonianza, Carosello di testimonianze, Citazione,
+  Titolo animato, Invito libero e Tabella prezzi, ora sono neutri.
 - **Per chi fa siti con plumeCMS**: `api/versione.php?serie=<serie>` dice versione, nome, sha256 e dimensione dell'ultimo
   file di una serie del download manager.
 

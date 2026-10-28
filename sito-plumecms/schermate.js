@@ -25,8 +25,14 @@ const [B, D, UTENTE, PASSWORD] = process.argv.slice(2);
   await foto('editor-ritratto', '/admin/editor.php?tipo=pagine&id=1', () => editor(1, 'hero', 'stile', true));
   await p.setViewportSize({ width: 1440, height: 900 });
   for (const [n, u] of [['dashboard', '/admin/index.php'], ['stile', '/admin/design.php'], ['modelli', '/admin/modelli.php'], ['versioni', '/admin/versioni.php'],
-    ['seo', '/admin/seo.php'], ['flussi', '/admin/newsletter-flussi.php'], ['sicurezza', '/admin/sicurezza.php'], ['aggiornamenti', '/admin/aggiornamenti.php'], ['download', '/admin/scaricabili.php'],
+    ['seo', '/admin/seo.php'], ['flussi', '/admin/newsletter-flussi.php'], ['sicurezza', '/admin/sicurezza.php'], ['aggiornamenti', '/admin/aggiornamenti.php'], ['download', '/admin/scaricabili.php'], ['copia', '/admin/copia-sito.php'],
     ['temi', '/admin/temi.php'], ['menu', '/admin/menu.php'], ['form', '/admin/form.php']]) await foto(n, u);
+  // 1.3.0: l'editor della home con la linguetta Sezioni aperta.
+  await foto('sezioni', '/admin/editor.php?tipo=pagine&id=1', async () => {
+    await p.waitForTimeout(1200);
+    if (await p.locator('#ed-chiudi-revisioni').isVisible()) await p.click('#ed-chiudi-revisioni');
+    await p.click('.ed-schede-pannello button[data-pannello="sezioni"]'); await p.waitForTimeout(600);
+  });
   await p.setViewportSize({ width: 1280, height: 800 });
   for (const t of ['cosmo', 'aria', 'bottega']) await foto('tema-' + t, `/?preview=1&tema=${t}`);
   await br.close();

@@ -85,7 +85,7 @@ Stato, decisioni, contesto e diario non stanno qui: stanno nel second brain
 - **Pacchetto di aggiornamento** per un'installazione esistente:
   `python3 tools/cms-pacchetto.py --aggiornamento`. Si carica dal pannello,
   Impostazioni, Aggiornamenti.
-- **Versione**: `cms/VERSIONE` (oggi 1.2.8) e una voce in `cms/CHANGELOG.md` a ogni
+- **Versione**: `cms/VERSIONE` (oggi 1.3.0) e una voce in `cms/CHANGELOG.md` a ogni
   zip con contenuto diverso. Mai cambiare il contenuto di una versione già data.
 - **Prove** prima di dire finito:
   - `php -n -d short_open_tag=1 -l` su ogni file PHP toccato, `node --check` sui js;
@@ -121,7 +121,10 @@ Le decisioni complete, con data e perché, stanno nel second brain, `plumecms/de
 
 ## Stato al 27 ottobre 2026
 
-Fatto: plumeCMS 1.2.8: licenza GNU GPL 3 o successiva (`LICENSE`); tolto dal prodotto tutto ciò che era di danilofailli.it
+Fatto: plumeCMS 1.3.0 (notte del 27 ottobre, un agente con il ciclo PDCA): kit di partenza nell'installatore (`includes/kit-partenza.php`,
+`includes/kit/`), 30 sezioni pronte nell'editor (`includes/sezioni-pronte*.php`), "c'è una versione nuova" (`includes/versione-nuova.php`,
+`api/versione.php`), copia del sito (`includes/copia-sito.php`, Impostazioni > Copia del sito); prove `prova-kit.js`, `prova-sezioni.js`,
+`prova-copia.js`, `prova-versione.js`; 97 attacchi respinti. 1.2.8: licenza GNU GPL 3 o successiva (`LICENSE`); tolto dal prodotto tutto ciò che era di danilofailli.it
 (moduli ebook e Laser, CTA, box del burnout, aforismi come tipo fisso, testi d'esempio, glossario PNL, mittente); agganci
 `moduli_disponibili`, `modulo_html`, `pagina_moduli`, `sito_percorso`; corretti captcha nella radice, Contatti con il modulo laser,
 pubblicazione di notte. Il sito di plumeCMS ha la piuma disegnata in copertina e "Installalo in 5 minuti" con le schermate vere. 1.2.7: margine di Centrata, Copertina, Rivista e Scheda; la home del sito di plumeCMS apre con la Copertina (scelta di Danilo). 1.2.6: tendina Disposizione dell'Apertura, dieci disposizioni nuove più la classica (identica al pixel
@@ -138,7 +141,7 @@ sottocartella; aggiornamento 1.1.9 -> 1.2.0 dal pannello provato con sito identi
 78 prove di attacco respinte (la 79esima è del modulo danilofailli). Le prove del CMS girano su PHP 8.3 con
 MySQL 8.0: su PHP 8.4.27 sono provate la sintassi di ogni file e i `.htaccess` su Apache, non il CMS intero
 (senza `pdo_mysql` nell'immagine, e i pacchetti Debian bloccati dalla rete della sessione).
-Prima installazione vera su `https://duhtron.it/test` (cartella), funzionante con la 1.1.9: da aggiornare alla 1.2.8.
+Prima installazione vera su `https://duhtron.it/test` (cartella), funzionante con la 1.1.9: da aggiornare alla 1.3.0.
 Dal 27 ottobre plumeCMS vive nel suo progetto e repository (`SPOSTARE.md`).
 
 Aperto:
@@ -149,6 +152,11 @@ Aperto:
   `define('CMS_PREFISSO', 'newdf_');` al `config.local.php` di danilofailli.it;
 - prova vera delle chiamate a Google Search Console e IndexNow da un server con rete aperta;
 - favicon di partenza (l'installazione pulita risponde 404 su `/favicon.ico`);
+- **indirizzo del sito ufficiale** per "c'è una versione nuova": `VERSIONE_SITO_UFFICIALE` in `includes/versione-nuova.php` vale
+  `https://duhtron.it/test`, provvisorio, da confermare con Danilo; quel sito deve avere la 1.3.0 (per `api/versione.php`);
+- copia del sito: il ripristino non toglie i file che stanno nel sito ma non nella copia; con due installazioni nello stesso database
+  e prefissi che cominciano uguale (`cms_` e `cms_b_`) la copia prende anche le tabelle dell'altra;
+- "c'è una versione nuova" provato solo in http locale (`CMS_AGGIORNAMENTI_HTTP_PROVA`): HTTPS vero da provare su un server;
 - **danilofailli.it e la 1.2.8**: lì ebook, Laser, CTA, box del test e aforismi servono ancora. Quando si porta il nucleo 1.2.8, il
   modulo `moduli/danilofailli/` deve ridarli con i filtri e l'evento nuovi (manuale tecnico 15.4), e i file tolti (`admin/contatti.php`...)
   tornano nel modulo. Mai lo zip del prodotto là: il pacchetto di aggiornamento 1.2.8 li cancella (`TOLTI` in `tools/cms-pacchetto.py`);
@@ -209,6 +217,7 @@ Errori veri, già pagati. Non ripeterli.
 | Un pacchetto più grande del limite di caricamento del server | "Il file supera il limite di caricamento del server": il pacchetto unico del sito di plumeCMS (5 MB) è stato rifiutato dal primo hosting vero (27 ottobre 2026), che accetta 1,2 MB. Ora il costruttore lo divide in parti sotto 1900 KB (il predefinito di PHP è 2M). Anche i PDF: con i tag di accessibilità e Inter variabile pesavano il doppio |
 | `editor_widget_registrati()` per sapere quali fogli caricare | dà solo i widget esterni, non quelli del nucleo: l'anteprima dell'editor non caricava i fogli delle disposizioni dell'Apertura e le mostrava senza stile (1.2.6, trovato dalla prova dell'editor, non da quella del sito). E le viste mettono ogni `<link>` davanti al precedente: l'ordine dei fogli di un widget si capovolge se non lo si dà al contrario |
 | Una regola di un foglio nuovo con un solo nome di classe (`.ed-hero-copertina{padding:...}`) | perde contro `.ed-w-hero .hero{padding:0}` di `sito.css`: nella 1.2.6 testo e pulsanti della Copertina toccavano il bordo, e nessuna prova lo vedeva (passavano tutte). Le regole sul contenitore di una disposizione si scrivono `.ed-hero.ed-hero-<id>`; le foto si guardano anche sul sito vero, non solo sulla pagina di prova |
+| Cercare i resti di un sito con le sue parole (danilofailli, laser, ebook) | sfuggono le frasi: i widget extra avevano ancora "Non lavoro per renderti più forte", "Fai chiarezza in 15 minuti", un listino a incontri. Si guarda la pagina con tutti i widget, a occhio |
 | Fidarsi del resoconto di un agente | è successo che un agente dichiarasse lavoro mai scritto su disco. Si controllano i file veri e si rifanno le prove |
 
 ## Tono con l'utente

@@ -222,10 +222,10 @@ ewx_registra('barra_avanzamento', 'Barra di avanzamento', 'grafico-barre', 'Nume
 function ewx_controlli_testimonianza(bool $singola = true): array {
     $c = [];
     if ($singola) {
-        $c[] = ec('testo', 'testolungo', 'Testo', 'Dopo tre incontri ho smesso di portarmi a casa le riunioni. Non e cambiato il lavoro: e cambiato dove sto io.', 'contenuto', ['sezione' => 'Testimonianza']);
+        $c[] = ec('testo', 'testolungo', 'Testo', 'Ci hanno seguito dal primo giorno, con pazienza e idee chiare. Il risultato è andato oltre quello che speravamo.', 'contenuto', ['sezione' => 'Testimonianza']);
         $c[] = ec('immagine', 'immagine', 'Foto', '', 'contenuto', ['sezione' => 'Testimonianza']);
         $c[] = ec('nome', 'testo', 'Nome', 'Nome Cognome', 'contenuto', ['sezione' => 'Testimonianza']);
-        $c[] = ec('ruolo', 'testo', 'Ruolo', 'Responsabile di area', 'contenuto', ['sezione' => 'Testimonianza']);
+        $c[] = ec('ruolo', 'testo', 'Ruolo', 'Cliente', 'contenuto', ['sezione' => 'Testimonianza']);
         $c[] = ec('stelle', 'numero', 'Stelle (0 = nessuna)', 0, 'contenuto', ['min' => 0, 'max' => 5, 'sezione' => 'Testimonianza']);
     }
     return array_merge($c, [

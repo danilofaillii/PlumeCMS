@@ -186,6 +186,12 @@ def funzionalita():
           '<li>Anteprima per computer, tablet e telefono, con valori diversi per ogni misura.</li>'
           '<li>Colori e caratteri globali: cambi il colore principale e cambia ovunque.</li>'
           '<li>Foto con velo, bianco e nero ed effetti animati, dalla 1.2.2.</li></ul>']),
+        ('kit', 'installa-4.webp', 'Si parte con un sito vero, non con una pagina bianca',
+         ['All\'ultimo passo l\'installatore ti chiede che sito vuoi fare: personale, attività, blog, portfolio, oppure vuoto.',
+          'Scegli, e plumeCMS parte con la home, le pagine principali e il menu già costruiti, con testi d\'esempio che ti dicono cosa scriverci. Tu cambi le parole e metti le tue foto: il sito c\'è già.']),
+        ('sezioni', 'sezioni.webp', 'Sezioni pronte: trenta modi di riempire una pagina',
+         ['Nell\'editor c\'è la linguetta Sezioni: prezzi, testimonianze, chi siamo, servizi, numeri, domande frequenti, contatti, inviti. Trenta sezioni già impaginate, in nove gruppi, ognuna con la sua anteprima.',
+          'Un clic e la sezione entra nella pagina, oppure la trascini dove vuoi. Da lì è una sezione come le altre: cambi testi, colori e widget. E segue i colori del tuo sito e del tema.']),
         ('aperture', 'aperture.webp', 'Undici aperture fra cui scegliere',
          ['La prima cosa che si vede di una pagina è la sua apertura. In plumeCMS la scegli con una tendina, fra undici disposizioni: testo e foto affiancati, tutto al centro, foto a tutto sfondo, divisa a metà, da rivista, in una scheda con il ritratto rotondo, solo parole, a mosaico, con la foto inclinata, a fascia bassa per le pagine interne, con il colore tagliato in diagonale.',
           'Cambi disposizione e i testi restano dove sono: provi, guardi, scegli. Tutte seguono i colori del tuo sito e dei temi, e si leggono bene anche al telefono.']),
@@ -210,10 +216,14 @@ def funzionalita():
           'Nelle pagine li mostri con il widget Download, a elenco o a schede, con icona, peso e pulsante. Come nella <a href="/scarica/">pagina Scarica</a> di questo sito.']),
         ('sicurezza', 'sicurezza.webp', 'Sicurezza, senza doverci pensare ogni giorno',
          ['Password robuste, accesso a due fattori, blocchi automatici contro chi prova a indovinare, sessioni che scadono, Content Security Policy, registro degli eventi.',
-          'Prima di uscire, plumeCMS è stato messo alla prova con 79 attacchi: tutti respinti. La pagina Sicurezza ti dice in verde e in rosso come sta il tuo sito.']),
+          'Prima di uscire, plumeCMS è stato messo alla prova con 97 attacchi: tutti respinti. La pagina Sicurezza ti dice in verde e in rosso come sta il tuo sito.']),
         ('aggiornamenti', 'aggiornamenti.webp', 'Aggiornamenti dal pannello, con la rete sotto',
          ['Un aggiornamento è uno zip: lo carichi da Impostazioni, Aggiornamenti, e premi Applica. Prima di toccare qualunque cosa il pannello fa una copia di sicurezza del database e dei file.',
-          'Se qualcosa va storto, rimette tutto com\'era da solo. Puoi anche programmare l\'aggiornamento per la notte.']),
+          'Se qualcosa va storto, rimette tutto com\'era da solo. Puoi anche programmare l\'aggiornamento per la notte.',
+          'Dalla 1.3.0 non devi nemmeno cercarlo: quando esce una versione nuova la dashboard te lo dice, e con Scarica e prepara lo zip arriva da solo, controllato, pronto da applicare.']),
+        ('copia', 'copia.webp', 'La copia del tuo sito, con un clic',
+         ['In Impostazioni, Copia del sito: Prepara la copia mette in uno zip il database, le immagini, i temi e i moduli. La scarichi e la tieni al sicuro.',
+          'Se un giorno serve tornare indietro, o spostare il sito su un altro hosting, Ripristina rimette tutto com\'era. Prima, per sicurezza, fa da sola una copia del sito di adesso.']),
     ]
     for i, (ancora, img, tit, testo) in enumerate(blocchi):
         foto = [immagine(img, 'plumeCMS: ' + tit)]
@@ -297,8 +307,8 @@ PASSI_INSTALLA = [
      'Scrivi host (di solito localhost), nome, utente e password del database. Il prefisso delle tabelle lascialo com\'è, a meno che nello stesso database ci sia già un altro sito.'),
     ('Sito e amministratore', 'Il nome del sito, l\'indirizzo (lo trova da solo) e il tuo utente.',
      'Nome del sito, una descrizione in una riga, l\'indirizzo e il tuo utente con una password di almeno 12 caratteri. Annotala: è la chiave di casa.'),
-    ('Installazione', 'Il riepilogo di quello che succede. Premi Installa adesso.',
-     'Prima di toccare qualcosa l\'installatore ti dice cosa farà: tabelle, amministratore, pagine di partenza, menu, header e footer. Premi Installa adesso e aspetti qualche secondo.'),
+    ('Installazione', 'Scegli che sito vuoi fare, poi Installa adesso.',
+     'Scegli il punto di partenza: personale, attività, blog, portfolio, oppure vuoto. L\'installatore ti dice cosa farà (tabelle, amministratore, pagine, menu, header e footer): premi Installa adesso e aspetti qualche secondo.'),
     ('Fine', 'Il sito è pronto. Entri nel pannello e cominci.',
      'Trovi il link al pannello e quello al sito, e le due righe per i compiti pianificati. Entri, scegli un tema e il sito è tuo.'),
 ]
@@ -395,6 +405,7 @@ def faq():
     voci = [
         ('Quanto costa? A quali condizioni lo uso?', 'Niente: plumeCMS è software libero, con licenza GNU GPL versione 3. Lo usi per tutti i siti che vuoi, tuoi o dei tuoi clienti, lo modifichi e lo ridistribuisci. Una sola regola: chi lo ridistribuisce, anche modificato, lo fa con la stessa licenza. I tuoi siti, i contenuti e i temi che disegni restano tuoi.'),
         ('Devo saper programmare?', 'No. Installi dal browser, costruisci le pagine trascinando i widget, cambi colori e caratteri da una pagina sola. Il codice serve solo se vuoi costruire un tema o un modulo tuo.'),
+        ('Devo partire da una pagina bianca?', 'No. All\'installazione scegli che sito vuoi fare (personale, attività, blog, portfolio) e plumeCMS parte con la home, le pagine e il menu già fatti. Poi, nell\'editor, la linguetta Sezioni ti dà trenta sezioni pronte da aggiungere con un clic.'),
         ('Che hosting serve?', 'Un hosting con PHP 8.2 o più nuovo e MySQL 8 (o MariaDB 10.6). Va bene un normale hosting condiviso con cPanel: non servono server dedicati.'),
         ('Posso installarlo in una cartella del mio dominio?', 'Sì. All\'installazione scrivi l\'indirizzo con la cartella, per esempio https://tuosito.it/nuovo, e plumeCMS sistema da solo link e percorsi.'),
         ('Se cambio tema, perdo le pagine?', 'No. Il tema cambia l\'aspetto: colori, caratteri, header e footer. Pagine, articoli, menu e immagini restano come sono. E lo stile di prima resta nelle Versioni.'),
@@ -490,7 +501,7 @@ def editor_json():
 
 
 # ------------------------------------------------------------------ file
-USATE = ['copertina', 'installa-1', 'installa-2', 'installa-3', 'installa-4', 'installa-5', 'editor-ritratto', 'editor', 'aperture', 'stile', 'modelli', 'versioni', 'seo', 'flussi', 'download', 'sicurezza', 'aggiornamenti', 'temi',
+USATE = ['copertina', 'sezioni', 'copia', 'installa-1', 'installa-2', 'installa-3', 'installa-4', 'installa-5', 'editor-ritratto', 'editor', 'aperture', 'stile', 'modelli', 'versioni', 'seo', 'flussi', 'download', 'sicurezza', 'aggiornamenti', 'temi',
          'tema-cosmo', 'tema-aria', 'tema-bottega']
 
 
@@ -536,6 +547,10 @@ def zip_lavagna(dest):
 
 # Le novità per chi scarica: brevi, scritte qui (il CHANGELOG è per chi sviluppa). Da aggiornare a ogni versione.
 NOVITA = [
+    ('1.3.0', 'Si parte con un sito vero', ['All\'installazione scegli che sito vuoi fare: personale, attività, blog, portfolio. Parte già fatto.',
+                                           'Nell\'editor, trenta sezioni pronte da mettere nella pagina con un clic.',
+                                           'Il pannello ti dice quando esce una versione nuova, e la prepara da solo.',
+                                           'La copia del sito con un clic, e il ripristino quando serve.']),
     ('1.2.8', 'Software libero, di tutti', ['plumeCMS ha la sua licenza: GNU GPL versione 3. Lo usi, lo modifichi, lo condividi.',
                                             'Testi d\'esempio neutri e niente più pezzi del sito da cui è nato.',
                                             'Corretti il controllo "Sono una persona" nei siti installati nella radice e la pubblicazione di notte.']),

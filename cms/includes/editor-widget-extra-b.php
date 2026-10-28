@@ -98,8 +98,8 @@ ewx_registra('carosello', 'Carosello di immagini', 'frecce-scambia', 'Gallerie',
 // ---------------- Carosello di testimonianze
 ewx_registra('carosello_testimonianze', 'Carosello di testimonianze', 'messaggi', 'Gallerie', array_merge([
     ec('voci', 'ripetitore', 'Testimonianze', [
-        ['testo' => 'Dopo tre incontri ho smesso di portarmi a casa le riunioni.', 'nome' => 'Nome Cognome', 'ruolo' => 'Responsabile di area', 'immagine' => '', 'stelle' => 0],
-        ['testo' => 'Ho capito dove finisce il mio ruolo e dove comincia quello degli altri.', 'nome' => 'Nome Cognome', 'ruolo' => 'Project manager', 'immagine' => '', 'stelle' => 0],
+        ['testo' => 'Puntuali, chiari, gentili. Lo consiglio a chiunque.', 'nome' => 'Nome Cognome', 'ruolo' => 'Cliente', 'immagine' => '', 'stelle' => 0],
+        ['testo' => 'Hanno capito subito cosa ci serviva, e l\'hanno fatto meglio.', 'nome' => 'Nome Cognome', 'ruolo' => 'Cliente', 'immagine' => '', 'stelle' => 0],
     ], 'contenuto', ['campi' => [
         ec('testo', 'testolungo', 'Testo', 'Il testo della testimonianza.'), ec('nome', 'testo', 'Nome', 'Nome Cognome'), ec('ruolo', 'testo', 'Ruolo', ''), ec('immagine', 'immagine', 'Foto', ''), ec('stelle', 'numero', 'Stelle (0 = nessuna)', 0, 'contenuto', ['min' => 0, 'max' => 5]),
     ], 'titolo_voce' => 'nome', 'sezione' => 'Testimonianze']),

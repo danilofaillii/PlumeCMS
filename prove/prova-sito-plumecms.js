@@ -115,6 +115,8 @@ async function contrastoParole(pg) {
   ok('nessuna immagine rotta in Funzionalità', imgF.length === 0, imgF);
   ok('Funzionalità: il blocco del download manager, con la schermata', await v.locator('#download img[src*="download.webp"]').count() === 1 && /Download manager/.test(await v.locator('#download').innerText()));
   ok('Funzionalità: il blocco delle undici aperture, con il foglio', await v.locator('#aperture img[src*="aperture.webp"]').count() === 1 && /Undici aperture/.test(await v.locator('#aperture').innerText()));
+  for (const [id, img, re] of [['kit', 'installa-4.webp', /sito vero/], ['sezioni', 'sezioni.webp', /Sezioni pronte/], ['copia', 'copia.webp', /copia del tuo sito/]])
+    ok(`Funzionalità (1.3.0): il blocco ${id}, con la schermata`, await v.locator(`#${id} img[src*="${img}"]`).count() === 1 && re.test(await v.locator(`#${id}`).innerText()));
   ok('favicon del sito', await v.locator('link[rel=icon][href*="favicon.png"]').count() === 1);
 
   // "Installalo in 5 minuti" (pagina Installazione): cosa serve prima e il carosello delle cinque schermate vere
