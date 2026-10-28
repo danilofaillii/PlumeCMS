@@ -180,6 +180,13 @@ function sito_pagina_editor(array &$c): array {
     return $c['editor_disegno'] = [$html, $css, editor_faq($albero)];
 }
 
+/** Import da WordPress (1.4.0): le categorie e i tag nuovi di un import ancora in prova non si vedono, tranne nell'anteprima. */
+function sito_nascosti_import(string $chiave): array {
+    static $n = null;
+    if ($n === null) $n = json_decode((string)get_setting('importa_wp_nascosti', ''), true) ?: [];
+    return sito_anteprima() ? [] : (array)($n[$chiave] ?? []);
+}
+
 /** Categorie con robots: quello salvato, oppure noindex se vuota o se un modulo la nasconde. */
 function sito_categorie(): array {
     static $c = null;
@@ -187,7 +194,9 @@ function sito_categorie(): array {
     $conta = [];
     foreach (sito_contenuti() as $x) if ($x['tipo'] === 'post' && !$x['rediretto']) foreach ($x['categorie'] as $s) $conta[$s] = ($conta[$s] ?? 0) + 1;
     $c = [];
+    $nascoste = sito_nascosti_import('categorie');
     foreach (db()->query('SELECT * FROM ' . tbl('categories') . ' ORDER BY sort_order, name')->fetchAll() as $r) {
+        if ($nascoste && in_array($r['slug'], $nascoste, true)) continue;
         $n = $conta[$r['slug']] ?? 0;
         $robots = in_array($r['robots'], ['index', 'noindex'], true) ? $r['robots']
             : (($n === 0 || in_array($r['slug'], sito_categorie_noindex(), true)) ? 'noindex' : 'index');
@@ -202,7 +211,9 @@ function sito_tag(): array {
     $conta = [];
     foreach (sito_contenuti() as $x) if ($x['tipo'] === 'post' && !$x['rediretto']) foreach ($x['tag'] as $s) $conta[$s] = ($conta[$s] ?? 0) + 1;
     $t = [];
+    $nascosti = sito_nascosti_import('tag');
     foreach (db()->query('SELECT * FROM ' . tbl('tags') . ' ORDER BY name')->fetchAll() as $r) {
+        if ($nascosti && in_array($r['slug'], $nascosti, true)) continue;
         $t[$r['slug']] = ['id' => (int)$r['id'], 'slug' => $r['slug'], 'name' => $r['name'], 'count' => $conta[$r['slug']] ?? 0, 'robots' => 'noindex'];
     }
     return $t;

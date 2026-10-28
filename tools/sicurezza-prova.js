@@ -36,6 +36,9 @@ async function tokenDi(p, url) {
   });
 }
 
+// Lo stato HTTP di un indirizzo visto da un contesto (con la sua sessione).
+async function anon_get(browser, url, ctx) { const r = await ctx.request.get(url, { maxRedirects: 0 }); return r.status(); }
+
 // Una fetch dentro il contesto del browser (porta i cookie di sessione), con intestazioni a scelta.
 async function post(p, url, body, headers = {}) {
   return await p.evaluate(async ({ url, body, headers }) => {
@@ -549,6 +552,92 @@ echo json_encode($o);
     ok('foto: impostazioni senza token rifiutate (403)', fs2.status === 403, { status: fs2.status });
     await admin.p.goto(ADMIN + '/media.php?foto=1', { waitUntil: 'domcontentloaded' });
     ok('foto: dopo gli attacchi le impostazioni non sono cambiate', await admin.p.locator('input[name=foto_lato_max]').inputValue().catch(() => '') !== '900');
+  }
+
+  // === 19. (1.4.0) Import da WordPress: solo amministratore, CSRF, SSRF, rimandi verso altri host, file PHP mascherati,
+  //          HTML con script nei contenuti. Il WordPress cattivo e prove/finto-wp.php (php -S 127.0.0.1:8073 prove/finto-wp.php),
+  //          indicato con FINTO_WP=http://127.0.0.1:8073 e messo in CMS_IMPORTA_WP_LOCALE nel config.local.php del CMS.
+  {
+    const IW = ADMIN + '/importa-wordpress.php';
+    const anon = await browser.newContext();
+    const ra = await anon.request.get(IW, { maxRedirects: 0 });
+    ok('import WordPress senza login: rimanda al login', [302, 303].includes(ra.status()) && /login/.test(ra.headers()['location'] || ''), { status: ra.status() });
+    const rs = await anon.request.post(IW, { form: { azione: 'giro' }, maxRedirects: 0 });
+    ok('import WordPress senza login, POST giro: niente lavoro', rs.status() !== 200 || !/"fase"/.test(await rs.text()), { status: rs.status() });
+    await anon.close();
+    if (red.dentro) {
+      const rr = await red.ctx.request.get(IW, { maxRedirects: 0 });
+      ok('import WordPress: il redattore non entra', rr.status() !== 200 || !/Collegati e analizza/.test(await rr.text()), { status: rr.status() });
+      const tr = await tokenDi(red.p, ADMIN + '/index.php');
+      const pr = await post(red.p, IW, new URLSearchParams({ _csrf: tr, azione: 'collega', indirizzo: 'http://127.0.0.1:8073', utente: 'x', password: 'abcdabcdabcdabcdabcdabcd' }).toString(), { 'Content-Type': 'application/x-www-form-urlencoded' });
+      ok('import WordPress: il redattore non avvia niente (403)', pr.status === 403, { status: pr.status });
+      const gr = await post(red.p, IW, new URLSearchParams({ _csrf: tr, azione: 'annulla' }).toString(), { 'Content-Type': 'application/x-www-form-urlencoded' });
+      ok('import WordPress: il redattore non annulla niente (403)', gr.status === 403, { status: gr.status });
+    }
+    const senza = await post(admin.p, IW, new URLSearchParams({ azione: 'collega', indirizzo: 'https://example.org', utente: 'a', password: 'b' }).toString(), { 'Content-Type': 'application/x-www-form-urlencoded' });
+    ok('import WordPress: POST senza token rifiutato (403)', senza.status === 403, { status: senza.status });
+    const g = await post(admin.p, IW, new URLSearchParams({ azione: 'giro' }).toString(), { 'Content-Type': 'application/x-www-form-urlencoded', 'X-CSRF': 'sbagliato' });
+    ok('import WordPress: giro con un token sbagliato rifiutato (403)', g.status === 403, { status: g.status });
+    const t = await tokenDi(admin.p, IW);
+    const est = await admin.ctx.request.post(IW, { headers: { 'Origin': 'https://evil.example' }, form: { _csrf: t, azione: 'annulla' }, maxRedirects: 0 });
+    ok('import WordPress: POST con Origin esterno rifiutato (403)', est.status() === 403, { status: est.status() });
+    // Il form come lo usa una persona: il messaggio d'errore e quello che conta.
+    const collega = async (indirizzo, utente = 'admin', password = 'abcd efgh ijkl mnop qrst uvwx') => {
+      await admin.p.goto(IW, { waitUntil: 'networkidle' });
+      // Un import lasciato a meta da un giro di prima: si annulla (o si lascia perdere) prima di provare.
+      for (const b of ['form:has(input[value=annulla]) button', 'form:has(input[value=abbandona]) button']) {
+        if (await admin.p.locator(b).count()) { admin.p.once('dialog', d => d.accept()); await Promise.all([admin.p.waitForNavigation(), admin.p.locator(b).first().click()]); }
+      }
+      if (!(await admin.p.locator('#iw-indirizzo').count())) return 'form assente (un import e gia in corso?)';
+      await admin.p.fill('#iw-indirizzo', indirizzo); await admin.p.fill('#iw-utente', utente); await admin.p.fill('#iw-password', password);
+      await Promise.all([admin.p.waitForNavigation({ timeout: 60000 }).catch(() => {}), admin.p.click('button:has-text("Collegati e analizza il sito")')]);
+      return (await admin.p.locator('.flash-error').allInnerTexts().catch(() => [])).join(' ');
+    };
+    for (const [u, atteso] of [['http://169.254.169.254/latest/meta-data/', /rete interna/], ['http://127.0.0.1/', /rete interna/], ['http://[::1]/', /rete interna/],
+      ['http://2130706433/', /rete interna/], ['http://0x7f000001/', /rete interna|non esiste/], ['http://10.1.2.3/', /rete interna/], ['http://192.168.1.1/', /rete interna/],
+      ['http://127.0.0.1:3306/', /porte normali/], ['http://utente:segreto@example.org/', /nome e password/], ['file:///etc/passwd', /non è valido/], ['gopher://127.0.0.1:70/_x', /non è valido/]]) {
+      const m = await collega(u);
+      ok('import WordPress, SSRF verso ' + u + ': rifiutato', atteso.test(m), m);
+    }
+    const FINTO = process.env.FINTO_WP || '';
+    if (FINTO) {
+      let m = await collega(FINTO + '/rimanda');
+      ok('import WordPress: un rimando verso un altro host non si segue', /rimanda a un altro indirizzo/.test(m), m);
+      m = await collega(FINTO + '/rimanda-interno');
+      ok('import WordPress: un rimando verso i metadati del cloud non si segue', /rimanda a un altro indirizzo/.test(m), m);
+      // Import completo dal WordPress cattivo, poi Annulla.
+      m = await collega(FINTO, 'admin', 'abcd efgh ijkl mnop qrst uvwx');
+      const dialoghi = []; admin.p.on('dialog', d => { if (!/Annullo|Confermo/.test(d.message())) dialoghi.push(d.message()); d.accept(); });
+      await admin.p.waitForSelector('h2:has-text("Il report di")', { timeout: 60000 }).catch(() => {});
+      ok('import WordPress: il nome del sito con <script> resta testo nel report', !(await admin.p.content()).includes('<script>alert(8)') && dialoghi.length === 0);
+      await Promise.all([admin.p.waitForNavigation(), admin.p.click('button:has-text("Importa le voci scelte")')]).catch(() => {});
+      await admin.p.waitForSelector('h2:has-text("Riepilogo")', { timeout: 120000 }).catch(() => {});
+      const riep = await admin.p.locator('.iw').innerText().catch(() => '');
+      ok('import WordPress: il "JPEG" che e codice PHP non entra (riepilogo)', /foto\.jpg\s+il contenuto non è un'immagine/.test(riep), riep.slice(0, 300));
+      ok('import WordPress: il file PHP dichiarato come media non entra', /shell\.php\s+tipo di file non ammesso/.test(riep));
+      ok('import WordPress: il file su un altro host non si scarica', /altrove\.jpg\s+sta su un altro sito/.test(riep));
+      if (DIR) {
+        const fs = require('fs'), path = require('path');
+        const tutti = []; const giro = d => { for (const f of fs.readdirSync(d, { withFileTypes: true })) { const p = path.join(d, f.name); if (f.isDirectory()) giro(p); else tutti.push(p); } };
+        giro(path.join(DIR, 'uploads'));
+        const conCodice = tutti.filter(f => /\.(php\d?|phtml|phar)$/i.test(f) || /<\?php|<\?=|<script/i.test(fs.readFileSync(f).toString('latin1')));
+        ok('import WordPress: in uploads nessun file PHP e nessun file con codice (GIF doppia riscritta, PDF con PHP e SVG con script fuori)', conCodice.length === 0, conCodice.map(f => path.relative(DIR, f)));
+      } else console.log('--  import WordPress, file in uploads: saltata (manca CMS_DIR)');
+      const pv = await admin.ctx.newPage();
+      const pd = []; pv.on('dialog', d => { pd.push(d.message()); d.dismiss(); });
+      await pv.goto(BASE + PAN + '/articolo-cattivo/?preview=1', { waitUntil: 'networkidle' });
+      await pv.waitForTimeout(800);
+      const corpo = await pv.content();
+      ok('import WordPress: nell\'anteprima nessuno script parte (niente alert)', pd.length === 0, pd);
+      // I testi "alert(10)" del titolo restano parole: conta che non ci siano script, eventi, javascript:, iframe, moduli o url() verso fuori.
+      const pericoli = /<script(?![^>]*\b(nonce|src)=|[^>]*application\/ld\+json)|javascript:|\son[a-z]+=|<iframe|<form|(src|action)="[^"]*evil\.example|url\([^)]*evil\.example/gi;
+      ok('import WordPress: via script, eventi, javascript:, iframe e moduli estranei, url() esterni', /Testo buono/.test(corpo) && !pericoli.test(corpo), (corpo.match(/<script[^>]{0,60}|javascript:.{0,40}|<iframe[^>]{0,60}/g) || []).slice(0, 6));
+      ok('import WordPress: un finto segnaposto video con codice non diventa un iframe', !/youtube-nocookie\.com\/embed\/[^"]*[<>"]/.test(corpo) && (await pv.locator('iframe').count()) === 0);
+      await pv.close();
+      await admin.p.goto(IW, { waitUntil: 'networkidle' });
+      if (await admin.p.locator('form:has(input[value=annulla]) button').count()) await Promise.all([admin.p.waitForNavigation(), admin.p.locator('form:has(input[value=annulla]) button').first().click()]);
+      ok('import WordPress: Annulla toglie l\'articolo cattivo', (await anon_get(browser, BASE + PAN + '/articolo-cattivo/?preview=1', admin.ctx)) === 404);
+    } else console.log('--  import WordPress dal sito cattivo: saltate (manca FINTO_WP, vedi prove/finto-wp.php)');
   }
 
   // === pulizia: elimina il redattore di prova

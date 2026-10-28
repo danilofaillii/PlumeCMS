@@ -39,6 +39,7 @@ Per costruire un tema c'è un manuale a parte: `docs/manuale-temi.md`.
 23. Strumenti e prove
 24. Risoluzione dei problemi
 25. Riferimento rapido delle funzioni
+26. Import da WordPress (dalla 1.4.0)
 
 Appendice A. Dove i documenti vecchi non corrispondono al codice
 
@@ -245,6 +246,8 @@ web non lo serve mai (`.htaccess`, capitolo 21). Non va messo in un repository.
 | `CMS_SICUREZZA_SPEGNI` | riga di emergenza: spegne 2FA e lista IP (capitolo 18.11) | spenta |
 | `CMS_AGGIORNAMENTI_URL` | il sito a cui chiedere l'ultima versione (un plumeCMS, senza barra finale; 19.6); vince sul campo del pannello | l'indirizzo scritto in Aggiornamenti, poi `VERSIONE_SITO_UFFICIALE` |
 | `CMS_AGGIORNAMENTI_HTTP_PROVA` | solo per le prove: con `true` il controllo della versione accetta anche `http://` | spenta (solo HTTPS) |
+| `CMS_IMPORTA_WP_LOCALE` | solo per le prove in locale: elenco `host:porta` (separati da virgole) da cui l'import da WordPress accetta indirizzi interni e `http://` (capitolo 26) | spenta: solo siti pubblici, porte 80 e 443, credenziali solo in HTTPS |
+| `CMS_IMPORTA_WP_GIRO` | solo per le prove: i secondi di un giro dell'import (anche decimali, minimo 0.2) | 8 secondi |
 
 Note:
 - `CMS_PREFISSO` vale `newdf_` quando manca perché le installazioni di prima dell'installatore non lo scrivono nel loro config.
@@ -465,6 +468,8 @@ Tutte con il prefisso davanti. Le colonne sono quelle principali.
 
 **Download**: `scaricabili` (titolo, descrizione, versione, conteggio dei file da scaricare; dalla 1.2.4).
 
+**Import da WordPress**: `importa_wp_voci` (dalla 1.4.0, `utf8mb4`): una riga per ogni cosa entrata con un import (lavoro, genere, id e indirizzo su WordPress, id e riferimento in plumeCMS, stato finale), per Conferma e Annulla (capitolo 26).
+
 **SEO**: `seo_coda` (coda IndexNow), `seo_log`, `seo_url` (ispezioni di Search Console), `seo_404`.
 
 **Sicurezza**: `sicurezza_log` (registro), `sicurezza_tentativi` (blocchi), `sicurezza_sessioni`,
@@ -532,7 +537,7 @@ admin), `is_admin()`, `current_user()`.
 | Editor > Impostazioni | `editor-impostazioni.php` | admin |
 | Editor > Informazioni | `informazioni.php` | admin |
 | SEO e AEO | `seo.php` con le schede panoramica, motori, copertura, prestazioni, analisi, globale, schema, redirect, registro | admin |
-| Impostazioni | `impostazioni.php` (email e SMTP), `sicurezza.php`, `aggiornamenti.php`, `copia-sito.php` (19.7), `cron-log.php` | admin |
+| Impostazioni | `impostazioni.php` (email e SMTP), `sicurezza.php`, `aggiornamenti.php`, `copia-sito.php` (19.7), `importa-wordpress.php` (26), `cron-log.php` | admin |
 
 Pagine fuori dal menu: `contenuto.php` (scheda classica di un contenuto), `editor.php` (editor visuale),
 `editor-api.php` (le chiamate JSON dell'editor), `editor-anteprima.php` (la tela dentro l'iframe), `seo-api.php`
@@ -2017,7 +2022,8 @@ CMS_DIR=<cartella del CMS installato> node tools/sicurezza-prova.js <base> <uten
 Il prefisso del pannello predefinito è `/new`; per un CMS nella radice si passa `""`. Prova XSS, CSRF, ruoli,
 pagine aperte senza login, CSV, open redirect, forza bruta, blocchi per nome utente e IP di casa, upload di PHP e
 SVG, file protetti, SQL injection, intestazioni, session fixation, cron dal web, firma della newsletter, CSP del
-pannello, pacchetti non firmati, copia del sito, aspetto del pannello e impostazioni delle foto (1.4.0). Oggi: 114 prove respinte con `SEGRETO` nell'ambiente (112 senza: la newsletter firmata si salta), più quelle del modulo del primo sito che si saltano da sole.
+pannello, pacchetti non firmati, copia del sito, aspetto del pannello e impostazioni delle foto, import da WordPress (SSRF, rimandi,
+file PHP mascherati, HTML con script; serve `prove/finto-wp.php` con `FINTO_WP`) (1.4.0). Oggi: NUMERO_ATTACCHI.
 
 Dopo la prova l'IP di chi l'ha lanciata è bloccato: prima di altre prove si svuota la tabella
 `<prefisso>sicurezza_tentativi`.
@@ -2041,6 +2047,7 @@ Istruzioni in `prove/LEGGIMI.md`. Le principali:
 | `prova-kit.js` | (1.3.0) installazione con un kit di partenza, poi ogni pagina del menu al computer e al telefono, in radice e in cartella |
 | `prova-sezioni.js` | (1.3.0) la linguetta Sezioni dell'editor: clic, trascinamento, modifica, pubblicazione; `/sezioni-pronte/` (`pagina-sezioni.php`) con il contrasto |
 | `prova-copia.js` | (1.3.0) copia del sito: prepara, scarica, ripristina, e gli zip da respingere (`zip-copie-prova.py`) |
+| `prova-importa-wp.js` | (1.4.0) import da WordPress contro un WordPress vero (`wp-installa.php`, `wp-riempi.php`, `router-wp.php`): errori, report, scelta, ripresa, anteprima protetta, Annulla, Conferma, confronto contenuto per contenuto, in radice e in cartella |
 | `prova-versione.js` | (1.3.0) "c'è una versione nuova" con due installazioni e un sito ufficiale finto che si comporta male (`finto-ufficiale.php`) |
 | `prova-aspetti.js` | (1.4.0) i quattro aspetti del pannello: scelta in Il mio accesso, ogni pagina del menu e l'editor in ognuno, contrasto di ogni testo, colori rimasti scritti a mano |
 | `prova-foto-leggere.js` | (1.4.0) foto più leggere: foto grande girata con il GPS, PNG piccola, WebP sul sito e originale per chi non la accetta, lato massimo, spento, newsletter, redattore, cancellazione (`foto-prova.php`, `pagina-foto.php`) |
@@ -2167,6 +2174,126 @@ può stare dentro una pagina che risponde 200.
 | `copia_crea($etichetta)`, `copia_ripristina($file)`, `copia_elenco()`, `copia_leggi_manifest($zip)` | la copia del sito |
 | `agg_dump_db($file, $prefisso)` | il database in un file; con il prefisso, solo le tabelle del sito |
 | `scaricabili_sha256($file)` | l'impronta di un file da scaricare, ricordata |
+
+---
+
+## 26. Import da WordPress (dalla 1.4.0)
+
+Porta in plumeCMS un sito WordPress: articoli, pagine, categorie, tag, media, menu, SEO, con i redirect dai vecchi
+indirizzi. Pagina **Impostazioni > Importa da WordPress** (`admin/importa-wordpress.php`, solo amministratore). Il motore sta
+in quattro file:
+
+| File | Cosa fa |
+|---|---|
+| `includes/importa-wp.php` | chiamate in uscita (SSRF), credenziali cifrate, collegamento con i messaggi d'errore, stato del lavoro, tabella `importa_wp_voci` |
+| `includes/importa-wp-analisi.php` | l'analisi a passi, l'indice del sito, il report, SEO di Yoast e Rank Math |
+| `includes/importa-wp-converti.php` | il testo di WordPress in HTML semplice e sicuro |
+| `includes/importa-wp-lavoro.php` | l'import a giri, i media, i menu, Conferma e Annulla |
+
+Il sito WordPress non si tocca: si legge e basta, con la REST (`wp-json/wp/v2`; per i siti senza permalink belli
+`?rest_route=/`).
+
+### 26.1 Il percorso
+
+1. **Collegamento** (`importa_wp_collega()`): indirizzo, utente e **password per le applicazioni** di WordPress (Utenti >
+   Profilo > Password per le applicazioni, da WordPress 5.6; la pagina lo spiega in tre passi). Si accetta come WordPress la
+   mostra, con gli spazi. Il collegamento controlla: indirizzo (SSRF, 26.4), REST aperta (`/wp-json/` o `?rest_route=/`, con
+   `wp/v2`), credenziali (`users/me?context=edit`), permessi (amministratore, o almeno `edit_others_posts`). Ogni errore
+   diventa una frase: sito che non esiste, che non risponde, certificato non valido, rimando a un altro host, rete interna,
+   porta non del web, sito in http (credenziali solo in HTTPS), REST chiusa da un plugin (403, `rest_disabled` e simili),
+   password per le applicazioni spente (manca `authentication.application-passwords` nell'indice), password normale al posto
+   di quella per le applicazioni (non ha la forma di 24 lettere e cifre), utente sconosciuto, credenziali non accettate (con il
+   caso del server che toglie l'intestazione `Authorization`), utente senza permessi.
+2. **Analisi** (`importa_wp_analisi_passo()`): a passi (categorie, tag, utenti, pagine, articoli, media, menu, il resto),
+   una richiesta per passo, articoli e pagine a 50 per volta con `context=edit` e tutti gli stati (pubblicati, programmati,
+   bozze, in attesa di revisione, privati). Si tiene un indice senza i testi: id, slug (`slug` o `generated_slug`, decodificato,
+   senza caratteri a 4 byte), titolo, stato, date, percorso del vecchio indirizzo, categorie, tag, immagine in evidenza, note
+   (page builder riconosciuti dal testo: Elementor, Divi, WPBakery, Beaver Builder, Avada, Brizy, Oxygen, SiteOrigin;
+   shortcode di plugin; embed; immagini su altri host; moduli o script; campi personalizzati), SEO.
+3. **Report** (`importa_wp_report()`): per ogni voce i numeri, cosa diventa, e l'elenco di cosa non si porta (commenti, tipi
+   personalizzati come i prodotti di WooCommerce, page builder, shortcode, campi personalizzati, file di tipo non ammesso,
+   file su un altro host, pagina iniziale, aspetto e plugin, utenti). I contenuti con uno slug già usato in plumeCMS
+   (articolo o pagina, anche in bozza o nel cestino, o un indirizzo del sito come `/blog/`) sono elencati: si saltano.
+   Anche la struttura dei permalink, ricavata dall'indirizzo di un articolo (`importa_wp_permalink()`).
+4. **Scelta**: voci (articoli, pagine, categorie, tag, media, menu, SEO, redirect) e, per gli articoli, gli stati.
+   Scorciatoie Tutto, Solo gli articoli, Solo le pagine, Niente.
+5. **Import a giri** (`importa_wp_import_giro()`): piano `copia, categorie, tag, media, pagine, articoli, menu, fine`.
+   Il primo passo è una copia del sito (`copia_crea('prima-di-importa-wordpress')`, 19.7). Il browser chiede un giro dopo
+   l'altro (`azione=giro`, JSON, intestazione `X-CSRF`); ogni giro lavora `IMPORTA_WP_GIRO` secondi (8) e salva il cursore
+   nello stato. Un giro alla volta (`GET_LOCK`), la sessione si chiude subito (gli altri pannelli non aspettano), e con
+   `ignore_user_abort` un giro iniziato finisce anche se il browser si chiude. Riaprendo la pagina si legge "L'import si è
+   fermato qui" e **Riprendi** continua. Ogni voce entrata sta nella tabella: un giro ripetuto non fa doppioni. Una richiesta
+   che fallisce si riprova; dopo 3 volte quel lotto si salta, con il motivo.
+6. **In prova** (fase `prova`): tutto è invisibile ai visitatori.
+   - articoli e pagine sono **bozze**; lo stato di WordPress sta in `importa_wp_voci.stato_finale` (`pubblicato`, `programmato`, `bozza`);
+   - categorie e tag nuovi sono nascosti: l'impostazione `importa_wp_nascosti` li toglie da `sito_categorie()` e
+     `sito_tag()` (`includes/sito-dati.php`, `sito_nascosti_import()`), tranne nell'anteprima;
+   - i redirect hanno `attivo = 0` e `origine = 'wordpress'`; i menu non hanno posizione;
+   - i file sono già in `uploads/`, con sei lettere a caso nel nome.
+   L'amministratore guarda tutto con l'anteprima del sito (`?preview=1` e la sua sessione, `SITO_ANTEPRIMA`): il riepilogo
+   ha il link per ogni contenuto, la tabella di quello che non è entrato con il motivo, e "Da guardare" con quello che
+   manca nei contenuti entrati (shortcode tolti, page builder, immagini non scaricate).
+7. **Conferma** (`importa_wp_conferma()`): `status = published` per i pubblicati e i programmati (un programmato resta
+   programmato: la data è nel futuro), le bozze restano bozze; redirect accesi; `importa_wp_nascosti` svuotata; IndexNow per
+   i pubblicati. Con la spunta "Metti nel menu principale...", le voci del menu importato vanno nel menu in posizione
+   `principale` (quello dell'header, che il modello indica per id o per posizione); il menu di prima resta in Versioni.
+   **Annulla** (`importa_wp_annulla()`): toglie, voce per voce, contenuti (e le loro revisioni), categorie e tag **nuovi**
+   (quelli che c'erano già restano), file, menu, redirect. Il resto del sito non si tocca.
+
+### 26.2 Cosa diventa cosa
+
+| WordPress | plumeCMS |
+|---|---|
+| articolo, pagina | articolo, pagina con `contenuti_salva()` (8.4): titolo, slug, data e ora (da `date_gmt` nel fuso del CMS), autore (nome), estratto scritto a mano, immagine in evidenza, formato `html` |
+| testo (blocchi di Gutenberg) | l'HTML che WordPress disegna (`content.rendered`), passato da `importa_wp_html()`: embed di YouTube e Vimeo in un iframe costruito dal CMS (`youtube-nocookie`, id controllato), gli altri embed diventano link; immagini scaricate e riscritte (via `srcset` e `sizes`; con la classe `wp-image-N` si prende l'originale); link interni verso gli indirizzi nuovi (mappa `vecchio percorso -> nuovo`); file di `wp-content/uploads` linkati (un PDF) scaricati; shortcode non eseguiti tolti; poi `sicurezza_html_pulito(..., 'articolo')` e i caratteri a 4 byte in entità |
+| pagina figlia (`/chi-siamo/il-team/`) | pagina `/il-team/` con un redirect |
+| stato | `publish` pubblicato, `future` programmato, `draft`, `pending`, `private` bozza |
+| categorie (anche annidate), tag | categorie e tag (stesso slug); uno slug che c'è già si usa com'è |
+| media | file in `uploads/<anno>/<mese>/` (l'anno e il mese di WordPress) |
+| menu classici (`wp/v2/menus`, `menu-items`, da WP 5.9) e menu dei temi a blocchi (`wp/v2/navigation`) | menu di navigazione, voci di tipo pagina, articolo, categoria o link, al massimo tre livelli |
+| SEO | `seo_title` e `seo_description`: dai meta `_yoast_wpseo_*` o `rank_math_*` se la REST li mostra, altrimenti da `yoast_head_json`; variabili `%%...%%` risolte o tolte, il nome del sito in coda tolto, un titolo uguale a quello del contenuto lasciato vuoto (`importa_wp_seo()`) |
+| vecchi indirizzi | redirect 301 per i contenuti pubblicati: il permalink se diverso da `/<slug>/`, `/?p=ID`, per le pagine `/?page_id=ID`; categorie e tag con un percorso diverso. Un redirect con lo stesso `da` che c'è già non si tocca; un percorso con un carattere a 4 byte si salta (colonna utf8) |
+| conflitti | un contenuto con uno slug già usato non entra (sicurezza: niente si sovrascrive); link e voci di menu verso di lui portano a quello che c'è in plumeCMS con lo stesso indirizzo |
+
+Non entrano, e il report lo dice: commenti, utenti e password, tipi di contenuto personalizzati, campi personalizzati,
+aspetto del tema e widget, plugin, moduli e script nei testi, grafica dei page builder (entra il testo), file che non sono
+immagini (JPEG, PNG, GIF, WebP, AVIF, SVG), PDF, MP4 o MP3.
+
+### 26.3 Stato e credenziali
+
+- Stato: l'impostazione `importa_wp_stato` (JSON in ASCII, anche le emoji come `\uXXXX`): fase (`analisi`, `pronto`,
+  `importa`, `prova`, `confermato`, `annullato`), base, utente, indice, report, scelta, piano, cursore, mappa, esito.
+- La password per le applicazioni sta nello stato solo cifrata (`importa_wp_cifra()`: sodium secretbox, chiave
+  `sha256('importa-wp|' . CMS_SEGRETO)`; senza `CMS_SEGRETO`, una chiave casuale nella sessione). Si cancella alla fine
+  dell'import, con Annulla, con Conferma, e dopo un giorno senza lavoro (`importa_wp_scadenza()`). Se manca quando serve, la
+  pagina chiede di riscriverla. Non compare mai nelle pagine (il campo torna vuoto dopo un errore), nei registri né nei log.
+- Registro della sicurezza: evento `importa_wp` (collegato, in prova, confermato, annullato), senza credenziali.
+
+### 26.4 Sicurezza
+
+- Solo amministratore (`require_admin()`, e il redattore riceve 403 sui POST); ogni azione in POST con il token CSRF, i giri
+  con `X-CSRF`; `Origin` estranea rifiutata.
+- Chiamate in uscita (`importa_wp_get()`): solo `http` e `https`, niente credenziali nell'indirizzo, solo le porte 80 e 443;
+  il nome si risolve una volta, ogni IP si controlla (`importa_wp_ip_interno()`: privati, locali, riservati, link-local
+  come 169.254.169.254, 100.64.0.0/10) e la connessione si fissa su quell'IP (`CURLOPT_RESOLVE`); nessun proxy; certificato
+  verificato; nessun rimando seguito verso un altro host (al massimo 3 sullo stesso host, e da http a https sì, mai il
+  contrario); 20 secondi e 8 MB per una risposta JSON, 60 secondi e 25 MB per un file. Le credenziali partono solo in HTTPS.
+- `CMS_IMPORTA_WP_LOCALE` (solo prove): gli `host:porta` elencati possono essere interni e in http. Nessun altro.
+- File (`importa_wp_media()`): solo dallo stesso sito; il tipo si legge dal contenuto (`getimagesize`, `%PDF-`, `ftyp`, `ID3`,
+  `<svg`), mai dal nome; le immagini si riscrivono con GD (via metadati e codice in coda); una GIF che GD non riscrive entra
+  solo senza `<?php`, `<?=` o `<script`; PDF, MP4 e MP3 con codice dentro non entrano; l'SVG passa da
+  `sicurezza_svg_pulito()`; l'estensione la decide il CMS. Un file PHP chiamato `foto.jpg` non entra.
+- Testi: `sicurezza_html_pulito()` (18.10) su tutto; titoli, nomi e descrizioni come testo (`importa_wp_testo()`).
+
+### 26.5 Limiti noti
+
+- Provato con WordPress 6.6.2 sul server integrato di PHP, non su un hosting vero, né con Elementor, WooCommerce o un Yoast
+  vero installato (la prova imita `yoast_head_json`).
+- Le immagini dentro gli shortcode di un plugin e i fondi dei page builder non si scaricano.
+- Le gallerie restano figure una sotto l'altra: il CSS del sito non ha la griglia di Gutenberg.
+- Un link a un contenuto non importato (per esempio una bozza esclusa) resta verso il vecchio sito.
+- Una copia del sito grande, il primo passo, può superare il tempo di un giro: su un hosting condiviso con limiti stretti
+  conviene fare prima la copia da Impostazioni > Copia del sito.
 
 ---
 
