@@ -120,15 +120,15 @@
 }
 
 /* Quill (l'editor dei testi, servito in casa): la barra e il foglio seguono l'aspetto. */
-htmlhtml[data-pannello] .ql-snow .ql-stroke { stroke: var(--text); }
-htmlhtml[data-pannello] .ql-snow .ql-fill, html[data-pannello] .ql-snow .ql-stroke.ql-fill { fill: var(--text); }
-htmlhtml[data-pannello] .ql-snow .ql-picker { color: var(--text); }
-htmlhtml[data-pannello] .ql-snow .ql-picker-options { background: var(--surface); }
-htmlhtml[data-pannello] .ql-toolbar.ql-snow, html[data-pannello] .ql-container.ql-snow, html[data-pannello] .ql-snow .ql-picker.ql-expanded .ql-picker-options { border-color: var(--border); }
-htmlhtml[data-pannello] .ql-snow.ql-toolbar button:hover .ql-stroke, html[data-pannello] .ql-snow.ql-toolbar button.ql-active .ql-stroke, html[data-pannello] .ql-snow .ql-picker-label:hover .ql-stroke { stroke: var(--accento-testo); }
-htmlhtml[data-pannello] .ql-snow.ql-toolbar button:hover .ql-fill, html[data-pannello] .ql-snow.ql-toolbar button.ql-active .ql-fill { fill: var(--accento-testo); }
-htmlhtml[data-pannello] .ql-snow.ql-toolbar button:hover, html[data-pannello] .ql-snow.ql-toolbar button.ql-active, html[data-pannello] .ql-snow .ql-picker-label:hover, html[data-pannello] .ql-snow .ql-picker-item:hover { color: var(--accento-testo); }
-htmlhtml[data-pannello] .ql-editor { color: var(--text); }
-htmlhtml[data-pannello] .ql-editor.ql-blank::before { color: var(--text-muted); }
-htmlhtml[data-pannello] .ql-snow .ql-tooltip { background: var(--surface); color: var(--text); border-color: var(--border); box-shadow: var(--ombra-grande); }
-htmlhtml[data-pannello] .ql-snow .ql-tooltip input[type=text] { background: var(--campo); color: var(--text); border-color: var(--border); }
+html[data-pannello] .ql-snow .ql-stroke { stroke: var(--text); }
+html[data-pannello] .ql-snow .ql-fill, html[data-pannello] .ql-snow .ql-stroke.ql-fill { fill: var(--text); }
+html[data-pannello] .ql-snow .ql-picker { color: var(--text); }
+html[data-pannello] .ql-snow .ql-picker-options { background: var(--surface); }
+html[data-pannello] .ql-toolbar.ql-snow, html[data-pannello] .ql-container.ql-snow, html[data-pannello] .ql-snow .ql-picker.ql-expanded .ql-picker-options { border-color: var(--border); }
+html[data-pannello] .ql-snow.ql-toolbar button:hover .ql-stroke, html[data-pannello] .ql-snow.ql-toolbar button.ql-active .ql-stroke, html[data-pannello] .ql-snow .ql-picker-label:hover .ql-stroke { stroke: var(--accento-testo); }
+html[data-pannello] .ql-snow.ql-toolbar button:hover .ql-fill, html[data-pannello] .ql-snow.ql-toolbar button.ql-active .ql-fill { fill: var(--accento-testo); }
+html[data-pannello] .ql-snow.ql-toolbar button:hover, html[data-pannello] .ql-snow.ql-toolbar button.ql-active, html[data-pannello] .ql-snow .ql-picker-label:hover, html[data-pannello] .ql-snow .ql-picker-item:hover { color: var(--accento-testo); }
+html[data-pannello] .ql-editor { color: var(--text); }
+html[data-pannello] .ql-editor.ql-blank::before { color: var(--text-muted); }
+html[data-pannello] .ql-snow .ql-tooltip { background: var(--surface); color: var(--text); border-color: var(--border); box-shadow: var(--ombra-grande); }
+html[data-pannello] .ql-snow .ql-tooltip input[type=text] { background: var(--campo); color: var(--text); border-color: var(--border); }

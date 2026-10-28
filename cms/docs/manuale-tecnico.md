@@ -2142,7 +2142,7 @@ Il prefisso del pannello predefinito è `/new`; per un CMS nella radice si passa
 pagine aperte senza login, CSV, open redirect, forza bruta, blocchi per nome utente e IP di casa, upload di PHP e
 SVG, file protetti, SQL injection, intestazioni, session fixation, cron dal web, firma della newsletter, CSP del
 pannello, pacchetti non firmati, copia del sito, aspetto del pannello e impostazioni delle foto, import da WordPress (SSRF, rimandi,
-file PHP mascherati, HTML con script; serve `prove/finto-wp.php` con `FINTO_WP`) (1.4.0). Oggi: NUMERO_ATTACCHI.
+file PHP mascherati, HTML con script; serve `prove/finto-wp.php` con `FINTO_WP`) (1.4.0). Oggi: 163 prove respinte, due saltate (il test del burnout, del modulo danilofailli, e la newsletter firmata senza `SEGRETO`).
 
 Dopo la prova l'IP di chi l'ha lanciata è bloccato: prima di altre prove si svuota la tabella
 `<prefisso>sicurezza_tentativi`.

@@ -128,7 +128,7 @@ require_once __DIR__ . '/includes/admin-header.php';
 .db-passi li.fatto .db-passi-segno{background:var(--sage);border-color:var(--sage)}
 .db-passi li b{display:block;font-size:.9rem}
 .db-passi li small{display:block;font-size:.8rem;color:var(--text-muted);margin:.15rem 0 .35rem}
-.db-passi li a{font-size:.8rem;font-weight:600;color:var(--coral);text-decoration:none}
+.db-passi li a{font-size:.8rem;font-weight:600;color:var(--accento-testo);text-decoration:none}
 .db-passi li form{display:block;margin-top:.45rem}
 .db-passi-fine{display:flex;justify-content:flex-end;margin-top:.8rem}
 .db-passi .sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}

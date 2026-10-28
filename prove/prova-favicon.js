@@ -42,7 +42,7 @@ const cartella = new URL(B).pathname.replace(/\/$/, '');
   await stile('');
   l = await icone();
   ok('tolta dallo Stile: di nuovo l\'icona di partenza', l.length === 2 && l[0].endsWith('/sito/assets/favicon.ico'), l);
-  await v.screenshot({ path: `${OUT}/favicon-home.png` });
+  if (OUT) await v.screenshot({ path: `${OUT}/favicon-home.png` });
   await br.close();
   console.log(`\n${n - ko} su ${n} OK`);
 })();
