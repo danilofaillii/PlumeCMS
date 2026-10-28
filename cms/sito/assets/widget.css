@@ -258,6 +258,9 @@ a.ew-ei-voce:hover{color:var(--ew-tc,var(--testo))}
 .ew-cta-velo{position:absolute;inset:0;background:var(--ew-velo,var(--ew-velo-pred,transparent));transition:background .3s}
 .ew-cta:hover .ew-cta-velo{background:var(--ew-veloh,var(--ew-velo,var(--ew-velo-pred,transparent)))}
 .ew-cta-contenuto{position:relative;z-index:1;padding:32px;display:flex;flex-direction:column;justify-content:var(--ew-valign,center);flex:1;align-items:var(--ew-just,center)}
+/* 1.6.3: un Invito da solo nella sua colonna riempie la colonna, cosi due inviti affiancati sono alti uguali (le colonne lo sono gia) */
+.ed-colonna>.ed-w-invito_libero:only-child{flex:1;display:flex;flex-direction:column}
+.ed-colonna>.ed-w-invito_libero:only-child>.ew-cta{flex:1}
 .ew-cta-copertina .ew-cta-sfondo{position:absolute;inset:0;aspect-ratio:auto;z-index:0}
 .ew-cta-copertina{--ew-velo-pred:rgba(var(--bg-rgb),.6)}
 .ew-cta-copertina{min-height:var(--ew-minh,320px)}

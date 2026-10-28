@@ -2,6 +2,12 @@
 
 Il prodotto si chiama **plumeCMS** (nome scelto il 26 ottobre 2026; prima, per poche ore, "CarbonaraCMS", e ancora prima il provvisorio "Officina": gli zip vecchi si chiamavano `officina-*` e `carbonaracms-*`).
 
+## 1.6.3 (28 ottobre 2026) - Due inviti affiancati, alti uguali
+
+- Corretto: due widget "Invito all'azione" in due colonne affiancate uscivano di altezza diversa (quello con più testo era più
+  alto: la pagina Scarica del sito di plumeCMS, segnalata da Danilo). Ora un Invito che sta da solo nella sua colonna la
+  riempie, e le colonne di una riga sono già alte uguali. Nient'altro cambia.
+
 ## 1.6.2 (28 ottobre 2026) - L'indirizzo degli aggiornamenti arriva con gli aggiornamenti
 
 - **Decisione di Danilo**: tutte le installazioni chiedono le versioni nuove a `https://plumecms.danilofailli.it`, e

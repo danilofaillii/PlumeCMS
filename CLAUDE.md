@@ -93,7 +93,7 @@ Stato, decisioni, contesto e diario non stanno qui: stanno nel second brain
 - **Pacchetto di aggiornamento** per un'installazione esistente:
   `python3 tools/cms-pacchetto.py --aggiornamento`. Si carica dal pannello,
   Impostazioni, Aggiornamenti.
-- **Versione**: `cms/VERSIONE` (oggi 1.6.2) e una voce in `cms/CHANGELOG.md` a ogni
+- **Versione**: `cms/VERSIONE` (oggi 1.6.3) e una voce in `cms/CHANGELOG.md` a ogni
   zip con contenuto diverso. Mai cambiare il contenuto di una versione già data.
 - **Prove** prima di dire finito:
   - `php -n -d short_open_tag=1 -l` su ogni file PHP toccato, `node --check` sui js;
@@ -129,7 +129,10 @@ Le decisioni complete, con data e perché, stanno nel second brain, `plumecms/de
 
 ## Stato al 28 ottobre 2026
 
-Fatto: plumeCMS 1.6.2 (28 ottobre, sera): l'indirizzo del sito ufficiale non si scrive più nel pannello (decisione di Danilo:
+Fatto: plumeCMS 1.6.3 (28 ottobre, notte): due "Invito all'azione" affiancati alti uguali (segnalazione di Danilo sulla pagina
+Scarica, già su plumecms.danilofailli.it): `widget.css`, un Invito da solo nella colonna la riempie. Aggiornamento 1.6.2 -> 1.6.3
+13/13, foto del sito uguali tranne il conto alla rovescia, schede 321/321 px.
+1.6.2 (28 ottobre, sera): l'indirizzo del sito ufficiale non si scrive più nel pannello (decisione di Danilo:
 "non inseriranno più manualmente il dominio, gli verrà passato dagli aggiornamenti"): via il campo della 1.3.1 e `versione_sito_salva()`,
 l'impostazione `versione_sito` vecchia si ignora, `CMS_AGGIORNAMENTI_URL` resta solo per le prove. `prova-versione-sito.js` riscritta
 (5 controlli, con `prove/settings-cli.php`); `prova-versione.js` e `finto-ufficiale.php` non hanno più le versioni scritte dentro
