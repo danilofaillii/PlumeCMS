@@ -223,7 +223,7 @@ L'import da WordPress come un utente, contro un WordPress vero (6.6.2) sul serve
 4. `node prove/prova-importa-wp.js <base CMS> <cartella CMS> <utente> <password> http://127.0.0.1:8071 <cartella segreti> <cartella schermate> http://127.0.0.1:8072`.
    La prova scrive nel `config.local.php` del CMS `CMS_IMPORTA_WP_LOCALE` (gli host:porta di prova) e `CMS_IMPORTA_WP_GIRO`
    0.3 (giri corti, per interrompere e riprendere). Usa `prove/importa-wp-cli.php` per leggere database e file.
-   Atteso: 75 su 75, in radice e in cartella. Lascia `importa-*.png` (collegamento, errore, report, avanzamento, fermo,
+   Atteso: 76 su 76, in radice e in cartella. Lascia `importa-*.png` (collegamento, errore, report, avanzamento, fermo,
    riepilogo, anteprima, confermato). Alla fine il sito ha l'import confermato: per rifarla serve un CMS nuovo.
 
 Per le prove di attacco dell'import (punto 18 di `tools/sicurezza-prova.js`): `php -S 127.0.0.1:8073 prove/finto-wp.php`

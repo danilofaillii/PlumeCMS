@@ -129,7 +129,12 @@ const hostPorta = u => new URL(u).host;
   const fermo = await p.locator('#iw-testo').innerText();
   ok('dopo la chiusura: la pagina dice dove si e fermato e offre Riprendi', /si è fermato/.test(fermo) && await p.locator('#iw-riprendi').isVisible(), fermo);
   await p.screenshot({ path: `${OUT}/importa-fermo.png`, fullPage: false });
-  await p.click('#iw-riprendi');
+  // Fermo da piu di un giorno: la password si e dimenticata, la pagina la chiede di nuovo e poi continua.
+  cli('dimentica');
+  await p.goto(B + '/admin/importa-wordpress.php', { waitUntil: 'networkidle' });
+  ok('password dimenticata (lavoro fermo da un giorno): la pagina la chiede di nuovo', /riscrivi la password per le applicazioni/.test(await p.locator('#iw-lavoro').innerText()) && await p.locator('#iw-lavoro input[name=password]').count() === 1);
+  await p.fill('#iw-lavoro input[name=password]', app);
+  await Promise.all([p.waitForNavigation(), p.click('#iw-lavoro button:has-text("Continua")')]);
   await p.waitForSelector('h2:has-text("Riepilogo")', { timeout: 180000 });
   const riep = await p.locator('.iw').innerText();
   const stat = async etichetta => +(await p.locator(`.stat-card:has(.stat-card-label:text-is("${etichetta}")) .stat-card-value`).innerText());

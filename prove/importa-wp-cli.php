@@ -5,6 +5,7 @@
  *   php prove/importa-wp-cli.php <cartella CMS> contenuti   articoli e pagine con i campi da confrontare con WordPress
  *   php prove/importa-wp-cli.php <cartella CMS> menu        i menu con le voci
  *   php prove/importa-wp-cli.php <cartella CMS> stato       lo stato dell'import (senza il segreto) e se contiene la password
+ *   php prove/importa-wp-cli.php <cartella CMS> dimentica   toglie la password cifrata (come dopo un giorno fermo)
  *   php prove/importa-wp-cli.php <cartella CMS> cerca <file> il testo del file (una password) compare nel database o nei log?
  */
 if (PHP_SAPI !== 'cli') exit;
@@ -42,6 +43,13 @@ switch ($cosa) {
     case 'stato':
         $s = json_decode((string)get_setting('importa_wp_stato', ''), true) ?: [];
         $out = ['fase' => $s['fase'] ?? '', 'segreto' => isset($s['segreto']), 'lavoro' => $s['lavoro'] ?? '', 'cursore' => $s['cursore'] ?? null];
+        break;
+    case 'dimentica':
+        // Come dopo un giorno senza lavoro: la password cifrata si toglie dallo stato.
+        $s = json_decode((string)get_setting('importa_wp_stato', ''), true) ?: [];
+        unset($s['segreto']);
+        save_setting('importa_wp_stato', (string)json_encode($s, JSON_UNESCAPED_SLASHES));
+        $out = ['fatto' => true];
         break;
     case 'cerca':
         // La password (con e senza spazi) non deve comparire in chiaro da nessuna parte: impostazioni, registro, log.
