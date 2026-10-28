@@ -629,7 +629,7 @@ Una pagina dell'editor è un JSON (`includes/editor.php:5-9`):
 
 ```json
 {
-  "versione": 1,
+  "versione": 2,
   "elementi": [
     { "id": "a1b2c3d", "tipo": "sezione", "impostazioni": { },
       "figli": [
@@ -646,9 +646,15 @@ Tre livelli fissi: sezione, colonna, widget. Niente widget dentro altri widget.
 
 Il JSON si salva con i caratteri a 4 byte scritti come `\uXXXX` (`editor_json()`).
 
+`versione` è `EDITOR_VERSIONE` (`includes/editor.php:21`): 2 dalla 1.3.0, quando i controlli dei widget che si chiamavano
+come uno delle Avanzate hanno preso un nome loro (9.6). `editor_valida()` la riscrive sempre; un albero con versione 1
+passa dalla migrazione dei nomi, uno senza versione (kit, sezioni pronte, modelli di partenza, scritti dal codice di
+oggi) no. L'editor riceve l'albero già passato da `editor_valida()` e rimanda la versione 2: i widget aggiunti dopo non
+vengono migrati.
+
 ### 9.2 La validazione
 
-Ogni albero che arriva al server passa da `editor_valida()` (`includes/editor.php:148-175`):
+Ogni albero che arriva al server passa da `editor_valida()` (`includes/editor.php:153-182`):
 - al massimo **200 sezioni**, **6 colonne** per sezione, **100 widget** per colonna: il resto si scarta;
 - gli id validi sono 4-12 caratteri `a-z0-9`, unici; gli altri si rigenerano (7 caratteri esadecimali);
 - i tipi di widget sconosciuti si scartano; una sezione senza colonne ne riceve una vuota;
@@ -737,6 +743,29 @@ perdeva al salvataggio. Dalla 1.3.0 la Posizione delle Avanzate si chiama `posiz
 `posizione_css`, e `posizione` torna al valore di partenza del widget, come si vedeva prima. Anche
 `editor_css_avanzate` legge il vecchio `posizione` se vale `absolute` o `fixed` e `posizione_css` è vuoto. Le pagine
 salvate prima restano identiche al pixel (provato con `prove/pagina-widget.php` e una pagina con le posizioni vecchie).
+
+Lo stesso errore c'era in altri sei punti, trovati con un controllo su tutto `editor_definizioni()` (nella 1.3.0 un
+widget ha un nome doppio solo per sbaglio). Verificato con `editor_valida` e con il CSS disegnato:
+
+| Widget | Nome di prima | Cosa succedeva | Nome di oggi |
+|---|---|---|---|
+| Titolo animato | `animazione` (Animazione delle parole) | la pulizia dell'Animazione all'ingresso (`EDITOR_ANIMAZIONI`) svuotava Scrittura, Scorri, Dissolvenza e Gira; la classe `ew-anim-` restava vuota e le parole si dissolvevano sempre. Restava solo Zoom, che accendeva anche l'ingresso in zoom | `animazione_parole` |
+| Condividi | `padding` (Spazio interno dei pulsanti) | un valore solo, scritto sia su `.ed-<id>` sia su `.ed-<id> .ew-cond-voce` | `pulsanti_padding` |
+| Avviso | `padding` | lo stesso, su `.ed-<id> .ew-avviso` | `avviso_padding` |
+| Flip box | `padding` | lo stesso, su `.ed-<id> .ew-flip-contenuto` | `contenuto_padding` |
+| Icone social | `padding` (Spazio intorno all'icona, una misura) | la pulizia delle Avanzate (dimensioni) lo svuotava sempre: `--ew-pad` non usciva e restavano i 10 px del foglio di stile | `icona_padding` |
+| Carosello di immagini | `spazio` due volte | Spazio fra gli elementi (16 px) e Spazio fra le immagini (12 px), stessa variabile `--ew-gap`: un valore per tutti e due, di partenza 12 | un solo `spazio`, Spazio fra le immagini (12 px); `ewx_controlli_carosello($sezione, false)` |
+
+I widget hanno cambiato nome, le Avanzate no: i loro nomi valgono per tutti gli elementi e sono nei salvataggi di ogni
+pagina. Gli alberi con versione 1 passano da `editor_nomi_doppi_vecchi()` (`includes/editor-controlli.php:761`), chiamata
+da `editor_pulisci_impostazioni` (`includes/editor.php:100`) solo per loro: il Titolo animato prende `animazione_parole`
+uguale a `zoom` se `animazione` era `zoom`, altrimenti `dissolvi` (quello che si vedeva); Condividi, Avviso e Flip box
+copiano `padding` nel nome nuovo; il valore di prima resta alle Avanzate. Icone social non ha niente da spostare. Il
+carosello tiene il nome `spazio`. Un albero nuovo non passa da qui: un widget senza il nome nuovo ha il suo valore di
+partenza (Scrittura a macchina per le parole), e un'animazione all'ingresso Zoom non diventa uno zoom delle parole.
+Le pagine salvate prima restano identiche al pixel (`prove/pagina-widget.php` e `prove/pagina-nomi-doppi.php`, foto
+prima e dopo); `prove/prova-nomi-doppi.php` (33 controlli) e `prove/prova-posizione.php` controllano anche che nessun
+elemento abbia due controlli con lo stesso nome, `prove/prova-nomi-doppi.js` lo prova nell'editor.
 
 ### 9.7 I widget
 
@@ -2088,6 +2117,7 @@ può stare dentro una pagina che risponde 200.
 | `copia_crea($etichetta)`, `copia_ripristina($file)`, `copia_elenco()`, `copia_leggi_manifest($zip)` | la copia del sito |
 | `agg_dump_db($file, $prefisso)` | il database in un file; con il prefisso, solo le tabelle del sito |
 | `scaricabili_sha256($file)` | l'impronta di un file da scaricare, ricordata |
+| `editor_nomi_doppi_vecchi($tipo, $imp)` | i nomi di prima dei widget in un albero con versione 1 (9.6) |
 
 ---
 

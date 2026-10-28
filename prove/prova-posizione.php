@@ -57,9 +57,11 @@ $nomi = array_count_values(array_column($def, 'nome'));
 ok('riquadro_icona: nessun nome di controllo ripetuto', !array_filter($nomi, fn($c) => $c > 1), array_keys(array_filter($nomi, fn($c) => $c > 1)));
 $cond = array_values(array_filter($def, fn($c) => $c['nome'] === 'posizione_x'))[0]['condizione'] ?? [];
 ok('posizione_x compare con posizione_css diversa da Normale', $cond === ['!posizione_css' => '']);
+// 1.3.0: il controllo generale. Due controlli con lo stesso nome in un elemento salvano un solo valore (vince l'ultimo,
+// di solito quello delle Avanzate): e successo con posizione, animazione, padding e spazio.
 $doppi = [];
-foreach (editor_definizioni() as $t => $d) if (count(array_keys(array_column($d['controlli'], 'nome'), 'posizione')) > 1) $doppi[] = $t;
-ok('nessun widget ha due controlli "posizione"', !$doppi, $doppi);
+foreach (editor_definizioni() as $t => $d) foreach (array_count_values(array_column($d['controlli'], 'nome')) as $nome => $k) if ($k > 1) $doppi[] = "$t.$nome";
+ok('nessun elemento ha due controlli con lo stesso nome', !$doppi, $doppi);
 
 echo "\n" . ($n - $ko) . " su $n OK\n";
 exit($ko ? 1 : 0);

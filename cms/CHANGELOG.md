@@ -27,6 +27,12 @@ Il prodotto si chiama **plumeCMS** (nome scelto il 26 ottobre 2026; prima, per p
   dell'immagine) e "In basso a sinistra" (angolo del pulsante) ora restano dopo il salvataggio. Si perdevano perché la
   Posizione della scheda Avanzate aveva lo stesso nome e cancellava la scelta; ora si chiama `posizione_css`, e le pagine
   già salvate con una posizione assoluta o fissa restano come sono.
+- **Titolo animato, Condividi, Avviso, Flip box, Icone social e Carosello di immagini**: anche qui un controllo aveva lo
+  stesso nome di uno della scheda Avanzate, o di un altro dello stesso widget. Le parole del Titolo animato ora si muovono
+  come scegli (prima si dissolvevano sempre, e Zoom accendeva anche l'animazione all'ingresso); lo Spazio interno di
+  Condividi, Avviso e Flip box vale solo dentro il widget, quello delle Avanzate solo fuori; lo Spazio intorno all'icona
+  delle Icone social non si perde più; il Carosello di immagini ha un solo Spazio fra le immagini. Le pagine già salvate
+  restano identiche.
 - **Per chi fa siti con plumeCMS**: `api/versione.php?serie=<serie>` dice versione, nome, sha256 e dimensione dell'ultimo
   file di una serie del download manager.
 

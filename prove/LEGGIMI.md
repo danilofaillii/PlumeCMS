@@ -205,3 +205,23 @@ riquadri e "Angolo" del Pulsante fisso, e i widget salvati prima con la Posizion
 `php prove/prova-posizione.php <cartella CMS installato>`. Atteso: 27 su 27. Non scrive niente nel database.
 Il 28 ottobre 2026 foto prima e dopo (`foto-sito.js`, con `pagina-widget.php` e una pagina di widget salvati con le
 posizioni vecchie) identiche al pixel, a parte il rumore noto della pagina dei widget.
+Dalla correzione dei nomi doppi controlla anche che nessun elemento abbia due controlli con lo stesso nome (non solo
+`posizione`).
+
+## prova-nomi-doppi.php e prova-nomi-doppi.js (1.3.0)
+
+Gli altri controlli dei widget con lo stesso nome di uno delle Avanzate o di un altro controllo dello stesso widget:
+Titolo animato (`animazione` -> `animazione_parole`), Condividi, Avviso e Flip box (`padding` -> `pulsanti_padding`,
+`avviso_padding`, `contenuto_padding`), Icone social (`padding` -> `icona_padding`), Carosello di immagini (due `spazio`,
+ne resta uno). L'albero è passato a `versione` 2; quelli con versione 1 passano da `editor_nomi_doppi_vecchi()`.
+
+- `php prove/prova-nomi-doppi.php <cartella CMS installato>`: nessun nome doppio, i valori nuovi nel CSS giusto, gli
+  alberi con versione 1 disegnati come prima. Atteso: 33 su 33. Non scrive niente nel database.
+- `php prove/pagina-nomi-doppi.php <cartella CMS installato>` crea (o rifà) `/nomi-doppi/` con un albero in versione 1
+  com'era salvato prima (stampa l'id); poi
+  `node prove/prova-nomi-doppi.js <base> <utente> <password> <id> <cartella schermate>`: il sito come prima, poi
+  nell'editor parole, ingresso, spazi interni e spazio intorno alle icone scelti come un utente, Pubblica, riapertura,
+  misure nel browser. Atteso: 28 su 28. Cambia la pagina: per rifarla, di nuovo `pagina-nomi-doppi.php`.
+- Foto prima e dopo: `pagina-widget.php` e `pagina-nomi-doppi.php` con il codice di prima, poi
+  `node prove/foto-sito.js <base> <cartella> /nomi-doppi/` (i percorsi in più si aggiungono in fondo) prima e dopo
+  l'aggiornamento. Il 28 ottobre 2026 identiche al pixel, a parte i minuti del Conto alla rovescia sulla pagina dei widget.

@@ -746,6 +746,27 @@ function editor_posizione_css_vecchia(array $imp): array {
     return $imp;
 }
 
+/**
+ * Gli alberi salvati con la versione 1 (fino alla 1.3.0) avevano nei widget qui sotto un controllo con lo stesso nome di
+ * uno delle Avanzate. La pulizia teneva quello delle Avanzate, che arriva dopo, e il disegno usava quel valore per tutti e
+ * due. Qui il widget prende il nome nuovo con il valore che mostrava, cosi la pagina resta identica; il valore di prima
+ * resta alle Avanzate. Solo per la versione 1 (editor_valida): in un albero nuovo un widget senza il nome nuovo ha il suo
+ * valore di partenza, e il valore delle Avanzate non va copiato.
+ *   titolo_animato: "animazione" (parole e ingresso) -> "animazione_parole". Le parole si muovevano in Zoom solo con Zoom,
+ *                   l'unico valore che stava anche fra le animazioni all'ingresso; con ogni altro si dissolvevano.
+ *   condividi, avviso, flip_box: "padding" valeva sul widget e dentro -> "pulsanti_padding", "avviso_padding",
+ *                   "contenuto_padding" con lo stesso valore.
+ *   social: niente da spostare. Il suo "padding" era una misura e la pulizia delle Avanzate lo svuotava sempre.
+ */
+function editor_nomi_doppi_vecchi(string $tipo, array $imp): array {
+    if ($tipo === 'titolo_animato' && !array_key_exists('animazione_parole', $imp)) {
+        $imp['animazione_parole'] = ($imp['animazione'] ?? '') === 'zoom' ? 'zoom' : 'dissolvi';
+    }
+    $nuovo = ['condividi' => 'pulsanti_padding', 'avviso' => 'avviso_padding', 'flip_box' => 'contenuto_padding'][$tipo] ?? '';
+    if ($nuovo !== '' && !array_key_exists($nuovo, $imp) && is_array($imp['padding'] ?? null)) $imp[$nuovo] = $imp['padding'];
+    return $imp;
+}
+
 /** Pulizia dei campi speciali della scheda Avanzate (dopo editor_pulisci_valore). */
 function editor_pulisci_avanzate(array &$out): void {
     if (isset($out['ancora'])) $out['ancora'] = preg_replace('/[^a-z0-9-]/', '', strtolower($out['ancora']));

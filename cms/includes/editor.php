@@ -3,7 +3,7 @@
  * Editor visuale delle pagine, degli articoli e dei tipi dei moduli.
  *
  * Una pagina è un albero: sezioni, dentro colonne, dentro widget. Ogni elemento ha un id e le sue impostazioni.
- *   {"versione":1,"elementi":[{"id":"a1b2c3d","tipo":"sezione","impostazioni":{...},"figli":[
+ *   {"versione":2,"elementi":[{"id":"a1b2c3d","tipo":"sezione","impostazioni":{...},"figli":[
  *       {"id":"...","tipo":"colonna","impostazioni":{...},"figli":[{"id":"...","tipo":"titolo","impostazioni":{...}}]}]}]}
  * Le impostazioni responsive valgono per desktop, tablet e telefono: {"d":..,"t":..,"m":..}; tablet e telefono,
  * se mancano, prendono il valore della misura più grande. Il CSS di ogni elemento si genera a parte (.ed-ID),
@@ -16,7 +16,9 @@
 require_once __DIR__ . '/sito-mappa.php';
 require_once __DIR__ . '/editor-widget.php';
 
-const EDITOR_VERSIONE = 1;
+// 2 (1.3.0): i controlli dei widget che si chiamavano come uno delle Avanzate hanno un nome loro. Un albero con versione 1
+// passa da editor_nomi_doppi_vecchi() (editor_valida).
+const EDITOR_VERSIONE = 2;
 const EDITOR_REVISIONI = 30;
 const EDITOR_TABLET = 1024;
 const EDITOR_TELEFONO = 767;
@@ -95,9 +97,10 @@ function editor_pulisci_valore(array $ctl, $val) {
     }
 }
 
-function editor_pulisci_impostazioni(string $tipo, $imp): array {
+function editor_pulisci_impostazioni(string $tipo, $imp, bool $versione1 = false): array {
     $out = [];
     $imp = editor_posizione_css_vecchia(is_array($imp) ? $imp : []);
+    if ($versione1) $imp = editor_nomi_doppi_vecchi($tipo, $imp);
     foreach (editor_definizioni()[$tipo]['controlli'] as $ctl) {
         if ($ctl['tipo'] === 'intestazione' || !array_key_exists($ctl['nome'], $imp)) continue;
         $x = editor_pulisci_valore($ctl, $imp[$ctl['nome']]);
@@ -150,6 +153,8 @@ function editor_puo_codice(): bool {
 function editor_valida($albero): ?array {
     if (!is_array($albero) || !isset($albero['elementi']) || !is_array($albero['elementi'])) return null;
     $def = editor_definizioni();
+    // Senza versione e un albero scritto dal codice di oggi (kit, sezioni pronte, modelli di partenza): nomi gia nuovi.
+    $versione1 = (int)($albero['versione'] ?? EDITOR_VERSIONE) < 2;
     $visti = [];
     $id = function ($x) use (&$visti) {
         $i = is_string($x['id'] ?? null) && preg_match('/^[a-z0-9]{4,12}$/', $x['id']) && !isset($visti[$x['id']]) ? $x['id'] : editor_id();
@@ -166,7 +171,7 @@ function editor_valida($albero): ?array {
             foreach (array_slice((array)($c['figli'] ?? []), 0, 100) as $w) {
                 $t = (string)($w['tipo'] ?? '');
                 if (!isset($def[$t]) || in_array($t, ['sezione', 'colonna'], true)) continue;
-                $widget[] = ['id' => $id($w), 'tipo' => $t, 'impostazioni' => editor_pulisci_impostazioni($t, $w['impostazioni'] ?? [])];
+                $widget[] = ['id' => $id($w), 'tipo' => $t, 'impostazioni' => editor_pulisci_impostazioni($t, $w['impostazioni'] ?? [], $versione1)];
             }
             $colonne[] = ['id' => $id($c), 'tipo' => 'colonna', 'impostazioni' => editor_pulisci_impostazioni('colonna', $c['impostazioni'] ?? []), 'figli' => $widget];
         }

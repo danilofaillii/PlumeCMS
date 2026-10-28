@@ -52,7 +52,8 @@ ewx_registra('galleria', 'Galleria', 'griglia', 'Gallerie', [
 });
 
 // ---------------- Carosello (Image Carousel)
-function ewx_controlli_carosello(string $sezione = 'Scorrimento'): array {
+// $spazio false: il Carosello di immagini, che lo Spazio fra le immagini lo ha gia da ewx_controlli_galleria_stile() (1.3.0).
+function ewx_controlli_carosello(string $sezione = 'Scorrimento', bool $spazio = true): array {
     return [
         ec('per_vista', 'numero', 'Elementi visibili', ['d' => 3, 't' => 2, 'm' => 1], 'contenuto', ['min' => 1, 'max' => 6, 'responsive' => true, 'sezione' => $sezione]),
         ec('scorri', 'scelta', 'Scorri di', 'uno', 'contenuto', ['opzioni' => ['uno' => 'Un elemento', 'vista' => 'Tutti quelli visibili'], 'sezione' => $sezione]),
@@ -62,7 +63,7 @@ function ewx_controlli_carosello(string $sezione = 'Scorrimento'): array {
         ec('intervallo', 'numero', 'Ogni quanti millisecondi', 5000, 'contenuto', ['min' => 1000, 'max' => 30000, 'condizione' => ['autoplay' => true], 'sezione' => $sezione]),
         ec('pausa_hover', 'interruttore', 'Si ferma al passaggio del mouse', true, 'contenuto', ['condizione' => ['autoplay' => true], 'sezione' => $sezione]),
         ec('ciclo', 'interruttore', 'Ricomincia dall\'inizio', true, 'contenuto', ['sezione' => $sezione]),
-        ewx_var('spazio', 'Spazio fra gli elementi', '--ew-gap', $sezione, ['d' => ['v' => 16, 'u' => 'px']]),
+        $spazio ? ewx_var('spazio', 'Spazio fra gli elementi', '--ew-gap', $sezione, ['d' => ['v' => 16, 'u' => 'px']]) : null,
         ec('frecce_posizione', 'scelta', 'Posizione delle frecce', 'dentro', 'stile', ['opzioni' => ['dentro' => 'Dentro', 'fuori' => 'Fuori'], 'sezione' => 'Frecce']),
         ewx_var('frecce_dimensione', 'Dimensione', '--ew-adim', 'Frecce', ['d' => ['v' => 40, 'u' => 'px']]),
         ewx_col('frecce_colore', 'Colore', '--ew-ac', 'Frecce', true),
@@ -86,7 +87,9 @@ function ewx_carosello_html(array $v, array $ctx, array $voci, string $classe = 
 }
 ewx_registra('carosello', 'Carosello di immagini', 'frecce-scambia', 'Gallerie', [
     ex('immagini', 'galleria', 'Immagini', [], 'contenuto', ['sezione' => 'Immagini']),
-    ...ewx_controlli_carosello(),
+    // 1.3.0: un solo "spazio". Prima c'erano Spazio fra gli elementi (16 px) e Spazio fra le immagini (12 px), lo
+    // stesso nome e la stessa variabile: un valore per tutti e due, e di partenza vinceva il secondo. Resta quello.
+    ...ewx_controlli_carosello('Scorrimento', false),
     ...ewx_controlli_galleria_stile(),
 ], function (array $v, array $ctx): string {
     $imm = ewx_immagini($v['immagini']);
@@ -211,7 +214,9 @@ ewx_registra('social', 'Icone social', 'condividi', 'Marketing', [
     ewx_colonne(0),
     ewx_allinea('allineamento', 'Aspetto', ''),
     ewx_var('dimensione', 'Dimensione dell\'icona', '--ew-dim', 'Icone', ['d' => ['v' => 20, 'u' => 'px']]),
-    ewx_var('padding', 'Spazio intorno all\'icona', '--ew-pad', 'Icone', ['d' => ['v' => 10, 'u' => 'px']]),
+    // 1.3.0: "icona_padding" (prima "padding", come lo Spazio interno delle Avanzate, che ha un'altra forma: il valore si
+    // perdeva sempre e restavano i 10 px del foglio di stile). Nessuna migrazione: quel valore e sempre stato delle Avanzate.
+    ewx_var('icona_padding', 'Spazio intorno all\'icona', '--ew-pad', 'Icone', ['d' => ['v' => 10, 'u' => 'px']]),
     ewx_var('spazio', 'Spazio fra le icone', '--ew-gap', 'Icone', ['d' => ['v' => 10, 'u' => 'px']]),
     ewx_col('colore_primario', 'Colore principale (sfondo)', '--ew-c1', 'Colori personalizzati', true, ['condizione' => ['colori' => 'personalizzati']]),
     ewx_col('colore_secondario', 'Colore secondario (icona)', '--ew-c2', 'Colori personalizzati', true, ['condizione' => ['colori' => 'personalizzati']]),
@@ -250,7 +255,8 @@ ewx_registra('condividi', 'Condividi', 'invia', 'Marketing', [
     ec('titolo_condivisione', 'testo', 'Testo che accompagna il link (vuoto: il titolo della pagina)', '', 'contenuto', ['sezione' => 'Aspetto']),
     ewx_var('dimensione', 'Dimensione dell\'icona', '--ew-dim', 'Pulsanti', ['d' => ['v' => 18, 'u' => 'px']]),
     ewx_var('spazio', 'Spazio fra i pulsanti', '--ew-gap', 'Pulsanti', ['d' => ['v' => 10, 'u' => 'px']]),
-    ex('padding', 'dimensioni', 'Spazio interno', [], 'stile', ['selettore' => ' .ew-cond-voce', 'proprieta' => 'padding', 'responsive' => true, 'sezione' => 'Pulsanti']),
+    // 1.3.0: "pulsanti_padding" (prima "padding", come lo Spazio interno delle Avanzate: un valore valeva per tutti e due).
+    ex('pulsanti_padding', 'dimensioni', 'Spazio interno', [], 'stile', ['selettore' => ' .ew-cond-voce', 'proprieta' => 'padding', 'responsive' => true, 'sezione' => 'Pulsanti']),
     ewx_col('colore_primario', 'Colore principale', '--ew-c1', 'Colori personalizzati', true, ['condizione' => ['colori' => 'personalizzati']]),
     ewx_col('colore_secondario', 'Colore secondario', '--ew-c2', 'Colori personalizzati', true, ['condizione' => ['colori' => 'personalizzati']]),
     ewx_tip('tipografia', 'Tipografia', ' .ew-cond-voce', 'Pulsanti'),
