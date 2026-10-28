@@ -85,27 +85,27 @@ require_once __DIR__ . '/includes/admin-header.php';
 .cs-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:1.2rem 1.4rem}
 .cs-card h2{font-size:1.05rem;margin:0 0 .6rem}
 .cs-note{font-size:.84rem;color:var(--text-muted);margin:.5rem 0 0;line-height:1.5}
-.cs-avviso{display:flex;gap:.8rem;align-items:flex-start;border:1px solid #f0d58a;background:#fff8e1;color:#6b4e00;border-radius:12px;padding:.9rem 1.2rem;margin-bottom:1.2rem;font-size:.9rem;line-height:1.5}
+.cs-avviso{display:flex;gap:.8rem;align-items:flex-start;border:1px solid var(--attenzione-bordo);background:var(--mustard-light);color:var(--attenzione-testo);border-radius:12px;padding:.9rem 1.2rem;margin-bottom:1.2rem;font-size:.9rem;line-height:1.5}
 .cs-avviso b{display:block;margin-bottom:.15rem}
 .cs-btn{display:inline-block;padding:.5rem 1rem;border-radius:8px;border:1px solid var(--border);background:var(--bg);font-family:var(--font);font-size:.84rem;font-weight:600;cursor:pointer;color:var(--text)}
-.cs-btn.primary{background:#2d5a5f;color:#fff;border-color:#2d5a5f}
-.cs-btn.danger{color:#a8322a;border-color:#e8b4ae}
+.cs-btn.primary{background:var(--coral);color:var(--su-accento);border-color:var(--coral)}
+.cs-btn.danger{color:var(--errore-testo);border-color:var(--errore-bordo)}
 .cs-btn:disabled{opacity:.5;cursor:default}
 .cs-spunta{display:flex;gap:.5rem;align-items:flex-start;font-size:.86rem;margin:.7rem 0}
 .cs-spunta input{margin-top:.2rem}
 .cs-table{width:100%;border-collapse:collapse;font-size:.86rem}
 .cs-table th{text-align:left;font-size:.75rem;text-transform:uppercase;letter-spacing:.05em;color:var(--text-muted);padding:.5rem .6rem;border-bottom:1px solid var(--border)}
 .cs-table td{padding:.6rem;border-bottom:1px solid var(--border);vertical-align:top}
-.cs-table tr.cs-nuova td{background:#f1f8f2}
+.cs-table tr.cs-nuova td{background:var(--sage-light)}
 .cs-tag{display:inline-block;padding:.1rem .5rem;border-radius:999px;font-size:.72rem;font-weight:700}
-.cs-tag.si{background:#e3f1e6;color:#2f6b3f}.cs-tag.no{background:#fff3d6;color:#8a5a00}
+.cs-tag.si{background:var(--sage-light);color:var(--successo-testo)}.cs-tag.no{background:var(--mustard-light);color:var(--attenzione-testo)}
 .cs-azioni{display:flex;gap:.4rem;flex-wrap:wrap}
 .cs-azioni details{width:100%}
-.cs-azioni summary{cursor:pointer;color:#a8322a;font-weight:600;font-size:.84rem;list-style:none}
+.cs-azioni summary{cursor:pointer;color:var(--errore-testo);font-weight:600;font-size:.84rem;list-style:none}
 .cs-esito{border-radius:12px;padding:1rem 1.4rem;margin-bottom:1.2rem;border:1px solid}
-.cs-esito.ok{background:#f1f8f2;border-color:#bfdcc5}.cs-esito.ko{background:#fdf1ef;border-color:#f0c2bb}
-.cs-log{background:#1e1e1e;color:#d4d4d4;padding:1rem;border-radius:8px;font-family:monospace;font-size:.8rem;white-space:pre-wrap;word-break:break-word;max-height:360px;overflow:auto;margin:.6rem 0 0}
-.cs-lavoro{position:fixed;inset:0;background:rgba(20,16,12,.72);z-index:9999;display:flex;align-items:center;justify-content:center;padding:1.5rem}
+.cs-esito.ok{background:var(--sage-light);border-color:var(--successo-bordo)}.cs-esito.ko{background:var(--errore-chiaro);border-color:var(--errore-bordo)}
+.cs-log{background:var(--codice-fondo);color:var(--codice-testo);padding:1rem;border-radius:8px;font-family:monospace;font-size:.8rem;white-space:pre-wrap;word-break:break-word;max-height:360px;overflow:auto;margin:.6rem 0 0}
+.cs-lavoro{position:fixed;inset:0;background:var(--velo);z-index:9999;display:flex;align-items:center;justify-content:center;padding:1.5rem}
 .cs-lavoro[hidden]{display:none}
 .cs-lavoro div{background:var(--surface);border-radius:14px;padding:1.6rem 1.8rem;max-width:480px}
 </style>
@@ -182,7 +182,7 @@ require_once __DIR__ . '/includes/admin-header.php';
       // Prima di mandarlo: un file oltre il limite del server non arriverebbe mai.
       if (file && file.files[0] && lim && file.files[0].size > lim) {
         e.preventDefault();
-        var p = document.getElementById('cs-limite'); p.style.color = '#a8322a';
+        var p = document.getElementById('cs-limite'); p.style.color = 'var(--errore-testo)';
         p.innerHTML = '<b>Questo file pesa ' + (file.files[0].size / 1048576).toFixed(1) + ' MB, il server ne accetta al massimo ' + (lim / 1048576).toFixed(1) + '.</b> Mettilo con il gestore dei file del tuo hosting nella cartella <code>aggiornamenti/copie/</code> e ripristinalo dall\'elenco qui sotto.';
         return;
       }

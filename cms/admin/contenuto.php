@@ -108,7 +108,7 @@ require_once __DIR__ . '/includes/admin-header.php';
 
       <div class="te" id="te">
         <div class="te-schede">
-          <button type="button" class="btn btn-secondary btn-sm" style="margin-right:auto;background:#e8553e;color:#fff;border:0" data-al-clic="teInfografica()">+ Infografica</button>
+          <button type="button" class="btn btn-secondary btn-sm" style="margin-right:auto;background:var(--coral);color:var(--su-accento);border:0" data-al-clic="teInfografica()">+ Infografica</button>
           <button type="button" class="btn btn-secondary btn-sm" style="margin-right:.5rem" data-al-clic="scMediaPer('teInserisciImmagine')">+ Immagine</button>
           <button type="button" data-scheda="visuale" class="attivo">Visuale</button>
           <button type="button" data-scheda="testo">Testo</button>
@@ -127,9 +127,9 @@ require_once __DIR__ . '/includes/admin-header.php';
           <button type="button" data-cmd="insertUnorderedList" title="Elenco puntato">• ≡</button>
           <button type="button" data-cmd="insertOrderedList" title="Elenco numerato">1. ≡</button>
           <span class="te-sep"></span>
-          <button type="button" data-az="link" title="Link (Ctrl+K)">🔗</button>
+          <button type="button" data-az="link" title="Link (Ctrl+K)">&#128279;</button>
           <button type="button" data-cmd="unlink" title="Togli il link">⛓</button>
-          <button type="button" data-cmd="insertHorizontalRule" title="Linea">—</button>
+          <button type="button" data-cmd="insertHorizontalRule" title="Linea">&mdash;</button>
           <span class="te-sep"></span>
           <button type="button" data-cmd="removeFormat" title="Togli la formattazione">Tx</button>
           <button type="button" data-cmd="undo" title="Annulla">↶</button>
@@ -316,7 +316,7 @@ require_once __DIR__ . '/includes/admin-header.php';
       <input type="search" id="sc-media-cerca" placeholder="Cerca nel nome…">
       <input type="url" id="sc-media-url" placeholder="oppure incolla un indirizzo" style="min-width:200px"><button type="button" class="btn btn-secondary btn-sm" data-al-clic="scMediaUrl()">Usa</button>
     </div>
-    <p class="hint" id="sc-media-errore" style="color:#b91c1c" hidden></p>
+    <p class="hint" id="sc-media-errore" style="color:var(--errore-testo)" hidden></p>
     <div class="sc-media-griglia" id="sc-media-griglia"></div>
     <div class="sc-media-pagine" id="sc-media-pagine"></div>
   </div>

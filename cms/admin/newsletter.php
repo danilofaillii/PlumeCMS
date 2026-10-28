@@ -184,12 +184,12 @@ require_once __DIR__ . '/includes/admin-header.php';
 ?>
 <style>
 .nl-numeri{display:grid;grid-template-columns:repeat(3,1fr);gap:1rem;margin-bottom:1.25rem}
-.nl-numeri div{background:#fff;border:1px solid var(--border);border-radius:10px;padding:1rem}
+.nl-numeri div{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:1rem}
 .nl-numeri b{display:block;font-size:1.8rem}
 .nl-schede{display:flex;gap:.25rem;margin-bottom:1rem}
 .nl-schede a{padding:.5rem 1rem;border:1px solid var(--border);border-radius:8px 8px 0 0;text-decoration:none;color:var(--text-muted);font-weight:600}
-.nl-schede a.attiva{background:#fff;color:var(--text)}
-.nl-barra{height:6px;background:#eee;border-radius:3px;min-width:120px}.nl-barra div{height:6px;background:#7c3aed;border-radius:3px}
+.nl-schede a.attiva{background:var(--surface);color:var(--text)}
+.nl-barra{height:6px;background:var(--fondo-2);border-radius:3px;min-width:120px}.nl-barra div{height:6px;background:var(--coral);border-radius:3px}
 .nl-riga{display:flex;gap:.4rem;flex-wrap:wrap;align-items:center}
 </style>
 

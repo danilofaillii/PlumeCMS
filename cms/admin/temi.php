@@ -101,15 +101,15 @@ require_once __DIR__ . '/includes/admin-header.php';
 ?>
 <style>
 .tt-intro{margin:0 0 1rem;font-size:.9rem;color:var(--text-muted);max-width:820px}
-.tt-guasto{background:#fdecea;border:1px solid #f5c2bd;border-radius:var(--radius);padding:1rem 1.1rem;margin:0 0 1.2rem;color:#7a1f15}
+.tt-guasto{background:var(--errore-chiaro);border:1px solid var(--errore-bordo);border-radius:var(--radius);padding:1rem 1.1rem;margin:0 0 1.2rem;color:var(--errore-testo)}
 .tt-guasto h2{margin:0 0 .4rem;font-size:1.05rem}
 .tt-guasto p{margin:.3rem 0;font-size:.88rem}
-.tt-guasto code{font-size:.8rem;background:rgba(255,255,255,.6);padding:.1rem .3rem;border-radius:4px;word-break:break-word}
+.tt-guasto code{font-size:.8rem;background:var(--surface);padding:.1rem .3rem;border-radius:4px;word-break:break-word}
 .tt-guasto .tt-azioni{margin-top:.7rem}
 .tt-griglia{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:1rem}
 .tt-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;display:flex;flex-direction:column}
-.tt-card.attivo{border-color:var(--sage, #6b8f71);box-shadow:0 0 0 2px var(--sage-light, #dfe9e0)}
-.tt-immagine{aspect-ratio:16/10;background:#f3f1ee;display:block;width:100%;object-fit:cover;border-bottom:1px solid var(--border)}
+.tt-card.attivo{border-color:var(--sage);box-shadow:0 0 0 2px var(--successo-bordo)}
+.tt-immagine{aspect-ratio:16/10;background:var(--fondo-2);display:block;width:100%;object-fit:cover;border-bottom:1px solid var(--border)}
 .tt-finto{aspect-ratio:16/10;padding:14px 16px;display:flex;flex-direction:column;gap:9px;border-bottom:1px solid var(--border);overflow:hidden}
 .tt-finto .tt-barra{display:flex;justify-content:space-between;align-items:center;font:700 11px/1 system-ui,sans-serif;letter-spacing:.06em;opacity:.9}
 .tt-finto .tt-barra i{display:inline-block;width:26px;height:5px;border-radius:3px;margin-left:5px;opacity:.5}
@@ -123,9 +123,9 @@ require_once __DIR__ . '/includes/admin-header.php';
 .tt-corpo h3 .badge{font-size:.68rem}
 .tt-meta{font-size:.78rem;color:var(--text-muted);margin:0}
 .tt-desc{font-size:.86rem;margin:0;color:var(--text)}
-.tt-errori{font-size:.8rem;color:#a12a1c;margin:0}
+.tt-errori{font-size:.8rem;color:var(--errore-testo);margin:0}
 .tt-ig{display:flex;align-items:center;gap:5px;font-size:.76rem;color:var(--text-muted);margin:0}
-.tt-ig i{display:inline-block;width:14px;height:14px;border-radius:50%;border:1px solid rgba(0,0,0,.12)}
+.tt-ig i{display:inline-block;width:14px;height:14px;border-radius:50%;border:1px solid var(--bordo-forte)}
 .tt-azioni{display:flex;gap:.4rem;flex-wrap:wrap;margin-top:auto;padding-top:.4rem}
 .tt-azioni form{display:inline}
 .tt-barra{display:flex;gap:.5rem;flex-wrap:wrap;margin:0 0 .8rem}
@@ -169,7 +169,7 @@ $baseAlPosto = !$baseAttivo && $guasto && $guasto['slug'] === $scelto;
     <div class="tt-finto" style="background:<?= h($cb['sfondo']) ?>;color:<?= h($cb['testo']) ?>" aria-hidden="true">
       <div class="tt-barra"><span><?= h(mb_strtoupper(design_sito()['nome'])) ?></span><span><i style="background:<?= h($cb['testo']) ?>"></i><i style="background:<?= h($cb['testo']) ?>"></i></span></div>
       <div class="tt-titolo">Aspetto di base</div><div class="tt-riga" style="background:<?= h($cb['testo']) ?>"></div><div class="tt-riga corta" style="background:<?= h($cb['testo']) ?>"></div>
-      <div class="tt-pulsanti"><span style="background:<?= h($cb['primario']) ?>;color:#fff">PULSANTE</span><span style="border:1px solid <?= h($cb['secondario']) ?>;color:<?= h($cb['secondario']) ?>">SECONDO</span></div>
+      <div class="tt-pulsanti"><span style="background:<?= h($cb['primario']) ?>;color:#fff /* fisso: il pulsante del tema del sito */">PULSANTE</span><span style="border:1px solid <?= h($cb['secondario']) ?>;color:<?= h($cb['secondario']) ?>">SECONDO</span></div>
     </div>
     <div class="tt-corpo">
       <h3>Aspetto di base<?= $baseAttivo ? ' <span class="badge badge-published">attivo</span>' : '' ?><?= $baseAlPosto ? ' <span class="badge badge-scheduled">in uso adesso</span>' : '' ?></h3>
@@ -202,7 +202,7 @@ $baseAlPosto = !$baseAttivo && $guasto && $guasto['slug'] === $scelto;
     <div class="tt-finto" style="background:<?= h($c['sfondo']) ?>;color:<?= h($c['testo']) ?>" aria-hidden="true">
       <div class="tt-barra"><span><?= h(mb_strtoupper(design_sito()['nome'])) ?></span><span><i style="background:<?= h($c['testo']) ?>"></i><i style="background:<?= h($c['testo']) ?>"></i></span></div>
       <div class="tt-titolo"><?= h($t['nome']) ?></div><div class="tt-riga" style="background:<?= h($c['testo']) ?>"></div><div class="tt-riga corta" style="background:<?= h($c['testo']) ?>"></div>
-      <div class="tt-pulsanti"><span style="background:<?= h($c['primario']) ?>;color:#fff">PULSANTE</span><span style="border:1px solid <?= h($c['secondario']) ?>;color:<?= h($c['secondario']) ?>">SECONDO</span></div>
+      <div class="tt-pulsanti"><span style="background:<?= h($c['primario']) ?>;color:#fff /* fisso: il pulsante del tema del sito */">PULSANTE</span><span style="border:1px solid <?= h($c['secondario']) ?>;color:<?= h($c['secondario']) ?>">SECONDO</span></div>
     </div>
     <?php endif; ?>
     <div class="tt-corpo">

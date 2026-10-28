@@ -235,9 +235,9 @@ require_once __DIR__ . '/includes/admin-header.php';
 .seo-tab th{font-size:.74rem;text-transform:uppercase;letter-spacing:.04em;color:var(--text-muted);cursor:pointer;user-select:none;white-space:nowrap}
 .seo-tab th.ord::after{content:" \25BE"}
 .seo-tab th.ord.su::after{content:" \25B4"}
-.seo-pt{display:inline-block;min-width:2.3em;text-align:center;padding:.15rem .4rem;border-radius:999px;font-weight:700;color:#fff;font-size:.8rem}
-.seo-pt.verde{background:#2d7a3a}.seo-pt.giallo{background:#b07a00}.seo-pt.rosso{background:#b3261e}
-.seo-ok{color:#2d7a3a}.seo-no{color:#b3261e}.seo-att{color:#b07a00}
+.seo-pt{display:inline-block;min-width:2.3em;text-align:center;padding:.15rem .4rem;border-radius:999px;font-weight:700;color:#fff /* fisso: sui colori di categoria */;font-size:.8rem}
+.seo-pt.verde{background:var(--cat-verde)}.seo-pt.giallo{background:var(--cat-ambra)}.seo-pt.rosso{background:#b3261e /* fisso: categoria rosso */}
+.seo-ok{color:var(--successo-testo)}.seo-no{color:var(--errore-testo)}.seo-att{color:var(--attenzione-testo)}
 .seo-chiave{font-family:Consolas,Monaco,monospace;background:var(--bg);padding:.3rem .5rem;border-radius:6px;word-break:break-all}
 .seo-numeri{display:flex;gap:1rem;flex-wrap:wrap;margin-bottom:1rem}
 .seo-numeri a{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:.6rem 1rem;text-decoration:none;color:var(--text);font-size:.85rem}
@@ -248,7 +248,7 @@ require_once __DIR__ . '/includes/admin-header.php';
 .seo-interruttori label{display:flex;gap:.5rem;align-items:flex-start;font-size:.86rem;padding:.35rem 0;border-bottom:1px solid var(--border)}
 .seo-interruttori label input{margin-top:.2rem}
 .seo-interruttori small{display:block;color:var(--text-muted)}
-pre.seo-pre{background:#1d1510;color:#f3e9dd;padding:.9rem;border-radius:8px;font-size:.78rem;overflow:auto;max-height:420px;white-space:pre-wrap;word-break:break-word}
+pre.seo-pre{background:var(--codice-fondo);color:var(--codice-testo);padding:.9rem;border-radius:8px;font-size:.78rem;overflow:auto;max-height:420px;white-space:pre-wrap;word-break:break-word}
 .seo-filtri{display:flex;gap:.5rem;flex-wrap:wrap;margin:.5rem 0 1rem}
 .seo-filtri input{padding:.45rem .7rem;border:1px solid var(--border);border-radius:8px;font-size:.86rem}
 </style>
@@ -485,7 +485,7 @@ pre.seo-pre{background:#1d1510;color:#f3e9dd;padding:.9rem;border-radius:8px;fon
   <div class="seo-card">
     <h3>Codice personalizzato</h3>
     <p class="seo-nota">Per tag che non stanno nelle caselle sopra. Viaggia protetto fino al pannello (ModSecurity non lo ferma). Il codice entra cosi com'e: un errore qui si vede su tutto il sito.</p>
-    <p class="seo-nota" style="color:#b45309"><strong>Attenzione:</strong> questo e HTML grezzo, inserito in ogni pagina senza controlli. Mettici solo codice di cui conosci la provenienza. Chi puo scriverlo si decide in Impostazioni, Sicurezza (voce "Codice libero head/body"): se e spento, il codice resta salvato ma non esce sul sito.</p>
+    <p class="seo-nota" style="color:var(--attenzione-testo)"><strong>Attenzione:</strong> questo e HTML grezzo, inserito in ogni pagina senza controlli. Mettici solo codice di cui conosci la provenienza. Chi puo scriverlo si decide in Impostazioni, Sicurezza (voce "Codice libero head/body"): se e spento, il codice resta salvato ma non esce sul sito.</p>
     <div class="form-group"><label>Nel &lt;head&gt;</label><textarea name="analisi[codice_head]" class="codice" rows="4"><?= h($a['codice_head']) ?></textarea></div>
     <div class="form-group"><label>Subito dopo &lt;body&gt;</label><textarea name="analisi[codice_body_inizio]" class="codice" rows="3"><?= h($a['codice_body_inizio']) ?></textarea></div>
     <div class="form-group"><label>Prima di &lt;/body&gt;</label><textarea name="analisi[codice_body_fine]" class="codice" rows="3"><?= h($a['codice_body_fine']) ?></textarea></div>

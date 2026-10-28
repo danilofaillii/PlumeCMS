@@ -63,13 +63,13 @@ require_once __DIR__ . '/includes/admin-header.php';
 .mn-barra b{flex:1;font-weight:600;font-size:.9rem}
 .mn-barra small{color:var(--text-muted);font-size:.74rem}
 .mn-barra button{background:none;border:0;cursor:pointer;color:var(--text-muted);font-size:.8rem}
-.mn-dettagli{display:none;padding:.6rem .8rem .8rem;border:1px solid var(--border);border-top:0;border-radius:0 0 8px 8px;background:#fff;font-size:.84rem}
+.mn-dettagli{display:none;padding:.6rem .8rem .8rem;border:1px solid var(--border);border-top:0;border-radius:0 0 8px 8px;background:var(--surface);font-size:.84rem}
 .mn-voce-ed.aperta>.mn-dettagli{display:block}
 .mn-voce-ed.aperta>.mn-barra{border-radius:8px 8px 0 0}
 .mn-dettagli label{display:block;margin:.3rem 0 .1rem;color:var(--text-muted)}
 .mn-dettagli input[type=text]{width:100%}
 .mn-dettagli .mn-azioni-voce{margin-top:.6rem;display:flex;gap:.8rem;font-size:.8rem}
-.mn-dettagli .mn-azioni-voce a{color:#b91c1c;cursor:pointer}
+.mn-dettagli .mn-azioni-voce a{color:var(--errore-testo);cursor:pointer}
 .sortable-ghost{opacity:.4}
 .mn-vuoto{border:1px dashed var(--border);border-radius:8px;padding:1.2rem;text-align:center;color:var(--text-muted);font-size:.86rem}
 </style>
@@ -128,7 +128,7 @@ require_once __DIR__ . '/includes/admin-header.php';
         <ul class="mn-albero" id="mn-albero"></ul>
         <div class="mn-vuoto" id="mn-vuoto" hidden>Il menu è vuoto: aggiungi le voci dalla colonna a sinistra.</div>
         <div style="display:flex;justify-content:space-between;align-items:center;margin-top:1rem;gap:.5rem;flex-wrap:wrap">
-          <?php if ($m['id']): ?><button type="submit" class="ct-link ct-rosso" name="azione" value="elimina" style="background:none;border:0;color:#b91c1c;cursor:pointer;font-size:.84rem" data-conferma="Eliminare il menu <?= h(($m['nome'])) ?>?">Elimina il menu</button><?php else: ?><span></span><?php endif; ?>
+          <?php if ($m['id']): ?><button type="submit" class="ct-link ct-rosso" name="azione" value="elimina" style="background:none;border:0;color:var(--errore-testo);cursor:pointer;font-size:.84rem" data-conferma="Eliminare il menu <?= h(($m['nome'])) ?>?">Elimina il menu</button><?php else: ?><span></span><?php endif; ?>
           <button type="submit" class="btn btn-primary"><?= $m['id'] ? 'Salva il menu' : 'Crea il menu' ?></button>
         </div>
       </div>

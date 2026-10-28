@@ -1,0 +1,134 @@
+/*
+ * Gli aspetti del pannello (1.4.0): Aria, Bottega, Cosmo, Lavagna.
+ *
+ * Ogni utente sceglie il suo in "Il mio accesso"; il pannello lo scrive sulla radice della pagina,
+ * <html data-pannello="cosmo">, e qui ogni aspetto ridefinisce le stesse variabili. Nessun JavaScript:
+ * il foglio arriva prima del contenuto, quindi la pagina nasce gia con i colori giusti.
+ * Senza attributo (login, installatore, pagine vecchie) vale Aria.
+ *
+ * Le regole valgono anche su un elemento qualunque: <div data-pannello="lavagna"> dentro una pagina Aria
+ * prende i colori di Lavagna. Cosi sono fatte le anteprime della scelta.
+ *
+ * Nomi di sempre (restano, gli altri fogli e le pagine nuove li usano):
+ *   --bg --surface --text --text-muted --border --coral --coral-light --coral-hover --sage --sage-light
+ *   --mustard --mustard-light --sidebar --sidebar-hover --radius --font
+ *   --coral e l'accento dell'aspetto (blu in Aria, terracotta in Bottega, viola in Cosmo, gesso giallo in Lavagna),
+ *   --sage il verde dei successi, --mustard il giallo degli avvisi.
+ * Nomi nuovi, per significato:
+ *   --fondo-2           fondo secondario (testate delle tabelle, schede in rilievo, righe alternate)
+ *   --campo             fondo dei campi dei moduli
+ *   --riga-hover        riga di tabella sotto il mouse
+ *   --bordo-forte       bordo che si deve vedere (campo al passaggio, separatori marcati)
+ *   --su-accento        testo sopra --coral (bianco nei chiari, scuro nei due scuri)
+ *   --accento-testo     l'accento usato come colore del testo (link, titoli al passaggio)
+ *   --link              i link nel testo
+ *   --successo* --errore* --attenzione* --info*   fondo chiaro (-chiaro), testo (-testo), bordo (-bordo)
+ *   --sidebar-testo --sidebar-testo-2 --sidebar-attivo --sidebar-su-attivo --sidebar-bordo --logo --logo-accento
+ *   --codice-fondo --codice-testo   i registri e il codice (sempre scuri)
+ *   --ombra --ombra-grande --velo --fuoco --tela-fondo --font-titolo --font-codice
+ *   --cat-verde --cat-viola --cat-ambra --cat-blu --cat-grigio   colori di categoria (blocchi dei flussi), con testo bianco
+ */
+
+/* Il carattere del pannello: Inter, lo stesso file del sito (in casa, nessuna chiamata esterna). */
+@font-face{font-family:"Inter";font-style:normal;font-weight:400 700;font-display:swap;src:url(../../../sito/assets/font/inter-latin.woff2) format("woff2");unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD}
+@font-face{font-family:"Inter";font-style:normal;font-weight:400 700;font-display:swap;src:url(../../../sito/assets/font/inter-latin-ext.woff2) format("woff2");unicode-range:U+0100-02BA,U+02BD-02C5,U+02C7-02CC,U+02CE-02D7,U+02DD-02FF,U+0304,U+0308,U+0329,U+1D00-1DBF,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20C4,U+2113,U+2C60-2C7F,U+A720-A7FF}
+
+/* Uguali per tutti gli aspetti */
+:root{
+  --font: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-titolo: var(--font);
+  --font-codice: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  --codice-fondo: #161b22; --codice-testo: #e6edf3;
+  --cat-verde: #1f7a4a; --cat-viola: #6d3fd1; --cat-ambra: #9a5b05; --cat-blu: #1d5fa8; --cat-grigio: #5b6470;
+}
+
+/* ARIA: chiaro, bianco e blu, molto spazio (il tema Aria del sito). E il predefinito. */
+:root, [data-pannello="aria"]{
+  color-scheme: light;
+  --bg: #f6f7f9; --surface: #ffffff; --fondo-2: #f9fafb; --campo: #ffffff; --riga-hover: #f5f8ff;
+  --text: #111827; --text-muted: #4b5563;
+  --border: #e5e7eb; --bordo-forte: #c9ced6;
+  --coral: #2563eb; --coral-hover: #1d4ed8; --coral-light: #eaf1fe; --su-accento: #ffffff; --accento-testo: #1d4ed8; --link: #1d4ed8;
+  --sage: #047857; --sage-light: #ecfdf5; --successo-testo: #065f46; --successo-bordo: #a7f3d0;
+  --mustard: #b45309; --mustard-light: #fffbeb; --attenzione-testo: #92400e; --attenzione-bordo: #fcd34d;
+  --errore: #dc2626; --errore-chiaro: #fef2f2; --errore-testo: #b91c1c; --errore-bordo: #fecaca;
+  --info-chiaro: #eff6ff; --info-testo: #1e40af; --info-bordo: #bfdbfe;
+  --sidebar: #ffffff; --sidebar-hover: #f1f5f9; --sidebar-testo: #374151; --sidebar-testo-2: #6b7280;
+  --sidebar-attivo: #2563eb; --sidebar-su-attivo: #ffffff; --sidebar-bordo: #e5e7eb; --logo: #111827; --logo-accento: #2563eb;
+  --ombra: 0 1px 2px rgba(17,24,39,.05); --ombra-grande: 0 20px 50px rgba(17,24,39,.16);
+  --velo: rgba(17,24,39,.42); --fuoco: rgba(37,99,235,.28); --tela-fondo: #eceef2;
+  --radius: 12px;
+}
+
+/* BOTTEGA: caldo, carta crema, terracotta e verde salvia (il tema Bottega del sito, vicino al pannello di prima). */
+[data-pannello="bottega"]{
+  color-scheme: light;
+  --bg: #f3ece0; --surface: #fffdf9; --fondo-2: #faf6ef; --campo: #fffdf9; --riga-hover: #fbf5ec;
+  --text: #2b2118; --text-muted: #5f4d3e;
+  --border: #e6dccb; --bordo-forte: #cbbba2;
+  --coral: #b4532a; --coral-hover: #974421; --coral-light: #f8e7dc; --su-accento: #ffffff; --accento-testo: #9a4523; --link: #9a4523;
+  --sage: #3f6b5a; --sage-light: #e6efe9; --successo-testo: #2f5446; --successo-bordo: #bcd3c6;
+  --mustard: #a2690c; --mustard-light: #fbf1dc; --attenzione-testo: #7a5208; --attenzione-bordo: #ecd29a;
+  --errore: #b42318; --errore-chiaro: #fbe9e5; --errore-testo: #9b1c13; --errore-bordo: #f0c2b8;
+  --info-chiaro: #eef3f6; --info-testo: #2d4f63; --info-bordo: #c3d5df;
+  --sidebar: #2b2118; --sidebar-hover: #3d3024; --sidebar-testo: #ece3d6; --sidebar-testo-2: #bfae99;
+  --sidebar-attivo: #b4532a; --sidebar-su-attivo: #ffffff; --sidebar-bordo: rgba(255,255,255,.1); --logo: #ffffff; --logo-accento: #e9a57f;
+  --ombra: 0 1px 2px rgba(43,33,24,.06); --ombra-grande: 0 20px 50px rgba(43,33,24,.2);
+  --velo: rgba(43,33,24,.45); --fuoco: rgba(180,83,42,.25); --tela-fondo: #e9e1d4;
+  --font-titolo: Georgia, 'Times New Roman', serif;
+  --radius: 10px;
+}
+
+/* COSMO: scuro, notte e viola (il tema Cosmo del sito). */
+[data-pannello="cosmo"]{
+  color-scheme: dark;
+  --bg: #070b18; --surface: #0e1428; --fondo-2: #121a33; --campo: #0a1022; --riga-hover: #141d38;
+  --text: #e6ebf5; --text-muted: #a7b1c6;
+  --border: #222c4a; --bordo-forte: #3a4772;
+  --coral: #a78bfa; --coral-hover: #c4b5fd; --coral-light: #221a45; --su-accento: #0d0820; --accento-testo: #c4b5fd; --link: #7dd3fc;
+  --sage: #4ade80; --sage-light: #0f2a1d; --successo-testo: #86efac; --successo-bordo: #1f5136;
+  --mustard: #fbbf24; --mustard-light: #2a2108; --attenzione-testo: #fcd34d; --attenzione-bordo: #5c4610;
+  --errore: #f87171; --errore-chiaro: #2d1316; --errore-testo: #fca5a5; --errore-bordo: #5f2328;
+  --info-chiaro: #0f1f3a; --info-testo: #93c5fd; --info-bordo: #1e3a66;
+  --sidebar: #050813; --sidebar-hover: #121a33; --sidebar-testo: #c7cfe0; --sidebar-testo-2: #8a95ad;
+  --sidebar-attivo: #a78bfa; --sidebar-su-attivo: #0d0820; --sidebar-bordo: #18203a; --logo: #ffffff; --logo-accento: #22d3ee;
+  --ombra: 0 1px 2px rgba(0,0,0,.4); --ombra-grande: 0 24px 60px rgba(0,0,0,.6);
+  --velo: rgba(2,4,12,.7); --fuoco: rgba(167,139,250,.35); --tela-fondo: #04070f;
+  --codice-fondo: #04070f;
+  --cat-verde: #17804a; --cat-viola: #7046d8; --cat-ambra: #9a5b05; --cat-blu: #1f63ad; --cat-grigio: #4b5568;
+  --radius: 14px;
+}
+
+/* LAVAGNA: scuro, verde ardesia e testo color gesso (il tema d'esempio Lavagna). */
+[data-pannello="lavagna"]{
+  color-scheme: dark;
+  --bg: #1b2521; --surface: #222e2a; --fondo-2: #26332e; --campo: #1d2824; --riga-hover: #2a3833;
+  --text: #f1efe6; --text-muted: #c9c6b8;
+  --border: #34443e; --bordo-forte: #50645b;
+  --coral: #f2c94c; --coral-hover: #f6d878; --coral-light: #38382a; --su-accento: #1f2a26; --accento-testo: #f2c94c; --link: #f2c94c;
+  --sage: #7fb7a4; --sage-light: #22392f; --successo-testo: #a8d5c4; --successo-bordo: #3d6152;
+  --mustard: #f0b65a; --mustard-light: #3b3220; --attenzione-testo: #f5cf8e; --attenzione-bordo: #6b5530;
+  --errore: #e4785b; --errore-chiaro: #3d2620; --errore-testo: #f2a48f; --errore-bordo: #74402f;
+  --info-chiaro: #213540; --info-testo: #a9d1e0; --info-bordo: #3b5b6a;
+  --sidebar: #151d1a; --sidebar-hover: #26332e; --sidebar-testo: #dcd9cc; --sidebar-testo-2: #a8a597;
+  --sidebar-attivo: #f2c94c; --sidebar-su-attivo: #1f2a26; --sidebar-bordo: #26332e; --logo: #f1efe6; --logo-accento: #f2c94c;
+  --ombra: 0 1px 2px rgba(0,0,0,.3); --ombra-grande: 0 24px 60px rgba(0,0,0,.5);
+  --velo: rgba(10,14,12,.65); --fuoco: rgba(242,201,76,.3); --tela-fondo: #141b18;
+  --codice-fondo: #101614;
+  --font-titolo: 'Trebuchet MS', 'Segoe UI', sans-serif;
+  --radius: 6px;
+}
+
+/* Quill (l'editor dei testi, servito in casa): la barra e il foglio seguono l'aspetto. */
+htmlhtml[data-pannello] .ql-snow .ql-stroke { stroke: var(--text); }
+htmlhtml[data-pannello] .ql-snow .ql-fill, html[data-pannello] .ql-snow .ql-stroke.ql-fill { fill: var(--text); }
+htmlhtml[data-pannello] .ql-snow .ql-picker { color: var(--text); }
+htmlhtml[data-pannello] .ql-snow .ql-picker-options { background: var(--surface); }
+htmlhtml[data-pannello] .ql-toolbar.ql-snow, html[data-pannello] .ql-container.ql-snow, html[data-pannello] .ql-snow .ql-picker.ql-expanded .ql-picker-options { border-color: var(--border); }
+htmlhtml[data-pannello] .ql-snow.ql-toolbar button:hover .ql-stroke, html[data-pannello] .ql-snow.ql-toolbar button.ql-active .ql-stroke, html[data-pannello] .ql-snow .ql-picker-label:hover .ql-stroke { stroke: var(--accento-testo); }
+htmlhtml[data-pannello] .ql-snow.ql-toolbar button:hover .ql-fill, html[data-pannello] .ql-snow.ql-toolbar button.ql-active .ql-fill { fill: var(--accento-testo); }
+htmlhtml[data-pannello] .ql-snow.ql-toolbar button:hover, html[data-pannello] .ql-snow.ql-toolbar button.ql-active, html[data-pannello] .ql-snow .ql-picker-label:hover, html[data-pannello] .ql-snow .ql-picker-item:hover { color: var(--accento-testo); }
+htmlhtml[data-pannello] .ql-editor { color: var(--text); }
+htmlhtml[data-pannello] .ql-editor.ql-blank::before { color: var(--text-muted); }
+htmlhtml[data-pannello] .ql-snow .ql-tooltip { background: var(--surface); color: var(--text); border-color: var(--border); box-shadow: var(--ombra-grande); }
+htmlhtml[data-pannello] .ql-snow .ql-tooltip input[type=text] { background: var(--campo); color: var(--text); border-color: var(--border); }

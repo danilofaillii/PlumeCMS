@@ -13,17 +13,17 @@ $homeId = (int)db()->query('SELECT id FROM ' . tbl('pages') . ' WHERE slug = ' .
  * Il menu: voci semplici e gruppi con le sottovoci. 'qui' dice quando la voce è quella aperta.
  */
 $menu = [
-    ['Dashboard', 'index.php', '📊', $qui === 'index.php'],
-    ['Articoli', 'contenuti.php?tipo=articoli', '📝', $ctQui && ($ctTipo === '' || $ctTipo === 'articoli')],
-    ['Pagine', 'contenuti.php?tipo=pagine', '📄', $ctQui && $ctTipo === 'pagine', [['Home nell\'editor', $homeId ? 'editor.php?id=' . $homeId : 'contenuti.php?tipo=pagine', false]]],
-    ['Form', 'form.php', '🧾', $qui === 'form.php'],
-    ['Popup', 'popup.php', '🪟', $qui === 'popup.php'],
-    ['Categorie', 'categories.php', '📁', $qui === 'categories.php' && ($_GET['tipo'] ?? '') !== 'tag'],
-    ['Tag', 'categories.php?tipo=tag', '🏷', $qui === 'categories.php' && ($_GET['tipo'] ?? '') === 'tag'],
-    ['Media', 'media.php', '🖼', $qui === 'media.php'],
-    $sonoAdminMenu ? ['Download', 'scaricabili.php', '&#11015;', $qui === 'scaricabili.php'] : null, // download manager (1.2.4)
-    $sonoAdminMenu ? ['Utenti', 'utenti.php', '👤', $qui === 'utenti.php'] : null,
-    ['Newsletter e form', 'newsletter.php', '✉️', in_array($qui, ['newsletter.php', 'newsletter-campagna.php', 'newsletter-flussi.php', 'newsletter-statistiche.php', 'form-submissions.php'], true), [
+    ['Dashboard', 'index.php', 'grafico-barre', $qui === 'index.php'],
+    ['Articoli', 'contenuti.php?tipo=articoli', 'documento-testo', $ctQui && ($ctTipo === '' || $ctTipo === 'articoli')],
+    ['Pagine', 'contenuti.php?tipo=pagine', 'documento', $ctQui && $ctTipo === 'pagine', [['Home nell\'editor', $homeId ? 'editor.php?id=' . $homeId : 'contenuti.php?tipo=pagine', false]]],
+    ['Form', 'form.php', 'lista-spunte', $qui === 'form.php'],
+    ['Popup', 'popup.php', 'finestra', $qui === 'popup.php'],
+    ['Categorie', 'categories.php', 'cartella', $qui === 'categories.php' && ($_GET['tipo'] ?? '') !== 'tag'],
+    ['Tag', 'categories.php?tipo=tag', 'etichetta', $qui === 'categories.php' && ($_GET['tipo'] ?? '') === 'tag'],
+    ['Media', 'media.php', 'immagine', $qui === 'media.php'],
+    $sonoAdminMenu ? ['Download', 'scaricabili.php', 'download', $qui === 'scaricabili.php'] : null, // download manager (1.2.4)
+    $sonoAdminMenu ? ['Utenti', 'utenti.php', 'utenti', $qui === 'utenti.php'] : null,
+    ['Newsletter e form', 'newsletter.php', 'email', in_array($qui, ['newsletter.php', 'newsletter-campagna.php', 'newsletter-flussi.php', 'newsletter-statistiche.php', 'form-submissions.php'], true), [
         ['Campagne', 'newsletter.php', in_array($qui, ['newsletter.php', 'newsletter-campagna.php'], true) && !in_array($_GET['scheda'] ?? '', ['iscritti', 'liste', 'impostazioni'], true)],
         ['Iscritti e liste', 'newsletter.php?scheda=iscritti', $qui === 'newsletter.php' && in_array($_GET['scheda'] ?? '', ['iscritti', 'liste', 'impostazioni'], true)],
         ['Invii dei form', 'form-submissions.php', $qui === 'form-submissions.php'],
@@ -31,7 +31,7 @@ $menu = [
         ['Statistiche', 'newsletter-statistiche.php', $qui === 'newsletter-statistiche.php'],
     ]],
     // menu (26 ottobre): tutto quello che è dell'editor in un gruppo solo. Le pagine nuove: Temi, Widget, Versioni (agente versioni), Impostazioni dell'editor.
-    ['Editor', 'design.php', '&#9998;', in_array($qui, EDITOR_MENU_PAGINE, true), array_values(array_filter([
+    ['Editor', 'design.php', 'matita', in_array($qui, EDITOR_MENU_PAGINE, true), array_values(array_filter([
         $sonoAdminMenu ? ['Temi', 'temi.php', $qui === 'temi.php'] : null,
         ['Stile del sito', 'design.php', $qui === 'design.php'],
         ['Header e footer', 'modelli.php', $qui === 'modelli.php'],
@@ -43,7 +43,7 @@ $menu = [
         ['Informazioni', 'informazioni.php', $qui === 'informazioni.php'],
     ]))],
     // seo: Search Console, Bing, IndexNow, statistiche, robots, sitemap, redirect e 404, dati strutturati, llms.txt. Solo amministratore.
-    $sonoAdminMenu ? ['SEO e AEO', 'seo.php', '&#128269;', $qui === 'seo.php', [
+    $sonoAdminMenu ? ['SEO e AEO', 'seo.php', 'cerca', $qui === 'seo.php', [
         ['Panoramica', 'seo.php?scheda=panoramica', $qui === 'seo.php' && in_array($_GET['scheda'] ?? 'panoramica', ['panoramica'], true)],
         ['Motori di ricerca', 'seo.php?scheda=motori', $qui === 'seo.php' && ($_GET['scheda'] ?? '') === 'motori'],
         ['Copertura e prestazioni', 'seo.php?scheda=copertura', $qui === 'seo.php' && in_array($_GET['scheda'] ?? '', ['copertura', 'prestazioni'], true)],
@@ -53,7 +53,7 @@ $menu = [
         ['Redirect e 404', 'seo.php?scheda=redirect', $qui === 'seo.php' && ($_GET['scheda'] ?? '') === 'redirect'],
     ]] : null,
     // Il redattore vede solo Log cron e Diagnosi: posta, aggiornamenti e SQL sono dell'amministratore.
-    ['Impostazioni', $sonoAdminMenu ? 'impostazioni.php' : 'cron-log.php', '⚙', in_array($qui, ['impostazioni.php', 'aggiornamenti.php', 'copia-sito.php', 'cron-log.php', 'sicurezza.php'], true), array_values(array_filter([
+    ['Impostazioni', $sonoAdminMenu ? 'impostazioni.php' : 'cron-log.php', 'impostazioni', in_array($qui, ['impostazioni.php', 'aggiornamenti.php', 'copia-sito.php', 'cron-log.php', 'sicurezza.php'], true), array_values(array_filter([
         $sonoAdminMenu ? ['Configurazione email', 'impostazioni.php', $qui === 'impostazioni.php'] : null,
         $sonoAdminMenu ? ['Sicurezza', 'sicurezza.php', $qui === 'sicurezza.php'] : null, // sicurezza: checklist, 2FA, blocchi, CSP, registro
         $sonoAdminMenu ? ['Aggiornamenti', 'aggiornamenti.php', $qui === 'aggiornamenti.php'] : null,
@@ -62,6 +62,10 @@ $menu = [
     ]))],
 ];
 $menu = array_values(array_filter($menu));
+// 1.4.0: le icone del menu sono quelle disegnate del set (includes/icone.php), del colore del testo: seguono l'aspetto.
+// Una voce di un modulo puo ancora dare un'icona sua (un'entita HTML): passa com'e.
+require_once dirname(__DIR__, 2) . '/includes/icone.php';
+$iconaMenu = fn(string $i): string => preg_match('/^[a-z-]+$/', $i) && icona_esiste($i) ? icona_svg($i, 'nav-svg') : $i;
 // Le voci dei moduli del sito: ogni modulo aggiunge le sue pagine al menu (chiave menu del manifest).
 $menu = cms_menu_integra($menu, $qui, (string)$ctTipo, $sonoAdminMenu);
 // Ruoli: il redattore vede solo le voci che puo aprire (le stesse regole di require_login, auth_redattore_puo).
@@ -85,11 +89,11 @@ if (!$sonoAdminMenu) {
 }
 ?>
 <!DOCTYPE html>
-<html lang="it">
+<html lang="it" data-pannello="<?= h(pannello_aspetto($user)) ?>">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title><?= htmlspecialchars($adminTitle) ?> — Pannello</title>
+  <title><?= htmlspecialchars($adminTitle) ?> &middot; Pannello</title>
   <link rel="stylesheet" href="assets/css/admin.css">
   <script src="assets/campi-protetti.js"></script>
   <script src="assets/pannello.js" defer></script>
@@ -104,10 +108,10 @@ if (!$sonoAdminMenu) {
     <nav class="admin-nav">
       <?php foreach ($menu as $v): [$nome, $href, $icona, $attivo] = $v; $sotto = $v[4] ?? []; ?>
       <?php if (!$sotto): ?>
-      <a href="<?= h($href) ?>" class="<?= $attivo ? 'active' : '' ?>"><span class="nav-icon"><?= $icona ?></span> <?= h($nome) ?></a>
+      <a href="<?= h($href) ?>" class="<?= $attivo ? 'active' : '' ?>"><span class="nav-icon"><?= $iconaMenu((string)$icona) ?></span> <?= h($nome) ?></a>
       <?php else: ?>
       <details class="nav-gruppo" <?= $attivo ? 'open' : '' ?>>
-        <summary class="<?= $attivo ? 'active' : '' ?>"><a href="<?= h($href) ?>"><span class="nav-icon"><?= $icona ?></span> <?= h($nome) ?></a><span class="nav-freccia" title="Apri o chiudi il gruppo">▸</span></summary>
+        <summary class="<?= $attivo ? 'active' : '' ?>"><a href="<?= h($href) ?>"><span class="nav-icon"><?= $iconaMenu((string)$icona) ?></span> <?= h($nome) ?></a><span class="nav-freccia" title="Apri o chiudi il gruppo">&#9656;</span></summary>
         <div class="nav-sotto">
           <?php foreach ($sotto as [$sn, $sh, $sa]): ?>
           <a href="<?= h($sh) ?>" class="<?= $sa ? 'active' : '' ?>"><?= h($sn) ?></a>
@@ -118,10 +122,10 @@ if (!$sonoAdminMenu) {
       <?php endforeach; ?>
     </nav>
     <div class="admin-sidebar-footer">
-      <a href="<?= h(cms_url_sito()) ?>/" target="_blank">👁 Vedi sito</a>
-      <a href="password.php">🔑 Password</a>
-      <a href="account.php">&#128274; Il mio accesso</a>
-      <a href="logout.php">🚪 Esci</a>
+      <a href="<?= h(cms_url_sito()) ?>/" target="_blank"><?= icona_svg('occhio', 'nav-svg') ?> Vedi sito</a>
+      <a href="password.php"><?= icona_svg('chiave', 'nav-svg') ?> Password</a>
+      <a href="account.php" class="<?= $qui === 'account.php' ? 'active' : '' ?>"><?= icona_svg('lucchetto', 'nav-svg') ?> Il mio accesso</a>
+      <a href="logout.php"><?= icona_svg('esci', 'nav-svg') ?> Esci</a>
     </div>
   </aside>
   <main class="admin-main">

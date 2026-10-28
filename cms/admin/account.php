@@ -1,7 +1,7 @@
 <?php
 /**
- * Il mio accesso: secondo fattore (app di autenticazione, codici di recupero), i dispositivi collegati,
- * "esci da tutti i dispositivi". Nome utente e password restano in password.php.
+ * Il mio accesso: l'aspetto del pannello (1.4.0), secondo fattore (app di autenticazione, codici di recupero), i dispositivi
+ * collegati, "esci da tutti i dispositivi". Nome utente e password restano in password.php.
  */
 require_once __DIR__ . '/includes/auth.php';
 require_once __DIR__ . '/includes/admin-functions.php';
@@ -17,7 +17,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     verify_csrf();
     $azione = (string)($_POST['azione'] ?? '');
     try {
-        if ($azione === 'totp_inizia') {
+        if ($azione === 'aspetto') {
+            // 1.4.0: l'aspetto del pannello, solo per chi e collegato (l'id viene dalla sessione, mai dal modulo).
+            $scelto = (string)($_POST['aspetto'] ?? '');
+            if (!pannello_aspetto_salva((int)$io['id'], $scelto)) throw new RuntimeException('Aspetto non riconosciuto: scegli uno dei quattro.');
+            flash('success', 'Aspetto del pannello: ' . pannello_aspetti()[$scelto]['nome'] . '.');
+        } elseif ($azione === 'totp_inizia') {
             // Un segreto nuovo, ancora non attivo: si attiva solo quando l'app risponde con un codice giusto.
             $_SESSION['totp_bozza'] = sicurezza_totp_segreto();
         } elseif ($azione === 'totp_conferma') {
@@ -63,22 +68,64 @@ require_once __DIR__ . '/includes/admin-header.php';
 <style>
 .acc-grid { display:grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap:1.2rem; align-items:start; max-width:1100px }
 .acc-qr { display:flex; gap:1.2rem; align-items:flex-start; flex-wrap:wrap; margin:1rem 0 }
-.acc-qr svg { width:180px; height:180px; border:1px solid var(--border, #e8ddd0); border-radius:8px; background:#fff }
-.acc-codici { display:grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap:.4rem .9rem; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size:1rem; background:#fff8e6; border:1px solid #f1d58a; border-radius:8px; padding:1rem; margin:.8rem 0 }
-.acc-ok { color:#15803d; font-weight:600 } .acc-no { color:#b45309; font-weight:600 }
-.acc-segreto { font-family: ui-monospace, monospace; letter-spacing:.08em; word-break:break-all; background:#f4f1ec; padding:.4rem .6rem; border-radius:6px; display:inline-block }
+.acc-qr svg { width:180px; height:180px; border:1px solid var(--border); border-radius:8px; background:#fff /* fisso: il codice QR vuole il bianco */ }
+.acc-codici { display:grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap:.4rem .9rem; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size:1rem; background:var(--mustard-light); color:var(--attenzione-testo); border:1px solid var(--attenzione-bordo); border-radius:8px; padding:1rem; margin:.8rem 0 }
+.acc-ok { color:var(--successo-testo); font-weight:600 } .acc-no { color:var(--attenzione-testo); font-weight:600 }
+.acc-segreto { font-family: ui-monospace, monospace; letter-spacing:.08em; word-break:break-all; background:var(--fondo-2); padding:.4rem .6rem; border-radius:6px; display:inline-block }
+.acc-aspetti { grid-column:1/-1 }
+.asp-scelta { display:grid; grid-template-columns:repeat(auto-fill, minmax(210px, 1fr)); gap:1rem; margin:.4rem 0 1rem; border:0 }
+.asp-voce { position:relative; display:flex; flex-direction:column; gap:.55rem; cursor:pointer; border-radius:calc(var(--radius) + 2px); padding:.5rem; border:2px solid transparent }
+.asp-voce:hover { border-color:var(--border) }
+.asp-voce:has(input:checked) { border-color:var(--coral); background:var(--coral-light) }
+.asp-voce:has(input:focus-visible) { outline:2px solid var(--coral); outline-offset:2px }
+.asp-voce input { position:absolute; opacity:0; width:1px; height:1px }
+.asp-testo { display:flex; flex-direction:column; gap:.1rem; padding:0 .2rem .2rem }
+.asp-testo b { font-size:.95rem } .asp-testo small { font-size:.8rem; color:var(--text-muted) }
+.asp-voce:has(input:checked) .asp-testo b::after { content:" \2713"; color:var(--accento-testo) }
+/* La miniatura: un pannello vero in piccolo, con le variabili dell'aspetto (data-pannello sull'elemento) */
+.asp-mini { display:grid; grid-template-columns:28% 1fr; height:118px; border-radius:var(--radius); overflow:hidden; border:1px solid var(--border); background:var(--bg); box-shadow:var(--ombra) }
+.asp-mini-lato { background:var(--sidebar); border-right:1px solid var(--sidebar-bordo); padding:9px 7px; display:flex; flex-direction:column; gap:6px }
+.asp-mini-lato i { display:block; height:5px; border-radius:3px; background:var(--sidebar-testo-2); opacity:.55 }
+.asp-mini-lato i:first-child { width:70%; background:var(--logo); opacity:1; margin-bottom:3px }
+.asp-mini-lato i.on { background:var(--sidebar-attivo); opacity:1; height:9px }
+.asp-mini-corpo { padding:9px; display:flex; flex-direction:column; gap:7px }
+.asp-mini-barra { height:12px; background:var(--surface); border:1px solid var(--border); border-radius:4px }
+.asp-mini-scheda { flex:1; background:var(--surface); border:1px solid var(--border); border-radius:6px; padding:7px; display:flex; flex-direction:column; gap:5px }
+.asp-mini-scheda span { display:block; height:5px; border-radius:3px; background:var(--text); width:62% }
+.asp-mini-scheda span + span { background:var(--text-muted); width:85%; height:4px }
+.asp-mini-scheda em { display:block; margin-top:auto; width:42%; height:11px; border-radius:4px; background:var(--coral) }
 </style>
 <?php if ($obbligatorio): ?>
 <div class="flash flash-error">Il secondo fattore e obbligatorio per gli amministratori di questo sito. Finche non lo attivi qui sotto, il resto del pannello resta chiuso.</div>
 <?php endif; ?>
 <?php if ($codiciNuovi): ?>
-<div class="form-card" style="max-width:720px;border:2px solid #f1d58a">
+<div class="form-card" style="max-width:720px;border:2px solid var(--attenzione-bordo)">
   <h3>Codici di recupero: salvali adesso</h3>
   <p style="font-size:.9rem">Ognuno vale una volta sola e ti fa entrare se perdi il telefono. Stampali o mettili nel gestore di password. <strong>Questa e l'unica volta che li vedi.</strong></p>
   <div class="acc-codici"><?php foreach ($codiciNuovi as $c): ?><span><?= h($c) ?></span><?php endforeach; ?></div>
 </div>
 <?php endif; ?>
 <div class="acc-grid">
+  <?php $mioAspetto = pannello_aspetto($io); ?>
+  <div class="form-card acc-aspetti" id="aspetto">
+    <h3>Aspetto del pannello</h3>
+    <p style="font-size:.88rem;color:var(--text-muted)">I colori del pannello, solo per te: ognuno sceglie il suo. Il sito non cambia.</p>
+    <form method="post"><?= csrf_field() ?><input type="hidden" name="azione" value="aspetto">
+      <fieldset class="asp-scelta"><legend class="sr-solo">Scegli l'aspetto</legend>
+        <?php foreach (pannello_aspetti() as $chiave => $a): ?>
+        <label class="asp-voce">
+          <input type="radio" name="aspetto" value="<?= h($chiave) ?>"<?= $chiave === $mioAspetto ? ' checked' : '' ?>>
+          <span class="asp-mini" data-pannello="<?= h($chiave) ?>" aria-hidden="true">
+            <span class="asp-mini-lato"><i></i><i class="on"></i><i></i><i></i><i></i></span>
+            <span class="asp-mini-corpo"><span class="asp-mini-barra"></span><span class="asp-mini-scheda"><span></span><span></span><em></em></span></span>
+          </span>
+          <span class="asp-testo"><b><?= h($a['nome']) ?></b><small><?= h($a['descrizione']) ?></small></span>
+        </label>
+        <?php endforeach; ?>
+      </fieldset>
+      <button class="btn btn-primary">Usa questo aspetto</button>
+    </form>
+  </div>
   <div class="form-card">
     <h3>Secondo fattore (app di autenticazione)</h3>
     <?php if (!empty($io['totp_attivo'])): ?>

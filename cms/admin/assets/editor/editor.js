@@ -119,7 +119,7 @@
   function avvisoH1(ha) {
     var n = $('#ed-titolo-pagina');
     n.title = ha ? '' : 'La pagina non ha un titolo H1: aggiungi un widget Titolo con livello H1 (o un\'Apertura).';
-    n.style.color = ha ? '' : '#b45309';
+    n.style.color = ha ? '' : 'var(--attenzione-testo)';
   }
 
   window.addEventListener('message', function (e) {
@@ -413,7 +413,7 @@
     }
     var elx = p.el, def = DEF[elx.tipo];
     $('#ed-modifica-nome').textContent = def.etichetta;
-    azioni.innerHTML = '<button type="button" data-az="su" title="Sposta su">↑</button><button type="button" data-az="giu" title="Sposta giù">↓</button><button type="button" data-az="duplica" title="Duplica">⧉</button><button type="button" data-az="elimina" title="Elimina">🗑</button>';
+    azioni.innerHTML = '<button type="button" data-az="su" title="Sposta su">↑</button><button type="button" data-az="giu" title="Sposta giù">↓</button><button type="button" data-az="duplica" title="Duplica">⧉</button><button type="button" data-az="elimina" title="Elimina">\uD83D\uDDD1</button>';
     $$('button', azioni).forEach(function (b) { b.addEventListener('click', function () { azione(b.dataset.az, elx.id); }); });
     var presenti = [];
     def.controlli.forEach(function (c) { if (presenti.indexOf(c.scheda) < 0) presenti.push(c.scheda); });
@@ -1054,7 +1054,7 @@
     }
     function voce(el) {
       var nascosto = el.impostazioni && (el.impostazioni.nascondi_d || el.impostazioni.nascondi_t || el.impostazioni.nascondi_m);
-      var h = '<li><div class="ed-nav-voce' + (el.id === selezionato ? ' attivo' : '') + '" data-id="' + el.id + '"><i>' + (DEF[el.tipo].icona || '') + '</i>' + DEF[el.tipo].etichetta + ' <small>' + escapeHtml(riassunto(el)) + '</small>' + (nascosto ? '<span class="ed-nav-occhio" title="Nascosto su qualche misura">👁</span>' : '') + '</div>';
+      var h = '<li><div class="ed-nav-voce' + (el.id === selezionato ? ' attivo' : '') + '" data-id="' + el.id + '"><i>' + (DEF[el.tipo].icona || '') + '</i>' + DEF[el.tipo].etichetta + ' <small>' + escapeHtml(riassunto(el)) + '</small>' + (nascosto ? '<span class="ed-nav-occhio" title="Nascosto su qualche misura">\uD83D\uDC41</span>' : '') + '</div>';
       if (el.figli) h += '<ul>' + el.figli.map(voce).join('') + '</ul>';
       return h + '</li>';
     }

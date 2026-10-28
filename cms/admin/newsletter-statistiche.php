@@ -41,7 +41,7 @@ require_once __DIR__ . '/includes/admin-header.php';
         <td class="ct-muto"><b><?= (int)$c['clic'] ?></b> · <?= $c['tasso_clic'] ?>%</td>
       </tr>
       <?php if ($dettaglio === (int)$c['id']): $link = newsletter_clic_per_link($dettaglio); ?>
-      <tr><td colspan="5" style="background:#faf8f5">
+      <tr><td colspan="5" style="background:var(--fondo-2)">
         <b style="font-size:.85rem">Link più cliccati</b>
         <?php if (!$link): ?><p class="ct-muto">Nessun clic ancora.</p><?php else: ?>
         <ul class="db-lista" style="font-size:.85rem;margin:.4rem 0 0;padding:0;list-style:none"><?php foreach ($link as $l): ?><li style="display:flex;justify-content:space-between;gap:1rem;padding:.2rem 0"><span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap"><?= h($l['url']) ?></span><b><?= (int)$l['n'] ?></b></li><?php endforeach; ?></ul>

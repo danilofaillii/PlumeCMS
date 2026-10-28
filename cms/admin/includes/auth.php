@@ -16,6 +16,7 @@ set_error_handler(function (int $n, string $msg, string $file, int $riga): bool 
 require_once __DIR__ . '/../../includes/config.php';
 require_once __DIR__ . '/../../includes/db.php';
 require_once __DIR__ . '/../../includes/sicurezza.php';
+require_once __DIR__ . '/../../includes/pannello-aspetto.php'; // 1.4.0: gli aspetti del pannello
 
 // Indirizzo pulito. Con un pezzo in più dopo il nome del file (/admin/index.php/qualcosa) Apache apre lo stesso la pagina,
 // ma i fogli di stile e gli script, scritti relativi, si cercano dentro "index.php/" e il pannello appare senza grafica

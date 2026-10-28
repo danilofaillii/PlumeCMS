@@ -1,56 +1,56 @@
 /* La tela dei flussi automatici: tavolozza a sinistra, tela al centro, pannello del blocco a destra. */
 .fl-form{display:flex;flex-direction:column;gap:.8rem;height:calc(100vh - 140px);min-height:560px}
 .fl-testa{display:flex;gap:.6rem;align-items:center;flex-wrap:wrap}
-.fl-nome{font:600 1.1rem/1.3 var(--font);padding:.5rem .8rem;border:1px solid var(--border);border-radius:10px;background:#fff;min-width:280px}
+.fl-nome{font:600 1.1rem/1.3 var(--font);padding:.5rem .8rem;border:1px solid var(--border);border-radius:10px;background:var(--campo);color:var(--text);min-width:280px}
 .fl-acceso{display:flex;gap:.4rem;align-items:center;font-size:.9rem}
 .fl-spazio{flex:1}
 .fl-corpo{display:grid;grid-template-columns:230px minmax(0,1fr) 340px;gap:.8rem;flex:1;min-height:0}
 .fl-tavolozza,.fl-pannello{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:.9rem;overflow:auto;font-size:.88rem}
 .fl-tavolozza h4{font-size:.78rem;text-transform:uppercase;letter-spacing:.06em;color:var(--text-muted);margin:0 0 .5rem}
 .fl-tavolozza .hint{font-size:.78rem;color:var(--text-muted);margin:0 0 .6rem}
-.fl-tavolozza select,.fl-tavolozza input,.fl-pannello select,.fl-pannello input[type=text],.fl-pannello input[type=number],.fl-pannello input[type=url]{width:100%;font:inherit;padding:.4rem .5rem;border:1px solid var(--border);border-radius:8px;background:#fff;margin-bottom:.5rem}
+.fl-tavolozza select,.fl-tavolozza input,.fl-pannello select,.fl-pannello input[type=text],.fl-pannello input[type=number],.fl-pannello input[type=url]{width:100%;font:inherit;padding:.4rem .5rem;border:1px solid var(--border);border-radius:8px;background:var(--campo);color:var(--text);margin-bottom:.5rem}
 .fl-mini{display:block;font-size:.75rem;color:var(--text-muted);margin:.4rem 0 .2rem}
-.fl-pezzo{border:1px solid var(--border);border-radius:10px;padding:.5rem .6rem;margin-bottom:.5rem;background:#fff;cursor:grab;user-select:none;touch-action:none}
+.fl-pezzo{border:1px solid var(--border);border-radius:10px;padding:.5rem .6rem;margin-bottom:.5rem;background:var(--fondo-2);cursor:grab;user-select:none;touch-action:none}
 .fl-pezzo:active{cursor:grabbing}
 .fl-pezzo b{display:block;font-size:.88rem}
 .fl-pezzo small{display:block;color:var(--text-muted);font-size:.72rem;line-height:1.3}
-.fl-tela-box{position:relative;overflow:auto;border:1px solid var(--border);border-radius:var(--radius);background:#f6f4f0 radial-gradient(#d9d4cc 1px,transparent 1px);background-size:20px 20px}
+.fl-tela-box{position:relative;overflow:auto;border:1px solid var(--border);border-radius:var(--radius);background:var(--tela-fondo) radial-gradient(var(--bordo-forte) 1px,transparent 1px);background-size:20px 20px}
 .fl-tela{position:relative;width:3000px;height:2200px}
 .fl-archi{position:absolute;inset:0;width:100%;height:100%;overflow:visible}
-.fl-archi path{fill:none;stroke:#8b8378;stroke-width:2.5;cursor:pointer}
-.fl-archi path.fl-scelto{stroke:#7c3aed;stroke-width:3.5}
+.fl-archi path{fill:none;stroke:var(--text-muted);stroke-width:2.5;cursor:pointer}
+.fl-archi path.fl-scelto{stroke:var(--coral);stroke-width:3.5}
 .fl-archi path.fl-ombra{stroke:transparent;stroke-width:14}
-.fl-archi path.fl-temp{stroke:#7c3aed;stroke-dasharray:6 5;pointer-events:none}
-.fl-archi text{font:600 .68rem var(--font);fill:#6b645b;pointer-events:none}
-.fl-nodo{position:absolute;width:230px;background:#fff;border:1.5px solid var(--border);border-radius:12px;box-shadow:0 2px 6px rgba(0,0,0,.06);cursor:grab;user-select:none;touch-action:none}
+.fl-archi path.fl-temp{stroke:var(--coral);stroke-dasharray:6 5;pointer-events:none}
+.fl-archi text{font:600 .68rem var(--font);fill:var(--text-muted);pointer-events:none}
+.fl-nodo{position:absolute;width:230px;background:var(--surface);border:1.5px solid var(--border);border-radius:12px;box-shadow:var(--ombra);cursor:grab;user-select:none;touch-action:none}
 .fl-nodo:active{cursor:grabbing}
-.fl-nodo.fl-scelto{border-color:#7c3aed;box-shadow:0 0 0 3px rgba(124,58,237,.18)}
-.fl-nodo.fl-bersaglio{border-color:#2e9e5b;box-shadow:0 0 0 3px rgba(46,158,91,.2)}
-.fl-nodo-testa{display:flex;gap:.4rem;align-items:center;padding:.45rem .7rem;border-radius:11px 11px 0 0;font-size:.8rem;font-weight:600;color:#fff}
-.fl-nodo[data-tipo=innesco] .fl-nodo-testa{background:#2e9e5b}
-.fl-nodo[data-tipo=email] .fl-nodo-testa{background:#7c3aed}
-.fl-nodo[data-tipo=attesa] .fl-nodo-testa{background:#c98a1a}
-.fl-nodo[data-tipo=bivio] .fl-nodo-testa{background:#2271b1}
-.fl-nodo[data-tipo=fine] .fl-nodo-testa{background:#6b645b}
+.fl-nodo.fl-scelto{border-color:var(--coral);box-shadow:0 0 0 3px var(--fuoco)}
+.fl-nodo.fl-bersaglio{border-color:var(--sage);box-shadow:0 0 0 3px var(--successo-bordo)}
+.fl-nodo-testa{display:flex;gap:.4rem;align-items:center;padding:.45rem .7rem;border-radius:11px 11px 0 0;font-size:.8rem;font-weight:600;color:#fff /* fisso: sui colori di categoria --cat-* */}
+.fl-nodo[data-tipo=innesco] .fl-nodo-testa{background:var(--cat-verde)}
+.fl-nodo[data-tipo=email] .fl-nodo-testa{background:var(--cat-viola)}
+.fl-nodo[data-tipo=attesa] .fl-nodo-testa{background:var(--cat-ambra)}
+.fl-nodo[data-tipo=bivio] .fl-nodo-testa{background:var(--cat-blu)}
+.fl-nodo[data-tipo=fine] .fl-nodo-testa{background:var(--cat-grigio)}
 .fl-nodo-corpo{padding:.5rem .7rem;font-size:.82rem;line-height:1.35;min-height:2.2rem;word-break:break-word}
 .fl-nodo-corpo small{display:block;color:var(--text-muted);font-size:.72rem;margin-top:.2rem}
 .fl-nodo-numeri{display:flex;gap:.6rem;padding:0 .7rem .4rem;font-size:.7rem;color:var(--text-muted)}
 .fl-uscite{display:flex;flex-wrap:wrap;gap:.3rem .5rem;padding:.3rem .5rem .55rem;border-top:1px dashed var(--border)}
 .fl-uscita{display:flex;align-items:center;gap:.3rem;font-size:.7rem;color:var(--text-muted)}
-.fl-porta{width:14px;height:14px;border-radius:50%;border:2px solid #8b8378;background:#fff;cursor:crosshair;flex:none}
-.fl-porta.fl-collegata{background:#8b8378}
-.fl-porta:hover{border-color:#7c3aed;transform:scale(1.2)}
+.fl-porta{width:14px;height:14px;border-radius:50%;border:2px solid var(--text-muted);background:var(--surface);cursor:crosshair;flex:none}
+.fl-porta.fl-collegata{background:var(--text-muted)}
+.fl-porta:hover{border-color:var(--coral);transform:scale(1.2)}
 .fl-pannello h3{font-size:.95rem;margin:0 0 .6rem;display:flex;justify-content:space-between;align-items:center}
 .fl-pannello label{display:block;font-size:.78rem;font-weight:600;margin:.5rem 0 .2rem}
 .fl-pannello .hint{font-size:.75rem;color:var(--text-muted);margin:.2rem 0 .4rem}
 .fl-pannello-vuoto{color:var(--text-muted);font-size:.85rem;padding:1rem .2rem}
 .fl-tempo{display:grid;grid-template-columns:1fr 1fr;gap:.4rem}
 .fl-tempo input,.fl-tempo select{margin-bottom:0}
-.fl-elimina{background:none;border:0;color:#b42318;font-size:.78rem;cursor:pointer;padding:0}
-.fl-editor{background:#fff;border-radius:0 0 8px 8px;min-height:180px}
+.fl-elimina{background:none;border:0;color:var(--errore-testo);font-size:.78rem;cursor:pointer;padding:0}
+.fl-editor{background:var(--campo);color:var(--text);border-radius:0 0 8px 8px;min-height:180px}
 .fl-pannello .ql-toolbar{border-radius:8px 8px 0 0}
-.fl-cestina-arco{position:absolute;background:#b42318;color:#fff;border:0;border-radius:50%;width:22px;height:22px;font-size:.8rem;cursor:pointer;line-height:1;transform:translate(-50%,-50%)}
-.fl-avviso{display:flex;flex-wrap:wrap;gap:.6rem;align-items:center;background:#fff7e6;border:1px solid #f0c060;border-radius:10px;padding:.6rem .9rem;font-size:.88rem}
+.fl-cestina-arco{position:absolute;background:var(--errore);color:var(--surface);border:0;border-radius:50%;width:22px;height:22px;font-size:.8rem;cursor:pointer;line-height:1;transform:translate(-50%,-50%)}
+.fl-avviso{display:flex;flex-wrap:wrap;gap:.6rem;align-items:center;background:var(--mustard-light);color:var(--attenzione-testo);border:1px solid var(--attenzione-bordo);border-radius:10px;padding:.6rem .9rem;font-size:.88rem}
 .fl-avviso span{flex:1;min-width:200px}
 /* Schermo stretto: una colonna sola. La tavolozza sopra, con i blocchi in riga; la tela alta quanto serve; il pannello sotto. */
 @media (max-width:1100px){

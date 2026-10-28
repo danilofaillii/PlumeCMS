@@ -37,10 +37,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 }
 ?>
 <!DOCTYPE html>
-<html lang="it">
+<html lang="it" data-pannello="aria">
 <head>
   <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Password dimenticata — Admin</title>
+  <title>Password dimenticata &middot; Pannello</title>
   <link rel="stylesheet" href="assets/css/admin.css">
 </head>
 <body class="login-page">

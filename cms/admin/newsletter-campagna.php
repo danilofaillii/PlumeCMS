@@ -90,11 +90,11 @@ require_once __DIR__ . '/includes/admin-header.php';
 <style>
 .nlc{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:1.25rem;align-items:start}
 @media(max-width:1100px){.nlc{grid-template-columns:1fr}}
-#editor{min-height:420px;background:#fff;font-size:16px}
-.nlc iframe{width:100%;height:760px;border:1px solid var(--border);border-radius:10px;background:#f4f4f6}
+#editor{min-height:420px;background:var(--campo);color:var(--text);font-size:16px}
+.nlc iframe{width:100%;height:760px;border:1px solid var(--border);border-radius:10px;background:#f4f4f6 /* fisso: il fondo dell email */}
 .nlc-azioni{display:flex;gap:.5rem;flex-wrap:wrap;align-items:flex-end;margin-top:1rem}
 .nlc-azioni input{padding:.4rem .6rem;border:1px solid var(--border);border-radius:6px}
-.nlc-stato{padding:.6rem 1rem;border-radius:8px;background:#f0e8fa;margin-bottom:1rem}
+.nlc-stato{padding:.6rem 1rem;border-radius:8px;background:var(--info-chiaro);color:var(--info-testo);margin-bottom:1rem}
 </style>
 
 <p><a href="newsletter.php">← Tutte le campagne</a></p>

@@ -41,7 +41,7 @@ require_once __DIR__ . '/includes/admin-header.php';
 <link rel="stylesheet" href="assets/css/contenuti.css">
 <style>
 .dl-tabella td{vertical-align:top}
-.dl-tabella input[readonly]{border:1px solid var(--border);border-radius:6px;padding:.25rem .4rem;background:#fff;cursor:copy}
+.dl-tabella input[readonly]{border:1px solid var(--border);border-radius:6px;padding:.25rem .4rem;background:var(--campo);color:var(--text);cursor:copy}
 .dl-modifica{display:inline-block;vertical-align:top}
 .dl-modifica[open]{display:block;margin-bottom:.4rem}
 .dl-modifica>summary{list-style:none}

@@ -103,15 +103,15 @@ $schede = ['stato' => 'Stato', 'impostazioni' => 'Impostazioni', 'registro' => '
 ?>
 <style>
 .sic-schede { display:flex; gap:.4rem; flex-wrap:wrap; margin-bottom:1.2rem }
-.sic-schede a { padding:.45rem .9rem; border:1px solid var(--border); border-radius:999px; text-decoration:none; color:inherit; font-size:.88rem; background:#fff }
-.sic-schede a.attiva { background:#2d1b0e; color:#fff; border-color:#2d1b0e }
+.sic-schede a { padding:.45rem .9rem; border:1px solid var(--border); border-radius:999px; text-decoration:none; color:inherit; font-size:.88rem; background:var(--surface) }
+.sic-schede a.attiva { background:var(--coral); color:var(--su-accento); border-color:var(--coral) }
 .sic-lista { display:grid; gap:.5rem; max-width:900px }
-.sic-voce { display:grid; grid-template-columns: 28px minmax(0,1fr); gap:.8rem; align-items:start; background:#fff; border:1px solid var(--border); border-radius:10px; padding:.7rem .9rem }
+.sic-voce { display:grid; grid-template-columns: 28px minmax(0,1fr); gap:.8rem; align-items:start; background:var(--surface); border:1px solid var(--border); border-radius:10px; padding:.7rem .9rem }
 .sic-voce b { display:block; font-size:.92rem } .sic-voce span { font-size:.84rem; color:var(--text-muted) }
-.sic-pallino { width:18px; height:18px; border-radius:50%; margin-top:2px } .sic-ok { background:#22c55e } .sic-attenzione { background:#f59e0b } .sic-no { background:#dc2626 } .sic-info { background:#94a3b8 }
+.sic-pallino { width:18px; height:18px; border-radius:50%; margin-top:2px } .sic-ok { background:var(--sage) } .sic-attenzione { background:var(--mustard) } .sic-no { background:var(--errore) } .sic-info { background:var(--text-muted) }
 .sic-form { max-width:820px } .sic-form h4 { margin:1.4rem 0 .5rem; font-size:1rem } .sic-form .hint { font-size:.82rem; color:var(--text-muted); margin-top:.25rem }
 .sic-form .form-group { margin-bottom:.9rem } .sic-form input[type=number] { max-width:120px } .sic-form textarea { width:100%; min-height:90px; font-family:ui-monospace,monospace; font-size:.85rem }
-.sic-riquadro { border:1px solid #f1d58a; background:#fff8e6; border-radius:10px; padding:.9rem 1rem; font-size:.88rem; margin:.8rem 0 }
+.sic-riquadro { border:1px solid var(--attenzione-bordo); background:var(--mustard-light); color:var(--attenzione-testo); border-radius:10px; padding:.9rem 1rem; font-size:.88rem; margin:.8rem 0 }
 .sic-filtri { display:flex; gap:.5rem; flex-wrap:wrap; align-items:flex-end; margin-bottom:1rem } .sic-filtri label { font-size:.78rem; display:block; color:var(--text-muted) }
 .sic-filtri input, .sic-filtri select { padding:.4rem .5rem; border:1px solid var(--border); border-radius:6px }
 .sic-tab td, .sic-tab th { font-size:.84rem; vertical-align:top } .sic-mono { font-family:ui-monospace,monospace; font-size:.8rem }

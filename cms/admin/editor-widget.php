@@ -80,10 +80,10 @@ require_once __DIR__ . '/includes/admin-header.php';
 .wg-barra .wg-conta{font-size:.84rem;color:var(--text-muted);margin-left:auto}
 .wg-gruppo{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);margin-bottom:1rem;overflow:hidden}
 .wg-gruppo h3{margin:0;padding:.6rem .9rem;font-size:.86rem;letter-spacing:.06em;text-transform:uppercase;color:var(--text-muted);border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center}
-.wg-gruppo h3 button{background:none;border:0;font:inherit;font-size:.76rem;text-transform:none;letter-spacing:0;color:#2271b1;cursor:pointer}
+.wg-gruppo h3 button{background:none;border:0;font:inherit;font-size:.76rem;text-transform:none;letter-spacing:0;color:var(--link);cursor:pointer}
 .wg-lista{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr))}
 .wg-voce{display:flex;gap:.7rem;align-items:center;padding:.6rem .9rem;border-bottom:1px solid var(--border);border-right:1px solid var(--border)}
-.wg-voce i{font-style:normal;font-size:1.25rem;width:1.6rem;text-align:center;color:#6d28d9;flex:none}
+.wg-voce i{font-style:normal;font-size:1.25rem;width:1.6rem;text-align:center;color:var(--accento-testo);flex:none}
 .wg-voce b{display:block;font-size:.9rem}
 .wg-voce small{display:block;font-size:.74rem;color:var(--text-muted)}
 .wg-voce.spento b{color:var(--text-muted);text-decoration:line-through}
@@ -91,11 +91,11 @@ require_once __DIR__ . '/includes/admin-header.php';
 .wg-voce.wg-nascosto{display:none}
 .wg-int{margin-left:auto;flex:none;position:relative;width:40px;height:22px}
 .wg-int input{opacity:0;width:0;height:0;position:absolute}
-.wg-int span{position:absolute;inset:0;background:#cbd5e1;border-radius:22px;transition:.15s;cursor:pointer}
-.wg-int span::before{content:"";position:absolute;width:16px;height:16px;left:3px;top:3px;background:#fff;border-radius:50%;transition:.15s}
-.wg-int input:checked+span{background:#2d5a32}
+.wg-int span{position:absolute;inset:0;background:var(--bordo-forte);border-radius:22px;transition:.15s;cursor:pointer}
+.wg-int span::before{content:"";position:absolute;width:16px;height:16px;left:3px;top:3px;background:var(--surface);border-radius:50%;transition:.15s}
+.wg-int input:checked+span{background:var(--sage)}
 .wg-int input:checked+span::before{transform:translateX(18px)}
-.wg-int input:focus-visible+span{outline:2px solid #2271b1;outline-offset:2px}
+.wg-int input:focus-visible+span{outline:2px solid var(--coral);outline-offset:2px}
 </style>
 
 <div class="wg-testa">

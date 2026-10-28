@@ -100,15 +100,15 @@ require_once __DIR__ . '/includes/admin-header.php';
 .md-schede{display:flex;gap:.25rem;border-bottom:1px solid var(--border);margin-bottom:1rem}
 .md-schede a{padding:.6rem 1rem;text-decoration:none;color:var(--text-muted);border-bottom:2px solid transparent;font-weight:600}
 .md-schede a.attiva{color:var(--text);border-bottom-color:var(--coral)}
-.md-stella{background:none;border:0;cursor:pointer;font-size:1.3rem;line-height:1;color:#cbd5e1;padding:0 .2rem}
-.md-stella.on{color:#f59e0b}
+.md-stella{background:none;border:0;cursor:pointer;font-size:1.3rem;line-height:1;color:var(--bordo-forte);padding:0 .2rem}
+.md-stella.on{color:var(--mustard)}
 .md-azioni form{display:inline}
 .md-cond{font-size:.82rem;color:var(--text-muted)}
 dialog.md-dialogo{border:1px solid var(--border);border-radius:12px;padding:1.25rem;max-width:720px;width:95vw}
-dialog.md-dialogo::backdrop{background:rgba(0,0,0,.4)}
+dialog.md-dialogo::backdrop{background:var(--velo)}
 .md-regola{display:grid;grid-template-columns:110px 1fr 1fr 32px;gap:.4rem;align-items:center;margin-bottom:.4rem}
 .md-regola select,.md-regola input{width:100%}
-.md-regola button{border:0;background:#fde8e3;color:#b91c1c;border-radius:6px;height:30px;cursor:pointer}
+.md-regola button{border:0;background:var(--errore-chiaro);color:var(--errore-testo);border-radius:6px;height:30px;cursor:pointer}
 .md-aiuto{font-size:.82rem;color:var(--text-muted)}
 </style>
 

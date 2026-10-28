@@ -37,13 +37,13 @@ function igTypeChanged() {
   if (def.extra) {
     def.extra.forEach(([name, label, ph]) => {
       container.innerHTML += `<div class="form-group" style="margin-bottom:0.75rem">
-        <label style="font-size:0.78rem;font-weight:600;color:#9c7b65;text-transform:uppercase;display:block;margin-bottom:0.25rem">${label}</label>
-        <input type="text" data-extra="${name}" data-al-input="igUpdatePreview()" placeholder="${ph||''}" style="width:100%;padding:0.45rem 0.6rem;border:1px solid #e8ddd0;border-radius:6px;font-size:0.88rem">
+        <label style="font-size:0.78rem;font-weight:600;color:var(--text-muted);text-transform:uppercase;display:block;margin-bottom:0.25rem">${label}</label>
+        <input type="text" data-extra="${name}" data-al-input="igUpdatePreview()" placeholder="${ph||''}" style="width:100%;padding:0.45rem 0.6rem;border:1px solid var(--border);background:var(--campo);color:var(--text);border-radius:6px;font-size:0.88rem">
       </div>`;
     });
   }
 
-  container.innerHTML += `<div style="font-size:0.78rem;font-weight:600;color:#9c7b65;text-transform:uppercase;margin:1rem 0 0.5rem">${def.label}</div>`;
+  container.innerHTML += `<div style="font-size:0.78rem;font-weight:600;color:var(--text-muted);text-transform:uppercase;margin:1rem 0 0.5rem">${def.label}</div>`;
   container.innerHTML += '<div id="ig-rows"></div>';
 
   document.getElementById('ig-add-row').style.display = def.canAdd ? '' : 'none';
@@ -62,19 +62,19 @@ function igAddRow() {
   const rows = document.getElementById('ig-rows');
   const idx = rows.children.length + 1;
 
-  let html = `<div class="ig-row" style="background:#f4f1ec;padding:0.75rem;border-radius:8px;margin-bottom:0.5rem;position:relative">`;
+  let html = `<div class="ig-row" style="background:var(--fondo-2);padding:0.75rem;border-radius:8px;margin-bottom:0.5rem;position:relative">`;
   if (def.canAdd) {
-    html += `<button type="button" data-al-clic="igTogliRiga(this)" style="position:absolute;top:0.4rem;right:0.5rem;background:none;border:none;cursor:pointer;color:#b91c1c;font-size:1rem" title="Rimuovi">&times;</button>`;
+    html += `<button type="button" data-al-clic="igTogliRiga(this)" style="position:absolute;top:0.4rem;right:0.5rem;background:none;border:none;cursor:pointer;color:var(--errore-testo);font-size:1rem" title="Rimuovi">&times;</button>`;
   }
-  html += `<div style="font-size:0.72rem;color:#9c7b65;margin-bottom:0.4rem;font-weight:600">#${idx}</div>`;
+  html += `<div style="font-size:0.72rem;color:var(--text-muted);margin-bottom:0.4rem;font-weight:600">#${idx}</div>`;
 
   def.fields.forEach(([name, label, inputType, options]) => {
     if (inputType === 'select') {
-      html += `<select data-field="${name}" data-al-cambio="igUpdatePreview()" style="width:100%;padding:0.35rem 0.5rem;border:1px solid #e8ddd0;border-radius:6px;font-size:0.85rem;margin-bottom:0.4rem">`;
+      html += `<select data-field="${name}" data-al-cambio="igUpdatePreview()" style="width:100%;padding:0.35rem 0.5rem;border:1px solid var(--border);background:var(--campo);color:var(--text);border-radius:6px;font-size:0.85rem;margin-bottom:0.4rem">`;
       options.forEach(o => { const [v,l] = o.split(':'); html += `<option value="${v}">${l}</option>`; });
       html += `</select>`;
     } else {
-      html += `<input type="text" data-field="${name}" data-al-input="igUpdatePreview()" placeholder="${label}" style="width:100%;padding:0.35rem 0.5rem;border:1px solid #e8ddd0;border-radius:6px;font-size:0.85rem;margin-bottom:0.4rem">`;
+      html += `<input type="text" data-field="${name}" data-al-input="igUpdatePreview()" placeholder="${label}" style="width:100%;padding:0.35rem 0.5rem;border:1px solid var(--border);background:var(--campo);color:var(--text);border-radius:6px;font-size:0.85rem;margin-bottom:0.4rem">`;
     }
   });
   html += '</div>';
@@ -144,7 +144,7 @@ function igRenderPreview(type, title, data) {
   }
   if (type === 'quote') {
     let h = `<figure class="ig ig-quote"><blockquote class="ig-quote-text">${e(data.text||'')}</blockquote>`;
-    if (data.author) h += `<figcaption class="ig-quote-author">— ${e(data.author)}</figcaption>`;
+    if (data.author) h += `<figcaption class="ig-quote-author">&mdash; ${e(data.author)}</figcaption>`;
     return h + '</figure>';
   }
   if (type === 'flow' && data.items) {
@@ -154,7 +154,7 @@ function igRenderPreview(type, title, data) {
     });
     return h + '</div></figure>';
   }
-  return '<p style="color:#9c7b65;text-align:center;padding:2rem">Compila i campi per vedere l\'anteprima</p>';
+  return '<p style="color:var(--text-muted);text-align:center;padding:2rem">Compila i campi per vedere l\'anteprima</p>';
 }
 
 function igUpdatePreview() {

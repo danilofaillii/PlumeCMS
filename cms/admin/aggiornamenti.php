@@ -136,33 +136,33 @@ require_once __DIR__ . '/includes/admin-header.php';
 .agg-card h2{font-size:1.05rem;margin:0 0 0.8rem}
 .agg-check{list-style:none;padding:0;margin:0;font-size:0.88rem}
 .agg-check li{padding:0.25rem 0;display:flex;gap:0.5rem;align-items:flex-start}
-.agg-ok{color:#4a7c59;font-weight:700}.agg-ko{color:#c0392b;font-weight:700}
+.agg-ok{color:var(--successo-testo);font-weight:700}.agg-ko{color:var(--errore-testo);font-weight:700}
 .agg-table{width:100%;border-collapse:collapse;font-size:0.86rem}
 .agg-table th{text-align:left;font-size:0.75rem;text-transform:uppercase;letter-spacing:0.05em;color:var(--text-muted);padding:0.5rem 0.6rem;border-bottom:1px solid var(--border)}
 .agg-table td{padding:0.6rem;border-bottom:1px solid var(--border);vertical-align:top}
 .agg-stato{display:inline-block;padding:0.15rem 0.55rem;border-radius:999px;font-size:0.75rem;font-weight:700}
-.agg-stato.in_attesa{background:#fff3d6;color:#8a5a00}.agg-stato.applicato{background:#e3f1e6;color:#2f6b3f}.agg-stato.fallito{background:#fbe3e0;color:#a8322a}
+.agg-stato.in_attesa{background:var(--mustard-light);color:var(--attenzione-testo)}.agg-stato.applicato{background:var(--sage-light);color:var(--successo-testo)}.agg-stato.fallito{background:var(--errore-chiaro);color:var(--errore-testo)}
 .agg-btn{display:inline-block;padding:0.45rem 0.9rem;border-radius:8px;border:1px solid var(--border);background:var(--bg);font-family:var(--font);font-size:0.82rem;font-weight:600;cursor:pointer;color:var(--text)}
-.agg-btn.primary{background:#2d5a5f;color:#fff;border-color:#2d5a5f}
-.agg-btn.danger{color:#a8322a;border-color:#e8b4ae}
-.agg-log{background:#1e1e1e;color:#d4d4d4;padding:1rem;border-radius:8px;font-family:monospace;font-size:0.8rem;white-space:pre-wrap;word-break:break-word;max-height:420px;overflow:auto;margin:0.6rem 0 0}
+.agg-btn.primary{background:var(--coral);color:var(--su-accento);border-color:var(--coral)}
+.agg-btn.danger{color:var(--errore-testo);border-color:var(--errore-bordo)}
+.agg-log{background:var(--codice-fondo);color:var(--codice-testo);padding:1rem;border-radius:8px;font-family:monospace;font-size:0.8rem;white-space:pre-wrap;word-break:break-word;max-height:420px;overflow:auto;margin:0.6rem 0 0}
 .agg-esito{border-radius:12px;padding:1rem 1.4rem;margin-bottom:1.2rem;border:1px solid}
-.agg-esito.ok{background:#f1f8f2;border-color:#bfdcc5}.agg-esito.ko{background:#fdf1ef;border-color:#f0c2bb}
+.agg-esito.ok{background:var(--sage-light);border-color:var(--successo-bordo)}.agg-esito.ko{background:var(--errore-chiaro);border-color:var(--errore-bordo)}
 .agg-note{font-size:0.82rem;color:var(--text-muted);margin:0.4rem 0 0}
 details summary{cursor:pointer;font-size:0.82rem;color:var(--text-muted)}
 .agg-manifest{font-size:0.82rem;margin:0.4rem 0 0;padding-left:1rem}
-.agg-lavoro{position:fixed;inset:0;background:rgba(20,16,12,0.72);z-index:9999;display:flex;align-items:center;justify-content:center;padding:1.5rem}
+.agg-lavoro{position:fixed;inset:0;background:var(--velo);z-index:9999;display:flex;align-items:center;justify-content:center;padding:1.5rem}
 .agg-lavoro[hidden]{display:none}
-.agg-lavoro-box{background:var(--surface);border-radius:14px;padding:1.6rem 1.8rem;max-width:520px;width:100%;box-shadow:0 20px 60px rgba(0,0,0,0.35)}
+.agg-lavoro-box{background:var(--surface);border-radius:14px;padding:1.6rem 1.8rem;max-width:520px;width:100%;box-shadow:var(--ombra-grande)}
 .agg-lavoro-box h3{margin:0 0 0.3rem;font-size:1.05rem}
 .agg-barra{height:12px;border-radius:999px;background:var(--border);overflow:hidden;margin:1rem 0 0.6rem}
-.agg-barra i{display:block;height:100%;width:0;background:#2d5a5f;border-radius:999px;transition:width 0.4s ease}
+.agg-barra i{display:block;height:100%;width:0;background:var(--coral);border-radius:999px;transition:width 0.4s ease}
 .agg-barra.indeterminata i{width:35%;animation:agg-scorre 1.4s ease-in-out infinite}
 @keyframes agg-scorre{0%{margin-left:-35%}100%{margin-left:100%}}
 .agg-passo{font-size:0.9rem;margin:0;min-height:2.4em}
 .agg-tempo{font-size:0.78rem;color:var(--text-muted);margin:0.5rem 0 0}
-.agg-lavoro-box.ko .agg-barra i{background:#a8322a}
-.agg-versione.nuova{border-color:#2d5a5f;box-shadow:0 0 0 3px rgba(45,90,95,.12)}
+.agg-lavoro-box.ko .agg-barra i{background:var(--errore)}
+.agg-versione.nuova{border-color:var(--coral);box-shadow:0 0 0 3px var(--fuoco)}
 </style>
 
 
@@ -199,7 +199,7 @@ details summary{cursor:pointer;font-size:0.82rem;color:var(--text-muted)}
   <?php if (defined('CMS_AGGIORNAMENTI_URL')): ?><p class="agg-note">L'indirizzo è fissato nel file <code>config.local.php</code> (<code>CMS_AGGIORNAMENTI_URL</code>): si cambia lì.</p>
   <?php else: ?><form method="post" class="agg-riga" style="display:flex;gap:.6rem;align-items:flex-end;flex-wrap:wrap;margin-top:1rem"><?= csrf_field() ?><input type="hidden" name="action" value="versione_sito">
     <label class="agg-note" style="flex:1;min-width:16rem;margin:0">Indirizzo del sito da cui arrivano gli aggiornamenti<br>
-      <input type="url" name="sito" value="<?= h((string)get_setting('versione_sito', '')) ?>" placeholder="<?= h(VERSIONE_SITO_UFFICIALE) ?>" maxlength="300" style="width:100%;margin-top:.35rem;padding:.55rem .7rem;border:1px solid var(--border,#e2dccf);border-radius:8px;font:inherit;color:inherit;background:#fff"></label>
+      <input type="url" name="sito" value="<?= h((string)get_setting('versione_sito', '')) ?>" placeholder="<?= h(VERSIONE_SITO_UFFICIALE) ?>" maxlength="300" style="width:100%;margin-top:.35rem;padding:.55rem .7rem;border:1px solid var(--border);border-radius:8px;font:inherit;color:inherit;background:var(--campo)"></label>
     <button class="agg-btn" type="submit">Salva l'indirizzo</button>
   </form><p class="agg-note">Vuoto vuol dire quello di partenza (<code><?= h(VERSIONE_SITO_UFFICIALE) ?></code>). Deve essere un sito plumeCMS 1.3.0 o più nuovo, con lo zip di aggiornamento nella pagina Download.</p><?php endif; ?>
 </div>

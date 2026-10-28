@@ -642,14 +642,14 @@ function seo_grafico_svg(array $righe): string {
     $etichette = '';
     foreach ([0, intdiv($n - 1, 2), $n - 1] as $i) {
         if (!isset($righe[$i])) continue;
-        $etichette .= '<text x="' . round($x($i), 1) . '" y="' . ($hh - 2) . '" font-size="10" text-anchor="middle" fill="#9c7b65">' . h(substr($righe[$i]['chiave'], 5)) . '</text>';
+        $etichette .= '<text x="' . round($x($i), 1) . '" y="' . ($hh - 2) . '" font-size="10" text-anchor="middle" style="fill:var(--text-muted)">' . h(substr($righe[$i]['chiave'], 5)) . '</text>';
     }
     return '<svg viewBox="0 0 ' . $w . ' ' . $hh . '" width="100%" style="max-width:' . $w . 'px;display:block" role="img" aria-label="Clic e impressioni per giorno">'
-        . '<line x1="' . $px . '" y1="' . ($hh - $py) . '" x2="' . ($w - $px) . '" y2="' . ($hh - $py) . '" stroke="#e8ddd0"/>'
-        . '<path d="' . $li . '" fill="none" stroke="#6b8f71" stroke-width="2" opacity=".8"/>'
-        . '<path d="' . $lc . '" fill="none" stroke="#e8553e" stroke-width="2.5"/>'
-        . '<text x="' . $px . '" y="12" font-size="10" fill="#e8553e">Clic (max ' . $maxC . ')</text>'
-        . '<text x="' . ($w - $px) . '" y="12" font-size="10" text-anchor="end" fill="#6b8f71">Impressioni (max ' . $maxI . ')</text>'
+        . '<line x1="' . $px . '" y1="' . ($hh - $py) . '" x2="' . ($w - $px) . '" y2="' . ($hh - $py) . '" style="stroke:var(--border)"/>'
+        . '<path d="' . $li . '" fill="none" style="stroke:var(--sage)" stroke-width="2" opacity=".8"/>'
+        . '<path d="' . $lc . '" fill="none" style="stroke:var(--coral)" stroke-width="2.5"/>'
+        . '<text x="' . $px . '" y="12" font-size="10" style="fill:var(--accento-testo)">Clic (max ' . $maxC . ')</text>'
+        . '<text x="' . ($w - $px) . '" y="12" font-size="10" text-anchor="end" style="fill:var(--successo-testo)">Impressioni (max ' . $maxI . ')</text>'
         . $etichette . '</svg>';
 }
 
@@ -1191,9 +1191,10 @@ function seo_analisi(array $c): array {
 
 /** L'HTML del riquadro del controllo (per la scheda del contenuto e la panoramica). */
 function seo_analisi_html(array $a): string {
-    $colore = ['verde' => '#2d7a3a', 'giallo' => '#b07a00', 'rosso' => '#b3261e'][$a['colore']];
+    // 1.4.0: i colori degli stati del pannello, che seguono l'aspetto scelto
+    $colore = ['verde' => 'var(--successo-testo)', 'giallo' => 'var(--attenzione-testo)', 'rosso' => 'var(--errore-testo)'][$a['colore']];
     $segno = ['ok' => '&#10003;', 'attenzione' => '&#9679;', 'no' => '&#10007;'];
-    $cl = ['ok' => '#2d7a3a', 'attenzione' => '#b07a00', 'no' => '#b3261e'];
+    $cl = ['ok' => 'var(--successo-testo)', 'attenzione' => 'var(--attenzione-testo)', 'no' => 'var(--errore-testo)'];
     $out = '<div class="seo-punteggio" style="display:flex;align-items:center;gap:1rem;margin-bottom:.8rem"><div style="width:58px;height:58px;border-radius:50%;border:4px solid ' . $colore . ';display:flex;align-items:center;justify-content:center;font-weight:700;font-size:1.1rem;color:' . $colore . '">' . $a['punteggio'] . '</div>'
         . '<div><b>' . $a['ok'] . ' controlli su ' . $a['totale'] . ' a posto</b><div class="hint">' . $a['parole'] . ' parole' . ($a['keyword'] !== '' ? ' &middot; keyword: ' . h($a['keyword']) : ' &middot; nessuna keyword') . '</div></div></div><ul style="list-style:none;padding:0;margin:0;font-size:.86rem">';
     foreach ($a['voci'] as $x) $out .= '<li style="padding:.28rem 0;border-bottom:1px solid var(--border);display:flex;gap:.5rem"><span style="color:' . $cl[$x['stato']] . ';font-weight:700;width:1em">' . $segno[$x['stato']] . '</span><span>' . h($x['testo']) . '</span></li>';

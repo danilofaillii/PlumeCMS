@@ -1,5 +1,6 @@
-/* Le infografiche del configuratore ([IG:tipo:titolo] ... [/IG]) nell'anteprima del pannello: i colori di partenza e le loro regole. */
-:root {
+/* Le infografiche del configuratore ([IG:tipo:titolo] ... [/IG]) nell'anteprima del pannello: i colori di partenza e le loro regole.
+   1.4.0: le variabili valgono solo dentro l'anteprima e il testo della scheda, non piu su tutta la pagina (coprivano quelle del pannello). */
+#ig-preview, .te-visuale {
   --cream: #fef9f0;
   --cream-dark: #f5edd8;
   --coral: #e8553e;

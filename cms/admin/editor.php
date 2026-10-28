@@ -79,7 +79,7 @@ $adminTitle = 'Editor: ' . $pagina['title'];
 
 if ($albero === null): ?>
 <!DOCTYPE html>
-<html lang="it"><head><meta charset="utf-8"><title>Editor: <?= h($pagina['title']) ?></title>
+<html lang="it" data-pannello="<?= h(pannello_aspetto()) ?>"><head><meta charset="utf-8"><title>Editor: <?= h($pagina['title']) ?></title>
 <link rel="stylesheet" href="assets/css/admin.css"><link rel="stylesheet" href="assets/editor/editor.css"><script src="assets/campi-protetti.js"></script></head>
 <body class="ed-scelta-pagina">
 <div class="ed-scelta">
@@ -116,7 +116,7 @@ $dati = [
 ];
 ?>
 <!DOCTYPE html>
-<html lang="it">
+<html lang="it" data-pannello="<?= h(pannello_aspetto()) ?>">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -132,7 +132,7 @@ $dati = [
   <a class="ed-indietro" href="<?= h($scheda) ?>" title="Torna alla scheda">←</a>
   <div class="ed-nome"><b id="ed-titolo-pagina"><?= h($pagina['title']) ?></b><small id="ed-percorso"><?= h($percorso) ?></small></div>
   <div class="ed-misure" role="group" aria-label="Misura dello schermo">
-    <button type="button" data-misura="d" class="attivo" title="Desktop">🖥</button>
+    <button type="button" data-misura="d" class="attivo" title="Desktop">&#128421;</button>
     <button type="button" data-misura="t" title="Tablet (fino a <?= EDITOR_TABLET ?> px)">▭</button>
     <button type="button" data-misura="m" title="Telefono (fino a <?= EDITOR_TELEFONO ?> px)">▯</button>
   </div>

@@ -53,7 +53,7 @@ require_once __DIR__ . '/includes/admin-header.php';
 .db-griglia{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:1rem;margin-top:1rem}
 .db-scatola{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:1rem 1.2rem}
 .db-scatola h3{font-size:.85rem;text-transform:uppercase;letter-spacing:.06em;color:var(--text-muted);margin-bottom:.7rem;display:flex;justify-content:space-between}
-.db-scatola h3 a{font-size:.75rem;text-transform:none;letter-spacing:0;color:#2271b1;text-decoration:none}
+.db-scatola h3 a{font-size:.75rem;text-transform:none;letter-spacing:0;color:var(--link);text-decoration:none}
 .db-numeri{display:flex;gap:1.2rem;flex-wrap:wrap;margin-bottom:.6rem}
 .db-numeri b{display:block;font-size:1.6rem;line-height:1.1}
 .db-numeri span{font-size:.75rem;color:var(--text-muted)}
@@ -62,10 +62,10 @@ require_once __DIR__ . '/includes/admin-header.php';
 .db-lista li:last-child{border-bottom:0}
 .db-lista a{color:var(--text);text-decoration:none;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .db-lista small{color:var(--text-muted);white-space:nowrap}
-.db-avvisi{background:#fff3cd;border:1px solid #f1dfae;border-radius:var(--radius);padding:.8rem 1.2rem}
-.db-avvisi a{color:#7a5a00;font-weight:600}
+.db-avvisi{background:var(--mustard-light);color:var(--attenzione-testo);border:1px solid var(--attenzione-bordo);border-radius:var(--radius);padding:.8rem 1.2rem}
+.db-avvisi a{color:var(--attenzione-testo);font-weight:600}
 .db-azioni{display:flex;gap:.5rem;flex-wrap:wrap;margin-bottom:1rem}
-.db-versione{display:flex;gap:.4rem 1rem;flex-wrap:wrap;align-items:center;background:#e8f3f1;border:1px solid #b9dad3;border-radius:var(--radius);padding:.8rem 1.2rem;margin-bottom:1rem;color:#1f4a45}
+.db-versione{display:flex;gap:.4rem 1rem;flex-wrap:wrap;align-items:center;background:var(--info-chiaro);border:1px solid var(--info-bordo);border-radius:var(--radius);padding:.8rem 1.2rem;margin-bottom:1rem;color:var(--info-testo)}
 .db-versione[hidden]{display:none}
 .db-versione span{font-size:.88rem;flex:1 1 280px}
 </style>

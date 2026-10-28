@@ -67,10 +67,10 @@ if (!empty($_GET['anteprima'])) {
     if (is_file(dirname(__DIR__) . '/includes/modelli.php')) require_once dirname(__DIR__) . '/includes/modelli.php';
     header('Cache-Control: no-store');
     header('X-Robots-Tag: noindex');
-    $fascia = '<div style="position:sticky;top:0;z-index:9999;background:#1f2937;color:#fff;font:13px/1.4 system-ui,sans-serif;padding:8px 16px;display:flex;gap:12px;align-items:center;flex-wrap:wrap">'
+    $fascia = '<div style="position:sticky;top:0;z-index:9999;background:#1f2937;color:#fff;font:13px/1.4 system-ui,sans-serif; /* fisso: fascia sopra l anteprima del sito */padding:8px 16px;display:flex;gap:12px;align-items:center;flex-wrap:wrap">'
         . '<b>Anteprima della versione ' . (int)$v['id'] . '</b> <span>' . h(versioni_data_breve((string)$v['creato'])) . ($v['autore'] ? ' · ' . h($v['autore']) : '') . ($v['nota'] ? ' · ' . h($v['nota']) : '') . '</span>'
         . '<span style="opacity:.8">Niente è cambiato sul sito: è solo una finestra sul passato.</span>'
-        . '<a href="' . h($indietro) . '" style="margin-left:auto;color:#fff">Torna alle versioni</a></div>';
+        . '<a href="' . h($indietro) . '" style="margin-left:auto;color:#fff /* fisso */">Torna alle versioni</a></div>';
     if ($v['ambito'] === 'modello') {
         // Il sito (la home) con quella versione dell'header o del footer al posto di quello scelto.
         $tipoModello = (string)($v['dati']['tipo'] ?? (modelli_leggi((int)$v['oggetto_id'])['tipo'] ?? 'header'));
@@ -162,7 +162,7 @@ require_once __DIR__ . '/includes/admin-header.php';
 .vs-riassunto-cella{color:var(--text-muted);font-size:.82rem}
 .vs-pagine{display:flex;gap:.3rem;margin-top:.8rem;flex-wrap:wrap}
 .vs-pagine a,.vs-pagine b{padding:.3rem .6rem;border:1px solid var(--border);border-radius:6px;text-decoration:none;font-size:.82rem}
-.vs-pagine b{background:var(--coral);color:#fff;border-color:var(--coral)}
+.vs-pagine b{background:var(--coral);color:var(--su-accento);border-color:var(--coral)}
 </style>
 
 <p class="vs-intro">Ogni volta che salvi o pubblichi qualcosa con l'editor (una pagina, un articolo, un header, lo Stile del sito, un menu, un tema) resta una versione.

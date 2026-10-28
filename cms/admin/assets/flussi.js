@@ -6,7 +6,7 @@
 var FL = (function () {
   var g = FL_DATI.grafo, tela = document.getElementById('fl-tela'), box = document.getElementById('fl-tela-box'), svg = document.getElementById('fl-archi');
   var pannello = document.getElementById('fl-pannello'), scelto = null, arcoScelto = null, quill = null, ns = 'http://www.w3.org/2000/svg';
-  var ICONE = {innesco: '🚀', email: '✉️', attesa: '⏳', bivio: '🔀', fine: '⏹'};
+  var ICONE = {innesco: '\uD83D\uDE80', email: '✉️', attesa: '⏳', bivio: '\uD83D\uDD00', fine: '⏹'};
   var NOMI = {innesco: 'Parte quando', email: 'Email', attesa: 'Attesa', bivio: 'Bivio', fine: 'Fine'};
   var INNESCHI = {}; document.querySelectorAll('#fl-innesco option').forEach(function (o) { INNESCHI[o.value] = o.textContent; });
 
@@ -27,7 +27,7 @@ var FL = (function () {
     var d = n.dati || {};
     switch (n.tipo) {
       case 'innesco': return h(INNESCHI[document.getElementById('fl-innesco').value] || '') + '<small>' + h(innescoCosa()) + '</small>';
-      case 'email': return (d.oggetto ? h(d.oggetto) : '<i style="color:#b42318">Senza oggetto</i>') + '<small>' + (d.ascolto > 0 ? 'aspetta una reazione per ' + tempo(d.ascolto) : 'prosegue subito dopo l\'invio') + '</small>';
+      case 'email': return (d.oggetto ? h(d.oggetto) : '<i style="color:var(--errore-testo)">Senza oggetto</i>') + '<small>' + (d.ascolto > 0 ? 'aspetta una reazione per ' + tempo(d.ascolto) : 'prosegue subito dopo l\'invio') + '</small>';
       case 'attesa': return 'Aspetta ' + h(tempo(d.minuti || 1440));
       case 'bivio': var c = FL_DATI.condizioni[d.condizione] || ['?', '']; return h(c[0]) + '<small>' + h(valoreBivio(d)) + '</small>';
       case 'fine': return 'Il cammino finisce qui.';
@@ -57,7 +57,7 @@ var FL = (function () {
       el.classList.toggle('fl-scelto', scelto === n.id);
       var uscite = FL_DATI.uscite[n.tipo] || {}, html = '<div class="fl-nodo-testa"><span>' + ICONE[n.tipo] + '</span> ' + NOMI[n.tipo] + (n.tipo !== 'innesco' && n.tipo !== 'fine' ? '<span style="margin-left:auto;opacity:.7;font-weight:400">#' + n.id + '</span>' : '') + '</div>';
       html += '<div class="fl-nodo-corpo">' + riassunto(n) + '</div>';
-      if (FL_DATI.inCorso[n.id] || FL_DATI.aperture[n.id]) html += '<div class="fl-nodo-numeri">' + (FL_DATI.inCorso[n.id] ? '<span>👥 ' + FL_DATI.inCorso[n.id] + ' qui adesso</span>' : '') + (FL_DATI.aperture[n.id] ? '<span>👁 ' + FL_DATI.aperture[n.id] + ' aperture</span>' : '') + '</div>';
+      if (FL_DATI.inCorso[n.id] || FL_DATI.aperture[n.id]) html += '<div class="fl-nodo-numeri">' + (FL_DATI.inCorso[n.id] ? '<span>\uD83D\uDC65 ' + FL_DATI.inCorso[n.id] + ' qui adesso</span>' : '') + (FL_DATI.aperture[n.id] ? '<span>\uD83D\uDC41 ' + FL_DATI.aperture[n.id] + ' aperture</span>' : '') + '</div>';
       var keys = Object.keys(uscite);
       if (keys.length) {
         html += '<div class="fl-uscite">';

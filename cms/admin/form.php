@@ -135,13 +135,13 @@ document.getElementById('fm-form').addEventListener('submit', function () {
 });
 </script>
 <style>
-.fm-campo{border:1px solid var(--border);border-radius:8px;padding:.5rem .6rem;margin-bottom:.5rem;background:#faf8f5}
+.fm-campo{border:1px solid var(--border);border-radius:8px;padding:.5rem .6rem;margin-bottom:.5rem;background:var(--fondo-2)}
 .fm-riga{display:flex;gap:.5rem;align-items:center}.fm-riga2{margin-top:.4rem;padding-left:1.4rem}
 .fm-riga input[type=text]{flex:1;padding:.4rem .6rem;border:1px solid var(--border);border-radius:6px;font:inherit;font-size:.85rem}
 .fm-riga select{padding:.4rem .5rem;border:1px solid var(--border);border-radius:6px;font:inherit;font-size:.82rem}
 .fm-riga textarea.fm-opzioni{flex:1;min-height:0;padding:.4rem .6rem;border:1px solid var(--border);border-radius:6px;font:inherit;font-size:.85rem;resize:vertical}
 .fm-obb{font-size:.78rem;color:var(--text-muted);display:flex;gap:.3rem;align-items:center;white-space:nowrap;margin:0}
-.fm-maniglia{cursor:grab;color:var(--text-muted)}.fm-via{border:0;background:none;color:#b91c1c;font-size:1.1rem;cursor:pointer}
+.fm-maniglia{cursor:grab;color:var(--text-muted)}.fm-via{border:0;background:none;color:var(--errore-testo);font-size:1.1rem;cursor:pointer}
 </style>
 <?php endif; ?>
 <?php require_once __DIR__ . '/includes/admin-footer.php'; ?>

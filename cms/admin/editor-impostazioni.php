@@ -104,14 +104,14 @@ require_once __DIR__ . '/includes/admin-header.php';
 .ei-card p{font-size:.86rem;color:var(--text-muted);margin:.3rem 0 .6rem}
 .ei-campo{margin-bottom:.9rem}
 .ei-campo label{display:block;font-weight:600;font-size:.86rem;margin-bottom:.25rem}
-.ei-campo input[type=number],.ei-campo select{padding:.4rem .6rem;border:1px solid var(--border);border-radius:8px;font:inherit;font-size:.9rem;background:#fff;width:160px}
+.ei-campo input[type=number],.ei-campo select{padding:.4rem .6rem;border:1px solid var(--border);border-radius:8px;font:inherit;font-size:.9rem;background:var(--campo);color:var(--text);width:160px}
 .ei-campo .ei-radio label{font-weight:400;display:flex;gap:.4rem;align-items:center;margin:.2rem 0}
 .ei-campo small{display:block;color:var(--text-muted);font-size:.78rem;margin-top:.2rem}
 .ei-layout td{padding:.25rem .4rem;font-size:.88rem;border-bottom:1px solid var(--border)}
 .ei-layout td:last-child{text-align:right;font-weight:600}
 .ei-anteprima h3{font-size:.92rem;margin:.9rem 0 .3rem;display:flex;gap:.5rem;align-items:center}
 .ei-anteprima ul{margin:0 0 .4rem 1.1rem;font-size:.84rem;max-height:220px;overflow:auto}
-.ei-anteprima li.nuovo{color:#2d5a32}.ei-anteprima li.cambia{color:#7a5a00}.ei-anteprima li.uguale{color:var(--text-muted)}
+.ei-anteprima li.nuovo{color:var(--successo-testo)}.ei-anteprima li.cambia{color:var(--attenzione-testo)}.ei-anteprima li.uguale{color:var(--text-muted)}
 .ei-anteprima .ei-stato{font-size:.7rem;padding:.05rem .4rem;border-radius:999px;background:var(--bg);border:1px solid var(--border);text-transform:uppercase;letter-spacing:.05em}
 </style>
 

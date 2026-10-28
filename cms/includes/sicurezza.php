@@ -109,6 +109,8 @@ function sicurezza_schema(): void {
     $colonne = ['users' => [
         'totp_segreto' => "varchar(64) NOT NULL DEFAULT ''", 'totp_attivo' => 'tinyint NOT NULL DEFAULT 0', 'totp_recupero' => 'text',
         'totp_ultimo' => 'int NOT NULL DEFAULT 0', 'sessione_epoca' => 'int NOT NULL DEFAULT 0', 'password_cambiata' => 'datetime DEFAULT NULL',
+        // 1.4.0: l'aspetto del pannello scelto dall'utente (includes/pannello-aspetto.php). Chi c'era gia parte da Aria.
+        'pannello_aspetto' => "varchar(12) NOT NULL DEFAULT 'aria'",
     ]];
     $impronta = md5(serialize([$tabelle, $colonne, DB_NAME]));
     if (get_setting('sicurezza_schema_impronta', '') === $impronta) return;

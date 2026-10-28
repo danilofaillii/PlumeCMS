@@ -30,14 +30,14 @@ require_once __DIR__ . '/includes/admin-header.php';
     </p>
     <div style="display:flex;gap:0.5rem">
       <?php if ($logContent): ?>
-      <form method="post" data-conferma="Cancellare il log?" style="display:inline"><?= csrf_field() ?><input type="hidden" name="clear" value="1"><button type="submit" class="btn btn-secondary btn-sm" style="color:#b91c1c">Svuota log</button></form>
+      <form method="post" data-conferma="Cancellare il log?" style="display:inline"><?= csrf_field() ?><input type="hidden" name="clear" value="1"><button type="submit" class="btn btn-secondary btn-sm" style="color:var(--errore-testo)">Svuota log</button></form>
       <?php endif; ?>
     </div>
   </div>
 
   <div class="form-card">
     <?php if ($logContent): ?>
-    <pre style="background:#1e1e1e;color:#d4d4d4;padding:1rem;border-radius:8px;font-size:0.82rem;max-height:500px;overflow:auto;white-space:pre-wrap"><?= htmlspecialchars($logContent) ?></pre>
+    <pre style="background:var(--codice-fondo);color:var(--codice-testo);padding:1rem;border-radius:8px;font-size:0.82rem;max-height:500px;overflow:auto;white-space:pre-wrap"><?= htmlspecialchars($logContent) ?></pre>
     <?php else: ?>
     <div style="text-align:center;padding:3rem;color:var(--text-muted)">
       <p style="font-size:1.2rem;margin-bottom:0.5rem">Nessun log</p>

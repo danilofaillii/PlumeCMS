@@ -18,7 +18,7 @@
   // ---------------- editor: Visuale e Testo
   function daTestoAVisuale() {
     if (markdown) {
-      visuale.innerHTML = '<p style="color:#9c7b65">Converto il Markdown…</p>';
+      visuale.innerHTML = '<p style="color:var(--text-muted)">Converto il Markdown…</p>';
       api('markdown', { testo: testo.value }).then(function (j) { visuale.innerHTML = j.html; }).catch(function (e) { visuale.textContent = e.message; });
     } else visuale.innerHTML = testo.value;
   }
@@ -159,7 +159,7 @@ window.scMedia = function (f) { cb = f; $('#sc-media-errore').hidden = true; dMe
         (function (n) { pb.addEventListener('click', function () { carica(n); }); })(i);
         pg.appendChild(pb);
       }
-    }).catch(function (e) { g.innerHTML = '<p class="hint" style="color:#b91c1c">' + e.message + '</p>'; });
+    }).catch(function (e) { g.innerHTML = '<p class="hint" style="color:var(--errore-testo)">' + e.message + '</p>'; });
   }
   $('#sc-media-cartella').addEventListener('change', function () { carica(1); });
   $('#sc-media-cerca').addEventListener('input', function () { clearTimeout(timer); timer = setTimeout(function () { carica(1); }, 300); });

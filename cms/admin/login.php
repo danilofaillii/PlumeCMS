@@ -40,32 +40,35 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 }
 ?>
 <!DOCTYPE html>
-<html lang="it">
+<html lang="it" data-pannello="aria"><?php /* 1.4.0: il login e sempre Aria: non si sa ancora chi entra */ ?>
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Login — Admin</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <title>Accesso al pannello</title>
+  <link rel="stylesheet" href="assets/css/aspetti.css">
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
-    body { font-family: 'Inter', system-ui, sans-serif; background: #f4f1ec; color: #2d1b0e; min-height: 100vh; display: flex; align-items: center; justify-content: center; }
-    .box { background: white; border: 1px solid #e8ddd0; border-radius: 16px; padding: 2.5rem; width: 100%; max-width: 400px; box-shadow: 0 8px 32px rgba(45,27,14,0.08); }
+    body { font-family: var(--font); background: var(--bg); color: var(--text); min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1.2rem; padding: 1.5rem 1rem; }
+    .marchio { font-size: 1.05rem; font-weight: 700; color: var(--text); letter-spacing: -.01em; }
+    .marchio strong { color: var(--coral); }
+    .box { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 2.5rem; width: 100%; max-width: 400px; box-shadow: var(--ombra-grande); }
     .box h1 { font-size: 1.3rem; margin-bottom: 0.5rem; }
-    .box p { font-size: 0.88rem; color: #6b4c35; margin-bottom: 1.5rem; }
+    .box p { font-size: 0.9rem; color: var(--text-muted); margin-bottom: 1.5rem; }
     .form-group { margin-bottom: 1rem; }
-    .form-group label { display: block; font-size: 0.82rem; font-weight: 600; color: #9c7b65; margin-bottom: 0.3rem; text-transform: uppercase; letter-spacing: 0.03em; }
-    .form-group input { width: 100%; padding: 0.6rem 0.85rem; border: 1px solid #e8ddd0; border-radius: 8px; font-size: 0.92rem; font-family: inherit; }
-    .form-group input:focus { outline: none; border-color: #e8553e; box-shadow: 0 0 0 3px #fde8e3; }
-    .btn { display: block; width: 100%; padding: 0.75rem; background: #e8553e; color: white; border: none; border-radius: 8px; font-size: 0.92rem; font-weight: 600; cursor: pointer; font-family: inherit; }
-    .btn:hover { background: #d03f28; }
-    .error { color: #b91c1c; font-size: 0.85rem; margin-bottom: 1rem; padding: 0.75rem; background: #fde8e3; border-radius: 8px; }
-    .info { color: #4a3728; font-size: 0.85rem; margin-bottom: 1rem; padding: 0.75rem; background: #f4f1ec; border-radius: 8px; }
-    .sotto { margin-top: 1.2rem; font-size: 0.82rem; text-align: center; }
-    .sotto a { color: #9c7b65; }
+    .form-group label { display: block; font-size: 0.82rem; font-weight: 600; color: var(--text-muted); margin-bottom: 0.3rem; }
+    .form-group input { width: 100%; padding: 0.65rem 0.85rem; border: 1px solid var(--bordo-forte); border-radius: 8px; font-size: 0.95rem; font-family: inherit; background: var(--campo); color: var(--text); }
+    .form-group input:focus { outline: none; border-color: var(--coral); box-shadow: 0 0 0 3px var(--fuoco); }
+    .btn { display: block; width: 100%; padding: 0.75rem; background: var(--coral); color: var(--su-accento); border: none; border-radius: 8px; font-size: 0.95rem; font-weight: 600; cursor: pointer; font-family: inherit; }
+    .btn:hover { background: var(--coral-hover); }
+    .btn:focus-visible { outline: 2px solid var(--coral); outline-offset: 2px; }
+    .error { color: var(--errore-testo); font-size: 0.85rem; margin-bottom: 1rem; padding: 0.75rem; background: var(--errore-chiaro); border: 1px solid var(--errore-bordo); border-radius: 8px; }
+    .info { color: var(--info-testo); font-size: 0.85rem; margin-bottom: 1rem; padding: 0.75rem; background: var(--info-chiaro); border: 1px solid var(--info-bordo); border-radius: 8px; }
+    .sotto { margin-top: 1.2rem; font-size: 0.85rem; text-align: center; }
+    .sotto a { color: var(--link); }
   </style>
 </head>
 <body>
+<div class="marchio" aria-hidden="true"><strong>plume</strong>CMS</div>
 <div class="box">
   <h1><?= htmlspecialchars((string)cms_impostazione('sito_nome', CMS_NOME)) ?></h1>
   <p><?= $passo2 ? 'Secondo passo: il codice della tua app di autenticazione.' : 'Pannello di amministrazione' ?></p>

@@ -138,12 +138,12 @@ require_once __DIR__ . '/includes/admin-header.php';
 .tm-card h3 .badge{font-size:.68rem}
 .tm-desc{font-size:.84rem;color:var(--text-muted);margin:0;min-height:2.4em}
 .tm-anteprima{border-radius:10px;overflow:hidden;border:1px solid var(--border);font-size:.8rem}
-.tm-anteprima .tm-t{padding:.5rem .7rem;font-weight:700;color:#fff}
-.tm-anteprima .tm-c{padding:.55rem .7rem;display:flex;gap:.4rem;align-items:center;color:#5a4a3a}
+.tm-anteprima .tm-t{padding:.5rem .7rem;font-weight:700;color:#fff /* fisso: colori delle infografiche del sito */}
+.tm-anteprima .tm-c{padding:.55rem .7rem;display:flex;gap:.4rem;align-items:center;color:#5a4a3a /* fisso: colori delle infografiche del sito */}
 .tm-anteprima .tm-c i{display:inline-block;width:10px;height:10px;border-radius:50%}
 .tm-pastiglie{display:flex;gap:.5rem;flex-wrap:wrap;font-size:.74rem;color:var(--text-muted)}
 .tm-pastiglie span{display:inline-flex;align-items:center;gap:.3rem}
-.tm-pastiglie i{display:inline-block;width:16px;height:16px;border-radius:4px;border:1px solid rgba(0,0,0,.12)}
+.tm-pastiglie i{display:inline-block;width:16px;height:16px;border-radius:4px;border:1px solid var(--bordo-forte)}
 .tm-azioni{display:flex;gap:.4rem;flex-wrap:wrap;margin-top:auto}
 .tm-azioni form{display:inline}
 .tm-rinomina{display:none;gap:.4rem;align-items:center}
