@@ -653,7 +653,7 @@ partono mai.
 Il filtro `design_predefiniti` esiste anche sul sito, ma non usarlo da un tema: i colori del tema stanno in
 `stile.json`, e cambiare i predefiniti solo sul sito darebbe un pannello che mostra valori diversi da quelli veri.
 
-Più filtri e più dettagli, per chi scrive moduli: `docs/cms-moduli.md`.
+I filtri e gli eventi sono gli stessi dei moduli del sito: un tema con PHP ne usa un sottoinsieme, elencato qui sotto.
 
 ### 9.4 Le viste: ridisegnare una pagina
 
@@ -978,7 +978,7 @@ h1,h2,.sez-titolo{letter-spacing:-.01em}
 ```php
 <?php
 /**
- * Lavagna: il PHP del tema. Ritorna filtri ed eventi, come un modulo (docs/cms-moduli.md).
+ * Lavagna: il PHP del tema. Ritorna filtri ed eventi, come un modulo.
  * Gira solo sul sito pubblico, mai nel pannello. Un errore qui spegne il tema, non il sito.
  */
 return [
@@ -1076,4 +1076,4 @@ Firma (PHP):                 PACCHETTO_CHIAVE=... python3 tools/pacchetto.py --r
 Contrasto minimo:            4,5 a 1
 ```
 
-Per sapere come lavora il motore dei temi dentro il CMS: `docs/temi.md` e il manuale tecnico, `docs/manuale-tecnico.md`.
+Il motore dei temi sta in `includes/temi.php`: è commentato riga per riga, per chi vuole guardarci dentro.

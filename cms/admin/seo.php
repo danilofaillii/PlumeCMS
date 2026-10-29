@@ -2,7 +2,7 @@
 /**
  * SEO e AEO: la pagina di configurazione di Search Console, Bing, IndexNow, statistiche, titoli, robots,
  * sitemap, redirect e 404, dati strutturati, llms.txt e il controllo SEO di ogni contenuto.
- * Il motore e in includes/seo.php. Documento: docs/seo.md.
+ * Il motore e in includes/seo.php.
  *   seo.php?scheda=panoramica | motori | copertura | prestazioni | analisi | globale | schema | redirect | log
  */
 require_once __DIR__ . '/includes/auth.php';

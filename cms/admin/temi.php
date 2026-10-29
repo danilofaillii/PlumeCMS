@@ -251,6 +251,6 @@ $finestra = (int)($cfgSic['root_php_fino'] ?? 0) > time();
 
 <div class="tt-dove">
   <p><b>Dove stanno i temi.</b> Ogni tema è una cartella dentro <code>temi/</code>, nella cartella del CMS sul server. <?= $temi ? 'Qui ne vedi ' . count($temi) . '.' : 'Per ora non ce n\'è nessuno.' ?></p>
-  <p>Per chi scrive un tema: com'è fatto, cosa può cambiare e cosa succede se sbaglia sta in <code>docs/temi.md</code>.</p>
+  <p>Per chi scrive un tema: com'è fatto, cosa può cambiare e cosa succede se sbaglia sta nel manuale dei temi, <code>docs/manuale-temi.md</code>.</p>
 </div>
 <?php require_once __DIR__ . '/includes/admin-footer.php'; ?>

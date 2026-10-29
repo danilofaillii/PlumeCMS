@@ -2,6 +2,13 @@
 
 Il prodotto si chiama **plumeCMS** (nome scelto il 26 ottobre 2026; prima, per poche ore, "CarbonaraCMS", e ancora prima il provvisorio "Officina": gli zip vecchi si chiamavano `officina-*` e `carbonaracms-*`).
 
+## 1.6.4 (29 ottobre 2026) - Due manuali
+
+- **Decisione di Danilo**: con plumeCMS restano solo il manuale d'uso e il manuale dei temi. Il manuale tecnico e i
+  documenti per chi sviluppa (`cms.md`, `cms-moduli.md`, `editor-pagine.md`, `sicurezza.md` e gli altri) non stanno più
+  nello zip, nel sito di plumeCMS e nella pagina Download. La cartella `docs/` ha i due manuali e le schermate.
+- Le pagine del pannello che citavano quei documenti (Informazioni, Temi) ora rimandano ai due manuali.
+
 ## 1.6.3 (28 ottobre 2026) - Due inviti affiancati, alti uguali
 
 - Corretto: due widget "Invito all'azione" in due colonne affiancate uscivano di altezza diversa (quello con più testo era più

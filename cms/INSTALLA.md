@@ -21,7 +21,7 @@
 
 - **Il cron.** Da cPanel, voce *Cron Jobs*: `php /percorso/del/cms/cron-daily.php` una volta al giorno (alle 06:00) e
   `php /percorso/del/cms/cron-newsletter.php` ogni 5 minuti. I cron girano solo da riga di comando: dal web rispondono
-  403. Se il tuo hosting sa lanciare un cron solo come indirizzo web, vedi `docs/sicurezza.md` (voce Cron, `CMS_CRON_TOKEN`).
+  403. Se il tuo hosting sa lanciare un cron solo come indirizzo web, vedi il manuale d'uso, capitolo 26 (`CMS_CRON_TOKEN`).
 - **Le email.** Pannello, *Impostazioni, Configurazione email*: il server SMTP del tuo hosting. Senza, il CMS usa `mail()`.
 - **Il .htaccess (importante per la sicurezza).** Lo zip contiene un `.htaccess` per la radice del dominio
   (è `install/esempi/htaccess-radice.txt`): nega dal web le cartelle riservate (`includes` con `config.local.php`,
@@ -36,7 +36,7 @@
 
 Dopo l'installazione, dal pannello: *Impostazioni, Sicurezza*. Da lì attivi il secondo fattore, decidi il limite ai
 tentativi di login, le scadenze della sessione, la Content-Security-Policy e altro. La guida passo per passo, con cosa
-fare se ti chiudi fuori, è in `docs/sicurezza.md`. Conviene anche togliere la cartella `install/` quando il sito è in
+fare se ti chiudi fuori, è nel manuale d'uso, capitolo 27. Conviene anche togliere la cartella `install/` quando il sito è in
 piedi (la pagina Sicurezza ha un pulsante che lo fa).
 
 ## Radice o sottocartella

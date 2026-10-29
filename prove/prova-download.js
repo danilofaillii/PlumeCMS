@@ -2,7 +2,7 @@
 // Carica un PDF con titolo, descrizione e versione; prova i caricamenti che devono essere rifiutati; modifica il titolo;
 // mette il widget in una pagina (prove/pagina-download.php); guarda la pagina da visitatore; scarica e controlla che il
 // conteggio salga per una persona e non per un robot; elimina il file e controlla che sparisca dal sito.
-// Serve un plumeCMS 1.2.4 con il file manuale-tecnico in Download (il sito di plumeCMS lo ha).
+// Serve un plumeCMS 1.2.4 con il file manuale-temi in Download (il sito di plumeCMS lo ha).
 // uso: node prova-download.js <base> <cartella CMS installato> <utente> <password>
 const { chromium } = require('playwright');
 const { execFileSync } = require('child_process');

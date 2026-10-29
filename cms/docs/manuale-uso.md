@@ -22,7 +22,7 @@ Poi scegli quello che ti serve.
 Una parola sui nomi. **Il pannello** è la parte riservata, dove lavori tu. **Il sito** è quello che vedono le persone.
 **Pubblicare** vuol dire rendere visibile sul sito quello che hai preparato nel pannello.
 
-Il manuale tecnico, per chi sviluppa, racconta come è fatto plumeCMS dentro. Questo racconta come si usa.
+Questo manuale racconta come si usa plumeCMS. Per costruire un tema c'è il manuale dei temi.
 
 ---
 
@@ -1224,8 +1224,10 @@ sul tuo telefono. Chi ruba la password resta fuori.
 - *Ho dimenticato la password.* Nella pagina di accesso usa il link per reimpostarla: arriva un'email (serve che le
   email partano, capitolo 25).
 - *Ho perso il telefono del secondo fattore.* Entra con uno dei codici di recupero, poi rigenera il secondo fattore.
-- *Mi sono chiuso fuori del tutto.* Chiedi a chi gestisce l'hosting, o a chi ha installato il sito: il manuale tecnico
-  (capitolo "Se ci si chiude fuori") spiega la riga da aggiungere al file di configurazione per rientrare.
+- *Mi sono chiuso fuori del tutto* (secondo fattore perso e niente codici, o lista degli indirizzi che non ti fa entrare).
+  Con il gestore dei file dell'hosting apri `includes/config.local.php` e aggiungi in fondo la riga di emergenza
+  `define('CMS_SICUREZZA_SPEGNI', true);`: spegne secondo fattore e lista degli indirizzi. Entra, sistema in
+  **Sicurezza** quello che ti bloccava, poi **togli la riga**: finché c'è, la pagina Sicurezza lo segna in rosso.
 
 ---
 
@@ -1388,4 +1390,4 @@ Dopo la conferma puoi cancellare la password per le applicazioni da WordPress, d
 | Ho rovinato una pagina | Editor > Revisioni: carica la versione di prima e pubblica |
 | Ho rovinato lo stile del sito | Stile del sito > Cronologia, oppure Editor > Versioni |
 | Un tema ha rotto il sito | Il sito torna da solo all'aspetto di base: in Editor > Temi vedi il motivo in rosso |
-| Non riesco più a entrare | Link "password dimenticata"; codici di recupero; il manuale tecnico per i casi estremi |
+| Non riesco più a entrare | Link "password dimenticata"; codici di recupero; la riga di emergenza nel `config.local.php` per i casi estremi |

@@ -1,5 +1,5 @@
 # La consegna a Danilo in un solo zip (1.4.2): l'aggiornamento e lo zip completo del CMS, le parti del sito di plumeCMS,
-# i tre manuali in PDF e un LEGGIMI con l'ordine in cui caricarli. Si lancia per ultimo, dopo cms-pacchetto.py,
+# i due manuali in PDF e un LEGGIMI con l'ordine in cui caricarli. Si lancia per ultimo, dopo cms-pacchetto.py,
 # manuali-pdf.js e sito-plumecms/costruisci.py. Scrive releases/consegna/plumecms-<versione>-consegna.zip.
 # Lo zip si apre sul computer: sul server si caricano i file che contiene, uno per uno, come dice il LEGGIMI.
 # uso: python3 tools/consegna.py [--pezzi]
@@ -19,7 +19,7 @@ def main():
     agg = os.path.join(REL, 'cms', f'plumecms-{V}-aggiornamento.zip')
     completo = os.path.join(REL, 'cms', f'plumecms-{V}.zip')
     parti = sorted(glob.glob(os.path.join(REL, 'sito', f'sito-plumecms-{V}-parte-*.zip')), key=lambda f: int(f.rsplit('-parte-', 1)[1].split('-')[0]))
-    manuali = [os.path.join(REL, 'manuali', n + '.pdf') for n in ('manuale-uso', 'manuale-tecnico', 'manuale-temi')]
+    manuali = [os.path.join(REL, 'manuali', n + '.pdf') for n in ('manuale-uso', 'manuale-temi')]
     for f in [agg, completo] + manuali:
         if not os.path.exists(f):
             sys.exit(f'manca {f}: prima cms-pacchetto.py --aggiornamento, manuali-pdf.js e costruisci.py')

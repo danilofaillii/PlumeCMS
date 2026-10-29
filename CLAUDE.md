@@ -52,23 +52,20 @@ tools/consegna.py     lo zip unico da dare a Danilo (releases/consegna/)
 Stato, decisioni, contesto e diario non stanno qui: stanno nel second brain
 (`danilofaillii/second-brain`, cartella `plumecms/`), unica copia.
 
-## Documenti, in quest'ordine
+## Documenti
+
+**Regola di Danilo (29 ottobre 2026): con plumeCMS restano solo due documenti**, il manuale d'uso e il manuale dei temi.
+Sono gli unici in `cms/docs/`, nello zip, nel sito di plumeCMS e nella pagina Download.
 
 0. `cms/docs/manuale-uso.md`: il manuale d'uso per chi usa plumeCMS (31 capitoli, esempio, schermate con i passi
    numerati, checklist). Le schermate le fa `tools/manuale-uso-schermate.js` eseguendo gli esempi su un sito di prova
    (kit Attività, in `/home/studioprova/public_html`): **quando cambia il pannello si rifanno le schermate e si
    ricontrolla il capitolo**. Il PDF deve restare sotto 1900 KB (oggi 1,8 MB).
-   `cms/docs/manuale-tecnico.md`: il manuale tecnico, tutto il CMS scritto leggendo il codice, con `file:riga`.
-   Se un documento qui sotto dice una cosa diversa, vale il manuale (appendice A: i punti superati).
    `cms/docs/manuale-temi.md`: il manuale per chi costruisce un tema, con il tema d'esempio Lavagna.
-   Quando si cambia il codice, si aggiorna anche il manuale tecnico.
-1. `cms/docs/cms.md`: architettura (nucleo, moduli, prefisso, base URL, installatore, pacchetti).
-2. `cms/docs/cms-moduli.md`: come si scrive un modulo (manifest `modulo.php`, filtri, eventi, tipi di contenuto, menu, cron).
-3. `cms/docs/editor-pagine.md`: l'editor (sezioni, colonne, widget, controlli di gruppo, schede Stile e Avanzate, i trenta widget extra, le infografiche `ig_*`, temi).
-4. `cms/docs/stile-sito.md`, `header-footer-menu.md`, `versioni.md`.
-5. `cms/docs/sicurezza.md`: cosa c'è, come si configura, cosa fare se ci si chiude fuori.
-6. `cms/docs/temi.md`: i temi del sito (com'è fatto un tema, motore, errori, sicurezza).
-7. `cms/docs/seo.md`, `newsletter.md`, `moduli.md` (form ebook e Laser, nati per danilofailli.it), `contenuti.md`, `pannello.md`, `aggiornamenti.md`.
+1. `docs-sviluppo/` (solo nel repository, mai nello zip): il manuale tecnico (`manuale-tecnico.md`, tutto il CMS letto dal
+   codice, con `file:riga`: **quando si cambia il codice si aggiorna anche lui**) e i documenti vecchi (`cms.md`,
+   `cms-moduli.md`, `editor-pagine.md`, `sicurezza.md`, `temi.md`, `seo.md`...), superati in alcuni punti: se dicono una
+   cosa diversa dal manuale tecnico, vale il manuale (appendice A).
 
 ## Come si lavora
 
@@ -93,7 +90,7 @@ Stato, decisioni, contesto e diario non stanno qui: stanno nel second brain
 - **Pacchetto di aggiornamento** per un'installazione esistente:
   `python3 tools/cms-pacchetto.py --aggiornamento`. Si carica dal pannello,
   Impostazioni, Aggiornamenti.
-- **Versione**: `cms/VERSIONE` (oggi 1.6.3) e una voce in `cms/CHANGELOG.md` a ogni
+- **Versione**: `cms/VERSIONE` (oggi 1.6.4) e una voce in `cms/CHANGELOG.md` a ogni
   zip con contenuto diverso. Mai cambiare il contenuto di una versione già data.
 - **Prove** prima di dire finito:
   - `php -n -d short_open_tag=1 -l` su ogni file PHP toccato, `node --check` sui js;
@@ -129,7 +126,13 @@ Le decisioni complete, con data e perché, stanno nel second brain, `plumecms/de
 
 ## Stato al 28 ottobre 2026
 
-Fatto: plumeCMS 1.6.3 (28 ottobre, notte): due "Invito all'azione" affiancati alti uguali (segnalazione di Danilo sulla pagina
+Fatto: plumeCMS 1.6.4 (29 ottobre): solo due documenti nel prodotto (decisione di Danilo): manuale tecnico e documenti vecchi
+spostati in `docs-sviluppo/`, fuori dallo zip; sito di plumeCMS con due manuali (Documentazione, Download, piede); pannello
+(Informazioni, Temi), README e INSTALLA rimandano ai due manuali. L'aggiornamento toglie dai siti i 15 documenti vecchi
+(`TOLTI` in `cms-pacchetto.py`), la parte 1 del sito toglie `manuale-tecnico.pdf` dal Download. Il sito ora è in quattro parti.
+Prove: install 37/37, aggiornamento 1.6.3 -> 1.6.4 13/13 (in `docs/` restano i due manuali), sito di plumeCMS 77/77 (il manuale
+tecnico dà 404).
+1.6.3 (28 ottobre, notte): due "Invito all'azione" affiancati alti uguali (segnalazione di Danilo sulla pagina
 Scarica, già su plumecms.danilofailli.it): `widget.css`, un Invito da solo nella colonna la riempie. Aggiornamento 1.6.2 -> 1.6.3
 13/13, foto del sito uguali tranne il conto alla rovescia, schede 321/321 px.
 1.6.2 (28 ottobre, sera): l'indirizzo del sito ufficiale non si scrive più nel pannello (decisione di Danilo:

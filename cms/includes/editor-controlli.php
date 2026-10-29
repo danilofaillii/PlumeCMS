@@ -6,7 +6,7 @@
  * scelta_icone, icona, galleria, data_ora, trasformazione, intestazione. Ogni tipo ha tre pezzi, qui sotto in ordine:
  * la pulizia del valore che arriva dal pannello (editor_pulisci_gruppo), la struttura completa con i valori di partenza
  * (editor_normalizza_gruppo) e il CSS che ne esce (editor_css_gruppo). Il contratto per gli altri file:
- * audit3/CONTROLLI-CONTRATTO.md (copia in docs/editor-pagine.md, sezione "Controlli di gruppo").
+ * audit3/CONTROLLI-CONTRATTO.md (copia in docs-sviluppo/editor-pagine.md del repository, sezione "Controlli di gruppo").
  *
  * Un controllo con 'selettore' scrive il CSS da solo (editor_css_controllo): il widget non deve leggere i suoi valori di stile.
  * Un valore vuoto non scrive niente: il foglio di stile del sito resta quello che si vede.

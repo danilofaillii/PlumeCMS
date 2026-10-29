@@ -59,7 +59,7 @@ require_once __DIR__ . '/includes/admin-header.php';
     <h2><?= h(CMS_NOME) ?></h2>
     <div class="info-ver"><?= h(cms_versione()) ?></div>
     <p>Installato in <code><?= h(cms_radice()) ?></code><?= cms_base() !== '' ? ', sottocartella <code>' . h(cms_base()) . '</code>' : ', nella radice del dominio' ?>.<br>Sito: <code><?= h(cms_url_sito()) ?></code>. Prefisso delle tabelle: <code><?= h(DB_PREFIX) ?></code>.</p>
-    <p>Pacchetti di aggiornamento: voce <a href="aggiornamenti.php">Aggiornamenti</a>. Documenti: <code>docs/manuale-tecnico.md</code>, <code>docs/cms.md</code>.</p>
+    <p>Pacchetti di aggiornamento: voce <a href="aggiornamenti.php">Aggiornamenti</a>. Manuali: <code>docs/manuale-uso.md</code>, <code>docs/manuale-temi.md</code>.</p>
     <p>Software libero con licenza <a href="https://www.gnu.org/licenses/gpl-3.0.html" target="_blank" rel="noopener">GNU GPL, versione 3 o successiva</a>: il testo è nel file <code>LICENSE</code>.</p>
     <h3>Moduli attivi</h3>
     <?php if (!cms_moduli()): ?><p style="color:var(--text-muted)">Nessun modulo: il CMS gira con il solo nucleo.</p><?php else: ?>

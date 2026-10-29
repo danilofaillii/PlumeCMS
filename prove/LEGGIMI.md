@@ -149,7 +149,7 @@ Il download manager come un utente: carica un PDF con titolo, descrizione e vers
 caricamenti che vanno rifiutati (stesso nome senza Sostituisci, un testo chiamato .pdf, un .php, uno .zip con lo stesso
 nome del PDF); sostituisce il file e controlla che titolo e versione restino; cambia il titolo; mette il widget in una
 pagina (`prove/pagina-download.php`); guarda la pagina da visitatore; scarica come persona e come Googlebot e controlla
-che conti solo la persona; elimina il file. Serve il file manuale-tecnico in Download (il sito di plumeCMS lo ha).
+che conti solo la persona; elimina il file. Serve il file manuale-temi in Download (il sito di plumeCMS lo ha).
 `node prove/prova-download.js <base> <cartella CMS> <utente> <password>`. Atteso: 27 su 27.
 
 ## prova-hero.js (1.2.6)

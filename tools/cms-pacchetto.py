@@ -12,7 +12,7 @@ Costruisce i pacchetti del CMS (il prodotto, senza il modulo di danilofailli.it 
                                                    <nome>-b.zip (i .htaccess, che solo il motore nuovo accetta: vedi sotto)
 
 Dentro il prodotto: includes/, admin/, sito/, api/, share/, install/, assets/css, i cron, index.php, VERSIONE, CHANGELOG.md, LICENSE,
-README.md, INSTALLA.md, i documenti del CMS in docs/, un .htaccess per la radice del dominio, le cartelle vuote uploads/,
+README.md, INSTALLA.md, i due manuali in docs/, un .htaccess per la radice del dominio, le cartelle vuote uploads/,
 logs/, aggiornamenti/, moduli/. Fuori: moduli/danilofailli/, config.local.php, sql/, data/, test/, test-definizioni/,
 privato/, le immagini degli articoli, i file ponte (shim) che rimandano al modulo, i vecchi file di radice del publisher.
 Il programma rifiuta il pacchetto se dentro c'è un carattere a 4 byte, la parola "newdf_" fuori da cms.php e db.php,
@@ -28,7 +28,7 @@ AVVISI = []   # provvisorio: CMS_NOME in includes/cms.php
 
 CARTELLE = ['includes', 'admin', 'sito', 'api', 'share', 'install', 'assets/css', 'moduli', 'temi']
 FILE_RADICE = ['index.php', 'cron-daily.php', 'cron-newsletter.php', 'VERSIONE', 'CHANGELOG.md', 'README.md', 'INSTALLA.md', 'LICENSE']
-DOCS = ['manuale-uso.md', 'manuale-tecnico.md', 'manuale-temi.md', 'cms.md', 'cms-moduli.md', 'moduli.md', 'sicurezza.md', 'editor-pagine.md', 'stile-sito.md', 'header-footer-menu.md', 'versioni.md', 'seo.md', 'pannello.md', 'contenuti.md', 'newsletter.md', 'aggiornamenti.md', 'temi.md']
+DOCS = ['manuale-uso.md', 'manuale-temi.md']  # 1.6.4: nel prodotto solo i due manuali; il resto sta in docs-sviluppo/ del repository
 VUOTE = ['uploads', 'logs', 'aggiornamenti', 'moduli', 'temi']
 ESCLUDI_PREFISSI = ('moduli/danilofailli/', 'includes/config.local.php', 'install/.installato', 'admin/infographics/')
 # I file ponte verso il modulo di danilofailli.it: nel prodotto non c'è il modulo, quindi non ci sono nemmeno loro.
@@ -153,6 +153,9 @@ def scrivi_prodotto(versione, dest):
 # file che non c'e si salta). 1.2.8: i pezzi del primo sito (ebook e Laser, test, aforismi, header e footer di prima).
 TOLTI = ['admin/contatti.php', 'admin/aforismi.php', 'admin/aforisma-edit.php', 'admin/aforisma-delete.php',
          'includes/header.php', 'includes/footer.php', 'sito/assets/test.js']
+# 1.6.4: nel prodotto restano solo manuale d'uso e manuale dei temi; gli altri documenti spariscono anche dai siti che si aggiornano.
+TOLTI += [f'docs/{d}.md' for d in ('manuale-tecnico', 'cms', 'cms-moduli', 'moduli', 'sicurezza', 'editor-pagine', 'stile-sito',
+          'header-footer-menu', 'versioni', 'seo', 'pannello', 'contenuti', 'newsletter', 'aggiornamenti', 'temi')]
 
 
 def scrivi_aggiornamento(versione, file, dest):

@@ -12,7 +12,7 @@ require_once __DIR__ . '/editor-controlli.php';
 
 /**
  * Un controllo. $extra: opzioni, min, max, passo, unita, intervalli, responsive, stati, selettore, proprieta, valore_css, mappa,
- * hover_su, condizione, sezione, campi (ripetitore), aiuto. Tipi e strutture: editor-controlli.php e docs/editor-pagine.md.
+ * hover_su, condizione, sezione, campi (ripetitore), aiuto. Tipi e strutture: editor-controlli.php (e docs-sviluppo/editor-pagine.md nel repository).
  */
 function ec(string $nome, string $tipo, string $etichetta, $predefinito = '', string $scheda = 'contenuto', array $extra = []): array {
     return ['nome' => $nome, 'tipo' => $tipo, 'etichetta' => $etichetta, 'predefinito' => $predefinito, 'scheda' => $scheda] + $extra;

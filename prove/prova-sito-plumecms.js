@@ -157,7 +157,7 @@ async function contrastoParole(pg) {
   // I file da scaricare: i link delle pagine portano a file veri, con il tipo giusto.
   await v.goto(B + '/scarica/', { waitUntil: 'networkidle' });
   const link = await v.locator('a[href*="/scarica/"]').evaluateAll(as => [...new Set(as.map(a => a.getAttribute('href')).filter(h => /\/scarica\/[^/]+\/$/.test(h)))]);
-  ok('la pagina Scarica, widget Download: sei file (dalla 1.4.2 anche il manuale d\'uso), tutti presenti', await v.locator('.ed-dl-voce').count() === 6 && await v.locator('.ed-dl-mancante').count() === 0, await v.locator('.ed-dl-titolo').allInnerTexts());
+  ok('la pagina Scarica, widget Download: cinque file (dalla 1.6.4 senza il manuale tecnico), tutti presenti', await v.locator('.ed-dl-voce').count() === 5 && await v.locator('.ed-dl-mancante').count() === 0, await v.locator('.ed-dl-titolo').allInnerTexts());
   // Dalla 1.2.5 i link sono quelli della serie, che porta sempre all'ultima versione caricata.
   ok('la pagina Scarica punta alle serie (sempre l\'ultima versione)', link.some(h => h.endsWith('/plumecms-ultima/')) && link.some(h => h.endsWith('/plumecms-ultima-aggiornamento/')), link);
   ok('nessun segnaposto {versione:...} rimasto nella pagina', !/\{versione:/.test(await v.content()));
@@ -165,13 +165,16 @@ async function contrastoParole(pg) {
   const rSerie = await v.request.get(B + '/scarica/plumecms-ultima/');
   ok(`/scarica/plumecms-ultima/ manda plumecms-${V}.zip`, rSerie.status() === 200 && (rSerie.headers()['content-disposition'] || '').includes(`plumecms-${V}.zip`), rSerie.headers()['content-disposition']);
   for (const [u, tipo, min] of [[`/scarica/plumecms-${V}/`, 'application/zip', 500000], [`/scarica/plumecms-${V}-aggiornamento/`, 'application/zip', 500000],
-    ['/scarica/manuale-uso/', 'application/pdf', 1000000], ['/scarica/manuale-tecnico/', 'application/pdf', 300000], ['/scarica/manuale-temi/', 'application/pdf', 300000], ['/scarica/tema-lavagna/', 'application/zip', 1000]]) {
+    ['/scarica/manuale-uso/', 'application/pdf', 1000000], ['/scarica/manuale-temi/', 'application/pdf', 300000], ['/scarica/tema-lavagna/', 'application/zip', 1000]]) {
     const r = await v.request.get(B + u);
     const corpo = await r.body();
     const firma = tipo === 'application/pdf' ? corpo.slice(0, 4).toString() === '%PDF' : corpo[0] === 0x50 && corpo[1] === 0x4b;
     ok(`${u}: ${tipo}, ${Math.round(corpo.length / 1024)} KB, scaricabile`, r.status() === 200 && r.headers()['content-type'] === tipo && /attachment/.test(r.headers()['content-disposition'] || '') && corpo.length > min && firma,
       [r.status(), r.headers()['content-type'], r.headers()['content-disposition']]);
   }
+  // 1.6.4: il manuale tecnico non c'è più, nemmeno su un sito che lo aveva (la parte 1 lo toglie).
+  const rTec = await v.request.get(B + '/scarica/manuale-tecnico/');
+  ok('/scarica/manuale-tecnico/: tolto (404)', rTec.status() === 404, rTec.status());
   const r404 = await v.request.get(B + '/scarica/non-esiste/');
   ok('/scarica/ di un file che non c\'è: 404', r404.status() === 404, r404.status());
   const rFuga = await v.request.get(B + '/scarica/..%2Fconfig/');
@@ -189,7 +192,7 @@ async function contrastoParole(pg) {
   ok('Installazione (1.4.0): dopo l\'installazione, Primi passi e Controlla il server', /Primi passi/.test(await v.locator('body').innerText()) && /Controlla il server/.test(await v.locator('body').innerText()));
   // 1.4.2: il manuale d'uso nella Documentazione, nelle Domande frequenti e nel piede.
   await v.goto(B + '/documentazione/', { waitUntil: 'networkidle' });
-  ok('Documentazione (1.4.2): tre manuali, il primo è il manuale d\'uso', /Tre manuali/.test(await v.locator('body').innerText()) && await v.locator('a[href$="/scarica/manuale-uso/"]').count() >= 1);
+  ok('Documentazione (1.6.4): due manuali, il primo è il manuale d\'uso', /Due manuali/.test(await v.locator('body').innerText()) && await v.locator('a[href$="/scarica/manuale-uso/"]').count() >= 1);
   await v.goto(B + '/domande-frequenti/', { waitUntil: 'networkidle' });
   ok('Domande frequenti (1.6.0): lo stesso invito sotto tutti gli articoli, e i 31 capitoli', /stesso invito sotto tutti gli articoli\?/.test(await v.locator('body').innerText()) && /Trentuno capitoli/.test(await v.locator('body').textContent()));
   ok('Domande frequenti (1.5.0): i social', /Mi aiuta anche con i social\?/.test(await v.locator('body').innerText()));

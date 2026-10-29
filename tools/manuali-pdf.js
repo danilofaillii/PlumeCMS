@@ -1,4 +1,4 @@
-// I manuali in PDF (1.2.3, 27 ottobre 2026): docs/manuale-tecnico.md e docs/manuale-temi.md diventano
+// I manuali in PDF (1.2.3, 27 ottobre 2026; dalla 1.6.4 solo manuale d'uso e manuale dei temi): i markdown in docs/ diventano
 // releases/manuali/<nome>.pdf, con copertina, indice cliccabile e numeri di pagina.
 // Peso: niente PDF "tagged" (i tag dell'accessibilita raddoppiavano il file, 2,1 MB il manuale tecnico) e il carattere
 // Carlito (Inter installato qui e variabile, e Chromium lo mette nel PDF lettera per lettera come disegni). Cosi il
@@ -18,7 +18,6 @@ const USCITA = path.resolve(process.argv[2] || path.join(RADICE, 'releases', 'ma
 const VERSIONE = fs.readFileSync(path.join(RADICE, 'cms', 'VERSIONE'), 'utf8').trim();
 const MANUALI = [
   { file: 'manuale-uso', titolo: 'Manuale d\'uso', sotto: 'Come si fa ogni cosa con plumeCMS: articoli, pagine, menu, form, newsletter, sicurezza. Con esempi veri, schermate e checklist.' },
-  { file: 'manuale-tecnico', titolo: 'Manuale tecnico', sotto: 'Tutto il CMS, pezzo per pezzo: com\'è fatto, come funziona, dove mettere le mani.' },
   { file: 'manuale-temi', titolo: 'Manuale dei temi', sotto: 'Come si costruisce un tema da zero, file per file, con un esempio completo.' },
 ];
 
