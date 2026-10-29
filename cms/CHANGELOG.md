@@ -2,6 +2,15 @@
 
 Il prodotto si chiama **plumeCMS** (nome scelto il 26 ottobre 2026; prima, per poche ore, "CarbonaraCMS", e ancora prima il provvisorio "Officina": gli zip vecchi si chiamavano `officina-*` e `carbonaracms-*`).
 
+## 1.8.0 (29 ottobre 2026) - La frase in fondo al sito e il sito ufficiale nella dashboard
+
+- **Richiesta di Danilo**: sotto il piede di ogni pagina una riga piccola, **Un nuovo sito plumeCMS**, con il link a
+  `https://plumecms.danilofailli.it`. Chi installa la cambia o la spegne in **Impostazioni > Sito pubblico**, riquadro
+  "La frase in fondo al sito": testo, indirizzo del link (vuoto: niente link), acceso o spento. Il testo è solo testo
+  (HTML ed emoji tolti); un indirizzo che non è http o https torna quello ufficiale. Esce anche con i temi.
+- **Dashboard**: in cima, sempre e per tutti, la riga "Visita il sito ufficiale **plumeCMS**", con il link al sito
+  ufficiale in una scheda nuova.
+
 ## 1.7.0 (29 ottobre 2026) - Il sito su misura
 
 - **Richiesta di Danilo**: chi installa plumeCMS scrive che sito vuole e il sito si compone da solo, con foto finte da

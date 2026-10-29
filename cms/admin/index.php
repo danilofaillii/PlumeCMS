@@ -8,6 +8,7 @@ require_once __DIR__ . '/includes/admin-functions.php';
 require_once dirname(__DIR__) . '/includes/contenuti.php';
 require_once dirname(__DIR__) . '/includes/form.php';
 require_once dirname(__DIR__) . '/includes/newsletter.php';
+require_once dirname(__DIR__) . '/includes/firma.php'; // FIRMA_URL: il sito ufficiale, per il banner (1.8.0)
 require_login();
 sito_schema_aggiorna();
 newsletter_schema();
@@ -138,8 +139,15 @@ require_once __DIR__ . '/includes/admin-header.php';
 .db-passi li a{font-size:.8rem;font-weight:600;color:var(--accento-testo);text-decoration:none}
 .db-passi li form{display:block;margin-top:.45rem}
 .db-passi-fine{display:flex;justify-content:flex-end;margin-top:.8rem}
+.db-ufficiale{display:flex;align-items:center;gap:.6rem;background:var(--coral-light);border:1px solid var(--border);border-radius:var(--radius);padding:.7rem 1.1rem;margin-bottom:1rem;font-size:.92rem;color:var(--text)}
+.db-ufficiale svg{width:18px;height:18px;flex:none;color:var(--accento-testo)}
+.db-ufficiale span{flex:1 1 auto}
+.db-ufficiale a{font-weight:700;color:var(--accento-testo)}
 .db-passi .sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
 </style>
+
+<?php /* 1.8.0, richiesta di Danilo: il banner del sito ufficiale, sempre, per tutti; non si chiude. */ ?>
+<p class="db-ufficiale" id="db-ufficiale"><?= icona_svg('stella', 'nav-svg') ?> <span>Visita il sito ufficiale <a href="<?= h(FIRMA_URL) ?>" target="_blank" rel="noopener">plumeCMS</a></span></p>
 
 <div class="db-azioni">
   <a class="btn btn-primary btn-sm" href="editor.php?nuova=1&amp;tipo=articoli">+ Articolo</a>

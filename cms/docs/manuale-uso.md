@@ -1,6 +1,6 @@
 # Manuale d'uso di plumeCMS
 
-Versione del manuale: plumeCMS 1.7.0, 29 ottobre 2026.
+Versione del manuale: plumeCMS 1.8.0, 29 ottobre 2026.
 
 ## Prima di cominciare
 
@@ -55,6 +55,9 @@ Dopo l'accesso arrivi alla **Dashboard**: la pagina che ti dice come sta il sito
 1. **Il menu a sinistra.** Tutte le sezioni del pannello. Le voci con la freccetta (Pagine, Newsletter e form, Editor,
    SEO e AEO, Impostazioni) si aprono e mostrano le sottovoci.
 2. **I pulsanti rapidi.** + Articolo, + Pagina, + Campagna e Home nell'editor: le cose che si fanno più spesso, a un clic.
+
+In cima c'è sempre la riga **Visita il sito ufficiale plumeCMS**: il link porta a plumecms.danilofailli.it, dove trovi
+le versioni nuove, i manuali e le novità.
 
 Sotto trovi i riquadri del **tipo di sito** e dei **Primi passi** (capitoli 2 e 3), gli avvisi in giallo, e i numeri
 del sito: articoli online, programmati e in bozza, iscritti alla newsletter, form compilati, ultime modifiche, e un
@@ -752,6 +755,20 @@ il ciano). Per costruirne uno tuo c'è il **Manuale dei temi**.
 
 - [ ] L'header mostra il logo e il menu.
 - [ ] Il footer ha i contatti, la privacy e l'anno giusto.
+
+### La frase in fondo al sito
+
+Sotto il footer, in piccolo, ogni pagina ha una riga: **Un nuovo sito plumeCMS**, con il link al sito ufficiale. La
+cambi o la spegni da **Impostazioni > Sito pubblico**, riquadro **La frase in fondo al sito**.
+
+![La frase in fondo al sito](immagini/manuale-uso/15-frase.jpg)
+
+1. **Mostra la frase sul sito**: togli la spunta per spegnerla.
+2. **Testo**: quello che si legge (per esempio "Sito fatto con plumeCMS da Studio Prova").
+3. **Indirizzo del link**: dove porta. Lascialo vuoto e la frase esce senza link.
+4. Premi **Salva la frase** e apri il sito: in fondo a ogni pagina c'è quella nuova.
+
+Il testo è solo testo: niente grassetti né codice, e le emoji si tolgono.
 
 ---
 

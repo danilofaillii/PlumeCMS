@@ -90,7 +90,7 @@ Sono gli unici in `cms/docs/`, nello zip, nel sito di plumeCMS e nella pagina Do
 - **Pacchetto di aggiornamento** per un'installazione esistente:
   `python3 tools/cms-pacchetto.py --aggiornamento`. Si carica dal pannello,
   Impostazioni, Aggiornamenti.
-- **Versione**: `cms/VERSIONE` (oggi 1.7.0) e una voce in `cms/CHANGELOG.md` a ogni
+- **Versione**: `cms/VERSIONE` (oggi 1.8.0) e una voce in `cms/CHANGELOG.md` a ogni
   zip con contenuto diverso. Mai cambiare il contenuto di una versione già data.
 - **Prove** prima di dire finito:
   - `php -n -d short_open_tag=1 -l` su ogni file PHP toccato, `node --check` sui js;
@@ -126,7 +126,13 @@ Le decisioni complete, con data e perché, stanno nel second brain, `plumecms/de
 
 ## Stato al 28 ottobre 2026
 
-Fatto: plumeCMS 1.7.0 (29 ottobre): il sito su misura (richiesta di Danilo, strada A senza intelligenza artificiale):
+Fatto: plumeCMS 1.8.0 (29 ottobre): la frase in fondo al sito "Un nuovo sito plumeCMS" con il link a `https://plumecms.danilofailli.it`
+(richiesta di Danilo), modificabile in Impostazioni > Sito pubblico (`includes/firma.php`, impostazione `firma_sito`: testo, indirizzo,
+acceso); banner "Visita il sito ufficiale plumeCMS" in cima alla dashboard, sempre. `FIRMA_URL` ripete `VERSIONE_SITO_UFFICIALE`: se cambia
+uno, cambia l'altro. Manuale d'uso capitoli 1 e 15, tecnico 30. Prove: `prova-firma.js` 14/14 (radice e cartella), attacchi 249/249
+(gruppo 24), install 37/37 radice e cartella (la prova ammette ora `plumecms.danilofailli.it` nella home), aggiornamento 1.7.0 -> 1.8.0
+13/13 (pagine uguali tranne la riga nuova), sito di plumeCMS 80/80.
+1.7.0 (29 ottobre): il sito su misura (richiesta di Danilo, strada A senza intelligenza artificiale):
 carta "Su misura" al passo 4 dell'installatore con quattro domande (attività fra dieci, città, fino a sei servizi, pagine), motore
 `includes/sito-su-misura.php` che compone il kit dalle risposte, foto finte SVG in `uploads/segnaposto/`, Media > Da sostituire con
 Sostituisci (solo admin, sostituisce l'indirizzo in pagine, articoli e modelli), voce dei Primi passi, `admin/sito-su-misura.php` per

@@ -58,6 +58,9 @@ function vista_pagina(array $meta, string $corpo, string $jsonld = '', string $a
     // modelli: header e footer dal Theme Builder (includes/modelli.php). Senza modelli, la testata e il piede scritti qui.
     $GLOBALS['sito_attivo'] = $attivo;
     [$testata, $piede, $cssModelli] = vista_header_footer($menu, $menuMobile);
+    // 1.8.0: la firma sotto il piede ("Un nuovo sito plumeCMS"), che si cambia o si spegne in Impostazioni.
+    require_once dirname(__DIR__) . '/includes/firma.php';
+    $piede .= firma_html();
 
     $testa = '<meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">

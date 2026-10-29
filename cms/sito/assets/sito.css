@@ -183,6 +183,9 @@ h1,h2,h3{font-family:var(--f-titolo);letter-spacing:-.01em;margin:0}
 .piede li{padding:4px 0}
 .piede a{text-decoration:none}
 .piede a:hover{color:var(--ciano)}
+.firma-sito{margin:0;padding:14px 16px 22px;text-align:center;font-size:13px;color:var(--testo-2)}
+.firma-sito a{color:inherit;text-decoration:underline;text-underline-offset:3px}
+.firma-sito a:hover{color:var(--ciano)}
 @media (max-width:860px){.piede .wrap{grid-template-columns:1fr 1fr}}
 :focus-visible{outline:2px solid var(--ciano);outline-offset:3px}
 

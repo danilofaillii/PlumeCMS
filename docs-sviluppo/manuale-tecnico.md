@@ -1,6 +1,6 @@
 # plumeCMS: manuale tecnico
 
-Versione del manuale: 1.15, per plumeCMS 1.7.0 (29 ottobre 2026).
+Versione del manuale: 1.16, per plumeCMS 1.8.0 (29 ottobre 2026).
 
 Questo manuale descrive come è fatto plumeCMS e come funziona, pezzo per pezzo. È scritto leggendo il codice:
 ogni numero, limite e nome di funzione viene dai file veri, con il riferimento `file:riga` quando serve a chi
@@ -44,6 +44,7 @@ pagine, gestire il sito) c'è il manuale d'uso, `docs/manuale-uso.md`, con le sc
 27. Social e email del mattino (dalla 1.5.0)
 28. Aggiungi sempre alla fine: il riquadro in fondo agli articoli (dalla 1.6.0)
 29. Il sito su misura (dalla 1.7.0)
+30. La frase in fondo al sito e il banner del sito ufficiale (dalla 1.8.0)
 
 Appendice A. Dove i documenti vecchi non corrispondono al codice
 
@@ -72,7 +73,7 @@ fatti con plumeCMS, i loro contenuti e i temi e moduli che non ne copiano il cod
 index.php           front controller: tutte le richieste del sito passano da qui
 cron-daily.php      compiti del giorno (pacchetti programmati, moduli, IndexNow)
 cron-newsletter.php invio della newsletter a giri, coda IndexNow
-VERSIONE            il numero di versione (oggi 1.7.0)
+VERSIONE            il numero di versione (oggi 1.8.0)
 CHANGELOG.md, README.md, INSTALLA.md
 .htaccess           regole di Apache (copia di install/esempi/htaccess-radice.txt)
 
@@ -2738,6 +2739,34 @@ il sito in prova è su misura o se qualche foto finta è ancora usata (`su_misur
 
 **Prove**: `prove/prova-su-misura.js` (installazione con le domande, sito, Media, Sostituisci con i rifiuti, sito
 ricomposto dalla dashboard, Definitivo), gruppo 23 di `tools/sicurezza-prova.js`.
+
+## 30. La frase in fondo al sito e il banner del sito ufficiale (dalla 1.8.0)
+
+Richiesta di Danilo: in fondo a ogni pagina "Un nuovo sito plumeCMS" con il link a `https://plumecms.danilofailli.it`,
+modificabile da chi installa; nella dashboard, sempre, "Visita il sito ufficiale plumeCMS".
+
+**Motore**: `includes/firma.php`. `FIRMA_URL` (`:10`) è lo stesso indirizzo di `VERSIONE_SITO_UFFICIALE`
+(`includes/versione-nuova.php`), scritto due volte per non caricare il motore degli aggiornamenti a ogni visita: se cambia
+uno, cambia l'altro. L'impostazione `firma_sito` (JSON `{mostra, testo, url}`); senza impostazione vale
+`firma_predefinita()` (`:14`): accesa, `FIRMA_TESTO`, `FIRMA_URL`.
+
+| Funzione | Cosa fa |
+|---|---|
+| `firma_valori()` (`:19`) | la firma salvata, ripulita, o quella di partenza |
+| `firma_pulisci($p)` (`:25`) | testo senza HTML, senza caratteri a 4 byte, fino a 120 caratteri; indirizzo vuoto (niente link) o `http(s)://` valido, altrimenti `FIRMA_URL` |
+| `firma_salva($p)` (`:33`) | pulisce e salva |
+| `firma_html()` (`:40`) | `<p class="firma-sito" id="firma-sito">`, con il link in una scheda nuova (`rel="noopener"`); `''` se spenta o senza testo |
+
+**Sito**: `vista_pagina()` (`sito/viste.php:62`) aggiunge `firma_html()` in coda al piede, quindi esce anche con i temi
+che ridisegnano la pagina (variabile `piede` di `viste/documento.php`) e con qualunque footer del Theme Builder. Stile
+`.firma-sito` in `sito/assets/sito.css` (13 px, `--testo-2`, centrata).
+
+**Pannello**: Impostazioni, riquadro "La frase in fondo al sito" (`admin/impostazioni.php:101`, azione `save_firma`,
+`:33`, solo amministratore come tutta la pagina). Dashboard: `#db-ufficiale` (`admin/index.php:150`), per tutti i ruoli,
+senza chiusura.
+
+**Prove**: `prove/prova-firma.js` (14 controlli: banner, frase sul sito sotto il piede, cambio, senza link, HTML e
+`javascript:`, spenta; alla fine rimette la frase com'era), gruppo 24 di `tools/sicurezza-prova.js`.
 
 ## Appendice A. Dove i documenti vecchi non corrispondono al codice
 

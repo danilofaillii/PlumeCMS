@@ -20,7 +20,8 @@ Installa plumeCMS da zero con il browser (Playwright) e controlla sito e pannell
 
 
 
-Le prove di attacco: ogni OK è un attacco respinto (242 nella 1.7.0, con FINTO_WP, su un sito su misura ancora in prova: le 41
+Le prove di attacco: ogni OK è un attacco respinto (249 nella 1.8.0 sullo stesso sito su misura in prova, con FINTO_WP: le 7 nuove,
+gruppo 24, sono sulla frase in fondo al sito; 227 su un sito Attività; 242 nella 1.7.0, con FINTO_WP, su un sito su misura ancora in prova: le 41
 nuove, gruppi 23 e 23b, sono sul sito su misura; 226 sullo stesso tipo di sito già definitivo e senza FINTO_WP; 201 nella 1.6.0,
 con FINTO_WP: le 24 nuove, gruppo 22, sono su Aggiungi sempre alla
 fine; 177 nella 1.5.0; 118 nella 1.4.0, con `CMS_DIR` e `SEGRETO`; le 21 nuove sono sul
@@ -395,3 +396,9 @@ passi e Media > Da sostituire; Sostituisci con un PNG vero (la foto finta sparis
 cambiata resta); Definitivo, e la pagina non ricompone più. Atteso: 34 su 34. Alla fine il sito è definitivo: per rifarla
 servono una cartella e un database nuovi. Con la cartella delle schermate lascia `su-misura-*.png`.
 Dalla 1.7.0 `prova-kit.js` conta sei carte al passo 4 e `prova-tipo-sito.js` sei carte nella dashboard (con Su misura).
+
+## prova-firma.js (1.8.0)
+
+La frase in fondo al sito ("Un nuovo sito plumeCMS") e il banner "Visita il sito ufficiale plumeCMS" della dashboard.
+`node prove/prova-firma.js <base del CMS> <utente> <password>`, su un CMS installato (qualunque kit). Cambia la frase in
+Impostazioni e alla fine la rimette com'era. Atteso: 14 su 14, in radice e in cartella.

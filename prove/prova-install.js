@@ -49,7 +49,8 @@ let n = 0, ko = 0; const ok = (t, c, extra = '') => { n++; if (!c) ko++; console
   ok('home con il nome del sito nel titolo', /Bottega di prova/i.test(h1), h1);
   ok('header con il menu Principale', await p.locator('header a:has-text("Chi sono")').count() >= 1 && await p.locator('header a:has-text("Contatti")').count() >= 1);
   ok('footer presente', await p.locator('footer').count() >= 1);
-  ok('nessuna traccia di danilofailli nella home', !/danilofailli|FuoriDalCoso|Deep Office/i.test(await p.content()));
+  // 1.8.0: il link al sito ufficiale (plumecms.danilofailli.it, la frase in fondo al sito) è voluto; nient'altro di danilofailli.
+  ok('nessuna traccia di danilofailli nella home (tranne il sito ufficiale)', !/danilofailli|FuoriDalCoso|Deep Office/i.test((await p.content()).split('https://plumecms.danilofailli.it').join('')));
   await shot('sito-home');
   const blog = await p.goto(B + '/blog/', { waitUntil: 'networkidle' }); ok('blog 200 con l\'articolo di benvenuto', blog.status() === 200 && (await p.content()).includes('Benvenuto'));
   const art = await p.goto(B + '/benvenuto/', { waitUntil: 'networkidle' }); ok('articolo di benvenuto 200', art.status() === 200 && /Benvenuto/.test(await p.locator('h1').first().innerText()));

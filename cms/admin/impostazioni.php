@@ -7,6 +7,7 @@ require_once __DIR__ . '/includes/auth.php';
 require_once __DIR__ . '/includes/admin-functions.php';
 require_once __DIR__ . '/../includes/sito.php';
 require_once __DIR__ . '/../includes/posta.php';
+require_once __DIR__ . '/../includes/firma.php';
 require_admin();
 
 $adminTitle = 'Impostazioni';
@@ -29,6 +30,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         save_setting('posta_smtp', json_encode($posta, JSON_UNESCAPED_UNICODE));
         save_setting('notifica_email', trim($_POST['notification_email'] ?? ''));
         flash('success', $posta['host'] ? 'Posta salvata: si spedisce da ' . $posta['host'] . '.' : 'Posta salvata: senza server SMTP si usa mail() di PHP.');
+    } elseif (($_POST['action'] ?? '') === 'save_firma') {
+        // 1.8.0: la frase in fondo al sito (includes/firma.php).
+        $f = firma_salva(['mostra' => !empty($_POST['firma_mostra']), 'testo' => $_POST['firma_testo'] ?? '', 'url' => $_POST['firma_url'] ?? '']);
+        flash('success', $f['mostra'] && $f['testo'] !== '' ? 'Frase in fondo al sito salvata: «' . $f['testo'] . '».' : 'Frase in fondo al sito spenta: sul sito non compare più.');
     } elseif (($_POST['action'] ?? '') === 'prova_posta') {
         $a = trim($_POST['prova_a'] ?? '');
         if (!filter_var($a, FILTER_VALIDATE_EMAIL)) {
@@ -45,6 +50,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 $smtp = (json_decode((string)get_setting('posta_smtp', ''), true) ?: []) + ['host' => '', 'porta' => 465, 'sicurezza' => 'ssl', 'utente' => '', 'password' => '', 'mittente' => '', 'nome' => (string)cms_impostazione('sito_nome', CMS_NOME)];
 $notifica = posta_notifica_email();
+$firma = firma_valori();
 
 require_once __DIR__ . '/includes/admin-header.php';
 ?>
@@ -91,6 +97,26 @@ require_once __DIR__ . '/includes/admin-header.php';
       Grafica e contenuti si cambiano da <a href="contenuti.php?tipo=pagine">Pagine</a> e <a href="contenuti.php?tipo=articoli">Articoli</a>, con l'editor visuale.
     </p>
   </div>
+
+  <form method="post" class="form-card" id="firma-sito" style="margin-top:1rem">
+    <?= csrf_field() ?><input type="hidden" name="action" value="save_firma">
+    <h3>La frase in fondo al sito</h3>
+    <p style="font-size:0.85rem;color:var(--text-muted);margin:0 0 1rem">Una riga piccola sotto il piede di ogni pagina, con un link. Si può cambiare il testo, l'indirizzo, oppure spegnerla.</p>
+    <div class="form-group" style="display:flex;gap:.5rem;align-items:center">
+      <input type="checkbox" id="firma_mostra" name="firma_mostra" value="1"<?= $firma['mostra'] ? ' checked' : '' ?> style="width:auto">
+      <label for="firma_mostra" style="margin:0;text-transform:none;letter-spacing:0">Mostra la frase sul sito</label>
+    </div>
+    <div class="form-group">
+      <label for="firma_testo">Testo</label>
+      <input type="text" id="firma_testo" name="firma_testo" maxlength="120" value="<?= h($firma['testo']) ?>" placeholder="<?= h(FIRMA_TESTO) ?>">
+    </div>
+    <div class="form-group">
+      <label for="firma_url">Indirizzo del link</label>
+      <input type="url" id="firma_url" name="firma_url" value="<?= h($firma['url']) ?>" placeholder="<?= h(FIRMA_URL) ?>">
+      <small style="display:block;color:var(--text-muted);font-size:.8rem;margin-top:.3rem">Vuoto: la frase esce senza link. Di partenza: il sito ufficiale di plumeCMS.</small>
+    </div>
+    <button type="submit" class="btn btn-primary" id="firma-salva">Salva la frase</button>
+  </form>
 </div>
 
 <?php require_once __DIR__ . '/includes/admin-footer.php'; ?>

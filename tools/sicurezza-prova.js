@@ -1002,6 +1002,39 @@ echo json_encode($o);
     } else console.log('--  sito su misura dopo il Definitivo: saltata (il sito non ha un tipo di sito definitivo)');
   }
 
+  // === 24. (1.8.0) La frase in fondo al sito: la cambia solo l'amministratore, con il token; il testo non diventa codice.
+  {
+    const form = (o) => new URLSearchParams(o).toString();
+    const CT = { 'Content-Type': 'application/x-www-form-urlencoded' };
+    const PAG = ADMIN + '/impostazioni.php';
+    const cattiva = { action: 'save_firma', firma_mostra: '1', firma_testo: 'sic-firma-<script>alert(1)</script>', firma_url: 'javascript:alert(1)' };
+    const sitoFirma = async () => { const r = await admin.ctx.request.get(BASE + '/'); const h = await r.text(); return (h.match(/<p class="firma-sito"[^]*?<\/p>/) || [''])[0]; };
+    const prima = await sitoFirma();
+    const anon = await browser.newContext();
+    const ra = await anon.request.post(PAG, { form: cattiva, maxRedirects: 0 });
+    ok('1.8.0: frase in fondo al sito senza login: rifiutata', ra.status() !== 200 && !(await sitoFirma()).includes('sic-firma'), { status: ra.status() });
+    await anon.close();
+    const r1 = await post(admin.p, PAG, form(cattiva), CT);
+    ok('1.8.0: frase in fondo al sito senza token: 403', r1.status === 403 && !(await sitoFirma()).includes('sic-firma'), { status: r1.status });
+    const tk = await tokenDi(admin.p, PAG);
+    const est = await admin.ctx.request.post(PAG, { headers: { 'Origin': 'https://evil.example' }, form: { _csrf: tk, ...cattiva }, maxRedirects: 0 });
+    ok('1.8.0: frase in fondo al sito con Origin esterno: 403', est.status() === 403 && !(await sitoFirma()).includes('sic-firma'), { status: est.status() });
+    if (red.dentro) {
+      const tr = await tokenDi(red.p, ADMIN + '/media.php');
+      const rr = await post(red.p, PAG, form({ _csrf: tr, ...cattiva }), CT);
+      ok('1.8.0: il redattore non cambia la frase in fondo al sito', rr.status !== 200 || !/salvata/.test(rr.body), { status: rr.status });
+      ok('1.8.0: (controllo) dopo il redattore la frase è com\'era', !(await sitoFirma()).includes('sic-firma'));
+    }
+    // L'amministratore con il token: il testo con lo script esce come testo, l'indirizzo javascript: non passa.
+    const r2 = await post(admin.p, PAG, form({ _csrf: await tokenDi(admin.p, PAG), ...cattiva }), CT);
+    const dopo = await sitoFirma();
+    ok('1.8.0: frase con <script> e javascript: dall\'amministratore: niente codice sul sito', r2.status < 400 && dopo.includes('sic-firma') && !/<script|javascript:/i.test(dopo), { dopo: dopo.slice(0, 200) });
+    // Com'era: dai valori di partenza, o quelli letti prima.
+    const m = prima.match(/href="([^"]*)"[^>]*>([^<]*)</);
+    await post(admin.p, PAG, form({ _csrf: await tokenDi(admin.p, PAG), action: 'save_firma', firma_mostra: prima ? '1' : '', firma_testo: m ? m[2] : (prima.replace(/<[^>]+>/g, '') || 'Un nuovo sito plumeCMS'), firma_url: m ? m[1] : '' }), CT);
+    ok('1.8.0: (pulizia) la frase torna com\'era', (await sitoFirma()) === prima, { prima: prima.slice(0, 120) });
+  }
+
   // === pulizia: elimina il redattore di prova
   {
     await admin.p.goto(ADMIN + '/utenti.php', { waitUntil: 'networkidle' });

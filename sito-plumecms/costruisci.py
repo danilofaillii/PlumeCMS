@@ -236,6 +236,9 @@ def funzionalita():
          ['Chi arriva alla fine di un articolo è il lettore più interessato che hai. In Articoli, la linguetta <strong>Aggiungi sempre alla fine</strong>: prepari una volta sola un riquadro che esce sotto ogni articolo, anche sotto quelli già pubblicati. Un invito alla newsletter, un contatto, una prenotazione, un libro da consigliare.',
           'Lo componi con l\'editor visuale, come una pagina: titoli, testi, foto, pulsanti. Esce quando premi Pubblica, con l\'ombra, il bordo e i colori del tuo sito e del tema.',
           'Lo spegni e lo riaccendi con un clic, senza perdere il lavoro. Ogni modifica lascia una versione, e nella sua pagina vedi l\'anteprima sotto l\'ultimo articolo prima di pubblicare.']),
+        ('firma', 'firma.webp', 'La tua firma in fondo al sito',
+         ['Sotto il piede di ogni pagina c\'è una riga piccola: <strong>Un nuovo sito plumeCMS</strong>, con il link al sito ufficiale. È tua: in Impostazioni > Sito pubblico cambi il testo e l\'indirizzo, oppure la spegni con una spunta.',
+          'Il testo resta testo: niente codice, niente sorprese. E nella dashboard trovi sempre il link al sito ufficiale, per le versioni nuove e i manuali.']),
         ('download', 'download.webp', 'Download manager: i tuoi file, a portata di clic',
          ['Manuali, ebook, listini, programmi: li carichi dalla pagina Download del pannello, con titolo, descrizione e versione. Ogni file ha il suo indirizzo da condividere.',
           'Con la versione nel nome (guida-1.2.pdf) il file entra in una serie: un indirizzo porta sempre alla versione più recente, e nelle pagine il numero si scrive da solo. Carichi la versione nuova e tutto il sito la segue. E vedi quante volte ogni file è stato scaricato: le persone sì, i robot no.',
@@ -451,6 +454,7 @@ def faq():
         ('Mi aiuta anche con i social?', 'Sì. Scrivi il testo nel riquadro Social dell\'articolo e il giorno in cui esce ti arriva un\'email con il testo pronto per ogni canale, il link, i tuoi hashtag e le due immagini della misura giusta. Per i giorni dopo c\'è il calendario dei post. Pubblicare resta a te: plumeCMS non entra nei tuoi account.'),
         ('Posso mettere lo stesso invito sotto tutti gli articoli?', 'Sì. In Articoli premi la linguetta Aggiungi sempre alla fine e componi il riquadro con l\'editor: un invito alla newsletter, un pulsante per prenotare, un contatto. Quando premi Pubblica esce in fondo a ogni articolo, anche a quelli già online. Se lo spegni non perdi niente: con Accendi torna com\'era.'),
         ('Non so da dove partire. plumeCMS mi aiuta a fare il sito?', 'Sì. Quando lo installi scegli Su misura e rispondi a quattro domande: che attività è, dove si trova, cosa offri, quali pagine vuoi. Il sito si compone da solo, con i testi pensati per la tua attività e delle foto finte che dicono cosa fotografare. Le cambi con le tue in Media, con il pulsante Sostituisci. Le domande si riaprono dalla dashboard finché il sito è in prova.'),
+        ('In fondo al mio sito c\'è scritto "Un nuovo sito plumeCMS". Si può cambiare?', 'Sì. In Impostazioni > Sito pubblico, riquadro La frase in fondo al sito, cambi il testo e l\'indirizzo del link, oppure togli la spunta e la frase non compare più.'),
         ('C\'è una guida per imparare a usarlo?', 'Sì: il manuale d\'uso, in PDF. Trentuno capitoli, dal primo accesso alla checklist prima di andare online, ognuno con un esempio vero, le schermate con i passi numerati e una checklist per sapere quando hai finito.'),
         ('Posso costruirmi un tema mio?', 'Sì: c\'è un manuale apposta, con un tema d\'esempio completo da smontare e rifare tuo.'),
     ]
@@ -537,7 +541,7 @@ def editor_json():
 
 
 # ------------------------------------------------------------------ file
-USATE = ['copertina', 'su-misura', 'social', 'fine-articolo', 'importa-wp', 'tipo-sito', 'primi-passi', 'aspetti', 'controlla-server', 'sezioni', 'copia', 'installa-1', 'installa-2', 'installa-3', 'installa-4', 'installa-5', 'editor-ritratto', 'editor', 'aperture', 'stile', 'modelli', 'versioni', 'seo', 'flussi', 'download', 'sicurezza', 'aggiornamenti', 'temi',
+USATE = ['copertina', 'su-misura', 'firma', 'social', 'fine-articolo', 'importa-wp', 'tipo-sito', 'primi-passi', 'aspetti', 'controlla-server', 'sezioni', 'copia', 'installa-1', 'installa-2', 'installa-3', 'installa-4', 'installa-5', 'editor-ritratto', 'editor', 'aperture', 'stile', 'modelli', 'versioni', 'seo', 'flussi', 'download', 'sicurezza', 'aggiornamenti', 'temi',
          'tema-cosmo', 'tema-aria', 'tema-bottega']
 
 
@@ -583,6 +587,8 @@ def zip_lavagna(dest):
 
 # Le novità per chi scarica: brevi, scritte qui (il CHANGELOG è per chi sviluppa). Da aggiornare a ogni versione.
 NOVITA = [
+    ('1.8.0', 'La frase in fondo al sito', ['Sotto il piede di ogni pagina una riga piccola, "Un nuovo sito plumeCMS", con il link al sito ufficiale. Si cambia o si spegne in Impostazioni > Sito pubblico.',
+                                           'Nella dashboard, in cima, il link al sito ufficiale di plumeCMS.']),
     ('1.7.0', 'Il sito su misura', ['All\'installazione la carta Su misura: quattro domande (che attività è, dove, cosa offri, quali pagine) e il sito si compone da solo, con testi pensati per quell\'attività.',
                                    'Foto finte che dicono cosa fotografare; in Media, cartella Da sostituire, il pulsante Sostituisci mette la foto vera in tutte le pagine.',
                                    'Finché il sito è in prova, le domande si riaprono dalla dashboard e il sito si ricompone.']),

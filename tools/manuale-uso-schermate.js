@@ -375,6 +375,9 @@ capitoli['14'] = async () => {
 capitoli['15'] = async () => {
   await vai('modelli.php');
   await foto('15-modelli', { clip: { x: 240, y: 56, width: 960, height: 440 }, segni: [{ sel: '.md-stella.on', n: 1 }] });
+  // 1.8.0: la frase in fondo al sito, in Impostazioni (solo la foto: non si salva niente).
+  await vai('impostazioni.php');
+  await foto('15-frase', { sel: 'form#firma-sito', segni: [{ sel: '#firma_mostra', n: 1 }, { sel: '#firma_testo', n: 2 }, { sel: '#firma_url', n: 3 }, { sel: '#firma-salva', n: 4, lato: 'destra' }] });
 };
 
 // 15f. Un riquadro in fondo a ogni articolo (1.6.0): Articoli > Aggiungi sempre alla fine, sotto "Chiusi per ferie" del capitolo 4.
