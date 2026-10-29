@@ -22,7 +22,7 @@ let n = 0, ko = 0; const ok = (t, c, extra = '') => { n++; if (!c) ko++; console
   await Promise.all([p.waitForNavigation(), p.click('button[type=submit]')]);
   // Passo 4: la scelta del kit
   const carte = await p.locator('.kit-scelta .kit').count();
-  ok('passo 4: "Che sito vuoi fare?" con cinque carte', carte === 5 && await p.locator('h3:has-text("Che sito vuoi fare")').count() === 1, carte);
+  ok('passo 4: "Che sito vuoi fare?" con sei carte (dalla 1.7.0 anche Su misura)', carte === 6 && await p.locator('.kit-scelta .kit-su-misura').count() === 1 && await p.locator('h3:has-text("Che sito vuoi fare")').count() === 1, carte);
   ok('passo 4: Vuoto scelto se non si tocca niente', await p.locator('.kit input[value=vuoto]').isChecked());
   await p.locator('.kit-' + KIT).click();
   ok('passo 4: il kit ' + KIT + ' si sceglie con un clic sulla carta', await p.locator('.kit input[value=' + KIT + ']').isChecked());

@@ -129,11 +129,33 @@ function media_carica(?array $f, string $cartella = 'pagine', int $maxMb = 8): a
     else {
         // 1.4.0: foto più leggere (lato massimo, orientamento, WebP accanto); se non si può, la ripulitura di sempre.
         $foto = foto_alleggerisci("$dir/$nome", $ext);
-        if (!$foto['fatto']) { require_once __DIR__ . '/sicurezza-html.php'; sicurezza_immagine_ricodifica("$dir/$nome", $ext); } // via metadati e qualunque cosa nascosta dopo i pixel
+        if (!$foto['fatto']) {
+            require_once __DIR__ . '/sicurezza-html.php';
+            // via metadati e qualunque cosa nascosta dopo i pixel. Se nemmeno questo riesce (un falso, una GIF animata, un
+            // server senza GD) il file resta com'è: solo se dentro non c'è codice (1.7.0, come l'import da WordPress).
+            if (!sicurezza_immagine_ricodifica("$dir/$nome", $ext) && media_ha_codice("$dir/$nome")) {
+                @unlink("$dir/$nome");
+                return ['errore' => 'Il file non è un\'immagine pulita (contiene codice): non è stato caricato.'];
+            }
+        }
         elseif ($foto['larghezza']) { $info[0] = $foto['larghezza']; $info[1] = $foto['altezza']; }
     }
     @chmod("$dir/$nome", 0644);
     return ['url' => MEDIA_RADICE_UPLOADS . '/' . $rel . '/' . $nome, 'larghezza' => $info[0] ?? null, 'altezza' => $info[1] ?? null, 'webp' => !empty($foto['webp'])];
+}
+
+/** Il file contiene codice PHP o uno script? Letto a pezzi, con la coda del pezzo prima (un'apertura spezzata a metà). */
+function media_ha_codice(string $f): bool {
+    $h = @fopen($f, 'rb');
+    if (!$h) return true;
+    $coda = '';
+    while (!feof($h)) {
+        $pezzo = $coda . (string)fread($h, 1048576);
+        if (preg_match('/<\?(php|=)|<script\b/i', $pezzo)) { fclose($h); return true; }
+        $coda = substr($pezzo, -16);
+    }
+    fclose($h);
+    return false;
 }
 
 /** Cancella un file della libreria. Solo dentro le cartelle conosciute. */

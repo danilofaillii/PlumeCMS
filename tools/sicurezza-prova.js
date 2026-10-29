@@ -332,6 +332,10 @@ echo json_encode($o);
     const phpB64 = Buffer.from('<?php echo "pwned"; ?>').toString('base64');
     const php = await suMedia(red.p, 'finta.php.png', 'image/png', phpB64).catch(() => ({ status: 0, ok: false }));
     ok('upload: un PHP travestito da PNG viene rifiutato', php.ok === false, php);
+    // 1.7.0: una GIF finta (intestazione GIF89a, poi PHP) che GD non riscrive: prima restava in uploads.
+    const gifB64 = Buffer.from('GIF89a<?php echo "pwned"; ?>').toString('base64');
+    const gif = await suMedia(red.p, 'finta.gif', 'image/gif', gifB64).catch(() => ({ status: 0, ok: false }));
+    ok('upload: una GIF finta con il PHP dentro viene rifiutata', gif.ok === false, gif);
     const svgB64 = Buffer.from('<svg xmlns="http://www.w3.org/2000/svg" onload="alert(1)"><script>alert(1)</script><rect width="10" height="10"/></svg>').toString('base64');
     await suMedia(red.p, 'cattivo.svg', 'image/svg+xml', svgB64).catch(() => {});
     // verifica che se accettato, l'SVG salvato non contenga script/eventi: lo leggiamo dalla libreria
@@ -691,7 +695,7 @@ echo json_encode($o);
 
     // Il motore scarta quello che non sta negli elenchi (riga di comando: niente database, niente sito toccato).
     const { execFileSync } = require('child_process');
-    const phpCli = (codice) => { try { return execFileSync('php', ['-d', 'display_errors=stderr', '-r', 'require ' + JSON.stringify(path.join(DIR, 'includes', 'sito-su-misura.php')) + '; ' + codice], { encoding: 'utf8', timeout: 20000 }); } catch (e) { return 'ERRORE ' + (e.stderr || e.message).slice(0, 200); } };
+    const phpCli = (codice) => { try { return execFileSync('php', ['-d', 'display_errors=stderr', '-r', 'require ' + JSON.stringify(path.join(DIR, 'includes', 'sito-su-misura.php')) + '; ' + codice], { encoding: 'utf8', timeout: 20000, stdio: ['ignore', 'pipe', 'pipe'] }); } catch (e) { return 'ERRORE ' + (e.stderr || e.message).slice(0, 200); } };
     if (DIR && fs.existsSync(path.join(DIR, 'includes', 'sito-su-misura.php'))) {
       const j = (() => { try { return JSON.parse(phpCli('echo json_encode([su_misura_pulisci(["attivita" => "<script>x</script>", "citta" => "<b>Roma</b>" . str_repeat("a", 200), "servizi" => ["<img src=x onerror=alert(1)>Cena", "a", "b", "c", "d", "e", "f", "g"], "pagine" => ["../../x", "faq", "chi-siamo OR 1=1", ["x"]], "ogni_servizio" => "1"]), su_misura_pulisci(["attivita" => ["ristorante"], "servizi" => "uno\ndue"]), su_misura_pulisci(["attivita" => "ristorante "])]);')); } catch (e) { return null; } })();
       ok('1.7.0: attività fuori elenco (con HTML, un array, uno spazio in più): diventa "altro"', !!j && j[0].attivita === 'altro' && j[1].attivita === 'altro' && j[2].attivita === 'altro', j && j.map(x => x.attivita));
@@ -782,6 +786,10 @@ echo json_encode($o);
       const php = { nome: 'sic-sm-prova.php', tipo: 'image/png', b64: Buffer.from('<?php echo "sic-sm"; ?>').toString('base64') };
       const rp = await manda(admin.p, { _csrf: tm, azione: 'sostituisci', segnaposto: finta }, php);
       ok('1.7.0: Sostituisci con un .php travestito da PNG: rifiutato', /Formati accettati/.test(rp.flash), rp);
+      // Una GIF finta con il PHP dentro (GD non la sa riscrivere): fino alla 1.7.0 restava in uploads e la foto finta spariva.
+      const gif = { nome: 'sic-sm-prova.png', tipo: 'image/png', b64: Buffer.from('GIF89a<?php echo "sic-sm"; ?>').toString('base64') };
+      const rg = await manda(admin.p, { _csrf: tm, azione: 'sostituisci', segnaposto: finta }, gif);
+      ok('1.7.0: Sostituisci con una GIF finta con il PHP dentro: rifiutata', /contiene codice/.test(rg.flash), rg);
       const rv = await manda(admin.p, { _csrf: tm, azione: 'sostituisci', segnaposto: finta }, null);
       ok('1.7.0: Sostituisci senza file: rifiutato, la foto finta resta', !/preso il posto/.test(rv.flash), rv);
       const ancora = await admin.ctx.request.get(finta.startsWith('http') ? finta : new URL(finta, BASE).href);
@@ -881,8 +889,11 @@ echo json_encode($o);
     for (const c of ['articoli:999999', '../../x:1', 'pagine:0', "articoli:1 OR 1=1"]) await salva({ contenuto: c, titolo: 'sic-prova-inventato' });
     await admin.p.goto(ADMIN + '/social.php?scheda=calendario', { waitUntil: 'networkidle' });
     ok('1.5.0: calendario con contenuti inventati (id inesistente, ../, SQL): nessuna riga', !(await admin.p.content()).includes('sic-prova-inventato'));
-    await salva({ contenuto: 'articoli:1', titolo: 'sic-prova-js', immagine_og: 'javascript:alert(1)' });
-    await salva({ contenuto: 'articoli:1', titolo: '<img src=x onerror=alert(77)>sic-prova-xss' });
+    // Un articolo vero, dalla tendina del form (il cambio del tipo di sito, gruppo 23, rifà gli articoli del kit con id nuovi).
+    await admin.p.goto(ADMIN + '/social.php?scheda=calendario&nuovo=1', { waitUntil: 'networkidle' });
+    const art = await admin.p.evaluate(() => ([...document.querySelectorAll('select[name=contenuto] option')].map(o => o.value).find(v => /^articoli:\d+$/.test(v))) || 'articoli:1');
+    await salva({ contenuto: art, titolo: 'sic-prova-js', immagine_og: 'javascript:alert(1)' });
+    await salva({ contenuto: art, titolo: '<img src=x onerror=alert(77)>sic-prova-xss' });
     await admin.p.goto(ADMIN + '/social.php?scheda=calendario', { waitUntil: 'networkidle' });
     const html = await admin.p.content();
     // La riga con l'HTML nel titolo deve esserci (il salvataggio vero è passato), e il tag solo come testo.

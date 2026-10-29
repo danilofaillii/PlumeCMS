@@ -1,6 +1,6 @@
 // Il tipo di sito in prova dalla dashboard (1.4.0), come un utente. Serve un'installazione nuova della 1.4.0 fatta con il
 // kit Portfolio (prove/prova-kit.js ... portfolio ...), con il CMS in radice o in cartella.
-// 1. la dashboard mostra "Stai provando il sito Portfolio", le cinque carte, Portfolio segnato, i Primi passi;
+// 1. la dashboard mostra "Stai provando il sito Portfolio", le sei carte (cinque fino alla 1.6.4), Portfolio segnato, i Primi passi;
 // 2. la persona cambia la pagina Chi sono e scrive un articolo (dal pannello, scheda classica);
 // 3. la conferma rifiutata non cambia niente; accettata, il sito diventa Blog: la copia "prima del cambio" c'e, la pagina
 //    cambiata e l'articolo scritto restano (e il riquadro lo dice), Lavori sparisce, il menu e gli articoli sono del Blog;
@@ -27,7 +27,8 @@ const sito = new URL(B).pathname.replace(/\/$/, '');
   // 1. La dashboard
   await p.goto(B + '/admin/index.php', { waitUntil: 'networkidle' });
   ok('riquadro "Stai provando il sito Portfolio"', (await p.locator('#tipo-sito-titolo').innerText().catch(() => '')) === 'Stai provando il sito Portfolio');
-  ok('cinque carte, Portfolio segnato e non cliccabile', await p.locator('.db-kit-carta').count() === 5 && await p.locator('.db-kit-carta.attuale button[data-kit=portfolio]').isDisabled());
+  // Dalla 1.7.0 le carte sono sei: la sesta, Su misura, è un link alla pagina delle domande.
+  ok('sei carte (con Su misura), Portfolio segnato e non cliccabile', await p.locator('.db-kit-carta').count() === 6 && await p.locator('.db-kit-carta a[data-kit=su-misura][href*="sito-su-misura.php"]').count() === 1 && await p.locator('.db-kit-carta.attuale button[data-kit=portfolio]').isDisabled());
   ok('Primi passi: sei voci, "definitivo" da fare', await p.locator('#primi-passi li').count() === 6 && !(await p.locator('#primi-passi li[data-passo=definitivo]').getAttribute('class')).includes('fatto'));
   ok('Primi passi: "prima pagina o articolo" da fare su un sito appena installato', !(await p.locator('#primi-passi li[data-passo=contenuto]').getAttribute('class')).includes('fatto'));
   await p.screenshot({ path: `${OUT}/tipo-sito-portfolio.png`, fullPage: true });

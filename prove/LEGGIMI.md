@@ -20,11 +20,18 @@ Installa plumeCMS da zero con il browser (Playwright) e controlla sito e pannell
 
 
 
-Le prove di attacco: ogni OK è un attacco respinto (201 nella 1.6.0, con FINTO_WP: le 24 nuove, gruppo 22, sono su Aggiungi sempre alla
+Le prove di attacco: ogni OK è un attacco respinto (242 nella 1.7.0, con FINTO_WP, su un sito su misura ancora in prova: le 41
+nuove, gruppi 23 e 23b, sono sul sito su misura; 226 sullo stesso tipo di sito già definitivo e senza FINTO_WP; 201 nella 1.6.0,
+con FINTO_WP: le 24 nuove, gruppo 22, sono su Aggiungi sempre alla
 fine; 177 nella 1.5.0; 118 nella 1.4.0, con `CMS_DIR` e `SEGRETO`; le 21 nuove sono sul
 tipo di sito in prova, i primi passi, Esegui adesso del cron e Controlla il server). Si lanciano contro un'installazione locale, mai contro un sito vero:
 `CMS_DIR=<cartella del CMS installato> node tools/sicurezza-prova.js <base> <utente> <password> [prefisso-pannello]`.
 Le prove del modulo danilofailli (burnout) si saltano da sole dove il modulo non c'è.
+Il gruppo 23 (1.7.0, sito su misura) gira prima del gruppo 20, che preme Definitivo. Le risposte cattive mandate davvero
+(il sito si ricompone, poi torna alle risposte di prima: restano due copie del sito in più) partono solo se il sito è in prova
+su misura; altrimenti si saltano con un OK motivato e l'escape si prova da riga di comando (`php`, con `CMS_DIR`). Gli attacchi a
+Sostituisci vogliono almeno una foto finta in Media; senza, si saltano. Il 23b (dopo il Definitivo il sito su misura non si
+ricompone) vuole `CMS_DIR`. Un sito su misura in prova si fa con i passi 1-3 di `prova-su-misura.js`, senza il resto.
 Dopo, svuota la tabella `<prefisso>sicurezza_tentativi`: la prova della forza bruta blocca 127.0.0.1 per qualche minuto.
 
 ## Le altre prove
@@ -374,3 +381,17 @@ lato; Spegni e Accendi; versioni con l'anteprima; Header e footer senza il riqua
 cartella (base `http://127.0.0.1:<porta>/test`). Una volta sola per installazione. Lascia `fine-*.png`.
 Le prove di attacco del riquadro sono il gruppo 22 di `tools/sicurezza-prova.js`; `prova-aspetti.js` apre anche
 `fine-articolo.php` nei quattro aspetti.
+
+## prova-su-misura.js (1.7.0)
+
+Il sito su misura, come un utente, da zero. Serve una cartella del CMS appena copiata, senza `includes/config.local.php`,
+servita su `<base>` (`php -S ... prove/router-php-s.php`), e un database vuoto che l'utente `danilo` può usare (host
+`127.0.0.1:3308`, come `prova-install.js`).
+`DBPASS=<password del database> node prove/prova-su-misura.js <base> <db> [cartella schermate]`.
+Installatore con la carta Su misura, le quattro domande (Indietro torna alle carte), risposte con HTML e un'emoji ripulite;
+il sito che ne esce (menu, pagine scelte e non scelte, foto finte SVG, Bologna nei testi e nella mappa); dashboard, Primi
+passi e Media > Da sostituire; Sostituisci con un PNG vero (la foto finta sparisce, la home mostra quella vera) e i rifiuti
+(percorso fuori dalle foto finte, file che non è un'immagine); il sito ricomposto dalla dashboard con risposte nuove (la home
+cambiata resta); Definitivo, e la pagina non ricompone più. Atteso: 34 su 34. Alla fine il sito è definitivo: per rifarla
+servono una cartella e un database nuovi. Con la cartella delle schermate lascia `su-misura-*.png`.
+Dalla 1.7.0 `prova-kit.js` conta sei carte al passo 4 e `prova-tipo-sito.js` sei carte nella dashboard (con Su misura).

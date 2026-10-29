@@ -181,8 +181,8 @@ function su_misura_risposte_vuote(): array {
 /** Ripulisce le risposte di un modulo (installatore o pannello). Mai un errore: quello che non va si scarta. */
 function su_misura_pulisci(array $p): array {
     $att = su_misura_attivita();
-    $testo = fn($s, int $max) => mb_substr(trim(preg_replace('/\s+/u', ' ', su_misura_senza_4byte(strip_tags((string)$s)))), 0, $max);
-    $r = ['attivita' => isset($att[(string)($p['attivita'] ?? '')]) ? (string)$p['attivita'] : 'altro', 'citta' => $testo($p['citta'] ?? '', 80), 'servizi' => [], 'pagine' => [], 'ogni_servizio' => !empty($p['ogni_servizio'])];
+    $testo = fn($s, int $max) => mb_substr(trim(preg_replace('/\s+/u', ' ', su_misura_senza_4byte(strip_tags(is_scalar($s) ? (string)$s : '')))), 0, $max);
+    $r = ['attivita' => is_string($p['attivita'] ?? null) && isset($att[$p['attivita']]) ? $p['attivita'] : 'altro', 'citta' => $testo($p['citta'] ?? '', 80), 'servizi' => [], 'pagine' => [], 'ogni_servizio' => !empty($p['ogni_servizio'])];
     $servizi = is_array($p['servizi'] ?? null) ? $p['servizi'] : preg_split('/\r?\n/', (string)($p['servizi'] ?? ''));
     foreach ($servizi as $s) {
         $s = $testo($s, 60);

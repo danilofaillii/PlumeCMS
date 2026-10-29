@@ -131,7 +131,11 @@ carta "Su misura" al passo 4 dell'installatore con quattro domande (attività fr
 `includes/sito-su-misura.php` che compone il kit dalle risposte, foto finte SVG in `uploads/segnaposto/`, Media > Da sostituire con
 Sostituisci (solo admin, sostituisce l'indirizzo in pagine, articoli e modelli), voce dei Primi passi, `admin/sito-su-misura.php` per
 ricomporre dalla dashboard finché il tipo di sito è in prova. Manuale d'uso capitolo 2 (e 3, 7), tecnico capitolo 29; JPEG del manuale a
-qualità 28 (PDF 1838 KB). Prove: `prova-su-misura.js` 34/34.
+qualità 28 (PDF 1838 KB). `media_carica()` rifiuta un'immagine non riscrivibile che contiene codice (`media_ha_codice()`).
+Prove: `prova-su-misura.js` 34/34, attacchi 242/242 (gruppi 23 e 23b, su un sito su misura in prova), install radice e cartella 37/37,
+kit 34/34 e 44/44, tipo di sito 39/39, primi passi 19/19, aggiornamento 1.6.4 -> 1.7.0 13/13 (sito uguale tranne il conto alla
+rovescia, poi ricomposto su misura dal pannello), sito di plumeCMS in quattro parti 78/78. Attacchi e regressioni fatti da un agente
+e rifatti a mano (su misura, attacchi, install, aggiornamento, sito).
 1.6.4 (29 ottobre): solo due documenti nel prodotto (decisione di Danilo): manuale tecnico e documenti vecchi
 spostati in `docs-sviluppo/`, fuori dallo zip; sito di plumeCMS con due manuali (Documentazione, Download, piede); pannello
 (Informazioni, Temi), README e INSTALLA rimandano ai due manuali. L'aggiornamento toglie dai siti i 15 documenti vecchi

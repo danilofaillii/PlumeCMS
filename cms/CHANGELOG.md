@@ -16,8 +16,10 @@ Il prodotto si chiama **plumeCMS** (nome scelto il 26 ottobre 2026; prima, per p
 - **Dalla dashboard**: finché il tipo di sito è in prova, la carta Su misura apre le stesse domande (già compilate con le
   risposte di prima, se il sito è già su misura). Con le risposte nuove il sito si ricompone come negli altri cambi di tipo:
   copia del sito prima, e quello che hai scritto o cambiato resta tuo (anche una pagina in cui hai già messo una foto vera).
-- Nient'altro cambia per i siti che non scelgono Su misura. Le emoji nei nomi dei servizi si tolgono (diventano anche il
-  titolo e l'indirizzo di una pagina).
+- Le emoji nei nomi dei servizi si tolgono (diventano anche il titolo e l'indirizzo di una pagina).
+- Sicurezza, per tutti i siti: un'immagine che il server non riesce a riscrivere (per esempio una GIF finta) e che contiene
+  codice non entra più in Media, dall'editor o da Sostituisci; prima restava nella cartella delle immagini (dove PHP è spento,
+  quindi non si eseguiva). Trovato dalle prove di attacco della 1.7.0 (242 respinti).
 
 ## 1.6.4 (29 ottobre 2026) - Due manuali
 
