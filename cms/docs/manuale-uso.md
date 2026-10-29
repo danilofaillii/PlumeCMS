@@ -1,6 +1,6 @@
 # Manuale d'uso di plumeCMS
 
-Versione del manuale: plumeCMS 1.6.0, 28 ottobre 2026.
+Versione del manuale: plumeCMS 1.7.0, 29 ottobre 2026.
 
 ## Prima di cominciare
 
@@ -103,7 +103,7 @@ Vale solo per te: ogni utente sceglie il suo, e il sito non cambia.
 
 ## 2. Il tipo di sito in prova
 
-**A cosa serve.** All'installazione hai scelto un tipo di sito: Vuoto, Personale, Attività, Blog o Portfolio. Finché
+**A cosa serve.** All'installazione hai scelto un tipo di sito: Vuoto, Personale, Attività, Blog, Portfolio o Su misura. Finché
 non lo dichiari definitivo puoi provarli tutti, con un clic, e vedere quale ti somiglia di più.
 
 ![Il riquadro del tipo di sito, sulla dashboard](immagini/manuale-uso/02-tipo-sito.jpg)
@@ -132,11 +132,58 @@ Apri il sito (Vedi sito) dopo ogni cambio: è il modo più veloce per decidere.
 - *Ho cambiato tipo e una pagina che avevo ritoccato è rimasta quella vecchia.* È voluto: quello che hai cambiato tu
   non si tocca. Se vuoi la pagina del nuovo tipo, cancella la tua e cambia di nuovo tipo.
 
+
+### Il sito su misura
+
+**A cosa serve.** Invece di partire da un modello uguale per tutti, rispondi a quattro domande e il sito si compone da
+solo: home, pagine, menu e testi pensati per la tua attività. Dove andrà una foto c'è un disegno che dice cosa
+fotografare ("La vetrina", "Un prodotto", "Le persone"), e lo sostituisci quando hai le foto vere (capitolo 7).
+
+Lo trovi in due posti: nell'installatore, al passo 4, è la carta **Su misura**; dopo, finché il tipo di sito è in prova,
+è la carta **Su misura** di questo riquadro.
+
+![Le quattro domande del sito su misura](immagini/manuale-uso/02-su-misura.jpg)
+
+**Esempio.** Ciclofficina Prova, un negozio di biciclette a Ravenna, vuole anche la pagina delle domande frequenti.
+
+1. **Che attività è?** Scegli la carta più vicina: **Negozio**. Ognuna porta testi suoi: un ristorante ha "Il menù" e
+   "Prenota un tavolo", un idraulico "Chiedi un preventivo". Se nessuna ti somiglia, **Un'altra attività** scrive testi
+   neutri da adattare.
+2. **Dove si trova?** Scrivi la città: **Ravenna**. Finisce nei testi, nei contatti e nella mappa della pagina Contatti.
+   Puoi lasciarla vuota.
+3. **Cosa offri?** Fino a sei servizi o prodotti, due o tre parole ciascuno: **Biciclette da città**, **Riparazioni**,
+   **Noleggio**. Diventano le schede della home e le sezioni della pagina Servizi. Se li lasci vuoti, il sito mette
+   quelli tipici dell'attività.
+4. **Quali pagine vuoi?** Spunta quelle che servono: qui aggiungiamo **Domande frequenti**. La home c'è sempre. Con
+   **Una pagina per ogni servizio** ogni servizio ha la sua pagina, sotto Servizi nel menu.
+5. Premi **Componi il sito su misura** e conferma. Come per gli altri cambi, prima il pannello fa una copia del sito.
+   Nell'installatore il pulsante è **Installa adesso**.
+
+![La home di un sito su misura appena composto](immagini/manuale-uso/02-su-misura-home.jpg)
+
+Le risposte restano: se riapri la carta Su misura le ritrovi già scritte. Cambiane una e premi **Ricomponi il sito**:
+le pagine che hai già ritoccato, o in cui hai messo una foto vera, restano tue, il riquadro te lo dice.
+
+**Checklist**
+
+- [ ] Ho scelto l'attività e scritto la città.
+- [ ] I servizi hanno nomi brevi, come li direi a un cliente al telefono.
+- [ ] Nel menu ci sono solo le pagine che userò davvero.
+- [ ] Ho aperto il sito e ho letto ogni pagina: i testi sono d'esempio e vanno riscritti con le mie parole.
+
+**Se qualcosa non va**
+
+- *Le foto hanno una scritta "Sostituisci questa foto".* È voluto: sono finte. Si cambiano in Media (capitolo 7).
+- *Ho scritto un'emoji nel nome di un servizio e non c'è più.* Il nome di un servizio diventa anche il titolo e
+  l'indirizzo di una pagina: le emoji si tolgono.
+- *Non vedo la carta Su misura nella dashboard.* Il tipo di sito è già definitivo: da lì in poi il sito si cambia con
+  l'editor, pagina per pagina.
+
 ---
 
 ## 3. I primi passi
 
-**A cosa serve.** Sei cose che servono perché il sito sia davvero pronto. Le trovi sulla dashboard, ognuna con il link
+**A cosa serve.** Sei cose (sette in un sito su misura) che servono perché il sito sia davvero pronto. Le trovi sulla dashboard, ognuna con il link
 alla pagina giusta, e si spuntano da sole quando le hai fatte.
 
 ![I Primi passi, sulla dashboard](immagini/manuale-uso/03-primi-passi.jpg)
@@ -148,13 +195,14 @@ alla pagina giusta, e si spuntano da sole quando le hai fatte.
 | Le email partono | Manda un'email di prova al tuo indirizzo | 24 |
 | Il cron è attivo | Le due righe nei Cron Job dell'hosting | 25 |
 | La prima pagina o il primo articolo | Riscrivi una pagina d'esempio o scrivi un articolo | 4, 9 |
+| Le tue foto al posto di quelle finte (solo nei siti su misura) | Media, Da sostituire, Sostituisci | 7 |
 | Il tipo di sito è definitivo | Premi Definitivo nel riquadro sopra | 2 |
 
 Quando sono tutte verdi compare **Tutto fatto: nascondi**: premilo e la dashboard torna pulita.
 
 **Checklist**
 
-- [ ] Le sei voci dei Primi passi sono verdi.
+- [ ] Le voci dei Primi passi sono verdi (sei, sette in un sito su misura).
 - [ ] Ho nascosto il riquadro.
 
 ---
@@ -338,8 +386,24 @@ Quando carichi una foto JPEG o PNG, plumeCMS la sistema da solo:
 
 Tu non devi fare niente: il sito è più veloce e la tua casa non finisce su internet dentro una foto.
 
+### Le foto finte del sito su misura
+
+Un sito su misura (capitolo 2) parte con dei disegni al posto delle foto: ognuno dice cosa ritrarre. In Media li trovi
+nella cartella **Da sostituire**, e un avviso in cima ti dice quanti ne restano.
+
+![Media, Da sostituire](immagini/manuale-uso/07-sostituisci.jpg)
+
+1. Premi **Da sostituire** nell'avviso (o fra le cartelle).
+2. Sotto il disegno che vuoi cambiare premi **Sostituisci** e scegli la foto dal computer. Appena la scegli, parte: la
+   foto si carica, prende il posto del disegno in tutte le pagine, gli articoli, l'header e il footer, e il disegno si
+   cancella. Il messaggio verde ti dice in quanti punti del sito l'ha messa.
+
+Una foto per la home in larghezza va bene orizzontale (il disegno è largo), una per "Chi siamo" va bene verticale.
+Sostituisci lo usa solo l'amministratore.
+
 **Checklist**
 
+- [ ] La cartella Da sostituire è vuota (e la voce dei Primi passi è verde).
 - [ ] Le foto hanno un nome che dice cosa sono (vetrina-natale.jpg è meglio di IMG_4021.jpg).
 - [ ] Ogni foto usata nelle pagine ha il testo alternativo (lo scrivi dove la usi).
 

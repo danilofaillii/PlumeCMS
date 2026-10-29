@@ -39,7 +39,7 @@ cms/            il CMS: è esattamente quello che si carica sul server
   VERSIONE, CHANGELOG.md, README.md, INSTALLA.md
 tools/          cms-pacchetto.py (costruisce gli zip), pacchetto.py (pacchetti per il
                 pannello Aggiornamenti), sicurezza-prova.js (79 prove di attacco)
-prove/          prova-install.js (installazione da zero con Playwright), prova-social.js (social ed email del mattino), prova-fine-articolo.js (il riquadro in fondo agli articoli), prova-temi.js, prova-pannello-temi.js,
+prove/          prova-install.js (installazione da zero con Playwright), prova-social.js (social ed email del mattino), prova-fine-articolo.js (il riquadro in fondo agli articoli), prova-su-misura.js (il sito su misura), prova-temi.js, prova-pannello-temi.js,
                 prova-temi-partenza.js, prova-carica-temi.js (temi), prova-foto-effetti.js (velo ed effetti delle foto), prova-hero.js (le undici aperture),
                 foto-sito.js e quanto-foto.py (schermate prima e dopo, al pixel)
 esempi/         tema-lavagna/: il tema d'esempio del manuale dei temi (provato, non entra nello zip)
@@ -90,7 +90,7 @@ Sono gli unici in `cms/docs/`, nello zip, nel sito di plumeCMS e nella pagina Do
 - **Pacchetto di aggiornamento** per un'installazione esistente:
   `python3 tools/cms-pacchetto.py --aggiornamento`. Si carica dal pannello,
   Impostazioni, Aggiornamenti.
-- **Versione**: `cms/VERSIONE` (oggi 1.6.4) e una voce in `cms/CHANGELOG.md` a ogni
+- **Versione**: `cms/VERSIONE` (oggi 1.7.0) e una voce in `cms/CHANGELOG.md` a ogni
   zip con contenuto diverso. Mai cambiare il contenuto di una versione già data.
 - **Prove** prima di dire finito:
   - `php -n -d short_open_tag=1 -l` su ogni file PHP toccato, `node --check` sui js;
@@ -126,7 +126,13 @@ Le decisioni complete, con data e perché, stanno nel second brain, `plumecms/de
 
 ## Stato al 28 ottobre 2026
 
-Fatto: plumeCMS 1.6.4 (29 ottobre): solo due documenti nel prodotto (decisione di Danilo): manuale tecnico e documenti vecchi
+Fatto: plumeCMS 1.7.0 (29 ottobre): il sito su misura (richiesta di Danilo, strada A senza intelligenza artificiale):
+carta "Su misura" al passo 4 dell'installatore con quattro domande (attività fra dieci, città, fino a sei servizi, pagine), motore
+`includes/sito-su-misura.php` che compone il kit dalle risposte, foto finte SVG in `uploads/segnaposto/`, Media > Da sostituire con
+Sostituisci (solo admin, sostituisce l'indirizzo in pagine, articoli e modelli), voce dei Primi passi, `admin/sito-su-misura.php` per
+ricomporre dalla dashboard finché il tipo di sito è in prova. Manuale d'uso capitolo 2 (e 3, 7), tecnico capitolo 29; JPEG del manuale a
+qualità 28 (PDF 1838 KB). Prove: `prova-su-misura.js` 34/34.
+1.6.4 (29 ottobre): solo due documenti nel prodotto (decisione di Danilo): manuale tecnico e documenti vecchi
 spostati in `docs-sviluppo/`, fuori dallo zip; sito di plumeCMS con due manuali (Documentazione, Download, piede); pannello
 (Informazioni, Temi), README e INSTALLA rimandano ai due manuali. L'aggiornamento toglie dai siti i 15 documenti vecchi
 (`TOLTI` in `cms-pacchetto.py`), la parte 1 del sito toglie `manuale-tecnico.pdf` dal Download. Il sito ora è in quattro parti.
@@ -280,6 +286,8 @@ Errori veri, già pagati. Non ripeterli.
 | Cercare i resti di un sito con le sue parole (danilofailli, laser, ebook) | sfuggono le frasi: i widget extra avevano ancora "Non lavoro per renderti più forte", "Fai chiarezza in 15 minuti", un listino a incontri. Si guarda la pagina con tutti i widget, a occhio |
 | Una consegna in un solo zip da 15 MB | arrivata rotta a Danilo due volte (1.5.0 e 1.6.0) pur essendo integra qui; anche i pezzi da 4,8 MB lo hanno confuso (li ha caricati nel pannello: "supera il limite"). Funziona mandare **i file uno per uno** (aggiornamento, parti del sito, PDF), ognuno sotto 1,9 MB, nell'ordine di caricamento (28 ottobre 2026) |
 | `open(f, 'w').write(f(open(f).read()))` in Python | `open(f, 'w')` svuota il file prima che la lettura avvenga: il `config.local.php` di un sito di prova è finito vuoto (28 ottobre 2026) e la prova dopo falliva in modo incomprensibile. Prima si legge in una variabile, poi si scrive |
+| Un'emoji salvata come entità (`&#127837;`) in un campo di testo semplice di un widget | il widget fa l'escape e sul sito esce scritto `&amp;#127837;` (sito su misura, 1.7.0). Le entità valgono solo nei campi che le decodificano (Testo); nell'albero dell'editor ci pensa `editor_json()`; nei nomi che diventano titoli e slug le emoji si tolgono |
+| Un gestore in linea (`onchange="..."`) nel pannello | la CSP a nonce lo blocca in silenzio: Sostituisci non partiva. Si usano gli attributi di `pannello.js` (`data-invia-al-cambio`, `data-conferma`...) |
 | Fidarsi del resoconto di un agente | è successo che un agente dichiarasse lavoro mai scritto su disco. Si controllano i file veri e si rifanno le prove |
 
 ## Tono con l'utente

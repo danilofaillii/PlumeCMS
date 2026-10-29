@@ -1,6 +1,6 @@
 # plumeCMS: manuale tecnico
 
-Versione del manuale: 1.14, per plumeCMS 1.6.2 (28 ottobre 2026).
+Versione del manuale: 1.15, per plumeCMS 1.7.0 (29 ottobre 2026).
 
 Questo manuale descrive come è fatto plumeCMS e come funziona, pezzo per pezzo. È scritto leggendo il codice:
 ogni numero, limite e nome di funzione viene dai file veri, con il riferimento `file:riga` quando serve a chi
@@ -43,6 +43,7 @@ pagine, gestire il sito) c'è il manuale d'uso, `docs/manuale-uso.md`, con le sc
 26. Import da WordPress (dalla 1.4.0)
 27. Social e email del mattino (dalla 1.5.0)
 28. Aggiungi sempre alla fine: il riquadro in fondo agli articoli (dalla 1.6.0)
+29. Il sito su misura (dalla 1.7.0)
 
 Appendice A. Dove i documenti vecchi non corrispondono al codice
 
@@ -71,7 +72,7 @@ fatti con plumeCMS, i loro contenuti e i temi e moduli che non ne copiano il cod
 index.php           front controller: tutte le richieste del sito passano da qui
 cron-daily.php      compiti del giorno (pacchetti programmati, moduli, IndexNow)
 cron-newsletter.php invio della newsletter a giri, coda IndexNow
-VERSIONE            il numero di versione (oggi 1.6.0)
+VERSIONE            il numero di versione (oggi 1.7.0)
 CHANGELOG.md, README.md, INSTALLA.md
 .htaccess           regole di Apache (copia di install/esempi/htaccess-radice.txt)
 
@@ -2654,6 +2655,89 @@ resta un header, come prima della 1.6.0.
 
 `prove/prova-fine-articolo.js`: dal pannello al sito, nel browser. Il capitolo 16 del manuale d'uso lo esegue anche
 `tools/manuale-uso-schermate.js` (chiave `15f`).
+
+## 29. Il sito su misura (dalla 1.7.0)
+
+Una richiesta di Danilo: chi installa scrive che sito vuole (che attività, quante pagine e di che tipo) e il sito si
+compone da solo, con immagini finte da sostituire. Strada scelta: un compositore a regole, senza intelligenza
+artificiale e senza chiamate fuori dal server. È un **kit di partenza** (capitolo dei kit, `includes/kit-partenza.php`)
+come gli altri cinque, con una differenza: i suoi dati non stanno in un file di `includes/kit/`, li compone
+`su_misura_kit()` dalle risposte. Tutto il resto (registro `kit_prova`, impronte, cambio di tipo con copia del sito,
+Definitivo) è quello dei kit.
+
+### 29.1 Le risposte
+
+`includes/sito-su-misura.php`. Le costanti: `SU_MISURA_PAGINE` (`:34`, otto pagine facoltative, ognuna `[nome, slug,
+spiegazione, scelta all'inizio]`; la home c'è sempre), `SU_MISURA_MAX_SERVIZI` (6), `SU_MISURA_CARTELLA`
+(`segnaposto`), `SU_MISURA_IMPOSTAZIONE` (`su_misura_risposte`, l'impostazione dove stanno).
+
+| Funzione | Cosa fa |
+|---|---|
+| `su_misura_attivita()` (`:49`) | le dieci attività (negozio, ristorante, studio, artigiano, coach, benessere, creativo, alloggio, associazione, altro): nome, icona, invito, nome del listino e della galleria, titolo e sottotitolo dell'apertura, sei servizi tipici, sei soggetti delle foto, testi di Chi siamo, tre valori, quattro numeri, quattro domande frequenti, tre recensioni |
+| `su_misura_risposte_vuote()` (`:175`) | attività vuota, pagine scelte all'inizio (Chi siamo, Servizi, Galleria, Contatti) |
+| `su_misura_pulisci($p)` (`:182`) | mai un errore: attività fuori elenco => `altro`; città fino a 80 caratteri, servizi fino a 6 da 60, senza HTML, spazi doppi, doppioni ed emoji; pagine solo fra quelle di `SU_MISURA_PAGINE`, nel loro ordine |
+| `su_misura_senza_4byte()` (`:201`) | toglie i caratteri a 4 byte: un servizio diventa titolo e slug di una pagina (come entità uscivano scritti, `&#127837;`, nei titoli delle schede) |
+| `su_misura_risposte()` / `su_misura_salva_risposte()` (`:206`, `:211`) | leggono e scrivono l'impostazione, sempre passando da `su_misura_pulisci()` |
+| `su_misura_quante_pagine($r)` (`:216`) | il conto per il messaggio del pannello (home compresa, blog escluso, una per servizio se richiesto) |
+| `su_misura_campi_html($r, $h)` (`:492`) | le quattro domande come campi HTML (classi `sm-*`), le stesse per l'installatore (`$h` = `ih`) e il pannello (`$h` = `h`); nessuna attività scelta all'inizio |
+
+### 29.2 Le immagini finte
+
+`su_misura_foto($attivita, $n, $formato)` (`:252`) scrive una volta sola
+`<uploads>/segnaposto/<attività>-<n>-<formato>.svg` e ritorna `['url', 'file']`. Formati (`SU_MISURA_FORMATI`, `:227`):
+`largo` 1600x900, `quadro` 1000x1000, `ritratto` 900x1100. Il disegno: sfumatura dei colori primario e secondario dello
+Stile del sito scuriti (`su_misura_colori()`, `su_misura_scurisci()`: la scritta bianca si legge sempre), puntini, una
+luce, l'icona dell'attività (`icona_svg()`), il soggetto ("La sala") e "Sostituisci questa foto". Nel formato largo, lo
+sfondo delle aperture, icona e scritte stanno in alto a destra, lontano dal titolo. I file entrano nel registro del kit
+come `['t' => 'immagine', 'file' => ...]` (`kit_costruisci()`, `includes/kit-partenza.php:218`, chiave `segnaposto` del
+kit): `kit_impronta()` li riconosce con la stessa espressione di `su_misura_file_valido()` (`:543`), e al cambio di tipo
+quelli che nessuna pagina mostra più si cancellano (`kit_immagine_usata()`, `includes/kit-partenza.php:322`).
+
+### 29.3 Il kit
+
+`su_misura_kit(?array $r)` (`:305`) ritorna un kit con `nome`, `form`, `home`, `pagine`, `menu`, `segnaposto`, scritto
+nella forma corta delle sezioni pronte (`['imp' => ..., 'widget' => [[tipo, [impostazioni]]]]` o `'colonne'`), che
+`kit_sezioni()` passa da `editor_valida()`. **Attenzione**: `editor_valida()` toglie in silenzio chiavi e widget che non
+conosce (il widget `modulo` senza il form nel database, una chiave sbagliata come `id_css` al posto di `ancora`):
+quando si cambia il kit si contano i widget scritti e quelli validati, pagina per pagina.
+
+- **Home**: apertura Copertina (foto finta larga, occhiello con nome del sito e città, invito e "I servizi"), schede dei
+  servizi, presentazione con la foto ritratto, numeri, galleria e recensioni se scelte, invito finale a sfondo sfumato.
+- **Servizi**: una pagina con una sezione per servizio (ancora = slug del servizio, `/servizi/#slug`), oppure, con
+  `ogni_servizio`, una pagina per servizio (`/slug/`) e le voci figlie sotto Servizi nel menu. Uno slug che coincide con
+  un'altra pagina prende quello di riserva `servizio-N` (`su_misura_slug()`, `:520`).
+- **Contatti**: form `contatti`, recapiti, mappa (`fornitore` google, `indirizzo` = città) solo se la città c'è.
+- **Menu**: home, le pagine scelte nell'ordine di `SU_MISURA_PAGINE`, Blog solo se scelto (la pagina del blog c'è
+  sempre). Il costruttore del menu dei kit accetta ora voci figlie: `[etichetta, url, [[etichetta, url], ...]]`.
+
+### 29.4 Dove si risponde
+
+- **Installatore**, passo 4 (`install/index.php:246`): scelta la carta `su-misura` e premuto Installa, se il POST non ha
+  `sm=1` la pagina mostra le domande (ancora passo 4, niente scritto); con `sm=1` le risposte pulite vanno in
+  `$_SESSION['inst']['su_misura']` e l'installazione parte. Prima di `kit_costruisci()` le risposte si salvano
+  nell'impostazione (`install/index.php:318`), perché `kit_leggi('su-misura')` le legge da lì.
+- **Pannello**, `admin/sito-su-misura.php` (solo amministratore, solo con il tipo di sito in prova): GET mostra le
+  domande compilate con `su_misura_risposte()`; POST (`verify_csrf()`) salva le risposte e chiama
+  `kit_cambia('su-misura', ...)` (`admin/sito-su-misura.php:25`), che dalla 1.7.0 accetta il kit uguale a quello in prova
+  solo per `su-misura` (`includes/kit-partenza.php:351`). Se il cambio fallisce tornano le risposte di prima. La carta
+  della dashboard (`admin/index.php:174`) è un link a questa pagina, non un form.
+
+### 29.5 Sostituisci
+
+`su_misura_sostituisci($url, $file)` (`:559`), chiamata da `admin/media.php:25` (azione `sostituisci`, solo
+amministratore: tocca anche header e footer). Controlla che `$url` sia `cms_uploads_url()/segnaposto/...` con il nome
+nel formato di `su_misura_file_valido()` e che il file esista; carica la foto con `media_carica()` (tipo letto dal
+file, SVG ripulito, foto alleggerita) in `uploads/pagine/AAAA/MM/`; poi in `pages`, `articles` e `modelli`, in ogni colonna
+di testo, `REPLACE` del vecchio indirizzo con il nuovo, scritto con le barre normali e con `\/` (il JSON); infine
+cancella il file finto. Ritorna `['url', 'righe']` o `['errore']`. In Media la cartella si chiama **Da sostituire**
+(`media_cartelle()`, `includes/media.php:31`) e un avviso dice quante ne restano. Una pagina in cui si è sostituita una
+foto ha un'impronta nuova: a un cambio di tipo resta della persona.
+
+**Primi passi** (`includes/primi-passi.php:53`): la voce `foto` ("Le tue foto al posto di quelle finte") compare solo se
+il sito in prova è su misura o se qualche foto finta è ancora usata (`su_misura_segnaposto_usati()`, `:548`).
+
+**Prove**: `prove/prova-su-misura.js` (installazione con le domande, sito, Media, Sostituisci con i rifiuti, sito
+ricomposto dalla dashboard, Definitivo), gruppo 23 di `tools/sicurezza-prova.js`.
 
 ## Appendice A. Dove i documenti vecchi non corrispondono al codice
 

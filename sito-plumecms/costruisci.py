@@ -192,13 +192,17 @@ def funzionalita():
           'Spunti quello che vuoi portare e premi Importa: la barra ti dice a che punto è. I vecchi indirizzi diventano redirect, così i link sparsi per il web e su Google continuano a funzionare.',
           'Tutto entra <strong>in prova</strong>: i visitatori non vedono niente, tu giri il sito nuovo nell\'anteprima. Ti piace? Conferma. Non ti convince? Annulla, e il sito torna com\'era.']),
         ('kit', 'installa-4.webp', 'Si parte con un sito vero, non con una pagina bianca',
-         ['All\'ultimo passo l\'installatore ti chiede che sito vuoi fare: personale, attività, blog, portfolio, oppure vuoto.',
+         ['All\'ultimo passo l\'installatore ti chiede che sito vuoi fare: personale, attività, blog, portfolio, vuoto, oppure su misura.',
           'Scegli, e plumeCMS parte con la home, le pagine principali e il menu già costruiti, con testi d\'esempio che ti dicono cosa scriverci. Tu cambi le parole e metti le tue foto: il sito c\'è già.']),
+        ('su-misura', 'su-misura.webp', 'Il sito su misura: dici che attività è, il sito si compone',
+         ['All\'installazione scegli <strong>Su misura</strong> e rispondi a quattro domande: che attività è (un negozio, un ristorante, uno studio, un artigiano, un B&amp;B e altre), dove si trova, cosa offri, quali pagine vuoi.',
+          'plumeCMS compone home, pagine, menu e testi pensati per quell\'attività: un ristorante ha il menù e "Prenota un tavolo", un idraulico "Chiedi un preventivo". Con il form dei contatti e la mappa della tua città.',
+          'Dove andrà una foto c\'è un disegno che dice cosa fotografare: la vetrina, la sala, le persone. Quando hai le foto vere, in Media premi <strong>Sostituisci</strong> e la foto prende il suo posto in tutte le pagine.']),
         ('tipo-sito', 'tipo-sito.webp', 'Non sei sicuro del tipo di sito? Provali',
          ['Dopo l\'installazione il sito resta in prova: dalla dashboard passi da personale ad attività, a blog, a portfolio con un clic, e guardi come viene. Prima di cambiare, il pannello fa una copia del sito. Le pagine che hai già scritto restano.',
           'Quando hai trovato quello giusto premi <strong>Definitivo</strong>: il riquadro sparisce e da lì in poi cambi tutto con l\'editor, pagina per pagina.']),
         ('primi-passi', 'primi-passi.webp', 'Primi passi: cosa manca perché il sito sia pronto',
-         ['Nella dashboard sei caselle: nome e logo, i tuoi colori, le email che partono, il cron, la prima pagina scritta, il tipo di sito deciso. Ognuna con il link alla pagina giusta.',
+         ['Nella dashboard sei caselle: nome e logo, i tuoi colori, le email che partono, il cron, la prima pagina scritta, il tipo di sito deciso (in un sito su misura una in più: le tue foto al posto di quelle finte). Ognuna con il link alla pagina giusta.',
           'Si spuntano da sole quando le hai fatte. Tutte verdi? Le nascondi e la dashboard torna pulita.']),
         ('sezioni', 'sezioni.webp', 'Sezioni pronte: trenta modi di riempire una pagina',
          ['Nell\'editor c\'è la linguetta Sezioni: prezzi, testimonianze, chi siamo, servizi, numeri, domande frequenti, contatti, inviti. Trenta sezioni già impaginate, in nove gruppi, ognuna con la sua anteprima.',
@@ -332,7 +336,7 @@ PASSI_INSTALLA = [
     ('Sito e amministratore', 'Il nome del sito, l\'indirizzo (lo trova da solo) e il tuo utente.',
      'Nome del sito, una descrizione in una riga, l\'indirizzo e il tuo utente con una password di almeno 12 caratteri. Annotala: è la chiave di casa.'),
     ('Installazione', 'Scegli che sito vuoi fare, poi Installa adesso.',
-     'Scegli il punto di partenza: personale, attività, blog, portfolio, oppure vuoto. L\'installatore ti dice cosa farà (tabelle, amministratore, pagine, menu, header e footer): premi Installa adesso e aspetti qualche secondo.'),
+     'Scegli il punto di partenza: personale, attività, blog, portfolio, vuoto, oppure su misura (quattro domande sulla tua attività e il sito si compone da solo). L\'installatore ti dice cosa farà (tabelle, amministratore, pagine, menu, header e footer): premi Installa adesso e aspetti qualche secondo.'),
     ('Fine', 'Il sito è pronto. Entri nel pannello e cominci.',
      'Trovi il link al pannello e quello al sito, e le due righe per i compiti pianificati. Entri, scegli un tema e il sito è tuo.'),
 ]
@@ -446,6 +450,7 @@ def faq():
         ('Come pubblico la versione nuova di un file da scaricare?', 'Dalla pagina Download del pannello carichi il file nuovo. Se il nome contiene la versione (guida-1.3.pdf), l\'indirizzo "ultima" e le pagine che la citano passano da soli alla versione nuova.'),
         ('Mi aiuta anche con i social?', 'Sì. Scrivi il testo nel riquadro Social dell\'articolo e il giorno in cui esce ti arriva un\'email con il testo pronto per ogni canale, il link, i tuoi hashtag e le due immagini della misura giusta. Per i giorni dopo c\'è il calendario dei post. Pubblicare resta a te: plumeCMS non entra nei tuoi account.'),
         ('Posso mettere lo stesso invito sotto tutti gli articoli?', 'Sì. In Articoli premi la linguetta Aggiungi sempre alla fine e componi il riquadro con l\'editor: un invito alla newsletter, un pulsante per prenotare, un contatto. Quando premi Pubblica esce in fondo a ogni articolo, anche a quelli già online. Se lo spegni non perdi niente: con Accendi torna com\'era.'),
+        ('Non so da dove partire. plumeCMS mi aiuta a fare il sito?', 'Sì. Quando lo installi scegli Su misura e rispondi a quattro domande: che attività è, dove si trova, cosa offri, quali pagine vuoi. Il sito si compone da solo, con i testi pensati per la tua attività e delle foto finte che dicono cosa fotografare. Le cambi con le tue in Media, con il pulsante Sostituisci. Le domande si riaprono dalla dashboard finché il sito è in prova.'),
         ('C\'è una guida per imparare a usarlo?', 'Sì: il manuale d\'uso, in PDF. Trentuno capitoli, dal primo accesso alla checklist prima di andare online, ognuno con un esempio vero, le schermate con i passi numerati e una checklist per sapere quando hai finito.'),
         ('Posso costruirmi un tema mio?', 'Sì: c\'è un manuale apposta, con un tema d\'esempio completo da smontare e rifare tuo.'),
     ]
@@ -532,7 +537,7 @@ def editor_json():
 
 
 # ------------------------------------------------------------------ file
-USATE = ['copertina', 'social', 'fine-articolo', 'importa-wp', 'tipo-sito', 'primi-passi', 'aspetti', 'controlla-server', 'sezioni', 'copia', 'installa-1', 'installa-2', 'installa-3', 'installa-4', 'installa-5', 'editor-ritratto', 'editor', 'aperture', 'stile', 'modelli', 'versioni', 'seo', 'flussi', 'download', 'sicurezza', 'aggiornamenti', 'temi',
+USATE = ['copertina', 'su-misura', 'social', 'fine-articolo', 'importa-wp', 'tipo-sito', 'primi-passi', 'aspetti', 'controlla-server', 'sezioni', 'copia', 'installa-1', 'installa-2', 'installa-3', 'installa-4', 'installa-5', 'editor-ritratto', 'editor', 'aperture', 'stile', 'modelli', 'versioni', 'seo', 'flussi', 'download', 'sicurezza', 'aggiornamenti', 'temi',
          'tema-cosmo', 'tema-aria', 'tema-bottega']
 
 
@@ -578,6 +583,9 @@ def zip_lavagna(dest):
 
 # Le novità per chi scarica: brevi, scritte qui (il CHANGELOG è per chi sviluppa). Da aggiornare a ogni versione.
 NOVITA = [
+    ('1.7.0', 'Il sito su misura', ['All\'installazione la carta Su misura: quattro domande (che attività è, dove, cosa offri, quali pagine) e il sito si compone da solo, con testi pensati per quell\'attività.',
+                                   'Foto finte che dicono cosa fotografare; in Media, cartella Da sostituire, il pulsante Sostituisci mette la foto vera in tutte le pagine.',
+                                   'Finché il sito è in prova, le domande si riaprono dalla dashboard e il sito si ricompone.']),
     ('1.6.4', 'Due manuali', ['Nel prodotto e nel sito restano il manuale d\'uso e il manuale dei temi: il manuale tecnico e i documenti per chi sviluppa non ci sono più.']),
     ('1.6.0', 'Un riquadro in fondo a ogni articolo', ['In Articoli, la linguetta Aggiungi sempre alla fine: un riquadro ombreggiato che esce sotto ogni articolo, anche sotto quelli già pubblicati.',
                                                      'Si compone con l\'editor visuale, come una pagina, ed esce quando lo pubblichi. Si spegne e si riaccende con un clic.',

@@ -1,7 +1,8 @@
 // Le schermate del manuale d'uso (1.4.2): esegue gli esempi del manuale come una persona e fotografa ogni passo.
 // Se un passo del manuale non si può fare, lo script si ferma: il manuale e il pannello restano d'accordo.
 // Serve un plumeCMS appena installato con il kit Attività (prove/prova-kit.js ... attivita ...), utente prova.
-// uso: node tools/manuale-uso-schermate.js <base> <utente> <password> [solo un capitolo, es. 04]
+// uso: [SU_MISURA_BASE=<un sito su misura, stesso utente>] node tools/manuale-uso-schermate.js <base> <utente> <password> [solo un capitolo, es. 04]
+// Senza SU_MISURA_BASE mancano le due foto del sito su misura (02-su-misura-home, 07-sostituisci).
 // Scrive cms/docs/immagini/manuale-uso/<capitolo>-<nome>.jpg (JPEG: il PDF del manuale deve restare sotto 1900 KB).
 const { chromium } = require('playwright');
 const fs = require('fs');
@@ -71,7 +72,7 @@ async function apriEditor(u) {
 }
 
 // Da PNG a JPEG, una volta sola: al massimo LARGO px (nel PDF sono 17 cm), qualità QUALITA. Il PDF deve stare sotto 1900 KB.
-const LARGO = 760, QUALITA = 34;
+const LARGO = 760, QUALITA = 28;
 function stringi() {
   require('child_process').execFileSync('python3', ['-c', `
 import os, sys
@@ -109,6 +110,28 @@ capitoli['01'] = async () => {
 capitoli['02'] = async () => {
   await vai('index.php');
   await foto('02-tipo-sito', { sel: '#tipo-sito', segni: [{ sel: '.db-kit-carta:not(.attuale) button[data-kit="blog"]', n: 1 }, { sel: '#tipo-sito .db-kit-piede button', n: 2, lato: 'destra' }] });
+  // 1.7.0: il sito su misura. Si apre la pagina delle domande e si compila come nell'esempio, senza premere il pulsante
+  // (il sito delle schermate resta Attività).
+  await Promise.all([p.waitForNavigation(), p.click('.db-kit-carta a[data-kit="su-misura"]')]);
+  await p.check('.sm-carta input[value=negozio]');
+  await p.fill('input[name=citta]', 'Ravenna');
+  for (const [i, s] of ['Biciclette da città', 'Riparazioni', 'Noleggio'].entries()) await p.locator('input[name="servizi[]"]').nth(i).fill(s);
+  await p.check('input[name="pagine[]"][value=faq]');
+  await foto('02-su-misura', { clip: { x: 240, y: 56, width: 960, height: 1700 }, segni: [{ sel: '.sm-carta:has(input[value=negozio])', n: 1 }, { sel: 'input[name=citta]', n: 2 }, { sel: '.sm-servizi', n: 3 }, { sel: '.sm-pagine', n: 4 }, { sel: '#sm-componi', n: 5 }] });
+  if (!process.env.SU_MISURA_BASE || (SOLO && !'02'.startsWith(SOLO.slice(0, 2)))) return;
+  // Il sito che ne esce e Media > Da sostituire: da un sito su misura a parte (SU_MISURA_BASE, per esempio quello di
+  // prove/prova-su-misura.js), perché il sito delle schermate è Attività.
+  const altro = await p.context().browser().newContext({ viewport: { width: 1200, height: 800 }, locale: 'it-IT', deviceScaleFactor: 1 });
+  const q = await altro.newPage();
+  const SM = process.env.SU_MISURA_BASE;
+  await q.goto(SM + '/', { waitUntil: 'networkidle' }); await dorme(400);
+  await q.screenshot({ path: path.join(GREZZE, '02-su-misura-home.png'), clip: { x: 0, y: 0, width: 1200, height: 760 } }); console.log('02-su-misura-home');
+  await q.goto(SM + '/admin/login.php'); await q.fill('#username', UTENTE); await q.fill('#password', PASSWORD);
+  await Promise.all([q.waitForNavigation(), q.click('button[type=submit]')]);
+  await q.goto(SM + '/admin/media.php?cartella=segnaposto', { waitUntil: 'networkidle' }); await dorme(400);
+  await segna(q, [{ sel: '#md-da-sostituire', n: 1 }, { sel: '.md-sostituisci label', n: 2 }]);
+  await q.screenshot({ path: path.join(GREZZE, '07-sostituisci.png'), clip: { x: 240, y: 56, width: 960, height: 640 } }); console.log('07-sostituisci');
+  await altro.close();
 };
 
 // 03. I primi passi

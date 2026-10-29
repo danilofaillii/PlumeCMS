@@ -640,6 +640,163 @@ echo json_encode($o);
     } else console.log('--  import WordPress dal sito cattivo: saltate (manca FINTO_WP, vedi prove/finto-wp.php)');
   }
 
+  // === 23. (1.7.0, qui prima del gruppo 20, che preme Definitivo: le risposte cattive vogliono un sito ancora in prova)
+  // Sito su misura: la pagina delle domande (admin/sito-su-misura.php) è dell'amministratore e vuole il
+  // token; le risposte non diventano mai codice, né nel pannello né nel sito; Sostituisci di Media (azione=sostituisci) è
+  // dell'amministratore e cambia solo un'immagine finta vera, con una foto vera.
+  // La via scelta per l'XSS: un POST valido ricompone il sito (kit_cambia, con una copia del sito prima). Si fa solo se il sito
+  // è già in prova su misura (il pulsante dice "Ricomponi il sito"): risposte cattive, controlli, poi di nuovo le risposte
+  // di prima, lette dal form stesso (FormData), così le pagine del kit tornano com'erano; restano solo due copie del sito in
+  // più. Su un sito che non è su misura un POST valido lo farebbe diventare su misura: lì non si manda, e l'escape si prova
+  // da riga di comando (php, con CMS_DIR) su su_misura_campi_html e su_misura_pulisci, che non toccano il database.
+  {
+    const form = (o) => new URLSearchParams(o).toString();
+    const CT = { 'Content-Type': 'application/x-www-form-urlencoded' };
+    const PAG = ADMIN + '/sito-su-misura.php';
+    const MEDIA = ADMIN + '/media.php?cartella=segnaposto';
+    // Un attributo on* che contiene il segno delle prove (__sm), o una bandierina accesa: codice vivo nella pagina.
+    const vivo = (p) => p.evaluate(() => {
+      for (const el of document.querySelectorAll('*')) for (const a of el.attributes) if (/^on/i.test(a.name) && /__sm/.test(a.value)) return a.name + ' su ' + el.tagName;
+      for (const s of document.querySelectorAll('script')) if (/__sm\d=1/.test(s.textContent)) return 'script';
+      return Object.keys(window).some(k => /^__sm\d$/.test(k)) ? 'bandierina' : '';
+    });
+    const anon = await browser.newContext();
+    const ra = await anon.request.get(PAG, { maxRedirects: 0 });
+    ok('1.7.0: sito-su-misura.php senza login: rimanda al login', [302, 303].includes(ra.status()) && /login/.test(ra.headers()['location'] || ''), { status: ra.status() });
+    const rpa = await anon.request.post(PAG, { form: { attivita: 'ristorante' }, maxRedirects: 0 });
+    ok('1.7.0: sito-su-misura.php POST senza login: rifiutato', rpa.status() !== 200 && /login/.test(rpa.headers()['location'] || '') , { status: rpa.status(), location: rpa.headers()['location'] });
+    const ma = await anon.request.post(ADMIN + '/media.php', { multipart: { azione: 'sostituisci', segnaposto: 'x' }, maxRedirects: 0 });
+    ok('1.7.0: Sostituisci senza login: rifiutato', ma.status() !== 200 && /login/.test(ma.headers()['location'] || ''), { status: ma.status() });
+    await anon.close();
+    const r0 = await post(admin.p, PAG, form({ attivita: 'ristorante', citta: 'x' }), CT);
+    ok('1.7.0: sito-su-misura.php senza token: 403', r0.status === 403, { status: r0.status });
+    const t = await tokenDi(admin.p, ADMIN + '/index.php');
+    ok('1.7.0: (preparazione) token del pannello letto', t !== '');
+    const est = await admin.ctx.request.post(PAG, { headers: { 'Origin': 'https://evil.example' }, form: { _csrf: t, attivita: 'ristorante', citta: 'x' }, maxRedirects: 0 });
+    ok('1.7.0: sito-su-misura.php con Origin esterno: 403', est.status() === 403, { status: est.status() });
+    const rif = await admin.ctx.request.post(PAG, { headers: { 'Referer': 'https://evil.example/x' }, form: { _csrf: t, attivita: 'ristorante', citta: 'x' }, maxRedirects: 0 });
+    ok('1.7.0: sito-su-misura.php con Referer esterno: 403', rif.status() === 403, { status: rif.status() });
+    await admin.p.goto(PAG + '?attivita=%3Cscript%3Ewindow.__sm0%3D1%3C%2Fscript%3E&citta=%22%3E%3Cimg%20src%3Dx%20onerror%3Dwindow.__sm0%3D1%3E', { waitUntil: 'networkidle' });
+    ok('1.7.0: ?attivita= e ?citta= con HTML nell\'indirizzo: non entrano nella pagina', !(await vivo(admin.p)) && !(await admin.p.content()).includes('__sm0'));
+    if (red.dentro) {
+      await red.p.goto(PAG, { waitUntil: 'networkidle' });
+      const fuori = !/sito-su-misura\.php/.test(red.p.url()) && ((await red.p.content()).includes('riservata') || /index\.php|login\.php/.test(red.p.url()));
+      ok('1.7.0: il redattore non apre Sito su misura: torna alla dashboard', fuori, { url: red.p.url() });
+      await red.p.goto(ADMIN + '/index.php', { waitUntil: 'networkidle' });
+      ok('1.7.0: il redattore non vede la carta Su misura nella dashboard', await red.p.locator('a[href*="sito-su-misura.php"]').count() === 0);
+      const tr = await tokenDi(red.p, ADMIN + '/index.php');
+      const rp = await post(red.p, PAG, form({ _csrf: tr, attivita: 'ristorante', citta: 'x', 'pagine[]': 'contatti' }), CT);
+      ok('1.7.0: il redattore, sito-su-misura.php con il suo token: 403', rp.status === 403, { status: rp.status });
+    }
+
+    // Il motore scarta quello che non sta negli elenchi (riga di comando: niente database, niente sito toccato).
+    const { execFileSync } = require('child_process');
+    const phpCli = (codice) => { try { return execFileSync('php', ['-d', 'display_errors=stderr', '-r', 'require ' + JSON.stringify(path.join(DIR, 'includes', 'sito-su-misura.php')) + '; ' + codice], { encoding: 'utf8', timeout: 20000 }); } catch (e) { return 'ERRORE ' + (e.stderr || e.message).slice(0, 200); } };
+    if (DIR && fs.existsSync(path.join(DIR, 'includes', 'sito-su-misura.php'))) {
+      const j = (() => { try { return JSON.parse(phpCli('echo json_encode([su_misura_pulisci(["attivita" => "<script>x</script>", "citta" => "<b>Roma</b>" . str_repeat("a", 200), "servizi" => ["<img src=x onerror=alert(1)>Cena", "a", "b", "c", "d", "e", "f", "g"], "pagine" => ["../../x", "faq", "chi-siamo OR 1=1", ["x"]], "ogni_servizio" => "1"]), su_misura_pulisci(["attivita" => ["ristorante"], "servizi" => "uno\ndue"]), su_misura_pulisci(["attivita" => "ristorante "])]);')); } catch (e) { return null; } })();
+      ok('1.7.0: attività fuori elenco (con HTML, un array, uno spazio in più): diventa "altro"', !!j && j[0].attivita === 'altro' && j[1].attivita === 'altro' && j[2].attivita === 'altro', j && j.map(x => x.attivita));
+      ok('1.7.0: pagine fuori elenco (../, SQL, un array): scartate', !!j && JSON.stringify(j[0].pagine) === '["faq"]', j && j[0].pagine);
+      ok('1.7.0: servizi oltre sei scartati, tag tolti, città tagliata a 80 caratteri', !!j && j[0].servizi.length === 6 && !/[<>]/.test(j[0].servizi.join('')) && j[0].citta.length === 80 && !/</.test(j[0].citta), j && j[0]);
+      const html = phpCli('echo su_misura_campi_html(["attivita" => "\\"><script>window.__sm1=1</script>", "citta" => "Roma\\" onfocus=\\"window.__sm2=1", "servizi" => ["x\\" autofocus onfocus=\\"window.__sm3=1", "&lt;img src=x onerror=window.__sm4=1&gt;"], "pagine" => ["faq\\"><b>"]], fn($s) => htmlspecialchars($s, ENT_QUOTES, "UTF-8"));');
+      ok('1.7.0: le domande compilate con risposte cattive: ogni valore resta dentro il suo attributo', /name="citta"[^>]*value="Roma&quot; onfocus=&quot;window.__sm2=1"/.test(html) && !/onfocus="window/.test(html) && !/<script>window/.test(html) && /value="x&quot; autofocus onfocus=&quot;window.__sm3=1"/.test(html) && /value="&amp;lt;img/.test(html) && !/faq"><b>/.test(html), html.slice(0, 120));
+    } else ok('1.7.0: (senza CMS_DIR il motore del sito su misura non si prova da riga di comando)', true);
+
+    // Le risposte cattive davvero, sul sito: solo se è già in prova su misura (vedi sopra).
+    await admin.p.goto(PAG, { waitUntil: 'networkidle' });
+    const suMisura = await admin.p.locator('#sm-modulo').count() === 1 && /Ricomponi/.test(await admin.p.locator('#sm-componi').innerText().catch(() => ''));
+    if (suMisura) {
+      const prima = await admin.p.evaluate(() => [...new FormData(document.querySelector('#sm-modulo')).entries()]);
+      const att = (prima.find(x => x[0] === 'attivita') || [])[1] || 'altro';
+      const cattive = [['_csrf', (prima.find(x => x[0] === '_csrf') || [])[1]], ['attivita', att],
+        ['citta', '<script>window.__sm2=1</script>Roma" onload="window.__sm1=1'],
+        ['servizi[]', '"><img src=x onerror="window.__sm3=1">Cena'], ['servizi[]', '&lt;img src=x onerror=window.__sm4=1&gt;Pranzo'],
+        ['servizi[]', "Corso' onmouseover='window.__sm5=1"], ['servizi[]', '<svg/onload=window.__sm6=1>Pizza'],
+        ['pagine[]', 'servizi'], ['pagine[]', 'contatti'], ['pagine[]', '../../x'], ['pagine[]', "faq' OR 1=1"]];
+      const manda = (coppie) => admin.p.evaluate(async ({ url, coppie }) => {
+        const b = new URLSearchParams(); for (const [k, v] of coppie) b.append(k, v);
+        const r = await fetch(url, { method: 'POST', body: b, credentials: 'include' }); const h = await r.text();
+        return { status: r.status, flash: (h.match(/class="flash flash-(?:success|error)"[^>]*>([^<]*)/) || [])[1] || '' };
+      }, { url: PAG, coppie });
+      const rc = await manda(cattive);
+      ok('1.7.0: (preparazione) risposte cattive dell\'amministratore: il sito si ricompone', /pronto/.test(rc.flash), rc);
+      await admin.p.goto(PAG, { waitUntil: 'networkidle' });
+      const citta = await admin.p.inputValue('input[name=citta]');
+      ok('1.7.0: la pagina del pannello rimostra le risposte come testo (tag tolti, virgolette dentro il valore)', !(await vivo(admin.p)) && citta === 'window.__sm2=1Roma" onload="window.__sm1=1', { citta });
+      const giro = [];
+      for (const u of ['/', '/servizi/', '/contatti/']) {
+        const pg = await browser.newPage();
+        const r = await pg.goto(BASE + PAN + u, { waitUntil: 'networkidle' }).catch(() => null);
+        giro.push([u, r ? r.status() : 0, await vivo(pg), (await pg.content()).includes('Cena')]);
+        await pg.close();
+      }
+      ok('1.7.0: le risposte cattive nel sito (home, Servizi, Contatti): nessun codice vivo', giro.every(g => g[1] === 200 && !g[2]) && giro[0][3], giro);
+      // Com'era prima.
+      const rr = await manda(prima);
+      await admin.p.goto(PAG, { waitUntil: 'networkidle' });
+      const tornata = await admin.p.inputValue('input[name=citta]');
+      ok('1.7.0: (pulizia) il sito torna alle risposte di prima', /pronto/.test(rr.flash) && tornata === ((prima.find(x => x[0] === 'citta') || [])[1] || ''), { flash: rr.flash, citta: tornata });
+    } else ok('1.7.0: risposte cattive sul sito: saltate (il sito non è in prova su misura; l\'escape è provato da riga di comando)', true);
+
+    // Sostituisci di Media.
+    await admin.p.goto(MEDIA, { waitUntil: 'networkidle' });
+    const finte = await admin.p.locator('.md-sostituisci input[name=segnaposto]').evaluateAll(l => l.map(i => i.value));
+    if (finte.length) {
+      const finta = finte[0];
+      const uploads = finta.replace(/\/segnaposto\/[^/]+$/, '/');
+      const tm = await tokenDi(admin.p, MEDIA);
+      const PNG = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==', 'base64');
+      const manda = (p, campi, file) => p.evaluate(async ({ url, campi, file }) => {
+        const f = new FormData(); for (const [k, v] of Object.entries(campi)) f.append(k, v);
+        if (file) f.append('file', new Blob([Uint8Array.from(atob(file.b64), c => c.charCodeAt(0))], { type: file.tipo }), file.nome);
+        const r = await fetch(url, { method: 'POST', body: f, credentials: 'include' }); const h = await r.text();
+        return { status: r.status, flash: (h.match(/class="flash flash-(?:success|error)"[^>]*>([^<]*)/) || [])[1] || '' };
+      }, { url: MEDIA, campi, file });
+      const png = { nome: 'sic-sm-prova.png', tipo: 'image/png', b64: PNG.toString('base64') };
+      const s0 = await manda(admin.p, { azione: 'sostituisci', segnaposto: finta }, png);
+      ok('1.7.0: Sostituisci senza token: 403', s0.status === 403, s0);
+      const s1 = await admin.ctx.request.post(ADMIN + '/media.php', { headers: { 'Origin': 'https://evil.example' }, multipart: { _csrf: tm, azione: 'sostituisci', segnaposto: finta, file: { name: 'sic-sm-prova.png', mimeType: 'image/png', buffer: PNG } }, maxRedirects: 0 });
+      ok('1.7.0: Sostituisci con Origin esterno: 403', s1.status() === 403, { status: s1.status() });
+      if (red.dentro) {
+        await red.p.goto(MEDIA, { waitUntil: 'networkidle' });
+        ok('1.7.0: il redattore non vede i pulsanti Sostituisci', await red.p.locator('.md-sostituisci').count() === 0);
+        const trm = await tokenDi(red.p, ADMIN + '/media.php');
+        const sr = await manda(red.p, { _csrf: trm, azione: 'sostituisci', segnaposto: finta }, png);
+        ok('1.7.0: il redattore, Sostituisci con il suo token: 403', sr.status === 403, sr);
+      }
+      const cattivi = [
+        ['../ nel percorso', finta.replace(/[^/]+$/, '../../includes/config.local.php')],
+        ['../ con il formato giusto in fondo', finta.replace(/[^/]+$/, '../segnaposto/' + finta.split('/').pop())],
+        ['un file fuori da uploads/segnaposto', uploads + 'pagine/' + finta.split('/').pop()],
+        ['un indirizzo di un altro sito', 'https://evil.example' + finta],
+        ['un nome fuori formato (.php)', finta.replace(/\.svg$/, '.php')],
+        ['un nome fuori formato (maiuscole)', finta.replace(/[^/]+$/, n => n.toUpperCase())],
+        ['un a capo in fondo (il $ di PHP lo lascia passare)', finta + '\n'],
+        ['un nome fuori formato (doppia estensione)', finta + '.php'],
+        ['un nome fuori formato (byte nullo)', finta + '\0.php'],
+        ['un nome che rispetta il formato ma non esiste', finta.replace(/-\d{1,2}-/, '-99-')],
+      ];
+      for (const [nome, seg] of cattivi) {
+        const r = await manda(admin.p, { _csrf: tm, azione: 'sostituisci', segnaposto: seg }, png);
+        ok('1.7.0: Sostituisci con ' + nome + ': rifiutato', /Si sostituiscono solo/.test(r.flash), { seg: seg.slice(-60), flash: r.flash });
+      }
+      const php = { nome: 'sic-sm-prova.php', tipo: 'image/png', b64: Buffer.from('<?php echo "sic-sm"; ?>').toString('base64') };
+      const rp = await manda(admin.p, { _csrf: tm, azione: 'sostituisci', segnaposto: finta }, php);
+      ok('1.7.0: Sostituisci con un .php travestito da PNG: rifiutato', /Formati accettati/.test(rp.flash), rp);
+      const rv = await manda(admin.p, { _csrf: tm, azione: 'sostituisci', segnaposto: finta }, null);
+      ok('1.7.0: Sostituisci senza file: rifiutato, la foto finta resta', !/preso il posto/.test(rv.flash), rv);
+      const ancora = await admin.ctx.request.get(finta.startsWith('http') ? finta : new URL(finta, BASE).href);
+      ok('1.7.0: dopo i rifiuti la foto finta esiste ancora', ancora.status() === 200 && (await ancora.text()).includes('Sostituisci questa foto'), { status: ancora.status() });
+      await admin.p.goto(MEDIA, { waitUntil: 'networkidle' });
+      ok('1.7.0: dopo i rifiuti Media mostra ancora tutte le foto finte', await admin.p.locator('.md-sostituisci').count() === finte.length);
+      if (DIR) {
+        const trovati = [];
+        const cerca = (d) => { for (const f of (() => { try { return fs.readdirSync(d, { withFileTypes: true }); } catch (e) { return []; } })()) { const q = path.join(d, f.name); if (f.isDirectory()) cerca(q); else if (/sic-sm-prova/.test(f.name)) trovati.push(q); } };
+        cerca(path.join(DIR, 'uploads'));
+        ok('1.7.0: nessun file dei rifiuti è finito in uploads', trovati.length === 0 && fs.existsSync(path.join(DIR, 'includes', 'config.local.php')), trovati);
+      }
+    } else ok('1.7.0: Sostituisci: attacchi saltati (nessuna foto finta in Media: il sito non è su misura)', true);
+  }
+
   // === 20. (1.4.0) Tipo di sito in prova, primi passi, Esegui adesso del cron, Controlla il server: solo l'amministratore,
   //          solo con il token, niente da fuori, nessun cambio dopo il Definitivo. Con CMS_DIR legge lo stato vero.
   {
@@ -815,6 +972,23 @@ echo json_encode($o);
       await post(admin.p, ADMIN + '/modelli.php', form({ _csrf: t, azione: 'cestina', id: String(id) }), CT);
       await post(admin.p, ADMIN + '/modelli.php', form({ _csrf: t, azione: 'elimina', id: String(id), cestino: '1' }), CT);
     }
+  }
+
+  // === 23b. (1.7.0) Dopo il Definitivo (premuto dal gruppo 20) il sito su misura non si ricompone più, nemmeno con il token.
+  if (DIR && fs.existsSync(path.join(__dirname, '..', 'prove', 'settings-cli.php'))) {
+    const { execFileSync } = require('child_process');
+    const leggi = (k) => { try { return execFileSync('php', [path.join(__dirname, '..', 'prove', 'settings-cli.php'), DIR, 'leggi', k], { encoding: 'utf8' }).trim(); } catch (e) { return ''; } };
+    const kp = (() => { try { return JSON.parse(leggi('kit_prova')); } catch (e) { return null; } })();
+    const prima = leggi('su_misura_risposte');
+    if (kp && kp.stato === 'definitivo') {
+      const t = await tokenDi(admin.p, ADMIN + '/index.php');
+      const r = await admin.p.evaluate(async ({ url, t }) => {
+        const b = new URLSearchParams({ _csrf: t, attivita: 'negozio', citta: 'sic-dopo-definitivo', 'pagine[]': 'contatti' });
+        const x = await fetch(url, { method: 'POST', body: b, credentials: 'include' }); const h = await x.text();
+        return (h.match(/class="flash flash-(?:success|error)"[^>]*>([^<]*)/) || [])[1] || '';
+      }, { url: ADMIN + '/sito-su-misura.php', t });
+      ok('1.7.0: sito su misura dopo il Definitivo, con il token giusto: rifiutato, risposte e tipo di sito com\'erano', /definitivo/.test(r) && leggi('su_misura_risposte') === prima && JSON.parse(leggi('kit_prova') || '{}').stato === 'definitivo', { flash: r });
+    } else console.log('--  sito su misura dopo il Definitivo: saltata (il sito non ha un tipo di sito definitivo)');
   }
 
   // === pulizia: elimina il redattore di prova

@@ -58,7 +58,8 @@ require_once __DIR__ . '/includes/admin-header.php';
 .sm-carta:has(input:focus-visible){outline:2px solid var(--coral);outline-offset:2px}
 .sm-carta b{font-size:.92rem}.sm-carta small{color:var(--text-muted);font-size:.78rem;line-height:1.35}
 .sm-campo{display:block;max-width:420px}.sm-campo span{display:block;font-weight:600;font-size:.88rem;margin-bottom:.25rem}
-.sm-campo input,.sm-servizi input{width:100%;box-sizing:border-box}
+.sm-campo input,.sm-servizi input{width:100%;box-sizing:border-box;padding:.6rem .85rem;border:1px solid var(--border);border-radius:8px;font-size:.92rem;font-family:var(--font);background:var(--campo);color:var(--text)}
+.sm-campo input:focus,.sm-servizi input:focus{outline:none;border-color:var(--coral);box-shadow:0 0 0 3px var(--fuoco)}
 .sm-servizi{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:.5rem .75rem;max-width:760px}
 .sm-pagine{display:grid;gap:.4rem;max-width:760px}
 .sm-spunta{display:flex;gap:.6rem;align-items:flex-start;padding:.5rem .7rem;border:1px solid var(--border);border-radius:var(--radius);cursor:pointer;font-size:.88rem}

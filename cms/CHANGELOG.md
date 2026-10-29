@@ -2,6 +2,23 @@
 
 Il prodotto si chiama **plumeCMS** (nome scelto il 26 ottobre 2026; prima, per poche ore, "CarbonaraCMS", e ancora prima il provvisorio "Officina": gli zip vecchi si chiamavano `officina-*` e `carbonaracms-*`).
 
+## 1.7.0 (29 ottobre 2026) - Il sito su misura
+
+- **Richiesta di Danilo**: chi installa plumeCMS scrive che sito vuole e il sito si compone da solo, con foto finte da
+  sostituire. Nell'installatore, al passo 4, c'è una carta nuova, **Su misura**: quattro domande (che attività è, fra dieci,
+  dove si trova, cosa offre, fino a sei servizi, e quali pagine vuole fra Chi siamo, Servizi, Listino, Galleria,
+  Recensioni, Domande frequenti, Blog e Contatti, con "una pagina per ogni servizio" se serve). Ne escono home, pagine,
+  menu e testi pensati per quell'attività, il form dei contatti e la mappa della città.
+- **Le foto finte**: disegni SVG con i colori del sito, l'icona dell'attività e cosa ritrarre ("La sala", "Un piatto",
+  "Lo chef"). Stanno in Media, nella cartella nuova **Da sostituire**: il pulsante **Sostituisci** sotto ognuna carica la
+  foto vera e la mette al suo posto in tutte le pagine, articoli, header e footer, poi cancella quella finta. Solo
+  l'amministratore. I Primi passi hanno una voce in più per i siti su misura: "Le tue foto al posto di quelle finte".
+- **Dalla dashboard**: finché il tipo di sito è in prova, la carta Su misura apre le stesse domande (già compilate con le
+  risposte di prima, se il sito è già su misura). Con le risposte nuove il sito si ricompone come negli altri cambi di tipo:
+  copia del sito prima, e quello che hai scritto o cambiato resta tuo (anche una pagina in cui hai già messo una foto vera).
+- Nient'altro cambia per i siti che non scelgono Su misura. Le emoji nei nomi dei servizi si tolgono (diventano anche il
+  titolo e l'indirizzo di una pagina).
+
 ## 1.6.4 (29 ottobre 2026) - Due manuali
 
 - **Decisione di Danilo**: con plumeCMS restano solo il manuale d'uso e il manuale dei temi. Il manuale tecnico e i
