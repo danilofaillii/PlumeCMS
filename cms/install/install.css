@@ -69,3 +69,27 @@ code { background: var(--bg); padding: 1px 5px; border-radius: 4px; font-size: .
 .kit-portfolio .kit-disegno i:nth-child(2) { left: 35%; height: 25px; background: linear-gradient(135deg, #1d4ed8, #7c3aed); }
 .kit-portfolio .kit-disegno i:nth-child(3) { left: 35%; top: 39px; height: 25px; background: linear-gradient(135deg, #0f766e, #312e81); }
 .kit-portfolio .kit-disegno i:nth-child(4) { right: 8px; background: linear-gradient(135deg, #701a75, #0c4a6e); }
+/* 1.7.0: il sito su misura, la carta e le quattro domande (classi sm-*, le stesse del pannello) */
+.kit-su-misura .kit-disegno i:nth-child(1) { inset: 0 0 30px 0; border-radius: 0; background: repeating-linear-gradient(135deg, #2e2650 0 8px, #3b3166 8px 16px); }
+.kit-su-misura .kit-disegno i:nth-child(2) { left: 12px; top: 12px; width: 44%; height: 9px; background: #fde68a; }
+.kit-su-misura .kit-disegno i:nth-child(3) { left: 12px; bottom: 8px; width: 22%; height: 14px; background: #fde68a; box-shadow: calc(100% + 8px) 0 0 #c4b5fd; }
+.kit-su-misura .kit-disegno i:nth-child(4) { right: 12px; bottom: 8px; width: 22%; height: 14px; background: #8b5cf6; }
+.sm-gruppo { border: 0; margin: 0 0 24px; }
+.sm-gruppo legend { font-weight: 700; font-size: 1.05rem; margin-bottom: 10px; }
+.sm-nota { color: var(--text-muted); font-size: .88rem; margin: 4px 0 10px; }
+.sm-attivita { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 10px; }
+.sm-carta { position: relative; display: flex; flex-direction: column; gap: 2px; padding: 10px 34px 10px 12px; border: 1.5px solid var(--border); border-radius: 10px; background: var(--surface); cursor: pointer; }
+.sm-carta input { position: absolute; top: 11px; right: 10px; width: 17px; height: 17px; accent-color: var(--coral); }
+.sm-carta:has(input:checked) { border-color: var(--coral); box-shadow: 0 0 0 3px var(--fuoco); }
+.sm-carta:has(input:focus-visible) { outline: 2px solid var(--coral); outline-offset: 2px; }
+.sm-carta b { font-size: .95rem; } .sm-carta small { color: var(--text-muted); font-size: .8rem; line-height: 1.35; }
+.sm-campo span { display: block; font-weight: 600; font-size: .92rem; margin-bottom: 4px; }
+.sm-campo input, .sm-servizi input { width: 100%; padding: 10px 12px; border: 1px solid var(--bordo-forte); border-radius: 8px; font: inherit; background: var(--campo); color: var(--text); }
+.sm-campo input:focus, .sm-servizi input:focus { outline: 2px solid var(--coral); outline-offset: 1px; border-color: transparent; }
+.sm-servizi { display: grid; grid-template-columns: 1fr 1fr; gap: 8px 12px; }
+.sm-pagine { display: grid; gap: 6px; }
+.sm-spunta { display: flex; gap: 10px; align-items: flex-start; padding: 8px 10px; border: 1px solid var(--border); border-radius: 8px; cursor: pointer; font-size: .9rem; }
+.sm-spunta input { margin-top: 4px; width: 16px; height: 16px; accent-color: var(--coral); flex: none; }
+.sm-spunta span { color: var(--text-muted); } .sm-spunta b { color: var(--text); }
+.sm-spunta.sm-ogni { margin-top: 6px; border-style: dashed; }
+@media (max-width: 600px) { .sm-servizi { grid-template-columns: 1fr; } }

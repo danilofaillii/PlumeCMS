@@ -22,6 +22,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             save_setting('foto_lato_max', (string)$lato);
             flash('success', !empty($_POST['foto_leggere']) ? "Foto più leggere: acceso, lato massimo $lato px." : 'Foto più leggere: spento. Le foto nuove restano come arrivano.');
         }
+    } elseif (($_POST['azione'] ?? '') === 'sostituisci') {
+        // 1.7.0: una foto vera al posto di un'immagine finta del sito su misura, in tutte le pagine. Solo l'amministratore:
+        // cambia anche header, footer e modelli.
+        if (!is_admin()) { http_response_code(403); exit('Solo l\'amministratore sostituisce le immagini finte.'); }
+        require_once dirname(__DIR__) . '/includes/sito-su-misura.php';
+        $r = su_misura_sostituisci((string)($_POST['segnaposto'] ?? ''), $_FILES['file'] ?? null);
+        if (isset($r['url'])) flash('success', 'Fatto: la foto nuova ha preso il posto di quella finta' . ($r['righe'] ? ' (' . $r['righe'] . ($r['righe'] === 1 ? ' punto del sito)' : ' punti del sito)') : ', che nessuna pagina mostrava più') . '.');
+        else flash('error', $r['errore']);
     } elseif (isset($_POST['elimina'])) {
         $ok = media_elimina((string)$_POST['elimina']);
         flash($ok ? 'success' : 'error', ($ok ? 'Cancellata: ' : 'Non si è potuta cancellare: ') . (string)$_POST['elimina']);
@@ -74,6 +82,11 @@ require_once __DIR__ . '/includes/admin-header.php';
 </details>
 <style>.md-foto{margin-bottom:1rem;padding:1rem 1.25rem}.md-foto summary{cursor:pointer;display:flex;gap:.6rem;align-items:center}.md-foto-campi{display:flex;flex-wrap:wrap;gap:1rem 1.5rem;align-items:center;font-size:.9rem}.md-foto-campi label{display:flex;gap:.5rem;align-items:center}.md-foto-campi input[type=number]{padding:.4rem .6rem;border:1px solid var(--border);border-radius:8px;font:inherit}</style>
 <?php endif; ?>
+<?php if (!empty($conta['segnaposto'])): ?>
+<div class="flash flash-info" id="md-da-sostituire"><b><?= $conta['segnaposto'] === 1 ? 'Una foto finta da sostituire.' : $conta['segnaposto'] . ' foto finte da sostituire.' ?></b> Le ha messe il sito su misura per mostrare dove va una foto e cosa ritrarre.
+  <?= is_admin() ? 'Apri <a href="' . h($link(['cartella' => 'segnaposto'])) . '">Da sostituire</a> e premi Sostituisci sotto ognuna: la foto nuova prende il suo posto in tutte le pagine.' : 'Le sostituisce l\'amministratore.' ?></div>
+<style>.md-sostituisci{margin-top:.4rem}.md-sostituisci label{position:relative;overflow:hidden;font-size:.72rem;padding:.25rem .6rem;cursor:pointer}.md-sostituisci input[type=file]{position:absolute;inset:0;opacity:0;cursor:pointer}.md-sostituisci label:focus-within{outline:2px solid var(--coral);outline-offset:2px}</style>
+<?php endif; ?>
 <div style="display:flex;flex-wrap:wrap;gap:0.4rem;margin-bottom:0.8rem">
   <a href="<?= h($link(['cartella' => ''])) ?>" class="btn btn-sm <?= $cartella === '' ? 'btn-primary' : 'btn-secondary' ?>" style="font-size:0.78rem">Tutte (<?= array_sum($conta) ?>)</a>
   <?php foreach (media_cartelle() as $k => $nome): if (empty($conta[$k])) continue; ?>
@@ -103,6 +116,12 @@ require_once __DIR__ . '/includes/admin-header.php';
       <input type="text" value="<?= h($img['url']) ?>" readonly title="Clic per copiare l'indirizzo"
              style="width:100%;font-size:0.7rem;padding:0.25rem 0.4rem;margin-top:0.4rem;border:1px solid var(--border);border-radius:4px;background:var(--bg);color:var(--text-muted)"
              data-copia-se-stesso>
+      <?php if ($img['cartella'] === 'segnaposto' && is_admin()): ?>
+      <form method="post" enctype="multipart/form-data" class="md-sostituisci">
+        <?= csrf_field() ?><input type="hidden" name="azione" value="sostituisci"><input type="hidden" name="segnaposto" value="<?= h($img['url']) ?>">
+        <label class="btn btn-primary btn-sm">Sostituisci<input type="file" name="file" accept="image/jpeg,image/png,image/gif,image/webp,image/avif,image/svg+xml" required data-invia-al-cambio></label>
+      </form>
+      <?php endif; ?>
       <?php if (in_array($img['cartella'], ['pagine', 'pannello', 'newsletter'], true)): ?>
       <form method="post" style="margin-top:0.4rem" data-conferma="Cancellare <?= h($img['nome']) ?>? Se una pagina la usa, resterà un buco.">
         <?= csrf_field() ?><input type="hidden" name="elimina" value="<?= h($img['url']) ?>">

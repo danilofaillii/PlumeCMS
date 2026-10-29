@@ -49,6 +49,16 @@ function primi_passi(): array {
     $scritto = kit_contenuto_scritto();
     $out[] = $v('contenuto', 'La prima pagina o il primo articolo', $scritto, $scritto ? 'Hai scritto o cambiato qualcosa nel sito.' : 'Riscrivi una pagina d\'esempio o scrivi il tuo primo articolo.', 'contenuti.php?tipo=articoli', 'Vai agli articoli');
 
+    // 5 bis (1.7.0). Il sito su misura: le foto vere al posto di quelle finte. Solo se il sito è su misura o ne mostra ancora.
+    require_once __DIR__ . '/sito-su-misura.php';
+    $finte = count(su_misura_segnaposto_usati());
+    $kp = kit_prova();
+    if ($finte > 0 || ($kp && $kp['kit'] === 'su-misura')) {
+        $out[] = $v('foto', 'Le tue foto al posto di quelle finte', $finte === 0,
+            $finte === 0 ? 'Il sito mostra solo foto tue.' : ($finte === 1 ? 'Resta una foto finta da sostituire.' : 'Restano ' . $finte . ' foto finte da sostituire.'),
+            'media.php?cartella=segnaposto', 'Apri Media, Da sostituire');
+    }
+
     // 6. Il tipo di sito definitivo.
     $k = kit_prova();
     $def = $k === null || $k['stato'] === 'definitivo';

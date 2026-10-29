@@ -28,6 +28,7 @@ function media_cartelle(): array {
         'newsletter' => 'Newsletter',
         'articles' => 'Copertine articoli',
         'pannello' => 'Pannello (vecchi caricamenti)',
+        'segnaposto' => 'Da sostituire', // 1.7.0: le immagini finte del sito su misura (includes/sito-su-misura.php)
     ];
 }
 

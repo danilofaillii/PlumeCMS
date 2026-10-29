@@ -241,6 +241,19 @@ if ($passo === 4) {
             . '<p><a class="btn-filo" href="?passo=3">Indietro</a> <button class="btn" type="submit">Installa adesso</button></p></form>', 4);
     }
     if (!$esegui) $d['kit'] = isset($kit[(string)($_POST['kit'] ?? '')]) ? (string)$_POST['kit'] : 'vuoto';
+    // 1.7.0: il sito su misura. Scelta la carta, prima di installare si risponde alle quattro domande (una pagina in più
+    // dentro il passo 4); le risposte restano nella sessione e il kit le legge quando costruisce il sito.
+    if (!$esegui && $d['kit'] === 'su-misura' && empty($_POST['sm'])) {
+        require_once $radice . '/includes/sito-su-misura.php';
+        inst_pagina('Il tuo sito su misura', '<form method="post" class="sm">' . $csrf . '<input type="hidden" name="kit" value="su-misura"><input type="hidden" name="sm" value="1">'
+            . '<p class="nota-kit">Quattro domande e il sito si compone da solo: home, pagine, menu e testi pensati per la tua attività, con foto finte che dicono cosa metterci. Le sostituisci dal pannello, in Media, quando hai le tue.</p>'
+            . su_misura_campi_html($d['su_misura'] ?? su_misura_risposte_vuote(), 'ih')
+            . '<p><a class="btn-filo" href="?passo=4">Indietro</a> <button class="btn" type="submit">Installa adesso</button></p></form>', 4);
+    }
+    if (!$esegui && $d['kit'] === 'su-misura') {
+        require_once $radice . '/includes/sito-su-misura.php';
+        $d['su_misura'] = su_misura_pulisci($_POST);
+    }
     $s = $d['sito']; $db = $d['db'];
     $log = $d['log'] ?? [];
     try {
@@ -302,6 +315,11 @@ if ($passo === 4) {
             // 1.3.0: il kit scelto al passo 4 (Vuoto e il sito di sempre). Dalla 1.4.0 lo costruisce kit_costruisci(),
             // la stessa funzione del cambio di tipo di sito dalla dashboard, e cio che crea entra nel registro kit_prova.
             $kitId = (string)($d['kit'] ?? 'vuoto');
+            if ($kitId === 'su-misura') {
+                // 1.7.0: le risposte prima del kit, che le legge dalle impostazioni (le stesse che riapre il pannello).
+                require_once $radice . '/includes/sito-su-misura.php';
+                su_misura_salva_risposte($d['su_misura'] ?? su_misura_risposte_vuote());
+            }
             if ($kitId !== 'vuoto' && !kit_leggi($kitId)) $kitId = 'vuoto';
             // Menu e modelli (header e footer) di partenza prima dei contenuti: il kit scrive le sue voci nel menu Principale.
             menu_installa(); modelli_installa();

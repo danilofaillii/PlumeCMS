@@ -25,7 +25,9 @@
 
 /** I kit che ci sono: id => ['nome', 'descrizione']. "vuoto" e sempre il primo e non ha un file. */
 function kit_elenco(): array {
-    $out = ['vuoto' => ['nome' => 'Vuoto', 'descrizione' => 'Le pagine di sempre: una home di benvenuto, Chi sono, Blog e Contatti. Per chi vuole costruire da zero.', 'ordine' => 0]];
+    $out = ['vuoto' => ['nome' => 'Vuoto', 'descrizione' => 'Le pagine di sempre: una home di benvenuto, Chi sono, Blog e Contatti. Per chi vuole costruire da zero.', 'ordine' => 0],
+        // 1.7.0: il sito su misura (includes/sito-su-misura.php): i dati li compongono le risposte, non un file di kit/.
+        'su-misura' => ['nome' => 'Su misura', 'descrizione' => 'Rispondi a quattro domande (che attività è, dove, cosa offri, quali pagine) e il sito si compone da solo, con foto finte da sostituire.', 'ordine' => 5]];
     foreach (glob(__DIR__ . '/kit/*.php') ?: [] as $f) {
         $id = basename($f, '.php');
         if (!preg_match('/^[a-z0-9-]{2,40}$/', $id) || $id === 'vuoto') continue;
@@ -38,6 +40,11 @@ function kit_elenco(): array {
 
 /** I dati di un kit, o null. Un file rotto non ferma l'installatore: il kit semplicemente non c'è. */
 function kit_leggi(string $id): ?array {
+    if ($id === 'su-misura') {
+        // 1.7.0: il kit su misura nasce dalle risposte salvate (impostazione su_misura_risposte).
+        require_once __DIR__ . '/sito-su-misura.php';
+        try { return su_misura_kit(); } catch (Throwable $e) { error_log('kit su-misura: ' . $e->getMessage()); return null; }
+    }
     if (!preg_match('/^[a-z0-9-]{2,40}$/', $id) || !is_file(__DIR__ . '/kit/' . $id . '.php')) return null;
     try { $k = require __DIR__ . '/kit/' . $id . '.php'; } catch (Throwable $e) { error_log('kit ' . $id . ': ' . $e->getMessage()); return null; }
     return is_array($k) && !empty($k['nome']) ? $k : null;
@@ -102,9 +109,9 @@ function kit_immagini(): array {
 }
 
 /** La mappa dei segnaposto: {sito}, {descrizione}, {immagine:N}. */
-function kit_mappa(string $sito, string $descrizione): array {
+function kit_mappa(string $sito, string $descrizione, bool $disegni = true): array {
     $m = ['{sito}' => $sito, '{descrizione}' => $descrizione !== '' ? $descrizione : 'Una frase che dice cosa fai e per chi: la scrivi in Impostazioni o qui, nell\'editor.'];
-    foreach (kit_immagini() as $n => $u) $m['{immagine:' . $n . '}'] = $u;
+    if ($disegni) foreach (kit_immagini() as $n => $u) $m['{immagine:' . $n . '}'] = $u;
     return $m;
 }
 
@@ -179,7 +186,7 @@ function kit_impronta(array $voce): ?string {
     }
     if ($t === 'immagine') {
         $f = cms_uploads_dir() . '/' . (string)($voce['file'] ?? '');
-        return preg_match('~^kit/disegno-\d+\.svg$~', (string)($voce['file'] ?? '')) && is_file($f) ? sha1_file($f) : null;
+        return preg_match('~^(kit/disegno-\d+|segnaposto/[a-z]{2,20}-\d{1,2}-(largo|quadro|ritratto))\.svg$~', (string)($voce['file'] ?? '')) && is_file($f) ? sha1_file($f) : null;
     }
     return null;
 }
@@ -246,14 +253,18 @@ function kit_costruisci(string $kitId, string $sito, string $descrizione, string
     $blog = [editor_sezione([editor_widget('titolo', ['testo' => 'Blog', 'livello' => 'h1'])])];
     if ($kitDati) {
         // Le pagine del kit: la home, Blog (l'elenco lo disegna il sito) e le pagine del kit, tutte con l'editor.
-        $mappa = kit_mappa($sito, $descrizione);
+        // Il sito su misura ha le sue foto finte (segnaposto/): i disegni astratti dei kit non servono.
+        $suMisura = isset($kitDati['segnaposto']);
+        $mappa = kit_mappa($sito, $descrizione, !$suMisura);
         if ($pagina('Home', 'home', kit_sezioni((array)$kitDati['home'], $mappa))) $log[] = 'kit ' . $kitDati['nome'] . ': pagina Home (impostata come home)';
         if ($pagina('Blog', 'blog', $blog)) $log[] = 'pagina Blog (/blog/)';
         foreach ((array)($kitDati['pagine'] ?? []) as $pk) {
             if ($pagina((string)$pk['titolo'], (string)$pk['slug'], kit_sezioni((array)$pk['sezioni'], $mappa))) $log[] = 'pagina ' . $pk['titolo'];
         }
         // I disegni del kit, nel registro: si tolgono quando nessun kit li usa più e nessuno li ha cambiati.
-        foreach (array_keys(kit_immagini()) as $n) $creati[] = ['t' => 'immagine', 'file' => 'kit/disegno-' . $n . '.svg', 'nome' => 'disegno ' . $n];
+        if (!$suMisura) foreach (array_keys(kit_immagini()) as $n) $creati[] = ['t' => 'immagine', 'file' => 'kit/disegno-' . $n . '.svg', 'nome' => 'disegno ' . $n];
+        // 1.7.0: le foto finte del sito su misura, nello stesso registro.
+        foreach ((array)($kitDati['segnaposto'] ?? []) as $f) $creati[] = ['t' => 'immagine', 'file' => (string)$f, 'nome' => basename((string)$f)];
     } else {
         if ($pagina('Home', 'home', kit_vuoto_home($sito, $descrizione))) $log[] = 'pagina Home (impostata come home)';
         // La pagina del blog: l'indirizzo esiste perché esiste la pagina; l'elenco degli articoli lo disegna il sito.
@@ -282,8 +293,9 @@ function kit_costruisci(string $kitId, string $sito, string $descrizione, string
 
     // Il menu Principale con le pagine del kit.
     if (($opz['menu'] ?? true) && ($m = menu_per_posizione('principale'))) {
-        $v = fn(string $e, string $u) => ['id' => menu_id_voce(), 'etichetta' => $e, 'tipo' => 'link', 'rif' => '', 'url' => $u, 'nuova' => false, 'classi' => '', 'figli' => []];
-        $voci = $kitDati ? array_map(fn($x) => $v((string)$x[0], (string)$x[1]), (array)$kitDati['menu']) : [$v('Home', '/'), $v('Chi sono', '/chi-sono/'), $v('Blog', '/blog/'), $v('Contatti', '/contatti/')];
+        $v = fn(string $e, string $u, array $figli = []) => ['id' => menu_id_voce(), 'etichetta' => $e, 'tipo' => 'link', 'rif' => '', 'url' => $u, 'nuova' => false, 'classi' => '', 'figli' => $figli];
+        // Una voce [etichetta, indirizzo] o [etichetta, indirizzo, [[etichetta, indirizzo], ...]] (le sottovoci: il sito su misura, 1.7.0).
+        $voci = $kitDati ? array_map(fn($x) => $v((string)$x[0], (string)$x[1], array_map(fn($y) => $v((string)$y[0], (string)$y[1]), (array)($x[2] ?? []))), (array)$kitDati['menu']) : [$v('Home', '/'), $v('Chi sono', '/chi-sono/'), $v('Blog', '/blog/'), $v('Contatti', '/contatti/')];
         menu_salva((int)$m['id'], (string)$m['nome'], 'principale', $voci);
         $creati[] = ['t' => 'menu', 'id' => (int)$m['id'], 'nome' => (string)$m['nome']];
     }
@@ -335,7 +347,8 @@ function kit_cambia(string $nuovo, string $autore): array {
     if ($s['stato'] !== 'prova') throw new RuntimeException('Il tipo di sito è già definitivo: non si cambia più da qui.');
     $kit = kit_elenco();
     if (!isset($kit[$nuovo])) throw new RuntimeException('Tipo di sito sconosciuto.');
-    if ($nuovo === $s['kit']) throw new RuntimeException('Il sito è già ' . $kit[$nuovo]['nome'] . '.');
+    // Il sito su misura si rifà anche da su misura, con risposte nuove (1.7.0); gli altri kit no.
+    if ($nuovo === $s['kit'] && $nuovo !== 'su-misura') throw new RuntimeException('Il sito è già ' . $kit[$nuovo]['nome'] . '.');
     foreach (['contenuti', 'editor', 'form', 'menu-nav', 'modelli', 'copia-sito'] as $f) require_once __DIR__ . '/' . $f . '.php';
     @set_time_limit(0);
     @ignore_user_abort(true);

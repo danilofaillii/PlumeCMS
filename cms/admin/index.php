@@ -90,6 +90,9 @@ require_once __DIR__ . '/includes/admin-header.php';
 .db-kit-carta button:hover{border-color:var(--coral)}
 .db-kit-carta button:focus-visible{outline:2px solid var(--coral);outline-offset:2px}
 .db-kit-carta.attuale button{border-color:var(--coral);background:var(--coral-light);cursor:default}
+.db-kit-carta .db-kit-link{box-sizing:border-box;display:flex;flex-direction:column;gap:.3rem;width:100%;height:100%;padding:.7rem;border:1.5px solid var(--border);border-radius:var(--radius);background:var(--surface);color:var(--text);text-decoration:none}
+.db-kit-carta .db-kit-link:hover{border-color:var(--coral)}
+.db-kit-carta.attuale .db-kit-link{border-color:var(--coral);background:var(--coral-light)}
 .db-kit-carta b{font-size:.95rem}
 .db-kit-carta small{font-size:.78rem;color:var(--text-muted);line-height:1.35}
 .db-kit-carta em{font-style:normal;font-size:.72rem;font-weight:600;color:var(--coral);text-transform:uppercase;letter-spacing:.05em}
@@ -116,6 +119,10 @@ require_once __DIR__ . '/includes/admin-header.php';
 .db-k-portfolio i:nth-child(2){left:35.5%;height:19px;background:var(--coral-light)}
 .db-k-portfolio i:nth-child(3){left:35.5%;top:31px;height:19px;background:var(--sage-light)}
 .db-k-portfolio i:nth-child(4){right:7px;background:var(--mustard)}
+.db-k-su-misura i:nth-child(1){inset:0 0 22px 0;border-radius:0;background:repeating-linear-gradient(135deg,var(--border) 0 6px,var(--bg) 6px 12px)}
+.db-k-su-misura i:nth-child(2){left:10px;top:10px;width:44%;height:8px;background:var(--mustard)}
+.db-k-su-misura i:nth-child(3){left:10px;bottom:5px;width:24%;height:10px;background:var(--coral)}
+.db-k-su-misura i:nth-child(4){right:10px;bottom:5px;width:24%;height:10px;background:var(--mustard-light)}
 .db-kit-tenuti{margin:.9rem 0 0;padding:.7rem 1rem;border-radius:var(--radius);background:var(--sage-light);font-size:.85rem}
 .db-kit-tenuti ul{margin:.3rem 0 0 1.1rem}
 .db-kit-piede{display:flex;flex-wrap:wrap;gap:.6rem 1rem;align-items:center;justify-content:space-between;margin-top:1rem;padding-top:.9rem;border-top:1px solid var(--border);font-size:.85rem;color:var(--text-muted)}
@@ -164,6 +171,15 @@ fetch('aggiornamenti.php', { method: 'POST', credentials: 'same-origin', headers
   <p>Il sito è partito con pagine, menu e testi d'esempio. Finché non premi <b>Definitivo</b> puoi cambiare tipo di sito con un clic: prima il pannello fa da solo una copia del sito, poi cambia solo quello che il kit aveva preparato e che non hai toccato. Le pagine e gli articoli che hai scritto o cambiato restano.</p>
   <div class="db-kit-carte">
 <?php foreach ($kitTutti as $kid => $k): $kitQui = $kid === $kitProva['kit']; ?>
+<?php if ($kid === 'su-misura'): // 1.7.0: prima le domande, in una pagina sua; si rifà anche quando è già il sito in prova ?>
+    <div class="db-kit-carta<?= $kitQui ? ' attuale' : '' ?>">
+      <a href="sito-su-misura.php" class="db-kit-link" data-kit="su-misura">
+        <span class="db-kit-disegno db-k-su-misura" aria-hidden="true"><i></i><i></i><i></i><i></i></span>
+        <?php if ($kitQui): ?><em>In prova adesso</em><?php endif; ?>
+        <b><?= h($k['nome']) ?></b><small><?= $kitQui ? 'Rispondi di nuovo alle domande e il sito si ricompone con le risposte nuove.' : h($k['descrizione']) ?></small>
+      </a>
+    </div>
+<?php continue; endif; ?>
     <form method="post" action="tipo-sito.php" class="db-kit-carta<?= $kitQui ? ' attuale' : '' ?>"<?= $kitQui ? '' : ' data-conferma="' . h('Il sito diventa ' . $k['nome'] . '. Le pagine che hai scritto o cambiato restano. Prima del cambio il pannello fa una copia del sito.') . '"' ?>>
       <?= csrf_field() ?><input type="hidden" name="azione" value="cambia"><input type="hidden" name="kit" value="<?= h($kid) ?>">
       <button type="submit"<?= $kitQui ? ' disabled aria-current="true"' : '' ?> data-kit="<?= h($kid) ?>">
