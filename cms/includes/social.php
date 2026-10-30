@@ -366,7 +366,7 @@ function social_invia(string $a, string $oggetto, string $html): bool {
     $nome = str_replace(['"', "\r", "\n"], '', (string)cms_impostazione('sito_nome', CMS_NOME));
     $mitt = (string)(posta_config()['mittente'] ?? '');
     $intest = "MIME-Version: 1.0\r\nContent-Type: text/html; charset=UTF-8\r\n" . ($mitt !== '' ? 'From: ' . posta_oggetto($nome) . " <$mitt>\r\n" : '');
-    return posta_invia($a, posta_oggetto($oggetto), $html, $intest);
+    return posta_invia($a, posta_oggetto($oggetto), $html, $intest, 'social');
 }
 
 /** I contenuti da leggere (non le pagine) che escono il giorno $data: [[tipo, riga], ...], in ordine di ora. */

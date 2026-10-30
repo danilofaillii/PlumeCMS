@@ -1,6 +1,6 @@
 <?php
 /**
- * Newsletter: campagne, iscritti, importazione da Brevo, ritmo di invio.
+ * Newsletter: campagne, iscritti, importazione (per esempio da Brevo), ritmo di invio.
  * Motore in includes/newsletter.php, editor in newsletter-campagna.php, invio in cron-newsletter.php.
  */
 require_once __DIR__ . '/includes/auth.php';
@@ -15,11 +15,13 @@ $scheda = in_array($_GET['scheda'] ?? '', ['campagne', 'iscritti', 'liste', 'imp
 /** I filtri della scheda Iscritti, uguali per l'elenco e per le azioni su tutti i risultati. */
 function nl_filtro(array $q): array {
     $cerca = trim((string)($q['cerca'] ?? ''));
-    $stato = in_array($q['stato'] ?? '', ['attivo', 'in_attesa', 'uscito'], true) ? $q['stato'] : '';
+    $stato = in_array($q['stato'] ?? '', ['attivo', 'in_attesa', 'uscito', 'rimbalzato', 'errori'], true) ? $q['stato'] : '';
     $lista = (int)($q['lista'] ?? 0);
     $w = []; $par = [];
     if ($cerca !== '') { $q = '%' . addcslashes($cerca, '%_\\') . '%'; $w[] = "(i.email LIKE ? ESCAPE '\\\\' OR i.nome LIKE ? ESCAPE '\\\\' OR i.cognome LIKE ? ESCAPE '\\\\')"; array_push($par, $q, $q, $q); }
-    if ($stato !== '') { $w[] = 'i.stato = ?'; $par[] = $stato; }
+    // 'errori': attivi con tre errori temporanei di fila o più (1.11.0).
+    if ($stato === 'errori') $w[] = "i.stato = 'attivo' AND i.errori_di_fila >= 3";
+    elseif ($stato !== '') { $w[] = 'i.stato = ?'; $par[] = $stato; }
     if ($lista > 0) { $w[] = 'EXISTS (SELECT 1 FROM ' . tbl('newsletter_iscritti_liste') . ' l WHERE l.iscritto_id = i.id AND l.lista_id = ?)'; $par[] = $lista; }
     if ($lista === -1) { $w[] = 'NOT EXISTS (SELECT 1 FROM ' . tbl('newsletter_iscritti_liste') . ' l WHERE l.iscritto_id = i.id)'; }
     return [$w ? ' WHERE ' . implode(' AND ', $w) : '', $par, ['cerca' => $cerca, 'stato' => $stato, 'lista' => $lista]];
@@ -71,9 +73,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if ($azione === 'importa') {
         $f = $_FILES['csv'] ?? null;
         if (!$f || $f['error'] !== UPLOAD_ERR_OK) {
-            flash('error', 'Scegli il file CSV esportato da Brevo.');
+            flash('error', 'Scegli il file CSV con i contatti (per esempio esportato da Brevo).');
         } elseif (empty($_POST['consenso_brevo'])) {
-            flash('error', 'Serve la spunta: i contatti importati devono avere dato il consenso in Brevo.');
+            flash('error', 'Serve la spunta: i contatti importati devono avere dato il loro consenso.');
         } else {
             $lista = (int)($_POST['lista'] ?? 0);
             $nuova = trim((string)($_POST['lista_nuova'] ?? ''));
@@ -83,9 +85,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $st->execute([mb_substr($nuova, 0, 100)]);
                 $lista = (int)$st->fetchColumn();
             }
-            $r = newsletter_importa_csv($f['tmp_name'], $lista ?: newsletter_lista_principale());
+            // 1.11.0: i flussi della lista partono per gli importati solo con la spunta (spenta di partenza).
+            $r = newsletter_importa_csv($f['tmp_name'], $lista ?: newsletter_lista_principale(), !empty($_POST['flussi_import']));
             isset($r['errore']) ? flash('error', $r['errore'])
-                : flash('success', "Importati {$r['nuovi']} iscritti nuovi. Già presenti: {$r['gia']} (lasciati com'erano). Righe scartate perché senza email valida: {$r['scartati']}.");
+                : flash('success', "Importati {$r['nuovi']} iscritti nuovi. Già presenti: {$r['gia']} (lasciati com'erano). Saltati perché usciti, rimbalzati o con i dati cancellati: {$r['saltati']}. Righe scartate perché senza email valida: {$r['scartati']}."
+                    . (!empty($_POST['flussi_import']) ? ' I flussi della lista sono partiti per gli importati.' : ''));
         }
         header('Location: newsletter.php?scheda=iscritti');
         exit;
@@ -146,11 +150,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             newsletter_esci($id);
             flash('success', 'Iscritto tolto dalla newsletter.');
         } else {
-            // Diritto alla cancellazione: via tutti i dati dell'iscritto.
-            db()->prepare('DELETE FROM ' . tbl('newsletter_coda') . ' WHERE iscritto_id = ?')->execute([$id]);
-            db()->prepare('DELETE FROM ' . tbl('newsletter_iscritti_liste') . ' WHERE iscritto_id = ?')->execute([$id]);
-            db()->prepare('DELETE FROM ' . tbl('newsletter_iscritti') . ' WHERE id = ?')->execute([$id]);
-            flash('success', 'Dati dell\'iscritto cancellati.');
+            // Diritto alla cancellazione: via tutti i dati dell'iscritto, anche aperture, clic, flussi e invii dei form
+            // (1.11.0); l'impronta dell'email resta nella lista di soppressione, che l'importazione rispetta.
+            newsletter_cancella_dati($id);
+            flash('success', 'Dati dell\'iscritto cancellati: iscrizione, liste, aperture e clic, flussi e invii dei form con la sua email. Un\'importazione non lo rimetterà dentro.');
         }
         nl_torna_iscritti();
     }
@@ -158,6 +161,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $rispondi = trim((string)($_POST['rispondi_a'] ?? ''));
         save_setting('newsletter_config', json_encode([
             'per_ora' => max(10, min(2000, (int)($_POST['per_ora'] ?? 150))),
+            'per_giorno' => max(0, min(100000, (int)($_POST['per_giorno'] ?? 0))),
             'rispondi_a' => filter_var($rispondi, FILTER_VALIDATE_EMAIL) ? $rispondi : '',
         ]));
         flash('success', 'Impostazioni della newsletter salvate.');
@@ -183,7 +187,7 @@ $statoNome = ['bozza' => 'Bozza', 'programmata' => 'Programmata', 'in_invio' => 
 require_once __DIR__ . '/includes/admin-header.php';
 ?>
 <style>
-.nl-numeri{display:grid;grid-template-columns:repeat(3,1fr);gap:1rem;margin-bottom:1.25rem}
+.nl-numeri{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:1rem;margin-bottom:1.25rem}
 .nl-numeri div{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:1rem}
 .nl-numeri b{display:block;font-size:1.8rem}
 .nl-schede{display:flex;gap:.25rem;margin-bottom:1rem}
@@ -191,13 +195,17 @@ require_once __DIR__ . '/includes/admin-header.php';
 .nl-schede a.attiva{background:var(--surface);color:var(--text)}
 .nl-barra{height:6px;background:var(--fondo-2);border-radius:3px;min-width:120px}.nl-barra div{height:6px;background:var(--coral);border-radius:3px}
 .nl-riga{display:flex;gap:.4rem;flex-wrap:wrap;align-items:center}
+.nl-avviso{background:var(--mustard-light);color:var(--attenzione-testo);border-radius:8px;padding:.6rem .9rem;margin:0 0 1rem}
+.nl-errori{display:block;font-size:.78rem;color:var(--attenzione-testo)}
 </style>
 
 <div class="nl-numeri">
   <div><b><?= $numeri['attivo'] ?></b>iscritti attivi</div>
   <div><b><?= $numeri['in_attesa'] ?></b>in attesa di conferma</div>
   <div><b><?= $numeri['uscito'] ?></b>usciti</div>
+  <div><b><?= $numeri['rimbalzato'] ?></b><a href="?scheda=iscritti&amp;stato=rimbalzato">rimbalzati</a></div>
 </div>
+<?php if ($numeri['segnalati']): ?><p class="nl-avviso" role="status"><b><?= (int)$numeri['segnalati'] ?></b> <?= $numeri['segnalati'] === 1 ? 'iscritto ha' : 'iscritti hanno' ?> avuto tre errori temporanei di fila: ricevono ancora, ma conviene controllare l'indirizzo. <a href="?scheda=iscritti&amp;stato=errori">Vedi chi</a>.</p><?php endif; ?>
 
 <nav class="nl-schede">
   <?php foreach (['campagne' => 'Campagne', 'iscritti' => 'Iscritti', 'liste' => 'Liste', 'impostazioni' => 'Impostazioni'] as $k => $v): ?>
@@ -229,7 +237,7 @@ require_once __DIR__ . '/includes/admin-header.php';
     <?php endforeach; if (!$campagne): ?><tr><td colspan="6">Ancora nessuna campagna. Premi "Nuova campagna".</td></tr><?php endif; ?>
   </table></div>
   <p style="font-size:.85rem;color:var(--text-muted);margin-top:1rem">
-    Le email partono dal cron ogni 5 minuti, al massimo <?= (int)$cfg['per_ora'] ?> l'ora. Ultimo giro: <?= h($ultimoGiro ?: 'nessuno registrato') ?>.
+    Le email partono dal cron ogni 5 minuti, al massimo <?= (int)$cfg['per_ora'] ?> l'ora<?= (int)$cfg['per_giorno'] ? ' e ' . (int)$cfg['per_giorno'] . ' al giorno' : '' ?>, contando tutte le email del sito. Ultimo giro: <?= h($ultimoGiro ?: 'nessuno registrato') ?>.
   </p>
   <form method="post"><?= csrf_field() ?><input type="hidden" name="azione" value="giro"><button class="btn btn-secondary btn-sm" type="submit">Fai partire un giro adesso</button></form>
 </div>
@@ -247,14 +255,15 @@ require_once __DIR__ . '/includes/admin-header.php';
   $sceltaLista = fn($nome, $vuota) => '<select name="' . $nome . '">' . ($vuota !== '' ? '<option value="0">' . $vuota . '</option>' : '')
       . implode('', array_map(fn($l) => '<option value="' . (int)$l['id'] . '">' . h($l['nome']) . '</option>', $liste)) . '</select>'; ?>
 <div class="form-card">
-  <h3>Importa i contatti da Brevo</h3>
-  <p style="font-size:.85rem;color:var(--text-muted)">In Brevo: Contatti, seleziona una lista, Esporta, formato CSV. Esporta solo i contatti iscritti, senza quelli disiscritti o bloccati. Se in Brevo avevi più liste, esportale una alla volta e scegli qui la lista di arrivo. Chi è già qui resta com'è (chi è uscito resta fuori), ed entra anche nella lista scelta.</p>
+  <h3>Importa i contatti</h3>
+  <p style="font-size:.85rem;color:var(--text-muted)">Un file CSV con la colonna EMAIL (e, se ci sono, NOME, COGNOME e la data del consenso in una colonna CONSENSO). Da Brevo: Contatti, seleziona una lista, Esporta, formato CSV, solo i contatti iscritti, senza quelli disiscritti o bloccati. Se avevi più liste, esportale una alla volta e scegli qui la lista di arrivo. Chi è già qui resta com'è ed entra anche nella lista scelta; chi è uscito, è rimbalzato o ha chiesto di cancellare i suoi dati resta fuori.</p>
   <form method="post" enctype="multipart/form-data" class="nl-riga">
     <?= csrf_field() ?><input type="hidden" name="azione" value="importa">
     <input type="file" name="csv" accept=".csv,text/csv">
     <label style="font-size:.85rem">nella lista <?= $sceltaLista('lista', '') ?></label>
     <label style="font-size:.85rem">oppure in una lista nuova <input type="text" name="lista_nuova" placeholder="nome" style="padding:.3rem .5rem;border:1px solid var(--border);border-radius:6px"></label>
-    <label style="font-size:.85rem"><input type="checkbox" name="consenso_brevo" value="1"> Sono contatti iscritti in Brevo, con il loro consenso</label>
+    <label style="font-size:.85rem"><input type="checkbox" name="consenso_brevo" value="1"> Sono contatti iscritti, con il loro consenso</label>
+    <label style="font-size:.85rem"><input type="checkbox" name="flussi_import" value="1"> Fai partire i flussi per gli importati</label>
     <button class="btn btn-primary btn-sm" type="submit">Importa</button>
   </form>
 </div>
@@ -262,7 +271,7 @@ require_once __DIR__ . '/includes/admin-header.php';
   <form method="get" class="nl-riga" style="margin-bottom:1rem">
     <input type="hidden" name="scheda" value="iscritti">
     <input type="text" name="cerca" value="<?= h($f['cerca']) ?>" placeholder="email o nome" style="padding:.4rem .6rem;border:1px solid var(--border);border-radius:6px">
-    <select name="stato"><option value="">Tutti gli stati</option><?php foreach (['attivo' => 'Attivi', 'in_attesa' => 'In attesa', 'uscito' => 'Usciti'] as $k => $v): ?><option value="<?= $k ?>" <?= $f['stato'] === $k ? 'selected' : '' ?>><?= $v ?></option><?php endforeach; ?></select>
+    <select name="stato"><option value="">Tutti gli stati</option><?php foreach (['attivo' => 'Attivi', 'in_attesa' => 'In attesa', 'uscito' => 'Usciti', 'rimbalzato' => 'Rimbalzati', 'errori' => 'Con 3 errori di fila'] as $k => $v): ?><option value="<?= $k ?>" <?= $f['stato'] === $k ? 'selected' : '' ?>><?= $v ?></option><?php endforeach; ?></select>
     <select name="lista"><option value="0">Tutte le liste</option><?php foreach ($liste as $l): ?><option value="<?= (int)$l['id'] ?>" <?= $f['lista'] === (int)$l['id'] ? 'selected' : '' ?>><?= h($l['nome']) ?></option><?php endforeach; ?><option value="-1" <?= $f['lista'] === -1 ? 'selected' : '' ?>>In nessuna lista</option></select>
     <button class="btn btn-secondary btn-sm" type="submit">Cerca</button>
     <a href="?scarica=iscritti" style="margin-left:auto">Scarica tutti (CSV)</a>
@@ -279,7 +288,9 @@ require_once __DIR__ . '/includes/admin-header.php';
     <?php foreach ($iscritti as $r): $sue = array_map('intval', array_filter(explode(',', (string)$r['sue_liste']))); ?>
     <tr>
       <td><?= h($r['email']) ?></td><td><?= h(trim($r['nome'] . ' ' . $r['cognome'])) ?></td>
-      <td><?= ['attivo' => 'attivo', 'in_attesa' => 'in attesa', 'uscito' => 'uscito'][$r['stato']] ?? h($r['stato']) ?></td>
+      <td><?= ['attivo' => 'attivo', 'in_attesa' => 'in attesa', 'uscito' => 'uscito', 'rimbalzato' => 'rimbalzato'][$r['stato']] ?? h($r['stato']) ?>
+        <?php if ($r['stato'] === 'rimbalzato'): ?><span class="nl-errori" title="<?= h($r['ultimo_errore']) ?>">il server di posta ha rifiutato l'indirizzo: non riceve più niente</span>
+        <?php elseif ((int)$r['errori_di_fila'] >= 3): ?><span class="nl-errori" title="<?= h($r['ultimo_errore']) ?>"><?= (int)$r['errori_di_fila'] ?> errori temporanei di fila</span><?php endif; ?></td>
       <td><details><summary style="cursor:pointer"><?= h(implode(', ', array_map(fn($l) => $nomeLista[$l] ?? '', $sue)) ?: 'nessuna') ?></summary>
         <form method="post" style="padding:.4rem 0"><?= csrf_field() ?><input type="hidden" name="azione" value="liste_iscritto"><input type="hidden" name="id" value="<?= (int)$r['id'] ?>"><?= $nascosti() ?>
           <?php foreach ($liste as $l): ?><label style="display:block;font-size:.85rem"><input type="checkbox" name="liste[]" value="<?= (int)$l['id'] ?>" <?= in_array((int)$l['id'], $sue, true) ? 'checked' : '' ?>> <?= h($l['nome']) ?></label><?php endforeach; ?>
@@ -329,7 +340,9 @@ require_once __DIR__ . '/includes/admin-header.php';
   <form method="post">
     <?= csrf_field() ?><input type="hidden" name="azione" value="impostazioni">
     <div class="form-group"><label for="per_ora">Email al massimo ogni ora</label><input type="number" id="per_ora" name="per_ora" min="10" max="2000" value="<?= (int)$cfg['per_ora'] ?>">
-      <div class="hint">I server condivisi limitano le email per ora: chiedi a Hostcare il limite del tuo piano e scrivi qui un numero un po' più basso.</div></div>
+      <div class="hint">I server condivisi limitano le email per ora: chiedi a Hostcare il limite del tuo piano e scrivi qui un numero un po' più basso. Contano tutte le email del sito (conferme, avvisi dei form, flussi, campagne): nell'ultima ora ne sono partite <?= posta_inviate(3600) ?>.</div></div>
+    <div class="form-group"><label for="per_giorno">Email al massimo al giorno</label><input type="number" id="per_giorno" name="per_giorno" min="0" max="100000" value="<?= (int)$cfg['per_giorno'] ?>">
+      <div class="hint">Nelle ultime 24 ore, contando tutte le email del sito. 0 vuol dire nessun limite. Nelle ultime 24 ore ne sono partite <?= posta_inviate(86400) ?>.</div></div>
     <div class="form-group"><label for="rispondi_a">Le risposte alla newsletter arrivano a</label><input type="email" id="rispondi_a" name="rispondi_a" value="<?= h($cfg['rispondi_a']) ?>" placeholder="la tua email">
       <div class="hint">Vuoto: le risposte vanno all'indirizzo che spedisce (scheda Posta).</div></div>
     <button class="btn btn-primary" type="submit">Salva</button>

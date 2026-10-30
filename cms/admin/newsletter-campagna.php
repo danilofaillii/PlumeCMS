@@ -42,7 +42,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $a = trim((string)($_POST['prova_a'] ?? ''));
             if (!filter_var($a, FILTER_VALIDATE_EMAIL)) { flash('error', 'Indirizzo per la prova non valido.'); break; }
             [$ogg, $html, $intest] = newsletter_email($c, ['id' => 0, 'nome' => trim((string)($_POST['prova_nome'] ?? '')) ?: 'Giulia', 'email' => $a]);
-            posta_invia($a, '[PROVA] ' . $ogg, $html, $intest)
+            posta_invia($a, '[PROVA] ' . $ogg, $html, $intest, 'prova')
                 ? flash('success', "Prova spedita a $a.") : flash('error', 'Prova non partita: ' . posta_errore());
             break;
         case 'programma':

@@ -8,7 +8,8 @@
  *                        mattino (Social, includes/social.php: "Oggi sul sito" e i testi del calendario), manda a IndexNow
  *                        gli indirizzi in coda (pannello SEO e AEO). Scrive logs/cron-daily.log.
  *   cron-newsletter.php  ogni 5 minuti: avvia le campagne arrivate alla loro ora, manda un giro di email (fino a 40, nel
- *                        limite orario della newsletter), fa avanzare i flussi automatici, svuota la coda di IndexNow.
+ *                        limite orario della newsletter), fa avanzare i flussi automatici, svuota la coda di IndexNow;
+ *                        una volta al giorno pulisce il registro della posta (oltre 60 giorni) e gli iscritti mai confermati.
  *                        Scrive logs/newsletter.log solo quando ha fatto qualcosa.
  *
  * Ogni passata, da qualunque parte arrivi, lascia una riga in logs/cron-stato.json: quando, da dove ("cron" se dalla riga
@@ -107,6 +108,8 @@ function cron_newsletter(string $da = 'cron'): array {
         @file_put_contents(cms_radice() . '/logs/seo.log', date('Y-m-d H:i:s') . ' | ERRORE ' . $e->getMessage() . "\n", FILE_APPEND);
     }
     try {
+        // 1.11.0: una volta al giorno, la pulizia (registro della posta oltre 60 giorni, iscritti mai confermati).
+        try { $righe = array_merge($righe, newsletter_pulizia()); } catch (Throwable $e) { $righe[] = 'ERRORE pulizia: ' . $e->getMessage(); }
         $log = newsletter_invia_giro();
         if ($log) @file_put_contents(cms_radice() . '/logs/newsletter.log', date('Y-m-d H:i:s') . ' | ' . implode('; ', $log) . "\n", FILE_APPEND);
         $righe = array_merge($righe, $log);

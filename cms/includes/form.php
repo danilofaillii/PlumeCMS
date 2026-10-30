@@ -279,6 +279,9 @@ function form_ricevi(array $m, array $p, string $pagina): string {
     if (empty($p['privacy'])) return 'privacy';
     if (!moduli_captcha_valido((string)($p['captcha'] ?? ''))) return 'captcha';
     if (moduli_troppi('moduli_invii')) return 'troppi';
+    // 1.11.0: con la doppia conferma, il limite delle richieste di iscrizione si controlla prima di salvare: la persona
+    // vede l'errore di sempre, invece del grazie senza l'email di conferma.
+    if ((int)$m['lista_id'] > 0 && $email !== '' && !empty($m['lista_conferma']) && newsletter_stato_email($email) !== 'attivo' && newsletter_troppe_richieste()) return 'troppi';
     $ora = moduli_adesso();
     $nomeIntero = trim(($nome['nome'] ?? '') . ' ' . ($nome['cognome'] ?? ''));
     if ($nomeIntero === '') foreach ($dati as $k => $v) { if ($v !== '' && preg_match('/nome/i', $k)) { $nomeIntero = $v; break; } }
@@ -287,44 +290,50 @@ function form_ricevi(array $m, array $p, string $pagina): string {
     $invioId = (int)db()->lastInsertId();
     // Nella lista della newsletter, con o senza doppia conferma.
     if ((int)$m['lista_id'] > 0 && $email !== '') {
-        try { form_iscrivi($email, $nome['nome'] ?? '', $nome['cognome'] ?? '', (int)$m['lista_id'], (bool)$m['lista_conferma']); } catch (Throwable $e) { error_log('form lista: ' . $e->getMessage()); }
+        try {
+            $r = form_iscrivi($email, $nome['nome'] ?? '', $nome['cognome'] ?? '', (int)$m['lista_id'], (bool)$m['lista_conferma'], $m);
+            if ($r !== '') error_log("form: iscrizione con conferma non riuscita ($r)");
+        } catch (Throwable $e) { error_log('form lista: ' . $e->getMessage()); }
     }
     if (!empty($m['avviso'])) {
         // 1.9.0: agli indirizzi scelti nel form, uno per uno; senza, a quello degli avvisi del sito.
         foreach (form_avviso_destinatari($m) as $a) {
             $righe = implode('', array_map(fn($k, $v) => '<p style="margin:0 0 10px"><b>' . h($k) . ':</b> ' . nl2br(h($v)) . '</p>', array_keys($dati), $dati));
             [$oggetto, $corpo] = ['Nuova compilazione: ' . $m['nome'], moduli_email_html('Form «' . $m['nome'] . '»', $righe . '<p style="color:#888;font-size:13px">Dalla pagina ' . h($pagina) . ', il ' . date('d/m/Y H:i') . '.</p>', 'Apri nel pannello', cms_url_pannello() . 'form-submissions.php?modulo=' . (int)$m['id'])];
-            if (!posta_invia($a, $oggetto, $corpo, moduli_intestazioni($email))) error_log('form: avviso non partito: ' . posta_errore());
+            if (!posta_invia($a, $oggetto, $corpo, moduli_intestazioni($email), 'avviso_form')) error_log('form: avviso non partito: ' . posta_errore());
         }
     }
+    // L'innesco "Compila un form": subito per chi è attivo; per chi deve ancora confermare si ricorda e parte alla conferma.
     newsletter_flussi_innesco('form', (int)$m['id'], $email !== '' ? newsletter_id_da_email($email) : 0);
     return '';
 }
 
-/** Un iscritto in una lista, da un form: con conferma manda l'email di conferma, senza entra subito attivo. */
-function form_iscrivi(string $email, string $nome, string $cognome, int $lista, bool $conferma): void {
+/**
+ * Un iscritto in una lista, da un form: con conferma manda l'email di conferma (1.11.0: per la lista del form, non per
+ * la newsletter principale, con il titolo del form nell'email; entra nella lista solo quando conferma), senza entra
+ * subito attivo. Chi è già attivo entra subito nella lista. Ritorna '' oppure il codice d'errore di newsletter_richiesta().
+ */
+function form_iscrivi(string $email, string $nome, string $cognome, int $lista, bool $conferma, array $m = []): string {
     newsletter_schema();
     $st = db()->prepare('SELECT * FROM ' . tbl('newsletter_iscritti') . ' WHERE email = ?');
     $st->execute([$email]);
     $i = $st->fetch();
     $ora = moduli_adesso();
-    if ($i && $i['stato'] === 'attivo') { newsletter_in_lista((int)$i['id'], $lista); return; }
+    if ($i && $i['stato'] === 'attivo') { newsletter_in_lista((int)$i['id'], $lista); return ''; }
     if ($conferma) {
-        $r = newsletter_richiesta(['nome' => $nome, 'cognome' => $cognome, 'email' => $email]);
-        if ($r !== '' && $r !== 'gia') error_log("form: iscrizione con conferma non riuscita ($r)");
-        $id = newsletter_id_da_email($email);
-        if ($id) newsletter_in_lista($id, $lista);
-        return;
+        $cosa = trim((string)($m['titolo'] ?? '')) ?: trim((string)($m['nome'] ?? '')) ?: newsletter_nome_lista($lista);
+        return newsletter_richiesta(['nome' => $nome, 'cognome' => $cognome, 'email' => $email], ['lista' => $lista, 'form' => (int)($m['id'] ?? 0), 'cosa' => $cosa, 'fonte' => 'form']);
     }
     if (!$i) {
         db()->prepare('INSERT INTO ' . tbl('newsletter_iscritti') . " (email, nome, cognome, stato, fonte, consenso_versione, consenso_at, ip, creato, aggiornato) VALUES (?,?,?,'attivo','form',?,?,?,?,?)")
             ->execute([$email, mb_substr($nome, 0, 100), mb_substr($cognome, 0, 100), MODULI_CONSENSO_VERSIONE, $ora, moduli_ip(), $ora, $ora]);
     } else {
-        db()->prepare('UPDATE ' . tbl('newsletter_iscritti') . " SET stato = 'attivo', consenso_at = ?, aggiornato = ? WHERE id = ?")->execute([$ora, $ora, $i['id']]);
+        db()->prepare('UPDATE ' . tbl('newsletter_iscritti') . " SET stato = 'attivo', consenso_at = ?, uscito_at = NULL, rimbalzato_at = NULL, errori_di_fila = 0, aggiornato = ? WHERE id = ?")->execute([$ora, $ora, $i['id']]);
     }
     $id = newsletter_id_da_email($email);
     newsletter_in_lista($id, $lista);
     newsletter_flussi_innesco('lista', $lista, $id);
+    return '';
 }
 
 /** Pagina di ringraziamento di un form (dopo l'invio). */

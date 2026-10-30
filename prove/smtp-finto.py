@@ -1,12 +1,15 @@
 #!/usr/bin/env python3
 """Un server di posta finto per le prove (1.4.0): accetta SMTP in chiaro, senza autenticazione, e scrive ogni messaggio
 ricevuto in <cartella>/<n>.eml. Mai su un server vero.
-uso: python3 -I prove/smtp-finto.py <porta> <cartella>   (si ferma con un segnale)"""
+uso: python3 -I prove/smtp-finto.py <porta> <cartella> [rimbalzi]   (si ferma con un segnale)
+Con "rimbalzi" (1.11.0, prova-newsletter-difetti.js) rifiuta al RCPT TO gli indirizzi che contengono "rimbalza" con un
+550 (indirizzo inesistente) e quelli che contengono "rinvia" con un 451 (errore temporaneo)."""
 import os
 import socketserver
 import sys
 
 PORTA, CARTELLA = int(sys.argv[1]), sys.argv[2]
+RIMBALZI = len(sys.argv) > 3 and sys.argv[3] == 'rimbalzi'
 os.makedirs(CARTELLA, exist_ok=True)
 
 
@@ -38,8 +41,14 @@ class Sessione(socketserver.StreamRequestHandler):
             elif v.startswith('MAIL FROM'):
                 self.scrivi('250 ok')
             elif v.startswith('RCPT TO'):
-                a.append(c.split(':', 1)[1].strip(' <>'))
-                self.scrivi('250 ok')
+                dest = c.split(':', 1)[1].strip(' <>')
+                if RIMBALZI and 'rimbalza' in dest:
+                    self.scrivi('550 5.1.1 <' + dest + '>: Recipient address rejected: User unknown')
+                elif RIMBALZI and 'rinvia' in dest:
+                    self.scrivi('451 4.7.1 <' + dest + '>: Try again later')
+                else:
+                    a.append(dest)
+                    self.scrivi('250 ok')
             elif v == 'DATA':
                 dati = []
                 self.scrivi('354 avanti')

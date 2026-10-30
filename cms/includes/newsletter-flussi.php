@@ -357,6 +357,15 @@ function newsletter_flusso_parti(array $f, int $iscritto): void {
 function newsletter_flussi_innesco(string $innesco, int $innescoId, int $iscritto): void {
     if (!$iscritto) return;
     newsletter_flussi_schema();
+    // 1.11.0: solo per chi è attivo. Prima un cammino partiva anche per chi doveva ancora confermare, il giro lo fermava
+    // e la chiave unica (flusso, iscritto) non lo faceva più ripartire. Chi aspetta la conferma: l'innesco "form" si
+    // ricorda e parte alla conferma (newsletter_conferma_esito); gli altri inneschi arrivano già da soli dopo la conferma.
+    $st = db()->prepare('SELECT stato FROM ' . tbl('newsletter_iscritti') . ' WHERE id = ?');
+    $st->execute([$iscritto]);
+    if ($st->fetchColumn() !== 'attivo') {
+        if ($innesco === 'form') newsletter_innesco_in_attesa($innesco, $innescoId, $iscritto);
+        return;
+    }
     $st = db()->prepare('SELECT * FROM ' . tbl('newsletter_flussi') . ' WHERE attivo = 1 AND innesco = ? AND (innesco_id = 0 OR innesco_id = ?)');
     $st->execute([$innesco, $innescoId]);
     foreach ($st->fetchAll() as $f) newsletter_flusso_parti($f, $iscritto);
@@ -485,7 +494,15 @@ function newsletter_flussi_giro(int $posti): array {
             $d = $nodo['dati'];
             $c = ['id' => 0, 'oggetto' => $d['oggetto'], 'anteprima' => $d['anteprima'], 'corpo' => $d['corpo'], 'pulsante_testo' => $d['pulsante_testo'], 'pulsante_link' => $d['pulsante_link']];
             [$oggetto, $html, $intest] = newsletter_email($c, ['id' => $iscritto, 'nome' => $r['nome'], 'email' => $r['email']], ['f' => (int)$f['id'], 'p' => $nodoId]);
-            if (!posta_invia($r['email'], $oggetto, $html, $intest)) { $log[] = 'flusso ' . $f['nome'] . ': email non partita verso ' . $r['email'] . ' (' . posta_errore() . ')'; break; }
+            $partita = posta_invia($r['email'], $oggetto, $html, $intest, 'flusso');
+            newsletter_esito_invio($iscritto);
+            if (!$partita && posta_esito() === 'rimbalzo') {
+                // Indirizzo rifiutato per sempre: l'iscritto è rimbalzato, il suo cammino si ferma, gli altri vanno avanti.
+                db()->prepare('UPDATE ' . tbl('newsletter_corsi') . " SET stato = 'fermato', prossimo = NULL, ascolto = NULL, aggiornato = NOW() WHERE id = ?")->execute([$corso]);
+                $log[] = 'flusso ' . $f['nome'] . ': indirizzo rifiutato, iscritto segnato rimbalzato (' . posta_errore() . ')';
+                break;
+            }
+            if (!$partita) { $log[] = 'flusso ' . $f['nome'] . ': email non partita verso ' . $r['email'] . ' (' . posta_errore() . ')'; break; }
             $inviate++;
             db()->prepare('UPDATE ' . tbl('newsletter_flussi') . ' SET inviate = inviate + 1 WHERE id = ?')->execute([$f['id']]);
             $ascolta = $d['ascolto'] > 0 && (newsletter_flusso_arrivo($g, $nodoId, 'aperta') !== null || newsletter_flusso_arrivo($g, $nodoId, 'cliccata') !== null || newsletter_flusso_arrivo($g, $nodoId, 'nessuna') !== null);
