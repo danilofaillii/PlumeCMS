@@ -42,4 +42,5 @@
 .pa-muto{color:var(--text-muted);font-size:.85rem}
 [hidden]{display:none!important}
 @media (max-width:900px){.pa-settimana{grid-template-columns:1fr}.pa-giorno{min-height:0}.pa-riga{grid-template-columns:4.5rem 1fr}.pa-riga .pa-azioni{grid-column:1/-1}.pa-chiusura{grid-template-columns:1fr 1fr}.pa-chiusura input:last-child{grid-column:1/-1}.pa-orari{grid-template-columns:1fr}.pa-dettaglio{grid-template-columns:1fr}}
-@media (max-width:600px){.admin-table-wrap{overflow-x:auto}}
+/* Al telefono le tabelle diventano schede, una riga sotto l'altra: niente pagina che scorre di lato. */
+@media (max-width:700px){.pa-tabella thead{display:none}.pa-tabella,.pa-tabella tbody,.pa-tabella tr,.pa-tabella td{display:block;width:100%}.pa-tabella tr{border-bottom:1px solid var(--border);padding:.6rem .8rem}.pa-tabella td{padding:.15rem 0;border:0}.pa-barra select{max-width:100%}.pa-barra label{flex-wrap:wrap}}

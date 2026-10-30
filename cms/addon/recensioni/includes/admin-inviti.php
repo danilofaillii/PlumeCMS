@@ -33,7 +33,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             foreach ($elenco as [$email, $nome]) {
                 if (rec_invito_crea($email, $nome, 'manuale', null, $servizio, $quando)) $si++; else $no[] = $email;
             }
-            flash($si ? 'success' : 'error', ($si ? "$si inviti in coda" . ($_POST['quando'] === 'subito' ? ': partono al prossimo giro del cron, oppure premi Manda adesso.' : ', partono fra ' . (int)rec_impostazioni()['giorni_dopo'] . ' giorni.') : 'Nessun invito aggiunto.')
+            flash($si ? 'success' : 'error', ($si ? ($si === 1 ? '1 invito in coda' : "$si inviti in coda") . ($_POST['quando'] === 'subito' ? ': partono al prossimo giro del cron, oppure premi Manda adesso.' : ', partono fra ' . (int)rec_impostazioni()['giorni_dopo'] . ' giorni.') : 'Nessun invito aggiunto.')
                 . ($no ? ' Saltati ' . count($no) . ' (indirizzo sbagliato, già invitati, o hanno chiesto di non ricevere queste email): ' . implode(', ', array_slice($no, 0, 10)) . '.' : ''));
             break;
         case 'manda':

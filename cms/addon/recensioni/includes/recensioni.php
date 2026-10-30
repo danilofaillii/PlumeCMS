@@ -292,5 +292,5 @@ function rec_cron(?int $adesso = null): string {
         db()->prepare('UPDATE ' . tbl('rec_inviti') . ' SET inviato_at = NULL, scade_at = NULL, tentativi = tentativi + 1, annullato = IF(tentativi >= 4, 1, 0) WHERE id = ?')->execute([(int)$i['id']]);
         $ko++;
     }
-    return ($ok || $ko) ? "$ok inviti mandati" . ($ko ? ", $ko non partiti (si riprova)" : '') : '';
+    return ($ok || $ko) ? ($ok === 1 ? '1 invito mandato' : "$ok inviti mandati") . ($ko ? ", $ko non partiti (si riprova)" : '') : '';
 }

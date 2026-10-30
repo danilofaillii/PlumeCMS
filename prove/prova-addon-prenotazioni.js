@@ -215,6 +215,9 @@ const norma = h => h.replace(/nonce="[^"]+"/g, '').replace(/name="_csrf" value="
   await C.entra(at, B);
   await vai(at, PAG('agenda'));
   ok('agenda al telefono: niente scorrimento di lato', await C.largo(at) <= 0, await C.largo(at));
+  const larghe = [];
+  for (const u of ['elenco&filtro=tutte', 'elenco&id=' + id3, 'servizi', 'servizi&nuovo=1', 'persone', 'persone&nuova=1', 'impostazioni', 'agenda&vista=giorno&d=' + g3]) { await vai(at, PAG(u)); if (await C.largo(at) > 0) larghe.push(u); }
+  ok('le altre pagine del pannello al telefono: nessuna scorre di lato', larghe.length === 0, larghe);
   const riga = C.cli(CMS, 'sql', `SELECT inizio_ts FROM {p}pren_prenotazioni WHERE id = ${id3}`)[0];
   C.cli(CMS, 'sql', `UPDATE {p}pren_prenotazioni SET creato = DATE_SUB(creato, INTERVAL 5 DAY) WHERE id = ${id3}`);
   const avanti = Math.max(0, riga.inizio_ts - 6 * 3600 - Math.floor(Date.now() / 1000));

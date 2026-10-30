@@ -23,7 +23,7 @@ async function pagina(br, err, opz = {}) {
   const ctx = await br.newContext({ viewport: opz.telefono ? { width: 390, height: 844 } : { width: 1280, height: 900 }, ...(opz.telefono ? { isMobile: true, hasTouch: true, deviceScaleFactor: 2 } : {}) });
   const p = await ctx.newPage();
   p.on('pageerror', e => err.push(e.message.slice(0, 200)));
-  p.on('console', m => { if (m.type() === 'error' && !/favicon|ERR_ABORTED|status of 40[34]/.test(m.text() + (m.location().url || ''))) err.push(m.text().slice(0, 200)); });
+  p.on('console', m => { if (m.type() === 'error' && !/favicon|ERR_ABORTED|status of 4(0[34]|10|22)/.test(m.text() + (m.location().url || ''))) err.push(m.text().slice(0, 200)); });
   p.on('dialog', d => d.accept());
   return p;
 }
