@@ -2,6 +2,11 @@
 
 Il prodotto si chiama **plumeCMS** (nome scelto il 26 ottobre 2026; prima, per poche ore, "CarbonaraCMS", e ancora prima il provvisorio "Officina": gli zip vecchi si chiamavano `officina-*` e `carbonaracms-*`).
 
+## 1.9.1 (30 ottobre 2026) - Form dentro Newsletter e form
+
+- **Richiesta di Danilo**: nel menu del pannello la voce **Form** non sta più da sola: è in **Newsletter e form**, fra
+  Iscritti e liste e Invii dei form. La pagina e i form non cambiano. Solo l'amministratore la vede, come la pagina.
+
 ## 1.9.0 (30 ottobre 2026) - A chi arriva l'avviso di un form
 
 - **Segnalazione di Danilo**: creando un form non si poteva scegliere a chi arriva l'email di avviso a ogni compilazione;

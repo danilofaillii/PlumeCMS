@@ -90,7 +90,7 @@ Sono gli unici in `cms/docs/`, nello zip, nel sito di plumeCMS e nella pagina Do
 - **Pacchetto di aggiornamento** per un'installazione esistente:
   `python3 tools/cms-pacchetto.py --aggiornamento`. Si carica dal pannello,
   Impostazioni, Aggiornamenti.
-- **Versione**: `cms/VERSIONE` (oggi 1.9.0) e una voce in `cms/CHANGELOG.md` a ogni
+- **Versione**: `cms/VERSIONE` (oggi 1.9.1) e una voce in `cms/CHANGELOG.md` a ogni
   zip con contenuto diverso. Mai cambiare il contenuto di una versione già data.
 - **Prove** prima di dire finito:
   - `php -n -d short_open_tag=1 -l` su ogni file PHP toccato, `node --check` sui js;
@@ -126,7 +126,11 @@ Le decisioni complete, con data e perché, stanno nel second brain, `plumecms/de
 
 ## Stato al 28 ottobre 2026
 
-Fatto: plumeCMS 1.9.0 (30 ottobre): a chi arriva l'avviso di un form (segnalazione di Danilo: non si poteva scegliere). Colonna
+Fatto: plumeCMS 1.9.1 (30 ottobre): la voce Form del menu del pannello spostata dentro "Newsletter e form" (richiesta di Danilo),
+fra Iscritti e liste e Invii dei form, solo amministratore (`admin/includes/admin-header.php`). Manuale d'uso capitolo 18 e schermata
+01-dashboard. Prove: install 37/37, aggiornamento 1.9.0 -> 1.9.1 13/13, menu controllato nel browser. Pagine del sito di plumeCMS
+invariate: niente parti nuove.
+1.9.0 (30 ottobre): a chi arriva l'avviso di un form (segnalazione di Danilo: non si poteva scegliere). Colonna
 `moduli.avviso_a` (aggiunta anche alle tabelle vecchie da `form_schema()`), casella "Manda l'avviso a" in Form > Dopo l'invio, fino a
 5 indirizzi validati (`form_avviso_indirizzi()`), un'email per destinatario; vuota = `posta_notifica_email()` come prima. Manuale d'uso
 capitolo 18 (schermata 17-avviso), tecnico 15.1. Prove: `prova-form-avviso.js` 13/13 (sito nuovo e sito aggiornato), attacchi 233/233

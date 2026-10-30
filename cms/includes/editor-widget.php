@@ -338,7 +338,7 @@ function editor_definizioni(): array {
             ...es_testo('meta', 'di categoria e data', ' .card-meta', 'Meta'),
         ]],
         'modulo' => ['etichetta' => 'Modulo', 'icona' => '✉', 'gruppo' => 'Dal sito', 'controlli' => [
-            ec('tipo', 'scelta', 'Quale modulo', 'newsletter', 'contenuto', ['opzioni' => editor_moduli_disponibili(), 'accetta' => '/^[a-z][a-z0-9_:-]{0,40}$/', 'aiuto' => 'I form li crei dal pannello, voce Form. Lì decidi anche a chi arriva l\'email di avviso a ogni compilazione (Dopo l\'invio, Manda l\'avviso a).']),
+            ec('tipo', 'scelta', 'Quale modulo', 'newsletter', 'contenuto', ['opzioni' => editor_moduli_disponibili(), 'accetta' => '/^[a-z][a-z0-9_:-]{0,40}$/', 'aiuto' => 'I form li crei dal pannello, in Newsletter e form > Form. Lì decidi anche a chi arriva l\'email di avviso a ogni compilazione (Dopo l\'invio, Manda l\'avviso a).']),
             es_sfo('sfondo', 'Sfondo del riquadro', ' .modulo', 'Riquadro', [], false),
             es_bor('bordo', 'Bordo del riquadro', ' .modulo', 'Riquadro', [], false),
             es_pad('riquadro_padding', 'Spazio interno del riquadro', ' .modulo', 'Riquadro'),

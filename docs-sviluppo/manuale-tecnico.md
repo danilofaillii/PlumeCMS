@@ -1,6 +1,6 @@
 # plumeCMS: manuale tecnico
 
-Versione del manuale: 1.17, per plumeCMS 1.9.0 (30 ottobre 2026).
+Versione del manuale: 1.18, per plumeCMS 1.9.1 (30 ottobre 2026).
 
 Questo manuale descrive come è fatto plumeCMS e come funziona, pezzo per pezzo. È scritto leggendo il codice:
 ogni numero, limite e nome di funzione viene dai file veri, con il riferimento `file:riga` quando serve a chi
@@ -73,7 +73,7 @@ fatti con plumeCMS, i loro contenuti e i temi e moduli che non ne copiano il cod
 index.php           front controller: tutte le richieste del sito passano da qui
 cron-daily.php      compiti del giorno (pacchetti programmati, moduli, IndexNow)
 cron-newsletter.php invio della newsletter a giri, coda IndexNow
-VERSIONE            il numero di versione (oggi 1.9.0)
+VERSIONE            il numero di versione (oggi 1.9.1)
 CHANGELOG.md, README.md, INSTALLA.md
 .htaccess           regole di Apache (copia di install/esempi/htaccess-radice.txt)
 
@@ -1387,7 +1387,7 @@ in un colpo solo).
 
 ### 15.1 Form
 
-`includes/form.php`, pagina Form. Si costruisce un form nel pannello e lo si mette in una pagina con il widget
+`includes/form.php`, pagina Form (dalla 1.9.1 nel menu dentro Newsletter e form, `admin/includes/admin-header.php`). Si costruisce un form nel pannello e lo si mette in una pagina con il widget
 Modulo (`form:ID`).
 
 - Tabelle: `moduli` (definizione) e `moduli_invii` (invii).

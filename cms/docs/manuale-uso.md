@@ -1,6 +1,6 @@
 # Manuale d'uso di plumeCMS
 
-Versione del manuale: plumeCMS 1.9.0, 30 ottobre 2026.
+Versione del manuale: plumeCMS 1.9.1, 30 ottobre 2026.
 
 ## Prima di cominciare
 
@@ -889,7 +889,7 @@ compilazioni arrivano nel pannello e, se vuoi, anche via email.
 
 **Esempio.** Un form "Candidature" da mettere nella pagina "Lavora con noi".
 
-Apri **Form** dal menu e premi **+ Nuovo form**.
+Apri **Newsletter e form > Form** dal menu e premi **+ Nuovo form**.
 
 ![Il form nuovo](immagini/manuale-uso/17-form.jpg)
 

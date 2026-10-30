@@ -16,20 +16,21 @@ $menu = [
     ['Dashboard', 'index.php', 'grafico-barre', $qui === 'index.php'],
     ['Articoli', 'contenuti.php?tipo=articoli', 'documento-testo', ($ctQui && ($ctTipo === '' || $ctTipo === 'articoli')) || $qui === 'fine-articolo.php'],
     ['Pagine', 'contenuti.php?tipo=pagine', 'documento', $ctQui && $ctTipo === 'pagine', [['Home nell\'editor', $homeId ? 'editor.php?id=' . $homeId : 'contenuti.php?tipo=pagine', false]]],
-    ['Form', 'form.php', 'lista-spunte', $qui === 'form.php'],
     ['Popup', 'popup.php', 'finestra', $qui === 'popup.php'],
     ['Categorie', 'categories.php', 'cartella', $qui === 'categories.php' && ($_GET['tipo'] ?? '') !== 'tag'],
     ['Tag', 'categories.php?tipo=tag', 'etichetta', $qui === 'categories.php' && ($_GET['tipo'] ?? '') === 'tag'],
     ['Media', 'media.php', 'immagine', $qui === 'media.php'],
     $sonoAdminMenu ? ['Download', 'scaricabili.php', 'download', $qui === 'scaricabili.php'] : null, // download manager (1.2.4)
     $sonoAdminMenu ? ['Utenti', 'utenti.php', 'utenti', $qui === 'utenti.php'] : null,
-    ['Newsletter e form', 'newsletter.php', 'email', in_array($qui, ['newsletter.php', 'newsletter-campagna.php', 'newsletter-flussi.php', 'newsletter-statistiche.php', 'form-submissions.php'], true), [
+    ['Newsletter e form', 'newsletter.php', 'email', in_array($qui, ['newsletter.php', 'newsletter-campagna.php', 'newsletter-flussi.php', 'newsletter-statistiche.php', 'form-submissions.php', 'form.php'], true), array_values(array_filter([
         ['Campagne', 'newsletter.php', in_array($qui, ['newsletter.php', 'newsletter-campagna.php'], true) && !in_array($_GET['scheda'] ?? '', ['iscritti', 'liste', 'impostazioni'], true)],
         ['Iscritti e liste', 'newsletter.php?scheda=iscritti', $qui === 'newsletter.php' && in_array($_GET['scheda'] ?? '', ['iscritti', 'liste', 'impostazioni'], true)],
+        // 1.9.1, richiesta di Danilo: Form sta qui, accanto ai suoi invii (prima era una voce a sé). Solo amministratore.
+        $sonoAdminMenu ? ['Form', 'form.php', $qui === 'form.php'] : null,
         ['Invii dei form', 'form-submissions.php', $qui === 'form-submissions.php'],
         ['Flussi automatici', 'newsletter-flussi.php', $qui === 'newsletter-flussi.php'],
         ['Statistiche', 'newsletter-statistiche.php', $qui === 'newsletter-statistiche.php'],
-    ]],
+    ]))],
     // 1.5.0: email del mattino, calendario e testi dei social (includes/social.php). Solo amministratore.
     $sonoAdminMenu ? ['Social', 'social.php', 'megafono', $qui === 'social.php', [
         ['Email del mattino', 'social.php?scheda=mattino', $qui === 'social.php' && in_array($_GET['scheda'] ?? 'mattino', ['mattino'], true)],
