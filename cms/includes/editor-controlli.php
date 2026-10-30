@@ -43,7 +43,8 @@ function editor_registra_widget(string $tipo, array $definizione, callable $dise
     }
     // menu: da dove viene il widget (pagina Widget del pannello): 'nucleo' oppure 'modulo:<nome>' se il file sta in moduli/<nome>/.
     $origine = 'nucleo';
-    if ($r['file_corrente'] !== '' && preg_match('~/moduli/([a-z][a-z0-9_-]*)/~', str_replace('\\', '/', $r['file_corrente']), $m)) $origine = 'modulo:' . $m[1];
+    // 2.0.0: anche 'addon:<nome>' per i widget degli addon (addon/<nome>/).
+    if ($r['file_corrente'] !== '' && preg_match('~/(moduli|addon)/([a-z][a-z0-9_-]*)/~', str_replace('\\', '/', $r['file_corrente']), $m)) $origine = ($m[1] === 'addon' ? 'addon:' : 'modulo:') . $m[2];
     $definizione += ['etichetta' => ucfirst(str_replace('_', ' ', $tipo)), 'icona' => '*', 'gruppo' => 'Altri', 'controlli' => [], 'origine' => $origine];
     $r['widget'][$tipo] = ['definizione' => $definizione, 'disegna' => $disegna];
 }

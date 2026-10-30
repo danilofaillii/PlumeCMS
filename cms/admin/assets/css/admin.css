@@ -370,3 +370,16 @@ code { background: var(--fondo-2); color: var(--text); padding: .05em .3em; bord
 .pn-media-voce small{font-size:.72rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .pn-media-azioni{text-align:right;margin-top:.8rem}
 .pn-campo-immagine{display:flex;gap:.5rem;align-items:center}.pn-campo-immagine input{flex:1}
+
+/* 2.0.0: niente scorrimento di lato al telefono. Un fieldset non si stringe sotto il suo contenuto se non glielo si dice;
+   gli indirizzi lunghi nelle tabelle vanno a capo; la casella di ricerca delle barre in alto non impone 200 pixel. */
+fieldset { min-width: 0; }
+.admin-table code, .admin-content code { overflow-wrap: anywhere; }
+.admin-content td code { white-space: normal; }
+@media (max-width: 640px) {
+  .admin-toolbar .search-input { min-width: 0; }
+  .admin-toolbar form { min-width: 0; max-width: 100%; flex: 1 1 auto; }
+  .admin-toolbar form .search-input { width: 100%; }
+  /* Le tabelle larghe scorrono dentro il loro riquadro: la pagina resta ferma. */
+  .admin-content table { display: block; max-width: 100%; overflow-x: auto; }
+}

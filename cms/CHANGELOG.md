@@ -2,7 +2,66 @@
 
 Il prodotto si chiama **plumeCMS** (nome scelto il 26 ottobre 2026; prima, per poche ore, "CarbonaraCMS", e ancora prima il provvisorio "Officina": gli zip vecchi si chiamavano `officina-*` e `carbonaracms-*`).
 
-## 1.11.0 (in preparazione)
+## 2.0.0 beta (30 ottobre 2026) - Gli addon
+
+La prima versione con gli **addon**: funzioni in più che arrivano con plumeCMS e si accendono solo sul sito che le vuole.
+È una **beta**: tutto è provato (prove nel browser, attacchi, installazione e aggiornamento), ma gli addon sono nuovi e
+aspettano di essere usati su siti veri. La 1.11.0 non è uscita: le sue correzioni sono qui sotto.
+
+**Impostazioni > Addon** (nuova pagina, solo amministratore): una carta per addon con Accendi e Spegni. Un addon acceso
+aggiunge le sue voci al menu e i suoi widget all'editor; spento sparisce dal sito, ma i suoi dati restano e tornano quando lo
+si riaccende. Gli aggiornamenti non accendono e non spengono niente.
+
+Gli otto addon:
+
+- **Prenotazioni e appuntamenti**: servizi con durata e prezzo, persone con i loro orari, ferie e giorni chiusi. Chi visita
+  sceglie servizio, persona, giorno e ora fra i posti davvero liberi (mai due prenotazioni sullo stesso posto, anche nello
+  stesso istante), riceve la conferma per email con il link per il calendario e quello per annullare o spostare, e un
+  promemoria il giorno prima. Nel pannello: agenda del giorno e della settimana, prenotazioni da confermare, annullare o
+  segnare "non presentato". Widget **Prenota**.
+- **Eventi con iscrizione**: eventi con posti limitati, iscrizione con più posti per persona, lista d'attesa che scorre da
+  sola quando qualcuno si cancella, email di conferma e promemoria, presenze, esporta CSV, email a tutti gli iscritti.
+  Widget **Iscrizione all'evento** ed elenco degli eventi con i posti rimasti.
+- **Raccolta recensioni**: dopo una prenotazione svolta (o da un elenco di email scritto a mano) parte "Com'è andata?" con
+  un link personale a stelle e testo; le recensioni si approvano nel pannello ed escono nel widget **Recensioni dal sito**.
+  A chi dà 4 o 5 stelle si può proporre anche la recensione su Google.
+- **Vetrina prodotti con ordini**: catalogo con foto, varianti (taglia, colore), prezzi scontati, scorte e categorie;
+  carrello e richiesta d'ordine con spedizione o ritiro. Si paga con bonifico, alla consegna o con il proprio link PayPal.me
+  o Stripe: nessuna chiave segreta nel sito. I prezzi li calcola sempre il server. Ordini con stati (nuovo, pagato,
+  spedito, consegnato, annullato) e un'email al cliente a ogni cambio. Widget **Prodotti** e **Carrello**.
+- **Statistiche delle visite senza cookie**: visite, visitatori, pagine più viste, da dove arrivano, campagne, telefono o
+  computer. Niente cookie, nessun indirizzo IP salvato, robot e amministratori esclusi: non serve il banner dei cookie.
+  Riquadro nella dashboard e testo pronto per l'informativa privacy.
+- **Area riservata (membri)**: account del sito (separati da quelli del pannello) con iscrizione, conferma email, accesso,
+  password dimenticata, profilo e cancellazione. Pagine, articoli e file di Download si possono riservare ai membri.
+  Widget **Accesso membri**.
+- **Corsi online** (accende anche l'Area riservata): corsi con moduli e lezioni in ordine, testo, video (YouTube, Vimeo o
+  caricato) e materiali; corsi aperti a tutti i membri o assegnati; avanzamento, "riprendi da dove eri" e certificato con
+  codice di verifica. Widget **Elenco corsi**.
+- **Copia del sito altrove**: ogni notte la copia del sito va su uno spazio esterno (FTP, FTPS, WebDAV, quindi anche
+  Nextcloud e molti cloud; SFTP dove il server ha l'estensione ssh2), tenendo le ultime copie. Password salvata cifrata,
+  "Prova la connessione", "Manda una copia adesso", registro degli invii. Google Drive e Dropbox non ci sono ancora.
+
+Download e form:
+
+- **File riservati**: in Download, la spunta **Riservato** al caricamento (o il pulsante "Rendi riservato"). Un file
+  riservato non ha un indirizzo pubblico: si scarica solo con un **link personale** firmato, che vale 30 giorni (si cambia
+  in Download). Sotto ogni file riservato, "Chi l'ha ricevuto", con i download di ognuno.
+- **Form > Dopo l'invio > Dopo la conferma, dai questo file**: chi compila il form riceve il file riservato per email dopo
+  aver confermato l'indirizzo, e lo trova anche nella pagina di conferma ("Ecco il tuo file", pulsante Scarica). Chi è già
+  nella lista lo riceve subito per email; senza la conferma, il pulsante esce anche nella pagina di ringraziamento.
+- La conferma di un form ha la sua pagina, non più quella della newsletter.
+
+Immagine per i social:
+
+- In SEO e AEO > Globale SEO, accanto all'immagine social, il pulsante **Scegli dai Media**.
+- L'immagine social esce sempre con l'indirizzo intero (prima, una scelta dai Media usciva senza dominio e Facebook,
+  WhatsApp e LinkedIn la scartavano), con misure, tipo e descrizione: le anteprime escono già alla prima lettura.
+
+Altre correzioni:
+
+- Il titolo dell'email di conferma della newsletter mostrava `&#039;` al posto dell'apostrofo.
+- La pagina Password dimenticata andava in errore quando doveva mostrare un messaggio.
 
 Correzioni della newsletter (Newsletter e form):
 

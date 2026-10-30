@@ -66,6 +66,7 @@ try {
 $origine = function (array $d): string {
     $o = (string)($d['origine'] ?? 'nucleo');
     if (str_starts_with($o, 'modulo:')) { $m = substr($o, 7); $mod = cms_modulo($m); return 'modulo ' . ($mod['etichetta'] ?? $m); }
+    if (str_starts_with($o, 'addon:')) { $m = substr($o, 6); $mod = cms_modulo($m); return 'addon ' . ($mod['etichetta'] ?? $m); }
     return 'nucleo';
 };
 $totale = count($tipiNoti);
