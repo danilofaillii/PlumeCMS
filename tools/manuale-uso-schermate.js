@@ -672,6 +672,8 @@ async function postaNuove(prima, quante = 1) {
   return C2.nuove(POSTA_DIR, prima, quante, 15000);
 }
 const addonPag = (a, pag) => vai('addon-pagina.php?a=' + a + '&p=' + pag);
+// Nelle email il sito ha il suo indirizzo vero (sito_url, https://www.studioprova.it): lo si apre dal server di prova.
+const qui = (u) => u.replace(/^https?:\/\/[^/]+/, B);
 const flash = async () => (await p.locator('.flash').first().innerText().catch(() => '')).trim();
 // Un visitatore, in una finestra sua (senza l'accesso al pannello).
 async function visitatore(telefono = false) {
@@ -684,7 +686,7 @@ async function fotoDi(q, nome, opz = {}) {
   if (SOLO && !nome.startsWith(SOLO)) return;
   if (opz.segni) await segna(q, opz.segni);
   if (opz.sel) { const el = q.locator(opz.sel).first(); await el.scrollIntoViewIfNeeded(); await el.screenshot({ path: path.join(GREZZE, nome + '.png') }); }
-  else await q.screenshot({ path: path.join(GREZZE, nome + '.png'), clip: opz.clip, fullPage: !!opz.clip });
+  else await q.screenshot({ path: path.join(GREZZE, nome + '.png'), clip: opz.clip, fullPage: !!opz.clip && !opz.vista });
   if (opz.segni) await togliSegni(q);
   console.log(nome);
 }
@@ -698,6 +700,7 @@ async function paginaConWidget(titolo, slug, tipo, imposta) {
   await p.fill('#ed-form-impostazioni [name=titolo]', titolo);
   await p.fill('#ed-form-impostazioni [name=slug]', slug);
   await p.click('#ed-form-impostazioni button[type=submit]'); await dorme(1200);
+  if (await p.locator('#ed-dialogo-impostazioni[open]').count()) throw new Error('la pagina ' + slug + ' non si salva: ' + (await p.locator('#ed-dialogo-impostazioni').innerText()).slice(0, 300));
   await tela().locator('.ed-w-titolo').first().dblclick(); await dorme(500);
   await scriviCtl('Titolo', titolo);
   await widget(tipo);
@@ -767,10 +770,10 @@ capitoli['31n'] = async () => {
   const lk = conf && C2.link(conf).find(l => /\?t=[a-f0-9]{64}/.test(l));
   if (!lk) throw new Error('31n: non arriva l\'email di conferma');
   n0 = postaN();
-  await v.goto(lk, { waitUntil: 'networkidle' });
-  await fotoDi(v, '31n-ecco-il-file', { clip: { x: 0, y: 0, width: 1200, height: 560 }, segni: [{ sel: 'a.btn:has-text("Scarica")', n: 4 }] });
+  await v.goto(qui(lk), { waitUntil: 'networkidle' });
+  await fotoDi(v, '31n-ecco-il-file', { clip: { x: 0, y: 0, width: 1200, height: 560 }, segni: [{ sel: 'a.btn[href*="/scarica/"]', n: 4 }] });
   await postaNuove(n0);
-  const r = await v.request.get(await v.locator('a.btn:has-text("Scarica")').getAttribute('href'));
+  await v.request.get(qui(await v.locator('a.btn:has-text("Scarica")').getAttribute('href')));
   await v.context().close();
   // Download: chi l'ha ricevuto.
   await vai('scaricabili.php');
@@ -796,12 +799,97 @@ capitoli['31n'] = async () => {
   await p.click('[data-scegli-media="#seo-og-immagine"]');
   await p.waitForSelector('dialog.pn-media .pn-media-voce'); await dorme(800);
   await p.fill('dialog.pn-media input[type=search]', 'condivisione'); await dorme(500);
-  await fotoDi(p, '31n-scegli-media', { clip: { x: 0, y: 0, width: 1200, height: 800 }, segni: [{ sel: 'dialog.pn-media input[type=search]', n: 2 }, { sel: 'dialog.pn-media .pn-media-voce', n: 3 }] });
+  // Il dialogo dei Media sta sopra a tutto (top layer): i segni non ci vanno sopra, la foto è senza numeri.
+  await fotoDi(p, '31n-scegli-media', { vista: true, clip: { x: 0, y: 0, width: 1200, height: 520 } });
   await p.locator('dialog.pn-media .pn-media-voce').first().click(); await dorme(300);
-  const campo = p.locator('.form-group:has(#seo-og-immagine)');
-  await campo.scrollIntoViewIfNeeded();
-  await fotoDi(p, '31n-immagine-social', { sel: '.form-group:has(#seo-og-immagine)', segni: [{ sel: '[data-scegli-media="#seo-og-immagine"]', n: 1 }, { sel: '#seo-og-immagine', n: 4 }] });
+  await foto('31n-immagine-social', { sel: '.form-group:has(#seo-og-immagine)', margine: 22, segni: [{ sel: '[data-scegli-media="#seo-og-immagine"]', n: 1 }, { sel: '#seo-og-immagine', n: 4 }] });
   await Promise.all([p.waitForNavigation(), p.click('form:has(#seo-og-immagine) button.btn-primary')]);
+};
+
+// Accende un addon da Impostazioni > Addon, come una persona; ritorna il messaggio verde.
+async function accendi(nome) {
+  await vai('addon.php');
+  const b = p.locator(`[data-addon="${nome}"] button[value=accendi]`);
+  if (await b.count()) await Promise.all([p.waitForNavigation(), b.click()]);
+  if (!(await p.locator(`[data-addon="${nome}"].acceso`).count())) throw new Error('non si accende ' + nome);
+  return flash();
+}
+
+// 32. Gli addon: accendere e spegnere.
+capitoli['32'] = async () => {
+  await vai('addon.php');
+  await foto('32-addon', { clip: { x: 240, y: 56, width: 960, height: 700 }, segni: [{ sel: '[data-addon="prenotazioni"] button[value=accendi]', n: 1 }] });
+  await Promise.all([p.waitForNavigation(), p.click('[data-addon="prenotazioni"] button[value=accendi]')]);
+  if (!/è acceso/.test(await flash())) throw new Error('32: Prenotazioni non si accende');
+  await p.setViewportSize({ width: 1200, height: 1000 });
+  await foto('32-acceso', { clip: { x: 0, y: 0, width: 1200, height: 1000 }, segni: [{ sel: '.flash', n: 2 }, { sel: '[data-addon="prenotazioni"] .badge', n: 3, lato: 'destra' }, { sel: 'nav.admin-nav a[href*="a=prenotazioni"]', n: 4 }] });
+  await p.setViewportSize({ width: 1200, height: 800 });
+};
+
+// 33. Prenotazioni e appuntamenti: il salone "Forbici d'Oro" a Bologna, Anna e Marco.
+capitoli['33'] = async () => {
+  await accendi('prenotazioni');
+  await addonPag('prenotazioni', 'persone&nuova=1');
+  await p.fill('#pa-persona [name=nome]', 'Anna');
+  await p.fill('[name="ferie[0][dal]"]', '2026-12-28'); await p.fill('[name="ferie[0][al]"]', '2026-12-31'); await p.fill('[name="ferie[0][motivo]"]', 'Ferie');
+  await foto('33-persona', { clip: { x: 240, y: 56, width: 960, height: 1080 }, segni: [{ sel: '#pa-persona [name=nome]', n: 1 }, { sel: '#pa-o-lun', n: 2 }, { sel: '[name="ferie[0][dal]"]', n: 3 }, { sel: '#pa-persona button.btn-primary', n: 4 }] });
+  await Promise.all([p.waitForNavigation(), p.click('#pa-persona button.btn-primary')]);
+  await addonPag('prenotazioni', 'persone&nuova=1');
+  await p.fill('#pa-persona [name=nome]', 'Marco');
+  for (const [g, v] of Object.entries({ lun: '10:00-18:00', mar: '10:00-18:00', mer: '10:00-18:00', gio: '10:00-18:00', ven: '10:00-18:00', sab: 'Chiuso', dom: 'Chiuso' })) await p.fill(`#pa-o-${g}`, v);
+  await Promise.all([p.waitForNavigation(), p.click('#pa-persona button.btn-primary')]);
+  await addonPag('prenotazioni', 'servizi&nuovo=1');
+  await p.fill('#pa-servizio [name=nome]', 'Taglio donna'); await p.fill('#pa-servizio [name=durata]', '45'); await p.fill('#pa-servizio [name=pausa]', '15'); await p.fill('#pa-servizio [name=prezzo]', '35 €');
+  await foto('33-servizio', { sel: '#pa-servizio', segni: [{ sel: '#pa-servizio [name=nome]', n: 1 }, { sel: '#pa-servizio [name=durata]', n: 2 }, { sel: '#pa-servizio [name=pausa]', n: 3 }, { sel: '#pa-servizio [name=prezzo]', n: 4 }, { sel: '#pa-servizio label.pa-spunta', n: 5 }, { sel: '#pa-servizio button.btn-primary', n: 6 }] });
+  await Promise.all([p.waitForNavigation(), p.click('#pa-servizio button.btn-primary')]);
+  await addonPag('prenotazioni', 'servizi&nuovo=1');
+  await p.fill('#pa-servizio [name=nome]', 'Colore'); await p.fill('#pa-servizio [name=durata]', '90'); await p.fill('#pa-servizio [name=prezzo]', '60 €');
+  await p.locator('#pa-servizio label.pa-spunta', { hasText: 'Marco' }).locator('input').uncheck();
+  await Promise.all([p.waitForNavigation(), p.click('#pa-servizio button.btn-primary')]);
+  await addonPag('prenotazioni', 'servizi');
+  await foto('33-servizi', { clip: { x: 240, y: 56, width: 960, height: 380 } });
+  await addonPag('prenotazioni', 'impostazioni');
+  await p.fill('#pa-impostazioni [name=avviso_a]', 'salone@forbicidoro.it');
+  await p.fill('#pa-impostazioni [name=indirizzo]', 'Via dell\'Indipendenza 10, Bologna');
+  await foto('33-impostazioni', { clip: { x: 240, y: 56, width: 960, height: 1000 }, segni: [{ sel: '#pa-impostazioni [name=anticipo_ore]', n: 1 }, { sel: '#pa-impostazioni [name=limite_ore]', n: 2 }, { sel: '#pa-impostazioni [name=da_confermare]', n: 3 }, { sel: '#pa-impostazioni [name=avviso_a]', n: 4 }, { sel: '#pa-impostazioni [name=indirizzo]', n: 5 }] });
+  await Promise.all([p.waitForNavigation(), p.click('#pa-impostazioni button.btn-primary')]);
+  // La pagina "Prenota" con il widget.
+  await paginaConWidget('Prenota un appuntamento', 'prenota', 'prenota');
+  await p.click('.ed-schede-pannello button[data-pannello="modifica"]'); await dorme(800);
+  await foto('33-widget', { clip: { x: 0, y: 0, width: 1200, height: 760 }, segni: [{ sel: '#ed-controlli', n: 6 }, { sel: '#ed-pubblica', n: 7 }] });
+  await pubblica();
+  // Una cliente prenota dal sito.
+  const v = await visitatore();
+  await v.goto(B + '/prenota/', { waitUntil: 'networkidle' });
+  const box = v.locator('[data-pren]').first();
+  await box.locator('select[name=servizio]').selectOption(await box.locator('select[name=servizio] option', { hasText: 'Taglio donna' }).getAttribute('value'));
+  await v.waitForSelector('.pren-giorno[aria-pressed=true]');
+  await box.locator('select[name=risorsa]').selectOption(await box.locator('select[name=risorsa] option', { hasText: 'Anna' }).getAttribute('value'));
+  await v.waitForSelector('.pren-ora'); await dorme(500);
+  const fraTre = new Date(Date.now() + 3 * 86400000).toISOString().slice(0, 10);
+  const d = await box.locator('.pren-giorno:not([disabled])').evaluateAll((bs, m) => (bs.find(b => b.dataset.d >= m) || {}).dataset?.d, fraTre);
+  await box.locator(`.pren-giorno[data-d="${d}"]`).click();
+  await v.waitForFunction(x => document.querySelector('[name=giorno]').value === x && document.querySelector('.pren-ora'), d); await dorme(400);
+  await box.locator('.pren-ora', { hasText: /^10:00$/ }).first().click().catch(() => box.locator('.pren-ora').nth(2).click());
+  const f = box.locator('form');
+  await f.locator('[name=nome]').fill('Giulia Rossi'); await f.locator('[name=email]').fill('giulia.rossi@esempio.it'); await f.locator('[name=telefono]').fill('+39 333 1234567');
+  await f.locator('[name=privacy]').check();
+  await C2.captcha(f, v);
+  await v.addStyleTag({ content: 'header{visibility:hidden}' });
+  await fotoDi(v, '33-sul-sito', { sel: '[data-pren]', segni: [{ sel: '[data-pren] select[name=servizio]', n: 1 }, { sel: '[data-pren] select[name=risorsa]', n: 2 }, { sel: '[data-pren] .pren-giorno[aria-pressed=true]', n: 3 }, { sel: '[data-pren] .pren-ora[aria-pressed=true], [data-pren] .pren-ora.scelta, [data-pren] .pren-riepilogo', n: 4 }, { sel: '[data-pren] form button[type=submit]', n: 5 }] });
+  const n0 = postaN();
+  await Promise.all([v.waitForNavigation(), f.locator('button[type=submit]').click()]);
+  await v.waitForLoadState('networkidle');
+  await fotoDi(v, '33-fatta', { sel: 'main' });
+  const em = await postaNuove(n0, 2);
+  if (!em.some(e => /Prenotazione confermata/.test(e.oggetto))) throw new Error('33: non arriva la conferma al cliente');
+  await v.context().close();
+  // Nel pannello: agenda e scheda.
+  await addonPag('prenotazioni', 'agenda');
+  if (!(await p.locator('.pa-voce', { hasText: 'Giulia Rossi' }).count())) { await Promise.all([p.waitForNavigation(), p.locator('.pa-barra a', { hasText: 'Dopo' }).click()]); }
+  await foto('33-agenda', { clip: { x: 240, y: 56, width: 960, height: 560 }, segni: [{ sel: '.pa-voce', n: 1 }, { sel: '.pa-barra', n: 2 }] });
+  await Promise.all([p.waitForNavigation(), p.locator('.pa-voce', { hasText: 'Giulia Rossi' }).first().click()]);
+  await foto('33-scheda', { clip: { x: 240, y: 56, width: 960, height: 900 }, segni: [{ sel: '#pa-sposta', n: 3 }, { sel: '#pa-annulla textarea', n: 4 }] });
 };
 
 module.exports = { capitoli };
