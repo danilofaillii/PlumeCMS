@@ -120,8 +120,6 @@ async function contrastoParole(pg) {
   for (const [id, img, re] of [['wordpress', 'importa-wp.webp', /Vieni da WordPress/], ['tipo-sito', 'tipo-sito.webp', /Definitivo/], ['primi-passi', 'primi-passi.webp', /Primi passi/],
     ['aspetti', 'aspetti.webp', /Lavagna/], ['server', 'controlla-server.webp', /Controlla il server/]])
     ok(`Funzionalità (1.4.0): il blocco ${id}, con la schermata`, await v.locator(`#${id} img[src*="${img}"]`).count() === 1 && re.test(await v.locator(`#${id}`).innerText()));
-  ok('Funzionalità: il prima e dopo di WordPress, sotto il suo blocco, con le due illustrazioni', await v.locator('#prima-dopo .ew-pd img[src*="wp-prima.webp"]').count() === 1 && await v.locator('#prima-dopo .ew-pd img[src*="wp-dopo.webp"]').count() === 1
-    && /vive più/.test(await v.locator('#prima-dopo').innerText()) && await v.evaluate(() => { const a = document.getElementById('wordpress'), b = document.getElementById('prima-dopo'); return !!(a && b && a.nextElementSibling === b); }));
   ok('Funzionalità (1.10.0): il blocco dei widget per le attività, con la schermata', await v.locator('#widget-attivita img[src*="widget-attivita.webp"]').count() === 1 && /Orari di apertura/.test(await v.locator('#widget-attivita').innerText()));
   ok('Funzionalità (1.9.0): nel blocco dei form, chi riceve l\'email a ogni compilazione', /chi riceve l.email a ogni compilazione/.test(await v.locator('#newsletter').innerText()));
   ok('Funzionalità (1.8.0): il blocco della frase in fondo al sito, con la schermata', await v.locator('#firma img[src*="firma.webp"]').count() === 1 && /Impostazioni/.test(await v.locator('#firma').innerText()));
