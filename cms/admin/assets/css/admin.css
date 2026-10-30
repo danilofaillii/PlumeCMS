@@ -6,7 +6,9 @@ a { color: var(--link); }
 [hidden] { display: none !important; }
 
 /* Layout */
-.admin-layout { display: grid; grid-template-columns: 240px 1fr; min-height: 100vh; }
+.admin-layout { display: grid; grid-template-columns: 240px minmax(0, 1fr); min-height: 100vh; }
+/* 2.0.1: minmax(0, 1fr) e min-width: 0: la colonna del contenuto non si allarga per il suo elemento più largo (al telefono
+   una tabella o una fila di schede allargava tutta la pagina, testi compresi). */
 
 /* Sidebar */
 .admin-sidebar {
@@ -63,7 +65,7 @@ a { color: var(--link); }
 .admin-sidebar-footer a:hover { color: var(--sidebar-testo); background: var(--sidebar-hover); }
 
 /* Main */
-.admin-main { min-height: 100vh; }
+.admin-main { min-height: 100vh; min-width: 0; }
 .admin-topbar {
   background: var(--surface);
   border-bottom: 1px solid var(--border);
@@ -313,7 +315,7 @@ tr:hover td { background: var(--riga-hover); }
 
 /* Responsive */
 @media (max-width: 900px) {
-  .admin-layout { grid-template-columns: 1fr; }
+  .admin-layout { grid-template-columns: minmax(0, 1fr); }
   .admin-sidebar {
     position: fixed;
     left: -260px;
@@ -382,6 +384,10 @@ fieldset { min-width: 0; }
   .admin-toolbar form .search-input { width: 100%; }
   /* Le tabelle larghe scorrono dentro il loro riquadro: la pagina resta ferma. */
   .admin-content table { display: block; max-width: 100%; overflow-x: auto; }
+  /* 2.0.1: le righe di filtri, schede e moduli brevi vanno a capo invece di allargare la pagina. */
+  .admin-content form, .admin-content label, .ct-filtri, .fm-riga, .admin-content nav, .admin-content [class$="-schede"], .admin-content [class*="-schede "] { flex-wrap: wrap; }
+  .admin-content select, .admin-content input:not([type=checkbox]):not([type=radio]), .admin-content label { max-width: 100%; }
+  .admin-content label > select { min-width: 0; }
 }
 
 /* 2.0.0: le tabelle degli addon nei riquadri stretti scorrono dentro il loro contenitore (la colonna delle azioni resta raggiungibile). */

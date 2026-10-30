@@ -91,7 +91,7 @@ Sono gli unici in `cms/docs/`, nello zip, nel sito di plumeCMS e nella pagina Do
 - **Pacchetto di aggiornamento** per un'installazione esistente:
   `python3 tools/cms-pacchetto.py --aggiornamento`. Si carica dal pannello,
   Impostazioni, Aggiornamenti.
-- **Versione**: `cms/VERSIONE` (oggi 2.0.0; sempre tre numeri: "beta" va nel CHANGELOG, mai nel nome dello zip, se no la serie "ultima" del Download non lo riconosce) e una voce in `cms/CHANGELOG.md` a ogni
+- **Versione**: `cms/VERSIONE` (oggi 2.0.1; sempre tre numeri: "beta" va nel CHANGELOG, mai nel nome dello zip, se no la serie "ultima" del Download non lo riconosce) e una voce in `cms/CHANGELOG.md` a ogni
   zip con contenuto diverso. Mai cambiare il contenuto di una versione già data.
 - **Prove** prima di dire finito:
   - `php -n -d short_open_tag=1 -l` su ogni file PHP toccato, `node --check` sui js;
@@ -127,6 +127,11 @@ Le decisioni complete, con data e perché, stanno nel second brain, `plumecms/de
 
 ## Stato al 30 ottobre 2026
 
+Fatto: plumeCMS 2.0.1 (30 ottobre, notte): il pannello al telefono (richiesta di Danilo). `.admin-layout` a `minmax(0, 1fr)` e
+`.admin-main{min-width:0}` (la colonna `1fr` si allargava per l'elemento più largo: 29 pagine su 70 scorrevano di lato), sotto 640 px
+form, etichette, filtri, `nav` e schede vanno a capo. `prove/prova-pannello-telefono.js` 81/81 a 390, 768 e 1280 px (menu più venti
+pagine interne, otto addon accesi), al computer 12 pagine identiche al pixel; aggiornamento 2.0.0 -> 2.0.1 13/13 con 20 foto del sito
+uguali; install 37/37 radice e cartella. Solo `admin.css`: niente parti nuove del sito.
 Fatto: plumeCMS 2.0.0 beta (30 ottobre, sera; la 1.11.0 non è uscita, decisione di Danilo: dentro la 2.0.0). Base degli addon
 (`includes/addon.php`, `admin/addon.php`, `admin/addon-pagina.php`, `cron_spesso`, manuale tecnico 32, `docs-sviluppo/cms-moduli.md`) e
 otto addon scelti da Danilo, fatti da tre agenti in worktree e rifatti da me: Prenotazioni 60, Eventi con iscrizione 45, Recensioni 39
@@ -343,6 +348,7 @@ Errori veri, già pagati. Non ripeterli.
 | `prova-install.js` in cartella | la base è `http://127.0.0.1:<porta>/test` e il quinto argomento resta vuoto (il quinto è per il CMS in una sottocartella con il sito nella radice) |
 | Un `fieldset` o un `<code>` con `white-space:nowrap` in una pagina del pannello | il fieldset non si stringe sotto il suo contenuto e la pagina scorre di lato al telefono: dalla 2.0.0 `admin.css` mette `fieldset{min-width:0}` e manda a capo i codici nelle tabelle |
 | Una variabile in cima a un file di widget (`$r`, `$f`, `$file`) | il file si caricava nello spazio di `editor_carica_widget_esterni()` e ne sovrascriveva il registro: con una persona nelle Prenotazioni tutte le pagine del sito uscivano vuote (2.0.0, trovato dall'agente del manuale, non dalle prove degli addon). Ora ogni file si carica in una funzione sua; le prove degli addon mettono dati veri prima di guardare le pagine |
+| Centinaia di server di prova accesi (agenti e giri di prove) | le porte si esauriscono: "Address already in use" e la prova fallisce in modo strano. Alla fine di un lavoro si spengono i `php -S` e i server finti che non servono (cercando il pid con `ps -eo pid=,comm=,args=` e `comm` uguale a php, mai `pkill -f`) |
 | Fidarsi del resoconto di un agente | è successo che un agente dichiarasse lavoro mai scritto su disco. Si controllano i file veri e si rifanno le prove |
 
 ## Tono con l'utente

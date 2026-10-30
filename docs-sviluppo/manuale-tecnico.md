@@ -3026,7 +3026,10 @@ Il modo di lanciarle è in `prove/LEGGIMI.md`.
 - `fieldset{min-width:0}`;
 - i codici nelle tabelle vanno a capo;
 - sotto 640 px la casella di ricerca delle barre in alto non impone 200 px e le tabelle scorrono dentro il loro riquadro.
-- Alcune pagine del nucleo (Articoli, SEO, Form, Newsletter, Media, Download, Utenti) scorrono ancora di lato al telefono per altri motivi, che c'erano già prima della 2.0.0: da sistemare.
+- Dalla 2.0.1 nessuna pagina scorre di lato.
+  - `.admin-layout` ha la colonna `minmax(0, 1fr)` e `.admin-main` ha `min-width: 0`. Prima la colonna `1fr` si allargava per il suo elemento più largo, e con lei testi e riquadri.
+  - Sotto 640 px vanno a capo i form, `.ct-filtri`, `.fm-riga`, i `nav` e le file di schede (`*-schede`); `select` e campi non superano il contenitore.
+  - Prova: `prove/prova-pannello-telefono.js`. Controlla ogni pagina del menu più quelle passate come argomento; `LARGHEZZA=` per provare altre misure.
 
 ## Appendice A. Dove i documenti vecchi non corrispondono al codice
 

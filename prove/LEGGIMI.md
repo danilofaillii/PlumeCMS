@@ -455,3 +455,11 @@ Impostazioni > Addon e scrive il server finto in Impostazioni > Configurazione e
 Usano `prove/addon-b-comune.js` e `prove/addon-b-cli.php` (pagine con un widget, SQL di prova con `{p}` per il prefisso,
 il cron frequente con l'orologio spostato in avanti). Due prove insieme vogliono due server di posta finti diversi: le
 email si riconoscono dal destinatario, e le prove usano gli stessi indirizzi.
+
+## prova-pannello-telefono.js (2.0.1)
+
+Il pannello al telefono: apre ogni pagina del menu (sottovoci comprese) a 390x844 come amministratore e controlla che non
+scorra di lato; per una pagina larga dice gli elementi più interni che escono dallo schermo. Pagine in più come quarto
+argomento, separate da virgola; `LARGHEZZA=768` (o altro) per un'altra misura.
+`node prove/prova-pannello-telefono.js <base> <utente> <password> [pagine in più]`. Atteso: tutto OK a 390, 768 e 1280 px,
+anche con gli otto addon accesi (30 ottobre 2026: 81 su 81 con venti pagine interne).

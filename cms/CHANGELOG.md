@@ -2,6 +2,17 @@
 
 Il prodotto si chiama **plumeCMS** (nome scelto il 26 ottobre 2026; prima, per poche ore, "CarbonaraCMS", e ancora prima il provvisorio "Officina": gli zip vecchi si chiamavano `officina-*` e `carbonaracms-*`).
 
+## 2.0.1 (30 ottobre 2026) - Il pannello al telefono
+
+- **Al telefono il pannello non scorre più di lato.** Prima 29 pagine su 70 erano più larghe dello schermo (Articoli,
+  Pagine, Popup, Categorie, Media, Download, Utenti, Newsletter, Form, Flussi, Statistiche, Social, Header e footer, Menu,
+  Versioni, SEO, Il mio accesso...): una tabella o una fila di schede allargava tutta la pagina, testi compresi. Ora la
+  colonna del contenuto resta larga quanto lo schermo, le tabelle larghe scorrono dentro il loro riquadro, e filtri,
+  schede e campi vanno a capo.
+- Provato su tutte le pagine del menu e su venti pagine interne (schede di articoli, form, prodotti, campagne, addon), a
+  390, 768 e 1280 pixel: nessuna pagina scorre di lato. Al computer le pagine sono identiche a prima, al pixel.
+- Cambia solo il foglio di stile del pannello (`admin/assets/css/admin.css`): sito, dati e addon non cambiano.
+
 ## 2.0.0 beta (30 ottobre 2026) - Gli addon
 
 La prima versione con gli **addon**: funzioni in più che arrivano con plumeCMS e si accendono solo sul sito che le vuole.
