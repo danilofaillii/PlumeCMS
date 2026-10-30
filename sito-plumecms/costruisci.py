@@ -22,6 +22,7 @@ import json
 import os
 import shutil
 import subprocess
+import re
 import sys
 import zipfile
 
@@ -266,6 +267,17 @@ def funzionalita():
         parole = [titolo(tit, livello='h2'), ricco(*testo)]
         colonne = [(55, foto), (45, parole)] if i % 2 == 0 else [(45, parole), (55, foto)]
         p.sezione(colonne, allineamento_verticale='center', ancora=ancora, **(tinta() if i % 2 else {}), **spazi(64, 64))
+        if ancora == 'wordpress':
+            # 30 ottobre 2026, richiesta di Danilo: il prima e dopo del passaggio da WordPress (illustrazioni di prima-dopo.js),
+            # nella stessa fascia del blocco WordPress, con il widget Prima e dopo della 1.10.0.
+            p.sezione([[titolo('Chi passa a Plume vive più *leggero.*', 'Prima e dopo',
+                               'Trascina la linea: a sinistra il pannello di prima, a destra il sito con plumeCMS.', centro=True,
+                               css_personalizzato='selector .sez-intro{margin-left:auto;margin-right:auto}'),
+                        w('prima_dopo', immagine_prima=U + 'wp-prima.webp', immagine_dopo=U + 'wp-dopo.webp',
+                          etichetta_prima='Con WordPress', etichetta_dopo='Con plumeCMS',
+                          alt='Una persona davanti al computer, prima disperata fra gli avvisi di WordPress, poi felice con il sito fatto con plumeCMS',
+                          partenza=50, proporzioni='3/2')]],
+                      larghezza='stretta', ancora='prima-dopo', **(tinta() if i % 2 else {}), **spazi(8, 72))
     p.sezione([[w('invito_libero', icona='download', titolo='Provalo sul tuo server.', livello='h2',
                   testo='Il modo migliore per capire un CMS è usarlo. Ci vogliono cinque minuti.',
                   pulsante_testo='Scarica plumeCMS', link={'url': '/scarica/', 'nuova': False})]], larghezza='stretta', **spazi(72, 80))
@@ -547,7 +559,7 @@ def editor_json():
 
 
 # ------------------------------------------------------------------ file
-USATE = ['copertina', 'su-misura', 'firma', 'widget-attivita', 'social', 'fine-articolo', 'importa-wp', 'tipo-sito', 'primi-passi', 'aspetti', 'controlla-server', 'sezioni', 'copia', 'installa-1', 'installa-2', 'installa-3', 'installa-4', 'installa-5', 'editor-ritratto', 'editor', 'aperture', 'stile', 'modelli', 'versioni', 'seo', 'flussi', 'download', 'sicurezza', 'aggiornamenti', 'temi',
+USATE = ['copertina', 'su-misura', 'firma', 'widget-attivita', 'wp-prima', 'wp-dopo', 'social', 'fine-articolo', 'importa-wp', 'tipo-sito', 'primi-passi', 'aspetti', 'controlla-server', 'sezioni', 'copia', 'installa-1', 'installa-2', 'installa-3', 'installa-4', 'installa-5', 'editor-ritratto', 'editor', 'aperture', 'stile', 'modelli', 'versioni', 'seo', 'flussi', 'download', 'sicurezza', 'aggiornamenti', 'temi',
          'tema-cosmo', 'tema-aria', 'tema-bottega']
 
 
@@ -768,7 +780,10 @@ def dividi_e_costruisci(out, manifest, max_kb):
             os.makedirs(os.path.join(cartella, 'file'), exist_ok=True)
             shutil.copy(os.path.join(out, v['da']), os.path.join(cartella, v['da']))
         json.dump(m, open(os.path.join(cartella, 'manifest.json'), 'w', encoding='utf-8'), ensure_ascii=False, indent=1)
-        dest = os.path.join(REL, 'sito', f'sito-plumecms-{V}-parte-{k}-di-{totale}.zip')
+        # SITO_REV (30 ottobre 2026): le pagine del sito cambiano senza una versione nuova del CMS. Le parti nuove prendono un nome
+        # diverso (sito-plumecms-1.10.0-r2-parte-...), così non si confondono con quelle già date.
+        rev = re.sub(r'[^a-z0-9]', '', os.environ.get('SITO_REV', '').lower())
+        dest = os.path.join(REL, 'sito', f'sito-plumecms-{V}{"-" + rev if rev else ""}-parte-{k}-di-{totale}.zip')
         subprocess.run([sys.executable, os.path.join(RADICE, 'tools', 'pacchetto.py'), cartella, dest], check=True)
         if os.path.getsize(dest) // 1024 > max_kb:
             errore(f'{dest} pesa {os.path.getsize(dest) // 1024} KB, oltre il limite di {max_kb} KB')

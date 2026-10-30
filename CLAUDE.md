@@ -126,6 +126,11 @@ Le decisioni complete, con data e perché, stanno nel second brain, `plumecms/de
 
 ## Stato al 28 ottobre 2026
 
+Sito di plumeCMS 1.10.0-r2 (30 ottobre, solo le pagine, il CMS non cambia): in Funzionalità, sotto "Vieni da WordPress?", la sezione
+"Chi passa a Plume vive più *leggero.*" con il widget Prima e dopo e due illustrazioni disegnate in SVG da `sito-plumecms/prima-dopo.js`
+(persona disperata davanti a un pannello WordPress pieno di avvisi, poi felice davanti al sito plumeCMS; "WordPress" solo come testo, niente
+logo). `SITO_REV=r2` dà alle parti un nome diverso da quelle già date. Prova del sito 83/83. Da migliorare nel widget Prima e dopo: con
+etichette lunghe, sul telefono si sovrappongono (qui accorciate a "Con WordPress" e "Con plumeCMS").
 Fatto: plumeCMS 1.10.0 (30 ottobre): sette widget per le attività scelti da Danilo (Orari di apertura con "Aperto ora" calcolato
 dal server e ricalcolato nel browser nel fuso del sito, Barra contatti fissa sul telefono, Recensioni scritte a mano senza dati per Google,
 Prima e dopo, Squadra, Slider sul motore del carosello, Eventi che spariscono passati) in `includes/editor-widget-extra-d.php`; 87 widget.
