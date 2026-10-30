@@ -7,7 +7,12 @@ nuova), copia del sito scaricabile e ripristinabile, sezioni pronte nell'editor 
 
 Il nucleo è generico: quello che è di un sito solo sta nel suo modulo, in `moduli/<nome>/`.
 
+Dalla 2.0.0 (beta) ci sono gli **addon**, in `addon/<nome>/`: funzioni in più che si accendono solo dove servono, da
+Impostazioni > Addon. Prenotazioni e appuntamenti, Eventi con iscrizione, Raccolta recensioni, Vetrina prodotti con ordini,
+Statistiche delle visite senza cookie, Area riservata, Corsi online, Copia del sito altrove.
+
 - Installazione: `INSTALLA.md` (cinque passi dal browser).
+- **Manuale d'uso**, come si fa ogni cosa, con esempi e schermate: `docs/manuale-uso.md`.
 - **Manuale dei temi**, per costruirsi il proprio tema: `docs/manuale-temi.md`.
 - Novità per versione: `CHANGELOG.md`. Versione corrente: file `VERSIONE`.
 

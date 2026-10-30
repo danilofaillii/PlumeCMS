@@ -33,7 +33,8 @@ cms/            il CMS: è esattamente quello che si carica sul server
   sito/         il sito pubblico (viste, feed, sitemap, assets)
   api/          endpoint pubblici (nl.php firma HMAC, csp.php rapporti)
   install/      l'installatore e gli esempi .htaccess / Nginx
-  moduli/       i moduli del sito che installa (vuota nel prodotto)
+  moduli/       i moduli del sito che installa (vuota nel prodotto); addon-attivi.json = gli addon accesi
+  addon/        gli otto addon (2.0.0), moduli del prodotto spenti finché non si accendono da Impostazioni > Addon
   temi/         i temi del sito (motore in includes/temi.php, docs/temi.md)
   docs/         la documentazione del CMS
   VERSIONE, CHANGELOG.md, README.md, INSTALLA.md
@@ -90,7 +91,7 @@ Sono gli unici in `cms/docs/`, nello zip, nel sito di plumeCMS e nella pagina Do
 - **Pacchetto di aggiornamento** per un'installazione esistente:
   `python3 tools/cms-pacchetto.py --aggiornamento`. Si carica dal pannello,
   Impostazioni, Aggiornamenti.
-- **Versione**: `cms/VERSIONE` (oggi 1.10.0) e una voce in `cms/CHANGELOG.md` a ogni
+- **Versione**: `cms/VERSIONE` (oggi 2.0.0; sempre tre numeri: "beta" va nel CHANGELOG, mai nel nome dello zip, se no la serie "ultima" del Download non lo riconosce) e una voce in `cms/CHANGELOG.md` a ogni
   zip con contenuto diverso. Mai cambiare il contenuto di una versione già data.
 - **Prove** prima di dire finito:
   - `php -n -d short_open_tag=1 -l` su ogni file PHP toccato, `node --check` sui js;
@@ -124,9 +125,20 @@ Le decisioni complete, con data e perché, stanno nel second brain, `plumecms/de
   Il redattore gestisce solo contenuti, media, categorie e tag.
 - **Nome: plumeCMS** (26 ottobre 2026).
 
-## Stato al 28 ottobre 2026
+## Stato al 30 ottobre 2026
 
-Fatto: plumeCMS 1.10.0 (30 ottobre): sette widget per le attività scelti da Danilo (Orari di apertura con "Aperto ora" calcolato
+Fatto: plumeCMS 2.0.0 beta (30 ottobre, sera; la 1.11.0 non è uscita, decisione di Danilo: dentro la 2.0.0). Base degli addon
+(`includes/addon.php`, `admin/addon.php`, `admin/addon-pagina.php`, `cron_spesso`, manuale tecnico 32, `docs-sviluppo/cms-moduli.md`) e
+otto addon scelti da Danilo, fatti da tre agenti in worktree e rifatti da me: Prenotazioni 60, Eventi con iscrizione 45, Recensioni 39
+(agente B, attacchi 80), Vetrina 60, Statistiche 32 (agente C, attacchi 94), Area riservata 75, Corsi 58, Copia altrove 39 (agente A,
+attacchi 108); `prova-addon-tutti.js` 66/66 su sito nuovo e su sito aggiornato dalla 1.10.0. Dettaglio in `docs-sviluppo/addon/<nome>.md`.
+Correzioni della newsletter (agente, `prova-newsletter-difetti.js` 37/37), file riservati e "Dopo la conferma, dai questo file"
+(`prova-omaggio.js` 27/27, attacchi gruppo 27), Scegli dai Media e og:image intero con misure (manuale tecnico 33-34). Attacchi
+261/261, install 37/37 radice e cartella dallo zip, aggiornamento 1.10.0 -> 2.0.0 12/13 (il KO vuole un sito di prima della 1.4.0:
+riquadri uguali prima e dopo) con 20 foto identiche al pixel. Limiti della beta: niente pagamento con carta, Google Drive e Dropbox,
+prenotazione inserita dal pannello, inviti alle recensioni dopo gli eventi; alcune pagine del nucleo (Articoli, SEO, Form, Newsletter,
+Media, Download, Utenti) scorrono ancora di lato al telefono (c'era già prima).
+1.10.0 (30 ottobre): sette widget per le attività scelti da Danilo (Orari di apertura con "Aperto ora" calcolato
 dal server e ricalcolato nel browser nel fuso del sito, Barra contatti fissa sul telefono, Recensioni scritte a mano senza dati per Google,
 Prima e dopo, Squadra, Slider sul motore del carosello, Eventi che spariscono passati) in `includes/editor-widget-extra-d.php`; 87 widget.
 Dati per Google (LocalBusiness, Event) in `<script type="application/ld+json">` dentro il widget. Manuale d'uso capitolo 8 (foto
@@ -323,6 +335,10 @@ Errori veri, già pagati. Non ripeterli.
 | Un gestore in linea (`onchange="..."`) nel pannello | la CSP a nonce lo blocca in silenzio: Sostituisci non partiva. Si usano gli attributi di `pannello.js` (`data-invia-al-cambio`, `data-conferma`...) |
 | Più di sei colonne in una sezione | `editor_valida()` tiene le prime sei e toglie le altre in silenzio: la settima colonna (con il suo widget) sparisce. Nelle pagine di prova un widget per sezione |
 | Una pagina di prova creata a metà del giro delle schermate | prende il numero di pagina che un capitolo dopo si aspetta (`editor.php?id=6`, "Lavora con noi") e lo script si ferma. Le pagine di prova per le foto si creano dopo tutti i capitoli |
+| Un agente con `isolation: worktree` | la sua worktree nasce dal primo commit del repository, senza il CMS: tutti e tre gli agenti degli addon hanno dovuto fare `git reset --hard` sul ramo di lavoro. Nel compito si scrive da quale commit partire |
+| `quanto-foto.py` con due file | vuole due **cartelle** di schermate, non due file; senza differenze non stampa niente |
+| `prova-install.js` in cartella | la base è `http://127.0.0.1:<porta>/test` e il quinto argomento resta vuoto (il quinto è per il CMS in una sottocartella con il sito nella radice) |
+| Un `fieldset` o un `<code>` con `white-space:nowrap` in una pagina del pannello | il fieldset non si stringe sotto il suo contenuto e la pagina scorre di lato al telefono: dalla 2.0.0 `admin.css` mette `fieldset{min-width:0}` e manda a capo i codici nelle tabelle |
 | Fidarsi del resoconto di un agente | è successo che un agente dichiarasse lavoro mai scritto su disco. Si controllano i file veri e si rifanno le prove |
 
 ## Tono con l'utente
