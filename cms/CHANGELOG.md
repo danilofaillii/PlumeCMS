@@ -4,6 +4,14 @@ Il prodotto si chiama **plumeCMS** (nome scelto il 26 ottobre 2026; prima, per p
 
 ## 1.11.0 (in preparazione)
 
+Correzione del pannello:
+
+- **Password dimenticata e Nuova password non escono più bianche.** Quando c'era da mostrare un errore ("Troppe
+  richieste: riprova fra N minuti", "Richiesta rifiutata", "Le due password sono diverse") la pagina si fermava con un
+  errore di PHP e restava vuota; anche il link per la nuova password arrivato via email apriva una pagina vuota. Adesso
+  compaiono il messaggio e il modulo. Il difetto c'era da diverse versioni: le due pagine usavano una funzione che non
+  caricavano (`h()`, in `includes/functions.php`).
+
 Correzioni della newsletter (Newsletter e form):
 
 - **Un form con la doppia conferma non iscrive più alla newsletter.** Chi compila un form che mette in una lista con la

@@ -422,6 +422,13 @@ Ogni pagina del pannello comincia con `admin/includes/auth.php`, che:
 
 Poi la pagina chiama `require_login()` o `require_admin()` (capitolo 7).
 
+`auth.php` **non** carica `includes/functions.php`, dove sta `h()`: alle pagine con il menu la porta
+`admin/includes/admin-header.php` (con `admin-functions.php`), ma le pagine che si aprono senza accesso e senza menu
+devono caricarla da sé. `password-dimenticata.php` e `password-reimposta.php` lo fanno dalla 1.11.0 (riga 7 di
+entrambe); fino alla 1.10.0 no, e ogni messaggio d'errore ("Troppe richieste", "Richiesta rifiutata", "Le due password
+sono diverse") finiva in `Call to undefined function h()` e pagina bianca (500), come anche un link valido di
+`password-reimposta.php`, che scrive il token con `h($t)` nel campo nascosto. `login.php` non usa `h()`.
+
 ---
 
 ## 5. Il CMS in una cartella: base URL
@@ -1803,7 +1810,10 @@ Un valore della CSP non valido diventa `rapporto`.
 
 **Password dimenticata**: la risposta è sempre la stessa (non dice se l'email esiste); il link vale 30 minuti e
 si usa una volta; nel database resta solo l'impronta del token. Al massimo 3 richieste l'ora per email e 10 per
-IP. Reimpostare chiude tutte le sessioni e manda un'email.
+IP. Reimpostare chiude tutte le sessioni e manda un'email. Oltre il limite la pagina dice "Troppe richieste: riprova
+fra N minuti" (`admin/password-dimenticata.php:18`); un POST da un altro sito (`sicurezza_origine_ok()`) riceve
+"Richiesta rifiutata". Fino alla 1.10.0 questi due messaggi davano pagina bianca (4.3). Prova:
+`prove/prova-password-dimenticata.js` (dalla 1.11.0, 11 controlli).
 
 ### 18.4 Due fattori (TOTP)
 

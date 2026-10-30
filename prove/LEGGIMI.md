@@ -32,6 +32,18 @@ spunta), rimbalzi (550 e tre 451 di fila), errore "troppe richieste" del form, p
    `sendmail_path`. Lascia dati di prova: va su un sito da buttare.
 4. Atteso (1.11.0): 37 su 37. Sullo stesso sito con il codice della 1.10.0: 7 su 37 (i 30 KO sono i difetti).
 
+## prova-password-dimenticata.js
+
+Password dimenticata e Nuova password con un messaggio d'errore (1.11.0): fino alla 1.10.0 le due pagine usavano `h()`
+senza caricarla e ogni errore, e anche un link valido per la password nuova, dava pagina bianca (500).
+
+`node prove/prova-password-dimenticata.js <base> <utente> <cartella del CMS>` su un CMS installato (basta `prova-install.js`).
+Controlla nel browser "Richiesta rifiutata" (POST da un sito finto, `http://cattivo.example`), "Troppe richieste" alla quarta
+richiesta per la stessa email, link non valido e valido, password diverse, e che in `logs/php-errori.log` non compaia
+`undefined function h()`. Usa `prove/password-cli.php` (token e conteggi `reset-*`, svuotati prima e dopo). Non cambia la
+password: il POST da fuori manda apposta due password diverse.
+Atteso (1.11.0): 11 su 11. Con le due pagine della 1.10.0: 3 su 11.
+
 ## tools/sicurezza-prova.js
 
 

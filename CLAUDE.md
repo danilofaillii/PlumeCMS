@@ -323,6 +323,7 @@ Errori veri, già pagati. Non ripeterli.
 | Un gestore in linea (`onchange="..."`) nel pannello | la CSP a nonce lo blocca in silenzio: Sostituisci non partiva. Si usano gli attributi di `pannello.js` (`data-invia-al-cambio`, `data-conferma`...) |
 | Più di sei colonne in una sezione | `editor_valida()` tiene le prime sei e toglie le altre in silenzio: la settima colonna (con il suo widget) sparisce. Nelle pagine di prova un widget per sezione |
 | Una pagina di prova creata a metà del giro delle schermate | prende il numero di pagina che un capitolo dopo si aspetta (`editor.php?id=6`, "Lavora con noi") e lo script si ferma. Le pagine di prova per le foto si creano dopo tutti i capitoli |
+| Una pagina del pannello senza menu (login, password dimenticata) che usa `h()` con solo `auth.php` | `auth.php` non porta `includes/functions.php`: `Call to undefined function h()` e pagina bianca (500) solo quando c'è un errore da mostrare. Così fino alla 1.10.0 "Troppe richieste" e "Richiesta rifiutata" di `password-dimenticata.php`, e ogni link valido di `password-reimposta.php`. `sicurezza-prova.js` passava lo stesso (l'attacco 8 guarda solo il login del proprietario): l'errore stava in `logs/php-errori.log`. Dopo le prove si guarda anche il log |
 | Fidarsi del resoconto di un agente | è successo che un agente dichiarasse lavoro mai scritto su disco. Si controllano i file veri e si rifanno le prove |
 
 ## Tono con l'utente
