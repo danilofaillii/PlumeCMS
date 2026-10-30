@@ -172,6 +172,13 @@ try {
         sito_manda_scaricabile($file);
         exit;
     }
+    // 1.11.0: un file riservato si manda solo con il link personale (?k=): valido, scaduto, oppure niente (404 come gli altri).
+    if (isset($sc[1]) && isset($_GET['k']) && is_string($_GET['k'])) {
+        $r = sito_scaricabile_riservato($sc[1], $_GET['k']);
+        if ($r['file'] !== '') { sito_manda_scaricabile($r['file'], $r['iscritto']); exit; }
+        if ($r['scaduto']) sito_html(410, ['titolo' => 'Link scaduto - ' . SITO_NOME, 'robots' => 'noindex'] + $cortesia, vista_cortesia('Download',
+            'Questo link è scaduto', 'Il link personale per scaricare il file vale ' . scaricabili_giorni() . ' giorni. Per riceverne uno nuovo compila di nuovo il modulo da cui l\'avevi chiesto: arriva subito, senza confermare un\'altra volta.'));
+    }
 
     // 4. File calcolati. robots.txt, sitemap e llms.txt passano dal pannello SEO e AEO (con i predefiniti sono quelli di sempre).
     switch ($percorso) {

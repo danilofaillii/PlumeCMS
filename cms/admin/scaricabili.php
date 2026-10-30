@@ -17,11 +17,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $azione = (string)($_POST['azione'] ?? '');
     $info = ['titolo' => (string)($_POST['titolo'] ?? ''), 'descrizione' => (string)($_POST['descrizione'] ?? ''), 'versione' => (string)($_POST['versione'] ?? '')];
     if ($azione === 'carica') {
-        $r = scaricabili_carica($_FILES['file'] ?? null, $info, !empty($_POST['sostituisci']));
-        flash(isset($r['file']) ? 'success' : 'error', isset($r['file']) ? 'Caricato: ' . $r['file'] . '. Si scarica da /scarica/' . $r['nome'] . '/' : $r['errore']);
+        $ris = !empty($_POST['riservato']);
+        $r = scaricabili_carica($_FILES['file'] ?? null, $info, !empty($_POST['sostituisci']), $ris);
+        flash(isset($r['file']) ? 'success' : 'error', isset($r['file']) ? 'Caricato: ' . $r['file'] . ($ris ? '. È riservato: si scarica solo con il link personale che arriva dopo la conferma di un form.' : '. Si scarica da /scarica/' . $r['nome'] . '/') : $r['errore']);
     } elseif ($azione === 'salva') {
         $ok = scaricabili_salva_info((string)($_POST['nome'] ?? ''), $info);
         flash($ok ? 'success' : 'error', $ok ? 'Salvato.' : 'File non trovato.');
+    } elseif ($azione === 'riservato' || $azione === 'pubblico') {
+        // 1.11.0: sposta il file fra i pubblici e i riservati.
+        $ok = scaricabili_rendi_riservato((string)($_POST['nome'] ?? ''), $azione === 'riservato');
+        flash($ok ? 'success' : 'error', $ok ? ($azione === 'riservato' ? 'Ora il file è riservato: l\'indirizzo pubblico non funziona più, si scarica solo con il link personale.' : 'Ora il file è pubblico: si scarica da /scarica/' . (string)$_POST['nome'] . '/.') : 'Non si è potuto spostare il file (ce n\'è già uno con lo stesso nome dall\'altra parte?).');
+    } elseif ($azione === 'giorni') {
+        $g = (int)($_POST['giorni'] ?? 30);
+        if ($g < 1 || $g > 3650) flash('error', 'I giorni vanno da 1 a 3650.');
+        else { save_setting('scaricabili_giorni', (string)$g); flash('success', "I link personali dei file riservati ora valgono $g giorni (quelli già mandati restano come erano)."); }
     } elseif ($azione === 'elimina') {
         $ok = scaricabili_elimina((string)($_POST['nome'] ?? ''));
         flash($ok ? 'success' : 'error', $ok ? 'File eliminato.' : 'Non si è potuto eliminare il file.');
@@ -65,10 +74,20 @@ require_once __DIR__ . '/includes/admin-header.php';
         <?php foreach ($file as $x): ?>
           <tr id="dl-<?= h($x['nome']) ?>">
             <td style="max-width:360px">
-              <b><?= h($x['titolo']) ?></b><?= $x['versione'] !== '' ? ' <span class="badge badge-published">' . h($x['versione']) . '</span>' : '' ?><br>
+              <b><?= h($x['titolo']) ?></b><?= $x['versione'] !== '' ? ' <span class="badge badge-published">' . h($x['versione']) . '</span>' : '' ?><?= $x['riservato'] ? ' <span class="badge badge-scheduled dl-riservato">Riservato</span>' : '' ?><br>
               <small style="color:var(--text-muted)"><?= h($x['file']) ?> &middot; caricato il <?= h(date('d/m/Y', $x['data'])) ?></small>
               <?php if ($x['descrizione'] !== ''): ?><br><small><?= h(mb_strimwidth($x['descrizione'], 0, 140, '…')) ?></small><?php endif; ?>
+              <?php if ($x['riservato']): $cons = scaricabili_consegne($x['file']); ?>
+                <small style="display:block;margin-top:.4rem;color:var(--text-muted)">Nessun indirizzo pubblico: lo ricevono, con un link personale valido <?= scaricabili_giorni() ?> giorni, le persone che confermano l'email di un form che lo dà (Form, Dopo l'invio).</small>
+                <details class="dl-consegne" style="margin-top:.3rem"><summary style="cursor:pointer;font-size:.82rem">Chi l'ha ricevuto (<?= count($cons) ?>)</summary>
+                  <?php if (!$cons): ?><small style="color:var(--text-muted)">Ancora nessuno.</small><?php else: ?>
+                  <table class="admin-table" style="font-size:.8rem;margin-top:.3rem"><tr><th>Email</th><th>Ricevuto</th><th>Scaricato</th></tr>
+                    <?php foreach ($cons as $c): ?><tr><td><?= h((string)($c['email'] ?? '(cancellato)')) ?></td><td><?= h(date('d/m/Y', strtotime($c['creato']))) ?></td><td><?= (int)$c['scaricati'] ?> volte<?= $c['ultimo'] ? ', ultima il ' . h(date('d/m/Y', strtotime($c['ultimo']))) : '' ?></td></tr><?php endforeach; ?>
+                  </table><?php endif; ?>
+                </details>
+              <?php else: ?>
               <input type="text" readonly value="<?= h($base . $x['url']) ?>" data-copia-se-stesso title="Clic per copiare l'indirizzo" style="margin-top:.4rem;width:100%;font-size:.78rem">
+              <?php endif; ?>
               <?php if ($x['serie'] !== '' && ($serie[$x['serie']]['nome'] ?? '') === $x['nome']): ?>
                 <small class="dl-serie" style="display:block;margin-top:.4rem;color:var(--text-muted)">Sempre l'ultima versione (cambia da sola quando carichi la prossima):</small>
                 <input type="text" readonly value="<?= h($base . '/scarica/' . $x['serie'] . '/') ?>" data-copia-se-stesso title="Clic per copiare l'indirizzo" style="width:100%;font-size:.78rem">
@@ -86,7 +105,11 @@ require_once __DIR__ . '/includes/admin-header.php';
                   <button type="submit" class="btn btn-primary btn-sm" style="margin-top:.5rem">Salva</button>
                 </form>
               </details>
-              <a class="btn btn-secondary btn-sm" href="<?= h($base . $x['url']) ?>">Scarica</a>
+              <?php if (!$x['riservato']): ?><a class="btn btn-secondary btn-sm" href="<?= h($base . $x['url']) ?>">Scarica</a><?php endif; ?>
+              <form method="post" style="display:inline" data-conferma="<?= h($x['riservato'] ? 'Rendere pubblico ' . $x['file'] . '? Chiunque potrà scaricarlo dal suo indirizzo, senza iscriversi.' : 'Rendere riservato ' . $x['file'] . '? Il suo indirizzo pubblico smette di funzionare: si scaricherà solo con il link personale dopo la conferma di un form.') ?>">
+                <?= csrf_field() ?><input type="hidden" name="azione" value="<?= $x['riservato'] ? 'pubblico' : 'riservato' ?>"><input type="hidden" name="nome" value="<?= h($x['nome']) ?>">
+                <button type="submit" class="btn btn-secondary btn-sm dl-sposta"><?= $x['riservato'] ? 'Rendi pubblico' : 'Rendi riservato' ?></button>
+              </form>
               <form method="post" style="display:inline" data-conferma="Eliminare <?= h($x['file']) ?>? Chi ha il link non potrà più scaricarlo e il conteggio si perde.">
                 <?= csrf_field() ?><input type="hidden" name="azione" value="elimina"><input type="hidden" name="nome" value="<?= h($x['nome']) ?>">
                 <button type="submit" class="btn btn-danger btn-sm">Elimina</button>
@@ -108,6 +131,7 @@ require_once __DIR__ . '/includes/admin-header.php';
         <label>Descrizione</label><textarea name="descrizione" rows="3" maxlength="2000" placeholder="Una o due frasi: cosa trova chi lo scarica"></textarea>
         <label>Versione</label><input type="text" name="versione" maxlength="40" placeholder="1.0">
         <label class="ed-spunta" style="display:flex;gap:.5rem;align-items:center;font-weight:400;margin-top:.6rem"><input type="checkbox" name="sostituisci" value="1"> Sostituisci il file con lo stesso nome (versione nuova, stesso indirizzo)</label>
+        <label class="ed-spunta" style="display:flex;gap:.5rem;align-items:center;font-weight:400;margin-top:.4rem"><input type="checkbox" name="riservato" value="1" id="dl-riservato"> Riservato: si scarica solo dopo l'iscrizione e la conferma dell'email</label>
         <button type="submit" class="btn btn-primary" style="margin-top:.8rem">Carica</button>
       </form>
       <p class="hint" style="margin-top:.8rem">Tipi ammessi: <?= h(implode(', ', array_keys(SCARICABILI_TIPI))) ?>.
@@ -115,6 +139,11 @@ require_once __DIR__ . '/includes/admin-header.php';
       <p class="hint">Con la versione nel nome (<code>guida-1.2.zip</code>) il file entra in una serie: <code>/scarica/guida-ultima/</code>
         porta sempre alla versione più alta, e nei testi delle pagine <code>{versione:guida-ultima}</code> diventa il suo numero.
         Per una versione nuova carica il file nuovo (<code>guida-1.3.zip</code>): link e pagine la seguono da soli.</p>
+      <p class="hint"><b>File riservati.</b> Non hanno un indirizzo pubblico. Li dai con un form: in <b>Newsletter e form &gt; Form</b>,
+        riquadro Dopo l'invio, scegli il file in "Dopo la conferma, dai questo file". Chi conferma l'email riceve un link personale.</p>
+      <form method="post" style="display:flex;gap:.5rem;align-items:center;flex-wrap:wrap;margin:.2rem 0 .8rem" id="dl-giorni"><?= csrf_field() ?><input type="hidden" name="azione" value="giorni">
+        <label style="font-size:.85rem;margin:0">Il link personale vale</label><input type="number" name="giorni" min="1" max="3650" value="<?= scaricabili_giorni() ?>" style="width:5.5rem"><span style="font-size:.85rem">giorni</span>
+        <button type="submit" class="btn btn-secondary btn-sm">Salva</button></form>
       <p class="hint">Il tuo server accetta file fino a <b><?= h((string)$limite) ?></b>. Un file più grande lo metti nella cartella
         <code>uploads/scaricabili/</code> con il gestore dei file dell'hosting: compare qui da solo.</p>
     </div></div>

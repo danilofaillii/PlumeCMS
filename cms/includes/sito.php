@@ -257,15 +257,33 @@ function sito_scaricabile(string $nome): ?string {
     return $x ? scaricabili_dir() . '/' . $x['file'] : null;
 }
 
+/**
+ * Un file riservato con il link personale (1.11.0): ['file' => percorso o '', 'iscritto' => id, 'scaduto' => bool].
+ * La chiave falsa o di un altro file vale come un file che non c'è.
+ */
+function sito_scaricabile_riservato(string $nome, string $k): array {
+    $no = ['file' => '', 'iscritto' => 0, 'scaduto' => false];
+    if (!preg_match('/^[a-z0-9][a-z0-9._-]{0,120}$/', $nome) || str_contains($nome, '..')) return $no;
+    require_once __DIR__ . '/scaricabili.php';
+    $x = scaricabili_elenco()[$nome] ?? null;
+    if (!$x || !$x['riservato']) return $no;
+    $id = scaricabili_verifica_chiave($nome, $k);
+    if ($id === null) return $no;
+    if ($id === 0) return ['scaduto' => true] + $no;
+    return ['file' => $x['percorso'], 'iscritto' => $id, 'scaduto' => false];
+}
+
 /** Manda un file scaricabile: tipo giusto, come allegato, una cache di un'ora; e lo conta (non per i robot). */
-function sito_manda_scaricabile(string $file): void {
+function sito_manda_scaricabile(string $file, int $iscritto = 0): void {
     require_once __DIR__ . '/scaricabili.php';
     $ext = strtolower(pathinfo($file, PATHINFO_EXTENSION));
     header('Content-Type: ' . SCARICABILI_TIPI[$ext][0]);
     header('Content-Disposition: attachment; filename="' . basename($file) . '"');
     header('Content-Length: ' . filesize($file));
-    header('Cache-Control: public, max-age=3600');
+    // Un file riservato non resta nelle cache condivise: il link è personale.
+    header('Cache-Control: ' . ($iscritto ? 'private, no-store' : 'public, max-age=3600'));
     header('X-Robots-Tag: noindex');
+    if ($iscritto) { header('Referrer-Policy: no-referrer'); scaricabili_conta_consegna($file, $iscritto); }
     scaricabili_conta($file);
     readfile($file);
 }
