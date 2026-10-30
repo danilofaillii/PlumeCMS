@@ -4,10 +4,15 @@
 // uso: [CMS_DIR_MANUALE=<cartella del sito delle schermate>] [SU_MISURA_BASE=<un sito su misura, stesso utente>] node tools/manuale-uso-schermate.js <base> <utente> <password> [solo un capitolo, es. 04]
 // Senza SU_MISURA_BASE mancano le due foto del sito su misura (02-su-misura-home, 07-sostituisci).
 // Scrive cms/docs/immagini/manuale-uso/<capitolo>-<nome>.jpg (JPEG: il PDF del manuale deve restare sotto 1900 KB).
+// 2.0.0: i capitoli 31n (le novità della 2.0.0 nei capitoli di prima: file riservati, form che dà un file, newsletter, Scegli dai
+// Media) e 32-40 (la Parte seconda, gli addon) girano dopo tutti gli altri e vogliono il server di posta finto:
+//   python3 -I prove/smtp-finto.py <porta> <cartella> &   e   POSTA_MANUALE=<porta>:<cartella>
+// Per rifare solo alcuni capitoli, esattamente quelli: SOLO_CAPITOLI=31n,32,33 (le foto degli altri restano come sono).
 const { chromium } = require('playwright');
 const fs = require('fs');
 const path = require('path');
 const [B, UTENTE, PASSWORD, SOLO] = process.argv.slice(2);
+const SOLI = (process.env.SOLO_CAPITOLI || '').split(',').filter(Boolean);
 const USCITA = path.join(__dirname, '..', 'cms', 'docs', 'immagini', 'manuale-uso');
 const FOTO_PROVA = path.join(__dirname, '..', 'esempi', 'manuale-uso');
 // Le foto nascono PNG qui (senza perdita) e diventano JPEG una volta sola, alla fine (stringi()).
@@ -656,6 +661,149 @@ async function fotoWidgetAttivita() {
   }
 }
 
+// ------------------------------------------------------------------------------------------------------------------------
+// 2.0.0. Da qui in poi i capitoli girano dopo tutti gli altri (creano pagine: la trappola dei numeri di pagina) e vogliono
+// il server di posta finto (POSTA_MANUALE=<porta>:<cartella>): le email di conferma si aprono come farebbe una persona.
+const C2 = require(path.join(__dirname, '..', 'prove', 'addon-b-comune.js'));
+const [POSTA_PORTA, POSTA_DIR] = (process.env.POSTA_MANUALE || ':').split(':');
+const postaN = () => C2.posta(POSTA_DIR).length;
+async function postaNuove(prima, quante = 1) {
+  if (!POSTA_DIR) throw new Error('serve POSTA_MANUALE=<porta>:<cartella> (prove/smtp-finto.py)');
+  return C2.nuove(POSTA_DIR, prima, quante, 15000);
+}
+const addonPag = (a, pag) => vai('addon-pagina.php?a=' + a + '&p=' + pag);
+const flash = async () => (await p.locator('.flash').first().innerText().catch(() => '')).trim();
+// Un visitatore, in una finestra sua (senza l'accesso al pannello).
+async function visitatore(telefono = false) {
+  const c = await p.context().browser().newContext(telefono ? { viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true, deviceScaleFactor: 1, locale: 'it-IT', timezoneId: 'Europe/Rome' }
+    : { viewport: { width: 1200, height: 800 }, locale: 'it-IT', timezoneId: 'Europe/Rome', deviceScaleFactor: 1 });
+  const v = await c.newPage(); v.on('dialog', d => d.accept());
+  return v;
+}
+async function fotoDi(q, nome, opz = {}) {
+  if (SOLO && !nome.startsWith(SOLO)) return;
+  if (opz.segni) await segna(q, opz.segni);
+  if (opz.sel) { const el = q.locator(opz.sel).first(); await el.scrollIntoViewIfNeeded(); await el.screenshot({ path: path.join(GREZZE, nome + '.png') }); }
+  else await q.screenshot({ path: path.join(GREZZE, nome + '.png'), clip: opz.clip, fullPage: !!opz.clip });
+  if (opz.segni) await togliSegni(q);
+  console.log(nome);
+}
+// Una pagina nuova dall'editor, con un titolo e un widget sotto il titolo; ritorna l'id della pagina.
+async function paginaConWidget(titolo, slug, tipo, imposta) {
+  await vai('index.php');
+  await Promise.all([p.waitForNavigation(), p.click('.db-azioni a:has-text("+ Pagina")')]);
+  await apriEditor(p.url().split('/admin/')[1]);
+  const id = new URL(p.url()).searchParams.get('id');
+  await p.click('#ed-apri-impostazioni'); await dorme(300);
+  await p.fill('#ed-form-impostazioni [name=titolo]', titolo);
+  await p.fill('#ed-form-impostazioni [name=slug]', slug);
+  await p.click('#ed-form-impostazioni button[type=submit]'); await dorme(1200);
+  await tela().locator('.ed-w-titolo').first().dblclick(); await dorme(500);
+  await scriviCtl('Titolo', titolo);
+  await widget(tipo);
+  if (imposta) await imposta();
+  return id;
+}
+async function pubblica() {
+  await p.click('#ed-pubblica');
+  await p.waitForFunction(() => /Pubblicata alle/.test(document.querySelector('#ed-stato').textContent));
+}
+// Compila un form del sito (tutti i campi visibili), con la privacy e "Sono una persona".
+async function compilaForm(v, f, valori) {
+  for (const c of await f.locator('input:not([type=hidden]):not([type=checkbox]):not([type=radio]), textarea').all()) {
+    const nome = await c.getAttribute('name'); const tipo = await c.getAttribute('type');
+    if (nome === 'sito_web' || !(await c.isVisible())) continue;
+    if (valori[nome] !== undefined) await c.fill(valori[nome]);
+    else await c.fill(tipo === 'email' ? valori.email : (tipo === 'tel' ? '+39 333 1234567' : (tipo === 'password' ? valori.password : valori.nome)));
+  }
+  const pr = f.locator('input[name=privacy]'); if (await pr.count()) await pr.check();
+  if (await f.locator('.captcha input[type=checkbox]').count()) await C2.captcha(f, v);
+}
+
+// 31n. Le novità della 2.0.0 nei capitoli di prima: file riservati e form che li dà (capitoli 18 e 22), newsletter (20),
+// Scegli dai Media (23). Esempio: Studio Prova regala la "Guida alla cura delle piante" a chi si iscrive.
+capitoli['31n'] = async () => {
+  // La posta: il server finto, perché la conferma arrivi davvero.
+  await vai('impostazioni.php');
+  await p.fill('#smtp_host', '127.0.0.1'); await p.fill('#smtp_porta', POSTA_PORTA); await p.selectOption('#smtp_sicurezza', 'nessuna');
+  await p.fill('[name=smtp_mittente]', 'negozio@studioprova.it').catch(() => {});
+  await Promise.all([p.waitForNavigation(), p.click('form:has(input[value=save_posta]) button[type=submit]')]);
+  // Download: un PDF riservato.
+  const pdf = path.join(require('os').tmpdir(), 'guida-piante.pdf');
+  const t = await ctx.newPage(); await t.setContent('<h1>Guida alla cura delle piante</h1><p>Acqua, luce, rinvasi: tutto quello che serve.</p>'); await t.pdf({ path: pdf }); await t.close();
+  await vai('scaricabili.php');
+  await p.setInputFiles('#dl-carica input[type=file]', pdf);
+  await p.fill('#dl-carica input[name=titolo]', 'Guida alla cura delle piante');
+  await p.fill('#dl-carica [name=descrizione]', 'In regalo a chi si iscrive alla newsletter.');
+  await p.check('#dl-riservato');
+  await foto('31n-riservato', { sel: '#dl-carica', segni: [{ sel: '#dl-carica input[type=file]', n: 1 }, { sel: '#dl-carica input[name=titolo]', n: 2 }, { sel: '#dl-riservato', n: 3 }, { sel: '#dl-carica button[type=submit]', n: 4 }] });
+  await Promise.all([p.waitForNavigation(), p.click('#dl-carica button[type=submit]')]);
+  if (!/riservato/.test(await flash())) throw new Error('31n: il file non risulta riservato: ' + await flash());
+  // Form > Dopo l'invio: lista, conferma e il file.
+  await vai('form.php?nuovo=1');
+  await p.fill('[name=nome]', 'Guida in regalo');
+  await p.fill('[name=titolo]', 'Ricevi la guida alla cura delle piante');
+  await p.fill('[name=intro]', 'Lasciaci nome ed email: dopo la conferma ti mandiamo la guida in PDF e, una volta al mese, la nostra newsletter.');
+  await p.fill('[name=pulsante]', 'Mandami la guida');
+  await p.selectOption('select[name=lista_id]', { label: 'Newsletter' });
+  await p.check('input[name=lista_conferma]');
+  await p.selectOption('#fm-omaggio', { label: 'Guida alla cura delle piante (guida-piante.pdf)' });
+  await foto('31n-form-file', { sel: '.sc-scatola:has(#fm-omaggio)', altezza: 300, segni: [{ sel: 'select[name=lista_id]', n: 1 }, { sel: 'input[name=lista_conferma]', n: 2 }, { sel: '#fm-omaggio', n: 3 }] });
+  await Promise.all([p.waitForNavigation(), p.click('button.btn-primary:has-text("Salva")')]);
+  // La pagina "Guida in regalo" con il form.
+  await paginaConWidget('Guida in regalo', 'guida-in-regalo', 'modulo', async () => {
+    const q = await ctl('Quale modulo');
+    await q.locator('select').selectOption(await q.locator('option', { hasText: 'Guida in regalo' }).getAttribute('value')); await dorme(1200);
+  });
+  await pubblica();
+  // Una persona compila, conferma dall'email e trova il file.
+  const v = await visitatore();
+  await v.goto(B + '/guida-in-regalo/', { waitUntil: 'networkidle' });
+  const f = v.locator('form[data-captcha]').first();
+  await compilaForm(v, f, { nome: 'Lucia Bassi', email: 'lucia.bassi@esempio.it', messaggio: '' });
+  let n0 = postaN();
+  await Promise.all([v.waitForNavigation(), f.locator('button[type=submit]').click()]);
+  const conf = (await postaNuove(n0)).find(e => /lucia\.bassi/.test(e.a));
+  const lk = conf && C2.link(conf).find(l => /\?t=[a-f0-9]{64}/.test(l));
+  if (!lk) throw new Error('31n: non arriva l\'email di conferma');
+  n0 = postaN();
+  await v.goto(lk, { waitUntil: 'networkidle' });
+  await fotoDi(v, '31n-ecco-il-file', { clip: { x: 0, y: 0, width: 1200, height: 560 }, segni: [{ sel: 'a.btn:has-text("Scarica")', n: 4 }] });
+  await postaNuove(n0);
+  const r = await v.request.get(await v.locator('a.btn:has-text("Scarica")').getAttribute('href'));
+  await v.context().close();
+  // Download: chi l'ha ricevuto.
+  await vai('scaricabili.php');
+  await p.locator('tr#dl-guida-piante details.dl-consegne summary').click(); await dorme(300);
+  await foto('31n-chi', { sel: 'tr#dl-guida-piante', segni: [{ sel: 'tr#dl-guida-piante .dl-riservato', n: 1 }, { sel: 'tr#dl-guida-piante details.dl-consegne summary', n: 2 }] });
+  await foto('31n-giorni', { sel: '#dl-giorni', margine: 10 });
+  // La newsletter: i limiti di invio e i conteggi.
+  await vai('newsletter.php?scheda=impostazioni');
+  await p.fill('#per_giorno', '500');
+  await foto('31n-limiti', { sel: '.form-card:has(#per_giorno)', segni: [{ sel: '#per_ora', n: 1 }, { sel: '#per_giorno', n: 2 }] });
+  await Promise.all([p.waitForNavigation(), p.click('.form-card:has(#per_giorno) button.btn-primary')]);
+  await vai('newsletter.php?scheda=iscritti');
+  await foto('31n-iscritti', { clip: { x: 240, y: 56, width: 960, height: 560 }, segni: [{ sel: 'input[name=flussi_import]', n: 1 }, { sel: 'select[name=stato]', n: 2 }] });
+  // SEO e AEO > Globale SEO: l'immagine social scelta dai Media (prima si carica in Media, 1200x630).
+  const img = path.join(require('os').tmpdir(), 'condivisione-studio-prova.jpg');
+  const g = await ctx.newPage(); await g.setViewportSize({ width: 1200, height: 630 });
+  await g.setContent('<body style="margin:0;width:1200px;height:630px;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#1f6f5c,#9fd3a8);font:700 72px sans-serif;color:#fff;text-align:center">Studio Prova<br><span style="font-size:36px;font-weight:400">Vasi e piante a Bologna</span></body>');
+  await g.screenshot({ path: img, type: 'jpeg', quality: 80 }); await g.close();
+  await vai('media.php');
+  await p.setInputFiles('input[type=file][name=file]', img);
+  await Promise.all([p.waitForNavigation(), p.click('form[enctype] button[type=submit]')]);
+  await vai('seo.php?scheda=globale');
+  await p.click('[data-scegli-media="#seo-og-immagine"]');
+  await p.waitForSelector('dialog.pn-media .pn-media-voce'); await dorme(800);
+  await p.fill('dialog.pn-media input[type=search]', 'condivisione'); await dorme(500);
+  await fotoDi(p, '31n-scegli-media', { clip: { x: 0, y: 0, width: 1200, height: 800 }, segni: [{ sel: 'dialog.pn-media input[type=search]', n: 2 }, { sel: 'dialog.pn-media .pn-media-voce', n: 3 }] });
+  await p.locator('dialog.pn-media .pn-media-voce').first().click(); await dorme(300);
+  const campo = p.locator('.form-group:has(#seo-og-immagine)');
+  await campo.scrollIntoViewIfNeeded();
+  await fotoDi(p, '31n-immagine-social', { sel: '.form-group:has(#seo-og-immagine)', segni: [{ sel: '[data-scegli-media="#seo-og-immagine"]', n: 1 }, { sel: '#seo-og-immagine', n: 4 }] });
+  await Promise.all([p.waitForNavigation(), p.click('form:has(#seo-og-immagine) button.btn-primary')]);
+};
+
 module.exports = { capitoli };
 
 (async () => {
@@ -668,12 +816,13 @@ module.exports = { capitoli };
   await p.goto(B + '/admin/login.php'); await p.fill('#username', UTENTE); await p.fill('#password', PASSWORD);
   await Promise.all([p.waitForNavigation(), p.click('button[type=submit]')]);
   // Un giro completo riparte da una cartella vuota: nel manuale restano solo le foto di questo giro.
-  if (!SOLO) for (const d of [USCITA, GREZZE]) for (const f of fs.readdirSync(d)) if (/\.(jpg|png)$/.test(f)) fs.unlinkSync(path.join(d, f));
+  if (!SOLO && !SOLI.length) for (const d of [USCITA, GREZZE]) for (const f of fs.readdirSync(d)) if (/\.(jpg|png)$/.test(f)) fs.unlinkSync(path.join(d, f));
   for (const [n, fn] of Object.entries(capitoli).sort((a, b) => a[0].localeCompare(b[0]))) { // '10' e oltre sono chiavi numeriche: JavaScript le mette prima di '01'
     if (SOLO && !SOLO.startsWith(n) && !n.startsWith(SOLO)) continue;
+    if (SOLI.length && !SOLI.includes(n)) continue;
     await fn();
   }
-  await fotoWidgetAttivita();
+  if (!SOLI.length) await fotoWidgetAttivita();
   if (err.length) console.log('errori JavaScript:', err);
   stringi();
   const tot = fs.readdirSync(USCITA).filter(f => f.endsWith('.jpg')).reduce((t, f) => t + fs.statSync(path.join(USCITA, f)).size, 0);
