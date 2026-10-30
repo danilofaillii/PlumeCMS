@@ -3,6 +3,8 @@
 // Chromium. Caratteri di casa (cms/sito/assets/font), niente servizi esterni.
 // uso: node tools/banner.js [cartella]   scrive <cartella>/plumecms-<misura>-<n>.png alla misura esatta e @2x per gli
 // schermi densi. Predefinita: releases/banner. Il link da mettere sotto ogni banner: https://plumecms.danilofailli.it
+// 30 ottobre 2026: anche l'immagine per i social (Open Graph) 1200x630, in PNG e in JPG: logo e titolo al centro, perché
+// WhatsApp e alcuni telefoni la tagliano quasi quadrata.
 const { chromium } = require('playwright');
 const fs = require('fs');
 const path = require('path');
@@ -60,6 +62,9 @@ const BANNER = [
   { nome: 'plumecms-160x600-2', l: 160, a: 600, forma: 'alto', disegno: finestra,
     occhiello: 'Editor visuale', titolo: 'Il sito<br>lo fai tu.<br><em>Come lo vuoi tu.</em>', punti: ['Gratis, per sempre', 'In italiano', 'Senza scrivere codice'],
     testo: 'Temi, SEO e newsletter già dentro. Pronto in 5 minuti.', invito: 'Scarica gratis' },
+  { nome: 'plumecms-social-1200x630', l: 1200, a: 630, forma: 'social',
+    occhiello: 'Il CMS italiano con l’editor visuale', titolo: 'Il sito lo fai tu.<br><em>Come lo vuoi tu.</em>',
+    testo: 'Trascini, scrivi, pubblichi. Temi, SEO e newsletter già dentro.', invito: 'Gratis, si installa in 5 minuti' },
 ];
 
 const CSS = `
@@ -98,11 +103,26 @@ p{color:#d6d2f5;font-size:14px;line-height:1.4}
 .alto .basso{margin-top:auto;display:flex;flex-direction:column;align-items:center;gap:8px;width:100%}
 .alto .invito{font-size:13px;padding:11px 14px;width:100%;text-align:center}
 .alto .url{font-size:9.5px;text-align:center}
+/* 1200x630, l'immagine dei social: tutto al centro, i disegni ai lati come sfondo */
+.social{width:1200px;height:630px;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:18px;padding:0 120px}
+.social .marchio{font-size:40px;gap:16px}
+.social .occhiello{font-size:15px;letter-spacing:.18em}
+.social h1{font-size:78px;line-height:1.02}
+.social p{font-size:23px;max-width:760px}
+.social .invito{font-size:19px;padding:15px 26px;margin-top:6px}
+.social .url{font-size:16px;margin-top:2px}
+.social .lato{position:absolute;opacity:.32;pointer-events:none}
+.social .lato.s{left:-70px;bottom:-30px;transform:rotate(-8deg)}
+.social .lato.d{right:-90px;top:34px;transform:rotate(7deg)}
 `;
 
 const pagina = (b) => {
   const marchio = `<div class="marchio">${piuma(b.forma === 'largo' ? 26 : 28)}<span><b>plume</b>CMS</span></div>`;
-  const corpo = b.forma === 'largo'
+  const corpo = b.forma === 'social'
+    ? `<div class="b social"><div class="lato s">${finestra(360, 228)}</div><div class="lato d">${domande(330, 209)}</div>
+         <div class="marchio">${piuma(58)}<span><b>plume</b>CMS</span></div><div class="occhiello">${b.occhiello}</div><h1>${b.titolo}</h1><p>${b.testo}</p>
+         <span class="invito">${b.invito}</span><span class="url">plumecms.danilofailli.it</span></div>`
+    : b.forma === 'largo'
     ? `<div class="b largo"><div class="testo"><div class="testa">${marchio}<div class="occhiello">${b.occhiello}</div></div><h1>${b.titolo}</h1><p>${b.testo}</p>
          <div class="riga"><span class="invito">${b.invito} &rarr;</span><span class="url">plumecms.danilofailli.it</span></div></div>
          <div class="disegno">${b.disegno(300, 190)}</div></div>`
@@ -116,16 +136,21 @@ const pagina = (b) => {
   fs.mkdirSync(OUT, { recursive: true });
   const br = await chromium.launch();
   for (const b of BANNER) {
-    for (const scala of [1, 2]) {
+    for (const scala of b.forma === 'social' ? [1] : [1, 2]) {
       const p = await (await br.newContext({ viewport: { width: b.l, height: b.a }, deviceScaleFactor: scala })).newPage();
       await p.setContent(pagina(b), { waitUntil: 'load' });
       await p.evaluate(() => document.fonts.ready);
       // Niente deve uscire dal banner: un testo troppo lungo ferma lo script invece di finire tagliato.
-      const fuori = await p.evaluate(() => [...document.querySelectorAll('.b *')].filter(e => { const r = e.getBoundingClientRect(); return r.right > innerWidth + .5 || r.bottom > innerHeight + .5; }).map(e => e.className || e.tagName));
+      const fuori = await p.evaluate(() => [...document.querySelectorAll('.b > :not(.lato), .b > :not(.lato) *')].filter(e => { const r = e.getBoundingClientRect(); return r.right > innerWidth + .5 || r.bottom > innerHeight + .5; }).map(e => e.className || e.tagName));
       if (fuori.length) throw new Error(b.nome + ': esce dal banner: ' + fuori.join(', '));
       const file = path.join(OUT, b.nome + (scala === 2 ? '@2x' : '') + '.png');
       await p.locator('.b').screenshot({ path: file });
       console.log(file, Math.round(fs.statSync(file).size / 1024) + ' KB');
+      if (b.forma === 'social') {
+        const jpg = path.join(OUT, b.nome + '.jpg');
+        await p.locator('.b').screenshot({ path: jpg, type: 'jpeg', quality: 88 });
+        console.log(jpg, Math.round(fs.statSync(jpg).size / 1024) + ' KB');
+      }
       await p.context().close();
     }
   }
