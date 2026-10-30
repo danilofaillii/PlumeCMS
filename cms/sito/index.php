@@ -32,6 +32,12 @@ function sito_rispondi(int $codice, string $tipo, string $corpo, array $intestaz
     // sicurezza: sulle pagine HTML anche la Content-Security-Policy (a nonce, modalita scelta nella pagina Sicurezza del pannello).
     if ($tipo === 'text/html') sicurezza_intestazioni('sito'); else sicurezza_intestazioni_base();
     foreach ($intestazioni as $h) header($h);
+    // 2.0.0: evento "una pagina HTML del sito è stata servita" (codice HTTP e percorso dalla radice del sito, senza la
+    // cartella). Lo ascolta l'addon Statistiche per contare le visite; chi lo ascolta non deve mandare intestazioni né
+    // scrivere niente, e un suo errore non tocca la pagina.
+    if ($tipo === 'text/html') {
+        try { cms_evento('sito_pagina_servita', $codice, (string)($GLOBALS['sito_percorso_404'] ?? '')); } catch (Throwable $e) { error_log('sito_pagina_servita: ' . $e->getMessage()); }
+    }
     if (($_SERVER['REQUEST_METHOD'] ?? 'GET') !== 'HEAD') echo $corpo;
     exit;
 }

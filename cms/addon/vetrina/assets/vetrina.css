@@ -1,0 +1,109 @@
+/* Vetrina (addon, 2.0.0): le pagine del negozio e i widget Prodotti e Carrello. Colori e caratteri dalle variabili del
+   sito (sito.css, Stile del sito, temi): il negozio prende l'aspetto del sito da solo. */
+[hidden]{display:none!important}
+.vt{padding-top:40px;padding-bottom:64px}
+.vt h1{font-size:clamp(28px,4vw,44px);margin:.2em 0 .4em;overflow-wrap:anywhere}
+.vt h2{font-size:clamp(20px,2.4vw,26px);margin:1.4em 0 .6em}
+.vt-nascosto{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+.vt-testa{display:flex;justify-content:space-between;align-items:flex-end;gap:16px;flex-wrap:wrap;margin-bottom:12px}
+.vt-testa-piccola{align-items:center}
+.vt-intro{color:var(--testo-2);max-width:60ch;margin:0}
+.vt-al-carrello,.vt-carrello-w{display:inline-flex;align-items:center;gap:8px;text-decoration:none;color:var(--testo);border:1px solid var(--bordo);border-radius:999px;padding:8px 14px;font-weight:600;background:var(--vetro)}
+.vt-conta{display:inline-grid;place-items:center;min-width:1.6em;height:1.6em;padding:0 .35em;border-radius:999px;background:var(--viola);color:#fff;font-size:.8em}
+.vt-filtri{display:flex;gap:8px;flex-wrap:wrap;margin:8px 0 12px}
+.vt-filtri a{text-decoration:none;color:var(--testo-2);border:1px solid var(--bordo);border-radius:999px;padding:6px 14px;font-size:14px}
+.vt-filtri a[aria-current]{background:var(--viola);border-color:var(--viola);color:#fff}
+.vt-ordina{margin:0 0 20px;font-size:14px;color:var(--testo-2)}
+.vt-ordina select{margin-left:6px;padding:6px 10px;border-radius:8px;border:1px solid var(--bordo);background:var(--bg);color:var(--testo);font:inherit}
+.vt-griglia{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,220px),1fr));gap:20px}
+.vt-scheda a{display:flex;flex-direction:column;gap:6px;text-decoration:none;color:var(--testo);height:100%}
+.vt-foto{position:relative;display:block;aspect-ratio:1/1;border-radius:var(--r,14px);overflow:hidden;background:var(--vetro-2);border:1px solid var(--bordo)}
+.vt-foto img{width:100%;height:100%;object-fit:cover;display:block;transition:transform .3s}
+.vt-scheda a:hover .vt-foto img{transform:scale(1.04)}
+.vt-senza-foto{display:block;width:100%;height:100%;min-height:120px;background:repeating-linear-gradient(135deg,var(--vetro),var(--vetro) 12px,var(--vetro-2) 12px,var(--vetro-2) 24px)}
+.vt-bollino{position:absolute;top:10px;left:10px;background:var(--viola);color:#fff;font-size:12px;font-weight:700;padding:4px 10px;border-radius:999px}
+.vt-bollino-esaurito{background:#555}
+.vt-esaurito .vt-foto img{filter:grayscale(.8);opacity:.7}
+.vt-nome{font-weight:700;font-size:17px;overflow-wrap:anywhere}
+.vt-breve{color:var(--testo-2);font-size:14px}
+.vt-prezzo s{color:var(--testo-3);font-weight:400}
+.vt-prezzo b{font-size:1.05em}
+.vt-vuoto{color:var(--testo-2)}
+.vt-avviso{background:rgba(var(--successo-rgb,74,222,128),.12);border:1px solid rgba(var(--successo-rgb,74,222,128),.5);border-radius:12px;padding:10px 14px}
+.vt-briciole{font-size:14px;color:var(--testo-2)}
+.vt-briciole a{color:var(--testo-2)}
+.vt-prodotto{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);gap:40px;align-items:start}
+.vt-principale{margin:0;aspect-ratio:1/1;border-radius:var(--r,14px);overflow:hidden;background:var(--vetro-2);border:1px solid var(--bordo)}
+.vt-principale img{width:100%;height:100%;object-fit:cover;display:block}
+.vt-miniature{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap}
+.vt-miniature a{width:72px;height:72px;border-radius:10px;overflow:hidden;border:2px solid transparent;display:block}
+.vt-miniature a[aria-current]{border-color:var(--viola)}
+.vt-miniature img{width:100%;height:100%;object-fit:cover;display:block}
+.vt-prezzo-grande{font-size:26px;margin:0}
+.vt-iva{font-size:13px;color:var(--testo-3);margin:.3em 0}
+.vt-breve-grande{font-size:18px;color:var(--testo-2)}
+.vt-disponibilita{font-weight:600;margin:.6em 0}
+.vt-disponibilita.si{color:var(--successo,#16a34a)}
+.vt-disponibilita.no{color:var(--errore,#dc2626)}
+.vt-compra{display:flex;flex-wrap:wrap;gap:12px;align-items:flex-end;margin:16px 0 24px}
+.vt-campo{display:flex;flex-direction:column;gap:6px;font-size:13px;color:var(--testo-2);font-weight:600}
+.vt-campo select,.vt-campo input{padding:12px 14px;border-radius:10px;border:1px solid var(--bordo);background:var(--bg);color:var(--testo);font:inherit;font-size:16px;min-width:0}
+.vt-campo select{max-width:100%}
+.vt-qta input{width:6em}
+.vt-descrizione{color:var(--testo-corpo,var(--testo));line-height:1.7}
+.vt-righe{list-style:none;margin:0;padding:0;border-top:1px solid var(--bordo)}
+.vt-riga{display:grid;grid-template-columns:64px minmax(0,1fr) auto auto auto;gap:12px;align-items:center;padding:12px 0;border-bottom:1px solid var(--bordo)}
+.vt-riga img,.vt-riga .vt-senza-foto{width:64px;height:64px;min-height:0;object-fit:cover;border-radius:10px}
+.vt-riga-nome{display:flex;flex-direction:column;gap:2px;min-width:0;overflow-wrap:anywhere}
+.vt-riga-nome a{color:var(--testo);font-weight:600}
+.vt-riga-nome small{color:var(--testo-2)}
+.vt-riga-no .vt-riga-nome small b{color:var(--errore,#dc2626)}
+.vt-riga-qta input{width:4.5em;padding:8px;border-radius:8px;border:1px solid var(--bordo);background:var(--bg);color:var(--testo);font:inherit;font-size:16px}
+.vt-togli{background:none;border:0;color:var(--testo-2);text-decoration:underline;cursor:pointer;font:inherit;font-size:14px;padding:4px}
+.vt-riga-tot{white-space:nowrap}
+.vt-carrello .vt-riga{grid-template-columns:64px minmax(0,1fr) auto auto auto}
+.vt-riepilogo .vt-riga,.vt-fatto .vt-riga{grid-template-columns:minmax(0,1fr) auto auto}
+.vt-riepilogo .vt-riga img,.vt-riepilogo .vt-senza-foto,.vt-fatto .vt-riga img,.vt-fatto .vt-senza-foto{display:none}
+.vt-totali{display:grid;grid-template-columns:1fr auto;gap:6px 16px;max-width:420px;margin:16px 0 0 auto}
+.vt-totali dt{color:var(--testo-2)}
+.vt-totali dd{margin:0;text-align:right}
+.vt-totali .vt-totale{font-weight:700;font-size:20px;color:var(--testo)}
+.vt-avanti{text-align:right;margin-top:20px}
+.vt-cassa{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(0,1fr);gap:32px;align-items:start}
+.vt-ordine{margin-top:0}
+.vt-riepilogo{position:sticky;top:96px;border:1px solid var(--bordo);border-radius:var(--r,14px);padding:20px;background:var(--vetro)}
+.vt-riepilogo h2{margin-top:0}
+.vt-riepilogo .vt-totali{margin-left:0;max-width:none}
+.vt-scelte{border:0;padding:0;margin:0 0 12px;display:grid;gap:10px}
+.vt-scelta{display:flex;gap:12px;align-items:flex-start;border:1px solid var(--bordo);border-radius:12px;padding:12px 14px;cursor:pointer;background:var(--vetro)}
+.vt-scelta input{width:20px;height:20px;margin-top:2px;flex:none;accent-color:var(--viola)}
+.vt-scelta small{display:block;color:var(--testo-2);font-size:14px;margin-top:2px}
+.vt-errore{display:block;color:var(--errore-testo,var(--errore,#dc2626));font:500 14px/1.4 var(--f-testo,inherit);letter-spacing:0;text-transform:none;margin-top:4px}
+.errato input,.errato select,.errato textarea{border-color:var(--errore,#dc2626)!important}
+.vt-scelte.errato .vt-scelta{border-color:var(--errore,#dc2626)}
+.vt-paga{border:1px solid var(--bordo);border-radius:var(--r,14px);padding:16px 20px;background:var(--vetro);margin:16px 0;overflow-wrap:anywhere}
+.vt-paga a{color:#fff}
+.vt-cortesia,.vt-fatto,.vt-condizioni{max-width:760px}
+@media (max-width:860px){
+  .vt-prodotto,.vt-cassa{grid-template-columns:minmax(0,1fr);gap:24px}
+  .vt-riepilogo{position:static}
+}
+@media (max-width:560px){
+  .vt{padding-top:24px}
+  .vt-griglia{grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+  .vt-nome{font-size:15px}
+  .vt-carrello .vt-riga{grid-template-columns:56px minmax(0,1fr) auto;grid-template-areas:"f n n" "f q t";row-gap:6px}
+  .vt-carrello .vt-riga img,.vt-carrello .vt-riga .vt-senza-foto{grid-area:f;width:56px;height:56px}
+  .vt-carrello .vt-riga-nome{grid-area:n}
+  .vt-carrello .vt-riga-qta{grid-area:q;display:flex;gap:6px;align-items:center}
+  .vt-carrello .vt-togli{grid-row:2;grid-column:2;justify-self:end;margin-right:4.5em}
+  .vt-carrello .vt-riga-tot{grid-area:t;text-align:right}
+  .vt-riepilogo .vt-riga{grid-template-columns:minmax(0,1fr) auto}
+  .vt-riepilogo .vt-riga-qta{grid-column:1}
+  .vt-compra .btn{width:100%;justify-content:center}
+  .vt-avanti .btn{width:100%;justify-content:center}
+}
+/* Widget Prodotti e Carrello nell'editor */
+.ed-w-vetrina_prodotti .vt-griglia{grid-template-columns:repeat(var(--vt-col,3),minmax(0,1fr))}
+@media (max-width:860px){.ed-w-vetrina_prodotti .vt-griglia{grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}}
+.vt-carrello-w svg{width:1.3em;height:1.3em}
