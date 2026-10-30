@@ -131,7 +131,10 @@ Fatto: plumeCMS 2.0.0 beta (30 ottobre, sera; la 1.11.0 non è uscita, decisione
 (`includes/addon.php`, `admin/addon.php`, `admin/addon-pagina.php`, `cron_spesso`, manuale tecnico 32, `docs-sviluppo/cms-moduli.md`) e
 otto addon scelti da Danilo, fatti da tre agenti in worktree e rifatti da me: Prenotazioni 60, Eventi con iscrizione 45, Recensioni 39
 (agente B, attacchi 80), Vetrina 60, Statistiche 32 (agente C, attacchi 94), Area riservata 75, Corsi 58, Copia altrove 39 (agente A,
-attacchi 108); `prova-addon-tutti.js` 66/66 su sito nuovo e su sito aggiornato dalla 1.10.0. Dettaglio in `docs-sviluppo/addon/<nome>.md`.
+attacchi 108); `prova-addon-tutti.js` 68/68 su sito nuovo e su sito aggiornato dalla 1.10.0 (salva una persona nelle Prenotazioni:
+il difetto delle pagine vuote, trovato dall'agente del manuale). Manuale d'uso con la Parte seconda (capitoli 32-40) in due PDF:
+`manuale-uso.pdf` 1889 KB (11 KB di margine: la prossima aggiunta non ci sta) e `manuale-uso-addon.pdf` 1330 KB; sito di plumeCMS in
+cinque parti 87/87 (server a 2 MB). Dettaglio in `docs-sviluppo/addon/<nome>.md`.
 Correzioni della newsletter (agente, `prova-newsletter-difetti.js` 37/37), file riservati e "Dopo la conferma, dai questo file"
 (`prova-omaggio.js` 27/27, attacchi gruppo 27), Scegli dai Media e og:image intero con misure (manuale tecnico 33-34). Attacchi
 261/261, install 37/37 radice e cartella dallo zip, aggiornamento 1.10.0 -> 2.0.0 12/13 (il KO vuole un sito di prima della 1.4.0:
@@ -339,6 +342,7 @@ Errori veri, già pagati. Non ripeterli.
 | `quanto-foto.py` con due file | vuole due **cartelle** di schermate, non due file; senza differenze non stampa niente |
 | `prova-install.js` in cartella | la base è `http://127.0.0.1:<porta>/test` e il quinto argomento resta vuoto (il quinto è per il CMS in una sottocartella con il sito nella radice) |
 | Un `fieldset` o un `<code>` con `white-space:nowrap` in una pagina del pannello | il fieldset non si stringe sotto il suo contenuto e la pagina scorre di lato al telefono: dalla 2.0.0 `admin.css` mette `fieldset{min-width:0}` e manda a capo i codici nelle tabelle |
+| Una variabile in cima a un file di widget (`$r`, `$f`, `$file`) | il file si caricava nello spazio di `editor_carica_widget_esterni()` e ne sovrascriveva il registro: con una persona nelle Prenotazioni tutte le pagine del sito uscivano vuote (2.0.0, trovato dall'agente del manuale, non dalle prove degli addon). Ora ogni file si carica in una funzione sua; le prove degli addon mettono dati veri prima di guardare le pagine |
 | Fidarsi del resoconto di un agente | è successo che un agente dichiarasse lavoro mai scritto su disco. Si controllano i file veri e si rifanno le prove |
 
 ## Tono con l'utente

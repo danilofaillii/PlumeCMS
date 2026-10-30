@@ -129,7 +129,7 @@ async function contrastoParole(pg) {
   ok('Funzionalità (1.7.0): il blocco del sito su misura, con la schermata', await v.locator('#su-misura img[src*="su-misura.webp"]').count() === 1 && /Sostituisci/.test(await v.locator('#su-misura').innerText()));
   ok('Funzionalità (1.6.0): il blocco del riquadro in fondo agli articoli, con la schermata', await v.locator('#fine-articolo img[src*="fine-articolo.webp"]').count() === 1 && /Aggiungi sempre alla fine/.test(await v.locator('#fine-articolo').innerText()));
   ok('Funzionalità (1.5.0): il blocco dei social, con l\'email del mattino', await v.locator('#social img[src*="social.webp"]').count() === 1 && /pronti ogni mattina/.test(await v.locator('#social').innerText()));
-  ok('Funzionalità: 201 attacchi respinti, non più 177', /201 attacchi/.test(await v.locator('#sicurezza').innerText()));
+  ok('Funzionalità (2.0.0): più di 500 attacchi respinti, addon compresi', /più di 500 attacchi, addon compresi/.test(await v.locator('#sicurezza').innerText()));
   ok('favicon del sito', await v.locator('link[rel=icon][href*="favicon.png"]').count() === 1);
 
   // "Installalo in 5 minuti" (pagina Installazione): cosa serve prima e il carosello delle cinque schermate vere
@@ -201,7 +201,7 @@ async function contrastoParole(pg) {
   await v.goto(B + '/documentazione/', { waitUntil: 'networkidle' });
   ok('Documentazione (1.6.4): due manuali, il primo è il manuale d\'uso', /Due manuali/.test(await v.locator('body').innerText()) && await v.locator('a[href$="/scarica/manuale-uso/"]').count() >= 1);
   await v.goto(B + '/domande-frequenti/', { waitUntil: 'networkidle' });
-  ok('Domande frequenti (1.6.0): lo stesso invito sotto tutti gli articoli, e i 31 capitoli', /stesso invito sotto tutti gli articoli\?/.test(await v.locator('body').innerText()) && /Trentuno capitoli/.test(await v.locator('body').textContent()));
+  ok('Domande frequenti: lo stesso invito sotto tutti gli articoli; i quaranta capitoli e gli addon (2.0.0)', /stesso invito sotto tutti gli articoli\?/.test(await v.locator('body').innerText()) && /Quaranta capitoli/.test(await v.locator('body').textContent()) && /Cosa sono gli addon\?/.test(await v.locator('body').innerText()));
   ok('Domande frequenti (1.5.0): i social', /Mi aiuta anche con i social\?/.test(await v.locator('body').innerText()));
   ok('Domande frequenti (1.4.2): la guida per imparare a usarlo', /una guida per imparare a usarlo/.test(await v.locator('body').innerText()));
   ok('nessun errore JavaScript sul sito', errV.length === 0, errV);

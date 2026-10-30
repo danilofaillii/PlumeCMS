@@ -2937,6 +2937,11 @@ spento finché l'amministratore non lo accende da **Impostazioni > Addon**.
 | filtro `sitemap_voci($voci)` | `includes/seo.php:878` | Vetrina: negozio e prodotti nella sitemap (e quindi nella coda IndexNow) |
 
 - La pagina Widget dice "addon <nome>" come origine (`editor_registra_widget()`, `includes/editor-controlli.php`).
+- `editor_carica_widget_esterni()` carica ogni file dei widget dentro una funzione anonima statica: le variabili in cima a
+  un file di widget (di un modulo o di un addon) non toccano più `$r`, `$f` e `$file` del caricatore. Prima un `$r` nel
+  widget delle Prenotazioni sovrascriveva il registro e tutte le pagine del sito uscivano vuote.
+- Le pagine degli addon hanno anche `assets/css/contenuti.css` (i riquadri `.sc-scatola`), da `admin-header.php`; le tabelle
+  in un riquadro stretto stanno in `<div class="ad-tabella">` e scorrono lì dentro.
 - Dal web, `addon/*/includes|sql|docs`, ogni `.php` di `addon/` e `moduli/addon-attivi.json` danno 403: `.htaccess`, gli esempi in `install/esempi/` e il router delle prove.
 
 **Gli otto addon.** Il dettaglio di ognuno (tabelle, funzioni con file:riga, sicurezza, limiti) sta in `docs-sviluppo/addon/<nome>.md`.
