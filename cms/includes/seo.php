@@ -874,7 +874,8 @@ function seo_sitemap_voci(): array {
             foreach ($articoli as $a) if (in_array($c['slug'], $a['categorie'], true)) { $voci[] = ['loc' => SITO_URL . "/category/{$c['slug']}/", 'lastmod' => $a['modificato'], 'tipo' => 'categorie', 'immagine' => '']; break; }
         }
     }
-    return $voci;
+    // 2.0.0: gli indirizzi dei moduli e degli addon (per esempio le schede dei prodotti della Vetrina), nello stesso formato.
+    return (array)cms_filtro('sitemap_voci', $voci);
 }
 
 function seo_sitemap_xml(array $voci): string {
