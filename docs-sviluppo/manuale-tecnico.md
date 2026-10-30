@@ -1409,10 +1409,15 @@ All'invio (`form_ricevi()`, `includes/form.php:225-275`), in ordine:
 4. captcha (prova di lavoro fatta dal browser, 15.4);
 5. limite di invii per IP;
 6. salvataggio dell'invio;
-7. iscrizione alla lista scelta, con o senza doppio consenso;
+7. iscrizione alla lista scelta, con o senza doppio consenso (`form_iscrivi()`, `includes/form.php:316`). Dalla 1.11.0
+   con il doppio consenso la persona entra **solo** nella lista del form, alla conferma, e l'email di conferma dice per
+   cosa è (il titolo del form, o il suo nome, o il nome della lista). Prima del salvataggio, se il form chiede la conferma e
+   da quell'IP sono arrivate troppe richieste di iscrizione, il form risponde con l'errore `troppi` (prima: grazie e
+   nessuna email);
 8. avviso via email, uno per destinatario (`form_avviso_destinatari()`, `includes/form.php:152`): gli indirizzi della
    colonna `avviso_a` del form, oppure, se è vuota, `posta_notifica_email()` (Impostazioni, Posta in uscita);
-9. innesco dei flussi della newsletter con origine `form`.
+9. innesco dei flussi della newsletter con origine `form`: subito per chi è attivo; per chi deve ancora confermare si
+   ricorda in `newsletter_inneschi_attesa` e parte alla conferma (dalla 1.11.0, 15.5).
 
 **A chi va l'avviso (dalla 1.9.0).** Colonna `moduli.avviso_a` (VARCHAR 500), aggiunta da `form_schema()` anche alle tabelle
 nate prima (`includes/form.php:64`). In pannello è la casella "Manda l'avviso a" del riquadro Dopo l'invio
@@ -1438,7 +1443,22 @@ formule, capitolo 18.10).
 `includes/posta.php`, pagina Impostazioni > Configurazione email.
 - Con il server SMTP impostato (`posta_smtp`) il CMS usa un client SMTP scritto in casa: SSL sulla porta 465 o
   STARTTLS sulla 587, con autenticazione se c'è un utente.
-- Senza SMTP usa `mail()` di PHP.
+- Senza SMTP usa `mail()` di PHP. Dalla 1.11.0 con il From del mittente scritto in Posta in uscita (anche senza server
+  SMTP; altrimenti l'utente; altrimenti `noreply@` il dominio del sito: `posta_mittente()`, `includes/posta.php:115`) e il
+  Return-Path con `-f` (se `mail()` lo rifiuta si riprova senza). Prima le email partivano senza From.
+- Dalla 1.11.0 ogni email HTML esce in `multipart/alternative`: la parte di testo semplice la scrive `posta_testo_da_html()`
+  (`includes/posta.php:129`: paragrafi a capo, link come "testo (indirizzo)", niente immagini né testo di anteprima
+  nascosto), il corpo MIME lo compone `posta_mime()` (`:158`), tutto in base64, uguale per SMTP e `mail()`.
+- `posta_invia($a, $oggetto, $corpo, $intestazioni, $tipo)` (`includes/posta.php:183`): il quinto argomento è il tipo per
+  il registro (`campagna`, `flusso`, `conferma`, `avviso_form`, `prova`, `social`; `altro` di partenza).
+- **Registro della posta (dalla 1.11.0).** Ogni spedizione lascia una riga in `posta_registro` (quando, tipo, esito,
+  errore; nessun indirizzo), tabella creata da `posta_registro_schema()` (`:53`). `posta_inviate($secondi)` (`:85`) conta
+  le email partite: è il conto dei limiti della newsletter (15.5). Il cron toglie le righe oltre 60 giorni
+  (`posta_pulisci_registro()`, `:100`).
+- **Esito (dalla 1.11.0).** Dopo `posta_invia()`, `posta_esito()` (`:40`) dice `ok`, `rimbalzo` (il server SMTP ha
+  rifiutato il destinatario al `RCPT TO` con un 5xx), `temporaneo` (4xx al `RCPT TO`) o `errore` (connessione, accesso,
+  server). Il rifiuto del destinatario è l'eccezione `PostaRifiutata` (`:47`) con il codice SMTP; con `mail()` l'esito è solo
+  `ok` o `errore`.
 - Gli avvisi (form, sicurezza) vanno all'indirizzo `notifica_email`.
 - La password SMTP è salvata nel database insieme alle altre impostazioni della posta.
 
@@ -1465,24 +1485,78 @@ nel nucleo. Un modulo del sito che ha moduli suoi li porta così:
 
 `includes/newsletter.php` e `includes/newsletter-flussi.php`, gruppo Newsletter e contatti.
 
-**Iscritti e liste.** Stati: in attesa, attivo, uscito. Un iscritto può stare in più liste.
+**Iscritti e liste.** Stati: in attesa, attivo, uscito, rimbalzato (dalla 1.11.0). Un iscritto può stare in più liste.
+Colonne della 1.11.0 in `newsletter_iscritti`: `errori_di_fila`, `ultimo_errore`, `rimbalzato_at`, aggiunte da
+`newsletter_schema()` (`includes/newsletter.php:38`) anche alle tabelle nate prima. La migrazione "chi non sta in nessuna
+lista entra nella principale" gira una volta sola, quando la lista principale nasce: dalla 1.11.0 chi aspetta la conferma di
+un form non sta in nessuna lista e non deve finire nella principale.
 
-**Doppio consenso.** L'iscrizione salva l'indirizzo in attesa con un token e manda l'email di conferma; il clic
-su `/newsletter-conferma/` lo attiva e fa partire i flussi "iscrizione" e "lista".
+**Doppio consenso (dalla 1.11.0).** `newsletter_richiesta($dati, $opzioni)` (`includes/newsletter.php:276`) salva la
+persona (una nuova in attesa; chi c'è già resta nel suo stato, anche uscito o rimbalzato, fino alla conferma) e scrive la
+richiesta in `newsletter_conferme` (token sha256, iscritto, lista, form d'origine, scadenza a 7 giorni). Opzioni: `lista`
+(predefinita la principale: il modulo della newsletter), `form`, `cosa` (per cosa si iscrive, nelle frasi dell'email),
+`oggetto`, `testo`, `pulsante`, `fonte`. Il modulo della newsletter (`api/modulo.php`) la chiama senza opzioni, come prima;
+un form con conferma passa la sua lista, il suo id e il suo titolo, e la persona non entra più nella principale. Errori:
+`troppi` (5 richieste l'ora dallo stesso IP: `newsletter_troppe_richieste()`, `:254`) e `posta`.
+
+Il clic su `/newsletter-conferma/` chiama `newsletter_conferma($token)` (`:384`, vero o falso, per la pagina del sito), che
+usa `newsletter_conferma_esito($token)` (`:331`): un link vale una volta sola; la persona diventa attiva (consenso adesso,
+errori azzerati, via dalla lista di soppressione: ha confermato di sua volontà), entra nella lista della richiesta (i flussi
+"lista" partono lì, `newsletter_in_lista()`, `:187`), il flusso "iscrizione" parte solo per la lista principale, per chi non
+era attivo partono anche i flussi delle liste in cui stava già, e partono gli inneschi rimasti in attesa. I link mandati prima
+della 1.11.0 (token nella riga dell'iscritto) valgono ancora, con la lista principale.
+
+**Aggancio alla conferma.** `newsletter_conferma_esito()` ritorna null oppure
+`['iscritto' => id, 'email' => ..., 'lista' => id, 'form' => id del form d'origine (0 dal modulo della newsletter), 'nuovo' => bool]`.
+Lo stesso array arriva all'evento dei moduli e dei temi `newsletter_confermata` (`cms_evento`, capitolo 17) e, nella stessa
+richiesta, a `newsletter_ultima_conferma()` (`:389`). Per consegnare qualcosa a chi conferma da un certo form: un modulo
+dichiara `'eventi' => ['newsletter_confermata' => function (array $e) { if ($e['form'] === 3) { ... } }]`, oppure la pagina di
+conferma legge `newsletter_ultima_conferma()` dopo `newsletter_conferma()`.
+
+**Inneschi in attesa (dalla 1.11.0).** `newsletter_flussi_innesco()` (`includes/newsletter-flussi.php:357`) fa partire i
+flussi solo per chi è attivo. Prima un cammino partiva anche per chi era in attesa, il giro lo fermava (`fermato`) e la
+chiave unica (flusso, iscritto) non lo faceva più ripartire alla conferma. Ora l'innesco `form` di chi deve ancora
+confermare si ricorda in `newsletter_inneschi_attesa` (`newsletter_innesco_in_attesa()`, `includes/newsletter.php:399`) e
+parte alla conferma.
 
 **Uscita.** Ogni email ha un link di uscita firmato (HMAC) e le intestazioni `List-Unsubscribe` e
 `List-Unsubscribe-Post` (uscita con un clic dai programmi di posta). L'uscita vera avviene con un POST su
 `/newsletter-esci/`. Chi esce perde anche le email ancora in coda.
 
-**Campagne.** Stati: bozza, programmata, in invio, inviata. Nell'oggetto e nel testo `{nome}` diventa il nome
-dell'iscritto.
+**Cancella dati (dalla 1.11.0).** `newsletter_cancella_dati($id)` (`:473`, pulsante "Cancella dati" in Iscritti,
+`admin/newsletter.php:155`) toglie l'iscritto da tutte le tabelle della newsletter (`newsletter_togli_iscritti()`, `:457`:
+coda, liste, richieste di conferma, inneschi in attesa, aperture e clic, cammini nei flussi), gli invii dei form con la sua
+email (`moduli_invii`) e mette l'impronta sha256 dell'email in minuscolo in `newsletter_soppressi`. Il registro della posta
+non ha indirizzi.
 
-**Invio.** Dal cron (`cron-newsletter.php`, ogni 5 minuti), `newsletter_invia_giro()`:
+**Importazione (dalla 1.11.0).** `newsletter_importa_csv($file, $lista, $flussi)` (`:526`): fonte `import`, consenso con la
+data della colonna CONSENSO (o DATA CONSENSO, OPTIN...; `newsletter_data_csv()`, `:509`), altrimenti NULL; si saltano chi è
+nella lista di soppressione, chi è uscito e chi è rimbalzato (anche dalla lista). I flussi della lista partono solo con la
+spunta "Fai partire i flussi per gli importati" (`admin/newsletter.php:266`, spenta di partenza). Prima: tutti attivi con
+il consenso di adesso, fonte `brevo`, flussi sempre.
+
+**Campagne.** Stati: bozza, programmata, in invio, inviata. Nell'oggetto e nel testo `{nome}` diventa il nome
+dell'iscritto. Vanno solo agli attivi.
+
+**Invio.** Dal cron (`cron-newsletter.php`, ogni 5 minuti), `newsletter_invia_giro()` (`:701`):
 - un solo invio alla volta (lock di MySQL);
 - avvia le campagne programmate arrivate alla loro ora;
-- al massimo 40 email per giro, entro il limite orario (predefinito 150 l'ora);
+- al massimo 40 email per giro, entro il limite orario (predefinito 150 l'ora) e, se impostato, quello al giorno (ultime 24
+  ore, `per_giorno` in `newsletter_config()`, `:228`; 0 = nessuno). Dalla 1.11.0 i limiti contano **tutte** le email del CMS
+  dal registro della posta (15.3), non solo le campagne; il primo giro dopo l'aggiornamento conta anche la coda;
 - tre tentativi per indirizzo, poi errore; si ferma dopo 3 errori senza nessun invio riuscito;
 - con i posti rimasti, manda le email dei flussi.
+
+**Rimbalzi (dalla 1.11.0).** Dopo ogni email di campagna o di flusso `newsletter_esito_invio()` (`:449`) legge
+`posta_esito()`: `ok` azzera `errori_di_fila`; `rimbalzo` (5xx al `RCPT TO`) chiama `newsletter_rimbalzato()` (`:438`):
+stato `rimbalzato`, coda saltata, nessun altro tentativo; i flussi lo fermano al giro dopo; `temporaneo` (4xx) aggiunge un
+errore di fila: da 3 in su l'iscritto resta attivo ma il pannello lo segnala (avviso in cima, filtro "Con 3 errori di fila",
+nota nella riga). Gli errori del server (connessione, accesso) non contano per l'indirizzo. Niente lettura di caselle IMAP:
+i rimbalzi che arrivano dopo, come email, non si vedono.
+
+**Pulizia (dalla 1.11.0).** `newsletter_pulizia()` (`:490`), dal cron della newsletter (`cron_newsletter()`,
+`includes/cron.php:121`), una volta al giorno (impostazione `newsletter_pulizia_giorno`): registro della posta oltre 60 giorni, richieste di conferma scadute, iscritti
+ancora in attesa con la conferma scaduta da più di 30 giorni, inneschi in attesa oltre 40 giorni.
 
 **Flussi automatici.** Un flusso parte da un innesco (iscrizione, lista, form, apertura, clic, inattività) e
 segue nodi: email, attesa, bivio (secondo una condizione), fine. Le persone dentro un flusso stanno in
@@ -1491,6 +1565,9 @@ segue nodi: email, attesa, bivio (secondo una condizione), fine. Le persone dent
 **Statistiche.** Aperture (pixel) e clic (link che passano da `api/nl.php`, firmati) si registrano in
 `newsletter_eventi`, solo per le email vere e non per quelle di prova. La pagina Statistiche mostra campagne,
 clic per link, iscritti per mese.
+
+Prove: `prove/prova-newsletter-difetti.js` (dalla 1.11.0, con `prove/smtp-finto.py ... rimbalzi`,
+`prove/sendmail-finto.py` e `prove/newsletter-cli.php`).
 
 ---
 
@@ -2028,7 +2105,8 @@ adesso** della pagina Log cron con `da = 'pannello'`.
 Scrive in `logs/cron-daily.log`, che si legge da Impostazioni > Log cron.
 
 **`cron-newsletter.php`**, ogni 5 minuti: svuota la coda IndexNow (log in `logs/seo.log`) e fa un giro della
-newsletter (log in `logs/newsletter.log`, capitolo 15.5).
+newsletter (log in `logs/newsletter.log`, capitolo 15.5); dalla 1.11.0, una volta al giorno, prima del giro, la pulizia
+(`newsletter_pulizia()`: registro della posta oltre 60 giorni, iscritti mai confermati da oltre 30 giorni).
 
 Dal web i cron rispondono 403, a meno che:
 - `CMS_CRON_TOKEN` (almeno 32 caratteri) sia definito e la richiesta lo porti come `?token=` o intestazione

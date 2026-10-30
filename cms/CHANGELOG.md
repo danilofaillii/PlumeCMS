@@ -2,6 +2,38 @@
 
 Il prodotto si chiama **plumeCMS** (nome scelto il 26 ottobre 2026; prima, per poche ore, "CarbonaraCMS", e ancora prima il provvisorio "Officina": gli zip vecchi si chiamavano `officina-*` e `carbonaracms-*`).
 
+## 1.11.0 (in preparazione)
+
+Correzioni della newsletter (Newsletter e form):
+
+- **Un form con la doppia conferma non iscrive più alla newsletter.** Chi compila un form che mette in una lista con la
+  conferma riceve un'email che dice per cosa conferma (il titolo del form, per esempio «Scrivici»), non "la newsletter", ed
+  entra solo nella lista del form, e solo quando conferma. Il modulo della newsletter funziona come prima.
+- **I flussi "Compila un form" non si perdono più** quando il form chiede la conferma: partono quando la persona conferma
+  (prima, se il cron passava prima della conferma, il flusso non partiva mai più).
+- **Il limite di email ogni ora conta tutte le email del sito**: conferme, avvisi dei form, flussi e campagne, non solo le
+  campagne. Nuova casella in Newsletter, Impostazioni: **Email al massimo al giorno** (0 = nessun limite). Sotto le due
+  caselle si legge quante email sono partite nell'ultima ora e nelle ultime 24 ore.
+- **Email con il mittente giusto anche senza server SMTP**: con `mail()` di PHP le email partono dall'indirizzo del
+  mittente scritto in Impostazioni, Posta in uscita (prima partivano senza mittente e finivano spesso nello spam). Ogni email
+  ha anche la versione in testo semplice, per i programmi di posta che non mostrano l'HTML.
+- **"Cancella dati" cancella tutto**: oltre all'iscrizione, anche aperture e clic, i passaggi nei flussi e gli invii dei
+  form con quell'email. L'indirizzo resta in una lista di esclusione (come impronta, non leggibile): un'importazione non lo
+  rimette dentro. Se la persona si iscrive di nuovo da sola e conferma, torna dentro.
+- **Importazione**: i contatti importati hanno la fonte "import" e la data del consenso del file (colonna CONSENSO), o
+  nessuna data; chi è uscito, è rimbalzato o ha chiesto di cancellare i dati si salta. I flussi automatici non partono per
+  gli importati, a meno della spunta **Fai partire i flussi per gli importati**.
+- **Indirizzi che non esistono**: se il server di posta rifiuta un indirizzo per sempre, l'iscritto diventa **rimbalzato**
+  e non riceve più niente (né campagne né flussi). Un indirizzo che dà tre errori temporanei di fila resta attivo ma si
+  segnala in cima a Iscritti e liste ("Vedi chi", filtro "Con 3 errori di fila"). Nuovo riquadro "rimbalzati" e filtro
+  Rimbalzati.
+- Un form con la conferma che riceve troppe richieste dallo stesso indirizzo in un'ora ora lo dice ("Hai già inviato diverse
+  richieste"), invece di ringraziare senza mandare l'email.
+- Una volta al giorno il cron toglie chi non ha confermato l'iscrizione da più di 30 giorni dalla scadenza del link, e il
+  registro delle email più vecchio di 60 giorni.
+- Per chi fa moduli: alla conferma riuscita parte l'evento `newsletter_confermata` con l'iscritto, la lista e il form
+  d'origine (`newsletter_conferma_esito()`, manuale tecnico 15.5).
+
 ## 1.10.0 (30 ottobre 2026) - Sette widget per le attività
 
 - **Scelti da Danilo** fra le proposte dell'analisi dei widget. Nell'editor, linguetta Widget:

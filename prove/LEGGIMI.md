@@ -16,6 +16,22 @@ Installa plumeCMS da zero con il browser (Playwright) e controlla sito e pannell
 5. Atteso (1.4.0): 37 su 37, in radice e in cartella (base `http://127.0.0.1:<porta>/test` con `CMS_CARTELLA=/test`), anche
    l'icona di partenza a `/favicon.ico` e nel `<link rel="icon">`. Fino alla 1.3.1 l'unico KO era il 404 della favicon.
 
+## prova-newsletter-difetti.js
+
+I difetti della newsletter corretti nella 1.11.0, con un controllo (o più) per punto: doppia conferma dei form (solo la lista
+del form, email che dice per cosa, aggancio `newsletter_conferma_esito()`), flusso "Compila un form" che parte alla
+conferma, registro di tutte le email con il limite orario e giornaliero, From, Return-Path e testo semplice anche con
+`mail()`, Cancella dati completo con la lista di soppressione, importazione (fonte, consenso, usciti, flussi solo con la
+spunta), rimbalzi (550 e tre 451 di fila), errore "troppe richieste" del form, pulizia del cron.
+
+1. Un CMS installato con il kit Attività (`prove/prova-kit.js ... attivita ...`): la pagina Contatti ha il form.
+2. Il server di posta finto con i rimbalzi: `python3 -I prove/smtp-finto.py <porta smtp> <cartella posta> rimbalzi`
+   (rifiuta con 550 gli indirizzi con "rimbalza" e con 451 quelli con "rinvia").
+3. `node prove/prova-newsletter-difetti.js <base> <utente> <password> <porta smtp> <cartella posta> <cartella del CMS>`.
+   Usa `prove/newsletter-cli.php` (query e giri da riga di comando) e, per `mail()`, `prove/sendmail-finto.py` come
+   `sendmail_path`. Lascia dati di prova: va su un sito da buttare.
+4. Atteso (1.11.0): 37 su 37. Sullo stesso sito con il codice della 1.10.0: 7 su 37 (i 30 KO sono i difetti).
+
 ## tools/sicurezza-prova.js
 
 

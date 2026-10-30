@@ -205,7 +205,7 @@ require_once __DIR__ . '/includes/admin-header.php';
   <div><b><?= $numeri['uscito'] ?></b>usciti</div>
   <div><b><?= $numeri['rimbalzato'] ?></b><a href="?scheda=iscritti&amp;stato=rimbalzato">rimbalzati</a></div>
 </div>
-<?php if ($numeri['segnalati']): ?><p class="nl-avviso" role="status"><b><?= (int)$numeri['segnalati'] ?></b> <?= $numeri['segnalati'] === 1 ? 'iscritto ha' : 'iscritti hanno' ?> avuto tre errori temporanei di fila: ricevono ancora, ma conviene controllare l'indirizzo. <a href="?scheda=iscritti&amp;stato=errori">Vedi chi</a>.</p><?php endif; ?>
+<?php if ($numeri['segnalati']): ?><p class="nl-avviso" role="status"><b><?= (int)$numeri['segnalati'] ?></b> <?= $numeri['segnalati'] === 1 ? 'iscritto ha' : 'iscritti hanno' ?> avuto tre errori temporanei di fila: <?= $numeri['segnalati'] === 1 ? 'riceve' : 'ricevono' ?> ancora, ma conviene controllare l'indirizzo. <a href="?scheda=iscritti&amp;stato=errori">Vedi chi</a>.</p><?php endif; ?>
 
 <nav class="nl-schede">
   <?php foreach (['campagne' => 'Campagne', 'iscritti' => 'Iscritti', 'liste' => 'Liste', 'impostazioni' => 'Impostazioni'] as $k => $v): ?>
