@@ -94,7 +94,7 @@ Iscrizione: <b><?= h(MEMBRI_MODI[$cfg['modo']]) ?></b> (si cambia in <a href="<?
   <?php if (!$righe): ?>
     <p style="padding:1rem;margin:0;color:var(--text-muted)">Ancora nessuno<?= $stato || $cerca !== '' ? ' con questo filtro' : '' ?>. Chi si iscrive da <code>/iscriviti/</code> compare qui.</p>
   <?php else: ?>
-    <table class="admin-table" id="mb-elenco" style="width:100%">
+    <div class="ad-tabella"><table class="admin-table" id="mb-elenco" style="width:100%">
       <thead><tr><th>Nome</th><th>Email</th><th>Stato</th><th>Iscritto</th><th>Ultimo accesso</th><th></th></tr></thead>
       <tbody>
       <?php foreach ($righe as $r): $badge = ['attivo' => 'badge-published', 'sospeso' => 'badge-draft', 'in_attesa' => 'badge-scheduled', 'invitato' => 'badge-scheduled', 'da_confermare' => 'badge-draft'][$r['stato']] ?? 'badge-draft'; ?>
@@ -119,7 +119,7 @@ Iscrizione: <b><?= h(MEMBRI_MODI[$cfg['modo']]) ?></b> (si cambia in <a href="<?
         </tr>
       <?php endforeach; ?>
       </tbody>
-    </table>
+    </table></div>
   <?php endif; ?>
   </div></div>
 </div>

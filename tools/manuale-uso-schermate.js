@@ -4,8 +4,7 @@
 // uso: [CMS_DIR_MANUALE=<cartella del sito delle schermate>] [SU_MISURA_BASE=<un sito su misura, stesso utente>] node tools/manuale-uso-schermate.js <base> <utente> <password> [solo un capitolo, es. 04]
 // Senza SU_MISURA_BASE mancano le due foto del sito su misura (02-su-misura-home, 07-sostituisci).
 // Scrive cms/docs/immagini/manuale-uso/<capitolo>-<nome>.jpg (JPEG: il PDF del manuale deve restare sotto 1900 KB).
-// 2.0.0: i capitoli 31n (le novità della 2.0.0 nei capitoli di prima: file riservati, form che dà un file, newsletter, Scegli dai
-// Media) e 32-40 (la Parte seconda, gli addon) girano dopo tutti gli altri e vogliono il server di posta finto:
+// 2.0.0: i capitoli 31n (le novità della 2.0.0 nei capitoli di prima: file riservati, form che dà un file, Scegli dai Media) e 32-40 (la Parte seconda, gli addon) girano dopo tutti gli altri e vogliono il server di posta finto:
 //   python3 -I prove/smtp-finto.py <porta> <cartella> &   e   POSTA_MANUALE=<porta>:<cartella>
 // Per rifare solo alcuni capitoli, esattamente quelli: SOLO_CAPITOLI=31n,32,33 (le foto degli altri restano come sono).
 const { chromium } = require('playwright');
@@ -675,13 +674,46 @@ const addonPag = (a, pag) => vai('addon-pagina.php?a=' + a + '&p=' + pag);
 // Nelle email il sito ha il suo indirizzo vero (sito_url, https://www.studioprova.it): lo si apre dal server di prova.
 const qui = (u) => u.replace(/^https?:\/\/[^/]+/, B);
 const flash = async () => (await p.locator('.flash').first().innerText().catch(() => '')).trim();
+// La posta del sito sul server finto (una volta per giro), perché le email di conferma arrivino davvero.
+let postaPronta = false;
+async function postaFinta() {
+  if (postaPronta) return;
+  if (!POSTA_DIR) throw new Error('serve POSTA_MANUALE=<porta>:<cartella> (prove/smtp-finto.py)');
+  await vai('impostazioni.php');
+  await p.fill('#smtp_host', '127.0.0.1'); await p.fill('#smtp_porta', POSTA_PORTA); await p.selectOption('#smtp_sicurezza', 'nessuna');
+  await p.fill('[name=smtp_mittente]', 'negozio@studioprova.it').catch(() => {});
+  await Promise.all([p.waitForNavigation(), p.click('form:has(input[value=save_posta]) button[type=submit]')]);
+  postaPronta = true;
+}
 // Un visitatore, in una finestra sua (senza l'accesso al pannello).
 async function visitatore(telefono = false) {
   const c = await p.context().browser().newContext(telefono ? { viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true, deviceScaleFactor: 1, locale: 'it-IT', timezoneId: 'Europe/Rome' }
     : { viewport: { width: 1200, height: 800 }, locale: 'it-IT', timezoneId: 'Europe/Rome', deviceScaleFactor: 1 });
+  // Il sito risponde con il suo indirizzo vero (sito_url, https://www.studioprova.it) nei rimandi: per il visitatore quell'indirizzo
+  // si serve dal server di prova, e il visitatore resta sempre lì (un solo dominio, gli stessi cookie).
+  await c.route(/^https:\/\/www\.studioprova\.it\//, async (r) => {
+    const ck = (await c.cookies('https://www.studioprova.it/')).map(x => x.name + '=' + x.value).join('; ');
+    const h = { ...r.request().headers() }; delete h.cookie; if (ck) h.cookie = ck;
+    if (h.origin) h.origin = B; if (h.referer && h.referer.startsWith('https://www.studioprova.it/')) h.referer = qui(h.referer); // il controllo dell'origine dei moduli guarda il server vero
+    const risposta = await r.fetch({ url: qui(r.request().url()), headers: h, maxRedirects: 0 });
+    const dove = risposta.headers().location; if (process.env.DBG && r.request().method() === 'POST') console.log('POST', r.request().url(), risposta.status(), dove, JSON.stringify(risposta.headersArray().filter(x => /cookie/i.test(x.name))), (r.request().postData() || '').slice(0, 200));
+    // I cookie (il carrello, l'accesso dei membri) si mettono a mano: una risposta finta non li porta con sé.
+    const cookie = risposta.headersArray().filter(x => x.name.toLowerCase() === 'set-cookie').map(x => x.value.split(';'));
+    for (const [nv, ...attr] of cookie) {
+      const [n, ...v] = nv.split('='); const scade = attr.find(a => /^\s*expires=/i.test(a));
+      const ts = scade ? Date.parse(scade.split('=')[1]) / 1000 : -1;
+      if (ts > 0 && ts < Date.now() / 1000) await c.clearCookies({ name: n.trim() });
+      else await c.addCookies([{ name: n.trim(), value: v.join('='), url: 'https://www.studioprova.it/' }]);
+    }
+    // Chromium non intercetta il rimando di una risposta finta: il rimando diventa una pagina che va avanti da sola.
+    if (risposta.status() >= 300 && risposta.status() < 400 && dove) {
+      await r.fulfill({ status: 200, headers: { 'content-type': 'text/html; charset=utf-8' }, body: '<script>location.replace(' + JSON.stringify(new URL(dove, r.request().url()).href) + ')</script>' });
+    } else await r.fulfill({ response: risposta });
+  });
   const v = await c.newPage(); v.on('dialog', d => d.accept());
   return v;
 }
+const SITO = 'https://www.studioprova.it';
 async function fotoDi(q, nome, opz = {}) {
   if (SOLO && !nome.startsWith(SOLO)) return;
   if (opz.segni) await segna(q, opz.segni);
@@ -691,7 +723,7 @@ async function fotoDi(q, nome, opz = {}) {
   console.log(nome);
 }
 // Una pagina nuova dall'editor, con un titolo e un widget sotto il titolo; ritorna l'id della pagina.
-async function paginaConWidget(titolo, slug, tipo, imposta) {
+async function paginaConWidget(titolo, slug, tipo, imposta, testo) {
   await vai('index.php');
   await Promise.all([p.waitForNavigation(), p.click('.db-azioni a:has-text("+ Pagina")')]);
   await apriEditor(p.url().split('/admin/')[1]);
@@ -703,7 +735,12 @@ async function paginaConWidget(titolo, slug, tipo, imposta) {
   if (await p.locator('#ed-dialogo-impostazioni[open]').count()) throw new Error('la pagina ' + slug + ' non si salva: ' + (await p.locator('#ed-dialogo-impostazioni').innerText()).slice(0, 300));
   await tela().locator('.ed-w-titolo').first().dblclick(); await dorme(500);
   await scriviCtl('Titolo', titolo);
-  await widget(tipo);
+  if (testo) { // il testo di partenza della pagina, riscritto
+    await tela().locator('.ed-w-testo').first().dblclick(); await dorme(500);
+    await p.locator('#ed-controlli .ql-editor').click(); await p.keyboard.press('Control+A');
+    await p.keyboard.type(testo); await dorme(500);
+  }
+  if (tipo) await widget(tipo);
   if (imposta) await imposta();
   return id;
 }
@@ -723,14 +760,10 @@ async function compilaForm(v, f, valori) {
   if (await f.locator('.captcha input[type=checkbox]').count()) await C2.captcha(f, v);
 }
 
-// 31n. Le novità della 2.0.0 nei capitoli di prima: file riservati e form che li dà (capitoli 18 e 22), newsletter (20),
-// Scegli dai Media (23). Esempio: Studio Prova regala la "Guida alla cura delle piante" a chi si iscrive.
+// 31n. Le novità della 2.0.0 nei capitoli di prima: file riservati e form che li dà (capitoli 18 e 22), Scegli dai Media (23).
+// La newsletter (capitolo 20) è cambiata solo a parole: niente foto, il PDF del manuale d'uso deve restare sotto 1900 KB. Esempio: Studio Prova regala la "Guida alla cura delle piante" a chi si iscrive.
 capitoli['31n'] = async () => {
-  // La posta: il server finto, perché la conferma arrivi davvero.
-  await vai('impostazioni.php');
-  await p.fill('#smtp_host', '127.0.0.1'); await p.fill('#smtp_porta', POSTA_PORTA); await p.selectOption('#smtp_sicurezza', 'nessuna');
-  await p.fill('[name=smtp_mittente]', 'negozio@studioprova.it').catch(() => {});
-  await Promise.all([p.waitForNavigation(), p.click('form:has(input[value=save_posta]) button[type=submit]')]);
+  await postaFinta();
   // Download: un PDF riservato.
   const pdf = path.join(require('os').tmpdir(), 'guida-piante.pdf');
   const t = await ctx.newPage(); await t.setContent('<h1>Guida alla cura delle piante</h1><p>Acqua, luce, rinvasi: tutto quello che serve.</p>'); await t.pdf({ path: pdf }); await t.close();
@@ -761,32 +794,28 @@ capitoli['31n'] = async () => {
   await pubblica();
   // Una persona compila, conferma dall'email e trova il file.
   const v = await visitatore();
-  await v.goto(B + '/guida-in-regalo/', { waitUntil: 'networkidle' });
+  await v.goto(SITO + '/guida-in-regalo/', { waitUntil: 'networkidle' });
   const f = v.locator('form[data-captcha]').first();
   await compilaForm(v, f, { nome: 'Lucia Bassi', email: 'lucia.bassi@esempio.it', messaggio: '' });
   let n0 = postaN();
-  await Promise.all([v.waitForNavigation(), f.locator('button[type=submit]').click()]);
+  await f.locator('button[type=submit]').click(); await v.waitForURL(/\/grazie\//); await v.waitForLoadState('networkidle');
   const conf = (await postaNuove(n0)).find(e => /lucia\.bassi/.test(e.a));
   const lk = conf && C2.link(conf).find(l => /\?t=[a-f0-9]{64}/.test(l));
   if (!lk) throw new Error('31n: non arriva l\'email di conferma');
   n0 = postaN();
-  await v.goto(qui(lk), { waitUntil: 'networkidle' });
-  await fotoDi(v, '31n-ecco-il-file', { clip: { x: 0, y: 0, width: 1200, height: 560 }, segni: [{ sel: 'a.btn[href*="/scarica/"]', n: 4 }] });
+  await v.goto(lk, { waitUntil: 'networkidle' });
+  // La pagina "Ecco il tuo file" non si fotografa: il PDF del manuale d'uso deve restare sotto 1900 KB.
+  if (!(await v.locator('a.btn[href*="/scarica/"]').count())) throw new Error('31n: dopo la conferma manca il pulsante Scarica');
   await postaNuove(n0);
   await v.request.get(qui(await v.locator('a.btn:has-text("Scarica")').getAttribute('href')));
   await v.context().close();
   // Download: chi l'ha ricevuto.
   await vai('scaricabili.php');
   await p.locator('tr#dl-guida-piante details.dl-consegne summary').click(); await dorme(300);
-  await foto('31n-chi', { sel: 'tr#dl-guida-piante', segni: [{ sel: 'tr#dl-guida-piante .dl-riservato', n: 1 }, { sel: 'tr#dl-guida-piante details.dl-consegne summary', n: 2 }] });
-  await foto('31n-giorni', { sel: '#dl-giorni', margine: 10 });
-  // La newsletter: i limiti di invio e i conteggi.
-  await vai('newsletter.php?scheda=impostazioni');
-  await p.fill('#per_giorno', '500');
-  await foto('31n-limiti', { sel: '.form-card:has(#per_giorno)', segni: [{ sel: '#per_ora', n: 1 }, { sel: '#per_giorno', n: 2 }] });
-  await Promise.all([p.waitForNavigation(), p.click('.form-card:has(#per_giorno) button.btn-primary')]);
-  await vai('newsletter.php?scheda=iscritti');
-  await foto('31n-iscritti', { clip: { x: 240, y: 56, width: 960, height: 560 }, segni: [{ sel: 'input[name=flussi_import]', n: 1 }, { sel: 'select[name=stato]', n: 2 }] });
+  // Solo la colonna del file (il PDF del manuale d'uso deve restare sotto 1900 KB: foto strette).
+  await p.evaluate(() => scrollTo(0, 0));
+  const riga = await p.locator('tr#dl-guida-piante td').first().boundingBox();
+  await foto('31n-chi', { clip: { x: riga.x - 12, y: riga.y - 12, width: riga.width + 24, height: riga.height + 24 }, segni: [{ sel: 'tr#dl-guida-piante .dl-riservato', n: 1 }, { sel: 'tr#dl-guida-piante details.dl-consegne summary', n: 2 }] });
   // SEO e AEO > Globale SEO: l'immagine social scelta dai Media (prima si carica in Media, 1200x630).
   const img = path.join(require('os').tmpdir(), 'condivisione-studio-prova.jpg');
   const g = await ctx.newPage(); await g.setViewportSize({ width: 1200, height: 630 });
@@ -799,15 +828,15 @@ capitoli['31n'] = async () => {
   await p.click('[data-scegli-media="#seo-og-immagine"]');
   await p.waitForSelector('dialog.pn-media .pn-media-voce'); await dorme(800);
   await p.fill('dialog.pn-media input[type=search]', 'condivisione'); await dorme(500);
-  // Il dialogo dei Media sta sopra a tutto (top layer): i segni non ci vanno sopra, la foto è senza numeri.
-  await fotoDi(p, '31n-scegli-media', { vista: true, clip: { x: 0, y: 0, width: 1200, height: 520 } });
+  // Il dialogo dei Media sta sopra a tutto (top layer): niente foto, la casella dice abbastanza.
   await p.locator('dialog.pn-media .pn-media-voce').first().click(); await dorme(300);
-  await foto('31n-immagine-social', { sel: '.form-group:has(#seo-og-immagine)', margine: 22, segni: [{ sel: '[data-scegli-media="#seo-og-immagine"]', n: 1 }, { sel: '#seo-og-immagine', n: 4 }] });
+  await foto('31n-immagine-social', { sel: '.form-group:has(#seo-og-immagine)', margine: 22, segni: [{ sel: '[data-scegli-media="#seo-og-immagine"]', n: 1 }, { sel: '#seo-og-immagine', n: 2 }] });
   await Promise.all([p.waitForNavigation(), p.click('form:has(#seo-og-immagine) button.btn-primary')]);
 };
 
 // Accende un addon da Impostazioni > Addon, come una persona; ritorna il messaggio verde.
 async function accendi(nome) {
+  await postaFinta();
   await vai('addon.php');
   const b = p.locator(`[data-addon="${nome}"] button[value=accendi]`);
   if (await b.count()) await Promise.all([p.waitForNavigation(), b.click()]);
@@ -854,13 +883,13 @@ capitoli['33'] = async () => {
   await foto('33-impostazioni', { clip: { x: 240, y: 56, width: 960, height: 1000 }, segni: [{ sel: '#pa-impostazioni [name=anticipo_ore]', n: 1 }, { sel: '#pa-impostazioni [name=limite_ore]', n: 2 }, { sel: '#pa-impostazioni [name=da_confermare]', n: 3 }, { sel: '#pa-impostazioni [name=avviso_a]', n: 4 }, { sel: '#pa-impostazioni [name=indirizzo]', n: 5 }] });
   await Promise.all([p.waitForNavigation(), p.click('#pa-impostazioni button.btn-primary')]);
   // La pagina "Prenota" con il widget.
-  await paginaConWidget('Prenota un appuntamento', 'prenota', 'prenota');
+  await paginaConWidget('Prenota', 'prenota', 'prenota');
   await p.click('.ed-schede-pannello button[data-pannello="modifica"]'); await dorme(800);
   await foto('33-widget', { clip: { x: 0, y: 0, width: 1200, height: 760 }, segni: [{ sel: '#ed-controlli', n: 6 }, { sel: '#ed-pubblica', n: 7 }] });
   await pubblica();
   // Una cliente prenota dal sito.
   const v = await visitatore();
-  await v.goto(B + '/prenota/', { waitUntil: 'networkidle' });
+  await v.goto(SITO + '/prenota/', { waitUntil: 'networkidle' });
   const box = v.locator('[data-pren]').first();
   await box.locator('select[name=servizio]').selectOption(await box.locator('select[name=servizio] option', { hasText: 'Taglio donna' }).getAttribute('value'));
   await v.waitForSelector('.pren-giorno[aria-pressed=true]');
@@ -875,10 +904,11 @@ capitoli['33'] = async () => {
   await f.locator('[name=nome]').fill('Giulia Rossi'); await f.locator('[name=email]').fill('giulia.rossi@esempio.it'); await f.locator('[name=telefono]').fill('+39 333 1234567');
   await f.locator('[name=privacy]').check();
   await C2.captcha(f, v);
-  await v.addStyleTag({ content: 'header{visibility:hidden}' });
+  await v.addStyleTag({ content: '#testata{visibility:hidden}' });
   await fotoDi(v, '33-sul-sito', { sel: '[data-pren]', segni: [{ sel: '[data-pren] select[name=servizio]', n: 1 }, { sel: '[data-pren] select[name=risorsa]', n: 2 }, { sel: '[data-pren] .pren-giorno[aria-pressed=true]', n: 3 }, { sel: '[data-pren] .pren-ora[aria-pressed=true], [data-pren] .pren-ora.scelta, [data-pren] .pren-riepilogo', n: 4 }, { sel: '[data-pren] form button[type=submit]', n: 5 }] });
   const n0 = postaN();
-  await Promise.all([v.waitForNavigation(), f.locator('button[type=submit]').click()]);
+  await f.locator('button[type=submit]').click();
+  await v.waitForURL(/\/prenotazione\/gestisci\//, { timeout: 20000 }).catch(async (e) => { await v.screenshot({ path: '/tmp/dbg-33.png', fullPage: true }); console.log(v.url(), (await v.locator('body').innerText()).slice(0, 1500)); throw e; });
   await v.waitForLoadState('networkidle');
   await fotoDi(v, '33-fatta', { sel: 'main' });
   const em = await postaNuove(n0, 2);
@@ -890,6 +920,375 @@ capitoli['33'] = async () => {
   await foto('33-agenda', { clip: { x: 240, y: 56, width: 960, height: 560 }, segni: [{ sel: '.pa-voce', n: 1 }, { sel: '.pa-barra', n: 2 }] });
   await Promise.all([p.waitForNavigation(), p.locator('.pa-voce', { hasText: 'Giulia Rossi' }).first().click()]);
   await foto('33-scheda', { clip: { x: 240, y: 56, width: 960, height: 900 }, segni: [{ sel: '#pa-sposta', n: 3 }, { sel: '#pa-annulla textarea', n: 4 }] });
+};
+
+const dataLocale = d => { const z = n => String(n).padStart(2, '0'); return `${d.getFullYear()}-${z(d.getMonth() + 1)}-${z(d.getDate())}T${z(d.getHours())}:${z(d.getMinutes())}`; };
+
+// 34. Eventi con iscrizione: l'associazione "Colli Bolognesi" e la serata di degustazione.
+capitoli['34'] = async () => {
+  await accendi('eventi-iscrizione');
+  await addonPag('eventi-iscrizione', 'impostazioni');
+  await p.fill('#evi-impostazioni [name=avviso_a]', 'info@collibolognesi.it');
+  await Promise.all([p.waitForNavigation(), p.click('#evi-impostazioni button.btn-primary')]);
+  const inizio = new Date(Date.now() + 7 * 86400000); inizio.setHours(21, 0, 0, 0);
+  const chiude = new Date(inizio.getTime() - 86400000); chiude.setHours(20, 0, 0, 0);
+  await addonPag('eventi-iscrizione', 'eventi&nuovo=1');
+  await p.fill('#evi-evento [name=titolo]', 'Serata di degustazione');
+  await p.fill('#evi-evento [name=inizio]', dataLocale(inizio));
+  await p.fill('#evi-evento [name=luogo]', 'Sede dell\'associazione'); await p.fill('#evi-evento [name=indirizzo]', 'Via Rizzoli 1, Bologna');
+  await p.fill('#evi-evento [name=prezzo]', '15 € a persona');
+  await p.fill('#evi-evento [name=descrizione]', 'Assaggiamo insieme cinque vini dei colli bolognesi, raccontati da chi li fa.\n\nIn abbinamento, pane e salumi del territorio.');
+  await p.fill('#evi-evento [name=posti]', '30'); await p.fill('#evi-evento [name=max_persona]', '2');
+  await p.fill('#evi-evento [name=chiusura]', dataLocale(chiude));
+  await p.selectOption('#evi-evento [name=stato]', 'pubblicato');
+  await foto('34-evento', { sel: '#evi-evento', segni: [{ sel: '#evi-evento [name=titolo]', n: 1 }, { sel: '#evi-evento [name=inizio]', n: 2 }, { sel: '#evi-evento [name=luogo]', n: 3 }, { sel: '#evi-evento [name=posti]', n: 4 }, { sel: '#evi-evento [name=max_persona]', n: 5 }, { sel: '#evi-evento [name=chiusura]', n: 6 }, { sel: '#evi-evento [name=stato]', n: 7 }, { sel: '#evi-evento button.btn-primary', n: 8 }] });
+  await Promise.all([p.waitForNavigation(), p.click('#evi-evento button.btn-primary')]);
+  if (!/\/evento\/serata-di-degustazione\//.test(await flash())) throw new Error('34: evento non salvato: ' + await flash());
+  const eid = new URL(p.url()).searchParams.get('id');
+  await foto('34-salvato', { clip: { x: 240, y: 56, width: 960, height: 200 }, segni: [{ sel: '.flash', n: 9 }] });
+  // La pagina "Eventi" con il widget dell'elenco.
+  await paginaConWidget('Eventi', 'eventi', 'eventi_iscrizione');
+  await pubblica();
+  // Una socia si iscrive con due posti.
+  const v = await visitatore();
+  await v.goto(SITO + '/eventi/', { waitUntil: 'networkidle' });
+  await v.addStyleTag({ content: '#testata{visibility:hidden}' });
+  await fotoDi(v, '34-elenco', { sel: '.ew-eventi' });
+  await v.goto(SITO + '/evento/serata-di-degustazione/', { waitUntil: 'networkidle' });
+  const f = v.locator('.evi form[data-captcha]').first();
+  await f.locator('[name=nome]').fill('Marta Lodi'); await f.locator('[name=email]').fill('marta.lodi@esempio.it');
+  await f.locator('[name=posti]').selectOption('2');
+  await f.locator('[name=privacy]').check(); await C2.captcha(f, v);
+  await v.addStyleTag({ content: '#testata{visibility:hidden}' });
+  await fotoDi(v, '34-pagina', { sel: 'main', segni: [{ sel: '.evi-scheda', n: 1 }, { sel: '.evi form [name=posti]', n: 2 }, { sel: '.evi form button[type=submit]', n: 3 }] });
+  const n0 = postaN();
+  await f.locator('button[type=submit]').click(); await v.waitForLoadState('networkidle'); await dorme(800);
+  await postaNuove(n0, 1);
+  await fotoDi(v, '34-iscritta', { clip: { x: 0, y: 0, width: 1200, height: 700 } });
+  await v.context().close();
+  // Nel pannello: gli iscritti.
+  await addonPag('eventi-iscrizione', 'iscritti&e=' + eid);
+  await foto('34-iscritti', { clip: { x: 240, y: 56, width: 960, height: 900 }, segni: [{ sel: 'button[value=presente]', n: 1 }, { sel: 'a[href*="csv=1"]', n: 2 }, { sel: '#evi-scrivi', n: 3 }] });
+};
+
+// 35. Raccolta recensioni: il centro estetico "Rosa" a Bologna chiede com'è andata a due clienti affezionate.
+capitoli['35'] = async () => {
+  await accendi('recensioni');
+  await addonPag('recensioni', 'impostazioni');
+  await p.fill('#rec-impostazioni [name=google_link]', 'https://g.page/r/centro-estetico-rosa/review');
+  await p.selectOption('#rec-impostazioni [name=google_da]', '4');
+  await p.fill('#rec-impostazioni [name=avviso_a]', 'info@centrorosa.it');
+  await foto('35-impostazioni', { sel: '#rec-impostazioni', segni: [{ sel: '#rec-impostazioni [name=giorni_dopo]', n: 1 }, { sel: '#rec-impostazioni [name=google_link]', n: 2 }, { sel: '#rec-impostazioni [name=google_da]', n: 3 }, { sel: '#rec-impostazioni button.btn-primary', n: 4 }] });
+  await Promise.all([p.waitForNavigation(), p.click('#rec-impostazioni button.btn-primary')]);
+  await addonPag('recensioni', 'inviti');
+  await p.fill('#rec-aggiungi [name=elenco]', 'Giulia Rossi <giulia.rossi@esempio.it>\nPaola Neri <paola.neri@esempio.it>');
+  await p.fill('#rec-aggiungi [name=servizio]', 'Trattamento viso');
+  await p.selectOption('#rec-aggiungi [name=quando]', 'subito');
+  await p.check('#rec-aggiungi [name=consenso]');
+  await foto('35-inviti', { sel: '#rec-aggiungi', segni: [{ sel: '#rec-aggiungi [name=elenco]', n: 1 }, { sel: '#rec-aggiungi [name=servizio]', n: 2 }, { sel: '#rec-aggiungi [name=quando]', n: 3 }, { sel: '#rec-aggiungi [name=consenso]', n: 4 }, { sel: '#rec-aggiungi button', n: 5 }] });
+  await Promise.all([p.waitForNavigation(), p.click('#rec-aggiungi button')]);
+  const n0 = postaN();
+  await Promise.all([p.waitForNavigation(), p.click('#rec-manda')]);
+  await foto('35-coda', { clip: { x: 240, y: 56, width: 960, height: 1000 }, segni: [{ sel: '.flash', n: 6 }, { sel: '#rec-manda', n: 7 }] });
+  const em = await postaNuove(n0, 2);
+  // Le due clienti cliccano le stelle nell'email e scrivono due righe.
+  for (const [chi, stelle, testo] of [['giulia.rossi', 5, 'Mani d\'oro e un\'accoglienza che mette subito a proprio agio. Tornerò di sicuro.'], ['paola.neri', 4, 'Trattamento rilassante e pelle luminosa per giorni. Un po\' di attesa all\'arrivo.']]) {
+    const e = em.find(x => x.a.startsWith(chi));
+    const lk = e && C2.link(e).find(l => new RegExp('s=' + stelle + '$').test(l));
+    if (!lk) throw new Error('35: manca l\'email per ' + chi);
+    const v = await visitatore();
+    await v.goto(lk, { waitUntil: 'networkidle' });
+    await v.fill('[name=testo]', testo); await v.check('[name=consenso]');
+    if (stelle === 5) { await v.addStyleTag({ content: '#testata{visibility:hidden}' }); await fotoDi(v, '35-modulo', { sel: 'main', segni: [{ sel: '#rec-s5', n: 1 }, { sel: '[name=testo]', n: 2 }, { sel: '[name=nome]', n: 3 }, { sel: '.rec-modulo button[type=submit]', n: 4 }] }); }
+    await v.click('.rec-modulo button[type=submit]'); await v.waitForLoadState('networkidle'); await dorme(600);
+    if (stelle === 5) { await v.addStyleTag({ content: '#testata{visibility:hidden}' }); await fotoDi(v, '35-grazie', { sel: 'main' }); }
+    await v.context().close();
+  }
+  // Nel pannello: approvare e rispondere.
+  await addonPag('recensioni', 'recensioni');
+  await foto('35-approva', { clip: { x: 240, y: 56, width: 960, height: 700 }, segni: [{ sel: 'button[value=approva]', n: 1 }, { sel: 'button[value=rifiuta]', n: 2 }] });
+  for (let i = 0; i < 2; i++) await Promise.all([p.waitForNavigation(), p.locator('button[value=approva]').first().click()]);
+  await addonPag('recensioni', 'recensioni&filtro=approvata');
+  const art = p.locator('article', { hasText: 'Giulia R.' });
+  await art.locator('textarea[name=risposta]').fill('Grazie Giulia, è stato un piacere. Ti aspettiamo!');
+  await Promise.all([p.waitForNavigation(), art.locator('button[value=rispondi]').click()]);
+  // La pagina "Dicono di noi" con il widget.
+  await paginaConWidget('Dicono di noi', 'dicono-di-noi', 'recensioni_sito');
+  await pubblica();
+  const v = await visitatore();
+  await v.goto(SITO + '/dicono-di-noi/', { waitUntil: 'networkidle' });
+  await v.addStyleTag({ content: '#testata{visibility:hidden}' });
+  await fotoDi(v, '35-sul-sito', { sel: 'main .ed-sezione:has(.ed-w-recensioni_sito), main .ed-w-recensioni_sito' });
+  await v.context().close();
+};
+
+// Una foto finta di un prodotto (disegnata nel browser): una tazza o un grembiule, del colore scelto.
+async function fotoProdotto(nome, forma, colore) {
+  const file = path.join(require('os').tmpdir(), nome + '.jpg');
+  const t = await ctx.newPage(); await t.setViewportSize({ width: 800, height: 800 });
+  const disegno = forma === 'tazza'
+    ? `<div style="position:relative;width:300px;height:280px"><div style="position:absolute;left:0;top:0;width:230px;height:280px;background:${colore};border-radius:18px 18px 60px 60px;box-shadow:inset -30px 0 0 rgba(0,0,0,.12)"></div><div style="position:absolute;left:200px;top:60px;width:110px;height:130px;border:28px solid ${colore};border-radius:50%;box-sizing:border-box"></div></div>`
+    : `<div style="width:320px;height:420px;background:${colore};clip-path:polygon(30% 0,70% 0,70% 20%,100% 32%,92% 100%,8% 100%,0 32%,30% 20%);box-shadow:inset 0 -40px 0 rgba(0,0,0,.12)"></div>`;
+  await t.setContent(`<body style="margin:0;width:800px;height:800px;display:flex;align-items:center;justify-content:center;background:radial-gradient(circle at 50% 40%,#f7f1e8,#e3d6c3)">${disegno}</body>`);
+  await t.screenshot({ path: file, type: 'jpeg', quality: 82 }); await t.close();
+  return file;
+}
+
+// 36. Vetrina prodotti: la "Bottega Rossi", ceramiche fatte a mano a Bologna.
+capitoli['36'] = async () => {
+  await accendi('vetrina');
+  await addonPag('vetrina', 'impostazioni');
+  await p.fill('#vt-nome_negozio', 'Bottega');
+  await p.fill('#vt-intro', 'Ceramiche fatte a mano a Bologna.');
+  await p.fill('#vt-spedizione_costo', '7,00'); await p.fill('#vt-gratis_oltre', '60,00');
+  await p.fill('#vt-iban', 'IT60 X054 2811 1010 0000 0123 456'); await p.fill('#vt-intestatario', 'Bottega Rossi di Anna Rossi');
+  await p.check('input[name=link]'); await p.fill('#vt-link_url', 'https://paypal.me/bottegarossi');
+  await p.fill('#vt-attivita_nome', 'Bottega Rossi'); await p.fill('#vt-attivita_indirizzo', 'Via Rizzoli 1, 40125 Bologna'); await p.fill('#vt-attivita_piva', '01234567890');
+  await p.fill('#vt-email_avvisi', 'ordini@bottegarossi.it');
+  await foto('36-impostazioni', { clip: { x: 240, y: 56, width: 960, height: 1250 }, segni: [{ sel: '#vt-nome_negozio', n: 1 }, { sel: '#vt-spedizione_costo', n: 2 }, { sel: '#vt-iban', n: 3 }, { sel: '#vt-link_url', n: 4 }] });
+  await Promise.all([p.waitForNavigation(), p.click('#vt-salva')]);
+  if (!/salvate/.test(await flash())) throw new Error('36: impostazioni non salvate: ' + await flash());
+  for (const c of ['Tazze', 'Grembiuli']) { await addonPag('vetrina', 'categorie'); await p.fill('#vt-cat-nome', c); await Promise.all([p.waitForNavigation(), p.click('#vt-cat-nuova button[type=submit]')]); }
+  // La tazza: scontata, due foto, 3 pezzi, in evidenza.
+  await addonPag('vetrina', 'prodotto');
+  await p.fill('#vt-nome', 'Tazza smaltata'); await p.fill('#vt-breve', 'Fatta a mano, 300 ml');
+  await p.fill('#vt-descrizione', 'Ceramica smaltata a mano nel nostro laboratorio di via Rizzoli.\n\nSi lava in lavastoviglie.');
+  await p.fill('#vt-prezzo', '18,00'); await p.fill('#vt-scontato', '15,00'); await p.fill('#vt-scorta', '3');
+  await p.setInputFiles('#vt-foto-nuove', [await fotoProdotto('tazza-blu', 'tazza', '#2f6f9f'), await fotoProdotto('tazza-verde', 'tazza', '#4f8a5b')]);
+  await p.check('#vt-prodotto input[name=evidenza]');
+  await p.check('label.vt-a-spunta:has-text("Tazze") input');
+  await foto('36-prodotto', { sel: '#vt-prodotto', segni: [{ sel: '#vt-nome', n: 1 }, { sel: '#vt-prezzo', n: 2 }, { sel: '#vt-scontato', n: 3 }, { sel: '#vt-foto-nuove', n: 4 }, { sel: '#vt-scorta', n: 5 }, { sel: '#vt-prodotto input[name=evidenza]', n: 6 }, { sel: '#vt-salva', n: 7 }] });
+  await Promise.all([p.waitForNavigation(), p.click('#vt-salva')]);
+  // Il grembiule con le taglie.
+  await addonPag('vetrina', 'prodotto');
+  await p.fill('#vt-nome', 'Grembiule da bottega'); await p.fill('#vt-breve', 'Cotone pesante, tasca davanti'); await p.fill('#vt-prezzo', '25,00');
+  await p.setInputFiles('#vt-foto-nuove', [await fotoProdotto('grembiule', 'grembiule', '#b5532f')]);
+  await p.check('#vt-prodotto input[name=evidenza]');
+  await p.check('label.vt-a-spunta:has-text("Grembiuli") input');
+  await p.fill('#vt-opz1', 'Taglia');
+  for (const [i, v] of [['S', '', '1'], ['M', '', '0'], ['L', '30,00', '']].entries()) { await p.fill(`input[name="var[${i}][valore1]"]`, v[0]); await p.fill(`input[name="var[${i}][prezzo]"]`, v[1]); await p.fill(`input[name="var[${i}][scorta]"]`, v[2]); }
+  await foto('36-varianti', { sel: '#vt-varianti', segni: [{ sel: '#vt-opz1', n: 1 }, { sel: 'input[name="var[2][prezzo]"]', n: 2 }, { sel: 'input[name="var[1][scorta]"]', n: 3 }] });
+  await Promise.all([p.waitForNavigation(), p.click('#vt-salva')]);
+  await addonPag('vetrina', 'prodotti');
+  await foto('36-prodotti', { clip: { x: 240, y: 56, width: 960, height: 420 } });
+  // Un cliente compra dal negozio.
+  const v = await visitatore();
+  await v.goto(SITO + '/negozio/', { waitUntil: 'networkidle' });
+  await fotoDi(v, '36-negozio', { clip: { x: 0, y: 0, width: 1200, height: 900 } });
+  await v.goto(SITO + '/negozio/tazza-smaltata/', { waitUntil: 'networkidle' });
+  await v.fill('input[name=qta]', '2');
+  await fotoDi(v, '36-scheda', { clip: { x: 0, y: 0, width: 1200, height: 800 }, segni: [{ sel: 'input[name=qta]', n: 1 }, { sel: '.vt-compra button', n: 2 }] });
+  await v.click('.vt-compra button'); await v.waitForLoadState('networkidle');
+  await v.goto(SITO + '/negozio/grembiule-da-bottega/', { waitUntil: 'networkidle' });
+  await v.selectOption('select[name=variante]', { label: 'L · € 30,00' });
+  await v.click('.vt-compra button'); await v.waitForLoadState('networkidle'); await dorme(500);
+  await v.goto(SITO + '/negozio/carrello/', { waitUntil: 'networkidle' }); if (process.env.DBG) console.log(await v.context().cookies(), (await v.locator('main').innerText()).slice(0, 600));
+  await v.addStyleTag({ content: '#testata{visibility:hidden}' });
+  await fotoDi(v, '36-carrello', { sel: 'main', segni: [{ sel: '.vt-riga input[type=number]', n: 3 }, { sel: '.vt-avanti a', n: 4 }] });
+  await v.goto(SITO + '/negozio/ordine/', { waitUntil: 'networkidle' });
+  for (const [k, val] of Object.entries({ nome: 'Marta Bianchi', email: 'marta.bianchi@esempio.it', telefono: '+39 333 1234567', indirizzo: 'Via Indipendenza 10', cap: '40121', citta: 'Bologna', note: 'Citofono Bianchi, grazie.' })) await v.fill(`.vt-ordine [name=${k}]`, val);
+  await v.click('label.vt-scelta:has-text("Bonifico") input');
+  await v.check('.vt-ordine input[name=consenso]');
+  await v.locator('.vt-ordine .captcha input[type=checkbox]').check(); await v.waitForSelector('form.verificato', { timeout: 30000 });
+  await v.addStyleTag({ content: '#testata{visibility:hidden}' });
+  await fotoDi(v, '36-ordine', { sel: 'main', segni: [{ sel: '.vt-ordine [name=nome]', n: 5 }, { sel: 'label.vt-scelta:has(input[name=metodo]:checked)', n: 6 }, { sel: '.vt-ordine input[name=consenso]', n: 7 }, { sel: '.vt-ordine button[type=submit]', n: 8 }] });
+  const n0 = postaN();
+  await v.click('.vt-ordine button[type=submit]'); await v.waitForURL(/ordine\/fatto/); await v.waitForLoadState('networkidle');
+  await v.addStyleTag({ content: '#testata{visibility:hidden}' });
+  await fotoDi(v, '36-grazie', { sel: 'main' });
+  await postaNuove(n0, 2);
+  await v.context().close();
+  // Nel pannello: l'ordine e il suo stato.
+  await addonPag('vetrina', 'ordini');
+  await foto('36-ordini', { clip: { x: 240, y: 56, width: 960, height: 400 } });
+  await Promise.all([p.waitForNavigation(), p.click('#vt-ordini tbody tr a')]);
+  await p.selectOption('#vt-stato-scelta', 'pagato');
+  await p.fill('#vt-messaggio', 'Grazie, il bonifico è arrivato: prepariamo il pacco.');
+  await foto('36-stato', { clip: { x: 240, y: 56, width: 960, height: 900 }, segni: [{ sel: '#vt-stato-scelta', n: 1 }, { sel: '#vt-stato input[name=avvisa]', n: 2 }, { sel: '#vt-messaggio', n: 3 }, { sel: '#vt-stato button[type=submit]', n: 4 }] });
+  await Promise.all([p.waitForNavigation(), p.click('#vt-stato button[type=submit]')]);
+};
+
+// 37. Statistiche delle visite: la "Bottega Rossi" guarda da dove arrivano le persone dopo la newsletter d'autunno.
+capitoli['37'] = async () => {
+  await accendi('statistiche');
+  // Qualche visita vera, da browser diversi (un browser senza finestra conterebbe come robot: si dice che browser è).
+  const UA = {
+    pc: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
+    mac: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 14_4) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.4 Safari/605.1.15',
+    iphone: 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_4 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.4 Mobile/15E148 Safari/604.1',
+    android: 'Mozilla/5.0 (Linux; Android 14; Pixel 8) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Mobile Safari/537.36',
+    ipad: 'Mozilla/5.0 (iPad; CPU OS 17_4 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.4 Mobile/15E148 Safari/604.1',
+  };
+  const giri = [
+    [UA.pc, [['/', 'https://www.google.com/search?q=ceramiche+bologna'], ['/servizi/'], ['/contatti/']]],
+    [UA.iphone, [['/servizi/', 'https://m.facebook.com/'], ['/chi-siamo/']]],
+    [UA.mac, [['/?utm_source=newsletter&utm_medium=email&utm_campaign=autunno'], ['/chi-siamo/'], ['/servizi/']]],
+    [UA.android, [['/?utm_source=newsletter&utm_medium=email&utm_campaign=autunno'], ['/lavora-con-noi/']]],
+    [UA.ipad, [['/'], ['/blog/']]],
+  ];
+  for (const [ua, pagine] of giri) {
+    const c = await p.context().browser().newContext({ userAgent: ua, locale: 'it-IT', extraHTTPHeaders: { 'Accept-Language': 'it-IT,it;q=0.9' } });
+    const v = await c.newPage();
+    for (const [u, da] of pagine) await v.goto(B + u, { referer: da, waitUntil: 'networkidle' });
+    await c.close();
+  }
+  await vai('addon-pagina.php?a=statistiche&p=visite');
+  await p.locator('a, button', { hasText: 'Ultimi 7 giorni' }).first().click(); await p.waitForLoadState('networkidle'); await dorme(500);
+  await foto('37-visite', { clip: { x: 240, y: 56, width: 960, height: 1250 }, segni: [{ sel: '#st-csv', n: 1, lato: 'destra' }] });
+  await addonPag('statistiche', 'impostazioni');
+  await foto('37-impostazioni', { clip: { x: 240, y: 56, width: 960, height: 760 }, segni: [{ sel: '#st-impostazioni select', n: 1 }, { sel: '#st-impostazioni input[name=dnt]', n: 2 }] });
+};
+
+// 38. Area riservata (membri): lo studio di yoga "Yoga Ponte" a Bologna riserva ai soci le sequenze da fare a casa e il calendario.
+capitoli['38'] = async () => {
+  await accendi('membri');
+  await addonPag('membri', 'impostazioni');
+  await p.fill('#mi-avviso', 'Questa pagina è per i soci di Yoga Ponte: entra con la tua email, oppure iscriviti, è gratis.');
+  await foto('38-impostazioni', { sel: '#mi-form', segni: [{ sel: '#mi-form [name=modo][value=aperta]', n: 1 }, { sel: '#mi-avviso', n: 2 }, { sel: '#mi-form button[type=submit]', n: 3 }] });
+  await Promise.all([p.waitForNavigation(), p.click('#mi-form button[type=submit]')]);
+  // Un file riservato in Download, e la pagina "Sequenze da fare a casa".
+  const pdf = path.join(require('os').tmpdir(), 'calendario-lezioni-2027.pdf');
+  const t = await ctx.newPage(); await t.setContent('<h1>Calendario delle lezioni 2027</h1>'); await t.pdf({ path: pdf }); await t.close();
+  await vai('scaricabili.php');
+  await p.setInputFiles('#dl-carica input[type=file]', pdf);
+  await p.fill('#dl-carica input[name=titolo]', 'Calendario delle lezioni 2027');
+  await p.check('#dl-riservato');
+  await Promise.all([p.waitForNavigation(), p.click('#dl-carica button[type=submit]')]);
+  await paginaConWidget('Sequenze da fare a casa', 'sequenze-a-casa', null, null, 'Tre sequenze di quindici minuti per i giorni in cui non riesci a venire in sala: una per il mattino, una per la schiena, una per la sera.');
+  await pubblica();
+  await paginaConWidget('Area soci', 'area-soci', 'membri_accesso');
+  await p.click('.ed-schede-pannello button[data-pannello="modifica"]'); await dorme(800);
+  await foto('38-widget', { clip: { x: 0, y: 0, width: 1200, height: 640 }, segni: [{ sel: '#ed-controlli', n: 7 }] });
+  await pubblica();
+  await addonPag('membri', 'riservati');
+  await p.locator('label.mr-voce', { hasText: '/sequenze-a-casa/' }).locator('input').check();
+  await foto('38-riservati', { clip: { x: 240, y: 56, width: 960, height: 760 }, segni: [{ sel: 'label.mr-voce:has(input:checked)', n: 1 }, { sel: '#mr-contenuti button[type=submit]', n: 2 }] });
+  await Promise.all([p.waitForNavigation(), p.click('#mr-contenuti button[type=submit]')]);
+  await p.locator('#mr-file label.mr-voce', { hasText: 'calendario-lezioni-2027.pdf' }).locator('input').check();
+  await foto('38-file', { sel: '#mr-file', segni: [{ sel: '#mr-file label.mr-voce', n: 3 }, { sel: '#mr-file button[type=submit]', n: 4 }] });
+  await Promise.all([p.waitForNavigation(), p.click('#mr-file button[type=submit]')]);
+  // Una persona trova la pagina chiusa, si iscrive e conferma.
+  const v = await visitatore();
+  await v.goto(SITO + '/sequenze-a-casa/', { waitUntil: 'networkidle' });
+  await v.addStyleTag({ content: '#testata{visibility:hidden}' });
+  await fotoDi(v, '38-chiusa', { clip: { x: 0, y: 0, width: 1200, height: 560 } });
+  await v.goto(SITO + '/iscriviti/', { waitUntil: 'networkidle' });
+  const PW = 'Respiro-lungo-2026';
+  await v.fill('#membri-iscriviti [name=nome]', 'Chiara Ferri'); await v.fill('#membri-iscriviti [name=email]', 'chiara.ferri@esempio.it');
+  await v.fill('#membri-iscriviti [name=password]', PW); await v.fill('#membri-iscriviti [name=password2]', PW);
+  await v.check('#membri-iscriviti [name=privacy]');
+  await v.check('#membri-iscriviti .captcha input');
+  await v.waitForFunction(() => /Verificato/.test(document.querySelector('.captcha-stato').textContent), null, { timeout: 30000 });
+  await v.addStyleTag({ content: '#testata{visibility:hidden}' });
+  await fotoDi(v, '38-iscriviti', { sel: 'main', segni: [{ sel: '#membri-iscriviti [name=email]', n: 1 }, { sel: '#membri-iscriviti [name=password]', n: 2 }, { sel: '#membri-iscriviti button[type=submit]', n: 3 }] });
+  let n0 = postaN();
+  await v.click('#membri-iscriviti button[type=submit]'); await v.waitForLoadState('networkidle'); await dorme(500);
+  const m = (await postaNuove(n0)).find(e => /chiara\.ferri/.test(e.a));
+  const lk = m && C2.link(m).find(l => /\/conferma-iscrizione\/\?t=/.test(l));
+  if (!lk) throw new Error('38: non arriva la conferma dell\'iscrizione');
+  await v.goto(lk, { waitUntil: 'networkidle' });
+  await v.click('main form button[type=submit]'); await v.waitForURL(/area-riservata/); await v.waitForLoadState('networkidle');
+  await v.addStyleTag({ content: '#testata{visibility:hidden}' });
+  await fotoDi(v, '38-area', { sel: 'main' });
+  await v.context().close();
+  await addonPag('membri', 'elenco');
+  await foto('38-elenco', { clip: { x: 240, y: 56, width: 960, height: 560 } });
+};
+
+// 39. Corsi online: Luca Neri, fotografo e formatore, mette online "Fotografia per cominciare".
+capitoli['39'] = async () => {
+  const msg = await accendi('corsi');
+  await foto('39-acceso', { clip: { x: 240, y: 56, width: 960, height: 130 }, segni: [{ sel: '.flash', n: '' }] });
+  // Il materiale: un PDF riservato in Download.
+  const pdf = path.join(require('os').tmpdir(), 'scheda-inquadratura.pdf');
+  const t = await ctx.newPage(); await t.setContent('<h1>La regola dei terzi</h1><p>Una scheda da tenere nel telefono.</p>'); await t.pdf({ path: pdf }); await t.close();
+  await vai('scaricabili.php');
+  await p.setInputFiles('#dl-carica input[type=file]', pdf); await p.fill('#dl-carica [name=titolo]', 'Scheda dell\'inquadratura'); await p.check('#dl-riservato');
+  await Promise.all([p.waitForNavigation(), p.click('#dl-carica button[type=submit]')]);
+  // Il corso.
+  await addonPag('corsi', 'corsi');
+  await p.fill('#co-titolo', 'Fotografia per cominciare');
+  await foto('39-nuovo', { clip: { x: 240, y: 56, width: 960, height: 420 }, segni: [{ sel: '#co-titolo', n: 1 }, { sel: '#co-nuovo button', n: 2 }] });
+  await Promise.all([p.waitForNavigation(), p.click('#co-nuovo button')]);
+  const urlCorso = p.url().split('/admin/')[1];
+  await p.fill('#co-descrizione', 'Le basi per fare belle foto con il telefono: la luce, l\'inquadratura, il primo scatto. Tre lezioni brevi, da seguire quando vuoi.');
+  await p.selectOption('#co-stato', 'pubblicato');
+  await Promise.all([p.waitForNavigation(), p.click('#co-dati button[type=submit]')]);
+  await p.locator('.co-modulo').first().locator('input[name=titolo]').first().fill('Le basi');
+  await Promise.all([p.waitForNavigation(), p.locator('.co-modulo').first().locator('.co-modulo-testa button:has-text("Salva")').click()]);
+  const lezione = async (i, titolo) => {
+    await vai(urlCorso);
+    const f = p.locator('.co-modulo').nth(i).locator('form.co-nuova-lezione');
+    await f.locator('input[name=titolo]').fill(titolo);
+    await Promise.all([p.waitForNavigation(), f.locator('button').click()]);
+    return p.url().split('/admin/')[1];
+  };
+  const uLuce = await lezione(0, 'La luce');
+  await p.fill('#le-testo', '<p>La luce più bella arriva <b>presto la mattina</b> e poco prima del tramonto.</p><p>Mettiti con la luce di lato: le forme si vedono meglio.</p>');
+  await p.fill('#le-video', 'https://www.youtube.com/watch?v=dQw4w9WgXcQ'); await p.fill('#le-durata', '8 minuti');
+  await Promise.all([p.waitForNavigation(), p.click('#le-form aside button.btn-primary')]);
+  const uInq = await lezione(0, 'L\'inquadratura');
+  await p.fill('#le-testo', '<h2>La regola dei terzi</h2><p>Dividi lo schermo in nove riquadri: metti il soggetto dove le linee si incrociano, non al centro.</p><p>La scheda qui sotto la riassume: tienila nel telefono.</p>');
+  await p.fill('#le-durata', '10 minuti');
+  await p.locator('label.le-mat', { hasText: 'scheda-inquadratura.pdf' }).locator('input').check();
+  await foto('39-lezione', { sel: '#le-form', segni: [{ sel: '#le-testo', n: 1 }, { sel: '#le-video', n: 2 }, { sel: 'label.le-mat', n: 3 }, { sel: '#le-durata', n: 4 }, { sel: '#le-form aside button.btn-primary', n: 5 }] });
+  await Promise.all([p.waitForNavigation(), p.click('#le-form aside button.btn-primary')]);
+  await vai(urlCorso);
+  await p.fill('#co-nuovo-modulo input[name=titolo]', 'Pratica');
+  await Promise.all([p.waitForNavigation(), p.click('#co-nuovo-modulo button')]);
+  await lezione(1, 'Il primo scatto');
+  await p.fill('#le-testo', '<p>Esci, scegli una cosa sola da fotografare e fanne dieci scatti diversi. Poi tieni il migliore.</p>'); await p.fill('#le-durata', '5 minuti');
+  await Promise.all([p.waitForNavigation(), p.click('#le-form aside button.btn-primary')]);
+  await vai(urlCorso);
+  await foto('39-corso', { clip: { x: 240, y: 56, width: 960, height: 1000 }, segni: [{ sel: '#co-stato', n: 1 }, { sel: '.co-modulo .co-modulo-testa input[name=titolo]', n: 2 }, { sel: 'form.co-nuova-lezione', n: 3 }, { sel: '#co-nuovo-modulo', n: 4 }] });
+  // Un'allieva, invitata dal pannello, segue il corso.
+  await addonPag('membri', 'elenco');
+  await p.fill('#mb-nome', 'Sara Galli'); await p.fill('#mb-email', 'sara.galli@esempio.it');
+  let n0 = postaN();
+  await Promise.all([p.waitForNavigation(), p.click('#mb-invita button')]);
+  const m = (await postaNuove(n0)).find(e => /sara\.galli/.test(e.a));
+  const lk = m && C2.link(m).find(l => /\/nuova-password\/\?t=/.test(l));
+  if (!lk) throw new Error('39: non arriva l\'invito');
+  const v = await visitatore();
+  await v.goto(lk, { waitUntil: 'networkidle' });
+  await v.fill('#membri-nuova-password [name=password]', 'Scatti-al-mattino-26'); await v.fill('#membri-nuova-password [name=password2]', 'Scatti-al-mattino-26');
+  await v.click('#membri-nuova-password button'); await v.waitForLoadState('networkidle'); await dorme(500);
+  await v.goto(SITO + '/corsi/fotografia-per-cominciare/', { waitUntil: 'networkidle' });
+  await v.addStyleTag({ content: '#testata{visibility:hidden}' });
+  await fotoDi(v, '39-programma', { sel: 'main', segni: [{ sel: 'a.corsi-riprendi', n: 1 }] });
+  await v.click('a.corsi-riprendi'); await v.waitForLoadState('networkidle');
+  await v.click('form.corsi-completa button'); await v.waitForLoadState('networkidle'); await dorme(400);
+  await v.addStyleTag({ content: '#testata{visibility:hidden}' });
+  await fotoDi(v, '39-lezione-sito', { sel: 'main', segni: [{ sel: 'a.corsi-materiale', n: 2 }, { sel: 'form.corsi-completa button', n: 3 }] });
+  for (let i = 0; i < 2; i++) { await v.click('form.corsi-completa button'); await v.waitForLoadState('networkidle'); await dorme(400); }
+  await v.click('a:has-text("Il tuo certificato")'); await v.waitForLoadState('networkidle');
+  await fotoDi(v, '39-certificato', { clip: { x: 0, y: 0, width: 1200, height: 800 } });
+  await v.context().close();
+  await vai(urlCorso);
+  await foto('39-chi-segue', { sel: '.sc-scatola:has(#co-iscritti)', margine: 10 });
+};
+
+// 40. Copia del sito altrove: le copie di ogni notte su un Nextcloud (WebDAV). La destinazione vera della prova è un WebDAV
+// finto in locale (prove/server-copia-finti.py webdav 8297 <cartella> copie Nuvola-Copie-2026, e nel config.local.php del sito
+// define('CMS_COPIA_ALTROVE_LOCALE', '127.0.0.1:8297')): la foto del modulo si fa con l'indirizzo d'esempio, prima di salvare.
+capitoli['40'] = async () => {
+  await accendi('copia-altrove');
+  await addonPag('copia-altrove', 'destinazione');
+  await p.selectOption('#ca-tipo', 'webdav'); await dorme(300);
+  await p.fill('#ca-url', 'https://cloud.esempio.it/remote.php/dav/files/mario/');
+  await p.fill('#ca-utente', 'mario'); await p.fill('#ca-password', 'password-per-le-app');
+  await p.fill('#ca-cartella', 'copie-sito'); await p.fill('#ca-tenere', '14'); await p.check('#ca-attivo');
+  await foto('40-destinazione', { sel: '#ca-form', segni: [{ sel: '#ca-tipo', n: 1 }, { sel: '#ca-url', n: 2 }, { sel: '#ca-utente', n: 3 }, { sel: '#ca-cartella', n: 4 }, { sel: '#ca-tenere', n: 5 }, { sel: '#ca-attivo', n: 6 }, { sel: '#ca-form button[type=submit]', n: 7 }] });
+  await p.fill('#ca-url', 'http://127.0.0.1:8297/dav/'); await p.fill('#ca-utente', 'copie'); await p.fill('#ca-password', 'Nuvola-Copie-2026');
+  await Promise.all([p.waitForNavigation(), p.click('#ca-form button[type=submit]')]);
+  if (!/Destinazione salvata/.test(await flash())) throw new Error('40: destinazione non salvata: ' + await flash());
+  await Promise.all([p.waitForNavigation(), p.click('#ca-prova')]);
+  if (!/Collegamento riuscito/.test(await flash())) throw new Error('40: la prova non riesce: ' + await flash());
+  await foto('40-prova', { clip: { x: 240, y: 56, width: 960, height: 120 }, segni: [{ sel: '.flash', n: 8 }] });
+  await Promise.all([p.waitForNavigation({ timeout: 180000 }), p.click('#ca-manda')]);
+  if (!/Copia mandata/.test(await flash())) throw new Error('40: la copia non parte: ' + await flash());
+  await foto('40-mandata', { clip: { x: 240, y: 56, width: 960, height: 120 }, segni: [{ sel: '.flash', n: 9 }] });
+  await foto('40-registro', { sel: '#ca-registro', margine: 10 });
 };
 
 module.exports = { capitoli };

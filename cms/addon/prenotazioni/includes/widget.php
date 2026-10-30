@@ -10,7 +10,7 @@ $prenServizi = ['' => 'Il visitatore sceglie fra tutti'];
 $prenPersone = ['' => 'Il visitatore sceglie (o chi è libero)'];
 try {
     foreach (pren_servizi(true) as $s) $prenServizi[(string)$s['id']] = $s['nome'];
-    foreach (pren_risorse(true) as $r) $prenPersone[(string)$r['id']] = 'Solo ' . $r['nome'];
+    foreach (pren_risorse(true) as $prenR) $prenPersone[(string)$prenR['id']] = 'Solo ' . $prenR['nome'];
 } catch (Throwable $e) {
     error_log('prenotazioni: widget senza servizi: ' . $e->getMessage());
 }

@@ -19,7 +19,7 @@ def main():
     agg = os.path.join(REL, 'cms', f'plumecms-{V}-aggiornamento.zip')
     completo = os.path.join(REL, 'cms', f'plumecms-{V}.zip')
     parti = sorted(glob.glob(os.path.join(REL, 'sito', f'sito-plumecms-{V}-parte-*.zip')), key=lambda f: int(f.rsplit('-parte-', 1)[1].split('-')[0]))
-    manuali = [os.path.join(REL, 'manuali', n + '.pdf') for n in ('manuale-uso', 'manuale-temi')]
+    manuali = [os.path.join(REL, 'manuali', n + '.pdf') for n in ('manuale-uso', 'manuale-uso-addon', 'manuale-temi')]
     for f in [agg, completo] + manuali:
         if not os.path.exists(f):
             sys.exit(f'manca {f}: prima cms-pacchetto.py --aggiornamento, manuali-pdf.js e costruisci.py')

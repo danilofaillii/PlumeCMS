@@ -77,13 +77,13 @@ Se il server del sito si rompe o viene attaccato, la copia è al sicuro altrove.
     </div></div>
     <div class="sc-scatola"><h3>Registro degli invii</h3><div class="sc-corpo ca-tab" style="padding:0">
       <?php if (!$registro): ?><p style="padding:1rem;margin:0;color:var(--text-muted)">Ancora nessun invio.</p><?php else: ?>
-      <table class="admin-table" id="ca-registro" style="width:100%"><thead><tr><th>Quando</th><th>Cosa</th><th>Esito</th><th>Dettagli</th></tr></thead><tbody>
+      <div class="ad-tabella"><table class="admin-table" id="ca-registro" style="width:100%"><thead><tr><th>Quando</th><th>Cosa</th><th>Esito</th><th>Dettagli</th></tr></thead><tbody>
       <?php foreach ($registro as $r): ?>
         <tr><td style="white-space:nowrap"><?= h(date('d/m/Y H:i', strtotime($r['quando']))) ?></td>
           <td><?= h(['notte' => 'Copia della notte', 'manuale' => 'Copia mandata a mano', 'prova' => 'Prova della connessione'][$r['origine']] ?? $r['origine']) ?></td>
           <td class="<?= $r['esito'] === 'ok' ? 'ca-ok' : 'ca-ko' ?>"><?= $r['esito'] === 'ok' ? 'Riuscito' : 'Non riuscito' ?></td>
           <td><small><?= h((string)$r['messaggio']) ?><?= $r['file'] !== '' ? '<br>' . h($r['file']) : '' ?><?= (int)$r['secondi'] ? ' &middot; ' . (int)$r['secondi'] . ' s' : '' ?></small></td></tr>
-      <?php endforeach; ?></tbody></table><?php endif; ?>
+      <?php endforeach; ?></tbody></table></div><?php endif; ?>
     </div></div>
   </div>
 </div>

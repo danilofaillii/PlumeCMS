@@ -70,7 +70,9 @@ function editor_carica_widget_esterni(): void {
         set_error_handler(function (int $n, string $msg, string $file = '', int $riga = 0) use ($f) { error_log("editor: avviso in $f: $msg ($file:$riga)"); return true; });
         $r['file_corrente'] = $f; // menu: per l'origine dei widget registrati
         try {
-            require_once $f;
+            // 2.0.0: ogni file in uno spazio suo. Prima una variabile di un file dei widget (un $r in cima al widget delle
+            // Prenotazioni) sovrascriveva il registro di questa funzione e le pagine del sito uscivano vuote.
+            (static function (string $file): void { require_once $file; })($f);
         } catch (Throwable $e) {
             error_log('editor: ' . $f . ' non caricato: ' . $e->getMessage());
         } finally {

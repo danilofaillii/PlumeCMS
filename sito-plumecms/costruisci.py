@@ -312,10 +312,12 @@ def temi():
 def documentazione(pagine_pdf):
     p = Pagina('documentazione')
     p.sezione([[titolo('I manuali, *da leggere anche offline.*', 'Documentazione',
-                       'Due manuali in PDF. Uno per usare plumeCMS, con le schermate vere; uno per costruirti il tuo tema.',
+                       'Due manuali in PDF. Uno per usare plumeCMS, con le schermate vere (in due file: il secondo è per gli addon); uno per costruirti il tuo tema.',
                        livello='h1', centro=True)]], larghezza='stretta', **spazi(72, 24))
     man = [('lista-spunte', 'Manuale d\'uso', pagine_pdf['manuale-uso'], 'manuale-uso',
             'Come si fa ogni cosa: articoli, pagine con l\'editor, menu, form, newsletter, sicurezza, aggiornamenti. Ogni capitolo ha un esempio vero, le schermate con i passi numerati e una checklist.'),
+           ('puzzle', 'Manuale d\'uso: gli addon', pagine_pdf['manuale-uso-addon'], 'manuale-uso-addon',
+            'La seconda parte del manuale d\'uso (dalla 2.0.0): prenotazioni, eventi, recensioni, negozio, statistiche, area riservata, corsi, copia del sito altrove. Un capitolo per addon, con l\'esempio e i limiti della beta.'),
            ('tavolozza', 'Manuale dei temi', pagine_pdf['manuale-temi'], 'manuale-temi',
             'Come si costruisce un tema da zero: cartella, colori, header e footer, CSS, infografiche, PHP, prove, distribuzione. Con il tema d\'esempio Lavagna.')]
     p.sezione([[w('invito_libero', icona=ic, titolo=n, livello='h2', testo=f'{d} {pag} pagine.', pulsante_testo='Scarica il PDF',
@@ -324,7 +326,7 @@ def documentazione(pagine_pdf):
                      w('elenco_icone', voci=[{'testo': t, 'icona': 'spunta', 'link': ''} for t in
                                              ['Il pannello in cinque minuti', 'Il primo articolo, e come programmarlo', 'Una pagina con l\'editor, dall\'inizio alla fine',
                                               'Menu, header, footer, stile e temi', 'Form, popup, newsletter, download', 'SEO, utenti, email, cron, sicurezza',
-                                              'Aggiornare, copiare il sito, portare qui WordPress', 'La checklist prima di andare online']])]),
+                                              'Aggiornare, copiare il sito, portare qui WordPress', 'Gli otto addon, uno per capitolo', 'La checklist prima di andare online']])]),
                (50, [titolo('Cosa c\'è nel manuale dei temi', livello='h3'),
                      w('elenco_icone', voci=[{'testo': t, 'icona': 'spunta', 'link': ''} for t in
                                              ['Il percorso, dal foglio bianco al tema attivo', 'tema.json, stile.json, modelli.json',
@@ -428,6 +430,7 @@ def scarica(note):
                     {'file': SERIE, 'titolo': 'plumeCMS {versione}', 'descrizione': 'Lo zip completo per un sito nuovo: estrai, carica sul server, apri il browser.'},
                     {'file': SERIE_AGG, 'titolo': 'plumeCMS {versione}, aggiornamento', 'descrizione': 'Per chi ha già plumeCMS: si carica da Impostazioni, Aggiornamenti.'},
                     {'file': 'manuale-uso', 'titolo': 'Manuale d\'uso', 'descrizione': 'Come si fa ogni cosa, con esempi, schermate e checklist.'},
+                    {'file': 'manuale-uso-addon', 'titolo': 'Manuale d\'uso: gli addon', 'descrizione': 'La seconda parte del manuale: un capitolo per ognuno degli otto addon.'},
                     {'file': 'manuale-temi', 'titolo': 'Manuale dei temi', 'descrizione': 'Come si costruisce un tema da zero.'},
                     {'file': 'tema-lavagna', 'titolo': 'Tema Lavagna', 'descrizione': 'Il tema d\'esempio del manuale: verde ardesia e testo color gesso.'}])]],
               larghezza='stretta', **spazi(16, 64))
@@ -477,7 +480,7 @@ def faq():
         ('Posso far prenotare un appuntamento dal sito?', 'Sì, con l\'addon Prenotazioni e appuntamenti. Scrivi i servizi, chi li fa e i suoi orari: chi visita sceglie fra i posti davvero liberi, riceve la conferma per email e il promemoria il giorno prima. Tu vedi tutto nell\'agenda del pannello.'),
         ('Posso vendere i miei prodotti?', 'Sì, con l\'addon Vetrina prodotti: catalogo, varianti, carrello e ordini che arrivano per email e nel pannello. Il pagamento è con bonifico, alla consegna o con il tuo link PayPal.me o Stripe: per ora non c\'è il pagamento con carta direttamente sul sito.'),
         ('Posso dare un ebook a chi si iscrive?', 'Sì. In Download carichi il file con la spunta Riservato; nel form, in Dopo l\'invio, scegli "Dopo la conferma, dai questo file". Chi compila riceve l\'email di conferma e, appena conferma, il link personale per scaricarlo. Il file non ha un indirizzo pubblico.'),
-        ('C\'è una guida per imparare a usarlo?', 'Sì: il manuale d\'uso, in PDF. Trentuno capitoli, dal primo accesso alla checklist prima di andare online, ognuno con un esempio vero, le schermate con i passi numerati e una checklist per sapere quando hai finito.'),
+        ('C\'è una guida per imparare a usarlo?', 'Sì: il manuale d\'uso, in PDF, in due file (il secondo è per gli addon). Quaranta capitoli, dal primo accesso alla checklist prima di andare online, ognuno con un esempio vero, le schermate con i passi numerati e una checklist per sapere quando hai finito.'),
         ('Posso costruirmi un tema mio?', 'Sì: c\'è un manuale apposta, con un tema d\'esempio completo da smontare e rifare tuo.'),
     ]
     p.sezione([[w('faq', voci=[{'domanda': d, 'risposta': r} for d, r in voci], prima_aperta=True)]], larghezza='stretta', **spazi(24, 56))
@@ -681,7 +684,7 @@ def main():
     if '--schermate' in sys.argv:
         immagini_da_schermate(sys.argv[sys.argv.index('--schermate') + 1])
     zips = {n: os.path.join(REL, 'cms', n + '.zip') for n in (ZIP, ZIP_AGG)}
-    pdf = {n: os.path.join(REL, 'manuali', n + '.pdf') for n in ('manuale-uso', 'manuale-temi')}
+    pdf = {n: os.path.join(REL, 'manuali', n + '.pdf') for n in ('manuale-uso', 'manuale-uso-addon', 'manuale-temi')}
     for n, f in list(zips.items()) + list(pdf.items()):
         if not os.path.exists(f):
             errore(f'manca {f}: prima python3 tools/cms-pacchetto.py --aggiornamento e node tools/manuali-pdf.js')

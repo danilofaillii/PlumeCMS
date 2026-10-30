@@ -39,7 +39,7 @@ Sul sito l'elenco è a <code>/corsi/</code>; in una pagina lo mostri con il widg
   <div class="sc-scatola"><h3><?= count($corsi) ?> corsi</h3><div class="sc-corpo co-tab" style="padding:0">
   <?php if (!$corsi): ?><p style="padding:1rem;margin:0;color:var(--text-muted)">Ancora nessun corso. Crea il primo con il riquadro qui accanto.</p>
   <?php else: ?>
-    <table class="admin-table" id="co-elenco" style="width:100%">
+    <div class="ad-tabella"><table class="admin-table" id="co-elenco" style="width:100%">
       <thead><tr><th>Corso</th><th>Stato</th><th>Chi lo vede</th><th>Lezioni</th><th>Iscritti</th><th></th></tr></thead>
       <tbody>
       <?php foreach ($corsi as $c): $nl = count(corsi_lezioni((int)$c['id'])); $ni = count(corsi_iscritti((int)$c['id'])); ?>
@@ -53,7 +53,7 @@ Sul sito l'elenco è a <code>/corsi/</code>; in una pagina lo mostri con il widg
         </tr>
       <?php endforeach; ?>
       </tbody>
-    </table>
+    </table></div>
   <?php endif; ?>
   </div></div>
   <aside><div class="sc-scatola"><h3>Nuovo corso</h3><div class="sc-corpo">

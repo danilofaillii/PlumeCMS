@@ -359,10 +359,10 @@ code { background: var(--fondo-2); color: var(--text); padding: .05em .3em; bord
 .search-input:focus, .admin-toolbar select:focus { outline: none; border-color: var(--coral); box-shadow: 0 0 0 3px var(--fuoco); }
 
 /* 2.0.0: la libreria dei Media per i campi immagine del pannello (pannello.js, data-scegli-media) */
-.pn-media{width:min(860px,94vw);max-height:86vh;border:1px solid var(--border);border-radius:var(--radius);background:var(--surface);color:var(--text);padding:1.1rem 1.25rem}
+.pn-media{margin:auto;width:min(860px,94vw);max-height:86vh;border:1px solid var(--border);border-radius:var(--radius);background:var(--surface);color:var(--text);padding:1.1rem 1.25rem}
 .pn-media::backdrop{background:rgba(0,0,0,.45)}
 .pn-media h3{margin:0 0 .6rem;font-size:1.05rem}
-.pn-media input[type=search]{width:100%;margin-bottom:.7rem}
+.pn-media input[type=search]{width:100%;margin-bottom:.7rem;padding:.5rem .85rem;border:1px solid var(--border);border-radius:8px;font:inherit;font-size:.9rem;background:var(--campo);color:var(--text)}
 .pn-media-griglia{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:.6rem;max-height:58vh;overflow:auto}
 .pn-media-voce{display:flex;flex-direction:column;gap:.25rem;padding:.35rem;border:1px solid var(--border);border-radius:8px;background:var(--bg,transparent);cursor:pointer;text-align:left;color:inherit}
 .pn-media-voce:hover,.pn-media-voce:focus-visible{border-color:var(--accent,#2563eb)}
@@ -383,3 +383,7 @@ fieldset { min-width: 0; }
   /* Le tabelle larghe scorrono dentro il loro riquadro: la pagina resta ferma. */
   .admin-content table { display: block; max-width: 100%; overflow-x: auto; }
 }
+
+/* 2.0.0: le tabelle degli addon nei riquadri stretti scorrono dentro il loro contenitore (la colonna delle azioni resta raggiungibile). */
+.ad-tabella { overflow-x: auto; max-width: 100%; }
+.ad-tabella > table { min-width: 100%; }

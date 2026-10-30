@@ -43,6 +43,17 @@ const log = () => { const f = path.join(DIR, 'logs', 'php-errori.log'); return f
   const attivi = JSON.parse(fs.readFileSync(path.join(DIR, 'moduli', 'addon-attivi.json'), 'utf8'));
   ok('moduli/addon-attivi.json li elenca tutti', ADDON.every(a => attivi.includes(a)), attivi);
 
+  // 1b. Dati veri negli addon, come li mette chi li usa: una persona nelle Prenotazioni. Con la 2.0.0 prima della correzione,
+  // una persona salvata (il widget Prenota legge le persone quando si carica) lasciava vuote tutte le pagine del sito.
+  const homePrima = (await (await p.request.get(B + '/')).text()).length;
+  await p.goto(B + '/admin/addon-pagina.php?a=prenotazioni&p=persone&nuova=1', { waitUntil: 'networkidle' });
+  await p.fill('#pa-persona input[name=nome]', 'Anna');
+  await Promise.all([p.waitForNavigation(), p.click('#pa-persona button.btn-primary')]);
+  ok('Prenotazioni: una persona salvata dal pannello', /Anna/.test(await (await p.request.get(B + '/admin/addon-pagina.php?a=prenotazioni&p=persone')).text()));
+  const homeDopo = await (await p.request.get(B + '/')).text();
+  ok('con una persona nelle Prenotazioni la home esce intera (non vuota)', homeDopo.length > homePrima * 0.8 && /<footer|class="piede|firma-sito/.test(homeDopo), { prima: homePrima, dopo: homeDopo.length });
+  const edApi = await p.goto(B + '/admin/', { waitUntil: 'networkidle' });
+
   // 2. Le pagine del pannello degli addon, prese dal menu.
   await p.goto(B + '/admin/', { waitUntil: 'networkidle' });
   const link = [...new Set(await p.locator('a[href*="addon-pagina.php"]').evaluateAll(l => l.map(a => a.getAttribute('href'))))];

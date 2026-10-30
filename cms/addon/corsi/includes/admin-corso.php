@@ -100,14 +100,14 @@ require CMS_ADMIN . '/includes/admin-header.php';
       </form>
     <?php else: ?><p class="hint">Il corso è aperto a tutti i membri: qui compare chi l'ha cominciato.</p><?php endif; ?>
     <?php if (!$iscritti): ?><p style="color:var(--text-muted)">Ancora nessuno.</p><?php else: ?>
-    <table class="admin-table" id="co-iscritti" style="width:100%"><thead><tr><th>Membro</th><th>Avanzamento</th><th>Ultima visita</th><th>Certificato</th><th></th></tr></thead><tbody>
+    <div class="ad-tabella"><table class="admin-table" id="co-iscritti" style="width:100%"><thead><tr><th>Membro</th><th>Avanzamento</th><th>Ultima visita</th><th>Certificato</th><th></th></tr></thead><tbody>
     <?php foreach ($iscritti as $r): $pc = $totale ? (int)floor((int)$r['fatte'] * 100 / $totale) : 0; ?>
       <tr data-email="<?= h($r['email']) ?>"><td><?= h($r['nome']) ?><br><small style="color:var(--text-muted)"><?= h($r['email']) ?><?= (int)$r['assegnato'] ? ' &middot; assegnato' : '' ?></small></td>
         <td class="co-av"><?= (int)$r['fatte'] ?> su <?= $totale ?> (<?= $pc ?>%)</td>
         <td><?= $r['ultimo'] ? h(date('d/m/Y H:i', strtotime($r['ultimo']))) : '-' ?></td>
         <td><?= $r['certificato'] ? '<code>' . h($r['certificato']) . '</code>' : '-' ?></td>
         <td><?php if ((int)$r['assegnato'] && $corso['accesso'] === 'assegnati'): ?><form method="post" data-conferma="Togliere il corso a <?= h($r['email']) ?>?"><?= csrf_field() ?><input type="hidden" name="azione" value="togli"><input type="hidden" name="membro" value="<?= (int)$r['membro_id'] ?>"><button class="btn btn-secondary btn-sm" type="submit">Togli</button></form><?php endif; ?></td></tr>
-    <?php endforeach; ?></tbody></table>
+    <?php endforeach; ?></tbody></table></div>
     <?php endif; ?>
   </div></div>
 </div>

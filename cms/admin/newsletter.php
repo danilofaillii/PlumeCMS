@@ -340,7 +340,7 @@ require_once __DIR__ . '/includes/admin-header.php';
   <form method="post">
     <?= csrf_field() ?><input type="hidden" name="azione" value="impostazioni">
     <div class="form-group"><label for="per_ora">Email al massimo ogni ora</label><input type="number" id="per_ora" name="per_ora" min="10" max="2000" value="<?= (int)$cfg['per_ora'] ?>">
-      <div class="hint">I server condivisi limitano le email per ora: chiedi a Hostcare il limite del tuo piano e scrivi qui un numero un po' più basso. Contano tutte le email del sito (conferme, avvisi dei form, flussi, campagne): nell'ultima ora ne sono partite <?= posta_inviate(3600) ?>.</div></div>
+      <div class="hint">I server condivisi limitano le email per ora: chiedi al tuo hosting il limite del tuo piano e scrivi qui un numero un po' più basso. Contano tutte le email del sito (conferme, avvisi dei form, flussi, campagne): nell'ultima ora ne sono partite <?= posta_inviate(3600) ?>.</div></div>
     <div class="form-group"><label for="per_giorno">Email al massimo al giorno</label><input type="number" id="per_giorno" name="per_giorno" min="0" max="100000" value="<?= (int)$cfg['per_giorno'] ?>">
       <div class="hint">Nelle ultime 24 ore, contando tutte le email del sito. 0 vuol dire nessun limite. Nelle ultime 24 ore ne sono partite <?= posta_inviate(86400) ?>.</div></div>
     <div class="form-group"><label for="rispondi_a">Le risposte alla newsletter arrivano a</label><input type="email" id="rispondi_a" name="rispondi_a" value="<?= h($cfg['rispondi_a']) ?>" placeholder="la tua email">

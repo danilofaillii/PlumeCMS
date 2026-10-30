@@ -164,7 +164,7 @@ async function contrastoParole(pg) {
   // I file da scaricare: i link delle pagine portano a file veri, con il tipo giusto.
   await v.goto(B + '/scarica/', { waitUntil: 'networkidle' });
   const link = await v.locator('a[href*="/scarica/"]').evaluateAll(as => [...new Set(as.map(a => a.getAttribute('href')).filter(h => /\/scarica\/[^/]+\/$/.test(h)))]);
-  ok('la pagina Scarica, widget Download: cinque file (dalla 1.6.4 senza il manuale tecnico), tutti presenti', await v.locator('.ed-dl-voce').count() === 5 && await v.locator('.ed-dl-mancante').count() === 0, await v.locator('.ed-dl-titolo').allInnerTexts());
+  ok('la pagina Scarica, widget Download: sei file (dalla 2.0.0 anche il manuale degli addon), tutti presenti', await v.locator('.ed-dl-voce').count() === 6 && await v.locator('.ed-dl-mancante').count() === 0, await v.locator('.ed-dl-titolo').allInnerTexts());
   // Dalla 1.2.5 i link sono quelli della serie, che porta sempre all'ultima versione caricata.
   ok('la pagina Scarica punta alle serie (sempre l\'ultima versione)', link.some(h => h.endsWith('/plumecms-ultima/')) && link.some(h => h.endsWith('/plumecms-ultima-aggiornamento/')), link);
   ok('nessun segnaposto {versione:...} rimasto nella pagina', !/\{versione:/.test(await v.content()));
@@ -172,7 +172,7 @@ async function contrastoParole(pg) {
   const rSerie = await v.request.get(B + '/scarica/plumecms-ultima/');
   ok(`/scarica/plumecms-ultima/ manda plumecms-${V}.zip`, rSerie.status() === 200 && (rSerie.headers()['content-disposition'] || '').includes(`plumecms-${V}.zip`), rSerie.headers()['content-disposition']);
   for (const [u, tipo, min] of [[`/scarica/plumecms-${V}/`, 'application/zip', 500000], [`/scarica/plumecms-${V}-aggiornamento/`, 'application/zip', 500000],
-    ['/scarica/manuale-uso/', 'application/pdf', 1000000], ['/scarica/manuale-temi/', 'application/pdf', 300000], ['/scarica/tema-lavagna/', 'application/zip', 1000]]) {
+    ['/scarica/manuale-uso/', 'application/pdf', 1000000], ['/scarica/manuale-uso-addon/', 'application/pdf', 500000], ['/scarica/manuale-temi/', 'application/pdf', 300000], ['/scarica/tema-lavagna/', 'application/zip', 1000]]) {
     const r = await v.request.get(B + u);
     const corpo = await r.body();
     const firma = tipo === 'application/pdf' ? corpo.slice(0, 4).toString() === '%PDF' : corpo[0] === 0x50 && corpo[1] === 0x4b;
