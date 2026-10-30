@@ -314,3 +314,4 @@ function ewx_icona_html(array $v, string $classe = ''): string {
 require_once __DIR__ . '/editor-widget-extra-a.php';
 require_once __DIR__ . '/editor-widget-extra-b.php';
 require_once __DIR__ . '/editor-widget-extra-c.php';
+require_once __DIR__ . '/editor-widget-extra-d.php'; // 1.10.0: orari, barra contatti, recensioni, prima e dopo, squadra, slider, eventi

@@ -1066,6 +1066,32 @@ echo json_encode($o);
     } else ok('1.9.0: avviso dei form: attacchi saltati (nessun form)', true);
   }
 
+  // === 26. (1.10.0) I sette widget nuovi con testo cattivo in ogni campo (prove/widget-cattivi.php: passano da editor_valida
+  // come dall'editor vero): niente attributi on*, niente script tranne i dati per Google (JSON valido), niente link javascript: o data:.
+  if (DIR && fs.existsSync(path.join(__dirname, '..', 'prove', 'widget-cattivi.php'))) {
+    const { execFileSync } = require('child_process');
+    let html = '';
+    try { html = execFileSync('php', [path.join(__dirname, '..', 'prove', 'widget-cattivi.php'), DIR], { encoding: 'utf8' }); } catch (e) { html = ''; }
+    ok('1.10.0: (preparazione) i sette widget disegnati con i valori cattivi', html.length > 2000 && ['orari', 'barra_contatti', 'recensioni', 'squadra', 'slider', 'eventi'].every(x => html.includes('ed-w-' + x)), { lunghezza: html.length });
+    const anon = await browser.newContext({ javaScriptEnabled: false });
+    const pg = await anon.newPage();
+    await pg.setContent('<!doctype html><body>' + html + '</body>');
+    const esame = await pg.evaluate(() => {
+      const tutti = [...document.querySelectorAll('*')];
+      return {
+        on: tutti.filter(e => [...e.attributes].some(a => /^on/i.test(a.name))).map(e => e.outerHTML.slice(0, 80)),
+        script: [...document.scripts].map(s => ({ tipo: s.type, json: (() => { try { JSON.parse(s.textContent); return true; } catch (e) { return false; } })() })),
+        link: tutti.flatMap(e => ['href', 'src', 'action', 'formaction'].map(n => e.getAttribute(n)).filter(Boolean)).filter(u => /^\s*(javascript|data|vbscript):/i.test(u)),
+        testo: document.body.innerText.includes('<script>alert(1)</script>'),
+      };
+    });
+    ok('1.10.0: widget nuovi, nessun attributo on* nell\'HTML', esame.on.length === 0, esame.on);
+    ok('1.10.0: widget nuovi, solo script di dati per Google, con JSON valido', esame.script.every(s => s.tipo === 'application/ld+json' && s.json), esame.script);
+    ok('1.10.0: widget nuovi, nessun link o immagine javascript: o data:', esame.link.length === 0, esame.link);
+    ok('1.10.0: widget nuovi, il testo cattivo si legge come testo', esame.testo);
+    await anon.close();
+  } else console.log('--  widget nuovi con testo cattivo: saltata (serve CMS_DIR)');
+
   // === pulizia: elimina il redattore di prova
   {
     await admin.p.goto(ADMIN + '/utenti.php', { waitUntil: 'networkidle' });

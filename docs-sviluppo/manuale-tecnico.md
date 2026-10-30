@@ -1,6 +1,6 @@
 # plumeCMS: manuale tecnico
 
-Versione del manuale: 1.19, per plumeCMS 1.9.2 (30 ottobre 2026).
+Versione del manuale: 1.20, per plumeCMS 1.10.0 (30 ottobre 2026).
 
 Questo manuale descrive come è fatto plumeCMS e come funziona, pezzo per pezzo. È scritto leggendo il codice:
 ogni numero, limite e nome di funzione viene dai file veri, con il riferimento `file:riga` quando serve a chi
@@ -45,6 +45,7 @@ pagine, gestire il sito) c'è il manuale d'uso, `docs/manuale-uso.md`, con le sc
 28. Aggiungi sempre alla fine: il riquadro in fondo agli articoli (dalla 1.6.0)
 29. Il sito su misura (dalla 1.7.0)
 30. La frase in fondo al sito e il banner del sito ufficiale (dalla 1.8.0)
+31. I widget per le attività (dalla 1.10.0)
 
 Appendice A. Dove i documenti vecchi non corrispondono al codice
 
@@ -73,7 +74,7 @@ fatti con plumeCMS, i loro contenuti e i temi e moduli che non ne copiano il cod
 index.php           front controller: tutte le richieste del sito passano da qui
 cron-daily.php      compiti del giorno (pacchetti programmati, moduli, IndexNow)
 cron-newsletter.php invio della newsletter a giri, coda IndexNow
-VERSIONE            il numero di versione (oggi 1.9.2)
+VERSIONE            il numero di versione (oggi 1.10.0)
 CHANGELOG.md, README.md, INSTALLA.md
 .htaccess           regole di Apache (copia di install/esempi/htaccess-radice.txt)
 
@@ -2782,6 +2783,46 @@ senza chiusura.
 
 **Prove**: `prove/prova-firma.js` (14 controlli: banner, frase sul sito sotto il piede, cambio, senza link, HTML e
 `javascript:`, spenta; alla fine rimette la frase com'era), gruppo 24 di `tools/sicurezza-prova.js`.
+
+## 31. I widget per le attività (dalla 1.10.0)
+
+Scelti da Danilo fra le quindici proposte dell'analisi dei widget del 30 ottobre 2026 (1, 2, 5, 6, 8, 11, 12). Stanno in
+`includes/editor-widget-extra-d.php`, caricato in coda a `includes/editor-widget-extra.php`, con lo stesso contratto delle parti
+A, B e C (`ewx_registra()`, classi `ew-*`, aspetto in `sito/assets/widget.css`, comportamento in `sito/assets/widget.js`).
+I widget sono ora 87. Nessun servizio esterno: niente chiavi, niente chiamate dal server.
+
+| Tipo | Nome | Gruppo | Note |
+|---|---|---|---|
+| `orari` | Orari di apertura | Elementi | sette campi di testo (`lun`...`dom`), ripetitore `chiusure` (dal, al, motivo) |
+| `barra_contatti` | Barra contatti (telefono) | Elementi | `tel:`, `https://wa.me/`, indicazioni Google Maps (`/maps/dir/?api=1&destination=`), `mailto:` |
+| `recensioni` | Recensioni | Marketing | voto, totale, fonte, ripetitore delle recensioni scritte a mano, pulsante verso la pagina delle recensioni |
+| `prima_dopo` | Prima e dopo | Gallerie | due immagini, `--ew-pos` spostata da un `input type=range` invisibile sopra le foto |
+| `squadra` | Squadra | Elementi | ripetitore delle persone; i link social solo `http(s)://`, l'email solo se valida, senza foto le iniziali |
+| `slider` | Slider | Gallerie | ripetitore delle slide sul motore del carosello (`ewx_carosello_html()`), una per vista; sotto 640 px niente frecce |
+| `eventi` | Eventi | Dal sito | ripetitore con data `AAAA-MM-GG`; ordinati per data e ora, i passati tolti sul sito (nell'anteprima si vedono, segnati) |
+
+**Orari.** `ewx_orari_intervalli()` (`:17`) legge "9:00-13:00, 15:00-19:00", "9-13", "9.30 - 12.30", "24 ore"; "chiuso",
+vuoto o un testo che non si capisce valgono giorno chiuso; un orario oltre la mezzanotte (18:00-02:00) vale anche per la
+notte dopo. `ewx_orari_stato()` (`:50`) dà [aperto, frase]: le chiusure del giorno vincono, poi la notte di ieri, poi le
+fasce di oggi; da chiuso cerca la prossima apertura nei sette giorni dopo, saltando le chiusure. Lo stesso calcolo è in
+`widget.js` (funzione `orari`), con i dati in `data-ew-orari` e l'ora nel fuso del sito (`Intl.DateTimeFormat` con
+`timeZone`): la frase si rifà ogni minuto anche su una pagina aperta a lungo. Dati per Google: `LocalBusiness` con
+`openingHoursSpecification`, in un `<script type="application/ld+json">` dentro il widget (non è codice: la CSP non lo
+blocca; `JSON_HEX_TAG` contro `</script>` nei testi). Nell'anteprima dell'editor i dati per Google non escono.
+
+**Eventi.** Dati per Google `Event` (nome, `startDate`, luogo, descrizione, immagine) per gli eventi non passati, in un
+`@graph`. **Recensioni**: nessun dato per Google, apposta (Google non mostra le stelle delle recensioni che un'attività
+pubblica di sé). Le stelle del voto medio sono due file sovrapposte, quella piena larga quanto il voto (`width` in linea:
+la CSP del sito ammette gli stili in linea).
+
+**Barra contatti.** `position:fixed` in fondo; con "Solo sul telefono" (predefinito) sparisce sopra 767 px; il corpo della
+pagina prende lo spazio in fondo (`body:has(.ew-barra-contatti)`), così il piede non resta coperto. Nell'editor è un
+riquadro tratteggiato con una riga che spiega dove sta.
+
+**Prove.** `prove/prova-widget-nuovi.js` (40 controlli: i calcoli degli orari a giorni e ore fissi con
+`prove/orari-cli.php`, il sito al computer e al telefono, i dati per Google, l'elenco dell'editor), con la pagina di
+`prove/pagina-widget-nuovi.php`; attacchi: gruppo 26 di `tools/sicurezza-prova.js` con `prove/widget-cattivi.php`
+(testo cattivo in ogni campo, passato da `editor_valida()`).
 
 ## Appendice A. Dove i documenti vecchi non corrispondono al codice
 

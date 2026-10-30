@@ -90,7 +90,7 @@ Sono gli unici in `cms/docs/`, nello zip, nel sito di plumeCMS e nella pagina Do
 - **Pacchetto di aggiornamento** per un'installazione esistente:
   `python3 tools/cms-pacchetto.py --aggiornamento`. Si carica dal pannello,
   Impostazioni, Aggiornamenti.
-- **Versione**: `cms/VERSIONE` (oggi 1.9.2) e una voce in `cms/CHANGELOG.md` a ogni
+- **Versione**: `cms/VERSIONE` (oggi 1.10.0) e una voce in `cms/CHANGELOG.md` a ogni
   zip con contenuto diverso. Mai cambiare il contenuto di una versione già data.
 - **Prove** prima di dire finito:
   - `php -n -d short_open_tag=1 -l` su ogni file PHP toccato, `node --check` sui js;
@@ -126,7 +126,15 @@ Le decisioni complete, con data e perché, stanno nel second brain, `plumecms/de
 
 ## Stato al 28 ottobre 2026
 
-Fatto: plumeCMS 1.9.2 (30 ottobre): sezioni e gruppi del pannello dell'editor più riconoscibili (segnalazione di Danilo):
+Fatto: plumeCMS 1.10.0 (30 ottobre): sette widget per le attività scelti da Danilo (Orari di apertura con "Aperto ora" calcolato
+dal server e ricalcolato nel browser nel fuso del sito, Barra contatti fissa sul telefono, Recensioni scritte a mano senza dati per Google,
+Prima e dopo, Squadra, Slider sul motore del carosello, Eventi che spariscono passati) in `includes/editor-widget-extra-d.php`; 87 widget.
+Dati per Google (LocalBusiness, Event) in `<script type="application/ld+json">` dentro il widget. Manuale d'uso capitolo 8 (foto
+08-attivita fatta dopo tutti i capitoli: la pagina di prova prende un numero di pagina), tecnico 31; JPEG del manuale a qualità 25
+(PDF 1826 KB). Prove: `prova-widget-nuovi.js` 40/40 (sito nuovo e sito aggiornato), attacchi 238/238 (gruppo 26 con
+`prove/widget-cattivi.php`), install 37/37 radice e cartella, aggiornamento 1.9.2 -> 1.10.0 13/13 (sito uguale tranne il conto alla
+rovescia), sito di plumeCMS 82/82.
+1.9.2 (30 ottobre): sezioni e gruppi del pannello dell'editor più riconoscibili (segnalazione di Danilo):
 `details.ed-sez` con intestazione piena e, aperta, bordo e striscia d'accento; `.ed-gruppo` a riquadro con il nome in maiuscoletto
 (`.ed-controllo:has(>.ed-gruppo)`), solo `admin/assets/editor/editor.css`. Schermate del manuale rifatte (PDF 1884 KB, al limite: la
 prossima volta alleggerire). Prove: install 37/37, aggiornamento 1.9.1 -> 1.9.2 13/13, file del pannello 6/6, pannello guardato in Aria e
@@ -313,6 +321,8 @@ Errori veri, già pagati. Non ripeterli.
 | `open(f, 'w').write(f(open(f).read()))` in Python | `open(f, 'w')` svuota il file prima che la lettura avvenga: il `config.local.php` di un sito di prova è finito vuoto (28 ottobre 2026) e la prova dopo falliva in modo incomprensibile. Prima si legge in una variabile, poi si scrive |
 | Un'emoji salvata come entità (`&#127837;`) in un campo di testo semplice di un widget | il widget fa l'escape e sul sito esce scritto `&amp;#127837;` (sito su misura, 1.7.0). Le entità valgono solo nei campi che le decodificano (Testo); nell'albero dell'editor ci pensa `editor_json()`; nei nomi che diventano titoli e slug le emoji si tolgono |
 | Un gestore in linea (`onchange="..."`) nel pannello | la CSP a nonce lo blocca in silenzio: Sostituisci non partiva. Si usano gli attributi di `pannello.js` (`data-invia-al-cambio`, `data-conferma`...) |
+| Più di sei colonne in una sezione | `editor_valida()` tiene le prime sei e toglie le altre in silenzio: la settima colonna (con il suo widget) sparisce. Nelle pagine di prova un widget per sezione |
+| Una pagina di prova creata a metà del giro delle schermate | prende il numero di pagina che un capitolo dopo si aspetta (`editor.php?id=6`, "Lavora con noi") e lo script si ferma. Le pagine di prova per le foto si creano dopo tutti i capitoli |
 | Fidarsi del resoconto di un agente | è successo che un agente dichiarasse lavoro mai scritto su disco. Si controllano i file veri e si rifanno le prove |
 
 ## Tono con l'utente

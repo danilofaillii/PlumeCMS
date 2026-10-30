@@ -1,6 +1,6 @@
 # Manuale d'uso di plumeCMS
 
-Versione del manuale: plumeCMS 1.9.2, 30 ottobre 2026.
+Versione del manuale: plumeCMS 1.10.0, 30 ottobre 2026.
 
 ## Prima di cominciare
 
@@ -448,7 +448,7 @@ ancora pubblicata".
 
 Ogni pagina è una pila di **sezioni** (le fasce orizzontali). Ogni sezione ha da una a quattro **colonne**. Dentro le
 colonne ci sono i **widget**: titoli, testi, immagini, pulsanti, gallerie, prezzi, domande frequenti, mappe, form e
-molti altri, 80 in tutto.
+molti altri, 87 in tutto.
 
 - Per **aggiungere un widget**: fai clic su un elemento della tela, poi sul widget nella linguetta **Widget**: entra
   sotto l'elemento scelto. Oppure trascinalo dove vuoi.
@@ -473,6 +473,30 @@ Doppio clic su un elemento, e a sinistra si apre **Modifica**.
 - [ ] So distinguere sezione, colonna e widget.
 - [ ] So aprire il pannello Modifica (doppio clic) e trovare le schede Contenuto, Stile, Avanzate.
 - [ ] So che **Salva bozza** non cambia il sito e **Pubblica** sì.
+
+### I widget per le attività
+
+Sette widget pensati per chi ha un negozio, uno studio, un locale. Li trovi nella linguetta **Widget**, come gli altri.
+
+![Orari di apertura e Recensioni sul sito](immagini/manuale-uso/08-attivita.jpg)
+
+| Widget | A cosa serve | Cosa scrivere |
+|---|---|---|
+| **Orari di apertura** | I giorni con gli orari, e in alto "Aperto ora, chiude alle 19:00" oppure "Chiuso ora, apre domani alle 9:00", che si aggiorna da solo | Un giorno per riga: `9:00-13:00, 15:00-19:00`, `Chiuso`, `24 ore`. In **Ferie e chiusure** le date (`2026-08-10`): in quei giorni il widget dice Chiuso e il motivo |
+| **Barra contatti (telefono)** | Una fascia fissa in fondo allo schermo, solo sul telefono: Chiama, WhatsApp, Indicazioni, Scrivici | Il numero, il numero WhatsApp con il prefisso (39...), l'indirizzo, l'email: un pulsante per ognuno che scrivi |
+| **Recensioni** | Il voto medio con le stelle, alcune recensioni e il pulsante "Lasciaci una recensione" | Il voto (4,8), quante sono, dove (Google); le recensioni copiale con il permesso di chi le ha scritte; nel link del pulsante l'indirizzo che Google ti dà per farti recensire |
+| **Prima e dopo** | Due foto una sopra l'altra, con una linea da trascinare: il lavoro prima e dopo | Due foto con la stessa inquadratura |
+| **Squadra** | Le persone, con foto, ruolo, due righe e i contatti | Senza foto escono le iniziali |
+| **Slider** | Più aperture che scorrono, ognuna con foto, titolo e pulsante | Una slide per messaggio, non più di quattro |
+| **Eventi** | Le serate, i corsi, le aperture straordinarie, in ordine di data | La data come `2026-11-21`: quando l'evento è passato sparisce da solo |
+
+Orari ed Eventi mettono anche i dati che Google sa leggere (si spengono dalla sezione Aspetto o Elenco). Le recensioni
+no, apposta: Google non mostra le stelle che un'attività scrive di sé.
+
+**Checklist**
+
+- [ ] Negli orari ho scritto anche i giorni di chiusura e le ferie.
+- [ ] Ho aperto il sito dal telefono e la barra dei contatti chiama il numero giusto.
 
 ---
 

@@ -482,3 +482,116 @@ a.ew-ei-voce:hover{color:var(--ew-tc,var(--testo))}
 @keyframes ew-spinge{50%{transform:scale(.92)}}
 @keyframes ew-vibra{50%{transform:translateX(2px) rotate(1deg)}100%{transform:translateX(-2px) rotate(-1deg)}}
 @media (prefers-reduced-motion:reduce){[class*=ew-hov-]:hover{animation:none;transform:none}.ew-barra-riempi{transition:none}}
+
+/* ==== 1.10.0: orari, barra contatti, recensioni, prima e dopo, squadra, slider, eventi ==== */
+/* ---- Orari di apertura */
+.ew-orari{display:flex;flex-direction:column;gap:14px}
+.ew-orari-titolo{margin:0;font:600 1.25rem/1.2 var(--f-titolo);color:var(--ew-tc,var(--testo))}
+.ew-orari-stato{display:inline-flex;align-items:center;gap:8px;margin:0;font-weight:600}
+.ew-orari-punto{width:10px;height:10px;border-radius:50%;flex:none;background:currentColor;box-shadow:0 0 0 4px rgba(var(--inchiostro-rgb),.06)}
+.ew-orari-stato.ew-aperto{color:var(--ew-ok,var(--successo))}
+.ew-orari-stato.ew-chiuso-ora{color:var(--ew-no,var(--errore))}
+.ew-orari-giorni,.ew-orari-ferie{list-style:none;margin:0;padding:0}
+.ew-orari-riga{display:flex;justify-content:space-between;gap:16px;padding:8px 10px;border-bottom:1px solid var(--bordo);color:var(--ew-dc,var(--testo-corpo))}
+.ew-orari-riga:last-child{border-bottom:0}
+.ew-orari-riga span:last-child{text-align:right;font-variant-numeric:tabular-nums}
+.ew-orari-riga.ew-chiuso span:last-child{color:var(--testo-2)}
+.ew-orari-riga.ew-oggi{background:var(--ew-obg,var(--vetro-2));border-radius:8px;font-weight:600;color:var(--testo)}
+.ew-orari-ferie li{font-size:.9em;color:var(--testo-2);padding:2px 0}
+/* ---- Barra dei contatti per il telefono */
+.ew-barra-contatti{position:fixed;left:0;right:0;bottom:0;z-index:70;display:flex;height:calc(var(--ew-h,62px) + env(safe-area-inset-bottom,0px));padding-bottom:env(safe-area-inset-bottom,0px);background:var(--ew-bg,var(--bg-2));border-top:1px solid var(--ew-bc,var(--bordo));box-shadow:0 -8px 24px rgba(0,0,0,.25)}
+.ew-bc-voce{flex:1 1 0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;color:var(--ew-c1,var(--testo));text-decoration:none;font:600 12px/1 var(--f-testo);border-left:1px solid var(--ew-bc,var(--bordo))}
+.ew-bc-voce:first-child{border-left:0}
+.ew-bc-voce svg{width:22px;height:22px}
+.ew-bc-voce:hover,.ew-bc-voce:focus-visible{background:rgba(var(--inchiostro-rgb),.06)}
+.ew-bc-whatsapp svg{color:#25d366}
+@media (min-width:768px){.ew-bc-telefono{display:none}}
+@media (max-width:767px){body:has(.ew-barra-contatti){padding-bottom:calc(var(--ew-h,62px) + env(safe-area-inset-bottom,0px))}}
+body:has(.ew-bc-sempre){padding-bottom:62px}
+.ew-barra-contatti.ew-bc-anteprima{position:static;display:flex;border-radius:12px;box-shadow:none;border:1px dashed var(--bordo)}
+/* ---- Recensioni */
+.ew-rec{display:flex;flex-direction:column;gap:22px}
+.ew-rec-riepilogo{display:flex;align-items:center;gap:16px;justify-content:var(--ew-just,flex-start)}
+.ew-rec-media{font:700 3rem/1 var(--f-titolo);color:var(--ew-tc,var(--testo))}
+.ew-rec-riepilogo>div{display:flex;flex-direction:column;gap:6px}
+.ew-rec-totale{color:var(--testo-2);font-size:.92em}
+.ew-rec-stelle{position:relative;display:inline-block;line-height:0;color:var(--ew-c1,#f5b301)}
+.ew-rec-stelle svg,.ew-rec-stelle-voce svg{width:var(--ew-dim,18px);height:var(--ew-dim,18px)}
+.ew-rec-vuote{opacity:.35;white-space:nowrap}
+.ew-rec-piene{position:absolute;left:0;top:0;overflow:hidden;white-space:nowrap}
+.ew-rec-griglia{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}
+@media (max-width:860px){.ew-rec-griglia{grid-template-columns:1fr}}
+.ew-rec-voce{margin:0;display:flex;flex-direction:column;gap:10px;padding:20px;border:1px solid var(--bordo);border-radius:var(--r,16px);background:var(--vetro)}
+.ew-rec-stelle-voce{color:var(--ew-c1,#f5b301);line-height:0}
+.ew-rec-testo{margin:0;color:var(--ew-dc,var(--testo-corpo))}
+.ew-rec-testo p{margin:0 0 .5em}
+.ew-rec-voce figcaption{margin-top:auto;display:flex;justify-content:space-between;gap:10px;font-size:.9em}
+.ew-rec-nome{color:var(--ew-ac,var(--testo))}
+.ew-rec-quando{color:var(--testo-2)}
+.ew-rec-azione{margin:0;text-align:var(--ew-ta,left)}
+.ew-rec-azione .btn svg{width:16px;height:16px;vertical-align:-3px}
+/* ---- Prima e dopo */
+.ew-pd{position:relative;overflow:hidden;border-radius:var(--ew-r,14px);aspect-ratio:var(--ew-ratio,3/2);user-select:none;touch-action:pan-y;background:var(--vetro)}
+.ew-pd img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block;pointer-events:none}
+.ew-pd-prima{position:absolute;inset:0;clip-path:inset(0 calc(100% - var(--ew-pos,50%)) 0 0)}
+.ew-pd-linea{position:absolute;top:0;bottom:0;left:var(--ew-pos,50%);width:3px;margin-left:-1.5px;background:var(--ew-c1,#fff);box-shadow:0 0 8px rgba(0,0,0,.35);pointer-events:none}
+.ew-pd-maniglia{position:absolute;top:50%;left:50%;width:44px;height:44px;margin:-22px 0 0 -22px;border-radius:50%;background:var(--ew-c1,#fff);color:#111;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 14px rgba(0,0,0,.35)}
+.ew-pd-maniglia svg{width:22px;height:22px}
+.ew-pd-eti{position:absolute;top:12px;padding:5px 10px;border-radius:999px;font:700 11px/1 var(--f-testo);letter-spacing:.08em;text-transform:uppercase;background:var(--ew-ebg,rgba(0,0,0,.55));color:var(--ew-ec,#fff);pointer-events:none}
+.ew-pd-eti-prima{left:12px}.ew-pd-eti-dopo{right:12px}
+.ew-pd-cursore{position:absolute;inset:0;width:100%;height:100%;margin:0;opacity:0;cursor:ew-resize;-webkit-appearance:none;appearance:none}
+.ew-pd:has(.ew-pd-cursore:focus-visible) .ew-pd-maniglia{outline:3px solid var(--ciano);outline-offset:2px}
+/* ---- Squadra */
+.ew-squadra{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:24px}
+@media (max-width:860px){.ew-squadra{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media (max-width:560px){.ew-squadra{grid-template-columns:1fr}}
+.ew-sq-voce{margin:0;display:flex;flex-direction:column;align-items:var(--ew-just,center);text-align:var(--ew-ta,center);gap:14px}
+.ew-sq-foto{display:block;overflow:hidden;background:var(--vetro-2);line-height:0}
+.ew-sq-foto img{width:100%;height:100%;object-fit:cover}
+.ew-sq-tonda .ew-sq-foto{width:var(--ew-imgs,140px);height:var(--ew-imgs,140px);border-radius:50%}
+.ew-sq-quadrata .ew-sq-foto{width:100%;aspect-ratio:1/1;border-radius:var(--r,16px)}
+.ew-sq-verticale .ew-sq-foto{width:100%;aspect-ratio:3/4;border-radius:var(--r,16px)}
+.ew-sq-iniziali{display:flex;width:100%;height:100%;align-items:center;justify-content:center;font:700 2.2rem/1 var(--f-titolo);color:var(--testo-2)}
+.ew-sq-voce figcaption{display:flex;flex-direction:column;gap:4px;align-items:inherit}
+.ew-sq-nome{font:600 1.1rem/1.25 var(--f-titolo);color:var(--ew-tc,var(--testo))}
+.ew-sq-ruolo{color:var(--ew-ac,var(--ciano));font-size:.85em;font-weight:600;letter-spacing:.06em;text-transform:uppercase}
+.ew-sq-testo{color:var(--ew-dc,var(--testo-corpo));font-size:.95em;margin-top:4px}
+.ew-sq-social{display:flex;gap:10px;margin-top:8px;justify-content:var(--ew-just,center)}
+.ew-sq-social a{color:var(--ew-c1,var(--testo-2));line-height:0;transition:color .2s}
+.ew-sq-social a:hover{color:var(--ew-c1-h,var(--ciano))}
+.ew-sq-social svg{width:20px;height:20px}
+/* ---- Slider */
+.ew-slider .ew-car-voce{flex:0 0 100%}
+.ew-sl{position:relative;display:flex;align-items:center;min-height:var(--ew-h,460px);padding:48px clamp(24px,6vw,72px);border-radius:var(--ew-r,18px);overflow:hidden;background:linear-gradient(120deg,var(--primario-scuro),var(--secondario-scuro))}
+.ew-sl-sfondo{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.ew-sl-foto::after{content:'';position:absolute;inset:0;background:var(--ew-velo,linear-gradient(90deg,rgba(0,0,0,.65),rgba(0,0,0,.15)))}
+.ew-sl-centro{justify-content:center;text-align:center}.ew-sl-destra{justify-content:flex-end;text-align:right}
+.ew-sl-centro.ew-sl-foto::after{background:var(--ew-velo,rgba(0,0,0,.45))}
+.ew-sl-destra.ew-sl-foto::after{background:var(--ew-velo,linear-gradient(270deg,rgba(0,0,0,.65),rgba(0,0,0,.15)))}
+.ew-sl-testi{position:relative;z-index:1;max-width:620px;display:flex;flex-direction:column;gap:14px;align-items:flex-start;color:#fff}
+.ew-sl-centro .ew-sl-testi{align-items:center}.ew-sl-destra .ew-sl-testi{align-items:flex-end}
+.ew-sl-occhiello{font:700 12px/1 var(--f-testo);letter-spacing:.16em;text-transform:uppercase;color:var(--ew-ac,var(--secondario-chiaro))}
+.ew-sl-titolo{margin:0;font:700 clamp(1.8rem,4vw,3rem)/1.08 var(--f-titolo);color:var(--ew-tc,#fff)}
+.ew-sl-testo{margin:0;font-size:1.08rem;color:var(--ew-dc,rgba(255,255,255,.88))}
+.ew-sl-pulsante{margin-top:6px}
+/* ---- Eventi */
+.ew-eventi{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:14px}
+.ew-ev-voce{display:flex;gap:18px;align-items:flex-start;padding:16px;border:1px solid var(--bordo);border-radius:var(--r,16px);background:var(--vetro)}
+.ew-ev-passato{opacity:.55}
+.ew-ev-data{flex:none;width:72px;padding:10px 0;border-radius:12px;display:flex;flex-direction:column;align-items:center;gap:2px;background:var(--ew-c2,linear-gradient(180deg,var(--primario-chiaro),var(--primario-scuro)));color:var(--ew-c1,#fff)}
+.ew-ev-data b{font:700 1.7rem/1 var(--f-titolo)}
+.ew-ev-data span{font:700 12px/1 var(--f-testo);letter-spacing:.12em;text-transform:uppercase}
+.ew-ev-data small{font-size:11px;opacity:.85}
+.ew-ev-img{flex:none;width:120px;aspect-ratio:4/3;border-radius:10px;overflow:hidden;line-height:0}
+.ew-ev-img img{width:100%;height:100%;object-fit:cover}
+.ew-ev-corpo{flex:1;min-width:0;display:flex;flex-direction:column;gap:6px}
+.ew-ev-titolo{margin:0;font:600 1.15rem/1.25 var(--f-titolo);color:var(--ew-tc,var(--testo))}
+.ew-ev-meta{margin:0;color:var(--testo-2);font-size:.9em}
+.ew-ev-testo{margin:0;color:var(--ew-dc,var(--testo-corpo))}
+.ew-ev-link{align-self:flex-start;display:inline-flex;gap:6px;align-items:center;font-weight:600;text-decoration:none;color:var(--ciano)}
+.ew-ev-link svg{width:16px;height:16px}
+.ew-ev-vuoto{color:var(--testo-2)}
+@media (max-width:560px){.ew-ev-img{display:none}.ew-ev-voce{gap:12px}.ew-ev-data{width:58px}}
+@media (prefers-reduced-motion:reduce){.ew-sq-social a{transition:none}}
+/* Sul telefono le frecce coprirebbero il testo della slide: si scorre con il dito, restano i pallini. */
+@media (max-width:640px){.ew-slider .ew-car-prev,.ew-slider .ew-car-next{display:none}.ew-sl{padding:36px 22px}}

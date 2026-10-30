@@ -2,6 +2,21 @@
 
 Il prodotto si chiama **plumeCMS** (nome scelto il 26 ottobre 2026; prima, per poche ore, "CarbonaraCMS", e ancora prima il provvisorio "Officina": gli zip vecchi si chiamavano `officina-*` e `carbonaracms-*`).
 
+## 1.10.0 (30 ottobre 2026) - Sette widget per le attività
+
+- **Scelti da Danilo** fra le proposte dell'analisi dei widget. Nell'editor, linguetta Widget:
+  - **Orari di apertura**: i giorni con gli orari e, in alto, "Aperto ora, chiude alle 19:00" o "Chiuso ora, apre domani
+    alle 9:00", che si aggiorna da solo; ferie e chiusure con le date; gli orari anche nei dati per Google.
+  - **Barra contatti (telefono)**: una fascia fissa in fondo allo schermo, di solito solo sul telefono, con Chiama,
+    WhatsApp, Indicazioni e Scrivici.
+  - **Recensioni**: il voto medio con le stelle, le recensioni scritte a mano e il pulsante "Lasciaci una recensione".
+  - **Prima e dopo**: due foto sovrapposte con una linea da trascinare (anche con il dito e con la tastiera).
+  - **Squadra**: le persone con foto, ruolo, due righe e i contatti; senza foto, le iniziali.
+  - **Slider**: più aperture che scorrono, ognuna con foto, titolo, testo e pulsante.
+  - **Eventi**: in ordine di data, quelli passati spariscono da soli; anche nei dati per Google.
+- I widget ora sono 87. Nessun servizio esterno: le recensioni si copiano a mano (Google non mostra comunque le stelle che
+  un'attività scrive di sé), gli orari e gli eventi stanno nel widget.
+
 ## 1.9.2 (30 ottobre 2026) - Sezioni dell'editor più riconoscibili
 
 - **Segnalazione di Danilo**: nel pannello di sinistra dell'editor le sezioni (Titolo, Occhiello, Testo sotto il titolo...)

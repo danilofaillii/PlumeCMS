@@ -1,7 +1,7 @@
 // Le schermate del manuale d'uso (1.4.2): esegue gli esempi del manuale come una persona e fotografa ogni passo.
 // Se un passo del manuale non si può fare, lo script si ferma: il manuale e il pannello restano d'accordo.
 // Serve un plumeCMS appena installato con il kit Attività (prove/prova-kit.js ... attivita ...), utente prova.
-// uso: [SU_MISURA_BASE=<un sito su misura, stesso utente>] node tools/manuale-uso-schermate.js <base> <utente> <password> [solo un capitolo, es. 04]
+// uso: [CMS_DIR_MANUALE=<cartella del sito delle schermate>] [SU_MISURA_BASE=<un sito su misura, stesso utente>] node tools/manuale-uso-schermate.js <base> <utente> <password> [solo un capitolo, es. 04]
 // Senza SU_MISURA_BASE mancano le due foto del sito su misura (02-su-misura-home, 07-sostituisci).
 // Scrive cms/docs/immagini/manuale-uso/<capitolo>-<nome>.jpg (JPEG: il PDF del manuale deve restare sotto 1900 KB).
 const { chromium } = require('playwright');
@@ -72,7 +72,7 @@ async function apriEditor(u) {
 }
 
 // Da PNG a JPEG, una volta sola: al massimo LARGO px (nel PDF sono 17 cm), qualità QUALITA. Il PDF deve stare sotto 1900 KB.
-const LARGO = 760, QUALITA = 28;
+const LARGO = 760, QUALITA = 25;
 function stringi() {
   require('child_process').execFileSync('python3', ['-c', `
 import os, sys
@@ -642,6 +642,20 @@ capitoli['29'] = async () => {
   if (!SOLO || '29'.startsWith(SOLO)) fs.copyFileSync(path.join(FOTO_PROVA, 'importa-report.png'), path.join(GREZZE, '29-report.png'));
 };
 
+// 1.10.0: i widget per le attività, sul sito (foto del capitolo 8). La pagina /widget-nuovi/ la crea prove/pagina-widget-nuovi.php
+// nella cartella del sito delle schermate (CMS_DIR_MANUALE; senza, la foto si salta). Si fa dopo tutti i capitoli: creata prima,
+// prenderebbe il numero di pagina che il capitolo 17 si aspetta per "Lavora con noi".
+async function fotoWidgetAttivita() {
+  if (process.env.CMS_DIR_MANUALE && (!SOLO || '08'.startsWith(SOLO.slice(0, 2)))) {
+    require('child_process').execFileSync('php', [path.join(__dirname, '..', 'prove', 'pagina-widget-nuovi.php'), process.env.CMS_DIR_MANUALE]);
+    await p.goto(B + '/widget-nuovi/', { waitUntil: 'networkidle' }); await dorme(600);
+    await p.addStyleTag({ content: 'header{visibility:hidden}' }); // la testata fissa coprirebbe la parte alta della foto
+    const sez = p.locator('.ed-sezione:has(.ed-w-orari)').first();
+    await sez.scrollIntoViewIfNeeded();
+    await sez.screenshot({ path: path.join(GREZZE, '08-attivita.png') }); console.log('08-attivita');
+  }
+}
+
 module.exports = { capitoli };
 
 (async () => {
@@ -659,6 +673,7 @@ module.exports = { capitoli };
     if (SOLO && !SOLO.startsWith(n) && !n.startsWith(SOLO)) continue;
     await fn();
   }
+  await fotoWidgetAttivita();
   if (err.length) console.log('errori JavaScript:', err);
   stringi();
   const tot = fs.readdirSync(USCITA).filter(f => f.endsWith('.jpg')).reduce((t, f) => t + fs.statSync(path.join(USCITA, f)).size, 0);

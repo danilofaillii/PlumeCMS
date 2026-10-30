@@ -261,7 +261,47 @@
     mostra(0);
   }
 
+  // ---- orari di apertura (1.10.0): "Aperto ora" si ricalcola ogni minuto, nel fuso del sito, con gli stessi dati del server
+  function orari(el) {
+    var d; try { d = JSON.parse(el.dataset.ewOrari); } catch (e) { return; }
+    var stato = el.querySelector('.ew-orari-stato'), frase = el.querySelector('.ew-orari-frase');
+    if (!stato || !frase || !window.Intl) return;
+    var nomi = ['lunedì', 'martedì', 'mercoledì', 'giovedì', 'venerdì', 'sabato', 'domenica'];
+    function adesso(spost) {
+      var p = {}; new Intl.DateTimeFormat('en-GB', { timeZone: d.fuso, year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', weekday: 'short', hour12: false })
+        .formatToParts(new Date(Date.now() + (spost || 0) * 86400000)).forEach(function (x) { p[x.type] = x.value; });
+      return { data: p.year + '-' + p.month + '-' + p.day, g: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].indexOf(p.weekday), min: (parseInt(p.hour, 10) % 24) * 60 + parseInt(p.minute, 10) };
+    }
+    function hm(m) { m = m % 1440; return Math.floor(m / 60) + ':' + ('0' + (m % 60)).slice(-2); }
+    function inChiusura(data) { for (var i = 0; i < d.chiusure.length; i++) if (data >= d.chiusure[i][0] && data <= d.chiusure[i][1]) return d.chiusure[i]; return null; }
+    function calcola() {
+      var o = adesso(0), c = inChiusura(o.data), i, k, x;
+      if (c) return [false, d.chiuso + (c[2] ? ': ' + c[2] : '')];
+      var ieri = d.giorni[(o.g + 6) % 7] || [];
+      for (i = 0; i < ieri.length; i++) if (ieri[i][1] > 1440 && o.min < ieri[i][1] - 1440) return [true, d.aperto + ', chiude alle ' + hm(ieri[i][1])];
+      var oggi = d.giorni[o.g] || [];
+      for (i = 0; i < oggi.length; i++) { if (oggi[i][0] === 0 && oggi[i][1] === 1440) return [true, d.aperto + ', 24 ore su 24']; if (o.min >= oggi[i][0] && o.min < oggi[i][1]) return [true, d.aperto + ', chiude alle ' + hm(oggi[i][1])]; }
+      for (k = 0; k < 8; k++) {
+        x = adesso(k); if (inChiusura(x.data)) continue;
+        var g = d.giorni[x.g] || [];
+        for (i = 0; i < g.length; i++) { if (k === 0 && g[i][0] <= o.min) continue; return [false, d.chiuso + ', apre ' + (k === 0 ? 'alle ' : k === 1 ? 'domani alle ' : nomi[x.g] + ' alle ') + hm(g[i][0])]; }
+      }
+      return [false, d.chiuso];
+    }
+    function aggiorna() { var r = calcola(); frase.textContent = r[1]; stato.classList.toggle('ew-aperto', r[0]); stato.classList.toggle('ew-chiuso-ora', !r[0]); }
+    aggiorna(); var t = setInterval(function () { if (!el.isConnected) { clearInterval(t); return; } aggiorna(); }, 60000);
+  }
+
+  // ---- prima e dopo (1.10.0): il cursore (un input range invisibile sopra le foto) sposta la linea
+  function primaDopo(el) {
+    var r = el.querySelector('.ew-pd-cursore');
+    if (!r) return;
+    r.addEventListener('input', function () { el.style.setProperty('--ew-pos', r.value + '%'); });
+  }
+
   function avvia(root) {
+    nuovo('[data-ew-orari]', root, orari);
+    nuovo('[data-ew-pd]', root, primaDopo);
     nuovo('[data-ew-num]', root, contatore);
     nuovo('[data-ew-barra]', root, barra);
     nuovo('[data-ew-fisa]', root, fisa);

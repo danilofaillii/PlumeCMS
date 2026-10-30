@@ -20,7 +20,8 @@ Installa plumeCMS da zero con il browser (Playwright) e controlla sito e pannell
 
 
 
-Le prove di attacco: ogni OK è un attacco respinto (233 nella 1.9.0 su un sito Attività, con le 6 nuove del gruppo 25 sull'avviso
+Le prove di attacco: ogni OK è un attacco respinto (238 nella 1.10.0 su un sito Attività, con le 5 nuove del gruppo 26 sui
+widget nuovi; 233 nella 1.9.0 su un sito Attività, con le 6 nuove del gruppo 25 sull'avviso
 dei form; 249 nella 1.8.0 sullo stesso sito su misura in prova, con FINTO_WP: le 7 nuove,
 gruppo 24, sono sulla frase in fondo al sito; 227 su un sito Attività; 242 nella 1.7.0, con FINTO_WP, su un sito su misura ancora in prova: le 41
 nuove, gruppi 23 e 23b, sono sul sito su misura; 226 sullo stesso tipo di sito già definitivo e senza FINTO_WP; 201 nella 1.6.0,
@@ -411,3 +412,11 @@ ha il form) e con il server di posta finto acceso (`python3 -I prove/smtp-finto.
 `node prove/prova-form-avviso.js <base> <utente> <password> <porta smtp> <cartella posta>`. Scrive il server finto in
 Impostazioni e compila il form tre volte (il limite è 5 all'ora per IP: prima di rilanciarla, svuotare
 `<prefisso>moduli_invii`). Atteso: 13 su 13, anche su un sito aggiornato dalla 1.8.0.
+
+## prova-widget-nuovi.js (1.10.0)
+
+I sette widget per le attività (Orari di apertura, Barra contatti, Recensioni, Prima e dopo, Squadra, Slider, Eventi).
+Prima `php prove/pagina-widget-nuovi.php <cartella CMS>` (la pagina `/widget-nuovi/`, con le foto del kit di partenza),
+poi `node prove/prova-widget-nuovi.js <base> <cartella CMS> <utente> <password>`. Controlla anche i calcoli degli orari a
+giorni e ore fissi (`prove/orari-cli.php`). Atteso: 40 su 40. Le prove di attacco sui widget nuovi (gruppo 26) usano
+`prove/widget-cattivi.php` e partono con `CMS_DIR`.

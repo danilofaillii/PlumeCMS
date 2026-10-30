@@ -152,7 +152,7 @@ def home():
               **tinta(), **spazi(56, 56))
     # Le armi del viaggio: cosa c'è dentro.
     funzioni = [
-        ('pennello', 'Editor visuale', 'Sezioni, colonne e 80 widget, con le schede Contenuto, Stile e Avanzate per ogni elemento. Vedi quello che fai mentre lo fai.', '/funzionalita/#editor'),
+        ('pennello', 'Editor visuale', 'Sezioni, colonne e 87 widget, con le schede Contenuto, Stile e Avanzate per ogni elemento. Vedi quello che fai mentre lo fai.', '/funzionalita/#editor'),
         ('tavolozza', 'Temi', 'Tre temi pronti e un manuale per disegnarti il tuo. Il tema cambia l\'aspetto, mai i contenuti.', '/temi/'),
         ('storia', 'Versioni', 'Ogni salvataggio lascia una versione: la confronti, la guardi in anteprima, ci torni con un clic.', '/funzionalita/#versioni'),
         ('grafico-su', 'SEO e AEO', 'Sitemap, robots, dati strutturati, llms.txt, IndexNow e Search Console. Per Google e per le intelligenze artificiali.', '/funzionalita/#seo'),
@@ -182,7 +182,7 @@ def funzionalita():
     blocchi = [
         ('editor', 'editor.webp', 'L\'editor visuale: sezioni, colonne, widget',
          ['Costruisci le pagine trascinando sezioni, colonne e widget. Ogni elemento ha le sue tre schede, come negli editor che conosci: <strong>Contenuto</strong>, <strong>Stile</strong> e <strong>Avanzate</strong>.',
-          '<ul><li>80 widget: titoli, testi, immagini, pulsanti, gallerie, caroselli, prezzi, domande frequenti, contatori, mappe e 14 infografiche.</li>'
+          '<ul><li>87 widget: titoli, testi, immagini, pulsanti, gallerie, caroselli, prezzi, domande frequenti, contatori, mappe, orari di apertura, recensioni, eventi e 14 infografiche.</li>'
           '<li>Anteprima per computer, tablet e telefono, con valori diversi per ogni misura.</li>'
           '<li>Colori e caratteri globali: cambi il colore principale e cambia ovunque.</li>'
           '<li>Foto con velo, bianco e nero ed effetti animati, dalla 1.2.2.</li>'
@@ -232,6 +232,10 @@ def funzionalita():
          ['Il giorno in cui esce un articolo ti arriva un\'email: <strong>"Oggi sul sito"</strong>. Dentro c\'è tutto per pubblicarlo: le due immagini della misura giusta, 1200x630 per LinkedIn e Facebook e 1080x1350 per Instagram, e il testo pronto per ogni canale, con il link e i tuoi hashtag. Copi, incolli, pubblichi.',
           'Il testo lo scrivi una volta, nella scheda dell\'articolo; se vuoi, uno diverso per LinkedIn, per Facebook e Instagram, per WhatsApp. Le immagini le ritaglia plumeCMS dalla foto in evidenza.',
           'Per un articolo importante c\'è il <strong>calendario</strong>: prepari i post dei giorni dopo, e ogni mattina arriva quello del giorno, con il link al punto giusto della pagina.']),
+        ('widget-attivita', 'widget-attivita.webp', 'I widget per chi ha un\'attività',
+         ['<strong>Orari di apertura</strong> che dicono da soli "Aperto ora, chiude alle 19:00" o "Chiuso, apre domani alle 9:00", con le ferie e i giorni di chiusura. Google li legge.',
+          'Sul telefono, la <strong>barra dei contatti</strong> fissa in fondo allo schermo: Chiama, WhatsApp, Indicazioni, Scrivici. Le <strong>recensioni</strong> con il voto medio e il pulsante per lasciarne una.',
+          'E poi <strong>Prima e dopo</strong>, due foto con una linea da trascinare; la <strong>Squadra</strong>; lo <strong>Slider</strong>; gli <strong>Eventi</strong>, che spariscono da soli quando sono passati.']),
         ('fine-articolo', 'fine-articolo.webp', 'Un riquadro in fondo a ogni articolo',
          ['Chi arriva alla fine di un articolo è il lettore più interessato che hai. In Articoli, la linguetta <strong>Aggiungi sempre alla fine</strong>: prepari una volta sola un riquadro che esce sotto ogni articolo, anche sotto quelli già pubblicati. Un invito alla newsletter, un contatto, una prenotazione, un libro da consigliare.',
           'Lo componi con l\'editor visuale, come una pagina: titoli, testi, foto, pulsanti. Esce quando premi Pubblica, con l\'ombra, il bordo e i colori del tuo sito e del tema.',
@@ -267,7 +271,7 @@ def funzionalita():
                   pulsante_testo='Scarica plumeCMS', link={'url': '/scarica/', 'nuova': False})]], larghezza='stretta', **spazi(72, 80))
     return dict(slug='funzionalita', titolo='Funzionalità', struttura=p.albero(),
                 seo_titolo='Funzionalità di plumeCMS: editor, temi, versioni, SEO, newsletter',
-                seo_descrizione='Cosa c\'è dentro plumeCMS: editor visuale con 80 widget, import da WordPress, stile globale, header e footer, versioni, SEO e AEO, newsletter, sicurezza, aggiornamenti dal pannello.')
+                seo_descrizione='Cosa c\'è dentro plumeCMS: editor visuale con 87 widget, import da WordPress, stile globale, header e footer, versioni, SEO e AEO, newsletter, sicurezza, aggiornamenti dal pannello.')
 
 
 def temi():
@@ -456,6 +460,7 @@ def faq():
         ('Non so da dove partire. plumeCMS mi aiuta a fare il sito?', 'Sì. Quando lo installi scegli Su misura e rispondi a quattro domande: che attività è, dove si trova, cosa offri, quali pagine vuoi. Il sito si compone da solo, con i testi pensati per la tua attività e delle foto finte che dicono cosa fotografare. Le cambi con le tue in Media, con il pulsante Sostituisci. Le domande si riaprono dalla dashboard finché il sito è in prova.'),
         ('In fondo al mio sito c\'è scritto "Un nuovo sito plumeCMS". Si può cambiare?', 'Sì. In Impostazioni > Sito pubblico, riquadro La frase in fondo al sito, cambi il testo e l\'indirizzo del link, oppure togli la spunta e la frase non compare più.'),
         ('Posso far arrivare le richieste di un form a un\'altra persona?', 'Sì. Apri il form nel pannello e, nel riquadro Dopo l\'invio, scrivi gli indirizzi in Manda l\'avviso a: fino a cinque, separati da una virgola. Ogni form ha i suoi: i preventivi all\'ufficio commerciale, le candidature a chi si occupa del personale.'),
+        ('Posso mettere gli orari di apertura e dire se adesso sono aperto?', 'Sì. Nell\'editor c\'è il widget Orari di apertura: scrivi gli orari di ogni giorno e le ferie, e il sito dice da solo "Aperto ora" o "Chiuso, apre domani alle 9:00". Gli orari entrano anche nei dati che Google sa leggere.'),
         ('C\'è una guida per imparare a usarlo?', 'Sì: il manuale d\'uso, in PDF. Trentuno capitoli, dal primo accesso alla checklist prima di andare online, ognuno con un esempio vero, le schermate con i passi numerati e una checklist per sapere quando hai finito.'),
         ('Posso costruirmi un tema mio?', 'Sì: c\'è un manuale apposta, con un tema d\'esempio completo da smontare e rifare tuo.'),
     ]
@@ -542,7 +547,7 @@ def editor_json():
 
 
 # ------------------------------------------------------------------ file
-USATE = ['copertina', 'su-misura', 'firma', 'social', 'fine-articolo', 'importa-wp', 'tipo-sito', 'primi-passi', 'aspetti', 'controlla-server', 'sezioni', 'copia', 'installa-1', 'installa-2', 'installa-3', 'installa-4', 'installa-5', 'editor-ritratto', 'editor', 'aperture', 'stile', 'modelli', 'versioni', 'seo', 'flussi', 'download', 'sicurezza', 'aggiornamenti', 'temi',
+USATE = ['copertina', 'su-misura', 'firma', 'widget-attivita', 'social', 'fine-articolo', 'importa-wp', 'tipo-sito', 'primi-passi', 'aspetti', 'controlla-server', 'sezioni', 'copia', 'installa-1', 'installa-2', 'installa-3', 'installa-4', 'installa-5', 'editor-ritratto', 'editor', 'aperture', 'stile', 'modelli', 'versioni', 'seo', 'flussi', 'download', 'sicurezza', 'aggiornamenti', 'temi',
          'tema-cosmo', 'tema-aria', 'tema-bottega']
 
 
@@ -588,6 +593,9 @@ def zip_lavagna(dest):
 
 # Le novità per chi scarica: brevi, scritte qui (il CHANGELOG è per chi sviluppa). Da aggiornare a ogni versione.
 NOVITA = [
+    ('1.10.0', 'Sette widget per le attività', ['Orari di apertura con "Aperto ora" che si aggiorna da solo, ferie comprese; Barra contatti fissa sul telefono con Chiama, WhatsApp, Indicazioni.',
+                                               'Recensioni con il voto medio e le stelle, Prima e dopo con la linea da trascinare, Squadra, Slider ed Eventi che spariscono da soli quando sono passati.',
+                                               'I widget ora sono 87.']),
     ('1.9.0', 'A chi arriva l\'avviso di un form', ['Nella scheda di ogni form, Dopo l\'invio, la casella Manda l\'avviso a: fino a cinque indirizzi che ricevono un\'email a ogni compilazione.',
                                                     'Vuota, l\'avviso va all\'indirizzo del sito, come prima.']),
     ('1.8.0', 'La frase in fondo al sito', ['Sotto il piede di ogni pagina una riga piccola, "Un nuovo sito plumeCMS", con il link al sito ufficiale. Si cambia o si spegne in Impostazioni > Sito pubblico.',
