@@ -420,3 +420,22 @@ Prima `php prove/pagina-widget-nuovi.php <cartella CMS>` (la pagina `/widget-nuo
 poi `node prove/prova-widget-nuovi.js <base> <cartella CMS> <utente> <password>`. Controlla anche i calcoli degli orari a
 giorni e ore fissi (`prove/orari-cli.php`). Atteso: 40 su 40. Le prove di attacco sui widget nuovi (gruppo 26) usano
 `prove/widget-cattivi.php` e partono con `CMS_DIR`.
+
+## Addon Prenotazioni, Eventi con iscrizione, Raccolta recensioni (2.0.0)
+
+Ognuna su un sito nuovo installato con il kit Attività (`prova-kit.js ... attivita`, utente `prova`), con il server di
+posta finto acceso: `python3 -I prove/smtp-finto.py <porta> <cartella posta> &`. La prova accende il suo addon da
+Impostazioni > Addon e scrive il server finto in Impostazioni > Configurazione email da sola.
+
+- `node prove/prova-addon-prenotazioni.js <base> <cartella CMS> <porta smtp> <cartella posta>`. Fa girare anche
+  `prove/prenotazioni-cli.php` (posti a ore fisse: ora legale, fine mese, anticipi, ferie, pausa, doppia prenotazione,
+  promemoria) prima di ogni prenotazione vera. Atteso: 60 su 60, nella radice e con `CMS_CARTELLA=/test`.
+- `node prove/prova-addon-eventi-iscrizione.js <base> <cartella CMS> <porta smtp> <cartella posta>`. Atteso: 45 su 45.
+- `node prove/prova-addon-recensioni.js <base> <cartella CMS> <porta smtp> <cartella posta>` (accende per un momento
+  anche Prenotazioni). Atteso: 39 su 39.
+- `node prove/attacchi-addon-b.js <base> <cartella CMS> <porta smtp> <cartella posta>`: 80 attacchi, ogni OK è un
+  attacco respinto. Accende i tre addon e crea un redattore `red_addon`.
+
+Usano `prove/addon-b-comune.js` e `prove/addon-b-cli.php` (pagine con un widget, SQL di prova con `{p}` per il prefisso,
+il cron frequente con l'orologio spostato in avanti). Due prove insieme vogliono due server di posta finti diversi: le
+email si riconoscono dal destinatario, e le prove usano gli stessi indirizzi.
