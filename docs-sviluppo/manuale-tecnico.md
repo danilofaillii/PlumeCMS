@@ -1,6 +1,6 @@
 # plumeCMS: manuale tecnico
 
-Versione del manuale: 1.18, per plumeCMS 1.9.1 (30 ottobre 2026).
+Versione del manuale: 1.19, per plumeCMS 1.9.2 (30 ottobre 2026).
 
 Questo manuale descrive come è fatto plumeCMS e come funziona, pezzo per pezzo. È scritto leggendo il codice:
 ogni numero, limite e nome di funzione viene dai file veri, con il riferimento `file:riga` quando serve a chi
@@ -73,7 +73,7 @@ fatti con plumeCMS, i loro contenuti e i temi e moduli che non ne copiano il cod
 index.php           front controller: tutte le richieste del sito passano da qui
 cron-daily.php      compiti del giorno (pacchetti programmati, moduli, IndexNow)
 cron-newsletter.php invio della newsletter a giri, coda IndexNow
-VERSIONE            il numero di versione (oggi 1.9.1)
+VERSIONE            il numero di versione (oggi 1.9.2)
 CHANGELOG.md, README.md, INSTALLA.md
 .htaccess           regole di Apache (copia di install/esempi/htaccess-radice.txt)
 
@@ -892,6 +892,12 @@ misura, cursore, allineamento, scelta di icone, icona, galleria, data e ora, tra
 
 Unità ammesse: `px`, `%`, `em`, `rem`, `vw`, `vh`. Un valore può essere diverso per misura (computer, tablet,
 telefono) e per stato (`normale`, `hover`).
+
+**Come si vedono nel pannello (dalla 1.9.2).** Le sezioni a tendina sono `details.ed-sez` (intestazione con il fondo
+`--ed-campo`; aperta: bordo e striscia a sinistra `--ed-primo`, il colore d'accento dell'aspetto). Un controllo di gruppo è
+un `div.ed-gruppo` dentro il suo `.ed-controllo`: riquadro con fondo `--ed-campo` e striscia sinistra a metà fra accento e
+bordo; il nome del gruppo (l'etichetta del controllo che lo contiene) esce in maiuscoletto nel colore d'accento, con la
+regola `.ed-controllo:has(>.ed-gruppo)` di `admin/assets/editor/editor.css`. Solo variabili dell'aspetto: vale per tutti e quattro.
 
 ### 9.6 Le schede Contenuto, Stile, Avanzate
 

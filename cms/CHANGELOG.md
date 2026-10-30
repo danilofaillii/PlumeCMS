@@ -2,6 +2,14 @@
 
 Il prodotto si chiama **plumeCMS** (nome scelto il 26 ottobre 2026; prima, per poche ore, "CarbonaraCMS", e ancora prima il provvisorio "Officina": gli zip vecchi si chiamavano `officina-*` e `carbonaracms-*`).
 
+## 1.9.2 (30 ottobre 2026) - Sezioni dell'editor più riconoscibili
+
+- **Segnalazione di Danilo**: nel pannello di sinistra dell'editor le sezioni (Titolo, Occhiello, Testo sotto il titolo...)
+  e i gruppi dentro di loro (Tipografia, Ombra, Sfondo, Bordo) si distinguevano poco. Ora l'intestazione di ogni sezione ha
+  un fondo suo; la sezione aperta ha il bordo e una striscia a sinistra del colore d'accento del pannello, e il nome in
+  quel colore. Ogni gruppo è un riquadro con il suo nome in testa, in maiuscoletto. Vale per tutti e quattro gli aspetti.
+  Cambia solo il foglio di stile dell'editor (`admin/assets/editor/editor.css`): il sito e i dati non cambiano.
+
 ## 1.9.1 (30 ottobre 2026) - Form dentro Newsletter e form
 
 - **Richiesta di Danilo**: nel menu del pannello la voce **Form** non sta più da sola: è in **Newsletter e form**, fra

@@ -90,7 +90,7 @@ Sono gli unici in `cms/docs/`, nello zip, nel sito di plumeCMS e nella pagina Do
 - **Pacchetto di aggiornamento** per un'installazione esistente:
   `python3 tools/cms-pacchetto.py --aggiornamento`. Si carica dal pannello,
   Impostazioni, Aggiornamenti.
-- **Versione**: `cms/VERSIONE` (oggi 1.9.1) e una voce in `cms/CHANGELOG.md` a ogni
+- **Versione**: `cms/VERSIONE` (oggi 1.9.2) e una voce in `cms/CHANGELOG.md` a ogni
   zip con contenuto diverso. Mai cambiare il contenuto di una versione già data.
 - **Prove** prima di dire finito:
   - `php -n -d short_open_tag=1 -l` su ogni file PHP toccato, `node --check` sui js;
@@ -126,7 +126,12 @@ Le decisioni complete, con data e perché, stanno nel second brain, `plumecms/de
 
 ## Stato al 28 ottobre 2026
 
-Fatto: plumeCMS 1.9.1 (30 ottobre): la voce Form del menu del pannello spostata dentro "Newsletter e form" (richiesta di Danilo),
+Fatto: plumeCMS 1.9.2 (30 ottobre): sezioni e gruppi del pannello dell'editor più riconoscibili (segnalazione di Danilo):
+`details.ed-sez` con intestazione piena e, aperta, bordo e striscia d'accento; `.ed-gruppo` a riquadro con il nome in maiuscoletto
+(`.ed-controllo:has(>.ed-gruppo)`), solo `admin/assets/editor/editor.css`. Schermate del manuale rifatte (PDF 1884 KB, al limite: la
+prossima volta alleggerire). Prove: install 37/37, aggiornamento 1.9.1 -> 1.9.2 13/13, file del pannello 6/6, pannello guardato in Aria e
+Lavagna. Analisi dei widget (agente, 80 widget, 15 proposte) consegnata a Danilo il 30 ottobre: nessuna scelta ancora.
+1.9.1 (30 ottobre): la voce Form del menu del pannello spostata dentro "Newsletter e form" (richiesta di Danilo),
 fra Iscritti e liste e Invii dei form, solo amministratore (`admin/includes/admin-header.php`). Manuale d'uso capitolo 18 e schermata
 01-dashboard. Prove: install 37/37, aggiornamento 1.9.0 -> 1.9.1 13/13, menu controllato nel browser. Pagine del sito di plumeCMS
 invariate: niente parti nuove.

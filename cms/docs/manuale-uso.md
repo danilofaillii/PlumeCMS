@@ -1,6 +1,6 @@
 # Manuale d'uso di plumeCMS
 
-Versione del manuale: plumeCMS 1.9.1, 30 ottobre 2026.
+Versione del manuale: plumeCMS 1.9.2, 30 ottobre 2026.
 
 ## Prima di cominciare
 
