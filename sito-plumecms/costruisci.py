@@ -22,6 +22,7 @@ import json
 import os
 import shutil
 import subprocess
+import re
 import sys
 import zipfile
 
@@ -768,7 +769,10 @@ def dividi_e_costruisci(out, manifest, max_kb):
             os.makedirs(os.path.join(cartella, 'file'), exist_ok=True)
             shutil.copy(os.path.join(out, v['da']), os.path.join(cartella, v['da']))
         json.dump(m, open(os.path.join(cartella, 'manifest.json'), 'w', encoding='utf-8'), ensure_ascii=False, indent=1)
-        dest = os.path.join(REL, 'sito', f'sito-plumecms-{V}-parte-{k}-di-{totale}.zip')
+        # SITO_REV (30 ottobre 2026): le pagine del sito cambiano senza una versione nuova del CMS. Le parti nuove prendono un nome
+        # diverso (sito-plumecms-1.10.0-r3-parte-...), così non si confondono con quelle già date.
+        rev = re.sub(r'[^a-z0-9]', '', os.environ.get('SITO_REV', '').lower())
+        dest = os.path.join(REL, 'sito', f'sito-plumecms-{V}{"-" + rev if rev else ""}-parte-{k}-di-{totale}.zip')
         subprocess.run([sys.executable, os.path.join(RADICE, 'tools', 'pacchetto.py'), cartella, dest], check=True)
         if os.path.getsize(dest) // 1024 > max_kb:
             errore(f'{dest} pesa {os.path.getsize(dest) // 1024} KB, oltre il limite di {max_kb} KB')
