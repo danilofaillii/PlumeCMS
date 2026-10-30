@@ -1092,6 +1092,74 @@ echo json_encode($o);
     await anon.close();
   } else console.log('--  widget nuovi con testo cattivo: saltata (serve CMS_DIR)');
 
+  // === 27. (1.11.0) File riservati e file dato dai form: senza la chiave firmata il file non esce, la cartella non si legge
+  // dal web, le chiavi manomesse o scadute non valgono, il redattore e le richieste senza token non cambiano niente.
+  if (DIR && fs.existsSync(path.join(__dirname, '..', 'prove', 'omaggio-cli.php'))) {
+    const { execFileSync } = require('child_process');
+    const cli = (...a) => { try { return execFileSync('php', [path.join(__dirname, '..', 'prove', 'omaggio-cli.php'), DIR, ...a], { encoding: 'utf8' }).trim(); } catch (e) { return ''; } };
+    const os = require('os');
+    const pdf = path.join(os.tmpdir(), 'sic-riservato.pdf');
+    fs.writeFileSync(pdf, '%PDF-1.4\n%segreto-di-prova\n%%EOF\n');
+    const PAG = ADMIN + '/scaricabili.php';
+    await admin.p.goto(PAG, { waitUntil: 'networkidle' });
+    await admin.p.setInputFiles('#dl-carica input[type=file]', pdf);
+    await admin.p.check('#dl-riservato');
+    await Promise.all([admin.p.waitForNavigation(), admin.p.click('#dl-carica button[type=submit]')]);
+    const anon = await browser.newContext();
+    const g = async (u) => { const r = await anon.request.get(u, { maxRedirects: 0 }); return { s: r.status(), t: (await r.text()).slice(0, 3000) }; };
+    const pub = await g(BASE + '/scarica/sic-riservato/');
+    ok('1.11.0: file riservato dall\'indirizzo pubblico: 404, il contenuto non esce', pub.s === 404 && !pub.t.includes('segreto-di-prova'), pub.s);
+    const cart = cli('sic-riservato', '0', 'cartella');
+    const dir = await g(BASE + PAN.replace(/\/$/, '') + '/uploads/' + cart + '/sic-riservato.pdf');
+    ok('1.11.0: la cartella dei riservati non si legge dal web, anche sapendo il nome', cart !== '' && dir.s >= 403 && !dir.t.includes('segreto-di-prova'), { cart: cart.slice(0, 12), s: dir.s });
+    const buona = cli('sic-riservato', '424242', 'valida');
+    const [id, sc, fi] = buona.split('.');
+    const v = await g(BASE + '/scarica/sic-riservato/?k=' + buona);
+    ok('1.11.0: (preparazione) la chiave vera scarica il file', v.s === 200 && v.t.includes('segreto-di-prova'), v.s);
+    const falsi = [
+      ['firma inventata', id + '.' + sc + '.' + 'f'.repeat(32)], ['altro iscritto', (+id + 1) + '.' + sc + '.' + fi], ['scadenza allungata', id + '.' + (+sc + 999) + '.' + fi],
+      ['firma maiuscola', id + '.' + sc + '.' + fi.toUpperCase()], ['chiave con SQL', id + "' OR '1'='1"], ['chiave lunghissima', '1.' + '9'.repeat(5000) + '.' + fi],
+    ];
+    for (const [nome, k] of falsi) { const r = await g(BASE + '/scarica/sic-riservato/?k=' + encodeURIComponent(k)); ok('1.11.0: chiave falsa (' + nome + '): il file non esce', r.s !== 200 && !r.t.includes('segreto-di-prova'), r.s); }
+    const altro = await g(BASE + '/scarica/altro-file/?k=' + buona);
+    ok('1.11.0: la chiave di un file non apre un altro file', altro.s === 404);
+    for (const pz of ['..%2f..%2fincludes%2fconfig', '..%252f..%252fincludes', 'sic-riservato%00', 'sic-riservato.pdf/..']) {
+      const r = await g(BASE + '/scarica/' + pz + '/?k=' + buona);
+      ok('1.11.0: percorso cattivo (' + pz + '): niente file', r.s !== 200 || (!r.t.includes('segreto-di-prova') && !/DB_PASS|define\(/.test(r.t)), r.s);
+    }
+    const scad = cli('sic-riservato', id);
+    const r410 = await g(BASE + '/scarica/sic-riservato/?k=' + scad);
+    ok('1.11.0: chiave scaduta: 410 e il file non esce', r410.s === 410 && !r410.t.includes('segreto-di-prova'), r410.s);
+    const gr = await g(BASE + '/grazie/?f=1&o=link&k=' + encodeURIComponent(id + '.' + sc + '.' + 'a'.repeat(32)));
+    ok('1.11.0: pagina di ringraziamento con una chiave falsa: nessun link al file', !/\/scarica\/[^"]*\?k=/.test(gr.t));
+    const gx = await g(BASE + '/grazie/?f=1&o=' + encodeURIComponent('"><script>alert(1)</script>') + '&k=' + encodeURIComponent('"><img src=x onerror=alert(1)>'));
+    ok('1.11.0: pagina di ringraziamento con HTML nell\'indirizzo: non esce', !gx.t.includes('<script>alert(1)') && !gx.t.includes('onerror=alert'));
+    await anon.close();
+    // Il pannello: senza token, con Origin esterno, dal redattore.
+    const form = (o) => new URLSearchParams(o).toString();
+    const CT = { 'Content-Type': 'application/x-www-form-urlencoded' };
+    const stato = async () => { await admin.p.goto(PAG, { waitUntil: 'networkidle' }); return (await admin.p.locator('body').innerText()).match(/Il link personale vale|riservat/gi)?.length + '|' + await admin.p.inputValue('#dl-giorni input[name=giorni]'); };
+    const prima = await stato();
+    const r1 = await post(admin.p, PAG, form({ azione: 'pubblico', nome: 'sic-riservato' }), CT);
+    ok('1.11.0: "Rendi pubblico" senza token: 403', r1.status === 403 && (await g2(BASE + '/scarica/sic-riservato/')) === 404, r1.status);
+    const r2 = await post(admin.p, PAG, form({ azione: 'giorni', giorni: '3650' }), CT);
+    ok('1.11.0: validità dei link senza token: 403, non cambia', r2.status === 403 && (await stato()) === prima, r2.status);
+    const tk = await tokenDi(admin.p, PAG);
+    const est = await admin.ctx.request.post(PAG, { headers: { 'Origin': 'https://evil.example', ...CT }, data: form({ _csrf: tk, azione: 'pubblico', nome: 'sic-riservato' }), maxRedirects: 0 });
+    ok('1.11.0: "Rendi pubblico" con Origin esterno: 403', est.status() === 403 && (await g2(BASE + '/scarica/sic-riservato/')) === 404, est.status());
+    if (red.dentro) {
+      const tr = await tokenDi(red.p, ADMIN + '/media.php');
+      const rr = await post(red.p, PAG, form({ _csrf: tr, azione: 'pubblico', nome: 'sic-riservato' }), CT);
+      ok('1.11.0: il redattore non rende pubblico un file riservato', (await g2(BASE + '/scarica/sic-riservato/')) === 404, rr.status);
+      const rf = await post(red.p, ADMIN + '/form.php', form({ _csrf: tr, id: '1', nome: 'X', omaggio: 'sic-riservato', lista_id: '1' }), CT);
+      ok('1.11.0: il redattore non mette un file in un form', !/salvato/.test(rf.body), rf.status);
+    }
+    const tk2 = await tokenDi(admin.p, PAG);
+    await post(admin.p, PAG, form({ _csrf: tk2, azione: 'elimina', nome: 'sic-riservato' }), CT);
+    ok('1.11.0: pulizia: file riservato di prova eliminato', (await admin.ctx.request.get(BASE + '/scarica/sic-riservato/?k=' + buona)).status() === 404);
+    async function g2(u) { return (await admin.ctx.request.get(u, { maxRedirects: 0 })).status(); }
+  } else console.log('--  file riservati: saltata (serve CMS_DIR)');
+
   // === pulizia: elimina il redattore di prova
   {
     await admin.p.goto(ADMIN + '/utenti.php', { waitUntil: 'networkidle' });

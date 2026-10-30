@@ -44,6 +44,13 @@ function vista_pagina(array $meta, string $corpo, string $jsonld = '', string $a
     $righe[] = '<meta name="robots" content="' . sito_robots_meta($meta['robots']) . '">';
     if ($meta['canonical'] !== '') $righe[] = '<link rel="canonical" href="' . h($meta['canonical']) . '">';
     foreach ($meta['og'] as $k => $v) {
+        // 1.11.0: Facebook, WhatsApp e LinkedIn vogliono l'indirizzo intero dell'immagine: uno relativo (/uploads/..., come
+        // lo dà Scegli dai Media) prende l'origine del sito davanti.
+        // L'origine viene dall'indirizzo del sito salvato, non dall'intestazione Host della richiesta.
+        if ($k === 'og:image' && is_string($v) && str_starts_with($v, '/') && !str_starts_with($v, '//')) {
+            $u = parse_url(cms_url_sito());
+            if (!empty($u['host'])) $v = ($u['scheme'] ?? 'https') . '://' . $u['host'] . (!empty($u['port']) ? ':' . $u['port'] : '') . $v;
+        }
         $righe[] = '<meta property="' . $k . '" content="' . h((string)$v) . '">';
     }
     if (!empty($meta['og']['og:title'])) {

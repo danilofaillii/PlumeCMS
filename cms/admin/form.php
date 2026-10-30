@@ -24,7 +24,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     } catch (RuntimeException $e) {
         flash('error', $e->getMessage());
         $campi = json_decode((string)($_POST['campi'] ?? ''), true);
-        $daPost = ['id' => $id] + array_map(fn($x) => is_string($x) ? $x : '', $_POST) + ['nome' => '', 'slug' => '', 'titolo' => '', 'intro' => '', 'pulsante' => 'Invia', 'consenso' => '', 'grazie_titolo' => '', 'grazie_testo' => '', 'grazie_link' => '', 'avviso_a' => ''];
+        $daPost = ['id' => $id] + array_map(fn($x) => is_string($x) ? $x : '', $_POST) + ['nome' => '', 'slug' => '', 'titolo' => '', 'intro' => '', 'pulsante' => 'Invia', 'consenso' => '', 'grazie_titolo' => '', 'grazie_testo' => '', 'grazie_link' => '', 'avviso_a' => '', 'omaggio' => ''];
         $daPost['campi'] = is_array($campi) ? array_values(array_filter($campi, 'is_array')) : [];
         foreach (['lista_id' => 0, 'lista_conferma' => 0, 'avviso' => 0, 'attivo' => 0] as $k => $z) $daPost[$k] = (int)($_POST[$k] ?? $z);
         $nuovo = !$id;
@@ -57,7 +57,7 @@ require_once __DIR__ . '/includes/admin-header.php';
     </tbody>
   </table>
 </div>
-<?php else: $v = $f ?: ['id' => 0, 'nome' => '', 'slug' => '', 'titolo' => '', 'intro' => '', 'campi' => [['nome' => 'nome', 'etichetta' => 'Nome', 'tipo' => 'testo', 'obbligatorio' => true, 'segnaposto' => '', 'opzioni' => [], 'meta' => 'nome'], ['nome' => 'email', 'etichetta' => 'Email', 'tipo' => 'email', 'obbligatorio' => true, 'segnaposto' => '', 'opzioni' => [], 'meta' => 'email'], ['nome' => 'messaggio', 'etichetta' => 'Messaggio', 'tipo' => 'testolungo', 'obbligatorio' => false, 'segnaposto' => '', 'opzioni' => [], 'meta' => '']], 'pulsante' => 'Invia', 'consenso' => '', 'lista_id' => 0, 'lista_conferma' => 1, 'avviso' => 1, 'avviso_a' => '', 'grazie_titolo' => 'Grazie, ricevuto.', 'grazie_testo' => 'Ti rispondo appena posso.', 'grazie_link' => '', 'attivo' => 1]; ?>
+<?php else: $v = $f ?: ['id' => 0, 'nome' => '', 'slug' => '', 'titolo' => '', 'intro' => '', 'campi' => [['nome' => 'nome', 'etichetta' => 'Nome', 'tipo' => 'testo', 'obbligatorio' => true, 'segnaposto' => '', 'opzioni' => [], 'meta' => 'nome'], ['nome' => 'email', 'etichetta' => 'Email', 'tipo' => 'email', 'obbligatorio' => true, 'segnaposto' => '', 'opzioni' => [], 'meta' => 'email'], ['nome' => 'messaggio', 'etichetta' => 'Messaggio', 'tipo' => 'testolungo', 'obbligatorio' => false, 'segnaposto' => '', 'opzioni' => [], 'meta' => '']], 'pulsante' => 'Invia', 'consenso' => '', 'lista_id' => 0, 'lista_conferma' => 1, 'avviso' => 1, 'avviso_a' => '', 'omaggio' => '', 'grazie_titolo' => 'Grazie, ricevuto.', 'grazie_testo' => 'Ti rispondo appena posso.', 'grazie_link' => '', 'attivo' => 1]; ?>
 <form method="post" id="fm-form">
   <?= csrf_field() ?><input type="hidden" name="id" value="<?= (int)$v['id'] ?>"><input type="hidden" name="campi" id="fm-campi-json">
   <div class="sc-griglia">
@@ -87,6 +87,10 @@ require_once __DIR__ . '/includes/admin-header.php';
         <label>Iscrivi alla lista della newsletter</label>
         <select name="lista_id"><option value="0">Nessuna</option><?php foreach ($liste as $l): ?><option value="<?= (int)$l['id'] ?>" <?= (int)$v['lista_id'] === (int)$l['id'] ? 'selected' : '' ?>><?= h($l['nome']) ?></option><?php endforeach; ?></select>
         <label class="ed-spunta" style="display:flex;gap:.5rem;align-items:center;font-weight:400;margin-top:.5rem"><input type="checkbox" name="lista_conferma" value="1" <?= $v['lista_conferma'] ? 'checked' : '' ?>> Con email di conferma (doppio consenso)</label>
+        <?php require_once dirname(__DIR__) . '/includes/scaricabili.php'; $riservati = array_filter(scaricabili_elenco(), fn($x) => $x['riservato']); /* 1.11.0 */ ?>
+        <label for="fm-omaggio" style="margin-top:.6rem">Dopo la conferma, dai questo file</label>
+        <select name="omaggio" id="fm-omaggio"><option value="">Nessun file</option><?php foreach ($riservati as $x): ?><option value="<?= h($x['nome']) ?>" <?= (string)($v['omaggio'] ?? '') === $x['nome'] ? 'selected' : '' ?>><?= h($x['titolo']) ?> (<?= h($x['file']) ?>)</option><?php endforeach; ?></select>
+        <small class="fm-aiuto" id="fm-omaggio-aiuto" style="display:block;font-size:.78rem;color:var(--text-muted);margin:.25rem 0 .4rem"><?= $riservati ? 'Chi compila riceve per email un link personale al file, dopo aver confermato l\'indirizzo (con l\'email di conferma accesa) oppure subito. Serve una lista qui sopra.' : 'Qui compaiono i file <b>riservati</b>: caricane uno in Download con la spunta «Riservato».' ?></small>
         <label class="ed-spunta" style="display:flex;gap:.5rem;align-items:center;font-weight:400"><input type="checkbox" name="avviso" value="1" <?= $v['avviso'] ? 'checked' : '' ?>> Avvisami via email a ogni compilazione</label>
         <?php $avvisoSito = posta_notifica_email(); /* 1.9.0: a chi va l'avviso di questo form */ ?>
         <label for="fm-avviso-a">Manda l'avviso a</label>

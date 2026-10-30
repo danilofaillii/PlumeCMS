@@ -312,7 +312,7 @@ function newsletter_richiesta(array $d, array $opz = []): string {
         : '<p>Ciao' . ($nome !== '' ? ' ' . h($nome) : '') . ',</p><p>manca un clic. Premi il pulsante e ' . $frase . '.</p><p>Il link vale ' . MODULI_CONFERMA_GIORNI . ' giorni.</p>';
     $pulsante = trim((string)($opz['pulsante'] ?? '')) ?: 'Confermo l&#039;iscrizione';
     $html = str_replace(moduli_firma_html(), moduli_firma_html() . '<p style="font-size:12px;color:#888">Se la richiesta l&#039;ha fatta qualcun altro, ignora questa email: ' . $fuori . '.</p>',
-        moduli_email_html('Conferma l&#039;iscrizione', $corpo, html_entity_decode($pulsante, ENT_QUOTES, 'UTF-8'), $link));
+        moduli_email_html('Conferma l\'iscrizione', $corpo, html_entity_decode($pulsante, ENT_QUOTES, 'UTF-8'), $link));
     $oggetto = trim((string)($opz['oggetto'] ?? '')) ?: $oggetto;
     return posta_invia($email, str_replace(["\r", "\n"], ' ', $oggetto), $html, moduli_intestazioni(), 'conferma') ? '' : 'posta';
 }

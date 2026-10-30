@@ -357,3 +357,16 @@ code { background: var(--fondo-2); color: var(--text); padding: .05em .3em; bord
 .sr-solo { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 .search-input { padding: 0.5rem 0.85rem; border: 1px solid var(--border); border-radius: 8px; font: inherit; font-size: 0.88rem; }
 .search-input:focus, .admin-toolbar select:focus { outline: none; border-color: var(--coral); box-shadow: 0 0 0 3px var(--fuoco); }
+
+/* 1.11.0: la libreria dei Media per i campi immagine del pannello (pannello.js, data-scegli-media) */
+.pn-media{width:min(860px,94vw);max-height:86vh;border:1px solid var(--border);border-radius:var(--radius);background:var(--surface);color:var(--text);padding:1.1rem 1.25rem}
+.pn-media::backdrop{background:rgba(0,0,0,.45)}
+.pn-media h3{margin:0 0 .6rem;font-size:1.05rem}
+.pn-media input[type=search]{width:100%;margin-bottom:.7rem}
+.pn-media-griglia{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:.6rem;max-height:58vh;overflow:auto}
+.pn-media-voce{display:flex;flex-direction:column;gap:.25rem;padding:.35rem;border:1px solid var(--border);border-radius:8px;background:var(--bg,transparent);cursor:pointer;text-align:left;color:inherit}
+.pn-media-voce:hover,.pn-media-voce:focus-visible{border-color:var(--accent,#2563eb)}
+.pn-media-voce img{width:100%;aspect-ratio:4/3;object-fit:cover;border-radius:5px;background:#eee}
+.pn-media-voce small{font-size:.72rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pn-media-azioni{text-align:right;margin-top:.8rem}
+.pn-campo-immagine{display:flex;gap:.5rem;align-items:center}.pn-campo-immagine input{flex:1}

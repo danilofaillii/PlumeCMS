@@ -14,6 +14,7 @@ $vieta = [
     '~^addon/[^/]+/(includes|sql|docs)(/|$)~', // 2.0.0: gli addon come i moduli
     '~^addon/.*\.(php|phtml|phar|php[0-9]|phps)$~i',
     '~^moduli/addon-attivi\.json$~',
+    '~^uploads/riservati-[^/]+(/|$)~', // 1.11.0: i file riservati (su Apache il loro .htaccess)
     '~^temi/.*\.(php|phtml|phar|php[0-9]|phps)$~i',
     '~^(VERSIONE|CHANGELOG\.md|README\.md|INSTALLA\.md|composer\.(json|lock)|package(-lock)?\.json)$~',
     '~(^|/)\.(git|env|htpasswd|installato|gitkeep)~',

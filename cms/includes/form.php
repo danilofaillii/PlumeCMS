@@ -34,6 +34,7 @@ function form_schema(): void {
             `lista_conferma` TINYINT(1) NOT NULL DEFAULT 1,
             `avviso` TINYINT(1) NOT NULL DEFAULT 1,
             `avviso_a` VARCHAR(500) NOT NULL DEFAULT '',
+            `omaggio` VARCHAR(130) NOT NULL DEFAULT '',
             `grazie_titolo` VARCHAR(255) NOT NULL DEFAULT 'Grazie, ricevuto.',
             `grazie_testo` TEXT,
             `grazie_link` VARCHAR(500) NOT NULL DEFAULT '',
@@ -62,6 +63,8 @@ function form_schema(): void {
         // 1.9.0: a chi va l'avviso di ogni form. Le tabelle nate prima non hanno la colonna.
         $col = db()->query('SHOW COLUMNS FROM ' . tbl('moduli'))->fetchAll(PDO::FETCH_COLUMN);
         if (!in_array('avviso_a', $col, true)) db()->exec('ALTER TABLE ' . tbl('moduli') . " ADD COLUMN `avviso_a` VARCHAR(500) NOT NULL DEFAULT '' AFTER `avviso`");
+        // 1.11.0: il file riservato che il form dà dopo la conferma dell'email.
+        if (!in_array('omaggio', $col, true)) db()->exec('ALTER TABLE ' . tbl('moduli') . " ADD COLUMN `omaggio` VARCHAR(130) NOT NULL DEFAULT '' AFTER `avviso_a`");
         save_setting('form_schema_impronta', $impronta);
     }
 }
@@ -79,7 +82,7 @@ function form_leggi(int $id): ?array {
     $m = $st->fetch() ?: null;
     if ($m) {
         $m['campi'] = form_campi_validi(json_decode((string)$m['campi'], true) ?: []);
-        foreach (['intro', 'grazie_testo', 'titolo', 'consenso', 'grazie_titolo', 'grazie_link', 'pulsante', 'avviso_a'] as $k) $m[$k] = (string)($m[$k] ?? '');
+        foreach (['intro', 'grazie_testo', 'titolo', 'consenso', 'grazie_titolo', 'grazie_link', 'pulsante', 'avviso_a', 'omaggio'] as $k) $m[$k] = (string)($m[$k] ?? '');
     }
     return $m;
 }
@@ -174,10 +177,18 @@ function form_salva(int $id, array $d): int {
         'consenso' => mb_substr(trim((string)($d['consenso'] ?? '')), 0, 500), 'lista_id' => (int)($d['lista_id'] ?? 0),
         'lista_conferma' => !empty($d['lista_conferma']) ? 1 : 0, 'avviso' => !empty($d['avviso']) ? 1 : 0,
         'avviso_a' => implode(', ', form_avviso_indirizzi($d['avviso_a'] ?? '')),
+        'omaggio' => trim((string)($d['omaggio'] ?? '')),
         'grazie_titolo' => mb_substr(trim((string)($d['grazie_titolo'] ?? '')), 0, 255) ?: 'Grazie, ricevuto.', 'grazie_testo' => trim((string)($d['grazie_testo'] ?? '')),
         'grazie_link' => mb_substr(trim((string)($d['grazie_link'] ?? '')), 0, 500), 'attivo' => !empty($d['attivo']) ? 1 : 0,
     ];
     if ($v['lista_id'] && !$emails) throw new RuntimeException('Per iscrivere a una lista serve un campo di tipo Email.');
+    // 1.11.0: il file da dare dopo la conferma è un file riservato di Download, e serve una lista (chi lo riceve è un iscritto).
+    if ($v['omaggio'] !== '') {
+        require_once __DIR__ . '/scaricabili.php';
+        $x = scaricabili_elenco()[$v['omaggio']] ?? null;
+        if (!$x || !$x['riservato']) throw new RuntimeException('Il file da dare dopo la conferma deve essere un file riservato di Download (Download, carica con «Riservato»).');
+        if (!$v['lista_id']) throw new RuntimeException('Per dare un file serve una lista: scegli in quale lista iscrivere chi compila il form.');
+    }
     if ($id) {
         $set = implode(', ', array_map(fn($k) => "`$k` = :$k", array_keys($v)));
         $p = []; foreach ($v as $k => $x) $p[":$k"] = $x; $p[':id'] = $id;
@@ -291,8 +302,20 @@ function form_ricevi(array $m, array $p, string $pagina): string {
     // Nella lista della newsletter, con o senza doppia conferma.
     if ((int)$m['lista_id'] > 0 && $email !== '') {
         try {
+            $attivoPrima = newsletter_stato_email($email) === 'attivo';
             $r = form_iscrivi($email, $nome['nome'] ?? '', $nome['cognome'] ?? '', (int)$m['lista_id'], (bool)$m['lista_conferma'], $m);
             if ($r !== '') error_log("form: iscrizione con conferma non riuscita ($r)");
+            // 1.11.0: il file del form. Con la conferma da fare arriva dopo la conferma; chi è già iscritto lo riceve
+            // subito per email (non sulla pagina: da qui nessuno prende il file scrivendo l'email di un altro);
+            // senza conferma, per email e anche sulla pagina di ringraziamento.
+            if (($m['omaggio'] ?? '') !== '' && $r === '') {
+                if (!empty($m['lista_conferma']) && !$attivoPrima) form_ultimo_omaggio(['stato' => 'conferma']);
+                else {
+                    $link = form_omaggio_consegna($m, newsletter_id_da_email($email), $email);
+                    $k = $link !== '' ? (string)parse_url($link, PHP_URL_QUERY) : '';
+                    form_ultimo_omaggio(empty($m['lista_conferma']) && $k !== '' ? ['stato' => 'link', 'k' => substr($k, 2)] : ['stato' => 'email']);
+                }
+            }
         } catch (Throwable $e) { error_log('form lista: ' . $e->getMessage()); }
     }
     if (!empty($m['avviso'])) {
@@ -336,7 +359,53 @@ function form_iscrivi(string $email, string $nome, string $cognome, int $lista, 
     return '';
 }
 
-/** Pagina di ringraziamento di un form (dopo l'invio). */
-function form_grazie_html(array $m): string {
-    return vista_cortesia('Ricevuto', h($m['grazie_titolo']), $m['grazie_testo'] !== '' ? nl2br(h($m['grazie_testo'])) : 'Ti rispondo appena posso.', $m['grazie_link'] !== '' ? '<a class="btn btn-viola" href="' . h($m['grazie_link']) . '">Continua</a>' : '');
+/** Pagina di ringraziamento di un form (dopo l'invio). $o e $k: come va il file del form (form_ultimo_omaggio, nell'indirizzo). */
+function form_grazie_html(array $m, string $o = '', string $k = ''): string {
+    $piu = '';
+    if (($m['omaggio'] ?? '') !== '') {
+        require_once __DIR__ . '/scaricabili.php';
+        $x = scaricabili_elenco()[$m['omaggio']] ?? null;
+        $titolo = $x ? h($x['titolo']) : 'il file';
+        if ($o === 'conferma') $piu = '<p class="form-omaggio"><b>Ultimo passo:</b> ti abbiamo mandato un&#039;email. Apri il link per confermare il tuo indirizzo e ricevi subito «' . $titolo . '». Se non la vedi, guarda nello spam.</p>';
+        elseif ($o === 'email') $piu = '<p class="form-omaggio">Sei già nella lista: ti abbiamo mandato per email il link per scaricare «' . $titolo . '».</p>';
+        elseif ($o === 'link' && $x && scaricabili_verifica_chiave($m['omaggio'], $k)) {
+            $piu = '<p class="form-omaggio">Ecco «' . $titolo . '». Ti abbiamo mandato il link anche per email.</p><p><a class="btn btn-viola" href="' . h(rtrim(cms_url_sito(), '/') . '/scarica/' . $m['omaggio'] . '/?k=' . $k) . '">Scarica</a></p>';
+        }
+    }
+    return vista_cortesia('Ricevuto', h($m['grazie_titolo']), ($m['grazie_testo'] !== '' ? nl2br(h($m['grazie_testo'])) : 'Ti rispondo appena posso.') . $piu, $m['grazie_link'] !== '' ? '<a class="btn btn-viola" href="' . h($m['grazie_link']) . '">Continua</a>' : '');
+}
+
+/** Come va il file del form nell'invio appena ricevuto (lo legge api/modulo.php per la pagina di ringraziamento). */
+function form_ultimo_omaggio(?array $nuovo = null): ?array {
+    static $e = null;
+    if ($nuovo !== null) $e = $nuovo;
+    return $e;
+}
+
+/**
+ * Dà il file del form a un iscritto: il link personale (scaricabili_link_personale, registra la consegna) e l'email con il
+ * pulsante Scarica. Ritorna il link ('' se il file non c'è più o non è riservato).
+ */
+function form_omaggio_consegna(array $m, int $iscritto, string $email): string {
+    require_once __DIR__ . '/scaricabili.php';
+    $nome = (string)($m['omaggio'] ?? '');
+    $x = scaricabili_elenco()[$nome] ?? null;
+    if ($nome === '' || !$x || !$x['riservato'] || $iscritto <= 0) return '';
+    $link = scaricabili_link_personale($nome, $iscritto);
+    if ($link === '') return '';
+    $corpo = '<p>Ecco il file che hai chiesto: <b>' . h($x['titolo']) . '</b>.</p><p>Il link è personale e vale ' . scaricabili_giorni() . ' giorni.</p>';
+    if (!posta_invia($email, 'Ecco il tuo file: ' . $x['titolo'], moduli_email_html($x['titolo'], $corpo, 'Scarica', $link), moduli_intestazioni(), 'omaggio')) error_log('form: email del file non partita: ' . posta_errore());
+    return $link;
+}
+
+/** La pagina di conferma per chi ha confermato l'email da un form (non la newsletter): con il file del form, se c'è. */
+function form_conferma_html(array $m, string $link): string {
+    $lista = newsletter_nome_lista((int)$m['lista_id']);
+    if ($link !== '') {
+        require_once __DIR__ . '/scaricabili.php';
+        $x = scaricabili_elenco()[$m['omaggio']] ?? null;
+        return vista_cortesia('Email confermata', 'Ecco il tuo file.', '<p>Grazie: il tuo indirizzo è confermato. Scarica «' . h($x['titolo'] ?? 'il file') . '» qui sotto; ti abbiamo mandato il link anche per email (vale ' . scaricabili_giorni() . ' giorni).</p>',
+            '<p><a class="btn btn-viola" href="' . h($link) . '">Scarica</a></p>');
+    }
+    return vista_cortesia('Email confermata', 'Fatto, sei dentro.', '<p>Grazie: il tuo indirizzo è confermato' . ($lista !== '' ? ' e sei nella lista «' . h($lista) . '»' : '') . '.</p>');
 }

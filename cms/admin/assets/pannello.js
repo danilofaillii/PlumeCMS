@@ -14,6 +14,7 @@
 //   data-copia-se-stesso         campo: al clic seleziona il testo e lo copia
 //   data-nascondi="#id"          pulsante: nasconde quell'elemento
 //   data-menu-mobile             apre e chiude il menu laterale sul telefono
+//   data-scegli-media="#id"      pulsante: apre la libreria dei Media e scrive l'indirizzo scelto nel campo con quell'id (1.11.0)
 //   data-al-clic="funzione(arg, ...)"   data-al-input="..."   data-al-cambio="..."
 //        chiama una funzione globale della pagina. Gli argomenti si leggono senza eval: stringhe tra apici,
 //        numeri, true/false/null, oggetti e liste JSON, e le parole this (l'elemento) ed event.
@@ -126,5 +127,50 @@
   document.addEventListener('input', function (ev) {
     var el = ev.target;
     if (el.hasAttribute && el.hasAttribute('data-al-input')) chiama(el, ev, 'data-al-input');
+  });
+
+  // ------------------------------------------------------------ 1.11.0: scegli un'immagine dai Media
+  // Un solo <dialog> per la pagina, creato al primo clic; le immagini arrivano da editor-api.php (azione media), come
+  // nell'editor e in Stile del sito. Senza libreria (errore di rete) il campo resta da scrivere a mano.
+  var mediaDlg = null, mediaCampo = null, mediaTutte = [];
+  function mediaDisegna() {
+    var g = mediaDlg.querySelector('.pn-media-griglia'), cerca = mediaDlg.querySelector('input[type=search]').value.toLowerCase();
+    g.textContent = '';
+    mediaTutte.filter(function (m) { return !cerca || String(m.nome || m.url).toLowerCase().indexOf(cerca) >= 0; }).forEach(function (m) {
+      var b = document.createElement('button'); b.type = 'button'; b.className = 'pn-media-voce';
+      var i = document.createElement('img'); i.loading = 'lazy'; i.alt = ''; i.src = m.url;
+      var t = document.createElement('small'); t.textContent = m.nome || m.url;
+      b.appendChild(i); b.appendChild(t);
+      b.addEventListener('click', function () {
+        if (mediaCampo) { mediaCampo.value = m.url; mediaCampo.dispatchEvent(new Event('input', { bubbles: true })); mediaCampo.dispatchEvent(new Event('change', { bubbles: true })); }
+        mediaDlg.close();
+      });
+      g.appendChild(b);
+    });
+    if (!g.children.length) { var p = document.createElement('p'); p.textContent = mediaTutte.length ? 'Nessuna immagine con questo nome.' : 'Nessuna immagine: caricala prima in Media.'; g.appendChild(p); }
+  }
+  function mediaApri(campo) {
+    mediaCampo = campo;
+    if (!mediaDlg) {
+      mediaDlg = document.createElement('dialog'); mediaDlg.className = 'pn-media';
+      mediaDlg.innerHTML = '<h3>Scegli un\'immagine</h3><input type="search" placeholder="Cerca nel nome\u2026"><div class="pn-media-griglia"></div><div class="pn-media-azioni"><button type="button" class="btn btn-secondary">Chiudi</button></div>';
+      document.body.appendChild(mediaDlg);
+      mediaDlg.querySelector('input[type=search]').addEventListener('input', mediaDisegna);
+      mediaDlg.querySelector('.pn-media-azioni button').addEventListener('click', function () { mediaDlg.close(); });
+    }
+    var g = mediaDlg.querySelector('.pn-media-griglia'); g.textContent = 'Carico\u2026';
+    mediaDlg.showModal();
+    var tk = document.querySelector('input[name=_csrf]');
+    var fd = new FormData(); fd.set('azione', 'media'); fd.set('pagina', '1'); fd.set('_csrf', tk ? tk.value : '');
+    fetch('editor-api.php', { method: 'POST', body: fd, credentials: 'same-origin' }).then(function (r) { return r.json(); }).then(function (j) {
+      mediaTutte = j.immagini || []; mediaDisegna();
+    }).catch(function () { g.textContent = 'Libreria non raggiungibile: incolla l\'indirizzo dell\'immagine nella casella.'; });
+  }
+  document.addEventListener('click', function (ev) {
+    var b = ev.target.closest && ev.target.closest('[data-scegli-media]');
+    if (!b) return;
+    ev.preventDefault();
+    var c = document.querySelector(b.getAttribute('data-scegli-media'));
+    if (c) mediaApri(c);
   });
 })();

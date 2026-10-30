@@ -28,7 +28,9 @@ try {
     if ($tipo === 'form') {
         $errore = form_ricevi($form, $_POST, $pagina);
         if ($errore !== '') modulo_torna($pagina . '?modulo=' . rawurlencode($errore) . '&f=' . (int)$form['id'] . $popup . '#modulo-f' . (int)$form['id']);
-        modulo_torna(FORM_PAGINA_GRAZIE . '?f=' . (int)$form['id']);
+        // 1.11.0: come va il file del form (dopo la conferma, per email, o il link sulla pagina).
+        $om = form_ultimo_omaggio();
+        modulo_torna(FORM_PAGINA_GRAZIE . '?f=' . (int)$form['id'] . ($om ? '&o=' . $om['stato'] . (isset($om['k']) ? '&k=' . rawurlencode($om['k']) : '') : ''));
     }
     [$dati, $errore] = moduli_leggi($_POST, false);
     if ($errore === '') $errore = newsletter_richiesta($dati);

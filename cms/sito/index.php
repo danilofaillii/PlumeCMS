@@ -149,7 +149,17 @@ try {
     $cortesia = ['titolo' => '', 'descrizione' => '', 'robots' => 'noindex', 'canonical' => '', 'og' => []];
     if ($percorso === NEWSLETTER_GRAZIE) sito_html(200, ['titolo' => 'Conferma la tua email - ' . SITO_NOME] + $cortesia, vista_newsletter_grazie());
     if ($percorso === NEWSLETTER_CONFERMA) {
-        sito_html(200, ['titolo' => 'Iscrizione confermata - ' . SITO_NOME] + $cortesia, vista_newsletter_confermata(newsletter_conferma((string)($q['t'] ?? ''))));
+        $ok = newsletter_conferma((string)($q['t'] ?? ''));
+        // 1.11.0: la conferma di un form ha la sua pagina (e il file del form, se ne dà uno), non quella della newsletter.
+        $e = $ok ? newsletter_ultima_conferma() : null;
+        if ($e && $e['form'] > 0) {
+            require_once dirname(__DIR__) . '/includes/form.php';
+            if ($f = form_leggi((int)$e['form'])) {
+                $link = $f['omaggio'] !== '' ? form_omaggio_consegna($f, (int)$e['iscritto'], (string)$e['email']) : '';
+                sito_html(200, ['titolo' => 'Email confermata - ' . SITO_NOME] + $cortesia, form_conferma_html($f, $link));
+            }
+        }
+        sito_html(200, ['titolo' => 'Iscrizione confermata - ' . SITO_NOME] + $cortesia, vista_newsletter_confermata($ok));
     }
     if ($percorso === NEWSLETTER_ESCI) {
         $i = (string)($q['i'] ?? ''); $t = (string)($q['t'] ?? '');
@@ -164,7 +174,7 @@ try {
     if ($percorso === '/grazie/' && !empty($_GET['f'])) {
         require_once dirname(__DIR__) . '/includes/form.php';
         $f = form_leggi((int)$_GET['f']);
-        if ($f) sito_html(200, ['titolo' => 'Ricevuto - ' . SITO_NOME] + $cortesia, form_grazie_html($f));
+        if ($f) sito_html(200, ['titolo' => 'Ricevuto - ' . SITO_NOME] + $cortesia, form_grazie_html($f, is_string($_GET['o'] ?? null) ? $_GET['o'] : '', is_string($_GET['k'] ?? null) ? $_GET['k'] : ''));
     }
 
     // File da scaricare (1.2.3): /scarica/<nome>/ manda uploads/scaricabili/<nome>.zip o .pdf; se non c'è, 404 come le altre pagine.
