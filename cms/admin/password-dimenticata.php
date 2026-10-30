@@ -4,6 +4,7 @@
  * La risposta e sempre la stessa, che l'utente esista o no: da qui nessuno scopre chi ha un accesso.
  */
 require_once __DIR__ . '/includes/auth.php';
+require_once __DIR__ . '/includes/admin-functions.php'; // 1.11.0: h() per il messaggio d'errore
 ini_set('display_errors', '0'); // pagina per anonimi: niente dettagli tecnici a video
 if (is_logged_in()) { header('Location: index.php'); exit; }
 
