@@ -149,6 +149,10 @@ function sito_contenuti(): array {
 /** HTML del contenuto, calcolato una volta sola. */
 function sito_html_contenuto(array &$c): string {
     if (isset($c['html'])) return $c['html'];
+    // 2.0.0: un addon può dare al posto del testo un avviso (per esempio un contenuto "solo per i membri", visto da chi non
+    // è entrato): vale per i feed, llms-full.txt, la ricerca e i widget che mostrano il testo. null = il testo vero.
+    $chiuso = cms_filtro('contenuto_riservato', null, $c);
+    if (is_string($chiuso)) return $c['html'] = $chiuso;
     $r = $c['riga'];
     if ($c['rediretto']) return $c['html'] = '';
     $id = (int)$r['id'];

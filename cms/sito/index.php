@@ -215,6 +215,9 @@ try {
                 sito_html(200, $meta, vista_home(), sito_jsonld_script($nodi));
             case 'contenuto':
                 $c = $v['c'];
+                // 2.0.0: un addon può chiudere un contenuto prima che esca (per esempio l'Area riservata: "solo per i membri").
+                // Chi ascolta l'evento risponde con la sua pagina e chiude (exit), oppure non fa niente e la pagina esce come sempre.
+                cms_evento('sito_contenuto', $c, $meta);
                 $GLOBALS['sito_percorso'] = $c['percorso']; $GLOBALS['sito_genere'] = $c['tipo'] === 'post' ? 'post' : ($c['tipo'] === 'page' ? 'page' : 'altro');
                 if ($c['tipo'] === 'post') {
                     $cat = $c['categorie'][0] ?? null;
