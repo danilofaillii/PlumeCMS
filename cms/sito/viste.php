@@ -37,6 +37,22 @@ function vista_popup(): string {
     return popup_html(popup_per($GLOBALS['sito_percorso'], (string)($GLOBALS['sito_genere'] ?? 'altro')), $GLOBALS['sito_percorso']);
 }
 
+/**
+ * 1.11.0: le righe che accompagnano og:image quando l'immagine sta nei Media del sito: misure, tipo e testo alternativo.
+ * LinkedIn e Facebook le usano per mostrare l'anteprima già alla prima lettura. Un'immagine di un altro sito: niente righe.
+ */
+function vista_og_immagine_dati(string $url, string $alt): array {
+    $base = (string)parse_url(cms_uploads_url(), PHP_URL_PATH);
+    $percorso = (string)parse_url($url, PHP_URL_PATH);
+    $host = (string)parse_url($url, PHP_URL_HOST);
+    if ($host !== '' && $host !== (string)parse_url(cms_url_sito(), PHP_URL_HOST)) return [];
+    if ($base === '' || !str_starts_with($percorso, rtrim($base, '/') . '/') || str_contains($percorso, '..')) return [];
+    $f = cms_uploads_dir() . substr(rawurldecode($percorso), strlen(rtrim($base, '/')));
+    $d = is_file($f) ? @getimagesize($f) : false;
+    if (!$d || empty($d[0]) || empty($d['mime'])) return [];
+    return ['og:image:width' => (string)$d[0], 'og:image:height' => (string)$d[1], 'og:image:type' => (string)$d['mime']] + ($alt !== '' ? ['og:image:alt' => $alt] : []);
+}
+
 /** La pagina intera: testa con i metadati, intestazione, contenuto, piede. */
 function vista_pagina(array $meta, string $corpo, string $jsonld = '', string $attivo = ''): string {
     $righe = ['<title>' . h($meta['titolo']) . '</title>'];
@@ -52,6 +68,7 @@ function vista_pagina(array $meta, string $corpo, string $jsonld = '', string $a
             if (!empty($u['host'])) $v = ($u['scheme'] ?? 'https') . '://' . $u['host'] . (!empty($u['port']) ? ':' . $u['port'] : '') . $v;
         }
         $righe[] = '<meta property="' . $k . '" content="' . h((string)$v) . '">';
+        if ($k === 'og:image' && is_string($v) && $v !== '') foreach (vista_og_immagine_dati($v, (string)($meta['og']['og:title'] ?? '')) as $kk => $vv) $righe[] = '<meta property="' . $kk . '" content="' . h($vv) . '">';
     }
     if (!empty($meta['og']['og:title'])) {
         $righe[] = '<meta name="twitter:card" content="summary_large_image">';
