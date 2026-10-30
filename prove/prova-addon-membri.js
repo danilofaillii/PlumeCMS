@@ -157,6 +157,7 @@ let br;
   await v.goto(linkDa(m, '/conferma-email/?t='), { waitUntil: 'networkidle' });
   await Promise.all([v.waitForNavigation(), v.click('main form button[type=submit]')]);
   ok('il link al nuovo indirizzo cambia l\'email', /nuovo indirizzo email/.test(await v.locator('.membri-ok').innerText()));
+  ok('e al vecchio indirizzo arriva "Il tuo indirizzo email è cambiato"', !!(await aspettaEmail(POSTA, 'giulia@esempio.it', da, x => /indirizzo email è cambiato/.test(x.oggetto))));
   await vai('/area-riservata/');
   await Promise.all([v.waitForNavigation(), v.click('form.membri-esci button')]);
   ok('con la vecchia email non si entra più, con la nuova sì', /non corrette/.test(await accedi('giulia@esempio.it', PW2)) && /La tua area riservata/.test(await accedi('giulia.rossi@esempio.it', PW2)));

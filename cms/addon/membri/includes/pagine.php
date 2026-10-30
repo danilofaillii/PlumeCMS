@@ -405,6 +405,8 @@ function membri_pagina_conferma_email(array $q, bool $post): never {
     membri_token_leggi('email', $t, true);
     if (membri_per_email($ok['dato'])) membri_html('Indirizzo già usato', membri_riquadro('Indirizzo già usato', '<p>Nel frattempo questo indirizzo è stato usato per un altro account. La tua email resta quella di prima.</p>'), 409);
     db()->prepare('UPDATE ' . tbl('membri') . ' SET email = ? WHERE id = ?')->execute([$ok['dato'], (int)$m['id']]);
+    // Il vecchio indirizzo lo sa: se non è stato il proprietario, se ne accorge.
+    membri_manda((string)$m['email'], 'Il tuo indirizzo email è cambiato', 'Indirizzo email cambiato', '<p>L\'account dell\'area riservata di ' . h(membri_nome_sito()) . ' adesso usa un altro indirizzo email. Se non sei stato tu, scrivi subito al sito.</p>');
     sito_vai(membri_corrente() ? '/area-riservata/profilo/?m=email-cambiata' : '/accedi/?m=password', 303);
 }
 
