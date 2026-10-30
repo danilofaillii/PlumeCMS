@@ -1035,6 +1035,37 @@ echo json_encode($o);
     ok('1.8.0: (pulizia) la frase torna com\'era', (await sitoFirma()) === prima, { prima: prima.slice(0, 120) });
   }
 
+  // === 25. (1.9.0) A chi va l'avviso di un form: lo sceglie solo l'amministratore, con il token; niente intestazioni nascoste.
+  {
+    const form = (o) => new URLSearchParams(o).toString();
+    const CT = { 'Content-Type': 'application/x-www-form-urlencoded' };
+    await admin.p.goto(ADMIN + '/form.php', { waitUntil: 'networkidle' });
+    const link = await admin.p.locator('a.ct-nome').first().getAttribute('href').catch(() => null);
+    const fid = link ? +(link.match(/id=(\d+)/) || [0, 0])[1] : 0;
+    if (fid) {
+      const PAG = ADMIN + '/form.php?id=' + fid;
+      const leggi = async () => { await admin.p.goto(PAG, { waitUntil: 'networkidle' }); return admin.p.inputValue('#fm-avviso-a'); };
+      const prima = await leggi();
+      // Tutti i campi del form come sono, con un indirizzo diverso: quello che manderebbe chi attacca.
+      const campiDi = async (avviso) => admin.p.evaluate((avviso) => { const f = document.getElementById('fm-form'); f.querySelector('#fm-campi-json').value = JSON.stringify(window.fmCampi || []); const d = new FormData(f); d.set('avviso_a', avviso); d.delete('azione'); return [...d.entries()].filter(([, v]) => typeof v === 'string'); }, avviso);
+      const corpo = async (avviso, senzaToken) => { const c = await campiDi(avviso); return form(Object.fromEntries(c.filter(([k]) => !(senzaToken && k === '_csrf')))); };
+      const r1 = await post(admin.p, ADMIN + '/form.php', await corpo('spia@cattivo.it', true), CT);
+      ok('1.9.0: indirizzo dell\'avviso senza token: 403', r1.status === 403 && (await leggi()) === prima, { status: r1.status });
+      const tk = await tokenDi(admin.p, PAG);
+      const est = await admin.ctx.request.post(ADMIN + '/form.php', { headers: { 'Origin': 'https://evil.example', 'Content-Type': CT['Content-Type'] }, data: (await corpo('spia@cattivo.it', false)).replace(/_csrf=[^&]*/, '_csrf=' + tk), maxRedirects: 0 });
+      ok('1.9.0: indirizzo dell\'avviso con Origin esterno: 403', est.status() === 403 && (await leggi()) === prima, { status: est.status() });
+      if (red.dentro) {
+        const tr = await tokenDi(red.p, ADMIN + '/media.php');
+        const rr = await post(red.p, ADMIN + '/form.php', (await corpo('spia@cattivo.it', false)).replace(/_csrf=[^&]*/, '_csrf=' + tr), CT);
+        ok('1.9.0: il redattore non cambia a chi va l\'avviso', (rr.status !== 200 || !/salvato/.test(rr.body)) && (await leggi()) === prima, { status: rr.status });
+      }
+      for (const [nome, v] of [['un a capo con Bcc', 'a@x.it\r\nBcc: spia@cattivo.it'], ['un indirizzo con le virgolette', '"spia"@x.it<script>'], ['sei indirizzi', 'a@x.it,b@x.it,c@x.it,d@x.it,e@x.it,f@x.it']]) {
+        await post(admin.p, ADMIN + '/form.php', await corpo(v, false), CT);
+        ok('1.9.0: avviso a ' + nome + ': rifiutato, l\'indirizzo resta com\'era', (await leggi()) === prima);
+      }
+    } else ok('1.9.0: avviso dei form: attacchi saltati (nessun form)', true);
+  }
+
   // === pulizia: elimina il redattore di prova
   {
     await admin.p.goto(ADMIN + '/utenti.php', { waitUntil: 'networkidle' });

@@ -33,6 +33,7 @@ function form_schema(): void {
             `lista_id` INT(11) NOT NULL DEFAULT 0,
             `lista_conferma` TINYINT(1) NOT NULL DEFAULT 1,
             `avviso` TINYINT(1) NOT NULL DEFAULT 1,
+            `avviso_a` VARCHAR(500) NOT NULL DEFAULT '',
             `grazie_titolo` VARCHAR(255) NOT NULL DEFAULT 'Grazie, ricevuto.',
             `grazie_testo` TEXT,
             `grazie_link` VARCHAR(500) NOT NULL DEFAULT '',
@@ -58,6 +59,9 @@ function form_schema(): void {
     $impronta = md5(serialize($tabelle) . DB_NAME);
     if (get_setting('form_schema_impronta', '') !== $impronta) {
         foreach ($tabelle as $sql) db()->exec($sql);
+        // 1.9.0: a chi va l'avviso di ogni form. Le tabelle nate prima non hanno la colonna.
+        $col = db()->query('SHOW COLUMNS FROM ' . tbl('moduli'))->fetchAll(PDO::FETCH_COLUMN);
+        if (!in_array('avviso_a', $col, true)) db()->exec('ALTER TABLE ' . tbl('moduli') . " ADD COLUMN `avviso_a` VARCHAR(500) NOT NULL DEFAULT '' AFTER `avviso`");
         save_setting('form_schema_impronta', $impronta);
     }
 }
@@ -75,7 +79,7 @@ function form_leggi(int $id): ?array {
     $m = $st->fetch() ?: null;
     if ($m) {
         $m['campi'] = form_campi_validi(json_decode((string)$m['campi'], true) ?: []);
-        foreach (['intro', 'grazie_testo', 'titolo', 'consenso', 'grazie_titolo', 'grazie_link', 'pulsante'] as $k) $m[$k] = (string)($m[$k] ?? '');
+        foreach (['intro', 'grazie_testo', 'titolo', 'consenso', 'grazie_titolo', 'grazie_link', 'pulsante', 'avviso_a'] as $k) $m[$k] = (string)($m[$k] ?? '');
     }
     return $m;
 }
@@ -129,6 +133,28 @@ function form_campi_validi($campi): array {
     return $out;
 }
 
+/**
+ * Gli indirizzi a cui va l'avviso di un form (1.9.0): separati da virgole, punti e virgola, spazi o a capo, al massimo
+ * FORM_AVVISO_MAX, senza doppioni. Un indirizzo sbagliato ferma il salvataggio e si dice quale.
+ */
+const FORM_AVVISO_MAX = 5;
+function form_avviso_indirizzi(mixed $testo): array {
+    $out = [];
+    foreach (preg_split('/[\s,;]+/', is_scalar($testo) ? (string)$testo : '', -1, PREG_SPLIT_NO_EMPTY) as $e) {
+        if (!filter_var($e, FILTER_VALIDATE_EMAIL) || mb_strlen($e) > 190) throw new RuntimeException("«{$e}» non è un indirizzo email valido (Dopo l'invio, Manda l'avviso a).");
+        $out[strtolower($e)] = $e;
+    }
+    if (count($out) > FORM_AVVISO_MAX) throw new RuntimeException("L'avviso va al massimo a " . FORM_AVVISO_MAX . ' indirizzi.');
+    return array_values($out);
+}
+
+/** A chi parte l'avviso di questo form: i suoi indirizzi, oppure quello degli avvisi del sito (Impostazioni). */
+function form_avviso_destinatari(array $m): array {
+    try { $a = form_avviso_indirizzi($m['avviso_a'] ?? ''); } catch (RuntimeException $e) { $a = []; }
+    if (!$a && posta_notifica_email() !== '') $a = [posta_notifica_email()];
+    return $a;
+}
+
 function form_salva(int $id, array $d): int {
     form_schema();
     $nome = mb_substr(trim((string)($d['nome'] ?? '')), 0, 100);
@@ -147,6 +173,7 @@ function form_salva(int $id, array $d): int {
         'campi' => json_encode($campi, JSON_UNESCAPED_UNICODE), 'pulsante' => mb_substr(trim((string)($d['pulsante'] ?? '')), 0, 100) ?: 'Invia',
         'consenso' => mb_substr(trim((string)($d['consenso'] ?? '')), 0, 500), 'lista_id' => (int)($d['lista_id'] ?? 0),
         'lista_conferma' => !empty($d['lista_conferma']) ? 1 : 0, 'avviso' => !empty($d['avviso']) ? 1 : 0,
+        'avviso_a' => implode(', ', form_avviso_indirizzi($d['avviso_a'] ?? '')),
         'grazie_titolo' => mb_substr(trim((string)($d['grazie_titolo'] ?? '')), 0, 255) ?: 'Grazie, ricevuto.', 'grazie_testo' => trim((string)($d['grazie_testo'] ?? '')),
         'grazie_link' => mb_substr(trim((string)($d['grazie_link'] ?? '')), 0, 500), 'attivo' => !empty($d['attivo']) ? 1 : 0,
     ];
@@ -263,8 +290,8 @@ function form_ricevi(array $m, array $p, string $pagina): string {
         try { form_iscrivi($email, $nome['nome'] ?? '', $nome['cognome'] ?? '', (int)$m['lista_id'], (bool)$m['lista_conferma']); } catch (Throwable $e) { error_log('form lista: ' . $e->getMessage()); }
     }
     if (!empty($m['avviso'])) {
-        $a = posta_notifica_email();
-        if ($a !== '') {
+        // 1.9.0: agli indirizzi scelti nel form, uno per uno; senza, a quello degli avvisi del sito.
+        foreach (form_avviso_destinatari($m) as $a) {
             $righe = implode('', array_map(fn($k, $v) => '<p style="margin:0 0 10px"><b>' . h($k) . ':</b> ' . nl2br(h($v)) . '</p>', array_keys($dati), $dati));
             [$oggetto, $corpo] = ['Nuova compilazione: ' . $m['nome'], moduli_email_html('Form «' . $m['nome'] . '»', $righe . '<p style="color:#888;font-size:13px">Dalla pagina ' . h($pagina) . ', il ' . date('d/m/Y H:i') . '.</p>', 'Apri nel pannello', cms_url_pannello() . 'form-submissions.php?modulo=' . (int)$m['id'])];
             if (!posta_invia($a, $oggetto, $corpo, moduli_intestazioni($email))) error_log('form: avviso non partito: ' . posta_errore());

@@ -1,6 +1,6 @@
 # plumeCMS: manuale tecnico
 
-Versione del manuale: 1.16, per plumeCMS 1.8.0 (29 ottobre 2026).
+Versione del manuale: 1.17, per plumeCMS 1.9.0 (30 ottobre 2026).
 
 Questo manuale descrive come è fatto plumeCMS e come funziona, pezzo per pezzo. È scritto leggendo il codice:
 ogni numero, limite e nome di funzione viene dai file veri, con il riferimento `file:riga` quando serve a chi
@@ -73,7 +73,7 @@ fatti con plumeCMS, i loro contenuti e i temi e moduli che non ne copiano il cod
 index.php           front controller: tutte le richieste del sito passano da qui
 cron-daily.php      compiti del giorno (pacchetti programmati, moduli, IndexNow)
 cron-newsletter.php invio della newsletter a giri, coda IndexNow
-VERSIONE            il numero di versione (oggi 1.8.0)
+VERSIONE            il numero di versione (oggi 1.9.0)
 CHANGELOG.md, README.md, INSTALLA.md
 .htaccess           regole di Apache (copia di install/esempi/htaccess-radice.txt)
 
@@ -1403,8 +1403,17 @@ All'invio (`form_ricevi()`, `includes/form.php:225-275`), in ordine:
 5. limite di invii per IP;
 6. salvataggio dell'invio;
 7. iscrizione alla lista scelta, con o senza doppio consenso;
-8. avviso all'indirizzo delle notifiche;
+8. avviso via email, uno per destinatario (`form_avviso_destinatari()`, `includes/form.php:152`): gli indirizzi della
+   colonna `avviso_a` del form, oppure, se è vuota, `posta_notifica_email()` (Impostazioni, Posta in uscita);
 9. innesco dei flussi della newsletter con origine `form`.
+
+**A chi va l'avviso (dalla 1.9.0).** Colonna `moduli.avviso_a` (VARCHAR 500), aggiunta da `form_schema()` anche alle tabelle
+nate prima (`includes/form.php:64`). In pannello è la casella "Manda l'avviso a" del riquadro Dopo l'invio
+(`admin/form.php:93`, solo amministratore). `form_avviso_indirizzi()` (`includes/form.php:141`) divide su virgole, punti e
+virgola, spazi e a capo, valida ogni indirizzo con `FILTER_VALIDATE_EMAIL` (niente intestazioni nascoste con un a capo),
+toglie i doppioni senza badare alle maiuscole, al massimo `FORM_AVVISO_MAX` (5); un indirizzo sbagliato ferma
+`form_salva()` con il suo nome. Prove: `prove/prova-form-avviso.js` (con il server di posta finto), gruppo 25 di
+`tools/sicurezza-prova.js`.
 
 Gli invii si leggono in Newsletter e contatti > Invii dei form, e si esportano in CSV (celle protette contro le
 formule, capitolo 18.10).

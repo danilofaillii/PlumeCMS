@@ -120,6 +120,7 @@ async function contrastoParole(pg) {
   for (const [id, img, re] of [['wordpress', 'importa-wp.webp', /Vieni da WordPress/], ['tipo-sito', 'tipo-sito.webp', /Definitivo/], ['primi-passi', 'primi-passi.webp', /Primi passi/],
     ['aspetti', 'aspetti.webp', /Lavagna/], ['server', 'controlla-server.webp', /Controlla il server/]])
     ok(`Funzionalità (1.4.0): il blocco ${id}, con la schermata`, await v.locator(`#${id} img[src*="${img}"]`).count() === 1 && re.test(await v.locator(`#${id}`).innerText()));
+  ok('Funzionalità (1.9.0): nel blocco dei form, chi riceve l\'email a ogni compilazione', /chi riceve l.email a ogni compilazione/.test(await v.locator('#newsletter').innerText()));
   ok('Funzionalità (1.8.0): il blocco della frase in fondo al sito, con la schermata', await v.locator('#firma img[src*="firma.webp"]').count() === 1 && /Impostazioni/.test(await v.locator('#firma').innerText()));
   ok('Funzionalità (1.8.0): la frase in fondo al sito, con il link al sito ufficiale', await v.locator('#firma-sito a[href="https://plumecms.danilofailli.it"]').count() === 1);
   ok('Funzionalità (1.7.0): il blocco del sito su misura, con la schermata', await v.locator('#su-misura img[src*="su-misura.webp"]').count() === 1 && /Sostituisci/.test(await v.locator('#su-misura').innerText()));

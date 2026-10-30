@@ -20,7 +20,8 @@ Installa plumeCMS da zero con il browser (Playwright) e controlla sito e pannell
 
 
 
-Le prove di attacco: ogni OK è un attacco respinto (249 nella 1.8.0 sullo stesso sito su misura in prova, con FINTO_WP: le 7 nuove,
+Le prove di attacco: ogni OK è un attacco respinto (233 nella 1.9.0 su un sito Attività, con le 6 nuove del gruppo 25 sull'avviso
+dei form; 249 nella 1.8.0 sullo stesso sito su misura in prova, con FINTO_WP: le 7 nuove,
 gruppo 24, sono sulla frase in fondo al sito; 227 su un sito Attività; 242 nella 1.7.0, con FINTO_WP, su un sito su misura ancora in prova: le 41
 nuove, gruppi 23 e 23b, sono sul sito su misura; 226 sullo stesso tipo di sito già definitivo e senza FINTO_WP; 201 nella 1.6.0,
 con FINTO_WP: le 24 nuove, gruppo 22, sono su Aggiungi sempre alla
@@ -402,3 +403,11 @@ Dalla 1.7.0 `prova-kit.js` conta sei carte al passo 4 e `prova-tipo-sito.js` sei
 La frase in fondo al sito ("Un nuovo sito plumeCMS") e il banner "Visita il sito ufficiale plumeCMS" della dashboard.
 `node prove/prova-firma.js <base del CMS> <utente> <password>`, su un CMS installato (qualunque kit). Cambia la frase in
 Impostazioni e alla fine la rimette com'era. Atteso: 14 su 14, in radice e in cartella.
+
+## prova-form-avviso.js (1.9.0)
+
+A chi arriva l'avviso di un form (Dopo l'invio, "Manda l'avviso a"). Su un CMS installato con un kit (la pagina Contatti
+ha il form) e con il server di posta finto acceso (`python3 -I prove/smtp-finto.py <porta> <cartella posta> &`):
+`node prove/prova-form-avviso.js <base> <utente> <password> <porta smtp> <cartella posta>`. Scrive il server finto in
+Impostazioni e compila il form tre volte (il limite è 5 all'ora per IP: prima di rilanciarla, svuotare
+`<prefisso>moduli_invii`). Atteso: 13 su 13, anche su un sito aggiornato dalla 1.8.0.

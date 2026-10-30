@@ -438,6 +438,9 @@ capitoli['17'] = async () => {
   await p.fill('[name=intro]', 'Due righe su di te bastano. Ti rispondiamo entro una settimana.');
   await p.fill('[name=pulsante]', 'Invia la candidatura');
   await foto('17-form', { clip: { x: 240, y: 56, width: 960, height: 760 }, segni: [{ sel: '[name=nome]', n: 1 }, { sel: '[name=titolo]', n: 2 }, { sel: '#fm-campi', n: 3 }, { sel: 'button.btn-primary', n: 4, lato: 'destra' }] });
+  // 1.9.0: a chi arriva l'avviso di ogni compilazione.
+  await p.fill('#fm-avviso-a', 'lavoro@studioprova.it, marta@studioprova.it');
+  await foto('17-avviso', { sel: '.sc-scatola:has(#fm-avviso-a)', segni: [{ sel: 'input[name=avviso]', n: 1 }, { sel: '#fm-avviso-a', n: 2 }] });
   await Promise.all([p.waitForNavigation(), p.click('button.btn-primary:has-text("Salva")')]);
   // Nella pagina, sotto il pulsante "Scrivici"
   await apriEditor('editor.php?tipo=pagine&id=6');

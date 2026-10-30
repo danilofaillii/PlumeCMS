@@ -226,7 +226,7 @@ def funzionalita():
          ['Sitemap, robots.txt, dati strutturati (articoli, domande frequenti, briciole di pane), titoli e descrizioni per ogni pagina, redirect e pagine 404 sotto controllo.',
           'In più quello che serve alle risposte delle intelligenze artificiali: <code>llms.txt</code>, riassunti in testa, risposte brevi. E gli avvisi ai motori con IndexNow e Search Console.']),
         ('newsletter', 'flussi.webp', 'Newsletter, form e popup',
-         ['Iscrizioni con doppia conferma, liste, campagne programmate, flussi automatici (benvenuto, promemoria, bivi), aperture e clic contati. I form li costruisci nel pannello, i popup decidi tu quando e dove.',
+         ['Iscrizioni con doppia conferma, liste, campagne programmate, flussi automatici (benvenuto, promemoria, bivi), aperture e clic contati. I form li costruisci nel pannello, e per ognuno scegli chi riceve l\'email a ogni compilazione; i popup decidi tu quando e dove.',
           'Le email partono dal tuo server, a giri, senza servizi esterni da pagare.']),
         ('social', 'social.webp', 'I social, pronti ogni mattina',
          ['Il giorno in cui esce un articolo ti arriva un\'email: <strong>"Oggi sul sito"</strong>. Dentro c\'è tutto per pubblicarlo: le due immagini della misura giusta, 1200x630 per LinkedIn e Facebook e 1080x1350 per Instagram, e il testo pronto per ogni canale, con il link e i tuoi hashtag. Copi, incolli, pubblichi.',
@@ -455,6 +455,7 @@ def faq():
         ('Posso mettere lo stesso invito sotto tutti gli articoli?', 'Sì. In Articoli premi la linguetta Aggiungi sempre alla fine e componi il riquadro con l\'editor: un invito alla newsletter, un pulsante per prenotare, un contatto. Quando premi Pubblica esce in fondo a ogni articolo, anche a quelli già online. Se lo spegni non perdi niente: con Accendi torna com\'era.'),
         ('Non so da dove partire. plumeCMS mi aiuta a fare il sito?', 'Sì. Quando lo installi scegli Su misura e rispondi a quattro domande: che attività è, dove si trova, cosa offri, quali pagine vuoi. Il sito si compone da solo, con i testi pensati per la tua attività e delle foto finte che dicono cosa fotografare. Le cambi con le tue in Media, con il pulsante Sostituisci. Le domande si riaprono dalla dashboard finché il sito è in prova.'),
         ('In fondo al mio sito c\'è scritto "Un nuovo sito plumeCMS". Si può cambiare?', 'Sì. In Impostazioni > Sito pubblico, riquadro La frase in fondo al sito, cambi il testo e l\'indirizzo del link, oppure togli la spunta e la frase non compare più.'),
+        ('Posso far arrivare le richieste di un form a un\'altra persona?', 'Sì. Apri il form nel pannello e, nel riquadro Dopo l\'invio, scrivi gli indirizzi in Manda l\'avviso a: fino a cinque, separati da una virgola. Ogni form ha i suoi: i preventivi all\'ufficio commerciale, le candidature a chi si occupa del personale.'),
         ('C\'è una guida per imparare a usarlo?', 'Sì: il manuale d\'uso, in PDF. Trentuno capitoli, dal primo accesso alla checklist prima di andare online, ognuno con un esempio vero, le schermate con i passi numerati e una checklist per sapere quando hai finito.'),
         ('Posso costruirmi un tema mio?', 'Sì: c\'è un manuale apposta, con un tema d\'esempio completo da smontare e rifare tuo.'),
     ]
@@ -587,6 +588,8 @@ def zip_lavagna(dest):
 
 # Le novità per chi scarica: brevi, scritte qui (il CHANGELOG è per chi sviluppa). Da aggiornare a ogni versione.
 NOVITA = [
+    ('1.9.0', 'A chi arriva l\'avviso di un form', ['Nella scheda di ogni form, Dopo l\'invio, la casella Manda l\'avviso a: fino a cinque indirizzi che ricevono un\'email a ogni compilazione.',
+                                                    'Vuota, l\'avviso va all\'indirizzo del sito, come prima.']),
     ('1.8.0', 'La frase in fondo al sito', ['Sotto il piede di ogni pagina una riga piccola, "Un nuovo sito plumeCMS", con il link al sito ufficiale. Si cambia o si spegne in Impostazioni > Sito pubblico.',
                                            'Nella dashboard, in cima, il link al sito ufficiale di plumeCMS.']),
     ('1.7.0', 'Il sito su misura', ['All\'installazione la carta Su misura: quattro domande (che attività è, dove, cosa offri, quali pagine) e il sito si compone da solo, con testi pensati per quell\'attività.',

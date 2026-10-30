@@ -2,6 +2,16 @@
 
 Il prodotto si chiama **plumeCMS** (nome scelto il 26 ottobre 2026; prima, per poche ore, "CarbonaraCMS", e ancora prima il provvisorio "Officina": gli zip vecchi si chiamavano `officina-*` e `carbonaracms-*`).
 
+## 1.9.0 (30 ottobre 2026) - A chi arriva l'avviso di un form
+
+- **Segnalazione di Danilo**: creando un form non si poteva scegliere a chi arriva l'email di avviso a ogni compilazione;
+  andava sempre all'indirizzo degli avvisi del sito. Ora la scheda del form, riquadro **Dopo l'invio**, ha **Manda
+  l'avviso a**: uno o più indirizzi (al massimo cinque), separati da una virgola o uno per riga. Vuoto: l'indirizzo degli
+  avvisi del sito, come prima, scritto sotto la casella. Ogni indirizzo riceve la sua email.
+- Un indirizzo sbagliato ferma il salvataggio e il pannello dice quale. L'elenco dei form dice a chi va l'avviso.
+- Nel widget Modulo dell'editor, il testo d'aiuto dice dove si sceglie. I siti che si aggiornano hanno la colonna nuova
+  da soli e, finché non la compilano, continuano come prima.
+
 ## 1.8.0 (29 ottobre 2026) - La frase in fondo al sito e il sito ufficiale nella dashboard
 
 - **Richiesta di Danilo**: sotto il piede di ogni pagina una riga piccola, **Un nuovo sito plumeCMS**, con il link a

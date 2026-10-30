@@ -1,6 +1,6 @@
 # Manuale d'uso di plumeCMS
 
-Versione del manuale: plumeCMS 1.8.0, 29 ottobre 2026.
+Versione del manuale: plumeCMS 1.9.0, 30 ottobre 2026.
 
 ## Prima di cominciare
 
@@ -904,6 +904,21 @@ Apri **Form** dal menu e premi **+ Nuovo form**.
 A destra, **Dopo l'invio** decide cosa succede: iscrivere la persona a una lista della newsletter (con email di
 conferma), avvisarti via email, e cosa scrivere nella pagina di ringraziamento.
 
+### A chi arriva l'avviso
+
+![Dopo l'invio: a chi arriva l'avviso](immagini/manuale-uso/17-avviso.jpg)
+
+1. **Avvisami via email a ogni compilazione**: con la spunta, a ogni form compilato parte un'email con tutto quello che
+   la persona ha scritto.
+2. **Manda l'avviso a**: gli indirizzi che la ricevono, separati da una virgola o uno per riga, al massimo cinque. Le
+   candidature possono andare a chi si occupa del personale, i preventivi all'ufficio commerciale. Se lo lasci vuoto,
+   l'avviso va all'indirizzo degli avvisi del sito (**Impostazioni > Posta in uscita**, capitolo 25): sotto la casella
+   c'è scritto quale.
+
+Ogni indirizzo riceve la sua email. Se ne scrivi uno sbagliato, il form non si salva e il pannello ti dice quale. Nel
+widget Modulo dell'editor l'indirizzo non si sceglie: si sceglie qui, una volta, e vale in ogni pagina in cui metti
+quel form.
+
 ### Mettere il form nella pagina
 
 Apri "Lavora con noi" nell'editor, fai clic sul pulsante "Scrivici" e aggiungi il widget **Modulo** (gruppo "Dal sito").
@@ -929,6 +944,7 @@ Excel o Numbers.
 - [ ] Il campo Email è di tipo **Email** (serve per risponderti e per la newsletter).
 - [ ] Ho compilato il form dal sito, una volta, e la compilazione è arrivata.
 - [ ] Le email partono (capitolo 25), se voglio l'avviso a ogni compilazione.
+- [ ] In **Manda l'avviso a** c'è chi deve leggere le compilazioni, oppure so che vanno all'indirizzo del sito.
 
 ---
 

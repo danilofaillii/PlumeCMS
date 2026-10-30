@@ -90,7 +90,7 @@ Sono gli unici in `cms/docs/`, nello zip, nel sito di plumeCMS e nella pagina Do
 - **Pacchetto di aggiornamento** per un'installazione esistente:
   `python3 tools/cms-pacchetto.py --aggiornamento`. Si carica dal pannello,
   Impostazioni, Aggiornamenti.
-- **Versione**: `cms/VERSIONE` (oggi 1.8.0) e una voce in `cms/CHANGELOG.md` a ogni
+- **Versione**: `cms/VERSIONE` (oggi 1.9.0) e una voce in `cms/CHANGELOG.md` a ogni
   zip con contenuto diverso. Mai cambiare il contenuto di una versione già data.
 - **Prove** prima di dire finito:
   - `php -n -d short_open_tag=1 -l` su ogni file PHP toccato, `node --check` sui js;
@@ -126,7 +126,13 @@ Le decisioni complete, con data e perché, stanno nel second brain, `plumecms/de
 
 ## Stato al 28 ottobre 2026
 
-Fatto: plumeCMS 1.8.0 (29 ottobre): la frase in fondo al sito "Un nuovo sito plumeCMS" con il link a `https://plumecms.danilofailli.it`
+Fatto: plumeCMS 1.9.0 (30 ottobre): a chi arriva l'avviso di un form (segnalazione di Danilo: non si poteva scegliere). Colonna
+`moduli.avviso_a` (aggiunta anche alle tabelle vecchie da `form_schema()`), casella "Manda l'avviso a" in Form > Dopo l'invio, fino a
+5 indirizzi validati (`form_avviso_indirizzi()`), un'email per destinatario; vuota = `posta_notifica_email()` come prima. Manuale d'uso
+capitolo 18 (schermata 17-avviso), tecnico 15.1. Prove: `prova-form-avviso.js` 13/13 (sito nuovo e sito aggiornato), attacchi 233/233
+(gruppo 25), install 37/37 radice e cartella, aggiornamento 1.8.0 -> 1.9.0 13/13 (sito uguale tranne il conto alla rovescia), sito di
+plumeCMS 81/81. PDF del manuale d'uso 1877 KB: vicino al limite di 1900.
+1.8.0 (29 ottobre): la frase in fondo al sito "Un nuovo sito plumeCMS" con il link a `https://plumecms.danilofailli.it`
 (richiesta di Danilo), modificabile in Impostazioni > Sito pubblico (`includes/firma.php`, impostazione `firma_sito`: testo, indirizzo,
 acceso); banner "Visita il sito ufficiale plumeCMS" in cima alla dashboard, sempre. `FIRMA_URL` ripete `VERSIONE_SITO_UFFICIALE`: se cambia
 uno, cambia l'altro. Manuale d'uso capitoli 1 e 15, tecnico 30. Prove: `prova-firma.js` 14/14 (radice e cartella), attacchi 249/249
