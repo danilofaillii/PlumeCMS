@@ -2,6 +2,16 @@
 
 Il prodotto si chiama **plumeCMS** (nome scelto il 26 ottobre 2026; prima, per poche ore, "CarbonaraCMS", e ancora prima il provvisorio "Officina": gli zip vecchi si chiamavano `officina-*` e `carbonaracms-*`).
 
+## 2.0.2 (31 ottobre 2026) - I link scritti a mano
+
+- **Pulsanti che non portavano da nessuna parte** (segnalazione di Danilo sui pulsanti dell'Apertura). Un link scritto come lo
+  scrive una persona, `laser-coaching`, `chi-sono/`, `www.sito.it` o `sito.it/pagina`, veniva scartato in silenzio e il pulsante
+  puntava a `#`: il clic restava sulla pagina. C'era da sempre, in tutti i widget con un link (pulsanti, inviti, riquadri,
+  immagini, menu dei widget). Ora `www.sito.it` e `sito.it/pagina` diventano `https://...`, un nome di pagina diventa la pagina del
+  sito (`/laser-coaching`). Restano rifiutati, come prima, i link pericolosi (`javascript:`, `data:` e simili).
+- Controllati i pulsanti dell'Apertura in tutte le undici disposizioni, con i sei effetti della foto, al computer e al telefono,
+  senza tema e con Cosmo, Aria e Bottega: ogni pulsante è libero (niente velo, foto o onda sopra) e il clic porta alla pagina giusta.
+
 ## 2.0.1 (30 ottobre 2026) - Il pannello al telefono
 
 - **Al telefono il pannello non scorre più di lato.** Prima 29 pagine su 70 erano più larghe dello schermo (Articoli,

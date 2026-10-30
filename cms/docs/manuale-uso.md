@@ -2696,6 +2696,7 @@ sicurezza, WebDAV su https.
 | Le email non arrivano | Configurazione email, email di prova; guarda lo spam (capitolo 25) |
 | "Il file supera il limite di caricamento del server" | File troppo grande per l'hosting: rimpiccioliscilo o chiedi all'hosting di alzare il limite |
 | Una pagina è sparita dal menu | Editor > Menu di navigazione: rimettila e premi Salva il menu |
+| Un pulsante non porta da nessuna parte | Nel campo Link scrivi l'indirizzo intero (`https://...`) o la pagina con la barra davanti (`/contatti/`). Dalla 2.0.2 vanno bene anche `www.sito.it` e il solo nome della pagina |
 | Ho rovinato una pagina | Editor > Revisioni: carica la versione di prima e pubblica |
 | Ho rovinato lo stile del sito | Stile del sito > Cronologia, oppure Editor > Versioni |
 | Un tema ha rotto il sito | Il sito torna da solo all'aspetto di base: in Editor > Temi vedi il motivo in rosso |

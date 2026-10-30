@@ -529,7 +529,15 @@ function editor_link_sicuro(string $url): string {
     // sicurezza: via i caratteri di controllo (java\nscript:), poi solo http, https, percorso interno, ancora, mailto, tel.
     $url = trim(preg_replace('/[\x00-\x20\x7F]+/', '', $url) ?? '');
     if ($url === '') return '';
-    return preg_match('~^(https?://|/|#|mailto:|tel:)~i', $url) ? $url : '';
+    if (preg_match('~^(https?://|/|#|\?|mailto:|tel:)~i', $url)) return $url;
+    // 2.0.2: i link scritti come li scrive una persona. Prima si scartavano in silenzio e il pulsante puntava a "#":
+    // www.sito.it e sito.it/pagina diventano https://..., un nome di pagina (laser-coaching, chi-sono/) la pagina interna.
+    // Tutto quello che ha un "schema" diverso (javascript:, data:...) resta fuori.
+    if (str_contains(strtok($url, '/?#'), ':')) return '';
+    if (preg_match('~^(?:www\.)?(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+([a-z]{2,24})(?=[/?#]|$)~i', $url, $m)
+        && !in_array(strtolower($m[1]), ['html', 'htm', 'php', 'pdf', 'jpg', 'jpeg', 'png', 'webp', 'gif', 'svg', 'zip', 'txt', 'xml'], true)) return 'https://' . $url;
+    if (preg_match('~^[a-z0-9][a-z0-9._\~/-]*(?:[?#].*)?$~i', $url)) return '/' . $url;
+    return '';
 }
 
 /** Testo ricco dall'editor: si tengono solo i tag di formattazione, senza script né attributi strani. */

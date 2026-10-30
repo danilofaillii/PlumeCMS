@@ -612,6 +612,7 @@ def zip_lavagna(dest):
 
 # Le novità per chi scarica: brevi, scritte qui (il CHANGELOG è per chi sviluppa). Da aggiornare a ogni versione.
 NOVITA = [
+    ('2.0.2', 'I link scritti a mano', ['Un pulsante con il link scritto senza https:// o senza la barra (www.sito.it, contatti) ora porta alla pagina giusta: prima puntava a "#".']),
     ('2.0.1', 'Il pannello al telefono', ['Nessuna pagina del pannello scorre più di lato sul telefono: le tabelle scorrono nel loro riquadro, filtri e schede vanno a capo.']),
     ('2.0.0', 'Gli addon (beta)', ['In Impostazioni > Addon otto funzioni da accendere solo se servono: Prenotazioni e appuntamenti, Eventi con iscrizione, Raccolta recensioni, Vetrina prodotti con ordini, Statistiche senza cookie, Area riservata, Corsi online, Copia del sito altrove.',
                                    'File riservati in Download e il form che li dà dopo la conferma dell\'email; l\'immagine per i social si sceglie dai Media ed esce sempre con l\'indirizzo intero.',

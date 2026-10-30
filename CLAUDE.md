@@ -91,7 +91,7 @@ Sono gli unici in `cms/docs/`, nello zip, nel sito di plumeCMS e nella pagina Do
 - **Pacchetto di aggiornamento** per un'installazione esistente:
   `python3 tools/cms-pacchetto.py --aggiornamento`. Si carica dal pannello,
   Impostazioni, Aggiornamenti.
-- **Versione**: `cms/VERSIONE` (oggi 2.0.1; sempre tre numeri: "beta" va nel CHANGELOG, mai nel nome dello zip, se no la serie "ultima" del Download non lo riconosce) e una voce in `cms/CHANGELOG.md` a ogni
+- **Versione**: `cms/VERSIONE` (oggi 2.0.2; sempre tre numeri: "beta" va nel CHANGELOG, mai nel nome dello zip, se no la serie "ultima" del Download non lo riconosce) e una voce in `cms/CHANGELOG.md` a ogni
   zip con contenuto diverso. Mai cambiare il contenuto di una versione già data.
 - **Prove** prima di dire finito:
   - `php -n -d short_open_tag=1 -l` su ogni file PHP toccato, `node --check` sui js;
@@ -127,6 +127,12 @@ Le decisioni complete, con data e perché, stanno nel second brain, `plumecms/de
 
 ## Stato al 30 ottobre 2026
 
+Fatto: plumeCMS 2.0.2 (31 ottobre): i link scritti a mano (segnalazione di Danilo: "i pulsanti della hero non funzionano").
+`editor_link_sicuro()` scartava in silenzio `laser-coaching`, `www.sito.it`, `sito.it/pagina` e il pulsante puntava a `#`, in tutti i
+widget; ora diventano `/laser-coaching` e `https://...`, gli schemi pericolosi restano fuori. `prova-hero-pulsanti.js` 670/670
+(11 disposizioni per 6 effetti più i link a mano, 1280 e 390 px, senza tema e con Cosmo, Aria, Bottega in anteprima `?preview=1&tema=`):
+nessun pulsante coperto da velo, foto o onda. Attacchi 261/261, install 37/37 radice e cartella, aggiornamento 2.0.1 -> 2.0.2 13/13 con
+20 foto uguali. danilofailli.it non si apre dalla sessione (proxy 403): la sua pagina non è stata guardata.
 Fatto: plumeCMS 2.0.1 (30 ottobre, notte): il pannello al telefono (richiesta di Danilo). `.admin-layout` a `minmax(0, 1fr)` e
 `.admin-main{min-width:0}` (la colonna `1fr` si allargava per l'elemento più largo: 29 pagine su 70 scorrevano di lato), sotto 640 px
 form, etichette, filtri, `nav` e schede vanno a capo. `prove/prova-pannello-telefono.js` 81/81 a 390, 768 e 1280 px (menu più venti
@@ -349,6 +355,8 @@ Errori veri, già pagati. Non ripeterli.
 | Un `fieldset` o un `<code>` con `white-space:nowrap` in una pagina del pannello | il fieldset non si stringe sotto il suo contenuto e la pagina scorre di lato al telefono: dalla 2.0.0 `admin.css` mette `fieldset{min-width:0}` e manda a capo i codici nelle tabelle |
 | Una variabile in cima a un file di widget (`$r`, `$f`, `$file`) | il file si caricava nello spazio di `editor_carica_widget_esterni()` e ne sovrascriveva il registro: con una persona nelle Prenotazioni tutte le pagine del sito uscivano vuote (2.0.0, trovato dall'agente del manuale, non dalle prove degli addon). Ora ogni file si carica in una funzione sua; le prove degli addon mettono dati veri prima di guardare le pagine |
 | Centinaia di server di prova accesi (agenti e giri di prove) | le porte si esauriscono: "Address already in use" e la prova fallisce in modo strano. Alla fine di un lavoro si spengono i `php -S` e i server finti che non servono (cercando il pid con `ps -eo pid=,comm=,args=` e `comm` uguale a php, mai `pkill -f`) |
+| `tema_attivo` scritto da riga di comando per provare un tema | non basta: il tema si applica dal pannello (copia stile e modelli). Per le prove si usa l'anteprima da amministratore, `?preview=1&tema=<slug>` |
+| Un link scritto senza `https://` o senza `/` in un widget | fino alla 2.0.1 `editor_link_sicuro()` lo scartava in silenzio e il pulsante puntava a `#` ("i pulsanti non funzionano") |
 | Fidarsi del resoconto di un agente | è successo che un agente dichiarasse lavoro mai scritto su disco. Si controllano i file veri e si rifanno le prove |
 
 ## Tono con l'utente

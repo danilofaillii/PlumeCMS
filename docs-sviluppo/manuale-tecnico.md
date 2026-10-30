@@ -990,6 +990,14 @@ evidenza, informazioni del contenuto, briciole di pane, copyright (con `{anno}` 
 I widget si spengono da Editor > Widget: un widget spento sparisce solo dalla tavolozza, le pagine che lo usano
 continuano a mostrarlo.
 
+**I link dei widget** passano tutti da `editor_link_sicuro()` (`includes/editor-widget.php:528`).
+- Restano come sono gli indirizzi che cominciano con `https://`, `http://`, `/`, `#`, `?`, `mailto:` e `tel:`.
+- Dalla 2.0.2 i link scritti a mano non si scartano più:
+  - `www.sito.it` e `sito.it/pagina` diventano `https://...` (un `.html`, `.pdf` e simili alla fine resta un file del sito);
+  - un nome di pagina come `laser-coaching` diventa `/laser-coaching`.
+- Si rifiuta (link vuoto, il pulsante punta a `#`) tutto ciò che ha uno schema diverso: `javascript:`, `data:`, `vbscript:`, anche scritto con caratteri di controllo in mezzo.
+- Prove: `prove/prova-hero-pulsanti.js` (con `prove/pagina-hero-pulsanti.php`): undici disposizioni per sei effetti più i link scritti a mano, al computer e al telefono, e con `TEMA=` nelle anteprime dei temi. 670 controlli.
+
 ### 9.8 Scrivere un widget nuovo
 
 Un widget si registra con `editor_registra_widget($tipo, $definizione, $disegna)`

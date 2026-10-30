@@ -463,3 +463,12 @@ scorra di lato; per una pagina larga dice gli elementi più interni che escono d
 argomento, separate da virgola; `LARGHEZZA=768` (o altro) per un'altra misura.
 `node prove/prova-pannello-telefono.js <base> <utente> <password> [pagine in più]`. Atteso: tutto OK a 390, 768 e 1280 px,
 anche con gli otto addon accesi (30 ottobre 2026: 81 su 81 con venti pagine interne).
+
+## prova-hero-pulsanti.js (2.0.2)
+
+I pulsanti dell'Apertura si cliccano davvero. Prima `php prove/pagina-hero-pulsanti.php <cartella CMS> <url foto> > elenco.txt`
+(una pagina per disposizione ed effetto della foto, 66, più `/hp-link-a-mano/` con i link scritti senza la barra). Poi
+`node prove/prova-hero-pulsanti.js <base> elenco.txt`: per ogni pulsante l'elemento sotto il suo centro e sotto i due lati è il
+pulsante, il link non è `#`, il clic porta alla pagina giusta; a 1280 e a 390 px. Con `TEMA=cosmo UTENTE=... PASSWORD=...` nelle
+anteprime del tema. Atteso: 670 su 670, anche con Cosmo, Aria e Bottega (31 ottobre 2026); sul codice di prima della 2.0.2 la
+pagina dei link scritti a mano dà KO (il pulsante punta a `#`).
