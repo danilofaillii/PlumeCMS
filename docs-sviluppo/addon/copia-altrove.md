@@ -74,6 +74,6 @@ Nessun file del nucleo toccato. Usa `copia_crea()`, `copia_percorso()`, `copia_d
 ## Prove
 
 - `prove/prova-addon-copia-altrove.js` con `prove/server-copia-finti.py` (FTP 8205, FTPS 8206 con certificato a sé, WebDAV 8207):
-  39 su 39 in radice.
+  39 su 39 in radice e in `/test`.
 - `prove/attacchi-addon-a.js`, gruppo 10: SSRF verso undici indirizzi interni, schemi `file:`, `gopher:`, `dict:`,
   credenziali nell'indirizzo; password mai nella pagina, nel registro o in chiaro nel database.

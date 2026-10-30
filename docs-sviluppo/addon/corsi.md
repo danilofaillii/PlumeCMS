@@ -86,5 +86,5 @@ del sito ammette già `www.youtube-nocookie.com` e `player.vimeo.com` in `frame-
 
 ## Prove
 
-- `prove/prova-addon-corsi.js` (sito Attività nuovo, posta finta, ffmpeg per il video): 58 su 58 in radice.
+- `prove/prova-addon-corsi.js` (sito Attività nuovo, posta finta, ffmpeg per il video): 58 su 58 in radice e in `/test`.
 - `prove/attacchi-addon-a.js`: lezioni, video e materiali di un corso non proprio, path traversal, certificato di un altro, XSS nei titoli.

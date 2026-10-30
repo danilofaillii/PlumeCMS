@@ -77,7 +77,7 @@ Un indirizzo che comincia con questi percorsi vince su una pagina del sito con l
 
 | File | Riga | Cosa |
 |---|---|---|
-| `cms/sito/index.php` | 220 | **evento nuovo** `sito_contenuto($c, $meta)` nel caso `contenuto` della mappa, prima di disegnare articoli e pagine: chi ascolta risponde e chiude (`exit`) oppure lascia andare. L'addon lo usa per la pagina "Solo per i membri" (`membri_controlla_contenuto()`, `pagine.php:414`) |
+| `cms/sito/index.php` | 220 | **evento nuovo** `sito_contenuto($c, $meta)` nel caso `contenuto` della mappa, prima di disegnare articoli e pagine: chi ascolta risponde e chiude (`exit`) oppure lascia andare. L'addon lo usa per la pagina "Solo per i membri" (`membri_controlla_contenuto()`, `pagine.php:416`) |
 | `cms/includes/sito-dati.php` | 154 | **filtro nuovo** `contenuto_riservato(null, $c)` in testa a `sito_html_contenuto()`: una stringa al posto del testo vero. Copre llms-full.txt, i widget che mostrano il testo di un contenuto, i conti dei minuti di lettura. L'addon dà l'avviso a chi non è entrato |
 
 Con l'addon spento nessuno ascolta e il sito è identico (provato: `prova-addon-membri.js`, punto 17).
@@ -96,7 +96,7 @@ sotto `/area-riservata/` che l'addon non conosce).
   pagina per l'iscrizione, stessa risposta per il cambio di email del profilo).
 - Forza bruta: blocchi in `sicurezza_tentativi`, visibili e sbloccabili dalla pagina Sicurezza; non toccano l'accesso al pannello.
 - XSS: ogni testo esce con `h()`; nomi senza caratteri a 4 byte. CSV: `sicurezza_csv_riga()` (formule neutralizzate).
-- Attacchi provati: `prove/attacchi-addon-a.js` (108 su 108, insieme a Corsi e Copia altrove).
+- Attacchi provati: `prove/attacchi-addon-a.js` (108 su 108 in radice e in `/test`, insieme a Corsi e Copia altrove).
 
 ## Limiti noti
 
@@ -110,5 +110,5 @@ sotto `/area-riservata/` che l'addon non conosce).
 
 ## Prove
 
-- `prove/prova-addon-membri.js` (sito Attività nuovo, posta finta): 74 su 74 in radice; con il CMS in `/test` vedi il resoconto.
+- `prove/prova-addon-membri.js` (sito Attività nuovo, posta finta): 75 su 75 in radice e 75 su 75 con il CMS in `/test`.
 - `prove/pagina-addon-a.php`: crea una pagina con il widget, per la prova.
