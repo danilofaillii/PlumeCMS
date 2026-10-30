@@ -2,6 +2,8 @@
 $user = current_user();
 $adminTitle = $adminTitle ?? 'Admin';
 $qui = basename($_SERVER['SCRIPT_NAME']);
+// 2.0.0: le pagine degli addon passano tutte da addon-pagina.php; per il menu ognuna è "addon-pagina.php?a=<addon>&p=<pagina>".
+if ($qui === 'addon-pagina.php') $qui = 'addon-pagina.php?a=' . (string)($_GET['a'] ?? '') . '&p=' . (string)($_GET['p'] ?? '');
 $ctTipo = $_GET['tipo'] ?? '';
 $ctQui = in_array($qui, ['contenuti.php', 'contenuto.php', 'editor.php'], true);
 $sonoAdminMenu = is_admin();
@@ -61,9 +63,10 @@ $menu = [
         ['Redirect e 404', 'seo.php?scheda=redirect', $qui === 'seo.php' && ($_GET['scheda'] ?? '') === 'redirect'],
     ]] : null,
     // Il redattore vede solo Log cron e Diagnosi: posta, aggiornamenti e SQL sono dell'amministratore.
-    ['Impostazioni', $sonoAdminMenu ? 'impostazioni.php' : 'cron-log.php', 'impostazioni', in_array($qui, ['impostazioni.php', 'aggiornamenti.php', 'copia-sito.php', 'importa-wordpress.php', 'cron-log.php', 'sicurezza.php', 'controlla-server.php'], true), array_values(array_filter([
+    ['Impostazioni', $sonoAdminMenu ? 'impostazioni.php' : 'cron-log.php', 'impostazioni', in_array($qui, ['impostazioni.php', 'addon.php', 'aggiornamenti.php', 'copia-sito.php', 'importa-wordpress.php', 'cron-log.php', 'sicurezza.php', 'controlla-server.php'], true), array_values(array_filter([
         $sonoAdminMenu ? ['Configurazione email', 'impostazioni.php', $qui === 'impostazioni.php'] : null,
         $sonoAdminMenu ? ['Sicurezza', 'sicurezza.php', $qui === 'sicurezza.php'] : null, // sicurezza: checklist, 2FA, blocchi, CSP, registro
+        $sonoAdminMenu ? ['Addon', 'addon.php', $qui === 'addon.php'] : null, // 2.0.0: le funzioni in più, da accendere
         $sonoAdminMenu ? ['Aggiornamenti', 'aggiornamenti.php', $qui === 'aggiornamenti.php'] : null,
         $sonoAdminMenu ? ['Copia del sito', 'copia-sito.php', $qui === 'copia-sito.php'] : null, // 1.3.0: scarica e ripristina tutto il sito
         $sonoAdminMenu ? ['Importa da WordPress', 'importa-wordpress.php', $qui === 'importa-wordpress.php'] : null, // 1.4.0

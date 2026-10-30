@@ -168,6 +168,7 @@ function cms_uploads_url(): string {
  *   rotte           => [['percorso' => regex, 'file' => ...]]   (indirizzi pubblici serviti dal modulo prima della mappa del sito)
  *   installa        => callable                                 (crea le sue tabelle; la chiama l'installatore e cms_installa)
  *   cron            => [callable]                               (passi del cron giornaliero)
+ *   cron_spesso     => [callable]                               (2.0.0: passi del giro frequente, quello della newsletter)
  *   widget          => [file]                                   (widget dell'editor da caricare con editor_registra_widget)
  *   azioni          => [nome => callable]                       (azioni dei pacchetti del pannello Aggiornamenti)
  *   filtri          => [nome => callable]                       (cms_filtro: il modulo cambia un valore del nucleo)
@@ -189,7 +190,28 @@ function cms_moduli(): array {
         if (!is_array($def)) continue;
         $m[$nome] = $def + ['nome' => $nome, 'etichetta' => ucfirst($nome), 'versione' => '', 'cartella' => dirname($f)];
     }
+    // 2.0.0: gli addon (addon/<nome>/modulo.php) sono moduli che arrivano con il prodotto e si accendono dal pannello,
+    // Impostazioni > Addon. Quelli accesi sono scritti in moduli/addon-attivi.json (fuori dagli aggiornamenti, dentro la copia del sito).
+    foreach (cms_addon_attivi() as $nome) {
+        $f = cms_radice() . '/addon/' . $nome . '/modulo.php';
+        if (isset($m[$nome]) || !is_file($f)) continue;
+        try {
+            $def = require $f;
+        } catch (Throwable $e) {
+            error_log("cms: addon $nome non caricato: " . $e->getMessage());
+            continue;
+        }
+        if (!is_array($def)) continue;
+        $m[$nome] = $def + ['nome' => $nome, 'etichetta' => ucfirst($nome), 'versione' => '', 'cartella' => dirname($f), 'addon' => true];
+    }
     return $m;
+}
+
+/** I nomi degli addon accesi (moduli/addon-attivi.json). Solo nomi validi, senza doppioni. */
+function cms_addon_attivi(): array {
+    $f = cms_radice() . '/moduli/addon-attivi.json';
+    $l = is_file($f) ? json_decode((string)@file_get_contents($f), true) : [];
+    return array_values(array_unique(array_filter(is_array($l) ? $l : [], fn($n) => is_string($n) && preg_match('/^[a-z][a-z0-9_-]{0,40}$/', $n))));
 }
 
 function cms_modulo(string $nome): ?array {
@@ -198,11 +220,11 @@ function cms_modulo(string $nome): ?array {
 
 /** La cartella di un modulo sul disco e il suo indirizzo (per gli asset). */
 function cms_modulo_dir(string $nome): string {
-    return cms_radice() . '/moduli/' . $nome;
+    return !empty(cms_modulo($nome)['addon']) ? cms_radice() . '/addon/' . $nome : cms_radice() . '/moduli/' . $nome;
 }
 
 function cms_modulo_url(string $nome): string {
-    return cms_base() . '/moduli/' . $nome;
+    return !empty(cms_modulo($nome)['addon']) ? cms_base() . '/addon/' . $nome : cms_base() . '/moduli/' . $nome;
 }
 
 /** Un valore passa per i filtri dei moduli: ognuno riceve il valore e gli argomenti e ritorna il valore nuovo. */

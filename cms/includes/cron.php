@@ -107,6 +107,15 @@ function cron_newsletter(string $da = 'cron'): array {
     } catch (Throwable $e) {
         @file_put_contents(cms_radice() . '/logs/seo.log', date('Y-m-d H:i:s') . ' | ERRORE ' . $e->getMessage() . "\n", FILE_APPEND);
     }
+    // 2.0.0: i passi frequenti dei moduli e degli addon (promemoria delle prenotazioni, email dopo un servizio...).
+    foreach (cms_moduli_elenco('cron_spesso') as $x) {
+        try {
+            $esito = ($x['valore'])();
+            if (is_string($esito) && $esito !== '') $righe[] = ucfirst((string)$x['chiave']) . ': ' . $esito;
+        } catch (Throwable $e) {
+            $righe[] = 'ERRORE ' . $x['chiave'] . ' (' . $x['modulo'] . '): ' . $e->getMessage();
+        }
+    }
     try {
         // 1.11.0: una volta al giorno, la pulizia (registro della posta oltre 60 giorni, iscritti mai confermati).
         try { $righe = array_merge($righe, newsletter_pulizia()); } catch (Throwable $e) { $righe[] = 'ERRORE pulizia: ' . $e->getMessage(); }

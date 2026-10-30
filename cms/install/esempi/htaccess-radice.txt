@@ -28,6 +28,10 @@ RewriteRule ^(includes|logs|aggiornamenti|privato|data|sql|docs|tools|test|test-
 RewriteRule ^moduli/[^/]+/(includes|sql|docs)(/|$) - [F,L]
 # I file PHP dei moduli si eseguono solo attraverso il nucleo (admin/, api/, share/), mai chiamati direttamente.
 RewriteRule ^moduli/.*\.(php|phtml|phar)$ - [F,L]
+# 2.0.0: gli addon come i moduli (il PHP solo attraverso il nucleo), e l'elenco di quelli accesi non si legge dal web.
+RewriteRule ^addon/[^/]+/(includes|sql|docs)(/|$) - [F,L]
+RewriteRule ^addon/.*\.(php|phtml|phar|php[0-9]|phps)$ - [F,L,NC]
+RewriteRule ^moduli/addon-attivi\.json$ - [F,L]
 # temi: il PHP di un tema (funzioni.php, viste/) gira solo dentro il sito; CSS, immagini e caratteri si servono.
 RewriteRule ^temi/.*\.(php|phtml|phar|php[0-9]|phps)$ - [F,L,NC]
 RewriteRule ^(VERSIONE|CHANGELOG\.md|README\.md|INSTALLA\.md|composer\.(json|lock)|package(-lock)?\.json)$ - [F,L]

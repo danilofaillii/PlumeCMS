@@ -11,6 +11,9 @@ $vieta = [
     '~^(includes|logs|aggiornamenti|privato|data|sql|docs|tools|test|test-definizioni)(/|$)~',
     '~^moduli/[^/]+/(includes|sql|docs)(/|$)~',
     '~^moduli/.*\.(php|phtml|phar)$~',
+    '~^addon/[^/]+/(includes|sql|docs)(/|$)~', // 2.0.0: gli addon come i moduli
+    '~^addon/.*\.(php|phtml|phar|php[0-9]|phps)$~i',
+    '~^moduli/addon-attivi\.json$~',
     '~^temi/.*\.(php|phtml|phar|php[0-9]|phps)$~i',
     '~^(VERSIONE|CHANGELOG\.md|README\.md|INSTALLA\.md|composer\.(json|lock)|package(-lock)?\.json)$~',
     '~(^|/)\.(git|env|htpasswd|installato|gitkeep)~',

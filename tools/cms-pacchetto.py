@@ -26,11 +26,11 @@ SITE = os.path.join(REPO, 'cms')
 NOME_PRODOTTO = 'plumecms'
 AVVISI = []   # provvisorio: CMS_NOME in includes/cms.php
 
-CARTELLE = ['includes', 'admin', 'sito', 'api', 'share', 'install', 'assets/css', 'moduli', 'temi']
+CARTELLE = ['includes', 'admin', 'sito', 'api', 'share', 'install', 'assets/css', 'moduli', 'temi', 'addon']
 FILE_RADICE = ['index.php', 'cron-daily.php', 'cron-newsletter.php', 'VERSIONE', 'CHANGELOG.md', 'README.md', 'INSTALLA.md', 'LICENSE']
 DOCS = ['manuale-uso.md', 'manuale-temi.md']  # 1.6.4: nel prodotto solo i due manuali; il resto sta in docs-sviluppo/ del repository
 VUOTE = ['uploads', 'logs', 'aggiornamenti', 'moduli', 'temi']
-ESCLUDI_PREFISSI = ('moduli/danilofailli/', 'includes/config.local.php', 'install/.installato', 'admin/infographics/')
+ESCLUDI_PREFISSI = ('moduli/danilofailli/', 'moduli/addon-attivi.json', 'includes/config.local.php', 'install/.installato', 'admin/infographics/')
 # I file ponte verso il modulo di danilofailli.it: nel prodotto non c'è il modulo, quindi non ci sono nemmeno loro.
 SHIM = {
     'admin': ['test', 'test-statistiche', 'burnout-dashboard', 'social-copy', 'diagnosi-articoli', 'importa-sql', 'import-articles', 'export-articles-sql',

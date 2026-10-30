@@ -70,3 +70,20 @@ Dai file in `moduli/<nome>/includes/`, `dirname(__DIR__, 3)` è la cartella del 
 Il prodotto non ne contiene: la cartella `moduli/` è vuota. Un modulo completo tiene i suoi file in `includes/`, le pagine
 del pannello in `admin/` (servite da `pannello`), le API in `api/`, e dichiara nel manifesto tipi di contenuto, valori di
 partenza del sito (home, header e footer, menu, stile, con i filtri qui sopra), passi del cron e widget.
+
+## Gli addon (2.0.0)
+
+Un addon è un modulo che arriva con il prodotto: stesso manifesto, ma sta in `cms/addon/<nome>/modulo.php` ed è spento
+finché l'amministratore non lo accende da Impostazioni > Addon (`admin/addon.php`, `includes/addon.php`).
+
+- Quelli accesi sono in `moduli/addon-attivi.json` (fuori dagli zip e dagli aggiornamenti, dentro la copia del sito, 403 dal web).
+  `cms_moduli()` carica prima `moduli/*` e poi gli addon accesi, con `'addon' => true`; `cms_modulo_dir()` e `cms_modulo_url()` li trovano in `addon/`.
+- Chiavi in più del manifesto: `descrizione` (la carta in Impostazioni > Addon), `richiede` (`['membri']`: accesi insieme, e non si
+  spegne un addon che un altro acceso usa), `cron_spesso` (passi del giro frequente, `cron_newsletter()`, ogni pochi minuti).
+- Accendendo si chiama `installa` (le tabelle). Spegnendo non si cancella niente.
+- Le pagine del pannello: chiave `pannello` => `['agenda' => __DIR__ . '/includes/admin-agenda.php']`, aperte da
+  `admin/addon-pagina.php?a=<addon>&p=<pagina>` (solo amministratore, 404 se l'addon è spento). Nella voce di menu
+  `'attivo' => ['addon-pagina.php?a=<addon>&p=<pagina>']`. La pagina comincia con `$adminTitle = '...'` e
+  `require CMS_ADMIN . '/includes/admin-header.php';`, finisce con `admin-footer.php`; auth e CSRF sono già caricati (`verify_csrf()`, `csrf_field()`).
+- Gli indirizzi pubblici: evento `sito_percorso($percorso, $q)` (il modulo risponde ed esce). I widget: chiave `widget`.
+- Dal web: `addon/*/includes|sql|docs` e ogni `.php` di `addon/` danno 403 (`.htaccess`, esempi, Nginx, router delle prove).
