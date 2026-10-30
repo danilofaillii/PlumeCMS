@@ -24,7 +24,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $ok = scaricabili_salva_info((string)($_POST['nome'] ?? ''), $info);
         flash($ok ? 'success' : 'error', $ok ? 'Salvato.' : 'File non trovato.');
     } elseif ($azione === 'riservato' || $azione === 'pubblico') {
-        // 1.11.0: sposta il file fra i pubblici e i riservati.
+        // 2.0.0: sposta il file fra i pubblici e i riservati.
         $ok = scaricabili_rendi_riservato((string)($_POST['nome'] ?? ''), $azione === 'riservato');
         flash($ok ? 'success' : 'error', $ok ? ($azione === 'riservato' ? 'Ora il file è riservato: l\'indirizzo pubblico non funziona più, si scarica solo con il link personale.' : 'Ora il file è pubblico: si scarica da /scarica/' . (string)$_POST['nome'] . '/.') : 'Non si è potuto spostare il file (ce n\'è già uno con lo stesso nome dall\'altra parte?).');
     } elseif ($azione === 'giorni') {

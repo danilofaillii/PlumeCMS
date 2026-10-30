@@ -1,7 +1,7 @@
 <?php
 /**
- * Aiuti da riga di comando per prova-newsletter-difetti.js (1.11.0), su un CMS installato. Mai nel prodotto.
- * Funziona anche su un CMS di prima della 1.11.0 (per vedere i difetti): dove una funzione manca, risponde null.
+ * Aiuti da riga di comando per prova-newsletter-difetti.js (2.0.0), su un CMS installato. Mai nel prodotto.
+ * Funziona anche su un CMS di prima della 2.0.0 (per vedere i difetti): dove una funzione manca, risponde null.
  * uso: php prove/newsletter-cli.php <cartella CMS> <comando> [argomenti]
  *   sql "<query>"                       righe in JSON ({p} diventa il prefisso delle tabelle)
  *   giro                                un giro della newsletter (campagne e flussi), righe di log in JSON

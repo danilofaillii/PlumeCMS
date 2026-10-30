@@ -1,5 +1,5 @@
-// I difetti della newsletter corretti nella 1.11.0, un controllo (o più) per punto. Su un CMS di prima della 1.11.0 i
-// controlli dei punti danno KO (il difetto si vede); sulla 1.11.0 tutti OK.
+// I difetti della newsletter corretti nella 2.0.0, un controllo (o più) per punto. Su un CMS di prima della 2.0.0 i
+// controlli dei punti danno KO (il difetto si vede); sulla 2.0.0 tutti OK.
 //   1. la doppia conferma di un form iscriveva anche alla newsletter principale (e l'email parlava di newsletter);
 //      aggancio newsletter_conferma_esito(): chi ha confermato e da quale form;
 //   2. un flusso "Compila un form" su un form con doppia conferma si perdeva (il giro lo fermava prima della conferma);

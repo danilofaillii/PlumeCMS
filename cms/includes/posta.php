@@ -7,7 +7,7 @@
  * Stessa firma di mail(): chi la chiama passa destinatario, oggetto, corpo e intestazioni come prima, più il tipo
  * dell'email (campagna, flusso, conferma...) per il registro.
  *
- * 1.11.0:
+ * 2.0.0:
  *   - ogni spedizione lascia una riga in <prefisso>posta_registro (quando, tipo, esito, errore; niente indirizzi):
  *     il limite orario e giornaliero della newsletter conta tutte le email del CMS, non solo le campagne;
  *   - con mail() di PHP l'email parte con il From del mittente di Posta in uscita (o noreply@ del dominio del sito)
@@ -47,7 +47,7 @@ function posta_esito(?string $nuovo = null): string {
 class PostaRifiutata extends RuntimeException {}
 
 // ------------------------------------------------------------
-// Registro di tutte le email spedite (1.11.0)
+// Registro di tutte le email spedite (2.0.0)
 // ------------------------------------------------------------
 
 function posta_registro_schema(): void {

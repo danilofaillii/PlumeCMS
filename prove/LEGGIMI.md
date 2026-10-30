@@ -18,7 +18,7 @@ Installa plumeCMS da zero con il browser (Playwright) e controlla sito e pannell
 
 ## prova-newsletter-difetti.js
 
-I difetti della newsletter corretti nella 1.11.0, con un controllo (o più) per punto: doppia conferma dei form (solo la lista
+I difetti della newsletter corretti nella 2.0.0, con un controllo (o più) per punto: doppia conferma dei form (solo la lista
 del form, email che dice per cosa, aggancio `newsletter_conferma_esito()`), flusso "Compila un form" che parte alla
 conferma, registro di tutte le email con il limite orario e giornaliero, From, Return-Path e testo semplice anche con
 `mail()`, Cancella dati completo con la lista di soppressione, importazione (fonte, consenso, usciti, flussi solo con la
@@ -30,7 +30,7 @@ spunta), rimbalzi (550 e tre 451 di fila), errore "troppe richieste" del form, p
 3. `node prove/prova-newsletter-difetti.js <base> <utente> <password> <porta smtp> <cartella posta> <cartella del CMS>`.
    Usa `prove/newsletter-cli.php` (query e giri da riga di comando) e, per `mail()`, `prove/sendmail-finto.py` come
    `sendmail_path`. Lascia dati di prova: va su un sito da buttare.
-4. Atteso (1.11.0): 37 su 37. Sullo stesso sito con il codice della 1.10.0: 7 su 37 (i 30 KO sono i difetti).
+4. Atteso (2.0.0): 37 su 37. Sullo stesso sito con il codice della 1.10.0: 7 su 37 (i 30 KO sono i difetti).
 
 ## tools/sicurezza-prova.js
 

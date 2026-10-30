@@ -258,7 +258,7 @@ function sito_scaricabile(string $nome): ?string {
 }
 
 /**
- * Un file riservato con il link personale (1.11.0): ['file' => percorso o '', 'iscritto' => id, 'scaduto' => bool].
+ * Un file riservato con il link personale (2.0.0): ['file' => percorso o '', 'iscritto' => id, 'scaduto' => bool].
  * La chiave falsa o di un altro file vale come un file che non c'è.
  */
 function sito_scaricabile_riservato(string $nome, string $k): array {

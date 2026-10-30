@@ -14,7 +14,7 @@
 //   data-copia-se-stesso         campo: al clic seleziona il testo e lo copia
 //   data-nascondi="#id"          pulsante: nasconde quell'elemento
 //   data-menu-mobile             apre e chiude il menu laterale sul telefono
-//   data-scegli-media="#id"      pulsante: apre la libreria dei Media e scrive l'indirizzo scelto nel campo con quell'id (1.11.0)
+//   data-scegli-media="#id"      pulsante: apre la libreria dei Media e scrive l'indirizzo scelto nel campo con quell'id (2.0.0)
 //   data-al-clic="funzione(arg, ...)"   data-al-input="..."   data-al-cambio="..."
 //        chiama una funzione globale della pagina. Gli argomenti si leggono senza eval: stringhe tra apici,
 //        numeri, true/false/null, oggetti e liste JSON, e le parole this (l'elemento) ed event.
@@ -129,7 +129,7 @@
     if (el.hasAttribute && el.hasAttribute('data-al-input')) chiama(el, ev, 'data-al-input');
   });
 
-  // ------------------------------------------------------------ 1.11.0: scegli un'immagine dai Media
+  // ------------------------------------------------------------ 2.0.0: scegli un'immagine dai Media
   // Un solo <dialog> per la pagina, creato al primo clic; le immagini arrivano da editor-api.php (azione media), come
   // nell'editor e in Stile del sito. Senza libreria (errore di rete) il campo resta da scrivere a mano.
   var mediaDlg = null, mediaCampo = null, mediaTutte = [];

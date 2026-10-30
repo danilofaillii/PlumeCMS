@@ -1,4 +1,4 @@
-// Il file dato da un form dopo la conferma dell'email (1.11.0): Download > file Riservato, Form > Dopo l'invio >
+// Il file dato da un form dopo la conferma dell'email (2.0.0): Download > file Riservato, Form > Dopo l'invio >
 // "Dopo la conferma, dai questo file". Su un CMS installato con il kit Attività (la pagina Contatti ha il form),
 // con il server di posta finto acceso: python3 -I prove/smtp-finto.py <porta smtp> <cartella posta> &
 // Percorsi: persona nuova con conferma (email di conferma, pagina con Scarica, email con il link), stessa persona di nuovo
@@ -14,7 +14,7 @@ let n = 0, ko = 0; const ok = (t, c, extra = '') => { n++; if (!c) ko++; console
 const posta = () => (fs.existsSync(POSTA) ? fs.readdirSync(POSTA) : []).filter(f => f.endsWith('.eml')).sort((a, b) => parseInt(a) - parseInt(b)).map(f => fs.readFileSync(path.join(POSTA, f), 'utf8'));
 const dorme = ms => new Promise(r => setTimeout(r, ms));
 // Il corpo delle email del server finto può essere in quoted-printable: si ricompone prima di cercare i link.
-// Le parti in base64 si decodificano (1.11.0: ogni email ha la parte di testo e quella HTML).
+// Le parti in base64 si decodificano (2.0.0: ogni email ha la parte di testo e quella HTML).
 const testo = e => (e + '\n' + [...e.matchAll(/Content-Transfer-Encoding: base64\r?\n\r?\n([A-Za-z0-9+\/=\r\n]+)/g)].map(m => Buffer.from(m[1].replace(/\s/g, ''), 'base64').toString('utf8')).join('\n'))
   .replace(/=\r?\n/g, '').replace(/=3D/g, '=').replace(/&amp;/g, '&');
 const linkIn = (e, re) => (testo(e).match(re) || [])[0];

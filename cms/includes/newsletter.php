@@ -8,7 +8,7 @@
  * (i server condivisi limitano le email per ora). Ogni email ha l'uscita in un clic, anche dall'intestazione
  * List-Unsubscribe che leggono Gmail e Outlook.
  *
- * 1.11.0:
+ * 2.0.0:
  *   - ogni richiesta di conferma è una riga di <prefisso>newsletter_conferme (token, lista, form d'origine): la persona
  *     entra nella lista (e partono i flussi) solo alla conferma, e un form con doppia conferma non la mette più nella
  *     lista principale. newsletter_conferma_esito() dice chi ha confermato e da quale form (aggancio per i moduli);
@@ -99,7 +99,7 @@ function newsletter_schema(): void {
             `inviata_at` DATETIME DEFAULT NULL,
             PRIMARY KEY (`id`), UNIQUE KEY `campagna_iscritto` (`campagna_id`, `iscritto_id`), KEY `attesa` (`stato`, `campagna_id`), KEY `inviata_at` (`inviata_at`)
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8",
-        // 1.11.0: una riga per ogni email di conferma mandata. La persona entra nella lista solo quando conferma.
+        // 2.0.0: una riga per ogni email di conferma mandata. La persona entra nella lista solo quando conferma.
         'newsletter_conferme' => 'CREATE TABLE IF NOT EXISTS ' . tbl('newsletter_conferme') . " (
             `id` INT(11) NOT NULL AUTO_INCREMENT,
             `token` CHAR(64) NOT NULL,
@@ -110,7 +110,7 @@ function newsletter_schema(): void {
             `creato` DATETIME NOT NULL,
             PRIMARY KEY (`id`), UNIQUE KEY `token` (`token`), KEY `iscritto` (`iscritto_id`), KEY `scade` (`scade`)
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8",
-        // 1.11.0: gli inneschi dei flussi arrivati mentre la persona non aveva ancora confermato.
+        // 2.0.0: gli inneschi dei flussi arrivati mentre la persona non aveva ancora confermato.
         'newsletter_inneschi_attesa' => 'CREATE TABLE IF NOT EXISTS ' . tbl('newsletter_inneschi_attesa') . " (
             `iscritto_id` INT(11) NOT NULL,
             `innesco` VARCHAR(20) NOT NULL,
@@ -118,7 +118,7 @@ function newsletter_schema(): void {
             `creato` DATETIME NOT NULL,
             PRIMARY KEY (`iscritto_id`, `innesco`, `innesco_id`)
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8",
-        // 1.11.0: chi ha chiesto la cancellazione dei dati, come impronta sha256 dell'email in minuscolo.
+        // 2.0.0: chi ha chiesto la cancellazione dei dati, come impronta sha256 dell'email in minuscolo.
         'newsletter_soppressi' => 'CREATE TABLE IF NOT EXISTS ' . tbl('newsletter_soppressi') . " (
             `impronta` CHAR(64) NOT NULL,
             `creato` DATETIME NOT NULL,
@@ -131,13 +131,13 @@ function newsletter_schema(): void {
         // Colonna arrivata dopo la prima versione (23 ottobre, sera): le liste della campagna.
         $c = db()->query("SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = '" . DB_PREFIX . "newsletter_campagne' AND COLUMN_NAME = 'liste'")->fetchColumn();
         if (!$c) db()->exec('ALTER TABLE ' . tbl('newsletter_campagne') . " ADD COLUMN `liste` VARCHAR(255) NOT NULL DEFAULT '' AFTER `errori`");
-        // 1.11.0: rimbalzi ed errori temporanei di fila. Le tabelle nate prima non hanno le colonne.
+        // 2.0.0: rimbalzi ed errori temporanei di fila. Le tabelle nate prima non hanno le colonne.
         $col = db()->query('SHOW COLUMNS FROM ' . tbl('newsletter_iscritti'))->fetchAll(PDO::FETCH_COLUMN);
         if (!in_array('errori_di_fila', $col, true)) db()->exec('ALTER TABLE ' . tbl('newsletter_iscritti') . ' ADD COLUMN `errori_di_fila` INT(11) NOT NULL DEFAULT 0 AFTER `ip`');
         if (!in_array('ultimo_errore', $col, true)) db()->exec('ALTER TABLE ' . tbl('newsletter_iscritti') . " ADD COLUMN `ultimo_errore` VARCHAR(255) NOT NULL DEFAULT '' AFTER `errori_di_fila`");
         if (!in_array('rimbalzato_at', $col, true)) db()->exec('ALTER TABLE ' . tbl('newsletter_iscritti') . ' ADD COLUMN `rimbalzato_at` DATETIME DEFAULT NULL AFTER `ultimo_errore`');
         $fatto = true;
-        // La lista di partenza. Chi era iscritto prima delle liste entra nella principale, una volta sola: dalla 1.11.0
+        // La lista di partenza. Chi era iscritto prima delle liste entra nella principale, una volta sola: dalla 2.0.0
         // chi aspetta la conferma di un form non sta in nessuna lista, e non deve finire nella principale.
         $primaVolta = !(int)get_setting('newsletter_lista_principale', 0);
         $principale = newsletter_lista_di_sistema('principale', newsletter_nome(), 'Chi si iscrive dal sito, e gli iscritti di prima delle liste');
@@ -266,7 +266,7 @@ function newsletter_troppe_richieste(): bool {
  * Una richiesta di iscrizione con doppia conferma: salva la persona (nuova: in attesa; chi c'è già resta nel suo stato),
  * scrive la richiesta in newsletter_conferme e manda l'email con il link. Ritorna '' oppure il codice d'errore
  * ('troppi', 'posta').
- * Opzioni (1.11.0), tutte facoltative:
+ * Opzioni (2.0.0), tutte facoltative:
  *   lista     la lista in cui entra alla conferma (predefinita: la principale, il modulo della newsletter)
  *   form      l'id del form d'origine (lo ritrova newsletter_conferma_esito())
  *   cosa      per cosa si iscrive, nelle frasi dell'email ("la newsletter di...", il titolo del form)
@@ -342,7 +342,7 @@ function newsletter_conferma_esito(string $token): ?array {
         $del->execute([(int)$c['id']]);
         if ($del->rowCount() !== 1) return null;
     } else {
-        // I link mandati prima della 1.11.0: il token stava nella riga dell'iscritto, e la lista era già scritta.
+        // I link mandati prima della 2.0.0: il token stava nella riga dell'iscritto, e la lista era già scritta.
         $i = db()->prepare('SELECT id FROM ' . tbl('newsletter_iscritti') . ' WHERE token_conferma = ? AND conferma_scade > NOW() LIMIT 1');
         $i->execute([$hash]);
         $id = (int)$i->fetchColumn();
@@ -519,7 +519,7 @@ function newsletter_data_csv(string $v): ?string {
 /**
  * Importazione dei contatti esportati da un altro servizio, per esempio Brevo (CSV). Colonne riconosciute: EMAIL,
  * NOME/FIRSTNAME, COGNOME/LASTNAME e, se c'è, la data del consenso (CONSENSO, DATA CONSENSO, OPTIN...).
- * 1.11.0: entrano come attivi con fonte 'import' e la data del consenso del file (vuota se il file non la porta).
+ * 2.0.0: entrano come attivi con fonte 'import' e la data del consenso del file (vuota se il file non la porta).
  * Chi è già nell'elenco resta com'è ed entra anche lui nella lista; chi è uscito, è rimbalzato o ha chiesto la
  * cancellazione dei dati (lista di soppressione) si salta. I flussi della lista partono solo con $flussi.
  */
@@ -703,7 +703,7 @@ function newsletter_invia_giro(?int $massimo = null): array {
     if (!db()->query("SELECT GET_LOCK('" . DB_PREFIX . "newsletter_invio', 0)")->fetchColumn()) return ['un altro invio è in corso'];
     try {
         $log = newsletter_avvia_programmate();
-        // 1.11.0: il limite conta tutte le email del CMS (registro della posta): conferme, avvisi, flussi, campagne.
+        // 2.0.0: il limite conta tutte le email del CMS (registro della posta): conferme, avvisi, flussi, campagne.
         // Le campagne della coda restano contate anche se il registro è appena nato (il primo giro dopo l'aggiornamento).
         $cfg = newsletter_config();
         $ultimaOra = max(posta_inviate(3600), (int)db()->query('SELECT COUNT(*) FROM ' . tbl('newsletter_coda') . " WHERE inviata_at > DATE_SUB(NOW(), INTERVAL 1 HOUR)")->fetchColumn());

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Un sendmail finto per le prove di mail() di PHP (1.11.0): scrive il messaggio ricevuto su stdin in <cartella>/<n>.eml,
+"""Un sendmail finto per le prove di mail() di PHP (2.0.0): scrive il messaggio ricevuto su stdin in <cartella>/<n>.eml,
 con in testa l'intestazione X-Argomenti (gli argomenti della riga di comando, per vedere il -f del Return-Path).
 uso, nel php.ini o con -d: sendmail_path="python3 -I prove/sendmail-finto.py <cartella>"   Mai su un server vero."""
 import os

@@ -1409,7 +1409,7 @@ All'invio (`form_ricevi()`, `includes/form.php:225-275`), in ordine:
 4. captcha (prova di lavoro fatta dal browser, 15.4);
 5. limite di invii per IP;
 6. salvataggio dell'invio;
-7. iscrizione alla lista scelta, con o senza doppio consenso (`form_iscrivi()`, `includes/form.php:316`). Dalla 1.11.0
+7. iscrizione alla lista scelta, con o senza doppio consenso (`form_iscrivi()`, `includes/form.php:316`). Dalla 2.0.0
    con il doppio consenso la persona entra **solo** nella lista del form, alla conferma, e l'email di conferma dice per
    cosa è (il titolo del form, o il suo nome, o il nome della lista). Prima del salvataggio, se il form chiede la conferma e
    da quell'IP sono arrivate troppe richieste di iscrizione, il form risponde con l'errore `troppi` (prima: grazie e
@@ -1417,7 +1417,7 @@ All'invio (`form_ricevi()`, `includes/form.php:225-275`), in ordine:
 8. avviso via email, uno per destinatario (`form_avviso_destinatari()`, `includes/form.php:152`): gli indirizzi della
    colonna `avviso_a` del form, oppure, se è vuota, `posta_notifica_email()` (Impostazioni, Posta in uscita);
 9. innesco dei flussi della newsletter con origine `form`: subito per chi è attivo; per chi deve ancora confermare si
-   ricorda in `newsletter_inneschi_attesa` e parte alla conferma (dalla 1.11.0, 15.5).
+   ricorda in `newsletter_inneschi_attesa` e parte alla conferma (dalla 2.0.0, 15.5).
 
 **A chi va l'avviso (dalla 1.9.0).** Colonna `moduli.avviso_a` (VARCHAR 500), aggiunta da `form_schema()` anche alle tabelle
 nate prima (`includes/form.php:64`). In pannello è la casella "Manda l'avviso a" del riquadro Dopo l'invio
@@ -1443,19 +1443,19 @@ formule, capitolo 18.10).
 `includes/posta.php`, pagina Impostazioni > Configurazione email.
 - Con il server SMTP impostato (`posta_smtp`) il CMS usa un client SMTP scritto in casa: SSL sulla porta 465 o
   STARTTLS sulla 587, con autenticazione se c'è un utente.
-- Senza SMTP usa `mail()` di PHP. Dalla 1.11.0 con il From del mittente scritto in Posta in uscita (anche senza server
+- Senza SMTP usa `mail()` di PHP. Dalla 2.0.0 con il From del mittente scritto in Posta in uscita (anche senza server
   SMTP; altrimenti l'utente; altrimenti `noreply@` il dominio del sito: `posta_mittente()`, `includes/posta.php:115`) e il
   Return-Path con `-f` (se `mail()` lo rifiuta si riprova senza). Prima le email partivano senza From.
-- Dalla 1.11.0 ogni email HTML esce in `multipart/alternative`: la parte di testo semplice la scrive `posta_testo_da_html()`
+- Dalla 2.0.0 ogni email HTML esce in `multipart/alternative`: la parte di testo semplice la scrive `posta_testo_da_html()`
   (`includes/posta.php:129`: paragrafi a capo, link come "testo (indirizzo)", niente immagini né testo di anteprima
   nascosto), il corpo MIME lo compone `posta_mime()` (`:158`), tutto in base64, uguale per SMTP e `mail()`.
 - `posta_invia($a, $oggetto, $corpo, $intestazioni, $tipo)` (`includes/posta.php:183`): il quinto argomento è il tipo per
   il registro (`campagna`, `flusso`, `conferma`, `avviso_form`, `prova`, `social`; `altro` di partenza).
-- **Registro della posta (dalla 1.11.0).** Ogni spedizione lascia una riga in `posta_registro` (quando, tipo, esito,
+- **Registro della posta (dalla 2.0.0).** Ogni spedizione lascia una riga in `posta_registro` (quando, tipo, esito,
   errore; nessun indirizzo), tabella creata da `posta_registro_schema()` (`:53`). `posta_inviate($secondi)` (`:85`) conta
   le email partite: è il conto dei limiti della newsletter (15.5). Il cron toglie le righe oltre 60 giorni
   (`posta_pulisci_registro()`, `:100`).
-- **Esito (dalla 1.11.0).** Dopo `posta_invia()`, `posta_esito()` (`:40`) dice `ok`, `rimbalzo` (il server SMTP ha
+- **Esito (dalla 2.0.0).** Dopo `posta_invia()`, `posta_esito()` (`:40`) dice `ok`, `rimbalzo` (il server SMTP ha
   rifiutato il destinatario al `RCPT TO` con un 5xx), `temporaneo` (4xx al `RCPT TO`) o `errore` (connessione, accesso,
   server). Il rifiuto del destinatario è l'eccezione `PostaRifiutata` (`:47`) con il codice SMTP; con `mail()` l'esito è solo
   `ok` o `errore`.
@@ -1485,13 +1485,13 @@ nel nucleo. Un modulo del sito che ha moduli suoi li porta così:
 
 `includes/newsletter.php` e `includes/newsletter-flussi.php`, gruppo Newsletter e contatti.
 
-**Iscritti e liste.** Stati: in attesa, attivo, uscito, rimbalzato (dalla 1.11.0). Un iscritto può stare in più liste.
-Colonne della 1.11.0 in `newsletter_iscritti`: `errori_di_fila`, `ultimo_errore`, `rimbalzato_at`, aggiunte da
+**Iscritti e liste.** Stati: in attesa, attivo, uscito, rimbalzato (dalla 2.0.0). Un iscritto può stare in più liste.
+Colonne della 2.0.0 in `newsletter_iscritti`: `errori_di_fila`, `ultimo_errore`, `rimbalzato_at`, aggiunte da
 `newsletter_schema()` (`includes/newsletter.php:38`) anche alle tabelle nate prima. La migrazione "chi non sta in nessuna
-lista entra nella principale" gira una volta sola, quando la lista principale nasce: dalla 1.11.0 chi aspetta la conferma di
+lista entra nella principale" gira una volta sola, quando la lista principale nasce: dalla 2.0.0 chi aspetta la conferma di
 un form non sta in nessuna lista e non deve finire nella principale.
 
-**Doppio consenso (dalla 1.11.0).** `newsletter_richiesta($dati, $opzioni)` (`includes/newsletter.php:276`) salva la
+**Doppio consenso (dalla 2.0.0).** `newsletter_richiesta($dati, $opzioni)` (`includes/newsletter.php:276`) salva la
 persona (una nuova in attesa; chi c'è già resta nel suo stato, anche uscito o rimbalzato, fino alla conferma) e scrive la
 richiesta in `newsletter_conferme` (token sha256, iscritto, lista, form d'origine, scadenza a 7 giorni). Opzioni: `lista`
 (predefinita la principale: il modulo della newsletter), `form`, `cosa` (per cosa si iscrive, nelle frasi dell'email),
@@ -1504,7 +1504,7 @@ usa `newsletter_conferma_esito($token)` (`:331`): un link vale una volta sola; l
 errori azzerati, via dalla lista di soppressione: ha confermato di sua volontà), entra nella lista della richiesta (i flussi
 "lista" partono lì, `newsletter_in_lista()`, `:187`), il flusso "iscrizione" parte solo per la lista principale, per chi non
 era attivo partono anche i flussi delle liste in cui stava già, e partono gli inneschi rimasti in attesa. I link mandati prima
-della 1.11.0 (token nella riga dell'iscritto) valgono ancora, con la lista principale.
+della 2.0.0 (token nella riga dell'iscritto) valgono ancora, con la lista principale.
 
 **Aggancio alla conferma.** `newsletter_conferma_esito()` ritorna null oppure
 `['iscritto' => id, 'email' => ..., 'lista' => id, 'form' => id del form d'origine (0 dal modulo della newsletter), 'nuovo' => bool]`.
@@ -1513,7 +1513,7 @@ richiesta, a `newsletter_ultima_conferma()` (`:389`). Per consegnare qualcosa a 
 dichiara `'eventi' => ['newsletter_confermata' => function (array $e) { if ($e['form'] === 3) { ... } }]`, oppure la pagina di
 conferma legge `newsletter_ultima_conferma()` dopo `newsletter_conferma()`.
 
-**Inneschi in attesa (dalla 1.11.0).** `newsletter_flussi_innesco()` (`includes/newsletter-flussi.php:357`) fa partire i
+**Inneschi in attesa (dalla 2.0.0).** `newsletter_flussi_innesco()` (`includes/newsletter-flussi.php:357`) fa partire i
 flussi solo per chi è attivo. Prima un cammino partiva anche per chi era in attesa, il giro lo fermava (`fermato`) e la
 chiave unica (flusso, iscritto) non lo faceva più ripartire alla conferma. Ora l'innesco `form` di chi deve ancora
 confermare si ricorda in `newsletter_inneschi_attesa` (`newsletter_innesco_in_attesa()`, `includes/newsletter.php:399`) e
@@ -1523,13 +1523,13 @@ parte alla conferma.
 `List-Unsubscribe-Post` (uscita con un clic dai programmi di posta). L'uscita vera avviene con un POST su
 `/newsletter-esci/`. Chi esce perde anche le email ancora in coda.
 
-**Cancella dati (dalla 1.11.0).** `newsletter_cancella_dati($id)` (`:473`, pulsante "Cancella dati" in Iscritti,
+**Cancella dati (dalla 2.0.0).** `newsletter_cancella_dati($id)` (`:473`, pulsante "Cancella dati" in Iscritti,
 `admin/newsletter.php:155`) toglie l'iscritto da tutte le tabelle della newsletter (`newsletter_togli_iscritti()`, `:457`:
 coda, liste, richieste di conferma, inneschi in attesa, aperture e clic, cammini nei flussi), gli invii dei form con la sua
 email (`moduli_invii`) e mette l'impronta sha256 dell'email in minuscolo in `newsletter_soppressi`. Il registro della posta
 non ha indirizzi.
 
-**Importazione (dalla 1.11.0).** `newsletter_importa_csv($file, $lista, $flussi)` (`:526`): fonte `import`, consenso con la
+**Importazione (dalla 2.0.0).** `newsletter_importa_csv($file, $lista, $flussi)` (`:526`): fonte `import`, consenso con la
 data della colonna CONSENSO (o DATA CONSENSO, OPTIN...; `newsletter_data_csv()`, `:509`), altrimenti NULL; si saltano chi è
 nella lista di soppressione, chi è uscito e chi è rimbalzato (anche dalla lista). I flussi della lista partono solo con la
 spunta "Fai partire i flussi per gli importati" (`admin/newsletter.php:266`, spenta di partenza). Prima: tutti attivi con
@@ -1542,19 +1542,19 @@ dell'iscritto. Vanno solo agli attivi.
 - un solo invio alla volta (lock di MySQL);
 - avvia le campagne programmate arrivate alla loro ora;
 - al massimo 40 email per giro, entro il limite orario (predefinito 150 l'ora) e, se impostato, quello al giorno (ultime 24
-  ore, `per_giorno` in `newsletter_config()`, `:228`; 0 = nessuno). Dalla 1.11.0 i limiti contano **tutte** le email del CMS
+  ore, `per_giorno` in `newsletter_config()`, `:228`; 0 = nessuno). Dalla 2.0.0 i limiti contano **tutte** le email del CMS
   dal registro della posta (15.3), non solo le campagne; il primo giro dopo l'aggiornamento conta anche la coda;
 - tre tentativi per indirizzo, poi errore; si ferma dopo 3 errori senza nessun invio riuscito;
 - con i posti rimasti, manda le email dei flussi.
 
-**Rimbalzi (dalla 1.11.0).** Dopo ogni email di campagna o di flusso `newsletter_esito_invio()` (`:449`) legge
+**Rimbalzi (dalla 2.0.0).** Dopo ogni email di campagna o di flusso `newsletter_esito_invio()` (`:449`) legge
 `posta_esito()`: `ok` azzera `errori_di_fila`; `rimbalzo` (5xx al `RCPT TO`) chiama `newsletter_rimbalzato()` (`:438`):
 stato `rimbalzato`, coda saltata, nessun altro tentativo; i flussi lo fermano al giro dopo; `temporaneo` (4xx) aggiunge un
 errore di fila: da 3 in su l'iscritto resta attivo ma il pannello lo segnala (avviso in cima, filtro "Con 3 errori di fila",
 nota nella riga). Gli errori del server (connessione, accesso) non contano per l'indirizzo. Niente lettura di caselle IMAP:
 i rimbalzi che arrivano dopo, come email, non si vedono.
 
-**Pulizia (dalla 1.11.0).** `newsletter_pulizia()` (`:490`), dal cron della newsletter (`cron_newsletter()`,
+**Pulizia (dalla 2.0.0).** `newsletter_pulizia()` (`:490`), dal cron della newsletter (`cron_newsletter()`,
 `includes/cron.php:121`), una volta al giorno (impostazione `newsletter_pulizia_giorno`): registro della posta oltre 60 giorni, richieste di conferma scadute, iscritti
 ancora in attesa con la conferma scaduta da più di 30 giorni, inneschi in attesa oltre 40 giorni.
 
@@ -1566,7 +1566,7 @@ segue nodi: email, attesa, bivio (secondo una condizione), fine. Le persone dent
 `newsletter_eventi`, solo per le email vere e non per quelle di prova. La pagina Statistiche mostra campagne,
 clic per link, iscritti per mese.
 
-Prove: `prove/prova-newsletter-difetti.js` (dalla 1.11.0, con `prove/smtp-finto.py ... rimbalzi`,
+Prove: `prove/prova-newsletter-difetti.js` (dalla 2.0.0, con `prove/smtp-finto.py ... rimbalzi`,
 `prove/sendmail-finto.py` e `prove/newsletter-cli.php`).
 
 ---
@@ -2105,7 +2105,7 @@ adesso** della pagina Log cron con `da = 'pannello'`.
 Scrive in `logs/cron-daily.log`, che si legge da Impostazioni > Log cron.
 
 **`cron-newsletter.php`**, ogni 5 minuti: svuota la coda IndexNow (log in `logs/seo.log`) e fa un giro della
-newsletter (log in `logs/newsletter.log`, capitolo 15.5); dalla 1.11.0, una volta al giorno, prima del giro, la pulizia
+newsletter (log in `logs/newsletter.log`, capitolo 15.5); dalla 2.0.0, una volta al giorno, prima del giro, la pulizia
 (`newsletter_pulizia()`: registro della posta oltre 60 giorni, iscritti mai confermati da oltre 30 giorni).
 
 Dal web i cron rispondono 403, a meno che:
@@ -2901,6 +2901,127 @@ riquadro tratteggiato con una riga che spiega dove sta.
 `prove/orari-cli.php`, il sito al computer e al telefono, i dati per Google, l'elenco dell'editor), con la pagina di
 `prove/pagina-widget-nuovi.php`; attacchi: gruppo 26 di `tools/sicurezza-prova.js` con `prove/widget-cattivi.php`
 (testo cattivo in ogni campo, passato da `editor_valida()`).
+
+## 32. Gli addon (dalla 2.0.0)
+
+Un addon è un modulo (capitolo sui moduli, `docs-sviluppo/cms-moduli.md`) che arriva con il prodotto in `addon/<nome>/` ed è
+spento finché l'amministratore non lo accende da **Impostazioni > Addon**.
+
+**Motore.**
+- `cms_moduli()` (`includes/cms.php:195`) carica prima `moduli/*`, poi gli addon accesi, con `'addon' => true` nel manifesto.
+- L'elenco degli accesi sta in `moduli/addon-attivi.json` (`cms_addon_attivi()`, `includes/cms.php:211`):
+  - non entra negli zip (`ESCLUDI_PREFISSI` di `tools/cms-pacchetto.py`), quindi un aggiornamento non accende e non spegne niente;
+  - sta in `moduli/`, quindi la Copia del sito lo porta con sé.
+- `cms_modulo_dir()` e `cms_modulo_url()` (`:222`) trovano gli addon in `addon/`.
+- `includes/addon.php`:
+  - `addon_disponibili()` (`:13`): tutti quelli sul disco, anche spenti, con `acceso`;
+  - `addon_attiva($nome, $acceso)` (`:29`): accende anche quelli in `richiede`, rifiuta di spegnere un addon che un altro acceso usa, chiama `installa`;
+  - `addon_scrivi()` (`:61`): scrittura atomica, file temporaneo e `rename`.
+- Spegnere non cancella tabelle né dati.
+
+**Pagine del pannello.**
+- Tutte da `admin/addon-pagina.php?a=<addon>&p=<pagina>`: solo amministratore, 404 se l'addon è spento o la pagina non è nel manifesto (chiave `pannello`).
+- In `admin-header.php`, `$qui` diventa `addon-pagina.php?a=..&p=..`, così le voci di menu degli addon si accendono.
+- `admin/addon.php`: le carte con Accendi e Spegni; ogni azione in POST con CSRF, registrata in `sicurezza_log` (tipo `addon`).
+
+**Chiavi nuove del manifesto.**
+- `descrizione`, `richiede`.
+- `cron_spesso`: passi del giro frequente, chiamati da `cron_newsletter()` (`includes/cron.php:111`).
+
+**Ganci nuovi del nucleo.**
+| Gancio | Dove | Chi lo usa |
+|---|---|---|
+| evento `sito_contenuto($c, $meta)` | `sito/index.php:236`, prima di disegnare un articolo o una pagina | Area riservata: pagina "Solo per i membri" |
+| filtro `contenuto_riservato(null, $c)` | `includes/sito-dati.php:154`, in testa a `sito_html_contenuto()` | Area riservata: il testo riservato non esce in llms-full.txt né nei widget |
+| evento `sito_pagina_servita($codice, $percorso)` | `sito/index.php:39`, risposte HTML | Statistiche |
+| filtro `sitemap_voci($voci)` | `includes/seo.php:878` | Vetrina: negozio e prodotti nella sitemap (e quindi nella coda IndexNow) |
+
+- La pagina Widget dice "addon <nome>" come origine (`editor_registra_widget()`, `includes/editor-controlli.php`).
+- Dal web, `addon/*/includes|sql|docs`, ogni `.php` di `addon/` e `moduli/addon-attivi.json` danno 403: `.htaccess`, gli esempi in `install/esempi/` e il router delle prove.
+
+**Gli otto addon.** Il dettaglio di ognuno (tabelle, funzioni con file:riga, sicurezza, limiti) sta in `docs-sviluppo/addon/<nome>.md`.
+| Addon | Cartella | Tabelle | Widget |
+|---|---|---|---|
+| Prenotazioni e appuntamenti | `prenotazioni` | `pren_servizi`, `pren_risorse`, `pren_prenotazioni` | Prenota |
+| Eventi con iscrizione | `eventi-iscrizione` | `evi_eventi`, `evi_iscrizioni` | Iscrizione all'evento, elenco eventi |
+| Raccolta recensioni | `recensioni` | `rec_inviti`, `rec_recensioni`, `rec_esclusi` | Recensioni dal sito |
+| Vetrina prodotti con ordini | `vetrina` | `vetrina_prodotti`, `vetrina_varianti`, `vetrina_categorie`, `vetrina_prodotti_categorie`, ordini | Prodotti, Carrello |
+| Statistiche delle visite | `statistiche` | `stat_visite`, `stat_impronte` | (riquadro della dashboard) |
+| Area riservata | `membri` | `membri`, `membri_sessioni`, `membri_token` | Accesso membri |
+| Corsi online (richiede `membri`) | `corsi` | `corsi`, `corsi_moduli`, `corsi_lezioni`, avanzamento | Elenco corsi |
+| Copia del sito altrove | `copia-altrove` | `copia_altrove_registro` | (nessuno) |
+
+Scelte comuni:
+- doppie prenotazioni e posti degli eventi: transazione con `SELECT ... FOR UPDATE` più un indice UNIQUE;
+- link personali firmati con `moduli_segreto()`;
+- prezzi della Vetrina in centesimi, sempre ricalcolati dal database;
+- Statistiche senza cookie e senza IP: impronta giornaliera con un sale che cambia ogni giorno;
+- password della Copia altrove cifrata con una chiave derivata da `moduli_segreto()`.
+
+**Prove.**
+| Prova | Risultato |
+|---|---|
+| `prove/prova-addon-prenotazioni.js` | 60 |
+| `prove/prova-addon-eventi-iscrizione.js` | 45 |
+| `prove/prova-addon-recensioni.js` | 39 |
+| `prove/prova-addon-vetrina.js` | 60 |
+| `prove/prova-addon-statistiche.js` | 32 |
+| `prove/prova-addon-membri.js` | 75 |
+| `prove/prova-addon-corsi.js` | 58 |
+| `prove/prova-addon-copia-altrove.js` | 39 |
+| attacchi `prove/attacchi-addon-a.js` / `-b.js` / `-c.js` | 108 / 80 / 94 |
+| `prove/prova-addon-tutti.js`: tutti accesi insieme, pannello e sito anche al telefono, poi spenti e sito uguale a prima | 66 |
+
+Il modo di lanciarle è in `prove/LEGGIMI.md`.
+
+## 33. File riservati e il file dato dai form (dalla 2.0.0)
+
+**File riservati.**
+- Un file riservato di Download sta in `uploads/riservati-<16 esadecimali>/`:
+  - nome della cartella nell'impostazione `scaricabili_riservati`;
+  - dentro, un `.htaccess` che nega tutto e un `index.html` vuoto (`scaricabili_dir_riservati()`, `includes/scaricabili.php:64`);
+  - il router delle prove emula il `.htaccess`.
+- Non ha un indirizzo pubblico: non entra nelle serie e il widget Download non lo mostra.
+- `scaricabili_rendi_riservato()` (`:316`) lo sposta fra le due cartelle.
+
+**Link personale.**
+- Forma: `/scarica/<nome>/?k=<iscritto>.<scadenza>.<firma>`.
+- Firma: `scaricabili_firma()` (`:331`), HMAC-SHA256 di `scarica|nome|id|scadenza` con `moduli_segreto()`, 32 caratteri.
+- Validità: `scaricabili_giorni()` (`:326`, impostazione `scaricabili_giorni`, 30 giorni di partenza).
+- Lo crea `scaricabili_link_personale()` (`:340`), che segna anche la consegna in `scaricabili_consegne` (PK file + iscritto).
+- `scaricabili_verifica_chiave()` (`:352`) restituisce l'id dell'iscritto, 0 se il link è scaduto, null se è falso.
+
+**Come si serve** (`sito/index.php`, dopo la rotta pubblica di `/scarica/`, e `sito_scaricabile_riservato()`, `includes/sito.php:264`):
+- con una chiave valida, il file con `Cache-Control: private, no-store` e `Referrer-Policy: no-referrer` (`sito_manda_scaricabile()`, `:277`), e il download si conta per iscritto, senza i robot (`scaricabili_conta_consegna()`, `:359`);
+- con una chiave scaduta, 410 e una pagina che spiega cosa fare;
+- altrimenti 404.
+
+**Il file dato dai form.**
+- Colonna `moduli.omaggio` (`form_schema()`). La valida `form_salva()`: deve essere un file riservato, e serve una lista.
+- In `form_ricevi()`:
+  - con la conferma da fare, il file arriva alla conferma;
+  - chi è già attivo lo riceve subito per email: sulla pagina no, così nessuno lo prende scrivendo l'email di un altro;
+  - senza conferma, per email e sulla pagina di ringraziamento.
+- Lo stato passa ad `api/modulo.php` con `form_ultimo_omaggio()` (`includes/form.php:379`) e va nell'indirizzo di `/grazie/` (`o`, `k`). `form_grazie_html()` (`:363`) mostra il pulsante solo se la chiave è valida.
+- La conferma di un form (`newsletter_ultima_conferma()`, capitolo 15.5) ha la sua pagina, `form_conferma_html()` (`:402`); con il file chiama `form_omaggio_consegna()` (`:389`).
+
+**Prove:** `prove/prova-omaggio.js` (27, con `prove/omaggio-cli.php`), gruppo 27 di `tools/sicurezza-prova.js` (23 attacchi).
+
+## 34. Immagine social e pannello al telefono (dalla 2.0.0)
+
+**Scegli dai Media.**
+- Un pulsante con `data-scegli-media="#id"` apre la libreria dei Media (`admin/assets/pannello.js`, un solo `<dialog>`, elenco da `editor-api.php` azione `media`) e scrive l'indirizzo nel campo.
+- Oggi è su SEO e AEO > Globale SEO, accanto all'immagine social (`#seo-og-immagine`).
+
+**og:image.**
+- `vista_pagina()` (`sito/viste.php:66`) rende intero un indirizzo che comincia con `/`, con lo schema, l'host e la porta di `cms_url_sito()`. Mai l'host della richiesta: un'intestazione Host falsa non entra nella pagina.
+- Per le immagini dei Media, `vista_og_immagine_dati()` (`:44`) aggiunge `og:image:width`, `height`, `type` (con `getimagesize`) e `alt`.
+
+**Pannello al telefono** (`admin/assets/css/admin.css`, in fondo):
+- `fieldset{min-width:0}`;
+- i codici nelle tabelle vanno a capo;
+- sotto 640 px la casella di ricerca delle barre in alto non impone 200 px e le tabelle scorrono dentro il loro riquadro.
+- Alcune pagine del nucleo (Articoli, SEO, Form, Newsletter, Media, Download, Utenti) scorrono ancora di lato al telefono per altri motivi, che c'erano già prima della 2.0.0: da sistemare.
 
 ## Appendice A. Dove i documenti vecchi non corrispondono al codice
 

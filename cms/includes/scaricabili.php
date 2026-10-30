@@ -18,11 +18,11 @@
  *   scaricabili_serie()                        le serie: per ognuna l'ultima versione (1.2.5)
  *   scaricabili_versioni_nel_testo($html)      {versione:<serie>} diventa il numero dell'ultima versione (1.2.5)
  *   scaricabili_sha256($file)                  l'impronta SHA-256 di un file, ricordata finché il file non cambia (1.3.0, api/versione.php)
- *   scaricabili_rendi_riservato($nome, $si)    sposta un file fra i pubblici e i riservati (1.11.0)
- *   scaricabili_link_personale($nome, $id)     il link firmato e a scadenza per un file riservato (1.11.0)
- *   scaricabili_verifica_chiave($nome, $k)     l'iscritto di un link personale valido, 0 se scaduto, null se falso (1.11.0)
+ *   scaricabili_rendi_riservato($nome, $si)    sposta un file fra i pubblici e i riservati (2.0.0)
+ *   scaricabili_link_personale($nome, $id)     il link firmato e a scadenza per un file riservato (2.0.0)
+ *   scaricabili_verifica_chiave($nome, $k)     l'iscritto di un link personale valido, 0 se scaduto, null se falso (2.0.0)
  *
- * File riservati (1.11.0): stanno in uploads/riservati-<16 caratteri a caso>/, una cartella con un .htaccess che
+ * File riservati (2.0.0): stanno in uploads/riservati-<16 caratteri a caso>/, una cartella con un .htaccess che
  * chiude tutto e un nome che non si indovina (vale anche su Nginx, dove il .htaccess non conta). /scarica/<nome>/ li
  * manda solo con ?k=<chiave>: iscritto, scadenza e firma HMAC con il segreto del sito. Non fanno parte delle serie e il
  * widget Download non li mostra. Chi li ha scaricati sta nella tabella {prefisso}scaricabili_consegne.
@@ -60,7 +60,7 @@ function scaricabili_dir(): string {
     return $d;
 }
 
-/** La cartella dei file riservati (1.11.0): nome a caso, ricordato nelle impostazioni; chiusa al web con .htaccess. */
+/** La cartella dei file riservati (2.0.0): nome a caso, ricordato nelle impostazioni; chiusa al web con .htaccess. */
 function scaricabili_dir_riservati(): string {
     $nome = (string)get_setting('scaricabili_riservati', '');
     if (!preg_match('/^riservati-[a-f0-9]{16}$/', $nome)) {
@@ -78,7 +78,7 @@ function scaricabili_installa(): void {
     static $fatto = false;
     if ($fatto) return;
     $fatto = true;
-    // 1.11.0: chi ha ricevuto e scaricato un file riservato (una riga per file e iscritto).
+    // 2.0.0: chi ha ricevuto e scaricato un file riservato (una riga per file e iscritto).
     $consegne = 'CREATE TABLE IF NOT EXISTS ' . tbl('scaricabili_consegne') . " (
         `file` VARCHAR(190) NOT NULL,
         `iscritto_id` INT(11) NOT NULL,
@@ -134,7 +134,7 @@ function scaricabili_righe(): array {
 function scaricabili_elenco(): array {
     $righe = scaricabili_righe();
     $out = [];
-    // 1.11.0: prima i pubblici, poi i riservati (un nome non può stare in tutte e due: lo impediscono carica e sposta).
+    // 2.0.0: prima i pubblici, poi i riservati (un nome non può stare in tutte e due: lo impediscono carica e sposta).
     foreach ([[scaricabili_dir(), false], [scaricabili_dir_riservati(), true]] as [$dir, $riservato])
     foreach ((array)@scandir($dir) as $f) {
         if ($f === '' || $f[0] === '.' || !is_file("$dir/$f")) continue;
@@ -309,7 +309,7 @@ function scaricabili_sha256(string $file): string {
 }
 
 // ------------------------------------------------------------
-// File riservati e link personali (1.11.0)
+// File riservati e link personali (2.0.0)
 // ------------------------------------------------------------
 
 /** Sposta un file fra i pubblici e i riservati. Il conteggio e i dati restano (stessa riga della tabella). */

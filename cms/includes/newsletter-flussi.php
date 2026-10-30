@@ -357,7 +357,7 @@ function newsletter_flusso_parti(array $f, int $iscritto): void {
 function newsletter_flussi_innesco(string $innesco, int $innescoId, int $iscritto): void {
     if (!$iscritto) return;
     newsletter_flussi_schema();
-    // 1.11.0: solo per chi è attivo. Prima un cammino partiva anche per chi doveva ancora confermare, il giro lo fermava
+    // 2.0.0: solo per chi è attivo. Prima un cammino partiva anche per chi doveva ancora confermare, il giro lo fermava
     // e la chiave unica (flusso, iscritto) non lo faceva più ripartire. Chi aspetta la conferma: l'innesco "form" si
     // ricorda e parte alla conferma (newsletter_conferma_esito); gli altri inneschi arrivano già da soli dopo la conferma.
     $st = db()->prepare('SELECT stato FROM ' . tbl('newsletter_iscritti') . ' WHERE id = ?');

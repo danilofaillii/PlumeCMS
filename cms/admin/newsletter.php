@@ -19,7 +19,7 @@ function nl_filtro(array $q): array {
     $lista = (int)($q['lista'] ?? 0);
     $w = []; $par = [];
     if ($cerca !== '') { $q = '%' . addcslashes($cerca, '%_\\') . '%'; $w[] = "(i.email LIKE ? ESCAPE '\\\\' OR i.nome LIKE ? ESCAPE '\\\\' OR i.cognome LIKE ? ESCAPE '\\\\')"; array_push($par, $q, $q, $q); }
-    // 'errori': attivi con tre errori temporanei di fila o più (1.11.0).
+    // 'errori': attivi con tre errori temporanei di fila o più (2.0.0).
     if ($stato === 'errori') $w[] = "i.stato = 'attivo' AND i.errori_di_fila >= 3";
     elseif ($stato !== '') { $w[] = 'i.stato = ?'; $par[] = $stato; }
     if ($lista > 0) { $w[] = 'EXISTS (SELECT 1 FROM ' . tbl('newsletter_iscritti_liste') . ' l WHERE l.iscritto_id = i.id AND l.lista_id = ?)'; $par[] = $lista; }
@@ -85,7 +85,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $st->execute([mb_substr($nuova, 0, 100)]);
                 $lista = (int)$st->fetchColumn();
             }
-            // 1.11.0: i flussi della lista partono per gli importati solo con la spunta (spenta di partenza).
+            // 2.0.0: i flussi della lista partono per gli importati solo con la spunta (spenta di partenza).
             $r = newsletter_importa_csv($f['tmp_name'], $lista ?: newsletter_lista_principale(), !empty($_POST['flussi_import']));
             isset($r['errore']) ? flash('error', $r['errore'])
                 : flash('success', "Importati {$r['nuovi']} iscritti nuovi. Già presenti: {$r['gia']} (lasciati com'erano). Saltati perché usciti, rimbalzati o con i dati cancellati: {$r['saltati']}. Righe scartate perché senza email valida: {$r['scartati']}."
@@ -151,7 +151,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             flash('success', 'Iscritto tolto dalla newsletter.');
         } else {
             // Diritto alla cancellazione: via tutti i dati dell'iscritto, anche aperture, clic, flussi e invii dei form
-            // (1.11.0); l'impronta dell'email resta nella lista di soppressione, che l'importazione rispetta.
+            // (2.0.0); l'impronta dell'email resta nella lista di soppressione, che l'importazione rispetta.
             newsletter_cancella_dati($id);
             flash('success', 'Dati dell\'iscritto cancellati: iscrizione, liste, aperture e clic, flussi e invii dei form con la sua email. Un\'importazione non lo rimetterà dentro.');
         }

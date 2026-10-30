@@ -63,7 +63,7 @@ function form_schema(): void {
         // 1.9.0: a chi va l'avviso di ogni form. Le tabelle nate prima non hanno la colonna.
         $col = db()->query('SHOW COLUMNS FROM ' . tbl('moduli'))->fetchAll(PDO::FETCH_COLUMN);
         if (!in_array('avviso_a', $col, true)) db()->exec('ALTER TABLE ' . tbl('moduli') . " ADD COLUMN `avviso_a` VARCHAR(500) NOT NULL DEFAULT '' AFTER `avviso`");
-        // 1.11.0: il file riservato che il form dà dopo la conferma dell'email.
+        // 2.0.0: il file riservato che il form dà dopo la conferma dell'email.
         if (!in_array('omaggio', $col, true)) db()->exec('ALTER TABLE ' . tbl('moduli') . " ADD COLUMN `omaggio` VARCHAR(130) NOT NULL DEFAULT '' AFTER `avviso_a`");
         save_setting('form_schema_impronta', $impronta);
     }
@@ -182,7 +182,7 @@ function form_salva(int $id, array $d): int {
         'grazie_link' => mb_substr(trim((string)($d['grazie_link'] ?? '')), 0, 500), 'attivo' => !empty($d['attivo']) ? 1 : 0,
     ];
     if ($v['lista_id'] && !$emails) throw new RuntimeException('Per iscrivere a una lista serve un campo di tipo Email.');
-    // 1.11.0: il file da dare dopo la conferma è un file riservato di Download, e serve una lista (chi lo riceve è un iscritto).
+    // 2.0.0: il file da dare dopo la conferma è un file riservato di Download, e serve una lista (chi lo riceve è un iscritto).
     if ($v['omaggio'] !== '') {
         require_once __DIR__ . '/scaricabili.php';
         $x = scaricabili_elenco()[$v['omaggio']] ?? null;
@@ -290,7 +290,7 @@ function form_ricevi(array $m, array $p, string $pagina): string {
     if (empty($p['privacy'])) return 'privacy';
     if (!moduli_captcha_valido((string)($p['captcha'] ?? ''))) return 'captcha';
     if (moduli_troppi('moduli_invii')) return 'troppi';
-    // 1.11.0: con la doppia conferma, il limite delle richieste di iscrizione si controlla prima di salvare: la persona
+    // 2.0.0: con la doppia conferma, il limite delle richieste di iscrizione si controlla prima di salvare: la persona
     // vede l'errore di sempre, invece del grazie senza l'email di conferma.
     if ((int)$m['lista_id'] > 0 && $email !== '' && !empty($m['lista_conferma']) && newsletter_stato_email($email) !== 'attivo' && newsletter_troppe_richieste()) return 'troppi';
     $ora = moduli_adesso();
@@ -305,7 +305,7 @@ function form_ricevi(array $m, array $p, string $pagina): string {
             $attivoPrima = newsletter_stato_email($email) === 'attivo';
             $r = form_iscrivi($email, $nome['nome'] ?? '', $nome['cognome'] ?? '', (int)$m['lista_id'], (bool)$m['lista_conferma'], $m);
             if ($r !== '') error_log("form: iscrizione con conferma non riuscita ($r)");
-            // 1.11.0: il file del form. Con la conferma da fare arriva dopo la conferma; chi è già iscritto lo riceve
+            // 2.0.0: il file del form. Con la conferma da fare arriva dopo la conferma; chi è già iscritto lo riceve
             // subito per email (non sulla pagina: da qui nessuno prende il file scrivendo l'email di un altro);
             // senza conferma, per email e anche sulla pagina di ringraziamento.
             if (($m['omaggio'] ?? '') !== '' && $r === '') {
@@ -332,7 +332,7 @@ function form_ricevi(array $m, array $p, string $pagina): string {
 }
 
 /**
- * Un iscritto in una lista, da un form: con conferma manda l'email di conferma (1.11.0: per la lista del form, non per
+ * Un iscritto in una lista, da un form: con conferma manda l'email di conferma (2.0.0: per la lista del form, non per
  * la newsletter principale, con il titolo del form nell'email; entra nella lista solo quando conferma), senza entra
  * subito attivo. Chi è già attivo entra subito nella lista. Ritorna '' oppure il codice d'errore di newsletter_richiesta().
  */

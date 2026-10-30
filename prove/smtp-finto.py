@@ -2,7 +2,7 @@
 """Un server di posta finto per le prove (1.4.0): accetta SMTP in chiaro, senza autenticazione, e scrive ogni messaggio
 ricevuto in <cartella>/<n>.eml. Mai su un server vero.
 uso: python3 -I prove/smtp-finto.py <porta> <cartella> [rimbalzi]   (si ferma con un segnale)
-Con "rimbalzi" (1.11.0, prova-newsletter-difetti.js) rifiuta al RCPT TO gli indirizzi che contengono "rimbalza" con un
+Con "rimbalzi" (2.0.0, prova-newsletter-difetti.js) rifiuta al RCPT TO gli indirizzi che contengono "rimbalza" con un
 550 (indirizzo inesistente) e quelli che contengono "rinvia" con un 451 (errore temporaneo)."""
 import os
 import socketserver

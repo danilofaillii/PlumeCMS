@@ -117,7 +117,7 @@ function cron_newsletter(string $da = 'cron'): array {
         }
     }
     try {
-        // 1.11.0: una volta al giorno, la pulizia (registro della posta oltre 60 giorni, iscritti mai confermati).
+        // 2.0.0: una volta al giorno, la pulizia (registro della posta oltre 60 giorni, iscritti mai confermati).
         try { $righe = array_merge($righe, newsletter_pulizia()); } catch (Throwable $e) { $righe[] = 'ERRORE pulizia: ' . $e->getMessage(); }
         $log = newsletter_invia_giro();
         if ($log) @file_put_contents(cms_radice() . '/logs/newsletter.log', date('Y-m-d H:i:s') . ' | ' . implode('; ', $log) . "\n", FILE_APPEND);

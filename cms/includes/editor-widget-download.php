@@ -11,7 +11,7 @@ require_once __DIR__ . '/scaricabili.php';
 function editor_download_opzioni(): array {
     $o = ['' => 'Scegli un file'];
     try {
-        $tutti = array_filter(scaricabili_elenco(), fn($x) => empty($x['riservato'])); // 1.11.0: i riservati non si mostrano
+        $tutti = array_filter(scaricabili_elenco(), fn($x) => empty($x['riservato'])); // 2.0.0: i riservati non si mostrano
         // 1.2.5: prima le serie, che puntano sempre all'ultima versione caricata.
         foreach (scaricabili_serie($tutti) as $serie => $x) $o[$serie] = 'Sempre l\'ultima: ' . $serie . ' (oggi ' . $x['versione_nome'] . ')';
         foreach ($tutti as $x) $o[$x['nome']] = $x['titolo'] . ' (' . $x['tipo'] . ', ' . scaricabili_peso($x['peso']) . ')';
@@ -52,7 +52,7 @@ editor_registra_widget('download', ['etichetta' => 'Download', 'icona' => '&#110
     ...es_testo('descrizione', 'della descrizione', ' .ed-dl-desc', 'Descrizione'),
     ...es_testo('meta', 'dei dettagli', ' .ed-dl-meta', 'Dettagli'),
 ]], function (array $v, array $ctx): string {
-    try { $tutti = array_filter(scaricabili_elenco(), fn($x) => empty($x['riservato'])); } catch (Throwable $e) { $tutti = []; } // 1.11.0: i riservati no
+    try { $tutti = array_filter(scaricabili_elenco(), fn($x) => empty($x['riservato'])); } catch (Throwable $e) { $tutti = []; } // 2.0.0: i riservati no
     $voci = [];
     if (($v['origine'] ?? 'scelti') === 'ultimi') {
         foreach (array_slice($tutti, 0, max(1, (int)$v['quanti'])) as $x) $voci[] = $x;

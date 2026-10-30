@@ -156,7 +156,7 @@ try {
     if ($percorso === NEWSLETTER_GRAZIE) sito_html(200, ['titolo' => 'Conferma la tua email - ' . SITO_NOME] + $cortesia, vista_newsletter_grazie());
     if ($percorso === NEWSLETTER_CONFERMA) {
         $ok = newsletter_conferma((string)($q['t'] ?? ''));
-        // 1.11.0: la conferma di un form ha la sua pagina (e il file del form, se ne dà uno), non quella della newsletter.
+        // 2.0.0: la conferma di un form ha la sua pagina (e il file del form, se ne dà uno), non quella della newsletter.
         $e = $ok ? newsletter_ultima_conferma() : null;
         if ($e && $e['form'] > 0) {
             require_once dirname(__DIR__) . '/includes/form.php';
@@ -188,7 +188,7 @@ try {
         sito_manda_scaricabile($file);
         exit;
     }
-    // 1.11.0: un file riservato si manda solo con il link personale (?k=): valido, scaduto, oppure niente (404 come gli altri).
+    // 2.0.0: un file riservato si manda solo con il link personale (?k=): valido, scaduto, oppure niente (404 come gli altri).
     if (isset($sc[1]) && isset($_GET['k']) && is_string($_GET['k'])) {
         $r = sito_scaricabile_riservato($sc[1], $_GET['k']);
         if ($r['file'] !== '') { sito_manda_scaricabile($r['file'], $r['iscritto']); exit; }

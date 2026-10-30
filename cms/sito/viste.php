@@ -38,7 +38,7 @@ function vista_popup(): string {
 }
 
 /**
- * 1.11.0: le righe che accompagnano og:image quando l'immagine sta nei Media del sito: misure, tipo e testo alternativo.
+ * 2.0.0: le righe che accompagnano og:image quando l'immagine sta nei Media del sito: misure, tipo e testo alternativo.
  * LinkedIn e Facebook le usano per mostrare l'anteprima già alla prima lettura. Un'immagine di un altro sito: niente righe.
  */
 function vista_og_immagine_dati(string $url, string $alt): array {
@@ -60,7 +60,7 @@ function vista_pagina(array $meta, string $corpo, string $jsonld = '', string $a
     $righe[] = '<meta name="robots" content="' . sito_robots_meta($meta['robots']) . '">';
     if ($meta['canonical'] !== '') $righe[] = '<link rel="canonical" href="' . h($meta['canonical']) . '">';
     foreach ($meta['og'] as $k => $v) {
-        // 1.11.0: Facebook, WhatsApp e LinkedIn vogliono l'indirizzo intero dell'immagine: uno relativo (/uploads/..., come
+        // 2.0.0: Facebook, WhatsApp e LinkedIn vogliono l'indirizzo intero dell'immagine: uno relativo (/uploads/..., come
         // lo dà Scegli dai Media) prende l'origine del sito davanti.
         // L'origine viene dall'indirizzo del sito salvato, non dall'intestazione Host della richiesta.
         if ($k === 'og:image' && is_string($v) && str_starts_with($v, '/') && !str_starts_with($v, '//')) {
