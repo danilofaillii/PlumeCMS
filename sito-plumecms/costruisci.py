@@ -148,7 +148,7 @@ def home():
                     {'titolo': 'Scrivi e pubblica', 'testo': 'Trascini sezioni, colonne e widget, guardi l\'anteprima, premi Pubblica. Se sbagli, torni indietro: ogni modifica resta nelle versioni.'}]),
                 pulsanti(('Guarda l\'installatore, passo per passo', '/installazione/#passi', 'filo'), centro=True)]],
               **spazi(48, 72))
-    p.sezione([[w('numeri', colonne={'d': 4, 't': 2, 'm': 2}, voci=[{'valore': '5', 'etichetta': 'passi per installarlo'}, {'valore': '80', 'etichetta': 'widget nell\'editor'},
+    p.sezione([[w('numeri', colonne={'d': 4, 't': 2, 'm': 2}, voci=[{'valore': '5', 'etichetta': 'passi per installarlo'}, {'valore': '87', 'etichetta': 'widget nell\'editor'},
                                   {'valore': '3', 'etichetta': 'temi pronti da indossare'}, {'valore': '0', 'etichetta': 'plugin da tenere aggiornati'}])]],
               **tinta(), **spazi(56, 56))
     # Le armi del viaggio: cosa c'è dentro.
@@ -158,7 +158,7 @@ def home():
         ('storia', 'Versioni', 'Ogni salvataggio lascia una versione: la confronti, la guardi in anteprima, ci torni con un clic.', '/funzionalita/#versioni'),
         ('grafico-su', 'SEO e AEO', 'Sitemap, robots, dati strutturati, llms.txt, IndexNow e Search Console. Per Google e per le intelligenze artificiali.', '/funzionalita/#seo'),
         ('email', 'Newsletter, form e social', 'Iscrizioni con doppia conferma, campagne, flussi automatici, form e popup. E ogni mattina i post pronti per i social.', '/funzionalita/#social'),
-        ('scudo-spunta', 'Sicurezza', 'Due fattori, blocchi contro i tentativi, CSP, pacchetti firmati. Messo alla prova con 201 attacchi.', '/funzionalita/#sicurezza'),
+        ('scudo-spunta', 'Sicurezza', 'Due fattori, blocchi contro i tentativi, CSP, pacchetti firmati. Messo alla prova con più di 500 attacchi.', '/funzionalita/#sicurezza'),
     ]
     riq = lambda f: w('riquadro_icona', icona=f[0], titolo=f[1], testo=f[2], link={'url': f[3], 'nuova': False}, livello='h3', vista='impilata', allineamento={'d': 'left'})
     p.sezione([[titolo('Tutto quello che serve, *già dentro.*', 'Nello zaino', 'Niente da installare a parte, niente abbonamenti da ricordare.', centro=True)]], **spazi(80, 8))
@@ -237,6 +237,16 @@ def funzionalita():
          ['<strong>Orari di apertura</strong> che dicono da soli "Aperto ora, chiude alle 19:00" o "Chiuso, apre domani alle 9:00", con le ferie e i giorni di chiusura. Google li legge.',
           'Sul telefono, la <strong>barra dei contatti</strong> fissa in fondo allo schermo: Chiama, WhatsApp, Indicazioni, Scrivici. Le <strong>recensioni</strong> con il voto medio e il pulsante per lasciarne una.',
           'E poi <strong>Prima e dopo</strong>, due foto con una linea da trascinare; la <strong>Squadra</strong>; lo <strong>Slider</strong>; gli <strong>Eventi</strong>, che spariscono da soli quando sono passati.']),
+        ('addon', 'addon.webp', 'Gli addon: accendi solo quello che ti serve',
+         ['In Impostazioni, <strong>Addon</strong>: otto funzioni in più, ognuna con il suo pulsante Accendi. Acceso, l\'addon mette le sue voci nel menu e i suoi widget nell\'editor. Spento, sparisce dal sito, e i suoi dati restano lì per quando lo riaccendi.',
+          '<ul><li><strong>Prenotazioni e appuntamenti</strong>: il calendario con i posti davvero liberi, la conferma per email e il promemoria il giorno prima.</li>'
+          '<li><strong>Eventi con iscrizione</strong>: posti limitati e lista d\'attesa che scorre da sola.</li>'
+          '<li><strong>Raccolta recensioni</strong>: "Com\'è andata?" dopo il servizio, e le recensioni che approvi vanno sul sito.</li>'
+          '<li><strong>Vetrina prodotti</strong>: catalogo, varianti, carrello e ordini, con bonifico, pagamento alla consegna o il tuo link PayPal o Stripe.</li>'
+          '<li><strong>Statistiche senza cookie</strong>: visite e fonti, senza banner e senza Google Analytics.</li>'
+          '<li><strong>Area riservata</strong> e <strong>Corsi online</strong>: pagine e file per chi ha un account, lezioni, avanzamento e certificato.</li>'
+          '<li><strong>Copia del sito altrove</strong>: ogni notte la copia del sito su FTP o WebDAV.</li></ul>',
+          'Sono in <strong>beta</strong> dalla 2.0.0: provati a fondo, aspettano i siti veri. Se trovi qualcosa che non va, dimmelo.']),
         ('fine-articolo', 'fine-articolo.webp', 'Un riquadro in fondo a ogni articolo',
          ['Chi arriva alla fine di un articolo è il lettore più interessato che hai. In Articoli, la linguetta <strong>Aggiungi sempre alla fine</strong>: prepari una volta sola un riquadro che esce sotto ogni articolo, anche sotto quelli già pubblicati. Un invito alla newsletter, un contatto, una prenotazione, un libro da consigliare.',
           'Lo componi con l\'editor visuale, come una pagina: titoli, testi, foto, pulsanti. Esce quando premi Pubblica, con l\'ombra, il bordo e i colori del tuo sito e del tema.',
@@ -247,10 +257,11 @@ def funzionalita():
         ('download', 'download.webp', 'Download manager: i tuoi file, a portata di clic',
          ['Manuali, ebook, listini, programmi: li carichi dalla pagina Download del pannello, con titolo, descrizione e versione. Ogni file ha il suo indirizzo da condividere.',
           'Con la versione nel nome (guida-1.2.pdf) il file entra in una serie: un indirizzo porta sempre alla versione più recente, e nelle pagine il numero si scrive da solo. Carichi la versione nuova e tutto il sito la segue. E vedi quante volte ogni file è stato scaricato: le persone sì, i robot no.',
-          'Nelle pagine li mostri con il widget Download, a elenco o a schede, con icona, peso e pulsante. Come nella <a href="/scarica/">pagina Scarica</a> di questo sito.']),
+          'Nelle pagine li mostri con il widget Download, a elenco o a schede, con icona, peso e pulsante. Come nella <a href="/scarica/">pagina Scarica</a> di questo sito.',
+          'Dalla 2.0.0 un file può essere <strong>riservato</strong>: non ha un indirizzo pubblico e arriva per email, con un link personale, a chi compila un form e conferma la sua email. L\'ebook in cambio dell\'iscrizione, senza servizi esterni.']),
         ('sicurezza', 'sicurezza.webp', 'Sicurezza, senza doverci pensare ogni giorno',
          ['Password robuste, accesso a due fattori, blocchi automatici contro chi prova a indovinare, sessioni che scadono, Content Security Policy, registro degli eventi.',
-          'Prima di uscire, plumeCMS è stato messo alla prova con 201 attacchi: tutti respinti. La pagina Sicurezza ti dice in verde e in rosso come sta il tuo sito.']),
+          'Prima di uscire, plumeCMS è stato messo alla prova con più di 500 attacchi, addon compresi: tutti respinti. La pagina Sicurezza ti dice in verde e in rosso come sta il tuo sito.']),
         ('aggiornamenti', 'aggiornamenti.webp', 'Aggiornamenti dal pannello, con la rete sotto',
          ['Un aggiornamento è uno zip: lo carichi da Impostazioni, Aggiornamenti, e premi Applica. Prima di toccare qualunque cosa il pannello fa una copia di sicurezza del database e dei file.',
           'Se qualcosa va storto, rimette tutto com\'era da solo. Puoi anche programmare l\'aggiornamento per la notte.',
@@ -272,7 +283,7 @@ def funzionalita():
                   pulsante_testo='Scarica plumeCMS', link={'url': '/scarica/', 'nuova': False})]], larghezza='stretta', **spazi(72, 80))
     return dict(slug='funzionalita', titolo='Funzionalità', struttura=p.albero(),
                 seo_titolo='Funzionalità di plumeCMS: editor, temi, versioni, SEO, newsletter',
-                seo_descrizione='Cosa c\'è dentro plumeCMS: editor visuale con 87 widget, import da WordPress, stile globale, header e footer, versioni, SEO e AEO, newsletter, sicurezza, aggiornamenti dal pannello.')
+                seo_descrizione='Cosa c\'è dentro plumeCMS: editor visuale con 87 widget, gli addon (prenotazioni, eventi, negozio, statistiche, area riservata, corsi), import da WordPress, stile globale, header e footer, versioni, SEO e AEO, newsletter, sicurezza, aggiornamenti dal pannello.')
 
 
 def temi():
@@ -462,6 +473,10 @@ def faq():
         ('In fondo al mio sito c\'è scritto "Un nuovo sito plumeCMS". Si può cambiare?', 'Sì. In Impostazioni > Sito pubblico, riquadro La frase in fondo al sito, cambi il testo e l\'indirizzo del link, oppure togli la spunta e la frase non compare più.'),
         ('Posso far arrivare le richieste di un form a un\'altra persona?', 'Sì. Apri il form nel pannello e, nel riquadro Dopo l\'invio, scrivi gli indirizzi in Manda l\'avviso a: fino a cinque, separati da una virgola. Ogni form ha i suoi: i preventivi all\'ufficio commerciale, le candidature a chi si occupa del personale.'),
         ('Posso mettere gli orari di apertura e dire se adesso sono aperto?', 'Sì. Nell\'editor c\'è il widget Orari di apertura: scrivi gli orari di ogni giorno e le ferie, e il sito dice da solo "Aperto ora" o "Chiuso, apre domani alle 9:00". Gli orari entrano anche nei dati che Google sa leggere.'),
+        ('Cosa sono gli addon?', 'Funzioni in più che arrivano con plumeCMS e accendi solo se ti servono, in Impostazioni > Addon: prenotazioni, eventi con iscrizione, raccolta recensioni, vetrina prodotti, statistiche senza cookie, area riservata, corsi online, copia del sito altrove. Spento, un addon sparisce dal sito ma i suoi dati restano. Dalla 2.0.0 sono in beta.'),
+        ('Posso far prenotare un appuntamento dal sito?', 'Sì, con l\'addon Prenotazioni e appuntamenti. Scrivi i servizi, chi li fa e i suoi orari: chi visita sceglie fra i posti davvero liberi, riceve la conferma per email e il promemoria il giorno prima. Tu vedi tutto nell\'agenda del pannello.'),
+        ('Posso vendere i miei prodotti?', 'Sì, con l\'addon Vetrina prodotti: catalogo, varianti, carrello e ordini che arrivano per email e nel pannello. Il pagamento è con bonifico, alla consegna o con il tuo link PayPal.me o Stripe: per ora non c\'è il pagamento con carta direttamente sul sito.'),
+        ('Posso dare un ebook a chi si iscrive?', 'Sì. In Download carichi il file con la spunta Riservato; nel form, in Dopo l\'invio, scegli "Dopo la conferma, dai questo file". Chi compila riceve l\'email di conferma e, appena conferma, il link personale per scaricarlo. Il file non ha un indirizzo pubblico.'),
         ('C\'è una guida per imparare a usarlo?', 'Sì: il manuale d\'uso, in PDF. Trentuno capitoli, dal primo accesso alla checklist prima di andare online, ognuno con un esempio vero, le schermate con i passi numerati e una checklist per sapere quando hai finito.'),
         ('Posso costruirmi un tema mio?', 'Sì: c\'è un manuale apposta, con un tema d\'esempio completo da smontare e rifare tuo.'),
     ]
@@ -548,7 +563,7 @@ def editor_json():
 
 
 # ------------------------------------------------------------------ file
-USATE = ['copertina', 'su-misura', 'firma', 'widget-attivita', 'social', 'fine-articolo', 'importa-wp', 'tipo-sito', 'primi-passi', 'aspetti', 'controlla-server', 'sezioni', 'copia', 'installa-1', 'installa-2', 'installa-3', 'installa-4', 'installa-5', 'editor-ritratto', 'editor', 'aperture', 'stile', 'modelli', 'versioni', 'seo', 'flussi', 'download', 'sicurezza', 'aggiornamenti', 'temi',
+USATE = ['copertina', 'addon', 'su-misura', 'firma', 'widget-attivita', 'social', 'fine-articolo', 'importa-wp', 'tipo-sito', 'primi-passi', 'aspetti', 'controlla-server', 'sezioni', 'copia', 'installa-1', 'installa-2', 'installa-3', 'installa-4', 'installa-5', 'editor-ritratto', 'editor', 'aperture', 'stile', 'modelli', 'versioni', 'seo', 'flussi', 'download', 'sicurezza', 'aggiornamenti', 'temi',
          'tema-cosmo', 'tema-aria', 'tema-bottega']
 
 
@@ -594,6 +609,9 @@ def zip_lavagna(dest):
 
 # Le novità per chi scarica: brevi, scritte qui (il CHANGELOG è per chi sviluppa). Da aggiornare a ogni versione.
 NOVITA = [
+    ('2.0.0', 'Gli addon (beta)', ['In Impostazioni > Addon otto funzioni da accendere solo se servono: Prenotazioni e appuntamenti, Eventi con iscrizione, Raccolta recensioni, Vetrina prodotti con ordini, Statistiche senza cookie, Area riservata, Corsi online, Copia del sito altrove.',
+                                   'File riservati in Download e il form che li dà dopo la conferma dell\'email; l\'immagine per i social si sceglie dai Media ed esce sempre con l\'indirizzo intero.',
+                                   'Newsletter più solida: un limite che conta tutte le email, il mittente giusto anche senza SMTP, gli indirizzi che rimbalzano messi da parte.']),
     ('1.10.0', 'Sette widget per le attività', ['Orari di apertura con "Aperto ora" che si aggiorna da solo, ferie comprese; Barra contatti fissa sul telefono con Chiama, WhatsApp, Indicazioni.',
                                                'Recensioni con il voto medio e le stelle, Prima e dopo con la linea da trascinare, Squadra, Slider ed Eventi che spariscono da soli quando sono passati.',
                                                'I widget ora sono 87.']),

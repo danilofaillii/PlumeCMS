@@ -31,7 +31,7 @@ const [B, D, UTENTE, PASSWORD] = process.argv.slice(2);
   await p.setViewportSize({ width: 1440, height: 900 });
   for (const [n, u] of [['dashboard', '/admin/index.php'], ['stile', '/admin/design.php'], ['modelli', '/admin/modelli.php'], ['versioni', '/admin/versioni.php'],
     ['seo', '/admin/seo.php'], ['flussi', '/admin/newsletter-flussi.php'], ['sicurezza', '/admin/sicurezza.php'], ['aggiornamenti', '/admin/aggiornamenti.php'], ['download', '/admin/scaricabili.php'], ['copia', '/admin/copia-sito.php'],
-    ['temi', '/admin/temi.php'], ['menu', '/admin/menu.php'], ['form', '/admin/form.php']]) await foto(n, u);
+    ['temi', '/admin/temi.php'], ['menu', '/admin/menu.php'], ['form', '/admin/form.php'], ['addon', '/admin/addon.php']]) await foto(n, u); // 2.0.0: addon
   // 1.3.0: l'editor della home con la linguetta Sezioni aperta.
   await foto('sezioni', '/admin/editor.php?tipo=pagine&id=1', async () => {
     await p.waitForTimeout(1200);

@@ -27,7 +27,7 @@ $tutti = addon_disponibili();
 require_once __DIR__ . '/includes/admin-header.php';
 ?>
 <style>.ad-griglia{display:grid;grid-template-columns:repeat(auto-fill,minmax(290px,1fr));gap:1rem}.ad-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:1.1rem 1.25rem;display:flex;flex-direction:column;gap:.5rem}.ad-card.acceso{border-color:var(--accent,#2563eb);box-shadow:inset 4px 0 0 var(--accent,#2563eb)}.ad-card h2{font-size:1.05rem;margin:0;display:flex;gap:.5rem;align-items:center;justify-content:space-between}.ad-card p{margin:0;font-size:.9rem;color:var(--text-muted)}.ad-card form{margin-top:auto;padding-top:.4rem}.ad-richiede{font-size:.82rem}</style>
-<p style="max-width:62rem">Gli addon sono funzioni in più che arrivano con plumeCMS: accendi solo quelle che ti servono. Un addon acceso aggiunge le sue voci al menu e i suoi widget all'editor. Spento, sparisce, ma i suoi dati restano dove sono.</p>
+<p style="max-width:62rem;margin:0 0 1.25rem">Gli addon sono funzioni in più che arrivano con plumeCMS: accendi solo quelle che ti servono. Un addon acceso aggiunge le sue voci al menu e i suoi widget all'editor. Spento, sparisce, ma i suoi dati restano dove sono.</p>
 <?php if (!$tutti): ?><p>Nessun addon in questa installazione.</p><?php else: ?>
 <div class="ad-griglia">
 <?php foreach ($tutti as $nome => $d): ?>
