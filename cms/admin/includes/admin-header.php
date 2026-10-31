@@ -106,6 +106,7 @@ if (!$sonoAdminMenu) {
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="pn-csrf" content="<?= h(csrf_token()) ?>"><?php /* 2.1.0: il token per le chiamate di pannello.js (Scegli dai Media) anche nelle pagine senza form */ ?>
   <title><?= htmlspecialchars($adminTitle) ?> &middot; Pannello</title>
   <link rel="stylesheet" href="<?= pannello_file('assets/css/aspetti.css') ?>"><link rel="stylesheet" href="<?= pannello_file('assets/css/admin.css') ?>"><?php if (str_starts_with($qui, 'addon-pagina.php')): /* 2.0.0: i riquadri delle pagine degli addon (.sc-scatola) */ ?><link rel="stylesheet" href="<?= pannello_file('assets/css/contenuti.css') ?>"><?php endif; ?>
   <script src="<?= pannello_file('assets/campi-protetti.js') ?>"></script>

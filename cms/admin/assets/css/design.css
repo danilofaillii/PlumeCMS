@@ -111,15 +111,4 @@
 .dg-cornice[data-misura=t] iframe{width:900px;max-width:100%}
 .dg-cornice[data-misura=m] iframe{width:400px;max-width:100%}
 
-/* libreria delle immagini */
-.dg-dialogo{border:0;border-radius:14px;padding:1rem 1.2rem;width:min(900px,94vw);box-shadow:var(--ombra-grande);font:inherit;color:var(--text);background:var(--surface)}
-.dg-dialogo::backdrop{background:var(--velo)}
-.dg-dialogo h3{margin:0 0 .6rem}
-.dg-media-filtri{display:flex;gap:.6rem;align-items:center;margin-bottom:.6rem}
-.dg-media-filtri input{padding:.4rem .55rem;border:1px solid var(--dg-bordo);border-radius:8px;font:inherit;flex:1;background:var(--campo);color:var(--text)}
-.dg-media-griglia{display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:.5rem;max-height:60vh;overflow:auto}
-.dg-media-griglia button{border:1px solid var(--dg-bordo);border-radius:8px;background:var(--surface);color:var(--text);padding:0;cursor:pointer;overflow:hidden;text-align:left}
-.dg-media-griglia button:hover{border-color:var(--coral)}
-.dg-media-griglia img{width:100%;aspect-ratio:1;object-fit:cover;display:block;background:var(--fondo-2)}
-.dg-media-griglia small{display:block;font-size:.66rem;padding:.25rem .35rem;color:var(--dg-muto);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.dg-dialogo-azioni{display:flex;justify-content:flex-end;margin-top:.8rem}
+/* 2.1.0: la libreria delle immagini è la finestra Scegli dai Media di tutto il pannello (.pn-media in admin.css) */

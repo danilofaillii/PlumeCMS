@@ -360,17 +360,75 @@ code { background: var(--fondo-2); color: var(--text); padding: .05em .3em; bord
 .search-input { padding: 0.5rem 0.85rem; border: 1px solid var(--border); border-radius: 8px; font: inherit; font-size: 0.88rem; }
 .search-input:focus, .admin-toolbar select:focus { outline: none; border-color: var(--coral); box-shadow: 0 0 0 3px var(--fuoco); }
 
-/* 2.0.0: la libreria dei Media per i campi immagine del pannello (pannello.js, data-scegli-media) */
-.pn-media{margin:auto;width:min(860px,94vw);max-height:86vh;border:1px solid var(--border);border-radius:var(--radius);background:var(--surface);color:var(--text);padding:1.1rem 1.25rem}
-.pn-media::backdrop{background:rgba(0,0,0,.45)}
-.pn-media h3{margin:0 0 .6rem;font-size:1.05rem}
-.pn-media input[type=search]{width:100%;margin-bottom:.7rem;padding:.5rem .85rem;border:1px solid var(--border);border-radius:8px;font:inherit;font-size:.9rem;background:var(--campo);color:var(--text)}
-.pn-media-griglia{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:.6rem;max-height:58vh;overflow:auto}
-.pn-media-voce{display:flex;flex-direction:column;gap:.25rem;padding:.35rem;border:1px solid var(--border);border-radius:8px;background:var(--bg,transparent);cursor:pointer;text-align:left;color:inherit}
-.pn-media-voce:hover,.pn-media-voce:focus-visible{border-color:var(--accent,#2563eb)}
-.pn-media-voce img{width:100%;aspect-ratio:4/3;object-fit:cover;border-radius:5px;background:#eee}
-.pn-media-voce small{font-size:.72rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.pn-media-azioni{text-align:right;margin-top:.8rem}
+/* 2.1.0: la libreria dei Media per i campi immagine del pannello (pannello.js: data-immagine, data-scegli-media, pnMedia.apri).
+   Sul telefono la finestra prende tutto lo schermo; la griglia scorre da sola, testa e piede restano fermi. */
+.pn-media{margin:auto;padding:0;width:min(940px,94vw);height:min(760px,88vh);max-height:88vh;border:1px solid var(--border);border-radius:var(--radius);background:var(--surface);color:var(--text);box-shadow:var(--ombra-grande,0 20px 50px rgba(0,0,0,.25))}
+.pn-media[open]{display:flex}
+.pn-media::backdrop{background:var(--velo,rgba(0,0,0,.45))}
+.pn-media-dentro{display:flex;flex-direction:column;gap:.6rem;flex:1;min-width:0;min-height:0;padding:1rem 1.25rem 1.1rem}
+.pn-media-testa{display:flex;align-items:center;gap:.5rem}
+.pn-media-testa h3{margin:0;font-size:1.08rem;flex:1}
+.pn-media-chiudi{width:2.25rem;height:2.25rem;border:0;border-radius:8px;background:transparent;color:var(--text-muted);font-size:1.5rem;line-height:1;cursor:pointer}
+.pn-media-chiudi:hover{background:var(--fondo-2);color:var(--text)}
+.pn-media-filtri{display:flex;flex-wrap:wrap;gap:.5rem;align-items:center}
+.pn-media-cerca{flex:1 1 14rem;min-width:0}
+.pn-media input:focus-visible,.pn-media select:focus-visible,.pn-media summary:focus-visible{outline:none;border-color:var(--coral);box-shadow:0 0 0 3px var(--fuoco)}
+.pn-media-cerca input,.pn-media-cartella select{width:100%;padding:.5rem .8rem;border:1px solid var(--border);border-radius:8px;font:inherit;font-size:.9rem;background:var(--campo);color:var(--text)}
+.pn-media-cartella{flex:0 1 13rem;min-width:0}
+.pn-media-carica{white-space:nowrap}
+.pn-media-barra{height:4px;border-radius:4px;background:var(--fondo-2);overflow:hidden}
+.pn-media-barra span{display:block;height:100%;width:0;background:var(--coral);transition:width .15s}
+.pn-media-barra[hidden]{display:none}
+.pn-media-stato{margin:0;min-height:1.2em;font-size:.82rem;color:var(--text-muted)}
+.pn-media-stato.pn-media-errore{color:var(--errore-testo)}
+.pn-media-corpo{flex:1;min-height:0;overflow:auto;overscroll-behavior:contain;border:1px solid var(--border);border-radius:10px;background:var(--fondo-2);padding:.6rem}
+.pn-media-griglia{display:grid;grid-template-columns:repeat(auto-fill,minmax(132px,1fr));gap:.6rem}
+.pn-media-voce{display:flex;flex-direction:column;gap:.15rem;min-width:0;padding:.35rem;border:1px solid var(--border);border-radius:9px;background:var(--surface);cursor:pointer;text-align:left;color:inherit;font:inherit}
+.pn-media-voce:hover{border-color:var(--coral)}
+.pn-media-voce:focus-visible{outline:none;border-color:var(--coral);box-shadow:0 0 0 3px var(--fuoco)}
+.pn-media-voce.pn-media-scelta{border-color:var(--coral);box-shadow:inset 0 0 0 2px var(--coral)}
+.pn-media-foto{display:block;aspect-ratio:4/3;border-radius:6px;overflow:hidden;background:repeating-conic-gradient(#e9e9ef 0 25%,#f7f7fa 0 50%) 0 0/16px 16px}
+.pn-media-foto img{display:block;width:100%;height:100%;object-fit:cover}
+.pn-media-foto.pn-media-rotta img{visibility:hidden}
+.pn-media-foto.pn-media-rotta::after{content:"Non si apre";display:block;margin-top:-55%;text-align:center;font-size:.72rem;color:var(--text-muted)}
+.pn-media-nome{font-size:.75rem;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pn-media-info{font-size:.68rem;color:var(--text-muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pn-media-vuoto{grid-column:1/-1;margin:1.5rem 0;text-align:center;color:var(--text-muted);font-size:.9rem}
+.pn-media-fondo{text-align:center;padding:.6rem 0 .1rem}
+.pn-media-fondo:empty,.pn-media-altre[hidden]{display:none}
+.pn-media-cala{display:none}
+.pn-media.pn-media-sopra .pn-media-corpo{outline:3px dashed var(--coral);outline-offset:-3px}
+.pn-media.pn-media-sopra .pn-media-cala{display:block;margin:0;text-align:center;font-weight:600;color:var(--accento-testo,var(--coral))}
+.pn-media-azioni{display:flex;flex-wrap:wrap;gap:.6rem;align-items:center;justify-content:space-between}
+.pn-media-indirizzo{flex:1 1 18rem;min-width:0;font-size:.85rem}
+.pn-media-indirizzo summary{cursor:pointer;color:var(--accento-testo,var(--coral));width:max-content;max-width:100%}
+.pn-media-indirizzo div{display:flex;gap:.4rem;margin-top:.4rem}
+.pn-media-indirizzo label{flex:1;min-width:0}
+.pn-media-indirizzo input{width:100%;padding:.4rem .7rem;border:1px solid var(--border);border-radius:8px;font:inherit;background:var(--campo);color:var(--text)}
+@media (max-width:640px){
+  .pn-media{width:100vw;max-width:100vw;height:100dvh;max-height:100dvh;border:0;border-radius:0}
+  .pn-media-dentro{padding:.75rem .85rem .85rem}
+  .pn-media-griglia{grid-template-columns:repeat(auto-fill,minmax(100px,1fr));gap:.45rem}
+  .pn-media-cartella{flex:1 1 9rem}
+  .pn-media-carica{flex:1 1 9rem}
+}
+
+/* Il campo immagine: miniatura, indirizzo, Scegli dai Media, X. Va a capo sul telefono (la casella resta intera). */
+.pn-immagine{display:flex;flex-wrap:wrap;gap:.5rem;align-items:center;max-width:100%}
+.pn-immagine > input{flex:1 1 10rem;min-width:0;width:auto;margin:0}
+.pn-immagine-azioni{display:flex;gap:.5rem;align-items:center;flex:none}
+.pn-immagine-mini{flex:none;width:44px;height:44px;border:1px solid var(--border);border-radius:8px;overflow:hidden;display:flex;align-items:center;justify-content:center;background:repeating-conic-gradient(#e9e9ef 0 25%,#f7f7fa 0 50%) 0 0/12px 12px}
+.pn-immagine-mini img{width:100%;height:100%;object-fit:cover;display:block}
+.pn-immagine-vuota .pn-immagine-mini,.pn-immagine-mini.pn-immagine-rotta{background:var(--fondo-2)}
+.pn-immagine-vuota .pn-immagine-mini img,.pn-immagine-rotta img{display:none}
+.pn-immagine-vuota .pn-immagine-mini::after{content:"";width:20px;height:20px;opacity:.45;background:currentColor;-webkit-mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2'%3E%3Crect x='3' y='4' width='18' height='16' rx='2'/%3E%3Ccircle cx='9' cy='10' r='2'/%3E%3Cpath d='M21 17l-5-5-9 8'/%3E%3C/svg%3E") center/contain no-repeat;mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2'%3E%3Crect x='3' y='4' width='18' height='16' rx='2'/%3E%3Ccircle cx='9' cy='10' r='2'/%3E%3Cpath d='M21 17l-5-5-9 8'/%3E%3C/svg%3E") center/contain no-repeat;color:var(--text-muted)}
+.pn-immagine-mini.pn-immagine-rotta::after{content:"!";font-weight:700;color:var(--errore-testo)}
+.pn-immagine-scegli{flex:none;white-space:nowrap}
+.pn-immagine-x{flex:none;width:2rem;height:2rem;border:1px solid var(--border);border-radius:8px;background:var(--surface);color:var(--text-muted);font-size:1.15rem;line-height:1;cursor:pointer}
+.pn-immagine-x:hover{color:var(--errore-testo);border-color:var(--errore-bordo,var(--border))}
+.pn-immagine-x:focus-visible,.pn-media-chiudi:focus-visible{outline:none;box-shadow:0 0 0 3px var(--fuoco)}
+.pn-immagine-x[hidden]{display:none}
+label > .pn-immagine{margin-top:.3rem}
 .pn-campo-immagine{display:flex;gap:.5rem;align-items:center}.pn-campo-immagine input{flex:1}
 
 /* 2.0.0: niente scorrimento di lato al telefono. Un fieldset non si stringe sotto il suo contenuto se non glielo si dice;

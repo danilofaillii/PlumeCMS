@@ -179,7 +179,7 @@ capitoli['04'] = async () => {
   await p.fill('[name=categoria_nuova]', 'Avvisi');
   await p.fill('#sc-tag-nuovo', 'orari'); await p.keyboard.press('Enter');
   await p.click('button:has-text("Scegli l\'immagine")'); await dorme(400);
-  await p.setInputFiles('#sc-media-file', path.join(FOTO_PROVA, 'agosto.jpg'));
+  await p.setInputFiles('dialog.pn-media input[type=file]', path.join(FOTO_PROVA, 'agosto.jpg')); // 2.1.0: la finestra Scegli dai Media di tutto il pannello
   await p.waitForFunction(() => !document.querySelector('#sc-immagine-anteprima').hidden);
   await p.fill('[name=immagine_alt]', 'Il mare d\'agosto, con un ombrellone rosso');
   await dorme(500);

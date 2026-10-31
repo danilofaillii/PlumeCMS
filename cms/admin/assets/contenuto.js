@@ -131,41 +131,14 @@
     $('#sc-immagine').value = u;
     var img = $('#sc-immagine-anteprima'); img.src = u; img.hidden = !u;
     $('#sc-immagine-togli').hidden = !u;
+    var b = $('#sc-immagine-scegli'); if (b) b.textContent = u ? 'Cambia' : 'Scegli l\'immagine';
   };
 
-  // ---------------- finestra delle immagini (la libreria Media)
-  var dMedia = $('#sc-media'), cb = null, cartelleFatte = false, timer = null;
-  // Apre la libreria e passa l'indirizzo scelto alla funzione globale con quel nome (usata da data-al-clic, senza onclick in linea).
-window.scMediaPer = function (nome) { window.scMedia(function (u) { if (typeof window[nome] === 'function') window[nome](u); }); };
-window.scMedia = function (f) { cb = f; $('#sc-media-errore').hidden = true; dMedia.showModal(); carica(1); };
-  window.scMediaUrl = function () { var u = $('#sc-media-url').value.trim(); if (u) scegli(u); };
-  function scegli(u) { dMedia.close(); if (cb) cb(u); }
-  function carica(pagina) {
-    var g = $('#sc-media-griglia'), pg = $('#sc-media-pagine');
-    g.innerHTML = '<p class="hint">Carico…</p>'; pg.innerHTML = '';
-    api('media', { cartella: $('#sc-media-cartella').value, q: $('#sc-media-cerca').value, pagina: pagina }).then(function (j) {
-      if (!cartelleFatte) { cartelleFatte = true; j.cartelle.forEach(function (c) { if (!c.quante) return; var o = document.createElement('option'); o.value = c.chiave; o.textContent = c.nome + ' (' + c.quante + ')'; $('#sc-media-cartella').appendChild(o); }); }
-      g.innerHTML = j.immagini.length ? '' : '<p class="hint">Nessuna immagine qui.</p>';
-      j.immagini.forEach(function (m) {
-        var b = document.createElement('button'); b.type = 'button'; b.title = m.url;
-        var im = document.createElement('img'); im.src = m.url; im.loading = 'lazy'; b.appendChild(im);
-        var sp = document.createElement('span'); sp.textContent = m.nome; b.appendChild(sp);
-        b.addEventListener('click', function () { scegli(m.url); });
-        g.appendChild(b);
-      });
-      for (var i = 1; i <= j.pagine; i++) {
-        if (j.pagine > 12 && Math.abs(i - j.pagina) > 3 && i !== 1 && i !== j.pagine) continue;
-        var pb = document.createElement('button'); pb.type = 'button'; pb.className = 'btn btn-sm ' + (i === j.pagina ? 'btn-primary' : 'btn-secondary'); pb.textContent = i;
-        (function (n) { pb.addEventListener('click', function () { carica(n); }); })(i);
-        pg.appendChild(pb);
-      }
-    }).catch(function (e) { g.innerHTML = '<p class="hint" style="color:var(--errore-testo)">' + e.message + '</p>'; });
-  }
-  $('#sc-media-cartella').addEventListener('change', function () { carica(1); });
-  $('#sc-media-cerca').addEventListener('input', function () { clearTimeout(timer); timer = setTimeout(function () { carica(1); }, 300); });
-  $('#sc-media-file').addEventListener('change', function () {
-    var f = this.files[0]; if (!f) return;
-    api('carica', {}, f).then(function (j) { scegli(j.url); }).catch(function (e) { var p = $('#sc-media-errore'); p.textContent = e.message; p.hidden = false; });
-    this.value = '';
-  });
+  // ---------------- la libreria Media: la finestra di tutto il pannello (pannello.js, 2.1.0), con ricerca, cartelle,
+  // caricamento progressivo e Carica un'immagine. Passa l'indirizzo scelto alla funzione globale con quel nome
+  // (usata da data-al-clic, senza onclick in linea).
+  window.scMedia = function (f, attuale) { window.pnMedia.apri({ scegli: f, attuale: attuale || '' }); };
+  window.scMediaPer = function (nome) {
+    window.scMedia(function (u) { if (typeof window[nome] === 'function') window[nome](u); }, nome === 'scImmagine' ? $('#sc-immagine').value : '');
+  };
 })();

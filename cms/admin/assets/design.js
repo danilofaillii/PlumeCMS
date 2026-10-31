@@ -188,43 +188,22 @@
   form.addEventListener('submit', function () { modificato = false; });
   window.addEventListener('beforeunload', function (e) { if (modificato) { e.preventDefault(); e.returnValue = ''; } });
 
-  // ---------- immagini: la libreria del pannello (stessa chiamata dell'editor) ----------
-  var dialogo = document.getElementById('dg-media'), destinazione = null, immagini = [];
+  // ---------- immagini: la finestra Scegli dai Media di tutto il pannello (pannello.js, 2.1.0) ----------
+  // Ricerca e cartelle sul server, le immagini a pagine mentre si scorre, Carica un'immagine dalla stessa finestra.
   form.addEventListener('click', function (e) {
     var b = e.target.closest('.dg-scegli');
-    if (b) { destinazione = b.closest('.dg-immagine'); apriMedia(); return; }
+    if (b) {
+      var c = b.closest('.dg-immagine'), i = q('input[type=text]', c);
+      window.pnMedia.apri({ attuale: i.value.trim(), scegli: function (u) { i.value = u; var img = q('.dg-miniatura', c); img.src = u; img.hidden = false; q('.dg-x', c).hidden = false; cambiato(i); } });
+      return;
+    }
     var x = e.target.closest('.dg-immagine .dg-x');
-    if (x) { var c = x.closest('.dg-immagine'); q('input[type=text]', c).value = ''; q('.dg-miniatura', c).hidden = true; cambiato(q('input[type=text]', c)); }
+    if (x) { var d = x.closest('.dg-immagine'); q('input[type=text]', d).value = ''; q('.dg-miniatura', d).hidden = true; x.hidden = true; cambiato(q('input[type=text]', d)); }
   });
   form.addEventListener('input', function (e) {
     var c = e.target.closest('.dg-immagine'); if (!c || e.target.type !== 'text') return;
-    var img = q('.dg-miniatura', c); img.src = e.target.value; img.hidden = !e.target.value;
+    var img = q('.dg-miniatura', c); img.src = e.target.value; img.hidden = !e.target.value; q('.dg-x', c).hidden = !e.target.value;
   });
-  function apriMedia() {
-    dialogo.showModal();
-    var fd = new FormData(); fd.set('azione', 'media'); fd.set('_csrf', q('input[name=_csrf]', form).value); fd.set('pagina', '1');
-    q('#dg-media-griglia').innerHTML = '<p class="dg-aiuto">Carico…</p>';
-    fetch('editor-api.php', { method: 'POST', body: fd, credentials: 'same-origin' }).then(function (r) { return r.json(); }).then(function (j) {
-      immagini = j.immagini || []; disegnaMedia();
-      q('#dg-media-conta').textContent = (j.totale || immagini.length) + ' immagini' + (j.pagine > 1 ? ' (le prime ' + immagini.length + ')' : '');
-    }).catch(function () { q('#dg-media-griglia').innerHTML = '<p class="dg-aiuto">Libreria non raggiungibile. Incolla l\'indirizzo dell\'immagine nella casella.</p>'; });
-  }
-  function disegnaMedia() {
-    var cerca = q('#dg-media-cerca').value.toLowerCase(), g = q('#dg-media-griglia'); g.innerHTML = '';
-    immagini.filter(function (m) { return !cerca || (m.nome || '').toLowerCase().indexOf(cerca) >= 0; }).forEach(function (m) {
-      var b = document.createElement('button'); b.type = 'button';
-      b.innerHTML = '<img loading="lazy" alt=""><small></small>';
-      q('img', b).src = m.url; q('small', b).textContent = m.nome || m.url;
-      b.addEventListener('click', function () {
-        if (destinazione) { var i = q('input[type=text]', destinazione); i.value = m.url; var img = q('.dg-miniatura', destinazione); img.src = m.url; img.hidden = false; cambiato(i); }
-        dialogo.close();
-      });
-      g.appendChild(b);
-    });
-    if (!g.children.length) g.innerHTML = '<p class="dg-aiuto">Nessuna immagine.</p>';
-  }
-  q('#dg-media-cerca').addEventListener('input', disegnaMedia);
-  qa('[data-chiudi]', dialogo).forEach(function (b) { b.addEventListener('click', function () { dialogo.close(); }); });
 
   aggiornaTuttiColori(); aggiornaRiassunti();
 })();

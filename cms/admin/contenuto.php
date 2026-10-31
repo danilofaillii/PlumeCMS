@@ -310,7 +310,7 @@ require_once __DIR__ . '/includes/admin-header.php';
           <input type="hidden" name="immagine" id="sc-immagine" value="<?= h($sc['immagine']) ?>">
           <img id="sc-immagine-anteprima" src="<?= h($sc['immagine']) ?>" alt="" <?= $sc['immagine'] === '' ? 'hidden' : '' ?>>
           <div class="sc-img-azioni">
-            <button type="button" class="btn btn-secondary btn-sm" data-al-clic="scMediaPer('scImmagine')"><?= $sc['immagine'] === '' ? 'Scegli l\'immagine' : 'Cambia' ?></button>
+            <button type="button" class="btn btn-secondary btn-sm" id="sc-immagine-scegli" data-al-clic="scMediaPer('scImmagine')"><?= $sc['immagine'] === '' ? 'Scegli l\'immagine' : 'Cambia' ?></button>
             <button type="button" class="btn btn-secondary btn-sm" id="sc-immagine-togli" data-al-clic="scImmagine('')" <?= $sc['immagine'] === '' ? 'hidden' : '' ?>>Togli</button>
           </div>
           <?php if ($T['attributi']): ?><label>Testo alternativo</label><input type="text" name="immagine_alt" value="<?= h($sc['immagine_alt']) ?>"><?php endif; ?>
@@ -342,21 +342,6 @@ require_once __DIR__ . '/includes/admin-header.php';
 
 <?php require __DIR__ . '/includes/infografica-modal.php'; ?>
 
-<dialog id="sc-media" class="sc-media">
-  <div class="sc-media-dentro">
-    <h2>Immagini</h2>
-    <div class="sc-media-filtri">
-      <label class="btn btn-secondary btn-sm">Carica<input type="file" id="sc-media-file" accept="image/*" hidden></label>
-      <select id="sc-media-cartella"><option value="">Tutte le cartelle</option></select>
-      <input type="search" id="sc-media-cerca" placeholder="Cerca nel nome…">
-      <input type="url" id="sc-media-url" placeholder="oppure incolla un indirizzo" style="min-width:200px"><button type="button" class="btn btn-secondary btn-sm" data-al-clic="scMediaUrl()">Usa</button>
-    </div>
-    <p class="hint" id="sc-media-errore" style="color:var(--errore-testo)" hidden></p>
-    <div class="sc-media-griglia" id="sc-media-griglia"></div>
-    <div class="sc-media-pagine" id="sc-media-pagine"></div>
-  </div>
-  <div class="sc-media-azioni"><button type="button" class="btn btn-secondary btn-sm" data-chiudi-dialogo="#sc-media">Chiudi</button></div>
-</dialog>
 
 <script<?= nonce_attr() ?>>window.SC = <?= json_encode(['csrf' => $csrf, 'tipo' => $tipo, 'id' => $id, 'formato' => $sc['content_format'], 'nuovo' => $nuovo], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?>;</script>
 <script src="<?= pannello_file('assets/infografica.js') ?>"></script>

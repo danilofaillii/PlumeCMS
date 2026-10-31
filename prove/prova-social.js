@@ -63,7 +63,7 @@ const corpo = (eml) => {
   ok('la scheda ha il riquadro Social', await p.locator('#social textarea[name=social_testo]').count() === 1);
   await p.fill('[name=data]', oggi); await p.fill('[name=ora]', '07:30');
   await p.fill('[name=categoria_nuova]', 'Avvisi');
-  await p.click('button:has-text("Scegli l\'immagine")'); await p.setInputFiles('#sc-media-file', FOTO);
+  await p.click('#sc-immagine-scegli'); await p.setInputFiles('dialog.pn-media input[type=file]', FOTO);
   await p.waitForFunction(() => !document.querySelector('#sc-immagine-anteprima').hidden);
   await p.fill('[name=social_testo]', 'Si comincia \u{1F31E} oggi. <script>alert(1)</script>');
   await p.locator('#social details summary').click();

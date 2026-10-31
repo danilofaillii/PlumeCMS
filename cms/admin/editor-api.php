@@ -198,7 +198,8 @@ switch ($azione) {
         api_esci([
             'totale' => count($voci), 'pagina' => $pagina, 'pagine' => max(1, (int)ceil(count($voci) / 60)),
             'cartelle' => array_map(fn($k, $n) => ['chiave' => $k, 'nome' => $n, 'quante' => $conta[$k] ?? 0], array_keys($cartelle), $cartelle),
-            'immagini' => array_map(fn($m) => ['url' => $m['url'], 'nome' => $m['nome'], 'cartella' => $cartelle[$m['cartella']] ?? $m['cartella'], 'sotto' => $m['sotto']], array_slice($voci, ($pagina - 1) * 60, 60)),
+            // 2.1.0: anche il peso, che la finestra Scegli dai Media del pannello (pannello.js) mostra sotto il nome.
+            'immagini' => array_map(fn($m) => ['url' => $m['url'], 'nome' => $m['nome'], 'cartella' => $cartelle[$m['cartella']] ?? $m['cartella'], 'sotto' => $m['sotto'], 'peso' => (int)$m['peso']], array_slice($voci, ($pagina - 1) * 60, 60)),
         ]);
 }
 api_esci(['errore' => 'Azione sconosciuta.'], 400);

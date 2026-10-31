@@ -152,8 +152,8 @@ require_once __DIR__ . '/includes/admin-header.php';
     <div class="so-largo"><label for="so-li">LinkedIn</label><textarea id="so-li" name="linkedin" rows="4"><?= h(social_testo_vero((string)$v['linkedin'])) ?></textarea></div>
     <div class="so-largo"><label for="so-fb">Facebook e Instagram</label><textarea id="so-fb" name="facebook" rows="4"><?= h(social_testo_vero((string)$v['facebook'])) ?></textarea></div>
     <div class="so-largo"><label for="so-wa">WhatsApp e Telegram</label><textarea id="so-wa" name="whatsapp" rows="3"><?= h(social_testo_vero((string)$v['whatsapp'])) ?></textarea><div class="hint">Un testo vuoto prende quello scritto nel riquadro Social del contenuto. Il link e gli hashtag li aggiunge il CMS.</div></div>
-    <div><label for="so-og">Immagine per LinkedIn e Facebook (facoltativa)</label><input type="text" id="so-og" name="immagine_og" value="<?= h($v['immagine_og']) ?>" placeholder="/uploads/..."></div>
-    <div><label for="so-ig">Immagine per Instagram (facoltativa)</label><input type="text" id="so-ig" name="immagine_ig" value="<?= h($v['immagine_ig']) ?>" placeholder="/uploads/..."><div class="hint">Vuote = quelle fatte dall'immagine in evidenza del contenuto. L'indirizzo lo copi dalla pagina Media.</div></div>
+    <div><label for="so-og">Immagine per LinkedIn e Facebook (facoltativa)</label><input type="text" id="so-og" name="immagine_og" value="<?= h($v['immagine_og']) ?>" placeholder="/uploads/..." data-immagine></div>
+    <div><label for="so-ig">Immagine per Instagram (facoltativa)</label><input type="text" id="so-ig" name="immagine_ig" value="<?= h($v['immagine_ig']) ?>" placeholder="/uploads/..." data-immagine><div class="hint">Vuote = quelle fatte dall'immagine in evidenza del contenuto. Scegli dai Media apre la libreria (e ci carichi anche un'immagine nuova).</div></div>
     <div class="so-largo so-azioni"><button class="btn btn-primary">Salva</button><a class="btn btn-secondary" href="social.php?scheda=calendario">Annulla</a></div>
   </div>
 </form>
