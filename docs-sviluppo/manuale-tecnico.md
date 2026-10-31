@@ -688,6 +688,9 @@ spiegazione; "Controlla adesso" (POST con il token) chiama `server_controlli()` 
 ritorna gruppi di controlli con esito `ok` (verde), `avviso` (giallo: serve solo ad alcune funzioni) o `ko` (rosso), una
 frase su cosa si è visto e una su cosa fare:
 
+- **Google e IndexNow** (2.2.0, `server_servizi_esterni()`): con il service account salvato, `seo_gsc_prova()` (sola lettura)
+  e la proprietà di `seo_gsc_proprieta()` fra quelle viste; senza, giallo e se il server raggiunge `oauth2.googleapis.com`. Con
+  la chiave di IndexNow, il file `/<chiave>.txt` letto da fuori e `api.indexnow.org` raggiungibile; senza, giallo.
 - **PHP e database**: versione (8.2 o più), estensioni (`pdo_mysql`, `mbstring`, `openssl`, `json`, `zlib`, `zip`
   necessarie; `dom`, `gd`/`imagick`, `curl` gialle se mancano), MySQL che risponde;
 - **Indirizzo del sito**: rosso se `sito_url` non è https; se lo è, una richiesta vera a `/robots.txt` con il certificato
@@ -853,9 +856,13 @@ dell'icona" (Riquadro con icona), "Posizione dell'immagine" (Riquadro con immagi
 `editor_pulisci_impostazioni()` e `editor_valori()`, passa al nome nuovo il valore salvato con quello vecchio se è fra le
 opzioni. Nei Riquadri anche l'allineamento scelto vale per il testo: `ewx_css_allinea_ribox()`
 (`includes/editor-widget-extra.php:278`) scrive `--ew-ta`, che `.ew-ribox` usa per `text-align` (prima il `center` di
-`widget.css` vinceva su tutto); con l'icona o l'immagine di lato, "Centro" resta il "a sinistra" di sempre. Restano, da sistemare in una versione prossima senza cambiare le pagine che ci sono, due
-nomi doppi: `animazione` del Titolo animato (la sua "Animazione delle parole" perde tutto tranne Zoom) e `padding` di Social, Condividi, Avviso e
-Flip box.
+`widget.css` vinceva su tutto); con l'icona o l'immagine di lato, "Centro" resta il "a sinistra" di sempre. Dalla 2.2.0 anche gli altri nomi doppi hanno un
+nome loro: `animazione_parole` del Titolo animato (`includes/editor-widget-extra-c.php`), `avviso_padding` (Avviso),
+`flip_padding` (Flip box), `voce_padding` (Condividi) e `icona_spazio` (Icone social, `includes/editor-widget-extra-b.php`), tutti
+con `'prima'`. Per un controllo senza opzioni (`dimensioni`, `misura`) `editor_nomi_di_prima()` copia il valore vecchio al nome
+nuovo e lo lascia anche al vecchio, perché prima valeva per tutti e due: la pagina resta uguale al pixel (una `misura` prende solo
+un valore con la forma di una misura, `editor_forma_misura()`). Il Titolo animato salvato prima aveva perso la scelta (diventava
+""); ora vale quella di partenza, la scrittura a macchina, che prima non partiva. Prova: `prove/prova-nomi-doppi.php` (9 controlli).
 
 ### 9.3 I colori globali
 
@@ -2151,6 +2158,10 @@ nel suo download manager.
   scarica lo zip, controlla che la lunghezza e lo sha256 siano quelli annunciati e lo registra con
   `agg_registra_pacchetto()`, come uno zip caricato a mano: da lì "Applica ora" (19.4). Una versione già in coda non si
   scarica due volte.
+- **Certificato** (2.2.0): `versione_http()` e `server_http()` (`includes/controllo-server.php`) raccolgono tutti gli avvisi di PHP
+  con `set_error_handler` (l'ultimo dice solo "failed to open stream"): un certificato scaduto, per un altro nome o di
+  un'autorità sconosciuta si dice con il suo nome invece di "non risponde". Prova con HTTPS vero: `prove/prova-versione-https.py
+  <cartella CMS> <pacchetto.zip>` (un'autorità di prova con openssl, `openssl.cafile`; 5 controlli).
 - **Sicurezza** (`versione_http()`, `includes/versione-nuova.php:65`): solo HTTPS con il certificato verificato (http
   solo con `CMS_AGGIORNAMENTI_HTTP_PROVA`, per le prove); nessun redirect seguito; il file si scarica solo dallo stesso
   host (schema e porta compresi) del sito ufficiale; risposta JSON di al massimo 16 KB, zip di al massimo 50 MB e mai più
@@ -3522,7 +3533,7 @@ in coda a `includes/editor-widget-extra.php`, con il contratto delle parti A-D (
 | Tipo | Nome | Gruppo | Icona |
 |---|---|---|---|
 | `menu_ristorante` | Menu del ristorante | Elementi | `libro-aperto` |
-| `richiesta_prenotazione` | Richiesta di prenotazione | Dal sito | `calendario-spunta` |
+| `richiesta_prenotazione` | Richiesta di prenotazione | Dal sito | `calendario-spunta` (dalla 2.2.0 `email_a` è `'solo_admin'`: `editor_blinda_solo_admin()` in `includes/editor.php`, chiamata da `api_albero()` di `admin/editor-api.php` per chi non è amministratore, rimette il valore salvato; nell'editor il campo è spento, `D.admin`; prova `prove/prova-solo-admin.js`, 6 controlli) |
 | `galleria_filtri` | Galleria con filtri | Gallerie | `filtro` |
 | `scorrevole` | Loghi e testo scorrevoli | Elementi | `infinito` |
 | `contenuto_esterno` | Contenuto esterno (con consenso) | Interazione | `scudo-spunta` |
