@@ -88,6 +88,12 @@ Sono gli unici in `cms/docs/`, nello zip, nel sito di plumeCMS e nella pagina Do
   `python3 sito-plumecms/costruisci.py`, `python3 tools/consegna.py`. **Regola di Danilo (28 ottobre 2026): a lui si consegna
   un solo zip**, `releases/consegna/plumecms-<versione>-consegna.zip`, con dentro l'aggiornamento e lo zip completo del CMS,
   le parti del sito, i tre PDF e un LEGGIMI con l'ordine di caricamento. Non più i file uno per uno.
+- **Regola di Danilo (31 ottobre 2026): niente più file spezzettati. "Dai prossimi aggiornamenti non serve più che spezzetti i file.
+  Me ne dai uno solo che contiene tutte le modifiche."** Ha alzato il limite di caricamento del suo hosting (php.ini). Quindi:
+  le modifiche di una versione (codice del CMS ed eventuali pagine del sito di plumeCMS) arrivano in **un solo pacchetto** da caricare
+  in Impostazioni > Aggiornamenti; le parti del sito non si dividono più sotto 1900 KB (`costruisci.py --max-kb` alto). Supera le regole
+  vecchie "file uno per uno" e "parti sotto 1900 KB" per quello che si consegna a lui. Attenzione alla trappola del motore nuovo: se
+  una versione cambia il motore dei pacchetti (`includes/aggiornamenti.php`), codice e pagine non stanno nello stesso pacchetto.
 - **Pacchetto di aggiornamento** per un'installazione esistente:
   `python3 tools/cms-pacchetto.py --aggiornamento`. Si carica dal pannello,
   Impostazioni, Aggiornamenti.
