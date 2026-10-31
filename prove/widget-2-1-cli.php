@@ -41,6 +41,27 @@ switch ($c) {
         $out['nuovi'] = array_map(fn($t) => isset($d[$t]) ? ['etichetta' => $d[$t]['etichetta'], 'gruppo' => $d[$t]['gruppo'], 'icona' => str_starts_with((string)$d[$t]['icona'], '<svg')] : null, array_combine($n5 = ['menu_ristorante', 'richiesta_prenotazione', 'galleria_filtri', 'scorrevole', 'contenuto_esterno'], $n5));
         echo json_encode($out, JSON_UNESCAPED_UNICODE);
         break;
+    case 'form-prova':
+        // Un form attivo con un campo File (PDF e JPG, 1 MB) per gli attacchi; ritorna l'id. Con "togli", lo cancella.
+        $st = db()->prepare('SELECT id FROM ' . tbl('moduli') . ' WHERE slug = ?'); $st->execute(['attacchi-file']);
+        $id = (int)$st->fetchColumn();
+        if (($argv[3] ?? '') === 'togli') { if ($id) form_elimina($id); echo json_encode(['tolto' => $id]); break; }
+        $id = form_salva($id, ['nome' => 'Attacchi file', 'slug' => 'attacchi-file', 'attivo' => 1, 'avviso' => 0, 'campi' => [
+            ['etichetta' => 'Email', 'tipo' => 'email', 'obbligatorio' => true], ['etichetta' => 'Documento', 'tipo' => 'file', 'obbligatorio' => true, 'estensioni' => ['pdf', 'jpg'], 'peso' => 1]]]);
+        echo json_encode(['id' => $id]);
+        break;
+    case 'invio-cattivo':
+        // Un invio con un "file" che punta fuori dalla cartella (come se il database fosse stato toccato): lo scarico deve dire 404.
+        $id = (int)db()->query('SELECT id FROM ' . tbl('moduli') . ' ORDER BY id LIMIT 1')->fetchColumn();
+        db()->prepare('INSERT INTO ' . tbl('moduli_invii') . " (modulo_id, email, nome, dati, pagina, ip, allegati, creato, aggiornato) VALUES (?, 'x@x.it', 'x', '{}', '/', '0.0.0.0', ?, NOW(), NOW())")
+            ->execute([$id, json_encode([['campo' => 'x', 'nome' => 'config.php', 'file' => '../../includes/config.local.php', 'peso' => 1, 'tipo' => 'text/plain'], ['campo' => 'y', 'nome' => 'a.php', 'file' => '/etc/passwd', 'peso' => 1, 'tipo' => 'text/plain']])]);
+        echo json_encode(['id' => (int)db()->lastInsertId()]);
+        break;
+    case 'csp-prova':
+        // sicurezza_csp_pagina ammette solo frame-src e solo https://host.
+        foreach ([['frame-src', 'https://calendly.com'], ['script-src', 'https://cattivo.example'], ['frame-src', 'http://cattivo.example'], ['frame-src', 'https://cattivo.example/x'], ['frame-src', "https://a.it; script-src *"], ['frame-src', '*']] as [$d, $o]) sicurezza_csp_pagina($d, $o);
+        echo json_encode(sicurezza_csp_pagina());
+        break;
     case 'svuota-limiti':
         $n = db()->exec('UPDATE ' . tbl('moduli_invii') . " SET ip = '0.0.0.0' WHERE ip = '127.0.0.1'");
         echo json_encode(['righe' => $n]);
