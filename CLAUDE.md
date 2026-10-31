@@ -62,7 +62,7 @@ Sono gli unici in `cms/docs/`, nello zip, nel sito di plumeCMS e nella pagina Do
    numerati, checklist). Le schermate le fa `tools/manuale-uso-schermate.js` eseguendo gli esempi su un sito di prova
    (kit Attività, in `/home/studioprova/public_html`): **quando cambia il pannello si rifanno le schermate e si
    ricontrolla il capitolo**. Il PDF è uno solo (dalla 2.1.0) e deve restare sotto 8 MB (`MAX_KB` in `tools/manuali-pdf.js`; oggi
-   7,1 MB con le schermate JPEG a qualità 55). Nel PDF vanno JPEG: Chromium rimette i PNG senza tavolozza e pesano di più.
+   7,3 MB con le schermate JPEG a qualità 55). Nel PDF vanno JPEG: Chromium rimette i PNG senza tavolozza e pesano di più.
    `cms/docs/manuale-temi.md`: il manuale per chi costruisce un tema, con il tema d'esempio Lavagna.
 1. `docs-sviluppo/` (solo nel repository, mai nello zip): il manuale tecnico (`manuale-tecnico.md`, tutto il CMS letto dal
    codice, con `file:riga`: **quando si cambia il codice si aggiorna anche lui**) e i documenti vecchi (`cms.md`,
@@ -99,7 +99,7 @@ Sono gli unici in `cms/docs/`, nello zip, nel sito di plumeCMS e nella pagina Do
 - **Pacchetto di aggiornamento** per un'installazione esistente:
   `python3 tools/cms-pacchetto.py --aggiornamento`. Si carica dal pannello,
   Impostazioni, Aggiornamenti.
-- **Versione**: `cms/VERSIONE` (oggi 2.1.0; sempre tre numeri: "beta" va nel CHANGELOG, mai nel nome dello zip, se no la serie "ultima" del Download non lo riconosce) e una voce in `cms/CHANGELOG.md` a ogni
+- **Versione**: `cms/VERSIONE` (oggi 2.2.0; sempre tre numeri: "beta" va nel CHANGELOG, mai nel nome dello zip, se no la serie "ultima" del Download non lo riconosce) e una voce in `cms/CHANGELOG.md` a ogni
   zip con contenuto diverso. Mai cambiare il contenuto di una versione già data.
 - **Prove** prima di dire finito:
   - `php -n -d short_open_tag=1 -l` su ogni file PHP toccato, `node --check` sui js;
@@ -134,6 +134,17 @@ Le decisioni complete, con data e perché, stanno nel second brain, `plumecms/de
 - **Nome: plumeCMS** (26 ottobre 2026).
 
 ## Stato al 31 ottobre 2026
+
+Fatto: plumeCMS 2.2.0 (31 ottobre, sera): Scegli dal sito (richiesta di Danilo, agente in worktree rifatto da me): `includes/collegamenti.php`,
+`admin/link-api.php`, `admin/assets/scegli-link.js` (`window.pnLink`, `data-link-sito`), filtro `collegamenti_sito` per gli addon, in tutti i
+campi link (editor, Quill, popup, form, newsletter, social, SEO, menu, privacy di eventi e prenotazioni); il valore è `/percorso/` (la
+cartella la mette `cms_con_cartella()`), nelle email l'indirizzo intero. Il redirect 301 da solo c'è per pagine e articoli pubblicati, non per
+le bozze né per i contenuti degli addon. Poi: Controlla il server con il gruppo "Google e IndexNow" (`server_servizi_esterni()`), certificato
+HTTPS non valido detto per nome, `email_a` della Richiesta di prenotazione `solo_admin` (`editor_blinda_solo_admin()`), nomi doppi
+dell'editor risolti con `'prima'` (anche per dimensioni e misure), PDF del manuale a 7,3 MB (JPEG a qualità 55). Prove: scegli link 80/80 radice
+e 81/81 cartella, attacchi link 32/32, solo admin 6/6, nomi doppi 9/9, versione HTTPS 5/5, controlla server 21/21, install 37/37 radice e
+cartella, aggiornamento 2.1.0 -> 2.2.0 13/13 (foto uguali tranne il cursore del Titolo animato, che prima non partiva), addon 70/70,
+attacchi 261/261, Scegli dai Media 112/112, telefono 72/72 a 390 e 768, hero 670/670.
 
 Fatto: plumeCMS 2.1.0 (31 ottobre): i punti scelti da Danilo dall'elenco del sospeso, con quattro agenti e uno per i widget, tutto
 rifatto e provato da me sul codice unito. Consegna delle email (Impostazioni > Consegna delle email, Brevo, SES, Mailgun, rimbalzi,
