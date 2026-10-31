@@ -308,7 +308,7 @@ ewx_registra('galleria_filtri', 'Galleria con filtri', 'filtro', 'Gallerie', arr
 // ---------------- Loghi e testo scorrevoli
 
 ewx_registra('scorrevole', 'Loghi e testo scorrevoli', 'infinito', 'Elementi', [
-    ec('tipo', 'scelta', 'Cosa scorre', 'loghi', 'contenuto', ['opzioni' => ['loghi' => 'Una fila di loghi', 'testo' => 'Una frase'], 'sezione' => 'Contenuto']),
+    ec('tipo', 'scelta', 'Cosa scorre', 'testo', 'contenuto', ['opzioni' => ['loghi' => 'Una fila di loghi', 'testo' => 'Una frase'], 'sezione' => 'Contenuto']),
     ec('loghi', 'ripetitore', 'Loghi', [], 'contenuto', ['campi' => [
         ec('immagine', 'immagine', 'Logo', ''), ec('alt', 'testo', 'Nome (per chi non vede)', ''), ec('link', 'testo', 'Link (facoltativo)', ''),
     ], 'titolo_voce' => 'alt', 'condizione' => ['tipo' => 'loghi'], 'sezione' => 'Contenuto', 'aiuto' => 'Loghi della stessa altezza, su sfondo trasparente (PNG o SVG), vengono meglio.']),
