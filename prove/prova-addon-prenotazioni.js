@@ -83,9 +83,12 @@ const norma = h => h.replace(/nonce="[^"]+"/g, '').replace(/name="_csrf" value="
   await a.fill('[name=avviso_a]', 'salone@esempio.it'); await a.fill('[name=indirizzo]', 'Via dell\'Indipendenza 10, Bologna');
   await Promise.all([a.waitForNavigation(), a.click('#pa-impostazioni button.btn-primary')]);
   ok('impostazioni salvate', /salvate/.test(await a.locator('.flash').first().innerText()));
-  await vai(a, PAG('impostazioni'));
+  await vai(a, PAG('impostazioni')); // audit 2026-11: non basta il messaggio verde, si rilegge il campo
+  ok('riaperte, le impostazioni hanno l\'email e l\'indirizzo scritti', await a.inputValue('[name=avviso_a]') === 'salone@esempio.it' && await a.inputValue('[name=indirizzo]') === 'Via dell\'Indipendenza 10, Bologna');
   await a.fill('[name=avviso_a]', 'mario@localhost'); await Promise.all([a.waitForNavigation(), a.click('#pa-impostazioni button.btn-primary')]);
   ok('un indirizzo sbagliato per gli avvisi non si salva', /non è un indirizzo email valido/.test(await a.locator('.flash').first().innerText()));
+  await vai(a, PAG('impostazioni'));
+  ok('e il campo ha ancora l\'email di prima', await a.inputValue('[name=avviso_a]') === 'salone@esempio.it', await a.inputValue('[name=avviso_a]'));
 
   // 4. La pagina con il widget Prenota (dalla riga di comando, come la farebbe l'editor) e il widget nella tavolozza.
   const pg = C.cli(CMS, 'pagina', 'prenota', 'Prenota', 'prenota');

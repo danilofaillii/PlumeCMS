@@ -33,6 +33,8 @@ const locale = d => { const z = n => String(n).padStart(2, '0'); return `${d.get
   await a.fill('[name=avviso_a]', 'eventi@esempio.it');
   await Promise.all([a.waitForNavigation(), a.click('#evi-impostazioni button.btn-primary')]);
   ok('impostazioni salvate', /salvate/.test(await a.locator('.flash').first().innerText()));
+  await vai(a, PAG('impostazioni')); // audit 2026-11: non basta il messaggio verde, si rilegge il campo
+  ok('riaperte, le impostazioni hanno l\'email degli avvisi', await a.inputValue('[name=avviso_a]') === 'eventi@esempio.it', await a.inputValue('[name=avviso_a]'));
 
   // 1. L'evento, dal pannello.
   const inizio = new Date(Date.now() + 5 * 86400000); inizio.setHours(21, 0, 0, 0);

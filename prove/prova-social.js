@@ -65,6 +65,8 @@ const corpo = (eml) => {
   await p.fill('#so-wa-e', 'Scrivici:');
   await Promise.all([p.waitForNavigation(), p.click('form:has(input[value=impostazioni]) button.btn-primary')]);
   ok('impostazioni salvate', /salvate/.test(await flash()), await flash());
+  await p.goto(B + '/admin/social.php?scheda=impostazioni', { waitUntil: 'networkidle' }); // audit 2026-11: si rileggono i campi
+  ok('riaperte, le impostazioni hanno hashtag e link di WhatsApp', await p.inputValue('#so-h-li') === '#provalinkedin' && await p.inputValue('#so-h-ig') === '#provainstagram #seconda' && await p.inputValue('#so-wa-l') === '/contatti/' && await p.inputValue('#so-wa-e') === 'Scrivici:');
 
   // 2. Il riquadro Social della scheda, sull'articolo d'esempio
   await p.goto(B + '/admin/contenuto.php?tipo=articoli&id=1', { waitUntil: 'networkidle' });

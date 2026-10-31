@@ -39,6 +39,8 @@ const norma = h => h.replace(/nonce="[^"]+"/g, '').replace(/name="_csrf" value="
   await a.fill('[name=avviso_a]', 'recensioni@esempio.it');
   await Promise.all([a.waitForNavigation(), a.click('#rec-impostazioni button.btn-primary')]);
   ok('impostazioni salvate', /salvate/.test(await flash()));
+  await vai(a, PAG('impostazioni')); // audit 2026-11: non basta il messaggio verde, si rileggono i campi
+  ok('riaperte, le impostazioni hanno il link di Google, la soglia e l\'email', await a.inputValue('[name=google_link]') === 'https://g.page/r/esempio/review' && await a.inputValue('[name=google_da]') === '4' && await a.inputValue('[name=avviso_a]') === 'recensioni@esempio.it');
 
   // 2. Clienti a mano.
   await vai(a, PAG('inviti'));
