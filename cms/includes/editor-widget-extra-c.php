@@ -13,7 +13,7 @@ ewx_registra('avviso', 'Avviso', 'avviso', 'Elementi', [
     ewx_col('bordo_colore', 'Colore del bordo', '--ew-bc', 'Avviso'),
     ewx_var('bordo_sinistro', 'Spessore del bordo a sinistra', '--ew-bw', 'Avviso', ['d' => ['v' => 4, 'u' => 'px']]),
     ewx_var('raggio', 'Angoli arrotondati', '--ew-r', 'Avviso', ['d' => ['v' => 12, 'u' => 'px']]),
-    ex('padding', 'dimensioni', 'Spazio interno', [], 'stile', ['selettore' => ' .ew-avviso', 'proprieta' => 'padding', 'responsive' => true, 'sezione' => 'Avviso']),
+    ex('avviso_padding', 'dimensioni', 'Spazio interno', [], 'stile', ['selettore' => ' .ew-avviso', 'proprieta' => 'padding', 'responsive' => true, 'sezione' => 'Avviso', 'prima' => 'padding']), // 2.2.0: prima 'padding', come le Avanzate
     ...ewx_testo_stile('titolo', 'Titolo', ' .ew-avviso-titolo', '--ew-tc'),
     ...ewx_testo_stile('testo', 'Testo', ' .ew-avviso-testo', '--ew-dc'),
     ewx_col('icona_colore', 'Colore', '--ew-c1', 'Icona e chiusura'),
@@ -247,7 +247,7 @@ ewx_registra('flip_box', 'Flip box', 'copia', 'Gallerie', [
     ewx_var('altezza', 'Altezza', '--ew-h', 'Impostazioni', ['d' => ['v' => 280, 'u' => 'px']], ['intervalli' => ['px' => [100, 1000, 1]]]),
     ewx_allinea('allineamento', 'Impostazioni', 'center'),
     ec('verticale', 'scelta', 'Contenuto allineato', 'center', 'contenuto', ['opzioni' => ['flex-start' => 'In alto', 'center' => 'Al centro', 'flex-end' => 'In basso'], 'selettore' => '', 'proprieta' => '--ew-valign', 'sezione' => 'Impostazioni']),
-    ex('padding', 'dimensioni', 'Spazio interno', [], 'stile', ['selettore' => ' .ew-flip-contenuto', 'proprieta' => 'padding', 'responsive' => true, 'sezione' => 'Impostazioni']),
+    ex('flip_padding', 'dimensioni', 'Spazio interno', [], 'stile', ['selettore' => ' .ew-flip-contenuto', 'proprieta' => 'padding', 'responsive' => true, 'sezione' => 'Impostazioni', 'prima' => 'padding']), // 2.2.0: prima 'padding'
     ex('bordo', 'bordo', 'Bordo e angoli', [], 'stile', ['selettore' => ' .ew-flip-fronte, .ew-flip-retro', 'sezione' => 'Impostazioni']),
     ewx_col('icona_colore', 'Colore dell\'icona', '--ew-c1', 'Fronte: stile'),
     ewx_var('icona_dimensione', 'Dimensione dell\'icona', '--ew-dim', 'Fronte: stile', ['d' => ['v' => 48, 'u' => 'px']]),
@@ -285,7 +285,7 @@ ewx_registra('titolo_animato', 'Titolo animato', 'bacchetta', 'Marketing', [
     ewx_livello('h2'),
     ewx_link(),
     ec('forma', 'scelta', 'Forma del disegno', 'cerchio', 'contenuto', ['opzioni' => ['cerchio' => 'Cerchio', 'sottolinea' => 'Sottolineatura', 'doppia' => 'Doppia sottolineatura', 'zigzag' => 'Zigzag', 'barrato' => 'Barrato', 'evidenziatore' => 'Evidenziatore', 'x' => 'Una X'], 'condizione' => ['modo' => 'evidenziato'], 'sezione' => 'Animazione']),
-    ec('animazione', 'scelta', 'Animazione delle parole', 'scrittura', 'contenuto', ['opzioni' => ['scrittura' => 'Scrittura a macchina', 'scorri' => 'Scorri dal basso', 'dissolvi' => 'Dissolvenza', 'zoom' => 'Zoom', 'gira' => 'Gira'], 'condizione' => ['modo' => 'rotante'], 'sezione' => 'Animazione']),
+    ec('animazione_parole', 'scelta', 'Animazione delle parole', 'scrittura', 'contenuto', ['opzioni' => ['scrittura' => 'Scrittura a macchina', 'scorri' => 'Scorri dal basso', 'dissolvi' => 'Dissolvenza', 'zoom' => 'Zoom', 'gira' => 'Gira'], 'condizione' => ['modo' => 'rotante'], 'sezione' => 'Animazione', 'prima' => 'animazione']), // 2.2.0: prima 'animazione', come l'animazione d'ingresso delle Avanzate
     ec('ciclo', 'interruttore', 'Ripeti all\'infinito', true, 'contenuto', ['sezione' => 'Animazione']),
     ec('durata', 'numero', 'Durata (millisecondi)', 2500, 'contenuto', ['min' => 500, 'max' => 10000, 'sezione' => 'Animazione']),
     ewx_allinea('allineamento', 'Titolo', ''),
@@ -304,7 +304,7 @@ ewx_registra('titolo_animato', 'Titolo animato', 'bacchetta', 'Marketing', [
         $parole = array_values(array_filter(array_map('trim', explode("\n", (string)$v['rotanti'])), fn($x) => $x !== ''));
         if (!$parole) return ewx_vuoto('Scrivi le parole che si alternano');
         $lunga = array_reduce($parole, fn($c, $p) => mb_strlen($p) > mb_strlen($c) ? $p : $c, '');
-        $rot = '<span class="ew-tanim-rot ew-anim-' . h($v['animazione']) . '" data-ew-rot data-durata="' . (int)$v['durata'] . '" data-ciclo="' . ($v['ciclo'] ? 1 : 0) . '"><span class="ew-tanim-misura" aria-hidden="true">' . h($lunga) . '</span>';
+        $rot = '<span class="ew-tanim-rot ew-anim-' . h($v['animazione_parole']) . '" data-ew-rot data-durata="' . (int)$v['durata'] . '" data-ciclo="' . ($v['ciclo'] ? 1 : 0) . '"><span class="ew-tanim-misura" aria-hidden="true">' . h($lunga) . '</span>';
         foreach ($parole as $i => $p) $rot .= '<span class="ew-tanim-parola' . ($i === 0 ? ' attiva' : '') . '"' . ($i === 0 ? '' : ' aria-hidden="true"') . '>' . h($p) . '</span>';
         $rot .= '</span>';
         return "<$tag class=\"ew-tanim ew-tanim-rotante\">" . $a . $prima . $rot . $dopo . $z . "</$tag>";

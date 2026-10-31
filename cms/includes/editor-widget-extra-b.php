@@ -211,7 +211,7 @@ ewx_registra('social', 'Icone social', 'condividi', 'Marketing', [
     ewx_colonne(0),
     ewx_allinea('allineamento', 'Aspetto', ''),
     ewx_var('dimensione', 'Dimensione dell\'icona', '--ew-dim', 'Icone', ['d' => ['v' => 20, 'u' => 'px']]),
-    ewx_var('padding', 'Spazio intorno all\'icona', '--ew-pad', 'Icone', ['d' => ['v' => 10, 'u' => 'px']]),
+    ewx_var('icona_spazio', 'Spazio intorno all\'icona', '--ew-pad', 'Icone', ['d' => ['v' => 10, 'u' => 'px']], ['prima' => 'padding']), // 2.2.0: prima 'padding'
     ewx_var('spazio', 'Spazio fra le icone', '--ew-gap', 'Icone', ['d' => ['v' => 10, 'u' => 'px']]),
     ewx_col('colore_primario', 'Colore principale (sfondo)', '--ew-c1', 'Colori personalizzati', true, ['condizione' => ['colori' => 'personalizzati']]),
     ewx_col('colore_secondario', 'Colore secondario (icona)', '--ew-c2', 'Colori personalizzati', true, ['condizione' => ['colori' => 'personalizzati']]),
@@ -250,7 +250,7 @@ ewx_registra('condividi', 'Condividi', 'invia', 'Marketing', [
     ec('titolo_condivisione', 'testo', 'Testo che accompagna il link (vuoto: il titolo della pagina)', '', 'contenuto', ['sezione' => 'Aspetto']),
     ewx_var('dimensione', 'Dimensione dell\'icona', '--ew-dim', 'Pulsanti', ['d' => ['v' => 18, 'u' => 'px']]),
     ewx_var('spazio', 'Spazio fra i pulsanti', '--ew-gap', 'Pulsanti', ['d' => ['v' => 10, 'u' => 'px']]),
-    ex('padding', 'dimensioni', 'Spazio interno', [], 'stile', ['selettore' => ' .ew-cond-voce', 'proprieta' => 'padding', 'responsive' => true, 'sezione' => 'Pulsanti']),
+    ex('voce_padding', 'dimensioni', 'Spazio interno', [], 'stile', ['selettore' => ' .ew-cond-voce', 'proprieta' => 'padding', 'responsive' => true, 'sezione' => 'Pulsanti', 'prima' => 'padding']), // 2.2.0: prima 'padding'
     ewx_col('colore_primario', 'Colore principale', '--ew-c1', 'Colori personalizzati', true, ['condizione' => ['colori' => 'personalizzati']]),
     ewx_col('colore_secondario', 'Colore secondario', '--ew-c2', 'Colori personalizzati', true, ['condizione' => ['colori' => 'personalizzati']]),
     ewx_tip('tipografia', 'Tipografia', ' .ew-cond-voce', 'Pulsanti'),

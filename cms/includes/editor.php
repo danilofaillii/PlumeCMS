@@ -113,12 +113,28 @@ function editor_pulisci_impostazioni(string $tipo, $imp): array {
  * opzioni del controllo, passa al nome nuovo. Nato per "Posizione dell'icona" dei Riquadri, che si chiamava "posizione"
  * come il Posizionamento delle Avanzate e al salvataggio si perdeva (editor-widget-extra-a.php).
  */
+/** 2.2.0: un valore con la forma di una misura: {v, u} oppure {d, t, m} di misure. */
+function editor_forma_misura($x): bool {
+    if (!is_array($x)) return false;
+    $una = fn($y) => is_array($y) && array_key_exists('v', $y) && !array_key_exists('sopra', $y);
+    if ($una($x)) return true;
+    foreach (['d', 't', 'm'] as $k) if (isset($x[$k]) && $una($x[$k])) return true;
+    return false;
+}
+
 function editor_nomi_di_prima(string $tipo, array $imp): array {
     foreach (editor_definizioni()[$tipo]['controlli'] ?? [] as $ctl) {
         $prima = (string)($ctl['prima'] ?? '');
         if ($prima === '' || array_key_exists($ctl['nome'], $imp) || !array_key_exists($prima, $imp)) continue;
         $x = $imp[$prima];
-        if (is_string($x) && isset($ctl['opzioni']) && array_key_exists($x, $ctl['opzioni'])) $imp[$ctl['nome']] = $x;
+        if (isset($ctl['opzioni'])) {
+            if (is_string($x) && array_key_exists($x, $ctl['opzioni'])) $imp[$ctl['nome']] = $x;
+        } elseif (is_array($x) && in_array($ctl['tipo'], ['dimensioni', 'misura'], true)) {
+            // 2.2.0: lo spazio interno di Avviso, Flip box, Condividi e Social si chiamava "padding" come quello delle Avanzate:
+            // il valore salvato valeva per tutti e due. Passa al nome nuovo e resta anche al vecchio: la pagina non cambia.
+            // Una misura prende solo un valore con la forma di una misura (v e u, anche per dispositivo).
+            if ($ctl['tipo'] === 'dimensioni' || editor_forma_misura($x)) $imp[$ctl['nome']] = $x;
+        }
     }
     return $imp;
 }
@@ -144,6 +160,44 @@ function editor_blinda_codice(array $albero, ?array $precedente): array {
                 $codice = (string)($x['impostazioni']['codice'] ?? '');
                 $id = (string)($x['id'] ?? '');
                 if (!isset($noti[$id]) || $noti[$id] !== $codice) $x['impostazioni']['codice'] = sicurezza_html_pulito($codice, 'articolo');
+            }
+            if (!empty($x['figli'])) $x['figli'] = $blinda($x['figli']);
+        }
+        unset($x);
+        return $el;
+    };
+    $albero['elementi'] = $blinda($albero['elementi'] ?? []);
+    return $albero;
+}
+
+/**
+ * 2.2.0: i controlli con 'solo_admin' (per esempio "A chi arriva la richiesta" del widget Richiesta di prenotazione: un
+ * redattore non deve poter mandare le richieste dei clienti a un suo indirizzo) li cambia solo l'amministratore. Per chi non
+ * lo è, ogni widget dell'albero nuovo riprende quei valori dal widget con lo stesso id nell'albero salvato ($precedente);
+ * un widget nuovo li ha vuoti (cioè quelli del sito).
+ */
+function editor_blinda_solo_admin(array $albero, ?array $precedente): array {
+    $prot = [];
+    foreach (editor_definizioni() as $tipo => $d)
+        foreach ($d['controlli'] ?? [] as $ctl) if (!empty($ctl['solo_admin'])) $prot[$tipo][] = $ctl['nome'];
+    if (!$prot) return $albero;
+    $noti = [];
+    $raccogli = function (array $el) use (&$raccogli, &$noti, $prot) {
+        foreach ($el as $x) {
+            if (isset($prot[$x['tipo'] ?? ''])) $noti[(string)($x['id'] ?? '')] = $x['impostazioni'] ?? [];
+            if (!empty($x['figli'])) $raccogli($x['figli']);
+        }
+    };
+    if ($precedente) $raccogli($precedente['elementi'] ?? []);
+    $blinda = function (array $el) use (&$blinda, $noti, $prot) {
+        foreach ($el as &$x) {
+            $t = (string)($x['tipo'] ?? '');
+            if (isset($prot[$t])) {
+                $prima = $noti[(string)($x['id'] ?? '')] ?? [];
+                foreach ($prot[$t] as $nome) {
+                    if (array_key_exists($nome, $prima)) $x['impostazioni'][$nome] = $prima[$nome];
+                    else unset($x['impostazioni'][$nome]);
+                }
             }
             if (!empty($x['figli'])) $x['figli'] = $blinda($x['figli']);
         }

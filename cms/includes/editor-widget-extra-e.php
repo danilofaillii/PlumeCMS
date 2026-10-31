@@ -190,7 +190,7 @@ function ewx_controlli_richiesta(): array {
         ec('modalita', 'scelta', 'Cosa si prenota', 'tavolo', 'contenuto', ['opzioni' => ['tavolo' => 'Un tavolo (data, ora, persone)', 'alloggio' => 'Un alloggio (arrivo, partenza, ospiti)'], 'sezione' => 'Richiesta']),
         ec('titolo', 'testo', 'Titolo', 'Prenota un tavolo', 'contenuto', ['sezione' => 'Richiesta']),
         ec('intro', 'testolungo', 'Testo sopra il modulo', 'Mandaci la richiesta: ti rispondiamo per confermare il prima possibile.', 'contenuto', ['sezione' => 'Richiesta']),
-        ec('email_a', 'testo', 'A chi arriva la richiesta (email)', '', 'contenuto', ['sezione' => 'Richiesta', 'aiuto' => 'Fino a ' . 3 . ' indirizzi separati da una virgola. Vuoto: l\'indirizzo degli avvisi del sito (Impostazioni, Posta in uscita). Le richieste restano anche nel pannello, in Invii dei form.']),
+        ec('email_a', 'testo', 'A chi arriva la richiesta (email)', '', 'contenuto', ['sezione' => 'Richiesta', 'solo_admin' => true, 'aiuto' => 'Fino a ' . 3 . ' indirizzi separati da una virgola. Vuoto: l\'indirizzo degli avvisi del sito (Impostazioni, Posta in uscita). Le richieste restano anche nel pannello, in Invii dei form. Lo cambia solo un amministratore.']),
         ec('max_persone', 'numero', 'Quante persone al massimo', 12, 'contenuto', ['min' => 1, 'max' => 200, 'sezione' => 'Campi']),
         ec('tel_obbligatorio', 'interruttore', 'Telefono obbligatorio', true, 'contenuto', ['sezione' => 'Campi']),
         ec('mostra_note', 'interruttore', 'Campo per le note (allergie, seggiolone, orario di arrivo...)', true, 'contenuto', ['sezione' => 'Campi']),

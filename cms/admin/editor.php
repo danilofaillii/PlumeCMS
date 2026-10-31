@@ -118,7 +118,7 @@ $dati = [
     'definizioni' => editor_definizioni(), 'csrf' => csrf_token(), 'temi' => editor_temi_infografica(), 'temiCampi' => editor_temi_campi(),
     'tablet' => editor_soglia('tablet'), 'telefono' => editor_soglia('telefono'),
     // menu: Impostazioni dell'editor (includes/editor-opzioni.php): widget spenti, colonne massime, chi pubblica.
-    'widgetDisattivi' => editor_widget_disattivi(), 'colonneMax' => (int)editor_opzione('colonne_max'), 'puoPubblicare' => editor_puo_pubblicare(),
+    'widgetDisattivi' => editor_widget_disattivi(), 'colonneMax' => (int)editor_opzione('colonne_max'), 'puoPubblicare' => editor_puo_pubblicare(), 'admin' => is_admin(), // 2.2.0: i controlli solo_admin
     // 1.3.0: le sezioni pronte (includes/sezioni-pronte.php), non per header e footer.
     'sezioniPronte' => $modello ? [] : sezioni_pronte_per_editor(), 'categorieSezioni' => sezioni_pronte_categorie(),
 ];

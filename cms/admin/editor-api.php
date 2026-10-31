@@ -58,6 +58,13 @@ function api_albero(): array {
         if ($salvato && $pubblicato && $salvato !== $pubblicato) $salvato['elementi'] = array_merge($salvato['elementi'], $pubblicato['elementi']);
         $a = editor_blinda_codice($a, $salvato);
     }
+    // 2.2.0: i controlli 'solo_admin' (a chi arriva la Richiesta di prenotazione) li cambia solo l'amministratore.
+    if (!is_admin()) {
+        $prima = $pagina ? (editor_decodifica((string)($pagina['struttura_bozza'] ?: $pagina['struttura'])) ?? null) : null;
+        $pubbl = $pagina && !empty($pagina['struttura']) ? editor_decodifica((string)$pagina['struttura']) : null;
+        if ($prima && $pubbl && $prima !== $pubbl) $prima['elementi'] = array_merge($prima['elementi'], $pubbl['elementi']);
+        $a = editor_blinda_solo_admin($a, $prima);
+    }
     return $a;
 }
 

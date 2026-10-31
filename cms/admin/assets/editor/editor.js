@@ -579,6 +579,9 @@
     });
     if (ctl.tipo === 'interruttore') { etichetta.appendChild(campo); d.appendChild(etichetta); }
     else { if (ctl.etichetta !== '' || ctl.responsive) d.appendChild(etichetta); d.appendChild(campo); }
+    // 2.2.0: un controllo 'solo_admin' (A chi arriva la richiesta) per chi non è amministratore si vede ma non si cambia:
+    // lo protegge anche il server (editor_blinda_solo_admin).
+    if (ctl.solo_admin && !D.admin) { d.classList.add('ed-solo-admin'); d.querySelectorAll('input, select, textarea, button').forEach(function (x) { x.disabled = true; }); }
     if (ctl.aiuto) d.appendChild(mk('p', 'ed-aiuto', escapeHtml(ctl.aiuto)));
     return d;
   }
