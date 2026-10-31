@@ -1,6 +1,6 @@
 # Email marketing in plumeCMS: la checklist per arrivare al livello di Brevo
 
-Aggiornata al 30 ottobre 2026, dopo la 2.0.0. Segno: [x] fatto, [ ] da fare. Fra parentesi la tappa proposta.
+Aggiornata al 31 ottobre 2026: tappa 2 (consegna) fatta e provata (2.1.0, `docs-sviluppo/manuale-tecnico.md` capitolo 35). Segno: [x] fatto, [ ] da fare. Fra parentesi la tappa proposta.
 Riferimento: le sezioni del menu di Brevo. Cosa c'è oggi viene dal codice (analisi del 30 ottobre).
 
 ## Contatti
@@ -49,7 +49,7 @@ Riferimento: le sezioni del menu di Brevo. Cosa c'è oggi viene dal codice (anal
 ## Statistiche
 - [x] Aperture e clic per campagna, link più cliccati, iscritti per mese
 - [x] Chi ha ricevuto e scaricato un file riservato (2.0.0)
-- [ ] Rimbalzi, disiscrizioni e segnalazioni di spam per campagna (tappa 2)
+- [x] Rimbalzi, disiscrizioni e segnalazioni di spam per campagna, con le soglie di Gmail e Yahoo in rosso (tappa 2, 2.1.0)
 - [ ] Andamento per lista e nel tempo (tappa 4)
 - [ ] Avviso: le aperture sono gonfiate dalla protezione della privacy di Apple Mail (tappa 4)
 
@@ -57,10 +57,13 @@ Riferimento: le sezioni del menu di Brevo. Cosa c'è oggi viene dal codice (anal
 - [x] Server di posta configurabile, link di uscita anche in un clic (List-Unsubscribe-Post)
 - [x] Mittente giusto anche senza server di posta, parte di testo semplice (2.0.0)
 - [x] Un solo conteggio di tutte le email, all'ora e al giorno (2.0.0)
-- [ ] Pagina che controlla SPF, DKIM e DMARC del dominio e dice cosa chiedere all'hosting (tappa 2)
-- [ ] Più mittenti verificati (tappa 2)
-- [ ] Spedizione tramite un servizio esterno (Brevo SMTP, Amazon SES, Mailgun) con i rimbalzi via webhook (tappa 2)
-- [ ] Riscaldamento graduale: limite che sale da solo per un indirizzo nuovo (tappa 2)
+- [x] Pagina che controlla SPF, DKIM, DMARC e MX del dominio e dice cosa chiedere all'hosting, con il testo esatto (tappa 2, 2.1.0; provata con un DNS finto, non con il DNS vero)
+- [x] Più mittenti verificati con un link di conferma, uno predefinito, scelti da campagne e flussi (tappa 2, 2.1.0)
+- [x] Spedizione tramite un servizio esterno: Brevo SMTP (Configurazione email), API di Brevo, Amazon SES (firma SigV4) e Mailgun, chiavi cifrate, prova con allegato (tappa 2, 2.1.0; provata contro server finti, non contro i servizi veri)
+- [x] Rimbalzi, segnalazioni di spam e uscite dai servizi via webhook (Brevo con segreto, Mailgun firmato, SES con SNS firmato) (tappa 2, 2.1.0)
+- [x] Riscaldamento graduale: limite che sale da solo per un indirizzo nuovo, con lo stato nel pannello (tappa 2, 2.1.0)
+- [ ] Lettura dei rimbalzi che arrivano come email in una casella (IMAP), per chi spedisce con il server dell'hosting (tappa 4)
+- [ ] Password SMTP cifrata come le chiavi dei servizi (tappa 4)
 
 ## GDPR
 - [x] Data e versione del consenso, indirizzo IP

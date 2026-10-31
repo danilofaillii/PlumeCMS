@@ -277,7 +277,7 @@ const decodifica = eml => eml.replace(/\r?\n\r?\n([A-Za-z0-9+\/=\r\n]{40,})/g, (
     ok('E. il pannello elenca gli avvisi ricevuti e dice "Ultimo avviso" per i tre servizi', righeAvvisi >= 8 && await p.locator('#ce-avvisi-brevo .ce-ok, #ce-avvisi-ses .ce-ok, #ce-avvisi-mailgun .ce-ok').count() === 3, righeAvvisi);
     ok('E. il pannello dà un indirizzo per servizio, con il segreto, da copiare', (await p.locator('#ce-avvisi-brevo .ce-record input').inputValue()).includes('/api/posta-avvisi.php?s=brevo&k=') && (await p.locator('#ce-avvisi-ses .ce-record input').inputValue()).includes('s=ses') && (await p.locator('#ce-avvisi-mailgun .ce-record input').inputValue()).includes('s=mailgun'));
     await vai('/admin/newsletter.php?scheda=iscritti&stato=spam');
-    ok('E. Iscritti: filtro "Hanno segnalato spam" con le tre persone e il riquadro del numero', (await p.locator('table tr').count()) === 4 && /hanno segnalato spam/.test(await testo()));
+    ok('E. Iscritti: filtro "Hanno segnalato spam" con le tre persone e il riquadro del numero', await (async () => { const t = await p.locator('table').innerText(); return ['b2@persona.it', 's2@persona.it', 'm2@persona.it'].every(e => t.includes(e)) && !/b1@persona\.it|b3@persona\.it/.test(t); })() && /hanno segnalato spam/.test(await testo()));
 
     // ===== F. Statistiche per campagna
     await vai('/admin/newsletter-statistiche.php');

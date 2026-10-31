@@ -472,3 +472,15 @@ I pulsanti dell'Apertura si cliccano davvero. Prima `php prove/pagina-hero-pulsa
 pulsante, il link non è `#`, il clic porta alla pagina giusta; a 1280 e a 390 px. Con `TEMA=cosmo UTENTE=... PASSWORD=...` nelle
 anteprime del tema. Atteso: 670 su 670, anche con Cosmo, Aria e Bottega (31 ottobre 2026); sul codice di prima della 2.0.2 la
 pagina dei link scritti a mano dà KO (il pulsante punta a `#`).
+
+## prova-consegna-email.js e attacchi-consegna.js (2.1.0)
+
+La consegna delle email (`includes/consegna.php`, Impostazioni > Consegna delle email). Su un CMS installato con il kit
+Attività:
+1. `python3 -I prove/smtp-finto.py <porta smtp> <cartella posta> &`;
+2. `node prove/prova-consegna-email.js <base> <utente> <password> <porta smtp> <cartella posta> <cartella del CMS> <porta api finta>`;
+3. `node prove/attacchi-consegna.js` con gli stessi argomenti.
+Le prove scrivono nel `config.local.php` il blocco "prove della consegna" (`CMS_POSTA_API_PROVA`, `CMS_DNS_PROVA`,
+`CMS_SNS_CERT_PROVA`), creano il DNS finto e il certificato SNS delle prove in `/tmp/plume-consegna-<porta api>` e accendono da
+sole `prove/api-posta-finta.py` (Brevo, SES con la firma SigV4 ricalcolata, Mailgun) sulla porta api. Aiuti:
+`prove/consegna-comune.js`, `prove/consegna-cli.php`. Atteso: 73 su 73 e 40 su 40 (31 ottobre 2026). Lasciano dati di prova.
