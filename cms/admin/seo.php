@@ -118,9 +118,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             // ---- Analisi e tag
             case 'salva_analisi':
                 $a = $_POST['analisi'] ?? [];
+                $a['pixel'] = preg_replace('/\s+/', '', (string)($a['pixel'] ?? '')); // audit 2026-11: prima di $pulisci, che copia $a
                 $pulisci = fn(string $k, string $re) => (preg_match($re, trim((string)($a[$k] ?? ''))) ? trim((string)$a[$k]) : '');
                 if (trim((string)($a['ga4'] ?? '')) !== '' && !preg_match('/^G-[A-Z0-9]{4,}$/', trim((string)$a['ga4']))) throw new RuntimeException('L\'ID di Google Analytics 4 ha la forma G-XXXXXXXXXX.');
                 if (trim((string)($a['gtm'] ?? '')) !== '' && !preg_match('/^GTM-[A-Z0-9]{4,}$/', trim((string)$a['gtm']))) throw new RuntimeException('L\'ID di Tag Manager ha la forma GTM-XXXXXXX.');
+                // Audit 2026-11: un ID del Pixel o di Clarity scritto male si toglieva in silenzio, con "Analisi e tag salvati".
+                if ($a['pixel'] !== '' && !preg_match('/^\d{6,20}$/', $a['pixel'])) throw new RuntimeException('L\'ID del Meta Pixel è fatto solo di numeri (da 6 a 20 cifre): copialo da Gestione eventi di Meta.');
+                if (trim((string)($a['clarity'] ?? '')) !== '' && !preg_match('/^[a-z0-9]{6,20}$/i', trim((string)$a['clarity']))) throw new RuntimeException('L\'ID di Microsoft Clarity è fatto di lettere e numeri (da 6 a 20): lo trovi in Clarity, Impostazioni, Panoramica.');
                 seo_salva('analisi', ['ga4' => $pulisci('ga4', '/^G-[A-Z0-9]{4,}$/'), 'gtm' => $pulisci('gtm', '/^GTM-[A-Z0-9]{4,}$/'), 'pixel' => $pulisci('pixel', '/^\d{6,20}$/'),
                     'clarity' => $pulisci('clarity', '/^[a-z0-9]{6,20}$/i'), 'consenso' => ($a['consenso'] ?? '') === 'subito' ? 'subito' : 'banner',
                     'banner_testo' => (string)($a['banner_testo'] ?? ''), 'codice_head' => (string)($a['codice_head'] ?? ''),

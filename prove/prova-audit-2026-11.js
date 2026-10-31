@@ -152,6 +152,18 @@ const CARTELLA = new URL(B).pathname.replace(/\/$/, '');
   const f9 = await flash();
   ok('P9 redirect: con un\'emoji il pannello lo dice, senza SQLSTATE', !/SQLSTATE/.test(f9) && /emoji/.test(f9), f9);
 
+  // ---------------------------------------------------------------- P10: ID del Meta Pixel scritto male, non più tolto in silenzio
+  await vai('seo.php?scheda=analisi');
+  const fa = 'form:has([name="analisi[pixel]"])';
+  await a.fill('[name="analisi[pixel]"]', '12345 67890'); await invia(fa);
+  await vai('seo.php?scheda=analisi');
+  ok('P10 pixel: scritto con uno spazio, riaperto senza (1234567890)', await a.inputValue('[name="analisi[pixel]"]') === '1234567890', await a.inputValue('[name="analisi[pixel]"]'));
+  await a.fill('[name="analisi[pixel]"]', 'Pixel 123'); await invia(fa);
+  const f10 = await flash();
+  await vai('seo.php?scheda=analisi');
+  ok('P10 pixel: un ID sbagliato si rifiuta e si dice, il valore di prima resta', /solo di numeri/.test(f10) && await a.inputValue('[name="analisi[pixel]"]') === '1234567890', f10);
+  await a.fill('[name="analisi[pixel]"]', ''); await invia(fa);
+
   ok('nessun errore JavaScript', err.length === 0, err);
   await br.close();
   console.log(`\n${n - ko} su ${n} OK`); process.exit(ko ? 1 : 0);
