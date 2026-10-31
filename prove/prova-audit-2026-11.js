@@ -2,8 +2,11 @@
 // pagina dopo il salvataggio (non il messaggio verde). Ogni controllo dice il numero del problema (P1, P2...).
 // Su un CMS installato con il kit Attività (prove/prova-kit.js ... attivita ...), in radice o in cartella. Accende da sé
 // Prenotazioni ed Eventi con iscrizione se sono spenti. Cambia dati veri: va su un sito da buttare.
-// uso: node prove/prova-audit-2026-11.js <base> <utente> <password>
+// Con CMS_DIR=<cartella del CMS installato> fa anche le prove che preparano dati da riga di comando (P15).
+// uso: [CMS_DIR=<cartella>] node prove/prova-audit-2026-11.js <base> <utente> <password>
 const { chromium } = require('playwright');
+const { execFileSync } = require('child_process');
+const path = require('path');
 const [B, U, P] = process.argv.slice(2);
 if (!B || !P) { console.error('uso: node prove/prova-audit-2026-11.js <base> <utente> <password>'); process.exit(2); }
 let n = 0, ko = 0; const ok = (t, c, x = '') => { n++; if (!c) ko++; console.log((c ? 'OK  ' : 'KO  ') + t + (x !== '' ? ' ' + JSON.stringify(x).slice(0, 300) : '')); };
@@ -190,6 +193,20 @@ const CARTELLA = new URL(B).pathname.replace(/\/$/, '');
   ok('P13 utenti: un nome mostrato di 270 caratteri si salva (tagliato a 200), senza SQLSTATE', !/SQLSTATE/.test(f13) && nomeDopo.startsWith('Nome lunghissimo') && nomeDopo.length <= 200, f13);
   await a.fill('[name=display_name]', nomePrima);
   await Promise.all([a.waitForNavigation(), a.locator('form:has([name=display_name]) button.btn-primary').first().click()]);
+
+  // ---------------------------------------------------------------- P15: l'oggetto di una campagna inviata, con un'emoji
+  if (process.env.CMS_DIR) {
+    const nl = (...x) => JSON.parse(execFileSync('php', [path.join(__dirname, 'newsletter-cli.php'), process.env.CMS_DIR, 'sql', ...x], { encoding: 'utf8' }).trim() || 'null');
+    // Come la salva il pannello (newsletter_4byte_dentro): l'emoji come entità.
+    nl("INSERT INTO {p}newsletter_campagne (oggetto, corpo, liste, stato, invio_at, creato, aggiornato) VALUES ('Audit novità &#x1F389;', '<p>x</p>', '1', 'inviata', NOW(), NOW(), NOW())");
+    await vai('index.php');
+    const dash = await a.locator('main').innerText();
+    ok('P15 dashboard: "Ultima" campagna con l\'emoji, non "&#x1F389;"', dash.includes('Audit novità ' + FESTA) && !dash.includes('&#x1F389;'), (dash.match(/Ultima:[^\n]*/) || [''])[0]);
+    await vai('newsletter-statistiche.php');
+    const st = await a.locator('main').innerText();
+    ok('P15 statistiche: l\'oggetto con l\'emoji', st.includes('Audit novità ' + FESTA) && !st.includes('&#x1F389;'));
+    nl("DELETE FROM {p}newsletter_campagne WHERE oggetto = 'Audit novità &#x1F389;'");
+  } else console.log('--  P15 saltata: serve CMS_DIR');
 
   ok('nessun errore JavaScript', err.length === 0, err);
   await br.close();
