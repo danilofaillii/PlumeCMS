@@ -5,7 +5,8 @@
 // categoria. Poi il form dei Contatti con i campi Ora e File: file buono accettato e allegato all'avviso, .php rinominato
 // .pdf rifiutato, file troppo grande rifiutato, scarico dal pannello solo per l'amministratore, file mai pubblico, file
 // cancellato con l'invio e con "Cancella dati". Alla fine il form torna com'era.
-// Prima: un sito installato con il kit Attività (prova-kit.js), una categoria "notizie" con l'articolo di benvenuto,
+// Prima: un sito installato con il kit Attività (prova-kit.js), una categoria "notizie" con l'articolo di benvenuto e una
+//   categoria "ricette" (anche vuota),
 //   php prove/pagina-widget-2-1.php <cartella CMS> nuovi      e il server di posta finto:
 //   python3 -I prove/smtp-finto.py <porta smtp> <cartella posta>
 // uso: node prove/prova-widget-2-1.js <base> <cartella CMS> <utente> <password> <porta smtp> <cartella posta>
