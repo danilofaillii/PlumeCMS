@@ -159,24 +159,13 @@ require_once __DIR__ . '/includes/admin-header.php';
   });
   quill.clipboard.dangerouslyPasteHTML(<?= json_encode((string)$c['corpo'], JSON_HEX_TAG | JSON_HEX_AMP | JSON_UNESCAPED_UNICODE) ?>);
 
-  // Le immagini vanno sul server, non dentro l'email: si caricano e si inserisce il loro indirizzo.
+  // Le immagini vanno sul server, non dentro l'email: si sceglie dai Media (o si carica dalla stessa finestra, in
+  // newsletter-immagine.php, senza WebP) e si inserisce l'indirizzo completo, quello che serve ai programmi di posta (2.1.0).
   function carica() {
-    var input = document.createElement('input');
-    input.type = 'file'; input.accept = 'image/png,image/jpeg,image/gif,image/webp';
-    input.onchange = function () {
-      var dati = new FormData();
-      dati.append('immagine', input.files[0]);
-      dati.append('_csrf', document.querySelector('#nl-form input[name=_csrf]').value);
-      fetch('newsletter-immagine.php', { method: 'POST', body: dati, credentials: 'same-origin' })
-        .then(function (r) { return r.json(); })
-        .then(function (j) {
-          if (!j.url) { alert(j.errore || 'Caricamento non riuscito.'); return; }
-          var r = quill.getSelection(true);
-          quill.insertEmbed(r.index, 'image', j.url, 'user');
-        })
-        .catch(function () { alert('Caricamento non riuscito.'); });
-    };
-    input.click();
+    var r = quill.getSelection(true);
+    window.pnMedia.apri({ titolo: 'Un\'immagine per l\'email', carica: 'newsletter-immagine.php', assoluto: true,
+      accetta: 'image/png,image/jpeg,image/gif,image/webp',
+      scegli: function (u) { quill.insertEmbed(r ? r.index : quill.getLength(), 'image', u, 'user'); } });
   }
 
   document.getElementById('nl-form').addEventListener('submit', function () {

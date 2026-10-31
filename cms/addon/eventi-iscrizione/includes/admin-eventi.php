@@ -78,7 +78,7 @@ if ($e): ?>
     <label>Luogo<input name="luogo" maxlength="200" value="<?= h((string)$e['luogo']) ?>" placeholder="In negozio"></label>
     <label>Indirizzo<input name="indirizzo" maxlength="255" value="<?= h((string)$e['indirizzo']) ?>" placeholder="Via Rizzoli 1, Bologna"></label>
     <label>Prezzo (facoltativo)<input name="prezzo" maxlength="60" value="<?= h((string)$e['prezzo']) ?>" placeholder="15 € a persona"></label>
-    <label>Foto (indirizzo)<input name="foto" maxlength="500" value="<?= h((string)$e['foto']) ?>" placeholder="/uploads/2026/11/serata.jpg"><span class="pa-aiuto">In Media, apri la foto e copia il suo indirizzo.</span></label>
+    <label class="pa-largo">Foto<input name="foto" id="ev-foto" maxlength="500" value="<?= h((string)$e['foto']) ?>" placeholder="/uploads/2026/11/serata.jpg" data-immagine><span class="pa-aiuto">Scegli dai Media apre la libreria: scegli la foto o caricane una nuova.</span></label>
     <label class="pa-largo">Descrizione<textarea name="descrizione" rows="6" maxlength="6000" placeholder="Cosa succede, per chi è, cosa portare."><?= h((string)$e['descrizione']) ?></textarea><span class="pa-aiuto">Testo semplice: una riga vuota fa un paragrafo nuovo.</span></label>
     <label>Posti in tutto<input type="number" name="posti" min="0" max="100000" value="<?= (int)$e['posti'] ?>"><span class="pa-aiuto">0 = senza limite.</span></label>
     <label>Posti al massimo per persona<input type="number" name="max_persona" min="1" max="50" value="<?= (int)$e['max_persona'] ?>"><span class="pa-aiuto">Chi si iscrive può portare qualcuno: per esempio 4.</span></label>

@@ -15,8 +15,8 @@ Dentro il prodotto: includes/, admin/, sito/, api/, share/, install/, assets/css
 README.md, INSTALLA.md, i due manuali in docs/, un .htaccess per la radice del dominio, le cartelle vuote uploads/,
 logs/, aggiornamenti/, moduli/. Fuori: moduli/danilofailli/, config.local.php, sql/, data/, test/, test-definizioni/,
 privato/, le immagini degli articoli, i file ponte (shim) che rimandano al modulo, i vecchi file di radice del publisher.
-Il programma rifiuta il pacchetto se dentro c'è un carattere a 4 byte, la parola "newdf_" fuori da cms.php e db.php,
-o un riferimento a danilofailli nel codice del nucleo.
+Il programma rifiuta il pacchetto per un errore di sintassi PHP, la parola "newdf_" fuori da cms.php e db.php o un riferimento
+a danilofailli nel codice del nucleo; per un carattere a 4 byte dà solo un avviso.
 """
 import io, json, os, re, shutil, subprocess, sys, zipfile
 

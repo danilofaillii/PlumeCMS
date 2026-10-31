@@ -1,7 +1,7 @@
 # SEO e AEO: il pannello
 
 Voce di menu **SEO e AEO** (solo amministratore). Motore in `includes/seo.php`, pagina `admin/seo.php`,
-chiamate `admin/seo-api.php`, tabelle in `sql/seo.sql` (le crea da sola `seo_installa()` al primo uso).
+chiamate `admin/seo-api.php`, tabelle create dal codice (`seo_schema_tabelle()` e `seo_installa()` in `includes/seo.php`, al primo uso): la cartella `sql/` nel prodotto non c'è.
 Impostazioni in `<prefisso>settings`: `seo_config` (JSON di tutto), `seo_indexnow_chiave`, `seo_google_sa`
 (la chiave del service account, mai mostrata), `seo_google_token` (cache del token).
 

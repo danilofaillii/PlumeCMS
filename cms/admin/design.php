@@ -129,7 +129,7 @@ function dg_immagine(string $percorso, string $val, string $etichetta, string $a
     return '<div class="dg-campo dg-immagine"><label>' . h($etichetta) . '</label><div class="dg-riga">'
         . '<img class="dg-miniatura" src="' . h($val) . '" alt=""' . ($val === '' ? ' hidden' : '') . '>'
         . '<input type="text" name="' . dg_nome($percorso) . '" value="' . h($val) . '" placeholder="Nessuna immagine" autocomplete="off">'
-        . '<button type="button" class="btn btn-secondary btn-sm dg-scegli">Scegli</button><button type="button" class="dg-x" title="Togli l\'immagine">×</button></div>' . dg_aiuto($aiuto) . '</div>';
+        . '<button type="button" class="btn btn-secondary btn-sm dg-scegli">Scegli dai Media</button><button type="button" class="dg-x" title="Togli l\'immagine" aria-label="Togli l\'immagine"' . ($val === '' ? ' hidden' : '') . '>×</button></div>' . dg_aiuto($aiuto) . '</div>';
 }
 
 /** Tre caselle, una per misura: desktop, tablet, telefono. */
@@ -353,12 +353,6 @@ require_once __DIR__ . '/includes/admin-header.php';
 <template id="dg-tpl-colore"><?= dg_riga_colore('__I__', ['id' => '', 'nome' => '', 'valore' => '#ffffff']) ?></template>
 <template id="dg-tpl-font"><?= dg_riga_font('__I__', ['id' => '', 'nome' => ''] + design_tipografia_vuota(['famiglia' => 'Inter'])) ?></template>
 
-<dialog id="dg-media" class="dg-dialogo">
-  <h3>Scegli un'immagine</h3>
-  <div class="dg-media-filtri"><input type="search" id="dg-media-cerca" placeholder="Cerca nel nome…"><span id="dg-media-conta" class="dg-aiuto"></span></div>
-  <div class="dg-media-griglia" id="dg-media-griglia"></div>
-  <div class="dg-dialogo-azioni"><button type="button" class="btn btn-secondary" data-chiudi>Chiudi</button></div>
-</dialog>
 
 <script id="dg-dati" type="application/json"><?= str_replace('</', '<\/', json_encode(['globali' => $globali, 'tablet' => (int)$l['tablet'], 'telefono' => (int)$l['telefono'], 'famiglieCss' => $globali['famiglie_css']], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES)) ?></script>
 <script src="<?= pannello_file('assets/design.js') ?>"></script>

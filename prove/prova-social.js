@@ -19,11 +19,19 @@ const leggi = (f) => fs.readFileSync(path.join(POSTA, f), 'utf8');
 // L'oggetto arriva codificato (=?UTF-8?B?...?=): lo si rimette in chiaro.
 const oggetto = (eml) => { const m = /^Subject: (.*)$/m.exec(eml); return m ? m[1].replace(/=\?UTF-8\?B\?([^?]+)\?=/g, (_, b) => Buffer.from(b, 'base64').toString('utf8')) : ''; };
 // Il corpo può essere in quoted-printable o in base64.
+// 2.1.0: con più parti (multipart, ognuna con la sua codifica: posta.php dalla d448b55) si decodifica la parte HTML.
 const corpo = (eml) => {
+  const b = /boundary="?([^";\r\n]+)"?/i.exec(eml);
+  if (b) {
+    // Si guarda la parte HTML (quella che si vede nel programma di posta); senza, tutte le parti.
+    const parti = eml.split('--' + b[1]).slice(1).filter(p => p.trim() !== '--' && p.trim() !== '');
+    const html = parti.filter(p => /^\s*Content-Type: (text\/html|multipart)/im.test(p.slice(0, 300)));
+    return (html.length ? html : parti).map(corpo).join('\n');
+  }
   const i = eml.indexOf('\r\n\r\n') > 0 ? eml.indexOf('\r\n\r\n') : eml.indexOf('\n\n');
   let c = eml.slice(i).trim();
-  if (/Content-Transfer-Encoding: base64/i.test(eml)) { try { c = Buffer.from(c.replace(/\s+/g, ''), 'base64').toString('utf8'); } catch (e) { } }
-  else if (/quoted-printable/i.test(eml)) c = c.replace(/=\r?\n/g, '').replace(/=([0-9A-F]{2})/g, (_, h) => String.fromCharCode(parseInt(h, 16)));
+  if (/Content-Transfer-Encoding: base64/i.test(eml.slice(0, i))) { try { c = Buffer.from(c.replace(/\s+/g, ''), 'base64').toString('utf8'); } catch (e) { } }
+  else if (/quoted-printable/i.test(eml.slice(0, i))) c = c.replace(/=\r?\n/g, '').replace(/=([0-9A-F]{2})/g, (_, h) => String.fromCharCode(parseInt(h, 16)));
   return c;
 };
 
@@ -63,7 +71,7 @@ const corpo = (eml) => {
   ok('la scheda ha il riquadro Social', await p.locator('#social textarea[name=social_testo]').count() === 1);
   await p.fill('[name=data]', oggi); await p.fill('[name=ora]', '07:30');
   await p.fill('[name=categoria_nuova]', 'Avvisi');
-  await p.click('button:has-text("Scegli l\'immagine")'); await p.setInputFiles('#sc-media-file', FOTO);
+  await p.click('#sc-immagine-scegli'); await p.setInputFiles('dialog.pn-media input[type=file]', FOTO);
   await p.waitForFunction(() => !document.querySelector('#sc-immagine-anteprima').hidden);
   await p.fill('[name=social_testo]', 'Si comincia \u{1F31E} oggi. <script>alert(1)</script>');
   await p.locator('#social details summary').click();

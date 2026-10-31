@@ -95,7 +95,7 @@ require CMS_ADMIN . '/includes/admin-header.php';
       <label for="co-slug">Indirizzo</label><input type="text" id="co-slug" name="slug" value="<?= h($corso['slug']) ?>" maxlength="100" pattern="[a-z0-9\-]+">
       <p class="hint">Il corso si apre da <code>/corsi/<?= h($corso['slug']) ?>/</code>. Solo minuscole, numeri e trattini.</p>
       <label for="co-descrizione">Descrizione</label><textarea id="co-descrizione" name="descrizione" rows="4" maxlength="3000"><?= h((string)$corso['descrizione']) ?></textarea>
-      <label for="co-immagine">Immagine (facoltativa)</label><input type="text" id="co-immagine" name="immagine" value="<?= h($corso['immagine']) ?>" maxlength="500" placeholder="/uploads/... (copiala da Media)">
+      <label for="co-immagine">Immagine (facoltativa)</label><input type="text" id="co-immagine" name="immagine" value="<?= h($corso['immagine']) ?>" maxlength="500" placeholder="/uploads/..." data-immagine>
       <fieldset class="co-acc" style="border:0;padding:0;margin:.8rem 0"><legend style="font-weight:600">Chi può seguirlo</legend>
         <?php foreach (CORSI_ACCESSI as $k => $et): ?><label><input type="radio" name="accesso" value="<?= h($k) ?>"<?= $corso['accesso'] === $k ? ' checked' : '' ?>> <?= h($et) ?></label><?php endforeach; ?>
       </fieldset>

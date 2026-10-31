@@ -1,6 +1,6 @@
 # plumeCMS: manuale tecnico
 
-Versione del manuale: 1.20, per plumeCMS 1.10.0 (30 ottobre 2026).
+Versione del manuale: 1.21, per plumeCMS 2.0.3 e le novità della 2.1.0 (31 ottobre 2026).
 
 Questo manuale descrive come è fatto plumeCMS e come funziona, pezzo per pezzo. È scritto leggendo il codice:
 ogni numero, limite e nome di funzione viene dai file veri, con il riferimento `file:riga` quando serve a chi
@@ -46,6 +46,9 @@ pagine, gestire il sito) c'è il manuale d'uso, `docs/manuale-uso.md`, con le sc
 29. Il sito su misura (dalla 1.7.0)
 30. La frase in fondo al sito e il banner del sito ufficiale (dalla 1.8.0)
 31. I widget per le attività (dalla 1.10.0)
+32. Gli addon (dalla 2.0.0)
+33. File riservati e il file dato dai form (dalla 2.0.0)
+34. Scegli dai Media, immagine social e pannello al telefono (dalla 2.0.0; Scegli dai Media dappertutto dalla 2.1.0)
 
 Appendice A. Dove i documenti vecchi non corrispondono al codice
 
@@ -2028,7 +2031,7 @@ attesa.
 Due trappole già pagate:
 - un apostrofo dentro un commento `/* */` di un file SQL fa fallire lo spezzatore delle istruzioni;
 - un pacchetto che porta un motore nuovo e insieme usa le sue voci nuove lo applica il motore vecchio: servono
-  due pacchetti, prima il codice e poi il resto.
+  due pacchetti, prima il codice e poi il resto. `tools/consegna.py` lo controlla da solo (19.8).
 
 ### 19.2 Dove si può scrivere
 
@@ -2132,6 +2135,49 @@ l'amministratore, ogni azione in POST con il token CSRF.
 - La pagina dice in un riquadro che la copia contiene dati sensibili e che la password del database non c'è.
 
 ---
+
+### 19.8 Il pacchetto unico della consegna (dalla 2.1.0)
+
+Regola di Danilo del 31 ottobre 2026: un file solo per aggiornamento. `tools/consegna.py` unisce in **un pacchetto** il codice
+del CMS (le voci di `plumecms-<V>-aggiornamento.zip`) e il sito di plumeCMS (le voci di `sito-plumecms-<V>.zip`: pagine,
+stile, header e footer, menu, nome del sito, immagini, e in Download gli zip del CMS e i manuali). Scrive
+`releases/consegna/plumecms-<V>-pacchetto-unico.zip` e lo zip da dare a Danilo, `plumecms-<V>-consegna.zip`.
+
+**Come si uniscono.**
+- I file dei due pacchetti finiscono sotto `cms/` e `sito/` dentro lo zip (`prefissa()`); le destinazioni (`a`) restano
+  quelle di prima: `new/...` per il codice, `uploads/...` per il sito.
+- Il manifest unito (`unisci()`) ha `file` (prima il CMS, poi il sito), `elimina` (i due elenchi), `redirect`, e dal sito
+  `impostazioni`, `editor`, `editor_ambiti`, `pagine`, `azioni` (`sito-pagine-e-stile`). Due file con la stessa destinazione
+  fermano la costruzione.
+- Lo scrive `tools/pacchetto.py`, con tutti i suoi controlli (destinazioni, sintassi PHP di ogni file con `short_open_tag`
+  acceso, JSON delle pagine, azioni); con `PACCHETTO_CHIAVE` nell'ambiente esce firmato.
+
+**Perché funziona con il motore installato.** Il pacchetto lo applica il motore che c'è già sul sito (`agg_applica()`,
+`includes/aggiornamenti.php:595`):
+- il manifest usa solo voci che `agg_leggi_manifest()` (`:136`) conosce dalla 1.2.3 e solo azioni di `AGG_AZIONI` (`:26`):
+  `consegna.py` lo controlla (`VOCI_NOTE`, `AZIONI_NOTE`) e si ferma se ne trova altre;
+- l'ordine di `agg_applica()` fa il resto: prima tutti i file (`:633`), il codice nuovo e i file del Download; poi elimina;
+  poi impostazioni, stile, menu e pagine (`:694`); infine i redirect (`:700`);
+- impostazioni, stile e pagine li importa il codice **di prima**: `sito.php` è caricato in cima al motore (`:20`) e
+  `editor-opzioni.php` quando il manifest si legge (`:226`), cioè prima che i file nuovi si scrivano. Le pagine del sito di
+  plumeCMS devono quindi essere leggibili anche dall'editor della versione installata, come per le parti di prima.
+
+**Quando servono due pacchetti.** Se `includes/aggiornamenti.php` è diverso da quello dell'ultima versione in
+`releases/cms` (`motore_cambiato()`; `--prima X.Y.Z` per sceglierla), o con `--due`, escono `plumecms-<V>-1-cms.zip` (l'aggiornamento
+così com'è) e `plumecms-<V>-2-sito.zip` (il sito), e il LEGGIMI dice l'ordine. Senza una versione di prima in `releases/cms`
+il confronto non si può fare: due pacchetti anche allora.
+
+**`--senza-pagine`**: il pacchetto porta il CMS e i file del Download, ma non `impostazioni`, `editor`, `pagine` (pagine,
+stile e menu del sito restano come sono).
+
+**Cosa contiene la consegna**: il pacchetto unico (o i due), `cms/plumecms-<V>.zip` (lo zip completo per un sito nuovo),
+`manuali/manuale-uso.pdf` e `manuali/manuale-temi.pdf`, `LEGGIMI.txt`. L'aggiornamento semplice per gli altri siti è dentro il
+pacchetto unico, nel Download del sito ufficiale (`/scarica/plumecms-ultima-aggiornamento/`). Il pacchetto unico pesa
+circa 13 MB: serve un server che accetti caricamenti di quella misura (quello di Danilo dal 31 ottobre 2026).
+
+**Prove** (31 ottobre 2026, costruito in una copia del repository con la versione finta 2.0.9): `prove/prova-consegna-unica.js`
+13 su 13, con dentro `prove/prova-sito-plumecms.js` 85 su 85 (87 su 87 con il blocco Scegli dai Media del sito, provato sul 2.0.3 nuovo), su un 2.0.3 nuovo e su un 2.0.3 con le cinque parti del sito della
+2.0.0 già applicate; dopo, `prove/prova-scegli-media.js` 112 su 112 sul sito aggiornato.
 
 ## 20. Cron
 
@@ -2272,15 +2318,20 @@ righe `--` e senza caratteri a 4 byte, articoli, test).
 
 ### 23.4 `tools/manuali-pdf.js`
 
-`node tools/manuali-pdf.js` scrive `releases/manuali/manuale-uso.pdf` (dalla 1.4.2), `manuale-tecnico.pdf` e `manuale-temi.pdf`: pandoc converte il
+`node tools/manuali-pdf.js` scrive `releases/manuali/manuale-uso.pdf` (dalla 1.4.2) e `manuale-temi.pdf` (il manuale tecnico non si stampa più dalla 1.6.4): pandoc converte il
 Markdown, Chromium (Playwright) stampa il PDF A4 con copertina, indice cliccabile e numeri di pagina. Carattere Carlito e
 niente tag di accessibilità nel PDF: con i tag e il carattere Inter (variabile) il manuale tecnico pesava 2,1 MB, così 0,9. Si rifà a ogni
 versione, dopo aver aggiornato i manuali.
 
 Il manuale d'uso ha le schermate: la pagina si apre da un file scritto accanto al Markdown (`docs/.stampa-<nome>.html`,
 tolto subito dopo), così `immagini/manuale-uso/...` si trova; ogni immagine sola in un paragrafo diventa una figura con
-la didascalia (il testo alternativo); le checklist (`- [ ]`) diventano caselle. Il PDF deve restare sotto 1900 KB
-(il limite delle parti del sito di plumeCMS): oggi 1,8 MB.
+la didascalia (il testo alternativo); le checklist (`- [ ]`) diventano caselle.
+
+Peso. Fino alla 2.0.3 il PDF doveva restare sotto 1900 KB (il limite delle parti del sito di plumeCMS) e dalla 2.0.0 il
+manuale d'uso usciva in due file (`manuale-uso.pdf` e `manuale-uso-addon.pdf`, la Parte seconda). Dalla 2.1.0 è di nuovo
+**un PDF solo**, Parte prima e Parte seconda insieme, con un tetto di 8 MB (`MAX_KB` in `tools/manuali-pdf.js`: sopra, la
+costruzione finisce con un errore). Oggi 6,9 MB, 133 pagine; il manuale dei temi 557 KB. Lo script toglie dalla cartella di
+uscita un vecchio `manuale-uso-addon.pdf`, così non si consegna per sbaglio.
 
 **`tools/manuale-uso-schermate.js` (1.4.2).** Le schermate del manuale d'uso. Esegue gli esempi del manuale come una
 persona, su un plumeCMS appena installato con il kit Attività (`prove/prova-kit.js ... attivita ...`), e fotografa ogni
@@ -2288,8 +2339,10 @@ passo con i pallini rossi numerati: scrive l'articolo "Chiusi per ferie" nell'ed
 programma un altro, costruisce la pagina "Lavora con noi" (sezione a due colonne, immagine, elenco, pulsante, sezione
 pronta, form), la mette nel menu, compone il riquadro in fondo agli articoli (1.6.0), crea un form, un popup, una campagna, un utente, un download. Se un passo non si può
 fare, si ferma: il manuale e il pannello restano d'accordo. `node tools/manuale-uso-schermate.js <base> <utente>
-<password> [capitolo]`. Le foto nascono PNG in `/tmp/manuale-uso-png` e diventano JPEG una volta sola (760 px, qualità
-34) in `docs/immagini/manuale-uso/`; `--stringi` rifà solo la conversione. Le foto d'esempio (disegnate, niente foto di
+<password> [capitolo]`. Le foto nascono PNG in `/tmp/manuale-uso-png` e diventano JPEG una volta sola in
+`docs/immagini/manuale-uso/` (`stringi()`, costanti `LARGO` e `QUALITA`): dalla 2.1.0 a 1200 px e qualità 65 (circa 180 punti
+per pollice sui 17 cm della pagina, le scritte piccole si leggono), prima 760 px e qualità 25; `--stringi` rifà solo la
+conversione. Le foto d'esempio (disegnate, niente foto di
 terzi) e il report dell'import da WordPress (dalla prova contro un WordPress vero) stanno in `esempi/manuale-uso/`.
 Le immagini non entrano nello zip del CMS (solo il Markdown, in `docs/`).
 
@@ -2297,9 +2350,10 @@ Le immagini non entrano nello zip del CMS (solo il Markdown, in `docs/`).
 
 Il sito da cui si scarica plumeCMS, fatto con plumeCMS. Il costruttore scrive le pagine (home, funzionalità, temi,
 documentazione, installazione, scarica, domande frequenti) come alberi dell'editor, lo stile, header, footer e menu, e
-mette insieme i file da scaricare: i due zip del CMS, i due PDF, il tema Lavagna. Il risultato sono più pacchetti
-per Impostazioni > Aggiornamenti, `releases/sito/sito-plumecms-<versione>-parte-<k>-di-<n>.zip`, da caricare in ordine:
-la parte 1 porta pagine, stile, menu e immagini, le altre i file da scaricare.
+mette insieme i file da scaricare: i due zip del CMS, i due PDF, il tema Lavagna. Dalla 2.1.0 il risultato è **un
+pacchetto solo** per Impostazioni > Aggiornamenti, `releases/sito/sito-plumecms-<versione>.zip` (circa 11 MB), che di solito
+non si carica da solo: `tools/consegna.py` lo unisce all'aggiornamento del CMS (19.8). Il pacchetto toglie dal Download il
+vecchio `manuale-uso-addon.pdf` e mette il redirect `/scarica/manuale-uso-addon/` -> `/scarica/manuale-uso/`.
 
 Ordine, a ogni versione: `python3 tools/cms-pacchetto.py --aggiornamento`, `node tools/manuali-pdf.js`,
 `python3 sito-plumecms/costruisci.py`. Dalla 1.2.5 le pagine non scrivono il numero di versione: usano
@@ -2315,9 +2369,11 @@ su un plumeCMS appena estratto e mai installato con un database vuoto, installa 
 (`installa-1.png` ... `installa-5.png`); nelle foto server, database, indirizzo e cartella diventano quelli d'esempio
 di `tuosito.it`. I testi delle novità per chi scarica sono in `NOVITA`, dentro il costruttore.
 
-Ogni parte resta sotto 1900 KB (`--max-kb` per cambiarlo), perché molti hosting non accettano caricamenti più grandi di 2 MB
-(`upload_max_filesize` e `post_max_size`, mostrati nei Controlli della pagina Aggiornamenti): un pacchetto unico da 5 MB
-è stato rifiutato dal primo server vero, il 27 ottobre 2026.
+Fino alla 2.0.3 il pacchetto si divideva in parti sotto 1900 KB, perché molti hosting non accettano caricamenti più grandi di
+2 MB (`upload_max_filesize` e `post_max_size`, mostrati nei Controlli della pagina Aggiornamenti): un pacchetto da 5 MB è stato
+rifiutato dal primo server vero, il 27 ottobre 2026. Il 31 ottobre 2026 Danilo ha alzato il limite del suo hosting: dalla 2.1.0
+`MAX_KB` vale 200000 e tutto sta in un pacchetto (`dividi_e_costruisci()` mette tutto nella prima parte quando ci sta).
+`--max-kb 1900` rifà le parti piccole, `sito-plumecms-<versione>-parte-<k>-di-<n>.zip`, per un server che accetta file piccoli.
 
 ### 23.3 `tools/sicurezza-prova.js`
 
@@ -2348,7 +2404,7 @@ Istruzioni in `prove/LEGGIMI.md`. Le principali:
 | `prova-temi-partenza.js` | ogni tema di partenza: pagine, menu nell'header, contrasto del testo, nessun errore |
 | `prova-carica-temi.js` | caricare e scaricare temi da zip, con e senza PHP, firmati e no |
 | `prova-download.js` | download manager: caricamenti buoni e cattivi, widget, conteggio, eliminazione |
-| `prova-sito-plumecms.js` | il pacchetto del sito di plumeCMS applicato dal pannello, poi ogni pagina e ogni file da scaricare |
+| `prova-sito-plumecms.js` | il pacchetto del sito di plumeCMS (dalla 2.1.0 anche il pacchetto unico) applicato dal pannello, poi ogni pagina e ogni file da scaricare |
 | `prova-hero.js` | le undici disposizioni dell'Apertura al computer e al telefono: un solo h1, niente scorrimento orizzontale, foto caricate, contrasto di titolo e testo, pulsanti visibili (pagine create da `pagina-hero.php`) |
 | `prova-foto-effetti.js` | sezione Foto di Apertura e Presentazione e interruttore dell'onda, dall'editor al sito |
 | `prova-aggiornamento.js` | aggiornare dal pannello con il pacchetto del prodotto |
@@ -2366,6 +2422,8 @@ Istruzioni in `prove/LEGGIMI.md`. Le principali:
 | `prova-favicon.js` | (1.4.0) l'icona di partenza e quella dello Stile, in radice e in cartella |
 | `prova-fine-articolo.js` | (1.6.0) Aggiungi sempre alla fine: linguetta, crea, editor, pubblica, spegni e accendi, il riquadro sotto gli articoli del sito (28) |
 | `prova-riquadri.js` | (1.4.0) Riquadri e Pulsante fisso: posizione e allineamento dall'editor al sito (`pagina-riquadri.php`) |
+| `prova-scegli-media.js` | (2.1.0) Scegli dai Media su ogni campo immagine: cerca, sceglie, carica, salva, X, tastiera, 130 immagini a pagine, telefono (34) |
+| `prova-consegna-unica.js` | (2.1.0) la consegna con il pacchetto unico: contenuto, manifest, applicato dal pannello con `prova-sito-plumecms.js`, pannello aggiornato (19.8) |
 | `foto-sito.js`, `quanto-foto.py` | schermate prima e dopo, confrontate al pixel |
 | `router-php-s.php` | router per `php -S` che imita l'`.htaccess` |
 | `tema-cli.php` | attiva, disattiva, ripristina lo stile da riga di comando, per le prove |
@@ -3098,11 +3156,63 @@ contenitori, 9.12).
 
 **Prove:** `prove/prova-omaggio.js` (27, con `prove/omaggio-cli.php`), gruppo 27 di `tools/sicurezza-prova.js` (23 attacchi).
 
-## 34. Immagine social e pannello al telefono (dalla 2.0.0)
+## 34. Scegli dai Media, immagine social e pannello al telefono (dalla 2.0.0; Scegli dai Media dappertutto dalla 2.1.0)
 
-**Scegli dai Media.**
-- Un pulsante con `data-scegli-media="#id"` apre la libreria dei Media (`admin/assets/pannello.js`, un solo `<dialog>`, elenco da `editor-api.php` azione `media`) e scrive l'indirizzo nel campo.
-- Oggi è su SEO e AEO > Globale SEO, accanto all'immagine social (`#seo-og-immagine`).
+**Scegli dai Media** (2.0.0 sulla sola immagine social; dalla 2.1.0 su ogni campo immagine del pannello fuori dall'editor
+visuale, che ha la sua finestra). Una finestra sola per tutto il pannello, in `admin/assets/pannello.js` (dalla riga 133),
+stili `.pn-media` e `.pn-immagine` in `admin/assets/css/admin.css:363`.
+
+*Il campo.* Un `<input type="text" data-immagine>` diventa, al caricamento della pagina (`preparaCampo()`, `pannello.js:353`):
+miniatura (`.pn-immagine-mini`, 44 px; vuota con l'icona, "!" se l'indirizzo non si apre), la casella, il pulsante
+**Scegli dai Media** (`data-scegli-media="#id"`) e la X (`.pn-immagine-x`, nascosta col campo vuoto). Il campo riceve un id se
+non ce l'ha. Scrivere a mano aggiorna la miniatura dopo 300 ms; scegliere o togliere manda `input` e `change`
+(`scriviCampo()`, `:340`), così le pagine che ascoltano il campo se ne accorgono. Pulsanti e X vanno a capo insieme
+(`.pn-immagine-azioni`). Attributi facoltativi del campo: `data-immagine-carica="pagina.php"` (dove si caricano i file nuovi)
+e `data-immagine-assoluto` (l'indirizzo esce completo, con `https://` e il dominio). `window.pnMedia.prepara(elemento)`
+prepara i campi aggiunti dopo.
+
+*Dove.* SEO e AEO > Globale SEO, immagine social (`admin/seo.php:508`); Schema, logo e immagine dell'organizzazione (`:568`,
+`:569`) e foto della persona (`:582`); Social > Calendario, le due immagini (`admin/social.php:155`, `:156`); Popup
+(`admin/popup.php:62`); Corsi, immagine del corso (`addon/corsi/includes/admin-corso.php:84`); Eventi, foto
+(`addon/eventi-iscrizione/includes/admin-eventi.php:71`). Usano la stessa finestra con il loro aspetto: la scheda dei contenuti
+(immagine in evidenza e "+ Immagine" nel testo, `window.scMedia()` in `admin/assets/contenuto.js:140`, al posto del dialogo
+`#sc-media` di prima), Stile del sito (logo, favicon, sfondo: `admin/assets/design.js:191`, al posto di `#dg-media`), la
+Vetrina (sotto). Le immagini delle campagne della newsletter: il pulsante immagine dell'editor (Quill) apre la finestra
+(`admin/newsletter-campagna.php:164`) con `assoluto` (le email vogliono indirizzi completi), `carica:
+'newsletter-immagine.php'` (cartella `newsletter/`, senza WebP) e solo PNG, JPEG, GIF, WebP; prima apriva solo la scelta del
+file dal computer. Nessun campo immagine in Impostazioni (la frase in fondo al sito ha testo e indirizzo, non un'immagine),
+Membri, Recensioni, Prenotazioni, Statistiche, Copia altrove.
+
+*La Vetrina* ha un elenco di foto, non un campo: il pulsante `data-scegli-media-lista="#vt-foto"`
+`data-scegli-media-modello="#vt-foto-modello"` (`addon/vetrina/includes/admin-prodotto.php:88`) aggiunge a `#vt-foto` una copia
+del `<template>`, con l'indirizzo negli elementi `[data-url-src]` (src) e `[data-url-valore]` (value): foto, `foto[]`,
+Principale, Togli, come le foto già salvate. Il server tiene solo gli indirizzi di `uploads/` (`vt_foto_ammessa()`).
+
+*La finestra* (`mediaApri()`, `pannello.js:321`; da codice `window.pnMedia.apri({scegli, attuale, carica, assoluto, accetta,
+titolo})`):
+- un solo `<dialog>` per pagina, creato al primo uso; ogni apertura riparte senza ricerca, con tutte le cartelle;
+- le immagini da `editor-api.php` azione `media`, **60 per volta**, cercate (`q`, nel percorso) e filtrate per cartella dal
+  server (`mediaPagina()`, `:247`); la ricerca parte 250 ms dopo l'ultimo tasto e annulla la richiesta di prima
+  (`AbortController`); le pagine dopo arrivano scorrendo (`IntersectionObserver` sul fondo, `:219`) o con "Mostra altre
+  immagini"; il conto dice "60 di 171 immagini". Dalla 2.1.0 l'azione `media` dà anche il peso (`admin/editor-api.php:202`);
+- ogni immagine è un pulsante con nome, peso e cartella, `loading="lazy"`; quella già nel campo è segnata
+  (`.pn-media-scelta`, `aria-current`);
+- **Carica un'immagine** (`mediaCarica()`, `:292`): `XMLHttpRequest` con la barra di avanzamento, a `editor-api.php` azione
+  `carica` (`media_carica()`, cartella `pagine/AAAA/MM/`) o all'indirizzo dato; il file trascinato sulla finestra si carica
+  uguale; l'immagine caricata si sceglie subito. Gli errori del server (formato, peso, limite del server, 413) si leggono
+  nella riga di stato (`role="status"`);
+- "Oppure usa un indirizzo": una casella per un indirizzo scritto a mano;
+- tastiera: si apre con il fuoco sulla ricerca; freccia giù porta alla griglia, una sola fermata di Tab (tabindex mobile,
+  `fuoco()`, `:225`), frecce, Home, Fine, Pagina su e giù per muoversi, Invio sceglie; Esc o il clic sullo sfondo chiudono e
+  il fuoco torna al pulsante che ha aperto;
+- sotto 640 px la finestra prende tutto lo schermo (`100dvh`), la griglia ha colonne da 100 px e scorre da sola.
+
+Il token CSRF per le chiamate sta in `<meta name="pn-csrf">` (`admin/includes/admin-header.php:109`), così la finestra
+funziona anche nelle pagine senza un form. L'API resta quella dell'editor: `require_login()`, quindi anche il redattore
+(che gestisce i media) sceglie e carica.
+
+**Prove**: `prove/prova-scegli-media.js` (112: ogni campo, carica, salva e ricarica, X, scheda, Stile del sito, newsletter,
+Vetrina, tastiera, 130 immagini a pagine, cartelle, indirizzo a mano, telefono), `prove/prova-pannello-telefono.js`.
 
 **og:image.**
 - `vista_pagina()` (`sito/viste.php:66`) rende intero un indirizzo che comincia con `/`, con lo schema, l'host e la porta di `cms_url_sito()`. Mai l'host della richiesta: un'intestazione Host falsa non entra nella pagina.
@@ -3124,32 +3234,25 @@ contenitori, 9.12).
 
 ## Appendice A. Dove i documenti vecchi non corrispondono al codice
 
-Alcuni documenti di `docs/` sono nati quando il CMS era il pannello di un solo sito, e in qualche punto sono
-rimasti indietro. In questi casi vale il codice, ed è quello che dice questo manuale.
+I documenti di `docs-sviluppo/` (fino alla 1.6.4 in `docs/`) sono nati quando il CMS era il pannello di un solo sito.
+Il 31 ottobre 2026 sono stati allineati al codice in tutti i punti che questa appendice elencava: versioni dell'editor nella
+tabella `editor_versioni` (`editor-pagine.md`, `contenuti.md`, `header-footer-menu.md`), widget HTML del redattore, colori,
+link e widget registrati con `editor_registra_widget()` (`editor-pagine.md`), caricamenti in `uploads/pagine/AAAA/MM/` con
+AVIF e SVG, voci del gruppo Editor (`stile-sito.md`, `header-footer-menu.md`), CSS personalizzato ripulito
+(`stile-sito.md`), aperture e clic contati (`newsletter.md`), tabelle create dal codice (`seo.md`), niente `sincronizza` né
+Rank Math (`aggiornamenti.md`), sito servito anche in una cartella e `CMS_BASE` scritto dall'installatore (`cms.md`), e i
+rimandi ai documenti spostati in `docs-sviluppo/`. Le citazioni di `includes/editor-articoli.php`, di `share/` e delle voci
+Aforismi, Test e Social copy erano già sparite.
+
+Se un documento vecchio dice ancora una cosa diversa da questo manuale, vale il manuale: va aggiunta qui una riga.
 
 | Documento | Cosa dice | Cosa fa il codice |
 |---|---|---|
-| `editor-pagine.md`, `contenuti.md`, `header-footer-menu.md` | revisioni dell'editor in `pagine_revisioni`, ultime 30 | tabella `editor_versioni`, 50 per oggetto, da 5 a 500 (capitolo 13) |
-| `editor-pagine.md` | il widget HTML passa com'è | per chi non è amministratore diventa testo |
-| `editor-pagine.md` | colori solo esadecimali o rgb | anche hsl, `transparent`, `globale:`, `ig:` |
-| `editor-pagine.md` | widget nuovi con un `case` in `editor_disegna_widget()` | `editor_registra_widget()` (9.8) |
-| `editor-pagine.md` | caricamenti in `wp-content/uploads/pagine`, JPG PNG GIF WebP | `uploads/pagine/AAAA/MM/`, anche AVIF e SVG ripulito |
-| `editor-pagine.md` | cita `includes/editor-articoli.php` | il file non c'è nel nucleo |
-| `stile-sito.md`, `header-footer-menu.md` | voci sotto "Pagine" | sono nel gruppo Editor |
-| `stile-sito.md` | il CSS personalizzato passa intero | passa da `sicurezza_css_pulisci`, fino a 60000 caratteri |
-| `newsletter.md` | aperture e clic non si contano | si contano (15.5) |
-| `seo.md`, `header-footer-menu.md` | citano file SQL in `sql/` | le tabelle si creano dal codice, `sql/` non c'è |
-| `aggiornamenti.md` | sincronizzazione WordPress, chiave `sincronizza`, redirect di Rank Math | il motore non li legge; i redirect vanno nella tabella `redirect` |
-| `cms.md` | `index.php` serve il sito solo nella radice | lo serve anche in una cartella (caso b del capitolo 5), con un 302 negli altri casi |
-| `cms.md` | `CMS_BASE` solo se il rilevamento sbaglia | l'installatore lo scrive sempre quando l'indirizzo ha una cartella |
-| `cms.md` | cita la cartella `share/` | non c'è nel prodotto |
-| `pannello.md` | voci Aforismi, Test, Social copy | compaiono solo con il modulo del primo sito |
 
-Piccole incoerenze interne del codice, innocue, da sistemare:
-- il commento di `admin/includes/admin-header.php` dice che il redattore vede il Log cron, ma `cron-log.php` è solo
-  per amministratori: per il redattore il gruppo Impostazioni non c'è;
-- il commento della chiave `rotte` del manifest in `includes/cms.php`: nessun codice la legge;
-- `tools/cms-pacchetto.py` dice di rifiutare i caratteri a 4 byte, ma dà solo un avviso;
-- il commento di `includes/aggiornamenti.php` parla del rapporto di compressione: il codice controlla solo le
-  dimensioni;
-- l'evento `upload_rifiutato` del registro esiste ma nessuno lo scrive.
+Nel codice, sistemati lo stesso giorno: il commento di `admin/includes/admin-header.php` sul Log cron del redattore,
+quello della chiave `rotte` in `includes/cms.php`, la descrizione di `tools/cms-pacchetto.py` (per i caratteri a 4 byte un
+avviso, non un rifiuto). Restano:
+- il commento di `includes/aggiornamenti.php:144` parla del rapporto di compressione, ma il codice controlla solo le
+  dimensioni (200 MB per file, 600 MB in tutto). Non si tocca da solo: cambiare il motore dei pacchetti, anche in un commento,
+  costringe `tools/consegna.py` a dare due pacchetti (19.8); va sistemato insieme alla prossima modifica vera del motore;
+- l'evento `upload_rifiutato` del registro della sicurezza (`includes/sicurezza.php:213`) esiste ma nessuno lo scrive.

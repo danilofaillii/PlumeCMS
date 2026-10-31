@@ -9,8 +9,10 @@ Prima di lanciarlo:
 
 uso: python3 sito-plumecms/costruisci.py [--schermate <cartella di png>] [--max-kb <KB>]
   --schermate rifà le immagini di sito-plumecms/immagini/ dalle schermate (vedi schermate.js).
-  --max-kb    il peso massimo di ogni parte (predefinito 1900: sotto i 2 MB, il limite predefinito di PHP).
-Scrive releases/sito/sito-plumecms-<versione>-parte-<k>-di-<n>.zip: si caricano in ordine, dopo il CMS.
+  --max-kb    il peso massimo di ogni parte (dal 2.1.0 predefinito 200000 KB: un pacchetto solo). Con un limite basso,
+              per un server che accetta file piccoli, il pacchetto si divide in parti come prima della 2.1.0.
+Scrive releases/sito/sito-plumecms-<versione>.zip (con --max-kb basso: ...-parte-<k>-di-<n>.zip, da caricare in ordine).
+Di solito non si carica da solo: tools/consegna.py lo unisce all'aggiornamento del CMS in un pacchetto unico.
 
 Il pacchetto, applicato a un plumeCMS: nome e descrizioni del sito, Stile del sito, header e footer (predefiniti),
 menu Principale e Piede, le pagine home, funzionalita, temi, documentazione, installazione, scarica,
@@ -247,6 +249,10 @@ def funzionalita():
           '<li><strong>Area riservata</strong> e <strong>Corsi online</strong>: pagine e file per chi ha un account, lezioni, avanzamento e certificato.</li>'
           '<li><strong>Copia del sito altrove</strong>: ogni notte la copia del sito su FTP o WebDAV.</li></ul>',
           'Sono in <strong>beta</strong> dalla 2.0.0: provati a fondo, aspettano i siti veri. Se trovi qualcosa che non va, dimmelo.']),
+        ('scegli-media', 'scegli-media.webp', 'Scegli dai Media, da ogni pagina del pannello',
+         ['Dove il pannello chiede un\'immagine (il logo, l\'immagine per i social, la foto di un popup, di un evento, di un corso, di un prodotto) accanto alla casella c\'è <strong>Scegli dai Media</strong>, con la miniatura dell\'immagine scelta e la X per toglierla. Niente più indirizzi da copiare da una pagina all\'altra.',
+          'Si apre la tua libreria: cerchi per nome, filtri per cartella, scorri anche fra centinaia di immagini (arrivano un po\' alla volta, mentre scorri). Manca la foto? <strong>Carica un\'immagine</strong> dalla stessa finestra, o trascinala sopra: entra in Media e nella casella in un colpo solo.',
+          'Si usa anche con la tastiera e sul telefono, dove la finestra prende tutto lo schermo.']),
         ('fine-articolo', 'fine-articolo.webp', 'Un riquadro in fondo a ogni articolo',
          ['Chi arriva alla fine di un articolo è il lettore più interessato che hai. In Articoli, la linguetta <strong>Aggiungi sempre alla fine</strong>: prepari una volta sola un riquadro che esce sotto ogni articolo, anche sotto quelli già pubblicati. Un invito alla newsletter, un contatto, una prenotazione, un libro da consigliare.',
           'Lo componi con l\'editor visuale, come una pagina: titoli, testi, foto, pulsanti. Esce quando premi Pubblica, con l\'ombra, il bordo e i colori del tuo sito e del tema.',
@@ -312,12 +318,10 @@ def temi():
 def documentazione(pagine_pdf):
     p = Pagina('documentazione')
     p.sezione([[titolo('I manuali, *da leggere anche offline.*', 'Documentazione',
-                       'Due manuali in PDF. Uno per usare plumeCMS, con le schermate vere (in due file: il secondo è per gli addon); uno per costruirti il tuo tema.',
+                       'Due manuali in PDF. Uno per usare plumeCMS, con le schermate vere e un capitolo per ogni addon; uno per costruirti il tuo tema.',
                        livello='h1', centro=True)]], larghezza='stretta', **spazi(72, 24))
     man = [('lista-spunte', 'Manuale d\'uso', pagine_pdf['manuale-uso'], 'manuale-uso',
-            'Come si fa ogni cosa: articoli, pagine con l\'editor, menu, form, newsletter, sicurezza, aggiornamenti. Ogni capitolo ha un esempio vero, le schermate con i passi numerati e una checklist.'),
-           ('puzzle', 'Manuale d\'uso: gli addon', pagine_pdf['manuale-uso-addon'], 'manuale-uso-addon',
-            'La seconda parte del manuale d\'uso (dalla 2.0.0): prenotazioni, eventi, recensioni, negozio, statistiche, area riservata, corsi, copia del sito altrove. Un capitolo per addon, con l\'esempio e i limiti della beta.'),
+            'Come si fa ogni cosa: articoli, pagine con l\'editor, menu, form, newsletter, sicurezza, aggiornamenti. Nella seconda parte gli otto addon: prenotazioni, eventi, recensioni, negozio, statistiche, area riservata, corsi, copia del sito altrove. Ogni capitolo ha un esempio vero, le schermate con i passi numerati e una checklist.'),
            ('tavolozza', 'Manuale dei temi', pagine_pdf['manuale-temi'], 'manuale-temi',
             'Come si costruisce un tema da zero: cartella, colori, header e footer, CSS, infografiche, PHP, prove, distribuzione. Con il tema d\'esempio Lavagna.')]
     p.sezione([[w('invito_libero', icona=ic, titolo=n, livello='h2', testo=f'{d} {pag} pagine.', pulsante_testo='Scarica il PDF',
@@ -429,8 +433,7 @@ def scarica(note):
                 w('download', origine='scelti', disposizione='elenco', mostra_versione=False, voci=[
                     {'file': SERIE, 'titolo': 'plumeCMS {versione}', 'descrizione': 'Lo zip completo per un sito nuovo: estrai, carica sul server, apri il browser.'},
                     {'file': SERIE_AGG, 'titolo': 'plumeCMS {versione}, aggiornamento', 'descrizione': 'Per chi ha già plumeCMS: si carica da Impostazioni, Aggiornamenti.'},
-                    {'file': 'manuale-uso', 'titolo': 'Manuale d\'uso', 'descrizione': 'Come si fa ogni cosa, con esempi, schermate e checklist.'},
-                    {'file': 'manuale-uso-addon', 'titolo': 'Manuale d\'uso: gli addon', 'descrizione': 'La seconda parte del manuale: un capitolo per ognuno degli otto addon.'},
+                    {'file': 'manuale-uso', 'titolo': 'Manuale d\'uso', 'descrizione': 'Come si fa ogni cosa, con esempi, schermate e checklist. Con un capitolo per ognuno degli otto addon.'},
                     {'file': 'manuale-temi', 'titolo': 'Manuale dei temi', 'descrizione': 'Come si costruisce un tema da zero.'},
                     {'file': 'tema-lavagna', 'titolo': 'Tema Lavagna', 'descrizione': 'Il tema d\'esempio del manuale: verde ardesia e testo color gesso.'}])]],
               larghezza='stretta', **spazi(16, 64))
@@ -480,7 +483,7 @@ def faq():
         ('Posso far prenotare un appuntamento dal sito?', 'Sì, con l\'addon Prenotazioni e appuntamenti. Scrivi i servizi, chi li fa e i suoi orari: chi visita sceglie fra i posti davvero liberi, riceve la conferma per email e il promemoria il giorno prima. Tu vedi tutto nell\'agenda del pannello.'),
         ('Posso vendere i miei prodotti?', 'Sì, con l\'addon Vetrina prodotti: catalogo, varianti, carrello e ordini che arrivano per email e nel pannello. Il pagamento è con bonifico, alla consegna o con il tuo link PayPal.me o Stripe: per ora non c\'è il pagamento con carta direttamente sul sito.'),
         ('Posso dare un ebook a chi si iscrive?', 'Sì. In Download carichi il file con la spunta Riservato; nel form, in Dopo l\'invio, scegli "Dopo la conferma, dai questo file". Chi compila riceve l\'email di conferma e, appena conferma, il link personale per scaricarlo. Il file non ha un indirizzo pubblico.'),
-        ('C\'è una guida per imparare a usarlo?', 'Sì: il manuale d\'uso, in PDF, in due file (il secondo è per gli addon). Quaranta capitoli, dal primo accesso alla checklist prima di andare online, ognuno con un esempio vero, le schermate con i passi numerati e una checklist per sapere quando hai finito.'),
+        ('C\'è una guida per imparare a usarlo?', 'Sì: il manuale d\'uso, in PDF, in un file solo con le schermate nitide. Quaranta capitoli, dal primo accesso alla checklist prima di andare online, ognuno con un esempio vero, le schermate con i passi numerati e una checklist per sapere quando hai finito.'),
         ('Posso costruirmi un tema mio?', 'Sì: c\'è un manuale apposta, con un tema d\'esempio completo da smontare e rifare tuo.'),
     ]
     p.sezione([[w('faq', voci=[{'domanda': d, 'risposta': r} for d, r in voci], prima_aperta=True)]], larghezza='stretta', **spazi(24, 56))
@@ -566,7 +569,7 @@ def editor_json():
 
 
 # ------------------------------------------------------------------ file
-USATE = ['copertina', 'addon', 'su-misura', 'firma', 'widget-attivita', 'social', 'fine-articolo', 'importa-wp', 'tipo-sito', 'primi-passi', 'aspetti', 'controlla-server', 'sezioni', 'copia', 'installa-1', 'installa-2', 'installa-3', 'installa-4', 'installa-5', 'editor-ritratto', 'editor', 'aperture', 'stile', 'modelli', 'versioni', 'seo', 'flussi', 'download', 'sicurezza', 'aggiornamenti', 'temi',
+USATE = ['copertina', 'scegli-media', 'addon', 'su-misura', 'firma', 'widget-attivita', 'social', 'fine-articolo', 'importa-wp', 'tipo-sito', 'primi-passi', 'aspetti', 'controlla-server', 'sezioni', 'copia', 'installa-1', 'installa-2', 'installa-3', 'installa-4', 'installa-5', 'editor-ritratto', 'editor', 'aperture', 'stile', 'modelli', 'versioni', 'seo', 'flussi', 'download', 'sicurezza', 'aggiornamenti', 'temi',
          'tema-cosmo', 'tema-aria', 'tema-bottega']
 
 
@@ -612,6 +615,8 @@ def zip_lavagna(dest):
 
 # Le novità per chi scarica: brevi, scritte qui (il CHANGELOG è per chi sviluppa). Da aggiornare a ogni versione.
 NOVITA = [
+    ('2.1.0', 'Scegli dai Media dappertutto', ['Ogni campo immagine del pannello ha Scegli dai Media, con la miniatura e la X: SEO, social, popup, newsletter, Stile del sito, eventi, corsi, vetrina. Dalla stessa finestra si cerca, si scorre fra centinaia di immagini e se ne carica una nuova.',
+                                               'Il manuale d\'uso torna un PDF solo, con le schermate più nitide; gli aggiornamenti del sito arrivano in un pacchetto unico.']),
     ('2.0.3', 'L\'immagine per i social', ['La testa delle pagine dice dell\'immagine per i social tutto quello che LinkedIn, Facebook e X si aspettano: indirizzo pulito, misure, tipo, versione sicura.']),
     ('2.0.2', 'I link scritti a mano', ['Un pulsante con il link scritto senza https:// o senza la barra (www.sito.it, contatti) ora porta alla pagina giusta: prima puntava a "#".']),
     ('2.0.1', 'Il pannello al telefono', ['Nessuna pagina del pannello scorre più di lato sul telefono: le tabelle scorrono nel loro riquadro, filtri e schede vanno a capo.']),
@@ -687,7 +692,7 @@ def main():
     if '--schermate' in sys.argv:
         immagini_da_schermate(sys.argv[sys.argv.index('--schermate') + 1])
     zips = {n: os.path.join(REL, 'cms', n + '.zip') for n in (ZIP, ZIP_AGG)}
-    pdf = {n: os.path.join(REL, 'manuali', n + '.pdf') for n in ('manuale-uso', 'manuale-uso-addon', 'manuale-temi')}
+    pdf = {n: os.path.join(REL, 'manuali', n + '.pdf') for n in ('manuale-uso', 'manuale-temi')}  # 2.1.0: niente più manuale-uso-addon
     for n, f in list(zips.items()) + list(pdf.items()):
         if not os.path.exists(f):
             errore(f'manca {f}: prima python3 tools/cms-pacchetto.py --aggiornamento e node tools/manuali-pdf.js')
@@ -741,10 +746,10 @@ def main():
     dividi_e_costruisci(out, manifest, MAX_KB)
 
 
-# Il limite di caricamento dei server: su Hostcare passa un pacchetto da 1,2 MB e non uno da 5 (27 ottobre 2026); il
-# predefinito di PHP e 2 MB (upload_max_filesize = 2M), quindi ogni parte resta sotto 1900 KB. Con --max-kb si cambia
-# (per esempio --max-kb 60000 per un pacchetto solo, su un server che accetta file grandi).
-MAX_KB = 1900
+# Il limite di caricamento dei server: su Hostcare passava un pacchetto da 1,2 MB e non uno da 5 (27 ottobre 2026), e fino
+# alla 2.0.3 ogni parte restava sotto 1900 KB. Il 31 ottobre 2026 Danilo ha alzato il limite del suo hosting e ha chiesto un
+# file solo per aggiornamento: dalla 2.1.0 il predefinito è un pacchetto solo. --max-kb 1900 rifà le parti piccole.
+MAX_KB = 200000
 
 
 def dividi_e_costruisci(out, manifest, max_kb):
@@ -757,8 +762,10 @@ def dividi_e_costruisci(out, manifest, max_kb):
     base = sum(os.path.getsize(os.path.join(out, p)) for p in manifest['pagine'] + [manifest['editor']]) // 4096 + 8  # JSON: si comprime circa 4 a 1
     piccoli = sorted(manifest['file'], key=peso)
     prima, resto, occupato = [], [], base
+    # 2.1.0: se tutto sta sotto max_kb (il predefinito), un pacchetto solo con tutto dentro.
+    tutto = base + sum(map(peso, piccoli)) <= max_kb
     for v in piccoli:
-        if occupato + peso(v) <= max_kb and not v['da'].endswith(('.pdf',)) and not v['a'].startswith('uploads/scaricabili/plumecms-'):
+        if tutto or (occupato + peso(v) <= max_kb and not v['da'].endswith(('.pdf',)) and not v['a'].startswith('uploads/scaricabili/plumecms-')):
             prima.append(v); occupato += peso(v)
         else:
             resto.append(v)
@@ -778,12 +785,15 @@ def dividi_e_costruisci(out, manifest, max_kb):
         if os.path.isdir(cartella):
             shutil.rmtree(cartella)
         os.makedirs(cartella)
-        m = {'nome': f'Sito di plumeCMS ({V}), parte {k} di {totale}', 'creato': manifest['creato'], 'file': voci}
+        m = {'nome': f'Sito di plumeCMS ({V})' + (f', parte {k} di {totale}' if totale > 1 else ''), 'creato': manifest['creato'], 'file': voci}
         if k == 1:
             m.update({x: manifest[x] for x in ('descrizione', 'impostazioni', 'editor', 'editor_ambiti', 'pagine', 'azioni')})
-            m['note'] = manifest['note'] + f' Dopo questa parte vanno caricate le altre ({totale - 1}), in ordine: portano i file da scaricare.'
+            m['note'] = manifest['note'] + (f' Dopo questa parte vanno caricate le altre ({totale - 1}), in ordine: portano i file da scaricare.' if totale > 1 else '')
             # 1.6.4: il manuale tecnico non si offre più (decisione di Danilo): via dal Download del sito che lo aveva.
             m['elimina'] = ['uploads/scaricabili/manuale-tecnico.pdf']
+            # 2.1.0: il manuale d'uso è un PDF solo; il vecchio "manuale-uso-addon" sparisce e il suo indirizzo porta al manuale.
+            m['elimina'].append('uploads/scaricabili/manuale-uso-addon.pdf')
+            m['redirect'] = [{'da': '/scarica/manuale-uso-addon/', 'a': '/scarica/manuale-uso/'}]
             for x in manifest['pagine'] + [manifest['editor']]:
                 os.makedirs(os.path.dirname(os.path.join(cartella, x)) or cartella, exist_ok=True)
                 shutil.copy(os.path.join(out, x), os.path.join(cartella, x))
@@ -796,12 +806,12 @@ def dividi_e_costruisci(out, manifest, max_kb):
         # SITO_REV (30 ottobre 2026): le pagine del sito cambiano senza una versione nuova del CMS. Le parti nuove prendono un nome
         # diverso (sito-plumecms-1.10.0-r3-parte-...), così non si confondono con quelle già date.
         rev = re.sub(r'[^a-z0-9]', '', os.environ.get('SITO_REV', '').lower())
-        dest = os.path.join(REL, 'sito', f'sito-plumecms-{V}{"-" + rev if rev else ""}-parte-{k}-di-{totale}.zip')
+        dest = os.path.join(REL, 'sito', f'sito-plumecms-{V}{"-" + rev if rev else ""}' + (f'-parte-{k}-di-{totale}' if totale > 1 else '') + '.zip')
         subprocess.run([sys.executable, os.path.join(RADICE, 'tools', 'pacchetto.py'), cartella, dest], check=True)
         if os.path.getsize(dest) // 1024 > max_kb:
             errore(f'{dest} pesa {os.path.getsize(dest) // 1024} KB, oltre il limite di {max_kb} KB')
         elenco.append(dest)
-    print('\nDa caricare in questo ordine, dopo il CMS ' + V + ':')
+    print('\n' + ('Il pacchetto del sito' if len(elenco) == 1 else 'Da caricare in questo ordine') + ', dopo il CMS ' + V + ' (o dentro il pacchetto unico di tools/consegna.py):')
     for d in elenco:
         print(f'  {os.path.basename(d)}  ({os.path.getsize(d) // 1024} KB)')
 

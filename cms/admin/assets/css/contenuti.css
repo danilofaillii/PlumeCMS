@@ -97,21 +97,7 @@
 .te-piede{display:flex;justify-content:space-between;padding:.35rem .8rem;font-size:.74rem;color:var(--text-muted);border-top:1px solid var(--border);background:var(--bg)}
 .te-md{background:var(--mustard-light);border-bottom:1px solid var(--attenzione-bordo);padding:.5rem .8rem;font-size:.8rem;color:var(--attenzione-testo)}
 
-/* finestra immagini della scheda */
-.sc-media{border:0;border-radius:14px;padding:0;width:min(900px,94vw);box-shadow:var(--ombra-grande);font:inherit;background:var(--surface);color:var(--text)}
-.sc-media::backdrop{background:var(--velo)}
-.sc-media-dentro{padding:1.2rem}
-.sc-media h2{font-size:1.05rem;margin-bottom:.8rem}
-.sc-media-filtri{display:flex;gap:.5rem;align-items:center;flex-wrap:wrap;margin-bottom:.7rem}
-.sc-media-filtri input,.sc-media-filtri select{padding:.4rem .6rem;border:1px solid var(--border);border-radius:8px;font:inherit;font-size:.85rem;background:var(--campo);color:var(--text)}
-.sc-media-filtri input[type=search]{flex:1;min-width:160px}
-.sc-media-griglia{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:.5rem;max-height:52vh;overflow:auto}
-.sc-media-griglia button{border:2px solid transparent;border-radius:8px;padding:0;background:var(--fondo-2);aspect-ratio:1;overflow:hidden;cursor:pointer;position:relative}
-.sc-media-griglia button:hover{border-color:var(--coral)}
-.sc-media-griglia img{width:100%;height:100%;object-fit:cover;display:block}
-.sc-media-griglia span{position:absolute;left:0;right:0;bottom:0;background:rgba(0,0,0,.72);color:#fff;font-size:10px; /* fisso: etichetta sopra la foto */padding:3px 5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-align:left}
-.sc-media-pagine{display:flex;gap:.3rem;justify-content:center;margin-top:.6rem;flex-wrap:wrap}
-.sc-media-azioni{display:flex;justify-content:flex-end;gap:.5rem;padding:.8rem 1.2rem;border-top:1px solid var(--border)}
+/* 2.1.0: la finestra delle immagini della scheda è quella di tutto il pannello (pannello.js, .pn-media in admin.css) */
 /* 1.5.0: il riquadro Social della scheda */
 .sc-social-canali{margin-top:.6rem}
 .sc-social-canali summary{cursor:pointer;font-size:.84rem;font-weight:600;color:var(--accento-testo)}

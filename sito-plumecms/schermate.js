@@ -38,6 +38,11 @@ const [B, D, UTENTE, PASSWORD] = process.argv.slice(2);
     if (await p.locator('#ed-chiudi-revisioni').isVisible()) await p.click('#ed-chiudi-revisioni');
     await p.click('.ed-schede-pannello button[data-pannello="sezioni"]'); await p.waitForTimeout(600);
   });
+  // 2.1.0: Scegli dai Media, sulla scheda Schema della SEO, con il logo scelto e la finestra aperta.
+  await foto('scegli-media', '/admin/seo.php?scheda=schema', async () => {
+    await p.click('[data-scegli-media="#seo-org-logo"]');
+    await p.waitForSelector('dialog.pn-media[open] .pn-media-voce'); await p.waitForTimeout(900);
+  });
   await p.setViewportSize({ width: 1280, height: 800 });
   for (const t of ['cosmo', 'aria', 'bottega']) await foto('tema-' + t, `/?preview=1&tema=${t}`);
   await br.close();

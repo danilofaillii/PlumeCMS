@@ -78,15 +78,20 @@ $categorie = vt_categorie();
 
     <div class="form-card" style="margin-top:1rem">
       <h3>Foto</h3>
-      <?php if ($fotoOra): ?><div class="vt-a-fotolista" id="vt-foto">
+      <div class="vt-a-fotolista" id="vt-foto">
         <?php foreach ($fotoOra as $i => $f): if (!vt_foto_ammessa((string)$f)) continue; ?>
           <figure><img src="<?= h((string)$f) ?>" alt=""><input type="hidden" name="foto[]" value="<?= h((string)$f) ?>">
             <label class="vt-a-spunta"><input type="radio" name="principale" value="<?= h((string)$f) ?>"<?= $i === 0 ? ' checked' : '' ?>> Principale</label>
             <label class="vt-a-spunta"><input type="checkbox" name="togli_foto[]" value="<?= h((string)$f) ?>"> Togli</label></figure>
         <?php endforeach; ?>
-      </div><?php endif; ?>
-      <div class="form-group" style="margin-top:.8rem"><label for="vt-foto-nuove">Aggiungi foto (anche più di una insieme)</label><input type="file" id="vt-foto-nuove" name="foto_nuove[]" accept="image/jpeg,image/png,image/webp,image/gif,image/avif" multiple>
-        <p class="hint">JPG, PNG o WebP. La foto principale è quella della griglia e di Google. Le foto si alleggeriscono da sole e finiscono anche in Media.</p></div>
+      </div>
+      <?php // 2.1.0: una foto già in Media (o caricata dalla finestra) si aggiunge senza ricaricarla: pannello.js copia questo modello. ?>
+      <template id="vt-foto-modello"><figure><img data-url-src src="" alt=""><input type="hidden" name="foto[]" data-url-valore value="">
+        <label class="vt-a-spunta"><input type="radio" name="principale" data-url-valore value=""> Principale</label>
+        <label class="vt-a-spunta"><input type="checkbox" name="togli_foto[]" data-url-valore value=""> Togli</label></figure></template>
+      <div class="form-group" style="margin-top:.8rem"><button type="button" class="btn btn-secondary btn-sm" data-scegli-media-lista="#vt-foto" data-scegli-media-modello="#vt-foto-modello" data-scegli-media-titolo="Aggiungi una foto dai Media">Scegli dai Media</button></div>
+      <div class="form-group"><label for="vt-foto-nuove">Oppure carica dal computer (anche più di una insieme)</label><input type="file" id="vt-foto-nuove" name="foto_nuove[]" accept="image/jpeg,image/png,image/webp,image/gif,image/avif" multiple>
+        <p class="hint">JPG, PNG o WebP. La foto principale è quella della griglia e di Google. Le foto si alleggeriscono da sole e finiscono anche in Media; dai Media si possono aggiungere solo le immagini caricate (non quelle del pannello).</p></div>
     </div>
 
     <div class="form-card" style="margin-top:1rem">

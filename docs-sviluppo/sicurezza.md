@@ -55,7 +55,7 @@ Endpoint dei rapporti CSP: `api/csp.php`. Accesso dell'utente: `admin/account.ph
   I rapporti arrivano a `api/csp.php` e si leggono nella scheda Rapporti CSP. Nel pannello vale solo il nonce: nessun
   gestore in linea viene autorizzato con un hash.
 - **Ruoli** (dalla 1.1.2): il redattore apre solo le pagine dei contenuti, dei media, delle categorie e del suo accesso;
-  tutto il resto e dell'amministratore, controllato su ogni pagina e ogni azione. Tabella completa in `docs/pannello.md`.
+  tutto il resto e dell'amministratore, controllato su ogni pagina e ogni azione. Tabella completa in `docs-sviluppo/pannello.md`.
 - **Export CSV**: le celle che un foglio di calcolo leggerebbe come formula prendono un apice davanti.
 - **Contenuti costruiti dall'editor**: il testo ricco e i contenuti passano da un sanificatore su parser DOM (niente
   `<script>`, `on*`, `javascript:`, `data:` nei link); il widget HTML e il codice head/body sono solo

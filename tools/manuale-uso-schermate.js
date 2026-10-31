@@ -3,7 +3,7 @@
 // Serve un plumeCMS appena installato con il kit Attività (prove/prova-kit.js ... attivita ...), utente prova.
 // uso: [CMS_DIR_MANUALE=<cartella del sito delle schermate>] [SU_MISURA_BASE=<un sito su misura, stesso utente>] node tools/manuale-uso-schermate.js <base> <utente> <password> [solo un capitolo, es. 04]
 // Senza SU_MISURA_BASE mancano le due foto del sito su misura (02-su-misura-home, 07-sostituisci).
-// Scrive cms/docs/immagini/manuale-uso/<capitolo>-<nome>.jpg (JPEG: il PDF del manuale deve restare sotto 1900 KB).
+// Scrive cms/docs/immagini/manuale-uso/<capitolo>-<nome>.jpg (JPEG nitidi: dal 2.1.0 il manuale è un PDF solo, sotto 8 MB).
 // 2.0.0: i capitoli 31n (le novità della 2.0.0 nei capitoli di prima: file riservati, form che dà un file, Scegli dai Media) e 32-40 (la Parte seconda, gli addon) girano dopo tutti gli altri e vogliono il server di posta finto:
 //   python3 -I prove/smtp-finto.py <porta> <cartella> &   e   POSTA_MANUALE=<porta>:<cartella>
 // Per rifare solo alcuni capitoli, esattamente quelli: SOLO_CAPITOLI=31n,32,33 (le foto degli altri restano come sono).
@@ -75,8 +75,10 @@ async function apriEditor(u) {
   if (await p.locator('#ed-chiudi-revisioni').isVisible()) await p.click('#ed-chiudi-revisioni');
 }
 
-// Da PNG a JPEG, una volta sola: al massimo LARGO px (nel PDF sono 17 cm), qualità QUALITA. Il PDF deve stare sotto 1900 KB.
-const LARGO = 760, QUALITA = 25;
+// Da PNG a JPEG, una volta sola: al massimo LARGO px, qualità QUALITA. 2.1.0: il limite di 1900 KB non c'è più (Danilo ha alzato il
+// limite di caricamento del suo hosting): le foto restano larghe come sono fatte (1200 px, circa 180 punti per pollice sui 17 cm
+// del PDF) e a qualità 65, così si leggono anche le scritte piccole; il manuale intero (Parte prima e seconda) resta sotto 8 MB.
+const LARGO = 1200, QUALITA = 65;
 function stringi() {
   require('child_process').execFileSync('python3', ['-c', `
 import os, sys
@@ -179,7 +181,7 @@ capitoli['04'] = async () => {
   await p.fill('[name=categoria_nuova]', 'Avvisi');
   await p.fill('#sc-tag-nuovo', 'orari'); await p.keyboard.press('Enter');
   await p.click('button:has-text("Scegli l\'immagine")'); await dorme(400);
-  await p.setInputFiles('#sc-media-file', path.join(FOTO_PROVA, 'agosto.jpg'));
+  await p.setInputFiles('dialog.pn-media input[type=file]', path.join(FOTO_PROVA, 'agosto.jpg')); // 2.1.0: la finestra Scegli dai Media di tutto il pannello
   await p.waitForFunction(() => !document.querySelector('#sc-immagine-anteprima').hidden);
   await p.fill('[name=immagine_alt]', 'Il mare d\'agosto, con un ombrellone rosso');
   await dorme(500);

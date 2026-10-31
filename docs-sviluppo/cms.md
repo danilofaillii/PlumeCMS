@@ -25,15 +25,16 @@ Il nome del prodotto è **plumeCMS**: `CMS_NOME` in `includes/cms.php`, compare 
 ## Configurazione: `includes/config.local.php`
 
 Lo scrive l'installatore. Dentro: `DB_HOST`, `DB_NAME`, `DB_USER`, `DB_PASS`, `DB_CHARSET`, `CMS_PREFISSO`, `CMS_SEGRETO`,
-`CMS_FUSO`; a scelta `CMS_BASE` (se il rilevamento della sottocartella sbaglia), `CMS_UPLOADS` e `CMS_UPLOADS_URL` (immagini
+`CMS_FUSO`; `CMS_BASE` (l'installatore lo scrive sempre quando l'indirizzo del sito ha una cartella, dalla 1.1.7), `CMS_UPLOADS` e `CMS_UPLOADS_URL` (immagini
 altrove), `CMS_RADICE_SITO` (la radice del dominio per i pacchetti, quando il CMS sta in una sottocartella). Un modulo
 può dichiarare dove stanno le immagini (`uploads_url` fra le sue `impostazioni`).
 
 ## Radice o sottocartella
 
 `cms_base()` confronta `DOCUMENT_ROOT` con `cms_radice()`: `''` nella radice, `/cms` se il CMS sta in `/cms/`. Il sito la scrive
-in `<meta name="cms-base">` per i JS. `index.php` del CMS serve il sito se sta nella radice, altrimenti rimanda a `/` (il sito
-vive nella radice con `install/esempi/index-radice.php`). Nessun percorso assoluto nel codice: tutto parte da `cms_radice()`.
+in `<meta name="cms-base">` per i JS. `index.php` del CMS serve il sito quando sito e CMS stanno nella stessa cartella (`cms_sito_base() === cms_base()`: nella
+radice o tutti e due in `/test`), altrimenti rimanda al sito con un 302 senza cache (il sito nella radice con
+`install/esempi/index-radice.php`). I tre casi nel capitolo 5 del manuale tecnico (aggiornato al 31 ottobre 2026). Nessun percorso assoluto nel codice: tutto parte da `cms_radice()`.
 
 ## Prefisso delle tabelle
 
@@ -46,7 +47,7 @@ e lo scrive sempre). `db.php` lo copia in
 
 `cms_impostazione('chiave', $default)`: prima la tabella delle impostazioni, poi il valore dichiarato da un modulo
 (`impostazioni` nel manifesto), poi `$default`. Così un sito con un modulo prende i valori del modulo senza righe nuove nel
-database, e un'installazione nuova prende i valori scritti dall'installatore. L'elenco delle chiavi: `docs/cms-moduli.md`.
+database, e un'installazione nuova prende i valori scritti dall'installatore. L'elenco delle chiavi: `docs-sviluppo/cms-moduli.md`.
 
 ## Cosa resta da fare (26 ottobre 2026)
 

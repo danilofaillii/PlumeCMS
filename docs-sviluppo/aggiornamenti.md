@@ -17,7 +17,7 @@ caricamento di immagini in Media.
 3. **Guarda la barra.** Appena premi, compare una finestra scura con la
    barra che avanza e, sotto, la riga che dice cosa sta facendo il server in
    quel momento: lo snapshot, i file copiati uno a uno, il SQL istruzione
-   per istruzione, i redirect, gli articoli sincronizzati. Il tempo passato
+   per istruzione, le pagine, i redirect. Il tempo passato
    si vede in fondo. La stessa finestra compare su Ripristina, Carica e
    Snapshot. La pagina non va chiusa finché la barra non arriva in fondo.
 4. **Leggi il log.** Sotto il nome del pacchetto, "Log": una riga per ogni
@@ -48,13 +48,14 @@ nei file SQL.
   "sql": ["sql/01-pillar.sql", "sql/02-bozze.sql"],
   "file": [{"da": "file/x.png", "a": "uploads/contenuti/potatura/x.png"}],
   "redirect": [{"da": "/vecchio-slug/", "a": "/nuovo-slug/"}],
-  "sincronizza": [{"slug": "nuovo-slug", "aggiorna_data": true}],
   "note": "cosa controllare dopo"
 }
 ```
 
-Ordine di applicazione: snapshot, file, SQL nell'ordine dato, redirect,
-sincronizzazione WordPress. Ogni errore ferma tutto e ripristina.
+La voce `sincronizza` (spingere gli articoli su WordPress) non esiste più: il motore di oggi non la legge (aggiornato al
+31 ottobre 2026). L'elenco completo delle voci e l'ordine di applicazione di oggi stanno nel capitolo 19 del manuale
+tecnico: snapshot, schema, file, elimina, SQL, test, azioni, articoli, impostazioni, stile e menu, pagine, redirect. Ogni
+errore ferma tutto e ripristina.
 
 - **file**: `a` ammette tre radici. `uploads/` è la cartella delle immagini
   (`cms_uploads_dir()`), `new/` è la cartella del CMS (il nome è storico),
@@ -63,14 +64,8 @@ sincronizzazione WordPress. Ogni errore ferma tutto e ripristina.
 - **sql**: si eseguono con la connessione del publisher. Lo spezzatore
   tiene conto delle stringhe e toglie le righe `--`. Restano le regole:
   upsert, niente caratteri a 4 byte, `UPDATE` solo su righe che esistono.
-- **redirect**: scrive nella tabella di Rank Math, `df_rank_math_redirections`,
-  come 301 attivo. Se lo stesso indirizzo di partenza esiste già, aggiorna la
-  destinazione. Verificare a mano il primo redirect di ogni pacchetto:
-  Rank Math tiene una cache che si popola alla prima visita.
-- **sincronizza**: per ogni slug, se l'articolo ha già un post WordPress lo
-  aggiorna (titolo, testo, meta, categoria, tag; con `aggiorna_data` anche
-  la data del post); se non lo ha ed è pubblicabile lo crea con immagine in
-  evidenza; se è futuro non fa nulla e lo scrive nel log.
+- **redirect**: scrive nella tabella del CMS, `<prefisso>redirect` (`sito_salva_redirect()`, 301), non più in quella di
+  Rank Math. Se lo stesso indirizzo di partenza esiste già, aggiorna la destinazione.
 - **applica_dal**: se manca, il pacchetto si applica al primo clic. Se c'è,
   il cron delle 06:00 lo applica quel giorno; il pulsante "Applica ora"
   resta disponibile per anticipare.
@@ -114,6 +109,7 @@ WordPress, quindi decine per pacchetto.
 Le chiamate sono state tolte da `includes/wp-sync.php` e da
 `cron-publish-wp.php`. Dal PHP 8.0 non servono: la risorsa curl e un
 oggetto e viene liberata da sola.
+(Storia: `includes/wp-sync.php` e `cron-publish-wp.php` oggi non ci sono più nel prodotto, nota del 31 ottobre 2026.)
 
 Quegli avvisi facevano anche un secondo danno. Arrivando al browser durante
 il lavoro mandavano le intestazioni, e la `session_start()` che riapre la
@@ -141,15 +137,12 @@ La sessione si riapre solo se e davvero chiusa.
 Due voci nuove nel manifest. Dettagli in `sito-nuovo/ARCHITETTURA.md`.
 
 - **articoli**: elenco di file JSON, uno per articolo, con `pubblicazione` in formato `AAAA-MM-GGTHH:MM`. Il pannello li inserisce o li aggiorna per slug (`sito_importa_articolo()` in `includes/sito.php`). Lo stato `published` con una data futura vuol dire "esce da solo a quell'ora". Le emoji diventano entità HTML.
-- **contenuti**: un file JSON con articoli, pagine, glossario, categorie, tag e redirect. Serve una volta sola, per la migrazione da WordPress (`sito-nuovo/strumenti/pacchetto_migrazione.py`).
+- **contenuti** (la migrazione da WordPress, una volta sola) non c'è più nel motore di oggi: per portare un sito WordPress c'è
+  l'import dal pannello (capitolo 26 del manuale tecnico).
 
-Il motore si sceglie in Impostazioni, tab **Sito pubblico**, oppure lo accende il pacchetto con l'azione `attiva-sito-nuovo`:
-
-| | motore `wordpress` (oggi) | motore `php` (dopo il passaggio) |
-|---|---|---|
-| redirect | tabella `<prefisso>redirect` e Rank Math | solo `<prefisso>redirect` |
-| sincronizza | spinge su WordPress | saltato, lo scrive nel log |
-| cron delle 06:00 | `cron-publish-wp.php` | niente: il sito legge dal database e un articolo esce da solo alla sua ora |
+Il motore `wordpress` non c'è più: il sito legge sempre dal database (l'azione `attiva-sito-nuovo` è rimasta e non fa niente),
+i redirect vanno solo in `<prefisso>redirect`, un articolo esce da solo alla sua ora senza cron di pubblicazione. Aggiornato al
+31 ottobre 2026.
 
 Il sito nuovo legge dal database a ogni visita: un pacchetto applicato o un articolo salvato si vedono subito, senza ricostruzioni.
 
@@ -162,9 +155,15 @@ Il sito nuovo legge dal database a ogni visita: un pacchetto applicato o un arti
 - **Lo spezzatore SQL del motore** tiene conto delle stringhe fra apici anche dentro i commenti `/* */`: un apostrofo in un commento apre una stringa che non si chiude, e il file SQL fallisce (successo alla prima prova del 16). Nei commenti dei file SQL niente apostrofi e niente punti e virgola.
 - Un articolo con un `"tipo"` di un modulo (per esempio `"tipo": "ricetta"`) lo prende il modulo con il filtro `importa_contenuto` e finisce nella sua tabella.
 
-Ordine di applicazione aggiornato: snapshot, schema, file, SQL, contenuti, test, azioni, articoli, redirect, sincronizzazione WordPress.
+Ordine di applicazione di oggi (`agg_applica()`): snapshot, schema, file, elimina, SQL, test, azioni, articoli, impostazioni,
+stile e menu (`editor`), pagine, redirect.
 
 **Attenzione:** un pacchetto lo applica il motore già installato. Se un pacchetto porta un motore nuovo e insieme usa voci che solo quello nuovo conosce, quelle voci vengono saltate in silenzio. Si fanno due pacchetti: prima i file, poi le voci nuove.
+
+**Pacchetto unico (dalla 2.1.0).** La consegna a Danilo è un pacchetto solo, costruito da `tools/consegna.py`: il codice del CMS
+e il sito di plumeCMS (pagine, stile, menu, file del Download) in un manifest che usa solo voci note al motore installato. Se
+il motore cambia rispetto alla versione di prima, `consegna.py` fa da solo i due pacchetti. Dettagli nel capitolo 19.8 del
+manuale tecnico.
 
 
 ## Sicurezza dei pacchetti (dalla 1.1.0 e 1.1.1)
@@ -175,4 +174,4 @@ Ordine di applicazione aggiornato: snapshot, schema, file, SQL, contenuti, test,
 - Un file eseguibile (`.php` e simili) nella radice del sito (`root/`) entra solo con un pacchetto firmato, oppure durante
   la finestra di un'ora che l'amministratore apre con la sua password da Impostazioni, Sicurezza. Senza firma, in `root/`
   passano i file statici e il `.htaccess`. Vale per esempio per un pacchetto che scrive `root/index.php`.
-- Nomi con `..` o percorsi assoluti, file oltre 200 MB o pacchetti oltre 600 MB estratti: rifiutati. Guida in `docs/sicurezza.md`.
+- Nomi con `..` o percorsi assoluti, file oltre 200 MB o pacchetti oltre 600 MB estratti: rifiutati. Guida in `docs-sviluppo/sicurezza.md`.
