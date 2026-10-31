@@ -357,6 +357,24 @@ function agg_sql_val($v): string {
 }
 
 /**
+ * 2.1.0: le colonne generate di una tabella (GENERATED ALWAYS AS, per esempio email_attiva di Eventi e slot_attivo di
+ * Prenotazioni), come posizioni nell'ordine di SELECT *. In un INSERT accettano solo DEFAULT (errore MySQL 3105).
+ */
+function agg_colonne_generate(PDO $pdo, string $t): array {
+    $pos = [];
+    foreach ($pdo->query('SHOW COLUMNS FROM `' . str_replace('`', '``', $t) . '`')->fetchAll(PDO::FETCH_ASSOC) as $i => $c)
+        if (stripos((string)($c['Extra'] ?? ''), 'GENERATED') !== false) $pos[$i] = true;
+    return $pos;
+}
+
+/** Una riga per l'INSERT di un dump: i valori, DEFAULT al posto delle colonne generate. */
+function agg_riga_sql(array $row, array $generate): string {
+    $v = [];
+    foreach (array_values($row) as $i => $x) $v[] = isset($generate[$i]) ? 'DEFAULT' : agg_sql_val($x);
+    return '(' . implode(',', $v) . ')';
+}
+
+/**
  * Scrive tutto il database in un file .sql.gz, una istruzione per riga. Ritorna statistiche.
  * Con $prefisso (1.3.0, la copia del sito) solo le tabelle che cominciano con quel prefisso.
  */
@@ -375,11 +393,12 @@ function agg_dump_db(string $gzPath, string $prefisso = ''): array {
         gzwrite($gz, ($isView ? 'DROP VIEW IF EXISTS `' : 'DROP TABLE IF EXISTS `') . $t . "`;\n");
         gzwrite($gz, str_replace(["\r\n", "\n"], ' ', $create[1]) . ";\n");
         if ($isView) continue;
+        $gen = agg_colonne_generate($pdo, (string)$t);
         $pdo->setAttribute(agg_pdo_buffered_attr(), false);
         $st = $pdo->query('SELECT * FROM `' . $t . '`');
         $buf = ''; $n = 0;
         while ($row = $st->fetch(PDO::FETCH_NUM)) {
-            $vals = '(' . implode(',', array_map('agg_sql_val', $row)) . ')';
+            $vals = agg_riga_sql($row, $gen);
             $buf .= ($buf === '' ? 'INSERT INTO `' . $t . '` VALUES ' : ',') . $vals;
             $n++; $righe++;
             if (strlen($buf) > 400000) { gzwrite($gz, $buf . ";\n"); $buf = ''; }

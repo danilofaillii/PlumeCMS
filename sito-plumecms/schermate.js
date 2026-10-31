@@ -43,6 +43,17 @@ const [B, D, UTENTE, PASSWORD] = process.argv.slice(2);
     await p.click('[data-scegli-media="#seo-org-logo"]');
     await p.waitForSelector('dialog.pn-media[open] .pn-media-voce'); await p.waitForTimeout(900);
   });
+  // 2.1.0: Impostazioni > Consegna delle email, Da dove cominciare; i widget della 2.1 (menu del ristorante e galleria con
+  // filtri) sulla pagina /widget-2-1/ (prove/pagina-widget-2-1.php <cartella del sito> nuovi), solo la parte dei due widget.
+  await foto('consegna', '/admin/consegna.php');
+  await p.goto(B + '/widget-2-1/', { waitUntil: 'networkidle' }); await p.waitForTimeout(900);
+  {
+    const a = await p.locator('.ed-w-menu_ristorante').first().boundingBox();
+    const g = await p.locator('.ed-w-galleria_filtri').first().boundingBox();
+    const y0 = Math.max(0, a.y - 30), y1 = Math.min(a.y + 900, Math.max(a.y + a.height, g ? g.y + g.height : 0) + 30);
+    await p.screenshot({ path: `${D}/widget-2-1.png`, fullPage: true, clip: { x: 0, y: y0, width: 1440, height: Math.min(1400, y1 - y0) } });
+    console.log('widget-2-1');
+  }
   await p.setViewportSize({ width: 1280, height: 800 });
   for (const t of ['cosmo', 'aria', 'bottega']) await foto('tema-' + t, `/?preview=1&tema=${t}`);
   await br.close();

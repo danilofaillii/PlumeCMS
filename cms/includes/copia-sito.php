@@ -171,11 +171,12 @@ function copia_dump_db(string $gzPath, array $tabelle): array {
         $create = $pdo->query('SHOW CREATE TABLE `' . str_replace('`', '``', $t) . '`')->fetch(PDO::FETCH_NUM);
         gzwrite($gz, 'DROP TABLE IF EXISTS `' . $t . "`;\n");
         gzwrite($gz, str_replace(["\r\n", "\n"], ' ', (string)$create[1]) . ";\n");
+        $gen = agg_colonne_generate($pdo, $t); // 2.1.0: DEFAULT al posto delle colonne generate (Eventi, Prenotazioni)
         $pdo->setAttribute(agg_pdo_buffered_attr(), false);
         $st = $pdo->query('SELECT * FROM `' . str_replace('`', '``', $t) . '`');
         $buf = '';
         while ($row = $st->fetch(PDO::FETCH_NUM)) {
-            $buf .= ($buf === '' ? 'INSERT INTO `' . $t . '` VALUES ' : ',') . '(' . implode(',', array_map('agg_sql_val', $row)) . ')';
+            $buf .= ($buf === '' ? 'INSERT INTO `' . $t . '` VALUES ' : ',') . agg_riga_sql($row, $gen);
             $righe++;
             if (strlen($buf) > 400000) { gzwrite($gz, $buf . ";\n"); $buf = ''; }
         }

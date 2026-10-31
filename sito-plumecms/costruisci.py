@@ -150,12 +150,12 @@ def home():
                     {'titolo': 'Scrivi e pubblica', 'testo': 'Trascini sezioni, colonne e widget, guardi l\'anteprima, premi Pubblica. Se sbagli, torni indietro: ogni modifica resta nelle versioni.'}]),
                 pulsanti(('Guarda l\'installatore, passo per passo', '/installazione/#passi', 'filo'), centro=True)]],
               **spazi(48, 72))
-    p.sezione([[w('numeri', colonne={'d': 4, 't': 2, 'm': 2}, voci=[{'valore': '5', 'etichetta': 'passi per installarlo'}, {'valore': '87', 'etichetta': 'widget nell\'editor'},
+    p.sezione([[w('numeri', colonne={'d': 4, 't': 2, 'm': 2}, voci=[{'valore': '5', 'etichetta': 'passi per installarlo'}, {'valore': '92', 'etichetta': 'widget nell\'editor'},
                                   {'valore': '3', 'etichetta': 'temi pronti da indossare'}, {'valore': '0', 'etichetta': 'plugin da tenere aggiornati'}])]],
               **tinta(), **spazi(56, 56))
     # Le armi del viaggio: cosa c'è dentro.
     funzioni = [
-        ('pennello', 'Editor visuale', 'Sezioni, colonne e 87 widget, con le schede Contenuto, Stile e Avanzate per ogni elemento. Vedi quello che fai mentre lo fai.', '/funzionalita/#editor'),
+        ('pennello', 'Editor visuale', 'Sezioni, colonne e 92 widget, con le schede Contenuto, Stile e Avanzate per ogni elemento. Vedi quello che fai mentre lo fai.', '/funzionalita/#editor'),
         ('tavolozza', 'Temi', 'Tre temi pronti e un manuale per disegnarti il tuo. Il tema cambia l\'aspetto, mai i contenuti.', '/temi/'),
         ('storia', 'Versioni', 'Ogni salvataggio lascia una versione: la confronti, la guardi in anteprima, ci torni con un clic.', '/funzionalita/#versioni'),
         ('grafico-su', 'SEO e AEO', 'Sitemap, robots, dati strutturati, llms.txt, IndexNow e Search Console. Per Google e per le intelligenze artificiali.', '/funzionalita/#seo'),
@@ -185,7 +185,7 @@ def funzionalita():
     blocchi = [
         ('editor', 'editor.webp', 'L\'editor visuale: sezioni, colonne, widget',
          ['Costruisci le pagine trascinando sezioni, colonne e widget. Ogni elemento ha le sue tre schede, come negli editor che conosci: <strong>Contenuto</strong>, <strong>Stile</strong> e <strong>Avanzate</strong>.',
-          '<ul><li>87 widget: titoli, testi, immagini, pulsanti, gallerie, caroselli, prezzi, domande frequenti, contatori, mappe, orari di apertura, recensioni, eventi e 14 infografiche.</li>'
+          '<ul><li>92 widget: titoli, testi, immagini, pulsanti, gallerie, caroselli, prezzi, domande frequenti, contatori, mappe, orari di apertura, recensioni, eventi, menu del ristorante e 14 infografiche.</li>'
           '<li>Anteprima per computer, tablet e telefono, con valori diversi per ogni misura.</li>'
           '<li>Colori e caratteri globali: cambi il colore principale e cambia ovunque.</li>'
           '<li>Foto con velo, bianco e nero ed effetti animati, dalla 1.2.2.</li>'
@@ -241,18 +241,29 @@ def funzionalita():
           'E poi <strong>Prima e dopo</strong>, due foto con una linea da trascinare; la <strong>Squadra</strong>; lo <strong>Slider</strong>; gli <strong>Eventi</strong>, che spariscono da soli quando sono passati.']),
         ('addon', 'addon.webp', 'Gli addon: accendi solo quello che ti serve',
          ['In Impostazioni, <strong>Addon</strong>: otto funzioni in più, ognuna con il suo pulsante Accendi. Acceso, l\'addon mette le sue voci nel menu e i suoi widget nell\'editor. Spento, sparisce dal sito, e i suoi dati restano lì per quando lo riaccendi.',
-          '<ul><li><strong>Prenotazioni e appuntamenti</strong>: il calendario con i posti davvero liberi, la conferma per email e il promemoria il giorno prima.</li>'
+          '<ul><li><strong>Prenotazioni e appuntamenti</strong>: il calendario con i posti davvero liberi, la conferma per email con il file per il calendario e il promemoria il giorno prima. La prenotazione presa al telefono la scrivi tu dal pannello.</li>'
           '<li><strong>Eventi con iscrizione</strong>: posti limitati e lista d\'attesa che scorre da sola.</li>'
-          '<li><strong>Raccolta recensioni</strong>: "Com\'è andata?" dopo il servizio, e le recensioni che approvi vanno sul sito.</li>'
+          '<li><strong>Raccolta recensioni</strong>: "Com\'è andata?" dopo il servizio o dopo un evento, e le recensioni che approvi vanno sul sito.</li>'
           '<li><strong>Vetrina prodotti</strong>: catalogo, varianti, carrello e ordini, con bonifico, pagamento alla consegna o il tuo link PayPal o Stripe.</li>'
           '<li><strong>Statistiche senza cookie</strong>: visite e fonti, senza banner e senza Google Analytics.</li>'
-          '<li><strong>Area riservata</strong> e <strong>Corsi online</strong>: pagine e file per chi ha un account, lezioni, avanzamento e certificato.</li>'
-          '<li><strong>Copia del sito altrove</strong>: ogni notte la copia del sito su FTP o WebDAV.</li></ul>',
+          '<li><strong>Area riservata</strong> e <strong>Corsi online</strong>: pagine e file per chi ha un account (con la spunta "Solo per i membri" nella scheda), lezioni scritte con l\'editor visuale e messe in ordine trascinando, avanzamento e certificato.</li>'
+          '<li><strong>Copia del sito altrove</strong>: ogni notte la copia del sito su FTP, WebDAV, Google Drive o Dropbox.</li></ul>',
           'Sono in <strong>beta</strong> dalla 2.0.0: provati a fondo, aspettano i siti veri. Se trovi qualcosa che non va, dimmelo.']),
         ('scegli-media', 'scegli-media.webp', 'Scegli dai Media, da ogni pagina del pannello',
          ['Dove il pannello chiede un\'immagine (il logo, l\'immagine per i social, la foto di un popup, di un evento, di un corso, di un prodotto) accanto alla casella c\'è <strong>Scegli dai Media</strong>, con la miniatura dell\'immagine scelta e la X per toglierla. Niente più indirizzi da copiare da una pagina all\'altra.',
           'Si apre la tua libreria: cerchi per nome, filtri per cartella, scorri anche fra centinaia di immagini (arrivano un po\' alla volta, mentre scorri). Manca la foto? <strong>Carica un\'immagine</strong> dalla stessa finestra, o trascinala sopra: entra in Media e nella casella in un colpo solo.',
           'Si usa anche con la tastiera e sul telefono, dove la finestra prende tutto lo schermo.']),
+        ('consegna', 'consegna.webp', 'Le email arrivano nella posta, non nello spam',
+         ['Conferme, avvisi dei form, newsletter: servono solo se arrivano. In Impostazioni, <strong>Consegna delle email</strong>, cinque passi, ognuno con il suo stato: il mittente, il dominio, come partono, rimbalzi e spam, riscaldamento.',
+          '<ul><li><strong>Il dominio</strong>: il pannello controlla SPF, DKIM e DMARC e ti dà le righe da copiare nel pannello dell\'hosting. Non serve essere tecnici.</li>'
+          '<li><strong>Come partono</strong>: dal server del sito, con SMTP, oppure con Brevo, Amazon SES o Mailgun. Le chiavi si salvano cifrate.</li>'
+          '<li><strong>Rimbalzi e spam</strong>: chi rimbalza o segna "è spam" esce dagli invii da solo.</li>'
+          '<li><strong>Riscaldamento</strong>: un indirizzo nuovo parte con poche email al giorno e sale da solo, come piace a Gmail.</li></ul>',
+          'Più mittenti, ognuno con il suo nome: ogni campagna e ogni flusso sceglie il suo.']),
+        ('widget-21', 'widget-2-1.webp', 'Il menu del ristorante e altri quattro widget',
+         ['Il <strong>menu del ristorante</strong>: sezioni, piatti e prezzi, i segni vegano, vegetariano, senza glutine e piccante, gli allergeni con i numeri e la legenda, il menu del giorno e le sezioni che escono solo in certi giorni.',
+          'La <strong>richiesta di prenotazione</strong> di un tavolo o di una camera, che arriva per email all\'attività. La <strong>galleria con filtri</strong>, per esempio Matrimoni, Ritratti, Eventi. <strong>Loghi e testo scorrevoli</strong>. Il <strong>contenuto esterno</strong> (Calendly, Spotify, Google Calendar, Typeform) che si carica solo dopo il consenso del visitatore.',
+          'E i widget di prima fanno di più: la mappa con "Come arrivare", il video che parte da solo senza audio, la tabella con grassetto e link, i form con i campi Ora e File. In tutto, 92 widget.']),
         ('fine-articolo', 'fine-articolo.webp', 'Un riquadro in fondo a ogni articolo',
          ['Chi arriva alla fine di un articolo è il lettore più interessato che hai. In Articoli, la linguetta <strong>Aggiungi sempre alla fine</strong>: prepari una volta sola un riquadro che esce sotto ogni articolo, anche sotto quelli già pubblicati. Un invito alla newsletter, un contatto, una prenotazione, un libro da consigliare.',
           'Lo componi con l\'editor visuale, come una pagina: titoli, testi, foto, pulsanti. Esce quando premi Pubblica, con l\'ombra, il bordo e i colori del tuo sito e del tema.',
@@ -289,7 +300,7 @@ def funzionalita():
                   pulsante_testo='Scarica plumeCMS', link={'url': '/scarica/', 'nuova': False})]], larghezza='stretta', **spazi(72, 80))
     return dict(slug='funzionalita', titolo='Funzionalità', struttura=p.albero(),
                 seo_titolo='Funzionalità di plumeCMS: editor, temi, versioni, SEO, newsletter',
-                seo_descrizione='Cosa c\'è dentro plumeCMS: editor visuale con 87 widget, gli addon (prenotazioni, eventi, negozio, statistiche, area riservata, corsi), import da WordPress, stile globale, header e footer, versioni, SEO e AEO, newsletter, sicurezza, aggiornamenti dal pannello.')
+                seo_descrizione='Cosa c\'è dentro plumeCMS: editor visuale con 92 widget, gli addon (prenotazioni, eventi, negozio, statistiche, area riservata, corsi), import da WordPress, stile globale, header e footer, versioni, SEO e AEO, newsletter, sicurezza, aggiornamenti dal pannello.')
 
 
 def temi():
@@ -569,7 +580,7 @@ def editor_json():
 
 
 # ------------------------------------------------------------------ file
-USATE = ['copertina', 'scegli-media', 'addon', 'su-misura', 'firma', 'widget-attivita', 'social', 'fine-articolo', 'importa-wp', 'tipo-sito', 'primi-passi', 'aspetti', 'controlla-server', 'sezioni', 'copia', 'installa-1', 'installa-2', 'installa-3', 'installa-4', 'installa-5', 'editor-ritratto', 'editor', 'aperture', 'stile', 'modelli', 'versioni', 'seo', 'flussi', 'download', 'sicurezza', 'aggiornamenti', 'temi',
+USATE = ['copertina', 'consegna', 'widget-2-1', 'scegli-media', 'addon', 'su-misura', 'firma', 'widget-attivita', 'social', 'fine-articolo', 'importa-wp', 'tipo-sito', 'primi-passi', 'aspetti', 'controlla-server', 'sezioni', 'copia', 'installa-1', 'installa-2', 'installa-3', 'installa-4', 'installa-5', 'editor-ritratto', 'editor', 'aperture', 'stile', 'modelli', 'versioni', 'seo', 'flussi', 'download', 'sicurezza', 'aggiornamenti', 'temi',
          'tema-cosmo', 'tema-aria', 'tema-bottega']
 
 
@@ -615,7 +626,10 @@ def zip_lavagna(dest):
 
 # Le novità per chi scarica: brevi, scritte qui (il CHANGELOG è per chi sviluppa). Da aggiornare a ogni versione.
 NOVITA = [
-    ('2.1.0', 'Scegli dai Media dappertutto', ['Ogni campo immagine del pannello ha Scegli dai Media, con la miniatura e la X: SEO, social, popup, newsletter, Stile del sito, eventi, corsi, vetrina. Dalla stessa finestra si cerca, si scorre fra centinaia di immagini e se ne carica una nuova.',
+    ('2.1.0', 'Le email arrivano, gli addon completi, un file solo', ['Impostazioni > Consegna delle email: mittente, dominio (SPF, DKIM, DMARC), servizi come Brevo, Amazon SES e Mailgun, rimbalzi e spam, riscaldamento. Le email arrivano nella posta, non nello spam.',
+                                               'Cinque widget nuovi (menu del ristorante, richiesta di prenotazione, galleria con filtri, loghi scorrevoli, contenuto esterno con consenso) e i form con i campi Ora e File: 92 widget.',
+                                               'Addon più completi: prenotazioni prese al telefono e file per il calendario, recensioni dopo gli eventi, lezioni con l\'editor visuale, "Solo per i membri" dalla scheda, copie su Google Drive e Dropbox.',
+                                               'Ogni campo immagine del pannello ha Scegli dai Media, con la miniatura e la X: SEO, social, popup, newsletter, Stile del sito, eventi, corsi, vetrina. Dalla stessa finestra si cerca, si scorre fra centinaia di immagini e se ne carica una nuova.',
                                                'Il manuale d\'uso torna un PDF solo, con le schermate più nitide; gli aggiornamenti del sito arrivano in un pacchetto unico.']),
     ('2.0.3', 'L\'immagine per i social', ['La testa delle pagine dice dell\'immagine per i social tutto quello che LinkedIn, Facebook e X si aspettano: indirizzo pulito, misure, tipo, versione sicura.']),
     ('2.0.2', 'I link scritti a mano', ['Un pulsante con il link scritto senza https:// o senza la barra (www.sito.it, contatti) ora porta alla pagina giusta: prima puntava a "#".']),

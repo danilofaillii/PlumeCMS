@@ -21,6 +21,9 @@
 # uso: python3 tools/consegna.py [--senza-pagine] [--due] [--prima <versione>]
 #   --senza-pagine  il pacchetto unico porta il CMS e i file in Download (zip e manuali) ma non tocca pagine, stile e menu
 #   --due           due pacchetti anche se il motore non è cambiato
+#   --uno           un pacchetto anche se il motore è cambiato: solo quando il cambio non porta voci nuove del manifest (lo
+#                   controlla la verifica delle voci qui sotto, che resta). Esempio: 2.1.0, il motore scrive DEFAULT per le
+#                   colonne generate nei dump; il motore installato applica il pacchetto come sempre.
 #   --prima X.Y.Z   la versione con cui confrontare il motore (predefinita: la più alta in releases/cms sotto <V>)
 # Con PACCHETTO_CHIAVE nell'ambiente il pacchetto unico esce firmato (tools/pacchetto.py --firma).
 import glob
@@ -157,8 +160,10 @@ def main():
         due = True
     else:
         cambiato = motore_cambiato(prima)
-        due = cambiato or '--due' in sys.argv
-        if cambiato:
+        due = (cambiato and '--uno' not in sys.argv) or '--due' in sys.argv
+        if cambiato and not due:
+            print(f'avviso: {MOTORE} è cambiato dalla {prima}, ma con --uno esce un pacchetto solo (voci del manifest controllate)')
+        elif cambiato:
             print(f'avviso: {MOTORE} è cambiato dalla {prima}: il motore nuovo arriva con il primo pacchetto, le pagine con il secondo')
     uscita = os.path.join(REL, 'consegna')
     os.makedirs(uscita, exist_ok=True)

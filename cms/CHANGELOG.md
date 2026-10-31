@@ -35,6 +35,10 @@ Il prodotto si chiama **plumeCMS** (nome scelto il 26 ottobre 2026; prima, per p
 - **Form**: i campi Ora e File. Il file si controlla sul contenuto vero, si salva fuori dal sito pubblico, arriva allegato
   all'avviso e lo scarica solo l'amministratore; si cancella con l'invio e con Cancella dati.
 - Corretto: con il sito in una cartella, dopo l'invio di un form si finiva alla radice del dominio.
+- Corretto: con dati negli addon Eventi con iscrizione o Prenotazioni, il ripristino di una Copia del sito finiva "con errori"
+  e lo snapshot che il pannello fa prima di un aggiornamento non si sarebbe ripristinato (errore MySQL 3105 sulle colonne
+  calcolate dal database). Le copie e gli snapshot fatti dalla 2.1.0 in poi si ripristinano interi; quelli fatti prima con
+  quei dati restano da rifare.
 - **Un manuale d'uso solo**, in un PDF, con le novità di questa versione.
 - **Un file solo da caricare**: l'aggiornamento arriva in un pacchetto unico, con codice e pagine insieme.
 - Corretti: la griglia della pagina dei Corsi al telefono, l'indirizzo dell'immagine della newsletter in un sito in una

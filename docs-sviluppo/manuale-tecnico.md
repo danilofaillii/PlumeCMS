@@ -2179,7 +2179,13 @@ l'amministratore, ogni azione in POST con il token CSRF.
   tocca solo le tabelle di `elenco_tabelle` (per una copia vecchia, la stessa regola applicata ai `CREATE TABLE` del suo
   database) e mai una tabella di un'altra installazione presente in questo database, qualunque cosa dica la copia; le righe
   saltate si contano ("Tabelle di un'altra installazione nello stesso database, lasciate stare"). Gli snapshot degli
-  Aggiornamenti restano su tutto il database (`agg_dump_db()` senza prefisso, non toccato).
+  Aggiornamenti restano su tutto il database (`agg_dump_db()` senza prefisso).
+- **Colonne generate** (2.1.0): `agg_colonne_generate($pdo, $tabella)` e `agg_riga_sql($riga, $generate)`
+  (`includes/aggiornamenti.php`) scrivono `DEFAULT` al posto delle colonne `GENERATED ALWAYS AS` (`email_attiva` di
+  `evi_iscrizioni`, `slot_attivo` di `pren_prenotazioni`), sia in `copia_dump_db()` sia in `agg_dump_db()`: prima l'INSERT
+  falliva con l'errore 3105 e il ripristino finiva con errori. La forma `INSERT INTO ... VALUES (` resta quella che il
+  ripristino accetta. Prova: `prove/prova-colonne-generate.php <cartella CMS>` (copia e snapshot, 5 controlli). Le copie e
+  gli snapshot fatti prima della 2.1.0 con righe in quelle tabelle non si ripristinano interi.
 - **Ripristina** (`copia_ripristina($file, $tieni)`, `includes/copia-sito.php:358`): da una copia caricata (che entra fra quelle sul
   server) o già sul server; serve la spunta di conferma. Prima fa una copia del sito com'è (`prima-del-ripristino`), poi:
   - nomi dello zip controllati (`copia_nome_voce_ok()`): solo `manifest.json`, `db.sql.gz` e file dentro `uploads/`,
