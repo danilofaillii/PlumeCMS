@@ -9,6 +9,10 @@ require_once __DIR__ . '/../includes/newsletter.php';
 require_once __DIR__ . '/../includes/form.php';
 
 function modulo_torna(string $dove): never {
+    // 2.1: con il sito in una cartella (https://esempio.it/test) i percorsi del sito ("/contatti/") prendono la cartella.
+    // Prima un form con un errore, o il grazie, portavano alla radice del dominio, fuori dal sito.
+    $b = cms_sito_base();
+    if ($b !== '' && str_starts_with($dove, '/') && !str_starts_with($dove, '//')) $dove = $b . $dove; // chi chiama passa sempre percorsi del sito, senza cartella
     header('Location: ' . $dove, true, 303);
     exit;
 }
@@ -17,7 +21,7 @@ function modulo_torna(string $dove): never {
 // da cui viene, con l'errore del file, invece che alla home senza spiegazioni.
 if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST' && !$_POST && (int)($_SERVER['CONTENT_LENGTH'] ?? 0) > 0) {
     $da = (string)parse_url((string)($_SERVER['HTTP_REFERER'] ?? ''), PHP_URL_PATH);
-    $base = cms_base();
+    $base = cms_sito_base();
     if ($base !== '' && str_starts_with($da, $base . '/')) $da = substr($da, strlen($base));
     modulo_torna((preg_match('~^/[a-z0-9/-]*$~', $da) ? $da : '/') . '?modulo=file_peso#modulo');
 }

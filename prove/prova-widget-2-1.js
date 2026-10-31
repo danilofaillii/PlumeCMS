@@ -114,7 +114,7 @@ const domani = (g = 1) => { const d = new Date(Date.now() + g * 86400000); retur
   const tab = p.locator('.ed-w-tabella table').last();
   ok('tabella: **grassetto** e *corsivo* nelle celle', await tab.locator('td strong').innerText() === 'Taglio' && await tab.locator('td em').innerText() === 'su prenotazione');
   const lt = await tab.locator('a').evaluateAll(l => l.map(a => [a.getAttribute('href'), a.target]));
-  ok('tabella: [testo](link) diventa un link; un sito esterno si apre in una scheda nuova', JSON.stringify(lt) === JSON.stringify([['/contatti/', ''], ['https://www.esempio.it', '_blank']]), lt);
+  ok('tabella: [testo](link) diventa un link; un sito esterno si apre in una scheda nuova', JSON.stringify(lt) === JSON.stringify([[new URL(B).pathname.replace(/\/$/, '') + '/contatti/', ''], ['https://www.esempio.it', '_blank']]), lt);
   ok('ultimi articoli: con la categoria scelta dalla tendina, solo i suoi', await p.locator('.ed-w-articoli .card').count() === 1);
   const def = cli('definizioni');
   ok('editor: la categoria di Ultimi articoli e della Griglia è una tendina con le categorie del sito', def['articoli.categoria'].tipo === 'scelta' && def['articoli.categoria'].opzioni.notizie === 'Notizie' && def['griglia_contenuti.categoria'].opzioni.ricette === 'Ricette' && !!def['articoli.categoria'].accetta, def['articoli.categoria']);
