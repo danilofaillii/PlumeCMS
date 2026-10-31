@@ -7,6 +7,10 @@
 // 2.0.0: i capitoli 31n (le novità della 2.0.0 nei capitoli di prima: file riservati, form che dà un file, Scegli dai Media) e 32-40 (la Parte seconda, gli addon) girano dopo tutti gli altri e vogliono il server di posta finto:
 //   python3 -I prove/smtp-finto.py <porta> <cartella> &   e   POSTA_MANUALE=<porta>:<cartella>
 // Per rifare solo alcuni capitoli, esattamente quelli: SOLO_CAPITOLI=31n,32,33 (le foto degli altri restano come sono).
+// 2.1.0: il capitolo 31q (Consegna delle email) vuole il server di posta finto con "rimbalzi" (prove/smtp-finto.py <porta> <cartella> rimbalzi)
+//   e, nel config.local.php del sito, CMS_DNS_PROVA con i record finti di studiorossi.it (senza, la foto del Dominio dice che il DNS non
+//   risponde); il capitolo 40 il WebDAV finto (COPIA_PORTA, 8297 se manca). I widget della 2.1 (08-menu-ristorante, 08-galleria-filtri)
+//   vogliono CMS_DIR_MANUALE. Il giro completo cancella prima tutte le foto: ognuna deve nascere da qui.
 const { chromium } = require('playwright');
 const fs = require('fs');
 const path = require('path');
@@ -26,12 +30,17 @@ async function segna(dove, voci) {
     for (const v of voci) {
       const e = typeof v.sel === 'string' ? document.querySelector(v.sel) : null;
       if (!e) throw new Error('segno: non trovo ' + v.sel);
-      const r = e.getBoundingClientRect();
+      const r0 = e.getBoundingClientRect();
+      // 2.1.0: un elemento dentro un dialogo modale (Scegli dai Media) sta sopra a tutto (top layer): i segni vanno dentro il
+      // dialogo, con le coordinate del dialogo.
+      const dlg = e.closest('dialog[open]'), dr = dlg ? dlg.getBoundingClientRect() : null;
+      const dove = dlg || document.body;
+      const r = dlg ? { left: r0.left - dr.left - dlg.clientLeft + dlg.scrollLeft - scrollX, top: r0.top - dr.top - dlg.clientTop + dlg.scrollTop - scrollY, right: r0.right - dr.left - dlg.clientLeft + dlg.scrollLeft - scrollX, width: r0.width, height: r0.height } : r0;
       const box = document.createElement('div');
       box.className = 'mu-segno';
       Object.assign(box.style, { position: 'absolute', left: (r.left + scrollX - 4) + 'px', top: (r.top + scrollY - 4) + 'px', width: (r.width + 8) + 'px',
         height: (r.height + 8) + 'px', border: '3px solid #e8553e', borderRadius: '8px', zIndex: 99998, pointerEvents: 'none', boxSizing: 'border-box' });
-      document.body.appendChild(box);
+      dove.appendChild(box);
       if (v.n) {
         const b = document.createElement('div');
         b.className = 'mu-segno';
@@ -40,7 +49,7 @@ async function segna(dove, voci) {
         Object.assign(b.style, { position: 'absolute', left: sx + 'px', top: Math.max(2, r.top + scrollY - 16) + 'px', width: '26px', height: '26px', borderRadius: '50%',
           background: '#e8553e', color: '#fff', font: '700 15px/26px Inter, sans-serif', textAlign: 'center', zIndex: 99999, pointerEvents: 'none',
           boxShadow: '0 1px 4px rgba(0,0,0,.35)' });
-        document.body.appendChild(b);
+        dove.appendChild(b);
       }
     }
   }, voci.map(v => typeof v === 'string' ? { sel: v } : v));
@@ -324,6 +333,16 @@ capitoli['07'] = async () => {
   await Promise.all([p.waitForNavigation(), p.click('form[enctype] button[type=submit]')]);
   await p.waitForLoadState('networkidle');
   await foto('07-libreria', { clip: { x: 240, y: 56, width: 960, height: 700 } });
+  // 2.1.0: Scegli dai Media, sul campo dell'immagine social della SEO (solo le foto: non si salva niente, la casella la riempie
+  // il capitolo 31n).
+  await vai('seo.php?scheda=globale');
+  await p.click('[data-scegli-media="#seo-og-immagine"]');
+  await p.waitForSelector('dialog.pn-media .pn-media-voce'); await dorme(900);
+  await foto('07-scegli-finestra', { sel: 'dialog.pn-media', margine: 0, segni: [{ sel: 'dialog.pn-media input[type=search]', n: 1 }, { sel: 'dialog.pn-media .pn-media-cartella select', n: 2 },
+    { sel: 'dialog.pn-media .pn-media-carica', n: 3, lato: 'destra' }, { sel: 'dialog.pn-media .pn-media-voce', n: 4 }, { sel: 'dialog.pn-media .pn-media-indirizzo summary', n: 5 }] });
+  await p.locator('dialog.pn-media .pn-media-voce', { hasText: 'squadra' }).first().click(); await dorme(800);
+  await foto('07-scegli-campo', { sel: '.form-group:has(#seo-og-immagine)', margine: 22, segni: [{ sel: '.form-group:has(#seo-og-immagine) .pn-immagine-mini', n: 1 },
+    { sel: '[data-scegli-media="#seo-og-immagine"]', n: 2 }, { sel: '.form-group:has(#seo-og-immagine) .pn-immagine-x', n: 3, lato: 'destra' }] });
 };
 
 // 10. Le sezioni pronte
@@ -631,7 +650,22 @@ capitoli['26'] = async () => {
 // 27. Copia del sito
 capitoli['27'] = async () => {
   await vai('copia-sito.php');
+  // 2.1.0: una copia fatta adesso, una foto caricata dopo, il ripristino pulito: la foto in più si sposta da parte.
+  await Promise.all([p.waitForNavigation({ timeout: 300000 }), p.click('form:has(input[value=crea]) button[type=submit]')]);
+  await vai('copia-sito.php');
   await foto('27-copia', { clip: { x: 240, y: 56, width: 960, height: 620 } });
+  await vai('media.php');
+  await p.setInputFiles('input[type=file][name=file]', path.join(FOTO_PROVA, 'agosto.jpg'));
+  await Promise.all([p.waitForNavigation(), p.click('form[enctype] button[type=submit]')]);
+  await vai('copia-sito.php');
+  const riga = p.locator('.cs-table tr:has(details)').first();
+  await riga.locator('details summary').click();
+  await riga.locator('input[name=conferma]').check();
+  await Promise.all([p.waitForNavigation({ timeout: 600000 }), riga.locator('button.danger').click()]);
+  await p.waitForLoadState('networkidle');
+  if (!(await p.locator('#cs-scartati').count())) throw new Error('27: dopo il ripristino manca il riquadro dei file spostati da parte');
+  const fine = (await p.locator('#cs-scarto-elenco').count()) ? '#cs-scarto-elenco' : '#cs-scartati';
+  await fotoFino('27-scartati', fine, { max: 1500, segni: [{ sel: '#cs-scartati', n: 2 }, { sel: '#cs-scartati code', n: 3, lato: 'destra' }, ...(fine === '#cs-scarto-elenco' ? [{ sel: '#cs-scarto-elenco', n: 4 }] : [])] });
 };
 
 // 28. Controlla il server
@@ -660,6 +694,37 @@ async function fotoWidgetAttivita() {
     await sez.scrollIntoViewIfNeeded();
     await sez.screenshot({ path: path.join(GREZZE, '08-attivita.png') }); console.log('08-attivita');
   }
+}
+
+// 2.1.0: i widget nuovi sul sito (capitolo 8) e il campo File del form (capitolo 18). Come sopra, dopo tutti i capitoli: la pagina
+// /widget-2-1/ la crea prove/pagina-widget-2-1.php nella cartella del sito delle schermate (CMS_DIR_MANUALE; senza, le due foto
+// dei widget si saltano).
+async function fotoWidget21() {
+  if (SOLO && !['08', '17'].some(c => c.startsWith(SOLO.slice(0, 2)))) return;
+  if (process.env.CMS_DIR_MANUALE) {
+    require('child_process').execFileSync('php', [path.join(__dirname, '..', 'prove', 'pagina-widget-2-1.php'), process.env.CMS_DIR_MANUALE, 'nuovi']);
+    await p.goto(B + '/widget-2-1/', { waitUntil: 'networkidle' }); await dorme(600);
+    await p.addStyleTag({ content: 'header{visibility:hidden}' });
+    const menu = p.locator('.ew-menu').first();
+    await menu.scrollIntoViewIfNeeded(); await dorme(300);
+    await menu.screenshot({ path: path.join(GREZZE, '08-menu-ristorante.png') }); console.log('08-menu-ristorante');
+    const gal = p.locator('.ed-sezione:has(.ew-gf-filtri)').first();
+    await gal.scrollIntoViewIfNeeded();
+    await gal.locator('.ew-gf-filtro', { hasText: 'Ritratti' }).click(); await dorme(700);
+    await gal.screenshot({ path: path.join(GREZZE, '08-galleria-filtri.png') }); console.log('08-galleria-filtri');
+  }
+  // Il campo File nel form Candidature del capitolo 18.
+  await vai('form.php');
+  await vai(await p.locator('a.ct-nome', { hasText: 'Candidature' }).first().getAttribute('href'));
+  await p.click('button:has-text("+ Aggiungi un campo")'); await dorme(300);
+  await p.locator('.fm-campo:last-child .fm-etichetta').fill('Curriculum');
+  await p.locator('.fm-campo:last-child .fm-tipo').selectOption('file'); await dorme(300);
+  const tipo = (e) => p.locator(`.fm-campo:last-child .fm-file-tipi input[value=${e}]`);
+  await tipo('jpg').uncheck(); await tipo('png').uncheck(); await tipo('docx').check();
+  await p.locator('.fm-campo:last-child .fm-file-peso select').selectOption('5');
+  await foto('17-campo-file', { sel: '.fm-campo:last-child', margine: 30, segni: [{ sel: '.fm-campo:last-child .fm-tipo', n: 1 }, { sel: '.fm-campo:last-child .fm-file-tipi', n: 2 },
+    { sel: '.fm-campo:last-child .fm-file-peso select', n: 3 }] });
+  await Promise.all([p.waitForNavigation(), p.click('button.btn-primary:has-text("Salva")')]);
 }
 
 // ------------------------------------------------------------------------------------------------------------------------
@@ -836,6 +901,83 @@ capitoli['31n'] = async () => {
   await Promise.all([p.waitForNavigation(), p.click('form:has(#seo-og-immagine) button.btn-primary')]);
 };
 
+// Una foto del pannello (colonna di destra) dall'alto fino in fondo a un elemento.
+async function fotoFino(nome, selFine, opz = {}) {
+  await p.evaluate(() => scrollTo(0, 0)); await dorme(100);
+  const r = await p.locator(selFine).last().boundingBox();
+  if (!r) throw new Error('foto ' + nome + ': non trovo ' + selFine);
+  await foto(nome, { clip: { x: 240, y: 56, width: 960, height: Math.min(opz.max || 1400, Math.round(r.y + r.height + 24 - 56)) }, segni: opz.segni || [] });
+}
+
+// 31q. Consegna delle email (2.1.0, capitolo 25): lo Studio Rossi e il mittente notizie@studiorossi.it. Il DNS del dominio è
+// finto (CMS_DNS_PROVA nel config.local.php del sito, con i record di studiorossi.it: SPF e MX sì, DKIM e DMARC no); senza,
+// la linguetta Dominio dice che il DNS non risponde. Le statistiche vogliono il server di posta finto con "rimbalzi"
+// (prove/smtp-finto.py <porta> <cartella> rimbalzi): due indirizzi su venticinque rimbalzano.
+capitoli['31q'] = async () => {
+  await postaFinta();
+  await vai('consegna.php');
+  await fotoFino('23-consegna-inizio', '.ce-passi');
+  // 1. Il mittente, confermato dall'email.
+  await vai('consegna.php?scheda=mittenti');
+  await p.fill('#ce-m-nome', 'Studio Rossi Notizie'); await p.fill('#ce-m-email', 'notizie@studiorossi.it');
+  let n0 = postaN();
+  await Promise.all([p.waitForNavigation(), p.click('#ce-nuovo-mittente button[type=submit]')]);
+  const mc = (await postaNuove(n0)).find(e => /notizie@studiorossi\.it/.test(e.a));
+  const lc = mc && C2.link(mc).find(l => /api\/mittente\.php\?t=/.test(l));
+  if (!lc) throw new Error('31q: non arriva la conferma del mittente');
+  const v = await visitatore();
+  await v.goto(qui(lc), { waitUntil: 'networkidle' });
+  await v.click('form button[type=submit]'); await v.waitForLoadState('networkidle');
+  if (!/Mittente confermato/.test(await v.locator('body').innerText())) throw new Error('31q: il mittente non si conferma');
+  await v.context().close();
+  await vai('consegna.php?scheda=mittenti');
+  await p.fill('#ce-m-nome', 'Anna dello Studio'); await p.fill('#ce-m-email', 'anna@studiorossi.it');
+  await fotoFino('23-consegna-mittenti', '#ce-nuovo-mittente', { segni: [{ sel: '.ce-schede a[href="?scheda=mittenti"]', n: 1 }, { sel: '#ce-m-nome', n: 2 },
+    { sel: '#ce-nuovo-mittente button[type=submit]', n: 3 }, { sel: 'tr[data-mittente="notizie@studiorossi.it"]', n: 6 }] });
+  // 2. Il dominio.
+  await vai('consegna.php?scheda=dominio');
+  await p.fill('#ce-dominio', 'studiorossi.it');
+  await Promise.all([p.waitForNavigation(), p.click('form:has(#ce-dominio) button[type=submit]')]);
+  await fotoFino('23-consegna-dominio', (await p.locator('#ce-messaggio').count()) ? '#ce-messaggio' : '.ce-voce', { max: 1500, segni: [{ sel: '#ce-dominio', n: 1 }, { sel: '#ce-dkim', n: 2 },
+    ...((await p.locator('#ce-messaggio').count()) ? [{ sel: '#ce-messaggio', n: 4 }] : [])] });
+  // 3. Come partono: la tendina con Brevo (solo la foto, non si salva).
+  await vai('consegna.php?scheda=servizio');
+  await p.selectOption('#ce-servizio', 'brevo'); await dorme(400);
+  await fotoFino('23-consegna-servizio', '#ce-prova', { segni: [{ sel: '#ce-servizio', n: 1 }, { sel: '#ce-brevo', n: 2 }, { sel: '#ce-prova', n: 3 }] });
+  // 7. Le statistiche: venticinque clienti importati, una campagna, due rimbalzi e un'uscita.
+  const csv = path.join(require('os').tmpdir(), 'clienti-studio-rossi.csv');
+  fs.writeFileSync(csv, 'EMAIL,NOME\n' + Array.from({ length: 25 }, (_, i) => (i === 7 || i === 18 ? `rimbalza${i}@esempio.it` : `cliente${String(i + 1).padStart(2, '0')}@esempio.it`) + ',Cliente ' + (i + 1)).join('\n') + '\n');
+  await vai('newsletter.php?scheda=iscritti');
+  await p.setInputFiles('form:has(input[value=importa]) input[name=csv]', csv);
+  await p.fill('form:has(input[value=importa]) input[name=lista_nuova]', 'Clienti');
+  await p.check('form:has(input[value=importa]) input[name=consenso_brevo]');
+  await Promise.all([p.waitForNavigation(), p.click('form:has(input[value=importa]) button[type=submit]')]);
+  await vai('newsletter.php');
+  await Promise.all([p.waitForNavigation(), p.click('button:has-text("+ Nuova campagna")')]);
+  await p.waitForLoadState('networkidle');
+  await p.fill('[name=oggetto]', 'Le novità di novembre');
+  await p.locator('#editor .ql-editor').click(); await p.keyboard.type('Ciao! A novembre lo studio è aperto anche il sabato mattina.');
+  await p.locator('label', { hasText: 'Clienti' }).locator('input[name="liste[]"]').check();
+  await Promise.all([p.waitForNavigation(), p.click('button[value=subito]')]);
+  n0 = postaN();
+  await vai('newsletter.php');
+  await Promise.all([p.waitForNavigation(), p.click('form:has(input[value=giro]) button')]);
+  const uscita = (await postaNuove(n0, 23)).find(e => /cliente03@/.test(e.a));
+  const lu = uscita && C2.link(uscita).find(l => /[?&]i=\d+&t=/.test(l) && /[?&]c=\d+/.test(l));
+  if (!lu) throw new Error('31q: la campagna non arriva (o senza il link per uscire)');
+  const u = await visitatore();
+  await u.goto(qui(lu), { waitUntil: 'networkidle' });
+  await u.click('form[action*="i="] button[type=submit]'); await u.waitForLoadState('networkidle');
+  await u.context().close();
+  await vai('newsletter-statistiche.php');
+  await fotoFino('23-consegna-statistiche', 'table', { segni: [{ sel: 'td.st-rimbalzi', n: '' }] });
+  // 5. Il riscaldamento.
+  await vai('consegna.php?scheda=riscaldamento');
+  await p.check('#ce-acceso');
+  await Promise.all([p.waitForNavigation(), p.click('form:has(#ce-acceso) button[type=submit]')]);
+  await fotoFino('23-consegna-riscaldamento', '#ce-giorni', { segni: [{ sel: '#ce-acceso', n: 1 }, { sel: '#ce-partenza', n: 2 }, { sel: '#ce-caldo-stato', n: 3 }] });
+};
+
 // Accende un addon da Impostazioni > Addon, come una persona; ritorna il messaggio verde.
 async function accendi(nome) {
   await postaFinta();
@@ -922,6 +1064,21 @@ capitoli['33'] = async () => {
   await foto('33-agenda', { clip: { x: 240, y: 56, width: 960, height: 560 }, segni: [{ sel: '.pa-voce', n: 1 }, { sel: '.pa-barra', n: 2 }] });
   await Promise.all([p.waitForNavigation(), p.locator('.pa-voce', { hasText: 'Giulia Rossi' }).first().click()]);
   await foto('33-scheda', { clip: { x: 240, y: 56, width: 960, height: 900 }, segni: [{ sel: '#pa-sposta', n: 3 }, { sel: '#pa-annulla textarea', n: 4 }] });
+  // 2.1.0: Paolo Verdi chiama: un taglio da Anna il giovedì dopo quello di Giulia, alle 10, senza email.
+  const gio = new Date(d + 'T12:00:00'); do gio.setDate(gio.getDate() + 1); while (gio.getDay() !== 4);
+  const giovedi = `${gio.getFullYear()}-${String(gio.getMonth() + 1).padStart(2, '0')}-${String(gio.getDate()).padStart(2, '0')}`;
+  await addonPag('prenotazioni', 'nuova');
+  const opz = async (sel, testo) => p.locator(sel + ' option', { hasText: testo }).first().getAttribute('value');
+  await Promise.all([p.waitForNavigation(), p.selectOption('#pa-nuova-quando select[name=s]', await opz('#pa-nuova-quando select[name=s]', 'Taglio donna'))]);
+  await Promise.all([p.waitForNavigation(), p.selectOption('#pa-nuova-quando select[name=r]', await opz('#pa-nuova-quando select[name=r]', 'Anna'))]);
+  await Promise.all([p.waitForNavigation(), p.fill('#pa-nuova-quando input[name=d]', giovedi)]);
+  await p.locator('label.pa-ora-scelta', { hasText: /^10:00/ }).first().click();
+  await p.fill('#pa-nuova [name=nome]', 'Paolo Verdi'); await p.fill('#pa-nuova [name=telefono]', '051 123456');
+  await p.fill('#pa-nuova [name=note]', 'Preferisce Anna, capelli lunghi');
+  await fotoFino('33-nuova', '#pa-nuova button[type=submit]', { max: 1500, segni: [{ sel: '#pa-nuova-quando', n: 2 }, { sel: 'label.pa-ora-scelta:has(input:checked)', n: 3 },
+    { sel: '#pa-nuova [name=nome]', n: 4 }, { sel: '#pa-nuova button[type=submit]', n: 5 }] });
+  await Promise.all([p.waitForNavigation(), p.click('#pa-nuova button[type=submit]')]);
+  if (!/Prenotazione salvata/.test(await flash())) throw new Error('33: la prenotazione dal pannello non si salva: ' + await flash());
 };
 
 const dataLocale = d => { const z = n => String(n).padStart(2, '0'); return `${d.getFullYear()}-${z(d.getMonth() + 1)}-${z(d.getDate())}T${z(d.getHours())}:${z(d.getMinutes())}`; };
@@ -1195,6 +1352,17 @@ capitoli['38'] = async () => {
   await v.context().close();
   await addonPag('membri', 'elenco');
   await foto('38-elenco', { clip: { x: 240, y: 56, width: 960, height: 560 } });
+  // 2.1.0: il riquadro Area riservata nella scheda dell'articolo del capitolo 4 (solo la foto: la spunta non si salva).
+  await vai('contenuti.php?tipo=articoli');
+  await vai(await p.locator('tr:has-text("Chiusi per ferie") .ct-azioni a', { hasText: 'Modifica' }).first().getAttribute('href'));
+  await p.check('#membri-riservato');
+  const rq = await p.locator('#membri-scheda').boundingBox();
+  await p.evaluate(() => scrollTo(0, 0));
+  const top = await p.locator('.sc-scatola:has(h3:text-is("Pubblica"))').boundingBox();
+  const r2 = await p.locator('#membri-scheda').boundingBox();
+  await foto('38-scheda', { clip: { x: top.x - 12, y: top.y - 12, width: top.width + 24, height: Math.min(1300, r2.y + r2.height - top.y + 24) },
+    segni: [{ sel: '#membri-scheda h3', n: 2 }, { sel: '#membri-riservato', n: 3 }, { sel: 'button[data-valore=pubblica]', n: '' }] });
+  if (!rq) throw new Error('38: manca il riquadro Area riservata nella scheda');
 };
 
 // 39. Corsi online: Luca Neri, fotografo e formatore, mette online "Fotografia per cominciare".
@@ -1225,22 +1393,35 @@ capitoli['39'] = async () => {
     await Promise.all([p.waitForNavigation(), f.locator('button').click()]);
     return p.url().split('/admin/')[1];
   };
+  // 2.1.0: il testo della lezione si scrive con l'editor visuale (il pulsante salva anche la pagina della lezione). Nella tela
+  // c'è già un widget Testo: doppio clic, si scrive, Pubblica, e la freccia riporta alla lezione.
+  const testoLezione = async (paragrafi, fotoEditor) => {
+    await Promise.all([p.waitForNavigation(), p.click('#le-apri-editor')]);
+    await apriEditor(p.url().split('/admin/')[1]);
+    await tela().locator('.ed-w-testo').first().dblclick(); await dorme(500);
+    await p.locator('#ed-controlli .ql-editor').click(); await p.keyboard.press('Control+A');
+    for (let k = 0; k < paragrafi.length; k++) { if (k) await p.keyboard.press('Enter'); await p.keyboard.type(paragrafi[k]); }
+    await dorme(900);
+    if (fotoEditor) await foto(fotoEditor, { clip: { x: 0, y: 0, width: 1200, height: 700 }, segni: [{ sel: '#ed-iframe', n: 4 }, { sel: '#ed-controlli .ql-editor', n: 5 },
+      { sel: '.ed-schede-pannello button[data-pannello="widget"]', n: 6 }, { sel: '#ed-pubblica', n: 7, lato: 'destra' }, { sel: 'a.ed-indietro', n: 8, lato: 'destra' }] });
+    await pubblica();
+    await Promise.all([p.waitForNavigation(), p.click('a.ed-indietro')]);
+    await p.waitForLoadState('networkidle');
+  };
   const uLuce = await lezione(0, 'La luce');
-  await p.fill('#le-testo', '<p>La luce più bella arriva <b>presto la mattina</b> e poco prima del tramonto.</p><p>Mettiti con la luce di lato: le forme si vedono meglio.</p>');
   await p.fill('#le-video', 'https://www.youtube.com/watch?v=dQw4w9WgXcQ'); await p.fill('#le-durata', '8 minuti');
-  await Promise.all([p.waitForNavigation(), p.click('#le-form aside button.btn-primary')]);
+  await testoLezione(['La luce migliore arriva presto, appena dopo l\'alba, e poco prima del tramonto.', 'Mettiti con la luce di lato: le forme si vedono meglio.'], '39-lezione-editor');
   const uInq = await lezione(0, 'L\'inquadratura');
-  await p.fill('#le-testo', '<h2>La regola dei terzi</h2><p>Dividi lo schermo in nove riquadri: metti il soggetto dove le linee si incrociano, non al centro.</p><p>La scheda qui sotto la riassume: tienila nel telefono.</p>');
   await p.fill('#le-durata', '10 minuti');
   await p.locator('label.le-mat', { hasText: 'scheda-inquadratura.pdf' }).locator('input').check();
-  await foto('39-lezione', { sel: '#le-form', segni: [{ sel: '#le-testo', n: 1 }, { sel: '#le-video', n: 2 }, { sel: 'label.le-mat', n: 3 }, { sel: '#le-durata', n: 4 }, { sel: '#le-form aside button.btn-primary', n: 5 }] });
-  await Promise.all([p.waitForNavigation(), p.click('#le-form aside button.btn-primary')]);
+  await foto('39-lezione', { sel: '#le-form', segni: [{ sel: '#le-apri-editor', n: 1 }, { sel: '#le-video', n: 2 }, { sel: 'label.le-mat', n: 3 }, { sel: '#le-durata', n: 4 }, { sel: '#le-form aside button.btn-primary', n: 5 }] });
+  await testoLezione(['La regola dei terzi: dividi lo schermo in nove riquadri e metti il soggetto dove le linee si incrociano, non al centro.', 'La scheda qui sotto la riassume: tienila nel telefono.']);
   await vai(urlCorso);
   await p.fill('#co-nuovo-modulo input[name=titolo]', 'Pratica');
   await Promise.all([p.waitForNavigation(), p.click('#co-nuovo-modulo button')]);
   await lezione(1, 'Il primo scatto');
-  await p.fill('#le-testo', '<p>Esci, scegli una cosa sola da fotografare e fanne dieci scatti diversi. Poi tieni il migliore.</p>'); await p.fill('#le-durata', '5 minuti');
-  await Promise.all([p.waitForNavigation(), p.click('#le-form aside button.btn-primary')]);
+  await p.fill('#le-durata', '5 minuti');
+  await testoLezione(['Esci, scegli una cosa sola da fotografare e fanne dieci scatti diversi. Poi tieni il migliore.']);
   await vai(urlCorso);
   await foto('39-corso', { clip: { x: 240, y: 56, width: 960, height: 1000 }, segni: [{ sel: '#co-stato', n: 1 }, { sel: '.co-modulo .co-modulo-testa input[name=titolo]', n: 2 }, { sel: 'form.co-nuova-lezione', n: 3 }, { sel: '#co-nuovo-modulo', n: 4 }] });
   // Un'allieva, invitata dal pannello, segue il corso.
@@ -1273,16 +1454,22 @@ capitoli['39'] = async () => {
 // 40. Copia del sito altrove: le copie di ogni notte su un Nextcloud (WebDAV). La destinazione vera della prova è un WebDAV
 // finto in locale (prove/server-copia-finti.py webdav 8297 <cartella> copie Nuvola-Copie-2026, e nel config.local.php del sito
 // define('CMS_COPIA_ALTROVE_LOCALE', '127.0.0.1:8297')): la foto del modulo si fa con l'indirizzo d'esempio, prima di salvare.
+// Un'altra porta: COPIA_PORTA=<porta> (la stessa nel config.local.php).
 capitoli['40'] = async () => {
   await accendi('copia-altrove');
   await addonPag('copia-altrove', 'destinazione');
+  // 2.1.0: il riquadro Google Drive, non ancora collegato (solo la foto).
+  await p.selectOption('#ca-tipo', 'gdrive'); await dorme(400);
+  await p.fill('#ca-cartella', 'copie-del-sito'); await p.fill('#ca-tenere', '7'); await p.check('#ca-attivo');
+  await foto('40-gdrive', { sel: '#ca-form', segni: [{ sel: '#ca-tipo', n: 2 }, { sel: '#ca-gdrive-redirect', n: 3 }, { sel: '#ca-gdrive-client_id', n: 10 }, { sel: '#ca-cartella', n: 11 },
+    { sel: '#ca-gdrive-collega', n: 12, lato: 'destra' }] });
   await p.selectOption('#ca-tipo', 'webdav'); await dorme(300);
   await p.fill('#ca-url', 'https://cloud.esempio.it/remote.php/dav/files/mario/');
   await p.fill('#ca-utente', 'mario'); await p.fill('#ca-password', 'password-per-le-app');
   await p.fill('#ca-cartella', 'copie-sito'); await p.fill('#ca-tenere', '14'); await p.check('#ca-attivo');
-  await foto('40-destinazione', { sel: '#ca-form', segni: [{ sel: '#ca-tipo', n: 1 }, { sel: '#ca-url', n: 2 }, { sel: '#ca-utente', n: 3 }, { sel: '#ca-cartella', n: 4 }, { sel: '#ca-tenere', n: 5 }, { sel: '#ca-attivo', n: 6 }, { sel: '#ca-form button[type=submit]', n: 7 }] });
-  await p.fill('#ca-url', 'http://127.0.0.1:8297/dav/'); await p.fill('#ca-utente', 'copie'); await p.fill('#ca-password', 'Nuvola-Copie-2026');
-  await Promise.all([p.waitForNavigation(), p.click('#ca-form button[type=submit]')]);
+  await foto('40-destinazione', { sel: '#ca-form', segni: [{ sel: '#ca-tipo', n: 1 }, { sel: '#ca-url', n: 2 }, { sel: '#ca-utente', n: 3 }, { sel: '#ca-cartella', n: 4 }, { sel: '#ca-tenere', n: 5 }, { sel: '#ca-attivo', n: 6 }, { sel: '#ca-salva', n: 7 }] });
+  await p.fill('#ca-url', 'http://127.0.0.1:' + (process.env.COPIA_PORTA || '8297') + '/dav/'); await p.fill('#ca-utente', 'copie'); await p.fill('#ca-password', 'Nuvola-Copie-2026');
+  await Promise.all([p.waitForNavigation(), p.click('#ca-salva')]);
   if (!/Destinazione salvata/.test(await flash())) throw new Error('40: destinazione non salvata: ' + await flash());
   await Promise.all([p.waitForNavigation(), p.click('#ca-prova')]);
   if (!/Collegamento riuscito/.test(await flash())) throw new Error('40: la prova non riesce: ' + await flash());
@@ -1311,7 +1498,7 @@ module.exports = { capitoli };
     if (SOLI.length && !SOLI.includes(n)) continue;
     await fn();
   }
-  if (!SOLI.length) await fotoWidgetAttivita();
+  if (!SOLI.length || SOLI.includes('fine')) { await fotoWidgetAttivita(); await fotoWidget21(); } // SOLO_CAPITOLI=...,fine: anche le foto dei widget sul sito
   if (err.length) console.log('errori JavaScript:', err);
   stringi();
   const tot = fs.readdirSync(USCITA).filter(f => f.endsWith('.jpg')).reduce((t, f) => t + fs.statSync(path.join(USCITA, f)).size, 0);
