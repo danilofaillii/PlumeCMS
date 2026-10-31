@@ -286,7 +286,10 @@ def funzionalita():
         ('aggiornamenti', 'aggiornamenti.webp', 'Aggiornamenti dal pannello, con la rete sotto',
          ['Un aggiornamento è uno zip: lo carichi da Impostazioni, Aggiornamenti, e premi Applica. Prima di toccare qualunque cosa il pannello fa una copia di sicurezza del database e dei file.',
           'Se qualcosa va storto, rimette tutto com\'era da solo. Puoi anche programmare l\'aggiornamento per la notte.',
-          'Dalla 1.3.0 non devi nemmeno cercarlo: quando esce una versione nuova la dashboard te lo dice, e con Scarica e prepara lo zip arriva da solo, controllato, pronto da applicare.']),
+          'Dalla 1.3.0 non devi nemmeno cercarlo: quando esce una versione nuova la dashboard te lo dice, e dalla 2.3.0 basta Installa ora.']),
+        ('installa-ora', 'installa-ora.webp', 'Nuova versione disponibile? Installa ora',
+         ['In alto a sinistra del pannello c\'è sempre la versione che hai. Quando ne esce una nuova, la dashboard lo scrive subito sotto il link al sito ufficiale: <strong>Nuova versione disponibile</strong>, con il numero.',
+          'Accanto c\'è <strong>Installa ora</strong>: un clic, una conferma, e il pannello scarica lo zip, controlla che sia intero e quello giusto, fa la copia di sicurezza e installa. Se qualcosa non va, rimette tutto com\'era.']),
         ('server', 'controlla-server.webp', 'Controlla il server: il tuo hosting va bene?',
          ['In Impostazioni, Controlla il server: il pannello prova tutto quello che serve a plumeCMS. Versione di PHP, estensioni, HTTPS, cron, email, cartelle, protezioni dei file. Non cambia niente: guarda e ti dice.',
           'Ogni voce ha il suo segno: a posto, da sapere, da sistemare, con la spiegazione in parole semplici. Con il pulsante accanto mandi un\'email di prova e vedi se arriva.']),
@@ -584,7 +587,7 @@ def editor_json():
 
 
 # ------------------------------------------------------------------ file
-USATE = ['copertina', 'scegli-sito', 'consegna', 'widget-2-1', 'scegli-media', 'addon', 'su-misura', 'firma', 'widget-attivita', 'social', 'fine-articolo', 'importa-wp', 'tipo-sito', 'primi-passi', 'aspetti', 'controlla-server', 'sezioni', 'copia', 'installa-1', 'installa-2', 'installa-3', 'installa-4', 'installa-5', 'editor-ritratto', 'editor', 'aperture', 'stile', 'modelli', 'versioni', 'seo', 'flussi', 'download', 'sicurezza', 'aggiornamenti', 'temi',
+USATE = ['copertina', 'installa-ora', 'scegli-sito', 'consegna', 'widget-2-1', 'scegli-media', 'addon', 'su-misura', 'firma', 'widget-attivita', 'social', 'fine-articolo', 'importa-wp', 'tipo-sito', 'primi-passi', 'aspetti', 'controlla-server', 'sezioni', 'copia', 'installa-1', 'installa-2', 'installa-3', 'installa-4', 'installa-5', 'editor-ritratto', 'editor', 'aperture', 'stile', 'modelli', 'versioni', 'seo', 'flussi', 'download', 'sicurezza', 'aggiornamenti', 'temi',
          'tema-cosmo', 'tema-aria', 'tema-bottega']
 
 
@@ -630,6 +633,7 @@ def zip_lavagna(dest):
 
 # Le novità per chi scarica: brevi, scritte qui (il CHANGELOG è per chi sviluppa). Da aggiornare a ogni versione.
 NOVITA = [
+    ('2.3.0', 'Installa ora', ['La versione installata è sempre in alto a sinistra del pannello. Quando ne esce una nuova, la dashboard scrive Nuova versione disponibile e accanto c\'è Installa ora: un clic e il pannello la scarica, la controlla e la installa, con la copia di sicurezza prima.']),
     ('2.2.0', 'Scegli dal sito', ['Accanto a ogni campo link del pannello, Scegli dal sito: scrivi due lettere del titolo, scegli la pagina o l\'articolo, e il link entra da solo. Nell\'editor, nei testi, nel menu, nei popup, nei form, nella newsletter e nella SEO.',
                                      'Controlla il server prova anche Google Search Console e IndexNow dal tuo hosting; un certificato HTTPS che non va si dice per nome. Il manuale d\'uso pesa 1 MB in meno.']),
     ('2.1.0', 'Le email arrivano, gli addon completi, un file solo', ['Impostazioni > Consegna delle email: mittente, dominio (SPF, DKIM, DMARC), servizi come Brevo, Amazon SES e Mailgun, rimbalzi e spam, riscaldamento. Le email arrivano nella posta, non nello spam.',

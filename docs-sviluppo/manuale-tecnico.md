@@ -2163,6 +2163,14 @@ nel suo download manager.
   scarica lo zip, controlla che la lunghezza e lo sha256 siano quelli annunciati e lo registra con
   `agg_registra_pacchetto()`, come uno zip caricato a mano: da lì "Applica ora" (19.4). Una versione già in coda non si
   scarica due volte.
+- **Dashboard e versione in vista** (2.3.0): `admin/includes/admin-header.php` scrive `cms_versione()` accanto al logo
+  (`#admin-versione`, `.admin-versione`) e, sotto 900 px, accanto al pulsante del menu (`.admin-versione-tel`). Nel banner
+  `#db-ufficiale` di `admin/index.php`, dopo il link al sito ufficiale, `#db-nuova` ("Nuova versione disponibile v. x.x.x", acceso
+  da `versione_nuova()` o dal controllo del giorno in JS) e il form `#db-installa` (solo amministratore) con l'azione
+  `versione_installa` di `admin/aggiornamenti.php`: `versione_scarica_e_prepara()` e poi lo stesso ramo di `applica` (snapshot,
+  ripristino se fallisce). `versione_installabile_qui()` (`includes/versione-nuova.php`) è falso se esistono moduli del sito
+  (`moduli/*/modulo.php`): allora il pulsante è "Scarica e prepara" (`versione_prepara`) e l'azione `versione_installa` rifiuta.
+  Il vecchio riquadro `#db-versione` non c'è più. Prova: `prove/prova-installa-ora.js` (11 controlli, con `prove/finto-ufficiale.php`).
 - **Certificato** (2.2.0): `versione_http()` e `server_http()` (`includes/controllo-server.php`) raccolgono tutti gli avvisi di PHP
   con `set_error_handler` (l'ultimo dice solo "failed to open stream"): un certificato scaduto, per un altro nome o di
   un'autorità sconosciuta si dice con il suo nome invece di "non risponde". Prova con HTTPS vero: `prove/prova-versione-https.py

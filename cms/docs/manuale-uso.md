@@ -62,7 +62,11 @@ Dopo l'accesso arrivi alla **Dashboard**: la pagina che ti dice come sta il sito
 2. **I pulsanti rapidi.** + Articolo, + Pagina, + Campagna e Home nell'editor: le cose che si fanno più spesso, a un clic.
 
 In cima c'è sempre la riga **Visita il sito ufficiale plumeCMS**: il link porta a plumecms.danilofailli.it, dove trovi
-le versioni nuove, i manuali e le novità.
+le versioni nuove, i manuali e le novità. Quando esce una versione nuova, subito dopo compare **Nuova versione disponibile
+v. 2.3.1** (con il numero vero) e accanto il pulsante **Installa ora** (capitolo 28).
+
+In alto a sinistra, accanto al nome plumeCMS, c'è sempre la versione installata, per esempio **v. 2.3.0**: la vedi in
+ogni pagina del pannello. Al telefono sta accanto al pulsante del menu.
 
 Sotto trovi i riquadri del **tipo di sito** e dei **Primi passi** (capitoli 2 e 3), gli avvisi in giallo, e i numeri
 del sito: articoli online, programmati e in bozza, iscritti alla newsletter, form compilati, ultime modifiche, e un
@@ -1974,10 +1978,16 @@ solo. Si apre da **Impostazioni > Aggiornamenti**.
 Due strade.
 
 **Quando il pannello te lo dice.** Una volta al giorno il pannello chiede al sito ufficiale se c'è una versione nuova.
-Se c'è, lo vedi sulla dashboard e in questa pagina:
+Se c'è, sulla dashboard, nella riga in cima, leggi **Nuova versione disponibile v. ...** e accanto **Installa ora**:
 
-1. premi **Scarica e prepara**: lo zip arriva da solo, controllato;
-2. premi **Applica ora** sul pacchetto pronto.
+1. premi **Installa ora** e conferma;
+2. aspetta circa un minuto senza chiudere la pagina: il pannello scarica lo zip, controlla che sia intero e quello giusto,
+   fa una copia di sicurezza del sito e installa. Se un passo non va, rimette tutto com'era da solo;
+3. si apre la pagina Aggiornamenti con scritto **applicato**, e in alto a sinistra c'è il numero nuovo.
+
+Se preferisci guardare prima, qui in Aggiornamenti premi **Scarica e prepara**: lo zip arriva da solo, controllato, e
+poi premi **Applica ora** sul pacchetto pronto. Un sito con moduli suoi (fatti apposta per lui) ha sempre questa strada:
+sulla dashboard, al posto di Installa ora, c'è **Scarica e prepara**.
 
 **A mano.** Scarica lo zip di aggiornamento (`plumecms-<versione>-aggiornamento.zip`) dal sito di plumeCMS:
 

@@ -134,6 +134,7 @@ async function contrastoParole(pg) {
     ['aspetti', 'aspetti.webp', /Lavagna/], ['server', 'controlla-server.webp', /Controlla il server/]])
     ok(`Funzionalità (1.4.0): il blocco ${id}, con la schermata`, await v.locator(`#${id} img[src*="${img}"]`).count() === 1 && re.test(await v.locator(`#${id}`).innerText()));
   ok('Funzionalità (2.0.0): il blocco degli addon, con la schermata e gli otto addon', await v.locator('#addon img[src*="addon.webp"]').count() === 1 && /Prenotazioni e appuntamenti/.test(await v.locator('#addon').innerText()) && /Copia del sito altrove/.test(await v.locator('#addon').innerText()) && /beta/.test(await v.locator('#addon').innerText()));
+  ok('Funzionalità (2.3.0): il blocco di Installa ora, con la schermata', await v.locator('#installa-ora img[src*="installa-ora.webp"]').count() === 1 && /Installa ora/.test(await v.locator('#installa-ora').innerText()));
   ok('Funzionalità (2.2.0): il blocco di Scegli dal sito, con la schermata', await v.locator('#scegli-sito img[src*="scegli-sito.webp"]').count() === 1 && /Scegli dal sito/.test(await v.locator('#scegli-sito').innerText()));
   ok('Funzionalità (2.1.0): il blocco della consegna delle email, con la schermata', await v.locator('#consegna img[src*="consegna.webp"]').count() === 1 && /Consegna delle email/.test(await v.locator('#consegna').innerText()) && /Brevo/.test(await v.locator('#consegna').innerText()));
   ok('Funzionalità (2.1.0): il blocco dei widget nuovi, con la schermata e 92 widget', await v.locator('#widget-21 img[src*="widget-2-1.webp"]').count() === 1 && /menu del ristorante/i.test(await v.locator('#widget-21').innerText()) && /92 widget/.test(await v.locator('#widget-21').innerText()));
@@ -218,7 +219,7 @@ async function contrastoParole(pg) {
   ok('Domande frequenti (1.4.0): chi viene da WordPress', /Vengo da WordPress\. Devo rifare tutto\?/.test(await v.locator('body').innerText()));
   await v.goto(B + '/scarica/', { waitUntil: 'networkidle' });
   ok('Scarica: le novità della 1.4.0', /1\.4\.0: Il sito si prova/.test(await v.locator('body').innerText()));
-  ok('Scarica: le novità della 2.2.0', /2\.2\.0: Scegli dal sito/.test(await v.locator('body').innerText()));
+  ok('Scarica: le novità della 2.3.0', /2\.3\.0: Installa ora/.test(await v.locator('body').innerText()));
   ok('Scarica: le novità della 1.6.0', /1\.6\.0: Un riquadro in fondo a ogni articolo/.test(await v.locator('body').innerText()));
   await v.goto(B + '/installazione/', { waitUntil: 'networkidle' });
   ok('Installazione (1.4.0): dopo l\'installazione, Primi passi e Controlla il server', /Primi passi/.test(await v.locator('body').innerText()) && /Controlla il server/.test(await v.locator('body').innerText()));

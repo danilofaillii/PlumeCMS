@@ -2,6 +2,17 @@
 
 Il prodotto si chiama **plumeCMS** (nome scelto il 26 ottobre 2026; prima, per poche ore, "CarbonaraCMS", e ancora prima il provvisorio "Officina": gli zip vecchi si chiamavano `officina-*` e `carbonaracms-*`).
 
+## 2.3.0 (31 ottobre 2026) - La versione sempre in vista, e Installa ora
+
+- **La versione installata sempre in alto a sinistra** del pannello, accanto al nome (per esempio "v. 2.3.0"), in ogni pagina.
+  Al telefono sta accanto al pulsante del menu.
+- **Nuova versione disponibile, Installa ora** (richiesta di Danilo): nel banner della dashboard, subito dopo "Visita il sito
+  ufficiale plumeCMS", compare "Nuova versione disponibile v. x.x.x" con il pulsante **Installa ora**. Un clic, una conferma: il
+  pannello scarica lo zip dal sito ufficiale, controlla dimensione e impronta sha256, fa lo snapshot e applica; se un passo non
+  va, rimette tutto com'era. Solo l'amministratore lo vede. Un sito con moduli suoi passa ancora da "Scarica e prepara" e dal
+  riepilogo prima di applicare.
+- Il riquadro azzurro "plumeCMS x.x.x è disponibile" della dashboard non c'è più: lo sostituisce la riga del banner.
+
 ## 2.2.0 (31 ottobre 2026) - Scegli dal sito
 
 - **Scegli dal sito** (richiesta di Danilo): accanto a ogni campo del pannello che vuole un link a una pagina del sito c'è il
