@@ -43,7 +43,9 @@ const corpo = (eml) => {
   const flash = async () => (await p.locator('.flash').allInnerTexts()).join(' ');
   await p.goto(B + '/admin/login.php'); await p.fill('#username', UTENTE); await p.fill('#password', PASSWORD);
   await Promise.all([p.waitForNavigation(), p.click('button[type=submit]')]);
-  const oggi = new Date(Date.now() - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 10);
+  // Audit 2026-11: "oggi" nel fuso del sito (l'installatore scrive Europe/Rome), non in quello della macchina: vicino a
+  // mezzanotte i due giorni erano diversi e il cron non trovava il testo del calendario (KO che non dicevano niente del CMS).
+  const oggi = new Date().toLocaleDateString('sv-SE', { timeZone: process.env.FUSO || 'Europe/Rome' });
 
   // Posta verso il server finto, avvisi a prova@esempio.it.
   await p.goto(B + '/admin/impostazioni.php', { waitUntil: 'networkidle' });

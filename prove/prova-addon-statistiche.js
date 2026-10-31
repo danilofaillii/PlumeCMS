@@ -111,7 +111,7 @@ async function misura(ua) {
   ok('nel database nessun indirizzo IP (127.0.0.1) e nessuno user agent', !tutto.includes('127.0.0.1') && !/Mozilla|iPhone|Googlebot/.test(tutto));
   ok('le colonne sono solo quelle aggregate (niente ip, niente user agent)', JSON.stringify(d.colonne.stat_visite) === JSON.stringify(['giorno', 'chiave', 'pagina', 'fonte', 'utm_source', 'utm_medium', 'utm_campaign', 'dispositivo', 'visite', 'visitatori']) && JSON.stringify(d.colonne.stat_impronte) === JSON.stringify(['giorno', 'impronta', 'viste']), d.colonne);
   ok('tre impronte anonime di oggi (A, B, C), 16 byte ciascuna', d.stat_impronte.length === 3 && d.stat_impronte.every(x => /^[0-9a-f]{32}$/.test(x.impronta)), d.stat_impronte);
-  ok('il sale del giorno è di oggi', d.sale && d.sale.giorno === new Date(Date.now() - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 10) && /^[0-9a-f]{64}$/.test(d.sale.sale), d.sale && d.sale.giorno);
+  ok('il sale del giorno è di oggi', d.sale && d.sale.giorno === new Date().toLocaleDateString('sv-SE', { timeZone: process.env.FUSO || 'Europe/Rome' }) /* audit 2026-11: il giorno del sito */ && /^[0-9a-f]{64}$/.test(d.sale.sale), d.sale && d.sale.giorno);
   const somma = (f) => d.stat_visite.filter(f).reduce((a, x) => [a[0] + +x.visite, a[1] + +x.visitatori], [0, 0]);
   ok('in tutto 7 visite e 3 visitatori (robot, 404 e amministratore esclusi)', JSON.stringify(somma(() => true)) === '[7,3]', somma(() => true));
 
@@ -129,7 +129,7 @@ async function misura(ua) {
   ok('il grafico SVG con una barra per giorno e la linea dei visitatori', await p.locator('svg.st-grafico .st-giorno').count() === 7 && await p.locator('svg.st-grafico polyline.st-linea').count() === 1 && await p.locator('svg.st-grafico rect.st-barra').count() === 1);
   ok('confronto con il periodo prima (vuoto): «prima non c\'erano»', /prima non c.erano/.test(await p.locator('#st-numeri').innerText()));
   // Periodo personalizzato: solo ieri, niente visite.
-  const ieri = new Date(Date.now() - 86400000 - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 10);
+  const ieri = new Date(Date.now() - 86400000).toLocaleDateString('sv-SE', { timeZone: process.env.FUSO || 'Europe/Rome' }); // audit 2026-11: nel fuso del sito
   await vai(`/admin/addon-pagina.php?a=statistiche&p=visite&periodo=personalizzato&dal=${ieri}&al=${ieri}`);
   ok('periodo personalizzato (solo ieri): 0 visite', await num('visite') === '0' && await p.locator('svg.st-grafico .st-giorno').count() === 1);
   await vai('/admin/addon-pagina.php?a=statistiche&p=visite&periodo=personalizzato&dal=2026-02-30&al=xx');
