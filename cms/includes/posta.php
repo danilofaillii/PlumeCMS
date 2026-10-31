@@ -155,7 +155,11 @@ function posta_testo_da_html(string $html): string {
  * non quelle del contenuto. Un corpo HTML diventa multipart/alternative con la parte di testo; tutto in base64.
  * Ritorna [intestazioni tenute, intestazioni del contenuto, corpo], con a capo CRLF.
  */
-function posta_mime(string $corpo, string $intestazioni): array {
+/**
+ * Il messaggio MIME. 2.0.3: $allegati = [['nome' => 'evento.ics', 'tipo' => 'text/calendar; method=REQUEST', 'dati' => '...'], ...]
+ * fa un multipart/mixed: prima il testo (o l'alternativa testo e HTML), poi i file in base64. Nomi ripuliti, al massimo 10 file.
+ */
+function posta_mime(string $corpo, string $intestazioni, array $allegati = []): array {
     $tenute = []; $tipo = '';
     foreach (preg_split('/\r?\n/', trim($intestazioni)) as $h) {
         if ($h === '') continue;
@@ -171,21 +175,39 @@ function posta_mime(string $corpo, string $intestazioni): array {
             . "--$confine\r\nContent-Type: text/plain; charset=UTF-8\r\nContent-Transfer-Encoding: base64\r\n\r\n" . $b64(posta_testo_da_html($corpo)) . "\r\n"
             . "--$confine\r\nContent-Type: $tipo\r\nContent-Transfer-Encoding: base64\r\n\r\n" . $b64($corpo) . "\r\n"
             . "--$confine--\r\n";
-        return [$tenute, ['MIME-Version: 1.0', 'Content-Type: multipart/alternative; boundary="' . $confine . '"'], $parti];
+        $testa = ['MIME-Version: 1.0', 'Content-Type: multipart/alternative; boundary="' . $confine . '"'];
+        return $allegati ? posta_con_allegati($tenute, $testa, $parti, $allegati) : [$tenute, $testa, $parti];
     }
-    return [$tenute, ['MIME-Version: 1.0', 'Content-Type: ' . $tipo, 'Content-Transfer-Encoding: base64'], $b64($corpo) . "\r\n"];
+    $testa = ['MIME-Version: 1.0', 'Content-Type: ' . $tipo, 'Content-Transfer-Encoding: base64'];
+    return $allegati ? posta_con_allegati($tenute, $testa, $b64($corpo) . "\r\n", $allegati) : [$tenute, $testa, $b64($corpo) . "\r\n"];
+}
+
+/** Avvolge il messaggio (intestazioni del contenuto e corpo) in un multipart/mixed con gli allegati. */
+function posta_con_allegati(array $tenute, array $testa, string $parti, array $allegati): array {
+    $b64 = fn(string $s) => rtrim(chunk_split(base64_encode($s), 76, "\r\n"));
+    $confine = 'plume-m-' . bin2hex(random_bytes(12));
+    $interno = implode("\r\n", array_filter($testa, fn($h) => !preg_match('/^MIME-Version:/i', $h)));
+    $out = "Messaggio in formato MIME.\r\n--$confine\r\n" . $interno . "\r\n\r\n" . $parti;
+    foreach (array_slice($allegati, 0, 10) as $f) {
+        $nome = preg_replace('/[^A-Za-z0-9._-]+/', '-', (string)($f['nome'] ?? 'file')) ?: 'file';
+        $tipoF = preg_match('~^[a-z]+/[a-z0-9.+-]+(;\s*[a-z-]+=[A-Za-z0-9-]+)*$~i', (string)($f['tipo'] ?? '')) ? (string)$f['tipo'] : 'application/octet-stream';
+        $out .= "--$confine\r\nContent-Type: $tipoF; name=\"$nome\"\r\nContent-Transfer-Encoding: base64\r\nContent-Disposition: attachment; filename=\"$nome\"\r\n\r\n"
+            . $b64((string)($f['dati'] ?? '')) . "\r\n";
+    }
+    $out .= "--$confine--\r\n";
+    return [$tenute, ['MIME-Version: 1.0', 'Content-Type: multipart/mixed; boundary="' . $confine . '"'], $out];
 }
 
 /**
  * Spedisce un'email. $tipo finisce nel registro (campagna, flusso, conferma, avviso_form, prova, social...).
  * Dopo la chiamata posta_esito() dice com'è andata e posta_errore() perché.
  */
-function posta_invia(string $a, string $oggetto, string $corpo, string $intestazioni = '', string $tipo = 'altro'): bool {
+function posta_invia(string $a, string $oggetto, string $corpo, string $intestazioni = '', string $tipo = 'altro', array $allegati = []): bool {
     posta_errore('');
     posta_esito('');
     $c = posta_config();
     if (!$c) {
-        [$tenute, $contenuto, $testo] = posta_mime($corpo, $intestazioni);
+        [$tenute, $contenuto, $testo] = posta_mime($corpo, $intestazioni, $allegati);
         [$mittente, $nome] = posta_mittente();
         // Il From di chi chiama vince; senza, quello del sito. To e Subject li scrive mail().
         $tenute = array_values(array_filter($tenute, fn($h) => !preg_match('/^(To|Subject):/i', $h)));
@@ -201,7 +223,7 @@ function posta_invia(string $a, string $oggetto, string $corpo, string $intestaz
         return $ok;
     }
     try {
-        posta_smtp($c, $a, $oggetto, $corpo, $intestazioni);
+        posta_smtp($c, $a, $oggetto, $corpo, $intestazioni, $allegati);
         posta_esito('ok');
         posta_registra($tipo, 'ok');
         return true;
@@ -220,7 +242,7 @@ function posta_oggetto(string $s): string {
     return '=?UTF-8?B?' . base64_encode($s) . '?=';
 }
 
-function posta_smtp(array $c, string $a, string $oggetto, string $corpo, string $intestazioni): void {
+function posta_smtp(array $c, string $a, string $oggetto, string $corpo, string $intestazioni, array $allegati = []): void {
     $host = (string)$c['host'];
     $porta = (int)$c['porta'];
     $ssl = $c['sicurezza'] === 'ssl';
@@ -286,7 +308,7 @@ function posta_smtp(array $c, string $a, string $oggetto, string $corpo, string 
         $scrivi('DATA', 354);
 
         // Intestazioni di chi chiama, tranne quelle che decide il server di posta.
-        [$tenute, $contenuto, $testo] = posta_mime($corpo, $intestazioni);
+        [$tenute, $contenuto, $testo] = posta_mime($corpo, $intestazioni, $allegati);
         $tenute = array_values(array_filter($tenute, fn($h) => !preg_match('/^(From|To|Subject|Date|Message-ID):/i', $h)));
         $testa = array_merge([
             'Date: ' . date('r'),
