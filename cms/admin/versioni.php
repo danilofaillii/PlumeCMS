@@ -159,7 +159,7 @@ $totale = versioni_conta($ambito, $oggetto);
 $righe = editor_versioni($ambito, $oggetto, $perPagina, ($paginaN - 1) * $perPagina);
 $oggetti = $ambito !== '' && $ambito !== 'contenuto' && !in_array($ambito, ['stile', 'impostazioni'], true) ? versioni_oggetti($ambito) : [];
 $csrf = csrf_token();
-$conAnteprima = fn(array $r) => str_starts_with((string)$r['ambito'], 'contenuto:') || $r['ambito'] === 'modello';
+$conAnteprima = fn(array $r) => str_starts_with((string)$r['ambito'], 'contenuto:') || str_starts_with((string)$r['ambito'], 'contenitore:') || $r['ambito'] === 'modello'; // 2.1: anche i contenitori (le lezioni)
 $linkOggetto = function (array $r): string {
     $a = (string)$r['ambito']; $id = (int)$r['oggetto_id'];
     if (str_starts_with($a, 'contenuto:')) return 'editor.php?tipo=' . rawurlencode(substr($a, 10)) . '&id=' . $id;

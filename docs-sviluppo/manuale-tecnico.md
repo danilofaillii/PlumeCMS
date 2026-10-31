@@ -1097,6 +1097,46 @@ Un modulo può aggiungere varianti? Non ancora: i dati sono un file solo del nuc
 
 ---
 
+### 9.12 I contenitori dei moduli (dalla 2.1)
+
+Un modulo (o un addon) può far comporre con l'editor un oggetto suo che **non** è un contenuto del sito: niente elenco
+Contenuti, sitemap, SEO, menu. Il primo è la lezione dei Corsi online (`docs-sviluppo/addon/corsi.md`). Si dichiara nel
+manifesto: `'editor_contenitori' => ['<tipo>' => fn() => [...]]` (tipo: minuscole, numeri e `_`, da 3 a 31 caratteri; mai
+`pagine`, `articoli`, `modelli`). Solo i moduli: i temi non possono (non passa da `cms_filtro()`).
+
+| Chiave | Obbligo | Cosa |
+|---|---|---|
+| `riga($id)` | sì | la riga con le chiavi di una pagina: `title`, `slug`, `status` (`published` se c'è una struttura pubblicata), `struttura`, `struttura_bozza`, `content` (il testo di prima), `percorso`, `vedi` (l'anteprima), `scheda` (la pagina del pannello a cui tornare); null se non c'è |
+| `salva($id, $json, $pubblica, $autore)` | sì | scrive la struttura: bozza, o pubblicata togliendo la bozza |
+| `etichetta`, `uno` | no | "Lezioni dei corsi" (pagina Versioni), "lezione" (finestra Impostazioni) |
+| `permesso()` | no | chi lo apre; senza, solo l'amministratore |
+| `impostazioni($id, ['titolo' => ...])` | no | il titolo dalla finestra Impostazioni (che per un contenitore ha solo il titolo) |
+| `togli($id)` | no | "Torna al contenuto della scheda" |
+| `anteprima($riga)` | no | `['prima' => html, 'dopo' => html, 'testa' => html]`: la cornice della tela e i suoi fogli |
+
+Nel motore (`includes/editor.php`):
+- `editor_contenitori()` (`:453`) legge i manifesti una volta per richiesta e scarta le definizioni senza `riga` o `salva`;
+  `editor_contenitore()` (`:469`), `editor_contenitore_permesso()` (`:474`), `editor_ambito()` (`:482`: `modello`,
+  `contenitore:<tipo>` o `contenuto:<tipo>`);
+- `editor_tipo_valido()` (`:496`) riconosce il tipo; `editor_pagina()` (`:512`) chiede la riga al modulo e completa le
+  chiavi che mancano; `editor_salva()` (`:554`) chiama `salva` e lascia la versione; `editor_percorso_pagina()` (`:653`) usa
+  `percorso`.
+
+Nelle pagine:
+- `admin/editor.php:49` (403 senza permesso), `:57` (la freccia torna a `scheda`), `:110` (`slugFisso`, dati
+  `contenitore` per `editor.js`), `:155` ("Vedi la pagina" = `vedi`); niente header e footer da scegliere, niente controllo SEO;
+- `admin/editor-api.php:45` (403 senza permesso, per ogni azione), `:75` (Pubblica non tocca tabelle del nucleo), `:133`
+  (Impostazioni: solo il titolo), `:192` (`togli`); le revisioni con `editor_ambito()`;
+- `admin/editor-anteprima.php:16` (403 senza permesso: la tela mostra il contenuto), `:37` (la cornice);
+- `admin/assets/editor/editor.js:1117` (finestra Impostazioni con il solo titolo), `:1203` (dopo "Torna al contenuto
+  della scheda" si va a `scheda`).
+
+Versioni (`includes/versioni.php`): ambito `contenitore:<tipo>`, con i dati `albero` e `stato` (`versioni_dati_contenitore()`,
+`:321`); stato di adesso (`:357`), nome (`:390`), ripristino con il salvataggio normale (`:438`; con il modulo spento:
+"riaccendilo per ripristinare"); l'etichetta nella pagina Versioni dal contenitore (`:148`); l'anteprima di una versione in
+`admin/versioni.php:92`, con la cornice. Il redattore vede e tocca solo gli ambiti `contenuto:`: i contenitori sono
+dell'amministratore.
+
 ## 10. Stile del sito
 
 `includes/design.php`, pagina Editor > Stile del sito (`admin/design.php`). È l'equivalente dei "Global" di
@@ -2986,6 +3026,44 @@ Scelte comuni:
 | `prove/prova-addon-tutti.js`: tutti accesi insieme, pannello e sito anche al telefono, poi spenti e sito uguale a prima | 66 |
 
 Il modo di lanciarle è in `prove/LEGGIMI.md`.
+
+### 32.1 Le novità degli addon nella 2.1
+
+**Prenotazioni** (1.1.0, `docs-sviluppo/addon/prenotazioni.md`):
+- Prenotazioni > Nuova prenotazione (`addon/prenotazioni/includes/admin-nuova.php`): l'attività scrive una prenotazione
+  presa al telefono o di persona fra gli orari liberi del sito (senza gli anticipi), oppure forzando "Un altro orario"
+  con l'avviso e una persona scelta; mai sopra un altro appuntamento della stessa persona (`pren_prenota_pannello()`,
+  `addon/prenotazioni/includes/prenotazioni.php:412`, nella stessa transazione con blocco delle righe, più l'indice UNIQUE);
+  email facoltativa, conferma solo con l'email e la spunta;
+- il file .ics allegato alle email di conferma, spostamento (REQUEST) e annullamento (CANCEL), con lo stesso UID e la
+  SEQUENCE che cresce (`pren_ics()`, `:610`; colonna `sequenza`), con `posta_invia(..., $allegati)` della 2.0.3;
+- colonne `origine` e `sequenza` aggiunte da `pren_colonne_nuove()` (`:108`) ai siti della 2.0.0.
+
+**Eventi con iscrizione**: eventi per gli altri addon `evento_svolto` (dal cron, una volta per evento, colonna
+`svolto_at`), `iscrizione_presenza`, `iscrizione_cancellata`, `evento_cambiato`, `evento_eliminato`
+(`docs-sviluppo/addon/eventi-iscrizione.md`). Aggiornando, gli eventi già finiti si segnano svolti senza annunciarli.
+
+**Raccolta recensioni** (1.1.0): l'invito "Com'è andata?" anche dopo gli eventi, ai presenti o a tutti gli iscritti
+(tranne gli assenti), `giorni_dopo` giorni dopo la fine; le presenze segnate dopo l'evento contano
+(`docs-sviluppo/addon/recensioni.md`, "Dopo gli eventi"). Nessuna dipendenza: con Eventi spento non arriva niente.
+
+**Corsi online** (1.1.0): il testo delle lezioni con l'editor visuale, come contenitore dell'editor (9.12); le lezioni
+di prima entrano nell'editor in bozza, in un widget Testo o, se il widget perderebbe qualcosa, in un widget HTML; la
+colonna `testo` resta. Il programma si riordina trascinando (SortableJS del pannello, `addon/corsi/assets/programma.js`),
+`corsi_riordina()` tutto o niente (`addon/corsi/includes/corsi.php:374`); le frecce restano per la tastiera.
+
+File del nucleo toccati nella 2.1 per questi addon: `includes/editor.php`, `includes/versioni.php`, `admin/editor.php`,
+`admin/editor-api.php`, `admin/editor-anteprima.php`, `admin/versioni.php`, `admin/assets/editor/editor.js` (solo i
+contenitori, 9.12).
+
+| Prova | 2.0.0 | 2.1 |
+|---|---|---|
+| `prove/prova-addon-prenotazioni.js` | 60 | 85 |
+| `prove/prova-addon-eventi-iscrizione.js` | 45 | 47 |
+| `prove/prova-addon-recensioni.js` | 39 | 51 |
+| `prove/prova-addon-corsi.js` | 58 | 80 |
+| attacchi `prove/attacchi-addon-a.js` / `-b.js` | 108 / 80 | 127 / 89 |
+| `prove/prova-addon-tutti.js` | 66 | 70 |
 
 ## 33. File riservati e il file dato dai form (dalla 2.0.0)
 

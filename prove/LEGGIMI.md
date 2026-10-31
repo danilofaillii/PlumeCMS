@@ -445,14 +445,18 @@ Impostazioni > Addon e scrive il server finto in Impostazioni > Configurazione e
 
 - `node prove/prova-addon-prenotazioni.js <base> <cartella CMS> <porta smtp> <cartella posta>`. Fa girare anche
   `prove/prenotazioni-cli.php` (posti a ore fisse: ora legale, fine mese, anticipi, ferie, pausa, doppia prenotazione,
-  promemoria) prima di ogni prenotazione vera. Atteso: 60 su 60, nella radice e con `CMS_CARTELLA=/test`.
-- `node prove/prova-addon-eventi-iscrizione.js <base> <cartella CMS> <porta smtp> <cartella posta>`. Atteso: 45 su 45.
+  promemoria) prima di ogni prenotazione vera. Atteso: 60 su 60 con la 2.0.0, nella radice e con `CMS_CARTELLA=/test`;
+  85 su 85 con la 2.1 (allegati .ics letti dalle email del server finto, prenotazione scritta dal pannello, colonne nuove
+  su un sito della 2.0.0; provata nella radice).
+- `node prove/prova-addon-eventi-iscrizione.js <base> <cartella CMS> <porta smtp> <cartella posta>`. Atteso: 45 su 45
+  (2.0.0), 47 su 47 con la 2.1 (colonna `svolto_at` su un sito della 2.0.0, «1 evento concluso» una volta sola).
 - `node prove/prova-addon-recensioni.js <base> <cartella CMS> <porta smtp> <cartella posta>` (accende per un momento
-  anche Prenotazioni). Atteso: 39 su 39.
-- `node prove/attacchi-addon-b.js <base> <cartella CMS> <porta smtp> <cartella posta>`: 80 attacchi, ogni OK è un
-  attacco respinto. Accende i tre addon e crea un redattore `red_addon`.
+  anche Prenotazioni e, dalla 2.1, Eventi con iscrizione). Atteso: 39 su 39 (2.0.0), 51 su 51 con la 2.1 (inviti dopo gli
+  eventi).
+- `node prove/attacchi-addon-b.js <base> <cartella CMS> <porta smtp> <cartella posta>`: 80 attacchi (89 con la 2.1: la
+  prenotazione scritta dal pannello, A18 e D2), ogni OK è un attacco respinto. Accende i tre addon e crea un redattore `red_addon`.
 
-Usano `prove/addon-b-comune.js` e `prove/addon-b-cli.php` (pagine con un widget, SQL di prova con `{p}` per il prefisso,
+Usano `prove/addon-b-comune.js` (dalla 2.1 anche `allegati(email)` e `ics(testo, campo)` per gli allegati delle email) e `prove/addon-b-cli.php` (pagine con un widget, SQL di prova con `{p}` per il prefisso,
 il cron frequente con l'orologio spostato in avanti). Due prove insieme vogliono due server di posta finti diversi: le
 email si riconoscono dal destinatario, e le prove usano gli stessi indirizzi.
 
