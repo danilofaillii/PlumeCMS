@@ -238,6 +238,7 @@ var FL = (function () {
       pannello.querySelector('#fp-pl').addEventListener('input', function (e) { d.pulsante_link = e.target.value; });
       quill = new Quill('#fp-corpo', {theme: 'snow', modules: {toolbar: [[{header: [2, 3, false]}], ['bold', 'italic', 'underline'], ['link', 'blockquote'], [{list: 'ordered'}, {list: 'bullet'}], ['clean']]}});
       quill.clipboard.dangerouslyPasteHTML(d.corpo || '');
+      if (window.pnLink) window.pnLink.quill(quill, { assoluto: true }); // 2.2: il link di un'email sceglie una pagina del sito (indirizzo intero)
       quill.on('text-change', function () { d.corpo = quill.root.innerHTML === '<p><br></p>' ? '' : quill.root.innerHTML; bozzaPiuTardi(); });
     }
   }

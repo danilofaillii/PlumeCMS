@@ -245,6 +245,10 @@ button,input,select,textarea{font:inherit;color:inherit}
 .ed-galleria-via,.ed-galleria-mod{position:absolute;top:3px;border:0;border-radius:4px;background:rgba(0,0,0,.72);color:#fff /* fisso: sopra la foto */;font-size:11px;cursor:pointer;padding:2px 6px}
 .ed-galleria-via{right:3px}
 .ed-galleria-mod{left:3px}
+.ed-galleria-link{position:absolute;bottom:3px;left:3px;border:0;border-radius:4px;background:rgba(0,0,0,.72);color:#fff /* fisso: sopra la foto */;font-size:11px;cursor:pointer;padding:2px 6px}
+/* 2.2: la casella di un link con "Scegli dal sito" (assets/scegli-link.js, css/scegli-link.css) */
+.ed-link-sito .pn-link-campo{gap:6px}
+.ed-link-sito .pn-link-campo > input{flex:1 1 8rem}
 .ed-riga-immagine button.ed-b{flex:none}
 .ed-sfondo-img{margin-top:6px}
 .ed-seo{margin:0 22px 12px;border:1px solid var(--ed-bordo);border-radius:8px;padding:10px 12px;font-size:13px;max-height:260px;overflow:auto}

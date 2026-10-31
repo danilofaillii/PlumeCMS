@@ -574,8 +574,9 @@ Due ruoli (`admin/utenti.php:12`):
 - **Amministratore** (`admin`): tutto.
 - **Redattore** (`editor`): solo contenuti, media, categorie e tag.
 
-Il redattore può aprire solo queste pagine (`AUTH_REDATTORE_PAGINE`, `admin/includes/auth.php:69-70`):
-`index`, `contenuti`, `contenuto`, `editor`, `editor-api`, `editor-anteprima`, `seo-api`, `media`,
+Il redattore può aprire solo queste pagine (`AUTH_REDATTORE_PAGINE`, `admin/includes/auth.php:81-82`):
+`index`, `contenuti`, `contenuto`, `editor`, `editor-api`, `editor-anteprima`, `seo-api`, `link-api` (2.2, Scegli dal sito:
+capitolo 38), `media`,
 `categories`, `versioni`, `account`, `password`, `logout`, `login`. L'editor con `tipo=modelli` (header,
 footer e il riquadro in fondo agli articoli) è sempre negato. Un modulo aggiunge pagine con il filtro `redattore_pagine`.
 
@@ -1233,6 +1234,9 @@ header e footer del codice.
 - Una voce: `{id, etichetta, tipo, rif, url, nuova, classi, figli}`. Al massimo 3 livelli e 200 voci; etichetta
   fino a 100 caratteri; indirizzi `http(s)://`, `/`, `#`, `mailto:`, `tel:`.
 - Indirizzi calcolati: categoria `/category/<slug>/`, pagina o articolo `/<slug>/`, la home `/`.
+- Dalla 2.2 il link personalizzato e l'indirizzo di ogni voce hanno **Scegli dal sito**: una pagina, un articolo o una
+  categoria scelti così diventano una voce di quel tipo (con `rif`); un indirizzo scritto a mano su una voce con `rif` la fa
+  diventare un link personalizzato (capitolo 38).
 
 Il menu si mette nell'header con il widget **Menu di navigazione** (`menu_nav`). Il widget può indicare un menu
 preciso oppure, dalla 1.2.3, "quello in posizione: ..." (valore `posizione:principale`, `posizione:piede-1`...): il menu
@@ -1845,6 +1849,7 @@ Elenco completo dei filtri e degli eventi chiamati nel codice:
 | `llms_intestazione` | filtro | righe di testa di `llms.txt` | `sito/extra.php:88` |
 | `sito_menu` | filtro | voci del menu scritto nel codice | `sito/viste.php:17` |
 | `blog_filtri` | filtro | categorie mostrate come filtri del blog | `sito/viste.php:21` |
+| `collegamenti_sito` | filtro | voci, ricerca, amministratore sì o no: i contenuti di un modulo per Scegli dal sito (2.2, capitolo 38) | `includes/collegamenti.php:97` |
 | `testata_fissa` | filtro | `null`, menu, menu del telefono | `sito/viste.php:104` |
 | `vista_home` | filtro | `null` | `sito/viste.php:482` |
 | `moduli_disponibili` | filtro | moduli del widget Modulo e dei popup (1.2.8) | `includes/editor-widget.php:85` |
@@ -3631,6 +3636,130 @@ mappa e il video hanno da sempre i loro domini nel `frame-src` di tutto il sito)
   widget di prima con i valori di una pagina vera), Tutti i widget, Contatti e home, prima e dopo: uguali al pixel tranne il
   conto alla rovescia.
 - `tools/sicurezza-prova.js` non è stato toccato: gli attacchi della 2.1 stanno nel loro file.
+
+## 38. Scegli dal sito: il link a una pagina senza scriverlo a mano (dalla 2.2)
+
+Richiesta di Danilo: "se inserisco un pulsante che deve aprire una pagina o un articolo del sito, oggi devo inserire per forza
+la voce a mano". Accanto a ogni casella del pannello che porta un link a una pagina c'è il pulsante **Scegli dal sito**: apre
+una finestra che cerca per titolo fra pagine, articoli, categorie, tag e i contenuti degli addon con una pagina pubblica, e
+scrive il link nella casella. La casella resta scrivibile a mano come prima: il pulsante aggiunge, non toglie.
+
+**Il valore che si salva.** Il percorso dalla radice del sito, senza la cartella: `/contatti/`, `/offerta-di-primavera/`,
+`/category/notizie/`, `/evento/serata/`. È lo stesso formato dei link scritti a mano che `editor_link_sicuro()`
+(`includes/editor-widget.php:546`) accetta così com'è, e resta giusto se il sito cambia cartella o dominio: la cartella la
+aggiunge `cms_con_cartella()` (`includes/cms.php:96`) quando la pagina esce (`sito/index.php:58`). La home è `/`. Dove serve
+l'indirizzo intero (le email della newsletter) si salva `cms_url_sito()` più il percorso (`assoluto`).
+
+**Il motore**, `includes/collegamenti.php`:
+- `collegamenti_cerca($q, $tipo, $admin)` (`:58`): pagine e articoli (`cestino IS NULL`, bozze comprese, stato da
+  `contenuti_stato()`: `pubblicato`, `bozza` o `programmato`), categorie (`/category/<slug>/`) e tag (`/tag/<slug>/`), poi il
+  filtro `collegamenti_sito` (`:97`). Ricerca nel titolo e nello slug con `LIKE ... ESCAPE` (`collegamenti_like()`, `:43`: `%` e
+  `_` scritti valgono come caratteri). Ordine: titolo uguale alla ricerca, poi che comincia così, poi gli altri; a parità
+  nell'ordine dei tipi. Al massimo 60 voci (`COLLEGAMENTI_MAX`, `:20`), `altre: true` se ce n'erano di più. Ogni voce: `titolo`,
+  `tipo`, `tipo_nome`, `stato`, `percorso` (da salvare), `indirizzo` (con la cartella, da mostrare), `assoluto` (per le email).
+  La risposta porta anche `tipi` (chiave e nome, per la tendina della finestra).
+- `collegamenti_ricerca_pulita()` (`:27`): via i caratteri di controllo e quelli a 4 byte (nessun titolo li contiene: le
+  colonne sono utf8 a 3 byte, e in un `LIKE` facevano fallire la query delle tabelle degli addon), spazi ridotti, al massimo 100
+  caratteri.
+- Il filtro **`collegamenti_sito`** `($voci, $q, $admin)`: un addon (o un modulo) aggiunge le sue voci con `tipo` (chiave
+  breve), `tipo_nome`, `titolo`, `percorso`, `stato`. Il nucleo controlla il percorso (`collegamenti_percorso_ok()`, `:38`: una
+  barra sola davanti, solo caratteri di un indirizzo), rifà il filtro per la ricerca, **toglie le bozze a chi non è
+  amministratore**, scarta i tipi del nucleo usati da un addon e le voci senza titolo. Un addon che lancia un'eccezione toglie le
+  voci degli addon, non la finestra (il `try` intorno a `cms_filtro`, nel log `collegamenti_sito:`).
+- Gli addon che lo usano: Eventi (`addon/eventi-iscrizione/modulo.php:36`: ogni evento `/evento/<slug>/`, gli annullati con
+  "(annullato)", le bozze solo all'amministratore), Vetrina (`addon/vetrina/modulo.php:46`, `vt_collegamenti()`
+  `addon/vetrina/includes/vetrina.php:493`: il negozio `vt_base()`, le sue categorie `?categoria=`, i prodotti, i nascosti come
+  bozza), Corsi (`addon/corsi/modulo.php:35`: `/corsi/` e ogni corso), Area riservata (`addon/membri/modulo.php:47`: `/accedi/`,
+  `/iscriviti/` se l'iscrizione non è solo su invito, `/area-riservata/`). Prenotazioni e Recensioni non hanno pagine da
+  linkare (le loro sono widget e link personali con il codice); Statistiche e Copia altrove nessuna pagina pubblica.
+
+**L'endpoint**, `admin/link-api.php`: `require_login()`, solo POST con il token (`csrf_ok()`: token e Origin/Referer), risposta
+JSON con `JSON_HEX_TAG | JSON_HEX_AMP` (un titolo con `<script>` arriva come `<script`), `Cache-Control: no-store`,
+`nosniff`. Parametri `q` e `cosa` (non `tipo`: `require_login()` legge `?tipo=` per i modelli, e `tipo=modelli` dà 403 al
+redattore); un valore che non è testo vale vuoto. È in `AUTH_REDATTORE_PAGINE` (`admin/includes/auth.php:81`): il redattore
+riceve `$admin = false` (`is_admin()`), quindi vede pagine, articoli, categorie e tag come nel pannello, bozze comprese, e dei
+contenuti degli addon solo quelli già pubblici. Senza login: 401 in JSON (`auth_rifiuta()`).
+
+**La finestra**, `admin/assets/scegli-link.js` con il suo foglio `admin/assets/css/scegli-link.css` (un file suo perché la usa
+anche l'editor visuale, che non carica `admin.css`: solo le variabili degli aspetti). Caricati da
+`admin/includes/admin-header.php:115` (con `defer`, dopo `pannello.js`) e da `admin/editor.php:135` e `:250` (con il
+`<meta name="pn-csrf">` che l'editor prima non aveva). Nessun gestore in linea.
+- `window.pnLink.apri({ scegli(url, voce), attuale, assoluto, titolo, manuale })` (`:181`): un solo `<dialog class="pn-link">`
+  per pagina, creato al primo uso (`crea()`, `:30`); ogni apertura riparte senza ricerca e rifà la tendina dei tipi con quelli
+  che il server manda (gli addon accesi). Ricerca 200 ms dopo l'ultimo tasto, la richiesta di prima annullata
+  (`AbortController`, `carica()` `:132`). Ogni voce è un pulsante con titolo, tipo, il segno **bozza** o **programmato**
+  (`.pn-link-bozza`, con la spiegazione nel `title`) e l'indirizzo come si vede nel browser; quella già nella casella è segnata
+  (`.pn-link-scelta`, `aria-current`). Tutto con `textContent`: un titolo con HTML resta testo. "Oppure scrivi un indirizzo"
+  (`manuale: false` lo nasconde) passa `voce = null`.
+- Tastiera: si apre con il fuoco sulla ricerca; freccia giù porta alla prima voce, le frecce (e Home, Fine, Pag su/giù) si
+  muovono fra le voci con una sola fermata di Tab (tabindex mobile), freccia su dalla prima torna alla ricerca; Invio sceglie
+  (nella ricerca, se c'è una voce sola); Esc chiude e il fuoco torna a chi l'ha aperta. Sotto 640 px la finestra prende tutto
+  lo schermo. Nell'editor, Canc e Ctrl+Z dentro una finestra aperta non toccano la tela (`editor.js:1105`).
+- I campi: `<input data-link-sito>` (o `<textarea>`) diventa `.pn-link-campo` con la casella e il pulsante (`campo()`, `:204`).
+  `data-link-sito="assoluto"` scrive l'indirizzo intero; `data-link-sito="riga"` (textarea) aggiunge il percorso su una riga
+  nuova; `data-link-sito-titolo="#id"` scrive il titolo in quel campo se è vuoto. Scrivere manda `input` e `change` (`scrivi()`,
+  `:199`). Casella `readonly` o `disabled`: pulsante spento. I campi aggiunti dopo si preparano da soli (`MutationObserver`);
+  `window.pnLink.campo(input, { classe, scegli, modo })` per quelli creati da uno script (l'attributo `data-link-pronto` lo
+  scrive `campo()`: chi prepara un campo a mano non deve usarlo).
+- `window.pnLink.quill(quill, { assoluto })` (`:238`): il pulsante link della barra di Quill apre la finestra. Con del testo
+  selezionato lo fa diventare link; senza, scrive il titolo della pagina scelta come link; sopra un link già fatto lo toglie
+  (come prima). Il fumetto di Quill per vedere, cambiare o togliere un link esistente resta. Quill scrive ogni link con
+  `target="_blank"` (anche prima della 2.2, anche quelli scritti a mano): i link dei testi si aprono in una scheda nuova.
+
+**Dove** (inventario dei campi link del pannello, nucleo e addon):
+
+| Dove | Campo | Come |
+|---|---|---|
+| Editor visuale, controllo `link` (Immagine, Invito all'azione, Riquadri, Flip box, ogni widget con `ewx_link()`) | casella dell'indirizzo | `conSceltaLink()`, `admin/assets/editor/editor.js:918`, usato a `:980` |
+| Editor visuale, caselle di testo che portano un link | nome che finisce in `link` (`link`, `pulsante_link`, `extra_link`), `link_privacy`, o `link_sito: true` nel controllo | `eLinkSito()`, `editor.js:926`: Pulsanti, Apertura, Schede con link, Slider, Elenco con icone, Listino, Barra contatti e gli altri, anche dentro i ripetitori |
+| Editor visuale, Testo (Quill, controllo `ricco`) | pulsante link della barra | `editor.js:989` |
+| Editor visuale, Galleria | pulsante **Link** su ogni foto (il pulsante Testo lo chiede ancora a mano) | `editor.js:900` |
+| Header, footer, Fine articolo | sono modelli dell'editor visuale: come sopra | |
+| Popup | Link del pulsante; Indirizzi elencati (una riga per volta) | `admin/popup.php:63`, `:77` |
+| Form | Link del pulsante "Continua" | `admin/form.php:101` |
+| Newsletter, campagna | Link del pulsante e link nel testo (Quill), con l'indirizzo intero | `admin/newsletter-campagna.php:125`, `:173` |
+| Newsletter, flussi | link nel testo dei blocchi email (Quill, indirizzo intero) | `admin/assets/flussi.js:241` |
+| Social, Impostazioni | Un link in più nei testi di WhatsApp | `admin/social.php:224` |
+| SEO e AEO | Motori: "Un indirizzo da inviare" (IndexNow), "Notifica un indirizzo a Google"; Copertura: "Un indirizzo" da ispezionare; Schema: "Indirizzo del sito"; Redirect: "Vecchio indirizzo" e "Nuovo indirizzo" | `admin/seo.php:350`, `:387`, `:415`, `:611`, `:663`, `:664` |
+| Menu di navigazione | Link personalizzato (il testo della voce dal titolo); Indirizzo di ogni voce | `admin/menu.php:184-210` |
+| Eventi e Prenotazioni, Impostazioni | Pagina dell'informativa privacy | `addon/eventi-iscrizione/includes/admin-impostazioni.php:23`, `addon/prenotazioni/includes/admin-impostazioni.php:53` |
+
+Senza il pulsante, perché non sono pagine del sito: video (YouTube, Vimeo), profili dei social e LinkedIn della Squadra,
+`url` di Condividi (vuoto vale la pagina stessa), Mappa e indirizzi postali, link di Google per le recensioni, WebDAV di Copia
+altrove, indirizzo dell'importazione da WordPress, la frase in fondo al sito (porta al sito di plumeCMS), i campi immagine
+(hanno Scegli dai Media), gli slug delle schede. Le condizioni dei modelli ("Contenuto preciso", `admin/modelli.php`) hanno già
+la loro scelta per titolo.
+
+**Il menu** (`admin/menu.php:184`): una pagina, un articolo o una categoria scelti dal sito diventano una voce di quel tipo con
+lo slug in `rif` (`rifDa()`): `menu_url_voce()` (`includes/menu-nav.php:102`) calcola l'indirizzo dallo slug, quindi la voce segue
+la pagina anche se cambia indirizzo. Un indirizzo scritto a mano su una voce che ricordava uno slug la fa diventare "Link
+personalizzato" (prima l'indirizzo scritto si ignorava in silenzio, perché `rif` vince). Gli elenchi Pagine, Articoli e
+Categorie con le caselle, a sinistra, restano.
+
+**Link sicuri anche fuori dall'editor** (2.2): il pulsante del popup passa da `editor_link_sicuro()` (`includes/popup.php:141`),
+il "Continua" dei form (`includes/form.php:574`), il pulsante delle email (`includes/newsletter.php:672`) e il link della privacy
+di Eventi e Prenotazioni (`addon/eventi-iscrizione/includes/vista.php:75`, `addon/prenotazioni/includes/vista.php:92`) da
+`sicurezza_url_pulito()`. Prima un `javascript:` scritto lì dall'amministratore usciva così com'era; gli indirizzi buoni non
+cambiano (il popup trasforma anche `contatti` in `/contatti`, come i widget).
+
+**Se la pagina scelta cambia indirizzo.** Il link salvato resta quello di prima (è un testo), ma il CMS scrive da solo un
+redirect 301 dal vecchio indirizzo al nuovo quando cambia lo slug di una pagina o di un articolo **pubblicati**
+(`contenuti_redirect()`, `includes/contenuti.php:257`, chiamato da `contenuti_salva()` `:354`, dal salvataggio dall'editor `:462`
+e dal ripristino di una versione `includes/versioni.php:522`), e di una categoria o un tag (`admin/categories.php:45`): il
+pulsante continua a portare alla pagina, con un salto in più. Non lo fa per una pagina in **bozza** (un link scelto su una
+bozza si rompe se le si cambia indirizzo prima di pubblicarla) e per eventi, prodotti e corsi (gli addon non scrivono redirect
+quando cambia il loro slug). Le voci del menu scelte dal sito non ne hanno bisogno (seguono lo slug).
+
+**Prove.**
+- `prove/prova-scegli-link.js` (80 controlli in radice, 81 in cartella, con `prove/scegli-link-cli.php` che prepara e pulisce):
+  il motore (ogni tipo, addon compresi, bozze, home, cartella), l'editor (Apertura con la tastiera, Immagine, Testo con e senza
+  selezione, Esc, Canc dentro la finestra), popup, form, newsletter (indirizzi interi), social, SEO, menu, privacy degli addon,
+  e per ognuno il clic vero sul sito con l'indirizzo finale e il 200; bozza segnata e sceglibile, titolo con `<script>`,
+  "scrivi un indirizzo", telefono a 390 px (sette pagine e la finestra), il redattore, il cambio d'indirizzo con il redirect.
+- `prove/attacchi-scegli-link.js` (32 attacchi): senza login, GET, senza token, token sbagliato, Origin di un altro sito;
+  ricerche cattive (SQL, UNION, jolly di LIKE, barra rovesciata, HTML, NUL, U+202E, emoji, UTF-8 rotto, 100.000 caratteri,
+  liste); titolo cattivo nel JSON e nella finestra; `javascript:` e varianti nel popup e nei widget; il redattore e le bozze
+  degli addon.
 
 ## Appendice A. Dove i documenti vecchi non corrispondono al codice
 

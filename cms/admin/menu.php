@@ -173,11 +173,42 @@ require_once __DIR__ . '/includes/admin-header.php';
     li.querySelector('.mn-apri').addEventListener('click', function () { li.classList.toggle('aperta'); });
     li.querySelector('.mn-elimina').addEventListener('click', function () { if (confirm('Togliere questa voce (e le sue sottovoci)?')) { li.remove(); controllaVuoto(); } });
     li.querySelectorAll('input').forEach(function (i) { i.addEventListener('input', function () { aggiornaBarra(li); }); });
+    attaccaLink(li);
     var figli = li.querySelector('.mn-figli');
     (v.figli || []).forEach(function (f) { figli.appendChild(nodo(f)); });
     ordinabile(figli);
     return li;
   }
+  // 2.2: "Scegli dal sito" (assets/scegli-link.js) accanto agli indirizzi. Una pagina, un articolo o una categoria scelti
+  // così diventano una voce di quel tipo, che ricorda lo slug (rif): il link segue la pagina anche se cambia indirizzo.
+  function rifDa(v) {
+    if (!v) return { tipo: 'link', rif: '' };
+    var m = v.percorso.match(/^\/(?:category\/)?([a-z0-9-]+)\/$/);
+    if (m && v.tipo === 'categoria' && v.percorso.indexOf('/category/') === 0) return { tipo: 'categoria', rif: m[1] };
+    if (m && (v.tipo === 'pagina' || v.tipo === 'articolo') && v.percorso.indexOf('/category/') !== 0) return { tipo: v.tipo, rif: m[1] };
+    return { tipo: 'link', rif: '' };
+  }
+  function attaccaLink(li) {
+    if (!window.pnLink || li.dataset.mnLink) return;
+    li.dataset.mnLink = '1';
+    var u = li.querySelector('[data-c=url]');
+    window.pnLink.campo(u, { scegli: function (url, v) {
+      var r = rifDa(v);
+      u.value = url; li.dataset.tipo = r.tipo; li.dataset.rif = r.rif;
+      var et = li.querySelector('[data-c=etichetta]'); if (v && !et.value.trim()) et.value = v.titolo;
+      aggiornaBarra(li);
+    } });
+    // Un indirizzo scritto a mano su una voce che ricordava uno slug: da qui in poi vale l'indirizzo scritto.
+    u.addEventListener('input', function () { if (li.dataset.tipo !== 'link') { li.dataset.tipo = 'link'; li.dataset.rif = ''; aggiornaBarra(li); } });
+  }
+  var sceltaLink = null;
+  function attaccaNuovo() {
+    var u = document.getElementById('mn-link-url'), t = document.getElementById('mn-link-testo');
+    if (!window.pnLink || u.dataset.mnLink) return;
+    u.dataset.mnLink = '1'; // non data-link-pronto: quello lo scrive scegli-link.js
+    window.pnLink.campo(u, { scegli: function (url, v) { u.value = url; sceltaLink = { url: url, r: rifDa(v) }; if (v && !t.value.trim()) t.value = v.titolo; u.focus(); } });
+  }
+  document.addEventListener('DOMContentLoaded', function () { attaccaNuovo(); albero.querySelectorAll('.mn-voce-ed').forEach(attaccaLink); });
   function aggiornaBarra(li) {
     li.querySelector('.mn-et').textContent = li.querySelector('[data-c=etichetta]').value || '(senza testo)';
     li.querySelector('.mn-tipo').textContent = TIPI[li.dataset.tipo] || 'Link';
@@ -203,8 +234,9 @@ require_once __DIR__ . '/includes/admin-header.php';
   window.mnAggiungiLink = function () {
     var u = document.getElementById('mn-link-url'), t = document.getElementById('mn-link-testo');
     if (!u.value.trim()) { u.focus(); return; }
-    aggiungi({ tipo: 'link', rif: '', url: u.value.trim(), etichetta: t.value.trim() || u.value.trim() });
-    u.value = ''; t.value = '';
+    var r = sceltaLink && sceltaLink.url === u.value.trim() ? sceltaLink.r : { tipo: 'link', rif: '' };
+    aggiungi({ tipo: r.tipo, rif: r.rif, url: u.value.trim(), etichetta: t.value.trim() || u.value.trim() });
+    u.value = ''; t.value = ''; sceltaLink = null;
   };
   window.mnFiltra = function (inp) {
     var q = inp.value.trim().toLowerCase();

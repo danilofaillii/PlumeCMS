@@ -898,7 +898,14 @@
           var link = prompt('Link (facoltativo):', x.link || ''); if (link === null) return;
           x.alt = alt; x.didascalia = did; x.link = link; manda(); disegna();
         });
-        d.appendChild(img); d.appendChild(via); d.appendChild(mod); g.appendChild(d);
+        d.appendChild(img); d.appendChild(via); d.appendChild(mod);
+        // 2.2: il link della foto scelto dal sito (per "Al clic: vai al link della voce"); il pulsante Testo lo chiede ancora a mano.
+        if (window.pnLink) {
+          var lk = mk('button', 'ed-galleria-link', 'Link'); lk.type = 'button'; lk.title = x.link ? 'Link: ' + x.link : 'Scegli il link dal sito';
+          lk.addEventListener('click', function () { window.pnLink.apri({ attuale: x.link || '', titolo: 'Link della foto', scegli: function (u) { x.link = u; manda(); disegna(); } }); });
+          d.appendChild(lk);
+        }
+        g.appendChild(d);
       });
       c.appendChild(g);
       var agg = mk('button', 'ed-b', '+ Aggiungi immagine'); agg.type = 'button';
@@ -910,13 +917,27 @@
     return c;
   }
 
+  // 2.2: "Scegli dal sito" accanto a una casella di link (assets/scegli-link.js). Senza lo script la casella resta com'era.
+  function conSceltaLink(input) {
+    if (!window.pnLink) return input;
+    var box = mk('div', 'ed-link-sito'); box.appendChild(input);
+    window.pnLink.campo(input, { classe: 'ed-b ed-b-piccolo' });
+    return box;
+  }
+  // I controlli di testo che portano un link a una pagina (Link, Link del pulsante, Link della voce in più...): nome che
+  // finisce in "link", oppure ctl.link_sito. Non quelli che non sono pagine del sito (video, social, LinkedIn).
+  function eLinkSito(ctl) {
+    if (ctl.link_sito !== undefined) return !!ctl.link_sito;
+    return /(^|_)link$/.test(ctl.nome || '') || ctl.nome === 'link_privacy';
+  }
+
   function campoControllo(imp, ctl, l, salva) {
     var v = l.valore, c;
     switch (ctl.tipo) {
       case 'testo':
         c = document.createElement('input'); c.type = 'text'; c.value = v || ''; c.maxLength = 500;
         c.addEventListener('input', function () { salva(c.value); });
-        return c;
+        return eLinkSito(ctl) ? conSceltaLink(c) : c;
       case 'testolungo':
         c = document.createElement('textarea'); c.value = v || '';
         c.addEventListener('input', function () { salva(c.value); });
@@ -959,7 +980,7 @@
         var lf = mk('label', 'ed-spunta'); var lcf = document.createElement('input'); lcf.type = 'checkbox'; lcf.checked = !!v.nofollow; lf.appendChild(lcf); lf.appendChild(document.createTextNode('Nofollow (Google non lo segue)'));
         var aggiorna = function () { salva({ url: lu.value.trim(), nuova: lc.checked, nofollow: lcf.checked }); };
         lu.addEventListener('input', aggiorna); lc.addEventListener('change', aggiorna); lcf.addEventListener('change', aggiorna);
-        c.appendChild(lu); c.appendChild(ln); c.appendChild(lf);
+        c.appendChild(conSceltaLink(lu)); c.appendChild(ln); c.appendChild(lf);
         return c;
       case 'ricco':
         c = mk('div', 'ed-quill');
@@ -968,6 +989,7 @@
         setTimeout(function () {
           var q = new Quill(ed, { theme: 'snow', modules: { toolbar: [[{ header: [2, 3, 4, false] }], ['bold', 'italic', 'underline', 'link'], [{ list: 'ordered' }, { list: 'bullet' }], [{ align: [] }], ['blockquote', 'clean']] } });
           q.on('text-change', function (d, o, fonte) { if (fonte === 'user') salva(q.getSemanticHTML ? q.getSemanticHTML() : q.root.innerHTML); });
+          if (window.pnLink) window.pnLink.quill(q); // 2.2: il pulsante link sceglie una pagina del sito (o un indirizzo scritto a mano)
           quillVivi.push(q);
         }, 0);
         return c;
@@ -1083,6 +1105,7 @@
   $('#ed-ripeti').addEventListener('click', ripeti);
   document.addEventListener('keydown', function (e) {
     var inCampo = /INPUT|TEXTAREA|SELECT/.test(e.target.tagName) || e.target.isContentEditable;
+    if (e.target.closest && e.target.closest('dialog[open]')) inCampo = true; // 2.2: dentro una finestra (Scegli dal sito) Canc e Ctrl+Z non toccano la tela
     if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 's') { e.preventDefault(); salva(false); }
     else if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z' && !inCampo) { e.preventDefault(); e.shiftKey ? ripeti() : annulla(); }
     else if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'y' && !inCampo) { e.preventDefault(); ripeti(); }

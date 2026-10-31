@@ -137,7 +137,8 @@ function popup_html(array $popup, string $percorso): string {
             . ($p['occhiello'] !== '' ? '<span class="occhiello">' . h($p['occhiello']) . '</span>' : '')
             . ($p['titolo'] !== '' ? '<h2 id="popup-titolo-' . (int)$p['id'] . '">' . h($p['titolo']) . '</h2>' : '')
             . ($p['testo'] !== '' ? '<div class="popup-testo">' . editor_ricco_pulito((string)$p['testo']) . '</div>' : '')
-            . ($p['pulsante_testo'] !== '' && $p['pulsante_link'] !== '' ? '<p class="azioni"><a class="btn btn-viola" href="' . h($p['pulsante_link']) . '">' . h($p['pulsante_testo']) . '</a></p>' : '')
+            // 2.2: il link passa da editor_link_sicuro() come quelli dei widget (javascript: e simili restano fuori, "contatti" diventa /contatti/).
+            . ($p['pulsante_testo'] !== '' && editor_link_sicuro($p['pulsante_link']) !== '' ? '<p class="azioni"><a class="btn btn-viola" href="' . h(editor_link_sicuro($p['pulsante_link'])) . '">' . h($p['pulsante_testo']) . '</a></p>' : '')
             . $modulo . '</div></div>';
     }
     return $h . '<script src="' . sito_versione_asset('popup.js') . '" defer></script>';

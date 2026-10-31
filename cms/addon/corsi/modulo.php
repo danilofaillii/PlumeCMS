@@ -31,6 +31,15 @@ return [
         'membro_eliminato' => function (int $id) { require_once __DIR__ . '/includes/corsi.php'; corsi_dimentica_membro($id); },
     ],
     'filtri' => [
+        // 2.2: l'elenco dei corsi e ogni corso nella finestra "Scegli dal sito" del pannello (includes/collegamenti.php).
+        'collegamenti_sito' => function (array $voci, string $q, bool $admin) {
+            require_once __DIR__ . '/includes/corsi.php';
+            $voci[] = ['tipo' => 'corso', 'tipo_nome' => 'Corso', 'titolo' => 'I corsi (elenco)', 'percorso' => '/corsi/', 'stato' => 'pubblicato'];
+            foreach (corsi_tutti(!$admin) as $c) {
+                $voci[] = ['tipo' => 'corso', 'tipo_nome' => 'Corso', 'titolo' => (string)$c['titolo'], 'percorso' => '/corsi/' . $c['slug'] . '/', 'stato' => $c['stato'] === 'pubblicato' ? 'pubblicato' : 'bozza'];
+            }
+            return $voci;
+        },
         // La sezione "I miei corsi" nell'area riservata del membro.
         'membri_area' => function (array $sezioni, array $membro) {
             require_once __DIR__ . '/includes/pagine.php';

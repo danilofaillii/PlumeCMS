@@ -20,7 +20,7 @@ evi_admin_schede('impostazioni');
 <form method="post" class="pa-modulo" id="evi-impostazioni"><?= csrf_field() ?>
   <div class="pa-campi">
     <label>Avvisi delle iscrizioni a<input type="email" name="avviso_a" maxlength="190" value="<?= h((string)$imp['avviso_a']) ?>" placeholder="<?= h(posta_notifica_email()) ?>"><span class="pa-aiuto">Vuoto: all'indirizzo degli avvisi del sito.</span></label>
-    <label>Pagina dell'informativa privacy<input name="privacy" maxlength="190" value="<?= h((string)$imp['privacy']) ?>"></label>
+    <label>Pagina dell'informativa privacy<input name="privacy" id="evi-privacy" maxlength="190" value="<?= h((string)$imp['privacy']) ?>" data-link-sito></label>
     <label class="pa-spunta pa-largo"><input type="checkbox" name="avvisa_iscrizioni" value="1"<?= $imp['avvisa_iscrizioni'] ? ' checked' : '' ?>> Mandami un'email a ogni iscrizione e cancellazione</label>
     <label class="pa-spunta pa-largo"><input type="checkbox" name="promemoria" value="1"<?= $imp['promemoria'] ? ' checked' : '' ?>> Manda agli iscritti il promemoria il giorno prima</label>
     <label class="pa-largo">Una frase in più nelle email di conferma (facoltativa)<textarea name="nota_email" rows="2" maxlength="600" placeholder="Porta con te questa email: all'ingresso diciamo il tuo nome."><?= h((string)$imp['nota_email']) ?></textarea></label>

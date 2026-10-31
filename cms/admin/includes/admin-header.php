@@ -112,6 +112,7 @@ if (!$sonoAdminMenu) {
   <link rel="stylesheet" href="<?= pannello_file('assets/css/aspetti.css') ?>"><link rel="stylesheet" href="<?= pannello_file('assets/css/admin.css') ?>"><?php if (str_starts_with($qui, 'addon-pagina.php')): /* 2.0.0: i riquadri delle pagine degli addon (.sc-scatola) */ ?><link rel="stylesheet" href="<?= pannello_file('assets/css/contenuti.css') ?>"><?php endif; ?>
   <script src="<?= pannello_file('assets/campi-protetti.js') ?>"></script>
   <script src="<?= pannello_file('assets/pannello.js') ?>" defer></script>
+  <link rel="stylesheet" href="<?= pannello_file('assets/css/scegli-link.css') ?>"><script src="<?= pannello_file('assets/scegli-link.js') ?>" defer></script><?php /* 2.2: Scegli dal sito (data-link-sito, window.pnLink) */ ?>
 </head>
 <body class="admin-body">
 <div class="admin-sidebar-overlay" data-menu-mobile></div>

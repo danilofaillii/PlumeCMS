@@ -30,6 +30,18 @@ return [
     'cron_spesso' => [
         'eventi' => function () use ($evi) { require_once $evi; return evi_cron(); },
     ],
+    'filtri' => [
+        // 2.2: gli eventi nella finestra "Scegli dal sito" del pannello (includes/collegamenti.php). Annullati compresi:
+        // la loro pagina resta e lo dice. Le bozze solo all'amministratore.
+        'collegamenti_sito' => function (array $voci, string $q, bool $admin) use ($evi) {
+            require_once $evi;
+            foreach (evi_eventi(!$admin) as $e) {
+                $voci[] = ['tipo' => 'evento', 'tipo_nome' => 'Evento', 'titolo' => (string)$e['titolo'] . ($e['stato'] === 'annullato' ? ' (annullato)' : ''),
+                    'percorso' => evi_url_evento($e), 'stato' => $e['stato'] === 'bozza' ? 'bozza' : 'pubblicato'];
+            }
+            return $voci;
+        },
+    ],
     'eventi' => [
         'sito_percorso' => function (string $percorso, array $q) {
             if (!str_starts_with($percorso, '/evento/') && !str_starts_with($percorso, '/evento-iscrizione/')) return;

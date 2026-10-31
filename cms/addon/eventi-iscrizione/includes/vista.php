@@ -4,6 +4,7 @@
  * riquadro con data, luogo e posti. Il modulo si invia normalmente (POST a /evento-iscrizione/invia/) con il captcha dei
  * moduli del sito (sito/assets/moduli.js).
  */
+require_once dirname(__DIR__, 3) . '/includes/sicurezza-html.php'; // 2.2: sicurezza_url_pulito() per il link della privacy
 require_once __DIR__ . '/eventi.php';
 
 const EVI_ERRORI = [
@@ -71,7 +72,7 @@ function evi_modulo_html(array $e, array $o = []): string {
         $out .= '<input type="hidden" name="posti" value="1">';
     }
     $out .= '</div><div class="esca" aria-hidden="true"><label>Sito web <input name="sito_web" tabindex="-1" autocomplete="off"></label></div>'
-        . '<label class="spunta"><input type="checkbox" name="privacy" value="1" required> <span>Ho letto l&#039;<a href="' . h((string)$imp['privacy']) . '" target="_blank">informativa privacy</a> e accetto che i miei dati servano per gestire l&#039;iscrizione.</span></label>'
+        . '<label class="spunta"><input type="checkbox" name="privacy" value="1" required> <span>Ho letto l&#039;<a href="' . h(sicurezza_url_pulito((string)$imp['privacy'])) . '" target="_blank">informativa privacy</a> e accetto che i miei dati servano per gestire l&#039;iscrizione.</span></label>'
         . '<label class="captcha"><input type="checkbox"> <span>Sono una persona</span> <span class="captcha-stato" aria-live="polite"></span></label>'
         . '<button class="btn btn-viola" type="submit">' . ($pieno ? 'Mettimi in lista d&#039;attesa' : 'Iscriviti') . '</button></form>'
         . '<script src="' . (function_exists('sito_versione_asset') ? sito_versione_asset('moduli.js') : cms_base() . '/sito/assets/moduli.js') . '" defer></script>';
