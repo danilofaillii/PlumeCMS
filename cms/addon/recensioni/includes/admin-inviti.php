@@ -80,7 +80,7 @@ rec_admin_schede('inviti');
   ?>
   <tr data-invito="<?= (int)$i['id'] ?>">
     <td><b><?= h((string)$i['nome'] ?: '-') ?></b><br><span class="pa-muto"><?= h((string)$i['email']) ?></span></td>
-    <td class="pa-muto"><?= $i['origine'] === 'prenotazione' ? 'Appuntamento svolto' : 'A mano' ?><?= $i['servizio'] !== '' ? '<br>' . h((string)$i['servizio']) : '' ?></td>
+    <td class="pa-muto"><?= ['prenotazione' => 'Appuntamento svolto', 'evento' => 'Dopo un evento'][$i['origine']] ?? 'A mano' ?><?= $i['servizio'] !== '' ? '<br>' . h((string)$i['servizio']) : '' ?></td>
     <td><?= h($stato) ?></td>
     <td class="pa-azioni">
       <?php if (!$i['inviato_at'] && !(int)$i['annullato']): ?><form method="post"><?= csrf_field() ?><input type="hidden" name="id" value="<?= (int)$i['id'] ?>"><button class="btn btn-secondary btn-sm" name="azione" value="annulla">Annulla</button></form><?php endif; ?>

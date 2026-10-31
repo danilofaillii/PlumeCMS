@@ -312,6 +312,14 @@ const norma = h => h.replace(/nonce="[^"]+"/g, '').replace(/name="_csrf" value="
   await Promise.all([a.waitForNavigation(), a.click('button[value=non_presentato]')]);
   ok('segno "Non si è presentato"', (await a.getAttribute('#pa-scheda', 'data-stato')) === 'non_presentato' && /non presentato/i.test(await a.locator('#pa-scheda .badge').innerText()));
 
+  // 8b. 2.1: le colonne nuove (origine, sequenza) su un sito della 2.0.0, aggiunte alla prima richiesta senza perdere niente.
+  const prime = C.cli(CMS, 'sql', 'SELECT COUNT(*) n FROM {p}pren_prenotazioni')[0].n;
+  C.cli(CMS, 'sql', 'ALTER TABLE {p}pren_prenotazioni DROP COLUMN sequenza, DROP COLUMN origine');
+  C.cli(CMS, 'sql', "UPDATE {p}settings SET setting_value = '' WHERE setting_key = 'pren_schema_impronta'");
+  C.cli(CMS, 'cron');
+  const col = C.cli(CMS, 'sql', "SELECT COUNT(*) n, SUM(origine = 'sito') s, SUM(sequenza = 0) q FROM {p}pren_prenotazioni")[0];
+  ok('sito della 2.0.0: origine e sequenza tornano da sole, le prenotazioni ci sono tutte («dal sito», sequenza 0)', +col.n === +prime && +col.s === +prime && +col.q === +prime, [prime, col]);
+
   // 9. Spento: il sito torna com'era, i dati restano.
   const f2 = await C.addon(a, B, 'prenotazioni', false);
   ok('spengo: "i suoi dati restano"', /spento/.test(f2) && /restano/.test(f2), f2);

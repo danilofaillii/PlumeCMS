@@ -11,7 +11,7 @@
 require_once dirname(__DIR__, 3) . '/includes/moduli.php';
 
 const REC_STATI = ['da_approvare' => 'Da approvare', 'approvata' => 'Approvata', 'rifiutata' => 'Rifiutata'];
-const REC_PREDEFINITE = ['giorni_dopo' => 2, 'validita' => 30, 'da_prenotazioni' => true, 'google_link' => '', 'google_da' => 4, 'avviso_a' => '', 'avvisa' => true,
+const REC_PREDEFINITE = ['giorni_dopo' => 2, 'validita' => 30, 'da_prenotazioni' => true, 'da_eventi' => true, 'eventi_chi' => 'presenti', 'google_link' => '', 'google_da' => 4, 'avviso_a' => '', 'avvisa' => true,
     'oggetto' => 'Com\'è andata?', 'testo' => 'Grazie di essere passato da noi. Ci diresti com\'è andata? Bastano un clic sulle stelle e due righe: ci aiuta a migliorare, e a chi ci cerca a sceglierci.'];
 const REC_MAX_A_MANO = 200;
 
@@ -138,6 +138,71 @@ function rec_da_prenotazione(array $p): void {
     $imp = rec_impostazioni();
     if (!$imp['da_prenotazioni']) return;
     rec_invito_crea((string)$p['email'], (string)$p['nome'], 'prenotazione', 'pren:' . (int)$p['id'], (string)$p['servizio'], (int)$p['fine_ts'] + max(0, (int)$imp['giorni_dopo']) * 86400);
+}
+
+// ------------------------------------------------------------
+// 2.1: dopo gli eventi dell'addon Eventi con iscrizione (se è acceso: nessuna dipendenza, solo i suoi eventi)
+// ------------------------------------------------------------
+
+/** Il riferimento di un'iscrizione a un evento: 'evi:<evento>:<iscrizione>' (rif è UNIQUE: un invito per iscrizione). */
+function rec_rif_evento(array $e, array $i): string {
+    return 'evi:' . (int)$e['id'] . ':' . (int)$i['id'];
+}
+
+/** Quando finisce l'evento (la fine scritta, o due ore dopo l'inizio: la stessa regola dell'addon Eventi). */
+function rec_fine_evento(array $e): int {
+    return (int)($e['fine_ts'] ?? 0) > (int)$e['inizio_ts'] ? (int)$e['fine_ts'] : (int)$e['inizio_ts'] + 7200;
+}
+
+/**
+ * L'invito per un iscritto a un evento: nuovo, oppure quello già annullato e mai partito che torna attivo (un evento
+ * rinviato, una presenza segnata per sbaglio e poi corretta). Ritorna true se l'invito c'è ed è in coda.
+ */
+function rec_invito_evento(array $e, array $i, int $quando): bool {
+    $rif = rec_rif_evento($e, $i);
+    if (rec_invito_crea((string)$i['email'], (string)$i['nome'], 'evento', $rif, (string)$e['titolo'], $quando)) return true;
+    if (!filter_var((string)$i['email'], FILTER_VALIDATE_EMAIL) || rec_escluso((string)$i['email'])) return false;
+    $st = db()->prepare('UPDATE ' . tbl('rec_inviti') . ' SET annullato = 0, invia_dopo = ?, tentativi = 0 WHERE rif = ? AND annullato = 1 AND inviato_at IS NULL AND usato_at IS NULL');
+    $st->execute([date('Y-m-d H:i:s', $quando), $rif]);
+    return $st->rowCount() === 1;
+}
+
+/** Chi riceve l'invito dopo un evento: con "presenti" solo chi è segnato presente; con "tutti" tutti i confermati tranne chi è segnato assente. */
+function rec_invita_iscritto(array $i): bool {
+    if (($i['stato'] ?? '') !== 'confermata') return false;
+    $p = $i['presente'] ?? null;
+    return rec_impostazioni()['eventi_chi'] === 'tutti' ? !($p !== null && (int)$p === 0) : ($p !== null && (int)$p === 1);
+}
+
+/** L'evento evento_svolto: gli inviti partono N giorni dopo la fine dell'evento. Ritorna quanti inviti sono in coda. */
+function rec_da_evento(array $e, array $iscritti): int {
+    $imp = rec_impostazioni();
+    if (!$imp['da_eventi']) return 0;
+    $quando = rec_fine_evento($e) + max(0, (int)$imp['giorni_dopo']) * 86400;
+    $n = 0;
+    foreach ($iscritti as $i) if (rec_invita_iscritto($i) && rec_invito_evento($e, $i, $quando)) $n++;
+    return $n;
+}
+
+/**
+ * L'evento iscrizione_presenza (Presente / Assente nel pannello degli iscritti). Prima della fine dell'evento non serve
+ * niente: ci pensa evento_svolto. Dopo: presente (con "presenti") prepara l'invito, assente annulla quello non partito.
+ */
+function rec_da_presenza(?array $i, ?array $e): void {
+    if (!$i || !$e || empty($e['svolto_at'])) return;
+    rec_schema();
+    if (!rec_impostazioni()['da_eventi']) return;
+    if (rec_invita_iscritto($i)) rec_invito_evento($e, $i, max(time(), rec_fine_evento($e) + max(0, (int)rec_impostazioni()['giorni_dopo']) * 86400));
+    else rec_annulla_rif(rec_rif_evento($e, $i));
+}
+
+/** Evento annullato, rinviato o eliminato: gli inviti non ancora partiti dei suoi iscritti si annullano (o si tolgono). */
+function rec_annulla_evento(?array $e, bool $elimina = false): void {
+    if (!$e) return;
+    rec_schema();
+    $like = 'evi:' . (int)$e['id'] . ':%';
+    if ($elimina) db()->prepare('DELETE FROM ' . tbl('rec_inviti') . ' WHERE rif LIKE ? AND usato_at IS NULL')->execute([$like]);
+    else db()->prepare('UPDATE ' . tbl('rec_inviti') . ' SET annullato = 1 WHERE rif LIKE ? AND inviato_at IS NULL')->execute([$like]);
 }
 
 /** Un invito non ancora partito che non deve più partire (appuntamento annullato, non presentato); con $elimina si toglie la riga. */

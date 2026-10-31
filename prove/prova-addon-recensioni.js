@@ -4,7 +4,8 @@
 // (le stelle dell'email aprono il modulo con il voto già scelto), Google proposto solo a chi è contento, una recensione per
 // invito, link scaduto, "Non scrivermi più", approva, rispondi, rifiuta, il widget Recensioni dal sito (senza dati per
 // Google sulle stelle), e il legame con l'addon Prenotazioni (invito dopo un appuntamento svolto, annullato se non si è
-// presentato). Alla fine spegne l'addon: le pagine del sito tornano identiche.
+// presentato) e con l'addon Eventi con iscrizione (2.1: invito dopo un evento ai presenti o a tutti, presenze segnate
+// dopo, cancellazioni). Alla fine spegne l'addon: le pagine del sito tornano identiche.
 // uso: node prove/prova-addon-recensioni.js <base> <cartella del CMS installato> <porta smtp> <cartella posta>
 const { chromium } = require('playwright');
 const C = require('./addon-b-comune.js');
@@ -153,6 +154,54 @@ const norma = h => h.replace(/nonce="[^"]+"/g, '').replace(/name="_csrf" value="
   em = await C.nuove(POSTA, quante, 1);
   ok('tre giorni dopo parte l\'invito a Luca (e non a Paolo)', em.some(e => e.a === 'luca@cliente.it' && /Com'è andata/.test(e.oggetto) && /Colore/.test(e.html)) && !em.some(e => e.a === 'paolo@cliente.it') && /1 invito mandato/.test(c2.recensioni || ''), [c2, em.map(e => e.a)]);
   await C.addon(a, B, 'prenotazioni', false);
+
+  // 7b. 2.1: con l'addon Eventi con iscrizione acceso, l'invito parte anche dopo un evento (ai presenti, o a tutti).
+  await vai(a, PAG('impostazioni'));
+  ok('Impostazioni: «Chiedi da solo dopo ogni evento» acceso e «Solo a chi segno Presente» scelto, con l\'avviso che Eventi è spento', await a.isChecked('[name=da_eventi]') && await a.isChecked('[name=eventi_chi][value=presenti]') && /Eventi con iscrizione acceso: adesso è spento/.test(await a.locator('#rec-impostazioni').innerText()));
+  await C.addon(a, B, 'eventi-iscrizione', true);
+  const evento = (slug, titolo, oreFa) => {
+    C.cli(CMS, 'sql', `INSERT INTO {p}evi_eventi (slug, titolo, inizio, inizio_ts, fine_ts, descrizione, posti, max_persona, attesa, stato, creato, aggiornato) VALUES ('${slug}', '${titolo}', FROM_UNIXTIME(${ora - oreFa * 3600}), ${ora - oreFa * 3600}, ${ora - oreFa * 3600 + 5400}, '', 20, 2, 0, 'pubblicato', NOW(), NOW())`);
+    return C.cli(CMS, 'sql', `SELECT id FROM {p}evi_eventi WHERE slug = '${slug}'`)[0].id;
+  };
+  const iscrivi = (ev, nome, email, presente, stato = 'confermata') => C.cli(CMS, 'sql', `INSERT INTO {p}evi_iscrizioni (evento_id, codice, nome, email, posti, stato, presente, consenso_at, creato, aggiornato) VALUES (${ev}, MD5(RAND()), '${nome}', '${email}', 1, '${stato}', ${presente}, NOW(), NOW(), NOW())`);
+  const ev1 = evento('serata-vini', 'Serata dei vini', 4);
+  iscrivi(ev1, 'Elena Blu', 'elena@cliente.it', 1); iscrivi(ev1, 'Franco Rosa', 'franco@cliente.it', 'NULL'); iscrivi(ev1, 'Gina Viola', 'gina@cliente.it', 0); iscrivi(ev1, 'Ugo Grigio', 'ugo@cliente.it', 1, 'cancellata');
+  const invito = email => C.cli(CMS, 'sql', `SELECT origine, rif, servizio, annullato, inviato_at FROM {p}rec_inviti WHERE email = '${email}'`)[0];
+  ok('(controllo) prima della fine nessun invito', !invito('elena@cliente.it'));
+  const c3 = C.cli(CMS, 'cron');
+  ok('il cron vede l\'evento finito: «1 evento concluso»', /1 evento concluso/.test(c3.eventi || ''), c3);
+  const iE = invito('elena@cliente.it');
+  ok('«solo i presenti»: invito a Elena (presente), con l\'evento come servizio; niente a Franco (non segnato), Gina (assente), Ugo (cancellato)', iE && iE.origine === 'evento' && iE.rif === `evi:${ev1}:` + C.cli(CMS, 'sql', "SELECT id FROM {p}evi_iscrizioni WHERE email = 'elena@cliente.it'")[0].id && iE.servizio === 'Serata dei vini' && !invito('franco@cliente.it') && !invito('gina@cliente.it') && !invito('ugo@cliente.it'), iE);
+  ok('il cron dopo non lo rifà (una volta sola)', !/evento concluso/.test(C.cli(CMS, 'cron').eventi || ''));
+  // Le presenze segnate dopo l'evento, dal pannello degli iscritti.
+  const presenza = async (email, azione) => {
+    await vai(a, B + '/admin/addon-pagina.php?a=eventi-iscrizione&p=iscritti&e=' + ev1);
+    await Promise.all([a.waitForNavigation(), a.locator('tr', { hasText: email }).locator(`button[value=${azione}]`).click()]);
+  };
+  await presenza('franco@cliente.it', 'presente');
+  ok('segno Franco presente il giorno dopo: il suo invito entra in coda', invito('franco@cliente.it') && +invito('franco@cliente.it').annullato === 0);
+  await presenza('elena@cliente.it', 'assente');
+  ok('segno Elena assente (per sbaglio): il suo invito si annulla', +invito('elena@cliente.it').annullato === 1);
+  await presenza('elena@cliente.it', 'presente');
+  ok('e la rimetto presente: l\'invito torna in coda, sempre uno solo', +invito('elena@cliente.it').annullato === 0 && +C.cli(CMS, 'sql', "SELECT COUNT(*) n FROM {p}rec_inviti WHERE email = 'elena@cliente.it'")[0].n === 1);
+  await vai(a, PAG('inviti'));
+  ok('Inviti: «Dopo un evento», con il titolo dell\'evento', /Dopo un evento[\s\S]*Serata dei vini/.test(await a.locator('tr', { hasText: 'franco@cliente.it' }).innerText()));
+  quante = C.posta(POSTA).length;
+  const c4 = C.cli(CMS, 'cron', String(3 * 86400));
+  em = await C.nuove(POSTA, quante, 2);
+  ok('tre giorni dopo partono gli inviti a Elena e Franco (non a Gina), con il titolo dell\'evento', em.some(e => e.a === 'elena@cliente.it' && /Com'è andata/.test(e.oggetto) && /Serata dei vini/.test(e.html)) && em.some(e => e.a === 'franco@cliente.it') && !em.some(e => e.a === 'gina@cliente.it') && /2 inviti mandati/.test(c4.recensioni || ''), [c4, em.map(e => e.a)]);
+  // «A tutti gli iscritti»: tutti i confermati tranne chi è segnato assente; una cancellazione annulla l'invito non partito.
+  await vai(a, PAG('impostazioni'));
+  await a.check('[name=eventi_chi][value=tutti]');
+  await Promise.all([a.waitForNavigation(), a.click('#rec-impostazioni button.btn-primary')]);
+  const ev2 = evento('corso-pane', 'Corso di pane', 3);
+  iscrivi(ev2, 'Iva Oro', 'iva@cliente.it', 'NULL'); iscrivi(ev2, 'Lia Bronzo', 'lia@cliente.it', 0); iscrivi(ev2, 'Mia Rame', 'mia@cliente.it', 'NULL');
+  C.cli(CMS, 'cron');
+  ok('«a tutti gli iscritti»: inviti a Iva e Mia (non segnate), non a Lia (assente)', invito('iva@cliente.it') && invito('mia@cliente.it') && !invito('lia@cliente.it'));
+  await vai(a, B + '/admin/addon-pagina.php?a=eventi-iscrizione&p=iscritti&e=' + ev2);
+  await Promise.all([a.waitForNavigation(), a.locator('tr', { hasText: 'mia@cliente.it' }).locator('button[value=cancella]').click()]);
+  ok('cancello l\'iscrizione di Mia: il suo invito non partito si annulla', +invito('mia@cliente.it').annullato === 1 && +invito('iva@cliente.it').annullato === 0);
+  await C.addon(a, B, 'eventi-iscrizione', false);
 
   // 8. Elimina e spento.
   await vai(a, PAG('recensioni') + '&filtro=rifiutata');

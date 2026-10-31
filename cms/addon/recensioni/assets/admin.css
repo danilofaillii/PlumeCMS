@@ -44,3 +44,6 @@
 @media (max-width:900px){.pa-settimana{grid-template-columns:1fr}.pa-giorno{min-height:0}.pa-riga{grid-template-columns:4.5rem 1fr}.pa-riga .pa-azioni{grid-column:1/-1}.pa-chiusura{grid-template-columns:1fr 1fr}.pa-chiusura input:last-child{grid-column:1/-1}.pa-orari{grid-template-columns:1fr}.pa-dettaglio{grid-template-columns:1fr}}
 /* Al telefono le tabelle diventano schede, una riga sotto l'altra: niente pagina che scorre di lato. */
 @media (max-width:700px){.pa-tabella thead{display:none}.pa-tabella,.pa-tabella tbody,.pa-tabella tr,.pa-tabella td{display:block;width:100%}.pa-tabella tr{border-bottom:1px solid var(--border);padding:.6rem .8rem}.pa-tabella td{padding:.15rem 0;border:0}.pa-barra select{max-width:100%}.pa-barra label{flex-wrap:wrap}}
+/* 2.1: "Dopo un evento, a chi" in Impostazioni. */
+.rec-chi{border:0;padding:0;margin:0;display:flex;flex-direction:column;gap:.4rem;min-width:0}
+.rec-chi legend{font-size:.85rem;font-weight:600;padding:0;margin:0 0 .3rem}

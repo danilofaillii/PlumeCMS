@@ -170,6 +170,19 @@ const locale = d => { const z = n => String(n).padStart(2, '0'); return `${d.get
   em = await C.nuove(POSTA, quante, 3);
   ok('promemoria ai tre iscritti, una volta sola', em.filter(e => /Promemoria: Serata/.test(e.oggetto)).length === 3 && /^3 promemoria/.test(c1.eventi || '') && !(c2.eventi || ''), [c1, c2]);
 
+  // 7b. 2.1: la colonna svolto_at su un sito della 2.0.0. Gli eventi già finiti si segnano svolti subito (niente inviti
+  // "Com'è andata?" per eventi vecchi), quelli futuri no; poi un evento che finisce adesso parte una volta sola.
+  const adesso = Math.floor(Date.now() / 1000);
+  C.cli(CMS, 'sql', 'ALTER TABLE {p}evi_eventi DROP COLUMN svolto_at');
+  C.cli(CMS, 'sql', `INSERT INTO {p}evi_eventi (slug, titolo, inizio, inizio_ts, fine_ts, descrizione, posti, max_persona, attesa, stato, creato, aggiornato) VALUES ('vecchio', 'Evento vecchio', FROM_UNIXTIME(${adesso - 5 * 86400}), ${adesso - 5 * 86400}, 0, '', 10, 2, 0, 'pubblicato', NOW(), NOW())`);
+  C.cli(CMS, 'sql', "UPDATE {p}settings SET setting_value = '' WHERE setting_key = 'evi_schema_impronta'");
+  const c3 = C.cli(CMS, 'cron');
+  const sv = C.cli(CMS, 'sql', `SELECT slug, svolto_at FROM {p}evi_eventi WHERE slug IN ('vecchio') OR id = ${eid}`);
+  ok('sito della 2.0.0: la colonna nasce, l\'evento finito 5 giorni fa è già «svolto» e il cron non lo annuncia; l\'evento futuro no', !/concluso/.test(c3.eventi || '') && sv.find(x => x.slug === 'vecchio').svolto_at !== null && sv.find(x => x.slug !== 'vecchio').svolto_at === null, [c3, sv]);
+  C.cli(CMS, 'sql', `INSERT INTO {p}evi_eventi (slug, titolo, inizio, inizio_ts, fine_ts, descrizione, posti, max_persona, attesa, stato, creato, aggiornato) VALUES ('appena-finito', 'Appena finito', FROM_UNIXTIME(${adesso - 3 * 3600}), ${adesso - 3 * 3600}, ${adesso - 600}, '', 10, 2, 0, 'pubblicato', NOW(), NOW())`);
+  const c4 = C.cli(CMS, 'cron'), c5 = C.cli(CMS, 'cron');
+  ok('un evento appena finito: «1 evento concluso» una volta sola', /1 evento concluso/.test(c4.eventi || '') && !/concluso/.test(c5.eventi || ''), [c4, c5]);
+
   // 8. Spento: il sito torna com'era.
   const f2 = await C.addon(a, B, 'eventi-iscrizione', false);
   ok('spengo: i dati restano', /spento/.test(f2) && /restano/.test(f2));
