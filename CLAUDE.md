@@ -135,6 +135,12 @@ Le decisioni complete, con data e perché, stanno nel second brain, `plumecms/de
 
 ## Stato al 31 ottobre 2026
 
+Fatto: plumeCMS 2.3.2 (1 novembre): segnalazione di Danilo, la chiave del service account di Google si salvava ma il riquadro SEO restava
+vuoto: `admin-header.php` sovrascriveva `$sa` della pagina con il suo sottomenu. Variabili del menu con prefisso e `unset`. Link
+`projectcreate` nel passo 1. Prove: service account 8/8 (4 KO col menu vecchio), install 37/37 radice e cartella, aggiornamento 2.3.1 -> 2.3.2
+13/13 con 24 foto uguali, addon 70/70, attacchi 261/261, telefono 49/49 a 390 e 768, sito 89/89, pacchetto unico 13/13.
+Danilo ha incollato la chiave privata del service account in chat e ha scelto di tenerla (avvisato del rischio, proposta l'autorizzazione Limitata).
+
 Fatto: plumeCMS 2.3.1 (1 novembre): segnalazione di Danilo, "Scarica l'aggiornamento" dava la 2.2.0 dopo aver caricato la 2.3.0.
 Causa: `/scarica/<serie>/` mandava il file con `public, max-age=3600` e il browser ridava la copia vecchia. Ora 302 con `no-store` verso
 `/scarica/<versione>/` (`sito/index.php`). `prova-download.js` aggiornata (mancava il file manuale-tecnico dalla 1.6.4, link senza la cartella):
