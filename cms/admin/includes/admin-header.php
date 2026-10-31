@@ -119,7 +119,7 @@ if (!$sonoAdminMenu) {
 <div class="admin-layout">
   <aside class="admin-sidebar">
     <div class="admin-logo">
-      <strong>plume</strong>CMS
+      <strong>plume</strong>CMS <span class="admin-versione" id="admin-versione" title="La versione di <?= h(CMS_NOME) ?> installata">v. <?= h(cms_versione()) ?></span>
     </div>
     <nav class="admin-nav">
       <?php foreach ($menu as $v): [$nome, $href, $icona, $attivo] = $v; $sotto = $v[4] ?? []; ?>
@@ -148,6 +148,7 @@ if (!$sonoAdminMenu) {
     <header class="admin-topbar">
       <div style="display:flex;align-items:center;gap:0.75rem">
         <button class="admin-menu-toggle" data-menu-mobile>&#9776;</button>
+        <span class="admin-versione admin-versione-tel">v. <?= h(cms_versione()) ?></span><?php /* 2.3.0: al telefono il menu è chiuso, la versione sta qui */ ?>
         <h1 class="admin-page-title"><?= htmlspecialchars($adminTitle) ?></h1>
       </div>
       <div class="admin-user">

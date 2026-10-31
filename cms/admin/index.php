@@ -78,9 +78,6 @@ require_once __DIR__ . '/includes/admin-header.php';
 .db-avvisi{background:var(--mustard-light);color:var(--attenzione-testo);border:1px solid var(--attenzione-bordo);border-radius:var(--radius);padding:.8rem 1.2rem}
 .db-avvisi a{color:var(--attenzione-testo);font-weight:600}
 .db-azioni{display:flex;gap:.5rem;flex-wrap:wrap;margin-bottom:1rem}
-.db-versione{display:flex;gap:.4rem 1rem;flex-wrap:wrap;align-items:center;background:var(--info-chiaro);border:1px solid var(--info-bordo);border-radius:var(--radius);padding:.8rem 1.2rem;margin-bottom:1rem;color:var(--info-testo)}
-.db-versione[hidden]{display:none}
-.db-versione span{font-size:.88rem;flex:1 1 280px}
 /* 1.4.0: tipo di sito in prova e primi passi. Solo le variabili del pannello, niente colori scritti qui. */
 .db-kit,.db-passi{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:1.1rem 1.25rem;margin-bottom:1rem}
 .db-kit h2,.db-passi h2{font-size:1.1rem;margin:0 0 .3rem}
@@ -143,11 +140,17 @@ require_once __DIR__ . '/includes/admin-header.php';
 .db-ufficiale svg{width:18px;height:18px;flex:none;color:var(--accento-testo)}
 .db-ufficiale span{flex:1 1 auto}
 .db-ufficiale a{font-weight:700;color:var(--accento-testo)}
+.db-ufficiale{flex-wrap:wrap}
+.db-installa{margin:0}
+.db-nuova[hidden],.db-installa[hidden]{display:none}
 .db-passi .sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
 </style>
 
 <?php /* 1.8.0, richiesta di Danilo: il banner del sito ufficiale, sempre, per tutti; non si chiude. */ ?>
-<p class="db-ufficiale" id="db-ufficiale"><?= icona_svg('stella', 'nav-svg') ?> <span>Visita il sito ufficiale <a href="<?= h(FIRMA_URL) ?>" target="_blank" rel="noopener">plumeCMS</a></span></p>
+<?php /* 2.3.0, richiesta di Danilo: subito dopo, se c'è, la versione nuova con "Installa ora" (solo l'amministratore installa). */ ?>
+<div class="db-ufficiale" id="db-ufficiale"><?= icona_svg('stella', 'nav-svg') ?> <span>Visita il sito ufficiale <a href="<?= h(FIRMA_URL) ?>" target="_blank" rel="noopener">plumeCMS</a><span class="db-nuova" id="db-nuova"<?= $versioneNuova ? '' : ' hidden' ?>> &middot; <b>Nuova versione disponibile v. <span id="db-nuova-numero"><?= h($versioneNuova['versione'] ?? '') ?></span></b></span></span>
+<?php if ($dbAdmin && function_exists('versione_installabile_qui')): ?>  <form method="post" action="aggiornamenti.php" class="db-installa" id="db-installa"<?= $versioneNuova ? '' : ' hidden' ?>><?= csrf_field() ?><input type="hidden" name="action" value="<?= versione_installabile_qui() ? 'versione_installa' : 'versione_prepara' ?>"><button type="submit" class="btn btn-primary btn-sm" data-conferma="<?= h(versione_installabile_qui() ? 'Installare la versione nuova adesso? Prima il pannello fa una copia di sicurezza del sito: se un passo non va, rimette tutto com\'era. Ci vuole circa un minuto: non chiudere la pagina.' : 'Questo sito ha moduli suoi: la versione nuova si scarica e si prepara, poi in Aggiornamenti leggi il riepilogo e premi Applica ora.') ?>"><?= versione_installabile_qui() ? 'Installa ora' : 'Scarica e prepara' ?></button></form>
+<?php endif; ?></div>
 
 <div class="db-azioni">
   <a class="btn btn-primary btn-sm" href="editor.php?nuova=1&amp;tipo=articoli">+ Articolo</a>
@@ -159,16 +162,11 @@ require_once __DIR__ . '/includes/admin-header.php';
   <a class="btn btn-secondary btn-sm" href="<?= $homeId ? 'editor.php?id=' . $homeId : 'contenuti.php?tipo=pagine' ?>">Home nell'editor</a>
 </div>
 
-<div class="db-versione" id="db-versione"<?= $versioneNuova ? '' : ' hidden' ?>>
-  <b><?= h(CMS_NOME) ?> <span id="db-versione-numero"><?= h($versioneNuova['versione'] ?? '') ?></span> è disponibile.</b>
-  <span>Hai la <?= h(cms_versione()) ?>. Da Aggiornamenti la scarichi e la prepari con un clic; il sito cambia solo quando premi Applica.</span>
-  <a class="btn btn-primary btn-sm" href="aggiornamenti.php#agg-versione">Vai ad Aggiornamenti</a>
-</div>
 <?php if ($versioneDaControllare): /* il controllo del giorno, dopo il caricamento: la dashboard non aspetta la rete */ ?>
 <script<?= nonce_attr() ?>>
 fetch('aggiornamenti.php', { method: 'POST', credentials: 'same-origin', headers: { 'X-CSRF': <?= json_encode(csrf_token()) ?> }, body: new URLSearchParams({ action: 'versione_controlla', _csrf: <?= json_encode(csrf_token()) ?> }) })
   .then(function (r) { return r.json(); })
-  .then(function (j) { if (j.nuova) { document.getElementById('db-versione-numero').textContent = j.versione; document.getElementById('db-versione').hidden = false; } })
+  .then(function (j) { if (j.nuova) { document.getElementById('db-nuova-numero').textContent = j.versione; document.getElementById('db-nuova').hidden = false; var f = document.getElementById('db-installa'); if (f) f.hidden = false; } })
   .catch(function () {});
 </script>
 <?php endif; ?>

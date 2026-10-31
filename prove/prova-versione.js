@@ -53,12 +53,12 @@ z.writestr('cms/VERSIONE','${V1}\\n'); z.close()`, pacchetto]);
   // Dashboard: niente cache, il browser chiede il controllo dopo il caricamento; l'avviso compare
   svuota(); const prima = richiesteUff();
   await p.goto(B + '/admin/index.php', { waitUntil: 'networkidle' }); await p.waitForTimeout(1500);
-  ok(`dashboard: "plumeCMS ${V1} e disponibile" con il link ad Aggiornamenti`, await p.locator('#db-versione').isVisible() && rV1.test(await p.locator('#db-versione').innerText()) && await p.locator('#db-versione a[href^="aggiornamenti.php"]').count() === 1);
+  ok(`dashboard (2.3.0): nel banner "Nuova versione disponibile v. ${V1}" e "Installa ora"`, await p.locator('#db-nuova').isVisible() && rV1.test(await p.locator('#db-nuova').innerText()) && await p.locator('#db-installa button').isVisible());
   await p.screenshot({ path: `${OUT}/versione-dashboard.png` });
   const dopo1 = richiesteUff();
   for (let i = 0; i < 3; i++) { await p.goto(B + '/admin/index.php', { waitUntil: 'networkidle' }); await p.goto(B + '/admin/aggiornamenti.php', { waitUntil: 'networkidle' }); }
   ok('una sola richiesta al sito ufficiale per tre giri fra dashboard e Aggiornamenti (cache di un giorno)', dopo1 - prima === 1 && richiesteUff() === dopo1, { prima, dopo1, ora: richiesteUff() });
-  ok('dashboard: l\'avviso resta (dalla cache), senza un\'altra richiesta', await p.goto(B + '/admin/index.php', { waitUntil: 'networkidle' }) && await p.locator('#db-versione').isVisible());
+  ok('dashboard: l\'avviso resta (dalla cache), senza un\'altra richiesta', await p.goto(B + '/admin/index.php', { waitUntil: 'networkidle' }) && await p.locator('#db-nuova').isVisible());
   // Da qui il sito ufficiale vero (la seconda installazione)
   await config(UFF); php(`require_once '${CMS}/includes/versione-nuova.php'; versione_controlla(true);`);
   // Aggiornamenti: Scarica e prepara
@@ -80,7 +80,7 @@ z.writestr('cms/VERSIONE','${V1}\\n'); z.close()`, pacchetto]);
   await Promise.all([p.waitForNavigation({ timeout: 120000 }), rigaP.locator('button:has-text("Applica ora")').click()]);
   ok(`Applica ora: il sito e alla ${V1}`, /Aggiornamento applicato/.test(await p.locator('body').innerText()) && fs.readFileSync(path.join(CMS, 'VERSIONE'), 'utf8').trim() === V1);
   await p.goto(B + '/admin/index.php', { waitUntil: 'networkidle' }); await p.waitForTimeout(800);
-  ok('dopo l\'aggiornamento la dashboard non mostra piu l\'avviso', !(await p.locator('#db-versione').isVisible()));
+  ok('dopo l\'aggiornamento la dashboard non mostra piu l\'avviso', !(await p.locator('#db-nuova').isVisible()));
   fs.writeFileSync(path.join(CMS, 'VERSIONE'), V0 + '\n');
   // I casi da respingere: Controlla adesso, poi Scarica e prepara
   const controlla = async () => { await p.goto(B + '/admin/aggiornamenti.php', { waitUntil: 'networkidle' }); await Promise.all([p.waitForNavigation({ timeout: 60000 }), p.click('#agg-versione button:has-text("Controlla adesso")')]); return p.locator('body').innerText(); };
@@ -92,7 +92,7 @@ z.writestr('cms/VERSIONE','${V1}\\n'); z.close()`, pacchetto]);
   const t0 = Date.now(); const tRete = await controlla();
   ok('rete assente: messaggio chiaro, in pochi secondi, il pannello funziona', /non risponde/.test(tRete) && Date.now() - t0 < 12000 && await p.locator('.admin-sidebar').count() === 1, Date.now() - t0);
   const dash = await p.goto(B + '/admin/index.php', { waitUntil: 'networkidle' });
-  ok('rete assente: la dashboard si apre lo stesso, senza avviso', dash.status() === 200 && !(await p.locator('#db-versione').isVisible()));
+  ok('rete assente: la dashboard si apre lo stesso, senza avviso', dash.status() === 200 && !(await p.locator('#db-nuova').isVisible()));
   const casi = [['redirect', 'controlla', /rimando/], ['enorme', 'controlla', /più grande del previsto|piu grande del previsto/], ['lento', 'controlla', /non risponde|troppo lento/],
     ['host', 'controlla', /altro sito/], ['grande', 'controlla', /Dimensione del file non ammessa/], ['http', 'controlla', /altro sito/],
     ['sha', 'prepara', /non corrisponde all'impronta/], ['corto', 'prepara', /più grande del previsto|piu grande del previsto/], ['zipredirect', 'prepara', /rimando/]];
@@ -110,7 +110,7 @@ z.writestr('cms/VERSIONE','${V1}\\n'); z.close()`, pacchetto]);
   ok('spento da Aggiornamenti: messaggio e casella vuota', /Controllo automatico della versione spento/.test(await p.locator('body').innerText()) && !(await p.locator('#agg-versione input[name=attivo]').isChecked()));
   svuota(); const pr = richiesteUff();
   await p.goto(B + '/admin/index.php', { waitUntil: 'networkidle' }); await p.waitForTimeout(1200);
-  ok('spento: la dashboard non chiede niente e non mostra avvisi', richiesteUff() === pr && !(await p.locator('#db-versione').isVisible()));
+  ok('spento: la dashboard non chiede niente e non mostra avvisi', richiesteUff() === pr && !(await p.locator('#db-nuova').isVisible()));
   await p.goto(B + '/admin/aggiornamenti.php', { waitUntil: 'networkidle' });
   await Promise.all([p.waitForNavigation(), p.locator('#agg-versione input[name=attivo]').check()]);
   await config(null, false); svuota();

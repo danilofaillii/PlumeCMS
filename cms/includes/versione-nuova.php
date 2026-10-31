@@ -40,6 +40,15 @@ function versione_sito(): string {
     return rtrim(VERSIONE_SITO_UFFICIALE, '/');
 }
 
+/**
+ * 2.3.0: "Installa ora" dalla dashboard (scarica, controlla e applica in un clic) solo dove l'aggiornamento del prodotto basta:
+ * un sito con moduli suoi (moduli/<nome>/modulo.php, non gli addon) può volere un pacchetto fatto apposta, quindi passa da
+ * Aggiornamenti, dove prima si legge il riepilogo e poi si applica.
+ */
+function versione_installabile_qui(): bool {
+    return !(glob(cms_radice() . '/moduli/*/modulo.php') ?: []);
+}
+
 /** Il controllo e acceso? (Aggiornamenti, "Controlla da solo") */
 function versione_attivo(): bool {
     return (string)get_setting('versione_controllo', '1') !== '0';

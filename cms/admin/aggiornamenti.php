@@ -40,6 +40,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     verify_csrf();
     $action = $_POST['action'] ?? '';
     try {
+        // 2.3.0: "Installa ora" (banner della dashboard): scarica e controlla la versione nuova (dimensione e sha256), poi la
+        // applica come "Applica ora", con lo snapshot prima e il ripristino da solo se un passo non va.
+        if ($action === 'versione_installa') {
+            if (!versione_installabile_qui()) throw new RuntimeException('Questo sito ha moduli suoi: scarica la versione con "Scarica e prepara", leggi il riepilogo e poi premi "Applica ora".');
+            $_POST['id'] = versione_scarica_e_prepara();
+            $action = 'applica';
+        }
         if ($action === 'carica') {
             $f = $_FILES['pacchetto'] ?? null;
             if (!$f || $f['error'] !== UPLOAD_ERR_OK) {
