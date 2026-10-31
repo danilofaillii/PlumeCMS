@@ -7,7 +7,7 @@
  */
 return [
     'etichetta' => 'Corsi online',
-    'versione' => '1.0.0',
+    'versione' => '1.1.0',
     'descrizione' => 'Corsi fatti di moduli e lezioni, con testo, video e materiali da scaricare. Ogni membro vede quanto gli manca, riprende da dove era e alla fine riceve un certificato.',
     'richiede' => ['membri'],
     'installa' => function () { require_once __DIR__ . '/includes/corsi.php'; return corsi_installa(); },
@@ -40,4 +40,8 @@ return [
         },
     ],
     'widget' => [__DIR__ . '/includes/widget.php'],
+    // 2.1: il testo delle lezioni si scrive con l'editor visuale (contenitore dell'editor, includes/editor.php).
+    'editor_contenitori' => [
+        'corsi_lezione' => function () { require_once __DIR__ . '/includes/corsi.php'; return corsi_contenitore(); },
+    ],
 ];

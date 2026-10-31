@@ -2,7 +2,8 @@
 // Su un sito nuovo (kit Attività) con il server di posta finto acceso: la prova accende i tre addon dal pannello e prepara
 // i suoi dati dalla riga di comando (prove/addon-b-cli.php). Mai contro un sito vero.
 // Gruppi: A prenotazioni (doppia prenotazione in parallelo, posti che non esistono, captcha, campo esca, origine, XSS,
-// SQL injection, header injection, troppe richieste, link manomessi e scaduti, annullare quella di un altro, CSRF),
+// SQL injection, header injection, troppe richieste, link manomessi e scaduti, annullare quella di un altro, CSRF; 2.1:
+// la prenotazione scritta dal pannello senza token, sopra un altro appuntamento, con dati sbagliati, dal redattore),
 // B eventi (posti oltre il massimo, iscrizioni in parallelo, bozze e chiuse, link, CSRF), C recensioni (due volte in
 // parallelo, link manomessi, scaduti, non partiti, stelle fuori scala, XSS, CSRF), D pannello (senza accesso, redattore,
 // file degli addon dal web).
@@ -130,6 +131,34 @@ const codice = r => decodeURIComponent(((r.headers.get('location') || '').match(
   ok('A9 i posti con un servizio "1 UNION SELECT": 404, niente dati', (await fetch(`${B}/prenotazione/posti/?s=${encodeURIComponent('1 UNION SELECT 1')}`)).status === 404);
   const csrf = await a.request.post(B + '/admin/addon-pagina.php?a=prenotazioni&p=elenco', { form: { id: String(pa.id), azione: 'annulla' }, maxRedirects: 0 });
   ok('A16 CSRF: annullare dal pannello senza il token: 403, resta confermata', csrf.status() === 403 && sql(`SELECT stato FROM {p}pren_prenotazioni WHERE id = ${pa.id}`)[0].stato === 'confermata', csrf.status());
+  // A18 (2.1) la prenotazione scritta dal pannello: senza token, sopra un appuntamento della stessa persona, dati sbagliati.
+  const conta = () => +sql('SELECT COUNT(*) n FROM {p}pren_prenotazioni')[0].n;
+  const n0 = conta();
+  const pAdm = await a.request.post(B + '/admin/addon-pagina.php?a=prenotazioni&p=nuova', { form: { servizio: String(ids.s), risorsa: String(ids.r), giorno: g, ora: posti.posti[20].ora, nome: 'Senza Token', telefono: '1' }, maxRedirects: 0 });
+  ok('A18 CSRF: una prenotazione dal pannello senza il token: 403, nessuna riga', pAdm.status() === 403 && conta() === n0, pAdm.status());
+  await a.goto(B + '/admin/addon-pagina.php?a=prenotazioni&p=nuova', { waitUntil: 'networkidle' });
+  const tokP = await a.inputValue('#pa-nuova [name=_csrf]');
+  const nuovaP = campi => a.request.post(B + '/admin/addon-pagina.php?a=prenotazioni&p=nuova', { form: { _csrf: tokP, servizio: String(ids.s), risorsa: String(ids.r), giorno: g, nome: 'Prova Pannello', telefono: '333', avvisa: '1', ...campi }, maxRedirects: 0, headers: { Origin: new URL(B).origin } });
+  // Giorno e ora nel fuso del sito (la colonna inizio è già scritta così).
+  const occ = sql(`SELECT DATE_FORMAT(inizio, '%Y-%m-%d') g, DATE_FORMAT(inizio, '%k:%i') o, DATE_FORMAT(DATE_ADD(inizio, INTERVAL 15 MINUTE), '%k:%i') m FROM {p}pren_prenotazioni WHERE id = ${pa.id}`)[0];
+  const [gOcc, oOcc] = [occ.g, occ.o.trim()];
+  let rp = await nuovaP({ giorno: gOcc, ora: oOcc });
+  ok('A18 dal pannello sul posto di un altro (fra i posti liberi): «non è più libero», nessuna riga', rp.status() === 200 && /non è più libero/.test(await rp.text()) && conta() === n0);
+  rp = await nuovaP({ giorno: gOcc, ora: 'altra', ora_altra: oOcc, risorsa_altra: String(ids.r) });
+  ok('A18 forzando «Un altro orario» sopra lo stesso appuntamento: «ha già un appuntamento», nessuna riga', /ha già un appuntamento/.test(await rp.text()) && conta() === n0);
+  rp = await nuovaP({ giorno: gOcc, ora: 'altra', ora_altra: occ.m.trim(), risorsa_altra: String(ids.r) });
+  ok('A18 forzando un orario a metà di un appuntamento (sovrapposto): no', /ha già un appuntamento/.test(await rp.text()) && conta() === n0);
+  rp = await nuovaP({ servizio: '1 OR 1=1', ora: posti.posti[21].ora });
+  ok('A18 SQL injection nel servizio dal pannello: «Scegli un servizio», nessuna riga', rp.status() === 200 && /Scegli un servizio/.test(await rp.text()) && conta() === n0 && !/SQLSTATE|Fatal/.test(await rp.text()));
+  const n1 = conta();
+  rp = await nuovaP({ ora: posti.posti[22].ora, email: 'a@b.it\r\nBcc: spia@cattivo.it' });
+  ok('A18 header injection nell\'email dal pannello: «non è un indirizzo email valido», nessuna riga', /non è un indirizzo email valido/.test(await rp.text()) && conta() === n1);
+  rp = await nuovaP({ ora: 'altra', ora_altra: '25:99', risorsa_altra: String(ids.r) });
+  ok('A18 un\'ora che non esiste (25:99): «non vanno bene», nessuna riga', /non vanno bene/.test(await rp.text()) && conta() === n1);
+  rp = await nuovaP({ ora: posti.posti[23].ora, nome: '<script>alert(1)</script>', note: '<img src=x onerror=alert(2)>' });
+  const idX2 = sql("SELECT MAX(id) id FROM {p}pren_prenotazioni")[0].id;
+  const schedaX = await (await a.request.get(B + '/admin/addon-pagina.php?a=prenotazioni&p=elenco&id=' + idX2)).text();
+  ok('A18 codice nel nome e nella nota dal pannello: salvato come testo, nella scheda esce come testo', !/<script>alert\(1\)/.test(schedaX) && !/<img src=x/.test(schedaX) && /&lt;script&gt;alert\(1\)/.test(schedaX));
   const cerca = await a.request.get(B + "/admin/addon-pagina.php?a=prenotazioni&p=elenco&filtro=tutte&q=" + encodeURIComponent("' OR 1=1 -- "));
   ok('A9 SQL injection nella ricerca del pannello: nessuna riga', cerca.status() === 200 && /Nessuna prenotazione qui/.test(await cerca.text()));
 
@@ -214,7 +243,7 @@ const codice = r => decodeURIComponent(((r.headers.get('location') || '').match(
   ok('C5 e nel pannello', !/<script>alert\(1\)/.test(ph) && !/<b onmouseover/.test(ph));
 
   // ================= D. Pannello e file
-  const pagine = [['prenotazioni', ['agenda', 'elenco', 'servizi', 'persone', 'impostazioni']], ['eventi-iscrizione', ['eventi', 'iscritti', 'impostazioni']], ['recensioni', ['recensioni', 'inviti', 'impostazioni']]];
+  const pagine = [['prenotazioni', ['agenda', 'nuova', 'elenco', 'servizi', 'persone', 'impostazioni']], ['eventi-iscrizione', ['eventi', 'iscritti', 'impostazioni']], ['recensioni', ['recensioni', 'inviti', 'impostazioni']]];
   let senza = 0, tot = 0;
   for (const [ad, ps] of pagine) for (const p of ps) { tot++; const r = await fetch(`${B}/admin/addon-pagina.php?a=${ad}&p=${p}`, { redirect: 'manual' }); if (r.status >= 300 && r.status < 400 && /login\.php/.test(r.headers.get('location') || '')) senza++; }
   ok(`D1 le ${tot} pagine del pannello degli addon senza accesso: tutte al login`, senza === tot, [senza, tot]);
@@ -228,9 +257,12 @@ const codice = r => decodeURIComponent(((r.headers.get('location') || '').match(
   let bloccate = 0;
   for (const [ad, ps] of pagine) for (const p of ps) { const r = await red.goto(`${B}/admin/addon-pagina.php?a=${ad}&p=${p}`); if (!/addon-pagina\.php/.test(red.url()) || r.status() >= 400) bloccate++; }
   const postRed = await red.request.post(B + '/admin/addon-pagina.php?a=prenotazioni&p=impostazioni', { form: { anticipo_ore: '0' }, maxRedirects: 0 });
+  const nRed = +sql('SELECT COUNT(*) n FROM {p}pren_prenotazioni')[0].n;
+  const postRedN = await red.request.post(B + '/admin/addon-pagina.php?a=prenotazioni&p=nuova', { form: { servizio: '1', giorno: '2030-01-07', ora: 'altra', ora_altra: '9:00', risorsa_altra: '1', nome: 'Dal redattore', telefono: '1' }, maxRedirects: 0 });
   ok(`D2 il redattore non apre nessuna delle ${tot} pagine degli addon`, bloccate === tot, [bloccate, tot]);
   ok('D2 e non vede le voci nel menu', await red.locator('nav.admin-nav a', { hasText: 'Persone e orari' }).count() === 0 && await red.locator('nav.admin-nav a', { hasText: /^\s*Inviti\s*$/ }).count() === 0);
   ok('D2 un POST del redattore alle impostazioni non passa', postRed.status() !== 200 || !/salvate/.test(await postRed.text()));
+  ok('D2 (2.1) una prenotazione dal pannello scritta dal redattore non passa', postRedN.status() !== 200 && +sql('SELECT COUNT(*) n FROM {p}pren_prenotazioni')[0].n === nRed && !/Dal redattore/.test(JSON.stringify(sql("SELECT nome FROM {p}pren_prenotazioni"))), postRedN.status());
   const file = ['/addon/prenotazioni/modulo.php', '/addon/prenotazioni/includes/prenotazioni.php', '/addon/eventi-iscrizione/includes/sito.php', '/addon/recensioni/includes/admin-inviti.php', '/moduli/addon-attivi.json'];
   const stati = [];
   for (const f of file) stati.push((await fetch(B + f)).status);

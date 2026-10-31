@@ -31,7 +31,10 @@ if ($post) {
     $campi['avvisa'] = !empty($_POST['avvisa']) ? '1' : '';
     $altra = $campi['ora'] === 'altra';
     $email = mb_strtolower($campi['email']);
+    // Il servizio e la persona arrivati devono essere numeri, e quelli della pagina: niente ripieghi silenziosi su un altro.
+    $numero = fn($x) => is_string($x) && ctype_digit($x);
     if (!$s) $errore = 'Prima scrivi almeno un servizio in Servizi.';
+    elseif (!$numero($_POST['servizio'] ?? null) || (int)$_POST['servizio'] !== (int)$s['id'] || !$numero($_POST['risorsa'] ?? '0') || ($altra && !$numero($_POST['risorsa_altra'] ?? '0'))) $errore = 'Scegli un servizio fra quelli attivi (e una persona che lo fa).';
     elseif ($campi['nome'] === '') $errore = 'Scrivi il nome del cliente.';
     elseif ($campi['telefono'] === '') $errore = 'Scrivi il telefono del cliente: serve per richiamarlo se cambia qualcosa.';
     elseif ($email !== '' && !filter_var($email, FILTER_VALIDATE_EMAIL)) $errore = '«' . $campi['email'] . '» non è un indirizzo email valido. Correggilo, oppure lascia il campo vuoto.';

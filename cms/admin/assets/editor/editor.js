@@ -1114,6 +1114,8 @@
     fImp.titolo.value = D.titolo; fImp.slug.value = D.slug; fImp.seo_titolo.value = D.seo.titolo; fImp.seo_descrizione.value = D.seo.descrizione;
     fImp.robots.value = D.seo.robots; fImp.stato.value = D.stato;
     if (fImp.header_id) { fImp.header_id.value = String(D.headerId || 0); fImp.footer_id.value = String(D.footerId || 0); }
+    // 2.1: un contenitore di un modulo (una lezione): nella finestra resta solo il titolo.
+    if (D.contenitore) { ['slug', 'seo_titolo', 'seo_descrizione', 'robots', 'stato'].forEach(function (n) { var c = fImp[n] && fImp[n].closest('label'); if (c) { c.hidden = true; c.style.display = 'none'; } }); var h3 = fImp.querySelector('h2'); if (h3) h3.textContent = 'Impostazioni: ' + D.contenitore.uno; }
     if (D.modello) { ['slug', 'seo_titolo', 'seo_descrizione', 'robots'].forEach(function (n) { var c = fImp[n] && fImp[n].closest('label'); if (c) { c.hidden = true; c.style.display = 'none'; } }); var h2 = fImp.querySelector('h2'); if (h2) h2.textContent = 'Impostazioni del modello'; } // modelli: il CSS dà display:block alle label, hidden da solo non basta
     $('#ed-impostazioni-errore').hidden = true;
     dImp.showModal();
@@ -1142,7 +1144,7 @@
       D.titolo = campi.titolo; D.slug = j.slug; D.percorso = j.percorso; D.stato = campi.stato;
       if (fImp.header_id) { D.headerId = Number(campi.header_id); D.footerId = Number(campi.footer_id); disegna(); }
       D.seo = { titolo: campi.seo_titolo, descrizione: campi.seo_descrizione, robots: campi.robots };
-      $('#ed-titolo-pagina').textContent = D.titolo; $('#ed-percorso').textContent = D.percorso; $('#ed-vedi').href = D.percorso + (D.pubblicato === false ? '?preview=1' : '');
+      $('#ed-titolo-pagina').textContent = D.titolo; $('#ed-percorso').textContent = D.percorso; if (!D.contenitore) $('#ed-vedi').href = D.percorso + (D.pubblicato === false ? '?preview=1' : '');
       dImp.close();
     }).catch(function (er) { var p = $('#ed-impostazioni-errore'); p.textContent = er.message; p.hidden = false; });
   });
@@ -1198,7 +1200,7 @@
   var togli = $('#ed-togli-editor');
   if (togli) togli.addEventListener('click', function () {
     if (!confirm('La pagina torna a mostrare il contenuto di prima (quello della scheda). La struttura fatta con l\'editor si perde; le versioni restano. Continuare?')) return;
-    api('togli').then(function () { sporco = false; location.href = 'contenuto.php?tipo=' + (D.tipo || 'pagine') + '&id=' + D.id; }).catch(function (e) { alert(e.message); });
+    api('togli').then(function () { sporco = false; location.href = D.contenitore ? D.contenitore.scheda : 'contenuto.php?tipo=' + (D.tipo || 'pagine') + '&id=' + D.id; }).catch(function (e) { alert(e.message); });
   });
 
   // ------------------------------------------------------------ immagini

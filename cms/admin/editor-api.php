@@ -42,6 +42,9 @@ $tab = tbl(editor_tabella($tipo));
 $id = (int)($_POST['id'] ?? 0);
 $pagina = $id ? editor_pagina($id, $tipo) : null;
 if (!in_array($azione, ['carica', 'media', 'markdown'], true) && !$pagina) api_esci(['errore' => 'Pagina non trovata.'], 404);
+// 2.1: un contenitore di un modulo (una lezione di un corso) lo tocca solo chi ha il suo permesso (di solito l'amministratore).
+$contenitore = editor_contenitore($tipo);
+if ($contenitore && !editor_contenitore_permesso($tipo)) api_esci(['errore' => 'Questo contenuto lo modifica solo un amministratore.'], 403);
 $percorso = $pagina ? editor_percorso_pagina($pagina) : '/';
 
 function api_albero(): array {
@@ -69,7 +72,9 @@ switch ($azione) {
         $pubblica = !empty($_POST['pubblica']);
         if ($pubblica && !editor_puo_pubblicare()) api_esci(['errore' => 'Solo un amministratore può pubblicare dall\'editor (Editor > Impostazioni dell\'editor). La bozza resta salvata.'], 403); // menu
         editor_salva($id, $a, $pubblica, (string)(current_user()['username'] ?? ''), (string)($_POST['nota'] ?? ''), $tipo);
-        if ($pubblica && $tipo === 'modelli') {
+        if ($contenitore) {
+            // 2.1: lo stato di un contenitore è la sua struttura pubblicata, già scritta da salva().
+        } elseif ($pubblica && $tipo === 'modelli') {
             // modelli: Pubblica nell'editor pubblica anche il modello (la tabella non ha publish_date).
             modelli_stato($id, true);
         } elseif ($pubblica && $pagina['status'] !== 'published') {
@@ -80,7 +85,7 @@ switch ($azione) {
 
     case 'revisioni':
         // versioni: la stessa tabella e lo stesso confronto della pagina Versioni (includes/versioni.php).
-        $ambito = $tipo === 'modelli' ? 'modello' : 'contenuto:' . $tipo;
+        $ambito = editor_ambito($tipo);
         $righe = [];
         foreach (editor_versioni($ambito, $id, 60) as $r) {
             $righe[] = ['id' => (int)$r['id'], 'nota' => $r['nota'], 'autore' => $r['autore'], 'creato' => $r['creato'], 'peso' => (int)$r['dimensione'], 'pubblicata' => (bool)$r['pubblicata'], 'nota_mano' => (bool)$r['nota_mano']];
@@ -89,7 +94,7 @@ switch ($azione) {
 
     case 'revisione':
         $v = editor_versione((int)($_POST['revisione'] ?? 0));
-        $ambito = $tipo === 'modelli' ? 'modello' : 'contenuto:' . $tipo;
+        $ambito = editor_ambito($tipo);
         if (!$v || $v['ambito'] !== $ambito || (int)$v['oggetto_id'] !== $id) api_esci(['errore' => 'Versione non trovata.'], 404);
         $a = is_array($v['dati']['albero'] ?? null) ? editor_valida($v['dati']['albero']) : null;
         if (!$a) api_esci(['errore' => 'Questa versione non ha una struttura dell\'editor (è una copia della scheda classica).'], 400);
@@ -97,7 +102,7 @@ switch ($azione) {
 
     case 'confronta':
         $v = editor_versione((int)($_POST['versione'] ?? 0));
-        $ambito = $tipo === 'modelli' ? 'modello' : 'contenuto:' . $tipo;
+        $ambito = editor_ambito($tipo);
         if (!$v || $v['ambito'] !== $ambito || (int)$v['oggetto_id'] !== $id) api_esci(['errore' => 'Versione non trovata.'], 404);
         $con = (string)($_POST['con'] ?? 'precedente');
         try {
@@ -118,13 +123,20 @@ switch ($azione) {
 
     case 'nota':
         $v = editor_versione((int)($_POST['versione'] ?? 0));
-        $ambito = $tipo === 'modelli' ? 'modello' : 'contenuto:' . $tipo;
+        $ambito = editor_ambito($tipo);
         if (!$v || $v['ambito'] !== $ambito || (int)$v['oggetto_id'] !== $id) api_esci(['errore' => 'Versione non trovata.'], 404);
         versioni_nota((int)$v['id'], (string)($_POST['testo'] ?? ''));
         api_esci(['ok' => true]);
 
     case 'impostazioni':
         // Titolo, indirizzo, stato e dati per Google: la stessa strada della scheda classica (contenuti_salva_rapido).
+        if ($contenitore) {
+            // 2.1: un contenitore: solo il titolo, se il modulo lo permette.
+            if (!is_callable($contenitore['impostazioni'] ?? null)) api_esci(['errore' => 'Il titolo si cambia dalla sua pagina nel pannello.'], 400);
+            try { $contenitore['impostazioni']($id, ['titolo' => (string)($_POST['titolo'] ?? '')]); } catch (Throwable $e) { api_esci(['errore' => $e->getMessage()], 400); }
+            $nuova = editor_pagina($id, $tipo);
+            api_esci(['ok' => true, 'slug' => (string)$nuova['slug'], 'percorso' => editor_percorso_pagina($nuova)]);
+        }
         if ($tipo === 'modelli') {
             // modelli: solo il nome e lo stato.
             try { modelli_rinomina($id, (string)($_POST['titolo'] ?? '')); modelli_stato($id, ($_POST['stato'] ?? '') === 'published'); } catch (Throwable $e) { api_esci(['errore' => $e->getMessage()], 400); }
@@ -166,7 +178,7 @@ switch ($azione) {
 
     case 'seo':
         // Il controllo SEO del contenuto com'è nella tela (includes/seo.php), come Rank Math.
-        if (!function_exists('seo_analisi') || $tipo === 'modelli') api_esci(['html' => '']);
+        if (!function_exists('seo_analisi') || $tipo === 'modelli' || $contenitore) api_esci(['html' => '']);
         $a = api_albero();
         [$h] = editor_disegna($a, $percorso);
         $riga = $pagina + ['contenuto' => $h, 'content_format' => 'html'];
@@ -177,6 +189,11 @@ switch ($azione) {
         try { api_esci(['html' => seo_analisi_html(seo_analisi($riga))]); } catch (Throwable $e) { api_esci(['html' => '<p class="ed-aiuto">Controllo SEO non disponibile: ' . h($e->getMessage()) . '</p>']); }
 
     case 'togli':
+        if ($contenitore) { // 2.1: il contenitore torna al testo di prima, se il modulo lo sa fare
+            if (!is_callable($contenitore['togli'] ?? null)) api_esci(['errore' => 'Non si può tornare indietro per questo contenuto.'], 400);
+            $contenitore['togli']($id);
+            api_esci(['ok' => true, 'scheda' => (string)$pagina['scheda']]);
+        }
         db()->prepare('UPDATE ' . $tab . ' SET struttura = NULL, struttura_bozza = NULL, struttura_aggiornata = NULL WHERE id = ?')->execute([$id]);
         api_esci(['ok' => true]);
 

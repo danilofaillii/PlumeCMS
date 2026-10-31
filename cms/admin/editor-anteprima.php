@@ -13,6 +13,8 @@ $tipo = editor_tipo_valido($_GET['tipo'] ?? '');
 $id = (int)($_GET['id'] ?? 0);
 $pagina = $id ? editor_pagina($id, $tipo) : null;
 if (!$pagina) { http_response_code(404); exit('Pagina non trovata.'); }
+// 2.1: un contenitore di un modulo (una lezione) lo vede solo chi ha il suo permesso, anche nella tela.
+if (!editor_contenitore_permesso($tipo)) { http_response_code(403); exit('Questo contenuto lo vede solo un amministratore.'); }
 header('X-Frame-Options: SAMEORIGIN');
 // modelli: la tela mostra l'header e il footer scelti per questo contenuto; per un modello, il segnaposto al posto dell'header o del footer.
 $GLOBALS['sito_contenuto_riga'] = $pagina;
@@ -22,15 +24,21 @@ $GLOBALS['editor_contesto'] = ['tipo' => $tipo, 'id' => $id, 'titolo' => (string
 $meta = ['titolo' => 'Anteprima: ' . $pagina['title'], 'descrizione' => '', 'robots' => 'noindex', 'canonical' => '', 'og' => []];
 $testa = '<style id="ed-css"></style><link rel="stylesheet" href="' . pannello_file('assets/editor/anteprima.css') . '">';
 // Un articolo tiene la sua testata (titolo, data) sopra le sezioni, come sul sito.
-$corpo = ($tipo !== 'pagine' && $tipo !== 'modelli' ? vista_articolo_testa(['titolo' => $pagina['title'], 'data' => sito_iso((string)($pagina['publish_date'] ?: date('Y-m-d')), (string)$pagina['publish_time']), 'pillar' => ($pagina['type'] ?? '') === 'pillar', 'categorie' => sito_lista($pagina['categorie'] ?? '') ?: array_filter([(string)$pagina['category']])], '') : '')
+$corpo = ($tipo !== 'pagine' && $tipo !== 'modelli' && !editor_contenitore($tipo) ? vista_articolo_testa(['titolo' => $pagina['title'], 'data' => sito_iso((string)($pagina['publish_date'] ?: date('Y-m-d')), (string)$pagina['publish_time']), 'pillar' => ($pagina['type'] ?? '') === 'pillar', 'categorie' => sito_lista($pagina['categorie'] ?? '') ?: array_filter([(string)$pagina['category']])], '') : '')
     . '<div class="ed-pagina" id="ed-pagina"></div>';
 // modelli: la tela sta nell'header (o nel footer); al posto del contenuto un segnaposto.
 if ($tipo === 'modelli') $corpo = ($pagina['tipo'] ?? '') === 'fine' ? modelli_segnaposto_fine() : modelli_segnaposto_contenuto((string)($pagina['tipo'] ?? 'header'));
 // Un articolo fatto di sezioni "Articolo" (la conversione a blocchi) sta nella colonna di lettura, come sul sito.
-if ($tipo !== 'pagine' && $tipo !== 'modelli') {
+if ($tipo !== 'pagine' && $tipo !== 'modelli' && !editor_contenitore($tipo)) {
     $albero = editor_decodifica((string)($pagina['struttura_bozza'] ?: $pagina['struttura'])) ?? ['elementi' => []];
     $soloArticolo = $albero['elementi'] && !array_filter($albero['elementi'], fn($s) => editor_valori('sezione', $s['impostazioni'] ?? [])['larghezza'] !== 'articolo');
     if ($soloArticolo) $corpo = substr($corpo, 0, -strlen('</div>' . '<div class="ed-pagina" id="ed-pagina"></div>')) . '<div class="art" style="grid-template-columns:minmax(0,1fr)"><article class="corpo"><div class="ed-pagina ed-articolo-pagina" id="ed-pagina"></div></article></div></div>';
+}
+// 2.1: un contenitore di un modulo (una lezione) ha la sua cornice: l'HTML prima e dopo la tela, e i suoi fogli di stile.
+if ($cont = editor_contenitore($tipo)) {
+    $cornice = is_callable($cont['anteprima'] ?? null) ? (array)$cont['anteprima']($pagina) : [];
+    $corpo = (string)($cornice['prima'] ?? '') . '<div class="ed-pagina" id="ed-pagina"></div>' . (string)($cornice['dopo'] ?? '');
+    $testa .= (string)($cornice['testa'] ?? '');
 }
 $html = vista_pagina($meta, $corpo, $testa, editor_percorso_pagina($pagina));
 // Niente link del sito: gli script dell'editor e Sortable vanno in fondo.

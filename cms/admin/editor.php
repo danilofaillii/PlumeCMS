@@ -25,7 +25,7 @@ require_once dirname(__DIR__) . '/includes/contenuti.php';
 if (isset($_GET['nuova'])) {
     require_once dirname(__DIR__) . '/includes/contenuti.php';
     $tipo = editor_tipo_valido((string)($_GET['tipo'] ?? ''));
-    if ($tipo === 'modelli') $tipo = 'pagine';
+    if ($tipo === 'modelli' || editor_contenitore($tipo)) $tipo = 'pagine'; // 2.1: un contenitore nasce dal suo modulo
     $def = contenuti_tipi()[$tipo];
     $nome = (string)($def['nuovo'] ?? (((($def['genere'] ?? (str_ends_with($def['uno'], 'a') ? 'f' : 'm')) === 'f') ? 'Nuova ' : 'Nuovo ') . $def['uno']));
     $base = contenuti_slug($nome); $n = 1;
@@ -46,14 +46,18 @@ if (!$pagina) {
     http_response_code(404);
     exit('Contenuto non trovato. <a href="' . ($tipo === 'modelli' ? 'modelli.php' : 'contenuti.php?tipo=' . $tipo) . '">Torna all\'elenco</a>');
 }
+// 2.1: un contenitore di un modulo (una lezione di un corso): lo apre chi ha il permesso (di solito solo l'amministratore).
+$contenitore = editor_contenitore($tipo);
+if ($contenitore && !editor_contenitore_permesso($tipo)) { http_response_code(403); exit('Questo contenuto lo modifica solo un amministratore. <a href="index.php">Torna al pannello</a>'); }
 // modelli: header e footer del Theme Builder si aprono con lo stesso editor; la scheda di ritorno è l'elenco dei modelli.
 $modello = $tipo === 'modelli';
 $fine = $modello && ($pagina['tipo'] ?? '') === 'fine'; // 1.6.0: il riquadro di fine articolo torna alla sua pagina
 $elenco = $fine ? 'fine-articolo.php' : ($modello ? 'modelli.php' : 'contenuti.php?tipo=' . $tipo);
 $scheda = $fine ? 'fine-articolo.php' : ($modello ? 'modelli.php' : 'contenuto.php?tipo=' . $tipo . '&id=' . $id);
+if ($contenitore) $elenco = $scheda = (string)$pagina['scheda'];
 // Le tendine Header e Footer del contenuto (includes/modelli.php), se il Theme Builder c'è.
 $opzioniModelli = null;
-if (!$modello && is_file(dirname(__DIR__) . '/includes/modelli.php')) {
+if (!$modello && !$contenitore && is_file(dirname(__DIR__) . '/includes/modelli.php')) {
     require_once dirname(__DIR__) . '/includes/modelli.php';
     if (function_exists('modelli_opzioni_scelta')) { try { $opzioniModelli = ['header' => modelli_opzioni_scelta('header'), 'footer' => modelli_opzioni_scelta('footer')]; } catch (Throwable $e) { $opzioniModelli = null; } }
 }
@@ -95,7 +99,7 @@ if ($albero === null): ?>
     <?php if (trim((string)($tipo !== 'pagine' ? $pagina['content'] : $pagina['html'])) !== ''): ?>
     <a class="ed-carta" href="editor.php?tipo=<?= $tipo ?>&amp;id=<?= $id ?>&amp;parti=html"><b>Il contenuto di oggi</b><span>Il testo entra intero in un widget HTML<?= $tipo === 'pagine' ? ', con i moduli al loro posto' : '' ?>. Da lì lo rifai un pezzo alla volta.</span></a>
     <?php endif; ?>
-    <a class="ed-carta" href="editor.php?tipo=<?= $tipo ?>&amp;id=<?= $id ?>&amp;parti=vuota"><b><?= $tipo !== 'pagine' ? ucfirst(contenuti_tipi()[$tipo]['uno'] ?? 'articolo') . ' vuoto' : 'Pagina vuota' ?></b><span><?= $tipo !== 'pagine' ? 'Una sezione di lettura con un widget Testo.' : 'Solo il titolo.' ?> Costruisci tutto da zero con i widget.</span></a>
+    <a class="ed-carta" href="editor.php?tipo=<?= $tipo ?>&amp;id=<?= $id ?>&amp;parti=vuota"><b><?= $tipo !== 'pagine' ? ucfirst((string)($contenitore['uno'] ?? contenuti_tipi()[$tipo]['uno'] ?? 'articolo')) . ' vuoto' : 'Pagina vuota' ?></b><span><?= $tipo !== 'pagine' ? 'Una sezione di lettura con un widget Testo.' : 'Solo il titolo.' ?> Costruisci tutto da zero con i widget.</span></a>
   </div>
 </div>
 </body></html>
@@ -103,12 +107,14 @@ if ($albero === null): ?>
 
 $dati = [
     'id' => $id, 'tipo' => $tipo, 'titolo' => $pagina['title'], 'slug' => $pagina['slug'], 'percorso' => $percorso, 'home' => $home, 'pubblicato' => $pagina['status'] === 'published',
-    'stato' => $pagina['status'], 'slugFisso' => $modello, 'modello' => $modello,
+    'stato' => $pagina['status'], 'slugFisso' => $modello || $contenitore, 'modello' => $modello,
+    // 2.1: un contenitore di un modulo: la finestra Impostazioni ha solo il titolo, "Torna al contenuto della scheda" torna alla sua pagina.
+    'contenitore' => $contenitore ? ['uno' => (string)$contenitore['uno'], 'scheda' => (string)$pagina['scheda'], 'vedi' => (string)($pagina['vedi'] ?? '')] : null,
     'headerId' => (int)($pagina['header_id'] ?? 0), 'footerId' => (int)($pagina['footer_id'] ?? 0), 'opzioniModelli' => $opzioniModelli,
     'globali' => editor_globali(), 'icone' => editor_icone_set(), 'seo' => ['titolo' => (string)$pagina['seo_title'], 'descrizione' => (string)$pagina['seo_description'], 'robots' => $pagina['robots'] === 'noindex' ? 'noindex' : ''],
-    'controlloSeo' => !$modello && function_exists('seo_analisi'),
+    'controlloSeo' => !$modello && !$contenitore && function_exists('seo_analisi'),
     'albero' => $albero, 'bozza' => $bozza !== null && $pubblica !== null, 'pubblicata' => $pubblica !== null,
-    'haHtml' => trim((string)($tipo !== 'pagine' ? $pagina['content'] : $pagina['html'])) !== '',
+    'haHtml' => trim((string)($tipo !== 'pagine' ? $pagina['content'] : $pagina['html'])) !== '' && (!$contenitore || is_callable($contenitore['togli'] ?? null)),
     'definizioni' => editor_definizioni(), 'csrf' => csrf_token(), 'temi' => editor_temi_infografica(), 'temiCampi' => editor_temi_campi(),
     'tablet' => editor_soglia('tablet'), 'telefono' => editor_soglia('telefono'),
     // menu: Impostazioni dell'editor (includes/editor-opzioni.php): widget spenti, colonne massime, chi pubblica.
@@ -146,7 +152,7 @@ $dati = [
   <span class="ed-stato" id="ed-stato"></span>
   <button type="button" class="ed-b" id="ed-apri-impostazioni">Impostazioni</button>
   <button type="button" class="ed-b" id="ed-apri-revisioni">Revisioni</button>
-  <a class="ed-b" id="ed-vedi" href="<?= h($modello ? '..' . $percorso : cms_sito_base() . $percorso . ($pagina['status'] === 'published' ? '' : '?preview=1')) ?>" target="_blank"><?= $modello ? 'Vedi sul sito' : 'Vedi la pagina' ?></a>
+  <a class="ed-b" id="ed-vedi" href="<?= h($contenitore ? (string)($pagina['vedi'] ?? cms_sito_base() . $percorso) : ($modello ? '..' . $percorso : cms_sito_base() . $percorso . ($pagina['status'] === 'published' ? '' : '?preview=1'))) ?>" target="_blank"><?= $modello ? 'Vedi sul sito' : 'Vedi la pagina' ?></a>
   <button type="button" class="ed-b" id="ed-salva">Salva bozza</button>
   <button type="button" class="ed-b ed-b-primo" id="ed-pubblica"<?= $dati['puoPubblicare'] ? '' : ' disabled title="Solo un amministratore pubblica (Editor > Impostazioni dell\'editor)"' ?>>Pubblica</button>
 </header>
@@ -191,7 +197,7 @@ $dati = [
     <p class="ed-aiuto">Ogni salvataggio e ogni pubblicazione lasciano una versione. <b>Cosa è cambiato</b> la confronta con la precedente; <b>Carica nella tela</b> la porta qui, e la pagina cambia solo quando pubblichi di nuovo.</p>
     <div id="ed-elenco-revisioni" class="ed-revisioni-elenco"></div>
     <div class="ed-revisioni-piede">
-      <a class="ed-b" id="ed-tutte-versioni" href="versioni.php?ambito=<?= h($modello ? 'modello' : 'contenuto:' . $tipo) ?>&amp;oggetto=<?= $id ?>" target="_blank">Tutte le versioni, anteprima e ripristino</a>
+      <a class="ed-b" id="ed-tutte-versioni" href="versioni.php?ambito=<?= h(editor_ambito($tipo)) ?>&amp;oggetto=<?= $id ?>" target="_blank">Tutte le versioni, anteprima e ripristino</a>
       <?php if ($dati['haHtml']): ?><button type="button" class="ed-b ed-b-pericolo" id="ed-togli-editor">Torna al contenuto della scheda</button><?php endif; ?>
     </div>
   </aside>

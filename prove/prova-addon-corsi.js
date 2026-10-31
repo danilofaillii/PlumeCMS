@@ -2,7 +2,9 @@
 // Su un sito nuovo installato con il kit Attività (prove/prova-kit.js), con il server di posta finto acceso
 // (python3 -I prove/smtp-finto.py <porta smtp> <cartella posta>) e ffmpeg per il video di prova.
 // L'amministratore accende Corsi online (si accende anche l'Area riservata), crea un corso con due moduli e tre lezioni
-// (testo, video di YouTube, video caricato, materiale riservato), le riordina, crea un secondo corso solo su assegnazione.
+// (2.1: il testo con l'editor visuale, due lezioni di prima convertite senza perdere niente; video di YouTube, video
+// caricato, materiale riservato), le riordina con le frecce e trascinando (resta dopo il ricaricamento), crea un secondo
+// corso solo su assegnazione.
 // Due membri invitati: uno segue il corso fino al certificato (riprendi da dove eri, percentuale, codice di verifica
 // pubblico), l'altro no; il corso su assegnazione si apre solo dopo l'assegnazione. Widget Elenco corsi, telefono
 // 390x844, bozza e anteprima, account cancellato. Alla fine spegne l'addon: il sito torna identico a prima.
@@ -74,14 +76,38 @@ let br;
   await vaiA(urlCorso);
   ok('programma: due moduli, tre lezioni', /2 moduli, 3 lezioni/.test(await a.locator('#programma h3').innerText()));
 
-  // 3. Le lezioni: testo (con uno script che deve sparire), video di YouTube, indirizzo sbagliato, video caricato, materiale.
+  // 3. Le lezioni (2.1): il testo con l'editor visuale; video di YouTube, indirizzo sbagliato, video caricato, materiale.
+  const sqlC = q => JSON.parse(execFileSync('php', ['-r', `$_SERVER['HTTP_HOST']='127.0.0.1'; require '${DIR}/includes/config.php'; $r = db()->query(str_replace('{p}', DB_PREFIX, ${JSON.stringify(q)})); echo json_encode($r && $r->columnCount() ? $r->fetchAll() : []);`], { encoding: 'utf8' }));
+  const tela = () => a.frameLocator('#ed-iframe');
+  const telaPronta = () => a.waitForFunction(() => { const f = document.querySelector('#ed-iframe'); return f && f.contentDocument && f.contentDocument.querySelector('.ed-sezione'); }, null, { timeout: 30000 });
   await vaiA(uLuce);
-  await a.fill('#le-testo', '<h2>La luce del mattino</h2><p>La luce migliore arriva <b>presto</b>.</p><script>alert(1)</script><p><img src=x onerror="alert(2)"></p>');
+  ok('la lezione non ha più l\'area di testo in HTML: c\'è «Scrivi il testo con l\'editor visuale»', await a.locator('#le-testo').count() === 0 && /Scrivi il testo con l'editor visuale/.test(await a.locator('#le-apri-editor').innerText()) && /non ha ancora un testo/.test(await a.locator('#le-editor').innerText()));
   await a.fill('#le-video', 'https://www.youtube.com/watch?v=dQw4w9WgXcQ');
   await a.fill('#le-durata', '10 minuti');
-  await Promise.all([a.waitForNavigation(), a.click('#le-form aside button.btn-primary')]);
-  const testo = await a.inputValue('#le-testo');
-  ok('lezione salvata: il testo resta, script e onerror no', /Lezione salvata/.test(await flash()) && /La luce migliore/.test(testo) && !/script|onerror/i.test(testo), testo);
+  await Promise.all([a.waitForNavigation(), a.click('#le-apri-editor')]);
+  await telaPronta();
+  ok('il pulsante salva la scheda (video e durata) e apre l\'editor visuale della lezione', /editor\.php\?tipo=corsi_lezione&id=\d+/.test(a.url()) && sqlC("SELECT durata, video_url FROM {p}corsi_lezioni WHERE slug = 'la-luce'")[0].durata === '10 minuti');
+  ok('la tela ha la cornice della lezione: briciole, «lezione 1 di 3», il titolo, e il widget Testo pronto', /Fotografia per cominciare/.test(await tela().locator('.corsi-briciole').innerText()) && /lezione 1 di 3/i.test(await tela().locator('.corsi-testa .occhiello').innerText()) && (await tela().locator('.corsi-testa h1').innerText()) === 'La luce' && await tela().locator('.ed-w-testo').count() === 1);
+  ok('in alto il percorso della lezione, e «Vedi la pagina» apre l\'anteprima', /\/corsi\/fotografia-per-cominciare\/la-luce\//.test(await a.locator('#ed-percorso').innerText()) && /\/corsi\/fotografia-per-cominciare\/la-luce\/\?preview=1$/.test(await a.getAttribute('#ed-vedi', 'href')));
+  await tela().locator('.ed-w-testo').first().dblclick(); await a.waitForTimeout(500);
+  await a.locator('#ed-controlli .ql-editor').click(); await a.keyboard.press('Control+A');
+  await a.keyboard.type('La luce migliore arriva presto, appena dopo l\'alba.');
+  await a.waitForTimeout(700);
+  // Un titolo in più dalla tavolozza: clic sul widget Titolo, entra sotto quello selezionato.
+  await a.click('[data-pannello="widget"]');
+  await a.locator('.ed-widget-voce[data-tipo=titolo]').click(); await a.waitForTimeout(800);
+  await a.click('#ed-pubblica');
+  await a.waitForFunction(() => /Pubblicata alle/.test(document.querySelector('#ed-stato').textContent), null, { timeout: 15000 });
+  ok('scrivo nel widget Testo, aggiungo un Titolo, Pubblica: «Pubblicata»', true);
+  const strL = sqlC("SELECT struttura, struttura_bozza, testo FROM {p}corsi_lezioni WHERE slug = 'la-luce'")[0];
+  ok('nel database: la struttura pubblicata con il testo scritto, nessuna bozza, la colonna di prima vuota com\'era', /La luce migliore arriva presto/.test(strL.struttura) && /"tipo":"titolo"/.test(strL.struttura) && strL.struttura_bozza === null && strL.testo === '');
+  await a.click('#ed-apri-impostazioni');
+  ok('Impostazioni dell\'editor: solo il titolo (niente indirizzo, Google, stato)', await a.locator('#ed-form-impostazioni [name=titolo]').isVisible() && !(await a.locator('#ed-form-impostazioni [name=slug]').isVisible()) && !(await a.locator('#ed-form-impostazioni [name=seo_titolo]').isVisible()) && !(await a.locator('#ed-form-impostazioni [name=stato]').isVisible()) && /lezione/.test(await a.locator('#ed-form-impostazioni h2').innerText()));
+  await a.click('#ed-form-impostazioni [data-chiudi]');
+  await a.click('#ed-apri-revisioni'); await a.waitForTimeout(800);
+  ok('Revisioni: le versioni della lezione (la prima e la pubblicata)', await a.locator('#ed-elenco-revisioni > *').count() >= 2 && /ambito=contenitore%3Acorsi_lezione|ambito=contenitore:corsi_lezione/.test(await a.getAttribute('#ed-tutte-versioni', 'href')));
+  await Promise.all([a.waitForNavigation(), a.click('.ed-indietro')]);
+  ok('la freccia in alto torna alla scheda della lezione, che dice «Pubblicato»', /p=lezione&id=/.test(a.url()) && /Pubblicato/i.test(await a.locator('#le-editor').innerText()) && (await a.getAttribute('#le-editor', 'data-stato')) === 'pubblicata');
   await a.fill('#le-video', 'https://cattivo.example/video.mp4');
   await Promise.all([a.waitForNavigation(), a.click('#le-form aside button.btn-primary')]);
   ok('un indirizzo video che non è YouTube né Vimeo si rifiuta, e si dice perché', /YouTube/.test(await flash()) && await a.inputValue('#le-video') === 'https://www.youtube.com/watch?v=dQw4w9WgXcQ');
@@ -94,8 +120,10 @@ let br;
   // il video caricato: due secondi fatti con ffmpeg
   const webm = path.join(tmp, 'inquadratura.webm');
   execFileSync('ffmpeg', ['-hide_banner', '-loglevel', 'error', '-y', '-f', 'lavfi', '-i', 'testsrc=duration=2:size=320x240:rate=10', '-c:v', 'libvpx', '-b:v', '200k', webm]);
+  // Due lezioni "di prima" (2.0.0): il testo in HTML scritto nella colonna testo, come lo lasciava l'area di testo.
+  execFileSync('php', ['-r', `$_SERVER['HTTP_HOST']='127.0.0.1'; require '${DIR}/includes/config.php'; $u = db()->prepare("UPDATE " . tbl('corsi_lezioni') . " SET testo = ? WHERE slug = ?"); $u->execute(['<p>La regola dei <b>terzi</b>.</p><ul><li>Linee</li><li>Punti forti</li></ul>', 'l-inquadratura']); $u->execute(['<p>Esci e scatta.</p><table><tbody><tr><td>ISO</td><td>100</td></tr></tbody></table>', 'il-primo-scatto']);`]);
   await vaiA(uInq);
-  await a.fill('#le-testo', '<p>La regola dei terzi.</p>');
+  ok('lezione di prima: «Apri il testo nell\'editor visuale», e sotto il testo di prima', /Apri il testo nell'editor visuale/.test(await a.locator('#le-apri-editor').innerText()) && /regola dei terzi/.test(await a.locator('.le-vecchio').innerText()));
   await a.setInputFiles('#le-file', webm);
   await a.locator('label.le-mat', { hasText: 'scheda-inquadratura.pdf' }).locator('input').check();
   await Promise.all([a.waitForNavigation(), a.click('#le-form aside button.btn-primary')]);
@@ -104,15 +132,56 @@ let br;
   await a.setInputFiles('#le-file', finto);
   await Promise.all([a.waitForNavigation(), a.click('#le-form aside button.btn-primary')]);
   ok('un file che non è un video si rifiuta', /non è un video/.test(await flash()));
+  await Promise.all([a.waitForNavigation(), a.click('#le-apri-editor')]);
+  await telaPronta();
+  ok('lezione di prima aperta nell\'editor: il testo entra intero in un widget Testo (grassetto ed elenco compresi)', /La regola dei terzi/.test(await tela().locator('.ed-w-testo').first().innerText()) && await tela().locator('.ed-w-testo b').count() === 1 && await tela().locator('.ed-w-testo li').count() === 2);
+  ok('ed è una bozza: «Mai pubblicata», il testo di prima è ancora quello dei membri', /Mai pubblicata/.test(await a.locator('#ed-stato').innerText()) && sqlC("SELECT struttura FROM {p}corsi_lezioni WHERE slug = 'l-inquadratura'")[0].struttura === null);
+  await vaiA(uInq);
+  ok('la scheda dice «Bozza non pubblicata: i membri vedono ancora il testo di prima»', /Bozza non pubblicata/i.test(await a.locator('#le-editor').innerText()) && /vedono ancora il testo di prima/.test(await a.locator('#le-editor').innerText()));
   await vaiA(uScatto);
-  await a.fill('#le-testo', '<p>Esci e scatta.</p>'); await a.fill('#le-video', 'https://vimeo.com/76979871');
-  await Promise.all([a.waitForNavigation(), a.click('#le-form aside button.btn-primary')]);
-  ok('un video di Vimeo va bene', /Lezione salvata/.test(await flash()));
-  // riordinare: L'inquadratura sale prima della luce
+  await a.fill('#le-video', 'https://vimeo.com/76979871');
+  await Promise.all([a.waitForNavigation(), a.click('#le-apri-editor')]);
+  await telaPronta();
+  ok('una lezione di prima con una tabella: entra intera in un widget HTML (il widget Testo la perderebbe)', await tela().locator('.ed-w-html table td', { hasText: 'ISO' }).count() === 1 && /Esci e scatta/.test(await tela().locator('.ed-w-html').innerText()));
+  await a.click('#ed-pubblica');
+  await a.waitForFunction(() => /Pubblicata alle/.test(document.querySelector('#ed-stato').textContent), null, { timeout: 15000 });
+  ok('il testo di prima resta salvato nella sua colonna (niente si perde)', /<table>/.test(sqlC("SELECT testo FROM {p}corsi_lezioni WHERE slug = 'il-primo-scatto'")[0].testo) && sqlC("SELECT video_url FROM {p}corsi_lezioni WHERE slug = 'il-primo-scatto'")[0].video_url === 'https://vimeo.com/76979871');
+  // riordinare: con le frecce (la tastiera) e trascinando.
   await vaiA(urlCorso);
   await Promise.all([a.waitForNavigation(), a.locator('li[data-lezione="l-inquadratura"] button.co-su').click()]);
-  const ordine = await a.locator('.co-modulo').first().locator('li[data-lezione]').evaluateAll(l => l.map(x => x.dataset.lezione));
-  ok('le frecce riordinano le lezioni', JSON.stringify(ordine) === '["l-inquadratura","la-luce"]', ordine);
+  const ordineDi = () => a.locator('.co-modulo').evaluateAll(ms => ms.map(m => m.querySelector('.co-modulo-testa input[name=titolo]').value + ':' + [...m.querySelectorAll('li[data-lezione]')].map(x => x.dataset.lezione).join(',')));
+  ok('le frecce riordinano le lezioni', JSON.stringify(await ordineDi()) === '["Le basi:l-inquadratura,la-luce","Pratica:il-primo-scatto"]', await ordineDi());
+  ok('ogni modulo e ogni lezione ha la sua maniglia per trascinare', await a.locator('.co-maniglia-modulo').count() === 2 && await a.locator('.co-maniglia-lezione').count() === 3);
+  // Trascina dalla maniglia (il mouse a passi, come una persona) e aspetta che il server risponda.
+  const trascina = async (da, a2, sotto = true) => {
+    const p0 = await da.boundingBox(), p1 = await a2.boundingBox();
+    const prima = await a.getAttribute('#co-moduli', 'data-salvato');
+    await a.mouse.move(p0.x + p0.width / 2, p0.y + p0.height / 2); await a.mouse.down();
+    await a.mouse.move(p0.x + p0.width / 2, p0.y + p0.height / 2 + 6, { steps: 3 });
+    const y = sotto ? p1.y + p1.height - 4 : p1.y + 4;
+    await a.mouse.move(p1.x + p1.width / 2, y, { steps: 20 }); await a.waitForTimeout(200);
+    await a.mouse.move(p1.x + p1.width / 2, y + (sotto ? 2 : -2), { steps: 2 }); await a.mouse.up();
+    await a.waitForFunction(x => { const b = document.querySelector('#co-moduli'); return b.getAttribute('data-salvato') && b.getAttribute('data-salvato') !== x; }, prima, { timeout: 8000 }).catch(() => {});
+    return (await a.locator('#co-ordine-stato').innerText()).trim();
+  };
+  let st = await trascina(a.locator('li[data-lezione="il-primo-scatto"] .co-maniglia-lezione'), a.locator('li[data-lezione="l-inquadratura"]'), false);
+  ok('trascino «Il primo scatto» in cima al primo modulo: «Ordine salvato.»', st === 'Ordine salvato.' && JSON.stringify(await ordineDi()) === '["Le basi:il-primo-scatto,l-inquadratura,la-luce","Pratica:"]', [st, await ordineDi()]);
+  ok('le frecce si aggiornano: la prima lezione non sale, l\'ultima non scende', await a.locator('li[data-lezione="il-primo-scatto"] button.co-su').isDisabled() && await a.locator('li[data-lezione="la-luce"] button.co-giu').isDisabled() && !(await a.locator('li[data-lezione="l-inquadratura"] button.co-su').isDisabled()));
+  await vaiA(urlCorso);
+  ok('ricaricando la pagina l\'ordine trascinato resta', JSON.stringify(await ordineDi()) === '["Le basi:il-primo-scatto,l-inquadratura,la-luce","Pratica:"]', await ordineDi());
+  st = await trascina(a.locator('.co-modulo').nth(1).locator('.co-maniglia-modulo'), a.locator('.co-modulo').nth(0), false);
+  await vaiA(urlCorso);
+  ok('trascino il modulo «Pratica» sopra «Le basi»: resta dopo il ricaricamento', st === 'Ordine salvato.' && JSON.stringify(await ordineDi()) === '["Pratica:","Le basi:il-primo-scatto,l-inquadratura,la-luce"]', [st, await ordineDi()]);
+  // Si rimette com'era: il modulo con le frecce, la lezione trascinata nel modulo vuoto.
+  await Promise.all([a.waitForNavigation(), a.locator('.co-modulo').nth(0).locator('button.co-modulo-giu').click()]);
+  st = await trascina(a.locator('li[data-lezione="il-primo-scatto"] .co-maniglia-lezione'), a.locator('.co-modulo').nth(1).locator('.co-lez'), true);
+  await vaiA(urlCorso);
+  ok('la freccia rimette giù il modulo, e una lezione si trascina anche in un modulo vuoto', st === 'Ordine salvato.' && JSON.stringify(await ordineDi()) === '["Le basi:l-inquadratura,la-luce","Pratica:il-primo-scatto"]', [st, await ordineDi()]);
+  const at = await pagina(br, err, 390, 844);
+  await at.context().addCookies(await a.context().cookies());
+  const larghiP = [];
+  for (const u of [urlCorso, uLuce, uInq]) { await at.goto(B + u, { waitUntil: 'networkidle' }); if (await largo(at) > 0) larghiP.push(u); }
+  ok('al telefono il programma e le schede delle lezioni non scorrono di lato', larghiP.length === 0, larghiP);
   // un secondo corso, solo per chi lo riceve
   await vaiA('/admin/' + C + 'corsi');
   await a.fill('#co-titolo', 'Corso avanzato');
@@ -167,6 +236,7 @@ let br;
   ok('il file riservato non ha un indirizzo pubblico', (await v0.request.get(B + '/scarica/scheda-inquadratura/')).status() === 404);
   await Promise.all([luca.waitForNavigation(), luca.click('form.corsi-completa button')]);
   ok('"Segna come completata e vai avanti": si va alla lezione 2, la luce', /\/la-luce\/$/.test(luca.url()) && /1 lezioni fatte su 3 \(33%\)/.test(await luca.locator('.corsi-numeri').last().innerText()));
+  ok('la lezione scritta con l\'editor visuale: il membro vede il testo e il titolo aggiunto, a sezioni, e non l\'area di testo di prima', /La luce migliore arriva presto/.test(await luca.locator('.corsi-lezione-testo .ed-w-testo').innerText()) && await luca.locator('.corsi-lezione-testo .ed-w-titolo').count() === 1 && await luca.locator('.corsi-testo').count() === 0 && await luca.locator('form.corsi-completa').count() === 1);
   ok('la lezione con YouTube incorpora la versione senza cookie', /^https:\/\/www\.youtube-nocookie\.com\/embed\/dQw4w9WgXcQ$/.test(await luca.locator('.corsi-video iframe').getAttribute('src')));
   await vaiL('/area-riservata/');
   await vaiL('/corsi/fotografia-per-cominciare/');
@@ -178,6 +248,7 @@ let br;
   r = await luca.goto(B + '/corsi/fotografia-per-cominciare/certificato/', { waitUntil: 'networkidle' });
   ok('a corso non finito il certificato non c\'è ancora', /arriva alla fine/.test(await luca.locator('h1').innerText()));
   await vaiL('/corsi/fotografia-per-cominciare/il-primo-scatto/');
+  ok('la lezione di prima convertita e pubblicata: il membro vede la tabella intera', await luca.locator('.corsi-lezione-testo table td', { hasText: 'ISO' }).count() === 1 && /Esci e scatta/.test(await luca.locator('.corsi-lezione-testo').innerText()));
   ok('la lezione con Vimeo', /^https:\/\/player\.vimeo\.com\/video\/76979871$/.test(await luca.locator('.corsi-video iframe').getAttribute('src')));
   await Promise.all([luca.waitForNavigation(), luca.click('form.corsi-completa button')]);
   ok('ultima lezione fatta: il corso dice "Hai completato il corso", 100%', /Hai completato il corso/.test(await luca.locator('main').innerText()) && /3 lezioni fatte su 3 \(100%\)/.test(await luca.locator('.corsi-numeri').last().innerText()));

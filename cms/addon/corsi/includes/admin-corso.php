@@ -1,7 +1,9 @@
 <?php
 /**
- * Pannello, Corsi > un corso (addon corsi): i dati del corso, il programma (moduli e lezioni, da riordinare con le frecce),
- * chi lo segue e a che punto è; per un corso "solo i membri a cui lo assegno", l'elenco delle assegnazioni.
+ * Pannello, Corsi > un corso (addon corsi): i dati del corso, il programma (moduli e lezioni: si riordinano trascinando,
+ * 2.1, con assets/programma.js e SortableJS del pannello; le frecce restano per la tastiera), chi lo segue e a che punto è;
+ * per un corso "solo i membri a cui lo assegno", l'elenco delle assegnazioni.
+ * POST azione=ordine (dal trascinamento, con il token CSRF): risponde in JSON, corsi_riordina() fa tutto o niente.
  */
 require_once __DIR__ . '/corsi.php';
 corsi_schema();
@@ -13,6 +15,15 @@ $qui = corsi_admin_url('corso', ['id' => $cid]);
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     verify_csrf();
     $azione = (string)($_POST['azione'] ?? '');
+    if ($azione === 'ordine') {
+        // 2.1: l'ordine nuovo dopo un trascinamento (moduli e lezioni, anche da un modulo all'altro).
+        header('Content-Type: application/json; charset=utf-8');
+        header('Cache-Control: no-store');
+        try { $e = corsi_riordina($cid, json_decode((string)($_POST['ordine'] ?? ''), true)); } catch (Throwable $x) { error_log('corsi: ordine: ' . $x->getMessage()); $e = 'Ordine non salvato: riprova.'; }
+        http_response_code($e === '' ? 200 : 400);
+        echo json_encode($e === '' ? ['ok' => true] : ['ok' => false, 'errore' => $e], JSON_UNESCAPED_UNICODE);
+        exit;
+    }
     $ancora = '';
     try {
         $mod = fn() => (($m = corsi_modulo((int)($_POST['modulo'] ?? 0))) && (int)$m['corso_id'] === $cid) ? $m : throw new RuntimeException('Modulo non trovato.');
@@ -71,7 +82,10 @@ require CMS_ADMIN . '/includes/admin-header.php';
 <style>.co-griglia{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:1.25rem}@media(max-width:1100px){.co-griglia{grid-template-columns:1fr}}
 .co-modulo{border:1px solid var(--border);border-radius:var(--radius);padding:.8rem 1rem;margin-bottom:1rem}.co-modulo-testa{display:flex;gap:.5rem;flex-wrap:wrap;align-items:center}
 .co-modulo-testa input[type=text]{flex:1;min-width:10rem}.co-lez{list-style:none;margin:.6rem 0;padding:0}.co-lez li{display:flex;gap:.5rem;align-items:center;flex-wrap:wrap;padding:.4rem 0;border-top:1px solid var(--border)}
-.co-lez li .co-nome{flex:1;min-width:10rem}.co-lez form,.co-modulo-testa form{display:inline}.co-tab{overflow-x:auto}.co-acc label{display:flex;gap:.5rem;font-weight:400;align-items:center}</style>
+.co-lez li .co-nome{flex:1;min-width:10rem}.co-lez{min-height:2.2rem}
+.co-maniglia{cursor:grab;touch-action:none;user-select:none;display:inline-flex;align-items:center;justify-content:center;width:1.9rem;height:1.9rem;border-radius:6px;color:var(--text-muted);font-size:1.1rem;line-height:1}
+.co-maniglia:hover{background:var(--fondo-2,rgba(0,0,0,.06));color:var(--text)}.co-fantasma{opacity:.45;background:var(--fondo-2,rgba(0,0,0,.06))}
+#co-ordine-stato{min-height:1.2em;margin:.3rem 0 0}.co-lez form,.co-modulo-testa form{display:inline}.co-tab{overflow-x:auto}.co-acc label{display:flex;gap:.5rem;font-weight:400;align-items:center}</style>
 <p><a href="<?= h(corsi_admin_url('corsi')) ?>">&larr; Tutti i corsi</a> &middot; <a href="<?= h($sito . ($corso['stato'] !== 'pubblicato' ? '?preview=1' : '')) ?>" target="_blank" id="co-vedi">Vedi sul sito<?= $corso['stato'] !== 'pubblicato' ? ' (anteprima: è in bozza)' : '' ?></a></p>
 <div class="co-griglia">
 <div>
@@ -112,20 +126,24 @@ require CMS_ADMIN . '/includes/admin-header.php';
   </div></div>
 </div>
 <div class="sc-scatola" id="programma"><h3>Programma: <?= count($moduli) ?> moduli, <?= $totale ?> lezioni</h3><div class="sc-corpo">
+  <p class="hint">Per cambiare l'ordine trascina un modulo o una lezione dalla maniglia <span aria-hidden="true">&#10303;</span>, anche da un modulo all'altro: si salva da solo. Le frecce fanno lo stesso un posto alla volta (anche con la tastiera).</p>
+  <p class="hint" id="co-ordine-stato" role="status" aria-live="polite"></p>
+  <div id="co-moduli">
   <?php foreach ($moduli as $mi => $m): $mid = (int)$m['id']; ?>
     <div class="co-modulo" data-modulo="<?= $mid ?>">
       <div class="co-modulo-testa">
+        <span class="co-maniglia co-maniglia-modulo" title="Trascina per spostare il modulo" aria-hidden="true">&#10303;</span>
         <form method="post" style="display:flex;gap:.4rem;flex:1;min-width:12rem"><?= csrf_field() ?><input type="hidden" name="azione" value="modulo_rinomina"><input type="hidden" name="modulo" value="<?= $mid ?>">
           <input type="text" name="titolo" value="<?= h($m['titolo']) ?>" maxlength="200" aria-label="Nome del modulo"><button class="btn btn-secondary btn-sm" type="submit">Salva</button></form>
-        <form method="post"><?= csrf_field() ?><input type="hidden" name="azione" value="modulo_su"><input type="hidden" name="modulo" value="<?= $mid ?>"><button class="btn btn-secondary btn-sm" type="submit" title="Sposta il modulo in su"<?= $mi === 0 ? ' disabled' : '' ?>>&uarr;</button></form>
-        <form method="post"><?= csrf_field() ?><input type="hidden" name="azione" value="modulo_giu"><input type="hidden" name="modulo" value="<?= $mid ?>"><button class="btn btn-secondary btn-sm" type="submit" title="Sposta il modulo in giù"<?= $mi === count($moduli) - 1 ? ' disabled' : '' ?>>&darr;</button></form>
+        <form method="post"><?= csrf_field() ?><input type="hidden" name="azione" value="modulo_su"><input type="hidden" name="modulo" value="<?= $mid ?>"><button class="btn btn-secondary btn-sm co-modulo-su" type="submit" title="Sposta il modulo in su" aria-label="Sposta il modulo «<?= h($m['titolo']) ?>» in su"<?= $mi === 0 ? ' disabled' : '' ?>>&uarr;</button></form>
+        <form method="post"><?= csrf_field() ?><input type="hidden" name="azione" value="modulo_giu"><input type="hidden" name="modulo" value="<?= $mid ?>"><button class="btn btn-secondary btn-sm co-modulo-giu" type="submit" title="Sposta il modulo in giù" aria-label="Sposta il modulo «<?= h($m['titolo']) ?>» in giù"<?= $mi === count($moduli) - 1 ? ' disabled' : '' ?>>&darr;</button></form>
         <form method="post" data-conferma="Eliminare il modulo «<?= h($m['titolo']) ?>»?"><?= csrf_field() ?><input type="hidden" name="azione" value="modulo_elimina"><input type="hidden" name="modulo" value="<?= $mid ?>"><button class="btn btn-danger btn-sm" type="submit">Elimina</button></form>
       </div>
       <ol class="co-lez">
       <?php $ls = $lezioniPer[$mid] ?? []; foreach ($ls as $li => $l): ?>
-        <li data-lezione="<?= h($l['slug']) ?>"><span class="co-nome"><a href="<?= h(corsi_admin_url('lezione', ['id' => $l['id']])) ?>"><?= h($l['titolo']) ?></a><?= $l['video_url'] !== '' || $l['video_file'] !== '' ? ' <small title="Ha un video">&#9654; video</small>' : '' ?></span>
-          <form method="post"><?= csrf_field() ?><input type="hidden" name="azione" value="lezione_su"><input type="hidden" name="lezione" value="<?= (int)$l['id'] ?>"><button class="btn btn-secondary btn-sm co-su" type="submit" title="Sposta in su"<?= $li === 0 ? ' disabled' : '' ?>>&uarr;</button></form>
-          <form method="post"><?= csrf_field() ?><input type="hidden" name="azione" value="lezione_giu"><input type="hidden" name="lezione" value="<?= (int)$l['id'] ?>"><button class="btn btn-secondary btn-sm co-giu" type="submit" title="Sposta in giù"<?= $li === count($ls) - 1 ? ' disabled' : '' ?>>&darr;</button></form>
+        <li data-lezione="<?= h($l['slug']) ?>" data-id="<?= (int)$l['id'] ?>"><span class="co-maniglia co-maniglia-lezione" title="Trascina per spostare la lezione" aria-hidden="true">&#10303;</span><span class="co-nome"><a href="<?= h(corsi_admin_url('lezione', ['id' => $l['id']])) ?>"><?= h($l['titolo']) ?></a><?= $l['video_url'] !== '' || $l['video_file'] !== '' ? ' <small title="Ha un video">&#9654; video</small>' : '' ?></span>
+          <form method="post"><?= csrf_field() ?><input type="hidden" name="azione" value="lezione_su"><input type="hidden" name="lezione" value="<?= (int)$l['id'] ?>"><button class="btn btn-secondary btn-sm co-su" type="submit" title="Sposta in su" aria-label="Sposta «<?= h($l['titolo']) ?>» in su"<?= $li === 0 ? ' disabled' : '' ?>>&uarr;</button></form>
+          <form method="post"><?= csrf_field() ?><input type="hidden" name="azione" value="lezione_giu"><input type="hidden" name="lezione" value="<?= (int)$l['id'] ?>"><button class="btn btn-secondary btn-sm co-giu" type="submit" title="Sposta in giù" aria-label="Sposta «<?= h($l['titolo']) ?>» in giù"<?= $li === count($ls) - 1 ? ' disabled' : '' ?>>&darr;</button></form>
           <a class="btn btn-secondary btn-sm" href="<?= h(corsi_admin_url('lezione', ['id' => $l['id']])) ?>">Modifica</a>
           <form method="post" data-conferma="Eliminare la lezione «<?= h($l['titolo']) ?>»?"><?= csrf_field() ?><input type="hidden" name="azione" value="lezione_elimina"><input type="hidden" name="lezione" value="<?= (int)$l['id'] ?>"><button class="btn btn-danger btn-sm" type="submit">Elimina</button></form>
         </li>
@@ -135,9 +153,12 @@ require CMS_ADMIN . '/includes/admin-header.php';
         <input type="text" name="titolo" maxlength="200" required placeholder="Titolo della lezione nuova" aria-label="Titolo della lezione nuova" style="flex:1;min-width:12rem"><button class="btn btn-primary btn-sm" type="submit">Aggiungi lezione</button></form>
     </div>
   <?php endforeach; ?>
+  </div>
   <form method="post" id="co-nuovo-modulo" style="display:flex;gap:.4rem;flex-wrap:wrap"><?= csrf_field() ?><input type="hidden" name="azione" value="modulo_nuovo">
     <input type="text" name="titolo" maxlength="200" required placeholder="Nome del modulo nuovo" aria-label="Nome del modulo nuovo" style="flex:1;min-width:12rem"><button class="btn btn-secondary" type="submit">Aggiungi modulo</button></form>
-  <p class="hint">Le frecce cambiano l'ordine: i membri seguono le lezioni in quest'ordine, modulo dopo modulo.</p>
+  <p class="hint">I membri seguono le lezioni in quest'ordine, modulo dopo modulo.</p>
 </div></div>
 </div>
+<script src="<?= pannello_file('assets/editor/Sortable.min.js') ?>"></script>
+<script src="<?= h(cms_modulo_url('corsi') . '/assets/programma.js?v=' . (int)@filemtime(dirname(__DIR__) . '/assets/programma.js')) ?>"></script>
 <?php require CMS_ADMIN . '/includes/admin-footer.php';

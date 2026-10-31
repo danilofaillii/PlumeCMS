@@ -431,9 +431,63 @@ function editor_ha_h1(array $albero): bool {
 // Lettura e salvataggio
 // ------------------------------------------------------------
 
+// ------------------------------------------------------------
+// 2.1: i contenitori dell'editor offerti dai moduli e dagli addon
+// ------------------------------------------------------------
+
+/**
+ * Un contenitore è un oggetto di un modulo che si compone con l'editor visuale senza essere un contenuto del sito (niente
+ * elenco Contenuti, sitemap, SEO, menu): per esempio le lezioni dell'addon Corsi online. Il modulo lo dichiara nel
+ * manifesto, chiave 'editor_contenitori' => ['<tipo>' => fn() => [...]], con:
+ *   riga($id)                          la riga per l'editor, con le chiavi di una pagina: id, title, slug, status
+ *                                      ('published' se c'è una struttura pubblicata), struttura, struttura_bozza, content
+ *                                      (il testo di prima), percorso (sul sito), vedi (l'anteprima), scheda (la pagina del
+ *                                      pannello a cui si torna); null se non c'è
+ *   salva($id, $json, $pubblica, $autore)  scrive la struttura (bozza, o pubblicata togliendo la bozza)
+ *   etichetta, uno                     i nomi ("Lezioni dei corsi", "lezione")
+ * e, facoltativi: permesso() (chi lo apre: senza, solo l'amministratore), impostazioni($id, $dati) (il titolo dalla
+ * finestra Impostazioni), togli($id) ("Torna al contenuto della scheda"), anteprima($riga) (['prima', 'dopo', 'testa']:
+ * l'HTML intorno alla tela e i fogli di stile, perché la tela somigli alla pagina vera).
+ * Le versioni hanno l'ambito 'contenitore:<tipo>' (solo l'amministratore le vede e le ripristina).
+ */
+function editor_contenitori(): array {
+    static $c = null;
+    if ($c !== null) return $c;
+    $c = [];
+    if (!function_exists('cms_moduli')) return $c;
+    foreach (cms_moduli() as $m) {
+        foreach ((array)($m['editor_contenitori'] ?? []) as $tipo => $f) {
+            if (!is_string($tipo) || !preg_match('/^[a-z][a-z0-9_]{2,30}$/', $tipo) || in_array($tipo, ['pagine', 'articoli', 'modelli'], true) || !is_callable($f)) continue;
+            try { $d = $f(); } catch (Throwable $e) { error_log('editor: contenitore ' . $tipo . ': ' . $e->getMessage()); continue; }
+            if (is_array($d) && is_callable($d['riga'] ?? null) && is_callable($d['salva'] ?? null)) $c[$tipo] = $d + ['etichetta' => $tipo, 'uno' => 'contenuto'];
+        }
+    }
+    return $c;
+}
+
+/** La definizione del contenitore di un tipo, oppure null (pagine, articoli, tipi dei moduli, modelli). */
+function editor_contenitore(string $tipo): ?array {
+    return editor_contenitori()[$tipo] ?? null;
+}
+
+/** Chi apre un contenitore: il suo permesso(), altrimenti solo l'amministratore. */
+function editor_contenitore_permesso(string $tipo): bool {
+    $d = editor_contenitore($tipo);
+    if (!$d) return true;
+    if (is_callable($d['permesso'] ?? null)) return (bool)$d['permesso']();
+    return function_exists('is_admin') && is_admin();
+}
+
+/** L'ambito delle versioni di un tipo: 'modello', 'contenitore:<tipo>' o 'contenuto:<tipo>'. */
+function editor_ambito(string $tipo): string {
+    if ($tipo === 'modelli') return 'modello';
+    return editor_contenitore($tipo) ? 'contenitore:' . $tipo : 'contenuto:' . $tipo;
+}
+
 /** La tabella (senza prefisso) di un tipo: quelle dei contenuti le dice contenuti_tipi(), "modelli" è dell'editor. */
 function editor_tabella(string $tipo): string {
     if ($tipo === 'modelli') return 'modelli';
+    if ($d = editor_contenitore($tipo)) return (string)($d['tabella'] ?? '');
     require_once __DIR__ . '/contenuti.php';
     return contenuti_tipi()[$tipo]['tabella'] ?? 'pages';
 }
@@ -441,6 +495,7 @@ function editor_tabella(string $tipo): string {
 /** I tipi di contenuto che l'editor apre: quelli di contenuti_tipi() (anche dei moduli) e i modelli di header e footer. */
 function editor_tipo_valido(?string $tipo): string {
     if ($tipo === 'modelli' && is_file(__DIR__ . '/modelli.php')) return 'modelli';
+    if (is_string($tipo) && editor_contenitore($tipo)) return $tipo; // 2.1: un contenitore di un modulo
     require_once __DIR__ . '/contenuti.php';
     if ($tipo !== null && $tipo !== 'pagine' && isset(contenuti_tipi()[$tipo])) return $tipo;
     return 'pagine';
@@ -449,6 +504,7 @@ function editor_tipo_valido(?string $tipo): string {
 /** Un tipo "di lettura" (articoli, i tipi da leggere dei moduli) nasce con una sezione "Articolo" a colonna stretta; una pagina no. */
 function editor_tipo_lettura(string $tipo): bool {
     if ($tipo === 'pagine' || $tipo === 'modelli') return false;
+    if ($d = editor_contenitore($tipo)) return (bool)($d['lettura'] ?? true);
     require_once __DIR__ . '/contenuti.php';
     return (bool)(contenuti_tipi()[$tipo]['lettura'] ?? true);
 }
@@ -462,6 +518,13 @@ function editor_pagina(int $id, string $tipo = 'pagine'): ?array {
         $r = modelli_riga_editor($id);
         if ($r) $r['_tipo'] = 'modelli';
         return $r ?: null;
+    }
+    if ($d = editor_contenitore($tipo)) {
+        // 2.1: la riga la dà il modulo, con le chiavi di una pagina.
+        $r = $d['riga']($id);
+        if (!is_array($r)) return null;
+        return $r + ['id' => $id, 'title' => '', 'slug' => '', 'status' => 'draft', 'struttura' => null, 'struttura_bozza' => null, 'content' => '', 'html' => '', 'tldr' => '',
+            'seo_title' => '', 'seo_description' => '', 'robots' => 'noindex', 'header_id' => 0, 'footer_id' => 0, 'percorso' => '/', 'scheda' => 'index.php', '_tipo' => $tipo];
     }
     $st = db()->prepare('SELECT * FROM ' . tbl(editor_tabella($tipo)) . ' WHERE id = ?');
     $st->execute([$id]);
@@ -492,6 +555,7 @@ function editor_salva(int $id, array $albero, bool $pubblica, string $autore = '
     editor_schema();
     $json = editor_json($albero);
     if ($tipo === 'modelli' && function_exists('modelli_salva_struttura')) { modelli_salva_struttura($id, $json, $pubblica, $autore); return; }
+    if ($d = editor_contenitore($tipo)) { $d['salva']($id, $json, $pubblica, $autore); editor_versione_dopo_salva($id, $tipo, $pubblica, $autore, $nota); return; } // 2.1
     $tab = tbl(editor_tabella($tipo));
     if ($pubblica) {
         db()->prepare('UPDATE ' . $tab . ' SET struttura = ?, struttura_bozza = NULL, struttura_aggiornata = NOW(), updated_at = NOW() WHERE id = ?')->execute([$json, $id]);
@@ -513,6 +577,10 @@ function editor_versione_dopo_salva(int $id, string $tipo, bool $pubblica, strin
             require_once __DIR__ . '/modelli.php';
             $m = modelli_leggi($id);
             if ($m) editor_versione_salva('modello', $id, (string)$m['nome'], versioni_dati_modello($m), $nota, ['pubblicata' => $pubblica, 'autore' => $autore]);
+            return;
+        }
+        if (editor_contenitore($tipo)) { // 2.1: solo albero e stato (niente header, footer, scheda)
+            editor_versione_salva(editor_ambito($tipo), $id, (string)$riga['title'], versioni_dati_contenitore($riga), $nota, ['pubblicata' => $pubblica, 'autore' => $autore]);
             return;
         }
         editor_versione_salva('contenuto:' . $tipo, $id, (string)$riga['title'], versioni_dati_contenuto($riga), $nota, ['pubblicata' => $pubblica, 'autore' => $autore]);
@@ -583,5 +651,6 @@ function editor_e_home(array $pagina): bool {
 }
 
 function editor_percorso_pagina(array $pagina): string {
+    if (editor_contenitore((string)($pagina['_tipo'] ?? 'pagine'))) return (string)($pagina['percorso'] ?? '/'); // 2.1
     return editor_e_home($pagina) ? '/' : '/' . $pagina['slug'] . '/';
 }
