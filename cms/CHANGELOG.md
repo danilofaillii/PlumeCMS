@@ -4,6 +4,24 @@ Il prodotto si chiama **plumeCMS** (nome scelto il 26 ottobre 2026; prima, per p
 
 ## 2.2.0 (31 ottobre 2026) - Scegli dal sito
 
+- **Scegli dal sito** (richiesta di Danilo): accanto a ogni campo del pannello che vuole un link a una pagina del sito c'è il
+  pulsante **Scegli dal sito**. Si scrivono due lettere del titolo, si sceglie, e il link entra da solo: niente più indirizzi
+  scritti a mano. Trova pagine, articoli (anche in bozza o programmati, con il segno), categorie, tag e, con gli addon accesi,
+  eventi, prodotti e negozio, corsi, area riservata. Si usa con la tastiera e al telefono.
+  - Dove: i link dell'editor visuale (pulsanti, Apertura, immagini, inviti, ripetitori, header, footer, fine articolo), i link nei
+    testi (widget Testo, campagne e flussi della newsletter), Popup (pulsante e pagine dove compare), Form (pulsante "Continua"),
+    Newsletter, Social (link di WhatsApp), SEO (redirect, IndexNow, Google, dati per Google), Menu, la pagina della privacy di
+    Eventi e Prenotazioni.
+  - Il link salvato è l'indirizzo della pagina (`/contatti/`): con il sito in una cartella porta comunque dentro la cartella, e
+    resta giusto se il sito si sposta. Nelle email l'indirizzo è intero, con `https://`.
+  - Menu: una pagina, un articolo o una categoria scelti così diventano una voce di quel tipo, che segue la pagina se cambia
+    indirizzo. Scrivere a mano l'indirizzo di una voce ora la fa diventare "Link personalizzato" (prima quello che si scriveva
+    non si salvava).
+  - Il redattore lo usa anche lui: vede tutte le pagine e gli articoli; degli addon solo quello già pubblicato.
+- **Link più sicuri**: il link del pulsante dei popup, il "Continua" dei form, il pulsante delle email e la pagina della privacy di
+  Eventi e Prenotazioni ora passano dal controllo dei link (prima un `javascript:` scritto lì usciva sul sito).
+- **Editor**: Canc e Ctrl+Z dentro una finestra aperta (Scegli dal sito, Scegli dai Media) non toccano più la tela (prima Canc
+  cancellava il widget selezionato).
 - **Controlla il server prova Google e IndexNow** dal server vero: con il service account salvato, se Search Console vede la
   tua proprietà; con la chiave di IndexNow, se il file della chiave si legge da fuori e se `api.indexnow.org` risponde. Senza i
   dati, se il server raggiunge i due servizi.
