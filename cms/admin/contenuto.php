@@ -20,7 +20,7 @@ $tipo = isset(contenuti_tipi()[$_GET['tipo'] ?? '']) ? $_GET['tipo'] : 'articoli
 $T = contenuti_tipo($tipo);
 $id = (int)($_GET['id'] ?? 0);
 $r = $id ? contenuti_leggi($tipo, $id) : null;
-if ($id && !$r) { http_response_code(404); exit($T['Uno'] . ' non trovato. <a href="contenuti.php?tipo=' . $tipo . '">Torna all\'elenco</a>'); }
+if ($id && !$r) { http_response_code(404); exit($T['Uno'] . ' non trovat' . contenuti_desinenza($T) . '. <a href="contenuti.php?tipo=' . $tipo . '">Torna all\'elenco</a>'); }
 $nuovo = !$r;
 $adminTitle = $nuovo ? 'Aggiungi ' . $T['uno'] : 'Modifica ' . $T['uno'];
 $autore = (string)(current_user()['username'] ?? '');
@@ -33,7 +33,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             case 'cestina':
                 if ($home) throw new RuntimeException('La home non va nel cestino.');
                 contenuti_cestina($tipo, [$id]);
-                flash('success', $T['Uno'] . ' spostato nel cestino.');
+                flash('success', $T['Uno'] . ' spostat' . contenuti_desinenza($T) . ' nel cestino.');
                 header('Location: contenuti.php?tipo=' . $tipo);
                 exit;
             case 'ripristina':
@@ -62,7 +62,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 cms_evento('scheda_salvata', $tipo, $id, $d);
                 $salvato = contenuti_leggi($tipo, $id);
                 $stato = contenuti_stato($tipo, $salvato);
-                flash('success', $nuovo ? $T['Uno'] . ' creato' . ($stato === 'bozza' ? ' in bozza.' : ($stato === 'programmato' ? ' e programmato.' : ' e pubblicato.')) : $T['Uno'] . ' aggiornato.');
+                $o = contenuti_desinenza($T); // audit 2026-11: prima "Pagina aggiornato"
+                flash('success', $nuovo ? $T['Uno'] . ' creat' . $o . ($stato === 'bozza' ? ' in bozza.' : ($stato === 'programmato' ? ' e programmat' . $o . '.' : ' e pubblicat' . $o . '.')) : $T['Uno'] . ' aggiornat' . $o . '.');
         }
     } catch (RuntimeException $e) {
         flash('error', $e->getMessage());
