@@ -505,7 +505,7 @@ ancora pubblicata".
 
 Ogni pagina è una pila di **sezioni** (le fasce orizzontali). Ogni sezione ha da una a quattro **colonne**. Dentro le
 colonne ci sono i **widget**: titoli, testi, immagini, pulsanti, gallerie, prezzi, domande frequenti, mappe, form e
-molti altri, 87 in tutto.
+molti altri, 92 in tutto.
 
 - Per **aggiungere un widget**: fai clic su un elemento della tela, poi sul widget nella linguetta **Widget**: entra
   sotto l'elemento scelto. Oppure trascinalo dove vuoi.
@@ -554,6 +554,166 @@ no, apposta: Google non mostra le stelle che un'attività scrive di sé.
 
 - [ ] Negli orari ho scritto anche i giorni di chiusura e le ferie.
 - [ ] Ho aperto il sito dal telefono e la barra dei contatti chiama il numero giusto.
+
+### Altri cinque widget: ristoranti, alloggi, gallerie, servizi esterni
+
+Dalla 2.1.0 ci sono cinque widget in più: **Menu del ristorante**, **Richiesta di prenotazione**, **Galleria con
+filtri**, **Loghi e testo scorrevoli**, **Contenuto esterno (con consenso)**. Si trovano nella linguetta **Widget**: il
+modo più veloce è scrivere una parte del nome nella casella **Cerca un widget...** in cima alla linguetta.
+
+Due esempi lungo tutta la sezione: la **Trattoria da Anna** (ristorante, Bologna) e il **B&B Le Colline** (tre camere,
+nelle Langhe).
+
+Per aprire una pagina nell'editor: **Pagine**, passa con il mouse sopra la pagina e premi **Editor visuale**.
+
+#### Il menu del ristorante
+
+Mostra il menu diviso in sezioni (Antipasti, Primi...), con prezzi, foto, allergeni ed etichette come Vegano o Piccante.
+Google lo legge come menu.
+
+**Esempio: il menu della Trattoria da Anna.**
+
+![Il menu del ristorante sul sito](immagini/manuale-uso/08-menu-ristorante.jpg)
+
+1. Apri la pagina Menu nell'editor.
+2. Nella linguetta **Widget** cerca "Menu" e trascina **Menu del ristorante** (gruppo Elementi) nella pagina. Compare un
+   menu d'esempio con quattro piatti.
+3. Doppio clic sul menu. Nella sezione **Menu** apri **Piatti**, poi il primo piatto, e scrivi:
+   - **Sezione (Antipasti, Primi...)**: `Antipasti`;
+   - **Nome del piatto**: `Tagliere di salumi`;
+   - **Descrizione**: `Mortadella, prosciutto, crescentine`;
+   - **Prezzo**: `14` (sul sito diventa "14 €"; per i centesimi scrivi `9,50`);
+   - **Allergeni**: `1, 7` oppure `glutine, latte`. Sotto la casella c'è l'elenco dei 14 numeri;
+   - **Foto (facoltativa)**, se vuoi;
+   - le spunte **Vegano**, **Vegetariano**, **Senza glutine**, **Piccante**, **Novità**, se servono.
+4. Premi **+ Aggiungi** per ogni piatto. I piatti con la stessa sezione stanno insieme; le sezioni escono nell'ordine in
+   cui le scrivi la prima volta.
+5. **Il menu del giorno.** In **Sezioni con una nota o solo in certi giorni** premi **+ Aggiungi** e scrivi:
+   - **Sezione (lo stesso nome scritto nei piatti)**: `Menu del giorno`;
+   - **Nota sotto il titolo (facoltativa)**: `Solo a pranzo`;
+   - **Solo in questi giorni (vuoto: sempre)**: `lun-ven`.
+   Sul sito il sabato e la domenica la sezione non c'è; negli altri giorni ha l'etichetta "Oggi". Nell'editor si vede
+   sempre, con scritto "Solo lunedì, martedì..." e "(sul sito si vede solo quei giorni)".
+6. Nella sezione **Allergeni** scegli la **Legenda**: **Solo gli allergeni presenti nel menu** oppure **Tutti i 14
+   allergeni**. Se vuoi, correggi la **Nota sugli allergeni**.
+7. Nella sezione **Aspetto**: **Colonne** (due al computer, una al telefono: si cambia con l'icona dello schermo accanto),
+   **Valuta**, **Mostra le foto dei piatti**, **Dati per Google (menu)**.
+8. Premi **Pubblica**, poi **Vedi la pagina**.
+
+Cosa deve comparire: le sezioni con una riga sotto il titolo, i piatti con i puntini fino al prezzo, i numeri degli
+allergeni in piccoli cerchi e, in fondo, la legenda "Allergeni".
+
+#### La richiesta di prenotazione
+
+Un modulo per chiedere un tavolo (data, ora, persone) o un alloggio (arrivo, partenza, ospiti). La richiesta arriva per
+email: **non è una prenotazione confermata**, la confermi tu rispondendo. Il modulo lo dice anche a chi scrive. Se vuoi
+orari, posti e conferme automatiche c'è l'addon Prenotazioni (capitolo 33): con l'addon acceso, nel pannello Modifica del
+widget c'è scritto "Hai l'addon Prenotazioni acceso".
+
+**Esempio: la Trattoria da Anna.**
+
+1. Nell'editor trascina **Richiesta di prenotazione** (gruppo Dal sito) nella pagina, poi doppio clic sul widget.
+2. **Cosa si prenota**: **Un tavolo (data, ora, persone)**.
+3. **A chi arriva la richiesta (email)**: `prenotazioni@trattoriadaanna.it`. Fino a tre indirizzi, separati da una
+   virgola. Se la lasci vuota, la richiesta va all'indirizzo degli avvisi del sito (Impostazioni, Posta in uscita,
+   capitolo 25).
+4. Nella sezione **Campi**: **Quante persone al massimo** `12`, **Telefono obbligatorio**, il **Campo per le note**
+   (allergie, seggiolone...), il **Testo del pulsante**. Nella sezione **Dopo l'invio** c'è il **Messaggio dopo l'invio**.
+5. Premi **Pubblica**. Poi prova tu: compila il modulo sul sito, spunta la privacy e **Sono una persona**, premi **Invia
+   la richiesta**. Deve comparire "Grazie, abbiamo ricevuto la tua richiesta...", e nella casella di posta l'email
+   "Richiesta di prenotazione: ...". Con **Rispondi** scrivi direttamente al cliente.
+
+**Esempio: il B&B Le Colline.** Come sopra, ma **Cosa si prenota**: **Un alloggio (arrivo, partenza, ospiti)**,
+**Titolo** `Chiedi la disponibilità`, **Quante persone al massimo** `6`. Il cliente sceglie arrivo e partenza (la
+partenza propone da sola il giorno dopo l'arrivo); l'email dice anche quante notti.
+
+Tutte le richieste restano anche nel pannello: **Newsletter e form > Invii dei form**, linguetta **Richieste di
+prenotazione**. In **Newsletter e form > Form** il form "Richieste di prenotazione" ha il segno **Dal widget**: nasce da
+solo alla prima richiesta e non si mette nelle pagine con il widget Modulo.
+
+#### La galleria con filtri
+
+Una galleria con dei pulsanti sopra ("Tutti", "Matrimoni", "Ritratti"...) che mostrano solo le foto di quel tipo.
+
+**Esempio: le camere del B&B Le Colline.**
+
+![La galleria con filtri sul sito, con un filtro scelto](immagini/manuale-uso/08-galleria-filtri.jpg)
+
+1. Trascina **Galleria con filtri** (gruppo Gallerie) nella pagina, poi doppio clic sul widget.
+2. In **Immagini** premi **+ Aggiungi** per ogni foto. Per ognuna: scegli l'**Immagine**, scrivi il **Testo alternativo
+   (cosa si vede)** per chi non vede, una **Didascalia** se vuoi, e le **Categorie (separate da una virgola)**:
+   `Camera Rosa` oppure `Colazione`. Una foto può stare in due categorie: `Esterni, Colazione`.
+3. I pulsanti nascono da soli dalle categorie. Nella sezione **Filtri**: **Pulsante per vedere tutte le foto** (si può
+   togliere), il suo **Testo del pulsante** (Tutti) e la **Posizione dei pulsanti**.
+4. Premi **Pubblica** e prova sul sito: un clic su "Colazione" lascia solo quelle foto; un clic su una foto la apre a
+   tutto schermo e le frecce scorrono solo le foto del filtro. Funziona anche con la tastiera (Tab e Invio).
+
+#### Loghi e testo scorrevoli
+
+Una striscia che scorre senza fine: i loghi dei clienti o dei fornitori, oppure una frase ("Aperti anche la domenica ·
+Prenota online").
+
+1. Trascina **Loghi e testo scorrevoli** (gruppo Elementi) nella pagina. Parte con una frase d'esempio: doppio clic e
+   cambiala in **Frase**.
+2. Per i loghi: **Cosa scorre**: **Una fila di loghi**, poi in **Loghi** premi **+ Aggiungi** per ogni logo (**Logo**,
+   **Nome (per chi non vede)**, **Link (facoltativo)**). Loghi della stessa altezza, su sfondo trasparente, vengono meglio.
+3. Sezione **Movimento**: **Durata di un giro** (più alto, più lento: 30 secondi va bene), **Direzione**, **Si ferma al
+   passaggio del mouse**, **Bordi sfumati**.
+4. Sezione **Aspetto**: **Loghi in grigio che si colorano al passaggio** e **Altezza dei loghi**.
+
+Chi ha chiesto al telefono o al computer meno animazioni vede la striscia ferma. Per tutti c'è un piccolo pulsante per
+fermarla.
+
+#### Il contenuto esterno: Calendly, Spotify, Google Calendar, Typeform, Booking.com
+
+Mette nella pagina un calendario per gli appuntamenti, una playlist, un modulo... **solo dopo il clic** di chi visita,
+con la frase sulla privacy. Prima del clic il servizio non riceve niente. Non si incolla codice: solo l'indirizzo.
+
+**Esempio: gli appuntamenti con Calendly.**
+
+1. Su Calendly copia il link della tua pagina (per esempio `https://calendly.com/trattoriadaanna/degustazione`).
+2. Trascina **Contenuto esterno (con consenso)** (gruppo Interazione) nella pagina, doppio clic, e incolla il link in
+   **Indirizzo da incollare**. **Servizio** lascialo su **Lo capisce dall'indirizzo**.
+3. Nell'editor compare il riquadro "Contenuto di Calendly" con il pulsante e la frase "Sul sito il contenuto si carica
+   solo dopo il clic della persona" (nell'editor non si carica niente).
+4. Nella sezione **Consenso** puoi cambiare il **Testo del pulsante**, la **Frase sulla privacy** e il **Link
+   dell'informativa privacy** (di solito `/privacy-policy/`).
+5. Premi **Pubblica** e prova sul sito: **Mostra il contenuto di Calendly** carica il calendario.
+
+Gli altri indirizzi che vanno bene:
+
+- **Spotify**: il link di un brano, un album o una playlist (Condividi, Copia link).
+- **Google Calendar**: Impostazioni del calendario, Integra il calendario, l'indirizzo che comincia con
+  `https://calendar.google.com/calendar/embed?src=`, oppure l'ID del calendario.
+- **Typeform**: il link del modulo (`https://...typeform.com/to/...`).
+- **Booking.com**: il link della tua struttura. Booking non lascia mettere le sue pagine dentro altri siti: esce un
+  riquadro con il pulsante **Vedi la disponibilità su Booking.com**, che apre Booking in una scheda nuova.
+
+Se l'indirizzo non è di questi servizi, nell'editor compare un messaggio e sul sito non esce niente.
+
+### Le novità dei widget di prima
+
+- **Mappa: "Come arrivare".** Nel widget **Mappa**, sezione **Come arrivare**: in **Pulsante "Come arrivare"** scegli
+  **Sotto la mappa** o **Sopra la mappa**, poi **Con quale app** (Google Maps, Apple Mappe, oppure Tutte e due), il
+  **Testo del pulsante** e l'allineamento. Sul telefono il pulsante apre le indicazioni stradali.
+- **Video: "Parte da solo, senza audio" e "Si ripete".** Nel widget **Video**, sezione **Riproduzione**. Con "Parte da
+  solo" il video si carica insieme alla pagina, senza il clic: YouTube o Vimeo ricevono la visita (scrivilo
+  nell'informativa privacy). Sul telefono alcuni browser non lo fanno partire da soli.
+- **Tabella: grassetto, corsivo e link.** Nelle celle scrivi `**Taglio**` per il grassetto, `*su prenotazione*` per il
+  corsivo, `[Vedi i colori](/colori/)` per un link. Niente HTML.
+- **Ultimi articoli e Griglia di contenuti**: **Solo una categoria** si sceglie da una tendina (prima si scriveva a mano).
+  Nella Griglia di contenuti anche il tag.
+
+**Checklist dei widget nuovi**
+
+- [ ] Menu: ogni piatto ha sezione, nome e prezzo; gli allergeni sono scritti per ogni piatto che ne ha.
+- [ ] Menu del giorno: i giorni sono giusti (guardo la pagina anche in un giorno in cui non deve esserci).
+- [ ] Richiesta di prenotazione: l'indirizzo email è giusto e la prova arriva davvero (guardo anche nello spam).
+- [ ] Galleria con filtri: ogni foto ha la sua categoria e il testo alternativo.
+- [ ] Scorrevole: i loghi hanno il nome; la velocità si legge senza fatica.
+- [ ] Contenuto esterno: il pulsante carica il contenuto sul sito; l'informativa privacy nomina il servizio.
+- [ ] Mappa: "Come arrivare" porta all'indirizzo giusto (provato dal telefono).
+- [ ] Ho guardato tutto anche dal telefono.
 
 ---
 
@@ -980,7 +1140,7 @@ Apri **Newsletter e form > Form** dal menu e premi **+ Nuovo form**.
 2. **Titolo mostrato sopra il form**, **Testo di introduzione** e **Testo del pulsante** sono quello che legge chi
    visita.
 3. **Campi**: si parte con Nome, Email e Messaggio. Per ogni campo scegli l'etichetta, il tipo (testo breve, email,
-   telefono, testo lungo, scelta singola, scelta multipla, casella da spuntare, data, numero) e se è **obbligatorio**. **+ Aggiungi un campo** ne mette un altro;
+   telefono, testo lungo, scelta singola, scelta multipla, casella da spuntare, data, numero, ora, file da allegare) e se è **obbligatorio**. **+ Aggiungi un campo** ne mette un altro;
    la maniglia **⋮⋮** cambia l'ordine.
 4. Premi **Salva**.
 
@@ -1013,6 +1173,32 @@ Apri "Lavora con noi" nell'editor, fai clic sul pulsante "Scrivici" e aggiungi i
 ![Il form sul sito](immagini/manuale-uso/17-sul-sito.jpg)
 
 Sotto il form ci sono sempre la spunta per la privacy e il controllo **Sono una persona**, che ferma i programmi automatici.
+
+### I campi Ora e File
+
+Dalla 2.1.0 un form ha due tipi di campo in più. In **Newsletter e form > Form** apri il form, premi **+ Aggiungi un
+campo** e, nella tendina del tipo, scegli:
+
+- **Ora**: chi compila sceglie un orario (per esempio "Ora preferita per essere richiamato").
+- **File da allegare**: chi compila allega un documento (un curriculum, un preventivo, una foto).
+
+**Esempio.** Nel form "Candidature" di Studio Prova, un campo per il curriculum: solo PDF e Word, fino a 5 MB.
+
+![Un campo File da allegare nel form](immagini/manuale-uso/17-campo-file.jpg)
+
+1. Scrivi l'etichetta, "Curriculum", e nella tendina del tipo scegli **File da allegare**.
+2. Sotto il campo, in **File che accetta**, spunta i tipi: qui **PDF** e **Word (docx)**. Ci sono anche JPG, PNG, WebP,
+   Excel (xlsx), OpenDocument (odt) e Testo (txt).
+3. **Peso massimo**: 5 MB. La riga sotto dice quanto accetta al massimo il server.
+4. Premi **Salva**.
+
+Il sito controlla il file vero, non solo il nome: un file pericoloso rinominato in `.pdf` non passa. Sul sito, sotto il
+campo, chi compila legge quali file può mandare e quanto possono pesare.
+
+Dove finiscono i file: in una cartella riservata, che dal sito non si apre. Li scarichi in **Newsletter e form > Invii
+dei form**: sotto i dati dell'invio c'è il link **Scarica curriculum.pdf** (con il nome del file). Se sono piccoli (fino a
+4 MB in tutto) arrivano anche allegati all'email di avviso. Se elimini l'invio, o usi **Cancella dati** per un iscritto,
+il file si cancella.
 
 ### Dare un file a chi compila il form
 
@@ -1055,6 +1241,7 @@ Excel o Numbers.
 - [ ] In **Manda l'avviso a** c'è chi deve leggere le compilazioni, oppure so che vanno all'indirizzo del sito.
 - [ ] Se il form dà un file: il file è **Riservato** in Download, il form ha una lista, e ho provato io a compilarlo e a
   confermare (il file è arrivato per email).
+- [ ] Se il form ha un campo **File da allegare**: ho mandato io un file di prova e l'ho scaricato da Invii dei form.
 
 ---
 

@@ -148,3 +148,7 @@ l'invio, o con **Cancella dati** di un iscritto, il file si cancella.
 - [ ] Mappa: "Come arrivare" porta all'indirizzo giusto (provalo dal telefono).
 - [ ] Form con File: prova a mandare un file; scaricalo da Invii dei form.
 - [ ] Guarda tutto anche dal telefono.
+
+---
+
+Portata nel manuale d'uso il 2026-10-31, capitoli 8 ("Altri cinque widget" e "Le novità dei widget di prima") e 18 ("I campi Ora e File").
