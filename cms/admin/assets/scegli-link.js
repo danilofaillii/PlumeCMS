@@ -70,6 +70,8 @@
     });
     cerca.addEventListener('input', function () { clearTimeout(L.timer); L.timer = setTimeout(carica, 200); });
     cerca.addEventListener('keydown', function (e) {
+      // Esc in una casella di ricerca la svuota soltanto (Chromium): qui chiude la finestra, come da ogni altro punto.
+      if (e.key === 'Escape') { e.preventDefault(); d.close(); return; }
       if (e.key === 'ArrowDown') { var b = lista.querySelector('.pn-link-voce'); if (b) { e.preventDefault(); fuoco(b); } }
       if (e.key === 'Enter') {
         e.preventDefault(); clearTimeout(L.timer);

@@ -55,7 +55,8 @@ const D = 'dialog.pn-link';
     await bottone.click(); await aperta(pg); await pronta(pg);
     await cerca(pg, testo);
     const v = voce(pg, titolo);
-    if (!(await v.count())) return { trovata: false, nomi: await pg.locator(D + ' .pn-link-nome').allInnerTexts() };
+    await v.waitFor({ timeout: 5000 }).catch(() => {});
+    if (!(await v.count())) { const nomi = await pg.locator(D + ' .pn-link-nome').allInnerTexts(); await pg.keyboard.press('Escape'); return { trovata: false, nomi }; }
     const info = await v.innerText();
     await v.click();
     await pg.waitForFunction((d) => !document.querySelector(d).open, D);
@@ -199,7 +200,7 @@ const D = 'dialog.pn-link';
     const r = await scegli(p, pulsante(p, '#pp-link'), 'prenota', 'SL Prenota ora');
     ok('Popup: "Link del pulsante" scelto dal sito', r.trovata && await p.inputValue('#pp-link') === '/sl-prenota-ora/', await p.inputValue('#pp-link'));
     await p.selectOption('select[name=dove]', 'percorsi');
-    await scegli(p, pulsante(p, '#pp-percorsi'), 'pulsanti', 'SL Pulsanti');
+    await scegli(p, pulsante(p, '#pp-percorsi'), 'SL Pulsanti', 'SL Pulsanti');
     await scegli(p, pulsante(p, '#pp-percorsi'), 'contatti', 'Contatti');
     ok('Popup: gli "indirizzi elencati" si aggiungono una riga per volta', await p.inputValue('#pp-percorsi') === '/sl-pulsanti/\n/contatti/', await p.inputValue('#pp-percorsi'));
     await p.selectOption('select[name=innesco]', 'secondi'); await p.fill('input[name=valore]', '0'); await p.fill('input[name=frequenza_giorni]', '0');

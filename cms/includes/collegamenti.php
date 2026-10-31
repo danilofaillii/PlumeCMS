@@ -68,8 +68,9 @@ function collegamenti_cerca(string $q, string $tipo = '', bool $admin = true): a
         $quando = $chiave === 'pagine' ? 'publish_at' : 'publish_date, publish_time';
         $st = db()->prepare('SELECT id, title, slug, status, cestino, ' . $quando . ' FROM ' . tbl($tab)
             . ' WHERE cestino IS NULL AND ' . collegamenti_like(['title', 'slug'], $q, $par)
-            . ' ORDER BY ' . ($q !== '' ? '(title = :esatto) DESC, ' : '') . 'title LIMIT ' . (COLLEGAMENTI_MAX + 1));
-        if ($q !== '') $par[':esatto'] = $q;
+            . ' ORDER BY ' . ($q !== '' ? '(title = :esatto) DESC, (title LIKE :inizio ESCAPE \'\\\\\') DESC, ' : '') . 'title LIMIT ' . (COLLEGAMENTI_MAX + 1));
+        // Prima il titolo uguale, poi quelli che cominciano con la ricerca: il taglio a 60 tiene i migliori.
+        if ($q !== '') { $par[':esatto'] = $q; $par[':inizio'] = addcslashes($q, '%_\\') . '%'; }
         $st->execute($par);
         foreach ($st->fetchAll() as $r) {
             $stato = contenuti_stato($chiave, $r);

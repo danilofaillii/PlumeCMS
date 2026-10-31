@@ -490,6 +490,18 @@ pagine di 60 scorrendo, la tendina delle cartelle, l'indirizzo scritto a mano e 
 `CMS_DIR=<cartella del CMS installato> node prove/prova-scegli-media.js <base> <utente> <password>` su un sito con il kit
 Attività. Atteso: 112 su 112 (31 ottobre 2026, su un sito nuovo e su un 2.0.3 aggiornato con il pacchetto unico).
 
+## prova-scegli-link.js e attacchi-scegli-link.js (2.2)
+
+Scegli dal sito, come una persona. `prove/scegli-link-cli.php` prepara da solo pagine e articoli di prova (`sl-*`, una pagina in
+bozza, un titolo con `<script>`), una categoria, un tag, un redattore, gli otto addon accesi, un evento (e uno in bozza), un
+prodotto, un corso; alla fine li toglie e rimette form, social e privacy degli addon com'erano. Per ogni campo link (editor:
+Apertura, Immagine, Testo; Popup, Form, Newsletter, Social, SEO, Menu, privacy di Eventi e Prenotazioni) apre la finestra,
+cerca, sceglie, salva e fa clic sul sito (indirizzo finale e 200); poi tastiera, bozza, telefono a 390 px, redattore, cambio
+d'indirizzo con il redirect 301. Gli attacchi: senza login, senza token, da un altro sito, ricerche cattive, `javascript:`.
+`CMS_DIR=<cartella del CMS installato> node prove/prova-scegli-link.js <base> <utente> <password>`, idem
+`attacchi-scegli-link.js`, su un sito con il kit Attività, in radice e in cartella. Atteso: 80 su 80 in radice, 81 su 81 in
+`/test`; attacchi 32 su 32 (31 ottobre 2026).
+
 ## prova-consegna-unica.js (2.1.0)
 
 La consegna con il pacchetto unico di `tools/consegna.py`: controlla lo zip di consegna (pacchetto unico, zip completo, due
