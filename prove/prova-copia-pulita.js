@@ -36,6 +36,7 @@ let br;
   a.on('dialog', d => dialoghi.push(d.message()));
   const vai = u => a.goto(BA + u, { waitUntil: 'networkidle' });
   await entraPannello(a, BA, UTENTE, PASSWORD);
+  fs.rmSync(path.join(DA, 'aggiornamenti', 'scarto'), { recursive: true, force: true }); // rifacendo la prova sullo stesso sito
   // Le tabelle dei due siti nello stesso database.
   const tabelleB = JSON.parse(php(DB, "echo json_encode(db()->query(\"SHOW TABLES LIKE 'cms\\\\_b\\\\_%'\")->fetchAll(PDO::FETCH_COLUMN));"));
   ok('due installazioni nello stesso database: B ha le sue tabelle cms_b_ (settings e users comprese)', tabelleB.includes('cms_b_settings') && tabelleB.includes('cms_b_users'), tabelleB.length);

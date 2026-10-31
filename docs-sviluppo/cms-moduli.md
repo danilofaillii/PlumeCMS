@@ -23,6 +23,7 @@ che caricano i file veri quando servono (`require_once __DIR__ . '/includes/rice
 | `widget` | elenco di file PHP con funzioni `ew_*` | `editor-controlli.php` li carica dopo quelli del nucleo |
 | `filtri` | `['nome' => fn($valore, ...$arg) => $valore]` | `cms_filtro('nome', $valore, ...$arg)`, in catena fra i moduli |
 | `eventi` | `['nome' => fn(...$arg) => void]` | `cms_evento('nome', ...$arg)` |
+| `oauth_ritorno` (2.1, solo addon) | `fn(array $q): never` | `admin/oauth-ritorno.php`, quando lo `state` comincia con il nome dell'addon e un punto |
 
 ## I percorsi dentro un modulo
 
@@ -53,6 +54,9 @@ Dai file in `moduli/<nome>/includes/`, `dirname(__DIR__, 3)` è la cartella del 
 | evento `sito_query($q, $percorso)` | `sito/index.php` | una query del sito (per esempio `/?a_caso=1` per un contenuto a caso) |
 | evento `sito_percorso($percorso, $q)` | `sito/index.php` | gli indirizzi del modulo (conferme, download, pagine di cortesia): il modulo risponde e chiude |
 | evento `sito_genere($v, $meta)` | `sito/index.php` | un genere della mappa che il nucleo non conosce |
+| `contenuti_elenco($tutti, $dove)` (2.1) | `sito_contenuti_elenco()`, `sito-dati.php` | i contenuti che escono negli elenchi pubblici: `$dove` è `cerca` (ricerca), `feed`, `sitemap` (anche IndexNow), `llms` (llms.txt e llms-full.txt). Un modulo toglie i suoi |
+| `scheda_riquadri([], $tipo, $id, $r)` (2.1) | `admin/contenuto.php` | riquadri in più nella colonna di destra della scheda di un contenuto che esiste già: un elenco di HTML, ognuno un `<div class="sc-scatola">` |
+| evento `scheda_salvata($tipo, $id, $d)` (2.1) | `admin/contenuto.php` | dopo il salvataggio della scheda, con il POST (`$d`): i campi dei riquadri qui sopra. Chi ascolta controlla da sé il ruolo (la scheda la apre anche il redattore) e che il suo campo sia arrivato |
 
 ## Le impostazioni che il nucleo legge
 
@@ -86,4 +90,8 @@ finché l'amministratore non lo accende da Impostazioni > Addon (`admin/addon.ph
   `'attivo' => ['addon-pagina.php?a=<addon>&p=<pagina>']`. La pagina comincia con `$adminTitle = '...'` e
   `require CMS_ADMIN . '/includes/admin-header.php';`, finisce con `admin-footer.php`; auth e CSRF sono già caricati (`verify_csrf()`, `csrf_field()`).
 - Gli indirizzi pubblici: evento `sito_percorso($percorso, $q)` (il modulo risponde ed esce). I widget: chiave `widget`.
+- (2.1) Un collegamento OAuth 2 (per esempio Google Drive o Dropbox): il redirect URI da registrare presso il servizio è
+  sempre `admin/oauth-ritorno.php`, fisso e senza query. Lo `state` comincia con `<addon>.`; la pagina (solo amministratore)
+  chiama la funzione della chiave `oauth_ritorno` del manifesto con `$_GET`, che controlla lo state e chiude con il suo
+  redirect. Senza un addon acceso con quella chiave: 400. Esempio: `addon/copia-altrove/`.
 - Dal web: `addon/*/includes|sql|docs` e ogni `.php` di `addon/` danno 403 (`.htaccess`, esempi, Nginx, router delle prove).

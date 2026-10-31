@@ -66,7 +66,7 @@ function copia_altrove_cloud_url(string $servizio, string $url): string {
     return preg_replace('~^https://~', $prova . '/', $url);
 }
 
-/** Il segreto per i pezzi: 8 MB; per le prove CMS_COPIA_ALTROVE_PEZZO (multiplo di 256 KB). */
+/** La misura dei pezzi del caricamento: 8 MB; per le prove CMS_COPIA_ALTROVE_PEZZO (multiplo di 256 KB). */
 function copia_altrove_pezzo(): int {
     $p = defined('CMS_COPIA_ALTROVE_PEZZO') ? (int)CMS_COPIA_ALTROVE_PEZZO : 8388608;
     return max(262144, intdiv($p, 262144) * 262144);
@@ -377,7 +377,7 @@ function copia_altrove_scollega(string $servizio): string {
                 $t = copia_altrove_decifra($o['refresh']);
                 if ($t) $revocato = copia_altrove_cloud_http($servizio, 'POST', copia_altrove_cloud_url($servizio, 'https://oauth2.googleapis.com/revoke'), ['Content-Type: application/x-www-form-urlencoded'], http_build_query(['token' => $t]), 30)[0] === 200;
             } else {
-                $revocato = copia_altrove_cloud_api($servizio, 'POST', 'https://api.dropboxapi.com/2/auth/token/revoke', [], null, 30)[0] === 200;
+                $revocato = copia_altrove_cloud_api($servizio, 'POST', 'https://api.dropboxapi.com/2/auth/token/revoke', ['Content-Type: application/json'], 'null', 30)[0] === 200;
             }
         } catch (Throwable $e) { $revocato = false; }
     }

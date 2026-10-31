@@ -49,6 +49,8 @@ let br;
   await entraPannello(a, B, UTENTE, PASSWORD);
   await postaFinta(a, B, SMTP);
   await addon(a, B, 'copia-altrove', false);
+  // si riparte da nessuna destinazione e dal registro vuoto anche rifacendo la prova sullo stesso sito
+  php("save_setting('copia_altrove_cfg', ''); try { db()->exec('DELETE FROM ' . tbl('copia_altrove_registro')); } catch (Throwable $e) {}");
   const v0 = await pagina(br, err);
   const prima = {};
   for (const u of ['/', '/servizi/', '/contatti/']) prima[u] = pulisci(await (await v0.request.get(B + u)).text());

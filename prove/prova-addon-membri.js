@@ -49,10 +49,10 @@ let br;
     const g = async u => (await ctx.request.get(B + u)).text();
     return { sitemap: await g('/sitemap.xml'), feed: await g('/feed/'), llms: await g('/llms.txt'), cercaChi: await g('/?s=' + encodeURIComponent(tit.chi)), cercaArt: await g('/?s=' + encodeURIComponent(tit.art)), cercaServizi: await g('/?s=' + encodeURIComponent(tit.servizi)) };
   };
-  const e0 = await elenchi(v0);
+  const el0 = await elenchi(v0);
   ok('prima: Chi siamo, Servizi e l\'articolo sono nella sitemap, nella ricerca e in llms.txt; l\'articolo nel feed',
-    ['/chi-siamo/', '/servizi/', articolo].every(u => e0.sitemap.includes(u + '<') || e0.sitemap.includes(u + '</loc>')) && e0.cercaChi.includes('href="' + BASEP + '/chi-siamo/"') && e0.cercaArt.includes(articolo + '"')
-    && e0.cercaServizi.includes('/servizi/"') && e0.feed.includes(articolo) && e0.llms.includes('/chi-siamo/') && e0.llms.includes(articolo), tit);
+    ['/chi-siamo/', '/servizi/', articolo].every(u => el0.sitemap.includes(u + '<') || el0.sitemap.includes(u + '</loc>')) && el0.cercaChi.includes('href="' + BASEP + '/chi-siamo/"') && el0.cercaArt.includes(articolo + '"')
+    && el0.cercaServizi.includes('/servizi/"') && el0.feed.includes(articolo) && el0.llms.includes('/chi-siamo/') && el0.llms.includes(articolo), tit);
 
   // 1. Accendere l'addon.
   const f1 = await addon(a, B, 'membri', true);
@@ -107,11 +107,11 @@ let br;
   const llms = await (await v.request.get(B + '/llms-full.txt')).text();
   ok('llms-full.txt non ha il testo di Chi siamo', !llms.includes(rigaChi.slice(0, 50)));
   // 2.1: fuori dagli elenchi pubblici, titolo e riassunto compresi.
-  const e1 = await elenchi(v);
-  ok('da fuori: la ricerca non trova i contenuti riservati nemmeno per titolo (Chi siamo, Servizi, l\'articolo)', !e1.cercaChi.includes('/chi-siamo/"') && !e1.cercaServizi.includes('/servizi/"') && !e1.cercaArt.includes(articolo + '"'));
-  ok('da fuori: la sitemap non elenca i contenuti riservati', !e1.sitemap.includes('/chi-siamo/') && !e1.sitemap.includes('/servizi/') && !e1.sitemap.includes(articolo), e1.sitemap.length);
-  ok('da fuori: il feed RSS non ha l\'articolo riservato (né titolo né riassunto)', !e1.feed.includes(articolo) && !e1.feed.includes(tit.art));
-  ok('da fuori: llms.txt non elenca i contenuti riservati', !e1.llms.includes('/chi-siamo/') && !e1.llms.includes('/servizi/') && !e1.llms.includes(articolo) && !e1.llms.includes(tit.art));
+  const el1 = await elenchi(v);
+  ok('da fuori: la ricerca non trova i contenuti riservati nemmeno per titolo (Chi siamo, Servizi, l\'articolo)', !el1.cercaChi.includes('/chi-siamo/"') && !el1.cercaServizi.includes('/servizi/"') && !el1.cercaArt.includes(articolo + '"'));
+  ok('da fuori: la sitemap non elenca i contenuti riservati', !el1.sitemap.includes('/chi-siamo/') && !el1.sitemap.includes('/servizi/') && !el1.sitemap.includes(articolo), el1.sitemap.length);
+  ok('da fuori: il feed RSS non ha l\'articolo riservato (né titolo né riassunto)', !el1.feed.includes(articolo) && !el1.feed.includes(tit.art));
+  ok('da fuori: llms.txt non elenca i contenuti riservati', !el1.llms.includes('/chi-siamo/') && !el1.llms.includes('/servizi/') && !el1.llms.includes(articolo) && !el1.llms.includes(tit.art));
   ok('da fuori: llms-full.txt non ha l\'articolo riservato', !llms.includes(articolo) && !llms.includes('## ' + tit.art));
   r = await vai('/area-riservata/');
   ok('/area-riservata/ da fuori porta a /accedi/ con il ritorno', /\/accedi\/\?m=entra&torna=/.test(v.url()) && /entra con la tua email/.test(await v.locator('.membri-ok').innerText()));
@@ -154,10 +154,10 @@ let br;
   ok('il link di conferma vale una volta sola', /non vale più/.test(await v.locator('h1').innerText()));
   // 2.1: il membro collegato trova i riservati nella ricerca (risposta privata, non in cache); gli elenchi pubblici restano senza.
   const rc = await v.request.get(B + '/?s=' + encodeURIComponent(tit.chi));
-  const e2 = await elenchi(v);
-  ok('da membro: la ricerca trova Chi siamo, Servizi e l\'articolo riservati', (await rc.text()).includes('/chi-siamo/"') && e2.cercaServizi.includes('/servizi/"') && e2.cercaArt.includes(articolo + '"'));
+  const el2 = await elenchi(v);
+  ok('da membro: la ricerca trova Chi siamo, Servizi e l\'articolo riservati', (await rc.text()).includes('/chi-siamo/"') && el2.cercaServizi.includes('/servizi/"') && el2.cercaArt.includes(articolo + '"'));
   ok('da membro: la pagina dei risultati è privata (Cache-Control private, no-store)', /private/.test(rc.headers()['cache-control'] || '') && /no-store/.test(rc.headers()['cache-control'] || ''), rc.headers()['cache-control']);
-  ok('da membro: sitemap, feed e llms.txt restano senza i riservati', !e2.sitemap.includes('/chi-siamo/') && !e2.feed.includes(articolo) && !e2.llms.includes('/servizi/'));
+  ok('da membro: sitemap, feed e llms.txt restano senza i riservati', !el2.sitemap.includes('/chi-siamo/') && !el2.feed.includes(articolo) && !el2.llms.includes('/servizi/'));
   r = await vai('/chi-siamo/');
   ok('Chi siamo, da membro: il testo intero', !/solo per i membri/i.test(await v.locator('main').innerText()) && /private, no-store/.test(r.headers()['cache-control'] || ''));
   const cookie = (await v.context().cookies()).find(c => /^membri_[a-f0-9]{8}$/.test(c.name));

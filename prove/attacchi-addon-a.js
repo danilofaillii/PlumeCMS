@@ -105,6 +105,17 @@ let br;
   }
   t = await (await g(fuori, '/?s=SEGRETO-XYZ-42')).text();
   ok('la ricerca del sito non trova la pagina riservata per il suo testo', !t.includes('/segreta/'));
+  // 2.1: nemmeno per il titolo, e titolo e indirizzo non escono negli elenchi pubblici.
+  t = await (await g(fuori, '/?s=' + encodeURIComponent('Pagina segreta'))).text();
+  ok('la ricerca del sito non trova la pagina riservata nemmeno per il titolo', !t.includes('/segreta/') && !/Pagina segreta<\/span>/.test(t));
+  for (const u of ['/sitemap.xml', '/llms.txt', '/llms-full.txt']) {
+    t = await (await g(fuori, u)).text();
+    ok('titolo e indirizzo della pagina riservata non escono da ' + u, !t.includes('/segreta/') && !t.includes('Pagina segreta'));
+  }
+  const nomeCookie = php("require_once cms_radice() . '/addon/membri/includes/membri.php'; echo membri_cookie_nome();").trim();
+  const finto = await request.newContext({ extraHTTPHeaders: { Cookie: nomeCookie + '=' + 'b'.repeat(64) } });
+  t = await (await g(finto, '/?s=' + encodeURIComponent('Pagina segreta'))).text();
+  ok('con un cookie del membro inventato la ricerca non trova la pagina riservata', !t.includes('/segreta/'));
   r = await g(fuori, '/corsi/corso-aperto/prima-lezione/');
   ok('senza login la lezione porta all\'accesso', r.status() === 303);
   r = await g(fuori, `/corsi/corso-chiuso/video/${idChiusa}/`);
@@ -313,7 +324,7 @@ let br;
     await vaiA('/admin/addon-pagina.php?a=copia-altrove&p=destinazione');
     await a.selectOption('#ca-tipo', campi.tipo);
     for (const [k, val] of Object.entries(campi)) if (k !== 'tipo') await a.fill('#ca-' + k, String(val));
-    await Promise.all([a.waitForNavigation(), a.click('#ca-form button[type=submit]')]);
+    await Promise.all([a.waitForNavigation(), a.click('#ca-salva')]);
     return (await a.locator('.flash').first().innerText()).trim();
   };
   const prova = async () => { await vaiA('/admin/addon-pagina.php?a=copia-altrove&p=destinazione'); await Promise.all([a.waitForNavigation(), a.click('#ca-prova')]); return (await a.locator('.flash').first().innerText()).trim(); };
@@ -337,6 +348,137 @@ let br;
   ok('nel database la password della copia è cifrata', !/Password-Della-Copia-77/.test(php("echo get_setting('copia_altrove_cfg');")));
   r = await post(soloMembro, '/admin/addon-pagina.php?a=copia-altrove&p=destinazione', { azione: 'manda' });
   ok('il membro non manda copie dal pannello', r.status() === 302);
+
+  // ---------------- 11. (2.1) OAuth di Google Drive e Dropbox: state falso, rubato, ripetuto; rimandi fuori; token mai nell'HTML.
+  // Servono i server finti di prove/server-cloud-finti.py (CLOUD_GOOGLE, di partenza 8321, CLOUD_DROPBOX 8322) con il
+  // redirect URI <base>/admin/oauth-ritorno.php registrato.
+  const CONFIG = path.join(DIR, 'includes', 'config.local.php');
+  const G = 'http://127.0.0.1:' + (process.env.CLOUD_GOOGLE || '8321'), DBX = 'http://127.0.0.1:' + (process.env.CLOUD_DROPBOX || '8322');
+  const conf0 = fs.readFileSync(CONFIG, 'utf8').replace(/\ndefine\('CMS_COPIA_ALTROVE_CLOUD_PROVA'[^\n]*/g, '').replace(/\s*$/, '\n');
+  fs.writeFileSync(CONFIG, conf0 + `define('CMS_COPIA_ALTROVE_CLOUD_PROVA', 'gdrive=${G},dropbox=${DBX}');\n`);
+  await new Promise(x => setTimeout(x, 2500));
+  const stato = async base => (await (await fuori.get(base + '/_stato')).json());
+  const PCA = '/admin/addon-pagina.php?a=copia-altrove&p=destinazione';
+  const RIT = '/admin/oauth-ritorno.php';
+  const SEG = { gdrive: 'GOCSPX-prova-segreto-2026', dropbox: 'segretodropbox2026' };
+  const ID = { gdrive: 'prova-plumecms.apps.googleusercontent.com', dropbox: 'provadropbox2026' };
+  const collega = async (pg, s) => {
+    await pg.goto(B + PCA, { waitUntil: 'networkidle' });
+    await pg.selectOption('#ca-tipo', s);
+    await pg.fill(`#ca-${s}-client_id`, ID[s]); await pg.fill(`#ca-${s}-segreto`, SEG[s]);
+    await Promise.all([pg.waitForNavigation(), pg.click(`#ca-${s}-collega`)]);
+    await pg.waitForURL(u => u.toString().startsWith(s === 'gdrive' ? G : DBX), { timeout: 10000 });
+    return pg.url();
+  };
+  const flashDi = async pg => (await pg.locator('.flash').first().innerText().catch(() => '')).trim();
+  for (const s of ['gdrive', 'dropbox']) {
+    const base = s === 'gdrive' ? G : DBX;
+    const n = s === 'gdrive' ? 'Google Drive' : 'Dropbox';
+    // state falso (firmato a caso), con un codice inventato
+    let s0 = await stato(base);
+    const falso = `copia-altrove.${s}.${'A'.repeat(24)}.${Math.floor(Date.now() / 1000) + 600}.${'B'.repeat(43)}`;
+    await a.goto(B + RIT + '?state=' + encodeURIComponent(falso) + '&code=codice-inventato', { waitUntil: 'networkidle' });
+    ok(n + ': state falso respinto ("non è partita da qui"), nessuno scambio del codice', /non è partita da qui/.test(await flashDi(a)) && (await stato(base)).scambi === s0.scambi);
+    // state rubato: la pagina del servizio aperta da un'altra sessione del pannello (lo stesso amministratore, un altro browser)
+    const urlAuth = await collega(a, s);
+    const ladro = await pagina(br, err);
+    await entraPannello(ladro, B, UTENTE, PASSWORD);
+    await ladro.goto(urlAuth, { waitUntil: 'networkidle' });
+    await Promise.all([ladro.waitForURL(/p=destinazione/), ladro.click('#consenti')]);
+    ok(n + ': state rubato e usato da un\'altra sessione: respinto, il codice non si scambia', /non è partita da qui/.test(await flashDi(ladro)) && (await stato(base)).scambi === s0.scambi);
+    await ladro.context().close();
+    // il giro vero, poi lo stesso ritorno ripetuto
+    let ritorno = '';
+    a.on('request', q => { if (q.url().includes(RIT + '?')) ritorno = q.url(); });
+    await Promise.all([a.waitForURL(/p=destinazione/), a.click('#consenti')]);
+    ok(n + ': il giro vero dopo il tentativo del ladro riesce', new RegExp('Collegato a ' + n).test(await flashDi(a)) && (await stato(base)).scambi === s0.scambi + 1);
+    await a.goto(ritorno, { waitUntil: 'networkidle' });
+    ok(n + ': lo stesso ritorno ripetuto (state e codice già usati): respinto', /già stata usata|non è partita da qui/.test(await flashDi(a)) && (await stato(base)).scambi === s0.scambi + 1, ritorno.slice(0, 120));
+    // state manomesso (servizio cambiato nello state di un giro aperto)
+    const urlAuth2 = await collega(a, s);
+    const st2 = new URL(urlAuth2).searchParams.get('state');
+    const altroServ = st2.replace('.' + s + '.', '.' + (s === 'gdrive' ? 'dropbox' : 'gdrive') + '.');
+    await a.goto(B + RIT + '?state=' + encodeURIComponent(altroServ) + '&code=x', { waitUntil: 'networkidle' });
+    ok(n + ': state con il servizio cambiato: respinto', /non è partita da qui/.test(await flashDi(a)));
+    const scaduto = st2.split('.'); scaduto[3] = String(Math.floor(Date.now() / 1000) - 10);
+    await a.goto(B + RIT + '?state=' + encodeURIComponent(scaduto.join('.')) + '&code=x', { waitUntil: 'networkidle' });
+    ok(n + ': state con la scadenza cambiata: respinto (la firma non torna)', /non è partita da qui|già stata usata/.test(await flashDi(a)));
+    // rimandi: nessun parametro porta fuori dal pannello
+    r = await soloAdmin.get(B + RIT + '?state=' + encodeURIComponent(falso) + '&code=x&redirect_uri=https%3A%2F%2Fcattivo.example%2F&torna=https%3A%2F%2Fcattivo.example%2F&next=%2F%2Fcattivo.example', { maxRedirects: 0 });
+    ok(n + ': il ritorno rimanda solo dentro il pannello, mai a un indirizzo della richiesta', [302, 303].includes(r.status()) && !/cattivo/.test(r.headers().location || '') && /^addon-pagina\.php\?a=copia-altrove/.test(r.headers().location || ''), r.headers().location);
+    r = await soloAdmin.get(B + PCA + '&autorizza=1&vai=https%3A%2F%2Fcattivo.example%2F');
+    t = await r.text();
+    ok(n + ': la pagina "Ti porto da..." non prende indirizzi dalla richiesta', !t.includes('cattivo.example'));
+    r = await request.newContext({ extraHTTPHeaders: { Cookie: cookieAdmin, Host: 'cattivo.example' } }).then(c => c.get(B + PCA));
+    t = await r.text();
+    ok(n + ': con un Host falso il redirect URI mostrato resta quello del sito', !/cattivo\.example\/admin\/oauth-ritorno/.test(t));
+    // token e segreto mai nella pagina, nel registro, nei log, nel database in chiaro
+    const st = await stato(base);
+    const pagine = [];
+    for (const u of [PCA, '/admin/cron-log.php', '/admin/sicurezza.php', '/admin/index.php']) pagine.push(await (await g(soloAdmin, u)).text());
+    const tutto = pagine.join('\n') + php("echo get_setting('copia_altrove_cfg');") + (fs.existsSync(path.join(DIR, 'logs', 'php-errori.log')) ? fs.readFileSync(path.join(DIR, 'logs', 'php-errori.log'), 'utf8') : '');
+    ok(n + ': refresh token, access token e segreto dell\'app mai nella pagina, nei log e in chiaro nel database', !!st.ultimo_refresh && !tutto.includes(st.ultimo_refresh) && !tutto.includes(st.ultimo_accesso) && !tutto.includes(SEG[s]));
+    // Scollega senza token, e dal membro
+    r = await post(soloAdmin, PCA, { azione: 'scollega', servizio: s });
+    ok(n + ': Scollega senza token CSRF: respinto, resta collegato', /"refresh":"v1:/.test(php("echo get_setting('copia_altrove_cfg');")) && (await stato(base)).refresh_revocati === st.refresh_revocati);
+    r = await post(soloMembro, PCA, { azione: 'scollega', servizio: s });
+    ok(n + ': il cookie del membro non scollega', r.status() === 302 && /login/.test(r.headers().location || '') && (await stato(base)).refresh_revocati === st.refresh_revocati);
+    await a.goto(B + PCA, { waitUntil: 'networkidle' });
+    await Promise.all([a.waitForNavigation(), a.click('#ca-scollega')]);
+  }
+  r = await g(fuori, RIT + '?state=copia-altrove.gdrive.x&code=y');
+  ok('ritorno OAuth senza login: rimanda al login', r.status() === 302 && /login\.php/.test(r.headers().location || ''));
+  r = await g(soloMembro, RIT + '?state=copia-altrove.gdrive.x&code=y');
+  ok('ritorno OAuth con il cookie del membro: rimanda al login', r.status() === 302 && /login\.php/.test(r.headers().location || ''));
+  for (const sx of ['membri.qualcosa', 'nonesiste.qualcosa', '', '../copia-altrove.x', 'Copia-Altrove.x']) {
+    r = await g(soloAdmin, RIT + '?state=' + encodeURIComponent(sx) + '&code=y');
+    ok('ritorno OAuth con uno state senza un addon che lo aspetta (' + JSON.stringify(sx) + '): 400', r.status() === 400, r.status());
+  }
+  fs.writeFileSync(CONFIG, conf0);
+
+  // ---------------- 12. (2.1) Riservato dalla scheda: il redattore non lo cambia; feed e llms di un articolo riservato.
+  const art = JSON.parse(sql("SELECT a.id, a.slug, a.title FROM {p}articles a WHERE a.status = 'published' AND a.cestino IS NULL ORDER BY a.id LIMIT 1"))[0];
+  await vaiA('/admin/contenuto.php?tipo=articoli&id=' + art.id);
+  await a.check('#membri-riservato');
+  await Promise.all([a.waitForNavigation(), a.click('#sc-form button[data-valore=pubblica]')]);
+  ok('preparazione: articolo riservato dalla scheda', JSON.parse(sql(`SELECT COUNT(*) AS n FROM {p}membri_riservati WHERE fonte = 'articles' AND contenuto_id = ${art.id}`))[0].n == 1);
+  const extraXml = x => x.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&apos;');
+  for (const u of ['/feed/', '/llms.txt', '/llms-full.txt', '/sitemap.xml']) {
+    t = await (await g(fuori, u)).text();
+    ok('l\'articolo riservato (titolo e indirizzo) non esce da ' + u, !t.includes('/' + art.slug + '/') && !t.includes(art.title) && !t.includes(extraXml(art.title)));
+  }
+  t = await (await g(fuori, '/?s=' + encodeURIComponent(art.title))).text();
+  ok('la ricerca per il titolo non trova l\'articolo riservato', !t.includes('/' + art.slug + '/"'));
+  r = await g(fuori, '/' + art.slug + '/feed/');
+  ok('il feed del singolo articolo riservato non risponde', r.status() === 404, r.status());
+  // il redattore
+  const RED = 'redattore-membri', REDPW = 'Ceramica-Forno-Membri-2026';
+  await vaiA('/admin/utenti.php');
+  if (!(await a.locator('text=' + RED).count())) {
+    await a.fill('input[name=username]', RED); await a.fill('input[name=email]', RED + '@esempio.it');
+    await a.selectOption('select[name=role]', 'editor'); await a.fill('input[name=password]', REDPW); await a.fill('input[name=password2]', REDPW);
+    await Promise.all([a.waitForNavigation(), a.click('form:has(input[name=username]) button.btn-primary')]);
+  }
+  const red = await pagina(br, err);
+  await entraPannello(red, B, RED, REDPW);
+  const idSeg = JSON.parse(sql("SELECT id FROM {p}pages WHERE slug = 'segreta'"))[0].id;
+  await red.goto(B + '/admin/contenuto.php?tipo=articoli&id=' + art.id, { waitUntil: 'networkidle' });
+  ok('il redattore non vede il riquadro "Area riservata" nella scheda', await red.locator('#membri-scheda').count() === 0);
+  // il redattore aggiunge a mano i campi del riquadro e salva: niente cambia
+  await red.evaluate(() => { const f = document.getElementById('sc-form'); for (const [k, v] of [['membri_scheda', '1']]) { const i = document.createElement('input'); i.type = 'hidden'; i.name = k; i.value = v; f.appendChild(i); } });
+  await Promise.all([red.waitForNavigation(), red.click('#sc-form button[data-valore=pubblica]')]);
+  ok('il redattore che manda i campi del riquadro (senza la spunta) non rende pubblico l\'articolo riservato', JSON.parse(sql(`SELECT COUNT(*) AS n FROM {p}membri_riservati WHERE fonte = 'articles' AND contenuto_id = ${art.id}`))[0].n == 1);
+  await red.goto(B + '/admin/contenuto.php?tipo=pagine&id=' + idSeg, { waitUntil: 'networkidle' }).catch(() => {});
+  const puo = await red.locator('#sc-form').count();
+  if (puo) {
+    await red.evaluate(() => { const f = document.getElementById('sc-form'); const i = document.createElement('input'); i.type = 'hidden'; i.name = 'membri_scheda'; i.value = '1'; f.appendChild(i); });
+    await Promise.all([red.waitForNavigation(), red.click('#sc-form button[data-valore=pubblica]')]);
+  }
+  ok('il redattore non toglie la riservatezza alla pagina segreta', JSON.parse(sql(`SELECT COUNT(*) AS n FROM {p}membri_riservati WHERE fonte = 'pages' AND contenuto_id = ${idSeg}`))[0].n == 1);
+  await red.context().close();
+  await vaiA('/admin/contenuto.php?tipo=articoli&id=' + art.id);
+  await a.uncheck('#membri-riservato');
+  await Promise.all([a.waitForNavigation(), a.click('#sc-form button[data-valore=pubblica]')]);
 
   fine(err);
   await br.close();

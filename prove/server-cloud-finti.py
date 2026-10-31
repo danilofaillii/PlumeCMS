@@ -42,7 +42,7 @@ S = {
     'refresh': {},     # refresh -> {revocato}
     'accessi': {},     # access -> {scade, refresh}
     'refresh_fatti': 0, 'pezzi': 0, 'guasti_fatti': 0, 'sessioni': {}, 'file': {}, 'prossimo': 1,
-    'testate_auth': 0, 'token_in_query': 0, 'scambi': 0, 'permessi_negati': 0,
+    'testate_auth': 0, 'token_in_query': 0, 'scambi': 0, 'permessi_negati': 0, 'ultimo_refresh': '', 'ultimo_accesso': '',
 }
 ACCOUNT = {'gdrive': {'displayName': 'Mario Prova', 'emailAddress': 'mario.prova@gmail.com'},
            'dropbox': {'name': 'Mario Prova', 'email': 'mario.prova@esempio.it'}}[SERVIZIO]
@@ -148,6 +148,7 @@ class Gestore(BaseHTTPRequestHandler):
             S['scambi'] += 1
             refresh = ('1//' if SERVIZIO == 'gdrive' else '') + secrets.token_urlsafe(40)
             S['refresh'][refresh] = {'revocato': False}
+            S['ultimo_refresh'] = refresh  # solo per le prove di attacco: il token non deve comparire nel CMS
             acc = self.nuovo_accesso(refresh)
             r = {'access_token': acc, 'expires_in': S['vita'], 'refresh_token': refresh, 'token_type': 'Bearer' if SERVIZIO == 'gdrive' else 'bearer'}
             if SERVIZIO == 'gdrive':
@@ -166,6 +167,7 @@ class Gestore(BaseHTTPRequestHandler):
     def nuovo_accesso(self, refresh):
         acc = ('ya29.' if SERVIZIO == 'gdrive' else 'sl.') + secrets.token_urlsafe(48)
         S['accessi'][acc] = {'scade': time.time() + S['vita'], 'refresh': refresh}
+        S['ultimo_accesso'] = acc
         return acc
 
     def revoca(self, refresh):
@@ -355,7 +357,8 @@ class Gestore(BaseHTTPRequestHandler):
         if t is False:
             return self.errore_db(401, 'expired_access_token/', {'.tag': 'expired_access_token'})
         if p.startswith('/api.dropboxapi.com/2/'):
-            if 'application/json' not in self.headers.get('Content-Type', '') and self.headers.get('Content-Length', '0') != '0':
+            ct = self.headers.get('Content-Type')
+            if (ct is not None and 'application/json' not in ct) or (ct is None and self.headers.get('Content-Length', '0') != '0'):
                 return self.manda(400, 'Error in call: bad content type', 'text/plain')
             raw = self.corpo()
             arg = json.loads(raw) if raw and raw != b'null' else None

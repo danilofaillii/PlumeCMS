@@ -98,9 +98,9 @@ function copia_elimina(string $file): void {
     @unlink(copia_percorso($file));
 }
 
-/** Tiene le ultime COPIA_DA_TENERE copie. */
-function copia_pulisci(): void {
-    foreach (array_slice(copia_elenco(), COPIA_DA_TENERE) as $c) @unlink(copia_dir() . '/' . $c['file']);
+/** Tiene le ultime COPIA_DA_TENERE copie. $salva (2.1): copie da non togliere mai (quella che si sta ripristinando). */
+function copia_pulisci(array $salva = []): void {
+    foreach (array_slice(copia_elenco(), COPIA_DA_TENERE) as $c) if (!in_array($c['file'], $salva, true)) @unlink(copia_dir() . '/' . $c['file']);
 }
 
 /** I file di una radice, ricorsivi, senza i file e le cartelle nascosti. Ritorna [percorso nello zip => percorso sul disco]. */
@@ -192,7 +192,7 @@ function copia_dump_db(string $gzPath, array $tabelle): array {
  * Crea una copia del sito. $etichetta: "manuale", "prima-del-ripristino"... Ritorna il nome del file.
  * Il lavoro e lungo su un sito grande: niente limite di tempo e niente interruzione se il browser chiude.
  */
-function copia_crea(string $etichetta = 'manuale'): string {
+function copia_crea(string $etichetta = 'manuale', array $salva = []): string {
     if (!class_exists('ZipArchive')) throw new RuntimeException('La libreria PHP per gli zip (ZipArchive) manca sul server.');
     if (!function_exists('gzopen')) throw new RuntimeException('La compressione zlib manca sul server.');
     @set_time_limit(0);
@@ -237,7 +237,7 @@ function copia_crea(string $etichetta = 'manuale'): string {
         @unlink($tmpDb);
     }
     if (function_exists('sicurezza_log')) sicurezza_log('copia', (string)($_SESSION['admin_username'] ?? 'cron'), (int)($_SESSION['admin_user_id'] ?? 0), 'copia del sito creata: ' . $nome);
-    copia_pulisci();
+    copia_pulisci($salva);
     return $nome;
 }
 
@@ -365,7 +365,8 @@ function copia_ripristina(string $file, bool $tieni = false): array {
     $log[] = 'Copia letta: fatta il ' . ($m['creato'] ?? '?') . ' da ' . CMS_NOME . ' ' . ($m['cms_versione'] ?? '?') . ' su ' . ($m['sito'] ?? '?') . ', ' . (int)($m['tabelle'] ?? 0) . ' tabelle, ' . (int)($m['file'] ?? 0) . ' file.';
     $log[] = $firmata ? 'Firmata da questo sito: entrano anche i temi e i moduli con PHP.' : 'Non firmata da questo sito (viene da un altro sito, o è stata modificata): i file eseguibili (.php e simili) si saltano.';
     // 1. La rete di sicurezza: il sito di adesso, in una copia.
-    $prima = copia_crea('prima-del-ripristino');
+    // 2.1: la copia che si ripristina non si toglie nella pulizia (prima, con sei copie più nuove, spariva a metà).
+    $prima = copia_crea('prima-del-ripristino', [basename($zipPath)]);
     $log[] = 'Copia di sicurezza del sito di prima: ' . $prima . ' (la trovi nell\'elenco, si ripristina come le altre).';
     $sitoUrl = (string)get_setting('sito_url', '');
     // 2. Database.
@@ -515,8 +516,7 @@ function copia_scarto_elenco(): array {
 
 /** Cancella una cartella dello scarto (dal pannello). */
 function copia_scarto_elimina(string $nome): void {
-    $nome = basename($nome);
-    if (!copia_scarto_nome_valido($nome) || !is_dir(copia_scarto_dir() . '/' . $nome)) throw new RuntimeException('Cartella dei file messi da parte non trovata.');
+    if ($nome !== basename($nome) || !copia_scarto_nome_valido($nome) || !is_dir(copia_scarto_dir() . '/' . $nome)) throw new RuntimeException('Cartella dei file messi da parte non trovata.');
     $dir = copia_scarto_dir() . '/' . $nome;
     $it = new RecursiveIteratorIterator(new RecursiveDirectoryIterator($dir, FilesystemIterator::SKIP_DOTS), RecursiveIteratorIterator::CHILD_FIRST);
     foreach ($it as $f) { if ($f->isDir() && !$f->isLink()) @rmdir($f->getPathname()); else @unlink($f->getPathname()); }

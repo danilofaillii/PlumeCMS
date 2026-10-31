@@ -1,6 +1,6 @@
 # Addon Area riservata (`membri`)
 
-Versione 1.0.0, con plumeCMS 2.0.0. Cartella `cms/addon/membri/`. Si accende da Impostazioni > Addon.
+Versione 1.1.0 (plumeCMS 2.1, in lavorazione; la 1.0.0 è della 2.0.0). Cartella `cms/addon/membri/`. Si accende da Impostazioni > Addon.
 
 Account per i **visitatori del sito**, separati dagli utenti del pannello: tabella propria, cookie proprio, nessun uso di
 `$_SESSION`. Un membro non entra nel pannello; un utente del pannello non è un membro.
@@ -49,8 +49,35 @@ Si creano accendendo l'addon (`membri_installa()`, `membri.php:40`) e, se mancan
 | `membri_verifica_accesso()` | 370 | lo stesso messaggio e lo stesso tempo (`sicurezza_hash_finto()`) per email inesistente e password sbagliata |
 | `membri_manda()` | 394 | `posta_invia()` con `moduli_email_html()` del nucleo, tipo `membri` nel registro della posta |
 | `membri_riservati()`, `membri_contenuto_riservato()`, `membri_contenuto_chiuso()`, `membri_riservato_imposta()` | 421-446 | i contenuti per i membri; l'anteprima del pannello (`SITO_ANTEPRIMA`) li vede |
-| `membri_file()` | 454 | i file **riservati** di Download (`includes/scaricabili.php`) scelti per i membri |
-| `membri_pulizia()` | 470 | passo del cron: sessioni e link scaduti, iscrizioni mai confermate dopo 7 giorni |
+| `membri_elenco_filtra($tutti, $dove)` | 458 | (1.1.0) filtro `contenuti_elenco`: toglie i riservati da sitemap, feed, llms.txt e ricerca (sotto) |
+| `membri_fonte_tipo()`, `membri_e_home()` | 468, 473 | (1.1.0) `articoli` e `pagine` della scheda verso `articles` e `pages`; la home resta di tutti |
+| `membri_scheda_riquadro($tipo, $id, $r)`, `membri_scheda_salva($tipo, $id, $d)` | 482, 498 | (1.1.0) il riquadro "Area riservata" della scheda e il suo salvataggio (sotto) |
+| `membri_file()` | 510 | i file **riservati** di Download (`includes/scaricabili.php`) scelti per i membri |
+| `membri_pulizia()` | 526 | passo del cron: sessioni e link scaduti, iscrizioni mai confermate dopo 7 giorni |
+
+## Dalla scheda del contenuto, e fuori dagli elenchi pubblici (1.1.0)
+
+**Dalla scheda.** Nella scheda di un articolo o di una pagina (`admin/contenuto.php`, colonna di destra dopo Header e footer)
+c'è il riquadro **Area riservata** con la spunta "Solo per i membri" (`#membri-riservato`), la stessa cosa della pagina
+Membri > Contenuti e file riservati: le due si vedono a vicenda (una sola tabella, `{p}membri_riservati`).
+- Lo vede e lo salva solo l'amministratore (`is_admin()`), come le pagine Membri. Il redattore non lo vede e, se manda a mano
+  i campi del riquadro, non cambia niente (`membri_scheda_salva()` controlla il ruolo da sé).
+- Il campo nascosto `membri_scheda=1` dice che il riquadro c'era: senza, la spunta assente non si legge come "pubblico"
+  (un salvataggio che non viene dalla scheda non tocca la riservatezza).
+- La home: spunta spenta, "La home resta di tutti", e il salvataggio la lascia pubblica comunque.
+- Solo articoli e pagine (i tipi dei moduli no). La scheda c'è solo per i contenuti che esistono già (un contenuto nuovo nasce
+  nell'editor visuale).
+
+**Fuori dagli elenchi pubblici** (`membri_elenco_filtra()`, filtro `contenuti_elenco` del nucleo). Un contenuto "solo per i
+membri", titolo e riassunto compresi, non esce in:
+- la sitemap (`/sitemap.xml` e le sitemap divise) e quindi nemmeno nella coda di IndexNow (`seo_sitemap_voci()`);
+- i feed RSS (`/feed/`, delle categorie e dei tag; il feed del singolo articolo risponde 404);
+- `llms.txt` e `llms-full.txt`;
+- la ricerca del sito (`/?s=`), tranne per un **membro collegato**: allora la pagina dei risultati esce con
+  `Cache-Control: private, no-store`. L'amministratore in anteprima non è un membro: la ricerca non li mostra nemmeno a lui.
+
+Restano come prima (non richiesto e lasciato fuori): gli archivi del blog, delle categorie e dei tag e i widget che elencano
+contenuti (Griglia di contenuti) mostrano titolo e riassunto anche di un riservato, che poi si apre chiuso.
 
 ## Pagine pubbliche (`includes/pagine.php`)
 
@@ -78,9 +105,20 @@ Un indirizzo che comincia con questi percorsi vince su una pagina del sito con l
 | File | Riga | Cosa |
 |---|---|---|
 | `cms/sito/index.php` | 220 | **evento nuovo** `sito_contenuto($c, $meta)` nel caso `contenuto` della mappa, prima di disegnare articoli e pagine: chi ascolta risponde e chiude (`exit`) oppure lascia andare. L'addon lo usa per la pagina "Solo per i membri" (`membri_controlla_contenuto()`, `pagine.php:416`) |
-| `cms/includes/sito-dati.php` | 154 | **filtro nuovo** `contenuto_riservato(null, $c)` in testa a `sito_html_contenuto()`: una stringa al posto del testo vero. Copre llms-full.txt, i widget che mostrano il testo di un contenuto, i conti dei minuti di lettura. L'addon dà l'avviso a chi non è entrato |
+| `cms/includes/sito-dati.php` | 164 (era 154 nella 2.0.0) | **filtro nuovo** `contenuto_riservato(null, $c)` in testa a `sito_html_contenuto()`: una stringa al posto del testo vero. Copre llms-full.txt, i widget che mostrano il testo di un contenuto, i conti dei minuti di lettura. L'addon dà l'avviso a chi non è entrato |
 
 Con l'addon spento nessuno ascolta e il sito è identico (provato: `prova-addon-membri.js`, punto 17).
+
+Ganci del nucleo nuovi (2.1, addon 1.1.0):
+
+| File | Riga | Cosa |
+|---|---|---|
+| `cms/includes/sito-dati.php` | 155 | **funzione e filtro nuovi** `sito_contenuti_elenco($dove)` = `cms_filtro('contenuti_elenco', sito_contenuti(), $dove)`, con `$dove` fra `cerca`, `feed`, `sitemap`, `llms`. Senza addon è `sito_contenuti()` |
+| `cms/sito/viste.php` | 484 | `vista_cerca()` legge `sito_contenuti_elenco('cerca')` |
+| `cms/sito/extra.php` | 16, 60, 75 | `extra_articoli($dove)` (feed), `extra_sitemap()`, `extra_llms()` |
+| `cms/includes/seo.php` | 831, 862 | `seo_llms_full()` e `seo_sitemap_voci()` (sitemap e IndexNow) |
+| `cms/admin/contenuto.php` | 285 | **filtro nuovo** `scheda_riquadri([], $tipo, $id, $r)`: un elenco di HTML (ognuno un `<div class="sc-scatola">`) nella colonna di destra della scheda, per un contenuto che esiste già |
+| `cms/admin/contenuto.php` | 62 | **evento nuovo** `scheda_salvata($tipo, $id, $d)` dopo il salvataggio della scheda (`$d` = il POST): chi ascolta controlla da sé il ruolo e che il suo campo sia arrivato |
 
 Ganci che l'addon offre agli altri addon: evento `membro_eliminato($id)` (`membri.php:190`), filtro `membri_area($sezioni, $membro)`
 (`pagine.php:302`, sezioni `[titolo, html]`), evento `membri_area_percorso($percorso, $q, $membro)` (`pagine.php:106`, gli indirizzi
@@ -101,14 +139,20 @@ sotto `/area-riservata/` che l'addon non conosce).
 ## Limiti noti
 
 - Spegnendo l'addon i contenuti riservati tornano pubblici (il nucleo non sa più che erano riservati). Il pannello lo dice.
-- La ricerca del sito (`/?s=`) cerca nel titolo, nel TL;DR e nella descrizione: quelli di un contenuto riservato restano
-  visibili (come il titolo nella pagina chiusa). La sitemap elenca anche gli indirizzi riservati (la pagina chiusa è noindex).
-- Il riquadro "solo per i membri" si sceglie dalla pagina Contenuti e file riservati, non dalla scheda del contenuto.
+- (Corretti nella 1.1.0: la ricerca, la sitemap, i feed e llms.txt non mostrano più titolo e riassunto dei contenuti
+  riservati; la spunta si sceglie anche dalla scheda del contenuto.)
+- Gli archivi del blog, delle categorie e dei tag e il widget Griglia di contenuti mostrano ancora titolo e riassunto di un
+  contenuto riservato (che poi si apre chiuso). Il titolo resta visibile anche nella pagina chiusa.
 - Il widget Accesso membri e i contenuti riservati presuppongono che le pagine non stiano in una cache condivisa (le pagine
   riservate mandano `private, no-store`; le altre pagine del sito non sono in cache nel CMS).
 - La password del membro segue le regole del pannello (almeno 12 caratteri), più severe di quelle di molti siti.
 
 ## Prove
 
-- `prove/prova-addon-membri.js` (sito Attività nuovo, posta finta): 75 su 75 in radice e 75 su 75 con il CMS in `/test`.
+- `prove/prova-addon-membri.js` (sito Attività nuovo, posta finta): 75 su 75 in radice e 75 su 75 con il CMS in `/test`
+  (2.0.0). Dalla 1.1.0 anche la scheda (Chi siamo e Servizi, la home spenta, la spunta tolta e rimessa) e gli elenchi
+  (ricerca per titolo, sitemap, feed, llms.txt e llms-full.txt prima, da fuori e da membro).
+- `prove/attacchi-addon-a.js`: gruppo 1 con la ricerca per titolo e un cookie inventato; gruppo 12 (1.1.0) con un articolo
+  riservato dalla scheda (feed, llms, sitemap, ricerca, feed del singolo articolo) e il redattore che manda a mano i campi
+  del riquadro.
 - `prove/pagina-addon-a.php`: crea una pagina con il widget, per la prova.
