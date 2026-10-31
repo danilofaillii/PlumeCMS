@@ -78,6 +78,7 @@ Contratto degli indirizzi: 0 differenze.
 ## Aperto
 
 - Il limite orario delle email del proprio hosting: da chiedere al fornitore, poi da scrivere nelle Impostazioni.
-- Aperture e clic: non si contano (scelta di privacy, e niente servizi esterni).
+- Aperture e clic: dal 2.0 si contano, senza servizi esterni: aperture con un pixel, clic con i link che passano da
+  `api/nl.php` firmati; si vedono in Newsletter > Statistiche (capitolo 15.5 del manuale tecnico). Aggiornato al 31 ottobre 2026.
 - Informativa privacy da aggiornare con la newsletter interna.
 - SPF, DKIM e DMARC del dominio: decidono se le email arrivano in posta o nello spam.

@@ -3156,32 +3156,25 @@ Vetrina, tastiera, 130 immagini a pagine, cartelle, indirizzo a mano, telefono),
 
 ## Appendice A. Dove i documenti vecchi non corrispondono al codice
 
-Alcuni documenti di `docs/` sono nati quando il CMS era il pannello di un solo sito, e in qualche punto sono
-rimasti indietro. In questi casi vale il codice, ed è quello che dice questo manuale.
+I documenti di `docs-sviluppo/` (fino alla 1.6.4 in `docs/`) sono nati quando il CMS era il pannello di un solo sito.
+Il 31 ottobre 2026 sono stati allineati al codice in tutti i punti che questa appendice elencava: versioni dell'editor nella
+tabella `editor_versioni` (`editor-pagine.md`, `contenuti.md`, `header-footer-menu.md`), widget HTML del redattore, colori,
+link e widget registrati con `editor_registra_widget()` (`editor-pagine.md`), caricamenti in `uploads/pagine/AAAA/MM/` con
+AVIF e SVG, voci del gruppo Editor (`stile-sito.md`, `header-footer-menu.md`), CSS personalizzato ripulito
+(`stile-sito.md`), aperture e clic contati (`newsletter.md`), tabelle create dal codice (`seo.md`), niente `sincronizza` né
+Rank Math (`aggiornamenti.md`), sito servito anche in una cartella e `CMS_BASE` scritto dall'installatore (`cms.md`), e i
+rimandi ai documenti spostati in `docs-sviluppo/`. Le citazioni di `includes/editor-articoli.php`, di `share/` e delle voci
+Aforismi, Test e Social copy erano già sparite.
+
+Se un documento vecchio dice ancora una cosa diversa da questo manuale, vale il manuale: va aggiunta qui una riga.
 
 | Documento | Cosa dice | Cosa fa il codice |
 |---|---|---|
-| `editor-pagine.md`, `contenuti.md`, `header-footer-menu.md` | revisioni dell'editor in `pagine_revisioni`, ultime 30 | tabella `editor_versioni`, 50 per oggetto, da 5 a 500 (capitolo 13) |
-| `editor-pagine.md` | il widget HTML passa com'è | per chi non è amministratore diventa testo |
-| `editor-pagine.md` | colori solo esadecimali o rgb | anche hsl, `transparent`, `globale:`, `ig:` |
-| `editor-pagine.md` | widget nuovi con un `case` in `editor_disegna_widget()` | `editor_registra_widget()` (9.8) |
-| `editor-pagine.md` | caricamenti in `wp-content/uploads/pagine`, JPG PNG GIF WebP | `uploads/pagine/AAAA/MM/`, anche AVIF e SVG ripulito |
-| `editor-pagine.md` | cita `includes/editor-articoli.php` | il file non c'è nel nucleo |
-| `stile-sito.md`, `header-footer-menu.md` | voci sotto "Pagine" | sono nel gruppo Editor |
-| `stile-sito.md` | il CSS personalizzato passa intero | passa da `sicurezza_css_pulisci`, fino a 60000 caratteri |
-| `newsletter.md` | aperture e clic non si contano | si contano (15.5) |
-| `seo.md`, `header-footer-menu.md` | citano file SQL in `sql/` | le tabelle si creano dal codice, `sql/` non c'è |
-| `aggiornamenti.md` | sincronizzazione WordPress, chiave `sincronizza`, redirect di Rank Math | il motore non li legge; i redirect vanno nella tabella `redirect` |
-| `cms.md` | `index.php` serve il sito solo nella radice | lo serve anche in una cartella (caso b del capitolo 5), con un 302 negli altri casi |
-| `cms.md` | `CMS_BASE` solo se il rilevamento sbaglia | l'installatore lo scrive sempre quando l'indirizzo ha una cartella |
-| `cms.md` | cita la cartella `share/` | non c'è nel prodotto |
-| `pannello.md` | voci Aforismi, Test, Social copy | compaiono solo con il modulo del primo sito |
 
-Piccole incoerenze interne del codice, innocue, da sistemare:
-- il commento di `admin/includes/admin-header.php` dice che il redattore vede il Log cron, ma `cron-log.php` è solo
-  per amministratori: per il redattore il gruppo Impostazioni non c'è;
-- il commento della chiave `rotte` del manifest in `includes/cms.php`: nessun codice la legge;
-- `tools/cms-pacchetto.py` dice di rifiutare i caratteri a 4 byte, ma dà solo un avviso;
-- il commento di `includes/aggiornamenti.php` parla del rapporto di compressione: il codice controlla solo le
-  dimensioni;
-- l'evento `upload_rifiutato` del registro esiste ma nessuno lo scrive.
+Nel codice, sistemati lo stesso giorno: il commento di `admin/includes/admin-header.php` sul Log cron del redattore,
+quello della chiave `rotte` in `includes/cms.php`, la descrizione di `tools/cms-pacchetto.py` (per i caratteri a 4 byte un
+avviso, non un rifiuto). Restano:
+- il commento di `includes/aggiornamenti.php:144` parla del rapporto di compressione, ma il codice controlla solo le
+  dimensioni (200 MB per file, 600 MB in tutto). Non si tocca da solo: cambiare il motore dei pacchetti, anche in un commento,
+  costringe `tools/consegna.py` a dare due pacchetti (19.8); va sistemato insieme alla prossima modifica vera del motore;
+- l'evento `upload_rifiutato` del registro della sicurezza (`includes/sicurezza.php:213`) esiste ma nessuno lo scrive.

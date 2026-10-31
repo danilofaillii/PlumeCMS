@@ -165,7 +165,7 @@ function cms_uploads_url(): string {
  *   tipi_contenuto  => [chiave => definizione]                  (come contenuti_tipi(): tabella, etichette, campi)
  *   menu            => [voci del pannello]                      (stesso formato di admin-header.php: nome, url, icona, attivo, sottovoci)
  *   pannello        => [nome => file]                           (pagine del pannello: admin/<nome>.php le serve con cms_pagina_modulo)
- *   rotte           => [['percorso' => regex, 'file' => ...]]   (indirizzi pubblici serviti dal modulo prima della mappa del sito)
+ *   rotte           => [['percorso' => regex, 'file' => ...]]   (prevista per gli indirizzi pubblici di un modulo: oggi nessun codice la legge)
  *   installa        => callable                                 (crea le sue tabelle; la chiama l'installatore e cms_installa)
  *   cron            => [callable]                               (passi del cron giornaliero)
  *   cron_spesso     => [callable]                               (2.0.0: passi del giro frequente, quello della newsletter)

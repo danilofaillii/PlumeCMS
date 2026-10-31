@@ -5,10 +5,10 @@ articolo o contenuto di un tipo dei moduli può avere header e footer suoi, dive
 
 ## Dove si trova nel pannello
 
-- **Pagine > Header e footer** (`admin/modelli.php`): due schede, Header e Footer. Ogni riga è un modello con la
+- **Editor > Header e footer** (`admin/modelli.php`; fino alla 1.1 la voce stava sotto Pagine): due schede, Header e Footer. Ogni riga è un modello con la
   stellina del predefinito, lo stato, le condizioni, l'uso. Azioni: Modifica (apre l'editor visuale), Anteprima sul sito,
   Condizioni, Rinomina, Duplica, Pubblica / Metti in bozza, Cestino. "+ Aggiungi" crea un modello in bozza e apre l'editor.
-- **Pagine > Menu di navigazione** (`admin/menu.php`): come Aspetto > Menu di WordPress. A sinistra pagine, articoli,
+- **Editor > Menu di navigazione** (`admin/menu.php`): come Aspetto > Menu di WordPress. A sinistra pagine, articoli,
   categorie e link personalizzato; a destra la struttura da ordinare e annidare trascinando (fino a tre livelli).
 - Nella **scheda classica** di ogni articolo, pagina e contenuto dei tipi dei moduli: riquadro "Header e footer" con due tendine
   (Predefinito, Nessuno, ogni modello pubblicato). Le stesse due tendine stanno nelle **Impostazioni** dell'editor visuale.
@@ -43,6 +43,6 @@ bordi, spazi). Nome, sottotitolo, logo e frase, se lasciati vuoti, vengono dallo
 - Le cornici: `<header class="ed-testata ed-modello">` e `<footer class="ed-piede ed-modello">`, CSS in
   `sito/assets/tema.css` (riproduce `.top` e `.piede`). Dentro un header le colonne sono righe orizzontali.
 - I modelli si modificano con `editor.php?tipo=modelli&id=N`: la tela mette l'header (o il footer) al suo posto e un
-  segnaposto per il contenuto. Revisioni in `<prefisso>pagine_revisioni` con `tipo = modelli`.
+  segnaposto per il contenuto. Le versioni stanno nella tabella unica `<prefisso>editor_versioni`, ambito `modello` (prima in `<prefisso>pagine_revisioni` con `tipo = modelli`); i menu nell'ambito `menu`.
 - Il menu salva le voci in un JSON ad albero; una voce che punta a una pagina, a un articolo o a una categoria ricorda lo
   slug e ricalcola l'indirizzo (`menu_voci_risolte`).

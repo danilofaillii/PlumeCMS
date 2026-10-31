@@ -1,6 +1,6 @@
 # Stile del sito (25 ottobre 2026)
 
-La voce **Pagine > Stile del sito** del pannello (`admin/design.php`, motore `includes/design.php`) raccoglie le
+La voce **Editor > Stile del sito** del pannello (`admin/design.php`, motore `includes/design.php`) raccoglie le
 impostazioni che valgono per tutto il sito, come le Site Settings di Elementor: colori globali, caratteri globali,
 tipografia per elemento, pulsanti, immagini, campi dei moduli, layout, sfondo, identità del sito, CSS personalizzato.
 Solo l'amministratore la vede.
@@ -31,8 +31,8 @@ Solo l'amministratore la vede.
 - Un controllo colore dell'editor salva `globale:<id>` e il CSS generato scrive `var(--g-colore-<id>)`: cambiando il
   globale cambia la pagina. Lo stesso per le famiglie con `globale:font-<id>`.
 - Validazione al salvataggio: colori (hex, rgb/rgba, hsl/hsla, transparent, globale), misure con unità, famiglie
-  dall'elenco, scelte dalle liste; quello che non passa torna vuoto. Il CSS personalizzato passa intero, senza
-  `</style>`.
+  dall'elenco, scelte dalle liste; quello che non passa torna vuoto. Il CSS personalizzato passa da `sicurezza_css_pulisci()`
+  (via `expression()`, `javascript:`, `@import` e simili), senza `</style>`, fino a 60000 caratteri (`includes/design.php:533`).
 - Dal 27 ottobre 2026 (temi, fase 1) `sito.css`, `widget.css` e `tema.css` non hanno più colori del sito scritti in
   chiaro: le trasparenze sono `rgba(var(--viola-rgb),.2)` (anche `--ciano-rgb`, `--bg-rgb`, `--inchiostro-rgb`,
   `--errore-rgb`, `--successo-rgb`), i gradienti dei pulsanti `--primario-chiaro/--primario-scuro` e

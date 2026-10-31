@@ -62,7 +62,7 @@ $menu = [
         ['Schema e AEO', 'seo.php?scheda=schema', $qui === 'seo.php' && ($_GET['scheda'] ?? '') === 'schema'],
         ['Redirect e 404', 'seo.php?scheda=redirect', $qui === 'seo.php' && ($_GET['scheda'] ?? '') === 'redirect'],
     ]] : null,
-    // Il redattore vede solo Log cron e Diagnosi: posta, aggiornamenti e SQL sono dell'amministratore.
+    // Il gruppo Impostazioni è dell'amministratore: per il redattore il filtro dei ruoli qui sotto lo toglie tutto (anche Log cron, cron-log.php è solo admin).
     ['Impostazioni', $sonoAdminMenu ? 'impostazioni.php' : 'cron-log.php', 'impostazioni', in_array($qui, ['impostazioni.php', 'addon.php', 'aggiornamenti.php', 'copia-sito.php', 'importa-wordpress.php', 'cron-log.php', 'sicurezza.php', 'controlla-server.php'], true), array_values(array_filter([
         $sonoAdminMenu ? ['Configurazione email', 'impostazioni.php', $qui === 'impostazioni.php'] : null,
         $sonoAdminMenu ? ['Sicurezza', 'sicurezza.php', $qui === 'sicurezza.php'] : null, // sicurezza: checklist, 2FA, blocchi, CSP, registro

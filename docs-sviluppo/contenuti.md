@@ -38,7 +38,7 @@ Le pagine hanno tutto tranne categorie, tag e attributi dell'articolo: WordPress
 
 **Anteprima**: `/indirizzo/?preview=1` con la sessione del pannello mostra bozze e programmati come fossero usciti (`SITO_ANTEPRIMA` in `sito/index.php`, con `Cache-Control: no-store`). Senza la sessione, 404 come sempre.
 
-**Revisioni**: a ogni salvataggio dalla scheda, la riga com'era prima finisce in `<prefisso>revisioni` (tipo, contenuto_id, dati JSON, autore, data; le ultime 20). Ripristina riporta titolo, testo, indirizzo e il resto a quella versione, e la versione di adesso finisce nelle revisioni. Le revisioni dell'editor visuale stanno a parte, in `<prefisso>pagine_revisioni` (ora con la colonna `tipo`).
+**Revisioni**: a ogni salvataggio dalla scheda, la riga com'era prima finisce in `<prefisso>revisioni` (tipo, contenuto_id, dati JSON, autore, data; le ultime 20). Ripristina riporta titolo, testo, indirizzo e il resto a quella versione, e la versione di adesso finisce nelle revisioni. Lo stesso salvataggio scrive anche una versione nella tabella unica `<prefisso>editor_versioni` (ambito `contenuto:<tipo>`). Le versioni dell'editor visuale stanno lì, non più in `<prefisso>pagine_revisioni`: 50 per contenuto (da 5 a 500), pubblicate e con nota mai potate (aggiornato al 31 ottobre 2026; capitolo 13 del manuale tecnico).
 
 ## L'editor visuale anche sugli articoli
 

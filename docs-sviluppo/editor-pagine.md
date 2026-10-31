@@ -24,7 +24,7 @@ Deciso il 23 ottobre 2026: un editor come Elementor, dentro il CMS, senza WordPr
 - `struttura_bozza`: quella in lavorazione
 - `struttura_aggiornata`: ultima modifica
 
-`<prefisso>pagine_revisioni`: le ultime 30 versioni pubblicate di ogni pagina (pagina_id, struttura, nota, autore, creato).
+Le versioni (aggiornato al 31 ottobre 2026): non più `<prefisso>pagine_revisioni` con le ultime 30, ma la tabella unica `<prefisso>editor_versioni` (`includes/versioni.php`), con bozze e pubblicazioni di ogni pagina, articolo, modello, menu e stile; se ne tengono 50 per oggetto (da 5 a 500, Editor > Impostazioni), mai potate le pubblicate e quelle con una nota scritta a mano. Dettagli nel capitolo 13 del manuale tecnico.
 
 Il JSON:
 
@@ -65,7 +65,7 @@ Nei titoli e nelle frasi, `*parola*` diventa `<em>` con il gradiente del sito. I
 
 Controlli comuni (scheda Avanzate): spazio sotto, ancora, nascondi su desktop/tablet/telefono, classe CSS. La sezione ha larghezza (contenuta, stretta, piena), altezza minima, allineamento verticale, spazio tra colonne, sfondo (nessuno, vetro, gradiente, colore, immagine con velo), colori, spazi. La colonna ha larghezza in percentuale per misura, riquadro di vetro, spazio interno, allineamento del testo.
 
-Per aggiungere un widget: una voce in `editor_definizioni()` con i suoi controlli, un `case` in `editor_disegna_widget()`, eventualmente il CSS in `sito.css` e le regole per elemento in `editor_disegna_elemento_widget()`.
+Per aggiungere un widget (aggiornato al 31 ottobre 2026): non più una voce in `editor_definizioni()` e un `case` in `editor_disegna_widget()`, ma `editor_registra_widget($tipo, $definizione, $disegna)` da un file in `includes/editor-widget*.php`, da un modulo o da un addon, con i suoi fogli e script dichiarati con `editor_registra_asset()` (capitolo 9.8 del manuale tecnico).
 
 ## Nel pannello
 
@@ -80,11 +80,11 @@ Nell'editor:
 - Nella tela: la maniglia in alto a destra trascina la sezione, quella in alto al centro trascina la colonna, i widget si trascinano direttamente; il `+` sotto una sezione ne aggiunge una; la barra sopra l'elemento selezionato sposta, duplica, elimina.
 - Il titolo in alto diventa arancione se la pagina non ha un H1.
 
-Le immagini caricate dall'editor vanno in `pagine/AAAA/MM/` dentro la cartella delle immagini (`cms_uploads_dir()`, di solito `uploads/`) (JPG, PNG, GIF, WebP, massimo 8 MB).
+Le immagini caricate dall'editor vanno in `pagine/AAAA/MM/` dentro la cartella delle immagini (`cms_uploads_dir()`, di solito `uploads/`, mai `wp-content/uploads/pagine`): JPG, PNG, GIF, WebP, AVIF e SVG (ripulito da script ed entità), massimo 8 MB (`media_carica()`). Dalla 2.1.0 la stessa chiamata (`editor-api.php` azione `carica`) la usa la finestra Scegli dai Media di tutto il pannello.
 
 ## Sicurezza
 
-Tutte le chiamate sono POST con il token di sessione. L'albero viene ripulito a ogni salvataggio e a ogni disegno (`editor_valida`): tipi sconosciuti scartati, numeri nei limiti, colori solo esadecimali o rgb, link solo `http`, `/`, `#`, `mailto:`, `tel:`, testo ricco senza script e senza attributi (`editor_ricco_pulito`). Il widget HTML passa com'è: è il posto del contenuto portato da WordPress, e lo scrive solo chi entra nel pannello.
+Tutte le chiamate sono POST con il token di sessione. L'albero viene ripulito a ogni salvataggio e a ogni disegno (`editor_valida`): tipi sconosciuti scartati, numeri nei limiti, colori esadecimali, `rgb()`/`rgba()`, `hsl()`/`hsla()`, `transparent`, `globale:<id>` e `ig:<id>`, link `http(s)`, `/`, `#`, `?`, `mailto:`, `tel:` (dalla 2.0.2 `www.sito.it` e `sito.it/pagina` diventano `https://...` e un nome di pagina diventa `/nome`; ogni altro schema resta fuori, `editor_link_sicuro()`), testo ricco senza script e senza attributi (`editor_ricco_pulito`). Il widget HTML passa com'è solo per l'amministratore: per chi non lo è ogni blocco HTML nuovo o cambiato diventa testo pulito (`editor_blinda_codice()`, `editor_puo_codice()`).
 
 ## Collaudo del 23 ottobre
 
@@ -231,7 +231,7 @@ senza scorrimento orizzontale) e `prova-editor.js` (23 controlli nell'editor: ta
 
 ## Widget e Impostazioni dell'editor (26 ottobre 2026)
 
-Il gruppo **Editor** del menu (`docs/pannello.md`) ha due pagine nuove che parlano con l'editor, più i Colori delle infografiche e le Versioni.
+Il gruppo **Editor** del menu (`docs-sviluppo/pannello.md`) ha due pagine nuove che parlano con l'editor, più i Colori delle infografiche e le Versioni.
 
 **Widget** (`admin/editor-widget.php`): l'elenco di `editor_definizioni()` senza sezione e colonna, per gruppo, con la provenienza. `editor_registra_widget()` scrive nella definizione la chiave `origine` (`nucleo`, oppure `modulo:<nome>` quando il file che registra sta in `moduli/<nome>/`); i widget scritti direttamente in `editor-widget.php` (base, contenuto, `ig_*`) sono del nucleo. L'interruttore salva i tipi spenti in `editor_widget_disattivi`; `admin/editor.php` li passa all'editor come `D.widgetDisattivi` e `disegnaElencoWidget()` in `editor.js` li salta. Niente altro cambia: `editor_disegna()` continua a disegnare ogni widget che trova nell'albero, la scheda Modifica si apre anche su un widget spento, e un tipo spento che un modulo non registra più resta spento finché il modulo torna.
 

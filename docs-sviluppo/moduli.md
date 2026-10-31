@@ -1,6 +1,6 @@
 # Moduli da compilare: newsletter e form
 
-> I **moduli del CMS** (cartella `moduli/`, manifesto `modulo.php`) sono un'altra cosa: `docs/cms-moduli.md`.
+> I **moduli del CMS** (cartella `moduli/`, manifesto `modulo.php`) sono un'altra cosa: `docs-sviluppo/cms-moduli.md`.
 
 Il nucleo ha due moduli da compilare: l'iscrizione alla **newsletter** (`newsletter.md`) e i **form** costruiti
 dal pannello, voce Form (`includes/form.php`). Tutti e due arrivano a `api/modulo.php` e si mettono nelle pagine

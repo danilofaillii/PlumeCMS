@@ -1,6 +1,6 @@
 # I moduli del CMS
 
-(`docs/moduli.md` racconta i moduli da compilare del sito, newsletter e form, cioè `includes/moduli.php`: altra cosa.)
+(`docs-sviluppo/moduli.md` racconta i moduli da compilare del sito, newsletter e form, cioè `includes/moduli.php`: altra cosa.)
 
 Un modulo è una cartella `moduli/<nome>/` con un file `modulo.php` che **restituisce un array**, il manifesto. Il nucleo lo
 legge a ogni richiesta (`cms_moduli()`) prima del database: nel manifesto niente query, solo dichiarazioni e funzioni anonime
