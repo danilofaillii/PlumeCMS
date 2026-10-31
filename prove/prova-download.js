@@ -22,6 +22,10 @@ const php = scrivi('attacco.php', '<?php echo "no"; ?>');
 const doppio = scrivi('listino-2026.zip', 'PK\x03\x04' + 'x'.repeat(100));
 const guida10 = scrivi('guida-1.0.pdf', '%PDF-1.4\n% guida 1.0\n%%EOF\n');
 const guida11 = scrivi('guida-1.1.pdf', '%PDF-1.4\n% guida 1.1\n%%EOF\n');
+// 2.3.1: la pagina di prova (pagina-download.php) vuole anche un "manuale-tecnico": dalla 1.6.4 non arriva più con il CMS.
+const manuale = scrivi('manuale-tecnico.pdf', '%PDF-1.4\n% manuale\n%%EOF\n');
+const catalogo = scrivi('catalogo.pdf', '%PDF-1.4\n% catalogo\n%%EOF\n'); // il terzo file delle schede "ultimi caricati"
+const BASEP = new URL(B).pathname.replace(/\/$/, ''); // il sito in una cartella: i link cominciano con la cartella
 
 (async () => {
   const br = await chromium.launch();
@@ -58,6 +62,7 @@ const guida11 = scrivi('guida-1.1.pdf', '%PDF-1.4\n% guida 1.1\n%%EOF\n');
   t = await carica(doppio);
   ok('listino-2026.zip accanto a listino-2026.pdf: rifiutato (stesso indirizzo)', /due file con lo stesso nome/.test(t));
 
+  await carica(manuale); await carica(catalogo); // 2.3.1: i file che la pagina di prova si aspetta
   // Modifica del titolo.
   await p.goto(B + '/admin/scaricabili.php', { waitUntil: 'networkidle' });
   await p.locator('#dl-listino-2026 summary', { hasText: 'Modifica' }).click();
@@ -83,7 +88,7 @@ const guida11 = scrivi('guida-1.1.pdf', '%PDF-1.4\n% guida 1.1\n%%EOF\n');
   const primo = v.locator('.ed-dl-elenco .ed-dl-voce').first();
   ok('sito: titolo, descrizione, tipo e peso, versione', /Listino prezzi 2026/.test(await primo.innerText()) && /I prezzi aggiornati/.test(await primo.innerText()) && /PDF · \d+ KB/.test(await primo.innerText()) && /versione 2\.0/.test(await primo.innerText()), await primo.innerText());
   ok('sito: il titolo scritto nel widget vince su quello del pannello', await v.locator('.ed-dl-titolo', { hasText: 'Il manuale, titolo dal widget' }).count() === 1);
-  ok('sito: pulsante verso /scarica/listino-2026/', await primo.locator('a.ed-dl-btn').getAttribute('href') === '/scarica/listino-2026/');
+  ok('sito: pulsante verso /scarica/listino-2026/', await primo.locator('a.ed-dl-btn').getAttribute('href') === BASEP + '/scarica/listino-2026/');
   ok('sito: le schede degli ultimi caricati, con il conteggio', await v.locator('.ed-dl-schede .ed-dl-voce').count() === 3 && /0 download/.test(await v.locator('.ed-dl-schede').innerText()));
   ok('sito: il CSS del widget è caricato', await v.locator('link[href*="download.css"]').count() === 1);
   const icona = await primo.locator('.ed-dl-icona').evaluate(e => getComputedStyle(e).display);
@@ -104,10 +109,13 @@ const guida11 = scrivi('guida-1.1.pdf', '%PDF-1.4\n% guida 1.1\n%%EOF\n');
   await p.goto(B + '/admin/scaricabili.php', { waitUntil: 'networkidle' });
   ok('serie: il pannello dà l\'indirizzo "sempre l\'ultima" accanto alla 1.1', await p.locator('#dl-guida-1\\.1 input[value$="/scarica/guida-ultima/"]').count() === 1 && await p.locator('#dl-guida-1\\.0 .dl-serie').count() === 0);
   const rG = await v.request.get(B + '/scarica/guida-ultima/');
+  // 2.3.1: l'indirizzo della serie rimanda (302, senza memoria) a quello della versione: il browser non ridà la versione di prima.
+  const rG0 = await v.request.get(B + '/scarica/guida-ultima/', { maxRedirects: 0 });
+  ok('serie (2.3.1): 302 senza memoria verso /scarica/guida-1.1/', rG0.status() === 302 && /no-store/.test(rG0.headers()['cache-control'] || '') && /\/scarica\/guida-1\.1\/$/.test(rG0.headers()['location'] || ''), [rG0.status(), rG0.headers()['location'], rG0.headers()['cache-control']]);
   ok('serie: /scarica/guida-ultima/ manda guida-1.1.pdf', rG.status() === 200 && /guida-1\.1\.pdf/.test(rG.headers()['content-disposition'] || ''), rG.headers()['content-disposition']);
   await v.reload({ waitUntil: 'networkidle' });
   ok('serie: nella pagina "versione 1.1" scritto da solo e il widget mostra "Guida 1.1"', await v.locator('h2', { hasText: 'La guida è alla versione 1.1' }).count() === 1 && await v.locator('.ed-dl-elenco .ed-dl-titolo', { hasText: /^Guida 1\.1$/ }).count() === 1);
-  ok('serie: il pulsante del widget usa l\'indirizzo della serie', await v.locator('.ed-dl-elenco .ed-dl-voce', { hasText: 'Guida 1.1' }).locator('a.ed-dl-btn').getAttribute('href') === '/scarica/guida-ultima/');
+  ok('serie: il pulsante del widget usa l\'indirizzo della serie', await v.locator('.ed-dl-elenco .ed-dl-voce', { hasText: 'Guida 1.1' }).locator('a.ed-dl-btn').getAttribute('href') === BASEP + '/scarica/guida-ultima/');
   ok('serie: nessun segnaposto rimasto nella pagina', !/\{versione/.test(await v.content()));
   await p.goto(`${B}/admin/editor.php?tipo=pagine&id=${id}`, { waitUntil: 'networkidle' });
   ok('serie: la tela dell\'editor scrive già 1.1', await p.frameLocator('iframe').first().locator('h2', { hasText: 'versione 1.1' }).count() === 1);

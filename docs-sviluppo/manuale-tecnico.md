@@ -2163,6 +2163,10 @@ nel suo download manager.
   scarica lo zip, controlla che la lunghezza e lo sha256 siano quelli annunciati e lo registra con
   `agg_registra_pacchetto()`, come uno zip caricato a mano: da lì "Applica ora" (19.4). Una versione già in coda non si
   scarica due volte.
+- **Serie dei download** (2.3.1): `/scarica/<serie>/` (il nome con "ultima" al posto della versione) in `sito/index.php` risponde
+  302 con `Cache-Control: no-store` verso `/scarica/<file della versione più alta>/`, che poi manda il file con `public,
+  max-age=3600`. Prima mandava il file direttamente con la memoria di un'ora e il browser ridava la versione di prima. Prova:
+  `prove/prova-download.js` (36 controlli, anche in cartella).
 - **Dashboard e versione in vista** (2.3.0): `admin/includes/admin-header.php` scrive `cms_versione()` accanto al logo
   (`#admin-versione`, `.admin-versione`) e, sotto 900 px, accanto al pulsante del menu (`.admin-versione-tel`). Nel banner
   `#db-ufficiale` di `admin/index.php`, dopo il link al sito ufficiale, `#db-nuova` ("Nuova versione disponibile v. x.x.x", acceso

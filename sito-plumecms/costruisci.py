@@ -633,6 +633,7 @@ def zip_lavagna(dest):
 
 # Le novità per chi scarica: brevi, scritte qui (il CHANGELOG è per chi sviluppa). Da aggiornare a ogni versione.
 NOVITA = [
+    ('2.3.1', 'Scarica sempre l\'ultima', ['Il pulsante Scarica l\'aggiornamento (e ogni link "sempre l\'ultima" del download manager) porta subito alla versione appena caricata: prima il browser poteva ridare per un\'ora quella di prima.']),
     ('2.3.0', 'Installa ora', ['La versione installata è sempre in alto a sinistra del pannello. Quando ne esce una nuova, la dashboard scrive Nuova versione disponibile e accanto c\'è Installa ora: un clic e il pannello la scarica, la controlla e la installa, con la copia di sicurezza prima.']),
     ('2.2.0', 'Scegli dal sito', ['Accanto a ogni campo link del pannello, Scegli dal sito: scrivi due lettere del titolo, scegli la pagina o l\'articolo, e il link entra da solo. Nell\'editor, nei testi, nel menu, nei popup, nei form, nella newsletter e nella SEO.',
                                      'Controlla il server prova anche Google Search Console e IndexNow dal tuo hosting; un certificato HTTPS che non va si dice per nome. Il manuale d\'uso pesa 1 MB in meno.']),

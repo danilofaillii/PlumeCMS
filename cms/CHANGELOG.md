@@ -2,6 +2,14 @@
 
 Il prodotto si chiama **plumeCMS** (nome scelto il 26 ottobre 2026; prima, per poche ore, "CarbonaraCMS", e ancora prima il provvisorio "Officina": gli zip vecchi si chiamavano `officina-*` e `carbonaracms-*`).
 
+## 2.3.1 (1 novembre 2026) - Il pulsante "Scarica l'aggiornamento" dà sempre l'ultima
+
+- **Corretto** (segnalazione di Danilo): dopo aver caricato la 2.3.0, il pulsante "Scarica l'aggiornamento" del sito di plumeCMS
+  dava ancora la 2.2.0. L'indirizzo che porta sempre all'ultima versione (`/scarica/plumecms-ultima-aggiornamento/`) mandava il
+  file dicendo al browser di tenerlo per un'ora: chi l'aveva scaricato da poco riceveva la copia vecchia. Ora quell'indirizzo
+  rimanda, senza farsi ricordare, all'indirizzo della versione precisa (`/scarica/plumecms-2.3.1-aggiornamento/`). Vale per ogni
+  file con le versioni nel nome, in Download.
+
 ## 2.3.0 (31 ottobre 2026) - La versione sempre in vista, e Installa ora
 
 - **La versione installata sempre in alto a sinistra** del pannello, accanto al nome (per esempio "v. 2.3.0"), in ogni pagina.

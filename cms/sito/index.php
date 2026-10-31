@@ -190,6 +190,14 @@ try {
     }
 
     // File da scaricare (1.2.3): /scarica/<nome>/ manda uploads/scaricabili/<nome>.zip o .pdf; se non c'è, 404 come le altre pagine.
+    // 2.3.1: l'indirizzo di una serie (/scarica/plumecms-ultima-aggiornamento/) rimanda con un 302 senza memoria all'indirizzo della
+    // versione (/scarica/plumecms-2.3.0-aggiornamento/): prima mandava il file con "public, max-age=3600" e il browser, per un'ora,
+    // ridava la versione di prima anche dopo che ne era stata caricata una nuova.
+    if (preg_match('~^/scarica/([a-z0-9][a-z0-9._-]{0,120})/?$~', $percorso, $sc) && !isset($_GET['k'])) {
+        require_once dirname(__DIR__) . '/includes/scaricabili.php';
+        $serieX = scaricabili_leggi($sc[1]);
+        if ($serieX && $serieX['nome'] !== $sc[1]) { header('Cache-Control: no-store'); sito_vai('/scarica/' . $serieX['nome'] . '/', 302); }
+    }
     if (preg_match('~^/scarica/([a-z0-9][a-z0-9._-]{0,120})/?$~', $percorso, $sc) && ($file = sito_scaricabile($sc[1]))) {
         sito_manda_scaricabile($file);
         exit;
