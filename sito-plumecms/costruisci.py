@@ -146,7 +146,7 @@ def home():
                     {'titolo': 'Scarichi lo zip', 'testo': 'Un file solo, poco più di un megabyte. Dentro c\'è tutto: niente da installare a parte.'},
                     {'titolo': 'Lo carichi sul server', 'testo': 'Nella radice del sito o in una cartella, con il gestore dei file del tuo hosting. Basta un hosting con PHP 8.2 e MySQL.'},
                     {'titolo': 'Apri il browser', 'testo': 'L\'installatore ti fa cinque domande: database, nome del sito, il tuo utente. Due minuti, caffè compreso.'},
-                    {'titolo': 'Scegli il vestito', 'testo': 'Tre temi pronti: Cosmo, Aria, Bottega. Un clic e il sito cambia aspetto. I tuoi testi restano dove sono.'},
+                    {'titolo': 'Scegli il vestito', 'testo': 'Undici temi pronti: Cosmo, Aria, Bottega, le quattro stagioni e quattro tinte piene. Un clic e il sito cambia aspetto. I tuoi testi restano dove sono.'},
                     {'titolo': 'Scrivi e pubblica', 'testo': 'Trascini sezioni, colonne e widget, guardi l\'anteprima, premi Pubblica. Se sbagli, torni indietro: ogni modifica resta nelle versioni.'}]),
                 pulsanti(('Guarda l\'installatore, passo per passo', '/installazione/#passi', 'filo'), centro=True)]],
               **spazi(48, 72))
@@ -318,7 +318,22 @@ def temi():
     t = [('tema-cosmo.webp', 'Cosmo', 'Notte profonda, viola e ciano, titoli che brillano. L\'aspetto di nascita di plumeCMS.'),
          ('tema-aria.webp', 'Aria', 'Chiaro, pulito, un solo blu. Per chi vuole che parlino i contenuti.'),
          ('tema-bottega.webp', 'Bottega', 'Carta crema, titoli con le grazie, terracotta e salvia. Caldo come un laboratorio artigiano.')]
-    p.sezione([[immagine(img, 'Il tema ' + n + ' di plumeCMS'), titolo(n, livello='h3'), ricco(d)] for img, n, d in t], **spazi(24, 72))
+    p.sezione([[immagine(img, 'Il tema ' + n + ' di plumeCMS'), titolo(n, livello='h3'), ricco(d)] for img, n, d in t], **spazi(24, 48))
+    stagioni = [('tema-estate.webp', 'Estate', 'Sabbia chiara, corallo e blu del largo, pulsanti a pillola e un\'onda sopra il piede.'),
+                ('tema-inverno.webp', 'Inverno', 'Bianco ghiaccio con un velo di brina, blu profondo, titoli sottili.'),
+                ('tema-autunno.webp', 'Autunno', 'Castagna scura, zucca e ocra, titoli con le grazie. Caldo come un camino acceso.'),
+                ('tema-primavera.webp', 'Primavera', 'Bianco verdino, rosa pesco e verde foglia, titoli in corsivo, forme tonde.')]
+    p.sezione([[titolo('Le quattro stagioni.', 'Novità della 2.5.0', 'Quattro temi, uno per stagione: il sito cambia aria quando cambia il tempo.', centro=True)]],
+              larghezza='stretta', **spazi(48, 16))
+    p.sezione([[immagine(img, 'Il tema ' + n + ' di plumeCMS'), titolo(n, livello='h3'), ricco(d)] for img, n, d in stagioni], **spazi(16, 48))
+    tinte = [('tema-giallo.webp', 'Giallo', 'Sfondo 255, 255, 0. Testo nero, righe nette, pulsanti neri a lettere gialle.'),
+             ('tema-rosso.webp', 'Rosso', 'Sfondo 255, 0, 0. Testo nero, titoli in maiuscolo, pulsanti bianchi e neri.'),
+             ('tema-verde.webp', 'Verde', 'Sfondo 0, 255, 0. Testo nero, titoli a spaziatura fissa, pulsanti neri a lettere verdi.'),
+             ('tema-blu.webp', 'Blu', 'Sfondo 0, 0, 255. Testo bianco, titoli con le grazie, pulsanti gialli.')]
+    p.sezione([[titolo('Le tinte piene.', 'Per chi non passa inosservato',
+                       'Un colore solo, pieno, dal bordo al bordo. Il testo resta leggibile ovunque: ogni scritta è misurata, almeno 4,5 a 1.', centro=True)]],
+              larghezza='stretta', **spazi(48, 16))
+    p.sezione([[immagine(img, 'Il tema ' + n + ' di plumeCMS'), titolo(n, livello='h3'), ricco(d)] for img, n, d in tinte], **spazi(16, 72))
     p.sezione([(50, [titolo('Fatti il tuo tema.', 'Per chi disegna',
                              'Un tema è una cartella con qualche file: i colori in un JSON, header e footer, un po\' di CSS. Il PHP è facoltativo.'),
                      ricco('Il manuale dei temi ti accompagna dal foglio bianco al tema attivo, file per file. Alla fine c\'è un tema completo, '
@@ -329,8 +344,8 @@ def temi():
                (50, [immagine('temi.webp', 'La pagina Temi del pannello di plumeCMS')])],
               allineamento_verticale='center', **tinta(), **spazi(72, 72))
     return dict(slug='temi', titolo='Temi', struttura=p.albero(),
-                seo_titolo='Temi di plumeCMS: Cosmo, Aria, Bottega e il tuo',
-                seo_descrizione='I temi di plumeCMS cambiano l\'aspetto del sito senza toccare i contenuti. Tre temi pronti e un manuale per costruire il tuo.')
+                seo_titolo='Temi di plumeCMS: undici pronti e il tuo',
+                seo_descrizione='I temi di plumeCMS cambiano l\'aspetto del sito senza toccare i contenuti. Undici temi pronti (Cosmo, Aria, Bottega, le quattro stagioni, giallo, rosso, verde e blu) e un manuale per costruire il tuo.')
 
 
 def documentazione(pagine_pdf):
@@ -588,7 +603,8 @@ def editor_json():
 
 # ------------------------------------------------------------------ file
 USATE = ['copertina', 'installa-ora', 'scegli-sito', 'consegna', 'widget-2-1', 'scegli-media', 'addon', 'su-misura', 'firma', 'widget-attivita', 'social', 'fine-articolo', 'importa-wp', 'tipo-sito', 'primi-passi', 'aspetti', 'controlla-server', 'sezioni', 'copia', 'installa-1', 'installa-2', 'installa-3', 'installa-4', 'installa-5', 'editor-ritratto', 'editor', 'aperture', 'stile', 'modelli', 'versioni', 'seo', 'flussi', 'download', 'sicurezza', 'aggiornamenti', 'temi',
-         'tema-cosmo', 'tema-aria', 'tema-bottega']
+         'tema-cosmo', 'tema-aria', 'tema-bottega',
+         'tema-estate', 'tema-inverno', 'tema-autunno', 'tema-primavera', 'tema-giallo', 'tema-rosso', 'tema-verde', 'tema-blu']
 
 
 def immagini_da_schermate(cartella):

@@ -1043,12 +1043,19 @@ Ogni tema ha una scheda con l'anteprima e quattro pulsanti:
 - **Elimina** lo toglie.
 
 In alto: **Scarica l'aspetto di adesso come tema** salva il tuo stile come tema; **Carica un tema** installa uno zip.
-Tre temi sono già dentro: **Aria** (chiaro e pulito), **Bottega** (caldo, artigiano), **Cosmo** (scuro, con il viola e
-il ciano). Per costruirne uno tuo c'è il **Manuale dei temi**.
+Undici temi sono già dentro:
+
+- **Aria** (chiaro e pulito), **Bottega** (caldo, artigiano), **Cosmo** (scuro, con il viola e il ciano);
+- le quattro stagioni: **Estate** (sabbia, corallo e blu del largo), **Inverno** (bianco ghiaccio e blu profondo),
+  **Autunno** (scuro, castagna, zucca e ocra), **Primavera** (bianco verdino, rosa pesco e verde foglia);
+- le tinte piene: **Giallo**, **Rosso** e **Verde** (sfondo pieno, testo nero) e **Blu** (sfondo pieno, testo bianco).
+  Su tutti e quattro le scritte sono misurate per leggersi bene.
+
+Per costruirne uno tuo c'è il **Manuale dei temi**.
 
 **Checklist**
 
-- [ ] Ho guardato i tre temi in Anteprima.
+- [ ] Ho guardato in Anteprima i temi che mi interessano.
 - [ ] Dopo aver attivato un tema ho ritoccato Stile del sito con i miei colori.
 
 **Se qualcosa non va**
@@ -2065,7 +2072,7 @@ copia (una foto caricata dopo, un tema provato e poi tolto) **restavano**. Dalla
 **Vuoi il comportamento di prima?** Prima di ripristinare spunta **Tieni i file in più**: i file che non sono nella copia
 restano dove sono.
 
-Non si spostano mai: i file nascosti (come `.htaccess`) e i temi che arrivano con plumeCMS (Cosmo, Aria, Bottega).
+Non si spostano mai: i file nascosti (come `.htaccess`) e i temi che arrivano con plumeCMS (Cosmo, Aria, Bottega e gli otto della 2.5.0).
 
 **Due siti nello stesso database.** Se sullo stesso database ci sono due installazioni con prefissi che cominciano uguale
 (per esempio `cms_` e `cms_b_`), la copia di una non prende più le tabelle dell'altra, e il ripristino non le tocca mai.
