@@ -7,7 +7,8 @@
  * si toglie (a meno di "tienila anche qui"). Sulla destinazione restano le ultime N copie "altrove" (mai altri file).
  *
  * Destinazioni: FTP e FTPS (estensione ftp di PHP), SFTP (solo se c'è l'estensione ssh2, altrimenti si dice che manca),
- * WebDAV con curl (Nextcloud, ownCloud e gli spazi cloud che parlano WebDAV). Google Drive e Dropbox no (vedi la doc).
+ * WebDAV con curl (Nextcloud, ownCloud e gli spazi cloud che parlano WebDAV); dalla 2.1 Google Drive e Dropbox con OAuth 2
+ * (includes/cloud.php: collegamento, rinnovo dell'accesso, caricamento a pezzi).
  *
  * Credenziali: nell'impostazione copia_altrove_cfg; la password cifrata con sodium (secretbox), chiave derivata da
  * moduli_segreto() e da CMS_SEGRETO del config.local.php (che non entra nella copia del sito). Non si mostra mai più.
@@ -23,8 +24,8 @@
 require_once dirname(__DIR__, 3) . '/includes/copia-sito.php';
 require_once dirname(__DIR__, 3) . '/includes/moduli.php';
 
-const COPIA_ALTROVE_TIPI = ['ftp' => 'FTP', 'ftps' => 'FTPS (FTP cifrato)', 'sftp' => 'SFTP', 'webdav' => 'WebDAV (Nextcloud e molti spazi cloud)'];
-const COPIA_ALTROVE_PORTE = ['ftp' => 21, 'ftps' => 21, 'sftp' => 22, 'webdav' => 443];
+const COPIA_ALTROVE_TIPI = ['gdrive' => 'Google Drive', 'dropbox' => 'Dropbox', 'ftp' => 'FTP', 'ftps' => 'FTPS (FTP cifrato)', 'sftp' => 'SFTP', 'webdav' => 'WebDAV (Nextcloud e molti spazi cloud)'];
+const COPIA_ALTROVE_PORTE = ['gdrive' => 443, 'dropbox' => 443, 'ftp' => 21, 'ftps' => 21, 'sftp' => 22, 'webdav' => 443];
 const COPIA_ALTROVE_ETICHETTA = 'altrove';
 const COPIA_ALTROVE_TIMEOUT = 30;
 
@@ -66,7 +67,7 @@ function copia_altrove_admin_url(array $q = []): string {
 function copia_altrove_cfg(): array {
     $c = json_decode((string)get_setting('copia_altrove_cfg', ''), true);
     $c = is_array($c) ? $c : [];
-    $tipo = isset(COPIA_ALTROVE_TIPI[$c['tipo'] ?? '']) ? $c['tipo'] : 'ftps';
+    $tipo = isset(COPIA_ALTROVE_TIPI[$c['tipo'] ?? '']) ? $c['tipo'] : 'gdrive';
     return [
         'tipo' => $tipo,
         'host' => (string)($c['host'] ?? ''),
@@ -79,7 +80,15 @@ function copia_altrove_cfg(): array {
         'attivo' => !empty($c['attivo']),
         'tieni_locale' => !empty($c['tieni_locale']),
         'sftp_impronta' => (string)($c['sftp_impronta'] ?? ''),
+        // 2.1: Google Drive e Dropbox (includes/cloud.php, copia_altrove_oauth()): app, token cifrati, account.
+        'oauth' => is_array($c['oauth'] ?? null) ? $c['oauth'] : [],
     ];
+}
+
+/** La destinazione è pronta per un invio? (FTP e SFTP: il server; WebDAV: l'indirizzo; Drive e Dropbox: collegati) */
+function copia_altrove_configurata(array $c): bool {
+    if (copia_altrove_e_cloud($c['tipo'])) return copia_altrove_collegato($c, $c['tipo']);
+    return $c['tipo'] === 'webdav' ? $c['url'] !== '' : $c['host'] !== '';
 }
 
 function copia_altrove_cfg_scrivi(array $c): void {
@@ -117,7 +126,11 @@ function copia_altrove_salva(array $p): void {
     if (!isset(COPIA_ALTROVE_TIPI[$tipo])) throw new CopiaAltroveErrore('Scegli il tipo di destinazione.');
     $nuovo = $c;
     $nuovo['tipo'] = $tipo;
-    if ($tipo === 'webdav') {
+    if (copia_altrove_e_cloud($tipo)) {
+        // 2.1: Google Drive e Dropbox: niente server da scrivere, l'app (ID e segreto) del servizio.
+        $nuovo['host'] = ''; $nuovo['porta'] = 443; $nuovo['url'] = '';
+        copia_altrove_cloud_salva($nuovo, $p, $tipo);
+    } elseif ($tipo === 'webdav') {
         $url = trim((string)($p['url'] ?? ''));
         $o = parse_url($url);
         if (!$o || !in_array(strtolower((string)($o['scheme'] ?? '')), ['http', 'https'], true) || empty($o['host'])) throw new CopiaAltroveErrore('Scrivi l\'indirizzo WebDAV completo, per esempio https://cloud.esempio.it/remote.php/dav/files/mario/');
@@ -136,6 +149,7 @@ function copia_altrove_salva(array $p): void {
     $cart = trim((string)($p['cartella'] ?? ''), " \t");
     if ($cart !== '' && (!preg_match('~^[A-Za-z0-9._/ -]{1,200}$~', $cart) || preg_match('~(^|/)\.\.(/|$)~', $cart))) throw new CopiaAltroveErrore('La cartella può avere lettere, numeri, punti, trattini e barre (niente "..").');
     $nuovo['cartella'] = trim($cart, '/');
+    if (copia_altrove_e_cloud($tipo) && $nuovo['cartella'] === '') $nuovo['cartella'] = 'copie-del-sito';
     $utente = trim((string)($p['utente'] ?? ''));
     if (strlen($utente) > 190 || preg_match('/[\r\n\0]/', $utente)) throw new CopiaAltroveErrore('Il nome utente non va bene.');
     $nuovo['utente'] = $utente;
@@ -155,14 +169,20 @@ function copia_altrove_salva(array $p): void {
 
 /** La destinazione in parole: "FTPS ftp.esempio.it:21, cartella backup". Mai la password. */
 function copia_altrove_descrivi(array $c): string {
-    if ($c['host'] === '') return 'nessuna destinazione';
+    if (copia_altrove_e_cloud($c['tipo'])) {
+        $o = copia_altrove_oauth($c, $c['tipo']);
+        if ($o['refresh'] === '') return COPIA_ALTROVE_TIPI[$c['tipo']] . ', non ancora collegato';
+        return COPIA_ALTROVE_TIPI[$c['tipo']] . ($o['account'] !== '' ? ' di ' . $o['account'] : '') . ', cartella ' . ($c['tipo'] === 'dropbox' ? 'Applicazioni/(la tua app)/' : '') . $c['cartella'];
+    }
+    if (!copia_altrove_configurata($c)) return 'nessuna destinazione';
     if ($c['tipo'] === 'webdav') return 'WebDAV ' . $c['url'];
     return COPIA_ALTROVE_TIPI[$c['tipo']] . ' ' . $c['host'] . ':' . $c['porta'] . ($c['cartella'] !== '' ? ', cartella ' . $c['cartella'] : '');
 }
 
 /** Le estensioni di PHP che servono, per tipo: ['ftp' => true, ...]. */
 function copia_altrove_disponibili(): array {
-    return ['ftp' => function_exists('ftp_connect'), 'ftps' => function_exists('ftp_ssl_connect'), 'sftp' => function_exists('ssh2_connect'), 'webdav' => function_exists('curl_init')];
+    return ['gdrive' => function_exists('curl_init') && function_exists('sodium_crypto_secretbox'), 'dropbox' => function_exists('curl_init') && function_exists('sodium_crypto_secretbox'),
+        'ftp' => function_exists('ftp_connect'), 'ftps' => function_exists('ftp_ssl_connect'), 'sftp' => function_exists('ssh2_connect'), 'webdav' => function_exists('curl_init')];
 }
 
 // ------------------------------------------------------------
@@ -215,8 +235,14 @@ function copia_altrove_ip(string $host, int $porta): string {
 
 /** Una connessione aperta. Ritorna un oggetto con i metodi carica(locale, nome), elenco(), elimina(nome), scrivi(nome, testo), chiudi(). */
 function copia_altrove_apri(array $c): object {
-    if ($c['host'] === '') throw new CopiaAltroveErrore('Prima scrivi la destinazione e salva.');
     $disp = copia_altrove_disponibili();
+    if (copia_altrove_e_cloud($c['tipo'])) {
+        // 2.1: Google Drive e Dropbox (includes/cloud.php). Gli host sono fissi: niente controllo SSRF da fare.
+        if (empty($disp[$c['tipo']])) throw new CopiaAltroveErrore('Su questo server manca l\'estensione curl (o sodium) di PHP, che serve per ' . COPIA_ALTROVE_TIPI[$c['tipo']] . '.');
+        if (!copia_altrove_collegato($c, $c['tipo'])) throw new CopiaAltroveErrore(COPIA_ALTROVE_TIPI[$c['tipo']] . ' non è ancora collegato: scrivi ID e segreto dell\'app e premi "Salva e collega".');
+        return $c['tipo'] === 'gdrive' ? new CopiaAltroveGdrive($c) : new CopiaAltroveDropbox($c);
+    }
+    if (!copia_altrove_configurata($c)) throw new CopiaAltroveErrore('Prima scrivi la destinazione e salva.');
     if (empty($disp[$c['tipo']])) {
         throw new CopiaAltroveErrore(match ($c['tipo']) {
             'sftp' => 'Su questo server manca l\'estensione ssh2 di PHP, che serve per SFTP: SFTP non si può usare. Scegli FTPS o WebDAV, oppure chiedi al tuo hosting di attivare ssh2.',
@@ -457,7 +483,7 @@ function copia_altrove_peso(int $b): string {
 function copia_altrove_notte(): string {
     $c = copia_altrove_cfg();
     if (!$c['attivo']) return 'spenta (si accende nella pagina Copia altrove)';
-    if ($c['host'] === '') return 'nessuna destinazione';
+    if (!copia_altrove_configurata($c) && !copia_altrove_e_cloud($c['tipo'])) return 'nessuna destinazione';
     try {
         return copia_altrove_invia('notte');
     } catch (Throwable $e) {
@@ -468,3 +494,5 @@ function copia_altrove_notte(): string {
         throw $e;
     }
 }
+
+require_once __DIR__ . '/cloud.php'; // 2.1: Google Drive e Dropbox

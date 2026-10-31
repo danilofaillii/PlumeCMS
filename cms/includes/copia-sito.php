@@ -128,14 +128,24 @@ function copia_file_di(string $nome): array {
  */
 function copia_tabelle_del_prefisso(array $tutte, string $p): array {
     $mie = array_values(array_filter(array_map('strval', $tutte), fn($t) => $p !== '' && str_starts_with($t, $p)));
+    $altri = copia_altri_prefissi($mie, $p);
+    return array_values(array_filter($mie, fn($t) => !copia_di_altri($t, $altri)));
+}
+
+/** (2.1) I prefissi più lunghi di $p che fra $tutte hanno settings e users: altre installazioni nello stesso database. */
+function copia_altri_prefissi(array $tutte, string $p): array {
+    $tutte = array_map('strval', $tutte);
     $altri = [];
-    foreach ($mie as $t) {
-        if (preg_match('/^(.+_)settings$/', $t, $m) && strlen($m[1]) > strlen($p) && in_array($m[1] . 'users', $mie, true)) $altri[] = $m[1];
+    foreach ($tutte as $t) {
+        if ($p !== '' && str_starts_with($t, $p) && preg_match('/^(.+_)settings$/', $t, $m) && strlen($m[1]) > strlen($p) && in_array($m[1] . 'users', $tutte, true)) $altri[] = $m[1];
     }
-    return array_values(array_filter($mie, function ($t) use ($altri) {
-        foreach ($altri as $q) if (str_starts_with($t, $q)) return false;
-        return true;
-    }));
+    return array_values(array_unique($altri));
+}
+
+/** (2.1) La tabella $t comincia con uno dei prefissi di $altri? */
+function copia_di_altri(string $t, array $altri): bool {
+    foreach ($altri as $q) if (str_starts_with($t, $q)) return true;
+    return false;
 }
 
 /** (2.1) Le tabelle vere (non le viste) di questa installazione, con il loro nome intero. */
@@ -302,6 +312,9 @@ function copia_ripristina_db(string $gzPath, string $prefissoCopia, ?array $suff
         $suffissi = array_map(fn($t) => substr($t, strlen($prefissoCopia)), copia_tabelle_del_prefisso($nomi, $prefissoCopia));
     }
     $ammesse = array_flip(array_map('strval', $suffissi));
+    // E mai una tabella di un'altra installazione che sta in questo database (cms_b_ accanto a cms_), qualunque cosa dica la
+    // copia: una copia caricata con un elenco inventato ("b_settings") non arriva alle tabelle dell'altro sito.
+    $altriQui = copia_altri_prefissi(array_map(fn($r) => (string)$r[0], $pdo->query('SHOW TABLES')->fetchAll(PDO::FETCH_NUM)), DB_PREFIX);
     $gz = gzopen($gzPath, 'rb');
     if (!$gz) throw new RuntimeException('Il database della copia non si legge.');
     $p = preg_quote($prefissoCopia, '~');
@@ -317,7 +330,7 @@ function copia_ripristina_db(string $gzPath, string $prefissoCopia, ?array $suff
         // sicurezza: solo queste tre forme, su una tabella del prefisso della copia (nome semplice fra apici inversi).
         if (!preg_match('~^(DROP TABLE IF EXISTS |CREATE TABLE |INSERT INTO )`' . $p . '([a-z0-9_]{1,60})`~', $riga, $m)) { $saltate++; continue; }
         // 2.1: una tabella di un'altra installazione (prefisso più lungo) che una copia vecchia si era portata dietro.
-        if (!isset($ammesse[$m[2]])) { $altre++; continue; }
+        if (!isset($ammesse[$m[2]]) || copia_di_altri($nostro . $m[2], $altriQui)) { $altre++; continue; }
         // Una riga, una istruzione: un secondo comando dopo un ";" (fuori dalle stringhe) fa saltare la riga intera.
         // E solo la forma che scrive agg_dump_db: CREATE TABLE con le colonne (non "AS SELECT" ne "LIKE"), INSERT con VALUES.
         $forma = match ($m[1]) {

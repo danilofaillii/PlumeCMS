@@ -41,6 +41,18 @@ let br;
   await v0.goto(B + '/chi-siamo/', { waitUntil: 'networkidle' });
   const rigaChi = (await v0.locator('main').innerText()).split('\n').map(x => x.trim()).filter(x => x.length > 60)[0] || '@@';
   ok('prima dell\'addon: /accedi/ non esiste (404)', (await v0.request.get(B + '/accedi/')).status() === 404);
+  // 2.1: i titoli e gli elenchi pubblici prima (ricerca, sitemap, feed, llms.txt), per vedere dopo che i riservati spariscono.
+  const php = codice => execFileSync('php', ['-r', `$_SERVER['HTTP_HOST']='127.0.0.1'; require '${DIR}/includes/config.php'; ${codice}`], { encoding: 'utf8' });
+  const slugA = articolo.replace(/\//g, '');
+  const tit = JSON.parse(php(`echo json_encode(['chi' => db()->query("SELECT title FROM " . tbl('pages') . " WHERE slug = 'chi-siamo'")->fetchColumn(), 'servizi' => db()->query("SELECT title FROM " . tbl('pages') . " WHERE slug = 'servizi'")->fetchColumn(), 'art' => db()->query("SELECT title FROM " . tbl('articles') . " WHERE slug = " . db()->quote('${slugA}'))->fetchColumn()]);`));
+  const elenchi = async ctx => {
+    const g = async u => (await ctx.request.get(B + u)).text();
+    return { sitemap: await g('/sitemap.xml'), feed: await g('/feed/'), llms: await g('/llms.txt'), cercaChi: await g('/?s=' + encodeURIComponent(tit.chi)), cercaArt: await g('/?s=' + encodeURIComponent(tit.art)), cercaServizi: await g('/?s=' + encodeURIComponent(tit.servizi)) };
+  };
+  const e0 = await elenchi(v0);
+  ok('prima: Chi siamo, Servizi e l\'articolo sono nella sitemap, nella ricerca e in llms.txt; l\'articolo nel feed',
+    ['/chi-siamo/', '/servizi/', articolo].every(u => e0.sitemap.includes(u + '<') || e0.sitemap.includes(u + '</loc>')) && e0.cercaChi.includes('href="' + BASEP + '/chi-siamo/"') && e0.cercaArt.includes(articolo + '"')
+    && e0.cercaServizi.includes('/servizi/"') && e0.feed.includes(articolo) && e0.llms.includes('/chi-siamo/') && e0.llms.includes(articolo), tit);
 
   // 1. Accendere l'addon.
   const f1 = await addon(a, B, 'membri', true);
@@ -57,6 +69,31 @@ let br;
   await Promise.all([a.waitForNavigation(), a.click('#mr-contenuti button[type=submit]')]);
   ok('Contenuti riservati: Chi siamo e l\'articolo salvati', /2 contenuti sono solo per i membri/.test(await a.locator('.flash').first().innerText()));
   ok('la home non si può rendere riservata', await a.locator('label.mr-voce input[disabled]').count() === 1);
+  // 2b. (2.1) Dalla scheda del contenuto: il riquadro "Area riservata".
+  const idPag = s => php(`echo db()->query("SELECT id FROM " . tbl('pages') . " WHERE slug = '${s}'")->fetchColumn();`).trim();
+  await vaiA('/admin/contenuto.php?tipo=pagine&id=' + idPag('chi-siamo'));
+  ok('scheda di Chi siamo: il riquadro "Area riservata" con "Solo per i membri" già spuntato (scelto dalla pagina Membri)', await a.locator('#membri-scheda').count() === 1 && await a.locator('#membri-riservato').isChecked());
+  await vaiA('/admin/contenuto.php?tipo=pagine&id=' + idPag('servizi'));
+  ok('scheda di Servizi: la spunta c\'è e non è messa', await a.locator('#membri-riservato').count() === 1 && !(await a.locator('#membri-riservato').isChecked()));
+  await a.check('#membri-riservato');
+  await Promise.all([a.waitForNavigation(), a.click('#sc-form button[data-valore=pubblica]')]);
+  ok('Servizi riservata dalla scheda: dopo Aggiorna la spunta resta', /aggiornat/i.test(await a.locator('.flash').first().innerText()) && await a.locator('#membri-riservato').isChecked());
+  await vaiA('/admin/' + MEMBRI + 'riservati');
+  ok('e la pagina Membri > Contenuti e file riservati la mostra spuntata', await a.locator('label.mr-voce', { hasText: '/servizi/' }).locator('input').isChecked());
+  const home = php("echo get_setting('pagina_home');").trim();
+  await vaiA('/admin/contenuto.php?tipo=pagine&id=' + idPag(home));
+  ok('scheda della home: la spunta è spenta ("La home resta di tutti")', await a.locator('#membri-riservato').isDisabled() && /La home resta di tutti/.test(await a.locator('#membri-scheda').innerText()));
+  await vaiA('/admin/contenuto.php?tipo=articoli&id=' + php(`echo db()->query("SELECT id FROM " . tbl('articles') . " WHERE slug = " . db()->quote('${slugA}'))->fetchColumn();`).trim());
+  ok('scheda dell\'articolo: riservato (scelto dalla pagina Membri)', await a.locator('#membri-riservato').isChecked());
+  // Togliere la spunta dalla scheda e rimetterla: torna pubblico, poi di nuovo riservato.
+  await vaiA('/admin/contenuto.php?tipo=pagine&id=' + idPag('servizi'));
+  await a.uncheck('#membri-riservato');
+  await Promise.all([a.waitForNavigation(), a.click('#sc-form button[data-valore=pubblica]')]);
+  const aperta = (await (await v0.request.get(B + '/servizi/')).text());
+  await a.check('#membri-riservato');
+  await Promise.all([a.waitForNavigation(), a.click('#sc-form button[data-valore=pubblica]')]);
+  const chiusa = (await (await v0.request.get(B + '/servizi/')).text());
+  ok('spunta tolta dalla scheda: Servizi è di tutti; rimessa: di nuovo solo per i membri', !/data-membri-chiuso/.test(aperta) && /data-membri-chiuso/.test(chiusa));
 
   // 3. Il visitatore senza account.
   const v = await pagina(br, err);
@@ -69,6 +106,13 @@ let br;
   ok('l\'articolo riservato, da fuori: chiuso anche lui', /solo per i membri/i.test(await v.locator('main').innerText()));
   const llms = await (await v.request.get(B + '/llms-full.txt')).text();
   ok('llms-full.txt non ha il testo di Chi siamo', !llms.includes(rigaChi.slice(0, 50)));
+  // 2.1: fuori dagli elenchi pubblici, titolo e riassunto compresi.
+  const e1 = await elenchi(v);
+  ok('da fuori: la ricerca non trova i contenuti riservati nemmeno per titolo (Chi siamo, Servizi, l\'articolo)', !e1.cercaChi.includes('/chi-siamo/"') && !e1.cercaServizi.includes('/servizi/"') && !e1.cercaArt.includes(articolo + '"'));
+  ok('da fuori: la sitemap non elenca i contenuti riservati', !e1.sitemap.includes('/chi-siamo/') && !e1.sitemap.includes('/servizi/') && !e1.sitemap.includes(articolo), e1.sitemap.length);
+  ok('da fuori: il feed RSS non ha l\'articolo riservato (né titolo né riassunto)', !e1.feed.includes(articolo) && !e1.feed.includes(tit.art));
+  ok('da fuori: llms.txt non elenca i contenuti riservati', !e1.llms.includes('/chi-siamo/') && !e1.llms.includes('/servizi/') && !e1.llms.includes(articolo) && !e1.llms.includes(tit.art));
+  ok('da fuori: llms-full.txt non ha l\'articolo riservato', !llms.includes(articolo) && !llms.includes('## ' + tit.art));
   r = await vai('/area-riservata/');
   ok('/area-riservata/ da fuori porta a /accedi/ con il ritorno', /\/accedi\/\?m=entra&torna=/.test(v.url()) && /entra con la tua email/.test(await v.locator('.membri-ok').innerText()));
 
@@ -108,6 +152,12 @@ let br;
   ok('l\'area riservata elenca i contenuti per i membri', await v.locator('.membri-lista a[href$="/chi-siamo/"]').count() === 1);
   await v.goto(linkConferma, { waitUntil: 'networkidle' });
   ok('il link di conferma vale una volta sola', /non vale più/.test(await v.locator('h1').innerText()));
+  // 2.1: il membro collegato trova i riservati nella ricerca (risposta privata, non in cache); gli elenchi pubblici restano senza.
+  const rc = await v.request.get(B + '/?s=' + encodeURIComponent(tit.chi));
+  const e2 = await elenchi(v);
+  ok('da membro: la ricerca trova Chi siamo, Servizi e l\'articolo riservati', (await rc.text()).includes('/chi-siamo/"') && e2.cercaServizi.includes('/servizi/"') && e2.cercaArt.includes(articolo + '"'));
+  ok('da membro: la pagina dei risultati è privata (Cache-Control private, no-store)', /private/.test(rc.headers()['cache-control'] || '') && /no-store/.test(rc.headers()['cache-control'] || ''), rc.headers()['cache-control']);
+  ok('da membro: sitemap, feed e llms.txt restano senza i riservati', !e2.sitemap.includes('/chi-siamo/') && !e2.feed.includes(articolo) && !e2.llms.includes('/servizi/'));
   r = await vai('/chi-siamo/');
   ok('Chi siamo, da membro: il testo intero', !/solo per i membri/i.test(await v.locator('main').innerText()) && /private, no-store/.test(r.headers()['cache-control'] || ''));
   const cookie = (await v.context().cookies()).find(c => /^membri_[a-f0-9]{8}$/.test(c.name));
