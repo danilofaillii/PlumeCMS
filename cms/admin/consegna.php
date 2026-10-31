@@ -172,7 +172,7 @@ require_once __DIR__ . '/includes/admin-header.php';
 .ce-passi li{display:flex;gap:.9rem;align-items:flex-start;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:.9rem 1rem}
 .ce-num{flex:0 0 2rem;height:2rem;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;background:var(--fondo-2)}
 .ce-passi li > div{min-width:0;flex:1}
-.ce-passi b{display:block;margin-bottom:.15rem}
+.ce-passi li > div > b{display:block;margin-bottom:.15rem}
 .ce-passi p{margin:.15rem 0 .4rem;font-size:.88rem;color:var(--text-muted)}
 .ce-stato{display:inline-block;font-size:.75rem;font-weight:700;padding:.15rem .55rem;border-radius:999px;margin-left:.35rem;vertical-align:middle}
 .ce-ok{background:var(--sage-light);color:var(--successo-testo)}
@@ -183,8 +183,9 @@ require_once __DIR__ . '/includes/admin-header.php';
 .ce-voce p{margin:.2rem 0 .5rem;font-size:.9rem}
 .ce-record{display:grid;grid-template-columns:auto minmax(0,1fr);gap:.35rem .75rem;align-items:center;background:var(--fondo-2);border-radius:8px;padding:.7rem;margin:.5rem 0}
 .ce-record span{font-size:.8rem;color:var(--text-muted)}
-.ce-record input,.ce-copia{width:100%;min-width:0;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:.85rem}
-.ce-copia{min-height:8rem}
+.ce-record input,.ce-record textarea,.ce-copia{width:100%;min-width:0;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:.85rem;padding:.4rem .55rem;border:1px solid var(--border);border-radius:6px;background:var(--campo);color:var(--text);cursor:copy}
+.ce-record textarea{resize:vertical;overflow-wrap:anywhere;line-height:1.4}
+.ce-copia{min-height:13rem;line-height:1.45}
 .ce-trovato{font-size:.8rem;color:var(--text-muted);overflow-wrap:anywhere}
 .ce-trovato code{white-space:normal;overflow-wrap:anywhere}
 .ce-dove{font-size:.82rem;color:var(--text-muted)}
@@ -260,7 +261,7 @@ require_once __DIR__ . '/includes/admin-header.php';
     <div class="ce-record">
       <span>Tipo</span><input type="text" readonly value="<?= h($v['record']['tipo']) ?>" data-copia-se-stesso aria-label="Tipo del record">
       <span>Nome</span><input type="text" readonly value="<?= h($v['record']['nome']) ?>" data-copia-se-stesso aria-label="Nome del record">
-      <span>Valore</span><input type="text" readonly value="<?= h($v['record']['valore']) ?>" data-copia-se-stesso aria-label="Valore del record" class="ce-valore">
+      <span>Valore</span><textarea readonly rows="<?= strlen($v['record']['valore']) > 60 ? 3 : 1 ?>" data-copia-se-stesso aria-label="Valore del record" class="ce-valore"><?= h($v['record']['valore']) ?></textarea>
     </div>
     <p class="ce-dove">Tocca una casella per copiarla. <?= h($v['dove']) ?></p>
     <?php elseif ($v['stato'] !== 'ok'): ?><p class="ce-dove"><?= h($v['dove']) ?></p><?php endif; ?>

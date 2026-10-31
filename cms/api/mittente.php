@@ -2,6 +2,7 @@
 /**
  * La conferma di un mittente (2.1.0, includes/consegna.php). Il link arriva all'indirizzo del mittente; la pagina chiede
  * un clic sul pulsante (POST): i filtri antispam aprono i link delle email, e non devono confermare al posto della persona.
+ * Un link non valido, scaduto o già usato risponde 404 (con la pagina che lo spiega).
  */
 require_once dirname(__DIR__) . '/includes/config.php';
 require_once dirname(__DIR__) . '/includes/db.php';
@@ -21,6 +22,7 @@ $titolo = 'Conferma il mittente';
 $testo = '';
 try {
     if (!$valido) {
+        http_response_code(404);
         $testo = '<p>Il link non è valido. Copialo intero dall&#039;email, oppure chiedi di mandarne uno nuovo dal pannello.</p>';
     } elseif (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST') {
         $m = consegna_mittente_conferma($t);
@@ -28,6 +30,7 @@ try {
             $titolo = 'Mittente confermato';
             $testo = '<p>Fatto: <b>' . h((string)$m['email']) . '</b> ora si può usare come mittente delle email del sito.</p><p>Puoi chiudere questa pagina.</p>';
         } else {
+            http_response_code(404);
             $testo = '<p>Il link è scaduto o è già stato usato. Dal pannello (Consegna delle email, Mittenti) premi "Rimanda la conferma".</p>';
         }
     } else {

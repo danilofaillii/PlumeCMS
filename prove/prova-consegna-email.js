@@ -28,7 +28,7 @@ const decodifica = eml => eml.replace(/\r?\n\r?\n([A-Za-z0-9+\/=\r\n]{40,})/g, (
 
 (async () => {
   const P = C.prepara(DIR, PORTA_API);
-  await dorme(800);
+  await dorme(2500);
   const br = await chromium.launch();
   const ctx = await br.newContext({ viewport: { width: 1280, height: 900 } });
   const p = await ctx.newPage();
@@ -70,7 +70,7 @@ const decodifica = eml => eml.replace(/\r?\n\r?\n([A-Za-z0-9+\/=\r\n]{40,})/g, (
     ok('B. vuoto.it: il record SPF da incollare (v=spf1 +a +mx ~all) e quello DMARC con il nome _dmarc', (await valore('spf')) === 'v=spf1 +a +mx ~all' && /^v=DMARC1; p=none/.test(await valore('dmarc'))
       && (await p.locator('#ce-dmarc .ce-record input').nth(1).inputValue()) === '_dmarc.vuoto.it', [await valore('spf'), await valore('dmarc')]);
     ok('B. vuoto.it: il messaggio per l\'hosting con il dominio e i record', /vuoto\.it/.test(msg) && /v=spf1 \+a \+mx ~all/.test(msg) && /_dmarc\.vuoto\.it/.test(msg) && /DKIM/.test(msg) && /Buongiorno/.test(msg), msg.slice(0, 200));
-    ok('B. le caselle si copiano con un tocco (data-copia-se-stesso), niente gestori in linea', await p.locator('#ce-spf input[data-copia-se-stesso]').count() === 3 && await p.locator('[onclick],[onchange]').count() === 0);
+    ok('B. le caselle si copiano con un tocco (data-copia-se-stesso), niente gestori in linea', await p.locator('#ce-spf [data-copia-se-stesso]').count() === 3 && await p.locator('[onclick],[onchange]').count() === 0);
     await dominio('doppio.it');
     const unito = await valore('spf');
     ok('B. doppio.it: due SPF da unire in uno, con tutti i pezzi una volta e -all', (await statoVoce('spf')) === 'Da sistemare' && unito === 'v=spf1 include:_spf.google.com a mx -all', unito);
