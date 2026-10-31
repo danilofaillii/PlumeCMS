@@ -46,6 +46,10 @@ pagine, gestire il sito) c'è il manuale d'uso, `docs/manuale-uso.md`, con le sc
 29. Il sito su misura (dalla 1.7.0)
 30. La frase in fondo al sito e il banner del sito ufficiale (dalla 1.8.0)
 31. I widget per le attività (dalla 1.10.0)
+32. Gli addon (dalla 2.0.0)
+33. File riservati e il file dato dai form (dalla 2.0.0)
+34. Immagine social e pannello al telefono (dalla 2.0.0)
+35. I widget della 2.1: menu, richiesta di prenotazione, galleria con filtri, scorrevole, contenuto esterno
 
 Appendice A. Dove i documenti vecchi non corrispondono al codice
 
@@ -1406,7 +1410,8 @@ in un colpo solo).
 Modulo (`form:ID`).
 
 - Tabelle: `moduli` (definizione) e `moduli_invii` (invii).
-- Tipi di campo: testo, email, telefono, testo lungo, scelta, scelta multipla, spunta, data, numero.
+- Tipi di campo: testo, email, telefono, testo lungo, scelta, scelta multipla, spunta, data, numero; dalla 2.1 anche
+  **ora** (`input type=time`, validata `HH:MM`) e **file** (vedi "Il campo File", sotto).
 - Ogni form ha: titolo, introduzione, campi, testo del pulsante, consenso, lista della newsletter (con o senza
   conferma), avviso per email, pagina di ringraziamento (`/grazie/?f=ID`).
 
@@ -1437,6 +1442,42 @@ toglie i doppioni senza badare alle maiuscole, al massimo `FORM_AVVISO_MAX` (5);
 
 Gli invii si leggono in Newsletter e contatti > Invii dei form, e si esportano in CSV (celle protette contro le
 formule, capitolo 18.10).
+
+**Il campo File (dalla 2.1).** `FORM_TIPI_CAMPO` e `FORM_FILE_TIPI` (`includes/form.php:15-31`).
+- Regole del campo (`form_file_regole()`, `:160`): `estensioni` scelte fra pdf, jpg, png, webp, docx, xlsx, odt, txt (mai
+  tipi che si eseguono o che il browser interpreta: niente svg, html, php) e `peso` da 1 a `FORM_FILE_PESO_MAX` (10) MB. Il
+  peso vero è il minore fra quello scelto e quello del server (`form_file_limite_server()`, `:166`: upload_max_filesize e
+  post_max_size); il costruttore lo dice ("Il server accetta al massimo...").
+- Nel pannello (`admin/form.php:139`, `fmRegoleFile()`) le caselle dei tipi e la tendina del peso; sul sito
+  (`form_html()`, `:395`) `input type=file` con `accept` e, sotto, i tipi e il peso (`aria-describedby`); il form prende
+  `enctype="multipart/form-data"` solo se ha un campo File (gli altri form restano come prima).
+- All'invio (`form_ricevi()`, `:421`; il quarto argomento è `$_FILES`, da `api/modulo.php`), prima del captcha: errore del
+  caricamento o peso oltre il massimo dà `file_peso:ETICHETTA`; poi `form_file_controlla()` (`:192`) guarda il **contenuto
+  vero**: estensione fra quelle del campo; inizio del file (`%PDF-`, `FFD8FF` più `getimagesize`, la firma PNG,
+  `RIFF....WEBP`, lo zip di Office con `word/document.xml`, `xl/workbook.xml` o il `mimetype` di odt e senza programmi
+  dentro, testo UTF-8 senza NUL); il tipo MIME di `finfo` fra quelli ammessi; nessun `&lt;?php`, `&lt;?=` o `<script`
+  dentro (come `media_ha_codice()`). Se no: `file_tipo:ETICHETTA`. Due file nello stesso campo (array) non passano.
+- Il file si salva solo quando tutto il resto è a posto (consenso, captcha, limite): in `form_file_dir()` (`:178`), cioè
+  `<cartella dei file riservati>/form/`, con un nome a caso (`bin2hex(random_bytes(16))`) e l'estensione controllata,
+  `chmod 0640`. La cartella ha un `.htaccess` che nega tutto (anche quella sopra, capitolo 33) e il router delle prove dà
+  403. L'invio ricorda i file nella colonna `moduli_invii.allegati` (JSON: campo, nome com'era, file, peso, tipo), aggiunta da
+  `form_schema()` anche alle tabelle vecchie. Se il salvataggio dell'invio fallisce, il file si toglie.
+- L'avviso per email allega i file se in tutto stanno sotto `FORM_FILE_ALLEGA_MAX` (4 MB), con `posta_invia(..., $allegati)`;
+  più grandi, l'email dice di scaricarli dal pannello.
+- Scarico: `admin/form-submissions.php:31`, `?file=<invio>&n=<numero>`, solo amministratore (`require_admin()` della pagina).
+  `form_allegati()` (`:249`) tiene solo i nomi `^[a-f0-9]{32}\.[a-z]{3,4}$`: un invio toccato nel database che punta fuori
+  (`../`, percorso assoluto) dà 404. Sempre `application/octet-stream`, `Content-Disposition: attachment`, `nosniff`, CSP
+  `sandbox`. In Invii dei form, sotto i dati, "Scarica <nome>" con il peso.
+- Cancellazione: Elimina in Invii dei form (`form_allegati_cancella()`, `:255`, prima di cancellare le righe), Elimina il form
+  (`form_elimina()`), **Cancella dati** della newsletter (`admin/newsletter.php:161`: i file degli invii con quell'email,
+  prima di `newsletter_cancella_dati()`). `form_file_orfani()` (`:269`) toglie i file che nessun invio cita più (non quelli
+  di meno di un minuto, che possono essere di un invio in corso).
+- Un form con un file oltre `post_max_size` arriva a PHP senza campi: `api/modulo.php:17` torna alla pagina di provenienza
+  (dal Referer, solo percorsi interni) con `?modulo=file_peso`. `sito/assets/moduli.js` non salva e non rimette i campi file
+  nel ripristino dopo un errore (un `value` su un input file lancia un'eccezione).
+- Messaggi: `MODULI_ERRORI['file_peso']` e `['file_tipo']` (`includes/moduli.php`), con l'etichetta del campo in
+  `form_errore()`.
+- Prove: `prove/prova-widget-2-1.js` (parte "Form con Ora e File") e `prove/attacchi-widget-2-1.js` (parti "file" e "scarico").
 
 ### 15.2 Popup
 
@@ -3043,6 +3084,114 @@ Il modo di lanciarle è in `prove/LEGGIMI.md`.
   - `.admin-layout` ha la colonna `minmax(0, 1fr)` e `.admin-main` ha `min-width: 0`. Prima la colonna `1fr` si allargava per il suo elemento più largo, e con lei testi e riquadri.
   - Sotto 640 px vanno a capo i form, `.ct-filtri`, `.fm-riga`, i `nav` e le file di schede (`*-schede`); `select` e campi non superano il contenitore.
   - Prova: `prove/prova-pannello-telefono.js`. Controlla ogni pagina del menu più quelle passate come argomento; `LARGHEZZA=` per provare altre misure.
+
+## 35. I widget della 2.1: menu, richiesta di prenotazione, galleria con filtri, scorrevole, contenuto esterno
+
+Scelti da Danilo ("tutti") il 31 ottobre 2026. I cinque widget nuovi stanno in `includes/editor-widget-extra-e.php`, caricato
+in coda a `includes/editor-widget-extra.php`, con il contratto delle parti A-D (`ewx_registra()`, classi `ew-*`,
+`sito/assets/widget.css` e `widget.js`). Niente variabili in cima al file (capitolo 32). I widget sono ora 92.
+
+| Tipo | Nome | Gruppo | Icona |
+|---|---|---|---|
+| `menu_ristorante` | Menu del ristorante | Elementi | `libro-aperto` |
+| `richiesta_prenotazione` | Richiesta di prenotazione | Dal sito | `calendario-spunta` |
+| `galleria_filtri` | Galleria con filtri | Gallerie | `filtro` |
+| `scorrevole` | Loghi e testo scorrevoli | Elementi | `infinito` |
+| `contenuto_esterno` | Contenuto esterno (con consenso) | Interazione | `scudo-spunta` |
+
+**Menu del ristorante** (`:106`).
+- Ripetitore `piatti` (sezione, nome, descrizione, prezzo, immagine, allergeni, cinque interruttori: vegano, vegetariano,
+  senza_glutine, piccante, novita). Le sezioni nascono dai piatti, nell'ordine in cui compaiono; il ripetitore `sezioni`
+  (nome, nota, giorni) aggiunge la nota e i giorni. Niente ripetitori annidati: l'editor non li ha.
+- Allergeni: `EWE_ALLERGENI` (`:12`), i 14 dell'allegato II del Reg. UE 1169/2011 con il loro numero. `ewe_allergeni()`
+  (`:29`) legge numeri o parole ("1, 7", "glutine, latte"). Sul sito pallini con il numero (`aria-hidden`, con il nome nel
+  `title`) più il testo per chi non vede ("Allergeni: cereali con glutine, latte e lattosio."); legenda con quelli usati o
+  con tutti e 14, e una nota modificabile.
+- Giorni: `ewe_giorni()` (`:44`): "lun-ven", "dom", "sab, dom". Una sezione con giorni che non comprendono oggi non esce sul
+  sito (nell'editor sì, con "Solo ..."); se oggi c'è, ha l'etichetta "Oggi". Il giorno è quello del server nel fuso del sito;
+  la pagina si disegna a ogni richiesta.
+- Prezzo: `ewe_prezzo()` (`:58`): "14" diventa "14 €", "9,5" "9,50 €"; un testo libero ("a peso") resta com'è.
+- Dati per Google: `Menu` > `MenuSection` > `MenuItem` con `offers` (prezzo, EUR) e `suitableForDiet` (VeganDiet,
+  VegetarianDiet, GlutenFreeDiet), `JSON_HEX_TAG | JSON_HEX_AMP`; solo le sezioni che si vedono; mai nell'anteprima.
+
+**Richiesta di prenotazione** (`:206`, ricezione in `includes/richiesta-prenotazione.php`). Non è l'addon Prenotazioni: niente
+posti né calendario, una richiesta per email che l'attività conferma lei. Con l'addon acceso, il pannello del widget mostra
+un'intestazione che lo suggerisce (`ewx_controlli_richiesta()`, `:182`, con `cms_addon_attivi()`).
+- Perché un ingresso suo e non un form del pannello: il destinatario lo sceglie chi fa la pagina, nel widget, e non può
+  arrivare dal browser (il sito diventerebbe un ripetitore di posta). Il widget mette nel modulo la sua configurazione
+  (modalità, fino a 3 indirizzi validati, massimo di persone, telefono obbligatorio, titolo) in base64 con la firma
+  HMAC-SHA256 di `moduli_segreto()` (`rp_firma()`, `:30`); `api/modulo.php:35` (`modulo=prenota`) chiama `rp_ricevi()`
+  (`:73`), che accetta solo una configurazione con la firma giusta (`rp_verifica()`, `:36`, `hash_equals`). Il resto sono
+  le difese dei moduli: campo esca, date fra oggi e due anni, partenza dopo l'arrivo, ora `HH:MM`, persone fra 1 e il
+  massimo, email con `FILTER_VALIDATE_EMAIL`, telefono, spunta della privacy, captcha, `moduli_troppi()`.
+- Le richieste finiscono in `moduli_invii` sotto il form "Richieste di prenotazione" (slug `richieste-prenotazione`,
+  `rp_form_id()`, `:52`), creato spento alla prima richiesta: si leggono in Invii dei form; nell'elenco dei form ha
+  l'etichetta "Dal widget" (`admin/form.php`) e non compare fra i form del widget Modulo (`editor_moduli_disponibili()`).
+- Email a ogni indirizzo della configurazione (vuoti: `posta_notifica_email()`), con `Reply-To` di chi chiede; nel registro
+  della posta con il tipo `avviso_form`.
+- Ritorno: alla pagina (`pagina`, solo `^/[a-z0-9/-]*$`) con `?prenota=ok|<codice>&w=<id del widget>#prenota-<id>`; il
+  widget con quell'id mostra il grazie (`role=status`) o l'errore (`role=alert`). In `widget.js` (`prenota()`) la partenza
+  propone il giorno dopo l'arrivo.
+
+**Galleria con filtri** (`:260`). Ripetitore con una casella `categorie` (separate da virgole) per ogni foto; i pulsanti
+nascono dalle categorie, nell'ordine in cui compaiono (`ewe_slug()` per `data-cat`). Pulsanti veri (`button`,
+`aria-pressed`, `role=group`), alti almeno 44 px, un `aria-live` che dice quante foto si vedono. `widget.js`
+(`galleriaFiltri()`) dissolve e rimette le foto (`hidden` più `.ew-gf-via`, con la regola `[hidden]{display:none}`); con meno
+movimento, subito. Il lightbox di sempre scorre solo le foto visibili (`widget.js:133`: un filtro sulla lista, che non cambia
+niente per le gallerie senza filtri). Stile delle foto: `ewx_controlli_galleria_stile()`, come la Galleria.
+
+**Loghi e testo scorrevoli** (`:310`). Una frase (predefinita) o una fila di loghi; due gruppi uguali in una traccia larga
+quanto il contenuto, animata in CSS da 0 a -50% (`@keyframes ew-scorri`); "Durata di un giro" in secondi (`--ew-durata`, nello
+stile in linea, che la CSP del sito ammette), direzione con `animation-direction`. Pochi elementi si ripetono (`ew-scr-copia`)
+perché un gruppo superi la striscia. Il secondo gruppo e le copie sono `aria-hidden` e i loro link hanno `tabindex=-1`. Pausa
+al passaggio del mouse e al fuoco; il pulsante Ferma/Riparti c'è sempre (WCAG 2.2.2). Con `prefers-reduced-motion: reduce`
+niente animazione, niente copie, niente pulsante: i loghi vanno a capo. Loghi in grigio (`grayscale`) che si colorano al
+passaggio, facoltativo. I loghi non hanno `loading=lazy` (fuori dalla striscia resterebbero da caricare).
+
+**Contenuto esterno con consenso** (`:405`). Niente HTML libero: `ewe_esterno()` (`:374`) legge solo gli indirizzi dei servizi
+di `EWE_FORNITORI` (`:362`) e costruisce lui l'indirizzo da incorporare:
+- Calendly `https://calendly.com/<utente>[/<evento>]` (con `?hide_gdpr_banner=1&embed_type=Inline`);
+- Spotify `open.spotify.com/(track|album|playlist|episode|show|artist)/<id>` (anche `intl-xx`), che diventa `/embed/...`;
+- Google Calendar `calendar.google.com/calendar/embed?src=...` o l'indirizzo del calendario (`...@group.calendar.google.com`),
+  ricostruito con solo `src`, `ctz`, `mode`;
+- Typeform `<qualcosa>.typeform.com/to/<id>`, che diventa `form.typeform.com/to/<id>`;
+- Booking.com `/hotel/<paese>/<nome>.html`: Booking non si lascia incorporare, quindi un riquadro con il link (nessun contatto,
+  nessuna CSP da aprire).
+Un indirizzo con utente, password o porta, un altro host o un altro percorso non dà niente (nell'editor un messaggio). Sul
+sito: un riquadro con il nome del servizio, la frase sulla privacy, il link all'informativa, il pulsante "Mostra il contenuto
+di <servizio>" e il link "Apri su <servizio>"; `widget.js` (`esterno()`) crea l'iframe solo al clic, e solo se l'indirizzo
+comincia con una delle quattro origini. Nell'editor il pulsante è finto. Altezza: quella del servizio (`--ew-hp`), oppure
+quella scelta nel widget (`--ew-h`).
+
+**CSP solo nella pagina che li usa.** `sicurezza_csp_pagina()` (`includes/sicurezza.php:752`): il widget, mentre la pagina si
+disegna, aggiunge l'origine del servizio (solo `frame-src`, solo `https://host` senza percorso); `sicurezza_csp()` la aggiunge
+al `frame-src` del sito (`:797`). La CSP si scrive in `sito_rispondi()`, dopo il disegno. Le altre pagine restano come prima (la
+mappa e il video hanno da sempre i loro domini nel `frame-src` di tutto il sito).
+
+**Le opzioni nuove dei widget di prima.** Senza le opzioni nuove l'HTML è quello di prima (foto prima e dopo uguali al pixel).
+- Mappa (`includes/editor-widget-extra-c.php:188`): `come_arrivare` (nessuno, sotto, sopra), `come_arrivare_app` (Google Maps
+  `/maps/dir/?api=1&destination=`, Apple Mappe `maps.apple.com/?daddr=`, tutte e due), testo, allineamento. Con OpenStreetMap
+  la destinazione sono le coordinate. Link in una scheda nuova, detto anche a chi non vede.
+- Video (`includes/editor-widget.php:649`, `editor_video_opzioni()` `:1311`): `da_solo` carica subito il lettore (niente
+  facciata: il servizio riceve la visita, e l'aiuto lo dice) con `autoplay=1&mute=1&playsinline=1` (Vimeo `muted=1`);
+  `ripeti` aggiunge `loop=1` (YouTube anche `playlist=<id>`, senza il quale non ripete). Nell'anteprima dell'editor resta la
+  facciata.
+- Tabella (`editor_cella()`, `includes/editor-widget.php:1291`): nelle celle `**grassetto**`, `*corsivo*`, `[testo](link)`.
+  Prima `h()` di tutto, poi le tre forme; il link passa da `editor_link_sicuro()` (javascript:, data: restano testo), uno
+  esterno si apre in una scheda nuova. Un asterisco da solo ("5 * 3") o una parentesi quadra senza link non cambiano niente.
+- Ultimi articoli e Griglia di articoli: categoria (e tag, nella Griglia) da una tendina (`editor_opzioni_tassonomia()`,
+  `includes/editor-widget.php:94`) con `'accetta' => EDITOR_SLUG_RE` (`:93`): un valore scritto a mano prima della 2.1, o una
+  categoria che arriva dopo la pagina, resta (la tendina lo mostra con "non trovato").
+
+**Prove.**
+- `prove/prova-widget-2-1.js` (68 controlli, con `prove/pagina-widget-2-1.php ... nuovi` e `prove/widget-2-1-cli.php`): il
+  sito al computer e al telefono, meno movimento, CSP, dati per Google, contrasto, richiesta di prenotazione vera con il server
+  di posta finto, form con ora e file fino allo scarico e a Cancella dati.
+- `prove/attacchi-widget-2-1.js` (40 attacchi, con `pagina-widget-2-1.php ... cattivi`).
+- `prove/foto-widget-2-1.js` più `prove/quanto-foto.py`: la pagina `/widget-vecchi/` (`pagina-widget-2-1.php ... vecchi`, i
+  widget di prima con i valori di una pagina vera), Tutti i widget, Contatti e home, prima e dopo: uguali al pixel tranne il
+  conto alla rovescia.
+- `tools/sicurezza-prova.js` non è stato toccato: gli attacchi della 2.1 stanno nel loro file.
 
 ## Appendice A. Dove i documenti vecchi non corrispondono al codice
 
