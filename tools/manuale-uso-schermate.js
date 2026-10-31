@@ -11,6 +11,9 @@
 //   e, nel config.local.php del sito, CMS_DNS_PROVA con i record finti di studiorossi.it (senza, la foto del Dominio dice che il DNS non
 //   risponde); il capitolo 40 il WebDAV finto (COPIA_PORTA, 8297 se manca). I widget della 2.1 (08-menu-ristorante, 08-galleria-filtri)
 //   vogliono CMS_DIR_MANUALE. Il giro completo cancella prima tutte le foto: ognuna deve nascere da qui.
+// 2.2.0: Scegli dal sito (08-scegli-dal-sito, 11-prenota-1 e 2 con l'esempio eseguito davvero, 17-menu-scegli, 19-popup-scegli; la
+//   finestra 08-scegli-finestra dopo tutti i capitoli, con la pagina in bozza "Condizioni di vendita") e 28-server con il gruppo
+//   "Google e IndexNow" (due foto della stessa pagina unite).
 const { chromium } = require('playwright');
 const fs = require('fs');
 const path = require('path');
@@ -33,6 +36,27 @@ async function segna(dove, voci) {
       const r0 = e.getBoundingClientRect();
       // 2.1.0: un elemento dentro un dialogo modale (Scegli dai Media) sta sopra a tutto (top layer): i segni vanno dentro il
       // dialogo, con le coordinate del dialogo.
+      // 2.2.0: un elemento fuori dal dialogo aperto (il pulsante Scegli dal sito, sotto il velo della finestra): { sopra: true }
+      // mette il segno in uno strato popover, che sta sopra al dialogo; coordinate della finestra.
+      if (v.sopra) {
+        let st = document.querySelector('.mu-segno-strato');
+        if (!st) {
+          st = document.createElement('div'); st.className = 'mu-segno mu-segno-strato'; st.setAttribute('popover', 'manual');
+          Object.assign(st.style, { position: 'fixed', inset: '0', width: '100vw', height: '100vh', margin: '0', padding: '0', border: '0', background: 'transparent', overflow: 'visible', pointerEvents: 'none' });
+          document.body.appendChild(st); st.showPopover();
+        }
+        const box = document.createElement('div');
+        Object.assign(box.style, { position: 'absolute', left: (r0.left - 4) + 'px', top: (r0.top - 4) + 'px', width: (r0.width + 8) + 'px', height: (r0.height + 8) + 'px',
+          border: '3px solid #e8553e', borderRadius: '8px', boxSizing: 'border-box' });
+        st.appendChild(box);
+        if (v.n) {
+          const b = document.createElement('div'); b.textContent = v.n;
+          Object.assign(b.style, { position: 'absolute', left: Math.max(2, v.lato === 'destra' ? r0.right - 6 : r0.left - 16) + 'px', top: Math.max(2, r0.top - 16) + 'px', width: '26px', height: '26px',
+            borderRadius: '50%', background: '#e8553e', color: '#fff', font: '700 15px/26px Inter, sans-serif', textAlign: 'center', boxShadow: '0 1px 4px rgba(0,0,0,.35)' });
+          st.appendChild(b);
+        }
+        continue;
+      }
       const dlg = e.closest('dialog[open]'), dr = dlg ? dlg.getBoundingClientRect() : null;
       const dove = dlg || document.body;
       const r = dlg ? { left: r0.left - dr.left - dlg.clientLeft + dlg.scrollLeft - scrollX, top: r0.top - dr.top - dlg.clientTop + dlg.scrollTop - scrollY, right: r0.right - dr.left - dlg.clientLeft + dlg.scrollLeft - scrollX, width: r0.width, height: r0.height } : r0;
@@ -252,6 +276,30 @@ async function scegliFoto(file) {
   await p.waitForFunction(() => !document.querySelector('#ed-dialogo-media').open); await dorme(800);
 }
 
+// 2.2.0: Scegli dal sito (assets/scegli-link.js). marca() dà a un elemento un nome per i segni ([data-mu=...]); apriScelta() apre la
+// finestra dal pulsante accanto a una casella, scrive nella ricerca e aspetta l'elenco; rigaSito() è la riga con quel titolo.
+const marca = (loc, nome) => loc.first().evaluate((e, n) => e.setAttribute('data-mu', n), nome);
+const SCELTA = 'dialog.pn-link[open]';
+async function apriScelta(bottone, cerca) {
+  await bottone.click();
+  await p.waitForSelector(SCELTA + ' .pn-link-voce'); await dorme(300);
+  if (cerca) await p.fill(SCELTA + ' input[type=search]', cerca);
+  await dorme(400);
+  await p.waitForFunction((s) => { const l = document.querySelector(s + ' .pn-link-lista'); return l && !l.hasAttribute('aria-busy'); }, SCELTA); await dorme(300);
+}
+const rigaSito = (titolo) => p.locator(SCELTA + ' .pn-link-voce').filter({ has: p.locator('.pn-link-nome', { hasText: new RegExp('^' + titolo + '$') }) }).first();
+// Il primo pulsante dell'Apertura della home, aperto nel pannello Modifica (capitoli 8 e 11).
+async function primoPulsanteApertura() {
+  await apriEditor('editor.php?tipo=pagine&id=1');
+  await tela().locator('.ed-w-hero').first().dblclick(); await dorme(600);
+  const v = p.locator('#ed-controlli .ed-voce').first();
+  await v.scrollIntoViewIfNeeded();
+  if (await v.locator('.ed-voce-corpo').isHidden()) { await v.locator('.ed-voce-testa b').click(); await dorme(300); }
+  const campo = (et) => v.locator('.ed-voce-corpo .ed-controllo').filter({ has: p.locator('.ed-etichetta, label', { hasText: new RegExp('^' + et + '$') }) }).first();
+  await campo('Link').scrollIntoViewIfNeeded(); await dorme(200);
+  return { voce: v, testo: campo('Testo').locator('input[type=text]').first(), link: campo('Link').locator('input[type=text]').first(), scegli: campo('Link').locator('.pn-link-scegli').first() };
+}
+
 // 08. L'editor: com'è fatto
 capitoli['08'] = async () => {
   await apriEditor('editor.php?tipo=pagine&id=1');
@@ -260,6 +308,12 @@ capitoli['08'] = async () => {
     { sel: '#ed-apri-impostazioni', n: 5 }, { sel: '#ed-apri-revisioni', n: 6 }, { sel: '#ed-vedi', n: 7 }, { sel: '#ed-salva', n: 8 }, { sel: '#ed-pubblica', n: 9 }] });
   await tela().locator('.ed-w-hero').first().dblclick(); await dorme(600);
   await foto('08-modifica', { clip: { x: 0, y: 0, width: 1200, height: 520 }, segni: [{ sel: '#ed-schede-controlli', n: 1 }, { sel: '#ed-modifica-azioni', n: 2 }] });
+  // 2.2.0: il link del primo pulsante dell'Apertura, con Scegli dal sito accanto (la finestra la fotografa fotoSceltaSito(), dopo
+  // tutti i capitoli: vuole una pagina in bozza).
+  const pu = await primoPulsanteApertura();
+  await marca(pu.link, 'link'); await marca(pu.scegli, 'scegli');
+  await pu.voce.evaluate(e => { const c = e.closest('.ed-controllo'); c.setAttribute('data-mu', 'pulsanti'); c.scrollIntoView({ block: 'center' }); }); await dorme(300);
+  await foto('08-scegli-dal-sito', { sel: '[data-mu=pulsanti]', margine: 12, segni: [{ sel: '[data-mu=link]', n: 1 }, { sel: '[data-mu=scegli]', n: 2, lato: 'destra' }] });
 };
 
 // 09. Esempio: la pagina "Lavora con noi"
@@ -373,6 +427,25 @@ capitoli['11'] = async () => {
   const sezFoto = p.locator('#ed-controlli details.ed-sez').filter({ has: p.locator('summary', { hasText: /^Foto$/ }) });
   if (await sezFoto.count()) { if ((await sezFoto.getAttribute('open')) === null) await sezFoto.locator('summary').click(); await dorme(400);
     await foto('11-foto', { clip: { x: 0, y: 0, width: 360, height: 800 } }); }
+  // 2.2.0: l'esempio "Prenota", eseguito davvero (la disposizione Centrata di sopra non si salva: l'editor si riapre da capo).
+  const pu = await primoPulsanteApertura();
+  await pu.testo.fill('Prenota'); await dorme(400);
+  await marca(pu.testo, 'testo');
+  await foto('11-prenota-1', { clip: { x: 0, y: 0, width: 1200, height: 800 }, segni: [{ sel: '#ed-titolo-pagina', n: 1, lato: 'destra' }, { sel: '#ed-schede-controlli', n: 2 }, { sel: '[data-mu=testo]', n: 3 }] });
+  await marca(pu.scegli, 'scegli');
+  await apriScelta(pu.scegli, 'cont');
+  const riga = rigaSito('Contatti');
+  await riga.hover(); await marca(riga, 'contatti'); await dorme(200);
+  await foto('11-prenota-2', { clip: { x: 0, y: 0, width: 1200, height: 800 }, segni: [{ sel: '[data-mu=scegli]', n: 4, sopra: true },
+    { sel: SCELTA + ' input[type=search]', n: 5 }, { sel: '[data-mu=contatti]', n: 6 }] });
+  await riga.click(); await dorme(500);
+  if (await pu.link.inputValue() !== '/contatti/') throw new Error('11: nella casella Link non c\'è /contatti/: ' + await pu.link.inputValue());
+  await pubblica();
+  const v = await ctx.newPage();
+  await v.goto(B + '/', { waitUntil: 'networkidle' });
+  await Promise.all([v.waitForNavigation(), v.locator('.ed-w-hero a', { hasText: 'Prenota' }).first().click()]);
+  if (!/\/contatti\/$/.test(v.url())) throw new Error('11: Prenota porta a ' + v.url());
+  await v.close();
 };
 
 // 12. Tornare indietro: revisioni e versioni
@@ -455,6 +528,16 @@ capitoli['16'] = async () => {
   await Promise.all([p.waitForNavigation(), p.click('button.btn-primary[type=submit]:has-text("Salva il menu")')]);
   await p.goto(B + '/', { waitUntil: 'networkidle' });
   await foto('16-sul-sito', { clip: { x: 0, y: 0, width: 1200, height: 90 } });
+  // 2.2.0: Link personalizzato con Scegli dal sito (solo la foto: la voce non si aggiunge).
+  await vai('menu.php');
+  const lp = p.locator('details', { has: p.locator('summary', { hasText: /^Link personalizzato/ }) }).first();
+  if ((await lp.getAttribute('open')) === null) await lp.locator('summary').click();
+  const bs = lp.locator('.pn-link-scegli').first();
+  await apriScelta(bs, 'cont');
+  await rigaSito('Contatti').click(); await dorme(500);
+  if (await p.inputValue('#mn-link-url') !== '/contatti/' || await p.inputValue('#mn-link-testo') !== 'Contatti') throw new Error('16: Scegli dal sito non riempie la voce');
+  await marca(bs, 'scegli'); await marca(lp, 'lp');
+  await foto('17-menu-scegli', { sel: '[data-mu=lp]', margine: 16, segni: [{ sel: '[data-mu=scegli]', lato: 'destra' }] });
 };
 
 // 17. Form: le candidature di "Lavora con noi"
@@ -505,7 +588,23 @@ capitoli['18'] = async () => {
   await p.fill('[name=titolo]', 'Saldi: meno 30% su tutto');
   await p.fill('[name=testo]', 'Vieni in negozio entro domenica.');
   await p.fill('[name=pulsante_testo]', 'Come arrivare');
-  await p.fill('[name=pulsante_link]', '/contatti/');
+  // 2.2.0: il link del pulsante con Scegli dal sito.
+  await apriScelta(p.locator('.pn-link-campo:has(#pp-link) .pn-link-scegli'), 'cont');
+  await rigaSito('Contatti').click(); await dorme(400);
+  if (await p.inputValue('#pp-link') !== '/contatti/') throw new Error('18: Scegli dal sito non riempie il link del pulsante');
+  // La casella Indirizzi: due pagine scelte dal sito, una per riga (solo per la foto: il popup resta su tutte le pagine).
+  const bi = p.locator('.pn-link-campo:has(#pp-percorsi) .pn-link-scegli');
+  await apriScelta(bi, 'cont'); await rigaSito('Contatti').click(); await dorme(300);
+  await apriScelta(bi, 'serv'); await rigaSito('Servizi').click(); await dorme(300);
+  if (await p.inputValue('#pp-percorsi') !== '/contatti/\n/servizi/') throw new Error('18: indirizzi: ' + JSON.stringify(await p.inputValue('#pp-percorsi')));
+  {
+    await p.evaluate(() => scrollTo(0, 0)); await dorme(100);
+    const a = await p.locator('.sc-riga:has(#pp-link)').boundingBox(), b = await p.locator('.pn-link-campo:has(#pp-percorsi)').boundingBox();
+    const y0 = Math.min(a.y, b.y) - 50, y1 = Math.max(a.y + a.height, b.y + b.height) + 24;
+    await foto('19-popup-scegli', { clip: { x: 240, y: y0, width: 960, height: y1 - y0 }, segni: [{ sel: '.pn-link-campo:has(#pp-link) .pn-link-scegli', n: 1, lato: 'destra' },
+      { sel: '.pn-link-campo:has(#pp-percorsi)', n: 2 }] });
+  }
+  await p.fill('#pp-percorsi', '');
   await p.selectOption('[name=dove]', 'tutte');
   await p.selectOption('[name=innesco]', 'secondi');
   await p.fill('[name=valore]', '3');
@@ -673,7 +772,31 @@ capitoli['27'] = async () => {
 // 28. Controlla il server
 capitoli['28'] = async () => {
   await vai('controlla-server.php');
-  await foto('28-server', { clip: { x: 240, y: 56, width: 960, height: 640 } });
+  await Promise.all([p.waitForNavigation({ timeout: 120000 }), p.locator('.cs-azioni button.btn-primary').first().click()]);
+  await p.waitForLoadState('networkidle'); await dorme(300);
+  // 2.2.0: la cima della pagina (quante voci a posto, da sapere, da sistemare) e il gruppo nuovo "Google e IndexNow", che sta più
+  // in basso: due foto unite in una, con una riga tratteggiata dove la pagina è tagliata.
+  if (SOLO && !'28'.startsWith(SOLO.slice(0, 2))) return;
+  await p.evaluate(() => scrollTo(0, 0)); await dorme(100);
+  const somma = await p.locator('.cs-somma').boundingBox();
+  await foto('28-server-a', { clip: { x: 240, y: 56, width: 960, height: somma.y + somma.height + 14 - 56 } });
+  await marca(p.locator('.cs-gruppo').filter({ has: p.locator('h2', { hasText: 'Google e IndexNow' }) }), 'google');
+  const g = await p.locator('[data-mu=google]').boundingBox();
+  await foto('28-server-b', { clip: { x: 240, y: g.y - 14, width: 960, height: g.height + 28 }, segni: [{ sel: '[data-mu=google]' }] });
+  require('child_process').execFileSync('python3', ['-c', `
+import sys
+from PIL import Image, ImageDraw
+a, b, o = (sys.argv[1] + n for n in ('28-server-a.png', '28-server-b.png', '28-server.png'))
+A, B = Image.open(a).convert('RGB'), Image.open(b).convert('RGB')
+fondo = A.getpixel((4, A.height - 4))
+im = Image.new('RGB', (A.width, A.height + 30 + B.height), fondo)
+im.paste(A, (0, 0)); im.paste(B, (0, A.height + 30))
+d = ImageDraw.Draw(im)
+for x in range(0, im.width, 14): d.line([(x, A.height + 15), (x + 7, A.height + 15)], fill=(150, 150, 160), width=2)
+im.save(o)
+`, GREZZE + path.sep]);
+  for (const n of ['28-server-a', '28-server-b']) fs.unlinkSync(path.join(GREZZE, n + '.png'));
+  console.log('28-server');
 };
 
 // 29. Importare da WordPress (il collegamento; il report viene dalla prova con un WordPress vero)
@@ -727,6 +850,28 @@ async function fotoWidget21() {
   await foto('17-campo-file', { sel: '.fm-campo:last-child', margine: 30, segni: [{ sel: '.fm-campo:last-child .fm-tipo', n: 1 }, { sel: '.fm-campo:last-child .fm-file-tipi', n: 2 },
     { sel: '.fm-campo:last-child .fm-file-peso select', n: 3 }] });
   await Promise.all([p.waitForNavigation(), p.click('button.btn-primary:has-text("Salva")')]);
+}
+
+// 2.2.0: la finestra Scegli dal sito (capitolo 8), con "con" nella ricerca e una pagina in bozza ("Condizioni di vendita"). Dopo
+// tutti i capitoli: la pagina in bozza prenderebbe un numero di pagina che un capitolo dopo si aspetta.
+async function fotoSceltaSito() {
+  if (SOLO && !'08'.startsWith(SOLO.slice(0, 2))) return;
+  await vai('index.php');
+  await Promise.all([p.waitForNavigation(), p.click('.db-azioni a:has-text("+ Pagina")')]);
+  await apriEditor(p.url().split('/admin/')[1]);
+  await p.click('#ed-apri-impostazioni'); await dorme(300);
+  await p.fill('#ed-form-impostazioni [name=titolo]', 'Condizioni di vendita');
+  await p.fill('#ed-form-impostazioni [name=slug]', 'condizioni-di-vendita');
+  await p.click('#ed-form-impostazioni button[type=submit]'); await dorme(1000);
+  await p.click('#ed-salva');
+  await p.waitForFunction(() => /Bozza salvata/.test(document.querySelector('#ed-stato').textContent));
+  const pu = await primoPulsanteApertura();
+  await apriScelta(pu.scegli, 'con');
+  if (!(await p.locator(SCELTA + ' .pn-link-bozza').count())) throw new Error('08: nella finestra non c\'è la pagina in bozza');
+  const tre = (await p.locator(SCELTA + ' .pn-link-voce.pn-link-scelta').count()) ? SCELTA + ' .pn-link-voce.pn-link-scelta' : SCELTA + ' .pn-link-voce';
+  await foto('08-scegli-finestra', { sel: SCELTA, margine: 0, segni: [{ sel: SCELTA + ' input[type=search]', n: 1 }, { sel: SCELTA + ' .pn-link-tipo-scelta select', n: 2 },
+    { sel: tre, n: 3 }, { sel: SCELTA + ' .pn-link-bozza', n: 4, lato: 'destra' }, { sel: SCELTA + ' .pn-link-mano summary', n: 5 }] });
+  await p.keyboard.press('Escape'); await dorme(300);
 }
 
 // ------------------------------------------------------------------------------------------------------------------------
@@ -1500,7 +1645,7 @@ module.exports = { capitoli };
     if (SOLI.length && !SOLI.includes(n)) continue;
     await fn();
   }
-  if (!SOLI.length || SOLI.includes('fine')) { await fotoWidgetAttivita(); await fotoWidget21(); } // SOLO_CAPITOLI=...,fine: anche le foto dei widget sul sito
+  if (!SOLI.length || SOLI.includes('fine')) { await fotoWidgetAttivita(); await fotoWidget21(); await fotoSceltaSito(); } // SOLO_CAPITOLI=...,fine: anche le foto dei widget sul sito
   if (err.length) console.log('errori JavaScript:', err);
   stringi();
   const tot = fs.readdirSync(USCITA).filter(f => f.endsWith('.jpg')).reduce((t, f) => t + fs.statSync(path.join(USCITA, f)).size, 0);
