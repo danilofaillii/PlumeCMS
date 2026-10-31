@@ -2136,7 +2136,7 @@ pacchetto unico, nel Download del sito ufficiale (`/scarica/plumecms-ultima-aggi
 circa 13 MB: serve un server che accetti caricamenti di quella misura (quello di Danilo dal 31 ottobre 2026).
 
 **Prove** (31 ottobre 2026, costruito in una copia del repository con la versione finta 2.0.9): `prove/prova-consegna-unica.js`
-13 su 13, con dentro `prove/prova-sito-plumecms.js` 85 su 85, su un 2.0.3 nuovo e su un 2.0.3 con le cinque parti del sito della
+13 su 13, con dentro `prove/prova-sito-plumecms.js` 85 su 85 (87 su 87 con il blocco Scegli dai Media del sito, provato sul 2.0.3 nuovo), su un 2.0.3 nuovo e su un 2.0.3 con le cinque parti del sito della
 2.0.0 già applicate; dopo, `prove/prova-scegli-media.js` 112 su 112 sul sito aggiornato.
 
 ## 20. Cron

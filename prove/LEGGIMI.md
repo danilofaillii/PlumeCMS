@@ -495,4 +495,4 @@ senza il manuale degli addon), poi lancia `prova-sito-plumecms.js` con il pacche
 Provata su un 2.0.3 nuovo e su un 2.0.3 con le cinque parti del sito della 2.0.0 già applicate (il manuale degli addon sparisce
 e `/scarica/manuale-uso-addon/` porta a `/scarica/manuale-uso/`), con il server a 64 MB (`php -d upload_max_filesize=64M
 -d post_max_size=64M -S ...`): il pacchetto unico pesa circa 13 MB. Per provarla senza toccare `cms/VERSIONE` si costruisce
-tutto in una copia del repository con una versione finta (2.0.9). Atteso: 13 su 13 (e 85 su 85 dentro) tutte e due le volte.
+tutto in una copia del repository con una versione finta (2.0.9). Atteso: 13 su 13 (e 87 su 87 dentro, con il blocco Scegli dai Media del sito).
