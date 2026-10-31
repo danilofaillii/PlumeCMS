@@ -86,8 +86,10 @@ async function apriEditor(u) {
 
 // Da PNG a JPEG, una volta sola: al massimo LARGO px, qualità QUALITA. 2.1.0: il limite di 1900 KB non c'è più (Danilo ha alzato il
 // limite di caricamento del suo hosting): le foto restano larghe come sono fatte (1200 px, circa 180 punti per pollice sui 17 cm
-// del PDF) e a qualità 65, così si leggono anche le scritte piccole; il manuale intero (Parte prima e seconda) resta sotto 8 MB.
-const LARGO = 1200, QUALITA = 65;
+// del PDF). 2.2.0: qualità 55 (era 65, il PDF era a 8089 KB su un tetto di 8192): le scritte si leggono ancora bene anche
+// ingrandite, il PDF scende di circa 1 MB. Provato il PNG a 256 colori (più leggero per molte schermate): Chromium lo rimette nel
+// PDF senza tavolozza e il PDF sale a 9,6 MB. Nel PDF va il JPEG, che Chromium copia così com'è.
+const LARGO = 1200, QUALITA = 55;
 function stringi() {
   require('child_process').execFileSync('python3', ['-c', `
 import os, sys
