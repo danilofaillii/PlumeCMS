@@ -46,6 +46,12 @@ const [B, D, UTENTE, PASSWORD] = process.argv.slice(2);
   // 2.1.0: Impostazioni > Consegna delle email, Da dove cominciare; i widget della 2.1 (menu del ristorante e galleria con
   // filtri) sulla pagina /widget-2-1/ (prove/pagina-widget-2-1.php <cartella del sito> nuovi), solo la parte dei due widget.
   await foto('consegna', '/admin/consegna.php');
+  // 2.2.0: Scegli dal sito, aperto dal link del pulsante di un popup nuovo, con "cont" nella ricerca.
+  await foto('scegli-sito', '/admin/popup.php?nuovo=1', async () => {
+    await p.locator('[name=pulsante_link]').scrollIntoViewIfNeeded();
+    await p.locator('[name=pulsante_link]').locator('xpath=..').locator('button', { hasText: 'Scegli dal sito' }).first().click();
+    await p.waitForSelector('dialog[open]'); await p.keyboard.type('cont'); await p.waitForTimeout(900);
+  });
   await p.goto(B + '/widget-2-1/', { waitUntil: 'networkidle' }); await p.waitForTimeout(900);
   {
     const a = await p.locator('.ed-w-menu_ristorante').first().boundingBox();

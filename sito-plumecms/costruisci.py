@@ -253,6 +253,10 @@ def funzionalita():
          ['Dove il pannello chiede un\'immagine (il logo, l\'immagine per i social, la foto di un popup, di un evento, di un corso, di un prodotto) accanto alla casella c\'è <strong>Scegli dai Media</strong>, con la miniatura dell\'immagine scelta e la X per toglierla. Niente più indirizzi da copiare da una pagina all\'altra.',
           'Si apre la tua libreria: cerchi per nome, filtri per cartella, scorri anche fra centinaia di immagini (arrivano un po\' alla volta, mentre scorri). Manca la foto? <strong>Carica un\'immagine</strong> dalla stessa finestra, o trascinala sopra: entra in Media e nella casella in un colpo solo.',
           'Si usa anche con la tastiera e sul telefono, dove la finestra prende tutto lo schermo.']),
+        ('scegli-sito', 'scegli-sito.webp', 'Scegli dal sito: i link senza scriverli',
+         ['Un pulsante che porta alla pagina Contatti, una voce del menu, il link di un popup o di una newsletter: accanto alla casella c\'è <strong>Scegli dal sito</strong>. Scrivi due lettere del titolo, scegli la pagina, e il link entra da solo.',
+          'Trova pagine, articoli, categorie, tag e, con gli addon accesi, eventi, prodotti e corsi. Le bozze hanno il loro segno. Si usa con la tastiera e al telefono.',
+          'Il link resta giusto anche se sposti il sito in un\'altra cartella; nel menu la voce segue la pagina se le cambi indirizzo.']),
         ('consegna', 'consegna.webp', 'Le email arrivano nella posta, non nello spam',
          ['Conferme, avvisi dei form, newsletter: servono solo se arrivano. In Impostazioni, <strong>Consegna delle email</strong>, cinque passi, ognuno con il suo stato: il mittente, il dominio, come partono, rimbalzi e spam, riscaldamento.',
           '<ul><li><strong>Il dominio</strong>: il pannello controlla SPF, DKIM e DMARC e ti dà le righe da copiare nel pannello dell\'hosting. Non serve essere tecnici.</li>'
@@ -580,7 +584,7 @@ def editor_json():
 
 
 # ------------------------------------------------------------------ file
-USATE = ['copertina', 'consegna', 'widget-2-1', 'scegli-media', 'addon', 'su-misura', 'firma', 'widget-attivita', 'social', 'fine-articolo', 'importa-wp', 'tipo-sito', 'primi-passi', 'aspetti', 'controlla-server', 'sezioni', 'copia', 'installa-1', 'installa-2', 'installa-3', 'installa-4', 'installa-5', 'editor-ritratto', 'editor', 'aperture', 'stile', 'modelli', 'versioni', 'seo', 'flussi', 'download', 'sicurezza', 'aggiornamenti', 'temi',
+USATE = ['copertina', 'scegli-sito', 'consegna', 'widget-2-1', 'scegli-media', 'addon', 'su-misura', 'firma', 'widget-attivita', 'social', 'fine-articolo', 'importa-wp', 'tipo-sito', 'primi-passi', 'aspetti', 'controlla-server', 'sezioni', 'copia', 'installa-1', 'installa-2', 'installa-3', 'installa-4', 'installa-5', 'editor-ritratto', 'editor', 'aperture', 'stile', 'modelli', 'versioni', 'seo', 'flussi', 'download', 'sicurezza', 'aggiornamenti', 'temi',
          'tema-cosmo', 'tema-aria', 'tema-bottega']
 
 
@@ -626,6 +630,8 @@ def zip_lavagna(dest):
 
 # Le novità per chi scarica: brevi, scritte qui (il CHANGELOG è per chi sviluppa). Da aggiornare a ogni versione.
 NOVITA = [
+    ('2.2.0', 'Scegli dal sito', ['Accanto a ogni campo link del pannello, Scegli dal sito: scrivi due lettere del titolo, scegli la pagina o l\'articolo, e il link entra da solo. Nell\'editor, nei testi, nel menu, nei popup, nei form, nella newsletter e nella SEO.',
+                                     'Controlla il server prova anche Google Search Console e IndexNow dal tuo hosting; un certificato HTTPS che non va si dice per nome. Il manuale d\'uso pesa 1 MB in meno.']),
     ('2.1.0', 'Le email arrivano, gli addon completi, un file solo', ['Impostazioni > Consegna delle email: mittente, dominio (SPF, DKIM, DMARC), servizi come Brevo, Amazon SES e Mailgun, rimbalzi e spam, riscaldamento. Le email arrivano nella posta, non nello spam.',
                                                'Cinque widget nuovi (menu del ristorante, richiesta di prenotazione, galleria con filtri, loghi scorrevoli, contenuto esterno con consenso) e i form con i campi Ora e File: 92 widget.',
                                                'Addon più completi: prenotazioni prese al telefono e file per il calendario, recensioni dopo gli eventi, lezioni con l\'editor visuale, "Solo per i membri" dalla scheda, copie su Google Drive e Dropbox.',
