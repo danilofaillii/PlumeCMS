@@ -35,6 +35,7 @@ function evi_tabelle(): array {
             `chiusura_ts` BIGINT NOT NULL DEFAULT 0,
             `attesa` TINYINT(1) NOT NULL DEFAULT 1,
             `stato` VARCHAR(20) NOT NULL DEFAULT 'bozza',
+            `svolto_at` DATETIME NULL DEFAULT NULL,
             `creato` DATETIME NOT NULL,
             `aggiornato` DATETIME NOT NULL,
             PRIMARY KEY (`id`),
@@ -68,8 +69,27 @@ function evi_tabelle(): array {
 
 function evi_installa(): string {
     foreach (evi_tabelle() as $sql) db()->exec($sql);
+    evi_colonne_nuove();
     save_setting('evi_schema_impronta', md5(serialize(evi_tabelle()) . DB_NAME));
     return 'tabelle a posto';
+}
+
+/**
+ * 2.1: la colonna svolto_at (l'evento è finito e l'evento evento_svolto è partito) sulle tabelle della 2.0.0. Gli eventi
+ * già finiti quando la colonna nasce si segnano svolti subito: niente inviti "Com'è andata?" per eventi di mesi fa.
+ */
+function evi_colonne_nuove(): void {
+    $tab = tbl('evi_eventi');
+    $ci = [];
+    foreach (db()->query('SHOW COLUMNS FROM ' . $tab)->fetchAll() as $c) $ci[$c['Field']] = true;
+    if (isset($ci['svolto_at'])) return;
+    db()->exec('ALTER TABLE ' . $tab . ' ADD COLUMN `svolto_at` DATETIME NULL DEFAULT NULL AFTER `stato`');
+    db()->prepare('UPDATE ' . $tab . ' SET svolto_at = ? WHERE GREATEST(inizio_ts, fine_ts) < ?')->execute([date('Y-m-d H:i:s'), time()]);
+}
+
+/** Quando finisce un evento: la fine scritta, oppure due ore dopo l'inizio (come nel file .ics). */
+function evi_fine(array $e): int {
+    return (int)$e['fine_ts'] > (int)$e['inizio_ts'] ? (int)$e['fine_ts'] : (int)$e['inizio_ts'] + 7200;
 }
 
 function evi_schema(): void {
@@ -272,6 +292,8 @@ function evi_cancella(array $i, string $da = 'persona'): bool {
     if ($st->rowCount() !== 1) return false;
     $e = evi_evento((int)$i['evento_id']);
     $i = evi_iscrizione((int)$i['id']);
+    // 2.1: per gli altri addon (Raccolta recensioni annulla l'invito "Com'è andata?" non ancora partito).
+    try { cms_evento('iscrizione_cancellata', $i, $e); } catch (Throwable $x) { error_log('eventi: evento iscrizione_cancellata: ' . $x->getMessage()); }
     if ($e) {
         evi_email($e, $i, 'cancellata');
         if ($da === 'persona' && evi_impostazioni()['avvisa_iscrizioni']) evi_email_attivita($e, $i, 'cancellata');
@@ -392,7 +414,7 @@ function evi_ics_piega(string $riga): string {
 function evi_ics(array $e, array $i): string {
     $host = (string)(parse_url(cms_url_sito(), PHP_URL_HOST) ?: 'localhost');
     $z = fn(int $ts) => gmdate('Ymd\THis\Z', $ts);
-    $fine = (int)$e['fine_ts'] > (int)$e['inizio_ts'] ? (int)$e['fine_ts'] : (int)$e['inizio_ts'] + 7200;
+    $fine = evi_fine($e);
     $righe = ['BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//plumeCMS//Eventi//IT', 'CALSCALE:GREGORIAN', 'METHOD:PUBLISH', 'BEGIN:VEVENT',
         'UID:evento-' . (int)$e['id'] . '-' . substr((string)$i['codice'], 0, 12) . '@' . $host, 'DTSTAMP:' . $z(time()), 'DTSTART:' . $z((int)$e['inizio_ts']), 'DTEND:' . $z($fine),
         'SUMMARY:' . evi_ics_testo((string)$e['titolo']), 'URL:' . cms_url_sito() . evi_url_evento($e),
@@ -425,22 +447,43 @@ function evi_jsonld(array $e): string {
 // Cron frequente: promemoria
 // ------------------------------------------------------------
 
-/** Il giro frequente: promemoria agli iscritti degli eventi che cominciano entro 24 ore (iscritti da più di 24 ore), una volta sola. */
+/**
+ * Il giro frequente: promemoria agli iscritti degli eventi che cominciano entro 24 ore (iscritti da più di 24 ore), una
+ * volta sola; poi (2.1) gli eventi finiti: svolto_at si prende con UPDATE ... WHERE svolto_at IS NULL e parte l'evento
+ * evento_svolto (l'evento e i suoi iscritti confermati, con la presenza) per gli altri addon: Raccolta recensioni, se è
+ * accesa, prepara gli inviti "Com'è andata?". Solo eventi pubblicati e finiti da meno di 30 giorni.
+ */
 function evi_cron(?int $adesso = null): string {
     evi_schema();
     $adesso ??= time();
-    if (!evi_impostazioni()['promemoria']) return '';
-    $st = db()->prepare('SELECT i.*, e.inizio_ts FROM ' . tbl('evi_iscrizioni') . ' i JOIN ' . tbl('evi_eventi') . " e ON e.id = i.evento_id WHERE i.stato = 'confermata' AND i.promemoria_at IS NULL AND e.stato = 'pubblicato' AND e.inizio_ts > ? AND e.inizio_ts <= ? ORDER BY e.inizio_ts LIMIT 100");
-    $st->execute([$adesso, $adesso + 86400]);
-    $mandati = 0; $falliti = 0;
-    foreach ($st->fetchAll() as $i) {
-        if ((int)$i['inizio_ts'] - strtotime((string)($i['entrato_at'] ?: $i['creato'])) <= 86400) continue;
-        $presa = db()->prepare('UPDATE ' . tbl('evi_iscrizioni') . ' SET promemoria_at = ? WHERE id = ? AND promemoria_at IS NULL');
-        $presa->execute([date('Y-m-d H:i:s', $adesso), (int)$i['id']]);
-        if ($presa->rowCount() !== 1) continue;
-        if (evi_email(evi_evento((int)$i['evento_id']), $i, 'promemoria')) { $mandati++; continue; }
-        db()->prepare('UPDATE ' . tbl('evi_iscrizioni') . ' SET promemoria_at = NULL WHERE id = ?')->execute([(int)$i['id']]);
-        $falliti++;
+    $mandati = 0; $falliti = 0; $svolti = 0;
+    if (evi_impostazioni()['promemoria']) {
+        $st = db()->prepare('SELECT i.*, e.inizio_ts FROM ' . tbl('evi_iscrizioni') . ' i JOIN ' . tbl('evi_eventi') . " e ON e.id = i.evento_id WHERE i.stato = 'confermata' AND i.promemoria_at IS NULL AND e.stato = 'pubblicato' AND e.inizio_ts > ? AND e.inizio_ts <= ? ORDER BY e.inizio_ts LIMIT 100");
+        $st->execute([$adesso, $adesso + 86400]);
+        foreach ($st->fetchAll() as $i) {
+            if ((int)$i['inizio_ts'] - strtotime((string)($i['entrato_at'] ?: $i['creato'])) <= 86400) continue;
+            $presa = db()->prepare('UPDATE ' . tbl('evi_iscrizioni') . ' SET promemoria_at = ? WHERE id = ? AND promemoria_at IS NULL');
+            $presa->execute([date('Y-m-d H:i:s', $adesso), (int)$i['id']]);
+            if ($presa->rowCount() !== 1) continue;
+            if (evi_email(evi_evento((int)$i['evento_id']), $i, 'promemoria')) { $mandati++; continue; }
+            db()->prepare('UPDATE ' . tbl('evi_iscrizioni') . ' SET promemoria_at = NULL WHERE id = ?')->execute([(int)$i['id']]);
+            $falliti++;
+        }
     }
-    return ($mandati || $falliti) ? "$mandati promemoria" . ($falliti ? ", $falliti non partiti (si riprova)" : '') : '';
+    $st = db()->prepare('SELECT * FROM ' . tbl('evi_eventi') . " WHERE stato = 'pubblicato' AND svolto_at IS NULL AND IF(fine_ts > inizio_ts, fine_ts, inizio_ts + 7200) <= ? AND IF(fine_ts > inizio_ts, fine_ts, inizio_ts + 7200) > ? ORDER BY inizio_ts LIMIT 20");
+    $st->execute([$adesso, $adesso - 30 * 86400]);
+    foreach ($st->fetchAll() as $e) {
+        $presa = db()->prepare('UPDATE ' . tbl('evi_eventi') . ' SET svolto_at = ? WHERE id = ? AND svolto_at IS NULL');
+        $presa->execute([date('Y-m-d H:i:s', $adesso), (int)$e['id']]);
+        if ($presa->rowCount() !== 1) continue;
+        $svolti++;
+        $e['svolto_at'] = date('Y-m-d H:i:s', $adesso);
+        $i = db()->prepare('SELECT * FROM ' . tbl('evi_iscrizioni') . " WHERE evento_id = ? AND stato = 'confermata' ORDER BY id");
+        $i->execute([(int)$e['id']]);
+        try { cms_evento('evento_svolto', $e, $i->fetchAll()); } catch (Throwable $x) { error_log('eventi: evento evento_svolto: ' . $x->getMessage()); }
+    }
+    $out = [];
+    if ($mandati || $falliti) $out[] = "$mandati promemoria" . ($falliti ? ", $falliti non partiti (si riprova)" : '');
+    if ($svolti) $out[] = $svolti === 1 ? '1 evento concluso' : "$svolti eventi conclusi";
+    return implode(', ', $out);
 }

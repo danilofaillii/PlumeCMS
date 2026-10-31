@@ -89,6 +89,20 @@ if (!empty($_GET['anteprima'])) {
         echo preg_replace('~(<body[^>]*>)~', '$1' . $fascia, $html, 1);
         exit;
     }
+    if (str_starts_with((string)$v['ambito'], 'contenitore:')) {
+        // 2.1: un contenitore di un modulo (una lezione): la tela com'era, con la cornice del modulo.
+        $tipo = substr((string)$v['ambito'], 12);
+        $cont = editor_contenitore($tipo);
+        $pagina = $cont ? editor_pagina((int)$v['oggetto_id'], $tipo) : null;
+        if (!$pagina) { http_response_code(404); exit('Il contenuto non esiste più (o il suo modulo è spento). <a href="' . h($indietro) . '">Torna alle versioni</a>'); }
+        [$dis, $css] = editor_disegna($albero, editor_percorso_pagina($pagina));
+        $cornice = is_callable($cont['anteprima'] ?? null) ? (array)$cont['anteprima']($pagina) : [];
+        $testa = ($css !== '' ? '<style id="ed-css">' . str_replace('</', '<\\/', $css) . '</style>' : '') . (string)($cornice['testa'] ?? '');
+        if (function_exists('editor_asset_pagina')) { $asset = editor_asset_pagina($dis); foreach ($asset['css'] ?? [] as $f) $testa = '<link rel="stylesheet" href="' . sito_versione_asset($f) . '">' . $testa; foreach ($asset['js'] ?? [] as $f) $dis .= '<script src="' . sito_versione_asset($f) . '" defer></script>'; }
+        $html = vista_pagina(['titolo' => 'Anteprima della versione ' . (int)$v['id'] . ': ' . $pagina['title'], 'descrizione' => '', 'robots' => 'noindex', 'canonical' => '', 'og' => []], (string)($cornice['prima'] ?? '') . '<div class="ed-pagina">' . $dis . '</div>' . (string)($cornice['dopo'] ?? ''), $testa, editor_percorso_pagina($pagina));
+        echo preg_replace('~(<body[^>]*>)~', '$1' . $fascia, $html, 1);
+        exit;
+    }
     $tipo = editor_tipo_valido(substr((string)$v['ambito'], 10));
     $pagina = editor_pagina((int)$v['oggetto_id'], $tipo);
     if (!$pagina) { http_response_code(404); exit('Il contenuto non esiste più. <a href="' . h($indietro) . '">Torna alle versioni</a>'); }
@@ -145,7 +159,7 @@ $totale = versioni_conta($ambito, $oggetto);
 $righe = editor_versioni($ambito, $oggetto, $perPagina, ($paginaN - 1) * $perPagina);
 $oggetti = $ambito !== '' && $ambito !== 'contenuto' && !in_array($ambito, ['stile', 'impostazioni'], true) ? versioni_oggetti($ambito) : [];
 $csrf = csrf_token();
-$conAnteprima = fn(array $r) => str_starts_with((string)$r['ambito'], 'contenuto:') || $r['ambito'] === 'modello';
+$conAnteprima = fn(array $r) => str_starts_with((string)$r['ambito'], 'contenuto:') || str_starts_with((string)$r['ambito'], 'contenitore:') || $r['ambito'] === 'modello'; // 2.1: anche i contenitori (le lezioni)
 $linkOggetto = function (array $r): string {
     $a = (string)$r['ambito']; $id = (int)$r['oggetto_id'];
     if (str_starts_with($a, 'contenuto:')) return 'editor.php?tipo=' . rawurlencode(substr($a, 10)) . '&id=' . $id;

@@ -24,8 +24,8 @@ const CORSI_VIDEO_TIPI = ['mp4' => 'video/mp4', 'webm' => 'video/webm'];
 const CORSI_SLUG_RISERVATI = ['certificato', 'video', 'materiale'];
 const CORSI_ALFABETO = '23456789ABCDEFGHJKLMNPQRSTUVWXYZ'; // per i codici dei certificati: niente 0, O, 1, I
 
-function corsi_installa(): string {
-    $t = [
+function corsi_tabelle(): array {
+    return [
         'CREATE TABLE IF NOT EXISTS ' . tbl('corsi') . " (
             `id` INT NOT NULL AUTO_INCREMENT, `slug` VARCHAR(120) NOT NULL, `titolo` VARCHAR(200) NOT NULL, `descrizione` TEXT,
             `immagine` VARCHAR(500) NOT NULL DEFAULT '', `accesso` VARCHAR(12) NOT NULL DEFAULT 'tutti', `stato` VARCHAR(12) NOT NULL DEFAULT 'bozza',
@@ -40,6 +40,7 @@ function corsi_installa(): string {
             `id` INT NOT NULL AUTO_INCREMENT, `corso_id` INT NOT NULL, `modulo_id` INT NOT NULL, `slug` VARCHAR(120) NOT NULL, `titolo` VARCHAR(200) NOT NULL,
             `testo` MEDIUMTEXT, `video_url` VARCHAR(500) NOT NULL DEFAULT '', `video_file` VARCHAR(120) NOT NULL DEFAULT '', `materiali` TEXT,
             `durata` VARCHAR(40) NOT NULL DEFAULT '', `ordine` INT NOT NULL DEFAULT 0, `creato` DATETIME NOT NULL, `aggiornato` DATETIME NOT NULL,
+            `struttura` MEDIUMTEXT NULL, `struttura_bozza` MEDIUMTEXT NULL, `struttura_aggiornata` DATETIME NULL DEFAULT NULL,
             PRIMARY KEY (`id`), UNIQUE KEY `corso_slug` (`corso_id`, `slug`), KEY `modulo` (`modulo_id`)
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4",
         'CREATE TABLE IF NOT EXISTS ' . tbl('corsi_iscritti') . " (
@@ -57,9 +58,28 @@ function corsi_installa(): string {
             PRIMARY KEY (`codice`), UNIQUE KEY `corso_membro` (`corso_id`, `membro_id`), KEY `membro` (`membro_id`)
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4",
     ];
+}
+
+function corsi_installa(): string {
+    $t = corsi_tabelle();
     foreach ($t as $sql) db()->exec($sql);
+    corsi_colonne_nuove();
     save_setting('corsi_schema', md5(implode('', $t)));
     return 'tabelle dei corsi a posto';
+}
+
+/**
+ * 2.1: le colonne dell'editor visuale sulle lezioni di un sito della 2.0.0 (CREATE TABLE IF NOT EXISTS non le aggiunge).
+ * struttura: l'albero pubblicato (quello che vede il membro), struttura_bozza: quello in lavorazione. Il testo HTML di
+ * prima (colonna testo) resta com'era: senza struttura la lezione lo mostra ancora, e niente si perde.
+ */
+function corsi_colonne_nuove(): void {
+    $tab = tbl('corsi_lezioni');
+    $ci = [];
+    foreach (db()->query('SHOW COLUMNS FROM ' . $tab)->fetchAll() as $c) $ci[$c['Field']] = true;
+    if (!isset($ci['struttura'])) db()->exec('ALTER TABLE ' . $tab . ' ADD COLUMN `struttura` MEDIUMTEXT NULL');
+    if (!isset($ci['struttura_bozza'])) db()->exec('ALTER TABLE ' . $tab . ' ADD COLUMN `struttura_bozza` MEDIUMTEXT NULL');
+    if (!isset($ci['struttura_aggiornata'])) db()->exec('ALTER TABLE ' . $tab . ' ADD COLUMN `struttura_aggiornata` DATETIME NULL DEFAULT NULL');
 }
 
 function corsi_schema(): void {
@@ -67,7 +87,7 @@ function corsi_schema(): void {
     if ($fatto) return;
     $fatto = true;
     membri_schema();
-    if ((string)get_setting('corsi_schema', '') === '') corsi_installa();
+    if ((string)get_setting('corsi_schema', '') !== md5(implode('', corsi_tabelle()))) corsi_installa();
 }
 
 function corsi_admin_url(string $p, array $q = []): string {
@@ -233,6 +253,159 @@ function corsi_lezione_elimina(int $id): void {
     if ($l['video_file'] !== '') @unlink(corsi_video_dir() . '/' . basename((string)$l['video_file']));
     db()->prepare('DELETE FROM ' . tbl('corsi_progressi') . ' WHERE lezione_id = ?')->execute([$id]);
     db()->prepare('DELETE FROM ' . tbl('corsi_lezioni') . ' WHERE id = ?')->execute([$id]);
+}
+
+// ------------------------------------------------------------
+// 2.1: il testo della lezione con l'editor visuale (contenitore "corsi_lezione" dell'editor, includes/editor.php)
+// ------------------------------------------------------------
+
+/**
+ * Il contenitore dell'editor per le lezioni (chiave 'editor_contenitori' del manifesto). Strada scelta: la lezione resta
+ * una riga di corsi_lezioni (non diventa una pagina del sito: niente elenco Contenuti, sitemap, SEO, menu, nessun
+ * indirizzo pubblico senza il controllo dell'accesso) e l'editor la apre con lo stesso motore delle pagine: stessi
+ * widget, stessa validazione (editor_valida), stesse versioni (ambito contenitore:corsi_lezione), anteprima nella cornice
+ * della lezione. Solo l'amministratore la apre (come tutte le pagine dei Corsi).
+ */
+function corsi_contenitore(): array {
+    return [
+        'etichetta' => 'Lezioni dei corsi', 'uno' => 'lezione', 'lettura' => true,
+        'riga' => fn(int $id) => corsi_lezione_riga_editor($id),
+        'salva' => function (int $id, string $json, bool $pubblica, string $autore = '') { corsi_lezione_salva_struttura($id, $json, $pubblica); },
+        'impostazioni' => function (int $id, array $d) { corsi_lezione_salva($id, ['titolo' => (string)($d['titolo'] ?? '')]); },
+        'togli' => fn(int $id) => corsi_lezione_togli_editor($id),
+        'permesso' => fn() => function_exists('is_admin') && is_admin(),
+        'anteprima' => fn(array $riga) => corsi_lezione_cornice((int)$riga['id']),
+    ];
+}
+
+/** La lezione nella forma che l'editor si aspetta (le chiavi di una pagina). */
+function corsi_lezione_riga_editor(int $id): ?array {
+    $l = corsi_lezione($id);
+    $c = $l ? corsi_leggi((int)$l['corso_id']) : null;
+    if (!$l || !$c) return null;
+    $percorso = '/corsi/' . $c['slug'] . '/' . $l['slug'] . '/';
+    return ['id' => (int)$l['id'], 'title' => (string)$l['titolo'], 'slug' => (string)$l['slug'], 'status' => trim((string)$l['struttura']) !== '' ? 'published' : 'draft',
+        'struttura' => $l['struttura'], 'struttura_bozza' => $l['struttura_bozza'], 'content' => (string)$l['testo'], 'html' => (string)$l['testo'],
+        'percorso' => $percorso, 'vedi' => cms_sito_base() . $percorso . '?preview=1', 'scheda' => corsi_admin_url('lezione', ['id' => (int)$l['id']])];
+}
+
+/** Scrive l'albero della lezione: la bozza, oppure (pubblicando) la versione che vedono i membri, togliendo la bozza. */
+function corsi_lezione_salva_struttura(int $id, string $json, bool $pubblica): void {
+    if ($pubblica) db()->prepare('UPDATE ' . tbl('corsi_lezioni') . ' SET struttura = ?, struttura_bozza = NULL, struttura_aggiornata = NOW(), aggiornato = NOW() WHERE id = ?')->execute([$json, $id]);
+    else db()->prepare('UPDATE ' . tbl('corsi_lezioni') . ' SET struttura_bozza = ?, struttura_aggiornata = NOW() WHERE id = ?')->execute([$json, $id]);
+}
+
+/** "Torna al contenuto della scheda" dell'editor: la lezione torna al testo HTML di prima (le versioni restano). */
+function corsi_lezione_togli_editor(int $id): void {
+    db()->prepare('UPDATE ' . tbl('corsi_lezioni') . ' SET struttura = NULL, struttura_bozza = NULL, struttura_aggiornata = NULL WHERE id = ?')->execute([$id]);
+}
+
+/** La lezione usa l'editor visuale? 'pubblicata', 'bozza' (solo bozza o bozza sopra la pubblicata), oppure '' (testo di prima). */
+function corsi_lezione_editor_stato(array $l): string {
+    if (trim((string)($l['struttura_bozza'] ?? '')) !== '') return 'bozza';
+    return trim((string)($l['struttura'] ?? '')) !== '' ? 'pubblicata' : '';
+}
+
+/**
+ * Prima di aprire l'editor: se la lezione non ha ancora un albero, lo crea dal testo di prima, in bozza (i membri vedono il
+ * testo di prima finché non si preme Pubblica). Il testo entra in un widget Testo se il widget lo tiene tutto (lo stesso
+ * HTML ripulito con le regole del widget e con quelle della lezione); altrimenti (tabelle, video incorporati, immagini con
+ * attributi che il widget Testo toglie) in un widget HTML, intero: niente si perde.
+ */
+function corsi_lezione_prepara_editor(int $id): void {
+    $l = corsi_lezione($id);
+    if (!$l || corsi_lezione_editor_stato($l) !== '') return;
+    require_once cms_radice() . '/includes/editor.php';
+    require_once cms_radice() . '/includes/sicurezza-html.php';
+    $html = trim((string)$l['testo']);
+    if ($html === '') $w = editor_widget('testo', ['contenuto' => '<p>Scrivi qui il testo della lezione.</p>', 'margine_sotto' => ['d' => 0]]);
+    elseif (corsi_html_uguale(editor_ricco_pulito($html), sicurezza_html_pulito($html, 'articolo'))) $w = editor_widget('testo', ['contenuto' => $html, 'margine_sotto' => ['d' => 0]]);
+    else $w = editor_widget('html', ['codice' => $html, 'margine_sotto' => ['d' => 0]]);
+    $albero = editor_valida(['elementi' => [editor_sezione([$w], ['larghezza' => 'stretta', 'spazio_sopra' => ['d' => 8], 'spazio_sotto' => ['d' => 24]])]]);
+    // Con il salvataggio normale dell'editor: resta anche la prima versione.
+    editor_salva($id, $albero, false, (string)(function_exists('current_user') ? (current_user()['username'] ?? '') : ''), $html === '' ? 'lezione nuova' : 'dal testo di prima', 'corsi_lezione');
+}
+
+/** Due HTML uguali a meno di spazi e del modo di chiudere i tag vuoti. */
+function corsi_html_uguale(string $a, string $b): bool {
+    $n = fn(string $x) => (string)preg_replace(['/\s+/', '~\s*/>~', '/>\s+</'], [' ', '>', '><'], trim($x));
+    return $n($a) === $n($b);
+}
+
+/** L'albero della lezione da mostrare: quello pubblicato; nell'anteprima dell'amministratore, senza pubblicato, la bozza. */
+function corsi_lezione_albero(array $l, bool $anteprima = false): ?array {
+    if (corsi_lezione_editor_stato($l) === '') return null;
+    require_once cms_radice() . '/includes/editor.php';
+    $a = editor_decodifica((string)($l['struttura'] ?? ''));
+    if (!$a && $anteprima) $a = editor_decodifica((string)($l['struttura_bozza'] ?? ''));
+    return $a;
+}
+
+/** La testa della lezione (briciole, modulo e numero, titolo, durata): la stessa sul sito e nella tela dell'editor. */
+function corsi_lezione_testa_html(array $corso, array $l): string {
+    $lezioni = corsi_lezioni((int)$corso['id']);
+    $i = (int)array_search((int)$l['id'], array_map(fn($x) => (int)$x['id'], $lezioni), true);
+    $mod = corsi_modulo((int)$l['modulo_id']);
+    return '<p class="corsi-briciole"><a href="/corsi/">Corsi</a> &rsaquo; <a href="/corsi/' . h($corso['slug']) . '/">' . h($corso['titolo']) . '</a></p>'
+        . '<header class="corsi-testa"><span class="occhiello">' . h((string)($mod['titolo'] ?? '')) . ' &middot; lezione ' . ($i + 1) . ' di ' . count($lezioni) . '</span><h1>' . h($l['titolo']) . '</h1>'
+        . ($l['durata'] !== '' ? '<p class="corsi-numeri">' . h($l['durata']) . '</p>' : '') . '</header>';
+}
+
+/** La cornice della tela dell'editor: la testa della lezione sopra, un segnaposto per video e materiali, e il foglio dei corsi. */
+function corsi_lezione_cornice(int $id): array {
+    $l = corsi_lezione($id);
+    $c = $l ? corsi_leggi((int)$l['corso_id']) : null;
+    if (!$l || !$c) return [];
+    $video = $l['video_url'] !== '' || $l['video_file'] !== '';
+    return ['prima' => '<div class="wrap corsi-pagina corsi-lezione">' . corsi_lezione_testa_html($c, $l) . ($video ? '<p class="corsi-numeri">&#9654; Qui il membro vede il video della lezione (lo cambi dalla pagina della lezione).</p>' : '') . '</div>',
+        'dopo' => '<div class="wrap corsi-pagina corsi-lezione corsi-lezione-fondo"><p class="corsi-numeri">Sotto il testo: i materiali da scaricare, "Segna come completata" e le frecce per le lezioni.</p></div>',
+        'testa' => '<link rel="stylesheet" href="' . h(cms_modulo_url('corsi') . '/assets/corsi.css?v=' . (int)@filemtime(dirname(__DIR__) . '/assets/corsi.css')) . '">'];
+}
+
+// ------------------------------------------------------------
+// Ordine di moduli e lezioni
+// ------------------------------------------------------------
+
+/**
+ * 2.1: l'ordine nuovo del programma dopo un trascinamento: [['modulo' => id, 'lezioni' => [id, ...]], ...] con tutti i
+ * moduli e tutte le lezioni del corso, ognuno una volta. Una lezione può passare in un altro modulo dello stesso corso.
+ * Tutto o niente: un id di un altro corso, un id che manca o ripetuto, e non cambia niente. Ritorna '' oppure l'errore.
+ */
+function corsi_riordina(int $corso, mixed $ordine): string {
+    if (!is_array($ordine) || !$ordine || count($ordine) > 500) return 'L\'ordine non è leggibile.';
+    $moduli = array_map(fn($m) => (int)$m['id'], corsi_moduli($corso));
+    $st = db()->prepare('SELECT id FROM ' . tbl('corsi_lezioni') . ' WHERE corso_id = ?'); $st->execute([$corso]);
+    $lezioni = array_map('intval', $st->fetchAll(PDO::FETCH_COLUMN));
+    $vistiM = []; $vistiL = []; $piano = [];
+    foreach (array_values($ordine) as $x) {
+        if (!is_array($x) || !is_int($x['modulo'] ?? null) || !is_array($x['lezioni'] ?? null)) return 'L\'ordine non è leggibile.';
+        $m = $x['modulo'];
+        if (!in_array($m, $moduli, true) || isset($vistiM[$m])) return 'Un modulo non è di questo corso.';
+        $vistiM[$m] = true;
+        $ls = [];
+        foreach (array_values($x['lezioni']) as $id) {
+            if (!is_int($id) || !in_array($id, $lezioni, true) || isset($vistiL[$id])) return 'Una lezione non è di questo corso.';
+            $vistiL[$id] = true;
+            $ls[] = $id;
+        }
+        $piano[] = [$m, $ls];
+    }
+    if (count($vistiM) !== count($moduli) || count($vistiL) !== count($lezioni)) return 'Mancano dei moduli o delle lezioni: ricarica la pagina e riprova.';
+    $pdo = db();
+    $pdo->beginTransaction();
+    try {
+        $um = $pdo->prepare('UPDATE ' . tbl('corsi_moduli') . ' SET ordine = ? WHERE id = ? AND corso_id = ?');
+        $ul = $pdo->prepare('UPDATE ' . tbl('corsi_lezioni') . ' SET modulo_id = ?, ordine = ? WHERE id = ? AND corso_id = ?');
+        foreach ($piano as $k => [$m, $ls]) {
+            $um->execute([$k + 1, $m, $corso]);
+            foreach ($ls as $j => $id) $ul->execute([$m, $j + 1, $id, $corso]);
+        }
+        $pdo->commit();
+    } catch (Throwable $e) {
+        if ($pdo->inTransaction()) $pdo->rollBack();
+        throw $e;
+    }
+    return '';
 }
 
 /** Sposta una lezione (o un modulo) di un posto in su o in giù, scambiando l'ordine con la vicina. */

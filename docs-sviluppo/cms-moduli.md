@@ -23,6 +23,7 @@ che caricano i file veri quando servono (`require_once __DIR__ . '/includes/rice
 | `widget` | elenco di file PHP con funzioni `ew_*` | `editor-controlli.php` li carica dopo quelli del nucleo |
 | `filtri` | `['nome' => fn($valore, ...$arg) => $valore]` | `cms_filtro('nome', $valore, ...$arg)`, in catena fra i moduli |
 | `eventi` | `['nome' => fn(...$arg) => void]` | `cms_evento('nome', ...$arg)` |
+| `editor_contenitori` | `['<tipo>' => fn() => ['riga' => fn($id), 'salva' => fn($id, $json, $pubblica, $autore), ...]]` (2.1) | l'editor visuale apre un oggetto del modulo che non è un contenuto del sito (manuale tecnico 9.12; esempio: le lezioni dei Corsi) |
 
 ## I percorsi dentro un modulo
 
@@ -86,4 +87,10 @@ finché l'amministratore non lo accende da Impostazioni > Addon (`admin/addon.ph
   `'attivo' => ['addon-pagina.php?a=<addon>&p=<pagina>']`. La pagina comincia con `$adminTitle = '...'` e
   `require CMS_ADMIN . '/includes/admin-header.php';`, finisce con `admin-footer.php`; auth e CSRF sono già caricati (`verify_csrf()`, `csrf_field()`).
 - Gli indirizzi pubblici: evento `sito_percorso($percorso, $q)` (il modulo risponde ed esce). I widget: chiave `widget`.
+- Gli addon parlano fra loro con gli eventi, senza dipendenze: chi offre l'evento lo chiama con `cms_evento()`, chi lo
+  vuole lo ascolta nel manifesto; spento uno dei due, non succede niente. Offerti oggi: Prenotazioni `prenotazione_nuova`,
+  `prenotazione_annullata`, `prenotazione_non_presentata`, `prenotazione_svolta`, `prenotazione_eliminata` (la riga);
+  Eventi con iscrizione (2.1) `evento_svolto` (evento, iscritti confermati), `iscrizione_presenza` e
+  `iscrizione_cancellata` (iscrizione, evento), `evento_cambiato`, `evento_eliminato` (evento); Area riservata
+  `membro_eliminato` (id). Raccolta recensioni ascolta quelli di Prenotazioni ed Eventi, Corsi `membro_eliminato`.
 - Dal web: `addon/*/includes|sql|docs` e ogni `.php` di `addon/` danno 403 (`.htaccess`, esempi, Nginx, router delle prove).

@@ -4,7 +4,9 @@
 // video e materiale) e poi attacca: accesso senza login, sessioni scambiate fra sito e pannello, cookie inventati,
 // lezioni, video e materiali di un corso non proprio, link scaduti o manomessi, CSRF, XSS nei nomi, CSV con formule,
 // SQL injection, forza bruta all'accesso, rimandi fuori dal sito, enumerazione degli account, path traversal,
-// certificato di un altro, SSRF nella destinazione della copia, password della copia mai mostrata.
+// certificato di un altro, SSRF nella destinazione della copia, password della copia mai mostrata; 2.1: HTML cattivo nel
+// testo di una lezione scritta con l'editor visuale, editor e tela delle lezioni da redattore, riordino del programma con
+// lezioni di un altro corso, senza token, da membro.
 // Dopo: svuotare <prefisso>sicurezza_tentativi (la forza bruta blocca 127.0.0.1 per l'area riservata).
 // uso: node prove/attacchi-addon-a.js <base> <cartella CMS> <utente> <password> <porta smtp> <cartella posta>
 const { chromium, request } = require('playwright');
@@ -73,7 +75,8 @@ let br;
     await Promise.all([a.waitForNavigation(), a.click('#co-dati button[type=submit]')]);
     const f = a.locator('.co-modulo').first().locator('form.co-nuova-lezione');
     await f.locator('input[name=titolo]').fill(lezione); await Promise.all([a.waitForNavigation(), f.locator('button').click()]);
-    await a.fill('#le-testo', '<p>Testo della lezione ' + lezione + '</p>');
+    // 2.1: il testo della lezione si scrive con l'editor visuale; qui basta il testo HTML "di prima" (colonna testo).
+    php(`db()->prepare("UPDATE " . tbl('corsi_lezioni') . " SET testo = ? WHERE titolo = ?")->execute(['<p>Testo della lezione ' . ${JSON.stringify(lezione)} . '</p>', ${JSON.stringify(lezione)}]);`);
     if (conVideo) { await a.setInputFiles('#le-file', webm); await a.locator('label.le-mat', { hasText: 'materiale-b.pdf' }).locator('input').check(); }
     await Promise.all([a.waitForNavigation(), a.click('#le-form aside button.btn-primary')]);
     return u;
@@ -168,6 +171,83 @@ let br;
   r = await g(fuori, "/certificato/%27%20OR%201%3D1%20--/");
   ok('SQL injection nel codice del certificato: 404', r.status() === 404);
   ok('il codice del certificato ha 60 bit a caso (12 caratteri di 32)', /^[2-9A-HJ-NP-Z]{4}-[2-9A-HJ-NP-Z]{4}-[2-9A-HJ-NP-Z]{4}$/.test(codiceA));
+
+  // ---------------- 3b. 2.1: lezioni scritte con l'editor visuale, e ordine del programma trascinato
+  // L'amministratore apre la lezione aperta nell'editor e salva (dall'API dell'editor, come fa Pubblica) un widget Testo con
+  // codice cattivo: il sanificatore del widget lo toglie, il membro vede solo il testo.
+  await vaiA(`/admin/addon-pagina.php?a=corsi&p=lezione&id=${idAperta}`);
+  await Promise.all([a.waitForNavigation(), a.click('#le-apri-editor')]);
+  const salvaLezione = (id, contenuto, pubblica = 1) => a.evaluate(async ([id, contenuto, pubblica]) => {
+    const D = JSON.parse(document.querySelector('#ed-dati').textContent);
+    const al = JSON.parse(JSON.stringify(D.albero));
+    al.elementi[0].figli[0].figli = [{ id: 'xss0001', tipo: 'testo', impostazioni: { contenuto } }];
+    const fd = new FormData();
+    for (const [k, v] of Object.entries({ _csrf: D.csrf, id, tipo: 'corsi_lezione', azione: 'salva', albero: JSON.stringify(al), pubblica, nota: '' })) fd.append(k, v);
+    const x = await fetch('editor-api.php', { method: 'POST', body: fd, credentials: 'same-origin' });
+    return x.status;
+  }, [id, contenuto, pubblica]);
+  r = await salvaLezione(idAperta, '<p>Lezione ripulita OK-77</p><script>alert(7)</script><img src="x" onerror="alert(8)"><a href="javascript:alert(9)">clic</a><iframe src="https://cattivo.example/"></iframe>');
+  ok('(preparazione) l\'amministratore pubblica la lezione dall\'editor', r === 200, r);
+  t = await (await g(soloMembro, '/corsi/corso-aperto/prima-lezione/')).text();
+  ok('HTML cattivo nel testo della lezione: il membro vede il testo, senza script, onerror, javascript: né iframe esterni', /OK-77/.test(t) && !/alert\(7\)|onerror|javascript:alert|cattivo\.example/.test(t), t.match(/OK-77[\s\S]{0,300}/)?.[0]);
+  ok('nel database l\'albero è già ripulito (editor_valida al salvataggio)', !/<script|onerror|javascript:/i.test(sql(`SELECT struttura FROM {p}corsi_lezioni WHERE id = ${idAperta}`)));
+  r = await g(fuori, '/corsi/corso-aperto/prima-lezione/');
+  ok('la lezione scritta con l\'editor resta chiusa a chi non è entrato', r.status() === 303 && !(await r.text()).includes('OK-77'));
+  t = await (await g(soloMembro, '/corsi/corso-chiuso/lezione-chiusa/')).text();
+  ok('e a chi non ha il corso', !t.includes('Testo della lezione Lezione chiusa'));
+  // Un redattore (non amministratore): niente editor delle lezioni, né la tela, né l'API, né le versioni.
+  await vaiA('/admin/utenti.php');
+  await a.fill('form.sc-corpo [name=username]', 'red_corsi'); await a.fill('form.sc-corpo [name=email]', 'red_corsi@esempio.it');
+  await a.selectOption('form.sc-corpo [name=role]', 'editor'); await a.fill('form.sc-corpo [name=password]', 'Redattore-Corsi-2026'); await a.fill('form.sc-corpo [name=password2]', 'Redattore-Corsi-2026');
+  await Promise.all([a.waitForNavigation(), a.click('form.sc-corpo button.btn-primary')]);
+  const red = await pagina(br, err);
+  await entraPannello(red, B, 'red_corsi', 'Redattore-Corsi-2026');
+  r = await red.goto(B + `/admin/editor.php?tipo=corsi_lezione&id=${idChiusa}`);
+  ok('il redattore non apre l\'editor di una lezione (403)', r.status() === 403 && !(await red.content()).includes('Lezione chiusa</b>'));
+  r = await red.goto(B + `/admin/editor-anteprima.php?tipo=corsi_lezione&id=${idAperta}`);
+  ok('né la sua tela (editor-anteprima: 403, il testo non esce)', r.status() === 403 && !(await red.content()).includes('OK-77'));
+  // Il token vero del redattore (dall'editor di una pagina, che lui può aprire): il rifiuto viene dal permesso, non dal CSRF.
+  const idPag = JSON.parse(sql("SELECT id FROM {p}pages WHERE status = 'published' ORDER BY id LIMIT 1"))[0].id;
+  await red.goto(B + `/admin/editor.php?tipo=pagine&id=${idPag}`, { waitUntil: 'networkidle' });
+  const tokRed = await red.evaluate(() => { const d = document.querySelector('#ed-dati'); return d ? JSON.parse(d.textContent).csrf : ''; });
+  const apiRed = (azione, extra = {}) => red.evaluate(async ([id, tok, azione, extra]) => {
+    const fd = new FormData();
+    for (const [k, v] of Object.entries({ _csrf: tok, id, tipo: 'corsi_lezione', azione, ...extra })) fd.append(k, v);
+    const x = await fetch('editor-api.php', { method: 'POST', body: fd, credentials: 'same-origin' });
+    return [x.status, (await x.json().catch(() => ({}))).errore || ''];
+  }, [String(idAperta), tokRed, azione, extra]);
+  ok('(controllo) il redattore ha un token valido (dall\'editor di una pagina)', tokRed.length >= 32);
+  const rs = await apiRed('salva', { albero: JSON.stringify({ elementi: [] }), pubblica: 1 });
+  ok('né l\'API dell\'editor: salvare una lezione da redattore, con il suo token, dà 403 «solo un amministratore», la lezione resta', rs[0] === 403 && /amministratore/.test(rs[1]) && /OK-77/.test(sql(`SELECT struttura FROM {p}corsi_lezioni WHERE id = ${idAperta}`)), rs);
+  const rr = await apiRed('revisioni'), rt = await apiRed('togli');
+  ok('né le sue revisioni o «Torna al contenuto della scheda» (403)', rr[0] === 403 && rt[0] === 403 && /OK-77/.test(sql(`SELECT struttura FROM {p}corsi_lezioni WHERE id = ${idAperta}`)), [rr, rt]);
+  r = await red.goto(B + '/admin/versioni.php?ambito=' + encodeURIComponent('contenitore:corsi_lezione'));
+  ok('né le versioni delle lezioni (la pagina Versioni gli mostra solo i contenuti)', !(await red.content()).includes('Prima lezione') || r.status() === 403);
+  // L'ordine del programma: senza token, da membro, con lezioni o moduli di un altro corso, incompleto.
+  const cAperto = JSON.parse(sql("SELECT id FROM {p}corsi WHERE slug = 'corso-aperto'"))[0].id;
+  const modAperto = JSON.parse(sql(`SELECT id FROM {p}corsi_moduli WHERE corso_id = ${cAperto}`))[0].id;
+  const modChiuso = JSON.parse(sql("SELECT m.id FROM {p}corsi_moduli m JOIN {p}corsi c ON c.id = m.corso_id WHERE c.slug = 'corso-chiuso'"))[0].id;
+  const uOrd = `/admin/addon-pagina.php?a=corsi&p=corso&id=${cAperto}`;
+  const htmlCorso = await (await g(soloAdmin, uOrd)).text();
+  const tokAdm = (htmlCorso.match(/name="_csrf" value="([a-f0-9]+)"/) || [])[1] || '';
+  const prima = sql('SELECT id, corso_id, modulo_id, ordine FROM {p}corsi_lezioni ORDER BY id');
+  const ordina = (ctx, ordine, tok = tokAdm) => ctx.post(B + uOrd, { form: { _csrf: tok, azione: 'ordine', ordine: JSON.stringify(ordine) }, maxRedirects: 0, headers: { Origin: new URL(B).origin } });
+  r = await ordina(soloAdmin, [{ modulo: modAperto, lezioni: [idAperta, idChiusa] }]);
+  ok('riordino con una lezione di un altro corso: 400, niente cambia', r.status() === 400 && sql('SELECT id, corso_id, modulo_id, ordine FROM {p}corsi_lezioni ORDER BY id') === prima, r.status());
+  r = await ordina(soloAdmin, [{ modulo: modChiuso, lezioni: [idAperta] }]);
+  ok('riordino che porta una lezione nel modulo di un altro corso: 400, niente cambia', r.status() === 400 && sql('SELECT id, corso_id, modulo_id, ordine FROM {p}corsi_lezioni ORDER BY id') === prima, r.status());
+  r = await ordina(soloAdmin, [{ modulo: modAperto, lezioni: [] }]);
+  ok('riordino che fa sparire una lezione: 400, niente cambia', r.status() === 400 && sql('SELECT COUNT(*) AS n FROM {p}corsi_lezioni') === sql('SELECT COUNT(*) AS n FROM {p}corsi_lezioni') && sql('SELECT id, corso_id, modulo_id, ordine FROM {p}corsi_lezioni ORDER BY id') === prima, r.status());
+  r = await ordina(soloAdmin, [{ modulo: String(modAperto) + ' OR 1=1', lezioni: [idAperta] }]);
+  ok('riordino con un id che non è un numero: 400', r.status() === 400);
+  r = await ordina(soloAdmin, [{ modulo: modAperto, lezioni: [idAperta] }], '');
+  ok('riordino senza token CSRF: 403', r.status() === 403);
+  r = await soloAdmin.post(B + uOrd, { form: { _csrf: tokAdm, azione: 'ordine', ordine: JSON.stringify([{ modulo: modAperto, lezioni: [idAperta] }]) }, maxRedirects: 0, headers: { Origin: 'https://cattivo.example' } });
+  ok('riordino da un altro sito (Origin): 403', r.status() === 403);
+  r = await ordina(soloMembro, [{ modulo: modAperto, lezioni: [idAperta] }]);
+  ok('riordino da membro: al login del pannello, niente cambia', [302, 303].includes(r.status()) && sql('SELECT id, corso_id, modulo_id, ordine FROM {p}corsi_lezioni ORDER BY id') === prima, r.status());
+  r = await ordina(soloAdmin, [{ modulo: modAperto, lezioni: [idAperta] }]);
+  ok('(controllo) il riordino giusto passa: 200', r.status() === 200 && (await r.json()).ok === true, r.status());
 
   // ---------------- 4. Link scaduti o manomessi
   for (const [u, nome] of [['/nuova-password/?t=' + 'b'.repeat(64), 'password inventato'], ['/conferma-iscrizione/?t=' + 'c'.repeat(64), 'conferma inventato'], ['/conferma-email/?t=' + 'd'.repeat(64), 'cambio email inventato'], ['/nuova-password/?t=%27%20OR%201%3D1', 'con SQL']]) {

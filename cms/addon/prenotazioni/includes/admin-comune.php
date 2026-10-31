@@ -17,6 +17,8 @@ function pren_admin_schede(string $qui): void {
     echo '<link rel="stylesheet" href="' . h(cms_base() . '/addon/prenotazioni/assets/admin.css?v=' . (is_file($f) ? filemtime($f) : 0)) . '">';
     echo '<nav class="pa-schede" aria-label="Prenotazioni">';
     foreach ($schede as $k => $n) echo '<a href="' . h(pren_admin_url($k)) . '"' . ($k === $qui ? ' class="attivo" aria-current="page"' : '') . '>' . h($n) . '</a>';
+    // 2.1: la prenotazione presa al telefono o di persona, da ogni pagina dell'addon.
+    if (pren_servizi(true)) echo '<a class="pa-nuova" id="pa-vai-nuova" href="' . h(pren_admin_url('nuova')) . '"' . ($qui === 'nuova' ? ' aria-current="page"' : '') . '>+ Nuova prenotazione</a>';
     echo '</nav>';
     if (!pren_servizi() || !pren_risorse()) {
         echo '<div class="pa-avviso"><b>Per cominciare:</b> ' . (!pren_risorse() ? 'aggiungi chi lavora e i suoi orari in <a href="' . h(pren_admin_url('persone')) . '">Persone e orari</a>' : '') . (!pren_risorse() && !pren_servizi() ? ', poi ' : '')

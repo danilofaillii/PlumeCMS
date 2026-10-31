@@ -141,6 +141,12 @@ const norma = h => h.replace(/nonce="[^"]+"/g, '').replace(/name="_csrf" value="
   const ics = await v.request.get(C.link(cliente1).find(l => /calendario/.test(l)));
   const icsT = await ics.text();
   ok('il file .ics si scarica: text/calendar, con inizio in UTC, servizio e indirizzo', /text\/calendar/.test(ics.headers()['content-type']) && /BEGIN:VEVENT[\s\S]*DTSTART:\d{8}T\d{6}Z[\s\S]*SUMMARY:Taglio donna/.test(icsT) && /LOCATION:Via dell'Indipendenza 10\\, Bologna/.test(icsT) && /\r\n/.test(icsT), icsT.slice(0, 200));
+  // 2.1: il file per il calendario arriva anche come allegato vero, con METHOD e UID coerenti.
+  const all1 = (cliente1 && cliente1.allegati || []).find(x => /^text\/calendar/.test(x.tipo));
+  const uid = C.ics(icsT, 'UID');
+  ok('allegato .ics nella conferma: parte text/calendar method=REQUEST, METHOD:REQUEST, lo stesso UID del link, SEQUENCE:0', all1 && /method=REQUEST/.test(all1.tipo) && all1.nome === 'appuntamento.ics' && C.ics(all1.dati, 'METHOD') === 'REQUEST' && uid !== '' && C.ics(all1.dati, 'UID') === uid && C.ics(all1.dati, 'SEQUENCE') === '0' && C.ics(icsT, 'METHOD') === 'PUBLISH', all1 && [all1.tipo, C.ics(all1.dati, 'METHOD'), C.ics(all1.dati, 'UID'), uid]);
+  ok('allegato .ics: l\'attività è ORGANIZER, il cliente ATTENDEE, appuntamento CONFIRMED', all1 && /mailto:salone@esempio\.it/.test(C.ics(all1.dati, 'ORGANIZER')) && /mailto:giulia@cliente\.it/.test(C.ics(all1.dati, 'ATTENDEE')) && C.ics(all1.dati, 'STATUS') === 'CONFIRMED' && /DTSTART:\d{8}T\d{6}Z/.test(all1.dati));
+  ok('all\'attività niente allegato (l\'avviso non è un invito)', salone1 && salone1.allegati.length === 0);
   // Lo stesso posto non si offre più con Anna.
   box = await scegli(v, 'Taglio donna', 'Anna');
   await box.locator(`.pren-giorno[data-d="${giorno1}"]`).click();
@@ -160,6 +166,8 @@ const norma = h => h.replace(/nonce="[^"]+"/g, '').replace(/name="_csrf" value="
   ok('sposto: "l\'appuntamento è spostato", con la nuova ora', /spostato/.test(await v.locator('.pren-ok').innerText()) && (await v.locator('.pren-dettagli').innerText()).includes(ora2), ora2);
   em = await C.nuove(POSTA, quante, 2);
   ok('email "Prenotazione spostata" al cliente e "spostata dal cliente" all\'attività', em.some(e => e.a === 'giulia@cliente.it' && /spostata/.test(e.oggetto)) && em.some(e => e.a === 'salone@esempio.it' && /spostata dal cliente/.test(e.oggetto) && /Prima era/.test(e.html)), em.map(e => e.oggetto));
+  const all2 = (em.find(e => e.a === 'giulia@cliente.it' && /spostata/.test(e.oggetto)) || { allegati: [] }).allegati.find(x => /^text\/calendar/.test(x.tipo));
+  ok('allegato .ics nello spostamento: REQUEST, stesso UID, SEQUENCE:1, la nuova ora', all2 && C.ics(all2.dati, 'METHOD') === 'REQUEST' && C.ics(all2.dati, 'UID') === uid && C.ics(all2.dati, 'SEQUENCE') === '1' && C.ics(all2.dati, 'DTSTART') !== C.ics(all1.dati, 'DTSTART'), all2 && [C.ics(all2.dati, 'SEQUENCE'), C.ics(all2.dati, 'DTSTART')]);
   await v.click('a:has-text("Annulla la prenotazione")');
   ok('annullare chiede conferma', /Vuoi davvero annullare/.test(await v.locator('.pren-conferma').innerText()));
   quante = C.posta(POSTA).length;
@@ -167,6 +175,8 @@ const norma = h => h.replace(/nonce="[^"]+"/g, '').replace(/name="_csrf" value="
   ok('annullata: la pagina lo dice e non offre più i pulsanti', /annullata/.test(await v.locator('.pren-ok').innerText()) && /Annullata/.test(await v.locator('.pren-dettagli').innerText()) && await v.locator('a:has-text("Annulla la prenotazione")').count() === 0);
   em = await C.nuove(POSTA, quante, 2);
   ok('email di annullamento al cliente e all\'attività', em.some(e => e.a === 'giulia@cliente.it' && /annullata/i.test(e.oggetto)) && em.some(e => e.a === 'salone@esempio.it' && /annullata dal cliente/.test(e.oggetto)), em.map(e => e.oggetto));
+  const all3 = (em.find(e => e.a === 'giulia@cliente.it' && /annullata/i.test(e.oggetto)) || { allegati: [] }).allegati.find(x => /^text\/calendar/.test(x.tipo));
+  ok('allegato .ics nell\'annullamento: text/calendar method=CANCEL, METHOD:CANCEL, stesso UID, SEQUENCE:2, STATUS:CANCELLED', all3 && /method=CANCEL/.test(all3.tipo) && C.ics(all3.dati, 'METHOD') === 'CANCEL' && C.ics(all3.dati, 'UID') === uid && C.ics(all3.dati, 'SEQUENCE') === '2' && C.ics(all3.dati, 'STATUS') === 'CANCELLED', all3 && [all3.tipo, C.ics(all3.dati, 'SEQUENCE')]);
   const rotto = gestisci.replace(/t=([a-f0-9])/, (m, c) => 't=' + (c === 'a' ? 'b' : 'a'));
   const r404 = await v.goto(rotto);
   ok('un link personale manomesso: "Questo link non funziona"', r404.status() === 404 && /Questo link non funziona/.test(await v.locator('h1').innerText()));
@@ -201,6 +211,70 @@ const norma = h => h.replace(/nonce="[^"]+"/g, '').replace(/name="_csrf" value="
   ok('il messaggio arriva al cliente, nell\'email di annullamento', em.some(e => e.a === 'sara@cliente.it' && /chiusi per un imprevisto/.test(e.html)));
   await vai(a, PAG('impostazioni')); await a.uncheck('[name=da_confermare]'); await Promise.all([a.waitForNavigation(), a.click('#pa-impostazioni button.btn-primary')]);
 
+  // 7b. 2.1: la prenotazione presa al telefono o di persona, scritta dal pannello.
+  await vai(a, PAG('servizi'));
+  ok('in ogni pagina dell\'addon c\'è «+ Nuova prenotazione», e nel menu la voce', await a.locator('#pa-vai-nuova').count() === 1 && await a.locator('nav.admin-nav a', { hasText: 'Nuova prenotazione' }).count() === 1);
+  await Promise.all([a.waitForNavigation(), a.click('#pa-vai-nuova')]);
+  const sTaglio = await a.locator('#pa-nuova-quando select[name=s] option', { hasText: 'Taglio donna' }).getAttribute('value');
+  const sColore = await a.locator('#pa-nuova-quando select[name=s] option', { hasText: 'Colore' }).getAttribute('value');
+  await Promise.all([a.waitForNavigation(), a.selectOption('#pa-nuova-quando select[name=s]', sColore)]);
+  ok('cambio il servizio: la pagina si ricarica da sola e «Con chi» offre solo chi lo fa', /[?&]s=/.test(a.url()) && (await a.locator('#pa-nuova-quando select[name=r] option').allInnerTexts()).join() === 'Chi è libero,Anna');
+  await Promise.all([a.waitForNavigation(), a.selectOption('#pa-nuova-quando select[name=s]', sTaglio)]);
+  const rAnna = await a.locator('#pa-nuova-quando select[name=r] option', { hasText: 'Anna' }).getAttribute('value');
+  await Promise.all([a.waitForNavigation(), a.selectOption('#pa-nuova-quando select[name=r]', rAnna)]);
+  const fraDieci = new Date(Date.now() + 10 * 86400000).toISOString().slice(0, 10);
+  const pSito = await (await a.request.get(`${B}/prenotazione/posti/?s=${sTaglio}&r=${rAnna}&da=${fraDieci}`)).json();
+  const gP = pSito.giorno;
+  await vai(a, PAG('nuova') + `&s=${sTaglio}&r=${rAnna}&d=${gP}`);
+  const orePannello = (await a.locator('.pa-ora-scelta:not(.pa-ora-altra) b').allInnerTexts());
+  ok('gli orari liberi nel pannello sono gli stessi che il sito offre quel giorno', orePannello.length > 2 && orePannello.join() === pSito.posti.map(x => x.ora).join(), [gP, orePannello.slice(0, 6), pSito.posti.slice(0, 6).map(x => x.ora)]);
+  ok('«Un altro orario» chiuso finché non lo scelgo', await a.locator('#pa-forza').isHidden());
+  const oraP = orePannello[0];
+  await a.locator('.pa-ora-scelta', { hasText: oraP }).first().click();
+  await a.fill('#pa-nuova [name=nome]', 'Paolo Verdi'); await a.fill('#pa-nuova [name=telefono]', '051 123456'); await a.fill('#pa-nuova [name=note]', 'Ha chiamato alle 10');
+  quante = C.posta(POSTA).length;
+  await Promise.all([a.waitForNavigation(), a.click('#pa-nuova button.btn-primary')]);
+  const flashP = await a.locator('.flash').first().innerText();
+  ok('salvo una prenotazione senza email: «Prenotazione salvata ... Nessuna email al cliente», si apre la sua scheda', /Prenotazione salvata: Paolo Verdi/.test(flashP) && /Nessuna email al cliente/.test(flashP) && /elenco&id=\d+/.test(a.url()), flashP);
+  ok('la scheda: confermata, «scritta dal pannello», telefono e nota, email «nessuna»', (await a.getAttribute('#pa-scheda', 'data-stato')) === 'confermata' && await a.locator('#pa-origine').count() === 1 && /051 123456/.test(await a.locator('#pa-scheda').innerText()) && /Ha chiamato alle 10/.test(await a.locator('#pa-scheda').innerText()) && /nessuna/.test(await a.locator('#pa-scheda').innerText()));
+  await C.dorme(1200);
+  ok('nessuna email partita (né al cliente, che non ce l\'ha, né all\'attività, che l\'ha scritta)', C.posta(POSTA).length === quante, C.posta(POSTA).slice(quante).map(e => e.a));
+  const pDopo = await (await a.request.get(`${B}/prenotazione/posti/?s=${sTaglio}&r=${rAnna}&d=${gP}&da=${gP}`)).json();
+  ok('quell\'orario con Anna sul sito non si offre più', pDopo.giorno === gP && !pDopo.posti.some(x => x.ora === oraP), [pDopo.giorno, pDopo.posti.slice(0, 3)]);
+  await vai(a, PAG('nuova') + `&s=${sTaglio}&r=${rAnna}&d=${gP}`);
+  ok('e nemmeno nel pannello', !(await a.locator('.pa-ora-scelta b').allInnerTexts()).includes(oraP));
+  ok('nome e telefono sono obbligatori anche nel browser', await a.locator('#pa-nuova [name=nome][required]').count() === 1 && await a.locator('#pa-nuova [name=telefono][required]').count() === 1);
+  // Lo stesso posto forzato con «Un altro orario»: la persona è occupata.
+  await a.locator('.pa-ora-altra').click();
+  ok('scelgo «Un altro orario»: compare l\'avviso con ora e persona', await a.locator('#pa-forza').isVisible() && /sotto la tua responsabilità/.test(await a.locator('#pa-forza').innerText()));
+  await a.fill('#pa-nuova [name=ora_altra]', oraP); await a.selectOption('#pa-nuova [name=risorsa_altra]', rAnna);
+  await a.fill('#pa-nuova [name=nome]', 'Doppio Prova'); await a.fill('#pa-nuova [name=telefono]', '333');
+  await Promise.all([a.waitForNavigation(), a.click('#pa-nuova button.btn-primary')]);
+  ok('forzare sopra un appuntamento della stessa persona: no, «ha già un appuntamento», e i campi restano', /Anna a quell'ora ha già un appuntamento/.test(await a.locator('#pa-nuova-errore').innerText()) && (await a.inputValue('#pa-nuova [name=nome]')) === 'Doppio Prova' && await a.locator('#pa-forza').isVisible());
+  await a.selectOption('#pa-nuova [name=risorsa_altra]', '0'); await a.fill('#pa-nuova [name=ora_altra]', '7:15');
+  await Promise.all([a.waitForNavigation(), a.click('#pa-nuova button.btn-primary')]);
+  ok('forzare senza dire con chi: «scegli con chi»', /scegli con chi/.test(await a.locator('#pa-nuova-errore').innerText()));
+  await a.evaluate(() => document.querySelector('#pa-nuova [name=telefono]').removeAttribute('required'));
+  await a.fill('#pa-nuova [name=telefono]', '');
+  await Promise.all([a.waitForNavigation(), a.click('#pa-nuova button.btn-primary')]);
+  ok('senza telefono (anche saltando il controllo del browser): il server lo chiede', /Scrivi il telefono/.test(await a.locator('#pa-nuova-errore').innerText()));
+  // Fuori dagli orari (alle 7:15, prima dell'apertura) con l'email: si salva, con l'avviso, e parte la conferma con l'allegato.
+  await a.selectOption('#pa-nuova [name=risorsa_altra]', rAnna); await a.fill('#pa-nuova [name=ora_altra]', '7:15');
+  await a.fill('#pa-nuova [name=nome]', 'Paola Neri'); await a.fill('#pa-nuova [name=telefono]', '333 7654321'); await a.fill('#pa-nuova [name=email]', 'paola@cliente.it');
+  ok('la spunta «Manda al cliente l\'email di conferma» è accesa', await a.isChecked('#pa-nuova [name=avvisa]'));
+  quante = C.posta(POSTA).length;
+  await Promise.all([a.waitForNavigation(), a.click('#pa-nuova button.btn-primary')]);
+  const flashF = await a.locator('.flash').first().innerText();
+  ok('7:15 con Anna: salvata, «fuori dagli orari liberi», «è partita l\'email»', /Paola Neri/.test(flashF) && /fuori dagli orari liberi/.test(flashF) && /partita l'email di conferma/.test(flashF), flashF);
+  em = await C.nuove(POSTA, quante, 1);
+  const eP = em.find(e => e.a === 'paola@cliente.it');
+  const allP = eP && eP.allegati.find(x => /^text\/calendar/.test(x.tipo));
+  ok('a Paola arriva «Prenotazione confermata» con l\'allegato .ics (REQUEST, alle 7:15), all\'attività niente', eP && /Prenotazione confermata/.test(eP.oggetto) && /alle 7:15/.test(eP.oggetto) && allP && C.ics(allP.dati, 'METHOD') === 'REQUEST' && !em.some(e => e.a === 'salone@esempio.it'), em.map(e => e.a + ' ' + e.oggetto));
+  const idP = +new URL(a.url()).searchParams.get('id');
+  ok('la prenotazione forzata è nel database: confermata, origine pannello, senza IP', (() => { const r = C.cli(CMS, 'sql', `SELECT stato, origine, ip, risorsa FROM {p}pren_prenotazioni WHERE id = ${idP}`)[0]; return r && r.stato === 'confermata' && r.origine === 'pannello' && r.ip === '' && r.risorsa === 'Anna'; })());
+  await vai(a, PAG('agenda') + '&vista=giorno&d=' + gP);
+  ok('agenda del giorno: Paola alle 7:15 e Paolo, e il pulsante «+ Nuova prenotazione in questo giorno»', /7:15[\s\S]*Paola Neri/.test(await a.locator('.pa-giornata').innerText()) && /Paolo Verdi/.test(await a.locator('.pa-giornata').innerText()) && /d=/.test(await a.getAttribute('#pa-nuova-giorno', 'href')));
+
   // 8. Agenda, promemoria, svolto e non presentato.
   box = await scegli(v, 'Taglio donna');
   const g3 = await box.locator('.pren-giorno[aria-pressed=true]').getAttribute('data-d');
@@ -216,7 +290,7 @@ const norma = h => h.replace(/nonce="[^"]+"/g, '').replace(/name="_csrf" value="
   await vai(at, PAG('agenda'));
   ok('agenda al telefono: niente scorrimento di lato', await C.largo(at) <= 0, await C.largo(at));
   const larghe = [];
-  for (const u of ['elenco&filtro=tutte', 'elenco&id=' + id3, 'servizi', 'servizi&nuovo=1', 'persone', 'persone&nuova=1', 'impostazioni', 'agenda&vista=giorno&d=' + g3]) { await vai(at, PAG(u)); if (await C.largo(at) > 0) larghe.push(u); }
+  for (const u of ['nuova', 'elenco&filtro=tutte', 'elenco&id=' + id3, 'servizi', 'servizi&nuovo=1', 'persone', 'persone&nuova=1', 'impostazioni', 'agenda&vista=giorno&d=' + g3]) { await vai(at, PAG(u)); if (await C.largo(at) > 0) larghe.push(u); }
   ok('le altre pagine del pannello al telefono: nessuna scorre di lato', larghe.length === 0, larghe);
   const riga = C.cli(CMS, 'sql', `SELECT inizio_ts FROM {p}pren_prenotazioni WHERE id = ${id3}`)[0];
   C.cli(CMS, 'sql', `UPDATE {p}pren_prenotazioni SET creato = DATE_SUB(creato, INTERVAL 5 DAY) WHERE id = ${id3}`);
@@ -237,6 +311,14 @@ const norma = h => h.replace(/nonce="[^"]+"/g, '').replace(/name="_csrf" value="
   await vai(a, PAG('elenco') + '&id=' + id3);
   await Promise.all([a.waitForNavigation(), a.click('button[value=non_presentato]')]);
   ok('segno "Non si è presentato"', (await a.getAttribute('#pa-scheda', 'data-stato')) === 'non_presentato' && /non presentato/i.test(await a.locator('#pa-scheda .badge').innerText()));
+
+  // 8b. 2.1: le colonne nuove (origine, sequenza) su un sito della 2.0.0, aggiunte alla prima richiesta senza perdere niente.
+  const prime = C.cli(CMS, 'sql', 'SELECT COUNT(*) n FROM {p}pren_prenotazioni')[0].n;
+  C.cli(CMS, 'sql', 'ALTER TABLE {p}pren_prenotazioni DROP COLUMN sequenza, DROP COLUMN origine');
+  C.cli(CMS, 'sql', "UPDATE {p}settings SET setting_value = '' WHERE setting_key = 'pren_schema_impronta'");
+  C.cli(CMS, 'cron');
+  const col = C.cli(CMS, 'sql', "SELECT COUNT(*) n, SUM(origine = 'sito') s, SUM(sequenza = 0) q FROM {p}pren_prenotazioni")[0];
+  ok('sito della 2.0.0: origine e sequenza tornano da sole, le prenotazioni ci sono tutte («dal sito», sequenza 0)', +col.n === +prime && +col.s === +prime && +col.q === +prime, [prime, col]);
 
   // 9. Spento: il sito torna com'era, i dati restano.
   const f2 = await C.addon(a, B, 'prenotazioni', false);

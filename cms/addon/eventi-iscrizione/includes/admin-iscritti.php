@@ -20,7 +20,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $e) {
     if ($i && (int)$i['evento_id'] !== (int)$e['id']) $i = null;
     switch ($_POST['azione'] ?? '') {
         case 'presente': case 'assente':
-            if ($i) db()->prepare('UPDATE ' . tbl('evi_iscrizioni') . ' SET presente = ?, aggiornato = ? WHERE id = ?')->execute([$_POST['azione'] === 'presente' ? 1 : 0, date('Y-m-d H:i:s'), (int)$i['id']]);
+            if ($i) {
+                db()->prepare('UPDATE ' . tbl('evi_iscrizioni') . ' SET presente = ?, aggiornato = ? WHERE id = ?')->execute([$_POST['azione'] === 'presente' ? 1 : 0, date('Y-m-d H:i:s'), (int)$i['id']]);
+                // 2.1: per gli altri addon (Raccolta recensioni invita chi era presente, e non chi era assente).
+                try { cms_evento('iscrizione_presenza', evi_iscrizione((int)$i['id']), evi_evento((int)$e['id'])); } catch (Throwable $x) { error_log('eventi: evento iscrizione_presenza: ' . $x->getMessage()); }
+            }
             break;
         case 'cancella':
             if ($i && evi_cancella($i, 'attivita')) flash('success', 'Iscrizione di ' . $i['nome'] . ' cancellata: le è partita l\'email. Se qualcuno aspettava, è entrato.');

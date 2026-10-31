@@ -144,11 +144,13 @@ function versioni_ambiti(): array {
     } catch (Throwable $e) {
         $a['contenuto:pagine'] = 'Pagine'; $a['contenuto:articoli'] = 'Articoli';
     }
+    // 2.1: i contenitori dell'editor dei moduli accesi (le lezioni dei corsi...).
+    try { require_once __DIR__ . '/editor.php'; foreach (editor_contenitori() as $k => $d) $a['contenitore:' . $k] = (string)$d['etichetta']; } catch (Throwable $e) { /* senza moduli */ }
     return $a + ['modello' => 'Header e footer', 'menu' => 'Menu di navigazione', 'stile' => 'Stile del sito', 'tema' => 'Colori delle infografiche', 'impostazioni' => 'Impostazioni dell\'editor'];
 }
 
 function versioni_ambito_etichetta(string $ambito): string {
-    return versioni_ambiti()[$ambito] ?? ucfirst(str_replace(['contenuto:', '_'], ['', ' '], $ambito));
+    return versioni_ambiti()[$ambito] ?? ucfirst(str_replace(['contenuto:', 'contenitore:', '_'], ['', '', ' '], $ambito));
 }
 
 // ------------------------------------------------------------
@@ -315,6 +317,12 @@ function versioni_dati_contenuto(array $riga): array {
         'header_id' => (int)($riga['header_id'] ?? 0), 'footer_id' => (int)($riga['footer_id'] ?? 0)];
 }
 
+/** 2.1: i dati di un contenitore dell'editor (una lezione di un corso...) dalla sua riga: albero e stato. */
+function versioni_dati_contenitore(array $riga): array {
+    $d = versioni_dati_contenuto($riga);
+    return ['albero' => $d['albero'], 'stato' => $d['stato']];
+}
+
 /** I dati di un modello dalla sua riga. */
 function versioni_dati_modello(array $m): array {
     $bozza = trim((string)($m['struttura_bozza'] ?? ''));
@@ -346,6 +354,13 @@ function versioni_dati_attuali(string $ambito, int $id): ?array {
         $riga = editor_pagina($id, editor_tipo_valido(substr($ambito, 10)));
         return $riga ? versioni_dati_contenuto($riga) : null;
     }
+    if (str_starts_with($ambito, 'contenitore:')) { // 2.1
+        require_once __DIR__ . '/editor.php';
+        $tipo = substr($ambito, 12);
+        if (!editor_contenitore($tipo)) return null;
+        $riga = editor_pagina($id, $tipo);
+        return $riga ? versioni_dati_contenitore($riga) : null;
+    }
     switch ($ambito) {
         case 'modello':
             require_once __DIR__ . '/modelli.php';
@@ -372,6 +387,7 @@ function versioni_dati_attuali(string $ambito, int $id): ?array {
 function versioni_nome_oggetto(string $ambito, int $id): string {
     try {
         if (str_starts_with($ambito, 'contenuto:')) { require_once __DIR__ . '/editor.php'; $r = editor_pagina($id, editor_tipo_valido(substr($ambito, 10))); if ($r) return (string)$r['title']; }
+        elseif (str_starts_with($ambito, 'contenitore:')) { require_once __DIR__ . '/editor.php'; $t = substr($ambito, 12); $r = editor_contenitore($t) ? editor_pagina($id, $t) : null; if ($r) return (string)$r['title']; }
         elseif ($ambito === 'modello') { require_once __DIR__ . '/modelli.php'; $m = modelli_leggi($id); if ($m) return (string)$m['nome']; }
         elseif ($ambito === 'menu') { require_once __DIR__ . '/menu-nav.php'; $m = menu_leggi($id); if ($m) return (string)$m['nome']; }
         elseif ($ambito === 'tema') { require_once __DIR__ . '/editor-temi.php'; $t = editor_temi_salvati()['t' . $id] ?? null; if ($t) return (string)$t['nome']; }
@@ -419,6 +435,19 @@ function editor_versione_ripristina(int $versioneId, string $autore = ''): strin
             $nome = (string)(editor_pagina($id, $tipo)['title'] ?? $v['oggetto_nome']);
             $nuovi = versioni_dati_attuali($ambito, $id);
             if (isset($dati['scheda'])) $nuovi = ['scheda' => versioni_scheda_pulita(editor_pagina($id, $tipo) ?? [])];
+        } elseif (str_starts_with($ambito, 'contenitore:')) {
+            // 2.1: un contenitore di un modulo (una lezione): solo l'albero, con il salvataggio normale.
+            require_once __DIR__ . '/editor.php';
+            $tipo = substr($ambito, 12);
+            if (!editor_contenitore($tipo)) throw new RuntimeException('Il modulo di questo contenuto è spento: riaccendilo per ripristinare.');
+            if (!editor_pagina($id, $tipo)) throw new RuntimeException('Il contenuto non esiste più.');
+            if (is_array($dati['albero'] ?? null)) {
+                $albero = editor_valida($dati['albero']);
+                if (!$albero) throw new RuntimeException('La struttura salvata in questa versione non è leggibile.');
+                editor_salva($id, $albero, ($dati['stato'] ?? '') === 'pubblicata', $autore, $nota, $tipo);
+            }
+            $nome = (string)(editor_pagina($id, $tipo)['title'] ?? $v['oggetto_nome']);
+            $nuovi = versioni_dati_attuali($ambito, $id);
         } elseif ($ambito === 'modello') {
             require_once __DIR__ . '/modelli.php'; require_once __DIR__ . '/editor.php';
             $m = modelli_leggi($id);

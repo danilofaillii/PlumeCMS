@@ -14,8 +14,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $st = db()->prepare('SELECT COUNT(*) FROM ' . tbl('evi_iscrizioni') . " WHERE evento_id = ? AND stato <> 'cancellata'");
         $st->execute([$id]);
         if ((int)$st->fetchColumn() > 0) { flash('error', 'Questo evento ha degli iscritti: mettilo "Annullato" (e scrivi agli iscritti da Iscritti) invece di eliminarlo.'); evi_admin_vai('eventi', ['id' => $id]); }
+        $vecchio = evi_evento($id);
         db()->prepare('DELETE FROM ' . tbl('evi_iscrizioni') . ' WHERE evento_id = ?')->execute([$id]);
         db()->prepare('DELETE FROM ' . tbl('evi_eventi') . ' WHERE id = ?')->execute([$id]);
+        if ($vecchio) { try { cms_evento('evento_eliminato', $vecchio); } catch (Throwable $x) { error_log('eventi: evento evento_eliminato: ' . $x->getMessage()); } }
         flash('success', 'Evento eliminato.');
         evi_admin_vai('eventi');
     }
@@ -41,11 +43,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $stato = in_array($_POST['stato'] ?? '', ['bozza', 'pubblicato', 'annullato'], true) ? $_POST['stato'] : 'bozza';
     $val = [$slug, $titolo, date('Y-m-d H:i:s', $inizio), $inizio, $fine, evi_testo($_POST['luogo'] ?? '', 200), evi_testo($_POST['indirizzo'] ?? '', 255), evi_testo($_POST['descrizione'] ?? '', 6000, true),
         $foto, evi_testo($_POST['prezzo'] ?? '', 60), max(0, min(100000, (int)($_POST['posti'] ?? 0))), max(1, min(50, (int)($_POST['max_persona'] ?? 4))), $chiusura, !empty($_POST['attesa']) ? 1 : 0, $stato, date('Y-m-d H:i:s')];
+    $prima = $id ? evi_evento($id) : null;
     if ($id) {
         db()->prepare('UPDATE ' . tbl('evi_eventi') . ' SET slug = ?, titolo = ?, inizio = ?, inizio_ts = ?, fine_ts = ?, luogo = ?, indirizzo = ?, descrizione = ?, foto = ?, prezzo = ?, posti = ?, max_persona = ?, chiusura_ts = ?, attesa = ?, stato = ?, aggiornato = ? WHERE id = ?')->execute([...$val, $id]);
     } else {
         db()->prepare('INSERT INTO ' . tbl('evi_eventi') . ' (slug, titolo, inizio, inizio_ts, fine_ts, luogo, indirizzo, descrizione, foto, prezzo, posti, max_persona, chiusura_ts, attesa, stato, aggiornato, creato) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)')->execute([...$val, date('Y-m-d H:i:s')]);
         $id = (int)db()->lastInsertId();
+    }
+    // 2.1: un evento rinviato (la fine torna nel futuro) o annullato non è più "svolto": gli inviti "Com'è andata?" non
+    // ancora partiti si annullano (Raccolta recensioni ascolta evento_cambiato) e, se si svolge, ripartono alla fine nuova.
+    $dopo = evi_evento($id);
+    if ($prima && $dopo && ($stato === 'annullato' || evi_fine($dopo) !== evi_fine($prima))) {
+        if ($prima['svolto_at'] !== null && ($stato === 'annullato' || evi_fine($dopo) > time())) db()->prepare('UPDATE ' . tbl('evi_eventi') . ' SET svolto_at = NULL WHERE id = ?')->execute([$id]);
+        try { cms_evento('evento_cambiato', evi_evento($id)); } catch (Throwable $x) { error_log('eventi: evento evento_cambiato: ' . $x->getMessage()); }
     }
     $entrati = evi_promuovi($id);
     flash('success', 'Evento «' . $titolo . '» salvato' . ($stato === 'pubblicato' ? ': la sua pagina è ' . cms_url_sito() . '/evento/' . $slug . '/' : ' (' . ($stato === 'bozza' ? 'bozza: sul sito non si vede ancora' : 'annullato') . ')') . '.' . ($entrati ? " $entrati dalla lista d'attesa sono entrati e hanno ricevuto l'email." : ''));

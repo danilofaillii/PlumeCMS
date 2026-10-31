@@ -10,7 +10,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if ($avviso !== '' && !filter_var($avviso, FILTER_VALIDATE_EMAIL)) { flash('error', '«' . $avviso . '» non è un indirizzo email valido.'); rec_admin_vai('impostazioni'); }
     save_setting('rec_impostazioni', json_encode([
         'giorni_dopo' => max(0, min(60, (int)($_POST['giorni_dopo'] ?? 2))), 'validita' => max(1, min(365, (int)($_POST['validita'] ?? 30))),
-        'da_prenotazioni' => !empty($_POST['da_prenotazioni']), 'google_link' => $google, 'google_da' => max(1, min(5, (int)($_POST['google_da'] ?? 4))),
+        'da_prenotazioni' => !empty($_POST['da_prenotazioni']), 'da_eventi' => !empty($_POST['da_eventi']), 'eventi_chi' => ($_POST['eventi_chi'] ?? '') === 'tutti' ? 'tutti' : 'presenti', 'google_link' => $google, 'google_da' => max(1, min(5, (int)($_POST['google_da'] ?? 4))),
         'avviso_a' => $avviso, 'avvisa' => !empty($_POST['avvisa']),
         'oggetto' => rec_riga(rec_testo($_POST['oggetto'] ?? '', 120)) ?: REC_PREDEFINITE['oggetto'], 'testo' => rec_testo($_POST['testo'] ?? '', 1000, true) ?: REC_PREDEFINITE['testo'],
     ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES));
@@ -19,6 +19,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 }
 $imp = rec_impostazioni();
 $prenotazioni = cms_modulo('prenotazioni') !== null;
+$eventi = cms_modulo('eventi-iscrizione') !== null;
 require CMS_ADMIN . '/includes/admin-header.php';
 rec_admin_schede('impostazioni');
 ?>
@@ -26,7 +27,13 @@ rec_admin_schede('impostazioni');
   <h3>Quando chiedere</h3>
   <div class="pa-campi">
     <label class="pa-spunta pa-largo"><input type="checkbox" name="da_prenotazioni" value="1"<?= $imp['da_prenotazioni'] ? ' checked' : '' ?>> Chiedi da solo dopo ogni appuntamento svolto <?= $prenotazioni ? '' : '<span class="pa-aiuto">(serve l\'addon Prenotazioni acceso: adesso è spento)</span>' ?></label>
-    <label>Dopo quanti giorni<input type="number" name="giorni_dopo" min="0" max="60" value="<?= (int)$imp['giorni_dopo'] ?>"><span class="pa-aiuto">Dall'appuntamento (o da quando li aggiungi a mano, se scegli "fra qualche giorno").</span></label>
+    <label class="pa-spunta pa-largo"><input type="checkbox" name="da_eventi" value="1"<?= $imp['da_eventi'] ? ' checked' : '' ?>> Chiedi da solo dopo ogni evento <?= $eventi ? '' : '<span class="pa-aiuto">(serve l\'addon Eventi con iscrizione acceso: adesso è spento)</span>' ?></label>
+    <fieldset class="pa-largo rec-chi"><legend>Dopo un evento, a chi</legend>
+      <label class="pa-spunta"><input type="radio" name="eventi_chi" value="presenti"<?= $imp['eventi_chi'] !== 'tutti' ? ' checked' : '' ?>> Solo a chi segno <b>Presente</b> in Eventi &gt; Iscritti</label>
+      <label class="pa-spunta"><input type="radio" name="eventi_chi" value="tutti"<?= $imp['eventi_chi'] === 'tutti' ? ' checked' : '' ?>> A tutti gli iscritti (tranne chi segno <b>Assente</b>)</label>
+      <span class="pa-aiuto">Con "solo a chi segno Presente" puoi segnare le presenze anche nei giorni dopo l'evento: l'invito parte comunque.</span>
+    </fieldset>
+    <label>Dopo quanti giorni<input type="number" name="giorni_dopo" min="0" max="60" value="<?= (int)$imp['giorni_dopo'] ?>"><span class="pa-aiuto">Dalla fine dell'appuntamento o dell'evento (o da quando li aggiungi a mano, se scegli "fra qualche giorno").</span></label>
     <label>Il link vale (giorni)<input type="number" name="validita" min="1" max="365" value="<?= (int)$imp['validita'] ?>"></label>
   </div>
   <h3 style="margin-top:1.2rem">L'email</h3>

@@ -12,13 +12,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $p = pren_leggi((int)($_POST['id'] ?? 0));
     $az = (string)($_POST['azione'] ?? '');
     if (!$p) { flash('error', 'Prenotazione non trovata.'); pren_admin_vai('elenco'); }
+    // 2.1: una prenotazione presa al telefono può non avere l'email: allora il cliente si avvisa a voce.
+    $senzaEmail = !filter_var((string)$p['email'], FILTER_VALIDATE_EMAIL);
+    $aVoce = ' Il cliente non ha l\'email: avvisalo tu per telefono.';
     switch ($az) {
         case 'conferma':
-            flash(pren_cambia_stato($p, 'confermata') ? 'success' : 'error', pren_leggi((int)$p['id'])['stato'] === 'confermata' ? 'Confermata: al cliente è partita l\'email di conferma.' : 'Non si può confermare.');
+            flash(pren_cambia_stato($p, 'confermata') ? 'success' : 'error', pren_leggi((int)$p['id'])['stato'] === 'confermata' ? ($senzaEmail ? 'Confermata.' . $aVoce : 'Confermata: al cliente è partita l\'email di conferma.') : 'Non si può confermare.');
             break;
         case 'annulla':
             $e = pren_annulla($p, 'attivita', pren_testo($_POST['messaggio'] ?? '', 1000, true));
-            flash($e === '' ? 'success' : 'error', $e === '' ? 'Annullata: al cliente è partita l\'email' . (trim((string)($_POST['messaggio'] ?? '')) !== '' ? ' con il tuo messaggio.' : '.') : 'Questa prenotazione non è più attiva.');
+            flash($e === '' ? 'success' : 'error', $e === '' ? ($senzaEmail ? 'Annullata.' . $aVoce : 'Annullata: al cliente è partita l\'email' . (trim((string)($_POST['messaggio'] ?? '')) !== '' ? ' con il tuo messaggio.' : '.')) : 'Questa prenotazione non è più attiva.');
             break;
         case 'non_presentato':
             flash(pren_cambia_stato($p, 'non_presentato') ? 'success' : 'error', pren_leggi((int)$p['id'])['stato'] === 'non_presentato' ? 'Segnata: il cliente non si è presentato.' : 'Si può segnare solo un appuntamento già cominciato.');
@@ -28,7 +31,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             break;
         case 'sposta':
             $e = pren_sposta($p, (string)($_POST['giorno'] ?? ''), (string)($_POST['ora'] ?? ''), false);
-            flash($e === '' ? 'success' : 'error', $e === '' ? 'Spostata: al cliente è partita l\'email con il nuovo orario.' : 'Quell\'orario non è libero (o è fuori dagli orari di lavoro): scegline un altro.');
+            flash($e === '' ? 'success' : 'error', $e === '' ? ($senzaEmail ? 'Spostata.' . $aVoce : 'Spostata: al cliente è partita l\'email con il nuovo orario.') : 'Quell\'orario non è libero (o è fuori dagli orari di lavoro): scegline un altro.');
             break;
         case 'elimina':
             if (in_array($p['stato'], PREN_STATI_ATTIVI, true) && (int)$p['inizio_ts'] > time()) { flash('error', 'Prima annulla la prenotazione: è ancora da fare.'); break; }
@@ -66,11 +69,11 @@ if ($p):
     <dt>Servizio</dt><dd><?= h((string)$p['servizio']) ?><?= $p['prezzo'] !== '' ? ' (' . h((string)$p['prezzo']) . ')' : '' ?></dd>
     <dt>Quando</dt><dd><?= h(pren_quando($p)) ?>, fino alle <?= h(pren_ora((int)$p['fine_ts'])) ?></dd>
     <dt>Con</dt><dd><?= h((string)$p['risorsa']) ?></dd>
-    <dt>Email</dt><dd><a href="mailto:<?= h((string)$p['email']) ?>"><?= h((string)$p['email']) ?></a></dd>
+    <dt>Email</dt><dd><?= $p['email'] !== '' ? '<a href="mailto:' . h((string)$p['email']) . '">' . h((string)$p['email']) . '</a>' : '<span class="pa-muto">nessuna: il cliente non riceve email</span>' ?></dd>
     <dt>Telefono</dt><dd><a href="tel:<?= h(preg_replace('/[^\d+]/', '', (string)$p['telefono'])) ?>"><?= h((string)$p['telefono']) ?></a></dd>
     <?php if ($p['note'] !== ''): ?><dt>Note</dt><dd><?= nl2br(h((string)$p['note'])) ?></dd><?php endif; ?>
     <?php if ($p['messaggio'] !== ''): ?><dt>Messaggio mandato</dt><dd><?= nl2br(h((string)$p['messaggio'])) ?></dd><?php endif; ?>
-    <dt>Prenotata il</dt><dd><?= h(date('d/m/Y H:i', strtotime((string)$p['creato']))) ?><?= $p['promemoria_at'] ? ' &middot; promemoria mandato il ' . h(date('d/m H:i', strtotime((string)$p['promemoria_at']))) : '' ?></dd>
+    <dt>Prenotata il</dt><dd><?= h(date('d/m/Y H:i', strtotime((string)$p['creato']))) ?><?= ($p['origine'] ?? 'sito') === 'pannello' ? ' &middot; <span id="pa-origine">scritta dal pannello</span>' : ' &middot; dal sito' ?><?= $p['promemoria_at'] ? ' &middot; promemoria mandato il ' . h(date('d/m H:i', strtotime((string)$p['promemoria_at']))) : '' ?></dd>
   </dl>
   <div class="pa-azioni">
     <?php if ($p['stato'] === 'da_confermare'): ?>

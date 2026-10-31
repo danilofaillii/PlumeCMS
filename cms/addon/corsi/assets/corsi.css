@@ -46,3 +46,6 @@
   .corsi-nav a{max-width:100%}
   .corsi-completa .btn{flex:1 1 auto;justify-content:center;white-space:normal;text-align:center;line-height:1.3}
 }
+/* 2.1: il testo della lezione scritto con l'editor visuale esce a sezioni fra la testa e i materiali, senza buchi in mezzo. */
+.corsi-pagina.corsi-lezione:has(+.ed-pagina){padding-bottom:8px}
+.corsi-lezione-fondo{padding-top:0}

@@ -13,6 +13,7 @@
  */
 require_once __DIR__ . '/corsi.php';
 require_once dirname(__DIR__, 2) . '/membri/includes/pagine.php';
+require_once dirname(__DIR__, 3) . '/includes/editor.php'; // 2.1: le lezioni scritte con l'editor visuale
 
 function corsi_testa(): string {
     return membri_testa() . corsi_css();
@@ -22,10 +23,25 @@ function corsi_css(): string {
     return '<link rel="stylesheet" href="' . h(cms_modulo_url('corsi') . '/assets/corsi.css?v=' . (int)@filemtime(dirname(__DIR__) . '/assets/corsi.css')) . '">';
 }
 
-function corsi_html(string $titolo, string $corpo, int $codice = 200, string $descrizione = ''): never {
+function corsi_html(string $titolo, string $corpo, int $codice = 200, string $descrizione = '', string $testa = ''): never {
     header('Cache-Control: private, no-store');
     $meta = ['titolo' => $titolo . ' - ' . SITO_NOME, 'descrizione' => $descrizione, 'robots' => 'noindex', 'canonical' => '', 'og' => []];
-    sito_html($codice, $meta, $corpo, corsi_testa());
+    sito_html($codice, $meta, $corpo, corsi_testa() . $testa);
+}
+
+/**
+ * 2.1: il testo di una lezione scritto con l'editor visuale, disegnato come una pagina dell'editor: [html, righe per la
+ * testa] (il CSS degli elementi, i fogli e gli script dei widget che servono, editor-pagina.js per video e animazioni).
+ * Senza albero: null, e la lezione mostra il testo HTML di prima.
+ */
+function corsi_lezione_editor_html(array $l, string $percorso): ?array {
+    $albero = corsi_lezione_albero($l, corsi_anteprima());
+    if (!$albero) return null;
+    [$html, $css] = editor_disegna($albero, $percorso);
+    $testa = $css !== '' ? '<style id="ed-css">' . str_replace('</', '<\\/', $css) . '</style>' : '';
+    if (function_exists('editor_serve_script') && editor_serve_script($html)) $html .= '<script src="' . sito_versione_asset('editor-pagina.js') . '" defer></script>';
+    if (function_exists('editor_asset_pagina')) { $asset = editor_asset_pagina($html); foreach ($asset['css'] ?? [] as $f) $testa = '<link rel="stylesheet" href="' . sito_versione_asset($f) . '">' . $testa; foreach ($asset['js'] ?? [] as $f) $html .= '<script src="' . sito_versione_asset($f) . '" defer></script>'; }
+    return ['<div class="ed-pagina corsi-lezione-testo">' . $html . '</div>', $testa];
 }
 
 /** L'anteprima dell'amministratore (?preview=1 con la sessione del pannello): vede anche le bozze, senza avanzamento. */
@@ -171,7 +187,6 @@ function corsi_pagina_lezione(array $corso, string $slug, bool $post): never {
     $i = (int)array_search((int)$l['id'], $ids, true);
     $prima = $lezioni[$i - 1] ?? null; $dopo = $lezioni[$i + 1] ?? null;
     $fatta = $m && in_array((int)$l['id'], corsi_completate((int)$m['id'], (int)$corso['id']), true);
-    $mod = corsi_modulo((int)$l['modulo_id']);
     $video = '';
     if ($l['video_file'] !== '' && is_file(corsi_video_dir() . '/' . basename((string)$l['video_file']))) {
         $video = '<div class="corsi-video"><video controls preload="metadata" controlslist="nodownload" src="/corsi/' . h($corso['slug']) . '/video/' . (int)$l['id'] . '/' . (corsi_anteprima() ? '?preview=1' : '') . '"></video></div>';
@@ -192,13 +207,14 @@ function corsi_pagina_lezione(array $corso, string $slug, bool $post): never {
     $nav = '<nav class="corsi-nav" aria-label="Lezioni">' . ($prima ? '<a href="/corsi/' . h($corso['slug']) . '/' . h($prima['slug']) . '/">&larr; ' . h($prima['titolo']) . '</a>' : '<span></span>')
         . ($dopo ? '<a href="/corsi/' . h($corso['slug']) . '/' . h($dopo['slug']) . '/">' . h($dopo['titolo']) . ' &rarr;</a>' : '') . '</nav>';
     $av = $m ? corsi_avanzamento((int)$m['id'], $corso) : null;
-    $corpo = '<div class="wrap corsi-pagina corsi-lezione"><p class="corsi-briciole"><a href="/corsi/">Corsi</a> &rsaquo; <a href="/corsi/' . h($corso['slug']) . '/">' . h($corso['titolo']) . '</a></p>'
-        . '<header class="corsi-testa"><span class="occhiello">' . h((string)($mod['titolo'] ?? '')) . ' &middot; lezione ' . ($i + 1) . ' di ' . count($lezioni) . '</span><h1>' . h($l['titolo']) . '</h1>'
-        . ($l['durata'] !== '' ? '<p class="corsi-numeri">' . h($l['durata']) . '</p>' : '') . '</header>'
-        . $video . ($l['testo'] !== '' ? '<div class="corpo corsi-testo">' . $l['testo'] . '</div>' : '')
+    // 2.1: il testo scritto con l'editor visuale esce a sezioni, fra la testa e i materiali; senza, il testo HTML di prima.
+    $ed = corsi_lezione_editor_html($l, $url);
+    $testo = $ed ? '</div>' . $ed[0] . '<div class="wrap corsi-pagina corsi-lezione corsi-lezione-fondo">' : ($l['testo'] !== '' ? '<div class="corpo corsi-testo">' . $l['testo'] . '</div>' : '');
+    $corpo = '<div class="wrap corsi-pagina corsi-lezione">' . corsi_lezione_testa_html($corso, $l)
+        . $video . $testo
         . ($mat !== '' ? '<section class="corsi-materiali"><h2>Materiali</h2><ul class="membri-lista">' . $mat . '</ul></section>' : '')
         . $azioni . ($av ? corsi_barra($av) : '') . $nav . '</div>';
-    corsi_html($l['titolo'] . ' - ' . $corso['titolo'], $corpo);
+    corsi_html($l['titolo'] . ' - ' . $corso['titolo'], $corpo, 200, '', $ed[1] ?? '');
 }
 
 function corsi_pagina_video(array $corso, int $id): never {
