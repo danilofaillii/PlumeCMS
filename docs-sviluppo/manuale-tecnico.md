@@ -2163,6 +2163,13 @@ nel suo download manager.
   scarica lo zip, controlla che la lunghezza e lo sha256 siano quelli annunciati e lo registra con
   `agg_registra_pacchetto()`, come uno zip caricato a mano: da lì "Applica ora" (19.4). Una versione già in coda non si
   scarica due volte.
+- **Sito ufficiale e indirizzo del sito** (2.4.0): `VERSIONE_SITO_UFFICIALE` (`includes/versione-nuova.php`) e `FIRMA_URL`
+  (`includes/firma.php`) sono `https://plumecms.it`; `firma_pulisci()` porta al nuovo una frase salvata con
+  `plumecms.danilofailli.it`. In `admin/impostazioni.php` il riquadro **Indirizzo del sito** (`save_indirizzo`,
+  `indirizzo_sito_salva()`): solo l'origine (schema, host, porta), la cartella resta `cms_base()`; prima di salvare `sito_url`
+  scrive in `uploads/` un file `prova-indirizzo-<codice>.txt`, lo chiede al nuovo indirizzo con `server_http()` e lo toglie;
+  senza risposta giusta non salva (salvo "Salva lo stesso"). Registro di sicurezza. Prova: `prove/prova-indirizzo-sito.js`
+  (10 controlli, radice e cartella). I siti fino alla 2.3.2 chiedono gli aggiornamenti al vecchio dominio: la 2.4.0 si carica a mano.
 - **Menu del pannello** (2.3.2): `admin/includes/admin-header.php` si include dentro ogni pagina, quindi ogni sua variabile è
   una variabile della pagina. Il menu ora usa solo nomi `$_menu...` e `$_m...` e li toglie con `unset` alla fine: prima `$sa` del
   sottomenu cancellava `$sa` (il service account) di `admin/seo.php`, e `$v`, `$nome`, `$x` potevano fare lo stesso altrove. Prova:

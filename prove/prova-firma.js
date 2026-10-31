@@ -5,7 +5,7 @@
 // uso: node prova-firma.js <base del CMS> <utente> <password>
 const { chromium } = require('playwright');
 const [B, UTENTE, PASSWORD] = process.argv.slice(2);
-const UFFICIALE = 'https://plumecms.danilofailli.it';
+const UFFICIALE = 'https://plumecms.it'; // 2.4.0
 let n = 0, ko = 0; const ok = (t, c, extra = '') => { n++; if (!c) ko++; console.log((c ? 'OK  ' : 'KO  ') + t + (extra ? ' ' + JSON.stringify(extra).slice(0, 220) : '')); };
 
 (async () => {

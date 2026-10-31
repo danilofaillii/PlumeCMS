@@ -99,7 +99,7 @@ Sono gli unici in `cms/docs/`, nello zip, nel sito di plumeCMS e nella pagina Do
 - **Pacchetto di aggiornamento** per un'installazione esistente:
   `python3 tools/cms-pacchetto.py --aggiornamento`. Si carica dal pannello,
   Impostazioni, Aggiornamenti.
-- **Versione**: `cms/VERSIONE` (oggi 2.3.2; sempre tre numeri: "beta" va nel CHANGELOG, mai nel nome dello zip, se no la serie "ultima" del Download non lo riconosce) e una voce in `cms/CHANGELOG.md` a ogni
+- **Versione**: `cms/VERSIONE` (oggi 2.4.0; sempre tre numeri: "beta" va nel CHANGELOG, mai nel nome dello zip, se no la serie "ultima" del Download non lo riconosce) e una voce in `cms/CHANGELOG.md` a ogni
   zip con contenuto diverso. Mai cambiare il contenuto di una versione già data.
 - **Prove** prima di dire finito:
   - `php -n -d short_open_tag=1 -l` su ogni file PHP toccato, `node --check` sui js;
@@ -134,6 +134,11 @@ Le decisioni complete, con data e perché, stanno nel second brain, `plumecms/de
 - **Nome: plumeCMS** (26 ottobre 2026).
 
 ## Stato al 31 ottobre 2026
+
+Fatto: plumeCMS 2.4.0 (1 novembre): il sito ufficiale passa a **https://plumecms.it** (Danilo ha comprato il dominio; stesso hosting;
+il vecchio plumecms.danilofailli.it si chiude subito, decisione sua). `VERSIONE_SITO_UFFICIALE` e `FIRMA_URL` cambiati, la frase salvata col
+vecchio indirizzo migra da sola, e il riquadro nuovo Impostazioni > Indirizzo del sito (`sito_url` dal pannello, con la prova del file).
+I siti fino alla 2.3.2 vanno aggiornati a mano una volta. Foglio dei passi del trasloco in `docs-sviluppo/trasloco-plumecms-it.md`.
 
 Fatto: plumeCMS 2.3.2 (1 novembre): segnalazione di Danilo, la chiave del service account di Google si salvava ma il riquadro SEO restava
 vuoto: `admin-header.php` sovrascriveva `$sa` della pagina con il suo sottomenu. Variabili del menu con prefisso e `unset`. Link
@@ -329,9 +334,8 @@ Aperto:
 - Google Search Console e IndexNow su un server vero: dalla 2.2.0 li prova Impostazioni > Controlla il server (gruppo "Google e
   IndexNow": il service account legge le proprietà, il file della chiave si legge da fuori, api.indexnow.org risponde). Da fare
   sul sito di Danilo con i suoi dati;
-- **indirizzo del sito ufficiale** per "c'è una versione nuova": dalla 1.6.2 è solo `VERSIONE_SITO_UFFICIALE`
-  (`includes/versione-nuova.php`, `https://plumecms.danilofailli.it`), nessun campo nel pannello (decisione di Danilo); il sito
-  ufficiale ci sta dal 28 ottobre;
+- **indirizzo del sito ufficiale** per "c'è una versione nuova": è solo `VERSIONE_SITO_UFFICIALE` (`includes/versione-nuova.php`),
+  dalla 2.4.0 `https://plumecms.it` (prima `https://plumecms.danilofailli.it`), nessun campo nel pannello (decisione di Danilo);
 - "c'è una versione nuova" in HTTPS: dalla 2.2.0 provato con un certificato vero firmato da un'autorità di prova
   (`prove/prova-versione-https.py`: valido, autorità sconosciuta, altro nome, scaduto); manca la prova contro plumecms.danilofailli.it;
 - import da WordPress provato contro un WordPress locale (6.6.2 vero), non su un hosting vero: da fare con uno dei siti WordPress di

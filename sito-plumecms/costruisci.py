@@ -633,6 +633,8 @@ def zip_lavagna(dest):
 
 # Le novità per chi scarica: brevi, scritte qui (il CHANGELOG è per chi sviluppa). Da aggiornare a ogni versione.
 NOVITA = [
+    ('2.4.0', 'Il sito ufficiale è plumecms.it', ['Il sito di plumeCMS si è spostato su plumecms.it: da qui arrivano le versioni nuove, con Installa ora. I siti con una versione di prima vanno aggiornati una volta a mano con lo zip di aggiornamento.',
+                                     'In Impostazioni > Sito pubblico, Indirizzo del sito: per spostare un sito su un altro dominio. Il pannello prova che il nuovo indirizzo apra proprio quel sito prima di salvarlo.']),
     ('2.3.2', 'Search Console collegato', ['In SEO e AEO il service account di Google, dopo il salvataggio, si vede nel riquadro con il pulsante Prova il collegamento: prima restava nascosto. E il link per creare il progetto Google porta dritto alla pagina giusta.']),
     ('2.3.1', 'Scarica sempre l\'ultima', ['Il pulsante Scarica l\'aggiornamento (e ogni link "sempre l\'ultima" del download manager) porta subito alla versione appena caricata: prima il browser poteva ridare per un\'ora quella di prima.']),
     ('2.3.0', 'Installa ora', ['La versione installata è sempre in alto a sinistra del pannello. Quando ne esce una nuova, la dashboard scrive Nuova versione disponibile e accanto c\'è Installa ora: un clic e il pannello la scarica, la controlla e la installa, con la copia di sicurezza prima.']),

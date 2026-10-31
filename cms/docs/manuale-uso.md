@@ -61,7 +61,7 @@ Dopo l'accesso arrivi alla **Dashboard**: la pagina che ti dice come sta il sito
    SEO e AEO, Impostazioni) si aprono e mostrano le sottovoci.
 2. **I pulsanti rapidi.** + Articolo, + Pagina, + Campagna e Home nell'editor: le cose che si fanno più spesso, a un clic.
 
-In cima c'è sempre la riga **Visita il sito ufficiale plumeCMS**: il link porta a plumecms.danilofailli.it, dove trovi
+In cima c'è sempre la riga **Visita il sito ufficiale plumeCMS**: il link porta a plumecms.it, dove trovi
 le versioni nuove, i manuali e le novità. Quando esce una versione nuova, subito dopo compare **Nuova versione disponibile
 v. 2.3.1** (con il numero vero) e accanto il pulsante **Installa ora** (capitolo 28).
 
@@ -1094,6 +1094,23 @@ cambi o la spegni da **Impostazioni > Sito pubblico**, riquadro **La frase in fo
 4. Premi **Salva la frase** e apri il sito: in fondo a ogni pagina c'è quella nuova.
 
 Il testo è solo testo: niente grassetti né codice, e le emoji si tolgono.
+
+### Spostare il sito su un altro dominio
+
+Quando il sito passa a un dominio nuovo (per esempio da `https://studioprova.esempio.it` a `https://www.studioprova.it`),
+l'indirizzo che usa per i link, la sitemap, il canonical e le email si cambia da **Impostazioni > Sito pubblico**, riquadro
+**Indirizzo del sito**.
+
+1. Nel pannello dell'hosting collega il dominio nuovo alla **stessa cartella** del sito e attiva il certificato HTTPS (in
+   cPanel: Domini, poi SSL/TLS Status). Apri `https://www.studioprova.it` nel browser: deve comparire il tuo sito.
+2. Nel pannello del sito: **Impostazioni**, riquadro **Indirizzo del sito**. Scrivi solo il dominio, con `https://` davanti:
+   `https://www.studioprova.it`.
+3. Premi **Salva l'indirizzo** e conferma. Il pannello prova che il nuovo indirizzo apra proprio questo sito: se sì, in alto
+   compare "Indirizzo del sito cambiato"; se no, ti dice perché e non cambia niente.
+4. In Search Console aggiungi la proprietà del dominio nuovo e invia la sitemap (capitolo 23).
+
+Solo se sei sicuro che il nuovo indirizzo funziona e la prova non passa (capita con alcuni hosting che non lasciano il sito
+chiamare sé stesso), spunta **Salva lo stesso**.
 
 ---
 

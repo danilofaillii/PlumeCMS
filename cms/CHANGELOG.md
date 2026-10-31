@@ -2,6 +2,18 @@
 
 Il prodotto si chiama **plumeCMS** (nome scelto il 26 ottobre 2026; prima, per poche ore, "CarbonaraCMS", e ancora prima il provvisorio "Officina": gli zip vecchi si chiamavano `officina-*` e `carbonaracms-*`).
 
+## 2.4.0 (1 novembre 2026) - plumecms.it
+
+- **Il sito ufficiale è https://plumecms.it** (decisione di Danilo, dominio nuovo): da qui ogni installazione chiede se c'è una
+  versione nuova e la scarica con Installa ora, e qui porta la frase "Un nuovo sito plumeCMS" in fondo ai siti. Chi aveva salvato
+  la frase con il vecchio indirizzo (plumecms.danilofailli.it) passa da solo al nuovo.
+- **I siti con la 2.3.2 o prima** cercano gli aggiornamenti sul vecchio indirizzo, che chiude: questa versione si carica una volta
+  a mano (Impostazioni > Aggiornamenti > Carica un pacchetto). Dalla 2.4.0 Installa ora torna a funzionare.
+- **Impostazioni > Sito pubblico, Indirizzo del sito** (nuovo): per spostare un sito su un altro dominio. Si scrive il dominio
+  nuovo; prima di salvarlo il pannello prova che apra proprio questo sito (un file con un codice a caso, letto dal nuovo indirizzo).
+  Da quel momento link, sitemap, canonical, email e Search Console usano il nuovo indirizzo. "Salva lo stesso" per gli hosting che
+  non lasciano il sito chiamare sé stesso.
+
 ## 2.3.2 (1 novembre 2026) - Il service account di Google si vede dopo il salvataggio
 
 - **Corretto** (segnalazione di Danilo): in SEO e AEO, scheda Motori di ricerca, la chiave JSON del service account di Google si

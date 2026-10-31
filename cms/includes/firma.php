@@ -7,7 +7,7 @@
  */
 // Lo stesso indirizzo di VERSIONE_SITO_UFFICIALE (includes/versione-nuova.php), scritto qui per non caricare il motore
 // degli aggiornamenti a ogni visita del sito. Se cambia uno, cambia anche l'altro.
-const FIRMA_URL = 'https://plumecms.danilofailli.it';
+const FIRMA_URL = 'https://plumecms.it'; // 2.4.0 (prima https://plumecms.danilofailli.it)
 const FIRMA_IMPOSTAZIONE = 'firma_sito';
 const FIRMA_TESTO = 'Un nuovo sito plumeCMS';
 
@@ -26,6 +26,8 @@ function firma_pulisci(array $p): array {
     $testo = is_scalar($p['testo'] ?? null) ? (string)$p['testo'] : '';
     $testo = mb_substr(trim((string)preg_replace(['/[\x{10000}-\x{10FFFF}]/u', '/\s+/u'], ['', ' '], strip_tags($testo))), 0, 120);
     $url = is_scalar($p['url'] ?? null) ? trim((string)$p['url']) : '';
+    // 2.4.0: il sito ufficiale si è spostato su plumecms.it; il vecchio indirizzo salvato nella frase passa al nuovo.
+    if (preg_match('~^https?://plumecms\.danilofailli\.it/?$~i', $url)) $url = FIRMA_URL;
     if ($url !== '' && (!preg_match('~^https?://[^\s"<>]+$~i', $url) || !filter_var($url, FILTER_VALIDATE_URL))) $url = FIRMA_URL;
     return ['mostra' => !empty($p['mostra']), 'testo' => $testo, 'url' => $url];
 }

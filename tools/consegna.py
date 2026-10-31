@@ -202,7 +202,7 @@ def main():
              'Apri questo zip sul computer (doppio clic). Dentro ci sono altri zip: NON aprirli, si caricano così come sono.', '']
     if len(pacchetti) == 1:
         righe += [
-            '1. Sul sito ufficiale di plumeCMS (plumecms.danilofailli.it), un pacchetto solo:',
+            '1. Sul sito ufficiale di plumeCMS (plumecms.it), un pacchetto solo:',
             '   Pannello > Impostazioni > Aggiornamenti > Carica un pacchetto:',
             f'   {os.path.basename(pacchetti[0])}, poi Applica ora.',
             f'   Porta tutto insieme: il CMS {V}, ' + ('le pagine del sito, ' if not senza_pagine else '') + 'gli zip e i manuali nella pagina Download.',
@@ -210,7 +210,7 @@ def main():
         ]
     else:
         righe += [
-            '1. Sul sito ufficiale di plumeCMS (plumecms.danilofailli.it), due pacchetti, in quest\'ordine'
+            '1. Sul sito ufficiale di plumeCMS (plumecms.it), due pacchetti, in quest\'ordine'
             + (' (questa volta cambia il\n   motore degli aggiornamenti: le pagine le deve applicare quello nuovo).' if cambiato else '.'),
             '   Pannello > Impostazioni > Aggiornamenti > Carica un pacchetto > Applica ora, per ognuno:',
             f'   prima {os.path.basename(pacchetti[0])}, poi {os.path.basename(pacchetti[1])}.',

@@ -143,7 +143,7 @@ async function contrastoParole(pg) {
   ok('Funzionalità (1.10.0): il blocco dei widget per le attività, con la schermata', await v.locator('#widget-attivita img[src*="widget-attivita.webp"]').count() === 1 && /Orari di apertura/.test(await v.locator('#widget-attivita').innerText()));
   ok('Funzionalità (1.9.0): nel blocco dei form, chi riceve l\'email a ogni compilazione', /chi riceve l.email a ogni compilazione/.test(await v.locator('#newsletter').innerText()));
   ok('Funzionalità (1.8.0): il blocco della frase in fondo al sito, con la schermata', await v.locator('#firma img[src*="firma.webp"]').count() === 1 && /Impostazioni/.test(await v.locator('#firma').innerText()));
-  ok('Funzionalità (1.8.0): la frase in fondo al sito, con il link al sito ufficiale', await v.locator('#firma-sito a[href="https://plumecms.danilofailli.it"]').count() === 1);
+  ok('Funzionalità (1.8.0): la frase in fondo al sito, con il link al sito ufficiale', await v.locator('#firma-sito a[href="https://plumecms.it"]').count() === 1);
   ok('Funzionalità (1.7.0): il blocco del sito su misura, con la schermata', await v.locator('#su-misura img[src*="su-misura.webp"]').count() === 1 && /Sostituisci/.test(await v.locator('#su-misura').innerText()));
   ok('Funzionalità (1.6.0): il blocco del riquadro in fondo agli articoli, con la schermata', await v.locator('#fine-articolo img[src*="fine-articolo.webp"]').count() === 1 && /Aggiungi sempre alla fine/.test(await v.locator('#fine-articolo').innerText()));
   ok('Funzionalità (1.5.0): il blocco dei social, con l\'email del mattino', await v.locator('#social img[src*="social.webp"]').count() === 1 && /pronti ogni mattina/.test(await v.locator('#social').innerText()));
@@ -219,7 +219,7 @@ async function contrastoParole(pg) {
   ok('Domande frequenti (1.4.0): chi viene da WordPress', /Vengo da WordPress\. Devo rifare tutto\?/.test(await v.locator('body').innerText()));
   await v.goto(B + '/scarica/', { waitUntil: 'networkidle' });
   ok('Scarica: le novità della 1.4.0', /1\.4\.0: Il sito si prova/.test(await v.locator('body').innerText()));
-  ok('Scarica: le novità della 2.3.2', /2\.3\.2: Search Console collegato/.test(await v.locator('body').innerText()));
+  ok('Scarica: le novità della 2.4.0', /2\.4\.0: Il sito ufficiale è plumecms\.it/.test(await v.locator('body').innerText()));
   ok('Scarica: le novità della 1.6.0', /1\.6\.0: Un riquadro in fondo a ogni articolo/.test(await v.locator('body').innerText()));
   await v.goto(B + '/installazione/', { waitUntil: 'networkidle' });
   ok('Installazione (1.4.0): dopo l\'installazione, Primi passi e Controlla il server', /Primi passi/.test(await v.locator('body').innerText()) && /Controlla il server/.test(await v.locator('body').innerText()));

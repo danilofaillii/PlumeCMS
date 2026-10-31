@@ -12,6 +12,41 @@ require_admin();
 
 $adminTitle = 'Impostazioni';
 
+/**
+ * 2.4.0: cambia l'indirizzo del sito (impostazione sito_url: link, sitemap, canonical, email, firma degli aggiornamenti).
+ * Si scrive solo l'origine (https://nuovo-dominio.it): la cartella del sito resta quella di adesso (cms_base()).
+ * Prova: un file con un codice a caso in uploads/, chiesto al nuovo indirizzo; se non torna, non si salva (salvo $forza).
+ * Ritorna ['ok' => bool, 'messaggio' => testo per chi usa il pannello].
+ */
+function indirizzo_sito_salva(string $url, bool $forza): array {
+    $url = rtrim(trim($url), '/');
+    $p = parse_url($url);
+    if (!is_array($p) || !in_array(strtolower((string)($p['scheme'] ?? '')), ['https', 'http'], true) || empty($p['host'])
+        || isset($p['user']) || isset($p['pass']) || isset($p['query']) || isset($p['fragment']) || (($p['path'] ?? '') !== '' && $p['path'] !== '/')
+        || !preg_match('/^[a-z0-9.-]+$/i', (string)$p['host'])) {
+        return ['ok' => false, 'messaggio' => 'Scrivi solo l\'indirizzo del dominio, con https:// davanti, per esempio https://www.miosito.it (senza pagine né cartelle dopo).'];
+    }
+    $nuovo = strtolower((string)$p['scheme']) . '://' . strtolower((string)$p['host']) . (isset($p['port']) ? ':' . (int)$p['port'] : '') . cms_base();
+    if ($nuovo === cms_url_sito()) return ['ok' => true, 'messaggio' => 'L\'indirizzo del sito è già ' . $nuovo . '.'];
+    if (!$forza) {
+        require_once dirname(__DIR__) . '/includes/controllo-server.php';
+        $codice = bin2hex(random_bytes(12));
+        $nome = 'prova-indirizzo-' . $codice . '.txt';
+        $file = cms_uploads_dir() . '/' . $nome;
+        @file_put_contents($file, $codice);
+        $percorsoUploads = (string)parse_url(cms_uploads_url(), PHP_URL_PATH); // /uploads oppure /cartella/uploads
+        [$cod, $corpo, $err] = server_http(strtolower((string)$p['scheme']) . '://' . strtolower((string)$p['host']) . (isset($p['port']) ? ':' . (int)$p['port'] : '') . rtrim($percorsoUploads, '/') . '/' . $nome, 8, 1024);
+        @unlink($file);
+        if ($cod !== 200 || trim((string)$corpo) !== $codice) {
+            return ['ok' => false, 'messaggio' => 'Il nuovo indirizzo ' . $nuovo . ' non apre ancora questo sito (' . ($cod ? 'risposta ' . $cod : $err) . '). Prima collega il dominio a questa cartella nel pannello dell\'hosting e attiva il certificato HTTPS, poi riprova. Se sei sicuro che sia già giusto, spunta "Salva lo stesso".'];
+        }
+    }
+    $vecchio = cms_url_sito();
+    save_setting('sito_url', $nuovo);
+    if (function_exists('sicurezza_log')) sicurezza_log('impostazioni', (string)($_SESSION['admin_username'] ?? ''), (int)($_SESSION['admin_user_id'] ?? 0), 'indirizzo del sito: ' . $vecchio . ' -> ' . $nuovo);
+    return ['ok' => true, 'messaggio' => 'Indirizzo del sito cambiato: ' . $nuovo . '. Da ora link, sitemap, canonical ed email usano questo indirizzo. Ricordati di aggiungerlo in Search Console.'];
+}
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     verify_csrf();
     if (($_POST['action'] ?? '') === 'save_posta') {
@@ -34,6 +69,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         // 1.8.0: la frase in fondo al sito (includes/firma.php).
         $f = firma_salva(['mostra' => !empty($_POST['firma_mostra']), 'testo' => $_POST['firma_testo'] ?? '', 'url' => $_POST['firma_url'] ?? '']);
         flash('success', $f['mostra'] && $f['testo'] !== '' ? 'Frase in fondo al sito salvata: «' . $f['testo'] . '».' : 'Frase in fondo al sito spenta: sul sito non compare più.');
+    } elseif (($_POST['action'] ?? '') === 'save_indirizzo') {
+        // 2.4.0: l'indirizzo del sito (sito_url), per quando il sito passa a un altro dominio. Prima si prova che il nuovo
+        // indirizzo apra proprio questo sito: un file con un codice a caso in uploads/, letto dal nuovo indirizzo.
+        $r = indirizzo_sito_salva((string)($_POST['sito_url'] ?? ''), !empty($_POST['sito_url_forza']));
+        flash($r['ok'] ? 'success' : 'error', $r['messaggio']);
     } elseif (($_POST['action'] ?? '') === 'prova_posta') {
         $a = trim($_POST['prova_a'] ?? '');
         if (!filter_var($a, FILTER_VALIDATE_EMAIL)) {
@@ -102,6 +142,23 @@ require_once __DIR__ . '/includes/admin-header.php';
       Grafica e contenuti si cambiano da <a href="contenuti.php?tipo=pagine">Pagine</a> e <a href="contenuti.php?tipo=articoli">Articoli</a>, con l'editor visuale.
     </p>
   </div>
+
+  <?php /* 2.4.0: l'indirizzo del sito, per il trasloco su un altro dominio. */ ?>
+  <form method="post" class="form-card" id="indirizzo-sito" style="margin-top:1rem">
+    <?= csrf_field() ?><input type="hidden" name="action" value="save_indirizzo">
+    <h3>Indirizzo del sito</h3>
+    <p style="font-size:0.85rem;color:var(--text-muted);margin:0 0 1rem">L'indirizzo che il sito usa per i link, la sitemap, il canonical, le email e Search Console. Cambialo solo quando sposti il sito su un altro dominio, <b>dopo</b> aver collegato il nuovo dominio a questa cartella e attivato HTTPS: il pannello prova che il nuovo indirizzo apra davvero questo sito prima di salvarlo.</p>
+    <div class="form-group">
+      <label for="sito_url">Indirizzo (solo il dominio)</label>
+      <input type="url" id="sito_url" name="sito_url" value="<?= h(preg_replace('~' . preg_quote(cms_base(), '~') . '$~', '', cms_url_sito())) ?>" placeholder="https://www.miosito.it" required>
+      <?php if (cms_base() !== ''): ?><div class="hint">Il sito sta nella cartella <code><?= h(cms_base()) ?></code>: resta la stessa anche con il dominio nuovo.</div><?php endif; ?>
+    </div>
+    <div class="form-group" style="display:flex;gap:.5rem;align-items:center">
+      <input type="checkbox" id="sito_url_forza" name="sito_url_forza" value="1" style="width:auto">
+      <label for="sito_url_forza" style="margin:0;text-transform:none;letter-spacing:0">Salva lo stesso, senza la prova (solo se sai che il nuovo indirizzo funziona)</label>
+    </div>
+    <button type="submit" class="btn btn-primary" id="indirizzo-salva" data-conferma="Cambiare l'indirizzo del sito? Link, sitemap, canonical ed email useranno il nuovo indirizzo.">Salva l'indirizzo</button>
+  </form>
 
   <form method="post" class="form-card" id="firma-sito" style="margin-top:1rem">
     <?= csrf_field() ?><input type="hidden" name="action" value="save_firma">

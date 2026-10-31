@@ -8,7 +8,7 @@ const { chromium } = require('playwright');
 const { execFileSync } = require('child_process');
 const path = require('path');
 const [B, UTENTE, PASSWORD, DIR] = process.argv.slice(2);
-const UFFICIALE = 'https://plumecms.danilofailli.it';
+const UFFICIALE = 'https://plumecms.it'; // 2.4.0
 let n = 0, ko = 0; const ok = (t, c, extra = '') => { n++; if (!c) ko++; console.log((c ? 'OK  ' : 'KO  ') + t + (extra ? ' ' + JSON.stringify(extra).slice(0, 200) : '')); };
 
 (async () => {

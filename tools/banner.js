@@ -2,7 +2,7 @@
 // (skyscraper), disegnati qui in HTML e SVG con i colori del sito di plumeCMS e la piuma della favicon, fotografati da
 // Chromium. Caratteri di casa (cms/sito/assets/font), niente servizi esterni.
 // uso: node tools/banner.js [cartella]   scrive <cartella>/plumecms-<misura>-<n>.png alla misura esatta e @2x per gli
-// schermi densi. Predefinita: releases/banner. Il link da mettere sotto ogni banner: https://plumecms.danilofailli.it
+// schermi densi. Predefinita: releases/banner. Il link da mettere sotto ogni banner: https://plumecms.it
 // 30 ottobre 2026: anche l'immagine per i social (Open Graph) 1200x630, in PNG e in JPG: logo e titolo al centro, perché
 // WhatsApp e alcuni telefoni la tagliano quasi quadrata.
 const { chromium } = require('playwright');
@@ -121,14 +121,14 @@ const pagina = (b) => {
   const corpo = b.forma === 'social'
     ? `<div class="b social"><div class="lato s">${finestra(360, 228)}</div><div class="lato d">${domande(330, 209)}</div>
          <div class="marchio">${piuma(58)}<span><b>plume</b>CMS</span></div><div class="occhiello">${b.occhiello}</div><h1>${b.titolo}</h1><p>${b.testo}</p>
-         <span class="invito">${b.invito}</span><span class="url">plumecms.danilofailli.it</span></div>`
+         <span class="invito">${b.invito}</span><span class="url">plumecms.it</span></div>`
     : b.forma === 'largo'
     ? `<div class="b largo"><div class="testo"><div class="testa">${marchio}<div class="occhiello">${b.occhiello}</div></div><h1>${b.titolo}</h1><p>${b.testo}</p>
-         <div class="riga"><span class="invito">${b.invito} &rarr;</span><span class="url">plumecms.danilofailli.it</span></div></div>
+         <div class="riga"><span class="invito">${b.invito} &rarr;</span><span class="url">plumecms.it</span></div></div>
          <div class="disegno">${b.disegno(300, 190)}</div></div>`
     : `<div class="b alto">${marchio}<div class="occhiello">${b.occhiello}</div><h1>${b.titolo}</h1><p>${b.testo}</p>
          <div class="disegno">${b.disegno(136, 86)}</div><ul>${b.punti.map(x => `<li>${x}</li>`).join('')}</ul>
-         <div class="basso"><span class="invito">${b.invito}</span><span class="url">plumecms.danilofailli.it</span></div></div>`;
+         <div class="basso"><span class="invito">${b.invito}</span><span class="url">plumecms.it</span></div></div>`;
   return `<!doctype html><html lang="it"><head><meta charset="utf-8"><style>${CSS}</style></head><body>${corpo}</body></html>`;
 };
 
