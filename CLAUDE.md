@@ -99,7 +99,7 @@ Sono gli unici in `cms/docs/`, nello zip, nel sito di plumeCMS e nella pagina Do
 - **Pacchetto di aggiornamento** per un'installazione esistente:
   `python3 tools/cms-pacchetto.py --aggiornamento`. Si carica dal pannello,
   Impostazioni, Aggiornamenti.
-- **Versione**: `cms/VERSIONE` (oggi 2.3.0; sempre tre numeri: "beta" va nel CHANGELOG, mai nel nome dello zip, se no la serie "ultima" del Download non lo riconosce) e una voce in `cms/CHANGELOG.md` a ogni
+- **Versione**: `cms/VERSIONE` (oggi 2.3.1; sempre tre numeri: "beta" va nel CHANGELOG, mai nel nome dello zip, se no la serie "ultima" del Download non lo riconosce) e una voce in `cms/CHANGELOG.md` a ogni
   zip con contenuto diverso. Mai cambiare il contenuto di una versione già data.
 - **Prove** prima di dire finito:
   - `php -n -d short_open_tag=1 -l` su ogni file PHP toccato, `node --check` sui js;
@@ -134,6 +134,12 @@ Le decisioni complete, con data e perché, stanno nel second brain, `plumecms/de
 - **Nome: plumeCMS** (26 ottobre 2026).
 
 ## Stato al 31 ottobre 2026
+
+Fatto: plumeCMS 2.3.1 (1 novembre): segnalazione di Danilo, "Scarica l'aggiornamento" dava la 2.2.0 dopo aver caricato la 2.3.0.
+Causa: `/scarica/<serie>/` mandava il file con `public, max-age=3600` e il browser ridava la copia vecchia. Ora 302 con `no-store` verso
+`/scarica/<versione>/` (`sito/index.php`). `prova-download.js` aggiornata (mancava il file manuale-tecnico dalla 1.6.4, link senza la cartella):
+36/36 radice e cartella. Install 37/37, aggiornamento 2.3.0 -> 2.3.1 13/13 con 24 foto uguali, addon 70/70, attacchi 261/261, sito 89/89,
+pacchetto unico 13/13.
 
 Fatto: plumeCMS 2.3.0 (31 ottobre, notte): la versione sempre in alto a sinistra del pannello (`#admin-versione`, al telefono
 `.admin-versione-tel`) e, nel banner della dashboard dopo "Visita il sito ufficiale plumeCMS", "Nuova versione disponibile v. x.x.x" con
