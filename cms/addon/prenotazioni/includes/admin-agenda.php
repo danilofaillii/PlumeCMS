@@ -44,6 +44,7 @@ pren_admin_schede('agenda');
   <?php endfor; ?>
 </div>
 <?php else: ?>
+<p class="pa-azioni" style="margin:0 0 .8rem"><a class="btn btn-secondary btn-sm" id="pa-nuova-giorno" href="<?= h(pren_admin_url('nuova', ['d' => $inizio->format('Y-m-d')])) ?>">+ Nuova prenotazione in questo giorno</a></p>
 <div class="pa-giornata">
   <?php foreach ($perGiorno[$inizio->format('Y-m-d')] ?? [] as $p): ?>
   <div class="pa-riga">

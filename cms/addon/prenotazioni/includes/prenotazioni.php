@@ -76,6 +76,8 @@ function pren_tabelle(): array {
             `stato` VARCHAR(20) NOT NULL DEFAULT 'confermata',
             `slot_attivo` BIGINT GENERATED ALWAYS AS (IF(`stato` IN ('confermata','da_confermare'), `inizio_ts`, NULL)) STORED,
             `messaggio` VARCHAR(1000) NOT NULL DEFAULT '',
+            `origine` VARCHAR(10) NOT NULL DEFAULT 'sito',
+            `sequenza` INT NOT NULL DEFAULT 0,
             `promemoria_at` DATETIME NULL DEFAULT NULL,
             `consenso_at` DATETIME NOT NULL,
             `ip` VARCHAR(45) NOT NULL DEFAULT '',
@@ -93,8 +95,22 @@ function pren_tabelle(): array {
 /** Crea le tabelle (accendendo l'addon, e la prima volta che servono dopo un aggiornamento). Ritorna una riga di log. */
 function pren_installa(): string {
     foreach (pren_tabelle() as $sql) db()->exec($sql);
+    pren_colonne_nuove();
     save_setting('pren_schema_impronta', md5(serialize(pren_tabelle()) . DB_NAME));
     return 'tabelle a posto';
+}
+
+/**
+ * 2.1: le colonne nate dopo la 2.0.0 sulle tabelle che c'erano già (CREATE TABLE IF NOT EXISTS non le aggiunge).
+ * origine: 'sito' (dal widget) o 'pannello' (scritta dall'attività: telefonata, di persona). sequenza: il numero di
+ * revisione del file per il calendario (RFC 5545 SEQUENCE), cresce a ogni spostamento e all'annullamento.
+ */
+function pren_colonne_nuove(): void {
+    $tab = tbl('pren_prenotazioni');
+    $ci = [];
+    foreach (db()->query('SHOW COLUMNS FROM ' . $tab)->fetchAll() as $c) $ci[$c['Field']] = true;
+    if (!isset($ci['origine'])) db()->exec('ALTER TABLE ' . $tab . " ADD COLUMN `origine` VARCHAR(10) NOT NULL DEFAULT 'sito' AFTER `messaggio`");
+    if (!isset($ci['sequenza'])) db()->exec('ALTER TABLE ' . $tab . ' ADD COLUMN `sequenza` INT NOT NULL DEFAULT 0 AFTER `origine`');
 }
 
 function pren_schema(): void {
@@ -229,7 +245,7 @@ function pren_occupati(array $risorse, int $da, int $a, int $escludi = 0): array
  * $risorsa 0 = qualsiasi persona. $adesso: l'istante da cui contano gli anticipi (le prove lo fissano). $escludi: una
  * prenotazione che non conta (quella che si sta spostando).
  */
-function pren_posti(array $servizio, int $risorsa, string $giorno, ?int $adesso = null, int $escludi = 0): array {
+function pren_posti(array $servizio, int $risorsa, string $giorno, ?int $adesso = null, int $escludi = 0, bool $pannello = false): array {
     if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $giorno) || !checkdate((int)substr($giorno, 5, 2), (int)substr($giorno, 8, 2), (int)substr($giorno, 0, 4))) return [];
     if (empty($servizio['attivo'])) return [];
     $imp = pren_impostazioni();
@@ -237,8 +253,9 @@ function pren_posti(array $servizio, int $risorsa, string $giorno, ?int $adesso 
     if (pren_chiuso((array)$imp['chiusure'], $giorno)) return [];
     $tz = new DateTimeZone(date_default_timezone_get());
     $mezzanotte = new DateTimeImmutable($giorno . ' 00:00:00', $tz);
-    $minimo = $adesso + max(0, (int)$imp['anticipo_ore']) * 3600;
-    $massimo = $adesso + max(1, (int)$imp['anticipo_giorni']) * 86400;
+    // Dal pannello (2.1) l'attività prenota anche fra un'ora o fra sei mesi: gli anticipi valgono per chi prenota dal sito.
+    $minimo = $pannello ? $adesso : $adesso + max(0, (int)$imp['anticipo_ore']) * 3600;
+    $massimo = $pannello ? $adesso + 366 * 86400 : $adesso + max(1, (int)$imp['anticipo_giorni']) * 86400;
     if ($mezzanotte->getTimestamp() > $massimo) return [];
     $durata = max(5, (int)$servizio['durata']) * 60;
     $pausa = max(0, (int)$servizio['pausa']) * 60;
@@ -325,6 +342,31 @@ function pren_transazione(callable $f) {
     }
 }
 
+/** Il nome di una persona (attiva) dal suo id, oppure ''. */
+function pren_nome_risorsa(int $id): string {
+    foreach (pren_risorse(true) as $x) if ((int)$x['id'] === $id) return (string)$x['nome'];
+    return '';
+}
+
+/** L'istante di un giorno e di un'ora nel fuso del sito, oppure null se la data è sbagliata o quell'ora quel giorno non esiste. */
+function pren_istante(string $giorno, string $ora): ?DateTimeImmutable {
+    if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $giorno) || !checkdate((int)substr($giorno, 5, 2), (int)substr($giorno, 8, 2), (int)substr($giorno, 0, 4))) return null;
+    if (!preg_match('/^(\d{1,2}):(\d{2})$/', $ora, $m) || (int)$m[1] > 23 || (int)$m[2] > 59) return null;
+    $ini = (new DateTimeImmutable($giorno . ' 00:00:00', new DateTimeZone(date_default_timezone_get())))->setTime((int)$m[1], (int)$m[2]);
+    return $ini->format('G:i') === sprintf('%d:%02d', (int)$m[1], (int)$m[2]) ? $ini : null;
+}
+
+/** Scrive la riga di una prenotazione nuova (dentro la transazione, dopo i controlli). Ritorna l'id. */
+function pren_inserisci(PDO $pdo, array $s, int $rid, DateTimeImmutable $ini, array $d, string $stato, string $origine): int {
+    $iTs = $ini->getTimestamp();
+    $fTs = $iTs + (int)$s['durata'] * 60;
+    $ora0 = date('Y-m-d H:i:s');
+    $pdo->prepare('INSERT INTO ' . tbl('pren_prenotazioni') . ' (codice, servizio_id, risorsa_id, servizio, risorsa, prezzo, inizio, fine, inizio_ts, fine_ts, blocco_ts, nome, email, telefono, note, stato, origine, consenso_at, ip, creato, aggiornato) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)')
+        ->execute([bin2hex(random_bytes(16)), (int)$s['id'], $rid, $s['nome'], pren_nome_risorsa($rid), $s['prezzo'], $ini->format('Y-m-d H:i:s'), date('Y-m-d H:i:s', $fTs), $iTs, $fTs, $fTs + (int)$s['pausa'] * 60,
+            $d['nome'], $d['email'] ?? '', $d['telefono'] ?? '', $d['note'] ?? '', $stato, $origine, $ora0, $origine === 'pannello' ? '' : moduli_ip(), $ora0, $ora0]);
+    return (int)$pdo->lastInsertId();
+}
+
 /**
  * Una prenotazione nuova. $d: servizio, risorsa (0 = qualsiasi), giorno, ora, nome, email, telefono, note.
  * Ritorna ['id' => ...] oppure il codice d'errore ('servizio', 'posto', ...).
@@ -343,25 +385,58 @@ function pren_prenota(array $d, ?int $adesso = null): array|string {
         pren_blocca($s);
         $posti = pren_posti($s, $risorsa, $giorno, $adesso);
         if (empty($posti[$ora])) return 'posto';
-        $rid = $posti[$ora][0];
-        $nomeRisorsa = '';
-        foreach (pren_risorse(true) as $x) if ((int)$x['id'] === $rid) $nomeRisorsa = $x['nome'];
-        $tz = new DateTimeZone(date_default_timezone_get());
-        [$h, $m] = array_map('intval', explode(':', $ora));
-        $ini = (new DateTimeImmutable($giorno . ' 00:00:00', $tz))->setTime($h, $m);
-        $iTs = $ini->getTimestamp();
-        $fTs = $iTs + (int)$s['durata'] * 60;
-        $ora0 = date('Y-m-d H:i:s');
-        $pdo->prepare('INSERT INTO ' . tbl('pren_prenotazioni') . ' (codice, servizio_id, risorsa_id, servizio, risorsa, prezzo, inizio, fine, inizio_ts, fine_ts, blocco_ts, nome, email, telefono, note, stato, consenso_at, ip, creato, aggiornato) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)')
-            ->execute([bin2hex(random_bytes(16)), (int)$s['id'], $rid, $s['nome'], $nomeRisorsa, $s['prezzo'], $ini->format('Y-m-d H:i:s'), date('Y-m-d H:i:s', $fTs), $iTs, $fTs, $fTs + (int)$s['pausa'] * 60,
-                $d['nome'], $d['email'], $d['telefono'] ?? '', $d['note'] ?? '', $imp['da_confermare'] ? 'da_confermare' : 'confermata', $ora0, moduli_ip(), $ora0, $ora0]);
-        return ['id' => (int)$pdo->lastInsertId()];
+        $ini = pren_istante($giorno, $ora);
+        if (!$ini) return 'posto';
+        return ['id' => pren_inserisci($pdo, $s, $posti[$ora][0], $ini, $d, $imp['da_confermare'] ? 'da_confermare' : 'confermata', 'sito')];
     });
     if (is_array($r)) {
         $p = pren_leggi($r['id']);
         cms_evento('prenotazione_nuova', $p);
         pren_email_cliente($p, $p['stato'] === 'da_confermare' ? 'ricevuta' : 'confermata');
         pren_email_attivita($p, 'nuova');
+    }
+    return $r;
+}
+
+/**
+ * 2.1: una prenotazione scritta dall'attività nel pannello (una telefonata, un cliente al banco). $d: servizio, risorsa
+ * (0 = la prima persona libera), giorno, ora, nome, telefono, email (facoltativa), note.
+ * Senza $forza l'ora deve essere fra i posti liberi (gli stessi del sito, senza gli anticipi minimo e massimo). Con $forza
+ * va bene anche fuori dagli orari di lavoro, in un giorno chiuso o di ferie, ma con una persona scelta e mai sopra un
+ * altro appuntamento della stessa persona: le stesse regole contro le doppie prenotazioni (blocco delle righe, poi
+ * controllo, più l'indice UNIQUE). Nasce confermata. L'email di conferma parte solo se c'è l'indirizzo e $email è vero;
+ * l'avviso all'attività non parte (l'ha scritta lei). Ritorna ['id' => ..., 'fuori' => bool, 'email' => bool] oppure un
+ * codice d'errore: 'servizio', 'persona', 'quando' (data o ora sbagliate), 'posto' (non è un posto libero), 'occupato'
+ * (la persona ha già un appuntamento che si sovrappone).
+ */
+function pren_prenota_pannello(array $d, bool $forza = false, bool $email = true, ?int $adesso = null): array|string {
+    pren_schema();
+    $s = pren_servizio((int)($d['servizio'] ?? 0));
+    if (!$s || !$s['attivo']) return 'servizio';
+    $adesso ??= time();
+    $risorsa = (int)($d['risorsa'] ?? 0);
+    $persone = array_map('intval', array_column(pren_risorse_servizio($s), 'id'));
+    if ($risorsa && !in_array($risorsa, $persone, true)) return 'persona';
+    if ($forza && !$risorsa) return 'persona';
+    $giorno = (string)($d['giorno'] ?? '');
+    $ini = pren_istante($giorno, (string)($d['ora'] ?? ''));
+    if (!$ini) return 'quando';
+    $ora = $ini->format('G:i');
+    $r = pren_transazione(function (PDO $pdo) use ($s, $risorsa, $giorno, $ora, $ini, $d, $forza, $adesso) {
+        pren_blocca($s);
+        $posti = pren_posti($s, $risorsa, $giorno, $adesso, 0, true);
+        if (!empty($posti[$ora])) return ['id' => pren_inserisci($pdo, $s, $posti[$ora][0], $ini, $d, 'confermata', 'pannello'), 'fuori' => false];
+        if (!$forza) return 'posto';
+        // Fuori dagli orari liberi, ma mai sopra un altro appuntamento della stessa persona.
+        $iTs = $ini->getTimestamp();
+        $bTs = $iTs + ((int)$s['durata'] + (int)$s['pausa']) * 60;
+        foreach (pren_occupati([$risorsa], $iTs - 86400, $bTs + 86400)[$risorsa] ?? [] as [$oi, $ob]) if ($iTs < $ob && $oi < $bTs) return 'occupato';
+        return ['id' => pren_inserisci($pdo, $s, $risorsa, $ini, $d, 'confermata', 'pannello'), 'fuori' => true];
+    });
+    if (is_array($r)) {
+        $p = pren_leggi($r['id']);
+        cms_evento('prenotazione_nuova', $p);
+        $r['email'] = $email && filter_var($p['email'], FILTER_VALIDATE_EMAIL) ? pren_email_cliente($p, 'confermata') : false;
     }
     return $r;
 }
@@ -389,7 +464,7 @@ function pren_sposta(array $p, string $giorno, string $ora, bool $dalCliente = t
         $ini = (new DateTimeImmutable($giorno . ' 00:00:00', new DateTimeZone(date_default_timezone_get())))->setTime($h, $m);
         $iTs = $ini->getTimestamp();
         $fTs = $iTs + (int)$s['durata'] * 60;
-        $pdo->prepare('UPDATE ' . tbl('pren_prenotazioni') . ' SET risorsa_id = ?, risorsa = ?, inizio = ?, fine = ?, inizio_ts = ?, fine_ts = ?, blocco_ts = ?, promemoria_at = NULL, aggiornato = ? WHERE id = ?')
+        $pdo->prepare('UPDATE ' . tbl('pren_prenotazioni') . ' SET risorsa_id = ?, risorsa = ?, inizio = ?, fine = ?, inizio_ts = ?, fine_ts = ?, blocco_ts = ?, promemoria_at = NULL, sequenza = sequenza + 1, aggiornato = ? WHERE id = ?')
             ->execute([$rid, $nome, $ini->format('Y-m-d H:i:s'), date('Y-m-d H:i:s', $fTs), $iTs, $fTs, $fTs + (int)$s['pausa'] * 60, date('Y-m-d H:i:s'), (int)$p['id']]);
         return '';
     });
@@ -404,7 +479,7 @@ function pren_sposta(array $p, string $giorno, string $ora, bool $dalCliente = t
 /** Annulla. $da: 'cliente' (dal link, entro il limite) oppure 'attivita' (dal pannello, con un messaggio facoltativo). */
 function pren_annulla(array $p, string $da, string $messaggio = '', ?int $adesso = null): string {
     if ($da === 'cliente' && !pren_modificabile($p, $adesso)) return 'tardi';
-    $st = db()->prepare('UPDATE ' . tbl('pren_prenotazioni') . " SET stato = 'annullata', messaggio = ?, aggiornato = ? WHERE id = ? AND stato IN ('confermata','da_confermare')");
+    $st = db()->prepare('UPDATE ' . tbl('pren_prenotazioni') . " SET stato = 'annullata', messaggio = ?, sequenza = sequenza + 1, aggiornato = ? WHERE id = ? AND stato IN ('confermata','da_confermare')");
     $st->execute([pren_testo($messaggio, 1000, true), date('Y-m-d H:i:s'), (int)$p['id']]);
     if ($st->rowCount() !== 1) return 'tardi';
     $p = pren_leggi((int)$p['id']);
@@ -476,7 +551,14 @@ function pren_email_cliente(?array $p, string $tipo, string $messaggio = ''): bo
         default: return false;
     }
     $btn = in_array($tipo, ['ricevuta', 'confermata', 'spostata', 'promemoria'], true) ? ['Annulla o sposta', pren_url('gestisci', $p)] : ['Vai al sito', cms_url_sito() . '/'];
-    $ok = posta_invia((string)$p['email'], pren_riga($ogg), moduli_email_html($tit, $corpo, $btn[0], $btn[1]), moduli_intestazioni(pren_rispondi_a()), 'prenotazione');
+    // 2.1: il file per il calendario arriva anche come allegato vero (oltre al link): REQUEST per conferma e spostamento,
+    // CANCEL per l'annullamento, con lo stesso UID e la SEQUENCE che cresce, così il calendario aggiorna l'appuntamento.
+    $allegati = [];
+    if (in_array($tipo, ['confermata', 'spostata', 'annullata'], true)) {
+        $metodo = $tipo === 'annullata' ? 'CANCEL' : 'REQUEST';
+        $allegati[] = ['nome' => $tipo === 'annullata' ? 'annullamento.ics' : 'appuntamento.ics', 'tipo' => 'text/calendar; charset=UTF-8; method=' . $metodo, 'dati' => pren_ics($p, $metodo)];
+    }
+    $ok = posta_invia((string)$p['email'], pren_riga($ogg), moduli_email_html($tit, $corpo, $btn[0], $btn[1]), moduli_intestazioni(pren_rispondi_a()), 'prenotazione', $allegati);
     if (!$ok) error_log('prenotazioni: email ' . $tipo . ' non partita: ' . posta_errore());
     return $ok;
 }
@@ -519,14 +601,29 @@ function pren_ics_piega(string $riga): string {
     return $out . ($out === '' ? '' : "\r\n ") . $pezzo;
 }
 
-function pren_ics(array $p): string {
+/**
+ * Il file .ics di una prenotazione. $metodo: PUBLISH (il file scaricato dal link), REQUEST (allegato alla conferma e allo
+ * spostamento) o CANCEL (allegato all'annullamento). Lo stesso UID per sempre e SEQUENCE dalla colonna sequenza: il
+ * calendario del cliente riconosce l'appuntamento e lo aggiorna (o lo toglie) invece di aggiungerne un altro.
+ * REQUEST e CANCEL portano ORGANIZER (l'attività) e ATTENDEE (il cliente), come vuole RFC 5546.
+ */
+function pren_ics(array $p, string $metodo = 'PUBLISH'): string {
+    $metodo = in_array($metodo, ['PUBLISH', 'REQUEST', 'CANCEL'], true) ? $metodo : 'PUBLISH';
     $host = (string)(parse_url(cms_url_sito(), PHP_URL_HOST) ?: 'localhost');
     $z = fn(int $ts) => gmdate('Ymd\THis\Z', $ts);
-    $righe = ['BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//plumeCMS//Prenotazioni//IT', 'CALSCALE:GREGORIAN', 'METHOD:PUBLISH', 'BEGIN:VEVENT',
-        'UID:prenotazione-' . substr((string)$p['codice'], 0, 16) . '@' . $host, 'DTSTAMP:' . $z(time()), 'DTSTART:' . $z((int)$p['inizio_ts']), 'DTEND:' . $z((int)$p['fine_ts']),
-        'SUMMARY:' . pren_ics_testo($p['servizio'] . ' - ' . cms_impostazione('sito_nome', CMS_NOME)),
-        'DESCRIPTION:' . pren_ics_testo('Per annullare o spostare: ' . pren_url('gestisci', $p)),
-        'STATUS:' . (in_array($p['stato'], PREN_STATI_ATTIVI, true) ? 'CONFIRMED' : 'CANCELLED')];
+    $sito = (string)cms_impostazione('sito_nome', CMS_NOME);
+    $annullata = $metodo === 'CANCEL' || !in_array($p['stato'], PREN_STATI_ATTIVI, true);
+    $righe = ['BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//plumeCMS//Prenotazioni//IT', 'CALSCALE:GREGORIAN', 'METHOD:' . $metodo, 'BEGIN:VEVENT',
+        'UID:prenotazione-' . substr((string)$p['codice'], 0, 16) . '@' . $host, 'SEQUENCE:' . max(0, (int)($p['sequenza'] ?? 0)), 'DTSTAMP:' . $z(time()), 'DTSTART:' . $z((int)$p['inizio_ts']), 'DTEND:' . $z((int)$p['fine_ts']),
+        'SUMMARY:' . pren_ics_testo($p['servizio'] . ' - ' . $sito),
+        'DESCRIPTION:' . pren_ics_testo($annullata ? 'Appuntamento annullato.' : 'Per annullare o spostare: ' . pren_url('gestisci', $p)),
+        'STATUS:' . ($annullata ? 'CANCELLED' : 'CONFIRMED')];
+    if ($metodo !== 'PUBLISH') {
+        $org = pren_indirizzo_attivita();
+        if ($org === '') $org = (string)(posta_mittente()[0] ?? '');
+        if (filter_var($org, FILTER_VALIDATE_EMAIL)) $righe[] = 'ORGANIZER;CN="' . str_replace(['"', '\\', ';', ':', ','], '', pren_riga($sito)) . '":mailto:' . $org;
+        if (filter_var($p['email'], FILTER_VALIDATE_EMAIL)) $righe[] = 'ATTENDEE;CN="' . str_replace(['"', '\\', ';', ':', ','], '', pren_riga((string)$p['nome'])) . '";ROLE=REQ-PARTICIPANT;PARTSTAT=' . ($annullata ? 'DECLINED' : 'ACCEPTED') . ';RSVP=FALSE:mailto:' . $p['email'];
+    }
     $ind = trim((string)pren_impostazioni()['indirizzo']);
     if ($ind !== '') $righe[] = 'LOCATION:' . pren_ics_testo($ind);
     $righe[] = 'END:VEVENT';

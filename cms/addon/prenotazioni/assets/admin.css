@@ -44,3 +44,18 @@
 @media (max-width:900px){.pa-settimana{grid-template-columns:1fr}.pa-giorno{min-height:0}.pa-riga{grid-template-columns:4.5rem 1fr}.pa-riga .pa-azioni{grid-column:1/-1}.pa-chiusura{grid-template-columns:1fr 1fr}.pa-chiusura input:last-child{grid-column:1/-1}.pa-orari{grid-template-columns:1fr}.pa-dettaglio{grid-template-columns:1fr}}
 /* Al telefono le tabelle diventano schede, una riga sotto l'altra: niente pagina che scorre di lato. */
 @media (max-width:700px){.pa-tabella thead{display:none}.pa-tabella,.pa-tabella tbody,.pa-tabella tr,.pa-tabella td{display:block;width:100%}.pa-tabella tr{border-bottom:1px solid var(--border);padding:.6rem .8rem}.pa-tabella td{padding:.15rem 0;border:0}.pa-barra select{max-width:100%}.pa-barra label{flex-wrap:wrap}}
+/* 2.1: Nuova prenotazione dal pannello. Gli orari liberi sono pulsanti grandi (anche al telefono); "Un altro orario" apre la parte con l'avviso. */
+.pa-schede .pa-nuova{margin-left:auto;align-self:center;margin-bottom:4px;padding:.4rem .8rem;border-radius:8px;background:var(--coral);color:var(--su-accento,#fff);border:0}
+.pa-ore{border:0;padding:0;margin:0}
+.pa-ore legend{padding:0;margin:0 0 .6rem;font-size:.88rem}
+.pa-ore-griglia{display:grid;grid-template-columns:repeat(auto-fill,minmax(6.5rem,1fr));gap:.5rem}
+.pa-ora-scelta{position:relative;display:block;cursor:pointer}
+.pa-ora-scelta input{position:absolute;opacity:0;inset:0;width:100%;height:100%;margin:0;cursor:pointer}
+.pa-ora-scelta span{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:3rem;padding:.45rem .4rem;border:1px solid var(--border);border-radius:10px;background:var(--bg);text-align:center;line-height:1.2}
+.pa-ora-scelta small{font-size:.74rem;color:var(--text-muted);font-weight:400}
+.pa-ora-scelta input:checked+span{border-color:var(--coral);box-shadow:inset 0 0 0 2px var(--coral);background:var(--surface)}
+.pa-ora-scelta input:focus-visible+span{outline:2px solid var(--coral);outline-offset:2px}
+.pa-ora-altra span{border-style:dashed}
+.pa-modulo:not(:has(.pa-ora-altra input:checked)) .pa-forza{display:none}
+.pa-ora-altra{grid-column:span 2}
+#pa-prossimo{margin:.6rem 0 0}

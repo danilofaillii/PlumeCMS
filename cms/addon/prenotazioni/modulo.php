@@ -7,14 +7,15 @@
  */
 $pren = __DIR__ . '/includes/prenotazioni.php';
 $pag = fn(string $p) => 'addon-pagina.php?a=prenotazioni&p=' . $p;
-$pagine = ['agenda', 'elenco', 'servizi', 'persone', 'impostazioni'];
+$pagine = ['agenda', 'nuova', 'elenco', 'servizi', 'persone', 'impostazioni'];
 return [
     'etichetta' => 'Prenotazioni e appuntamenti',
-    'versione' => '1.0.0',
+    'versione' => '1.1.0',
     'descrizione' => 'I clienti prenotano dal sito un servizio, con chi e quando, fra gli orari davvero liberi. Ricevono l\'email di conferma con il promemoria del giorno prima, e possono annullare o spostare da soli.',
     'installa' => function () use ($pren) { require_once $pren; return pren_installa(); },
     'pannello' => [
         'agenda' => __DIR__ . '/includes/admin-agenda.php',
+        'nuova' => __DIR__ . '/includes/admin-nuova.php', // 2.1: la prenotazione presa al telefono o di persona
         'elenco' => __DIR__ . '/includes/admin-elenco.php',
         'servizi' => __DIR__ . '/includes/admin-servizi.php',
         'persone' => __DIR__ . '/includes/admin-persone.php',
@@ -25,6 +26,7 @@ return [
         'attivo' => array_map($pag, $pagine),
         'sotto' => [
             ['nome' => 'Agenda', 'url' => $pag('agenda'), 'attivo' => [$pag('agenda')]],
+            ['nome' => 'Nuova prenotazione', 'url' => $pag('nuova'), 'attivo' => [$pag('nuova')]],
             ['nome' => 'Prenotazioni', 'url' => $pag('elenco'), 'attivo' => [$pag('elenco')]],
             ['nome' => 'Servizi', 'url' => $pag('servizi'), 'attivo' => [$pag('servizi')]],
             ['nome' => 'Persone e orari', 'url' => $pag('persone'), 'attivo' => [$pag('persone')]],

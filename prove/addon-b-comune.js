@@ -68,8 +68,32 @@ function posta(cartella) {
       const corpo = Buffer.from(m[3].replace(/[^A-Za-z0-9+/=]/g, ''), 'base64').toString('utf8');
       if (m[2].toLowerCase() === 'html') html = corpo; else testo = corpo;
     }
-    return { file: f, a, oggetto: ogg, testo, html, grezza };
+    return { file: f, a, oggetto: ogg, testo, html, grezza, allegati: allegati(grezza) };
   });
+}
+/**
+ * 2.1: gli allegati veri di un'email (parti con Content-Disposition: attachment), decodificati:
+ * [{nome, tipo (il Content-Type intero), dati}]. Le parti si cercano fra i confini dichiarati nelle intestazioni.
+ */
+function allegati(grezza) {
+  const confini = [...grezza.matchAll(/boundary="([^"]+)"/g)].map(m => m[1].replace(/[.*+?^${}()|[\]\\]/g, '\\$&'));
+  if (!confini.length) return [];
+  const out = [];
+  for (const parte of grezza.split(new RegExp('\\r?\\n--(?:' + confini.join('|') + ')(?:--)?'))) {
+    const [testa, ...corpo] = parte.replace(/^\r?\n/, '').split(/\r?\n\r?\n/);
+    if (!/^Content-Disposition:\s*attachment/mi.test(testa)) continue;
+    const tipo = ((testa.match(/^Content-Type:\s*(.*)$/mi) || [])[1] || '').trim();
+    const nome = ((testa.match(/filename="([^"]+)"/i) || [])[1] || '');
+    const dati = /base64/i.test(testa) ? Buffer.from(corpo.join('\n').replace(/[^A-Za-z0-9+/=]/g, ''), 'base64').toString('utf8') : corpo.join('\n\n');
+    out.push({ nome, tipo, dati });
+  }
+  return out;
+}
+/** Un campo di un file .ics (le righe piegate a 75 byte si riuniscono): ics(testo, 'UID') -> valore. */
+function ics(testo, campo) {
+  const t = String(testo || '').replace(/\r?\n[ \t]/g, '');
+  const m = t.match(new RegExp('^' + campo + '(?:;[^:\\r\\n]*)?:(.*)$', 'm'));
+  return m ? m[1].trim() : '';
 }
 /** Aspetta che arrivino email nuove (dopo quante ce n'erano) e le ritorna. */
 async function nuove(cartella, prima, quante = 1, ms = 8000) {
@@ -97,4 +121,4 @@ async function captcha(form, p) {
   await p.waitForFunction(f => f.classList.contains('verificato'), await form.elementHandle(), { timeout: 30000 });
 }
 
-module.exports = { ok, fine, dorme, pagina, entra, postaFinta, addon, posta, nuove, link, cli, largo, captcha, conto };
+module.exports = { ok, fine, dorme, pagina, entra, postaFinta, addon, posta, allegati, ics, nuove, link, cli, largo, captcha, conto };
