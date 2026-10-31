@@ -616,7 +616,8 @@ widget c'è scritto "Hai l'addon Prenotazioni acceso".
 2. **Cosa si prenota**: **Un tavolo (data, ora, persone)**.
 3. **A chi arriva la richiesta (email)**: `prenotazioni@trattoriadaanna.it`. Fino a tre indirizzi, separati da una
    virgola. Se la lasci vuota, la richiesta va all'indirizzo degli avvisi del sito (Impostazioni, Posta in uscita,
-   capitolo 25).
+   capitolo 25). Dalla 2.2.0 questa casella la cambia solo un amministratore: un redattore la vede spenta, così le
+   richieste dei clienti non possono finire a un indirizzo sbagliato.
 4. Nella sezione **Campi**: **Quante persone al massimo** `12`, **Telefono obbligatorio**, il **Campo per le note**
    (allergie, seggiolone...), il **Testo del pulsante**. Nella sezione **Dopo l'invio** c'è il **Messaggio dopo l'invio**.
 5. Premi **Pubblica**. Poi prova tu: compila il modulo sul sito, spunta la privacy e **Sono una persona**, premi **Invia
@@ -1974,10 +1975,26 @@ Controlla il server**.
 In cima, quante voci sono **a posto**, **da sapere** e **da sistemare**. Sotto, ogni voce con la spiegazione in parole
 semplici. **Controlla di nuovo** rifà i controlli; **Manda un'email di prova** prova la posta.
 
+### Google e IndexNow, provati dal tuo hosting
+
+Il gruppo **Google e IndexNow** prova davvero, dal server dove gira il sito, i due servizi che avvisano i motori di
+ricerca (capitolo 23):
+
+- **Google Search Console**: se in SEO e AEO hai salvato il service account, il pannello chiede a Google le proprietà che
+  vede. Verde: vede la tua. Rosso: ti dice cosa manca (di solito l'email del service account non è fra gli utenti della
+  proprietà in Search Console). Giallo: non è collegato, e ti dice se il server raggiunge Google.
+- **IndexNow**: se hai generato la chiave, il pannello legge da fuori il file della chiave (`https://tuosito.it/<chiave>.txt`)
+  e prova a raggiungere `api.indexnow.org`. Rosso con "non raggiunge": l'hosting blocca le connessioni in uscita, e va
+  chiesto all'assistenza.
+
+Anche **Sito degli aggiornamenti** ora dice se il problema è il certificato HTTPS (scaduto, per un altro nome o di
+un'autorità che il server non conosce) oppure se il sito non risponde.
+
 **Checklist**
 
 - [ ] Nessuna voce "da sistemare".
 - [ ] Le voci "da sapere" le ho lette e capite.
+- [ ] Se uso Search Console o IndexNow, il gruppo Google e IndexNow è verde.
 
 ---
 
