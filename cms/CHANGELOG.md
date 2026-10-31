@@ -25,6 +25,16 @@ Il prodotto si chiama **plumeCMS** (nome scelto il 26 ottobre 2026; prima, per p
   cominciano uguale la copia prende solo le tabelle sue.
 - **Scegli dai Media dappertutto**: in ogni campo del pannello che chiede un'immagine (articoli, SEO, popup, social,
   newsletter, eventi, vetrina, corsi, stile del sito) c'è il pulsante per prenderla dai Media o caricarla.
+- **Cinque widget nuovi** (92 in tutto): il menu del ristorante (sezioni, prezzi, allergeni con la legenda, menu del giorno e
+  sezioni che escono solo in certi giorni), la richiesta di prenotazione di un tavolo o di un alloggio (l'email arriva
+  all'attività, le richieste si leggono in Invii dei form), la galleria con filtri, loghi e testo scorrevoli, il contenuto
+  esterno con il consenso (Calendly, Spotify, Google Calendar, Typeform; Booking.com con il pulsante, perché non si lascia
+  mettere dentro un altro sito).
+- **Widget migliorati**: la mappa con il pulsante "Come arrivare", il video che parte da solo senza audio e si ripete, la tabella
+  con grassetto, corsivo e link nelle celle, la categoria di Ultimi articoli e della Griglia scelta da una tendina.
+- **Form**: i campi Ora e File. Il file si controlla sul contenuto vero, si salva fuori dal sito pubblico, arriva allegato
+  all'avviso e lo scarica solo l'amministratore; si cancella con l'invio e con Cancella dati.
+- Corretto: con il sito in una cartella, dopo l'invio di un form si finiva alla radice del dominio.
 - **Un manuale d'uso solo**, in un PDF, con le novità di questa versione.
 - **Un file solo da caricare**: l'aggiornamento arriva in un pacchetto unico, con codice e pagine insieme.
 - Corretti: la griglia della pagina dei Corsi al telefono, l'indirizzo dell'immagine della newsletter in un sito in una
