@@ -525,11 +525,65 @@ Doppio clic su un elemento, e a sinistra si apre **Modifica**.
 2. **Sposta su, sposta giù, duplica, elimina** l'elemento scelto. Gli stessi pulsanti compaiono anche sulla tela,
    sopra l'elemento.
 
+### Un link a una pagina del sito, senza scriverlo
+
+Dove il pannello chiede un link (il pulsante dell'Apertura, un invito all'azione, un'immagine, una parola del testo, il
+pulsante di un popup, una voce del menu...) accanto alla casella c'è il pulsante **Scegli dal sito**. Lo premi, scrivi due
+lettere del titolo della pagina, la scegli: il link entra da solo nella casella. Non serve più ricordare come si chiama
+l'indirizzo di una pagina, né copiarlo dal browser.
+
+La casella resta scrivibile come prima: se il link porta a un altro sito (per esempio `https://www.instagram.com/...`), lo
+scrivi a mano.
+
+![Il link con Scegli dal sito](immagini/manuale-uso/08-scegli-dal-sito.jpg)
+
+1. La **casella** del link: dopo la scelta ci leggi l'indirizzo della pagina, per esempio `/contatti/`.
+2. **Scegli dal sito** apre la finestra.
+
+![La finestra Scegli dal sito](immagini/manuale-uso/08-scegli-finestra.jpg)
+
+Nella finestra:
+
+1. **Cerca nel titolo**: scrivi una parte del titolo (per esempio "cont" per Contatti). Non importano maiuscole e
+   minuscole. L'elenco si aggiorna mentre scrivi.
+2. **Tutto il sito**: la tendina restringe a un tipo: pagine, articoli, categorie, tag e, se hai acceso gli addon, eventi,
+   prodotti e negozio, corsi, area riservata.
+3. Ogni riga dice il **titolo**, il **tipo** (Pagina, Articolo, Evento...) e l'**indirizzo**. Fai clic su quella che vuoi:
+   la finestra si chiude e il link è nella casella. La pagina già scelta ha il bordo colorato.
+4. Il segno giallo **bozza** vuol dire che la pagina non è ancora pubblicata: puoi sceglierla lo stesso (per esempio se
+   stai preparando le due pagine insieme), ma chi visita il sito la vedrà solo quando la pubblichi. **programmato** vuol
+   dire che uscirà da sola in un giorno che hai già deciso.
+5. **Oppure scrivi un indirizzo**: per un link a un altro sito, a un'email (`mailto:...`) o a un telefono (`tel:...`).
+
+Con la tastiera: il cursore è già nella ricerca; **freccia giù** porta alla prima riga, le **frecce** si muovono fra le
+righe, **Invio** sceglie, **Esc** chiude senza cambiare niente.
+
+Al telefono la finestra prende tutto lo schermo: si sceglie con un tocco, **Chiudi** è in fondo.
+
+**Nei testi.** Nel widget Testo (e nella newsletter) il pulsante con la catena nella barra degli strumenti apre la stessa
+finestra:
+- se hai selezionato una o più parole, quelle parole diventano il link;
+- se non hai selezionato niente, nel testo entra il titolo della pagina scelta, già come link.
+Per cambiare o togliere un link che c'è già, fai clic sul link nel testo: compare il fumetto di sempre con **Modifica** e
+**Rimuovi**. I link dei testi si aprono in una scheda nuova del browser.
+
+**Se la pagina cambia indirizzo.** Se dopo cambi l'indirizzo di una pagina già pubblicata (nella sua scheda, campo
+Indirizzo), il CMS crea da solo un rimando dal vecchio indirizzo al nuovo: i pulsanti che avevi già fatto continuano a
+portare alla pagina giusta. Per le pagine **in bozza** il rimando non si crea: se cambi l'indirizzo di una bozza che avevi
+già scelto in un pulsante, rifai la scelta. Lo stesso vale per eventi, prodotti e corsi: se cambi il loro indirizzo,
+rifai la scelta nei pulsanti che li aprono. Le voci del menu scelte dal sito, invece, seguono la pagina da sole.
+
 **Checklist**
 
 - [ ] So distinguere sezione, colonna e widget.
 - [ ] So aprire il pannello Modifica (doppio clic) e trovare le schede Contenuto, Stile, Avanzate.
 - [ ] So che **Salva bozza** non cambia il sito e **Pubblica** sì.
+- [ ] Per i link a pagine del mio sito uso **Scegli dal sito**, non scrivo l'indirizzo a mano.
+- [ ] Se ho scelto una pagina con il segno **bozza**, l'ho pubblicata prima di pubblicare il pulsante.
+- [ ] Dopo aver pubblicato, ho fatto clic sul pulsante sul sito e si è aperta la pagina giusta.
+- [ ] Se ho cambiato l'indirizzo di una pagina in bozza, di un evento o di un prodotto, ho rifatto la scelta nei pulsanti
+      che la aprono.
+- [ ] Nelle email (newsletter) il link comincia con `https://`.
 
 ### I widget per le attività
 
@@ -873,6 +927,29 @@ Nella scheda **Stile**, gruppo **Foto**, decidi come appare la foto:
 - **Effetto animato**: zoom lento, bagliore, cornice luminosa, alone, scintille. Chi ha chiesto al computer meno
   movimento vede la foto ferma.
 
+### Esempio: il pulsante "Prenota" che porta alla pagina Contatti
+
+Vuoi che il pulsante dell'Apertura della home dica **Prenota** e porti alla pagina **Contatti**, senza scrivere niente a
+mano.
+
+![Il pulsante Prenota nell'Apertura](immagini/manuale-uso/11-prenota-1.jpg)
+
+1. Apri la home nell'editor: **Pagine**, passa con il mouse sopra **Home** e premi **Editor visuale**.
+2. Fai doppio clic sull'Apertura (la parte in alto con il titolo grande). A sinistra si apre **Modifica**, scheda **Contenuto**.
+3. Scendi fino a **Pulsanti** e fai clic sul primo pulsante per aprirlo. Nella casella **Testo** scrivi `Prenota`.
+
+![Scegli dal sito: la pagina Contatti](immagini/manuale-uso/11-prenota-2.jpg)
+
+4. Accanto alla casella **Link** premi **Scegli dal sito**. Si apre la finestra.
+5. Scrivi `cont` nella ricerca. Compare la riga **Contatti**, con sotto *Pagina* e `/contatti/`.
+6. Fai clic sulla riga. La finestra si chiude e nella casella Link c'è `/contatti/`.
+7. Premi **Pubblica** in alto e conferma.
+8. Apri il sito (pulsante **Vedi la pagina**, in alto) e fai clic su **Prenota**: si apre la pagina Contatti.
+
+Se il sito è in una cartella (per esempio `https://www.miosito.it/sito/`), nella casella resta `/contatti/` e il pulsante
+porta comunque a `https://www.miosito.it/sito/contatti/`: il CMS aggiunge la cartella da solo. Così il link resta giusto
+anche se un giorno sposti il sito.
+
 **Checklist**
 
 - [ ] Il titolo dell'Apertura dice in una frase cosa fai.
@@ -1115,7 +1192,12 @@ La freccetta **▾** di ogni voce apre testo, indirizzo e "Apri in una nuova sch
 ![Il menu sul sito, con la voce nuova](immagini/manuale-uso/16-sul-sito.jpg)
 
 Con **Link personalizzato** aggiungi una voce verso qualunque indirizzo, anche fuori dal sito (la pagina Facebook, una
-prenotazione). In alto, **Menu da modificare** passa agli altri menu (per esempio quello del footer); **Crea un nuovo
+prenotazione). Accanto alla casella Indirizzo c'è **Scegli dal sito**: se scegli una pagina, un articolo o una categoria, il
+testo della voce si riempie con il titolo e la voce diventa di quel tipo (Pagina, Articolo, Categoria): se un giorno cambi
+l'indirizzo della pagina, il menu la segue da solo. Lo stesso pulsante c'è nell'Indirizzo di ogni voce del menu, quando la
+apri con la freccia.
+
+![Il menu con Scegli dal sito](immagini/manuale-uso/17-menu-scegli.jpg) In alto, **Menu da modificare** passa agli altri menu (per esempio quello del footer); **Crea un nuovo
 menu** ne fa uno nuovo.
 
 **Checklist**
@@ -1146,7 +1228,8 @@ Apri **Newsletter e form > Form** dal menu e premi **+ Nuovo form**.
 4. Premi **Salva**.
 
 A destra, **Dopo l'invio** decide cosa succede: iscrivere la persona a una lista della newsletter (con email di
-conferma), avvisarti via email, e cosa scrivere nella pagina di ringraziamento.
+conferma), avvisarti via email, e cosa scrivere nella pagina di ringraziamento. Per il **Link del pulsante "Continua"**, con **Scegli dal
+sito** scegli la pagina in cui va chi ha compilato il form (per esempio i Servizi).
 
 ### A chi arriva l'avviso
 
@@ -1256,7 +1339,11 @@ Excel o Numbers.
 1. **Cosa mostra**: occhiello, **titolo**, testo, un'immagine, un pulsante con il suo link; oppure un form dentro il
    popup (tendina **Modulo dentro il popup**). Per l'immagine premi **Scegli dai Media** accanto alla casella
    **Immagine** e scegli la foto (capitolo 7).
-2. **Su quali pagine**: tutte, solo la home, solo gli articoli, solo le pagine, oppure gli indirizzi che scrivi tu.
+   Il link del pulsante si sceglie con **Scegli dal sito**.
+2. **Su quali pagine**: tutte, solo la home, solo gli articoli, solo le pagine, oppure gli indirizzi che scrivi tu. Nella
+   casella degli indirizzi **Scegli dal sito** aggiunge una pagina per riga: premilo una volta per ogni pagina.
+
+   ![Il popup con Scegli dal sito](immagini/manuale-uso/19-popup-scegli.jpg)
 3. **Quando compare**: dopo qualche secondo, quando chi legge arriva a una certa percentuale della pagina, o quando il
    mouse esce dalla pagina (solo computer). Sotto scegli **ogni quanti giorni** la stessa persona lo rivede.
 4. **Acceso**: spunta, e premi **Salva**.
@@ -1311,7 +1398,8 @@ form compilati. Un'importazione non lo rimette dentro; se si iscrive di nuovo da
 
 1. **Oggetto**: la riga che si legge nella casella di posta. Corto e chiaro.
 2. **Testo**: scrivi come in un'email normale. `{nome}` diventa il nome della persona. Sotto, un **pulsante** con il
-   suo link e le **liste** a cui mandarla.
+   suo link e le **liste** a cui mandarla. **Scegli dal sito**, accanto al link del pulsante e nella barra del testo,
+   scrive l'indirizzo intero (con `https://` e il nome del sito), quello che serve nelle email.
 
 Per mettere un'immagine nel testo premi il pulsante con l'immagine nella barra: si apre la finestra dei Media (capitolo 7).
 Scegli un'immagine già caricata o premi **Carica un'immagine**. Nelle email vanno bene JPG, PNG, GIF e WebP; l'immagine
@@ -1379,7 +1467,8 @@ il giorno dopo serve un promemoria.
 4. **Hashtag per categoria**: una riga per categoria, il nome, due punti, gli hashtag ("Avvisi: #avvisi #orari"). Un
    articolo di quella categoria li prende in più.
 
-Sotto puoi mettere un **link in più nei testi di WhatsApp**, con la sua frase: per esempio la pagina per prenotare.
+Sotto puoi mettere un **link in più nei testi di WhatsApp**, con la sua frase: per esempio la pagina per prenotare, che
+scegli con **Scegli dal sito**.
 Premi **Salva**.
 
 ### Per ogni contenuto: il riquadro Social
@@ -1565,7 +1654,9 @@ scelgono con **Scegli dai Media**, come l'immagine social.
 Il sito manda ai social l'indirizzo intero dell'immagine, con le misure: l'anteprima esce giusta già la prima volta.
 
 **Redirect e 404** elenca i rimandi dai vecchi indirizzi e le pagine che qualcuno ha cercato senza trovarle: da qui le
-rimandi dove devono andare.
+rimandi dove devono andare. Tutte e due le caselle di un rimando hanno **Scegli dal sito**: per il nuovo indirizzo scegli la
+pagina giusta senza scriverla. Anche gli indirizzi da mandare a Google e IndexNow e quello dei dati per Google (scheda
+Schema e AEO) si scelgono così.
 
 ![Redirect e 404](immagini/manuale-uso/21-redirect.jpg)
 
@@ -1588,7 +1679,8 @@ rimandi dove devono andare.
 2. **Ruolo**:
    - **Amministratore**: può tutto.
    - **Redattore**: scrive e pubblica articoli e pagine, carica immagini, gestisce categorie e tag. Non vede utenti,
-     impostazioni, aggiornamenti e sicurezza.
+     impostazioni, aggiornamenti e sicurezza. Anche lui ha **Scegli dal sito** nell'editor: vede tutte le pagine e gli
+     articoli, anche quelli in bozza; degli eventi, dei prodotti e dei corsi vede solo quelli pubblicati.
 
 Poi la **password** (almeno 12 caratteri, due volte) e **Aggiungi**. Dai la password alla persona di persona, non per
 email; al primo accesso potrà cambiarla da **Password**.
@@ -2217,7 +2309,7 @@ Apri **Prenotazioni > Impostazioni**.
 5. **Indirizzo dell'attività**: "Via dell'Indipendenza 10, Bologna". Esce nelle email e nel calendario del cliente.
 
 Più in basso: **Una frase in più nelle email di conferma** ("Se arrivi in ritardo di più di 15 minuti..."), la **Pagina
-dell'informativa privacy** e le **Chiusure di tutta l'attività** (Natale, ferie di agosto, inventario): in quei giorni
+dell'informativa privacy** (con **Scegli dal sito**: cerca `privacy`) e le **Chiusure di tutta l'attività** (Natale, ferie di agosto, inventario): in quei giorni
 nessuno si prenota. Premi **Salva**.
 
 ### Il calendario sul sito: il widget Prenota
@@ -2378,7 +2470,7 @@ Apri **Eventi > Impostazioni**:
 
 - **Avvisi delle iscrizioni a**: l'email dell'associazione, "info@collibolognesi.it" (vuoto: l'indirizzo degli avvisi
   del sito);
-- **Pagina dell'informativa privacy**;
+- **Pagina dell'informativa privacy** (con **Scegli dal sito**: cerca `privacy`);
 - **Mandami un'email a ogni iscrizione e cancellazione**: spunta se vuoi saperlo subito;
 - **Manda agli iscritti il promemoria il giorno prima**: lasciala spuntata;
 - **Una frase in più nelle email di conferma**, per esempio "All'ingresso diciamo il tuo nome: non serve stampare niente".
@@ -3411,6 +3503,8 @@ sicurezza, WebDAV su https.
 
 | Problema | Cosa fare |
 |---|---|
+| Nella finestra Scegli dal sito non trovo la pagina | Scrivi una parte diversa del titolo (la ricerca guarda il titolo e l'indirizzo). Se l'elenco dice "ce ne sono altri", scrivi qualche lettera in più. Una pagina nel cestino non c'è: prima ripristinala. Eventi, prodotti e corsi ci sono solo se il loro addon è acceso |
+| Il pulsante porta a una pagina "non trovata" | La pagina era in bozza quando l'hai scelta e poi le hai cambiato indirizzo, oppure è stata cancellata: apri il pulsante nell'editor e premi di nuovo **Scegli dal sito** |
 | Ho cambiato una pagina ma sul sito non si vede | Nell'editor hai premuto Salva bozza: premi **Pubblica**. Se l'hai fatto, ricarica la pagina del sito |
 | Il pannello ha i colori di prima dopo un aggiornamento | Ricarica con **Cmd + Maiusc + R** (Mac) o **Ctrl + Maiusc + R** (Windows) |
 | Stamattina non è arrivata l'email "Oggi sul sito" | Quel giorno non usciva niente, o il cron non gira, o manca l'indirizzo degli avvisi (capitolo 21) |

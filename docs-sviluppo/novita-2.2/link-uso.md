@@ -163,3 +163,5 @@ prova che prendono un numero).
 Da rifare perché il pannello è cambiato (compare il pulsante accanto alla casella): le schermate di Form (Dopo l'invio),
 Popup, Newsletter (campagna), Social (Impostazioni), SEO (Redirect) e del Menu che mostrano quelle caselle, e quelle
 dell'editor che mostrano un controllo Link (Immagine, Invito all'azione, Pulsanti).
+
+Portata nel manuale d'uso il 2026-10-31, capitoli 8, 11, 17, 18, 19, 20, 21, 23, 24, 33, 34 e Problemi frequenti.
