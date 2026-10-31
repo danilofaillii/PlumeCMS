@@ -282,6 +282,12 @@ let br;
     if (await largo(tel) > 0) larghi.push(u);
   }
   ok('al telefono le pagine dell\'area riservata non scorrono di lato', larghi.length === 0, larghi);
+  // 2.1: la scheda con il riquadro "Area riservata", al telefono.
+  const telA = await pagina(br, err, 390, 844);
+  await entraPannello(telA, B, UTENTE, PASSWORD);
+  await telA.goto(B + '/admin/contenuto.php?tipo=pagine&id=' + idPag('servizi'), { waitUntil: 'networkidle' });
+  ok('al telefono la scheda con il riquadro "Area riservata" non scorre di lato', await telA.locator('#membri-scheda').isVisible() && await largo(telA) <= 0, await largo(telA));
+  await telA.context().close();
 
   // 12. Sospendere: il membro esce subito. Poi riattivarlo.
   await vaiA('/admin/' + MEMBRI + 'elenco');
