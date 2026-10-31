@@ -173,6 +173,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             case 'redirect_nuovo':
                 $da = trim((string)($_POST['da'] ?? '')); $a = trim((string)($_POST['a'] ?? ''));
                 if ($da === '' || $a === '') throw new RuntimeException('Servono sia il vecchio indirizzo sia quello nuovo.');
+                // Audit 2026-11: con un'emoji MySQL rifiutava la riga (tabella a 3 byte) e il pannello mostrava "SQLSTATE[HY000]...".
+                if (preg_match('/[\x{10000}-\x{10FFFF}]/u', $da . $a)) throw new RuntimeException('Gli indirizzi di un redirect non possono contenere emoji: scrivili come compaiono nella barra del browser (per esempio /offerta-estate/).');
                 $codice = in_array((int)($_POST['codice'] ?? 301), [301, 302, 307, 308, 410], true) ? (int)$_POST['codice'] : 301;
                 sito_salva_redirect($da, $a, $codice, 'exact', 'pannello');
                 if (!empty($_POST['da_404'])) { $st = db()->prepare('DELETE FROM ' . tbl('seo_404') . ' WHERE percorso = ?'); $st->execute([$da]); }
