@@ -10,7 +10,7 @@ body{background:#0000ff}
 .card,.servizio,.ew-post{background:transparent;border:2px solid #ffffff;box-shadow:6px 6px 0 #ffffff}
 .card:hover,.ew-post:hover{border-color:#ffffff;transform:translate(-2px,-2px);box-shadow:8px 8px 0 #ffffff}
 .occhiello{color:#ffffff;letter-spacing:.2em}
-.hero h1 em{background:none;color:inherit;-webkit-text-fill-color:currentColor;text-decoration:underline;text-decoration-thickness:.08em;text-underline-offset:.1em}
+.hero h1 em{background:none;color:inherit;-webkit-text-fill-color:currentColor}
 .ed-piede{background:#ffffff;color:#0000ff;border-top:0;margin-top:40px}
 .ed-piede a,.ed-piede a:hover,.ed-piede .marchio,.ed-piede .ed-descrizione-sito,.ed-piede .ed-copyright{color:#0000ff}
 .ed-piede a:hover{text-decoration:underline}
