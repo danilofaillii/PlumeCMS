@@ -90,7 +90,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 if (isset($r['errore'])) flash('error', 'Collegamento non riuscito. ' . $r['errore']);
                 else {
                     $siti = array_map(fn($x) => $x['siteUrl'] . ' (' . ($x['permissionLevel'] ?? '') . ')', $r['dati']['siteEntry'] ?? []);
-                    flash('success', $siti ? 'Collegamento riuscito. Il service account vede: ' . implode(', ', $siti) : 'Collegamento riuscito, ma il service account non vede nessuna proprieta: aggiungilo come utente in Search Console.');
+                    flash('success', $siti ? 'Collegamento riuscito. Il service account vede: ' . implode(', ', $siti) : 'Collegamento riuscito, ma il service account non vede nessuna proprietà: aggiungilo come utente in Search Console.');
                 }
                 break;
             case 'google_indexing_url':
@@ -163,7 +163,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             case 'salva_schema':
                 seo_salva('schema', seo_form_interruttori(['article', 'faq', 'breadcrumb', 'website', 'searchaction', 'speakable', 'organization', 'person'], 'schema'));
                 $o = $_POST['org'] ?? []; $p = $_POST['persona'] ?? []; $ae = $_POST['aeo'] ?? [];
-                if (!preg_match('/^[A-Za-z]+$/', (string)($o['tipo'] ?? ''))) throw new RuntimeException('Il tipo di attivita e una sola parola di schema.org, per esempio ProfessionalService o Organization.');
+                if (!preg_match('/^[A-Za-z]+$/', (string)($o['tipo'] ?? ''))) throw new RuntimeException('Il tipo di attività è una sola parola di schema.org, per esempio ProfessionalService o Organization.');
                 seo_salva('org', array_intersect_key($o, seo_predefiniti()['org']));
                 seo_salva('persona', array_intersect_key($p, seo_predefiniti()['persona']));
                 seo_salva('aeo', ['parole_primo_paragrafo' => max(20, (int)($ae['parole_primo_paragrafo'] ?? 60)), 'tldr_min' => max(10, (int)($ae['tldr_min'] ?? 40)), 'tldr_max' => max(20, (int)($ae['tldr_max'] ?? 60))]);
@@ -267,7 +267,7 @@ pre.seo-pre{background:var(--codice-fondo);color:var(--codice-testo);padding:.9r
 </div>
 <div class="seo-card">
   <h3>Punteggio SEO di ogni contenuto pubblicato</h3>
-  <p class="seo-nota">Il punteggio e lo stesso della scheda di ogni contenuto (riquadro Controllo SEO): keyword nel titolo, nella descrizione, nell'indirizzo, in apertura e nei sottotitoli; densita 1,8% e correlate 1,5%; lunghezza di titolo e descrizione; immagine e alt; link; lunghezza; leggibilita; In breve e domande frequenti. Clicca un'intestazione per ordinare.</p>
+  <p class="seo-nota">Il punteggio e lo stesso della scheda di ogni contenuto (riquadro Controllo SEO): keyword nel titolo, nella descrizione, nell'indirizzo, in apertura e nei sottotitoli; densità 1,8% e correlate 1,5%; lunghezza di titolo e descrizione; immagine e alt; link; lunghezza; leggibilita; In breve e domande frequenti. Clicca un'intestazione per ordinare.</p>
   <div class="seo-filtri"><input type="search" id="seo-cerca" placeholder="Filtra per titolo o keyword"></div>
   <div style="overflow-x:auto"><table class="seo-tab" id="seo-panoramica">
     <thead><tr><th data-k="punteggio" data-n="1">Punteggio</th><th data-k="titolo">Titolo</th><th data-k="tipo">Tipo</th><th data-k="keyword">Keyword</th><th data-k="parole" data-n="1">Parole</th><th data-k="robots">Robots</th><th>In breve</th><th>FAQ</th><th>Descr.</th><th>Img</th><th>Apertura</th><th></th></tr></thead>
@@ -308,13 +308,13 @@ pre.seo-pre{background:var(--codice-fondo);color:var(--codice-testo);padding:.9r
 <?php elseif ($scheda === 'motori'): ?>
 <div class="seo-griglia">
   <div class="seo-card">
-    <h3>Verifica della proprieta</h3>
+    <h3>Verifica della proprietà</h3>
     <p class="seo-nota">Ogni motore chiede una prova che il sito e tuo. Qui incolli il codice e il sito lo pubblica da solo (meta tag nel <code>&lt;head&gt;</code> o file in radice). Poi torni nel servizio e premi <b>Verifica</b>.</p>
     <form method="post"><?= csrf_field() ?><input type="hidden" name="azione" value="salva_verifica">
       <div class="form-group"><label>Google Search Console</label><input type="text" name="verifica[google]" value="<?= h($cfg['verifica']['google']) ?>" placeholder="codice del meta tag, oppure google1234abcd.html" autocomplete="off">
-        <div class="hint">Search Console, Aggiungi proprieta, Prefisso URL <code><?= SITO_URL ?>/</code>, metodo <b>Tag HTML</b>: incolla il tag intero o solo il codice. Oppure metodo File HTML: scrivi il nome del file (google....html) e il sito lo serve in radice.</div></div>
+        <div class="hint">Search Console, Aggiungi proprietà, Prefisso URL <code><?= SITO_URL ?>/</code>, metodo <b>Tag HTML</b>: incolla il tag intero o solo il codice. Oppure metodo File HTML: scrivi il nome del file (google....html) e il sito lo serve in radice.</div></div>
       <div class="form-group"><label>Bing Webmaster Tools</label><input type="text" name="verifica[bing]" value="<?= h($cfg['verifica']['bing']) ?>" placeholder="codice del meta tag msvalidate.01" autocomplete="off">
-        <div class="hint">Bing Webmaster Tools, Aggiungi sito, opzione <b>Meta tag HTML</b>. In alternativa Bing si può collegare importando la proprieta da Search Console, senza codice.</div></div>
+        <div class="hint">Bing Webmaster Tools, Aggiungi sito, opzione <b>Meta tag HTML</b>. In alternativa Bing si può collegare importando la proprietà da Search Console, senza codice.</div></div>
       <div class="form-group"><label>Bing: contenuto di BingSiteAuth.xml (facoltativo)</label><textarea name="verifica[bing_file]" rows="3" placeholder="&lt;?xml version=&quot;1.0&quot;?&gt;&lt;users&gt;&lt;user&gt;CODICE&lt;/user&gt;&lt;/users&gt;"><?= h($cfg['verifica']['bing_file']) ?></textarea>
         <div class="hint">Solo se scegli il metodo del file XML: il sito risponde a /BingSiteAuth.xml con questo contenuto.</div></div>
       <div class="form-group"><label>Yandex Webmaster</label><input type="text" name="verifica[yandex]" value="<?= h($cfg['verifica']['yandex']) ?>" placeholder="codice del meta tag yandex-verification" autocomplete="off"></div>
@@ -377,8 +377,8 @@ pre.seo-pre{background:var(--codice-fondo);color:var(--codice-testo);padding:.9r
       <button class="btn btn-secondary btn-sm" type="submit">Salva la chiave</button>
     </form>
     <form method="post" style="margin-top:1rem"><?= csrf_field() ?><input type="hidden" name="azione" value="salva_google">
-      <div class="form-group"><label>Proprieta di Search Console</label><input type="text" name="google[proprieta]" value="<?= h($cfg['google']['proprieta']) ?>">
-        <div class="hint">Come e scritta in Search Console: <code><?= SITO_URL ?>/</code> per una proprieta Prefisso URL, oppure <code>sc-domain:<?= h((string)preg_replace('/^www\./', '', (string)parse_url(SITO_URL, PHP_URL_HOST))) ?></code> per una proprieta Dominio.</div></div>
+      <div class="form-group"><label>Proprietà di Search Console</label><input type="text" name="google[proprieta]" value="<?= h($cfg['google']['proprieta']) ?>">
+        <div class="hint">Come è scritta in Search Console: <code><?= SITO_URL ?>/</code> per una proprietà Prefisso URL, oppure <code>sc-domain:<?= h((string)preg_replace('/^www\./', '', (string)parse_url(SITO_URL, PHP_URL_HOST))) ?></code> per una proprietà Dominio.</div></div>
       <div class="seo-interruttori"><label><input type="checkbox" name="google[indexing_attivo]" value="1" <?= $chk($cfg['google']['indexing_attivo']) ?>><span>Google Indexing API al salvataggio (da usare con giudizio)<small>Google la ammette ufficialmente solo per pagine JobPosting e BroadcastEvent. Su un blog funziona a volte, ma fuori dalle regole: per questo è spenta. Quota 200 notifiche al giorno. Richiede la Web Search Indexing API abilitata e il service account come proprietario in Search Console.</small></span></label></div>
       <button class="btn btn-primary btn-sm" type="submit" style="margin-top:.6rem">Salva</button>
     </form>
@@ -394,7 +394,7 @@ pre.seo-pre{background:var(--codice-fondo);color:var(--codice-testo);padding:.9r
     <?php if ($sa): $sm = seo_gsc_sitemaps(); if (isset($sm['errore'])): ?><p class="seo-no" style="font-size:.84rem"><?= h($sm['errore']) ?></p><?php else: ?>
       <table class="seo-tab"><thead><tr><th>Sitemap in Search Console</th><th>Ultima lettura</th><th>Indirizzi</th><th>Errori</th></tr></thead><tbody>
       <?php foreach ($sm['dati']['sitemap'] ?? [] as $x): ?><tr><td><?= h($x['path'] ?? '') ?></td><td><?= h(substr((string)($x['lastDownloaded'] ?? ''), 0, 16)) ?></td><td><?= (int)(($x['contents'][0]['submitted'] ?? 0)) ?> inviati, <?= (int)(($x['contents'][0]['indexed'] ?? 0)) ?> indicizzati</td><td><?= (int)($x['errors'] ?? 0) ?> errori, <?= (int)($x['warnings'] ?? 0) ?> avvisi</td></tr><?php endforeach; ?>
-      <?php if (empty($sm['dati']['sitemap'])): ?><tr><td colspan="4">Nessuna sitemap inviata per questa proprieta.</td></tr><?php endif; ?>
+      <?php if (empty($sm['dati']['sitemap'])): ?><tr><td colspan="4">Nessuna sitemap inviata per questa proprietà.</td></tr><?php endif; ?>
       </tbody></table>
     <?php endif; endif; ?>
   </div>
@@ -415,7 +415,7 @@ pre.seo-pre{background:var(--codice-fondo);color:var(--codice-testo);padding:.9r
     <form method="post" class="seo-inline"><?= csrf_field() ?><input type="hidden" name="azione" value="ispeziona"><div class="form-group"><label>Un indirizzo</label><input type="text" name="url" id="seo-ispeziona-url" placeholder="/una-pagina-del-sito/" data-link-sito></div><button class="btn btn-primary btn-sm" type="submit">Ispeziona</button></form>
     <form method="post" class="seo-inline"><?= csrf_field() ?><input type="hidden" name="azione" value="ispeziona_lotto"><div class="form-group" style="min-width:120px"><label>Lotto</label><select name="quanti"><option value="10">10 indirizzi</option><option value="25" selected>25 indirizzi</option><option value="50">50 indirizzi</option><option value="100">100 indirizzi</option></select></div><button class="btn btn-secondary btn-sm" type="submit">Ispeziona i prossimi</button></form>
   </div>
-  <p class="hint" style="margin-top:.5rem">Un lotto da 100 dura un paio di minuti: ogni ispezione e una chiamata a Google. Se il server taglia la richiesta, usa lotti da 25.</p>
+  <p class="hint" style="margin-top:.5rem">Un lotto da 100 dura un paio di minuti: ogni ispezione è una chiamata a Google. Se il server taglia la richiesta, usa lotti da 25.</p>
   <?php endif; ?>
 </div>
 <div class="seo-card">
@@ -531,7 +531,7 @@ pre.seo-pre{background:var(--codice-fondo);color:var(--codice-testo);padding:.9r
       <div class="form-group"><label>robots.txt personalizzato</label><textarea name="robots_txt" class="codice" rows="10" placeholder="<?= h(seo_robots_txt_predefinito()) ?>"><?= h($cfg['robots_txt']['personale']) ?></textarea></div>
       <details><summary style="cursor:pointer;font-size:.84rem">Anteprima di quello che il sito serve adesso</summary><pre class="seo-pre"><?= h(seo_robots_txt()) ?></pre></details>
       <h3 style="margin-top:1rem">Crawler delle intelligenze artificiali</h3>
-      <p class="seo-nota">Ogni interruttore aggiunge al robots.txt predefinito un blocco <code>User-agent: ... Disallow: /</code>. Per l'AEO (essere citati dalle risposte delle IA) conviene <b>lasciare passare</b> i bot di ricerca (OAI-SearchBot, PerplexityBot) e decidere con calma quelli di addestramento. Il robots.txt e una richiesta: i bot seri la rispettano.</p>
+      <p class="seo-nota">Ogni interruttore aggiunge al robots.txt predefinito un blocco <code>User-agent: ... Disallow: /</code>. Per l'AEO (essere citati dalle risposte delle IA) conviene <b>lasciare passare</b> i bot di ricerca (OAI-SearchBot, PerplexityBot) e decidere con calma quelli di addestramento. Il robots.txt è una richiesta: i bot seri la rispettano.</p>
       <div class="seo-interruttori">
       <?php foreach (SEO_CRAWLER_AI as $bot => [$chi, $cosa]): ?>
         <label><input type="checkbox" name="ai[<?= h($bot) ?>]" value="1" <?= $chk($cfg['robots_txt']['ai'][$bot] ?? 0) ?>><span>Blocca <b><?= h($bot) ?></b> (<?= h($chi) ?>)<small><?= h($cosa) ?></small></span></label>
@@ -562,7 +562,7 @@ pre.seo-pre{background:var(--codice-fondo);color:var(--codice-testo);padding:.9r
   <div class="seo-card">
     <h3>Organizzazione (JSON-LD)</h3>
     <p class="seo-nota">Il nodo che ogni pagina dichiara su chi pubblica il sito. I valori di partenza sono quelli già in uso.</p>
-    <div class="form-group"><label>Tipo di attivita (schema.org)</label><input type="text" name="org[tipo]" value="<?= h($o['tipo']) ?>"><div class="hint">ProfessionalService (oggi), Organization, LocalBusiness, Person...</div></div>
+    <div class="form-group"><label>Tipo di attività (schema.org)</label><input type="text" name="org[tipo]" value="<?= h($o['tipo']) ?>"><div class="hint">ProfessionalService (oggi), Organization, LocalBusiness, Person...</div></div>
     <div class="form-group"><label>Nome</label><input type="text" name="org[nome]" value="<?= h($o['nome']) ?>"></div>
     <div class="form-group"><label>Nome del sito (WebSite)</label><input type="text" name="org[nome_sito]" value="<?= h($o['nome_sito']) ?>"></div>
     <div class="form-group"><label for="seo-org-logo">Logo</label><input type="text" name="org[logo]" id="seo-org-logo" value="<?= h($o['logo']) ?>" placeholder="/uploads/..." data-immagine></div>
@@ -572,7 +572,7 @@ pre.seo-pre{background:var(--codice-fondo);color:var(--codice-testo);padding:.9r
     <div class="form-group" style="margin-top:.8rem"><label>Tipo di servizio</label><input type="text" name="org[servizio]" value="<?= h($o['servizio']) ?>"></div>
     <div class="seo-inline"><div class="form-group"><label>Telefono (facoltativo)</label><input type="text" name="org[telefono]" value="<?= h($o['telefono']) ?>"></div><div class="form-group"><label>Email (facoltativa)</label><input type="text" name="org[email]" value="<?= h($o['email']) ?>"></div></div>
     <div class="form-group" style="margin-top:.8rem"><label>Indirizzo (facoltativo)</label><input type="text" name="org[indirizzo]" value="<?= h($o['indirizzo']) ?>"></div>
-    <div class="form-group"><label>Profili social dell'attivita (sameAs, uno per riga)</label><textarea name="org[sameas]" rows="3"><?= h($o['sameas']) ?></textarea></div>
+    <div class="form-group"><label>Profili social dell'attività (sameAs, uno per riga)</label><textarea name="org[sameas]" rows="3"><?= h($o['sameas']) ?></textarea></div>
   </div>
   <div class="seo-card">
     <h3>Persona (E-E-A-T)</h3>

@@ -211,7 +211,7 @@ require_once __DIR__ . '/includes/admin-header.php';
         <h3>Controllo SEO: <?= $seoAnalisi['punteggio'] ?>/100</h3>
         <div class="sc-corpo">
           <div id="seo-controllo-corpo"><?= seo_analisi_html($seoAnalisi) ?></div>
-          <div style="display:flex;justify-content:space-between;align-items:center;margin-top:.6rem;gap:.5rem;flex-wrap:wrap"><span class="hint">Le soglie (densita 1,8% e 1,5%, parole del primo paragrafo, In breve) stanno in <a href="seo.php?scheda=schema">SEO e AEO</a>.</span><button type="button" class="btn btn-secondary btn-sm" id="seo-ricontrolla">Ricontrolla</button></div>
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-top:.6rem;gap:.5rem;flex-wrap:wrap"><span class="hint">Le soglie (densità 1,8% e 1,5%, parole del primo paragrafo, In breve) stanno in <a href="seo.php?scheda=schema">SEO e AEO</a>.</span><button type="button" class="btn btn-secondary btn-sm" id="seo-ricontrolla">Ricontrolla</button></div>
         </div>
       </div>
       <script src="<?= pannello_file('assets/seo-controllo.js') ?>" defer></script>

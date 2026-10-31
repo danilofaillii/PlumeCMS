@@ -160,7 +160,7 @@ require_once __DIR__ . '/includes/admin-header.php';
     <h3>Dispositivi collegati</h3>
     <p style="font-size:.88rem;color:var(--text-muted)">Le sessioni aperte con il tuo accesso. Se ne vedi una che non riconosci, chiudile tutte e cambia la password.</p>
     <div class="admin-table-wrap"><table>
-      <thead><tr><th>Dove</th><th>Browser</th><th>Aperta</th><th>Ultima attivita</th></tr></thead>
+      <thead><tr><th>Dove</th><th>Browser</th><th>Aperta</th><th>Ultima attività</th></tr></thead>
       <tbody>
       <?php foreach ($sessioni as $s): ?>
         <tr><td><?= h($s['ip']) ?><?= $s['sid'] === $mia ? ' <span class="badge badge-published">questa</span>' : '' ?></td><td style="font-size:.8rem;max-width:260px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="<?= h($s['user_agent']) ?>"><?= h(mb_substr($s['user_agent'], 0, 60)) ?></td><td><?= h(date('d/m H:i', strtotime($s['creata']))) ?></td><td><?= h(date('d/m H:i', strtotime($s['ultimo']))) ?></td></tr>

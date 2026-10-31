@@ -76,7 +76,7 @@ const elencoZip = f => JSON.parse(execFileSync('python3', ['-I', '-c', 'import j
     await Promise.all([p.waitForNavigation({ timeout: 120000 }), p.click('#cs-carica button[type=submit]')]);
     return p.locator('body').innerText();
   };
-  ok('uno zip che non e una copia: respinto', /non e una copia del sito/.test(await carica('non-copia.zip')));
+  ok('uno zip che non e una copia: respinto', /non è una copia del sito/.test(await carica('non-copia.zip')));
   ok('zip slip (../fuori.txt): respinto, niente scritto fuori', /Nome non ammesso/.test(await carica('slip.zip')) && !fs.existsSync(path.join(CMS, '..', 'fuori.txt')) && !fs.existsSync(path.join(CMS, 'fuori.txt')));
   ok('percorso assoluto (/tmp/assoluto.txt): respinto', /Nome non ammesso/.test(await carica('slip-assoluto.zip')) && !fs.existsSync('/tmp/assoluto.txt'));
   ok('file nascosto (uploads/.htaccess): respinto', /Nome non ammesso/.test(await carica('nascosto.zip')));

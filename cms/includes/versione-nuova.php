@@ -185,7 +185,7 @@ function versione_scarica_e_prepara(): string {
     $tmp = agg_dir('pacchetti') . '/.scarico-' . bin2hex(random_bytes(6)) . '.zip';
     try {
         versione_http($d['url'], $d['dimensione'], VERSIONE_TIMEOUT_ZIP, $tmp);
-        if ((int)filesize($tmp) !== $d['dimensione']) throw new RuntimeException('Lo zip scaricato non e intero (' . agg_fmt_bytes((int)filesize($tmp)) . ' invece di ' . agg_fmt_bytes($d['dimensione']) . ').');
+        if ((int)filesize($tmp) !== $d['dimensione']) throw new RuntimeException('Lo zip scaricato non è intero (' . agg_fmt_bytes((int)filesize($tmp)) . ' invece di ' . agg_fmt_bytes($d['dimensione']) . ').');
         if (!hash_equals($d['sha256'], (string)hash_file('sha256', $tmp))) throw new RuntimeException('Lo zip scaricato non corrisponde all\'impronta sha256 del sito ufficiale: non lo uso.');
         $id = agg_registra_pacchetto($tmp, $d['nome']); // sposta $tmp nella coda, dopo aver letto il manifest
     } finally {
