@@ -1,0 +1,29 @@
+{
+  "nome": "Bottega",
+  "versione": "1.0",
+  "autore": "plumeCMS",
+  "anteprima": "anteprima.png",
+  "css": "tema.css",
+  "stile": "stile.json",
+  "modelli": "modelli.json",
+  "descrizione": "Caldo ed editoriale: carta crema, titoli con le grazie, terracotta e verde salvia. Per chi scrive e racconta.",
+  "infografiche": {
+    "sfondo": "#fbf7f0",
+    "bianco": "#fffdf9",
+    "bordo": "#e6dccd",
+    "riga": "#efe6d8",
+    "titolo": "#2b2118",
+    "testo": "#5b4a3c",
+    "muto": "#8a7766",
+    "situazione": "#f3ece1",
+    "su_scuro": "#d8cbbb",
+    "voci": {
+      "rosso": "#b4532a",
+      "oro": "#c98a1a",
+      "verde": "#3f6b5a",
+      "ciano": "#2f6f7a",
+      "viola": "#6b4f7a",
+      "scuro": "#2b2118"
+    }
+  }
+}

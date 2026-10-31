@@ -1,0 +1,61 @@
+/* Addon Prenotazioni: le pagine del pannello. Usa le variabili degli aspetti del pannello. */
+.pa-schede{display:flex;flex-wrap:wrap;gap:4px;margin:0 0 1.2rem;border-bottom:1px solid var(--border)}
+.pa-schede a{padding:.55rem .9rem;border-radius:8px 8px 0 0;color:var(--text-muted);text-decoration:none;font-weight:600;font-size:.92rem;border:1px solid transparent;border-bottom:0;margin-bottom:-1px}
+.pa-schede a.attivo{background:var(--surface);color:var(--text);border-color:var(--border)}
+.pa-avviso{background:var(--mustard-light);color:var(--attenzione-testo);border:1px solid var(--attenzione-bordo);border-radius:var(--radius);padding:.8rem 1rem;margin:0 0 1.2rem}
+.pa-barra{display:flex;flex-wrap:wrap;gap:.6rem;align-items:center;margin:0 0 1rem}
+.pa-barra h2{margin:0 auto 0 0;font-size:1.15rem}
+.pa-settimana{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:.5rem}
+.pa-giorno{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:.6rem;min-height:8rem;min-width:0}
+.pa-giorno h3{font-size:.85rem;margin:0 0 .5rem;color:var(--text-muted);text-transform:capitalize}
+.pa-giorno.oggi{border-color:var(--coral);box-shadow:inset 0 3px 0 var(--coral)}
+.pa-voce{display:block;border-radius:8px;padding:.4rem .5rem;margin:0 0 .4rem;background:var(--fondo-2);color:var(--text);text-decoration:none;font-size:.82rem;line-height:1.35;border-left:4px solid var(--sage);overflow-wrap:anywhere}
+.pa-voce b{display:block}
+.pa-voce.da_confermare{border-left-color:var(--mustard)}
+.pa-voce.annullata{opacity:.55;text-decoration:line-through}
+.pa-voce.non_presentato{border-left-color:var(--coral)}
+.pa-vuoto{color:var(--text-muted);font-size:.82rem}
+.pa-giornata{display:flex;flex-direction:column;gap:.5rem}
+.pa-riga{display:grid;grid-template-columns:6rem 1fr auto;gap:.8rem;align-items:center;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:.7rem 1rem}
+.pa-riga .pa-ora{font-weight:700;font-size:1.05rem}
+.pa-modulo{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:1.2rem 1.25rem;margin:0 0 1.2rem;max-width:52rem}
+.pa-modulo h3{margin:0 0 .8rem;font-size:1rem}
+.pa-campi{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:.9rem 1rem}
+.pa-campi label,.pa-campo{display:flex;flex-direction:column;gap:.3rem;font-size:.85rem;font-weight:600}
+.pa-campi input,.pa-campi select,.pa-campi textarea,.pa-modulo textarea,.pa-chiusura input{padding:.5rem .6rem;border:1px solid var(--border);border-radius:8px;background:var(--bg);color:var(--text);font:inherit;font-weight:400;min-width:0}
+.pa-largo{grid-column:1/-1}
+.pa-spunta{flex-direction:row!important;align-items:center;gap:.5rem!important;font-weight:400!important}
+.pa-aiuto{font-size:.78rem;color:var(--text-muted);font-weight:400}
+.pa-chiusure{display:flex;flex-direction:column;gap:.4rem}
+.pa-chiusura{display:grid;grid-template-columns:10rem 10rem 1fr;gap:.4rem}
+.pa-chiusura-testa span{font-size:.78rem;color:var(--text-muted)}
+.pa-orari{display:grid;grid-template-columns:7rem 1fr;gap:.4rem .8rem;align-items:center}
+.pa-orari label{font-weight:600;font-size:.88rem}
+.pa-orari input{padding:.45rem .6rem;border:1px solid var(--border);border-radius:8px;background:var(--bg);color:var(--text);font:inherit}
+.pa-azioni{display:flex;flex-wrap:wrap;gap:.5rem;align-items:center}
+.pa-azioni form{margin:0}
+.pa-dettaglio{display:grid;grid-template-columns:9rem 1fr;gap:.35rem 1rem;margin:0 0 1rem}
+.pa-dettaglio dt{color:var(--text-muted)}
+.pa-dettaglio dd{margin:0;overflow-wrap:anywhere}
+.pa-stelle{color:#d99a00;letter-spacing:.05em;white-space:nowrap}
+.pa-tabella td{vertical-align:top}
+.pa-muto{color:var(--text-muted);font-size:.85rem}
+[hidden]{display:none!important}
+@media (max-width:900px){.pa-settimana{grid-template-columns:1fr}.pa-giorno{min-height:0}.pa-riga{grid-template-columns:4.5rem 1fr}.pa-riga .pa-azioni{grid-column:1/-1}.pa-chiusura{grid-template-columns:1fr 1fr}.pa-chiusura input:last-child{grid-column:1/-1}.pa-orari{grid-template-columns:1fr}.pa-dettaglio{grid-template-columns:1fr}}
+/* Al telefono le tabelle diventano schede, una riga sotto l'altra: niente pagina che scorre di lato. */
+@media (max-width:700px){.pa-tabella thead{display:none}.pa-tabella,.pa-tabella tbody,.pa-tabella tr,.pa-tabella td{display:block;width:100%}.pa-tabella tr{border-bottom:1px solid var(--border);padding:.6rem .8rem}.pa-tabella td{padding:.15rem 0;border:0}.pa-barra select{max-width:100%}.pa-barra label{flex-wrap:wrap}}
+/* 2.1: Nuova prenotazione dal pannello. Gli orari liberi sono pulsanti grandi (anche al telefono); "Un altro orario" apre la parte con l'avviso. */
+.pa-schede .pa-nuova{margin-left:auto;align-self:center;margin-bottom:4px;padding:.4rem .8rem;border-radius:8px;background:var(--coral);color:var(--su-accento,#fff);border:0}
+.pa-ore{border:0;padding:0;margin:0}
+.pa-ore legend{padding:0;margin:0 0 .6rem;font-size:.88rem}
+.pa-ore-griglia{display:grid;grid-template-columns:repeat(auto-fill,minmax(6.5rem,1fr));gap:.5rem}
+.pa-ora-scelta{position:relative;display:block;cursor:pointer}
+.pa-ora-scelta input{position:absolute;opacity:0;inset:0;width:100%;height:100%;margin:0;cursor:pointer}
+.pa-ora-scelta span{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:3rem;padding:.45rem .4rem;border:1px solid var(--border);border-radius:10px;background:var(--bg);text-align:center;line-height:1.2}
+.pa-ora-scelta small{font-size:.74rem;color:var(--text-muted);font-weight:400}
+.pa-ora-scelta input:checked+span{border-color:var(--coral);box-shadow:inset 0 0 0 2px var(--coral);background:var(--surface)}
+.pa-ora-scelta input:focus-visible+span{outline:2px solid var(--coral);outline-offset:2px}
+.pa-ora-altra span{border-style:dashed}
+.pa-modulo:not(:has(.pa-ora-altra input:checked)) .pa-forza{display:none}
+.pa-ora-altra{grid-column:span 2}
+#pa-prossimo{margin:.6rem 0 0}

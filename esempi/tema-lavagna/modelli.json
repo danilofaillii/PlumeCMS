@@ -1,0 +1,45 @@
+{
+  "header": {
+    "versione": 1,
+    "elementi": [
+      {
+        "id": "lavh01",
+        "tipo": "sezione",
+        "impostazioni": { "larghezza": "contenuta", "spazio_sopra": { "d": 0, "m": 0 }, "spazio_sotto": { "d": 0, "m": 0 }, "spazio_colonne": { "d": 28 } },
+        "figli": [
+          {
+            "id": "lavh02",
+            "tipo": "colonna",
+            "impostazioni": {},
+            "figli": [
+              { "id": "lavh03", "tipo": "logo_sito", "impostazioni": { "margine_sotto": { "d": 0 } } },
+              { "id": "lavh04", "tipo": "menu_nav", "impostazioni": { "menu": "posizione:principale", "disposizione": "orizzontale", "spingi": true, "collasso": 960, "hamburger_testo": "Menu", "indicatore": "linea", "indicatore_colore": "globale:primario", "margine_sotto": { "d": 0 } } }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "footer": {
+    "versione": 1,
+    "elementi": [
+      {
+        "id": "lavf01",
+        "tipo": "sezione",
+        "impostazioni": { "larghezza": "contenuta", "colore_testo": "globale:testo-2", "spazio_sopra": { "d": 56, "m": 56 }, "spazio_sotto": { "d": 40, "m": 40 } },
+        "figli": [
+          {
+            "id": "lavf02",
+            "tipo": "colonna",
+            "impostazioni": {},
+            "figli": [
+              { "id": "lavf03", "tipo": "logo_sito", "impostazioni": { "margine_sotto": { "d": 8 } } },
+              { "id": "lavf04", "tipo": "descrizione_sito", "impostazioni": { "margine_sotto": { "d": 16 } } },
+              { "id": "lavf05", "tipo": "copyright", "impostazioni": { "margine_sotto": { "d": 0 } } }
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}

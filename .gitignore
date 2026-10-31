@@ -1,0 +1,14 @@
+releases/
+cms/includes/config.local.php
+cms/install/.installato
+cms/logs/*
+!cms/logs/.gitkeep
+cms/aggiornamenti/*
+!cms/aggiornamenti/.gitkeep
+cms/uploads/*
+!cms/uploads/.gitkeep
+__pycache__/
+*.pyc
+node_modules/
+.DS_Store
+.claude/worktrees/
