@@ -177,6 +177,20 @@ const CARTELLA = new URL(B).pathname.replace(/\/$/, '');
   ok('P11 vetrina: "servizi" come indirizzo del negozio si rifiuta, perché è la pagina Servizi', /della pagina «Servizi»/.test(f11), f11);
   ok('P11 vetrina: e la pagina Servizi resta sul sito', /^Servizi/.test(await titServ()) && /^Servizi/.test(prima11), await titServ());
 
+  // ---------------------------------------------------------------- P13: un nome mostrato lungo in Utenti
+  await vai('utenti.php');
+  const hrefU = await a.locator('a[href*="utenti.php?modifica="]').first().getAttribute('href');
+  await vai(hrefU);
+  const nomePrima = await a.inputValue('[name=display_name]');
+  await a.locator('[name=display_name]').evaluate((e, v) => { e.value = v; }, 'Nome lunghissimo '.repeat(16)); // anche oltre il maxlength, come un browser vecchio
+  await Promise.all([a.waitForNavigation(), a.locator('form:has([name=display_name]) button.btn-primary').first().click()]);
+  const f13 = await flash();
+  await vai(hrefU);
+  const nomeDopo = await a.inputValue('[name=display_name]');
+  ok('P13 utenti: un nome mostrato di 270 caratteri si salva (tagliato a 200), senza SQLSTATE', !/SQLSTATE/.test(f13) && nomeDopo.startsWith('Nome lunghissimo') && nomeDopo.length <= 200, f13);
+  await a.fill('[name=display_name]', nomePrima);
+  await Promise.all([a.waitForNavigation(), a.locator('form:has([name=display_name]) button.btn-primary').first().click()]);
+
   ok('nessun errore JavaScript', err.length === 0, err);
   await br.close();
   console.log(`\n${n - ko} su ${n} OK`); process.exit(ko ? 1 : 0);

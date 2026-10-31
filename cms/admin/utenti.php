@@ -36,7 +36,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         } else {
             $nome = trim((string)($_POST['username'] ?? ''));
             $email = trim((string)($_POST['email'] ?? ''));
-            $mostrato = trim((string)($_POST['display_name'] ?? '')) ?: $nome;
+            $mostrato = mb_substr(trim((string)($_POST['display_name'] ?? '')), 0, 200) ?: $nome; // audit 2026-11: oltre 200 caratteri MySQL rispondeva "SQLSTATE[22001] Data too long"
             $ruolo = isset(UTENTI_RUOLI[$_POST['role'] ?? '']) ? $_POST['role'] : 'editor';
             $p1 = (string)($_POST['password'] ?? ''); $p2 = (string)($_POST['password2'] ?? '');
             if (!preg_match('/^[A-Za-z0-9._-]{3,50}$/', $nome)) throw new RuntimeException('Nome utente: da 3 a 50 caratteri, solo lettere, numeri, punto, trattino.');
@@ -83,7 +83,7 @@ require_once __DIR__ . '/includes/admin-header.php';
       <input type="hidden" name="id" value="<?= $modifica['id'] ?? 0 ?>">
       <label>Nome utente</label><input type="text" name="username" value="<?= h($modifica['username'] ?? '') ?>" required autocomplete="off">
       <label>Email</label><input type="text" name="email" value="<?= h($modifica['email'] ?? '') ?>" required>
-      <label>Nome mostrato</label><input type="text" name="display_name" value="<?= h($modifica['display_name'] ?? '') ?>">
+      <label>Nome mostrato</label><input type="text" name="display_name" maxlength="200" value="<?= h($modifica['display_name'] ?? '') ?>">
       <label>Ruolo</label>
       <select name="role"><?php foreach (UTENTI_RUOLI as $k => $n): ?><option value="<?= $k ?>" <?= ($modifica['role'] ?? 'editor') === $k ? 'selected' : '' ?>><?= $n ?></option><?php endforeach; ?></select>
       <div class="hint">Il redattore scrive e pubblica; non vede utenti, impostazioni, aggiornamenti e SQL.</div>
