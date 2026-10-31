@@ -32,7 +32,7 @@ $corsi = corsi_tutti();
 $adminTitle = 'Corsi';
 require CMS_ADMIN . '/includes/admin-header.php';
 ?>
-<style>.co-griglia{display:grid;grid-template-columns:minmax(0,1fr) 320px;gap:1.25rem}@media(max-width:1000px){.co-griglia{grid-template-columns:1fr}}.co-tab{overflow-x:auto}</style>
+<style>.co-griglia{display:grid;grid-template-columns:minmax(0,1fr) 320px;gap:1.25rem}@media(max-width:1000px){.co-griglia{grid-template-columns:minmax(0,1fr)}}.co-tab{overflow-x:auto}</style>
 <p style="max-width:62rem">I corsi online del sito. Li seguono i <b>membri</b> dell'area riservata: ognuno vede quanto gli manca, riprende da dove era e alla fine riceve un certificato.
 Sul sito l'elenco è a <code>/corsi/</code>; in una pagina lo mostri con il widget <b>Elenco corsi</b> dell'editor.</p>
 <div class="co-griglia">

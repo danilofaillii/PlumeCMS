@@ -30,4 +30,8 @@ require_once dirname(__DIR__) . '/includes/foto.php';
 // 1.4.0: lato massimo e orientamento come nella libreria, ma senza WebP (molti programmi di posta non la mostrano).
 if (!foto_alleggerisci("$dir/$nome", $tipi[$info[2]], false)['fatto']) sicurezza_immagine_ricodifica("$dir/$nome", $tipi[$info[2]]); // sicurezza: via metadati e qualunque cosa nascosta dopo i pixel
 @chmod("$dir/$nome", 0644);
-echo json_encode(['url' => cms_url_sito() . cms_uploads_url() . '/' . $rel . '/' . $nome]);
+// 2.1.0: l'indirizzo intero si fa con l'origine del sito (schema, host, porta) più cms_uploads_url(), che ha già la cartella
+// del CMS: con cms_url_sito() davanti, in un'installazione in cartella (/test) la cartella usciva due volte.
+$u = parse_url(cms_url_sito());
+$origine = ($u['scheme'] ?? 'https') . '://' . ($u['host'] ?? '') . (!empty($u['port']) ? ':' . $u['port'] : '');
+echo json_encode(['url' => $origine . cms_uploads_url() . '/' . $rel . '/' . $nome]);

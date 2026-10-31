@@ -79,7 +79,7 @@ $sito = rtrim(cms_url_sito(), '/') . '/corsi/' . $corso['slug'] . '/';
 $adminTitle = 'Corso: ' . $corso['titolo'];
 require CMS_ADMIN . '/includes/admin-header.php';
 ?>
-<style>.co-griglia{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:1.25rem}@media(max-width:1100px){.co-griglia{grid-template-columns:1fr}}
+<style>.co-griglia{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:1.25rem}@media(max-width:1100px){.co-griglia{grid-template-columns:minmax(0,1fr)}}
 .co-modulo{border:1px solid var(--border);border-radius:var(--radius);padding:.8rem 1rem;margin-bottom:1rem}.co-modulo-testa{display:flex;gap:.5rem;flex-wrap:wrap;align-items:center}
 .co-modulo-testa input[type=text]{flex:1;min-width:10rem}.co-lez{list-style:none;margin:.6rem 0;padding:0}.co-lez li{display:flex;gap:.5rem;align-items:center;flex-wrap:wrap;padding:.4rem 0;border-top:1px solid var(--border)}
 .co-lez li .co-nome{flex:1;min-width:10rem}.co-lez{min-height:2.2rem}
