@@ -97,7 +97,7 @@ Sono gli unici in `cms/docs/`, nello zip, nel sito di plumeCMS e nella pagina Do
 - **Pacchetto di aggiornamento** per un'installazione esistente:
   `python3 tools/cms-pacchetto.py --aggiornamento`. Si carica dal pannello,
   Impostazioni, Aggiornamenti.
-- **Versione**: `cms/VERSIONE` (oggi 2.0.3; sempre tre numeri: "beta" va nel CHANGELOG, mai nel nome dello zip, se no la serie "ultima" del Download non lo riconosce) e una voce in `cms/CHANGELOG.md` a ogni
+- **Versione**: `cms/VERSIONE` (oggi 2.1.0; sempre tre numeri: "beta" va nel CHANGELOG, mai nel nome dello zip, se no la serie "ultima" del Download non lo riconosce) e una voce in `cms/CHANGELOG.md` a ogni
   zip con contenuto diverso. Mai cambiare il contenuto di una versione già data.
 - **Prove** prima di dire finito:
   - `php -n -d short_open_tag=1 -l` su ogni file PHP toccato, `node --check` sui js;
@@ -131,7 +131,18 @@ Le decisioni complete, con data e perché, stanno nel second brain, `plumecms/de
   Il redattore gestisce solo contenuti, media, categorie e tag.
 - **Nome: plumeCMS** (26 ottobre 2026).
 
-## Stato al 30 ottobre 2026
+## Stato al 31 ottobre 2026
+
+Fatto: plumeCMS 2.1.0 (31 ottobre): i punti scelti da Danilo dall'elenco del sospeso, con quattro agenti e uno per i widget, tutto
+rifatto e provato da me sul codice unito. Consegna delle email (Impostazioni > Consegna delle email, Brevo, SES, Mailgun, rimbalzi,
+riscaldamento), prenotazioni dal pannello con .ics, recensioni dopo gli eventi, corsi con l'editor e trascinamento, Google Drive e
+Dropbox, "Solo per i membri" dalla scheda e riservati fuori da ricerca, blog, archivi, widget, feed, sitemap (`sito_contenuti_elenco()`),
+ripristino pulito, Scegli dai Media dappertutto, cinque widget nuovi (92) e form con Ora e File, manuale d'uso in un PDF (8089 KB, tetto
+8 MB), copia e snapshot con le colonne generate (`agg_colonne_generate()`: prima errore 3105). Il backend nuovo l'ha fermato Danilo.
+Prove: install 37/37 radice e cartella, aggiornamento 2.0.3 -> 2.1.0 13/13 con 20 foto uguali, addon tutti 70/70, attacchi 261/261,
+widget 68/68 (radice e cartella) e 40/40, membri 95/95, telefono 49/49 a 390 e 768, Scegli dai Media 112/112, hero 670/670,
+colonne generate 5/5, sito di plumeCMS 87/87. Consegna con `consegna.py --uno`: un pacchetto unico da 14,3 MB (il motore è cambiato
+solo nei dump, nessuna voce nuova del manifest).
 
 Fatto: plumeCMS 2.0.3 (31 ottobre): l'immagine per i social (Danilo: su LinkedIn niente immagine, mentre i suoi siti WordPress sullo
 stesso hosting vanno, quindi non è l'hosting). Il sito di plumeCMS era ancora senza la 2.0.x e aveva `og:image` con le barre doppie
@@ -375,6 +386,8 @@ Errori veri, già pagati. Non ripeterli.
 | Centinaia di server di prova accesi (agenti e giri di prove) | le porte si esauriscono: "Address already in use" e la prova fallisce in modo strano. Alla fine di un lavoro si spengono i `php -S` e i server finti che non servono (cercando il pid con `ps -eo pid=,comm=,args=` e `comm` uguale a php, mai `pkill -f`) |
 | `tema_attivo` scritto da riga di comando per provare un tema | non basta: il tema si applica dal pannello (copia stile e modelli). Per le prove si usa l'anteprima da amministratore, `?preview=1&tema=<slug>` |
 | Un link scritto senza `https://` o senza `/` in un widget | fino alla 2.0.1 `editor_link_sicuro()` lo scartava in silenzio e il pulsante puntava a `#` ("i pulsanti non funzionano") |
+| Una tabella con colonne generate (`GENERATED ALWAYS AS`) in un dump | l'INSERT con il valore della colonna fallisce (MySQL 3105): ripristino della copia "con errori" e snapshot non ripristinabile con dati in Eventi o Prenotazioni (fino alla 2.0.3). Nei dump si scrive `DEFAULT` (`agg_riga_sql()`) |
+| `tbl()` in uno script di prova | restituisce il nome fra apici inversi: per `SHOW COLUMNS` o funzioni che li aggiungono si tolgono con `trim($t, '`')` |
 | Fidarsi del resoconto di un agente | è successo che un agente dichiarasse lavoro mai scritto su disco. Si controllano i file veri e si rifanno le prove |
 
 ## Tono con l'utente
