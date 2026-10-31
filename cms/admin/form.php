@@ -144,7 +144,7 @@ function fmRegoleFile(campo, i) {
   return '<div class="fm-file"><fieldset class="fm-file-tipi"><legend>File che accetta</legend>' + Object.keys(fmFile).map(function (e) {
       return '<label><input type="checkbox" value="' + e + '"' + (campo.estensioni.indexOf(e) >= 0 ? ' checked' : '') + ' data-al-cambio="fmEstensione(' + i + ', \'' + e + '\', this.checked)"> ' + fmE(fmFile[e]) + '</label>';
     }).join('') + '</fieldset>'
-    + '<label class="fm-file-peso">Peso massimo <select data-al-cambio="fmImposta(' + i + ', \'peso\', +this.value)">' + pesi.map(function (p) { return '<option value="' + p + '"' + (+campo.peso === p ? ' selected' : '') + '>' + p + ' MB</option>'; }).join('') + '</select></label>'
+    + '<label class="fm-file-peso">Peso massimo <select data-al-cambio="fmImposta(' + i + ', \'peso\', this.value)">' + pesi.map(function (p) { return '<option value="' + p + '"' + (+campo.peso === p ? ' selected' : '') + '>' + p + ' MB</option>'; }).join('') + '</select></label>'
     + '<small class="fm-file-nota">Il file va in una cartella riservata: lo scarichi da Invii dei form, e arriva allegato all\'avviso se è piccolo. Il server accetta al massimo ' + String(fmPesoServer).replace('.', ',') + ' MB.</small></div>';
 }
 function fmEstensione(i, e, on) {

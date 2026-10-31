@@ -41,7 +41,7 @@ if ($modo === 'vecchi') {
     $x = '"><img src=x onerror=alert(1)><script>alert(2)</script>';
     $js = 'javascript:alert(1)';
     $sezioni = [
-        $sez([$w('menu_ristorante', ['titolo' => $x, 'sezioni' => [['nome' => $x, 'nota' => $x, 'giorni' => $x]], 'piatti' => [['sezione' => $x, 'nome' => $x, 'descrizione' => $x, 'prezzo' => $x, 'immagine' => $js, 'allergeni' => $x, 'etichette' => $x]]])]),
+        $sez([$w('menu_ristorante', ['titolo' => $x, 'sezioni' => [['nome' => $x, 'nota' => $x, 'giorni' => $x]], 'piatti' => [['sezione' => $x, 'nome' => $x, 'descrizione' => $x, 'prezzo' => $x, 'immagine' => $js, 'allergeni' => $x, 'vegano' => $x]]])]),
         $sez([$w('richiesta_prenotazione', ['titolo' => $x, 'intro' => $x, 'pulsante' => $x, 'consenso' => $x, 'modalita' => $x, 'email_a' => $x])]),
         $sez([$w('galleria_filtri', ['tutti' => $x, 'immagini' => [['immagine' => $js, 'alt' => $x, 'didascalia' => $x, 'categorie' => $x], ['immagine' => $f(0), 'alt' => $x, 'didascalia' => $x, 'categorie' => $x . ', ' . $x]]])]),
         $sez([$w('scorrevole', ['tipo' => 'testo', 'frase' => $x, 'loghi' => [['immagine' => $js, 'alt' => $x, 'link' => $js]]])]),
@@ -68,12 +68,12 @@ if ($modo === 'vecchi') {
                 ['nome' => 'Menu della domenica', 'nota' => '', 'giorni' => $altroG === $oggiG ? 'xx' : $altroG],
             ],
             'piatti' => [
-                ['sezione' => 'Antipasti', 'nome' => 'Tagliere di salumi', 'descrizione' => 'Mortadella, prosciutto, crescentine', 'prezzo' => '14', 'immagine' => $f(0), 'allergeni' => 'glutine, latte', 'etichette' => ''],
-                ['sezione' => 'Antipasti', 'nome' => 'Verdure grigliate', 'descrizione' => 'Con olio del Garda', 'prezzo' => '9,50', 'immagine' => '', 'allergeni' => '', 'etichette' => 'vegano, senza_glutine'],
-                ['sezione' => 'Primi', 'nome' => 'Tagliatelle al ragù', 'descrizione' => 'La ricetta depositata', 'prezzo' => '13 €', 'immagine' => '', 'allergeni' => 'glutine, uova, sedano', 'etichette' => 'novita'],
-                ['sezione' => 'Primi', 'nome' => 'Penne all\'arrabbiata', 'descrizione' => '', 'prezzo' => '10', 'immagine' => '', 'allergeni' => 'glutine', 'etichette' => 'piccante, vegetariano'],
-                ['sezione' => 'Menu del giorno', 'nome' => 'Piatto del giorno', 'descrizione' => 'Chiedi al personale', 'prezzo' => '12', 'immagine' => '', 'allergeni' => 'pesce, molluschi', 'etichette' => ''],
-                ['sezione' => 'Menu della domenica', 'nome' => 'Lasagne della domenica', 'descrizione' => '', 'prezzo' => '15', 'immagine' => '', 'allergeni' => 'glutine', 'etichette' => ''],
+                ['sezione' => 'Antipasti', 'nome' => 'Tagliere di salumi', 'descrizione' => 'Mortadella, prosciutto, crescentine', 'prezzo' => '14', 'immagine' => $f(0), 'allergeni' => 'glutine, latte'],
+                ['sezione' => 'Antipasti', 'nome' => 'Verdure grigliate', 'descrizione' => 'Con olio del Garda', 'prezzo' => '9,50', 'immagine' => '', 'allergeni' => '', 'vegano' => true, 'vegetariano' => true, 'senza_glutine' => true],
+                ['sezione' => 'Primi', 'nome' => 'Tagliatelle al ragù', 'descrizione' => 'La ricetta depositata', 'prezzo' => '13 €', 'immagine' => '', 'allergeni' => 'glutine, uova, sedano', 'novita' => true],
+                ['sezione' => 'Primi', 'nome' => 'Penne all\'arrabbiata', 'descrizione' => '', 'prezzo' => '10', 'immagine' => '', 'allergeni' => 'glutine', 'piccante' => true, 'vegetariano' => true],
+                ['sezione' => 'Menu del giorno', 'nome' => 'Piatto del giorno', 'descrizione' => 'Chiedi al personale', 'prezzo' => '12', 'immagine' => '', 'allergeni' => '4, 14'],
+                ['sezione' => 'Menu della domenica', 'nome' => 'Lasagne della domenica', 'descrizione' => '', 'prezzo' => '15', 'immagine' => '', 'allergeni' => '1'],
             ],
         ])]),
         $sez([$w('richiesta_prenotazione', ['modalita' => 'tavolo', 'titolo' => 'Prenota un tavolo', 'email_a' => 'ristorante@esempio.it'])]),

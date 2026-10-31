@@ -90,7 +90,7 @@ function editor_moduli_disponibili(): array {
  * 2.1: le categorie (o i tag) del sito per una tendina dei widget: slug => nome. I valori che arrivano dopo (una pagina
  * importata prima della categoria) li tiene 'accetta' => EDITOR_SLUG_RE, e la tendina li mostra con "(non trovato)".
  */
-const EDITOR_SLUG_RE = '/^[a-z0-9][a-z0-9_-]{0,99}$/';
+const EDITOR_SLUG_RE = '/^[^"<>\x00-\x1f]{1,200}$/u'; // anche un valore scritto a mano prima della 2.1 (maiuscole, spazi) resta: si confronta e basta
 function editor_opzioni_tassonomia(string $tabella = 'categories', string $tutte = 'Tutte le categorie'): array {
     $o = ['' => $tutte];
     try {
