@@ -3086,8 +3086,9 @@ immagini, elenchi, pulsanti, video, schede, tabelle e tutti gli altri widget. No
 2. Nella pagina della lezione, a destra, metti il video e la durata come prima.
 3. A sinistra, sotto il titolo, c'è **Testo della lezione**. Premi **Scrivi il testo con l'editor visuale**. (Il
    pulsante salva anche titolo, video e materiali della pagina.)
-4. Si apre l'editor. Nella tela vedi la lezione come la vedrà il membro: in alto il nome del modulo, "lezione 1 di 3" e
-   il titolo; sotto, un widget Testo con scritto "Scrivi qui il testo della lezione".
+4. Si apre l'editor. Nella tela vedi la lezione come la vedrà il membro: in alto il nome del modulo, il numero della
+   lezione (per esempio "lezione 1 di 3") e il titolo; sotto, un widget Testo con scritto "Scrivi qui il testo della
+   lezione".
 5. Fai doppio clic sul testo: a sinistra, nella scheda **Modifica**, si apre la casella del testo. Scrivi, per esempio:
    "La luce migliore arriva presto, appena dopo l'alba."
 6. Per aggiungere altro, trascina un widget dalla scheda **Widget** (per esempio **Titolo** o **Immagine**) nella tela.
