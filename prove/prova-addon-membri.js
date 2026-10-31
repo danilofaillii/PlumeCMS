@@ -47,12 +47,14 @@ let br;
   const tit = JSON.parse(php(`echo json_encode(['chi' => db()->query("SELECT title FROM " . tbl('pages') . " WHERE slug = 'chi-siamo'")->fetchColumn(), 'servizi' => db()->query("SELECT title FROM " . tbl('pages') . " WHERE slug = 'servizi'")->fetchColumn(), 'art' => db()->query("SELECT title FROM " . tbl('articles') . " WHERE slug = " . db()->quote('${slugA}'))->fetchColumn()]);`));
   const elenchi = async ctx => {
     const g = async u => (await ctx.request.get(B + u)).text();
-    return { sitemap: await g('/sitemap.xml'), feed: await g('/feed/'), llms: await g('/llms.txt'), cercaChi: await g('/?s=' + encodeURIComponent(tit.chi)), cercaArt: await g('/?s=' + encodeURIComponent(tit.art)), cercaServizi: await g('/?s=' + encodeURIComponent(tit.servizi)) };
+    // della pagina della ricerca solo i risultati (il menu del sito ha anche lui i link a Chi siamo e Servizi)
+    const cerca = async q => ((await g('/?s=' + encodeURIComponent(q))).split('class="griglia"')[1] || '');
+    return { sitemap: await g('/sitemap.xml'), feed: await g('/feed/'), llms: await g('/llms.txt'), cercaChi: await cerca(tit.chi), cercaArt: await cerca(tit.art), cercaServizi: await cerca(tit.servizi) };
   };
   const el0 = await elenchi(v0);
-  ok('prima: Chi siamo, Servizi e l\'articolo sono nella sitemap, nella ricerca e in llms.txt; l\'articolo nel feed',
+  ok('prima: Chi siamo, Servizi e l\'articolo sono nella sitemap e nella ricerca; l\'articolo nel feed e in llms.txt (le pagine non ci sono mai)',
     ['/chi-siamo/', '/servizi/', articolo].every(u => el0.sitemap.includes(u + '<') || el0.sitemap.includes(u + '</loc>')) && el0.cercaChi.includes('href="' + BASEP + '/chi-siamo/"') && el0.cercaArt.includes(articolo + '"')
-    && el0.cercaServizi.includes('/servizi/"') && el0.feed.includes(articolo) && el0.llms.includes('/chi-siamo/') && el0.llms.includes(articolo), tit);
+    && el0.cercaServizi.includes('/servizi/"') && el0.feed.includes(articolo) && el0.llms.includes(articolo), tit);
 
   // 1. Accendere l'addon.
   const f1 = await addon(a, B, 'membri', true);
@@ -155,7 +157,7 @@ let br;
   // 2.1: il membro collegato trova i riservati nella ricerca (risposta privata, non in cache); gli elenchi pubblici restano senza.
   const rc = await v.request.get(B + '/?s=' + encodeURIComponent(tit.chi));
   const el2 = await elenchi(v);
-  ok('da membro: la ricerca trova Chi siamo, Servizi e l\'articolo riservati', (await rc.text()).includes('/chi-siamo/"') && el2.cercaServizi.includes('/servizi/"') && el2.cercaArt.includes(articolo + '"'));
+  ok('da membro: la ricerca trova Chi siamo, Servizi e l\'articolo riservati', ((await rc.text()).split('class="griglia"')[1] || '').includes('/chi-siamo/"') && el2.cercaServizi.includes('/servizi/"') && el2.cercaArt.includes(articolo + '"'));
   ok('da membro: la pagina dei risultati è privata (Cache-Control private, no-store)', /private/.test(rc.headers()['cache-control'] || '') && /no-store/.test(rc.headers()['cache-control'] || ''), rc.headers()['cache-control']);
   ok('da membro: sitemap, feed e llms.txt restano senza i riservati', !el2.sitemap.includes('/chi-siamo/') && !el2.feed.includes(articolo) && !el2.llms.includes('/servizi/'));
   r = await vai('/chi-siamo/');
