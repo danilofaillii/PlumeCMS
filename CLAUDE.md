@@ -139,6 +139,9 @@ Fatto: plumeCMS 2.4.0 (1 novembre): il sito ufficiale passa a **https://plumecms
 il vecchio plumecms.danilofailli.it si chiude subito, decisione sua). `VERSIONE_SITO_UFFICIALE` e `FIRMA_URL` cambiati, la frase salvata col
 vecchio indirizzo migra da sola, e il riquadro nuovo Impostazioni > Indirizzo del sito (`sito_url` dal pannello, con la prova del file).
 I siti fino alla 2.3.2 vanno aggiornati a mano una volta. Foglio dei passi del trasloco in `docs-sviluppo/trasloco-plumecms-it.md`.
+Prove: indirizzo sito 10/10 radice e cartella, firma 14/14 (la prova vecchia contava "Installa ora" come pulsante di chiusura: corretta),
+versione sito 5/5, install 37/37 radice e cartella, aggiornamento 2.3.2 -> 2.4.0 13/13 con 24 foto uguali, addon 70/70, attacchi 261/261,
+service account 8/8, telefono 49/49 a 390 e 768, sito 89/89, pacchetto unico 13/13.
 
 Fatto: plumeCMS 2.3.2 (1 novembre): segnalazione di Danilo, la chiave del service account di Google si salvava ma il riquadro SEO restava
 vuoto: `admin-header.php` sovrascriveva `$sa` della pagina con il suo sottomenu. Variabili del menu con prefisso e `unset`. Link

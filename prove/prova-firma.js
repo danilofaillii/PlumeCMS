@@ -34,7 +34,8 @@ let n = 0, ko = 0; const ok = (t, c, extra = '') => { n++; if (!c) ko++; console
   const banner = p.locator('#db-ufficiale');
   ok('dashboard: il banner "Visita il sito ufficiale plumeCMS"', await banner.count() === 1 && /Visita il sito ufficiale plumeCMS/.test(await banner.innerText()));
   ok('il banner: "plumeCMS" porta a ' + UFFICIALE + ' in una scheda nuova', await banner.locator('a').getAttribute('href') === UFFICIALE && await banner.locator('a').innerText() === 'plumeCMS' && await banner.locator('a').getAttribute('target') === '_blank');
-  ok('il banner non ha un pulsante per chiuderlo', await banner.locator('button').count() === 0);
+  // 2.3.0: nel banner c'è "Installa ora" (#db-installa, nascosto senza versioni nuove): non è un pulsante per chiuderlo.
+  ok('il banner non ha un pulsante per chiuderlo', await banner.locator('button:not(#db-installa button)').count() === 0);
 
   // 2. Di partenza (Impostazioni com'erano): la frase sul sito.
   await salva(true, 'Un nuovo sito plumeCMS', UFFICIALE);
