@@ -99,7 +99,7 @@ Sono gli unici in `cms/docs/`, nello zip, nel sito di plumeCMS e nella pagina Do
 - **Pacchetto di aggiornamento** per un'installazione esistente:
   `python3 tools/cms-pacchetto.py --aggiornamento`. Si carica dal pannello,
   Impostazioni, Aggiornamenti.
-- **Versione**: `cms/VERSIONE` (oggi 2.2.0; sempre tre numeri: "beta" va nel CHANGELOG, mai nel nome dello zip, se no la serie "ultima" del Download non lo riconosce) e una voce in `cms/CHANGELOG.md` a ogni
+- **Versione**: `cms/VERSIONE` (oggi 2.3.0; sempre tre numeri: "beta" va nel CHANGELOG, mai nel nome dello zip, se no la serie "ultima" del Download non lo riconosce) e una voce in `cms/CHANGELOG.md` a ogni
   zip con contenuto diverso. Mai cambiare il contenuto di una versione già data.
 - **Prove** prima di dire finito:
   - `php -n -d short_open_tag=1 -l` su ogni file PHP toccato, `node --check` sui js;
@@ -134,6 +134,13 @@ Le decisioni complete, con data e perché, stanno nel second brain, `plumecms/de
 - **Nome: plumeCMS** (26 ottobre 2026).
 
 ## Stato al 31 ottobre 2026
+
+Fatto: plumeCMS 2.3.0 (31 ottobre, notte): la versione sempre in alto a sinistra del pannello (`#admin-versione`, al telefono
+`.admin-versione-tel`) e, nel banner della dashboard dopo "Visita il sito ufficiale plumeCMS", "Nuova versione disponibile v. x.x.x" con
+**Installa ora** (azione `versione_installa`: scarica, controlla, applica con snapshot; solo admin; con moduli del sito resta "Scarica e
+prepara", `versione_installabile_qui()`). Prove: installa ora 11/11 (sito 2.2.0 e ufficiale finto 2.3.0), install 37/37 radice e
+cartella, aggiornamento 2.2.0 -> 2.3.0 13/13 con 24 foto uguali, addon 70/70, attacchi 261/261, nomi doppi 9/9, telefono 49/49 a 390 e
+768, sito di plumeCMS 89/89, pacchetto unico su un sito 2.2.0 13/13. `prova-versione.js` adattata al banner nuovo ma non rilanciata.
 
 Fatto: plumeCMS 2.2.0 (31 ottobre, sera): Scegli dal sito (richiesta di Danilo, agente in worktree rifatto da me): `includes/collegamenti.php`,
 `admin/link-api.php`, `admin/assets/scegli-link.js` (`window.pnLink`, `data-link-sito`), filtro `collegamenti_sito` per gli addon, in tutti i
