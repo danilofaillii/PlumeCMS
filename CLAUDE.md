@@ -39,14 +39,14 @@ cms/            il CMS: è esattamente quello che si carica sul server
   docs/         la documentazione del CMS
   VERSIONE, CHANGELOG.md, README.md, INSTALLA.md
 tools/          cms-pacchetto.py (costruisce gli zip), pacchetto.py (pacchetti per il
-                pannello Aggiornamenti), sicurezza-prova.js (79 prove di attacco)
+                pannello Aggiornamenti), sicurezza-prova.js (261 prove di attacco; quelle degli addon e dei widget stanno in prove/attacchi-*.js)
 prove/          prova-install.js (installazione da zero con Playwright), prova-social.js (social ed email del mattino), prova-fine-articolo.js (il riquadro in fondo agli articoli), prova-su-misura.js (il sito su misura), prova-temi.js, prova-pannello-temi.js,
                 prova-temi-partenza.js, prova-carica-temi.js (temi), prova-foto-effetti.js (velo ed effetti delle foto), prova-hero.js (le undici aperture),
                 foto-sito.js e quanto-foto.py (schermate prima e dopo, al pixel)
 esempi/         tema-lavagna/: il tema d'esempio del manuale dei temi (provato, non entra nello zip)
 sito-plumecms/  il sito da cui si scarica plumeCMS, fatto con plumeCMS: costruisci.py scrive il pacchetto
-                releases/sito/sito-plumecms-<versione>-parte-<k>-di-<n>.zip, ognuna sotto 1900 KB, da caricare in ordine
-tools/manuali-pdf.js  i tre manuali in PDF (releases/manuali/); tools/manuale-uso-schermate.js le schermate del manuale d'uso;
+                releases/sito/sito-plumecms-<versione>.zip (dalla 2.1.0 uno solo; --max-kb lo divide di nuovo in parti)
+tools/manuali-pdf.js  i due manuali in PDF (releases/manuali/: manuale-uso.pdf, manuale-temi.pdf); tools/manuale-uso-schermate.js le schermate del manuale d'uso;
 tools/consegna.py     lo zip unico da dare a Danilo (releases/consegna/)
 ```
 
@@ -58,10 +58,11 @@ Stato, decisioni, contesto e diario non stanno qui: stanno nel second brain
 **Regola di Danilo (29 ottobre 2026): con plumeCMS restano solo due documenti**, il manuale d'uso e il manuale dei temi.
 Sono gli unici in `cms/docs/`, nello zip, nel sito di plumeCMS e nella pagina Download.
 
-0. `cms/docs/manuale-uso.md`: il manuale d'uso per chi usa plumeCMS (31 capitoli, esempio, schermate con i passi
+0. `cms/docs/manuale-uso.md`: il manuale d'uso per chi usa plumeCMS (40 capitoli in due parti, la seconda per gli addon; esempi, schermate con i passi
    numerati, checklist). Le schermate le fa `tools/manuale-uso-schermate.js` eseguendo gli esempi su un sito di prova
    (kit Attività, in `/home/studioprova/public_html`): **quando cambia il pannello si rifanno le schermate e si
-   ricontrolla il capitolo**. Il PDF deve restare sotto 1900 KB (oggi 1,8 MB).
+   ricontrolla il capitolo**. Il PDF è uno solo (dalla 2.1.0) e deve restare sotto 8 MB (`MAX_KB` in `tools/manuali-pdf.js`; oggi
+   7,1 MB con le schermate JPEG a qualità 55). Nel PDF vanno JPEG: Chromium rimette i PNG senza tavolozza e pesano di più.
    `cms/docs/manuale-temi.md`: il manuale per chi costruisce un tema, con il tema d'esempio Lavagna.
 1. `docs-sviluppo/` (solo nel repository, mai nello zip): il manuale tecnico (`manuale-tecnico.md`, tutto il CMS letto dal
    codice, con `file:riga`: **quando si cambia il codice si aggiorna anche lui**) e i documenti vecchi (`cms.md`,
@@ -85,15 +86,16 @@ Sono gli unici in `cms/docs/`, nello zip, nel sito di plumeCMS e nella pagina Do
   Dalla 1.2.5 il numero di versione nelle pagine è automatico (`{versione:plumecms-ultima}`): per una versione del CMS
   senza pagine nuove Danilo carica solo i due zip da Download; le parti del sito servono quando cambiano le pagine.
   Ordine dei comandi: `python3 tools/cms-pacchetto.py --aggiornamento`, `node tools/manuali-pdf.js`,
-  `python3 sito-plumecms/costruisci.py`, `python3 tools/consegna.py`. **Regola di Danilo (28 ottobre 2026): a lui si consegna
-  un solo zip**, `releases/consegna/plumecms-<versione>-consegna.zip`, con dentro l'aggiornamento e lo zip completo del CMS,
-  le parti del sito, i tre PDF e un LEGGIMI con l'ordine di caricamento. Non più i file uno per uno.
+  `python3 sito-plumecms/costruisci.py`, `python3 tools/consegna.py` (con `--uno` se il motore dei pacchetti è cambiato senza voci
+  nuove del manifest). A Danilo si consegna il pacchetto unico `releases/consegna/plumecms-<versione>-pacchetto-unico.zip` (regola
+  del 31 ottobre, sotto), più lo zip completo del CMS e il PDF del manuale da conservare.
 - **Regola di Danilo (31 ottobre 2026): niente più file spezzettati. "Dai prossimi aggiornamenti non serve più che spezzetti i file.
   Me ne dai uno solo che contiene tutte le modifiche."** Ha alzato il limite di caricamento del suo hosting (php.ini). Quindi:
   le modifiche di una versione (codice del CMS ed eventuali pagine del sito di plumeCMS) arrivano in **un solo pacchetto** da caricare
   in Impostazioni > Aggiornamenti; le parti del sito non si dividono più sotto 1900 KB (`costruisci.py --max-kb` alto). Supera le regole
   vecchie "file uno per uno" e "parti sotto 1900 KB" per quello che si consegna a lui. Attenzione alla trappola del motore nuovo: se
-  una versione cambia il motore dei pacchetti (`includes/aggiornamenti.php`), codice e pagine non stanno nello stesso pacchetto.
+  una versione cambia il motore dei pacchetti (`includes/aggiornamenti.php`) e il pacchetto usa voci nuove del manifest, codice e
+  pagine non stanno nello stesso pacchetto (`consegna.py` controlla le voci; se il motore cambia solo dentro, `--uno`).
 - **Pacchetto di aggiornamento** per un'installazione esistente:
   `python3 tools/cms-pacchetto.py --aggiornamento`. Si carica dal pannello,
   Impostazioni, Aggiornamenti.
@@ -290,21 +292,20 @@ Prima installazione vera su `https://duhtron.it/test` (cartella), funzionante co
 Dal 27 ottobre plumeCMS vive nel suo progetto e repository (`SPOSTARE.md`).
 
 Aperto:
-- i documenti vecchi di `docs/` superati in alcuni punti (elenco nell'appendice A del manuale tecnico), da allineare;
 - `CMS_PREFISSO` ha come valore predefinito `newdf_` perché danilofailli.it non lo
   scrive nel suo config. L'installatore lo scrive sempre, quindi le installazioni
   nuove non ne risentono. Se un giorno si cambia il predefinito, prima va aggiunto
   `define('CMS_PREFISSO', 'newdf_');` al `config.local.php` di danilofailli.it;
-- prova vera delle chiamate a Google Search Console e IndexNow da un server con rete aperta;
+- Google Search Console e IndexNow su un server vero: dalla 2.2.0 li prova Impostazioni > Controlla il server (gruppo "Google e
+  IndexNow": il service account legge le proprietà, il file della chiave si legge da fuori, api.indexnow.org risponde). Da fare
+  sul sito di Danilo con i suoi dati;
 - **indirizzo del sito ufficiale** per "c'è una versione nuova": dalla 1.6.2 è solo `VERSIONE_SITO_UFFICIALE`
-  (`includes/versione-nuova.php`, `https://plumecms.danilofailli.it`), nessun campo nel pannello (decisione di Danilo); finché
-  il trasloco non è fatto, le installazioni non trovano il sito ufficiale (dicono "non raggiungibile", nient'altro);
-- copia del sito: il ripristino non toglie i file che stanno nel sito ma non nella copia; con due installazioni nello stesso database
-  e prefissi che cominciano uguale (`cms_` e `cms_b_`) la copia prende anche le tabelle dell'altra;
-- "c'è una versione nuova" provato solo in http locale (`CMS_AGGIORNAMENTI_HTTP_PROVA`): HTTPS vero da provare su un server;
-- stessa famiglia del Riquadro con icona (corretto nella 1.4.0): "Animazione delle parole" del Titolo animato e `padding` di Social,
-  Condividi, Avviso e Flip box hanno lo stesso nome di un controllo delle Avanzate;
-- import da WordPress provato contro un WordPress locale, non su un hosting vero; Apache, HTTPS vero, SMTP vero e Imagick non provati per la 1.4.0;
+  (`includes/versione-nuova.php`, `https://plumecms.danilofailli.it`), nessun campo nel pannello (decisione di Danilo); il sito
+  ufficiale ci sta dal 28 ottobre;
+- "c'è una versione nuova" in HTTPS: dalla 2.2.0 provato con un certificato vero firmato da un'autorità di prova
+  (`prove/prova-versione-https.py`: valido, autorità sconosciuta, altro nome, scaduto); manca la prova contro plumecms.danilofailli.it;
+- import da WordPress provato contro un WordPress locale (6.6.2 vero), non su un hosting vero: da fare con uno dei siti WordPress di
+  Danilo; Apache, SMTP vero e Imagick non provati per la 1.4.0;
 - `tools/` e `prove/` hanno ancora riferimenti a danilofailli.it (strumenti di sviluppo, non vanno nello zip): `--sito`, la prova del burnout;
 - i temi a danilofailli.it arrivano solo con un pacchetto `--sito` dal suo repository (mai lo zip del prodotto).
 
