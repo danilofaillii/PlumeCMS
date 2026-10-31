@@ -1472,9 +1472,11 @@ formule, capitolo 18.10).
   (`form_elimina()`), **Cancella dati** della newsletter (`admin/newsletter.php:161`: i file degli invii con quell'email,
   prima di `newsletter_cancella_dati()`). `form_file_orfani()` (`:269`) toglie i file che nessun invio cita più (non quelli
   di meno di un minuto, che possono essere di un invio in corso).
-- Un form con un file oltre `post_max_size` arriva a PHP senza campi: `api/modulo.php:17` torna alla pagina di provenienza
+- Un form con un file oltre `post_max_size` arriva a PHP senza campi: `api/modulo.php:22` torna alla pagina di provenienza
   (dal Referer, solo percorsi interni) con `?modulo=file_peso`. `sito/assets/moduli.js` non salva e non rimette i campi file
   nel ripristino dopo un errore (un `value` su un input file lancia un'eccezione).
+- Dalla 2.1 `modulo_torna()` (`api/modulo.php:11`) aggiunge la cartella del sito (`cms_sito_base()`) ai percorsi: con il sito in
+  una cartella, un form con un errore, il grazie (`/grazie/`) e la richiesta di prenotazione portavano alla radice del dominio.
 - Messaggi: `MODULI_ERRORI['file_peso']` e `['file_tipo']` (`includes/moduli.php`), con l'etichetta del campo in
   `form_errore()`.
 - Prove: `prove/prova-widget-2-1.js` (parte "Form con Ora e File") e `prove/attacchi-widget-2-1.js` (parti "file" e "scarico").
@@ -3120,7 +3122,7 @@ un'intestazione che lo suggerisce (`ewx_controlli_richiesta()`, `:182`, con `cms
 - Perché un ingresso suo e non un form del pannello: il destinatario lo sceglie chi fa la pagina, nel widget, e non può
   arrivare dal browser (il sito diventerebbe un ripetitore di posta). Il widget mette nel modulo la sua configurazione
   (modalità, fino a 3 indirizzi validati, massimo di persone, telefono obbligatorio, titolo) in base64 con la firma
-  HMAC-SHA256 di `moduli_segreto()` (`rp_firma()`, `:30`); `api/modulo.php:35` (`modulo=prenota`) chiama `rp_ricevi()`
+  HMAC-SHA256 di `moduli_segreto()` (`rp_firma()`, `:30`); `api/modulo.php:39` (`modulo=prenota`) chiama `rp_ricevi()`
   (`:73`), che accetta solo una configurazione con la firma giusta (`rp_verifica()`, `:36`, `hash_equals`). Il resto sono
   le difese dei moduli: campo esca, date fra oggi e due anni, partenza dopo l'arrivo, ora `HH:MM`, persone fra 1 e il
   massimo, email con `FILTER_VALIDATE_EMAIL`, telefono, spunta della privacy, captcha, `moduli_troppi()`.
