@@ -489,7 +489,7 @@ function membri_scheda_riquadro(string $tipo, int $id, ?array $r): string {
         . '<input type="hidden" name="membri_scheda" value="1">'
         . '<label style="display:flex;gap:.5rem;align-items:flex-start;font-size:.9rem;font-weight:600;color:var(--text);margin:0">'
         . '<input type="checkbox" name="membri_riservato" value="1" id="membri-riservato"' . ($si ? ' checked' : '') . ($home ? ' disabled' : '') . ' style="margin-top:.2rem"> <span>Solo per i membri</span></label>'
-        . '<div class="hint">' . ($home ? 'La home resta di tutti.' : 'Con la spunta, ' . $uno . ' lo vede intero solo chi è entrato nell\'area riservata: gli altri trovano l\'invito ad accedere. Non esce nella ricerca del sito (tranne che ai membri), nella sitemap, nel feed e in llms.txt.')
+        . '<div class="hint">' . ($home ? 'La home resta di tutti.' : 'Con la spunta, ' . $uno . ' lo vede intero solo chi è entrato nell\'area riservata: gli altri trovano l\'invito ad accedere. Chi non è entrato non lo trova nella ricerca, nel blog, negli archivi e nei widget degli articoli (i membri sì), né nella sitemap, nel feed e in llms.txt.')
         . ' Tutti i contenuti riservati: <a href="' . h(membri_admin_url('riservati')) . '">Membri, Contenuti e file riservati</a>.</div>'
         . '</div></div>';
 }
