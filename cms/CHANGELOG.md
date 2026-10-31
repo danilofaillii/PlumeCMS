@@ -2,6 +2,14 @@
 
 Il prodotto si chiama **plumeCMS** (nome scelto il 26 ottobre 2026; prima, per poche ore, "CarbonaraCMS", e ancora prima il provvisorio "Officina": gli zip vecchi si chiamavano `officina-*` e `carbonaracms-*`).
 
+## 2.3.2 (1 novembre 2026) - Il service account di Google si vede dopo il salvataggio
+
+- **Corretto** (segnalazione di Danilo): in SEO e AEO, scheda Motori di ricerca, la chiave JSON del service account di Google si
+  salvava (messaggio verde) ma il riquadro restava vuoto: niente email, niente "Prova il collegamento", e le schede Copertura e
+  Prestazioni dicevano ancora "Serve il service account". Il menu laterale del pannello usava per sé nomi di variabile comuni e
+  cancellava quella della pagina. Ora il menu usa nomi suoi: vale per tutte le pagine del pannello.
+- Nel riquadro di Search Console il passo 1 porta dritto a "Crea progetto" di Google Cloud e ricorda di controllare l'account.
+
 ## 2.3.1 (1 novembre 2026) - Il pulsante "Scarica l'aggiornamento" dà sempre l'ultima
 
 - **Corretto** (segnalazione di Danilo): dopo aver caricato la 2.3.0, il pulsante "Scarica l'aggiornamento" del sito di plumeCMS

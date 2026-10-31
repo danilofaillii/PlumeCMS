@@ -84,22 +84,24 @@ $iconaMenu = fn(string $i): string => preg_match('/^[a-z-]+$/', $i) && icona_esi
 $menu = cms_menu_integra($menu, $qui, (string)$ctTipo, $sonoAdminMenu);
 // Ruoli: il redattore vede solo le voci che può aprire (le stesse regole di require_login, auth_redattore_puo).
 if (!$sonoAdminMenu) {
-    $puo = function (string $url): bool {
+    // 2.3.2: nomi propri del menu (_menu...): questo file si include dentro le pagine, e i nomi comuni ($v, $x...) le sovrascrivevano.
+    $_menuPuo = function (string $url): bool {
         $pag = basename((string)parse_url($url, PHP_URL_PATH));
         parse_str((string)parse_url($url, PHP_URL_QUERY), $q);
         return auth_redattore_puo($pag, (string)($q['tipo'] ?? ''));
     };
-    $filtrato = [];
-    foreach ($menu as $v) {
-        $sotto = array_values(array_filter($v[4] ?? [], fn($x) => $puo((string)$x[1])));
-        if (!$puo((string)$v[1])) {
-            if (!$sotto) continue;
-            $v[1] = $sotto[0][1];
+    $_menuFiltrato = [];
+    foreach ($menu as $_menuVoce) {
+        $_menuSotto = array_values(array_filter($_menuVoce[4] ?? [], fn($x) => $_menuPuo((string)$x[1])));
+        if (!$_menuPuo((string)$_menuVoce[1])) {
+            if (!$_menuSotto) continue;
+            $_menuVoce[1] = $_menuSotto[0][1];
         }
-        if (isset($v[4])) $v[4] = $sotto;
-        $filtrato[] = $v;
+        if (isset($_menuVoce[4])) $_menuVoce[4] = $_menuSotto;
+        $_menuFiltrato[] = $_menuVoce;
     }
-    $menu = $filtrato;
+    $menu = $_menuFiltrato;
+    unset($_menuPuo, $_menuFiltrato, $_menuVoce, $_menuSotto);
 }
 ?>
 <!DOCTYPE html>
@@ -122,20 +124,21 @@ if (!$sonoAdminMenu) {
       <strong>plume</strong>CMS <span class="admin-versione" id="admin-versione" title="La versione di <?= h(CMS_NOME) ?> installata">v. <?= h(cms_versione()) ?></span>
     </div>
     <nav class="admin-nav">
-      <?php foreach ($menu as $v): [$nome, $href, $icona, $attivo] = $v; $sotto = $v[4] ?? []; ?>
-      <?php if (!$sotto): ?>
-      <a href="<?= h($href) ?>" class="<?= $attivo ? 'active' : '' ?>"><span class="nav-icon"><?= $iconaMenu((string)$icona) ?></span> <?= h($nome) ?></a>
+      <?php /* 2.3.2: nomi _m... e unset alla fine: prima $sa, $v, $nome... sovrascrivevano le variabili della pagina (il service account di Google spariva dal riquadro SEO). */ ?>
+      <?php foreach ($menu as $_mVoce): [$_mNome, $_mHref, $_mIcona, $_mAttivo] = $_mVoce; $_mSotto = $_mVoce[4] ?? []; ?>
+      <?php if (!$_mSotto): ?>
+      <a href="<?= h($_mHref) ?>" class="<?= $_mAttivo ? 'active' : '' ?>"><span class="nav-icon"><?= $iconaMenu((string)$_mIcona) ?></span> <?= h($_mNome) ?></a>
       <?php else: ?>
-      <details class="nav-gruppo" <?= $attivo ? 'open' : '' ?>>
-        <summary class="<?= $attivo ? 'active' : '' ?>"><a href="<?= h($href) ?>"><span class="nav-icon"><?= $iconaMenu((string)$icona) ?></span> <?= h($nome) ?></a><span class="nav-freccia" title="Apri o chiudi il gruppo">&#9656;</span></summary>
+      <details class="nav-gruppo" <?= $_mAttivo ? 'open' : '' ?>>
+        <summary class="<?= $_mAttivo ? 'active' : '' ?>"><a href="<?= h($_mHref) ?>"><span class="nav-icon"><?= $iconaMenu((string)$_mIcona) ?></span> <?= h($_mNome) ?></a><span class="nav-freccia" title="Apri o chiudi il gruppo">&#9656;</span></summary>
         <div class="nav-sotto">
-          <?php foreach ($sotto as [$sn, $sh, $sa]): ?>
-          <a href="<?= h($sh) ?>" class="<?= $sa ? 'active' : '' ?>"><?= h($sn) ?></a>
+          <?php foreach ($_mSotto as [$_mSn, $_mSh, $_mSa]): ?>
+          <a href="<?= h($_mSh) ?>" class="<?= $_mSa ? 'active' : '' ?>"><?= h($_mSn) ?></a>
           <?php endforeach; ?>
         </div>
       </details>
       <?php endif; ?>
-      <?php endforeach; ?>
+      <?php endforeach; unset($_mVoce, $_mNome, $_mHref, $_mIcona, $_mAttivo, $_mSotto, $_mSn, $_mSh, $_mSa); ?>
     </nav>
     <div class="admin-sidebar-footer">
       <a href="<?= h(cms_url_sito()) ?>/" target="_blank"><?= icona_svg('occhio', 'nav-svg') ?> Vedi sito</a>

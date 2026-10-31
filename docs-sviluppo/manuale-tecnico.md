@@ -2163,6 +2163,10 @@ nel suo download manager.
   scarica lo zip, controlla che la lunghezza e lo sha256 siano quelli annunciati e lo registra con
   `agg_registra_pacchetto()`, come uno zip caricato a mano: da lì "Applica ora" (19.4). Una versione già in coda non si
   scarica due volte.
+- **Menu del pannello** (2.3.2): `admin/includes/admin-header.php` si include dentro ogni pagina, quindi ogni sua variabile è
+  una variabile della pagina. Il menu ora usa solo nomi `$_menu...` e `$_m...` e li toglie con `unset` alla fine: prima `$sa` del
+  sottomenu cancellava `$sa` (il service account) di `admin/seo.php`, e `$v`, `$nome`, `$x` potevano fare lo stesso altrove. Prova:
+  `prove/prova-seo-service-account.js` (8 controlli; con il menu vecchio 4 falliscono).
 - **Serie dei download** (2.3.1): `/scarica/<serie>/` (il nome con "ultima" al posto della versione) in `sito/index.php` risponde
   302 con `Cache-Control: no-store` verso `/scarica/<file della versione più alta>/`, che poi manda il file con `public,
   max-age=3600`. Prima mandava il file direttamente con la memoria di un'ora e il browser ridava la versione di prima. Prova:

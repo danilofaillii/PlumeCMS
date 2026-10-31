@@ -219,7 +219,7 @@ async function contrastoParole(pg) {
   ok('Domande frequenti (1.4.0): chi viene da WordPress', /Vengo da WordPress\. Devo rifare tutto\?/.test(await v.locator('body').innerText()));
   await v.goto(B + '/scarica/', { waitUntil: 'networkidle' });
   ok('Scarica: le novità della 1.4.0', /1\.4\.0: Il sito si prova/.test(await v.locator('body').innerText()));
-  ok('Scarica: le novità della 2.3.1', /2\.3\.1: Scarica sempre l.ultima/.test(await v.locator('body').innerText()));
+  ok('Scarica: le novità della 2.3.2', /2\.3\.2: Search Console collegato/.test(await v.locator('body').innerText()));
   ok('Scarica: le novità della 1.6.0', /1\.6\.0: Un riquadro in fondo a ogni articolo/.test(await v.locator('body').innerText()));
   await v.goto(B + '/installazione/', { waitUntil: 'networkidle' });
   ok('Installazione (1.4.0): dopo l\'installazione, Primi passi e Controlla il server', /Primi passi/.test(await v.locator('body').innerText()) && /Controlla il server/.test(await v.locator('body').innerText()));

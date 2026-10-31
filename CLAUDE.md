@@ -99,7 +99,7 @@ Sono gli unici in `cms/docs/`, nello zip, nel sito di plumeCMS e nella pagina Do
 - **Pacchetto di aggiornamento** per un'installazione esistente:
   `python3 tools/cms-pacchetto.py --aggiornamento`. Si carica dal pannello,
   Impostazioni, Aggiornamenti.
-- **Versione**: `cms/VERSIONE` (oggi 2.3.1; sempre tre numeri: "beta" va nel CHANGELOG, mai nel nome dello zip, se no la serie "ultima" del Download non lo riconosce) e una voce in `cms/CHANGELOG.md` a ogni
+- **Versione**: `cms/VERSIONE` (oggi 2.3.2; sempre tre numeri: "beta" va nel CHANGELOG, mai nel nome dello zip, se no la serie "ultima" del Download non lo riconosce) e una voce in `cms/CHANGELOG.md` a ogni
   zip con contenuto diverso. Mai cambiare il contenuto di una versione già data.
 - **Prove** prima di dire finito:
   - `php -n -d short_open_tag=1 -l` su ogni file PHP toccato, `node --check` sui js;
@@ -413,6 +413,7 @@ Errori veri, già pagati. Non ripeterli.
 | Un link scritto senza `https://` o senza `/` in un widget | fino alla 2.0.1 `editor_link_sicuro()` lo scartava in silenzio e il pulsante puntava a `#` ("i pulsanti non funzionano") |
 | Una tabella con colonne generate (`GENERATED ALWAYS AS`) in un dump | l'INSERT con il valore della colonna fallisce (MySQL 3105): ripristino della copia "con errori" e snapshot non ripristinabile con dati in Eventi o Prenotazioni (fino alla 2.0.3). Nei dump si scrive `DEFAULT` (`agg_riga_sql()`) |
 | `tbl()` in uno script di prova | restituisce il nome fra apici inversi: per `SHOW COLUMNS` o funzioni che li aggiungono si tolgono con `trim($t, '`')` |
+| Una variabile con un nome comune in un file incluso dalle pagine (`admin-header.php`: `$sa`, `$v`, `$nome`) | sovrascrive quella della pagina che lo include: il service account di Google salvato non compariva in SEO (fino alla 2.3.1). Nei file inclusi, nomi con prefisso (`$_menu...`) e `unset` alla fine. E una prova che cerca un testo deve guardare nel riquadro giusto: il messaggio verde conteneva la stessa email e la prova passava lo stesso |
 | Fidarsi del resoconto di un agente | è successo che un agente dichiarasse lavoro mai scritto su disco. Si controllano i file veri e si rifanno le prove |
 
 ## Tono con l'utente

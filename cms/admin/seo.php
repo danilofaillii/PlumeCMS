@@ -364,7 +364,7 @@ pre.seo-pre{background:var(--codice-fondo);color:var(--codice-testo);padding:.9r
     <?php endif; ?>
     <details <?= $sa ? '' : 'open' ?>><summary style="cursor:pointer;font-size:.86rem;font-weight:600">Come si crea, passo per passo</summary>
     <ol class="seo-passi">
-      <li>Vai su <a href="https://console.cloud.google.com/" target="_blank">console.cloud.google.com</a> con l'account Google che ha Search Console. Crea un progetto (nome libero, per esempio "il-mio-sito-seo").</li>
+      <li>Vai su <a href="https://console.cloud.google.com/projectcreate" target="_blank" rel="noopener">console.cloud.google.com/projectcreate</a> con l'account Google che ha Search Console (in alto a destra, controlla che sia il tuo) e crea un progetto: nome libero, per esempio "il-mio-sito-seo", poi <b>Crea</b>.</li>
       <li>Menu, <b>API e servizi</b>, <b>Libreria</b>: cerca e abilita <b>Google Search Console API</b> (e, solo se la vorrai usare, <b>Web Search Indexing API</b>).</li>
       <li>Menu, <b>IAM e amministrazione</b>, <b>Service account</b>, <b>Crea service account</b>: nome libero, nessun ruolo, Fine. Apri il service account, scheda <b>Chiavi</b>, <b>Aggiungi chiave</b>, <b>Crea nuova chiave</b>, tipo <b>JSON</b>: il browser scarica un file.</li>
       <li>Apri il file con un editor di testo, copia tutto e incollalo qui sotto. Salva.</li>
