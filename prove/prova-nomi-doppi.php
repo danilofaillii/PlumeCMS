@@ -41,7 +41,9 @@ $giro($albero['elementi'] ?? []);
 $val = fn(string $t) => editor_valori($t, $widget[$t] ?? []);
 // Il CMS di prima perdeva la scelta al salvataggio ("gira" diventava ""): il titolo usciva senza animazione delle parole.
 // Ora vale quella di partenza, la scrittura a macchina; una scelta salvata da un CMS che la teneva passa al nome nuovo.
-$ok('Titolo animato salvato dal CMS di prima: animazione delle parole di partenza (scrittura)', ($val('titolo_animato')['animazione_parole'] ?? '') === 'scrittura', $widget['titolo_animato'] ?? null);
+// Salvato dalla 2.2.0 o dopo, la scelta c'è con il nome nuovo e resta ("gira").
+$salvata = $widget['titolo_animato']['animazione_parole'] ?? null;
+$ok('Titolo animato: salvato prima della 2.2.0 vale la scrittura di partenza, salvato dopo resta "gira"', ($val('titolo_animato')['animazione_parole'] ?? '') === ($salvata === 'gira' ? 'gira' : 'scrittura'), $widget['titolo_animato'] ?? null);
 $ok('Titolo animato: un "gira" salvato con il nome vecchio passa ad Animazione delle parole', (editor_valori('titolo_animato', ['modo' => 'rotante', 'animazione' => 'gira'])['animazione_parole'] ?? '') === 'gira');
 $ok('Avviso: lo spazio interno di prima (31 px) passa al controllo suo', ($val('avviso')['avviso_padding']['d']['sopra'] ?? null) == 31, $val('avviso')['avviso_padding'] ?? null);
 $ok('Flip box: lo spazio interno di prima (27 px) passa al controllo suo', ($val('flip_box')['flip_padding']['d']['sopra'] ?? null) == 27);
