@@ -294,6 +294,9 @@ Aperto:
 ## Rapporto con danilofailli.it
 
 **Regola di Danilo (28 ottobre 2026): non chiedergli più nulla di danilofailli.it.** Se servono informazioni, le dà lui.
+**Regola di Danilo (31 ottobre 2026), ripetuta più volte: "devi lasciar stare danilofailli.it. Se mi serve, te lo chiedo io."**
+Non proporre controlli, pacchetti, aggiornamenti o cose da fare su danilofailli.it, non metterlo negli elenchi di cose in sospeso,
+non nominarlo nelle risposte. Se ne parla solo quando è Danilo a chiederlo.
 Il 28 ottobre ha detto di aver già aggiornato tutto su danilofailli.it.
 
 - danilofailli.it usa plumeCMS con il modulo `moduli/danilofailli/`. **Dal 28 ottobre 2026 gira dalla radice** (detto da Danilo il
