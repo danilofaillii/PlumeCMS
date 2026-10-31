@@ -57,6 +57,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 }
                 // 1.5.0: i testi del riquadro Social, nella loro tabella (un salvataggio rapido dall'elenco non li tocca).
                 if (array_key_exists('social_testo', $d)) social_contenuto_salva($tipo, $id, $d);
+                // 2.1: i riquadri dei moduli e degli addon nella scheda (filtro scheda_riquadri, sotto) salvano i loro campi qui.
+                // Chi ascolta controlla da sé chi può farlo (per esempio solo l'amministratore) e che il suo campo sia arrivato.
+                cms_evento('scheda_salvata', $tipo, $id, $d);
                 $salvato = contenuti_leggi($tipo, $id);
                 $stato = contenuti_stato($tipo, $salvato);
                 flash('success', $nuovo ? $T['Uno'] . ' creato' . ($stato === 'bozza' ? ' in bozza.' : ($stato === 'programmato' ? ' e programmato.' : ' e pubblicato.')) : $T['Uno'] . ' aggiornato.');
@@ -276,6 +279,10 @@ require_once __DIR__ . '/includes/admin-header.php';
         </div>
       </div>
       <?php endif; ?>
+
+      <?php // 2.1: i riquadri dei moduli e degli addon (filtro scheda_riquadri: un elenco di HTML, ognuno un <div class="sc-scatola">).
+      // Per esempio l'Area riservata: "Solo per i membri". I campi tornano all'evento scheda_salvata.
+      if (!$nuovo) foreach ((array)cms_filtro('scheda_riquadri', [], $tipo, $id, $r) as $riquadro) if (is_string($riquadro)) echo $riquadro; ?>
 
       <?php if ($T['tassonomie']): ?>
       <div class="sc-scatola">

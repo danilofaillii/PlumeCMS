@@ -7,7 +7,7 @@
  */
 return [
     'etichetta' => 'Area riservata',
-    'versione' => '1.0.0',
+    'versione' => '1.1.0',
     'descrizione' => 'Account per i visitatori del sito: iscrizione con conferma dell\'email, accesso, profilo. Pagine, articoli e file solo per chi è iscritto. Spento, i contenuti riservati tornano visibili a tutti.',
     'installa' => function () { require_once __DIR__ . '/includes/membri.php'; return membri_installa(); },
     'menu' => [[
@@ -36,6 +36,11 @@ return [
             require_once __DIR__ . '/includes/pagine.php';
             membri_controlla_contenuto($c, $meta);
         },
+        // 2.1: la spunta "Solo per i membri" della scheda di un articolo o di una pagina (riquadro qui sotto, scheda_riquadri).
+        'scheda_salvata' => function (string $tipo, int $id, array $d) {
+            require_once __DIR__ . '/includes/membri.php';
+            membri_scheda_salva($tipo, $id, $d);
+        },
     ],
     'filtri' => [
         // Lo stesso contenuto nei feed, in llms-full.txt e nei widget che mostrano il testo: al posto del testo, un avviso.
@@ -43,6 +48,18 @@ return [
             if (is_string($valore)) return $valore;
             require_once __DIR__ . '/includes/membri.php';
             return membri_contenuto_chiuso($c) ? '<p>' . h(membri_testo_avviso()) . '</p>' : null;
+        },
+        // 2.1: i contenuti riservati non escono nella sitemap, nel feed, in llms.txt e nella ricerca (tranne per un membro).
+        'contenuti_elenco' => function (array $tutti, string $dove) {
+            require_once __DIR__ . '/includes/membri.php';
+            return membri_elenco_filtra($tutti, $dove);
+        },
+        // 2.1: il riquadro "Area riservata" nella scheda del contenuto (admin/contenuto.php).
+        'scheda_riquadri' => function (array $riquadri, string $tipo, int $id, $r) {
+            require_once __DIR__ . '/includes/membri.php';
+            $html = membri_scheda_riquadro($tipo, $id, is_array($r) ? $r : null);
+            if ($html !== '') $riquadri[] = $html;
+            return $riquadri;
         },
         'dashboard_numeri' => function (array $n) {
             require_once __DIR__ . '/includes/membri.php';
