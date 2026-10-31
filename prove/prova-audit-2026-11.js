@@ -208,6 +208,20 @@ const CARTELLA = new URL(B).pathname.replace(/\/$/, '');
     nl("DELETE FROM {p}newsletter_campagne WHERE oggetto = 'Audit novità &#x1F389;'");
   } else console.log('--  P15 saltata: serve CMS_DIR');
 
+  // ---------------------------------------------------------------- P16: titolo di un file di Download con un'emoji
+  {
+    const LIBRO = '\u{1F4D8}';
+    const pdf = '%PDF-1.4\n1 0 obj<</Type/Catalog/Pages 2 0 R>>endobj 2 0 obj<</Type/Pages/Kids[]/Count 0>>endobj\ntrailer<</Root 1 0 R>>\n%%EOF\n';
+    await vai('scaricabili.php');
+    await a.setInputFiles('#dl-carica input[type=file]', { name: 'audit-guida.pdf', mimeType: 'application/pdf', buffer: Buffer.from(pdf) });
+    await a.fill('#dl-carica [name=titolo]', 'La guida ' + LIBRO); await a.check('#dl-carica [name=sostituisci]');
+    await Promise.all([a.waitForNavigation(), a.click('#dl-carica button[type=submit]')]);
+    await vai('scaricabili.php');
+    const riga = a.locator('tr', { hasText: 'audit-guida' }).first();
+    ok('P16 download: nel pannello il titolo con l\'emoji, non "&#x1F4D8;"', (await riga.innerText().catch(() => '')).includes('La guida ' + LIBRO) && await riga.locator('[name=titolo]').inputValue().catch(() => '') === 'La guida ' + LIBRO, (await riga.innerText().catch(() => '')).slice(0, 120));
+    await Promise.all([a.waitForNavigation(), riga.locator('form:has(input[value=elimina]) button').first().click()]).catch(() => {});
+  }
+
   ok('nessun errore JavaScript', err.length === 0, err);
   await br.close();
   console.log(`\n${n - ko} su ${n} OK`); process.exit(ko ? 1 : 0);
