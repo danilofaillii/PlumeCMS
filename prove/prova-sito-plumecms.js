@@ -134,6 +134,7 @@ async function contrastoParole(pg) {
     ['aspetti', 'aspetti.webp', /Lavagna/], ['server', 'controlla-server.webp', /Controlla il server/]])
     ok(`Funzionalità (1.4.0): il blocco ${id}, con la schermata`, await v.locator(`#${id} img[src*="${img}"]`).count() === 1 && re.test(await v.locator(`#${id}`).innerText()));
   ok('Funzionalità (2.0.0): il blocco degli addon, con la schermata e gli otto addon', await v.locator('#addon img[src*="addon.webp"]').count() === 1 && /Prenotazioni e appuntamenti/.test(await v.locator('#addon').innerText()) && /Copia del sito altrove/.test(await v.locator('#addon').innerText()) && /beta/.test(await v.locator('#addon').innerText()));
+  ok('Funzionalità (2.1.0): il blocco di Scegli dai Media, con la schermata', await v.locator('#scegli-media img[src*="scegli-media.webp"]').count() === 1 && /Scegli dai Media/.test(await v.locator('#scegli-media').innerText()) && /Carica un.immagine/.test(await v.locator('#scegli-media').innerText()));
   ok('Funzionalità (2.0.0): Download dice dei file riservati', /riservato/.test(await v.locator('#download').innerText()));
   ok('Funzionalità (1.10.0): il blocco dei widget per le attività, con la schermata', await v.locator('#widget-attivita img[src*="widget-attivita.webp"]').count() === 1 && /Orari di apertura/.test(await v.locator('#widget-attivita').innerText()));
   ok('Funzionalità (1.9.0): nel blocco dei form, chi riceve l\'email a ogni compilazione', /chi riceve l.email a ogni compilazione/.test(await v.locator('#newsletter').innerText()));
@@ -214,6 +215,7 @@ async function contrastoParole(pg) {
   ok('Domande frequenti (1.4.0): chi viene da WordPress', /Vengo da WordPress\. Devo rifare tutto\?/.test(await v.locator('body').innerText()));
   await v.goto(B + '/scarica/', { waitUntil: 'networkidle' });
   ok('Scarica: le novità della 1.4.0', /1\.4\.0: Il sito si prova/.test(await v.locator('body').innerText()));
+  ok('Scarica: le novità della 2.1.0', /2\.1\.0: Scegli dai Media dappertutto/.test(await v.locator('body').innerText()));
   ok('Scarica: le novità della 1.6.0', /1\.6\.0: Un riquadro in fondo a ogni articolo/.test(await v.locator('body').innerText()));
   await v.goto(B + '/installazione/', { waitUntil: 'networkidle' });
   ok('Installazione (1.4.0): dopo l\'installazione, Primi passi e Controlla il server', /Primi passi/.test(await v.locator('body').innerText()) && /Controlla il server/.test(await v.locator('body').innerText()));

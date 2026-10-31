@@ -249,6 +249,10 @@ def funzionalita():
           '<li><strong>Area riservata</strong> e <strong>Corsi online</strong>: pagine e file per chi ha un account, lezioni, avanzamento e certificato.</li>'
           '<li><strong>Copia del sito altrove</strong>: ogni notte la copia del sito su FTP o WebDAV.</li></ul>',
           'Sono in <strong>beta</strong> dalla 2.0.0: provati a fondo, aspettano i siti veri. Se trovi qualcosa che non va, dimmelo.']),
+        ('scegli-media', 'scegli-media.webp', 'Scegli dai Media, da ogni pagina del pannello',
+         ['Dove il pannello chiede un\'immagine (il logo, l\'immagine per i social, la foto di un popup, di un evento, di un corso, di un prodotto) accanto alla casella c\'è <strong>Scegli dai Media</strong>, con la miniatura dell\'immagine scelta e la X per toglierla. Niente più indirizzi da copiare da una pagina all\'altra.',
+          'Si apre la tua libreria: cerchi per nome, filtri per cartella, scorri anche fra centinaia di immagini (arrivano un po\' alla volta, mentre scorri). Manca la foto? <strong>Carica un\'immagine</strong> dalla stessa finestra, o trascinala sopra: entra in Media e nella casella in un colpo solo.',
+          'Si usa anche con la tastiera e sul telefono, dove la finestra prende tutto lo schermo.']),
         ('fine-articolo', 'fine-articolo.webp', 'Un riquadro in fondo a ogni articolo',
          ['Chi arriva alla fine di un articolo è il lettore più interessato che hai. In Articoli, la linguetta <strong>Aggiungi sempre alla fine</strong>: prepari una volta sola un riquadro che esce sotto ogni articolo, anche sotto quelli già pubblicati. Un invito alla newsletter, un contatto, una prenotazione, un libro da consigliare.',
           'Lo componi con l\'editor visuale, come una pagina: titoli, testi, foto, pulsanti. Esce quando premi Pubblica, con l\'ombra, il bordo e i colori del tuo sito e del tema.',
@@ -565,7 +569,7 @@ def editor_json():
 
 
 # ------------------------------------------------------------------ file
-USATE = ['copertina', 'addon', 'su-misura', 'firma', 'widget-attivita', 'social', 'fine-articolo', 'importa-wp', 'tipo-sito', 'primi-passi', 'aspetti', 'controlla-server', 'sezioni', 'copia', 'installa-1', 'installa-2', 'installa-3', 'installa-4', 'installa-5', 'editor-ritratto', 'editor', 'aperture', 'stile', 'modelli', 'versioni', 'seo', 'flussi', 'download', 'sicurezza', 'aggiornamenti', 'temi',
+USATE = ['copertina', 'scegli-media', 'addon', 'su-misura', 'firma', 'widget-attivita', 'social', 'fine-articolo', 'importa-wp', 'tipo-sito', 'primi-passi', 'aspetti', 'controlla-server', 'sezioni', 'copia', 'installa-1', 'installa-2', 'installa-3', 'installa-4', 'installa-5', 'editor-ritratto', 'editor', 'aperture', 'stile', 'modelli', 'versioni', 'seo', 'flussi', 'download', 'sicurezza', 'aggiornamenti', 'temi',
          'tema-cosmo', 'tema-aria', 'tema-bottega']
 
 
@@ -611,6 +615,8 @@ def zip_lavagna(dest):
 
 # Le novità per chi scarica: brevi, scritte qui (il CHANGELOG è per chi sviluppa). Da aggiornare a ogni versione.
 NOVITA = [
+    ('2.1.0', 'Scegli dai Media dappertutto', ['Ogni campo immagine del pannello ha Scegli dai Media, con la miniatura e la X: SEO, social, popup, newsletter, Stile del sito, eventi, corsi, vetrina. Dalla stessa finestra si cerca, si scorre fra centinaia di immagini e se ne carica una nuova.',
+                                               'Il manuale d\'uso torna un PDF solo, con le schermate più nitide; gli aggiornamenti del sito arrivano in un pacchetto unico.']),
     ('2.0.3', 'L\'immagine per i social', ['La testa delle pagine dice dell\'immagine per i social tutto quello che LinkedIn, Facebook e X si aspettano: indirizzo pulito, misure, tipo, versione sicura.']),
     ('2.0.2', 'I link scritti a mano', ['Un pulsante con il link scritto senza https:// o senza la barra (www.sito.it, contatti) ora porta alla pagina giusta: prima puntava a "#".']),
     ('2.0.1', 'Il pannello al telefono', ['Nessuna pagina del pannello scorre più di lato sul telefono: le tabelle scorrono nel loro riquadro, filtri e schede vanno a capo.']),
