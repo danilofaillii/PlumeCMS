@@ -151,7 +151,8 @@ sotto `/area-riservata/` che l'addon non conosce).
 
 - `prove/prova-addon-membri.js` (sito Attività nuovo, posta finta): 75 su 75 in radice e 75 su 75 con il CMS in `/test`
   (2.0.0). Dalla 1.1.0 anche la scheda (Chi siamo e Servizi, la home spenta, la spunta tolta e rimessa) e gli elenchi
-  (ricerca per titolo, sitemap, feed, llms.txt e llms-full.txt prima, da fuori e da membro).
+  (ricerca per titolo, sitemap, feed, llms.txt e llms-full.txt prima, da fuori e da membro): 92 su 92 in radice e in `/test`
+  (31 ottobre 2026).
 - `prove/attacchi-addon-a.js`: gruppo 1 con la ricerca per titolo e un cookie inventato; gruppo 12 (1.1.0) con un articolo
   riservato dalla scheda (feed, llms, sitemap, ricerca, feed del singolo articolo) e il redattore che manda a mano i campi
   del riquadro.

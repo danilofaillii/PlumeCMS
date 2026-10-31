@@ -164,7 +164,7 @@ Solo quelle coppie host:porta, e dal pannello non si può aprire nessuna eccezio
 
 - `prove/prova-addon-copia-altrove.js` con `prove/server-copia-finti.py` (FTP, FTPS, WebDAV; porte in `PORTE_COPIA`, di
   partenza 8205-8207) e `prove/server-cloud-finti.py` (Google `CLOUD_GOOGLE`, Dropbox `CLOUD_DROPBOX`, di partenza 8321 e
-  8322, con il redirect URI del sito di prova): 81 controlli (con `SOLO=cloud` solo Drive, Dropbox e la fine).
+  8322, con il redirect URI del sito di prova): 91 su 91 in radice e in `/test` (31 ottobre 2026; con `SOLO=cloud` solo Drive, Dropbox e la fine).
 - `prove/attacchi-addon-a.js`, gruppo 10: SSRF verso undici indirizzi interni, schemi `file:`, `gopher:`, `dict:`,
   credenziali nell'indirizzo; password mai mostrata. Gruppo 11 (1.1.0): state falso, rubato da un'altra sessione, ripetuto,
   con servizio o scadenza cambiati, state senza addon (400), ritorno senza login o con il cookie di un membro, rimandi fuori

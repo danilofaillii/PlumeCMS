@@ -3116,6 +3116,11 @@ Lavoro sul ramo, non ancora in una versione (`cms/VERSIONE` e `CHANGELOG.md` non
 | `prove/attacchi-copia.js` (nuova) | scarto dal web, Elimina senza login, token, da redattore, con nomi cattivi; collegamenti verso `includes/` e fuori; nomi con HTML; copie inventate per arrivare alle tabelle dell'altra installazione |
 | `prove/attacchi-addon-a.js` | gruppi 11 (OAuth) e 12 (riservato dalla scheda, redattore), più la ricerca per titolo nel gruppo 1 |
 
+Risultati del 31 ottobre 2026 (PHP 8.3 con MySQL 8.0, server `php -S` con il router delle prove, siti nuovi con il kit
+Attività): `prova-addon-copia-altrove.js` 91 su 91 in radice e in `/test`; `prova-addon-membri.js` 92 su 92 in radice e in
+`/test`; `attacchi-addon-a.js` 154 su 154 in radice e in `/test`; `prova-copia-pulita.js` 24 su 24; `attacchi-copia.js`
+36 su 36; `prova-copia.js` 30 su 30; `prova-addon-tutti.js` 68 su 68. Non provati: Google Drive e Dropbox veri, Apache.
+
 ## Appendice A. Dove i documenti vecchi non corrispondono al codice
 
 Alcuni documenti di `docs/` sono nati quando il CMS era il pannello di un solo sito, e in qualche punto sono
