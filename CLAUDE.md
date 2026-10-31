@@ -291,10 +291,13 @@ Aperto:
 **Regola di Danilo (28 ottobre 2026): non chiedergli più nulla di danilofailli.it.** Se servono informazioni, le dà lui.
 Il 28 ottobre ha detto di aver già aggiornato tutto su danilofailli.it.
 
-- danilofailli.it usa plumeCMS con il CMS in `/new/` e il modulo `moduli/danilofailli/`.
+- danilofailli.it usa plumeCMS con il modulo `moduli/danilofailli/`. **Dal 28 ottobre 2026 gira dalla radice** (detto da Danilo il
+  31 ottobre: pacchetti 18 e 18-b del suo repository): pannello in `danilofailli.it/admin/`, `/new/` e `/new/admin/` rimandano agli
+  indirizzi senza `/new`, la cartella `new/` resta sul server solo per i rimandi. Il `new/` nei manifesti dei pacchetti è la cartella
+  del CMS dovunque sia (`includes/aggiornamenti.php`), non la cartella `/new/` del sito.
 - **28 ottobre 2026, sera**: Danilo ha applicato lo zip di aggiornamento del prodotto 1.6.0 a danilofailli.it e il pannello
-  lo ha preso. Visto da fuori: le pagine pubbliche (home, blog, laser, glossario, newsletter) le serve ancora WordPress, e
-  `/new/` è un sito statico (`/new/styles/global.css`): plumeCMS lì fa solo da pannello e cron. Rischio: email del mattino
+  lo ha preso. (Quello che segue era vero prima del trasloco nella radice, ora superato: pagine servite da WordPress e `/new/`
+  statico.) Rischio: email del mattino
   doppie (CMS e modulo); pagine del modulo nel pannello da controllare. Consigliato a Danilo: spegnere le due email in
   Social > Impostazioni finché il modulo non è portato alla 1.6.0; se il pannello si rompe, Aggiornamenti > Snapshot > Ripristina.
 - Le versioni nuove di plumeCMS arrivano a danilofailli.it come pacchetti del suo
