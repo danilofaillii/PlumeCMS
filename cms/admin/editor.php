@@ -132,6 +132,8 @@ $dati = [
 <link rel="stylesheet" href="<?= pannello_file('assets/quill/quill.snow.css') ?>">
 <link rel="stylesheet" href="<?= pannello_file('assets/css/aspetti.css') ?>">
 <link rel="stylesheet" href="<?= pannello_file('assets/editor/editor.css') ?>">
+<link rel="stylesheet" href="<?= pannello_file('assets/css/scegli-link.css') ?>"><?php /* 2.2: Scegli dal sito, per i link dei widget e dei testi */ ?>
+<meta name="pn-csrf" content="<?= h(csrf_token()) ?>">
 <style>.ed-tela[data-misura=t]{width:<?= (int)$dati['tablet'] ?>px}.ed-tela[data-misura=m]{width:<?= min(400, (int)$dati['telefono']) ?>px}
 <?= versioni_confronto_css() /* versioni: il confronto nel pannello Revisioni */ ?></style>
 <script src="<?= pannello_file('assets/campi-protetti.js') ?>"></script>
@@ -245,6 +247,7 @@ $dati = [
 <script id="ed-dati" type="application/json"><?= str_replace('</', '<\/', json_encode($dati, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES)) ?></script>
 <script src="<?= pannello_file('assets/quill/quill.js') ?>"></script>
 <script src="<?= pannello_file('assets/editor/Sortable.min.js') ?>"></script>
+<script src="<?= pannello_file('assets/scegli-link.js') ?>"></script>
 <script src="<?= pannello_file('assets/editor/editor.js') ?>"></script>
 </body>
 </html>

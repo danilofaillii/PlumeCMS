@@ -4,6 +4,7 @@
  * (per spostare un appuntamento). I posti li disegna assets/prenota.js chiedendoli a /prenotazione/posti/; il modulo
  * si invia normalmente (POST a /prenotazione/invia/) con il captcha dei moduli del sito (sito/assets/moduli.js).
  */
+require_once dirname(__DIR__, 3) . '/includes/sicurezza-html.php'; // 2.2: sicurezza_url_pulito() per il link della privacy
 require_once __DIR__ . '/prenotazioni.php';
 
 const PREN_ERRORI = [
@@ -88,7 +89,7 @@ function pren_modulo_html(array $o): string {
             . '<label><span>Note <small>(facoltativo)</small></span><input name="note" maxlength="500"></label>'
             . '</div>'
             . '<div class="esca" aria-hidden="true"><label>Sito web <input name="sito_web" tabindex="-1" autocomplete="off"></label></div>'
-            . '<label class="spunta"><input type="checkbox" name="privacy" value="1" required> <span>Ho letto l&#039;<a href="' . h((string)$imp['privacy']) . '" target="_blank">informativa privacy</a> e accetto che i miei dati servano per gestire la prenotazione.</span></label>'
+            . '<label class="spunta"><input type="checkbox" name="privacy" value="1" required> <span>Ho letto l&#039;<a href="' . h(sicurezza_url_pulito((string)$imp['privacy'])) . '" target="_blank">informativa privacy</a> e accetto che i miei dati servano per gestire la prenotazione.</span></label>'
             . '<label class="captcha"><input type="checkbox"> <span>Sono una persona</span> <span class="captcha-stato" aria-live="polite"></span></label>';
     }
     $out .= '<button class="btn btn-viola" type="submit">' . h($sposta ? 'Sposta qui l\'appuntamento' : ($o['pulsante'] ?: 'Prenota')) . '</button></form>';

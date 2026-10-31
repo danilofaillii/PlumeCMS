@@ -221,7 +221,7 @@ require_once __DIR__ . '/includes/admin-header.php';
     <label for="so-h-cat">Hashtag per categoria</label>
     <textarea id="so-h-cat" name="hashtag_categorie" rows="5" placeholder="ricette: #ricette #cucina&#10;eventi: #eventi"><?= h(social_testo_vero($imp['hashtag_categorie'])) ?></textarea>
     <div class="hint">Una riga per categoria: il nome (o lo slug), due punti, gli hashtag. Si aggiungono a quelli fissi quando il contenuto è in quella categoria.</div>
-    <label for="so-wa-l" style="margin-top:1rem">Un link in più nei testi di WhatsApp (facoltativo)</label><input type="text" id="so-wa-l" name="whatsapp_link" value="<?= h($imp['whatsapp_link']) ?>" placeholder="/prenota/ oppure https://...">
+    <label for="so-wa-l" style="margin-top:1rem">Un link in più nei testi di WhatsApp (facoltativo)</label><input type="text" id="so-wa-l" name="whatsapp_link" value="<?= h($imp['whatsapp_link']) ?>" placeholder="/prenota/ oppure https://..." data-link-sito>
     <label for="so-wa-e">Con la frase</label><input type="text" id="so-wa-e" name="whatsapp_etichetta" value="<?= h(social_testo_vero($imp['whatsapp_etichetta'])) ?>" placeholder="Prenota una chiamata:">
     <div style="margin-top:1rem"><button class="btn btn-primary">Salva</button></div>
   </div>

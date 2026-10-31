@@ -486,6 +486,20 @@ function vt_sitemap_voci(): array {
     return $out;
 }
 
+/**
+ * 2.2: le voci per "Scegli dal sito" (filtro collegamenti_sito): la pagina del negozio, le categorie (?categoria=) e i prodotti,
+ * quelli nascosti come bozza (solo l'amministratore li vede nella finestra). $q: la ricerca, già pulita dal nucleo.
+ */
+function vt_collegamenti(string $q, bool $admin): array {
+    $b = vt_base();
+    $out = [['tipo' => 'negozio', 'tipo_nome' => 'Negozio', 'titolo' => (string)(vt_impostazioni()['nome_negozio'] ?: 'Negozio'), 'percorso' => $b, 'stato' => 'pubblicato']];
+    foreach (vt_categorie() as $c) $out[] = ['tipo' => 'negozio', 'tipo_nome' => 'Negozio', 'titolo' => 'Negozio: ' . $c['nome'], 'percorso' => $b . '?categoria=' . rawurlencode((string)$c['slug']), 'stato' => 'pubblicato'];
+    foreach (vt_prodotti(['tutti' => $admin, 'cerca' => $q, 'limite' => 200]) as $p) {
+        $out[] = ['tipo' => 'prodotto', 'tipo_nome' => 'Prodotto', 'titolo' => (string)$p['nome'], 'percorso' => $b . $p['slug'] . '/', 'stato' => (int)$p['pubblicato'] ? 'pubblicato' : 'bozza'];
+    }
+    return $out;
+}
+
 /** Lo schema e l'host del sito ("https://esempio.it"), per gli indirizzi che cominciano con "/". */
 function vt_origine(): string {
     return (string)preg_replace('~^(https?://[^/]+).*$~', '$1', cms_url_sito());

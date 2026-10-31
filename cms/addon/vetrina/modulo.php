@@ -42,6 +42,11 @@ return [
         },
     ],
     'filtri' => [
+        // 2.2: il negozio, le sue categorie e i prodotti nella finestra "Scegli dal sito" del pannello (includes/collegamenti.php).
+        'collegamenti_sito' => function (array $voci, string $q, bool $admin) {
+            require_once __DIR__ . '/includes/vetrina.php';
+            return array_merge($voci, vt_collegamenti($q, $admin));
+        },
         // Le schede dei prodotti nella sitemap del sito.
         'sitemap_voci' => function (array $voci) {
             require_once __DIR__ . '/includes/vetrina.php';

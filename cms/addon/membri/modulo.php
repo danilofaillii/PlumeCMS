@@ -43,6 +43,14 @@ return [
         },
     ],
     'filtri' => [
+        // 2.2: le pagine dell'area riservata nella finestra "Scegli dal sito" del pannello (includes/collegamenti.php).
+        'collegamenti_sito' => function (array $voci, string $q, bool $admin) {
+            require_once __DIR__ . '/includes/membri.php';
+            $voci[] = ['tipo' => 'membri', 'tipo_nome' => 'Area riservata', 'titolo' => 'Accedi (area riservata)', 'percorso' => '/accedi/', 'stato' => 'pubblicato'];
+            if (membri_cfg()['modo'] !== 'invito') $voci[] = ['tipo' => 'membri', 'tipo_nome' => 'Area riservata', 'titolo' => 'Iscriviti (area riservata)', 'percorso' => '/iscriviti/', 'stato' => 'pubblicato'];
+            $voci[] = ['tipo' => 'membri', 'tipo_nome' => 'Area riservata', 'titolo' => 'Area riservata', 'percorso' => '/area-riservata/', 'stato' => 'pubblicato'];
+            return $voci;
+        },
         // Lo stesso contenuto nei feed, in llms-full.txt e nei widget che mostrano il testo: al posto del testo, un avviso.
         'contenuto_riservato' => function ($valore, array $c) {
             if (is_string($valore)) return $valore;

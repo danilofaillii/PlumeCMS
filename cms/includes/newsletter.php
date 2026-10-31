@@ -668,8 +668,10 @@ function newsletter_email(array $c, array $iscritto, ?array $traccia = null): ar
     $corpo = newsletter_personalizza(newsletter_corpo_email((string)$c['corpo']), $iscritto, true);
     $id = (int)($iscritto['id'] ?? 0);
     $uscita = $id ? newsletter_link_uscita($id, $traccia) : MODULI_URL . NEWSLETTER_ESCI;
-    $btn = (($c['pulsante_testo'] ?? '') !== '' && ($c['pulsante_link'] ?? '') !== '')
-        ? '<p style="margin:26px 0"><a href="' . h($c['pulsante_link']) . '" target="_blank" style="display:inline-block;background:#7c3aed;color:#fff;padding:14px 26px;border-radius:10px;text-decoration:none;font-weight:700">' . h($c['pulsante_testo']) . '</a></p>'
+    require_once __DIR__ . '/sicurezza-html.php';
+    $pl = sicurezza_url_pulito((string)($c['pulsante_link'] ?? '')); // 2.2: niente javascript: e simili nel pulsante dell'email
+    $btn = (($c['pulsante_testo'] ?? '') !== '' && $pl !== '')
+        ? '<p style="margin:26px 0"><a href="' . h($pl) . '" target="_blank" style="display:inline-block;background:#7c3aed;color:#fff;padding:14px 26px;border-radius:10px;text-decoration:none;font-weight:700">' . h($c['pulsante_testo']) . '</a></p>'
         : '';
     // Il testo di anteprima: quello che i programmi di posta mostrano accanto all'oggetto.
     $anteprima = $c['anteprima'] !== '' ? '<div style="display:none;max-height:0;overflow:hidden;mso-hide:all">' . h(newsletter_4byte_fuori(newsletter_personalizza($c['anteprima'], $iscritto, false))) . str_repeat('&#8204;&nbsp;', 40) . '</div>' : '';

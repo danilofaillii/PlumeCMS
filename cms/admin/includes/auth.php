@@ -78,7 +78,7 @@ function is_logged_in(): bool {
  * Il redattore gestisce articoli, pagine (e i tipi di contenuto dei moduli), media, categorie e tag; non i modelli.
  * Un modulo aggiunge le sue pagine con il filtro 'redattore_pagine'.
  */
-const AUTH_REDATTORE_PAGINE = ['index.php', 'contenuti.php', 'contenuto.php', 'editor.php', 'editor-api.php', 'editor-anteprima.php', 'seo-api.php',
+const AUTH_REDATTORE_PAGINE = ['index.php', 'contenuti.php', 'contenuto.php', 'editor.php', 'editor-api.php', 'editor-anteprima.php', 'seo-api.php', 'link-api.php',
     'media.php', 'categories.php', 'versioni.php', 'account.php', 'password.php', 'logout.php', 'login.php'];
 
 /** Il redattore può aprire questa pagina (nome del file, con il ?tipo= se serve)? Lo usano require_login e il menu. */

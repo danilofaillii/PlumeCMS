@@ -122,7 +122,7 @@ require_once __DIR__ . '/includes/admin-header.php';
       <div class="form-group"><label>Testo</label><div id="editor"></div></div>
       <div class="form-group"><label for="pulsante_testo">Pulsante in fondo (facoltativo)</label>
         <input type="text" id="pulsante_testo" name="pulsante_testo" maxlength="100" placeholder="Leggi la guida" value="<?= h(newsletter_4byte_fuori($c['pulsante_testo'])) ?>" <?= $modificabile ? '' : 'readonly' ?>>
-        <input type="url" name="pulsante_link" maxlength="500" placeholder="<?= h(cms_url_sito()) ?>/..." value="<?= h($c['pulsante_link']) ?>" style="margin-top:.4rem" <?= $modificabile ? '' : 'readonly' ?>></div>
+        <div style="margin-top:.4rem"><input type="url" name="pulsante_link" id="nl-pulsante-link" maxlength="500" placeholder="<?= h(cms_url_sito()) ?>/..." value="<?= h($c['pulsante_link']) ?>" aria-label="Link del pulsante" data-link-sito="assoluto" <?= $modificabile ? '' : 'readonly' ?>></div></div>
       <div class="form-group"><label for="mittente_id">Mittente</label>
         <select id="mittente_id" name="mittente_id" <?= $modificabile ? '' : 'disabled' ?>>
           <option value="0">Il predefinito<?= $mittPre !== '' ? ': ' . h($nomePre . ' <' . $mittPre . '>') : '' ?></option>
@@ -169,6 +169,8 @@ require_once __DIR__ . '/includes/admin-header.php';
       handlers: { image: carica } } }
   });
   quill.clipboard.dangerouslyPasteHTML(<?= json_encode((string)$c['corpo'], JSON_HEX_TAG | JSON_HEX_AMP | JSON_UNESCAPED_UNICODE) ?>);
+  // 2.2: il pulsante link sceglie una pagina del sito, con l'indirizzo intero (serve alle email). scegli-link.js arriva con defer.
+  document.addEventListener('DOMContentLoaded', function () { if (window.pnLink) window.pnLink.quill(quill, { assoluto: true }); });
 
   // Le immagini vanno sul server, non dentro l'email: si sceglie dai Media (o si carica dalla stessa finestra, in
   // newsletter-immagine.php, senza WebP) e si inserisce l'indirizzo completo, quello che serve ai programmi di posta (2.1.0).

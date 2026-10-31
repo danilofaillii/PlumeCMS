@@ -50,7 +50,7 @@ pren_admin_schede('impostazioni');
     <label>Avvisi delle prenotazioni a<input type="email" name="avviso_a" maxlength="190" value="<?= h((string)$imp['avviso_a']) ?>" placeholder="<?= h(posta_notifica_email()) ?>"><span class="pa-aiuto">Vuoto: all'indirizzo degli avvisi del sito (Impostazioni &gt; Configurazione email).</span></label>
     <label>Indirizzo dell'attività<input name="indirizzo" maxlength="200" value="<?= h((string)$imp['indirizzo']) ?>" placeholder="Via dell'Indipendenza 10, Bologna"><span class="pa-aiuto">Esce nelle email e nel calendario del cliente.</span></label>
     <label class="pa-largo">Una frase in più nelle email di conferma (facoltativa)<textarea name="nota_email" rows="2" maxlength="600" placeholder="Se arrivi in ritardo di più di 15 minuti potremmo non riuscire a fare il servizio."><?= h((string)$imp['nota_email']) ?></textarea></label>
-    <label>Pagina dell'informativa privacy<input name="privacy" maxlength="190" value="<?= h((string)$imp['privacy']) ?>"></label>
+    <label>Pagina dell'informativa privacy<input name="privacy" id="pren-privacy" maxlength="190" value="<?= h((string)$imp['privacy']) ?>" data-link-sito></label>
   </div>
   <h3 style="margin-top:1.2rem">Chiusure di tutta l'attività</h3>
   <p class="pa-aiuto">Feste, ferie, inventario: in questi giorni nessuno si può prenotare.</p>

@@ -10,6 +10,7 @@
 
 require_once __DIR__ . '/moduli.php';
 require_once __DIR__ . '/newsletter.php';
+require_once __DIR__ . '/sicurezza-html.php'; // 2.2: sicurezza_url_pulito() per il link del pulsante Continua
 
 const FORM_PAGINA_GRAZIE = '/grazie/';
 const FORM_TIPI_CAMPO = ['testo' => 'Testo breve', 'email' => 'Email', 'telefono' => 'Telefono', 'testolungo' => 'Testo lungo', 'scelta' => 'Scelta singola (menu)', 'multiscelta' => 'Scelta multipla (caselle)', 'spunta' => 'Casella da spuntare', 'data' => 'Data', 'numero' => 'Numero', 'ora' => 'Ora', 'file' => 'File da allegare'];
@@ -570,7 +571,7 @@ function form_grazie_html(array $m, string $o = '', string $k = ''): string {
             $piu = '<p class="form-omaggio">Ecco «' . $titolo . '». Ti abbiamo mandato il link anche per email.</p><p><a class="btn btn-viola" href="' . h(rtrim(cms_url_sito(), '/') . '/scarica/' . $m['omaggio'] . '/?k=' . $k) . '">Scarica</a></p>';
         }
     }
-    return vista_cortesia('Ricevuto', h($m['grazie_titolo']), ($m['grazie_testo'] !== '' ? nl2br(h($m['grazie_testo'])) : 'Ti rispondo appena posso.') . $piu, $m['grazie_link'] !== '' ? '<a class="btn btn-viola" href="' . h($m['grazie_link']) . '">Continua</a>' : '');
+    return vista_cortesia('Ricevuto', h($m['grazie_titolo']), ($m['grazie_testo'] !== '' ? nl2br(h($m['grazie_testo'])) : 'Ti rispondo appena posso.') . $piu, ($l = sicurezza_url_pulito((string)$m['grazie_link'])) !== '' ? '<a class="btn btn-viola" href="' . h($l) . '">Continua</a>' : ''); // 2.2: niente javascript: e simili
 }
 
 /** Come va il file del form nell'invio appena ricevuto (lo legge api/modulo.php per la pagina di ringraziamento). */
