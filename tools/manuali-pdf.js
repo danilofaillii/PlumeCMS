@@ -16,14 +16,12 @@ const path = require('path');
 const RADICE = path.join(__dirname, '..');
 const USCITA = path.resolve(process.argv[2] || path.join(RADICE, 'releases', 'manuali'));
 const VERSIONE = fs.readFileSync(path.join(RADICE, 'cms', 'VERSIONE'), 'utf8').trim();
-// 2.0.0: il manuale d'uso è un documento solo, ma esce in due PDF, ognuno sotto 1900 KB (il limite di caricamento dei server
-// piccoli): la Parte seconda, gli addon (dal titolo "## Parte seconda" fino alla checklist finale), va in manuale-uso-addon.pdf;
-// manuale-uso.pdf ha tutto il resto, checklist finale e problemi frequenti compresi.
-const PARTE_ADDON = /^## Parte seconda[\s\S]*?(?=^## Checklist finale)/m;
+// 2.1.0: il manuale d'uso torna un PDF solo, Parte prima e Parte seconda (gli addon) insieme, con le schermate nitide
+// (tools/manuale-uso-schermate.js, JPEG a 1200 px e qualità 65). Il limite di 1900 KB della 2.0.0 non serve più (Danilo ha
+// alzato il limite di caricamento del suo hosting, 31 ottobre 2026): il manuale-uso-addon.pdf non c'è più. Tetto: 8 MB.
+const MAX_KB = { 'manuale-uso': 8 * 1024 };
 const MANUALI = [
-  { file: 'manuale-uso', parte: md => md.replace(PARTE_ADDON, ''), titolo: 'Manuale d\'uso', sotto: 'Come si fa ogni cosa con plumeCMS: articoli, pagine, menu, form, newsletter, sicurezza. Con esempi veri, schermate e checklist.' },
-  { file: 'manuale-uso', uscita: 'manuale-uso-addon', parte: md => { const m = md.match(PARTE_ADDON); if (!m) throw new Error('manuale-uso.md: manca la Parte seconda'); return m[0]; },
-    titolo: 'Manuale d\'uso: gli addon', sotto: 'La parte seconda del manuale d\'uso: prenotazioni, eventi, recensioni, negozio, statistiche, area riservata, corsi e copia del sito altrove. Con esempi veri, schermate e checklist.' },
+  { file: 'manuale-uso', titolo: 'Manuale d\'uso', sotto: 'Come si fa ogni cosa con plumeCMS: articoli, pagine, menu, form, newsletter, sicurezza e gli otto addon. Con esempi veri, schermate e checklist.' },
   { file: 'manuale-temi', titolo: 'Manuale dei temi', sotto: 'Come si costruisce un tema da zero, file per file, con un esempio completo.' },
 ];
 
@@ -80,7 +78,6 @@ function html(m) {
   let md = fs.readFileSync(path.join(RADICE, 'cms', 'docs', m.file + '.md'), 'utf8');
   md = md.replace(/^# .*\n/, '').replace(/^Versione del manuale:.*\n/m, '');
   md = md.replace(/^## Indice\n[\s\S]*?(?=^---$)/m, ''); // l'indice lo fa pandoc, con i collegamenti
-  if (m.parte) md = m.parte(md);
   const tpl = path.join(USCITA, '.modello.html');
   fs.writeFileSync(tpl, '<nav class="indice"><h2>Indice</h2>\n$toc$\n</nav>\n$body$\n');
   const corpo = execFileSync('pandoc', ['-f', 'gfm', '-t', 'html5', '--toc', '--toc-depth=3', '--template', tpl, '--metadata', 'title=' + m.titolo],
@@ -97,11 +94,12 @@ ${conFigure}</body></html>`;
 
 (async () => {
   fs.mkdirSync(USCITA, { recursive: true });
+  try { fs.unlinkSync(path.join(USCITA, 'manuale-uso-addon.pdf')); } catch (e) {} // 2.1.0: non esiste più
   const br = await chromium.launch();
   const p = await br.newPage();
   for (const m of MANUALI) {
     // Da un file accanto al Markdown: le immagini (immagini/...) si trovano.
-    const nome = m.uscita || m.file;
+    const nome = m.file;
     const pagina = path.join(RADICE, 'cms', 'docs', '.stampa-' + nome + '.html');
     fs.writeFileSync(pagina, html(m));
     await p.goto('file://' + pagina, { waitUntil: 'load' });
@@ -112,7 +110,9 @@ ${conFigure}</body></html>`;
     const file = path.join(USCITA, nome + '.pdf');
     await p.pdf({ path: file, format: 'A4', printBackground: true, displayHeaderFooter: true, headerTemplate: '<span></span>', footerTemplate: piede,
       margin: { top: '20mm', bottom: '22mm', left: '17mm', right: '17mm' }, outline: true, tagged: false });
-    console.log(`${file}: ${Math.round(fs.statSync(file).size / 1024)} KB`);
+    const kb = Math.round(fs.statSync(file).size / 1024);
+    console.log(`${file}: ${kb} KB`);
+    if (MAX_KB[nome] && kb > MAX_KB[nome]) { console.error(`ERRORE: ${nome}.pdf pesa ${kb} KB, oltre ${MAX_KB[nome]} KB: abbassa QUALITA in tools/manuale-uso-schermate.js`); process.exitCode = 1; }
   }
   await br.close();
 })();

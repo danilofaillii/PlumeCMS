@@ -1,8 +1,11 @@
 // Il sito di plumeCMS (1.2.3, 27 ottobre 2026): il pacchetto di sito-plumecms/costruisci.py caricato e applicato dal
 // pannello Aggiornamenti come un utente, poi il sito visitato pagina per pagina e i file scaricati davvero.
-// uso: node prova-sito-plumecms.js <base> <cartella CMS installato> <utente> <password> <parte-1.zip,parte-2.zip,...> <versione>
-// Le parti si caricano e si applicano una dopo l'altra, in ordine, come le carica chi gestisce il sito.
+// uso: node prova-sito-plumecms.js <base> <cartella CMS installato> <utente> <password> <pacchetto.zip[,parte-2.zip,...]> <versione>
+// I pacchetti si caricano e si applicano uno dopo l'altro, in ordine, come li carica chi gestisce il sito. Dalla 2.1.0 di solito
+// è uno solo: il pacchetto del sito (sito-plumecms-<versione>.zip) oppure il pacchetto unico di tools/consegna.py, che porta
+// anche l'aggiornamento del CMS (allora si controlla anche che il CMS sia passato alla versione).
 const { chromium } = require('playwright');
+const { execFileSync } = require('child_process');
 const fs = require('fs');
 const path = require('path');
 const [B, DIR, UTENTE, PASSWORD, ZIP, V] = process.argv.slice(2);
@@ -50,8 +53,12 @@ async function contrastoParole(pg) {
 
   const zips = ZIP.split(',');
   let log = '';
+  let cmsNelPacchetto = false;
   for (const [k, z] of zips.entries()) {
-    const nome = `Sito di plumeCMS (${V}), parte ${k + 1} di ${zips.length}`;
+    // Il nome con cui il pannello lo elenca è quello del suo manifest.
+    const man = JSON.parse(execFileSync('python3', ['-I', '-c', 'import sys,zipfile;print(zipfile.ZipFile(sys.argv[1]).read("manifest.json").decode())', z], { encoding: 'utf8' }));
+    const nome = man.nome;
+    if ((man.file || []).some(f => f.a === 'new/VERSIONE')) cmsNelPacchetto = true;
     await p.goto(B + '/admin/aggiornamenti.php', { waitUntil: 'networkidle' });
     await p.setInputFiles('input[name=pacchetto]', z);
     await Promise.all([p.waitForNavigation(), p.click('form:has(input[name=pacchetto]) button[type=submit]')]);
@@ -65,6 +72,12 @@ async function contrastoParole(pg) {
   }
   ok('resoconto: nome del sito, stile, header e footer, menu', /Impostazioni del sito/.test(log) && /Stile del sito aggiornato/.test(log) && /Header e footer: 2/.test(log) && /Menu di navigazione: 3/.test(log), log.slice(0, 300));
   ok('resoconto: sette pagine', (log.match(/^Pagina \//gm) || []).length === 7);
+  if (cmsNelPacchetto) {
+    // 2.1.0, il pacchetto unico: nello stesso giro anche il codice del CMS.
+    ok(`pacchetto unico: il CMS è passato alla ${V} (VERSIONE e pannello Informazioni)`, fs.readFileSync(path.join(DIR, 'VERSIONE'), 'utf8').trim() === V
+      && (await (async () => { await p.goto(B + '/admin/informazioni.php', { waitUntil: 'networkidle' }); return (await p.locator('body').innerText()).includes(V); })()));
+    ok('pacchetto unico: il resoconto ha i file del CMS e le pagine del sito', /File scritto: new\/includes\/aggiornamenti\.php/.test(log) && /File scritto: uploads\/scaricabili\/manuale-uso\.pdf/.test(log));
+  }
   ok('nessun errore JavaScript nel pannello', err.length === 0, err);
 
   // Il sito, come un visitatore (senza login).
@@ -164,7 +177,7 @@ async function contrastoParole(pg) {
   // I file da scaricare: i link delle pagine portano a file veri, con il tipo giusto.
   await v.goto(B + '/scarica/', { waitUntil: 'networkidle' });
   const link = await v.locator('a[href*="/scarica/"]').evaluateAll(as => [...new Set(as.map(a => a.getAttribute('href')).filter(h => /\/scarica\/[^/]+\/$/.test(h)))]);
-  ok('la pagina Scarica, widget Download: sei file (dalla 2.0.0 anche il manuale degli addon), tutti presenti', await v.locator('.ed-dl-voce').count() === 6 && await v.locator('.ed-dl-mancante').count() === 0, await v.locator('.ed-dl-titolo').allInnerTexts());
+  ok('la pagina Scarica, widget Download: cinque file (dalla 2.1.0 il manuale d\'uso è uno solo), tutti presenti', await v.locator('.ed-dl-voce').count() === 5 && await v.locator('.ed-dl-mancante').count() === 0, await v.locator('.ed-dl-titolo').allInnerTexts());
   // Dalla 1.2.5 i link sono quelli della serie, che porta sempre all'ultima versione caricata.
   ok('la pagina Scarica punta alle serie (sempre l\'ultima versione)', link.some(h => h.endsWith('/plumecms-ultima/')) && link.some(h => h.endsWith('/plumecms-ultima-aggiornamento/')), link);
   ok('nessun segnaposto {versione:...} rimasto nella pagina', !/\{versione:/.test(await v.content()));
@@ -172,13 +185,20 @@ async function contrastoParole(pg) {
   const rSerie = await v.request.get(B + '/scarica/plumecms-ultima/');
   ok(`/scarica/plumecms-ultima/ manda plumecms-${V}.zip`, rSerie.status() === 200 && (rSerie.headers()['content-disposition'] || '').includes(`plumecms-${V}.zip`), rSerie.headers()['content-disposition']);
   for (const [u, tipo, min] of [[`/scarica/plumecms-${V}/`, 'application/zip', 500000], [`/scarica/plumecms-${V}-aggiornamento/`, 'application/zip', 500000],
-    ['/scarica/manuale-uso/', 'application/pdf', 1000000], ['/scarica/manuale-uso-addon/', 'application/pdf', 500000], ['/scarica/manuale-temi/', 'application/pdf', 300000], ['/scarica/tema-lavagna/', 'application/zip', 1000]]) {
+    ['/scarica/manuale-uso/', 'application/pdf', 3000000], ['/scarica/manuale-temi/', 'application/pdf', 300000], ['/scarica/tema-lavagna/', 'application/zip', 1000]]) {
     const r = await v.request.get(B + u);
     const corpo = await r.body();
     const firma = tipo === 'application/pdf' ? corpo.slice(0, 4).toString() === '%PDF' : corpo[0] === 0x50 && corpo[1] === 0x4b;
     ok(`${u}: ${tipo}, ${Math.round(corpo.length / 1024)} KB, scaricabile`, r.status() === 200 && r.headers()['content-type'] === tipo && /attachment/.test(r.headers()['content-disposition'] || '') && corpo.length > min && firma,
       [r.status(), r.headers()['content-type'], r.headers()['content-disposition']]);
   }
+  // 2.1.0: il manuale degli addon è dentro il manuale d'uso. Il file non c'è più (anche su un sito che lo aveva) e il suo
+  // indirizzo porta al manuale intero.
+  ok('2.1.0: uploads/scaricabili/manuale-uso-addon.pdf tolto', !fs.existsSync(path.join(DIR, 'uploads', 'scaricabili', 'manuale-uso-addon.pdf')));
+  const rAdd = await v.request.get(B + '/scarica/manuale-uso-addon/', { maxRedirects: 0 });
+  ok('2.1.0: /scarica/manuale-uso-addon/ porta a /scarica/manuale-uso/', [301, 302].includes(rAdd.status()) && /\/scarica\/manuale-uso\/$/.test(rAdd.headers()['location'] || ''), [rAdd.status(), rAdd.headers()['location']]);
+  const pdfUso = await (await v.request.get(B + '/scarica/manuale-uso/')).body();
+  ok('2.1.0: il manuale d\'uso scaricato ha anche la Parte seconda (gli addon)', /Parte seconda/.test(execFileSync('python3', ['-I', '-c', 'import sys,io,pypdf;r=pypdf.PdfReader(io.BytesIO(sys.stdin.buffer.read()));print(" ".join(p.extract_text() for p in r.pages[1:6]))'], { input: pdfUso, encoding: 'utf8', maxBuffer: 64 << 20 })));
   // 1.6.4: il manuale tecnico non c'è più, nemmeno su un sito che lo aveva (la parte 1 lo toglie).
   const rTec = await v.request.get(B + '/scarica/manuale-tecnico/');
   ok('/scarica/manuale-tecnico/: tolto (404)', rTec.status() === 404, rTec.status());
@@ -200,11 +220,14 @@ async function contrastoParole(pg) {
   // 1.4.2: il manuale d'uso nella Documentazione, nelle Domande frequenti e nel piede.
   await v.goto(B + '/documentazione/', { waitUntil: 'networkidle' });
   ok('Documentazione (1.6.4): due manuali, il primo è il manuale d\'uso', /Due manuali/.test(await v.locator('body').innerText()) && await v.locator('a[href$="/scarica/manuale-uso/"]').count() >= 1);
+  ok('Documentazione (2.1.0): niente più il manuale degli addon a parte, gli addon sono nel manuale d\'uso', await v.locator('a[href*="manuale-uso-addon"]').count() === 0 && /otto addon/.test(await v.locator('body').innerText()));
   await v.goto(B + '/domande-frequenti/', { waitUntil: 'networkidle' });
   ok('Domande frequenti: lo stesso invito sotto tutti gli articoli; i quaranta capitoli e gli addon (2.0.0)', /stesso invito sotto tutti gli articoli\?/.test(await v.locator('body').innerText()) && /Quaranta capitoli/.test(await v.locator('body').textContent()) && /Cosa sono gli addon\?/.test(await v.locator('body').innerText()));
   ok('Domande frequenti (1.5.0): i social', /Mi aiuta anche con i social\?/.test(await v.locator('body').innerText()));
   ok('Domande frequenti (1.4.2): la guida per imparare a usarlo', /una guida per imparare a usarlo/.test(await v.locator('body').innerText()));
+  ok('Domande frequenti (2.1.0): il manuale d\'uso è un file solo', /in un file solo/.test(await v.locator('body').textContent()) && !/in due file/.test(await v.locator('body').textContent()));
   ok('nessun errore JavaScript sul sito', errV.length === 0, errV);
   await br.close();
   console.log(`\n${n - ko} su ${n} OK`);
-})();
+  process.exit(ko ? 1 : 0);
+})().catch(e => { console.error(e); process.exit(2); });

@@ -160,8 +160,9 @@ il sito. Serve una pagina con un'Apertura (foto ed etichetta dell'onda) e una Pr
 Il sito di plumeCMS: carica e applica dal pannello il pacchetto di `sito-plumecms/costruisci.py`, poi visita le sette
 pagine da visitatore (titoli, menu, immagini, favicon) e scarica davvero gli zip e i PDF da `/scarica/<nome>/`.
 Serve un plumeCMS 1.2.3 o successivo.
-`node prove/prova-sito-plumecms.js <base> <cartella CMS> <utente> <password> <parte-1.zip,parte-2.zip,...> <versione>`: le parti si
-caricano e si applicano in ordine. Atteso: 55 su 55 con quattro parti (notte del 27 ottobre 2026: anche la piuma della
+`node prove/prova-sito-plumecms.js <base> <cartella CMS> <utente> <password> <pacchetto.zip[,parte-2.zip,...]> <versione>`: i pacchetti si
+caricano e si applicano in ordine (dalla 2.1.0 di solito uno: `sito-plumecms-<V>.zip`, o il pacchetto unico di `tools/consegna.py`,
+che porta anche il CMS: allora controlla anche la versione). Il nome atteso nel pannello lo legge dal manifest. Atteso: 55 su 55 con quattro parti (notte del 27 ottobre 2026: anche la piuma della
 Copertina, il suo peso, il ritaglio al telefono, il contrasto delle parole bianche misurato sul fondo e la piuma ferma
 per chi chiede meno movimento; la pagina Installazione con cosa serve, il carosello delle cinque schermate
 dell'installatore, che va avanti da solo e resta fermo con meno movimento, e il link dalla home). Il controllo del
@@ -472,3 +473,26 @@ I pulsanti dell'Apertura si cliccano davvero. Prima `php prove/pagina-hero-pulsa
 pulsante, il link non è `#`, il clic porta alla pagina giusta; a 1280 e a 390 px. Con `TEMA=cosmo UTENTE=... PASSWORD=...` nelle
 anteprime del tema. Atteso: 670 su 670, anche con Cosmo, Aria e Bottega (31 ottobre 2026); sul codice di prima della 2.0.2 la
 pagina dei link scritti a mano dà KO (il pulsante punta a `#`).
+
+## prova-scegli-media.js (2.1.0)
+
+Scegli dai Media dappertutto, come una persona. Prepara da solo 130 immagini finte (`uploads/2026/10/scmp-*.png`), gli otto
+addon accesi, una campagna, un corso. Per ogni campo immagine del pannello (SEO: immagine social, logo e immagine
+dell'organizzazione, foto della persona; Social: le due immagini; Popup; Corsi; Eventi) apre la finestra, cerca, sceglie,
+carica un'immagine nuova dalla finestra, salva dove serve, toglie con la X. Poi la scheda dell'articolo, Stile del sito (logo e
+favicon), l'immagine della newsletter (indirizzo completo, cartella della newsletter), la Vetrina (foto aggiunte all'elenco),
+la tastiera (Invio, frecce, Esc, fuoco che torna al pulsante, una sola fermata di Tab per la griglia), le 130 immagini a
+pagine di 60 scorrendo, la tendina delle cartelle, l'indirizzo scritto a mano e il telefono (finestra a tutto schermo).
+`CMS_DIR=<cartella del CMS installato> node prove/prova-scegli-media.js <base> <utente> <password>` su un sito con il kit
+Attività. Atteso: 112 su 112 (31 ottobre 2026, su un sito nuovo e su un 2.0.3 aggiornato con il pacchetto unico).
+
+## prova-consegna-unica.js (2.1.0)
+
+La consegna con il pacchetto unico di `tools/consegna.py`: controlla lo zip di consegna (pacchetto unico, zip completo, due
+manuali, LEGGIMI), il manifest (solo voci che il motore 2.0.3 conosce, nessuna destinazione doppia, codice del CMS, Download
+senza il manuale degli addon), poi lancia `prova-sito-plumecms.js` con il pacchetto unico e guarda il pannello aggiornato.
+`node prove/prova-consegna-unica.js <base> <cartella CMS> <utente> <password> <plumecms-V-consegna.zip> <versione>`.
+Provata su un 2.0.3 nuovo e su un 2.0.3 con le cinque parti del sito della 2.0.0 già applicate (il manuale degli addon sparisce
+e `/scarica/manuale-uso-addon/` porta a `/scarica/manuale-uso/`), con il server a 64 MB (`php -d upload_max_filesize=64M
+-d post_max_size=64M -S ...`): il pacchetto unico pesa circa 13 MB. Per provarla senza toccare `cms/VERSIONE` si costruisce
+tutto in una copia del repository con una versione finta (2.0.9). Atteso: 13 su 13 (e 85 su 85 dentro) tutte e due le volte.

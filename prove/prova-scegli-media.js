@@ -135,6 +135,7 @@ im = Image.new('RGB', (1200, 630), (31, 111, 92)); ImageDraw.Draw(im).text((500,
   ok('Articolo: immagine in evidenza scelta dai Media, con l\'anteprima e Cambia', /scmp-011\.png$/.test(await valore('#sc-immagine')) && !(await p.locator('#sc-immagine-anteprima').isHidden())
     && (await p.locator('#sc-immagine-scegli').innerText()).trim() === 'Cambia' && await p.locator('#sc-immagine-togli').isVisible());
   await apri('#sc-immagine-scegli');
+  await p.fill(dialogo + ' input[type=search]', 'scmp-011'); await p.waitForFunction((d) => document.querySelectorAll(d + ' .pn-media-voce').length === 1, dialogo).catch(() => {});
   ok('Articolo: la finestra segna l\'immagine già scelta', await p.locator(dialogo + ' .pn-media-voce.pn-media-scelta').count() === 1);
   await p.setInputFiles(dialogo + ' input[type=file]', FILE);
   await p.waitForFunction((d) => !document.querySelector(d).open, dialogo, { timeout: 15000 }).catch(() => {});
