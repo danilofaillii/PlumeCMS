@@ -137,3 +137,5 @@ controlla il dominio e, se l'indirizzo è nuovo, accendi il riscaldamento.
 - [ ] Se uso Brevo, Amazon SES o Mailgun: l'indirizzo di Rimbalzi e spam è incollato nel servizio e c'è un "Ultimo avviso".
 - [ ] Indirizzo nuovo o tanti iscritti tutti insieme: il riscaldamento è acceso.
 - [ ] Dopo ogni campagna guardo in Statistiche che spam e rimbalzi non siano rossi.
+
+Portata nel manuale d'uso il 2026-10-31, capitoli 25 (sezione "Le email arrivano nella posta, non nello spam") e 20 (tendina Mittente della campagna).

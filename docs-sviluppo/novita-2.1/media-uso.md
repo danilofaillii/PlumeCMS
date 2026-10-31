@@ -172,3 +172,5 @@ Tutte e due stanno nello stesso PDF, `manuale-uso.pdf`.
   della Vetrina con l'elenco delle foto (il pulsante Scegli dai Media sotto), quelle di Stile del sito con il Logo.
 - Dalla 2.1.0 le foto escono a 1200 px e qualità 65 (`tools/manuale-uso-schermate.js`): il PDF intero oggi pesa 6,9 MB,
   sotto il tetto di 8 MB; le due schermate nuove aggiungono circa 100 KB.
+
+Portata nel manuale d'uso il 2026-10-31, capitoli 7 ("Scegliere un'immagine da qualunque pagina del pannello"), 4, 13, 19, 20, 21, 23, 34, 36, 39 e l'introduzione (un PDF solo).

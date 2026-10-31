@@ -205,3 +205,5 @@ Se compare "L'ordine non è stato salvato", la pagina si ricarica da sola con l'
 - [ ] Lezioni e moduli trascinati dalla maniglia.
 - [ ] "Ordine salvato." sotto la spiegazione.
 - [ ] Ricaricando la pagina l'ordine è quello nuovo.
+
+Portata nel manuale d'uso il 2026-10-31, capitoli 33 ("Il calendario del cliente si aggiorna da solo", "Una prenotazione presa al telefono"), 34 (cosa non c'è ancora), 35 ("Dopo un evento") e 39 ("Cambiare l'ordine trascinando", "Il testo con l'editor visuale").

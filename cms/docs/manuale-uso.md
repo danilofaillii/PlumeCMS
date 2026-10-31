@@ -1,6 +1,6 @@
 # Manuale d'uso di plumeCMS
 
-Versione del manuale: plumeCMS 2.0.0 beta, 30 ottobre 2026.
+Versione del manuale: plumeCMS 2.1.0, 31 ottobre 2026.
 
 ## Prima di cominciare
 
@@ -24,8 +24,8 @@ Una parola sui nomi. **Il pannello** è la parte riservata, dove lavori tu. **Il
 
 Il manuale ha due parti. La **prima** (capitoli 1-31) è il CMS di sempre: c'è su ogni sito. La **seconda**
 (capitoli 32-40) racconta gli **addon**, le funzioni in più che accendi solo se ti servono: prenotazioni, eventi,
-recensioni, negozio, statistiche, area riservata, corsi, copia del sito altrove. Nel PDF la seconda parte è un file a
-sé, `manuale-uso-addon.pdf`.
+recensioni, negozio, statistiche, area riservata, corsi, copia del sito altrove. Tutte e due stanno nello stesso PDF,
+`manuale-uso.pdf`.
 
 Questo manuale racconta come si usa plumeCMS. Per costruire un tema c'è il manuale dei temi.
 
@@ -264,8 +264,10 @@ Nella colonna di destra della scheda:
    Si crea quando salvi.
 7. **Tag**: scrivi una parola e premi **Invio** (qui "orari"). I tag sono più liberi delle categorie: servono a
    ritrovare gli articoli che parlano della stessa cosa.
-8. **Immagine in evidenza**: premi **Scegli l'immagine**, poi **Carica** per prenderla dal computer, oppure fai clic su
-   una già caricata. Sotto scrivi il **Testo alternativo**: cosa si vede nella foto, per chi non vede e per Google.
+8. **Immagine in evidenza**: premi **Scegli l'immagine**. Nella finestra fai clic su un'immagine già caricata (la ricerca
+   aiuta a trovarla), oppure premi **Carica un'immagine** per prenderla dal computer (capitolo 7). Il pulsante diventa
+   **Cambia** e compare **Togli**. Sotto scrivi il **Testo alternativo**: cosa si vede nella foto, per chi non vede e per
+   Google.
    L'immagine in evidenza esce nelle schede del blog e quando qualcuno condivide l'articolo, non in cima all'articolo:
    se la vuoi anche lì, mettila nel testo con un widget Immagine.
 
@@ -375,7 +377,8 @@ A destra c'è l'elenco, con quanti articoli ha ogni voce, e i link per modificar
 ## 7. Le immagini: Media
 
 **A cosa serve.** **Media** è la libreria di tutte le immagini del sito. Le carichi qui, oppure direttamente
-dall'editor e dalla scheda (premendo Scegli o Carica): finiscono comunque qui.
+dall'editor, dalla scheda e da ogni pagina del pannello che chiede un'immagine (con **Scegli dai Media**, più sotto):
+finiscono comunque qui.
 
 ![Caricare una foto](immagini/manuale-uso/07-carica.jpg)
 
@@ -408,6 +411,55 @@ nella cartella **Da sostituire**, e un avviso in cima ti dice quanti ne restano.
 
 Una foto per la home in larghezza va bene orizzontale (il disegno è largo), una per "Chi siamo" va bene verticale.
 Sostituisci lo usa solo l'amministratore.
+
+### Scegliere un'immagine da qualunque pagina del pannello
+
+Dove il pannello chiede un'immagine (l'immagine social della SEO, il logo, la foto di un popup, di un corso, di un
+evento...) accanto alla casella c'è il pulsante **Scegli dai Media**. Non serve copiare indirizzi da una pagina
+all'altra.
+
+![Un campo immagine, con la miniatura](immagini/manuale-uso/07-scegli-campo.jpg)
+
+1. La **miniatura** a sinistra ti fa vedere l'immagine scelta. Se resta un punto esclamativo rosso, l'indirizzo scritto
+   nella casella non porta a un'immagine: controlla di averlo scritto giusto.
+2. **Scegli dai Media** apre la libreria.
+3. La **X** toglie l'immagine (la casella si svuota). Ricordati di salvare la pagina.
+
+![La finestra Scegli un'immagine](immagini/manuale-uso/07-scegli-finestra.jpg)
+
+Si apre la finestra **Scegli un'immagine**:
+
+1. **Cerca nel nome**: scrivi una parte del nome del file (per esempio "logo"). La griglia mostra solo quelle che
+   corrispondono.
+2. **Tutte le cartelle**: la tendina restringe a una cartella (Archivio, Editor delle pagine, Newsletter...).
+3. **Carica un'immagine**: prende un file dal computer, lo carica in Media e lo sceglie subito. Puoi anche trascinare il
+   file sopra la finestra. Mentre carica, una barra sottile mostra a che punto è.
+4. Fai clic sull'immagine che vuoi: la finestra si chiude e l'indirizzo entra da solo nella casella. L'immagine già
+   scelta ha il bordo colorato.
+5. **Oppure usa un indirizzo**: se l'immagine sta su un altro sito, scrivi qui il suo indirizzo e premi **Usa**.
+
+Sotto la ricerca c'è il conto, per esempio "60 di 171 immagini": le immagini arrivano 60 alla volta e le altre si
+caricano da sole quando scorri in fondo (oppure premi **Mostra altre immagini**).
+
+Con la tastiera: **Invio** sul pulsante apre la finestra con il cursore nella ricerca; **freccia giù** porta alla prima
+immagine; le **frecce** si muovono fra le immagini; **Invio** sceglie; **Esc** chiude senza cambiare niente.
+
+Al telefono la finestra prende tutto lo schermo: si sceglie con un tocco, **Chiudi** è in fondo.
+
+Dove trovi Scegli dai Media:
+
+| Pagina | Campo |
+|---|---|
+| SEO e AEO > Globale SEO | Immagine social predefinita |
+| SEO e AEO > Schema e AEO | Logo e Immagine dell'organizzazione, Foto della persona |
+| Social > Calendario (un testo nuovo) | Immagine per LinkedIn e Facebook, Immagine per Instagram |
+| Popup | Immagine |
+| Articoli e pagine (la scheda) | Immagine in evidenza (**Scegli l'immagine**), **+ Immagine** nel testo |
+| Editor > Stile del sito | Logo, Icona del sito, Immagine di sfondo |
+| Newsletter e form > Campagne, una campagna | il pulsante dell'immagine nella barra del testo |
+| Corsi (addon) | Immagine del corso |
+| Eventi (addon) | Foto dell'evento |
+| Vetrina (addon) | Foto del prodotto (si aggiungono all'elenco) |
 
 **Checklist**
 
@@ -715,7 +767,9 @@ sito finché non premi Salva.**
 
 3. **Identità del sito**: il **nome**, il **sottotitolo**, la **descrizione in una riga**, il **logo** (se lo lasci
    vuoto la testata scrive il nome in lettere) e l'**icona del sito** (la piccola immagine nella scheda del browser:
-   meglio quadrata, almeno 64 pixel).
+   meglio quadrata, almeno 64 pixel). Logo, icona e, in **Sfondo del sito**, l'**immagine di sfondo** si scelgono con
+   **Scegli dai Media**: si apre la stessa finestra di tutto il pannello, con la ricerca su tutte le immagini e
+   **Carica un'immagine** (capitolo 7). La **X** accanto, che toglie l'immagine, compare solo quando ce n'è una.
 
 In alto, **Cronologia** mostra i salvataggi di prima; **Ripristina predefiniti** torna allo stile di partenza.
 
@@ -1012,7 +1066,8 @@ Excel o Numbers.
 ![Il popup nuovo](immagini/manuale-uso/18-popup.jpg)
 
 1. **Cosa mostra**: occhiello, **titolo**, testo, un'immagine, un pulsante con il suo link; oppure un form dentro il
-   popup (tendina **Modulo dentro il popup**).
+   popup (tendina **Modulo dentro il popup**). Per l'immagine premi **Scegli dai Media** accanto alla casella
+   **Immagine** e scegli la foto (capitolo 7).
 2. **Su quali pagine**: tutte, solo la home, solo gli articoli, solo le pagine, oppure gli indirizzi che scrivi tu.
 3. **Quando compare**: dopo qualche secondo, quando chi legge arriva a una certa percentuale della pagina, o quando il
    mouse esce dalla pagina (solo computer). Sotto scegli **ogni quanti giorni** la stessa persona lo rivede.
@@ -1069,6 +1124,13 @@ form compilati. Un'importazione non lo rimette dentro; se si iscrive di nuovo da
 1. **Oggetto**: la riga che si legge nella casella di posta. Corto e chiaro.
 2. **Testo**: scrivi come in un'email normale. `{nome}` diventa il nome della persona. Sotto, un **pulsante** con il
    suo link e le **liste** a cui mandarla.
+
+Per mettere un'immagine nel testo premi il pulsante con l'immagine nella barra: si apre la finestra dei Media (capitolo 7).
+Scegli un'immagine già caricata o premi **Carica un'immagine**. Nelle email vanno bene JPG, PNG, GIF e WebP; l'immagine
+entra con il suo indirizzo completo, quello che i programmi di posta sanno aprire.
+
+Nella stessa pagina, la tendina **Mittente** sceglie da chi parte la campagna (capitolo 25, "Le email arrivano nella
+posta, non nello spam").
 
 A destra c'è l'anteprima dell'ultima versione salvata. Poi:
 
@@ -1188,7 +1250,9 @@ Premi **+ Un testo nel calendario**:
    riquadro Social del contenuto.
 
 Sotto: l'**ancora**, per portare il link a un punto preciso della pagina (l'id di un titolo), e due immagini diverse da
-quelle del contenuto, se le vuoi. Premi **Salva**.
+quelle del contenuto, se le vuoi: **Immagine per LinkedIn e Facebook** e **Immagine per Instagram**. Le due immagini si
+scelgono con **Scegli dai Media** (capitolo 7); vuote, il sito usa quelle fatte dall'immagine in evidenza. Premi
+**Salva**.
 
 ![Il calendario](immagini/manuale-uso/19s-calendario.jpg)
 
@@ -1298,13 +1362,17 @@ articoli è l'immagine in evidenza; per tutte le altre pagine è l'**immagine so
 Globale SEO**.
 
 La misura giusta è **1200 x 630 pixel**, in **JPG o PNG** (le SVG i social non le mostrano), con logo e scritte al
-centro: i bordi a volte si tagliano. Preparala e caricala in **Media** (capitolo 7). Poi:
+centro: i bordi a volte si tagliano. Preparala sul computer. Poi:
 
 ![La casella dell'immagine social](immagini/manuale-uso/31n-immagine-social.jpg)
 
-1. Premi **Scegli dai Media**. Si apre la libreria: scrivi una parte del nome nella casella di ricerca e fai clic
-   sull'immagine.
-2. L'indirizzo entra da solo nella casella. Premi **Salva titoli e meta**, in fondo al riquadro.
+1. Premi **Scegli dai Media**. Scrivi una parte del nome nella ricerca e fai clic sull'immagine; se non l'hai ancora
+   caricata, premi **Carica un'immagine** nella stessa finestra (capitolo 7).
+2. L'indirizzo entra da solo nella casella e a sinistra compare la miniatura. Premi **Salva titoli e meta**, in fondo al
+   riquadro.
+
+Anche in **SEO e AEO > Schema e AEO** il **Logo** e l'**Immagine** dell'organizzazione e la **Foto** della persona si
+scelgono con **Scegli dai Media**, come l'immagine social.
 
 Il sito manda ai social l'indirizzo intero dell'immagine, con le misure: l'anteprima esce giusta già la prima volta.
 
@@ -1373,7 +1441,163 @@ Premi **Salva**, poi manda l'email di prova (anche dai Primi passi, sulla dashbo
 
 - *L'email di prova non parte.* Il messaggio sotto dice perché, in parole chiare: di solito password sbagliata o porta
   sbagliata. Prova 465 con SSL, poi 587 con STARTTLS.
-- *Parte ma non arriva.* Guarda nello spam. Se è lì, chiedi all'hosting di attivare SPF e DKIM per il tuo dominio.
+- *Parte ma non arriva.* Guarda nello spam. Se è lì, segui la sezione qui sotto: il dominio deve dire chi può spedire
+  per lui (SPF, DKIM e DMARC).
+
+### Le email arrivano nella posta, non nello spam
+
+Le email del sito (newsletter, conferme di iscrizione, avvisi dei form) arrivano nella posta in arrivo solo se il tuo
+dominio dice chiaramente chi può spedire per lui. Gmail, Outlook e Yahoo controllano tre righe del DNS del dominio:
+**SPF** (chi può spedire), **DKIM** (la firma delle email) e **DMARC** (cosa fare con le email false). Da febbraio 2024
+Gmail e Yahoo le chiedono a chiunque mandi una newsletter.
+
+Tutto si fa da **Impostazioni > Consegna delle email**, solo per l'amministratore. In alto ci sono sei linguette:
+**Da dove cominciare**, **Dominio**, **Come partono**, **Mittenti**, **Rimbalzi e spam**, **Riscaldamento**.
+
+![Consegna delle email, Da dove cominciare](immagini/manuale-uso/23-consegna-inizio.jpg)
+
+La prima linguetta, **Da dove cominciare**, mostra cinque passi numerati, ognuno con il suo stato a colori: verde quando
+è a posto (**Fatto**, **A posto**, **Collegato**), giallo quando c'è da sistemare, rosso quando è ancora da fare. Sotto
+ogni passo c'è il link alla linguetta giusta.
+
+**Esempio.** Lo Studio Rossi ha il sito su `studiorossi.it` e manda la newsletter da `notizie@studiorossi.it`. Le prime
+email sono finite nello spam di Gmail. Segui i passi qui sotto nell'ordine.
+
+#### 1. Il mittente
+
+Il mittente è il nome e l'indirizzo che le persone vedono quando ricevono un'email.
+
+![Consegna delle email, Mittenti](immagini/manuale-uso/23-consegna-mittenti.jpg)
+
+1. Apri **Impostazioni > Consegna delle email**, linguetta **Mittenti**.
+2. In **Aggiungi un mittente** scrivi il **Nome che vedono le persone** (per esempio "Studio Rossi Notizie") e
+   l'**Indirizzo** (`notizie@studiorossi.it`). Se vuoi che le risposte arrivino altrove, scrivi l'indirizzo in **Le
+   risposte arrivano a**.
+3. Premi **Aggiungi e manda la conferma**. Nella riga del mittente compare "Aspetta la conferma".
+4. Apri la posta di `notizie@studiorossi.it`: c'è un'email "Conferma il mittente". Premi il pulsante.
+5. Nella pagina che si apre premi **Confermo il mittente**. Compare "Mittente confermato".
+6. Torna nel pannello e ricarica la linguetta: la riga dice **Confermato** e, se è il primo, **Predefinito**.
+
+Puoi avere più mittenti (per esempio "Anna dello Studio" per i flussi di benvenuto). Il **predefinito** è quello usato
+quando una campagna o un flusso non ne sceglie un altro: per cambiarlo premi **Rendi predefinito** nella sua riga. Se la
+conferma non è arrivata, **Rimanda la conferma**; **Togli** cancella un mittente.
+
+Usa sempre un indirizzo del tuo dominio. Un indirizzo `@gmail.com`, `@libero.it` o `@outlook.com` non va bene: il pannello
+lo segnala in rosso, perché Gmail, Yahoo e Outlook rifiutano o mettono nello spam le newsletter spedite a loro nome da altri
+server.
+
+#### 2. Il dominio
+
+![Consegna delle email, Dominio](immagini/manuale-uso/23-consegna-dominio.jpg)
+
+1. Linguetta **Dominio**. Nella casella c'è già il dominio del mittente predefinito: premi **Controlla**.
+2. Per ognuna delle quattro voci (SPF, DKIM, DMARC, MX) leggi lo stato:
+   - **A posto**: non devi fare niente;
+   - **Manca** o **Da sistemare**: sotto c'è la frase che spiega perché e, quasi sempre, il record da aggiungere con
+     Tipo, Nome e Valore.
+3. Se il DNS lo gestisci tu (per esempio da cPanel, **Zone Editor**): tocca la casella Valore, il testo si copia da solo;
+   aggiungi un record del tipo e con il nome indicati e incolla il valore.
+4. Se il DNS lo gestisce l'hosting: in fondo c'è **Il messaggio per l'hosting**. Tocca la casella per copiarlo e mandalo
+   alla loro assistenza così com'è.
+5. Dopo la modifica aspetta (possono servire fino a 24 ore) e premi di nuovo **Controlla**.
+
+Per la firma **DKIM** il servizio di spedizione a volte dà un "selettore" (la parte prima di `._domainkey`, per esempio
+`brevo1`). Se il pannello dice "Non trovata con i selettori più comuni", scrivilo in **Selettore DKIM** e rifai il
+controllo.
+
+Se compare "Il DNS non risponde", il server non riesce a leggere il dominio: riprova più tardi; se resta così, chiedilo
+all'hosting.
+
+#### 3. Come partono le email
+
+Per poche centinaia di email al giorno basta il server di posta dell'hosting (**Impostazioni > Configurazione email**,
+qui sopra). Per di più, o se le email finiscono spesso nello spam, conviene un servizio di spedizione: ha una reputazione
+già costruita e dice al sito chi rimbalza e chi segnala spam.
+
+**Brevo via SMTP** (il modo più semplice): in **Impostazioni > Configurazione email** scrivi server
+`smtp-relay.brevo.com`, porta `587`, sicurezza STARTTLS, utente il Login della pagina **SMTP e API** di Brevo, password
+una chiave SMTP di Brevo.
+
+**Con le API** (Brevo, Amazon SES, Mailgun):
+
+![Consegna delle email, Come partono](immagini/manuale-uso/23-consegna-servizio.jpg)
+
+1. Linguetta **Come partono**. Nella tendina scegli il servizio: compaiono i suoi campi e i passi per trovare le chiavi.
+2. Incolla le chiavi e premi **Salva**. Deve comparire "Salvato: le email partono da ...".
+3. In **Prova l'invio** scrivi il tuo indirizzo in **Manda la prova a** e premi **Manda la prova**. Arriva un'email
+   "Prova di consegna dal pannello" con un piccolo file allegato. Guarda anche nello Spam.
+
+Le chiavi si salvano cifrate e non si vedono più: il campo resta vuoto e dice "salvata: lascia vuoto per tenerla". Per
+cambiarle incolla quella nuova; per toglierle usa **Togli le chiavi di ...** (con il nome del servizio), in fondo alla
+linguetta.
+
+Errori frequenti, come li dice il pannello:
+
+- "Questa è la chiave SMTP di Brevo": hai incollato la chiave che comincia con `xsmtpsib-`; nelle API serve quella che
+  comincia con `xkeysib-`.
+- "... non accetta la chiave (codice 401)": la chiave è sbagliata, incompleta o disattivata nel servizio.
+- "Salvato, ma mancano dei dati": finché non li scrivi le email partono come prima.
+
+#### 4. Rimbalzi e spam
+
+Quando un indirizzo non esiste (rimbalzo) o qualcuno preme "è spam", il servizio lo dice al sito con un avviso automatico.
+Il sito toglie subito quella persona: continuare a scriverle rovina la reputazione del dominio.
+
+1. Linguetta **Rimbalzi e spam**. Per il tuo servizio c'è un **Indirizzo**: toccalo per copiarlo.
+2. Segui i tre passi scritti sotto, nel pannello del servizio (Brevo: Transazionale, Impostazioni, Webhook; Amazon: SNS e
+   SES; Mailgun: Send, Webhooks).
+3. Con Mailgun incolla anche la **HTTP webhook signing key** e premi **Salva la chiave di firma**.
+4. Quando arriva il primo avviso, accanto al servizio compare "Ultimo avviso ..." e in fondo la tabella **Ultimi avvisi
+   ricevuti** dice cosa ha fatto il sito.
+
+Chi segnala spam diventa "ha segnalato spam" in **Newsletter e form > Iscritti e liste** (filtro **Hanno segnalato
+spam**): non riceve più niente e un'importazione non lo rimette dentro. Solo una sua nuova iscrizione con la conferma lo
+fa rientrare.
+
+Se usi il server SMTP dell'hosting non serve: i rifiuti immediati il pannello li vede da solo (in Da dove cominciare il
+passo dice **Non serve**).
+
+#### 5. Il riscaldamento
+
+Un indirizzo nuovo (o fermo da mesi) che manda subito migliaia di email sembra uno spammer. Il riscaldamento parte con
+poche email al giorno e sale da solo.
+
+![Consegna delle email, Riscaldamento](immagini/manuale-uso/23-consegna-riscaldamento.jpg)
+
+1. Linguetta **Riscaldamento**. Spunta **Riscaldamento acceso**.
+2. **Email il primo giorno**: 50 va bene per quasi tutti. **Fino a quante al giorno**: il numero da raggiungere (vuoto =
+   il limite al giorno di Newsletter, Impostazioni, capitolo 20). **Quanto sale ogni giorno**: Normale (+50% al giorno).
+3. Premi **Salva**. In alto compare **A che punto è**: il giorno, quante email partono oggi al massimo, quante domani e
+   fra quanti giorni arriva al limite. Sotto, la tabella dei giorni.
+
+Le email che non entrano nel limite di oggi partono il giorno dopo. Conferme di iscrizione e avvisi dei form partono
+sempre. Anche la pagina **Newsletter e form > Campagne** dice "Riscaldamento acceso, giorno ...".
+
+#### 6. Il mittente di una campagna o di un flusso
+
+- Campagna: **Newsletter e form > Campagne**, apri la campagna, tendina **Mittente**, poi **Salva**.
+- Flusso: **Newsletter e form > Flussi automatici**, apri il flusso, a sinistra **Mittente**, poi **Salva**.
+
+Nelle tendine ci sono solo i mittenti confermati. "Il predefinito" segue il mittente predefinito anche se lo cambi dopo.
+
+#### 7. Le statistiche
+
+![Newsletter e form, Statistiche](immagini/manuale-uso/23-consegna-statistiche.jpg)
+
+**Newsletter e form > Statistiche**: per ogni campagna, accanto ad aperture e clic, ci sono **Rimbalzi**, **Uscite** e
+**Spam**, ognuno con il numero di persone e la percentuale. Il numero diventa rosso quando supera le soglie che Gmail e
+Yahoo guardano: spam oltre lo 0,3%, rimbalzi oltre il 2%. In quel caso: pulisci la lista (togli i contatti vecchi o
+comprati), controlla il dominio e, se l'indirizzo è nuovo, accendi il riscaldamento.
+
+**Checklist della consegna**
+
+- [ ] Il mittente è un indirizzo del mio dominio, confermato e predefinito.
+- [ ] In Dominio SPF, DKIM, DMARC e MX sono "A posto".
+- [ ] In Come partono la prova arriva nella posta in arrivo, con l'allegato.
+- [ ] Se uso Brevo, Amazon SES o Mailgun: l'indirizzo di Rimbalzi e spam è incollato nel servizio e c'è un "Ultimo
+  avviso".
+- [ ] Indirizzo nuovo o tanti iscritti tutti insieme: il riscaldamento è acceso.
+- [ ] Dopo ogni campagna guardo in Statistiche che spam e rimbalzi non siano rossi.
 
 ---
 
@@ -1511,6 +1735,35 @@ Serve se qualcosa si rompe, o per spostare il sito su un altro hosting. Si apre 
   adesso. Il server accetta file fino a una certa misura (qui 2 MB): una copia più grande si mette con il gestore dei
   file dell'hosting nella cartella `aggiornamenti/copie/` e si ripristina dall'elenco.
 
+### Il ripristino pulito
+
+Ripristinare una copia rimette il database e i file della copia. Fino alla 2.0 i file che c'erano nel sito ma non nella
+copia (una foto caricata dopo, un tema provato e poi tolto) **restavano**. Dalla 2.1.0 immagini, temi e moduli diventano
+**esattamente come nella copia**.
+
+![I file spostati da parte dopo un ripristino](immagini/manuale-uso/27-scartati.jpg)
+
+1. Ripristina come sempre: dall'elenco **Copie sul server** (**Ripristina questa copia**, la spunta "Sostituisci database
+   e file del sito con quelli di questa copia", **Ripristina adesso**) oppure da **Ripristina da una copia** con **Carica
+   e ripristina**.
+2. Nell'esito, se c'erano file in più, compare un riquadro: "N file c'erano nel sito ma non nella copia: li ho spostati
+   da parte", con l'elenco dei file. Se non ce n'erano, il registro dice "Nessun file in più".
+3. **Non sono cancellati**: stanno sul server, nella cartella `aggiornamenti/scarto/ripristino-<data>/`, per almeno
+   **30 giorni**. Da internet non si aprono. Per rimetterne uno, riportalo nella stessa cartella del sito con il gestore dei
+   file del tuo hosting.
+4. In fondo alla pagina, la sezione **File messi da parte dai ripristini** elenca ogni ripristino con quanti file e
+   quanto pesano. **Elimina** li cancella per sempre (chiede conferma). Passati 30 giorni, li cancella da solo il
+   ripristino successivo.
+
+**Vuoi il comportamento di prima?** Prima di ripristinare spunta **Tieni i file in più**: i file che non sono nella copia
+restano dove sono.
+
+Non si spostano mai: i file nascosti (come `.htaccess`) e i temi che arrivano con plumeCMS (Cosmo, Aria, Bottega).
+
+**Due siti nello stesso database.** Se sullo stesso database ci sono due installazioni con prefissi che cominciano uguale
+(per esempio `cms_` e `cms_b_`), la copia di una non prende più le tabelle dell'altra, e il ripristino non le tocca mai.
+Il registro lo dice: "Tabelle di un'altra installazione nello stesso database, lasciate stare".
+
 La copia contiene dati personali (utenti, iscritti, messaggi dei form): tienila in un posto sicuro e non mandarla per
 email.
 
@@ -1518,6 +1771,8 @@ email.
 
 - [ ] Faccio una copia una volta al mese, e prima di ogni cambiamento grosso.
 - [ ] Ne tengo una sul mio computer, fuori dal server.
+- [ ] Dopo un ripristino guardo il riquadro dei file spostati da parte (o "Nessun file in più") e, se serve, la sezione
+  **File messi da parte dai ripristini**.
 
 ---
 
@@ -1698,8 +1953,8 @@ solo lo ottiene, e all'altro il sito chiede di sceglierne un altro.
 e "Colore" (90 minuti, 60 €, solo Anna). Vogliono che si prenoti almeno 2 ore prima e che si possa annullare fino al
 giorno prima.
 
-Accendi l'addon (capitolo 32): nel menu compare **Prenotazioni** con cinque pagine, **Agenda**, **Prenotazioni**,
-**Servizi**, **Persone e orari** e **Impostazioni**. Finché mancano persone e servizi, ogni pagina ha in cima il riquadro
+Accendi l'addon (capitolo 32): nel menu compare **Prenotazioni** con sei pagine, **Agenda**, **Nuova prenotazione**,
+**Prenotazioni**, **Servizi**, **Persone e orari** e **Impostazioni**. Finché mancano persone e servizi, ogni pagina ha in cima il riquadro
 giallo **Per cominciare**, che dice cosa fare.
 
 ### Chi lavora e quando: Persone e orari
@@ -1790,14 +2045,72 @@ Arriva alla sua pagina personale: "Prenotazione fatta", con il riepilogo e i pul
 
 ### Cosa riceve il cliente
 
-- Subito: l'email **Prenotazione confermata**, con servizio, giorno, ora, indirizzo, il link **Aggiungi al
-  calendario** (un file che il telefono apre nel calendario) e il pulsante per la sua pagina, dove può annullare o
-  spostare. Se confermi tu a mano, prima riceve "Richiesta di prenotazione ricevuta".
+- Subito: l'email **Prenotazione confermata**, con servizio, giorno, ora, indirizzo, il file per il calendario
+  (qui sotto) e il pulsante per la sua pagina, dove può annullare o spostare. Se confermi tu a mano, prima riceve
+  "Richiesta di prenotazione ricevuta".
 - Il giorno prima: il **promemoria**.
 - Se sposta o annulla: un'email che lo conferma. Anche tu ricevi un avviso.
 
 Spostare e annullare dal sito si può fino al limite delle Impostazioni (24 ore prima, nell'esempio); dopo, la pagina gli
 dice di telefonare. Annullando, il sito chiede "Vuoi davvero annullare?".
+
+### Il calendario del cliente si aggiorna da solo
+
+Nelle email di **conferma**, **spostamento** e **annullamento** c'è un allegato: `appuntamento.ics` (o
+`annullamento.ics`). Sul telefono e sul computer il cliente lo apre con un tocco e l'appuntamento entra nel suo
+calendario (Google Calendar, Calendario di Apple, Outlook). Molti programmi di posta lo riconoscono da soli e mostrano il
+pulsante per aggiungerlo al calendario direttamente nell'email.
+
+Quando sposti l'appuntamento (o lo sposta il cliente dal suo link), la nuova email porta un allegato che il calendario
+riconosce come **lo stesso appuntamento**: lo sposta, invece di aggiungerne un altro. Quando lo annulli, l'allegato lo
+toglie dal calendario. Il link **Aggiungi al calendario** nell'email resta, per chi preferisce scaricare il file.
+
+*Da verificare con le prime email vere: è provato leggendo le email arrivate a un server di prova, non con Gmail,
+Outlook o il Calendario di Apple veri.*
+
+### Una prenotazione presa al telefono
+
+Un cliente chiama il salone e chiede un taglio per giovedì. Lo scrivi tu, dal pannello, mentre sei al telefono: il sito
+ti mostra gli orari liberi, gli stessi che vede chi prenota dal sito, e da quel momento quell'orario non lo offre più a
+nessun altro.
+
+**Esempio.** Paolo Verdi chiama alle 10: vuole un taglio da Anna giovedì mattina. Non ha l'email (o non vuole darla).
+
+![Nuova prenotazione, scritta dal pannello](immagini/manuale-uso/33-nuova.jpg)
+
+1. Nel menu a sinistra apri **Prenotazioni > Nuova prenotazione**. (La trovi anche come **+ Nuova prenotazione** in alto
+   in ogni pagina delle Prenotazioni, e nell'agenda di un giorno come **+ Nuova prenotazione in questo giorno**.)
+2. Nel riquadro **1. Cosa, con chi, quando**:
+   - in **Servizio** scegli "Taglio donna";
+   - in **Con chi** scegli "Anna" (oppure lascia **Chi è libero**);
+   - in **Giorno** scegli giovedì.
+   A ogni scelta la pagina si aggiorna da sola. Puoi anche premere **Giorno prima** e **Giorno dopo**.
+3. Nel riquadro **2. L'ora** compaiono gli orari liberi come pulsanti: 9:00, 9:30... Premi 10:00: il pulsante si
+   colora. (Con **Chi è libero**, sotto ogni ora c'è il nome di chi la prenderà.)
+4. Nel riquadro **3. Il cliente** scrivi **Nome e cognome** ("Paolo Verdi") e **Telefono** ("051 123456"). L'email la
+   lasci vuota. In **Nota** puoi scrivere qualcosa che vedi solo tu, per esempio "Preferisce Anna, capelli lunghi".
+5. Premi **Salva la prenotazione**.
+6. Si apre la scheda della prenotazione. In alto compare: "Prenotazione salvata: Paolo Verdi, giovedì ... alle 10:00 con
+   Anna. Nessuna email al cliente." Nella scheda, accanto a "Prenotata il", c'è **scritta dal pannello**.
+
+Se in un giorno non c'è più posto, la pagina lo dice e ti propone **il primo giorno libero**.
+
+**Con l'email: il cliente riceve la conferma.** Se il cliente ti dà l'email, scrivila nel campo **Email (facoltativa)** e
+lascia la spunta **Manda al cliente l'email di conferma**. Riceve la stessa email di chi prenota dal sito, con il file
+per il calendario e il link per annullare o spostare da solo; il giorno prima gli arriva il promemoria. Senza email non
+riceve niente: se sposti o annulli il suo appuntamento, il pannello ti ricorda di **avvisarlo tu per telefono**.
+
+**Un orario fuori dagli orari di lavoro.** A volte vuoi fare un'eccezione: un cliente affezionato alle 8:15, prima
+dell'apertura, o un sabato in cui di solito sei chiuso.
+
+1. Nel riquadro **2. L'ora** premi l'ultimo pulsante, **Un altro orario**.
+2. Compare un avviso: un orario fuori dai posti liberi lo segni sotto la tua responsabilità.
+3. Scrivi l'**Ora** (8:15) e scegli **Con chi** (qui è obbligatorio).
+4. Compila il cliente e premi **Salva la prenotazione**. Il messaggio dice "È fuori dagli orari liberi".
+
+Anche così il sito **non** ti lascia segnare due appuntamenti insieme per la stessa persona: se a quell'ora (o in parte
+di quell'ora) Anna ha già un cliente, compare "Anna a quell'ora ha già un appuntamento" e niente viene salvato. I campi
+che hai scritto restano: cambi l'ora e premi di nuovo **Salva la prenotazione**.
 
 ### L'agenda e le prenotazioni nel pannello
 
@@ -1824,9 +2137,8 @@ In cima alla scheda, secondo il momento, compaiono anche **Conferma** (se le con
 Un appuntamento confermato, passata l'ora, diventa da solo **Svolto**. Promemoria e appuntamenti svolti li fa il cron
 frequente, ogni 5 minuti (capitolo 26): controlla in **Impostazioni > Log cron** che giri.
 
-**Cosa non c'è ancora (beta).** Una prenotazione presa al telefono non si può scrivere dal pannello: per ora tienila
-fuori dal sito, oppure prenota tu dal sito al posto del cliente (con la sua email, se vuole le email). Non ci sono
-pagamenti né caparre online, servizi con più persone insieme, appuntamenti oltre la mezzanotte.
+**Cosa non c'è ancora (beta).** Non ci sono pagamenti né caparre online, servizi con più persone insieme, appuntamenti
+oltre la mezzanotte.
 
 **Checklist**
 
@@ -1838,6 +2150,8 @@ pagamenti né caparre online, servizi con più persone insieme, appuntamenti olt
 - [ ] Il widget **Prenota** è in una pagina pubblicata, e la pagina è nel menu.
 - [ ] Ho fatto una prenotazione di prova con la mia email: la conferma è arrivata e il file del calendario si apre.
 - [ ] La prenotazione di prova è nell'Agenda; l'ho annullata dal link dell'email.
+- [ ] Ho scritto una prenotazione da **Nuova prenotazione**: la scheda dice "scritta dal pannello".
+- [ ] Per chi prenota al telefono senza email: mi ricordo di avvisarlo a voce se cambia qualcosa.
 
 ---
 
@@ -1876,7 +2190,8 @@ Apri **Eventi > Eventi** e premi **Aggiungi un evento**.
 1. **Titolo**: "Serata di degustazione".
 2. **Inizio**: il giorno e l'ora (21:00). **Fine** è facoltativa.
 3. **Luogo**: "Sede dell'associazione"; accanto **Indirizzo** ("Via Rizzoli 1, Bologna"), **Prezzo** ("15 € a persona")
-   e **Foto**: in Media apri la foto, copia il suo indirizzo e incollalo qui. **Descrizione**: testo semplice, una riga
+   e **Foto**: premi **Scegli dai Media** e scegli la foto, o caricane una nuova dalla stessa finestra (capitolo 7).
+   **Descrizione**: testo semplice, una riga
    vuota fa un paragrafo nuovo.
 4. **Posti in tutto**: 30 (0 = senza limite).
 5. **Posti al massimo per persona**: 2.
@@ -1939,7 +2254,8 @@ verde dice quanti. Un evento con iscritti non si elimina: mettilo **Annullato** 
 
 **Cosa non c'è ancora (beta).** Il pagamento dei posti online: il prezzo si scrive, si paga come sempre (all'ingresso,
 con un bonifico). Non ci sono biglietti con il codice QR, eventi che si ripetono (ogni data è un evento a sé) né domande
-in più nel modulo. Gli inviti a lasciare una recensione dopo un evento non partono da soli (capitolo 35).
+in più nel modulo. Gli inviti a lasciare una recensione dopo un evento partono da soli se lo scegli in Raccolta
+recensioni (capitolo 35, "Dopo un evento").
 
 **Checklist**
 
@@ -2011,6 +2327,33 @@ Gli inviti partono al prossimo giro del cron (ogni 5 minuti). Per mandarli subit
 L'elenco dice per ognuno: In coda (e quando parte), Mandato (e fino a quando vale il link), Recensione lasciata,
 Annullato. Un invito in coda si può **Annullare**; uno non usato si può **Eliminare**.
 
+### Dopo un evento
+
+Se usi anche l'addon **Eventi con iscrizione** (capitolo 34), qualche giorno dopo una serata, un corso o un laboratorio
+gli iscritti ricevono l'email "Com'è andata?" con le stelle, come i clienti delle prenotazioni.
+
+**Esempio.** Venerdì c'è la "Serata dei vini", con venti iscritti. Vuoi chiedere un parere solo a chi è venuto davvero.
+
+1. Apri **Recensioni > Impostazioni**.
+2. Nel riquadro **Quando chiedere** lascia la spunta **Chiedi da solo dopo ogni evento**. (Se l'addon Eventi è spento,
+   accanto c'è scritto.)
+3. In **Dopo un evento, a chi** scegli **Solo a chi segno Presente in Eventi > Iscritti**.
+4. In **Dopo quanti giorni** lascia 2: vale per gli appuntamenti e per gli eventi, e si conta dalla fine.
+5. Premi **Salva**.
+6. Durante la serata (o nei giorni dopo) apri **Eventi > Iscritti**, scegli la serata e premi **Presente** accanto a chi
+   è venuto (**Assente** per chi non è venuto).
+7. Due giorni dopo la fine della serata, a chi è segnato Presente parte l'email "Com'è andata?". In **Recensioni >
+   Inviti** li vedi con **Dopo un evento** e il titolo dell'evento.
+
+Le presenze puoi segnarle anche il giorno dopo: l'invito parte lo stesso. Se segni Assente qualcuno per sbaglio, il suo
+invito si ferma; rimettilo Presente e riparte (sempre uno solo).
+
+Se scegli **A tutti gli iscritti (tranne chi segno Assente)**, l'email arriva a tutti gli iscritti tranne chi segni
+Assente: comodo se le presenze non le segni mai.
+
+Chi cancella l'iscrizione non riceve l'invito. Se annulli l'evento o lo sposti più avanti, gli inviti non ancora partiti
+si fermano; partono dopo la nuova data. Chi ha chiesto "Non scrivermi più" non riceve niente, come sempre.
+
 ### Cosa vede la cliente
 
 L'email "Com'è andata?" ha cinque stelle: un clic su una stella apre la pagina del sito con quel voto già scelto.
@@ -2052,8 +2395,8 @@ solo quelle da 4 stelle in su, le colonne, e il pulsante per Google.
 Le stelle non vanno nei dati per Google: Google non le mostra per le recensioni che un'attività raccoglie sul proprio
 sito. (Il widget **Recensioni** del capitolo 8, scritto a mano, resta: questo è quello che si riempie da solo.)
 
-**Cosa non c'è ancora (beta).** Gli inviti partono da soli solo dopo le prenotazioni (capitolo 33), non dopo gli eventi
-(capitolo 34) o gli ordini della vetrina (capitolo 36): per quelli si usano gli **Inviti** a mano. Non si possono
+**Cosa non c'è ancora (beta).** Gli inviti partono da soli dopo le prenotazioni (capitolo 33) e dopo gli eventi
+(capitolo 34), non dopo gli ordini della vetrina (capitolo 36): per quelli si usano gli **Inviti** a mano. Non si possono
 allegare foto alle recensioni, né importare quelle di Google.
 
 **Checklist**
@@ -2061,6 +2404,9 @@ allegare foto alle recensioni, né importare quelle di Google.
 - [ ] L'addon è acceso e la posta del sito funziona.
 - [ ] Impostazioni: giorni, validità, testo dell'email, link di Google (https), avvisi.
 - [ ] Con Prenotazioni acceso: **Chiedi da solo dopo ogni appuntamento svolto** è spuntata.
+- [ ] Con Eventi acceso: **Chiedi da solo dopo ogni evento** è spuntata, ho scelto "solo a chi segno Presente" oppure "a
+  tutti gli iscritti", e segno le presenze in **Eventi > Iscritti**.
+- [ ] In **Recensioni > Inviti** compaiono gli inviti **Dopo un evento**.
 - [ ] Ho mandato un invito alla mia email: è arrivato, le stelle aprono la pagina.
 - [ ] La recensione di prova è arrivata nel pannello; l'ho approvata e ho risposto.
 - [ ] Il widget **Recensioni dal sito** è in una pagina pubblicata.
@@ -2121,8 +2467,10 @@ Apri **Vetrina > Prodotti** e premi **+ Nuovo prodotto**. Una tazza scontata, co
 1. **Nome**: "Tazza smaltata". Sotto, la **Frase breve** ("Fatta a mano, 300 ml") e la **Descrizione**.
 2. **Prezzo**: 18,00.
 3. **Prezzo scontato**: 15,00. Sul sito il 18 esce barrato.
-4. **Aggiungi foto**: scegli due foto insieme (JPG, PNG o WebP). Dopo il salvataggio le vedi in fila: **Principale**
-   sceglie quella della griglia, **Togli** la toglie. Le foto si alleggeriscono da sole e finiscono anche in Media.
+4. **Le foto** si aggiungono in due modi: **Scegli dai Media** prende una foto già caricata (o la carica dalla
+   finestra, capitolo 7) e la mette nell'elenco; **Oppure carica dal computer** ne prende anche più di una insieme (JPG,
+   PNG o WebP). Ogni foto ha **Principale** (quella della griglia e di Google) e **Togli**. Le foto aggiunte si salvano
+   con **Salva il prodotto**; si alleggeriscono da sole e finiscono anche in Media.
 5. **Scorte**: 3. Scendono da sole a ogni ordine; a zero il prodotto risulta esaurito. Vuote: non le conti.
 6. **In evidenza**: la tazza comparirà nel widget Prodotti. Sopra, **Sul sito** resta spuntato; più a destra, in
    **Categorie**, spunta "Tazze".
@@ -2375,7 +2723,27 @@ e nemmeno i motori di ricerca lo leggono.
 
 Chi preme Accedi e scrive email e password torna proprio a quella pagina, aperta.
 
+**Dove non compare più.** Dalla 2.1.0 un contenuto solo per i membri, **titolo e riassunto compresi**, per chi non è
+entrato non compare più nella ricerca del sito, nel blog, nelle pagine delle categorie e dei tag, negli archivi, nel feed
+RSS, nella sitemap e nei widget degli articoli (come Griglia di contenuti). Un membro collegato lo vede nella ricerca,
+nel blog, nelle categorie, nei tag, negli archivi e nei widget, come gli altri contenuti. Il feed, la sitemap e i file
+per le intelligenze artificiali (llms.txt e llms-full.txt) non lo hanno mai: così Google e Bing non lo trovano da lì.
+
 > Se spegni l'addon, le pagine e gli articoli riservati tornano visibili a tutti.
+
+### Solo per i membri, dalla scheda del contenuto
+
+Un articolo o una pagina si rende riservato anche dalla sua scheda, senza passare da Membri.
+
+![Il riquadro Area riservata nella scheda](immagini/manuale-uso/38-scheda.jpg)
+
+1. Apri **Articoli** (o **Pagine**) e fai clic sul titolo: si apre la scheda.
+2. Nella colonna di destra c'è il riquadro **Area riservata** con la spunta **Solo per i membri**.
+3. Spuntala e premi **Aggiorna** (o **Pubblica**). Per renderlo di nuovo di tutti: togli la spunta e **Aggiorna**.
+4. In **Membri > Contenuti e file riservati** lo trovi spuntato anche lì: sono la stessa scelta.
+
+La **home** non si può rendere riservata: la spunta è spenta e c'è scritto "La home resta di tutti". Il riquadro lo vede
+solo l'**amministratore**, come le pagine Membri: il redattore non lo vede.
 
 ### Mettere "Accedi" sul sito
 
@@ -2430,16 +2798,18 @@ password (vale 7 giorni): scelta la password, è dentro. Funziona con ogni tipo 
 
 **Esporta**: **Scarica l'elenco (CSV)**, da aprire con Excel. Sono dati personali: tienili al sicuro. Il numero dei **Membri attivi** è anche in Dashboard, nel riquadro **Richieste e form**.
 
-**Cosa non c'è ancora (beta).** Non si riserva un contenuto dalla sua scheda: si fa da **Contenuti e file riservati**.
-Il titolo e il riassunto di un contenuto riservato restano visibili nella ricerca del sito, come nella pagina chiusa. Non
-ci sono livelli diversi di membri (tutti vedono gli stessi contenuti riservati) né abbonamenti a pagamento.
+**Cosa non c'è ancora (beta).** Non ci sono livelli diversi di membri (tutti vedono gli stessi contenuti riservati) né
+abbonamenti a pagamento.
 
 **Checklist**
 
 - [ ] La posta del sito funziona (capitolo 25): ai membri arrivano le email di conferma.
 - [ ] L'addon è acceso e nel menu c'è **Membri**.
 - [ ] Ho scelto chi può iscriversi e scritto il testo per chi non è entrato.
-- [ ] Contenuti e file riservati sono spuntati e salvati; da una finestra in incognito vedo solo il titolo.
+- [ ] Contenuti e file riservati sono spuntati e salvati (da Membri o dal riquadro **Area riservata** della scheda); da
+  una finestra in incognito vedo solo il titolo.
+- [ ] Da una finestra in incognito il contenuto riservato non c'è nella ricerca (`/?s=` con il titolo), nel blog, in
+  `/sitemap.xml` e in `/feed/`; da membro collegato la ricerca lo trova.
 - [ ] Sul sito c'è un modo per arrivare ad Accedi (widget **Accesso membri** o voce di menu).
 - [ ] Mi sono iscritto con un'email di prova: la conferma arriva, e dopo sono dentro.
 - [ ] L'informativa privacy parla anche degli account del sito.
@@ -2473,7 +2843,7 @@ Apri **Corsi**.
 ![La pagina del corso, con il programma](immagini/manuale-uso/39-corso.jpg)
 
 A sinistra, **Il corso**: **Titolo**, **Indirizzo**, **Descrizione** (due o tre frasi su cosa si impara), **Immagine**
-(facoltativa: l'indirizzo di un'immagine di Media) e **Chi può seguirlo**: **Tutti i membri**, oppure **Solo i membri a
+(facoltativa: premi **Scegli dai Media**, capitolo 7) e **Chi può seguirlo**: **Tutti i membri**, oppure **Solo i membri a
 cui lo assegno**.
 
 1. **Stato**: lascia **Bozza** finché il corso non è pronto, poi **Pubblicato**, e premi **Salva il corso**.
@@ -2485,22 +2855,77 @@ A destra, il **Programma**: un corso è fatto di **moduli** (i capitoli) e ogni 
    lezione.
 4. Per un altro modulo ("Pratica"): **Nome del modulo nuovo**, poi **Aggiungi modulo**.
 
-Le frecce **↑** e **↓** spostano moduli e lezioni, un posto alla volta: i membri seguono le lezioni in quest'ordine.
 **Modifica** riapre una lezione, **Elimina** la toglie.
+
+### Cambiare l'ordine trascinando
+
+Nel riquadro **Programma** ogni modulo e ogni lezione ha a sinistra una **maniglia**: sei puntini (&#10303;).
+
+1. Metti il mouse (o il dito) sulla maniglia di una lezione, tieni premuto e trascina la lezione dove la vuoi: più su,
+   più giù, anche dentro un altro modulo (anche vuoto).
+2. Lascia andare. Sotto la spiegazione del Programma compare "Ordine salvato." Non c'è niente da premere.
+3. Allo stesso modo si spostano i moduli interi, dalla maniglia accanto al loro nome.
+
+Le frecce **&uarr;** e **&darr;** restano: spostano di un posto alla volta, e si usano anche con la tastiera (tasto Tab
+fino alla freccia, poi Invio). I membri seguono le lezioni nell'ordine del programma, modulo dopo modulo.
+
+Se compare "L'ordine non è stato salvato" (o "Ordine non salvato: riprova"), la pagina si ricarica da sola con l'ordine
+giusto: riprova.
 
 ### Scrivere una lezione
 
 ![La scheda di una lezione](immagini/manuale-uso/39-lezione.jpg)
 
-1. **Testo della lezione**: si scrive in HTML semplice, `<p>...</p>` per un paragrafo, `<h2>...</h2>` per un titolo,
-   `<b>...</b>` per il grassetto, `<ul><li>...</li></ul>` per un elenco. Puoi incollare il testo di un articolo. Script e
-   codice pericoloso si tolgono da soli al salvataggio.
+1. **Testo della lezione**: si scrive con l'editor visuale, come una pagina del sito (qui sotto, "Il testo con l'editor
+   visuale").
 2. **Video**: l'**Indirizzo di YouTube o Vimeo** (copialo dalla barra del browser mentre guardi il video), oppure
    **Carica un video** (.mp4 o .webm, fino al limite del server scritto sotto: lo vede solo chi segue il corso).
 3. **Materiali da scaricare**: spunta i file. Sono i file **riservati** di Download: lì si caricano, con la spunta
    Riservato.
 4. **Durata** (facoltativa): "10 minuti". In **Dove sta** scegli anche il modulo.
 5. Premi **Salva la lezione**. Con **Vedi sul sito**, in alto, la guardi come la vedrà un membro.
+
+### Il testo con l'editor visuale
+
+Il testo di una lezione si scrive come una pagina del sito, con l'**editor visuale** (capitolo 8): titoli, testo,
+immagini, elenchi, pulsanti, video, schede, tabelle e tutti gli altri widget. Non serve l'HTML.
+
+**Esempio.** La lezione "La luce".
+
+![Il testo della lezione nell'editor visuale](immagini/manuale-uso/39-lezione-editor.jpg)
+
+1. Apri **Corsi**, il corso "Fotografia per cominciare", e nel **Programma** premi **Modifica** accanto alla lezione
+   "La luce" (o aggiungi una lezione nuova: si apre la sua pagina).
+2. Nella pagina della lezione, a destra, metti il video e la durata come prima.
+3. A sinistra, sotto il titolo, c'è **Testo della lezione**. Premi **Scrivi il testo con l'editor visuale**. (Il
+   pulsante salva anche titolo, video e materiali della pagina.)
+4. Si apre l'editor. Nella tela vedi la lezione come la vedrà il membro: in alto il nome del modulo, "lezione 1 di 3" e
+   il titolo; sotto, un widget Testo con scritto "Scrivi qui il testo della lezione".
+5. Fai doppio clic sul testo: a sinistra, nella scheda **Modifica**, si apre la casella del testo. Scrivi, per esempio:
+   "La luce migliore arriva presto, appena dopo l'alba."
+6. Per aggiungere altro, trascina un widget dalla scheda **Widget** (per esempio **Titolo** o **Immagine**) nella tela.
+7. Premi **Pubblica** in alto a destra. Compare "Pubblicata alle ...". (Con **Salva bozza** il membro non vede ancora
+   niente di nuovo.)
+8. Premi la freccia in alto a sinistra: torni alla pagina della lezione, che adesso dice **Pubblicato**. Il pulsante
+   diventa **Modifica il testo con l'editor visuale** (con una bozza non pubblicata, **Continua con l'editor visuale**).
+
+Per vedere la lezione come un membro premi **Vedi la pagina** nell'editor (o **Vedi sul sito** nella pagina della
+lezione). Nella finestra **Impostazioni** dell'editor c'è solo il titolo: indirizzo, video, materiali e modulo si
+cambiano nella pagina della lezione. **Revisioni** tiene ogni salvataggio, come per le pagine (capitolo 12).
+
+**Le lezioni scritte prima, in HTML.** Le lezioni scritte con la versione 2.0.0 restano come sono: i membri le vedono
+uguali. Nella loro pagina, sotto **Testo della lezione**, vedi il testo di prima e il pulsante **Apri il testo
+nell'editor visuale**.
+
+1. Premi **Apri il testo nell'editor visuale**.
+2. Il testo entra nell'editor così com'è: in un widget **Testo** se è testo semplice (paragrafi, grassetto, elenchi,
+   link); in un widget **HTML** se ha cose che il widget Testo non tiene (una tabella, un video incorporato).
+3. È una **bozza**: finché non premi **Pubblica**, i membri vedono il testo di prima. La pagina della lezione lo dice:
+   "Bozza non pubblicata. I membri vedono ancora il testo di prima."
+4. Sistemalo con calma e premi **Pubblica**.
+
+Niente si perde: il testo di prima resta salvato. Se vuoi tornare indietro, nell'editor apri **Revisioni** e premi
+**Torna al contenuto della scheda**: la lezione torna al testo di prima.
 
 ### Chi segue il corso
 
@@ -2546,8 +2971,7 @@ visita e il codice del certificato, se c'è.
 Per mostrare i corsi in una pagina: nell'editor, gruppo **Dal sito**, il widget **Elenco corsi** (tutti i corsi
 pubblicati, oppure solo quelli che chi guarda può seguire). Oppure un link a `/corsi/` nel menu.
 
-**Cosa non c'è ancora (beta).** Il testo della lezione si scrive in HTML, non con l'editor visuale; lezioni e moduli si
-spostano con le frecce, non trascinandoli. Non ci sono quiz né corsi a pagamento. Un video di YouTube o Vimeo lo vede
+**Cosa non c'è ancora (beta).** Non ci sono quiz né corsi a pagamento. Un video di YouTube o Vimeo lo vede
 chiunque abbia il suo indirizzo su quei servizi: per un video davvero privato caricalo nel sito, o usa Vimeo con il
 dominio limitato.
 
@@ -2555,7 +2979,12 @@ dominio limitato.
 
 - [ ] L'Area riservata funziona: iscrizione e accesso provati (capitolo 38).
 - [ ] Il corso ha la descrizione, almeno un modulo e le lezioni nell'ordine giusto.
-- [ ] Ogni lezione ha testo o video, e l'ho guardata con **Vedi sul sito**.
+- [ ] Ogni lezione ha testo o video, il testo è scritto nell'editor visuale con **Pubblica** premuto, e la pagina della
+  lezione dice "Pubblicato".
+- [ ] L'ho guardata con **Vedi sul sito** (o **Vedi la pagina** nell'editor).
+- [ ] Le lezioni scritte prima della 2.1.0 le ho aperte nell'editor, controllate e pubblicate.
+- [ ] Ho messo lezioni e moduli in ordine trascinandoli: "Ordine salvato.", e ricaricando la pagina l'ordine è quello
+  nuovo.
 - [ ] I materiali sono riservati in Download e spuntati nelle lezioni.
 - [ ] Il corso è **Pubblicato** e chi deve seguirlo può (tutti i membri, oppure assegnato).
 - [ ] Con un membro di prova: Inizia, Segna come completata, Riprendi, certificato, verifica del codice.
@@ -2567,11 +2996,11 @@ dominio limitato.
 
 **A cosa serve.** La **Copia del sito** (capitolo 29) fa uno zip di tutto il sito, ma se resta sullo stesso server,
 quando il server si rompe la perdi insieme al sito. Con questo addon, **ogni notte** la copia parte da sola verso un altro
-spazio: un altro hosting via FTP, un Nextcloud, uno spazio cloud con WebDAV.
+spazio: un altro hosting via FTP, un Nextcloud, uno spazio cloud con WebDAV, il tuo **Google Drive** o il tuo **Dropbox**.
 
 Cosa ti serve: uno spazio di destinazione con nome utente e password (un FTP, spesso lo dà anche un altro hosting,
-oppure WebDAV: Nextcloud, ownCloud, Koofr, pCloud...) e il cron del sito attivo (capitolo 26): è lui che ogni notte fa
-partire la copia.
+oppure WebDAV: Nextcloud, ownCloud, Koofr, pCloud...), oppure un account Google o Dropbox (più sotto, "Google Drive" e
+"Dropbox"), e il cron del sito attivo (capitolo 26): è lui che ogni notte fa partire la copia.
 
 **Esempio.** Mario tiene le copie del sito sul Nextcloud della sua associazione: ne vuole quattordici, una per notte.
 
@@ -2586,7 +3015,8 @@ Accendi l'addon (capitolo 32): in **Impostazioni**, subito sotto Copia del sito,
 
 ![La destinazione: un Nextcloud](immagini/manuale-uso/40-destinazione.jpg)
 
-1. **Tipo**: FTP, **FTPS (FTP cifrato)**, SFTP o **WebDAV (Nextcloud e molti spazi cloud)**. Per Mario, WebDAV. Se
+1. **Dove mandare le copie**: **Google Drive**, **Dropbox**, FTP, **FTPS (FTP cifrato)**, SFTP o **WebDAV (Nextcloud e
+   molti spazi cloud)**. Per Mario, WebDAV. Se
    accanto a un tipo c'è "non disponibile su questo server", il server del sito non ha quello che serve (per SFTP lo
    spiega la frase sotto: manca l'estensione ssh2).
 2. **Indirizzo WebDAV**: quello copiato dal Nextcloud, con `https://`. Per FTP, FTPS e SFTP ci sono invece **Server**
@@ -2621,6 +3051,91 @@ Poi premi **Manda una copia adesso** e conferma. Su un sito grande ci vuole qual
 
 Da quella notte parte da sola, quando gira il cron.
 
+### Google Drive
+
+Si fa una volta sola e ci vogliono circa 10 minuti. Il sito non conosce la tua password di Google: tu crei una piccola
+"app" tua, che dà al sito il permesso di scrivere le copie, e lo puoi togliere quando vuoi. Ti serve l'account Google
+dove vuoi le copie.
+
+![Il riquadro Google Drive](immagini/manuale-uso/40-gdrive.jpg)
+
+1. Nel pannello: **Impostazioni > Copia altrove**.
+2. In **Dove mandare le copie** scegli **Google Drive**. Compare il riquadro Google Drive con scritto "Non ancora
+   collegato" e i passi da seguire.
+3. Fai clic sull'indirizzo nel campo **Indirizzo da incollare (URI di reindirizzamento)**: si copia da solo. Ti serve al
+   passo 9.
+4. Apri, in un'altra scheda del browser, **console.cloud.google.com** ed entra con il tuo account Google.
+5. In alto premi il nome del progetto (o **Seleziona un progetto**), poi **Nuovo progetto**. Nome: "Copie del sito".
+   Premi **Crea** e poi scegli il progetto appena creato.
+6. Nel menu a sinistra: **API e servizi > Libreria**. Cerca "Google Drive API", aprila e premi **Abilita**.
+7. Nel menu: **Google Auth Platform** (prima si chiamava "Schermata consenso OAuth"). Premi **Inizia**: nome dell'app
+   ("Copie del sito"), la tua email, Pubblico **Esterno**, di nuovo la tua email, accetta e premi **Crea**.
+8. Sempre lì, in **Pubblico**, premi **Pubblica app** e conferma. **Non saltarlo**: un'app lasciata "in test" perde il
+   permesso dopo 7 giorni e le copie si fermano. Google non chiede di verificare l'app: chiede solo di vedere i file che
+   crea lei.
+9. In **Client** premi **Crea client**. Tipo di applicazione: **Applicazione web**. In **URI di reindirizzamento
+   autorizzati** premi **Aggiungi URI** e incolla l'indirizzo del passo 3. Premi **Crea**.
+10. Google mostra **ID client** e **Client secret**. Copiali, uno alla volta, nei campi **ID client** e **Client secret**
+    del pannello.
+11. Scrivi la **Cartella sulla destinazione** (per esempio "copie-del-sito"), **Quante copie tenere sulla destinazione**
+    (per esempio 7) e spunta **Manda una copia ogni notte**.
+12. Premi **Salva e collega con Google Drive**. Si apre la pagina di Google.
+13. Scegli il tuo account e premi **Continua** (o **Consenti**). Se Google mostra un avviso sull'app, è la tua: premi
+    **Avanzate** e poi **Vai a ...**.
+14. Torni da solo nel pannello. Compare "Collegato a Google Drive come ...". Il riquadro dice "Collegato come ... dal
+    ...".
+15. Premi **Prova la connessione**: "Collegamento riuscito: la cartella si apre e si può scrivere".
+16. Premi **Manda una copia adesso** e conferma. Dopo qualche minuto: "Copia mandata". Nel tuo Google Drive c'è la
+    cartella "copie-del-sito" con dentro lo zip (`copia-<data>-<ora>-altrove.zip`).
+
+*Da sapere: Google Drive e Dropbox sono provati contro due servizi finti che si comportano come quelli veri, non ancora
+con Google e Dropbox veri. I nomi delle voci nelle loro pagine possono essere un po' diversi da quelli scritti qui.*
+
+### Dropbox
+
+Ti serve il tuo account Dropbox.
+
+1. Nel pannello: **Impostazioni > Copia altrove**. In **Dove mandare le copie** scegli **Dropbox**.
+2. Fai clic sull'indirizzo nel campo **Indirizzo da incollare (Redirect URI)**: si copia da solo.
+3. Apri **dropbox.com/developers/apps** ed entra.
+4. Premi **Create app**. Scegli **Scoped access**, poi **App folder** (l'app vede solo la sua cartella, non il resto del
+   tuo Dropbox). Nome: per esempio "copie-sito-" e il nome del tuo sito. Premi **Create app**.
+5. Scheda **Permissions**: spunta **files.metadata.read**, **files.content.write** e **files.content.read**. Premi
+   **Submit** in fondo. Va fatto **prima** di collegare: i permessi aggiunti dopo valgono solo collegando di nuovo.
+6. Scheda **Settings**: in **Redirect URIs** incolla l'indirizzo del passo 2 e premi **Add**.
+7. Sempre in Settings: **App key** e **App secret** (premi **Show**). Copiali nei campi **App key** e **App secret** del
+   pannello.
+8. Cartella, quante copie tenere e **Manda una copia ogni notte** come per Google Drive.
+9. Premi **Salva e collega con Dropbox**, poi nella pagina di Dropbox **Consenti** (Allow). Torni nel pannello:
+   "Collegato a Dropbox come ...".
+10. **Prova la connessione**, poi **Manda una copia adesso**. Le copie sono nel tuo Dropbox in **Applicazioni**, nella
+    cartella con il nome dell'app, poi "copie-del-sito".
+
+**Cosa fa da solo il sito.**
+
+- **Il permesso si rinnova da solo**: Google e Dropbox danno un accesso che dura un'ora; il sito ne chiede uno nuovo
+  quando serve, senza che tu faccia niente.
+- **Le copie grandi viaggiano a pezzi** (8 MB alla volta): se un pezzo non arriva, il sito riprende da dove era.
+- **Restano le ultime copie** che hai scelto; le più vecchie si cancellano da sole. Gli altri file della cartella mai.
+- **Il segreto dell'app e i permessi si salvano cifrati** e non si vedono mai più nel pannello.
+
+**Scollegare.** Nel riquadro **Adesso** premi **Scollega Google Drive** (o **Scollega Dropbox**) e conferma. Il sito
+chiede al servizio di togliere il permesso e lo dimentica; l'invio di ogni notte si spegne. Le copie già mandate restano
+nel tuo Drive o Dropbox. Per ricollegare basta **Salva e collega di nuovo** (ID e segreto dell'app restano salvati).
+
+**Se qualcosa non va con Google Drive o Dropbox**
+
+| Messaggio | Cosa fare |
+|---|---|
+| "L'ID client di Google finisce con .apps.googleusercontent.com" | Hai incollato un'altra cosa: copia di nuovo l'ID client dalla pagina Client |
+| Pagina di Google con "redirect_uri_mismatch" | L'indirizzo nell'app non è identico a quello del pannello: copialo di nuovo (passo 3) e incollalo (passo 9) |
+| "Non hai dato il permesso a ..." | Hai premuto Annulla: premi di nuovo Salva e collega e poi Consenti |
+| "Questa risposta non è partita da qui, oppure è già stata usata" | Sono passati più di 15 minuti, o hai ricaricato la pagina: premi di nuovo Salva e collega |
+| "Il collegamento con ... non vale più" (anche per email, di notte) | Il permesso è stato tolto, o l'app Google è rimasta "in test": pubblicala e premi Salva e collega |
+| "La Google Drive API non è abilitata" | Passo 6 di Google Drive |
+| "All'app di Dropbox manca un permesso" | Passo 5 di Dropbox, poi Salva e collega di nuovo |
+| "... è pieno" | Libera spazio o tieni meno copie |
+
 ### Il registro
 
 Nel riquadro **Registro degli invii** c'è ogni prova e ogni invio: quando, cosa (Copia della notte, Copia mandata a
@@ -2634,17 +3149,20 @@ avvisi. La copia resta comunque sul server, in Impostazioni > Copia del sito.
 ### Rimettere il sito da una copia
 
 Scarica lo zip dalla destinazione e caricalo in **Impostazioni > Copia del sito > Ripristina** (capitolo 29). Dopo un
-ripristino su un'installazione nuova la password della destinazione va riscritta: per sicurezza la chiave che la decifra
-non sta nella copia.
+ripristino su un'installazione nuova la password della destinazione va riscritta (per Google Drive e Dropbox, il
+secret dell'app, poi **Salva e collega**): per sicurezza la chiave che la decifra non sta nella copia.
 
-**Cosa non c'è ancora (beta).** **Google Drive e Dropbox** non ci sono: non parlano WebDAV e vogliono un collegamento a
-parte. Chi usa Nextcloud, ownCloud, Koofr, pCloud o un FTP è coperto. SFTP c'è, ma è provato solo dove il server ha
+**Cosa non c'è ancora (beta).** Google Drive e Dropbox sono provati solo contro servizi finti (vedi sopra). SFTP c'è, ma è provato solo dove il server ha
 l'estensione ssh2. Con FTPS i dati viaggiano cifrati ma il certificato del server non si controlla: per il massimo della
 sicurezza, WebDAV su https.
 
 **Checklist**
 
 - [ ] Il cron del sito gira ogni notte (Log cron: l'ultimo giro è di stanotte).
+- [ ] Con Google Drive: Google Drive API abilitata, app **pubblicata** (Pubblico > Pubblica app), client di tipo
+  **Applicazione web** con l'indirizzo del pannello fra gli URI di reindirizzamento, "Collegato come ...".
+- [ ] Con Dropbox: app "App folder" con i tre permessi spuntati e salvati (Submit), Redirect URI aggiunto, "Collegato
+  come ...".
 - [ ] **Prova la connessione** dice "Collegamento riuscito".
 - [ ] **Manda una copia adesso** ha funzionato e lo zip c'è sulla destinazione.
 - [ ] **Manda una copia ogni notte** è spuntato.
@@ -2693,7 +3211,7 @@ sicurezza, WebDAV su https.
 | Stamattina non è arrivata l'email "Oggi sul sito" | Quel giorno non usciva niente, o il cron non gira, o manca l'indirizzo degli avvisi (capitolo 21) |
 | Ho fatto il riquadro in fondo agli articoli ma sul sito non c'è | Non l'hai pubblicato (nell'editor premi **Pubblica**) o è spento: Articoli > Aggiungi sempre alla fine, **Accendi** (capitolo 16) |
 | Un articolo programmato non è uscito | Controlla data e ora nella scheda; controlla che il cron giri (Log cron) |
-| Le email non arrivano | Configurazione email, email di prova; guarda lo spam (capitolo 25) |
+| Le email non arrivano | Configurazione email, email di prova; guarda lo spam. Se finiscono lì: Impostazioni > Consegna delle email (capitolo 25) |
 | "Il file supera il limite di caricamento del server" | File troppo grande per l'hosting: rimpiccioliscilo o chiedi all'hosting di alzare il limite |
 | Una pagina è sparita dal menu | Editor > Menu di navigazione: rimettila e premi Salva il menu |
 | Un pulsante non porta da nessuna parte | Nel campo Link scrivi l'indirizzo intero (`https://...`) o la pagina con la barra davanti (`/contatti/`). Dalla 2.0.2 vanno bene anche `www.sito.it` e il solo nome della pagina |

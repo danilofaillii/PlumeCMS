@@ -166,3 +166,5 @@ Il registro lo dice: «Tabelle di un'altra installazione nello stesso database, 
 - [ ] Dopo il ripristino: riquadro con i file spostati (o «Nessun file in più»)
 - [ ] Sezione «File messi da parte dai ripristini» con la riga del ripristino
 - [ ] Con «Tieni i file in più» i file restano
+
+Portata nel manuale d'uso il 2026-10-31, capitoli 40 ("Google Drive", "Dropbox"), 38 ("Dove non compare più", "Solo per i membri, dalla scheda del contenuto") e 29 ("Il ripristino pulito").
