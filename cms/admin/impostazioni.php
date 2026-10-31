@@ -63,6 +63,11 @@ require_once __DIR__ . '/includes/admin-header.php';
       I dati sono quelli della casella email che spedisce, li trovi nel pannello dell'hosting (cPanel, Account email, "Connetti dispositivi").
       Se lasci vuoto il server, il pannello prova con mail() di PHP.
     </p>
+    <p style="font-size:0.85rem;color:var(--text-muted);margin-bottom:1rem" id="posta-brevo-smtp">
+      Con <b>Brevo</b> via SMTP: server <code>smtp-relay.brevo.com</code>, porta <code>587</code>, sicurezza STARTTLS, utente il Login della pagina SMTP e API di Brevo, password una chiave SMTP.
+      Per Brevo, Amazon SES o Mailgun con le API, per il controllo del dominio e per i rimbalzi: <a href="consegna.php">Consegna delle email</a>.
+      <?php $servAttivo = consegna_servizio_attivo(); if ($servAttivo !== ''): ?><br><b>Attenzione:</b> adesso le email partono da <?= h(CONSEGNA_SERVIZI[$servAttivo]) ?> (Consegna delle email, Come partono): i dati SMTP qui sotto non si usano.<?php endif; ?>
+    </p>
     <form method="post">
       <?= csrf_field() ?>
       <input type="hidden" name="action" value="save_posta">

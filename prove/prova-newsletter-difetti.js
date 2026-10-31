@@ -122,7 +122,7 @@ const senzaTag = s => s.replace(/<style[\s\S]*?<\/style>/gi, '').replace(/<[^>]+
   ok('2. un giro prima della conferma: nessun cammino fermato per chi aspetta la conferma', num("SELECT COUNT(*) FROM {p}newsletter_corsi c JOIN {p}newsletter_iscritti i ON i.id = c.iscritto_id WHERE i.email = 'anna@persona.it' AND c.stato = 'fermato'") === 0);
   await vai('/newsletter-conferma/?t=' + token(confA || { html: '', testo: '' }));
   const pagConf = await p.locator('body').innerText().catch(() => '');
-  ok('1. il link di conferma si apre: iscrizione confermata', /Sei dentro/.test(pagConf), pagConf.slice(0, 120));
+  ok('1. il link di conferma si apre: iscrizione confermata', /sei dentro/i.test(pagConf), pagConf.slice(0, 120));
   ok('1. dopo la conferma: attiva, nella lista del form e non nella principale', uno("SELECT stato FROM {p}newsletter_iscritti WHERE email = 'anna@persona.it'") === 'attivo' && JSON.stringify(liste('anna@persona.it')) === JSON.stringify([clienti]), liste('anna@persona.it'));
   // L'aggancio: chi ha confermato e da quale form.
   const b = await compila('bruno');

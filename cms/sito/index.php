@@ -172,8 +172,14 @@ try {
         $iscritto = newsletter_iscritto_da_uscita($i, $t);
         // POST: il pulsante della pagina, oppure l'uscita in un clic dei programmi di posta (List-Unsubscribe-Post).
         $fatto = $iscritto && ($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST';
-        if ($fatto) newsletter_esci((int)$iscritto['id']);
-        sito_html(200, ['titolo' => 'Uscita dalla newsletter - ' . SITO_NOME] + $cortesia, vista_newsletter_esci($iscritto, $fatto, $i, $t));
+        if ($fatto && $iscritto['stato'] !== 'spam') {
+            // 2.1.0: la disiscrizione si conta per la campagna (o il flusso) da cui arriva il link, se è firmata.
+            if ($iscritto['stato'] === 'attivo') newsletter_uscita_registra((int)$iscritto['id'], $q);
+            newsletter_esci((int)$iscritto['id']);
+        }
+        $resto = '';
+        foreach (['c', 'f', 'p', 'k'] as $x) if (isset($q[$x]) && is_string($q[$x]) && preg_match('/^[a-f0-9]{1,24}$/', $q[$x])) $resto .= "&$x=" . $q[$x];
+        sito_html(200, ['titolo' => 'Uscita dalla newsletter - ' . SITO_NOME] + $cortesia, vista_newsletter_esci($iscritto, $fatto, $i, $t, $resto));
     }
 
     // Pagina di ringraziamento dei form costruiti dal pannello.

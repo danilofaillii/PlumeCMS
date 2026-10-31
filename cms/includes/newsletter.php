@@ -72,6 +72,7 @@ function newsletter_schema(): void {
             `inviate` INT(11) NOT NULL DEFAULT 0,
             `errori` INT(11) NOT NULL DEFAULT 0,
             `liste` VARCHAR(255) NOT NULL DEFAULT '',
+            `mittente_id` INT(11) NOT NULL DEFAULT 0,
             `creato` DATETIME NOT NULL,
             `aggiornato` DATETIME NOT NULL,
             PRIMARY KEY (`id`), KEY `stato` (`stato`)
@@ -136,6 +137,9 @@ function newsletter_schema(): void {
         if (!in_array('errori_di_fila', $col, true)) db()->exec('ALTER TABLE ' . tbl('newsletter_iscritti') . ' ADD COLUMN `errori_di_fila` INT(11) NOT NULL DEFAULT 0 AFTER `ip`');
         if (!in_array('ultimo_errore', $col, true)) db()->exec('ALTER TABLE ' . tbl('newsletter_iscritti') . " ADD COLUMN `ultimo_errore` VARCHAR(255) NOT NULL DEFAULT '' AFTER `errori_di_fila`");
         if (!in_array('rimbalzato_at', $col, true)) db()->exec('ALTER TABLE ' . tbl('newsletter_iscritti') . ' ADD COLUMN `rimbalzato_at` DATETIME DEFAULT NULL AFTER `ultimo_errore`');
+        // 2.1.0: il mittente scelto per la campagna (0 = il predefinito), includes/consegna.php.
+        $col = db()->query('SHOW COLUMNS FROM ' . tbl('newsletter_campagne'))->fetchAll(PDO::FETCH_COLUMN);
+        if (!in_array('mittente_id', $col, true)) db()->exec('ALTER TABLE ' . tbl('newsletter_campagne') . ' ADD COLUMN `mittente_id` INT(11) NOT NULL DEFAULT 0 AFTER `liste`');
         $fatto = true;
         // La lista di partenza. Chi era iscritto prima delle liste entra nella principale, una volta sola: dalla 2.0.0
         // chi aspetta la conferma di un form non sta in nessuna lista, e non deve finire nella principale.
@@ -415,8 +419,41 @@ function newsletter_token_uscita(int $id): string {
     return substr(hash_hmac('sha256', 'uscita|' . $id, moduli_segreto()), 0, 32);
 }
 
-function newsletter_link_uscita(int $id): string {
-    return MODULI_URL . NEWSLETTER_ESCI . '?i=' . $id . '&t=' . newsletter_token_uscita($id);
+/**
+ * Il link di uscita. 2.1.0: con $traccia (['c' => campagna] o ['f' => flusso, 'p' => passo]) porta anche da quale email si
+ * esce, firmato (k): le statistiche contano le disiscrizioni per campagna (newsletter_uscita_registra).
+ */
+function newsletter_link_uscita(int $id, ?array $traccia = null): string {
+    $url = MODULI_URL . NEWSLETTER_ESCI . '?i=' . $id . '&t=' . newsletter_token_uscita($id);
+    if ($traccia) {
+        $c = (int)($traccia['c'] ?? 0); $f = (int)($traccia['f'] ?? 0); $p = (int)($traccia['p'] ?? 0);
+        if ($c || $f) $url .= "&c=$c&f=$f&p=$p&k=" . nl_firma($c, $f, $p, $id);
+    }
+    return $url;
+}
+
+/** Dopo un'uscita dal link: se il link porta la campagna (o il flusso) firmata, la disiscrizione si conta lì. */
+function newsletter_uscita_registra(int $id, array $q): void {
+    $c = (int)($q['c'] ?? 0); $f = (int)($q['f'] ?? 0); $p = (int)($q['p'] ?? 0);
+    $k = is_string($q['k'] ?? null) ? $q['k'] : '';
+    if (!$id || (!$c && !$f) || $k === '' || !hash_equals(nl_firma($c, $f, $p, $id), $k)) return;
+    newsletter_evento_interno('uscita', $c, $f, $p, $id);
+}
+
+/**
+ * 2.1.0: la persona ha premuto "è spam" (avviso del servizio di spedizione). Vale come uscita e soppressione: stato
+ * 'spam', niente più email (campagne, flussi, coda), l'importazione la salta. Solo una sua nuova iscrizione confermata
+ * la rimette dentro.
+ */
+function newsletter_segnala_spam(int $id): void {
+    newsletter_schema();
+    $st = db()->prepare('SELECT email FROM ' . tbl('newsletter_iscritti') . ' WHERE id = ?');
+    $st->execute([$id]);
+    $email = (string)$st->fetchColumn();
+    if ($email === '') return;
+    db()->prepare('UPDATE ' . tbl('newsletter_iscritti') . " SET stato = 'spam', uscito_at = NOW(), aggiornato = NOW() WHERE id = ?")->execute([$id]);
+    db()->prepare('DELETE FROM ' . tbl('newsletter_coda') . " WHERE iscritto_id = ? AND stato = 'attesa'")->execute([$id]);
+    db()->prepare('INSERT IGNORE INTO ' . tbl('newsletter_soppressi') . ' (impronta, creato) VALUES (?, NOW())')->execute([newsletter_impronta($email)]);
 }
 
 /** L'iscritto del link di uscita, se il link è autentico. */
@@ -549,7 +586,7 @@ function newsletter_importa_csv(string $file, int $lista, bool $flussi = false):
         if (newsletter_soppresso($email)) { $n['saltati']++; continue; }
         $chi->execute([$email]);
         $c = $chi->fetch();
-        if ($c && in_array($c['stato'], ['uscito', 'rimbalzato'], true)) { $n['saltati']++; continue; }
+        if ($c && in_array($c['stato'], ['uscito', 'rimbalzato', 'spam'], true)) { $n['saltati']++; continue; }
         if (!$c) {
             $ins->execute([$email, $pulisci($cN !== null ? ($r[$cN] ?? '') : ''), $pulisci($cC !== null ? ($r[$cC] ?? '') : ''), $cD !== null ? newsletter_data_csv((string)($r[$cD] ?? '')) : null, $ora, $ora]);
             $ins->rowCount() ? $n['nuovi']++ : $n['gia']++;
@@ -630,7 +667,7 @@ function newsletter_email(array $c, array $iscritto, ?array $traccia = null): ar
     if ($traccia === null && !empty($c['id'])) $traccia = ['c' => (int)$c['id']];
     $corpo = newsletter_personalizza(newsletter_corpo_email((string)$c['corpo']), $iscritto, true);
     $id = (int)($iscritto['id'] ?? 0);
-    $uscita = $id ? newsletter_link_uscita($id) : MODULI_URL . NEWSLETTER_ESCI;
+    $uscita = $id ? newsletter_link_uscita($id, $traccia) : MODULI_URL . NEWSLETTER_ESCI;
     $btn = (($c['pulsante_testo'] ?? '') !== '' && ($c['pulsante_link'] ?? '') !== '')
         ? '<p style="margin:26px 0"><a href="' . h($c['pulsante_link']) . '" target="_blank" style="display:inline-block;background:#7c3aed;color:#fff;padding:14px 26px;border-radius:10px;text-decoration:none;font-weight:700">' . h($c['pulsante_testo']) . '</a></p>'
         : '';
@@ -649,8 +686,13 @@ function newsletter_email(array $c, array $iscritto, ?array $traccia = null): ar
     // Pixel di apertura e link tracciati: solo per le email vere, non per le prove.
     if ($id && $traccia) $html = newsletter_traccia($html, $traccia, $id);
     $cfg = newsletter_config();
-    $intest = moduli_intestazioni($cfg['rispondi_a'])
-        . ($id ? "List-Unsubscribe: <$uscita>\r\nList-Unsubscribe-Post: List-Unsubscribe=One-Click\r\n" : '');
+    // 2.1.0: il mittente scelto (confermato) con il suo Reply-To; il riferimento che i servizi rimandano con rimbalzi e spam.
+    $mitt = consegna_intestazioni_mittente((int)($c['mittente_id'] ?? 0));
+    $rispondi = $cfg['rispondi_a'];
+    if ($mitt !== '' && str_contains($mitt, 'Reply-To:')) $rispondi = '';
+    $intest = moduli_intestazioni($rispondi) . $mitt
+        . ($id ? "List-Unsubscribe: <$uscita>\r\nList-Unsubscribe-Post: List-Unsubscribe=One-Click\r\n" : '')
+        . ($id && $traccia ? 'X-Plume-Rif: ' . consegna_rif((int)($traccia['c'] ?? 0), (int)($traccia['f'] ?? 0), (int)($traccia['p'] ?? 0), $id) . "\r\n" : '');
     return [$oggetto, $html, $intest];
 }
 
@@ -663,7 +705,7 @@ function newsletter_campagna(int $id): ?array {
 
 function newsletter_numeri(): array {
     newsletter_schema();
-    $r = ['in_attesa' => 0, 'attivo' => 0, 'uscito' => 0, 'rimbalzato' => 0];
+    $r = ['in_attesa' => 0, 'attivo' => 0, 'uscito' => 0, 'rimbalzato' => 0, 'spam' => 0];
     foreach (db()->query('SELECT stato, COUNT(*) n FROM ' . tbl('newsletter_iscritti') . ' GROUP BY stato') as $x) $r[$x['stato']] = (int)$x['n'];
     // Attivi con tre errori temporanei di fila o più: da controllare.
     $r['segnalati'] = (int)db()->query('SELECT COUNT(*) FROM ' . tbl('newsletter_iscritti') . " WHERE stato = 'attivo' AND errori_di_fila >= 3")->fetchColumn();
@@ -709,9 +751,13 @@ function newsletter_invia_giro(?int $massimo = null): array {
         $ultimaOra = max(posta_inviate(3600), (int)db()->query('SELECT COUNT(*) FROM ' . tbl('newsletter_coda') . " WHERE inviata_at > DATE_SUB(NOW(), INTERVAL 1 HOUR)")->fetchColumn());
         $posti = min($massimo ?? NEWSLETTER_PER_GIRO, max(0, (int)$cfg['per_ora'] - $ultimaOra));
         if ($posti === 0) return array_merge($log, ['limite orario raggiunto']);
-        if ((int)$cfg['per_giorno'] > 0) {
-            $posti = min($posti, max(0, (int)$cfg['per_giorno'] - posta_inviate(86400)));
-            if ($posti === 0) return array_merge($log, ['limite giornaliero raggiunto']);
+        // 2.1.0: con il riscaldamento acceso il limite al giorno è quello di oggi (sale da solo), mai sopra quello scritto.
+        $alGiorno = (int)$cfg['per_giorno'];
+        $caldo = consegna_limite_riscaldamento();
+        if ($caldo > 0) $alGiorno = $alGiorno > 0 ? min($alGiorno, $caldo) : $caldo;
+        if ($alGiorno > 0) {
+            $posti = min($posti, max(0, $alGiorno - posta_inviate(86400)));
+            if ($posti === 0) return array_merge($log, [$caldo > 0 && $caldo === $alGiorno ? "limite del riscaldamento raggiunto ($caldo email in 24 ore)" : 'limite giornaliero raggiunto']);
         }
         $righe = db()->query('SELECT q.id, q.campagna_id, q.tentativi, i.id AS iscritto_id, i.email, i.nome, i.cognome FROM ' . tbl('newsletter_coda') . ' q
             JOIN ' . tbl('newsletter_campagne') . ' c ON c.id = q.campagna_id AND c.stato = \'in_invio\'
@@ -732,6 +778,7 @@ function newsletter_invia_giro(?int $massimo = null): array {
                 // L'indirizzo non esiste: niente altri tentativi (il server di posta funziona, si va avanti).
                 db()->prepare('UPDATE ' . tbl('newsletter_coda') . " SET tentativi = tentativi + 1, errore = ?, stato = 'errore' WHERE id = ?")->execute([mb_substr(posta_errore(), 0, 255), $r['id']]);
                 db()->prepare('UPDATE ' . tbl('newsletter_campagne') . ' SET errori = errori + 1 WHERE id = ?')->execute([$r['campagna_id']]);
+                newsletter_evento_interno('rimbalzo', (int)$r['campagna_id'], 0, 0, (int)$r['iscritto_id']);
                 $rimbalzi++;
             } else {
                 // Tre tentativi, a giri diversi; poi l'indirizzo si segna come errore.

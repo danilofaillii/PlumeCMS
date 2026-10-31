@@ -57,6 +57,7 @@ function newsletter_flussi_schema(): void {
             `innesco_id` INT(11) NOT NULL DEFAULT 0,
             `passi` MEDIUMTEXT,
             `inviate` INT(11) NOT NULL DEFAULT 0,
+            `mittente_id` INT(11) NOT NULL DEFAULT 0,
             `creato` DATETIME NOT NULL,
             `aggiornato` DATETIME NOT NULL,
             PRIMARY KEY (`id`), KEY `innesco` (`attivo`, `innesco`, `innesco_id`)
@@ -81,6 +82,9 @@ function newsletter_flussi_schema(): void {
         $col = db()->query('SHOW COLUMNS FROM ' . tbl('newsletter_corsi'))->fetchAll(PDO::FETCH_COLUMN);
         if (!in_array('ascolto', $col, true)) db()->exec('ALTER TABLE ' . tbl('newsletter_corsi') . ' ADD COLUMN `ascolto` VARCHAR(10) DEFAULT NULL');
         if (!in_array('salti', $col, true)) db()->exec('ALTER TABLE ' . tbl('newsletter_corsi') . ' ADD COLUMN `salti` INT(11) NOT NULL DEFAULT 0');
+        // 2.1.0: il mittente scelto per il flusso (0 = il predefinito), includes/consegna.php.
+        $col = db()->query('SHOW COLUMNS FROM ' . tbl('newsletter_flussi'))->fetchAll(PDO::FETCH_COLUMN);
+        if (!in_array('mittente_id', $col, true)) db()->exec('ALTER TABLE ' . tbl('newsletter_flussi') . ' ADD COLUMN `mittente_id` INT(11) NOT NULL DEFAULT 0 AFTER `inviate`');
         save_setting('newsletter_flussi_impronta', $impronta);
     }
 }
@@ -142,6 +146,19 @@ function newsletter_evento(string $tipo, int $c, int $f, int $p, int $i, string 
     return true;
 }
 
+/**
+ * 2.1.0: un evento che non arriva da un link dell'email ma dal CMS stesso: 'rimbalzo' (server di posta o avviso del
+ * servizio), 'spam' (avviso del servizio), 'uscita' (link di uscita con la campagna firmata). Una riga per persona.
+ */
+function newsletter_evento_interno(string $tipo, int $c, int $f, int $p, int $i): void {
+    if (!$i || (!$c && !$f) || !in_array($tipo, ['rimbalzo', 'spam', 'uscita'], true)) return;
+    newsletter_flussi_schema();
+    $st = db()->prepare('SELECT id FROM ' . tbl('newsletter_eventi') . " WHERE campagna_id = ? AND flusso_id = ? AND passo = ? AND iscritto_id = ? AND tipo = ? LIMIT 1");
+    $st->execute([$c, $f, $p, $i, $tipo]);
+    if ($st->fetchColumn()) return;
+    db()->prepare('INSERT INTO ' . tbl('newsletter_eventi') . " (campagna_id, flusso_id, passo, iscritto_id, tipo, url, creato) VALUES (?, ?, ?, ?, ?, '', NOW())")->execute([$c, $f, $p, $i, $tipo]);
+}
+
 /** Aperture e clic per persona, di una campagna. */
 function newsletter_conteggio_eventi(int $campagna): array {
     newsletter_flussi_schema();
@@ -156,9 +173,17 @@ function newsletter_conteggio_eventi(int $campagna): array {
 function newsletter_statistiche_campagne(): array {
     newsletter_flussi_schema();
     $out = [];
-    foreach (db()->query('SELECT c.*, (SELECT COUNT(DISTINCT e.iscritto_id) FROM ' . tbl('newsletter_eventi') . " e WHERE e.campagna_id = c.id AND e.tipo = 'apertura') AS aperture, (SELECT COUNT(DISTINCT e.iscritto_id) FROM " . tbl('newsletter_eventi') . " e WHERE e.campagna_id = c.id AND e.tipo = 'clic') AS clic FROM " . tbl('newsletter_campagne') . " c WHERE c.stato IN ('inviata','in_invio','sospesa') ORDER BY c.invio_at DESC, c.id DESC")->fetchAll() as $c) {
+    // 2.1.0: anche rimbalzi, disiscrizioni e segnalazioni di spam, per persona.
+    $conta = fn(string $tipo) => '(SELECT COUNT(DISTINCT e.iscritto_id) FROM ' . tbl('newsletter_eventi') . " e WHERE e.campagna_id = c.id AND e.tipo = '$tipo') AS ";
+    foreach (db()->query('SELECT c.*, ' . $conta('apertura') . 'aperture, ' . $conta('clic') . 'clic, ' . $conta('rimbalzo') . 'rimbalzi, ' . $conta('uscita') . 'uscite, ' . $conta('spam') . 'spam FROM '
+        . tbl('newsletter_campagne') . " c WHERE c.stato IN ('inviata','in_invio','sospesa') ORDER BY c.invio_at DESC, c.id DESC")->fetchAll() as $c) {
         $c['tasso_aperture'] = $c['inviate'] ? round($c['aperture'] * 100 / $c['inviate'], 1) : 0;
         $c['tasso_clic'] = $c['inviate'] ? round($c['clic'] * 100 / $c['inviate'], 1) : 0;
+        // I rimbalzi si contano su tutte le email provate (partite più quelle rifiutate subito dal server), gli altri sulle partite.
+        $provate = (int)$c['inviate'] + (int)$c['errori'];
+        $c['tasso_rimbalzi'] = $provate ? round($c['rimbalzi'] * 100 / $provate, 1) : 0;
+        $c['tasso_uscite'] = $c['inviate'] ? round($c['uscite'] * 100 / $c['inviate'], 1) : 0;
+        $c['tasso_spam'] = $c['inviate'] ? round($c['spam'] * 100 / $c['inviate'], 2) : 0;
         $out[] = $c;
     }
     return $out;
@@ -334,10 +359,16 @@ function newsletter_flusso_salva(int $id, array $d): int {
     $v = ['nome' => mb_substr(newsletter_4byte_dentro($nome), 0, 100), 'attivo' => !empty($d['attivo']) ? 1 : 0, 'innesco' => $innesco, 'innesco_id' => $innescoId, 'passi' => $passi];
     if ($id) {
         db()->prepare('UPDATE ' . tbl('newsletter_flussi') . ' SET nome = :nome, attivo = :attivo, innesco = :innesco, innesco_id = :innesco_id, passi = :passi, aggiornato = NOW() WHERE id = :id')->execute($v + ['id' => $id]);
-        return $id;
+    } else {
+        db()->prepare('INSERT INTO ' . tbl('newsletter_flussi') . ' (nome, attivo, innesco, innesco_id, passi, creato, aggiornato) VALUES (:nome, :attivo, :innesco, :innesco_id, :passi, NOW(), NOW())')->execute($v);
+        $id = (int)db()->lastInsertId();
     }
-    db()->prepare('INSERT INTO ' . tbl('newsletter_flussi') . ' (nome, attivo, innesco, innesco_id, passi, creato, aggiornato) VALUES (:nome, :attivo, :innesco, :innesco_id, :passi, NOW(), NOW())')->execute($v);
-    return (int)db()->lastInsertId();
+    // 2.1.0: il mittente del flusso, solo se è un mittente confermato (0 = il predefinito).
+    if (array_key_exists('mittente_id', $d)) {
+        $m = consegna_mittente((int)$d['mittente_id']);
+        db()->prepare('UPDATE ' . tbl('newsletter_flussi') . ' SET mittente_id = ? WHERE id = ?')->execute([$m && $m['verificato_at'] ? (int)$m['id'] : 0, $id]);
+    }
+    return $id;
 }
 
 function newsletter_flusso_elimina(int $id): void {
@@ -492,13 +523,14 @@ function newsletter_flussi_giro(int $posti): array {
             // Email.
             if ($inviate >= $posti) break; // resta dov'è, al prossimo giro
             $d = $nodo['dati'];
-            $c = ['id' => 0, 'oggetto' => $d['oggetto'], 'anteprima' => $d['anteprima'], 'corpo' => $d['corpo'], 'pulsante_testo' => $d['pulsante_testo'], 'pulsante_link' => $d['pulsante_link']];
+            $c = ['id' => 0, 'oggetto' => $d['oggetto'], 'anteprima' => $d['anteprima'], 'corpo' => $d['corpo'], 'pulsante_testo' => $d['pulsante_testo'], 'pulsante_link' => $d['pulsante_link'], 'mittente_id' => (int)($f['mittente_id'] ?? 0)];
             [$oggetto, $html, $intest] = newsletter_email($c, ['id' => $iscritto, 'nome' => $r['nome'], 'email' => $r['email']], ['f' => (int)$f['id'], 'p' => $nodoId]);
             $partita = posta_invia($r['email'], $oggetto, $html, $intest, 'flusso');
             newsletter_esito_invio($iscritto);
             if (!$partita && posta_esito() === 'rimbalzo') {
                 // Indirizzo rifiutato per sempre: l'iscritto è rimbalzato, il suo cammino si ferma, gli altri vanno avanti.
                 db()->prepare('UPDATE ' . tbl('newsletter_corsi') . " SET stato = 'fermato', prossimo = NULL, ascolto = NULL, aggiornato = NOW() WHERE id = ?")->execute([$corso]);
+                newsletter_evento_interno('rimbalzo', 0, (int)$f['id'], $nodoId, $iscritto);
                 $log[] = 'flusso ' . $f['nome'] . ': indirizzo rifiutato, iscritto segnato rimbalzato (' . posta_errore() . ')';
                 break;
             }

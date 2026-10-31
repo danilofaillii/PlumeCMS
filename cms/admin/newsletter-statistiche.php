@@ -2,6 +2,8 @@
 /**
  * Statistiche della newsletter: aperture e clic per campagna, link più cliccati, crescita degli iscritti, flussi.
  * I numeri sono per persona e per difetto: chi blocca le immagini nelle email non risulta tra le aperture.
+ * 2.1.0: per ogni campagna anche rimbalzi, disiscrizioni e segnalazioni di spam (newsletter_statistiche_campagne), con
+ * le soglie che Gmail e Yahoo guardano: spam sotto lo 0,3%, rimbalzi sotto il 2%.
  */
 require_once __DIR__ . '/includes/auth.php';
 require_once __DIR__ . '/includes/admin-functions.php';
@@ -25,13 +27,15 @@ require_once __DIR__ . '/includes/admin-header.php';
   <div class="stat-card stat-card-sage"><div class="stat-card-value"><?= $tot['inviate'] ? round($tot['aperture'] * 100 / $tot['inviate'], 1) : 0 ?>%</div><div class="stat-card-label">Aperture, media</div></div>
   <div class="stat-card stat-card-mustard"><div class="stat-card-value"><?= $tot['inviate'] ? round($tot['clic'] * 100 / $tot['inviate'], 1) : 0 ?>%</div><div class="stat-card-label">Clic, media</div></div>
 </div>
-<p class="hint" style="font-size:.8rem;color:var(--text-muted);margin:0 0 1rem">Aperture e clic contano una volta per persona. Chi legge con le immagini bloccate non compare: i numeri veri sono un po' più alti.</p>
+<p class="hint" style="font-size:.8rem;color:var(--text-muted);margin:0 0 1rem">Aperture e clic contano una volta per persona. Chi legge con le immagini bloccate non compare: i numeri veri sono un po' più alti.
+  Rimbalzi, uscite e spam: se le segnalazioni di spam superano lo 0,3% o i rimbalzi il 2%, Gmail e Yahoo cominciano a mettere le tue email nello spam. Il numero diventa rosso.
+  <?php if (consegna_servizio_scelto() !== 'smtp'): ?>Le segnalazioni di spam arrivano solo se il servizio di spedizione è collegato (<a href="consegna.php?scheda=avvisi">Rimbalzi e spam</a>).<?php endif; ?></p>
 
 <div class="admin-table-wrap ct-tabella" style="margin-bottom:1.2rem">
   <table>
-    <thead><tr><th>Campagna</th><th>Inviata il</th><th>Inviate</th><th>Aperte</th><th>Clic</th></tr></thead>
+    <thead><tr><th>Campagna</th><th>Inviata il</th><th>Inviate</th><th>Aperte</th><th>Clic</th><th>Rimbalzi</th><th>Uscite</th><th>Spam</th></tr></thead>
     <tbody>
-    <?php if (!$campagne): ?><tr><td colspan="5"><div class="empty-state"><p>Nessuna campagna inviata ancora.</p></div></td></tr><?php endif; ?>
+    <?php if (!$campagne): ?><tr><td colspan="8"><div class="empty-state"><p>Nessuna campagna inviata ancora.</p></div></td></tr><?php endif; ?>
     <?php foreach ($campagne as $c): ?>
       <tr class="ct-riga">
         <td class="ct-titolo"><a class="ct-nome" href="newsletter-statistiche.php?campagna=<?= (int)$c['id'] ?>"><?= h($c['oggetto']) ?></a><div class="ct-azioni"><a href="newsletter-statistiche.php?campagna=<?= (int)$c['id'] ?>">Link cliccati</a><a href="newsletter-campagna.php?id=<?= (int)$c['id'] ?>">Apri la campagna</a></div></td>
@@ -39,9 +43,12 @@ require_once __DIR__ . '/includes/admin-header.php';
         <td class="ct-muto"><?= (int)$c['inviate'] ?><?= $c['errori'] ? ' <span class="kw-bad">(' . (int)$c['errori'] . ' errori)</span>' : '' ?></td>
         <td class="ct-muto"><b><?= (int)$c['aperture'] ?></b> · <?= $c['tasso_aperture'] ?>%</td>
         <td class="ct-muto"><b><?= (int)$c['clic'] ?></b> · <?= $c['tasso_clic'] ?>%</td>
+        <td class="ct-muto st-rimbalzi"><b><?= (int)$c['rimbalzi'] ?></b> · <span class="<?= $c['tasso_rimbalzi'] > 2 ? 'kw-bad' : '' ?>"><?= $c['tasso_rimbalzi'] ?>%</span></td>
+        <td class="ct-muto st-uscite"><b><?= (int)$c['uscite'] ?></b> · <?= $c['tasso_uscite'] ?>%</td>
+        <td class="ct-muto st-spam"><b><?= (int)$c['spam'] ?></b> · <span class="<?= $c['tasso_spam'] > 0.3 ? 'kw-bad' : '' ?>"><?= $c['tasso_spam'] ?>%</span></td>
       </tr>
       <?php if ($dettaglio === (int)$c['id']): $link = newsletter_clic_per_link($dettaglio); ?>
-      <tr><td colspan="5" style="background:var(--fondo-2)">
+      <tr><td colspan="8" style="background:var(--fondo-2)">
         <b style="font-size:.85rem">Link più cliccati</b>
         <?php if (!$link): ?><p class="ct-muto">Nessun clic ancora.</p><?php else: ?>
         <ul class="db-lista" style="font-size:.85rem;margin:.4rem 0 0;padding:0;list-style:none"><?php foreach ($link as $l): ?><li style="display:flex;justify-content:space-between;gap:1rem;padding:.2rem 0"><span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap"><?= h($l['url']) ?></span><b><?= (int)$l['n'] ?></b></li><?php endforeach; ?></ul>

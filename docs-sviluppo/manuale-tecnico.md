@@ -49,6 +49,7 @@ pagine, gestire il sito) c'è il manuale d'uso, `docs/manuale-uso.md`, con le sc
 32. Gli addon (dalla 2.0.0)
 33. File riservati e il file dato dai form (dalla 2.0.0)
 34. Scegli dai Media, immagine social e pannello al telefono (dalla 2.0.0; Scegli dai Media dappertutto dalla 2.1.0)
+35. Consegna delle email: dominio, servizi, mittenti, rimbalzi, riscaldamento (dalla 2.1.0)
 
 Appendice A. Dove i documenti vecchi non corrispondono al codice
 
@@ -1495,23 +1496,30 @@ formule, capitolo 18.10).
 - Con il server SMTP impostato (`posta_smtp`) il CMS usa un client SMTP scritto in casa: SSL sulla porta 465 o
   STARTTLS sulla 587, con autenticazione se c'è un utente.
 - Senza SMTP usa `mail()` di PHP. Dalla 2.0.0 con il From del mittente scritto in Posta in uscita (anche senza server
-  SMTP; altrimenti l'utente; altrimenti `noreply@` il dominio del sito: `posta_mittente()`, `includes/posta.php:115`) e il
+  SMTP; altrimenti l'utente; altrimenti `noreply@` il dominio del sito: `posta_mittente()`, `includes/posta.php:120`; dalla 2.1.0
+  prima di tutto il mittente predefinito confermato, capitolo 35) e il
   Return-Path con `-f` (se `mail()` lo rifiuta si riprova senza). Prima le email partivano senza From.
 - Dalla 2.0.0 ogni email HTML esce in `multipart/alternative`: la parte di testo semplice la scrive `posta_testo_da_html()`
-  (`includes/posta.php:129`: paragrafi a capo, link come "testo (indirizzo)", niente immagini né testo di anteprima
-  nascosto), il corpo MIME lo compone `posta_mime()` (`:158`), tutto in base64, uguale per SMTP e `mail()`.
-- `posta_invia($a, $oggetto, $corpo, $intestazioni, $tipo)` (`includes/posta.php:183`): il quinto argomento è il tipo per
-  il registro (`campagna`, `flusso`, `conferma`, `avviso_form`, `prova`, `social`; `altro` di partenza).
+  (`includes/posta.php:139`: paragrafi a capo, link come "testo (indirizzo)", niente immagini né testo di anteprima
+  nascosto), il corpo MIME lo compone `posta_mime()` (`:172`), tutto in base64, uguale per SMTP, `mail()` e le API di SES e
+  Mailgun. Dalla 2.0.3 `posta_mime()` accetta gli allegati (`multipart/mixed`).
+- `posta_invia($a, $oggetto, $corpo, $intestazioni, $tipo, $allegati)` (`includes/posta.php:215`): il quinto argomento è il
+  tipo per il registro (`campagna`, `flusso`, `conferma`, `avviso_form`, `prova`, `social`; `altro` di partenza), il sesto la
+  lista degli allegati. **Dalla 2.1.0** con un servizio scelto in Consegna delle email (Brevo, Amazon SES, Mailgun) l'email
+  parte dalle sue API (`consegna_servizio_attivo()`, `:219`; capitolo 35) e SMTP e `mail()` non si usano. Con SMTP il From
+  è il mittente chiesto da chi chiama se è confermato, altrimenti il predefinito, altrimenti quello di Configurazione email
+  (`consegna_mittente_per()`, `:324`): anche l'envelope (`MAIL FROM`) usa quell'indirizzo.
 - **Registro della posta (dalla 2.0.0).** Ogni spedizione lascia una riga in `posta_registro` (quando, tipo, esito,
-  errore; nessun indirizzo), tabella creata da `posta_registro_schema()` (`:53`). `posta_inviate($secondi)` (`:85`) conta
+  errore; nessun indirizzo), tabella creata da `posta_registro_schema()` (`:58`). `posta_inviate($secondi)` (`:90`) conta
   le email partite: è il conto dei limiti della newsletter (15.5). Il cron toglie le righe oltre 60 giorni
-  (`posta_pulisci_registro()`, `:100`).
-- **Esito (dalla 2.0.0).** Dopo `posta_invia()`, `posta_esito()` (`:40`) dice `ok`, `rimbalzo` (il server SMTP ha
+  (`posta_pulisci_registro()`, `:105`).
+- **Esito (dalla 2.0.0).** Dopo `posta_invia()`, `posta_esito()` (`:45`) dice `ok`, `rimbalzo` (il server SMTP ha
   rifiutato il destinatario al `RCPT TO` con un 5xx), `temporaneo` (4xx al `RCPT TO`) o `errore` (connessione, accesso,
-  server). Il rifiuto del destinatario è l'eccezione `PostaRifiutata` (`:47`) con il codice SMTP; con `mail()` l'esito è solo
-  `ok` o `errore`.
+  server). Il rifiuto del destinatario è l'eccezione `PostaRifiutata` (`:52`) con il codice SMTP; con `mail()` e con le API l'esito
+  è solo `ok` o `errore` (i rimbalzi delle API arrivano dopo, con gli avvisi dei servizi: capitolo 35).
 - Gli avvisi (form, sicurezza) vanno all'indirizzo `notifica_email`.
-- La password SMTP è salvata nel database insieme alle altre impostazioni della posta.
+- La password SMTP è salvata nel database insieme alle altre impostazioni della posta (in chiaro, come prima). Le chiavi dei
+  servizi della 2.1.0 invece sono cifrate (capitolo 35).
 
 ### 15.4 I pezzi comuni dei moduli: captcha, campi, limiti
 
@@ -1538,74 +1546,79 @@ nel nucleo. Un modulo del sito che ha moduli suoi li porta così:
 
 **Iscritti e liste.** Stati: in attesa, attivo, uscito, rimbalzato (dalla 2.0.0). Un iscritto può stare in più liste.
 Colonne della 2.0.0 in `newsletter_iscritti`: `errori_di_fila`, `ultimo_errore`, `rimbalzato_at`, aggiunte da
-`newsletter_schema()` (`includes/newsletter.php:38`) anche alle tabelle nate prima. La migrazione "chi non sta in nessuna
+`newsletter_schema()` (`includes/newsletter.php:38`) anche alle tabelle nate prima. **Dalla 2.1.0** c'è anche lo stato `spam`
+(ha premuto "è spam": capitolo 35) e la colonna `newsletter_campagne.mittente_id` (0 = il mittente predefinito). La migrazione "chi non sta in nessuna
 lista entra nella principale" gira una volta sola, quando la lista principale nasce: dalla 2.0.0 chi aspetta la conferma di
 un form non sta in nessuna lista e non deve finire nella principale.
 
-**Doppio consenso (dalla 2.0.0).** `newsletter_richiesta($dati, $opzioni)` (`includes/newsletter.php:276`) salva la
+**Doppio consenso (dalla 2.0.0).** `newsletter_richiesta($dati, $opzioni)` (`includes/newsletter.php:280`) salva la
 persona (una nuova in attesa; chi c'è già resta nel suo stato, anche uscito o rimbalzato, fino alla conferma) e scrive la
 richiesta in `newsletter_conferme` (token sha256, iscritto, lista, form d'origine, scadenza a 7 giorni). Opzioni: `lista`
 (predefinita la principale: il modulo della newsletter), `form`, `cosa` (per cosa si iscrive, nelle frasi dell'email),
 `oggetto`, `testo`, `pulsante`, `fonte`. Il modulo della newsletter (`api/modulo.php`) la chiama senza opzioni, come prima;
 un form con conferma passa la sua lista, il suo id e il suo titolo, e la persona non entra più nella principale. Errori:
-`troppi` (5 richieste l'ora dallo stesso IP: `newsletter_troppe_richieste()`, `:254`) e `posta`.
+`troppi` (5 richieste l'ora dallo stesso IP: `newsletter_troppe_richieste()`, `:258`) e `posta`.
 
-Il clic su `/newsletter-conferma/` chiama `newsletter_conferma($token)` (`:384`, vero o falso, per la pagina del sito), che
-usa `newsletter_conferma_esito($token)` (`:331`): un link vale una volta sola; la persona diventa attiva (consenso adesso,
+Il clic su `/newsletter-conferma/` chiama `newsletter_conferma($token)` (`:388`, vero o falso, per la pagina del sito), che
+usa `newsletter_conferma_esito($token)` (`:335`): un link vale una volta sola; la persona diventa attiva (consenso adesso,
 errori azzerati, via dalla lista di soppressione: ha confermato di sua volontà), entra nella lista della richiesta (i flussi
-"lista" partono lì, `newsletter_in_lista()`, `:187`), il flusso "iscrizione" parte solo per la lista principale, per chi non
+"lista" partono lì, `newsletter_in_lista()`, `:191`), il flusso "iscrizione" parte solo per la lista principale, per chi non
 era attivo partono anche i flussi delle liste in cui stava già, e partono gli inneschi rimasti in attesa. I link mandati prima
 della 2.0.0 (token nella riga dell'iscritto) valgono ancora, con la lista principale.
 
 **Aggancio alla conferma.** `newsletter_conferma_esito()` ritorna null oppure
 `['iscritto' => id, 'email' => ..., 'lista' => id, 'form' => id del form d'origine (0 dal modulo della newsletter), 'nuovo' => bool]`.
 Lo stesso array arriva all'evento dei moduli e dei temi `newsletter_confermata` (`cms_evento`, capitolo 17) e, nella stessa
-richiesta, a `newsletter_ultima_conferma()` (`:389`). Per consegnare qualcosa a chi conferma da un certo form: un modulo
+richiesta, a `newsletter_ultima_conferma()` (`:393`). Per consegnare qualcosa a chi conferma da un certo form: un modulo
 dichiara `'eventi' => ['newsletter_confermata' => function (array $e) { if ($e['form'] === 3) { ... } }]`, oppure la pagina di
 conferma legge `newsletter_ultima_conferma()` dopo `newsletter_conferma()`.
 
-**Inneschi in attesa (dalla 2.0.0).** `newsletter_flussi_innesco()` (`includes/newsletter-flussi.php:357`) fa partire i
+**Inneschi in attesa (dalla 2.0.0).** `newsletter_flussi_innesco()` (`includes/newsletter-flussi.php:388`) fa partire i
 flussi solo per chi è attivo. Prima un cammino partiva anche per chi era in attesa, il giro lo fermava (`fermato`) e la
 chiave unica (flusso, iscritto) non lo faceva più ripartire alla conferma. Ora l'innesco `form` di chi deve ancora
-confermare si ricorda in `newsletter_inneschi_attesa` (`newsletter_innesco_in_attesa()`, `includes/newsletter.php:399`) e
+confermare si ricorda in `newsletter_inneschi_attesa` (`newsletter_innesco_in_attesa()`, `includes/newsletter.php:403`) e
 parte alla conferma.
 
 **Uscita.** Ogni email ha un link di uscita firmato (HMAC) e le intestazioni `List-Unsubscribe` e
 `List-Unsubscribe-Post` (uscita con un clic dai programmi di posta). L'uscita vera avviene con un POST su
-`/newsletter-esci/`. Chi esce perde anche le email ancora in coda.
+`/newsletter-esci/`. Chi esce perde anche le email ancora in coda. Dalla 2.1.0 il link porta anche la campagna (o il flusso e
+il passo) firmata (`newsletter_link_uscita($id, $traccia)`, `:426`): `newsletter_uscita_registra()` (`:436`, chiamata da
+`sito/index.php:177`) conta l'uscita per quella campagna nelle statistiche.
 
-**Cancella dati (dalla 2.0.0).** `newsletter_cancella_dati($id)` (`:473`, pulsante "Cancella dati" in Iscritti,
-`admin/newsletter.php:155`) toglie l'iscritto da tutte le tabelle della newsletter (`newsletter_togli_iscritti()`, `:457`:
+**Cancella dati (dalla 2.0.0).** `newsletter_cancella_dati($id)` (`:510`, pulsante "Cancella dati" in Iscritti,
+`admin/newsletter.php:155`) toglie l'iscritto da tutte le tabelle della newsletter (`newsletter_togli_iscritti()`, `:494`:
 coda, liste, richieste di conferma, inneschi in attesa, aperture e clic, cammini nei flussi), gli invii dei form con la sua
 email (`moduli_invii`) e mette l'impronta sha256 dell'email in minuscolo in `newsletter_soppressi`. Il registro della posta
 non ha indirizzi.
 
-**Importazione (dalla 2.0.0).** `newsletter_importa_csv($file, $lista, $flussi)` (`:526`): fonte `import`, consenso con la
-data della colonna CONSENSO (o DATA CONSENSO, OPTIN...; `newsletter_data_csv()`, `:509`), altrimenti NULL; si saltano chi è
-nella lista di soppressione, chi è uscito e chi è rimbalzato (anche dalla lista). I flussi della lista partono solo con la
-spunta "Fai partire i flussi per gli importati" (`admin/newsletter.php:266`, spenta di partenza). Prima: tutti attivi con
+**Importazione (dalla 2.0.0).** `newsletter_importa_csv($file, $lista, $flussi)` (`:563`): fonte `import`, consenso con la
+data della colonna CONSENSO (o DATA CONSENSO, OPTIN...; `newsletter_data_csv()`, `:546`), altrimenti NULL; si saltano chi è
+nella lista di soppressione, chi è uscito, chi è rimbalzato e (dalla 2.1.0) chi ha segnalato spam (anche dalla lista). I flussi della lista partono solo con la
+spunta "Fai partire i flussi per gli importati" (`admin/newsletter.php:268`, spenta di partenza). Prima: tutti attivi con
 il consenso di adesso, fonte `brevo`, flussi sempre.
 
 **Campagne.** Stati: bozza, programmata, in invio, inviata. Nell'oggetto e nel testo `{nome}` diventa il nome
 dell'iscritto. Vanno solo agli attivi.
 
-**Invio.** Dal cron (`cron-newsletter.php`, ogni 5 minuti), `newsletter_invia_giro()` (`:701`):
+**Invio.** Dal cron (`cron-newsletter.php`, ogni 5 minuti), `newsletter_invia_giro()` (`:743`):
 - un solo invio alla volta (lock di MySQL);
 - avvia le campagne programmate arrivate alla loro ora;
 - al massimo 40 email per giro, entro il limite orario (predefinito 150 l'ora) e, se impostato, quello al giorno (ultime 24
-  ore, `per_giorno` in `newsletter_config()`, `:228`; 0 = nessuno). Dalla 2.0.0 i limiti contano **tutte** le email del CMS
+  ore, `per_giorno` in `newsletter_config()`, `:232`; 0 = nessuno; dalla 2.1.0 con il riscaldamento acceso vale il più basso fra
+  questo e quello del giorno di riscaldamento, `:756`, capitolo 35). Dalla 2.0.0 i limiti contano **tutte** le email del CMS
   dal registro della posta (15.3), non solo le campagne; il primo giro dopo l'aggiornamento conta anche la coda;
 - tre tentativi per indirizzo, poi errore; si ferma dopo 3 errori senza nessun invio riuscito;
 - con i posti rimasti, manda le email dei flussi.
 
-**Rimbalzi (dalla 2.0.0).** Dopo ogni email di campagna o di flusso `newsletter_esito_invio()` (`:449`) legge
-`posta_esito()`: `ok` azzera `errori_di_fila`; `rimbalzo` (5xx al `RCPT TO`) chiama `newsletter_rimbalzato()` (`:438`):
+**Rimbalzi (dalla 2.0.0).** Dopo ogni email di campagna o di flusso `newsletter_esito_invio()` (`:486`) legge
+`posta_esito()`: `ok` azzera `errori_di_fila`; `rimbalzo` (5xx al `RCPT TO`) chiama `newsletter_rimbalzato()` (`:475`):
 stato `rimbalzato`, coda saltata, nessun altro tentativo; i flussi lo fermano al giro dopo; `temporaneo` (4xx) aggiunge un
 errore di fila: da 3 in su l'iscritto resta attivo ma il pannello lo segnala (avviso in cima, filtro "Con 3 errori di fila",
 nota nella riga). Gli errori del server (connessione, accesso) non contano per l'indirizzo. Niente lettura di caselle IMAP:
-i rimbalzi che arrivano dopo, come email, non si vedono.
+i rimbalzi che arrivano dopo, come email, non si vedono. Dalla 2.1.0 quelli dei servizi di spedizione arrivano con i webhook
+(capitolo 35), e ogni rimbalzo di una campagna diventa anche un evento `rimbalzo` (`:781`) per le statistiche.
 
-**Pulizia (dalla 2.0.0).** `newsletter_pulizia()` (`:490`), dal cron della newsletter (`cron_newsletter()`,
+**Pulizia (dalla 2.0.0).** `newsletter_pulizia()` (`:527`), dal cron della newsletter (`cron_newsletter()`,
 `includes/cron.php:121`), una volta al giorno (impostazione `newsletter_pulizia_giorno`): registro della posta oltre 60 giorni, richieste di conferma scadute, iscritti
 ancora in attesa con la conferma scaduta da più di 30 giorni, inneschi in attesa oltre 40 giorni.
 
@@ -1615,10 +1628,12 @@ segue nodi: email, attesa, bivio (secondo una condizione), fine. Le persone dent
 
 **Statistiche.** Aperture (pixel) e clic (link che passano da `api/nl.php`, firmati) si registrano in
 `newsletter_eventi`, solo per le email vere e non per quelle di prova. La pagina Statistiche mostra campagne,
-clic per link, iscritti per mese.
+clic per link, iscritti per mese. Dalla 2.1.0 anche rimbalzi, uscite e segnalazioni di spam per campagna (eventi `rimbalzo`,
+`uscita`, `spam` scritti da `newsletter_evento_interno()`, `includes/newsletter-flussi.php:153`; conti in
+`newsletter_statistiche_campagne()`, `:173`), con le soglie di Gmail e Yahoo in rosso (spam oltre lo 0,3%, rimbalzi oltre il 2%).
 
 Prove: `prove/prova-newsletter-difetti.js` (dalla 2.0.0, con `prove/smtp-finto.py ... rimbalzi`,
-`prove/sendmail-finto.py` e `prove/newsletter-cli.php`).
+`prove/sendmail-finto.py` e `prove/newsletter-cli.php`); per la consegna, capitolo 35.
 
 ---
 
@@ -3231,6 +3246,148 @@ Vetrina, tastiera, 130 immagini a pagine, cartelle, indirizzo a mano, telefono),
   - `.admin-layout` ha la colonna `minmax(0, 1fr)` e `.admin-main` ha `min-width: 0`. Prima la colonna `1fr` si allargava per il suo elemento più largo, e con lei testi e riquadri.
   - Sotto 640 px vanno a capo i form, `.ct-filtri`, `.fm-riga`, i `nav` e le file di schede (`*-schede`); `select` e campi non superano il contenitore.
   - Prova: `prove/prova-pannello-telefono.js`. Controlla ogni pagina del menu più quelle passate come argomento; `LARGHEZZA=` per provare altre misure.
+
+## 35. Consegna delle email: dominio, servizi, mittenti, rimbalzi, riscaldamento (dalla 2.1.0)
+
+Tappa 2 dell'email marketing (`docs-sviluppo/email-marketing-checklist.md`): far arrivare le email nella posta in arrivo.
+Motore in `includes/consegna.php` (caricato da `includes/posta.php`), pagina Impostazioni > Consegna delle email
+(`admin/consegna.php`, voce del menu in `admin/includes/admin-header.php:68`, solo amministratore), due indirizzi pubblici:
+`api/posta-avvisi.php` (gli avvisi dei servizi) e `api/mittente.php` (la conferma dei mittenti).
+
+### 35.1 Le tabelle e le impostazioni
+
+`consegna_schema()` (`includes/consegna.php:38`), con l'impronta in `consegna_schema_impronta`:
+- `posta_mittenti`: email (unica), nome, `rispondi_a`, `predefinito`, `verificato_at` (NULL finché non è confermato), `token`
+  (sha256 del link di conferma) e `token_scade` (2 giorni);
+- `posta_avvisi`: un avviso ricevuto per riga (quando, servizio, evento, email, campagna, esito in parole). `chiave` è unica:
+  sha256 di servizio, identificativo dell'evento, tipo ed email. Lo stesso avviso mandato due volte conta una volta.
+
+Colonne nuove: `newsletter_campagne.mittente_id` (`includes/newsletter.php`, in `newsletter_schema()`) e
+`newsletter_flussi.mittente_id` (`includes/newsletter-flussi.php`, in `newsletter_flussi_schema()`), 0 = il predefinito, aggiunte
+con `ALTER` anche alle tabelle nate prima (l'impronta dello schema cambia perché cambia il `CREATE`). Stato nuovo degli iscritti:
+`spam`.
+
+Impostazioni: `posta_servizio` (JSON: servizio scelto e dati di Brevo, SES, Mailgun, con le chiavi cifrate),
+`posta_riscaldamento` (JSON), `posta_avvisi_sale` (cambia gli indirizzi dei webhook), `consegna_ultimo_controllo` (l'ultimo
+controllo del dominio, per la scheda Da dove cominciare), `posta_sns_cert_<md5>` (i certificati di Amazon SNS già scaricati).
+
+### 35.2 Chiavi cifrate
+
+`consegna_cifra()` / `consegna_decifra()` (`:85`, `:97`): AES-256-GCM con `openssl` (`v1:` + base64 di iv, tag, testo), oppure
+`sodium_crypto_secretbox` se manca openssl (`v2:`). La chiave non si salva: è HMAC-SHA256 di una frase fissa con
+`moduli_segreto()` (`consegna_chiave()`, `:80`). Se il segreto del sito cambia, le chiavi non si aprono più (`''`): il pannello
+chiede di scriverle di nuovo. Le chiavi tornano in chiaro solo dentro `consegna_segreto()` (`:132`), per spedire o per
+controllare una firma; il pannello mostra solo "salvata il ...", i campi sono `password` vuoti e un campo vuoto tiene la chiave.
+
+### 35.3 Il controllo del dominio
+
+`consegna_controlla_dominio($dominio, $selettore, $servizio)` (`:607`) legge con `consegna_dns()` (`:550`, `dns_get_record()`;
+con `CMS_DNS_PROVA` un file JSON di record finti) e ritorna una voce per SPF, DKIM, DMARC, MX con stato (`ok`, `attenzione`,
+`manca`), frase, record trovati, record da scrivere (tipo, nome, valore) e dove si fa, più il messaggio da mandare all'hosting.
+- **Il DNS non risponde**: `consegna_dns_risponde()` (`:573`) cerca gli NS del dominio e, se mancano, quelli di `iana.org`;
+  senza risposta la pagina lo dice e non inventa niente.
+- **SPF**: uno solo (più record si uniscono con `consegna_spf_unisci()`, `:767`, ogni pezzo una volta, `-all` se c'era), niente
+  `+all`, l'`include` del servizio scelto (`consegna_spf_servizio()`, `:593`: `spf.brevo.com`, `amazonses.com`, `mailgun.org`;
+  per SMTP `+a +mx` e l'IP pubblico del server SMTP se si risolve), avviso oltre 9 meccanismi che chiedono il DNS.
+- **DKIM**: i selettori di `CONSEGNA_SELETTORI` (`:30`: default, mail, cpanel, k1, k2, google, selector1/2, brevo1/2, mailo,
+  smtp, krs, s1, s2, dkim, mx) più quello scritto, che va per primo; `p=` vuoto (firma ritirata) e chiavi RSA corte (meno di 300
+  caratteri di base64, 1024 bit o meno) sono da sistemare. Dove si attiva dipende dal servizio (cPanel, Brevo, SES, Mailgun).
+- **DMARC**: `_dmarc.<dominio>`, uno solo, con `p=`; proposto `v=DMARC1; p=none; adkim=r; aspf=r` con `rua` solo se l'indirizzo
+  degli avvisi è dello stesso dominio.
+- **MX**: senza, le risposte non arrivano.
+- **Posta gratuita** (`CONSEGNA_GRATUITI`, `:32`): avviso, perché il loro DMARC fa rifiutare le newsletter spedite da altri server.
+
+### 35.4 Spedire con le API
+
+`posta_invia()` (`includes/posta.php:215`) chiede `consegna_servizio_attivo()` (`:138`: il servizio scelto **e** con i dati
+completi, altrimenti `''` e si spedisce come prima) e chiama `consegna_invia_api()` (`:247`). Il mittente lo sceglie
+`consegna_mittente_per()` (`:410`). Gli indirizzi veri delle API passano da `consegna_url_api()` (`:163`): con
+`CMS_POSTA_API_PROVA` nel config (solo prove) schema e host diventano quelli del server finto. HTTP con curl, o con gli stream
+di PHP se curl manca (`consegna_http()`, `:171`), certificati controllati, niente rimandi seguiti.
+- **Brevo**: `POST https://api.brevo.com/v3/smtp/email`, intestazione `api-key`, JSON con `sender`, `to`, `subject`,
+  `htmlContent` e `textContent` (da `posta_testo_da_html()`), `replyTo`, `headers` (List-Unsubscribe, X-Plume-Rif e
+  `X-Mailin-custom` con il riferimento), `attachment` (nome e base64).
+- **Amazon SES**: `POST https://email.<regione>.amazonaws.com/v2/email/outbound-emails` (API v2 `SendEmail`) con il messaggio
+  MIME intero in `Content.Raw.Data` (`consegna_mime_intero()`, `:319`, sopra `posta_mime()`), il tag `plume` con il riferimento
+  (`EmailTags`) e il set di configurazione se scritto. Firma **AWS Signature Version 4** scritta a mano (`consegna_sigv4()`,
+  `:197`): verificata con i vettori di AWS `get-vanilla` e `get-vanilla-query-order-key-case` (`prove/consegna-cli.php sigv4`).
+- **Mailgun**: `POST https://api.eu.mailgun.net` (o `api.mailgun.net` per gli account US) `/v3/<dominio>/messages.mime`,
+  Basic `api:<chiave>`, multipart con `to`, `message` (il MIME intero) e `v:plume` (il riferimento).
+- Errori in parole (`consegna_errore_api()`, `:310`): 401 e 403 "non accetta la chiave", 429 troppe email (riprova al giro dopo),
+  5xx problema del servizio, altro con il messaggio del servizio. L'esito è `errore` (le API non dicono subito se l'indirizzo
+  esiste: lo dicono dopo, con gli avvisi).
+- Lo SMTP di Brevo non ha bisogno di niente: si scrive in Configurazione email (`smtp-relay.brevo.com`, 587, STARTTLS). Il
+  pannello lo spiega sia lì sia in Come partono; `consegna_servizio_scelto()` (`:152`) lo riconosce dall'host per i testi.
+
+**Il riferimento.** Ogni email di campagna o di flusso porta `X-Plume-Rif: c<campagna>-f<flusso>-p<passo>-i<iscritto>-<firma>`
+(`consegna_rif()`, `:337`, HMAC con `moduli_segreto()`; scritto da `newsletter_email()`, `includes/newsletter.php:695`). Torna
+con gli avvisi (`X-Mailin-custom` di Brevo, tag `plume` di SES, `user-variables.plume` di Mailgun) e `consegna_rif_leggi()`
+(`:343`) lo accetta solo con la firma giusta.
+
+### 35.5 Mittenti
+
+`consegna_mittente_aggiungi()` (`:433`) valida l'indirizzo, toglie dal nome `< > "`, a capo e caratteri a 4 byte, e manda il link
+di conferma (`consegna_mittente_manda_conferma()`, `:448`) all'indirizzo stesso. Il link apre `api/mittente.php`: il GET mostra
+solo il pulsante (i filtri antispam aprono i link), il POST conferma (`consegna_mittente_conferma()`, `:465`; il primo confermato
+diventa il predefinito); link non valido, scaduto o usato: 404 con la spiegazione. Pagina con la sua CSP (`default-src 'none'`).
+
+Chi può comparire nel From: l'indirizzo di Configurazione email e i mittenti confermati (`consegna_mittente_permesso()`, `:393`).
+`posta_mittente()` (`includes/posta.php:120`) dà prima il predefinito confermato. Campagne (`admin/newsletter-campagna.php:35`)
+e flussi (`admin/newsletter-flussi.php:110`, salvato da `newsletter_flusso_salva()`) scelgono fra i confermati
+(`consegna_mittenti_scelta()`, `:378`); un id non confermato si salva come 0. `newsletter_email()` aggiunge From e Reply-To
+del mittente scelto (`consegna_intestazioni_mittente()`, `:424`). Togliere un mittente rimette 0 dove era usato.
+
+### 35.6 Avvisi dei servizi (webhook)
+
+`api/posta-avvisi.php?s=brevo|ses|mailgun&k=<segreto>`: solo POST con JSON; senza il segreto giusto 403 prima di leggere il
+corpo. Il segreto è `HMAC(moduli_segreto, "avvisi|<servizio>|<sale>")` (`consegna_webhook_segreto()`, `:786`), diverso per
+servizio; "Cambia gli indirizzi" cambia il sale. In più:
+- **Brevo** (`consegna_avvisi_brevo()`, `:874`), che non firma: `hard_bounce`, `invalid_email`, `blocked` = rimbalzo;
+  `soft_bounce` = temporaneo; `spam`, `complaint` = spam; `unsubscribed` = uscita. Fino a 50 eventi per richiesta.
+- **Mailgun** (`consegna_avvisi_mailgun()`, `:888`): firma HMAC-SHA256 di `timestamp + token` con la "HTTP webhook signing key"
+  (salvata cifrata dalla scheda Rimbalzi e spam), timestamp entro 15 minuti; `failed` permanente o temporaneo, `complained`,
+  `unsubscribed`.
+- **Amazon SES con SNS** (`consegna_avvisi_ses()`, `:943`): firma di SNS (versione 1 SHA1, versione 2 SHA256) controllata con il
+  certificato scaricato solo da `https://sns.<regione>.amazonaws.com/...pem` (`consegna_sns_firma_valida()`, `:920`; con
+  `CMS_SNS_CERT_PROVA` il certificato delle prove). Il primo messaggio (`SubscriptionConfirmation`) si conferma da solo aprendo
+  `SubscribeURL` e l'argomento (`TopicArn`) si ricorda: dopo, gli altri argomenti si rifiutano. `Bounce` permanente, transitorio,
+  `Complaint`; vale anche il formato degli eventi dei set di configurazione (`eventType`).
+
+Tutti finiscono in `consegna_segnala()` (`:823`): trova l'iscritto dal riferimento (se l'email coincide) o dall'email, poi
+rimbalzo = `newsletter_rimbalzato()`, temporaneo = un errore di fila, spam = `newsletter_segnala_spam()`
+(`includes/newsletter.php:448`: stato `spam`, `uscito_at`, coda svuotata, impronta nella lista di soppressione), uscita =
+`newsletter_esci()`. Con un riferimento valido scrive anche l'evento `rimbalzo`, `spam` o `uscita` per la campagna o il passo
+del flusso (`newsletter_evento_interno()`).
+
+### 35.7 Riscaldamento
+
+`consegna_riscaldamento_stato()` (`:512`): il limite di oggi è `partenza x fattore^(giorni dall'inizio)`, fino ad `arrivo`
+(vuoto = il limite al giorno della newsletter, o 2000). Fattori: 1,3, 1,5 (normale), 2. Acceso dalla scheda Riscaldamento
+(l'inizio è il giorno in cui si accende, o "Ricomincia da oggi"). `newsletter_invia_giro()` usa il più basso fra il limite al
+giorno e quello di oggi (`consegna_limite_riscaldamento()`, `:533`; `includes/newsletter.php:756`) e scrive nel log "limite del
+riscaldamento raggiunto". Conferme e avvisi dei form non aspettano (non passano dalla coda) ma contano nel registro.
+
+### 35.8 La pagina
+
+`admin/consegna.php`: schede `inizio` (cinque passi con lo stato), `dominio` (`:236`), `servizio` (`:280`, i campi del servizio
+scelto si mostrano con uno script a nonce; senza JavaScript si vedono tutti), `mittenti` (`:375`), `avvisi` (`:419`),
+`riscaldamento` (`:478`); azioni POST con CSRF (`:27`-`:122`), poi rimando alla scheda. Le caselle dei record si copiano con un
+tocco (`data-copia-se-stesso` di `pannello.js`). Regole CSS con il prefisso `ce-` dentro la pagina; a 390 px niente scorrimento
+di lato. Variabile della pagina `$ceAttivo`: `$attivo` lo usa il menu del pannello (`admin-header.php`) e veniva sovrascritto.
+
+### 35.9 Prove
+
+- `prove/prova-consegna-email.js` (73 controlli): dominio con il DNS finto, mittenti e conferma, Brevo, SES e Mailgun contro
+  `prove/api-posta-finta.py` (che controlla chiave, firma SigV4 ricalcolata in Python e Basic), campagne e flusso con il
+  mittente scelto, avvisi dei tre servizi, uscita con la campagna, statistiche, riscaldamento, telefono a 390 px.
+- `prove/attacchi-consegna.js` (40 controlli): webhook senza segreto o con firme false, vecchie, cambiate, certificati non di
+  Amazon, argomenti diversi, riferimenti inventati; CSRF; XSS; chiavi mai nell'HTML né in chiaro nel database; SSRF da regione e
+  dominio; conferma dei mittenti; redattore.
+- Aiuti: `prove/consegna-comune.js`, `prove/consegna-cli.php`. Il server PHP delle prove tiene `config.local.php` in opcache fino
+  a 2 secondi: dopo aver cambiato le costanti si aspetta.
+
+Non provato: le API vere di Brevo, Amazon SES e Mailgun, i webhook veri e il DNS vero (la sessione non risolve nomi). Formati
+e firme seguono la documentazione dei servizi; la firma SigV4 è verificata sui vettori ufficiali di AWS.
 
 ## Appendice A. Dove i documenti vecchi non corrispondono al codice
 

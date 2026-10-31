@@ -33,7 +33,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $nuovo = !$id;
         try { $grafoPostato = newsletter_flusso_grafo_valido(newsletter_flusso_grafo_dal_form($_POST['grafo'] ?? [])); } catch (Throwable $x) { $grafoPostato = null; }
         $postato = ['id' => $id, 'nome' => mb_substr(trim((string)($_POST['nome'] ?? '')), 0, 100), 'attivo' => !empty($_POST['attivo']) ? 1 : 0,
-            'innesco' => isset(NL_INNESCHI[(string)($_POST['innesco'] ?? '')]) ? (string)$_POST['innesco'] : 'iscrizione', 'innesco_id' => (int)($_POST['innesco_id'] ?? 0), 'grafo' => $grafoPostato];
+            'innesco' => isset(NL_INNESCHI[(string)($_POST['innesco'] ?? '')]) ? (string)$_POST['innesco'] : 'iscrizione', 'innesco_id' => (int)($_POST['innesco_id'] ?? 0), 'mittente_id' => (int)($_POST['mittente_id'] ?? 0), 'grafo' => $grafoPostato];
     }
 }
 $f = $id ? newsletter_flusso($id) : null;
@@ -105,6 +105,9 @@ $inviateNodo = $v['id'] ? db()->query('SELECT passo, COUNT(DISTINCT iscritto_id)
       <h4 style="margin-top:1rem">Parte quando</h4>
       <select name="innesco" id="fl-innesco"><?php foreach (NL_INNESCHI as $k => $n): ?><option value="<?= $k ?>" <?= $v['innesco'] === $k ? 'selected' : '' ?>><?= h($n) ?></option><?php endforeach; ?></select>
       <div id="fl-cosa-box"><label id="fl-cosa-label" class="fl-mini">Quale</label><select name="innesco_id" id="fl-cosa"></select><input type="number" id="fl-cosa-n" min="1" max="3650" class="fl-n" placeholder="giorni" style="display:none"></div>
+      <?php $flMitt = consegna_mittenti_scelta(); [$flPre] = posta_mittente(); /* 2.1.0: il mittente delle email del flusso */ ?>
+      <h4 style="margin-top:1rem"><label for="fl-mittente">Mittente</label></h4>
+      <select name="mittente_id" id="fl-mittente"><option value="0">Il predefinito<?= $flPre !== '' ? ' (' . h($flPre) . ')' : '' ?></option><?php foreach ($flMitt as $mid => $mn): ?><option value="<?= (int)$mid ?>" <?= (int)($v['mittente_id'] ?? 0) === (int)$mid ? 'selected' : '' ?>><?= h($mn) ?></option><?php endforeach; ?></select>
       <?php if ($v['id']): ?><div style="margin-top:1.2rem;text-align:right"><button type="submit" class="sc-cestina" name="azione" value="elimina" formnovalidate data-conferma="Eliminare il flusso? Chi è a metà non riceve più niente.">Elimina il flusso</button></div><?php endif; ?>
     </aside>
     <div class="fl-tela-box" id="fl-tela-box">

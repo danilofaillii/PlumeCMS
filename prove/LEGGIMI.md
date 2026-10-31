@@ -500,3 +500,15 @@ Provata su un 2.0.3 nuovo e su un 2.0.3 con le cinque parti del sito della 2.0.0
 e `/scarica/manuale-uso-addon/` porta a `/scarica/manuale-uso/`), con il server a 64 MB (`php -d upload_max_filesize=64M
 -d post_max_size=64M -S ...`): il pacchetto unico pesa circa 13 MB. Per provarla senza toccare `cms/VERSIONE` si costruisce
 tutto in una copia del repository con una versione finta (2.0.9). Atteso: 13 su 13 (e 87 su 87 dentro, con il blocco Scegli dai Media del sito).
+
+## prova-consegna-email.js e attacchi-consegna.js (2.1.0)
+
+La consegna delle email (`includes/consegna.php`, Impostazioni > Consegna delle email). Su un CMS installato con il kit
+Attività:
+1. `python3 -I prove/smtp-finto.py <porta smtp> <cartella posta> &`;
+2. `node prove/prova-consegna-email.js <base> <utente> <password> <porta smtp> <cartella posta> <cartella del CMS> <porta api finta>`;
+3. `node prove/attacchi-consegna.js` con gli stessi argomenti.
+Le prove scrivono nel `config.local.php` il blocco "prove della consegna" (`CMS_POSTA_API_PROVA`, `CMS_DNS_PROVA`,
+`CMS_SNS_CERT_PROVA`), creano il DNS finto e il certificato SNS delle prove in `/tmp/plume-consegna-<porta api>` e accendono da
+sole `prove/api-posta-finta.py` (Brevo, SES con la firma SigV4 ricalcolata, Mailgun) sulla porta api. Aiuti:
+`prove/consegna-comune.js`, `prove/consegna-cli.php`. Atteso: 73 su 73 e 40 su 40 (31 ottobre 2026). Lasciano dati di prova.
