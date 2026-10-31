@@ -405,11 +405,12 @@ function vista_newsletter_confermata(bool $ok): string {
             '<p><a class="btn btn-viola" href="' . NEWSLETTER_PAGINA . '#modulo">Iscriviti</a></p>');
 }
 
-function vista_newsletter_esci(?array $iscritto, bool $fatto, string $i, string $t): string {
+/** $resto (2.1.0): la campagna firmata del link (&c=..&k=..), che il pulsante rimanda per le statistiche. */
+function vista_newsletter_esci(?array $iscritto, bool $fatto, string $i, string $t, string $resto = ''): string {
     if (!$iscritto) {
         return vista_cortesia('Newsletter', 'Link non valido.', '<p>Per uscire dalla newsletter usa il link in fondo a una delle email che hai ricevuto.</p>');
     }
-    if ($fatto || $iscritto['stato'] === 'uscito') {
+    if ($fatto || $iscritto['stato'] === 'uscito' || $iscritto['stato'] === 'spam') {
         return vista_cortesia('Newsletter', 'Fatto. Sei fuori.',
             '<p>L&#039;indirizzo ' . h($iscritto['email']) . ' non riceverà più la newsletter.</p><p>Se cambi idea, ti iscrivi di nuovo dalla pagina della newsletter.</p>',
             '<p><a class="btn btn-filo" href="' . NEWSLETTER_PAGINA . '">Pagina della newsletter</a></p>');
@@ -417,7 +418,7 @@ function vista_newsletter_esci(?array $iscritto, bool $fatto, string $i, string 
     // Un pulsante, e non l'uscita diretta: i filtri antispam aprono i link delle email e farebbero uscire chi non lo ha chiesto.
     return vista_cortesia('Newsletter', 'Vuoi uscire dalla newsletter?',
         '<p>L&#039;indirizzo ' . h($iscritto['email']) . ' smette di ricevere la ' . h(sito_newsletter_nome()) . '.</p>',
-        '<form method="post" action="' . NEWSLETTER_ESCI . '?i=' . h($i) . '&amp;t=' . h($t) . '"><button class="btn btn-viola" type="submit">Sì, toglimi dall&#039;elenco</button></form>');
+        '<form method="post" action="' . NEWSLETTER_ESCI . '?i=' . h($i) . '&amp;t=' . h($t) . h($resto) . '"><button class="btn btn-viola" type="submit">Sì, toglimi dall&#039;elenco</button></form>');
 }
 
 function vista_termine(array &$c): string {

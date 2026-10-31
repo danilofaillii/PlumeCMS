@@ -63,8 +63,9 @@ $menu = [
         ['Redirect e 404', 'seo.php?scheda=redirect', $qui === 'seo.php' && ($_GET['scheda'] ?? '') === 'redirect'],
     ]] : null,
     // Il redattore vede solo Log cron e Diagnosi: posta, aggiornamenti e SQL sono dell'amministratore.
-    ['Impostazioni', $sonoAdminMenu ? 'impostazioni.php' : 'cron-log.php', 'impostazioni', in_array($qui, ['impostazioni.php', 'addon.php', 'aggiornamenti.php', 'copia-sito.php', 'importa-wordpress.php', 'cron-log.php', 'sicurezza.php', 'controlla-server.php'], true), array_values(array_filter([
+    ['Impostazioni', $sonoAdminMenu ? 'impostazioni.php' : 'cron-log.php', 'impostazioni', in_array($qui, ['impostazioni.php', 'consegna.php', 'addon.php', 'aggiornamenti.php', 'copia-sito.php', 'importa-wordpress.php', 'cron-log.php', 'sicurezza.php', 'controlla-server.php'], true), array_values(array_filter([
         $sonoAdminMenu ? ['Configurazione email', 'impostazioni.php', $qui === 'impostazioni.php'] : null,
+        $sonoAdminMenu ? ['Consegna delle email', 'consegna.php', $qui === 'consegna.php'] : null, // 2.1.0: dominio, servizi, mittenti, rimbalzi, riscaldamento
         $sonoAdminMenu ? ['Sicurezza', 'sicurezza.php', $qui === 'sicurezza.php'] : null, // sicurezza: checklist, 2FA, blocchi, CSP, registro
         $sonoAdminMenu ? ['Addon', 'addon.php', $qui === 'addon.php'] : null, // 2.0.0: le funzioni in più, da accendere
         $sonoAdminMenu ? ['Aggiornamenti', 'aggiornamenti.php', $qui === 'aggiornamenti.php'] : null,

@@ -31,6 +31,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 implode(',', $scelte),
                 $id,
             ]);
+        // 2.1.0: il mittente, solo fra quelli confermati (0 = il predefinito).
+        $mitt = consegna_mittente((int)($_POST['mittente_id'] ?? 0));
+        db()->prepare('UPDATE ' . tbl('newsletter_campagne') . ' SET mittente_id = ? WHERE id = ?')->execute([$mitt && $mitt['verificato_at'] ? (int)$mitt['id'] : 0, $id]);
         $c = newsletter_campagna($id);
     }
     $vuota = trim(strip_tags((string)$c['corpo'], '<img>')) === '' || trim($c['oggetto']) === '';
@@ -83,6 +86,8 @@ $liste = newsletter_liste();
 $scelte = newsletter_liste_campagna($c);
 $destinatari = newsletter_destinatari($scelte);
 $prova = posta_notifica_email(); // l'indirizzo degli avvisi (Impostazioni, Configurazione email)
+$mittentiScelta = consegna_mittenti_scelta();
+[$mittPre, $nomePre] = posta_mittente();
 $adminTitle = 'Newsletter: ' . (newsletter_4byte_fuori($c['oggetto']) ?: 'nuova campagna');
 require_once __DIR__ . '/includes/admin-header.php';
 ?>
@@ -118,6 +123,12 @@ require_once __DIR__ . '/includes/admin-header.php';
       <div class="form-group"><label for="pulsante_testo">Pulsante in fondo (facoltativo)</label>
         <input type="text" id="pulsante_testo" name="pulsante_testo" maxlength="100" placeholder="Leggi la guida" value="<?= h(newsletter_4byte_fuori($c['pulsante_testo'])) ?>" <?= $modificabile ? '' : 'readonly' ?>>
         <input type="url" name="pulsante_link" maxlength="500" placeholder="<?= h(cms_url_sito()) ?>/..." value="<?= h($c['pulsante_link']) ?>" style="margin-top:.4rem" <?= $modificabile ? '' : 'readonly' ?>></div>
+      <div class="form-group"><label for="mittente_id">Mittente</label>
+        <select id="mittente_id" name="mittente_id" <?= $modificabile ? '' : 'disabled' ?>>
+          <option value="0">Il predefinito<?= $mittPre !== '' ? ': ' . h($nomePre . ' <' . $mittPre . '>') : '' ?></option>
+          <?php foreach ($mittentiScelta as $mid => $mn): ?><option value="<?= (int)$mid ?>" <?= (int)($c['mittente_id'] ?? 0) === (int)$mid ? 'selected' : '' ?>><?= h($mn) ?></option><?php endforeach; ?>
+        </select>
+        <div class="hint">I mittenti si aggiungono e si confermano in <a href="consegna.php?scheda=mittenti">Consegna delle email</a>.</div></div>
       <div class="form-group"><label>A quali liste</label>
         <?php foreach ($liste as $l): ?><label style="display:block;font-weight:400;text-transform:none;letter-spacing:0"><input type="checkbox" name="liste[]" value="<?= (int)$l['id'] ?>" <?= in_array((int)$l['id'], $scelte, true) ? 'checked' : '' ?> <?= $modificabile ? '' : 'disabled' ?>> <?= h($l['nome']) ?> <small style="color:var(--text-muted)">(<?= (int)$l['attivi'] ?> attivi)</small></label><?php endforeach; ?>
         <div class="hint">Con le liste salvate la campagna arriva a <b><?= $destinatari ?></b> persone: chi sta in più liste la riceve una volta sola. Il numero si aggiorna quando salvi.</div></div>

@@ -15,10 +15,15 @@
  *   - ogni email HTML esce in multipart/alternative, con la parte di testo semplice generata dall'HTML;
  *   - un rifiuto del destinatario al RCPT TO si riconosce: posta_esito() dice 'rimbalzo' (5xx, definitivo) o
  *     'temporaneo' (4xx); gli altri errori (connessione, accesso, server) sono 'errore'.
+ *
+ * 2.1.0 (includes/consegna.php): con un servizio scelto in Consegna delle email (Brevo, Amazon SES, Mailgun) l'email parte
+ * dalle sue API invece che da SMTP o da mail(); il From di chi chiama vale con SMTP e con le API solo se è un mittente
+ * confermato (o quello di Configurazione email), altrimenti l'email parte dal mittente predefinito.
  */
 
 require_once __DIR__ . '/config.php';
 require_once __DIR__ . '/db.php';
+require_once __DIR__ . '/consegna.php';
 
 /** Dati SMTP salvati nel pannello. Vuoto se il server di posta non è configurato. */
 function posta_config(): array {
@@ -113,6 +118,11 @@ function posta_pulisci_registro(int $giorni = 60): int {
  * server SMTP; se manca, noreply@ il dominio del sito. L'indirizzo è '' se non ne esce uno valido (sito su un IP).
  */
 function posta_mittente(): array {
+    // 2.1.0: il mittente predefinito di Consegna delle email, se è confermato.
+    if ($p = consegna_mittente_predefinito()) {
+        $nome = str_replace(['"', "\r", "\n"], '', (string)$p['nome']) ?: (string)cms_impostazione('sito_nome', CMS_NOME);
+        return [(string)$p['email'], $nome];
+    }
     $c = json_decode((string)get_setting('posta_smtp', ''), true);
     $c = is_array($c) ? $c : [];
     $nome = trim((string)($c['nome'] ?? '')) ?: (string)cms_impostazione('sito_nome', CMS_NOME);
@@ -205,6 +215,22 @@ function posta_con_allegati(array $tenute, array $testa, string $parti, array $a
 function posta_invia(string $a, string $oggetto, string $corpo, string $intestazioni = '', string $tipo = 'altro', array $allegati = []): bool {
     posta_errore('');
     posta_esito('');
+    // 2.1.0: un servizio con le API (Brevo, Amazon SES, Mailgun) al posto di SMTP e di mail().
+    $servizio = consegna_servizio_attivo();
+    if ($servizio !== '') {
+        try {
+            consegna_invia_api($servizio, $a, $oggetto, $corpo, $intestazioni, $allegati, consegna_mittente_per($intestazioni, posta_mittente()));
+            posta_esito('ok');
+            posta_registra($tipo, 'ok');
+            return true;
+        } catch (Throwable $e) {
+            posta_errore($e->getMessage());
+            posta_esito($e instanceof PostaRifiutata ? ($e->getCode() >= 500 ? 'rimbalzo' : 'temporaneo') : 'errore');
+            posta_registra($tipo, posta_esito(), $e->getMessage());
+            error_log('posta: ' . $e->getMessage());
+            return false;
+        }
+    }
     $c = posta_config();
     if (!$c) {
         [$tenute, $contenuto, $testo] = posta_mime($corpo, $intestazioni, $allegati);
@@ -294,7 +320,8 @@ function posta_smtp(array $c, string $a, string $oggetto, string $corpo, string 
                 throw new RuntimeException('Utente o password SMTP non accettati. ' . $e->getMessage());
             }
         }
-        $mittente = (string)$c['mittente'];
+        // 2.1.0: il mittente confermato scelto da chi chiama (campagna, flusso) o il predefinito; senza, quello di Configurazione email.
+        [$mittente, $nomeMitt] = consegna_mittente_per($intestazioni, [(string)$c['mittente'], (string)$c['nome']]);
         if ($mittente === '') throw new RuntimeException('Manca l\'indirizzo del mittente: compila Utente o Indirizzo del mittente in Impostazioni.');
         $scrivi("MAIL FROM:<$mittente>", 250);
         try {
@@ -312,7 +339,7 @@ function posta_smtp(array $c, string $a, string $oggetto, string $corpo, string 
         $tenute = array_values(array_filter($tenute, fn($h) => !preg_match('/^(From|To|Subject|Date|Message-ID):/i', $h)));
         $testa = array_merge([
             'Date: ' . date('r'),
-            'From: ' . posta_oggetto((string)$c['nome']) . " <$mittente>",
+            'From: ' . posta_oggetto($nomeMitt) . " <$mittente>",
             "To: <$a>",
             'Subject: ' . posta_oggetto($oggetto),
             'Message-ID: <' . bin2hex(random_bytes(12)) . '@' . substr(strrchr($mittente, '@') ?: '@' . (parse_url(cms_url_sito(), PHP_URL_HOST) ?: 'localhost'), 1) . '>',

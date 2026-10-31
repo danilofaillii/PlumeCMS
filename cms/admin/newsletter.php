@@ -15,7 +15,7 @@ $scheda = in_array($_GET['scheda'] ?? '', ['campagne', 'iscritti', 'liste', 'imp
 /** I filtri della scheda Iscritti, uguali per l'elenco e per le azioni su tutti i risultati. */
 function nl_filtro(array $q): array {
     $cerca = trim((string)($q['cerca'] ?? ''));
-    $stato = in_array($q['stato'] ?? '', ['attivo', 'in_attesa', 'uscito', 'rimbalzato', 'errori'], true) ? $q['stato'] : '';
+    $stato = in_array($q['stato'] ?? '', ['attivo', 'in_attesa', 'uscito', 'rimbalzato', 'spam', 'errori'], true) ? $q['stato'] : '';
     $lista = (int)($q['lista'] ?? 0);
     $w = []; $par = [];
     if ($cerca !== '') { $q = '%' . addcslashes($cerca, '%_\\') . '%'; $w[] = "(i.email LIKE ? ESCAPE '\\\\' OR i.nome LIKE ? ESCAPE '\\\\' OR i.cognome LIKE ? ESCAPE '\\\\')"; array_push($par, $q, $q, $q); }
@@ -59,8 +59,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $c = newsletter_campagna((int)($_POST['id'] ?? 0));
         if ($c) {
             $ora = date('Y-m-d H:i:s');
-            db()->prepare('INSERT INTO ' . tbl('newsletter_campagne') . ' (oggetto, anteprima, corpo, pulsante_testo, pulsante_link, liste, creato, aggiornato) VALUES (?,?,?,?,?,?,?,?)')
-                ->execute(['Copia di ' . $c['oggetto'], $c['anteprima'], $c['corpo'], $c['pulsante_testo'], $c['pulsante_link'], $c['liste'], $ora, $ora]);
+            db()->prepare('INSERT INTO ' . tbl('newsletter_campagne') . ' (oggetto, anteprima, corpo, pulsante_testo, pulsante_link, liste, mittente_id, creato, aggiornato) VALUES (?,?,?,?,?,?,?,?,?)')
+                ->execute(['Copia di ' . $c['oggetto'], $c['anteprima'], $c['corpo'], $c['pulsante_testo'], $c['pulsante_link'], $c['liste'], (int)($c['mittente_id'] ?? 0), $ora, $ora]);
             header('Location: newsletter-campagna.php?id=' . (int)db()->lastInsertId());
             exit;
         }
@@ -204,7 +204,9 @@ require_once __DIR__ . '/includes/admin-header.php';
   <div><b><?= $numeri['in_attesa'] ?></b>in attesa di conferma</div>
   <div><b><?= $numeri['uscito'] ?></b>usciti</div>
   <div><b><?= $numeri['rimbalzato'] ?></b><a href="?scheda=iscritti&amp;stato=rimbalzato">rimbalzati</a></div>
+  <?php if ($numeri['spam']): ?><div><b><?= (int)$numeri['spam'] ?></b><a href="?scheda=iscritti&amp;stato=spam">hanno segnalato spam</a></div><?php endif; ?>
 </div>
+<?php $nlCaldo = consegna_riscaldamento_stato(); if ($nlCaldo['acceso']): ?><p class="nl-avviso" role="status" id="nl-riscaldamento">Riscaldamento acceso, giorno <?= (int)$nlCaldo['giorno'] ?>: oggi partono al massimo <b><?= (int)$nlCaldo['oggi'] ?></b> email<?= $nlCaldo['finito'] ? ' (arrivato al limite scritto)' : ', domani ' . (int)$nlCaldo['domani'] ?>. <a href="consegna.php?scheda=riscaldamento">Vedi</a>.</p><?php endif; ?>
 <?php if ($numeri['segnalati']): ?><p class="nl-avviso" role="status"><b><?= (int)$numeri['segnalati'] ?></b> <?= $numeri['segnalati'] === 1 ? 'iscritto ha' : 'iscritti hanno' ?> avuto tre errori temporanei di fila: <?= $numeri['segnalati'] === 1 ? 'riceve' : 'ricevono' ?> ancora, ma conviene controllare l'indirizzo. <a href="?scheda=iscritti&amp;stato=errori">Vedi chi</a>.</p><?php endif; ?>
 
 <nav class="nl-schede">
@@ -271,7 +273,7 @@ require_once __DIR__ . '/includes/admin-header.php';
   <form method="get" class="nl-riga" style="margin-bottom:1rem">
     <input type="hidden" name="scheda" value="iscritti">
     <input type="text" name="cerca" value="<?= h($f['cerca']) ?>" placeholder="email o nome" style="padding:.4rem .6rem;border:1px solid var(--border);border-radius:6px">
-    <select name="stato"><option value="">Tutti gli stati</option><?php foreach (['attivo' => 'Attivi', 'in_attesa' => 'In attesa', 'uscito' => 'Usciti', 'rimbalzato' => 'Rimbalzati', 'errori' => 'Con 3 errori di fila'] as $k => $v): ?><option value="<?= $k ?>" <?= $f['stato'] === $k ? 'selected' : '' ?>><?= $v ?></option><?php endforeach; ?></select>
+    <select name="stato"><option value="">Tutti gli stati</option><?php foreach (['attivo' => 'Attivi', 'in_attesa' => 'In attesa', 'uscito' => 'Usciti', 'rimbalzato' => 'Rimbalzati', 'spam' => 'Hanno segnalato spam', 'errori' => 'Con 3 errori di fila'] as $k => $v): ?><option value="<?= $k ?>" <?= $f['stato'] === $k ? 'selected' : '' ?>><?= $v ?></option><?php endforeach; ?></select>
     <select name="lista"><option value="0">Tutte le liste</option><?php foreach ($liste as $l): ?><option value="<?= (int)$l['id'] ?>" <?= $f['lista'] === (int)$l['id'] ? 'selected' : '' ?>><?= h($l['nome']) ?></option><?php endforeach; ?><option value="-1" <?= $f['lista'] === -1 ? 'selected' : '' ?>>In nessuna lista</option></select>
     <button class="btn btn-secondary btn-sm" type="submit">Cerca</button>
     <a href="?scarica=iscritti" style="margin-left:auto">Scarica tutti (CSV)</a>
@@ -288,8 +290,9 @@ require_once __DIR__ . '/includes/admin-header.php';
     <?php foreach ($iscritti as $r): $sue = array_map('intval', array_filter(explode(',', (string)$r['sue_liste']))); ?>
     <tr>
       <td><?= h($r['email']) ?></td><td><?= h(trim($r['nome'] . ' ' . $r['cognome'])) ?></td>
-      <td><?= ['attivo' => 'attivo', 'in_attesa' => 'in attesa', 'uscito' => 'uscito', 'rimbalzato' => 'rimbalzato'][$r['stato']] ?? h($r['stato']) ?>
-        <?php if ($r['stato'] === 'rimbalzato'): ?><span class="nl-errori" title="<?= h($r['ultimo_errore']) ?>">il server di posta ha rifiutato l'indirizzo: non riceve più niente</span>
+      <td><?= ['attivo' => 'attivo', 'in_attesa' => 'in attesa', 'uscito' => 'uscito', 'rimbalzato' => 'rimbalzato', 'spam' => 'ha segnalato spam'][$r['stato']] ?? h($r['stato']) ?>
+        <?php if ($r['stato'] === 'spam'): ?><span class="nl-errori">ha premuto "è spam" nel suo programma di posta: non riceve più niente</span>
+        <?php elseif ($r['stato'] === 'rimbalzato'): ?><span class="nl-errori" title="<?= h($r['ultimo_errore']) ?>">il server di posta ha rifiutato l'indirizzo: non riceve più niente</span>
         <?php elseif ((int)$r['errori_di_fila'] >= 3): ?><span class="nl-errori" title="<?= h($r['ultimo_errore']) ?>"><?= (int)$r['errori_di_fila'] ?> errori temporanei di fila</span><?php endif; ?></td>
       <td><details><summary style="cursor:pointer"><?= h(implode(', ', array_map(fn($l) => $nomeLista[$l] ?? '', $sue)) ?: 'nessuna') ?></summary>
         <form method="post" style="padding:.4rem 0"><?= csrf_field() ?><input type="hidden" name="azione" value="liste_iscritto"><input type="hidden" name="id" value="<?= (int)$r['id'] ?>"><?= $nascosti() ?>
@@ -342,7 +345,8 @@ require_once __DIR__ . '/includes/admin-header.php';
     <div class="form-group"><label for="per_ora">Email al massimo ogni ora</label><input type="number" id="per_ora" name="per_ora" min="10" max="2000" value="<?= (int)$cfg['per_ora'] ?>">
       <div class="hint">I server condivisi limitano le email per ora: chiedi al tuo hosting il limite del tuo piano e scrivi qui un numero un po' più basso. Contano tutte le email del sito (conferme, avvisi dei form, flussi, campagne): nell'ultima ora ne sono partite <?= posta_inviate(3600) ?>.</div></div>
     <div class="form-group"><label for="per_giorno">Email al massimo al giorno</label><input type="number" id="per_giorno" name="per_giorno" min="0" max="100000" value="<?= (int)$cfg['per_giorno'] ?>">
-      <div class="hint">Nelle ultime 24 ore, contando tutte le email del sito. 0 vuol dire nessun limite. Nelle ultime 24 ore ne sono partite <?= posta_inviate(86400) ?>.</div></div>
+      <div class="hint">Nelle ultime 24 ore, contando tutte le email del sito. 0 vuol dire nessun limite. Nelle ultime 24 ore ne sono partite <?= posta_inviate(86400) ?>.
+        Indirizzo nuovo o tanti iscritti tutti insieme? Accendi il <a href="consegna.php?scheda=riscaldamento">riscaldamento</a>: il limite parte basso e sale da solo.</div></div>
     <div class="form-group"><label for="rispondi_a">Le risposte alla newsletter arrivano a</label><input type="email" id="rispondi_a" name="rispondi_a" value="<?= h($cfg['rispondi_a']) ?>" placeholder="la tua email">
       <div class="hint">Vuoto: le risposte vanno all'indirizzo che spedisce (scheda Posta).</div></div>
     <button class="btn btn-primary" type="submit">Salva</button>
