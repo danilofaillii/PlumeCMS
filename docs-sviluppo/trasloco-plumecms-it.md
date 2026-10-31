@@ -1,7 +1,10 @@
 # Trasloco del sito di plumeCMS su https://plumecms.it
 
-Per Danilo, 1 novembre 2026. Stesso hosting: il sito non si copia, si collega il dominio nuovo alla cartella dove c'è già.
-Tempo: mezz'ora, più l'attesa del certificato HTTPS (da pochi minuti a qualche ora).
+Per Danilo, 1 novembre 2026. Stesso hosting, **cartella nuova** per plumecms.it, **stesso database**: si copiano i file del sito
+nella cartella nuova e il sito nuovo usa lo stesso database del vecchio. Tempo: mezz'ora, più l'attesa del certificato HTTPS.
+
+Finché esistono tutti e due, i due siti leggono e scrivono lo stesso database: quello che salvi in uno compare nell'altro.
+Durante il trasloco **non modificare contenuti**.
 
 ## Prima di cominciare
 
@@ -20,18 +23,20 @@ Tempo: mezz'ora, più l'attesa del certificato HTTPS (da pochi minuti a qualche 
 1. **Impostazioni > Aggiornamenti > Carica un pacchetto**: scegli `plumecms-2.4.0-pacchetto-unico.zip`, poi **Applica ora**.
 2. In alto a sinistra deve comparire **v. 2.4.0**.
 
-## 3. Collegare plumecms.it alla stessa cartella (cPanel)
+## 3. Copiare i file nella cartella di plumecms.it (cPanel)
 
-1. In cPanel apri **Domini** (Domains).
-2. Guarda la riga di `plumecms.danilofailli.it` e annota la **Radice documenti** (Document Root), per esempio
-   `/home/tuoutente/plumecms.danilofailli.it`.
-3. Premi **Crea un nuovo dominio** (Create A New Domain):
-   - Dominio: `plumecms.it`;
-   - **togli** la spunta "Condividi la radice documenti" se ti propone quella del dominio principale;
-   - Radice documenti: scrivi **la stessa cartella** annotata al punto 2;
-   - premi **Invia**.
-4. In cPanel apri **SSL/TLS Status** e premi **Run AutoSSL**. Aspetta che `plumecms.it` e `www.plumecms.it` abbiano il lucchetto verde.
-5. Apri `https://plumecms.it` nel browser: deve comparire il sito di plumeCMS, con il lucchetto.
+1. In cPanel apri **Domini** (Domains) e annota due cartelle (colonna **Radice documenti**):
+   - quella di `plumecms.danilofailli.it` (la **vecchia**), per esempio `/home/tuoutente/plumecms.danilofailli.it`;
+   - quella di `plumecms.it` (la **nuova**), per esempio `/home/tuoutente/plumecms.it`.
+2. Apri **File Manager**. In alto a destra **Impostazioni** (Settings): spunta **Mostra i file nascosti (dotfiles)** e salva.
+   Serve per copiare anche i file `.htaccess`, che proteggono il sito.
+3. Se nella cartella **nuova** c'è già qualcosa (per esempio una pagina di benvenuto dell'hosting), selezionalo e cancellalo.
+4. Entra nella cartella **vecchia**, premi **Seleziona tutto** (Select All), poi **Copia** (Copy). Come destinazione scrivi la
+   cartella **nuova** (per esempio `/plumecms.it`) e premi **Copia i file**.
+5. Controlla nella cartella nuova che ci siano: `index.php`, `.htaccess`, le cartelle `admin`, `includes`, `uploads`, `sito`,
+   e il file `includes/config.local.php` (è lui che dice al sito quale database usare: va copiato così com'è).
+6. In cPanel apri **SSL/TLS Status** e premi **Run AutoSSL**. Aspetta che `plumecms.it` e `www.plumecms.it` abbiano il lucchetto verde.
+7. Apri `https://plumecms.it` nel browser: deve comparire il sito di plumeCMS, con il lucchetto.
 
 ## 4. Dire al sito il suo indirizzo nuovo
 
@@ -49,11 +54,23 @@ Tempo: mezz'ora, più l'attesa del certificato HTTPS (da pochi minuti a qualche 
 - [ ] `https://plumecms.it/sitemap.xml` elenca indirizzi che cominciano con `https://plumecms.it/`.
 - [ ] Nel pannello, **Impostazioni > Controlla il server > Controlla adesso**: nessuna voce rossa nuova.
 
+## 5b. I compiti automatici (cron)
+
+Il cron di cPanel lancia i file del sito con il percorso della cartella **vecchia**: va spostato sulla nuova, prima di chiudere il vecchio.
+
+1. Nel pannello di plumecms.it: **Impostazioni > Log cron**. In alto ci sono le due righe giuste da mettere nel cron, già con il
+   percorso della cartella nuova.
+2. In cPanel apri **Processi Cron** (Cron Jobs). Trovi le due righe di plumeCMS con dentro il percorso vecchio.
+3. Per ognuna premi **Modifica** e sostituisci il comando con quello del punto 1, oppure cancellala e aggiungi quella nuova
+   con gli stessi orari. Salva.
+4. Il giorno dopo, in **Impostazioni > Log cron**, "Ultimo giro" deve avere la data di oggi.
+
 ## 6. Chiudere il vecchio indirizzo
 
 1. In cPanel, **Domini**: sulla riga di `plumecms.danilofailli.it` premi **Gestisci** e poi **Rimuovi il dominio**.
-2. **Attenzione**: se cPanel chiede se cancellare anche la cartella (radice documenti), rispondi **NO**. È la stessa cartella
-   di plumecms.it: cancellarla cancellerebbe il sito.
+2. Se cPanel chiede se cancellare anche la sua cartella, qui puoi dire di sì: è la cartella **vecchia**, il sito ora vive in
+   quella nuova. Per stare tranquillo, prima scarica la copia del punto 1 (se non l'hai già fatto) e controlla ancora una volta
+   che `https://plumecms.it` funzioni.
 3. Facoltativo: se vuoi che `www.plumecms.it` porti a `plumecms.it`, in cPanel **Reindirizzamenti** (Redirects):
    tipo **Permanente (301)**, da `www.plumecms.it` a `https://plumecms.it`.
 
@@ -73,7 +90,11 @@ I siti con la 2.3.2 o prima cercano gli aggiornamenti sul vecchio indirizzo, che
 
 ## Se qualcosa va storto
 
-- Il sito su plumecms.it mostra la pagina dell'hosting: il punto 3 non punta alla cartella giusta. Ricontrolla la Radice documenti.
+- Il sito su plumecms.it mostra la pagina dell'hosting o un elenco di file: la copia del punto 3 è finita in un'altra cartella,
+  oppure è rimasto il file di benvenuto dell'hosting (`index.html`): cancellalo.
+- Il sito su plumecms.it dice "Manca includes/config.local.php": quel file non è stato copiato. Copialo dalla cartella vecchia.
+- Le pagine si aprono ma le immagini no, o il pannello è senza grafica: mancano i file nascosti (`.htaccess`) o la cartella
+  `uploads`. Rifai il punto 3 con "Mostra i file nascosti" acceso.
 - Il pannello dice "certificato non valido": AutoSSL non ha ancora finito. Aspetta e riprova.
-- Il sito non si apre più da nessun indirizzo: in cPanel la cartella è sparita (punto 6.2). Ripristina la copia del punto 1
-  (installazione nuova di plumeCMS nella cartella, poi Impostazioni > Copia del sito > Carica e ripristina).
+- Qualcosa è andato storto e non sai come tornare indietro: hai la copia del punto 1. Installazione nuova di plumeCMS nella cartella
+  di plumecms.it, poi Impostazioni > Copia del sito > Carica e ripristina.
