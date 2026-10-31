@@ -74,9 +74,18 @@ function versione_http(string $url, int $max, int $timeout, ?string $verso = nul
     ]);
     $vecchio = ini_get('default_socket_timeout');
     ini_set('default_socket_timeout', (string)$timeout);
-    $h = @fopen($url, 'rb', false, $ctx);
+    // 2.2.0: gli avvisi di PHP si raccolgono tutti (il primo dice del certificato, l'ultimo solo "failed to open stream").
+    $avvisi = [];
+    set_error_handler(function ($n, $m) use (&$avvisi) { $avvisi[] = (string)$m; return true; });
+    try { $h = fopen($url, 'rb', false, $ctx); } finally { restore_error_handler(); }
     ini_set('default_socket_timeout', (string)$vecchio);
-    if (!$h) throw new RuntimeException('Il sito ' . parse_url($url, PHP_URL_HOST) . ' non risponde (rete assente o sito spento).');
+    if (!$h) {
+        // Un certificato che non va (scaduto, per un altro nome, di un'autorità sconosciuta) si dice: "non risponde" confondeva.
+        $e = implode(' ', $avvisi);
+        if (preg_match('~certificate|SSL operation failed|crypto|peer~i', $e))
+            throw new RuntimeException('Il certificato HTTPS del sito ' . parse_url($url, PHP_URL_HOST) . ' non è valido per questo server (scaduto, per un altro nome o di un\'autorità che il server non conosce).');
+        throw new RuntimeException('Il sito ' . parse_url($url, PHP_URL_HOST) . ' non risponde (rete assente o sito spento).');
+    }
     try {
         $meta = stream_get_meta_data($h);
         $righe = (array)($meta['wrapper_data'] ?? []);

@@ -33,7 +33,7 @@ const esito = async (p, gruppo) => p.locator(`.cs-gruppo:has(h2:text-is("${grupp
   await p.waitForLoadState('networkidle');
   ok('il controllo finisce in meno di 30 secondi', Date.now() - t0 < 30000, Date.now() - t0);
   const gruppi = await p.locator('.cs-gruppo h2').allInnerTexts();
-  ok('sette gruppi', ['PHP e database', 'Indirizzo del sito', 'Cron', 'Email', 'Aggiornamenti', 'Cartelle', 'Protezioni (.htaccess)'].every(g => gruppi.map(x => x.toLowerCase()).includes(g.toLowerCase())), gruppi);
+  ok('otto gruppi', ['PHP e database', 'Indirizzo del sito', 'Cron', 'Email', 'Aggiornamenti', 'Google e IndexNow', 'Cartelle', 'Protezioni (.htaccess)'].every(g => gruppi.map(x => x.toLowerCase()).includes(g.toLowerCase())), gruppi);
   const php = await esito(p, 'PHP e database');
   ok('PHP, database ed estensioni necessarie: verdi', php.filter(x => /^PHP|Database|pdo_mysql|mbstring|openssl|json/.test(x[0])).every(x => x[1] === 'ok'), php.filter(x => x[1] !== 'ok'));
   const https = await esito(p, 'Indirizzo del sito');
@@ -44,11 +44,22 @@ const esito = async (p, gruppo) => p.locator(`.cs-gruppo:has(h2:text-is("${grupp
   ok('protezioni: config.local.php, registri e VERSIONE rispondono 403, verde', prot[0][1] === 'ok' && prot[0][2].includes('403'), prot);
   const agg = await esito(p, 'Aggiornamenti');
   ok('aggiornamenti: un esito leggibile (verde se risponde, giallo se no)', ['ok', 'avviso'].includes(agg[0][1]) && agg[0][2].length > 40, agg);
+  // 2.2.0: Google e IndexNow, senza service account e senza chiave: gialli, con cosa fare.
+  const est = await esito(p, 'Google e IndexNow');
+  ok('Google e IndexNow (2.2.0): due voci gialle senza service account e senza chiave', est.length === 2 && est.every(x => x[1] === 'avviso') && /Non collegato/.test(est[0][2]) && /Non acceso/.test(est[1][2]), est);
   const cron = await esito(p, 'Cron');
   ok('cron: due voci, con quando e il link alla pagina Log cron', cron.length === 2 && cron.every(x => /Ultimo giro/.test(x[2])), cron);
   ok('riassunto in alto con i numeri', await p.locator('.cs-somma span').count() >= 2);
   ok('nessun avviso di PHP nella pagina', !/Warning|Notice|Fatal error|Deprecated/.test(await p.locator('main').innerText()));
   await p.screenshot({ path: `${OUT}/controlla-server.png`, fullPage: true });
+
+  // 2.2.0: con la chiave di IndexNow il file /<chiave>.txt si legge dal sito stesso; api.indexnow.org da qui può non rispondere
+  // (rete chiusa della prova): verde se risponde, rosso con "non raggiunge" se no. Poi la chiave si toglie.
+  execFileSync('php', ['-r', `$_SERVER['HTTP_HOST']='127.0.0.1'; require '${DIR}/includes/config.php'; require_once '${DIR}/includes/seo.php'; seo_indexnow_genera();`]);
+  await Promise.all([p.waitForNavigation({ timeout: 90000 }), p.click('#cs-controlla')]);
+  const inx = (await esito(p, 'Google e IndexNow'))[1];
+  ok('IndexNow con la chiave: il file della chiave si legge, e il server raggiunge api.indexnow.org oppure lo dice', (inx[1] === 'ok' && /si legge da fuori/.test(inx[2])) || (inx[1] === 'ko' && /non raggiunge api\.indexnow\.org/.test(inx[2])), inx);
+  execFileSync('php', ['-r', `$_SERVER['HTTP_HOST']='127.0.0.1'; require '${DIR}/includes/config.php'; save_setting('seo_indexnow_chiave', '');`]);
 
   // 3. Un server che non legge il .htaccess (il router di prova lo simula con il file controllo-aperto)
   execFileSync('php', ['-r', 'file_put_contents($argv[1], "1");', path.join(DIR, 'logs', 'controllo-aperto')]);
