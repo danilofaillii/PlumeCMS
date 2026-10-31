@@ -2,6 +2,15 @@
 
 Il prodotto si chiama **plumeCMS** (nome scelto il 26 ottobre 2026; prima, per poche ore, "CarbonaraCMS", e ancora prima il provvisorio "Officina": gli zip vecchi si chiamavano `officina-*` e `carbonaracms-*`).
 
+## 2.0.3 (31 ottobre 2026) - L'immagine per i social, come la vogliono i social
+
+- **Segnalazione di Danilo**: su LinkedIn l'anteprima del sito di plumeCMS usciva senza immagine, mentre altri siti sullo stesso
+  hosting (WordPress) funzionano. La testa delle pagine ora dice dell'immagine quello che dicono quei siti:
+  - le barre doppie in un indirizzo incollato a pezzi (`https://sito.it//uploads/...`) diventano una;
+  - `og:image:secure_url` (con https) e `twitter:image`, oltre a misure, tipo e descrizione dell'immagine (dalla 2.0.0);
+  - il prefisso di Open Graph sul tag `<html>` (`prefix="og: https://ogp.me/ns#"`).
+- Le pagine non cambiano a vista.
+
 ## 2.0.2 (31 ottobre 2026) - I link scritti a mano
 
 - **Pulsanti che non portavano da nessuna parte** (segnalazione di Danilo sui pulsanti dell'Apertura). Un link scritto come lo

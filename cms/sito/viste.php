@@ -67,11 +67,19 @@ function vista_pagina(array $meta, string $corpo, string $jsonld = '', string $a
             $u = parse_url(cms_url_sito());
             if (!empty($u['host'])) $v = ($u['scheme'] ?? 'https') . '://' . $u['host'] . (!empty($u['port']) ? ':' . $u['port'] : '') . $v;
         }
+        // 2.0.3: le barre doppie nel percorso (https://sito.it//uploads/..., un indirizzo incollato a pezzi) diventano una.
+        if ($k === 'og:image' && is_string($v)) $v = (string)preg_replace('~(?<!:)/{2,}~', '/', $v);
         $righe[] = '<meta property="' . $k . '" content="' . h((string)$v) . '">';
-        if ($k === 'og:image' && is_string($v) && $v !== '') foreach (vista_og_immagine_dati($v, (string)($meta['og']['og:title'] ?? '')) as $kk => $vv) $righe[] = '<meta property="' . $kk . '" content="' . h($vv) . '">';
+        if ($k === 'og:image' && is_string($v) && $v !== '') {
+            // 2.0.3: come fanno i siti che i social leggono bene (WordPress con Yoast): anche secure_url e l'immagine per X.
+            if (str_starts_with($v, 'https://')) $righe[] = '<meta property="og:image:secure_url" content="' . h($v) . '">';
+            foreach (vista_og_immagine_dati($v, (string)($meta['og']['og:title'] ?? '')) as $kk => $vv) $righe[] = '<meta property="' . $kk . '" content="' . h($vv) . '">';
+            $ogImmagine = $v;
+        }
     }
     if (!empty($meta['og']['og:title'])) {
         $righe[] = '<meta name="twitter:card" content="summary_large_image">';
+        if (!empty($ogImmagine)) $righe[] = '<meta name="twitter:image" content="' . h($ogImmagine) . '">';
     }
     $menu = '';
     foreach (sito_menu_fisso() as [$nome, $href]) {
@@ -103,8 +111,9 @@ function vista_pagina(array $meta, string $corpo, string $jsonld = '', string $a
     $doc = vista_tema('documento', ['testa' => $testa, 'testata' => $testata, 'corpo' => $corpo, 'piede' => $piede, 'popup' => $popup, 'meta' => $meta]);
     if ($doc !== null) return $doc;
 
+    // 2.0.3: il prefisso di Open Graph sul tag html, come lo scrivono i siti che i social leggono senza problemi.
     return '<!DOCTYPE html>
-<html lang="it">
+<html lang="it" prefix="og: https://ogp.me/ns#">
 <head>
 ' . $testa . '
 </head>

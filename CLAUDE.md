@@ -91,7 +91,7 @@ Sono gli unici in `cms/docs/`, nello zip, nel sito di plumeCMS e nella pagina Do
 - **Pacchetto di aggiornamento** per un'installazione esistente:
   `python3 tools/cms-pacchetto.py --aggiornamento`. Si carica dal pannello,
   Impostazioni, Aggiornamenti.
-- **Versione**: `cms/VERSIONE` (oggi 2.0.2; sempre tre numeri: "beta" va nel CHANGELOG, mai nel nome dello zip, se no la serie "ultima" del Download non lo riconosce) e una voce in `cms/CHANGELOG.md` a ogni
+- **Versione**: `cms/VERSIONE` (oggi 2.0.3; sempre tre numeri: "beta" va nel CHANGELOG, mai nel nome dello zip, se no la serie "ultima" del Download non lo riconosce) e una voce in `cms/CHANGELOG.md` a ogni
   zip con contenuto diverso. Mai cambiare il contenuto di una versione già data.
 - **Prove** prima di dire finito:
   - `php -n -d short_open_tag=1 -l` su ogni file PHP toccato, `node --check` sui js;
@@ -127,6 +127,11 @@ Le decisioni complete, con data e perché, stanno nel second brain, `plumecms/de
 
 ## Stato al 30 ottobre 2026
 
+Fatto: plumeCMS 2.0.3 (31 ottobre): l'immagine per i social (Danilo: su LinkedIn niente immagine, mentre i suoi siti WordPress sullo
+stesso hosting vanno, quindi non è l'hosting). Il sito di plumeCMS era ancora senza la 2.0.x e aveva `og:image` con le barre doppie
+(`https://plumecms.danilofailli.it//uploads/...`); pagina e immagine arrivano al robot di LinkedIn con 200. Ora barre doppie corrette,
+`og:image:secure_url`, `twitter:image`, `prefix` di Open Graph su `<html>`. Non provato contro LinkedIn (la sessione non lo raggiunge).
+Aggiornamento 2.0.2 -> 2.0.3 13/13 con 20 foto uguali, install 37/37 radice e cartella, pulsanti 670/670.
 Fatto: plumeCMS 2.0.2 (31 ottobre): i link scritti a mano (segnalazione di Danilo: "i pulsanti della hero non funzionano").
 `editor_link_sicuro()` scartava in silenzio `laser-coaching`, `www.sito.it`, `sito.it/pagina` e il pulsante puntava a `#`, in tutti i
 widget; ora diventano `/laser-coaching` e `https://...`, gli schemi pericolosi restano fuori. `prova-hero-pulsanti.js` 670/670

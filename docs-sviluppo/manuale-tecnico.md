@@ -3029,6 +3029,11 @@ Il modo di lanciarle è in `prove/LEGGIMI.md`.
 **og:image.**
 - `vista_pagina()` (`sito/viste.php:66`) rende intero un indirizzo che comincia con `/`, con lo schema, l'host e la porta di `cms_url_sito()`. Mai l'host della richiesta: un'intestazione Host falsa non entra nella pagina.
 - Per le immagini dei Media, `vista_og_immagine_dati()` (`:44`) aggiunge `og:image:width`, `height`, `type` (con `getimagesize`) e `alt`.
+- Dalla 2.0.3, in `vista_pagina()` (`sito/viste.php`):
+  - le barre doppie nel percorso di `og:image` diventano una;
+  - con `https` esce anche `og:image:secure_url`, e con il titolo `twitter:image`;
+  - il tag `<html>` ha `prefix="og: https://ogp.me/ns#"`, come i siti WordPress con Yoast che LinkedIn legge.
+  - Non provato contro LinkedIn: la sessione non lo raggiunge.
 
 **Pannello al telefono** (`admin/assets/css/admin.css`, in fondo):
 - `fieldset{min-width:0}`;
