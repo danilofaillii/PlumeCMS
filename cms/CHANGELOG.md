@@ -2,6 +2,34 @@
 
 Il prodotto si chiama **plumeCMS** (nome scelto il 26 ottobre 2026; prima, per poche ore, "CarbonaraCMS", e ancora prima il provvisorio "Officina": gli zip vecchi si chiamavano `officina-*` e `carbonaracms-*`).
 
+## 2.1.0 (31 ottobre 2026) - Le email arrivano, gli addon completi, un file solo
+
+- **Le email arrivano nella posta, non nello spam.** Pannello nuovo Impostazioni > Consegna delle email, con sei linguette (Da dove
+  cominciare, Dominio, Come partono, Mittenti, Rimbalzi e spam, Riscaldamento): il mittente (anche più di uno, con il controllo dell'indirizzo), il dominio (SPF, DKIM e DMARC da copiare nel
+  pannello dell'hosting, con il controllo di quello che c'è), come partono le email (il server del sito, SMTP, oppure le API di
+  Brevo, Amazon SES e Mailgun, con le chiavi salvate cifrate), rimbalzi e segnalazioni di spam (gli indirizzi che rimbalzano
+  escono dagli invii da soli), il riscaldamento di un dominio nuovo (pochi invii al giorno che crescono). Campagne e flussi scelgono il loro mittente.
+- **Prenotazioni**: una prenotazione presa al telefono si scrive dal pannello (Prenotazioni > Nuova prenotazione), anche fuori dagli orari
+  di lavoro se lo si vuole; il cliente riceve la conferma con il file del calendario (.ics) che si aggiorna da solo quando
+  l'appuntamento cambia o si annulla.
+- **Raccolta recensioni**: "Com'è andata?" arriva anche a chi ha partecipato a un evento (ai presenti o a tutti gli
+  iscritti), dopo i giorni scelti nelle Impostazioni.
+- **Corsi online**: il testo delle lezioni si scrive con l'editor visuale (le lezioni scritte prima restano come sono) e
+  l'ordine di moduli e lezioni si cambia trascinando.
+- **Area riservata**: "Solo per i membri" si sceglie anche dalla scheda dell'articolo o della pagina. Chi non è entrato non
+  trova più i contenuti riservati, nemmeno il titolo, nella ricerca, nel blog, nelle categorie, nei tag, negli archivi, nei
+  feed, nella sitemap, in llms.txt e nei widget degli articoli; un membro collegato sì.
+- **Copia del sito altrove**: anche su Google Drive e su Dropbox, collegati con un clic.
+- **Copia del sito**: il ripristino è pulito, i file che stanno nel sito ma non nella copia vanno in
+  `aggiornamenti/scarto/ripristino-<data>/` (si possono riprendere); con due siti nello stesso database e prefissi che
+  cominciano uguale la copia prende solo le tabelle sue.
+- **Scegli dai Media dappertutto**: in ogni campo del pannello che chiede un'immagine (articoli, SEO, popup, social,
+  newsletter, eventi, vetrina, corsi, stile del sito) c'è il pulsante per prenderla dai Media o caricarla.
+- **Un manuale d'uso solo**, in un PDF, con le novità di questa versione.
+- **Un file solo da caricare**: l'aggiornamento arriva in un pacchetto unico, con codice e pagine insieme.
+- Corretti: la griglia della pagina dei Corsi al telefono, l'indirizzo dell'immagine della newsletter in un sito in una
+  cartella (la cartella usciva due volte).
+
 ## 2.0.3 (31 ottobre 2026) - L'immagine per i social, come la vogliono i social
 
 - **Segnalazione di Danilo**: su LinkedIn l'anteprima del sito di plumeCMS usciva senza immagine, mentre altri siti sullo stesso
