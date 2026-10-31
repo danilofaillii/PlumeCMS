@@ -164,6 +164,19 @@ const CARTELLA = new URL(B).pathname.replace(/\/$/, '');
   ok('P10 pixel: un ID sbagliato si rifiuta e si dice, il valore di prima resta', /solo di numeri/.test(f10) && await a.inputValue('[name="analisi[pixel]"]') === '1234567890', f10);
   await a.fill('[name="analisi[pixel]"]', ''); await invia(fa);
 
+  // ---------------------------------------------------------------- P11: l'indirizzo del negozio uguale a una pagina
+  await vai('addon.php');
+  const accV = a.locator('[data-addon="vetrina"] button[value=accendi]');
+  if (await accV.count()) await Promise.all([a.waitForNavigation(), accV.click()]);
+  const titServ = async () => ((await (await a.request.get(B + '/servizi/')).text()).match(/<title>([^<]*)/) || ['', ''])[1];
+  const prima11 = await titServ();
+  await vai('addon-pagina.php?a=vetrina&p=impostazioni');
+  await a.fill('[name=percorso]', 'servizi'); await a.uncheck('[name=bonifico]');
+  await Promise.all([a.waitForNavigation(), a.click('#vt-salva')]);
+  const f11 = (await a.locator('.flash, #vt-errori').allInnerTexts()).join(' | ');
+  ok('P11 vetrina: "servizi" come indirizzo del negozio si rifiuta, perché è la pagina Servizi', /della pagina «Servizi»/.test(f11), f11);
+  ok('P11 vetrina: e la pagina Servizi resta sul sito', /^Servizi/.test(await titServ()) && /^Servizi/.test(prima11), await titServ());
+
   ok('nessun errore JavaScript', err.length === 0, err);
   await br.close();
   console.log(`\n${n - ko} su ${n} OK`); process.exit(ko ? 1 : 0);
