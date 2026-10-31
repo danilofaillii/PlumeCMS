@@ -116,7 +116,7 @@ api/                endpoint pubblici: nl.php (aperture e clic della newsletter,
                     versione.php (l'ultima versione di una serie del download manager, 19.6)
 install/            l'installatore e gli esempi di .htaccess e Nginx
 moduli/             i moduli (vuota nel prodotto)
-temi/               i temi del sito (Cosmo, Aria, Bottega di partenza)
+temi/               i temi del sito (di partenza: Cosmo, Aria, Bottega, Estate, Inverno, Autunno, Primavera, Giallo, Rosso, Verde, Blu)
 uploads/            le immagini caricate
 logs/               i log
 aggiornamenti/      pacchetti caricati, snapshot, avanzamento, copie/ (le copie del sito, 19.7)
@@ -1264,7 +1264,30 @@ Una cartella `temi/<slug>/`:
 | `funzioni.php` | no | filtri ed eventi del tema |
 | `viste/*.php` | no | viste che sostituiscono quelle del CMS (per esempio `404.php`) |
 
-Partono con il prodotto tre temi: Cosmo, Aria, Bottega.
+Partono con il prodotto undici temi, nessuno con PHP (solo `tema.json`, `stile.json`, `modelli.json`, `tema.css`, `anteprima.png`):
+
+| Tema | Idea |
+|---|---|
+| Cosmo | lo scuro di partenza (notte blu, ciano e viola): attivarlo lascia il sito com'era |
+| Aria | chiaro e pulito, bianco e un solo blu |
+| Bottega | caldo editoriale, carta crema, titoli Georgia, terracotta e salvia |
+| Estate (2.5.0) | sabbia chiara, corallo e blu del largo, titoli Space Grotesk, pulsanti a pillola, onda sopra il footer |
+| Inverno (2.5.0) | bianco ghiaccio con una trama di brina, blu profondo, titoli Inter sottili, angoli quasi vivi |
+| Autunno (2.5.0) | scuro caldo (castagna), zucca e ocra, titoli Palatino; infografiche chiare color crema |
+| Primavera (2.5.0) | bianco di germoglio, rosa pesco e verde foglia, titoli Georgia in corsivo, forme tonde |
+| Giallo (2.5.0) | tinta piena: sfondo `rgb(255,255,0)`, testo nero, pulsanti neri a lettere gialle, footer nero |
+| Rosso (2.5.0) | tinta piena: sfondo `rgb(255,0,0)`, testo nero, titoli in maiuscolo, pulsanti bianco e nero, footer nero |
+| Verde (2.5.0) | tinta piena: sfondo `rgb(0,255,0)`, testo nero, titoli a spaziatura fissa, footer nero a lettere verdi |
+| Blu (2.5.0) | tinta piena: sfondo `rgb(0,0,255)`, testo bianco, titoli Georgia, pulsanti gialli, footer bianco |
+
+I temi della 2.5.0 finiscono il loro `tema.css` con un blocco uguale per tutti ("Leggibilità dei widget"): i colori
+ricavati (`--primario-chiaro`, `--secondario-scuro`, `--su-secondario`, `--errore*`, `--successo*`), il testo dei
+pulsanti anche dentro `.corpo` (dove `sito.css` colora i link con `--ciano`), i colori ufficiali dei social più scuri
+dove portano testo bianco, lo sfondo dello slider, l'occhiello delle infografiche su testata scura. Sono correzioni
+per difetti dei widget del nucleo che con colori chiari si vedono (testo del pulsante dentro un articolo, titolo
+dello slider dentro `.corpo`, mappa con testo bianco): i tre temi più vecchi non le hanno. Provati da
+`prove/prova-temi-nuovi.js`: anteprima e attivazione dal pannello, sei pagine a 1280 e 390 px, contrasto WCAG di
+ogni testo misurato contro quello che c'è davvero dietro (`document.elementsFromPoint`), sfondo esatto delle tinte piene.
 
 ### 12.2 Attivare un tema
 

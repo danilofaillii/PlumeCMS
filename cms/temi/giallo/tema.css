@@ -1,0 +1,49 @@
+/* Giallo: tinta piena, sfondo #ffff00. Righe nette, niente sfumature: il contrasto viene prima di tutto. */
+:root{--r:0px;--vetro:transparent;--vetro-2:rgba(255,255,255,.08);--velo-o:.85}
+body{background:#ffff00}
+.top,.ed-testata{background:#ffff00;backdrop-filter:none;border-bottom:3px solid #000000}
+.btn{border-radius:0;border:2px solid #000000;letter-spacing:.08em;transform:none;transition:box-shadow .15s,transform .15s}
+.btn:hover{transform:translate(-2px,-2px);box-shadow:4px 4px 0 #000000}
+.btn-viola{background:#000000;color:#ffff00;box-shadow:none}
+.btn-ciano{background:#1f1fb8;color:#000;box-shadow:none}
+.btn-filo{background:transparent;color:#000000;border-color:#000000;box-shadow:none}
+.card,.servizio,.ew-post{background:transparent;border:2px solid #000000;box-shadow:6px 6px 0 #000000}
+.card:hover,.ew-post:hover{border-color:#000000;transform:translate(-2px,-2px);box-shadow:8px 8px 0 #000000}
+.occhiello{color:#000000;letter-spacing:.2em}
+.hero h1 em{background:none;color:inherit;-webkit-text-fill-color:currentColor;text-decoration:underline;text-decoration-thickness:.08em;text-underline-offset:.1em}
+.ed-piede{background:#000000;color:#ffff00;border-top:0;margin-top:40px}
+.ed-piede a,.ed-piede a:hover,.ed-piede .marchio,.ed-piede .ed-descrizione-sito,.ed-piede .ed-copyright{color:#ffff00}
+.ed-piede a:hover{text-decoration:underline}
+.mn-h[open] .mn-h-pannello,.mn-o .mn-sotto{background:#ffff00;border:2px solid #000000;box-shadow:none}
+.mn-o .mn-lista a{color:#000000}
+.mn-ind-linea .mn-attiva>a::after{height:3px;border-radius:0}
+body .ew-testim-stelle .ico,body .ew-rec-stelle,body .ew-voti-stelle{color:var(--ew-c1,#000000)}
+
+/* Leggibilità dei widget (uguale nei temi della 2.5.0, cambiano solo i colori): testo dei pulsanti, pulsanti dentro
+   un articolo (.corpo colora i link), messaggi, mappa, slider, infografiche su testata scura. */
+:root{--grad:linear-gradient(100deg,#000000,#1f1fb8);--primario-chiaro:#000000;--primario-scuro:#000000;--secondario-chiaro:#1f1fb8;--secondario-scuro:#1f1fb8;--su-secondario:#ffffff;
+  --errore:#000000;--errore-chiaro:#000000;--errore-testo:#000000;--errore-rgb:0,0,0;--successo:#000000;--successo-chiaro:#000000;--successo-rgb:0,0,0}
+.btn-viola,:where(.corpo) a.btn-viola{color:#ffff00}
+:where(.corpo) a.btn-ciano{color:var(--su-secondario)}
+:where(.corpo) a.btn-filo{color:var(--ciano)}
+.ew-btn.btn-viola,:where(.corpo) a.ew-btn.btn-viola{color:var(--ew-bc,#ffff00)}
+.ew-btn.btn-ciano,:where(.corpo) a.ew-btn.btn-ciano{color:var(--ew-bc,var(--su-secondario))}
+.ew-prezzo-pulsante.btn-viola,:where(.corpo) a.ew-prezzo-pulsante{color:var(--ew-btc,#ffff00)}
+:where(.corpo) a.ew-cond-voce{color:var(--ew-c2,#fff)}
+.ew-col-ufficiali .ew-social-voce.ew-social-whatsapp{--ew-uff:#0f7a3c}.ew-col-ufficiali .ew-social-voce.ew-social-youtube{--ew-uff:#cc0000}.ew-col-ufficiali .ew-social-voce.ew-social-telegram{--ew-uff:#1a6fa0}
+.ew-col-ufficiali .ew-social-voce.ew-social-spotify{--ew-uff:#137a3a}.ew-col-ufficiali .ew-social-voce.ew-social-telefono{--ew-uff:#15803d}.ew-col-ufficiali .ew-social-voce.ew-social-rss{--ew-uff:#b8460f}.ew-col-ufficiali .ew-social-voce.ew-social-facebook{--ew-uff:#1465d0}
+.ew-col-ufficiali .ew-cond-voce.ew-social-whatsapp{--ew-uff:#0f7a3c}.ew-col-ufficiali .ew-cond-voce.ew-social-youtube{--ew-uff:#cc0000}.ew-col-ufficiali .ew-cond-voce.ew-social-telegram{--ew-uff:#1a6fa0}.ew-col-ufficiali .ew-cond-voce.ew-social-facebook{--ew-uff:#1465d0}
+body .ew-mappa-avvia{background:var(--bg-2);color:var(--testo)}
+body .ew-sl{background:linear-gradient(120deg,#000000,#1f1fb8)}
+body .ed-hero.ed-hero-copertina{background-color:#000000;background-image:radial-gradient(120% 90% at 85% 0%,rgba(255,255,255,.10),transparent 60%),linear-gradient(160deg,#000000,#1f1fb8)}
+body .ed-hdi-fondo{background-color:#000000;background-image:linear-gradient(120deg,#000000 0%,#000000 45%,#1f1fb8 100%)}
+body .ed-hero-diagonale .btn-viola{color:#000000}
+body .ew-cta-pulsante{color:var(--ew-pc,#ffff00)}
+body .ew-ev-data{color:var(--ew-c1,#ffff00)}
+body .ew-barra-riempi{background:var(--ew-c1,#000000);color:var(--ew-ic,#ffff00)}
+.igx .igx-c-oro{--c:var(--ig-oro-scuro);--c2:var(--ig-oro-scuro-2)}
+body .ew-sl-occhiello{color:var(--ew-ac,rgba(255,255,255,.9))}
+:where(.corpo) h2.ew-sl-titolo,:where(.corpo) h3.ew-sl-titolo{color:var(--ew-tc,#fff)}
+.igx-occhiello-auto[class*="igx-testata-scuro"]{--occ:var(--ig-oro-chiaro)}
+body .ew-avviso{background:var(--ew-bg,transparent);--ew-tono:currentColor}
+body .ew-prezzo-testa{background:var(--ew-hbg,transparent);border-bottom:2px solid currentColor}

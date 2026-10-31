@@ -1,0 +1,38 @@
+/* Primavera: germoglio, pesco e foglia. Solo forme e luce: i colori stanno in stile.json. */
+:root{--r:24px;--vetro:#fff;--vetro-2:#f1f7ec;--velo-1:#f4a6bf;--velo-2:#2f7a4d;--velo-3:#123d27;--fx-1:#d1496b;--fx-2:#2f7a4d}
+body{background:radial-gradient(800px 460px at 96% -6%,rgba(233,140,170,.20),transparent 62%),radial-gradient(760px 460px at -8% 30%,rgba(120,190,120,.14),transparent 60%),var(--bg);background-attachment:fixed}
+.top,.ed-testata{background:rgba(248,251,244,.9)}
+.btn{letter-spacing:.05em}
+.btn-viola{box-shadow:0 8px 22px rgba(184,51,106,.22)}
+.btn-ciano{box-shadow:0 8px 22px rgba(47,122,77,.20)}
+.btn-filo{box-shadow:none;border-width:2px}
+h1,h2,.sez-titolo{letter-spacing:-.01em}
+.card,.servizio,.ew-post{box-shadow:0 10px 30px rgba(47,122,77,.07)}
+.card:hover,.ew-post:hover{box-shadow:0 16px 40px rgba(184,51,106,.12)}
+
+/* Leggibilità dei widget (uguale nei temi della 2.5.0, cambiano solo i colori): testo dei pulsanti, pulsanti dentro
+   un articolo (.corpo colora i link), messaggi, mappa, slider, infografiche su testata scura. */
+:root{--grad:linear-gradient(100deg,#215c39,#8f2452);--primario-chiaro:#b8336a;--primario-scuro:#8f2452;--secondario-chiaro:#215c39;--secondario-scuro:#1a4a2e;--su-secondario:#ffffff;
+  --errore:#a8201a;--errore-chiaro:#a8201a;--errore-testo:#a8201a;--errore-rgb:168,32,26;--successo:#1e6b45;--successo-chiaro:#1e6b45;--successo-rgb:30,107,69}
+.btn-viola,:where(.corpo) a.btn-viola{color:#ffffff}
+:where(.corpo) a.btn-ciano{color:var(--su-secondario)}
+:where(.corpo) a.btn-filo{color:var(--ciano)}
+.ew-btn.btn-viola,:where(.corpo) a.ew-btn.btn-viola{color:var(--ew-bc,#ffffff)}
+.ew-btn.btn-ciano,:where(.corpo) a.ew-btn.btn-ciano{color:var(--ew-bc,var(--su-secondario))}
+.ew-prezzo-pulsante.btn-viola,:where(.corpo) a.ew-prezzo-pulsante{color:var(--ew-btc,#ffffff)}
+:where(.corpo) a.ew-cond-voce{color:var(--ew-c2,#fff)}
+.ew-col-ufficiali .ew-social-voce.ew-social-whatsapp{--ew-uff:#0f7a3c}.ew-col-ufficiali .ew-social-voce.ew-social-youtube{--ew-uff:#cc0000}.ew-col-ufficiali .ew-social-voce.ew-social-telegram{--ew-uff:#1a6fa0}
+.ew-col-ufficiali .ew-social-voce.ew-social-spotify{--ew-uff:#137a3a}.ew-col-ufficiali .ew-social-voce.ew-social-telefono{--ew-uff:#15803d}.ew-col-ufficiali .ew-social-voce.ew-social-rss{--ew-uff:#b8460f}.ew-col-ufficiali .ew-social-voce.ew-social-facebook{--ew-uff:#1465d0}
+.ew-col-ufficiali .ew-cond-voce.ew-social-whatsapp{--ew-uff:#0f7a3c}.ew-col-ufficiali .ew-cond-voce.ew-social-youtube{--ew-uff:#cc0000}.ew-col-ufficiali .ew-cond-voce.ew-social-telegram{--ew-uff:#1a6fa0}.ew-col-ufficiali .ew-cond-voce.ew-social-facebook{--ew-uff:#1465d0}
+body .ew-mappa-avvia{background:var(--bg-2);color:var(--testo)}
+body .ew-sl{background:linear-gradient(120deg,#8f2452,#1d5233)}
+body .ed-hero.ed-hero-copertina{background-color:#8f2452;background-image:radial-gradient(120% 90% at 85% 0%,rgba(255,255,255,.10),transparent 60%),linear-gradient(160deg,#8f2452,#1d5233)}
+body .ed-hdi-fondo{background-color:#8f2452;background-image:linear-gradient(120deg,#8f2452 0%,#8f2452 45%,#1d5233 100%)}
+body .ed-hero-diagonale .btn-viola{color:#8f2452}
+body .ew-cta-pulsante{color:var(--ew-pc,#ffffff)}
+body .ew-ev-data{color:var(--ew-c1,#ffffff)}
+body .ew-barra-riempi{background:var(--ew-c1,#215c39);color:var(--ew-ic,#ffffff)}
+.igx .igx-c-oro{--c:var(--ig-oro-scuro);--c2:var(--ig-oro-scuro-2)}
+body .ew-sl-occhiello{color:var(--ew-ac,rgba(255,255,255,.9))}
+:where(.corpo) h2.ew-sl-titolo,:where(.corpo) h3.ew-sl-titolo{color:var(--ew-tc,#fff)}
+.igx-occhiello-auto[class*="igx-testata-scuro"]{--occ:var(--ig-oro-chiaro)}

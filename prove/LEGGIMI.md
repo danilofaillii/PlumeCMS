@@ -117,6 +117,21 @@ colore del testo e lo sfondo dietro. Nata dopo che, su sfondo chiaro, il testo d
 `node prove/prova-temi-partenza.js <base> <cartella CMS installato>` (servono i temi in `temi/` e la pagina
 `/tutti-i-widget/` di `pagina-widget.php`). Atteso: 36 su 36. Alla fine disattiva il tema e ripristina lo stile.
 
+## prova-temi-nuovi.js (gli otto temi della 2.5.0)
+
+Estate, Inverno, Autunno, Primavera, Giallo, Rosso, Verde e Blu, prima in anteprima da amministratore
+(`?preview=1&tema=<nome>`) e poi attivati dal pannello (Editor > Temi, pulsante Attiva) e guardati da un visitatore:
+home, `/servizi/`, `/benvenuto/`, blog, `/tutti-i-widget/` e `/tutte-le-hero/` (se ci sono) e la 404, a 1280 e a 390 px.
+Controlla errori JavaScript, scorrimento di lato, lo sfondo esatto delle tinte piene e il **contrasto WCAG di ogni
+testo** (corpo, titoli, link, pulsanti, campi, anche nell'header e nel footer), misurato contro quello che c'è davvero
+dietro (`document.elementsFromPoint`, sfumature comprese; un testo sopra una foto non si misura). Alla fine rimette
+Cosmo e l'aspetto di base dal pannello.
+1. Sito con il kit Attività (`prova-kit.js`), `php prove/pagina-widget.php <cartella>` e
+   `php prove/pagina-hero.php <cartella> ""` (le undici aperture senza foto).
+2. `node prove/prova-temi-nuovi.js <base> <utente> <password> [temi] [cartella schermate]`. Con la cartella salva
+   `<tema>.png` (home a 1280 px, tema attivato) e `<tema>-intera.png`. Per lavorare su un tema: `PAGINE=home,widget`,
+   `MISURE=1280`, `SOLO_ANTEPRIMA=1`, `TUTTI=1` (ogni testo sotto 4,5).
+
 ## prova-carica-temi.js (temi, fase 6)
 
 Caricare, sostituire, scaricare ed eliminare i temi dalla pagina Temi, e gli zip che devono essere respinti.

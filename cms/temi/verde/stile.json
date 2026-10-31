@@ -1,0 +1,88 @@
+{
+  "colori": {
+    "sistema": {
+      "primario": "#000000",
+      "secondario": "#003d00",
+      "testo": "#000000",
+      "accento": "#000000",
+      "sfondo": "#00ff00"
+    },
+    "personalizzati": [
+      {
+        "id": "sfondo-2",
+        "nome": "Sfondo secondario",
+        "valore": "#00ff00"
+      },
+      {
+        "id": "testo-2",
+        "nome": "Testo attenuato",
+        "valore": "#001a00"
+      },
+      {
+        "id": "testo-3",
+        "nome": "Testo discreto",
+        "valore": "#002600"
+      },
+      {
+        "id": "bordo",
+        "nome": "Bordi",
+        "valore": "#000000"
+      }
+    ]
+  },
+  "font": {
+    "sistema": {
+      "primario": {
+        "famiglia": "Monospazio del sistema"
+      },
+      "secondario": {
+        "famiglia": "Monospazio del sistema"
+      },
+      "testo": {
+        "famiglia": "Inter"
+      },
+      "accento": {
+        "famiglia": "Inter"
+      }
+    },
+    "personalizzati": []
+  },
+  "sfondo": {
+    "sfumature_sito": false
+  },
+  "tipografia": {
+    "h1": {
+      "colore": "",
+      "tipografia": {
+        "peso": "800"
+      }
+    },
+    "h2": {
+      "colore": "",
+      "tipografia": {
+        "peso": "800"
+      }
+    }
+  },
+  "pulsanti": {
+    "raggio": "0px",
+    "bordo_tipo": "solid",
+    "bordo_larghezza": "2px"
+  },
+  "campi": {
+    "etichetta": {
+      "colore": "#000000"
+    },
+    "campo": {
+      "sfondo": "#ffffff",
+      "colore": "#000000",
+      "bordo_colore": "#000000",
+      "bordo_larghezza": "2px",
+      "raggio": "0px"
+    },
+    "fuoco": {
+      "bordo_colore": "#000000",
+      "contorno": "#000000"
+    }
+  }
+}

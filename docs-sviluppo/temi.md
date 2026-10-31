@@ -15,8 +15,17 @@ fase 6 (caricare, scaricare, eliminare) fatte.
 | **Cosmo** (`temi/cosmo`) | lo scuro di plumeCMS: notte blu, ciano e viola, sfumature e stelle | stile vuoto (i predefiniti), header e footer di partenza, infografiche Carta. **Attivarlo lascia il sito identico al pixel** (provato con le 20 schermate): è il punto da cui tornare |
 | **Aria** (`temi/aria`) | chiaro e pulito: bianco, un solo blu (`#2563eb`), Inter ovunque, niente sfumature né bagliori, card bianche con bordo | stile, header e footer (testo del footer in `globale:testo-2`), `tema.css`, infografiche ardesia e colori vivi |
 | **Bottega** (`temi/bottega`) | caldo editoriale: carta crema, titoli Georgia (carattere di sistema, nessuna chiamata a Google), terracotta `#b4532a` e verde salvia `#3f6b5a` | stile, header e footer, `tema.css`, infografiche calde intonate |
+| **Estate** (`temi/estate`, 2.5.0) | sabbia chiara `#fff8ec`, corallo `#c2410c`, blu del largo `#0a566f`, titoli Space Grotesk, pulsanti a pillola, onda sopra il footer | stile, header e footer, `tema.css`, infografiche |
+| **Inverno** (`temi/inverno`, 2.5.0) | bianco ghiaccio `#f4f8fb` con trama di brina, blu profondo `#1d4e89`, titoli Inter sottili (300), angoli quasi vivi | come sopra |
+| **Autunno** (`temi/autunno`, 2.5.0) | scuro caldo `#231912`, zucca `#e08a3c` e ocra `#e6b862`, titoli Palatino; infografiche chiare color crema | come sopra |
+| **Primavera** (`temi/primavera`, 2.5.0) | bianco di germoglio `#f8fbf4`, rosa pesco `#b8336a`, verde foglia `#215c39`, titoli Georgia in corsivo | come sopra |
+| **Giallo**, **Rosso**, **Verde**, **Blu** (2.5.0) | tinte piene: sfondo esattamente `rgb(255,255,0)`, `rgb(255,0,0)`, `rgb(0,255,0)`, `rgb(0,0,255)`; testo nero (bianco sul blu), bordi netti, angoli vivi, card con ombra piena, footer in negativo | come sopra |
 
-Ogni tema ha `anteprima.png` (800 per 500, la home del tema con il nome "Il tuo sito"). Nessuno dei tre contiene PHP.
+I temi della 2.5.0 chiudono `tema.css` con il blocco "Leggibilità dei widget" (manuale tecnico, capitolo 12):
+correzioni per i widget del nucleo che, con colori chiari o tinte piene, scriverebbero con poco contrasto.
+Provati con `prove/prova-temi-nuovi.js` (contrasto di ogni testo almeno 4,5 a 1).
+
+Ogni tema ha `anteprima.png` (800 per 500, la home del tema con il nome "Il tuo sito"). Nessuno contiene PHP.
 Nei temi il menu dell'header si indica con `"menu": "posizione:principale"`: all'attivazione (e in anteprima)
 `temi_albero_locale()` lo traduce nell'id del menu con quella posizione su quel sito.
 
