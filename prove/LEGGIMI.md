@@ -512,3 +512,21 @@ Le prove scrivono nel `config.local.php` il blocco "prove della consegna" (`CMS_
 `CMS_SNS_CERT_PROVA`), creano il DNS finto e il certificato SNS delle prove in `/tmp/plume-consegna-<porta api>` e accendono da
 sole `prove/api-posta-finta.py` (Brevo, SES con la firma SigV4 ricalcolata, Mailgun) sulla porta api. Aiuti:
 `prove/consegna-comune.js`, `prove/consegna-cli.php`. Atteso: 73 su 73 e 40 su 40 (31 ottobre 2026). Lasciano dati di prova.
+## Le prove della 2.1 (in lavorazione): Google Drive e Dropbox, riservati fuori dagli elenchi, ripristino pulito
+
+- **Server finti di Google Drive e Dropbox**: `python3 -I prove/server-cloud-finti.py gdrive <porta> <cartella> <redirect URI>`
+  e lo stesso con `dropbox` (redirect URI separati da virgola, per esempio `http://127.0.0.1:8320/admin/oauth-ritorno.php`).
+  Client di prova: Google `prova-plumecms.apps.googleusercontent.com` / `GOCSPX-prova-segreto-2026`, Dropbox `provadropbox2026` /
+  `segretodropbox2026`. `GET /_stato` e `POST /_imposta` (vita dell'accesso, pezzo che fallisce, file per pagina) per le prove.
+  **Non sono i servizi veri**: contro Google e Dropbox non si è provato (nessuna rete dalla sessione).
+- `prova-addon-copia-altrove.js`: come prima più Google Drive e Dropbox. Porte: `PORTE_COPIA="ftp,ftps,webdav"` (di partenza
+  8205-8207), `CLOUD_GOOGLE` e `CLOUD_DROPBOX` (8321, 8322). La prova scrive da sé nel config `CMS_COPIA_ALTROVE_LOCALE`,
+  `CMS_COPIA_ALTROVE_CLOUD_PROVA` e `CMS_COPIA_ALTROVE_PEZZO` (pezzi da 256 KB) e li toglie alla fine. `SOLO=cloud` salta FTP e
+  WebDAV. Atteso: 91 su 91 (31 ottobre 2026).
+- `prova-addon-membri.js`: in più la scheda (riquadro "Area riservata") e gli elenchi pubblici (ricerca per titolo, sitemap,
+  feed, llms) prima, da fuori e da membro. Su un sito nuovo.
+- `attacchi-addon-a.js`: in più i gruppi 11 (OAuth: servono i server finti con il redirect URI del sito) e 12.
+- `prova-copia-pulita.js` e `attacchi-copia.js`: due siti nello stesso database, A con `cms_` e B con `cms_b_`
+  (`PREFISSO=cms_b_ node prove/prova-kit.js ...` per B). `node prove/prova-copia-pulita.js <base A> <cartella A> <base B>
+  <cartella B> <utente> <password>`, idem `attacchi-copia.js`. Lasciano A come la sua prima copia; tolgono i collegamenti
+  simbolici che creano.

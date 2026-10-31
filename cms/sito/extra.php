@@ -12,8 +12,9 @@ function extra_rfc822(string $iso): string {
     return gmdate('D, d M Y H:i:s', strtotime($iso)) . ' +0000';
 }
 
-function extra_articoli(): array {
-    return array_values(array_filter(sito_contenuti(), fn($c) => $c['tipo'] === 'post' && !$c['rediretto']));
+/** Gli articoli che escono in un elenco pubblico ($dove: 'feed', 'sitemap', 'llms'; 2.1, vedi sito_contenuti_elenco()). */
+function extra_articoli(string $dove = 'feed'): array {
+    return array_values(array_filter(sito_contenuti_elenco($dove), fn($c) => $c['tipo'] === 'post' && !$c['rediretto']));
 }
 
 function extra_rss(string $titolo, string $link, array $voci): string {
@@ -56,8 +57,8 @@ function extra_feed(string $p): ?string {
 
 /** Solo indirizzi che rispondono 200 e sono indicizzabili. */
 function extra_sitemap(): string {
-    $attivi = array_values(array_filter(sito_contenuti(), fn($c) => !$c['rediretto']));
-    $articoli = extra_articoli();
+    $attivi = array_values(array_filter(sito_contenuti_elenco('sitemap'), fn($c) => !$c['rediretto']));
+    $articoli = extra_articoli('sitemap');
     $redirectDa = array_flip(array_column(sito_redirect(), 'da'));
     $voci = [['/', $articoli[0]['modificato'] ?? '']];
     foreach ($attivi as $c) if ($c['seo']['robots'] === 'index' && $c['percorso'] !== '/') $voci[] = [$c['percorso'], $c['modificato']];
@@ -71,8 +72,8 @@ function extra_sitemap(): string {
 
 /** llms.txt nel formato di llmstxt.org. */
 function extra_llms(): string {
-    $attivi = array_values(array_filter(sito_contenuti(), fn($c) => !$c['rediretto']));
-    $indicizzati = array_values(array_filter(extra_articoli(), fn($a) => $a['seo']['robots'] === 'index'));
+    $attivi = array_values(array_filter(sito_contenuti_elenco('llms'), fn($c) => !$c['rediretto']));
+    $indicizzati = array_values(array_filter(extra_articoli('llms'), fn($a) => $a['seo']['robots'] === 'index'));
     $riga = function ($c) {
         $nota = trim(preg_replace('/\s+/u', ' ', $c['tldr'] ?: $c['seo']['descrizione']));
         return '- [' . $c['titolo'] . '](' . SITO_URL . $c['percorso'] . ')' . ($nota !== '' ? ": $nota" : '');

@@ -45,8 +45,9 @@ $adminTitle = 'Contenuti e file riservati';
 require CMS_ADMIN . '/includes/admin-header.php';
 ?>
 <style>.mr-griglia{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:1.25rem}@media(max-width:1000px){.mr-griglia{grid-template-columns:1fr}}.mr-voce{display:flex;gap:.6rem;align-items:flex-start;padding:.45rem 0;border-bottom:1px solid var(--border);font-weight:400}.mr-voce small{color:var(--text-muted)}.mr-elenco{max-height:60vh;overflow:auto;margin-bottom:.8rem}</style>
-<p style="max-width:62rem">Un contenuto <b>solo per i membri</b> lo vede intero solo chi è entrato nell'area riservata. Gli altri vedono il titolo e l'invito ad accedere o a iscriversi;
-nei motori di ricerca la pagina esce senza il testo. <b>Attenzione:</b> se spegni l'addon Area riservata, questi contenuti tornano visibili a tutti.</p>
+<p style="max-width:62rem">Un contenuto <b>solo per i membri</b> lo vede intero solo chi è entrato nell'area riservata. Gli altri vedono il titolo e l'invito ad accedere o a iscriversi.
+Non esce nella ricerca del sito (tranne che ai membri collegati), nella sitemap, nel feed RSS e in llms.txt. Lo puoi scegliere qui oppure dalla scheda dell'articolo o della pagina, nel riquadro "Area riservata".
+<b>Attenzione:</b> se spegni l'addon Area riservata, questi contenuti tornano visibili a tutti.</p>
 <div class="mr-griglia">
   <div class="sc-scatola"><h3>Pagine e articoli</h3><div class="sc-corpo">
     <?php if (!$contenuti): ?><p>Nessuna pagina e nessun articolo.</p><?php else: ?>

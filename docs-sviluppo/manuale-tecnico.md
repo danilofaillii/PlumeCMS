@@ -50,6 +50,7 @@ pagine, gestire il sito) c'è il manuale d'uso, `docs/manuale-uso.md`, con le sc
 33. File riservati e il file dato dai form (dalla 2.0.0)
 34. Scegli dai Media, immagine social e pannello al telefono (dalla 2.0.0; Scegli dai Media dappertutto dalla 2.1.0)
 35. Consegna delle email: dominio, servizi, mittenti, rimbalzi, riscaldamento (dalla 2.1.0)
+36. Copia altrove su Google Drive e Dropbox, riservati fuori dagli elenchi, ripristino pulito (dalla 2.1.0)
 
 Appendice A. Dove i documenti vecchi non corrispondono al codice
 
@@ -2123,24 +2124,48 @@ nel suo download manager.
 Motore `includes/copia-sito.php`, pagina **Impostazioni > Copia del sito** (`admin/copia-sito.php`), solo per
 l'amministratore, ogni azione in POST con il token CSRF.
 
-- **Prepara la copia** (`copia_crea()`, `includes/copia-sito.php:114`): uno zip in `aggiornamenti/copie/` con
-  `manifest.json` (formato `plumecms-copia`, versione del CMS, prefisso, sito, quante tabelle, righe e file), `db.sql.gz`
-  (le sole tabelle con il prefisso del sito, `agg_dump_db($file, $prefisso)`, stesso formato degli snapshot) e le cartelle
-  `uploads/`, `temi/`, `moduli/`. Fuori: `includes/config.local.php` e ogni file o cartella nascosti. Il manifest ha la
-  firma HMAC-SHA256 dell'impronta dello zip (`sicurezza_pacchetto_impronta()`) con la chiave dei pacchetti di questo sito.
-  Lo zip ha permessi 0600; si scarica solo dal pannello (**Scarica**), la cartella è vietata al web. Se ne tengono 6.
-- **Ripristina** (`copia_ripristina()`, `includes/copia-sito.php:253`): da una copia caricata (che entra fra quelle sul
+- **Prepara la copia** (`copia_crea()`, `includes/copia-sito.php:195`): uno zip in `aggiornamenti/copie/` con
+  `manifest.json` (formato `plumecms-copia`, versione del CMS, prefisso, sito, quante tabelle, righe e file e, dalla 2.1,
+  `elenco_tabelle`: le tabelle della copia senza il prefisso), `db.sql.gz` (le tabelle di questa installazione, stesso
+  formato degli snapshot: dalla 2.1 `copia_dump_db()`, `:163`, sulle tabelle di `copia_tabelle_sito()`, `:152`; prima
+  `agg_dump_db($file, $prefisso)`) e le cartelle `uploads/`, `temi/`, `moduli/`. Fuori: `includes/config.local.php` e ogni
+  file o cartella nascosti. Il manifest ha la firma HMAC-SHA256 dell'impronta dello zip (`sicurezza_pacchetto_impronta()`)
+  con la chiave dei pacchetti di questo sito. Lo zip ha permessi 0600; si scarica solo dal pannello (**Scarica**), la
+  cartella è vietata al web. Se ne tengono 6 (`copia_pulisci()`, `:102`; dalla 2.1 mai quella che si sta ripristinando:
+  prima, con sei copie più nuove, la copia scelta spariva a metà del ripristino).
+- **Due installazioni nello stesso database** (2.1): con i prefissi `cms_` e `cms_b_` le tabelle `cms_b_*` cominciano anche
+  con `cms_`. `copia_tabelle_del_prefisso()` (`:129`) toglie le tabelle di un prefisso più lungo che ha sia `settings` sia
+  `users` (`copia_altri_prefissi()`, `:136`): sono di un'altra installazione. Il ripristino (`copia_ripristina_db()`, `:298`)
+  tocca solo le tabelle di `elenco_tabelle` (per una copia vecchia, la stessa regola applicata ai `CREATE TABLE` del suo
+  database) e mai una tabella di un'altra installazione presente in questo database, qualunque cosa dica la copia; le righe
+  saltate si contano ("Tabelle di un'altra installazione nello stesso database, lasciate stare"). Gli snapshot degli
+  Aggiornamenti restano su tutto il database (`agg_dump_db()` senza prefisso, non toccato).
+- **Ripristina** (`copia_ripristina($file, $tieni)`, `includes/copia-sito.php:358`): da una copia caricata (che entra fra quelle sul
   server) o già sul server; serve la spunta di conferma. Prima fa una copia del sito com'è (`prima-del-ripristino`), poi:
   - nomi dello zip controllati (`copia_nome_voce_ok()`): solo `manifest.json`, `db.sql.gz` e file dentro `uploads/`,
     `temi/`, `moduli/`, niente `..`, percorsi assoluti, barre rovesce, parti nascoste; 300 MB per file, 2 GB in tutto,
     rapporto di compressione sotto controllo;
-  - database (`copia_ripristina_db()`, `includes/copia-sito.php:214`): passano solo `DROP TABLE IF EXISTS`, `CREATE TABLE
+  - database (`copia_ripristina_db()`, `includes/copia-sito.php:298`): passano solo `DROP TABLE IF EXISTS`, `CREATE TABLE
     (...)` e `INSERT INTO ... VALUES` su tabelle con il prefisso della copia, una istruzione per riga, riscritte con il
     prefisso di questo sito; tutto il resto si salta e si conta. Le viste le crea lo schema del sito. L'impostazione
     `sito_url` resta quella di questa installazione;
-  - file: si scrivono sopra quelli che ci sono (quelli in più restano). Un file eseguibile (`.php`, `.phtml`, `.phar`,
+  - file: si scrivono sopra quelli che ci sono. Un file eseguibile (`.php`, `.phtml`, `.phar`,
     `.php.jpg` e simili) entra solo da una copia firmata da questo sito e mai in `uploads/`; da una copia di un altro sito
     si salta, e il pannello lo dice;
+  - (2.1) **ripristino pulito**: dopo i file, `uploads/`, `temi/` e `moduli/` diventano come nella copia. I file che ci sono
+    nel sito ma non nella copia (un file saltato perché eseguibile conta come "nella copia" e resta) si spostano, non si
+    cancellano, in `aggiornamenti/scarto/ripristino-AAAAMMGG-HHMMSS/` con il loro percorso e un `LEGGIMI.txt`
+    (`copia_metti_da_parte()`, `:460`); le cartelle rimaste vuote si tolgono. Restano dove sono: i file e le cartelle
+    nascosti (`.htaccess`), i collegamenti simbolici e ciò a cui portano (`copia_file_di()` non li elenca e non entra nelle
+    cartelle collegate), i file dei temi del prodotto (`tema.json` con `"autore": "plumeCMS"`, `copia_tema_del_prodotto()`,
+    `:448`: arrivano con gli aggiornamenti). Su un altro disco (`uploads_dir`) copia e cancella invece di `rename`.
+    L'esito elenca i file spostati (riquadro `#cs-scartati`, fino a 200, e il registro, fino a 40).
+  - (2.1) la casella **"Tieni i file in più"** (`tieni=1`, in tutti e due i moduli di ripristino) fa come prima della 2.1;
+  - (2.1) lo scarto: cartella vietata al web come le copie (è dentro `aggiornamenti/`). Le sue cartelle restano
+    `COPIA_SCARTO_GIORNI` (30) giorni: le toglie il ripristino dopo (`copia_scarto_pulisci()`, `:527`). La pagina ha la
+    sezione "File messi da parte dai ripristini" (`#cs-scarto-elenco`, `copia_scarto_elenco()`, `:504`) con **Elimina**
+    (azione `elimina_scarto`, POST con CSRF, solo il nome esatto `ripristino-\d{8}-\d{6}`: `copia_scarto_elimina()`, `:518`,
+    rifiuta anche un nome che `basename()` cambierebbe), registrata in `sicurezza_log`;
   - alla fine `temi/.htaccess` si riscrive (`temi_proteggi()`). Se l'utente collegato non c'è più fra quelli della copia,
     si torna al login.
 - **Limite di caricamento**: la pagina mostra il limite del server; il browser avvisa prima di mandare un file troppo
@@ -3053,9 +3078,12 @@ spento finché l'amministratore non lo accende da **Impostazioni > Addon**.
 | Gancio | Dove | Chi lo usa |
 |---|---|---|
 | evento `sito_contenuto($c, $meta)` | `sito/index.php:236`, prima di disegnare un articolo o una pagina | Area riservata: pagina "Solo per i membri" |
-| filtro `contenuto_riservato(null, $c)` | `includes/sito-dati.php:154`, in testa a `sito_html_contenuto()` | Area riservata: il testo riservato non esce in llms-full.txt né nei widget |
+| filtro `contenuto_riservato(null, $c)` | `includes/sito-dati.php:164`, in testa a `sito_html_contenuto()` | Area riservata: il testo riservato non esce in llms-full.txt né nei widget |
 | evento `sito_pagina_servita($codice, $percorso)` | `sito/index.php:39`, risposte HTML | Statistiche |
-| filtro `sitemap_voci($voci)` | `includes/seo.php:878` | Vetrina: negozio e prodotti nella sitemap (e quindi nella coda IndexNow) |
+| filtro `sitemap_voci($voci)` | `includes/seo.php:879` | Vetrina: negozio e prodotti nella sitemap (e quindi nella coda IndexNow) |
+| (2.1) filtro `contenuti_elenco($tutti, $dove)` | `includes/sito-dati.php:155` (`sito_contenuti_elenco()`) | Area riservata: i riservati fuori da ricerca, feed, sitemap, llms (capitolo 35) |
+| (2.1) filtro `scheda_riquadri` ed evento `scheda_salvata` | `admin/contenuto.php:285` e `:62` | Area riservata: "Solo per i membri" dalla scheda (capitolo 35) |
+| (2.1) chiave `oauth_ritorno` del manifesto | `admin/oauth-ritorno.php` (file nuovo) | Copia altrove: il ritorno da Google e da Dropbox (capitolo 35) |
 
 - La pagina Widget dice "addon <nome>" come origine (`editor_registra_widget()`, `includes/editor-controlli.php`).
 - `editor_carica_widget_esterni()` carica ogni file dei widget dentro una funzione anonima statica: le variabili in cima a
@@ -3388,6 +3416,52 @@ di lato. Variabile della pagina `$ceAttivo`: `$attivo` lo usa il menu del pannel
 
 Non provato: le API vere di Brevo, Amazon SES e Mailgun, i webhook veri e il DNS vero (la sessione non risolve nomi). Formati
 e firme seguono la documentazione dei servizi; la firma SigV4 è verificata sui vettori ufficiali di AWS.
+
+## 36. Copia altrove su Google Drive e Dropbox, riservati fuori dagli elenchi, ripristino pulito (dalla 2.1.0)
+
+Lavoro sul ramo, non ancora in una versione (`cms/VERSIONE` e `CHANGELOG.md` non toccati). Bozza del manuale d'uso:
+`docs-sviluppo/novita-2.1/cloud-membri-copia-uso.md`.
+
+**Copia del sito altrove, Google Drive e Dropbox** (addon `copia-altrove` 1.1.0, dettaglio in `docs-sviluppo/addon/copia-altrove.md`).
+- `addon/copia-altrove/includes/cloud.php`: OAuth 2 con state firmato e legato alla sessione del pannello, PKCE S256, refresh
+  token cifrato con la chiave di `copia_altrove_chiave()` (`moduli_segreto()` più `CMS_SEGRETO`), accesso rinnovato da solo,
+  upload a pezzi (Drive resumable, Dropbox upload session) con la ripresa, ultime N copie, Prova la connessione, Scollega.
+- Nucleo, file nuovo `admin/oauth-ritorno.php`: il redirect URI fisso di ogni addon con OAuth (chiave `oauth_ritorno` del
+  manifesto, capitolo 32). Solo amministratore, nessun indirizzo seguito dalla richiesta, 400 se lo state non è di un addon acceso.
+- Solo per le prove, nel `config.local.php`: `CMS_COPIA_ALTROVE_CLOUD_PROVA` (indirizzi dei server finti) e
+  `CMS_COPIA_ALTROVE_PEZZO` (misura dei pezzi). Server finti: `prove/server-cloud-finti.py`. **Mai provato contro Google
+  e Dropbox veri**: dalla sessione non c'è rete verso quei servizi.
+
+**Area riservata** (addon `membri` 1.1.0, dettaglio in `docs-sviluppo/addon/membri.md`).
+- Nucleo, `includes/sito-dati.php:155`: `sito_contenuti_elenco($dove)` con il filtro `contenuti_elenco`. La usano la ricerca
+  (`sito/viste.php:484`, `cerca`), i feed (`extra_articoli()`, `sito/extra.php:16`, `feed`), la sitemap (`extra_sitemap()`
+  `:60` e `seo_sitemap_voci()`, `includes/seo.php:862`, quindi anche IndexNow, `sitemap`), llms.txt e llms-full.txt
+  (`extra_llms()` `:75`, `seo_llms_full()` `includes/seo.php:831`, `llms`). L'addon toglie i contenuti "solo per i membri",
+  e nella ricerca li lascia a un membro collegato (con `Cache-Control: private, no-store`).
+- Nucleo, `admin/contenuto.php`: filtro `scheda_riquadri` (`:285`, riquadri in più nella colonna di destra) ed evento
+  `scheda_salvata` (`:62`, dopo il salvataggio, con il POST). L'addon ci mette "Area riservata, Solo per i membri", solo per
+  l'amministratore.
+- Con l'addon spento nessuno ascolta: ricerca, feed, sitemap, llms e scheda come prima.
+
+**Copia del sito: ripristino pulito e due prefissi** (capitolo 19.7, `includes/copia-sito.php`, `admin/copia-sito.php`).
+- I file in più di `uploads/`, `temi/`, `moduli/` vanno in `aggiornamenti/scarto/ripristino-<data>/` per 30 giorni, il
+  pannello li elenca, "Tieni i file in più" fa come prima; sezione "File messi da parte dai ripristini" con Elimina.
+- Le tabelle di un'altra installazione con un prefisso più lungo nello stesso database non entrano nella copia e il
+  ripristino non le tocca mai. La copia che si ripristina non si toglie più nella pulizia delle copie vecchie.
+
+**Prove (2.1)**
+| Prova | Cosa |
+|---|---|
+| `prove/prova-addon-copia-altrove.js` | FTP, FTPS, WebDAV come prima, più Google Drive e Dropbox contro i server finti (collega, Annulla, Consenti, file grande a pezzi, un pezzo fallito, rinnovo dell'accesso, ultime N con l'elenco a pagine, Scollega, telefono) |
+| `prove/prova-addon-membri.js` | più la scheda e gli elenchi pubblici prima, da fuori e da membro |
+| `prove/prova-copia-pulita.js` (nuova) | due siti nello stesso database (`PREFISSO=cms_b_` per `prova-kit.js`): copia senza le tabelle dell'altro, file in più nello scarto, "tieni", Elimina, copia vecchia con le tabelle dell'altro, telefono |
+| `prove/attacchi-copia.js` (nuova) | scarto dal web, Elimina senza login, token, da redattore, con nomi cattivi; collegamenti verso `includes/` e fuori; nomi con HTML; copie inventate per arrivare alle tabelle dell'altra installazione |
+| `prove/attacchi-addon-a.js` | gruppi 11 (OAuth) e 12 (riservato dalla scheda, redattore), più la ricerca per titolo nel gruppo 1 |
+
+Risultati del 31 ottobre 2026 (PHP 8.3 con MySQL 8.0, server `php -S` con il router delle prove, siti nuovi con il kit
+Attività): `prova-addon-copia-altrove.js` 91 su 91 in radice e in `/test`; `prova-addon-membri.js` 92 su 92 in radice e in
+`/test`; `attacchi-addon-a.js` 154 su 154 in radice e in `/test`; `prova-copia-pulita.js` 24 su 24; `attacchi-copia.js`
+36 su 36; `prova-copia.js` 30 su 30; `prova-addon-tutti.js` 68 su 68. Non provati: Google Drive e Dropbox veri, Apache.
 
 ## Appendice A. Dove i documenti vecchi non corrispondono al codice
 

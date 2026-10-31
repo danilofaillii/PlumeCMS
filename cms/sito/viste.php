@@ -481,7 +481,8 @@ function vista_cerca(string $q): string {
     $trovati = [];
     if (mb_strlen($q) >= 2) {
         $t = mb_strtolower($q);
-        foreach (sito_contenuti() as $c) {
+        // 2.1: sito_contenuti_elenco('cerca'): un contenuto "solo per i membri" lo trova solo un membro collegato.
+        foreach (sito_contenuti_elenco('cerca') as $c) {
             if ($c['rediretto'] || ($c['tipo'] === 'page' && $c['seo']['robots'] !== 'index')) continue;
             $testo = $c['tldr'] ?: ($c['seo']['descrizione'] ?: $c['estratto']);
             if (str_contains(mb_strtolower($c['titolo'] . ' ' . $testo), $t)) $trovati[] = ['c' => $c, 'e' => mb_substr($testo, 0, 180)];

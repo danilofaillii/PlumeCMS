@@ -828,7 +828,7 @@ function seo_llms(): string {
 /** llms-full.txt: l'indice più il testo intero dei pillar e degli articoli indicizzati, in testo semplice. */
 function seo_llms_full(): string {
     $out = [seo_llms(), '', '---', '', '# Testi completi', ''];
-    $articoli = array_values(array_filter(sito_contenuti(), fn($c) => $c['tipo'] === 'post' && !$c['rediretto'] && $c['seo']['robots'] === 'index'));
+    $articoli = array_values(array_filter(sito_contenuti_elenco('llms'), fn($c) => $c['tipo'] === 'post' && !$c['rediretto'] && $c['seo']['robots'] === 'index'));
     usort($articoli, fn($a, $b) => ($b['pillar'] <=> $a['pillar']) ?: strcmp($b['data'], $a['data']));
     foreach ($articoli as $c) {
         $html = sito_html_contenuto($c);
@@ -858,7 +858,8 @@ function seo_llms_full(): string {
  */
 function seo_sitemap_voci(): array {
     $s = seo_cfg()['sitemap'];
-    $attivi = array_values(array_filter(sito_contenuti(), fn($c) => !$c['rediretto']));
+    // 2.1: sito_contenuti_elenco() (i contenuti "solo per i membri" dell'Area riservata non entrano, né in IndexNow).
+    $attivi = array_values(array_filter(sito_contenuti_elenco('sitemap'), fn($c) => !$c['rediretto']));
     $articoli = array_values(array_filter($attivi, fn($c) => $c['tipo'] === 'post'));
     $redirectDa = array_flip(array_column(sito_redirect(), 'da'));
     $voci = [['loc' => SITO_URL . '/', 'lastmod' => $articoli[0]['modificato'] ?? '', 'tipo' => 'pagine', 'immagine' => '']];

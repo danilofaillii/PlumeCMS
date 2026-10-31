@@ -450,6 +450,62 @@ function membri_riservato_imposta(string $fonte, int $id, bool $si): void {
     else db()->prepare('DELETE FROM ' . tbl('membri_riservati') . ' WHERE fonte = ? AND contenuto_id = ?')->execute([$fonte, $id]);
 }
 
+/**
+ * 2.1, filtro contenuti_elenco del nucleo (sito_contenuti_elenco(), includes/sito-dati.php): i contenuti "solo per i membri"
+ * non escono negli elenchi pubblici, con titolo e riassunto: sitemap (e IndexNow), feed, llms.txt e llms-full.txt sempre;
+ * la ricerca del sito ($dove 'cerca') li mostra solo a un membro collegato, e allora la pagina dei risultati non va in cache.
+ */
+function membri_elenco_filtra(array $tutti, string $dove): array {
+    if (!membri_riservati()) return $tutti;
+    if ($dove === 'cerca' && membri_corrente() !== null) {
+        if (!headers_sent()) header('Cache-Control: private, no-store');
+        return $tutti;
+    }
+    return array_values(array_filter($tutti, fn($c) => !membri_contenuto_riservato($c)));
+}
+
+/** La fonte (tabella) dei tipi della scheda del pannello: articoli e pagine. Null per gli altri tipi. */
+function membri_fonte_tipo(string $tipo): ?string {
+    return ['articoli' => 'articles', 'pagine' => 'pages'][$tipo] ?? null;
+}
+
+/** La pagina è la home? (resta sempre di tutti) */
+function membri_e_home(string $tipo, ?array $r): bool {
+    return $tipo === 'pagine' && $r && (string)($r['slug'] ?? '') === (string)get_setting('pagina_home', '');
+}
+
+/**
+ * 2.1, filtro scheda_riquadri del nucleo (admin/contenuto.php): il riquadro "Area riservata" nella scheda di un articolo o
+ * di una pagina, solo per l'amministratore (le pagine Membri sono sue). Il campo nascosto membri_scheda dice all'evento
+ * scheda_salvata che il riquadro c'era: senza, la spunta tolta non si legge come "pubblico".
+ */
+function membri_scheda_riquadro(string $tipo, int $id, ?array $r): string {
+    $fonte = membri_fonte_tipo($tipo);
+    if (!$fonte || $id <= 0 || !function_exists('is_admin') || !is_admin()) return '';
+    $home = membri_e_home($tipo, $r);
+    $si = !$home && isset(membri_riservati()[$fonte . ':' . $id]);
+    $uno = $tipo === 'pagine' ? 'la pagina' : 'l\'articolo';
+    return '<div class="sc-scatola" id="membri-scheda"><h3>Area riservata</h3><div class="sc-corpo">'
+        . '<input type="hidden" name="membri_scheda" value="1">'
+        . '<label style="display:flex;gap:.5rem;align-items:flex-start;font-size:.9rem;font-weight:600;color:var(--text);margin:0">'
+        . '<input type="checkbox" name="membri_riservato" value="1" id="membri-riservato"' . ($si ? ' checked' : '') . ($home ? ' disabled' : '') . ' style="margin-top:.2rem"> <span>Solo per i membri</span></label>'
+        . '<div class="hint">' . ($home ? 'La home resta di tutti.' : 'Con la spunta, ' . $uno . ' lo vede intero solo chi è entrato nell\'area riservata: gli altri trovano l\'invito ad accedere. Non esce nella ricerca del sito (tranne che ai membri), nella sitemap, nel feed e in llms.txt.')
+        . ' Tutti i contenuti riservati: <a href="' . h(membri_admin_url('riservati')) . '">Membri, Contenuti e file riservati</a>.</div>'
+        . '</div></div>';
+}
+
+/** 2.1, evento scheda_salvata del nucleo: la spunta "Solo per i membri" della scheda. Solo l'amministratore, mai la home. */
+function membri_scheda_salva(string $tipo, int $id, array $d): void {
+    $fonte = membri_fonte_tipo($tipo);
+    if (!$fonte || $id <= 0 || ($d['membri_scheda'] ?? '') !== '1' || !function_exists('is_admin') || !is_admin()) return;
+    $r = db()->prepare('SELECT slug FROM ' . tbl($fonte) . ' WHERE id = ?');
+    $r->execute([$id]);
+    $slug = $r->fetchColumn();
+    if ($slug === false) return;
+    $si = !empty($d['membri_riservato']) && !membri_e_home($tipo, ['slug' => (string)$slug]);
+    membri_riservato_imposta($fonte, $id, $si);
+}
+
 /** I file riservati di Download che i membri vedono nell'area riservata (scelti in Contenuti e file riservati). */
 function membri_file(): array {
     require_once dirname(__DIR__, 3) . '/includes/scaricabili.php';

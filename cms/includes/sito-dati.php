@@ -146,6 +146,16 @@ function sito_contenuti(): array {
     return $tutti;
 }
 
+/**
+ * 2.1: i contenuti che possono uscire in un elenco pubblico, con titolo e riassunto: la ricerca del sito ($dove 'cerca'),
+ * i feed ('feed'), la sitemap e la coda di IndexNow ('sitemap'), llms.txt e llms-full.txt ('llms').
+ * Filtro contenuti_elenco($tutti, $dove): un addon toglie i suoi (l'Area riservata toglie i contenuti "solo per i membri",
+ * e li lascia nella ricerca a un membro collegato). Senza addon è sito_contenuti(), uguale.
+ */
+function sito_contenuti_elenco(string $dove): array {
+    return array_values((array)cms_filtro('contenuti_elenco', sito_contenuti(), $dove));
+}
+
 /** HTML del contenuto, calcolato una volta sola. */
 function sito_html_contenuto(array &$c): string {
     if (isset($c['html'])) return $c['html'];

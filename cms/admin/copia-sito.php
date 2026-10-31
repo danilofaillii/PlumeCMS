@@ -43,6 +43,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             copia_elimina((string)($_POST['file'] ?? ''));
             flash('success', 'Copia eliminata dal server.');
             header('Location: copia-sito.php'); exit;
+        } elseif ($azione === 'elimina_scarto') {
+            // 2.1: una cartella di file messi da parte da un ripristino.
+            copia_scarto_elimina((string)($_POST['scarto'] ?? ''));
+            if (function_exists('sicurezza_log')) sicurezza_log('copia', (string)($_SESSION['admin_username'] ?? ''), (int)($_SESSION['admin_user_id'] ?? 0), 'file messi da parte eliminati: ' . basename((string)($_POST['scarto'] ?? '')));
+            flash('success', 'File messi da parte eliminati dal server.');
+            header('Location: copia-sito.php'); exit;
         } elseif ($azione === 'carica' || $azione === 'ripristina') {
             if (empty($_POST['conferma'])) throw new RuntimeException('Per ripristinare spunta la conferma: il database e i file del sito vengono sostituiti da quelli della copia.');
             if ($azione === 'carica') {
@@ -59,11 +65,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
             session_write_close();
             ob_start();
-            $r = copia_ripristina($file);
+            $r = copia_ripristina($file, !empty($_POST['tieni'])); // 2.1: "tieni i file in più" 
             $rumore = trim((string)ob_get_clean());
             @session_start();
             if ($rumore !== '') $r['log'][] = 'Avvisi di PHP durante il lavoro, non bloccanti: ' . mb_substr($rumore, 0, 1500);
-            $esito = ['ok' => $r['ok'], 'titolo' => ($r['ok'] ? 'Sito ripristinato dalla copia ' : 'Ripristino con errori dalla copia ') . $file, 'log' => $r['log']];
+            $esito = ['ok' => $r['ok'], 'titolo' => ($r['ok'] ? 'Sito ripristinato dalla copia ' : 'Ripristino con errori dalla copia ') . $file, 'log' => $r['log'], 'scarto' => $r['scarto'] ?? null];
             // Il database nuovo può avere altri utenti: se questo non c'è più, si rientra con quelli della copia.
             $st = db()->prepare('SELECT COUNT(*) FROM ' . tbl('users') . " WHERE id = ? AND username = ? AND role = 'admin'");
             $st->execute([(int)($_SESSION['admin_user_id'] ?? 0), (string)($_SESSION['admin_username'] ?? '')]);
@@ -76,6 +82,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 }
 
 $copie = copia_elenco();
+$scarti = copia_scarto_elenco();
 $pronta = basename((string)($_GET['pronta'] ?? ''));
 require_once __DIR__ . '/includes/admin-header.php';
 ?>
@@ -108,10 +115,19 @@ require_once __DIR__ . '/includes/admin-header.php';
 .cs-lavoro{position:fixed;inset:0;background:var(--velo);z-index:9999;display:flex;align-items:center;justify-content:center;padding:1.5rem}
 .cs-lavoro[hidden]{display:none}
 .cs-lavoro div{background:var(--surface);border-radius:14px;padding:1.6rem 1.8rem;max-width:480px}
+.cs-scarto{margin:.8rem 0 0;padding:.8rem 1rem;border-radius:8px;background:var(--surface);border:1px solid var(--border);font-size:.86rem}
+.cs-scarto ul{margin:.4rem 0 0;padding-left:1.2rem;max-height:220px;overflow:auto;word-break:break-all}
+.cs-tabella{overflow-x:auto}
+@media(max-width:640px){.cs-card{padding:1rem}}
 </style>
 
 <?php if ($esito): ?>
-<div class="cs-esito <?= $esito['ok'] ? 'ok' : 'ko' ?>"><strong><?= h($esito['titolo']) ?></strong><pre class="cs-log"><?= h(implode("\n", $esito['log'])) ?></pre></div>
+<div class="cs-esito <?= $esito['ok'] ? 'ok' : 'ko' ?>"><strong><?= h($esito['titolo']) ?></strong>
+<?php if (!empty($esito['scarto']['file'])): $sf = $esito['scarto']['file']; ?>
+  <div class="cs-scarto" id="cs-scartati"><b><?= count($sf) ?> file c'erano nel sito ma non nella copia: li ho spostati da parte</b>, nella cartella <code>aggiornamenti/scarto/<?= h($esito['scarto']['cartella']) ?>/</code> del server. Non sono cancellati: restano <?= COPIA_SCARTO_GIORNI ?> giorni, poi si tolgono da soli. Per rimetterne uno, riportalo nella stessa cartella del sito con il gestore dei file del tuo hosting.
+    <ul><?php foreach (array_slice($sf, 0, 200) as $f): ?><li><?= h($f) ?></li><?php endforeach; ?><?php if (count($sf) > 200): ?><li>... e altri <?= count($sf) - 200 ?></li><?php endif; ?></ul></div>
+<?php endif; ?>
+<pre class="cs-log"><?= h(implode("\n", $esito['log'])) ?></pre></div>
 <?php endif; ?>
 
 <div class="cs-avviso" role="note"><span aria-hidden="true">&#9888;</span><div><b>Una copia contiene dati sensibili.</b>Dentro ci sono il database intero (utenti con le password cifrate, iscritti alla newsletter, messaggi dei form, impostazioni) e tutti i file caricati. Conservala in un posto sicuro e non mandarla per email. La password del database (il file <code>includes/config.local.php</code>) non è nella copia.</div></div>
@@ -133,6 +149,7 @@ require_once __DIR__ . '/includes/admin-header.php';
       <input type="file" name="copia" accept=".zip,application/zip" required style="font-size:.85rem;display:block" data-limite="<?= (int)$limite ?>">
       <p class="cs-note" id="cs-limite">Il server accetta file fino a <b><?= h(agg_fmt_bytes($limite)) ?></b>. Una copia più grande si mette con il gestore dei file del tuo hosting nella cartella <code>aggiornamenti/copie/</code>, e si ripristina dall'elenco qui sotto.</p>
       <label class="cs-spunta"><input type="checkbox" name="conferma" value="1" required> <span>Ho capito: il database e i file del sito vengono <b>sostituiti</b> da quelli della copia. Prima viene fatta da sola una copia del sito di adesso.</span></label>
+      <label class="cs-spunta"><input type="checkbox" name="tieni" value="1"> <span>Tieni i file in più (quelli che ci sono nel sito ma non nella copia). Senza la spunta si spostano da parte e immagini, temi e moduli diventano esattamente come nella copia.</span></label>
       <button class="cs-btn danger" type="submit">Carica e ripristina</button>
     </form>
   </div>
@@ -143,7 +160,7 @@ require_once __DIR__ . '/includes/admin-header.php';
   <?php if (!$copie): ?>
     <p class="cs-note">Ancora nessuna copia.</p>
   <?php else: ?>
-  <table class="cs-table">
+  <div class="cs-tabella"><table class="cs-table">
     <tr><th>Copia</th><th>Contenuto</th><th>Origine</th><th></th></tr>
     <?php foreach ($copie as $c): $m = $c['manifest']; ?>
     <tr<?= $c['file'] === $pronta ? ' class="cs-nuova"' : '' ?>>
@@ -158,6 +175,7 @@ require_once __DIR__ . '/includes/admin-header.php';
           <details><summary>Ripristina questa copia</summary>
             <form method="post" data-lavoro="Ripristino il sito dalla copia"><?= csrf_field() ?><input type="hidden" name="azione" value="ripristina"><input type="hidden" name="file" value="<?= h($c['file']) ?>">
               <label class="cs-spunta"><input type="checkbox" name="conferma" value="1" required> <span>Sostituisci database e file del sito con quelli di questa copia.</span></label>
+              <label class="cs-spunta"><input type="checkbox" name="tieni" value="1"> <span>Tieni i file in più (senza la spunta si spostano da parte, per 30 giorni).</span></label>
               <?php if (!$c['firmata']): ?><p class="cs-note">Viene da un altro sito: i file con codice PHP (temi e moduli) non entrano.</p><?php endif; ?>
               <button class="cs-btn danger" type="submit">Ripristina adesso</button>
             </form>
@@ -167,9 +185,23 @@ require_once __DIR__ . '/includes/admin-header.php';
       </td>
     </tr>
     <?php endforeach; ?>
-  </table>
+  </table></div>
   <?php endif; ?>
 </div>
+
+<?php if ($scarti): // 2.1: i file messi da parte dai ripristini ?>
+<div class="cs-card" id="cs-scarto-elenco" style="margin-top:1.2rem">
+  <h2>File messi da parte dai ripristini</h2>
+  <p class="cs-note" style="margin-top:0">Sono i file che c'erano nel sito ma non nella copia ripristinata. Stanno nella cartella <code>aggiornamenti/scarto/</code> del server (da internet non si apre) e si cancellano da soli dopo <?= COPIA_SCARTO_GIORNI ?> giorni.</p>
+  <div class="cs-tabella"><table class="cs-table">
+    <tr><th>Ripristino</th><th>File</th><th></th></tr>
+    <?php foreach ($scarti as $x): ?>
+    <tr><td><strong><?= h(date('d/m/Y H:i', $x['data'])) ?></strong><br><span class="cs-note"><?= h($x['nome']) ?></span></td><td><?= (int)$x['file'] ?> file, <?= h(agg_fmt_bytes($x['peso'])) ?></td>
+      <td><form method="post" data-conferma="Elimino per sempre questi file messi da parte?"><?= csrf_field() ?><input type="hidden" name="azione" value="elimina_scarto"><input type="hidden" name="scarto" value="<?= h($x['nome']) ?>"><button class="cs-btn" type="submit">Elimina</button></form></td></tr>
+    <?php endforeach; ?>
+  </table></div>
+</div>
+<?php endif; ?>
 
 <div class="cs-lavoro" id="cs-lavoro" hidden><div><h3 id="cs-lavoro-titolo" style="margin:0 0 .4rem">Sto lavorando</h3><p class="cs-note">Non chiudere questa pagina: su un sito grande ci vuole qualche minuto.</p></div></div>
 <script<?= nonce_attr() ?>>
