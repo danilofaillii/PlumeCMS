@@ -139,7 +139,7 @@ Fatto: plumeCMS 2.3.1 (1 novembre): segnalazione di Danilo, "Scarica l'aggiornam
 Causa: `/scarica/<serie>/` mandava il file con `public, max-age=3600` e il browser ridava la copia vecchia. Ora 302 con `no-store` verso
 `/scarica/<versione>/` (`sito/index.php`). `prova-download.js` aggiornata (mancava il file manuale-tecnico dalla 1.6.4, link senza la cartella):
 36/36 radice e cartella. Install 37/37, aggiornamento 2.3.0 -> 2.3.1 13/13 con 24 foto uguali, addon 70/70, attacchi 261/261, sito 89/89,
-pacchetto unico 13/13.
+pacchetto unico 13/13. Danilo ha caricato la 2.3.1 ("tutto ok") e ha provato **Installa ora** su un hosting vero: funziona.
 
 Fatto: plumeCMS 2.3.0 (31 ottobre, notte): la versione sempre in alto a sinistra del pannello (`#admin-versione`, al telefono
 `.admin-versione-tel`) e, nel banner della dashboard dopo "Visita il sito ufficiale plumeCMS", "Nuova versione disponibile v. x.x.x" con
