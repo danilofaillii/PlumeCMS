@@ -1,0 +1,41 @@
+{
+  "nome": "Primavera",
+  "versione": "1.0",
+  "autore": "plumeCMS",
+  "anteprima": "anteprima.png",
+  "css": "tema.css",
+  "stile": "stile.json",
+  "modelli": "modelli.json",
+  "descrizione": "Un giardino in fiore: bianco di germoglio, rosa pesco e verde foglia, titoli in corsivo e forme tonde. Per chi vuole un sito fresco e gentile.",
+  "infografiche": {
+    "sfondo": "#fbfdf8",
+    "bianco": "#ffffff",
+    "bordo": "#dcebd9",
+    "riga": "#eaf3e6",
+    "titolo": "#1d2b22",
+    "testo": "#3e5044",
+    "muto": "#5d6f62",
+    "situazione": "#f3f8ef",
+    "su_scuro": "#d6e6da",
+    "voci": {
+      "rosso": "#a82d5f",
+      "oro": "#e0a83a",
+      "verde": "#276a42",
+      "ciano": "#1f6b78",
+      "viola": "#7a4fa8",
+      "scuro": "#1d2b22"
+    },
+    "variabili": {
+      "rosso-chiaro": "#f6eaef",
+      "verde-chiaro": "#e9f0ec",
+      "ciano-chiaro": "#e9f0f2",
+      "viola-chiaro": "#f2edf6",
+      "oro-chiaro": "#f7e9ce",
+      "oro-scuro": "#7f5900",
+      "oro-scuro-2": "#6b4b00",
+      "oro-scuro-chiaro": "#f6ecd6",
+      "mattone-chiaro": "#f6eaef",
+      "lilla": "#f2edf6"
+    }
+  }
+}
