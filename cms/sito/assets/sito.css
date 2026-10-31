@@ -400,6 +400,10 @@ hr.ed-divisore-linea{background:var(--bordo)}
 .modulo-campi .multiscelta{grid-column:1/-1;border:0;padding:0;margin:0;min-width:0}
 .modulo-campi .multiscelta legend{font:600 12px/1 var(--f-testo);letter-spacing:.14em;text-transform:uppercase;color:var(--testo-2);margin-bottom:10px;padding:0}
 .modulo-campi .multiscelta .spunta{margin:0 0 8px}
+/* 2.1: i campi File e Ora dei form */
+.modulo-campi input[type=file]{padding:10px 12px;font-size:15px;cursor:pointer}
+.modulo-campi .form-file-aiuto{color:var(--testo-2);font:400 13px/1.4 var(--f-testo);letter-spacing:0;text-transform:none}
+.modulo-campi input[type=time]{min-height:52px}
 .modulo-campi .errato input,.modulo-campi .errato select,.modulo-campi .errato textarea{border-color:var(--errore);box-shadow:0 0 0 2px rgba(var(--errore-rgb),.35)}
 .modulo-campi .errato>span,.modulo-campi .errato legend{color:var(--errore-testo)}
 

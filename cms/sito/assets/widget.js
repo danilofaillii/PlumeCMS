@@ -130,7 +130,8 @@
     if (!a || anteprima) return;
     e.preventDefault();
     var gruppo = a.closest('[data-ew-galleria], .ew-car-lb, .ed-widget') || document;
-    var lista = q('a[data-ew-lb]', gruppo); if (!lista.length) lista = [a];
+    // 2.1: nella galleria con filtri, solo le foto che si vedono.
+    var lista = q('a[data-ew-lb]', gruppo).filter(function (x) { return !x.closest('[hidden]'); }); if (!lista.length) lista = [a];
     apriLightbox(lista, Math.max(0, lista.indexOf(a)));
   });
 
@@ -299,7 +300,70 @@
     r.addEventListener('input', function () { el.style.setProperty('--ew-pos', r.value + '%'); });
   }
 
+  // ---- galleria con filtri (2.1): i pulsanti mostrano le foto di una categoria, con una piccola dissolvenza
+  function galleriaFiltri(el) {
+    var bot = q('.ew-gf-filtro', el), voci = q('.ew-gal-voce', el), conta = el.querySelector('[data-ew-gf-conta]'), timer = null;
+    function scegli(b) {
+      var f = b.dataset.filtro;
+      bot.forEach(function (x) { x.setAttribute('aria-pressed', x === b ? 'true' : 'false'); });
+      clearTimeout(timer);
+      var mostra = [], nascondi = [];
+      voci.forEach(function (v) { var si = f === '*' || (' ' + (v.dataset.cat || '') + ' ').indexOf(' ' + f + ' ') >= 0; (si ? mostra : nascondi).push(v); });
+      if (conta) conta.textContent = mostra.length + (mostra.length === 1 ? ' foto' : ' foto') + (f === '*' ? '' : ': ' + b.textContent);
+      if (ridotto || anteprima) { nascondi.forEach(function (v) { v.hidden = true; v.classList.remove('ew-gf-via'); }); mostra.forEach(function (v) { v.hidden = false; v.classList.remove('ew-gf-via'); }); return; }
+      nascondi.forEach(function (v) { if (!v.hidden) v.classList.add('ew-gf-via'); });
+      timer = setTimeout(function () {
+        nascondi.forEach(function (v) { v.hidden = true; });
+        mostra.forEach(function (v) { if (v.hidden) { v.classList.add('ew-gf-via'); v.hidden = false; } });
+        requestAnimationFrame(function () { requestAnimationFrame(function () { mostra.forEach(function (v) { v.classList.remove('ew-gf-via'); }); }); });
+      }, 280);
+    }
+    bot.forEach(function (b) { b.addEventListener('click', function () { scegli(b); }); });
+  }
+
+  // ---- scorrevole (2.1): il pulsante ferma e fa ripartire (anche da tastiera); chi chiede meno movimento lo vede fermo dal CSS
+  function scorrevole(el) {
+    var b = el.querySelector('.ew-scr-ferma'); if (!b) return;
+    var t = b.querySelector('.ew-nascosto-vista');
+    b.addEventListener('click', function () {
+      var fermo = !el.classList.contains('ew-scr-fermo');
+      el.classList.toggle('ew-scr-fermo', fermo);
+      b.setAttribute('aria-pressed', fermo ? 'true' : 'false');
+      if (t) t.textContent = fermo ? 'Fai ripartire lo scorrimento' : 'Ferma lo scorrimento';
+    });
+  }
+
+  // ---- contenuto esterno (2.1): il riquadro del servizio si carica solo dopo il clic su "Mostra il contenuto di..."
+  function esterno(el) {
+    var b = el.querySelector('[data-ew-est-mostra]'); if (!b || anteprima) return;
+    b.addEventListener('click', function () {
+      if (!/^https:\/\/(calendly\.com|open\.spotify\.com|calendar\.google\.com|form\.typeform\.com)\//.test(el.dataset.src || '')) return;
+      var f = document.createElement('iframe');
+      f.src = el.dataset.src; f.title = el.dataset.titolo || 'Contenuto esterno'; f.loading = 'lazy';
+      f.referrerPolicy = 'strict-origin-when-cross-origin';
+      if (el.dataset.servizio === 'spotify') f.allow = 'autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture';
+      el.innerHTML = ''; el.appendChild(f); el.classList.add('ew-est-aperto');
+      f.setAttribute('tabindex', '-1'); f.focus();
+    });
+  }
+
+  // ---- richiesta di prenotazione (2.1): la partenza non può essere prima dell'arrivo
+  function prenota(el) {
+    var a = el.querySelector('[data-ew-rp-arrivo]'), p = el.querySelector('[data-ew-rp-partenza]');
+    if (!a || !p) return;
+    a.addEventListener('change', function () {
+      if (!a.value) return;
+      var d = new Date(a.value + 'T12:00:00'); d.setDate(d.getDate() + 1);
+      var min = d.toISOString().slice(0, 10);
+      p.min = min; if (!p.value || p.value < min) p.value = min;
+    });
+  }
+
   function avvia(root) {
+    nuovo('[data-ew-gf]', root, galleriaFiltri);
+    nuovo('[data-ew-scr]', root, scorrevole);
+    nuovo('[data-ew-est]', root, esterno);
+    nuovo('.ew-rp', root, prenota);
     nuovo('[data-ew-orari]', root, orari);
     nuovo('[data-ew-pd]', root, primaDopo);
     nuovo('[data-ew-num]', root, contatore);
