@@ -29,7 +29,10 @@ function sito_mappa(): array {
     $m = [];
     $tutti = sito_contenuti();
     $attivi = array_values(array_filter($tutti, fn($c) => !$c['rediretto']));
-    $articoli = array_values(array_filter($attivi, fn($c) => $c['tipo'] === 'post'));
+    // 2.1: blog, categorie, tag e archivi per data elencano solo i contenuti che possono uscire in un elenco ('elenco':
+    // l'Area riservata toglie i suoi a chi non è entrato). La pagina del contenuto resta raggiungibile e dice lei che è riservata.
+    $inElenco = array_flip(array_map(fn($c) => $c['fonte'] . ':' . $c['id'], sito_contenuti_elenco('elenco')));
+    $articoli = array_values(array_filter($attivi, fn($c) => $c['tipo'] === 'post' && isset($inElenco[$c['fonte'] . ':' . $c['id']])));
 
     foreach ($attivi as $i => $c) {
         if ($c['percorso'] === '/') { $m['/'] = ['genere' => 'home', 'c' => $c]; continue; }
@@ -65,7 +68,7 @@ function sito_mappa(): array {
     // Archivi per data: tutti gli articoli pubblicati, anche quelli assorbiti dai pillar . Sempre noindex.
     $perData = [];
     foreach ($tutti as $a) {
-        if ($a['tipo'] !== 'post') continue;
+        if ($a['tipo'] !== 'post' || !isset($inElenco[$a['fonte'] . ':' . $a['id']])) continue;
         [$anno, $mese, $giorno] = explode('-', substr($a['data'], 0, 10));
         $nomeMese = SITO_MESI[(int)$mese - 1];
         foreach ([["/$anno/", $anno], ["/$anno/$mese/", "$nomeMese $anno"], ["/$anno/$mese/$giorno/", (int)$giorno . " $nomeMese $anno"]] as [$k, $nome]) {
@@ -101,7 +104,7 @@ function sito_minuti_lettura(string $html): int {
 
 function sito_ultimi(int $n, ?callable $filtro = null): array {
     $out = [];
-    foreach (sito_contenuti() as $c) {
+    foreach (sito_contenuti_elenco('elenco') as $c) {
         if ($c['tipo'] !== 'post' || $c['rediretto'] || $c['seo']['robots'] !== 'index') continue;
         if ($filtro && !$filtro($c)) continue;
         $out[] = $c;

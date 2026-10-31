@@ -148,7 +148,8 @@ function sito_contenuti(): array {
 
 /**
  * 2.1: i contenuti che possono uscire in un elenco pubblico, con titolo e riassunto: la ricerca del sito ($dove 'cerca'),
- * i feed ('feed'), la sitemap e la coda di IndexNow ('sitemap'), llms.txt e llms-full.txt ('llms').
+ * i feed ('feed'), la sitemap e la coda di IndexNow ('sitemap'), llms.txt e llms-full.txt ('llms'), blog, categorie, tag,
+ * archivi per data, conteggi e widget con gli ultimi articoli ('elenco').
  * Filtro contenuti_elenco($tutti, $dove): un addon toglie i suoi (l'Area riservata toglie i contenuti "solo per i membri",
  * e li lascia nella ricerca a un membro collegato). Senza addon è sito_contenuti(), uguale.
  */
@@ -206,7 +207,7 @@ function sito_categorie(): array {
     static $c = null;
     if ($c !== null) return $c;
     $conta = [];
-    foreach (sito_contenuti() as $x) if ($x['tipo'] === 'post' && !$x['rediretto']) foreach ($x['categorie'] as $s) $conta[$s] = ($conta[$s] ?? 0) + 1;
+    foreach (sito_contenuti_elenco('elenco') as $x) if ($x['tipo'] === 'post' && !$x['rediretto']) foreach ($x['categorie'] as $s) $conta[$s] = ($conta[$s] ?? 0) + 1;
     $c = [];
     $nascoste = sito_nascosti_import('categorie');
     foreach (db()->query('SELECT * FROM ' . tbl('categories') . ' ORDER BY sort_order, name')->fetchAll() as $r) {
@@ -223,7 +224,7 @@ function sito_tag(): array {
     static $t = null;
     if ($t !== null) return $t;
     $conta = [];
-    foreach (sito_contenuti() as $x) if ($x['tipo'] === 'post' && !$x['rediretto']) foreach ($x['tag'] as $s) $conta[$s] = ($conta[$s] ?? 0) + 1;
+    foreach (sito_contenuti_elenco('elenco') as $x) if ($x['tipo'] === 'post' && !$x['rediretto']) foreach ($x['tag'] as $s) $conta[$s] = ($conta[$s] ?? 0) + 1;
     $t = [];
     $nascosti = sito_nascosti_import('tag');
     foreach (db()->query('SELECT * FROM ' . tbl('tags') . ' ORDER BY name')->fetchAll() as $r) {

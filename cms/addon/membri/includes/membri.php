@@ -453,11 +453,11 @@ function membri_riservato_imposta(string $fonte, int $id, bool $si): void {
 /**
  * 2.1, filtro contenuti_elenco del nucleo (sito_contenuti_elenco(), includes/sito-dati.php): i contenuti "solo per i membri"
  * non escono negli elenchi pubblici, con titolo e riassunto: sitemap (e IndexNow), feed, llms.txt e llms-full.txt sempre;
- * la ricerca del sito ($dove 'cerca') li mostra solo a un membro collegato, e allora la pagina dei risultati non va in cache.
+ * la ricerca del sito ($dove 'cerca') e blog, archivi e widget degli articoli ('elenco') li mostrano solo a un membro collegato, e allora la pagina dei risultati non va in cache.
  */
 function membri_elenco_filtra(array $tutti, string $dove): array {
     if (!membri_riservati()) return $tutti;
-    if ($dove === 'cerca' && membri_corrente() !== null) {
+    if (in_array($dove, ['cerca', 'elenco'], true) && membri_corrente() !== null) {
         if (!headers_sent()) header('Cache-Control: private, no-store');
         return $tutti;
     }

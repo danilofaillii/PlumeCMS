@@ -45,16 +45,22 @@ let br;
   const php = codice => execFileSync('php', ['-r', `$_SERVER['HTTP_HOST']='127.0.0.1'; require '${DIR}/includes/config.php'; ${codice}`], { encoding: 'utf8' });
   const slugA = articolo.replace(/\//g, '');
   const tit = JSON.parse(php(`echo json_encode(['chi' => db()->query("SELECT title FROM " . tbl('pages') . " WHERE slug = 'chi-siamo'")->fetchColumn(), 'servizi' => db()->query("SELECT title FROM " . tbl('pages') . " WHERE slug = 'servizi'")->fetchColumn(), 'art' => db()->query("SELECT title FROM " . tbl('articles') . " WHERE slug = " . db()->quote('${slugA}'))->fetchColumn()]);`));
+  const htmlArt = await (await v0.request.get(B + articolo)).text();
+  const catArt = ((htmlArt.match(/href="[^"]*(\/category\/[^"\/]+\/)"/) || [])[1]) || '';
+  const annoArt = '/' + php(`echo substr((string)db()->query("SELECT publish_date FROM " . tbl('articles') . " WHERE slug = " . db()->quote('${slugA}'))->fetchColumn(), 0, 4);`).trim() + '/';
   const elenchi = async ctx => {
     const g = async u => (await ctx.request.get(B + u)).text();
     // della pagina della ricerca solo i risultati (il menu del sito ha anche lui i link a Chi siamo e Servizi)
     const cerca = async q => ((await g('/?s=' + encodeURIComponent(q))).split('class="griglia"')[1] || '');
-    return { sitemap: await g('/sitemap.xml'), feed: await g('/feed/'), llms: await g('/llms.txt'), cercaChi: await cerca(tit.chi), cercaArt: await cerca(tit.art), cercaServizi: await cerca(tit.servizi) };
+    // 2.1: anche blog, la categoria e l'anno dell'articolo (archivi), solo il corpo della pagina.
+    const corpo = async u => ((await g(u)).split('<main')[1] || '').split('</main>')[0];
+    return { blog: await corpo('/blog/'), categoria: catArt ? await corpo(catArt) : '', anno: await corpo(annoArt), sitemap: await g('/sitemap.xml'), feed: await g('/feed/'), llms: await g('/llms.txt'), cercaChi: await cerca(tit.chi), cercaArt: await cerca(tit.art), cercaServizi: await cerca(tit.servizi) };
   };
   const el0 = await elenchi(v0);
   ok('prima: Chi siamo, Servizi e l\'articolo sono nella sitemap e nella ricerca; l\'articolo nel feed e in llms.txt (le pagine non ci sono mai)',
     ['/chi-siamo/', '/servizi/', articolo].every(u => el0.sitemap.includes(u + '<') || el0.sitemap.includes(u + '</loc>')) && el0.cercaChi.includes('href="' + BASEP + '/chi-siamo/"') && el0.cercaArt.includes(articolo + '"')
     && el0.cercaServizi.includes('/servizi/"') && el0.feed.includes(articolo) && el0.llms.includes(articolo), tit);
+  ok('prima: l\'articolo è nel blog, nella sua categoria e nel suo anno (titolo compreso)', el0.blog.includes(tit.art) && (!catArt || el0.categoria.includes(tit.art)) && el0.anno.includes(tit.art), { catArt, annoArt });
 
   // 1. Accendere l'addon.
   const f1 = await addon(a, B, 'membri', true);
@@ -113,6 +119,7 @@ let br;
   ok('da fuori: la ricerca non trova i contenuti riservati nemmeno per titolo (Chi siamo, Servizi, l\'articolo)', !el1.cercaChi.includes('/chi-siamo/"') && !el1.cercaServizi.includes('/servizi/"') && !el1.cercaArt.includes(articolo + '"'));
   ok('da fuori: la sitemap non elenca i contenuti riservati', !el1.sitemap.includes('/chi-siamo/') && !el1.sitemap.includes('/servizi/') && !el1.sitemap.includes(articolo), el1.sitemap.length);
   ok('da fuori: il feed RSS non ha l\'articolo riservato (né titolo né riassunto)', !el1.feed.includes(articolo) && !el1.feed.includes(tit.art));
+  ok('da fuori: blog, categoria e archivio dell\'anno non hanno il titolo dell\'articolo riservato', !el1.blog.includes(tit.art) && !el1.categoria.includes(tit.art) && !el1.anno.includes(tit.art) && !el1.blog.includes(articolo + '"'));
   ok('da fuori: llms.txt non elenca i contenuti riservati', !el1.llms.includes('/chi-siamo/') && !el1.llms.includes('/servizi/') && !el1.llms.includes(articolo) && !el1.llms.includes(tit.art));
   ok('da fuori: llms-full.txt non ha l\'articolo riservato', !llms.includes(articolo) && !llms.includes('## ' + tit.art));
   r = await vai('/area-riservata/');
@@ -159,6 +166,7 @@ let br;
   const el2 = await elenchi(v);
   ok('da membro: la ricerca trova Chi siamo, Servizi e l\'articolo riservati', ((await rc.text()).split('class="griglia"')[1] || '').includes('/chi-siamo/"') && el2.cercaServizi.includes('/servizi/"') && el2.cercaArt.includes(articolo + '"'));
   ok('da membro: la pagina dei risultati è privata (Cache-Control private, no-store)', /private/.test(rc.headers()['cache-control'] || '') && /no-store/.test(rc.headers()['cache-control'] || ''), rc.headers()['cache-control']);
+  ok('da membro: blog, categoria e archivio dell\'anno mostrano l\'articolo riservato', el2.blog.includes(tit.art) && (!catArt || el2.categoria.includes(tit.art)) && el2.anno.includes(tit.art));
   ok('da membro: sitemap, feed e llms.txt restano senza i riservati', !el2.sitemap.includes('/chi-siamo/') && !el2.feed.includes(articolo) && !el2.llms.includes('/servizi/'));
   r = await vai('/chi-siamo/');
   ok('Chi siamo, da membro: il testo intero', !/solo per i membri/i.test(await v.locator('main').innerText()) && /private, no-store/.test(r.headers()['cache-control'] || ''));

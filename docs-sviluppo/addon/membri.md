@@ -76,8 +76,9 @@ membri", titolo e riassunto compresi, non esce in:
 - la ricerca del sito (`/?s=`), tranne per un **membro collegato**: allora la pagina dei risultati esce con
   `Cache-Control: private, no-store`. L'amministratore in anteprima non è un membro: la ricerca non li mostra nemmeno a lui.
 
-Restano come prima (non richiesto e lasciato fuori): gli archivi del blog, delle categorie e dei tag e i widget che elencano
-contenuti (Griglia di contenuti) mostrano titolo e riassunto anche di un riservato, che poi si apre chiuso.
+Dalla 2.1.0 vale anche per gli archivi del blog, delle categorie, dei tag e per data, per i conteggi delle categorie e per i
+widget che elencano articoli (Ultimi articoli, Griglia di contenuti): da fuori il riservato non c'è, un membro collegato lo vede
+(`$dove` `elenco`, pagina `private, no-store`).
 
 ## Pagine pubbliche (`includes/pagine.php`)
 
@@ -141,8 +142,8 @@ sotto `/area-riservata/` che l'addon non conosce).
 - Spegnendo l'addon i contenuti riservati tornano pubblici (il nucleo non sa più che erano riservati). Il pannello lo dice.
 - (Corretti nella 1.1.0: la ricerca, la sitemap, i feed e llms.txt non mostrano più titolo e riassunto dei contenuti
   riservati; la spunta si sceglie anche dalla scheda del contenuto.)
-- Gli archivi del blog, delle categorie e dei tag e il widget Griglia di contenuti mostrano ancora titolo e riassunto di un
-  contenuto riservato (che poi si apre chiuso). Il titolo resta visibile anche nella pagina chiusa.
+- (Corretto nella 2.1.0: archivi del blog, categorie, tag, per data e i widget degli articoli.) Il titolo resta visibile
+  nella pagina chiusa, per chi ne conosce l'indirizzo.
 - Il widget Accesso membri e i contenuti riservati presuppongono che le pagine non stiano in una cache condivisa (le pagine
   riservate mandano `private, no-store`; le altre pagine del sito non sono in cache nel CMS).
 - La password del membro segue le regole del pannello (almeno 12 caratteri), più severe di quelle di molti siti.

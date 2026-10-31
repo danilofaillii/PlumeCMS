@@ -469,7 +469,7 @@ ewx_registra('griglia_contenuti', 'Griglia di articoli', 'giornale', 'Dal sito',
     $cat = trim((string)$v['categoria']); $tag = trim((string)$v['tag']);
     $percorso = $ctx['percorso'] ?? '/';
     $tutti = [];
-    try { $contenuti = sito_contenuti(); } catch (Throwable $e) { return ewx_vuoto('Gli articoli si vedono quando il database risponde'); }
+    try { $contenuti = sito_contenuti_elenco('elenco'); } catch (Throwable $e) { return ewx_vuoto('Gli articoli si vedono quando il database risponde'); }
     $tabella = ewx_fonti_griglia()[$v['fonte']][1] ?? 'articles';
     foreach ($contenuti as $c) {
         if ($c['tipo'] !== 'post' || $c['rediretto'] || $c['seo']['robots'] !== 'index') continue;

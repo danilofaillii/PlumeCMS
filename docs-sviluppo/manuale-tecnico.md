@@ -3437,7 +3437,11 @@ Lavoro sul ramo, non ancora in una versione (`cms/VERSIONE` e `CHANGELOG.md` non
   (`sito/viste.php:484`, `cerca`), i feed (`extra_articoli()`, `sito/extra.php:16`, `feed`), la sitemap (`extra_sitemap()`
   `:60` e `seo_sitemap_voci()`, `includes/seo.php:862`, quindi anche IndexNow, `sitemap`), llms.txt e llms-full.txt
   (`extra_llms()` `:75`, `seo_llms_full()` `includes/seo.php:831`, `llms`). L'addon toglie i contenuti "solo per i membri",
-  e nella ricerca li lascia a un membro collegato (con `Cache-Control: private, no-store`).
+  e nella ricerca li lascia a un membro collegato (con `Cache-Control: private, no-store`). Dalla 2.1.0 anche `elenco`:
+  blog, categorie, tag e archivi per data (`sito_mappa()`, `includes/sito-mappa.php`, con `$inElenco`; le voci dei contenuti
+  restano tutte, la pagina dice lei che è riservata), i conteggi di `sito_categorie()` e `sito_tag()`, `sito_ultimi()` (widget
+  Ultimi articoli, articoli collegati) e la Griglia di contenuti (`includes/editor-widget-extra-c.php`). Un membro collegato li
+  vede, con `private, no-store`.
 - Nucleo, `admin/contenuto.php`: filtro `scheda_riquadri` (`:285`, riquadri in più nella colonna di destra) ed evento
   `scheda_salvata` (`:62`, dopo il salvataggio, con il POST). L'addon ci mette "Area riservata, Solo per i membri", solo per
   l'amministratore.
