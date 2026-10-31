@@ -168,6 +168,8 @@ function seo_cfg(bool $azzera = false): array {
                 if (is_array($valori) && isset($c[$gruppo]) && is_array($c[$gruppo])) $c[$gruppo] = array_replace($c[$gruppo], $valori);
             }
         }
+        // Audit 2026-11: seo_salva() scrive le emoji come entità; qui tornano emoji, se no il titolo del sito usciva "&#x1F377;".
+        array_walk_recursive($c, function (&$x) { if (is_string($x)) $x = sito_4byte_veri($x); });
     }
     return $c;
 }

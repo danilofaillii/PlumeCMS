@@ -74,9 +74,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 // Valori del modulo: dalla riga oppure, dopo un errore su un contenuto nuovo, da quello che era stato scritto.
 $sc = [
     'title' => $r['title'] ?? '', 'slug' => $r['slug'] ?? '', 'contenuto' => $r[$T['campo_contenuto']] ?? ($r['contenuto'] ?? ''),
-    'excerpt' => $r['excerpt'] ?? '', 'author' => $r['author'] ?? (string)cms_impostazione('autore_predefinito', ''),
+    'excerpt' => sito_4byte_veri((string)($r['excerpt'] ?? '')), 'author' => $r['author'] ?? (string)cms_impostazione('autore_predefinito', ''),
     'seo_title' => $r['seo_title'] ?? '', 'seo_description' => $r['seo_description'] ?? '', 'meta_description' => $r['meta_description'] ?? '',
-    'robots' => $r['robots'] ?? '', 'tldr' => $r['tldr'] ?? '', 'faq_testo' => isset($r['faq_testo']) ? $r['faq_testo'] : admin_faq_a_testo($r['faq'] ?? ''),
+    'robots' => $r['robots'] ?? '', 'tldr' => sito_4byte_veri((string)($r['tldr'] ?? '')), 'faq_testo' => isset($r['faq_testo']) ? $r['faq_testo'] : admin_faq_a_testo($r['faq'] ?? ''),
     'immagine' => $r['immagine_url'] ?? ($r['immagine'] ?? ($r['featured_image'] ?? '')), 'immagine_alt' => $r['featured_image_alt'] ?? ($r['immagine_alt'] ?? ''),
     'type' => $r['type'] ?? 'cluster', 'keyword_target' => $r['keyword_target'] ?? '', 'keywords_secondarie' => $r['keywords_secondarie'] ?? '',
     'cta' => $r['cta'] ?? '', 'pillar_ref' => $r['pillar_ref'] ?? '', 'pillar_title' => $r['pillar_title'] ?? '', 'author_quote' => $r['author_quote'] ?? '',

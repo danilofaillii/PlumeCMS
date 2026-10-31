@@ -170,6 +170,19 @@ function sito_senza_4byte(string $s): string {
     return (string)preg_replace_callback('/[\x{10000}-\x{10FFFF}]/u', fn($m) => sprintf('&#x%X;', mb_ord($m[0], 'UTF-8')), $s);
 }
 
+/**
+ * Audit 2026-11: il contrario di sito_senza_4byte(), per i testi semplici (non HTML) che si salvano con le entità: estratto,
+ * In breve, titoli e testi del pannello SEO. Prima l'entità arrivava a h() e sul sito (titolo della scheda, meta, feed,
+ * dati per Google) e nel pannello si leggeva "&#x1F377;" al posto dell'emoji. Solo i caratteri a 4 byte: il resto resta com'è.
+ */
+function sito_4byte_veri(string $s): string {
+    if (!str_contains($s, '&#')) return $s;
+    return (string)preg_replace_callback('/&#(?:x([0-9a-f]{5,6})|(\d{5,7}));/i', function ($m) {
+        $n = $m[1] !== '' ? hexdec($m[1]) : (int)$m[2];
+        return $n >= 0x10000 && $n <= 0x10FFFF ? mb_chr($n, 'UTF-8') : $m[0];
+    }, $s);
+}
+
 /** HTML finale di un articolo: in HTML passa com'è (con le infografiche del configuratore), in Markdown si costruisce. */
 function sito_html_articolo(array $a): string {
     if (($a['content_format'] ?? 'markdown') === 'html') {
