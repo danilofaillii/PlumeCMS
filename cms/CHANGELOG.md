@@ -2,6 +2,22 @@
 
 Il prodotto si chiama **plumeCMS** (nome scelto il 26 ottobre 2026; prima, per poche ore, "CarbonaraCMS", e ancora prima il provvisorio "Officina": gli zip vecchi si chiamavano `officina-*` e `carbonaracms-*`).
 
+## 2.2.0 (31 ottobre 2026) - Scegli dal sito
+
+- **Controlla il server prova Google e IndexNow** dal server vero: con il service account salvato, se Search Console vede la
+  tua proprietà; con la chiave di IndexNow, se il file della chiave si legge da fuori e se `api.indexnow.org` risponde. Senza i
+  dati, se il server raggiunge i due servizi.
+- **Un certificato HTTPS che non va si dice per nome** ("Il certificato HTTPS del sito ... non è valido"), nel controllo della
+  versione nuova e in Controlla il server: prima diceva "non risponde". Provato con un certificato vero, uno di un'autorità
+  sconosciuta, uno per un altro nome e uno scaduto.
+- **Richiesta di prenotazione**: "A chi arriva la richiesta" lo cambia solo l'amministratore. Un redattore vede il campo spento,
+  e il server tiene l'indirizzo di prima anche se gli arriva un altro valore.
+- **Editor, nomi doppi**: "Animazione delle parole" del Titolo animato e lo spazio interno di Avviso, Flip box, Condividi e Icone
+  social avevano lo stesso nome di un controllo delle Avanzate: uno cancellava l'altro. Ora sono separati. Le pagine fatte prima
+  restano uguali al pixel; il Titolo animato con le parole che si alternano ora ha la sua animazione di partenza (la scrittura a
+  macchina), che prima non partiva.
+- **Manuale d'uso più leggero**: il PDF passa da 8,1 a 7,1 MB, con le scritte delle schermate ancora nitide.
+
 ## 2.1.0 (31 ottobre 2026) - Le email arrivano, gli addon completi, un file solo
 
 - **Le email arrivano nella posta, non nello spam.** Pannello nuovo Impostazioni > Consegna delle email, con sei linguette (Da dove
