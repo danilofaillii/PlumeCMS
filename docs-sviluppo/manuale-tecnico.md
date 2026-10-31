@@ -559,7 +559,10 @@ Tutte con il prefisso davanti. Le colonne sono quelle principali.
 
 Le tabelle di base, della sicurezza e `editor_versioni` sono in `utf8mb4`; molte altre sono in `utf8` a 3 byte.
 Per questo i caratteri a 4 byte (emoji) nei dati si salvano come entità HTML o come `\uXXXX` nel JSON: in
-modalità stretta MySQL rifiuterebbe la riga (errore 1366).
+modalità stretta MySQL rifiuterebbe la riga (errore 1366, o 3988 con la connessione in utf8mb4). Un testo semplice (non
+HTML) salvato come entità va rimesso emoji quando si legge, prima di `h()`, se no sul sito e nel pannello esce scritto
+`&#x1F377;`: lo fa `sito_4byte_veri()` (`includes/sito.php:178`, il contrario di `sito_senza_4byte()`), oppure
+`newsletter_4byte_fuori()` per la newsletter (audit 2026-11, capitolo 39).
 
 La tabella `form_submissions`, usata da una vecchia funzione di `db.php`, nel nucleo non si crea: la porta un modulo che
 ne ha bisogno. La funzione che la scrive non è chiamata dal nucleo.
@@ -3783,6 +3786,29 @@ quando cambia il loro slug). Le voci del menu scelte dal sito non ne hanno bisog
   ricerche cattive (SQL, UNION, jolly di LIKE, barra rovesciata, HTML, NUL, U+202E, emoji, UTF-8 rotto, 100.000 caratteri,
   liste); titolo cattivo nel JSON e nella finestra; `javascript:` e varianti nel popup e nei widget; il redattore e le bozze
   degli addon.
+
+## 39. Audit di novembre 2026: emoji, link scritti a mano, messaggi
+
+Il resoconto completo, con le prove prima e dopo, è in `docs-sviluppo/audit-2026-11.md`; la prova è
+`prove/prova-audit-2026-11.js` (un controllo per problema, `CMS_DIR` per P15). Quello che è cambiato nel codice:
+
+| Dove | Cosa fa adesso |
+|---|---|
+| `form_salva()`, `form_leggi()`, `form_tutti()` (`includes/form.php:105-111`) | i testi del form (`FORM_TESTI`) con le emoji come entità, rimesse emoji da `form_4byte_fuori()`; i campi in JSON con `form_json_3byte()` (`\uXXXX`); i dati di chi compila tengono le emoji e vanno nel database con `form_json_3byte()` |
+| `popup_salva()`, `popup_riga()` (`includes/popup.php:46`) | `POPUP_TESTI` come entità al salvataggio, emoji alla lettura |
+| `admin/newsletter.php:102` | nome o descrizione della lista con un'emoji: un messaggio; "Esiste già una lista" solo con l'errore 1062 |
+| `seo_cfg()` (`includes/seo.php:172`), `sito_contenuti()` (`includes/sito-dati.php`), `admin/contenuto.php` | `sito_4byte_veri()` su tutto il pannello SEO, su riassunto e In breve |
+| `scaricabili_elenco()` (`includes/scaricabili.php:264`) | titolo e descrizione dei Download con `scaricabili_4byte_veri()` |
+| Dashboard (`admin/index.php:271`), `admin/newsletter-statistiche.php:41` | l'oggetto della campagna con `newsletter_4byte_fuori()` |
+| Impostazioni di Prenotazioni ed Eventi (`addon/*/includes/admin-impostazioni.php`) | la pagina della privacy passa da `editor_link_sicuro()` (`privacy-policy` diventa `/privacy-policy`, `www.sito.it/x` `https://www.sito.it/x`); un valore che non è un indirizzo si rifiuta con un messaggio |
+| Vetrina > Impostazioni (`addon/vetrina/includes/admin-impostazioni.php:18`) | l'indirizzo del negozio non può essere quello di una pagina o di un articolo (nel cestino escluso) né di un altro addon |
+| `admin/versioni.php:84-125` | l'anteprima di una versione passa da `cms_con_cartella()` |
+| `contenuti_desinenza()` (`includes/contenuti.php:40`) | "Pagina aggiornata": `'genere' => 'f'` nel tipo `pagine` (anche i tipi dei moduli possono dirlo) |
+| `admin/seo.php:121-127` | Meta Pixel senza spazi; Pixel o Clarity sbagliati si rifiutano con un messaggio (prima si toglievano in silenzio) |
+| `admin/seo.php:180` | un redirect con un'emoji: un messaggio invece di `SQLSTATE` |
+| `admin/utenti.php:39` | il nome mostrato tagliato a 200 caratteri (la colonna), `maxlength` nel campo |
+
+---
 
 ## Appendice A. Dove i documenti vecchi non corrispondono al codice
 
