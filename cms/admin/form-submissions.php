@@ -20,10 +20,30 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     switch ($_POST['azione'] ?? '') {
         case 'letto': db()->exec('UPDATE ' . tbl('moduli_invii') . " SET letto = 1 WHERE id IN ($in)"); flash('success', 'Segnate come lette.'); break;
         case 'nonletto': db()->exec('UPDATE ' . tbl('moduli_invii') . " SET letto = 0 WHERE id IN ($in)"); flash('success', 'Segnate come da leggere.'); break;
-        case 'elimina': $n = db()->exec('DELETE FROM ' . tbl('moduli_invii') . " WHERE id IN ($in)"); flash('success', "$n eliminate."); break;
+        case 'elimina': form_allegati_cancella($ids); $n = db()->exec('DELETE FROM ' . tbl('moduli_invii') . " WHERE id IN ($in)"); form_file_orfani(); flash('success', "$n eliminate."); break;
         case 'elimina_vecchio': db()->prepare('DELETE FROM ' . tbl('form_submissions') . ' WHERE id = ?')->execute([(int)($_POST['uno'] ?? 0)]); flash('success', 'Eliminata.'); break;
     }
     header('Location: form-submissions.php' . ($modulo ? '?modulo=' . $modulo : ''));
+    exit;
+}
+// 2.1: un file arrivato con un form, solo da qui (pagina dell'amministratore). Si scarica sempre come allegato, con il nome
+// com'era e il tipo controllato all'arrivo: il browser non lo apre come pagina.
+if (isset($_GET['file'])) {
+    $st = db()->prepare('SELECT allegati FROM ' . tbl('moduli_invii') . ' WHERE id = ?');
+    $st->execute([(int)$_GET['file']]);
+    $al = form_allegati(['allegati' => (string)$st->fetchColumn()]);
+    $x = $al[(int)($_GET['n'] ?? 0)] ?? null;
+    $f = $x ? form_file_dir() . '/' . $x['file'] : '';
+    if (!$x || !is_file($f)) { http_response_code(404); exit('File non trovato: forse è stato cancellato.'); }
+    $nome = preg_replace('/[^A-Za-z0-9._-]+/', '-', (string)$x['nome']) ?: 'file';
+    header('Content-Type: application/octet-stream');
+    header('Content-Disposition: attachment; filename="' . $nome . '"; filename*=UTF-8\'\'' . rawurlencode((string)$x['nome']));
+    header('Content-Length: ' . filesize($f));
+    header('X-Content-Type-Options: nosniff');
+    header('Cache-Control: private, no-store');
+    header("Content-Security-Policy: default-src 'none'; sandbox");
+    while (ob_get_level()) ob_end_clean();
+    readfile($f);
     exit;
 }
 if (isset($_GET['csv'])) {
@@ -75,7 +95,8 @@ require_once __DIR__ . '/includes/admin-header.php';
             <div class="ct-azioni"><button type="submit" name="azione" value="<?= $i['letto'] ? 'nonletto' : 'letto' ?>" data-uno="<?= $i['id'] ?>"><?= $i['letto'] ? 'Da leggere' : 'Letta' ?></button><button type="submit" name="azione" value="elimina" class="ct-rosso" data-uno="<?= $i['id'] ?>" data-conferma="Eliminare?">Elimina</button></div></td>
           <td class="ct-muto"><?= h($i['modulo']) ?></td>
           <td><?= h($i['nome']) ?><?= $i['email'] ? '<br><a href="mailto:' . h($i['email']) . '" style="font-weight:400;font-size:.82rem">' . h($i['email']) . '</a>' : '' ?></td>
-          <td style="font-weight:400;font-size:.85rem"><?php foreach ($d as $k => $v): ?><div><span class="ct-muto"><?= h((string)$k) ?>:</span> <?= nl2br(h(mb_substr((string)$v, 0, 400))) ?></div><?php endforeach; ?></td>
+          <td style="font-weight:400;font-size:.85rem"><?php foreach ($d as $k => $v): ?><div><span class="ct-muto"><?= h((string)$k) ?>:</span> <?= nl2br(h(mb_substr((string)$v, 0, 400))) ?></div><?php endforeach; ?>
+            <?php foreach (form_allegati($i) as $n => $al): /* 2.1: i file del form */ ?><div><a class="fs-file" href="form-submissions.php?file=<?= (int)$i['id'] ?>&amp;n=<?= $n ?>" download>Scarica <?= h($al['nome']) ?></a> <span class="ct-muto">(<?= max(1, (int)round($al['peso'] / 1024)) ?> KB)</span></div><?php endforeach; ?></td>
           <td class="ct-muto"><?= h((string)$i['pagina']) ?></td>
         </tr>
       <?php endforeach; ?>

@@ -80,9 +80,23 @@ function editor_moduli_disponibili(): array {
     $o = ['newsletter' => 'Newsletter'];
     try {
         require_once __DIR__ . '/form.php';
-        foreach (form_tutti() as $f) $o['form:' . $f['id']] = 'Form: ' . $f['nome'] . ($f['attivo'] ? '' : ' (spento)');
+        // 2.1: le richieste del widget Richiesta di prenotazione stanno sotto un form loro, che non si mette in pagina.
+        foreach (form_tutti() as $f) if ($f['slug'] !== 'richieste-prenotazione') $o['form:' . $f['id']] = 'Form: ' . $f['nome'] . ($f['attivo'] ? '' : ' (spento)');
     } catch (Throwable $e) { /* senza database (prove a secco) resta la newsletter */ }
     return (array)cms_filtro('moduli_disponibili', $o);
+}
+
+/**
+ * 2.1: le categorie (o i tag) del sito per una tendina dei widget: slug => nome. I valori che arrivano dopo (una pagina
+ * importata prima della categoria) li tiene 'accetta' => EDITOR_SLUG_RE, e la tendina li mostra con "(non trovato)".
+ */
+const EDITOR_SLUG_RE = '/^[^"<>\x00-\x1f]{1,200}$/u'; // anche un valore scritto a mano prima della 2.1 (maiuscole, spazi) resta: si confronta e basta
+function editor_opzioni_tassonomia(string $tabella = 'categories', string $tutte = 'Tutte le categorie'): array {
+    $o = ['' => $tutte];
+    try {
+        foreach (db()->query('SELECT slug, name FROM ' . tbl($tabella) . ' ORDER BY ' . ($tabella === 'categories' ? 'sort_order, ' : '') . 'name')->fetchAll() as $r) $o[(string)$r['slug']] = (string)$r['name'];
+    } catch (Throwable $e) { /* senza database (prove a secco): solo "tutte" */ }
+    return $o;
 }
 
 /** Controlli che hanno tutti i widget, nella scheda Avanzate (come Elementor: layout, movimento, trasformazione, sfondo, bordo, posizione, responsive, attributi, CSS). */
@@ -316,6 +330,9 @@ function editor_definizioni(): array {
             ec('url', 'testo', 'Indirizzo YouTube o Vimeo', ''),
             ec('titolo', 'testo', 'Titolo del video', ''),
             ec('copertina', 'immagine', 'Copertina (facoltativa)', '', 'contenuto', ['aiuto' => 'Il video si carica solo quando la persona preme play: prima nessun contatto con YouTube.']),
+            // 2.1: parte da solo (senza audio, come vogliono i browser) e si ripete.
+            ec('da_solo', 'interruttore', 'Parte da solo, senza audio', false, 'contenuto', ['sezione' => 'Riproduzione', 'aiuto' => 'Il video si carica subito con la pagina, senza il clic: YouTube o Vimeo ricevono la visita (scrivilo nella privacy). Sul telefono alcuni browser non lo fanno partire da soli per risparmiare dati.']),
+            ec('ripeti', 'interruttore', 'Si ripete', false, 'contenuto', ['sezione' => 'Riproduzione', 'aiuto' => 'Quando finisce, ricomincia dall\'inizio.']),
             ec('proporzioni', 'scelta', 'Proporzioni', '', 'stile', ['sezione' => 'Video', 'opzioni' => ['' => '16:9', '4/3' => '4:3', '1/1' => 'Quadrato', '9/16' => 'Verticale 9:16', '21/9' => 'Cinema 21:9'], 'selettore' => ' .ed-video', 'proprieta' => 'aspect-ratio']),
             es_bor('bordo', 'Bordo', ' .ed-video', 'Video', [], false),
             es_omb('ombra', 'Ombra', ' .ed-video', 'Video', [], false),
@@ -327,7 +344,7 @@ function editor_definizioni(): array {
         'articoli' => ['etichetta' => 'Ultimi articoli', 'icona' => '▦', 'gruppo' => 'Dal sito', 'controlli' => [
             ec('numero', 'numero', 'Quanti', 3, 'contenuto', ['min' => 1, 'max' => 12]),
             ec('solo_pillar', 'interruttore', 'Solo i pillar', true),
-            ec('categoria', 'testo', 'Solo una categoria (slug, facoltativo)', ''),
+            ec('categoria', 'scelta', 'Solo una categoria', '', 'contenuto', ['opzioni' => editor_opzioni_tassonomia(), 'accetta' => EDITOR_SLUG_RE, 'aiuto' => 'Le categorie si creano in Articoli > Categorie.']),
             ec('colonne', 'numero', 'Colonne', ['d' => 3, 't' => 2, 'm' => 1], 'stile', ['sezione' => 'Griglia', 'min' => 1, 'max' => 4, 'responsive' => true, 'selettore' => ' .griglia', 'proprieta' => 'grid-template-columns', 'valore_css' => 'repeat({{v}},minmax(0,1fr))']),
             es_mis('spazio', 'Spazio fra le schede', ' .griglia', 'Griglia', 'gap', [], ['px', 'em'], ['intervalli' => ['px' => [0, 80, 1]]]),
             es_sfo('sfondo_card', 'Sfondo della scheda', ' .card', 'Scheda'),
@@ -376,7 +393,8 @@ function editor_definizioni(): array {
         ]],
         'tabella' => ['etichetta' => 'Tabella', 'icona' => '▦', 'gruppo' => 'Contenuto', 'controlli' => [
             ec('intestazione', 'interruttore', 'La prima riga è l\'intestazione', true),
-            ec('righe', 'ripetitore', 'Righe', [['celle' => 'Colonna 1 | Colonna 2'], ['celle' => 'Valore | Valore']], 'contenuto', ['campi' => [ec('celle', 'testolungo', 'Celle, separate da una barra verticale |', '')], 'titolo_voce' => 'celle']),
+            ec('righe', 'ripetitore', 'Righe', [['celle' => 'Colonna 1 | Colonna 2'], ['celle' => 'Valore | Valore']], 'contenuto', ['campi' => [ec('celle', 'testolungo', 'Celle, separate da una barra verticale |', '')], 'titolo_voce' => 'celle',
+                'aiuto' => 'Dentro una cella: **grassetto**, *corsivo* e [testo del link](/pagina/ oppure https://...). Niente HTML: si scrive così e basta.']),
             es_tip('tipografia', 'Tipografia della tabella', ' table', 'Tabella'),
             es_pad('padding_celle', 'Spazio interno delle celle', ' th, td', 'Tabella'),
             es_col('righe_colore', 'Colore delle righe di separazione', ' th, td', 'Tabella', 'border-color'),
@@ -625,6 +643,11 @@ function editor_disegna_widget(string $tipo, array $v): string {
             $emb = editor_video_incorporato((string)$v['url']);
             if (!$emb) return '<div class="ed-vuoto">Incolla l\'indirizzo di un video YouTube o Vimeo</div>';
             // Facciata: prima del clic nessuna richiesta a YouTube o Vimeo (niente cookie di terzi).
+            // 2.1: "si ripete" e "parte da solo, senza audio". Parte da solo: il lettore si carica subito (niente facciata).
+            if (!empty($v['ripeti']) || !empty($v['da_solo'])) $emb = editor_video_opzioni($emb, !empty($v['da_solo']), !empty($v['ripeti']));
+            if (!empty($v['da_solo']) && empty($GLOBALS['editor_ctx']['anteprima'])) {
+                return '<div class="ed-video ed-video-solo"><iframe src="' . h($emb) . '" title="' . h($v['titolo'] !== '' ? $v['titolo'] : 'Video') . '" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowfullscreen loading="lazy"></iframe></div>';
+            }
             return '<div class="ed-video" data-src="' . h($emb) . '"' . ($v['copertina'] !== '' ? ' style="background-image:url(\'' . h($v['copertina']) . '\')"' : '') . '>'
                 . '<button type="button" aria-label="Guarda il video ' . h($v['titolo']) . '"><span>▶</span>' . ($v['titolo'] !== '' ? '<b>' . h($v['titolo']) . '</b>' : '') . '<small>Il video si apre da ' . (str_contains($emb, 'vimeo') ? 'Vimeo' : 'YouTube') . '</small></button></div>';
         case 'articoli':
@@ -655,7 +678,7 @@ function editor_disegna_widget(string $tipo, array $v): string {
             $out = '<table>';
             foreach ($righe as $i => $r) {
                 $t = $i === 0 && $v['intestazione'] ? 'th' : 'td';
-                $out .= '<tr>' . implode('', array_map(fn($c) => "<$t>" . h($c) . "</$t>", $r)) . '</tr>';
+                $out .= '<tr>' . implode('', array_map(fn($c) => "<$t>" . editor_cella($c) . "</$t>", $r)) . '</tr>';
             }
             return $out . '</table>';
         case 'scheda':
@@ -1258,6 +1281,48 @@ function igx_disegna(string $tipo, array $v): string {
             return igx_cornice($tipo, $v, $out . '</div>');
     }
     return '';
+}
+
+/**
+ * 2.1: una cella della tabella con la sua formattazione semplice: **grassetto**, *corsivo*, [testo](link). Prima si fa
+ * l'escape di tutto, poi le tre forme diventano tag; il link passa da editor_link_sicuro (javascript:, data: restano
+ * fuori: resta il testo). Un asterisco da solo ("5 * 3") non cambia niente: serve la coppia attaccata alle parole.
+ */
+function editor_cella(string $testo): string {
+    $t = h(str_replace("\x01", '', $testo));
+    if (!str_contains($t, '*') && !str_contains($t, '](')) return $t;
+    $link = [];
+    $t = (string)preg_replace_callback('/\[([^\]\[]{1,200})\]\(([^()\s]{1,500})\)/u', function ($m) use (&$link) {
+        $u = editor_link_sicuro(html_entity_decode($m[2], ENT_QUOTES | ENT_HTML5, 'UTF-8'));
+        if ($u === '') return $m[1];
+        $fuori = preg_match('~^https?://~i', $u) && !(defined('SITO_URL') && str_starts_with($u, SITO_URL));
+        $link[] = '<a href="' . h($u) . '"' . ($fuori ? ' target="_blank" rel="noopener"' : '') . '>' . $m[1] . '</a>';
+        return "\x01" . (count($link) - 1) . "\x01";
+    }, $t);
+    $t = (string)preg_replace('/\*\*(?=\S)(.+?)(?<=\S)\*\*/u', '<strong>$1</strong>', $t);
+    $t = (string)preg_replace('/(?<![\w*])\*(?=[^\s*])([^*]+?)(?<=[^\s*])\*(?![\w*])/u', '<em>$1</em>', $t);
+    return (string)preg_replace_callback('/\x01(\d+)\x01/', function ($m) use ($link) {
+        // Il testo del link può avere grassetto e corsivo: si formatta anche lui.
+        return preg_replace(['/\*\*(?=\S)(.+?)(?<=\S)\*\*/u', '/(?<![\w*])\*(?=[^\s*])([^*]+?)(?<=[^\s*])\*(?![\w*])/u'], ['<strong>$1</strong>', '<em>$1</em>'], $link[(int)$m[1]]);
+    }, $t);
+}
+
+/** 2.1: l'indirizzo del lettore con "parte da solo" (senza audio) e "si ripete", per YouTube e Vimeo. */
+function editor_video_opzioni(string $emb, bool $daSolo, bool $ripeti): string {
+    $youtube = str_contains($emb, 'youtube');
+    $p = [];
+    if ($youtube) {
+        if (!$daSolo) $p['autoplay'] = '1'; // la facciata: al clic parte
+        if ($daSolo) { $p['autoplay'] = '1'; $p['mute'] = '1'; $p['playsinline'] = '1'; }
+        if ($ripeti && preg_match('~/embed/([A-Za-z0-9_-]{11})~', $emb, $m)) { $p['loop'] = '1'; $p['playlist'] = $m[1]; }
+    } else {
+        if ($daSolo) { $p['muted'] = '1'; $p['playsinline'] = '1'; }
+        if ($ripeti) $p['loop'] = '1';
+    }
+    foreach ($p as $k => $x) {
+        $emb = preg_match('/([?&])' . $k . '=[^&]*/', $emb) ? preg_replace('/([?&])' . $k . '=[^&]*/', '$1' . $k . '=' . $x, $emb) : $emb . (str_contains($emb, '?') ? '&' : '?') . $k . '=' . $x;
+    }
+    return $emb;
 }
 
 function editor_video_incorporato(string $url): ?string {

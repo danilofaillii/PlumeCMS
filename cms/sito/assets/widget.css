@@ -595,3 +595,109 @@ body:has(.ew-bc-sempre){padding-bottom:62px}
 @media (prefers-reduced-motion:reduce){.ew-sq-social a{transition:none}}
 /* Sul telefono le frecce coprirebbero il testo della slide: si scorre con il dito, restano i pallini. */
 @media (max-width:640px){.ew-slider .ew-car-prev,.ew-slider .ew-car-next{display:none}.ew-sl{padding:36px 22px}}
+
+/* ================= 2.1: menu del ristorante, richiesta di prenotazione, galleria con filtri, scorrevole, contenuto esterno,
+   "Come arrivare" della mappa. Le regole stanno sotto classi nuove: le pagine che non le usano restano uguali. */
+.ew-nascosto-vista{position:absolute!important;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+/* ---- Menu del ristorante */
+.ew-menu{display:flex;flex-direction:column;gap:30px}
+.ew-menu-titolo{margin:0;font:700 clamp(1.7rem,3.4vw,2.4rem)/1.15 var(--f-titolo);color:var(--ew-tc,var(--testo));text-align:center}
+.ew-menu-sezione{display:flex;flex-direction:column;gap:12px}
+.ew-menu-sez-testa{display:flex;align-items:center;gap:12px;flex-wrap:wrap;border-bottom:1px solid var(--bordo);padding-bottom:8px}
+.ew-menu-sez-titolo{margin:0;font:700 1.25rem/1.2 var(--f-titolo);letter-spacing:.02em;color:var(--ew-ac,var(--testo))}
+.ew-menu-quando{display:inline-flex;align-items:center;gap:6px;font:600 13px/1.2 var(--f-testo);color:var(--testo);background:var(--vetro-2);border:1px solid var(--bordo);border-radius:999px;padding:5px 11px}
+.ew-menu-quando .ico{width:15px;height:15px;color:var(--successo)}
+.ew-menu-nota{margin:0;color:var(--testo-2);font-style:italic}
+.ew-menu-piatti{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px 36px}
+.ew-menu-piatto{display:flex;gap:14px;align-items:flex-start;min-width:0}
+.ew-menu-foto{flex:none;width:84px;height:84px;border-radius:12px;overflow:hidden;line-height:0;background:var(--vetro)}
+.ew-menu-foto img{width:100%;height:100%;object-fit:cover}
+.ew-menu-corpo{flex:1;min-width:0;display:flex;flex-direction:column;gap:5px}
+.ew-menu-riga{display:flex;align-items:baseline;gap:8px}
+.ew-menu-nome{margin:0;font:600 1.05rem/1.3 var(--f-titolo);color:var(--ew-nc,var(--testo));min-width:0;overflow-wrap:anywhere}
+.ew-menu-puntini{flex:1;min-width:16px;border-bottom:2px dotted var(--ew-bc,var(--bordo));transform:translateY(-4px)}
+.ew-menu-prezzo{flex:none;font:700 1.05rem/1.3 var(--f-testo);font-variant-numeric:tabular-nums;color:var(--ew-pc,var(--testo));white-space:nowrap}
+.ew-menu-desc{margin:0;color:var(--ew-dc,var(--testo-2));font-size:.95em;line-height:1.5}
+.ew-menu-info{margin:2px 0 0;display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.ew-menu-eti{display:inline-flex;align-items:center;gap:4px;font:600 12px/1 var(--f-testo);color:var(--ew-ec,var(--testo));border:1px solid var(--bordo);border-radius:999px;padding:4px 9px 4px 7px}
+.ew-menu-eti .ico{width:14px;height:14px}
+.ew-menu-eti-vegano .ico,.ew-menu-eti-vegetariano .ico{color:var(--successo)}
+.ew-menu-eti-piccante .ico{color:var(--errore)}
+.ew-menu-eti-novita .ico{color:var(--secondario-chiaro)}
+.ew-menu-all{display:inline-flex;gap:4px;flex-wrap:wrap}
+.ew-all{display:inline-grid;place-items:center;min-width:22px;height:22px;padding:0 5px;border-radius:999px;font:700 11px/1 var(--f-testo);background:var(--ew-abg,var(--vetro-2));color:var(--ew-ec,var(--testo));border:1px solid var(--bordo)}
+.ew-menu-legenda{border-top:1px solid var(--bordo);padding-top:16px;display:flex;flex-direction:column;gap:10px}
+.ew-menu-legenda ul{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:8px 18px}
+.ew-menu-legenda li{display:flex;align-items:center;gap:8px;color:var(--testo-2);font-size:.92em}
+.ew-menu-legenda p{margin:0;color:var(--testo-2);font-size:.92em}
+@media (max-width:767px){.ew-menu-piatti{grid-template-columns:minmax(0,1fr)}.ew-menu-foto{width:68px;height:68px}}
+/* ---- Richiesta di prenotazione */
+.ew-rp{margin:0}
+.ew-rp .modulo-campi label{color:var(--ew-ec,var(--testo-2))}
+.ew-rp .modulo-campi input[type=date],.ew-rp .modulo-campi input[type=time]{min-height:52px;color-scheme:dark light}
+.ew-rp-nota{margin:14px 0 0;font-size:14px;color:var(--testo-2)}
+.ew-rp-ok{display:flex;gap:14px;align-items:flex-start;padding:18px;border-radius:14px;border:1px solid rgba(var(--successo-rgb),.55);background:rgba(var(--successo-rgb),.10);color:var(--testo)}
+.ew-rp-ok .ico{width:28px;height:28px;color:var(--successo)}
+.ew-rp-ok p{margin:0}
+.ew-rp-altra{color:var(--ciano)}
+/* ---- Galleria con filtri */
+.ew-gf{display:flex;flex-direction:column;gap:18px}
+.ew-gf-filtri{display:flex;flex-wrap:wrap;gap:8px;justify-content:center}
+.ew-gf-filtri.ew-gf-sinistra{justify-content:flex-start}.ew-gf-filtri.ew-gf-destra{justify-content:flex-end}
+.ew-gf-filtro{font:600 14px/1 var(--f-testo);padding:11px 18px;min-height:44px;border-radius:999px;border:1px solid var(--bordo);background:var(--ew-fbg,var(--vetro));color:var(--ew-fc,var(--testo));cursor:pointer;transition:background .2s,color .2s,border-color .2s}
+.ew-gf-filtro:hover{border-color:var(--ciano)}
+.ew-gf-filtro:focus-visible{outline:2px solid var(--ciano);outline-offset:2px}
+.ew-gf-filtro[aria-pressed=true]{background:var(--ew-fac,linear-gradient(180deg,var(--primario-chiaro),var(--primario-scuro)));color:var(--ew-fat,#fff);border-color:transparent}
+.ew-gf .ew-gal-voce{transition:opacity .28s,transform .28s}
+.ew-gf .ew-gal-voce.ew-gf-via{opacity:0;transform:scale(.94)}
+.ew-gf .ew-gal-voce[hidden]{display:none}
+@media (prefers-reduced-motion:reduce){.ew-gf .ew-gal-voce{transition:none}}
+/* ---- Loghi e testo scorrevoli */
+.ew-scr{position:relative;display:flex;align-items:center;gap:10px}
+.ew-scr-vista{flex:1;min-width:0;overflow:hidden}
+.ew-scr-sfuma .ew-scr-vista{-webkit-mask-image:linear-gradient(90deg,transparent,#000 8%,#000 92%,transparent);mask-image:linear-gradient(90deg,transparent,#000 8%,#000 92%,transparent)}
+.ew-scr-traccia{display:flex;width:max-content;animation:ew-scorri var(--ew-durata,30s) linear infinite}
+.ew-scr-destra .ew-scr-traccia{animation-direction:reverse}
+.ew-scr-pausa:hover .ew-scr-traccia,.ew-scr-pausa:focus-within .ew-scr-traccia,.ew-scr-fermo .ew-scr-traccia{animation-play-state:paused}
+@keyframes ew-scorri{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+.ew-scr-gruppo{list-style:none;margin:0;padding:0 var(--ew-gap,56px) 0 0;display:flex;align-items:center;gap:var(--ew-gap,56px);flex:none}
+.ew-scr-gruppo li{flex:none;display:flex;align-items:center}
+.ew-scr-logo{display:block;height:var(--ew-h,48px);width:auto;max-width:220px;object-fit:contain}
+.ew-scr-gruppo a{display:block;line-height:0}
+.ew-scr-gruppo a:focus-visible{outline:2px solid var(--ciano);outline-offset:4px}
+.ew-scr-grigio .ew-scr-logo{filter:grayscale(1);opacity:.7;transition:filter .3s,opacity .3s}
+.ew-scr-grigio li:hover .ew-scr-logo,.ew-scr-grigio a:focus-visible .ew-scr-logo{filter:none;opacity:1}
+.ew-scr-frase{font:600 clamp(1.1rem,2.2vw,1.6rem)/1.3 var(--f-titolo);color:var(--ew-tc,var(--testo));white-space:nowrap}
+.ew-scr-sep{color:var(--ew-ac,var(--secondario-chiaro));margin-left:var(--ew-gap,56px);font-size:1.1em}
+.ew-scr-testo .ew-scr-gruppo li{display:inline-flex}
+.ew-scr-ferma{flex:none;width:36px;height:36px;border-radius:50%;border:1px solid var(--bordo);background:var(--vetro);color:var(--testo);cursor:pointer;display:grid;place-items:center;padding:0}
+.ew-scr-ferma:focus-visible{outline:2px solid var(--ciano);outline-offset:2px}
+.ew-scr-ico{width:12px;height:12px;border-left:4px solid currentColor;border-right:4px solid currentColor}
+.ew-scr-fermo .ew-scr-ico{border-right:0;border-left:0;width:0;height:0;border-top:7px solid transparent;border-bottom:7px solid transparent;border-left:11px solid currentColor;margin-left:3px}
+@media (prefers-reduced-motion:reduce){
+  .ew-scr-traccia{animation:none;width:auto}
+  .ew-scr-gruppo[aria-hidden],.ew-scr-copia,.ew-scr-ferma{display:none}
+  .ew-scr-gruppo{flex-wrap:wrap;justify-content:center;padding:0;row-gap:16px;flex:1}
+  .ew-scr-frase{white-space:normal}
+  .ew-scr-sfuma .ew-scr-vista{-webkit-mask-image:none;mask-image:none}
+}
+/* ---- Contenuto esterno con consenso */
+.ew-est{position:relative;min-height:var(--ew-h,var(--ew-hp,480px));border-radius:var(--r,16px);border:1px solid var(--bordo);background:radial-gradient(circle at 25% 20%,rgba(var(--viola-rgb),.12),transparent 55%),var(--bg-2);overflow:hidden;display:flex}
+.ew-est iframe{width:100%;height:var(--ew-h,var(--ew-hp,480px));border:0;display:block;background:#fff}
+.ew-est-spotify iframe{background:transparent}
+.ew-est-booking{min-height:0}
+.ew-est-consenso{margin:auto;max-width:520px;padding:28px 22px;display:flex;flex-direction:column;align-items:center;gap:12px;text-align:center}
+.ew-est-consenso>.ico{width:44px;height:44px;color:var(--ciano)}
+.ew-est-titolo{margin:0;font:700 1.2rem/1.25 var(--f-titolo);color:var(--testo)}
+.ew-est-privacy{margin:0;color:var(--ew-dc,var(--testo-2));font-size:.95em;line-height:1.55}
+.ew-est-privacy a{color:var(--ciano)}
+.ew-est-fuori{display:inline-flex;align-items:center;gap:6px;font-size:14px;color:var(--ciano)}
+.ew-est-fuori .ico{width:14px;height:14px}
+.ew-est-nota{margin:0;font-size:13px;color:var(--testo-2)}
+.ew-est-finto{cursor:default}
+/* ---- Mappa: "Come arrivare" */
+.ew-mappa-arrivare{display:flex;flex-wrap:wrap;gap:10px;margin:14px 0 0}
+.ew-mappa-arrivare.ew-ma-sopra{margin:0 0 14px}
+.ew-ma-centro{justify-content:center}.ew-ma-destra{justify-content:flex-end}
+.ew-ma-pieno .btn{flex:1;justify-content:center}
+.ew-mappa-arrivare .btn .ico{width:18px;height:18px}

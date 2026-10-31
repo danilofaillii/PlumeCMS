@@ -152,7 +152,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         } else {
             // Diritto alla cancellazione: via tutti i dati dell'iscritto, anche aperture, clic, flussi e invii dei form
             // (2.0.0); l'impronta dell'email resta nella lista di soppressione, che l'importazione rispetta.
+            // 2.1: con gli invii dei form se ne vanno anche i file che avevano allegato (prima, finché gli invii ci sono).
+            require_once dirname(__DIR__) . '/includes/form.php';
+            try {
+                form_schema();
+                $st = db()->prepare('SELECT i.id FROM ' . tbl('moduli_invii') . ' i JOIN ' . tbl('newsletter_iscritti') . ' n ON n.email = i.email WHERE n.id = ?');
+                $st->execute([$id]);
+                form_allegati_cancella($st->fetchAll(PDO::FETCH_COLUMN));
+            } catch (Throwable $e) { error_log('cancella dati, file dei form: ' . $e->getMessage()); }
             newsletter_cancella_dati($id);
+            form_file_orfani();
             flash('success', 'Dati dell\'iscritto cancellati: iscrizione, liste, aperture e clic, flussi e invii dei form con la sua email. Un\'importazione non lo rimetterà dentro.');
         }
         nl_torna_iscritti();

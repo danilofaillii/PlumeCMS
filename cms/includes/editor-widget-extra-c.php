@@ -184,6 +184,11 @@ ewx_registra('mappa', 'Mappa', 'mappa', 'Elementi', [
     ec('tipo', 'scelta', 'Tipo di mappa', 'strade', 'contenuto', ['opzioni' => ['strade' => 'Strade', 'satellite' => 'Satellite'], 'condizione' => ['fornitore' => 'google'], 'sezione' => 'Mappa']),
     ec('al_clic', 'interruttore', 'Carica la mappa solo al clic (niente contatti con il servizio prima)', true, 'contenuto', ['sezione' => 'Privacy']),
     ec('testo_pulsante', 'testo', 'Testo del pulsante', 'Mostra la mappa', 'contenuto', ['condizione' => ['al_clic' => true], 'sezione' => 'Privacy']),
+    // 2.1: il pulsante "Come arrivare", che apre le indicazioni stradali nell'app di mappe.
+    ec('come_arrivare', 'scelta', 'Pulsante "Come arrivare"', '', 'contenuto', ['opzioni' => ['' => 'Nessuno', 'sotto' => 'Sotto la mappa', 'sopra' => 'Sopra la mappa'], 'sezione' => 'Come arrivare', 'aiuto' => 'Apre le indicazioni stradali fino all\'indirizzo della mappa (con OpenStreetMap, fino alle coordinate).']),
+    ec('come_arrivare_app', 'scelta', 'Con quale app', 'google', 'contenuto', ['opzioni' => ['google' => 'Google Maps', 'apple' => 'Apple Mappe', 'entrambe' => 'Tutte e due (due pulsanti)'], 'condizione' => ['!come_arrivare' => ''], 'sezione' => 'Come arrivare']),
+    ec('come_arrivare_testo', 'testo', 'Testo del pulsante', 'Come arrivare', 'contenuto', ['condizione' => ['!come_arrivare' => ''], 'sezione' => 'Come arrivare']),
+    ec('come_arrivare_allinea', 'scelta', 'Allineamento del pulsante', 'sinistra', 'contenuto', ['opzioni' => ['sinistra' => 'A sinistra', 'centro' => 'Al centro', 'destra' => 'A destra', 'pieno' => 'Largo quanto la mappa'], 'condizione' => ['!come_arrivare' => ''], 'sezione' => 'Come arrivare']),
     ewx_var('altezza', 'Altezza', '--ew-h', 'Mappa', ['d' => ['v' => 360, 'u' => 'px']], ['intervalli' => ['px' => [120, 1200, 1]]]),
     ex('bordo', 'bordo', 'Bordo e angoli', [], 'stile', ['selettore' => ' .ew-mappa', 'sezione' => 'Mappa']),
     ec('grigio', 'interruttore', 'In scala di grigi', false, 'stile', ['sezione' => 'Mappa']),
@@ -205,7 +210,22 @@ ewx_registra('mappa', 'Mappa', 'mappa', 'Elementi', [
     if ($v['al_clic'] && !$ctx['anteprima']) $out .= '<button type="button" class="ew-mappa-avvia" data-ew-mappa>' . icona_svg('pin') . '<b>' . h($v['testo_pulsante']) . '</b><small>La mappa arriva da ' . $nome . '</small></button>';
     elseif ($ctx['anteprima'] && $v['al_clic']) $out .= '<div class="ew-mappa-avvia ew-mappa-finta">' . icona_svg('pin') . '<b>' . h($v['testo_pulsante']) . '</b><small>Sul sito la mappa si carica al clic, da ' . $nome . '</small></div>';
     else $out .= '<iframe src="' . h($src) . '" title="' . h($titolo) . '" loading="lazy" referrerpolicy="no-referrer-when-downgrade" allowfullscreen></iframe>';
-    return $out . '</div>';
+    $out .= '</div>';
+    // 2.1: "Come arrivare". Senza la scelta l'HTML resta quello di prima.
+    if (in_array($v['come_arrivare'] ?? '', ['sotto', 'sopra'], true)) {
+        $dest = $v['fornitore'] === 'osm' ? ((float)str_replace(',', '.', $v['lat'])) . ',' . ((float)str_replace(',', '.', $v['lon'])) : trim($v['indirizzo']);
+        $app = in_array($v['come_arrivare_app'] ?? '', ['apple', 'entrambe'], true) ? $v['come_arrivare_app'] : 'google';
+        $testo = trim((string)($v['come_arrivare_testo'] ?? '')) ?: 'Come arrivare';
+        $link = [];
+        if ($app !== 'apple') $link[] = ['https://www.google.com/maps/dir/?api=1&destination=' . rawurlencode($dest), $app === 'entrambe' ? $testo . ' con Google Maps' : $testo];
+        if ($app !== 'google') $link[] = ['https://maps.apple.com/?daddr=' . rawurlencode($dest), $app === 'entrambe' ? $testo . ' con Apple Mappe' : $testo];
+        $all = in_array($v['come_arrivare_allinea'] ?? '', ['centro', 'destra', 'pieno'], true) ? $v['come_arrivare_allinea'] : 'sinistra';
+        $btn = '<p class="ew-mappa-arrivare ew-ma-' . $all . ' ew-ma-' . $v['come_arrivare'] . '">';
+        foreach ($link as [$u, $t]) $btn .= '<a class="btn btn-viola" href="' . h($u) . '" target="_blank" rel="noopener">' . icona_svg('navigazione') . '<span>' . h($t) . '</span><span class="ew-nascosto-vista"> (si apre in una nuova scheda)</span></a>';
+        $btn .= '</p>';
+        $out = $v['come_arrivare'] === 'sopra' ? $btn . $out : $out . $btn;
+    }
+    return $out;
 });
 
 // ---------------- Flip box
@@ -432,8 +452,9 @@ function ewx_fonti_griglia(): array {
 }
 ewx_registra('griglia_contenuti', 'Griglia di articoli', 'giornale', 'Dal sito', [
     ec('fonte', 'scelta', 'Cosa mostrare', 'articoli', 'contenuto', ['opzioni' => array_map(fn($x) => $x[0], ewx_fonti_griglia()), 'sezione' => 'Interrogazione']),
-    ec('categoria', 'testo', 'Solo una categoria (slug)', '', 'contenuto', ['sezione' => 'Interrogazione']),
-    ec('tag', 'testo', 'Solo un tag (slug)', '', 'contenuto', ['sezione' => 'Interrogazione']),
+    // 2.1: categoria e tag da una tendina (prima si scriveva lo slug a mano).
+    ec('categoria', 'scelta', 'Solo una categoria', '', 'contenuto', ['opzioni' => editor_opzioni_tassonomia(), 'accetta' => EDITOR_SLUG_RE, 'sezione' => 'Interrogazione']),
+    ec('tag', 'scelta', 'Solo un tag', '', 'contenuto', ['opzioni' => editor_opzioni_tassonomia('tags', 'Tutti i tag'), 'accetta' => EDITOR_SLUG_RE, 'sezione' => 'Interrogazione']),
     ec('solo_pillar', 'interruttore', 'Solo i pillar', false, 'contenuto', ['sezione' => 'Interrogazione']),
     ec('escludi_corrente', 'interruttore', 'Escludi la pagina in cui sta il widget', true, 'contenuto', ['sezione' => 'Interrogazione']),
     ec('ordine', 'scelta', 'Ordine', 'recenti', 'contenuto', ['opzioni' => ['recenti' => 'Dal più recente', 'vecchi' => 'Dal più vecchio', 'titolo' => 'Per titolo', 'casuale' => 'Casuale'], 'sezione' => 'Interrogazione']),

@@ -744,6 +744,17 @@ function sicurezza_intestazioni(string $contesto): void {
     else header('Content-Security-Policy-Report-Only: ' . $csp . '; report-uri ' . cms_base() . '/api/csp.php?c=' . $contesto);
 }
 
+/**
+ * 2.1: un'origine in più per la CSP di questa sola pagina del sito, aggiunta da un widget mentre la pagina si disegna (la
+ * CSP si scrive dopo, in sito_rispondi). Ammessa solo frame-src e solo un'origine https://host senza percorso. Senza
+ * argomenti ritorna quelle raccolte.
+ */
+function sicurezza_csp_pagina(string $direttiva = '', string $origine = ''): array {
+    static $raccolte = [];
+    if ($direttiva !== '' && $direttiva === 'frame-src' && preg_match('~^https://[a-z0-9-]+(\.[a-z0-9-]+)+$~', $origine)) $raccolte[$direttiva][$origine] = $origine;
+    return array_map('array_values', $raccolte);
+}
+
 /** Il testo della CSP per il sito o per il pannello. Le sorgenti dei tag di analisi entrano solo se attive nel pannello SEO. */
 function sicurezza_csp(string $contesto): string {
     $cfg = sicurezza_cfg();
@@ -781,6 +792,9 @@ function sicurezza_csp(string $contesto): string {
         if (preg_match('/^\d{6,20}$/', (string)($a['pixel'] ?? ''))) { $d['script-src'][] = 'https://connect.facebook.net'; $d['connect-src'][] = 'https://www.facebook.com'; $d['frame-src'][] = 'https://www.facebook.com'; }
         if (preg_match('/^[a-z0-9]{6,20}$/i', (string)($a['clarity'] ?? ''))) { array_push($d['script-src'], 'https://www.clarity.ms', 'https://*.clarity.ms'); $d['connect-src'][] = 'https://*.clarity.ms'; }
         if (sicurezza_https()) $d['upgrade-insecure-requests'] = [];
+        // 2.1: le origini che una pagina apre per sé (il widget Contenuto esterno, dopo il clic: Calendly, Spotify...).
+        // Solo frame-src, solo https://host, e solo nella pagina che ha il widget: le altre restano come sono.
+        foreach (sicurezza_csp_pagina() as $dir => $fonti) foreach ($fonti as $f) $d[$dir][] = $f;
     }
     // Sorgenti in più scritte nella pagina Sicurezza: "direttiva sorgente" per riga.
     foreach (preg_split('/\r?\n/', (string)$cfg['csp_extra']) ?: [] as $r) {

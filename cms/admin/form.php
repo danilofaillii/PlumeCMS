@@ -51,7 +51,7 @@ require_once __DIR__ . '/includes/admin-header.php';
         <td class="ct-muto"><?= h(implode(', ', array_map(fn($c) => $c['etichetta'] ?? '', $campi))) ?></td>
         <td class="ct-muto"><?= $m['lista_id'] ? 'entra nella lista «' . h(array_values(array_filter($liste, fn($l) => (int)$l['id'] === (int)$m['lista_id']))[0]['nome'] ?? '?') . '»' : 'nessuna lista' ?><?= $m['avviso'] ? ', avviso a ' . h(implode(', ', form_avviso_destinatari($m)) ?: 'nessuno (manca l\'indirizzo)') : '' ?></td>
         <td class="ct-muto"><?= (int)$m['invii'] ?><?= $m['nuovi'] ? ' <span class="badge badge-scheduled">' . (int)$m['nuovi'] . ' nuove</span>' : '' ?></td>
-        <td><span class="badge <?= $m['attivo'] ? 'badge-published' : 'badge-draft' ?>"><?= $m['attivo'] ? 'Attivo' : 'Spento' ?></span></td>
+        <td><?php if ($m['slug'] === 'richieste-prenotazione'): /* 2.1: le richieste del widget Richiesta di prenotazione */ ?><span class="badge badge-scheduled">Dal widget</span><?php else: ?><span class="badge <?= $m['attivo'] ? 'badge-published' : 'badge-draft' ?>"><?= $m['attivo'] ? 'Attivo' : 'Spento' ?></span><?php endif; ?></td>
       </tr>
     <?php endforeach; ?>
     </tbody>
@@ -107,6 +107,9 @@ require_once __DIR__ . '/includes/admin-header.php';
 <script<?= nonce_attr() ?>>
 var fmTipi = <?= json_encode(FORM_TIPI_CAMPO, JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP) ?>;
 var fmCampi = <?= json_encode($v['campi'], JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP) ?>;
+// 2.1: i tipi di file che un campo File può accettare e il peso che il server lascia passare (MB).
+var fmFile = <?= json_encode(array_map(fn($x) => $x[0], FORM_FILE_TIPI), JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP) ?>;
+var fmPesoServer = <?= json_encode(round(min(form_file_limite_server(), FORM_FILE_PESO_MAX << 20) / 1048576, 1)) ?>;
 // Le opzioni di una scelta possono arrivare come elenco (dal database) o come testo (appena scritto): sempre testo, una per riga.
 function fmOpzioni(c) {
   if (Array.isArray(c.opzioni)) return c.opzioni.join('\n');
@@ -125,11 +128,31 @@ function fmDisegna() {
       + '<button type="button" class="fm-via" title="Togli" data-al-clic="fmTogli(' + i + ')">×</button></div>'
       + '<div class="fm-riga fm-riga2">'
       + (fmScelta(campo.tipo) ? '<textarea class="fm-opzioni" rows="3" placeholder="Opzioni tra cui scegliere: una per riga" data-al-input="fmImposta(' + i + ', \'opzioni\', this.value)">' + fmE(fmOpzioni(campo)) + '</textarea>'
-        : (campo.tipo === 'spunta' || campo.tipo === 'data' ? '' : '<input type="text" class="fm-segnaposto" placeholder="Suggerimento dentro il campo (facoltativo)" value="' + fmE(campo.segnaposto) + '" data-al-input="fmImposta(' + i + ', \'segnaposto\', this.value)">'))
+        : campo.tipo === 'file' ? fmRegoleFile(campo, i)
+        : (campo.tipo === 'spunta' || campo.tipo === 'data' || campo.tipo === 'ora' ? '' : '<input type="text" class="fm-segnaposto" placeholder="Suggerimento dentro il campo (facoltativo)" value="' + fmE(campo.segnaposto) + '" data-al-input="fmImposta(' + i + ', \'segnaposto\', this.value)">'))
       + (['testo', 'email', 'telefono'].indexOf(campo.tipo) >= 0 ? '<select class="fm-meta" data-al-cambio="fmImposta(' + i + ', \'meta\', this.value)" title="A cosa serve questo campo"><option value="">(dato generico)</option><option value="nome"' + (campo.meta === 'nome' ? ' selected' : '') + '>è il nome</option><option value="cognome"' + (campo.meta === 'cognome' ? ' selected' : '') + '>è il cognome</option><option value="email"' + (campo.meta === 'email' ? ' selected' : '') + '>è l\'email</option><option value="cellulare"' + (campo.meta === 'cellulare' ? ' selected' : '') + '>è il cellulare</option></select>' : '')
       + '</div>';
     c.appendChild(d);
   });
+}
+// 2.1: un campo File: quali file accetta (caselle) e quanto pesa al massimo.
+function fmRegoleFile(campo, i) {
+  if (!Array.isArray(campo.estensioni) || !campo.estensioni.length) campo.estensioni = ['pdf', 'jpg', 'png'];
+  if (!campo.peso) campo.peso = 5;
+  var pesi = [1, 2, 3, 5, 8, 10].filter(function (p) { return p <= Math.max(1, Math.floor(fmPesoServer)); });
+  if (pesi.indexOf(+campo.peso) < 0) pesi.push(+campo.peso);
+  return '<div class="fm-file"><fieldset class="fm-file-tipi"><legend>File che accetta</legend>' + Object.keys(fmFile).map(function (e) {
+      return '<label><input type="checkbox" value="' + e + '"' + (campo.estensioni.indexOf(e) >= 0 ? ' checked' : '') + ' data-al-cambio="fmEstensione(' + i + ', \'' + e + '\', this.checked)"> ' + fmE(fmFile[e]) + '</label>';
+    }).join('') + '</fieldset>'
+    + '<label class="fm-file-peso">Peso massimo <select data-al-cambio="fmImposta(' + i + ', \'peso\', this.value)">' + pesi.map(function (p) { return '<option value="' + p + '"' + (+campo.peso === p ? ' selected' : '') + '>' + p + ' MB</option>'; }).join('') + '</select></label>'
+    + '<small class="fm-file-nota">Il file va in una cartella riservata: lo scarichi da Invii dei form, e arriva allegato all\'avviso se è piccolo. Il server accetta al massimo ' + String(fmPesoServer).replace('.', ',') + ' MB.</small></div>';
+}
+function fmEstensione(i, e, on) {
+  var c = fmCampi[i]; if (!c) return;
+  var l = (c.estensioni || []).filter(function (x) { return x !== e; });
+  if (on) l.push(e);
+  c.estensioni = l.length ? l : [e];
+  if (!l.length) fmDisegna(); // almeno un tipo resta sempre scelto
 }
 function fmE(s) { return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
 // I campi del costruttore senza gestori in linea (CSP): pannello.js chiama queste due funzioni dagli attributi data-al-*.
@@ -152,7 +175,15 @@ document.getElementById('fm-form').addEventListener('submit', function () {
 .sc-corpo .fm-riga select{width:auto;flex:0 0 auto}
 .sc-corpo .fm-riga input[type=text]{width:auto;flex:1 1 8rem;min-width:8rem}
 .fm-obb{font-size:.78rem;color:var(--text-muted);display:flex;gap:.3rem;align-items:center;white-space:nowrap;margin:0}
-.fm-maniglia{cursor:grab;color:var(--text-muted)}.fm-via{border:0;background:none;color:var(--errore-testo);font-size:1.1rem;cursor:pointer}
+.fm-maniglia{cursor:grab;color:var(--text-muted)}
+/* 2.1: le regole del campo File */
+.fm-file{flex:1;display:flex;flex-direction:column;gap:.4rem;min-width:0}
+.sc-corpo .fm-file-tipi{border:0;margin:0;padding:0;display:flex;flex-wrap:wrap;gap:.3rem .9rem;min-width:0}
+.sc-corpo .fm-file-tipi legend{font-size:.78rem;color:var(--text-muted);padding:0;margin-bottom:.2rem}
+.sc-corpo .fm-file-tipi label{display:flex;gap:.3rem;align-items:center;font-weight:400;font-size:.85rem;margin:0}
+.sc-corpo .fm-file-peso{display:flex;gap:.5rem;align-items:center;font-weight:400;font-size:.85rem;margin:0}
+.sc-corpo .fm-file-peso select{width:auto}
+.fm-file-nota{font-size:.78rem;color:var(--text-muted)}.fm-via{border:0;background:none;color:var(--errore-testo);font-size:1.1rem;cursor:pointer}
 </style>
 <?php endif; ?>
 <?php require_once __DIR__ . '/includes/admin-footer.php'; ?>

@@ -35,7 +35,7 @@
   function conserva(form) {
     var v = {};
     form.querySelectorAll("input[name], select[name], textarea[name]").forEach(function (c) {
-      if (["modulo", "pagina", "captcha", "sito_web", "privacy", "popup"].indexOf(c.name) >= 0 || c.type === "hidden") return;
+      if (["modulo", "pagina", "captcha", "sito_web", "privacy", "popup"].indexOf(c.name) >= 0 || c.type === "hidden" || c.type === "file") return; // un file non si rimette (2.1)
       if (c.type === "checkbox") { if (c.checked) v[c.name] = (v[c.name] || []).concat([c.value]); }
       else v[c.name] = c.value;
     });
@@ -46,7 +46,7 @@
     try { v = JSON.parse(sessionStorage.getItem(chiave(form)) || "null"); } catch (e) {}
     if (!v) return;
     form.querySelectorAll("input[name], select[name], textarea[name]").forEach(function (c) {
-      if (!(c.name in v) || c.type === "hidden") return;
+      if (!(c.name in v) || c.type === "hidden" || c.type === "file") return;
       if (c.type === "checkbox") c.checked = v[c.name].indexOf(c.value) >= 0;
       else c.value = v[c.name];
     });

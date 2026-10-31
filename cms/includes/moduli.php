@@ -128,6 +128,9 @@ const MODULI_ERRORI = [
     'troppi' => 'Hai già inviato diverse richieste. Riprova tra un\'ora.',
     'posta' => "L'email non è partita. Riprova tra qualche minuto.",
     'robot' => 'Richiesta non valida.',
+    // 2.1: i campi File dei form
+    'file_peso' => 'Il file è troppo grande. Prova con un file più leggero.',
+    'file_tipo' => 'Questo tipo di file non si può allegare.',
 ];
 
 // ------------------------------------------------------------
