@@ -61,10 +61,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 else $errori[] = 'La chiave API di Mailgun non sembra intera: copiala di nuovo.';
             }
             consegna_config_salva($c);
-            $attivo = consegna_servizio_attivo();
+            $ceAttivo = consegna_servizio_attivo();
             if ($errori) flash('error', implode(' ', $errori));
-            elseif ($c['servizio'] !== 'smtp' && $attivo === '') flash('error', 'Salvato, ma mancano dei dati per ' . CONSEGNA_SERVIZI[$c['servizio']] . ': finché non li scrivi le email partono come prima (Configurazione email).');
-            else flash('success', $attivo !== '' ? 'Salvato: le email partono da ' . CONSEGNA_SERVIZI[$attivo] . '. Manda una prova qui sotto.' : 'Salvato: le email partono dal server di Configurazione email.');
+            elseif ($c['servizio'] !== 'smtp' && $ceAttivo === '') flash('error', 'Salvato, ma mancano dei dati per ' . CONSEGNA_SERVIZI[$c['servizio']] . ': finché non li scrivi le email partono come prima (Configurazione email).');
+            else flash('success', $ceAttivo !== '' ? 'Salvato: le email partono da ' . CONSEGNA_SERVIZI[$ceAttivo] . '. Manda una prova qui sotto.' : 'Salvato: le email partono dal server di Configurazione email.');
             $torna = 'servizio';
             break;
         case 'togli_chiavi':
@@ -138,7 +138,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 }
 
 $cfg = consegna_config();
-$attivo = consegna_servizio_attivo();
+$ceAttivo = consegna_servizio_attivo();
 $scelto = consegna_servizio_scelto();
 $mittenti = consegna_mittenti();
 $predefinito = consegna_mittente_predefinito();
@@ -221,7 +221,7 @@ require_once __DIR__ . '/includes/admin-header.php';
   <li><span class="ce-num">2</span><div><b>Il dominio <span class="ce-stato <?= $domOk ? 'ce-ok' : ($ultimo ? 'ce-att' : 'ce-no') ?>"><?= $domOk ? 'A posto' : ($ultimo ? (int)$ultimo['da_fare'] . ' da sistemare' : 'Da controllare') ?></span></b>
     <p>SPF, DKIM e DMARC sono tre righe nel DNS del dominio: dicono a Gmail e Outlook che le email sono davvero tue. <?= $ultimo ? 'Ultimo controllo di ' . h((string)$ultimo['dominio']) . ': ' . h($quando((string)$ultimo['quando'])) . '.' : '' ?></p>
     <a href="?scheda=dominio">Controlla il dominio</a></div></li>
-  <li><span class="ce-num">3</span><div><b>Come partono <span class="ce-stato ce-ok"><?= h($attivo !== '' ? CONSEGNA_SERVIZI[$attivo] : ($smtp ? 'Server SMTP' : 'Server del sito')) ?></span></b>
+  <li><span class="ce-num">3</span><div><b>Come partono <span class="ce-stato ce-ok"><?= h($ceAttivo !== '' ? CONSEGNA_SERVIZI[$ceAttivo] : ($smtp ? 'Server SMTP' : 'Server del sito')) ?></span></b>
     <p>Per poche centinaia di email al giorno basta il server di posta dell'hosting. Per di più, o se le email finiscono spesso nello spam, conviene un servizio come Brevo, Amazon SES o Mailgun.</p>
     <a href="?scheda=servizio">Scegli come partono</a></div></li>
   <li><span class="ce-num">4</span><div><b>Rimbalzi e spam <span class="ce-stato <?= $avvisiOk === null ? 'ce-ok' : ($avvisiOk ? 'ce-ok' : 'ce-att') ?>"><?= $avvisiOk === null ? 'Non serve' : ($avvisiOk ? 'Collegato' : 'Da collegare') ?></span></b>
@@ -284,7 +284,7 @@ require_once __DIR__ . '/includes/admin-header.php';
     <select id="ce-servizio" name="servizio">
       <?php foreach (CONSEGNA_SERVIZI as $k => $v): ?><option value="<?= $k ?>" <?= $cfg['servizio'] === $k ? 'selected' : '' ?>><?= h($k === 'smtp' ? $v : $v . ' (con le API)') ?></option><?php endforeach; ?>
     </select>
-    <div class="hint">Adesso partono da: <b id="ce-adesso"><?= h($attivo !== '' ? CONSEGNA_SERVIZI[$attivo] . ' (API)' : ($smtp ? 'il server SMTP ' . $smtp['host'] : 'il server del sito, con mail() di PHP')) ?></b>.</div></div>
+    <div class="hint">Adesso partono da: <b id="ce-adesso"><?= h($ceAttivo !== '' ? CONSEGNA_SERVIZI[$ceAttivo] . ' (API)' : ($smtp ? 'il server SMTP ' . $smtp['host'] : 'il server del sito, con mail() di PHP')) ?></b>.</div></div>
 
   <fieldset class="ce-servizio" data-servizio="smtp">
     <legend>Server di posta (SMTP)</legend>
@@ -347,7 +347,7 @@ require_once __DIR__ . '/includes/admin-header.php';
 
 <div class="form-card" style="margin-top:1rem">
   <h3>Prova l'invio</h3>
-  <p class="ce-intro">Manda un'email di prova con un piccolo allegato, con il modo scelto adesso (<?= h($attivo !== '' ? CONSEGNA_SERVIZI[$attivo] : ($smtp ? 'server SMTP' : 'server del sito')) ?>). Se non arriva, guarda anche nello Spam.</p>
+  <p class="ce-intro">Manda un'email di prova con un piccolo allegato, con il modo scelto adesso (<?= h($ceAttivo !== '' ? CONSEGNA_SERVIZI[$ceAttivo] : ($smtp ? 'server SMTP' : 'server del sito')) ?>). Se non arriva, guarda anche nello Spam.</p>
   <form method="post" class="ce-riga">
     <?= csrf_field() ?><input type="hidden" name="azione" value="prova">
     <div class="form-group"><label for="ce-prova">Manda la prova a</label><input type="email" id="ce-prova" name="prova_a" value="<?= h(posta_notifica_email()) ?>" required></div>
@@ -419,7 +419,7 @@ require_once __DIR__ . '/includes/admin-header.php';
   $avvisi = consegna_avvisi_recenti(30);
   $nomiEvento = ['rimbalzo' => 'Rimbalzo', 'temporaneo' => 'Errore temporaneo', 'spam' => 'Segnalato come spam', 'uscita' => 'Uscito']; ?>
 <p class="ce-intro">Quando un indirizzo non esiste (rimbalzo) o qualcuno preme "è spam", il servizio di spedizione lo dice al sito con un avviso automatico (webhook). Il sito toglie subito quella persona dall'elenco: continuare a scriverle rovina la reputazione del dominio. Copia l'indirizzo del tuo servizio e incollalo dove dicono i passi.</p>
-<?php if ($attivo === '' && $scelto === 'smtp'): ?><p class="flash flash-info">Adesso le email partono dal server SMTP: i rimbalzi immediati il pannello li vede da solo. Questi indirizzi servono quando usi Brevo, Amazon SES o Mailgun (anche Brevo via SMTP).</p><?php endif; ?>
+<?php if ($ceAttivo === '' && $scelto === 'smtp'): ?><p class="flash flash-info">Adesso le email partono dal server SMTP: i rimbalzi immediati il pannello li vede da solo. Questi indirizzi servono quando usi Brevo, Amazon SES o Mailgun (anche Brevo via SMTP).</p><?php endif; ?>
 
 <section class="ce-voce ce-passo" id="ce-avvisi-brevo">
   <h4>Brevo <?php $u = consegna_ultimo_avviso('brevo'); ?><span class="ce-stato <?= $u ? 'ce-ok' : 'ce-att' ?>"><?= $u ? 'Ultimo avviso ' . h($quando($u)) : 'Nessun avviso ancora' ?></span></h4>
