@@ -539,23 +539,23 @@ let br;
     await a.selectOption('select[name=role]', 'editor'); await a.fill('input[name=password]', REDPW); await a.fill('input[name=password2]', REDPW);
     await Promise.all([a.waitForNavigation(), a.click('form:has(input[name=username]) button.btn-primary')]);
   }
-  const red = await pagina(br, err);
-  await entraPannello(red, B, RED, REDPW);
+  const redM = await pagina(br, err);
+  await entraPannello(redM, B, RED, REDPW);
   const idSeg = JSON.parse(sql("SELECT id FROM {p}pages WHERE slug = 'segreta'"))[0].id;
-  await red.goto(B + '/admin/contenuto.php?tipo=articoli&id=' + art.id, { waitUntil: 'networkidle' });
-  ok('il redattore non vede il riquadro "Area riservata" nella scheda', await red.locator('#membri-scheda').count() === 0);
+  await redM.goto(B + '/admin/contenuto.php?tipo=articoli&id=' + art.id, { waitUntil: 'networkidle' });
+  ok('il redattore non vede il riquadro "Area riservata" nella scheda', await redM.locator('#membri-scheda').count() === 0);
   // il redattore aggiunge a mano i campi del riquadro e salva: niente cambia
-  await red.evaluate(() => { const f = document.getElementById('sc-form'); for (const [k, v] of [['membri_scheda', '1']]) { const i = document.createElement('input'); i.type = 'hidden'; i.name = k; i.value = v; f.appendChild(i); } });
-  await Promise.all([red.waitForNavigation(), red.click('#sc-form button[data-valore=pubblica]')]);
+  await redM.evaluate(() => { const f = document.getElementById('sc-form'); for (const [k, v] of [['membri_scheda', '1']]) { const i = document.createElement('input'); i.type = 'hidden'; i.name = k; i.value = v; f.appendChild(i); } });
+  await Promise.all([redM.waitForNavigation(), redM.click('#sc-form button[data-valore=pubblica]')]);
   ok('il redattore che manda i campi del riquadro (senza la spunta) non rende pubblico l\'articolo riservato', JSON.parse(sql(`SELECT COUNT(*) AS n FROM {p}membri_riservati WHERE fonte = 'articles' AND contenuto_id = ${art.id}`))[0].n == 1);
-  await red.goto(B + '/admin/contenuto.php?tipo=pagine&id=' + idSeg, { waitUntil: 'networkidle' }).catch(() => {});
-  const puo = await red.locator('#sc-form').count();
+  await redM.goto(B + '/admin/contenuto.php?tipo=pagine&id=' + idSeg, { waitUntil: 'networkidle' }).catch(() => {});
+  const puo = await redM.locator('#sc-form').count();
   if (puo) {
-    await red.evaluate(() => { const f = document.getElementById('sc-form'); const i = document.createElement('input'); i.type = 'hidden'; i.name = 'membri_scheda'; i.value = '1'; f.appendChild(i); });
-    await Promise.all([red.waitForNavigation(), red.click('#sc-form button[data-valore=pubblica]')]);
+    await redM.evaluate(() => { const f = document.getElementById('sc-form'); const i = document.createElement('input'); i.type = 'hidden'; i.name = 'membri_scheda'; i.value = '1'; f.appendChild(i); });
+    await Promise.all([redM.waitForNavigation(), redM.click('#sc-form button[data-valore=pubblica]')]);
   }
   ok('il redattore non toglie la riservatezza alla pagina segreta', JSON.parse(sql(`SELECT COUNT(*) AS n FROM {p}membri_riservati WHERE fonte = 'pages' AND contenuto_id = ${idSeg}`))[0].n == 1);
-  await red.context().close();
+  await redM.context().close();
   await vaiA('/admin/contenuto.php?tipo=articoli&id=' + art.id);
   await a.uncheck('#membri-riservato');
   await Promise.all([a.waitForNavigation(), a.click('#sc-form button[data-valore=pubblica]')]);
