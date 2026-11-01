@@ -7,6 +7,7 @@ require_once __DIR__ . '/includes/auth.php';
 require_once __DIR__ . '/includes/admin-functions.php';
 require_once __DIR__ . '/../includes/newsletter.php';
 require_once __DIR__ . '/../includes/newsletter-email.php'; // 2.7.0: l'email di conferma comune
+require_once __DIR__ . '/../includes/newsletter-importa.php'; // 2.9.0: la lista dei test
 require_admin(); // sicurezza (ruoli): solo amministratore
 newsletter_schema();
 
@@ -66,6 +67,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         save_setting('newsletter_conferma_email', $j);
         flash('success', $j === '' ? 'Email di conferma: si usano i testi di partenza.' : 'Email di conferma salvata. Vale per il modulo della newsletter e per i form che non hanno testi loro.');
         header('Location: newsletter.php?scheda=impostazioni#nl-conferma');
+        exit;
+    }
+    // 2.9.0: la lista dei test (Brevo: Impostazioni > Lista dei test): fino a 20 indirizzi, tutti già contatti.
+    if ($azione === 'lista_test') {
+        $e = newsletter_lista_test_salva((string)($_POST['indirizzi'] ?? ''));
+        if ($e !== '') { flash('error', $e); $_SESSION['nl_test_testo'] = mb_substr((string)($_POST['indirizzi'] ?? ''), 0, 5000); }
+        else flash('success', 'Lista dei test salvata: le prove delle campagne si mandano da qui.');
+        header('Location: newsletter.php?scheda=impostazioni#nl-test');
         exit;
     }
     if ($azione === 'giro') {
@@ -168,6 +177,16 @@ require_once __DIR__ . '/includes/admin-header.php';
     Cron da aggiungere in cPanel, ogni 5 minuti:<br><code>/usr/local/bin/php <?= h(cms_radice()) ?>/cron-newsletter.php</code>
   </p>
 </div>
+<?php $nlTest = newsletter_lista_test(); $nlTestTesto = $_SESSION['nl_test_testo'] ?? implode("\n", array_column($nlTest, 'email')); unset($_SESSION['nl_test_testo']); ?>
+<form method="post" class="form-card" id="nl-test" style="margin-top:1.25rem">
+  <?= csrf_field() ?><input type="hidden" name="azione" value="lista_test">
+  <h3>Lista dei test</h3>
+  <p class="hint" style="margin-top:0">Gli indirizzi a cui mandare le prove delle campagne, prima di spedirle a tutti. La prova arriva a ognuno con i suoi dati (nome, attributi), come la riceverebbe davvero.</p>
+  <div class="form-group"><label for="nl-test-indirizzi">Indirizzi della lista dei test</label>
+    <textarea id="nl-test-indirizzi" name="indirizzi" rows="5" class="nlx-corto" placeholder="per esempio: tu@esempio.it" aria-describedby="nl-test-aiuto"><?= h($nlTestTesto) ?></textarea>
+    <div class="hint" id="nl-test-aiuto">Uno per riga, al massimo <?= NL_TEST_MASSIMO ?>. Ognuno deve essere già un contatto: se non lo è, crealo prima in <a href="newsletter-contatto.php?nuovo=1">Contatti, Crea un contatto</a>.</div></div>
+  <button class="btn btn-primary" type="submit">Salva la lista dei test</button>
+</form>
 <?php /* 2.7.0: l'email di conferma dell'iscrizione, valori comuni */ require_once __DIR__ . '/includes/email-conferma-campi.php'; $ecValori = nl_email_comuni(); ?>
 <?= ec_stile_html() ?>
 <div class="form-card" id="nl-conferma">

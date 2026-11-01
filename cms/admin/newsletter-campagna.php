@@ -7,6 +7,7 @@
 require_once __DIR__ . '/includes/auth.php';
 require_once __DIR__ . '/includes/admin-functions.php';
 require_once __DIR__ . '/../includes/newsletter.php';
+require_once __DIR__ . '/../includes/newsletter-importa.php'; // 2.9.0: la lista dei test
 require_admin(); // sicurezza (ruoli): solo amministratore
 newsletter_schema();
 
@@ -42,11 +43,28 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     elseif (in_array($azione, ['programma', 'subito'], true) && $destinatari === 0) { flash('error', 'Nelle liste scelte non c\'è nessun iscritto attivo.'); $azione = 'fermo'; }
     switch ($azione) {
         case 'prova':
+            // 2.9.0, come Brevo: la prova va ai contatti spuntati della lista dei test, ognuno con i suoi dati (senza
+            // tracciamento: le prove non contano nelle statistiche), e se serve a un altro indirizzo scritto a mano.
             $a = trim((string)($_POST['prova_a'] ?? ''));
-            if (!filter_var($a, FILTER_VALIDATE_EMAIL)) { flash('error', 'Indirizzo per la prova non valido.'); break; }
-            [$ogg, $html, $intest] = newsletter_email($c, ['id' => 0, 'nome' => trim((string)($_POST['prova_nome'] ?? '')) ?: 'Giulia', 'email' => $a]);
-            posta_invia($a, '[PROVA] ' . $ogg, $html, $intest, 'prova')
-                ? flash('success', "Prova spedita a $a.") : flash('error', 'Prova non partita: ' . posta_errore());
+            $test = [];
+            foreach (newsletter_lista_test() as $t) if (in_array((int)$t['id'], array_map('intval', (array)($_POST['prova_test'] ?? [])), true)) $test[] = $t;
+            if (!$test && !filter_var($a, FILTER_VALIDATE_EMAIL)) { flash('error', $a === '' ? 'Spunta almeno un indirizzo della lista dei test, oppure scrivi l\'indirizzo a cui mandare la prova.' : 'L\'indirizzo per la prova non è valido: scrivilo per intero (per esempio nome@esempio.it).'); break; }
+            $spedite = []; $nonPartite = [];
+            foreach ($test as $t) {
+                [$ogg, $html, $intest] = newsletter_email($c, ['id' => (int)$t['id'], 'nome' => (string)$t['nome'], 'email' => (string)$t['email']], []);
+                posta_invia((string)$t['email'], '[PROVA] ' . $ogg, $html, $intest, 'prova') ? $spedite[] = $t['email'] : $nonPartite[] = $t['email'];
+            }
+            if (filter_var($a, FILTER_VALIDATE_EMAIL) && !in_array(mb_strtolower($a), array_map('mb_strtolower', array_column($test, 'email')), true)) {
+                [$ogg, $html, $intest] = newsletter_email($c, ['id' => 0, 'nome' => trim((string)($_POST['prova_nome'] ?? '')) ?: 'Giulia', 'email' => $a]);
+                posta_invia($a, '[PROVA] ' . $ogg, $html, $intest, 'prova') ? $spedite[] = $a : $nonPartite[] = $a;
+                if (!empty($_POST['prova_aggiungi'])) {
+                    $cid = newsletter_id_da_email(mb_strtolower($a));
+                    $e = $cid ? newsletter_lista_test_aggiungi($cid) : "L'indirizzo $a non è un contatto: per metterlo nella lista dei test crealo prima in Contatti.";
+                    if ($e !== '') flash('error', $e);
+                }
+            }
+            if ($spedite) flash('success', 'Prova spedita a ' . implode(', ', $spedite) . '.');
+            if ($nonPartite) flash('error', 'Prova non partita per ' . implode(', ', $nonPartite) . ': ' . posta_errore());
             break;
         case 'programma':
             $quando = strtotime((string)($_POST['invio_at'] ?? ''));
@@ -86,6 +104,7 @@ $liste = newsletter_liste();
 $scelte = newsletter_liste_campagna($c);
 $destinatari = newsletter_destinatari($scelte);
 $prova = posta_notifica_email(); // l'indirizzo degli avvisi (Impostazioni, Configurazione email)
+$listaTest = newsletter_lista_test(); // 2.9.0
 $mittentiScelta = consegna_mittenti_scelta();
 [$mittPre, $nomePre] = posta_mittente();
 $adminTitle = 'Newsletter: ' . (newsletter_4byte_fuori($c['oggetto']) ?: 'nuova campagna');
@@ -135,10 +154,16 @@ require_once __DIR__ . '/includes/admin-header.php';
 
       <?php if ($modificabile): ?>
       <div class="nlc-azioni"><button class="btn btn-primary" type="submit" name="azione" value="salva">Salva</button></div>
-      <div class="nlc-azioni">
-        <label>Prova a <input type="email" name="prova_a" value="<?= h($prova) ?>"></label>
-        <button class="btn btn-secondary" type="submit" name="azione" value="prova">Salva e manda la prova</button>
-      </div>
+      <fieldset class="nlk-scelte" id="nlc-prova">
+        <legend>Manda una prova</legend>
+        <?php if ($listaTest): ?>
+        <?php foreach ($listaTest as $t): ?><label><input type="checkbox" name="prova_test[]" value="<?= (int)$t['id'] ?>" checked> <?= h($t['email']) ?><?= trim($t['nome'] . ' ' . $t['cognome']) !== '' ? ' <span class="nlx-sotto" style="display:inline">(' . h(trim(newsletter_4byte_fuori($t['nome'] . ' ' . $t['cognome']))) . ')</span>' : '' ?></label><?php endforeach; ?>
+        <p class="hint">Dalla <a href="newsletter.php?scheda=impostazioni#nl-test">lista dei test</a>: ognuno la riceve con i suoi dati. Le prove non contano nelle statistiche.</p>
+        <?php else: ?><p class="hint">Nessun indirizzo nella <a href="newsletter.php?scheda=impostazioni#nl-test">lista dei test</a>: aggiungili in Impostazioni, oppure scrivi qui sotto a chi mandare la prova.</p><?php endif; ?>
+        <div class="form-group"><label for="nlc-prova-a"><?= $listaTest ? 'Anche a un altro indirizzo' : 'Manda la prova a' ?></label><input type="email" id="nlc-prova-a" name="prova_a" value="<?= $listaTest ? '' : h($prova) ?>" placeholder="per esempio: tu@esempio.it"></div>
+        <label><input type="checkbox" name="prova_aggiungi" value="1"> Aggiungi questo indirizzo alla lista dei test (deve essere un contatto)</label>
+        <div class="nlc-azioni"><button class="btn btn-secondary" type="submit" name="azione" value="prova">Salva e manda la prova</button></div>
+      </fieldset>
       <div class="nlc-azioni">
         <label>Giorno e ora <input type="datetime-local" name="invio_at" value="<?= h($c['invio_at'] ? date('Y-m-d\TH:i', strtotime($c['invio_at'])) : date('Y-m-d\TH:i', strtotime('+1 day 06:00'))) ?>"></label>
         <button class="btn btn-secondary" type="submit" name="azione" value="programma">Programma l'invio</button>

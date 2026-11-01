@@ -167,6 +167,11 @@ function cron_newsletter(string $da = 'cron'): array {
     try {
         // 2.0.0: una volta al giorno, la pulizia (registro della posta oltre 60 giorni, iscritti mai confermati).
         try { $righe = array_merge($righe, newsletter_pulizia()); } catch (Throwable $e) { $righe[] = 'ERRORE pulizia: ' . $e->getMessage(); }
+        // 2.9.0: importazioni ed esportazioni dei contatti a giri (con la copia di riserva per opcache: il file si carica qui).
+        try {
+            if (!function_exists('newsletter_lavori_giro') && is_file(__DIR__ . '/newsletter-importa.php')) require_once __DIR__ . '/newsletter-importa.php';
+            if (function_exists('newsletter_lavori_giro')) foreach (newsletter_lavori_giro(15) as $x) $righe[] = 'Contatti: ' . $x;
+        } catch (Throwable $e) { $righe[] = 'ERRORE importazioni: ' . $e->getMessage(); }
         $log = newsletter_invia_giro();
         if ($log) @file_put_contents(cms_radice() . '/logs/newsletter.log', date('Y-m-d H:i:s') . ' | ' . implode('; ', $log) . "\n", FILE_APPEND);
         $righe = array_merge($righe, $log);

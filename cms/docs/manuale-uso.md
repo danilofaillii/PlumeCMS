@@ -1537,7 +1537,8 @@ lista nera** (non riceve più niente). Le persone si iscrivono da sole con un fo
 3. **Azione**: spunta i contatti nella tabella (o la casella **Tutti i contatti** del filtro, anche quelli delle altre
    pagine), scegli l'azione e premi **Applica**: **Aggiungi a una lista**, **Togli dalle liste**, **Sposta in un'altra
    lista** (da quella caricata), **Metti in lista nera**, **Modifica un attributo** (solo quelli Data, Sì/No e Categoria,
-   come in Brevo), **Esporta (CSV)** ed **Elimina definitivamente**. Prima di partire il pannello chiede conferma.
+   come in Brevo), **Esporta** (apre la finestra Esporta, sotto) ed **Elimina definitivamente**. Prima di partire il
+   pannello chiede conferma.
 4. **La tabella**: le cinque colonne di sempre (Contatto, Iscritto, In lista nera con il motivo, Data di creazione, Ultima
    modifica). Con **Personalizza le colonne** aggiungi gli attributi che vuoi vedere (la città, la data di nascita...) e
    li metti in ordine trascinandoli o con le frecce. La scelta resta per te.
@@ -1646,12 +1647,97 @@ conferma l'email, esce dalla lista nera da sola.
 
 #### Importare i contatti
 
-Se avevi una newsletter su Brevo (o un altro servizio), esporta i contatti in CSV e importali da **Contatti > Importa
-contatti** (il riquadro si apre in fondo alla pagina). Il file vuole la colonna EMAIL; NOME, COGNOME e CONSENSO (la data
-del consenso) se ci sono. Chi è in lista nera o ha chiesto di cancellare i suoi dati resta fuori.
+Dalla 2.9.0 l'importazione ha i quattro passi di Brevo: **Carica**, **Abbina i dati**, **Scegli la lista**, **Concludi**.
+Va bene un file **CSV**, **TXT** o **XLSX** (Excel o LibreOffice; un .xls vecchio va salvato prima come .xlsx o .csv), in
+UTF-8 o Windows-1252: gli accenti si leggono in tutti e due. La prima riga porta i nomi delle colonne.
 
-- **Fai partire i flussi per gli importati**: senza questa spunta i flussi automatici (il benvenuto, per esempio) non
-  partono per chi entra con l'importazione.
+Esempio: il negozio ha i clienti in un foglio di Excel, con email, nome, cognome, data di nascita e città.
+
+![Passo 1, Carica](immagini/manuale-uso/19-importa-1.jpg)
+
+1. **Contatti > Importa contatti**. Scegli **Carica un file** oppure **Copia e incolla** (selezioni le celle nel foglio di
+   calcolo, copi e incolli nella casella; va bene anche un indirizzo per riga, senza i nomi delle colonne).
+2. Scegli il file. Sotto c'è scritto il peso massimo che accetta il tuo server: un file più grande va diviso.
+3. Premi **Avanti: abbina i dati**.
+
+![Passo 2, Abbina i dati](immagini/manuale-uso/19-importa-2.jpg)
+
+1. Ogni riga della tabella è una colonna del file, con le prime righe accanto. Le colonne che si chiamano come un
+   attributo (EMAIL, NOME, COGNOME, oppure FIRSTNAME e LASTNAME di Brevo) sono già abbinate. La colonna delle email va
+   abbinata a **EMAIL**: senza, non si va avanti.
+2. Una colonna senza attributo: scegli **Crea un nuovo attributo...**, scrivi il nome (per esempio CITTA) e il tipo
+   (Testo, Numero, Data, Sì/No). Una colonna che non ti serve: **Non importare**. Una colonna con la data del consenso:
+   **Data del consenso**.
+3. Premi **Avanti: scegli la lista**. Se due colonne vanno sullo stesso attributo, il pannello lo dice in rosso sotto
+   la colonna sbagliata.
+
+![Passo 3, Scegli la lista](immagini/manuale-uso/19-importa-3.jpg)
+
+1. Spunta una o più liste, divise per cartella;
+2. oppure scrivi il nome di una **lista nuova** e scegli la sua cartella.
+3. Premi **Avanti: concludi**.
+
+![Passo 4, Concludi](immagini/manuale-uso/19-importa-4.jpg)
+
+1. Le **opzioni**, tutte spente di partenza:
+   - **Aggiorna gli attributi dei contatti che ci sono già**: spenta, chi c'è già resta com'è ed entra solo nelle liste;
+   - **Importa le celle vuote per cancellare i valori che ci sono**: solo con l'aggiornamento acceso, una cella vuota
+     svuota quell'attributo;
+   - **Metti in lista nera email tutti i contatti del file**: per un elenco di persone che non devono ricevere niente;
+   - **Fai partire i flussi automatici delle liste**: senza, chi entra con l'importazione non riceve il benvenuto dei flussi.
+   Leggi l'avviso giallo: alcune opzioni cambiano i dati in modo che non si torna indietro.
+2. Spunta **Confermo che questi contatti hanno dato il loro consenso esplicito**: si importano solo persone che hanno
+   detto sì. Il consenso si segna nel registro di ogni contatto nuovo.
+3. Premi **Conferma l'importazione**.
+
+Un file piccolo entra subito. Uno grande (decine di migliaia di righe) va a giri: la pagina mostra la barra e continua da
+sola; se la chiudi, il cron (capitolo 26) finisce il lavoro e il resoconto lo trovi in **Importa contatti > Importazioni
+recenti**.
+
+![Il resoconto](immagini/manuale-uso/19-resoconto.jpg)
+
+1. Il **resoconto**: **Nuovi**, **Aggiornati**, **Invariati** (c'erano già e non sono cambiati), **Doppioni nel file**
+   (la stessa email due volte: vale la prima riga) ed **Errori** (email mancante o sbagliata, persone che avevano chiesto
+   di cancellare i loro dati).
+2. **Scarica le righe scartate (CSV)**: ogni riga non entrata, con il motivo. Il file resta 7 giorni.
+
+Regole da sapere: chi c'è già non diventa un doppione; chi è in lista nera **non torna iscritto** e non entra nelle liste;
+un valore del tipo sbagliato (lettere in un numero, il 31 febbraio) si ignora senza errore; le date si scrivono come
+31/12/2026 o 2026-12-31 (nei file Excel le date vere si leggono da sole).
+
+**Checklist**
+
+- [ ] Il file ha la colonna delle email e, in cima, i nomi delle colonne.
+- [ ] Al passo 2 ogni colonna che mi serve ha un attributo, le altre sono su "Non importare".
+- [ ] Ho scelto la lista giusta, o ne ho creata una nuova.
+- [ ] Ho acceso "Aggiorna" solo se voglio cambiare i dati di chi c'è già.
+- [ ] Ho letto il resoconto e, se ci sono errori, ho guardato le righe scartate.
+
+#### Esportare i contatti
+
+Per avere i contatti in un foglio di calcolo: **Contatti > Esporta i contatti** (in alto), oppure spunta delle righe e
+scegli l'azione **Esporta**.
+
+![La finestra Esporta](immagini/manuale-uso/19-esporta.jpg)
+
+1. **Quali contatti**: quelli scelti nella tabella (o "Tutti i contatti" del filtro), una **lista** (tutti, solo gli
+   iscritti, solo quelli in lista nera, solo chi si è disiscritto da quella lista) oppure una **campagna** già partita
+   (chi l'ha aperta, chi no, chi ha cliccato, chi no, chi si è disiscritto, i rimbalzi).
+2. **Attributi da esportare**: spunta le colonne che vuoi (EMAIL c'è sempre). In fondo ci sono anche lo stato
+   dell'iscrizione, la lista nera con il motivo e le liste.
+3. **Separatore**: punto e virgola per Excel in italiano, virgola per gli altri programmi.
+4. Premi **Avvia l'esportazione**.
+
+Il file CSV si scarica subito; se i contatti sono tanti si prepara a giri e lo scarichi dal riquadro **Esportazioni**, in
+fondo alla pagina Contatti, che si aggiorna da solo. I file restano 7 giorni e poi si cancellano: contengono dati
+personali. Una cella che comincia con = + - o @ esce con un apostrofo davanti: così il foglio di calcolo non la prende
+per una formula. Il file esportato si può reimportare così com'è: i dati tornano uguali.
+
+**Checklist**
+
+- [ ] Ho scelto quali contatti esportare e le colonne che mi servono.
+- [ ] Ho aperto il file con il separatore giusto.
+- [ ] Ho conservato il file al sicuro, o l'ho cancellato quando non serviva più.
 
 ### Una campagna
 
@@ -1673,7 +1759,9 @@ posta, non nello spam").
 
 A destra c'è l'anteprima dell'ultima versione salvata. Poi:
 
-- **Salva e manda la prova**: la ricevi tu, per controllarla nella tua casella;
+- **Salva e manda la prova**: la ricevono gli indirizzi spuntati della **lista dei test** (sotto), ognuno con i suoi dati,
+  e se vuoi anche un altro indirizzo scritto a mano (con **Aggiungi questo indirizzo alla lista dei test**, se è un
+  contatto). Le prove non contano nelle statistiche;
 - **Programma l'invio**: parte da sola all'ora scelta;
 - **Invia adesso alle liste scelte**: parte al prossimo giro del cron (ogni 5 minuti, al massimo 150 email l'ora, per non
   finire fra lo spam).
@@ -1690,6 +1778,24 @@ email):
 Contano **tutte** le email del sito, non solo le campagne: conferme, avvisi dei form, flussi, prenotazioni. Sotto ogni
 casella c'è scritto quante ne sono partite nell'ultima ora e nelle ultime 24 ore. Quando il limite è raggiunto le email
 aspettano il giro dopo del cron: non si perdono.
+
+### La lista dei test
+
+Prima di mandare una campagna a tutti la provi su qualche indirizzo, come in Brevo: la **lista dei test** sta in
+**Newsletter e form > Impostazioni**.
+
+![La lista dei test](immagini/manuale-uso/19-lista-test.jpg)
+
+1. Scrivi gli indirizzi, uno per riga, al massimo 20. Ognuno deve essere già un contatto: se non lo è, crealo prima
+   (Contatti, Crea un contatto).
+2. Premi **Salva la lista dei test**.
+
+![La prova di una campagna](immagini/manuale-uso/19-prova.jpg)
+
+1. Nella campagna, riquadro **Manda una prova**: gli indirizzi della lista dei test sono già spuntati. Ognuno riceve
+   l'email con il suo nome e i suoi attributi, come la riceverebbe davvero.
+2. **Anche a un altro indirizzo**: per una prova in più.
+3. Premi **Salva e manda la prova**. L'oggetto comincia con [PROVA].
 
 ### L'email di conferma dell'iscrizione
 

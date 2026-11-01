@@ -1894,7 +1894,7 @@ righe spuntate o su tutti quelli del filtro (`tutti`, `newsletter_contatti_ids()
 (`newsletter_togli_da_liste()`, `:544`), sposta (dalla lista caricata), metti in lista nera, modifica
 (`newsletter_modifica_in_massa()`, `:564`: solo data, sì/no, categoria), esporta (CSV con `sicurezza_csv_riga()`), elimina
 definitivamente (`newsletter_contatti_elimina()`, `:579`: è "Cancella dati", tiene l'impronta, scelta di plumeCMS confermata da
-Danilo). Riquadri Importa contatti (l'importazione di prima, `newsletter_importa_csv()`, che ora salta anche `bloccato`) e
+Danilo). Riquadri Importa contatti (fino alla 2.8.0; dalla 2.9.0 è la pagina a passi, capitolo 15.8) e
 Metti in lista nera degli indirizzi (`:151`, crea il contatto se non c'è). Scheda Liste: cartelle e liste
 (`newsletter_cartelle()`, `:616`; `newsletter_cartella_elimina()`, `:648`, elimina le liste ma non i contatti, rifiuta una
 cartella con una lista di sistema, `newsletter_liste_di_sistema()`, `:607`; limiti 300 e 300).
@@ -1920,6 +1920,103 @@ Prove: `prove/prova-email-conferma.js` (con `prove/email-conferma-cli.php` e il 
 uguale al byte alla 2.6.0 per un form e per il modulo della newsletter, ogni parte cambiata, segnaposti, emoji in oggetto e
 testo, codice cattivo, anteprima, prova, link vero che conferma, redattore, 390 px. Attacchi: gruppo 28 di
 `tools/sicurezza-prova.js`.
+
+### 15.8 Importazione, esportazione e lista dei test come Brevo (dalla 2.9.0)
+
+Fase 2 del piano di `docs-sviluppo/brevo-confronto.md` (capitoli 1.3, 1.5, 3.5). Motore in `includes/newsletter-importa.php`
+(caricato in fondo a `includes/newsletter.php`, e caricato a mano dalle pagine e dal cron: copia di riserva per opcache);
+pagina `admin/newsletter-importa.php`; finestra Esporta e riquadro Esportazioni in `admin/newsletter-contatti.php`; Lista dei
+test in `admin/newsletter.php` (Impostazioni) e nella prova di `admin/newsletter-campagna.php`. JavaScript in
+`admin/assets/contatti.js` (`data-nli-*`, `data-nlx-origine`, `data-nl-giro`), stili `.nli-*` in fondo ad `admin.css`.
+
+**Tabelle** (`newsletter_importa_schema()`, `newsletter-importa.php:40`, con la sua impronta `newsletter_importa_impronta`;
+utf8, `NOT NULL DEFAULT`, niente colonne generate; nessuna tabella di prima cambiata):
+- `newsletter_importazioni`: origine (`file`, `incolla`), nome del file, file riscritto (`file`), `intestazione`, `anteprima`
+  (prime 5 righe, emoji come entità), `mappatura` (JSON: per colonna un nome di attributo, `''` = non importare,
+  `_CONSENSO` = data del consenso), `opzioni` (aggiorna, vuote, nera, flussi), `liste`, `passo` (2-4 mentre è in bozza),
+  `stato` (`bozza`, `pronta`, `in_corso`, `finita`, `errore`), `righe`, `fatte`, `posizione` (byte nel file), i contatori
+  `nuovi`, `aggiornati`, `invariati`, `doppioni`, `errori`, `dettagli` (JSON: bloccati, soppressi, non valide, EXT_ID doppi),
+  `scarti_file`.
+- `newsletter_importa_viste`: (importazione, md5 dell'email) delle righe già lette: i doppioni del file si riconoscono anche
+  fra un giro e l'altro; si svuota alla fine.
+- `newsletter_esportazioni`: descrizione, `filtro` (JSON), `colonne`, `separatore`, `stato`, `file`, `righe`, `totale`,
+  `ultimo_id` (il giro riprende da lì), `scade` (7 giorni).
+- Impostazioni nuove: `newsletter_cartella_file` (nome a caso della cartella privata), `newsletter_lista_test` (JSON degli id).
+
+**Cartella privata** (`newsletter_dir_privata()`, `:106`): `uploads/contatti-<16 esadecimali>/` con `.htaccess` "Require all
+denied" e `index.html` vuoto, come i file riservati (`scaricabili_dir_riservati()`); su Nginx la regola nuova in
+`install/esempi/nginx.txt`. I nomi dei file si accettano solo se sono dei nostri (`newsletter_file_privato()`, `:120`:
+`imp-`, `scarti-`, `esp-` più id e 12 esadecimali); si scaricano solo dal pannello (`newsletter_file_scarica()`, `:972`,
+`no-store`, `nosniff`).
+
+**Passo 1, Carica** (`newsletter_importa_prepara()`, `:311`): CSV e TXT (`newsletter_csv_righe()`, `:136`): se una riga non è
+UTF-8 il file si riscrive da Windows-1252; separatore indovinato sulla prima riga fra tabulazione, punto e virgola,
+virgola e barra; `fgetcsv` con l'escape vuoto (RFC 4180). XLSX (`newsletter_xlsx_righe()`, `:199`) con `ZipArchive` e
+`XMLReader`, senza librerie: nomi interni controllati (niente `/` iniziale, `..`, `\`, `:`, caratteri di controllo); tetto
+di 40 MB decompressi sia sui byte dichiarati sia su quelli letti davvero (`newsletter_zip_leggi()`, `:171`); una parte con
+`<!DOCTYPE` o `<!ENTITY` si rifiuta (niente DTD, niente entità esterne; `LIBXML_NONET`); primo foglio dai rel di
+`workbook.xml`; testi condivisi, testi in linea, testo ricco, `t="b"`, risultati delle formule; i numeri con un formato di
+data (14-22, 27-36, 45-47, 50-58 o un formato scritto con d, m, y, h) diventano `AAAA-MM-GG` (anche `date1904`). Ogni riga
+diventa una riga JSON nella cartella privata; righe vuote saltate, al massimo 200 colonne e 1000 caratteri per cella. Senza
+intestazioni (una colonna di indirizzi incollata) le colonne si chiamano "Colonna N" e la prima riga è un dato.
+Errori in parole sotto il campo (sessione `nli_errore`), con la `.xls` vecchia detta per nome.
+
+**Passo 2, Abbina** (`newsletter_importa_abbina()`, `:387`, `newsletter_importa_salva_abbinamento()`, `:410`): si importano
+solo gli attributi scrivibili (`newsletter_importa_attributi()`, `:381`: niente calcolati, globali, DOUBLE_OPT-IN,
+CREATION_DATE, LAST_CHANGED); abbinamento da solo per nome (con `newsletter_attributo_nome()`), FIRSTNAME e LASTNAME, i
+sinonimi di `NL_IMP_SINONIMI` (`:33`, anche i nomi della colonna del consenso della 2.0.0), e la colonna con le email nelle
+prime righe se nessuna si chiama EMAIL. "Crea un nuovo attributo" crea subito l'attributo (Testo, Numero, Data, Sì/No) con
+`newsletter_attributo_crea()`. Un attributo su due colonne è un errore sotto la colonna; senza EMAIL non si va avanti.
+
+**Passo 3** (`newsletter_importa_salva_liste()`, `:440`): liste esistenti o una nuova con `newsletter_lista_crea()`; almeno una.
+**Passo 4** (`newsletter_importa_conferma()`, `:456`): consenso obbligatorio (anche lato server), "celle vuote" solo con
+"aggiorna" (come Brevo); lo stato diventa `pronta` e la pagina fa subito un giro di 8 secondi.
+
+**Lavoro a giri** (`newsletter_lavori_giro()`, `:746`, con `GET_LOCK`): dalla pagina (`azione=giro`, JSON, token dal campo o
+da `X-CSRF`, `session_write_close`) e dal cron (`includes/cron.php:172`, 15 secondi a passata). `newsletter_importa_giro()`
+(`:476`) legge dal byte `posizione`, a pezzi di 200 righe (`newsletter_importa_pezzo()`, `:552`) dentro una transazione con
+contatori e posizione: per pezzo una domanda per le email già viste, una per la lista di soppressione, una per i contatti
+che ci sono già e una per i loro valori (`newsletter_valori_di()` con i soli nomi abbinati); storia e consensi a blocchi.
+Regole: email non valida e chi ha cancellato i dati = errori; doppione = vale la prima riga; nuovo = `attivo`, fonte e
+consenso `import`, data del consenso dalla colonna `_CONSENSO`, riga `importato` nella storia e `import` nel registro del
+consenso; chi c'è già e non è in lista nera entra nelle liste e, con "aggiorna", prende i valori
+(`newsletter_importa_valori()`, `:688`: il tipo sbagliato si ignora, le celle vuote cancellano solo con l'opzione, EXT_ID
+già di un altro non si scrive); chi è in lista nera resta com'è e fuori dalle liste (invariato); "lista nera" usa
+`newsletter_contatto_blocca($id, 'import')`. L'apostrofo che l'esportazione mette davanti a `= + - @` si toglie
+(`newsletter_importa_valore()`, `:547`): andata e ritorno uguali. Le righe scartate vanno nel CSV degli scarti
+(`newsletter_importa_scarti()`, `:527`: RIGA, MOTIVO e le celle). Alla fine il file caricato si cancella.
+`newsletter_importa_csv()` (`:794`) resta come involucro (dentro un `if (!function_exists())`, per opcache) con i numeri di
+prima. Pulizia (`newsletter_importa_pulizia()`, `:770`, da `newsletter_pulizia()` e all'apertura della pagina): bozze dopo un
+giorno, scarti ed esportazioni dopo 7.
+
+**Esportazione** (`newsletter_esporta_crea()`, `:880`, `newsletter_esporta_giro()`, `:919`): filtri
+(`newsletter_esporta_where()`, `:834`): `contatti` (il filtro della pagina, `newsletter_contatti_filtro()`), `ids`, `lista`
+(`NL_ESP_LISTA`: tutti, iscritti, in lista nera, usciti da quella lista con `newsletter_liste_uscite`), `campagna`
+(`NL_ESP_CAMPAGNA`: aperto e cliccato da `newsletter_eventi`, non aperto e non cliccato fra chi ha la riga `inviata` in coda,
+disiscritti, rimbalzi da eventi o coda in errore). Colonne nell'ordine degli attributi più ISCRITTO, LISTA_NERA, MOTIVO,
+LISTE (`NL_ESP_EXTRA`); EMAIL sempre; date `AAAA-MM-GG`, il resto in parole (`newsletter_valore_testo()`); ogni riga passa da
+`sicurezza_csv_riga()`. A pezzi di 500 per id; un file che finisce in 8 secondi esce subito (`nlc_esporta_avvia()`,
+`admin/newsletter-contatti.php:53`), uno più lungo va a giri e il riquadro Esportazioni chiede i giri da solo
+(`azione=esporta_giro`, `:81`) e si ricarica; `?esportazione=<id>` scarica (`:74`). `?scarica=tutti` (il collegamento della
+2.8.0) fa tutto in una richiesta. Le azioni di gruppo senza i campi della finestra (la 2.8.0, gli attacchi del gruppo 29)
+esportano tutte le colonne con il punto e virgola.
+
+**Lista dei test** (`newsletter_lista_test()`, `:989`, `newsletter_lista_test_salva()`, `:1001`): un indirizzo per riga, al
+massimo 20 (`NL_TEST_MASSIMO`), ognuno già un contatto (regole di Brevo), altrimenti non si salva niente. Nella campagna
+(`admin/newsletter-campagna.php:45`) la prova va ai contatti spuntati della lista, ognuno con i suoi dati
+(`newsletter_email($c, $contatto, [])`: con la traccia vuota niente pixel né link tracciati, quindi niente statistiche), più
+l'indirizzo scritto a mano come prima (dati di prova, "Giulia"); "Aggiungi questo indirizzo alla lista dei test"
+(`newsletter_lista_test_aggiungi()`, `:1017`).
+
+**Fatto diverso da Brevo, scelte di plumeCMS**: chi è in lista nera non torna iscritto con l'importazione (Brevo non dice
+cosa fa: [non trovato] nel capitolo 5 del piano); "Fai partire i flussi" è un'opzione del passo 4 (c'era dalla 2.0.0); il
+consenso è una casella obbligatoria anche per i file (in Brevo è sicura solo nelle importazioni da altri servizi); il
+resoconto conta a parte i doppioni del file; "manda l'esportazione per email", i gruppi di consenso e il prefisso
+telefonico non ci sono (SMS e gruppi fuori da questa fase).
+
+Prove: `prove/prova-importa.js` con `prove/importa-cli.php` (XLSX come Excel e LibreOffice e i quattro XLSX cattivi);
+`prova-newsletter-difetti.js` e `prova-contatti-brevo.js` adattati ai passi nuovi e alla finestra Esporta; attacchi: gruppo
+30 di `tools/sicurezza-prova.js`.
 
 ---
 
