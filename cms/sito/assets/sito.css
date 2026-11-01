@@ -804,5 +804,7 @@ hr.ed-divisore-linea{background:var(--bordo)}
 .cerca-niente{grid-column:1/-1}
 .cerca-niente p{margin:0 0 10px}
 .cerca-niente ul{list-style:none;display:flex;flex-wrap:wrap;gap:8px;margin:10px 0 0;padding:0}
-.cerca-niente a{display:inline-block;padding:8px 14px;border:1px solid var(--bordo);border-radius:999px;color:var(--testo);text-decoration:none}
-.cerca-niente a:hover{border-color:var(--viola)}
+.cerca-niente .vuoto{color:var(--testo-2)}
+.cerca-niente p a{color:var(--testo);text-decoration:underline;text-underline-offset:3px}
+.cerca-niente ul a{display:inline-block;padding:8px 14px;border:1px solid var(--bordo);border-radius:999px;color:var(--testo);text-decoration:none}
+.cerca-niente ul a:hover{border-color:var(--viola)}
