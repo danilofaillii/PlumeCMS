@@ -220,6 +220,13 @@ async function contrastoParole(pg) {
   await v.goto(B + '/scarica/', { waitUntil: 'networkidle' });
   ok('Scarica: le novità della 1.4.0', /1\.4\.0: Il sito si prova/.test(await v.locator('body').innerText()));
   ok('Scarica: le novità della 2.4.0', /2\.4\.0: Il sito ufficiale è plumecms\.it/.test(await v.locator('body').innerText()));
+  ok('Scarica: le novità della 2.5.0', /2\.5\.0: Otto temi nuovi/.test(await v.locator('body').innerText()));
+  // 2.5.0: la pagina Temi con le stagioni e le tinte piene, ogni immagine caricata.
+  await v.goto(B + '/temi/', { waitUntil: 'networkidle' });
+  const tTemi = await v.locator('body').innerText();
+  ok('Temi (2.5.0): le quattro stagioni e le tinte piene', /Le quattro stagioni/.test(tTemi) && /Le tinte piene/.test(tTemi) && ['Estate', 'Inverno', 'Autunno', 'Primavera', 'Giallo', 'Rosso', 'Verde', 'Blu'].every(n => tTemi.includes(n)));
+  ok('Temi (2.5.0): le undici immagini dei temi si vedono', await v.evaluate(() => [...document.querySelectorAll('img[alt^="Il tema "]')].filter(i => i.complete && i.naturalWidth > 0).length) === 11);
+  await v.goto(B + '/scarica/', { waitUntil: 'networkidle' });
   ok('Scarica: le novità della 1.6.0', /1\.6\.0: Un riquadro in fondo a ogni articolo/.test(await v.locator('body').innerText()));
   await v.goto(B + '/installazione/', { waitUntil: 'networkidle' });
   ok('Installazione (1.4.0): dopo l\'installazione, Primi passi e Controlla il server', /Primi passi/.test(await v.locator('body').innerText()) && /Controlla il server/.test(await v.locator('body').innerText()));

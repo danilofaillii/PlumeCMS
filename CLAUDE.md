@@ -99,7 +99,7 @@ Sono gli unici in `cms/docs/`, nello zip, nel sito di plumeCMS e nella pagina Do
 - **Pacchetto di aggiornamento** per un'installazione esistente:
   `python3 tools/cms-pacchetto.py --aggiornamento`. Si carica dal pannello,
   Impostazioni, Aggiornamenti.
-- **Versione**: `cms/VERSIONE` (oggi 2.4.0; sempre tre numeri: "beta" va nel CHANGELOG, mai nel nome dello zip, se no la serie "ultima" del Download non lo riconosce) e una voce in `cms/CHANGELOG.md` a ogni
+- **Versione**: `cms/VERSIONE` (oggi 2.5.0; sempre tre numeri: "beta" va nel CHANGELOG, mai nel nome dello zip, se no la serie "ultima" del Download non lo riconosce) e una voce in `cms/CHANGELOG.md` a ogni
   zip con contenuto diverso. Mai cambiare il contenuto di una versione già data.
 - **Prove** prima di dire finito:
   - `php -n -d short_open_tag=1 -l` su ogni file PHP toccato, `node --check` sui js;
@@ -134,6 +134,12 @@ Le decisioni complete, con data e perché, stanno nel second brain, `plumecms/de
 - **Nome: plumeCMS** (26 ottobre 2026).
 
 ## Stato al 31 ottobre 2026
+
+Fatto: plumeCMS 2.5.0 (1 novembre): otto temi nuovi (richiesta di Danilo: Estate, Inverno, Autunno, Primavera, Giallo 255,255,0,
+Rosso, Verde, Blu; agente temi in worktree) con contrasto almeno 4,5 misurato su sette pagine (`prove/prova-temi-nuovi.js` 611/611),
+e un audit di tutto il CMS (agente auditor): 16 problemi risolti, quasi tutti emoji nelle tabelle a 3 byte, documento
+`docs-sviluppo/audit-2026-11.md` con Gantt e sette punti aperti, `prove/prova-audit-2026-11.js` 34/34. Cosmo, Aria e Bottega hanno
+ancora testi sotto 4,5 (Bottega 3,97): non toccati. Prove della consegna: vedi il diario del 1 novembre.
 
 Fatto: plumeCMS 2.4.0 (1 novembre): il sito ufficiale passa a **https://plumecms.it** (Danilo ha comprato il dominio; stesso hosting;
 il vecchio plumecms.danilofailli.it si chiude subito, decisione sua). `VERSIONE_SITO_UFFICIALE` e `FIRMA_URL` cambiati, la frase salvata col

@@ -2,6 +2,21 @@
 
 Il prodotto si chiama **plumeCMS** (nome scelto il 26 ottobre 2026; prima, per poche ore, "CarbonaraCMS", e ancora prima il provvisorio "Officina": gli zip vecchi si chiamavano `officina-*` e `carbonaracms-*`).
 
+## 2.5.0 (1 novembre 2026) - Otto temi nuovi e un audit
+
+- **Otto temi nuovi** in Editor > Temi (richiesta di Danilo): le quattro stagioni **Estate**, **Inverno**, **Autunno**,
+  **Primavera** e le tinte piene **Giallo** (255, 255, 0), **Rosso** (255, 0, 0), **Verde** (0, 255, 0), **Blu** (0, 0, 255).
+  Ogni scritta di ogni tema, provata su sette pagine al computer e al telefono, ha contrasto almeno 4,5 a 1. I temi nuovi
+  correggono dentro di sé alcuni colori fissi dei widget (pulsanti negli articoli, social, aperture senza foto).
+- **Audit del CMS**, 16 problemi trovati e risolti (dettaglio in `docs-sviluppo/audit-2026-11.md`):
+  - le emoji si salvano in form, popup, Download, liste, redirect e campagne, invece di dare un errore del database;
+  - un'emoji nel pannello SEO, nel riassunto o in "In breve" non esce più scritta `&#x1F377;` sul sito, nei social e in Google;
+  - Vetrina: un indirizzo del negozio uguale a quello di una pagina si rifiuta (prima la pagina spariva dal sito);
+  - Prenotazioni ed Eventi: la pagina della privacy scritta a mano non torna più in silenzio quella di partenza;
+  - Meta Pixel e Clarity: un ID scritto male si dice, non si toglie in silenzio;
+  - anteprima delle versioni corretta per i siti in una cartella; un nome mostrato lungo in Utenti; 31 frasi del pannello con
+    gli accenti giusti; "Pagina aggiornata".
+
 ## 2.4.0 (1 novembre 2026) - plumecms.it
 
 - **Il sito ufficiale è https://plumecms.it** (decisione di Danilo, dominio nuovo): da qui ogni installazione chiede se c'è una
