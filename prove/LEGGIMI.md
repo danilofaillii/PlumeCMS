@@ -445,6 +445,15 @@ ha il form) e con il server di posta finto acceso (`python3 -I prove/smtp-finto.
 Impostazioni e compila il form tre volte (il limite è 5 all'ora per IP: prima di rilanciarla, svuotare
 `<prefisso>moduli_invii`). Atteso: 13 su 13, anche su un sito aggiornato dalla 1.8.0.
 
+## prova-email-conferma.js (2.7.0)
+
+L'email di conferma dell'iscrizione modificabile (Form > riquadro Email di conferma; Newsletter > Impostazioni). Su un CMS
+installato con il kit Attività e il server di posta finto acceso:
+`node prove/prova-email-conferma.js <base> <utente> <password> <porta smtp> <cartella posta> <cartella del CMS installato>`.
+Usa `prove/email-conferma-cli.php` (il codice della 2.6.0 copiato, per il confronto al byte; `richiesta` per il modulo della
+newsletter) e `prove/tema-cli.php` (il redattore). Si rilancia sullo stesso sito: toglie prima gli iscritti `@persona.it`.
+Atteso (1 novembre 2026): 44 su 44.
+
 ## prova-widget-nuovi.js (1.10.0)
 
 I sette widget per le attività (Orari di apertura, Barra contatti, Recensioni, Prima e dopo, Squadra, Slider, Eventi).
