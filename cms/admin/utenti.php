@@ -67,6 +67,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     exit;
 }
 
+/**
+ * UX 2026-11 (punto 10 deciso da Danilo): l'ultimo accesso in parole, come lo si dice: "oggi alle 12:17", "ieri alle 9:05",
+ * "lunedi alle 18:40" nell'ultima settimana, poi "26/10/2026 alle 14:05". Prima: "2026-11-01 12:17", che andava a capo a meta.
+ */
+function utenti_quando(string $d): string {
+    $t = strtotime($d);
+    if (!$t) return $d;
+    $ora = date('G:i', $t);
+    $giorni = (int)floor((strtotime('today') - strtotime(date('Y-m-d', $t))) / 86400);
+    if ($giorni <= 0) return 'oggi alle ' . $ora;
+    if ($giorni === 1) return 'ieri alle ' . $ora;
+    if ($giorni < 7) return ['domenica', 'lunedì', 'martedì', 'mercoledì', 'giovedì', 'venerdì', 'sabato'][(int)date('w', $t)] . ' alle ' . $ora;
+    return date('d/m/Y', $t) . ' alle ' . $ora;
+}
+
 sicurezza_schema();
 $utenti = db()->query('SELECT id, username, email, display_name, role, last_login, created_at, totp_attivo FROM ' . tbl('users') . ' ORDER BY username')->fetchAll();
 $sessioniPer = [];
@@ -75,7 +90,7 @@ $modifica = isset($_GET['modifica']) ? array_values(array_filter($utenti, fn($u)
 require_once __DIR__ . '/includes/admin-header.php';
 ?>
 <link rel="stylesheet" href="<?= pannello_file('assets/css/contenuti.css') ?>">
-<div style="display:grid;grid-template-columns:320px minmax(0,1fr);gap:1.2rem;align-items:start">
+<div class="ut-griglia"><?php /* UX 2026-11: una colonna sotto 760 px (la tabella finiva in una striscia larga pochi pixel) */ ?>
   <div class="sc-scatola">
     <h3><?= $modifica ? 'Modifica utente' : 'Aggiungi utente' ?></h3>
     <form method="post" class="sc-corpo" autocomplete="off">
@@ -104,7 +119,7 @@ require_once __DIR__ . '/includes/admin-header.php';
             </div></td>
           <td class="ct-muto"><?= h($u['email']) ?></td>
           <td class="ct-muto"><?= UTENTI_RUOLI[$u['role']] ?? h($u['role']) ?></td>
-          <td class="ct-muto"><?= $u['last_login'] ? h(substr($u['last_login'], 0, 16)) : 'mai' ?></td>
+          <td class="ct-muto ct-quando"><?= $u['last_login'] ? h(utenti_quando((string)$u['last_login'])) : 'mai' ?></td>
           <td class="ct-muto"><?= !empty($u['totp_attivo']) ? '<span class="badge badge-published">attivo</span>' : 'no' ?>
             <?php if ($sonoAdmin && !empty($u['totp_attivo']) && (int)$u['id'] !== (int)$io['id']): ?><form method="post" style="display:inline"><?= csrf_field() ?><input type="hidden" name="azione" value="azzera_2fa"><input type="hidden" name="id" value="<?= $u['id'] ?>"><button type="submit" class="ct-rosso" data-conferma="Azzerare il secondo fattore di questo utente? Serve se ha perso il telefono.">azzera</button></form><?php endif; ?></td>
           <td class="ct-muto"><?= (int)($sessioniPer[(int)$u['id']] ?? 0) ?>

@@ -10,6 +10,7 @@
 //   nell'ambiente, per lavorare su un tema: PAGINE=home,widget (solo quelle), MISURE=1280, SOLO_ANTEPRIMA=1, TUTTI=1 (ogni testo sotto 4,5).
 //   con la cartella, salva <cartella>/<tema>.png (la home a 1280 px, applicata dal pannello) e <tema>-intera.png.
 const { chromium } = require('playwright');
+const pnConferme = require('./conferme-pannello'); // UX 2026-11: conferme del pannello
 const [B, UTENTE, PASSWORD, TEMI = 'estate,inverno,autunno,primavera,giallo,rosso,verde,blu', OUT = ''] = process.argv.slice(2);
 let n = 0, ko = 0; const ok = (t, c, extra = '') => { n++; if (!c) ko++; console.log((c ? 'OK  ' : 'KO  ') + t + (extra ? ' ' + JSON.stringify(extra).slice(0, 400) : '')); };
 
@@ -95,7 +96,7 @@ function misura(MINIMO) {
 (async () => {
   const br = await chromium.launch();
   const admin = await br.newContext({ viewport: { width: 1360, height: 900 } }); const pa = await admin.newPage();
-  pa.on('dialog', d => d.accept());
+  pnConferme.on(pa, d => d.accept());
   await pa.goto(B + '/admin/login.php'); await pa.fill('#username', UTENTE); await pa.fill('#password', PASSWORD);
   await Promise.all([pa.waitForNavigation(), pa.click('button[type=submit]')]);
   ok('login', !pa.url().includes('login.php'), pa.url());
@@ -109,7 +110,7 @@ function misura(MINIMO) {
 
   await pa.goto(B + '/admin/temi.php', { waitUntil: 'networkidle' });
   // un tema rimasto attivo da una prova interrotta ha "attivo" al posto del pulsante Attiva
-  for (const t of TEMI.split(',')) ok(`${t}: c'è in Editor > Temi, con l'anteprima e il pulsante Attiva`, await pa.locator(`#tema-${t} img.tt-immagine`).count() === 1 && await pa.locator(`#tema-${t} button:has-text("Attiva"), #tema-${t} .badge:has-text("attivo")`).count() >= 1);
+  for (const t of TEMI.split(',')) ok(`${t}: c'è in Editor > Temi, con l'anteprima e il pulsante Usa questo tema`, await pa.locator(`#tema-${t} img.tt-immagine`).count() === 1 && await pa.locator(`#tema-${t} button:has-text("Usa questo tema"), #tema-${t} .badge:has-text("attivo")`).count() >= 1);
 
   const giro = async (tema, modo, ctx) => {
     const minimi = {};
@@ -154,7 +155,7 @@ function misura(MINIMO) {
     if (process.env.SOLO_ANTEPRIMA) continue;
     // 2. Attivato dal pannello, guardato da un visitatore
     await pa.goto(B + '/admin/temi.php', { waitUntil: 'networkidle' });
-    await Promise.all([pa.waitForNavigation(), pa.click(`#tema-${t} button:has-text("Attiva")`)]);
+    await Promise.all([pa.waitForNavigation(), pa.click(`#tema-${t} button:has-text("Usa questo tema")`)]);
     const msg = await pa.locator('.flash').first().innerText().catch(() => '');
     ok(`${t}: attivato dal pannello`, /attivo/i.test(msg) && await pa.locator(`#tema-${t} .badge`, { hasText: 'attivo' }).count() === 1, msg.slice(0, 120));
     const vis = await br.newContext();
@@ -164,7 +165,7 @@ function misura(MINIMO) {
 
   // 3. Il tema di partenza: Cosmo (i valori di partenza) e poi l'aspetto di base, come dopo l'installazione
   await pa.goto(B + '/admin/temi.php', { waitUntil: 'networkidle' });
-  await Promise.all([pa.waitForNavigation(), pa.click('#tema-cosmo button:has-text("Attiva")')]);
+  await Promise.all([pa.waitForNavigation(), pa.click('#tema-cosmo button:has-text("Usa questo tema")')]);
   await Promise.all([pa.waitForNavigation(), pa.click('#tema-base button:has-text("Usa l\'aspetto di base")')]);
   ok('alla fine: di nuovo l\'aspetto di base', await pa.locator('#tema-base .badge', { hasText: 'attivo' }).count() === 1);
   const vis = await (await br.newContext()).newPage(); await vis.goto(B + '/', { waitUntil: 'networkidle' });

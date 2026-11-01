@@ -5,6 +5,7 @@
 // senza errori, con il contrasto del testo sopra 4,5 a 1 (come prova-temi-partenza.js). Lascia schermate in <cartella>.
 // uso: node prova-sezioni.js <base> <utente> <password> <cartella schermate>
 const { chromium } = require('playwright');
+const pnConferme = require('./conferme-pannello'); // UX 2026-11: conferme del pannello
 const [B, U, P, OUT] = process.argv.slice(2);
 let n = 0, ko = 0; const ok = (t, c, extra = '') => { n++; if (!c) ko++; console.log((c ? 'OK  ' : 'KO  ') + t + (extra ? ' ' + JSON.stringify(extra).slice(0, 220) : '')); };
 const CATEGORIE = ['apertura', 'servizi', 'chi', 'testimonianze', 'prezzi', 'faq', 'contatti', 'invito'];
@@ -59,7 +60,7 @@ const CATEGORIE = ['apertura', 'servizi', 'chi', 'testimonianze', 'prezzi', 'faq
   await p.waitForTimeout(1500);
   ok('la sezione inserita si modifica: il titolo cambia nella tela', fatto && (await fr().locator('#ed-pagina').innerText()).includes('Una fascia tutta mia'));
   await p.screenshot({ path: `${OUT}/sezioni-editor.png` });
-  p.once('dialog', d => d.accept()); await p.click('#ed-pubblica'); await p.waitForTimeout(2000);
+  pnConferme.once(p, d => d.accept()); await p.click('#ed-pubblica'); await p.waitForTimeout(2000);
   const slug = (await p.locator('#ed-percorso').innerText()).trim();
   // ?preview=1: di notte (fra le 00 e le 06) una pagina pubblicata adesso esce alle 06:00 di oggi e fino ad allora
   // il visitatore vede 404; l'anteprima dell'amministratore la mostra subito (difetto noto, non delle sezioni pronte).

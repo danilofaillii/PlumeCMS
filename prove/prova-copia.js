@@ -6,6 +6,7 @@
 // uso: node prova-copia.js <base> <cartella CMS installato> <utente> <password> <cartella zip di zip-copie-prova.py> <cartella schermate>
 // (il server di prova con il limite di PHP: upload_max_filesize 2M, post_max_size 8M)
 const { chromium } = require('playwright');
+const pnConferme = require('./conferme-pannello'); // UX 2026-11: conferme del pannello
 const { execFileSync } = require('child_process');
 const fs = require('fs'), path = require('path');
 const [B, CMS, U, P, ZIP, OUT] = process.argv.slice(2);
@@ -14,7 +15,7 @@ const elencoZip = f => JSON.parse(execFileSync('python3', ['-I', '-c', 'import j
 (async () => {
   const br = await chromium.launch(); const ctx = await br.newContext({ viewport: { width: 1280, height: 900 }, acceptDownloads: true }); const p = await ctx.newPage();
   const err = []; p.on('pageerror', e => err.push(e.message.slice(0, 200)));
-  p.on('dialog', d => d.accept());
+  pnConferme.on(p, d => d.accept());
   // Senza login
   const anon = await ctx.request.get(B + '/admin/copia-sito.php', { maxRedirects: 0 });
   ok('senza login: la pagina rimanda al login', [301, 302, 303].includes(anon.status()) && /login/.test(anon.headers()['location'] || ''), anon.status());

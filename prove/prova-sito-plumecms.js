@@ -5,6 +5,7 @@
 // è uno solo: il pacchetto del sito (sito-plumecms-<versione>.zip) oppure il pacchetto unico di tools/consegna.py, che porta
 // anche l'aggiornamento del CMS (allora si controlla anche che il CMS sia passato alla versione).
 const { chromium } = require('playwright');
+const pnConferme = require('./conferme-pannello'); // UX 2026-11: conferme del pannello
 const { execFileSync } = require('child_process');
 const fs = require('fs');
 const path = require('path');
@@ -46,7 +47,7 @@ async function contrastoParole(pg) {
   const br = await chromium.launch();
   const p = await (await br.newContext({ viewport: { width: 1360, height: 900 } })).newPage();
   const err = []; p.on('pageerror', e => err.push(e.message.slice(0, 200)));
-  p.on('dialog', d => d.accept());
+  pnConferme.on(p, d => d.accept());
   await p.goto(B + '/admin/login.php'); await p.fill('#username', UTENTE); await p.fill('#password', PASSWORD);
   await Promise.all([p.waitForNavigation(), p.click('button[type=submit]')]);
   ok('login', !p.url().includes('login.php'), p.url());

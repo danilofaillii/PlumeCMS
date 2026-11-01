@@ -353,7 +353,7 @@ pre.seo-pre{background:var(--codice-fondo);color:var(--codice-testo);padding:.9r
         <form method="post"><?= csrf_field() ?><input type="hidden" name="azione" value="indexnow_sitemap"><button class="btn btn-primary btn-sm" type="submit">Invia tutta la sitemap adesso</button></form>
       </div>
       <form method="post" class="seo-inline" style="margin-top:.8rem"><?= csrf_field() ?><input type="hidden" name="azione" value="indexnow_url">
-        <div class="form-group"><label>Un indirizzo da inviare</label><input type="text" name="url" id="seo-indexnow-url" placeholder="/una-pagina-del-sito/" data-link-sito></div><button class="btn btn-secondary btn-sm" type="submit">Invia</button></form>
+        <div class="form-group"><label>Un indirizzo da inviare</label><input type="text" name="url" id="seo-indexnow-url" placeholder="per esempio /una-pagina-del-sito/" data-link-sito></div><button class="btn btn-secondary btn-sm" type="submit">Invia</button></form>
       <?php $ultimi = seo_log_elenco(5, 'indexnow'); if ($ultimi): ?><p class="hint" style="margin-top:.8rem">Ultimi esiti:</p><ul style="font-size:.8rem;padding-left:1.1rem"><?php foreach ($ultimi as $l): ?><li><?= h($l['quando']) ?> <?= h($l['azione']) ?> <b class="<?= $l['esito'] === 'ok' ? 'seo-ok' : 'seo-no' ?>"><?= h($l['esito']) ?></b> <?= $l['quanti'] ? $l['quanti'] . ' url, ' : '' ?><?= h(mb_substr(strtok((string)$l['dettaglio'], "\n") ?: '', 0, 140)) ?></li><?php endforeach; ?></ul><?php endif; ?>
     <?php endif; ?>
   </div>
@@ -368,7 +368,8 @@ pre.seo-pre{background:var(--codice-fondo);color:var(--codice-testo);padding:.9r
         <form method="post"><?= csrf_field() ?><input type="hidden" name="azione" value="google_sa_togli"><button class="btn btn-secondary btn-sm" type="submit" data-conferma="Togliere il service account dal database?">Rimuovi</button></form>
       </div>
     <?php endif; ?>
-    <details <?= $sa ? '' : 'open' ?>><summary style="cursor:pointer;font-size:.86rem;font-weight:600">Come si crea, passo per passo</summary>
+    <?php /* UX 2026-11 (punto 5): passi e chiave nello stesso riquadro che si apre; aperto finche il collegamento non c'e. */ ?>
+    <details class="pn-aiuto seo-sa-passi" <?= $sa ? '' : 'open' ?>><summary><?= $sa ? 'Rifai il collegamento o sostituisci la chiave' : 'Come si collega, passo per passo' ?></summary>
     <ol class="seo-passi">
       <li>Vai su <a href="https://console.cloud.google.com/projectcreate" target="_blank" rel="noopener">console.cloud.google.com/projectcreate</a> con l'account Google che ha Search Console (in alto a destra, controlla che sia il tuo) e crea un progetto: nome libero, per esempio "il-mio-sito-seo", poi <b>Crea</b>.</li>
       <li>Menu, <b>API e servizi</b>, <b>Libreria</b>: cerca e abilita <b>Google Search Console API</b> (e, solo se la vorrai usare, <b>Web Search Indexing API</b>).</li>
@@ -376,12 +377,14 @@ pre.seo-pre{background:var(--codice-fondo);color:var(--codice-testo);padding:.9r
       <li>Apri il file con un editor di testo, copia tutto e incollalo qui sotto. Salva.</li>
       <li>Vai in <a href="https://search.google.com/search-console/users" target="_blank">Search Console, Impostazioni, Utenti e autorizzazioni</a>, <b>Aggiungi utente</b>: incolla l'email del service account (quella che compare qui sopra dopo il salvataggio), autorizzazione <b>Completa</b> (serve per l'ispezione degli URL).</li>
       <li>Torna qui e premi <b>Prova il collegamento</b>.</li>
-    </ol></details>
+    </ol>
     <form method="post" style="margin-top:.6rem"><?= csrf_field() ?><input type="hidden" name="azione" value="google_sa">
       <div class="form-group"><label><?= $sa ? 'Sostituisci la chiave JSON' : 'Chiave JSON del service account' ?></label><textarea name="sa_json" rows="4" class="codice" placeholder='{"type": "service_account", "project_id": "...", "private_key": "...", "client_email": "..."}'></textarea>
         <div class="hint">Viaggia protetta (base64) fino al pannello e si salva solo nel database. Mai nel repository, mai in chat.</div></div>
-      <button class="btn btn-secondary btn-sm" type="submit">Salva la chiave</button>
+      <button class="btn <?= $sa ? 'btn-secondary' : 'btn-primary' ?> btn-sm" type="submit">Salva la chiave</button>
     </form>
+    </details>
+    <h3>La proprietà da leggere</h3>
     <form method="post" style="margin-top:1rem"><?= csrf_field() ?><input type="hidden" name="azione" value="salva_google">
       <div class="form-group"><label>Proprietà di Search Console</label><input type="text" name="google[proprieta]" value="<?= h($cfg['google']['proprieta']) ?>">
         <div class="hint">Come è scritta in Search Console: <code><?= SITO_URL ?>/</code> per una proprietà Prefisso URL, oppure <code>sc-domain:<?= h((string)preg_replace('/^www\./', '', (string)parse_url(SITO_URL, PHP_URL_HOST))) ?></code> per una proprietà Dominio.</div></div>
@@ -390,7 +393,7 @@ pre.seo-pre{background:var(--codice-fondo);color:var(--codice-testo);padding:.9r
     </form>
     <?php if ($sa && !empty($cfg['google']['indexing_attivo'])): ?>
     <form method="post" class="seo-inline" style="margin-top:.8rem"><?= csrf_field() ?><input type="hidden" name="azione" value="google_indexing_url">
-      <div class="form-group"><label>Notifica un indirizzo a Google (Indexing API)</label><input type="text" name="url" id="seo-google-url" placeholder="/un-articolo/" data-link-sito></div><button class="btn btn-secondary btn-sm" type="submit">Notifica</button></form>
+      <div class="form-group"><label>Notifica un indirizzo a Google (Indexing API)</label><input type="text" name="url" id="seo-google-url" placeholder="per esempio /un-articolo/" data-link-sito></div><button class="btn btn-secondary btn-sm" type="submit">Notifica</button></form>
     <?php endif; ?>
   </div>
 
@@ -418,7 +421,7 @@ pre.seo-pre{background:var(--codice-fondo);color:var(--codice-testo);padding:.9r
   <p class="seo-nota">Il problema storico del sito: pagine note a Google e fuori dall'indice ("Scansionata, al momento non indicizzata"). Qui si chiede a Search Console il verdetto di ogni indirizzo e si salva: verdetto, stato di copertura, ultima scansione, canonical scelto da Google. La quota di Google e di <?= SEO_QUOTA_ISPEZIONI ?> ispezioni al giorno: i lotti partono dagli indirizzi mai controllati o controllati da più tempo.</p>
   <?php if (!$sa): ?><p class="seo-att" style="font-size:.86rem">Serve il service account Google: scheda <a href="?scheda=motori">Motori di ricerca</a>.</p><?php else: ?>
   <div style="display:flex;gap:1rem;flex-wrap:wrap;align-items:flex-end">
-    <form method="post" class="seo-inline"><?= csrf_field() ?><input type="hidden" name="azione" value="ispeziona"><div class="form-group"><label>Un indirizzo</label><input type="text" name="url" id="seo-ispeziona-url" placeholder="/una-pagina-del-sito/" data-link-sito></div><button class="btn btn-primary btn-sm" type="submit">Ispeziona</button></form>
+    <form method="post" class="seo-inline"><?= csrf_field() ?><input type="hidden" name="azione" value="ispeziona"><div class="form-group"><label>Un indirizzo</label><input type="text" name="url" id="seo-ispeziona-url" placeholder="per esempio /una-pagina-del-sito/" data-link-sito></div><button class="btn btn-primary btn-sm" type="submit">Ispeziona</button></form>
     <form method="post" class="seo-inline"><?= csrf_field() ?><input type="hidden" name="azione" value="ispeziona_lotto"><div class="form-group" style="min-width:120px"><label>Lotto</label><select name="quanti"><option value="10">10 indirizzi</option><option value="25" selected>25 indirizzi</option><option value="50">50 indirizzi</option><option value="100">100 indirizzi</option></select></div><button class="btn btn-secondary btn-sm" type="submit">Ispeziona i prossimi</button></form>
   </div>
   <p class="hint" style="margin-top:.5rem">Un lotto da 100 dura un paio di minuti: ogni ispezione è una chiamata a Google. Se il server taglia la richiesta, usa lotti da 25.</p>
@@ -512,7 +515,7 @@ pre.seo-pre{background:var(--codice-fondo);color:var(--codice-testo);padding:.9r
       <?php endforeach; ?>
       <div class="form-group"><label>Descrizione predefinita</label><textarea name="meta[descrizione]" rows="2" maxlength="300"><?= h($m['descrizione']) ?></textarea><div class="hint">Per le pagine senza descrizione ne estratto. Vuota = nessun meta description (Google sceglie da solo).</div></div>
       <div class="form-group"><label>Immagine social predefinita (Open Graph)</label><input type="text" name="meta[og_immagine]" id="seo-og-immagine" value="<?= h($m['og_immagine']) ?>" placeholder="https://..." data-immagine><div class="hint">Per le pagine e gli articoli senza immagine in evidenza: è la foto che esce quando il sito si condivide su Facebook, WhatsApp, LinkedIn e X. Misura giusta 1200x630 pixel, JPG o PNG (le SVG i social non le mostrano), con logo e scritte al centro.</div></div>
-      <div class="form-group"><label>Account X / Twitter del sito</label><input type="text" name="meta[twitter_account]" value="<?= h($m['twitter_account']) ?>" placeholder="nomeaccount"></div>
+      <div class="form-group"><label>Account X / Twitter del sito</label><input type="text" name="meta[twitter_account]" value="<?= h($m['twitter_account']) ?>" placeholder="per esempio nomeaccount"></div>
       <div class="seo-interruttori"><label><input type="checkbox" name="meta[robots_avanzati]" value="1" <?= $chk($m['robots_avanzati']) ?>><span>Direttive avanzate nel meta robots<small><code>max-snippet:-1, max-image-preview:large, max-video-preview:-1</code>: Google può mostrare snippet lunghi e immagini grandi (anche nelle risposte IA). Oggi acceso.</small></span></label></div>
       <button class="btn btn-primary" type="submit" style="margin-top:.8rem">Salva titoli e meta</button>
     </form>
@@ -614,7 +617,7 @@ pre.seo-pre{background:var(--codice-fondo);color:var(--codice-testo);padding:.9r
 <div class="seo-griglia" style="margin-top:1rem">
   <div class="seo-card">
     <h3>Anteprima del JSON-LD di un indirizzo</h3>
-    <div class="seo-inline"><div class="form-group"><label>Indirizzo del sito</label><input type="text" id="seo-jsonld-url" value="/" placeholder="/una-pagina-del-sito/" data-link-sito></div><button class="btn btn-primary btn-sm" type="button" id="seo-jsonld-vai">Mostra</button></div>
+    <div class="seo-inline"><div class="form-group"><label>Indirizzo del sito</label><input type="text" id="seo-jsonld-url" value="/" placeholder="per esempio /una-pagina-del-sito/" data-link-sito></div><button class="btn btn-primary btn-sm" type="button" id="seo-jsonld-vai">Mostra</button></div>
     <p class="hint" style="margin:.5rem 0" id="seo-jsonld-esito"></p>
     <pre class="seo-pre" id="seo-jsonld-pre" hidden></pre>
     <p class="hint">Verifica esterna: <a id="seo-rrt" href="https://search.google.com/test/rich-results?url=<?= rawurlencode(SITO_URL . '/') ?>" target="_blank">Test dei risultati avanzati di Google</a> &middot; <a id="seo-sv" href="https://validator.schema.org/#url=<?= rawurlencode(SITO_URL . '/') ?>" target="_blank">Schema Markup Validator</a> (aprono l'indirizzo pubblico: funzionano sul sito vivo).</p>
@@ -666,8 +669,8 @@ pre.seo-pre{background:var(--codice-fondo);color:var(--codice-testo);padding:.9r
     <h3>Nuovo redirect</h3>
     <p class="seo-nota">Stessa tabella dei redirect dei pacchetti (Aggiornamenti) e di quelli che nascono da soli quando cambia l'indirizzo di un contenuto: una sola lista, nessun doppione.</p>
     <form method="post" id="seo-redirect-form"><?= csrf_field() ?><input type="hidden" name="azione" value="redirect_nuovo"><input type="hidden" name="da_404" id="seo-da-404" value="">
-      <div class="form-group"><label>Vecchio indirizzo</label><input type="text" name="da" id="seo-redirect-da" placeholder="/vecchio-articolo/" required data-link-sito></div>
-      <div class="form-group"><label>Nuovo indirizzo</label><input type="text" name="a" id="seo-redirect-a" placeholder="/articolo-nuovo/" required data-link-sito></div>
+      <div class="form-group"><label>Vecchio indirizzo</label><input type="text" name="da" id="seo-redirect-da" placeholder="per esempio /vecchio-articolo/" required data-link-sito></div>
+      <div class="form-group"><label>Nuovo indirizzo</label><input type="text" name="a" id="seo-redirect-a" placeholder="per esempio /articolo-nuovo/" required data-link-sito></div>
       <div class="form-group"><label>Codice</label><select name="codice"><option value="301">301, spostato per sempre (il normale)</option><option value="302">302, temporaneo</option><option value="307">307, temporaneo (stesso metodo)</option><option value="308">308, permanente (stesso metodo)</option><option value="410">410, pagina eliminata</option></select></div>
       <button class="btn btn-primary" type="submit">Salva il redirect</button>
     </form>

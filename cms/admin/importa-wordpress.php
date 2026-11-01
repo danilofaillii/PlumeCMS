@@ -169,7 +169,7 @@ require_once __DIR__ . '/includes/admin-header.php';
       <h2>Collegati al sito</h2>
       <form method="post" autocomplete="off" id="iw-collega">
         <?= csrf_field() ?><input type="hidden" name="azione" value="collega">
-        <div class="form-group"><label for="iw-indirizzo">Indirizzo del sito WordPress</label><input id="iw-indirizzo" name="indirizzo" type="text" inputmode="url" placeholder="https://www.miosito.it" value="<?= $h($form['indirizzo']) ?>" required></div>
+        <div class="form-group"><label for="iw-indirizzo">Indirizzo del sito WordPress</label><input id="iw-indirizzo" name="indirizzo" type="text" inputmode="url" placeholder="per esempio https://www.miosito.it" value="<?= $h($form['indirizzo']) ?>" required></div>
         <div class="form-group"><label for="iw-utente">Nome utente di WordPress</label><input id="iw-utente" name="utente" type="text" placeholder="il nome con cui entri in WordPress" value="<?= $h($form['utente']) ?>" required autocapitalize="off" spellcheck="false"></div>
         <div class="form-group"><label for="iw-password">Password per le applicazioni</label><input id="iw-password" name="password" type="password" class="iw-pwd" placeholder="abcd efgh ijkl mnop qrst uvwx" required autocomplete="new-password"><p class="hint">Si tiene cifrata solo per la durata dell'import, poi si cancella. Non compare mai nelle pagine né nei registri.</p></div>
         <div class="iw-azioni"><button class="btn btn-primary" type="submit">Collegati e analizza il sito</button></div>

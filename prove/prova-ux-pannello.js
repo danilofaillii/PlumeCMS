@@ -101,6 +101,33 @@ function misura() {
   let pagine = [...new Set(await p.locator('.admin-sidebar a[href]').evaluateAll(l => l.map(a => a.getAttribute('href')).filter(h => h && !/^(https?:|#|mailto:|\.\.|\/)/.test(h) && !/logout|editor\.php|anteprima/.test(h))))];
   pagine = [...new Set(pagine.concat(PIU))].filter(u => !FILTRO || new RegExp(FILTRO).test(u));
   const err = []; p.on('pageerror', e => err.push(p.url() + ' ' + e.message.slice(0, 120)));
+  // La finestra di conferma del pannello (al posto di confirm()): fuoco dentro, Esc chiude, il fuoco torna al pulsante,
+  // il pulsante che conferma ripete l'azione ed e rosso se distrugge. Nessun dialogo del browser.
+  if (!FILTRO || /temi/.test(FILTRO)) {
+    const nativi = []; p.on('dialog', d => { nativi.push(d.message()); d.dismiss(); });
+    await p.goto(B + '/admin/temi.php', { waitUntil: 'networkidle' });
+    const scheda = p.locator('.tt-card', { has: p.locator('button', { hasText: 'Elimina' }) }).first();
+    const quante = await p.locator('.tt-card').count();
+    await scheda.locator('button', { hasText: 'Elimina' }).click();
+    const dlg = p.locator('dialog.pn-conferma[open]');
+    ok('conferma: si apre la finestra del pannello, non quella del browser', await dlg.count() === 1 && nativi.length === 0, nativi);
+    const info = await p.evaluate(() => { const d = document.querySelector('dialog.pn-conferma'); const si = d.querySelector('.pn-conferma-si'); return { dentro: d.contains(document.activeElement), fuoco: document.activeElement.textContent, si: si.textContent, rosso: si.classList.contains('btn-pericolo'), ruolo: d.getAttribute('role'), testo: d.querySelector('p').textContent }; });
+    ok('conferma: fuoco dentro, su Annulla per un\'azione che distrugge', info.dentro && info.fuoco === 'Annulla', info);
+    ok('conferma: il pulsante dice l\'azione ("Elimina") ed e rosso', info.si === 'Elimina' && info.rosso, info);
+    ok('conferma: role alertdialog e il testo della domanda', info.ruolo === 'alertdialog' && /Togliere il tema/.test(info.testo), info);
+    await p.keyboard.press('Escape');
+    const dopo = await p.evaluate(() => ({ aperta: !!document.querySelector('dialog.pn-conferma[open]'), fuoco: document.activeElement && document.activeElement.textContent }));
+    ok('conferma: Esc chiude, il fuoco torna al pulsante, niente cambia', !dopo.aperta && dopo.fuoco === 'Elimina' && await p.locator('.tt-card').count() === quante, dopo);
+    const usa = p.locator('.tt-card button', { hasText: 'Usa questo tema' }).first();
+    if (await usa.count()) {
+      await usa.click();
+      const u = await p.evaluate(() => { const si = document.querySelector('dialog.pn-conferma .pn-conferma-si'); return { si: si.textContent, rosso: si.classList.contains('btn-pericolo'), fuoco: document.activeElement === si }; });
+      ok('conferma: un\'azione che non distrugge ha il pulsante primario, con il fuoco', u.si === 'Usa questo tema' && !u.rosso && u.fuoco, u);
+      await p.locator('dialog.pn-conferma .pn-conferma-no').click();
+      ok('conferma: Annulla chiude senza inviare', await p.locator('dialog.pn-conferma[open]').count() === 0 && /temi\.php$/.test(p.url()));
+    }
+    p.removeAllListeners('dialog');
+  }
   const tel = await (await br.newContext({ viewport: { width: 390, height: 844 }, locale: 'it-IT', storageState: await c.storageState() })).newPage();
   for (const asp of ASPETTI.split(',')) {
     await p.goto(B + '/admin/account.php', { waitUntil: 'networkidle' });

@@ -3,6 +3,7 @@
 // Servono i temi di collaudo (prove/temi-collaudo.php). Schermate in <cartella schermate>.
 // uso: node prova-pannello-temi.js <base> <cartella CMS installato> <utente> <password> <cartella schermate>
 const { chromium } = require('playwright');
+const pnConferme = require('./conferme-pannello'); // UX 2026-11: conferme del pannello
 const { execFileSync } = require('child_process');
 const path = require('path');
 const [B, DIR, UTENTE, PASSWORD, OUT] = process.argv.slice(2);
@@ -16,7 +17,7 @@ const sfondo = (p) => p.evaluate(() => getComputedStyle(document.body).backgroun
   const err = []; p.on('pageerror', e => err.push(e.message.slice(0, 200)));
   p.on('console', m => { if (m.type() === 'error' && !/favicon/.test(m.text())) err.push(m.text().slice(0, 200)); });
   let rispondi = true, ultimaConferma = '';
-  p.on('dialog', d => { ultimaConferma = d.message(); rispondi ? d.accept() : d.dismiss(); });
+  pnConferme.on(p, d => { ultimaConferma = d.message(); rispondi ? d.accept() : d.dismiss(); });
 
   await p.goto(B + '/admin/login.php'); await p.fill('#username', UTENTE); await p.fill('#password', PASSWORD);
   await Promise.all([p.waitForNavigation(), p.click('button[type=submit]')]);
@@ -52,11 +53,11 @@ const sfondo = (p) => p.evaluate(() => getComputedStyle(document.body).backgroun
 
   // 4. Attiva, prima rifiutando la conferma
   rispondi = false;
-  await p.click('#tema-prova button:has-text("Attiva")'); await p.waitForTimeout(400);
+  await p.click('#tema-prova button:has-text("Usa questo tema")'); await p.waitForTimeout(400);
   ok('Attiva: la conferma spiega cosa cambia', /Cambiano colori.*header e footer del tema.*menu e immagini non cambiano.*codice PHP/s.test(ultimaConferma), ultimaConferma);
   ok('Attiva rifiutata: niente cambia', /scelto= /.test(cli('stato')));
   rispondi = true;
-  await Promise.all([p.waitForNavigation(), p.click('#tema-prova button:has-text("Attiva")')]);
+  await Promise.all([p.waitForNavigation(), p.click('#tema-prova button:has-text("Usa questo tema")')]);
   const msg = await p.locator('.flash').first().innerText().catch(() => '');
   ok('Attiva: messaggio con il resoconto', msg.includes('Tema "Prova" attivo') && msg.includes('Versioni'), msg);
   ok('Attiva: la scheda Prova ora è attiva, con Personalizza', await p.locator('#tema-prova .badge', { hasText: 'attivo' }).count() === 1 && await p.locator('#tema-prova a:has-text("Personalizza")').count() === 1);
@@ -70,7 +71,7 @@ const sfondo = (p) => p.evaluate(() => getComputedStyle(document.body).backgroun
   // 5. Tema guasto: avviso e riprova
   await p.goto(B + '/admin/temi.php');
   rispondi = true;
-  await Promise.all([p.waitForNavigation(), p.click('#tema-rotto button:has-text("Attiva")')]);
+  await Promise.all([p.waitForNavigation(), p.click('#tema-rotto button:has-text("Usa questo tema")')]);
   await sito.goto(B + '/non-esiste/', { waitUntil: 'networkidle' });
   await p.goto(B + '/admin/temi.php', { waitUntil: 'networkidle' });
   const av = await p.locator('.tt-guasto').innerText().catch(() => '');
@@ -82,7 +83,7 @@ const sfondo = (p) => p.evaluate(() => getComputedStyle(document.body).backgroun
   ok('Resta sull\'aspetto di base: avviso sparito, base attivo', await p.locator('.tt-guasto').count() === 0 && await p.locator('#tema-base .badge', { hasText: 'attivo' }).count() === 1);
 
   // 6. Torna all'aspetto di base da un tema attivo
-  await Promise.all([p.waitForNavigation(), p.click('#tema-prova button:has-text("Attiva")')]);
+  await Promise.all([p.waitForNavigation(), p.click('#tema-prova button:has-text("Usa questo tema")')]);
   await Promise.all([p.waitForNavigation(), p.click('#tema-base button:has-text("Usa l\'aspetto di base")')]);
   ok('Usa l\'aspetto di base: conferma e base attivo', /Tornare all'aspetto di base/.test(ultimaConferma) && await p.locator('#tema-base .badge', { hasText: 'attivo' }).count() === 1, ultimaConferma);
 

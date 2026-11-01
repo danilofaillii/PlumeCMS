@@ -64,7 +64,8 @@ $menu = [
     ]] : null,
     // Il gruppo Impostazioni è dell'amministratore: per il redattore il filtro dei ruoli qui sotto lo toglie tutto (anche Log cron, cron-log.php è solo admin).
     ['Impostazioni', $sonoAdminMenu ? 'impostazioni.php' : 'cron-log.php', 'impostazioni', in_array($qui, ['impostazioni.php', 'consegna.php', 'addon.php', 'aggiornamenti.php', 'copia-sito.php', 'importa-wordpress.php', 'cron-log.php', 'sicurezza.php', 'controlla-server.php'], true), array_values(array_filter([
-        $sonoAdminMenu ? ['Configurazione email', 'impostazioni.php', $qui === 'impostazioni.php'] : null,
+        $sonoAdminMenu ? ['Configurazione email', 'impostazioni.php', $qui === 'impostazioni.php' && ($_GET['scheda'] ?? '') !== 'sito'] : null,
+        $sonoAdminMenu ? ['Sito', 'impostazioni.php?scheda=sito', $qui === 'impostazioni.php' && ($_GET['scheda'] ?? '') === 'sito'] : null, // UX 2026-11: indirizzo e frase in fondo al sito
         $sonoAdminMenu ? ['Consegna delle email', 'consegna.php', $qui === 'consegna.php'] : null, // 2.1.0: dominio, servizi, mittenti, rimbalzi, riscaldamento
         $sonoAdminMenu ? ['Sicurezza', 'sicurezza.php', $qui === 'sicurezza.php'] : null, // sicurezza: checklist, 2FA, blocchi, CSP, registro
         $sonoAdminMenu ? ['Addon', 'addon.php', $qui === 'addon.php'] : null, // 2.0.0: le funzioni in più, da accendere

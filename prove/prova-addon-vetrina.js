@@ -6,6 +6,7 @@
 //   python3 -I prove/smtp-finto.py <porta smtp> <cartella posta> &
 // uso: node prove/prova-addon-vetrina.js <base> <utente> <password> <porta smtp> <cartella posta> <cartella del CMS installato>
 const { chromium } = require('playwright');
+const pnConferme = require('./conferme-pannello'); // UX 2026-11: conferme del pannello
 const fs = require('fs');
 const path = require('path');
 const { execFileSync } = require('child_process');
@@ -29,7 +30,7 @@ const UA = 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Geck
   const ctx = await br.newContext({ viewport: { width: 1280, height: 900 }, userAgent: UA });
   const p = await ctx.newPage();
   const err = []; p.on('pageerror', e => err.push(e.message.slice(0, 200))); p.on('console', m => { if (m.type() === 'error' && !/favicon|404|422|403/.test(m.text())) err.push(m.text().slice(0, 200)); });
-  p.on('dialog', d => d.accept());
+  pnConferme.on(p, d => d.accept());
   const vai = u => p.goto(B + u, { waitUntil: 'networkidle' });
   const flash = async () => (await p.locator('.flash').first().innerText().catch(() => '')).trim();
   const invia = async (sel) => { await Promise.all([p.waitForNavigation(), p.click(sel)]); };

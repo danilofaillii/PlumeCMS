@@ -134,13 +134,15 @@ require_once __DIR__ . '/includes/admin-header.php';
         <label class="ed-spunta" style="display:flex;gap:.5rem;align-items:center;font-weight:400;margin-top:.4rem"><input type="checkbox" name="riservato" value="1" id="dl-riservato"> Riservato: si scarica solo dopo l'iscrizione e la conferma dell'email</label>
         <button type="submit" class="btn btn-primary" style="margin-top:.8rem">Carica</button>
       </form>
-      <p class="hint" style="margin-top:.8rem">Tipi ammessi: <?= h(implode(', ', array_keys(SCARICABILI_TIPI))) ?>.
+      <details class="pn-aiuto" style="margin-top:.8rem"><summary>Come funzionano indirizzi, versioni e file riservati</summary><?php /* UX 2026-11 (punto 6): l aiuto lungo si apre a richiesta */ ?>
+      <p class="hint">Tipi ammessi: <?= h(implode(', ', array_keys(SCARICABILI_TIPI))) ?>.
         Il nome del file diventa l'indirizzo: <code>Listino 2026.pdf</code> si scarica da <code>/scarica/listino-2026/</code>.</p>
       <p class="hint">Con la versione nel nome (<code>guida-1.2.zip</code>) il file entra in una serie: <code>/scarica/guida-ultima/</code>
         porta sempre alla versione più alta, e nei testi delle pagine <code>{versione:guida-ultima}</code> diventa il suo numero.
         Per una versione nuova carica il file nuovo (<code>guida-1.3.zip</code>): link e pagine la seguono da soli.</p>
       <p class="hint"><b>File riservati.</b> Non hanno un indirizzo pubblico. Li dai con un form: in <b>Newsletter e form &gt; Form</b>,
         riquadro Dopo l'invio, scegli il file in "Dopo la conferma, dai questo file". Chi conferma l'email riceve un link personale.</p>
+      </details>
       <form method="post" style="display:flex;gap:.5rem;align-items:center;flex-wrap:wrap;margin:.2rem 0 .8rem" id="dl-giorni"><?= csrf_field() ?><input type="hidden" name="azione" value="giorni">
         <label style="font-size:.85rem;margin:0">Il link personale vale</label><input type="number" name="giorni" min="1" max="3650" value="<?= scaricabili_giorni() ?>" style="width:5.5rem"><span style="font-size:.85rem">giorni</span>
         <button type="submit" class="btn btn-secondary btn-sm">Salva</button></form>

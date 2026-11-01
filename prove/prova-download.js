@@ -5,6 +5,7 @@
 // Serve un plumeCMS 1.2.4 con il file manuale-temi in Download (il sito di plumeCMS lo ha).
 // uso: node prova-download.js <base> <cartella CMS installato> <utente> <password>
 const { chromium } = require('playwright');
+const pnConferme = require('./conferme-pannello'); // UX 2026-11: conferme del pannello
 const { execFileSync } = require('child_process');
 const fs = require('fs');
 const os = require('os');
@@ -31,7 +32,7 @@ const BASEP = new URL(B).pathname.replace(/\/$/, ''); // il sito in una cartella
   const br = await chromium.launch();
   const p = await (await br.newContext({ viewport: { width: 1440, height: 950 }, userAgent: PERSONA })).newPage();
   const err = []; p.on('pageerror', e => err.push(e.message.slice(0, 200)));
-  p.on('dialog', d => d.accept());
+  pnConferme.on(p, d => d.accept());
   await p.goto(B + '/admin/login.php'); await p.fill('#username', UTENTE); await p.fill('#password', PASSWORD);
   await Promise.all([p.waitForNavigation(), p.click('button[type=submit]')]);
   ok('login', !p.url().includes('login.php'), p.url());

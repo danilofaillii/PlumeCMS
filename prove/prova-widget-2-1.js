@@ -11,6 +11,7 @@
 //   python3 -I prove/smtp-finto.py <porta smtp> <cartella posta>
 // uso: node prove/prova-widget-2-1.js <base> <cartella CMS> <utente> <password> <porta smtp> <cartella posta>
 const { chromium } = require('playwright');
+const pnConferme = require('./conferme-pannello'); // UX 2026-11: conferme del pannello
 const { execFileSync } = require('child_process');
 const fs = require('fs');
 const os = require('os');
@@ -32,7 +33,7 @@ const domani = (g = 1) => { const d = new Date(Date.now() + g * 86400000); retur
   const br = await chromium.launch();
   const err = [];
   const contesto = async (w, h, extra = {}) => { const c = await br.newContext({ viewport: { width: w, height: h }, ...extra }); await c.route(u => !u.href.startsWith(B), r => r.abort()); return c; };
-  const pagina = async (c) => { const p = await c.newPage(); p.on('pageerror', e => err.push(e.message.slice(0, 200))); p.on('console', m => { if (m.type() === 'error' && !/ERR_FAILED|net::|Failed to load resource/.test(m.text())) err.push(m.text().slice(0, 200)); }); p.on('dialog', d => d.accept()); return p; };
+  const pagina = async (c) => { const p = await c.newPage(); p.on('pageerror', e => err.push(e.message.slice(0, 200))); p.on('console', m => { if (m.type() === 'error' && !/ERR_FAILED|net::|Failed to load resource/.test(m.text())) err.push(m.text().slice(0, 200)); }); pnConferme.on(p, d => d.accept()); return p; };
   const cpc = await contesto(1280, 900);
   const p = await pagina(cpc);
   const r = await p.goto(B + '/widget-2-1/', { waitUntil: 'networkidle' });

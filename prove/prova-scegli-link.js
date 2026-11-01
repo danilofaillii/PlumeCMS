@@ -9,6 +9,7 @@
 // Serve un sito con il kit Attività (prove/prova-kit.js).
 // uso: CMS_DIR=<cartella del CMS installato> node prove/prova-scegli-link.js <base> <utente> <password>
 const { chromium } = require('playwright');
+const pnConferme = require('./conferme-pannello'); // UX 2026-11: conferme del pannello
 const path = require('path');
 const { execFileSync } = require('child_process');
 const [B, UTENTE, PASSWORD] = process.argv.slice(2);
@@ -32,7 +33,7 @@ const D = 'dialog.pn-link';
   const guarda = (pg) => {
     pg.on('pageerror', e => err.push(pg.url() + ' ' + e.message.slice(0, 160)));
     pg.on('console', m => { if (m.type() === 'error' && !/favicon|Failed to load resource/.test(m.text())) err.push(pg.url() + ' ' + m.text().slice(0, 160)); });
-    pg.on('dialog', d => d.accept());
+    pnConferme.on(pg, d => d.accept());
   };
   guarda(p);
   const vai = async (pg, u) => { await pg.goto(B + '/admin/' + u, { waitUntil: 'networkidle' }); };

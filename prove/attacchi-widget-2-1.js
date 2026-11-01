@@ -12,6 +12,7 @@
 // Prima: php prove/pagina-widget-2-1.php <cartella CMS> cattivi
 // uso: node prove/attacchi-widget-2-1.js <base> <cartella CMS> <utente> <password> <cartella posta>
 const { chromium } = require('playwright');
+const pnConferme = require('./conferme-pannello'); // UX 2026-11: conferme del pannello
 const { execFileSync } = require('child_process');
 const fs = require('fs');
 const path = require('path');
@@ -117,7 +118,7 @@ const quantePoste = () => (fs.existsSync(POSTA) ? fs.readdirSync(POSTA) : []).fi
   ok('pannello: l\'invio cattivo non mostra link di scarico', await (async () => { await p.goto(B + '/admin/form-submissions.php', { waitUntil: 'networkidle' }); return await p.locator(`a.fs-file[href*="file=${cattivo}&"]`).count() === 0; })());
   await p.goto(B + '/admin/form-submissions.php', { waitUntil: 'networkidle' });
   await p.locator('tr', { has: p.locator(`button.ct-rosso[data-uno="${cattivo}"]`) }).hover();
-  p.removeAllListeners('dialog'); p.on('dialog', d => d.accept());
+  p.removeAllListeners('dialog'); pnConferme.on(p, d => d.accept());
   await Promise.all([p.waitForNavigation(), p.locator(`button.ct-rosso[data-uno="${cattivo}"]`).click()]);
   ok('scarico: eliminando l\'invio cattivo non si cancella niente fuori dalla cartella', fs.existsSync(path.join(DIR, 'includes', 'config.local.php')));
   cli('svuota-limiti');

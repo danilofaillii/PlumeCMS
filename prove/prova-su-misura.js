@@ -4,6 +4,7 @@
 // Il 404 di /galleria/ (pagina non scelta) è cercato apposta, non è un errore.
 // uso: DBPASS=... node prova-su-misura.js <base, es. http://127.0.0.1:8101> <db> [<cartella screenshot>]
 const { chromium } = require('playwright');
+const pnConferme = require('./conferme-pannello'); // UX 2026-11: conferme del pannello
 const [B, DB, OUT = ''] = process.argv.slice(2);
 const UTENTE = 'prova', PASSWORD = 'Collaudo-Officina-2026';
 let n = 0, ko = 0; const ok = (t, c, extra = '') => { n++; if (!c) ko++; console.log((c ? 'OK  ' : 'KO  ') + t + (extra ? ' ' + JSON.stringify(extra).slice(0, 220) : '')); };
@@ -14,7 +15,7 @@ let n = 0, ko = 0; const ok = (t, c, extra = '') => { n++; if (!c) ko++; console
   const p = await ctx.newPage();
   const err = []; p.on('pageerror', e => err.push(e.message.slice(0, 200)));
   p.on('console', m => { if (m.type() === 'error' && !(m.location().url || '').endsWith('/galleria/')) err.push(m.text().slice(0, 200) + ' ' + (m.location().url || '')); });
-  p.on('dialog', d => d.accept());
+  pnConferme.on(p, d => d.accept());
   const shot = async nome => { if (OUT) await p.screenshot({ path: `${OUT}/su-misura-${nome}.png`, fullPage: false }); };
   const vai = async u => p.goto(B + u, { waitUntil: 'networkidle' });
 
@@ -113,7 +114,7 @@ let n = 0, ko = 0; const ok = (t, c, extra = '') => { n++; if (!c) ko++; console
   ok('Sostituisci rifiuta un percorso fuori dalle foto finte e un file che non è un\'immagine', /Si sostituiscono solo/.test(rifiuti[0]) && /Si sostituiscono solo/.test(rifiuti[1]) && /Formati accettati/.test(rifiuti[2]), rifiuti);
 
   // 7. Dalla dashboard: risposte nuove, il sito si ricompone.
-  await vai('/admin/');
+  await vai('/admin/#tipo-sito');
   await Promise.all([p.waitForNavigation(), p.click('.db-kit-carta a[data-kit=su-misura]')]);
   ok('la pagina del pannello riapre le risposte di prima', await p.inputValue('input[name=citta]') === 'Bologna' && await p.locator('.sm-carta input[value=ristorante]').isChecked() && await p.locator('input[name="servizi[]"]').nth(1).inputValue() === 'Cena degustazione');
   await shot('4-pannello');
@@ -131,7 +132,7 @@ let n = 0, ko = 0; const ok = (t, c, extra = '') => { n++; if (!c) ko++; console
   ok('la home tenuta mostra ancora la foto vera', (await p.locator('img').evaluateAll(l => l.map(i => i.getAttribute('src')))).some(s => /sala-vera-/.test(s || '')));
 
   // 8. Definitivo: la pagina del pannello non ricompone più.
-  await vai('/admin/');
+  await vai('/admin/#tipo-sito');
   await Promise.all([p.waitForNavigation(), p.click('#kit-definitivo')]);
   await vai('/admin/sito-su-misura.php');
   ok('dopo Definitivo la pagina dice che il sito non si ricompone più', await p.locator('#sm-modulo').count() === 0 && /definitivo/.test(await p.locator('#sito-su-misura').innerText()));

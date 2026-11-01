@@ -215,7 +215,7 @@ require_once __DIR__ . '/includes/admin-header.php';
     <div class="hint">Arrivano a <?= h($avvisi ?: 'l\'indirizzo degli avvisi (da scrivere)') ?>, al giro del mattino del cron.</div>
     <label style="margin-top:1rem">I canali</label>
     <?php foreach (SOCIAL_CANALI as $k => $n): ?><label style="font-weight:400"><input type="checkbox" name="canale[<?= $k ?>]" value="1"<?= !empty($imp['canali'][$k]) ? ' checked' : '' ?>> <?= h($n) ?></label><?php endforeach; ?>
-    <label for="so-h-li" style="margin-top:1rem">Hashtag fissi per LinkedIn</label><input type="text" id="so-h-li" name="hashtag[linkedin]" value="<?= h(social_testo_vero($imp['hashtag']['linkedin'])) ?>" placeholder="#iltuomarchio #lavoro">
+    <label for="so-h-li" style="margin-top:1rem">Hashtag fissi per LinkedIn</label><input type="text" id="so-h-li" name="hashtag[linkedin]" value="<?= h(social_testo_vero($imp['hashtag']['linkedin'])) ?>" placeholder="per esempio #iltuomarchio #lavoro">
     <label for="so-h-fb">Hashtag fissi per Facebook</label><input type="text" id="so-h-fb" name="hashtag[facebook]" value="<?= h(social_testo_vero($imp['hashtag']['facebook'])) ?>">
     <label for="so-h-ig">Hashtag fissi per Instagram</label><input type="text" id="so-h-ig" name="hashtag[instagram]" value="<?= h(social_testo_vero($imp['hashtag']['instagram'])) ?>">
     <label for="so-h-cat">Hashtag per categoria</label>

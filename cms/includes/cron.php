@@ -87,12 +87,60 @@ function cron_giornaliero(string $da = 'cron'): string {
         $righe[] = 'ERRORE IndexNow: ' . $e->getMessage();
     }
 
+    // 4. UX 2026-11 (punto 2 deciso da Danilo): le bozze vuote lasciate da "Aggiungi articolo" o "Aggiungi pagina" aperti e
+    // chiusi senza scrivere niente vanno nel cestino dopo un giorno (dal cestino si ripristinano). Mai una bozza con dentro qualcosa.
+    try {
+        $n = cron_bozze_vuote();
+        $righe[] = $n ? "Bozze vuote mai salvate messe nel cestino: $n" : 'Nessuna bozza vuota da mettere nel cestino';
+    } catch (Throwable $e) {
+        $righe[] = 'ERRORE bozze vuote: ' . $e->getMessage();
+    }
+
     $log = date('Y-m-d H:i:s') . ' | Cron avviato' . ($da === 'pannello' ? ' dal pannello (Esegui adesso)' : '') . "\n";
     foreach ($righe as $r) $log .= "  $r\n";
     $log .= "  Completato.\n\n";
     @file_put_contents($logFile, $log, FILE_APPEND | LOCK_EX);
     cron_segna('giornaliero', $da, $inizio, $righe);
     return $log;
+}
+
+/**
+ * UX 2026-11: le bozze vuote mai salvate, piu vecchie di $ore, nel cestino. Ritorna quante.
+ * "Vuota e mai salvata" vuol dire tutte queste cose insieme (basta che una manchi e la bozza resta dov'e):
+ *  - bozza (status draft), non gia nel cestino, nata da piu di $ore ore;
+ *  - titolo ancora quello che le dà il pannello ("Nuovo articolo", "Nuova pagina") e indirizzo nuovo-articolo, nuovo-articolo-2...;
+ *  - nessun testo nel campo del contenuto e nessuna struttura pubblicata;
+ *  - nella scheda nessun salvataggio dopo la nascita (updated_at entro cinque minuti da created_at);
+ *  - nell'editor nessuna versione oltre a quella "creato dall'editor".
+ * Solo articoli e pagine del nucleo. Le funzioni che usa ci sono dalla 2.1 (contenuti.php, editor.php): niente di nuovo da altri file.
+ */
+function cron_bozze_vuote(int $ore = 24): int {
+    require_once __DIR__ . '/contenuti.php';
+    $tot = 0;
+    foreach (['articoli', 'pagine'] as $tipo) {
+        $tipi = contenuti_tipi();
+        if (!isset($tipi[$tipo])) continue;
+        $def = $tipi[$tipo];
+        $nome = (string)($def['nuovo'] ?? (((($def['genere'] ?? (str_ends_with((string)$def['uno'], 'a') ? 'f' : 'm')) === 'f') ? 'Nuova ' : 'Nuovo ') . $def['uno']));
+        $base = contenuti_slug($nome);
+        $campo = (string)($def['campo_contenuto'] ?? 'content');
+        if (!preg_match('/^[a-z_]+$/', $campo)) continue;
+        $tab = tbl($def['tabella']);
+        $st = db()->prepare("SELECT id, slug, `$campo` AS testo, struttura FROM $tab WHERE status = 'draft' AND cestino IS NULL AND title = ?
+            AND created_at < (NOW() - INTERVAL " . max(1, $ore) . " HOUR) AND (updated_at IS NULL OR updated_at <= created_at + INTERVAL 5 MINUTE)");
+        $st->execute([$nome]);
+        $ambito = 'contenuto:' . $tipo;
+        $versioni = db()->prepare('SELECT COUNT(*) FROM ' . tbl('editor_versioni') . " WHERE ambito = ? AND oggetto_id = ? AND nota <> 'creato dall''editor'");
+        $ids = [];
+        foreach ($st->fetchAll() as $r) {
+            if (!preg_match('/^' . preg_quote($base, '/') . '(-\d+)?$/', (string)$r['slug'])) continue;
+            if (trim(strip_tags((string)$r['testo'])) !== '' || trim((string)$r['struttura']) !== '') continue;
+            try { $versioni->execute([$ambito, (int)$r['id']]); if ((int)$versioni->fetchColumn() > 0) continue; } catch (Throwable $e) { continue; }
+            $ids[] = (int)$r['id'];
+        }
+        if ($ids) $tot += contenuti_cestina($tipo, $ids);
+    }
+    return $tot;
 }
 
 /** Il giro della newsletter. Ritorna le righe di quello che ha fatto (vuoto: niente da fare). Eccezione se la newsletter si ferma. */

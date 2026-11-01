@@ -347,7 +347,7 @@ tr:hover td { background: var(--riga-hover); }
 .nav-freccia { padding: 0.2rem 0.4rem; }
 .nav-gruppo summary:hover { background: var(--sidebar-hover); color: var(--sidebar-testo); }
 .nav-gruppo summary.active { color: var(--logo); }
-.nav-freccia { margin-left: auto; font-size: 0.75rem; opacity: 0.6; transition: transform 0.15s; }
+.nav-freccia { margin-left: auto; font-size: 0.75rem; color: var(--sidebar-testo-2); transition: transform 0.15s; }
 .nav-gruppo[open] .nav-freccia { transform: rotate(90deg); }
 .nav-sotto { display: flex; flex-direction: column; gap: 1px; padding: 2px 0 6px 2.3rem; }
 .nav-sotto a { padding: 0.4rem 0.7rem !important; font-size: 0.84rem !important; border-radius: 6px; }
@@ -599,3 +599,66 @@ html .admin-content :is(input, select, textarea):disabled { opacity: .65; cursor
 .admin-menu-toggle { min-width: 44px; min-height: 44px; border-radius: 8px; line-height: 1; }
 .admin-menu-toggle:focus-visible { outline: 2px solid var(--coral); outline-offset: 2px; }
 .form-group .hint { line-height: 1.45; }
+
+/* 8. Fuoco da tastiera uguale in tutto il pannello, anche nelle pagine degli addon (pulsanti, link, schede, riquadri che si
+   aprono): prima era il contorno sottile del browser, quasi invisibile sui pulsanti pieni. */
+.admin-main :is(.btn, a, summary, button):focus-visible { outline: 2px solid var(--coral); outline-offset: 2px; }/* 10. La finestra di conferma del pannello (pannello.js, al posto di confirm()). Il pulsante che conferma ripete l'azione;
+   rosso pieno (.btn-pericolo) se l'azione distrugge qualcosa. */
+.btn-pericolo { background: var(--errore); color: var(--su-pericolo); border: 1px solid var(--errore); }
+.btn-pericolo:hover { filter: brightness(.92); }
+.pn-conferma { margin: auto; width: min(460px, calc(100vw - 2rem)); padding: 1.25rem 1.4rem 1.1rem; border: 1px solid var(--border); border-radius: var(--radius); background: var(--surface); color: var(--text); box-shadow: var(--ombra-grande); }
+.pn-conferma::backdrop { background: var(--velo); }
+.pn-conferma.pn-conferma-pericolo { border-top: 4px solid var(--errore); }
+.pn-conferma h2 { font-size: 1.05rem; margin: 0 0 .5rem; font-family: var(--font-titolo); }
+.pn-conferma p { font-size: .92rem; line-height: 1.5; margin: 0 0 1.1rem; white-space: pre-line; }
+.pn-conferma-azioni { display: flex; gap: .6rem; justify-content: flex-end; flex-wrap: wrap; }
+.pn-conferma-azioni .btn { min-height: 44px; justify-content: center; }
+.pn-conferma .btn:focus-visible { outline: 2px solid var(--coral); outline-offset: 2px; }
+.pn-conferma .btn-pericolo:focus-visible { outline-color: var(--errore); }
+@media (max-width: 640px) { .pn-conferma-azioni .btn { flex: 1 1 100%; } }
+
+/* 11. Al telefono le tabelle semplici diventano schede (pannello.js mette data-schede e data-etichetta): una riga = una
+   scheda, ogni cella con il nome della sua colonna. Niente piu prima colonna visibile e il resto nascosto di lato. */
+@media (max-width: 640px) {
+  .admin-content table[data-schede], .admin-content table[data-schede] tbody { display: block; overflow: visible; width: 100%; }
+  .admin-content table[data-schede] thead { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+  .admin-content table[data-schede] tr { display: block; margin: .6rem; padding: .55rem .8rem; border: 1px solid var(--border); border-radius: 10px; background: var(--surface); }
+  .admin-content table[data-schede] tr:hover td { background: transparent; }
+  .admin-content table[data-schede] td { display: block; padding: .35rem 0; border: 0; max-width: none; min-width: 0; overflow-wrap: anywhere; white-space: normal; }
+  .admin-content table[data-schede] td + td { border-top: 1px solid var(--border); }
+  .admin-content table[data-schede] td::before { content: attr(data-etichetta); display: block; font-size: .72rem; font-weight: 600; color: var(--text-muted); margin-bottom: .1rem; }
+  .admin-content table[data-schede] td:not([data-etichetta])::before { display: none; }
+  .admin-content table[data-schede] td:empty { display: none; }
+  .admin-content table[data-schede] td[colspan] { display: block; text-align: center; }
+  .admin-content table[data-schede] .empty-state { padding: 1.25rem .5rem; }
+  /* Una casella con la sua frase resta sulla stessa riga (la regola delle etichette che vanno a capo la separava). */
+  .admin-content label:has(> input[type=checkbox], > input[type=radio]) { flex-wrap: nowrap; }
+}
+
+/* Le azioni rosse a forma di link fuori dalla riga delle azioni (Utenti: "esci da tutti", "azzera"): erano pulsanti grigi
+   del browser. */
+.admin-content button.ct-rosso { background: none; border: 0; padding: 0 .1rem; color: var(--errore-testo); font: inherit; font-size: .85rem; text-decoration: underline; cursor: pointer; }
+
+/* Utenti e Categorie: modulo a sinistra, elenco a destra; sotto 760 px una colonna sola. */
+.ut-griglia { display: grid; grid-template-columns: 320px minmax(0, 1fr); gap: 1.2rem; align-items: start; }
+@media (max-width: 760px) {
+  .ut-griglia { grid-template-columns: minmax(0, 1fr); }
+  /* Download: la colonna larga 340 px scritta nella pagina va sotto l'elenco. */
+  .admin-content .sc-griglia[style] { grid-template-columns: minmax(0, 1fr) !important; }
+}
+
+/* Le schede di Impostazioni (Configurazione email, Sito): come quelle di SEO. */
+.imp-schede { display: flex; gap: .25rem; flex-wrap: wrap; margin-bottom: 1rem; border-bottom: 1px solid var(--border); }
+.imp-schede a { padding: .55rem .9rem; border-radius: 8px 8px 0 0; font-size: .88rem; color: var(--text-muted); text-decoration: none; border: 1px solid transparent; border-bottom: 0; }
+.imp-schede a:hover { color: var(--text); }
+.imp-schede a.attiva { background: var(--surface); color: var(--text); border-color: var(--border); font-weight: 600; box-shadow: inset 0 3px 0 var(--coral); }
+
+/* 9. L'aiuto lungo si apre a richiesta (<details class="pn-aiuto">): il riquadro resta corto, la spiegazione c'e. */
+.pn-aiuto { font-size: .82rem; }
+.pn-aiuto > summary { cursor: pointer; font-weight: 600; color: var(--accento-testo); width: max-content; max-width: 100%; padding: .15rem 0; }
+.pn-aiuto[open] > summary { margin-bottom: .4rem; }
+.pn-aiuto > p, .pn-aiuto > ol, .pn-aiuto > ul { margin-bottom: .5rem; }
+/* L'ultimo accesso in Utenti non va a capo a meta. */
+.ct-quando { white-space: nowrap; }
+/* La freccina dei gruppi del menu (.nav-freccia, sopra) ha il colore --sidebar-testo-2 pieno: prima opacita 0,6, 3,3:1 in
+   Aria, ed e l'unico segno che la voce si apre. */

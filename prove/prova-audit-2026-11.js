@@ -5,6 +5,7 @@
 // Con CMS_DIR=<cartella del CMS installato> fa anche le prove che preparano dati da riga di comando (P15).
 // uso: [CMS_DIR=<cartella>] node prove/prova-audit-2026-11.js <base> <utente> <password>
 const { chromium } = require('playwright');
+const pnConferme = require('./conferme-pannello'); // UX 2026-11: conferme del pannello
 const { execFileSync } = require('child_process');
 const path = require('path');
 const [B, U, P] = process.argv.slice(2);
@@ -17,7 +18,7 @@ const CARTELLA = new URL(B).pathname.replace(/\/$/, '');
   const br = await chromium.launch();
   const a = await br.newPage({ viewport: { width: 1280, height: 900 } });
   const err = []; a.on('pageerror', e => err.push(e.message.slice(0, 160)));
-  a.on('dialog', d => d.accept());
+  pnConferme.on(a, d => d.accept());
   const vai = async u => { await a.goto(B + '/admin/' + u, { waitUntil: 'domcontentloaded' }); };
   const flash = async () => (await a.locator('.flash').allInnerTexts()).join(' | ');
   const invia = async (form, bottone) => { await Promise.all([a.waitForNavigation(), a.locator(form).locator(bottone || 'button[type=submit], button:not([type])').first().click()]); };

@@ -1,6 +1,7 @@
 // I pezzi comuni delle prove degli addon Area riservata, Corsi online e Copia del sito altrove (2.0.0):
 // conteggio OK/KO, accesso al pannello, posta del server finto (prove/smtp-finto.py) letta e decodificata, addon da accendere.
 const fs = require('fs');
+const pnConferme = require('./conferme-pannello'); // UX 2026-11: conferme del pannello
 const path = require('path');
 
 function conta() {
@@ -16,7 +17,7 @@ async function pagina(br, err, w = 1280, h = 900) {
   const p = await ctx.newPage();
   p.on('pageerror', e => err.push(e.message.slice(0, 200)));
   p.on('console', m => { if (m.type() === 'error' && !/favicon|Failed to load resource/.test(m.text())) err.push(m.text().slice(0, 200)); });
-  p.on('dialog', d => d.accept());
+  pnConferme.on(p, d => d.accept());
   return p;
 }
 

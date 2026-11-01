@@ -1038,7 +1038,7 @@ footer. Pagine, articoli, menu e immagini restano come sono. Si apre da **Editor
 Ogni tema ha una scheda con l'anteprima e quattro pulsanti:
 
 - **Anteprima** apre il sito vero con quel tema, solo per te. Guardalo sempre prima di attivarlo.
-- **Attiva** lo mette sul sito, dopo una conferma. Lo stile di prima resta nelle Versioni.
+- **Usa questo tema** lo mette sul sito, dopo una conferma. Lo stile di prima resta nelle Versioni.
 - **Scarica** ne fa uno zip, da portare su un altro sito.
 - **Elimina** lo toglie.
 
@@ -1091,7 +1091,7 @@ Per costruirne uno tuo c'è il **Manuale dei temi**.
 ### La frase in fondo al sito
 
 Sotto il footer, in piccolo, ogni pagina ha una riga: **Un nuovo sito plumeCMS**, con il link al sito ufficiale. La
-cambi o la spegni da **Impostazioni > Sito pubblico**, riquadro **La frase in fondo al sito**.
+cambi o la spegni da **Impostazioni > Sito**, riquadro **La frase in fondo al sito**.
 
 ![La frase in fondo al sito](immagini/manuale-uso/15-frase.jpg)
 
@@ -1105,12 +1105,12 @@ Il testo è solo testo: niente grassetti né codice, e le emoji si tolgono.
 ### Spostare il sito su un altro dominio
 
 Quando il sito passa a un dominio nuovo (per esempio da `https://studioprova.esempio.it` a `https://www.studioprova.it`),
-l'indirizzo che usa per i link, la sitemap, il canonical e le email si cambia da **Impostazioni > Sito pubblico**, riquadro
+l'indirizzo che usa per i link, la sitemap, il canonical e le email si cambia da **Impostazioni > Sito**, riquadro
 **Indirizzo del sito**.
 
 1. Nel pannello dell'hosting collega il dominio nuovo alla **stessa cartella** del sito e attiva il certificato HTTPS (in
    cPanel: Domini, poi SSL/TLS Status). Apri `https://www.studioprova.it` nel browser: deve comparire il tuo sito.
-2. Nel pannello del sito: **Impostazioni**, riquadro **Indirizzo del sito**. Scrivi solo il dominio, con `https://` davanti:
+2. Nel pannello del sito: **Impostazioni > Sito**, riquadro **Indirizzo del sito**. Scrivi solo il dominio, con `https://` davanti:
    `https://www.studioprova.it`.
 3. Premi **Salva l'indirizzo** e conferma. Il pannello prova che il nuovo indirizzo apra proprio questo sito: se sì, in alto
    compare "Indirizzo del sito cambiato"; se no, ti dice perché e non cambia niente.
@@ -1936,6 +1936,10 @@ Fai lo stesso per la seconda riga. Il giorno dopo, la stessa pagina ti dice com'
 ![Come va il cron](immagini/manuale-uso/24-come-va.jpg)
 
 **Esegui adesso** fa partire subito il giro del mattino, per provare senza aspettare domani.
+
+Il giro del mattino mette anche nel cestino le bozze vuote: quelle nate da **Aggiungi articolo** o **Aggiungi pagina**,
+aperte e chiuse senza scrivere niente, dopo un giorno. Una bozza in cui hai scritto qualcosa, o a cui hai cambiato il
+titolo, non la tocca mai. Se ne serve una, la ritrovi nel **Cestino** e la ripristini.
 
 **Checklist**
 

@@ -14,6 +14,7 @@
 // uso: node prove/prova-newsletter-difetti.js <base> <utente> <password> <porta smtp> <cartella posta> <cartella del CMS installato>
 // Lascia dati di prova nel sito (iscritti, liste, flussi, campagne): va lanciata su un sito di prova da buttare.
 const { chromium } = require('playwright');
+const pnConferme = require('./conferme-pannello'); // UX 2026-11: conferme del pannello
 const fs = require('fs');
 const os = require('os');
 const path = require('path');
@@ -56,7 +57,7 @@ const senzaTag = s => s.replace(/<style[\s\S]*?<\/style>/gi, '').replace(/<[^>]+
   const br = await chromium.launch();
   const p = await (await br.newContext({ viewport: { width: 1280, height: 900 } })).newPage();
   const err = []; p.on('pageerror', e => err.push(e.message.slice(0, 200)));
-  p.on('dialog', d => d.accept());
+  pnConferme.on(p, d => d.accept());
   const vai = u => p.goto(B + u, { waitUntil: 'networkidle' });
   await vai('/admin/login.php'); await p.fill('#username', UTENTE); await p.fill('#password', PASSWORD);
   await Promise.all([p.waitForNavigation(), p.click('button[type=submit]')]);

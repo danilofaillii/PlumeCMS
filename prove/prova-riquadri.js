@@ -8,6 +8,7 @@
 // 4. sul sito: classi e allineamento del testo misurati nel browser.
 // uso: node prova-riquadri.js <base> <utente> <password> <id della pagina> <cartella schermate>
 const { chromium } = require('playwright');
+const pnConferme = require('./conferme-pannello'); // UX 2026-11: conferme del pannello
 const [B, UTENTE, PASSWORD, PAGINA, OUT] = process.argv.slice(2);
 let n = 0, ko = 0; const ok = (t, c, extra = '') => { n++; if (!c) ko++; console.log((c ? 'OK  ' : 'KO  ') + t + (extra !== '' ? ' ' + JSON.stringify(extra).slice(0, 260) : '')); };
 
@@ -29,7 +30,7 @@ let n = 0, ko = 0; const ok = (t, c, extra = '') => { n++; if (!c) ko++; console
 
   // 2.
   const p = await (await br.newContext({ viewport: { width: 1440, height: 950 } })).newPage();
-  const err = []; p.on('pageerror', e => err.push(e.message.slice(0, 200))); p.on('dialog', d => d.accept());
+  const err = []; p.on('pageerror', e => err.push(e.message.slice(0, 200))); pnConferme.on(p, d => d.accept());
   await p.goto(B + '/admin/login.php'); await p.fill('#username', UTENTE); await p.fill('#password', PASSWORD);
   await Promise.all([p.waitForNavigation(), p.click('button[type=submit]')]);
   const apri = async () => {

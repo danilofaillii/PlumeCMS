@@ -42,7 +42,7 @@ Un tema cambia **l'aspetto intero** del sito in un colpo solo:
 | se vuole, il disegno di alcune pagine (con PHP) | impostazioni, utenti, newsletter |
 
 Chi gestisce il sito sceglie il tema dal pannello, **Editor > Temi**: lo guarda con **Anteprima** (lo vede solo lui),
-lo attiva con **Attiva**, e poi ritocca ogni dettaglio da **Stile del sito** e da **Header e footer**. Il tema è il
+lo attiva con **Usa questo tema**, e poi ritocca ogni dettaglio da **Stile del sito** e da **Header e footer**. Il tema è il
 punto di partenza, non una gabbia.
 
 Quando si attiva un tema succedono tre cose:
@@ -420,7 +420,7 @@ Nei colori dei widget, oltre a `#rrggbb` e `rgba()`, si possono scrivere:
 
 Riattivando lo stesso tema, il CMS riusa i modelli creati la volta prima (non li duplica) e li rende di nuovo
 predefiniti. Se hai aggiornato `modelli.json`, per avere i modelli nuovi chi gestisce il sito deve cestinare
-"Header Nometema" e "Footer Nometema" e premere di nuovo **Attiva**.
+"Header Nometema" e "Footer Nometema" e premere di nuovo **Usa questo tema**.
 
 ---
 
@@ -796,7 +796,7 @@ file caricati (spesso 2 o 8 MB, si cambia da cPanel): tieni le immagini leggere.
 Pannello, Editor > Temi, in fondo **Carica un tema**: scegli lo zip, **Carica**. Il tema arriva in `temi/` ma **non si
 attiva da solo**. Per caricare una versione nuova dello stesso tema spunta **Sostituisci il tema con lo stesso nome**:
 la versione di prima resta sul server in `aggiornamenti/temi-precedenti/`. Se il tema era attivo, per applicare stile,
-header e footer nuovi si preme di nuovo **Attiva**.
+header e footer nuovi si preme di nuovo **Usa questo tema**.
 
 Ogni caricamento resta nel registro della pagina Sicurezza.
 
@@ -1051,7 +1051,7 @@ parte alta della pagina, riducilo a 800 per 500.
 | Testo degli articoli poco leggibile | colori di testo e sfondo troppo vicini | contrasto almeno 4,5 a 1 |
 | Pulsante principale illeggibile | primario chiaro con testo bianco | `.btn-viola{color:<scuro>}` in `tema.css` |
 | L'header non ha il menu | menu indicato per numero, o nessun menu con quella posizione | `"menu": "posizione:principale"` |
-| Header e footer nuovi non arrivano dopo l'aggiornamento del tema | il CMS riusa i modelli creati la prima volta | cestina "Header Nome" e "Footer Nome", poi Attiva |
+| Header e footer nuovi non arrivano dopo l'aggiornamento del tema | il CMS riusa i modelli creati la prima volta | cestina "Header Nome" e "Footer Nome", poi **Usa questo tema** |
 | Avviso rosso "si è rotto" | errore nel PHP del tema | leggi l'errore nell'avviso e in `logs/php-errori.log`, correggi, ricarica con Sostituisci, Riprova ad attivarlo |
 | Pagina bianca o errore 500 una volta | errore fatale nel PHP del tema | come sopra; dalla richiesta dopo il sito torna all'aspetto di base da solo |
 | Le immagini del CSS non si vedono con il CMS in una cartella | percorso assoluto `/temi/...` nel CSS | percorso relativo: `url(img/foto.jpg)` |

@@ -6,6 +6,7 @@
 // dimensione bugiarda o troppo grande, JSON enorme, sito lento, senza token, controllo spento.
 // uso: node prova-versione.js <base cliente> <cartella CMS cliente> <base ufficiale> <cartella CMS ufficiale> <base finto> <file FINTO_CONTA del finto> <utente> <password> <cartella schermate>
 const { chromium } = require('playwright');
+const pnConferme = require('./conferme-pannello'); // UX 2026-11: conferme del pannello
 const { execFileSync } = require('child_process');
 const fs = require('fs'), path = require('path'), crypto = require('crypto');
 const [B, CMS, UFF, CMSU, FINTO, LOGU, U, P, OUT] = process.argv.slice(2);
@@ -46,7 +47,7 @@ z.writestr('cms/VERSIONE','${V1}\\n'); z.close()`, pacchetto]);
 
   const br = await chromium.launch(); const ctx = await br.newContext({ viewport: { width: 1280, height: 900 } }); const p = await ctx.newPage();
   const err = []; p.on('pageerror', e => err.push(e.message.slice(0, 200)));
-  p.on('dialog', d => d.accept());
+  pnConferme.on(p, d => d.accept());
   await config(FINTO + '/buono'); svuota();
   await p.goto(B + '/admin/login.php'); await p.fill('#username', U); await p.fill('#password', P);
   await Promise.all([p.waitForNavigation(), p.click('button[type=submit]')]);
