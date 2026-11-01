@@ -139,7 +139,11 @@ Fatto: plumeCMS 2.5.0 (1 novembre): otto temi nuovi (richiesta di Danilo: Estate
 Rosso, Verde, Blu; agente temi in worktree) con contrasto almeno 4,5 misurato su sette pagine (`prove/prova-temi-nuovi.js` 611/611),
 e un audit di tutto il CMS (agente auditor): 16 problemi risolti, quasi tutti emoji nelle tabelle a 3 byte, documento
 `docs-sviluppo/audit-2026-11.md` con Gantt e sette punti aperti, `prove/prova-audit-2026-11.js` 34/34. Cosmo, Aria e Bottega hanno
-ancora testi sotto 4,5 (Bottega 3,97): non toccati. Prove della consegna: vedi il diario del 1 novembre.
+ancora testi sotto 4,5 (Bottega 3,97): non toccati. Le anteprime dei temi nuovi sono WebP: con i PNG lo zip di aggiornamento
+pesava 2182 KB, oltre i 2 MB predefiniti di PHP (ora 1908 KB). Prove: install 37/37 radice e cartella, aggiornamento 2.4.0 -> 2.5.0
+13/13 con 24 foto uguali, addon 70/70 (nuovo e aggiornato), attacchi 261/261, temi nuovi 451/451 (nuovo e aggiornato), audit 34/34
+radice e cartella, pannello temi 32/32, motore temi 39/40 (il KO cerca il nome "Bottega di prova" dell'installatore, sito fatto col kit),
+service account 8/8, telefono 49/49 a 390 e 768, firma 14/14, indirizzo sito 10/10, sito di plumeCMS 92/92.
 
 Fatto: plumeCMS 2.4.0 (1 novembre): il sito ufficiale passa a **https://plumecms.it** (Danilo ha comprato il dominio; stesso hosting;
 il vecchio plumecms.danilofailli.it si chiude subito, decisione sua). `VERSIONE_SITO_UFFICIALE` e `FIRMA_URL` cambiati, la frase salvata col
