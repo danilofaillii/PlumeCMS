@@ -634,8 +634,31 @@ capitoli['18'] = async () => {
 
 // 19. Newsletter
 capitoli['19'] = async () => {
-  await vai('newsletter.php?scheda=iscritti');
-  await foto('19-iscritti', { clip: { x: 240, y: 56, width: 960, height: 520 } });
+  // 2.8.0: i contatti come Brevo. Prima un attributo (Data di nascita), poi tre contatti creati a mano, uno in lista nera.
+  await vai('newsletter-attributi.php');
+  await p.click('button[data-apri-dialogo="#nla-crea"]');
+  await p.selectOption('#nla-tipo', 'date'); await p.fill('#nla-nome', 'DATA_NASCITA'); await p.fill('#nla-etichetta', 'Data di nascita');
+  await foto('19-attributo', { sel: '#nla-crea', margine: 8, segni: [{ sel: '#nla-tipo', n: 1 }, { sel: '#nla-nome', n: 2 }, { sel: '#nla-etichetta', n: 3 }, { sel: '#nla-crea button[type=submit]', n: 4 }], dove: p });
+  await Promise.all([p.waitForNavigation(), p.click('#nla-crea button[type=submit]')]);
+  for (const [e, n, c, d] of [['bruno.verdi@esempio.it', 'Bruno', 'Verdi', ''], ['carla.bianchi@esempio.it', 'Carla', 'Bianchi', ''], ['anna.rossi@esempio.it', 'Anna', 'Rossi', '1985-04-12']]) {
+    await vai('newsletter-contatto.php?nuovo=1');
+    await p.fill('#nlk-email', e); await p.fill('#nlk-nome', n); await p.fill('#nlk-cognome', c);
+    if (d) await p.fill('#nlk-data-nascita', d);
+    await p.locator('input[name="liste[]"]').first().check();
+    if (n === 'Anna') await foto('19-crea', { clip: { x: 240, y: 56, width: 960, height: 700 }, segni: [{ sel: '#nlk-email', n: 1 }, { sel: '#nlk-nome', n: 2 }, { sel: 'input[name="liste[]"]', n: 3 }, { sel: 'form.nlk-largo button.btn-primary', n: 4 }] });
+    await Promise.all([p.waitForNavigation(), p.click('button:has-text("Crea")')]);
+  }
+  await foto('19-contatto', { clip: { x: 240, y: 56, width: 960, height: 640 }, segni: [{ sel: 'nav.imp-schede', n: 1 }, { sel: 'form.form-card button.btn-primary', n: 2 }] });
+  // Bruno in lista nera dalla sua scheda, Preferenze.
+  await vai('newsletter-contatti.php?cerca=bruno');
+  await Promise.all([p.waitForNavigation(), p.locator('a', { hasText: 'bruno.verdi@esempio.it' }).click()]);
+  await Promise.all([p.waitForNavigation(), p.locator('nav.imp-schede a', { hasText: 'Preferenze' }).click()]);
+  await Promise.all([p.waitForNavigation(), p.click('button:has-text("Metti in lista nera")')]);
+  await foto('19-preferenze', { clip: { x: 240, y: 56, width: 960, height: 560 }, segni: [{ sel: '.nlk-pref-stato', n: 1 }, { sel: 'input[name=consenso]', n: 2 }] });
+  await vai('newsletter-contatti.php');
+  await foto('19-contatti', { clip: { x: 240, y: 56, width: 960, height: 760 }, segni: [{ sel: 'a[href="newsletter-contatto.php?nuovo=1"]', n: 1, lato: 'destra' }, { sel: '#nlx-lista', n: 2 }, { sel: '#nlx-cosa', n: 3 }, { sel: 'table.nlx-tabella thead', n: 4 }] });
+  await vai('newsletter-contatti.php?scheda=liste');
+  await foto('19-liste', { clip: { x: 240, y: 56, width: 960, height: 520 }, segni: [{ sel: '#nll-nome', n: 1 }, { sel: '#nlx-cart-nome', n: 2 }] });
   await vai('newsletter.php');
   await Promise.all([p.waitForNavigation(), p.click('button:has-text("+ Nuova campagna")')]);
   await p.waitForLoadState('networkidle');

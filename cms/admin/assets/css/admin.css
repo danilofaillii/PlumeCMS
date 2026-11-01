@@ -672,7 +672,9 @@ input[aria-invalid="true"], textarea[aria-invalid="true"], select[aria-invalid="
 .nl-riga { display: flex; gap: .4rem; flex-wrap: wrap; align-items: center; }
 .nl-avviso { background: var(--mustard-light); color: var(--attenzione-testo); border: 1px solid var(--attenzione-bordo); border-radius: 8px; padding: .6rem .9rem; margin: 0 0 1rem; }
 .nl-errori { display: block; font-size: .78rem; color: var(--attenzione-testo); }
-.nlx-filtri { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 180px), 1fr)); gap: .25rem 1rem; align-items: end; margin: 1rem 0; }
+.nlx-filtri { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 180px), 1fr)); gap: .25rem 1rem; align-items: start; margin: 1rem 0; }
+.nlx-filtri-azioni { grid-column: 1 / -1; }
+@media (min-width: 641px) { .nlx-tabella td:nth-child(2) { min-width: 14rem; overflow-wrap: break-word; } }
 .nlx-filtri .form-group { margin-bottom: .5rem; }
 .nlx-filtri-azioni { display: flex; gap: .75rem; align-items: center; padding-bottom: .6rem; }
 .nlx-gruppo fieldset { border: 1px solid var(--border); border-radius: 8px; padding: .75rem 1rem 1rem; margin: 0 0 1rem; min-width: 0; }
