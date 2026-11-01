@@ -117,6 +117,7 @@ if (!$sonoAdminMenu) {
   <link rel="stylesheet" href="<?= pannello_file('assets/css/scegli-link.css') ?>"><script src="<?= pannello_file('assets/scegli-link.js') ?>" defer></script><?php /* 2.2: Scegli dal sito (data-link-sito, window.pnLink) */ ?>
 </head>
 <body class="admin-body">
+<a class="admin-salta" href="#contenuto">Vai al contenuto</a><?php /* UX 2026-11: chi usa la tastiera salta il menu (WCAG 2.4.1) */ ?>
 <div class="admin-sidebar-overlay" data-menu-mobile></div>
 <div class="admin-layout">
   <aside class="admin-sidebar">
@@ -158,5 +159,5 @@ if (!$sonoAdminMenu) {
         <?= htmlspecialchars($user['display_name'] ?: $user['username']) ?>
       </div>
     </header>
-    <div class="admin-content">
+    <div class="admin-content" id="contenuto" tabindex="-1">
       <?= render_flash() ?>

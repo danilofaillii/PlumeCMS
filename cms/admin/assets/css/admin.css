@@ -522,20 +522,20 @@ fieldset { min-width: 0; }
    dell'accento. "html .admin-content" pesa piu delle regole delle singole pagine (.seo-filtri input, .sc-corpo select...). */
 html .admin-content :is(input:not([type=checkbox], [type=radio], [type=color], [type=range], [type=file], [type=submit], [type=button], [type=reset], [type=hidden], [type=image]), select, textarea),
 html .login-box :is(input:not([type=checkbox], [type=radio], [type=hidden], [type=submit]), select, textarea) {
-  border-color: var(--bordo-campo);
+  border-color: var(--bordo-campo) !important; /* vince anche sui bordi scritti in linea (style="border:1px solid var(--border)") */
   border-style: solid;
   background-color: var(--campo);
   color: var(--text);
 }
 html .admin-content :is(input, select, textarea):not([type=checkbox], [type=radio], [type=file]):hover,
-html .login-box :is(input, select, textarea):not([type=checkbox], [type=radio]):hover { border-color: var(--text-muted); }
+html .login-box :is(input, select, textarea):not([type=checkbox], [type=radio]):hover { border-color: var(--text-muted) !important; }
 html .admin-content :is(input, select, textarea):focus-visible,
 html .login-box :is(input, select, textarea):focus-visible,
 html .admin-content :is(input, select, textarea):focus:not([type=checkbox], [type=radio], [type=file]),
 html .login-box :is(input, select, textarea):focus:not([type=checkbox], [type=radio]) {
   outline: 2px solid var(--coral);
   outline-offset: 1px;
-  border-color: var(--coral);
+  border-color: var(--coral) !important;
 }
 html .admin-content :is(input, textarea)::placeholder, html .login-box input::placeholder { color: var(--segnaposto); opacity: 1; }
 /* Le finestre Scegli dai Media e Scegli dal sito stanno fuori da .admin-content (anche nell'editor): stesso bordo. */
@@ -591,6 +591,10 @@ html .admin-content :is(input, select, textarea):disabled { opacity: .65; cursor
   .admin-user { flex: none; max-width: 34%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: .78rem; }
   .admin-content { padding: 1.25rem 1rem; }
 }
+/* 7. "Vai al contenuto": invisibile finche non lo raggiunge la tastiera (il primo Tab della pagina). */
+.admin-salta { position: absolute; left: .75rem; top: -3rem; z-index: 300; padding: .6rem 1rem; border-radius: 8px; background: var(--coral); color: var(--su-accento); font-weight: 600; text-decoration: none; }
+.admin-salta:focus { top: .75rem; outline: 2px solid var(--text); outline-offset: 2px; }
+.admin-content:focus { outline: none; }
 /* Il pulsante del menu: almeno 44x44 da toccare (WCAG 2.5.8 chiede 24, le linee guida dei telefoni 44). */
 .admin-menu-toggle { min-width: 44px; min-height: 44px; border-radius: 8px; line-height: 1; }
 .admin-menu-toggle:focus-visible { outline: 2px solid var(--coral); outline-offset: 2px; }
