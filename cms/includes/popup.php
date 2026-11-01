@@ -42,9 +42,14 @@ function popup_schema(): void {
     }
 }
 
+/** I testi scritti da chi usa il pannello: con le emoji (4 byte) la tabella a 3 byte rifiutava tutto il popup (errore 3988). */
+const POPUP_TESTI = ['nome', 'occhiello', 'titolo', 'testo', 'pulsante_testo'];
+
 /** Le colonne di testo che possono essere NULL diventano stringhe: chi le usa confronta con ''. */
 function popup_riga(array $p): array {
     foreach (['testo', 'percorsi', 'occhiello', 'titolo', 'immagine', 'pulsante_testo', 'pulsante_link', 'modulo'] as $k) $p[$k] = (string)($p[$k] ?? '');
+    // Audit 2026-11: le emoji si salvano come entità (la tabella è a 3 byte) e qui tornano emoji, nel pannello e sul sito.
+    foreach (POPUP_TESTI as $k) $p[$k] = newsletter_4byte_fuori((string)($p[$k] ?? ''));
     return $p;
 }
 
@@ -76,6 +81,7 @@ function popup_salva(int $id, array $d): int {
         'frequenza_giorni' => max(0, min(365, (int)($d['frequenza_giorni'] ?? 7))),
     ];
     if ($v['titolo'] === '' && $v['testo'] === '' && $v['modulo'] === '') throw new RuntimeException('Un popup vuoto: metti almeno un titolo, un testo o un modulo.');
+    foreach (POPUP_TESTI as $k) $v[$k] = newsletter_4byte_dentro(newsletter_4byte_fuori((string)$v[$k])); // audit 2026-11
     if ($id) {
         $set = implode(', ', array_map(fn($k) => "`$k` = :$k", array_keys($v)));
         $p = []; foreach ($v as $k => $x) $p[":$k"] = $x; $p[':id'] = $id;

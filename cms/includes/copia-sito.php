@@ -246,10 +246,10 @@ function copia_crea(string $etichetta = 'manuale', array $salva = []): string {
 function copia_leggi_manifest(string $zipPath): array {
     if (!class_exists('ZipArchive')) throw new RuntimeException('La libreria PHP per gli zip (ZipArchive) manca sul server.');
     $zip = new ZipArchive();
-    if ($zip->open($zipPath) !== true) throw new RuntimeException('Il file non e uno zip leggibile.');
+    if ($zip->open($zipPath) !== true) throw new RuntimeException('Il file non è uno zip leggibile.');
     try {
         $m = json_decode((string)$zip->getFromName('manifest.json'), true);
-        if (!is_array($m) || ($m['formato'] ?? '') !== COPIA_FORMATO) throw new RuntimeException('Questo zip non e una copia del sito fatta da ' . CMS_NOME . ' (manca manifest.json con il formato "' . COPIA_FORMATO . '"). Un pacchetto di aggiornamento si carica da Aggiornamenti.');
+        if (!is_array($m) || ($m['formato'] ?? '') !== COPIA_FORMATO) throw new RuntimeException('Questo zip non è una copia del sito fatta da ' . CMS_NOME . ' (manca manifest.json con il formato "' . COPIA_FORMATO . '"). Un pacchetto di aggiornamento si carica da Aggiornamenti.');
         if ((int)($m['versione'] ?? 0) > COPIA_VERSIONE) throw new RuntimeException('La copia è stata fatta da una versione più nuova di ' . CMS_NOME . ': aggiorna prima questo sito.');
         if (!preg_match('/^[a-z0-9_]{1,30}$/', (string)($m['prefisso'] ?? ''))) throw new RuntimeException('Il prefisso delle tabelle nella copia non è valido.');
         if ($zip->locateName('db.sql.gz') === false) throw new RuntimeException('Nella copia manca il database (db.sql.gz).');

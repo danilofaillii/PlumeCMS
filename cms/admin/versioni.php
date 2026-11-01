@@ -81,12 +81,12 @@ if (!empty($_GET['anteprima'])) {
             [$corpo, $cssFine] = vista_fine_articolo('<div class="wrap"><div class="art" style="grid-template-columns:minmax(0,1fr)"><article class="corpo">'
                 . '<p style="opacity:.7">Qui c\'è il testo dell\'articolo. Sotto, il riquadro che esce in fondo a ogni articolo, con la versione ' . (int)$v['id'] . '.</p></article></div></div>');
             $html = vista_pagina(['titolo' => 'Anteprima della versione ' . (int)$v['id'], 'descrizione' => '', 'robots' => 'noindex', 'canonical' => '', 'og' => []], $corpo, $cssFine, '/');
-            echo preg_replace('~(<body[^>]*>)~', '$1' . $fascia, $html, 1);
+            echo cms_con_cartella(preg_replace('~(<body[^>]*>)~', '$1' . $fascia, $html, 1)); // audit 2026-11: i link del sito con la cartella (/test)
             exit;
         }
         $corpo = '<div class="wrap" style="padding:72px 0;text-align:center"><p style="opacity:.7">Qui sotto e qui sopra: l\'header e il footer come li vedrebbe chi visita il sito, con la versione ' . (int)$v['id'] . ' del ' . h($tipoModello) . '.</p></div>';
         $html = vista_pagina(['titolo' => 'Anteprima della versione ' . (int)$v['id'], 'descrizione' => '', 'robots' => 'noindex', 'canonical' => '', 'og' => []], $corpo, '', '/');
-        echo preg_replace('~(<body[^>]*>)~', '$1' . $fascia, $html, 1);
+        echo cms_con_cartella(preg_replace('~(<body[^>]*>)~', '$1' . $fascia, $html, 1)); // audit 2026-11: i link del sito con la cartella (/test)
         exit;
     }
     if (str_starts_with((string)$v['ambito'], 'contenitore:')) {
@@ -100,7 +100,7 @@ if (!empty($_GET['anteprima'])) {
         $testa = ($css !== '' ? '<style id="ed-css">' . str_replace('</', '<\\/', $css) . '</style>' : '') . (string)($cornice['testa'] ?? '');
         if (function_exists('editor_asset_pagina')) { $asset = editor_asset_pagina($dis); foreach ($asset['css'] ?? [] as $f) $testa = '<link rel="stylesheet" href="' . sito_versione_asset($f) . '">' . $testa; foreach ($asset['js'] ?? [] as $f) $dis .= '<script src="' . sito_versione_asset($f) . '" defer></script>'; }
         $html = vista_pagina(['titolo' => 'Anteprima della versione ' . (int)$v['id'] . ': ' . $pagina['title'], 'descrizione' => '', 'robots' => 'noindex', 'canonical' => '', 'og' => []], (string)($cornice['prima'] ?? '') . '<div class="ed-pagina">' . $dis . '</div>' . (string)($cornice['dopo'] ?? ''), $testa, editor_percorso_pagina($pagina));
-        echo preg_replace('~(<body[^>]*>)~', '$1' . $fascia, $html, 1);
+        echo cms_con_cartella(preg_replace('~(<body[^>]*>)~', '$1' . $fascia, $html, 1)); // audit 2026-11: i link del sito con la cartella (/test)
         exit;
     }
     $tipo = editor_tipo_valido(substr((string)$v['ambito'], 10));
@@ -122,7 +122,7 @@ if (!empty($_GET['anteprima'])) {
         $corpo = '<div class="ed-pagina">' . $dis . '</div>';
     }
     $html = vista_pagina(['titolo' => 'Anteprima della versione ' . (int)$v['id'] . ': ' . $pagina['title'], 'descrizione' => '', 'robots' => 'noindex', 'canonical' => '', 'og' => []], $corpo, $testa, $percorso);
-    echo preg_replace('~(<body[^>]*>)~', '$1' . $fascia, $html, 1);
+    echo cms_con_cartella(preg_replace('~(<body[^>]*>)~', '$1' . $fascia, $html, 1)); // audit 2026-11: i link del sito con la cartella (/test)
     exit;
 }
 

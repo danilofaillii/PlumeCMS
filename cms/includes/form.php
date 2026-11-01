@@ -93,7 +93,21 @@ function form_schema(): void {
 /** I form, attivi e no. */
 function form_tutti(): array {
     form_schema();
-    return db()->query('SELECT m.*, (SELECT COUNT(*) FROM ' . tbl('moduli_invii') . ' i WHERE i.modulo_id = m.id) AS invii, (SELECT COUNT(*) FROM ' . tbl('moduli_invii') . ' i WHERE i.modulo_id = m.id AND i.letto = 0) AS nuovi FROM ' . tbl('moduli') . ' m ORDER BY m.nome')->fetchAll();
+    return array_map('form_4byte_fuori', db()->query('SELECT m.*, (SELECT COUNT(*) FROM ' . tbl('moduli_invii') . ' i WHERE i.modulo_id = m.id) AS invii, (SELECT COUNT(*) FROM ' . tbl('moduli_invii') . ' i WHERE i.modulo_id = m.id AND i.letto = 0) AS nuovi FROM ' . tbl('moduli') . ' m ORDER BY m.nome')->fetchAll());
+}
+
+/**
+ * Audit 2026-11: le emoji (caratteri a 4 byte) nei testi del form. La tabella dei form è a 3 byte: salvate così com'erano,
+ * MySQL rifiutava tutto il form ("SQLSTATE[HY000]: General error: 3988", e il form non si salvava). Si salvano come entità
+ * (&#x1F389;) e tornano emoji quando si leggono; nei campi (JSON) diventano \uXXXX, che json_decode rimette a posto.
+ */
+const FORM_TESTI = ['nome', 'titolo', 'intro', 'pulsante', 'consenso', 'grazie_titolo', 'grazie_testo'];
+function form_4byte_fuori(array $m): array {
+    foreach (FORM_TESTI as $k) if (isset($m[$k]) && is_string($m[$k])) $m[$k] = newsletter_4byte_fuori($m[$k]);
+    return $m;
+}
+function form_json_3byte(array $campi): string {
+    return (string)preg_replace_callback('/[\x{10000}-\x{10FFFF}]/u', fn($x) => substr((string)json_encode($x[0]), 1, -1), (string)json_encode($campi, JSON_UNESCAPED_UNICODE));
 }
 
 function form_leggi(int $id): ?array {
@@ -104,6 +118,7 @@ function form_leggi(int $id): ?array {
     if ($m) {
         $m['campi'] = form_campi_validi(json_decode((string)$m['campi'], true) ?: []);
         foreach (['intro', 'grazie_testo', 'titolo', 'consenso', 'grazie_titolo', 'grazie_link', 'pulsante', 'avviso_a', 'omaggio'] as $k) $m[$k] = (string)($m[$k] ?? '');
+        $m = form_4byte_fuori($m);
     }
     return $m;
 }
@@ -317,7 +332,7 @@ function form_salva(int $id, array $d): int {
     $emails = array_filter($campi, fn($x) => $x['tipo'] === 'email');
     $v = [
         'nome' => $nome, 'slug' => $slug, 'titolo' => mb_substr(trim((string)($d['titolo'] ?? '')), 0, 255), 'intro' => trim((string)($d['intro'] ?? '')),
-        'campi' => json_encode($campi, JSON_UNESCAPED_UNICODE), 'pulsante' => mb_substr(trim((string)($d['pulsante'] ?? '')), 0, 100) ?: 'Invia',
+        'campi' => form_json_3byte($campi), 'pulsante' => mb_substr(trim((string)($d['pulsante'] ?? '')), 0, 100) ?: 'Invia',
         'consenso' => mb_substr(trim((string)($d['consenso'] ?? '')), 0, 500), 'lista_id' => (int)($d['lista_id'] ?? 0),
         'lista_conferma' => !empty($d['lista_conferma']) ? 1 : 0, 'avviso' => !empty($d['avviso']) ? 1 : 0,
         'avviso_a' => implode(', ', form_avviso_indirizzi($d['avviso_a'] ?? '')),
@@ -325,6 +340,7 @@ function form_salva(int $id, array $d): int {
         'grazie_titolo' => mb_substr(trim((string)($d['grazie_titolo'] ?? '')), 0, 255) ?: 'Grazie, ricevuto.', 'grazie_testo' => trim((string)($d['grazie_testo'] ?? '')),
         'grazie_link' => mb_substr(trim((string)($d['grazie_link'] ?? '')), 0, 500), 'attivo' => !empty($d['attivo']) ? 1 : 0,
     ];
+    foreach (FORM_TESTI as $k) $v[$k] = newsletter_4byte_dentro($v[$k]); // audit 2026-11: le emoji come entità (tabella a 3 byte)
     if ($v['lista_id'] && !$emails) throw new RuntimeException('Per iscrivere a una lista serve un campo di tipo Email.');
     // 2.0.0: il file da dare dopo la conferma è un file riservato di Download, e serve una lista (chi lo riceve è un iscritto).
     if ($v['omaggio'] !== '') {
@@ -449,7 +465,8 @@ function form_ricevi(array $m, array $p, string $pagina, array $file = []): stri
             $v = implode(', ', $scelte);
         }
         $v = is_array($v) ? '' : trim((string)$v);
-        $v = preg_replace('/[\x{10000}-\x{10FFFF}]/u', '', $v);
+        // Audit 2026-11: le emoji di chi scrive restano (prima si toglievano qui, e una scelta con un'emoji fra le opzioni non
+        // passava mai il controllo): nel database i dati vanno con form_json_3byte(), il nome senza.
         if ($c['tipo'] === 'spunta') $v = $v !== '' ? 'sì' : '';
         if ($c['obbligatorio'] && $v === '') return 'campo:' . $c['etichetta'];
         if ($v !== '') {
@@ -486,7 +503,7 @@ function form_ricevi(array $m, array $p, string $pagina, array $file = []): stri
     }
     try {
         db()->prepare('INSERT INTO ' . tbl('moduli_invii') . ' (modulo_id, email, nome, dati, pagina, ip, allegati, creato, aggiornato) VALUES (?,?,?,?,?,?,?,?,?)')
-            ->execute([(int)$m['id'], $email, mb_substr($nomeIntero, 0, 200), json_encode($dati, JSON_UNESCAPED_UNICODE), mb_substr($pagina, 0, 190), moduli_ip(), $allegati ? json_encode($allegati, JSON_UNESCAPED_UNICODE) : null, $ora, $ora]);
+            ->execute([(int)$m['id'], $email, mb_substr((string)preg_replace('/[\x{10000}-\x{10FFFF}]/u', '', $nomeIntero), 0, 200), form_json_3byte($dati), mb_substr($pagina, 0, 190), moduli_ip(), $allegati ? json_encode($allegati, JSON_UNESCAPED_UNICODE) : null, $ora, $ora]);
     } catch (Throwable $e) {
         foreach ($allegati as $a) @unlink(form_file_dir() . '/' . $a['file']);
         throw $e;

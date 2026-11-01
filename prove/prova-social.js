@@ -43,7 +43,9 @@ const corpo = (eml) => {
   const flash = async () => (await p.locator('.flash').allInnerTexts()).join(' ');
   await p.goto(B + '/admin/login.php'); await p.fill('#username', UTENTE); await p.fill('#password', PASSWORD);
   await Promise.all([p.waitForNavigation(), p.click('button[type=submit]')]);
-  const oggi = new Date(Date.now() - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 10);
+  // Audit 2026-11: "oggi" nel fuso del sito (l'installatore scrive Europe/Rome), non in quello della macchina: vicino a
+  // mezzanotte i due giorni erano diversi e il cron non trovava il testo del calendario (KO che non dicevano niente del CMS).
+  const oggi = new Date().toLocaleDateString('sv-SE', { timeZone: process.env.FUSO || 'Europe/Rome' });
 
   // Posta verso il server finto, avvisi a prova@esempio.it.
   await p.goto(B + '/admin/impostazioni.php', { waitUntil: 'networkidle' });
@@ -65,6 +67,8 @@ const corpo = (eml) => {
   await p.fill('#so-wa-e', 'Scrivici:');
   await Promise.all([p.waitForNavigation(), p.click('form:has(input[value=impostazioni]) button.btn-primary')]);
   ok('impostazioni salvate', /salvate/.test(await flash()), await flash());
+  await p.goto(B + '/admin/social.php?scheda=impostazioni', { waitUntil: 'networkidle' }); // audit 2026-11: si rileggono i campi
+  ok('riaperte, le impostazioni hanno hashtag e link di WhatsApp', await p.inputValue('#so-h-li') === '#provalinkedin' && await p.inputValue('#so-h-ig') === '#provainstagram #seconda' && await p.inputValue('#so-wa-l') === '/contatti/' && await p.inputValue('#so-wa-e') === 'Scrivici:');
 
   // 2. Il riquadro Social della scheda, sull'articolo d'esempio
   await p.goto(B + '/admin/contenuto.php?tipo=articoli&id=1', { waitUntil: 'networkidle' });

@@ -25,7 +25,7 @@ function contenuti_tipi(): array {
             'campo_contenuto' => 'content', 'tassonomie' => true, 'attributi' => true, 'kw' => true, 'citazione' => false,
         ],
         'pagine' => [
-            'tabella' => 'pages', 'uno' => 'pagina', 'tanti' => 'pagine', 'Uno' => 'Pagina', 'Tanti' => 'Pagine',
+            'tabella' => 'pages', 'uno' => 'pagina', 'tanti' => 'pagine', 'Uno' => 'Pagina', 'Tanti' => 'Pagine', 'genere' => 'f', // audit 2026-11: "Pagina aggiornata", non "aggiornato"
             'campo_contenuto' => 'html', 'tassonomie' => false, 'attributi' => false, 'kw' => false, 'citazione' => false,
         ],
     ];
@@ -34,6 +34,12 @@ function contenuti_tipi(): array {
         if (is_array($x['valore']) && !isset($tipi[$x['chiave']])) $tipi[(string)$x['chiave']] = $x['valore'] + ['tassonomie' => false, 'attributi' => false, 'kw' => false, 'citazione' => false, 'campo_contenuto' => 'content'];
     }
     return $tipi;
+}
+
+/** Audit 2026-11: la desinenza dei messaggi per il tipo ("o" per articolo, "a" per pagina; i tipi dei moduli possono dire 'genere' => 'f'). */
+function contenuti_desinenza(array $t, bool $plurale = false): string {
+    $f = ($t['genere'] ?? 'm') === 'f';
+    return $plurale ? ($f ? 'e' : 'i') : ($f ? 'a' : 'o');
 }
 
 function contenuti_tipo(string $tipo): array {

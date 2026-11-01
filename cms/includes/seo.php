@@ -40,7 +40,7 @@ const SEO_CRAWLER_AI = [
     'OAI-SearchBot' => ['OpenAI, ricerca', 'Serve a ChatGPT per cercare e citare pagine in tempo reale. Lasciarlo passare aiuta a essere citati.'],
     'ChatGPT-User' => ['OpenAI, su richiesta', 'Apre una pagina quando un utente di ChatGPT la chiede. Senza, ChatGPT non può leggere il sito su richiesta.'],
     'ClaudeBot' => ['Anthropic (Claude)', 'Raccoglie pagine per addestrare Claude. Claude-User e Claude-SearchBot restano separati.'],
-    'Google-Extended' => ['Google, Gemini', 'Non e un crawler: e un segnale che dice a Google di non usare le pagine per addestrare Gemini. Googlebot e la ricerca non cambiano.'],
+    'Google-Extended' => ['Google, Gemini', 'Non è un crawler: è un segnale che dice a Google di non usare le pagine per addestrare Gemini. Googlebot e la ricerca non cambiano.'],
     'PerplexityBot' => ['Perplexity', 'Indicizza per il motore di risposta Perplexity. Lasciarlo passare aiuta a comparire fra le fonti citate.'],
     'CCBot' => ['Common Crawl', 'Archivio pubblico del web, usato da molti per addestrare modelli. Bloccarlo toglie il sito da molti insiemi di addestramento.'],
     'Bytespider' => ['ByteDance (TikTok)', 'Crawler aggressivo di ByteDance. Nessun beneficio di visibilita: molti lo bloccano.'],
@@ -168,6 +168,8 @@ function seo_cfg(bool $azzera = false): array {
                 if (is_array($valori) && isset($c[$gruppo]) && is_array($c[$gruppo])) $c[$gruppo] = array_replace($c[$gruppo], $valori);
             }
         }
+        // Audit 2026-11: seo_salva() scrive le emoji come entità; qui tornano emoji, se no il titolo del sito usciva "&#x1F377;".
+        array_walk_recursive($c, function (&$x) { if (is_string($x)) $x = sito_4byte_veri($x); });
     }
     return $c;
 }
@@ -480,8 +482,8 @@ function seo_google_chiama(string $url, array $ambiti, string $metodo = 'GET', ?
     if ($r['codice'] >= 400 || !is_array($j)) {
         $m = is_array($j) ? (string)($j['error']['message'] ?? $j['error'] ?? '') : '';
         $spiega = match ($r['codice']) {
-            403 => ' Di solito: il service account non è stato aggiunto come utente della proprieta in Search Console, oppure l\'API non e abilitata nel progetto Google Cloud.',
-            404 => ' La proprieta indicata non esiste con questo nome esatto: controlla "Proprieta di Search Console" (con https:// e la barra finale, oppure sc-domain:dominio).',
+            403 => ' Di solito: il service account non è stato aggiunto come utente della proprietà in Search Console, oppure l\'API non è abilitata nel progetto Google Cloud.',
+            404 => ' La proprietà indicata non esiste con questo nome esatto: controlla "Proprietà di Search Console" (con https:// e la barra finale, oppure sc-domain:dominio).',
             429 => ' Quota giornaliera esaurita: si riprende domani.',
             default => '',
         };
@@ -1007,7 +1009,7 @@ function seo_jsonld_di(string $percorso): array {
     if ($percorso !== '/') $percorso .= '/';
     $mappa = sito_mappa();
     $v = $mappa[$percorso] ?? null;
-    if (!$v) return ['errore' => "L'indirizzo $percorso non e una pagina del sito."];
+    if (!$v) return ['errore' => "L'indirizzo $percorso non è una pagina del sito."];
     $nodi = [];
     switch ($v['genere']) {
         case 'home':

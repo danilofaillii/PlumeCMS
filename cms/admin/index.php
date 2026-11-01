@@ -268,7 +268,7 @@ fetch('aggiornamenti.php', { method: 'POST', credentials: 'same-origin', headers
     </div>
     <?php if ($ultimaCampagna): ?>
     <ul class="db-lista">
-      <li><a href="newsletter-campagna.php?id=<?= (int)$ultimaCampagna['id'] ?>">Ultima: <?= h($ultimaCampagna['oggetto']) ?></a><small><?= (int)$ultimaCampagna['inviate'] ?> inviate · <?= (int)$eventi['apertura'] ?> aperte · <?= (int)$eventi['clic'] ?> clic</small></li>
+      <li><a href="newsletter-campagna.php?id=<?= (int)$ultimaCampagna['id'] ?>">Ultima: <?= h(newsletter_4byte_fuori((string)$ultimaCampagna['oggetto'])) /* audit 2026-11 */ ?></a><small><?= (int)$ultimaCampagna['inviate'] ?> inviate · <?= (int)$eventi['apertura'] ?> aperte · <?= (int)$eventi['clic'] ?> clic</small></li>
     </ul>
     <?php else: ?><p style="font-size:.85rem;color:var(--text-muted)">Nessuna campagna inviata ancora.</p><?php endif; ?>
   </div>

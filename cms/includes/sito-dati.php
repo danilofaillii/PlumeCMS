@@ -83,7 +83,7 @@ function sito_contenuti(): array {
             'slug' => $a['slug'], 'percorso' => $percorso, 'titolo' => $a['title'],
             'data' => sito_iso($a['publish_date'], $a['publish_time']),
             'modificato' => str_replace(' ', 'T', (string)$a['updated_at']),
-            'estratto' => strip_tags((string)($a['excerpt'] ?? '')),
+            'estratto' => sito_4byte_veri(strip_tags((string)($a['excerpt'] ?? ''))), // audit 2026-11: le emoji salvate come entità
             'categorie' => array_values(sito_lista($a['categorie'] ?? '') ?: array_filter([$a['category']])),
             'tag' => array_values(sito_lista($a['tag_slugs'] ?? '') ?: array_map('sito_slug', sito_lista($a['tags'] ?? ''))),
             'immagine' => sito_immagine($a['immagine_url'] ?: (string)$a['featured_image']),
@@ -93,7 +93,7 @@ function sito_contenuti(): array {
                 'keyword' => (string)$a['keyword_target'], 'canonical' => '',
                 'robots' => sito_robots_articolo($a), 'immagine_social' => '',
             ],
-            'tldr' => (string)$a['tldr'], 'faq' => sito_faq_da_json($a['faq']),
+            'tldr' => sito_4byte_veri((string)$a['tldr']), 'faq' => sito_faq_da_json($a['faq']),
             // Pillar: solo il tipo. La lunghezza da sola non basta: anche cluster vecchi superano le 3500 parole.
             'pillar' => $a['type'] === 'pillar',
             'servizio' => [], 'rediretto' => $rediretto, 'editor' => (bool)$a['con_editor'],
@@ -122,7 +122,7 @@ function sito_contenuti(): array {
                 'titolo' => (string)$p['seo_title'], 'descrizione' => (string)($p['seo_description'] ?: $p['meta_description']),
                 'keyword' => '', 'canonical' => '', 'robots' => $p['robots'] === 'noindex' ? 'noindex' : 'index', 'immagine_social' => '',
             ],
-            'tldr' => (string)$p['tldr'], 'faq' => sito_faq_da_json($p['faq']), 'pillar' => false,
+            'tldr' => sito_4byte_veri((string)$p['tldr']), 'faq' => sito_faq_da_json($p['faq']), 'pillar' => false,
             'servizio' => is_array($servizio) ? $servizio : [], 'rediretto' => isset($daRedirect[$percorso]),
             'editor' => (bool)$p['con_editor'],
         ];

@@ -81,7 +81,7 @@ const UA = 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Geck
   ok('impostazioni: un link di pagamento javascript: si rifiuta', /deve cominciare con https/.test(await p.locator('#vt-errori').innerText().catch(() => '')));
   await p.fill('#vt-link_url', 'https://paypal.me/bottegarossi');
   await invia('#vt-salva');
-  ok('impostazioni salvate con il link PayPal.me', /salvate/.test(await flash()), await flash());
+  ok('impostazioni salvate con il link PayPal.me', /salvate/.test(await flash()) && await p.inputValue('#vt-link_url') === 'https://paypal.me/bottegarossi', await flash()); // audit 2026-11: anche il campo
   ok('l\'IBAN si salva senza spazi', await p.inputValue('#vt-iban') === 'IT60X0542811101000000123456');
 
   // Categorie.

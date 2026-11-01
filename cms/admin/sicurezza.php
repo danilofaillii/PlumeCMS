@@ -25,7 +25,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $cfgPrima = sicurezza_cfg();
                 // La lista IP si accende solo se contiene l'IP di chi la accende: nessuno si chiude fuori da solo.
                 if (!empty($v['ip_attivo']) && !sicurezza_ip_consentito(sicurezza_ip(), (string)($v['ip_elenco'] ?? ''))) {
-                    throw new RuntimeException('Il tuo indirizzo attuale (' . sicurezza_ip() . ') non e nell\'elenco: aggiungilo prima di accendere la lista, altrimenti resti fuori.');
+                    throw new RuntimeException('Il tuo indirizzo attuale (' . sicurezza_ip() . ') non è nell\'elenco: aggiungilo prima di accendere la lista, altrimenti resti fuori.');
                 }
                 if (!empty($v['totp_admin']) && empty($io['totp_attivo'])) {
                     throw new RuntimeException('Prima attiva il secondo fattore sul tuo accesso (Il mio accesso), poi rendilo obbligatorio per tutti gli amministratori.');
@@ -149,7 +149,7 @@ $schede = ['stato' => 'Stato', 'impostazioni' => 'Impostazioni', 'registro' => '
       <div class="hint">Un amministratore senza 2FA, al prossimo accesso, deve configurarlo prima di fare altro. I redattori restano liberi di attivarlo.</div></div>
 
     <h4>Indirizzi IP consentiti</h4>
-    <div class="sic-riquadro"><strong>Attenzione</strong>: con la lista accesa il pannello risponde solo da questi indirizzi. Il tuo IP di adesso e <code><?= h(sicurezza_ip()) ?></code>: se non e in elenco il salvataggio si rifiuta. Se la connessione di casa cambia IP (succede), ti chiudi fuori: in quel caso la riga di emergenza in <code>config.local.php</code> e <code>define('CMS_SICUREZZA_SPEGNI', true);</code>. Conviene usarla solo con un IP fisso o una VPN.</div>
+    <div class="sic-riquadro"><strong>Attenzione</strong>: con la lista accesa il pannello risponde solo da questi indirizzi. Il tuo IP di adesso è <code><?= h(sicurezza_ip()) ?></code>: se non è in elenco il salvataggio si rifiuta. Se la connessione di casa cambia IP (succede), ti chiudi fuori: in quel caso la riga di emergenza in <code>config.local.php</code> e <code>define('CMS_SICUREZZA_SPEGNI', true);</code>. Conviene usarla solo con un IP fisso o una VPN.</div>
     <div class="form-group"><label><input type="checkbox" name="cfg[ip_attivo]" value="1" <?= $cfg['ip_attivo'] ? 'checked' : '' ?>> Lista IP attiva</label></div>
     <div class="form-group"><label>Indirizzi o reti ammessi (uno per riga, anche in forma 192.168.1.0/24 o 2001:db8::/32)</label><textarea name="cfg[ip_elenco]" placeholder="<?= h(sicurezza_ip()) ?>"><?= h($cfg['ip_elenco']) ?></textarea></div>
 

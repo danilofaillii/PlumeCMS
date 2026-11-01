@@ -15,6 +15,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $n = [];
     $n['percorso'] = trim((string)preg_replace('/[^a-z0-9-]+/', '-', mb_strtolower(trim((string)($_POST['percorso'] ?? 'negozio')))), '-') ?: 'negozio';
     if (in_array($n['percorso'], ['admin', 'api', 'install', 'uploads', 'addon', 'moduli', 'temi', 'sito', 'assets', 'includes', 'scarica', 'feed', 'grazie', 'blog', 'category', 'tag'], true)) $errori[] = 'L\'indirizzo «' . $n['percorso'] . '» è già usato dal sito: scegline un altro (per esempio negozio).';
+    // Audit 2026-11: un indirizzo uguale a quello di una pagina o di un articolo (servizi, chi-siamo...) prendeva il suo posto
+    // sul sito, e la pagina spariva senza un avviso. Ora si dice, come per i nomi riservati.
+    elseif (in_array($n['percorso'], ['corsi', 'accedi', 'iscriviti', 'area-riservata', 'prenotazione', 'recensione', 'evento', 'evento-iscrizione', 'cerca'], true)) $errori[] = 'L\'indirizzo «' . $n['percorso'] . '» è già usato da un addon: scegline un altro (per esempio negozio).';
+    else {
+        foreach (['pages', 'articles'] as $tab) {
+            $st = db()->prepare('SELECT title FROM ' . tbl($tab) . ' WHERE slug = ? AND cestino IS NULL LIMIT 1');
+            $st->execute([$n['percorso']]);
+            if (($t = $st->fetchColumn()) !== false) { $errori[] = 'L\'indirizzo «' . $n['percorso'] . '» è già quello ' . ($tab === 'pages' ? 'della pagina' : 'dell\'articolo') . ' «' . $t . '»: il negozio la coprirebbe sul sito. Scegline un altro (per esempio negozio).'; break; }
+        }
+    }
     $n['nome_negozio'] = vt_testo($_POST['nome_negozio'] ?? '', 80) ?: 'Negozio';
     $n['intro'] = vt_testo($_POST['intro'] ?? '', 1000, true);
     $n['spedizione'] = empty($_POST['spedizione']) ? 0 : 1;

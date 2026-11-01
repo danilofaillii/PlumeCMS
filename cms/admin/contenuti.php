@@ -29,9 +29,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $d = ['title' => (string)($_POST['title'] ?? ''), 'slug' => (string)($_POST['slug'] ?? ''), 'stato' => (string)($_POST['stato'] ?? 'bozza'), 'data' => (string)($_POST['data'] ?? ''), 'ora' => (string)($_POST['ora'] ?? ''), 'autore' => $autore];
                 if ($T['tassonomie']) { $d['categorie'] = (array)($_POST['categorie'] ?? []); $d['tags'] = (string)($_POST['tags'] ?? ''); }
                 contenuti_salva_rapido($tipo, $ids[0], $d);
-                flash('success', $T['Uno'] . ' aggiornato.');
+                flash('success', $T['Uno'] . ' aggiornat' . contenuti_desinenza($T) . '.');
                 break;
-            case 'pubblica': $n = contenuti_stato_massa($tipo, $ids, 'pubblicato'); flash('success', "$n " . ($n === 1 ? $T['uno'] : $T['tanti']) . ' pubblicati.'); break;
+            case 'pubblica': $n = contenuti_stato_massa($tipo, $ids, 'pubblicato'); flash('success', "$n " . ($n === 1 ? $T['uno'] . ' pubblicat' . contenuti_desinenza($T) : $T['tanti'] . ' pubblicat' . contenuti_desinenza($T, true)) . '.'); break;
             case 'bozza': $n = contenuti_stato_massa($tipo, $ids, 'bozza'); flash('success', "$n in bozza."); break;
             case 'cestina': $n = contenuti_cestina($tipo, $ids); flash('success', "$n nel cestino." . ($n < count($ids) ? ' La home resta fuori dal cestino.' : '')); break;
             case 'ripristina': $n = contenuti_ripristina($tipo, $ids); flash('success', "$n ripristinati."); break;
@@ -143,7 +143,7 @@ require_once __DIR__ . '/includes/admin-header.php';
     </tr></thead>
     <tbody>
     <?php if (!$righe): ?>
-      <tr><td colspan="<?= $colonne ?>"><div class="empty-state"><p><?= $filtri['stato'] === 'cestino' ? 'Il cestino è vuoto.' : 'Nessun ' . $T['uno'] . ' qui.' ?></p></div></td></tr>
+      <tr><td colspan="<?= $colonne ?>"><div class="empty-state"><p><?= $filtri['stato'] === 'cestino' ? 'Il cestino è vuoto.' : 'Nessun' . (contenuti_desinenza($T) === 'a' ? 'a ' : ' ') . $T['uno'] . ' qui.' ?></p></div></td></tr>
     <?php endif; ?>
     <?php foreach ($righe as $r):
       $stato = contenuti_stato($tipo, $r);

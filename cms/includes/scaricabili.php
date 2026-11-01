@@ -147,9 +147,10 @@ function scaricabili_elenco(): array {
         $out[$nome] = [
             'nome' => $nome, 'file' => $f, 'ext' => $ext, 'tipo' => SCARICABILI_TIPI[$ext][1], 'icona' => SCARICABILI_TIPI[$ext][2],
             'peso' => (int)filesize("$dir/$f"), 'data' => (int)filemtime("$dir/$f"),
-            'titolo' => trim((string)($r['titolo'] ?? '')) ?: scaricabili_titolo_da_nome($nome),
-            'titolo_scritto' => trim((string)($r['titolo'] ?? '')),
-            'descrizione' => (string)($r['descrizione'] ?? ''), 'versione' => trim((string)($r['versione'] ?? '')) ?: $vNome,
+            // Audit 2026-11: le emoji salvate come entità tornano emoji (prima il widget Download e il pannello mostravano &#x1F4D8;).
+            'titolo' => scaricabili_4byte_veri(trim((string)($r['titolo'] ?? ''))) ?: scaricabili_titolo_da_nome($nome),
+            'titolo_scritto' => scaricabili_4byte_veri(trim((string)($r['titolo'] ?? ''))),
+            'descrizione' => scaricabili_4byte_veri((string)($r['descrizione'] ?? '')), 'versione' => trim((string)($r['versione'] ?? '')) ?: $vNome,
             'versione_nome' => $vNome, 'serie' => $serie,
             'conteggio' => (int)($r['conteggio'] ?? 0), 'ultimo' => (string)($r['ultimo'] ?? ''),
             'url' => $riservato ? '' : '/scarica/' . $nome . '/',
@@ -257,6 +258,11 @@ function scaricabili_salva_info(string $nome, array $info): bool {
     db()->prepare('INSERT INTO ' . tbl('scaricabili') . ' (file, aggiornato) VALUES (?, NOW()) ON DUPLICATE KEY UPDATE aggiornato = NOW()')->execute([$s]);
     foreach ($campi as $k => $v) db()->prepare('UPDATE ' . tbl('scaricabili') . " SET `$k` = ? WHERE file = ?")->execute([$v, $s]);
     return true;
+}
+
+/** Audit 2026-11: il contrario di scaricabili_testo() per mostrare titolo e descrizione (sito_4byte_veri, se c'è). */
+function scaricabili_4byte_veri(string $s): string {
+    return function_exists('sito_4byte_veri') ? sito_4byte_veri($s) : (string)preg_replace_callback('/&#x([0-9a-f]{5,6});/i', fn($m) => mb_chr((int)hexdec($m[1]), 'UTF-8'), $s);
 }
 
 /** Le colonne della tabella sono utf8mb4, ma i caratteri a 4 byte si salvano lo stesso come entita: il resto del CMS fa così. */

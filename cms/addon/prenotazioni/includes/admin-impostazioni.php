@@ -10,8 +10,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     verify_csrf();
     $avviso = pren_testo($_POST['avviso_a'] ?? '', 190);
     if ($avviso !== '' && !filter_var($avviso, FILTER_VALIDATE_EMAIL)) { flash('error', '«' . $avviso . '» non è un indirizzo email valido.'); pren_admin_vai('impostazioni'); }
-    $privacy = pren_testo($_POST['privacy'] ?? '', 190);
-    if ($privacy !== '' && !preg_match('~^(/[^\s"<>]*|https?://[^\s"<>]+)$~', $privacy)) $privacy = PREN_PREDEFINITE['privacy'];
+    // Audit 2026-11: un indirizzo scritto a mano ("privacy-policy", "www.sito.it/privacy") tornava in silenzio quello di partenza.
+    // Ora si sistema come i link dei widget (editor_link_sicuro) e, se non è un indirizzo, si dice.
+    require_once cms_radice() . '/includes/editor-widget.php';
+    $scritto = pren_testo($_POST['privacy'] ?? '', 190);
+    $privacy = $scritto === '' ? '' : editor_link_sicuro($scritto);
+    if ($scritto !== '' && !preg_match('~^(/[^\s"<>]*|https?://[^\s"<>]+)$~', $privacy)) { flash('error', '«' . $scritto . '» non è l\'indirizzo di una pagina: scrivi /privacy-policy/ (una pagina del sito) oppure https://... (Pagina dell\'informativa privacy).'); pren_admin_vai('impostazioni'); }
     $imp = [
         'anticipo_ore' => max(0, min(720, (int)($_POST['anticipo_ore'] ?? 2))),
         'anticipo_giorni' => max(1, min(365, (int)($_POST['anticipo_giorni'] ?? 60))),

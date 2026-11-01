@@ -38,7 +38,7 @@ require_once __DIR__ . '/includes/admin-header.php';
     <?php if (!$campagne): ?><tr><td colspan="8"><div class="empty-state"><p>Nessuna campagna inviata ancora.</p></div></td></tr><?php endif; ?>
     <?php foreach ($campagne as $c): ?>
       <tr class="ct-riga">
-        <td class="ct-titolo"><a class="ct-nome" href="newsletter-statistiche.php?campagna=<?= (int)$c['id'] ?>"><?= h($c['oggetto']) ?></a><div class="ct-azioni"><a href="newsletter-statistiche.php?campagna=<?= (int)$c['id'] ?>">Link cliccati</a><a href="newsletter-campagna.php?id=<?= (int)$c['id'] ?>">Apri la campagna</a></div></td>
+        <td class="ct-titolo"><a class="ct-nome" href="newsletter-statistiche.php?campagna=<?= (int)$c['id'] ?>"><?= h(newsletter_4byte_fuori((string)$c['oggetto'])) /* audit 2026-11: l'emoji, non &#x... */ ?></a><div class="ct-azioni"><a href="newsletter-statistiche.php?campagna=<?= (int)$c['id'] ?>">Link cliccati</a><a href="newsletter-campagna.php?id=<?= (int)$c['id'] ?>">Apri la campagna</a></div></td>
         <td class="ct-muto"><?= h(substr((string)$c['invio_at'], 0, 16)) ?></td>
         <td class="ct-muto"><?= (int)$c['inviate'] ?><?= $c['errori'] ? ' <span class="kw-bad">(' . (int)$c['errori'] . ' errori)</span>' : '' ?></td>
         <td class="ct-muto"><b><?= (int)$c['aperture'] ?></b> · <?= $c['tasso_aperture'] ?>%</td>

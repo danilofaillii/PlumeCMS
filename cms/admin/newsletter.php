@@ -99,10 +99,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $descr = mb_substr(trim((string)($_POST['descrizione'] ?? '')), 0, 255);
         try {
             if ($nome === '') flash('error', 'Scrivi il nome della lista.');
+            // Audit 2026-11: con un'emoji MySQL rifiutava la riga (tabella a 3 byte) e il messaggio diceva "Esiste già una lista".
+            elseif (preg_match('/[\x{10000}-\x{10FFFF}]/u', $nome . $descr)) flash('error', 'Il nome e la descrizione della lista non possono contenere emoji: toglile e salva di nuovo.');
             elseif ($azione === 'lista_crea') { db()->prepare('INSERT INTO ' . tbl('newsletter_liste') . ' (nome, descrizione, creato) VALUES (?, ?, NOW())')->execute([$nome, $descr]); flash('success', "Lista «{$nome}» creata."); }
             else { db()->prepare('UPDATE ' . tbl('newsletter_liste') . ' SET nome = ?, descrizione = ? WHERE id = ?')->execute([$nome, $descr, (int)$_POST['id']]); flash('success', 'Lista aggiornata.'); }
         } catch (PDOException $e) {
-            flash('error', 'Esiste già una lista con questo nome.');
+            flash('error', (int)($e->errorInfo[1] ?? 0) === 1062 ? 'Esiste già una lista con questo nome.' : 'La lista non si è salvata: ' . $e->getMessage());
         }
         header('Location: newsletter.php?scheda=liste');
         exit;

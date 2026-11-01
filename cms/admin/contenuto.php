@@ -20,7 +20,7 @@ $tipo = isset(contenuti_tipi()[$_GET['tipo'] ?? '']) ? $_GET['tipo'] : 'articoli
 $T = contenuti_tipo($tipo);
 $id = (int)($_GET['id'] ?? 0);
 $r = $id ? contenuti_leggi($tipo, $id) : null;
-if ($id && !$r) { http_response_code(404); exit($T['Uno'] . ' non trovato. <a href="contenuti.php?tipo=' . $tipo . '">Torna all\'elenco</a>'); }
+if ($id && !$r) { http_response_code(404); exit($T['Uno'] . ' non trovat' . contenuti_desinenza($T) . '. <a href="contenuti.php?tipo=' . $tipo . '">Torna all\'elenco</a>'); }
 $nuovo = !$r;
 $adminTitle = $nuovo ? 'Aggiungi ' . $T['uno'] : 'Modifica ' . $T['uno'];
 $autore = (string)(current_user()['username'] ?? '');
@@ -33,7 +33,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             case 'cestina':
                 if ($home) throw new RuntimeException('La home non va nel cestino.');
                 contenuti_cestina($tipo, [$id]);
-                flash('success', $T['Uno'] . ' spostato nel cestino.');
+                flash('success', $T['Uno'] . ' spostat' . contenuti_desinenza($T) . ' nel cestino.');
                 header('Location: contenuti.php?tipo=' . $tipo);
                 exit;
             case 'ripristina':
@@ -62,7 +62,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 cms_evento('scheda_salvata', $tipo, $id, $d);
                 $salvato = contenuti_leggi($tipo, $id);
                 $stato = contenuti_stato($tipo, $salvato);
-                flash('success', $nuovo ? $T['Uno'] . ' creato' . ($stato === 'bozza' ? ' in bozza.' : ($stato === 'programmato' ? ' e programmato.' : ' e pubblicato.')) : $T['Uno'] . ' aggiornato.');
+                $o = contenuti_desinenza($T); // audit 2026-11: prima "Pagina aggiornato"
+                flash('success', $nuovo ? $T['Uno'] . ' creat' . $o . ($stato === 'bozza' ? ' in bozza.' : ($stato === 'programmato' ? ' e programmat' . $o . '.' : ' e pubblicat' . $o . '.')) : $T['Uno'] . ' aggiornat' . $o . '.');
         }
     } catch (RuntimeException $e) {
         flash('error', $e->getMessage());
@@ -74,9 +75,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 // Valori del modulo: dalla riga oppure, dopo un errore su un contenuto nuovo, da quello che era stato scritto.
 $sc = [
     'title' => $r['title'] ?? '', 'slug' => $r['slug'] ?? '', 'contenuto' => $r[$T['campo_contenuto']] ?? ($r['contenuto'] ?? ''),
-    'excerpt' => $r['excerpt'] ?? '', 'author' => $r['author'] ?? (string)cms_impostazione('autore_predefinito', ''),
+    'excerpt' => sito_4byte_veri((string)($r['excerpt'] ?? '')), 'author' => $r['author'] ?? (string)cms_impostazione('autore_predefinito', ''),
     'seo_title' => $r['seo_title'] ?? '', 'seo_description' => $r['seo_description'] ?? '', 'meta_description' => $r['meta_description'] ?? '',
-    'robots' => $r['robots'] ?? '', 'tldr' => $r['tldr'] ?? '', 'faq_testo' => isset($r['faq_testo']) ? $r['faq_testo'] : admin_faq_a_testo($r['faq'] ?? ''),
+    'robots' => $r['robots'] ?? '', 'tldr' => sito_4byte_veri((string)($r['tldr'] ?? '')), 'faq_testo' => isset($r['faq_testo']) ? $r['faq_testo'] : admin_faq_a_testo($r['faq'] ?? ''),
     'immagine' => $r['immagine_url'] ?? ($r['immagine'] ?? ($r['featured_image'] ?? '')), 'immagine_alt' => $r['featured_image_alt'] ?? ($r['immagine_alt'] ?? ''),
     'type' => $r['type'] ?? 'cluster', 'keyword_target' => $r['keyword_target'] ?? '', 'keywords_secondarie' => $r['keywords_secondarie'] ?? '',
     'cta' => $r['cta'] ?? '', 'pillar_ref' => $r['pillar_ref'] ?? '', 'pillar_title' => $r['pillar_title'] ?? '', 'author_quote' => $r['author_quote'] ?? '',
@@ -210,7 +211,7 @@ require_once __DIR__ . '/includes/admin-header.php';
         <h3>Controllo SEO: <?= $seoAnalisi['punteggio'] ?>/100</h3>
         <div class="sc-corpo">
           <div id="seo-controllo-corpo"><?= seo_analisi_html($seoAnalisi) ?></div>
-          <div style="display:flex;justify-content:space-between;align-items:center;margin-top:.6rem;gap:.5rem;flex-wrap:wrap"><span class="hint">Le soglie (densita 1,8% e 1,5%, parole del primo paragrafo, In breve) stanno in <a href="seo.php?scheda=schema">SEO e AEO</a>.</span><button type="button" class="btn btn-secondary btn-sm" id="seo-ricontrolla">Ricontrolla</button></div>
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-top:.6rem;gap:.5rem;flex-wrap:wrap"><span class="hint">Le soglie (densità 1,8% e 1,5%, parole del primo paragrafo, In breve) stanno in <a href="seo.php?scheda=schema">SEO e AEO</a>.</span><button type="button" class="btn btn-secondary btn-sm" id="seo-ricontrolla">Ricontrolla</button></div>
         </div>
       </div>
       <script src="<?= pannello_file('assets/seo-controllo.js') ?>" defer></script>

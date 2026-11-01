@@ -140,7 +140,7 @@ function agg_leggi_manifest(string $zipPath): array {
     $raw = $zip->getFromName('manifest.json');
     if ($raw === false) { $zip->close(); throw new RuntimeException('Nel pacchetto manca manifest.json.'); }
     $m = json_decode($raw, true);
-    if (!is_array($m)) { $zip->close(); throw new RuntimeException('manifest.json non e un JSON valido.'); }
+    if (!is_array($m)) { $zip->close(); throw new RuntimeException('manifest.json non è un JSON valido.'); }
     // sicurezza: voci dello zip con nomi puliti (niente "..", niente percorsi assoluti), dimensione totale e rapporto di compressione sotto controllo (zip bomb).
     $totaleByte = 0;
     for ($i = 0; $i < $zip->numFiles; $i++) {
@@ -237,7 +237,7 @@ function agg_leggi_manifest(string $zipPath): array {
             $f = (string)$f;
             $raw = $zip->getFromName($f);
             if ($raw === false) { $zip->close(); throw new RuntimeException("File assente nello zip: $f"); }
-            if (!is_array(json_decode($raw, true))) { $zip->close(); throw new RuntimeException("$f non e un JSON valido."); }
+            if (!is_array(json_decode($raw, true))) { $zip->close(); throw new RuntimeException("$f non è un JSON valido."); }
             $out[$chiave][] = $f;
         }
     }

@@ -6,8 +6,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     verify_csrf();
     $avviso = evi_testo($_POST['avviso_a'] ?? '', 190);
     if ($avviso !== '' && !filter_var($avviso, FILTER_VALIDATE_EMAIL)) { flash('error', '«' . $avviso . '» non è un indirizzo email valido.'); evi_admin_vai('impostazioni'); }
-    $privacy = evi_testo($_POST['privacy'] ?? '', 190);
-    if (!preg_match('~^(/[^\s"<>]*|https?://[^\s"<>]+)$~', $privacy)) $privacy = EVI_PREDEFINITE['privacy'];
+    // Audit 2026-11: un indirizzo scritto a mano ("privacy-policy", "www.sito.it/privacy") tornava in silenzio quello di partenza.
+    require_once cms_radice() . '/includes/editor-widget.php';
+    $scritto = evi_testo($_POST['privacy'] ?? '', 190);
+    $privacy = $scritto === '' ? EVI_PREDEFINITE['privacy'] : editor_link_sicuro($scritto);
+    if (!preg_match('~^(/[^\s"<>]*|https?://[^\s"<>]+)$~', $privacy)) { flash('error', '«' . $scritto . '» non è l\'indirizzo di una pagina: scrivi /privacy-policy/ (una pagina del sito) oppure https://... (Pagina dell\'informativa privacy).'); evi_admin_vai('impostazioni'); }
     save_setting('evi_impostazioni', json_encode(['avviso_a' => $avviso, 'avvisa_iscrizioni' => !empty($_POST['avvisa_iscrizioni']), 'promemoria' => !empty($_POST['promemoria']),
         'nota_email' => evi_testo($_POST['nota_email'] ?? '', 600, true), 'privacy' => $privacy], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES));
     flash('success', 'Impostazioni salvate.');
