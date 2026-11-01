@@ -557,3 +557,13 @@ sole `prove/api-posta-finta.py` (Brevo, SES con la firma SigV4 ricalcolata, Mail
   (`PREFISSO=cms_b_ node prove/prova-kit.js ...` per B). `node prove/prova-copia-pulita.js <base A> <cartella A> <base B>
   <cartella B> <utente> <password>`, idem `attacchi-copia.js`. Lasciano A come la sua prima copia; tolgono i collegamenti
   simbolici che creano.
+
+## prova-ux-editor.js (controllo di UX, novembre 2026)
+
+Le correzioni del controllo di UX e UI di editor, installatore e addon (`docs-sviluppo/ux-ui-2026-11-editor-addon-sito.md`),
+provate nel browser: errori del database dell'installatore in italiano (su una copia non installata), fuoco da tastiera
+visibile e non tagliato, widget della tavolozza aggiunti con Tab e Invio, ricerca vuota, nome di ogni campo delle schede di
+un widget, finestra Immagini, contrasto dell'editor in Cosmo e Aria anche con l'opacità, anello dei colori globali, header
+senza avviso H1 e senza indirizzo tecnico, avviso dell'editor al telefono, Agenda e Vetrina.
+`node prove/prova-ux-editor.js <base con kit Attività e otto addon accesi> <utente> <password> [base di una copia non installata]`.
+Atteso: 37 su 37. Non salva niente; alla fine rimette l'aspetto Aria.
