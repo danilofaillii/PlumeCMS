@@ -241,7 +241,7 @@ const senzaTag = s => s.replace(/<style[\s\S]*?<\/style>/gi, '').replace(/<[^>]+
   cli('giro');
   ok('7. il rimbalzato non riceve più i flussi', num("SELECT COUNT(*) FROM {p}newsletter_corsi c JOIN {p}newsletter_iscritti i ON i.id = c.iscritto_id WHERE i.email = 'rimbalza@persona.it' AND c.stato = 'attivo'") === 0 && per('rimbalza', prima7).length === 0);
   await vai('/admin/newsletter.php?scheda=iscritti&stato=rimbalzato');
-  const tR = await p.locator('table.table').innerText().catch(() => '');
+  const tR = await p.locator('table.table').first().innerText().catch(() => '');
   // 2.8.0: Contatti mostra "In lista nera" con il motivo "Hard bounce".
   ok('7. Contatti: il filtro Rimbalzati mostra lo stato "rimbalzato" (in lista nera, hard bounce)', /rimbalza@persona\.it/.test(tR) && /rimbalzato|Hard bounce/.test(tR) && !/carla@persona\.it/.test(tR), tR.slice(0, 200));
   await vai('/admin/newsletter.php?scheda=iscritti');
