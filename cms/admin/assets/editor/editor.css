@@ -316,7 +316,7 @@ button,input,select,textarea{font:inherit;color:inherit}
    (misure, annulla e ripeti, stati) hanno overflow:hidden e tagliavano il contorno del browser: il contorno va dentro. */
 .ed-app :is(button,a,summary,input,select,textarea):focus-visible{outline:2px solid var(--ed-primo);outline-offset:2px}
 .ed-misure button:focus-visible,.ed-storia button:focus-visible,.ed-stati button:focus-visible,.ed-schede-pannello button:focus-visible,.ed-schede-controlli button:focus-visible{outline-offset:-3px}
-.ed-widget-voce:focus-visible{border-color:var(--ed-primo);box-shadow:0 0 0 3px var(--fuoco)}
+.ed-widget-voce:focus-visible{outline:2px solid var(--ed-primo);outline-offset:2px;border-color:var(--ed-primo);box-shadow:0 0 0 3px var(--fuoco)}
 .ed-gruppo-widget[hidden]{display:none}
 .ed-aiuto-sopra{margin:-4px 0 12px}
 /* il nome della pagina senza H1: un avviso che si legge, non solo il colore */
