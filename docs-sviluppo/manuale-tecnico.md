@@ -667,8 +667,19 @@ cambia: non sono i temi del sito (capitolo 12), ne prendono solo i nomi e i colo
   `--info-chiaro`/`-testo`/`-bordo`, `--sidebar-testo`, `--sidebar-testo-2`, `--sidebar-attivo`, `--sidebar-su-attivo`,
   `--sidebar-bordo`, `--logo`, `--logo-accento`, `--codice-fondo`/`-testo`, `--ombra`, `--ombra-grande`, `--velo`,
   `--fuoco`, `--tela-fondo`, `--font-titolo`, `--font-codice`, `--cat-verde`/`-viola`/`-ambra`/`-blu`/`-grigio`.
+  Dall'UX di novembre 2026 (`docs-sviluppo/ux-ui-2026-11-pannello.md`): `--testata`/`--testata-testo` (la fascia del
+  titolo dei riquadri), `--bordo-campo` (bordo di campi, tendine, scelta file e pulsanti secondari, almeno 3:1 sul riquadro
+  e sul fondo) e `--segnaposto` (testo d'esempio dei campi, almeno 4,5:1).
   **Attenzione**: in Aria `--sidebar` è bianca. Il testo sopra la barra laterale usa `--sidebar-testo`, quello sopra
   un pulsante pieno `--su-accento`: mai `#fff` scritto a mano.
+- **Riquadri e campi** (UX 2026-11, in fondo a `admin/assets/css/admin.css`): il primo `h2`/`h3` di un riquadro
+  (`.form-card`, `.seo-card`, `.agg-card`... anche dopo i campi nascosti di un `<form class="form-card">`) diventa una
+  fascia a filo dei bordi; ogni classe di riquadro dichiara il suo margine interno in `--riq-y`/`--riq-x`. Una pagina nuova
+  usa `.form-card` con il titolo come primo figlio e ha la fascia senza fare niente. I campi dentro `.admin-content`
+  prendono `--bordo-campo` con `!important` (vince anche sugli stili in linea) e il contorno dell'accento al fuoco;
+  `input[type=file]` ha `::file-selector-button` a pulsante. Le etichette `.form-group label` sono in carattere normale.
+  Tutto sta dentro `.admin-content` o `.login-box`: l'editor, che carica `admin.css`, non cambia. La prova è
+  `prove/prova-ux-pannello.js`.
 - **Una pagina nuova del pannello** usa solo variabili: nessun colore scritto a mano. Le eccezioni volute (etichette
   bianche sopra le foto, colori di categoria, il fondo bianco del codice QR, le anteprime del sito) portano un commento
   `fisso` sulla stessa riga; `prove/prova-aspetti.js` cerca tutti gli altri.
