@@ -23,6 +23,7 @@
 .igx .igs-alone{paint-order:stroke;stroke:var(--sfondo);stroke-width:8px;stroke-linejoin:round}
 /* Testo sopra un colore pieno: bianco o nero, quello con il contrasto più alto sul colore della voce (anche nei temi
    e con un colore libero). Il calcolo è la luminanza di WCAG con gamma 2,2: sopra 0,179 il nero vince. */
+/* fisso: bianco per i browser senza i colori relativi */
 .igx .igs-su,.igx .igs-su2{fill:#fff}
 @supports (color:rgb(from red r g b)) and (width:calc(pow(2,2) * 1px)){
   .igx .igs-su{fill:rgb(from var(--c) clamp(0, (.17913 - (.2126 * pow(r / 255, 2.2) + .7152 * pow(g / 255, 2.2) + .0722 * pow(b / 255, 2.2))) * 10000000, 255) clamp(0, (.17913 - (.2126 * pow(r / 255, 2.2) + .7152 * pow(g / 255, 2.2) + .0722 * pow(b / 255, 2.2))) * 10000000, 255) clamp(0, (.17913 - (.2126 * pow(r / 255, 2.2) + .7152 * pow(g / 255, 2.2) + .0722 * pow(b / 255, 2.2))) * 10000000, 255))}
@@ -54,4 +55,5 @@
 .igx .igs-ghiaccio{fill:var(--bianco);stroke:var(--c);stroke-width:1.5;stroke-linejoin:round}
 .igx .igs-strada{stroke:var(--bordo-c);stroke-linejoin:round}
 .igx .igs-mezzeria{stroke:var(--tx);opacity:.55}
+/* fisso: il grigio in più delle quindici ("Altro", "Elimina"), uguale in tutti i temi; il testo sopra lo sceglie igs-su */
 .igx .igs-c-grigio{--c:#8a8178;--c2:#6f675f}

@@ -709,7 +709,8 @@ function igs_iceberg(array $v, int $W): array {
     $o .= '<g' . $col . '><polygon class="igs-ghiaccio" points="' . igs_punti(array_map(fn($q) => [$bx + $q[0] * $k, $wl + $q[1] * $k], $punta)) . '"/>'
         . '<polygon class="igs-p" points="' . igs_punti(array_map(fn($q) => [$bx + $q[0] * $bw, $wl + 2 + $q[1] * $bh], $sotto)) . '"/>';
     $y0 = $wl + 2 + $bh * .46 - ($n - 1) * $lh / 2 + 5;
-    foreach ($voci as $i => $x) $o .= igs_testo($bx, $y0 + $i * $lh, [igs_tronca(igs_pulito($x['testo'] ?? '', 80), $L ? 14.5 : 13.5, $bw * .6, $i === 0)], 'igs-su', $L ? 14.5 : 13.5, 'middle', $i === 0 ? 700 : 500);
+    $fsV = $L ? 14.5 : 13;
+    foreach ($voci as $i => $x) $o .= igs_testo($bx, $y0 + $i * $lh, [igs_tronca(igs_pulito($x['testo'] ?? '', 80), $fsV, $bw * ($L ? .6 : .7), $i === 0)], 'igs-su', $fsV, 'middle', $i === 0 ? 700 : 500);
     $o .= '</g>';
     $lx = $bx + 38 * $k + 34; $tw = $W - $lx - 2;
     $t1 = igs_a_capo($v['sopra_titolo'] ?? '', 14.5, $tw, 2, true); $t2 = igs_a_capo($v['sopra_testo'] ?? '', 12.5, $tw, 2);
