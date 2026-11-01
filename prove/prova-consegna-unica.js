@@ -43,6 +43,7 @@ const py = (codice, ...arg) => execFileSync('python3', ['-I', '-c', codice, ...a
   const r = spawnSync('node', [path.join(__dirname, 'prova-sito-plumecms.js'), B, DIR, UTENTE, PASSWORD, path.join(tmp, unico), V], { encoding: 'utf8', timeout: 900000 });
   const righe = (r.stdout || '').split('\n');
   righe.filter(x => /^KO/.test(x)).forEach(x => console.log('    ' + x));
+  if (r.status !== 0) righe.filter(x => x.trim()).slice(-4).forEach(x => console.log('    ultima: ' + x.slice(0, 200)));
   const fine = righe.reverse().find(x => / su \d+ OK$/.test(x)) || '';
   const [buoni, tutti] = (fine.match(/(\d+) su (\d+)/) || [0, 0, 1]).slice(1).map(Number);
   ok(`prova-sito-plumecms.js con il pacchetto unico: ${fine}`, r.status === 0 && buoni === tutti && tutti > 50, (r.stderr || '').slice(0, 300));

@@ -88,7 +88,7 @@ async function contrastoParole(pg) {
     ['/installazione/', /Installalo in 5 minuti/], ['/scarica/', new RegExp('Scarica plumeCMS ' + V.replace(/\./g, '\\.') + '$')], ['/domande-frequenti/', /Domande frequenti/]];
   for (const [u, re] of pagine) {
     const r = await v.goto(B + u, { waitUntil: 'networkidle' });
-    const h1 = (await v.locator('h1').first().innerText()).replace(/\s+/g, ' ');
+    const h1 = (await v.locator('h1').first().innerText({ timeout: 15000 }).catch(async () => 'senza h1: ' + (await v.title()) + ' | ' + (await v.locator('body').innerText()).slice(0, 300))).replace(/\s+/g, ' ');
     ok(`${u} risponde 200 con il suo titolo`, r.status() === 200 && re.test(h1), [r.status(), h1]);
   }
   await v.goto(B + '/', { waitUntil: 'networkidle' });
