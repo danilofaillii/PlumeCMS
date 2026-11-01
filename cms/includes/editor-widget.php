@@ -72,7 +72,7 @@ const EDITOR_FOTO_EFFETTI = ['' => 'Nessuno', 'zoom' => 'Zoom lento', 'bagliore'
 // Le dieci disposizioni dell'Apertura in più della classica (1.2.6).
 require_once __DIR__ . '/editor-hero.php';
 
-// Le quindici infografiche disegnate in SVG (2.9.0): imbuto, piramide, matrice... (stesso gruppo e stessa cornice delle ig_*).
+// Le quindici infografiche disegnate in SVG: imbuto, piramide, matrice... (stesso gruppo e stessa cornice delle ig_*).
 require_once __DIR__ . '/editor-infografiche.php';
 
 const EDITOR_ALLINEAMENTI = ['' => 'Come la sezione', 'left' => 'Sinistra', 'center' => 'Centro', 'right' => 'Destra'];

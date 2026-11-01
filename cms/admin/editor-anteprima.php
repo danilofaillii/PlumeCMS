@@ -44,7 +44,7 @@ $html = vista_pagina($meta, $corpo, $testa, editor_percorso_pagina($pagina));
 // Niente link del sito: gli script dell'editor e Sortable vanno in fondo.
 $html = str_replace('</body>', '<script src="' . pannello_file('assets/editor/Sortable.min.js') . '"></script><script src="' . pannello_file('assets/editor/anteprima.js') . '"></script></body>', $html);
 // Gli script dei widget registrati (schede, fisarmonica, contatori...) servono anche nella tela.
-// I widget registrati (esterni), l'Apertura (le disposizioni, 1.2.6) e le infografiche disegnate (2.9.0): i widget del nucleo con fogli loro.
+// I widget registrati (esterni), l'Apertura (le disposizioni, 1.2.6) e le infografiche disegnate: i widget del nucleo con fogli loro.
 $asset = editor_asset_pagina('ed-w-' . implode(' ed-w-', array_merge(array_keys(editor_widget_registrati()), ['hero'], defined('IGS_TIPI') ? IGS_TIPI : [])));
 // Al contrario, come le viste del sito (che mettono ogni <link> davanti): stesso ordine dei fogli nell'editor e sul sito.
 foreach (array_reverse($asset['css']) as $f) if (is_file(dirname(__DIR__) . '/sito/assets/' . $f)) $html = str_replace('</head>', '<link rel="stylesheet" href="' . h(sito_versione_asset($f)) . '"></head>', $html);

@@ -577,6 +577,14 @@ test e la testata della Scheda. Nella pagina Temi del pannello ogni scheda mostr
 `testo` scuri e chiari come nell'esempio, altrimenti restano card color crema sul fondo scuro (che può anche essere
 una scelta).
 
+**Le quindici infografiche disegnate** (imbuto, piramide, ciambella, lancetta...) usano la stessa tavolozza: le forme
+prendono i colori di `voci` e delle tinte ricavate, le scritte `titolo` e `testo`, le linee `bordo` e `riga`, gli omini
+spenti `muto`. Il testo sopra un colore pieno (dentro un gradino dell'imbuto, una tappa del ciclo) e il titolo della loro
+testata li sceglie il CMS, bianco o nero secondo il colore: non serve scriverli nel tema. Se il tuo `tema.css` cambia il
+colore di una classe (`.igx .igx-c-oro{--c:var(--ig-oro-scuro)}`), anche quel testo si adatta. Il foglio di queste
+quindici è `sito/assets/infografiche-svg.css`, caricato solo nelle pagine che ne hanno una; le sue classi cominciano con
+`igs-`.
+
 ---
 
 ## 9. Il PHP del tema: filtri, eventi e pagine ridisegnate

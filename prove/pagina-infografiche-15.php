@@ -1,5 +1,5 @@
 <?php
-// Le pagine di prova delle quindici infografiche disegnate (2.9.0), una per sezione (più di sei colonne in una sezione spariscono).
+// Le pagine di prova delle quindici infografiche disegnate, una per sezione (più di sei colonne in una sezione spariscono).
 // uso: php prove/pagina-infografiche-15.php <cartella CMS> normali  -> /infografiche-15/: le quindici con i valori di partenza
 //      php prove/pagina-infografiche-15.php <cartella CMS> estremi  -> /infografiche-15-estremi/: minimi, massimi, testi lunghi,
 //                                                                       zero voci, totali sbagliati, colori liberi

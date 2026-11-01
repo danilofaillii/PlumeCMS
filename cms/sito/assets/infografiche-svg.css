@@ -1,4 +1,4 @@
-/* Le quindici infografiche disegnate (widget ig_imbuto ... ig_barre100, includes/editor-infografiche.php), 2.9.0.
+/* Le quindici infografiche disegnate (widget ig_imbuto ... ig_barre100, includes/editor-infografiche.php).
    La cornice (testata, corpo, chiusura, firma) e i colori igx-c-* stanno in sito.css: qui solo il disegno.
    Ogni infografica ha due SVG: .igs-largo (viewBox 560) e .igs-stretto (viewBox 320). Il riquadro .igs è un contenitore:
    sotto 500 px di larghezza si vede lo stretto, così al telefono le scritte restano grandi come al computer.

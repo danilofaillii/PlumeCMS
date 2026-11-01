@@ -1,6 +1,6 @@
 <?php
 /**
- * Le quindici infografiche disegnate (2.9.0): imbuto, piramide, matrice, ciclo, ciambella, cerchi che si toccano, ragnatela,
+ * Le quindici infografiche disegnate: imbuto, piramide, matrice, ciclo, ciambella, cerchi che si toccano, ragnatela,
  * lancetta, iceberg, omini, viaggio, bilancia, mappa di calore, cerchi concentrici, barre al cento per cento.
  * Widget del nucleo nel gruppo Infografiche (prefisso ig_), con la stessa cornice delle altre quattordici (igx_cornice,
  * igx_controlli_testa, igx_controlli_coda in editor-widget.php).

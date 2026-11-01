@@ -11,6 +11,8 @@
 //   e, nel config.local.php del sito, CMS_DNS_PROVA con i record finti di studiorossi.it (senza, la foto del Dominio dice che il DNS non
 //   risponde); il capitolo 40 il WebDAV finto (COPIA_PORTA, 8297 se manca). I widget della 2.1 (08-menu-ristorante, 08-galleria-filtri)
 //   vogliono CMS_DIR_MANUALE. Il giro completo cancella prima tutte le foto: ognuna deve nascere da qui.
+// Infografiche disegnate: le quindici infografiche disegnate (08-infografiche), una foto d'insieme dalla pagina di prove/pagina-infografiche-15.php:
+//   vuole CMS_DIR_MANUALE; da sola con SOLO_CAPITOLI=infografiche.
 // 2.2.0: Scegli dal sito (08-scegli-dal-sito, 11-prenota-1 e 2 con l'esempio eseguito davvero, 17-menu-scegli, 19-popup-scegli; la
 //   finestra 08-scegli-finestra dopo tutti i capitoli, con la pagina in bozza "Condizioni di vendita") e 28-server con il gruppo
 //   "Google e IndexNow" (due foto della stessa pagina unite).
@@ -891,6 +893,40 @@ async function fotoWidget21() {
 
 // 2.2.0: la finestra Scegli dal sito (capitolo 8), con "con" nella ricerca e una pagina in bozza ("Condizioni di vendita"). Dopo
 // tutti i capitoli: la pagina in bozza prenderebbe un numero di pagina che un capitolo dopo si aspetta.
+// Infografiche disegnate: le quindici infografiche disegnate, in una foto d'insieme (capitolo 8). La pagina /infografiche-15/ la crea
+// prove/pagina-infografiche-15.php nella cartella del sito delle schermate (CMS_DIR_MANUALE; senza, la foto si salta). Ogni
+// infografica si fotografa da sola a 1200 px, poi le quindici si mettono in una griglia di tre colonne. Dopo tutti i capitoli,
+// come le altre pagine di prova. Da sola: SOLO_CAPITOLI=infografiche.
+async function fotoInfografiche() {
+  if (!process.env.CMS_DIR_MANUALE || (SOLO && !'08'.startsWith(SOLO.slice(0, 2)))) return;
+  require('child_process').execFileSync('php', [path.join(__dirname, '..', 'prove', 'pagina-infografiche-15.php'), process.env.CMS_DIR_MANUALE, 'normali']);
+  await p.goto(B + '/infografiche-15/', { waitUntil: 'networkidle' }); await dorme(600);
+  await p.addStyleTag({ content: 'header{visibility:hidden}.igx .igx-firma{display:none}' });
+  const pezzi = [];
+  for (let i = 0; i < 15; i++) {
+    const f = path.join(GREZZE, `08-infografica-${String(i).padStart(2, '0')}.png`);
+    await p.locator('.igx').nth(i).screenshot({ path: f }); pezzi.push(f);
+  }
+  require('child_process').execFileSync('python3', ['-c', `
+import sys
+from PIL import Image
+uscita, pezzi = sys.argv[1], sys.argv[2:]
+col, larg, spazio = 3, 400, 16
+im = [Image.open(f).convert('RGB') for f in pezzi]
+im = [x.resize((larg, round(x.height * larg / x.width)), Image.LANCZOS) for x in im]
+righe = [im[i:i + col] for i in range(0, len(im), col)]
+H = sum(max(x.height for x in r) for r in righe) + spazio * (len(righe) + 1)
+tela = Image.new('RGB', (col * larg + spazio * (col + 1), H), (238, 240, 238))
+y = spazio
+for r in righe:
+    for j, x in enumerate(r): tela.paste(x, (spazio + j * (larg + spazio), y))
+    y += max(x.height for x in r) + spazio
+tela.save(uscita)
+`, path.join(GREZZE, '08-infografiche.png'), ...pezzi]);
+  for (const f of pezzi) fs.unlinkSync(f);
+  console.log('08-infografiche');
+}
+
 async function fotoSceltaSito() {
   if (SOLO && !'08'.startsWith(SOLO.slice(0, 2))) return;
   await vai('index.php');
@@ -1748,6 +1784,7 @@ module.exports = { capitoli };
     await fn();
   }
   if (!SOLI.length || SOLI.includes('fine')) { await fotoWidgetAttivita(); await fotoWidget21(); await fotoSceltaSito(); } // SOLO_CAPITOLI=...,fine: anche le foto dei widget sul sito
+  if (!SOLI.length || SOLI.includes('fine') || SOLI.includes('infografiche')) await fotoInfografiche(); // infografiche disegnate: SOLO_CAPITOLI=infografiche
   if (err.length) console.log('errori JavaScript:', err);
   stringi();
   const tot = fs.readdirSync(USCITA).filter(f => f.endsWith('.jpg')).reduce((t, f) => t + fs.statSync(path.join(USCITA, f)).size, 0);

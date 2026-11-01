@@ -575,7 +575,7 @@ compare un riquadro che lo dice e dà il link alla **scheda** della pagina, da c
 
 Ogni pagina è una pila di **sezioni** (le fasce orizzontali). Ogni sezione ha da una a quattro **colonne**. Dentro le
 colonne ci sono i **widget**: titoli, testi, immagini, pulsanti, gallerie, prezzi, domande frequenti, mappe, form e
-molti altri, 92 in tutto.
+molti altri, 107 in tutto.
 
 - Per **aggiungere un widget**: fai clic su un elemento della tela, poi sul widget nella linguetta **Widget**: entra
   sotto l'elemento scelto. Oppure trascinalo dove vuoi. In cima alla linguetta, **Cerca un widget...** trova un widget
@@ -825,6 +825,59 @@ Gli altri indirizzi che vanno bene:
   riquadro con il pulsante **Vedi la disponibilità su Booking.com**, che apre Booking in una scheda nuova.
 
 Se l'indirizzo non è di questi servizi, nell'editor compare un messaggio e sul sito non esce niente.
+
+### Le infografiche disegnate
+
+Nel gruppo **Infografiche** della linguetta **Widget**, accanto alle quattordici di sempre (passi, linea del tempo,
+tabella...), ci sono quindici infografiche disegnate: forme, frecce e numeri, come in una presentazione fatta bene. Si
+aggiungono come gli altri widget e partono con un esempio già scritto: cambi le voci e il disegno si rifà da solo.
+
+![Le quindici infografiche disegnate, con i valori di partenza](immagini/manuale-uso/08-infografiche.jpg)
+
+| Infografica | A cosa serve | Cosa compili |
+|---|---|---|
+| **Imbuto** | Quante persone restano a ogni passaggio (visite, contatti, appuntamenti, clienti) e dove se ne perdono di più | Da 3 a 6 **gradini**: nome e quanti. La **resa** fra un gradino e il precedente (28%) la calcola da sola |
+| **Piramide a livelli** | Una gerarchia: la base regge tutto, la punta è la cosa più importante | Da 3 a 6 **livelli**, dalla punta alla base: nome e una riga di spiegazione |
+| **Matrice a quattro quadranti** | Classificare le cose su due assi: urgente e importante, costo e valore | I nomi dei due **assi** e, per ogni **quadrante**, titolo, colore ed esempi (uno per riga) |
+| **Ciclo** | Un metodo che non finisce: alla fine si riparte dal primo passo | Da 3 a 6 **tappe** con nome e colore, la scritta al centro |
+| **Ciambella** | Le parti di un tutto in percentuale, con la più grande al centro | Da 2 a 6 **voci**: nome, percentuale, colore. Se il totale non fa 100, l'editor lo scrive sopra il disegno |
+| **Cerchi che si toccano** | Quello che due o tre cose hanno in comune, e il punto dove si incontrano | Due o tre **cerchi** con nome e colore, la scritta dell'incrocio |
+| **Ragnatela** | Un profilo su più aspetti, con il confronto fra prima e dopo | Da 4 a 8 **aspetti**; per ognuno il valore di prima e di dopo, da 0 a 10; i nomi della legenda |
+| **Lancetta** | Un solo numero su una scala, con le zone rossa, gialla e verde | Valore, minimo, massimo, dove finiscono le prime due zone, se è meglio alto o basso, la riga sotto |
+| **Iceberg** | La differenza fra il risultato che tutti vedono e il lavoro che c'è sotto | La frase sopra l'acqua e da 2 a 6 **voci** sotto |
+| **Omini** | Una proporzione che si capisce a colpo d'occhio: 7 persone su 10 | Quanti, su quanti (fino a 20), la frase, il simbolo: persone, case, cuori o stelle |
+| **Il viaggio** | Le tappe di un percorso con una meta: il percorso del cliente, il viaggio dell'eroe | Da 3 a 7 **tappe** con nome; la bandiera sull'ultima si spegne con un interruttore |
+| **Bilancia** | Pro e contro di una scelta: la bilancia pende dalla parte che pesa di più | Le voci dei due piatti; **Da che parte pende**: da sola (dalla parte con più voci) o scelta da te |
+| **Mappa di calore** | Dove si concentra qualcosa in una griglia: giorni e orari, mesi e servizi | I nomi delle **colonne** separati dalla virgola; per ogni **riga** il nome e un valore da 0 a 4 per colonna (`1 2 4 0`) |
+| **Cerchi concentrici** | Tre livelli uno dentro l'altro, dal cuore all'esterno | Da 2 a 4 **cerchi**, dal più grande al centro: nome e una riga di spiegazione |
+| **Barre al cento per cento** | Come si divide un tutto, e come cambia fra due momenti | Da 2 a 6 **voci** con il colore; da 1 a 4 **barre** con le percentuali nell'ordine delle voci (`55 25 5 15`), che fanno 100 |
+
+Testata, occhiello, titolo, colori, chiusura e firma si cambiano come nelle altre infografiche (scheda **Stile**, campo
+**Tema**). Il titolo e l'occhiello della testata diventano bianchi o neri da soli, secondo il colore che scegli: si leggono
+sempre. Le scritte sopra i colori pieni (i gradini dell'imbuto, le tappe del ciclo) fanno lo stesso.
+
+**Al telefono** ogni infografica si ridisegna stretta: le scritte restano grandi come al computer e alcune si spostano
+(la legenda della ciambella va sotto, il viaggio sale dal basso verso l'alto, le spiegazioni dei cerchi concentrici vanno
+sotto il disegno).
+
+**Scritte lunghe.** Un nome troppo lungo va a capo e, se non ci sta, finisce con i puntini: sul sito non esce mai dal
+disegno. Le voci in più (un settimo gradino, un quarto cerchio) restano salvate ma non si vedono, e l'editor lo scrive
+sopra il disegno; queste note sul sito non compaiono.
+
+**Esempio.** Lo Studio Rossi vuole mostrare da dove arrivano i clienti.
+
+1. Nella linguetta **Widget** scrivi `ciambella` in **Cerca un widget...** e fai clic su **Ciambella**: entra nella pagina
+   con l'esempio.
+2. In **Voci** apri **Passaparola**, scrivi `Amici e clienti` nel nome e `50` in **Percentuale**. Sopra il disegno compare
+   "Le percentuali fanno 105%": porta **Google** a `25`, e la nota sparisce.
+3. In **Titolo** scrivi `Da dove arrivano i nostri clienti`, poi **Pubblica**.
+
+**Checklist delle infografiche**
+
+- [ ] Le percentuali della ciambella e di ogni barra al cento per cento fanno 100 (sopra il disegno non c'è la nota).
+- [ ] Nessuna nota "Si vedono solo..." sopra il disegno: ho tolto le voci che non servono.
+- [ ] I nomi sono corti: niente puntini alla fine delle scritte.
+- [ ] Ho guardato la pagina anche dal telefono.
 
 ### Le novità dei widget di prima
 

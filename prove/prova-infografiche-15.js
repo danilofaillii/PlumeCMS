@@ -1,4 +1,4 @@
-// Le quindici infografiche disegnate (2.9.0): imbuto, piramide, matrice, ciclo, ciambella, cerchi che si toccano, ragnatela,
+// Le quindici infografiche disegnate: imbuto, piramide, matrice, ciclo, ciambella, cerchi che si toccano, ragnatela,
 // lancetta, iceberg, omini, viaggio, bilancia, mappa di calore, cerchi concentrici, barre al cento per cento.
 // Come le vede un visitatore al computer (1280) e al telefono (390): i numeri calcolati giusti, i dati per chi non vede,
 // niente scritte sovrapposte o fuori dal disegno, niente scorrimento di lato, scritte grandi abbastanza al telefono,
