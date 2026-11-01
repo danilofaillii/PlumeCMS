@@ -543,7 +543,9 @@ def editor_json():
         'sfondo': {'sfumature_sito': False},
         'sito': {'nome': 'plumeCMS', 'sottotitolo': 'il CMS leggero come una piuma',
                  'descrizione': 'Un CMS in PHP e MySQL con editor visuale, temi, SEO e newsletter già dentro.',
-                 'logo': '', 'favicon': U + 'favicon.png'},
+                 'logo': U + 'marchio.png', 'favicon': U + 'favicon.png'},
+        # 2.6.0: il logo sta solo qui; i widget Logo del sito di header e footer lo leggono (prima avevano l'immagine scritta dentro
+        # e il logo cambiato in Stile del sito non compariva).
         # Ritocchi per lo sfondo chiaro (come il tema Aria): testata chiara, ombre leggere.
         'css': {'sito': ':root{--r:14px}\n'
                         '.top,.ed-testata{background:rgba(var(--bg-rgb),.88)}\n'
@@ -567,7 +569,7 @@ def editor_json():
     col = lambda i, figli, larg=100: {'id': i, 'tipo': 'colonna', 'impostazioni': {'larghezza': {'d': larg, 'm': 100}}, 'figli': figli}
     wid = lambda i, tipo, **imp: {'id': i, 'tipo': tipo, 'impostazioni': imp}
     header = {'versione': 1, 'elementi': [sez('plh01', [col('plh02', [
-        wid('plh03', 'logo_sito', modo='entrambi', immagine=U + 'marchio.png', larghezza_immagine={'d': {'v': 32, 'u': 'px'}},
+        wid('plh03', 'logo_sito', modo='entrambi', larghezza_immagine={'d': {'v': 32, 'u': 'px'}},
             senza_sottotitolo=True, maiuscolo=False, margine_sotto={'d': 0}),
         wid('plh04', 'menu_nav', menu='posizione:principale', disposizione='orizzontale', spingi=True, collasso=960, hamburger_testo='Menu',
             indicatore='linea', indicatore_colore='globale:primario', extra_testo='Scarica', extra_link='/scarica/', margine_sotto={'d': 0}),
@@ -576,7 +578,7 @@ def editor_json():
             nascondi_t=True, nascondi_m=True)])],
         larghezza='contenuta', spazio_sopra={'d': 0, 'm': 0}, spazio_sotto={'d': 0, 'm': 0}, spazio_colonne={'d': 28})]}
     footer = {'versione': 1, 'elementi': [
-        sez('plf01', [col('plf02', [wid('plf03', 'logo_sito', modo='entrambi', immagine=U + 'marchio.png', larghezza_immagine={'d': {'v': 28, 'u': 'px'}},
+        sez('plf01', [col('plf02', [wid('plf03', 'logo_sito', modo='entrambi', larghezza_immagine={'d': {'v': 28, 'u': 'px'}},
                                         maiuscolo=False, margine_sotto={'d': 8}), wid('plf04', 'descrizione_sito', margine_sotto={'d': 0})], 40),
                       col('plf05', [wid('plf06', 'menu_nav', menu='posizione:piede-1', titolo='Il sito', disposizione='verticale', margine_sotto={'d': 0})], 30),
                       col('plf07', [wid('plf08', 'menu_nav', menu='posizione:piede-2', titolo='Manuali e download', disposizione='verticale', margine_sotto={'d': 0})], 30)],
