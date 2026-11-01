@@ -1,10 +1,13 @@
 // Controllo di UX e UI di editor, installatore, addon e sito (novembre 2026): le correzioni provate nel browser come un
 // utente. Contrasti misurati, fuoco da tastiera visibile, campi con un nome, testi nuovi presenti.
 // uso: node prove/prova-ux-editor.js <base di un CMS installato con il kit Attività e gli otto addon accesi> <utente> <password>
-//        [base di una copia NON installata, per l'installatore] [db di prova vuoto per l'installatore, solo per il passo 2]
+//        [base di una copia NON installata, per l'installatore] [db vuoto per i passi 3 e 4, con DBPASS nell'ambiente]
+// Per il punto degli addon vuoti nell'editor serve la pagina /addon-tutti/ con i widget degli addon, senza eventi né corsi:
+//   php prove/pagina-addon-a.php <cartella CMS> addon-tutti "Prova addon" prenota,membri_accesso,corsi_elenco,eventi_iscrizione,recensioni_sito,vetrina_prodotti,vetrina_carrello
+// Nessuna installazione parte: l'installatore si ferma al passo 4.
 // Non salva niente nel sito installato: il widget aggiunto con la tastiera resta nella tela e si lascia la pagina senza salvare.
 const { chromium } = require('playwright');
-const [B, U, P, BINST] = process.argv.slice(2);
+const [B, U, P, BINST, DBINST] = process.argv.slice(2);
 let n = 0, ko = 0; const ok = (t, c, extra = '') => { n++; if (!c) ko++; console.log((c ? 'OK  ' : 'KO  ') + t + (extra !== '' ? ' ' + JSON.stringify(extra).slice(0, 600) : '')); };
 
 // Contrasto di ogni testo visibile (come prova-aspetti.js), con l'opacità dei genitori moltiplicata.
@@ -61,7 +64,27 @@ const nomiMancanti = (p, radice) => p.evaluate((R) => [...document.querySelector
     await Promise.all([p.waitForNavigation(), p.click('button[type=submit]')]);
     const e2 = (await p.locator('.errore').innerText().catch(() => '')).trim();
     ok('installatore: server del database inesistente, si dice di controllare il campo Server', /non esiste\. Quasi sempre è localhost/.test(e2), e2);
-    // Passo 3 e 4 si raggiungono solo con un database vero: si guarda l'HTML che li scrive, dal sorgente servito con la sessione.
+    // 2.5.x (scelte di Danilo): passo 3 con gli errori sotto i campi sbagliati, passo 4 con il pulsante della carta Su misura.
+    if (DBINST && process.env.DBPASS) {
+      await p.fill('#host', '127.0.0.1:3308'); await p.fill('#nome', DBINST); await p.fill('#utente', 'danilo'); await p.fill('#password', process.env.DBPASS);
+      await Promise.all([p.waitForNavigation(), p.click('button[type=submit]')]);
+      ok('installatore: con il database giusto si arriva al passo 3', /passo=3/.test(p.url()), p.url());
+      await p.fill('#nome', 'Studio UX'); await p.fill('#admin_nome', 'prova'); await p.fill('#admin_email', 'non-una-email'); await p.fill('#admin_password', 'corta'); await p.fill('#admin_password2', 'corta');
+      await p.evaluate(() => { document.querySelectorAll('[required]').forEach(e => e.removeAttribute('required')); document.querySelectorAll('input[type=email]').forEach(e => e.type = 'text'); });
+      await Promise.all([p.waitForNavigation(), p.click('button[type=submit]')]);
+      const sb = await p.evaluate(() => [...document.querySelectorAll('.campo.sbagliato input')].map(i => ({ id: i.id, invalido: i.getAttribute('aria-invalid'), descr: i.getAttribute('aria-describedby') || '', bordo: getComputedStyle(i).borderTopColor, errore: (document.getElementById(i.id + '-errore') || {}).textContent || '' })));
+      ok('installatore, passo 3: email e password sbagliate segnate sotto il loro campo, con aria-invalid e il messaggio collegato', ['admin_email', 'admin_password'].every(id => sb.some(x => x.id === id && x.invalido === 'true' && x.descr.includes(id + '-errore') && x.errore.length > 10)) && !sb.some(x => x.id === 'nome'), sb);
+      ok('installatore, passo 3: il bordo del campo sbagliato è rosso (quello del riquadro degli errori)', sb.length > 0 && sb.every(x => x.bordo === sb[0].bordo) && await p.evaluate((b) => b === getComputedStyle(document.querySelector('.errore')).color, sb[0] && sb[0].bordo), sb.map(x => x.bordo));
+      ok('installatore, passo 3: in cima il riassunto dice quanti campi sistemare', /campi da sistemare/.test(await p.locator('.errore').innerText()));
+      await p.fill('#admin_email', 'prova@esempio.it'); await p.fill('#admin_password', 'Collaudo-Officina-2026'); await p.fill('#admin_password2', 'Collaudo-Officina-2026');
+      await Promise.all([p.waitForNavigation(), p.click('button[type=submit]')]);
+      const testo = async () => (await p.locator('form button[type=submit]').innerText()).trim();
+      ok('installatore, passo 4: con Vuoto il pulsante dice "Installa adesso"', await testo() === 'Installa adesso', await testo());
+      await p.locator('.kit-su-misura').click();
+      ok('installatore, passo 4: con la carta Su misura il pulsante dice "Avanti: le quattro domande"', await testo() === 'Avanti: le quattro domande', await testo());
+      await p.locator('.kit-personale').click();
+      ok('installatore, passo 4: tornando a un kit normale, di nuovo "Installa adesso"', await testo() === 'Installa adesso', await testo());
+    } else ok('installatore, passi 3 e 4: saltati (manca il database vuoto o DBPASS)', true);
     await p.close();
   } else ok('installatore: saltato (manca la base di una copia non installata)', true);
 
@@ -93,6 +116,18 @@ const nomiMancanti = (p, radice) => p.evaluate((R) => [...document.querySelector
     f = await fuoco(p); ok(`editor: fuoco visibile e non tagliato su ${sel}`, f.visibile, f);
   }
   ok('editor: i pulsanti delle misure dicono quale è scelta (aria-pressed)', await p.locator('.ed-misure button[aria-pressed=true]').count() === 1);
+  // 2.5.x: le schede del pannello sono schede ARIA, con le frecce
+  ok('editor: il pannello ha un tablist con quattro schede e i loro pannelli', await p.locator('.ed-schede-pannello[role=tablist] [role=tab]').count() === 4 && await p.locator('[role=tabpanel][aria-labelledby=ed-scheda-widget]').count() === 1);
+  await p.click('.ed-schede-pannello button[data-pannello=widget]'); await p.focus('#ed-scheda-widget');
+  const schedaAttiva = () => p.evaluate(() => ({ fuoco: document.activeElement.id, scelta: document.querySelector('[role=tab][aria-selected=true]').id, aperto: [...document.querySelectorAll('[role=tabpanel]')].filter(x => !x.hidden).map(x => x.id).join(), tab: [...document.querySelectorAll('[role=tab]')].map(x => x.tabIndex).join() }));
+  await p.keyboard.press('ArrowRight'); let sa = await schedaAttiva();
+  ok('editor: freccia a destra dalla scheda Widget apre Sezioni (fuoco, aria-selected, pannello, un solo tabindex 0)', sa.fuoco === 'ed-scheda-sezioni' && sa.scelta === 'ed-scheda-sezioni' && sa.aperto === 'ed-pannello-sezioni' && sa.tab === '-1,0,-1,-1', sa);
+  await p.keyboard.press('End'); sa = await schedaAttiva();
+  ok('editor: Fine porta a Navigatore', sa.scelta === 'ed-scheda-navigatore' && sa.aperto === 'ed-pannello-navigatore', sa);
+  await p.keyboard.press('ArrowRight'); sa = await schedaAttiva();
+  ok('editor: freccia a destra dall\'ultima torna alla prima (Widget)', sa.scelta === 'ed-scheda-widget', sa);
+  await p.keyboard.press('ArrowLeft'); await p.keyboard.press('Home'); sa = await schedaAttiva();
+  ok('editor: Inizio porta a Widget', sa.scelta === 'ed-scheda-widget' && sa.aperto === 'ed-pannello-widget', sa);
   // un widget aperto: ogni campo di Contenuto, Stile e Avanzate ha un nome per il lettore di schermo
   const tela = p.frameLocator('.ed-tela iframe');
   await tela.locator('[data-ed-tipo="hero"]').first().click(); await p.waitForTimeout(500);
@@ -111,6 +146,33 @@ const nomiMancanti = (p, radice) => p.evaluate((R) => [...document.querySelector
     const [a, b] = [lum(v(col)), lum(v(fondo))].sort((x, y) => y - x); return +((a + .05) / (b + .05)).toFixed(2);
   });
   await p.click('#ed-schede-controlli button[data-scheda=stile]'); await p.waitForTimeout(250);
+  // 2.5.x: i cursori senza un valore loro: "come il sito" e cursore grigio, finché non si sceglie un valore
+  await p.evaluate(() => document.querySelectorAll('details.ed-sez').forEach(d => d.open = true)); await p.waitForTimeout(200);
+  const vuoti = await p.evaluate(() => [...document.querySelectorAll('#ed-controlli .ed-misura, #ed-controlli .ed-numero-riga')].filter(r => r.offsetParent).map(r => { const n = r.querySelector('input[type=number]'), c = r.querySelector('input[type=range]'); return { vuota: n.value === '', segnaposto: n.placeholder, grigio: c.classList.contains('ed-cursore-vuoto'), opacita: +getComputedStyle(c).opacity }; }));
+  const vv = vuoti.filter(x => x.vuota && x.segnaposto === 'come il sito');
+  ok('editor, Stile: i cursori con la casella vuota dicono "come il sito" e sono grigi', vv.length >= 3 && vv.every(x => x.grigio && x.opacita < 1) && vuoti.filter(x => x.vuota && !x.segnaposto).length === 0, { quanti: vv.length, altri: vuoti.filter(x => x.vuota && x.segnaposto !== 'come il sito').slice(0, 3) });
+  ok('editor, Stile: un cursore con un valore non è grigio', vuoti.filter(x => !x.vuota).every(x => !x.grigio), vuoti.filter(x => !x.vuota && x.grigio).slice(0, 3));
+  // la riga si segna una volta: un locator con :has(.ed-cursore-vuoto) dopo il cambio prenderebbe la riga seguente
+  await p.evaluate(() => { const r = document.querySelector('#ed-controlli .ed-numero-riga:has(input.ed-cursore-vuoto), #ed-controlli .ed-misura:has(input.ed-cursore-vuoto)'); r.dataset.prova = 'cursore'; });
+  const riga = p.locator('[data-prova=cursore]');
+  await riga.locator('input[type=number]').fill('3'); await p.waitForTimeout(150);
+  ok('editor, Stile: scritto un valore nella casella, il cursore torna colorato', !(await riga.locator('input[type=range]').evaluate(c => c.classList.contains('ed-cursore-vuoto'))));
+  await riga.locator('input[type=number]').fill(''); await p.waitForTimeout(150);
+  ok('editor, Stile: svuotata la casella, di nuovo grigio', await riga.locator('input[type=range]').evaluate(c => c.classList.contains('ed-cursore-vuoto')));
+  // 2.5.x: "solo telefono" accanto al pallino del monitor quando il valore vale solo al telefono
+  await p.click('.ed-misure button[data-misura=m]'); await p.waitForTimeout(300);
+  await p.click('#ed-schede-controlli button[data-scheda=avanzate]'); await p.waitForTimeout(250);
+  await p.evaluate(() => document.querySelectorAll('details.ed-sez').forEach(d => d.open = true)); await p.waitForTimeout(150);
+  const ctlResp = p.locator('#ed-controlli .ed-controllo:has(> .ed-etichetta .ed-misura-pulsante):has(.ed-numero-riga input[type=number])').first();
+  ok('editor, telefono: prima di cambiare, nessuna etichetta "solo telefono"', await ctlResp.locator('.ed-misura-solo:visible').count() === 0);
+  await ctlResp.locator('.ed-numero-riga input[type=number]').fill('12'); await p.waitForTimeout(300);
+  ok('editor, telefono: un valore proprio del telefono mostra "solo telefono" accanto al pallino', (await ctlResp.locator('.ed-misura-solo').innerText().catch(() => '')).trim() === 'solo telefono');
+  const nomeResp = (await ctlResp.locator('> .ed-etichetta').evaluate(e => [...e.childNodes].filter(n => n.nodeType === 3).map(n => n.textContent).join('').trim()));
+  await p.click('.ed-misure button[data-misura=t]'); await p.waitForTimeout(300);
+  await p.evaluate(() => document.querySelectorAll('details.ed-sez').forEach(d => d.open = true)); await p.waitForTimeout(150);
+  const alTablet = await p.evaluate((nome) => { const c = [...document.querySelectorAll('#ed-controlli .ed-controllo')].find(x => { const e = x.querySelector(':scope > .ed-etichetta'); return e && [...e.childNodes].filter(n => n.nodeType === 3).map(n => n.textContent).join('').trim() === nome; }); if (!c) return null; const s = c.querySelector('.ed-misura-solo'); return s && !s.hidden ? s.textContent : ''; }, nomeResp);
+  ok('editor, tablet: lo stesso controllo (' + nomeResp + ') al tablet non dice "solo" (il valore è del telefono)', alTablet === '', alTablet);
+  await p.click('.ed-misure button[data-misura=d]'); await p.waitForTimeout(300);
   // il riquadro delle immagini: i campi hanno un nome
   await p.click('#ed-schede-controlli button[data-scheda=contenuto]'); await p.waitForTimeout(250);
   await p.locator('.ed-riga-immagine button:has-text("Scegli")').first().click(); await p.waitForTimeout(600);
@@ -151,6 +213,19 @@ const nomiMancanti = (p, radice) => p.evaluate((R) => [...document.querySelector
   ok('editor a 1280 px: l\'avviso del telefono non c\'è', await p.locator('.ed-solo-computer').isHidden());
   await p.goto(B + '/admin/', { waitUntil: 'networkidle' }); // si lascia l'editor senza salvare
 
+  // 5b. Gli addon senza dati nell'editor: il riquadro tratteggiato con la frase e dove aggiungerli, mai sul sito
+  const idAddon = await p.evaluate(async (b) => { const t = await (await fetch(b + '/admin/contenuti.php?tipo=pagine')).text(); const d = new DOMParser().parseFromString(t, 'text/html'); const a = [...d.querySelectorAll('a[href*="editor.php"]')].find(x => /id=\d+/.test(x.getAttribute('href')) && x.closest('tr') && /addon-tutti/.test(x.closest('tr').innerText)); return a ? new URL(a.getAttribute('href'), location.href).searchParams.get('id') : null; }, B);
+  if (idAddon) {
+    await p.goto(B + '/admin/editor.php?tipo=pagine&id=' + idAddon, { waitUntil: 'networkidle' }); await p.waitForTimeout(1800);
+    const vuotiEd = (await p.frameLocator('.ed-tela iframe').locator('.ed-vuoto').allInnerTexts()).join(' | ');
+    ok('editor, widget degli addon vuoti: il riquadro dice dove aggiungere eventi, corsi, prodotti e recensioni', /nessun evento in programma: aggiungili nel pannello, in Eventi/.test(vuotiEd) && /nessun corso pubblicato: crealo nel pannello, in Corsi/.test(vuotiEd) && /Vetrina > Prodotti/.test(vuotiEd) && /Recensioni/.test(vuotiEd), vuotiEd);
+    const tratt = await p.frameLocator('.ed-tela iframe').locator('.ed-vuoto').first().evaluate(e => getComputedStyle(e).borderTopStyle);
+    ok('editor: il riquadro è tratteggiato', tratt === 'dashed', tratt);
+    const sito = await (await p.request.get(B + '/addon-tutti/')).text();
+    ok('sito: la pagina con gli stessi widget non ha i riquadri dell\'editor', !/ed-vuoto/.test(sito) && !/aggiungili nel pannello|crealo nel pannello/.test(sito));
+    await p.goto(B + '/admin/', { waitUntil: 'networkidle' });
+  } else ok('editor, widget degli addon vuoti: saltato (manca la pagina /addon-tutti/, vedi in cima)', true);
+
   // 6. Addon: agenda e vetrina
   await p.goto(B + '/admin/addon-pagina.php?a=prenotazioni&p=agenda', { waitUntil: 'networkidle' });
   const barra = await p.locator('.pa-barra').innerText();
@@ -167,6 +242,51 @@ const nomiMancanti = (p, radice) => p.evaluate((R) => [...document.querySelector
   const cn = await contrasto(v, 'iframe, option, select, [aria-hidden=true]');
   const vt = cn.male.filter(x => /vt-|"Tutti"/.test(x));
   ok('Vetrina da visitatore: numero del carrello e filtro scelto con contrasto di almeno 4,5', vt.length === 0, vt);
+
+  // 7. Copia altrove: un solo pulsante di salvataggio, Prova e Manda spenti e spiegati
+  await p.goto(B + '/admin/addon-pagina.php?a=copia-altrove&p=destinazione', { waitUntil: 'networkidle' });
+  const salvataggi = async () => p.evaluate(() => [...document.querySelectorAll('#ca-form button[type=submit]')].filter(b => b.offsetParent).map(b => b.textContent.trim()));
+  await p.selectOption('#ca-tipo', 'gdrive'); await p.waitForTimeout(150);
+  let sv = await salvataggi();
+  ok('Copia altrove, Google Drive non collegato: un solo pulsante, "Salva e collega con Google Drive"', sv.length === 1 && sv[0] === 'Salva e collega con Google Drive', sv);
+  await p.selectOption('#ca-tipo', 'dropbox'); await p.waitForTimeout(150); sv = await salvataggi();
+  ok('Copia altrove, Dropbox: un solo pulsante, "Salva e collega con Dropbox"', sv.length === 1 && sv[0] === 'Salva e collega con Dropbox', sv);
+  await p.selectOption('#ca-tipo', 'ftp'); await p.waitForTimeout(150); sv = await salvataggi();
+  ok('Copia altrove, FTP: un solo pulsante, "Salva la destinazione"', sv.length === 1 && sv[0] === 'Salva la destinazione', sv);
+  const spenti = await p.evaluate(() => ['#ca-prova', '#ca-manda'].map(s => { const b = document.querySelector(s); return b.disabled && +getComputedStyle(b).opacity < 0.7; }));
+  ok('Copia altrove: senza destinazione, Prova e Manda sono spenti e si vedono spenti', spenti.every(Boolean), spenti);
+  ok('Copia altrove: e si dice perché sono spenti', /si accendono quando la destinazione/.test(await p.locator('#ca-spenti-perche').innerText().catch(() => '')));
+
+  // 8. Sito: data delle schede del blog (4,5 a 1, tema di base, Cosmo, Bottega), ricerca senza risultati, form
+  const metaContrasto = async (pg) => pg.evaluate(() => {
+    const rgba = (s) => { const m = s.match(/rgba?\(([^)]+)\)/); const v = m[1].split(/[ ,/]+/).filter(Boolean).map(Number); return { r: v[0], g: v[1], b: v[2], a: v.length > 3 ? v[3] : 1 }; };
+    const sopra = (c, f) => ({ r: c.r * c.a + f.r * (1 - c.a), g: c.g * c.a + f.g * (1 - c.a), b: c.b * c.a + f.b * (1 - c.a), a: 1 });
+    const lum = (c) => { const f = (x) => { x /= 255; return x <= .03928 ? x / 12.92 : Math.pow((x + .055) / 1.055, 2.4); }; return .2126 * f(c.r) + .7152 * f(c.g) + .0722 * f(c.b); };
+    const el = document.querySelector('.card-meta'); if (!el) return null;
+    const s = []; for (let e = el; e; e = e.parentElement) { const c = rgba(getComputedStyle(e).backgroundColor); if (c.a > 0) { s.push(c); if (c.a >= 1) break; } }
+    let bg = { r: 255, g: 255, b: 255, a: 1 }; for (let i = s.length - 1; i >= 0; i--) bg = sopra(s[i], bg);
+    let fg = rgba(getComputedStyle(el).color); if (fg.a < 1) fg = sopra(fg, bg);
+    const [a, b] = [lum(fg), lum(bg)].sort((x, y) => y - x); return +((a + .05) / (b + .05)).toFixed(2);
+  });
+  for (const t of ['', 'cosmo', 'bottega']) {
+    await p.goto(B + '/blog/' + (t ? '?preview=1&tema=' + t : ''), { waitUntil: 'networkidle' });
+    const c = await metaContrasto(p);
+    ok(`sito, blog${t ? ' con ' + t : ' (tema di base)'}: la data delle schede almeno 4,5 a 1`, c !== null && c >= 4.5, c);
+  }
+  await v.goto(B + '/?s=zzqqxxyy', { waitUntil: 'networkidle' });
+  const niente = await v.locator('.cerca-niente').innerText().catch(() => '');
+  ok('sito, ricerca senza risultati: suggerisce una parola più corta (con un link) e le pagine principali', /parola più corta/.test(niente) && await v.locator('.cerca-niente p a[href*="?s="]').count() === 1 && await v.locator('.cerca-niente ul a').count() >= 2, niente.slice(0, 200));
+  await v.setViewportSize({ width: 390, height: 844 });
+  ok('sito, ricerca senza risultati al telefono: niente scorrimento di lato', await v.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1));
+  await v.goto(B + '/contatti/', { waitUntil: 'networkidle' });
+  await v.evaluate(() => { document.querySelector('form[data-captcha]').noValidate = true; });
+  await v.locator('form[data-captcha] button[type=submit]').click(); await v.waitForTimeout(500);
+  const dopoInvio = await v.evaluate(() => ({ url: location.href, stato: (document.querySelector('.captcha-stato') || {}).textContent || '', fuoco: document.activeElement && document.activeElement.name }));
+  ok('sito, form dei contatti vuoto: prima i campi obbligatori (il fuoco va al primo), non il messaggio del captcha', /contatti/.test(dopoInvio.url) && !/Sono una persona/.test(dopoInvio.stato) && /^c_/.test(dopoInvio.fuoco || ''), dopoInvio);
+  await v.fill('input[name=c_nome]', 'Anna'); await v.fill('input[name=c_email]', 'anna@esempio.it'); await v.fill('textarea[name=c_messaggio]', 'Una prova del modulo.');
+  await v.evaluate(() => document.querySelectorAll('form[data-captcha] [required]').forEach(e => { if (e.closest('.captcha')) return; if (e.type === 'checkbox') e.checked = true; else if (!e.value) e.value = 'x'; }));
+  await v.locator('form[data-captcha] button[type=submit]').click(); await v.waitForTimeout(400);
+  ok('sito, form dei contatti compilato senza la spunta: il captcha resta obbligatorio', /Sono una persona/.test(await v.locator('.captcha-stato').innerText()) && /contatti/.test(v.url()));
 
   ok('nessun errore JavaScript', err.length === 0, err.slice(0, 5));
   console.log(`\n${n - ko} su ${n} OK`);

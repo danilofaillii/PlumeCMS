@@ -566,4 +566,5 @@ visibile e non tagliato, widget della tavolozza aggiunti con Tab e Invio, ricerc
 un widget, finestra Immagini, contrasto dell'editor in Cosmo e Aria anche con l'opacità, anello dei colori globali, header
 senza avviso H1 e senza indirizzo tecnico, avviso dell'editor al telefono, Agenda e Vetrina.
 `node prove/prova-ux-editor.js <base con kit Attività e otto addon accesi> <utente> <password> [base di una copia non installata]`.
-Atteso: 37 su 37. Non salva niente; alla fine rimette l'aspetto Aria.
+Atteso (con le scelte di Danilo del 1 novembre): 71 su 71, con la copia non installata, il database vuoto (quinto argomento, DBPASS
+nell'ambiente) e la pagina /addon-tutti/ di `pagina-addon-a.php` (vedi in cima al file). Non installa e non salva niente; alla fine rimette Aria.
