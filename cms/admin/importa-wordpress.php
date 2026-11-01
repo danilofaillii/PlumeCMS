@@ -190,7 +190,7 @@ require_once __DIR__ . '/includes/admin-header.php';
     <form method="post" autocomplete="off" class="iw-spunta" style="flex-wrap:wrap">
       <?= csrf_field() ?><input type="hidden" name="azione" value="password">
       <span style="width:100%">Per continuare riscrivi la password per le applicazioni di <b><?= $h($s['utente'] ?? '') ?></b> (per sicurezza non si tiene oltre un giorno).</span>
-      <input name="password" type="password" class="iw-pwd" placeholder="abcd efgh ijkl mnop qrst uvwx" required autocomplete="new-password" style="padding:.5rem .7rem;border:1px solid var(--border);border-radius:8px;min-width:280px">
+      <input name="password" type="password" class="iw-pwd" placeholder="abcd efgh ijkl mnop qrst uvwx" required autocomplete="new-password" style="padding:.5rem .7rem;border:1px solid var(--bordo-campo);border-radius:8px;min-width:280px">
       <button class="btn btn-primary" type="submit">Continua</button>
     </form>
     <?php endif; ?>

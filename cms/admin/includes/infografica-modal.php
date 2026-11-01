@@ -10,7 +10,7 @@
     <div style="padding:1.5rem;border-right:1px solid var(--border);max-height:70vh;overflow-y:auto">
       <div class="form-group">
         <label>Tipo infografica</label>
-        <select id="ig-type" data-al-cambio="igTypeChanged()" style="width:100%;padding:0.5rem;border:1px solid var(--border);border-radius:8px;font-size:0.9rem">
+        <select id="ig-type" data-al-cambio="igTypeChanged()" style="width:100%;padding:0.5rem;border:1px solid var(--bordo-campo);border-radius:8px;font-size:0.9rem">
           <option value="steps">Steps (passaggi numerati)</option>
           <option value="checklist">Checklist (lista ✓/✕)</option>
           <option value="compare">Compare (confronto 2 colonne)</option>
@@ -21,7 +21,7 @@
       </div>
       <div class="form-group">
         <label>Titolo infografica</label>
-        <input type="text" id="ig-title" data-al-input="igUpdatePreview()" style="width:100%;padding:0.5rem;border:1px solid var(--border);border-radius:8px;font-size:0.9rem" placeholder="Es: 5 Passi per Gestire l'Ansia">
+        <input type="text" id="ig-title" data-al-input="igUpdatePreview()" style="width:100%;padding:0.5rem;border:1px solid var(--bordo-campo);border-radius:8px;font-size:0.9rem" placeholder="Es: 5 Passi per Gestire l'Ansia">
       </div>
       <div id="ig-fields"></div>
       <button type="button" id="ig-add-row" data-al-clic="igAddRow()" style="margin-top:0.75rem;padding:0.4rem 1rem;background:var(--fondo-2);color:var(--text);border:1px solid var(--border);border-radius:8px;cursor:pointer;font-size:0.85rem;font-weight:600">+ Aggiungi riga</button>

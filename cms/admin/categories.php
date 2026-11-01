@@ -101,7 +101,7 @@ require_once __DIR__ . '/includes/admin-header.php';
     <a href="categories.php" class="<?= $tipo === 'categorie' ? 'attivo' : '' ?>">Categorie</a>
     <a href="categories.php?tipo=tag" class="<?= $tipo === 'tag' ? 'attivo' : '' ?>">Tag</a>
   </div>
-  <form method="get" style="display:flex;gap:.4rem"><?php if ($tipo === 'tag'): ?><input type="hidden" name="tipo" value="tag"><?php endif; ?><input type="search" name="q" value="<?= h($q) ?>" placeholder="Cerca…" class="search-input" style="padding:.4rem .6rem;border:1px solid var(--border);border-radius:8px"><button class="btn btn-secondary btn-sm">Cerca</button></form>
+  <form method="get" style="display:flex;gap:.4rem"><?php if ($tipo === 'tag'): ?><input type="hidden" name="tipo" value="tag"><?php endif; ?><input type="search" name="q" value="<?= h($q) ?>" placeholder="Cerca…" class="search-input" style="padding:.4rem .6rem;border:1px solid var(--bordo-campo);border-radius:8px"><button class="btn btn-secondary btn-sm">Cerca</button></form>
 </div>
 
 <div style="display:grid;grid-template-columns:320px minmax(0,1fr);gap:1.2rem;align-items:start">

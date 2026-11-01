@@ -27,6 +27,10 @@
  *   --codice-fondo --codice-testo   i registri e il codice (sempre scuri)
  *   --ombra --ombra-grande --velo --fuoco --tela-fondo --font-titolo --font-codice
  *   --cat-verde --cat-viola --cat-ambra --cat-blu --cat-grigio   colori di categoria (blocchi dei flussi), con testo bianco
+ * Nomi nuovi (UX 2026-11, richiesta di Danilo: titoli dei riquadri e campi riconoscibili):
+ *   --testata --testata-testo   la fascia del titolo di un riquadro, diversa dal corpo (testo almeno 4,5:1)
+ *   --bordo-campo                bordo di campi, tendine, aree di testo e scelta file: almeno 3:1 sul riquadro e sul fondo (WCAG 1.4.11)
+ *   --segnaposto                 il testo d'esempio dentro i campi: almeno 4,5:1, ma piu tenue del testo scritto
  */
 
 /* Il carattere del pannello: Inter, lo stesso file del sito (in casa, nessuna chiamata esterna). */
@@ -58,6 +62,7 @@
   --ombra: 0 1px 2px rgba(17,24,39,.05); --ombra-grande: 0 20px 50px rgba(17,24,39,.16);
   --velo: rgba(17,24,39,.42); --fuoco: rgba(37,99,235,.28); --tela-fondo: #eceef2;
   --radius: 12px;
+  --testata: #eef2f8; --testata-testo: #111827; --bordo-campo: #7c8594; --segnaposto: #6b7280;
 }
 
 /* BOTTEGA: caldo, carta crema, terracotta e verde salvia (il tema Bottega del sito, vicino al pannello di prima). */
@@ -77,6 +82,7 @@
   --velo: rgba(43,33,24,.45); --fuoco: rgba(180,83,42,.25); --tela-fondo: #e9e1d4;
   --font-titolo: Georgia, 'Times New Roman', serif;
   --radius: 10px;
+  --testata: #f4eadb; --testata-testo: #2b2118; --bordo-campo: #8f7a5c; --segnaposto: #7a6650;
 }
 
 /* COSMO: scuro, notte e viola (il tema Cosmo del sito). */
@@ -97,6 +103,8 @@
   --codice-fondo: #04070f;
   --cat-verde: #17804a; --cat-viola: #7046d8; --cat-ambra: #9a5b05; --cat-blu: #1f63ad; --cat-grigio: #4b5568;
   --radius: 14px;
+  --campo: #070c1c; /* UX 2026-11: un poco piu scuro del riquadro (prima #0a1022, quasi uguale) */
+  --testata: #19234a; --testata-testo: #e6ebf5; --bordo-campo: #6b78a6; --segnaposto: #8a95ad;
 }
 
 /* LAVAGNA: scuro, verde ardesia e testo color gesso (il tema d'esempio Lavagna). */
@@ -117,6 +125,8 @@
   --codice-fondo: #101614;
   --font-titolo: 'Trebuchet MS', 'Segoe UI', sans-serif;
   --radius: 6px;
+  --campo: #19221f; /* UX 2026-11: un poco piu scuro del riquadro (prima #1d2824) */
+  --testata: #2f3f39; --testata-testo: #f1efe6; --bordo-campo: #7f948b; --segnaposto: #a8a597;
 }
 
 /* Quill (l'editor dei testi, servito in casa): la barra e il foglio seguono l'aspetto. */
