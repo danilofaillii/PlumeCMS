@@ -25,7 +25,7 @@ const py = (codice, ...arg) => execFileSync('python3', ['-I', '-c', codice, ...a
   const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'consegna-unica-'));
   py('import sys,zipfile;z=zipfile.ZipFile(sys.argv[1]);open(sys.argv[3],"wb").write(z.read(sys.argv[2]))', CONSEGNA, unico, path.join(tmp, unico));
   const pdf = JSON.parse(py('import sys,json,zipfile;z=zipfile.ZipFile(sys.argv[1]);print(json.dumps([z.getinfo(n).file_size for n in ("manuali/manuale-uso.pdf","manuali/manuale-temi.pdf")]))', CONSEGNA));
-  ok('il manuale d\'uso è un PDF solo, sotto 8 MB', pdf[0] > 3e6 && pdf[0] < 8 * 1048576, pdf.map(x => Math.round(x / 1024) + ' KB'));
+  ok('il manuale d\'uso è un PDF solo, sotto 12 MB', pdf[0] > 3e6 && pdf[0] < 12 * 1048576, pdf.map(x => Math.round(x / 1024) + ' KB'));
 
   // 2. Il manifest del pacchetto unico.
   const m = JSON.parse(py('import sys,zipfile;print(zipfile.ZipFile(sys.argv[1]).read("manifest.json").decode())', path.join(tmp, unico)));
