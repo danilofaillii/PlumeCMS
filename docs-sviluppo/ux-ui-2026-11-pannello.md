@@ -77,36 +77,45 @@ Schermate prima e dopo, oltre a quelle sopra:
 ![Sicurezza, Bottega: i pallini con il segno](immagini/ux-ui/sicurezza-bottega.jpg)
 ![Aggiornamenti al telefono, Lavagna](immagini/ux-ui/aggiornamenti-lavagna-telefono.jpg)
 
-## Da decidere con Danilo
+## Decisi da Danilo (1 novembre 2026): tutti e dieci, fatti
 
-Cambierebbero come funziona una pagina, o le prove e il manuale d'uso: non li ho toccati.
+Danilo ha scelto tutti i punti che erano "da decidere", più tre ritocchi segnalati dall'altro agente. Secondo giro, partito
+da `26daddb`.
 
-1. **Editor > Temi, il pulsante "Attiva"** (verbo) sta accanto al distintivo "ATTIVO" (stato) e si legge come uno stato.
-   Proposta: "Usa questo tema". Vanno cambiate anche `prove/prova-pannello-temi.js`, `prove/prova-temi-nuovi.js` e il manuale.
-2. **Articoli > "Aggiungi articolo" e i link alla scheda nuova creano subito una bozza vera**: chi apre e chiude senza scrivere
-   lascia un "Nuovo articolo" vuoto in Bozze (il giro delle schermate ne ha lasciati 26). Proposta: creare la bozza al primo
-   salvataggio, oppure cestinare da sola una bozza senza titolo né testo dopo un giorno.
-3. **Articoli, filtro "Pillar e cluster" e colonna "Parole · KW" con "0% · 0%" in rosso**: termini SEO tecnici senza
-   spiegazione. Proposta: filtro visibile solo se c'è almeno un pillar, colonna "Parole e parola chiave" con aiuto.
-4. **Impostazioni > Configurazione email** contiene anche "Sito pubblico", "Indirizzo del sito" e "La frase in fondo al
-   sito": il nome della voce non dice cosa c'è dentro. Proposta: voce "Sito" separata, oppure schede nella pagina.
-5. **SEO > Motori di ricerca, riquadro del service account**: sei passi, una chiave e due moduli nello stesso riquadro.
-   Proposta: passi in una finestra guidata, nel riquadro solo lo stato e "Prova il collegamento".
-6. **Download, riquadro "Carica un file"**: cinque paragrafi d'aiuto in carattere piccolissimo sotto il pulsante. Proposta:
-   un "Come funzionano serie e file riservati" richiudibile.
-7. **Conferme** (`data-conferma`): usano la finestra del browser, che non segue l'aspetto e non distingue l'azione
-   pericolosa. Proposta: una finestra del pannello con il pulsante rosso per "Elimina", "Rimuovi", "Ripristina".
-8. **Tabelle al telefono** (Articoli, Pagine, Utenti): si vede la prima colonna e il resto scorre dentro il riquadro senza
-   nessun indizio. Proposta: sotto 640 px ogni riga diventa una scheda (titolo, stato, data, azioni).
-9. **Dashboard, "Stai provando il sito"**: sei carte grandi spingono i Primi passi sotto la piega. Proposta: riquadro
-   richiudibile, chiuso dopo la prima visita.
-10. **Utenti, colonna "Ultimo accesso"**: la data va a capo a metà ("2026-11-" / "01 12:17"). Proposta: data in parole
-    ("oggi alle 12:17") come nel resto del pannello.
+| n. | Punto | Cosa è cambiato | Commit |
+|---|---|---|---|
+| 1 | Editor > Temi, "Attiva" accanto ad "attivo" | Il pulsante dice **Usa questo tema** (anche "poi Usa questo tema" nel messaggio). Aggiornati `prova-pannello-temi.js`, `prova-temi-nuovi.js`, manuale d'uso e manuale dei temi (solo testo) | `03032d7`, `69d807b` |
+| 2 | "Aggiungi articolo" lascia bozze vuote | Il giro del mattino (`cron_bozze_vuote()` in `includes/cron.php`) mette nel cestino le bozze nate da più di un giorno con il titolo e l'indirizzo dati dal pannello, senza testo, mai salvate dalla scheda e senza versioni dell'editor oltre a "creato dall'editor". Riga nel Log cron, voce nell'elenco di cosa fa il cron, paragrafo nel manuale d'uso. Prova nuova `prova-bozze-vuote.js` | `10845e1` |
+| 3 | Articoli, "Pillar e cluster" e "Parole · KW" | Il filtro compare solo se c'è almeno un pillar (o se è già in uso); colonna "Parole e parola chiave" con l'aiuto al passaggio; senza parola chiave "nessuna parola chiave" al posto di "0% · 0%" in rosso | `fb6e542` |
+| 4 | Configurazione email conteneva il sito | Due schede in `impostazioni.php`: **Configurazione email** (solo la posta) e **Sito** (`?scheda=sito`), voce Sito nel menu. I vecchi indirizzi `#indirizzo-sito` e `#firma-sito` portano alla scheda Sito (`data-spostato` in `pannello.js`; senza JavaScript un link) | `7d8a7bd` |
+| 5 | Service account in SEO | Passi e casella della chiave in un riquadro che si apre: aperto finché il collegamento non c'è, chiuso dopo ("Rifai il collegamento o sostituisci la chiave"); "Salva la chiave" primario quando manca; sottotitolo prima del modulo della proprietà. Niente tolto | `bc73ef2` |
+| 6 | Download, aiuto lungo | Solo markup: i tre paragrafi d'aiuto in `<details class="pn-aiuto">` "Come funzionano indirizzi, versioni e file riservati" (`admin/scaricabili.php`, righe 137 e 145). Nient'altro nella pagina | `81e754b` |
+| 7 | Conferme del browser | `pannello.js`: ogni `data-conferma` apre una finestra del pannello (`role="alertdialog"`), il pulsante che conferma ripete l'azione ed è rosso (`.btn-pericolo`) se distrugge; fuoco dentro (su Annulla se distrugge), Esc e clic fuori annullano, il fuoco torna al pulsante. Chiesta nella fase di cattura, così i gestori della pagina partono solo dopo il sì. Senza `<dialog>` resta `confirm()`, senza JavaScript i form vanno come prima. Le prove usano `prove/conferme-pannello.js` | `7f611d6` |
+| 8 | Tabelle al telefono | Ogni tabella semplice del pannello (testata di almeno tre colonne, righe senza celle unite) sotto 640 px diventa una scheda per riga, con il nome della colonna sopra ogni valore. Utenti e Categorie in una colonna sotto 760 px (la tabella degli utenti finiva in una striscia di pochi pixel) | `aad9263` |
+| 9 | Dashboard, "Stai provando il sito" | `<details>` aperto alla prima visita di ogni amministratore (impostazione `dashboard_tipo_sito_visto_<id>`), poi chiuso; si apre con un clic o con `#tipo-sito` nell'indirizzo (dopo un cambio di kit torna aperto) | `7f611d6` |
+| 10 | Utenti, ultimo accesso | "oggi alle 12:17", "ieri alle 9:05", il giorno della settimana, poi la data (`utenti_quando()`), su una riga | `fb6e542` |
+
+Ritocchi dell'altro agente, fatti in `64e4c01`: freccina dei gruppi del menu a colore pieno (prima 3,3:1); contorno del
+fuoco di 2 px dell'accento su pulsanti, link, schede e summary in tutto il pannello, pagine degli addon comprese; segnaposto
+che sembravano valori scritti come esempio ("per esempio mail.tuosito.it", "per esempio copie-del-sito"); tolto lo stile in
+linea della ricerca in `cms/addon/prenotazioni/includes/admin-elenco.php`. In più (`4b80b80`): "esci da tutti" in Utenti era
+un pulsante grigio del browser.
+
+![La finestra di conferma, Cosmo](immagini/ux-ui/conferma-cosmo.jpg)
+![La finestra di conferma al telefono](immagini/ux-ui/conferma-telefono.jpg)
+![Dashboard con il riquadro chiuso](immagini/ux-ui/dashboard-richiusa-cosmo.jpg)
+![Impostazioni > Sito](immagini/ux-ui/impostazioni-sito-cosmo.jpg)
+![Articoli a schede al telefono](immagini/ux-ui/articoli-schede-telefono.jpg)
+![Utenti a schede al telefono](immagini/ux-ui/utenti-schede-telefono.jpg)
+
+Da sapere per le schermate del manuale d'uso: la dashboard ha ora il riquadro del tipo di sito chiuso dopo la prima visita
+(`tools/manuale-uso-schermate.js` ora apre `index.php#tipo-sito` per la foto 02, non rilanciato), le conferme sono la
+finestra del pannello, Impostazioni ha le schede Configurazione email e Sito.
 
 ## Segnalazioni per le parti dell'altro agente
 
-- `cms/addon/prenotazioni/includes/admin-elenco.php:114`: la ricerca ha il bordo in linea `var(--border)` (1,16:1). Ora lo
-  copre la regola di `admin.css` (bordo con `!important`), ma conviene togliere lo stile in linea.
+- `cms/addon/prenotazioni/includes/admin-elenco.php:114`: la ricerca aveva il bordo in linea `var(--border)` (1,16:1). Tolto nel
+  secondo giro (classe `search-input`).
 - `--campo` cambia in Cosmo e Lavagna: `cms/admin/assets/editor/editor.css` lo usa due volte, i campi dell'editor in quegli
   aspetti escono un poco più scuri.
 - `.btn-secondary` ha ora il bordo `--bordo-campo`: vale anche nelle pagine degli addon (voluto, più leggibile).
@@ -128,6 +137,30 @@ da Il mio accesso (come una persona), apre le pagine del menu e alcune schede, e
 bordi dei campi almeno 3:1 sul fondo intorno, segnaposto almeno 4,5:1, titoli dei riquadri in una fascia con fondo diverso
 e testo almeno 4,5:1, il pulsante della scelta file, niente scorrimento di lato a 390 px; alla fine rimette Aria.
 Limite: misura i colori pieni (salta i fondi a gradiente e gli elementi trasparenti) e guarda le pagine con i dati del kit.
+
+### Secondo giro (codice dei dieci punti, `4b80b80`)
+
+| Prova | Esito |
+|---|---|
+| `php -n -d short_open_tag=1 -l` e `node --check` su ogni file toccato; zip di `tools/cms-pacchetto.py` (340 file, 1927 KB) | a posto |
+| `prove/prova-ux-pannello.js`, quattro aspetti, otto addon accesi, con i controlli nuovi della finestra di conferma | 1694/1694 |
+| `prove/prova-ux-editor.js` (sito Attività con gli addon e la pagina `/addon-tutti/`, copia non installata per l'installatore) | 71/71 |
+| `prove/prova-pannello-telefono.js` a 390 e 768 px, otto addon accesi (una voce in più: Sito) | 73/73 e 73/73 |
+| `prove/prova-install.js` in radice, dallo zip | 37/37 |
+| `prove/prova-addon-tutti.js` su un sito Attività | 70/70 (sul sito appena installato dallo zip senza kit 69/70: manca la pagina `/servizi/` del kit, non dipende da questo lavoro) |
+| `tools/sicurezza-prova.js` con `CMS_DIR` (prefisso del pannello vuoto), poi svuotata `cms_sicurezza_tentativi` | 250/250; saltati burnout, newsletter firmata (senza `SEGRETO`), WordPress cattivo (senza `FINTO_WP`) e i due della 1.7.0 su un sito non su misura |
+| `prova-pannello-temi.js`, `prova-temi-nuovi.js` | 32/32, 451/451 |
+| `prova-firma.js`, `prova-indirizzo-sito.js` (due controlli nuovi: vecchio indirizzo, Configurazione email senza i riquadri del sito) | 14/14, 12/12 |
+| `prova-seo-service-account.js` (il controllo dell'etichetta guarda dentro il riquadro chiuso) | 8/8 |
+| `prova-bozze-vuote.js` (nuova) | 11/11 |
+| `prova-tipo-sito.js` (sito Portfolio, dashboard aperta con `#tipo-sito`), `prova-su-misura.js`, `prova-kit.js` portfolio | 39/39, 34/34, 34/34 |
+| `prove/foto-sito.js` prima e dopo sullo stesso database con gli otto addon, `quanto-foto.py` | 20 foto: 19 identiche, `cerca-tel` scarto massimo 1 livello su 255 e nessun pixel oltre 2 (rumore dei caratteri) |
+
+Le prove che accettavano `confirm()` con `p.on('dialog', ...)` (40 in `prove/` più `tools/sicurezza-prova.js` e
+`tools/manuale-uso-schermate.js`) ora passano da `prove/conferme-pannello.js`: stesso gestore, stessi `accept()` e
+`dismiss()`, ma premendo i pulsanti della finestra del pannello. Le prove che ascoltano i dialoghi per scoprire un `alert()`
+iniettato (attacchi) restano come erano. Non rilanciate in questo giro: le altre 30 prove convertite (la conversione è
+meccanica, la provano le dieci rilanciate qui sopra) e `tools/manuale-uso-schermate.js`.
 
 ## Principi applicati (per le regole globali di interfaccia)
 

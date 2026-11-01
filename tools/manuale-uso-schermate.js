@@ -150,7 +150,7 @@ capitoli['01'] = async () => {
 
 // 02. Il tipo di sito in prova
 capitoli['02'] = async () => {
-  await vai('index.php');
+  await vai('index.php#tipo-sito'); // UX 2026-11: il riquadro e chiuso dopo la prima visita, l'indirizzo con #tipo-sito lo apre
   await foto('02-tipo-sito', { sel: '#tipo-sito', segni: [{ sel: '.db-kit-carta:not(.attuale) button[data-kit="blog"]', n: 1 }, { sel: '#tipo-sito .db-kit-piede button', n: 2, lato: 'destra' }] });
   // 1.7.0: il sito su misura. Si apre la pagina delle domande e si compila come nell'esempio, senza premere il pulsante
   // (il sito delle schermate resta Attività).

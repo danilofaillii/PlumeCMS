@@ -680,6 +680,22 @@ cambia: non sono i temi del sito (capitolo 12), ne prendono solo i nomi e i colo
   `input[type=file]` ha `::file-selector-button` a pulsante. Le etichette `.form-group label` sono in carattere normale.
   Tutto sta dentro `.admin-content` o `.login-box`: l'editor, che carica `admin.css`, non cambia. La prova è
   `prove/prova-ux-pannello.js`.
+- **Comportamenti del pannello aggiunti nel secondo giro UX** (`admin/assets/pannello.js`, 1 novembre 2026):
+  - *Conferme*: `data-conferma` (pulsante, link, form) e `data-pn-gruppo-elimina` aprono `window.pnConferma(testo, elemento,
+    poi)`, un `<dialog class="pn-conferma" role="alertdialog">`. Il pulsante che conferma ripete il testo del pulsante premuto
+    (o `data-conferma-ok`), ed è `.btn-pericolo` (fondo `--errore`, testo `--su-pericolo`) se il nome o la domanda dicono
+    elimina, rimuovi, cestina, ripristina, spegni... (o `data-conferma-pericolo`). La conferma si chiede in cattura; dopo il
+    sì l'elemento riceve di nuovo il clic con il segno `__pnSi` (partono `data-uno`, `data-campo` e i gestori della pagina).
+    All'apertura parte l'evento `pn-conferma` (detail: testo, pericolo, rispondi(si)), che usa `prove/conferme-pannello.js`.
+    Senza `HTMLDialogElement` resta `confirm()`.
+  - *Riquadri che si aprono dall'indirizzo*: un `#id` nell'indirizzo apre il `<details>` che lo contiene; un elemento con
+    `data-spostato="url"` manda a quell'indirizzo (i vecchi `impostazioni.php#indirizzo-sito` e `#firma-sito`).
+  - *Tabelle a schede*: le tabelle di `.admin-content` con una testata di almeno tre colonne e righe senza celle unite
+    ricevono `data-schede` e, su ogni cella, `data-etichetta`; sotto 640 px `admin.css` le mostra una scheda per riga.
+    `data-no-schede` le esclude.
+  - Classi: `.pn-aiuto` (aiuto lungo in un `<details>`), `.ut-griglia` (modulo e elenco, una colonna sotto 760 px),
+    `.imp-schede` (schede di Impostazioni). Impostazioni ha due schede: `impostazioni.php` (posta) e `?scheda=sito`.
+    Dashboard: `#tipo-sito` è un `<details>` aperto alla prima visita (impostazione `dashboard_tipo_sito_visto_<id utente>`).
 - **Una pagina nuova del pannello** usa solo variabili: nessun colore scritto a mano. Le eccezioni volute (etichette
   bianche sopra le foto, colori di categoria, il fondo bianco del codice QR, le anteprime del sito) portano un commento
   `fisso` sulla stessa riga; `prove/prova-aspetti.js` cerca tutti gli altri.
@@ -2357,7 +2373,11 @@ adesso** della pagina Log cron con `da = 'pannello'`.
 1. applica i pacchetti di aggiornamento programmati per oggi o prima;
 2. esegue i passi `cron` dei moduli, ognuno separato dagli altri (un errore non ferma i successivi);
 3. dalla 1.5.0, `social_cron()`: l'email "Oggi sul sito" e i testi del calendario (capitolo 27);
-4. svuota la coda IndexNow.
+4. svuota la coda IndexNow;
+5. dall'UX di novembre 2026, `cron_bozze_vuote()` (`includes/cron.php`): mette nel cestino gli articoli e le pagine in bozza
+   nati da più di 24 ore con il titolo e l'indirizzo dati dal pannello ("Nuovo articolo", `nuovo-articolo-2`), senza testo
+   né struttura pubblicata, con `updated_at` entro cinque minuti da `created_at` e senza versioni in `editor_versioni` oltre
+   a "creato dall'editor". Una bozza con dentro qualcosa non si tocca mai. Prova: `prove/prova-bozze-vuote.js`.
 Scrive in `logs/cron-daily.log`, che si legge da Impostazioni > Log cron.
 
 **`cron-newsletter.php`**, ogni 5 minuti: svuota la coda IndexNow (log in `logs/seo.log`) e fa un giro della

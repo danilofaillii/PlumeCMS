@@ -88,7 +88,7 @@ Sbagliato: "‹ Prima" accanto a "Oggi" nell'Agenda; "Installa adesso" che invec
 **3.4 Un pulsante non si confonde mai con uno stato.**
 Perché: "Attiva" (verbo) accanto ad "ATTIVO" (stato) si legge come un'informazione, non come un comando.
 Giusto: "Usa questo tema" sul pulsante, il distintivo "In uso" sul tema scelto.
-Sbagliato: in Editor > Temi il pulsante "Attiva" sta accanto al distintivo "ATTIVO" (ancora da decidere con Danilo).
+Sbagliato: in Editor > Temi il pulsante "Attiva" stava accanto al distintivo "ATTIVO" (corretto il 1 novembre 2026).
 
 **3.5 Un pulsante spento si vede spento e dice perché.**
 Perché: un pulsante pieno ma spento sembra rotto.
@@ -188,7 +188,7 @@ Giusto: nell'editor "Trascina un widget nella pagina, oppure fai clic" sta sopra
 Sbagliato: lo stesso aiuto stava sotto cento widget.
 
 **9.2 L'aiuto lungo si chiude.** Passi e spiegazioni lunghe vanno in un "Come si fa" richiudibile (`details`).
-Sbagliato: cinque paragrafi in carattere piccolissimo sotto "Carica un file" in Download.
+Sbagliato: cinque paragrafi in carattere piccolissimo sotto "Carica un file" in Download (ora in `.pn-aiuto`).
 
 **9.3 La regola di un campo va nell'aiuto, non nell'etichetta.**
 Giusto: etichetta "Password", aiuto "almeno 12 caratteri, non fra le più comuni".
@@ -252,6 +252,7 @@ ed `editor.js`. Installatore in `cms/install/install.css`. Sito in `cms/sito/ass
 | Variabile | A cosa serve |
 |---|---|
 | `--testata`, `--testata-testo` | fascia del titolo dei riquadri |
+| `--su-pericolo` | testo sopra `--errore` pieno (pulsante rosso delle azioni che distruggono) |
 | `--bordo-campo` | bordo di campi, tendine, scelta file, pulsanti secondari (almeno 3:1) |
 | `--campo` | fondo dei campi |
 | `--segnaposto` | testo d'esempio (almeno 4,5:1, più tenue del testo) |
@@ -273,17 +274,26 @@ ed `editor.js`. Installatore in `cms/install/install.css`. Sito in `cms/sito/ass
   errori per campo con `inst_campo()`, `.campo.sbagliato`, `.errore-campo`, `aria-invalid`.
 - Vuoti: `.empty-state` nel pannello; `.ed-vuoto` nell'anteprima dell'editor (nascosto sul sito da `sito.css` e `widget.css`).
 - Accessibilità: `.admin-salta` ("Vai al contenuto"), `.sr-solo` per il testo solo per i lettori di schermo.
-- Conferme: `data-conferma="..."` (mai `onclick`).
+- Conferme: `data-conferma="..."` su un pulsante, un link o un form (mai `onclick`, mai `confirm()` scritto a mano):
+  `pannello.js` apre la finestra del pannello, con il pulsante che ripete l'azione, rosso (`.btn-pericolo`) se distrugge.
+  `data-conferma-ok="Elimina il form"` cambia il nome del pulsante, `data-conferma-pericolo` lo fa rosso.
+- Pulsante pericoloso pieno: `.btn-pericolo` (fondo `--errore`, testo `--su-pericolo`); `.btn-danger` resta il pulsante
+  chiaro con il testo rosso dentro le pagine.
+- Aiuto lungo: `<details class="pn-aiuto"><summary>Come funziona...</summary>...</details>`.
+- Riquadro che si apre: `<details>` con un `id`; `pagina.php#id` lo apre da solo. Un riquadro spostato lascia il vecchio
+  `id` con `data-spostato="nuovo indirizzo"`.
+- Tabelle: una testata `<thead>` con almeno tre colonne e righe senza celle unite diventano schede sotto 640 px da sole
+  (`data-schede`, `data-etichetta`); `data-no-schede` per una tabella che deve restare tale.
+- Modulo accanto all'elenco: `.ut-griglia` (una colonna sotto 760 px). Schede di una pagina: `.imp-schede`.
 
-**Prove.** `prove/prova-ux-pannello.js` (contrasti, bordi, segnaposto, fasce, scelta file e 390 px, nei quattro aspetti),
+**Prove.** `prove/prova-ux-pannello.js` (contrasti, bordi, segnaposto, fasce, scelta file, finestra di conferma e 390 px,
+nei quattro aspetti),
 `prove/prova-ux-editor.js` (editor, installatore, addon, sito), `prove/prova-pannello-telefono.js` (`LARGHEZZA=390` e
 `768`), `prove/prova-aspetti.js` (contrasto e colori scritti a mano), `prove/foto-sito.js` con `quanto-foto.py` (il sito
-uguale al pixel).
+uguale al pixel). Una prova che accetta le conferme usa `prove/conferme-pannello.js` (`pnConferme.on(p, d => d.accept())`).
 
-**Ancora aperti** (dai due documenti del controllo): pulsante "Attiva" dei temi; bozza creata all'apertura di "Aggiungi
-articolo"; tabelle a schede al telefono; conferme con una finestra del pannello al posto di quella del browser; freccina
-del menu a 3,3:1 (opacità 0,6); fuoco dei pulsanti e delle schede nelle pagine degli addon; editor ridotto al telefono
-(rimandato da Danilo).
+**Ancora aperti**: l'editor ridotto al telefono (rimandato da Danilo). Gli altri punti dei due controlli sono stati fatti
+il 1 novembre 2026 (`ux-ui-2026-11-pannello.md`, "Decisi da Danilo").
 
 ---
 

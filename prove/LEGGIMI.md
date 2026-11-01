@@ -492,7 +492,25 @@ sul fondo intorno, segnaposto almeno 4,5:1, titolo di ogni riquadro in una fasci
 4,5:1, pulsante della scelta file con l'aspetto del pannello, niente scorrimento di lato a 390 px. Alla fine rimette Aria.
 `node prove/prova-ux-pannello.js <base> <utente> <password> [aspetti, es. aria,cosmo] [filtro delle pagine, regex]`;
 `TUTTO=1` stampa anche gli OK. Atteso (1 novembre 2026, kit Attività): 1207 su 1207 senza addon, 1667 su 1667 con gli otto
-addon accesi. Sul codice di prima (2.5.0) dava 773 su 1175. Non misura i fondi a gradiente né gli elementi trasparenti.
+addon accesi. Sul codice di prima (2.5.0) dava 773 su 1175. Non misura i fondi a gradiente né gli elementi trasparenti. Dal secondo giro UX (1 novembre 2026) prova anche la finestra di conferma del pannello in Editor > Temi (fuoco dentro, Esc,
+pulsante rosso, nessun dialogo del browser): 1694 su 1694 con gli otto addon accesi.
+
+## conferme-pannello.js (UX 2026-11)
+
+Le conferme del pannello (`data-conferma`) non sono più `confirm()` del browser ma una finestra del pannello
+(`pannello.js`). Una prova che accettava le conferme con `p.on('dialog', d => d.accept())` scrive
+`pnConferme.on(p, d => d.accept())` (o `pnConferme.once`), con `const pnConferme = require('./conferme-pannello')`: il gestore
+riceve lo stesso oggetto (`message()`, `type()`, `accept()`, `dismiss()`) per i dialoghi veri e per la finestra del pannello,
+e `accept()`/`dismiss()` premono i suoi pulsanti. Le prove che ascoltano i dialoghi per scoprire un `alert()` iniettato
+restano con `p.on('dialog')`.
+
+## prova-bozze-vuote.js (UX 2026-11)
+
+Le bozze vuote nel cestino dopo un giorno (giro del mattino, `cron_bozze_vuote()`). Crea dal pannello cinque bozze (articolo e
+pagina vuoti, articolo con un testo salvato dall'editor, articolo con il titolo cambiato nella scheda, articolo vuoto appena
+nato), le invecchia con `prove/bozze-cli.php`, preme Esegui adesso in Log cron e controlla che vadano nel cestino solo le due
+vuote vecchie. `node prove/prova-bozze-vuote.js <base> <cartella CMS installato> <utente> <password>`. Atteso: 11 su 11.
+Lascia le sue bozze nel cestino.
 
 ## prova-hero-pulsanti.js (2.0.2)
 
