@@ -75,6 +75,23 @@ function inst_pdo(array $db, bool $senzaDb = false): PDO {
     return new PDO($dsn, $db['utente'], $db['password'], [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION, PDO::ATTR_TIMEOUT => 5]);
 }
 
+/**
+ * 2.5.x (controllo UX): l'errore di connessione in parole semplici, con quello che si può fare, e il messaggio del server
+ * in fondo, fra parentesi, per chi deve chiedere aiuto all'hosting. Prima si vedeva solo "SQLSTATE[HY000] [1045] Access denied...".
+ */
+function inst_errore_db(PDOException $e, array $db): string {
+    $msg = $e->getMessage();
+    $codice = (int)$e->getCode();
+    if ($codice === 0 && preg_match('/\[(\d{4})\]/', $msg, $m)) $codice = (int)$m[1];
+    $tecnico = ' (Dettaglio tecnico: ' . $msg . ')';
+    if ($codice === 1045) return "Utente o password del database sbagliati. Controlla in cPanel, voce Database MySQL, il nome esatto dell'utente (spesso comincia con il nome del tuo account, per esempio account_utente) e riscrivi la password." . $tecnico;
+    if ($codice === 1044) return "L'utente «" . $db['utente'] . "» non può usare il database «" . $db['nome'] . "». In cPanel, voce Database MySQL, aggiungi l'utente al database con tutti i privilegi (oppure controlla che il nome del database sia scritto giusto)." . $tecnico;
+    if ($codice === 2002 && preg_match('/getaddrinfo|Name or service|name resolution|No such host/i', $msg)) return "Il server del database «" . $db['host'] . "» non esiste. Quasi sempre è localhost: controlla il campo Server (host)." . $tecnico;
+    if ($codice === 2002 || $codice === 2003) return "Il server del database «" . $db['host'] . "» non risponde. Controlla il campo Server (host): quasi sempre è localhost, con una porta diversa server:porta." . $tecnico;
+    if ($codice === 2006 || $codice === 2013) return "Il server del database ha chiuso la connessione. Riprova fra un minuto; se continua, chiedi all'hosting." . $tecnico;
+    return 'Il database non accetta la connessione. Controlla server, nome del database, utente e password.' . $tecnico;
+}
+
 function inst_pagina(string $titolo, string $corpo, int $passo): void {
     $base = cms_base();
     $passi = ['Requisiti', 'Database', 'Sito e amministratore', 'Installazione', 'Fine'];
@@ -94,12 +111,13 @@ function inst_pagina(string $titolo, string $corpo, int $passo): void {
 
 function inst_errori(array $errori): string {
     if (!$errori) return '';
-    return '<div class="errore"><ul><li>' . implode('</li><li>', array_map('ih', $errori)) . '</li></ul></div>';
+    return '<div class="errore" role="alert"><ul><li>' . implode('</li><li>', array_map('ih', $errori)) . '</li></ul></div>';
 }
 
 function inst_campo(string $nome, string $etichetta, string $valore, string $tipo = 'text', string $aiuto = '', bool $obbl = true): string {
-    return '<div class="campo"><label for="' . $nome . '">' . ih($etichetta) . '</label><input type="' . $tipo . '" id="' . $nome . '" name="' . $nome . '" value="' . ih($valore) . '"' . ($obbl ? ' required' : '') . ($tipo === 'password' ? ' autocomplete="new-password"' : '') . '>'
-        . ($aiuto !== '' ? '<small>' . ih($aiuto) . '</small>' : '') . '</div>';
+    // L'aiuto sotto il campo si legge anche con il lettore di schermo (aria-describedby), insieme all'etichetta.
+    return '<div class="campo"><label for="' . $nome . '">' . ih($etichetta) . '</label><input type="' . $tipo . '" id="' . $nome . '" name="' . $nome . '" value="' . ih($valore) . '"' . ($obbl ? ' required' : '') . ($tipo === 'password' ? ' autocomplete="new-password"' : '') . ($aiuto !== '' ? ' aria-describedby="' . $nome . '-aiuto"' : '') . '>'
+        . ($aiuto !== '' ? '<small id="' . $nome . '-aiuto">' . ih($aiuto) . '</small>' : '') . '</div>';
 }
 
 $csrf = '<input type="hidden" name="_csrf" value="' . ih($_SESSION['inst_csrf']) . '">';
@@ -144,12 +162,12 @@ if ($passo === 2) {
                         $pdo->exec('CREATE DATABASE `' . str_replace('`', '', $db['nome']) . '` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci');
                         inst_pdo($db);
                     } catch (PDOException $e2) {
-                        $errori[] = 'Il database non esiste e non si riesce a crearlo: ' . $e2->getMessage() . ' Crealo da cPanel (Database MySQL) e dai all\'utente tutti i privilegi.';
+                        $errori[] = 'Il database «' . $db['nome'] . '» non esiste e questo utente non ha il permesso di crearlo. Crealo da cPanel (Database MySQL) e dai all\'utente tutti i privilegi. (Dettaglio tecnico: ' . $e2->getMessage() . ')';
                     }
                 } elseif ($codice === 1049) {
                     $errori[] = "Il database «{$db['nome']}» non esiste. Crealo da cPanel oppure spunta «Crealo se manca».";
                 } else {
-                    $errori[] = 'Connessione rifiutata: ' . $e->getMessage();
+                    $errori[] = inst_errore_db($e, $db);
                 }
             }
         }
@@ -210,7 +228,7 @@ if ($passo === 3) {
         . '<h3>L\'amministratore</h3>'
         . inst_campo('admin_nome', 'Nome utente', $s['admin_nome'])
         . inst_campo('admin_email', 'Email', $s['admin_email'], 'email')
-        . '<div class="due">' . inst_campo('admin_password', 'Password (almeno 12 caratteri, non fra le più comuni)', '', 'password') . inst_campo('admin_password2', 'Ripeti la password', '', 'password') . '</div>'
+        . '<div class="due">' . inst_campo('admin_password', 'Password', '', 'password', 'Almeno 12 caratteri, non fra le più comuni.') . inst_campo('admin_password2', 'Ripeti la password', '', 'password', 'Riscrivila uguale, per essere sicuri che sia giusta.') . '</div>'
         . '<p><a class="btn-filo" href="?passo=2">Indietro</a> <button class="btn" type="submit">Avanti: installa</button></p></form>', 3);
 }
 
