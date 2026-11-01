@@ -72,6 +72,9 @@ const EDITOR_FOTO_EFFETTI = ['' => 'Nessuno', 'zoom' => 'Zoom lento', 'bagliore'
 // Le dieci disposizioni dell'Apertura in più della classica (1.2.6).
 require_once __DIR__ . '/editor-hero.php';
 
+// Le quindici infografiche disegnate in SVG (2.9.0): imbuto, piramide, matrice... (stesso gruppo e stessa cornice delle ig_*).
+require_once __DIR__ . '/editor-infografiche.php';
+
 const EDITOR_ALLINEAMENTI = ['' => 'Come la sezione', 'left' => 'Sinistra', 'center' => 'Centro', 'right' => 'Destra'];
 const EDITOR_STILI_PULSANTE = ['viola' => 'Pieno viola', 'ciano' => 'Pieno ciano', 'filo' => 'Contorno'];
 
@@ -476,7 +479,7 @@ function editor_definizioni(): array {
             ec('codice', 'codice', 'Codice HTML', '', 'contenuto', ['aiuto' => 'Per incollare un pezzo già pronto. Qui finisce anche il contenuto di prima delle pagine.']),
         ]],
     ];
-    $d += igx_definizioni();
+    $d += igx_definizioni() + igs_definizioni();
     // Widget scritti in altri file (editor-widget-tema.php, editor-widget-extra.php): registrati con editor_registra_widget().
     foreach (editor_widget_registrati() as $tipo => $w) if (!isset($d[$tipo])) $d[$tipo] = $w['definizione'];
     foreach ($d as $tipo => &$def) {
@@ -1072,6 +1075,7 @@ function igx_chiusura(array $v): string {
 
 /** Il widget ig_* in HTML. */
 function igx_disegna(string $tipo, array $v): string {
+    if (in_array($tipo, IGS_TIPI, true)) return (string)igs_disegna($tipo, $v); // le quindici disegnate (editor-infografiche.php)
     switch ($tipo) {
         case 'ig_passi':
             $dueCifre = in_array($v['stile'], ['badge', 'card'], true) || ($v['stile'] === 'pieno' && $v['numero_grande']);
