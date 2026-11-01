@@ -24,6 +24,7 @@ require_once $dir . '/includes/form.php';
 newsletter_schema();
 newsletter_flussi_schema();
 form_schema();
+if (function_exists('newsletter_importa_schema')) newsletter_importa_schema();
 if (function_exists('newsletter_segmenti_schema')) newsletter_segmenti_schema();
 $t = fn($n) => tbl($n);
 $P = DB_PREFIX;

@@ -745,7 +745,7 @@ capitoli['19j'] = async () => {
   await Promise.all([p.waitForNavigation(), p.click('#nls-form button[type=submit]')]);
   if (!/creato/.test(await flash())) throw new Error('19j: segmento non creato: ' + await flash());
   const sid = await p.evaluate(() => { const a = [...document.querySelectorAll('a[href^="newsletter-segmenti.php?id="]')].find(x => x.textContent.trim() === 'Clienti di Bologna'); return a ? a.href.match(/id=(\d+)/)[1] : ''; });
-  await foto('19-segmenti', { clip: { x: 240, y: 56, width: 960, height: 480 }, segni: [{ sel: `a[href="newsletter-segmenti.php?id=${sid}"]`, n: 1 }, { sel: `a[aria-label="Vedi i contatti del segmento Clienti di Bologna"]`, n: 2 }, { sel: `button[data-apri-dialogo="#nls-lista-${sid}"]`, n: 3, lato: 'destra' }] });
+  await foto('19-segmenti', { clip: { x: 240, y: 56, width: 960, height: 700 }, segni: [{ sel: `a[href="newsletter-segmenti.php?id=${sid}"]`, n: 1 }, { sel: `a[aria-label="Vedi i contatti del segmento Clienti di Bologna"]`, n: 2 }, { sel: `button[data-apri-dialogo="#nls-lista-${sid}"]`, n: 3, lato: 'destra' }] });
   // Aggiungi filtro nella pagina Contatti, poi Salva come vista
   await vai('newsletter-contatti.php');
   await p.click('#nlx-filtro > summary');

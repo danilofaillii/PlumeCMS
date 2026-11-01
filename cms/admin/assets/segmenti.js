@@ -114,7 +114,7 @@
         html += '<div class="nl-riga nls-azioni-gruppo"><button type="button" class="btn btn-secondary btn-sm" data-aggiungi="' + gi + '">+ ' + (g.op === 'o' ? 'O' : 'E') + ': aggiungi una condizione</button>' +
           (regole.gruppi.length > 1 ? '<button type="button" class="btn btn-danger btn-sm" data-togli-gruppo="' + gi + '">Togli il gruppo ' + (gi + 1) + '</button>' : '') + '</div></fieldset>';
       });
-      html += '<div class="nl-riga"><button type="button" class="btn btn-secondary btn-sm" data-nuovo-gruppo>+ Aggiungi un gruppo di condizioni</button><span class="hint">' + quante() + ' condizioni su ' + DEF.massimo + '</span></div>';
+      html += '<div class="nl-riga"><button type="button" class="btn btn-secondary btn-sm" data-nuovo-gruppo>+ Aggiungi un gruppo di condizioni</button><span class="hint">' + quante() + (quante() === 1 ? ' condizione' : ' condizioni') + ' su ' + DEF.massimo + '</span></div>';
       box.innerHTML = html;
       if (fuoco) { var el = box.querySelector(fuoco); if (el) el.focus(); }
     }
