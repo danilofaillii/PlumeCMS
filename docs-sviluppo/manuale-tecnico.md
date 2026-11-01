@@ -52,6 +52,7 @@ pagine, gestire il sito) c'è il manuale d'uso, `docs/manuale-uso.md`, con le sc
 35. Consegna delle email: dominio, servizi, mittenti, rimbalzi, riscaldamento (dalla 2.1.0)
 36. Copia altrove su Google Drive e Dropbox, riservati fuori dagli elenchi, ripristino pulito (dalla 2.1.0)
 37. I widget della 2.1: menu, richiesta di prenotazione, galleria con filtri, scorrevole, contenuto esterno (dalla 2.1.0)
+41. Le quindici infografiche disegnate (novembre 2026)
 
 Appendice A. Dove i documenti vecchi non corrispondono al codice
 
@@ -1015,8 +1016,10 @@ Come è fatto (`includes/editor-hero.php`):
 - le regole sul contenitore si scrivono `.ed-hero.ed-hero-<id>`: `sito.css` ha `.ed-w-hero .hero{padding:0}`, che con
   un solo nome di classe vince e toglie il margine (successo nella 1.2.6, corretto nella 1.2.7).
 
-**Infografiche** (14, prefisso `ig_`): passi, timeline, checklist, tabella, liste, numeri, card, mappa, flusso,
-fasi, barre, prima e dopo, zone, domande. Usano i colori `--ig-*` della tavolozza (capitolo 12).
+**Infografiche** (29, prefisso `ig_`): passi, timeline, checklist, tabella, liste, numeri, card, mappa, flusso,
+fasi, barre, prima e dopo, zone, domande; e le quindici disegnate in SVG (imbuto, piramide, matrice, ciclo, ciambella, cerchi
+che si toccano, ragnatela, lancetta, iceberg, omini, viaggio, bilancia, mappa di calore, cerchi concentrici, barre al cento
+per cento: capitolo 41). Usano i colori `--ig-*` della tavolozza (capitolo 12). In tutto i widget sono 107.
 
 **Tema** (11, `includes/editor-widget-tema.php`), per header, footer e modelli: logo del sito, nome del sito,
 descrizione del sito, menu di navigazione, ricerca, titolo del contenuto, testo del contenuto, immagine in
@@ -4191,6 +4194,83 @@ scelto (segnalazione di Danilo, 1 novembre 2026).
 (fuori dal cestino) con `modo` diverso da `testo` e `immagine` scritta: se ce ne sono, l'avviso `#dg-logo-widget` dice in quali
 modelli il logo scelto non compare, con il link all'editor. Il widget usa il logo dello Stile solo con l'immagine vuota
 (`includes/editor-widget-tema.php`). Il sito di plumeCMS (`sito-plumecms/costruisci.py`) dalla 2.6.0 mette il logo solo nello Stile.
+
+## 41. Le quindici infografiche disegnate (novembre 2026)
+
+Quindici widget del gruppo Infografiche disegnati in SVG dal server, accanto alle quattordici `ig_*` fatte di riquadri HTML
+(capitolo 9.7). Stessa cornice (testata, occhiello, titolo, intro, chiusura, firma, tema delle infografiche: `igx_cornice()`,
+`igx_controlli_testa()`, `igx_controlli_coda()` in `includes/editor-widget.php`), stessa palette (`igx_palette()` e le classi
+`igx-c-*` di `sito.css`, che seguono le variabili `--ig-*` del tema del sito). Il disegno approvato da Danilo è la pagina
+"Quindici infografiche nuove" (anteprime SVG 360 x 240); i valori di partenza sono i suoi esempi.
+
+| Tipo | Nome | Funzione | Voci |
+|---|---|---|---|
+| `ig_imbuto` | Imbuto | `igs_imbuto()` (`includes/editor-infografiche.php:376`) | `gradini` 3-6 (nome, valore); resa = valore / valore precedente |
+| `ig_piramide` | Piramide a livelli | `igs_piramide()` (`:413`) | `livelli` 3-6 (nome, testo), dalla punta |
+| `ig_matrice` | Matrice a quattro quadranti | `igs_matrice()` (`:441`) | quattro assi; `quadranti` 4 (titolo, esempi uno per riga) |
+| `ig_ciclo` | Ciclo | `igs_ciclo()` (`:492`) | `tappe` 3-6 (2 il minimo per disegnare); frecce con `igs_punta()` (`:487`) |
+| `ig_ciambella` | Ciambella | `igs_ciambella()` (`:529`) | `voci` 2-6 (nome, percentuale 0-100); totale diverso da 100: nota per l'editor |
+| `ig_venn` | Cerchi che si toccano | `igs_venn()` (`:574`) | `cerchi` 2-3 (riga piccola, nome), incrocio |
+| `ig_radar` | Ragnatela | `igs_radar()` (`:612`) | `aspetti` 4-8 (3 il minimo), prima e dopo 0-10 |
+| `ig_lancetta` | Lancetta | `igs_lancetta()` (`:654`) | valore, minimo, massimo, due soglie, verso, decimali, suffisso |
+| `ig_iceberg` | Iceberg | `igs_iceberg()` (`:698`) | frase sopra, `voci` 2-6 sotto |
+| `ig_omini` | Omini | `igs_omini()` (`:753`), simboli `igs_simbolo()` (`:731`) | quanti 0-20 su totale 1-20; persona, casa, cuore, stella |
+| `ig_viaggio` | Il viaggio | `igs_viaggio()` (`:797`) | `tappe` 3-7 (2 il minimo), bandiera sull'ultima |
+| `ig_bilancia` | Bilancia | `igs_bilancia()` (`:851`) | `pro` e `contro` fino a 8; inclinazione `auto` (5 + 2 gradi per voce di differenza, al massimo 10) o scelta |
+| `ig_calore` | Mappa di calore | `igs_calore()` (`:889`) | colonne separate dalla virgola (fino a 12), `righe` fino a 12 con valori 0-4 |
+| `ig_cerchi` | Cerchi concentrici | `igs_cerchi()` (`:934`) | `cerchi` 2-4 (nome, testo), dall'esterno |
+| `ig_barre100` | Barre al cento per cento | `igs_barre100()` (`:983`) | `voci` 2-6 con il colore, `barre` 1-4 con le percentuali; somma diversa da 100: nota e parti in proporzione |
+
+**Come entrano nell'editor.** `includes/editor-infografiche.php` ha solo funzioni e costanti (niente variabili in cima al
+file) e lo carica `includes/editor-widget.php:76`. Le definizioni sono `igs_definizioni()` (`:57`), aggiunte a quelle delle
+altre infografiche in `editor_definizioni()` (`editor-widget.php:482`); il disegno passa da `igx_disegna()`, che per i tipi
+di `IGS_TIPI` (`:17`) chiama `igs_disegna()` (`:344`, `editor-widget.php:1078`). Il prefisso `ig_` resta riservato al nucleo:
+non passano da `editor_registra_widget()`.
+
+**Il disegno.** `igs_disegna()` chiama la funzione del tipo due volte, con `IGS_LARGO` (560) e `IGS_STRETTO` (320): ognuna
+restituisce `svg` (il contenuto), `h` (l'altezza), `aria` (tutti i dati in parole), `note` (frasi per l'editor) o `vuoto`
+(niente da disegnare). Escono due `<svg role="img" aria-label="..." class="igs-svg igs-largo|igs-stretto">` dentro
+`<figure class="igs">`. La versione stretta non è la larga rimpicciolita: cambia composizione dove serve (legenda della
+ciambella sotto, viaggio in verticale dal basso verso l'alto, spiegazioni dei cerchi concentrici sotto il disegno, numero
+degli omini accanto alla frase, "SOTTO" dell'iceberg a destra).
+
+**I testi.** Tutti passano da `igs_pulito()` (`:201`: entità decodificate, niente caratteri di controllo, al massimo 300
+caratteri prima di andare a capo) e da `h()` in `igs_testo()` (`:273`). Vanno a capo con `igs_a_capo()` (`:231`), che usa la
+larghezza stimata di `igs_largh()` (`:209`): misurata nel browser con Inter, la stima sta fra 0,88 e 1,1 della larghezza
+vera, quindi si moltiplica per 1,1. Quello che non ci sta finisce con i puntini (`igs_tronca()`, `:224`). I numeri all'italiana
+con `igs_num()` (`:264`: `1.200`, `8,6`); i valori scritti nei campi di testo (mappa di calore, barre) li legge
+`igs_valori()` (`:287`), con un massimo e i limiti.
+
+**I limiti.** `editor_valida()` taglia i ripetitori a 40 voci e i numeri ai `min`/`max` dichiarati; il disegno usa al massimo
+le voci della tabella (`igs_voci()`, `:324`, salta le voci vuote) e scrive per l'editor quante non si vedono
+(`igs_nota_troppe()`, `:334`). Le note sono `<p class="ed-vuoto igs-nota">`: nell'anteprima dell'editor si vedono, sul sito
+`.ed-vuoto{display:none}`. La lancetta corregge da sola massimo minore del minimo e soglie fuori scala, e lo dice.
+
+**I colori.** `igs_c()` (`:301`) dà a un `<g>` la classe `igx-c-<nome>` (o `igs-c-grigio`, il grigio in più delle quindici) oppure
+lo stile `--c:#...;--c2:#...` di un colore libero, sempre passato da `igx_esa()`: nell'attributo non entra altro. Le forme
+usano `fill:var(--c)` e le trasparenze `fill-opacity`, mai `color-mix()`. Il testo sopra un colore pieno (classe `igs-su`) è
+bianco o nero, quello con il contrasto più alto: `sito/assets/infografiche-svg.css:27` calcola nel foglio la luminanza di WCAG
+del colore (`rgb(from var(--c) ...)` con `pow(..., 2.2)` e la soglia 0,179), quindi vale anche con i temi e con i colori
+liberi; i browser senza i colori relativi restano al bianco. Lo stesso calcolo, sul primo colore della testata (`--t1`), dà il
+colore di titolo e occhiello (`igs_classi_cornice()`, `:361`: `igs-testa-auto` se il colore del testo della testata è vuoto,
+`igs-occhiello-auto` con l'occhiello "In armonia" o "Bianco"). Le testate di un colore solo sono piene, come nel disegno
+approvato (`igs-testa-piatta`, `infografiche-svg.css:15`): su una sfumatura nessun colore del testo passa 4,5 da un capo
+all'altro. La firma "sopra una riga" usa il colore del testo (`--tx`), non `--muto` (3,7 sul crema). Il numero della lancetta
+ha un alone del colore della card (`igs-alone`): la lancetta gli passa sotto.
+
+**Il foglio.** `sito/assets/infografiche-svg.css` si carica solo nelle pagine che hanno una delle quindici: ogni tipo ha
+l'asset in `editor_carica_widget_esterni()` (`includes/editor-controlli.php:86`, come le disposizioni dell'Apertura), e la tela
+dell'editor lo chiede in `admin/editor-anteprima.php:48`. Le regole sono tutte sotto `.igx`; la versione da mostrare la sceglie
+`@container` (`infografiche-svg.css:9`) sulla larghezza del riquadro, non della finestra (una colonna stretta al computer
+mostra la versione stretta). Le classi del disegno: `igs-t` (titoli, `--tit`), `igs-tm` (testo, `--tx`), `igs-inv`,
+`igs-p`/`igs-p2` (`--c`/`--c2`), `igs-tinta`, `igs-filo`, `igs-spento`, `igs-prima`/`igs-dopo` (ragnatela).
+
+**Prove.** `prove/prova-infografiche-15.js` con `prove/pagina-infografiche-15.php` (`normali`, `estremi`, `notte`, `cattivi`,
+`vuota`/`togli`): le quindici a 1280, 768 e 390 px (numeri calcolati, aria-label, nessuna scritta sovrapposta o fuori dal
+disegno, niente scorrimento di lato, scritte di almeno 10 px al telefono), i valori estremi, il contrasto di ogni scritta
+misurato sui pixel (senza tema, Aria, Cosmo, Autunno, corpo scuro, telefono), e dall'editor: le quindici dalla tavolozza, voci
+cambiate, la nota della ciambella, Pubblica, il sito. Attacchi: gruppo 30 di `tools/sicurezza-prova.js` (con `CMS_DIR`).
+La foto del manuale d'uso è `08-infografiche` (`tools/manuale-uso-schermate.js`, `SOLO_CAPITOLI=infografiche`).
 
 ## Appendice A. Dove i documenti vecchi non corrispondono al codice
 
