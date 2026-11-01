@@ -1195,11 +1195,10 @@ echo json_encode($o);
     }
     // L'amministratore con il token: tutto pulito.
     await post(admin.p, ADMIN + '/newsletter.php', form({ _csrf: await tokenDi(admin.p, PAG), ...cattiva }), CT);
-    const salvati = await admin.p.evaluate(() => Object.fromEntries([...document.querySelectorAll('#nl-conferma [name^="ce["]')].map(e => [e.name.slice(3, -1), e.value])));
     await admin.p.goto(PAG, { waitUntil: 'networkidle' });
     const v = await admin.p.evaluate(() => Object.fromEntries([...document.querySelectorAll('#nl-conferma [name^="ce["]')].map(e => [e.name.slice(3, -1), e.value])));
-    ok('2.7.0: oggetto senza a capo, colore con CSS scartato, testo senza script né eventi', /^sic-ec Bcc/.test(v.oggetto || '') && (v.colore || '') === '' && !/<script|onclick|javascript:/i.test(v.testo || ''), { v, salvati: Object.keys(salvati).length });
-    const an = await admin.ctx.request.post(API, { headers: { 'Origin': BASE.replace(/(https?:\/\/[^/]+).*/, '$1') }, form: { _csrf: await tokenDi(admin.p, PAG), azione: 'anteprima', contesto: 'comuni' }, maxRedirects: 0 });
+    ok('2.7.0: oggetto senza a capo, colore con CSS scartato, testo senza script né eventi', /^sic-ec Bcc/.test(v.oggetto || '') && (v.colore || '') === '' && !/<script|onclick|javascript:/i.test(v.testo || ''), v);
+    const an = await admin.ctx.request.post(API, { headers: { 'Origin': BASE.replace(/(https?:\/\/[^/]+).*/, '$1') }, form: { ...cattiva, _csrf: await tokenDi(admin.p, PAG), azione: 'anteprima', contesto: 'comuni' }, maxRedirects: 0 });
     const j = an.status() === 200 ? await an.json() : {};
     const h = String(j.html || '');
     ok('2.7.0: l\'email che ne esce non ha codice: niente script, eventi, javascript:, SVG; l\'oggetto è su una riga', h.includes('sic-ec') && !/<script|<svg|<img|<[^>]*\son[a-z]+=|javascript:/i.test(h) && !/[\r\n]/.test(String(j.oggetto || '')), { status: an.status(), ogg: j.oggetto });

@@ -15,7 +15,8 @@ let n = 0, ko = 0;
 const ok = (t, c, extra = '') => { n++; if (!c) ko++; if (!c || process.env.TUTTO) console.log((c ? 'OK  ' : 'KO  ') + t + (extra ? ' ' + JSON.stringify(extra).slice(0, 900) : '')); };
 const PIU = ['seo.php?scheda=motori', 'seo.php?scheda=copertura', 'seo.php?scheda=prestazioni', 'seo.php?scheda=analisi', 'seo.php?scheda=globale', 'seo.php?scheda=schema',
   'seo.php?scheda=redirect', 'seo.php?scheda=registro', 'newsletter.php?scheda=liste', 'newsletter.php?scheda=impostazioni', 'account.php', 'password.php', 'newsletter-campagna.php',
-  'tipo-sito.php', 'fine-articolo.php', 'sicurezza.php?scheda=impostazioni', 'sicurezza.php?scheda=registro', 'consegna.php?scheda=dominio'];
+  'tipo-sito.php', 'fine-articolo.php', 'sicurezza.php?scheda=impostazioni', 'sicurezza.php?scheda=registro', 'consegna.php?scheda=dominio',
+  'form.php?id=1']; // 2.7.0: la scheda di un form, con il riquadro Email di conferma
 
 // La misura dentro la pagina: tutto quello che serve sta qui, la pagina non carica niente.
 function misura() {
