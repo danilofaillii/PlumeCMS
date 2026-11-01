@@ -518,7 +518,7 @@ function agg_ripristina(string $id): array {
         if ($f['esisteva']) {
             $copia = $dir . '/files/' . $f['dest'];
             @mkdir(dirname($abs), 0755, true);
-            if (copy($copia, $abs)) $log[] = 'File rimesso: ' . $f['dest'];
+            if (copy($copia, $abs)) { agg_opcache_dimentica($abs); $log[] = 'File rimesso: ' . $f['dest']; }
             else $log[] = 'ATTENZIONE, file non rimesso: ' . $f['dest'];
         } else {
             if (file_exists($abs)) { @unlink($abs); $log[] = 'File rimosso (prima non esisteva): ' . $f['dest']; }
@@ -582,6 +582,15 @@ function agg_split_sql(string $sql): array {
  * Il pannello legge questo file mentre l'operazione gira, così chi lo ha avviato vede
  * a che punto siamo invece di guardare una pagina ferma.
  */
+/**
+ * 2.5.0: dopo aver scritto un file PHP, opcache non deve tenere la copia vecchia. Con revalidate_freq a 2 secondi (o con
+ * validate_timestamps spento, su alcuni hosting) la prima visita dopo l'aggiornamento poteva usare un file vecchio insieme a
+ * uno nuovo: "Call to undefined function" e pagina in 500 (trovato dalla prova del pacchetto unico della 2.5.0).
+ */
+function agg_opcache_dimentica(string $abs): void {
+    if (str_ends_with($abs, '.php') && function_exists('opcache_invalidate')) @opcache_invalidate($abs, true);
+}
+
 function agg_progresso_file(string $id): string {
     return agg_dir() . '/progresso-' . preg_replace('/[^A-Za-z0-9_.-]/', '', basename($id)) . '.json';
 }
@@ -656,6 +665,7 @@ function agg_applica(string $id): array {
             $abs = agg_dest_path($f['a']);
             @mkdir(dirname($abs), 0755, true);
             if (file_put_contents($abs, $data) === false) throw new RuntimeException('Impossibile scrivere ' . $f['a']);
+            agg_opcache_dimentica($abs);
             $log[] = 'File scritto: ' . $f['a'] . ' (' . agg_fmt_bytes(strlen($data)) . ')';
             agg_progresso($id, ++$passo, $totale, 'Copio i file: ' . basename($f['a']));
         }

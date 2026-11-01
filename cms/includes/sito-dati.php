@@ -11,6 +11,18 @@
 
 require_once __DIR__ . '/sito.php';
 
+// 2.5.0: copia di riserva per i pochi secondi dopo un aggiornamento in cui opcache può avere ancora il sito.php di prima
+// (senza questa funzione): altrimenti la home va in 500. Con il sito.php nuovo questa non si definisce.
+if (!function_exists('sito_4byte_veri')) {
+    function sito_4byte_veri(string $s): string {
+        if (!str_contains($s, '&#')) return $s;
+        return (string)preg_replace_callback('/&#(?:x([0-9a-f]{5,6})|(\d{5,7}));/i', function ($m) {
+            $n = $m[1] !== '' ? hexdec($m[1]) : (int)$m[2];
+            return $n >= 0x10000 && $n <= 0x10FFFF ? mb_chr($n, 'UTF-8') : $m[0];
+        }, $s);
+    }
+}
+
 function sito_iso(string $d, string $t = '00:00:00'): string {
     return substr($d, 0, 10) . 'T' . substr($t ?: '00:00:00', 0, 8);
 }
