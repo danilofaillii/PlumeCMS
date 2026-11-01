@@ -40,7 +40,7 @@ code { background: var(--bg); padding: 1px 5px; border-radius: 4px; font-size: .
 .kit-scelta { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 12px; margin-bottom: 26px; }
 .kit { position: relative; display: flex; flex-direction: column; gap: 4px; padding: 12px; border: 1.5px solid var(--border); border-radius: var(--radius); background: var(--surface); cursor: pointer; transition: border-color .15s, box-shadow .15s; }
 .kit:hover { border-color: var(--bordo-forte); }
-.kit input { position: absolute; top: 12px; right: 12px; accent-color: var(--coral); width: 18px; height: 18px; }
+.kit input { position: absolute; top: 12px; right: 12px; z-index: 1; accent-color: var(--coral); width: 18px; height: 18px; } /* sopra il disegnino: prima il pallino della scelta restava coperto */
 .kit:has(input:checked) { border-color: var(--coral); box-shadow: 0 0 0 3px var(--fuoco); }
 .kit:has(input:focus-visible) { outline: 2px solid var(--coral); outline-offset: 2px; }
 .kit b { font-size: 1rem; margin-top: 6px; }
@@ -93,3 +93,14 @@ code { background: var(--bg); padding: 1px 5px; border-radius: 4px; font-size: .
 .sm-spunta span { color: var(--text-muted); } .sm-spunta b { color: var(--text); }
 .sm-spunta.sm-ogni { margin-top: 6px; border-style: dashed; }
 @media (max-width: 600px) { .sm-servizi { grid-template-columns: 1fr; } }
+/* 2.5.x (controllo UX): il fuoco da tastiera sui pulsanti e sui link si vede in tutti i passi (prima il contorno era quello
+   sottile del browser, quasi invisibile sul pulsante blu). */
+.btn:focus-visible, .btn-filo:focus-visible, main a:focus-visible, .sm-spunta:has(input:focus-visible) { outline: 3px solid var(--coral); outline-offset: 2px; }
+.btn:focus-visible { box-shadow: 0 0 0 5px var(--fuoco); }
+/* 2.5.x (scelte di Danilo): l'errore sotto il campo sbagliato, e il pulsante del passo 4 con la carta Su misura */
+.campo.sbagliato input, .campo.sbagliato select { border-color: var(--errore-testo); border-width: 2px; }
+.errore-campo { color: var(--errore-testo); font-size: .86rem; font-weight: 600; margin: 4px 0 0; }
+.errore > p { margin: 0 0 6px; font-weight: 600; }
+.testo-domande { display: none; }
+form:has(.kit-su-misura input:checked) .testo-installa { display: none; }
+form:has(.kit-su-misura input:checked) .testo-domande { display: inline; }

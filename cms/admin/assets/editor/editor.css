@@ -226,7 +226,7 @@ button,input,select,textarea{font:inherit;color:inherit}
 .ed-ico-sfumato{width:14px;height:14px;border-radius:3px;background:linear-gradient(135deg,currentColor,transparent);display:inline-block}
 .ed-colore{display:flex;flex-direction:column;gap:6px}
 .ed-globali{display:flex;gap:5px;flex-wrap:wrap}
-.ed-globale{width:22px;height:22px;border-radius:50%;border:2px solid var(--surface);box-shadow:0 0 0 1px var(--ed-bordo);cursor:pointer;padding:0}
+.ed-globale{width:22px;height:22px;border-radius:50%;border:2px solid var(--surface);box-shadow:0 0 0 1px var(--bordo-forte);cursor:pointer;padding:0} /* 2.5.x: con --border i colori scuri sparivano sul pannello scuro (Cosmo, Lavagna) */
 .ed-globale.attivo{box-shadow:0 0 0 2px var(--ed-primo)}
 .ed-icona-testa{display:flex;align-items:center;gap:8px}
 .ed-icona-scelta{width:30px;height:30px;display:grid;place-items:center;border:1px solid var(--ed-bordo);border-radius:6px;background:var(--ed-campo)}
@@ -311,3 +311,32 @@ button,input,select,textarea{font:inherit;color:inherit}
 .ed-mini-hero-banner{flex-direction:row;flex-wrap:wrap;align-items:center;border:1px solid var(--border);background:var(--surface);border-radius:5px;padding:6px}
 .ed-mini-hero-banner .ed-mini-grande{height:6px;width:45%}
 .ed-mini-hero-banner .ed-mini-grande+.ed-mini-grande,.ed-mini-hero-banner .ed-mini-riga{display:none}
+
+/* 2.5.x (controllo UX): il fuoco da tastiera si vede su ogni pulsante e campo dell'editor. I gruppi di pulsanti attaccati
+   (misure, annulla e ripeti, stati) hanno overflow:hidden e tagliavano il contorno del browser: il contorno va dentro. */
+.ed-app :is(button,a,summary,input,select,textarea):focus-visible{outline:2px solid var(--ed-primo);outline-offset:2px}
+.ed-misure button:focus-visible,.ed-storia button:focus-visible,.ed-stati button:focus-visible,.ed-schede-pannello button:focus-visible,.ed-schede-controlli button:focus-visible{outline-offset:-3px}
+.ed-widget-voce:focus-visible{outline:2px solid var(--ed-primo);outline-offset:2px;border-color:var(--ed-primo);box-shadow:0 0 0 3px var(--fuoco)}
+.ed-gruppo-widget[hidden]{display:none}
+.ed-aiuto-sopra{margin:-4px 0 12px}
+/* il nome della pagina senza H1: un avviso che si legge, non solo il colore */
+.ed-avviso-h1{color:var(--attenzione-testo)!important;font-weight:600}
+.ed-avviso-h1[hidden]{display:none}
+/* la casella del file nella finestra Immagini: la regola delle label la mostrava, con il testo del browser */
+.ed-media-testa label.ed-b{position:relative}
+.ed-media-testa label.ed-b input[type=file]{position:absolute;width:1px;height:1px;opacity:0;margin:0;padding:0;border:0}
+.ed-media-testa label.ed-b:focus-within{outline:2px solid var(--ed-primo);outline-offset:2px}
+/* al telefono l'editor non ci sta: lo si dice, invece di una barra tagliata */
+.ed-solo-computer{display:none}
+@media (max-width:760px){
+  .ed-solo-computer{display:block;position:fixed;inset:auto 12px 12px 12px;z-index:20;margin:0;padding:12px 14px;border-radius:10px;background:var(--ed-pannello);color:var(--ed-testo);border:1px solid var(--bordo-forte);box-shadow:var(--ombra-grande);font-size:14px}
+  .ed-solo-computer a{color:var(--accento-testo)}
+}
+/* 2.5.x (scelte di Danilo): il cursore senza un valore suo è grigio, la casella dice "come il sito"; accanto al pallino del
+   monitor "solo tablet" o "solo telefono" quando il valore vale solo lì */
+.ed-cursore-vuoto{filter:grayscale(1);opacity:.5}
+.ed-misura input[type=number],.ed-numero-riga input[type=number]{width:94px;padding-left:7px;padding-right:3px}
+.ed-misura input[type=number]::placeholder,.ed-numero-riga input[type=number]::placeholder{font-size:10.5px;color:var(--ed-muto);opacity:1}
+.ed-misura-pulsante{display:inline-flex;align-items:center;gap:4px}
+.ed-misura-solo{font-size:10px;font-weight:700;letter-spacing:.02em;color:var(--accento-testo);white-space:nowrap}
+.ed-misura-solo[hidden]{display:none}

@@ -25,9 +25,9 @@ pren_admin_schede('agenda');
 <?php if ($daConfermare): ?><div class="pa-avviso"><a href="<?= h(pren_admin_url('elenco', ['filtro' => 'da_confermare'])) ?>"><b><?= $daConfermare ?> <?= $daConfermare === 1 ? 'prenotazione aspetta' : 'prenotazioni aspettano' ?> la tua conferma</b></a></div><?php endif; ?>
 <div class="pa-barra">
   <h2><?= h($titolo) ?></h2>
-  <a class="btn btn-secondary btn-sm" href="<?= h(pren_admin_url('agenda', ['vista' => $vista, 'd' => $inizio->modify("-$passo day")->format('Y-m-d')])) ?>">&lsaquo; Prima</a>
+  <a class="btn btn-secondary btn-sm" href="<?= h(pren_admin_url('agenda', ['vista' => $vista, 'd' => $inizio->modify("-$passo day")->format('Y-m-d')])) ?>">&lsaquo; <?= $vista === 'settimana' ? 'Settimana prima' : 'Giorno prima' ?></a>
   <a class="btn btn-secondary btn-sm" href="<?= h(pren_admin_url('agenda', ['vista' => $vista])) ?>">Oggi</a>
-  <a class="btn btn-secondary btn-sm" href="<?= h(pren_admin_url('agenda', ['vista' => $vista, 'd' => $inizio->modify("+$passo day")->format('Y-m-d')])) ?>">Dopo &rsaquo;</a>
+  <a class="btn btn-secondary btn-sm" href="<?= h(pren_admin_url('agenda', ['vista' => $vista, 'd' => $inizio->modify("+$passo day")->format('Y-m-d')])) ?>"><?= $vista === 'settimana' ? 'Settimana dopo' : 'Giorno dopo' ?> &rsaquo;</a>
   <a class="btn btn-<?= $vista === 'giorno' ? 'primary' : 'secondary' ?> btn-sm" href="<?= h(pren_admin_url('agenda', ['vista' => 'giorno', 'd' => $vista === 'giorno' ? $inizio->format('Y-m-d') : $oggi])) ?>">Giorno</a>
   <a class="btn btn-<?= $vista === 'settimana' ? 'primary' : 'secondary' ?> btn-sm" href="<?= h(pren_admin_url('agenda', ['vista' => 'settimana', 'd' => $inizio->format('Y-m-d')])) ?>">Settimana</a>
 </div>

@@ -23,7 +23,7 @@ echo vt_admin_stile();
 <div class="admin-toolbar" style="margin-bottom:1rem;display:flex;gap:.6rem;flex-wrap:wrap;align-items:center">
   <a class="btn btn-primary" href="<?= h(vt_admin_url('prodotto')) ?>" id="vt-nuovo">+ Nuovo prodotto</a>
   <form method="get" style="display:flex;gap:.4rem"><input type="hidden" name="a" value="vetrina"><input type="hidden" name="p" value="prodotti">
-    <input type="search" name="q" class="search-input" value="<?= h($cerca) ?>" placeholder="Cerca un prodotto"><button type="submit" class="btn btn-secondary btn-sm">Cerca</button></form>
+    <input type="search" name="q" class="search-input" aria-label="Cerca un prodotto" value="<?= h($cerca) ?>" placeholder="Cerca un prodotto"><button type="submit" class="btn btn-secondary btn-sm">Cerca</button></form>
 </div>
 <?php if (!$prodotti): ?>
   <div class="empty-state"><p><?= $cerca !== '' ? 'Nessun prodotto con questo nome.' : 'Ancora nessun prodotto. Comincia dal primo: bastano nome, prezzo e una foto.' ?></p></div>

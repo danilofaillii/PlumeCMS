@@ -117,7 +117,7 @@ h1,h2,h3{font-family:var(--f-titolo);letter-spacing:-.01em;margin:0}
 .card{display:flex;flex-direction:column;gap:12px;text-decoration:none;background:var(--vetro);border:1px solid var(--bordo);border-radius:var(--r);padding:24px;min-height:190px;transition:border-color .2s,transform .2s}
 .card:hover{border-color:rgba(var(--ciano-rgb),.5);transform:translateY(-3px)}
 .card-pillar{background:linear-gradient(160deg,rgba(var(--viola-rgb),.18),rgba(var(--ciano-rgb),.06));border-color:rgba(var(--viola-rgb),.4)}
-.card-meta{font:600 11px/1.4 var(--f-testo);letter-spacing:.12em;text-transform:uppercase;color:var(--testo-3)}
+.card-meta{font:600 11px/1.4 var(--f-testo);letter-spacing:.12em;text-transform:uppercase;color:var(--testo-2)} /* 2.5.x (scelta di Danilo): con --testo-3 la data faceva 4,24 a 1 nel tema di base (3,61 in Bottega) */
 .card-meta b{color:var(--viola)}
 .card-titolo{font:700 20px/1.25 var(--f-titolo);flex:1}
 .card-url{font:500 11px ui-monospace,Menlo,monospace;color:var(--testo-3)}
@@ -799,3 +799,12 @@ hr.ed-divisore-linea{background:var(--bordo)}
 .ed-fx-scintille .ed-fx-luce{background-image:radial-gradient(circle,var(--fx-1,var(--ciano)) 0 2px,transparent 3px),radial-gradient(circle,var(--fx-2,#fff) 0 1.5px,transparent 2.5px),radial-gradient(circle,var(--fx-1,var(--ciano)) 0 1px,transparent 2px);background-size:90px 120px,130px 170px,60px 80px;background-position:10px 0,50px 30px,25px 60px;mix-blend-mode:screen;opacity:.9;animation:ed-fx-scintille calc(9s * var(--fx-v,1)) linear infinite}
 @keyframes ed-fx-scintille{to{background-position:10px -240px,50px -310px,25px -100px}}
 @media (prefers-reduced-motion:reduce){.ed-fx img,.ed-fx,.ed-fx .ed-fx-luce{animation:none}}
+
+/* 2.5.x (scelta di Danilo): la ricerca senza risultati suggerisce cosa provare e dà le pagine principali */
+.cerca-niente{grid-column:1/-1}
+.cerca-niente p{margin:0 0 10px}
+.cerca-niente ul{list-style:none;display:flex;flex-wrap:wrap;gap:8px;margin:10px 0 0;padding:0}
+.cerca-niente .vuoto{color:var(--testo-2)}
+.cerca-niente p a{color:var(--testo);text-decoration:underline;text-underline-offset:3px}
+.cerca-niente ul a{display:inline-block;padding:8px 14px;border:1px solid var(--bordo);border-radius:999px;color:var(--testo);text-decoration:none}
+.cerca-niente ul a:hover{border-color:var(--viola)}

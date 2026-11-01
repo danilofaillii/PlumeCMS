@@ -95,7 +95,7 @@ foreach (array_keys(VT_STATI) as $k) $conta[$k] = vt_ordini_conta($k);
   <?php foreach (VT_STATI as $k => $et): ?><a href="<?= h(vt_admin_url('ordini', ['stato' => $k])) ?>"<?= $stato === $k ? ' aria-current="page"' : '' ?>><?= h($et) ?> (<?= $conta[$k] ?>)</a><?php endforeach; ?>
 </nav>
 <form method="get" class="admin-toolbar" style="margin-bottom:1rem"><input type="hidden" name="a" value="vetrina"><input type="hidden" name="p" value="ordini"><?php if ($stato !== ''): ?><input type="hidden" name="stato" value="<?= h($stato) ?>"><?php endif; ?>
-  <input type="search" name="q" class="search-input" value="<?= h($cerca) ?>" placeholder="Cerca per nome, email o numero"><button type="submit" class="btn btn-secondary btn-sm">Cerca</button></form>
+  <input type="search" name="q" class="search-input" aria-label="Cerca un ordine per nome, email o numero" value="<?= h($cerca) ?>" placeholder="Cerca per nome, email o numero"><button type="submit" class="btn btn-secondary btn-sm">Cerca</button></form>
 <?php if (!$ordini): ?>
   <div class="empty-state"><p>Nessun ordine<?= $stato !== '' || $cerca !== '' ? ' con questi filtri' : ', per ora' ?>.</p></div>
 <?php else: ?>

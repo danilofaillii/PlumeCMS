@@ -94,7 +94,7 @@ if ($albero === null): ?>
   <p><?= $tipo !== 'pagine' ? "Questo contenuto è ancora quello scritto nella scheda. Con l'editor visuale lo componi a sezioni e widget: titolo, data e sommario restano quelli dell'articolo." : 'Questa pagina è ancora quella di prima.' ?> Scegli da dove partire: fino a quando non premi <b>Pubblica</b>, chi visita il sito continua a vedere la versione di oggi.</p>
   <div class="ed-scelta-carte">
     <?php if ($home): ?>
-    <a class="ed-carta" href="editor.php?id=<?= $id ?>&amp;parti=home"><b>La grafica di oggi</b><span>La home com'è adesso, già divisa in sezioni e widget: apertura, tre passi, frase, schede, chi sono, ultimi pillar. Cambi quello che vuoi.</span></a>
+    <a class="ed-carta" href="editor.php?id=<?= $id ?>&amp;parti=home"><b>La grafica di oggi</b><span>La home com'è adesso, già divisa in sezioni e widget. Cambi quello che vuoi.</span></a>
     <?php endif; ?>
     <?php if (trim((string)($tipo !== 'pagine' ? $pagina['content'] : $pagina['html'])) !== ''): ?>
     <a class="ed-carta" href="editor.php?tipo=<?= $tipo ?>&amp;id=<?= $id ?>&amp;parti=html"><b>Il contenuto di oggi</b><span>Il testo entra intero in un widget HTML<?= $tipo === 'pagine' ? ', con i moduli al loro posto' : '' ?>. Da lì lo rifai un pezzo alla volta.</span></a>
@@ -140,18 +140,21 @@ $dati = [
 </head>
 <body class="ed-app">
 <header class="ed-barra">
-  <a class="ed-indietro" href="<?= h($scheda) ?>" title="Torna alla scheda">←</a>
-  <div class="ed-nome"><b id="ed-titolo-pagina"><?= h($pagina['title']) ?></b><small id="ed-percorso"><?= h($percorso) ?></small></div>
+  <a class="ed-indietro" href="<?= h($scheda) ?>" title="Torna alla scheda" aria-label="Torna alla scheda">←</a>
+  <?php /* 2.5.x (controllo UX): per header, footer e riquadro di fine articolo sotto il nome c'era l'indirizzo tecnico dell'anteprima
+     (/?preview=1&header=3); ora si dice che cosa è. E l'avviso del titolo H1 si legge, non solo nel colore del nome. */ ?>
+  <div class="ed-nome"><b id="ed-titolo-pagina"><?= h($pagina['title']) ?></b><small id="ed-percorso"><?= h($modello ? ($fine ? 'Riquadro in fondo a ogni articolo' : (($pagina['tipo'] ?? '') === 'footer' ? 'Footer: il piede delle pagine' : 'Header: la testata delle pagine')) : $percorso) ?></small><small class="ed-avviso-h1" id="ed-avviso-h1" hidden>Manca il titolo principale (H1)</small></div>
+  <p class="ed-solo-computer" role="note">L'editor visuale si usa da computer o tablet: su uno schermo così stretto la pagina non ci sta. Puoi cambiare i testi dalla <a href="<?= h($scheda) ?>">scheda</a>.</p>
   <div class="ed-misure" role="group" aria-label="Misura dello schermo">
-    <button type="button" data-misura="d" class="attivo" title="Desktop">&#128421;</button>
-    <button type="button" data-misura="t" title="Tablet (fino a <?= EDITOR_TABLET ?> px)">▭</button>
-    <button type="button" data-misura="m" title="Telefono (fino a <?= EDITOR_TELEFONO ?> px)">▯</button>
+    <button type="button" data-misura="d" class="attivo" title="Computer" aria-label="Guarda la pagina come su un computer" aria-pressed="true">&#128421;</button>
+    <button type="button" data-misura="t" title="Tablet (fino a <?= EDITOR_TABLET ?> px)" aria-label="Guarda la pagina come su un tablet" aria-pressed="false">▭</button>
+    <button type="button" data-misura="m" title="Telefono (fino a <?= EDITOR_TELEFONO ?> px)" aria-label="Guarda la pagina come su un telefono" aria-pressed="false">▯</button>
   </div>
   <div class="ed-storia">
-    <button type="button" id="ed-annulla" title="Annulla (Ctrl+Z)" disabled>↶</button>
-    <button type="button" id="ed-ripeti" title="Ripeti (Ctrl+Y)" disabled>↷</button>
+    <button type="button" id="ed-annulla" title="Annulla (Ctrl+Z)" aria-label="Annulla l'ultima modifica" disabled>↶</button>
+    <button type="button" id="ed-ripeti" title="Ripeti (Ctrl+Y)" aria-label="Ripeti la modifica annullata" disabled>↷</button>
   </div>
-  <span class="ed-stato" id="ed-stato"></span>
+  <span class="ed-stato" id="ed-stato" role="status"></span>
   <button type="button" class="ed-b" id="ed-apri-impostazioni">Impostazioni</button>
   <button type="button" class="ed-b" id="ed-apri-revisioni">Revisioni</button>
   <a class="ed-b" id="ed-vedi" href="<?= h($contenitore ? (string)($pagina['vedi'] ?? cms_sito_base() . $percorso) : ($modello ? '..' . $percorso : cms_sito_base() . $percorso . ($pagina['status'] === 'published' ? '' : '?preview=1'))) ?>" target="_blank"><?= $modello ? 'Vedi sul sito' : 'Vedi la pagina' ?></a>
@@ -160,30 +163,33 @@ $dati = [
 </header>
 <div class="ed-corpo">
   <aside class="ed-pannello">
-    <nav class="ed-schede-pannello">
-      <button type="button" data-pannello="widget" class="attivo">Widget</button>
-      <?php if ($dati['sezioniPronte']): ?><button type="button" data-pannello="sezioni">Sezioni</button><?php endif; ?>
-      <button type="button" data-pannello="modifica">Modifica</button>
-      <button type="button" data-pannello="navigatore">Navigatore</button>
+    <?php /* 2.5.x (scelta di Danilo): schede ARIA vere, frecce sinistra e destra, Inizio e Fine per passare dall'una all'altra */ ?>
+    <nav class="ed-schede-pannello" role="tablist" aria-label="Pannello dell'editor">
+      <button type="button" role="tab" id="ed-scheda-widget" aria-controls="ed-pannello-widget" data-pannello="widget" class="attivo" aria-selected="true" tabindex="0">Widget</button>
+      <?php if ($dati['sezioniPronte']): ?><button type="button" role="tab" id="ed-scheda-sezioni" aria-controls="ed-pannello-sezioni" data-pannello="sezioni" aria-selected="false" tabindex="-1">Sezioni</button><?php endif; ?>
+      <button type="button" role="tab" id="ed-scheda-modifica" aria-controls="ed-pannello-modifica" data-pannello="modifica" aria-selected="false" tabindex="-1">Modifica</button>
+      <button type="button" role="tab" id="ed-scheda-navigatore" aria-controls="ed-pannello-navigatore" data-pannello="navigatore" aria-selected="false" tabindex="-1">Navigatore</button>
     </nav>
-    <section class="ed-pannello-vista" id="ed-pannello-widget">
+    <section class="ed-pannello-vista" id="ed-pannello-widget" role="tabpanel" aria-labelledby="ed-scheda-widget">
       <input type="search" id="ed-cerca-widget" placeholder="Cerca un widget…" aria-label="Cerca un widget">
+      <?php /* 2.5.x (controllo UX): l'aiuto in cima, dove si legge; in fondo, dopo cento widget, non lo vedeva nessuno */ ?>
+      <p class="ed-aiuto ed-aiuto-sopra">Trascina un widget nella pagina, oppure fai clic: entra sotto l'elemento selezionato.</p>
+      <p class="ed-aiuto" id="ed-widget-nessuno" hidden>Nessun widget con questo nome. Prova con un'altra parola (per esempio: titolo, foto, pulsante, form).</p>
       <div id="ed-elenco-widget"></div>
-      <p class="ed-aiuto">Trascina un widget nella pagina, oppure fai clic: entra sotto l'elemento selezionato.</p>
     </section>
     <?php if ($dati['sezioniPronte']): ?>
-    <section class="ed-pannello-vista" id="ed-pannello-sezioni" hidden>
+    <section class="ed-pannello-vista" id="ed-pannello-sezioni" role="tabpanel" aria-labelledby="ed-scheda-sezioni" hidden>
       <input type="search" id="ed-cerca-sezioni" placeholder="Cerca una sezione…" aria-label="Cerca una sezione">
       <div id="ed-elenco-sezioni"></div>
       <p class="ed-aiuto">Fai clic su una sezione: entra sotto quella selezionata (o in fondo alla pagina). Oppure trascinala nel punto che vuoi. Una volta dentro è una sezione normale: cambi testi, colori e widget come sempre.</p>
     </section>
     <?php endif; ?>
-    <section class="ed-pannello-vista" id="ed-pannello-modifica" hidden>
+    <section class="ed-pannello-vista" id="ed-pannello-modifica" role="tabpanel" aria-labelledby="ed-scheda-modifica" hidden>
       <div class="ed-modifica-testa"><b id="ed-modifica-nome">Niente selezionato</b><span id="ed-modifica-azioni"></span></div>
       <nav class="ed-schede-controlli" id="ed-schede-controlli"></nav>
       <div id="ed-controlli"><p class="ed-aiuto">Fai clic su un elemento della pagina per modificarlo.</p></div>
     </section>
-    <section class="ed-pannello-vista" id="ed-pannello-navigatore" hidden>
+    <section class="ed-pannello-vista" id="ed-pannello-navigatore" role="tabpanel" aria-labelledby="ed-scheda-navigatore" hidden>
       <div id="ed-navigatore"></div>
       <button type="button" class="ed-b" id="ed-aggiungi-sezione">+ Aggiungi una sezione</button>
     </section>
@@ -195,7 +201,7 @@ $dati = [
   </main>
   <!-- versioni: il pannello Revisioni, a destra della tela. Stessa tabella e stesso confronto della pagina Versioni. -->
   <aside class="ed-revisioni" id="ed-revisioni" hidden>
-    <div class="ed-revisioni-testa"><h2>Revisioni</h2><button type="button" class="ed-b ed-b-piccolo" id="ed-chiudi-revisioni" title="Chiudi">&#10005;</button></div>
+    <div class="ed-revisioni-testa"><h2>Revisioni</h2><button type="button" class="ed-b ed-b-piccolo" id="ed-chiudi-revisioni" title="Chiudi" aria-label="Chiudi le revisioni">&#10005;</button></div>
     <p class="ed-aiuto">Ogni salvataggio e ogni pubblicazione lasciano una versione. <b>Cosa è cambiato</b> la confronta con la precedente; <b>Carica nella tela</b> la porta qui, e la pagina cambia solo quando pubblichi di nuovo.</p>
     <div id="ed-elenco-revisioni" class="ed-revisioni-elenco"></div>
     <div class="ed-revisioni-piede">
@@ -230,13 +236,13 @@ $dati = [
 <dialog id="ed-dialogo-media" class="ed-dialogo ed-dialogo-largo">
   <h2>Immagini</h2>
   <div class="ed-media-testa">
-    <label class="ed-b">Carica un'immagine<input type="file" id="ed-media-file" accept="image/jpeg,image/png,image/gif,image/webp" hidden></label>
-    <label class="ed-media-url">oppure incolla un indirizzo<input type="url" id="ed-media-url" placeholder="https://…"><button type="button" class="ed-b" id="ed-media-usa-url">Usa</button></label>
+    <label class="ed-b">Carica un'immagine<input type="file" id="ed-media-file" accept="image/jpeg,image/png,image/gif,image/webp"></label>
+    <label class="ed-media-url">oppure incolla un indirizzo<input type="url" id="ed-media-url" placeholder="https://…" aria-label="Indirizzo di un'immagine"><button type="button" class="ed-b" id="ed-media-usa-url">Usa</button></label>
   </div>
   <div class="ed-media-filtri">
-    <select id="ed-media-cartella"><option value="">Tutte le cartelle</option></select>
-    <input type="search" id="ed-media-cerca" placeholder="Cerca nel nome…">
-    <span class="ed-aiuto" id="ed-media-conta"></span>
+    <select id="ed-media-cartella" aria-label="Cartella delle immagini"><option value="">Tutte le cartelle</option></select>
+    <input type="search" id="ed-media-cerca" placeholder="Cerca nel nome…" aria-label="Cerca un'immagine per nome">
+    <span class="ed-aiuto" id="ed-media-conta" role="status"></span>
   </div>
   <p class="ed-errore" id="ed-media-errore" hidden></p>
   <div class="ed-media-griglia" id="ed-media-griglia"></div>

@@ -75,6 +75,23 @@ function inst_pdo(array $db, bool $senzaDb = false): PDO {
     return new PDO($dsn, $db['utente'], $db['password'], [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION, PDO::ATTR_TIMEOUT => 5]);
 }
 
+/**
+ * 2.5.x (controllo UX): l'errore di connessione in parole semplici, con quello che si può fare, e il messaggio del server
+ * in fondo, fra parentesi, per chi deve chiedere aiuto all'hosting. Prima si vedeva solo "SQLSTATE[HY000] [1045] Access denied...".
+ */
+function inst_errore_db(PDOException $e, array $db): string {
+    $msg = $e->getMessage();
+    $codice = (int)$e->getCode();
+    if ($codice === 0 && preg_match('/\[(\d{4})\]/', $msg, $m)) $codice = (int)$m[1];
+    $tecnico = ' (Dettaglio tecnico: ' . $msg . ')';
+    if ($codice === 1045) return "Utente o password del database sbagliati. Controlla in cPanel, voce Database MySQL, il nome esatto dell'utente (spesso comincia con il nome del tuo account, per esempio account_utente) e riscrivi la password." . $tecnico;
+    if ($codice === 1044) return "L'utente «" . $db['utente'] . "» non può usare il database «" . $db['nome'] . "». In cPanel, voce Database MySQL, aggiungi l'utente al database con tutti i privilegi (oppure controlla che il nome del database sia scritto giusto)." . $tecnico;
+    if ($codice === 2002 && preg_match('/getaddrinfo|Name or service|name resolution|No such host/i', $msg)) return "Il server del database «" . $db['host'] . "» non esiste. Quasi sempre è localhost: controlla il campo Server (host)." . $tecnico;
+    if ($codice === 2002 || $codice === 2003) return "Il server del database «" . $db['host'] . "» non risponde. Controlla il campo Server (host): quasi sempre è localhost (con una porta diversa si scrive server:porta)." . $tecnico;
+    if ($codice === 2006 || $codice === 2013) return "Il server del database ha chiuso la connessione. Riprova fra un minuto; se continua, chiedi all'hosting." . $tecnico;
+    return 'Il database non accetta la connessione. Controlla server, nome del database, utente e password.' . $tecnico;
+}
+
 function inst_pagina(string $titolo, string $corpo, int $passo): void {
     $base = cms_base();
     $passi = ['Requisiti', 'Database', 'Sito e amministratore', 'Installazione', 'Fine'];
@@ -94,12 +111,19 @@ function inst_pagina(string $titolo, string $corpo, int $passo): void {
 
 function inst_errori(array $errori): string {
     if (!$errori) return '';
-    return '<div class="errore"><ul><li>' . implode('</li><li>', array_map('ih', $errori)) . '</li></ul></div>';
+    $campi = count(array_filter(array_keys($errori), 'is_string'));
+    return '<div class="errore" role="alert">' . ($campi ? '<p>' . ($campi === 1 ? 'Un campo da sistemare' : $campi . ' campi da sistemare') . ': li trovi segnati in rosso qui sotto.</p>' : '') . '<ul><li>' . implode('</li><li>', array_map('ih', $errori)) . '</li></ul></div>';
 }
 
 function inst_campo(string $nome, string $etichetta, string $valore, string $tipo = 'text', string $aiuto = '', bool $obbl = true): string {
-    return '<div class="campo"><label for="' . $nome . '">' . ih($etichetta) . '</label><input type="' . $tipo . '" id="' . $nome . '" name="' . $nome . '" value="' . ih($valore) . '"' . ($obbl ? ' required' : '') . ($tipo === 'password' ? ' autocomplete="new-password"' : '') . '>'
-        . ($aiuto !== '' ? '<small>' . ih($aiuto) . '</small>' : '') . '</div>';
+    // L'aiuto sotto il campo si legge anche con il lettore di schermo (aria-describedby), insieme all'etichetta.
+    // 2.5.x (controllo UX, scelta di Danilo): l'errore di questo campo ($errori['<nome>'] del passo) sta anche sotto il campo,
+    // in rosso, con il bordo rosso e aria-invalid; in cima resta il riassunto.
+    $err = (string)($GLOBALS['errori'][$nome] ?? '');
+    $desc = trim(($err !== '' ? $nome . '-errore ' : '') . ($aiuto !== '' ? $nome . '-aiuto' : ''));
+    return '<div class="campo' . ($err !== '' ? ' sbagliato' : '') . '"><label for="' . $nome . '">' . ih($etichetta) . '</label><input type="' . $tipo . '" id="' . $nome . '" name="' . $nome . '" value="' . ih($valore) . '"' . ($obbl ? ' required' : '') . ($tipo === 'password' ? ' autocomplete="new-password"' : '') . ($desc !== '' ? ' aria-describedby="' . $desc . '"' : '') . ($err !== '' ? ' aria-invalid="true"' : '') . '>'
+        . ($err !== '' ? '<p class="errore-campo" id="' . $nome . '-errore">' . ih($err) . '</p>' : '')
+        . ($aiuto !== '' ? '<small id="' . $nome . '-aiuto">' . ih($aiuto) . '</small>' : '') . '</div>';
 }
 
 $csrf = '<input type="hidden" name="_csrf" value="' . ih($_SESSION['inst_csrf']) . '">';
@@ -129,10 +153,10 @@ if ($passo === 2) {
             'utente' => trim((string)($_POST['utente'] ?? '')), 'password' => (string)($_POST['password'] ?? ''),
             'prefisso' => strtolower(trim((string)($_POST['prefisso'] ?? 'cms_'))) ?: 'cms_', 'crea' => !empty($_POST['crea']) ? 1 : 0,
         ];
-        if (!preg_match('/^[a-z0-9_]{1,20}$/', $db['prefisso'])) $errori[] = 'Il prefisso può avere solo lettere minuscole, numeri e trattino basso (per esempio cms_).';
+        if (!preg_match('/^[a-z0-9_]{1,20}$/', $db['prefisso'])) $errori['prefisso'] = 'Il prefisso può avere solo lettere minuscole, numeri e trattino basso (per esempio cms_).';
         if (!str_ends_with($db['prefisso'], '_')) $db['prefisso'] .= '_';
-        if (!preg_match('/^[A-Za-z0-9_$-]{1,64}$/', $db['nome'])) $errori[] = 'Il nome del database può avere solo lettere, numeri, trattino e trattino basso.';
-        if ($db['utente'] === '') $errori[] = "Serve l'utente del database.";
+        if (!preg_match('/^[A-Za-z0-9_$-]{1,64}$/', $db['nome'])) $errori['nome'] = 'Il nome del database può avere solo lettere, numeri, trattino e trattino basso.';
+        if ($db['utente'] === '') $errori['utente'] = "Serve l'utente del database.";
         if (!$errori) {
             try {
                 inst_pdo($db);
@@ -144,12 +168,12 @@ if ($passo === 2) {
                         $pdo->exec('CREATE DATABASE `' . str_replace('`', '', $db['nome']) . '` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci');
                         inst_pdo($db);
                     } catch (PDOException $e2) {
-                        $errori[] = 'Il database non esiste e non si riesce a crearlo: ' . $e2->getMessage() . ' Crealo da cPanel (Database MySQL) e dai all\'utente tutti i privilegi.';
+                        $errori[] = 'Il database «' . $db['nome'] . '» non esiste e questo utente non ha il permesso di crearlo. Crealo da cPanel (Database MySQL) e dai all\'utente tutti i privilegi. (Dettaglio tecnico: ' . $e2->getMessage() . ')';
                     }
                 } elseif ($codice === 1049) {
                     $errori[] = "Il database «{$db['nome']}» non esiste. Crealo da cPanel oppure spunta «Crealo se manca».";
                 } else {
-                    $errori[] = 'Connessione rifiutata: ' . $e->getMessage();
+                    $errori[] = inst_errore_db($e, $db);
                 }
             }
         }
@@ -184,14 +208,14 @@ if ($passo === 3) {
             'email' => trim((string)($_POST['email'] ?? '')),
             'admin_nome' => trim((string)($_POST['admin_nome'] ?? '')), 'admin_email' => trim((string)($_POST['admin_email'] ?? '')), 'admin_password' => (string)($_POST['admin_password'] ?? ''),
         ];
-        if ($s['nome'] === '') $errori[] = 'Serve il nome del sito.';
-        if (!preg_match('~^https?://[^/\s?#]+(/[^\s?#]*[^/\s?#])?$~', $s['url'])) $errori[] = "L'indirizzo del sito deve essere come https://www.esempio.it oppure https://www.esempio.it/cartella, senza barra finale.";
-        if ($s['email'] !== '' && !filter_var($s['email'], FILTER_VALIDATE_EMAIL)) $errori[] = "L'email del sito non è valida.";
-        if (!preg_match('/^[A-Za-z0-9._-]{3,100}$/', $s['admin_nome'])) $errori[] = "Il nome utente dell'amministratore: almeno 3 caratteri, solo lettere, numeri, punto, trattino.";
-        if (!filter_var($s['admin_email'], FILTER_VALIDATE_EMAIL)) $errori[] = "L'email dell'amministratore non è valida (serve per recuperare la password).";
+        if ($s['nome'] === '') $errori['nome'] = 'Serve il nome del sito.';
+        if (!preg_match('~^https?://[^/\s?#]+(/[^\s?#]*[^/\s?#])?$~', $s['url'])) $errori['url'] = "L'indirizzo del sito deve essere come https://www.esempio.it oppure https://www.esempio.it/cartella, senza barra finale.";
+        if ($s['email'] !== '' && !filter_var($s['email'], FILTER_VALIDATE_EMAIL)) $errori['email'] = "L'email del sito non è valida.";
+        if (!preg_match('/^[A-Za-z0-9._-]{3,100}$/', $s['admin_nome'])) $errori['admin_nome'] = "Il nome utente dell'amministratore: almeno 3 caratteri, solo lettere, numeri, punto, trattino.";
+        if (!filter_var($s['admin_email'], FILTER_VALIDATE_EMAIL)) $errori['admin_email'] = "L'email dell'amministratore non è valida (serve per recuperare la password).";
         // sicurezza (attacco 3): come a regime, 12 caratteri, diversa dal nome e dall'email, non fra le più comuni.
-        if (($errPw = sicurezza_password_errore($s['admin_password'], $s['admin_nome'], $s['admin_email'])) !== '') $errori[] = $errPw;
-        if ((string)($_POST['admin_password2'] ?? '') !== $s['admin_password']) $errori[] = 'Le due password non coincidono.';
+        if (($errPw = sicurezza_password_errore($s['admin_password'], $s['admin_nome'], $s['admin_email'])) !== '') $errori['admin_password'] = $errPw;
+        if ((string)($_POST['admin_password2'] ?? '') !== $s['admin_password']) $errori['admin_password2'] = 'Le due password non coincidono.';
         if (!$errori) {
             $d['sito'] = $s;
             header('Location: ?passo=4'); exit;
@@ -210,7 +234,7 @@ if ($passo === 3) {
         . '<h3>L\'amministratore</h3>'
         . inst_campo('admin_nome', 'Nome utente', $s['admin_nome'])
         . inst_campo('admin_email', 'Email', $s['admin_email'], 'email')
-        . '<div class="due">' . inst_campo('admin_password', 'Password (almeno 12 caratteri, non fra le più comuni)', '', 'password') . inst_campo('admin_password2', 'Ripeti la password', '', 'password') . '</div>'
+        . '<div class="due">' . inst_campo('admin_password', 'Password', '', 'password', 'Almeno 12 caratteri, non fra le più comuni.') . inst_campo('admin_password2', 'Ripeti la password', '', 'password', 'Riscrivila uguale, per essere sicuri che sia giusta.') . '</div>'
         . '<p><a class="btn-filo" href="?passo=2">Indietro</a> <button class="btn" type="submit">Avanti: installa</button></p></form>', 3);
 }
 
@@ -238,7 +262,9 @@ if ($passo === 4) {
             . '<li>si creano le tabelle del CMS' . (cms_moduli() ? ' e dei moduli (' . ih(implode(', ', array_keys(cms_moduli()))) . ')' : '') . ';</li>'
             . '<li>si crea l\'amministratore <b>' . ih($s['admin_nome']) . '</b>;</li>'
             . '<li>si preparano i contenuti di partenza del sito scelto: la home nell\'editor, le pagine, un form dei contatti, un articolo di benvenuto, header e footer con il menu Principale, lo stile predefinito, sitemap e robots.txt.</li></ul>'
-            . '<p><a class="btn-filo" href="?passo=3">Indietro</a> <button class="btn" type="submit">Installa adesso</button></p></form>', 4);
+            // 2.5.x (scelta di Danilo): con la carta Su misura il pulsante porta alle quattro domande e lo dice. Solo CSS (:has),
+            // niente script: il testo nascosto non è letto dal lettore di schermo (display:none).
+            . '<p><a class="btn-filo" href="?passo=3">Indietro</a> <button class="btn" type="submit"><span class="testo-installa">Installa adesso</span><span class="testo-domande">Avanti: le quattro domande</span></button></p></form>', 4);
     }
     if (!$esegui) $d['kit'] = isset($kit[(string)($_POST['kit'] ?? '')]) ? (string)$_POST['kit'] : 'vuoto';
     // 1.7.0: il sito su misura. Scelta la carta, prima di installare si risponde alle quattro domande (una pagina in più

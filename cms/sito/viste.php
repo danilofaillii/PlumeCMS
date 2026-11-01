@@ -494,10 +494,36 @@ function vista_cerca(string $q): string {
         $elenco .= '<a class="card" href="' . h($x['c']['percorso']) . '"><span class="card-titolo">' . h($x['c']['titolo']) . '</span><span class="card-meta">' . h($x['e']) . '</span></a>';
     }
     if (($t = vista_tema('cerca', ['q' => $q, 'trovati' => $trovati])) !== null) return $t;
-    if ($elenco === '' && mb_strlen($q) >= 2) $elenco = '<p class="vuoto">Nessun risultato per questa parola.</p>';
+    if ($elenco === '' && mb_strlen($q) >= 2) $elenco = vista_cerca_niente($q);
     return '<div class="wrap" style="padding-top:56px;padding-bottom:40px"><span class="occhiello">Cerca</span><h1 class="sez-titolo">Cosa stai cercando?</h1>'
         . '<form action="/" method="get" role="search"><input name="s" class="cerca" type="search" value="' . h($q) . '" placeholder="Scrivi una parola…" aria-label="Cerca nel sito"></form>'
         . '<div class="griglia" style="margin-top:24px">' . $elenco . '</div></div>';
+}
+
+/**
+ * 2.5.x (scelta di Danilo): la ricerca senza risultati dice cosa provare (una parola più corta o diversa) e mette le pagine
+ * principali, prese dal menu della testata (al massimo sei; senza menu, la home e il blog).
+ */
+function vista_cerca_niente(string $q): string {
+    $voci = [];
+    try {
+        if (!function_exists('menu_per_posizione') && is_file(dirname(__DIR__) . '/includes/menu-nav.php')) require_once dirname(__DIR__) . '/includes/menu-nav.php';
+        $m = function_exists('menu_per_posizione') ? menu_per_posizione('principale') : null;
+        if ($m) foreach (menu_voci_risolte($m) as $x) {
+            if (($x['url'] ?? '#') === '#' || trim((string)($x['etichetta'] ?? $x['nome'] ?? '')) === '') continue;
+            $voci[] = [(string)($x['etichetta'] ?? $x['nome']), (string)$x['url']];
+            if (count($voci) >= 6) break;
+        }
+    } catch (Throwable $e) {
+        $voci = [];
+    }
+    if (!$voci) $voci = [['Home', '/'], ['Blog', SITO_PAGINA_BLOG]];
+    $corta = mb_strlen($q) > 4 ? mb_substr($q, 0, max(3, (int)floor(mb_strlen($q) * 0.6))) : '';
+    $link = '';
+    foreach ($voci as [$t, $u]) $link .= '<li><a href="' . h($u) . '">' . h($t) . '</a></li>';
+    return '<div class="cerca-niente"><p class="vuoto">Nessun risultato per «' . h($q) . '».</p>'
+        . '<p>Prova con una parola più corta o diversa' . ($corta !== '' ? ', per esempio <a href="/?s=' . h(rawurlencode($corta)) . '">' . h($corta) . '</a>' : '') . ', oppure riparti da una di queste pagine:</p>'
+        . '<ul>' . $link . '</ul></div>';
 }
 
 function vista_404(): string {
