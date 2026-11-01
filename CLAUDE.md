@@ -103,7 +103,7 @@ Sono gli unici in `cms/docs/`, nello zip, nel sito di plumeCMS e nella pagina Do
 - **Pacchetto di aggiornamento** per un'installazione esistente:
   `python3 tools/cms-pacchetto.py --aggiornamento`. Si carica dal pannello,
   Impostazioni, Aggiornamenti.
-- **Versione**: `cms/VERSIONE` (oggi 2.7.0; sempre tre numeri: "beta" va nel CHANGELOG, mai nel nome dello zip, se no la serie "ultima" del Download non lo riconosce) e una voce in `cms/CHANGELOG.md` a ogni
+- **Versione**: `cms/VERSIONE` (oggi 2.8.0; sempre tre numeri: "beta" va nel CHANGELOG, mai nel nome dello zip, se no la serie "ultima" del Download non lo riconosce) e una voce in `cms/CHANGELOG.md` a ogni
   zip con contenuto diverso. Mai cambiare il contenuto di una versione già data.
 - **Prove** prima di dire finito:
   - `php -n -d short_open_tag=1 -l` su ogni file PHP toccato, `node --check` sui js;
@@ -141,6 +141,15 @@ Le decisioni complete, con data e perché, stanno nel second brain, `plumecms/de
 - **Nome: plumeCMS** (26 ottobre 2026).
 
 ## Stato al 31 ottobre 2026
+
+Fatto: plumeCMS 2.8.0 (1 novembre, notte): fase 1 del piano Brevo (`docs-sviluppo/brevo-confronto.md`, richiesta di Danilo: "newsletter
+e form esattamente come Brevo"; agente in worktree, ramo `fase1-contatti-brevo`). Contatti (`admin/newsletter-contatti.php`), scheda del
+contatto, Attributi (sei tipi, calcolati, globali, `{{ contact.X }}`), liste in cartelle, lista nera con i motivi di Brevo, 5 soft bounce
+di fila (messaggi, non tentativi), Elimina definitivamente con l'impronta. Motore `includes/newsletter-contatti.php`, sette tabelle nuove,
+nessuna rinominata. Prove in `prove/prova-contatti-brevo.js` (con `MIGRATO=1` su un sito 2.7.0 seminato da `contatti-cli.php semina`).
+Fasi dopo: 2.9.0 importazione, 2.10.0 segmenti, 2.11.0 campagne con disiscrizione e preferenze, 2.12.0 editor a blocchi, 2.13.0 A/B,
+2.14.0 statistiche, 2.15.0 automazioni, 2.16.0 form e gruppi di consenso. Zip di aggiornamento 1988 KB: oltre la 2.8.0 supera i 2 MB.
+Attenzione: `/tmp/manuale-uso-png` ha 173 PNG vecchi che `tools/manuale-uso-schermate.js` con `SOLO_CAPITOLI` ricopia (usare `TMPDIR`).
 
 Fatto: plumeCMS 2.7.0 (1 novembre, sera): l'email di conferma dell'iscrizione modificabile in ogni parte (richiesta di Danilo; agente
 in worktree): `includes/newsletter-email.php` (`nl_email_conferma()`), riquadro "Email di conferma" nella scheda del form e in Newsletter >
