@@ -320,7 +320,7 @@ require_once __DIR__ . '/includes/admin-header.php';
           <input type="text" name="valore" id="nlx-valore" placeholder="per esempio: 2026-12-31, sì, oppure il nome dell'opzione" aria-describedby="nlx-valore-aiuto">
           <div class="hint" id="nlx-valore-aiuto">Data come 2026-12-31 o 31/12/2026; Sì/No come sì o no; Categoria con il nome dell'opzione. Vuoto toglie il valore.</div></div>
       </div>
-      <button class="btn btn-primary btn-sm" type="submit" id="nlx-applica" data-conferma="Applicare l'azione ai contatti scelti?">Applica</button>
+      <button class="btn btn-secondary btn-sm" type="submit" id="nlx-applica" data-conferma="Applicare l'azione ai contatti scelti?">Applica</button>
     </fieldset>
   </form>
 

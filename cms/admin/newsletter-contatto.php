@@ -41,7 +41,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             if (is_int($r)) $liste[] = $r; else flash('error', 'La lista nuova non è stata creata: ' . $r);
         }
         $r = newsletter_contatto_crea(nlk_dati_form($attributi), $liste);
-        if (isset($r['errore'])) { flash('error', $r['errore']); header('Location: newsletter-contatto.php?nuovo=1'); exit; }
+        if (isset($r['errore'])) {
+            // Regole di interfaccia 4.2: in cima il riassunto, sotto il campo l'errore; i valori scritti restano.
+            flash('error', 'Il contatto non è stato creato: c\'è un campo da sistemare, segnato in rosso qui sotto.');
+            $_SESSION['nlk_crea'] = ['errore' => $r['errore'], 'dati' => nlk_dati_form($attributi), 'liste' => $liste];
+            header('Location: newsletter-contatto.php?nuovo=1'); exit;
+        }
         if (isset($r['esiste'])) { flash('info', 'Questo contatto c\'è già: eccolo. Non ne è stato creato un doppione.'); header('Location: newsletter-contatto.php?id=' . (int)$r['esiste']); exit; }
         flash('success', 'Contatto creato. Lo trovi anche nella pagina Contatti.');
         header('Location: newsletter-contatto.php?id=' . (int)$r['id']); exit;
@@ -83,7 +88,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 $cartelle = newsletter_cartelle();
 
 /** Il campo di un attributo, secondo il tipo. */
-function nlk_campo(array $a, $v, bool $nuovo): string {
+function nlk_campo(array $a, $v, bool $nuovo, string $errore = ''): string {
     $n = $a['nome'];
     $nid = 'nlk-' . strtolower(preg_replace('/[^A-Za-z0-9]/', '-', $n));
     $et = h(newsletter_attributo_etichetta($a)) . ($a['etichetta'] !== '' && $a['etichetta'] !== $a['nome'] ? ' <small class="nlk-nome">' . h($n) . '</small>' : '');
@@ -117,7 +122,9 @@ function nlk_campo(array $a, $v, bool $nuovo): string {
     $tipo = $n === 'EMAIL' ? 'email' : 'text';
     $max = $n === 'EMAIL' || $n === 'EXT_ID' ? 190 : (in_array($n, ['NOME', 'COGNOME'], true) ? 100 : 500);
     $ph = ['EMAIL' => 'per esempio: anna@esempio.it', 'NOME' => 'per esempio: Anna', 'COGNOME' => 'per esempio: Rossi', 'EXT_ID' => 'per esempio: il codice cliente del gestionale'][$n] ?? '';
-    return '<div class="form-group"><label for="' . $nid . '">' . $et . ($n === 'EMAIL' ? ' (obbligatoria)' : '') . '</label><input type="' . $tipo . '" id="' . $nid . '" name="' . $nm . '" value="' . h(newsletter_4byte_fuori((string)$v)) . '" maxlength="' . $max . '"' . $req . ($ph !== '' ? ' placeholder="' . h($ph) . '"' : '') . '></div>';
+    $err = $errore !== '' ? ' aria-invalid="true" aria-describedby="' . $nid . '-errore"' : '';
+    return '<div class="form-group"><label for="' . $nid . '">' . $et . ($n === 'EMAIL' ? ' (obbligatoria)' : '') . '</label><input type="' . $tipo . '" id="' . $nid . '" name="' . $nm . '" value="' . h(newsletter_4byte_fuori((string)$v)) . '" maxlength="' . $max . '"' . $req . $err . ($ph !== '' ? ' placeholder="' . h($ph) . '"' : '') . '>'
+        . ($errore !== '' ? '<p class="errore-campo" id="' . $nid . '-errore" role="alert">' . h($errore) . '</p>' : '') . '</div>';
 }
 
 /** Le caselle delle liste, raggruppate per cartella. */
@@ -141,10 +148,11 @@ if ($nuovo) {
   <h3>Crea un contatto</h3>
   <p class="hint" style="margin-top:0">Un campo per ogni attributo. Serve almeno l'email; gli altri campi sono facoltativi. Se un contatto con la stessa email (o lo stesso identificativo esterno) c'è già, si apre quello: niente doppioni. Il contatto nasce iscritto: aggiungi solo chi ti ha dato il consenso.</p>
   <div class="nlk-campi">
-    <?php foreach ($attributi as $a) echo nlk_campo($a, '', true); ?>
+    <?php $prec = is_array($_SESSION['nlk_crea'] ?? null) ? $_SESSION['nlk_crea'] : ['errore' => '', 'dati' => [], 'liste' => []]; unset($_SESSION['nlk_crea']);
+    foreach ($attributi as $a) echo nlk_campo($a, $prec['dati'][$a['nome']] ?? '', true, $a['nome'] === 'EMAIL' ? (string)$prec['errore'] : ''); ?>
   </div>
   <h3>Liste</h3>
-  <?= nlk_liste($cartelle, []) ?>
+  <?= nlk_liste($cartelle, array_map('intval', (array)$prec['liste'])) ?>
   <div class="nlk-campi">
     <div class="form-group"><label for="nlk-lista-nuova">Oppure crea una lista</label><input type="text" id="nlk-lista-nuova" name="lista_nuova" maxlength="100" placeholder="per esempio: Clienti del negozio"></div>
     <div class="form-group"><label for="nlk-cartella">Cartella della lista nuova</label><select id="nlk-cartella" name="cartella"><?php foreach ($cartelle as $c): ?><option value="<?= (int)$c['id'] ?>"><?= h(newsletter_4byte_fuori($c['nome'])) ?></option><?php endforeach; ?></select></div>
