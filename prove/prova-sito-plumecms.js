@@ -219,23 +219,27 @@ async function contrastoParole(pg) {
   ok('Domande frequenti: quanto costa e a quali condizioni', /A quali condizioni lo uso\?/.test(await v.locator('body').innerText()));
   ok('Domande frequenti (1.4.0): chi viene da WordPress', /Vengo da WordPress\. Devo rifare tutto\?/.test(await v.locator('body').innerText()));
   await v.goto(B + '/scarica/', { waitUntil: 'networkidle' });
-  ok('Scarica: le novità della 1.4.0', /1\.4\.0: Porta qui il tuo vecchio sito/.test(await v.locator('body').innerText()));
-  ok('Scarica: le novità della 2.4.0', /2\.4\.0: Il sito ufficiale è plumecms\.it/.test(await v.locator('body').innerText()));
-  ok('Scarica: le novità della 2.5.0', /2\.5\.0: Otto temi nuovi/.test(await v.locator('body').innerText()));
-  ok('Scarica: le novità della 2.6.0', /2\.6\.0: Un pannello più chiaro/.test(await v.locator('body').innerText()));
-  ok('Scarica: le novità della 2.7.0', /2\.7\.0: L.email di conferma la scrivi tu/.test(await v.locator('body').innerText()));
-  ok('Scarica: le novità della 2.8.0', /2\.8\.0: I contatti, come nei grandi servizi di email/.test(await v.locator('body').innerText()));
-  // Regola di Danilo (1 novembre 2026): nelle novità solo i punti salienti, mai nomi di aziende o servizi di terzi.
-  { const tn = await v.locator('body').innerText(); const fine = tn.indexOf('1.2.0:'); const nov = tn.slice(tn.indexOf('2.8.0:'), tn.indexOf('\n', tn.indexOf('\n', fine) + 1) + 1 || fine + 120);
-    const terzi = nov.match(/brevo|google|wordpress|linkedin|facebook|instagram|whatsapp|telegram|mailgun|amazon|dropbox|indexnow|search console|gnu/gi) || [];
-    ok('Scarica: nelle novità nessun nome di aziende terze', nov.length > 500 && terzi.length === 0, terzi); }
+  // Regola di Danilo (1 novembre 2026): nelle novità un elenco breve delle ultime versioni, senza nomi di aziende terze,
+  // che non scende sotto il riquadro "Cosa serve" accanto (al computer).
+  { const r = await v.evaluate(() => {
+      const h = [...document.querySelectorAll('h2')].find(e => e.textContent.trim() === 'Novità');
+      const g = [...document.querySelectorAll('a')].find(e => /Guida all.installazione/i.test(e.textContent));
+      if (!h || !g) return null;
+      let col = h; while (col.parentElement && !col.parentElement.contains(g)) col = col.parentElement;
+      const voci = [...col.querySelectorAll('li')];
+      return { voci: voci.map(e => e.textContent.trim()), fondo: Math.max(...voci.map(e => e.getBoundingClientRect().bottom)), sinistra: g.getBoundingClientRect().bottom };
+    });
+    ok('Scarica: novità, elenco breve con l\'ultima versione in cima', r && r.voci.length >= 3 && r.voci.length <= 8 && /^2\.8\.0: Contatti con scheda/.test(r.voci[0]), r && r.voci);
+    const terzi = (r ? r.voci.join(' ') : '').match(/brevo|google|wordpress|linkedin|facebook|instagram|whatsapp|telegram|mailgun|amazon|dropbox|indexnow|search console|gnu/gi) || [];
+    ok('Scarica: nelle novità nessun nome di aziende terze', r && terzi.length === 0, terzi);
+    ok('Scarica: le novità finiscono non oltre il riquadro Cosa serve', r && r.fondo <= r.sinistra + 2, r && { fondo: r.fondo, sinistra: r.sinistra }); }
   // 2.6.0: il blocco del pannello più chiaro in Funzionalità, con la sua schermata caricata; il logo di header e footer dallo Stile.
   await v.goto(B + '/funzionalita/', { waitUntil: 'networkidle' });
   ok('Funzionalità (2.6.0): Un pannello che si legge a colpo d\'occhio', /Un pannello che si legge a colpo d.occhio/.test(await v.locator('body').innerText())
     && await v.evaluate(() => [...document.images].some(i => /pannello-chiaro/.test(i.currentSrc || i.src) && i.complete && i.naturalWidth > 0)));
   ok('Funzionalità (2.7.0): L\'email di conferma la scrivi tu', /L.email di conferma la scrivi tu/.test(await v.locator('body').innerText())
     && await v.evaluate(() => [...document.images].some(i => /email-conferma/.test(i.currentSrc || i.src) && i.complete && i.naturalWidth > 0)));
-  ok('Funzionalità (2.8.0): I contatti come nei grandi servizi di email', /I contatti come nei grandi servizi di email/.test(await v.locator('body').innerText())
+  ok('Funzionalità (2.8.0): Ogni contatto con la sua storia', /Ogni contatto con la sua storia/.test(await v.locator('body').innerText())
     && await v.evaluate(() => [...document.images].some(i => /contatti-brevo/.test(i.currentSrc || i.src) && i.complete && i.naturalWidth > 0)));
   ok('Header e footer (2.6.0): il logo è quello dello Stile del sito', await v.evaluate(() => [...document.querySelectorAll('.marchio img')].length >= 2 && [...document.querySelectorAll('.marchio img')].every(i => /marchio/.test(i.getAttribute('src')))));
   // 2.5.0: la pagina Temi con le stagioni e le tinte piene, ogni immagine caricata.
@@ -244,7 +248,6 @@ async function contrastoParole(pg) {
   ok('Temi (2.5.0): le quattro stagioni e le tinte piene', /Le quattro stagioni/.test(tTemi) && /Le tinte piene/.test(tTemi) && ['Estate', 'Inverno', 'Autunno', 'Primavera', 'Giallo', 'Rosso', 'Verde', 'Blu'].every(n => tTemi.includes(n)));
   ok('Temi (2.5.0): le undici immagini dei temi si vedono', await v.evaluate(() => [...document.querySelectorAll('img[alt^="Il tema "]')].filter(i => i.complete && i.naturalWidth > 0).length) === 11);
   await v.goto(B + '/scarica/', { waitUntil: 'networkidle' });
-  ok('Scarica: le novità della 1.6.0', /1\.6\.0: Un riquadro in fondo a ogni articolo/.test(await v.locator('body').innerText()));
   await v.goto(B + '/installazione/', { waitUntil: 'networkidle' });
   ok('Installazione (1.4.0): dopo l\'installazione, Primi passi e Controlla il server', /Primi passi/.test(await v.locator('body').innerText()) && /Controlla il server/.test(await v.locator('body').innerText()));
   // 1.4.2: il manuale d'uso nella Documentazione, nelle Domande frequenti e nel piede.

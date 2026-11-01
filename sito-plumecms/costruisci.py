@@ -183,8 +183,8 @@ def funzionalita():
                        'plumeCMS fa le cose che ti servono davvero, e le fa nello stesso posto. Ecco cosa trovi dentro, con le schermate vere del pannello.',
                        livello='h1', centro=True)]], larghezza='stretta', **spazi(72, 32))
     blocchi = [
-        ('contatti-brevo', 'contatti-brevo.webp', 'I contatti come nei grandi servizi di email',
-         ['Dalla 2.8.0 i contatti della newsletter si gestiscono come nei grandi servizi di email: un elenco con le colonne che scegli tu, una scheda per ogni persona con la sua storia, liste ordinate in cartelle e campi tuoi.',
+        ('contatti-brevo', 'contatti-brevo.webp', 'Ogni contatto con la sua storia',
+         ['Dalla 2.8.0 i contatti della newsletter hanno un elenco con le colonne che scegli tu, una scheda per ogni persona con la sua storia, liste ordinate in cartelle e campi tuoi.',
           '<ul><li>Azioni su più contatti insieme: aggiungi a una lista, sposta, esporta, metti in lista nera.</li>'
           '<li>Campi personalizzati di sei tipi, anche calcolati (quante email ha letto negli ultimi 30 giorni), da usare nelle email.</li>'
           '<li>Lista nera con il motivo: si è disiscritto, rimbalzo, spam, bloccato da te.</li></ul>']),
@@ -668,7 +668,7 @@ def zip_lavagna(dest):
 # Regola di Danilo (1 novembre 2026): solo i punti salienti, una riga per versione, mai nomi di aziende o servizi di terzi.
 # Le novità per chi scarica: brevi, scritte qui (il CHANGELOG è per chi sviluppa). Da aggiornare a ogni versione.
 NOVITA = [
-    ('2.8.0', 'I contatti, come nei grandi servizi di email', ['Una scheda per ogni persona con la sua storia, colonne che scegli tu, liste in cartelle, campi tuoi anche calcolati e lista nera con il motivo.']),
+    ('2.8.0', 'Contatti con scheda, liste e campi tuoi', ['Una scheda per ogni persona con la sua storia, colonne che scegli tu, liste in cartelle, campi tuoi anche calcolati e lista nera con il motivo.']),
     ('2.7.0', 'L\'email di conferma la scrivi tu', ['Oggetto, testo, pulsante e firma dell\'email a chi si iscrive: tutto si cambia, con anteprima e prova.']),
     ('2.6.0', 'Un pannello più chiaro', ['Titoli su una fascia, campi che si vedono, conferme chiare e tabelle comode al telefono.']),
     ('2.5.0', 'Otto temi nuovi', ['Le quattro stagioni e quattro tinte piene, tutte leggibili su ogni pagina.']),
@@ -707,8 +707,13 @@ NOVITA = [
 ]
 
 
+# Regola di Danilo (1 novembre 2026): nella pagina Scarica non un changelog, ma un elenco breve delle ultime versioni,
+# che non scende sotto il riquadro "Cosa serve" accanto (lo controlla prova-sito-plumecms.js).
+NOVITA_MOSTRATE = 6
+
+
 def note_versioni():
-    return ''.join(f'<p><strong>{v}: {t}</strong></p><ul>' + ''.join(f'<li>{x}</li>' for x in voci) + '</ul>' for v, t, voci in NOVITA)
+    return '<ul>' + ''.join(f'<li><strong>{v}</strong>: {t}</li>' for v, t, voci in NOVITA[:NOVITA_MOSTRATE]) + '</ul>'
 
 
 def pagine_pdf(f):
