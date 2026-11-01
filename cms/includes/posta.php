@@ -169,7 +169,7 @@ function posta_testo_da_html(string $html): string {
  * Il messaggio MIME. 2.0.3: $allegati = [['nome' => 'evento.ics', 'tipo' => 'text/calendar; method=REQUEST', 'dati' => '...'], ...]
  * fa un multipart/mixed: prima il testo (o l'alternativa testo e HTML), poi i file in base64. Nomi ripuliti, al massimo 10 file.
  */
-function posta_mime(string $corpo, string $intestazioni, array $allegati = []): array {
+function posta_mime(string $corpo, string $intestazioni, array $allegati = [], ?string $testoScritto = null): array {
     $tenute = []; $tipo = '';
     foreach (preg_split('/\r?\n/', trim($intestazioni)) as $h) {
         if ($h === '') continue;
@@ -182,7 +182,7 @@ function posta_mime(string $corpo, string $intestazioni, array $allegati = []): 
     if (stripos($tipo, 'text/html') === 0) {
         $confine = 'plume-' . bin2hex(random_bytes(12));
         $parti = "Messaggio in formato MIME.\r\n"
-            . "--$confine\r\nContent-Type: text/plain; charset=UTF-8\r\nContent-Transfer-Encoding: base64\r\n\r\n" . $b64(posta_testo_da_html($corpo)) . "\r\n"
+            . "--$confine\r\nContent-Type: text/plain; charset=UTF-8\r\nContent-Transfer-Encoding: base64\r\n\r\n" . $b64($testoScritto ?? posta_testo_da_html($corpo)) . "\r\n"
             . "--$confine\r\nContent-Type: $tipo\r\nContent-Transfer-Encoding: base64\r\n\r\n" . $b64($corpo) . "\r\n"
             . "--$confine--\r\n";
         $testa = ['MIME-Version: 1.0', 'Content-Type: multipart/alternative; boundary="' . $confine . '"'];
@@ -215,11 +215,12 @@ function posta_con_allegati(array $tenute, array $testa, string $parti, array $a
 function posta_invia(string $a, string $oggetto, string $corpo, string $intestazioni = '', string $tipo = 'altro', array $allegati = []): bool {
     posta_errore('');
     posta_esito('');
+    $int = posta_interne($intestazioni); // 2.11.0: il nome nel campo "A" e il testo semplice scritto a mano
     // 2.1.0: un servizio con le API (Brevo, Amazon SES, Mailgun) al posto di SMTP e di mail().
     $servizio = consegna_servizio_attivo();
     if ($servizio !== '') {
         try {
-            consegna_invia_api($servizio, $a, $oggetto, $corpo, $intestazioni, $allegati, consegna_mittente_per($intestazioni, posta_mittente()));
+            consegna_invia_api($servizio, $a, $oggetto, $corpo, $intestazioni, $allegati, consegna_mittente_per($intestazioni, posta_mittente()), $int);
             posta_esito('ok');
             posta_registra($tipo, 'ok');
             return true;
@@ -233,7 +234,7 @@ function posta_invia(string $a, string $oggetto, string $corpo, string $intestaz
     }
     $c = posta_config();
     if (!$c) {
-        [$tenute, $contenuto, $testo] = posta_mime($corpo, $intestazioni, $allegati);
+        [$tenute, $contenuto, $testo] = posta_mime($corpo, $intestazioni, $allegati, $int['testo']);
         [$mittente, $nome] = posta_mittente();
         // Il From di chi chiama vince; senza, quello del sito. To e Subject li scrive mail().
         $tenute = array_values(array_filter($tenute, fn($h) => !preg_match('/^(To|Subject):/i', $h)));
@@ -241,15 +242,16 @@ function posta_invia(string $a, string $oggetto, string $corpo, string $intestaz
         $testa = implode("\r\n", array_merge($tenute, $contenuto));
         $ok = false;
         // Return-Path con -f: alcuni server lo rifiutano, e allora si riprova senza.
-        if ($mittente !== '' && preg_match('/^[A-Za-z0-9._%+@-]+$/', $mittente)) $ok = @mail($a, posta_oggetto($oggetto), $testo, $testa, '-f' . $mittente);
-        if (!$ok) $ok = @mail($a, posta_oggetto($oggetto), $testo, $testa);
+        $aMail = $int['a'] !== '' ? posta_oggetto($int['a']) . " <$a>" : $a;
+        if ($mittente !== '' && preg_match('/^[A-Za-z0-9._%+@-]+$/', $mittente)) $ok = @mail($aMail, posta_oggetto($oggetto), $testo, $testa, '-f' . $mittente);
+        if (!$ok) $ok = @mail($aMail, posta_oggetto($oggetto), $testo, $testa);
         if (!$ok) posta_errore('mail() di PHP ha rifiutato il messaggio: il server non spedisce posta da PHP. Compila i dati SMTP.');
         posta_esito($ok ? 'ok' : 'errore');
         posta_registra($tipo, posta_esito(), posta_errore());
         return $ok;
     }
     try {
-        posta_smtp($c, $a, $oggetto, $corpo, $intestazioni, $allegati);
+        posta_smtp($c, $a, $oggetto, $corpo, $intestazioni, $allegati, $int);
         posta_esito('ok');
         posta_registra($tipo, 'ok');
         return true;
@@ -262,13 +264,44 @@ function posta_invia(string $a, string $oggetto, string $corpo, string $intestaz
     }
 }
 
+/**
+ * 2.11.0: le intestazioni interne di plumeCMS, che non partono mai: X-Plume-A (base64: il nome nel campo "A",
+ * Personalizza il campo "A" della campagna) e X-Plume-Testo (base64: il testo semplice scritto a mano). Le toglie da
+ * $intestazioni e le ritorna: ['a' => nome o '', 'testo' => testo o null].
+ */
+function posta_interne(string &$intestazioni): array {
+    $out = ['a' => '', 'testo' => null];
+    if (stripos($intestazioni, 'X-Plume-A:') === false && stripos($intestazioni, 'X-Plume-Testo:') === false) return $out;
+    $tenute = [];
+    foreach (preg_split('/\r?\n/', $intestazioni) as $h) {
+        if (preg_match('/^X-Plume-A:\s*(\S*)\s*$/i', $h, $m)) {
+            $d = base64_decode($m[1], true);
+            if ($d !== false) $out['a'] = mb_substr(trim(preg_replace('/[\x00-\x1F\x7F"<>]+/u', ' ', $d)), 0, 150);
+            continue;
+        }
+        if (preg_match('/^X-Plume-Testo:\s*(\S*)\s*$/i', $h, $m)) {
+            $d = base64_decode($m[1], true);
+            if ($d !== false && mb_check_encoding($d, 'UTF-8')) $out['testo'] = str_replace(["\r\n", "\r"], "\n", $d);
+            continue;
+        }
+        $tenute[] = $h;
+    }
+    $intestazioni = implode("\r\n", $tenute);
+    return $out;
+}
+
+/** Il destinatario per l'intestazione To: "Nome <a>" con il nome del campo "A", altrimenti "<a>". */
+function posta_to(string $a, string $nome): string {
+    return $nome !== '' ? posta_oggetto($nome) . " <$a>" : "<$a>";
+}
+
 /** Oggetto in UTF-8 per l'intestazione: se è già codificato resta com'è. */
 function posta_oggetto(string $s): string {
     if (str_starts_with($s, '=?') || !preg_match('/[^\x20-\x7E]/', $s)) return $s;
     return '=?UTF-8?B?' . base64_encode($s) . '?=';
 }
 
-function posta_smtp(array $c, string $a, string $oggetto, string $corpo, string $intestazioni, array $allegati = []): void {
+function posta_smtp(array $c, string $a, string $oggetto, string $corpo, string $intestazioni, array $allegati = [], array $int = []): void {
     $host = (string)$c['host'];
     $porta = (int)$c['porta'];
     $ssl = $c['sicurezza'] === 'ssl';
@@ -335,12 +368,12 @@ function posta_smtp(array $c, string $a, string $oggetto, string $corpo, string 
         $scrivi('DATA', 354);
 
         // Intestazioni di chi chiama, tranne quelle che decide il server di posta.
-        [$tenute, $contenuto, $testo] = posta_mime($corpo, $intestazioni, $allegati);
+        [$tenute, $contenuto, $testo] = posta_mime($corpo, $intestazioni, $allegati, $int['testo'] ?? null);
         $tenute = array_values(array_filter($tenute, fn($h) => !preg_match('/^(From|To|Subject|Date|Message-ID):/i', $h)));
         $testa = array_merge([
             'Date: ' . date('r'),
             'From: ' . posta_oggetto($nomeMitt) . " <$mittente>",
-            "To: <$a>",
+            'To: ' . posta_to($a, (string)($int['a'] ?? '')),
             'Subject: ' . posta_oggetto($oggetto),
             'Message-ID: <' . bin2hex(random_bytes(12)) . '@' . substr(strrchr($mittente, '@') ?: '@' . (parse_url(cms_url_sito(), PHP_URL_HOST) ?: 'localhost'), 1) . '>',
         ], $tenute, $contenuto);

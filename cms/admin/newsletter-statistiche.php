@@ -8,6 +8,7 @@
 require_once __DIR__ . '/includes/auth.php';
 require_once __DIR__ . '/includes/admin-functions.php';
 require_once dirname(__DIR__) . '/includes/newsletter.php';
+require_once dirname(__DIR__) . '/includes/newsletter-campagne.php'; // 2.11.0: i motivi della disiscrizione
 require_admin(); // sicurezza (ruoli): solo amministratore
 newsletter_schema();
 newsletter_flussi_schema();
@@ -17,6 +18,7 @@ $mesi = newsletter_iscritti_per_mese();
 $flussi = newsletter_flussi();
 $numeri = newsletter_numeri();
 $dettaglio = isset($_GET['campagna']) ? (int)$_GET['campagna'] : 0;
+$motivi = newsletter_uscite_motivi_conta($dettaglio);
 $tot = ['inviate' => array_sum(array_column($campagne, 'inviate')), 'aperture' => array_sum(array_column($campagne, 'aperture')), 'clic' => array_sum(array_column($campagne, 'clic'))];
 require_once __DIR__ . '/includes/admin-header.php';
 ?>
@@ -37,7 +39,7 @@ require_once __DIR__ . '/includes/admin-header.php';
     <tbody>
     <?php if (!$campagne): ?><tr><td colspan="8"><div class="empty-state"><p>Nessuna campagna inviata ancora.</p></div></td></tr><?php endif; ?>
     <?php foreach ($campagne as $c): ?>
-      <tr class="ct-riga">
+      <tr class="ct-riga" id="c<?= (int)$c['id'] ?>">
         <td class="ct-titolo"><a class="ct-nome" href="newsletter-statistiche.php?campagna=<?= (int)$c['id'] ?>"><?= h(newsletter_4byte_fuori((string)$c['oggetto'])) /* audit 2026-11: l'emoji, non &#x... */ ?></a><div class="ct-azioni"><a href="newsletter-statistiche.php?campagna=<?= (int)$c['id'] ?>">Link cliccati</a><a href="newsletter-campagna.php?id=<?= (int)$c['id'] ?>">Apri la campagna</a></div></td>
         <td class="ct-muto"><?= h(substr((string)$c['invio_at'], 0, 16)) ?></td>
         <td class="ct-muto"><?= (int)$c['inviate'] ?><?= $c['errori'] ? ' <span class="kw-bad">(' . (int)$c['errori'] . ' errori)</span>' : '' ?></td>
@@ -79,5 +81,15 @@ require_once __DIR__ . '/includes/admin-header.php';
       </tbody>
     </table>
   </div>
+</div>
+<div class="admin-table-wrap ct-tabella" id="st-motivi" style="margin-top:1.2rem">
+  <table>
+    <thead><tr><th>Perché sono usciti<?= $dettaglio ? ' (questa campagna)' : '' ?></th><th>Risposte</th><th>Sul totale</th></tr></thead>
+    <tbody>
+    <?php if (!$motivi['totale']): ?><tr><td colspan="3" class="ct-muto">Ancora nessuna risposta al questionario della pagina di disiscrizione. Le domande si cambiano in <a href="newsletter.php?scheda=impostazioni#nl-pagine">Impostazioni</a>.</td></tr><?php endif; ?>
+    <?php if ($motivi['totale']) foreach ($motivi['n'] as $k => $v): ?><tr><td><?= h(NL_USCITA_MOTIVI[$k]) ?></td><td class="ct-muto"><b><?= (int)$v ?></b></td><td class="ct-muto"><?= round($v * 100 / $motivi['totale']) ?>%</td></tr><?php endforeach; ?>
+    </tbody>
+  </table>
+  <?php if ($motivi['altri']): ?><p style="font-size:.85rem;margin:.6rem 0 .2rem"><b>Le ultime risposte «Altro»</b></p><ul style="font-size:.85rem;margin:0;padding-left:1.2rem"><?php foreach ($motivi['altri'] as $a): ?><li><?= h(newsletter_4byte_fuori((string)$a['altro'])) ?> <span class="ct-muto">(<?= h(substr((string)$a['creato'], 0, 10)) ?>)</span></li><?php endforeach; ?></ul><?php endif; ?>
 </div>
 <?php require_once __DIR__ . '/includes/admin-footer.php'; ?>

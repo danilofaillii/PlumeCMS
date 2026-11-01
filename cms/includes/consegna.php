@@ -244,7 +244,7 @@ function consegna_intestazioni(string $intestazioni): array {
  * Spedisce con le API del servizio. Lancia RuntimeException con un messaggio per una persona; PostaRifiutata
  * (codice 550) se il servizio rifiuta l'indirizzo del destinatario per sempre. Ritorna l'identificativo del messaggio.
  */
-function consegna_invia_api(string $servizio, string $a, string $oggetto, string $corpo, string $intestazioni, array $allegati, array $mittente): string {
+function consegna_invia_api(string $servizio, string $a, string $oggetto, string $corpo, string $intestazioni, array $allegati, array $mittente, array $int = []): string {
     $c = consegna_config();
     [$email, $nome] = $mittente;
     if ($email === '') throw new RuntimeException('Manca l\'indirizzo del mittente: scrivilo in Consegna delle email, Mittenti.');
@@ -252,8 +252,9 @@ function consegna_invia_api(string $servizio, string $a, string $oggetto, string
     $rif = (string)($altre['X-Plume-Rif'] ?? '');
     if ($servizio === 'brevo') {
         $html = stripos($intestazioni, 'text/html') !== false;
-        $dati = ['sender' => ['email' => $email] + ($nome !== '' ? ['name' => $nome] : []), 'to' => [['email' => $a]], 'subject' => $oggetto];
-        if ($html) { $dati['htmlContent'] = $corpo; $dati['textContent'] = posta_testo_da_html($corpo); }
+        $aNome = (string)($int['a'] ?? ''); // 2.11.0: il nome nel campo "A" della campagna
+        $dati = ['sender' => ['email' => $email] + ($nome !== '' ? ['name' => $nome] : []), 'to' => [['email' => $a] + ($aNome !== '' ? ['name' => $aNome] : [])], 'subject' => $oggetto];
+        if ($html) { $dati['htmlContent'] = $corpo; $dati['textContent'] = $int['testo'] ?? posta_testo_da_html($corpo); }
         else $dati['textContent'] = $corpo;
         if ($rispondi !== '' && preg_match('/<?([^<>\s]+@[^<>\s]+)>?\s*$/', $rispondi, $m)) $dati['replyTo'] = ['email' => $m[1]];
         if ($rif !== '') $altre['X-Mailin-custom'] = $rif;
@@ -271,7 +272,7 @@ function consegna_invia_api(string $servizio, string $a, string $oggetto, string
         consegna_errore_api('Brevo', $cod, (string)($j['message'] ?? $r));
     }
     // SES e Mailgun ricevono il messaggio MIME intero: lo stesso che partirebbe con SMTP.
-    $raw = consegna_mime_intero($a, $oggetto, $corpo, $intestazioni, $allegati, $email, $nome);
+    $raw = consegna_mime_intero($a, $oggetto, $corpo, $intestazioni, $allegati, $email, $nome, $int);
     if ($servizio === 'ses') {
         $regione = (string)$c['ses']['regione'];
         if (!preg_match('/^[a-z]{2}(-[a-z]+)+-\d$/', $regione)) throw new RuntimeException('La regione di Amazon SES non è valida (per esempio eu-west-1).');
@@ -316,13 +317,13 @@ function consegna_errore_api(string $nome, int $cod, string $dettaglio): never {
 }
 
 /** Il messaggio MIME completo (From, To, Subject, Date, Message-ID, poi quello che compone posta_mime). */
-function consegna_mime_intero(string $a, string $oggetto, string $corpo, string $intestazioni, array $allegati, string $email, string $nome): string {
-    [$tenute, $contenuto, $testo] = posta_mime($corpo, $intestazioni, $allegati);
+function consegna_mime_intero(string $a, string $oggetto, string $corpo, string $intestazioni, array $allegati, string $email, string $nome, array $int = []): string {
+    [$tenute, $contenuto, $testo] = posta_mime($corpo, $intestazioni, $allegati, $int['testo'] ?? null);
     $tenute = array_values(array_filter($tenute, fn($h) => !preg_match('/^(From|To|Subject|Date|Message-ID):/i', $h)));
     $testa = array_merge([
         'Date: ' . date('r'),
         'From: ' . ($nome !== '' ? posta_oggetto($nome) . ' ' : '') . "<$email>",
-        "To: <$a>",
+        'To: ' . (function_exists('posta_to') ? posta_to($a, (string)($int['a'] ?? '')) : "<$a>"),
         'Subject: ' . posta_oggetto($oggetto),
         'Message-ID: <' . bin2hex(random_bytes(12)) . '@' . substr((string)strrchr($email, '@'), 1) . '>',
     ], $tenute, $contenuto);

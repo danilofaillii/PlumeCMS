@@ -18,6 +18,8 @@ require_once __DIR__ . '/viste.php';
 require_once __DIR__ . '/extra.php';
 require_once dirname(__DIR__) . '/includes/moduli.php';
 require_once dirname(__DIR__) . '/includes/newsletter.php';
+const NEWSLETTER_PREFERENZE_SITO = '/newsletter-preferenze/'; // 2.11.0, come NEWSLETTER_PREFERENZE di includes/newsletter-campagne.php
+const NEWSLETTER_WEB_SITO = '/newsletter-web/';
 
 // Anteprima dal pannello: con ?preview=1 e la sessione dell'admin, bozze e programmati si vedono come usciti.
 define('SITO_ANTEPRIMA', !empty($_GET['preview']) && is_admin_preview());
@@ -168,18 +170,34 @@ try {
         sito_html(200, ['titolo' => 'Iscrizione confermata - ' . SITO_NOME] + $cortesia, vista_newsletter_confermata($ok));
     }
     if ($percorso === NEWSLETTER_ESCI) {
-        $i = (string)($q['i'] ?? ''); $t = (string)($q['t'] ?? '');
-        $iscritto = newsletter_iscritto_da_uscita($i, $t);
-        // POST: il pulsante della pagina, oppure l'uscita in un clic dei programmi di posta (List-Unsubscribe-Post).
-        $fatto = $iscritto && ($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST';
-        if ($fatto && $iscritto['stato'] !== 'spam') {
-            // 2.1.0: la disiscrizione si conta per la campagna (o il flusso) da cui arriva il link, se è firmata.
-            if ($iscritto['stato'] === 'attivo') newsletter_uscita_registra((int)$iscritto['id'], $q);
-            newsletter_esci((int)$iscritto['id']);
-        }
-        $resto = '';
-        foreach (['c', 'f', 'p', 'k'] as $x) if (isset($q[$x]) && is_string($q[$x]) && preg_match('/^[a-f0-9]{1,24}$/', $q[$x])) $resto .= "&$x=" . $q[$x];
-        sito_html(200, ['titolo' => 'Uscita dalla newsletter - ' . SITO_NOME] + $cortesia, vista_newsletter_esci($iscritto, $fatto, $i, $t, $resto));
+        // 2.11.0: la pagina di disiscrizione con il questionario dei motivi (includes/newsletter-campagne.php). Prima il
+        // pulsante (POST, o l'uscita in un clic dei programmi di posta, List-Unsubscribe-Post), poi le domande.
+        require_once dirname(__DIR__) . '/includes/newsletter-campagne.php';
+        header('Cache-Control: no-store');
+        $postEsci = ($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST';
+        sito_html(200, ['titolo' => 'Uscita dalla newsletter - ' . SITO_NOME] + $cortesia, newsletter_pagina_esci($q, $postEsci ? $_POST : [], $postEsci));
+    }
+    if ($percorso === NEWSLETTER_PREFERENZE_SITO) {
+        // 2.11.0: il centro preferenze, dal link firmato in fondo alle email.
+        require_once dirname(__DIR__) . '/includes/newsletter-campagne.php';
+        header('Cache-Control: no-store');
+        $postPref = ($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST';
+        [$codPref, $htmlPref, $vaiPref] = newsletter_pagina_preferenze($q, $postPref ? $_POST : [], $postPref);
+        if ($vaiPref !== '') { header('Location: ' . $vaiPref, true, 303); exit; }
+        sito_html($codPref, ['titolo' => 'Le tue preferenze - ' . SITO_NOME] + $cortesia, $htmlPref);
+    }
+    if ($percorso === NEWSLETTER_WEB_SITO) {
+        // 2.11.0: la versione web dell'email ("Vedi questa email nel browser"), firmata per campagna e contatto. L'HTML
+        // dell'email esce com'è, in una pagina che non esegue niente (CSP sandbox) e che i motori non leggono.
+        require_once dirname(__DIR__) . '/includes/newsletter-campagne.php';
+        [$codWeb, $htmlWeb] = newsletter_pagina_web($q);
+        if ($codWeb !== 200) sito_non_trovato();
+        header('Cache-Control: no-store, private');
+        header('X-Robots-Tag: noindex, nofollow');
+        header("Content-Security-Policy: sandbox allow-popups allow-popups-to-escape-sandbox allow-top-navigation-by-user-activation; default-src 'none'; img-src https: http: data:; style-src 'unsafe-inline'; font-src https: data:");
+        header('Content-Type: text/html; charset=UTF-8');
+        echo $htmlWeb;
+        exit;
     }
 
     // Pagina di ringraziamento dei form costruiti dal pannello.
