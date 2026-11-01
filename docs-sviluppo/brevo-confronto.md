@@ -770,3 +770,14 @@ Decisioni da chiedere a Danilo prima di cominciare:
 4. Soppressione con impronta dopo "Cancella dati": tenerla (consigliato) anche se Brevo non la ha.
 5. Pagina di disiscrizione e centro preferenze anticipati nella fase 4 o nella fase 9.
 6. Come stare sotto gli 8 MB del PDF del manuale.
+
+
+## Decisioni di Danilo (1 novembre 2026)
+
+1. Attributi calcolati e globali: sì.
+2. "All'orario migliore": sì.
+3. Gruppi di consenso: sì (nella fase dei form).
+4. "Cancella dati" tiene l'impronta sha256 (differenza voluta da Brevo, più prudente).
+5. Pagina di disiscrizione con il questionario e centro preferenze anticipati alla fase 4 (2.11.0, con le campagne a riepilogo).
+6. PDF del manuale d'uso: tetto alzato da 8 a 12 MB (`MAX_KB` in `tools/manuali-pdf.js`), un solo PDF.
+7. help.brevo.com non si legge dalla sessione (controllo anti-robot): per i dettagli esatti delle schermate fanno fede le schermate del suo account Brevo, se le manda.

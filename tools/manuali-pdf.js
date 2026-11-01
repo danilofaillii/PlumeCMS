@@ -19,7 +19,7 @@ const VERSIONE = fs.readFileSync(path.join(RADICE, 'cms', 'VERSIONE'), 'utf8').t
 // 2.1.0: il manuale d'uso torna un PDF solo, Parte prima e Parte seconda (gli addon) insieme, con le schermate nitide
 // (tools/manuale-uso-schermate.js, JPEG a 1200 px e qualità 65). Il limite di 1900 KB della 2.0.0 non serve più (Danilo ha
 // alzato il limite di caricamento del suo hosting, 31 ottobre 2026): il manuale-uso-addon.pdf non c'è più. Tetto: 8 MB.
-const MAX_KB = { 'manuale-uso': 8 * 1024 };
+const MAX_KB = { 'manuale-uso': 12 * 1024 }; // 1 novembre 2026, decisione di Danilo: tetto alzato da 8 a 12 MB (il PDF era a 7989 KB)
 const MANUALI = [
   { file: 'manuale-uso', titolo: 'Manuale d\'uso', sotto: 'Come si fa ogni cosa con plumeCMS: articoli, pagine, menu, form, newsletter, sicurezza e gli otto addon. Con esempi veri, schermate e checklist.' },
   { file: 'manuale-temi', titolo: 'Manuale dei temi', sotto: 'Come si costruisce un tema da zero, file per file, con un esempio completo.' },

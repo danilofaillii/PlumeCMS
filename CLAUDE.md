@@ -61,7 +61,7 @@ Sono gli unici in `cms/docs/`, nello zip, nel sito di plumeCMS e nella pagina Do
 0. `cms/docs/manuale-uso.md`: il manuale d'uso per chi usa plumeCMS (40 capitoli in due parti, la seconda per gli addon; esempi, schermate con i passi
    numerati, checklist). Le schermate le fa `tools/manuale-uso-schermate.js` eseguendo gli esempi su un sito di prova
    (kit Attività, in `/home/studioprova/public_html`): **quando cambia il pannello si rifanno le schermate e si
-   ricontrolla il capitolo**. Il PDF è uno solo (dalla 2.1.0) e deve restare sotto 8 MB (`MAX_KB` in `tools/manuali-pdf.js`; oggi
+   ricontrolla il capitolo**. Il PDF è uno solo (dalla 2.1.0) e deve restare sotto 12 MB (`MAX_KB` in `tools/manuali-pdf.js`, alzato da 8 a 12 MB il 1 novembre 2026, decisione di Danilo; oggi
    7,3 MB con le schermate JPEG a qualità 55). Nel PDF vanno JPEG: Chromium rimette i PNG senza tavolozza e pesano di più.
    `cms/docs/manuale-temi.md`: il manuale per chi costruisce un tema, con il tema d'esempio Lavagna.
    **Copia nel second brain** (richiesta di Danilo, 1 novembre 2026): i tre manuali (uso, temi, tecnico) stanno anche in
