@@ -25,6 +25,9 @@ function nlc_colonne(int $u): array {
     return array_values(array_filter(is_array($c) ? $c : [], fn($n) => is_string($n) && isset($attr[$n]) && $attr[$n]['categoria'] !== 'global'));
 }
 
+/** "1 contatto", "3 contatti". */
+function nlc_n(int $n): string { return $n === 1 ? '1 contatto' : "$n contatti"; }
+
 /** Dove tornare dopo un'azione: la stessa scheda con gli stessi filtri. */
 function nlc_torna(array $q, string $scheda = 'contatti'): never {
     $f = newsletter_contatti_filtro($q)[2];
@@ -93,11 +96,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if ($cosa === 'aggiungi') {
             if (!$lista || newsletter_nome_lista($lista) === '') { flash('error', 'Scegli la lista in cui aggiungere i contatti.'); nlc_torna($_POST); }
             foreach ($ids as $i) newsletter_in_lista($i, $lista);
-            flash('success', count($ids) . ' contatti aggiunti alla lista «' . newsletter_nome_lista($lista) . '».');
+            flash('success', nlc_n(count($ids)) . ' aggiunt' . (count($ids) === 1 ? 'o' : 'i') . ' alla lista «' . newsletter_nome_lista($lista) . '».');
         } elseif ($cosa === 'togli') {
             $da = (int)($_POST['lista_da'] ?? 0);
             $n = newsletter_togli_da_liste($ids, $da > 0 ? [$da] : []);
-            flash('success', $da > 0 ? "$n contatti tolti dalla lista «" . newsletter_nome_lista($da) . '».' : "Contatti tolti da tutte le loro liste ($n appartenenze).");
+            flash('success', $da > 0 ? nlc_n($n) . ' tolt' . ($n === 1 ? 'o' : 'i') . ' dalla lista «' . newsletter_nome_lista($da) . '».' : "Contatti tolti da tutte le loro liste ($n appartenenze).");
         } elseif ($cosa === 'sposta') {
             // Brevo: Sposta = aggiungi alla lista nuova e togli dalla lista d'origine (quella caricata).
             $da = (int)($_POST['lista'] ?? 0);
@@ -105,19 +108,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             if (!$lista || $lista === $da || newsletter_nome_lista($lista) === '') { flash('error', 'Scegli la lista di arrivo, diversa da quella caricata.'); nlc_torna($_POST); }
             foreach ($ids as $i) newsletter_in_lista($i, $lista);
             newsletter_togli_da_liste($ids, [$da]);
-            flash('success', count($ids) . ' contatti spostati da «' . newsletter_nome_lista($da) . '» a «' . newsletter_nome_lista($lista) . '».');
+            flash('success', nlc_n(count($ids)) . ' spostat' . (count($ids) === 1 ? 'o' : 'i') . ' da «' . newsletter_nome_lista($da) . '» a «' . newsletter_nome_lista($lista) . '».');
         } elseif ($cosa === 'blocca') {
             $n = 0;
             $st = db()->prepare('SELECT stato FROM ' . tbl('newsletter_iscritti') . ' WHERE id = ?');
             foreach ($ids as $i) { $st->execute([$i]); if (!in_array($st->fetchColumn(), NL_BLOCCATI, true) && newsletter_contatto_blocca($i, 'adminBlocked')) $n++; }
-            flash('success', "$n contatti messi in lista nera: non ricevono più campagne né automazioni." . ($n < count($ids) ? ' Gli altri erano già in lista nera.' : ''));
+            flash('success', nlc_n($n) . ($n === 1 ? ' messo' : ' messi') . ' in lista nera: non ricevono più campagne né automazioni.' . ($n < count($ids) ? ' Gli altri erano già in lista nera.' : ''));
         } elseif ($cosa === 'modifica') {
             $n = newsletter_modifica_in_massa($ids, (string)($_POST['attributo'] ?? ''), $_POST['valore'] ?? '');
             $n < 0 ? flash('error', 'Il valore non va bene per questo attributo, oppure l\'attributo non si può cambiare in massa (come in Brevo, solo Data, Sì/No e Categoria).')
-                : flash('success', "Attributo cambiato a $n contatti.");
+                : flash('success', 'Attributo cambiato a ' . nlc_n($n) . '.');
         } elseif ($cosa === 'elimina') {
             $n = newsletter_contatti_elimina($ids);
-            flash('success', "$n contatti eliminati definitivamente, con attributi, cronologia e statistiche. Le loro email restano nella lista di soppressione: un'importazione non li rimetterà dentro.");
+            flash('success', nlc_n($n) . ($n === 1 ? ' eliminato' : ' eliminati') . " definitivamente, con attributi, cronologia e statistiche. Le loro email restano nella lista di soppressione: un'importazione non li rimetterà dentro.");
         } else {
             flash('error', 'Scegli un\'azione.');
         }

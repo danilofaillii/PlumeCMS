@@ -92,6 +92,14 @@ switch ($cmd) {
         [$o, $h] = newsletter_email($c, ['id' => (int)$i['id'], 'nome' => $i['nome'], 'email' => $i['email']]);
         $out = [$o, $h];
         break;
+    case 'soft':
+        // un soft bounce (errore temporaneo) dal servizio di invio, come arriva dal webhook: consegna_segnala()
+        require_once $dir . '/includes/consegna.php';
+        $out = consegna_segnala('brevo', 'temporaneo', (string)$arg[0], '', 'prova-' . bin2hex(random_bytes(6)), 'casella piena');
+        break;
+    case 'valori':
+        $out = newsletter_valori_di([(int)$arg[0]])[(int)$arg[0]] ?? null;
+        break;
     case 'pulisci':
         $ids = db()->query('SELECT id FROM ' . $t('newsletter_iscritti') . " WHERE email LIKE '%@prova-contatti.it'")->fetchAll(PDO::FETCH_COLUMN);
         newsletter_togli_iscritti($ids);
