@@ -61,9 +61,9 @@ require_once __DIR__ . '/includes/admin-header.php';
     <tbody>
     <?php foreach ($righe as $a): $aid = (int)$a['id']; $et = newsletter_attributo_etichetta($a); ?>
       <tr>
-        <td><code><?= h($a['nome']) ?></code><?= isset(array_flip(NL_ATTR_ALIAS)[$a['nome']]) ? '<span class="nlc-sotto">in Brevo: ' . h(array_flip(NL_ATTR_ALIAS)[$a['nome']]) . '</span>' : '' ?></td>
+        <td><code><?= h($a['nome']) ?></code><?= isset(array_flip(NL_ATTR_ALIAS)[$a['nome']]) ? '<span class="nlx-sotto">in Brevo: ' . h(array_flip(NL_ATTR_ALIAS)[$a['nome']]) . '</span>' : '' ?></td>
         <td><?= h($a['etichetta'] !== '' ? $et : '') ?></td>
-        <td><?= h($a['categoria'] === 'category' ? 'Categoria' : ($a['categoria'] === 'calculated' ? 'Calcolato' : ($a['categoria'] === 'global' ? 'Globale' : NL_ATTR_TIPI[$a['tipo']] ?? $a['tipo']))) ?><?= (int)$a['sistema'] ? '<span class="nlc-sotto">di sistema</span>' : '' ?></td>
+        <td><?= h($a['categoria'] === 'category' ? 'Categoria' : ($a['categoria'] === 'calculated' ? 'Calcolato' : ($a['categoria'] === 'global' ? 'Globale' : NL_ATTR_TIPI[$a['tipo']] ?? $a['tipo']))) ?><?= (int)$a['sistema'] ? '<span class="nlx-sotto">di sistema</span>' : '' ?></td>
         <td><?= $scheda === 'normali' ? h(implode(', ', array_map('newsletter_4byte_fuori', $a['opzioni']))) : '<code>' . h($a['formula']) . '</code>' ?></td>
         <?php if ($scheda === 'globali'): ?><td><?= h(newsletter_numero_testo(newsletter_formula_valore((string)$a['formula'], 0))) ?></td><?php endif; ?>
         <td><?php if ((int)$a['sistema']): ?><span class="hint">non si cambia</span><?php else: ?>
@@ -72,7 +72,7 @@ require_once __DIR__ . '/includes/admin-header.php';
               <div class="form-group"><label for="nla-e<?= $aid ?>">Etichetta</label><input type="text" id="nla-e<?= $aid ?>" name="etichetta" value="<?= h($a['etichetta'] !== '' ? $et : '') ?>" maxlength="100"></div>
               <?php if (in_array($a['tipo'], ['category', 'multiple-choice'], true)): ?>
                 <?php if ($a['opzioni']): ?><fieldset class="nlk-scelte"><legend>Togli delle opzioni</legend><?php foreach ($a['opzioni'] as $k => $o): ?><label><input type="checkbox" name="togli[]" value="<?= (int)$k ?>"> <?= h(newsletter_4byte_fuori($o)) ?></label><?php endforeach; ?></fieldset><?php endif; ?>
-                <div class="form-group"><label for="nla-o<?= $aid ?>">Aggiungi opzioni</label><textarea id="nla-o<?= $aid ?>" name="nuove" rows="3" class="nlc-corto" placeholder="una per riga"></textarea>
+                <div class="form-group"><label for="nla-o<?= $aid ?>">Aggiungi opzioni</label><textarea id="nla-o<?= $aid ?>" name="nuove" rows="3" class="nlx-corto" placeholder="una per riga"></textarea>
                   <div class="hint">Una per riga, al massimo 200 caratteri. Chi aveva un'opzione tolta la perde.</div></div>
               <?php endif; ?>
               <p class="hint">Nome e tipo non si cambiano: per cambiarli crea un attributo nuovo.</p>
@@ -109,7 +109,7 @@ require_once __DIR__ . '/includes/admin-header.php';
       <input type="text" id="nla-etichetta" name="etichetta" maxlength="100" placeholder="per esempio: Città" aria-describedby="nla-et-aiuto"><div class="hint" id="nla-et-aiuto">Facoltativa: il nome in parole che vedi nelle tabelle e nella scheda del contatto.</div></div>
     <?php if ($scheda === 'normali'): ?>
     <div class="form-group" data-nla-opzioni hidden><label for="nla-opzioni">4. Opzioni</label>
-      <textarea id="nla-opzioni" name="opzioni" rows="4" class="nlc-corto" placeholder="per esempio:&#10;Cliente&#10;Fornitore" aria-describedby="nla-op-aiuto"></textarea>
+      <textarea id="nla-opzioni" name="opzioni" rows="4" class="nlx-corto" placeholder="per esempio:&#10;Cliente&#10;Fornitore" aria-describedby="nla-op-aiuto"></textarea>
       <div class="hint" id="nla-op-aiuto">Una per riga, al massimo 200 caratteri ciascuna. Nella Categoria ogni opzione prende anche un numero (1, 2, 3...), come in Brevo.</div></div>
     <?php else: ?>
     <div class="form-group"><label for="nla-formula">3. Formula</label>

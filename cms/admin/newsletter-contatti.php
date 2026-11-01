@@ -265,21 +265,21 @@ require_once __DIR__ . '/includes/admin-header.php';
     <h3 style="margin:0">Contatti</h3>
     <div class="nl-riga">
       <a class="btn btn-primary btn-sm" href="newsletter-contatto.php?nuovo=1">Crea un contatto</a>
-      <a class="btn btn-secondary btn-sm" href="#nlc-importa">Importa contatti</a>
-      <button class="btn btn-secondary btn-sm" type="button" data-apri-dialogo="#nlc-colonne">Personalizza le colonne</button>
+      <a class="btn btn-secondary btn-sm" href="#nlx-importa">Importa contatti</a>
+      <button class="btn btn-secondary btn-sm" type="button" data-apri-dialogo="#nlx-colonne">Personalizza le colonne</button>
     </div>
   </div>
   <p class="hint" style="margin-top:0"><?= (int)array_sum(array_intersect_key($numeri, array_flip(['attivo', 'in_attesa', 'uscito', 'rimbalzato', 'spam', 'bloccato']))) ?> contatti: <?= (int)$numeri['attivo'] ?> iscritti, <?= (int)$numeri['in_attesa'] ?> in attesa di conferma, <a href="?stato=lista_nera"><?= (int)$numeri['lista_nera'] ?> in lista nera</a>.</p>
   <?php if ($numeri['segnalati']): ?><p class="nl-avviso" role="status"><b><?= (int)$numeri['segnalati'] ?></b> <?= $numeri['segnalati'] === 1 ? 'contatto ha' : 'contatti hanno' ?> avuto tre errori temporanei di fila (soft bounce): al quinto di fila vanno in lista nera. <a href="?stato=errori">Vedi chi</a>.</p><?php endif; ?>
 
-  <form method="get" class="nlc-filtri" role="search" aria-label="Cerca i contatti">
-    <div class="form-group"><label for="nlc-lista">Carica una lista</label>
-      <?= $tendinaListe('lista', 'Tutti i contatti', (int)$f['lista'], '<option value="-1"' . ($f['lista'] === -1 ? ' selected' : '') . '>In nessuna lista</option>', 'nlc-lista') ?></div>
-    <div class="form-group"><label for="nlc-cerca">Cerca</label>
-      <input type="search" id="nlc-cerca" name="cerca" value="<?= h($f['cerca']) ?>" placeholder="per esempio: anna@ oppure Rossi" aria-describedby="nlc-cerca-aiuto">
-      <div class="hint" id="nlc-cerca-aiuto">Email (anche un pezzo), nome, cognome o identificativo esterno.</div></div>
-    <div class="form-group"><label for="nlc-stato">Stato dell'email</label>
-      <select id="nlc-stato" name="stato">
+  <form method="get" class="nlx-filtri" role="search" aria-label="Cerca i contatti">
+    <div class="form-group"><label for="nlx-lista">Carica una lista</label>
+      <?= $tendinaListe('lista', 'Tutti i contatti', (int)$f['lista'], '<option value="-1"' . ($f['lista'] === -1 ? ' selected' : '') . '>In nessuna lista</option>', 'nlx-lista') ?></div>
+    <div class="form-group"><label for="nlx-cerca">Cerca</label>
+      <input type="search" id="nlx-cerca" name="cerca" value="<?= h($f['cerca']) ?>" placeholder="per esempio: anna@ oppure Rossi" aria-describedby="nlx-cerca-aiuto">
+      <div class="hint" id="nlx-cerca-aiuto">Email (anche un pezzo), nome, cognome o identificativo esterno.</div></div>
+    <div class="form-group"><label for="nlx-stato">Stato dell'email</label>
+      <select id="nlx-stato" name="stato">
         <option value="">Tutti</option>
         <option value="iscritti"<?= $f['stato'] === 'iscritti' ? ' selected' : '' ?>>Iscritti</option>
         <option value="in_attesa"<?= $f['stato'] === 'in_attesa' ? ' selected' : '' ?>>In attesa di conferma</option>
@@ -287,22 +287,22 @@ require_once __DIR__ . '/includes/admin-header.php';
         <?php foreach (NL_MOTIVI as $k => $m): ?><option value="motivo:<?= h($k) ?>"<?= $f['stato'] === 'motivo:' . $k ? ' selected' : '' ?>>In lista nera: <?= h(lcfirst($m[0])) ?></option><?php endforeach; ?>
         <option value="errori"<?= $f['stato'] === 'errori' ? ' selected' : '' ?>>Iscritti con 3 errori temporanei di fila</option>
       </select></div>
-    <div class="form-group"><label for="nlc-per">Per pagina</label>
-      <select id="nlc-per" name="per"><?php foreach ([50, 100, 500] as $x): ?><option value="<?= $x ?>"<?= $per === $x ? ' selected' : '' ?>><?= $x ?></option><?php endforeach; ?></select></div>
-    <div class="nlc-filtri-azioni"><button class="btn btn-secondary btn-sm" type="submit">Cerca</button>
+    <div class="form-group"><label for="nlx-per">Per pagina</label>
+      <select id="nlx-per" name="per"><?php foreach ([50, 100, 500] as $x): ?><option value="<?= $x ?>"<?= $per === $x ? ' selected' : '' ?>><?= $x ?></option><?php endforeach; ?></select></div>
+    <div class="nlx-filtri-azioni"><button class="btn btn-secondary btn-sm" type="submit">Cerca</button>
       <?php if ($qBase && array_diff_key($qBase, ['per' => 1])): ?><a href="newsletter-contatti.php">Togli i filtri</a><?php endif; ?></div>
   </form>
 
-  <form method="post" id="nlc-gruppo" class="nlc-gruppo" aria-label="Azioni sui contatti scelti">
+  <form method="post" id="nlx-gruppo" class="nlx-gruppo" aria-label="Azioni sui contatti scelti">
     <?= csrf_field() ?><input type="hidden" name="azione" value="gruppo"><?= $nascosti ?>
     <fieldset>
       <legend>Azioni sui contatti scelti</legend>
       <div class="nl-riga">
-        <label class="nlc-tutti"><input type="checkbox" name="tutti" value="1" id="nlc-tutti"> Tutti i contatti <?= $qBase && array_diff_key($qBase, ['per' => 1]) ? 'del filtro' : '' ?> (<b><?= $totale ?></b>), non solo quelli spuntati in questa pagina</label>
+        <label class="nlx-tutti"><input type="checkbox" name="tutti" value="1" id="nlx-tutti"> Tutti i contatti <?= $qBase && array_diff_key($qBase, ['per' => 1]) ? 'del filtro' : '' ?> (<b><?= $totale ?></b>), non solo quelli spuntati in questa pagina</label>
       </div>
-      <div class="nlc-campi">
-        <div class="form-group"><label for="nlc-cosa">Azione</label>
-          <select name="cosa" id="nlc-cosa" data-nlc-azione>
+      <div class="nlx-campi">
+        <div class="form-group"><label for="nlx-cosa">Azione</label>
+          <select name="cosa" id="nlx-cosa" data-nlx-azione>
             <option value="">Scegli...</option>
             <option value="aggiungi">Aggiungi a una lista</option>
             <option value="togli">Togli dalle liste</option>
@@ -312,30 +312,30 @@ require_once __DIR__ . '/includes/admin-header.php';
             <option value="esporta">Esporta (CSV)</option>
             <option value="elimina">Elimina definitivamente</option>
           </select></div>
-        <div class="form-group" data-nlc-per="aggiungi sposta"><label for="nlc-lista-dest">Lista di arrivo</label><?= $tendinaListe('lista_dest', 'Scegli la lista...', 0, '', 'nlc-lista-dest') ?></div>
-        <div class="form-group" data-nlc-per="togli"><label for="nlc-lista-da">Da quale lista</label><?= $tendinaListe('lista_da', 'Da tutte le liste', (int)max(0, $f['lista']), '', 'nlc-lista-da') ?></div>
-        <div class="form-group" data-nlc-per="modifica"><label for="nlc-attr">Attributo</label>
-          <select name="attributo" id="nlc-attr"><?php foreach ($modificabili as $n => $a): ?><option value="<?= h($n) ?>" data-tipo="<?= h($a['tipo']) ?>"><?= h(newsletter_attributo_etichetta($a)) ?> (<?= h(NL_ATTR_TIPI[$a['tipo']]) ?>)</option><?php endforeach; ?></select></div>
-        <div class="form-group" data-nlc-per="modifica"><label for="nlc-valore">Nuovo valore</label>
-          <input type="text" name="valore" id="nlc-valore" placeholder="per esempio: 2026-12-31, sì, oppure il nome dell'opzione" aria-describedby="nlc-valore-aiuto">
-          <div class="hint" id="nlc-valore-aiuto">Data come 2026-12-31 o 31/12/2026; Sì/No come sì o no; Categoria con il nome dell'opzione. Vuoto toglie il valore.</div></div>
+        <div class="form-group" data-nlx-per="aggiungi sposta"><label for="nlx-lista-dest">Lista di arrivo</label><?= $tendinaListe('lista_dest', 'Scegli la lista...', 0, '', 'nlx-lista-dest') ?></div>
+        <div class="form-group" data-nlx-per="togli"><label for="nlx-lista-da">Da quale lista</label><?= $tendinaListe('lista_da', 'Da tutte le liste', (int)max(0, $f['lista']), '', 'nlx-lista-da') ?></div>
+        <div class="form-group" data-nlx-per="modifica"><label for="nlx-attr">Attributo</label>
+          <select name="attributo" id="nlx-attr"><?php foreach ($modificabili as $n => $a): ?><option value="<?= h($n) ?>" data-tipo="<?= h($a['tipo']) ?>"><?= h(newsletter_attributo_etichetta($a)) ?> (<?= h(NL_ATTR_TIPI[$a['tipo']]) ?>)</option><?php endforeach; ?></select></div>
+        <div class="form-group" data-nlx-per="modifica"><label for="nlx-valore">Nuovo valore</label>
+          <input type="text" name="valore" id="nlx-valore" placeholder="per esempio: 2026-12-31, sì, oppure il nome dell'opzione" aria-describedby="nlx-valore-aiuto">
+          <div class="hint" id="nlx-valore-aiuto">Data come 2026-12-31 o 31/12/2026; Sì/No come sì o no; Categoria con il nome dell'opzione. Vuoto toglie il valore.</div></div>
       </div>
-      <button class="btn btn-primary btn-sm" type="submit" id="nlc-applica" data-conferma="Applicare l'azione ai contatti scelti?">Applica</button>
+      <button class="btn btn-primary btn-sm" type="submit" id="nlx-applica" data-conferma="Applicare l'azione ai contatti scelti?">Applica</button>
     </fieldset>
   </form>
 
-  <div class="ad-tabella"><table class="table nlc-tabella">
-    <thead><tr><th scope="col"><input type="checkbox" data-seleziona-tutti=".nlc-sel" aria-label="Spunta tutti i contatti di questa pagina"></th>
+  <div class="ad-tabella"><table class="table nlx-tabella">
+    <thead><tr><th scope="col"><input type="checkbox" data-seleziona-tutti=".nlx-sel" aria-label="Spunta tutti i contatti di questa pagina"></th>
       <?php foreach (NL_COLONNE_FISSE as $k => $v): ?><th scope="col"><?= h($v) ?></th><?php endforeach; ?>
       <?php foreach ($colonne as $n): ?><th scope="col"><?= h(newsletter_attributo_etichetta($attributi[$n])) ?></th><?php endforeach; ?></tr></thead>
     <tbody>
     <?php foreach ($righe as $r): $id = (int)$r['id']; $nera = in_array($r['stato'], NL_BLOCCATI, true); ?>
       <tr>
-        <td><input type="checkbox" class="nlc-sel" name="sel[]" value="<?= $id ?>" form="nlc-gruppo" aria-label="Scegli <?= h($r['email']) ?>"></td>
-        <td><a href="newsletter-contatto.php?id=<?= $id ?>"><?= h($r['email']) ?></a><?php $nm = trim(newsletter_4byte_fuori($r['nome'] . ' ' . $r['cognome'])); if ($nm !== ''): ?><span class="nlc-sotto"><?= h($nm) ?></span><?php endif; ?></td>
-        <td><?= $r['stato'] === 'attivo' ? '<span class="nlc-stato nlc-si">&#10003; Sì</span>' : ($r['stato'] === 'in_attesa' ? '<span class="nlc-stato">&#8230; In attesa di conferma</span>' : '<span class="nlc-stato">No</span>') ?>
+        <td><input type="checkbox" class="nlx-sel" name="sel[]" value="<?= $id ?>" form="nlx-gruppo" aria-label="Scegli <?= h($r['email']) ?>"></td>
+        <td><a href="newsletter-contatto.php?id=<?= $id ?>"><?= h($r['email']) ?></a><?php $nm = trim(newsletter_4byte_fuori($r['nome'] . ' ' . $r['cognome'])); if ($nm !== ''): ?><span class="nlx-sotto"><?= h($nm) ?></span><?php endif; ?></td>
+        <td><?= $r['stato'] === 'attivo' ? '<span class="nlx-stato nlx-si">&#10003; Sì</span>' : ($r['stato'] === 'in_attesa' ? '<span class="nlx-stato">&#8230; In attesa di conferma</span>' : '<span class="nlx-stato">No</span>') ?>
           <?php if ($r['stato'] === 'attivo' && (int)$r['errori_di_fila'] >= 3): ?><span class="nl-errori" title="<?= h($r['ultimo_errore']) ?>"><?= (int)$r['errori_di_fila'] ?> errori temporanei di fila</span><?php endif; ?></td>
-        <td><?= $nera ? '<span class="nlc-stato nlc-nera">&#10007; Sì</span><span class="nlc-sotto">' . h(newsletter_motivo_testo($r)) . ($r['blocco_at'] ? ', ' . h(date('d/m/Y', strtotime($r['blocco_at']))) : '') . '</span>' : 'No' ?></td>
+        <td><?= $nera ? '<span class="nlx-stato nlx-nera">&#10007; Sì</span><span class="nlx-sotto">' . h(newsletter_motivo_testo($r)) . ($r['blocco_at'] ? ', ' . h(date('d/m/Y', strtotime($r['blocco_at']))) : '') . '</span>' : 'No' ?></td>
         <td><?= h(date('d/m/Y H:i', strtotime($r['creato']))) ?></td>
         <td><?= h(date('d/m/Y H:i', strtotime($r['aggiornato']))) ?></td>
         <?php foreach ($colonne as $n): ?><td><?= h(newsletter_valore_testo($attributi[$n], $valori[$id][$n] ?? '')) ?></td><?php endforeach; ?>
@@ -349,7 +349,7 @@ require_once __DIR__ . '/includes/admin-header.php';
     </tbody>
   </table></div>
   <?php if ($pagine > 1): $link = fn($p) => 'newsletter-contatti.php?' . http_build_query($qBase + ['pag' => $p]); ?>
-  <nav class="nlc-pagine" aria-label="Pagine dei contatti">
+  <nav class="nlx-pagine" aria-label="Pagine dei contatti">
     <?php if ($pag > 1): ?><a class="btn btn-secondary btn-sm" href="<?= h($link(1)) ?>">Prima pagina</a> <a class="btn btn-secondary btn-sm" href="<?= h($link($pag - 1)) ?>">Pagina precedente</a><?php endif; ?>
     <span>Pagina <?= $pag ?> di <?= $pagine ?> (<?= $totale ?> contatti)</span>
     <?php if ($pag < $pagine): ?><a class="btn btn-secondary btn-sm" href="<?= h($link($pag + 1)) ?>">Pagina successiva</a><?php endif; ?>
@@ -358,47 +358,47 @@ require_once __DIR__ . '/includes/admin-header.php';
   <p class="hint"><a href="?scarica=tutti">Scarica tutti i contatti (CSV)</a></p>
 </div>
 
-<details class="form-card nlc-riquadro" id="nlc-importa">
+<details class="form-card nlx-riquadro" id="nlx-importa">
   <summary><h3>Importa contatti</h3></summary>
   <p class="hint">Un file CSV con la colonna EMAIL (e, se ci sono, NOME, COGNOME e la data del consenso in una colonna CONSENSO). Da Brevo: Contatti, seleziona una lista, Esporta, formato CSV, solo i contatti iscritti. Chi è già qui resta com'è ed entra anche nella lista scelta; chi è in lista nera o ha chiesto di cancellare i suoi dati resta fuori.</p>
   <form method="post" enctype="multipart/form-data">
     <?= csrf_field() ?><input type="hidden" name="azione" value="importa">
-    <div class="form-group"><label for="nlc-csv">File CSV</label><input type="file" id="nlc-csv" name="csv" accept=".csv,text/csv"<?= pannello_limite_caricamento() > 0 ? ' data-peso-massimo="' . pannello_limite_caricamento() . '"' : '' ?>></div>
-    <div class="form-group"><label for="nlc-imp-lista">Nella lista</label><?= $tendinaListe('lista', '', 0, '', 'nlc-imp-lista') ?></div>
-    <div class="form-group"><label for="nlc-imp-nuova">Oppure in una lista nuova</label><input type="text" id="nlc-imp-nuova" name="lista_nuova" maxlength="100" placeholder="per esempio: Clienti 2026"></div>
-    <div class="form-group"><label for="nlc-imp-cart">Cartella della lista nuova</label><select id="nlc-imp-cart" name="cartella"><?php foreach ($cartelle as $c): ?><option value="<?= (int)$c['id'] ?>"><?= h(newsletter_4byte_fuori($c['nome'])) ?></option><?php endforeach; ?></select></div>
+    <div class="form-group"><label for="nlx-csv">File CSV</label><input type="file" id="nlx-csv" name="csv" accept=".csv,text/csv"<?= pannello_limite_caricamento() > 0 ? ' data-peso-massimo="' . pannello_limite_caricamento() . '"' : '' ?>></div>
+    <div class="form-group"><label for="nlx-imp-lista">Nella lista</label><?= $tendinaListe('lista', '', 0, '', 'nlx-imp-lista') ?></div>
+    <div class="form-group"><label for="nlx-imp-nuova">Oppure in una lista nuova</label><input type="text" id="nlx-imp-nuova" name="lista_nuova" maxlength="100" placeholder="per esempio: Clienti 2026"></div>
+    <div class="form-group"><label for="nlx-imp-cart">Cartella della lista nuova</label><select id="nlx-imp-cart" name="cartella"><?php foreach ($cartelle as $c): ?><option value="<?= (int)$c['id'] ?>"><?= h(newsletter_4byte_fuori($c['nome'])) ?></option><?php endforeach; ?></select></div>
     <div class="form-group"><label><input type="checkbox" name="consenso_brevo" value="1"> Sono contatti iscritti, con il loro consenso</label>
       <label><input type="checkbox" name="flussi_import" value="1"> Fai partire i flussi per gli importati</label></div>
     <button class="btn btn-primary btn-sm" type="submit">Importa</button>
   </form>
 </details>
 
-<details class="form-card nlc-riquadro" id="nlc-nera">
+<details class="form-card nlx-riquadro" id="nlx-nera">
   <summary><h3>Metti in lista nera degli indirizzi</h3></summary>
   <form method="post">
     <?= csrf_field() ?><input type="hidden" name="azione" value="lista_nera_indirizzi">
-    <div class="form-group"><label for="nlc-indirizzi">Indirizzi email</label>
-      <textarea id="nlc-indirizzi" name="indirizzi" rows="4" class="nlc-corto" placeholder="per esempio: chi.non.vuole@esempio.it" aria-describedby="nlc-indirizzi-aiuto"></textarea>
-      <div class="hint" id="nlc-indirizzi-aiuto">Uno per riga, fino a 1000. Chi non è ancora un contatto diventa un contatto in lista nera: non riceverà mai campagne né automazioni. Motivo: messo in lista nera a mano.</div></div>
+    <div class="form-group"><label for="nlx-indirizzi">Indirizzi email</label>
+      <textarea id="nlx-indirizzi" name="indirizzi" rows="4" class="nlx-corto" placeholder="per esempio: chi.non.vuole@esempio.it" aria-describedby="nlx-indirizzi-aiuto"></textarea>
+      <div class="hint" id="nlx-indirizzi-aiuto">Uno per riga, fino a 1000. Chi non è ancora un contatto diventa un contatto in lista nera: non riceverà mai campagne né automazioni. Motivo: messo in lista nera a mano.</div></div>
     <button class="btn btn-primary btn-sm" type="submit">Metti in lista nera</button>
   </form>
 </details>
 
-<dialog id="nlc-colonne" class="nl-dialogo" aria-labelledby="nlc-colonne-titolo">
+<dialog id="nlx-colonne" class="nl-dialogo" aria-labelledby="nlx-colonne-titolo">
   <form method="post">
     <?= csrf_field() ?><input type="hidden" name="azione" value="colonne"><?= $nascosti ?>
-    <h2 id="nlc-colonne-titolo">Personalizza le colonne</h2>
+    <h2 id="nlx-colonne-titolo">Personalizza le colonne</h2>
     <p class="hint">Le cinque colonne Contatto, Iscritto, In lista nera, Data di creazione e Ultima modifica ci sono sempre. Spunta gli attributi da aggiungere e mettili in ordine trascinandoli o con le frecce.</p>
-    <ul class="nlc-ordine" data-nlc-ordina>
+    <ul class="nlx-ordine" data-nlx-ordina>
       <?php $ordine = array_merge($colonne, array_values(array_diff(array_keys(array_filter($attributi, fn($a) => $a['categoria'] !== 'global' && !in_array($a['nome'], ['CREATION_DATE', 'LAST_CHANGED'], true))), $colonne)));
       foreach ($ordine as $n): $a = $attributi[$n]; ?>
-      <li><span class="nlc-maniglia" aria-hidden="true">&#8942;&#8942;</span>
+      <li><span class="nlx-maniglia" aria-hidden="true">&#8942;&#8942;</span>
         <label><input type="checkbox" name="colonne[]" value="<?= h($n) ?>"<?= in_array($n, $colonne, true) ? ' checked' : '' ?>> <?= h(newsletter_attributo_etichetta($a)) ?> <small>(<?= h($n) ?>)</small></label>
-        <button type="button" class="btn btn-secondary btn-sm" data-nlc-su aria-label="Sposta su <?= h(newsletter_attributo_etichetta($a)) ?>">&#8593;</button>
-        <button type="button" class="btn btn-secondary btn-sm" data-nlc-giu aria-label="Sposta giù <?= h(newsletter_attributo_etichetta($a)) ?>">&#8595;</button></li>
+        <button type="button" class="btn btn-secondary btn-sm" data-nlx-su aria-label="Sposta su <?= h(newsletter_attributo_etichetta($a)) ?>">&#8593;</button>
+        <button type="button" class="btn btn-secondary btn-sm" data-nlx-giu aria-label="Sposta giù <?= h(newsletter_attributo_etichetta($a)) ?>">&#8595;</button></li>
       <?php endforeach; ?>
     </ul>
-    <div class="pn-conferma-azioni"><button type="button" class="btn btn-secondary" data-chiudi-dialogo="#nlc-colonne">Annulla</button><button type="submit" class="btn btn-primary">Salva le colonne</button></div>
+    <div class="pn-conferma-azioni"><button type="button" class="btn btn-secondary" data-chiudi-dialogo="#nlx-colonne">Annulla</button><button type="submit" class="btn btn-primary">Salva le colonne</button></div>
   </form>
 </dialog>
 
@@ -416,7 +416,7 @@ require_once __DIR__ . '/includes/admin-header.php';
     <form method="post" class="form-card" style="margin-top:1rem">
       <?= csrf_field() ?><input type="hidden" name="azione" value="cartella_crea">
       <h3>Crea una cartella</h3>
-      <div class="form-group"><label for="nlc-cart-nome">Nome della cartella</label><input type="text" id="nlc-cart-nome" name="nome" maxlength="100" required placeholder="per esempio: Eventi 2026"></div>
+      <div class="form-group"><label for="nlx-cart-nome">Nome della cartella</label><input type="text" id="nlx-cart-nome" name="nome" maxlength="100" required placeholder="per esempio: Eventi 2026"></div>
       <button class="btn btn-primary btn-sm" type="submit">Crea la cartella</button>
     </form>
     <p class="hint" style="margin-top:1rem">Ogni lista sta in una cartella. Un contatto può stare in più liste o in nessuna; una campagna va alle liste che scegli, e chi sta in due di quelle liste la riceve una volta sola. Al massimo <?= NL_LISTE_MASSIMO ?> liste e <?= NL_CARTELLE_MASSIMO ?> cartelle.</p>
@@ -439,8 +439,8 @@ require_once __DIR__ . '/includes/admin-header.php';
         <tbody>
         <?php foreach ($c['liste'] as $l): $lid = (int)$l['id']; $nomeL = newsletter_4byte_fuori($l['nome']); ?>
           <tr>
-            <td><a href="newsletter-contatti.php?lista=<?= $lid ?>"><b><?= h($nomeL) ?></b></a><?php if ($l['descrizione'] !== ''): ?><span class="nlc-sotto"><?= h(newsletter_4byte_fuori($l['descrizione'])) ?></span><?php endif; ?>
-              <?php if (in_array($lid, $sistemaListe, true)): ?><span class="nlc-sotto">usata dal sito per le iscrizioni</span><?php endif; ?></td>
+            <td><a href="newsletter-contatti.php?lista=<?= $lid ?>"><b><?= h($nomeL) ?></b></a><?php if ($l['descrizione'] !== ''): ?><span class="nlx-sotto"><?= h(newsletter_4byte_fuori($l['descrizione'])) ?></span><?php endif; ?>
+              <?php if (in_array($lid, $sistemaListe, true)): ?><span class="nlx-sotto">usata dal sito per le iscrizioni</span><?php endif; ?></td>
             <td><a href="newsletter-contatti.php?lista=<?= $lid ?>&amp;stato=iscritti"><?= (int)$l['attivi'] ?></a></td>
             <td><a href="newsletter-contatti.php?lista=<?= $lid ?>"><?= (int)$l['totali'] ?></a></td>
             <td><?= h(date('d/m/Y', strtotime($l['creato']))) ?></td>

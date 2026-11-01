@@ -672,42 +672,42 @@ input[aria-invalid="true"], textarea[aria-invalid="true"], select[aria-invalid="
 .nl-riga { display: flex; gap: .4rem; flex-wrap: wrap; align-items: center; }
 .nl-avviso { background: var(--mustard-light); color: var(--attenzione-testo); border: 1px solid var(--attenzione-bordo); border-radius: 8px; padding: .6rem .9rem; margin: 0 0 1rem; }
 .nl-errori { display: block; font-size: .78rem; color: var(--attenzione-testo); }
-.nlc-filtri { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 180px), 1fr)); gap: .25rem 1rem; align-items: end; margin: 1rem 0; }
-.nlc-filtri .form-group { margin-bottom: .5rem; }
-.nlc-filtri-azioni { display: flex; gap: .75rem; align-items: center; padding-bottom: .6rem; }
-.nlc-gruppo fieldset { border: 1px solid var(--border); border-radius: 8px; padding: .75rem 1rem 1rem; margin: 0 0 1rem; min-width: 0; }
-.nlc-gruppo legend { font-weight: 700; font-size: .86rem; padding: 0 .3rem; }
-.nlc-campi, .nlk-campi { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 220px), 1fr)); gap: 0 1rem; margin-top: .6rem; }
-.nlc-tutti { font-size: .88rem; }
-.nlc-sotto { display: block; font-size: .78rem; color: var(--text-muted); overflow-wrap: anywhere; }
-.nlc-stato { font-weight: 600; white-space: nowrap; }
-.nlc-si { color: var(--successo-testo); }
-.nlc-nera { color: var(--errore-testo); }
-.nlc-tabella td:first-child, .nlc-tabella th:first-child { width: 2.2rem; }
-.nlc-tabella td { overflow-wrap: anywhere; }
-.nlc-tabella input[type=checkbox] { width: 20px; height: 20px; }
-.nlc-pagine { display: flex; gap: .5rem; align-items: center; flex-wrap: wrap; margin-top: 1rem; font-size: .88rem; }
-.nlc-corto { min-height: 0 !important; font-family: var(--font) !important; }
+.nlx-filtri { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 180px), 1fr)); gap: .25rem 1rem; align-items: end; margin: 1rem 0; }
+.nlx-filtri .form-group { margin-bottom: .5rem; }
+.nlx-filtri-azioni { display: flex; gap: .75rem; align-items: center; padding-bottom: .6rem; }
+.nlx-gruppo fieldset { border: 1px solid var(--border); border-radius: 8px; padding: .75rem 1rem 1rem; margin: 0 0 1rem; min-width: 0; }
+.nlx-gruppo legend { font-weight: 700; font-size: .86rem; padding: 0 .3rem; }
+.nlx-campi, .nlk-campi { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 220px), 1fr)); gap: 0 1rem; margin-top: .6rem; }
+.nlx-tutti { font-size: .88rem; }
+.nlx-sotto { display: block; font-size: .78rem; color: var(--text-muted); overflow-wrap: anywhere; }
+.nlx-stato { font-weight: 600; white-space: nowrap; }
+.nlx-si { color: var(--successo-testo); }
+.nlx-nera { color: var(--errore-testo); }
+.nlx-tabella td:first-child, .nlx-tabella th:first-child { width: 2.2rem; }
+.nlx-tabella td { overflow-wrap: anywhere; }
+.nlx-tabella input[type=checkbox] { width: 20px; height: 20px; }
+.nlx-pagine { display: flex; gap: .5rem; align-items: center; flex-wrap: wrap; margin-top: 1rem; font-size: .88rem; }
+.nlx-corto { min-height: 0 !important; font-family: var(--font) !important; }
 /* I riquadri che si aprono (Importa, Lista nera): il titolo nel summary, con la fascia. */
-details.nlc-riquadro { margin-top: 1.25rem; }
-details.nlc-riquadro > summary { list-style: none; cursor: pointer; margin: -1.5rem -1.5rem 0; padding: .7rem 1.5rem; background: var(--testata); color: var(--testata-testo); border-radius: calc(var(--radius) - 1px); box-shadow: inset 4px 0 0 var(--coral); }
-details.nlc-riquadro[open] > summary { margin-bottom: 1rem; border-bottom: 1px solid var(--border); border-radius: calc(var(--radius) - 1px) calc(var(--radius) - 1px) 0 0; }
-details.nlc-riquadro:not([open]) { padding-bottom: 0; padding-top: 1.5rem; }
-details.nlc-riquadro:not([open]) > summary { margin-bottom: 0; }
-details.nlc-riquadro > summary::-webkit-details-marker { display: none; }
-details.nlc-riquadro > summary h3 { display: inline; margin: 0; font-size: .95rem; font-weight: 700; text-transform: none; letter-spacing: 0; color: var(--testata-testo); }
-details.nlc-riquadro > summary::after { content: " \25BE"; }
-details.nlc-riquadro[open] > summary::after { content: " \25B4"; }
-details.nlc-riquadro > summary:focus-visible { outline: 2px solid var(--coral); outline-offset: -2px; }
+details.nlx-riquadro { margin-top: 1.25rem; }
+details.nlx-riquadro > summary { list-style: none; cursor: pointer; margin: -1.5rem -1.5rem 0; padding: .7rem 1.5rem; background: var(--testata); color: var(--testata-testo); border-radius: calc(var(--radius) - 1px); box-shadow: inset 4px 0 0 var(--coral); }
+details.nlx-riquadro[open] > summary { margin-bottom: 1rem; border-bottom: 1px solid var(--border); border-radius: calc(var(--radius) - 1px) calc(var(--radius) - 1px) 0 0; }
+details.nlx-riquadro:not([open]) { padding-bottom: 0; padding-top: 1.5rem; }
+details.nlx-riquadro:not([open]) > summary { margin-bottom: 0; }
+details.nlx-riquadro > summary::-webkit-details-marker { display: none; }
+details.nlx-riquadro > summary h3 { display: inline; margin: 0; font-size: .95rem; font-weight: 700; text-transform: none; letter-spacing: 0; color: var(--testata-testo); }
+details.nlx-riquadro > summary::after { content: " \25BE"; }
+details.nlx-riquadro[open] > summary::after { content: " \25B4"; }
+details.nlx-riquadro > summary:focus-visible { outline: 2px solid var(--coral); outline-offset: -2px; }
 /* Le finestre del pannello (Personalizza le colonne, Crea un attributo). */
 .nl-dialogo { margin: auto; width: min(560px, calc(100vw - 2rem)); max-height: calc(100vh - 2rem); overflow: auto; padding: 1.25rem 1.4rem 1.1rem; border: 1px solid var(--border); border-radius: var(--radius); background: var(--surface); color: var(--text); box-shadow: var(--ombra-grande); }
 .nl-dialogo::backdrop { background: var(--velo); }
 .nl-dialogo h2 { font-size: 1.05rem; margin: 0 0 .5rem; font-family: var(--font-titolo); }
-.nlc-ordine { list-style: none; margin: .75rem 0 1rem; padding: 0; }
-.nlc-ordine li { display: flex; gap: .5rem; align-items: center; padding: .3rem .4rem; border: 1px solid var(--border); border-radius: 6px; margin-bottom: .3rem; background: var(--fondo-2); }
-.nlc-ordine label { flex: 1; min-width: 0; font-size: .88rem; display: flex; gap: .4rem; align-items: center; overflow-wrap: anywhere; }
-.nlc-ordine .btn { min-width: 44px; min-height: 44px; justify-content: center; }
-.nlc-maniglia { cursor: grab; color: var(--text-muted); padding: 0 .2rem; letter-spacing: -.3em; }
+.nlx-ordine { list-style: none; margin: .75rem 0 1rem; padding: 0; }
+.nlx-ordine li { display: flex; gap: .5rem; align-items: center; padding: .3rem .4rem; border: 1px solid var(--border); border-radius: 6px; margin-bottom: .3rem; background: var(--fondo-2); }
+.nlx-ordine label { flex: 1; min-width: 0; font-size: .88rem; display: flex; gap: .4rem; align-items: center; overflow-wrap: anywhere; }
+.nlx-ordine .btn { min-width: 44px; min-height: 44px; justify-content: center; }
+.nlx-maniglia { cursor: grab; color: var(--text-muted); padding: 0 .2rem; letter-spacing: -.3em; }
 .nll-cartella { margin-bottom: 1rem; }
 .nll-campo { padding: .35rem .55rem; border: 1px solid var(--bordo-campo); border-radius: 6px; background: var(--campo); color: var(--text); font: inherit; min-width: 0; max-width: 100%; }
 .nll-modifica > summary { list-style: none; display: inline-flex; }

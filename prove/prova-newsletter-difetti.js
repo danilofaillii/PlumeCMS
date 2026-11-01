@@ -200,7 +200,7 @@ const senzaTag = s => s.replace(/<style[\s\S]*?<\/style>/gi, '').replace(/<[^>]+
     const f = path.join(os.tmpdir(), 'importa-' + Date.now() + '.csv');
     fs.writeFileSync(f, righe.join('\n') + '\n');
     await vai('/admin/newsletter.php?scheda=iscritti');
-    await p.evaluate(() => { const d = document.getElementById('nlc-importa'); if (d) d.open = true; }); // 2.8.0: riquadro che si apre
+    await p.evaluate(() => { const d = document.getElementById('nlx-importa'); if (d) d.open = true; }); // 2.8.0: riquadro che si apre
     const imp = p.locator('form:has(input[value=importa])');
     await imp.locator('input[type=file]').setInputFiles(f);
     await imp.locator('select[name=lista]').selectOption(String(lista));

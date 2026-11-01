@@ -69,24 +69,24 @@ const idDi = (e) => +uno(`SELECT id FROM {p}newsletter_iscritti WHERE email = '$
 
   // ===== Pagina Contatti
   await vai('newsletter-contatti.php');
-  const th = (await p.locator('table.nlc-tabella thead th').allInnerTexts()).map(x => x.trim().toLowerCase());
+  const th = (await p.locator('table.nlx-tabella thead th').allInnerTexts()).map(x => x.trim().toLowerCase());
   ok('le cinque colonne fisse di Brevo', ['contatto', 'iscritto', 'in lista nera', 'data di creazione', 'ultima modifica'].every(c => th.includes(c)), th);
-  const righeTot = await p.locator('table.nlc-tabella tbody tr').count();
+  const righeTot = await p.locator('table.nlx-tabella tbody tr').count();
   ok('elenco con i contatti seminati', righeTot >= 8, righeTot);
   await foto('contatti');
-  await p.selectOption('#nlc-stato', 'motivo:hardBounce'); await invia('.nlc-filtri button[type=submit]');
-  let t = await testo('table.nlc-tabella');
+  await p.selectOption('#nlx-stato', 'motivo:hardBounce'); await invia('.nlx-filtri button[type=submit]');
+  let t = await testo('table.nlx-tabella');
   ok('filtro "In lista nera: hard bounce" mostra solo il rimbalzato', /rimbalzato1@/.test(t) && !/attivo1@/.test(t), t.slice(0, 200));
   await vai('newsletter-contatti.php?cerca=Rossi');
-  t = await testo('table.nlc-tabella');
+  t = await testo('table.nlx-tabella');
   ok('ricerca per cognome', /attivo1@/.test(t) && !/attivo2@/.test(t), t.slice(0, 200));
   await vai('newsletter-contatti.php?cerca=' + encodeURIComponent('zzz-niente'));
   ok('ricerca senza risultati: lo dice e suggerisce cosa fare', /Nessun contatto con questi filtri per «zzz-niente»/.test(await testo()));
   const clienti = +uno("SELECT id FROM {p}newsletter_liste WHERE nome = 'PC Clienti'");
   const eventi = +uno("SELECT id FROM {p}newsletter_liste WHERE nome = 'PC Eventi'");
   const vuota = +uno("SELECT id FROM {p}newsletter_liste WHERE nome = 'PC Vuota'");
-  await vai('newsletter-contatti.php'); await p.selectOption('#nlc-lista', String(clienti)); await invia('.nlc-filtri button[type=submit]');
-  ok('Carica una lista: solo i contatti della lista', await p.locator('table.nlc-tabella tbody tr').count() === 5);
+  await vai('newsletter-contatti.php'); await p.selectOption('#nlx-lista', String(clienti)); await invia('.nlx-filtri button[type=submit]');
+  ok('Carica una lista: solo i contatti della lista', await p.locator('table.nlx-tabella tbody tr').count() === 5);
 
   // ===== Attributi: i sei tipi, calcolati e globali
   const creaAttr = async (scheda, campi) => {
@@ -198,67 +198,67 @@ const idDi = (e) => +uno(`SELECT id FROM {p}newsletter_iscritti WHERE email = '$
 
   // ===== Personalizza le colonne
   await vai('newsletter-contatti.php');
-  await p.click('button[data-apri-dialogo="#nlc-colonne"]');
-  await p.check('#nlc-colonne input[value=PUNTI]'); await p.check('#nlc-colonne input[value=CITTA]');
-  const li = p.locator('#nlc-colonne li:has(input[value=CITTA])');
-  await li.locator('[data-nlc-su]').click(); await li.locator('[data-nlc-su]').click();
-  await invia('#nlc-colonne button[type=submit]');
-  const th2 = (await p.locator('table.nlc-tabella thead th').allInnerTexts()).map(x => x.trim());
+  await p.click('button[data-apri-dialogo="#nlx-colonne"]');
+  await p.check('#nlx-colonne input[value=PUNTI]'); await p.check('#nlx-colonne input[value=CITTA]');
+  const li = p.locator('#nlx-colonne li:has(input[value=CITTA])');
+  await li.locator('[data-nlx-su]').click(); await li.locator('[data-nlx-su]').click();
+  await invia('#nlx-colonne button[type=submit]');
+  const th2 = (await p.locator('table.nlx-tabella thead th').allInnerTexts()).map(x => x.trim());
   ok('Personalizza le colonne: due attributi in più, nell\'ordine scelto con le frecce', th2.slice(-2).join(',') === 'Città,Punti' || th2.slice(-2).join(',').toLowerCase() === 'città,punti', th2);
-  t = await testo('table.nlc-tabella');
+  t = await testo('table.nlx-tabella');
   ok('le colonne in più mostrano i valori', /Roma/.test(t) && /12,5/.test(t), t.slice(0, 200));
 
   // ===== Azioni di gruppo
   const a2 = idDi('attivo2@prova-contatti.it'), a3 = idDi('attivo3@prova-contatti.it');
   const gruppo = async (ids, cosa, extra = {}, tutti = false, url = 'newsletter-contatti.php') => {
     await vai(url);
-    for (const i of ids) await p.check(`input.nlc-sel[value="${i}"]`);
-    if (tutti) await p.check('#nlc-tutti');
-    await p.selectOption('#nlc-cosa', cosa);
+    for (const i of ids) await p.check(`input.nlx-sel[value="${i}"]`);
+    if (tutti) await p.check('#nlx-tutti');
+    await p.selectOption('#nlx-cosa', cosa);
     for (const [k, val] of Object.entries(extra)) await p.selectOption(k, val).catch(async () => p.fill(k, val));
-    await invia('#nlc-applica');
+    await invia('#nlx-applica');
     return flash();
   };
-  await vai('newsletter-contatti.php'); await p.click('#nlc-applica');
-  ok("Applica senza azione: lo dice sotto il pulsante, senza inviare", /Scegli un'azione/.test(await p.locator('#nlc-errore').innerText().catch(() => '')));
-  f = await gruppo([a2, a3], 'aggiungi', { '#nlc-lista-dest': String(vuota) });
+  await vai('newsletter-contatti.php'); await p.click('#nlx-applica');
+  ok("Applica senza azione: lo dice sotto il pulsante, senza inviare", /Scegli un'azione/.test(await p.locator('#nlx-errore').innerText().catch(() => '')));
+  f = await gruppo([a2, a3], 'aggiungi', { '#nlx-lista-dest': String(vuota) });
   ok('Aggiungi a una lista', /2 contatti aggiunti/.test(f) && +uno(`SELECT COUNT(*) FROM {p}newsletter_iscritti_liste WHERE lista_id = ${vuota} AND iscritto_id IN (${a2},${a3})`) === 2, f);
-  f = await gruppo([a2], 'sposta', { '#nlc-lista-dest': String(eventi) }, false, 'newsletter-contatti.php?lista=' + vuota);
+  f = await gruppo([a2], 'sposta', { '#nlx-lista-dest': String(eventi) }, false, 'newsletter-contatti.php?lista=' + vuota);
   ok('Sposta: entra nella lista di arrivo ed esce da quella caricata', /spostato/.test(f) && +uno(`SELECT COUNT(*) FROM {p}newsletter_iscritti_liste WHERE iscritto_id = ${a2} AND lista_id = ${eventi}`) === 1 && +uno(`SELECT COUNT(*) FROM {p}newsletter_iscritti_liste WHERE iscritto_id = ${a2} AND lista_id = ${vuota}`) === 0, f);
-  f = await gruppo([a3], 'togli', { '#nlc-lista-da': String(vuota) });
+  f = await gruppo([a3], 'togli', { '#nlx-lista-da': String(vuota) });
   ok('Togli dalle liste (una lista)', /1 contatto tolto dalla lista/.test(f) && +uno(`SELECT COUNT(*) FROM {p}newsletter_iscritti_liste WHERE iscritto_id = ${a3} AND lista_id = ${vuota}`) === 0, f);
   await vai('newsletter-contatti.php');
-  const opzioniModifica = await p.locator('#nlc-attr option').allInnerTexts();
+  const opzioniModifica = await p.locator('#nlx-attr option').allInnerTexts();
   ok('Modifica in massa: solo attributi Data, Sì/No e Categoria (Brevo)', opzioniModifica.length === 3 && !opzioniModifica.some(o => /Città|Punti|Interessi/.test(o)), opzioniModifica);
-  f = await gruppo([a2, a3], 'modifica', { '#nlc-attr': 'CLIENTE', '#nlc-valore': 'sì' });
+  f = await gruppo([a2, a3], 'modifica', { '#nlx-attr': 'CLIENTE', '#nlx-valore': 'sì' });
   ok('Modifica in massa del Sì/No', /a 2 contatti/.test(f) && cli('valori', String(a2)).CLIENTE === 1 && cli('valori', String(a3)).CLIENTE === 1, f);
-  f = await gruppo([a2], 'modifica', { '#nlc-attr': 'DATA_NASCITA', '#nlc-valore': 'non una data' });
+  f = await gruppo([a2], 'modifica', { '#nlx-attr': 'DATA_NASCITA', '#nlx-valore': 'non una data' });
   ok('Modifica in massa con un valore del tipo sbagliato: rifiutata', /non va bene/.test(f), f);
   // Esporta: CSV con le formule neutralizzate.
-  await vai('newsletter-contatti.php'); await p.check(`input.nlc-sel[value="${nuova}"]`); await p.selectOption('#nlc-cosa', 'esporta');
-  const [dl] = await Promise.all([p.waitForEvent('download'), p.click('#nlc-applica')]);
+  await vai('newsletter-contatti.php'); await p.check(`input.nlx-sel[value="${nuova}"]`); await p.selectOption('#nlx-cosa', 'esporta');
+  const [dl] = await Promise.all([p.waitForEvent('download'), p.click('#nlx-applica')]);
   const csv = fs.readFileSync(await dl.path(), 'utf8');
   ok('Esporta: CSV con EMAIL, gli attributi, lo stato e le liste', /^﻿?EMAIL;NOME;COGNOME/.test(csv) && /nuova@nuovi-contatti\.it/.test(csv) && /CITTA/.test(csv) && /LISTE/.test(csv), csv.slice(0, 200));
   await vai('newsletter-contatto.php?id=' + nuova); await p.fill('#nlk-citta', '=CMD("calc")'); await invia('button:has-text("Salva le informazioni")');
-  await vai('newsletter-contatti.php'); await p.check(`input.nlc-sel[value="${nuova}"]`); await p.selectOption('#nlc-cosa', 'esporta');
-  const [dl2] = await Promise.all([p.waitForEvent('download'), p.click('#nlc-applica')]);
+  await vai('newsletter-contatti.php'); await p.check(`input.nlx-sel[value="${nuova}"]`); await p.selectOption('#nlx-cosa', 'esporta');
+  const [dl2] = await Promise.all([p.waitForEvent('download'), p.click('#nlx-applica')]);
   const csv2 = fs.readFileSync(await dl2.path(), 'utf8');
   ok("Esporta: una cella che comincia con = esce con l'apostrofo davanti (niente formule nel foglio di calcolo)", /'=CMD\(""calc""\)/.test(csv2) && !/;=CMD/.test(csv2), csv2.split('\n')[1]);
   f = await gruppo([a3], 'blocca');
   r = q(`SELECT stato, blocco_motivo FROM {p}newsletter_iscritti WHERE id = ${a3}`)[0];
   ok('Metti in lista nera dalla pagina', /1 contatto messo in lista nera/.test(f) && r.stato === 'bloccato' && r.blocco_motivo === 'adminBlocked', [f, r]);
-  ok('chi è in lista nera non si toglie in massa (nessuna azione per farlo)', !(await p.locator('#nlc-cosa option').allInnerTexts()).some(o => /Togli dalla lista nera/i.test(o)));
+  ok('chi è in lista nera non si toglie in massa (nessuna azione per farlo)', !(await p.locator('#nlx-cosa option').allInnerTexts()).some(o => /Togli dalla lista nera/i.test(o)));
   // Tutti i contatti del filtro
   await vai('newsletter-contatti.php?cerca=' + encodeURIComponent('@prova-contatti.it') + '&stato=iscritti');
-  const quanti = await p.locator('table.nlc-tabella tbody tr').count();
-  await p.check('#nlc-tutti'); await p.selectOption('#nlc-cosa', 'aggiungi'); await p.selectOption('#nlc-lista-dest', String(vuota));
-  await invia('#nlc-applica');
+  const quanti = await p.locator('table.nlx-tabella tbody tr').count();
+  await p.check('#nlx-tutti'); await p.selectOption('#nlx-cosa', 'aggiungi'); await p.selectOption('#nlx-lista-dest', String(vuota));
+  await invia('#nlx-applica');
   ok('"Tutti i contatti del filtro" vale per tutto il filtro, senza spuntare le righe', new RegExp(quanti + ' contatti aggiunti').test(await flash()), [quanti, await flash()]);
 
   // ===== Lista nera riempita a mano
-  await vai('newsletter-contatti.php#nlc-nera');
-  await p.fill('#nlc-indirizzi', 'nero1@nuovi-contatti.it\nnon-valido\nattivo2@prova-contatti.it');
-  await invia('#nlc-nera button[type=submit]');
+  await vai('newsletter-contatti.php#nlx-nera');
+  await p.fill('#nlx-indirizzi', 'nero1@nuovi-contatti.it\nnon-valido\nattivo2@prova-contatti.it');
+  await invia('#nlx-nera button[type=submit]');
   r = q("SELECT email, stato, blocco_motivo FROM {p}newsletter_iscritti WHERE email IN ('nero1@nuovi-contatti.it', 'attivo2@prova-contatti.it') ORDER BY email");
   ok('Metti in lista nera degli indirizzi: nuovi e già contatti, motivo a mano; le righe non valide saltate', r.length === 2 && r.every(x => x.stato === 'bloccato' && x.blocco_motivo === 'adminBlocked') && /1 non erano email valide/.test(await flash()), [r, await flash()]);
 
@@ -278,7 +278,7 @@ const idDi = (e) => +uno(`SELECT id FROM {p}newsletter_iscritti WHERE email = '$
 
   // ===== Cartelle e liste
   await vai('newsletter-contatti.php?scheda=liste');
-  await p.fill('#nlc-cart-nome', 'PC Cartella'); await invia('button:has-text("Crea la cartella")');
+  await p.fill('#nlx-cart-nome', 'PC Cartella'); await invia('button:has-text("Crea la cartella")');
   const cart = +uno("SELECT id FROM {p}newsletter_cartelle WHERE nome = 'PC Cartella'");
   await p.fill('#nll-nome', 'PC Lista in cartella'); await p.selectOption('#nll-cart', String(cart)); await invia('button:has-text("Crea la lista")');
   const lc = +uno("SELECT id FROM {p}newsletter_liste WHERE nome = 'PC Lista in cartella'");

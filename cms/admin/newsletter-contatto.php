@@ -166,7 +166,7 @@ require_once __DIR__ . '/includes/admin-header.php';
 <div class="nlk-testa">
   <div>
     <h2><?= h($nomeIntero !== '' ? $nomeIntero : $c['email']) ?></h2>
-    <p><?= h($c['email']) ?> &middot; <span class="nlc-stato <?= $nera ? 'nlc-nera' : ($c['stato'] === 'attivo' ? 'nlc-si' : '') ?>"><?= $nera ? '&#10007; ' : ($c['stato'] === 'attivo' ? '&#10003; ' : '') ?><?= h(newsletter_stato_testo($c)) ?></span>
+    <p><?= h($c['email']) ?> &middot; <span class="nlx-stato <?= $nera ? 'nlx-nera' : ($c['stato'] === 'attivo' ? 'nlx-si' : '') ?>"><?= $nera ? '&#10007; ' : ($c['stato'] === 'attivo' ? '&#10003; ' : '') ?><?= h(newsletter_stato_testo($c)) ?></span>
       <?= $nera ? ' &middot; ' . h(newsletter_motivo_testo($c)) : '' ?> &middot; creato il <?= h(date('d/m/Y', strtotime($c['creato']))) ?></p>
   </div>
   <form method="post" data-conferma="Eliminare definitivamente <?= h($c['email']) ?>? Si perdono attributi, cronologia, statistiche e lista nera. Non si torna indietro. Brevo sconsiglia di cancellare chi è in lista nera: plumeCMS tiene comunque l'impronta dell'email, così un'importazione non lo rimette dentro." data-conferma-ok="Elimina definitivamente" data-conferma-pericolo>
@@ -222,13 +222,13 @@ require_once __DIR__ . '/includes/admin-header.php';
   $filtrata = $fc['tipo'] !== '' || $fc['da'] !== '' || $fc['a'] !== '' || $fc['cerca'] !== ''; ?>
 <div class="form-card">
   <h3>Cronologia</h3>
-  <form method="get" class="nlc-filtri" role="search" aria-label="Filtra la cronologia">
+  <form method="get" class="nlx-filtri" role="search" aria-label="Filtra la cronologia">
     <input type="hidden" name="id" value="<?= $id ?>"><input type="hidden" name="scheda" value="cronologia">
     <div class="form-group"><label for="nlk-tipo">Tipo di attività</label><select id="nlk-tipo" name="tipo"><option value="">Tutte</option><?php foreach (NL_CRONOLOGIA_TIPI as $k => $v): ?><option value="<?= $k ?>"<?= $fc['tipo'] === $k ? ' selected' : '' ?>><?= $v ?></option><?php endforeach; ?></select></div>
     <div class="form-group"><label for="nlk-da">Dal</label><input type="date" id="nlk-da" name="da" value="<?= h($fc['da']) ?>"></div>
     <div class="form-group"><label for="nlk-a">Al</label><input type="date" id="nlk-a" name="a" value="<?= h($fc['a']) ?>"></div>
     <div class="form-group"><label for="nlk-cerca">Cerca</label><input type="search" id="nlk-cerca" name="cerca" value="<?= h($fc['cerca']) ?>" placeholder="per esempio: il nome di una campagna"></div>
-    <div class="nlc-filtri-azioni"><button class="btn btn-secondary btn-sm" type="submit">Filtra</button><?php if ($filtrata): ?> <a href="newsletter-contatto.php?id=<?= $id ?>&amp;scheda=cronologia">Togli i filtri</a><?php endif; ?></div>
+    <div class="nlx-filtri-azioni"><button class="btn btn-secondary btn-sm" type="submit">Filtra</button><?php if ($filtrata): ?> <a href="newsletter-contatto.php?id=<?= $id ?>&amp;scheda=cronologia">Togli i filtri</a><?php endif; ?></div>
   </form>
   <div class="ad-tabella"><table class="table">
     <thead><tr><th scope="col">Quando</th><th scope="col">Tipo</th><th scope="col">Cosa è successo</th></tr></thead>
@@ -255,7 +255,7 @@ require_once __DIR__ . '/includes/admin-header.php';
 <?php else: /* Preferenze */ ?>
 <section class="form-card nlk-largo" aria-labelledby="nlk-pref">
   <h3 id="nlk-pref">Campagne e automazioni: email</h3>
-  <p class="nlk-pref-stato"><span class="nlc-stato <?= $nera ? 'nlc-nera' : ($c['stato'] === 'attivo' ? 'nlc-si' : '') ?>"><?= $nera ? '&#10007; In lista nera' : ($c['stato'] === 'attivo' ? '&#10003; Iscritto' : '&#8230; In attesa di conferma') ?></span>
+  <p class="nlk-pref-stato"><span class="nlx-stato <?= $nera ? 'nlx-nera' : ($c['stato'] === 'attivo' ? 'nlx-si' : '') ?>"><?= $nera ? '&#10007; In lista nera' : ($c['stato'] === 'attivo' ? '&#10003; Iscritto' : '&#8230; In attesa di conferma') ?></span>
     <?php if ($nera): ?> &middot; <?= h(newsletter_motivo_testo($c)) ?><?= $c['blocco_at'] ? ', dal ' . h(date('d/m/Y H:i', strtotime($c['blocco_at']))) : '' ?><?php endif; ?></p>
   <?php if (!$nera): ?>
     <p class="hint"><?= $c['stato'] === 'attivo' ? 'Riceve le campagne delle sue liste e le automazioni.' : 'Non ha ancora aperto il link di conferma: riceve le email solo dopo.' ?> In lista nera non riceve più niente, ma resta nei contatti con la sua storia.</p>
