@@ -106,7 +106,7 @@ Sono gli unici in `cms/docs/`, nello zip, nel sito di plumeCMS e nella pagina Do
 - **Pacchetto di aggiornamento** per un'installazione esistente:
   `python3 tools/cms-pacchetto.py --aggiornamento`. Si carica dal pannello,
   Impostazioni, Aggiornamenti.
-- **Versione**: `cms/VERSIONE` (oggi 2.9.0; sempre tre numeri: "beta" va nel CHANGELOG, mai nel nome dello zip, se no la serie "ultima" del Download non lo riconosce) e una voce in `cms/CHANGELOG.md` a ogni
+- **Versione**: `cms/VERSIONE` (oggi 2.10.0; sempre tre numeri: "beta" va nel CHANGELOG, mai nel nome dello zip, se no la serie "ultima" del Download non lo riconosce) e una voce in `cms/CHANGELOG.md` a ogni
   zip con contenuto diverso. Mai cambiare il contenuto di una versione già data.
 - **Prove** prima di dire finito:
   - `php -n -d short_open_tag=1 -l` su ogni file PHP toccato, `node --check` sui js;
@@ -144,6 +144,16 @@ Le decisioni complete, con data e perché, stanno nel second brain, `plumecms/de
 - **Nome: plumeCMS** (26 ottobre 2026).
 
 ## Stato al 31 ottobre 2026
+
+Fatto: plumeCMS 2.10.0 (2 novembre): fase 3 del piano Brevo, i segmenti (agente, ramo `fase3-segmenti-brevo`: `includes/newsletter-segmenti.php`,
+`admin/newsletter-segmenti.php`, `assets/segmenti.js`, Aggiungi filtro, viste, bivi dei flussi sul motore; campagne con segmenti nella fase 4),
+e le 15 infografiche disegnate (agente, ramo `infografiche-15`: `includes/editor-infografiche.php`, `sito/assets/infografiche-svg.css`, 107 widget;
+su testate chiare il titolo esce nero per il contrasto). Anteprime di Aria, Bottega, Cosmo in WebP (`TOLTI` toglie i PNG): zip di aggiornamento
+1986 KB. Gruppi di attacchi 31 (segmenti) e 32 (infografiche). Prove: install 37/37 radice e cartella, segmenti 179/179 nuovo e aggiornato,
+infografiche 44/44, importa 85/85, contatti 94/94, aggiornamento 2.9.0 -> 2.10.0 13/13 con 20 foto uguali e conteggi uguali, newsletter 37/37,
+addon 70/70, attacchi 316/316, pacchetto unico su un sito 2.9.0 13/13. `prova-sito-plumecms.js` scorre Funzionalità prima di guardare le
+immagini (loading=lazy). `prova-pannello-temi.js` vuole prima il tema finto "prova". PDF 8865 KB.
+Attenzione: dalla 2.10.0 le versioni hanno due cifre in mezzo; confronti di versione sempre numerici, mai come testo.
 
 Fatto: plumeCMS 2.9.0 (2 novembre): fase 2 del piano Brevo (agente, ramo `fase2-importa-brevo`): Importa contatti in quattro passi
 (`admin/newsletter-importa.php`, motore `includes/newsletter-importa.php`, XLSX senza librerie con difese DTD e zip bomba, lavoro a giri dalla

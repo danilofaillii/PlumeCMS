@@ -235,6 +235,9 @@ async function contrastoParole(pg) {
     ok('Scarica: le novità finiscono non oltre il riquadro Cosa serve', r && r.fondo <= r.sinistra + 2, r && { fondo: r.fondo, sinistra: r.sinistra }); }
   // 2.6.0: il blocco del pannello più chiaro in Funzionalità, con la sua schermata caricata; il logo di header e footer dallo Stile.
   await v.goto(B + '/funzionalita/', { waitUntil: 'networkidle' });
+  // Le immagini dei blocchi si caricano quando si arriva lì (loading=lazy): la pagina si scorre tutta prima di guardarle.
+  await v.evaluate(async () => { for (let y = 0; y < document.body.scrollHeight; y += 500) { window.scrollTo(0, y); await new Promise(r => setTimeout(r, 80)); } });
+  await v.waitForLoadState('networkidle'); await v.waitForTimeout(500);
   ok('Funzionalità (2.6.0): Un pannello che si legge a colpo d\'occhio', /Un pannello che si legge a colpo d.occhio/.test(await v.locator('body').innerText())
     && await v.evaluate(() => [...document.images].some(i => /pannello-chiaro/.test(i.currentSrc || i.src) && i.complete && i.naturalWidth > 0)));
   ok('Funzionalità (2.7.0): L\'email di conferma la scrivi tu', /L.email di conferma la scrivi tu/.test(await v.locator('body').innerText())
