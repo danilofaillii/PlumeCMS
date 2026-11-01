@@ -66,7 +66,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 if ($err !== UPLOAD_ERR_OK || !is_uploaded_file((string)($f['tmp_name'] ?? ''))) throw new RuntimeException('Nessun file ricevuto: scegli lo zip del tema e riprova.');
                 if (strtolower(pathinfo((string)$f['name'], PATHINFO_EXTENSION)) !== 'zip') throw new RuntimeException('Il file deve essere uno zip (.zip).');
                 $r = temi_installa_zip((string)$f['tmp_name'], !empty($_POST['sostituisci']), $autore);
-                flash('success', implode(' ', $r['righe']) . ' Per vederlo sul sito: Anteprima, poi Attiva.');
+                flash('success', implode(' ', $r['righe']) . ' Per vederlo sul sito: Anteprima, poi Usa questo tema.');
                 break;
             case 'elimina':
                 $copia = temi_elimina((string)($_POST['tema'] ?? ''), $autore);
@@ -218,7 +218,7 @@ $baseAlPosto = !$baseAttivo && $guasto && $guasto['slug'] === $scelto;
       <div class="tt-azioni">
         <a class="btn btn-secondary btn-sm" href="<?= h($anteprima($slug)) ?>" target="_blank" rel="noopener">Anteprima</a>
         <?php if (!$attivo || $rotto): ?>
-        <form method="post" data-conferma="<?= h($conferma) ?>"><input type="hidden" name="_csrf" value="<?= h($csrf) ?>"><input type="hidden" name="azione" value="attiva"><input type="hidden" name="tema" value="<?= h($slug) ?>"><button class="btn btn-primary btn-sm"><?= $rotto ? 'Riprova ad attivarlo' : 'Attiva' ?></button></form>
+        <form method="post" data-conferma="<?= h($conferma) ?>"><input type="hidden" name="_csrf" value="<?= h($csrf) ?>"><input type="hidden" name="azione" value="attiva"><input type="hidden" name="tema" value="<?= h($slug) ?>"><button class="btn btn-primary btn-sm"><?= $rotto ? 'Riprova ad attivarlo' : 'Usa questo tema' ?></button></form>
         <?php else: ?>
         <a class="btn btn-secondary btn-sm" href="design.php">Personalizza</a>
         <?php endif; ?>

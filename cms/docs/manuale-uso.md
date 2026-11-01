@@ -1038,7 +1038,7 @@ footer. Pagine, articoli, menu e immagini restano come sono. Si apre da **Editor
 Ogni tema ha una scheda con l'anteprima e quattro pulsanti:
 
 - **Anteprima** apre il sito vero con quel tema, solo per te. Guardalo sempre prima di attivarlo.
-- **Attiva** lo mette sul sito, dopo una conferma. Lo stile di prima resta nelle Versioni.
+- **Usa questo tema** lo mette sul sito, dopo una conferma. Lo stile di prima resta nelle Versioni.
 - **Scarica** ne fa uno zip, da portare su un altro sito.
 - **Elimina** lo toglie.
 

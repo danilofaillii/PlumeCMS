@@ -52,11 +52,11 @@ const sfondo = (p) => p.evaluate(() => getComputedStyle(document.body).backgroun
 
   // 4. Attiva, prima rifiutando la conferma
   rispondi = false;
-  await p.click('#tema-prova button:has-text("Attiva")'); await p.waitForTimeout(400);
+  await p.click('#tema-prova button:has-text("Usa questo tema")'); await p.waitForTimeout(400);
   ok('Attiva: la conferma spiega cosa cambia', /Cambiano colori.*header e footer del tema.*menu e immagini non cambiano.*codice PHP/s.test(ultimaConferma), ultimaConferma);
   ok('Attiva rifiutata: niente cambia', /scelto= /.test(cli('stato')));
   rispondi = true;
-  await Promise.all([p.waitForNavigation(), p.click('#tema-prova button:has-text("Attiva")')]);
+  await Promise.all([p.waitForNavigation(), p.click('#tema-prova button:has-text("Usa questo tema")')]);
   const msg = await p.locator('.flash').first().innerText().catch(() => '');
   ok('Attiva: messaggio con il resoconto', msg.includes('Tema "Prova" attivo') && msg.includes('Versioni'), msg);
   ok('Attiva: la scheda Prova ora è attiva, con Personalizza', await p.locator('#tema-prova .badge', { hasText: 'attivo' }).count() === 1 && await p.locator('#tema-prova a:has-text("Personalizza")').count() === 1);
@@ -82,7 +82,7 @@ const sfondo = (p) => p.evaluate(() => getComputedStyle(document.body).backgroun
   ok('Resta sull\'aspetto di base: avviso sparito, base attivo', await p.locator('.tt-guasto').count() === 0 && await p.locator('#tema-base .badge', { hasText: 'attivo' }).count() === 1);
 
   // 6. Torna all'aspetto di base da un tema attivo
-  await Promise.all([p.waitForNavigation(), p.click('#tema-prova button:has-text("Attiva")')]);
+  await Promise.all([p.waitForNavigation(), p.click('#tema-prova button:has-text("Usa questo tema")')]);
   await Promise.all([p.waitForNavigation(), p.click('#tema-base button:has-text("Usa l\'aspetto di base")')]);
   ok('Usa l\'aspetto di base: conferma e base attivo', /Tornare all'aspetto di base/.test(ultimaConferma) && await p.locator('#tema-base .badge', { hasText: 'attivo' }).count() === 1, ultimaConferma);
 
