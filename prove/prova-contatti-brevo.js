@@ -264,13 +264,17 @@ const idDi = (e) => +uno(`SELECT id FROM {p}newsletter_iscritti WHERE email = '$
 
   // ===== Soft bounce: al quinto di fila, lista nera (Brevo)
   const e1 = idDi('errori1@prova-contatti.it');
-  q(`UPDATE {p}newsletter_iscritti SET errori_di_fila = 3, stato = 'attivo' WHERE id = ${e1}`);
-  cli('soft', 'errori1@prova-contatti.it');
+  q(`UPDATE {p}newsletter_iscritti SET errori_di_fila = 0, stato = 'attivo' WHERE id = ${e1}`);
+  q(`DELETE FROM {p}newsletter_storia WHERE contatto_id = ${e1} AND tipo = 'soft_bounce'`);
+  for (let i = 0; i < 4; i++) cli('soft', 'errori1@prova-contatti.it');
   r = q(`SELECT stato, errori_di_fila FROM {p}newsletter_iscritti WHERE id = ${e1}`)[0];
-  ok('quarto soft bounce: resta iscritto', r.stato === 'attivo' && +r.errori_di_fila === 4, r);
+  ok('quattro soft bounce (avvisi del servizio): resta iscritto', r.stato === 'attivo' && +r.errori_di_fila === 4, r);
   cli('soft', 'errori1@prova-contatti.it');
   r = q(`SELECT stato, blocco_motivo FROM {p}newsletter_iscritti WHERE id = ${e1}`)[0];
-  ok('quinto soft bounce di fila: lista nera con motivo softBounce', r.stato === 'bloccato' && r.blocco_motivo === 'softBounce', r);
+  ok('quinto soft bounce di fila: lista nera con motivo softBounce (Brevo)', r.stato === 'bloccato' && r.blocco_motivo === 'softBounce', r);
+  await vai('newsletter-contatto.php?id=' + e1);
+  t = await testo();
+  ok('la scheda conta i soft bounce dei 90 giorni', /Soft bounce\s*5/.test(t), t.slice(t.indexOf('Statistiche'), t.indexOf('Statistiche') + 200));
 
   // ===== Cartelle e liste
   await vai('newsletter-contatti.php?scheda=liste');

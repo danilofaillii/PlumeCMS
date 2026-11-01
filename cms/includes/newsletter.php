@@ -339,14 +339,27 @@ function newsletter_contatto_sblocca(int $id, string $perche = 'a mano'): bool {
     return true;
 }
 
-/** 2.8.0: un soft bounce (errore temporaneo) in più; al quinto di fila il contatto va in lista nera (regola di Brevo). */
-function newsletter_soft_bounce(int $id, string $errore): void {
+/**
+ * 2.8.0: un soft bounce (errore temporaneo). errori_di_fila conta ogni tentativo, come prima (da 3 in su si segnala).
+ * Regola di Brevo: 5 soft bounce di fila sulle campagne = lista nera. Un soft bounce è un messaggio che non è arrivato
+ * (avviso del servizio di invio, oppure l'ultimo dei tre tentativi della coda: $messaggio), non ogni tentativo; "di fila"
+ * vuol dire dopo l'ultima email partita bene o l'ultima uscita dalla lista nera.
+ */
+function newsletter_soft_bounce(int $id, string $errore, bool $messaggio = true): void {
     db()->prepare('UPDATE ' . tbl('newsletter_iscritti') . ' SET errori_di_fila = errori_di_fila + 1, ultimo_errore = ? WHERE id = ?')->execute([mb_substr($errore, 0, 255), $id]);
+    if (!$messaggio) return;
     newsletter_storia_scrivi($id, 'soft_bounce', $errore);
-    $st = db()->prepare('SELECT errori_di_fila, stato FROM ' . tbl('newsletter_iscritti') . ' WHERE id = ?');
+    $st = db()->prepare('SELECT stato FROM ' . tbl('newsletter_iscritti') . ' WHERE id = ?');
     $st->execute([$id]);
-    $r = $st->fetch();
-    if ($r && $r['stato'] === 'attivo' && (int)$r['errori_di_fila'] >= NL_SOFT_BOUNCE_MAX) newsletter_contatto_blocca($id, 'softBounce', $errore);
+    if ($st->fetchColumn() !== 'attivo') return;
+    $q = db()->prepare('SELECT GREATEST(
+            COALESCE((SELECT MAX(inviata_at) FROM ' . tbl('newsletter_coda') . " WHERE iscritto_id = ? AND stato = 'inviata'), '1970-01-01'),
+            COALESCE((SELECT MAX(creato) FROM " . tbl('newsletter_storia') . " WHERE contatto_id = ? AND tipo IN ('flusso_email', 'sbloccato', 'doi')), '1970-01-01'))");
+    $q->execute([$id, $id]);
+    $da = (string)$q->fetchColumn();
+    $n = db()->prepare('SELECT COUNT(*) FROM ' . tbl('newsletter_storia') . " WHERE contatto_id = ? AND tipo = 'soft_bounce' AND creato >= ?");
+    $n->execute([$id, $da]);
+    if ((int)$n->fetchColumn() >= NL_SOFT_BOUNCE_MAX) newsletter_contatto_blocca($id, 'softBounce', $errore);
 }
 
 // ------------------------------------------------------------
@@ -685,11 +698,11 @@ function newsletter_rimbalzato(int $id, string $errore): void {
  * un rifiuto definitivo lo segna rimbalzato, un rifiuto temporaneo conta un errore di fila (da 3 in su si segnala nel
  * pannello, ma resta attivo). Gli errori del server (connessione, accesso) non sono colpa dell'indirizzo.
  */
-function newsletter_esito_invio(int $id): void {
+function newsletter_esito_invio(int $id, bool $ultimoTentativo = false): void {
     $e = posta_esito();
     if ($e === 'ok') db()->prepare('UPDATE ' . tbl('newsletter_iscritti') . " SET errori_di_fila = 0, ultimo_errore = '' WHERE id = ? AND errori_di_fila > 0")->execute([$id]);
     elseif ($e === 'rimbalzo') newsletter_rimbalzato($id, posta_errore());
-    elseif ($e === 'temporaneo') newsletter_soft_bounce($id, posta_errore()); // 2.8.0: al quinto di fila, lista nera
+    elseif ($e === 'temporaneo') newsletter_soft_bounce($id, posta_errore(), $ultimoTentativo); // 2.8.0: al quinto messaggio di fila, lista nera
 }
 
 /** Toglie dal database le righe di questi iscritti, in tutte le tabelle della newsletter e dei flussi. */
@@ -981,7 +994,7 @@ function newsletter_invia_giro(?int $massimo = null): array {
             $c = $campagne[$r['campagna_id']] ??= newsletter_campagna((int)$r['campagna_id']);
             [$oggetto, $html, $intest] = newsletter_email($c, ['id' => $r['iscritto_id'], 'nome' => $r['nome'], 'email' => $r['email']]);
             $partita = posta_invia($r['email'], $oggetto, $html, $intest, 'campagna');
-            newsletter_esito_invio((int)$r['iscritto_id']);
+            newsletter_esito_invio((int)$r['iscritto_id'], (int)$r['tentativi'] + 1 >= 3); // 2.8.0: il terzo tentativo è il soft bounce del messaggio
             if ($partita) {
                 db()->prepare('UPDATE ' . tbl('newsletter_coda') . " SET stato = 'inviata', inviata_at = NOW() WHERE id = ?")->execute([$r['id']]);
                 db()->prepare('UPDATE ' . tbl('newsletter_campagne') . ' SET inviate = inviate + 1 WHERE id = ?')->execute([$r['campagna_id']]);

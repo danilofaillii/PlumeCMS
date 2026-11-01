@@ -185,8 +185,9 @@ const senzaTag = s => s.replace(/<style[\s\S]*?<\/style>/gi, '').replace(/<[^>]+
     invii: num("SELECT COUNT(*) FROM {p}moduli_invii WHERE email = 'anna@persona.it'"), iscritto: num("SELECT COUNT(*) FROM {p}newsletter_iscritti WHERE email = 'anna@persona.it'"),
   });
   const primaC = conta();
-  await vai('/admin/newsletter.php?scheda=iscritti&cerca=anna%40persona.it');
-  await Promise.all([p.waitForNavigation(), p.click('form:has(input[value=cancella]) button[type=submit]')]);
+  // 2.8.0: "Cancella dati" è "Elimina definitivamente" nella scheda del contatto (come Brevo); tiene l'impronta come prima.
+  await vai('/admin/newsletter-contatto.php?id=' + idA);
+  await Promise.all([p.waitForNavigation(), p.click('form:has(input[value=elimina]) button[type=submit]')]);
   const dopoC = conta();
   const impronta = crypto.createHash('sha256').update('anna@persona.it').digest('hex');
   ok('5. prima: aperture, cammini nei flussi e invii del form ci sono', primaC.eventi > 0 && primaC.corsi > 0 && primaC.invii > 0 && primaC.iscritto === 1, primaC);
@@ -199,6 +200,7 @@ const senzaTag = s => s.replace(/<style[\s\S]*?<\/style>/gi, '').replace(/<[^>]+
     const f = path.join(os.tmpdir(), 'importa-' + Date.now() + '.csv');
     fs.writeFileSync(f, righe.join('\n') + '\n');
     await vai('/admin/newsletter.php?scheda=iscritti');
+    await p.evaluate(() => { const d = document.getElementById('nlc-importa'); if (d) d.open = true; }); // 2.8.0: riquadro che si apre
     const imp = p.locator('form:has(input[value=importa])');
     await imp.locator('input[type=file]').setInputFiles(f);
     await imp.locator('select[name=lista]').selectOption(String(lista));
@@ -236,10 +238,11 @@ const senzaTag = s => s.replace(/<style[\s\S]*?<\/style>/gi, '').replace(/<[^>]+
   ok('7. il rimbalzato non riceve più i flussi', num("SELECT COUNT(*) FROM {p}newsletter_corsi c JOIN {p}newsletter_iscritti i ON i.id = c.iscritto_id WHERE i.email = 'rimbalza@persona.it' AND c.stato = 'attivo'") === 0 && per('rimbalza', prima7).length === 0);
   await vai('/admin/newsletter.php?scheda=iscritti&stato=rimbalzato');
   const tR = await p.locator('table.table').innerText().catch(() => '');
-  ok('7. Iscritti e liste: il filtro Rimbalzati mostra lo stato "rimbalzato"', /rimbalza@persona\.it/.test(tR) && /rimbalzato/.test(tR) && !/carla@persona\.it/.test(tR), tR.slice(0, 200));
+  // 2.8.0: Contatti mostra "In lista nera" con il motivo "Hard bounce".
+  ok('7. Contatti: il filtro Rimbalzati mostra lo stato "rimbalzato" (in lista nera, hard bounce)', /rimbalza@persona\.it/.test(tR) && /rimbalzato|Hard bounce/.test(tR) && !/carla@persona\.it/.test(tR), tR.slice(0, 200));
   await vai('/admin/newsletter.php?scheda=iscritti');
   const tE = await p.locator('body').innerText().catch(() => '');
-  ok('7. Iscritti e liste: gli errori temporanei di fila segnalati (avviso in cima e nella riga)', /rinvia@persona\.it\s+Rino\s+attivo\s+\d+ errori temporanei di fila/.test(tE) && /avuto tre errori temporanei di fila/.test(tE), tE.slice(tE.indexOf('rimbalzati'), tE.indexOf('rimbalzati') + 200));
+  ok('7. Iscritti e liste: gli errori temporanei di fila segnalati (avviso in cima e nella riga)', /rinvia@persona\.it\s+Rino\s+(attivo|\u2713 Sì)\s+\d+ errori temporanei di fila/.test(tE) && /avuto tre errori temporanei di fila/.test(tE), tE.slice(tE.indexOf('rimbalzati'), tE.indexOf('rimbalzati') + 200));
 
   // ===== Minori. L'errore "troppe richieste" del form con doppia conferma.
   q("UPDATE {p}moduli_invii SET ip = ''");
