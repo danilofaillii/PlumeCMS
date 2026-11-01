@@ -13,7 +13,7 @@ con Tab, campi senza un nome per il lettore di schermo, scorrimento di lato, mes
 ## Problemi trovati
 
 Gravità: alta = blocca o fa sbagliare; media = confonde o esclude chi usa la tastiera o un lettore di schermo; bassa = rifinitura.
-Commit: `74ee641` installatore, `26b0c61` editor e addon, `72d3ddd` prova e contorno della tavolozza, `ad. ultimo` testo dell'host (vedi in fondo).
+Commit: `74ee641` installatore, `26b0c61` editor e addon, `72d3ddd` prova e contorno della tavolozza, `9b7c0b2` documento e frase dell'host che non risponde.
 
 | N. | Gravità | Dove | Cosa confonde chi usa | Criterio | Correzione o proposta | Commit |
 |---|---|---|---|---|---|---|
