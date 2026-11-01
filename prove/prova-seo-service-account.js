@@ -24,7 +24,8 @@ let n = 0, ko = 0; const ok = (t, c, x = '') => { n++; if (!c) ko++; console.log
   const t = await card().innerText();
   ok('dopo il salvataggio il riquadro mostra l\'email (non solo il messaggio verde)', t.includes('Service account: prova-seo@prova-seo.iam.gserviceaccount.com') && t.includes('salvata (mascherata)'), t.slice(0, 300));
   ok('e il pulsante Prova il collegamento', await card().locator('button', { hasText: 'Prova il collegamento' }).count() === 1);
-  ok('la casella ora si chiama "Sostituisci la chiave JSON"', /Sostituisci la chiave JSON/i.test(t));
+  // UX 2026-11: con la chiave salvata passi e casella stanno nel riquadro chiuso "Rifai il collegamento o sostituisci la chiave".
+  ok('la casella ora si chiama "Sostituisci la chiave JSON" (nel riquadro che si apre)', /sostituisci la chiave/i.test(t) && await card().locator('label', { hasText: 'Sostituisci la chiave JSON' }).count() === 1);
   await p.goto(B + '/admin/seo.php?scheda=copertura', { waitUntil: 'networkidle' });
   ok('la scheda Copertura non dice più "Serve il service account"', !/Serve il service account Google/.test(await p.locator('main').innerText()));
   await p.goto(B + '/admin/seo.php?scheda=motori', { waitUntil: 'networkidle' });

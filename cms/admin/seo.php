@@ -368,7 +368,8 @@ pre.seo-pre{background:var(--codice-fondo);color:var(--codice-testo);padding:.9r
         <form method="post"><?= csrf_field() ?><input type="hidden" name="azione" value="google_sa_togli"><button class="btn btn-secondary btn-sm" type="submit" data-conferma="Togliere il service account dal database?">Rimuovi</button></form>
       </div>
     <?php endif; ?>
-    <details <?= $sa ? '' : 'open' ?>><summary style="cursor:pointer;font-size:.86rem;font-weight:600">Come si crea, passo per passo</summary>
+    <?php /* UX 2026-11 (punto 5): passi e chiave nello stesso riquadro che si apre; aperto finche il collegamento non c'e. */ ?>
+    <details class="pn-aiuto seo-sa-passi" <?= $sa ? '' : 'open' ?>><summary><?= $sa ? 'Rifai il collegamento o sostituisci la chiave' : 'Come si collega, passo per passo' ?></summary>
     <ol class="seo-passi">
       <li>Vai su <a href="https://console.cloud.google.com/projectcreate" target="_blank" rel="noopener">console.cloud.google.com/projectcreate</a> con l'account Google che ha Search Console (in alto a destra, controlla che sia il tuo) e crea un progetto: nome libero, per esempio "il-mio-sito-seo", poi <b>Crea</b>.</li>
       <li>Menu, <b>API e servizi</b>, <b>Libreria</b>: cerca e abilita <b>Google Search Console API</b> (e, solo se la vorrai usare, <b>Web Search Indexing API</b>).</li>
@@ -376,12 +377,14 @@ pre.seo-pre{background:var(--codice-fondo);color:var(--codice-testo);padding:.9r
       <li>Apri il file con un editor di testo, copia tutto e incollalo qui sotto. Salva.</li>
       <li>Vai in <a href="https://search.google.com/search-console/users" target="_blank">Search Console, Impostazioni, Utenti e autorizzazioni</a>, <b>Aggiungi utente</b>: incolla l'email del service account (quella che compare qui sopra dopo il salvataggio), autorizzazione <b>Completa</b> (serve per l'ispezione degli URL).</li>
       <li>Torna qui e premi <b>Prova il collegamento</b>.</li>
-    </ol></details>
+    </ol>
     <form method="post" style="margin-top:.6rem"><?= csrf_field() ?><input type="hidden" name="azione" value="google_sa">
       <div class="form-group"><label><?= $sa ? 'Sostituisci la chiave JSON' : 'Chiave JSON del service account' ?></label><textarea name="sa_json" rows="4" class="codice" placeholder='{"type": "service_account", "project_id": "...", "private_key": "...", "client_email": "..."}'></textarea>
         <div class="hint">Viaggia protetta (base64) fino al pannello e si salva solo nel database. Mai nel repository, mai in chat.</div></div>
-      <button class="btn btn-secondary btn-sm" type="submit">Salva la chiave</button>
+      <button class="btn <?= $sa ? 'btn-secondary' : 'btn-primary' ?> btn-sm" type="submit">Salva la chiave</button>
     </form>
+    </details>
+    <h3>La proprietà da leggere</h3>
     <form method="post" style="margin-top:1rem"><?= csrf_field() ?><input type="hidden" name="azione" value="salva_google">
       <div class="form-group"><label>Proprietà di Search Console</label><input type="text" name="google[proprieta]" value="<?= h($cfg['google']['proprieta']) ?>">
         <div class="hint">Come è scritta in Search Console: <code><?= SITO_URL ?>/</code> per una proprietà Prefisso URL, oppure <code>sc-domain:<?= h((string)preg_replace('/^www\./', '', (string)parse_url(SITO_URL, PHP_URL_HOST))) ?></code> per una proprietà Dominio.</div></div>
