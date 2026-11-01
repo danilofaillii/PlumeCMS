@@ -16,6 +16,8 @@ Il prodotto si chiama **plumeCMS** (nome scelto il 26 ottobre 2026; prima, per p
   - Meta Pixel e Clarity: un ID scritto male si dice, non si toglie in silenzio;
   - anteprima delle versioni corretta per i siti in una cartella; un nome mostrato lungo in Utenti; 31 frasi del pannello con
     gli accenti giusti; "Pagina aggiornata".
+- **Aggiornamenti più sicuri**: dopo aver scritto i file PHP il pannello dice a opcache di dimenticare le copie vecchie. Prima, nei
+  secondi subito dopo un aggiornamento, una visita poteva trovare un file nuovo insieme a uno vecchio e la pagina andava in errore.
 
 ## 2.4.0 (1 novembre 2026) - plumecms.it
 
