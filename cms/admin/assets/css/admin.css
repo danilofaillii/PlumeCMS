@@ -635,6 +635,10 @@ html .admin-content :is(input, select, textarea):disabled { opacity: .65; cursor
   .admin-content label:has(> input[type=checkbox], > input[type=radio]) { flex-wrap: nowrap; }
 }
 
+/* Le azioni rosse a forma di link fuori dalla riga delle azioni (Utenti: "esci da tutti", "azzera"): erano pulsanti grigi
+   del browser. */
+.admin-content button.ct-rosso { background: none; border: 0; padding: 0 .1rem; color: var(--errore-testo); font: inherit; font-size: .85rem; text-decoration: underline; cursor: pointer; }
+
 /* Utenti e Categorie: modulo a sinistra, elenco a destra; sotto 760 px una colonna sola. */
 .ut-griglia { display: grid; grid-template-columns: 320px minmax(0, 1fr); gap: 1.2rem; align-items: start; }
 @media (max-width: 760px) {
