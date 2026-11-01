@@ -1395,7 +1395,7 @@ campo, chi compila legge quali file può mandare e quanto possono pesare.
 
 Dove finiscono i file: in una cartella riservata, che dal sito non si apre. Li scarichi in **Newsletter e form > Invii
 dei form**: sotto i dati dell'invio c'è il link **Scarica curriculum.pdf** (con il nome del file). Se sono piccoli (fino a
-4 MB in tutto) arrivano anche allegati all'email di avviso. Se elimini l'invio, o usi **Cancella dati** per un iscritto,
+4 MB in tutto) arrivano anche allegati all'email di avviso. Se elimini l'invio, o usi **Elimina definitivamente** per un contatto,
 il file si cancella.
 
 ### Dare un file a chi compila il form
@@ -1520,32 +1520,138 @@ Excel o Numbers.
 **A cosa serve.** Scrivere alle persone che si sono iscritte, dal tuo sito, senza servizi esterni da pagare. Le email
 partono dal tuo server, a giri, grazie al cron (capitolo 26).
 
-### Gli iscritti
+### I contatti
 
-**Newsletter e form > Iscritti e liste**: l'elenco degli iscritti, le liste (Newsletter, Clienti...), chi deve ancora
-confermare e chi è uscito. Le persone si iscrivono da sole con un form (capitolo 18) e confermano con un'email
-(doppio consenso).
+Dalla 2.8.0 i contatti funzionano come in Brevo: stesse voci, stessi passi. **Newsletter e form > Contatti** ha due
+linguette, **Contatti** e **Liste**. Un contatto è una persona con la sua email: può stare in più liste o in nessuna, e per
+le email è **iscritto**, **in attesa di conferma** (non ha ancora premuto il pulsante dell'email di conferma) oppure **in
+lista nera** (non riceve più niente). Le persone si iscrivono da sole con un form (capitolo 18) e confermano con un'email
+(doppio consenso); oppure le aggiungi tu.
 
-![Iscritti e liste](immagini/manuale-uso/19-iscritti.jpg)
+![La pagina Contatti](immagini/manuale-uso/19-contatti.jpg)
 
-In alto quattro numeri: **iscritti attivi**, **in attesa di conferma**, **usciti** e **rimbalzati**. Un iscritto è
-**rimbalzato** quando il server di posta ha rifiutato il suo indirizzo per sempre (non esiste più): da quel momento non
-riceve più niente, né campagne né flussi.
+1. **Crea un contatto**, in alto: aggiunge una persona a mano (sotto, "Aggiungere un contatto").
+2. **Carica una lista**: mostra solo i contatti di quella lista (o "In nessuna lista"). Accanto: **Cerca** (un pezzo
+   dell'email, il nome, il cognome), **Stato dell'email** (Iscritti, In attesa di conferma, In lista nera con il motivo,
+   Con 3 errori di fila) e quanti contatti per pagina (50, 100 o 500). Premi **Cerca**.
+3. **Azione**: spunta i contatti nella tabella (o la casella **Tutti i contatti** del filtro, anche quelli delle altre
+   pagine), scegli l'azione e premi **Applica**: **Aggiungi a una lista**, **Togli dalle liste**, **Sposta in un'altra
+   lista** (da quella caricata), **Metti in lista nera**, **Modifica un attributo** (solo quelli Data, Sì/No e Categoria,
+   come in Brevo), **Esporta (CSV)** ed **Elimina definitivamente**. Prima di partire il pannello chiede conferma.
+4. **La tabella**: le cinque colonne di sempre (Contatto, Iscritto, In lista nera con il motivo, Data di creazione, Ultima
+   modifica). Con **Personalizza le colonne** aggiungi gli attributi che vuoi vedere (la città, la data di nascita...) e
+   li metti in ordine trascinandoli o con le frecce. La scelta resta per te.
 
-Se avevi una newsletter su Brevo (o un altro servizio), esporta i contatti in CSV e importali dal riquadro **Importa i
-contatti**. Il file vuole la colonna EMAIL; NOME, COGNOME e CONSENSO (la data del consenso) se ci sono. Chi è uscito, è
-rimbalzato o ha chiesto di cancellare i suoi dati resta fuori.
+Un clic sull'email apre la **scheda del contatto**.
 
-- **Fai partire i flussi per gli importati**: senza questa spunta, accanto a **Importa**, i flussi automatici (il
-  benvenuto, per esempio) non partono per chi entra con l'importazione. Spuntala solo se vuoi che anche loro ricevano il
-  benvenuto.
-- **Il filtro degli stati**, sopra l'elenco: oltre ad Attivi, In attesa e Usciti ci sono **Rimbalzati** e **Con 3 errori
-  di fila**: gli indirizzi che hanno dato tre errori temporanei uno dopo l'altro. Restano attivi, ma vale la pena
-  controllarli (una lettera sbagliata, una casella piena). Quando ce ne sono, lo dice anche un avviso in cima alla pagina,
-  con **Vedi chi**.
+#### Aggiungere un contatto
 
-**Cancella dati**, nella riga di un iscritto, cancella tutto quello che lo riguarda: iscrizione, aperture e clic, flussi,
-form compilati. Un'importazione non lo rimette dentro; se si iscrive di nuovo da solo e conferma, torna.
+Esempio: Anna Rossi, cliente del negozio, ti ha chiesto di ricevere le novità.
+
+![Crea un contatto](immagini/manuale-uso/19-crea.jpg)
+
+1. **Contatti > Crea un contatto**. C'è un campo per ogni attributo.
+2. Scrivi l'**Email** (obbligatoria) e, se li sai, **Nome**, **Cognome** e gli altri campi.
+3. Spunta le **liste** in cui deve stare. Se serve una lista nuova, scrivila in **Oppure crea una lista** e scegli la
+   cartella.
+4. Premi **Crea**: si apre la scheda del contatto nuovo.
+
+Se un contatto con la stessa email c'è già, il pannello apre quello: niente doppioni. Il contatto nasce iscritto: aggiungi
+solo chi ti ha dato il consenso. Un valore del tipo sbagliato (delle lettere in un numero) non si salva, senza errore.
+
+#### La scheda del contatto
+
+![La scheda del contatto](immagini/manuale-uso/19-contatto.jpg)
+
+1. Quattro linguette:
+   - **Panoramica**: le sue informazioni (si cambiano e si salvano), le **statistiche email degli ultimi 90 giorni**
+     (inviate, consegnate, aperte, cliccate con i link, hard bounce, soft bounce, segnalate come spam, disiscrizioni), i
+     form che ha compilato e l'attività recente;
+   - **Cronologia**: tutto quello che è successo, dalla più recente: email ricevute, aperture, clic, form, liste, lista
+     nera. Si filtra per tipo, per periodo e con una parola;
+   - **Liste**: spunta le liste in cui deve stare e premi **Salva le liste**;
+   - **Preferenze**: se riceve le email (Iscritto) o no (In lista nera), e il suo consenso.
+2. **Salva le informazioni** salva i campi della Panoramica.
+
+In alto a destra **Elimina definitivamente** cancella il contatto con tutti i suoi dati (attributi, cronologia,
+statistiche, invii dei form). Non si torna indietro. plumeCMS tiene solo un'impronta dell'email, che non si può leggere:
+così un'importazione non lo rimette dentro. Se si iscrive di nuovo da solo e conferma, torna.
+
+#### Gli attributi
+
+Un attributo è un campo del contatto: la città, la data di nascita, "cliente sì o no". Li crei in **Newsletter e form >
+Attributi dei contatti** e li usi nella scheda, nelle colonne della tabella e nelle email.
+
+![Crea un attributo](immagini/manuale-uso/19-attributo.jpg)
+
+1. Premi **Crea un attributo** e scegli il **Tipo**: Testo, Numero, Data, Sì/No, Categoria (una scelta fra opzioni, per
+   esempio Privato o Azienda) o Scelta multipla (più scelte).
+2. Scrivi il **Nome**, in maiuscolo, per esempio DATA_NASCITA (gli spazi diventano trattini bassi).
+3. Scrivi l'**Etichetta**, il nome in parole: Data di nascita. Per Categoria e Scelta multipla scrivi le **opzioni**, una
+   per riga.
+4. Premi **Crea l'attributo**.
+
+Le regole sono quelle di Brevo: al massimo 200 attributi; **nome e tipo non si cambiano** (si crea un attributo nuovo);
+se elimini un attributo i suoi valori spariscono da tutti i contatti. Gli attributi di sistema (EMAIL, NOME, COGNOME,
+EXT_ID, OPT_IN, DOUBLE_OPT-IN, CREATION_DATE, LAST_CHANGED) li crea plumeCMS e non si eliminano.
+
+Nelle linguette **Attributi calcolati** e **Valori globali** un attributo ha una formula, come in Brevo:
+`COUNT[READS,READS,>,NOW(-15)]` conta le email aperte da ogni contatto negli ultimi 15 giorni; un valore globale come
+`COUNT[CONTACTS]` conta gli iscritti di tutto il sito, `SUM[PUNTI]` somma un attributo numerico di tutti. Il valore si
+ricalcola da solo ogni volta. Il riquadro **Come si scrive la formula** dice tutte le parole che puoi usare.
+
+**Nelle email.** Nell'oggetto e nel testo di una campagna scrivi `{{ contact.NOME }}` e al posto suo esce il valore di
+ogni persona. Funzionano anche i filtri di Brevo: `{{ contact.NOME | default:"amico" }}` scrive "amico" quando il nome
+manca, `{{ contact.NOME | upper }}` lo scrive in maiuscolo. FIRSTNAME e LASTNAME, i nomi di Brevo, valgono come NOME e
+COGNOME. `{nome}` funziona ancora come prima.
+
+#### Liste e cartelle
+
+![Liste e cartelle](immagini/manuale-uso/19-liste.jpg)
+
+1. **Contatti > Liste**. A sinistra **Crea una lista**: nome, cartella, descrizione (facoltativa). La lista nasce vuota:
+   i contatti li aggiungi dalla linguetta Contatti (azione **Aggiungi a una lista**) o dalla scheda di ognuno.
+2. **Crea una cartella**: ogni lista sta in una cartella. Le liste che c'erano prima della 2.8.0 sono nella cartella
+   **Le tue liste**.
+
+In ogni cartella, accanto a ogni lista, **Modifica** cambia nome, descrizione e cartella; **Elimina la lista** la toglie,
+ma i contatti restano. **Elimina la cartella** toglie la cartella e le sue liste (i contatti restano), e non si torna
+indietro. La lista che il sito usa per le iscrizioni si rinomina ma non si elimina, e la sua cartella nemmeno (prima
+spostala). Al massimo 300 liste e 300 cartelle.
+
+#### La lista nera
+
+Chi è in lista nera non riceve più né campagne né flussi, ma resta fra i contatti con la sua storia. Il motivo si legge
+nella colonna **In lista nera** e nella scheda:
+
+- **si è disiscritto dal link dell'email** (o dal servizio di invio);
+- **hard bounce**: il server di posta ha rifiutato l'indirizzo, che non esiste più;
+- **cinque soft bounce di fila**: cinque email di fila non arrivate per un errore temporaneo (casella piena, server
+  occupato). Dalla terza la tabella lo segnala ("3 errori temporanei di fila"), alla quinta va in lista nera;
+- **ha segnalato un'email come spam**;
+- **messo in lista nera a mano**.
+
+Per metterci qualcuno: dalla tabella (azione **Metti in lista nera**), dalla scheda (**Preferenze > Metti in lista
+nera**), oppure scrivendo gli indirizzi nel riquadro **Metti in lista nera degli indirizzi** in fondo alla pagina Contatti
+(anche chi non è ancora un contatto).
+
+![Preferenze di un contatto in lista nera](immagini/manuale-uso/19-preferenze.jpg)
+
+1. Per toglierlo, solo uno alla volta: scheda del contatto, **Preferenze**. Leggi l'avviso: scrivere a chi si è
+   disiscritto è vietato dalla legge.
+2. Spunta **Il contatto mi ha dato di nuovo il consenso** e premi **Togli dalla lista nera e riscrivi**.
+
+Se cambi l'email di un contatto in lista nera, come in Brevo torna iscritto. Se una persona si iscrive di nuovo dal sito e
+conferma l'email, esce dalla lista nera da sola.
+
+#### Importare i contatti
+
+Se avevi una newsletter su Brevo (o un altro servizio), esporta i contatti in CSV e importali da **Contatti > Importa
+contatti** (il riquadro si apre in fondo alla pagina). Il file vuole la colonna EMAIL; NOME, COGNOME e CONSENSO (la data
+del consenso) se ci sono. Chi è in lista nera o ha chiesto di cancellare i suoi dati resta fuori.
+
+- **Fai partire i flussi per gli importati**: senza questa spunta i flussi automatici (il benvenuto, per esempio) non
+  partono per chi entra con l'importazione.
 
 ### Una campagna
 
@@ -1575,8 +1681,8 @@ A destra c'è l'anteprima dell'ultima versione salvata. Poi:
 ### Quante email partono
 
 I server condivisi lasciano partire un numero limitato di email ogni ora (a volte anche al giorno). Se il sito lo supera,
-l'hosting blocca la posta. Il limite lo scrivi in **Newsletter e form > Iscritti e liste**, linguetta **Impostazioni** (accanto a Campagne,
-Iscritti e Liste):
+l'hosting blocca la posta. Il limite lo scrivi in **Newsletter e form > Impostazioni** (la linguetta accanto a Campagne
+email):
 
 - **Email al massimo ogni ora**: chiedi all'hosting il limite del tuo piano e scrivi un numero un po' più basso;
 - **Email al massimo al giorno**: 0 vuol dire nessun limite.
@@ -1619,7 +1725,11 @@ un'email diversa a chi ha aperto e a chi no. Si disegnano su una tela con quattr
 - [ ] Ho mandato la prova a me stesso prima di ogni campagna.
 - [ ] Ogni email ha il link per uscire dalla newsletter (lo mette plumeCMS da solo).
 - [ ] I limiti di email ogni ora e al giorno sono sotto quelli dell'hosting.
-- [ ] Una volta al mese guardo i **Rimbalzati** e quelli **Con 3 errori di fila**.
+- [ ] Una volta al mese guardo in **Contatti** chi è in lista nera e quelli **Con 3 errori di fila**.
+- [ ] Ho creato gli attributi che mi servono (città, data di nascita...) e li ho provati in una campagna di prova con
+  `{{ contact.NOME_ATTRIBUTO }}`.
+- [ ] Le liste stanno in cartelle con un nome chiaro; nessuna lista vuota dimenticata.
+- [ ] Tolgo qualcuno dalla lista nera solo dalla sua scheda, e solo se mi ha dato di nuovo il consenso.
 - [ ] Se ho cambiato l'email di conferma: mi sono mandato la prova, e mi sono iscritto io una volta dal sito, premendo il
   pulsante dell'email vera.
 
@@ -2073,8 +2183,9 @@ Il sito toglie subito quella persona: continuare a scriverle rovina la reputazio
 4. Quando arriva il primo avviso, accanto al servizio compare "Ultimo avviso ..." e in fondo la tabella **Ultimi avvisi
    ricevuti** dice cosa ha fatto il sito.
 
-Chi segnala spam diventa "ha segnalato spam" in **Newsletter e form > Iscritti e liste** (filtro **Hanno segnalato
-spam**): non riceve più niente e un'importazione non lo rimette dentro. Solo una sua nuova iscrizione con la conferma lo
+Chi segnala spam va in lista nera con il motivo "ha segnalato un'email come spam" in **Newsletter e form > Contatti**
+(filtro **Stato dell'email**, In lista nera: ha segnalato un'email come spam): non riceve più niente e un'importazione non
+lo rimette dentro. Solo una sua nuova iscrizione con la conferma lo
 fa rientrare.
 
 Se usi il server SMTP dell'hosting non serve: i rifiuti immediati il pannello li vede da solo (in Da dove cominciare il

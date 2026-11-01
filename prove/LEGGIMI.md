@@ -454,6 +454,22 @@ Usa `prove/email-conferma-cli.php` (il codice della 2.6.0 copiato, per il confro
 newsletter) e `prove/tema-cli.php` (il redattore). Si rilancia sullo stesso sito: toglie prima gli iscritti `@persona.it`.
 Atteso (1 novembre 2026): 44 su 44.
 
+## prova-contatti-brevo.js (2.8.0)
+
+La base dei contatti come Brevo (fase 1 di `docs-sviluppo/brevo-confronto.md`): pagina Contatti (colonne fisse, ricerca,
+Carica una lista, filtri, Personalizza le colonne, le azioni di gruppo, "tutti i contatti del filtro"), Crea un contatto,
+scheda del contatto (Panoramica, Cronologia, Liste, Preferenze), attributi dei sei tipi più calcolati e globali, cartelle e
+liste, lista nera (a mano, togliere uno alla volta, indirizzi scritti a mano, 5 soft bounce, cambio di email), Elimina
+definitivamente con l'impronta, segnaposti `{{ contact.X }}` in una campagna, CSV con le formule neutralizzate, redattore,
+390 e 768 px. Usa `prove/contatti-cli.php` e `prove/tema-cli.php` (il redattore).
+1. Un CMS installato con il kit Attività; poi `php prove/contatti-cli.php <cartella CMS> semina` (contatti nei cinque stati di
+   prima, tre liste "PC", una campagna inviata con aperture e clic, una programmata, un flusso con un cammino in corso).
+2. `node prove/prova-contatti-brevo.js <base> <utente> <password> <cartella CMS> [cartella schermate]`.
+3. Migrazione: su un sito **2.7.0** fai il passo 1 (con il codice della 2.7.0), `contatti-cli.php conta > prima.json`, aggiorna
+   (`prova-aggiornamento.js`), `contatti-cli.php conta > dopo.json` (devono essere uguali), poi la prova con `MIGRATO=1`.
+Atteso (1 novembre 2026): 94 su 94 su un sito nuovo, 102 su 102 con `MIGRATO=1` su un sito aggiornato dalla 2.7.0. Lascia dati
+di prova: per rilanciarla, `contatti-cli.php pulisci` e di nuovo `semina`.
+
 ## prova-widget-nuovi.js (1.10.0)
 
 I sette widget per le attività (Orari di apertura, Barra contatti, Recensioni, Prima e dopo, Squadra, Slider, Eventi).

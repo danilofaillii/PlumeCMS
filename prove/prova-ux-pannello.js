@@ -16,7 +16,10 @@ const ok = (t, c, extra = '') => { n++; if (!c) ko++; if (!c || process.env.TUTT
 const PIU = ['seo.php?scheda=motori', 'seo.php?scheda=copertura', 'seo.php?scheda=prestazioni', 'seo.php?scheda=analisi', 'seo.php?scheda=globale', 'seo.php?scheda=schema',
   'seo.php?scheda=redirect', 'seo.php?scheda=registro', 'newsletter.php?scheda=liste', 'newsletter.php?scheda=impostazioni', 'account.php', 'password.php', 'newsletter-campagna.php',
   'tipo-sito.php', 'fine-articolo.php', 'sicurezza.php?scheda=impostazioni', 'sicurezza.php?scheda=registro', 'consegna.php?scheda=dominio',
-  'form.php?id=1']; // 2.7.0: la scheda di un form, con il riquadro Email di conferma
+  'form.php?id=1', // 2.7.0: la scheda di un form, con il riquadro Email di conferma
+  // 2.8.0: Contatti, scheda del contatto, Attributi dei contatti (le voci del menu ci sono già)
+  'newsletter-contatti.php?scheda=liste', 'newsletter-contatto.php?id=1', 'newsletter-contatto.php?id=1&scheda=cronologia', 'newsletter-contatto.php?id=1&scheda=liste',
+  'newsletter-contatto.php?id=1&scheda=preferenze', 'newsletter-contatto.php?id=5&scheda=preferenze', 'newsletter-contatto.php?nuovo=1', 'newsletter-attributi.php?scheda=calcolati', 'newsletter-attributi.php?scheda=globali'];
 
 // La misura dentro la pagina: tutto quello che serve sta qui, la pagina non carica niente.
 function misura() {

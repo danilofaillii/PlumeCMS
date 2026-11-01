@@ -1208,6 +1208,106 @@ echo json_encode($o);
     ok('2.7.0: (pulizia) l\'email di conferma torna com\'era', (await leggi()) === prima);
   }
 
+  // === 29. (2.8.0) Contatti, scheda del contatto, Attributi dei contatti: solo l'amministratore, solo con il token e dal
+  // pannello; nomi, etichette, opzioni e valori non diventano codice; i filtri non arrivano all'SQL; il CSV non porta formule.
+  {
+    const form = (o) => new URLSearchParams(o).toString();
+    const CT = { 'Content-Type': 'application/x-www-form-urlencoded' };
+    const PC = ADMIN + '/newsletter-contatti.php', PK = ADMIN + '/newsletter-contatto.php', PA = ADMIN + '/newsletter-attributi.php';
+    const attrPagina = async () => { await admin.p.goto(PA, { waitUntil: 'networkidle' }); return admin.p.content(); };
+    const nuovoAttr = { azione: 'crea', tipo: 'text', nome: 'SIC_ATTR' };
+    // Senza login, senza token, con Origin esterno
+    const anon = await browser.newContext();
+    const ra = await anon.request.post(PA, { form: nuovoAttr, maxRedirects: 0 });
+    const rc = await anon.request.get(PC + '?scarica=tutti', { maxRedirects: 0 });
+    ok('2.8.0: senza login niente attributi e niente CSV dei contatti', ra.status() !== 200 && rc.status() !== 200 && !(await attrPagina()).includes('SIC_ATTR') && !/text\/csv/.test(rc.headers()['content-type'] || ''), { a: ra.status(), c: rc.status() });
+    await anon.close();
+    const r1 = await post(admin.p, PA, form(nuovoAttr), CT);
+    ok('2.8.0: attributo senza token: 403', r1.status === 403 && !(await attrPagina()).includes('SIC_ATTR'), r1.status);
+    const tk = await tokenDi(admin.p, PC);
+    const est = await admin.ctx.request.post(PK, { headers: { 'Origin': 'https://evil.example' }, form: { _csrf: tk, azione: 'crea', 'a[EMAIL]': 'sic-origin@sic-prova.it' }, maxRedirects: 0 });
+    await admin.p.goto(PC + '?cerca=sic-origin', { waitUntil: 'networkidle' });
+    ok('2.8.0: Crea un contatto con Origin esterno: 403', est.status() === 403 && !(await admin.p.content()).includes('sic-origin@'), est.status());
+    if (red.dentro) {
+      const tr = await tokenDi(red.p, ADMIN + '/media.php');
+      await post(red.p, PA, form({ _csrf: tr, ...nuovoAttr }), CT);
+      await post(red.p, PK, form({ _csrf: tr, azione: 'crea', 'a[EMAIL]': 'sic-red@sic-prova.it' }), CT);
+      await post(red.p, PC, form({ _csrf: tr, azione: 'gruppo', cosa: 'elimina', tutti: '1' }), CT);
+      const vede = await red.ctx.request.get(PC + '?scarica=tutti', { maxRedirects: 0 });
+      await admin.p.goto(PC + '?cerca=sic-red', { waitUntil: 'networkidle' });
+      const nessuno = (await admin.p.content()).includes('Nessun contatto');
+      ok('2.8.0: il redattore non crea attributi né contatti, non elimina tutti, non scarica il CSV', !(await attrPagina()).includes('SIC_ATTR') && nessuno && !/text\/csv/.test(vede.headers()['content-type'] || ''), vede.status());
+    }
+    // XSS negli attributi (nome, etichetta, opzioni), nei contatti, nelle liste e nelle cartelle
+    const t2 = await tokenDi(admin.p, PA);
+    const x = '<img src=x onerror="window.__sic29=1">';
+    await post(admin.p, PA, form({ _csrf: t2, azione: 'crea', tipo: 'category', nome: 'SIC_CAT"><script>', etichetta: 'sic ' + x, opzioni: 'uno ' + x + '\ndue <script>window.__sic29=2</script>' }), CT);
+    await post(admin.p, PA, form({ _csrf: t2, azione: 'crea', tipo: 'text', nome: 'SIC_TESTO', etichetta: 'sic testo' }), CT);
+    const t3 = await tokenDi(admin.p, PC);
+    await post(admin.p, PC, form({ _csrf: t3, azione: 'cartella_crea', nome: 'sic cartella ' + x }), CT);
+    await post(admin.p, PC, form({ _csrf: t3, azione: 'lista_crea', nome: 'sic lista ' + x, descrizione: x }), CT);
+    await post(admin.p, PK, form({ _csrf: t3, azione: 'crea', 'a[EMAIL]': 'sic-xss@sic-prova.it', 'a[NOME]': 'Sic ' + x, 'a[SIC_TESTO]': '=HYPERLINK("http://cattivo.it","clic") \u{1F600} ' + x }), CT);
+    await admin.p.goto(PA, { waitUntil: 'networkidle' });
+    const pagA = await admin.p.content();
+    ok('2.8.0: il nome dell\'attributo con caratteri strani diventa SIC_CATSCRIPT (solo lettere, numeri, trattini bassi)', pagA.includes('SIC_CATSCRIPT') && !pagA.includes('SIC_CAT"'));
+    await admin.p.goto(PC + '?cerca=sic-xss', { waitUntil: 'networkidle' });
+    const idx = await admin.p.evaluate(() => { const a = document.querySelector('a[href*="newsletter-contatto.php?id="]'); return a ? +a.href.split('id=')[1] : 0; });
+    const visti = [];
+    for (const u of [PA, PC, PC + '?scheda=liste', PK + '?id=' + idx, PK + '?id=' + idx + '&scheda=liste', PK + '?id=' + idx + '&scheda=cronologia', PK + '?nuovo=1']) {
+      await admin.p.goto(u, { waitUntil: 'networkidle' });
+      if (await admin.p.evaluate(() => window.__sic29 !== undefined)) visti.push(u);
+    }
+    ok('2.8.0: etichette, opzioni, nomi di liste e cartelle e valori con HTML: solo testo in tutte le pagine', idx > 0 && visti.length === 0, visti);
+    // Il valore con l'emoji si salva (tabella a 3 byte, entità) e torna come carattere vero
+    await admin.p.goto(PK + '?id=' + idx, { waitUntil: 'networkidle' });
+    const valore = await admin.p.inputValue('#nlk-sic-testo').catch(() => '');
+    ok('2.8.0: un valore con un\'emoji si salva e torna intero', valore.includes('\u{1F600}') && valore.startsWith('=HYPERLINK'), valore.slice(0, 60));
+    // CSV con le formule neutralizzate
+    const t4 = await tokenDi(admin.p, PC + '?cerca=sic-xss');
+    const csv = await admin.ctx.request.post(PC, { headers: { 'Origin': BASE.replace(/(https?:\/\/[^/]+).*/, '$1') }, form: { _csrf: t4, azione: 'gruppo', cosa: 'esporta', cerca: 'sic-xss', tutti: '1' }, maxRedirects: 0 });
+    const testoCsv = await csv.text();
+    ok('2.8.0: Esporta: le celle che cominciano con = escono con l\'apostrofo davanti', /text\/csv/.test(csv.headers()['content-type'] || '') && testoCsv.includes("'=HYPERLINK") && !/;=HYPERLINK/.test(testoCsv), testoCsv.split('\n')[1]);
+    // Iniezioni nei filtri e nei nomi degli attributi
+    const strani = ["x' OR '1'='1", "1 OR 1=1", "motivo:x') OR 1=1 -- ", "-1 UNION SELECT password FROM users"];
+    let rotte = [];
+    for (const s of strani) {
+      const r = await admin.ctx.request.get(PC + '?cerca=' + encodeURIComponent(s) + '&stato=' + encodeURIComponent(s) + '&lista=' + encodeURIComponent(s) + '&per=' + encodeURIComponent(s) + '&pag=' + encodeURIComponent(s));
+      const t = await r.text();
+      if (r.status() !== 200 || /SQLSTATE|PDOException|Fatal error|sic-xss@/.test(t) || !/Nessun contatto/.test(t)) rotte.push([s, r.status()]);
+    }
+    ok('2.8.0: ricerca, stato, lista e pagina con SQL: nessun errore, nessun contatto in più (la ricerca è solo testo)', rotte.length === 0, rotte);
+    const t5 = await tokenDi(admin.p, PK + '?id=' + idx);
+    await post(admin.p, PK, form({ _csrf: t5, azione: 'salva', id: String(idx), "a[NOME' OR 1=1 -- ]": 'iniettato', 'a[EMAIL]': 'sic-xss@sic-prova.it' }), CT);
+    await post(admin.p, PC, form({ _csrf: t5, azione: 'colonne', 'colonne[]': 'id) FROM users; --' }), CT);
+    await admin.p.goto(PC + '?cerca=sic-xss', { waitUntil: 'networkidle' });
+    const dopo = await admin.p.content();
+    ok('2.8.0: un nome di attributo inventato nel modulo o nelle colonne si ignora', !dopo.includes('iniettato') && !/FROM users/.test(dopo) && !/SQLSTATE|Fatal/.test(dopo));
+    const t6 = await tokenDi(admin.p, PA + '?scheda=calcolati');
+    await post(admin.p, PA, form({ _csrf: t6, azione: 'crea', scheda: 'calcolati', nome: 'SIC_FORMULA', formula: "COUNT[READS];DELETE FROM users" }), CT);
+    await post(admin.p, PA, form({ _csrf: t6, azione: 'crea', scheda: 'globali', nome: 'SIC_SOMMA', formula: "SUM[EMAIL]" }), CT);
+    await admin.p.goto(PA + '?scheda=calcolati', { waitUntil: 'networkidle' });
+    const calc = await admin.p.content();
+    await admin.p.goto(PA + '?scheda=globali', { waitUntil: 'networkidle' });
+    ok('2.8.0: formule con SQL o SUM su un testo: rifiutate', !calc.includes('SIC_FORMULA') && !(await admin.p.content()).includes('SIC_SOMMA'));
+    // Pulizia: contatto, attributi, lista, cartella di prova
+    const t7 = await tokenDi(admin.p, PK + '?id=' + idx);
+    await post(admin.p, PK, form({ _csrf: t7, azione: 'elimina', id: String(idx) }), CT);
+    await admin.p.goto(PA, { waitUntil: 'networkidle' });
+    for (const n of ['SIC_CATSCRIPT', 'SIC_TESTO']) {
+      const id = await admin.p.evaluate((n) => { const tr = [...document.querySelectorAll('tr')].find(r => r.querySelector('code') && r.querySelector('code').textContent === n); const i = tr && tr.querySelector('input[name=id]'); return i ? i.value : ''; }, n);
+      if (id) await post(admin.p, PA, form({ _csrf: await tokenDi(admin.p, PA), azione: 'elimina', id }), CT);
+    }
+    await admin.p.goto(PC + '?scheda=liste', { waitUntil: 'networkidle' });
+    const ids = await admin.p.evaluate(() => {
+      const l = [...document.querySelectorAll('form')].filter(f => f.querySelector('input[name=azione][value=lista_elimina]') && /sic lista/.test(f.getAttribute('data-conferma') || '')).map(f => f.querySelector('input[name=id]').value);
+      const c = [...document.querySelectorAll('form')].filter(f => f.querySelector('input[name=azione][value=cartella_elimina]') && /sic cartella/.test(f.getAttribute('data-conferma') || '')).map(f => f.querySelector('input[name=id]').value);
+      return { l, c };
+    });
+    for (const id of ids.l) await post(admin.p, PC, form({ _csrf: await tokenDi(admin.p, PC + '?scheda=liste'), azione: 'lista_elimina', id }), CT);
+    for (const id of ids.c) await post(admin.p, PC, form({ _csrf: await tokenDi(admin.p, PC + '?scheda=liste'), azione: 'cartella_elimina', id }), CT);
+    ok('2.8.0: (pulizia) contatto, attributi, lista e cartella di prova tolti', !(await attrPagina()).includes('SIC_'));
+  }
+
   // === pulizia: elimina il redattore di prova
   {
     await admin.p.goto(ADMIN + '/utenti.php', { waitUntil: 'networkidle' });

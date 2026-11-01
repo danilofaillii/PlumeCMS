@@ -24,14 +24,19 @@ $menu = [
     ['Media', 'media.php', 'immagine', $qui === 'media.php'],
     $sonoAdminMenu ? ['Download', 'scaricabili.php', 'download', $qui === 'scaricabili.php'] : null, // download manager (1.2.4)
     $sonoAdminMenu ? ['Utenti', 'utenti.php', 'utenti', $qui === 'utenti.php'] : null,
-    ['Newsletter e form', 'newsletter.php', 'email', in_array($qui, ['newsletter.php', 'newsletter-campagna.php', 'newsletter-flussi.php', 'newsletter-statistiche.php', 'form-submissions.php', 'form.php'], true), array_values(array_filter([
-        ['Campagne', 'newsletter.php', in_array($qui, ['newsletter.php', 'newsletter-campagna.php'], true) && !in_array($_GET['scheda'] ?? '', ['iscritti', 'liste', 'impostazioni'], true)],
-        ['Iscritti e liste', 'newsletter.php?scheda=iscritti', $qui === 'newsletter.php' && in_array($_GET['scheda'] ?? '', ['iscritti', 'liste', 'impostazioni'], true)],
+    // 2.8.0: il menu come Brevo (docs-sviluppo/brevo-confronto.md, capitolo 2): Contatti (con Liste), poi Campagne email,
+    // Form, Invii dei form, Flussi automatici, Statistiche, Impostazioni (con Attributi dei contatti). Le voci delle fasi
+    // dopo (Segmenti, Modelli, Automazioni) arrivano con le loro pagine.
+    ['Newsletter e form', 'newsletter-contatti.php', 'email', in_array($qui, ['newsletter.php', 'newsletter-campagna.php', 'newsletter-flussi.php', 'newsletter-statistiche.php', 'form-submissions.php', 'form.php', 'newsletter-contatti.php', 'newsletter-contatto.php', 'newsletter-attributi.php'], true), array_values(array_filter([
+        ['Contatti', 'newsletter-contatti.php', in_array($qui, ['newsletter-contatti.php', 'newsletter-contatto.php'], true)],
+        ['Campagne email', 'newsletter.php', in_array($qui, ['newsletter.php', 'newsletter-campagna.php'], true) && ($_GET['scheda'] ?? '') !== 'impostazioni'],
         // 1.9.1, richiesta di Danilo: Form sta qui, accanto ai suoi invii (prima era una voce a sé). Solo amministratore.
         $sonoAdminMenu ? ['Form', 'form.php', $qui === 'form.php'] : null,
         ['Invii dei form', 'form-submissions.php', $qui === 'form-submissions.php'],
         ['Flussi automatici', 'newsletter-flussi.php', $qui === 'newsletter-flussi.php'],
         ['Statistiche', 'newsletter-statistiche.php', $qui === 'newsletter-statistiche.php'],
+        ['Impostazioni', 'newsletter.php?scheda=impostazioni', $qui === 'newsletter.php' && ($_GET['scheda'] ?? '') === 'impostazioni'],
+        ['Attributi dei contatti', 'newsletter-attributi.php', $qui === 'newsletter-attributi.php'],
     ]))],
     // 1.5.0: email del mattino, calendario e testi dei social (includes/social.php). Solo amministratore.
     $sonoAdminMenu ? ['Social', 'social.php', 'megafono', $qui === 'social.php', [

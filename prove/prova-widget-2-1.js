@@ -254,7 +254,9 @@ const domani = (g = 1) => { const d = new Date(Date.now() + g * 86400000); retur
   const i2 = cli('invii', '1')[0];
   ok('cancella dati: prima, l\'invio con il file c\'è', i2.email === 'cancella@persona.it' && cli('cartella-file').file.includes(i2.allegati[0].file));
   await p.goto(B + '/admin/newsletter.php?scheda=iscritti&cerca=cancella%40persona.it', { waitUntil: 'networkidle' });
-  await Promise.all([p.waitForNavigation(), p.locator('button', { hasText: 'Cancella dati' }).first().click()]);
+  // 2.8.0: "Cancella dati" è "Elimina definitivamente" nella scheda del contatto (come Brevo).
+  await Promise.all([p.waitForNavigation(), p.locator('a', { hasText: 'cancella@persona.it' }).first().click()]);
+  await Promise.all([p.waitForNavigation(), p.locator('button', { hasText: 'Elimina definitivamente' }).first().click()]);
   ok('cancella dati: via l\'invio e il file', cli('invii', '1')[0].id !== i2.id && !cli('cartella-file').file.includes(i2.allegati[0].file));
   // Il form torna com'era.
   await p.goto(B + '/admin/form.php?id=' + idForm, { waitUntil: 'networkidle' });
