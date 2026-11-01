@@ -118,6 +118,9 @@
   }
   function avvisoH1(ha) {
     var n = $('#ed-titolo-pagina');
+    // 2.5.x (controllo UX): header, footer e riquadro di fine articolo non hanno (e non devono avere) un H1: niente avviso.
+    if (D.modello) ha = true;
+    var av = $('#ed-avviso-h1'); if (av) av.hidden = !!ha;
     n.title = ha ? '' : 'La pagina non ha un titolo H1: aggiungi un widget Titolo con livello H1 (o un\'Apertura).';
     n.style.color = ha ? '' : 'var(--attenzione-testo)';
   }
@@ -213,7 +216,9 @@
     Object.keys(gruppi).forEach(function (g) {
       html += '<div class="ed-gruppo-widget"><h4>' + g + '</h4><div class="ed-griglia-widget">';
       gruppi[g].forEach(function (t) {
-        html += '<div class="ed-widget-voce" draggable="true" data-tipo="' + t + '" data-nome="' + DEF[t].etichetta.toLowerCase() + '"><i>' + DEF[t].icona + '</i>' + DEF[t].etichetta + '</div>';
+        // 2.5.x (controllo UX): si raggiunge con Tab e si aggiunge con Invio o Spazio, come con il clic. Resta un div con
+        // role=button: un <button> trascinabile in Firefox non parte.
+        html += '<div class="ed-widget-voce" role="button" tabindex="0" draggable="true" data-tipo="' + t + '" data-nome="' + DEF[t].etichetta.toLowerCase() + '"><i aria-hidden="true">' + DEF[t].icona + '</i>' + DEF[t].etichetta + '</div>';
       });
       html += '</div></div>';
     });
@@ -221,10 +226,14 @@
     $$('.ed-widget-voce').forEach(function (v) {
       v.addEventListener('dragstart', function (e) { e.dataTransfer.setData('text/ed-widget', v.dataset.tipo); e.dataTransfer.effectAllowed = 'copy'; });
       v.addEventListener('click', function () { aggiungiWidget(v.dataset.tipo); });
+      v.addEventListener('keydown', function (e) { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); aggiungiWidget(v.dataset.tipo); } });
     });
     $('#ed-cerca-widget').addEventListener('input', function () {
       var q = this.value.trim().toLowerCase();
       $$('.ed-widget-voce').forEach(function (v) { v.classList.toggle('ed-nascosto', q !== '' && v.dataset.nome.indexOf(q) < 0 && v.dataset.tipo.indexOf(q) < 0); });
+      // i gruppi rimasti vuoti si nascondono, e se non resta niente lo si dice
+      $$('.ed-gruppo-widget').forEach(function (g) { g.hidden = !$$('.ed-widget-voce:not(.ed-nascosto)', g).length; });
+      $('#ed-widget-nessuno').hidden = !!$$('.ed-widget-voce:not(.ed-nascosto)').length;
     });
   }
 
@@ -311,7 +320,7 @@
   }
 
   function apriPannello(nome) {
-    $$('.ed-schede-pannello button').forEach(function (b) { b.classList.toggle('attivo', b.dataset.pannello === nome); });
+    $$('.ed-schede-pannello button').forEach(function (b) { b.classList.toggle('attivo', b.dataset.pannello === nome); b.setAttribute('aria-pressed', b.dataset.pannello === nome ? 'true' : 'false'); });
     $$('.ed-pannello-vista').forEach(function (v) { v.hidden = v.id !== 'ed-pannello-' + nome; });
   }
   $$('.ed-schede-pannello button').forEach(function (b) { b.addEventListener('click', function () { apriPannello(b.dataset.pannello); }); });
@@ -837,9 +846,9 @@
   function campoImmagine(v, salva) {
     var c = mk('div', 'ed-riga-immagine');
     var img = document.createElement('img'); img.src = v || ''; img.alt = ''; img.hidden = !v;
-    var u = document.createElement('input'); u.type = 'url'; u.value = v || ''; u.placeholder = 'Indirizzo dell\'immagine';
-    var b = mk('button', 'ed-b ed-b-piccolo', 'Scegli'); b.type = 'button';
-    var x = mk('button', 'ed-b ed-b-piccolo', '×'); x.type = 'button'; x.title = 'Togli l\'immagine'; x.hidden = !v;
+    var u = document.createElement('input'); u.type = 'url'; u.value = v || ''; u.placeholder = 'Indirizzo dell\'immagine'; u.setAttribute('aria-label', 'Indirizzo dell\'immagine');
+    var b = mk('button', 'ed-b ed-b-piccolo', 'Scegli'); b.type = 'button'; b.title = 'Scegli un\'immagine dai Media o caricane una';
+    var x = mk('button', 'ed-b ed-b-piccolo', '×'); x.type = 'button'; x.title = 'Togli l\'immagine'; x.setAttribute('aria-label', 'Togli l\'immagine'); x.hidden = !v;
     u.addEventListener('input', function () { salva(u.value.trim()); img.src = u.value; img.hidden = !u.value; x.hidden = !u.value; });
     b.addEventListener('click', function () { apriMedia(function (url) { u.value = url; img.src = url; img.hidden = false; x.hidden = false; salva(url); }); });
     x.addEventListener('click', function () { u.value = ''; img.hidden = true; x.hidden = true; salva(''); });
@@ -1096,7 +1105,7 @@
   $$('.ed-misure button').forEach(function (b) {
     b.addEventListener('click', function () {
       misura = b.dataset.misura;
-      $$('.ed-misure button').forEach(function (x) { x.classList.toggle('attivo', x === b); });
+      $$('.ed-misure button').forEach(function (x) { x.classList.toggle('attivo', x === b); x.setAttribute('aria-pressed', x === b ? 'true' : 'false'); });
       $('#ed-tela').dataset.misura = misura;
       mostraControlli();
     });
@@ -1170,7 +1179,7 @@
       D.titolo = campi.titolo; D.slug = j.slug; D.percorso = j.percorso; D.stato = campi.stato;
       if (fImp.header_id) { D.headerId = Number(campi.header_id); D.footerId = Number(campi.footer_id); disegna(); }
       D.seo = { titolo: campi.seo_titolo, descrizione: campi.seo_descrizione, robots: campi.robots };
-      $('#ed-titolo-pagina').textContent = D.titolo; $('#ed-percorso').textContent = D.percorso; if (!D.contenitore) $('#ed-vedi').href = D.percorso + (D.pubblicato === false ? '?preview=1' : '');
+      $('#ed-titolo-pagina').textContent = D.titolo; if (!D.modello) $('#ed-percorso').textContent = D.percorso; if (!D.contenitore) $('#ed-vedi').href = D.percorso + (D.pubblicato === false ? '?preview=1' : '');
       dImp.close();
     }).catch(function (er) { var p = $('#ed-impostazioni-errore'); p.textContent = er.message; p.hidden = false; });
   });
@@ -1274,6 +1283,25 @@
   });
   $('#ed-media-usa-url').addEventListener('click', function () { var u = $('#ed-media-url').value.trim(); if (u) scegliMedia(u); });
   $$('[data-chiudi]').forEach(function (b) { b.addEventListener('click', function () { b.closest('dialog').close(); }); });
+
+  // ------------------------------------------------------------ nomi dei campi (2.5.x, controllo UX)
+  // Molti controlli hanno il nome scritto sopra in un div (.ed-etichetta), non in una <label>: chi usa un lettore di
+  // schermo sentiva solo "casella di testo". Ogni campo senza nome prende quello della sua etichetta (l'unità e i due
+  // campi di un cursore lo dicono). Niente cambia a vedersi.
+  function nominaCampi(radice) {
+    $$('input:not([type=hidden]), select, textarea', radice).forEach(function (c) {
+      if (c.getAttribute('aria-label') || c.getAttribute('aria-labelledby') || (c.labels && c.labels.length) || c.closest('label')) return;
+      var box = c.closest('.ed-controllo'); if (!box) return;
+      var et = box.querySelector('.ed-etichetta'); if (!et) return;
+      var nome = ''; et.childNodes.forEach(function (n) { if (n.nodeType === 3) nome += n.textContent; }); nome = nome.trim();
+      if (!nome) return;
+      if (c.classList.contains('ed-unita')) nome += ': unità di misura';
+      else if (c.type === 'range') nome += ' (cursore)';
+      else if (c.type === 'color') nome += ': scegli il colore';
+      c.setAttribute('aria-label', nome);
+    });
+  }
+  new MutationObserver(function () { nominaCampi($('#ed-controlli')); }).observe($('#ed-controlli'), { childList: true, subtree: true });
 
   // ------------------------------------------------------------ avvio
   disegnaElencoWidget();

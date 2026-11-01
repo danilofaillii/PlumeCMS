@@ -1,3 +1,5 @@
+/* 2.5.x (controllo UX): il bianco su --viola pieno faceva 3,96 a 1 (sotto 4,5): numero del carrello, filtro scelto e
+   bollino hanno il fondo viola scurito di un quinto (5,5 a 1). Il primo background resta per i browser senza color-mix. */
 /* Vetrina (addon, 2.0.0): le pagine del negozio e i widget Prodotti e Carrello. Colori e caratteri dalle variabili del
    sito (sito.css, Stile del sito, temi): il negozio prende l'aspetto del sito da solo. */
 [hidden]{display:none!important}
@@ -9,10 +11,10 @@
 .vt-testa-piccola{align-items:center}
 .vt-intro{color:var(--testo-2);max-width:60ch;margin:0}
 .vt-al-carrello,.vt-carrello-w{display:inline-flex;align-items:center;gap:8px;text-decoration:none;color:var(--testo);border:1px solid var(--bordo);border-radius:999px;padding:8px 14px;font-weight:600;background:var(--vetro)}
-.vt-conta{display:inline-grid;place-items:center;min-width:1.6em;height:1.6em;padding:0 .35em;border-radius:999px;background:var(--viola);color:#fff;font-size:.8em}
+.vt-conta{display:inline-grid;place-items:center;min-width:1.6em;height:1.6em;padding:0 .35em;border-radius:999px;background:var(--viola);background:color-mix(in srgb,var(--viola) 82%,#000);color:#fff;font-size:.8em}
 .vt-filtri{display:flex;gap:8px;flex-wrap:wrap;margin:8px 0 12px}
 .vt-filtri a{text-decoration:none;color:var(--testo-2);border:1px solid var(--bordo);border-radius:999px;padding:6px 14px;font-size:14px}
-.vt-filtri a[aria-current]{background:var(--viola);border-color:var(--viola);color:#fff}
+.vt-filtri a[aria-current]{background:var(--viola);background:color-mix(in srgb,var(--viola) 82%,#000);border-color:var(--viola);color:#fff}
 .vt-ordina{margin:0 0 20px;font-size:14px;color:var(--testo-2)}
 .vt-ordina select{margin-left:6px;padding:6px 10px;border-radius:8px;border:1px solid var(--bordo);background:var(--bg);color:var(--testo);font:inherit}
 .vt-griglia{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,220px),1fr));gap:20px}
@@ -21,7 +23,7 @@
 .vt-foto img{width:100%;height:100%;object-fit:cover;display:block;transition:transform .3s}
 .vt-scheda a:hover .vt-foto img{transform:scale(1.04)}
 .vt-senza-foto{display:block;width:100%;height:100%;min-height:120px;background:repeating-linear-gradient(135deg,var(--vetro),var(--vetro) 12px,var(--vetro-2) 12px,var(--vetro-2) 24px)}
-.vt-bollino{position:absolute;top:10px;left:10px;background:var(--viola);color:#fff;font-size:12px;font-weight:700;padding:4px 10px;border-radius:999px}
+.vt-bollino{position:absolute;top:10px;left:10px;background:var(--viola);background:color-mix(in srgb,var(--viola) 82%,#000);color:#fff;font-size:12px;font-weight:700;padding:4px 10px;border-radius:999px}
 .vt-bollino-esaurito{background:#555}
 .vt-esaurito .vt-foto img{filter:grayscale(.8);opacity:.7}
 .vt-nome{font-weight:700;font-size:17px;overflow-wrap:anywhere}
