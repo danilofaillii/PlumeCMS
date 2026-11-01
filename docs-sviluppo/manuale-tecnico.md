@@ -3864,6 +3864,52 @@ Il resoconto completo, con le prove prima e dopo, è in `docs-sviluppo/audit-202
 
 ---
 
+## 40. UX di novembre 2026: editor, installatore, addon, sito; Download e logo (dalla 2.6.0)
+
+Il pannello (riquadri, campi, conferme, tabelle al telefono, Impostazioni a schede, bozze vuote) è al capitolo 6 e al 20; le
+regole valgono per tutto il CMS e sono in `docs-sviluppo/regole-interfaccia.md`. I documenti del controllo:
+`docs-sviluppo/ux-ui-2026-11-pannello.md` e `docs-sviluppo/ux-ui-2026-11-editor-addon-sito.md`. Prove: `prove/prova-ux-pannello.js`,
+`prove/prova-ux-editor.js`, `prove/prova-bozze-vuote.js`, `prove/prova-download-limite.js`.
+
+**Installatore** (`install/index.php`): `inst_errore_db()` (riga 82) traduce i codici 1045, 1044, 2002, 2003, 2006, 2013 in una
+frase con il campo da controllare, il testo del server resta in fondo fra parentesi. `inst_campo()` (riga 118) collega l'aiuto al campo
+(`aria-describedby`, id `<campo>-aiuto`) e legge `$errori['<campo>']`: il campo sbagliato ha `.campo.sbagliato`, `aria-invalid` e
+`.errore-campo` sotto; in cima resta il riassunto con `role="alert"`. Il pulsante del passo 4 ha due testi, `.testo-installa` e
+`.testo-domande`, scelti dal CSS con `:has()` secondo la carta (Su misura dice "Avanti: le quattro domande").
+
+**Editor** (`admin/editor.php`, `admin/assets/editor/editor.js`): `nominaCampi()` (riga 1311) dà un nome ai campi senza etichetta
+con un `MutationObserver` su `#ed-controlli`; `cursoriVuoti()` (riga 1327) mette "come il sito" nella casella vuota e il cursore
+grigio; `etichettaMisura()` (riga 611) scrive "solo tablet" o "solo telefono" accanto al pallino dello schermo. Widget della tavolozza
+con `role="button"` e `tabindex` (un `<button>` trascinabile in Firefox non parte); schede del pannello `role=tablist/tab/tabpanel`
+con frecce, Inizio e Fine; `#ed-avviso-h1` scritto come frase e spento per i modelli; `.ed-solo-computer` sotto 760 px;
+`#ed-widget-nessuno` per la ricerca vuota; `.ed-vuoto` nell'anteprima dei widget `eventi_iscrizione` e `corsi_elenco` senza dati
+(mai sul sito).
+
+**Addon**: Vetrina (`addon/vetrina/assets/vetrina.css`) con `.vt-conta`, `.vt-filtri a[aria-current]` e `.vt-bollino` a 5,5 di
+contrasto; Agenda delle Prenotazioni con "Settimana prima/dopo"; Copia altrove con un solo pulsante di salvataggio
+(`.ca-salvataggio`) e i pulsanti spenti spiegati in `#ca-spenti-perche`.
+
+**Sito** (cambi voluti, foto spiegate nel documento del controllo): `sito.css` `.card-meta` con `--testo-2`; `vista_cerca_niente()`
+(`sito/viste.php`, riga 507) per la ricerca senza risultati; `moduli.js` chiama `checkValidity()` prima del captcha (il server non
+cambia: il captcha resta obbligatorio).
+
+**Invii troppo grandi** (`admin/includes/auth.php`): `pannello_ini_byte()` (riga 275), `pannello_limite_caricamento()` (riga 282,
+il minore fra `upload_max_filesize` e `post_max_size`), `pannello_peso()` (riga 288). Un POST oltre `post_max_size` arriva a PHP
+senza campi né file: `verify_csrf()` (riga 311) chiama prima `pannello_invio_troppo_grande()` (riga 299), che con `$_POST` e `$_FILES`
+vuoti e `CONTENT_LENGTH` oltre il limite scrive un flash in parole e torna alla pagina con un 303. Nessuna azione parte perché nessun
+campo è arrivato; prima la risposta era "Token CSRF non valido". Nel browser, `data-peso-massimo="<byte>"` su un campo file
+(`pannello.js`, `controllaPeso()`) dice il problema sotto il campo (`.errore-campo`, `aria-invalid`) e blocca l'invio con
+`setCustomValidity()`: c'è in Download, Aggiornamenti e Media.
+
+**Download** (`admin/scaricabili.php`): i giorni dei link personali stanno nel riquadro `#dl-riservati` ("Link dei file
+riservati", riga 152), fuori dal form di caricamento; prima un secondo "Salva" sotto "Carica" salvava i giorni e perdeva il file
+scelto (segnalazione di Danilo, 1 novembre 2026).
+
+**Logo** (`admin/design.php`, riga 302): nella scheda Identità del sito si cercano i widget `logo_sito` dei modelli header e footer
+(fuori dal cestino) con `modo` diverso da `testo` e `immagine` scritta: se ce ne sono, l'avviso `#dg-logo-widget` dice in quali
+modelli il logo scelto non compare, con il link all'editor. Il widget usa il logo dello Stile solo con l'immagine vuota
+(`includes/editor-widget-tema.php`). Il sito di plumeCMS (`sito-plumecms/costruisci.py`) dalla 2.6.0 mette il logo solo nello Stile.
+
 ## Appendice A. Dove i documenti vecchi non corrispondono al codice
 
 I documenti di `docs-sviluppo/` (fino alla 1.6.4 in `docs/`) sono nati quando il CMS era il pannello di un solo sito.

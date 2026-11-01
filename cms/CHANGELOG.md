@@ -2,6 +2,43 @@
 
 Il prodotto si chiama **plumeCMS** (nome scelto il 26 ottobre 2026; prima, per poche ore, "CarbonaraCMS", e ancora prima il provvisorio "Officina": gli zip vecchi si chiamavano `officina-*` e `carbonaracms-*`).
 
+## 2.6.0 (1 novembre 2026) - Un pannello più chiaro
+
+Controllo di UX e UI di tutto il CMS chiesto da Danilo ("i titoli delle sezioni devono avere uno sfondo diverso"), fatto da due
+esperti con le regole scritte in `docs-sviluppo/regole-interfaccia.md` e i dettagli in `docs-sviluppo/ux-ui-2026-11-*.md`.
+
+- **Pannello più leggibile, in tutti e quattro gli aspetti**: i titoli dei riquadri stanno in una fascia con un fondo loro; le
+  etichette dei campi non sembrano più titoli; campi di testo, aree e tendine hanno un bordo che si vede (almeno 3 a 1, prima 1,3)
+  e un contorno chiaro quando ci si scrive; "Sfoglia" è un pulsante vero dentro un riquadro tratteggiato; il contorno del fuoco
+  da tastiera si vede ovunque, anche nelle pagine degli addon.
+- **Le conferme** ("Eliminare...?") sono una finestra del pannello, con il pulsante rosso quando l'azione cancella qualcosa.
+- **Al telefono** ogni tabella del pannello diventa una scheda per riga; Utenti e Categorie su una colonna.
+- **Impostazioni** ha due schede, Configurazione email e **Sito** (indirizzo del sito, sito pubblico, frase in fondo), con la
+  voce Sito nel menu. I vecchi indirizzi portano alla scheda giusta.
+- **Temi**: il pulsante si chiama "Usa questo tema" (prima "Attiva", accanto al distintivo "ATTIVO").
+- **Articoli**: il filtro "Pillar e cluster" compare solo se usi i pillar; la colonna si chiama "Parole e parola chiave".
+  Le bozze nate aprendo "Aggiungi articolo" e mai scritte vanno da sole nel cestino dopo un giorno (giro del mattino del cron,
+  con la riga nel Log cron). Una bozza con qualcosa dentro non si tocca mai.
+- **Dashboard**: "Stai provando il sito" è un riquadro che si chiude e resta chiuso dopo la prima visita.
+- **Download**: i giorni dei link dei file riservati stanno in un riquadro loro (prima, sotto Carica, un secondo "Salva" salvava
+  i giorni e perdeva il file scelto); un file più grande del limite del server si dice sotto il campo appena lo scegli, e un invio
+  troppo grande dà un messaggio in parole invece di "Token CSRF non valido" (anche in Aggiornamenti e Media). L'aiuto lungo si apre a richiesta.
+- **Stile del sito > Identità**: se il widget Logo del sito di un header o footer ha un'immagine sua, il pannello lo dice, con il
+  link al modello (prima il logo cambiato qui non compariva e non si capiva perché).
+- **SEO**: i passi del service account di Google stanno in un riquadro che si apre. **Utenti**: ultimo accesso in parole.
+  **Accesso**: "Nome utente o password non corretti. Controlla le maiuscole e riprova."
+- **Editor**: i widget si aggiungono anche con Tab e Invio; le schede del pannello si usano con le frecce; un cursore vuoto dice
+  "come il sito" invece di sembrare a zero; accanto al pallino dello schermo compare "solo tablet" o "solo telefono"; i widget
+  degli addon senza dati mostrano nella tela dove aggiungerli (solo nell'editor); al telefono l'editor dice che si usa da
+  computer o tablet.
+- **Installatore**: errori del database in parole semplici e sotto il campo sbagliato; con la carta Su misura il pulsante dice
+  "Avanti: le quattro domande".
+- **Addon**: Agenda con "Settimana prima" e "Settimana dopo"; Vetrina con carrello e filtri leggibili; Copia altrove con un solo
+  pulsante di salvataggio e "Manda una copia adesso" spento finché la destinazione non è collegata.
+- **Sul sito (cambi voluti)**: la data sotto i titoli delle schede del blog e dei risultati della ricerca è più leggibile in tutti
+  gli undici temi (in Bottega da 3,6 a 7,1 di contrasto); la ricerca senza risultati propone una parola più corta e le pagine
+  principali; nei form i campi obbligatori si controllano prima di "Sono una persona". Il resto del sito è identico al pixel.
+
 ## 2.5.0 (1 novembre 2026) - Otto temi nuovi e un audit
 
 - **Otto temi nuovi** in Editor > Temi (richiesta di Danilo): le quattro stagioni **Estate**, **Inverno**, **Autunno**,
