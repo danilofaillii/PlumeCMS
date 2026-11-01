@@ -2,6 +2,27 @@
 
 Il prodotto si chiama **plumeCMS** (nome scelto il 26 ottobre 2026; prima, per poche ore, "CarbonaraCMS", e ancora prima il provvisorio "Officina": gli zip vecchi si chiamavano `officina-*` e `carbonaracms-*`).
 
+## 2.8.0 (1 novembre 2026) - I contatti come in Brevo
+
+Prima fase del piano per rendere "Newsletter e form" uguale a Brevo (richiesta di Danilo; piano in `docs-sviluppo/brevo-confronto.md`).
+
+- **Menu nuovo**: Contatti, Campagne email, Form, Invii dei form, Flussi automatici, Statistiche, Impostazioni, Attributi dei
+  contatti. I vecchi indirizzi Iscritti e Liste portano alle pagine nuove.
+- **Contatti**: elenco con le colonne che scegli tu (Personalizza le colonne, anche con la tastiera), ricerca, filtro per lista e
+  per stato, 50, 100 o 500 per pagina; selezione delle righe o di tutti quelli del filtro; azioni di gruppo: aggiungi a una lista,
+  togli, sposta, metti in lista nera, modifica un attributo, esporta in CSV, elimina definitivamente (resta l'impronta anonima).
+- **Crea un contatto** a mano; se l'email c'è già, si apre il contatto che esiste.
+- **Scheda del contatto**: panoramica con gli attributi modificabili, statistiche delle email degli ultimi 90 giorni, form
+  compilati, attività; cronologia con i filtri; liste; preferenze con la lista nera.
+- **Attributi dei contatti**: sei tipi (testo, numero, data, sì/no, categoria, scelta multipla), fino a 200; **attributi calcolati**
+  (letture, clic, invii, form in un periodo) e **valori globali**. Nelle email si scrivono come `{{ contact.NOME }}`, con
+  `upper`, `lower`, `capfirst` e `default`; `{nome}` funziona ancora.
+- **Liste nelle cartelle**, con crea, modifica, sposta ed elimina.
+- **Lista nera con il motivo** (si è disiscritto, bloccato dall'amministratore, rimbalzo definitivo, cinque rimbalzi temporanei di
+  fila, segnalato come spam, importato); si toglie un contatto alla volta, confermando di avere il consenso.
+- **Aggiornamento senza perdite**: gli iscritti di prima diventano contatti con il loro stato e la loro data, le liste vanno nella
+  cartella "Le tue liste".
+
 ## 2.7.0 (1 novembre 2026) - L'email di conferma la scrivi tu
 
 - **L'email di conferma dell'iscrizione si modifica in ogni parte** (richiesta di Danilo): oggetto, intestazione in cima,

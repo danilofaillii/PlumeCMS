@@ -183,6 +183,11 @@ def funzionalita():
                        'plumeCMS fa le cose che ti servono davvero, e le fa nello stesso posto. Ecco cosa trovi dentro, con le schermate vere del pannello.',
                        livello='h1', centro=True)]], larghezza='stretta', **spazi(72, 32))
     blocchi = [
+        ('contatti-brevo', 'contatti-brevo.webp', 'I contatti come nei grandi servizi di email',
+         ['Dalla 2.8.0 i contatti della newsletter si gestiscono come in Brevo: un elenco con le colonne che scegli tu, una scheda per ogni persona con la sua storia, liste ordinate in cartelle e campi tuoi.',
+          '<ul><li>Azioni su più contatti insieme: aggiungi a una lista, sposta, esporta, metti in lista nera.</li>'
+          '<li>Campi personalizzati di sei tipi, anche calcolati (quante email ha letto negli ultimi 30 giorni), da usare nelle email.</li>'
+          '<li>Lista nera con il motivo: si è disiscritto, rimbalzo, spam, bloccato da te.</li></ul>']),
         ('email-conferma', 'email-conferma.webp', 'L\'email di conferma la scrivi tu',
          ['Chi si iscrive da un form o dalla newsletter riceve un\'email per confermare. Dalla 2.7.0 la scrivi tu, in ogni parte: oggetto, titolo, testo, pulsante, firma e nota in fondo, per ogni form oppure una volta per tutti.',
           '<ul><li>Segnaposti per il nome di chi si iscrive, la lista, i giorni di validità del link e il nome del sito.</li>'
@@ -615,7 +620,7 @@ def editor_json():
 
 
 # ------------------------------------------------------------------ file
-USATE = ['email-conferma', 'pannello-chiaro', 'copertina', 'installa-ora', 'scegli-sito', 'consegna', 'widget-2-1', 'scegli-media', 'addon', 'su-misura', 'firma', 'widget-attivita', 'social', 'fine-articolo', 'importa-wp', 'tipo-sito', 'primi-passi', 'aspetti', 'controlla-server', 'sezioni', 'copia', 'installa-1', 'installa-2', 'installa-3', 'installa-4', 'installa-5', 'editor-ritratto', 'editor', 'aperture', 'stile', 'modelli', 'versioni', 'seo', 'flussi', 'download', 'sicurezza', 'aggiornamenti', 'temi',
+USATE = ['contatti-brevo', 'email-conferma', 'pannello-chiaro', 'copertina', 'installa-ora', 'scegli-sito', 'consegna', 'widget-2-1', 'scegli-media', 'addon', 'su-misura', 'firma', 'widget-attivita', 'social', 'fine-articolo', 'importa-wp', 'tipo-sito', 'primi-passi', 'aspetti', 'controlla-server', 'sezioni', 'copia', 'installa-1', 'installa-2', 'installa-3', 'installa-4', 'installa-5', 'editor-ritratto', 'editor', 'aperture', 'stile', 'modelli', 'versioni', 'seo', 'flussi', 'download', 'sicurezza', 'aggiornamenti', 'temi',
          'tema-cosmo', 'tema-aria', 'tema-bottega',
          'tema-estate', 'tema-inverno', 'tema-autunno', 'tema-primavera', 'tema-giallo', 'tema-rosso', 'tema-verde', 'tema-blu']
 
@@ -662,6 +667,7 @@ def zip_lavagna(dest):
 
 # Le novità per chi scarica: brevi, scritte qui (il CHANGELOG è per chi sviluppa). Da aggiornare a ogni versione.
 NOVITA = [
+    ('2.8.0', 'I contatti come in Brevo', ['Prima tappa per avere la newsletter come Brevo: contatti con le colonne che scegli, scheda di ogni persona con la sua storia, liste in cartelle, campi personalizzati anche calcolati e lista nera con il motivo. I dati di prima passano da soli, senza perdere niente.']),
     ('2.7.0', 'L\'email di conferma la scrivi tu', ['L\'email che arriva a chi si iscrive da un form o dalla newsletter si cambia in ogni parte: oggetto, titolo, testo, pulsante, firma e nota in fondo. Con l\'anteprima e una prova da mandarti prima di salvare.']),
     ('2.6.0', 'Un pannello più chiaro', ['Titoli dei riquadri su una fascia, campi con un bordo che si vede, conferme in una finestra del pannello e tabelle a schede al telefono. Due esperti di interfaccia hanno guardato ogni pagina del CMS.',
                                          'Download, Stile del sito, editor e installatore dicono meglio cosa succede: un file troppo grande per il server, un logo che il widget dell\'header copre, un errore del database spiegato in parole.']),

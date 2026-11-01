@@ -224,12 +224,15 @@ async function contrastoParole(pg) {
   ok('Scarica: le novità della 2.5.0', /2\.5\.0: Otto temi nuovi/.test(await v.locator('body').innerText()));
   ok('Scarica: le novità della 2.6.0', /2\.6\.0: Un pannello più chiaro/.test(await v.locator('body').innerText()));
   ok('Scarica: le novità della 2.7.0', /2\.7\.0: L.email di conferma la scrivi tu/.test(await v.locator('body').innerText()));
+  ok('Scarica: le novità della 2.8.0', /2\.8\.0: I contatti come in Brevo/.test(await v.locator('body').innerText()));
   // 2.6.0: il blocco del pannello più chiaro in Funzionalità, con la sua schermata caricata; il logo di header e footer dallo Stile.
   await v.goto(B + '/funzionalita/', { waitUntil: 'networkidle' });
   ok('Funzionalità (2.6.0): Un pannello che si legge a colpo d\'occhio', /Un pannello che si legge a colpo d.occhio/.test(await v.locator('body').innerText())
     && await v.evaluate(() => [...document.images].some(i => /pannello-chiaro/.test(i.currentSrc || i.src) && i.complete && i.naturalWidth > 0)));
   ok('Funzionalità (2.7.0): L\'email di conferma la scrivi tu', /L.email di conferma la scrivi tu/.test(await v.locator('body').innerText())
     && await v.evaluate(() => [...document.images].some(i => /email-conferma/.test(i.currentSrc || i.src) && i.complete && i.naturalWidth > 0)));
+  ok('Funzionalità (2.8.0): I contatti come nei grandi servizi di email', /I contatti come nei grandi servizi di email/.test(await v.locator('body').innerText())
+    && await v.evaluate(() => [...document.images].some(i => /contatti-brevo/.test(i.currentSrc || i.src) && i.complete && i.naturalWidth > 0)));
   ok('Header e footer (2.6.0): il logo è quello dello Stile del sito', await v.evaluate(() => [...document.querySelectorAll('.marchio img')].length >= 2 && [...document.querySelectorAll('.marchio img')].every(i => /marchio/.test(i.getAttribute('src')))));
   // 2.5.0: la pagina Temi con le stagioni e le tinte piene, ogni immagine caricata.
   await v.goto(B + '/temi/', { waitUntil: 'networkidle' });
