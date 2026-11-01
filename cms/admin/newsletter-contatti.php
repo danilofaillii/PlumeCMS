@@ -8,15 +8,20 @@
  *             finestra di Brevo, con attributi, separatore e filtri per lista o campagna, a giri), Metti in lista nera
  *             degli indirizzi.
  *   Liste:    le cartelle con le loro liste; crea, rinomina, sposta in un'altra cartella, elimina.
- * Motore in includes/newsletter-contatti.php. Solo amministratore.
+ * 2.10.0: Carica un segmento, "Aggiungi filtro" con le condizioni dei segmenti e "Salva come segmento", viste salvate
+ * (filtri e colonne con un nome, per utente), esportazione di un segmento. La scheda Segmenti è newsletter-segmenti.php.
+ * Motore in includes/newsletter-contatti.php e includes/newsletter-segmenti.php. Solo amministratore.
  */
 require_once __DIR__ . '/includes/auth.php';
 require_once __DIR__ . '/includes/admin-functions.php';
 require_once __DIR__ . '/../includes/newsletter.php';
 require_once __DIR__ . '/../includes/newsletter-importa.php'; // 2.9.0
+require_once __DIR__ . '/../includes/newsletter-segmenti.php'; // 2.10.0
 require_admin(); // sicurezza (ruoli): solo amministratore
 newsletter_schema();
 newsletter_importa_schema(); // 2.9.0: le tabelle delle esportazioni (anche su un sito appena aggiornato)
+newsletter_segmenti_schema(); // 2.10.0: segmenti e viste (anche su un sito appena aggiornato)
+if (($_GET['scheda'] ?? '') === 'segmenti') { header('Cache-Control: no-store'); header('Location: newsletter-segmenti.php', true, 302); exit; }
 
 $adminTitle = 'Contatti';
 $scheda = ($_GET['scheda'] ?? '') === 'liste' ? 'liste' : 'contatti';
@@ -35,7 +40,8 @@ function nlc_n(int $n): string { return $n === 1 ? '1 contatto' : "$n contatti";
 /** Dove tornare dopo un'azione: la stessa scheda con gli stessi filtri. */
 function nlc_torna(array $q, string $scheda = 'contatti'): never {
     $f = newsletter_contatti_filtro($q)[2];
-    $qs = ['scheda' => $scheda] + array_filter($f) + (isset($q['per']) ? ['per' => (int)$q['per']] : []);
+    unset($f['errore_filtro']);
+    $qs = ['scheda' => $scheda] + array_filter($f) + (isset($q['per']) ? ['per' => (int)$q['per']] : []) + (!empty($q['vista']) ? ['vista' => (int)$q['vista']] : []);
     header('Location: newsletter-contatti.php?' . http_build_query($qs));
     exit;
 }
@@ -54,6 +60,7 @@ function nlc_scelti(array $p): array {
 function nlc_esporta_avvia(array $p, int $u): never {
     $orig = (string)($p['esp_origine'] ?? 'scelti');
     if ($orig === 'lista') $f = ['tipo' => 'lista', 'lista' => (int)($p['esp_lista'] ?? 0), 'chi' => isset(NL_ESP_LISTA[$p['esp_lista_chi'] ?? '']) ? (string)$p['esp_lista_chi'] : 'tutti'];
+    elseif ($orig === 'segmento') $f = ['tipo' => 'segmento', 'segmento' => (int)($p['esp_segmento'] ?? 0)];
     elseif ($orig === 'campagna') $f = ['tipo' => 'campagna', 'campagna' => (int)($p['esp_campagna'] ?? 0), 'chi' => isset(NL_ESP_CAMPAGNA[$p['esp_campagna_chi'] ?? '']) ? (string)$p['esp_campagna_chi'] : 'aperto'];
     elseif (!empty($p['tutti'])) $f = ['tipo' => 'contatti', 'q' => newsletter_contatti_filtro($p)[2]];
     else $f = ['tipo' => 'ids', 'ids' => nlc_scelti($p)];
@@ -142,6 +149,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             flash('error', 'Scegli un\'azione.');
         }
         nlc_torna($_POST);
+    }
+    if ($azione === 'vista_salva') {
+        // 2.10.0: una vista = i filtri della pagina e le colonne di adesso, con un nome.
+        $q = newsletter_contatti_filtro($_POST)[2];
+        $r = newsletter_vista_salva($utenteId, (string)($_POST['nome_vista'] ?? ''), $q, array_filter((array)($_POST['colonne_vista'] ?? []), 'is_string'), (int)($_POST['per'] ?? 50));
+        if (is_int($r)) { flash('success', 'Vista salvata: la trovi fra le schede sopra la tabella.'); header('Location: newsletter-contatti.php?vista=' . $r); exit; }
+        flash('error', $r);
+        nlc_torna($_POST);
+    }
+    if ($azione === 'vista_elimina') {
+        newsletter_vista_elimina($utenteId, (int)($_POST['vista_id'] ?? 0));
+        flash('success', 'Vista eliminata. I contatti e i segmenti restano.');
+        header('Location: newsletter-contatti.php'); exit;
     }
     if ($azione === 'lista_nera_indirizzi') {
         // "Riempibile a mano": gli indirizzi scritti qui vanno in lista nera (contatti nuovi se non c'erano).
@@ -235,29 +255,45 @@ require_once __DIR__ . '/includes/admin-header.php';
 <nav class="imp-schede" aria-label="Contatti">
   <a href="newsletter-contatti.php"<?= $scheda === 'contatti' ? ' class="attiva" aria-current="page"' : '' ?>>Contatti</a>
   <a href="newsletter-contatti.php?scheda=liste"<?= $scheda === 'liste' ? ' class="attiva" aria-current="page"' : '' ?>>Liste</a>
+  <a href="newsletter-segmenti.php">Segmenti</a>
 </nav>
 
 <?php if ($scheda === 'contatti'):
-  [$where, $par, $f] = newsletter_contatti_filtro($_GET);
-  $per = in_array((int)($_GET['per'] ?? 50), [50, 100, 500], true) ? (int)($_GET['per'] ?? 50) : 50;
+  // 2.10.0: una vista salvata porta i suoi filtri e le sue colonne.
+  $viste = newsletter_viste($utenteId);
+  $vistaId = (int)($_GET['vista'] ?? 0);
+  if (!isset($viste[$vistaId])) $vistaId = 0;
+  $qPag = $vistaId ? $viste[$vistaId]['filtro'] + ['pag' => $_GET['pag'] ?? 1] : $_GET;
+  [$where, $par, $f] = newsletter_contatti_filtro($qPag);
+  $per = in_array((int)($qPag['per'] ?? 50), [50, 100, 500], true) ? (int)($qPag['per'] ?? 50) : 50;
   $tot = db()->prepare('SELECT COUNT(*) FROM ' . tbl('newsletter_iscritti') . " i$where");
   $tot->execute($par);
   $totale = (int)$tot->fetchColumn();
   $pagine = max(1, (int)ceil($totale / $per));
-  $pag = min($pagine, max(1, (int)($_GET['pag'] ?? 1)));
+  $pag = min($pagine, max(1, (int)($qPag['pag'] ?? 1)));
   // Brevo: ordine per data di creazione, dalla più recente.
   $st = db()->prepare('SELECT i.* FROM ' . tbl('newsletter_iscritti') . " i$where ORDER BY i.creato DESC, i.id DESC LIMIT $per OFFSET " . (($pag - 1) * $per));
   $st->execute($par);
   $righe = $st->fetchAll();
-  $colonne = nlc_colonne($utenteId);
+  $colonne = $vistaId ? array_values(array_filter($viste[$vistaId]['colonne'], fn($n) => isset($attributi[$n]))) : nlc_colonne($utenteId);
   $valori = $colonne ? newsletter_valori_di(array_column($righe, 'id'), $colonne) : [];
-  $nascosti = '<input type="hidden" name="cerca" value="' . h($f['cerca']) . '"><input type="hidden" name="stato" value="' . h($f['stato']) . '"><input type="hidden" name="lista" value="' . (int)$f['lista'] . '"><input type="hidden" name="per" value="' . $per . '">';
-  $qBase = array_filter(['cerca' => $f['cerca'], 'stato' => $f['stato'], 'lista' => $f['lista'] ?: null, 'per' => $per !== 50 ? $per : null]);
+  $nascosti = '<input type="hidden" name="cerca" value="' . h($f['cerca']) . '"><input type="hidden" name="stato" value="' . h($f['stato']) . '"><input type="hidden" name="lista" value="' . (int)$f['lista'] . '"><input type="hidden" name="per" value="' . $per . '">'
+    . '<input type="hidden" name="segmento" value="' . (int)$f['segmento'] . '"><input type="hidden" name="f" value="' . h($f['f']) . '">' . ($vistaId ? '<input type="hidden" name="vista" value="' . $vistaId . '">' : '');
+  $qBase = array_filter(['cerca' => $f['cerca'], 'stato' => $f['stato'], 'lista' => $f['lista'] ?: null, 'segmento' => $f['segmento'] ?: null, 'f' => $f['f'] ?: null, 'per' => $per !== 50 ? $per : null]);
+  $qLink = $vistaId ? ['vista' => $vistaId] : $qBase; // i link delle pagine restano nella vista
+  $segmenti = newsletter_segmenti();
+  $nomeSeg = array_column(array_map(fn($x) => ['id' => (int)$x['id'], 'nome' => newsletter_4byte_fuori((string)$x['nome'])], $segmenti), 'nome', 'id');
+  $regoleF = $f['f'] !== '' ? (newsletter_regole_valida($f['f'])['regole'] ?? null) : null;
   $modificabili = array_filter($attributi, fn($a) => !(int)$a['sistema'] && in_array($a['tipo'], ['date', 'boolean', 'category'], true));
 ?>
+<nav class="nlv-viste" aria-label="Viste dei contatti">
+  <a href="newsletter-contatti.php"<?= !$vistaId ? ' class="attiva" aria-current="page"' : '' ?>>Tutti i contatti</a>
+  <?php foreach ($viste as $vid => $v): ?><a href="newsletter-contatti.php?vista=<?= (int)$vid ?>"<?= $vistaId === (int)$vid ? ' class="attiva" aria-current="page"' : '' ?>><?= h(newsletter_4byte_fuori($v['nome'])) ?></a><?php endforeach; ?>
+  <button type="button" class="btn btn-secondary btn-sm" data-apri-dialogo="#nlv-salva">+ Salva come vista</button>
+</nav>
 <div class="form-card">
   <div class="nl-riga" style="justify-content:space-between">
-    <h3 style="margin:0">Contatti</h3>
+    <h3 style="margin:0"><?= $vistaId ? 'Vista «' . h(newsletter_4byte_fuori($viste[$vistaId]['nome'])) . '»' : 'Contatti' ?></h3>
     <div class="nl-riga">
       <a class="btn btn-primary btn-sm" href="newsletter-contatto.php?nuovo=1">Crea un contatto</a>
       <a class="btn btn-secondary btn-sm" href="newsletter-importa.php">Importa contatti</a>
@@ -271,6 +307,8 @@ require_once __DIR__ . '/includes/admin-header.php';
   <form method="get" class="nlx-filtri" role="search" aria-label="Cerca i contatti">
     <div class="form-group"><label for="nlx-lista">Carica una lista</label>
       <?= $tendinaListe('lista', 'Tutti i contatti', (int)$f['lista'], '<option value="-1"' . ($f['lista'] === -1 ? ' selected' : '') . '>In nessuna lista</option>', 'nlx-lista') ?></div>
+    <div class="form-group"><label for="nlx-segmento">Carica un segmento</label>
+      <select id="nlx-segmento" name="segmento"><option value="0"><?= $segmenti ? 'Nessun segmento' : 'Ancora nessun segmento' ?></option><?php foreach ($nomeSeg as $sid => $sn): ?><option value="<?= (int)$sid ?>"<?= (int)$f['segmento'] === (int)$sid ? ' selected' : '' ?>><?= h($sn) ?></option><?php endforeach; ?></select></div>
     <div class="form-group"><label for="nlx-cerca">Cerca</label>
       <input type="search" id="nlx-cerca" name="cerca" value="<?= h($f['cerca']) ?>" placeholder="per esempio: anna@ oppure Rossi" aria-describedby="nlx-cerca-aiuto">
       <div class="hint" id="nlx-cerca-aiuto">Email (anche un pezzo), nome, cognome o identificativo esterno.</div></div>
@@ -285,9 +323,28 @@ require_once __DIR__ . '/includes/admin-header.php';
       </select></div>
     <div class="form-group"><label for="nlx-per">Per pagina</label>
       <select id="nlx-per" name="per"><?php foreach ([50, 100, 500] as $x): ?><option value="<?= $x ?>"<?= $per === $x ? ' selected' : '' ?>><?= $x ?></option><?php endforeach; ?></select></div>
+    <input type="hidden" name="f" value="<?= h($f['f']) ?>">
     <div class="nlx-filtri-azioni"><button class="btn btn-secondary btn-sm" type="submit">Cerca</button>
       <?php if ($qBase && array_diff_key($qBase, ['per' => 1])): ?><a href="newsletter-contatti.php">Togli i filtri</a><?php endif; ?></div>
   </form>
+  <?php if (!empty($f['errore_filtro'])): ?><p class="errore-campo" role="alert">Il filtro non si è potuto usare: <?= h($f['errore_filtro']) ?></p><?php endif; ?>
+  <?php if ($regoleF): ?><p class="nl-avviso" role="status">Filtro: <?= h(newsletter_regole_testo($regoleF)) ?>.</p><?php endif; ?>
+
+  <details class="nlx-riquadro-filtro" id="nlx-filtro"<?= $regoleF || isset($_GET['filtro']) ? ' open' : '' ?>>
+    <summary><?= $regoleF ? 'Cambia il filtro' : 'Aggiungi filtro' ?></summary>
+    <form method="get" class="nlx-filtro-form" aria-label="Filtra i contatti con delle condizioni">
+      <input type="hidden" name="cerca" value="<?= h($f['cerca']) ?>"><input type="hidden" name="stato" value="<?= h($f['stato']) ?>"><input type="hidden" name="lista" value="<?= (int)$f['lista'] ?>"><input type="hidden" name="segmento" value="<?= (int)$f['segmento'] ?>"><input type="hidden" name="per" value="<?= $per ?>">
+      <input type="hidden" name="f" id="nlx-f" value="<?= h($f['f']) ?>">
+      <p class="hint">Le stesse condizioni dei segmenti: dati del contatto, liste, email aperte o cliccate, form inviati, lista nera. Il filtro vale insieme alla ricerca e alla lista caricate sopra.</p>
+      <div class="nls-editor" data-nls-editor="#nlx-f" data-nls-conta="newsletter-segmenti.php" data-csrf="<?= h(csrf_token()) ?>"></div>
+      <p class="nls-numero" data-nls-numero role="status" aria-live="polite"></p>
+      <div class="nl-riga">
+        <button class="btn btn-primary btn-sm" type="submit">Applica il filtro</button>
+        <button class="btn btn-secondary btn-sm" type="button" data-apri-dialogo="#nls-salva">Salva come segmento</button>
+        <?php if ($regoleF): ?><a href="<?= h('newsletter-contatti.php?' . http_build_query(array_diff_key($qBase, ['f' => 1]))) ?>">Togli il filtro</a><?php endif; ?>
+      </div>
+    </form>
+  </details>
 
   <form method="post" id="nlx-gruppo" class="nlx-gruppo" aria-label="Azioni sui contatti scelti">
     <?= csrf_field() ?><input type="hidden" name="azione" value="gruppo"><?= $nascosti ?>
@@ -319,17 +376,21 @@ require_once __DIR__ . '/includes/admin-header.php';
       <button class="btn btn-secondary btn-sm" type="submit" id="nlx-applica" data-conferma="Applicare l'azione ai contatti scelti?">Applica</button>
     </fieldset>
     <?php $espCol = newsletter_esporta_colonne(); $espCamp = newsletter_esporta_campagne(); ?>
-    <dialog id="nlx-esporta" class="nl-dialogo" aria-labelledby="nlx-esporta-titolo">
+    <dialog id="nlx-esporta" class="nl-dialogo" aria-labelledby="nlx-esporta-titolo"<?= isset($_GET['esporta']) ? ' data-nlx-apri' : '' ?>>
       <h2 id="nlx-esporta-titolo">Esporta i contatti</h2>
       <p class="hint">Un file CSV da aprire con Excel, LibreOffice o Fogli Google. Le celle che cominciano con = + - o @ escono con un apostrofo davanti, così il foglio di calcolo non le prende per formule.</p>
       <fieldset class="nlk-scelte">
         <legend>Quali contatti</legend>
-        <label><input type="radio" name="esp_origine" value="scelti" checked data-nlx-origine> I contatti scelti nella tabella (le righe spuntate, oppure «Tutti i contatti»)</label>
+        <label><input type="radio" name="esp_origine" value="scelti"<?= $segmenti && isset($_GET['esporta']) && $f['segmento'] ? '' : ' checked' ?> data-nlx-origine> I contatti scelti nella tabella (le righe spuntate, oppure «Tutti i contatti»)</label>
         <label><input type="radio" name="esp_origine" value="lista" data-nlx-origine> Una lista</label>
         <div class="nlx-campi" data-nlx-origine-per="lista">
           <div class="form-group"><label for="nlx-esp-lista">Lista</label><?= $tendinaListe('esp_lista', '', max(0, (int)$f['lista']), '', 'nlx-esp-lista') ?></div>
           <div class="form-group"><label for="nlx-esp-lista-chi">Chi</label><select id="nlx-esp-lista-chi" name="esp_lista_chi"><?php foreach (NL_ESP_LISTA as $k => $v): ?><option value="<?= $k ?>"><?= h(ucfirst($v)) ?></option><?php endforeach; ?></select></div>
         </div>
+        <label><input type="radio" name="esp_origine" value="segmento" data-nlx-origine<?= $segmenti ? '' : ' disabled' ?><?= $segmenti && isset($_GET['esporta']) && $f['segmento'] ? ' checked' : '' ?>> Un segmento<?= $segmenti ? '' : ' (ancora nessun segmento)' ?></label>
+        <?php if ($segmenti): ?><div class="nlx-campi" data-nlx-origine-per="segmento">
+          <div class="form-group"><label for="nlx-esp-seg">Segmento</label><select id="nlx-esp-seg" name="esp_segmento"><?php foreach ($nomeSeg as $sid => $sn): ?><option value="<?= (int)$sid ?>"<?= (int)$f['segmento'] === (int)$sid ? ' selected' : '' ?>><?= h($sn) ?></option><?php endforeach; ?></select></div>
+        </div><?php endif; ?>
         <label><input type="radio" name="esp_origine" value="campagna" data-nlx-origine<?= $espCamp ? '' : ' disabled' ?>> Una campagna<?= $espCamp ? '' : ' (nessuna campagna ancora partita)' ?></label>
         <?php if ($espCamp): ?><div class="nlx-campi" data-nlx-origine-per="campagna">
           <div class="form-group"><label for="nlx-esp-camp">Campagna</label><select id="nlx-esp-camp" name="esp_campagna"><?php foreach ($espCamp as $c): ?><option value="<?= (int)$c['id'] ?>"><?= h(newsletter_4byte_fuori((string)$c['oggetto']) ?: '(senza oggetto)') ?></option><?php endforeach; ?></select></div>
@@ -375,7 +436,7 @@ require_once __DIR__ . '/includes/admin-header.php';
     <?php endif; ?>
     </tbody>
   </table></div>
-  <?php if ($pagine > 1): $link = fn($p) => 'newsletter-contatti.php?' . http_build_query($qBase + ['pag' => $p]); ?>
+  <?php if ($pagine > 1): $link = fn($p) => 'newsletter-contatti.php?' . http_build_query($qLink + ['pag' => $p]); ?>
   <nav class="nlx-pagine" aria-label="Pagine dei contatti">
     <?php if ($pag > 1): ?><a class="btn btn-secondary btn-sm" href="<?= h($link(1)) ?>">Prima pagina</a> <a class="btn btn-secondary btn-sm" href="<?= h($link($pag - 1)) ?>">Pagina precedente</a><?php endif; ?>
     <span>Pagina <?= $pag ?> di <?= $pagine ?> (<?= $totale ?> contatti)</span>
@@ -433,6 +494,35 @@ require_once __DIR__ . '/includes/admin-header.php';
     <div class="pn-conferma-azioni"><button type="button" class="btn btn-secondary" data-chiudi-dialogo="#nlx-colonne">Annulla</button><button type="submit" class="btn btn-primary">Salva le colonne</button></div>
   </form>
 </dialog>
+
+<dialog id="nls-salva" class="nl-dialogo" aria-labelledby="nls-salva-titolo">
+  <form method="post" action="newsletter-segmenti.php">
+    <?= csrf_field() ?><input type="hidden" name="azione" value="salva"><input type="hidden" name="torna" value="contatti">
+    <input type="hidden" name="regole" value="<?= h($f['f']) ?>" data-nls-copia="#nlx-f">
+    <h2 id="nls-salva-titolo">Salva come segmento</h2>
+    <p class="hint">Il segmento tiene le condizioni del filtro (non la ricerca né la lista caricata) e si aggiorna da solo.</p>
+    <?php $segCart = newsletter_seg_cartelle(); ?>
+    <div class="form-group"><label for="nls-salva-nome">Nome del segmento</label><input type="text" id="nls-salva-nome" name="nome" maxlength="100" required placeholder="per esempio: Clienti di Roma"></div>
+    <div class="form-group"><label for="nls-salva-cart">Categoria</label><select id="nls-salva-cart" name="cartella"><option value="0">Senza categoria</option><?php foreach ($segCart as $c): ?><option value="<?= (int)$c['id'] ?>"><?= h(newsletter_4byte_fuori($c['nome'])) ?></option><?php endforeach; ?></select></div>
+    <div class="form-group"><label for="nls-salva-nuova">Oppure una categoria nuova</label><input type="text" id="nls-salva-nuova" name="cartella_nuova" maxlength="100" placeholder="per esempio: Vendite"></div>
+    <div class="pn-conferma-azioni"><button type="button" class="btn btn-secondary" data-chiudi-dialogo="#nls-salva">Annulla</button><button type="submit" class="btn btn-primary">Salva il segmento</button></div>
+  </form>
+</dialog>
+
+<dialog id="nlv-salva" class="nl-dialogo" aria-labelledby="nlv-salva-titolo">
+  <form method="post">
+    <?= csrf_field() ?><input type="hidden" name="azione" value="vista_salva"><?= $nascosti ?>
+    <?php foreach ($colonne as $n): ?><input type="hidden" name="colonne_vista[]" value="<?= h($n) ?>"><?php endforeach; ?>
+    <h2 id="nlv-salva-titolo">Salva come vista</h2>
+    <p class="hint">Una vista ricorda i filtri di adesso (ricerca, lista, segmento, stato, filtro) e le colonne della tabella. La trovi fra le schede sopra la tabella. Le viste sono tue: gli altri utenti non le vedono.</p>
+    <div class="form-group"><label for="nlv-nome">Nome della vista</label><input type="text" id="nlv-nome" name="nome_vista" maxlength="100" required value="<?= $vistaId ? h(newsletter_4byte_fuori($viste[$vistaId]['nome'])) : '' ?>" placeholder="per esempio: Clienti attivi"></div>
+    <div class="pn-conferma-azioni"><button type="button" class="btn btn-secondary" data-chiudi-dialogo="#nlv-salva">Annulla</button><button type="submit" class="btn btn-primary">Salva la vista</button></div>
+  </form>
+  <?php if ($vistaId): ?><form method="post" data-conferma="Eliminare la vista «<?= h(newsletter_4byte_fuori($viste[$vistaId]['nome'])) ?>»? I contatti restano." data-conferma-pericolo data-conferma-ok="Elimina la vista" style="margin-top:.75rem">
+    <?= csrf_field() ?><input type="hidden" name="azione" value="vista_elimina"><input type="hidden" name="vista_id" value="<?= $vistaId ?>">
+    <button class="btn btn-danger btn-sm" type="submit">Elimina questa vista</button></form><?php endif; ?>
+</dialog>
+<script type="application/json" id="nls-def"><?= json_encode(newsletter_regole_definizione(), JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP | JSON_INVALID_UTF8_SUBSTITUTE) ?></script>
 
 <?php else: /* Liste */ ?>
 <div class="ut-griglia">
@@ -497,4 +587,5 @@ require_once __DIR__ . '/includes/admin-header.php';
 <?php endif; ?>
 <script src="<?= pannello_file('assets/editor/Sortable.min.js') ?>"></script>
 <script src="<?= pannello_file('assets/contatti.js') ?>"></script>
+<script src="<?= pannello_file('assets/segmenti.js') ?>"></script>
 <?php require_once __DIR__ . '/includes/admin-footer.php'; ?>

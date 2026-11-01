@@ -32,6 +32,19 @@ spunta), rimbalzi (550 e tre 451 di fila), errore "troppe richieste" del form, p
    `sendmail_path`. Lascia dati di prova: va su un sito da buttare.
 4. Atteso (2.0.0): 37 su 37. Sullo stesso sito con il codice della 1.10.0: 7 su 37 (i 30 KO sono i difetti).
 
+## prova-segmenti.js
+
+I segmenti della 2.10.0 (fase 3 del piano Brevo): motore delle condizioni, pagina Segmenti, Aggiungi filtro, viste, lista da
+un segmento, esportazione, bivi dei flussi.
+
+1. Un CMS installato (anche nuovo, senza kit); il sito si riempie da solo con 5000 contatti finti `@seg-prova.it`
+   (`php prove/segmenti-cli.php <cartella CMS> semina`), eventi, form e un flusso: va su un sito da buttare.
+2. `node prove/prova-segmenti.js <base> <utente> <password> <cartella del CMS> [cartella schermate]` (`SEMINA=0` per non
+   rifare i contatti). Ogni condizione si confronta con una query scritta a mano (`segmenti-cli.php confronta`), i bivi dei
+   flussi con il codice della 2.9.0 copiato (`segmenti-cli.php flussi`); per un sito aggiornato, `segmenti-cli.php bivi`
+   prima e dopo l'aggiornamento dà due JSON da confrontare.
+3. Atteso (2.10.0): tutto OK, ogni conteggio sotto un secondo.
+
 ## tools/sicurezza-prova.js
 
 

@@ -9,7 +9,8 @@
 //   data-nli-modo             Carica un file o Copia e incolla: mostra il pannello giusto (data-nli-pannello)
 //   data-nli-col              tendina dell'abbinamento: con "Crea un nuovo attributo" compaiono nome e tipo (data-nli-nuovo)
 //   data-nli-aggiorna         "Aggiorna gli attributi": senza, "Celle vuote" si spegne (data-nli-vuote), come Brevo
-//   data-nlx-origine          Quali contatti esportare: mostra la lista o la campagna (data-nlx-origine-per)
+//   data-nlx-origine          Quali contatti esportare: mostra la lista, il segmento o la campagna (data-nlx-origine-per)
+//   dialog[data-nlx-apri]     2.10.0: la finestra si apre da sola (Esporta dall'elenco dei segmenti)
 //   data-nl-giro="pagina"     lavoro a giri: chiede un giro dopo l'altro (POST azione=giro, o data-azione) e aggiorna la
 //                             barra (data-nl-barra) e il testo (data-nl-testo); alla fine ricarica la pagina
 (function () {
@@ -141,6 +142,8 @@
     document.querySelectorAll('[data-nli-col]').forEach(colonna);
     var ag = document.querySelector('[data-nli-aggiorna]'); if (ag) aggiorna(ag);
     document.querySelectorAll('[data-nl-giro]').forEach(giri);
+    // 2.10.0: "Esporta" dall'elenco dei segmenti apre subito la finestra Esporta con il segmento scelto.
+    document.querySelectorAll('dialog[data-nlx-apri]').forEach(function (d) { if (d.showModal && !d.open) { d.showModal(); origine(); } });
     var s = document.querySelector('[data-nlx-azione]'); if (s) azione(s);
     var t = document.querySelector('[data-nla-tipo]'); if (t) t.dispatchEvent(new Event('change', { bubbles: true }));
     document.querySelectorAll('[data-nlx-ordina]').forEach(function (ul) {

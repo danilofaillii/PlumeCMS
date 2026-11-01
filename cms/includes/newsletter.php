@@ -990,3 +990,4 @@ function newsletter_invia_giro(?int $massimo = null): array {
 require_once __DIR__ . '/newsletter-flussi.php';
 require_once __DIR__ . '/newsletter-contatti.php'; // 2.8.0: contatti, attributi, cartelle (come Brevo)
 require_once __DIR__ . '/newsletter-importa.php'; // 2.9.0: importazione, esportazione, lista dei test (come Brevo)
+require_once __DIR__ . '/newsletter-segmenti.php'; // 2.10.0: segmenti, filtri e viste (come Brevo)

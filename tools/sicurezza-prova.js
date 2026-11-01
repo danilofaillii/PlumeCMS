@@ -1397,6 +1397,112 @@ echo json_encode($o);
     await post(admin.p, PC, form({ _csrf: tkp, azione: 'gruppo', cosa: 'elimina', cerca: 'formula', tutti: '1' }), CT);
   }
 
+  // === 31. (2.10.0) Segmenti, Aggiungi filtro, viste: solo l'amministratore, solo con il token e dal pannello; le condizioni
+  // sono JSON controllato con un elenco chiuso: nomi di colonna, operatori, valori, annidamento e quantità manipolati non
+  // arrivano all'SQL; un segmento non fa giri; i nomi non diventano codice.
+  {
+    const PS = ADMIN + '/newsletter-segmenti.php', PC = ADMIN + '/newsletter-contatti.php';
+    const ORIG = { 'Origin': BASE.replace(/(https?:\/\/[^/]+).*/, '$1') };
+    const b64 = (o) => Buffer.from(typeof o === 'string' ? o : JSON.stringify(o)).toString('base64').replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+    const g1 = (...c) => ({ op: 'e', gruppi: [{ op: 'e', condizioni: c }] });
+    const anon = await browser.newContext();
+    const a1 = await anon.request.get(PS, { maxRedirects: 0 });
+    const a2 = await anon.request.post(PS, { form: { azione: 'conta', regole: b64(g1({ campo: 'stato', op: 'iscritto' })) }, maxRedirects: 0 });
+    ok('2.10.0: senza login la pagina Segmenti non si apre e non conta', a1.status() !== 200 && !/"n":/.test(await a2.text()), [a1.status(), a2.status()]);
+    await anon.close();
+    const tk = await tokenDi(admin.p, PS);
+    const conta = async (regole, tok = tk, h = ORIG) => { const r = await admin.ctx.request.post(PS, { headers: h, form: { _csrf: tok, azione: 'conta', regole: typeof regole === 'string' ? regole : b64(regole) }, maxRedirects: 0 }); let j = {}; try { j = JSON.parse(await r.text()); } catch (e) { j = { stato: r.status() }; } j.status = r.status(); return j; };
+    const c1 = await conta(g1({ campo: 'stato', op: 'iscritto' }), '');
+    const c2 = await conta(g1({ campo: 'stato', op: 'iscritto' }), tk, { 'Origin': 'https://evil.example' });
+    const prima = await admin.ctx.request.post(PS, { headers: ORIG, form: { azione: 'salva', nome: 'Sic senza token', regole: b64(g1({ campo: 'stato', op: 'iscritto' })) }, maxRedirects: 0 });
+    await admin.p.goto(PS, { waitUntil: 'networkidle' });
+    ok('2.10.0: conta senza token o da un altro sito: 403; Salva senza token: 403 e niente segmento', c1.status === 403 && c2.status === 403 && prima.status() === 403 && !(await admin.p.content()).includes('Sic senza token'), [c1.status, c2.status, prima.status()]);
+    const tutti = (await conta({ op: 'e', gruppi: [] })).n;
+    // Condizioni manipolate
+    const casi = [
+      ['nome di colonna inventato', g1({ campo: 'i.id) OR 1=1 -- ', op: 'uguale', valore: 'x' })],
+      ['attributo con un pezzo di SQL nel nome', g1({ campo: 'attr:EMAIL`; DROP TABLE x; --', op: 'uguale', valore: 'x' })],
+      ['operatore inventato', g1({ campo: 'attr:EMAIL', op: '= 1 OR 1=1', valore: 'x' })],
+      ['operatore di un altro tipo', g1({ campo: 'attr:EMAIL', op: 'maggiore', valore: '1' })],
+      ['lista con SQL al posto dell\'id', g1({ campo: 'lista', op: 'in', valore: ['1) OR (1=1'] })],
+      ['motivo della lista nera inventato', g1({ campo: 'lista_nera', op: 'motivo', valore: ["x' OR '1'='1"] })],
+      ['condizione del flusso fuori da un flusso', g1({ campo: 'flusso_email', op: 'aperta', valore: 2 })],
+      ['campo come oggetto', g1({ campo: { a: 1 }, op: 'uguale' })],
+      ['1000 condizioni', { op: 'e', gruppi: [{ op: 'o', condizioni: Array.from({ length: 1000 }, () => ({ campo: 'stato', op: 'iscritto' })) }] }],
+      ['101 condizioni in tre gruppi', { op: 'e', gruppi: [0, 1, 2].map(k => ({ op: 'e', condizioni: Array.from({ length: k === 2 ? 35 : 33 }, () => ({ campo: 'stato', op: 'iscritto' })) })) }],
+      ['21 gruppi', { op: 'e', gruppi: Array.from({ length: 21 }, () => ({ op: 'e', condizioni: [{ campo: 'stato', op: 'iscritto' }] })) }],
+      ['annidamento enorme (5000 livelli)', '['.repeat(5000) + ']'.repeat(5000)],
+      ['gruppi dentro i gruppi', { op: 'e', gruppi: [{ op: 'e', condizioni: [{ op: 'o', gruppi: [{ op: 'e', condizioni: [{ campo: 'stato', op: 'iscritto' }] }] }] }] }],
+      ['JSON rotto', '{"op":"e","gruppi":[{"op":'],
+      ['testo di 300 KB', 'x'.repeat(300000)],
+    ];
+    const risposte = [];
+    for (const [nome, r] of casi) {
+      const t0 = Date.now();
+      const j = await conta(typeof r === 'string' ? b64(r) : r);
+      risposte.push([nome, j.errore || j.n, Date.now() - t0]);
+      ok(`2.10.0: condizioni manipolate (${nome}): rifiutate in parole, niente all'SQL`, !!j.errore && j.n === undefined && !/SQLSTATE|PDO|Fatal/i.test(j.errore) && Date.now() - t0 < 5000, [j.errore, j.n, j.status]);
+    }
+    // Valori cattivi: passano come parametri, non come codice
+    const v1 = await conta(g1({ campo: 'attr:EMAIL', op: 'uguale', valore: "x' OR '1'='1" }));
+    const v2 = await conta(g1({ campo: 'attr:EMAIL', op: 'contiene', valore: "%' OR 1=1 -- " }));
+    const v3 = await conta(g1({ campo: 'attr:CREATION_DATE', op: 'ultimi', n: '1) OR (1=1', unita: 'DAY) OR (1=1' }));
+    const v4 = await conta(g1({ campo: 'email', op: 'aperta', campagna: '1 OR 1=1', n: 30, unita: 'giorni; DROP' }));
+    const v4b = await conta(g1({ campo: 'email', op: 'aperta', campagna: 0, n: 30, unita: 'giorni' }));
+    ok('2.10.0: valori con SQL dentro (email, contiene, date relative, campagna, unità): sono valori, non codice',
+      v1.n === 0 && v2.n === 0 && (v3.errore || v3.n < tutti) && v4.n === v4b.n && !/SQLSTATE/i.test(JSON.stringify([v1, v2, v3, v4])), [tutti, v1, v2, v3, v4.n, v4b.n]);
+    // Filtro della pagina Contatti con condizioni cattive: niente errore del database, il filtro si scarta e lo dice
+    await admin.p.goto(PC + '?f=' + b64(g1({ campo: 'i.id) OR 1=1 -- ', op: 'x' })), { waitUntil: 'networkidle' });
+    const pc = await admin.p.content();
+    ok('2.10.0: Contatti con un filtro manipolato nell\'indirizzo: scartato e detto in parole, niente errore del database', /Il filtro non si è potuto usare/.test(pc) && !/SQLSTATE|Fatal error/i.test(pc));
+    // Giri fra segmenti: A usa B, poi B prova a usare A
+    const salva = async (o) => admin.ctx.request.post(PS, { headers: ORIG, form: { _csrf: tk, azione: 'salva', ...o }, maxRedirects: 0 });
+    await salva({ id: '0', nome: 'Sic A', regole: b64(g1({ campo: 'stato', op: 'iscritto' })) });
+    await admin.p.goto(PS, { waitUntil: 'networkidle' });
+    const idDi = async (nome) => admin.p.evaluate((n) => { const a = [...document.querySelectorAll('a[href*="newsletter-segmenti.php?id="]')].find(x => x.textContent.trim() === n); return a ? +a.href.match(/id=(\d+)/)[1] : 0; }, nome);
+    const idA = await idDi('Sic A');
+    await salva({ id: '0', nome: 'Sic B', regole: b64(g1({ campo: 'segmento', op: 'in', valore: idA })) });
+    await admin.p.goto(PS, { waitUntil: 'networkidle' });
+    const idB = await idDi('Sic B');
+    await salva({ id: String(idA), nome: 'Sic A', regole: b64(g1({ campo: 'segmento', op: 'in', valore: idB })) });
+    const giro = await conta(g1({ campo: 'segmento', op: 'in', valore: idB }));
+    await admin.p.goto(PS + '?id=' + idA, { waitUntil: 'networkidle' }); // la prima volta mostra la bozza rifiutata
+    await admin.p.goto(PS + '?id=' + idA, { waitUntil: 'networkidle' });
+    ok('2.10.0: un segmento che userebbe se stesso attraverso un altro: rifiutato, e il conteggio non gira all\'infinito', idA > 0 && idB > 0 && !/"campo":"segmento"/.test(await admin.p.evaluate(() => atob((document.querySelector('#nls-regole') || {}).value.replace(/-/g, '+').replace(/_/g, '/') || ''))) && typeof giro.n === 'number', [idA, idB, giro]);
+    // Nomi con codice: escono come testo
+    await salva({ id: '0', nome: '<script>alert(31)</script><img src=x onerror=alert(31)>', cartella_nuova: '<b onmouseover=alert(31)>cat</b>', regole: b64(g1({ campo: 'stato', op: 'iscritto' })) });
+    await admin.p.goto(PS, { waitUntil: 'networkidle' });
+    const hs = await admin.p.content();
+    ok('2.10.0: nome e categoria con codice: escono come testo, niente script', !/<script>alert\(31\)|<img src=x onerror|<b onmouseover/.test(hs) && /&lt;script&gt;alert\(31\)/.test(hs));
+    await admin.ctx.request.post(PC, { headers: ORIG, form: { _csrf: await tokenDi(admin.p, PC), azione: 'vista_salva', nome_vista: '<svg onload=alert(31)>' }, maxRedirects: 0 });
+    await admin.p.goto(PC, { waitUntil: 'networkidle' });
+    ok('2.10.0: nome di una vista con codice: esce come testo', !/<svg onload=alert\(31\)>/.test(await admin.p.content()));
+    const vv = await admin.ctx.request.post(PC, { headers: ORIG, form: { azione: 'vista_salva', nome_vista: 'Sic senza token' }, maxRedirects: 0 });
+    ok('2.10.0: Salva come vista senza token: 403', vv.status() === 403, vv.status());
+    // Il redattore: non vede e non salva
+    if (red.dentro) {
+      const tr = await tokenDi(red.p, ADMIN + '/media.php');
+      const r1 = await red.ctx.request.get(PS, { maxRedirects: 0 });
+      const r2 = await red.ctx.request.post(PS, { headers: ORIG, form: { _csrf: tr, azione: 'salva', nome: 'Sic dal redattore', regole: b64(g1({ campo: 'stato', op: 'iscritto' })) }, maxRedirects: 0 });
+      const r3 = await red.ctx.request.post(PS, { headers: ORIG, form: { _csrf: tr, azione: 'conta', regole: b64(g1({ campo: 'stato', op: 'iscritto' })) }, maxRedirects: 0 });
+      const r4 = await red.ctx.request.post(PS, { headers: ORIG, form: { _csrf: tr, azione: 'elimina', id: String(idB) }, maxRedirects: 0 });
+      const r5 = await red.ctx.request.post(PC, { headers: ORIG, form: { _csrf: tr, azione: 'gruppo', cosa: 'esporta', esporta_avvia: '1', esp_origine: 'segmento', esp_segmento: String(idB) }, maxRedirects: 0 });
+      await admin.p.goto(PS, { waitUntil: 'networkidle' });
+      const lista = await admin.p.content();
+      ok('2.10.0: il redattore non apre Segmenti, non salva, non conta, non elimina, non esporta un segmento',
+        r1.status() === 302 && !/"n":/.test(await r3.text()) && !lista.includes('Sic dal redattore') && lista.includes('Sic B') && !/text\/csv/.test(r5.headers()['content-type'] || ''), [r1.status(), r2.status(), r3.status(), r4.status(), r5.status()]);
+    }
+    // Pulizia: i segmenti e la vista di prova
+    await admin.p.goto(PS, { waitUntil: 'networkidle' });
+    for (const n of ['<script>alert(31)</script><img src=x onerror=alert(31)>', 'Sic B', 'Sic A']) {
+      const id = await idDi(n);
+      if (id) await salva({ azione: 'elimina', id: String(id) });
+    }
+    await admin.p.goto(PC, { waitUntil: 'networkidle' });
+    const vid = await admin.p.evaluate(() => { const a = [...document.querySelectorAll('.nlv-viste a')].find(x => /svg/.test(x.textContent)); return a ? a.href.match(/vista=(\d+)/)[1] : ''; });
+    if (vid) await admin.ctx.request.post(PC, { headers: ORIG, form: { _csrf: await tokenDi(admin.p, PC), azione: 'vista_elimina', vista_id: vid }, maxRedirects: 0 });
+  }
+
   // === pulizia: elimina il redattore di prova
   {
     await admin.p.goto(ADMIN + '/utenti.php', { waitUntil: 'networkidle' });

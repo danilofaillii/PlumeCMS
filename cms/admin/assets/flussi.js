@@ -39,6 +39,7 @@ var FL = (function () {
     if (c[1] === 'lista') return FL_DATI.liste[d.valore] ? 'lista: ' + FL_DATI.liste[d.valore] : 'scegli la lista';
     if (c[1] === 'email') { var e = nodo(d.valore); return e && e.tipo === 'email' ? 'email: ' + (e.dati.oggetto || 'Email ' + e.id) : 'scegli l\'email'; }
     if (c[1] === 'giorni') return (d.valore || 0) + ' giorni';
+    if (c[1] === 'segmento') return (FL_DATI.segmenti || {})[d.valore] ? 'segmento: ' + FL_DATI.segmenti[d.valore] : 'scegli il segmento';
     return '';
   }
   function innescoCosa() {
@@ -224,6 +225,7 @@ var FL = (function () {
         if (tipo === 'lista') s = '<label>Quale lista</label><select id="fp-val">' + Object.keys(FL_DATI.liste).map(function (k) { return '<option value="' + k + '"' + (+k === +d.valore ? ' selected' : '') + '>' + h(FL_DATI.liste[k]) + '</option>'; }).join('') + '</select>';
         if (tipo === 'email') s = '<label>Quale email di questo flusso</label><select id="fp-val">' + g.nodi.filter(function (x) { return x.tipo === 'email'; }).map(function (x) { return '<option value="' + x.id + '"' + (x.id === +d.valore ? ' selected' : '') + '>#' + x.id + ' ' + h(x.dati.oggetto || 'Email ' + x.id) + '</option>'; }).join('') + '</select>';
         if (tipo === 'giorni') s = '<label>Giorni</label><input type="number" id="fp-val" min="1" max="3650" value="' + (d.valore || 30) + '">';
+        if (tipo === 'segmento') { var sg = FL_DATI.segmenti || {}; s = Object.keys(sg).length ? '<label>Quale segmento</label><select id="fp-val">' + Object.keys(sg).map(function (k) { return '<option value="' + k + '"' + (+k === +d.valore ? ' selected' : '') + '>' + h(sg[k]) + '</option>'; }).join('') + '</select><p class="hint">Il segmento si controlla quando la persona arriva al bivio.</p>' : '<p class="hint">Ancora nessun segmento: crealo in Contatti, scheda Segmenti.</p>'; }
         box.innerHTML = s;
         var v = box.querySelector('#fp-val');
         if (v) { if (!d.valore || (tipo !== 'giorni' && ![].slice.call(v.options).some(function (o) { return +o.value === +d.valore; }))) d.valore = +v.value || 0; v.addEventListener('input', function () { d.valore = +v.value || 0; disegna(); }); v.addEventListener('change', function () { d.valore = +v.value || 0; disegna(); }); }
