@@ -163,13 +163,14 @@ $dati = [
 </header>
 <div class="ed-corpo">
   <aside class="ed-pannello">
-    <nav class="ed-schede-pannello">
-      <button type="button" data-pannello="widget" class="attivo" aria-pressed="true">Widget</button>
-      <?php if ($dati['sezioniPronte']): ?><button type="button" data-pannello="sezioni" aria-pressed="false">Sezioni</button><?php endif; ?>
-      <button type="button" data-pannello="modifica" aria-pressed="false">Modifica</button>
-      <button type="button" data-pannello="navigatore" aria-pressed="false">Navigatore</button>
+    <?php /* 2.5.x (scelta di Danilo): schede ARIA vere, frecce sinistra e destra, Inizio e Fine per passare dall'una all'altra */ ?>
+    <nav class="ed-schede-pannello" role="tablist" aria-label="Pannello dell'editor">
+      <button type="button" role="tab" id="ed-scheda-widget" aria-controls="ed-pannello-widget" data-pannello="widget" class="attivo" aria-selected="true" tabindex="0">Widget</button>
+      <?php if ($dati['sezioniPronte']): ?><button type="button" role="tab" id="ed-scheda-sezioni" aria-controls="ed-pannello-sezioni" data-pannello="sezioni" aria-selected="false" tabindex="-1">Sezioni</button><?php endif; ?>
+      <button type="button" role="tab" id="ed-scheda-modifica" aria-controls="ed-pannello-modifica" data-pannello="modifica" aria-selected="false" tabindex="-1">Modifica</button>
+      <button type="button" role="tab" id="ed-scheda-navigatore" aria-controls="ed-pannello-navigatore" data-pannello="navigatore" aria-selected="false" tabindex="-1">Navigatore</button>
     </nav>
-    <section class="ed-pannello-vista" id="ed-pannello-widget">
+    <section class="ed-pannello-vista" id="ed-pannello-widget" role="tabpanel" aria-labelledby="ed-scheda-widget">
       <input type="search" id="ed-cerca-widget" placeholder="Cerca un widget…" aria-label="Cerca un widget">
       <?php /* 2.5.x (controllo UX): l'aiuto in cima, dove si legge; in fondo, dopo cento widget, non lo vedeva nessuno */ ?>
       <p class="ed-aiuto ed-aiuto-sopra">Trascina un widget nella pagina, oppure fai clic: entra sotto l'elemento selezionato.</p>
@@ -177,18 +178,18 @@ $dati = [
       <div id="ed-elenco-widget"></div>
     </section>
     <?php if ($dati['sezioniPronte']): ?>
-    <section class="ed-pannello-vista" id="ed-pannello-sezioni" hidden>
+    <section class="ed-pannello-vista" id="ed-pannello-sezioni" role="tabpanel" aria-labelledby="ed-scheda-sezioni" hidden>
       <input type="search" id="ed-cerca-sezioni" placeholder="Cerca una sezione…" aria-label="Cerca una sezione">
       <div id="ed-elenco-sezioni"></div>
       <p class="ed-aiuto">Fai clic su una sezione: entra sotto quella selezionata (o in fondo alla pagina). Oppure trascinala nel punto che vuoi. Una volta dentro è una sezione normale: cambi testi, colori e widget come sempre.</p>
     </section>
     <?php endif; ?>
-    <section class="ed-pannello-vista" id="ed-pannello-modifica" hidden>
+    <section class="ed-pannello-vista" id="ed-pannello-modifica" role="tabpanel" aria-labelledby="ed-scheda-modifica" hidden>
       <div class="ed-modifica-testa"><b id="ed-modifica-nome">Niente selezionato</b><span id="ed-modifica-azioni"></span></div>
       <nav class="ed-schede-controlli" id="ed-schede-controlli"></nav>
       <div id="ed-controlli"><p class="ed-aiuto">Fai clic su un elemento della pagina per modificarlo.</p></div>
     </section>
-    <section class="ed-pannello-vista" id="ed-pannello-navigatore" hidden>
+    <section class="ed-pannello-vista" id="ed-pannello-navigatore" role="tabpanel" aria-labelledby="ed-scheda-navigatore" hidden>
       <div id="ed-navigatore"></div>
       <button type="button" class="ed-b" id="ed-aggiungi-sezione">+ Aggiungi una sezione</button>
     </section>

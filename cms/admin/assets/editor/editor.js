@@ -320,10 +320,21 @@
   }
 
   function apriPannello(nome) {
-    $$('.ed-schede-pannello button').forEach(function (b) { b.classList.toggle('attivo', b.dataset.pannello === nome); b.setAttribute('aria-pressed', b.dataset.pannello === nome ? 'true' : 'false'); });
+    $$('.ed-schede-pannello button').forEach(function (b) { var si = b.dataset.pannello === nome; b.classList.toggle('attivo', si); b.setAttribute('aria-selected', si ? 'true' : 'false'); b.tabIndex = si ? 0 : -1; });
     $$('.ed-pannello-vista').forEach(function (v) { v.hidden = v.id !== 'ed-pannello-' + nome; });
   }
   $$('.ed-schede-pannello button').forEach(function (b) { b.addEventListener('click', function () { apriPannello(b.dataset.pannello); }); });
+  // 2.5.x: le frecce da tastiera fra le schede (il modello delle schede ARIA): la scheda raggiunta si apre subito.
+  $('.ed-schede-pannello').addEventListener('keydown', function (e) {
+    var tutte = $$('.ed-schede-pannello button'), i = tutte.indexOf(document.activeElement), j = -1;
+    if (i < 0) return;
+    if (e.key === 'ArrowRight') j = (i + 1) % tutte.length;
+    else if (e.key === 'ArrowLeft') j = (i - 1 + tutte.length) % tutte.length;
+    else if (e.key === 'Home') j = 0;
+    else if (e.key === 'End') j = tutte.length - 1;
+    if (j < 0) return;
+    e.preventDefault(); apriPannello(tutte[j].dataset.pannello); tutte[j].focus();
+  });
 
   // ------------------------------------------------------------ controlli
   var schedaAttiva = 'contenuto';
@@ -575,6 +586,7 @@
       mp.type = 'button';
       mp.title = (l.proprio ? 'Valore proprio di questa misura (' + ICONE_MISURA[misura] + '). Clic: torna a ereditare dalla misura più grande.' : 'Eredita dalla misura più grande. Modifica il valore per fissarlo su ' + ICONE_MISURA[misura] + '.');
       mp.addEventListener('click', function () { if (l.proprio) { scrivi(imp, ctl, undefined); dopo(); mostraControlli(); } else { prossimaMisura(); } });
+      etichettaMisura(mp, l.proprio);
       etichetta.appendChild(mp);
     }
     if (eGruppo(ctl) && ctl.tipo !== 'allineamento' && ctl.tipo !== 'scelta_icone' && imp[ctl.nome] !== undefined) {
@@ -584,7 +596,7 @@
     }
     var campo = campoControllo(imp, ctl, l, function (v) {
       scrivi(imp, ctl, v); dopo();
-      if (ctl.responsive && mp) { var proprio = imp[ctl.nome] && typeof imp[ctl.nome] === 'object' && imp[ctl.nome][misura] !== undefined; mp.classList.toggle('ed-ereditato', !proprio); l.proprio = proprio; }
+      if (ctl.responsive && mp) { var proprio = imp[ctl.nome] && typeof imp[ctl.nome] === 'object' && imp[ctl.nome][misura] !== undefined; mp.classList.toggle('ed-ereditato', !proprio); l.proprio = proprio; etichettaMisura(mp, proprio); }
     });
     if (ctl.tipo === 'interruttore') { etichetta.appendChild(campo); d.appendChild(etichetta); }
     else { if (ctl.etichetta !== '' || ctl.responsive) d.appendChild(etichetta); d.appendChild(campo); }
@@ -593,6 +605,14 @@
     if (ctl.solo_admin && !D.admin) { d.classList.add('ed-solo-admin'); d.querySelectorAll('input, select, textarea, button').forEach(function (x) { x.disabled = true; }); }
     if (ctl.aiuto) d.appendChild(mk('p', 'ed-aiuto', escapeHtml(ctl.aiuto)));
     return d;
+  }
+  // 2.5.x (scelta di Danilo): accanto al pallino del monitor, quando il valore vale solo per il tablet o il telefono, lo si
+  // scrive ("solo tablet", "solo telefono"): il grigio chiaro e scuro del pallino da solo non lo capiva nessuno.
+  function etichettaMisura(mp, proprio) {
+    var s = mp.querySelector('.ed-misura-solo');
+    if (!s) { s = document.createElement('span'); s.className = 'ed-misura-solo'; mp.appendChild(s); }
+    var t = proprio && misura === 't' ? 'solo tablet' : (proprio && misura === 'm' ? 'solo telefono' : '');
+    s.textContent = t; s.hidden = !t;
   }
   function prossimaMisura() {
     var ordine = ['d', 't', 'm'], n = ordine[(ordine.indexOf(misura) + 1) % 3];
@@ -1301,7 +1321,19 @@
       c.setAttribute('aria-label', nome);
     });
   }
-  new MutationObserver(function () { nominaCampi($('#ed-controlli')); }).observe($('#ed-controlli'), { childList: true, subtree: true });
+  // 2.5.x (scelta di Danilo): un cursore con la casella vuota non ha un valore suo (vale quello del sito): la casella dice
+  // "come il sito" e il cursore è grigio finché non si sceglie un valore. Se la casella mostra un valore ereditato (da una
+  // misura più grande), resta quello.
+  function cursoriVuoti(radice) {
+    $$('.ed-misura, .ed-numero-riga', radice).forEach(function (riga) {
+      var r = riga.querySelector('input[type=range]'), n = riga.querySelector('input[type=number]');
+      if (!r || !n) return;
+      if (n.value === '' && !n.placeholder) n.placeholder = 'come il sito';
+      r.classList.toggle('ed-cursore-vuoto', n.value === '' && n.placeholder === 'come il sito');
+    });
+  }
+  new MutationObserver(function () { nominaCampi($('#ed-controlli')); cursoriVuoti($('#ed-controlli')); }).observe($('#ed-controlli'), { childList: true, subtree: true });
+  $('#ed-controlli').addEventListener('input', function (e) { var riga = e.target.closest && e.target.closest('.ed-misura, .ed-numero-riga'); if (riga) cursoriVuoti(riga.parentNode); });
 
   // ------------------------------------------------------------ avvio
   disegnaElencoWidget();

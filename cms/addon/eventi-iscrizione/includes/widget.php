@@ -59,7 +59,10 @@ editor_registra_widget('eventi_iscrizione', [
     // Il widget Eventi del nucleo disegna l'elenco (aspetto in widget.css, dati per Google con JSON_HEX_TAG).
     $nucleo = editor_widget_registrati()['eventi'] ?? null;
     if (!$nucleo) return '';
-    return (string)($nucleo['disegna'])(['voci' => $voci, 'nascondi_passati' => true, 'quanti' => (int)$v['quanti'], 'vuoto' => (string)$v['vuoto'], 'link_testo' => (string)$v['link_testo'], 'dati_google' => (bool)$v['dati_google'],
+    // 2.5.x (scelta di Danilo): senza eventi, solo nell'anteprima dell'editor, un riquadro tratteggiato dice dove aggiungerli
+    // (.ed-vuoto: sul sito non esce mai, e sito.css e widget.css lo nascondono comunque).
+    $suggerimento = !$voci && !empty($ctx['anteprima']) ? '<div class="ed-vuoto">Ancora nessun evento in programma: aggiungili nel pannello, in Eventi &gt; Nuovo evento. Sul sito, intanto, si legge la frase qui sotto.</div>' : '';
+    return $suggerimento . (string)($nucleo['disegna'])(['voci' => $voci, 'nascondi_passati' => true, 'quanti' => (int)$v['quanti'], 'vuoto' => (string)$v['vuoto'], 'link_testo' => (string)$v['link_testo'], 'dati_google' => (bool)$v['dati_google'],
         'data_sfondo' => '', 'data_colore' => '', 'titolo_colore' => '', 'testo_colore' => ''], $ctx);
 });
 editor_registra_asset('eventi_iscrizione', ['css' => ['widget.css', '../../addon/eventi-iscrizione/assets/eventi.css']]);

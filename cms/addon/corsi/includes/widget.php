@@ -22,6 +22,8 @@ editor_registra_widget('corsi_elenco', ['etichetta' => 'Elenco corsi', 'icona' =
         error_log('corsi: widget: ' . $e->getMessage());
         $schede = '';
     }
-    if ($schede === '') return '<p class="corsi-vuoto">' . h((string)($v['vuoto'] ?? '')) . '</p>';
+    // 2.5.x (scelta di Danilo): nell'anteprima dell'editor, senza corsi, il riquadro tratteggiato dice dove crearli (mai sul sito).
+    if ($schede === '') return (!empty($ctx['anteprima']) ? '<div class="ed-vuoto">Ancora nessun corso pubblicato: crealo nel pannello, in Corsi. Sul sito, intanto, si legge la frase qui sotto.</div>' : '')
+        . '<p class="corsi-vuoto">' . h((string)($v['vuoto'] ?? '')) . '</p>';
     return corsi_css() . '<div class="corsi-griglia corsi-widget">' . $schede . '</div>';
 });
