@@ -1267,7 +1267,7 @@ Una cartella `temi/<slug>/`:
 | `funzioni.php` | no | filtri ed eventi del tema |
 | `viste/*.php` | no | viste che sostituiscono quelle del CMS (per esempio `404.php`) |
 
-Partono con il prodotto undici temi, nessuno con PHP (solo `tema.json`, `stile.json`, `modelli.json`, `tema.css`, `anteprima.png`):
+Partono con il prodotto undici temi, nessuno con PHP (solo `tema.json`, `stile.json`, `modelli.json`, `tema.css`, `anteprima.png`, nei temi della 2.5.0 `anteprima.webp` per stare sotto i 2 MB dello zip di aggiornamento):
 
 | Tema | Idea |
 |---|---|
