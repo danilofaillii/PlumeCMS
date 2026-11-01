@@ -126,6 +126,77 @@ function newsletter_schema(): void {
             `creato` DATETIME NOT NULL,
             PRIMARY KEY (`impronta`)
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8",
+        // 2.8.0, la base dei contatti come Brevo (docs-sviluppo/brevo-confronto.md, capitolo 3).
+        // Gli attributi: quelli di sistema legati a una colonna di newsletter_iscritti (colonna), quelli normali con i
+        // valori in newsletter_valori, quelli di categoria con le opzioni, i calcolati e i globali con una formula.
+        'newsletter_attributi' => 'CREATE TABLE IF NOT EXISTS ' . tbl('newsletter_attributi') . " (
+            `id` INT(11) NOT NULL AUTO_INCREMENT,
+            `nome` VARCHAR(50) NOT NULL,
+            `etichetta` VARCHAR(100) NOT NULL DEFAULT '',
+            `categoria` VARCHAR(12) NOT NULL DEFAULT 'normal',
+            `tipo` VARCHAR(16) NOT NULL DEFAULT 'text',
+            `sistema` TINYINT(1) NOT NULL DEFAULT 0,
+            `colonna` VARCHAR(30) NOT NULL DEFAULT '',
+            `formula` VARCHAR(255) NOT NULL DEFAULT '',
+            `ordine` INT(11) NOT NULL DEFAULT 0,
+            `in_scheda` TINYINT(1) NOT NULL DEFAULT 1,
+            `creato` DATETIME NOT NULL,
+            PRIMARY KEY (`id`), UNIQUE KEY `nome` (`nome`)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8",
+        'newsletter_attributi_opzioni' => 'CREATE TABLE IF NOT EXISTS ' . tbl('newsletter_attributi_opzioni') . " (
+            `id` INT(11) NOT NULL AUTO_INCREMENT,
+            `attributo_id` INT(11) NOT NULL,
+            `valore` INT(11) NOT NULL DEFAULT 0,
+            `etichetta` VARCHAR(200) NOT NULL DEFAULT '',
+            `ordine` INT(11) NOT NULL DEFAULT 0,
+            PRIMARY KEY (`id`), UNIQUE KEY `attributo_valore` (`attributo_id`, `valore`)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8",
+        // Una riga per valore (per la scelta multipla una per opzione): niente colonne JSON né colonne generate.
+        'newsletter_valori' => 'CREATE TABLE IF NOT EXISTS ' . tbl('newsletter_valori') . " (
+            `contatto_id` INT(11) NOT NULL,
+            `attributo_id` INT(11) NOT NULL,
+            `opzione` INT(11) NOT NULL DEFAULT 0,
+            `v_testo` VARCHAR(500) NOT NULL DEFAULT '',
+            `v_num` DECIMAL(20,6) DEFAULT NULL,
+            `v_data` DATE DEFAULT NULL,
+            PRIMARY KEY (`contatto_id`, `attributo_id`, `opzione`),
+            KEY `testo` (`attributo_id`, `v_testo`(100)), KEY `num` (`attributo_id`, `v_num`), KEY `data` (`attributo_id`, `v_data`), KEY `opz` (`attributo_id`, `opzione`)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8",
+        'newsletter_cartelle' => 'CREATE TABLE IF NOT EXISTS ' . tbl('newsletter_cartelle') . " (
+            `id` INT(11) NOT NULL AUTO_INCREMENT,
+            `nome` VARCHAR(100) NOT NULL,
+            `creato` DATETIME NOT NULL,
+            PRIMARY KEY (`id`), UNIQUE KEY `nome` (`nome`)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8",
+        // Chi si è disiscritto da una sola lista (Brevo: listUnsubscribed): non riceve le campagne di quella lista.
+        'newsletter_liste_uscite' => 'CREATE TABLE IF NOT EXISTS ' . tbl('newsletter_liste_uscite') . " (
+            `contatto_id` INT(11) NOT NULL,
+            `lista_id` INT(11) NOT NULL,
+            `quando` DATETIME NOT NULL,
+            PRIMARY KEY (`contatto_id`, `lista_id`), KEY `lista` (`lista_id`)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8",
+        // La storia del contatto: quello che non sta già in coda ed eventi (liste, form, attributi, lista nera...).
+        'newsletter_storia' => 'CREATE TABLE IF NOT EXISTS ' . tbl('newsletter_storia') . " (
+            `id` INT(11) NOT NULL AUTO_INCREMENT,
+            `contatto_id` INT(11) NOT NULL,
+            `tipo` VARCHAR(20) NOT NULL,
+            `rif_id` INT(11) NOT NULL DEFAULT 0,
+            `dettaglio` VARCHAR(255) NOT NULL DEFAULT '',
+            `utente_id` INT(11) NOT NULL DEFAULT 0,
+            `creato` DATETIME NOT NULL,
+            PRIMARY KEY (`id`), KEY `contatto` (`contatto_id`, `creato`)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8",
+        // Il registro del consenso: in più rispetto a Brevo (che tiene solo OPT_IN e DOUBLE_OPT-IN).
+        'newsletter_consensi' => 'CREATE TABLE IF NOT EXISTS ' . tbl('newsletter_consensi') . " (
+            `id` INT(11) NOT NULL AUTO_INCREMENT,
+            `contatto_id` INT(11) NOT NULL,
+            `tipo` VARCHAR(12) NOT NULL DEFAULT 'opt_in',
+            `testo` TEXT,
+            `form_id` INT(11) NOT NULL DEFAULT 0,
+            `ip` VARCHAR(45) NOT NULL DEFAULT '',
+            `creato` DATETIME NOT NULL,
+            PRIMARY KEY (`id`), KEY `contatto` (`contatto_id`)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8",
     ];
     $impronta = md5(serialize($tabelle) . DB_NAME);
     if (get_setting('newsletter_schema_impronta', '') !== $impronta) {
@@ -151,9 +222,131 @@ function newsletter_schema(): void {
                 WHERE NOT EXISTS (SELECT 1 FROM ' . tbl('newsletter_iscritti_liste') . ' l WHERE l.iscritto_id = i.id)')->execute([$principale]);
         }
         db()->prepare('UPDATE ' . tbl('newsletter_campagne') . " SET liste = ? WHERE liste = ''")->execute([(string)$principale]);
+        newsletter_contatti_migra(); // 2.8.0
         save_setting('newsletter_schema_impronta', $impronta);
     }
     $fatto = true;
+}
+
+/** 2.8.0: i motivi della lista nera, con i codici di Brevo, e lo stato di newsletter_iscritti che ognuno dà. */
+const NL_MOTIVI = [
+    'unsubscribedViaEmail' => ['Si è disiscritto dal link dell\'email', 'uscito'],
+    'unsubscribedViaMA' => ['Si è disiscritto da un\'automazione', 'uscito'],
+    'unsubscribedViaApi' => ['Si è disiscritto dal servizio di invio', 'uscito'],
+    'adminBlocked' => ['Messo in lista nera a mano', 'bloccato'],
+    'hardBounce' => ['Hard bounce: il server di posta ha rifiutato l\'indirizzo', 'rimbalzato'],
+    'softBounce' => ['Cinque soft bounce di fila', 'bloccato'],
+    'contactFlaggedAsSpam' => ['Ha segnalato un\'email come spam', 'spam'],
+    'import' => ['Messo in lista nera con un\'importazione', 'bloccato'],
+];
+/** Gli stati che vogliono dire "in lista nera" per il canale email. */
+const NL_BLOCCATI = ['uscito', 'rimbalzato', 'spam', 'bloccato'];
+/** Quanti soft bounce di fila mettono un contatto in lista nera (Brevo: 5). */
+const NL_SOFT_BOUNCE_MAX = 5;
+
+/**
+ * 2.8.0: colonne e righe nuove della base dei contatti, e la migrazione dei dati di prima, una volta sola. Nessuna tabella
+ * si rinomina e nessuna colonna si toglie: gli stati di oggi restano e diventano anche motivi della lista nera.
+ */
+function newsletter_contatti_migra(): void {
+    $t = tbl('newsletter_iscritti');
+    $col = db()->query('SHOW COLUMNS FROM ' . $t)->fetchAll(PDO::FETCH_COLUMN);
+    $aggiungi = [
+        'ext_id' => 'VARCHAR(190) DEFAULT NULL',
+        'blocco_motivo' => "VARCHAR(24) NOT NULL DEFAULT ''",
+        'blocco_at' => 'DATETIME DEFAULT NULL',
+        'opt_in' => 'TINYINT(1) NOT NULL DEFAULT 0',
+        'doi_at' => 'DATETIME DEFAULT NULL',
+        'tracciamento' => 'TINYINT(1) NOT NULL DEFAULT 1',
+    ];
+    foreach ($aggiungi as $c => $def) if (!in_array($c, $col, true)) db()->exec("ALTER TABLE $t ADD COLUMN `$c` $def");
+    $ind = db()->query('SHOW INDEX FROM ' . $t)->fetchAll(PDO::FETCH_COLUMN, 2);
+    if (!in_array('ext_id', $ind, true)) db()->exec("ALTER TABLE $t ADD UNIQUE KEY `ext_id` (`ext_id`)");
+    $l = tbl('newsletter_liste');
+    $col = db()->query('SHOW COLUMNS FROM ' . $l)->fetchAll(PDO::FETCH_COLUMN);
+    if (!in_array('cartella_id', $col, true)) db()->exec("ALTER TABLE $l ADD COLUMN `cartella_id` INT(11) NOT NULL DEFAULT 0");
+    // Gli attributi di sistema (Brevo: EMAIL, FIRSTNAME, LASTNAME, EXT_ID, OPT_IN, DOUBLE_OPT-IN, CREATION_DATE, LAST_CHANGED).
+    $sis = [
+        ['EMAIL', 'Email', 'text', 'email'], ['NOME', 'Nome', 'text', 'nome'], ['COGNOME', 'Cognome', 'text', 'cognome'],
+        ['EXT_ID', 'Identificativo esterno', 'text', 'ext_id'], ['OPT_IN', 'Consenso (casella del form)', 'boolean', 'opt_in'],
+        ['DOUBLE_OPT-IN', 'Doppio opt-in confermato', 'boolean', 'doi_at'], ['CREATION_DATE', 'Data di creazione', 'date', 'creato'],
+        ['LAST_CHANGED', 'Ultima modifica', 'date', 'aggiornato'],
+    ];
+    $ins = db()->prepare('INSERT IGNORE INTO ' . tbl('newsletter_attributi') . " (nome, etichetta, categoria, tipo, sistema, colonna, ordine, creato) VALUES (?, ?, 'normal', ?, 1, ?, ?, NOW())");
+    foreach ($sis as $i => $a) $ins->execute([$a[0], $a[1], $a[2], $a[3], $i + 1]);
+    if (get_setting('newsletter_contatti_migrati', '') === '1') return;
+    // Gli stati di oggi diventano motivi della lista nera, con la data che c'era.
+    db()->exec("UPDATE $t SET blocco_motivo = 'unsubscribedViaEmail', blocco_at = COALESCE(uscito_at, aggiornato) WHERE stato = 'uscito' AND blocco_motivo = ''");
+    db()->exec("UPDATE $t SET blocco_motivo = 'hardBounce', blocco_at = COALESCE(rimbalzato_at, aggiornato) WHERE stato = 'rimbalzato' AND blocco_motivo = ''");
+    db()->exec("UPDATE $t SET blocco_motivo = 'contactFlaggedAsSpam', blocco_at = COALESCE(uscito_at, aggiornato) WHERE stato = 'spam' AND blocco_motivo = ''");
+    // DOUBLE_OPT-IN: chi è attivo dopo una conferma del link; OPT_IN: chi ha dato il consenso del modulo o del form.
+    db()->exec("UPDATE $t SET doi_at = consenso_at WHERE doi_at IS NULL AND consenso_at IS NOT NULL AND fonte IN ('modulo', 'form') AND stato IN ('attivo', 'uscito', 'rimbalzato', 'spam')");
+    db()->exec("UPDATE $t SET opt_in = 1 WHERE consenso_at IS NOT NULL AND consenso_versione NOT IN ('', 'import')");
+    // Il registro del consenso parte da quello che c'era (versione, data, IP).
+    db()->exec('INSERT INTO ' . tbl('newsletter_consensi') . " (contatto_id, tipo, testo, form_id, ip, creato)
+        SELECT i.id, IF(i.fonte = 'import', 'import', 'opt_in'), i.consenso_versione, 0, i.ip, i.consenso_at FROM $t i
+        WHERE i.consenso_at IS NOT NULL AND NOT EXISTS (SELECT 1 FROM " . tbl('newsletter_consensi') . ' c WHERE c.contatto_id = i.id)');
+    // Le liste di prima in una cartella "Le tue liste".
+    db()->exec('INSERT IGNORE INTO ' . tbl('newsletter_cartelle') . " (nome, creato) VALUES ('Le tue liste', NOW())");
+    $cart = (int)db()->query('SELECT id FROM ' . tbl('newsletter_cartelle') . " WHERE nome = 'Le tue liste'")->fetchColumn();
+    db()->exec("UPDATE $l SET cartella_id = $cart WHERE cartella_id = 0");
+    save_setting('newsletter_contatti_migrati', '1');
+}
+
+/** 2.8.0: una riga nella storia del contatto (Cronologia della scheda). Non ferma mai chi la chiama. */
+function newsletter_storia_scrivi(int $id, string $tipo, string $dettaglio = '', int $rif = 0): void {
+    if (!$id) return;
+    try {
+        $u = 0;
+        if (session_status() === PHP_SESSION_ACTIVE) $u = (int)($_SESSION['admin_user_id'] ?? 0);
+        db()->prepare('INSERT INTO ' . tbl('newsletter_storia') . ' (contatto_id, tipo, rif_id, dettaglio, utente_id, creato) VALUES (?, ?, ?, ?, ?, NOW())')
+            ->execute([$id, mb_substr($tipo, 0, 20), $rif, mb_substr(newsletter_4byte_dentro($dettaglio), 0, 255), $u]);
+    } catch (Throwable $e) { error_log('newsletter_storia: ' . $e->getMessage()); }
+}
+
+/**
+ * 2.8.0: mette un contatto in lista nera email con il motivo (codici di Brevo, NL_MOTIVI). Stato, motivo, data, coda e
+ * storia cambiano insieme. Chi è in lista nera non riceve più niente (campagne, automazioni, coda).
+ * Ritorna false se il motivo non esiste o il contatto non c'è.
+ */
+function newsletter_contatto_blocca(int $id, string $motivo, string $dettaglio = ''): bool {
+    if (!isset(NL_MOTIVI[$motivo])) return false;
+    newsletter_schema();
+    $stato = NL_MOTIVI[$motivo][1];
+    $st = db()->prepare('UPDATE ' . tbl('newsletter_iscritti') . " SET stato = ?, blocco_motivo = ?, blocco_at = NOW(),
+        uscito_at = IF(? IN ('uscito', 'spam', 'bloccato'), NOW(), uscito_at), rimbalzato_at = IF(? = 'rimbalzato', NOW(), rimbalzato_at), aggiornato = NOW() WHERE id = ?");
+    $st->execute([$stato, $motivo, $stato, $stato, $id]);
+    if (!$st->rowCount()) return false;
+    db()->prepare('UPDATE ' . tbl('newsletter_coda') . " SET stato = 'saltata' WHERE iscritto_id = ? AND stato = 'attesa'")->execute([$id]);
+    newsletter_storia_scrivi($id, 'bloccato', NL_MOTIVI[$motivo][0] . ($dettaglio !== '' ? ': ' . $dettaglio : ''));
+    return true;
+}
+
+/**
+ * 2.8.0: toglie un contatto dalla lista nera email (Brevo: solo dalla scheda, uno alla volta). Torna iscritto; se aveva
+ * chiesto la cancellazione dei dati, l'impronta si toglie (lo ha deciso l'amministratore, dopo l'avviso).
+ */
+function newsletter_contatto_sblocca(int $id, string $perche = 'a mano'): bool {
+    newsletter_schema();
+    $st = db()->prepare('SELECT email, stato FROM ' . tbl('newsletter_iscritti') . ' WHERE id = ?');
+    $st->execute([$id]);
+    $c = $st->fetch();
+    if (!$c || !in_array($c['stato'], NL_BLOCCATI, true)) return false;
+    db()->prepare('UPDATE ' . tbl('newsletter_iscritti') . " SET stato = 'attivo', blocco_motivo = '', blocco_at = NULL, uscito_at = NULL, rimbalzato_at = NULL,
+        errori_di_fila = 0, ultimo_errore = '', aggiornato = NOW() WHERE id = ?")->execute([$id]);
+    db()->prepare('DELETE FROM ' . tbl('newsletter_soppressi') . ' WHERE impronta = ?')->execute([newsletter_impronta((string)$c['email'])]);
+    newsletter_storia_scrivi($id, 'sbloccato', 'Tolto dalla lista nera: ' . $perche);
+    return true;
+}
+
+/** 2.8.0: un soft bounce (errore temporaneo) in più; al quinto di fila il contatto va in lista nera (regola di Brevo). */
+function newsletter_soft_bounce(int $id, string $errore): void {
+    db()->prepare('UPDATE ' . tbl('newsletter_iscritti') . ' SET errori_di_fila = errori_di_fila + 1, ultimo_errore = ? WHERE id = ?')->execute([mb_substr($errore, 0, 255), $id]);
+    newsletter_storia_scrivi($id, 'soft_bounce', $errore);
+    $st = db()->prepare('SELECT errori_di_fila, stato FROM ' . tbl('newsletter_iscritti') . ' WHERE id = ?');
+    $st->execute([$id]);
+    $r = $st->fetch();
+    if ($r && $r['stato'] === 'attivo' && (int)$r['errori_di_fila'] >= NL_SOFT_BOUNCE_MAX) newsletter_contatto_blocca($id, 'softBounce', $errore);
 }
 
 // ------------------------------------------------------------
@@ -193,6 +386,7 @@ function newsletter_in_lista(int $iscritto, int $lista, bool $flussi = true): vo
     if (!$iscritto || !$lista) return;
     $st = db()->prepare('INSERT IGNORE INTO ' . tbl('newsletter_iscritti_liste') . ' (iscritto_id, lista_id, aggiunto) VALUES (?, ?, NOW())');
     $st->execute([$iscritto, $lista]);
+    if ($st->rowCount() === 1) newsletter_storia_scrivi($iscritto, 'lista_aggiunto', newsletter_nome_lista($lista), $lista);
     // Entrato adesso in una lista, e già attivo: i flussi di quella lista partono.
     if ($st->rowCount() === 1 && $flussi) {
         $a = db()->prepare('SELECT stato FROM ' . tbl('newsletter_iscritti') . ' WHERE id = ?');
@@ -219,7 +413,12 @@ function newsletter_destinatari(array $liste): int {
     $liste = array_filter(array_map('intval', $liste));
     if (!$liste) return 0;
     return (int)db()->query('SELECT COUNT(DISTINCT i.id) FROM ' . tbl('newsletter_iscritti') . ' i JOIN ' . tbl('newsletter_iscritti_liste') . " l ON l.iscritto_id = i.id
-        WHERE i.stato = 'attivo' AND l.lista_id IN (" . implode(',', $liste) . ')')->fetchColumn();
+        WHERE i.stato = 'attivo' AND l.lista_id IN (" . implode(',', $liste) . ')' . newsletter_sql_uscite_lista())->fetchColumn();
+}
+
+/** 2.8.0: chi si è disiscritto da una lista non la riceve (condizione sulla riga l dell'appartenenza). */
+function newsletter_sql_uscite_lista(): string {
+    return ' AND NOT EXISTS (SELECT 1 FROM ' . tbl('newsletter_liste_uscite') . ' u WHERE u.contatto_id = l.iscritto_id AND u.lista_id = l.lista_id)';
 }
 
 /** Il nome di una lista ('' se non esiste). */
@@ -297,6 +496,7 @@ function newsletter_richiesta(array $d, array $opz = []): string {
             conferma_scade = IF(stato = 'attivo', conferma_scade, VALUES(conferma_scade)), ip = VALUES(ip), aggiornato = VALUES(aggiornato)")
         ->execute([':e' => $email, ':n' => mb_substr((string)$d['nome'], 0, 100), ':c' => mb_substr((string)($d['cognome'] ?? ''), 0, 100), ':f' => $fonte, ':v' => MODULI_CONSENSO_VERSIONE, ':s' => $scade, ':ip' => moduli_ip(), ':o' => $ora, ':o2' => $ora]);
     $id = newsletter_id_da_email($email);
+    newsletter_storia_scrivi($id, $form ? 'form' : 'iscrizione', ($form ? 'Ha compilato un form' : 'Si è iscritto dal modulo della newsletter') . ': aspetta la conferma dell\'email', $form);
     // Una richiesta nuova per la stessa lista e lo stesso form prende il posto di quella di prima.
     db()->prepare('DELETE FROM ' . tbl('newsletter_conferme') . ' WHERE iscritto_id = ? AND lista_id = ? AND form_id = ?')->execute([$id, $lista, $form]);
     db()->prepare('INSERT INTO ' . tbl('newsletter_conferme') . ' (token, iscritto_id, lista_id, form_id, scade, creato) VALUES (?, ?, ?, ?, ?, ?)')
@@ -348,8 +548,14 @@ function newsletter_conferma_esito(string $token): ?array {
     $iscritto = $i->fetch();
     if (!$iscritto) return null;
     $nuovo = $iscritto['stato'] !== 'attivo';
+    // 2.8.0: DOUBLE_OPT-IN e OPT_IN, e la lista nera si toglie (è il contatto stesso che lo chiede, con il link).
     db()->prepare('UPDATE ' . tbl('newsletter_iscritti') . " SET stato = 'attivo', consenso_at = NOW(), consenso_versione = ?, token_conferma = NULL, conferma_scade = NULL, uscito_at = NULL,
-        rimbalzato_at = NULL, errori_di_fila = 0, ultimo_errore = '', aggiornato = NOW() WHERE id = ?")->execute([MODULI_CONSENSO_VERSIONE, $id]);
+        rimbalzato_at = NULL, errori_di_fila = 0, ultimo_errore = '', blocco_motivo = '', blocco_at = NULL, doi_at = NOW(), opt_in = 1, aggiornato = NOW() WHERE id = ?")->execute([MODULI_CONSENSO_VERSIONE, $id]);
+    newsletter_storia_scrivi($id, 'doi', 'Ha confermato l\'iscrizione dal link dell\'email' . ($lista ? ' (lista ' . newsletter_nome_lista($lista) . ')' : ''), $form);
+    try {
+        db()->prepare('INSERT INTO ' . tbl('newsletter_consensi') . " (contatto_id, tipo, testo, form_id, ip, creato) VALUES (?, 'doi', ?, ?, ?, NOW())")
+            ->execute([$id, MODULI_CONSENSO_VERSIONE, $form, function_exists('moduli_ip') ? moduli_ip() : '']);
+    } catch (Throwable $e) { error_log('newsletter_consensi: ' . $e->getMessage()); }
     // Ha confermato di sua volontà: se aveva chiesto la cancellazione, l'impronta non serve più.
     db()->prepare('DELETE FROM ' . tbl('newsletter_soppressi') . ' WHERE impronta = ?')->execute([newsletter_impronta((string)$iscritto['email'])]);
     // Flussi: "si iscrive alla newsletter" solo per la lista principale; poi la lista in cui entra adesso
@@ -441,8 +647,9 @@ function newsletter_segnala_spam(int $id): void {
     $st->execute([$id]);
     $email = (string)$st->fetchColumn();
     if ($email === '') return;
-    db()->prepare('UPDATE ' . tbl('newsletter_iscritti') . " SET stato = 'spam', uscito_at = NOW(), aggiornato = NOW() WHERE id = ?")->execute([$id]);
+    db()->prepare('UPDATE ' . tbl('newsletter_iscritti') . " SET stato = 'spam', blocco_motivo = 'contactFlaggedAsSpam', blocco_at = NOW(), uscito_at = NOW(), aggiornato = NOW() WHERE id = ?")->execute([$id]);
     db()->prepare('DELETE FROM ' . tbl('newsletter_coda') . " WHERE iscritto_id = ? AND stato = 'attesa'")->execute([$id]);
+    newsletter_storia_scrivi($id, 'bloccato', NL_MOTIVI['contactFlaggedAsSpam'][0]);
     db()->prepare('INSERT IGNORE INTO ' . tbl('newsletter_soppressi') . ' (impronta, creato) VALUES (?, NOW())')->execute([newsletter_impronta($email)]);
 }
 
@@ -455,16 +662,21 @@ function newsletter_iscritto_da_uscita(string $i, string $t): ?array {
     return $st->fetch() ?: null;
 }
 
-function newsletter_esci(int $id): void {
-    db()->prepare('UPDATE ' . tbl('newsletter_iscritti') . " SET stato = 'uscito', uscito_at = NOW(), aggiornato = NOW() WHERE id = ?")->execute([$id]);
+/** L'uscita (disiscrizione): lista nera email. 2.8.0: con il motivo di Brevo (dal link dell'email, se non si dice altro). */
+function newsletter_esci(int $id, string $motivo = 'unsubscribedViaEmail'): void {
+    if (!isset(NL_MOTIVI[$motivo]) || NL_MOTIVI[$motivo][1] !== 'uscito') $motivo = 'unsubscribedViaEmail';
+    $st = db()->prepare('UPDATE ' . tbl('newsletter_iscritti') . " SET stato = 'uscito', blocco_motivo = ?, blocco_at = NOW(), uscito_at = NOW(), aggiornato = NOW() WHERE id = ?");
+    $st->execute([$motivo, $id]);
+    if ($st->rowCount()) newsletter_storia_scrivi($id, 'bloccato', NL_MOTIVI[$motivo][0]);
     // Chi esce non riceve più niente, neanche le email già in coda.
     db()->prepare('DELETE FROM ' . tbl('newsletter_coda') . " WHERE iscritto_id = ? AND stato = 'attesa'")->execute([$id]);
 }
 
 /** Il server di posta ha rifiutato l'indirizzo per sempre (5xx): non riceve più niente, né campagne né flussi. */
 function newsletter_rimbalzato(int $id, string $errore): void {
-    db()->prepare('UPDATE ' . tbl('newsletter_iscritti') . " SET stato = 'rimbalzato', rimbalzato_at = NOW(), ultimo_errore = ?, aggiornato = NOW() WHERE id = ? AND stato = 'attivo'")
-        ->execute([mb_substr($errore, 0, 255), $id]);
+    $st = db()->prepare('UPDATE ' . tbl('newsletter_iscritti') . " SET stato = 'rimbalzato', blocco_motivo = 'hardBounce', blocco_at = NOW(), rimbalzato_at = NOW(), ultimo_errore = ?, aggiornato = NOW() WHERE id = ? AND stato = 'attivo'");
+    $st->execute([mb_substr($errore, 0, 255), $id]);
+    if ($st->rowCount()) newsletter_storia_scrivi($id, 'bloccato', NL_MOTIVI['hardBounce'][0] . ($errore !== '' ? ': ' . $errore : ''));
     db()->prepare('UPDATE ' . tbl('newsletter_coda') . " SET stato = 'saltata' WHERE iscritto_id = ? AND stato = 'attesa'")->execute([$id]);
 }
 
@@ -477,7 +689,7 @@ function newsletter_esito_invio(int $id): void {
     $e = posta_esito();
     if ($e === 'ok') db()->prepare('UPDATE ' . tbl('newsletter_iscritti') . " SET errori_di_fila = 0, ultimo_errore = '' WHERE id = ? AND errori_di_fila > 0")->execute([$id]);
     elseif ($e === 'rimbalzo') newsletter_rimbalzato($id, posta_errore());
-    elseif ($e === 'temporaneo') db()->prepare('UPDATE ' . tbl('newsletter_iscritti') . ' SET errori_di_fila = errori_di_fila + 1, ultimo_errore = ? WHERE id = ?')->execute([mb_substr(posta_errore(), 0, 255), $id]);
+    elseif ($e === 'temporaneo') newsletter_soft_bounce($id, posta_errore()); // 2.8.0: al quinto di fila, lista nera
 }
 
 /** Toglie dal database le righe di questi iscritti, in tutte le tabelle della newsletter e dei flussi. */
@@ -488,6 +700,10 @@ function newsletter_togli_iscritti(array $ids): void {
     $in = implode(',', $ids);
     foreach (['newsletter_coda', 'newsletter_iscritti_liste', 'newsletter_conferme', 'newsletter_inneschi_attesa', 'newsletter_eventi', 'newsletter_corsi'] as $t) {
         db()->exec('DELETE FROM ' . tbl($t) . " WHERE iscritto_id IN ($in)");
+    }
+    // 2.8.0: attributi, storia, consensi e uscite dalle liste.
+    foreach (['newsletter_valori', 'newsletter_storia', 'newsletter_consensi', 'newsletter_liste_uscite'] as $t) {
+        db()->exec('DELETE FROM ' . tbl($t) . " WHERE contatto_id IN ($in)");
     }
     db()->exec('DELETE FROM ' . tbl('newsletter_iscritti') . " WHERE id IN ($in)");
 }
@@ -576,10 +792,10 @@ function newsletter_importa_csv(string $file, int $lista, bool $flussi = false):
         if (newsletter_soppresso($email)) { $n['saltati']++; continue; }
         $chi->execute([$email]);
         $c = $chi->fetch();
-        if ($c && in_array($c['stato'], ['uscito', 'rimbalzato', 'spam'], true)) { $n['saltati']++; continue; }
+        if ($c && in_array($c['stato'], NL_BLOCCATI, true)) { $n['saltati']++; continue; } // 2.8.0: anche chi è in lista nera a mano
         if (!$c) {
             $ins->execute([$email, $pulisci($cN !== null ? ($r[$cN] ?? '') : ''), $pulisci($cC !== null ? ($r[$cC] ?? '') : ''), $cD !== null ? newsletter_data_csv((string)($r[$cD] ?? '')) : null, $ora, $ora]);
-            $ins->rowCount() ? $n['nuovi']++ : $n['gia']++;
+            if ($ins->rowCount()) { $n['nuovi']++; newsletter_storia_scrivi(newsletter_id_da_email($email), 'importato', 'Importato da un file CSV'); } else $n['gia']++;
         } else {
             $n['gia']++;
         }
@@ -648,7 +864,10 @@ function newsletter_4byte_fuori(string $s): string {
 /** {nome} nell'oggetto e nel testo diventa il nome dell'iscritto. */
 function newsletter_personalizza(string $s, array $iscritto, bool $html): string {
     $nome = trim((string)($iscritto['nome'] ?? ''));
-    return str_replace('{nome}', $html ? h($nome) : $nome, $s);
+    $s = str_replace('{nome}', $html ? h($nome) : $nome, $s);
+    // 2.8.0: i segnaposti degli attributi come Brevo, {{ contact.NOME }} (includes/newsletter-contatti.php).
+    if (str_contains($s, '{{') && function_exists('newsletter_segnaposti')) $s = newsletter_segnaposti($s, $iscritto, $html);
+    return $s;
 }
 
 /** L'email completa per un iscritto (o per una prova: id 0). */
@@ -697,8 +916,9 @@ function newsletter_campagna(int $id): ?array {
 
 function newsletter_numeri(): array {
     newsletter_schema();
-    $r = ['in_attesa' => 0, 'attivo' => 0, 'uscito' => 0, 'rimbalzato' => 0, 'spam' => 0];
+    $r = ['in_attesa' => 0, 'attivo' => 0, 'uscito' => 0, 'rimbalzato' => 0, 'spam' => 0, 'bloccato' => 0];
     foreach (db()->query('SELECT stato, COUNT(*) n FROM ' . tbl('newsletter_iscritti') . ' GROUP BY stato') as $x) $r[$x['stato']] = (int)$x['n'];
+    $r['lista_nera'] = $r['uscito'] + $r['rimbalzato'] + $r['spam'] + $r['bloccato']; // 2.8.0
     // Attivi con tre errori temporanei di fila o più: da controllare.
     $r['segnalati'] = (int)db()->query('SELECT COUNT(*) FROM ' . tbl('newsletter_iscritti') . " WHERE stato = 'attivo' AND errori_di_fila >= 3")->fetchColumn();
     return $r;
@@ -723,7 +943,7 @@ function newsletter_avvia_programmate(): array {
         }
         // Chi sta in più liste scelte riceve l'email una volta sola (chiave unica campagna + iscritto).
         db()->prepare('INSERT IGNORE INTO ' . tbl('newsletter_coda') . ' (campagna_id, iscritto_id) SELECT DISTINCT ?, i.id FROM ' . tbl('newsletter_iscritti') . ' i
-            JOIN ' . tbl('newsletter_iscritti_liste') . " l ON l.iscritto_id = i.id WHERE i.stato = 'attivo' AND l.lista_id IN (" . implode(',', $liste) . ')')->execute([$id]);
+            JOIN ' . tbl('newsletter_iscritti_liste') . " l ON l.iscritto_id = i.id WHERE i.stato = 'attivo' AND l.lista_id IN (" . implode(',', $liste) . ')' . newsletter_sql_uscite_lista())->execute([$id]);
         $n = (int)db()->query('SELECT COUNT(*) FROM ' . tbl('newsletter_coda') . ' WHERE campagna_id = ' . (int)$id)->fetchColumn();
         db()->prepare('UPDATE ' . tbl('newsletter_campagne') . " SET stato = 'in_invio', destinatari = ?, aggiornato = NOW() WHERE id = ?")->execute([$n, $id]);
         $log[] = "campagna $id avviata: $n destinatari";
@@ -797,3 +1017,4 @@ function newsletter_invia_giro(?int $massimo = null): array {
 }
 
 require_once __DIR__ . '/newsletter-flussi.php';
+require_once __DIR__ . '/newsletter-contatti.php'; // 2.8.0: contatti, attributi, cartelle (come Brevo)

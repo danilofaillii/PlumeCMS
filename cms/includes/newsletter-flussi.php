@@ -537,6 +537,8 @@ function newsletter_flussi_giro(int $posti): array {
             if (!$partita) { $log[] = 'flusso ' . $f['nome'] . ': email non partita verso ' . $r['email'] . ' (' . posta_errore() . ')'; break; }
             $inviate++;
             db()->prepare('UPDATE ' . tbl('newsletter_flussi') . ' SET inviate = inviate + 1 WHERE id = ?')->execute([$f['id']]);
+            // 2.8.0: l'email del flusso nella Cronologia del contatto (le campagne stanno già nella coda).
+            if (function_exists('newsletter_storia_scrivi')) newsletter_storia_scrivi($iscritto, 'flusso_email', $f['nome'] . ': ' . newsletter_4byte_fuori((string)$d['oggetto']), (int)$f['id']);
             $ascolta = $d['ascolto'] > 0 && (newsletter_flusso_arrivo($g, $nodoId, 'aperta') !== null || newsletter_flusso_arrivo($g, $nodoId, 'cliccata') !== null || newsletter_flusso_arrivo($g, $nodoId, 'nessuna') !== null);
             if ($ascolta) {
                 $aggiorna->execute([$nodoId, date('Y-m-d H:i:s', time() + $d['ascolto'] * 60), 'email', $salti, $corso]);

@@ -853,13 +853,15 @@ function consegna_segnala(string $servizio, string $evento, string $email, strin
             newsletter_rimbalzato($id, $motivo);
             $esito = $iscritto['stato'] === 'attivo' ? 'iscritto segnato rimbalzato' : 'rimbalzo registrato (non era attivo)';
         } elseif ($evento === 'temporaneo') {
-            db()->prepare('UPDATE ' . tbl('newsletter_iscritti') . ' SET errori_di_fila = errori_di_fila + 1, ultimo_errore = ? WHERE id = ?')->execute([$motivo, $id]);
+            // 2.8.0: soft bounce, al quinto di fila lista nera (regola di Brevo). Copia di riserva per opcache (file vecchio accanto al nuovo).
+            if (function_exists('newsletter_soft_bounce')) newsletter_soft_bounce($id, $motivo);
+            else db()->prepare('UPDATE ' . tbl('newsletter_iscritti') . ' SET errori_di_fila = errori_di_fila + 1, ultimo_errore = ? WHERE id = ?')->execute([$motivo, $id]);
             $esito = 'errore temporaneo contato';
         } elseif ($evento === 'spam') {
             newsletter_segnala_spam($id);
             $esito = 'ha segnalato spam: fuori e in soppressione';
         } elseif ($evento === 'uscita') {
-            if ($iscritto['stato'] === 'attivo') newsletter_esci($id);
+            if ($iscritto['stato'] === 'attivo') newsletter_esci($id, 'unsubscribedViaApi'); // 2.8.0: il motivo di Brevo
             $esito = 'uscito dal link del servizio';
         } else {
             $esito = 'registrato';
