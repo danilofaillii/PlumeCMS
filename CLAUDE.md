@@ -103,7 +103,7 @@ Sono gli unici in `cms/docs/`, nello zip, nel sito di plumeCMS e nella pagina Do
 - **Pacchetto di aggiornamento** per un'installazione esistente:
   `python3 tools/cms-pacchetto.py --aggiornamento`. Si carica dal pannello,
   Impostazioni, Aggiornamenti.
-- **Versione**: `cms/VERSIONE` (oggi 2.5.0; sempre tre numeri: "beta" va nel CHANGELOG, mai nel nome dello zip, se no la serie "ultima" del Download non lo riconosce) e una voce in `cms/CHANGELOG.md` a ogni
+- **Versione**: `cms/VERSIONE` (oggi 2.6.0; sempre tre numeri: "beta" va nel CHANGELOG, mai nel nome dello zip, se no la serie "ultima" del Download non lo riconosce) e una voce in `cms/CHANGELOG.md` a ogni
   zip con contenuto diverso. Mai cambiare il contenuto di una versione già data.
 - **Prove** prima di dire finito:
   - `php -n -d short_open_tag=1 -l` su ogni file PHP toccato, `node --check` sui js;
@@ -141,6 +141,19 @@ Le decisioni complete, con data e perché, stanno nel second brain, `plumecms/de
 - **Nome: plumeCMS** (26 ottobre 2026).
 
 ## Stato al 31 ottobre 2026
+
+Fatto: plumeCMS 2.6.0 (1 novembre): controllo di UX e UI con due agenti (pannello; editor, installatore, addon, sito), scelte di
+Danilo su 18 punti (tutti tranne l'editor ridotto al telefono, rimandato), regole globali in `docs-sviluppo/regole-interfaccia.md`
+(copia in `second-brain/_comune/`). Titoli dei riquadri in fascia, campi a 3:1, conferme in una finestra del pannello, tabelle a schede
+al telefono, Impostazioni a schede (Sito), bozze vuote nel cestino dal cron, Download con i giorni in un riquadro loro e il peso del file
+controllato (`data-peso-massimo`, `pannello_invio_troppo_grande()`), avviso del logo coperto dal widget in Stile del sito,
+`allow_url_fopen` in Controlla il server (su plumecms.it era spento). Sito: data delle schede e ricerca vuota cambiate apposta.
+Prove: install 37/37 radice e cartella, aggiornamento 2.5.0 -> 2.6.0 13/13 (4 foto su 20 diverse, tutte volute: blog e ricerca),
+pacchetto unico su un sito 2.5.0 13/13 senza errori fatali, addon 70/70, ux pannello 1234/1234, ux editor 59/59 (senza copia non
+installata e pagina /addon-tutti/), telefono 50/50 a 390 e 768, bozze vuote 11/11, download limite 8/8, attacchi 250/250 (senza
+FINTO_WP e SEGRETO), sito di plumeCMS 95/95. Manuale d'uso con 173 schermate rifatte, PDF 7840 KB. Le prove che caricano pacchetti
+grandi vogliono il server con `-d upload_max_filesize=64M -d post_max_size=80M`: dalla 2.6.0 il browser blocca prima dell'invio un file
+oltre il limite. `prova-addon-tutti.js` spegne gli addon alla fine: `prova-ux-editor.js` li vuole accesi.
 
 Fatto: plumeCMS 2.5.0 (1 novembre): otto temi nuovi (richiesta di Danilo: Estate, Inverno, Autunno, Primavera, Giallo 255,255,0,
 Rosso, Verde, Blu; agente temi in worktree) con contrasto almeno 4,5 misurato su sette pagine (`prove/prova-temi-nuovi.js` 611/611),
