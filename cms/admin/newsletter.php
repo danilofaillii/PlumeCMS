@@ -240,7 +240,7 @@ require_once __DIR__ . '/includes/admin-header.php';
       <a href="?vista=<?= $k ?>"<?= $vista === $k ? ' class="attiva" aria-current="page"' : '' ?>><?= h($et) ?> <span class="nl-conto"><?= (int)$conti[$k] ?></span></a>
     <?php endforeach; ?>
   </nav>
-  <table class="table nl-elenco">
+  <?php if ($campagne): ?><table class="table nl-elenco">
     <thead><tr><th>Campagna</th><th>Stato</th><th>A chi</th><th>Quando</th><th>Avanzamento</th><th>Azioni</th></tr></thead>
     <tbody>
     <?php foreach ($campagne as $c): $pct = $c['destinatari'] ? round($c['inviate'] / $c['destinatari'] * 100) : 0; $cId = (int)$c['id'];
@@ -274,7 +274,7 @@ require_once __DIR__ . '/includes/admin-header.php';
     </tr>
     <?php endforeach; ?>
     </tbody>
-  </table>
+  </table><?php endif; ?>
   <?php if (!$campagne): ?><div class="empty-state"><p><?= $vista === 'tutte' ? 'Ancora nessuna campagna: crea la prima con «Crea una campagna» qui sopra.' : 'Nessuna campagna in questa vista. Guarda in <a href="newsletter.php">Tutte</a>.' ?></p></div><?php endif; ?>
   <p style="font-size:.85rem;color:var(--text-muted);margin-top:1rem">
     Le email partono dal cron ogni 5 minuti, al massimo <?= (int)$cfg['per_ora'] ?> l'ora<?= (int)$cfg['per_giorno'] ? ' e ' . (int)$cfg['per_giorno'] . ' al giorno' : '' ?>, contando tutte le email del sito. Ultimo giro: <?= h($ultimoGiro ?: 'nessuno registrato') ?>.

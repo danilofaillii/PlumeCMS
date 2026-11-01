@@ -45,6 +45,26 @@ un segmento, esportazione, bivi dei flussi.
    prima e dopo l'aggiornamento dà due JSON da confrontare.
 3. Atteso (2.10.0): tutto OK, ogni conteggio sotto un secondo.
 
+## prova-campagna-riepilogo.js
+
+Le campagne a riepilogo della 2.11.0 (fase 4 del piano Brevo), con la pagina di disiscrizione e il centro preferenze.
+
+1. Un CMS installato (anche nuovo, senza kit) e il server di posta finto: `python3 -I prove/smtp-finto.py <porta> <cartella> &`.
+   I dati della prova (`@cr-prova.it`, liste e campagne "CR ") li mette e li toglie `prove/campagne-cli.php` (`semina`,
+   `pulisci`): va su un sito da buttare.
+2. `node prove/prova-campagna-riepilogo.js <base> <utente> <password> <porta smtp> <cartella posta> <cartella del CMS> [cartella foto]`.
+   Il tempo che passa (ora programmata, secondo lotto) si simula spostando le date nel database.
+3. Atteso (2.11.0): 99 su 99, in radice e in cartella.
+
+## prova-campagne-vecchie.js
+
+Le campagne fatte con la 2.10.0, dopo l'aggiornamento alla 2.11.0: stesso HTML al byte e stesso oggetto, aperte e mandate.
+
+1. Sul sito 2.10.0: `php prove/campagne-cli.php <cartella> semina_vecchie`, poi `php prove/campagne-cli.php <cartella> impronte > prima.json`.
+2. Aggiornamento alla 2.11.0 dal pannello (`prove/prova-aggiornamento.js`), server di posta finto acceso.
+3. `node prove/prova-campagne-vecchie.js <base> <utente> <password> <porta smtp> <cartella posta> <cartella del CMS> prima.json`.
+4. Atteso: tutto OK (nove email uguali al byte a quelle che dava la 2.10.0).
+
 ## tools/sicurezza-prova.js
 
 
