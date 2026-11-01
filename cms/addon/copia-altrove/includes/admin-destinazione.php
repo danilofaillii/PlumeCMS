@@ -76,7 +76,8 @@ $campi = ['gdrive' => ['ID client', 'Client secret', '1234567890-abc...apps.goog
 <style>.ca-griglia{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:1.25rem}.ca-griglia>*{min-width:0}#ca-form select,#ca-form input:not([type=checkbox]){width:100%;max-width:100%;box-sizing:border-box}@media(max-width:1100px){.ca-griglia{grid-template-columns:1fr}}.ca-riga{display:grid;grid-template-columns:minmax(0,1fr) 7rem;gap:.6rem}.ca-tab{overflow-x:auto}.ca-ok{color:#15803d;font-weight:600}.ca-ko{color:#b91c1c;font-weight:600}.ca-spunta{display:flex;gap:.5rem;align-items:center;font-weight:400;margin-top:.6rem}[hidden]{display:none!important}
 .ca-cloud{border:1px solid var(--border);border-radius:10px;padding:.9rem 1rem;margin:.8rem 0;background:var(--bg)}.ca-cloud h4{margin:0 0 .4rem;font-size:.95rem}.ca-passi{margin:.4rem 0 .6rem;padding-left:1.3rem;font-size:.86rem;line-height:1.55}.ca-passi li{margin:.3rem 0}.ca-passi a{word-break:break-all}
 .ca-stato{display:flex;gap:.5rem;align-items:flex-start;padding:.6rem .8rem;border-radius:8px;font-size:.88rem;margin:.2rem 0 .6rem;word-break:break-word}.ca-stato.si{background:var(--sage-light);color:var(--successo-testo)}.ca-stato.no{background:var(--mustard-light);color:var(--attenzione-testo)}
-.ca-redirect{display:flex;gap:.4rem}.ca-redirect input{font-family:monospace;font-size:.8rem}.ca-vai{border:1px solid var(--coral);border-radius:12px;padding:1rem 1.2rem;margin:0 0 1.2rem;background:var(--surface)}.ca-azioni{display:flex;gap:.5rem;flex-wrap:wrap;align-items:center}</style>
+.ca-redirect{display:flex;gap:.4rem}.ca-redirect input{font-family:monospace;font-size:.8rem}.ca-vai{border:1px solid var(--coral);border-radius:12px;padding:1rem 1.2rem;margin:0 0 1.2rem;background:var(--surface)}.ca-azioni{display:flex;gap:.5rem;flex-wrap:wrap;align-items:center}
+.ca-azioni .btn:disabled{opacity:.45;cursor:not-allowed;box-shadow:none}.ca-salvataggio{display:flex;gap:.5rem;flex-wrap:wrap;margin-top:1rem}.ca-salvataggio [hidden]{display:none}</style>
 <?php if ($vaiServizio !== ''): $nomeServizio = COPIA_ALTROVE_TIPI[$c['tipo']] ?? 'il servizio'; ?>
 <div class="ca-vai" id="ca-vai" role="status"><b>Ti porto alla pagina di <?= h($nomeServizio) ?></b> per dare il permesso: scegli il tuo account e premi Consenti (o Continua). Poi torni qui da solo.
   <p style="margin:.6rem 0 0"><a class="btn btn-primary" id="ca-vai-link" href="<?= h($vaiServizio) ?>">Vai a <?= h($nomeServizio) ?></a> <span class="hint">Se la pagina non si apre da sola, premi il pulsante.</span></p></div>
@@ -107,7 +108,7 @@ Se il server del sito si rompe o viene attaccato, la copia è al sicuro altrove.
         <label for="ca-<?= h($s) ?>-client_id"><?= h($campi[$s][0]) ?></label><input type="text" id="ca-<?= h($s) ?>-client_id" name="<?= h($s) ?>_client_id" value="<?= h($o['client_id']) ?>" maxlength="200" placeholder="<?= h($campi[$s][2]) ?>" spellcheck="false">
         <label for="ca-<?= h($s) ?>-segreto"><?= h($campi[$s][1]) ?></label><input type="password" id="ca-<?= h($s) ?>-segreto" name="<?= h($s) ?>_segreto" value="" maxlength="200" autocomplete="new-password" placeholder="<?= $o['segreto'] !== '' ? 'Salvato: lascialo vuoto per non cambiarlo' : '' ?>">
         <p class="hint"><?= $o['segreto'] !== '' ? 'Il segreto è salvato cifrato e non si mostra più.' : 'Il segreto si salva cifrato e non si mostra più.' ?></p>
-        <button class="btn btn-primary" type="submit" name="azione" value="collega" id="ca-<?= h($s) ?>-collega" style="margin-top:.4rem"><?= $collegato ? 'Salva e collega di nuovo' : 'Salva e collega con ' . h($nomeS) ?></button>
+        <?php if ($collegato): ?><button class="btn btn-secondary btn-sm" type="submit" name="azione" value="collega" id="ca-<?= h($s) ?>-collega" style="margin-top:.4rem">Dai di nuovo il permesso a <?= h($nomeS) ?></button><?php endif; ?>
       </div>
       <?php endforeach; ?>
       <div data-ca-solo="ftp ftps sftp">
@@ -130,7 +131,18 @@ Se il server del sito si rompe o viene attaccato, la copia è al sicuro altrove.
       <label for="ca-tenere">Quante copie tenere sulla destinazione</label><input type="number" id="ca-tenere" name="tenere" value="<?= (int)$c['tenere'] ?>" min="1" max="30">
       <label class="ca-spunta"><input type="checkbox" name="attivo" value="1" id="ca-attivo"<?= $c['attivo'] ? ' checked' : '' ?>> Manda una copia ogni notte (con il cron del sito)</label>
       <label class="ca-spunta"><input type="checkbox" name="tieni_locale" value="1"<?= $c['tieni_locale'] ? ' checked' : '' ?>> Tieni la copia anche su questo server (in Copia del sito)</label>
-      <button class="btn btn-secondary" type="submit" name="azione" value="salva" id="ca-salva" style="margin-top:1rem">Salva la destinazione</button>
+      <?php
+      // 2.5.x (scelta di Danilo): un solo pulsante di salvataggio, in fondo, dopo tutti i campi. Per Google Drive e Dropbox non
+      // ancora collegati è "Salva e collega"; per gli altri tipi (e per un servizio già collegato) "Salva la destinazione".
+      // Lo script mostra quello del tipo scelto; senza script si vedono tutti e funzionano lo stesso.
+      $_caDaCollegare = [];
+      foreach (COPIA_ALTROVE_CLOUD as $s => $nomeS) if (copia_altrove_oauth($c, $s)['refresh'] === '') $_caDaCollegare[$s] = $nomeS;
+      $_caSalvaPer = implode(' ', array_diff(array_keys(COPIA_ALTROVE_TIPI), array_keys($_caDaCollegare)));
+      ?>
+      <div class="ca-salvataggio">
+      <?php foreach ($_caDaCollegare as $s => $nomeS): ?><button class="btn btn-primary" type="submit" name="azione" value="collega" id="ca-<?= h($s) ?>-collega" data-ca-solo="<?= h($s) ?>">Salva e collega con <?= h($nomeS) ?></button><?php endforeach; ?>
+      <button class="btn btn-primary" type="submit" name="azione" value="salva" id="ca-salva" data-ca-solo="<?= h($_caSalvaPer) ?>">Salva la destinazione</button>
+      </div>
     </form>
   </div></div>
   <div>
@@ -143,6 +155,7 @@ Se il server del sito si rompe o viene attaccato, la copia è al sicuro altrove.
       <form method="post" data-conferma="Scollegare <?= h(COPIA_ALTROVE_TIPI[$c['tipo']]) ?>? Le copie di ogni notte si fermano; quelle già mandate restano dove sono."><?= csrf_field() ?><input type="hidden" name="azione" value="scollega"><input type="hidden" name="servizio" value="<?= h($c['tipo']) ?>"><button class="btn btn-secondary" type="submit" id="ca-scollega">Scollega <?= h(COPIA_ALTROVE_TIPI[$c['tipo']]) ?></button></form>
       <?php endif; ?>
       </div>
+      <?php if (!$pronta): ?><p class="hint" id="ca-spenti-perche"><b>Prova la connessione</b> e <b>Manda una copia adesso</b> si accendono quando la destinazione è <?= copia_altrove_e_cloud($c['tipo']) ? 'collegata (premi "Salva e collega" a sinistra)' : 'salvata' ?>.</p><?php endif; ?>
       <p class="hint" style="margin-top:.8rem">"Prova la connessione" entra, apre la cartella, scrive un file piccolo e lo cancella: non manda la copia. Se la notte l'invio non riesce, arriva un'email all'indirizzo degli avvisi (Configurazione email).</p>
     </div></div>
     <div class="sc-scatola"><h3>Registro degli invii</h3><div class="sc-corpo ca-tab" style="padding:0">

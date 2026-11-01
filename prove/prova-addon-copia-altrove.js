@@ -185,7 +185,7 @@ let br;
     const rid = await a.inputValue(`#ca-${X.s}-redirect`);
     ok(t + 'l\'indirizzo da incollare nell\'app è quello fisso del pannello, senza query', rid === B + '/admin/oauth-ritorno.php', rid);
     ok(t + 'stato: "Non ancora collegato"', /Non ancora collegato/.test(await a.locator(`#ca-${X.s}-stato`).innerText()));
-    f = await salva({ tipo: X.s, [`${X.s}-client_id`]: X.idSbagliato, [`${X.s}-segreto`]: X.seg });
+    f = await salva({ tipo: X.s, [`${X.s}-client_id`]: X.idSbagliato, [`${X.s}-segreto`]: X.seg }, `#ca-${X.s}-collega`); // 2.5.x: un servizio non collegato ha un solo pulsante, Salva e collega
     ok(t + 'un ID dell\'app scritto male si rifiuta, e si dice dove trovarlo', /Non salvato/.test(f) && /(googleusercontent|Settings)/.test(f), f);
     // Salva e collega: la pagina del servizio, Annulla.
     const s0 = await stato(X.base);
