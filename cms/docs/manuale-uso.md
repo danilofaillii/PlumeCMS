@@ -1937,6 +1937,10 @@ Fai lo stesso per la seconda riga. Il giorno dopo, la stessa pagina ti dice com'
 
 **Esegui adesso** fa partire subito il giro del mattino, per provare senza aspettare domani.
 
+Il giro del mattino mette anche nel cestino le bozze vuote: quelle nate da **Aggiungi articolo** o **Aggiungi pagina**,
+aperte e chiuse senza scrivere niente, dopo un giorno. Una bozza in cui hai scritto qualcosa, o a cui hai cambiato il
+titolo, non la tocca mai. Se ne serve una, la ritrovi nel **Cestino** e la ripristini.
+
 **Checklist**
 
 - [ ] Ho messo le due righe in cPanel.

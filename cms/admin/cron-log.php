@@ -67,7 +67,8 @@ require_once __DIR__ . '/includes/admin-header.php';
     <ul>
       <li>applica i pacchetti di aggiornamento programmati in Aggiornamenti;</li>
       <li>avvisa i motori di ricerca (IndexNow) delle pagine nuove o cambiate;</li>
-      <li>fa i compiti dei moduli installati, se ne hanno.</li>
+      <li>fa i compiti dei moduli installati, se ne hanno;</li>
+      <li>mette nel cestino le bozze vuote mai salvate, vecchie di più di un giorno (si ripristinano dal Cestino).</li>
     </ul>
     <p><b>Il giro della newsletter</b> (<code>cron-newsletter.php</code>, ogni 5 minuti):</p>
     <ul>
