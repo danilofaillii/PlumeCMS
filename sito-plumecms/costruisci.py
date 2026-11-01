@@ -183,6 +183,12 @@ def funzionalita():
                        'plumeCMS fa le cose che ti servono davvero, e le fa nello stesso posto. Ecco cosa trovi dentro, con le schermate vere del pannello.',
                        livello='h1', centro=True)]], larghezza='stretta', **spazi(72, 32))
     blocchi = [
+        ('pannello-chiaro', 'pannello-chiaro.webp', 'Un pannello che si legge a colpo d\'occhio',
+         ['Dalla 2.6.0 ogni riquadro del pannello ha il titolo su una fascia sua, i campi hanno un bordo che si vede e "Sfoglia" è un pulsante vero. In tutti e quattro gli aspetti, chiari e scuri.',
+          '<ul><li>Le conferme sono una finestra del pannello, con il pulsante rosso quando l\'azione cancella qualcosa.</li>'
+          '<li>Al telefono ogni tabella diventa una scheda per riga.</li>'
+          '<li>Gli errori dicono cosa è successo e cosa fare, sotto il campo giusto: anche un file troppo grande per il server, prima di caricarlo.</li>'
+          '<li>Tutto si usa anche con la tastiera, editor compreso.</li></ul>']),
         ('editor', 'editor.webp', 'L\'editor visuale: sezioni, colonne, widget',
          ['Costruisci le pagine trascinando sezioni, colonne e widget. Ogni elemento ha le sue tre schede, come negli editor che conosci: <strong>Contenuto</strong>, <strong>Stile</strong> e <strong>Avanzate</strong>.',
           '<ul><li>92 widget: titoli, testi, immagini, pulsanti, gallerie, caroselli, prezzi, domande frequenti, contatori, mappe, orari di apertura, recensioni, eventi, menu del ristorante e 14 infografiche.</li>'
@@ -604,7 +610,7 @@ def editor_json():
 
 
 # ------------------------------------------------------------------ file
-USATE = ['copertina', 'installa-ora', 'scegli-sito', 'consegna', 'widget-2-1', 'scegli-media', 'addon', 'su-misura', 'firma', 'widget-attivita', 'social', 'fine-articolo', 'importa-wp', 'tipo-sito', 'primi-passi', 'aspetti', 'controlla-server', 'sezioni', 'copia', 'installa-1', 'installa-2', 'installa-3', 'installa-4', 'installa-5', 'editor-ritratto', 'editor', 'aperture', 'stile', 'modelli', 'versioni', 'seo', 'flussi', 'download', 'sicurezza', 'aggiornamenti', 'temi',
+USATE = ['pannello-chiaro', 'copertina', 'installa-ora', 'scegli-sito', 'consegna', 'widget-2-1', 'scegli-media', 'addon', 'su-misura', 'firma', 'widget-attivita', 'social', 'fine-articolo', 'importa-wp', 'tipo-sito', 'primi-passi', 'aspetti', 'controlla-server', 'sezioni', 'copia', 'installa-1', 'installa-2', 'installa-3', 'installa-4', 'installa-5', 'editor-ritratto', 'editor', 'aperture', 'stile', 'modelli', 'versioni', 'seo', 'flussi', 'download', 'sicurezza', 'aggiornamenti', 'temi',
          'tema-cosmo', 'tema-aria', 'tema-bottega',
          'tema-estate', 'tema-inverno', 'tema-autunno', 'tema-primavera', 'tema-giallo', 'tema-rosso', 'tema-verde', 'tema-blu']
 
@@ -651,6 +657,8 @@ def zip_lavagna(dest):
 
 # Le novità per chi scarica: brevi, scritte qui (il CHANGELOG è per chi sviluppa). Da aggiornare a ogni versione.
 NOVITA = [
+    ('2.6.0', 'Un pannello più chiaro', ['Titoli dei riquadri su una fascia, campi con un bordo che si vede, conferme in una finestra del pannello e tabelle a schede al telefono. Due esperti di interfaccia hanno guardato ogni pagina del CMS.',
+                                         'Download, Stile del sito, editor e installatore dicono meglio cosa succede: un file troppo grande per il server, un logo che il widget dell\'header copre, un errore del database spiegato in parole.']),
     ('2.5.0', 'Otto temi nuovi', ['Le quattro stagioni (Estate, Inverno, Autunno, Primavera) e quattro tinte piene: giallo, rosso, verde e blu. Ogni scritta si legge bene, misurata su ogni pagina.',
                                   'Un audit di tutto il CMS: 16 difetti trovati e corretti. Le emoji ora si salvano dappertutto, e il pannello dice quando un valore non va invece di toglierlo in silenzio.']),
     ('2.4.0', 'Il sito ufficiale è plumecms.it', ['Il sito di plumeCMS si è spostato su plumecms.it: da qui arrivano le versioni nuove, con Installa ora. I siti con una versione di prima vanno aggiornati una volta a mano con lo zip di aggiornamento.',
