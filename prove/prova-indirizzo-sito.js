@@ -17,13 +17,19 @@ let n = 0, ko = 0; const ok = (t, c, x = '') => { n++; if (!c) ko++; console.log
   await p.goto(B + '/admin/login.php'); await p.fill('#username', U); await p.fill('#password', P);
   await Promise.all([p.waitForNavigation(), p.click('button[type=submit]')]);
   const salva = async (url, forza = false) => {
-    await p.goto(B + '/admin/impostazioni.php', { waitUntil: 'networkidle' });
+    await p.goto(B + '/admin/impostazioni.php?scheda=sito', { waitUntil: 'networkidle' });
     await p.evaluate(() => { document.getElementById('sito_url').type = 'text'; }); // la prova è il controllo del server, non quello del browser
     await p.fill('#sito_url', url); if (forza) await p.check('#sito_url_forza');
     await Promise.all([p.waitForNavigation(), p.click('#indirizzo-salva')]);
     return (await p.locator('.admin-content').innerText()).slice(0, 400);
   };
+  // UX 2026-11: il riquadro sta nella scheda Sito; il vecchio indirizzo con #indirizzo-sito ci porta da solo.
+  await p.goto(B + '/admin/impostazioni.php#indirizzo-sito');
+  await p.waitForURL(/scheda=sito#indirizzo-sito$/, { timeout: 10000 }).catch(() => {});
+  ok('il vecchio indirizzo impostazioni.php#indirizzo-sito porta alla scheda Sito', /scheda=sito#indirizzo-sito$/.test(p.url()) && await p.locator('form#indirizzo-sito #sito_url').count() === 1, p.url());
   await p.goto(B + '/admin/impostazioni.php', { waitUntil: 'networkidle' });
+  ok('Configurazione email non ha più i riquadri del sito', await p.locator('#sito_url').count() === 0 && await p.locator('#firma_testo').count() === 0 && await p.locator('#smtp_host').count() === 1);
+  await p.goto(B + '/admin/impostazioni.php?scheda=sito', { waitUntil: 'networkidle' });
   ok('Impostazioni: il riquadro Indirizzo del sito con l\'indirizzo di adesso', (await p.locator('#sito_url').inputValue()) === vecchio.replace(cartella, '').replace(/\/$/, ''), [await p.locator('#sito_url').inputValue(), vecchio]);
   let t = await salva('miosito.it/pagina');
   ok('un indirizzo scritto male è rifiutato', /Scrivi solo l'indirizzo del dominio/.test(t) && php("echo get_setting('sito_url','');").trim() === vecchio, t);

@@ -643,6 +643,12 @@ html .admin-content :is(input, select, textarea):disabled { opacity: .65; cursor
   .admin-content .sc-griglia[style] { grid-template-columns: minmax(0, 1fr) !important; }
 }
 
+/* Le schede di Impostazioni (Configurazione email, Sito): come quelle di SEO. */
+.imp-schede { display: flex; gap: .25rem; flex-wrap: wrap; margin-bottom: 1rem; border-bottom: 1px solid var(--border); }
+.imp-schede a { padding: .55rem .9rem; border-radius: 8px 8px 0 0; font-size: .88rem; color: var(--text-muted); text-decoration: none; border: 1px solid transparent; border-bottom: 0; }
+.imp-schede a:hover { color: var(--text); }
+.imp-schede a.attiva { background: var(--surface); color: var(--text); border-color: var(--border); font-weight: 600; box-shadow: inset 0 3px 0 var(--coral); }
+
 /* 9. L'aiuto lungo si apre a richiesta (<details class="pn-aiuto">): il riquadro resta corto, la spiegazione c'e. */
 .pn-aiuto { font-size: .82rem; }
 .pn-aiuto > summary { cursor: pointer; font-weight: 600; color: var(--accento-testo); width: max-content; max-width: 100%; padding: .15rem 0; }

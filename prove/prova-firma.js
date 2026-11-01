@@ -16,7 +16,7 @@ let n = 0, ko = 0; const ok = (t, c, extra = '') => { n++; if (!c) ko++; console
   const vai = u => p.goto(B + u, { waitUntil: 'networkidle' });
   const firma = async (u = '/') => { await vai(u); const l = p.locator('#firma-sito'); return (await l.count()) ? { testo: (await l.innerText()).trim(), href: await l.locator('a').getAttribute('href').catch(() => null), html: await l.innerHTML() } : null; };
   const salva = async (mostra, testo, url) => {
-    await vai('/admin/impostazioni.php');
+    await vai('/admin/impostazioni.php?scheda=sito');
     if (mostra) await p.check('#firma_mostra'); else await p.uncheck('#firma_mostra');
     await p.fill('#firma_testo', testo);
     await p.evaluate(u => { document.querySelector('#firma_url').type = 'text'; document.querySelector('#firma_url').value = u; }, url); // anche quello che il browser rifiuterebbe
@@ -26,7 +26,7 @@ let n = 0, ko = 0; const ok = (t, c, extra = '') => { n++; if (!c) ko++; console
 
   await vai('/admin/login.php'); await p.fill('#username', UTENTE); await p.fill('#password', PASSWORD);
   await Promise.all([p.waitForNavigation(), p.click('button[type=submit]')]);
-  await vai('/admin/impostazioni.php');
+  await vai('/admin/impostazioni.php?scheda=sito');
   const inizio = { mostra: await p.isChecked('#firma_mostra'), testo: await p.inputValue('#firma_testo'), url: await p.inputValue('#firma_url') };
 
   // 1. Il banner della dashboard.
@@ -66,7 +66,7 @@ let n = 0, ko = 0; const ok = (t, c, extra = '') => { n++; if (!c) ko++; console
   // 6. Spenta.
   const m5 = await salva(false, 'Un nuovo sito plumeCMS', UFFICIALE);
   ok('spenta: sul sito non c\'è più', /spenta/.test(m5) && await firma() === null, m5);
-  await vai('/admin/impostazioni.php');
+  await vai('/admin/impostazioni.php?scheda=sito');
   ok('spenta, il pannello ricorda testo e indirizzo', !(await p.isChecked('#firma_mostra')) && await p.inputValue('#firma_testo') === 'Un nuovo sito plumeCMS');
 
   // Com'era all'inizio.

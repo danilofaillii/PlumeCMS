@@ -1,7 +1,7 @@
 <?php
 /**
  * La firma in fondo al sito (1.8.0, richiesta di Danilo): una riga sotto il piede, "Un nuovo sito plumeCMS", con il
- * link al sito ufficiale. Chi installa la cambia o la spegne in Impostazioni > Sito pubblico: testo, indirizzo, acceso.
+ * link al sito ufficiale. Chi installa la cambia o la spegne in Impostazioni > Sito: testo, indirizzo, acceso.
  * Impostazione firma_sito (JSON). Senza impostazione: accesa, con il testo e l'indirizzo di partenza.
  * La esce vista_pagina() (sito/viste.php) dopo il piede, anche con un tema che ridisegna la pagina (variabile piede).
  */

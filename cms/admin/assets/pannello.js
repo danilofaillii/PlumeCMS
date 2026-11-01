@@ -196,6 +196,8 @@
   function apriDaIndirizzo() {
     var id = location.hash ? decodeURIComponent(location.hash.slice(1)) : '';
     var t = id && document.getElementById(id); if (!t) return;
+    // Un riquadro spostato in un'altra scheda lascia qui il suo id con data-spostato: si va dove sta adesso.
+    if (t.hasAttribute('data-spostato')) { location.replace(t.getAttribute('data-spostato')); return; }
     for (var d = t; d; d = d.parentElement) if (d.tagName === 'DETAILS') d.open = true;
   }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', apriDaIndirizzo); else apriDaIndirizzo();

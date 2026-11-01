@@ -10,7 +10,12 @@ require_once __DIR__ . '/../includes/posta.php';
 require_once __DIR__ . '/../includes/firma.php';
 require_admin();
 
-$adminTitle = 'Impostazioni';
+// UX 2026-11 (punto 4 deciso da Danilo): due schede. "Configurazione email" (impostazioni.php) ha solo la posta;
+// "Sito" (impostazioni.php?scheda=sito) ha sito pubblico, indirizzo del sito e frase in fondo. I vecchi indirizzi
+// impostazioni.php#indirizzo-sito e #firma-sito portano alla scheda Sito (pannello.js, data-spostato; senza JavaScript
+// un link nella pagina).
+$scheda = ($_GET['scheda'] ?? '') === 'sito' ? 'sito' : 'email';
+$adminTitle = $scheda === 'sito' ? 'Sito' : 'Configurazione email';
 
 /**
  * 2.4.0: cambia l'indirizzo del sito (impostazione sito_url: link, sitemap, canonical, email, firma degli aggiornamenti).
@@ -84,7 +89,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             flash('error', 'Spedizione non riuscita: ' . posta_errore());
         }
     }
-    header('Location: impostazioni.php');
+    $azioneSito = in_array($_POST['action'] ?? '', ['save_firma', 'save_indirizzo'], true);
+    header('Location: impostazioni.php' . ($azioneSito ? '?scheda=sito#' . (($_POST['action'] ?? '') === 'save_firma' ? 'firma-sito' : 'indirizzo-sito') : ''));
     exit;
 }
 
@@ -95,7 +101,12 @@ $firma = firma_valori();
 require_once __DIR__ . '/includes/admin-header.php';
 ?>
 
+<nav class="imp-schede" aria-label="Impostazioni">
+  <a href="impostazioni.php"<?= $scheda === 'email' ? ' class="attiva" aria-current="page"' : '' ?>>Configurazione email</a>
+  <a href="impostazioni.php?scheda=sito"<?= $scheda === 'sito' ? ' class="attiva" aria-current="page"' : '' ?>>Sito</a>
+</nav>
 <div style="max-width:720px">
+<?php if ($scheda === 'email'): ?>
   <div class="form-card">
     <h3>Posta in uscita</h3>
     <p style="font-size:0.85rem;color:var(--text-muted);margin-bottom:1rem">
@@ -134,8 +145,11 @@ require_once __DIR__ . '/includes/admin-header.php';
       <button type="submit" class="btn btn-secondary">Manda la prova</button>
     </form>
   </div>
+  <p class="hint" style="margin-top:1rem">Indirizzo del sito e frase in fondo al sito stanno nella scheda
+    <a href="impostazioni.php?scheda=sito#indirizzo-sito" id="indirizzo-sito" data-spostato="impostazioni.php?scheda=sito#indirizzo-sito">Sito</a><span id="firma-sito" data-spostato="impostazioni.php?scheda=sito#firma-sito"></span>.</p>
+<?php else: ?>
 
-  <div class="form-card" style="margin-top:1rem">
+  <div class="form-card">
     <h3>Sito pubblico</h3>
     <p style="font-size:0.85rem;color:var(--text-muted);margin:0">
       Il sito legge da questo pannello a ogni visita: una modifica si vede subito, un articolo programmato compare da solo alla sua data e ora.
@@ -179,6 +193,7 @@ require_once __DIR__ . '/includes/admin-header.php';
     </div>
     <button type="submit" class="btn btn-primary" id="firma-salva">Salva la frase</button>
   </form>
+<?php endif; ?>
 </div>
 
 <?php require_once __DIR__ . '/includes/admin-footer.php'; ?>

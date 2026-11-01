@@ -1091,7 +1091,7 @@ Per costruirne uno tuo c'è il **Manuale dei temi**.
 ### La frase in fondo al sito
 
 Sotto il footer, in piccolo, ogni pagina ha una riga: **Un nuovo sito plumeCMS**, con il link al sito ufficiale. La
-cambi o la spegni da **Impostazioni > Sito pubblico**, riquadro **La frase in fondo al sito**.
+cambi o la spegni da **Impostazioni > Sito**, riquadro **La frase in fondo al sito**.
 
 ![La frase in fondo al sito](immagini/manuale-uso/15-frase.jpg)
 
@@ -1105,12 +1105,12 @@ Il testo è solo testo: niente grassetti né codice, e le emoji si tolgono.
 ### Spostare il sito su un altro dominio
 
 Quando il sito passa a un dominio nuovo (per esempio da `https://studioprova.esempio.it` a `https://www.studioprova.it`),
-l'indirizzo che usa per i link, la sitemap, il canonical e le email si cambia da **Impostazioni > Sito pubblico**, riquadro
+l'indirizzo che usa per i link, la sitemap, il canonical e le email si cambia da **Impostazioni > Sito**, riquadro
 **Indirizzo del sito**.
 
 1. Nel pannello dell'hosting collega il dominio nuovo alla **stessa cartella** del sito e attiva il certificato HTTPS (in
    cPanel: Domini, poi SSL/TLS Status). Apri `https://www.studioprova.it` nel browser: deve comparire il tuo sito.
-2. Nel pannello del sito: **Impostazioni**, riquadro **Indirizzo del sito**. Scrivi solo il dominio, con `https://` davanti:
+2. Nel pannello del sito: **Impostazioni > Sito**, riquadro **Indirizzo del sito**. Scrivi solo il dominio, con `https://` davanti:
    `https://www.studioprova.it`.
 3. Premi **Salva l'indirizzo** e conferma. Il pannello prova che il nuovo indirizzo apra proprio questo sito: se sì, in alto
    compare "Indirizzo del sito cambiato"; se no, ti dice perché e non cambia niente.
