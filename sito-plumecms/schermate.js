@@ -7,6 +7,7 @@
 // prova-primi-passi.js, prova-aspetti.js, prova-controlla-server.js, tagliate in alto e messe nella cartella delle schermate.
 // 1.5.0: social viene dall'email del mattino del sito delle schermate del manuale d'uso. 1.6.0: fine-articolo è il riquadro
 // in fondo a "Chiusi per ferie" sullo stesso sito (kit Attività, dopo tools/manuale-uso-schermate.js), fotografato a 2x.
+// 2.7.0: email-conferma è un ritaglio (righe 900-1876) della foto 17-email-conferma del manuale d'uso, non viene da qui.
 // 2.3.0: installa-ora è la dashboard (1280x520) di un sito 2.2.0 con il sito ufficiale finto che annuncia la 2.3.0, come la
 // prepara prove/prova-installa-ora.js (prima del clic su Installa ora).
 const { chromium } = require('playwright');

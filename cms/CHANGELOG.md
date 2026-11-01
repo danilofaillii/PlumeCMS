@@ -2,6 +2,16 @@
 
 Il prodotto si chiama **plumeCMS** (nome scelto il 26 ottobre 2026; prima, per poche ore, "CarbonaraCMS", e ancora prima il provvisorio "Officina": gli zip vecchi si chiamavano `officina-*` e `carbonaracms-*`).
 
+## 2.7.0 (1 novembre 2026) - L'email di conferma la scrivi tu
+
+- **L'email di conferma dell'iscrizione si modifica in ogni parte** (richiesta di Danilo): oggetto, intestazione in cima,
+  titolo, testo, testo e colore del pulsante, frase sotto il pulsante, firma e nota in fondo. Segnaposti `{nome}`, `{lista}`,
+  `{giorni}`, `{sito}`; il link del pulsante resta sempre quello vero.
+  - per ogni form: Newsletter e form > Form, nella scheda del form, riquadro "Email di conferma";
+  - per il modulo della newsletter e come base per tutti i form: Newsletter > Impostazioni, "Email di conferma dell'iscrizione";
+  - "Aggiorna l'anteprima" mostra l'email com'è, "Manda una prova a me" la spedisce con un link finto che non conferma niente;
+  - solo l'amministratore la cambia; chi non tocca niente riceve l'email di prima, identica.
+
 ## 2.6.0 (1 novembre 2026) - Un pannello più chiaro
 
 Controllo di UX e UI di tutto il CMS chiesto da Danilo ("i titoli delle sezioni devono avere uno sfondo diverso"), fatto da due

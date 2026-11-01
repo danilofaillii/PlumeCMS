@@ -183,6 +183,11 @@ def funzionalita():
                        'plumeCMS fa le cose che ti servono davvero, e le fa nello stesso posto. Ecco cosa trovi dentro, con le schermate vere del pannello.',
                        livello='h1', centro=True)]], larghezza='stretta', **spazi(72, 32))
     blocchi = [
+        ('email-conferma', 'email-conferma.webp', 'L\'email di conferma la scrivi tu',
+         ['Chi si iscrive da un form o dalla newsletter riceve un\'email per confermare. Dalla 2.7.0 la scrivi tu, in ogni parte: oggetto, titolo, testo, pulsante, firma e nota in fondo, per ogni form oppure una volta per tutti.',
+          '<ul><li>Segnaposti per il nome di chi si iscrive, la lista, i giorni di validità del link e il nome del sito.</li>'
+          '<li>Anteprima dell\'email com\'è e una prova da mandarti, prima di salvare.</li>'
+          '<li>Il link del pulsante resta sempre quello vero: nessuno può cambiarlo.</li></ul>']),
         ('pannello-chiaro', 'pannello-chiaro.webp', 'Un pannello che si legge a colpo d\'occhio',
          ['Dalla 2.6.0 ogni riquadro del pannello ha il titolo su una fascia sua, i campi hanno un bordo che si vede e "Sfoglia" è un pulsante vero. In tutti e quattro gli aspetti, chiari e scuri.',
           '<ul><li>Le conferme sono una finestra del pannello, con il pulsante rosso quando l\'azione cancella qualcosa.</li>'
@@ -610,7 +615,7 @@ def editor_json():
 
 
 # ------------------------------------------------------------------ file
-USATE = ['pannello-chiaro', 'copertina', 'installa-ora', 'scegli-sito', 'consegna', 'widget-2-1', 'scegli-media', 'addon', 'su-misura', 'firma', 'widget-attivita', 'social', 'fine-articolo', 'importa-wp', 'tipo-sito', 'primi-passi', 'aspetti', 'controlla-server', 'sezioni', 'copia', 'installa-1', 'installa-2', 'installa-3', 'installa-4', 'installa-5', 'editor-ritratto', 'editor', 'aperture', 'stile', 'modelli', 'versioni', 'seo', 'flussi', 'download', 'sicurezza', 'aggiornamenti', 'temi',
+USATE = ['email-conferma', 'pannello-chiaro', 'copertina', 'installa-ora', 'scegli-sito', 'consegna', 'widget-2-1', 'scegli-media', 'addon', 'su-misura', 'firma', 'widget-attivita', 'social', 'fine-articolo', 'importa-wp', 'tipo-sito', 'primi-passi', 'aspetti', 'controlla-server', 'sezioni', 'copia', 'installa-1', 'installa-2', 'installa-3', 'installa-4', 'installa-5', 'editor-ritratto', 'editor', 'aperture', 'stile', 'modelli', 'versioni', 'seo', 'flussi', 'download', 'sicurezza', 'aggiornamenti', 'temi',
          'tema-cosmo', 'tema-aria', 'tema-bottega',
          'tema-estate', 'tema-inverno', 'tema-autunno', 'tema-primavera', 'tema-giallo', 'tema-rosso', 'tema-verde', 'tema-blu']
 
@@ -657,6 +662,7 @@ def zip_lavagna(dest):
 
 # Le novità per chi scarica: brevi, scritte qui (il CHANGELOG è per chi sviluppa). Da aggiornare a ogni versione.
 NOVITA = [
+    ('2.7.0', 'L\'email di conferma la scrivi tu', ['L\'email che arriva a chi si iscrive da un form o dalla newsletter si cambia in ogni parte: oggetto, titolo, testo, pulsante, firma e nota in fondo. Con l\'anteprima e una prova da mandarti prima di salvare.']),
     ('2.6.0', 'Un pannello più chiaro', ['Titoli dei riquadri su una fascia, campi con un bordo che si vede, conferme in una finestra del pannello e tabelle a schede al telefono. Due esperti di interfaccia hanno guardato ogni pagina del CMS.',
                                          'Download, Stile del sito, editor e installatore dicono meglio cosa succede: un file troppo grande per il server, un logo che il widget dell\'header copre, un errore del database spiegato in parole.']),
     ('2.5.0', 'Otto temi nuovi', ['Le quattro stagioni (Estate, Inverno, Autunno, Primavera) e quattro tinte piene: giallo, rosso, verde e blu. Ogni scritta si legge bene, misurata su ogni pagina.',
