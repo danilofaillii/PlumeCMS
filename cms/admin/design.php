@@ -297,6 +297,29 @@ $contenuto['sfondo'] = $o;
 $id = $v['sito'];
 $o = '<p class="dg-intro">Nome, sottotitolo, logo e icona del sito. Li leggono la testata e il piede costruiti con l\'editor e la scheda del browser.</p>';
 $o .= dg_scatola('Identità', dg_testo('sito.nome', $id['nome'], 'Nome del sito', (string)cms_impostazione('sito_nome', CMS_NOME), 'Nella testata oggi è scritto in maiuscolo. I titoli delle pagine (la scheda del browser) tengono il nome di oggi.') . dg_testo('sito.sottotitolo', $id['sottotitolo'], 'Sottotitolo', 'Una frase su cosa fai') . dg_testo('sito.descrizione', $id['descrizione'], 'Descrizione in una riga', '') . dg_immagine('sito.logo', $id['logo'], 'Logo', 'Vuoto = la testata scrive il nome in lettere, come oggi.') . dg_immagine('sito.favicon', $id['favicon'], 'Icona del sito (favicon)', 'L\'icona nella scheda del browser. Meglio quadrata, almeno 64 px.'));
+// 2.6.0: un widget "Logo del sito" con un'immagine sua vince sul logo scelto qui (segnalazione di Danilo: "pur avendo cambiato logo, non
+// compare"). Lo si dice, con il link al modello da aprire.
+$dgLoghi = [];
+try {
+    require_once dirname(__DIR__) . '/includes/modelli.php';
+    foreach (modelli_tutti(true) as $dgM) {
+        if (!in_array($dgM['tipo'], ['header', 'footer'], true) || !empty($dgM['cestino'])) continue;
+        $dgCerca = function (array $el) use (&$dgCerca): bool {
+            foreach ($el as $x) {
+                if (!is_array($x)) continue;
+                $i = (array)($x['impostazioni'] ?? []);
+                if (($x['tipo'] ?? '') === 'logo_sito' && ($i['modo'] ?? 'testo') !== 'testo' && trim((string)($i['immagine'] ?? '')) !== '') return true;
+                if (!empty($x['figli']) && $dgCerca((array)$x['figli'])) return true;
+            }
+            return false;
+        };
+        $dgA = json_decode((string)($dgM['struttura'] ?? ''), true);
+        if (is_array($dgA) && $dgCerca((array)($dgA['elementi'] ?? []))) $dgLoghi[] = '<a href="editor.php?tipo=modelli&amp;id=' . (int)$dgM['id'] . '">' . h(($dgM['tipo'] === 'header' ? 'Header' : 'Footer') . ' "' . $dgM['nome'] . '"') . '</a>';
+    }
+} catch (Throwable $e) { $dgLoghi = []; }
+if ($dgLoghi) $o .= '<div class="flash flash-info" role="status" id="dg-logo-widget" style="margin-top:.8rem"><b>Il logo scelto qui non compare in: ' . implode(', ', $dgLoghi) . '.</b> '
+    . 'Lì il widget Logo del sito ha un\'immagine sua, che vince su questa. Apri il modello, clicca sul logo e, nella scheda Contenuto, svuota "Immagine del logo" con la X; poi Pubblica.</div>';
+unset($dgLoghi, $dgM, $dgCerca, $dgA);
 $contenuto['sito'] = $o;
 
 // CSS personalizzato

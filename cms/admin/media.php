@@ -63,7 +63,7 @@ require_once __DIR__ . '/includes/admin-header.php';
   <p style="color:var(--text-muted);font-size:0.9rem;margin:0"><?= $totale ?> immagini<?= $q !== '' ? ' per «' . h($q) . '»' : '' ?><?= $miniature ? '' : ', senza le miniature' ?></p>
   <form method="post" enctype="multipart/form-data" style="display:flex;gap:0.5rem;align-items:center">
     <?= csrf_field() ?>
-    <input type="file" name="file" accept="image/jpeg,image/png,image/gif,image/webp,image/avif,image/svg+xml" required style="font-size:0.85rem">
+    <input type="file" name="file" accept="image/jpeg,image/png,image/gif,image/webp,image/avif,image/svg+xml" required<?= pannello_limite_caricamento() > 0 ? ' data-peso-massimo="' . pannello_limite_caricamento() . '"' : '' ?> style="font-size:0.85rem">
     <button type="submit" class="btn btn-primary btn-sm">Carica in uploads/pagine</button>
   </form>
 </div>
@@ -119,7 +119,7 @@ require_once __DIR__ . '/includes/admin-header.php';
       <?php if ($img['cartella'] === 'segnaposto' && is_admin()): ?>
       <form method="post" enctype="multipart/form-data" class="md-sostituisci">
         <?= csrf_field() ?><input type="hidden" name="azione" value="sostituisci"><input type="hidden" name="segnaposto" value="<?= h($img['url']) ?>">
-        <label class="btn btn-primary btn-sm">Sostituisci<input type="file" name="file" accept="image/jpeg,image/png,image/gif,image/webp,image/avif,image/svg+xml" required data-invia-al-cambio></label>
+        <label class="btn btn-primary btn-sm">Sostituisci<input type="file" name="file" accept="image/jpeg,image/png,image/gif,image/webp,image/avif,image/svg+xml" required<?= pannello_limite_caricamento() > 0 ? ' data-peso-massimo="' . pannello_limite_caricamento() . '"' : '' ?> data-invia-al-cambio></label>
       </form>
       <?php endif; ?>
       <?php if (in_array($img['cartella'], ['pagine', 'pannello', 'newsletter'], true)): ?>

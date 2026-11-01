@@ -14,6 +14,7 @@
 //   data-copia-se-stesso         campo: al clic seleziona il testo e lo copia
 //   data-nascondi="#id"          pulsante: nasconde quell'elemento
 //   data-menu-mobile             apre e chiude il menu laterale sul telefono
+//   data-peso-massimo="byte"     campo file: se il file supera il limite del server lo dice sotto il campo e blocca l'invio (2.6.0)
 //   data-immagine                campo di testo: miniatura, "Scegli dai Media" e X per toglierla (2.1.0, vedi in fondo)
 //   data-scegli-media="#id"      pulsante: apre la libreria dei Media e scrive l'indirizzo scelto nel campo con quell'id (2.0.0)
 //   data-al-clic="funzione(arg, ...)"   data-al-input="..."   data-al-cambio="..."
@@ -226,7 +227,33 @@
     if (el.hasAttribute('data-vai-al-valore') && el.value) location.href = el.value;
     if (el.hasAttribute('data-invia-al-cambio') && el.form) el.form.submit();
     if (el.hasAttribute('data-al-cambio')) chiama(el, ev, 'data-al-cambio');
+    if (el.hasAttribute('data-peso-massimo')) controllaPeso(el);
   });
+
+  // ------------------------------------------------------------ peso dei file (2.6.0)
+  // Un file più grande del limite del server arriverebbe vuoto: lo si dice subito, sotto il campo, e il form non parte.
+  function pesoInParole(b) {
+    return b >= 1048576 ? (Math.round(b / 104857.6) / 10).toString().replace('.', ',') + ' MB' : Math.round(b / 1024) + ' KB';
+  }
+  function controllaPeso(el) {
+    var max = +el.getAttribute('data-peso-massimo') || 0, troppo = null;
+    Array.prototype.forEach.call(el.files || [], function (f) { if (max && f.size > max && !troppo) troppo = f; });
+    var id = (el.id || el.name || 'file') + '-peso', msg = document.getElementById(id);
+    if (!troppo) {
+      el.setCustomValidity(''); el.removeAttribute('aria-invalid');
+      if (msg) msg.remove();
+      return;
+    }
+    var testo = troppo.name + ' pesa ' + pesoInParole(troppo.size) + ', ma il server accetta file fino a ' + pesoInParole(max)
+      + '. Alza il limite dal pannello del tuo hosting (in cPanel: MultiPHP INI Editor, upload_max_filesize e post_max_size).';
+    el.setCustomValidity(testo); el.setAttribute('aria-invalid', 'true');
+    if (!msg) {
+      msg = document.createElement('p'); msg.id = id; msg.className = 'errore-campo'; msg.setAttribute('role', 'alert');
+      el.insertAdjacentElement('afterend', msg);
+      el.setAttribute('aria-describedby', ((el.getAttribute('aria-describedby') || '') + ' ' + id).trim());
+    }
+    msg.textContent = testo;
+  }
   document.addEventListener('input', function (ev) {
     var el = ev.target;
     if (el.hasAttribute && el.hasAttribute('data-al-input')) chiama(el, ev, 'data-al-input');

@@ -42,7 +42,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 $file = scaricabili_elenco();
 $serie = scaricabili_serie($file);
 $totale = array_sum(array_column($file, 'conteggio'));
-$limite = ini_get('upload_max_filesize');
+$limiteByte = pannello_limite_caricamento();
+$limite = $limiteByte > 0 ? pannello_peso($limiteByte) : ini_get('upload_max_filesize');
 $base = rtrim(cms_url_sito(), '/');
 
 require_once __DIR__ . '/includes/admin-header.php';
@@ -126,7 +127,7 @@ require_once __DIR__ . '/includes/admin-header.php';
     <div class="sc-scatola"><h3>Carica un file</h3><div class="sc-corpo">
       <form method="post" enctype="multipart/form-data" id="dl-carica">
         <?= csrf_field() ?><input type="hidden" name="azione" value="carica">
-        <input type="file" name="file" required accept="<?= h(implode(',', array_map(fn($e) => '.' . $e, array_keys(SCARICABILI_TIPI)))) ?>">
+        <input type="file" name="file" id="dl-file" required<?= $limiteByte > 0 ? ' data-peso-massimo="' . $limiteByte . '"' : '' ?> accept="<?= h(implode(',', array_map(fn($e) => '.' . $e, array_keys(SCARICABILI_TIPI)))) ?>">
         <label>Titolo</label><input type="text" name="titolo" maxlength="200" placeholder="Se vuoto, dal nome del file">
         <label>Descrizione</label><textarea name="descrizione" rows="3" maxlength="2000" placeholder="Una o due frasi: cosa trova chi lo scarica"></textarea>
         <label>Versione</label><input type="text" name="versione" maxlength="40" placeholder="1.0">
@@ -143,11 +144,17 @@ require_once __DIR__ . '/includes/admin-header.php';
       <p class="hint"><b>File riservati.</b> Non hanno un indirizzo pubblico. Li dai con un form: in <b>Newsletter e form &gt; Form</b>,
         riquadro Dopo l'invio, scegli il file in "Dopo la conferma, dai questo file". Chi conferma l'email riceve un link personale.</p>
       </details>
-      <form method="post" style="display:flex;gap:.5rem;align-items:center;flex-wrap:wrap;margin:.2rem 0 .8rem" id="dl-giorni"><?= csrf_field() ?><input type="hidden" name="azione" value="giorni">
-        <label style="font-size:.85rem;margin:0">Il link personale vale</label><input type="number" name="giorni" min="1" max="3650" value="<?= scaricabili_giorni() ?>" style="width:5.5rem"><span style="font-size:.85rem">giorni</span>
-        <button type="submit" class="btn btn-secondary btn-sm">Salva</button></form>
       <p class="hint">Il tuo server accetta file fino a <b><?= h((string)$limite) ?></b>. Un file più grande lo metti nella cartella
         <code>uploads/scaricabili/</code> con il gestore dei file dell'hosting: compare qui da solo.</p>
+    </div></div>
+    <?php /* 2.6.0: i giorni dei link personali in un riquadro loro. Stavano sotto "Carica" con un altro "Salva": chi sceglieva un
+       file e premeva quel Salva salvava i giorni e perdeva il file (segnalazione di Danilo). */ ?>
+    <div class="sc-scatola" id="dl-riservati"><h3>Link dei file riservati</h3><div class="sc-corpo">
+      <form method="post" id="dl-giorni"><?= csrf_field() ?><input type="hidden" name="azione" value="giorni">
+        <label for="dl-giorni-n">Il link personale vale (giorni)</label>
+        <input type="number" name="giorni" id="dl-giorni-n" min="1" max="3650" value="<?= scaricabili_giorni() ?>" style="max-width:8rem" aria-describedby="dl-giorni-aiuto">
+        <p class="hint" id="dl-giorni-aiuto">Vale per i link che partono da adesso, per tutti i file riservati. Non carica nessun file: per caricare usa il riquadro qui sopra.</p>
+        <button type="submit" class="btn btn-secondary btn-sm">Salva i giorni</button></form>
     </div></div>
   </aside>
 </div>

@@ -662,3 +662,7 @@ html .admin-content :is(input, select, textarea):disabled { opacity: .65; cursor
 .ct-quando { white-space: nowrap; }
 /* La freccina dei gruppi del menu (.nav-freccia, sopra) ha il colore --sidebar-testo-2 pieno: prima opacita 0,6, 3,3:1 in
    Aria, ed e l'unico segno che la voce si apre. */
+
+/* 2.6.0: errore sotto un campo (il file supera il limite del server), come nell'installatore. */
+.errore-campo { color: var(--errore-testo); font-size: .86rem; font-weight: 600; margin: .35rem 0 .2rem; }
+input[aria-invalid="true"], textarea[aria-invalid="true"], select[aria-invalid="true"] { border-color: var(--errore) !important; }

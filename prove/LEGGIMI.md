@@ -596,3 +596,10 @@ senza avviso H1 e senza indirizzo tecnico, avviso dell'editor al telefono, Agend
 `node prove/prova-ux-editor.js <base con kit Attività e otto addon accesi> <utente> <password> [base di una copia non installata]`.
 Atteso (con le scelte di Danilo del 1 novembre): 71 su 71, con la copia non installata, il database vuoto (quinto argomento, DBPASS
 nell'ambiente) e la pagina /addon-tutti/ di `pagina-addon-a.php` (vedi in cima al file). Non installa e non salva niente; alla fine rimette Aria.
+
+## prova-download-limite.js (2.6.0)
+
+Download con un server dal limite basso: i giorni dei link riservati in un riquadro loro, il file troppo grande detto sotto
+il campo prima dell'invio, il riservato caricato e in elenco, l'invio oltre `post_max_size` con un messaggio in parole (prima
+"Token CSRF non valido"). Sito col kit, server avviato con `php -d upload_max_filesize=1M -d post_max_size=2M -S ...`.
+Uso: `node prove/prova-download-limite.js <base> [utente] [password]`. 8 controlli.

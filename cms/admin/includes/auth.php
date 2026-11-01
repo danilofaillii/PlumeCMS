@@ -271,7 +271,45 @@ function csrf_ok(?string $token = null): bool {
     return $ok;
 }
 
+/** 2.6.0: un valore di php.ini (2M, 512K, 1G) in byte. */
+function pannello_ini_byte(string $v): int {
+    $v = trim($v); if ($v === '') return 0;
+    $n = (float)$v; $u = strtolower(substr($v, -1));
+    return (int)($u === 'g' ? $n * 1073741824 : ($u === 'm' ? $n * 1048576 : ($u === 'k' ? $n * 1024 : $n)));
+}
+
+/** 2.6.0: il file più grande che il server accetta, in byte (il minore fra upload_max_filesize e post_max_size; 0 = senza limite). */
+function pannello_limite_caricamento(): int {
+    $l = array_filter([pannello_ini_byte((string)ini_get('upload_max_filesize')), pannello_ini_byte((string)ini_get('post_max_size'))], fn($x) => $x > 0);
+    return $l ? min($l) : 0;
+}
+
+/** 2.6.0: un peso in parole (3,2 MB). */
+function pannello_peso(int $b): string {
+    if ($b >= 1048576) return str_replace('.', ',', (string)round($b / 1048576, 1)) . ' MB';
+    if ($b >= 1024) return (string)round($b / 1024) . ' KB';
+    return $b . ' byte';
+}
+
+/**
+ * 2.6.0: un invio più grande di post_max_size arriva a PHP senza campi e senza file: prima il pannello rispondeva
+ * "Token CSRF non valido" (Download, Aggiornamenti, Copia del sito, Media). Ora lo dice in parole e torna alla pagina.
+ * Non fa niente: nessun campo e arrivato, quindi nessuna azione parte.
+ */
+function pannello_invio_troppo_grande(): void {
+    $lung = (int)($_SERVER['CONTENT_LENGTH'] ?? 0);
+    $max = pannello_ini_byte((string)ini_get('post_max_size'));
+    if ($_POST !== [] || $_FILES !== [] || $max <= 0 || $lung <= $max) return;
+    flash('error', 'Il file pesa ' . pannello_peso($lung) . ', ma il server ne accetta al massimo ' . pannello_peso(pannello_limite_caricamento() ?: $max)
+        . '. Alza il limite dal pannello del tuo hosting (in cPanel: MultiPHP INI Editor, upload_max_filesize e post_max_size) e riprova.');
+    $qui = strtok((string)($_SERVER['REQUEST_URI'] ?? ''), '#');
+    header('Cache-Control: no-store');
+    header('Location: ' . ($qui !== '' && $qui[0] === '/' && !str_starts_with($qui, '//') ? $qui : 'index.php'), true, 303);
+    exit;
+}
+
 function verify_csrf(): void {
+    if ($_SERVER['REQUEST_METHOD'] === 'POST') pannello_invio_troppo_grande();
     if (!csrf_ok()) {
         http_response_code(403);
         die('Token CSRF non valido. Ricarica la pagina.');

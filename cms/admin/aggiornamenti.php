@@ -220,7 +220,7 @@ details summary{cursor:pointer;font-size:0.82rem;color:var(--text-muted)}
     <form method="post" enctype="multipart/form-data">
       <?= csrf_field() ?>
       <input type="hidden" name="action" value="carica">
-      <input type="file" name="pacchetto" accept=".zip" required style="font-size:0.85rem;margin-bottom:0.6rem;display:block">
+      <input type="file" name="pacchetto" accept=".zip" required<?= pannello_limite_caricamento() > 0 ? ' data-peso-massimo="' . pannello_limite_caricamento() . '"' : '' ?> style="font-size:0.85rem;margin-bottom:0.6rem;display:block">
       <button class="agg-btn primary" type="submit">Carica</button>
     </form>
     <p class="agg-note">Uno zip con dentro <code>manifest.json</code>. Se il pacchetto ha una data, resta in attesa e viene applicato quel giorno alle 06:00. Prima di ogni aggiornamento viene creato uno snapshot; se qualcosa fallisce, il sito torna com'era da solo.</p>
