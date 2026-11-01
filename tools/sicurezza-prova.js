@@ -1161,6 +1161,54 @@ echo json_encode($o);
     async function g2(u) { return (await admin.ctx.request.get(u, { maxRedirects: 0 })).status(); }
   } else console.log('--  file riservati: saltata (serve CMS_DIR)');
 
+  // === 28. (2.7.0) L'email di conferma dell'iscrizione: la cambia solo l'amministratore, con il token; i testi non diventano
+  // codice, l'oggetto non porta intestazioni nascoste, il colore non porta CSS; anteprima e prova solo per l'amministratore.
+  {
+    const form = (o) => new URLSearchParams(o).toString();
+    const CT = { 'Content-Type': 'application/x-www-form-urlencoded' };
+    const PAG = ADMIN + '/newsletter.php?scheda=impostazioni';
+    const API = ADMIN + '/email-conferma-api.php';
+    const cattiva = { azione: 'conferma_email', 'ce[oggetto]': 'sic-ec\r\nBcc: spia@cattivo.it', 'ce[testo]': 'sic-ec <script>alert(1)</script><b onclick="alert(2)">x</b> <a href="javascript:alert(3)">y</a>',
+      'ce[colore]': 'red;background:url(javascript:alert(4))', 'ce[intestazione]': 'sic-ec <img src=x onerror=alert(5)>', 'ce[firma]': '<svg onload=alert(6)>', 'ce[nota]': 'sic-ec' };
+    const leggi = async () => { await admin.p.goto(PAG, { waitUntil: 'networkidle' }); return admin.p.evaluate(() => [...document.querySelectorAll('#nl-conferma [name^="ce["]')].map(e => e.value).join('|')); };
+    const prima = await leggi();
+    const anon = await browser.newContext();
+    const ra = await anon.request.post(ADMIN + '/newsletter.php', { form: cattiva, maxRedirects: 0 });
+    const rapi = await anon.request.post(API, { form: { azione: 'anteprima', contesto: 'comuni' }, maxRedirects: 0 });
+    ok('2.7.0: email di conferma senza login: rifiutata, anche l\'anteprima', ra.status() !== 200 && rapi.status() !== 200 && !(await leggi()).includes('sic-ec'), { status: ra.status(), api: rapi.status() });
+    await anon.close();
+    const r1 = await post(admin.p, ADMIN + '/newsletter.php', form(cattiva), CT);
+    ok('2.7.0: email di conferma senza token: 403', r1.status === 403 && !(await leggi()).includes('sic-ec'), { status: r1.status });
+    const tk = await tokenDi(admin.p, PAG);
+    const est = await admin.ctx.request.post(ADMIN + '/newsletter.php', { headers: { 'Origin': 'https://evil.example' }, form: { _csrf: tk, ...cattiva }, maxRedirects: 0 });
+    ok('2.7.0: email di conferma con Origin esterno: 403', est.status() === 403 && !(await leggi()).includes('sic-ec'), { status: est.status() });
+    const estApi = await admin.ctx.request.post(API, { headers: { 'Origin': 'https://evil.example' }, form: { _csrf: tk, azione: 'prova', contesto: 'comuni' }, maxRedirects: 0 });
+    ok('2.7.0: prova dell\'email con Origin esterno: 403', estApi.status() === 403, estApi.status());
+    if (red.dentro) {
+      const tr = await tokenDi(red.p, ADMIN + '/media.php');
+      const rr = await post(red.p, ADMIN + '/newsletter.php', form({ _csrf: tr, ...cattiva }), CT);
+      ok('2.7.0: il redattore non cambia l\'email di conferma', !(await leggi()).includes('sic-ec'), { status: rr.status });
+      const rp = await post(red.p, API, form({ _csrf: tr, azione: 'prova', contesto: 'comuni' }), CT);
+      ok('2.7.0: il redattore non vede l\'anteprima e non manda la prova (403)', rp.status === 403, rp.status);
+      const rf = await post(red.p, ADMIN + '/form.php', form({ _csrf: tr, id: '1', nome: 'X', 'ce[oggetto]': 'sic-ec' }), CT);
+      ok('2.7.0: il redattore non cambia l\'email di conferma di un form', !/salvato/.test(rf.body), rf.status);
+    }
+    // L'amministratore con il token: tutto pulito.
+    await post(admin.p, ADMIN + '/newsletter.php', form({ _csrf: await tokenDi(admin.p, PAG), ...cattiva }), CT);
+    const salvati = await admin.p.evaluate(() => Object.fromEntries([...document.querySelectorAll('#nl-conferma [name^="ce["]')].map(e => [e.name.slice(3, -1), e.value])));
+    await admin.p.goto(PAG, { waitUntil: 'networkidle' });
+    const v = await admin.p.evaluate(() => Object.fromEntries([...document.querySelectorAll('#nl-conferma [name^="ce["]')].map(e => [e.name.slice(3, -1), e.value])));
+    ok('2.7.0: oggetto senza a capo, colore con CSS scartato, testo senza script né eventi', /^sic-ec Bcc/.test(v.oggetto || '') && (v.colore || '') === '' && !/<script|onclick|javascript:/i.test(v.testo || ''), { v, salvati: Object.keys(salvati).length });
+    const an = await admin.ctx.request.post(API, { headers: { 'Origin': BASE.replace(/(https?:\/\/[^/]+).*/, '$1') }, form: { _csrf: await tokenDi(admin.p, PAG), azione: 'anteprima', contesto: 'comuni' }, maxRedirects: 0 });
+    const j = an.status() === 200 ? await an.json() : {};
+    const h = String(j.html || '');
+    ok('2.7.0: l\'email che ne esce non ha codice: niente script, eventi, javascript:, SVG; l\'oggetto è su una riga', h.includes('sic-ec') && !/<script|<svg|<img|<[^>]*\son[a-z]+=|javascript:/i.test(h) && !/[\r\n]/.test(String(j.oggetto || '')), { status: an.status(), ogg: j.oggetto });
+    // Com'era: i campi vuoti (o quelli letti prima).
+    const vuoti = Object.fromEntries(['oggetto', 'intestazione', 'titolo', 'testo', 'pulsante', 'colore', 'sotto', 'firma', 'nota'].map((k, i) => ['ce[' + k + ']', (prima.split('|')[i] || '')]));
+    await post(admin.p, ADMIN + '/newsletter.php', form({ _csrf: await tokenDi(admin.p, PAG), azione: 'conferma_email', ...vuoti }), CT);
+    ok('2.7.0: (pulizia) l\'email di conferma torna com\'era', (await leggi()) === prima);
+  }
+
   // === pulizia: elimina il redattore di prova
   {
     await admin.p.goto(ADMIN + '/utenti.php', { waitUntil: 'networkidle' });

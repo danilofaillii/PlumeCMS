@@ -1631,7 +1631,8 @@ formule, capitolo 18.10).
 `includes/moduli.php` dà a newsletter e form del costruttore (15.1) le stesse cose:
 - lettura e controllo dei campi (nome, cognome, email, privacy), campo esca invisibile alle persone;
 - limite: 5 invii l'ora per IP e per modulo;
-- l'impaginazione delle email (`moduli_email_html`, intestazione e firma dalle impostazioni);
+- l'impaginazione delle email (`moduli_email_html`, intestazione e firma dalle impostazioni; dalla 2.7.0 un quinto argomento
+  facoltativo cambia intestazione, firma, frase sotto il pulsante e colore di una sola email, 15.6);
 - captcha a prova di lavoro: il browser risolve un piccolo calcolo, la sfida vale 1200 secondi e non si può
   riusare (`captcha_usati`).
 
@@ -1660,7 +1661,8 @@ un form non sta in nessuna lista e non deve finire nella principale.
 persona (una nuova in attesa; chi c'è già resta nel suo stato, anche uscito o rimbalzato, fino alla conferma) e scrive la
 richiesta in `newsletter_conferme` (token sha256, iscritto, lista, form d'origine, scadenza a 7 giorni). Opzioni: `lista`
 (predefinita la principale: il modulo della newsletter), `form`, `cosa` (per cosa si iscrive, nelle frasi dell'email),
-`oggetto`, `testo`, `pulsante`, `fonte`. Il modulo della newsletter (`api/modulo.php`) la chiama senza opzioni, come prima;
+`oggetto`, `testo`, `pulsante`, `fonte` e, dalla 2.7.0, `email` (le parti dell'email scritte nel form; l'email la compone
+`nl_email_conferma()`, 15.6). Il modulo della newsletter (`api/modulo.php`) la chiama senza opzioni, come prima;
 un form con conferma passa la sua lista, il suo id e il suo titolo, e la persona non entra più nella principale. Errori:
 `troppi` (5 richieste l'ora dallo stesso IP: `newsletter_troppe_richieste()`, `:258`) e `posta`.
 
@@ -1739,6 +1741,87 @@ clic per link, iscritti per mese. Dalla 2.1.0 anche rimbalzi, uscite e segnalazi
 
 Prove: `prove/prova-newsletter-difetti.js` (dalla 2.0.0, con `prove/smtp-finto.py ... rimbalzi`,
 `prove/sendmail-finto.py` e `prove/newsletter-cli.php`); per la consegna, capitolo 35.
+
+### 15.6 L'email di conferma modificabile (dalla 2.7.0)
+
+Richiesta di Danilo: "Voglio poter modificare l'email che arriva, in ogni sua parte." Motore in
+`includes/newsletter-email.php` (caricato da `includes/newsletter.php:25`, e lui a sua volta carica `newsletter.php`: le due
+`require_once` si chiudono a vicenda).
+
+**Le parti** (`NL_EMAIL_PARTI`, `:27`, con lunghezza massima e "una riga sola"): `intestazione` (150, la riga scura in cima),
+`oggetto` (255), `titolo` (255), `testo` (5000, HTML limitato, più righe), `pulsante` (100), `colore` (`#rrggbb`), `sotto`
+(300, la frase sotto il pulsante), `firma` (300, più righe), `nota` (500, più righe). Il **link** del pulsante non è una parte:
+resta sempre quello vero (sicurezza).
+
+**Da dove arriva ogni parte**, nell'ordine: il form (colonna `moduli.conferma_email`, TEXT con il JSON delle parti, NULL =
+nessuna; creata da `form_schema()` e aggiunta alle tabelle vecchie, `includes/form.php:55` e `:88`), i valori comuni
+(impostazione `newsletter_conferma_email`, stesso JSON, `nl_email_comuni()`, `:75`), il testo di partenza
+(`nl_email_partenza($principale)`, `:88`: le frasi di prima, con i segnaposti, nella forma "alla newsletter" per il modulo
+della newsletter e "a «...»" per form e liste). Una parte uguale a quella che erediterebbe non si salva
+(`nl_email_da_salvare()`, `:112`, con `nl_email_uguali()`, `:123`, che non bada a spazi e a capo di Windows): così "Riempi i
+campi vuoti" e Salva senza cambiare niente lasciano tutto com'era.
+
+**La composizione**: `nl_email_conferma($c)` (`:163`) ritorna `[oggetto, html]`. Per ogni parte assente, o uguale alla
+partenza, usa **il codice di prima, riga per riga** (`l&#039;` scritto a mano compreso): senza parti scritte l'email esce
+uguale al byte a quella della 2.6.0 (`prove/email-conferma-cli.php` ha il codice della 2.6.0 copiato, e la prova lo
+confronta con l'email vera). Le vecchie opzioni di `newsletter_richiesta()` (`oggetto`, `testo` HTML, `pulsante`) vincono
+ancora su tutto. `newsletter_richiesta()` (`includes/newsletter.php:282`) la chiama con `principale` (lista principale e
+nessun form), `cosa`, il nome, il link vero e l'opzione nuova `email` (le parti del form); `form_iscrivi()`
+(`includes/form.php:572`) passa le parti del form. Il modulo della newsletter (`api/modulo.php:56`) non cambia: prende i
+comuni.
+
+**L'impaginazione**: `moduli_email_html()` (`includes/moduli.php:148`) ha un quinto argomento facoltativo `$parti` (HTML già
+pronto): `intestazione`, `firma`, `sotto`, `colore`, `dopo_firma`. Senza, esce come prima: le altre email del sito (avvisi,
+file, flussi) non cambiano. La nota "Se la richiesta l'ha fatta qualcun altro" ora entra con `dopo_firma` (prima con uno
+`str_replace` sulla firma, che con una firma cambiata non avrebbe più trovato il punto). Il testo del pulsante è bianco o
+quasi nero secondo il contrasto con il colore scelto (`nl_email_su_colore()`, `:150`, rapporto WCAG); con il viola di
+partenza resta `#fff`.
+
+**Segnaposti** (`nl_email_segnaposti()`, `:129`): `{nome}`, `{lista}` (il `cosa`: titolo del form, o nome, o nome della
+lista; "newsletter ..." per il modulo della newsletter), `{giorni}` (`MODULI_CONFERMA_GIORNI`), `{sito}` (`sito_nome`). Con il
+nome vuoto `" {nome}"` sparisce con lo spazio. Nei testi semplici i valori entrano come testo e l'escape lo fa chi stampa
+(`h()`); nel testo HTML entrano **dopo** la pulizia e con `h()`, così un nome non porta codice nell'email.
+
+**Il testo** (`nl_email_testo_html()`, `:140`): se non ha paragrafi scritti a mano, una riga vuota separa i paragrafi e un a
+capo diventa `<br>`; poi `sicurezza_html_pulito($t, 'ricco')` (capitolo 18: tag ammessi del widget Testo, niente `on*`,
+indirizzi `javascript:` tolti). La pulizia si fa anche al salvataggio (`nl_email_parte_pulita()`, `:37`, quando il testo
+contiene `<`) e di nuovo a ogni invio, per un valore toccato nel database.
+
+**Pulizia al salvataggio** (`nl_email_parte_pulita()`): niente NUL; le parti di una riga perdono a capo e tabulazioni (un
+oggetto con `\r\nBcc:` diventa una riga sola: nessuna intestazione nascosta; `posta_invia` toglie comunque gli a capo
+dall'oggetto); il colore passa solo come `#rrggbb` (un `red;background:url(...)` si scarta); lunghezza massima. **Emoji**:
+le tabelle sono a 3 byte, i caratteri a 4 byte si salvano come entità `&#x1F389;` (`newsletter_4byte_dentro`) e tornano
+caratteri alla lettura (`nl_email_da_json()`, `:60`), prima dell'escape (senza, uscirebbe `&amp;#x1F389;`).
+
+**Pannello** (solo amministratore):
+- Form, scheda di un form: riquadro **Email di conferma** (`admin/form.php:88`, nella colonna larga sotto Consenso; nel
+  riquadro stretto Dopo l'invio c'è il rimando `#fm-conferma`), campi `ce[...]` dentro un `details` aperto quando il form ha
+  parti sue; `form_salva()` (`includes/form.php:350`) le salva solo se arrivano (`array_key_exists('ce')`: il kit di
+  partenza non le tocca). Con un errore di salvataggio i campi tornano come scritti (`admin/form.php:31`).
+- Newsletter > Impostazioni: riquadro **Email di conferma dell'iscrizione** (`admin/newsletter.php:378`, `id="nl-conferma"`),
+  azione `conferma_email` (`:184`), confronto con la partenza "newsletter".
+- I campi, uguali nelle due pagine: `admin/includes/email-conferma-campi.php` (`ec_campi_html()`, `:20`): etichetta vera,
+  aiuto collegato (`aria-describedby`) che dice cosa si usa quando il campo è vuoto (comune o partenza), nessun segnaposto
+  dentro i campi (non deve sembrare un valore); `ec_segnaposti_html()` (`:52`) spiega i segnaposti in un `details.pn-aiuto`;
+  `ec_anteprima_html()` (`:63`) i pulsanti, il messaggio (`role=status`, `alert` per gli errori) e la cornice.
+- `admin/assets/email-conferma.js`: niente gestori in linea (CSP a nonce); `data-email-conferma` (l'indirizzo dell'API),
+  `data-contesto`, `data-csrf`; i pulsanti `data-ec-anteprima`, `data-ec-prova`, `data-ec-riempi`; il selettore del colore
+  `data-ec-colore` scrive nella casella accanto. I campi viaggiano con `campiProtetti.codifica()` (base64 per ModSecurity).
+  L'anteprima entra in un `iframe sandbox` con `srcdoc` (niente script, origine opaca; la CSP del pannello ammette gli stili
+  in linea delle email).
+- `admin/email-conferma-api.php`: solo POST, token e Origin (`csrf_ok`), solo amministratore (finisce in `-api.php`, quindi
+  `require_login()` dà 403 al redattore, e lo controlla di nuovo). `azione=anteprima` ritorna `{oggetto, html}`;
+  `azione=prova` manda l'email all'indirizzo dell'utente collegato, con `[PROVA]` nell'oggetto e il link finto
+  `nl_email_link_finto()` (`:211`, `?t=prova-senza-valore`: la pagina di conferma lo dà per scaduto e non conferma niente).
+  Usa i campi come sono scritti in quel momento, anche non salvati; il nome d'esempio è "Maria".
+
+Intestazione e firma scritte qui valgono **solo** per l'email di conferma: le altre email del sito tengono
+`email_intestazione` ed `email_firma` (che un modulo del sito può impostare).
+
+Prove: `prove/prova-email-conferma.js` (con `prove/email-conferma-cli.php` e il server di posta finto): senza modifiche
+uguale al byte alla 2.6.0 per un form e per il modulo della newsletter, ogni parte cambiata, segnaposti, emoji in oggetto e
+testo, codice cattivo, anteprima, prova, link vero che conferma, redattore, 390 px. Attacchi: gruppo 28 di
+`tools/sicurezza-prova.js`.
 
 ---
 

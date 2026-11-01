@@ -1423,6 +1423,47 @@ Chi è già nella lista riceve il file subito per email, senza conferma. Se togl
 **Scarica** esce già nella pagina di ringraziamento. L'email di conferma dice per cosa si conferma (il titolo del form),
 e la persona entra solo nella lista di quel form, non in tutte le liste della newsletter.
 
+### Cambiare l'email di conferma
+
+L'email che arriva a chi compila il form (con il pulsante **Confermo l'iscrizione**) la puoi riscrivere in ogni sua parte:
+oggetto, riga in cima, titolo, testo, pulsante e il suo colore, frase sotto il pulsante, firma e nota in fondo. Se non
+tocchi niente, l'email resta quella di sempre.
+
+**Esempio.** Il form "Guida in regalo" di Studio Prova: oggetto "Ultimo passo per la tua guida, {nome}", pulsante "Sì,
+mandami la guida", colore verde.
+
+Apri il form in **Newsletter e form > Form** e scendi al riquadro **Email di conferma**, sotto Consenso.
+
+![Il riquadro Email di conferma, con l'anteprima](immagini/manuale-uso/17-email-conferma.jpg)
+
+1. Premi **Cambia i testi dell'email**: si aprono i campi. Sotto ogni campo c'è scritto cosa si usa quando lo lasci
+   vuoto (il testo comune della newsletter, se c'è, oppure quello di partenza).
+2. Scrivi solo le parti che vuoi cambiare. Qui: **Oggetto** "Ultimo passo per la tua guida, {nome}", **Testo del
+   pulsante** "Sì, mandami la guida", **Colore del pulsante**: premi il quadratino colorato e scegli il verde (oppure
+   scrivi un colore come `#0a7d32`). Il testo del pulsante diventa bianco o nero da solo, per leggersi bene.
+3. Per partire dal testo di oggi, premi **Riempi i campi vuoti con i testi in uso** e poi cambia quello che vuoi.
+4. Premi **Aggiorna l'anteprima**: sotto vedi l'oggetto e l'email come arriverà, con "Maria" al posto del nome. Anche
+   quello che non hai ancora salvato.
+5. Premi **Manda una prova a me**: l'email arriva alla tua casella (l'email del tuo utente), con "[PROVA]" davanti
+   all'oggetto. Il suo pulsante non conferma niente.
+6. Premi **Salva**, nel riquadro Stato.
+
+I segnaposti (li spiega anche il riquadro, in **Come si scrivono il nome e le altre parti che cambiano**):
+
+- `{nome}`: il nome di chi si iscrive. Se non l'ha scritto sparisce con lo spazio davanti: "Ciao {nome}," diventa "Ciao,".
+- `{lista}`: per cosa si iscrive, cioè il titolo del form.
+- `{giorni}`: quanti giorni vale il link (7).
+- `{sito}`: il nome del sito.
+
+Nel **Testo** una riga vuota separa i paragrafi. Puoi usare il grassetto (`<b>...</b>`), il corsivo (`<i>...</i>`) e i
+link (`<a href="https://...">...</a>`); il resto si toglie da solo quando salvi. Le emoji vanno bene, anche nell'oggetto.
+
+Il link del pulsante non si scrive e non si cambia: è sempre quello vero, che conferma l'iscrizione. La riga in cima e la
+firma che scrivi qui valgono solo per l'email di conferma: gli avvisi dei form, le email dei file e le campagne restano
+come sono.
+
+Questi testi li cambia solo l'amministratore: il redattore non vede il riquadro.
+
 ### Leggere le compilazioni
 
 Le trovi in **Newsletter e form > Invii dei form**, con una linguetta per ogni form e **Scarica CSV** per aprirle con
@@ -1440,6 +1481,8 @@ Excel o Numbers.
 - [ ] Se il form dà un file: il file è **Riservato** in Download, il form ha una lista, e ho provato io a compilarlo e a
   confermare (il file è arrivato per email).
 - [ ] Se il form ha un campo **File da allegare**: ho mandato io un file di prova e l'ho scaricato da Invii dei form.
+- [ ] Se ho cambiato l'email di conferma: ho guardato l'anteprima, mi sono mandato la prova e l'ho letta anche dal
+  telefono; poi ho compilato il form io e ho premuto il pulsante dell'email vera (l'iscrizione risulta attiva).
 
 ---
 
@@ -1542,6 +1585,26 @@ Contano **tutte** le email del sito, non solo le campagne: conferme, avvisi dei 
 casella c'è scritto quante ne sono partite nell'ultima ora e nelle ultime 24 ore. Quando il limite è raggiunto le email
 aspettano il giro dopo del cron: non si perdono.
 
+### L'email di conferma dell'iscrizione
+
+Chi si iscrive alla newsletter riceve un'email con il pulsante **Confermo l'iscrizione**: entra fra gli iscritti solo
+quando lo preme. Quell'email la riscrivi nella stessa linguetta **Impostazioni**, riquadro **Email di conferma
+dell'iscrizione**.
+
+![L'email di conferma in Newsletter, Impostazioni](immagini/manuale-uso/19-email-conferma.jpg)
+
+1. Scrivi le parti che vuoi cambiare: oggetto, riga in cima, titolo, testo, pulsante, colore, frase sotto il pulsante,
+   firma, nota in fondo. Un campo vuoto usa il testo di partenza, scritto sotto il campo.
+2. Nei testi puoi usare `{nome}`, `{lista}`, `{giorni}` e `{sito}` (come nei form, capitolo 18, "Cambiare l'email di
+   conferma").
+3. Guarda l'anteprima, premi **Manda una prova a me** e controlla l'email nella tua casella.
+4. Premi **Salva l'email di conferma**.
+
+Questi testi valgono per il modulo della newsletter del sito e sono la base per i form: un form che iscrive a una lista
+con l'email di conferma usa i suoi testi, e per le parti che lasci vuote nel form usa questi.
+
+Per tornare all'email di partenza svuota i campi e salva.
+
 ### I flussi automatici
 
 **Flussi automatici** sono email che partono da sole: il benvenuto a chi si iscrive, un promemoria dopo qualche giorno,
@@ -1557,6 +1620,8 @@ un'email diversa a chi ha aperto e a chi no. Si disegnano su una tela con quattr
 - [ ] Ogni email ha il link per uscire dalla newsletter (lo mette plumeCMS da solo).
 - [ ] I limiti di email ogni ora e al giorno sono sotto quelli dell'hosting.
 - [ ] Una volta al mese guardo i **Rimbalzati** e quelli **Con 3 errori di fila**.
+- [ ] Se ho cambiato l'email di conferma: mi sono mandato la prova, e mi sono iscritto io una volta dal sito, premendo il
+  pulsante dell'email vera.
 
 ---
 
