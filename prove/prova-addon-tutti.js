@@ -4,6 +4,7 @@
 // pubbliche degli addon; poi li spegne tutti e controlla che home, Servizi, Contatti e sitemap tornino uguali a prima.
 // uso: node prove/prova-addon-tutti.js <base> <utente> <password> <cartella del CMS installato>
 const { chromium } = require('playwright');
+const pnConferme = require('./conferme-pannello'); // UX 2026-11: conferme del pannello
 const fs = require('fs');
 const path = require('path');
 const [B, UTENTE, PASSWORD, DIR] = process.argv.slice(2);
@@ -20,7 +21,7 @@ const log = () => { const f = path.join(DIR, 'logs', 'php-errori.log'); return f
   const p = await ctx.newPage();
   p.on('pageerror', e => err.push(p.url() + ' ' + e.message.slice(0, 160)));
   p.on('console', m => { if (m.type() === 'error' && !/favicon|404/.test(m.text())) err.push(p.url() + ' ' + m.text().slice(0, 160)); });
-  p.on('dialog', d => d.accept());
+  pnConferme.on(p, d => d.accept());
   const pubbliche = ['/', '/servizi/', '/contatti/', '/sitemap.xml'];
   const prima = {};
   for (const u of pubbliche) prima[u] = pulisci(await (await p.request.get(B + u)).text());

@@ -1,6 +1,7 @@
 // Installazione vera del CMS da browser, poi un giro da utente: login, Stile, pagina nuova, articolo, sitemap, SEO.
 // uso: node prova-install.js <base, es. http://127.0.0.1:8099> <cartella screenshot> <prefisso shot> <db> [<base CMS, es. /sub>]
 const { chromium } = require('playwright');
+const pnConferme = require('./conferme-pannello'); // UX 2026-11: conferme del pannello
 const [B, OUT, PRE, DB, CMSB = ''] = process.argv.slice(2);
 let n = 0, ko = 0; const ok = (t, c, extra = '') => { n++; if (!c) ko++; console.log((c ? 'OK  ' : 'KO  ') + t + (extra ? ' ' + JSON.stringify(extra).slice(0, 200) : '')); };
 (async () => {
@@ -93,7 +94,7 @@ let n = 0, ko = 0; const ok = (t, c, extra = '') => { n++; if (!c) ko++; console
   await p.click('#ed-apri-impostazioni'); await p.waitForTimeout(400); await p.fill('#ed-form-impostazioni input[name=titolo]', 'Pagina di prova dell\'installazione');
   const slugIn = p.locator('#ed-form-impostazioni input[name=slug]'); if (await slugIn.count()) await slugIn.fill('pagina-di-prova');
   await p.click('#ed-form-impostazioni button[type=submit]'); await p.waitForTimeout(800);
-  p.once('dialog', d => d.accept()); await p.click('#ed-pubblica'); await p.waitForTimeout(1500);
+  pnConferme.once(p, d => d.accept()); await p.click('#ed-pubblica'); await p.waitForTimeout(1500);
   const pg = await p.goto(B + '/pagina-di-prova/', { waitUntil: 'networkidle' });
   ok('pagina pubblicata visibile sul sito, con header e footer', pg.status() === 200 && await p.locator('header').count() >= 1 && await p.locator('footer').count() >= 1 && await p.locator('.ed-w-icona').count() >= 1, pg.status());
   await shot('sito-pagina-nuova');

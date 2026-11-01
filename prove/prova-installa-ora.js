@@ -5,6 +5,7 @@
 //   FINTO_ZIP=<.../plumecms-X-aggiornamento.zip, col suo nome: il finto legge la versione dal nome> php -S 127.0.0.1:<porta> prove/finto-ufficiale.php
 // uso: node prove/prova-installa-ora.js <base> <cartella CMS> <utente> <password> <base del finto> <versione nuova>
 const { chromium } = require('playwright');
+const pnConferme = require('./conferme-pannello'); // UX 2026-11: conferme del pannello
 const fs = require('fs'); const path = require('path');
 const { execFileSync } = require('child_process');
 const [B, DIR, U, P, FINTO, NUOVA] = process.argv.slice(2);
@@ -18,7 +19,7 @@ const php = c => execFileSync('php', ['-r', `$_SERVER['HTTP_HOST']='127.0.0.1'; 
   php("save_setting('versione_controllo_cache', '');");
   const br = await chromium.launch(); const err = [];
   const ctx = await br.newContext({ viewport: { width: 1280, height: 900 } }); const p = await ctx.newPage();
-  p.on('pageerror', e => err.push(e.message)); p.on('dialog', d => d.accept());
+  p.on('pageerror', e => err.push(e.message)); pnConferme.on(p, d => d.accept());
   await p.goto(B + '/admin/login.php'); await p.fill('#username', U); await p.fill('#password', P);
   await Promise.all([p.waitForNavigation(), p.click('button[type=submit]')]);
   await p.goto(B + '/admin/', { waitUntil: 'networkidle' });

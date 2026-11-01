@@ -3,6 +3,7 @@
 // Servono i temi di collaudo (prove/temi-collaudo.php). Schermate in <cartella schermate>.
 // uso: node prova-pannello-temi.js <base> <cartella CMS installato> <utente> <password> <cartella schermate>
 const { chromium } = require('playwright');
+const pnConferme = require('./conferme-pannello'); // UX 2026-11: conferme del pannello
 const { execFileSync } = require('child_process');
 const path = require('path');
 const [B, DIR, UTENTE, PASSWORD, OUT] = process.argv.slice(2);
@@ -16,7 +17,7 @@ const sfondo = (p) => p.evaluate(() => getComputedStyle(document.body).backgroun
   const err = []; p.on('pageerror', e => err.push(e.message.slice(0, 200)));
   p.on('console', m => { if (m.type() === 'error' && !/favicon/.test(m.text())) err.push(m.text().slice(0, 200)); });
   let rispondi = true, ultimaConferma = '';
-  p.on('dialog', d => { ultimaConferma = d.message(); rispondi ? d.accept() : d.dismiss(); });
+  pnConferme.on(p, d => { ultimaConferma = d.message(); rispondi ? d.accept() : d.dismiss(); });
 
   await p.goto(B + '/admin/login.php'); await p.fill('#username', UTENTE); await p.fill('#password', PASSWORD);
   await Promise.all([p.waitForNavigation(), p.click('button[type=submit]')]);

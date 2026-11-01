@@ -3,6 +3,7 @@
 // Il confronto delle schermate prima e dopo si fa a parte con foto-sito.js e quanto-foto.py.
 // uso: node prova-aggiornamento.js <base del CMS> <cartella CMS installato> <utente> <password> <pacchetto.zip> <versione attesa>
 const { chromium } = require('playwright');
+const pnConferme = require('./conferme-pannello'); // UX 2026-11: conferme del pannello
 const fs = require('fs');
 const path = require('path');
 const [B, DIR, UTENTE, PASSWORD, ZIP, VERSIONE] = process.argv.slice(2);
@@ -12,7 +13,7 @@ let n = 0, ko = 0; const ok = (t, c, extra = '') => { n++; if (!c) ko++; console
   const br = await chromium.launch();
   const p = await (await br.newContext({ viewport: { width: 1360, height: 900 } })).newPage();
   const err = []; p.on('pageerror', e => err.push(e.message.slice(0, 200)));
-  p.on('dialog', d => d.accept());
+  pnConferme.on(p, d => d.accept());
   await p.goto(B + '/admin/login.php'); await p.fill('#username', UTENTE); await p.fill('#password', PASSWORD);
   await Promise.all([p.waitForNavigation(), p.click('button[type=submit]')]);
   ok('login', !p.url().includes('login.php'), p.url());

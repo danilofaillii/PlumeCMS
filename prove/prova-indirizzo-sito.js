@@ -4,6 +4,7 @@
 // con il vecchio indirizzo ufficiale che passa a plumecms.it.
 // uso: node prove/prova-indirizzo-sito.js <base con 127.0.0.1> <cartella CMS> <utente> <password>
 const { chromium } = require('playwright');
+const pnConferme = require('./conferme-pannello'); // UX 2026-11: conferme del pannello
 const { execFileSync } = require('child_process');
 const [B, DIR, U, P] = process.argv.slice(2);
 const php = c => execFileSync('php', ['-r', `$_SERVER['HTTP_HOST']='127.0.0.1'; require '${DIR}/includes/config.php'; ${c}`], { encoding: 'utf8' });
@@ -12,7 +13,7 @@ let n = 0, ko = 0; const ok = (t, c, x = '') => { n++; if (!c) ko++; console.log
   const u = new URL(B); const cartella = u.pathname.replace(/\/$/, '');
   const vecchio = php("echo get_setting('sito_url', '');").trim();
   const nuovoDominio = `${u.protocol}//localhost:${u.port}`;
-  const br = await chromium.launch(); const p = await br.newPage(); const err = []; p.on('pageerror', e => err.push(e.message)); p.on('dialog', d => d.accept());
+  const br = await chromium.launch(); const p = await br.newPage(); const err = []; p.on('pageerror', e => err.push(e.message)); pnConferme.on(p, d => d.accept());
   await p.goto(B + '/admin/login.php'); await p.fill('#username', U); await p.fill('#password', P);
   await Promise.all([p.waitForNavigation(), p.click('button[type=submit]')]);
   const salva = async (url, forza = false) => {

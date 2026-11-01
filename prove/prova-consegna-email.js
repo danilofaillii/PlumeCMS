@@ -14,6 +14,7 @@
 // uso: node prove/prova-consegna-email.js <base> <utente> <password> <porta smtp> <cartella posta> <cartella del CMS installato> <porta api finta>
 // Scrive nel config.local.php le costanti delle prove (blocco "prove della consegna") e lascia dati di prova: sito da buttare.
 const { chromium } = require('playwright');
+const pnConferme = require('./conferme-pannello'); // UX 2026-11: conferme del pannello
 const fs = require('fs');
 const path = require('path');
 const C = require('./consegna-comune');
@@ -33,7 +34,7 @@ const decodifica = eml => eml.replace(/\r?\n\r?\n([A-Za-z0-9+\/=\r\n]{40,})/g, (
   const ctx = await br.newContext({ viewport: { width: 1280, height: 900 } });
   const p = await ctx.newPage();
   const err = []; p.on('pageerror', e => err.push(e.message.slice(0, 200)));
-  p.on('dialog', d => d.accept());
+  pnConferme.on(p, d => d.accept());
   const vai = u => p.goto(B + u, { waitUntil: 'networkidle' });
   const testo = async () => (await p.locator('body').innerText()).replace(/\s+/g, ' ');
   const flash = async () => (await p.locator('.flash').allInnerTexts().catch(() => [])).join(' | ');

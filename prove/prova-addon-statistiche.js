@@ -6,6 +6,7 @@
 // il sito uguale a prima.
 // uso: node prove/prova-addon-statistiche.js <base> <utente> <password> <cartella del CMS installato>
 const { chromium } = require('playwright');
+const pnConferme = require('./conferme-pannello'); // UX 2026-11: conferme del pannello
 const path = require('path');
 const { execFileSync } = require('child_process');
 const [B, UTENTE, PASSWORD, CMS] = process.argv.slice(2);
@@ -41,7 +42,7 @@ async function misura(ua) {
     return [c, pg];
   };
   const [ac, p] = await contesto(UA.pc);
-  p.on('dialog', d => d.accept());
+  pnConferme.on(p, d => d.accept());
   const vai = u => p.goto(B + u, { waitUntil: 'networkidle' });
   const flash = async () => (await p.locator('.flash').first().innerText().catch(() => '')).trim();
 

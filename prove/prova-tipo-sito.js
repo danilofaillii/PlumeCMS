@@ -9,6 +9,7 @@
 // 6. Definitivo con la conferma: il riquadro sparisce, la voce dei Primi passi si spunta.
 // uso: node prova-tipo-sito.js <base> <cartella CMS> <utente> <password> <cartella schermate>
 const { chromium } = require('playwright');
+const pnConferme = require('./conferme-pannello'); // UX 2026-11: conferme del pannello
 const { execFileSync } = require('child_process');
 const path = require('path');
 const [B, DIR, UTENTE, PASSWORD, OUT] = process.argv.slice(2);
@@ -25,7 +26,7 @@ const sito = new URL(B).pathname.replace(/\/$/, '');
   ok('login', !p.url().includes('login.php'), p.url());
 
   // 1. La dashboard
-  await p.goto(B + '/admin/index.php', { waitUntil: 'networkidle' });
+  await p.goto(B + '/admin/index.php#tipo-sito', { waitUntil: 'networkidle' });
   ok('riquadro "Stai provando il sito Portfolio"', (await p.locator('#tipo-sito-titolo').innerText().catch(() => '')) === 'Stai provando il sito Portfolio');
   // Dalla 1.7.0 le carte sono sei: la sesta, Su misura, è un link alla pagina delle domande.
   ok('sei carte (con Su misura), Portfolio segnato e non cliccabile', await p.locator('.db-kit-carta').count() === 6 && await p.locator('.db-kit-carta a[data-kit=su-misura][href*="sito-su-misura.php"]').count() === 1 && await p.locator('.db-kit-carta.attuale button[data-kit=portfolio]').isDisabled());
@@ -47,17 +48,17 @@ const sito = new URL(B).pathname.replace(/\/$/, '');
   await p.fill('#sc-title', 'Il mio primo articolo');
   await Promise.all([p.waitForNavigation(), p.click('button[data-valore=pubblica]')]);
   ok('articolo scritto dal pannello', cli('articolo', 'il-mio-primo-articolo') !== 'nessuna', cli('articolo', 'il-mio-primo-articolo'));
-  await p.goto(B + '/admin/index.php', { waitUntil: 'networkidle' });
+  await p.goto(B + '/admin/index.php#tipo-sito', { waitUntil: 'networkidle' });
   ok('Primi passi: "prima pagina o articolo" spuntata da sola', (await p.locator('#primi-passi li[data-passo=contenuto]').getAttribute('class')).includes('fatto'));
 
   // 3. Il cambio: prima la conferma rifiutata, poi accettata
   let testo = '';
-  p.once('dialog', d => { testo = d.message(); d.dismiss(); });
+  pnConferme.once(p, d => { testo = d.message(); d.dismiss(); });
   await p.click('.db-kit-carta button[data-kit=blog]');
   await p.waitForTimeout(800);
   ok('la conferma dice cosa succede', testo.includes('Il sito diventa Blog. Le pagine che hai scritto o cambiato restano.'), testo);
   ok('conferma rifiutata: niente cambia', JSON.parse(cli('stato')).kit === 'portfolio');
-  p.once('dialog', d => d.accept());
+  pnConferme.once(p, d => d.accept());
   await Promise.all([p.waitForNavigation({ timeout: 120000 }), p.click('.db-kit-carta button[data-kit=blog]')]);
   await p.waitForLoadState('networkidle');
   const flash = await p.locator('.flash').allInnerTexts();
@@ -84,7 +85,7 @@ const sito = new URL(B).pathname.replace(/\/$/, '');
   ok('sito: i link restano nella cartella del sito', (await v.$$eval('a[href^="/"]', as => as.map(a => a.getAttribute('href')))).every(h => sito === '' || h.startsWith(sito + '/')));
 
   // 4. Di nuovo: Vuoto
-  p.once('dialog', d => d.accept());
+  pnConferme.once(p, d => d.accept());
   await Promise.all([p.waitForNavigation({ timeout: 120000 }), p.click('.db-kit-carta button[data-kit=vuoto]')]);
   await p.waitForLoadState('networkidle');
   ok('il sito ora e Vuoto', (await p.locator('#tipo-sito-titolo').innerText()) === 'Stai provando il sito Vuoto' && JSON.parse(cli('stato')).kit === 'vuoto');
@@ -104,7 +105,7 @@ const sito = new URL(B).pathname.replace(/\/$/, '');
   const rctx = await br.newContext(); const rp = await rctx.newPage();
   await rp.goto(B + '/admin/login.php'); await rp.fill('#username', 'redattore-prova'); await rp.fill('#password', 'Redattore-Prova-Tipo-2026');
   await Promise.all([rp.waitForNavigation(), rp.click('button[type=submit]')]);
-  await rp.goto(B + '/admin/index.php', { waitUntil: 'networkidle' });
+  await rp.goto(B + '/admin/index.php#tipo-sito', { waitUntil: 'networkidle' });
   ok('redattore: niente riquadro e niente primi passi', await rp.locator('#tipo-sito').count() === 0 && await rp.locator('#primi-passi').count() === 0);
   const rtoken = await rp.locator('input[name=_csrf]').first().inputValue().catch(() => '');
   rr = await rp.request.post(B + '/admin/tipo-sito.php', { form: { _csrf: rtoken, azione: 'cambia', kit: 'attivita' }, maxRedirects: 0 });
@@ -115,7 +116,7 @@ const sito = new URL(B).pathname.replace(/\/$/, '');
 
   // 6. Definitivo
   testo = '';
-  p.once('dialog', d => { testo = d.message(); d.accept(); });
+  pnConferme.once(p, d => { testo = d.message(); d.accept(); });
   await Promise.all([p.waitForNavigation(), p.click('#kit-definitivo')]);
   await p.waitForLoadState('networkidle');
   ok('la conferma del Definitivo spiega che non si torna indietro', testo.includes('non si potrà più cambiare'), testo);

@@ -7,6 +7,7 @@
 // Nessuna installazione parte: l'installatore si ferma al passo 4.
 // Non salva niente nel sito installato: il widget aggiunto con la tastiera resta nella tela e si lascia la pagina senza salvare.
 const { chromium } = require('playwright');
+const pnConferme = require('./conferme-pannello'); // UX 2026-11: conferme del pannello
 const [B, U, P, BINST, DBINST] = process.argv.slice(2);
 let n = 0, ko = 0; const ok = (t, c, extra = '') => { n++; if (!c) ko++; console.log((c ? 'OK  ' : 'KO  ') + t + (extra !== '' ? ' ' + JSON.stringify(extra).slice(0, 600) : '')); };
 
@@ -46,7 +47,7 @@ const nomiMancanti = (p, radice) => p.evaluate((R) => [...document.querySelector
 (async () => {
   const br = await chromium.launch();
   const err = [];
-  const nuova = async (w, h) => { const c = await br.newContext({ viewport: { width: w, height: h } }); const p = await c.newPage(); p.on('pageerror', e => err.push(p.url() + ' ' + e.message.slice(0, 160))); p.on('dialog', d => d.accept()); return p; };
+  const nuova = async (w, h) => { const c = await br.newContext({ viewport: { width: w, height: h } }); const p = await c.newPage(); p.on('pageerror', e => err.push(p.url() + ' ' + e.message.slice(0, 160))); pnConferme.on(p, d => d.accept()); return p; };
 
   // 1. L'installatore (su una copia non installata). Il passo 2 con una password sbagliata: il messaggio è in parole semplici.
   if (BINST) {

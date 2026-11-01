@@ -2,6 +2,7 @@
 // Contatore OK/KO, accesso al pannello, server di posta finto in Impostazioni, accensione di un addon dal pannello,
 // lettura delle email arrivate (base64 compreso), riga di comando (prove/addon-b-cli.php), controllo del telefono.
 const fs = require('fs');
+const pnConferme = require('./conferme-pannello'); // UX 2026-11: conferme del pannello
 const path = require('path');
 const { execFileSync } = require('child_process');
 
@@ -24,7 +25,7 @@ async function pagina(br, err, opz = {}) {
   const p = await ctx.newPage();
   p.on('pageerror', e => err.push(e.message.slice(0, 200)));
   p.on('console', m => { if (m.type() === 'error' && !/favicon|ERR_ABORTED|status of 4(0[34]|10|22)/.test(m.text() + (m.location().url || ''))) err.push(m.text().slice(0, 200)); });
-  p.on('dialog', d => d.accept());
+  pnConferme.on(p, d => d.accept());
   return p;
 }
 

@@ -6,6 +6,7 @@
 // voci, la tela che cambia disposizione con i fogli caricati, i testi che restano. Non salva niente.
 // uso: node prova-hero.js <base> <cartella delle foto> [id,id,...] [utente password id-pagina]
 const { chromium } = require('playwright');
+const pnConferme = require('./conferme-pannello'); // UX 2026-11: conferme del pannello
 const fs = require('fs');
 const [B, D, IDS, UTENTE, PASSWORD, PAGINA] = process.argv.slice(2);
 const ids = (IDS || 'classica,centrata,copertina,divisa,rivista,scheda,minimale,mosaico,inclinata,banner,diagonale').split(',');
@@ -52,7 +53,7 @@ const contrasto = (p, sel) => p.evaluate((sel) => {
   if (UTENTE) {
     // La tendina nell'editor, come un utente: si sceglie, la tela cambia, i testi restano.
     const p = await (await br.newContext({ viewport: { width: 1440, height: 950 } })).newPage();
-    const err = []; p.on('pageerror', e => err.push(e.message.slice(0, 200))); p.on('dialog', d => d.accept());
+    const err = []; p.on('pageerror', e => err.push(e.message.slice(0, 200))); pnConferme.on(p, d => d.accept());
     await p.goto(B + '/admin/login.php'); await p.fill('#username', UTENTE); await p.fill('#password', PASSWORD);
     await Promise.all([p.waitForNavigation(), p.click('button[type=submit]')]);
     await p.goto(`${B}/admin/editor.php?tipo=pagine&id=${PAGINA}`, { waitUntil: 'networkidle' });

@@ -5,6 +5,7 @@
 //   python3 -I prove/smtp-finto.py <porta smtp> <cartella posta> &
 // uso: node prove/attacchi-addon-c.js <base> <utente> <password> <porta smtp> <cartella posta> <cartella del CMS installato>
 const { chromium, request } = require('playwright');
+const pnConferme = require('./conferme-pannello'); // UX 2026-11: conferme del pannello
 const fs = require('fs');
 const path = require('path');
 const crypto = require('crypto');
@@ -28,7 +29,7 @@ const ordineBase = { nome: 'Cliente Prova', email: 'cliente@prova.it', telefono:
   const br = await chromium.launch();
   const ctx = await br.newContext({ viewport: { width: 1280, height: 900 }, userAgent: BROWSER['User-Agent'] });
   const p = await ctx.newPage();
-  const dialoghi = []; p.on('dialog', d => { if (/^attacco/.test(d.message()) || d.type() === 'alert') dialoghi.push(d.message()); d.accept(); });
+  const dialoghi = []; pnConferme.on(p, d => { if (/^attacco/.test(d.message()) || d.type() === 'alert') dialoghi.push(d.message()); d.accept(); });
   const vai = u => p.goto(B + u, { waitUntil: 'networkidle' });
   const invia = sel => Promise.all([p.waitForNavigation(), p.click(sel)]);
   const flash = async () => (await p.locator('.flash').first().innerText().catch(() => '')).trim();

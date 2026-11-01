@@ -10,6 +10,7 @@
 //   nell'ambiente, per lavorare su un tema: PAGINE=home,widget (solo quelle), MISURE=1280, SOLO_ANTEPRIMA=1, TUTTI=1 (ogni testo sotto 4,5).
 //   con la cartella, salva <cartella>/<tema>.png (la home a 1280 px, applicata dal pannello) e <tema>-intera.png.
 const { chromium } = require('playwright');
+const pnConferme = require('./conferme-pannello'); // UX 2026-11: conferme del pannello
 const [B, UTENTE, PASSWORD, TEMI = 'estate,inverno,autunno,primavera,giallo,rosso,verde,blu', OUT = ''] = process.argv.slice(2);
 let n = 0, ko = 0; const ok = (t, c, extra = '') => { n++; if (!c) ko++; console.log((c ? 'OK  ' : 'KO  ') + t + (extra ? ' ' + JSON.stringify(extra).slice(0, 400) : '')); };
 
@@ -95,7 +96,7 @@ function misura(MINIMO) {
 (async () => {
   const br = await chromium.launch();
   const admin = await br.newContext({ viewport: { width: 1360, height: 900 } }); const pa = await admin.newPage();
-  pa.on('dialog', d => d.accept());
+  pnConferme.on(pa, d => d.accept());
   await pa.goto(B + '/admin/login.php'); await pa.fill('#username', UTENTE); await pa.fill('#password', PASSWORD);
   await Promise.all([pa.waitForNavigation(), pa.click('button[type=submit]')]);
   ok('login', !pa.url().includes('login.php'), pa.url());

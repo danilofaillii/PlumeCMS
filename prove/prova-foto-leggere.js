@@ -7,6 +7,7 @@
 // uso: node prove/prova-foto-leggere.js <base> <cartella CMS installato> <utente> <password> <cartella foto>
 // Servono: php prove/foto-prova.php <cartella foto> (crea le foto) e prove/tema-cli.php (crea il redattore di prova).
 const { chromium } = require('playwright');
+const pnConferme = require('./conferme-pannello'); // UX 2026-11: conferme del pannello
 const { execFileSync } = require('child_process');
 const fs = require('fs'), path = require('path');
 const [B, CMS, U, P, F] = process.argv.slice(2);
@@ -138,7 +139,7 @@ const disco = (url) => path.join(CMS, url.replace(/^.*?\/uploads\//, 'uploads/')
 
   // 10. Cancellare la foto toglie anche la sua WebP
   await p.goto(B + '/admin/media.php?q=' + encodeURIComponent(path.basename(g.url)));
-  p.once('dialog', d => d.accept());
+  pnConferme.once(p, d => d.accept());
   const bott = p.locator(`form:has(input[name=elimina][value="${g.url}"]) button, button[name=elimina][value="${g.url}"]`).first();
   if (await bott.count()) { await Promise.all([p.waitForNavigation(), bott.click()]); }
   ok('cancellata: via la foto e la sua WebP', !fs.existsSync(disco(g.url)) && !fs.existsSync(w1));

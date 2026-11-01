@@ -80,7 +80,71 @@
     if (esito === false || c.stop) { ev.preventDefault(); ev.stopPropagation(); }
   }
 
+  // ------------------------------------------------------------ UX 2026-11: la finestra di conferma del pannello
+  // Al posto di confirm() del browser (che non segue l'aspetto e non distingue l'azione pericolosa): un <dialog> modale,
+  // con il messaggio, "Annulla" e il pulsante che conferma. Il pulsante che conferma ripete il nome dell'azione premuta
+  // ("Rimuovi", "Elimina il form"), rosso se l'azione distrugge qualcosa. Il fuoco va dentro (su Annulla se l'azione e
+  // pericolosa), Esc chiude, alla chiusura il fuoco torna dove era. Senza <dialog> (browser vecchi) resta confirm().
+  // Evento "pn-conferma" sul documento all'apertura (detail: testo, pericolo, rispondi(si)): lo usano le prove.
+  var PERICOLO = /elimin|cancell|cestin|rimuov|togli|svuot|ripristin|azzer|sospend|spegn|esci da|disconnett|revoc|sostituisc|annulla (la|il|l')|rigener|chiudi tutt|definitivo/i;
+  var C = { dlg: null, poi: null, prima: null };
+  function confermaCrea() {
+    var d = document.createElement('dialog');
+    d.className = 'pn-conferma'; d.setAttribute('role', 'alertdialog'); d.setAttribute('aria-labelledby', 'pn-conferma-titolo'); d.setAttribute('aria-describedby', 'pn-conferma-testo');
+    d.innerHTML = '<h2 id="pn-conferma-titolo">Confermi?</h2><p id="pn-conferma-testo"></p>'
+      + '<div class="pn-conferma-azioni"><button type="button" class="btn btn-secondary pn-conferma-no">Annulla</button>'
+      + '<button type="button" class="btn btn-primary pn-conferma-si">Conferma</button></div>';
+    document.body.appendChild(d);
+    d.querySelector('.pn-conferma-no').addEventListener('click', function () { confermaChiudi(false); });
+    d.querySelector('.pn-conferma-si').addEventListener('click', function () { confermaChiudi(true); });
+    d.addEventListener('cancel', function (e) { e.preventDefault(); confermaChiudi(false); });
+    d.addEventListener('click', function (e) { if (e.target === d) confermaChiudi(false); }); // clic sul velo = Annulla
+    C.dlg = d;
+  }
+  function confermaChiudi(si) {
+    var poi = C.poi, prima = C.prima; C.poi = null;
+    if (C.dlg.open) C.dlg.close();
+    if (prima && prima.focus && document.contains(prima)) { try { prima.focus({ preventScroll: true }); } catch (e) { prima.focus(); } }
+    if (poi) poi(si);
+  }
+  // testo: la domanda; azione: l'elemento premuto (per il nome del pulsante e il colore); poi(si): cosa fare dopo
+  function conferma(testo, azione, poi) {
+    if (typeof HTMLDialogElement === 'undefined' || !document.body) { poi(confirm(testo)); return; }
+    if (!C.dlg) confermaCrea();
+    if (C.dlg.open) return;
+    var nome = azione ? ((azione.getAttribute && azione.getAttribute('data-conferma-ok')) || (azione.tagName === 'INPUT' ? azione.value : azione.textContent) || '').replace(/\s+/g, ' ').trim() : '';
+    if (nome.length > 32 || nome === '') nome = 'Conferma';
+    var pericolo = (azione && azione.hasAttribute && azione.hasAttribute('data-conferma-pericolo')) || PERICOLO.test(nome) || PERICOLO.test(testo.split(/[.?!]/)[0]);
+    C.dlg.querySelector('#pn-conferma-testo').textContent = testo;
+    var si = C.dlg.querySelector('.pn-conferma-si'), no = C.dlg.querySelector('.pn-conferma-no');
+    si.textContent = nome;
+    si.className = 'btn ' + (pericolo ? 'btn-pericolo' : 'btn-primary') + ' pn-conferma-si';
+    C.dlg.classList.toggle('pn-conferma-pericolo', !!pericolo);
+    C.poi = poi; C.prima = document.activeElement;
+    C.dlg.showModal();
+    (pericolo ? no : si).focus();
+    document.dispatchEvent(new CustomEvent('pn-conferma', { detail: { testo: testo, pericolo: !!pericolo, rispondi: function (r) { (r ? si : no).click(); } } }));
+  }
+  window.pnConferma = conferma;
+  // Rifa l'azione dopo il si: l'elemento riceve di nuovo il clic (cosi partono anche data-uno, data-campo e i gestori
+  // della pagina; un pulsante invia il suo form con nome e valore, un link apre l'indirizzo). Il segno __pnSi fa passare
+  // la seconda volta senza chiedere, anche al form se ha una sua conferma.
+  function rifai(el) {
+    el.__pnSi = true;
+    var form = el.form || (el.closest && el.closest('form'));
+    if (form) form.__pnSi = true;
+    el.click();
+    setTimeout(function () { el.__pnSi = false; if (form) form.__pnSi = false; }, 0);
+  }
+
   // ------------------------------------------------------------ clic
+  // La conferma si chiede nella fase di cattura: i gestori della pagina sul pulsante partono solo dopo il si.
+  document.addEventListener('click', function (ev) {
+    var el = ev.target.closest && ev.target.closest('[data-conferma]');
+    if (!el || el.tagName === 'FORM' || el.__pnSi) return;
+    ev.preventDefault(); ev.stopPropagation();
+    conferma(el.getAttribute('data-conferma'), el, function (si) { if (si) rifai(el); });
+  }, true);
   document.addEventListener('click', function (ev) {
     var el = ev.target.closest('[data-conferma], [data-uno], [data-campo], [data-campo-id], [data-pn-gruppo], [data-seleziona-tutti], [data-chiudi-dialogo], [data-rimuovi-genitore], [data-copia-se-stesso], [data-nascondi], [data-menu-mobile], [data-al-clic]');
     if (!el) return;
@@ -92,9 +156,8 @@
       var righe = el.getAttribute('data-pn-gruppo-righe');
       if (righe && !document.querySelector(righe + ':checked')) { ev.preventDefault(); alert('Spunta almeno una riga.'); return; }
       var msg = el.getAttribute('data-pn-gruppo-elimina');
-      if (msg && sel.value === 'elimina' && !confirm(msg)) { ev.preventDefault(); return; }
+      if (msg && sel.value === 'elimina' && !el.__pnSi) { ev.preventDefault(); ev.stopPropagation(); conferma(msg, null, function (si) { if (si) rifai(el); }); return; }
     }
-    if (el.hasAttribute('data-conferma') && !confirm(el.getAttribute('data-conferma'))) { ev.preventDefault(); ev.stopPropagation(); return; }
     var form = el.form || el.closest('form');
     if (el.hasAttribute('data-uno') && form && form.uno) form.uno.value = el.getAttribute('data-uno');
     if (el.hasAttribute('data-campo') && form) { var f = form.querySelector('[name="' + el.getAttribute('data-campo') + '"]'); if (f) f.value = el.getAttribute('data-valore'); }
@@ -117,8 +180,26 @@
   // ------------------------------------------------------------ invio dei form
   document.addEventListener('submit', function (ev) {
     var f = ev.target;
-    if (f.hasAttribute && f.hasAttribute('data-conferma') && !confirm(f.getAttribute('data-conferma'))) ev.preventDefault();
+    if (!f.hasAttribute || !f.hasAttribute('data-conferma') || f.__pnSi) return;
+    ev.preventDefault(); ev.stopPropagation(); // i gestori della pagina sul form (invii con barra di avanzamento...) aspettano il si
+    var chi = ev.submitter || null;
+    conferma(f.getAttribute('data-conferma'), chi, function (si) {
+      if (!si) return;
+      f.__pnSi = true;
+      if (f.requestSubmit) f.requestSubmit(chi && chi.form === f ? chi : undefined); else f.submit();
+      setTimeout(function () { f.__pnSi = false; }, 0);
+    });
   }, true);
+
+  // ------------------------------------------------------------ UX 2026-11: un indirizzo con #id apre il riquadro richiudibile
+  // (<details>) che ha quell'id o che lo contiene: dopo un cambio la pagina torna con il riquadro aperto (Dashboard, #tipo-sito).
+  function apriDaIndirizzo() {
+    var id = location.hash ? decodeURIComponent(location.hash.slice(1)) : '';
+    var t = id && document.getElementById(id); if (!t) return;
+    for (var d = t; d; d = d.parentElement) if (d.tagName === 'DETAILS') d.open = true;
+  }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', apriDaIndirizzo); else apriDaIndirizzo();
+  window.addEventListener('hashchange', apriDaIndirizzo);
 
   // ------------------------------------------------------------ cambio e scrittura
   document.addEventListener('change', function (ev) {

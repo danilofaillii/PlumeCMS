@@ -2,6 +2,7 @@
 // zip malevoli che il pannello deve rifiutare. Servono gli zip di prove/zip-temi-prova.py e i temi di partenza in temi/.
 // uso: node prova-carica-temi.js <base> <cartella CMS installato> <utente> <password> <cartella degli zip di prova>
 const { chromium } = require('playwright');
+const pnConferme = require('./conferme-pannello'); // UX 2026-11: conferme del pannello
 const { execFileSync } = require('child_process');
 const fs = require('fs');
 const path = require('path');
@@ -17,7 +18,7 @@ const leggiZip = (f, nome) => execFileSync('python3', ['-I', '-c', 'import sys,z
   const br = await chromium.launch();
   const ctx = await br.newContext({ acceptDownloads: true, viewport: { width: 1360, height: 900 } }); const p = await ctx.newPage();
   const err = []; p.on('pageerror', e => err.push(e.message.slice(0, 200)));
-  p.on('dialog', d => d.accept());
+  pnConferme.on(p, d => d.accept());
   await p.goto(B + '/admin/login.php'); await p.fill('#username', UTENTE); await p.fill('#password', PASSWORD);
   await Promise.all([p.waitForNavigation(), p.click('button[type=submit]')]);
   await p.goto(B + '/admin/temi.php', { waitUntil: 'networkidle' });

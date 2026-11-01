@@ -3,6 +3,7 @@
 // Una chiave finta con una chiave RSA vera (openssl), nessuna chiamata a Google.
 // uso: node prove/prova-seo-service-account.js <base> <utente> <password>
 const { chromium } = require('playwright');
+const pnConferme = require('./conferme-pannello'); // UX 2026-11: conferme del pannello
 const { execFileSync } = require('child_process');
 const [B, U, P] = process.argv.slice(2);
 let n = 0, ko = 0; const ok = (t, c, x = '') => { n++; if (!c) ko++; console.log((c ? 'OK  ' : 'KO  ') + t + (x !== '' ? ' ' + JSON.stringify(x).slice(0, 300) : '')); };
@@ -10,7 +11,7 @@ let n = 0, ko = 0; const ok = (t, c, x = '') => { n++; if (!c) ko++; console.log
   const chiave = execFileSync('openssl', ['genpkey', '-algorithm', 'RSA', '-pkeyopt', 'rsa_keygen_bits:2048'], { encoding: 'utf8' });
   const sa = JSON.stringify({ type: 'service_account', project_id: 'prova-seo', private_key_id: 'abc', private_key: chiave, client_email: 'prova-seo@prova-seo.iam.gserviceaccount.com', client_id: '1', token_uri: 'https://oauth2.googleapis.com/token' }, null, 2);
   const br = await chromium.launch(); const p = await br.newPage({ viewport: { width: 1280, height: 900 } }); const err = []; p.on('pageerror', e => err.push(e.message));
-  p.on('dialog', d => d.accept());
+  pnConferme.on(p, d => d.accept());
   await p.goto(B + '/admin/login.php'); await p.fill('#username', U); await p.fill('#password', P);
   await Promise.all([p.waitForNavigation(), p.click('button[type=submit]')]);
   await p.goto(B + '/admin/seo.php?scheda=motori', { waitUntil: 'networkidle' });

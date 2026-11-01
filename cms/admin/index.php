@@ -60,9 +60,25 @@ if ($dbAdmin) {
         if (primi_passi_attivi()) $passi = primi_passi();
     } catch (Throwable $e) { error_log('dashboard, tipo di sito e primi passi: ' . $e->getMessage()); }
 }
+// UX 2026-11 (punto 9 deciso da Danilo): il riquadro "Stai provando il sito" e aperto alla prima visita di ogni amministratore,
+// poi chiuso (si apre con un clic, o da solo con #tipo-sito nell'indirizzo, dopo un cambio). La memoria e un'impostazione per utente.
+$kitAperto = false;
+if ($kitProva) {
+    $kitVisto = 'dashboard_tipo_sito_visto_' . (int)(current_user()['id'] ?? 0);
+    $kitAperto = get_setting($kitVisto) === null;
+    if ($kitAperto) { try { save_setting($kitVisto, date('Y-m-d H:i:s')); } catch (Throwable $e) {} }
+}
 require_once __DIR__ . '/includes/admin-header.php';
 ?>
 <style>
+.db-kit>summary{list-style:none;cursor:pointer;display:flex;flex-wrap:wrap;align-items:baseline;gap:.2rem .8rem}
+.db-kit>summary::-webkit-details-marker{display:none}
+.db-kit>summary::before{content:"\25B8";color:var(--accento-testo);transition:transform .15s}
+.db-kit[open]>summary::before{transform:rotate(90deg)}
+.db-kit>summary h2{margin:0!important}
+.db-kit>summary span{font-size:.85rem;color:var(--accento-testo);font-weight:600}
+.db-kit[open]>summary{margin-bottom:.6rem}
+.db-kit[open]>summary span{display:none}
 .db-griglia{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:1rem;margin-top:1rem}
 .db-scatola{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:1rem 1.2rem}
 .db-scatola h3{font-size:.85rem;text-transform:uppercase;letter-spacing:.06em;color:var(--text-muted);margin-bottom:.7rem;display:flex;justify-content:space-between}
@@ -172,8 +188,8 @@ fetch('aggiornamenti.php', { method: 'POST', credentials: 'same-origin', headers
 <?php endif; ?>
 
 <?php if ($kitProva): $kitNome = $kitTutti[$kitProva['kit']]['nome'] ?? $kitProva['kit']; ?>
-<section class="db-kit" id="tipo-sito" aria-labelledby="tipo-sito-titolo">
-  <h2 id="tipo-sito-titolo">Stai provando il sito <?= h($kitNome) ?></h2>
+<details class="db-kit" id="tipo-sito"<?= $kitAperto ? ' open' : '' ?>>
+  <summary><h2 id="tipo-sito-titolo">Stai provando il sito <?= h($kitNome) ?></h2><span>Apri per cambiare tipo di sito o tenerlo così</span></summary>
   <p>Il sito è partito con pagine, menu e testi d'esempio. Finché non premi <b>Definitivo</b> puoi cambiare tipo di sito con un clic: prima il pannello fa da solo una copia del sito, poi cambia solo quello che il kit aveva preparato e che non hai toccato. Le pagine e gli articoli che hai scritto o cambiato restano.</p>
   <div class="db-kit-carte">
 <?php foreach ($kitTutti as $kid => $k): $kitQui = $kid === $kitProva['kit']; ?>
@@ -210,7 +226,7 @@ fetch('aggiornamenti.php', { method: 'POST', credentials: 'same-origin', headers
       <button type="submit" class="btn btn-primary btn-sm" id="kit-definitivo">Definitivo</button>
     </form>
   </div>
-</section>
+</details>
 <?php endif; ?>
 
 <?php if ($passi): $fatti = count(array_filter($passi, fn($x) => $x['fatto'])); ?>

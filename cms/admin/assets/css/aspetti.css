@@ -31,6 +31,7 @@
  *   --testata --testata-testo   la fascia del titolo di un riquadro, diversa dal corpo (testo almeno 4,5:1)
  *   --bordo-campo                bordo di campi, tendine, aree di testo e scelta file: almeno 3:1 sul riquadro e sul fondo (WCAG 1.4.11)
  *   --segnaposto                 il testo d'esempio dentro i campi: almeno 4,5:1, ma piu tenue del testo scritto
+ *   --su-pericolo                testo sopra --errore pieno (pulsante rosso delle azioni che distruggono), almeno 4,5:1
  */
 
 /* Il carattere del pannello: Inter, lo stesso file del sito (in casa, nessuna chiamata esterna). */
@@ -63,6 +64,7 @@
   --velo: rgba(17,24,39,.42); --fuoco: rgba(37,99,235,.28); --tela-fondo: #eceef2;
   --radius: 12px;
   --testata: #eef2f8; --testata-testo: #111827; --bordo-campo: #7c8594; --segnaposto: #6b7280;
+  --su-pericolo: #ffffff;
 }
 
 /* BOTTEGA: caldo, carta crema, terracotta e verde salvia (il tema Bottega del sito, vicino al pannello di prima). */
@@ -83,6 +85,7 @@
   --font-titolo: Georgia, 'Times New Roman', serif;
   --radius: 10px;
   --testata: #f4eadb; --testata-testo: #2b2118; --bordo-campo: #8f7a5c; --segnaposto: #7a6650;
+  --su-pericolo: #ffffff;
 }
 
 /* COSMO: scuro, notte e viola (il tema Cosmo del sito). */
@@ -105,6 +108,7 @@
   --radius: 14px;
   --campo: #070c1c; /* UX 2026-11: un poco piu scuro del riquadro (prima #0a1022, quasi uguale) */
   --testata: #19234a; --testata-testo: #e6ebf5; --bordo-campo: #6b78a6; --segnaposto: #8a95ad;
+  --su-pericolo: #0e1428;
 }
 
 /* LAVAGNA: scuro, verde ardesia e testo color gesso (il tema d'esempio Lavagna). */
@@ -127,6 +131,7 @@
   --radius: 6px;
   --campo: #19221f; /* UX 2026-11: un poco piu scuro del riquadro (prima #1d2824) */
   --testata: #2f3f39; --testata-testo: #f1efe6; --bordo-campo: #7f948b; --segnaposto: #a8a597;
+  --su-pericolo: #1f2a26;
 }
 
 /* Quill (l'editor dei testi, servito in casa): la barra e il foglio seguono l'aspetto. */

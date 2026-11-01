@@ -7,6 +7,7 @@
 // Il config.local.php del CMS deve avere CMS_IMPORTA_WP_LOCALE con l'host:porta del WordPress (e di quello chiuso):
 // la prova lo aggiunge da sola, con CMS_IMPORTA_WP_GIRO a 0.3 secondi (giri corti per provare la ripresa).
 const { chromium } = require('playwright');
+const pnConferme = require('./conferme-pannello'); // UX 2026-11: conferme del pannello
 const { execFileSync } = require('child_process');
 const fs = require('fs'), path = require('path');
 const [B, CMS, U, P, WP, SEG, OUT, WPCHIUSO] = process.argv.slice(2);
@@ -30,7 +31,7 @@ const hostPorta = u => new URL(u).host;
   const br = await chromium.launch();
   const ctx = await br.newContext({ viewport: { width: 1280, height: 900 } }); const p = await ctx.newPage();
   const err = []; p.on('pageerror', e => err.push(e.message.slice(0, 200)));
-  p.on('dialog', d => d.accept());
+  pnConferme.on(p, d => d.accept());
   const anon = await br.newContext();
   const vis = (u, o = {}) => anon.request.get(B + u, { maxRedirects: 0, ...o });
 

@@ -6,6 +6,7 @@
 // Alla fine il form torna com'era e il file si elimina.
 // uso: node prove/prova-omaggio.js <base> <utente> <password> <porta smtp> <cartella posta> <cartella del CMS installato>
 const { chromium } = require('playwright');
+const pnConferme = require('./conferme-pannello'); // UX 2026-11: conferme del pannello
 const fs = require('fs');
 const path = require('path');
 const { execFileSync } = require('child_process');
@@ -24,7 +25,7 @@ const linkIn = (e, re) => (testo(e).match(re) || [])[0];
   const ctx = await br.newContext({ viewport: { width: 1280, height: 900 } });
   const p = await ctx.newPage();
   const err = []; p.on('pageerror', e => err.push(e.message.slice(0, 200)));
-  p.on('dialog', d => d.accept());
+  pnConferme.on(p, d => d.accept());
   const vai = u => p.goto(u.startsWith('http') ? u : B + u, { waitUntil: 'networkidle' });
   await vai('/admin/login.php'); await p.fill('#username', UTENTE); await p.fill('#password', PASSWORD);
   await Promise.all([p.waitForNavigation(), p.click('button[type=submit]')]);

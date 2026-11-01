@@ -3,6 +3,7 @@
 // Su un CMS installato (kit Attività). Usa il server finto delle API come prova-consegna-email.js.
 // uso: node prove/attacchi-consegna.js <base> <utente> <password> <porta smtp> <cartella posta> <cartella del CMS installato> <porta api finta>
 const { chromium } = require('playwright');
+const pnConferme = require('./conferme-pannello'); // UX 2026-11: conferme del pannello
 const fs = require('fs');
 const path = require('path');
 const crypto = require('crypto');
@@ -21,7 +22,7 @@ const uno = s => { const r = q(s); return Array.isArray(r) && r[0] ? Object.valu
   const ctx = await br.newContext();
   const a = await ctx.newPage();
   const err = []; a.on('pageerror', e => err.push(e.message.slice(0, 200)));
-  a.on('dialog', d => d.accept());
+  pnConferme.on(a, d => d.accept());
   const vai = u => a.goto(B + u, { waitUntil: 'networkidle' });
   try {
     q('DELETE FROM {p}posta_mittenti'); q('DELETE FROM {p}posta_avvisi'); q("DELETE FROM {p}settings WHERE setting_key IN ('posta_servizio', 'posta_riscaldamento')");

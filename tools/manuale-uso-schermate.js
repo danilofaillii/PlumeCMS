@@ -15,6 +15,7 @@
 //   finestra 08-scegli-finestra dopo tutti i capitoli, con la pagina in bozza "Condizioni di vendita") e 28-server con il gruppo
 //   "Google e IndexNow" (due foto della stessa pagina unite).
 const { chromium } = require('playwright');
+const pnConferme = require('../prove/conferme-pannello'); // UX 2026-11: conferme del pannello
 const fs = require('fs');
 const path = require('path');
 const [B, UTENTE, PASSWORD, SOLO] = process.argv.slice(2);
@@ -924,7 +925,7 @@ async function visitatore(telefono = false) {
       await r.fulfill({ status: 200, headers: { 'content-type': 'text/html; charset=utf-8' }, body: '<script>location.replace(' + JSON.stringify(new URL(dove, r.request().url()).href) + ')</script>' });
     } else await r.fulfill({ response: risposta });
   });
-  const v = await c.newPage(); v.on('dialog', d => d.accept());
+  const v = await c.newPage(); pnConferme.on(v, d => d.accept());
   return v;
 }
 const SITO = 'https://www.studioprova.it';
@@ -1634,7 +1635,7 @@ module.exports = { capitoli };
   const br = await chromium.launch({ args: ['--lang=it-IT'], env: { ...process.env, LANG: 'it_IT.UTF-8', LANGUAGE: 'it' } });
   ctx = await br.newContext({ viewport: { width: 1200, height: 800 }, locale: 'it-IT', timezoneId: 'Europe/Rome', deviceScaleFactor: 1 });
   p = await ctx.newPage();
-  p.on('dialog', d => d.accept());
+  pnConferme.on(p, d => d.accept());
   const err = []; p.on('pageerror', e => err.push(e.message));
   await p.goto(B + '/admin/login.php'); await p.fill('#username', UTENTE); await p.fill('#password', PASSWORD);
   await Promise.all([p.waitForNavigation(), p.click('button[type=submit]')]);

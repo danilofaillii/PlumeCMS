@@ -7,6 +7,7 @@
 // Serve Playwright (require('playwright')) e un pannello raggiungibile. Crea un utente redattore "sic_prova_red"
 // e lo cancella alla fine; se qualcosa resta, lo toglie al giro dopo. Non lascia contenuti pubblicati.
 const { chromium } = require('playwright');
+const pnConferme = require('../prove/conferme-pannello'); // UX 2026-11: conferme del pannello
 
 const [BASE, UTENTE, PASSWORD, PAN = '/new'] = process.argv.slice(2);
 if (!BASE || !UTENTE || !PASSWORD) { console.error('uso: node sicurezza-prova.js <base> <utente> <password> [prefisso-pannello]'); process.exit(2); }
@@ -590,7 +591,7 @@ echo json_encode($o);
       await admin.p.goto(IW, { waitUntil: 'networkidle' });
       // Un import lasciato a meta da un giro di prima: si annulla (o si lascia perdere) prima di provare.
       for (const b of ['form:has(input[value=annulla]) button', 'form:has(input[value=abbandona]) button']) {
-        if (await admin.p.locator(b).count()) { admin.p.once('dialog', d => d.accept()); await Promise.all([admin.p.waitForNavigation(), admin.p.locator(b).first().click()]); }
+        if (await admin.p.locator(b).count()) { pnConferme.once(admin.p, d => d.accept()); await Promise.all([admin.p.waitForNavigation(), admin.p.locator(b).first().click()]); }
       }
       if (!(await admin.p.locator('#iw-indirizzo').count())) return 'form assente (un import e gia in corso?)';
       await admin.p.fill('#iw-indirizzo', indirizzo); await admin.p.fill('#iw-utente', utente); await admin.p.fill('#iw-password', password);
@@ -611,7 +612,7 @@ echo json_encode($o);
       ok('import WordPress: un rimando verso i metadati del cloud non si segue', /rimanda a un altro indirizzo/.test(m), m);
       // Import completo dal WordPress cattivo, poi Annulla.
       m = await collega(FINTO, 'admin', 'abcd efgh ijkl mnop qrst uvwx');
-      const dialoghi = []; admin.p.on('dialog', d => { if (!/Annullo|Confermo/.test(d.message())) dialoghi.push(d.message()); d.accept(); });
+      const dialoghi = []; pnConferme.on(admin.p, d => { if (!/Annullo|Confermo/.test(d.message())) dialoghi.push(d.message()); d.accept(); });
       await admin.p.waitForSelector('h2:has-text("Il report di")', { timeout: 60000 }).catch(() => {});
       ok('import WordPress: il nome del sito con <script> resta testo nel report', !(await admin.p.content()).includes('<script>alert(8)') && dialoghi.length === 0);
       await Promise.all([admin.p.waitForNavigation(), admin.p.click('button:has-text("Importa le voci scelte")')]).catch(() => {});

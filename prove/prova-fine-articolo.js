@@ -11,6 +11,7 @@
 //  quanto la lettura, mai dentro una scheda della griglia.
 // uso: node prova-fine-articolo.js <base> <utente> <password> <articolo 1> <articolo 2> [cartella schermate] [articolo largo]
 const { chromium } = require('playwright');
+const pnConferme = require('./conferme-pannello'); // UX 2026-11: conferme del pannello
 const path = require('path');
 const [B, UTENTE, PASSWORD, ART1, ART2, FOTO_, LARGO] = process.argv.slice(2);
 const FOTO = FOTO_ || '';
@@ -22,7 +23,7 @@ const foto = async (pg, nome, o = {}) => { if (FOTO) await pg.screenshot({ path:
   const ctx = await br.newContext({ viewport: { width: 1360, height: 900 } });
   const p = await ctx.newPage();
   const err = []; p.on('pageerror', e => err.push(e.message.slice(0, 200)));
-  p.on('dialog', d => d.accept());
+  pnConferme.on(p, d => d.accept());
   const flash = async () => (await p.locator('.flash').allInnerTexts()).join(' ');
   await p.goto(B + '/admin/login.php'); await p.fill('#username', UTENTE); await p.fill('#password', PASSWORD);
   await Promise.all([p.waitForNavigation(), p.click('button[type=submit]')]);

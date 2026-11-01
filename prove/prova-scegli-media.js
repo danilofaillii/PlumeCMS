@@ -6,6 +6,7 @@
 // un evento. Serve un sito con il kit Attività (prove/prova-kit.js) e la cartella del sito sul disco.
 // uso: CMS_DIR=<cartella del CMS installato> node prove/prova-scegli-media.js <base> <utente> <password>
 const { chromium } = require('playwright');
+const pnConferme = require('./conferme-pannello'); // UX 2026-11: conferme del pannello
 const fs = require('fs');
 const path = require('path');
 const { execFileSync } = require('child_process');
@@ -44,7 +45,7 @@ im = Image.new('RGB', (1200, 630), (31, 111, 92)); ImageDraw.Draw(im).text((500,
   const p = await ctx.newPage();
   const err = []; p.on('pageerror', e => err.push(p.url() + ' ' + e.message.slice(0, 160)));
   p.on('console', m => { if (m.type() === 'error' && !/favicon|404|Failed to load resource/.test(m.text())) err.push(p.url() + ' ' + m.text().slice(0, 160)); });
-  p.on('dialog', d => d.accept());
+  pnConferme.on(p, d => d.accept());
   const vai = async (u) => { await p.goto(B + '/admin/' + u, { waitUntil: 'networkidle' }); };
   await vai('login.php'); await p.fill('#username', UTENTE); await p.fill('#password', PASSWORD);
   await Promise.all([p.waitForNavigation(), p.click('button[type=submit]')]);
