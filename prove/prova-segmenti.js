@@ -210,8 +210,10 @@ const numeroIt = (x) => String(x).replace(/\B(?=(\d{3})+(?!\d))/g, '.');
   await p.click('#nlx-filtro button[data-aggiungi="0"]');
   await ultima('#nlx-filtro [data-k=campo]').selectOption('email');
   await ultima('#nlx-filtro [data-k=op]').selectOption('cliccata');
-  await ultima('#nlx-filtro [data-k=campagna]').selectOption('-1');
-  const regF = g1({ campo: 'attr:VIP', op: 'si' }, { campo: 'email', op: 'cliccata', campagna: -1 });
+  // Una campagna precisa (sul sito possono esserci campagne di altre prove, più recenti: "l'ultima" la prova il motore).
+  const c3 = +uno("SELECT id FROM {p}newsletter_campagne WHERE oggetto = 'SG Campagna tre'");
+  await ultima('#nlx-filtro [data-k=campagna]').selectOption(String(c3));
+  const regF = g1({ campo: 'attr:VIP', op: 'si' }, { campo: 'email', op: 'cliccata', campagna: c3 });
   atteso = conta(regF);
   attesoN = atteso; num = await numero();
   ok('Aggiungi filtro: stesse condizioni dei segmenti, con il conteggio', num.startsWith(numeroIt(atteso) + ' contatt'), [num, atteso]);
@@ -219,9 +221,9 @@ const numeroIt = (x) => String(x).replace(/\B(?=(\d{3})+(?!\d))/g, '.');
   await invia('#nlx-filtro button:has-text("Applica il filtro")');
   tot = await totale();
   const tF = await testo();
-  ok('Applica il filtro: la tabella ha quei contatti, e il filtro si legge in parole', tot === atteso && /Filtro: \(?Cliente VIP è sì E Email aperte, cliccate, ricevute ha cliccato \(l'ultima campagna\)/.test(tF), [tot, atteso, (tF.match(/Filtro:[^.]*/) || [''])[0]]);
+  ok('Applica il filtro: la tabella ha quei contatti, e il filtro si legge in parole', tot === atteso && /Filtro: \(?Cliente VIP è sì E Email aperte, cliccate, ricevute ha cliccato \(campagna «SG Campagna tre»\)/.test(tF), [tot, atteso, (tF.match(/Filtro:[^.]*/) || [''])[0]]);
   const idsTabella = await p.locator('input.nlx-sel').evaluateAll(x => x.map(e => +e.value));
-  const giusti = new Set(q(`SELECT v.contatto_id AS id FROM {p}newsletter_valori v JOIN {p}newsletter_attributi a ON a.id = v.attributo_id WHERE a.nome = 'VIP' AND v.v_num = 1 AND v.contatto_id IN (SELECT iscritto_id FROM {p}newsletter_eventi WHERE tipo = 'clic' AND campagna_id = (SELECT MAX(id) FROM {p}newsletter_campagne WHERE oggetto LIKE 'SG Campagna%'))`).map(r => +r.id));
+  const giusti = new Set(q(`SELECT v.contatto_id AS id FROM {p}newsletter_valori v JOIN {p}newsletter_attributi a ON a.id = v.attributo_id WHERE a.nome = 'VIP' AND v.v_num = 1 AND v.contatto_id IN (SELECT iscritto_id FROM {p}newsletter_eventi WHERE tipo = 'clic' AND campagna_id = ${c3})`).map(r => +r.id));
   ok('le righe della tabella sono proprio quelle della query a mano', idsTabella.length > 0 && idsTabella.every(i => giusti.has(i)), idsTabella.slice(0, 5));
   // Azione di gruppo "tutti i contatti del filtro": vale sul filtro
   await p.check('#nlx-tutti'); await p.selectOption('#nlx-cosa', 'aggiungi'); await p.selectOption('#nlx-lista-dest', String(L['SG Vuota']));

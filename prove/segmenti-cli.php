@@ -154,6 +154,9 @@ case 'semina':
         $inv[] = [mt_rand(0, 1) ? $F['SG Contatti'] : $F['SG Preventivo'], $email, date('Y-m-d H:i:s', $ora - mt_rand(0, 90) * 86400)];
     }
     foreach (array_chunk($inv, 500) as $pezzo) db()->prepare('INSERT INTO ' . $t('moduli_invii') . " (modulo_id, email, nome, dati, pagina, ip, creato, aggiornato) VALUES " . implode(',', array_fill(0, count($pezzo), "(?,?,'','{}','','',?,NOW())")))->execute(array_merge(...$pezzo));
+    // Statistiche delle tabelle aggiornate dopo tanti inserimenti in un colpo (come succede da sole col tempo): senza,
+    // MySQL può scegliere per qualche minuto un piano lento e i tempi misurati non direbbero quelli veri.
+    foreach (['newsletter_iscritti', 'newsletter_valori', 'newsletter_eventi', 'newsletter_coda', 'newsletter_storia', 'newsletter_iscritti_liste', 'moduli_invii'] as $tab) db()->query('ANALYZE TABLE ' . $t($tab))->fetchAll();
     $out = ['contatti' => count($C), 'attivi' => count($attivi), 'liste' => $L, 'campagne' => $camp, 'form' => $F, 'flusso' => $flusso, 'attributi' => $A,
         'eventi' => (int)db()->query('SELECT COUNT(*) FROM ' . $t('newsletter_eventi'))->fetchColumn(), 'invii_form' => count($inv)];
     break;

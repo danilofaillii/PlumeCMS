@@ -575,7 +575,10 @@ function newsletter_regole_testo(array $regole): string {
                 $vv = array_map(fn($x) => $nomi[$x] ?? (is_float($x) ? newsletter_numero_testo($x) : (string)$x), is_array($v) ? $v : [$v]);
                 $s .= ' ' . implode(', ', $vv) . (isset($c['valore2']) ? ' e ' . (is_float($c['valore2']) ? newsletter_numero_testo($c['valore2']) : $c['valore2']) : '');
             }
-            if (isset($c['campagna'])) $s .= ' (' . ([0 => 'qualsiasi campagna', -1 => 'l\'ultima campagna', -2 => 'qualsiasi email'][(int)$c['campagna']] ?? 'campagna n. ' . (int)$c['campagna']) . ')';
+            if (isset($c['campagna'])) {
+                $def ??= newsletter_regole_definizione();
+                $s .= ' (' . ([0 => 'qualsiasi campagna', -1 => 'l\'ultima campagna', -2 => 'qualsiasi email'][(int)$c['campagna']] ?? 'campagna «' . ($def['campagne'][(int)$c['campagna']] ?? 'n. ' . (int)$c['campagna']) . '»') . ')';
+            }
             if (!empty($c['n']) && $tipo !== 'date') $s .= in_array($tipo, ['iscritto_da', 'attivita'], true) ? ' ' . $c['n'] . ' giorni' : ', negli ultimi ' . $c['n'] . ' ' . ($c['unita'] ?? 'giorni');
             elseif (!empty($c['n'])) $s .= ' ' . $c['n'] . ' ' . ($c['unita'] ?? 'giorni');
             if (!empty($c['non'])) $s = 'NON (' . $s . ')';

@@ -2070,18 +2070,18 @@ solo da `NL_MOTIVI`. `newsletter_regole_where()` (`:315`) scrive l'SQL solo con 
 parametri `?` in `$par`, nell'ordine in cui compaiono nell'SQL (attenzione: una parte scritta prima nell'SQL deve mettere i
 suoi parametri prima; "non aperta" di una campagna li mette prima, `:404`). `LIKE` con `addcslashes` e `ESCAPE`; le unità
 diventano DAY, WEEK, MONTH da un elenco. Segmenti dentro segmenti: fino a 5 livelli (`NL_SEG_PROFONDITA`), un giro si
-rifiuta al salvataggio (`newsletter_segmento_contiene()`, `:613`) e, se arrivasse lo stesso, vale "nessuno" (`_visti`).
+rifiuta al salvataggio (`newsletter_segmento_contiene()`, `:616`) e, se arrivasse lo stesso, vale "nessuno" (`_visti`).
 
 **Uso**: `newsletter_regole_conta()` (`:512`, numero e millisecondi), `newsletter_regole_vale()` (`:523`, un contatto),
-`newsletter_segmento_where()` (`:627`), `newsletter_regole_testo()` (`:559`, le regole in parole). Segmenti:
-`newsletter_segmento_salva()` (`:638`: nome unico, almeno una condizione, categoria esistente o nuova, conteggio subito; al
-massimo 300 segmenti, scelta di plumeCMS: Brevo non dice il suo limite), `newsletter_segmento_conta()` (`:668`),
-`newsletter_segmento_usato()` (`:679`: altri segmenti e bivi dei flussi) e `newsletter_segmento_elimina()` (`:694`, rifiuta un
-segmento usato), `newsletter_segmento_in_lista()` (`:705`: lista nuova con i membri di oggi, con un `INSERT ... SELECT` e la
-riga `lista_aggiunto` nella storia di ognuno, senza far partire i flussi della lista), categorie (`:723`-`:742`; eliminare una
-categoria lascia i segmenti senza categoria), modelli (`newsletter_segmenti_modelli()`, `:751`: i dieci modelli; quello di
-Brevo trovato è "Unengaged email contacts", gli altri sono di plumeCMS), viste (`newsletter_viste()`, `:781`,
-`newsletter_vista_salva()`, `:798`: per utente, al massimo 30, lo stesso nome sovrascrive, "Tutti i contatti" è riservato).
+`newsletter_segmento_where()` (`:630`), `newsletter_regole_testo()` (`:559`, le regole in parole). Segmenti:
+`newsletter_segmento_salva()` (`:641`: nome unico, almeno una condizione, categoria esistente o nuova, conteggio subito; al
+massimo 300 segmenti, scelta di plumeCMS: Brevo non dice il suo limite), `newsletter_segmento_conta()` (`:671`),
+`newsletter_segmento_usato()` (`:682`: altri segmenti e bivi dei flussi) e `newsletter_segmento_elimina()` (`:697`, rifiuta un
+segmento usato), `newsletter_segmento_in_lista()` (`:708`: lista nuova con i membri di oggi, con un `INSERT ... SELECT` e la
+riga `lista_aggiunto` nella storia di ognuno, senza far partire i flussi della lista), categorie (`:726`-`:745`; eliminare una
+categoria lascia i segmenti senza categoria), modelli (`newsletter_segmenti_modelli()`, `:754`: i dieci modelli; quello di
+Brevo trovato è "Unengaged email contacts", gli altri sono di plumeCMS), viste (`newsletter_viste()`, `:784`,
+`newsletter_vista_salva()`, `:801`: per utente, al massimo 30, lo stesso nome sovrascrive, "Tutti i contatti" è riservato).
 
 **Pagina Segmenti** (`admin/newsletter-segmenti.php`): elenco per categoria con ricerca e filtro della categoria; i numeri
 vecchi di più di dieci minuti si ricalcolano aprendo la pagina per al massimo tre secondi, il resto con "Aggiorna i
