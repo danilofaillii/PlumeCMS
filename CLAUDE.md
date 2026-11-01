@@ -83,7 +83,8 @@ Sono gli unici in `cms/docs/`, nello zip, nel sito di plumeCMS e nella pagina Do
   1. *Il progetto*: codice, prove, `cms/CHANGELOG.md`, `cms/VERSIONE`, il manuale tecnico (e quello dei temi, se tocca i temi),
      il manuale d'uso se cambia quello che vede chi usa il pannello (capitolo, passi e schermate con `tools/manuale-uso-schermate.js`).
   2. *I PDF*: `node tools/manuali-pdf.js`, dopo aver aggiornato i manuali.
-  3. *Il sito di plumeCMS* (`sito-plumecms/costruisci.py`): `NOVITA`; un blocco nella pagina Funzionalità con la schermata
+  3. *Il sito di plumeCMS* (`sito-plumecms/costruisci.py`): `NOVITA` (regola di Danilo, 1 novembre 2026: solo i punti salienti, una riga
+     per versione, **mai nomi di aziende o servizi di terzi**; lo controlla `prova-sito-plumecms.js`); un blocco nella pagina Funzionalità con la schermata
      (pagina aggiunta a `sito-plumecms/schermate.js`, immagine in `USATE`); home, Domande frequenti o Installazione se la
      funzionalità le cambia; i numeri scritti nei testi (widget, attacchi). Poi le schermate rifatte sul sito di prova e
      `--schermate`, le parti ricostruite, `prove/prova-sito-plumecms.js` con un controllo per il blocco nuovo.

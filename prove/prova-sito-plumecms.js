@@ -219,12 +219,16 @@ async function contrastoParole(pg) {
   ok('Domande frequenti: quanto costa e a quali condizioni', /A quali condizioni lo uso\?/.test(await v.locator('body').innerText()));
   ok('Domande frequenti (1.4.0): chi viene da WordPress', /Vengo da WordPress\. Devo rifare tutto\?/.test(await v.locator('body').innerText()));
   await v.goto(B + '/scarica/', { waitUntil: 'networkidle' });
-  ok('Scarica: le novità della 1.4.0', /1\.4\.0: Il sito si prova/.test(await v.locator('body').innerText()));
+  ok('Scarica: le novità della 1.4.0', /1\.4\.0: Porta qui il tuo vecchio sito/.test(await v.locator('body').innerText()));
   ok('Scarica: le novità della 2.4.0', /2\.4\.0: Il sito ufficiale è plumecms\.it/.test(await v.locator('body').innerText()));
   ok('Scarica: le novità della 2.5.0', /2\.5\.0: Otto temi nuovi/.test(await v.locator('body').innerText()));
   ok('Scarica: le novità della 2.6.0', /2\.6\.0: Un pannello più chiaro/.test(await v.locator('body').innerText()));
   ok('Scarica: le novità della 2.7.0', /2\.7\.0: L.email di conferma la scrivi tu/.test(await v.locator('body').innerText()));
-  ok('Scarica: le novità della 2.8.0', /2\.8\.0: I contatti come in Brevo/.test(await v.locator('body').innerText()));
+  ok('Scarica: le novità della 2.8.0', /2\.8\.0: I contatti, come nei grandi servizi di email/.test(await v.locator('body').innerText()));
+  // Regola di Danilo (1 novembre 2026): nelle novità solo i punti salienti, mai nomi di aziende o servizi di terzi.
+  { const tn = await v.locator('body').innerText(); const fine = tn.indexOf('1.2.0:'); const nov = tn.slice(tn.indexOf('2.8.0:'), tn.indexOf('\n', tn.indexOf('\n', fine) + 1) + 1 || fine + 120);
+    const terzi = nov.match(/brevo|google|wordpress|linkedin|facebook|instagram|whatsapp|telegram|mailgun|amazon|dropbox|indexnow|search console|gnu/gi) || [];
+    ok('Scarica: nelle novità nessun nome di aziende terze', nov.length > 500 && terzi.length === 0, terzi); }
   // 2.6.0: il blocco del pannello più chiaro in Funzionalità, con la sua schermata caricata; il logo di header e footer dallo Stile.
   await v.goto(B + '/funzionalita/', { waitUntil: 'networkidle' });
   ok('Funzionalità (2.6.0): Un pannello che si legge a colpo d\'occhio', /Un pannello che si legge a colpo d.occhio/.test(await v.locator('body').innerText())
