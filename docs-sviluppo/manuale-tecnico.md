@@ -1818,6 +1818,104 @@ caratteri alla lettura (`nl_email_da_json()`, `:60`), prima dell'escape (senza, 
 Intestazione e firma scritte qui valgono **solo** per l'email di conferma: le altre email del sito tengono
 `email_intestazione` ed `email_firma` (che un modulo del sito può impostare).
 
+### 15.7 La base dei contatti come Brevo (dalla 2.8.0)
+
+Fase 1 del piano di `docs-sviluppo/brevo-confronto.md` (richiesta di Danilo: "La gestione del menu newsletter e form deve
+lavorare esattamente come Brevo"). Motore in `includes/newsletter-contatti.php` (caricato in fondo a `includes/newsletter.php`);
+schema, migrazione, lista nera e storia in `includes/newsletter.php` (stesso file di chi li usa: niente problemi di opcache).
+
+**Menu** (`admin/includes/admin-header.php:31`): Newsletter e form > Contatti (`newsletter-contatti.php`, con la scheda Liste),
+Campagne email, Form, Invii dei form, Flussi automatici, Statistiche, Impostazioni (`newsletter.php?scheda=impostazioni`),
+Attributi dei contatti (`newsletter-attributi.php`). Le voci delle fasi dopo (Segmenti, Modelli, Automazioni) arrivano con le
+loro pagine. `newsletter.php?scheda=iscritti` e `?scheda=liste` (e `?scarica=iscritti`) rimandano con 302 e `no-store`
+alle pagine nuove con gli stessi filtri (`admin/newsletter.php:17`); le loro azioni POST sono passate nelle pagine nuove.
+
+**Modello dei dati** (nessuna tabella rinominata, nessuna colonna tolta; tabelle nuove nell'elenco di `newsletter_schema()`,
+`includes/newsletter.php:132`, utf8 a 3 byte, `NOT NULL DEFAULT` espliciti, niente colonne generate):
+- `newsletter_iscritti`, colonne nuove (`newsletter_contatti_migra()`, `:251`): `ext_id` (UNIQUE, NULL), `blocco_motivo`,
+  `blocco_at`, `opt_in`, `doi_at`, `tracciamento` (per la fase 9, oggi sempre 1). Stato nuovo `bloccato` (a mano, da
+  importazione, 5 soft bounce). "In lista nera email" = `stato IN ('uscito','rimbalzato','spam','bloccato')` (`NL_BLOCCATI`, `:243`).
+- `newsletter_attributi` (nome UNIQUE in maiuscolo, etichetta, categoria `normal`/`category`/`calculated`/`global`, tipo,
+  `sistema`, `colonna` per quelli di sistema, `formula`, ordine), `newsletter_attributi_opzioni` (valore numerico ed etichetta
+  di categoria e scelta multipla), `newsletter_valori` (una riga per valore, chiave contatto + attributo + opzione, con
+  `v_testo`, `v_num` DECIMAL(20,6), `v_data`, e gli indici per i segmenti della fase 3).
+- `newsletter_cartelle`, `newsletter_liste.cartella_id`; `newsletter_liste_uscite` (disiscritto da una sola lista: le
+  campagne di quella lista lo saltano, `newsletter_sql_uscite_lista()`, `:433`; la scrive il centro preferenze della fase 9).
+- `newsletter_storia` (cronologia: creato, iscrizione, form, doi, lista_aggiunto, lista_tolto, attributo, email, bloccato,
+  sbloccato, soft_bounce, importato, flusso_email) e `newsletter_consensi` (registro del consenso: in più rispetto a Brevo).
+
+**Migrazione** (una volta, impostazione `newsletter_contatti_migrati`): `uscito` -> `unsubscribedViaEmail`, `rimbalzato` ->
+`hardBounce`, `spam` -> `contactFlaggedAsSpam`, con la data di prima (`uscito_at`, `rimbalzato_at`); `doi_at` dal consenso di
+chi è arrivato da modulo o form (non si distingue chi è entrato da un form senza conferma: approssimato); `opt_in` per chi
+ha un consenso che non è `import`; una riga di `newsletter_consensi` per ogni contatto con `consenso_at`; tutte le liste nella
+cartella "Le tue liste". Gli attributi di sistema si scrivono a ogni giro di schema (INSERT IGNORE): EMAIL, NOME
+(FIRSTNAME), COGNOME (LASTNAME), EXT_ID, OPT_IN, DOUBLE_OPT-IN, CREATION_DATE, LAST_CHANGED. Le righe di prima senza motivo
+mostrano il motivo dallo stato (`newsletter_motivo_testo()`, `newsletter-contatti.php:492`).
+
+**Lista nera** (`includes/newsletter.php`): i motivi con i codici di Brevo in `NL_MOTIVI` (`:232`): codice -> testo e stato.
+`newsletter_contatto_blocca($id, $motivo)` (`:312`) cambia insieme stato, motivo, data, coda (saltata) e storia;
+`newsletter_contatto_sblocca($id)` (`:329`) torna iscritto, toglie l'impronta di soppressione e scrive la storia.
+`newsletter_esci($id, $motivo)` (`:679`, predefinito `unsubscribedViaEmail`; dal webhook `unsubscribedViaApi`,
+`includes/consegna.php:864`), `newsletter_rimbalzato()` e `newsletter_segnala_spam()` scrivono anche motivo e storia. La
+conferma del doppio opt-in (`newsletter_conferma_esito()`) toglie la lista nera, scrive `doi_at`, `opt_in`, la storia e il
+consenso. Togliere dalla lista nera si fa solo dalla scheda, uno alla volta, con la spunta del consenso
+(`admin/newsletter-contatto.php`, azione `sblocca`); cambiare l'email di un contatto in lista nera lo fa tornare iscritto
+(`newsletter_contatto_colonna()`, `newsletter-contatti.php:412`).
+
+**Soft bounce** (`newsletter_soft_bounce()`, `includes/newsletter.php:348`): `errori_di_fila` conta ogni tentativo come
+prima (segnalato da 3); la regola di Brevo, 5 soft bounce di fila = lista nera con motivo `softBounce`, conta i **messaggi**:
+l'avviso del servizio di invio (`includes/consegna.php:857`, con la copia di riserva per opcache) o il terzo e ultimo
+tentativo della coda (`newsletter_esito_invio($id, $ultimoTentativo)`, `:701`); "di fila" vuol dire dopo l'ultima email
+partita bene (coda o automazione) o l'ultima uscita dalla lista nera. Le email dei flussi riprovano a ogni giro e non contano.
+Nuovi tentativi per 36 ore come Brevo: non fatti (la coda tiene i suoi tre tentativi).
+
+**Attributi** (`includes/newsletter-contatti.php`): tipi `NL_ATTR_TIPI` (`:21`); `newsletter_attributo_crea()` (`:78`) con le
+regole di Brevo: nome in maiuscolo (`newsletter_attributo_nome()`, `:60`, accenti tolti, spazi in trattini bassi), unico e
+non uguale a FIRSTNAME, LASTNAME, SMS...; al massimo 200 attributi, 50 calcolati, 30 globali; opzioni al massimo 200
+caratteri; nome e tipo non si cambiano (`newsletter_attributo_modifica()`, `:126`, cambia solo etichetta e opzioni;
+togliere un'opzione la toglie a chi l'aveva); `newsletter_attributo_elimina()` (`:151`) toglie i valori a tutti. Le emoji
+diventano entità (`newsletter_testo_pulito()`, `:69`) e tornano caratteri con `newsletter_4byte_fuori()` prima dell'escape.
+Valori: `newsletter_valori_di($ids)` (`:266`, sistema dalle colonne, calcolati dalla formula), `newsletter_valore_leggi()`
+(`:324`, ritorna "ok" falso per un valore del tipo sbagliato), `newsletter_valori_salva()` (`:373`, il tipo sbagliato si
+ignora senza errore, come Brevo), `newsletter_valore_testo()` (`:308`, in parole: Sì/No, data italiana, etichetta).
+
+**Formule** (attributi calcolati e globali, decisione di Danilo del 1 novembre 2026): `newsletter_formula_analizza()` (`:180`)
+legge solo `COUNT[FONTE]`, `COUNT[FONTE,FONTE,<|>|<=|>=,NOW(-N)]` e `SUM[ATTRIBUTO]` (regex: niente altro arriva all'SQL);
+fonti `NL_FORMULA_FONTI` (`:30`): READS (aperture), CLICKS, SENT (coda più email dei flussi), FORMS (invii dei form con la sua
+email), CONTACTS (solo globali: iscritti). SUM solo nei globali e solo su un attributo Numero. Si calcolano a ogni lettura
+(`newsletter_formula_valore()`, `:206`): è il "ricorrente" di Brevo. I globali si vedono in Attributi > Valori globali e nei
+segnaposti; non c'è una dashboard dei valori globali.
+
+**Contatti** (`admin/newsletter-contatti.php`): colonne fisse `NL_COLONNE_FISSE` (`newsletter-contatti.php:35`) più quelle
+scelte (impostazione `newsletter_colonne_u<id utente>`, finestra "Personalizza le colonne" con SortableJS e le frecce per la
+tastiera); filtri `newsletter_contatti_filtro()` (`:506`: cerca, lista, stato con gli stati di prima ancora validi negli
+indirizzi); 50/100/500 per pagina, ordine per data di creazione decrescente; azioni di gruppo (`azione=gruppo`, `:90`) sulle
+righe spuntate o su tutti quelli del filtro (`tutti`, `newsletter_contatti_ids()`, `:536`): aggiungi, togli
+(`newsletter_togli_da_liste()`, `:544`), sposta (dalla lista caricata), metti in lista nera, modifica
+(`newsletter_modifica_in_massa()`, `:564`: solo data, sì/no, categoria), esporta (CSV con `sicurezza_csv_riga()`), elimina
+definitivamente (`newsletter_contatti_elimina()`, `:579`: è "Cancella dati", tiene l'impronta, scelta di plumeCMS confermata da
+Danilo). Riquadri Importa contatti (l'importazione di prima, `newsletter_importa_csv()`, che ora salta anche `bloccato`) e
+Metti in lista nera degli indirizzi (`:151`, crea il contatto se non c'è). Scheda Liste: cartelle e liste
+(`newsletter_cartelle()`, `:616`; `newsletter_cartella_elimina()`, `:648`, elimina le liste ma non i contatti, rifiuta una
+cartella con una lista di sistema, `newsletter_liste_di_sistema()`, `:607`; limiti 300 e 300).
+
+**Scheda del contatto** (`admin/newsletter-contatto.php`): Panoramica (attributi modificabili, statistiche dei 90 giorni
+`newsletter_contatto_statistiche()`, `:692`, form compilati, attività recente), Cronologia
+(`newsletter_contatto_cronologia()`, `:720`: coda, eventi, invii dei form, storia, con filtro per tipo, periodo e testo),
+Liste, Preferenze (lista nera); `?nuovo=1` è "Crea un contatto" (`newsletter_contatto_crea()`, `:462`: email obbligatoria, un
+doppione apre il contatto che c'è, lista nuova dal modulo). JavaScript in `admin/assets/contatti.js` (`data-apri-dialogo`,
+`data-nlc-azione`, `data-nlc-ordina`, `data-nla-tipo`; nessun gestore in linea). Stili `.nlx-*`, `.nlk-*`, `.nll-*`,
+`.nl-dialogo` in fondo ad `admin.css` (non `.nlc-*`: lo usa già la pagina della campagna).
+
+**Segnaposti** (`newsletter_segnaposti()`, `:785`, chiamata da `newsletter_personalizza()`, `includes/newsletter.php:878`,
+con `function_exists`): `{{ contact.NOME }}`, filtri `upper`, `lower`, `capfirst`, `default:"testo"` (anche con gli spazi di
+Brevo, `default : 'x'`). FIRSTNAME e LASTNAME valgono come NOME e COGNOME; categoria e scelta multipla escono come etichette,
+le date in italiano, i globali calcolati. Nell'HTML il valore entra con `h()`. `{nome}` resta per le campagne di prima.
+Le email dei flussi lasciano una riga `flusso_email` nella storia (`includes/newsletter-flussi.php:541`).
+
+Prove: `prove/prova-contatti-brevo.js` con `prove/contatti-cli.php` (con `MIGRATO=1` anche la migrazione di un sito 2.7.0
+preparato con `contatti-cli.php semina`); attacchi: gruppo 29 di `tools/sicurezza-prova.js`.
+
 Prove: `prove/prova-email-conferma.js` (con `prove/email-conferma-cli.php` e il server di posta finto): senza modifiche
 uguale al byte alla 2.6.0 per un form e per il modulo della newsletter, ogni parte cambiata, segnaposti, emoji in oggetto e
 testo, codice cattivo, anteprima, prova, link vero che conferma, redattore, 390 px. Attacchi: gruppo 28 di
