@@ -13,7 +13,9 @@ con Tab, campi senza un nome per il lettore di schermo, scorrimento di lato, mes
 ## Problemi trovati
 
 Gravità: alta = blocca o fa sbagliare; media = confonde o esclude chi usa la tastiera o un lettore di schermo; bassa = rifinitura.
-Commit: `74ee641` installatore, `26b0c61` editor e addon, `72d3ddd` prova e contorno della tavolozza, `9b7c0b2` documento e frase dell'host che non risponde.
+Commit, primo giro: `74ee641` installatore, `26b0c61` editor e addon, `72d3ddd` prova e contorno della tavolozza, `9b7c0b2` documento e
+frase dell'host che non risponde. Secondo giro (le scelte di Danilo del 1 novembre, righe 23-33): `5fccd02` installatore, `8b12def`
+editor ed eventi e corsi vuoti, `d109430` Copia altrove, `4e5a442` e `f3d94aa` sito, `6de1a77` prova estesa e caselle dei cursori.
 
 | N. | Gravità | Dove | Cosa confonde chi usa | Criterio | Correzione o proposta | Commit |
 |---|---|---|---|---|---|---|
@@ -39,6 +41,17 @@ Commit: `74ee641` installatore, `26b0c61` editor e addon, `72d3ddd` prova e cont
 | 20 | media | Prenotazioni, Agenda | "‹ Prima" e "Dopo ›" accanto a "Oggi": prima di cosa? | Nielsen 2, 6 | "‹ Settimana prima", "Settimana dopo ›" (nella vista per giorno "Giorno prima", "Giorno dopo") | 26b0c61 |
 | 21 | bassa | Vetrina, Prodotti e Ordini | Casella di ricerca senza nome (solo il segnaposto) | WCAG 3.3.2 | `aria-label` | 26b0c61 |
 | 22 | media | Vetrina, sito pubblico (negozio, widget Carrello) | Numero del carrello, filtro scelto e bollino: bianco su viola pieno, 3,96 a 1 | WCAG 1.4.3 | Fondo viola scurito di un quinto (`color-mix`, 5,5 a 1), il primo `background` resta per i browser vecchi. Cambia solo l'aspetto delle parti della Vetrina | 26b0c61 |
+| 23 | media | Installatore, passo 3 | Gli errori stavano solo in cima: con quattro errori non si capiva quale campo correggere | Nielsen 9, WCAG 3.3.1 | (scelta di Danilo) l'errore sotto il campo sbagliato, bordo rosso di 2 px, `aria-invalid` e `aria-describedby` verso il messaggio; in cima resta il riassunto "4 campi da sistemare: li trovi segnati in rosso qui sotto". Anche i campi del passo 2 (prefisso, nome, utente) | 5fccd02 |
+| 24 | media | Installatore, passo 4 | Con la carta Su misura il pulsante diceva "Installa adesso" ma portava alle quattro domande | Nielsen 4 (coerenza) | (scelta di Danilo) con Su misura il pulsante dice "Avanti: le quattro domande"; solo CSS (`:has`), niente script | 5fccd02 |
+| 25 | media | Editor, cursori (Dimensione, Interlinea, Z-index...) | Casella vuota e cursore tutto a sinistra: sembrava zero, era "come il sito" | Nielsen 1, 2 | (scelta di Danilo) `cursoriVuoti()`: la casella dice "come il sito" e il cursore è grigio (opacità 0,5) finché non si sceglie un valore; casella allargata a 94 px perché la frase ci stia | 8b12def, 6de1a77 |
+| 26 | media | Editor, pallino del monitor | Grigio chiaro o scuro: nessuno capiva che il valore valeva solo per il tablet o il telefono | WCAG 1.4.1, Nielsen 1 | (scelta di Danilo) `etichettaMisura()`: accanto al pallino "solo tablet" o "solo telefono" quando il valore è proprio di quella misura | 8b12def |
+| 27 | bassa | Editor, schede Widget, Sezioni, Modifica, Navigatore | Erano pulsanti: con la tastiera solo Tab, niente frecce, il lettore di schermo non diceva "scheda 2 di 4" | WCAG 4.1.2 (modello ARIA delle schede) | (scelta di Danilo) `role=tablist/tab/tabpanel`, `aria-selected`, `aria-controls`, un solo `tabindex=0`; frecce sinistra e destra (girano), Inizio e Fine | 8b12def |
+| 28 | media | Editor, widget Eventi con iscrizione e Elenco corsi senza dati | Nella tela non si capiva che il widget c'era né dove aggiungere gli eventi o i corsi | Nielsen 10 | (scelta di Danilo) nell'anteprima dell'editor il riquadro tratteggiato `.ed-vuoto` ("Ancora nessun evento in programma: aggiungili nel pannello, in Eventi > Nuovo evento..."; "Ancora nessun corso pubblicato: crealo nel pannello, in Corsi..."). Prodotti, Recensioni dal sito, Prenota e Iscrizione a un evento lo avevano già. Mai sul sito: esce solo con `$ctx['anteprima']`, e `.ed-vuoto` è nascosto da `sito.css` e `widget.css` (foto identiche) | 8b12def |
+| 29 | media | Copia altrove | Due pulsanti di salvataggio nello stesso riquadro; "Manda una copia adesso" spento ma blu pieno, sembrava attivo | Nielsen 4, 5 | (scelta di Danilo) un solo pulsante in fondo, dopo tutti i campi: "Salva e collega con Google Drive/Dropbox" per un servizio non collegato, "Salva la destinazione" altrimenti (nel riquadro del servizio resta, solo da collegato, "Dai di nuovo il permesso a ..."); Prova e Manda spenti con opacità 0,45 e la frase "si accendono quando la destinazione è collegata" | d109430 |
+| 30 | media | Sito, data delle schede del blog (`.card-meta`, anche il testo dei risultati della ricerca) | 4,24 a 1 nel tema di base e in Cosmo, 3,61 in Bottega | WCAG 1.4.3 | (scelta di Danilo, cambio voluto) `--testo-2` al posto di `--testo-3`: base e Cosmo 8,48, Aria 7,56, Bottega 7,13, Estate 7,82, Inverno 8,09, Autunno 8,98, Primavera 8,59, Giallo 15,59, Rosso 5,25, Verde 13,33, Blu 7,01 | 4e5a442 |
+| 31 | bassa | Sito, ricerca senza risultati | "Nessun risultato per questa parola." e basta | Nielsen 9 | (scelta di Danilo) `vista_cerca_niente()`: la parola cercata, "Prova con una parola più corta o diversa, per esempio <link alla parola accorciata>", e fino a sei pagine del menu della testata (senza menu: Home e Blog) | 4e5a442, f3d94aa |
+| 32 | bassa | Sito, form con captcha | Con il controllo del browser spento (`novalidate`) il form vuoto rispondeva prima "Spunta Sono una persona" | Nielsen 9 | (scelta di Danilo) in `moduli.js` prima `checkValidity()` e `reportValidity()` (il fuoco va al primo campo vuoto), poi il captcha. Il captcha resta obbligatorio nel browser e sul server (nessun cambio al server): attacchi 263 su 263 | 4e5a442 |
+| 33 | bassa | Editor, punto 6 (editor ridotto al telefono) | Al telefono solo l'avviso | | **Rimandato** (decisione di Danilo: "lo facciamo partire in un altro momento") | |
 
 Cose guardate e trovate a posto: contrasto di ogni testo dell'editor nei quattro aspetti (anche con le sezioni aperte, le
 finestre Impostazioni, Immagini e Revisioni); le pagine degli otto addon a 1280 e 390 px (nessuno scorrimento di lato,
@@ -60,59 +73,53 @@ eventi da visitatore a 1280 e 390 px (fuoco visibile, campi con l'etichetta, mes
    con il contorno del browser. Proposta coerente con l'editor:
    `:is(.btn,.admin-main a,.admin-main summary):focus-visible{outline:2px solid var(--coral);outline-offset:2px}`.
 
-## Da decidere con Danilo
+## Decisi da Danilo (1 novembre 2026)
 
-Cambiano come funziona una cosa: non li ho toccati.
+Danilo ha scelto "tutto tranne il 6". Fatti (righe 23-32 della tabella): pulsante del passo 4 con Su misura, errori sotto i campi
+dell'installatore, cursori vuoti "come il sito", "solo tablet"/"solo telefono", schede ARIA, addon vuoti spiegati nell'editor, Copia
+altrove con un solo salvataggio, data delle schede del blog; e le due segnalazioni minori (ricerca senza risultati, campi prima del
+captcha).
 
-1. **Installatore, passo 4 con "Su misura"**: il pulsante dice "Installa adesso" ma porta alle quattro domande. Proposta:
-   con la carta Su misura scelta il pulsante dice "Avanti: le quattro domande" (serve un piccolo script, o un pulsante
-   in più).
-2. **Installatore, errori del passo 3**: gli errori stanno in cima e i campi sbagliati non sono segnati. Proposta: il
-   bordo rosso e la frase sotto il campo sbagliato (`aria-invalid`), come nel pannello.
-3. **Editor, cursori con la casella vuota** (Dimensione, Interlinea, Z-index...): vuoto vuol dire "come il sito", ma il
-   cursore sta tutto a sinistra e sembra zero. Proposta: nella casella il segnaposto "auto" (o "come il sito") e il cursore
-   grigio finché non si sceglie un valore.
-4. **Editor, pallino del monitor accanto ai controlli** (valore per computer, tablet, telefono): grigio = eredita, scuro =
-   valore proprio. Nessuno lo capisce senza il `title`. Proposta: un'etichetta breve ("solo telefono") quando il valore è
-   proprio di una misura, o una riga d'aiuto la prima volta.
-5. **Editor, schede del pannello** (Widget, Sezioni, Modifica, Navigatore) come vere schede ARIA (`role=tablist`, frecce
-   da tastiera). Ora sono pulsanti con `aria-pressed`: funzionano, ma le frecce no.
-6. **Editor al telefono**: oggi solo l'avviso. Si potrebbe aprire un editor ridotto (testi e foto della pagina) invece
-   della tela.
-7. **Editor, widget degli addon vuoti** (Prodotti, Recensioni dal sito senza dati): sul sito non mostrano niente, e
-   nell'editor non si capisce che il widget c'è. Proposta: nella tela dell'editor un riquadro tratteggiato "Ancora
-   nessun prodotto: aggiungili in Vetrina > Prodotti" (solo nell'anteprima, mai sul sito).
-8. **Copia altrove**: con la destinazione "non ancora collegata", "Manda una copia adesso" è il pulsante principale e
-   nello stesso riquadro ci sono due pulsanti di salvataggio ("Salva e collega con Google Drive" e "Salva la
-   destinazione"). Proposta: "Manda una copia adesso" spento finché la destinazione non è collegata, e un solo salvataggio.
-9. **Sito pubblico, data delle schede del blog** (`.card-meta` in `sito.css`): 4,24 a 1, sotto 4,5. È il sito di tutti i
-   clienti: cambiarla cambia le foto di chi aggiorna. Proposta per una versione con cambi del sito annunciati:
-   `--testo-3` un poco più chiaro nel tema di base.
-
-## Segnalazioni sul sito pubblico (nessuna modifica)
-
-- La ricerca senza risultati dice "Nessun risultato per questa parola.": si potrebbe proporre la ricerca di una parola
-  più corta o i link del menu (bassa).
-- Il form dei contatti mandato vuoto senza controllo del browser risponde "Spunta Sono una persona e aspetta il segno
-  verde": il controllo del captcha arriva prima di quello dei campi obbligatori, quindi chi ha davvero lasciato vuoto un
-  campo lo scopre solo dopo (bassa; nel browser normale i campi obbligatori fermano prima).
+**Rimandato:** il punto 6, un editor ridotto al telefono (testi e foto della pagina invece della tela). Oggi al telefono c'è
+l'avviso con il link alla scheda (riga 15).
 
 ## Prove
 
-- `php -n -d short_open_tag=1 -l` sui PHP toccati, `node --check` su `editor.js` e sulla prova nuova: a posto.
-- `prove/prova-ux-editor.js` (nuova): **37 su 37** (installatore su una copia non installata, editor in Aria e Cosmo,
-  header, telefono, Agenda, Vetrina nel pannello e da visitatore).
-- `prove/prova-install.js` dallo zip costruito (`tools/cms-pacchetto.py`, 340 file): **37 su 37 in radice e 37 su 37 in
-  cartella** (`/test`). Dalla cartella del repository senza zip manca `uploads/.htaccess` (lo mette il costruttore): 36 su 37,
-  non è un difetto del prodotto.
-- `prove/prova-kit.js` attività: 34 su 34. `prove/prova-addon-tutti.js` su un sito nuovo: **70 su 70**.
-- `prove/prova-hero.js` con l'editor (le undici aperture senza foto): **161 su 161**.
-- Foto del sito prima e dopo sullo stesso database, addon accesi, con `/tutti-i-widget/`, Servizi, Chi siamo, `/negozio/`,
-  una pagina con tutti i widget degli addon, Corsi e Area riservata (32 foto). `quanto-foto.py`: differenze solo in
-  `widget` (il conto alla rovescia, rumore noto, e il numero del widget Carrello), `negozio` (numero del carrello e filtro
-  "Tutti") e nella pagina degli addon (numero del carrello): sono le correzioni 22, volute. Tutte le altre pagine identiche.
-- Non rifatte: `prova-aspetti.js` (lunga; il contrasto dell'editor nei quattro aspetti l'ho misurato con l'esplorazione,
-  zero testi sotto soglia), attacchi (nessuna modifica a permessi o richieste).
+Secondo giro (codice di tutte le scelte, zip ricostruito con `tools/cms-pacchetto.py`, 340 file, 1917 KB):
+
+- `php -n -d short_open_tag=1 -l` su ogni PHP toccato, `node --check` su `editor.js`, `moduli.js` e sulla prova: a posto.
+- `prove/prova-ux-editor.js`: **71 su 71** (installatore su una copia non installata fino al passo 4 con un database vuoto, editor
+  in Aria e Cosmo, schede ARIA con le frecce, cursori vuoti, "solo telefono", addon vuoti nell'editor e non sul sito, header,
+  telefono, Agenda, Vetrina, Copia altrove, data del blog nel tema di base, Cosmo e Bottega, ricerca vuota, form).
+- `prove/prova-install.js` dallo zip: **37 su 37 in radice e 37 su 37 in cartella** (`/test`).
+- `prove/prova-kit.js` attività: 34 su 34 (due siti). `prove/prova-su-misura.js`: **34 su 34** (il pulsante con il testo nuovo).
+- `prove/prova-addon-tutti.js` su un sito nuovo dallo zip: **70 su 70**.
+- `prove/prova-hero.js` con l'editor: **161 su 161**.
+- `tools/sicurezza-prova.js` su un sito Attività dallo zip, con `CMS_DIR`, `SEGRETO` e il WordPress cattivo finto
+  (`FINTO_WP`): **263 su 263** (saltato solo il report del burnout, che non c'è nel prodotto); poi svuotata
+  `cms_sicurezza_tentativi`. Il numero è più alto dei 261 delle note perché questo sito ha anche le prove con `FINTO_WP` e `SEGRETO`.
+- Contrasto della data delle schede (`.card-meta`) in anteprima da amministratore con ogni tema: prima base e Cosmo 4,24,
+  Bottega 3,61 (gli altri sopra 4,5); dopo tutti sopra 5 (vedi riga 30).
+- Non rilanciate: `prova-aspetti.js` (lunga; il contrasto dell'editor nei quattro aspetti l'ho misurato a parte) e
+  `prova-addon-copia-altrove.js` (vuole i server finti FTP, FTPS, WebDAV e cloud): l'ho adattata al pulsante unico (il caso
+  dell'ID scritto male ora preme "Salva e collega"), ma non l'ho fatta girare.
+
+### Foto del sito prima e dopo
+
+Stesso database (kit Attività, otto addon accesi, `/tutti-i-widget/`, pagina con i widget degli addon), 34 foto a 1280 e
+390 px: home, blog, articoli, contatti, widget, ricerca, 404, Servizi, Chi siamo, negozio, pagina degli addon, Corsi, Area
+riservata, ricerca senza risultati.
+
+- Primo giro (vetrina): cambiano solo il numero del carrello e il filtro "Tutti" del negozio (`piu-negozio` 2.163 pixel,
+  `piu-addon-tutti` 394, il carrello in `widget`) e il conto alla rovescia (rumore noto).
+- Secondo giro: **`blog-pc` e `blog-tel`**: 557 pixel, la data della scheda dell'articolo (zona di 120 x 8 px, da `#6f7a92` a
+  `#a7b1c6`, scarto massimo 56 livelli); **`piu-s-zzqqxx`** (la ricerca senza risultati): pagina nuova, al telefono più alta di
+  35 px (844 -> 879) per il suggerimento e i link; `widget-pc` e `widget-tel`: solo il conto alla rovescia. Tutte le altre
+  identiche al pixel. Il riquadro tratteggiato degli addon vuoti non compare sul sito (la pagina degli addon è identica).
+- Con un tema attivo cambia lo stesso elemento (la data delle schede del blog e il testo sotto il titolo dei risultati della
+  ricerca) in tutti gli undici temi: è da annunciare nel CHANGELOG come cambio voluto.
+
+Primo giro: `prova-ux-editor.js` 37/37, install 37/37 radice e cartella, addon 70/70, hero 161/161.
 
 ## Per il manuale tecnico (da riportare)
 
@@ -123,6 +130,12 @@ Cambiano come funziona una cosa: non li ho toccati.
 - `admin/assets/editor/editor.js`: `nominaCampi()` con `MutationObserver` su `#ed-controlli`; widget della tavolozza con
   `role="button"` e `tabindex`; `avvisoH1()` spento per i modelli; `aria-pressed` su misure e schede.
 - `addon/vetrina/assets/vetrina.css`: `color-mix` sul fondo di `.vt-conta`, `.vt-filtri a[aria-current]`, `.vt-bollino`.
+- Secondo giro: `inst_campo()` legge `$errori['<campo>']` (errori con chiave di campo nei passi 2 e 3, `.campo.sbagliato`,
+  `.errore-campo`, `aria-invalid`); pulsante del passo 4 con `.testo-installa` e `.testo-domande` (CSS `:has`); in `editor.js`
+  `cursoriVuoti()`, `etichettaMisura()`, schede ARIA del pannello con la tastiera; `editor.php` con `role=tablist/tab/tabpanel`;
+  `.ed-vuoto` nell'anteprima dei widget `eventi_iscrizione` e `corsi_elenco`; Copia altrove con il salvataggio unico
+  (`.ca-salvataggio`, `#ca-spenti-perche`); `sito.css` `.card-meta` con `--testo-2` e `.cerca-niente`; `vista_cerca_niente()`
+  in `sito/viste.php`; `moduli.js` con `checkValidity()` prima del captcha.
 
 ## Principi applicati (appunti per le regole globali d'interfaccia)
 
@@ -147,3 +160,6 @@ Cambiano come funziona una cosa: non li ho toccati.
 - Barra dell'editor di un header: `b-editor-header-prima.jpg`, `b-editor-header-dopo.jpg`
 - Editor al telefono: `b-editor-telefono-prima.jpg`, `b-editor-telefono-dopo.jpg`
 - Tavolozza con l'aiuto in cima: `b-editor-tavolozza-dopo.jpg`
+- Secondo giro: `b-installatore-passo3-dopo.jpg` (errori sotto i campi), `b-editor-cursori-come-il-sito-dopo.jpg`,
+  `b-editor-solo-telefono-dopo.jpg`, `b-copia-altrove-dopo.jpg`, `b-sito-ricerca-vuota-dopo.jpg`,
+  `b-sito-blog-data-prima.jpg` e `b-sito-blog-data-dopo.jpg`
