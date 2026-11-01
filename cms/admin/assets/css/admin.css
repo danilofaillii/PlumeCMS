@@ -602,5 +602,12 @@ html .admin-content :is(input, select, textarea):disabled { opacity: .65; cursor
 
 /* 8. Fuoco da tastiera uguale in tutto il pannello, anche nelle pagine degli addon (pulsanti, link, schede, riquadri che si
    aprono): prima era il contorno sottile del browser, quasi invisibile sui pulsanti pieni. */
-.admin-main :is(.btn, a, summary, button):focus-visible { outline: 2px solid var(--coral); outline-offset: 2px; }/* La freccina dei gruppi del menu (.nav-freccia, sopra) ha il colore --sidebar-testo-2 pieno: prima opacita 0,6, 3,3:1 in
+.admin-main :is(.btn, a, summary, button):focus-visible { outline: 2px solid var(--coral); outline-offset: 2px; }/* 9. L'aiuto lungo si apre a richiesta (<details class="pn-aiuto">): il riquadro resta corto, la spiegazione c'e. */
+.pn-aiuto { font-size: .82rem; }
+.pn-aiuto > summary { cursor: pointer; font-weight: 600; color: var(--accento-testo); width: max-content; max-width: 100%; padding: .15rem 0; }
+.pn-aiuto[open] > summary { margin-bottom: .4rem; }
+.pn-aiuto > p, .pn-aiuto > ol, .pn-aiuto > ul { margin-bottom: .5rem; }
+/* L'ultimo accesso in Utenti non va a capo a meta. */
+.ct-quando { white-space: nowrap; }
+/* La freccina dei gruppi del menu (.nav-freccia, sopra) ha il colore --sidebar-testo-2 pieno: prima opacita 0,6, 3,3:1 in
    Aria, ed e l'unico segno che la voce si apre. */
