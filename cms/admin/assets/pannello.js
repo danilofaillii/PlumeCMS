@@ -201,6 +201,23 @@
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', apriDaIndirizzo); else apriDaIndirizzo();
   window.addEventListener('hashchange', apriDaIndirizzo);
 
+  // ------------------------------------------------------------ UX 2026-11: le tabelle diventano schede al telefono
+  // Ogni tabella semplice del pannello (testata con almeno tre colonne, righe senza celle unite) riceve data-schede e, su
+  // ogni cella, data-etichetta con il nome della sua colonna: sotto 640 px admin.css mostra ogni riga come una scheda
+  // ("Ruolo: Amministratore") invece di una tabella da far scorrere di lato. data-no-schede su una tabella la lascia com'e.
+  function tabelleASchede() {
+    document.querySelectorAll('.admin-content table:not([data-no-schede]):not([data-schede])').forEach(function (t) {
+      var th = t.tHead && t.tHead.rows.length === 1 ? Array.prototype.slice.call(t.tHead.rows[0].cells) : [];
+      if (th.length < 3 || th.some(function (c) { return c.colSpan > 1; })) return;
+      var nomi = th.map(function (c) { return (c.textContent || '').replace(/\s+/g, ' ').replace(/[▴▾▲▼]/g, '').trim(); });
+      var righe = Array.prototype.slice.call(t.tBodies.length ? t.tBodies[0].rows : []);
+      if (righe.some(function (r) { return r.cells.length !== nomi.length && !(r.cells.length === 1 && r.cells[0].colSpan > 1); })) return;
+      righe.forEach(function (r) { if (r.cells.length === nomi.length) Array.prototype.forEach.call(r.cells, function (c, i) { if (nomi[i]) c.setAttribute('data-etichetta', nomi[i]); }); });
+      t.setAttribute('data-schede', '');
+    });
+  }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', tabelleASchede); else tabelleASchede();
+
   // ------------------------------------------------------------ cambio e scrittura
   document.addEventListener('change', function (ev) {
     var el = ev.target;

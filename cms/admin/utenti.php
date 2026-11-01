@@ -90,7 +90,7 @@ $modifica = isset($_GET['modifica']) ? array_values(array_filter($utenti, fn($u)
 require_once __DIR__ . '/includes/admin-header.php';
 ?>
 <link rel="stylesheet" href="<?= pannello_file('assets/css/contenuti.css') ?>">
-<div style="display:grid;grid-template-columns:320px minmax(0,1fr);gap:1.2rem;align-items:start">
+<div class="ut-griglia"><?php /* UX 2026-11: una colonna sotto 760 px (la tabella finiva in una striscia larga pochi pixel) */ ?>
   <div class="sc-scatola">
     <h3><?= $modifica ? 'Modifica utente' : 'Aggiungi utente' ?></h3>
     <form method="post" class="sc-corpo" autocomplete="off">

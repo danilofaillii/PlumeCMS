@@ -104,7 +104,7 @@ require_once __DIR__ . '/includes/admin-header.php';
   <form method="get" style="display:flex;gap:.4rem"><?php if ($tipo === 'tag'): ?><input type="hidden" name="tipo" value="tag"><?php endif; ?><input type="search" name="q" value="<?= h($q) ?>" placeholder="Cerca…" class="search-input" style="padding:.4rem .6rem;border:1px solid var(--bordo-campo);border-radius:8px"><button class="btn btn-secondary btn-sm">Cerca</button></form>
 </div>
 
-<div style="display:grid;grid-template-columns:320px minmax(0,1fr);gap:1.2rem;align-items:start">
+<div class="ut-griglia"><?php /* UX 2026-11: una colonna sotto 760 px */ ?>
   <div class="sc-scatola">
     <h3><?= $modifica ? 'Modifica' : 'Aggiungi' ?> <?= $tipo === 'tag' ? 'tag' : 'categoria' ?></h3>
     <form method="post" class="sc-corpo">

@@ -617,6 +617,32 @@ html .admin-content :is(input, select, textarea):disabled { opacity: .65; cursor
 .pn-conferma .btn-pericolo:focus-visible { outline-color: var(--errore); }
 @media (max-width: 640px) { .pn-conferma-azioni .btn { flex: 1 1 100%; } }
 
+/* 11. Al telefono le tabelle semplici diventano schede (pannello.js mette data-schede e data-etichetta): una riga = una
+   scheda, ogni cella con il nome della sua colonna. Niente piu prima colonna visibile e il resto nascosto di lato. */
+@media (max-width: 640px) {
+  .admin-content table[data-schede], .admin-content table[data-schede] tbody { display: block; overflow: visible; width: 100%; }
+  .admin-content table[data-schede] thead { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+  .admin-content table[data-schede] tr { display: block; margin: .6rem; padding: .55rem .8rem; border: 1px solid var(--border); border-radius: 10px; background: var(--surface); }
+  .admin-content table[data-schede] tr:hover td { background: transparent; }
+  .admin-content table[data-schede] td { display: block; padding: .35rem 0; border: 0; max-width: none; min-width: 0; overflow-wrap: anywhere; white-space: normal; }
+  .admin-content table[data-schede] td + td { border-top: 1px solid var(--border); }
+  .admin-content table[data-schede] td::before { content: attr(data-etichetta); display: block; font-size: .72rem; font-weight: 600; color: var(--text-muted); margin-bottom: .1rem; }
+  .admin-content table[data-schede] td:not([data-etichetta])::before { display: none; }
+  .admin-content table[data-schede] td:empty { display: none; }
+  .admin-content table[data-schede] td[colspan] { display: block; text-align: center; }
+  .admin-content table[data-schede] .empty-state { padding: 1.25rem .5rem; }
+  /* Una casella con la sua frase resta sulla stessa riga (la regola delle etichette che vanno a capo la separava). */
+  .admin-content label:has(> input[type=checkbox], > input[type=radio]) { flex-wrap: nowrap; }
+}
+
+/* Utenti e Categorie: modulo a sinistra, elenco a destra; sotto 760 px una colonna sola. */
+.ut-griglia { display: grid; grid-template-columns: 320px minmax(0, 1fr); gap: 1.2rem; align-items: start; }
+@media (max-width: 760px) {
+  .ut-griglia { grid-template-columns: minmax(0, 1fr); }
+  /* Download: la colonna larga 340 px scritta nella pagina va sotto l'elenco. */
+  .admin-content .sc-griglia[style] { grid-template-columns: minmax(0, 1fr) !important; }
+}
+
 /* 9. L'aiuto lungo si apre a richiesta (<details class="pn-aiuto">): il riquadro resta corto, la spiegazione c'e. */
 .pn-aiuto { font-size: .82rem; }
 .pn-aiuto > summary { cursor: pointer; font-weight: 600; color: var(--accento-testo); width: max-content; max-width: 100%; padding: .15rem 0; }
