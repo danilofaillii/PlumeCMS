@@ -114,6 +114,9 @@ Sono gli unici in `cms/docs/`, nello zip, nel sito di plumeCMS e nella pagina Do
 - **PHP come sui server veri**: Hostcare (il primo cliente) ha PHP 8.4.27, MySQL 8.0.46
   in modalità stretta, Apache 2.4 con cPanel e ModSecurity. In locale si prova con
   PHP 8.4.27 in Docker: `dockerd`, immagine `php:8.4-cli` con `pdo_mysql`.
+- **Regole di interfaccia** (regola globale di Danilo, 1 novembre 2026): prima di toccare pannello, editor, installatore, addon o sito
+  si legge `docs-sviluppo/regole-interfaccia.md` (copia in `second-brain/_comune/regole-interfaccia.md`, valida per tutti i progetti;
+  se cambia una, si aggiorna l'altra) e si chiude con la sua checklist. Le prove sono `prove/prova-ux-pannello.js` e `prove/prova-ux-editor.js`.
 - Niente librerie esterne nel CMS (SortableJS e Quill sono serviti in casa).
 - Niente credenziali nel repository né in chat.
 - Italiano ovunque, niente trattini lunghi, niente caratteri a 4 byte nei file
