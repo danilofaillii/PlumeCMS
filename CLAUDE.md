@@ -64,6 +64,10 @@ Sono gli unici in `cms/docs/`, nello zip, nel sito di plumeCMS e nella pagina Do
    ricontrolla il capitolo**. Il PDF è uno solo (dalla 2.1.0) e deve restare sotto 8 MB (`MAX_KB` in `tools/manuali-pdf.js`; oggi
    7,3 MB con le schermate JPEG a qualità 55). Nel PDF vanno JPEG: Chromium rimette i PNG senza tavolozza e pesano di più.
    `cms/docs/manuale-temi.md`: il manuale per chi costruisce un tema, con il tema d'esempio Lavagna.
+   **Copia nel second brain** (richiesta di Danilo, 1 novembre 2026): i tre manuali (uso, temi, tecnico) stanno anche in
+   `second-brain/_comune/manuali-plumecms/` come `plumecms-manuale-*.md`, per tutti i progetti. A ogni versione si rimpiazzano
+   (il manuale d'uso senza le immagini: le righe `![...](immagini/...)` diventano "Schermata: ..., nel PDF") e si aggiorna la
+   versione nel `LEGGIMI.md` di quella cartella, poi commit e push su `main` del second brain.
 1. `docs-sviluppo/` (solo nel repository, mai nello zip): il manuale tecnico (`manuale-tecnico.md`, tutto il CMS letto dal
    codice, con `file:riga`: **quando si cambia il codice si aggiorna anche lui**) e i documenti vecchi (`cms.md`,
    `cms-moduli.md`, `editor-pagine.md`, `sicurezza.md`, `temi.md`, `seo.md`...), superati in alcuni punti: se dicono una
