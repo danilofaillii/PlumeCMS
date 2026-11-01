@@ -117,8 +117,9 @@ require_once __DIR__ . '/includes/admin-header.php';
         <?php foreach ($categorie as $slug => $c): ?><option value="<?= h($qs(['categoria' => $slug, 'pagina' => 1])) ?>" <?= $filtri['categoria'] === $slug ? 'selected' : '' ?>><?= h($c['name']) ?></option><?php endforeach; ?>
       </select>
       <?php endif; ?>
-      <?php if ($T['attributi']): ?>
-      <select data-vai-al-valore>
+      <?php // UX 2026-11 (punto 3): il filtro pillar e cluster solo se c'è almeno un pillar (o se il filtro è già in uso).
+      if ($T['attributi'] && ($filtri['tipo_articolo'] !== '' || (int)db()->query('SELECT COUNT(*) FROM ' . tbl($T['tabella']) . " WHERE type = 'pillar'")->fetchColumn() > 0)): ?>
+      <select data-vai-al-valore aria-label="Pillar e cluster">
         <option value="<?= h($qs(['tipo_articolo' => '', 'pagina' => 1])) ?>">Pillar e cluster</option>
         <option value="<?= h($qs(['tipo_articolo' => 'pillar', 'pagina' => 1])) ?>" <?= $filtri['tipo_articolo'] === 'pillar' ? 'selected' : '' ?>>Solo pillar</option>
         <option value="<?= h($qs(['tipo_articolo' => 'cluster', 'pagina' => 1])) ?>" <?= $filtri['tipo_articolo'] === 'cluster' ? 'selected' : '' ?>>Solo cluster</option>
@@ -138,7 +139,7 @@ require_once __DIR__ . '/includes/admin-header.php';
       <th><?= $ordinaLink('titolo', 'Titolo') ?></th>
       <th><?= $ordinaLink('autore', 'Autore') ?></th>
       <?php if ($T['tassonomie']): ?><th>Categorie</th><th>Tag</th><?php endif; ?>
-      <?php if ($T['kw']): ?><th title="Parole e densità della keyword principale e delle correlate">Parole · KW</th><?php endif; ?>
+      <?php if ($T['kw']): ?><th title="Quante parole ha il testo, e quanto spesso compaiono la parola chiave principale e le correlate (la scegli nella scheda, riquadro SEO)">Parole e parola chiave</th><?php endif; ?>
       <th><?= $ordinaLink('data', 'Data') ?></th>
     </tr></thead>
     <tbody>
@@ -189,8 +190,9 @@ require_once __DIR__ . '/includes/admin-header.php';
         <?php if ($T['kw']): ?>
         <td class="ct-kw" title="Keyword: <?= h($r['keyword_target'] ?? '') ?> · esatta <?= $kw['exact_density'] ?>% (<?= $kw['exact_count'] ?>x), varianti <?= $kw['variant_density'] ?>% · correlate: <?= h(implode(' | ', $rk['details'])) ?>">
           <?= $kw['words'] ?> parole<br>
+          <?php if (trim((string)($r['keyword_target'] ?? '')) === ''): /* UX 2026-11: senza parola chiave niente "0% · 0%" in rosso */ ?><span class="ct-muto">nessuna parola chiave</span><?php else: ?>
           <span class="<?= $kw['density'] >= 1.8 ? 'kw-good' : ($kw['density'] >= 1 ? 'kw-warn' : 'kw-bad') ?>"><?= $kw['density'] ?>%</span> ·
-          <span class="<?= $rk['density'] >= 1.5 ? 'kw-good' : ($rk['density'] >= .8 ? 'kw-warn' : 'kw-bad') ?>"><?= $rk['density'] ?>%</span>
+          <span class="<?= $rk['density'] >= 1.5 ? 'kw-good' : ($rk['density'] >= .8 ? 'kw-warn' : 'kw-bad') ?>"><?= $rk['density'] ?>%</span><?php endif; ?>
         </td>
         <?php endif; ?>
         <td class="ct-muto ct-data">
