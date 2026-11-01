@@ -7,6 +7,7 @@
 //   const pnConferme = require('./conferme-pannello');
 //   pnConferme.on(p, d => d.accept());                 // al posto di p.on('dialog', ...)
 //   pnConferme.once(p, d => { ...; d.dismiss(); });    // al posto di p.once('dialog', ...)
+//   pnConferme.ferma(p, true) ... pnConferme.ferma(p, false)   // la finestra resta aperta finché non la chiude la prova
 const STATO = new WeakMap();
 
 function ascolta() {
@@ -26,7 +27,7 @@ function prepara(page) {
   // Le tre chiamate partono subito, in ordine, prima di qualunque goto della prova.
   page.exposeBinding('__pnConfermaDecidi', async (_src, testo) => {
     const g = s.gestori[0];
-    if (!g) return null; // nessun gestore: la finestra resta aperta, come un dialogo vero senza gestore
+    if (!g || s.ferma) return null; // nessun gestore: la finestra resta aperta, come un dialogo vero senza gestore
     if (g.unaVolta) togli(page, s, g);
     return await new Promise((risolvi) => {
       const d = { type: () => 'confirm', message: () => testo, defaultValue: () => '', accept: async () => risolvi(true), dismiss: async () => risolvi(false) };
@@ -52,4 +53,7 @@ function registra(page, f, unaVolta) {
   page.on('dialog', g.nativo);
 }
 
-module.exports = { on: (page, f) => registra(page, f, false), once: (page, f) => registra(page, f, true) };
+// ferma(page, true): la finestra del pannello resta aperta, come senza gestore (per fotografarla); ferma(page, false) riprende.
+function ferma(page, si) { prepara(page).ferma = !!si; }
+
+module.exports = { on: (page, f) => registra(page, f, false), once: (page, f) => registra(page, f, true), ferma };

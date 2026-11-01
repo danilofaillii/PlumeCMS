@@ -27,7 +27,10 @@ Il manuale ha due parti. La **prima** (capitoli 1-31) è il CMS di sempre: c'è 
 recensioni, negozio, statistiche, area riservata, corsi, copia del sito altrove. Tutte e due stanno nello stesso PDF,
 `manuale-uso.pdf`.
 
-Questo manuale racconta come si usa plumeCMS. Per costruire un tema c'è il manuale dei temi.
+Questo manuale racconta come si usa plumeCMS. Per costruire un tema c'è il manuale dei temi. Per installarlo c'è il file
+`INSTALLA.md`, nello zip; durante l'installazione, se un dato non va, l'installatore lo scrive in rosso **sotto la casella
+sbagliata** e in cima riassume quante sono ("2 campi da sistemare"). Se il database non risponde, dice in italiano cosa
+controllare e dove (per esempio "Utente o password del database sbagliati. Controlla in cPanel, voce Database MySQL...").
 
 ---
 
@@ -95,6 +98,40 @@ Vale solo per te: ogni utente sceglie il suo, e il sito non cambia.
    (scuro, verde ardesia e gesso).
 2. Premi **Usa questo aspetto**. Il pannello cambia subito.
 
+### Come è fatta una pagina del pannello
+
+Tutte le pagine del pannello seguono le stesse regole, in tutti e quattro gli aspetti:
+
+- ogni **riquadro** ha il titolo in una **fascia colorata** con una striscia del colore d'accento a sinistra: lì comincia
+  un argomento nuovo;
+- sotto, le **etichette** dei campi sono in carattere normale ("Google Search Console", "Server SMTP"): dicono cosa
+  scrivere nella casella subito sotto;
+- le **caselle** hanno un bordo ben visibile; quella in cui stai scrivendo ha un contorno del colore d'accento. Il testo
+  grigio dentro una casella vuota è solo un esempio ("per esempio mail.tuosito.it"): non è scritto, non si salva;
+- **Scegli file** è un pulsante vero: accanto compare il nome del file scelto ("Nessun file selezionato" finché non ne
+  scegli uno). Le parole di questo pulsante le scrive il browser nella sua lingua: in un browser in inglese leggi
+  **Choose File** e "No file chosen", come nelle schermate di questo manuale;
+- un aiuto lungo sta in una riga sottolineata che si apre con un clic ("Come funziona..."): aprila quando ti serve;
+- il pulsante pieno del colore d'accento è l'azione principale del riquadro; quelli con il solo bordo sono secondari.
+
+### Le conferme
+
+Prima di un'azione che non si torna indietro facilmente (eliminare, togliere, ripristinare, cambiare il tipo di sito)
+il pannello chiede conferma con una **finestra** al centro della pagina.
+
+![La finestra di conferma](immagini/manuale-uso/01-conferma.jpg)
+
+1. **La domanda** dice cosa succede se confermi.
+2. **Annulla** chiude la finestra e non cambia niente. Anche il tasto **Esc** o un clic fuori dalla finestra annullano.
+3. **Il pulsante che conferma** ripete il nome dell'azione che hai premuto ("Elimina", "Rimuovi", "Usa questo tema"). È
+   **rosso** quando l'azione cancella o toglie qualcosa: in quel caso il cursore parte su Annulla, per sicurezza.
+
+### Al telefono
+
+Il pannello si usa anche dal telefono. Il menu si apre con il pulsante **☰** in alto a sinistra. Le tabelle (Articoli,
+Pagine, Utenti...) diventano **schede**, una per riga, con il nome di ogni colonna sopra il suo valore: niente da far
+scorrere di lato.
+
 **Checklist**
 
 - [ ] Entro nel pannello con il mio nome utente e la mia password.
@@ -105,6 +142,8 @@ Vale solo per te: ogni utente sceglie il suo, e il sito non cambia.
 
 - *Il pannello appare senza colori, solo testo.* Hai aperto un indirizzo con un pezzo in più dopo il nome della pagina
   (per esempio `/admin/index.php/qualcosa`). Torna a `/admin/`.
+- *"Nome utente o password non corretti. Controlla le maiuscole e riprova."* Il pannello non dice quale dei due è
+  sbagliato, apposta. Controlla il blocco delle maiuscole; se non ricordi la password, usa **Password dimenticata?**.
 - *"Troppi tentativi: riprova fra qualche minuto".* Aspetta il tempo indicato. Se sei sicuro della password, controlla
   che il blocco delle maiuscole sia spento.
 - *Dopo un aggiornamento il pannello ha i colori di prima.* Il browser ricorda la versione vecchia: ricarica la pagina
@@ -120,14 +159,18 @@ non lo dichiari definitivo puoi provarli tutti, con un clic, e vedere quale ti s
 
 ![Il riquadro del tipo di sito, sulla dashboard](immagini/manuale-uso/02-tipo-sito.jpg)
 
+Il riquadro **Stai provando il sito ...** è aperto la prima volta che entri nella dashboard; dalle volte dopo è chiuso
+in una riga, per lasciare spazio al resto. Si apre con un clic sul titolo (o su **Apri per cambiare tipo di sito o
+tenerlo così**). Il link **Vai al riquadro** dei Primi passi lo apre da solo.
+
 **Esempio.** Studio Prova è partito come **Attività** (la scheda azzurra, "In prova adesso"). Vogliamo vedere come
 starebbe da Blog.
 
-1. Fai clic sulla scheda **Blog**. Il pannello chiede conferma: premi **OK**. Prima di cambiare fa da solo una copia
+1. Fai clic sulla scheda **Blog**. Il pannello chiede conferma nella sua finestra: premi **Conferma**. Prima di cambiare fa da solo una copia
    del sito (la ritrovi in Impostazioni > Copia del sito), poi cambia le pagine, il menu e i testi d'esempio che il kit
    aveva preparato e che **non hai toccato**. Quello che hai scritto o cambiato tu resta dov'è, e il riquadro ti dice
    cosa è rimasto com'era.
-2. Quando il sito ti piace, premi **Definitivo** e conferma. Il riquadro sparisce e il tipo di sito non si cambia più
+2. Quando il sito ti piace, premi **Definitivo** e conferma con **Definitivo** nella finestra. Il riquadro sparisce e il tipo di sito non si cambia più
    da qui: da quel momento ogni modifica la fai con l'editor, pagina per pagina.
 
 Apri il sito (Vedi sito) dopo ogni cambio: è il modo più veloce per decidere.
@@ -139,6 +182,7 @@ Apri il sito (Vedi sito) dopo ogni cambio: è il modo più veloce per decidere.
 
 **Se qualcosa non va**
 
+- *Vedo solo una riga "Stai provando il sito".* È il riquadro chiuso: fai clic sul titolo per aprirlo.
 - *Non vedo il riquadro.* Compare solo sulle installazioni nuove (dalla 1.4.0) e solo all'amministratore. Se il sito è
   stato aggiornato da una versione più vecchia, o se hai già premuto Definitivo, il riquadro non c'è.
 - *Ho cambiato tipo e una pagina che avevo ritoccato è rimasta quella vecchia.* È voluto: quello che hai cambiato tu
@@ -169,7 +213,7 @@ Lo trovi in due posti: nell'installatore, al passo 4, è la carta **Su misura**;
 4. **Quali pagine vuoi?** Spunta quelle che servono: qui aggiungiamo **Domande frequenti**. La home c'è sempre. Con
    **Una pagina per ogni servizio** ogni servizio ha la sua pagina, sotto Servizi nel menu.
 5. Premi **Componi il sito su misura** e conferma. Come per gli altri cambi, prima il pannello fa una copia del sito.
-   Nell'installatore il pulsante è **Installa adesso**.
+   Nell'installatore, con la carta Su misura, il pulsante dice **Avanti: le quattro domande**.
 
 ![La home di un sito su misura appena composto](immagini/manuale-uso/02-su-misura-home.jpg)
 
@@ -311,6 +355,9 @@ scritto in ogni articolo: lo prepari una volta sola con **Aggiungi sempre alla f
   redirect al nuovo, e i link già condivisi continuano a funzionare.
 - *Ho fatto modifiche all'articolo già online, nell'editor, e sul sito non si vedono.* Nell'editor hai premuto Salva
   bozza: per mandarle online premi **Pubblica** nell'editor.
+- *In Bozze ci sono dei "Nuovo articolo" vuoti.* **+ Articolo** crea subito la bozza; se l'hai aperta e chiusa senza
+  scrivere niente, resta lì vuota. Non serve cancellarla: il giro del mattino del cron (capitolo 26) la mette nel cestino
+  dopo un giorno. Una bozza in cui hai scritto qualcosa, o a cui hai cambiato il titolo, non la tocca mai.
 
 ---
 
@@ -331,6 +378,13 @@ Scrivi l'articolo come nel capitolo 4. Poi, nella scheda, riquadro **Pubblica**:
    **Programmato**.
 
 ![L'elenco degli articoli, con quello programmato](immagini/manuale-uso/05-elenco.jpg)
+
+Nell'elenco, la colonna **Parole e parola chiave** dice quante parole ha il testo e quanto spesso compaiono la parola
+chiave principale e le correlate (la scegli nella scheda, riquadro SEO; passa il mouse sul titolo della colonna per la
+spiegazione). Un articolo senza parola chiave dice **nessuna parola chiave**. Il filtro **Pillar e cluster** compare solo
+quando hai segnato almeno un articolo come pillar.
+
+Al telefono l'elenco diventa una serie di schede, una per articolo, con il nome di ogni colonna sopra il suo valore.
 
 Sulla dashboard, nel riquadro **Contenuti**, la voce **Prossime uscite** ti ricorda cosa sta per uscire e quando.
 
@@ -505,6 +559,18 @@ nell'editor visuale** nella scheda di ogni contenuto.
 Accanto a **Annulla** c'è lo stato della pagina: "Tutto pubblicato", "Modifiche non salvate", "Bozza salvata, non
 ancora pubblicata".
 
+Sotto il nome della pagina, in alto, compare **Manca il titolo principale (H1)** quando la pagina non ha un Titolo di
+livello H1: Google lo usa per capire di cosa parla la pagina. Aggiungi un widget **Titolo** e scegli il livello H1. Negli
+header, nei footer e nel riquadro in fondo agli articoli l'avviso non c'è (non devono avere un H1): sotto il nome trovi
+"Header: la testata delle pagine", "Footer: il piede delle pagine", "Riquadro in fondo a ogni articolo".
+
+**Con la tastiera.** Le quattro linguette si scelgono con le **frecce** sinistra e destra (Inizio e Fine portano alla
+prima e all'ultima). Nella linguetta **Widget** ogni widget si raggiunge con **Tab** e si aggiunge con **Invio** o
+**Spazio**, come con il clic. L'elemento che ha il fuoco ha sempre un contorno colorato.
+
+**Al telefono.** L'editor visuale si usa da computer o tablet: sul telefono la tela non ci sta. Aprendolo da un telefono
+compare un riquadro che lo dice e dà il link alla **scheda** della pagina, da cui puoi cambiare titolo e testi.
+
 ### Sezioni, colonne, widget
 
 Ogni pagina è una pila di **sezioni** (le fasce orizzontali). Ogni sezione ha da una a quattro **colonne**. Dentro le
@@ -512,7 +578,8 @@ colonne ci sono i **widget**: titoli, testi, immagini, pulsanti, gallerie, prezz
 molti altri, 92 in tutto.
 
 - Per **aggiungere un widget**: fai clic su un elemento della tela, poi sul widget nella linguetta **Widget**: entra
-  sotto l'elemento scelto. Oppure trascinalo dove vuoi.
+  sotto l'elemento scelto. Oppure trascinalo dove vuoi. In cima alla linguetta, **Cerca un widget...** trova un widget
+  per nome; se nessun widget ha quel nome, la linguetta lo dice ("Nessun widget con questo nome").
 - Per **aggiungere una sezione**: premi il **+** viola in fondo a una sezione; la nuova nasce sotto. Oppure, nel
   Navigatore, **+ Aggiungi una sezione**.
 - Per **spostare** una sezione trascinala dalla sua maniglia **⋮⋮ Sezione**; un widget lo trascini direttamente.
@@ -528,6 +595,15 @@ Doppio clic su un elemento, e a sinistra si apre **Modifica**.
    per misura dello schermo, classi CSS.
 2. **Sposta su, sposta giù, duplica, elimina** l'elemento scelto. Gli stessi pulsanti compaiono anche sulla tela,
    sopra l'elemento.
+
+**"come il sito".** Molte misure (dimensione del testo, interlinea, spazi, livello...) hanno una casella e un cursore.
+Finché non scegli un valore, la casella dice **come il sito** e il cursore è grigio: vuol dire che vale quello deciso in
+Stile del sito (capitolo 13), non zero. Appena sposti il cursore o scrivi un numero, il valore diventa tuo.
+
+**Solo tablet, solo telefono.** Accanto al nome di alcune impostazioni c'è il **pallino del monitor**: dice per quale
+misura stai scrivendo, e ogni clic passa alla misura dopo (computer, tablet, telefono, come i pulsanti in alto). Quando un valore vale solo
+per il tablet o solo per il telefono, accanto al pallino compare la scritta **solo tablet** o **solo telefono**: sul
+computer quella misura resta com'era.
 
 ### Un link a una pagina del sito, senza scriverlo
 
@@ -1025,6 +1101,16 @@ In alto, **Cronologia** mostra i salvataggi di prima; **Ripristina predefiniti**
 **Se qualcosa non va**
 
 - *Ho cambiato tutto e non mi piace più.* Cronologia, oppure Editor > Versioni: lo stile di prima c'è.
+- *Ho messo il logo nuovo, ho salvato, ma sul sito c'è ancora quello vecchio.* Succede quando nell'header (o nel footer)
+  il widget **Logo del sito** ha un'immagine sua: quella vince sul logo di Identità del sito. Lo Stile del sito te lo
+  dice: sotto Identità compare un riquadro giallo **Il logo scelto qui non compare in: Header "..."**, con il link al
+  modello. Per sistemare:
+  1. fai clic sul nome del modello nel riquadro giallo: si apre nell'editor;
+  2. fai clic sul logo nella tela;
+  3. nella scheda **Contenuto**, accanto a **Immagine del logo**, premi la **X** per svuotarla;
+  4. premi **Pubblica** e conferma.
+  Da quel momento il widget usa il logo di Identità del sito, e il riquadro giallo sparisce. Se invece vuoi proprio un logo
+  diverso in quell'header, lascia l'immagine nel widget: il riquadro giallo te lo ricorda soltanto.
 
 ---
 
@@ -1590,8 +1676,32 @@ di quante volte sono stati scaricati (le persone sì, i robot no). Si apre da **
 
 ![Caricare un file](immagini/manuale-uso/20-carica.jpg)
 
-1. **Scegli file**: PDF, ZIP, ePub, documenti Word, Excel, PowerPoint e LibreOffice.
+1. **Scegli file**: PDF, ZIP, ePub, documenti Word, Excel, PowerPoint e LibreOffice. Accanto al pulsante compare il nome
+   del file scelto.
 2. **Titolo**, una riga di **Descrizione** e la **Versione**, poi **Carica**.
+
+Sotto il modulo, **Come funzionano indirizzi, versioni e file riservati** si apre con un clic e spiega le tre cose qui
+sotto. L'ultima riga del riquadro dice fino a quanto pesa un file che il tuo server accetta, per esempio **2M**.
+
+### Se il file è troppo grande
+
+Ogni hosting accetta file fino a un certo peso. Se scegli un file più pesante, il pannello te lo dice **subito, sotto il
+pulsante Scegli file**, prima di caricarlo: "*listino.pdf pesa 12,4 MB, ma il server accetta file fino a 2 MB...*". Il
+pulsante Carica non parte, così non aspetti un caricamento che il server rifiuterebbe. (Se il file arriva lo stesso al
+server, per esempio da un browser vecchio, in cima alla pagina compare lo stesso messaggio in rosso.)
+
+Hai due strade:
+
+- **alzare il limite** (la più comoda, se carichi spesso file grandi). In cPanel:
+  1. apri **MultiPHP INI Editor** (sezione Software);
+  2. nella scheda **Basic Mode** scegli dalla tendina **il dominio del sito** (il limite vale per un dominio alla volta:
+     se hai più siti, ripeti per ognuno);
+  3. alza **upload_max_filesize** (il peso di un file) e **post_max_size** (tutto quello che parte in un invio: metti lo
+     stesso numero o poco di più), per esempio **64M** e **64M**;
+  4. premi **Apply** (Applica). Torna in Download: l'ultima riga del riquadro dice il limite nuovo.
+  Se il tuo hosting non ha cPanel, chiedi all'assistenza di alzare `upload_max_filesize` e `post_max_size`;
+- **caricarlo a mano**: metti il file nella cartella `uploads/scaricabili/` del sito con il gestore dei file
+  dell'hosting. Compare da solo nell'elenco dei Download.
 
 ![L'elenco dei file](immagini/manuale-uso/20-elenco.jpg)
 
@@ -1622,14 +1732,30 @@ pubblico**): il suo indirizzo pubblico smette subito di funzionare.
 1. Il segno **Riservato** accanto al titolo.
 2. **Chi l'ha ricevuto**: aprilo per vedere a chi è arrivato il link, quando, e quante volte l'ha usato.
 
-Il link personale vale 30 giorni. Lo cambi nella casella **Il link personale vale ... giorni**, sotto il modulo di
-caricamento; i link già mandati restano come erano. Un link scaduto apre una pagina che spiega cosa fare.
+Il link personale vale 30 giorni. Lo cambi nel riquadro **Link dei file riservati**, sotto quello di caricamento:
+
+![Il riquadro Link dei file riservati](immagini/manuale-uso/22-giorni.jpg)
+
+1. Scrivi i giorni in **Il link personale vale (giorni)**.
+2. Premi **Salva i giorni**.
+
+Vale per i link che partono da adesso, per tutti i file riservati; i link già mandati restano come erano. Il riquadro ha
+un pulsante suo apposta: **Salva i giorni** non carica nessun file. Per caricare usa **Carica**, nel riquadro sopra. Un
+link scaduto apre una pagina che spiega cosa fare.
 
 **Checklist**
 
 - [ ] Ogni file ha un titolo che dice cosa contiene.
 - [ ] Ho provato a scaricarlo dal sito.
 - [ ] I file da dare solo a chi si iscrive sono **Riservati**, e il loro indirizzo `/scarica/...` non funziona.
+- [ ] Conosco il limite di peso del mio server (l'ultima riga del riquadro Carica un file) e, se serve, l'ho alzato.
+
+**Se qualcosa non va**
+
+- *Sotto Scegli file compare "... pesa ..., ma il server accetta file fino a ...".* Il file è più pesante del limite del
+  server: alza il limite (sopra, "Se il file è troppo grande") o caricalo a mano in `uploads/scaricabili/`.
+- *Ho cambiato i giorni e il file che avevo scelto non c'è.* Nelle versioni prima della 2.6.0 i giorni stavano nello
+  stesso riquadro del caricamento. Ora hanno un riquadro loro: scegli di nuovo il file e premi **Carica**.
 
 ---
 
@@ -1659,6 +1785,23 @@ Nella scheda di ogni articolo e di ogni pagina (e nelle Impostazioni dell'editor
 **Panoramica** mette in fila tutti i contenuti pubblicati con il loro punteggio: parti dai rossi. Le altre schede
 collegano Google Search Console e IndexNow, controllano copertura e prestazioni, tengono le impostazioni globali e i
 dati strutturati.
+
+### Collegare Google Search Console
+
+In **SEO e AEO > Motori di ricerca** il riquadro **Google: service account per Search Console** collega il pannello a
+Search Console, così le schede Copertura e Prestazioni mostrano i dati di Google.
+
+![Il riquadro del service account](immagini/manuale-uso/23-service-account.jpg)
+
+1. Finché il collegamento non c'è, il riquadro **Come si collega, passo per passo** è aperto: sei passi da fare in Google
+   Cloud e in Search Console, con i link alle pagine giuste.
+2. Al passo 4 incolli il contenuto del file JSON nella casella **Chiave JSON del service account** e premi **Salva la
+   chiave**.
+3. Il riquadro mostra l'email del service account: aggiungila fra gli utenti di Search Console (passo 5) e premi **Prova
+   il collegamento**.
+
+Dopo, il riquadro dei passi si chiude in una riga, **Rifai il collegamento o sostituisci la chiave**: si apre con un clic
+se un giorno devi cambiare la chiave. Sotto, **La proprietà da leggere** dice quale proprietà di Search Console usare.
 
 ### L'immagine per i social
 
@@ -1713,6 +1856,10 @@ Schema e AEO) si scelgono così.
 Poi la **password** (almeno 12 caratteri, due volte) e **Aggiungi**. Dai la password alla persona di persona, non per
 email; al primo accesso potrà cambiarla da **Password**.
 
+Nell'elenco, **Ultimo accesso** lo dice in parole: "oggi alle 9:12", "ieri alle 18:40", "lunedì alle 10:05", poi la data.
+**esci da tutti**, in rosso nella colonna Sessioni, chiude tutte le sessioni aperte di quell'utente (dopo una conferma):
+usalo se una persona ha perso il telefono o il computer con il pannello aperto.
+
 **Checklist**
 
 - [ ] Ogni persona ha il suo utente (mai password condivise).
@@ -1732,6 +1879,9 @@ Perché arrivino (e non finiscano fra lo spam) conviene farle partire da una cas
 
 I dati sono quelli della casella email che spedisce: li trovi nel pannello del tuo hosting (in cPanel: **Account email**,
 poi **Connetti dispositivi**).
+
+Configurazione email ha solo la posta. L'indirizzo del sito e la frase in fondo al sito stanno nella scheda accanto,
+**Sito** (capitolo 15).
 
 1. **Server SMTP** (per esempio `mail.tuosito.it`), **Porta** e **Sicurezza** (465 con SSL, oppure 587 con STARTTLS), **Utente**
    (l'indirizzo email completo), **Password della casella**, **Indirizzo e nome del mittente**.
@@ -1956,7 +2106,9 @@ che non servono, controlla quello che entra. **Impostazioni > Sicurezza** ti fa 
 
 ![La pagina Sicurezza](immagini/manuale-uso/25-sicurezza.jpg)
 
-**Verde**: a posto. **Giallo**: funziona, ma si può stringere. **Rosso**: da sistemare. **Grigio**: informazione.
+**Verde** con la spunta: a posto. **Giallo** con **!**: funziona, ma si può stringere. **Rosso** con la **x**: da
+sistemare. **Grigio** con la **i**: informazione. Il segno dentro il pallino dice la stessa cosa del colore, così si legge
+anche quando due colori si somigliano.
 Accanto a ogni voce c'è cosa fare. Le altre schede: **Impostazioni** (regole di accesso, la finestra di un'ora per i file
 PHP), **Registro** (accessi, blocchi, modifiche), **Sessioni e utenti**, **Rapporti CSP**.
 
@@ -2233,7 +2385,9 @@ La pagina si ricarica:
 4. Nel menu a sinistra c'è la voce nuova, **Prenotazioni**, con le sue pagine.
 
 Un addon acceso aggiunge anche i suoi **widget** all'editor (per esempio **Prenota**, nel gruppo "Dal sito") e, quando
-serve, i suoi indirizzi al sito (per esempio `/negozio/` o `/corsi/`).
+serve, i suoi indirizzi al sito (per esempio `/negozio/` o `/corsi/`). Se metti in una pagina un widget di un addon che
+non ha ancora niente da mostrare (Eventi senza eventi, Elenco corsi senza corsi, Prodotti senza prodotti), nell'editor
+compare un riquadro tratteggiato che dice dove aggiungerli; chi visita il sito quel riquadro non lo vede mai.
 
 Dove compare la voce di ogni addon nel menu:
 
@@ -2453,7 +2607,7 @@ che hai scritto restano: cambi l'ora e premi di nuovo **Salva la prenotazione**.
 ![L'agenda della settimana](immagini/manuale-uso/33-agenda.jpg)
 
 1. Ogni prenotazione, con ora, nome, servizio e persona. Un clic la apre.
-2. **‹ Prima**, **Oggi** e **Dopo ›** cambiano settimana; **Giorno** mostra un giorno solo, con telefono, email e note.
+2. **‹ Settimana prima**, **Oggi** e **Settimana dopo ›** cambiano settimana; **Giorno** mostra un giorno solo, con telefono, email e note (lì i pulsanti diventano **Giorno prima** e **Giorno dopo**).
 
 **Prenotazioni > Prenotazioni** è l'elenco, con le linguette **Prossime**, **Da confermare**, **Passate**,
 **Annullate**, **Tutte** e la ricerca per nome, email o telefono. Un clic apre la scheda:
@@ -3361,7 +3515,9 @@ Accendi l'addon (capitolo 32): in **Impostazioni**, subito sotto Copia del sito,
 5. **Quante copie tenere sulla destinazione**: 14. Le più vecchie si cancellano da sole; gli altri file della cartella
    mai.
 6. Spunta **Manda una copia ogni notte**. **Tieni la copia anche su questo server** la lascia anche in Copia del sito.
-7. Premi **Salva la destinazione**. Compare "Destinazione salvata. Adesso premi Prova la connessione".
+7. Premi **Salva la destinazione**, l'unico pulsante di salvataggio, in fondo dopo tutti i campi. Compare "Destinazione
+   salvata. Adesso premi Prova la connessione". (Con Google Drive o Dropbox ancora da collegare, lo stesso pulsante si
+   chiama **Salva e collega con ...**, più sotto.)
 
 La password si salva **cifrata** e non si mostra più: il campo resta vuoto, con scritto "Salvata: lasciala vuota per non
 cambiarla". Per cambiarla scrivi quella nuova.
@@ -3369,7 +3525,8 @@ cambiarla". Per cambiarla scrivi quella nuova.
 ### Provare e mandare la prima copia
 
 Nel riquadro **Adesso** premi **Prova la connessione**: il sito entra, apre la cartella, scrive un file piccolo e lo
-cancella.
+cancella. Finché la destinazione non è salvata (o, per Google Drive e Dropbox, collegata), **Prova la connessione** e
+**Manda una copia adesso** sono spenti, più chiari, e una frase sotto dice perché.
 
 ![La prova riuscita](immagini/manuale-uso/40-prova.jpg)
 
@@ -3414,7 +3571,7 @@ dove vuoi le copie.
     del pannello.
 11. Scrivi la **Cartella sulla destinazione** (per esempio "copie-del-sito"), **Quante copie tenere sulla destinazione**
     (per esempio 7) e spunta **Manda una copia ogni notte**.
-12. Premi **Salva e collega con Google Drive**. Si apre la pagina di Google.
+12. Premi **Salva e collega con Google Drive**, in fondo dopo tutti i campi. Si apre la pagina di Google.
 13. Scegli il tuo account e premi **Continua** (o **Consenti**). Se Google mostra un avviso sull'app, è la tua: premi
     **Avanzate** e poi **Vai a ...**.
 14. Torni da solo nel pannello. Compare "Collegato a Google Drive come ...". Il riquadro dice "Collegato come ... dal
@@ -3456,7 +3613,7 @@ Ti serve il tuo account Dropbox.
 
 **Scollegare.** Nel riquadro **Adesso** premi **Scollega Google Drive** (o **Scollega Dropbox**) e conferma. Il sito
 chiede al servizio di togliere il permesso e lo dimentica; l'invio di ogni notte si spegne. Le copie già mandate restano
-nel tuo Drive o Dropbox. Per ricollegare basta **Salva e collega di nuovo** (ID e segreto dell'app restano salvati).
+nel tuo Drive o Dropbox. Per ricollegare premi di nuovo **Salva e collega con ...**, in fondo ai campi (ID e segreto dell'app restano salvati).
 
 **Se qualcosa non va con Google Drive o Dropbox**
 
@@ -3468,7 +3625,7 @@ nel tuo Drive o Dropbox. Per ricollegare basta **Salva e collega di nuovo** (ID 
 | "Questa risposta non è partita da qui, oppure è già stata usata" | Sono passati più di 15 minuti, o hai ricaricato la pagina: premi di nuovo Salva e collega |
 | "Il collegamento con ... non vale più" (anche per email, di notte) | Il permesso è stato tolto, o l'app Google è rimasta "in test": pubblicala e premi Salva e collega |
 | "La Google Drive API non è abilitata" | Passo 6 di Google Drive |
-| "All'app di Dropbox manca un permesso" | Passo 5 di Dropbox, poi Salva e collega di nuovo |
+| "All'app di Dropbox manca un permesso" | Passo 5 di Dropbox, poi **Dai di nuovo il permesso a Dropbox** (o **Salva e collega con Dropbox**, se non è più collegato) |
 | "... è pieno" | Libera spazio o tieni meno copie |
 
 ### Il registro
@@ -3548,6 +3705,11 @@ sicurezza, WebDAV su https.
 | Stamattina non è arrivata l'email "Oggi sul sito" | Quel giorno non usciva niente, o il cron non gira, o manca l'indirizzo degli avvisi (capitolo 21) |
 | Ho fatto il riquadro in fondo agli articoli ma sul sito non c'è | Non l'hai pubblicato (nell'editor premi **Pubblica**) o è spento: Articoli > Aggiungi sempre alla fine, **Accendi** (capitolo 16) |
 | Un articolo programmato non è uscito | Controlla data e ora nella scheda; controlla che il cron giri (Log cron) |
+| Ho cambiato il logo in Stile del sito ma sul sito c'è ancora quello vecchio | Il widget Logo del sito dell'header ha un'immagine sua: segui il riquadro giallo sotto Identità (capitolo 13) |
+| "... pesa ..., ma il server accetta file fino a ..." | Il file supera il limite dell'hosting: in cPanel, MultiPHP INI Editor, alza upload_max_filesize e post_max_size per il dominio del sito (capitolo 22) |
+| Nella dashboard non vedo più le carte del tipo di sito | Il riquadro è chiuso dopo la prima visita: fai clic su "Stai provando il sito" (capitolo 2) |
+| Non trovo dove cambiare l'indirizzo del sito o la frase in fondo | Impostazioni > Sito (capitolo 15) |
+| Una ricerca sul sito non trova niente | Il sito lo dice e propone una parola più corta e le pagine principali del menu. Prova con una parola sola, senza articoli |
 | Le email non arrivano | Configurazione email, email di prova; guarda lo spam. Se finiscono lì: Impostazioni > Consegna delle email (capitolo 25) |
 | "Il file supera il limite di caricamento del server" | File troppo grande per l'hosting: rimpiccioliscilo o chiedi all'hosting di alzare il limite |
 | Una pagina è sparita dal menu | Editor > Menu di navigazione: rimettila e premi Salva il menu |
