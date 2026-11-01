@@ -7,6 +7,7 @@
  *   semina                   contatti, liste, attributo CITTA, segmenti e lista dei test della prova (@cr-prova.it); stampa gli id
  *   pulisci                  toglie tutto quello che ha seminato la prova (contatti @cr-prova.it, liste e campagne "CR ")
  *   giro                     un giro della newsletter (come il cron), righe di log
+ *   smtp <porta>             la posta verso il server finto su quella porta, limite orario largo
  *   html <campagna> <contatto>  l'email della campagna per quel contatto, come parte (con il tracciamento): {oggetto, html, intest}
  *   conta <campagna>         quanti contatti riceverebbero la campagna adesso
  *   uscita <contatto> [campagna]  il link di uscita (firmato con la campagna)
@@ -73,6 +74,12 @@ case 'semina':
     break;
 case 'giro':
     $out = newsletter_invia_giro();
+    break;
+case 'smtp':
+    // La posta verso il server finto (porta), mittente sito@esempio.it, limite orario largo.
+    save_setting('posta_smtp', json_encode(['host' => '127.0.0.1', 'porta' => (int)$arg[0], 'sicurezza' => 'nessuna', 'utente' => '', 'password' => '', 'mittente' => 'sito@esempio.it', 'nome' => 'Studio Prova']));
+    save_setting('newsletter_config', json_encode(['per_ora' => 2000, 'per_giorno' => 0, 'rispondi_a' => '']));
+    $out = true;
     break;
 case 'html':
     $c = newsletter_campagna((int)$arg[0]);

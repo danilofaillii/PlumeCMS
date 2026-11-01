@@ -1548,6 +1548,146 @@ echo json_encode($o);
     if (vid) await admin.ctx.request.post(PC, { headers: ORIG, form: { _csrf: await tokenDi(admin.p, PC), azione: 'vista_elimina', vista_id: vid }, maxRedirects: 0 });
   }
 
+  // === 33. (2.11.0) Campagne a riepilogo, pagina di disiscrizione con il questionario, centro preferenze. Le azioni nuove
+  // delle campagne: solo l'amministratore, solo con il token e dal pannello; destinatari manipolati (id con SQL, liste e
+  // segmenti che non esistono) non entrano; le pagine pubbliche valgono solo con la firma del contatto giusto, mostrano e
+  // cambiano solo le liste pubbliche e gli attributi consentiti, il questionario salva testo e mai HTML; la versione web
+  // si apre solo firmata, senza eseguire niente. Serve CMS_DIR (prove/campagne-cli.php legge e scrive il database).
+  {
+    const path = require('path'), { execFileSync } = require('child_process');
+    const DIR33 = process.env.CMS_DIR || '';
+    const PN = ADMIN + '/newsletter.php', PCm = ADMIN + '/newsletter-campagna.php';
+    const ORIG = { 'Origin': BASE.replace(/(https?:\/\/[^/]+).*/, '$1') };
+    const SITO = BASE; // il sito pubblico sta nella base
+    if (!DIR33) ok('2.11.0: (senza CMS_DIR le prove delle campagne e delle pagine pubbliche sono saltate)', true);
+    else {
+      const cli = (...a) => JSON.parse(execFileSync('php', [path.join(__dirname, '..', 'prove', 'campagne-cli.php'), DIR33, ...a.map(String)], { encoding: 'utf8' }).trim().split('\n').pop());
+      const q = (s) => cli('sql', s);
+      const uno = (s) => { const r = q(s); return r && r[0] ? Object.values(r[0])[0] : null; };
+      // Dati: due contatti, una lista pubblica e una privata, una campagna in bozza e una inviata
+      q("DELETE FROM {p}newsletter_iscritti WHERE email LIKE 'sic%@sic33.it'");
+      q("DELETE FROM {p}newsletter_liste WHERE nome IN ('Sic33 pubblica', 'Sic33 privata')");
+      q("DELETE FROM {p}newsletter_campagne WHERE nome LIKE 'Sic33%'");
+      q("INSERT INTO {p}newsletter_liste (nome, descrizione, creato, pubblica) VALUES ('Sic33 pubblica', '', NOW(), 1), ('Sic33 privata', '', NOW(), 0)");
+      const LP = +uno("SELECT id FROM {p}newsletter_liste WHERE nome = 'Sic33 pubblica'"), LR = +uno("SELECT id FROM {p}newsletter_liste WHERE nome = 'Sic33 privata'");
+      q("INSERT INTO {p}newsletter_iscritti (email, nome, stato, fonte, creato, aggiornato) VALUES ('sic1@sic33.it', 'Uno', 'attivo', 'manuale', NOW(), NOW()), ('sic2@sic33.it', 'Due', 'attivo', 'manuale', NOW(), NOW())");
+      const I1 = +uno("SELECT id FROM {p}newsletter_iscritti WHERE email = 'sic1@sic33.it'"), I2 = +uno("SELECT id FROM {p}newsletter_iscritti WHERE email = 'sic2@sic33.it'");
+      q(`INSERT INTO {p}newsletter_iscritti_liste (iscritto_id, lista_id, aggiunto) VALUES (${I1}, ${LP}, NOW()), (${I2}, ${LP}, NOW())`);
+      q(`INSERT INTO {p}newsletter_campagne (nome, oggetto, corpo, liste, stato, link_web, link_preferenze, creato, aggiornato) VALUES ('Sic33 bozza', 'Sic33', '<p>x</p>', '${LP}', 'bozza', 1, 1, NOW(), NOW()), ('Sic33 inviata', 'Sic33', '<p>x</p>', '${LP}', 'inviata', 1, 1, NOW(), NOW())`);
+      const CB = +uno("SELECT id FROM {p}newsletter_campagne WHERE nome = 'Sic33 bozza'"), CI = +uno("SELECT id FROM {p}newsletter_campagne WHERE nome = 'Sic33 inviata'");
+      const quante = () => +uno("SELECT COUNT(*) FROM {p}newsletter_campagne WHERE nome LIKE 'Sic33%' OR nome LIKE '%Sic33%'");
+      const n0 = quante();
+      // Senza login
+      const anon = await browser.newContext();
+      const a1 = await anon.request.get(PCm + '?id=' + CB, { maxRedirects: 0 });
+      const a2 = await anon.request.post(PN, { form: { azione: 'nuova', nome: 'Sic33 anonimo' }, maxRedirects: 0 });
+      const a3 = await anon.request.post(PCm + '?id=' + CB, { form: { azione: 'sezione', sez: 'oggetto', oggetto: 'Sic33 da fuori' }, maxRedirects: 0 });
+      ok('2.11.0: senza login il riepilogo non si apre, niente campagna creata né cambiata', a1.status() !== 200 && quante() === n0 && uno(`SELECT oggetto FROM {p}newsletter_campagne WHERE id = ${CB}`) === 'Sic33', [a1.status(), a2.status(), a3.status()]);
+      await anon.close();
+      // Token e origine
+      const tk = await tokenDi(admin.p, PCm + '?id=' + CB);
+      const s1 = await admin.ctx.request.post(PN, { headers: ORIG, form: { azione: 'nuova', nome: 'Sic33 senza token' }, maxRedirects: 0 });
+      const s2 = await admin.ctx.request.post(PN, { headers: { 'Origin': 'https://evil.example' }, form: { _csrf: tk, azione: 'nuova', nome: 'Sic33 da un altro sito' }, maxRedirects: 0 });
+      const s3 = await admin.ctx.request.post(PCm + '?id=' + CB, { headers: ORIG, form: { azione: 'invia', quando: 'subito' }, maxRedirects: 0 });
+      const s4 = await admin.ctx.request.post(PN, { headers: ORIG, form: { azione: 'elimina', id: String(CB) }, maxRedirects: 0 });
+      ok('2.11.0: Crea, Invia, Elimina senza token o da un altro sito: 403 e niente fatto', [s1, s2, s3, s4].every(r => r.status() === 403) && quante() === n0 && uno(`SELECT stato FROM {p}newsletter_campagne WHERE id = ${CB}`) === 'bozza', [s1.status(), s2.status(), s3.status(), s4.status()]);
+      // Destinatari manipolati
+      const dm = await admin.ctx.request.post(PCm + '?id=' + CB, { headers: ORIG, form: { _csrf: tk, azione: 'sezione', sez: 'destinatari', 'liste[]': ['1) OR (1=1', String(LP), '999999', String(LR) + ' OR 1'], 'segmenti[]': ['999999', "1' OR '1'='1"], 'escludi_liste[]': ['-5', 'abc'], 'escludi_segmenti[]': ['0x10'], non_coinvolti: '1; DROP TABLE x' }, maxRedirects: 0 });
+      const r = q(`SELECT liste, segmenti, escludi_liste, escludi_segmenti, non_coinvolti FROM {p}newsletter_campagne WHERE id = ${CB}`)[0];
+      const soloNumeri = (s) => s === '' || /^\d+(,\d+)*$/.test(s);
+      ok('2.11.0: destinatari manipolati: entrano solo id veri di liste e segmenti, nient\'altro', dm.status() === 302 && soloNumeri(r.liste) && soloNumeri(r.segmenti) && soloNumeri(r.escludi_liste) && soloNumeri(r.escludi_segmenti) && !r.liste.split(',').includes('999999') && r.segmenti === '' && ['0', '1'].includes(String(r.non_coinvolti)), r);
+      const conta = cli('conta', CB);
+      ok('2.11.0: il conteggio dei destinatari con quei valori resta un numero (niente errore del database)', typeof conta === 'number', conta);
+      // Sezione inventata, lotti fuori misura, Rispondi a con a capo
+      const sx = await admin.ctx.request.post(PCm + '?id=' + CB, { headers: ORIG, form: { _csrf: tk, azione: 'sezione', sez: 'stato', stato: 'inviata' }, maxRedirects: 0 });
+      await admin.ctx.request.post(PCm + '?id=' + CB, { headers: ORIG, form: { _csrf: tk, azione: 'sezione', sez: 'impostazioni', rispondi_a: "a@b.it\r\nBcc: spia@cattivo.it", lotti_attivi: '1', lotti: '500', lotti_intervallo: '1' }, maxRedirects: 0 });
+      await admin.ctx.request.post(PCm + '?id=' + CB, { headers: ORIG, form: { _csrf: tk, azione: 'sezione', sez: 'impostazioni', rispondi_a: '', campo_a: "Nome\r\nBcc: spia@cattivo.it <x>", lotti_attivi: '' }, maxRedirects: 0 });
+      const ri = q(`SELECT stato, rispondi_a, lotti, campo_a FROM {p}newsletter_campagne WHERE id = ${CB}`)[0];
+      ok('2.11.0: sezione inventata ignorata; Rispondi a con un a capo rifiutato; lotti oltre 10 rifiutati; campo «A» senza a capo né < >', sx.status() === 302 && ri.stato === 'bozza' && ri.rispondi_a === '' && +ri.lotti === 1 && !/[\r\n<>]/.test(ri.campo_a), ri);
+      const h1 = cli('html', CB, I1);
+      ok('2.11.0: nell\'email il campo «A» non aggiunge intestazioni (niente Bcc)', !/\r\nBcc:/i.test(h1.intest) && !/^Bcc:/mi.test(h1.intest), h1.intest);
+      // Azioni sulle campagne che non si possono fare
+      const tkn = await tokenDi(admin.p, PN);
+      await admin.ctx.request.post(PN, { headers: ORIG, form: { _csrf: tkn, azione: 'elimina', id: String(CI) }, maxRedirects: 0 });
+      await admin.ctx.request.post(PN, { headers: ORIG, form: { _csrf: tkn, azione: 'archivia', id: String(CB) }, maxRedirects: 0 });
+      await admin.ctx.request.post(PN, { headers: ORIG, form: { _csrf: tkn, azione: 'rinvio', id: String(CB) }, maxRedirects: 0 });
+      await admin.ctx.request.post(PN, { headers: ORIG, form: { _csrf: tkn, azione: 'nuovi', id: String(CB) }, maxRedirects: 0 });
+      ok('2.11.0: non si elimina una inviata, non si archivia una bozza, non si rimanda né si manda ai nuovi una bozza', +uno(`SELECT COUNT(*) FROM {p}newsletter_campagne WHERE id = ${CI}`) === 1 && +uno(`SELECT archiviata FROM {p}newsletter_campagne WHERE id = ${CB}`) === 0 && quante() === n0);
+      // Nome con codice nell'elenco
+      await admin.ctx.request.post(PN, { headers: ORIG, form: { _csrf: tkn, azione: 'nuova', nome: 'Sic33 <script>alert(33)</script><img src=x onerror=alert(33)>' }, maxRedirects: 0 });
+      await admin.p.goto(PN, { waitUntil: 'networkidle' });
+      const hl = await admin.p.content();
+      ok('2.11.0: nome della campagna con codice: esce come testo nell\'elenco', !/<script>alert\(33\)|<img src=x onerror=alert\(33\)/.test(hl) && /&lt;script&gt;alert\(33\)/.test(hl));
+      // Redattore
+      if (red.dentro) {
+        const tr = await tokenDi(red.p, ADMIN + '/media.php');
+        const prima = JSON.stringify(q(`SELECT * FROM {p}newsletter_campagne WHERE id IN (${CB}, ${CI}) ORDER BY id`));
+        const rr = [];
+        rr.push(await red.ctx.request.get(PCm + '?id=' + CB, { maxRedirects: 0 }));
+        for (const f of [{ azione: 'nuova', nome: 'Sic33 dal redattore' }, { azione: 'duplica', id: String(CI), 'parti[]': 'oggetto' }, { azione: 'nuovi', id: String(CI) }, { azione: 'rinvio', id: String(CI) }, { azione: 'archivia', id: String(CI) }, { azione: 'annulla', id: String(CB) }, { azione: 'elimina', id: String(CB) }, { azione: 'pagine', 'pubbliche[]': String(LR) }, { azione: 'indirizzo', indirizzo: 'Sic33 dal redattore' }])
+          rr.push(await red.ctx.request.post(PN, { headers: ORIG, form: { _csrf: tr, ...f }, maxRedirects: 0 }));
+        for (const f of [{ azione: 'sezione', sez: 'oggetto', oggetto: 'Sic33 dal redattore' }, { azione: 'invia', quando: 'subito' }, { azione: 'prova', prova_a: 'red@sic33.it' }])
+          rr.push(await red.ctx.request.post(PCm + '?id=' + CB, { headers: ORIG, form: { _csrf: tr, ...f }, maxRedirects: 0 }));
+        ok('2.11.0: il redattore non apre il riepilogo e non fa nessuna delle azioni nuove (crea, duplica, nuovi, rinvio, archivia, annulla, elimina, impostazioni, sezioni, invio, prova)',
+          rr.every(x => [302, 403].includes(x.status())) && JSON.stringify(q(`SELECT * FROM {p}newsletter_campagne WHERE id IN (${CB}, ${CI}) ORDER BY id`)) === prima && quante() === n0 + 1 && +uno(`SELECT pubblica FROM {p}newsletter_liste WHERE id = ${LR}`) === 0 && !/Sic33/.test(uno("SELECT setting_value FROM {p}settings WHERE setting_key = 'newsletter_indirizzo'") || ''), rr.map(x => x.status()));
+      }
+      // ----- Pagine pubbliche
+      const pub = await browser.newContext();
+      const pref1 = cli('preferenze', I1), pref2 = cli('preferenze', I2);
+      const t1 = pref1.match(/t=([a-f0-9]+)/)[1];
+      const g1 = await pub.request.get(pref1.replace(/i=\d+/, 'i=' + I2));
+      const g2 = await pub.request.get(pref1.replace(/t=[a-f0-9]+/, 't=' + '0'.repeat(32)));
+      const g3 = await pub.request.get(pref1.replace(/t=[a-f0-9]+/, 't[]=x'));
+      ok('2.11.0: centro preferenze con la firma di un altro contatto, sbagliata o storta: link non valido, nessun dato mostrato', [g1, g2, g3].every(x => x.status() === 200) && !/sic2@sic33|sic1@sic33/.test((await g1.text()) + (await g2.text()) + (await g3.text())) && /non è valido/.test(await g1.text()));
+      const pp1 = await pub.request.post(pref1.replace(/i=\d+/, 'i=' + I2), { form: { azione: 'esci' }, maxRedirects: 0 });
+      ok('2.11.0: «Esci da tutto» con la firma di un altro contatto: non esce nessuno', pp1.status() === 200 && uno(`SELECT stato FROM {p}newsletter_iscritti WHERE id = ${I2}`) === 'attivo');
+      const pp2 = await pub.request.post(pref1, { form: { azione: 'salva', 'liste[]': [String(LP), String(LR), '1) OR (1=1'], 'a[EMAIL]': 'rubata@cattivo.it', 'a[NOME]': '<script>alert(33)</script>Uno', 'a[EXT_ID]': 'sic33', 'a[OPT_IN]': '1', 'a[COGNOME]': 'x'.repeat(5000) }, maxRedirects: 0 });
+      const c1 = q(`SELECT email, nome, cognome, ext_id FROM {p}newsletter_iscritti WHERE id = ${I1}`)[0];
+      ok('2.11.0: centro preferenze: niente lista privata, niente email né attributi non consentiti, testi tagliati', pp2.status() === 200 && +uno(`SELECT COUNT(*) FROM {p}newsletter_iscritti_liste WHERE iscritto_id = ${I1} AND lista_id = ${LR}`) === 0 && c1.email === 'sic1@sic33.it' && !c1.ext_id && c1.cognome.length <= 100, c1);
+      const pg = await pub.newPage();
+      await pg.goto(pref1, { waitUntil: 'networkidle' });
+      const hp = await pg.content();
+      ok('2.11.0: un nome con codice scritto dal contatto esce come testo nella pagina', !/<script>alert\(33\)/.test(hp) && (await pg.inputValue('#nlp-nome')).includes('<script>'));
+      // Disiscrizione: firma sbagliata, motivo inventato, HTML e testo lungo nel questionario, campagna non firmata
+      const us1 = cli('uscita', I1), us2 = cli('uscita', I2, CI);
+      const e1 = await pub.request.post(us1.replace(/t=[a-f0-9]+/, 't=' + '0'.repeat(32)), { form: {}, maxRedirects: 0 });
+      const e2 = await pub.request.post(us1.replace(/i=\d+/, 'i=' + I2), { form: {}, maxRedirects: 0 });
+      ok('2.11.0: uscita con la firma sbagliata o di un altro contatto: link non valido, nessuno esce', /Link non valido/.test(await e1.text()) && /Link non valido/.test(await e2.text()) && uno(`SELECT stato FROM {p}newsletter_iscritti WHERE id = ${I2}`) === 'attivo');
+      const e3 = await pub.request.post(us2, { form: { motivo: 'troppe' }, maxRedirects: 0 });
+      ok('2.11.0: il questionario di un contatto ancora iscritto non si salva (prima si esce)', e3.status() === 200 && +uno(`SELECT COUNT(*) FROM {p}newsletter_uscite_motivi WHERE contatto_id = ${I2}`) === 0 && uno(`SELECT stato FROM {p}newsletter_iscritti WHERE id = ${I2}`) === 'attivo');
+      await pub.request.post(us2, { form: {}, maxRedirects: 0 });
+      await pub.request.post(us2, { form: { motivo: "troppe' OR 1=1" }, maxRedirects: 0 });
+      const m0 = +uno(`SELECT COUNT(*) FROM {p}newsletter_uscite_motivi WHERE contatto_id = ${I2}`);
+      await pub.request.post(us2, { form: { motivo: 'altro', altro: '<img src=x onerror=alert(33)><b>Troppe</b> \u{1F600} ' + 'z'.repeat(3000) }, maxRedirects: 0 });
+      const m1 = q(`SELECT motivo, altro, campagna_id FROM {p}newsletter_uscite_motivi WHERE contatto_id = ${I2}`);
+      ok('2.11.0: questionario: motivo inventato non salvato; «Altro» senza HTML, emoji come entità, al massimo 500 caratteri; campagna firmata dal link', m0 === 0 && m1.length === 1 && m1[0].motivo === 'altro' && !/[<>]/.test(m1[0].altro) && /&#x1F600;/.test(m1[0].altro) && m1[0].altro.length <= 500 && +m1[0].campagna_id === CI, m1);
+      // La campagna non firmata (c senza k, o con k di un'altra) non si attribuisce
+      q(`UPDATE {p}newsletter_iscritti SET stato = 'attivo', blocco_motivo = '' WHERE id = ${I1}`);
+      await pub.request.post(us1 + `&c=${CI}&f=0&p=0&k=` + 'a'.repeat(20), { form: {}, maxRedirects: 0 });
+      await pub.request.post(us1 + `&c=${CI}&f=0&p=0&k=` + 'a'.repeat(20), { form: { motivo: 'troppe' }, maxRedirects: 0 });
+      ok('2.11.0: la campagna di un link senza la firma giusta non riceve il motivo né l\'uscita', +uno(`SELECT campagna_id FROM {p}newsletter_uscite_motivi WHERE contatto_id = ${I1}`) === 0 && +uno(`SELECT COUNT(*) FROM {p}newsletter_eventi WHERE campagna_id = ${CI} AND iscritto_id = ${I1}`) === 0);
+      await admin.p.goto(ADMIN + '/newsletter-statistiche.php', { waitUntil: 'networkidle' });
+      ok('2.11.0: le risposte «Altro» escono come testo nelle Statistiche', !/<img src=x onerror=alert\(33\)>/.test(await admin.p.content()));
+      // Versione web
+      const h2 = cli('html', CI, I2);
+      const web = (h2.html.match(/href="([^"]*newsletter-web\/[^"]*)"/) || [])[1].replace(/&amp;/g, '&');
+      const w1 = await pub.request.get(web, { maxRedirects: 0 });
+      const w2 = await pub.request.get(web.replace(/i=\d+/, 'i=' + I1), { maxRedirects: 0 });
+      const w3 = await pub.request.get(web.replace(/c=\d+/, 'c=' + CB), { maxRedirects: 0 });
+      const w4 = await pub.request.get(SITO + '/newsletter-web/?c=' + CI + '&i=' + I2 + '&t[]=1', { maxRedirects: 0 });
+      ok('2.11.0: versione web: firmata si apre in una pagina che non esegue niente (CSP sandbox, noindex); di un altro contatto, di un\'altra campagna o storta: 404', w1.status() === 200 && /sandbox/.test(w1.headers()['content-security-policy'] || '') && /default-src 'none'/.test(w1.headers()['content-security-policy'] || '') && /noindex/.test(w1.headers()['x-robots-tag'] || '') && [w2, w3, w4].every(x => x.status() === 404), [w1.status(), w2.status(), w3.status(), w4.status()]);
+      await pub.close();
+      // Pulizia
+      q(`DELETE FROM {p}newsletter_uscite_motivi WHERE contatto_id IN (${I1}, ${I2})`);
+      q(`DELETE FROM {p}newsletter_iscritti_liste WHERE iscritto_id IN (${I1}, ${I2})`);
+      q(`DELETE FROM {p}newsletter_storia WHERE contatto_id IN (${I1}, ${I2})`);
+      q(`DELETE FROM {p}newsletter_eventi WHERE iscritto_id IN (${I1}, ${I2})`);
+      q("DELETE FROM {p}newsletter_iscritti WHERE email LIKE 'sic%@sic33.it'");
+      q("DELETE FROM {p}newsletter_liste WHERE nome IN ('Sic33 pubblica', 'Sic33 privata')");
+      q("DELETE FROM {p}newsletter_campagne WHERE nome LIKE 'Sic33%'");
+    }
+  }
+
   // === pulizia: elimina il redattore di prova
   {
     await admin.p.goto(ADMIN + '/utenti.php', { waitUntil: 'networkidle' });

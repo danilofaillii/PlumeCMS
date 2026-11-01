@@ -19,6 +19,8 @@
 // 2.9.0: il capitolo 19i (Importare ed esportare i contatti, la lista dei test): SOLO_CAPITOLI=19i, con TMPDIR vuota (in
 //   /tmp/manuale-uso-png possono esserci PNG vecchi che il giro ricopierebbe).
 // 2.10.0: il capitolo 19j (Segmenti, Aggiungi filtro, viste) dopo il 19i, di cui usa i contatti: SOLO_CAPITOLI=19i,19j.
+// 2.11.0: il capitolo 19k (la campagna a riepilogo, l'elenco, la pagina per uscire, il centro preferenze) dopo il 19, il 19i e il
+//   19j: SOLO_CAPITOLI=19,19i,19j,19k, con CMS_DIR_MANUALE e POSTA_MANUALE (la campagna parte davvero).
 const { chromium } = require('playwright');
 const pnConferme = require('../prove/conferme-pannello'); // UX 2026-11: conferme del pannello
 const fs = require('fs');
@@ -664,15 +666,25 @@ capitoli['19'] = async () => {
   await foto('19-contatti', { clip: { x: 240, y: 56, width: 960, height: 760 }, segni: [{ sel: 'a[href="newsletter-contatto.php?nuovo=1"]', n: 1, lato: 'destra' }, { sel: '#nlx-lista', n: 2 }, { sel: '#nlx-cosa', n: 3 }, { sel: 'table.nlx-tabella thead', n: 4 }] });
   await vai('newsletter-contatti.php?scheda=liste');
   await foto('19-liste', { clip: { x: 240, y: 56, width: 960, height: 520 }, segni: [{ sel: '#nll-nome', n: 1 }, { sel: '#nlx-cart-nome', n: 2 }] });
-  await vai('newsletter.php');
-  await Promise.all([p.waitForNavigation(), p.click('button:has-text("+ Nuova campagna")')]);
+  // 2.11.0: Crea una campagna (tipo e nome), poi il riepilogo a sezioni. Oggetto e testo qui; destinatari e il resto nel 19k.
+  await vai('newsletter.php?crea=1');
+  await p.fill('#nl-crea-nome', 'Aperti il sabato');
+  await foto('19-crea-campagna', { sel: '#nl-crea', margine: 8, segni: [{ sel: '#nl-crea input[name=tipo]', n: 1 }, { sel: '#nl-crea-nome', n: 2 }, { sel: '#nl-crea button[type=submit]', n: 3 }] });
+  await Promise.all([p.waitForNavigation(), p.click('#nl-crea button[type=submit]')]);
   await p.waitForLoadState('networkidle');
-  await p.fill('[name=oggetto]', 'Da settembre siamo aperti anche il sabato');
+  await foto('19-riepilogo', { clip: { x: 240, y: 56, width: 960, height: 760 }, segni: [{ sel: '#nlr-manca', n: 1 }, { sel: '#sez-mittente > summary', n: 2 }, { sel: '#sez-destinatari .nlr-stato', n: 3, lato: 'destra' }] });
+  const campagnaManuale = p.url().split('admin/')[1];
+  await vai(campagnaManuale + '&apri=oggetto');
+  await p.fill('#oggetto', 'Da settembre siamo aperti anche il sabato, {{ contact.NOME | default:"cliente" }}');
+  await foto('19-oggetto', { sel: '#sez-oggetto', margine: 6, segni: [{ sel: '#oggetto', n: 1 }, { sel: '#anteprima', n: 2 }, { sel: '#sez-oggetto details.pn-aiuto > summary', n: 3 }, { sel: '#sez-oggetto button[type=submit]', n: 4 }] });
+  await Promise.all([p.waitForNavigation(), p.click('#sez-oggetto button[type=submit]')]);
+  await vai(campagnaManuale + '&apri=design');
   await p.locator('#editor .ql-editor').click();
   await p.keyboard.type('Ciao! Da settembre ci trovi in negozio anche il sabato mattina, dalle 9 alle 13. Ti aspettiamo.');
   await p.fill('[name=pulsante_testo]', 'Leggi la notizia');
-  await p.fill('[name=pulsante_link]', '/aperti-il-sabato/');
-  await foto('19-campagna', { clip: { x: 240, y: 56, width: 960, height: 760 }, segni: [{ sel: '[name=oggetto]', n: 1 }, { sel: '#editor', n: 2 }] });
+  await p.fill('[name=pulsante_link]', B + '/aperti-il-sabato/');
+  await foto('19-design', { sel: '#sez-design', margine: 6, altezza: 760, segni: [{ sel: '#sez-design fieldset.nlk-scelte', n: 1 }, { sel: '#editor', n: 2 }, { sel: '#pulsante_testo', n: 3 }] });
+  await Promise.all([p.waitForNavigation(), p.click('#nl-form button[type=submit]')]);
   await vai('newsletter-flussi.php?nuovo=1');
   await foto('19-flussi', { clip: { x: 240, y: 56, width: 960, height: 600 } });
 };
@@ -719,10 +731,61 @@ capitoli['19i'] = async () => {
   await Promise.all([p.waitForNavigation(), p.click('#nl-test button[type=submit]')]);
   if (!/Lista dei test salvata/.test(await flash())) throw new Error('19i: lista dei test non salvata: ' + await flash());
   await vai('newsletter.php');
-  if (await p.locator('a[href^="newsletter-campagna.php?id="]').count()) await Promise.all([p.waitForNavigation(), p.locator('a[href^="newsletter-campagna.php?id="]').first().click()]);
-  else await Promise.all([p.waitForNavigation(), p.click('button:has-text("+ Nuova campagna")')]);
-  await p.waitForLoadState('networkidle');
+  const idCamp = await p.locator('a[href^="newsletter-campagna.php?id="]').first().getAttribute('href').catch(() => '');
+  if (!idCamp) throw new Error('19i: manca la campagna del capitolo 19');
+  await vai(idCamp + '&apri=prova'); // 2.11.0: la prova sta nella sezione Anteprima e prova del riepilogo
   await foto('19-prova', { sel: '#nlc-prova', margine: 8, segni: [{ sel: '#nlc-prova label:first-of-type', n: 1 }, { sel: '#nlc-prova-a', n: 2 }, { sel: '#nlc-prova button[value=prova]', n: 3 }] });
+};
+
+// 19k. La campagna a riepilogo, il programma, l'elenco, la pagina per uscire e il centro preferenze (2.11.0). Dopo il 19,
+// il 19i e il 19j (la campagna "Aperti il sabato", i clienti importati, il segmento). SOLO_CAPITOLI=19,19i,19j,19k con
+// TMPDIR vuota. Vuole CMS_DIR_MANUALE (i link firmati per uscire e per le preferenze si leggono da prove/campagne-cli.php).
+capitoli['19k'] = async () => {
+  await vai('newsletter.php');
+  const idCamp = await p.locator('a[href^="newsletter-campagna.php?id="]').first().getAttribute('href');
+  await vai(idCamp + '&apri=destinatari');
+  await p.locator('#sez-destinatari label', { hasText: 'Clienti del negozio' }).locator('input[name="liste[]"]').check();
+  await p.click('#sez-destinatari details.pn-aiuto > summary');
+  await foto('19-destinatari', { sel: '#sez-destinatari', margine: 6, segni: [{ sel: '#sez-destinatari fieldset.nlk-scelte', n: 1 }, { sel: '#sez-destinatari .nlr-colonne fieldset:nth-of-type(2)', n: 2 }, { sel: '#sez-destinatari details.pn-aiuto > summary', n: 3 }, { sel: '#sez-destinatari input[name=non_coinvolti]', n: 4 }, { sel: '#sez-destinatari button[type=submit]', n: 5 }] });
+  await Promise.all([p.waitForNavigation(), p.click('#sez-destinatari button[type=submit]')]);
+  await vai(idCamp + '&apri=impostazioni');
+  await p.fill('#nlr-campo-a', '{{ contact.NOME }} {{ contact.COGNOME }}');
+  await foto('19-impostazioni', { sel: '#sez-impostazioni', margine: 6, segni: [{ sel: '#nlr-rispondi', n: 1 }, { sel: '#nlr-campo-a', n: 2 }, { sel: '#sez-impostazioni input[name=link_web]', n: 3 }, { sel: '#sez-impostazioni input[name=utm]', n: 4 }, { sel: '#sez-impostazioni input[name=lotti_attivi]', n: 5 }] });
+  await Promise.all([p.waitForNavigation(), p.click('#sez-impostazioni button[type=submit]')]);
+  await vai(idCamp + '&contatto=marta.gialli@esempio.it');
+  await foto('19-anteprima', { sel: '#sez-prova', margine: 6, altezza: 560, segni: [{ sel: '#nlr-contatto', n: 1 }, { sel: '#sez-prova .nlr-schede', n: 2 }, { sel: '#nlr-anteprima iframe', n: 3 }] });
+  await vai(idCamp);
+  await foto('19-programma', { sel: '#nlr-invio', margine: 6, segni: [{ sel: '#nlr-invio input[value=subito]', n: 1 }, { sel: '#nlr-invio input[value=programma]', n: 2 }, { sel: '#nlr-quando', n: 3 }, { sel: '#nlr-invio button.btn-primary', n: 4 }] });
+  // L'indirizzo dell'azienda e le pagine pubbliche
+  await vai('newsletter.php?scheda=impostazioni#nl-indirizzo');
+  await p.fill('#nl-indirizzo-testo', 'Studio Prova, via Emilia 10, 41121 Modena');
+  await foto('19-indirizzo', { sel: '#nl-indirizzo', margine: 6, segni: [{ sel: '#nl-indirizzo-testo', n: 1 }, { sel: '#nl-indirizzo button[type=submit]', n: 2 }] });
+  await Promise.all([p.waitForNavigation(), p.click('#nl-indirizzo button[type=submit]')]);
+  await vai('newsletter.php?scheda=impostazioni#nl-pagine');
+  await p.locator('#nl-pagine label', { hasText: 'Clienti del negozio' }).locator('input[name="pubbliche[]"]').check();
+  await foto('19-pagine', { sel: '#nl-pagine', margine: 6, segni: [{ sel: '#pg-ut', n: 1 }, { sel: '#nl-pagine input[name="pg[questionario]"]', n: 2 }, { sel: '#nl-pagine fieldset:nth-of-type(2) legend', n: 3 }, { sel: '#nl-pagine fieldset:nth-of-type(3) legend', n: 4 }, { sel: '#nl-pagine button[type=submit]', n: 5 }] });
+  await Promise.all([p.waitForNavigation(), p.click('#nl-pagine button[type=submit]')]);
+  // Manda subito (verso il server di posta finto, POSTA_MANUALE) e l'elenco
+  await postaFinta();
+  await vai(idCamp);
+  await Promise.all([p.waitForNavigation(), p.click('#nlr-invio button.btn-primary')]);
+  await vai('newsletter.php');
+  await Promise.all([p.waitForNavigation(), p.click('form:has(input[value=giro]) button')]);
+  await vai('newsletter.php');
+  await p.locator('details.nl-azioni > summary').first().click();
+  await foto('19-elenco', { clip: { x: 240, y: 56, width: 960, height: 700 }, segni: [{ sel: 'details#nl-crea > summary', n: 1 }, { sel: 'nav.nl-viste', n: 2 }, { sel: 'details.nl-azioni[open] > summary', n: 3, lato: 'destra' }] });
+  // La pagina per uscire e il centro preferenze, come li vede chi riceve
+  const DIRM = process.env.CMS_DIR_MANUALE;
+  if (!DIRM) throw new Error('19k: serve CMS_DIR_MANUALE');
+  const cli = (...a) => JSON.parse(require('child_process').execFileSync('php', [path.join(__dirname, '..', 'prove', 'campagne-cli.php'), DIRM, ...a.map(String)], { encoding: 'utf8' }).trim().split('\n').pop());
+  const idDi = (e) => +Object.values(cli('sql', `SELECT id FROM {p}newsletter_iscritti WHERE email = '${e}'`)[0])[0];
+  const u = await visitatore();
+  await u.goto(qui(cli('preferenze', idDi('luca.neri@esempio.it'))), { waitUntil: 'networkidle' });
+  await u.screenshot({ path: path.join(GREZZE, '19-centro-preferenze.png'), clip: { x: 0, y: 70, width: 1200, height: 900 }, fullPage: true }); console.log('19-centro-preferenze');
+  await u.goto(qui(cli('uscita', idDi('sara.blu@esempio.it'))), { waitUntil: 'networkidle' });
+  await Promise.all([u.waitForNavigation(), u.click('button:has-text("toglimi")')]);
+  await u.screenshot({ path: path.join(GREZZE, '19-uscita.png'), clip: { x: 0, y: 70, width: 1200, height: 860 }, fullPage: true }); console.log('19-uscita');
+  await u.context().close();
 };
 
 // 19j. I segmenti, Aggiungi filtro e le viste (2.10.0). Dopo il 19i: usa i contatti importati ("Clienti del negozio",
@@ -1263,13 +1326,20 @@ capitoli['31q'] = async () => {
   await p.fill('form:has(input[value=importa]) input[name=lista_nuova]', 'Clienti');
   await p.check('form:has(input[value=importa]) input[name=consenso_brevo]');
   await Promise.all([p.waitForNavigation(), p.click('form:has(input[value=importa]) button[type=submit]')]);
-  await vai('newsletter.php');
-  await Promise.all([p.waitForNavigation(), p.click('button:has-text("+ Nuova campagna")')]);
-  await p.waitForLoadState('networkidle');
-  await p.fill('[name=oggetto]', 'Le novità di novembre');
+  // 2.11.0: Crea una campagna, poi le sezioni del riepilogo e Manda la campagna.
+  await vai('newsletter.php?crea=1');
+  await p.fill('#nl-crea-nome', 'Le novità di novembre');
+  await Promise.all([p.waitForNavigation(), p.click('#nl-crea button[type=submit]')]);
+  const camp31 = p.url().split('admin/')[1];
+  await vai(camp31 + '&apri=oggetto'); await p.fill('#oggetto', 'Le novità di novembre');
+  await Promise.all([p.waitForNavigation(), p.click('#sez-oggetto button[type=submit]')]);
+  await vai(camp31 + '&apri=design');
   await p.locator('#editor .ql-editor').click(); await p.keyboard.type('Ciao! A novembre lo studio è aperto anche il sabato mattina.');
-  await p.locator('label', { hasText: 'Clienti' }).locator('input[name="liste[]"]').check();
-  await Promise.all([p.waitForNavigation(), p.click('button[value=subito]')]);
+  await Promise.all([p.waitForNavigation(), p.click('#nl-form button[type=submit]')]);
+  await vai(camp31 + '&apri=destinatari');
+  await p.locator('#sez-destinatari label', { hasText: 'Clienti' }).first().locator('input[name="liste[]"]').check();
+  await Promise.all([p.waitForNavigation(), p.click('#sez-destinatari button[type=submit]')]);
+  await Promise.all([p.waitForNavigation(), p.click('#nlr-invio button.btn-primary')]);
   n0 = postaN();
   await vai('newsletter.php');
   await Promise.all([p.waitForNavigation(), p.click('form:has(input[value=giro]) button')]);

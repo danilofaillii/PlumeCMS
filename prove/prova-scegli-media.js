@@ -57,7 +57,8 @@ im = Image.new('RGB', (1200, 630), (31, 111, 92)); ImageDraw.Draw(im).text((500,
     if (await b.count()) await Promise.all([p.waitForNavigation(), b.click()]);
   }
   ok('gli otto addon accesi', await (async () => { await vai('addon.php'); return await p.locator('.ad-card.acceso').count() === 8; })());
-  await vai('newsletter.php');
+  await vai('newsletter.php?crea=1');
+  await p.fill('#nl-crea-nome', 'Campagna per la prova dei Media'); // 2.11.0: la campagna nasce con il nome
   await Promise.all([p.waitForNavigation(), p.click('form:has(input[value=nuova]) button')]);
   const campagna = p.url().split('admin/')[1];
   ok('una campagna nuova', /newsletter-campagna\.php\?id=\d+/.test(campagna), campagna);

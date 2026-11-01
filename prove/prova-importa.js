@@ -363,7 +363,7 @@ const D = '@csv.prova-importa.it';
   await foto('lista-test', '#nl-test');
   q(`INSERT INTO {p}newsletter_campagne (oggetto, anteprima, corpo, stato, liste, creato, aggiornato) VALUES ('PI Prova {{ contact.NOME }}', '', '<p>Ciao {{ contact.NOME }} da {{ contact.CITTA | default:"ovunque" }}.</p>', 'bozza', '${clienti}', NOW(), NOW())`);
   const cp = +uno("SELECT MAX(id) FROM {p}newsletter_campagne WHERE oggetto LIKE 'PI Prova%'");
-  await vai('newsletter-campagna.php?id=' + cp);
+  await vai('newsletter-campagna.php?id=' + cp + '&apri=prova'); // 2.11.0: la prova sta nella sezione Anteprima e prova del riepilogo
   ok('campagna: la prova propone i contatti della lista dei test, spuntati', (await p.locator('#nlc-prova input[name="prova_test[]"]:checked').count()) === 2);
   await foto('prova-campagna', '#nlc-prova');
   if (SMTP && POSTA) {
@@ -373,7 +373,7 @@ const D = '@csv.prova-importa.it';
     await p.fill('[name=smtp_mittente]', 'sito@esempio.it').catch(() => {});
     await invia('form:has(input[value=save_posta]) button[type=submit]');
     const prima = fs.readdirSync(POSTA).length;
-    await vai('newsletter-campagna.php?id=' + cp);
+    await vai('newsletter-campagna.php?id=' + cp + '&apri=prova'); // 2.11.0: la prova sta nella sezione Anteprima e prova del riepilogo
     await p.fill('#nlc-prova-a', `w2${D}`); await p.check('input[name=prova_aggiungi]');
     await invia('#nlc-prova button[value=prova]');
     const f = await flash();

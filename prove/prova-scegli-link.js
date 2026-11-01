@@ -231,18 +231,19 @@ const D = 'dialog.pn-link';
   }
 
   // ---------------------------------------------------------------- newsletter: pulsante e link del testo, indirizzi interi
-  await vai(p, 'newsletter.php');
+  await vai(p, 'newsletter.php?crea=1');
+  await p.fill('#nl-crea-nome', 'SL Campagna di prova'); // 2.11.0: la campagna nasce con il nome
   await Promise.all([p.waitForNavigation(), p.click('form:has(input[value=nuova]) button')]);
-  const campagna = p.url().split('admin/')[1];
+  const campagna = p.url().split('admin/')[1] + '&apri=design';
+  await vai(p, campagna);
   {
-    await p.fill('#oggetto', 'SL Campagna di prova');
     const r = await scegli(p, pulsante(p, '#nl-pulsante-link'), 'contatti', 'Contatti');
     ok('Newsletter: il link del pulsante è l\'indirizzo intero (serve alle email)', r.trovata && await p.inputValue('#nl-pulsante-link') === B + '/contatti/', await p.inputValue('#nl-pulsante-link'));
     const ed = p.locator('#editor .ql-editor');
     await ed.click(); await p.keyboard.type('Scopri il listino'); await p.keyboard.press('Control+A');
     const r2 = await scegli(p, p.locator('.ql-toolbar .ql-link').first(), 'prenota', 'SL Prenota ora');
     ok('Newsletter: il link nel testo dell\'email, scelto dal sito, è l\'indirizzo intero', r2.trovata && await ed.locator(`a[href="${B}/sl-prenota-ora/"]`).count() === 1, await ed.innerHTML());
-    await Promise.all([p.waitForNavigation(), p.click('button[name=azione][value=salva]')]);
+    await Promise.all([p.waitForNavigation(), p.click('#nl-form button[type=submit]')]);
     await vai(p, campagna);
     ok('Newsletter: salvati, dopo aver ricaricato ci sono ancora', await p.inputValue('#nl-pulsante-link') === B + '/contatti/' && await p.locator(`#editor .ql-editor a[href="${B}/sl-prenota-ora/"]`).count() === 1);
     const st = (await p.request.get(B + '/sl-prenota-ora/')).status();

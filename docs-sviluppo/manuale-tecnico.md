@@ -2125,7 +2125,7 @@ qualche secondo il file vecchio. Condizioni nuove del bivio: `in_segmento` e `no
 `newsletter-flussi.php:27`; tendina in `admin/assets/flussi.js:228`, segmenti in `FL_DATI.segmenti`,
 `admin/newsletter-flussi.php:130`). Il bivio a più rami con le condizioni dei segmenti è della fase 8.
 
-**Campagne**: non cambiano in questa fase (il piano mette destinatari ed esclusioni nella fase 4, 2.11.0). Il motore è pronto:
+**Campagne**: non cambiano in questa fase (il piano mette destinatari ed esclusioni nella fase 4, 2.11.0: fatto, capitolo 15.10). Il motore è pronto:
 `newsletter_segmento_where()` e `newsletter_regole_where()` danno la condizione da mettere nell'`INSERT ... SELECT` della coda
 (`newsletter_avvia_programmate()`, `includes/newsletter.php`) e nel conteggio dei destinatari.
 
@@ -2138,6 +2138,141 @@ Prove: `prove/prova-segmenti.js` con `prove/segmenti-cli.php` (5000 contatti fin
 motivi, liste, tre campagne con coda, aperture e clic, email dei flussi, invii dei form; ogni condizione contro una query
 scritta a mano, i dieci modelli, cento condizioni, i tempi; i bivi della 2.9.0 copiati com'erano contro il motore su 600
 contatti per condizione); attacchi: gruppo 31 di `tools/sicurezza-prova.js`.
+
+### 15.10 Campagne a riepilogo, disiscrizione con il questionario, centro preferenze (dalla 2.11.0)
+
+Fase 4 del piano di `docs-sviluppo/brevo-confronto.md` (capitoli 1.9, 1.10, 1.11, 1.15, 3.6, 3.8), con la pagina di
+disiscrizione e il centro preferenze anticipati dalla fase 9 (decisione 5 di Danilo). Motore in
+`includes/newsletter-campagne.php` (caricato in fondo a `includes/newsletter.php` e, con `require_once`, da ogni file che ne
+chiama le funzioni: le due pagine delle campagne, Statistiche, `sito/index.php`; un file nuovo non è mai vecchio in opcache).
+`includes/newsletter.php` lo chiama solo dietro `function_exists` (`newsletter_email()`, `newsletter_avvia_programmate()`,
+`newsletter_invia_giro()`). Solo amministratore, come prima (`require_admin()` sulle pagine). Nel testo per chi usa il
+pannello non c'è nessun paragone con Brevo.
+
+**Dati** (`newsletter_campagne_schema()`, `newsletter-campagne.php:58`, impronta `newsletter_campagne_impronta`; colonne
+`NOT NULL DEFAULT` con i valori che rifanno il comportamento di prima, niente colonne generate, nessuna tabella rinominata):
+- `newsletter_campagne`, colonne nuove: `nome` (interno), `tipo` (`normale`; l'A/B è della fase 6), `editor` (`semplice` o
+  `html`; il `blocchi` è della fase 5), `html`, `testo` e `testo_modificato` (testo semplice scritto a mano), `segmenti`,
+  `escludi_liste`, `escludi_segmenti` (id separati da virgole), `non_coinvolti`, `rispondi_a`, `campo_a`, `tag`, `utm` e
+  `utm_campagna`, `link_web` e `link_preferenze` (0 per le campagne di prima, 1 per quelle create con "Crea una campagna"),
+  `lotti` (1-10) e `lotti_intervallo` (minuti), `archiviata`, `padre_id` (Invia ai nuovi contatti), `rinvio_di` e
+  `rinvio_fatto` (Rimanda ai non aperti). Stato nuovo: `annullata`. Migrazione una volta (`newsletter_campagne_migrate`):
+  `nome = oggetto`. `newsletter_schema()` non rimette più la lista principale nelle campagne senza liste quando c'è la
+  colonna `segmenti` (`newsletter.php:226`): una campagna nuova può avere solo segmenti, o niente.
+- `newsletter_coda`: `lotto` e `dopo` (l'ora da cui la riga può partire; NULL = subito).
+- `newsletter_liste`: `pubblica` (si vede nel centro preferenze); alla prima volta la lista principale è pubblica.
+- `newsletter_uscite_motivi` (nuova): `contatto_id`, `campagna_id`, `flusso_id` (dal link firmato, sennò 0), `motivo` (chiave
+  di `NL_USCITA_MOTIVI`, `:47`), `altro` (500 caratteri, senza HTML, emoji come entità), `creato`.
+- Impostazioni nuove: `newsletter_indirizzo` (indirizzo dell'azienda), `newsletter_pagine` (JSON: testi delle due pagine,
+  questionario sì o no, testi dei motivi, attributi del centro preferenze), `coinvolti_giorni` dentro `newsletter_config`.
+
+**Destinatari** (`newsletter_campagna_where()`, `:157`): condizione SQL sui contatti `i` (già `stato = 'attivo'`): (in una
+delle liste senza esserne uscito, `newsletter_sql_uscite_lista()`, OPPURE in uno dei segmenti, `newsletter_segmento_where()`)
+E in nessuna lista esclusa E in nessun segmento escluso (l'esclusione vince) E, con `non_coinvolti`, non fra chi negli ultimi
+`coinvolti_giorni` (30-365, 90 di partenza, Impostazioni) ha ricevuto almeno `NL_NON_COINVOLTI_EMAIL` (3) campagne senza
+aperture né clic (il criterio di Brevo non si è trovato, capitolo 5 del piano: scelta di plumeCMS). Liste e segmenti si
+tengono solo se esistono (gli id passano da `nl_ids_scelti()`, `:130`, al salvataggio, e di nuovo da `array_intersect` qui);
+i valori vanno in `$par` nell'ordine. Ogni contatto una volta sola: è un `WHERE` su `newsletter_iscritti`, e la chiave unica
+della coda resta. Figlie: `rinvio_di` = chi ha la riga `inviata` nella coda della madre e nessuna apertura o clic su di
+lei; `padre_id` = la condizione della campagna meno chi è nella coda della madre o di un'altra figlia della stessa madre.
+`newsletter_campagna_conta()` (`:199`) conta; `newsletter_campagna_avvia()` (`:212`) riempie la coda con un
+`INSERT IGNORE ... SELECT ... ORDER BY i.id` e, con i lotti, divide le righe in parti uguali per id e scrive `lotto` e
+`dopo` = ora programmata + (lotto - 1) x intervallo; senza liste né segmenti la campagna torna bozza, come prima.
+`newsletter_invia_giro()` prende solo le righe con `dopo` passato (`newsletter.php:984`); la campagna resta "In invio" finché
+c'è una riga in attesa.
+
+**Riepilogo** (`admin/newsletter-campagna.php`): sezioni `<details class="form-card nlx-riquadro nlr-sez">` Mittente
+(`:209`), Destinatari (`:224`), Oggetto (`:262`), Design (`:277`), Impostazioni aggiuntive (`:312`), poi Anteprima e prova
+(`:343`) e Programma (`#nlr-invio`, `:373`). Ogni sezione ha un modulo suo (azione `sezione`, `sez`, `:29`) che passa da
+`newsletter_campagna_salva_sezione()` (`newsletter-campagne.php:278`: valida e salva solo le colonne di quella sezione; un
+errore riapre la sezione con `&apri=`); `newsletter_campagna_sezioni()` (`:254`) dice per ognuna "A posto" o "Da completare"
+con la frase di cosa fare (`$testa`, `:123`; segno e parola, non solo colore), e `newsletter_campagna_manca()` (`:273`) le
+raccoglie nel riquadro in cima e spegne il pulsante dell'invio; il server rifà il controllo (`case 'invia'`, `:64`). Una
+campagna partita mostra le sezioni senza segni e con i campi spenti, più il Report (`#nlr-report`, `:194`: inviate, aperture,
+clic, uscite, motivi del questionario). Design: "Usa questo editor" cambia `editor`; passando al codice HTML con la casella
+vuota si parte dall'email dell'editor semplice (`nl_camp_html_partenza()`, `:546`, con `{{ unsubscribe }}`); il codice viaggia
+in base64 (`campi-protetti.js`, è una `textarea`), al massimo 1,5 MB. Il testo semplice: senza la spunta si rifà dall'HTML a
+ogni invio (`posta_testo_da_html()`), con la spunta parte `testo`. Programma: Invia subito (`invio_at = NOW()`, il cron la
+prende entro 5 minuti) o giorno e ora nel fuso del sito (`date_default_timezone_get()`, scritto accanto al campo; una data
+passata si rifiuta); "Togli la programmazione" torna bozza, "Annulla la campagna" (`newsletter_campagna_annulla()`, `:453`)
+la chiude e mette `saltata` le righe in attesa. Anteprima: `?contatto=<email>` usa i dati di quel contatto (senza
+tracciamento), Computer o Telefono stringe la cornice (script con nonce); la prova va alla lista dei test e, se scritto, a
+un altro indirizzo (con i suoi dati se è un contatto).
+
+**Elenco** (`admin/newsletter.php`): "Crea una campagna" (`#nl-crea`, `:199`; azione `nuova`, `:39`,
+`newsletter_campagna_crea()`, `:357`: tipo Normale e nome obbligatorio); viste `NL_CAMP_VISTE` (`:28`, elenco chiuso di
+condizioni; Tutte, Bozze, Programmate, In invio, Inviate, Sospese, Annullate, Archiviate, con i numeri,
+`newsletter_campagne_conteggi()`); per riga il menu Azioni (`details.nl-azioni`): Apri, Report (`newsletter-statistiche.php?
+campagna=`), Duplica (`?duplica=`, `#nl-duplica`, `:213`: le cinque parti di `NL_CAMP_PARTI`, `:39`;
+`newsletter_campagna_duplica()`, `:369`), Invia ai nuovi contatti e Rimanda ai non aperti (`?rimanda=`, `#nl-rimanda`,
+`:224`; `newsletter_campagna_figlia()`, `:394`, e `newsletter_rinvio_possibile()`, `:424`: solo inviate, una volta sola, mai
+per una campagna a lotti né per un rinvio; eliminare la bozza del rinvio lo rende di nuovo possibile), Archivia (solo
+inviate, sospese, annullate), Annulla (`data-conferma-pericolo`), Elimina (solo bozza, anche dal server:
+`newsletter_campagna_elimina()`, `:443`). L'avviso `#nl-avviso-indirizzo` ricorda l'indirizzo dell'azienda che manca.
+
+**L'email** (`newsletter_email()`, `newsletter.php:852`): le parti in più arrivano da `nl_camp_extra()` (`:504`) e sono ''
+quando non servono, così una campagna di prima esce uguale al byte (provato: `prove/prova-campagne-vecchie.js`). Editor
+semplice: con `link_web` una riga "Vedi questa email nel browser" sopra la scheda; nel piede, dopo "Esci dalla newsletter",
+"Aggiorna le tue preferenze" (con `link_preferenze`) e l'indirizzo dell'azienda (se scritto; righe con `<br>`). Codice HTML
+(`nl_camp_html()`, `:524`): via gli `<script>`, `{{ unsubscribe }}`, `{{ mirror }}`, `{{ update_profile }}` diventano i link
+(`nl_camp_link_speciali()`, `:516`, i nomi di Brevo; valgono anche nell'editor semplice), poi i segnaposti `{{ contact.X }}`;
+se il link di uscita non c'è si aggiunge un piede con lui e l'indirizzo; il testo di anteprima e il link della versione web
+vanno subito dopo `<body>`. UTM (`nl_camp_utm()`, `:553`): solo i link verso il sito stesso, senza toccare quelli che hanno
+già `utm_source` e i link firmati; prima del tracciamento, che li avvolge. Intestazioni: `rispondi_a` della campagna vince su
+quello del mittente e delle impostazioni; il campo "A" (personalizzato con i segnaposti, senza a capo né `< > "`) e il testo
+semplice scritto a mano (`nl_camp_testo()`, `:569`: segnaposti, link speciali, link di uscita e indirizzo aggiunti se
+mancano) viaggiano nelle intestazioni interne `X-Plume-A` e `X-Plume-Testo` (base64) che `posta_interne()`
+(`includes/posta.php:272`) toglie in `posta_invia()` (`:218`) prima di qualunque spedizione: diventano il `To: Nome <a>`
+(`posta_to()`, `:294`; anche nel MIME di SES e Mailgun e nel `to.name` di Brevo, `includes/consegna.php`) e la parte
+`text/plain` (`posta_mime()`, quarto argomento). `newsletter.php` le scrive solo se `posta_interne` esiste (opcache).
+`newsletter_traccia()` lascia diretti anche i link delle preferenze e della versione web (`newsletter-flussi.php:129`).
+
+**Versione web** (`/newsletter-web/?c=&i=&t=`, `sito/index.php:189`; `newsletter_pagina_web()`, `:870`): firma
+`newsletter_firma_web()` (HMAC di `web|c|i` con `moduli_segreto()`, 24 caratteri); campagna e contatto devono esistere
+(qualunque stato: anche le prove alla lista dei test hanno il link); l'email di quel contatto senza pixel; risposta con
+`Cache-Control: no-store`, `X-Robots-Tag: noindex` e `Content-Security-Policy: sandbox ...; default-src 'none'` (l'HTML
+incollato non esegue niente sul dominio del sito). Firma sbagliata, di un altro contatto o di un'altra campagna: 404.
+
+**Disiscrizione con il questionario** (`/newsletter-esci/`, `sito/index.php:172`; `newsletter_pagina_esci()`, `:695`): con il
+link firmato di prima (`newsletter_token_uscita()`). GET: "Vuoi uscire dalla newsletter?" con il pulsante (i filtri antispam
+aprono i link: aprire non fa uscire) e, se ci sono liste pubbliche, il link alle preferenze. POST senza `motivo` (il
+pulsante, o l'uscita in un clic di Gmail e Outlook, `List-Unsubscribe-Post`): `newsletter_esci()` con il motivo
+`unsubscribedViaEmail`, l'uscita contata per la campagna se il link è firmato (`newsletter_uscita_registra()`), poi la
+pagina "Fatto. Sei fuori." con il questionario (`.modulo` del sito: stessi stili e temi del modulo della newsletter).
+POST con `motivo`: `newsletter_uscita_motivo_salva()` (`:642`): solo un motivo dell'elenco, solo per un contatto già in
+lista nera, uno per uscita (una risposta nuova prende il posto della prima), `altro` solo con il motivo "Altro"; campagna o
+flusso solo dal link firmato (`newsletter_uscita_traccia()`, `:667`). I cinque motivi (testi di Brevo non trovati,
+capitolo 5: questi sono di plumeCMS): Non mi interessa più, Ricevo troppe email, Non mi sono mai iscritto, I contenuti non
+sono adatti a me, Altro. Statistiche: `newsletter_uscite_motivi_conta()` (`:657`) nel riquadro `#st-motivi` di
+`admin/newsletter-statistiche.php` (`:85`, di tutte o della campagna scelta) e nel Report della campagna.
+
+**Centro preferenze** (`/newsletter-preferenze/?i=&t=`, `sito/index.php:180`; `newsletter_pagina_preferenze()`, `:743`):
+firma `newsletter_token_preferenze()` (HMAC di `preferenze|id`, diversa da quella di uscita); link
+`newsletter_link_preferenze()` nel piede delle email (con `link_preferenze`), nella pagina di uscita e come
+`{{ update_profile }}`. Contatto iscritto: i suoi dati consentiti (`newsletter_preferenze_attributi()`, `:615`: quelli scelti in
+Impostazioni fra NOME, COGNOME e gli attributi normali; mai EMAIL, EXT_ID, OPT_IN, calcolati, globali; salvati con
+`newsletter_valori_salva()`, che controlla il tipo) e le liste pubbliche (`newsletter_liste_pubbliche()`, `:633`) con la
+spunta su quelle che riceve (`newsletter_preferenze_mie()`, `:834`). Salvare (`newsletter_preferenze_lista()`, `:845`, solo
+liste pubbliche): togliere la spunta scrive una riga in `newsletter_liste_uscite` (resta nella lista, non riceve più le sue
+campagne, la tabella della fase 1); rimetterla toglie la riga o lo fa entrare (partono i flussi della lista); ogni cambio
+nella storia del contatto. "Esci da tutte le email": `newsletter_esci()` e 303 alla pagina di uscita con il questionario.
+Contatto uscito: "Iscrivimi di nuovo" manda l'email di conferma (`newsletter_richiesta()`, con il suo limite per IP); resta
+fuori finché non conferma. Senza firma valida: "Questo link non è valido", nessun dato. I testi delle due pagine
+(`newsletter_pagine_testi()`, `:584`; partenza in `newsletter_pagine_partenza()`, `:598`; `{email}` e `{newsletter}`)
+si cambiano in Newsletter > Impostazioni (`#nl-pagine`, `admin/newsletter.php:322`, azione `pagine`, `:106`), con le liste
+pubbliche e gli attributi; l'indirizzo dell'azienda in `#nl-indirizzo` (`:310`, azione `indirizzo`, `:98`).
+
+**Fatto diverso da Brevo, scelte di plumeCMS**: pagine di disiscrizione multiple (`newsletter_pagine_uscita`) e la scelta per
+campagna sono della fase 9 (qui una sola, con i testi modificabili); i motivi e il criterio dei non coinvolti non si sono
+trovati e sono di plumeCMS; UTM solo sui link del sito; le figlie "nuovi contatti" e "rinvio" nascono in bozza e si
+programmano dal loro riepilogo (Brevo chiede data e ora nella stessa finestra); nome del mittente con i segnaposti, allegato,
+immagini incorporate e "All'orario migliore" non ci sono ancora.
+
+Prove: `prove/prova-campagna-riepilogo.js` con `prove/campagne-cli.php` (99 controlli: sezioni, destinatari, segnaposti,
+anteprima e prova, programmazione, lotti, versione web, testo semplice, codice HTML, piede, UTM, Rispondi a, campo A,
+Duplica, rinvio, nuovi contatti, Archivia, Annulla, Elimina, questionario, centro preferenze, 390 px);
+`prove/prova-campagne-vecchie.js` (campagne fatte con la 2.10.0 uguali al byte dopo l'aggiornamento); attacchi: gruppo 33 di
+`tools/sicurezza-prova.js`.
 
 ---
 

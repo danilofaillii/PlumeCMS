@@ -514,7 +514,7 @@ Dove trovi Scegli dai Media:
 | Popup | Immagine |
 | Articoli e pagine (la scheda) | Immagine in evidenza (**Scegli l'immagine**), **+ Immagine** nel testo |
 | Editor > Stile del sito | Logo, Icona del sito, Immagine di sfondo |
-| Newsletter e form > Campagne, una campagna | il pulsante dell'immagine nella barra del testo |
+| Newsletter e form > Campagne email, una campagna, sezione Design | il pulsante dell'immagine nella barra del testo |
 | Corsi (addon) | Immagine del corso |
 | Eventi (addon) | Foto dell'evento |
 | Vetrina (addon) | Foto del prodotto (si aggiungono all'elenco) |
@@ -1879,30 +1879,181 @@ Le viste sono di chi le crea: gli altri amministratori non le vedono.
 
 ### Una campagna
 
-**Newsletter e form > Campagne**, poi **+ Nuova campagna**.
+Una campagna è un'email che mandi una volta a molte persone: le novità del mese, un'offerta, un avviso. Si prepara in una
+pagina sola, il **riepilogo**, divisa in sezioni; quando sono tutte a posto la mandi subito o all'ora che scegli.
 
-![Una campagna](immagini/manuale-uso/19-campagna.jpg)
+**Esempio.** Il negozio da settembre è aperto anche il sabato: lo scriviamo ai clienti del negozio.
+
+**Newsletter e form > Campagne email**, riquadro **Crea una campagna**.
+
+![Crea una campagna](immagini/manuale-uso/19-crea-campagna.jpg)
+
+1. **Tipo di campagna**: Normale, una sola versione dell'email per tutti.
+2. **Nome della campagna**: serve a te per ritrovarla nell'elenco, chi riceve l'email non lo vede. Qui: Aperti il sabato.
+3. Premi **Crea la campagna**: si apre il suo riepilogo.
+
+![Il riepilogo di una campagna nuova](immagini/manuale-uso/19-riepilogo.jpg)
+
+1. In cima il riquadro giallo dice cosa manca per poterla mandare, in parole.
+2. Ogni sezione ha il suo titolo, un segno e sotto il riassunto di quello che c'è: **A posto** con la spunta.
+3. **Da completare** con il punto esclamativo: apri la sezione (un clic sul titolo), riempila e premi il suo pulsante
+   **Salva**. La sezione si richiude e il segno diventa **A posto**.
+
+Le sezioni sono cinque: **Mittente**, **Destinatari**, **Oggetto**, **Design**, **Impostazioni aggiuntive**. Sotto ci sono
+**Anteprima e prova** e **Programma**. Il **Mittente** è già a posto con l'indirizzo predefinito (capitolo 25, "Le email
+arrivano nella posta, non nello spam"); se vuoi, scegline un altro dalla tendina. Per cambiare il nome della campagna premi
+**Rinomina la campagna**, in alto.
+
+**Oggetto.**
+
+![La sezione Oggetto](immagini/manuale-uso/19-oggetto.jpg)
 
 1. **Oggetto**: la riga che si legge nella casella di posta. Corto e chiaro.
-2. **Testo**: scrivi come in un'email normale. `{nome}` diventa il nome della persona. Sotto, un **pulsante** con il
-   suo link e le **liste** a cui mandarla. **Scegli dal sito**, accanto al link del pulsante e nella barra del testo,
-   scrive l'indirizzo intero (con `https://` e il nome del sito), quello che serve nelle email.
+2. **Testo di anteprima**: la riga grigia accanto all'oggetto, facoltativa.
+3. **Come mettere il nome o un altro dato di chi legge**: `{{ contact.NOME }}` diventa il nome di chi legge;
+   `{{ contact.NOME | default:"cliente" }}` scrive "cliente" a chi non ha il nome. Vale per ogni attributo dei contatti
+   (`{{ contact.CITTA }}`...). Funziona anche `{nome}`, come prima.
+4. Premi **Salva l'oggetto**.
 
-Per mettere un'immagine nel testo premi il pulsante con l'immagine nella barra: si apre la finestra dei Media (capitolo 7).
-Scegli un'immagine già caricata o premi **Carica un'immagine**. Nelle email vanno bene JPG, PNG, GIF e WebP; l'immagine
-entra con il suo indirizzo completo, quello che i programmi di posta sanno aprire.
+**Design.**
 
-Nella stessa pagina, la tendina **Mittente** sceglie da chi parte la campagna (capitolo 25, "Le email arrivano nella
-posta, non nello spam").
+![La sezione Design](immagini/manuale-uso/19-design.jpg)
 
-A destra c'è l'anteprima dell'ultima versione salvata. Poi:
+1. **Come scrivi l'email**: **Editor semplice** (testo, titoli, immagini, link e un pulsante) oppure **Codice HTML** (incolli
+   un'email già fatta). Per cambiare scegli e premi **Usa questo editor**: passando al codice parti dall'email che avevi.
+2. Il testo: scrivi come in un'email normale. Per un'immagine premi il pulsante con l'immagine nella barra: si apre la
+   finestra dei Media (capitolo 7). **Scegli dal sito**, nella barra e accanto al link del pulsante, scrive l'indirizzo
+   intero, quello che serve nelle email.
+3. **Pulsante in fondo**: il testo del pulsante e, sotto, il suo link.
 
-- **Salva e manda la prova**: la ricevono gli indirizzi spuntati della **lista dei test** (sotto), ognuno con i suoi dati,
-  e se vuoi anche un altro indirizzo scritto a mano (con **Aggiungi questo indirizzo alla lista dei test**, se è un
-  contatto). Le prove non contano nelle statistiche;
-- **Programma l'invio**: parte da sola all'ora scelta;
-- **Invia adesso alle liste scelte**: parte al prossimo giro del cron (ogni 5 minuti, al massimo 150 email l'ora, per non
-  finire fra lo spam).
+Sotto, **Testo semplice**: la versione senza grafica, per i programmi di posta che non mostrano l'HTML. Si fa da sola; se
+vuoi scriverla tu spunta **Lo scrivo io**. Nel codice HTML metti `{{ unsubscribe }}` dove vuoi il link per uscire (se
+manca lo aggiungiamo in fondo), `{{ update_profile }}` per le preferenze, `{{ mirror }}` per la versione web. Poi
+**Salva il design**.
+
+**Destinatari.**
+
+![La sezione Destinatari](immagini/manuale-uso/19-destinatari.jpg)
+
+1. **Invia a queste liste**: spunta una o più liste. Qui: Clienti del negozio.
+2. **e a questi segmenti**: anche i segmenti (sotto, "I segmenti"). Chi sta in più liste o segmenti la riceve una volta
+   sola.
+3. **Escludi delle liste o dei segmenti**: chi sta lì non la riceve, anche se sta in una lista scelta. L'esclusione vince.
+4. **Non mandare ai contatti non coinvolti**: salta chi da tempo riceve le campagne senza aprirne nessuna (quanti giorni,
+   lo scrivi in Impostazioni). Aiuta le tue email a non finire nello spam.
+5. Premi **Salva i destinatari**: la frase sopra il pulsante dice a quanti contatti arriva.
+
+Chi si è tolto da una lista dal centro preferenze (sotto) non riceve più le campagne di quella lista.
+
+**Impostazioni aggiuntive.** Tutte facoltative.
+
+![Le impostazioni aggiuntive](immagini/manuale-uso/19-impostazioni.jpg)
+
+1. **Rispondi a**: dove arrivano le risposte a questa campagna. Vuoto: come il mittente.
+2. **Personalizza il campo «A»**: il nome che chi riceve vede accanto al suo indirizzo, per esempio
+   `{{ contact.NOME }} {{ contact.COGNOME }}`.
+3. **Vedi questa email nel browser** in cima, e **Aggiorna le tue preferenze** in fondo: accesi nelle campagne nuove.
+4. **Parametri UTM**: le statistiche del sito (per esempio Google Analytics) riconoscono le visite arrivate da questa
+   campagna. Valgono per i link verso il tuo sito.
+5. **Invio a lotti**: la campagna parte in più pezzi (fino a 10), uno ogni tanti minuti. Il **Tag** serve a te per
+   ritrovarla.
+
+Premi **Salva le impostazioni**.
+
+### Anteprima e prova
+
+![Anteprima e prova](immagini/manuale-uso/19-anteprima.jpg)
+
+1. Scrivi l'email di un contatto e premi **Mostra con i suoi dati**: l'anteprima la mostra come la vedrà lui, con il suo
+   nome e i suoi attributi. Senza un contatto usa il nome "Giulia".
+2. **Computer** o **Telefono**: la larghezza dell'anteprima.
+3. L'anteprima, sempre dell'ultima versione salvata. Sopra c'è l'oggetto, già con i dati.
+
+Più sotto, **Manda una prova** (sotto, "La lista dei test").
+
+### Mandarla: subito o a un'ora
+
+![Programma](immagini/manuale-uso/19-programma.jpg)
+
+1. **Invia subito**: parte entro 5 minuti, al giro dopo del cron (capitolo 26).
+2. **Programma per giorno e ora**: parte da sola.
+3. Giorno e ora, nell'ora del sito (scritta accanto, per esempio Europe/Rome).
+4. Premi **Manda la campagna** e conferma. Il pulsante resta spento finché una sezione è da completare.
+
+Una campagna programmata si cambia ancora: **Togli la programmazione** la rimette in bozza, **Annulla la campagna** la ferma
+per sempre. Mentre parte puoi **Sospendere l'invio** e **Riprenderlo**. Dopo, nella stessa pagina c'è il **Report**: quante
+partite, aperte, cliccate, quante persone sono uscite e perché.
+
+**Checklist**
+
+- [ ] Tutte le sezioni sono **A posto** e il riquadro giallo in cima non c'è.
+- [ ] Ho guardato l'anteprima con i dati di un contatto vero.
+- [ ] Ho mandato una prova alla lista dei test e l'ho aperta, anche dal telefono.
+- [ ] Il numero dei destinatari è quello che mi aspetto.
+- [ ] In Impostazioni c'è l'indirizzo dell'azienda (sotto, "Il piede dell'email").
+
+### L'elenco delle campagne
+
+![L'elenco delle campagne](immagini/manuale-uso/19-elenco.jpg)
+
+1. **Crea una campagna**: il riquadro di prima.
+2. Le **viste**: Tutte, Bozze, Programmate, In invio, Inviate, Sospese, Annullate, Archiviate, con quante ce ne sono.
+3. **Azioni**, per ogni campagna:
+   - **Apri** (o **Apri e modifica** per una bozza);
+   - **Report**: i numeri della campagna e i link più cliccati (anche in Newsletter e form > Statistiche);
+   - **Duplica**: una copia in bozza; scegli cosa copiare (mittente, destinatari, oggetto, design, impostazioni);
+   - **Invia ai nuovi contatti**: una copia che arriva solo a chi non ha ricevuto la prima (per esempio chi si è iscritto
+     dopo). Nasce in bozza: la mandi dal suo riepilogo;
+   - **Rimanda ai non aperti**: una copia, con un oggetto nuovo se vuoi, per chi l'ha ricevuta e non l'ha aperta. Una volta
+     sola per campagna, e non per quelle mandate a lotti;
+   - **Archivia**: la toglie dalla vista Tutte (solo inviate, sospese o annullate); dalla vista Archiviate la rimetti;
+   - **Annulla la campagna** (programmata, in invio o sospesa) ed **Elimina** (solo le bozze), in rosso, con la conferma.
+
+### Il piede dell'email, la pagina per uscire e le preferenze
+
+Ogni email ha in fondo il link **Esci dalla newsletter** e, nelle campagne nuove, **Aggiorna le tue preferenze**. Per legge
+le email promozionali devono dire anche chi le manda: l'indirizzo lo scrivi una volta, in **Newsletter e form >
+Impostazioni**. Finché manca, l'elenco delle campagne te lo ricorda.
+
+![L'indirizzo dell'azienda](immagini/manuale-uso/19-indirizzo.jpg)
+
+1. Nome e indirizzo, su due o tre righe.
+2. Premi **Salva l'indirizzo**: esce in fondo a ogni campagna.
+
+Chi preme **Esci dalla newsletter** arriva a una pagina che gli chiede di confermare (un clic sul pulsante: chi apre il link
+per sbaglio non esce). Dopo, gli chiede perché: non gli interessa più, riceve troppe email, non si è mai iscritto, i
+contenuti non sono adatti, altro. Le risposte le leggi in **Statistiche**, riquadro **Perché sono usciti**, e nel Report di
+ogni campagna.
+
+![La pagina dopo l'uscita, con le domande](immagini/manuale-uso/19-uscita.jpg)
+
+Chi preme **Aggiorna le tue preferenze** sceglie da sé cosa ricevere: vede le liste che hai reso visibili, toglie la spunta
+a quelle che non vuole più (non riceve più le loro campagne, e resta nelle altre), la rimette per tornare; corregge i suoi
+dati; oppure esce da tutto.
+
+![Il centro preferenze](immagini/manuale-uso/19-centro-preferenze.jpg)
+
+Testi, liste e dati di queste due pagine si scelgono nel riquadro **Pagine di disiscrizione e preferenze**, in
+Impostazioni.
+
+![Pagine di disiscrizione e preferenze](immagini/manuale-uso/19-pagine.jpg)
+
+1. I testi della pagina per uscire. Un campo vuoto usa il testo di partenza, scritto in grigio. `{email}` diventa
+   l'indirizzo di chi legge.
+2. **Fai il questionario**: spegnilo se non vuoi chiedere perché. Sotto, le domande e le risposte possibili.
+3. **Le liste che il contatto vede e può scegliere**: spunta solo quelle che le persone possono scegliere da sole. Le altre
+   restano nascoste.
+4. **I dati che il contatto può cambiare**: nome e cognome, e gli attributi che vuoi. L'email no: chi ne vuole un'altra si
+   iscrive di nuovo con quella.
+5. Premi **Salva le pagine**.
+
+**Checklist**
+
+- [ ] L'indirizzo dell'azienda è scritto in Impostazioni.
+- [ ] Ho scelto quali liste si vedono nel centro preferenze.
+- [ ] Ho aperto il link **Esci dalla newsletter** di una prova e letto la pagina (senza premere il pulsante, oppure con un
+      indirizzo mio).
+- [ ] Ogni tanto leggo in Statistiche perché le persone escono.
 
 ### Quante email partono
 
@@ -1930,10 +2081,10 @@ Prima di mandare una campagna a tutti la provi su qualche indirizzo: la **lista 
 
 ![La prova di una campagna](immagini/manuale-uso/19-prova.jpg)
 
-1. Nella campagna, riquadro **Manda una prova**: gli indirizzi della lista dei test sono già spuntati. Ognuno riceve
+1. Nella campagna, sezione **Anteprima e prova**, riquadro **Manda una prova**: gli indirizzi della lista dei test sono già spuntati. Ognuno riceve
    l'email con il suo nome e i suoi attributi, come la riceverebbe davvero.
 2. **Anche a un altro indirizzo**: per una prova in più.
-3. Premi **Salva e manda la prova**. L'oggetto comincia con [PROVA].
+3. Premi **Manda la prova**. L'oggetto comincia con [PROVA]. La prova manda l'ultima versione salvata.
 
 ### L'email di conferma dell'iscrizione
 
@@ -2455,7 +2606,7 @@ sempre. Anche la pagina **Newsletter e form > Campagne** dice "Riscaldamento acc
 
 #### 6. Il mittente di una campagna o di un flusso
 
-- Campagna: **Newsletter e form > Campagne**, apri la campagna, tendina **Mittente**, poi **Salva**.
+- Campagna: **Newsletter e form > Campagne email**, apri la campagna, sezione **Mittente**, scegli dalla tendina, poi **Salva il mittente**.
 - Flusso: **Newsletter e form > Flussi automatici**, apri il flusso, a sinistra **Mittente**, poi **Salva**.
 
 Nelle tendine ci sono solo i mittenti confermati. "Il predefinito" segue il mittente predefinito anche se lo cambi dopo.

@@ -174,10 +174,10 @@ const decodifica = eml => eml.replace(/\r?\n\r?\n([A-Za-z0-9+\/=\r\n]{40,})/g, (
     ok('D. Brevo: posta_invia() con l\'allegato .ics (firma invariata, sesto argomento)', inv[0] === true && !!m && m._allegati[0].nome === 'evento.ics', inv);
     const iB = iscrivi(['b1@persona.it', 'b2@persona.it', 'b3@persona.it']);
     const cB = campagna('Novità Brevo', ['b1@persona.it', 'b2@persona.it', 'b3@persona.it']);
-    await vai('/admin/newsletter-campagna.php?id=' + cB);
+    await vai('/admin/newsletter-campagna.php?apri=mittente&id=' + cB); // 2.11.0: il mittente ha la sua sezione nel riepilogo
     const opzioni = await p.locator('#mittente_id option').allInnerTexts();
     await p.selectOption('#mittente_id', String(anna));
-    await Promise.all([p.waitForNavigation(), p.click('button[name=azione][value=salva]')]);
+    await Promise.all([p.waitForNavigation(), p.click('#sez-mittente button[type=submit]')]);
     ok('C. la campagna sceglie il mittente fra i confermati (tendina con il predefinito e i due)', opzioni.length === 3 && /Il predefinito/.test(opzioni[0]) && +uno('SELECT mittente_id FROM {p}newsletter_campagne WHERE id = ' + cB) === anna, opzioni);
     da = C.arrivati(P.api).length;
     const giroB = parti(cB);
