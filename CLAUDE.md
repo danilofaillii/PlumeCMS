@@ -146,7 +146,7 @@ radice e cartella, pannello temi 32/32, motore temi 39/40 (il KO cerca il nome "
 service account 8/8, telefono 49/49 a 390 e 768, firma 14/14, indirizzo sito 10/10, sito di plumeCMS 92/92.
 
 Fatto: plumeCMS 2.4.0 (1 novembre): il sito ufficiale passa a **https://plumecms.it** (Danilo ha comprato il dominio; stesso hosting;
-il vecchio plumecms.danilofailli.it si chiude subito, decisione sua). `VERSIONE_SITO_UFFICIALE` e `FIRMA_URL` cambiati, la frase salvata col
+il vecchio plumecms.danilofailli.it si chiudeva subito; dal 1 novembre, decisione di Danilo, resta e rimanda a plumecms.it con un 301 in `.htaccess`, cartella vecchia vuota). `VERSIONE_SITO_UFFICIALE` e `FIRMA_URL` cambiati, la frase salvata col
 vecchio indirizzo migra da sola, e il riquadro nuovo Impostazioni > Indirizzo del sito (`sito_url` dal pannello, con la prova del file).
 I siti fino alla 2.3.2 vanno aggiornati a mano una volta. Foglio dei passi del trasloco in `docs-sviluppo/trasloco-plumecms-it.md`.
 Prove: indirizzo sito 10/10 radice e cartella, firma 14/14 (la prova vecchia contava "Installa ora" come pulsante di chiusura: corretta),
