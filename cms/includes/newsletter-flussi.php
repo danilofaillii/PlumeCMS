@@ -23,6 +23,8 @@ const NL_CONDIZIONI = [
     'cliccata' => ["Ha cliccato in un'email di questo flusso", 'email'], 'non_cliccata' => ["Non ha cliccato in un'email di questo flusso", 'email'],
     'inattivo' => ['Non apre e non clicca niente da almeno tanti giorni', 'giorni'], 'attivo' => ['Ha aperto o cliccato qualcosa negli ultimi tanti giorni', 'giorni'],
     'iscritto_da' => ['È iscritto da almeno tanti giorni', 'giorni'],
+    // 2.10.0: i segmenti (motore in includes/newsletter-segmenti.php).
+    'in_segmento' => ['Fa parte di un segmento', 'segmento'], 'non_in_segmento' => ['Non fa parte di un segmento', 'segmento'],
 ];
 /** Le uscite di ogni tipo di nodo, con l'etichetta che si legge sulla tela. */
 const NL_USCITE = [
@@ -415,9 +417,15 @@ function newsletter_flussi_inattivi(): void {
     }
 }
 
-/** La condizione di un bivio vale per questa persona? */
+/**
+ * La condizione di un bivio vale per questa persona? 2.10.0: con il motore dei segmenti (newsletter_bivio_vale), che
+ * traduce le nove condizioni di prima nelle sue con lo stesso esito. Il codice di prima resta se il motore manca
+ * (opcache può dare per qualche secondo i file di prima dopo l'aggiornamento).
+ */
 function newsletter_flusso_condizione(array $f, array $nodo, int $iscritto): bool {
     $c = $nodo['dati']['condizione']; $v = (int)$nodo['dati']['valore'];
+    if (!function_exists('newsletter_bivio_vale')) @include_once __DIR__ . '/newsletter-segmenti.php';
+    if (function_exists('newsletter_bivio_vale')) return newsletter_bivio_vale((int)$f['id'], (string)$c, $v, $iscritto);
     switch ($c) {
         case 'in_lista': case 'non_in_lista':
             $st = db()->prepare('SELECT COUNT(*) FROM ' . tbl('newsletter_iscritti_liste') . ' WHERE iscritto_id = ? AND lista_id = ?');

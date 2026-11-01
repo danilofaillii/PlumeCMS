@@ -837,6 +837,11 @@ function newsletter_esporta_where(array $f): array {
         case 'contatti':
             [$w, $p] = newsletter_contatti_filtro((array)($f['q'] ?? []));
             return [$w !== '' ? substr($w, 7) : '1', $p];
+        case 'segmento':
+            // 2.10.0: i contatti di un segmento, ricalcolato a ogni giro (il motore si carica qui: opcache).
+            if (!function_exists('newsletter_segmento_where')) require_once __DIR__ . '/newsletter-segmenti.php';
+            $p = [];
+            return [newsletter_segmento_where((int)($f['segmento'] ?? 0), $p), $p];
         case 'ids':
             $ids = array_values(array_filter(array_map('intval', (array)($f['ids'] ?? []))));
             return [$ids ? 'i.id IN (' . implode(',', $ids) . ')' : '0', []];
@@ -891,6 +896,11 @@ function newsletter_esporta_crea(array $f, array $colonne, string $sep, int $ute
         $c = newsletter_campagna((int)($f['campagna'] ?? 0));
         if (!$c) return 'Scegli la campagna da esportare.';
         $descr = 'Campagna «' . (newsletter_4byte_fuori((string)$c['oggetto']) ?: 'senza oggetto') . '», ' . (NL_ESP_CAMPAGNA[$f['chi'] ?? ''] ?? NL_ESP_CAMPAGNA['aperto']);
+    } elseif (($f['tipo'] ?? '') === 'segmento') {
+        if (!function_exists('newsletter_segmento')) require_once __DIR__ . '/newsletter-segmenti.php';
+        $s = newsletter_segmento((int)($f['segmento'] ?? 0));
+        if (!$s) return 'Scegli il segmento da esportare.';
+        $descr = 'Segmento «' . newsletter_4byte_fuori((string)$s['nome']) . '»';
     } elseif (($f['tipo'] ?? '') === 'ids') {
         if (!array_filter((array)($f['ids'] ?? []))) return 'Spunta almeno un contatto nella tabella, oppure la casella «Tutti i contatti».';
         $descr = 'Contatti scelti nella tabella';

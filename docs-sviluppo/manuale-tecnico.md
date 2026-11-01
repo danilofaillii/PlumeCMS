@@ -2021,6 +2021,124 @@ Prove: `prove/prova-importa.js` con `prove/importa-cli.php` (XLSX come Excel e L
 `prova-newsletter-difetti.js` e `prova-contatti-brevo.js` adattati ai passi nuovi e alla finestra Esporta; attacchi: gruppo
 30 di `tools/sicurezza-prova.js`.
 
+### 15.9 Segmenti, Aggiungi filtro e viste come Brevo (dalla 2.10.0)
+
+Fase 3 del piano di `docs-sviluppo/brevo-confronto.md` (capitoli 1.4, 3.4, la riga "Filtri" e "Viste" del capitolo 1.1).
+Motore in `includes/newsletter-segmenti.php` (caricato in fondo a `includes/newsletter.php` e caricato a mano, con
+`require_once`, da chi lo chiama da un altro file: `newsletter_contatti_filtro()`, `newsletter_esporta_where()`,
+`newsletter_flusso_condizione()`, le due pagine; è la copia di riserva per opcache); pagina `admin/newsletter-segmenti.php`
+(scheda Segmenti accanto a Contatti e Liste; `newsletter-contatti.php?scheda=segmenti` rimanda con 302 e `no-store`);
+"Aggiungi filtro", "Salva come segmento", viste ed esportazione di un segmento in `admin/newsletter-contatti.php`;
+costruttore delle condizioni in `admin/assets/segmenti.js`; stili `.nls-*`, `.nlv-*`, `.nlx-riquadro-filtro` in fondo ad
+`admin.css`. Solo amministratore (`require_admin()` sulle due pagine).
+
+**Tabelle** (`newsletter_segmenti_schema()`, `newsletter-segmenti.php:50`, impronta `newsletter_segmenti_impronta`; utf8,
+`NOT NULL DEFAULT`, niente colonne generate; nessuna tabella di prima cambiata, solo indici in più):
+- `newsletter_segmenti`: `nome` (UNIQUE), `cartella_id`, `condizioni` (JSON delle regole già pulite, fuori ASCII come
+  `\uXXXX`), `conteggio` e `contato_at` (il numero per l'elenco), `utente_id`, `creato`, `aggiornato`. Il segmento non
+  salva i membri: le regole diventano SQL ogni volta ("si aggiorna da solo", come Brevo).
+- `newsletter_segmenti_cartelle`: le categorie (`nome` UNIQUE).
+- `newsletter_viste`: `utente_id`, `nome`, `filtro` (JSON dei filtri della pagina: cerca, stato, lista, segmento, f, per),
+  `colonne` (JSON dei nomi degli attributi), `ordine` (per dopo; oggi l'ordine è sempre per data di creazione).
+- Indici nuovi per i conteggi (`:91`): `newsletter_eventi.seg_contatto (iscritto_id, tipo, creato)`,
+  `newsletter_coda.seg_contatto (iscritto_id, stato, inviata_at)`, `newsletter_storia.seg_tipo (contatto_id, tipo, creato)`,
+  `moduli_invii.seg_email (email, creato)`; si aggiungono solo se mancano (`SHOW INDEX`).
+
+**Le regole** (JSON): `{"op": "e"|"o", "gruppi": [{"op": "e"|"o", "condizioni": [...]}]}`, due livelli: i gruppi si
+uniscono con `op`, le condizioni di un gruppo con il `op` del gruppo (la forma dei gruppi annidati di Brevo non si è trovata,
+capitolo 5 del piano). Una condizione: `campo`, `op` e solo le chiavi che servono (`valore`, `valore2`, `n`, `unita`,
+`campagna`, `non`). Campi (`newsletter_regole_campi()`, `:113`): `attr:NOME` per ogni attributo (di sistema sulla sua
+colonna, `NL_SEG_COLONNE`, `:48`; gli altri su `newsletter_valori`; calcolati e globali esclusi: si calcolano contatto per
+contatto), `stato`, `lista_nera` (con il motivo, anche per le righe senza motivo di prima della 2.8.0, come il filtro della
+pagina), `iscritto_da`, `lista`, `nessuna_lista`, `segmento`, `email` (aperta, non aperta, cliccata, non cliccata,
+ricevuta, non ricevuta; `campagna` 0 qualsiasi campagna, -1 l'ultima partita, -2 qualsiasi email anche delle automazioni, N
+una campagna; periodo `n` + `unita`), `link` (un indirizzo preciso cliccato, con la campagna), `attivita` (aperture e clic
+negli ultimi N giorni; con `tutti` qualunque evento, come i bivi di prima), `form` (inviato, uno o qualsiasi, nel periodo),
+e solo nei flussi `flusso_email` (aperta o cliccata un'email del flusso). Operatori per tipo in `NL_SEG_OPERATORI` (`:28`):
+testo (è, non è, contiene, non contiene, comincia, finisce, vuoto, pieno), numero (uguale, diverso, maggiore, minore, fra),
+data (il, prima, dopo, fra, negli ultimi N, più di N fa, nei prossimi N, in questo mese; unità `NL_SEG_UNITA`, `:26`:
+giorni, settimane, mesi, come le date dinamiche di Brevo), sì/no (sì; no = 0 o non impostato), categoria (uno di, nessuno
+di), scelta multipla (almeno una, tutte, nessuna di). Le negazioni sono operatori (come Brevo: "è / non è", "ha fatto / non
+ha fatto"); in più ogni condizione può avere `non` (lo usano i bivi). "Non è", "non contiene", "diverso" valgono anche per
+chi non ha il valore. "Non aperta" di una campagna precisa o dell'ultima = l'ha ricevuta e non l'ha aperta; di qualsiasi
+campagna = nessuna apertura nel periodo (il modello "Contatti non coinvolti" di Brevo).
+
+**Sicurezza** (`newsletter_regole_valida()`, `:173`, e `newsletter_condizione_valida()`, `:208`): JSON (anche in base64url
+per gli indirizzi) al massimo 200000 caratteri e profondità 7 (un annidamento più fondo non si legge); campo e operatore solo
+dagli elenchi chiusi, altrimenti errore in parole ("Condizione 2 del gruppo 1: scegli la condizione."); al massimo 100
+condizioni (`NL_SEG_CONDIZIONI_MAX`, Brevo) e 20 gruppi; id come interi (`nl_seg_int()`, `:205`); testi con
+`newsletter_testo_pulito()` (emoji come entità, come sono salvati), numeri e date con `newsletter_valore_leggi()`; motivi
+solo da `NL_MOTIVI`. `newsletter_regole_where()` (`:315`) scrive l'SQL solo con le colonne e le tabelle scritte nel codice
+(`nl_seg_condizione_sql()`, `:356`; `nl_seg_attributo_sql()`, `:431`; `nl_seg_confronto()`, `:482`) e tutti i valori come
+parametri `?` in `$par`, nell'ordine in cui compaiono nell'SQL (attenzione: una parte scritta prima nell'SQL deve mettere i
+suoi parametri prima; "non aperta" di una campagna li mette prima, `:404`). `LIKE` con `addcslashes` e `ESCAPE`; le unità
+diventano DAY, WEEK, MONTH da un elenco. Segmenti dentro segmenti: fino a 5 livelli (`NL_SEG_PROFONDITA`), un giro si
+rifiuta al salvataggio (`newsletter_segmento_contiene()`, `:616`) e, se arrivasse lo stesso, vale "nessuno" (`_visti`).
+
+**Uso**: `newsletter_regole_conta()` (`:512`, numero e millisecondi), `newsletter_regole_vale()` (`:523`, un contatto),
+`newsletter_segmento_where()` (`:630`), `newsletter_regole_testo()` (`:559`, le regole in parole). Segmenti:
+`newsletter_segmento_salva()` (`:641`: nome unico, almeno una condizione, categoria esistente o nuova, conteggio subito; al
+massimo 300 segmenti, scelta di plumeCMS: Brevo non dice il suo limite), `newsletter_segmento_conta()` (`:671`),
+`newsletter_segmento_usato()` (`:682`: altri segmenti e bivi dei flussi) e `newsletter_segmento_elimina()` (`:697`, rifiuta un
+segmento usato), `newsletter_segmento_in_lista()` (`:708`: lista nuova con i membri di oggi, con un `INSERT ... SELECT` e la
+riga `lista_aggiunto` nella storia di ognuno, senza far partire i flussi della lista), categorie (`:726`-`:745`; eliminare una
+categoria lascia i segmenti senza categoria), modelli (`newsletter_segmenti_modelli()`, `:754`: i dieci modelli; quello di
+Brevo trovato è "Unengaged email contacts", gli altri sono di plumeCMS), viste (`newsletter_viste()`, `:784`,
+`newsletter_vista_salva()`, `:801`: per utente, al massimo 30, lo stesso nome sovrascrive, "Tutti i contatti" è riservato).
+
+**Pagina Segmenti** (`admin/newsletter-segmenti.php`): elenco per categoria con ricerca e filtro della categoria; i numeri
+vecchi di più di dieci minuti si ricalcolano aprendo la pagina per al massimo tre secondi, il resto con "Aggiorna i
+numeri" (`:64`). `?nuovo=1`: Crea da zero o un modello; poi `?nuovo=1&modello=<chiave>` o `?id=`: le condizioni, il numero
+(azione `conta`, `:22`, JSON, token dal campo o da `X-CSRF`, `session_write_close`), nome e categoria; Salva (`:39`): con un
+errore la pagina torna con quello che si era scritto (`nls_bozza` in sessione, solo per lo stesso segmento). Da un segmento:
+Vedi i contatti, Esporta (`newsletter-contatti.php?segmento=<id>&esporta=1` apre la finestra Esporta con il segmento
+scelto), Crea una lista (finestra), Elimina (con `data-conferma`).
+
+**Pagina Contatti** (`admin/newsletter-contatti.php`): `newsletter_contatti_filtro()` (`includes/newsletter-contatti.php:508`)
+legge anche `segmento` e `f` (le regole in base64url, riscritte pulite; un `f` che non si legge si scarta e la pagina lo
+dice, `errore_filtro`): elenco, conteggio, "tutti i contatti del filtro" ed esportazione del filtro vedono le stesse
+condizioni. Tendina "Carica un segmento"; riquadro "Aggiungi filtro" (`<details id="nlx-filtro">`, `:333`: il costruttore
+scrive nel campo `f` del suo modulo GET; "Applica il filtro", "Salva come segmento" con la finestra `#nls-salva`, `:498`,
+che manda a `newsletter-segmenti.php` con `torna=contatti`; "Togli il filtro"); il filtro in parole sopra la tabella. Viste:
+schede `.nlv-viste` sopra la tabella ("Tutti i contatti" fissa), `?vista=<id>` (`:264`) prende filtri e colonne della vista;
+finestra `#nlv-salva` (`:512`, azioni `vista_salva` e `vista_elimina`, `:153`). Esporta: origine "Un segmento" (`:390`;
+`newsletter_esporta_where()` caso `segmento`, `includes/newsletter-importa.php:840`, ricalcolato a ogni giro; descrizione
+"Segmento «nome»", `:899`). La definizione per il costruttore (campi, operatori, liste, segmenti, campagne partite, form,
+motivi, gli ultimi 200 link cliccati) esce in `<script type="application/json" id="nls-def">` (`newsletter_regole_definizione()`,
+`newsletter-segmenti.php:138`): JSON, non codice, quindi la CSP a nonce non c'entra.
+
+**Costruttore** (`admin/assets/segmenti.js`): `data-nls-editor="#campo"` legge e scrive il campo nascosto (JSON in
+base64url); gruppi in `fieldset` con la legenda, ogni condizione con etichette vere ("Condizione 2: su cosa", "Come",
+"Valore"...), caselle per liste, opzioni e motivi, "+ E/O: aggiungi una condizione", "+ Aggiungi un gruppo", "Togli" con
+`aria-label`; dopo ogni cambio il fuoco torna sul campo cambiato; il numero (`[data-nls-numero]`, `role="status"`) si chiede
+mezzo secondo dopo l'ultimo cambio e dice cosa manca se una condizione è incompleta. `data-nls-copia` copia le regole nel
+modulo di "Salva come segmento" all'invio.
+
+**Flussi**: i bivi usano il motore. `newsletter_flusso_condizione()` (`includes/newsletter-flussi.php:425`) chiama
+`newsletter_bivio_vale()` (`newsletter-segmenti.php:548`), che traduce le nove condizioni di prima
+(`newsletter_bivio_regole()`, `:532`: in_lista e non_in_lista -> `lista`; aperta, non_aperta, cliccata, non_cliccata ->
+`flusso_email` con il flusso nel contesto; attivo e inattivo -> `attivita` con `tutti`; iscritto_da -> `iscritto_da`) e le
+fa passare dal controllo come tutte le altre. I dati dei flussi non cambiano (stessa `condizione` e `valore` nel grafo):
+nessuna migrazione, stesso esito (lista, email o segmento non scelti: "sta in", "ha aperto", "ha cliccato" no, le negative
+sì, come prima; una condizione sconosciuta vale, come prima). Il codice di prima resta sotto, per quando opcache dà per
+qualche secondo il file vecchio. Condizioni nuove del bivio: `in_segmento` e `non_in_segmento` (`NL_CONDIZIONI`,
+`newsletter-flussi.php:27`; tendina in `admin/assets/flussi.js:228`, segmenti in `FL_DATI.segmenti`,
+`admin/newsletter-flussi.php:130`). Il bivio a più rami con le condizioni dei segmenti è della fase 8.
+
+**Campagne**: non cambiano in questa fase (il piano mette destinatari ed esclusioni nella fase 4, 2.11.0). Il motore è pronto:
+`newsletter_segmento_where()` e `newsletter_regole_where()` danno la condizione da mettere nell'`INSERT ... SELECT` della coda
+(`newsletter_avvia_programmate()`, `includes/newsletter.php`) e nel conteggio dei destinatari.
+
+**Fatto diverso da Brevo, scelte di plumeCMS**: limiti di 300 segmenti, 100 categorie e 30 viste per utente (quelli di
+Brevo non si sono trovati); le viste sono per utente (in Brevo non si è trovato se sono dell'account); "I miei contatti" non
+c'è (è del CRM); le condizioni su sito ed e-commerce non ci sono; con il tracciamento anonimo (fase 9) le condizioni su
+aperture e clic andranno spente; "sì/no: no" comprende chi non ha il valore.
+
+Prove: `prove/prova-segmenti.js` con `prove/segmenti-cli.php` (5000 contatti finti con attributi dei sei tipi, stati e
+motivi, liste, tre campagne con coda, aperture e clic, email dei flussi, invii dei form; ogni condizione contro una query
+scritta a mano, i dieci modelli, cento condizioni, i tempi; i bivi della 2.9.0 copiati com'erano contro il motore su 600
+contatti per condizione); attacchi: gruppo 31 di `tools/sicurezza-prova.js`.
+
 ---
 
 ## 16. SEO e AEO, file calcolati, feed

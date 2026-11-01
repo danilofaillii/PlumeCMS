@@ -18,6 +18,7 @@
 //   "Google e IndexNow" (due foto della stessa pagina unite).
 // 2.9.0: il capitolo 19i (Importare ed esportare i contatti, la lista dei test): SOLO_CAPITOLI=19i, con TMPDIR vuota (in
 //   /tmp/manuale-uso-png possono esserci PNG vecchi che il giro ricopierebbe).
+// 2.10.0: il capitolo 19j (Segmenti, Aggiungi filtro, viste) dopo il 19i, di cui usa i contatti: SOLO_CAPITOLI=19i,19j.
 const { chromium } = require('playwright');
 const pnConferme = require('../prove/conferme-pannello'); // UX 2026-11: conferme del pannello
 const fs = require('fs');
@@ -722,6 +723,46 @@ capitoli['19i'] = async () => {
   else await Promise.all([p.waitForNavigation(), p.click('button:has-text("+ Nuova campagna")')]);
   await p.waitForLoadState('networkidle');
   await foto('19-prova', { sel: '#nlc-prova', margine: 8, segni: [{ sel: '#nlc-prova label:first-of-type', n: 1 }, { sel: '#nlc-prova-a', n: 2 }, { sel: '#nlc-prova button[value=prova]', n: 3 }] });
+};
+
+// 19j. I segmenti, Aggiungi filtro e le viste (2.10.0). Dopo il 19i: usa i contatti importati ("Clienti del negozio",
+// attributo CITTA). SOLO_CAPITOLI=19i,19j, con TMPDIR vuota.
+capitoli['19j'] = async () => {
+  const numero = async () => { for (let i = 0; i < 60; i++) { const t = await p.locator('[data-nls-numero]').first().innerText(); if (/rispett/.test(t)) return t; await dorme(150); } throw new Error('19j: il conteggio non arriva'); };
+  await vai('newsletter-segmenti.php?nuovo=1');
+  await foto('19-segmenti-modelli', { clip: { x: 240, y: 56, width: 960, height: 560 }, segni: [{ sel: 'a.nls-zero', n: 1 }, { sel: 'a.nls-modello[href*="non_aprono_90"]', n: 2 }] });
+  await Promise.all([p.waitForNavigation(), p.click('a.nls-zero')]);
+  await p.click('button[data-aggiungi="0"]');
+  await p.locator('[data-k=campo]').last().selectOption('attr:CITTA');
+  await p.locator('[data-k=op]').last().selectOption('uguale');
+  await p.locator('[data-k=valore]').last().fill('Bologna');
+  await p.click('button[data-aggiungi="0"]');
+  await p.locator('[data-k=campo]').last().selectOption('lista');
+  await p.locator('.nls-caselle label', { hasText: 'Clienti del negozio' }).locator('input').last().check();
+  await numero();
+  await p.fill('#nls-nome', 'Clienti di Bologna'); await p.fill('#nls-cart-nuova', 'Negozio');
+  await p.setViewportSize({ width: 1200, height: 1300 });
+  await foto('19-segmento', { sel: '#nls-form', margine: 0, segni: [{ sel: '.nls-cond [data-k=campo]', n: 1 }, { sel: 'button[data-aggiungi="0"]', n: 2 }, { sel: '[data-nls-numero]', n: 3 }, { sel: '#nls-nome', n: 4 }, { sel: '#nls-form button[type=submit]', n: 5 }] });
+  await p.setViewportSize({ width: 1200, height: 800 });
+  await Promise.all([p.waitForNavigation(), p.click('#nls-form button[type=submit]')]);
+  if (!/creato/.test(await flash())) throw new Error('19j: segmento non creato: ' + await flash());
+  const sid = await p.evaluate(() => { const a = [...document.querySelectorAll('a[href^="newsletter-segmenti.php?id="]')].find(x => x.textContent.trim() === 'Clienti di Bologna'); return a ? a.href.match(/id=(\d+)/)[1] : ''; });
+  await foto('19-segmenti', { clip: { x: 240, y: 56, width: 960, height: 700 }, segni: [{ sel: `a[href="newsletter-segmenti.php?id=${sid}"]`, n: 1 }, { sel: `a[aria-label="Vedi i contatti del segmento Clienti di Bologna"]`, n: 2 }, { sel: `button[data-apri-dialogo="#nls-lista-${sid}"]`, n: 3, lato: 'destra' }] });
+  // Aggiungi filtro nella pagina Contatti, poi Salva come vista
+  await vai('newsletter-contatti.php');
+  await p.click('#nlx-filtro > summary');
+  await p.click('#nlx-filtro button[data-aggiungi="0"]');
+  await p.locator('#nlx-filtro [data-k=campo]').last().selectOption('attr:CITTA');
+  await p.locator('#nlx-filtro [data-k=op]').last().selectOption('uguale');
+  await p.locator('#nlx-filtro [data-k=valore]').last().fill('Modena');
+  await numero();
+  await foto('19-filtro', { sel: '#nlx-filtro', margine: 8, segni: [{ sel: '#nlx-filtro > summary', n: 1 }, { sel: '#nlx-filtro .nls-cond', n: 2 }, { sel: '#nlx-filtro button[type=submit]', n: 3 }, { sel: '#nlx-filtro button[data-apri-dialogo="#nls-salva"]', n: 4, lato: 'destra' }] });
+  await Promise.all([p.waitForNavigation(), p.click('#nlx-filtro button[type=submit]')]);
+  await p.click('button[data-apri-dialogo="#nlv-salva"]');
+  await p.fill('#nlv-nome', 'Clienti di Modena');
+  await Promise.all([p.waitForNavigation(), p.click('#nlv-salva button:has-text("Salva la vista")')]);
+  if (!/Vista salvata/.test(await flash())) throw new Error('19j: vista non salvata: ' + await flash());
+  await foto('19-viste', { clip: { x: 240, y: 56, width: 960, height: 330 }, segni: [{ sel: '.nlv-viste a.attiva', n: 1 }, { sel: '.nlv-viste a:first-child', n: 2 }, { sel: 'button[data-apri-dialogo="#nlv-salva"]', n: 3, lato: 'destra' }] });
 };
 
 // 19s. I social e l'email del mattino (1.5.0), sull'articolo "Chiusi per ferie" del capitolo 4.

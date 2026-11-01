@@ -1575,8 +1575,8 @@ partono dal tuo server, a giri, grazie al cron (capitolo 26).
 
 ### I contatti
 
-Dalla 2.8.0 i contatti hanno pagine loro. **Newsletter e form > Contatti** ha due
-linguette, **Contatti** e **Liste**. Un contatto è una persona con la sua email: può stare in più liste o in nessuna, e per
+Dalla 2.8.0 i contatti hanno pagine loro. **Newsletter e form > Contatti** ha tre
+linguette, **Contatti**, **Liste** e **Segmenti** (dalla 2.10.0). Un contatto è una persona con la sua email: può stare in più liste o in nessuna, e per
 le email è **iscritto**, **in attesa di conferma** (non ha ancora premuto il pulsante dell'email di conferma) oppure **in
 lista nera** (non riceve più niente). Le persone si iscrivono da sole con un form (capitolo 18) e confermano con un'email
 (doppio consenso); oppure le aggiungi tu.
@@ -1586,7 +1586,8 @@ lista nera** (non riceve più niente). Le persone si iscrivono da sole con un fo
 1. **Crea un contatto**, in alto: aggiunge una persona a mano (sotto, "Aggiungere un contatto").
 2. **Carica una lista**: mostra solo i contatti di quella lista (o "In nessuna lista"). Accanto: **Cerca** (un pezzo
    dell'email, il nome, il cognome), **Stato dell'email** (Iscritti, In attesa di conferma, In lista nera con il motivo,
-   Con 3 errori di fila) e quanti contatti per pagina (50, 100 o 500). Premi **Cerca**.
+   Con 3 errori di fila) e quanti contatti per pagina (50, 100 o 500). Premi **Cerca**. Dalla 2.10.0 c'è anche **Carica
+   un segmento**, e sotto il riquadro **Aggiungi filtro** (più avanti, "Aggiungi filtro e Salva come segmento").
 3. **Azione**: spunta i contatti nella tabella (o la casella **Tutti i contatti** del filtro, anche quelli delle altre
    pagine), scegli l'azione e premi **Applica**: **Aggiungi a una lista**, **Togli dalle liste**, **Sposta in un'altra
    lista** (da quella caricata), **Metti in lista nera**, **Modifica un attributo** (solo quelli Data, Sì/No e
@@ -1774,7 +1775,8 @@ scegli l'azione **Esporta**.
 ![La finestra Esporta](immagini/manuale-uso/19-esporta.jpg)
 
 1. **Quali contatti**: quelli scelti nella tabella (o "Tutti i contatti" del filtro), una **lista** (tutti, solo gli
-   iscritti, solo quelli in lista nera, solo chi si è disiscritto da quella lista) oppure una **campagna** già partita
+   iscritti, solo quelli in lista nera, solo chi si è disiscritto da quella lista), un **segmento** (dalla 2.10.0) oppure
+   una **campagna** già partita
    (chi l'ha aperta, chi no, chi ha cliccato, chi no, chi si è disiscritto, i rimbalzi).
 2. **Attributi da esportare**: spunta le colonne che vuoi (EMAIL c'è sempre). In fondo ci sono anche lo stato
    dell'iscrizione, la lista nera con il motivo e le liste.
@@ -1791,6 +1793,89 @@ per una formula. Il file esportato si può reimportare così com'è: i dati torn
 - [ ] Ho scelto quali contatti esportare e le colonne che mi servono.
 - [ ] Ho aperto il file con il separatore giusto.
 - [ ] Ho conservato il file al sicuro, o l'ho cancellato quando non serviva più.
+
+#### I segmenti
+
+Un **segmento** è un gruppo di contatti scelto con delle condizioni, che **si aggiorna da solo**: chi rispetta le
+condizioni entra, chi smette di rispettarle esce. Una lista invece è ferma: ci entra solo chi aggiungi tu, un form o
+un'importazione. Esempi: "chi non apre le email da 90 giorni", "i clienti di Bologna", "chi ha cliccato l'ultima
+campagna". **Contatti > Segmenti**, poi **Crea un segmento**.
+
+![Da zero o da un modello](immagini/manuale-uso/19-segmenti-modelli.jpg)
+
+1. **Crea da zero**: scegli tu le condizioni.
+2. Oppure un **modello pronto**: contatti non coinvolti (né aperto né cliccato una campagna negli ultimi 30 giorni), chi
+   non apre da 90 giorni, contatti coinvolti, nuovi iscritti di questo mese, chi ha cliccato o aperto l'ultima campagna,
+   chi non l'ha aperta, chi ha compilato un form da poco, chi non sta in nessuna lista, chi è in lista nera. Il modello
+   riempie le condizioni e il nome: puoi cambiare tutto.
+
+Esempio: i clienti del negozio che abitano a Bologna.
+
+![Le condizioni di un segmento](immagini/manuale-uso/19-segmento.jpg)
+
+1. **Condizione 1: su cosa**: scegli **Città**, poi **Come** "è" e scrivi **Bologna**. Le condizioni possibili sono:
+   i dati del contatto (ogni attributo: testo, numero, data, sì/no, categoria, scelta multipla; anche email, nome, data
+   di creazione e ultima modifica), l'iscrizione e la lista nera (anche con il motivo), da quanti giorni è iscritto, le
+   liste, "in nessuna lista", un altro segmento, le email aperte, cliccate o ricevute (di una campagna, dell'ultima, di
+   qualsiasi campagna o di qualsiasi email, da sempre o negli ultimi giorni, settimane o mesi), un link preciso cliccato,
+   le aperture e i clic recenti, un form inviato. Per le date valgono anche "negli ultimi 30 giorni", "più di 6 mesi fa",
+   "nei prossimi 60 giorni" e "in questo mese".
+2. **+ E: aggiungi una condizione**: una seconda condizione nello stesso gruppo, per esempio **Liste** "è in almeno una
+   di" **Clienti del negozio**. Con **Dentro il gruppo** scegli **E** (devono valere tutte) oppure **O** (basta una).
+   **+ Aggiungi un gruppo di condizioni** crea un altro gruppo; con **I gruppi si uniscono così** scegli E oppure O.
+   Le condizioni "negative" sono fra le scelte di **Come**: "non è", "non contiene", "non ha aperto", "non è in nessuna
+   di"... Al massimo 100 condizioni.
+3. **Quanti contatti**: il numero si aggiorna da solo a ogni cambio. Se manca qualcosa (un valore, una lista), qui c'è
+   scritto cosa.
+4. **Nome del segmento** e, se vuoi, una **Categoria** (o una nuova): servono a tenere in ordine l'elenco.
+5. Premi **Crea il segmento**.
+
+![L'elenco dei segmenti](immagini/manuale-uso/19-segmenti.jpg)
+
+1. Il segmento, con le condizioni scritte in parole e quanti contatti ha adesso. Premi il nome per cambiarlo.
+2. **Vedi i contatti**: apre la pagina Contatti con il segmento caricato. Da lì le azioni di gruppo (aggiungi a una
+   lista, metti in lista nera...) valgono per i contatti del segmento, con la casella **Tutti i contatti**.
+3. **Crea una lista**: una lista nuova con i contatti che oggi sono nel segmento. La lista poi non cambia più da sola.
+   Accanto: **Esporta** (apre la finestra Esporta con il segmento già scelto).
+
+Un segmento usato da un altro segmento o da un flusso non si elimina: la sua pagina dice chi lo usa. Eliminare un
+segmento non tocca i contatti. In fondo all'elenco, **Categorie dei segmenti**: crea, rinomina, elimina (i segmenti di
+una categoria eliminata restano, senza categoria).
+
+#### Aggiungi filtro e Salva come segmento
+
+Per cercare i contatti con le stesse condizioni senza creare un segmento: nella pagina **Contatti**, apri **Aggiungi
+filtro**.
+
+![Aggiungi filtro](immagini/manuale-uso/19-filtro.jpg)
+
+1. **Aggiungi filtro** apre il riquadro.
+2. Le condizioni, come nei segmenti (qui: Città è Modena). Il numero dei contatti si aggiorna mentre scrivi.
+3. **Applica il filtro**: la tabella mostra solo quei contatti, e sopra c'è scritto il filtro in parole. Il filtro vale
+   insieme alla ricerca, alla lista e al segmento caricati. **Togli il filtro** lo toglie.
+4. **Salva come segmento**: chiede nome e categoria e crea il segmento con queste condizioni.
+
+#### Le viste
+
+Una **vista** ricorda i filtri della pagina Contatti (ricerca, lista, segmento, stato, filtro) e le colonne della tabella,
+con un nome: la ritrovi con un clic fra le schede sopra la tabella.
+
+![Le viste](immagini/manuale-uso/19-viste.jpg)
+
+1. La vista salvata (qui: Clienti di Modena): un clic e la tabella torna con i suoi filtri e le sue colonne.
+2. **Tutti i contatti**: la scheda di sempre, senza filtri. Non si cambia.
+3. **+ Salva come vista**: dai un nome ai filtri e alle colonne di adesso. Con lo stesso nome la vista si aggiorna; dalla
+   stessa finestra, con la vista aperta, **Elimina questa vista**.
+
+Le viste sono di chi le crea: gli altri amministratori non le vedono.
+
+**Checklist**
+
+- [ ] Ho provato le condizioni guardando il numero dei contatti prima di salvare.
+- [ ] Per "non ha aperto una campagna" ho scelto la campagna giusta (una precisa, l'ultima o qualsiasi) e il periodo.
+- [ ] Ho dato al segmento un nome che dice chi c'è dentro, e una categoria.
+- [ ] Ho aperto **Vedi i contatti** e controllato qualche nome.
+- [ ] Ricordo che una lista fatta da un segmento resta ferma, il segmento no.
 
 ### Una campagna
 
@@ -1874,7 +1959,9 @@ Per tornare all'email di partenza svuota i campi e salva.
 
 **Flussi automatici** sono email che partono da sole: il benvenuto a chi si iscrive, un promemoria dopo qualche giorno,
 un'email diversa a chi ha aperto e a chi no. Si disegnano su una tela con quattro blocchi: **Email**, **Attesa**,
-**Bivio**, **Fine**.
+**Bivio**, **Fine**. Il **Bivio** manda la persona per il Sì o per il No secondo una condizione: sta in una lista, ha
+aperto o cliccato un'email del flusso, è attiva o no da tanti giorni, è iscritta da tanti giorni e, dalla 2.10.0, **fa
+parte di un segmento** (o non ne fa parte): il segmento si controlla quando la persona arriva al bivio.
 
 ![Un flusso nuovo](immagini/manuale-uso/19-flussi.jpg)
 

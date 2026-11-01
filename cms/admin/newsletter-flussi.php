@@ -127,6 +127,7 @@ var FL_DATI = {
   condizioni: <?= json_encode(NL_CONDIZIONI, JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP) ?>,
   uscite: <?= json_encode(NL_USCITE, JSON_UNESCAPED_UNICODE) ?>,
   liste: <?= json_encode(array_map('strval', array_column($liste, 'nome', 'id')), JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP) ?>,
+  segmenti: <?= json_encode(function_exists('newsletter_segmenti') ? array_map(fn($x) => newsletter_4byte_fuori((string)$x), array_column(newsletter_segmenti(), 'nome', 'id')) : new stdClass(), JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP) ?>,
   inCorso: <?= json_encode(array_map('intval', $inCorso)) ?>,
   aperture: <?= json_encode(array_map('intval', $inviateNodo)) ?>,
   nome: <?= json_encode((string)$v['nome'], JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP) ?>,

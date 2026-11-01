@@ -501,7 +501,9 @@ function newsletter_motivo_testo(array $c): string {
  *   cerca   un pezzo di email, nome o cognome (o l'identificativo esterno)
  *   lista   l'id di una lista caricata (-1 = in nessuna lista)
  *   stato   iscritti | lista_nera | in_attesa | errori | motivo:<codice>; valgono ancora gli stati di prima della 2.8.0
- * Ritorna [where, parametri, filtri normalizzati].
+ *   segmento  2.10.0: l'id di un segmento caricato
+ *   f         2.10.0: "Aggiungi filtro", le regole del motore dei segmenti (JSON in base64, newsletter_regole_valida)
+ * Ritorna [where, parametri, filtri normalizzati]; con un filtro f che non si legge, errore_filtro nei filtri.
  */
 function newsletter_contatti_filtro(array $q): array {
     $cerca = mb_substr(trim((string)($q['cerca'] ?? '')), 0, 190);
@@ -529,7 +531,23 @@ function newsletter_contatti_filtro(array $q): array {
     }
     if ($lista > 0) { $w[] = 'EXISTS (SELECT 1 FROM ' . tbl('newsletter_iscritti_liste') . ' l WHERE l.iscritto_id = i.id AND l.lista_id = ?)'; $par[] = $lista; }
     if ($lista === -1) $w[] = 'NOT EXISTS (SELECT 1 FROM ' . tbl('newsletter_iscritti_liste') . ' l WHERE l.iscritto_id = i.id)';
-    return [$w ? ' WHERE ' . implode(' AND ', $w) : '', $par, ['cerca' => $cerca, 'stato' => $stato, 'lista' => $lista]];
+    // 2.10.0: segmento caricato e "Aggiungi filtro" con il motore dei segmenti (il file si carica qui: opcache).
+    $segmento = max(0, (int)($q['segmento'] ?? 0));
+    $fz = is_string($q['f'] ?? null) ? mb_substr(trim($q['f']), 0, 20000) : '';
+    $errF = '';
+    if (($segmento || $fz !== '') && !function_exists('newsletter_regole_valida')) require_once __DIR__ . '/newsletter-segmenti.php';
+    if ($segmento && function_exists('newsletter_segmento_where')) {
+        if (newsletter_segmento($segmento)) $w[] = newsletter_segmento_where($segmento, $par); else $segmento = 0;
+    }
+    if ($fz !== '' && function_exists('newsletter_regole_valida')) {
+        $r = newsletter_regole_valida($fz);
+        if (isset($r['errore'])) { $errF = $r['errore']; $fz = ''; }
+        elseif (!$r['regole']['gruppi']) $fz = '';
+        else { $fz = rtrim(strtr(base64_encode(json_encode($r['regole'], JSON_INVALID_UTF8_SUBSTITUTE)), '+/', '-_'), '='); $w[] = newsletter_regole_where($r['regole'], $par); }
+    }
+    $norm = ['cerca' => $cerca, 'stato' => $stato, 'lista' => $lista, 'segmento' => $segmento, 'f' => $fz];
+    if ($errF !== '') $norm['errore_filtro'] = $errF;
+    return [$w ? ' WHERE ' . implode(' AND ', $w) : '', $par, $norm];
 }
 
 /** Gli id di tutti i contatti del filtro (le azioni su "tutti i N"), al massimo 100000. */
