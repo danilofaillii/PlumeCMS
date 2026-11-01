@@ -133,7 +133,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             flash('success', nlc_n($n) . ($n === 1 ? ' messo' : ' messi') . ' in lista nera: non ricevono più campagne né automazioni.' . ($n < count($ids) ? ' Gli altri erano già in lista nera.' : ''));
         } elseif ($cosa === 'modifica') {
             $n = newsletter_modifica_in_massa($ids, (string)($_POST['attributo'] ?? ''), $_POST['valore'] ?? '');
-            $n < 0 ? flash('error', 'Il valore non va bene per questo attributo, oppure l\'attributo non si può cambiare in massa (come in Brevo, solo Data, Sì/No e Categoria).')
+            $n < 0 ? flash('error', 'Il valore non va bene per questo attributo, oppure l\'attributo non si può cambiare in massa (si cambiano in massa solo Data, Sì/No e Categoria).')
                 : flash('success', 'Attributo cambiato a ' . nlc_n($n) . '.');
         } elseif ($cosa === 'elimina') {
             $n = newsletter_contatti_elimina($ids);

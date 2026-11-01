@@ -61,7 +61,7 @@ require_once __DIR__ . '/includes/admin-header.php';
     <tbody>
     <?php foreach ($righe as $a): $aid = (int)$a['id']; $et = newsletter_attributo_etichetta($a); ?>
       <tr>
-        <td><code><?= h($a['nome']) ?></code><?= isset(array_flip(NL_ATTR_ALIAS)[$a['nome']]) ? '<span class="nlx-sotto">in Brevo: ' . h(array_flip(NL_ATTR_ALIAS)[$a['nome']]) . '</span>' : '' ?></td>
+        <td><code><?= h($a['nome']) ?></code><?= isset(array_flip(NL_ATTR_ALIAS)[$a['nome']]) ? '<span class="nlx-sotto">anche: ' . h(array_flip(NL_ATTR_ALIAS)[$a['nome']]) . '</span>' : '' ?></td>
         <td><?= h($a['etichetta'] !== '' ? $et : '') ?></td>
         <td><?= h($a['categoria'] === 'category' ? 'Categoria' : ($a['categoria'] === 'calculated' ? 'Calcolato' : ($a['categoria'] === 'global' ? 'Globale' : NL_ATTR_TIPI[$a['tipo']] ?? $a['tipo']))) ?><?= (int)$a['sistema'] ? '<span class="nlx-sotto">di sistema</span>' : '' ?></td>
         <td><?= $scheda === 'normali' ? h(implode(', ', array_map('newsletter_4byte_fuori', $a['opzioni']))) : '<code>' . h($a['formula']) . '</code>' ?></td>
@@ -110,12 +110,12 @@ require_once __DIR__ . '/includes/admin-header.php';
     <?php if ($scheda === 'normali'): ?>
     <div class="form-group" data-nla-opzioni hidden><label for="nla-opzioni">4. Opzioni</label>
       <textarea id="nla-opzioni" name="opzioni" rows="4" class="nlx-corto" placeholder="per esempio:&#10;Cliente&#10;Fornitore" aria-describedby="nla-op-aiuto"></textarea>
-      <div class="hint" id="nla-op-aiuto">Una per riga, al massimo 200 caratteri ciascuna. Nella Categoria ogni opzione prende anche un numero (1, 2, 3...), come in Brevo.</div></div>
+      <div class="hint" id="nla-op-aiuto">Una per riga, al massimo 200 caratteri ciascuna. Nella Categoria ogni opzione prende anche un numero (1, 2, 3...).</div></div>
     <?php else: ?>
     <div class="form-group"><label for="nla-formula">3. Formula</label>
       <input type="text" id="nla-formula" name="formula" maxlength="255" required placeholder="per esempio: <?= $scheda === 'calcolati' ? 'COUNT[READS,READS,&gt;,NOW(-15)]' : 'COUNT[CONTACTS]' ?>" aria-describedby="nla-f-aiuto">
       <details class="pn-aiuto" id="nla-f-aiuto"><summary>Come si scrive la formula</summary>
-        <p>Come in Brevo, con COUNT (conta)<?= $scheda === 'globali' ? ' e SUM (somma)' : '' ?>:</p>
+        <p>Con COUNT (conta)<?= $scheda === 'globali' ? ' e SUM (somma)' : '' ?>:</p>
         <ul>
           <li><code>COUNT[READS]</code>: le email aperte<?= $scheda === 'globali' ? ' da tutti i contatti' : '' ?>; <code>CLICKS</code> i clic, <code>SENT</code> le email ricevute, <code>FORMS</code> i form compilati<?= $scheda === 'globali' ? ', <code>CONTACTS</code> i contatti iscritti' : '' ?>.</li>
           <li><code>COUNT[READS,READS,&gt;,NOW(-15)]</code>: solo negli ultimi 15 giorni (con <code>&lt;</code>: prima di 15 giorni fa).</li>

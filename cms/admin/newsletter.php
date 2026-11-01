@@ -157,7 +157,7 @@ require_once __DIR__ . '/includes/admin-header.php';
 <?php else: ?>
 <div class="form-card">
   <h3>Attributi dei contatti</h3>
-  <p class="hint" style="margin-top:0">I campi dei contatti (città, data di nascita, cliente sì o no...), da usare nelle email con i segnaposti come {{ contact.NOME }}. Come in Brevo, Impostazioni &gt; Contatti &gt; Attributi dei contatti.</p>
+  <p class="hint" style="margin-top:0">I campi dei contatti (città, data di nascita, cliente sì o no...), da usare nelle email con i segnaposti come {{ contact.NOME }}.</p>
   <a class="btn btn-secondary btn-sm" href="newsletter-attributi.php">Apri gli attributi dei contatti</a>
 </div>
 <div class="form-card" style="margin-top:1.25rem">

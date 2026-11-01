@@ -2,9 +2,28 @@
 
 Il prodotto si chiama **plumeCMS** (nome scelto il 26 ottobre 2026; prima, per poche ore, "CarbonaraCMS", e ancora prima il provvisorio "Officina": gli zip vecchi si chiamavano `officina-*` e `carbonaracms-*`).
 
-## 2.8.0 (1 novembre 2026) - I contatti come in Brevo
+## 2.9.0 (2 novembre 2026) - Importa ed esporta i contatti
 
-Prima fase del piano per rendere "Newsletter e form" uguale a Brevo (richiesta di Danilo; piano in `docs-sviluppo/brevo-confronto.md`).
+- **Importa contatti** in quattro passi (Newsletter e form > Contatti > Importa contatti):
+  1. **Carica**: un file CSV, TXT o Excel (XLSX), anche con gli accenti dei file di Windows, oppure Copia e incolla;
+  2. **Abbina i dati**: le prime righe di ogni colonna e dove va; le colonne con il nome di un attributo si abbinano da sole,
+     le altre diventano un attributo nuovo o restano fuori; senza la colonna delle email non si va avanti;
+  3. **Scegli la lista**: una o più, oppure una lista nuova in una cartella;
+  4. **Concludi**: aggiornare chi c'è già, celle vuote che cancellano, lista nera dal file, il consenso da confermare.
+  Il lavoro va avanti a giri (anche 20000 righe), dalla pagina e dal cron; alla fine il resoconto con nuovi, aggiornati,
+  invariati, doppioni ed errori, e il file delle righe scartate con il motivo. Chi è in lista nera non torna iscritto.
+- **Esporta**: una finestra per scegliere quali contatti (quelli scelti, una lista, chi ha aperto o cliccato una campagna),
+  quali attributi e il separatore. I file grandi si preparano a giri e restano 7 giorni. Le celle con le formule escono
+  innocue.
+- **Lista dei test** in Newsletter > Impostazioni: fino a 20 contatti a cui va la prova di una campagna, ognuno con i suoi
+  dati, senza contare nelle statistiche.
+- I file dei contatti stanno in una cartella privata, chiusa al web (anche nell'esempio per Nginx, che ora chiude anche
+  quella dei file riservati).
+- Pannello e manuale non fanno più paragoni con altri servizi.
+
+## 2.8.0 (1 novembre 2026) - I contatti con la loro scheda
+
+Prima fase del rinnovo di "Newsletter e form" (piano in `docs-sviluppo/brevo-confronto.md`).
 
 - **Menu nuovo**: Contatti, Campagne email, Form, Invii dei form, Flussi automatici, Statistiche, Impostazioni, Attributi dei
   contatti. I vecchi indirizzi Iscritti e Liste portano alle pagine nuove.

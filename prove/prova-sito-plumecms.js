@@ -229,7 +229,7 @@ async function contrastoParole(pg) {
       const voci = [...col.querySelectorAll('li')];
       return { voci: voci.map(e => e.textContent.trim()), fondo: Math.max(...voci.map(e => e.getBoundingClientRect().bottom)), sinistra: g.getBoundingClientRect().bottom };
     });
-    ok('Scarica: novità, elenco breve con l\'ultima versione in cima', r && r.voci.length >= 3 && r.voci.length <= 8 && /^2\.8\.0: Contatti con scheda/.test(r.voci[0]), r && r.voci);
+    ok('Scarica: novità, elenco breve con l\'ultima versione in cima', r && r.voci.length >= 3 && r.voci.length <= 8 && /^2\.9\.0: Importa ed esporta i contatti/.test(r.voci[0]), r && r.voci);
     const terzi = (r ? r.voci.join(' ') : '').match(/brevo|google|wordpress|linkedin|facebook|instagram|whatsapp|telegram|mailgun|amazon|dropbox|indexnow|search console|gnu/gi) || [];
     ok('Scarica: nelle novità nessun nome di aziende terze', r && terzi.length === 0, terzi);
     ok('Scarica: le novità finiscono non oltre il riquadro Cosa serve', r && r.fondo <= r.sinistra + 2, r && { fondo: r.fondo, sinistra: r.sinistra }); }
@@ -241,6 +241,8 @@ async function contrastoParole(pg) {
     && await v.evaluate(() => [...document.images].some(i => /email-conferma/.test(i.currentSrc || i.src) && i.complete && i.naturalWidth > 0)));
   ok('Funzionalità (2.8.0): Ogni contatto con la sua storia', /Ogni contatto con la sua storia/.test(await v.locator('body').innerText())
     && await v.evaluate(() => [...document.images].some(i => /contatti-brevo/.test(i.currentSrc || i.src) && i.complete && i.naturalWidth > 0)));
+  ok('Funzionalità (2.9.0): I tuoi contatti entrano in quattro passi', /I tuoi contatti entrano in quattro passi/.test(await v.locator('body').innerText())
+    && await v.evaluate(() => [...document.images].some(i => /importa-contatti/.test(i.currentSrc || i.src) && i.complete && i.naturalWidth > 0)));
   ok('Header e footer (2.6.0): il logo è quello dello Stile del sito', await v.evaluate(() => [...document.querySelectorAll('.marchio img')].length >= 2 && [...document.querySelectorAll('.marchio img')].every(i => /marchio/.test(i.getAttribute('src')))));
   // 2.5.0: la pagina Temi con le stagioni e le tinte piene, ogni immagine caricata.
   await v.goto(B + '/temi/', { waitUntil: 'networkidle' });

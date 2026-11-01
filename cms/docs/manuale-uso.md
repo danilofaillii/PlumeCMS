@@ -1522,7 +1522,7 @@ partono dal tuo server, a giri, grazie al cron (capitolo 26).
 
 ### I contatti
 
-Dalla 2.8.0 i contatti funzionano come in Brevo: stesse voci, stessi passi. **Newsletter e form > Contatti** ha due
+Dalla 2.8.0 i contatti hanno pagine loro. **Newsletter e form > Contatti** ha due
 linguette, **Contatti** e **Liste**. Un contatto è una persona con la sua email: può stare in più liste o in nessuna, e per
 le email è **iscritto**, **in attesa di conferma** (non ha ancora premuto il pulsante dell'email di conferma) oppure **in
 lista nera** (non riceve più niente). Le persone si iscrivono da sole con un form (capitolo 18) e confermano con un'email
@@ -1536,8 +1536,8 @@ lista nera** (non riceve più niente). Le persone si iscrivono da sole con un fo
    Con 3 errori di fila) e quanti contatti per pagina (50, 100 o 500). Premi **Cerca**.
 3. **Azione**: spunta i contatti nella tabella (o la casella **Tutti i contatti** del filtro, anche quelli delle altre
    pagine), scegli l'azione e premi **Applica**: **Aggiungi a una lista**, **Togli dalle liste**, **Sposta in un'altra
-   lista** (da quella caricata), **Metti in lista nera**, **Modifica un attributo** (solo quelli Data, Sì/No e Categoria,
-   come in Brevo), **Esporta** (apre la finestra Esporta, sotto) ed **Elimina definitivamente**. Prima di partire il
+   lista** (da quella caricata), **Metti in lista nera**, **Modifica un attributo** (solo quelli Data, Sì/No e
+   Categoria), **Esporta** (apre la finestra Esporta, sotto) ed **Elimina definitivamente**. Prima di partire il
    pannello chiede conferma.
 4. **La tabella**: le cinque colonne di sempre (Contatto, Iscritto, In lista nera con il motivo, Data di creazione, Ultima
    modifica). Con **Personalizza le colonne** aggiungi gli attributi che vuoi vedere (la città, la data di nascita...) e
@@ -1592,18 +1592,18 @@ Attributi dei contatti** e li usi nella scheda, nelle colonne della tabella e ne
    per riga.
 4. Premi **Crea l'attributo**.
 
-Le regole sono quelle di Brevo: al massimo 200 attributi; **nome e tipo non si cambiano** (si crea un attributo nuovo);
+Le regole: al massimo 200 attributi; **nome e tipo non si cambiano** (si crea un attributo nuovo);
 se elimini un attributo i suoi valori spariscono da tutti i contatti. Gli attributi di sistema (EMAIL, NOME, COGNOME,
 EXT_ID, OPT_IN, DOUBLE_OPT-IN, CREATION_DATE, LAST_CHANGED) li crea plumeCMS e non si eliminano.
 
-Nelle linguette **Attributi calcolati** e **Valori globali** un attributo ha una formula, come in Brevo:
+Nelle linguette **Attributi calcolati** e **Valori globali** un attributo ha una formula:
 `COUNT[READS,READS,>,NOW(-15)]` conta le email aperte da ogni contatto negli ultimi 15 giorni; un valore globale come
 `COUNT[CONTACTS]` conta gli iscritti di tutto il sito, `SUM[PUNTI]` somma un attributo numerico di tutti. Il valore si
 ricalcola da solo ogni volta. Il riquadro **Come si scrive la formula** dice tutte le parole che puoi usare.
 
 **Nelle email.** Nell'oggetto e nel testo di una campagna scrivi `{{ contact.NOME }}` e al posto suo esce il valore di
-ogni persona. Funzionano anche i filtri di Brevo: `{{ contact.NOME | default:"amico" }}` scrive "amico" quando il nome
-manca, `{{ contact.NOME | upper }}` lo scrive in maiuscolo. FIRSTNAME e LASTNAME, i nomi di Brevo, valgono come NOME e
+ogni persona. Funzionano anche i filtri: `{{ contact.NOME | default:"amico" }}` scrive "amico" quando il nome
+manca, `{{ contact.NOME | upper }}` lo scrive in maiuscolo. FIRSTNAME e LASTNAME, i nomi inglesi, valgono come NOME e
 COGNOME. `{nome}` funziona ancora come prima.
 
 #### Liste e cartelle
@@ -1642,12 +1642,12 @@ nera**), oppure scrivendo gli indirizzi nel riquadro **Metti in lista nera degli
    disiscritto è vietato dalla legge.
 2. Spunta **Il contatto mi ha dato di nuovo il consenso** e premi **Togli dalla lista nera e riscrivi**.
 
-Se cambi l'email di un contatto in lista nera, come in Brevo torna iscritto. Se una persona si iscrive di nuovo dal sito e
+Se cambi l'email di un contatto in lista nera, torna iscritto. Se una persona si iscrive di nuovo dal sito e
 conferma l'email, esce dalla lista nera da sola.
 
 #### Importare i contatti
 
-Dalla 2.9.0 l'importazione ha i quattro passi di Brevo: **Carica**, **Abbina i dati**, **Scegli la lista**, **Concludi**.
+Dalla 2.9.0 l'importazione ha quattro passi: **Carica**, **Abbina i dati**, **Scegli la lista**, **Concludi**.
 Va bene un file **CSV**, **TXT** o **XLSX** (Excel o LibreOffice; un .xls vecchio va salvato prima come .xlsx o .csv), in
 UTF-8 o Windows-1252: gli accenti si leggono in tutti e due. La prima riga porta i nomi delle colonne.
 
@@ -1663,7 +1663,7 @@ Esempio: il negozio ha i clienti in un foglio di Excel, con email, nome, cognome
 ![Passo 2, Abbina i dati](immagini/manuale-uso/19-importa-2.jpg)
 
 1. Ogni riga della tabella è una colonna del file, con le prime righe accanto. Le colonne che si chiamano come un
-   attributo (EMAIL, NOME, COGNOME, oppure FIRSTNAME e LASTNAME di Brevo) sono già abbinate. La colonna delle email va
+   attributo (EMAIL, NOME, COGNOME, oppure FIRSTNAME e LASTNAME) sono già abbinate. La colonna delle email va
    abbinata a **EMAIL**: senza, non si va avanti.
 2. Una colonna senza attributo: scegli **Crea un nuovo attributo...**, scrivi il nome (per esempio CITTA) e il tipo
    (Testo, Numero, Data, Sì/No). Una colonna che non ti serve: **Non importare**. Una colonna con la data del consenso:
@@ -1781,7 +1781,7 @@ aspettano il giro dopo del cron: non si perdono.
 
 ### La lista dei test
 
-Prima di mandare una campagna a tutti la provi su qualche indirizzo, come in Brevo: la **lista dei test** sta in
+Prima di mandare una campagna a tutti la provi su qualche indirizzo: la **lista dei test** sta in
 **Newsletter e form > Impostazioni**.
 
 ![La lista dei test](immagini/manuale-uso/19-lista-test.jpg)

@@ -177,7 +177,7 @@ require_once __DIR__ . '/includes/admin-header.php';
     <p><?= h($c['email']) ?> &middot; <span class="nlx-stato <?= $nera ? 'nlx-nera' : ($c['stato'] === 'attivo' ? 'nlx-si' : '') ?>"><?= $nera ? '&#10007; ' : ($c['stato'] === 'attivo' ? '&#10003; ' : '') ?><?= h(newsletter_stato_testo($c)) ?></span>
       <?= $nera ? ' &middot; ' . h(newsletter_motivo_testo($c)) : '' ?> &middot; creato il <?= h(date('d/m/Y', strtotime($c['creato']))) ?></p>
   </div>
-  <form method="post" data-conferma="Eliminare definitivamente <?= h($c['email']) ?>? Si perdono attributi, cronologia, statistiche e lista nera. Non si torna indietro. Brevo sconsiglia di cancellare chi è in lista nera: plumeCMS tiene comunque l'impronta dell'email, così un'importazione non lo rimette dentro." data-conferma-ok="Elimina definitivamente" data-conferma-pericolo>
+  <form method="post" data-conferma="Eliminare definitivamente <?= h($c['email']) ?>? Si perdono attributi, cronologia, statistiche e lista nera. Non si torna indietro. Meglio non cancellare chi è in lista nera: plumeCMS tiene comunque l'impronta dell'email, così un'importazione non lo rimette dentro." data-conferma-ok="Elimina definitivamente" data-conferma-pericolo>
     <?= csrf_field() ?><input type="hidden" name="azione" value="elimina"><input type="hidden" name="id" value="<?= $id ?>">
     <button class="btn btn-danger btn-sm" type="submit">Elimina definitivamente</button>
   </form>
@@ -194,7 +194,7 @@ require_once __DIR__ . '/includes/admin-header.php';
     <h3>Informazioni del contatto</h3>
     <input type="hidden" name="id" value="<?= $id ?>">
     <div class="nlk-campi"><?php foreach ($attributi as $a) if ($a['categoria'] !== 'global') echo nlk_campo($a, $valori[$a['nome']] ?? '', false); ?></div>
-    <p class="hint">Un valore del tipo sbagliato (per esempio delle lettere in un numero) non si salva, come in Brevo. Gli attributi si creano in <a href="newsletter-attributi.php">Attributi dei contatti</a>.</p>
+    <p class="hint">Un valore del tipo sbagliato (per esempio delle lettere in un numero) non si salva. Gli attributi si creano in <a href="newsletter-attributi.php">Attributi dei contatti</a>.</p>
     <button class="btn btn-primary" type="submit">Salva le informazioni</button>
   </form>
   <div>
