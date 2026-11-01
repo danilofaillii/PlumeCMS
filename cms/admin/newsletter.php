@@ -6,6 +6,7 @@
 require_once __DIR__ . '/includes/auth.php';
 require_once __DIR__ . '/includes/admin-functions.php';
 require_once __DIR__ . '/../includes/newsletter.php';
+require_once __DIR__ . '/../includes/newsletter-email.php'; // 2.7.0: l'email di conferma comune
 require_admin(); // sicurezza (ruoli): solo amministratore
 newsletter_schema();
 
@@ -177,6 +178,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         ]));
         flash('success', 'Impostazioni della newsletter salvate.');
         header('Location: newsletter.php?scheda=impostazioni');
+        exit;
+    }
+    // 2.7.0: l'email di conferma comune (modulo della newsletter e base per i form). Solo le parti diverse dal testo di partenza.
+    if ($azione === 'conferma_email') {
+        $j = nl_email_da_salvare($_POST['ce'] ?? [], true, false);
+        save_setting('newsletter_conferma_email', $j);
+        flash('success', $j === '' ? 'Email di conferma: si usano i testi di partenza.' : 'Email di conferma salvata. Vale per il modulo della newsletter e per i form che non hanno testi loro.');
+        header('Location: newsletter.php?scheda=impostazioni#nl-conferma');
         exit;
     }
     if ($azione === 'giro') {
@@ -366,6 +375,20 @@ require_once __DIR__ . '/includes/admin-header.php';
     Cron da aggiungere in cPanel, ogni 5 minuti:<br><code>/usr/local/bin/php <?= h(cms_radice()) ?>/cron-newsletter.php</code>
   </p>
 </div>
+<?php /* 2.7.0: l'email di conferma dell'iscrizione, valori comuni */ require_once __DIR__ . '/includes/email-conferma-campi.php'; $ecValori = nl_email_comuni(); ?>
+<?= ec_stile_html() ?>
+<div class="form-card" id="nl-conferma">
+  <h3>Email di conferma dell'iscrizione</h3>
+  <form method="post" data-email-conferma="email-conferma-api.php" data-contesto="comuni" data-csrf="<?= h(csrf_token()) ?>">
+    <?= csrf_field() ?><input type="hidden" name="azione" value="conferma_email">
+    <p class="hint" style="margin-top:0">L'email con il pulsante «Confermo l'iscrizione» che arriva a chi si iscrive con il modulo della newsletter del sito. Vale anche per i form che iscrivono a una lista con l'email di conferma, per le parti che il form non cambia (Form, scheda del form, riquadro Email di conferma). Lascia vuoto un campo per usare il testo di partenza.</p>
+    <?= ec_segnaposti_html('comuni') ?>
+    <?= ec_campi_html($ecValori, nl_email_partenza(true), 'comuni', []) ?>
+    <?= ec_anteprima_html() ?>
+    <p style="margin-top:1rem"><button class="btn btn-primary" type="submit">Salva l'email di conferma</button></p>
+  </form>
+</div>
+<script src="<?= pannello_file('assets/email-conferma.js') ?>"></script>
 <?php endif; ?>
 
 <?php require_once __DIR__ . '/includes/admin-footer.php'; ?>

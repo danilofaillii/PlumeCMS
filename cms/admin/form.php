@@ -6,6 +6,7 @@
 require_once __DIR__ . '/includes/auth.php';
 require_once __DIR__ . '/includes/admin-functions.php';
 require_once dirname(__DIR__) . '/includes/form.php';
+require_once __DIR__ . '/includes/email-conferma-campi.php'; // 2.7.0: il riquadro Email di conferma
 require_admin(); // sicurezza (ruoli): solo amministratore
 $adminTitle = 'Form';
 $id = (int)($_GET['id'] ?? 0);
@@ -26,6 +27,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $campi = json_decode((string)($_POST['campi'] ?? ''), true);
         $daPost = ['id' => $id] + array_map(fn($x) => is_string($x) ? $x : '', $_POST) + ['nome' => '', 'slug' => '', 'titolo' => '', 'intro' => '', 'pulsante' => 'Invia', 'consenso' => '', 'grazie_titolo' => '', 'grazie_testo' => '', 'grazie_link' => '', 'avviso_a' => '', 'omaggio' => ''];
         $daPost['campi'] = is_array($campi) ? array_values(array_filter($campi, 'is_array')) : [];
+        // 2.7.0: le parti dell'email di conferma tornano nei campi come erano state scritte.
+        $daPost['conferma_email'] = array_map(fn($x) => is_scalar($x) ? (string)$x : '', array_intersect_key(is_array($_POST['ce'] ?? null) ? $_POST['ce'] : [], NL_EMAIL_PARTI));
         foreach (['lista_id' => 0, 'lista_conferma' => 0, 'avviso' => 0, 'attivo' => 0] as $k => $z) $daPost[$k] = (int)($_POST[$k] ?? $z);
         $nuovo = !$id;
     }
@@ -76,6 +79,21 @@ require_once __DIR__ . '/includes/admin-header.php';
       <div class="sc-scatola"><h3>Consenso</h3><div class="sc-corpo">
         <label>Testo della spunta privacy (vuoto = quello standard)</label><textarea name="consenso" rows="2"><?= h($v['consenso']) ?></textarea>
       </div></div>
+      <?php /* 2.7.0: l'email di conferma di questo form, parte per parte (includes/newsletter-email.php) */
+        $ecValori = is_array($v['conferma_email'] ?? null) ? $v['conferma_email'] : [];
+        $ecComuni = nl_email_comuni();
+        $ecEredita = nl_email_ereditati(false, true);
+        $ecOrigine = array_map(fn($k) => isset($ecComuni[$k]) ? 'comune' : 'partenza', array_combine(array_keys(NL_EMAIL_PARTI), array_keys(NL_EMAIL_PARTI)));
+        $ecCambiate = count($ecValori); ?>
+      <div class="sc-scatola" id="fm-conferma"><h3>Email di conferma</h3><div class="sc-corpo" data-email-conferma="email-conferma-api.php" data-contesto="form" data-csrf="<?= h(csrf_token()) ?>">
+        <p class="hint" style="margin-top:0">L'email che arriva a chi compila il form, quando in Dopo l'invio c'è una lista con «Con email di conferma». Lascia vuoto un campo per usare il testo comune (<a href="newsletter.php?scheda=impostazioni#nl-conferma">Newsletter, Impostazioni</a>) o quello di partenza. <?= $ecCambiate ? '<b>Parti cambiate per questo form: ' . $ecCambiate . '.</b>' : 'Per ora questo form usa i testi in uso per tutti.' ?></p>
+        <?php if (!(int)$v['lista_id'] || !(int)$v['lista_conferma']): ?><p class="hint" id="fm-conferma-spenta"><b>Adesso questo form non manda l'email di conferma:</b> in Dopo l'invio scegli una lista e spunta «Con email di conferma», poi salva.</p><?php endif; ?>
+        <?= ec_segnaposti_html('form') ?>
+        <details class="ec-dettagli" id="fm-conferma-campi"<?= $ecCambiate ? ' open' : '' ?>><summary>Cambia i testi dell'email</summary>
+          <?= ec_campi_html($ecValori, $ecEredita, 'form', $ecOrigine) ?>
+        </details>
+        <?= ec_anteprima_html() ?>
+      </div></div>
     </div>
     <aside>
       <div class="sc-scatola"><h3>Stato</h3><div class="sc-corpo">
@@ -87,6 +105,7 @@ require_once __DIR__ . '/includes/admin-header.php';
         <label>Iscrivi alla lista della newsletter</label>
         <select name="lista_id"><option value="0">Nessuna</option><?php foreach ($liste as $l): ?><option value="<?= (int)$l['id'] ?>" <?= (int)$v['lista_id'] === (int)$l['id'] ? 'selected' : '' ?>><?= h($l['nome']) ?></option><?php endforeach; ?></select>
         <label class="ed-spunta" style="display:flex;gap:.5rem;align-items:center;font-weight:400;margin-top:.5rem"><input type="checkbox" name="lista_conferma" value="1" <?= $v['lista_conferma'] ? 'checked' : '' ?>> Con email di conferma (doppio consenso)</label>
+        <small class="fm-aiuto" style="display:block;font-size:.78rem;color:var(--text-muted);margin:.25rem 0 .4rem">Il testo di quell'email lo cambi nel riquadro <a href="#fm-conferma">Email di conferma</a>, sotto Consenso.</small>
         <?php require_once dirname(__DIR__) . '/includes/scaricabili.php'; $riservati = array_filter(scaricabili_elenco(), fn($x) => $x['riservato']); /* 2.0.0 */ ?>
         <label for="fm-omaggio" style="margin-top:.6rem">Dopo la conferma, dai questo file</label>
         <select name="omaggio" id="fm-omaggio"><option value="">Nessun file</option><?php foreach ($riservati as $x): ?><option value="<?= h($x['nome']) ?>" <?= (string)($v['omaggio'] ?? '') === $x['nome'] ? 'selected' : '' ?>><?= h($x['titolo']) ?> (<?= h($x['file']) ?>)</option><?php endforeach; ?></select>
@@ -103,6 +122,8 @@ require_once __DIR__ . '/includes/admin-header.php';
     </aside>
   </div>
 </form>
+<?= ec_stile_html() ?>
+<script src="<?= pannello_file('assets/email-conferma.js') ?>"></script>
 <script src="<?= pannello_file('assets/editor/Sortable.min.js') ?>"></script>
 <script<?= nonce_attr() ?>>
 var fmTipi = <?= json_encode(FORM_TIPI_CAMPO, JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP) ?>;

@@ -22,6 +22,7 @@
  */
 
 require_once __DIR__ . '/moduli.php';
+require_once __DIR__ . '/newsletter-email.php'; // 2.7.0: l'email di conferma modificabile
 
 define('NEWSLETTER_PAGINA', (string)cms_impostazione('newsletter_pagina', '/newsletter/'));
 const NEWSLETTER_GRAZIE = '/newsletter-grazie/';
@@ -274,7 +275,8 @@ function newsletter_troppe_richieste(): bool {
  *   lista     la lista in cui entra alla conferma (predefinita: la principale, il modulo della newsletter)
  *   form      l'id del form d'origine (lo ritrova newsletter_conferma_esito())
  *   cosa      per cosa si iscrive, nelle frasi dell'email ("la newsletter di...", il titolo del form)
- *   oggetto, testo (HTML), pulsante: per riscrivere l'email
+ *   oggetto, testo (HTML), pulsante: per riscrivere l'email (vincono su tutto)
+ *   email     (2.7.0) le parti dell'email scritte nel form (nl_email_conferma(), includes/newsletter-email.php)
  *   fonte     la colonna fonte di un iscritto nuovo ('modulo', 'form')
  */
 function newsletter_richiesta(array $d, array $opz = []): string {
@@ -300,25 +302,13 @@ function newsletter_richiesta(array $d, array $opz = []): string {
     db()->prepare('INSERT INTO ' . tbl('newsletter_conferme') . ' (token, iscritto_id, lista_id, form_id, scade, creato) VALUES (?, ?, ?, ?, ?, ?)')
         ->execute([hash('sha256', $token), $id, $lista, $form, $scade, $ora]);
     $link = MODULI_URL . NEWSLETTER_CONFERMA . '?t=' . $token;
-    if ($lista === $principale && !$form) {
-        $cosa = trim((string)($opz['cosa'] ?? '')) ?: lcfirst(newsletter_nome());
-        $frase = 'confermi l&#039;iscrizione alla ' . h($cosa);
-        $oggetto = "Conferma l'iscrizione a " . (trim((string)cms_impostazione('newsletter_nome', '')) ?: 'questa newsletter');
-        $fuori = 'senza conferma l&#039;indirizzo resta fuori dalla newsletter';
-    } else {
-        $cosa = trim((string)($opz['cosa'] ?? '')) ?: (newsletter_nome_lista($lista) ?: 'questa lista');
-        $frase = 'confermi l&#039;iscrizione a «' . h($cosa) . '»';
-        $oggetto = "Conferma l'iscrizione: " . $cosa;
-        $fuori = 'senza conferma l&#039;indirizzo resta fuori';
-    }
-    $nome = trim((string)$d['nome']);
-    $corpo = (string)($opz['testo'] ?? '') !== '' ? (string)$opz['testo']
-        : '<p>Ciao' . ($nome !== '' ? ' ' . h($nome) : '') . ',</p><p>manca un clic. Premi il pulsante e ' . $frase . '.</p><p>Il link vale ' . MODULI_CONFERMA_GIORNI . ' giorni.</p>';
-    $pulsante = trim((string)($opz['pulsante'] ?? '')) ?: 'Confermo l&#039;iscrizione';
-    $html = str_replace(moduli_firma_html(), moduli_firma_html() . '<p style="font-size:12px;color:#888">Se la richiesta l&#039;ha fatta qualcun altro, ignora questa email: ' . $fuori . '.</p>',
-        moduli_email_html('Conferma l\'iscrizione', $corpo, html_entity_decode($pulsante, ENT_QUOTES, 'UTF-8'), $link));
-    $oggetto = trim((string)($opz['oggetto'] ?? '')) ?: $oggetto;
-    return posta_invia($email, str_replace(["\r", "\n"], ' ', $oggetto), $html, moduli_intestazioni(), 'conferma') ? '' : 'posta';
+    $principaleQui = $lista === $principale && !$form;
+    $cosa = trim((string)($opz['cosa'] ?? '')) ?: ($principaleQui ? lcfirst(newsletter_nome()) : (newsletter_nome_lista($lista) ?: 'questa lista'));
+    // 2.7.0: l'email si compone in includes/newsletter-email.php, con le parti scritte nel form (opzione 'email'), quelle
+    // comuni di Newsletter > Impostazioni e, per quello che resta vuoto, i testi di sempre.
+    [$oggetto, $html] = nl_email_conferma(['principale' => $principaleQui, 'cosa' => $cosa, 'nome' => (string)$d['nome'], 'link' => $link,
+        'parti' => is_array($opz['email'] ?? null) ? $opz['email'] : [], 'opz' => $opz]);
+    return posta_invia($email, $oggetto, $html, moduli_intestazioni(), 'conferma') ? '' : 'posta';
 }
 
 /**

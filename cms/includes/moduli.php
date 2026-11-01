@@ -141,16 +141,22 @@ function moduli_intestazioni(string $rispondiA = ''): string {
     return "MIME-Version: 1.0\r\nContent-Type: text/html; charset=UTF-8\r\n" . ($rispondiA !== '' ? "Reply-To: $rispondiA\r\n" : '');
 }
 
-function moduli_email_html(string $titolo, string $corpo, string $pulsante = '', string $link = ''): string {
+/**
+ * L'impaginazione delle email del sito. $parti (2.7.0, tutte facoltative, già in HTML): intestazione, firma, sotto (la frase
+ * sotto il pulsante), colore (#rrggbb del pulsante), dopo_firma (aggiunto dopo la firma). Senza $parti esce come prima.
+ */
+function moduli_email_html(string $titolo, string $corpo, string $pulsante = '', string $link = '', array $parti = []): string {
+    $colore = preg_match('/^#[0-9a-f]{6}$/i', (string)($parti['colore'] ?? '')) ? strtolower((string)$parti['colore']) : '#7c3aed';
+    $su = $colore === '#7c3aed' || !function_exists('nl_email_su_colore') ? '#fff' : nl_email_su_colore($colore);
     $btn = $pulsante !== ''
-        ? '<p style="margin:28px 0"><a href="' . h($link) . '" style="display:inline-block;background:#7c3aed;color:#fff;padding:14px 26px;border-radius:10px;text-decoration:none;font-weight:700">' . h($pulsante) . '</a></p>'
-          . '<p style="font-size:12px;color:#888">Se il pulsante non si apre, copia questo indirizzo nel browser:<br><span style="word-break:break-all">' . h($link) . '</span></p>'
+        ? '<p style="margin:28px 0"><a href="' . h($link) . '" style="display:inline-block;background:' . $colore . ';color:' . $su . ';padding:14px 26px;border-radius:10px;text-decoration:none;font-weight:700">' . h($pulsante) . '</a></p>'
+          . '<p style="font-size:12px;color:#888">' . (string)($parti['sotto'] ?? 'Se il pulsante non si apre, copia questo indirizzo nel browser:') . '<br><span style="word-break:break-all">' . h($link) . '</span></p>'
         : '';
     return '<!DOCTYPE html><html lang="it"><head><meta charset="UTF-8"></head><body style="margin:0;background:#f4f4f6;font-family:Arial,Helvetica,sans-serif;color:#1f2330">'
         . '<table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr><td align="center" style="padding:24px 12px">'
         . '<table role="presentation" width="600" cellpadding="0" cellspacing="0" style="max-width:600px;width:100%;background:#fff;border-radius:12px">'
-        . '<tr><td style="background:#060a17;color:#fff;padding:22px 30px;font-weight:700;letter-spacing:.06em">' . moduli_email_intestazione() . '</td></tr>'
-        . '<tr><td style="padding:30px;font-size:16px;line-height:1.6"><h1 style="font-size:22px;margin:0 0 16px">' . h($titolo) . '</h1>' . $corpo . $btn . moduli_firma_html() . '</td></tr>'
+        . '<tr><td style="background:#060a17;color:#fff;padding:22px 30px;font-weight:700;letter-spacing:.06em">' . (string)($parti['intestazione'] ?? moduli_email_intestazione()) . '</td></tr>'
+        . '<tr><td style="padding:30px;font-size:16px;line-height:1.6"><h1 style="font-size:22px;margin:0 0 16px">' . h($titolo) . '</h1>' . $corpo . $btn . (string)($parti['firma'] ?? moduli_firma_html()) . (string)($parti['dopo_firma'] ?? '') . '</td></tr>'
         . '</table></td></tr></table></body></html>';
 }
 

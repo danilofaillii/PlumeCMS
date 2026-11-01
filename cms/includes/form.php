@@ -52,6 +52,7 @@ function form_schema(): void {
             `avviso` TINYINT(1) NOT NULL DEFAULT 1,
             `avviso_a` VARCHAR(500) NOT NULL DEFAULT '',
             `omaggio` VARCHAR(130) NOT NULL DEFAULT '',
+            `conferma_email` TEXT,
             `grazie_titolo` VARCHAR(255) NOT NULL DEFAULT 'Grazie, ricevuto.',
             `grazie_testo` TEXT,
             `grazie_link` VARCHAR(500) NOT NULL DEFAULT '',
@@ -83,6 +84,8 @@ function form_schema(): void {
         if (!in_array('avviso_a', $col, true)) db()->exec('ALTER TABLE ' . tbl('moduli') . " ADD COLUMN `avviso_a` VARCHAR(500) NOT NULL DEFAULT '' AFTER `avviso`");
         // 2.0.0: il file riservato che il form dà dopo la conferma dell'email.
         if (!in_array('omaggio', $col, true)) db()->exec('ALTER TABLE ' . tbl('moduli') . " ADD COLUMN `omaggio` VARCHAR(130) NOT NULL DEFAULT '' AFTER `avviso_a`");
+        // 2.7.0: le parti dell'email di conferma scritte per questo form (JSON, includes/newsletter-email.php). NULL = nessuna.
+        if (!in_array('conferma_email', $col, true)) db()->exec('ALTER TABLE ' . tbl('moduli') . ' ADD COLUMN `conferma_email` TEXT AFTER `omaggio`');
         // 2.1: i file arrivati con i campi File (campo, nome, file salvato, peso, tipo), in JSON.
         $colI = db()->query('SHOW COLUMNS FROM ' . tbl('moduli_invii'))->fetchAll(PDO::FETCH_COLUMN);
         if (!in_array('allegati', $colI, true)) db()->exec('ALTER TABLE ' . tbl('moduli_invii') . ' ADD COLUMN `allegati` TEXT AFTER `letto`');
@@ -118,6 +121,7 @@ function form_leggi(int $id): ?array {
     if ($m) {
         $m['campi'] = form_campi_validi(json_decode((string)$m['campi'], true) ?: []);
         foreach (['intro', 'grazie_testo', 'titolo', 'consenso', 'grazie_titolo', 'grazie_link', 'pulsante', 'avviso_a', 'omaggio'] as $k) $m[$k] = (string)($m[$k] ?? '');
+        $m['conferma_email'] = nl_email_da_json((string)($m['conferma_email'] ?? '')); // 2.7.0: le parti, con le emoji
         $m = form_4byte_fuori($m);
     }
     return $m;
@@ -341,6 +345,9 @@ function form_salva(int $id, array $d): int {
         'grazie_link' => mb_substr(trim((string)($d['grazie_link'] ?? '')), 0, 500), 'attivo' => !empty($d['attivo']) ? 1 : 0,
     ];
     foreach (FORM_TESTI as $k) $v[$k] = newsletter_4byte_dentro($v[$k]); // audit 2026-11: le emoji come entità (tabella a 3 byte)
+    // 2.7.0: l'email di conferma di questo form (Email di conferma, admin/form.php): solo le parti diverse da quelle comuni
+    // o di partenza, pulite, con le emoji come entità. Chi salva senza le parti (il kit di partenza) non le tocca.
+    if (array_key_exists('ce', $d)) $v['conferma_email'] = nl_email_da_salvare($d['ce'], false, true) ?: null;
     if ($v['lista_id'] && !$emails) throw new RuntimeException('Per iscrivere a una lista serve un campo di tipo Email.');
     // 2.0.0: il file da dare dopo la conferma è un file riservato di Download, e serve una lista (chi lo riceve è un iscritto).
     if ($v['omaggio'] !== '') {
@@ -561,7 +568,8 @@ function form_iscrivi(string $email, string $nome, string $cognome, int $lista, 
     if ($i && $i['stato'] === 'attivo') { newsletter_in_lista((int)$i['id'], $lista); return ''; }
     if ($conferma) {
         $cosa = trim((string)($m['titolo'] ?? '')) ?: trim((string)($m['nome'] ?? '')) ?: newsletter_nome_lista($lista);
-        return newsletter_richiesta(['nome' => $nome, 'cognome' => $cognome, 'email' => $email], ['lista' => $lista, 'form' => (int)($m['id'] ?? 0), 'cosa' => $cosa, 'fonte' => 'form']);
+        return newsletter_richiesta(['nome' => $nome, 'cognome' => $cognome, 'email' => $email], ['lista' => $lista, 'form' => (int)($m['id'] ?? 0), 'cosa' => $cosa, 'fonte' => 'form',
+            'email' => is_array($m['conferma_email'] ?? null) ? $m['conferma_email'] : nl_email_da_json((string)($m['conferma_email'] ?? ''))]);
     }
     if (!$i) {
         db()->prepare('INSERT INTO ' . tbl('newsletter_iscritti') . " (email, nome, cognome, stato, fonte, consenso_versione, consenso_at, ip, creato, aggiornato) VALUES (?,?,?,'attivo','form',?,?,?,?,?)")
