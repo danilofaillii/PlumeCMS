@@ -141,7 +141,7 @@ require_once __DIR__ . '/includes/admin-header.php';
           <td class="ct-muto" style="text-align:right"><a href="contenuti.php?tipo=articoli&amp;<?= $tipo === 'tag' ? 'q=' . urlencode($v['name']) : 'categoria=' . urlencode($v['slug']) ?>"><?= $conta[$v['slug']] ?? 0 ?></a></td>
         </tr>
       <?php endforeach; ?>
-      <?php if (!$voci): ?><tr><td colspan="4"><div class="empty-state"><p>Niente qui.</p></div></td></tr><?php endif; ?>
+      <?php if (!$voci): ?><tr><td colspan="4"><div class="empty-state"><p><?= $q !== '' ? 'Nessun risultato per questa ricerca.' : ($tipo === 'tag' ? 'Ancora nessun tag: aggiungi il primo con il riquadro qui accanto.' : 'Ancora nessuna categoria: aggiungi la prima con il riquadro qui accanto.') ?></p></div></td></tr><?php endif; ?>
       </tbody>
     </table>
   </div>
