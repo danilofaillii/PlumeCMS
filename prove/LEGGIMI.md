@@ -501,7 +501,8 @@ Le conferme del pannello (`data-conferma`) non sono più `confirm()` del browser
 (`pannello.js`). Una prova che accettava le conferme con `p.on('dialog', d => d.accept())` scrive
 `pnConferme.on(p, d => d.accept())` (o `pnConferme.once`), con `const pnConferme = require('./conferme-pannello')`: il gestore
 riceve lo stesso oggetto (`message()`, `type()`, `accept()`, `dismiss()`) per i dialoghi veri e per la finestra del pannello,
-e `accept()`/`dismiss()` premono i suoi pulsanti. Le prove che ascoltano i dialoghi per scoprire un `alert()` iniettato
+e `accept()`/`dismiss()` premono i suoi pulsanti. `pnConferme.ferma(p, true)` lascia la finestra aperta (per fotografarla:
+`tools/manuale-uso-schermate.js`, foto 01-conferma), `pnConferme.ferma(p, false)` riprende. Le prove che ascoltano i dialoghi per scoprire un `alert()` iniettato
 restano con `p.on('dialog')`.
 
 ## prova-bozze-vuote.js (UX 2026-11)

@@ -146,6 +146,14 @@ capitoli['01'] = async () => {
   await p.setViewportSize({ width: 1200, height: 800 });
   await vai('account.php');
   await foto('01-aspetto', { sel: '#aspetto', segni: [{ sel: '.asp-voce:nth-child(3)', n: 1 }, { sel: '#aspetto button', n: 2 }] });
+  // 2.6.0: la finestra di conferma del pannello (si apre e si chiude con Annulla: nessun tema si cancella).
+  await vai('temi.php');
+  pnConferme.ferma(p, true);
+  await p.locator('.tt-card button', { hasText: 'Elimina' }).first().click();
+  await p.waitForSelector('dialog.pn-conferma[open]'); await dorme(300);
+  await foto('01-conferma', { sel: 'dialog.pn-conferma', margine: 0, segni: [{ sel: '#pn-conferma-testo', n: 1 }, { sel: 'dialog.pn-conferma .pn-conferma-no', n: 2 }, { sel: 'dialog.pn-conferma .pn-conferma-si', n: 3, lato: 'destra' }] });
+  await p.click('dialog.pn-conferma .pn-conferma-no'); await dorme(200);
+  pnConferme.ferma(p, false);
 };
 
 // 02. Il tipo di sito in prova
@@ -477,7 +485,7 @@ capitoli['15'] = async () => {
   await vai('modelli.php');
   await foto('15-modelli', { clip: { x: 240, y: 56, width: 960, height: 440 }, segni: [{ sel: '.md-stella.on', n: 1 }] });
   // 1.8.0: la frase in fondo al sito, in Impostazioni (solo la foto: non si salva niente).
-  await vai('impostazioni.php');
+  await vai('impostazioni.php?scheda=sito'); // UX 2026-11: la frase sta nella scheda Sito
   await foto('15-frase', { sel: 'form#firma-sito', segni: [{ sel: '#firma_mostra', n: 1 }, { sel: '#firma_testo', n: 2 }, { sel: '#firma_url', n: 3 }, { sel: '#firma-salva', n: 4, lato: 'destra' }] });
 };
 
@@ -696,6 +704,8 @@ capitoli['20'] = async () => {
   await foto('20-carica', { clip: { x: 240, y: 56, width: 960, height: 520 }, segni: [{ sel: 'input[type=file][name=file]', n: 1 }, { sel: '[name=titolo]', n: 2 }] });
   await Promise.all([p.waitForNavigation(), p.locator('form:has(input[type=file]) button[type=submit], form:has(input[type=file]) button.btn-primary').first().click()]);
   await foto('20-elenco', { clip: { x: 240, y: 56, width: 960, height: 520 } });
+  // 2.6.0: i giorni dei link riservati, in un riquadro loro.
+  await foto('22-giorni', { sel: '#dl-riservati', segni: [{ sel: '#dl-giorni-n', n: 1 }, { sel: '#dl-giorni button', n: 2, lato: 'destra' }] });
 };
 
 // 21. SEO e AEO
@@ -704,6 +714,9 @@ capitoli['21'] = async () => {
   await foto('21-panoramica', { clip: { x: 240, y: 56, width: 960, height: 700 } });
   await vai('seo.php?scheda=redirect');
   await foto('21-redirect', { clip: { x: 240, y: 56, width: 960, height: 560 } });
+  // 2.6.0: il service account, con i passi in un riquadro che si apre (aperto finché il collegamento non c'è).
+  await vai('seo.php?scheda=motori');
+  await foto('23-service-account', { sel: '.seo-card:has(.seo-sa-passi)', segni: [{ sel: '.seo-sa-passi > summary', n: 1 }, { sel: 'textarea[name=sa_json]', n: 2 }] });
 };
 
 // 22. Utenti e ruoli: un redattore
@@ -721,7 +734,7 @@ capitoli['22'] = async () => {
 // 23. Le email
 capitoli['23'] = async () => {
   await vai('impostazioni.php');
-  await foto('23-email', { clip: { x: 240, y: 56, width: 960, height: 760 }, segni: [{ sel: '[name=smtp_host]', n: 1 }, { sel: '[name=prova_a]', n: 2 }] });
+  await foto('23-email', { clip: { x: 240, y: 56, width: 960, height: 1120 }, segni: [{ sel: '[name=smtp_host]', n: 1 }, { sel: '[name=prova_a]', n: 2 }] });
 };
 
 // 24. Il cron
