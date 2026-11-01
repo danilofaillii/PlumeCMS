@@ -111,7 +111,7 @@ if ($p):
     <?php foreach ($filtri as $k => $n): ?><a href="<?= h(pren_admin_url('elenco', ['filtro' => $k])) ?>"<?= $k === $filtro ? ' class="attivo"' : '' ?>><?= h($n) ?></a><?php endforeach; ?>
   </nav>
   <form method="get" class="pa-azioni"><input type="hidden" name="a" value="prenotazioni"><input type="hidden" name="p" value="elenco"><input type="hidden" name="filtro" value="<?= h($filtro) ?>">
-    <input type="search" name="q" value="<?= h($cerca) ?>" placeholder="Cerca nome, email, telefono" aria-label="Cerca" style="padding:.45rem .6rem;border:1px solid var(--border);border-radius:8px;background:var(--bg);color:var(--text)"><button class="btn btn-secondary btn-sm">Cerca</button></form>
+    <input type="search" name="q" value="<?= h($cerca) ?>" placeholder="Cerca nome, email, telefono" aria-label="Cerca fra le prenotazioni" class="search-input"><button class="btn btn-secondary btn-sm">Cerca</button></form>
 </div>
 <div class="admin-table-wrap"><table class="pa-tabella">
   <thead><tr><th>Quando</th><th>Cliente</th><th>Servizio</th><th>Con</th><th>Stato</th></tr></thead>

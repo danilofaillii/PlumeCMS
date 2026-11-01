@@ -111,7 +111,7 @@ require_once __DIR__ . '/includes/admin-header.php';
     <form method="post">
       <?= csrf_field() ?>
       <input type="hidden" name="action" value="save_posta">
-      <div class="form-group"><label for="smtp_host">Server SMTP</label><input type="text" id="smtp_host" name="smtp_host" value="<?= h($smtp['host']) ?>" placeholder="mail.<?= h((string)preg_replace('/^www\./', '', (string)parse_url(cms_url_sito(), PHP_URL_HOST))) ?>" autocomplete="off"></div>
+      <div class="form-group"><label for="smtp_host">Server SMTP</label><input type="text" id="smtp_host" name="smtp_host" value="<?= h($smtp['host']) ?>" placeholder="per esempio mail.<?= h((string)preg_replace('/^www\./', '', (string)parse_url(cms_url_sito(), PHP_URL_HOST))) ?>" autocomplete="off"></div>
       <div class="form-group"><label for="smtp_porta">Porta</label><input type="number" id="smtp_porta" name="smtp_porta" value="<?= (int)$smtp['porta'] ?>"></div>
       <div class="form-group"><label for="smtp_sicurezza">Sicurezza</label>
         <select id="smtp_sicurezza" name="smtp_sicurezza">
@@ -119,12 +119,12 @@ require_once __DIR__ . '/includes/admin-header.php';
           <option value="tls" <?= $smtp['sicurezza'] === 'tls' ? 'selected' : '' ?>>STARTTLS (di solito porta 587)</option>
           <option value="nessuna" <?= $smtp['sicurezza'] === 'nessuna' ? 'selected' : '' ?>>Nessuna</option>
         </select></div>
-      <div class="form-group"><label for="smtp_utente">Utente (l'indirizzo email completo)</label><input type="text" id="smtp_utente" name="smtp_utente" value="<?= h($smtp['utente']) ?>" placeholder="posta@<?= h((string)preg_replace('/^www\./', '', (string)parse_url(cms_url_sito(), PHP_URL_HOST))) ?>" autocomplete="off"></div>
+      <div class="form-group"><label for="smtp_utente">Utente (l'indirizzo email completo)</label><input type="text" id="smtp_utente" name="smtp_utente" value="<?= h($smtp['utente']) ?>" placeholder="per esempio posta@<?= h((string)preg_replace('/^www\./', '', (string)parse_url(cms_url_sito(), PHP_URL_HOST))) ?>" autocomplete="off"></div>
       <div class="form-group"><label for="smtp_password">Password della casella</label><input type="password" id="smtp_password" name="smtp_password" value="<?= $smtp['password'] !== '' ? '********' : '' ?>" autocomplete="new-password">
         <div class="hint">Resta salvata nel database del pannello. Gli asterischi vogliono dire che c'è già: se non la cambi, resta quella.</div></div>
       <div class="form-group"><label for="smtp_mittente">Indirizzo del mittente</label><input type="text" id="smtp_mittente" name="smtp_mittente" value="<?= h($smtp['mittente']) ?>" placeholder="uguale all'utente"></div>
       <div class="form-group"><label for="smtp_nome">Nome del mittente</label><input type="text" id="smtp_nome" name="smtp_nome" value="<?= h($smtp['nome']) ?>"></div>
-      <div class="form-group"><label for="notification_email">Dove arrivano l'email del mattino e gli avvisi dei form</label><input type="text" id="notification_email" name="notification_email" value="<?= h($notifica) ?>" placeholder="tuaemail@esempio.it"></div>
+      <div class="form-group"><label for="notification_email">Dove arrivano l'email del mattino e gli avvisi dei form</label><input type="text" id="notification_email" name="notification_email" value="<?= h($notifica) ?>" placeholder="per esempio tuaemail@esempio.it"></div>
       <div style="margin-top:1rem"><button type="submit" class="btn btn-primary">Salva</button></div>
     </form>
     <form method="post" style="margin-top:1.5rem;display:flex;gap:0.75rem;align-items:flex-end;flex-wrap:wrap">
@@ -150,7 +150,7 @@ require_once __DIR__ . '/includes/admin-header.php';
     <p style="font-size:0.85rem;color:var(--text-muted);margin:0 0 1rem">L'indirizzo che il sito usa per i link, la sitemap, il canonical, le email e Search Console. Cambialo solo quando sposti il sito su un altro dominio, <b>dopo</b> aver collegato il nuovo dominio a questa cartella e attivato HTTPS: il pannello prova che il nuovo indirizzo apra davvero questo sito prima di salvarlo.</p>
     <div class="form-group">
       <label for="sito_url">Indirizzo (solo il dominio)</label>
-      <input type="url" id="sito_url" name="sito_url" value="<?= h(preg_replace('~' . preg_quote(cms_base(), '~') . '$~', '', cms_url_sito())) ?>" placeholder="https://www.miosito.it" required>
+      <input type="url" id="sito_url" name="sito_url" value="<?= h(preg_replace('~' . preg_quote(cms_base(), '~') . '$~', '', cms_url_sito())) ?>" placeholder="per esempio https://www.miosito.it" required>
       <?php if (cms_base() !== ''): ?><div class="hint">Il sito sta nella cartella <code><?= h(cms_base()) ?></code>: resta la stessa anche con il dominio nuovo.</div><?php endif; ?>
     </div>
     <div class="form-group" style="display:flex;gap:.5rem;align-items:center">

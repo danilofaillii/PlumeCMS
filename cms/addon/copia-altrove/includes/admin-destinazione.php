@@ -71,7 +71,7 @@ $passi = [
         'Le copie arrivano nel tuo Dropbox in <b>Applicazioni</b>, cartella con il nome dell\'app.',
     ],
 ];
-$campi = ['gdrive' => ['ID client', 'Client secret', '1234567890-abc...apps.googleusercontent.com'], 'dropbox' => ['App key', 'App secret', 'per esempio a1b2c3d4e5f6g7h']];
+$campi = ['gdrive' => ['ID client', 'Client secret', 'per esempio 1234567890-abc...apps.googleusercontent.com'], 'dropbox' => ['App key', 'App secret', 'per esempio a1b2c3d4e5f6g7h']];
 ?>
 <style>.ca-griglia{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:1.25rem}.ca-griglia>*{min-width:0}#ca-form select,#ca-form input:not([type=checkbox]){width:100%;max-width:100%;box-sizing:border-box}@media(max-width:1100px){.ca-griglia{grid-template-columns:1fr}}.ca-riga{display:grid;grid-template-columns:minmax(0,1fr) 7rem;gap:.6rem}.ca-tab{overflow-x:auto}.ca-ok{color:#15803d;font-weight:600}.ca-ko{color:#b91c1c;font-weight:600}.ca-spunta{display:flex;gap:.5rem;align-items:center;font-weight:400;margin-top:.6rem}[hidden]{display:none!important}
 .ca-cloud{border:1px solid var(--border);border-radius:10px;padding:.9rem 1rem;margin:.8rem 0;background:var(--bg)}.ca-cloud h4{margin:0 0 .4rem;font-size:.95rem}.ca-passi{margin:.4rem 0 .6rem;padding-left:1.3rem;font-size:.86rem;line-height:1.55}.ca-passi li{margin:.3rem 0}.ca-passi a{word-break:break-all}
@@ -126,7 +126,7 @@ Se il server del sito si rompe o viene attaccato, la copia è al sicuro altrove.
         <p class="hint" id="ca-password-stato"><?= $c['password'] !== '' ? 'La password è salvata cifrata e non si mostra più. Per cambiarla scrivi quella nuova.' : 'Nessuna password salvata.' ?></p>
         <?php if ($c['password'] !== ''): ?><label class="ca-spunta"><input type="checkbox" name="togli_password" value="1"> Togli la password salvata</label><?php endif; ?>
       </div>
-      <label for="ca-cartella">Cartella sulla destinazione</label><input type="text" id="ca-cartella" name="cartella" value="<?= h($c['cartella']) ?>" maxlength="200" placeholder="copie-del-sito">
+      <label for="ca-cartella">Cartella sulla destinazione</label><input type="text" id="ca-cartella" name="cartella" value="<?= h($c['cartella']) ?>" maxlength="200" placeholder="per esempio copie-del-sito">
       <p class="hint">Se non c'è, si crea. Usa una cartella solo per le copie: la pulizia tocca solo i file delle copie, mai gli altri.</p>
       <label for="ca-tenere">Quante copie tenere sulla destinazione</label><input type="number" id="ca-tenere" name="tenere" value="<?= (int)$c['tenere'] ?>" min="1" max="30">
       <label class="ca-spunta"><input type="checkbox" name="attivo" value="1" id="ca-attivo"<?= $c['attivo'] ? ' checked' : '' ?>> Manda una copia ogni notte (con il cron del sito)</label>

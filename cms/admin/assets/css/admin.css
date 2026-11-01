@@ -347,7 +347,7 @@ tr:hover td { background: var(--riga-hover); }
 .nav-freccia { padding: 0.2rem 0.4rem; }
 .nav-gruppo summary:hover { background: var(--sidebar-hover); color: var(--sidebar-testo); }
 .nav-gruppo summary.active { color: var(--logo); }
-.nav-freccia { margin-left: auto; font-size: 0.75rem; opacity: 0.6; transition: transform 0.15s; }
+.nav-freccia { margin-left: auto; font-size: 0.75rem; color: var(--sidebar-testo-2); transition: transform 0.15s; }
 .nav-gruppo[open] .nav-freccia { transform: rotate(90deg); }
 .nav-sotto { display: flex; flex-direction: column; gap: 1px; padding: 2px 0 6px 2.3rem; }
 .nav-sotto a { padding: 0.4rem 0.7rem !important; font-size: 0.84rem !important; border-radius: 6px; }
@@ -599,3 +599,8 @@ html .admin-content :is(input, select, textarea):disabled { opacity: .65; cursor
 .admin-menu-toggle { min-width: 44px; min-height: 44px; border-radius: 8px; line-height: 1; }
 .admin-menu-toggle:focus-visible { outline: 2px solid var(--coral); outline-offset: 2px; }
 .form-group .hint { line-height: 1.45; }
+
+/* 8. Fuoco da tastiera uguale in tutto il pannello, anche nelle pagine degli addon (pulsanti, link, schede, riquadri che si
+   aprono): prima era il contorno sottile del browser, quasi invisibile sui pulsanti pieni. */
+.admin-main :is(.btn, a, summary, button):focus-visible { outline: 2px solid var(--coral); outline-offset: 2px; }/* La freccina dei gruppi del menu (.nav-freccia, sopra) ha il colore --sidebar-testo-2 pieno: prima opacita 0,6, 3,3:1 in
+   Aria, ed e l'unico segno che la voce si apre. */

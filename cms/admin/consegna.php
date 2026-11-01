@@ -238,7 +238,7 @@ require_once __DIR__ . '/includes/admin-header.php';
 <form method="get" class="form-card ce-riga" style="margin-bottom:1rem">
   <input type="hidden" name="scheda" value="dominio">
   <div class="form-group"><label for="ce-dominio">Dominio del mittente</label>
-    <input type="text" id="ce-dominio" name="dominio" value="<?= h($dominio) ?>" list="ce-domini" placeholder="tuosito.it" autocomplete="off">
+    <input type="text" id="ce-dominio" name="dominio" value="<?= h($dominio) ?>" list="ce-domini" placeholder="per esempio tuosito.it" autocomplete="off">
     <datalist id="ce-domini"><?php foreach ($domini as $d): ?><option value="<?= h($d) ?>"><?php endforeach; ?></datalist></div>
   <div class="form-group"><label for="ce-selettore">Selettore DKIM (facoltativo)</label>
     <input type="text" id="ce-selettore" name="selettore" value="<?= h($selettore) ?>" placeholder="se il servizio te ne ha dato uno">
@@ -317,7 +317,7 @@ require_once __DIR__ . '/includes/admin-header.php';
       <li>Incolla qui sotto la regione, l'ID della chiave e la chiave segreta.</li>
     </ol>
     <div class="ce-riga">
-      <div class="form-group"><label for="ce-ses-regione">Regione</label><input type="text" id="ce-ses-regione" name="ses_regione" value="<?= h((string)$cfg['ses']['regione']) ?>" placeholder="eu-west-1" list="ce-regioni">
+      <div class="form-group"><label for="ce-ses-regione">Regione</label><input type="text" id="ce-ses-regione" name="ses_regione" value="<?= h((string)$cfg['ses']['regione']) ?>" placeholder="per esempio eu-west-1" list="ce-regioni">
         <datalist id="ce-regioni"><?php foreach (['eu-west-1', 'eu-south-1', 'eu-central-1', 'eu-west-2', 'eu-west-3', 'eu-north-1', 'us-east-1', 'us-west-2'] as $r): ?><option value="<?= $r ?>"><?php endforeach; ?></datalist></div>
       <div class="form-group"><label for="ce-ses-id">ID della chiave di accesso</label><input type="text" id="ce-ses-id" name="ses_id" value="<?= h((string)$cfg['ses']['id_chiave']) ?>" placeholder="AKIA..."></div>
     </div>
@@ -336,7 +336,7 @@ require_once __DIR__ . '/includes/admin-header.php';
       <li>Scegli la regione in cui hai aperto l'account: Europa (EU) o Stati Uniti (US).</li>
     </ol>
     <div class="ce-riga">
-      <div class="form-group"><label for="ce-mg-dominio">Dominio di invio</label><input type="text" id="ce-mg-dominio" name="mailgun_dominio" value="<?= h((string)$cfg['mailgun']['dominio']) ?>" placeholder="mg.tuosito.it"></div>
+      <div class="form-group"><label for="ce-mg-dominio">Dominio di invio</label><input type="text" id="ce-mg-dominio" name="mailgun_dominio" value="<?= h((string)$cfg['mailgun']['dominio']) ?>" placeholder="per esempio mg.tuosito.it"></div>
       <div class="form-group"><label for="ce-mg-regione">Regione</label><select id="ce-mg-regione" name="mailgun_regione"><option value="eu" <?= $cfg['mailgun']['regione'] !== 'us' ? 'selected' : '' ?>>Europa (EU)</option><option value="us" <?= $cfg['mailgun']['regione'] === 'us' ? 'selected' : '' ?>>Stati Uniti (US)</option></select></div>
     </div>
     <div class="form-group"><label for="ce-mg-chiave">Chiave API di Mailgun</label>
@@ -408,8 +408,8 @@ require_once __DIR__ . '/includes/admin-header.php';
     <li>Premi il pulsante nell'email, poi "Confermo il mittente" nella pagina che si apre.</li>
   </ol>
   <div class="ce-riga">
-    <div class="form-group"><label for="ce-m-nome">Nome che vedono le persone</label><input type="text" id="ce-m-nome" name="nome" maxlength="100" placeholder="Studio Rossi"></div>
-    <div class="form-group"><label for="ce-m-email">Indirizzo</label><input type="email" id="ce-m-email" name="email" maxlength="190" required placeholder="notizie@tuosito.it"></div>
+    <div class="form-group"><label for="ce-m-nome">Nome che vedono le persone</label><input type="text" id="ce-m-nome" name="nome" maxlength="100" placeholder="per esempio Studio Rossi"></div>
+    <div class="form-group"><label for="ce-m-email">Indirizzo</label><input type="email" id="ce-m-email" name="email" maxlength="190" required placeholder="per esempio notizie@tuosito.it"></div>
     <div class="form-group"><label for="ce-m-risp">Le risposte arrivano a (facoltativo)</label><input type="email" id="ce-m-risp" name="rispondi_a" maxlength="190" placeholder="uguale all'indirizzo"></div>
   </div>
   <div class="hint" style="margin:.5rem 0 1rem">Usa un indirizzo del tuo dominio. Se le email partono con Brevo, Amazon SES o Mailgun, il mittente va verificato anche lì.</div>

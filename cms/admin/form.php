@@ -98,7 +98,7 @@ require_once __DIR__ . '/includes/admin-header.php';
         <small class="fm-aiuto" id="fm-avviso-aiuto" style="display:block;font-size:.78rem;color:var(--text-muted);margin:.25rem 0 .4rem">Uno o più indirizzi, separati da una virgola o uno per riga (al massimo <?= FORM_AVVISO_MAX ?>). <?= $avvisoSito !== '' ? 'Vuoto: va a ' . h($avvisoSito) . ', l\'indirizzo degli avvisi del sito.' : '<b>Vuoto: l\'avviso non parte</b>, perché il sito non ha un indirizzo per gli avvisi (Impostazioni, Posta in uscita).' ?></small>
         <label>Titolo della pagina di ringraziamento</label><input type="text" name="grazie_titolo" value="<?= h($v['grazie_titolo']) ?>">
         <label>Testo</label><textarea name="grazie_testo" rows="3"><?= h($v['grazie_testo']) ?></textarea>
-        <label>Link del pulsante "Continua" (facoltativo)</label><input type="text" name="grazie_link" id="fm-grazie-link" value="<?= h($v['grazie_link']) ?>" placeholder="/grazie/" data-link-sito>
+        <label>Link del pulsante "Continua" (facoltativo)</label><input type="text" name="grazie_link" id="fm-grazie-link" value="<?= h($v['grazie_link']) ?>" placeholder="per esempio /grazie/" data-link-sito>
       </div></div>
     </aside>
   </div>

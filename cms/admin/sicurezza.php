@@ -163,7 +163,7 @@ $schede = ['stato' => 'Stato', 'impostazioni' => 'Impostazioni', 'registro' => '
       <?php foreach (['spenta' => 'Spenta', 'rapporto' => 'Solo rapporto (il browser segnala, non blocca)', 'applica' => 'Applica (il browser blocca)'] as $v => $n): ?><option value="<?= $v ?>" <?= $cfg[$k] === $v ? 'selected' : '' ?>><?= $n ?></option><?php endforeach; ?>
     </select></div>
     <?php endforeach; ?>
-    <div class="form-group"><label>Sorgenti in più (una per riga: direttiva e indirizzo, per esempio <code>frame-src https://www.google.com</code>)</label><textarea name="cfg[csp_extra]" placeholder="script-src https://esempio.it"><?= h($cfg['csp_extra']) ?></textarea><div class="hint">Serve se un widget HTML carica uno script o un frame da un sito che la CSP non conosce (lo vedi nei rapporti).</div></div>
+    <div class="form-group"><label>Sorgenti in più (una per riga: direttiva e indirizzo, per esempio <code>frame-src https://www.google.com</code>)</label><textarea name="cfg[csp_extra]" placeholder="per esempio script-src https://esempio.it"><?= h($cfg['csp_extra']) ?></textarea><div class="hint">Serve se un widget HTML carica uno script o un frame da un sito che la CSP non conosce (lo vedi nei rapporti).</div></div>
     <div class="form-group"><label><input type="checkbox" name="cfg[hsts]" value="1" <?= $cfg['hsts'] ? 'checked' : '' ?>> Strict-Transport-Security (il browser usa sempre https per sei mesi)</label><div class="hint">Solo quando il certificato funziona bene: se poi https si rompe, i browser non aprono il sito in http.</div></div>
 
     <h4>Chi può scrivere codice grezzo</h4>
@@ -176,7 +176,7 @@ $schede = ['stato' => 'Stato', 'impostazioni' => 'Impostazioni', 'registro' => '
     <?php $finestraRoot = (int)$cfg['root_php_fino'] > time(); ?>
     <div class="sic-riquadro"><strong>File .php nella radice del sito e nei temi.</strong> Un pacchetto che mette un file eseguibile (.php) nella radice (destinazione <code>root/</code>, per esempio il pacchetto del trasloco), e un tema con codice PHP caricato da Editor, Temi, passano solo se sono firmati, oppure durante una finestra di un'ora che apri qui sotto con la tua password.
       <?= $finestraRoot ? '<br><strong>Finestra aperta fino alle ' . h(date('H:i', (int)$cfg['root_php_fino'])) . '.</strong>' : '' ?></div>
-    <div class="form-group"><label>Altri host verso cui il CMS può fare chiamate (uno per riga)</label><textarea name="cfg[uscita_host]" placeholder="api.esempio.it"><?= h($cfg['uscita_host']) ?></textarea><div class="hint">Di base: IndexNow, Bing, Google (Search Console). Mai verso indirizzi privati del server.</div></div>
+    <div class="form-group"><label>Altri host verso cui il CMS può fare chiamate (uno per riga)</label><textarea name="cfg[uscita_host]" placeholder="per esempio api.esempio.it"><?= h($cfg['uscita_host']) ?></textarea><div class="hint">Di base: IndexNow, Bing, Google (Search Console). Mai verso indirizzi privati del server.</div></div>
     <div style="margin-top:1.2rem"><button class="btn btn-primary">Salva le impostazioni</button></div>
   </form>
   <form method="post" class="form-card sic-form" style="margin-top:1rem"><?= csrf_field() ?>
