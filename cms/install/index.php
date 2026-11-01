@@ -87,7 +87,7 @@ function inst_errore_db(PDOException $e, array $db): string {
     if ($codice === 1045) return "Utente o password del database sbagliati. Controlla in cPanel, voce Database MySQL, il nome esatto dell'utente (spesso comincia con il nome del tuo account, per esempio account_utente) e riscrivi la password." . $tecnico;
     if ($codice === 1044) return "L'utente «" . $db['utente'] . "» non può usare il database «" . $db['nome'] . "». In cPanel, voce Database MySQL, aggiungi l'utente al database con tutti i privilegi (oppure controlla che il nome del database sia scritto giusto)." . $tecnico;
     if ($codice === 2002 && preg_match('/getaddrinfo|Name or service|name resolution|No such host/i', $msg)) return "Il server del database «" . $db['host'] . "» non esiste. Quasi sempre è localhost: controlla il campo Server (host)." . $tecnico;
-    if ($codice === 2002 || $codice === 2003) return "Il server del database «" . $db['host'] . "» non risponde. Controlla il campo Server (host): quasi sempre è localhost, con una porta diversa server:porta." . $tecnico;
+    if ($codice === 2002 || $codice === 2003) return "Il server del database «" . $db['host'] . "» non risponde. Controlla il campo Server (host): quasi sempre è localhost (con una porta diversa si scrive server:porta)." . $tecnico;
     if ($codice === 2006 || $codice === 2013) return "Il server del database ha chiuso la connessione. Riprova fra un minuto; se continua, chiedi all'hosting." . $tecnico;
     return 'Il database non accetta la connessione. Controlla server, nome del database, utente e password.' . $tecnico;
 }
