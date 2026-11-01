@@ -117,6 +117,7 @@ if (!$sonoAdminMenu) {
   <link rel="stylesheet" href="<?= pannello_file('assets/css/scegli-link.css') ?>"><script src="<?= pannello_file('assets/scegli-link.js') ?>" defer></script><?php /* 2.2: Scegli dal sito (data-link-sito, window.pnLink) */ ?>
 </head>
 <body class="admin-body">
+<a class="admin-salta" href="#contenuto">Vai al contenuto</a><?php /* UX 2026-11: chi usa la tastiera salta il menu (WCAG 2.4.1) */ ?>
 <div class="admin-sidebar-overlay" data-menu-mobile></div>
 <div class="admin-layout">
   <aside class="admin-sidebar">
@@ -150,7 +151,7 @@ if (!$sonoAdminMenu) {
   <main class="admin-main">
     <header class="admin-topbar">
       <div style="display:flex;align-items:center;gap:0.75rem">
-        <button class="admin-menu-toggle" data-menu-mobile>&#9776;</button>
+        <button type="button" class="admin-menu-toggle" data-menu-mobile aria-label="Menu del pannello" aria-expanded="false">&#9776;</button><?php /* UX 2026-11: il pulsante dice cosa fa a chi non lo vede */ ?>
         <span class="admin-versione admin-versione-tel">v. <?= h(cms_versione()) ?></span><?php /* 2.3.0: al telefono il menu è chiuso, la versione sta qui */ ?>
         <h1 class="admin-page-title"><?= htmlspecialchars($adminTitle) ?></h1>
       </div>
@@ -158,5 +159,5 @@ if (!$sonoAdminMenu) {
         <?= htmlspecialchars($user['display_name'] ?: $user['username']) ?>
       </div>
     </header>
-    <div class="admin-content">
+    <div class="admin-content" id="contenuto" tabindex="-1">
       <?= render_flash() ?>

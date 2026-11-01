@@ -108,6 +108,8 @@
       var s = document.querySelector('.admin-sidebar'), o = document.querySelector('.admin-sidebar-overlay');
       if (el.classList.contains('admin-sidebar-overlay')) { el.classList.remove('open'); if (s) s.classList.remove('open'); }
       else { if (s) s.classList.toggle('open'); if (o) o.classList.toggle('open'); }
+      // UX 2026-11: chi usa un lettore di schermo sa se il menu e aperto.
+      var b = document.querySelector('.admin-menu-toggle'); if (b && s) b.setAttribute('aria-expanded', s.classList.contains('open') ? 'true' : 'false');
     }
     if (el.hasAttribute('data-al-clic')) chiama(el, ev, 'data-al-clic');
   });

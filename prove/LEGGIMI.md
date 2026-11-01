@@ -484,6 +484,16 @@ argomento, separate da virgola; `LARGHEZZA=768` (o altro) per un'altra misura.
 `node prove/prova-pannello-telefono.js <base> <utente> <password> [pagine in più]`. Atteso: tutto OK a 390, 768 e 1280 px,
 anche con gli otto addon accesi (30 ottobre 2026: 81 su 81 con venti pagine interne).
 
+## prova-ux-pannello.js (UX 2026-11)
+
+Il pannello si legge nei quattro aspetti. Sceglie ogni aspetto da Il mio accesso, apre le pagine del menu e alcune schede
+(SEO, Newsletter, Sicurezza, Consegna) e misura nel browser: testi almeno 4,5:1 (3:1 i grandi), bordi dei campi almeno 3:1
+sul fondo intorno, segnaposto almeno 4,5:1, titolo di ogni riquadro in una fascia con fondo diverso dal corpo e testo almeno
+4,5:1, pulsante della scelta file con l'aspetto del pannello, niente scorrimento di lato a 390 px. Alla fine rimette Aria.
+`node prove/prova-ux-pannello.js <base> <utente> <password> [aspetti, es. aria,cosmo] [filtro delle pagine, regex]`;
+`TUTTO=1` stampa anche gli OK. Atteso (1 novembre 2026, kit Attività): 1207 su 1207 senza addon, 1667 su 1667 con gli otto
+addon accesi. Sul codice di prima (2.5.0) dava 773 su 1175. Non misura i fondi a gradiente né gli elementi trasparenti.
+
 ## prova-hero-pulsanti.js (2.0.2)
 
 I pulsanti dell'Apertura si cliccano davvero. Prima `php prove/pagina-hero-pulsanti.php <cartella CMS> <url foto> > elenco.txt`

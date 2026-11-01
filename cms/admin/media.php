@@ -114,7 +114,7 @@ require_once __DIR__ . '/includes/admin-header.php';
         <span><?= round($img['peso'] / 1024) ?> KB</span>
       </div>
       <input type="text" value="<?= h($img['url']) ?>" readonly title="Clic per copiare l'indirizzo"
-             style="width:100%;font-size:0.7rem;padding:0.25rem 0.4rem;margin-top:0.4rem;border:1px solid var(--border);border-radius:4px;background:var(--bg);color:var(--text-muted)"
+             style="width:100%;font-size:0.7rem;padding:0.25rem 0.4rem;margin-top:0.4rem;border:1px solid var(--bordo-campo);border-radius:4px;background:var(--campo);color:var(--text)"
              data-copia-se-stesso>
       <?php if ($img['cartella'] === 'segnaposto' && is_admin()): ?>
       <form method="post" enctype="multipart/form-data" class="md-sostituisci">

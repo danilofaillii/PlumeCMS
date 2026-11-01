@@ -37,6 +37,9 @@ a { color: var(--link); }
 /* 2.3.0: la versione installata, sempre in alto a sinistra (richiesta di Danilo); al telefono accanto al pulsante del menu. */
 .admin-versione { display: inline-block; font-family: var(--font-testo, inherit); font-size: .72rem; font-weight: 600; letter-spacing: .02em;
   color: var(--text-muted); background: var(--surface-2, rgba(127,127,127,.12)); border-radius: 999px; padding: .1rem .5rem; vertical-align: middle; }
+/* UX 2026-11: nella barra laterale la versione prende i colori della barra (in Bottega la barra e scura e il grigio del
+   contenuto non si leggeva: 1,9 a 1). */
+.admin-logo .admin-versione { color: var(--sidebar-testo); background: var(--sidebar-hover); }
 .admin-versione-tel { display: none; }
 @media (max-width: 900px) { .admin-versione-tel { display: inline-block; } }
 .admin-nav { flex: 1; display: flex; flex-direction: column; gap: 2px; padding: 0 0.75rem; }
@@ -227,14 +230,14 @@ tr:hover td { background: var(--riga-hover); }
 }
 .form-group { margin-bottom: 1.25rem; }
 .form-group:last-child { margin-bottom: 0; }
+/* UX 2026-11: le etichette dei campi in carattere normale e colore pieno. In maiuscoletto grigio sembravano titoli
+   uguali a quelli dei riquadri (segnalazione di Danilo, SEO e AEO > Motori di ricerca). */
 .form-group label {
   display: block;
-  font-size: 0.82rem;
+  font-size: 0.86rem;
   font-weight: 600;
-  color: var(--text-muted);
+  color: var(--text);
   margin-bottom: 0.35rem;
-  text-transform: uppercase;
-  letter-spacing: 0.03em;
 }
 .form-group input,
 .form-group select,
@@ -456,3 +459,143 @@ fieldset { min-width: 0; }
 /* 2.0.0: le tabelle degli addon nei riquadri stretti scorrono dentro il loro contenitore (la colonna delle azioni resta raggiungibile). */
 .ad-tabella { overflow-x: auto; max-width: 100%; }
 .ad-tabella > table { min-width: 100%; }
+
+/* ==========================================================================================================
+   UX 2026-11 (richiesta di Danilo): titoli dei riquadri riconoscibili, campi che si staccano dal fondo, scelta
+   file con un pulsante vero. Solo il pannello: tutte le regole stanno dentro .admin-content o .login-box, quindi
+   l'editor visuale (che carica questo foglio) e il sito pubblico non cambiano.
+   ========================================================================================================== */
+
+/* 1. Il titolo di un riquadro e una fascia: fondo --testata diverso dal corpo, striscia d'accento a sinistra,
+   linea sotto. Vale per il primo h2/h3 di ogni riquadro. Ogni riquadro dice il suo margine interno
+   (--riq-y, --riq-x) cosi la fascia arriva ai bordi; un riquadro che non lo dice ha la fascia dentro il margine. */
+.form-card { --riq-y: 1.5rem; --riq-x: 1.5rem; }
+.seo-card { --riq-y: 1.25rem; --riq-x: 1.25rem; }
+.agg-card, .cs-card { --riq-y: 1.2rem; --riq-x: 1.4rem; }
+.cr-card, .ei-card, .fa-scatola, .info-card, .sm-scatola { --riq-y: 1.1rem; --riq-x: 1.25rem; }
+.iw-card { --riq-y: 1.4rem; --riq-x: 1.6rem; }
+.db-scatola, .vs-box { --riq-y: 1rem; --riq-x: 1.2rem; }
+.cs-gruppo { --riq-y: .9rem; --riq-x: 1.25rem; }
+.tt-carica { --riq-y: 1rem; --riq-x: 1.1rem; }
+@media (max-width: 640px) { .cs-card { --riq-y: 1rem; --riq-x: 1rem; } }
+/* Un riquadro che e anche il modulo (<form class="form-card">) comincia con i campi nascosti: il titolo viene dopo. */
+.admin-content :is(.form-card, .seo-card, .agg-card, .cs-card, .cr-card, .ei-card, .fa-scatola, .info-card, .sm-scatola, .iw-card, .db-scatola, .vs-box, .cs-gruppo, .tt-carica) > :is(h2, h3):first-child,
+.admin-content :is(.form-card, .seo-card, .agg-card, .cs-card, .cr-card, .ei-card, .fa-scatola, .info-card, .sm-scatola, .iw-card, .db-scatola, .vs-box, .cs-gruppo, .tt-carica) > input[type=hidden]:first-child + :is(h2, h3),
+.admin-content :is(.form-card, .seo-card, .agg-card, .cs-card, .cr-card, .ei-card, .fa-scatola, .info-card, .sm-scatola, .iw-card, .db-scatola, .vs-box, .cs-gruppo, .tt-carica) > input[type=hidden]:first-child + input[type=hidden] + :is(h2, h3) {
+  margin: calc(-1 * var(--riq-y, 0px)) calc(-1 * var(--riq-x, 0px)) 1rem;
+  padding: .7rem var(--riq-x, .9rem);
+  background: var(--testata);
+  color: var(--testata-testo);
+  border-bottom: 1px solid var(--border);
+  border-radius: calc(var(--radius) - 1px) calc(var(--radius) - 1px) 0 0;
+  box-shadow: inset 4px 0 0 var(--coral);
+  font-family: var(--font);
+  font-size: .95rem;
+  font-weight: 700;
+  line-height: 1.35;
+  letter-spacing: 0;
+  text-transform: none;
+}
+/* Newsletter: il titolo sta in una riga con il pulsante (Campagne, + Nuova campagna): la fascia e la riga intera. */
+.admin-content .form-card > .nl-riga:first-child:has(> h3:first-child) {
+  margin: -1.5rem -1.5rem 1rem !important; padding: .6rem 1.5rem;
+  background: var(--testata); border-bottom: 1px solid var(--border);
+  border-radius: calc(var(--radius) - 1px) calc(var(--radius) - 1px) 0 0; box-shadow: inset 4px 0 0 var(--coral);
+}
+.admin-content .form-card > .nl-riga:first-child > h3:first-child { color: var(--testata-testo); font-size: .95rem; text-transform: none; letter-spacing: 0; }
+/* I riquadri che avevano gia una testata (Contenuti, Menu, Widget): stessa fascia. */
+.admin-content :is(.sc-scatola, .mn-scatola, .wg-gruppo) > h3 {
+  background: var(--testata);
+  color: var(--testata-testo);
+  box-shadow: inset 4px 0 0 var(--coral);
+  border-radius: calc(var(--radius) - 1px) calc(var(--radius) - 1px) 0 0;
+}
+.admin-content .sc-scatola.chiusa > h3 { border-radius: calc(var(--radius) - 1px); }
+/* I sottotitoli dentro un riquadro (h3 e h4 dopo il primo): piccoli, in maiuscoletto, con una riga sopra.
+   Cosi si leggono come "gruppo di campi", un gradino sotto la fascia. */
+.admin-content :is(.form-card, .seo-card) h3:not(:first-child) {
+  margin: 1.25rem 0 .6rem; padding-top: .9rem; border-top: 1px solid var(--border);
+  font-size: .76rem; letter-spacing: .06em; text-transform: uppercase; color: var(--text-muted);
+}
+
+/* 2. I campi: bordo --bordo-campo (almeno 3:1 sul riquadro), fondo --campo, fuoco con un contorno pieno
+   dell'accento. "html .admin-content" pesa piu delle regole delle singole pagine (.seo-filtri input, .sc-corpo select...). */
+html .admin-content :is(input:not([type=checkbox], [type=radio], [type=color], [type=range], [type=file], [type=submit], [type=button], [type=reset], [type=hidden], [type=image]), select, textarea),
+html .login-box :is(input:not([type=checkbox], [type=radio], [type=hidden], [type=submit]), select, textarea) {
+  border-color: var(--bordo-campo) !important; /* vince anche sui bordi scritti in linea (style="border:1px solid var(--border)") */
+  border-style: solid;
+  background-color: var(--campo);
+  color: var(--text);
+}
+html .admin-content :is(input, select, textarea):not([type=checkbox], [type=radio], [type=file]):hover,
+html .login-box :is(input, select, textarea):not([type=checkbox], [type=radio]):hover { border-color: var(--text-muted) !important; }
+html .admin-content :is(input, select, textarea):focus-visible,
+html .login-box :is(input, select, textarea):focus-visible,
+html .admin-content :is(input, select, textarea):focus:not([type=checkbox], [type=radio], [type=file]),
+html .login-box :is(input, select, textarea):focus:not([type=checkbox], [type=radio]) {
+  outline: 2px solid var(--coral);
+  outline-offset: 1px;
+  border-color: var(--coral) !important;
+}
+html .admin-content :is(input, textarea)::placeholder, html .login-box input::placeholder { color: var(--segnaposto); opacity: 1; }
+/* Le finestre Scegli dai Media e Scegli dal sito stanno fuori da .admin-content (anche nell'editor): stesso bordo. */
+html :is(.pn-media, .pn-link) :is(input:not([type=checkbox], [type=radio], [type=file], [type=hidden]), select) { border-color: var(--bordo-campo); }
+html :is(.pn-media, .pn-link) :is(input, select):focus-visible { outline: 2px solid var(--coral); outline-offset: 1px; border-color: var(--coral); }
+html .admin-content :is(input, select, textarea):disabled { opacity: .65; cursor: not-allowed; }
+/* Caselle e scelte: un poco piu grandi, il colore dell'accento. */
+.admin-content :is(input[type=checkbox], input[type=radio]) { width: 1.05rem; height: 1.05rem; accent-color: var(--coral); vertical-align: -.15em; }
+.admin-content :is(input[type=checkbox], input[type=radio]):focus-visible { outline: 2px solid var(--coral); outline-offset: 2px; }
+
+/* 3. Scegli un file: il pulsante del browser diventa un pulsante del pannello, e accanto resta il nome del file
+   scelto (lo scrive il browser: "Nessun file selezionato" finche non si sceglie). */
+.admin-content input[type=file] {
+  max-width: 100%;
+  padding: .35rem;
+  border: 1px dashed var(--bordo-campo);
+  border-radius: 8px;
+  background: var(--campo);
+  color: var(--text);
+  font: inherit;
+  font-size: .86rem;
+  cursor: pointer;
+}
+.admin-content input[type=file]::file-selector-button {
+  margin-right: .75rem;
+  padding: .45rem .9rem;
+  border: 1px solid var(--bordo-campo);
+  border-radius: 6px;
+  background: var(--fondo-2);
+  color: var(--text);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+.admin-content input[type=file]:hover { border-color: var(--coral); }
+.admin-content input[type=file]:hover::file-selector-button { border-color: var(--coral); color: var(--accento-testo); }
+.admin-content input[type=file]:focus-visible { outline: 2px solid var(--coral); outline-offset: 2px; }
+
+/* 4. Pulsanti secondari: il bordo si vede anche negli aspetti scuri (prima --border, quasi invisibile in Cosmo). */
+.btn-secondary { border-color: var(--bordo-campo); }
+.btn-secondary:hover { border-color: var(--coral); color: var(--accento-testo); }
+
+/* 5. I testi di aiuto fuori da un .form-group avevano la misura del testo normale (SEO, IndexNow). */
+.admin-content .hint { font-size: .8rem; color: var(--text-muted); line-height: 1.45; }
+
+/* 6. La barra in alto al telefono: versione, titolo e nome non vanno a capo uno sull'altro ("Aggiornamenti" e il nome
+   si sovrapponevano a 390 px). Il titolo si accorcia con i puntini, il nome resta su una riga. */
+.admin-versione { white-space: nowrap; }
+.admin-topbar > div:first-child { min-width: 0; }
+@media (max-width: 640px) {
+  .admin-topbar { padding: .75rem 1rem; gap: .75rem; }
+  .admin-page-title { font-size: 1.05rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
+  .admin-user { flex: none; max-width: 34%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: .78rem; }
+  .admin-content { padding: 1.25rem 1rem; }
+}
+/* 7. "Vai al contenuto": invisibile finche non lo raggiunge la tastiera (il primo Tab della pagina). */
+.admin-salta { position: absolute; left: .75rem; top: -3rem; z-index: 300; padding: .6rem 1rem; border-radius: 8px; background: var(--coral); color: var(--su-accento); font-weight: 600; text-decoration: none; }
+.admin-salta:focus { top: .75rem; outline: 2px solid var(--text); outline-offset: 2px; }
+.admin-content:focus { outline: none; }
+/* Il pulsante del menu: almeno 44x44 da toccare (WCAG 2.5.8 chiede 24, le linee guida dei telefoni 44). */
+.admin-menu-toggle { min-width: 44px; min-height: 44px; border-radius: 8px; line-height: 1; }
+.admin-menu-toggle:focus-visible { outline: 2px solid var(--coral); outline-offset: 2px; }
+.form-group .hint { line-height: 1.45; }

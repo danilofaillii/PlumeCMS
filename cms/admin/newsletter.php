@@ -274,7 +274,7 @@ require_once __DIR__ . '/includes/admin-header.php';
     <?= csrf_field() ?><input type="hidden" name="azione" value="importa">
     <input type="file" name="csv" accept=".csv,text/csv">
     <label style="font-size:.85rem">nella lista <?= $sceltaLista('lista', '') ?></label>
-    <label style="font-size:.85rem">oppure in una lista nuova <input type="text" name="lista_nuova" placeholder="nome" style="padding:.3rem .5rem;border:1px solid var(--border);border-radius:6px"></label>
+    <label style="font-size:.85rem">oppure in una lista nuova <input type="text" name="lista_nuova" placeholder="nome" style="padding:.3rem .5rem;border:1px solid var(--bordo-campo);border-radius:6px"></label>
     <label style="font-size:.85rem"><input type="checkbox" name="consenso_brevo" value="1"> Sono contatti iscritti, con il loro consenso</label>
     <label style="font-size:.85rem"><input type="checkbox" name="flussi_import" value="1"> Fai partire i flussi per gli importati</label>
     <button class="btn btn-primary btn-sm" type="submit">Importa</button>
@@ -283,7 +283,7 @@ require_once __DIR__ . '/includes/admin-header.php';
 <div class="form-card" style="margin-top:1.25rem">
   <form method="get" class="nl-riga" style="margin-bottom:1rem">
     <input type="hidden" name="scheda" value="iscritti">
-    <input type="text" name="cerca" value="<?= h($f['cerca']) ?>" placeholder="email o nome" style="padding:.4rem .6rem;border:1px solid var(--border);border-radius:6px">
+    <input type="text" name="cerca" value="<?= h($f['cerca']) ?>" placeholder="email o nome" style="padding:.4rem .6rem;border:1px solid var(--bordo-campo);border-radius:6px">
     <select name="stato"><option value="">Tutti gli stati</option><?php foreach (['attivo' => 'Attivi', 'in_attesa' => 'In attesa', 'uscito' => 'Usciti', 'rimbalzato' => 'Rimbalzati', 'spam' => 'Hanno segnalato spam', 'errori' => 'Con 3 errori di fila'] as $k => $v): ?><option value="<?= $k ?>" <?= $f['stato'] === $k ? 'selected' : '' ?>><?= $v ?></option><?php endforeach; ?></select>
     <select name="lista"><option value="0">Tutte le liste</option><?php foreach ($liste as $l): ?><option value="<?= (int)$l['id'] ?>" <?= $f['lista'] === (int)$l['id'] ? 'selected' : '' ?>><?= h($l['nome']) ?></option><?php endforeach; ?><option value="-1" <?= $f['lista'] === -1 ? 'selected' : '' ?>>In nessuna lista</option></select>
     <button class="btn btn-secondary btn-sm" type="submit">Cerca</button>
@@ -330,8 +330,8 @@ require_once __DIR__ . '/includes/admin-header.php';
     foreach ($liste as $l): ?>
     <tr>
       <td><form method="post" class="nl-riga"><?= csrf_field() ?><input type="hidden" name="azione" value="lista_rinomina"><input type="hidden" name="id" value="<?= (int)$l['id'] ?>">
-        <input type="text" name="nome" value="<?= h($l['nome']) ?>" maxlength="100" style="padding:.3rem .5rem;border:1px solid var(--border);border-radius:6px;font-weight:600">
-        <input type="text" name="descrizione" value="<?= h($l['descrizione']) ?>" maxlength="255" placeholder="descrizione" style="padding:.3rem .5rem;border:1px solid var(--border);border-radius:6px;min-width:260px">
+        <input type="text" name="nome" value="<?= h($l['nome']) ?>" maxlength="100" style="padding:.3rem .5rem;border:1px solid var(--bordo-campo);border-radius:6px;font-weight:600">
+        <input type="text" name="descrizione" value="<?= h($l['descrizione']) ?>" maxlength="255" placeholder="descrizione" style="padding:.3rem .5rem;border:1px solid var(--bordo-campo);border-radius:6px;min-width:260px">
         <button class="btn btn-secondary btn-sm" type="submit">Salva</button>
         <?php if (isset($sistema[(int)$l['id']])): ?><small style="color:var(--text-muted)">usata dal sito: <?= $sistema[(int)$l['id']] ?></small><?php endif; ?></form></td>
       <td><a href="?scheda=iscritti&amp;lista=<?= (int)$l['id'] ?>&amp;stato=attivo"><?= (int)$l['attivi'] ?></a></td>
@@ -342,8 +342,8 @@ require_once __DIR__ . '/includes/admin-header.php';
   </table></div>
   <h3 style="margin-top:1.5rem">Nuova lista</h3>
   <form method="post" class="nl-riga"><?= csrf_field() ?><input type="hidden" name="azione" value="lista_crea">
-    <input type="text" name="nome" maxlength="100" placeholder="Nome, per esempio: Clienti" required style="padding:.4rem .6rem;border:1px solid var(--border);border-radius:6px;min-width:280px">
-    <input type="text" name="descrizione" maxlength="255" placeholder="Descrizione (facoltativa)" style="padding:.4rem .6rem;border:1px solid var(--border);border-radius:6px;min-width:260px">
+    <input type="text" name="nome" maxlength="100" placeholder="Nome, per esempio: Clienti" required style="padding:.4rem .6rem;border:1px solid var(--bordo-campo);border-radius:6px;min-width:280px">
+    <input type="text" name="descrizione" maxlength="255" placeholder="Descrizione (facoltativa)" style="padding:.4rem .6rem;border:1px solid var(--bordo-campo);border-radius:6px;min-width:260px">
     <button class="btn btn-primary btn-sm" type="submit">Crea</button>
   </form>
 </div>
