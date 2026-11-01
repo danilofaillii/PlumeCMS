@@ -1149,6 +1149,71 @@ async function accendi(nome) {
   return flash();
 }
 
+// 31r. (2.7.0) L'email di conferma modificabile: capitolo 18 ("Cambiare l'email di conferma", sul form "Guida in regalo" del
+// capitolo 31n; se manca, lo si crea qui) e capitolo 20 ("L'email di conferma dell'iscrizione", Newsletter > Impostazioni, senza
+// salvare). Si può rifare da solo: SOLO_CAPITOLI=31r.
+capitoli['31r'] = async () => {
+  await vai('form.php');
+  let guida = p.locator('a.ct-nome', { hasText: 'Guida in regalo' }).first();
+  if (!(await guida.count())) {
+    await vai('form.php?nuovo=1');
+    await p.fill('[name=nome]', 'Guida in regalo');
+    await p.fill('[name=titolo]', 'Ricevi la guida alla cura delle piante');
+    await p.selectOption('select[name=lista_id]', { label: 'Newsletter' });
+    await p.check('input[name=lista_conferma]');
+    await Promise.all([p.waitForNavigation(), p.click('button.btn-primary:has-text("Salva")')]);
+  } else await Promise.all([p.waitForNavigation(), guida.click()]);
+  await p.waitForLoadState('networkidle');
+  if ((await p.locator('#fm-conferma-campi').getAttribute('open')) === null) await p.click('#fm-conferma-campi > summary');
+  await p.fill('#ec-oggetto', 'Ultimo passo per la tua guida, {nome}');
+  await p.fill('#ec-pulsante', 'Sì, mandami la guida');
+  await p.fill('#ec-colore', '#0a7d32');
+  await p.click('#fm-conferma [data-ec-anteprima]');
+  await p.waitForFunction(() => /mandami la guida/.test((document.querySelector('#fm-conferma .ec-cornice') || {}).srcdoc || ''));
+  await dorme(800);
+  // Due foto: i campi cambiati (passi 1-2) e la barra con l'anteprima (passi 3-5), unite in una sola come 28-server.
+  await p.evaluate(() => scrollTo(0, 0)); await dorme(100); // le foto con fullPage vogliono le coordinate della pagina
+  const r1 = await p.locator('#fm-conferma').boundingBox();
+  const fine1 = await p.locator('.ec-campo:has(#ec-colore)').boundingBox();
+  await segna(p, [{ sel: '#fm-conferma-campi > summary', n: 1 }, { sel: '#ec-oggetto', n: 2 }, { sel: '#ec-pulsante', n: 2 }, { sel: '#ec-colore', n: 2 }]);
+  await p.screenshot({ path: path.join(GREZZE, '17-email-conferma-a.png'), clip: { x: r1.x - 12, y: r1.y - 12, width: r1.width + 24, height: fine1.y + fine1.height - r1.y + 24 }, fullPage: true });
+  await togliSegni(p);
+  // La cornice dell'anteprima non esce nelle foto della pagina intera: la foto si fa con la pagina scorsa fin lì.
+  await p.evaluate(() => scrollBy(0, document.querySelector('#fm-conferma .ec-anteprima-barra').getBoundingClientRect().top - 120)); await dorme(300); // sotto la barra in alto del pannello
+  await segna(p, [{ sel: '#fm-conferma [data-ec-riempi]', n: 3 }, { sel: '#fm-conferma [data-ec-anteprima]', n: 4 }, { sel: '#fm-conferma [data-ec-prova]', n: 5 }]);
+  const b2 = await p.locator('#fm-conferma .ec-anteprima-barra').boundingBox();
+  const c2 = await p.locator('#fm-conferma .ec-cornice').boundingBox();
+  await p.screenshot({ path: path.join(GREZZE, '17-email-conferma-b.png'), clip: { x: c2.x - 12, y: Math.max(0, b2.y - 12), width: c2.width + 24, height: Math.min(800 - Math.max(0, b2.y - 12), c2.y + Math.min(c2.height, 440) - b2.y + 24) } });
+  await togliSegni(p);
+  if (!SOLO || '17'.startsWith(SOLO.slice(0, 2))) {
+    require('child_process').execFileSync('python3', ['-c', `
+import sys
+from PIL import Image
+a, b, o = sys.argv[1], sys.argv[2], sys.argv[3]
+A, B = Image.open(a).convert('RGB'), Image.open(b).convert('RGB')
+w = max(A.width, B.width)
+U = Image.new('RGB', (w, A.height + B.height), (255, 255, 255))
+U.paste(A, (0, 0)); U.paste(B, (0, A.height)); U.save(o)
+`, path.join(GREZZE, '17-email-conferma-a.png'), path.join(GREZZE, '17-email-conferma-b.png'), path.join(GREZZE, '17-email-conferma.png')]);
+    for (const f of ['17-email-conferma-a.png', '17-email-conferma-b.png']) fs.unlinkSync(path.join(GREZZE, f));
+    console.log('17-email-conferma');
+  }
+  await Promise.all([p.waitForNavigation(), p.click('button.btn-primary:has-text("Salva")')]);
+  if (!/salvato/.test(await flash())) throw new Error('31r: il form non si salva: ' + await flash());
+  // Newsletter > Impostazioni: il riquadro, senza salvare.
+  await vai('newsletter.php?scheda=impostazioni#nl-conferma');
+  await p.fill('#nl-conferma #ec-firma', 'Studio Prova, vasi e piante a Bologna');
+  await p.evaluate(() => scrollTo(0, 0)); await dorme(100);
+  const nl = await p.locator('#nl-conferma').boundingBox();
+  const nlFine = await p.locator('#nl-conferma .ec-campo:has(#ec-titolo)').boundingBox();
+  await segna(p, [{ sel: '#nl-conferma #ec-oggetto', n: 1 }, { sel: '#nl-conferma .ec-segnaposti summary', n: 2 }]);
+  if (!SOLO || '19'.startsWith(SOLO.slice(0, 2))) {
+    await p.screenshot({ path: path.join(GREZZE, '19-email-conferma.png'), clip: { x: nl.x - 12, y: nl.y - 12, width: nl.width + 24, height: nlFine.y + nlFine.height - nl.y + 24 }, fullPage: true });
+    console.log('19-email-conferma');
+  }
+  await togliSegni(p);
+};
+
 // 32. Gli addon: accendere e spegnere.
 capitoli['32'] = async () => {
   await vai('addon.php');
