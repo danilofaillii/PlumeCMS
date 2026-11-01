@@ -142,6 +142,15 @@ Le decisioni complete, con data e perché, stanno nel second brain, `plumecms/de
 
 ## Stato al 31 ottobre 2026
 
+Fatto: plumeCMS 2.7.0 (1 novembre, sera): l'email di conferma dell'iscrizione modificabile in ogni parte (richiesta di Danilo; agente
+in worktree): `includes/newsletter-email.php` (`nl_email_conferma()`), riquadro "Email di conferma" nella scheda del form e in Newsletter >
+Impostazioni (impostazione `newsletter_conferma_email`, colonna `moduli.conferma_email`), anteprima e prova, solo admin; senza modifiche
+l'email è identica al byte alla 2.6.0 (`prove/email-conferma-cli.php`). Prove: email conferma 44/44 su un sito aggiornato, install 37/37
+radice e cartella, aggiornamento 2.6.0 -> 2.7.0 13/13 con le foto uguali (una a 1 livello), addon 70/70, attacchi 260/260 (gruppo 28 nuovo),
+pacchetto unico su un sito 2.6.0 13/13 senza errori fatali. PDF del manuale d'uso 7989 KB: vicino al tetto di 8 MB.
+Lo stesso giorno: su danilofailli.it la regola `RewriteRule ^new/?(.*)$` del suo `.htaccess` mangiava "new" di /newsletter-conferma/
+(pagina 404 dopo il clic nell'email): data a Danilo la regola `^new(?:/(.*))?$`.
+
 Fatto: plumeCMS 2.6.0 (1 novembre): controllo di UX e UI con due agenti (pannello; editor, installatore, addon, sito), scelte di
 Danilo su 18 punti (tutti tranne l'editor ridotto al telefono, rimandato), regole globali in `docs-sviluppo/regole-interfaccia.md`
 (copia in `second-brain/_comune/`). Titoli dei riquadri in fascia, campi a 3:1, conferme in una finestra del pannello, tabelle a schede
