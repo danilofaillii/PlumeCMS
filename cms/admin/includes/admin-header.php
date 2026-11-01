@@ -150,7 +150,7 @@ if (!$sonoAdminMenu) {
   <main class="admin-main">
     <header class="admin-topbar">
       <div style="display:flex;align-items:center;gap:0.75rem">
-        <button class="admin-menu-toggle" data-menu-mobile>&#9776;</button>
+        <button type="button" class="admin-menu-toggle" data-menu-mobile aria-label="Menu del pannello" aria-expanded="false">&#9776;</button><?php /* UX 2026-11: il pulsante dice cosa fa a chi non lo vede */ ?>
         <span class="admin-versione admin-versione-tel">v. <?= h(cms_versione()) ?></span><?php /* 2.3.0: al telefono il menu è chiuso, la versione sta qui */ ?>
         <h1 class="admin-page-title"><?= htmlspecialchars($adminTitle) ?></h1>
       </div>

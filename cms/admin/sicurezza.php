@@ -109,6 +109,9 @@ $schede = ['stato' => 'Stato', 'impostazioni' => 'Impostazioni', 'registro' => '
 .sic-voce { display:grid; grid-template-columns: 28px minmax(0,1fr); gap:.8rem; align-items:start; background:var(--surface); border:1px solid var(--border); border-radius:10px; padding:.7rem .9rem }
 .sic-voce b { display:block; font-size:.92rem } .sic-voce span { font-size:.84rem; color:var(--text-muted) }
 .sic-pallino { width:18px; height:18px; border-radius:50%; margin-top:2px } .sic-ok { background:var(--sage) } .sic-attenzione { background:var(--mustard) } .sic-no { background:var(--errore) } .sic-info { background:var(--text-muted) }
+/* UX 2026-11: il colore non basta (WCAG 1.4.1, e in Bottega verde e grigio quasi uguali): ogni pallino ha anche un segno. */
+.sic-pallino { display:flex; align-items:center; justify-content:center; color:var(--surface); font:700 11px/1 var(--font) }
+.sic-ok::after { content:"\2713" } .sic-attenzione::after { content:"!" } .sic-no::after { content:"\2715" } .sic-info::after { content:"i" }
 .sic-form { max-width:820px } .sic-form h4 { margin:1.4rem 0 .5rem; font-size:1rem } .sic-form .hint { font-size:.82rem; color:var(--text-muted); margin-top:.25rem }
 .sic-form .form-group { margin-bottom:.9rem } .sic-form input[type=number] { max-width:120px } .sic-form textarea { width:100%; min-height:90px; font-family:ui-monospace,monospace; font-size:.85rem }
 .sic-riquadro { border:1px solid var(--attenzione-bordo); background:var(--mustard-light); color:var(--attenzione-testo); border-radius:10px; padding:.9rem 1rem; font-size:.88rem; margin:.8rem 0 }
@@ -122,7 +125,7 @@ $schede = ['stato' => 'Stato', 'impostazioni' => 'Impostazioni', 'registro' => '
   <p style="font-size:.9rem;color:var(--text-muted);max-width:900px;margin-bottom:1rem">Un colpo d'occhio su come è protetto il sito. Verde: a posto. Giallo: funziona ma si può stringere. Rosso: da sistemare. Grigio: informazione.</p>
   <div class="sic-lista">
   <?php foreach (sicurezza_checklist() as [$k, $esito, $titolo, $testo]): ?>
-    <div class="sic-voce"><div class="sic-pallino sic-<?= $esito ?>"></div><div><b><?= h($titolo) ?></b><span><?= h($testo) ?></span>
+    <div class="sic-voce"><div class="sic-pallino sic-<?= $esito ?>" role="img" aria-label="<?= h(['ok' => 'A posto', 'attenzione' => 'Si può stringere', 'no' => 'Da sistemare', 'info' => 'Informazione'][$esito] ?? $esito) ?>"></div><div><b><?= h($titolo) ?></b><span><?= h($testo) ?></span>
       <?php if ($k === 'install' && is_dir(cms_radice() . '/install') && is_file(cms_radice() . '/install/.installato')): ?>
         <form method="post" style="margin-top:.5rem" data-conferma="Rimuovere la cartella install? Non serve più dopo l'installazione."><?= csrf_field() ?><input type="hidden" name="azione" value="rimuovi_install"><button class="btn btn-secondary btn-sm">Rimuovi la cartella install</button></form>
       <?php elseif ($k === 'uploads' && $esito !== 'ok'): ?>

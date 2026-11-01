@@ -496,6 +496,13 @@ fieldset { min-width: 0; }
   letter-spacing: 0;
   text-transform: none;
 }
+/* Newsletter: il titolo sta in una riga con il pulsante (Campagne, + Nuova campagna): la fascia e la riga intera. */
+.admin-content .form-card > .nl-riga:first-child:has(> h3:first-child) {
+  margin: -1.5rem -1.5rem 1rem !important; padding: .6rem 1.5rem;
+  background: var(--testata); border-bottom: 1px solid var(--border);
+  border-radius: calc(var(--radius) - 1px) calc(var(--radius) - 1px) 0 0; box-shadow: inset 4px 0 0 var(--coral);
+}
+.admin-content .form-card > .nl-riga:first-child > h3:first-child { color: var(--testata-testo); font-size: .95rem; text-transform: none; letter-spacing: 0; }
 /* I riquadri che avevano gia una testata (Contenuti, Menu, Widget): stessa fascia. */
 .admin-content :is(.sc-scatola, .mn-scatola, .wg-gruppo) > h3 {
   background: var(--testata);
@@ -570,4 +577,18 @@ html .admin-content :is(input, select, textarea):disabled { opacity: .65; cursor
 
 /* 5. I testi di aiuto fuori da un .form-group avevano la misura del testo normale (SEO, IndexNow). */
 .admin-content .hint { font-size: .8rem; color: var(--text-muted); line-height: 1.45; }
+
+/* 6. La barra in alto al telefono: versione, titolo e nome non vanno a capo uno sull'altro ("Aggiornamenti" e il nome
+   si sovrapponevano a 390 px). Il titolo si accorcia con i puntini, il nome resta su una riga. */
+.admin-versione { white-space: nowrap; }
+.admin-topbar > div:first-child { min-width: 0; }
+@media (max-width: 640px) {
+  .admin-topbar { padding: .75rem 1rem; gap: .75rem; }
+  .admin-page-title { font-size: 1.05rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
+  .admin-user { flex: none; max-width: 34%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: .78rem; }
+  .admin-content { padding: 1.25rem 1rem; }
+}
+/* Il pulsante del menu: almeno 44x44 da toccare (WCAG 2.5.8 chiede 24, le linee guida dei telefoni 44). */
+.admin-menu-toggle { min-width: 44px; min-height: 44px; border-radius: 8px; line-height: 1; }
+.admin-menu-toggle:focus-visible { outline: 2px solid var(--coral); outline-offset: 2px; }
 .form-group .hint { line-height: 1.45; }
