@@ -93,6 +93,13 @@
     });
 
     form.addEventListener("submit", function (e) {
+      // 2.5.x (scelta di Danilo): prima i campi obbligatori, poi la spunta "Sono una persona": chi ha lasciato vuoto un campo
+      // lo sa subito. Il captcha resta obbligatorio (qui e sul server): cambia solo l'ordine dei messaggi.
+      if (!pronto && typeof form.reportValidity === "function" && !form.checkValidity()) {
+        e.preventDefault();
+        form.reportValidity();
+        return;
+      }
       if (!pronto) {
         e.preventDefault();
         stato.textContent = 'Spunta "Sono una persona" e aspetta il segno verde.';
