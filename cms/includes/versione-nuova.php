@@ -76,6 +76,9 @@ function versione_stesso_host(string $u): bool {
  */
 function versione_http(string $url, int $max, int $timeout, ?string $verso = null): string {
     if (!versione_url_ok($url)) throw new RuntimeException('Indirizzo non ammesso (serve https): ' . $url);
+    // 2.6.0: con allow_url_fopen spento fopen() non apre https e prima si leggeva "il sito non risponde": si dice la causa.
+    if (!filter_var(ini_get('allow_url_fopen'), FILTER_VALIDATE_BOOLEAN))
+        throw new RuntimeException('Il server ha allow_url_fopen spento e non può chiamare il sito ufficiale. Accendilo in cPanel, MultiPHP INI Editor (allow_url_fopen su On), poi riprova.');
     $ctx = stream_context_create([
         'http' => ['method' => 'GET', 'timeout' => $timeout, 'follow_location' => 0, 'max_redirects' => 0, 'ignore_errors' => true,
             'header' => "User-Agent: " . CMS_NOME . '/' . cms_versione() . "\r\nAccept: application/json, application/zip\r\nConnection: close\r\n"],

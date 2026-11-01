@@ -63,6 +63,12 @@ function server_controlli(): array {
         $php[] = $c('Estensione ' . $e, $ha ? 'ok' : ($serve ? 'ko' : 'avviso'), $ha ? 'Attiva: serve per ' . $aCosa . '.' : 'Non attiva: serve per ' . $aCosa . '.',
             $ha ? '' : 'Si accende dal pannello dell\'hosting (in cPanel: "Seleziona versione PHP", scheda Estensioni, spunta ' . $e . ').');
     }
+    // 2.6.0: con allow_url_fopen spento PHP non apre indirizzi https: niente "c'è una versione nuova" e Installa ora, niente
+    // prove di questa pagina che chiamano il sito da fuori. Visto su plumecms.it.
+    $fopen = filter_var(ini_get('allow_url_fopen'), FILTER_VALIDATE_BOOLEAN);
+    $php[] = $c('allow_url_fopen', $fopen ? 'ok' : 'ko', $fopen ? 'Acceso: il sito può chiamare altri siti (per esempio per sapere se c\'è una versione nuova).'
+            : 'Spento: il sito non può chiamare altri siti. Non funzionano "Nuova versione disponibile" e Installa ora, e alcune prove di questa pagina.',
+        $fopen ? '' : 'Accendilo dal pannello dell\'hosting: in cPanel, MultiPHP INI Editor, scegli il dominio e metti allow_url_fopen su On (Enabled). Poi ricarica questa pagina.');
     $mysql = '';
     try { $mysql = (string)db()->query('SELECT VERSION()')->fetchColumn(); } catch (Throwable $e) {}
     $php[] = $c('Database', $mysql !== '' ? 'ok' : 'ko', $mysql !== '' ? 'MySQL ' . $mysql . ' risponde.' : 'Il database non risponde.', $mysql !== '' ? '' : 'Controlla i dati del database in includes/config.local.php, o chiedi all\'hosting se il database è acceso.');

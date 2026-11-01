@@ -25,6 +25,8 @@ esperti con le regole scritte in `docs-sviluppo/regole-interfaccia.md` e i detta
   troppo grande dà un messaggio in parole invece di "Token CSRF non valido" (anche in Aggiornamenti e Media). L'aiuto lungo si apre a richiesta.
 - **Stile del sito > Identità**: se il widget Logo del sito di un header o footer ha un'immagine sua, il pannello lo dice, con il
   link al modello (prima il logo cambiato qui non compariva e non si capiva perché).
+- **Controlla il server** dice se `allow_url_fopen` è spento (visto su plumecms.it): senza, il sito non chiede al sito ufficiale se
+  c'è una versione nuova e Installa ora non parte. Prima si leggeva "il sito non risponde"; ora il pannello dice la causa e dove accenderlo.
 - **SEO**: i passi del service account di Google stanno in un riquadro che si apre. **Utenti**: ultimo accesso in parole.
   **Accesso**: "Nome utente o password non corretti. Controlla le maiuscole e riprova."
 - **Editor**: i widget si aggiungono anche con Tab e Invio; le schede del pannello si usano con le frecce; un cursore vuoto dice

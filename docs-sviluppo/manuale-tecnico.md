@@ -3901,6 +3901,10 @@ campo è arrivato; prima la risposta era "Token CSRF non valido". Nel browser, `
 (`pannello.js`, `controllaPeso()`) dice il problema sotto il campo (`.errore-campo`, `aria-invalid`) e blocca l'invio con
 `setCustomValidity()`: c'è in Download, Aggiornamenti e Media.
 
+**allow_url_fopen**: `server_controlli()` (`includes/controllo-server.php`) ha la riga "allow_url_fopen" nel gruppo PHP e database
+(ko se spento); `versione_http()` (`includes/versione-nuova.php`) con il valore spento lancia un errore che dice la causa invece di
+"non risponde" (fopen di un https non parte). `consegna.php` e le chiamate di Google usano cURL quando c'è, quindi non ne dipendono.
+
 **Download** (`admin/scaricabili.php`): i giorni dei link personali stanno nel riquadro `#dl-riservati` ("Link dei file
 riservati", riga 152), fuori dal form di caricamento; prima un secondo "Salva" sotto "Carica" salvava i giorni e perdeva il file
 scelto (segnalazione di Danilo, 1 novembre 2026).
