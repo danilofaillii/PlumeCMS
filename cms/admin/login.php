@@ -31,7 +31,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             if ($esito === 'ok') { header('Location: index.php'); exit; }
             if ($esito === '2fa') { $passo2 = true; }
             elseif ($esito === 'bloccato') $error = 'Troppi tentativi: riprova fra ' . max(1, (int)ceil($secondi / 60)) . ' minuti. Se hai dimenticato la password, usa il link qui sotto.';
-            else $error = 'Credenziali non valide.';
+            else $error = 'Nome utente o password non corretti. Controlla le maiuscole e riprova.';
         }
     } catch (Throwable $e) {
         error_log('login: ' . $e->getMessage() . ' in ' . $e->getFile() . ':' . $e->getLine());
@@ -55,9 +55,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     .box h1 { font-size: 1.3rem; margin-bottom: 0.5rem; }
     .box p { font-size: 0.9rem; color: var(--text-muted); margin-bottom: 1.5rem; }
     .form-group { margin-bottom: 1rem; }
-    .form-group label { display: block; font-size: 0.82rem; font-weight: 600; color: var(--text-muted); margin-bottom: 0.3rem; }
-    .form-group input { width: 100%; padding: 0.65rem 0.85rem; border: 1px solid var(--bordo-forte); border-radius: 8px; font-size: 0.95rem; font-family: inherit; background: var(--campo); color: var(--text); }
-    .form-group input:focus { outline: none; border-color: var(--coral); box-shadow: 0 0 0 3px var(--fuoco); }
+    .form-group label { display: block; font-size: 0.82rem; font-weight: 600; color: var(--text); margin-bottom: 0.3rem; }
+    .form-group input { width: 100%; padding: 0.65rem 0.85rem; border: 1px solid var(--bordo-campo, var(--bordo-forte)); border-radius: 8px; font-size: 0.95rem; font-family: inherit; background: var(--campo); color: var(--text); }
+    .form-group input:focus { outline: 2px solid var(--coral); outline-offset: 1px; border-color: var(--coral); }
     .btn { display: block; width: 100%; padding: 0.75rem; background: var(--coral); color: var(--su-accento); border: none; border-radius: 8px; font-size: 0.95rem; font-weight: 600; cursor: pointer; font-family: inherit; }
     .btn:hover { background: var(--coral-hover); }
     .btn:focus-visible { outline: 2px solid var(--coral); outline-offset: 2px; }
@@ -73,7 +73,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
   <h1><?= htmlspecialchars((string)cms_impostazione('sito_nome', CMS_NOME)) ?></h1>
   <p><?= $passo2 ? 'Secondo passo: il codice della tua app di autenticazione.' : 'Pannello di amministrazione' ?></p>
   <?php if ($avviso): ?><div class="info"><?= htmlspecialchars($avviso) ?></div><?php endif; ?>
-  <?php if ($error): ?><div class="error"><?= htmlspecialchars($error) ?></div><?php endif; ?>
+  <?php if ($error): ?><div class="error" role="alert"><?= htmlspecialchars($error) ?></div><?php endif; ?>
   <?php if ($passo2): ?>
   <form method="post">
     <div class="form-group">

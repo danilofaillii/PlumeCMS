@@ -56,7 +56,7 @@ function misura() {
     if (v < soglia) r.testi.push(nome(el) + ' "' + testo.slice(0, 30) + '" ' + v.toFixed(2));
   }
   // Campi: bordo contro il fondo intorno (quello del genitore).
-  for (const el of document.querySelectorAll('.admin-content input:not([type=checkbox]):not([type=radio]):not([type=hidden]):not([type=submit]):not([type=button]):not([type=color]):not([type=range]):not([type=image]), .admin-content select, .admin-content textarea, .login-box input:not([type=checkbox]):not([type=hidden])')) {
+  for (const el of document.querySelectorAll('.admin-content input:not([type=checkbox]):not([type=radio]):not([type=hidden]):not([type=submit]):not([type=button]):not([type=color]):not([type=range]):not([type=image]), .admin-content select, .admin-content textarea, :is(.login-box, .box) input:not([type=checkbox]):not([type=hidden])')) {
     if (!visibile(el) || trasparente(el) || el.closest('[hidden]')) continue;
     const s = getComputedStyle(el);
     if (s.borderTopStyle === 'none' || parseFloat(s.borderTopWidth) === 0) { r.bordi.push(nome(el) + ' senza bordo'); continue; }

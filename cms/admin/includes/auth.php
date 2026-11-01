@@ -292,7 +292,8 @@ function render_flash(): string {
     $out = '';
     foreach ($_SESSION['flash'] as $f) {
         $cls = $f['type'] === 'error' ? 'flash-error' : ($f['type'] === 'success' ? 'flash-success' : 'flash-info');
-        $out .= '<div class="flash ' . $cls . '">' . htmlspecialchars($f['msg'], ENT_QUOTES, 'UTF-8') . '</div>';
+        // UX 2026-11: i lettori di schermo annunciano il messaggio (subito l'errore, con calma gli altri).
+        $out .= '<div class="flash ' . $cls . '" role="' . ($f['type'] === 'error' ? 'alert' : 'status') . '">' . htmlspecialchars($f['msg'], ENT_QUOTES, 'UTF-8') . '</div>';
     }
     $_SESSION['flash'] = [];
     return $out;

@@ -538,6 +538,9 @@ html .login-box :is(input, select, textarea):focus:not([type=checkbox], [type=ra
   border-color: var(--coral);
 }
 html .admin-content :is(input, textarea)::placeholder, html .login-box input::placeholder { color: var(--segnaposto); opacity: 1; }
+/* Le finestre Scegli dai Media e Scegli dal sito stanno fuori da .admin-content (anche nell'editor): stesso bordo. */
+html :is(.pn-media, .pn-link) :is(input:not([type=checkbox], [type=radio], [type=file], [type=hidden]), select) { border-color: var(--bordo-campo); }
+html :is(.pn-media, .pn-link) :is(input, select):focus-visible { outline: 2px solid var(--coral); outline-offset: 1px; border-color: var(--coral); }
 html .admin-content :is(input, select, textarea):disabled { opacity: .65; cursor: not-allowed; }
 /* Caselle e scelte: un poco piu grandi, il colore dell'accento. */
 .admin-content :is(input[type=checkbox], input[type=radio]) { width: 1.05rem; height: 1.05rem; accent-color: var(--coral); vertical-align: -.15em; }
