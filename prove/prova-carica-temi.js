@@ -40,7 +40,7 @@ const leggiZip = (f, nome) => execFileSync('python3', ['-I', '-c', 'import sys,z
   const [dl] = await Promise.all([p.waitForEvent('download'), p.click('#tema-aria a:has-text("Scarica")')]);
   const ariaZip = path.join(ZIP, 'aria-scaricato.zip'); await dl.saveAs(ariaZip);
   const voci = zipDentro(ariaZip);
-  ok('Scarica: zip del tema con la sua cartella', voci.includes('aria/tema.json') && voci.includes('aria/anteprima.png') && voci.every(v => v.startsWith('aria/')), voci);
+  ok('Scarica: zip del tema con la sua cartella', voci.includes('aria/tema.json') && voci.includes('aria/anteprima.webp') && voci.every(v => v.startsWith('aria/')), voci);
   ok('Scarica: niente file nascosti nello zip', voci.every(v => !/(^|\/)\./.test(v)));
 
   // 3. Caricare: lo stesso tema senza e con "Sostituisci"

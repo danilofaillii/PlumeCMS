@@ -138,7 +138,7 @@ async function contrastoParole(pg) {
   ok('Funzionalità (2.3.0): il blocco di Installa ora, con la schermata', await v.locator('#installa-ora img[src*="installa-ora.webp"]').count() === 1 && /Installa ora/.test(await v.locator('#installa-ora').innerText()));
   ok('Funzionalità (2.2.0): il blocco di Scegli dal sito, con la schermata', await v.locator('#scegli-sito img[src*="scegli-sito.webp"]').count() === 1 && /Scegli dal sito/.test(await v.locator('#scegli-sito').innerText()));
   ok('Funzionalità (2.1.0): il blocco della consegna delle email, con la schermata', await v.locator('#consegna img[src*="consegna.webp"]').count() === 1 && /Consegna delle email/.test(await v.locator('#consegna').innerText()) && /Brevo/.test(await v.locator('#consegna').innerText()));
-  ok('Funzionalità (2.1.0): il blocco dei widget nuovi, con la schermata e 92 widget', await v.locator('#widget-21 img[src*="widget-2-1.webp"]').count() === 1 && /menu del ristorante/i.test(await v.locator('#widget-21').innerText()) && /92 widget/.test(await v.locator('#widget-21').innerText()));
+  ok('Funzionalità (2.1.0): il blocco dei widget nuovi, con la schermata e 92 widget', await v.locator('#widget-21 img[src*="widget-2-1.webp"]').count() === 1 && /menu del ristorante/i.test(await v.locator('#widget-21').innerText()) && /107/.test(await v.locator('#widget-21').innerText()));
   ok('Funzionalità (2.1.0): il blocco di Scegli dai Media, con la schermata', await v.locator('#scegli-media img[src*="scegli-media.webp"]').count() === 1 && /Scegli dai Media/.test(await v.locator('#scegli-media').innerText()) && /Carica un.immagine/.test(await v.locator('#scegli-media').innerText()));
   ok('Funzionalità (2.0.0): Download dice dei file riservati', /riservato/.test(await v.locator('#download').innerText()));
   ok('Funzionalità (1.10.0): il blocco dei widget per le attività, con la schermata', await v.locator('#widget-attivita img[src*="widget-attivita.webp"]').count() === 1 && /Orari di apertura/.test(await v.locator('#widget-attivita').innerText()));
@@ -229,7 +229,7 @@ async function contrastoParole(pg) {
       const voci = [...col.querySelectorAll('li')];
       return { voci: voci.map(e => e.textContent.trim()), fondo: Math.max(...voci.map(e => e.getBoundingClientRect().bottom)), sinistra: g.getBoundingClientRect().bottom };
     });
-    ok('Scarica: novità, elenco breve con l\'ultima versione in cima', r && r.voci.length >= 3 && r.voci.length <= 8 && /^2\.9\.0: Importa ed esporta i contatti/.test(r.voci[0]), r && r.voci);
+    ok('Scarica: novità, elenco breve con l\'ultima versione in cima', r && r.voci.length >= 3 && r.voci.length <= 8 && /^2\.10\.0: Segmenti e quindici infografiche/.test(r.voci[0]), r && r.voci);
     const terzi = (r ? r.voci.join(' ') : '').match(/brevo|google|wordpress|linkedin|facebook|instagram|whatsapp|telegram|mailgun|amazon|dropbox|indexnow|search console|gnu/gi) || [];
     ok('Scarica: nelle novità nessun nome di aziende terze', r && terzi.length === 0, terzi);
     ok('Scarica: le novità finiscono non oltre il riquadro Cosa serve', r && r.fondo <= r.sinistra + 2, r && { fondo: r.fondo, sinistra: r.sinistra }); }
@@ -243,6 +243,9 @@ async function contrastoParole(pg) {
     && await v.evaluate(() => [...document.images].some(i => /contatti-brevo/.test(i.currentSrc || i.src) && i.complete && i.naturalWidth > 0)));
   ok('Funzionalità (2.9.0): I tuoi contatti entrano in quattro passi', /I tuoi contatti entrano in quattro passi/.test(await v.locator('body').innerText())
     && await v.evaluate(() => [...document.images].some(i => /importa-contatti/.test(i.currentSrc || i.src) && i.complete && i.naturalWidth > 0)));
+  for (const [id, t] of [['infografiche', 'Quindici infografiche disegnate'], ['segmenti', 'Scrivi solo a chi ti interessa']])
+    ok(`Funzionalità (2.10.0): ${t}`, (await v.locator('body').innerText()).includes(t)
+      && await v.evaluate((id) => [...document.images].some(i => new RegExp(id + '\\.webp').test(i.currentSrc || i.src) && i.complete && i.naturalWidth > 0), id));
   ok('Header e footer (2.6.0): il logo è quello dello Stile del sito', await v.evaluate(() => [...document.querySelectorAll('.marchio img')].length >= 2 && [...document.querySelectorAll('.marchio img')].every(i => /marchio/.test(i.getAttribute('src')))));
   // 2.5.0: la pagina Temi con le stagioni e le tinte piene, ogni immagine caricata.
   await v.goto(B + '/temi/', { waitUntil: 'networkidle' });

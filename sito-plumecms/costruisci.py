@@ -150,12 +150,12 @@ def home():
                     {'titolo': 'Scrivi e pubblica', 'testo': 'Trascini sezioni, colonne e widget, guardi l\'anteprima, premi Pubblica. Se sbagli, torni indietro: ogni modifica resta nelle versioni.'}]),
                 pulsanti(('Guarda l\'installatore, passo per passo', '/installazione/#passi', 'filo'), centro=True)]],
               **spazi(48, 72))
-    p.sezione([[w('numeri', colonne={'d': 4, 't': 2, 'm': 2}, voci=[{'valore': '5', 'etichetta': 'passi per installarlo'}, {'valore': '92', 'etichetta': 'widget nell\'editor'},
+    p.sezione([[w('numeri', colonne={'d': 4, 't': 2, 'm': 2}, voci=[{'valore': '5', 'etichetta': 'passi per installarlo'}, {'valore': '107', 'etichetta': 'widget nell\'editor'},
                                   {'valore': '3', 'etichetta': 'temi pronti da indossare'}, {'valore': '0', 'etichetta': 'plugin da tenere aggiornati'}])]],
               **tinta(), **spazi(56, 56))
     # Le armi del viaggio: cosa c'è dentro.
     funzioni = [
-        ('pennello', 'Editor visuale', 'Sezioni, colonne e 92 widget, con le schede Contenuto, Stile e Avanzate per ogni elemento. Vedi quello che fai mentre lo fai.', '/funzionalita/#editor'),
+        ('pennello', 'Editor visuale', 'Sezioni, colonne e 107 widget, con le schede Contenuto, Stile e Avanzate per ogni elemento. Vedi quello che fai mentre lo fai.', '/funzionalita/#editor'),
         ('tavolozza', 'Temi', 'Tre temi pronti e un manuale per disegnarti il tuo. Il tema cambia l\'aspetto, mai i contenuti.', '/temi/'),
         ('storia', 'Versioni', 'Ogni salvataggio lascia una versione: la confronti, la guardi in anteprima, ci torni con un clic.', '/funzionalita/#versioni'),
         ('grafico-su', 'SEO e AEO', 'Sitemap, robots, dati strutturati, llms.txt, IndexNow e Search Console. Per Google e per le intelligenze artificiali.', '/funzionalita/#seo'),
@@ -183,6 +183,16 @@ def funzionalita():
                        'plumeCMS fa le cose che ti servono davvero, e le fa nello stesso posto. Ecco cosa trovi dentro, con le schermate vere del pannello.',
                        livello='h1', centro=True)]], larghezza='stretta', **spazi(72, 32))
     blocchi = [
+        ('infografiche', 'infografiche.webp', 'Quindici infografiche disegnate',
+         ['Dalla 2.10.0 l\'editor ha quindici infografiche nuove: imbuto, piramide, matrice a quattro quadranti, ciclo, ciambella, cerchi che si toccano, ragnatela, lancetta, iceberg, omini, il viaggio, bilancia, mappa di calore, cerchi concentrici e barre al cento per cento.',
+          '<ul><li>Scrivi le voci e i numeri: il disegno si fa da solo, con i calcoli giusti.</li>'
+          '<li>Prendono i colori del tuo tema e si leggono bene anche sul telefono, dove cambiano composizione.</li>'
+          '<li>Testo vero, non un\'immagine: si legge, si cerca e lo sentono anche gli screen reader.</li></ul>']),
+        ('segmenti', 'segmenti.webp', 'Scrivi solo a chi ti interessa',
+         ['Dalla 2.10.0 i segmenti: gruppi di contatti che si aggiornano da soli. Chi abita a Bologna ed è cliente, chi non apre le tue email da tre mesi, chi ha cliccato l\'ultima campagna.',
+          '<ul><li>Fino a cento condizioni, unite da E e da O: campi dei contatti, liste, email aperte e cliccate, form inviati.</li>'
+          '<li>Il numero dei contatti si aggiorna mentre scrivi le condizioni; dieci modelli pronti per partire.</li>'
+          '<li>Gli stessi filtri nella pagina Contatti, con le viste salvate, e nei bivi dei flussi automatici.</li></ul>']),
         ('importa-contatti', 'importa-contatti.webp', 'I tuoi contatti entrano in quattro passi',
          ['Dalla 2.9.0 porti dentro i contatti da un file CSV, TXT o Excel, oppure li incolli: carichi, abbini ogni colonna a un campo, scegli la lista e confermi.',
           '<ul><li>Le colonne con lo stesso nome di un campo si abbinano da sole; le altre diventano campi nuovi o restano fuori.</li>'
@@ -206,7 +216,7 @@ def funzionalita():
           '<li>Tutto si usa anche con la tastiera, editor compreso.</li></ul>']),
         ('editor', 'editor.webp', 'L\'editor visuale: sezioni, colonne, widget',
          ['Costruisci le pagine trascinando sezioni, colonne e widget. Ogni elemento ha le sue tre schede, come negli editor che conosci: <strong>Contenuto</strong>, <strong>Stile</strong> e <strong>Avanzate</strong>.',
-          '<ul><li>92 widget: titoli, testi, immagini, pulsanti, gallerie, caroselli, prezzi, domande frequenti, contatori, mappe, orari di apertura, recensioni, eventi, menu del ristorante e 14 infografiche.</li>'
+          '<ul><li>107 widget: titoli, testi, immagini, pulsanti, gallerie, caroselli, prezzi, domande frequenti, contatori, mappe, orari di apertura, recensioni, eventi, menu del ristorante e 14 infografiche.</li>'
           '<li>Anteprima per computer, tablet e telefono, con valori diversi per ogni misura.</li>'
           '<li>Colori e caratteri globali: cambi il colore principale e cambia ovunque.</li>'
           '<li>Foto con velo, bianco e nero ed effetti animati, dalla 1.2.2.</li>'
@@ -288,7 +298,7 @@ def funzionalita():
         ('widget-21', 'widget-2-1.webp', 'Il menu del ristorante e altri quattro widget',
          ['Il <strong>menu del ristorante</strong>: sezioni, piatti e prezzi, i segni vegano, vegetariano, senza glutine e piccante, gli allergeni con i numeri e la legenda, il menu del giorno e le sezioni che escono solo in certi giorni.',
           'La <strong>richiesta di prenotazione</strong> di un tavolo o di una camera, che arriva per email all\'attività. La <strong>galleria con filtri</strong>, per esempio Matrimoni, Ritratti, Eventi. <strong>Loghi e testo scorrevoli</strong>. Il <strong>contenuto esterno</strong> (Calendly, Spotify, Google Calendar, Typeform) che si carica solo dopo il consenso del visitatore.',
-          'E i widget di prima fanno di più: la mappa con "Come arrivare", il video che parte da solo senza audio, la tabella con grassetto e link, i form con i campi Ora e File. In tutto, 92 widget.']),
+          'E i widget di prima fanno di più: la mappa con "Come arrivare", il video che parte da solo senza audio, la tabella con grassetto e link, i form con i campi Ora e File. Con la 2.1.0 erano 92 widget; oggi sono 107.']),
         ('fine-articolo', 'fine-articolo.webp', 'Un riquadro in fondo a ogni articolo',
          ['Chi arriva alla fine di un articolo è il lettore più interessato che hai. In Articoli, la linguetta <strong>Aggiungi sempre alla fine</strong>: prepari una volta sola un riquadro che esce sotto ogni articolo, anche sotto quelli già pubblicati. Un invito alla newsletter, un contatto, una prenotazione, un libro da consigliare.',
           'Lo componi con l\'editor visuale, come una pagina: titoli, testi, foto, pulsanti. Esce quando premi Pubblica, con l\'ombra, il bordo e i colori del tuo sito e del tema.',
@@ -328,7 +338,7 @@ def funzionalita():
                   pulsante_testo='Scarica plumeCMS', link={'url': '/scarica/', 'nuova': False})]], larghezza='stretta', **spazi(72, 80))
     return dict(slug='funzionalita', titolo='Funzionalità', struttura=p.albero(),
                 seo_titolo='Funzionalità di plumeCMS: editor, temi, versioni, SEO, newsletter',
-                seo_descrizione='Cosa c\'è dentro plumeCMS: editor visuale con 92 widget, gli addon (prenotazioni, eventi, negozio, statistiche, area riservata, corsi), import da WordPress, stile globale, header e footer, versioni, SEO e AEO, newsletter, sicurezza, aggiornamenti dal pannello.')
+                seo_descrizione='Cosa c\'è dentro plumeCMS: editor visuale con 107 widget, gli addon (prenotazioni, eventi, negozio, statistiche, area riservata, corsi), import da WordPress, stile globale, header e footer, versioni, SEO e AEO, newsletter, sicurezza, aggiornamenti dal pannello.')
 
 
 def temi():
@@ -625,7 +635,7 @@ def editor_json():
 
 
 # ------------------------------------------------------------------ file
-USATE = ['importa-contatti', 'contatti-brevo', 'email-conferma', 'pannello-chiaro', 'copertina', 'installa-ora', 'scegli-sito', 'consegna', 'widget-2-1', 'scegli-media', 'addon', 'su-misura', 'firma', 'widget-attivita', 'social', 'fine-articolo', 'importa-wp', 'tipo-sito', 'primi-passi', 'aspetti', 'controlla-server', 'sezioni', 'copia', 'installa-1', 'installa-2', 'installa-3', 'installa-4', 'installa-5', 'editor-ritratto', 'editor', 'aperture', 'stile', 'modelli', 'versioni', 'seo', 'flussi', 'download', 'sicurezza', 'aggiornamenti', 'temi',
+USATE = ['infografiche', 'segmenti', 'importa-contatti', 'contatti-brevo', 'email-conferma', 'pannello-chiaro', 'copertina', 'installa-ora', 'scegli-sito', 'consegna', 'widget-2-1', 'scegli-media', 'addon', 'su-misura', 'firma', 'widget-attivita', 'social', 'fine-articolo', 'importa-wp', 'tipo-sito', 'primi-passi', 'aspetti', 'controlla-server', 'sezioni', 'copia', 'installa-1', 'installa-2', 'installa-3', 'installa-4', 'installa-5', 'editor-ritratto', 'editor', 'aperture', 'stile', 'modelli', 'versioni', 'seo', 'flussi', 'download', 'sicurezza', 'aggiornamenti', 'temi',
          'tema-cosmo', 'tema-aria', 'tema-bottega',
          'tema-estate', 'tema-inverno', 'tema-autunno', 'tema-primavera', 'tema-giallo', 'tema-rosso', 'tema-verde', 'tema-blu']
 
@@ -673,6 +683,7 @@ def zip_lavagna(dest):
 # Regola di Danilo (1 novembre 2026): solo i punti salienti, una riga per versione, mai nomi di aziende o servizi di terzi.
 # Le novità per chi scarica: brevi, scritte qui (il CHANGELOG è per chi sviluppa). Da aggiornare a ogni versione.
 NOVITA = [
+    ('2.10.0', 'Segmenti e quindici infografiche', ['Gruppi di contatti che si aggiornano da soli e quindici infografiche disegnate nell\'editor: 107 widget.']),
     ('2.9.0', 'Importa ed esporta i contatti in pochi passi', ['Da file CSV, TXT o Excel, oppure incollati: abbini le colonne, scegli la lista, confermi; e la lista dei test per le prove.']),
     ('2.8.0', 'Contatti con scheda, liste e campi tuoi', ['Una scheda per ogni persona con la sua storia, colonne che scegli tu, liste in cartelle, campi tuoi anche calcolati e lista nera con il motivo.']),
     ('2.7.0', 'L\'email di conferma la scrivi tu', ['Oggetto, testo, pulsante e firma dell\'email a chi si iscrive: tutto si cambia, con anteprima e prova.']),

@@ -156,6 +156,8 @@ TOLTI = ['admin/contatti.php', 'admin/aforismi.php', 'admin/aforisma-edit.php', 
 # 1.6.4: nel prodotto restano solo manuale d'uso e manuale dei temi; gli altri documenti spariscono anche dai siti che si aggiornano.
 TOLTI += [f'docs/{d}.md' for d in ('manuale-tecnico', 'cms', 'cms-moduli', 'moduli', 'sicurezza', 'editor-pagine', 'stile-sito',
           'header-footer-menu', 'versioni', 'seo', 'pannello', 'contenuti', 'newsletter', 'aggiornamenti', 'temi')]
+# 2.10.0: le anteprime di Aria, Bottega e Cosmo passano a WebP (zip di aggiornamento sotto i 2 MB predefiniti di PHP).
+TOLTI += [f'temi/{t}/anteprima.png' for t in ('aria', 'bottega', 'cosmo')]
 
 
 def scrivi_aggiornamento(versione, file, dest):

@@ -2,6 +2,25 @@
 
 Il prodotto si chiama **plumeCMS** (nome scelto il 26 ottobre 2026; prima, per poche ore, "CarbonaraCMS", e ancora prima il provvisorio "Officina": gli zip vecchi si chiamavano `officina-*` e `carbonaracms-*`).
 
+## 2.10.0 (2 novembre 2026) - Segmenti e quindici infografiche
+
+- **Segmenti** (Newsletter e form > Contatti > Segmenti): gruppi di contatti che si aggiornano da soli.
+  - Condizioni su attributi (anche date relative: negli ultimi 30 giorni, questo mese), iscrizione, lista nera e motivo,
+    liste e "in nessuna lista", altri segmenti, email ricevute, aperte e cliccate (una campagna, l'ultima, qualsiasi),
+    link preciso cliccato, form inviato. Fino a 100 condizioni, in gruppi uniti da E e da O, con le negazioni.
+  - Crea un segmento da zero o da uno dei dieci modelli (per esempio chi non apre da 90 giorni, i nuovi iscritti di
+    questo mese, chi ha cliccato l'ultima campagna); il numero dei contatti si aggiorna mentre scrivi. Categorie, ricerca,
+    esporta, crea una lista dal segmento. Un segmento usato da un altro o da un flusso non si elimina.
+- **Pagina Contatti**: "Carica un segmento", **Aggiungi filtro** con le stesse condizioni, **Salva come segmento**, il filtro
+  scritto in parole e le **viste salvate** (filtri e colonne con un nome, per ogni utente).
+- **Flussi automatici**: i bivi usano le stesse condizioni (quelli di prima danno lo stesso esito), più "fa parte / non fa
+  parte di un segmento".
+- **Quindici infografiche disegnate** nel gruppo Infografiche dell'editor: imbuto, piramide a livelli, matrice a quattro
+  quadranti, ciclo, ciambella, cerchi che si toccano, ragnatela, lancetta, iceberg, omini, il viaggio, bilancia, mappa di
+  calore, cerchi concentrici, barre al cento per cento. Disegno fatto dal server con testo vero, colori del tema, una
+  composizione per il telefono, contrasto del testo almeno 4,5. I widget sono 107.
+- Le anteprime dei temi Aria, Bottega e Cosmo sono WebP: lo zip di aggiornamento resta sotto i 2 MB.
+
 ## 2.9.0 (2 novembre 2026) - Importa ed esporta i contatti
 
 - **Importa contatti** in quattro passi (Newsletter e form > Contatti > Importa contatti):
