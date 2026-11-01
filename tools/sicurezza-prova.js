@@ -1308,6 +1308,95 @@ echo json_encode($o);
     ok('2.8.0: (pulizia) contatto, attributi, lista e cartella di prova tolti', !(await attrPagina()).includes('SIC_'));
   }
 
+  // === 30. (2.9.0) Importazione, esportazione, lista dei test: solo l'amministratore, solo con il token e dal pannello; il
+  // CSV esportato non porta formule; un XLSX con entità esterne, DTD, zip bomba o percorsi nel pacchetto non si legge; i file
+  // dei contatti non si scaricano dal web.
+  {
+    const fs = require('fs'), path = require('path'), os = require('os'), { execFileSync } = require('child_process');
+    const DIR30 = process.env.CMS_DIR || '';
+    const PI = ADMIN + '/newsletter-importa.php', PC = ADMIN + '/newsletter-contatti.php', PN = ADMIN + '/newsletter.php';
+    const ORIG = { 'Origin': BASE.replace(/(https?:\/\/[^/]+).*/, '$1') };
+    const CT = { 'Content-Type': 'application/x-www-form-urlencoded' };
+    const form = (o) => new URLSearchParams(o).toString();
+    const carica = async (ctx, tk, campi, headers = ORIG) => ctx.request.post(PI, { headers, multipart: { _csrf: tk, azione: 'carica', ...campi }, maxRedirects: 0 });
+    const idDa = (r) => { const m = (r.headers()['location'] || '').match(/id=(\d+)/); return m ? +m[1] : 0; };
+    // Senza login
+    const anon = await browser.newContext();
+    const ra = await anon.request.get(PI, { maxRedirects: 0 });
+    const rb = await anon.request.post(PI, { multipart: { azione: 'carica', modo: 'incolla', testo: 'EMAIL\nanon@sic-prova.it' }, maxRedirects: 0 });
+    ok('2.9.0: senza login la pagina Importa non si apre e niente si carica', ra.status() !== 200 && rb.status() !== 200 && !/newsletter-importa\.php\?id=/.test(rb.headers()['location'] || ''), [ra.status(), rb.status()]);
+    await anon.close();
+    // Token mancante, Origin esterno, giro senza token
+    const tk = await tokenDi(admin.p, PI);
+    const r1 = await carica(admin.ctx, '', { modo: 'incolla', testo: 'EMAIL\nsenza-token@sic-prova.it' });
+    const r2 = await carica(admin.ctx, tk, { modo: 'incolla', testo: 'EMAIL\norigine@sic-prova.it' }, { 'Origin': 'https://evil.example' });
+    const r3 = await admin.ctx.request.post(PI, { headers: ORIG, form: { azione: 'giro', id: '1' }, maxRedirects: 0 });
+    ok('2.9.0: Carica senza token o da un altro sito: 403; un giro senza token: 403', r1.status() === 403 && r2.status() === 403 && r3.status() === 403, [r1.status(), r2.status(), r3.status()]);
+    const r4 = await admin.ctx.request.post(PC, { headers: ORIG, form: { azione: 'gruppo', cosa: 'esporta', tutti: '1' }, maxRedirects: 0 });
+    const r5 = await admin.ctx.request.post(PN, { headers: ORIG, form: { azione: 'lista_test', indirizzi: 'csrf@sic-prova.it' }, maxRedirects: 0 });
+    ok('2.9.0: Esporta e Lista dei test senza token: 403, niente CSV', r4.status() === 403 && !/text\/csv/.test(r4.headers()['content-type'] || '') && r5.status() === 403, [r4.status(), r5.status()]);
+    // Il redattore: non vede e non salva
+    if (red.dentro) {
+      const tr = await tokenDi(red.p, ADMIN + '/media.php');
+      const v1 = await red.ctx.request.get(PI, { maxRedirects: 0 });
+      const v2 = await carica(red.ctx, tr, { modo: 'incolla', testo: 'EMAIL\nred@sic-prova.it' });
+      const v3 = await red.ctx.request.post(PC, { headers: ORIG, form: { _csrf: tr, azione: 'gruppo', cosa: 'esporta', tutti: '1', esp_origine: 'scelti' }, maxRedirects: 0 });
+      const v4 = await red.ctx.request.post(PN, { headers: ORIG, form: { _csrf: tr, azione: 'lista_test', indirizzi: 'red@sic-prova.it' }, maxRedirects: 0 });
+      const v5 = await red.ctx.request.get(PC + '?esportazione=1', { maxRedirects: 0 });
+      const v6 = await red.ctx.request.get(PC + '?scarica=tutti', { maxRedirects: 0 });
+      await admin.p.goto(PN + '?scheda=impostazioni', { waitUntil: 'networkidle' });
+      const lt = await admin.p.inputValue('#nl-test-indirizzi').catch(() => '');
+      ok('2.9.0: il redattore non apre Importa, non carica, non esporta, non scarica, non cambia la lista dei test',
+        v1.status() === 302 && !/newsletter-importa\.php\?id=/.test(v2.headers()['location'] || '') && !/text\/csv/.test((v3.headers()['content-type'] || '') + (v5.headers()['content-type'] || '') + (v6.headers()['content-type'] || '')) && !lt.includes('red@sic-prova.it'),
+        [v1.status(), v2.headers()['location'], v3.status(), v4.status(), v5.status(), v6.status()]);
+    }
+    // XLSX cattivi (servono CMS_DIR e php per costruirli)
+    if (DIR30 && fs.existsSync(path.join(DIR30, 'includes/newsletter-importa.php'))) {
+      const cli = path.join(__dirname, '..', 'prove', 'importa-cli.php');
+      const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'sic30-'));
+      for (const [tipo, attesa] of [['xxe', /DTD/], ['dtd', /DTD/], ['bomba', /troppo grande/], ['percorsi', /nomi non ammessi/]]) {
+        const f = path.join(tmp, tipo + '.xlsx');
+        execFileSync('php', [cli, DIR30, 'xlsx', f, tipo], { encoding: 'utf8' });
+        const t0 = Date.now();
+        const r = await admin.ctx.request.post(PI, { headers: ORIG, multipart: { _csrf: await tokenDi(admin.p, PI), azione: 'carica', modo: 'file', file: { name: tipo + '.xlsx', mimeType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', buffer: fs.readFileSync(f) } }, maxRedirects: 0 });
+        await admin.p.goto(PI, { waitUntil: 'networkidle' });
+        const pag = await admin.p.content();
+        ok(`2.9.0: XLSX ${tipo === 'xxe' ? 'con un\'entità esterna (file:///etc/passwd)' : tipo === 'dtd' ? 'con una DTD che si moltiplica' : tipo === 'bomba' ? 'zip bomba (100 MB di spazi)' : 'con ../ e / nei nomi interni'}: rifiutato, con il motivo`,
+          !/id=\d+/.test(r.headers()['location'] || '') && attesa.test(pag) && !/root:x:0/.test(pag) && Date.now() - t0 < 30000, [r.headers()['location'], Date.now() - t0]);
+      }
+      ok('2.9.0: i percorsi del pacchetto XLSX non scrivono file fuori (niente percorso-cattivo.php)', !fs.existsSync(path.join(DIR30, 'percorso-cattivo.php')) && !fs.existsSync(path.join(DIR30, '..', 'percorso-cattivo.php')) && !fs.existsSync(path.join(DIR30, 'uploads', 'percorso-cattivo.php')));
+      fs.rmSync(tmp, { recursive: true, force: true });
+    } else console.log('--  XLSX cattivi: saltati (serve CMS_DIR)');
+    // Formule: importate con Copia e incolla, poi esportate: escono con l'apostrofo davanti
+    const testo = 'EMAIL;NOME;COGNOME\nformula1@sic-prova.it;=HYPERLINK("http://cattivo.it","clic");+cmd|\' /C calc\'!A0\nformula2@sic-prova.it;@SOMMA(1,2);-2+3*cmd|\' /C calc\'!A0\n';
+    const rc = await carica(admin.ctx, await tokenDi(admin.p, PI), { modo: 'incolla', testo });
+    const id30 = idDa(rc);
+    const tk30 = await tokenDi(admin.p, PI + '?id=' + id30);
+    await admin.ctx.request.post(PI, { headers: ORIG, form: { _csrf: tk30, azione: 'abbina', id: String(id30), 'col[0]': 'EMAIL', 'col[1]': 'NOME', 'col[2]': 'COGNOME' }, maxRedirects: 0 });
+    await admin.p.goto(PC + '?scheda=liste', { waitUntil: 'networkidle' });
+    const lista = await admin.p.evaluate(() => { const a = document.querySelector('a[href*="newsletter-contatti.php?lista="]'); return a ? a.href.match(/lista=(\d+)/)[1] : ''; });
+    await admin.ctx.request.post(PI, { headers: ORIG, form: { _csrf: tk30, azione: 'liste', id: String(id30), 'liste[]': lista }, maxRedirects: 0 });
+    await admin.ctx.request.post(PI, { headers: ORIG, form: { _csrf: tk30, azione: 'conferma', id: String(id30), consenso: '1' }, maxRedirects: 0 });
+    const csv = await admin.ctx.request.post(PC, { headers: ORIG, form: { _csrf: await tokenDi(admin.p, PC), azione: 'gruppo', cosa: 'esporta', cerca: 'formula', tutti: '1', esp_origine: 'scelti', esp_sep: ';' }, maxRedirects: 0 });
+    const tc = (await csv.text()).replace(/^﻿/, '');
+    const righe30 = tc.trim().split(/\r?\n/), testa30 = righe30[0].split(';'), iN = testa30.indexOf('NOME'), iC = testa30.indexOf('COGNOME');
+    const celle = righe30.slice(1).flatMap(l => { const c = l.match(/("([^"]|"")*"|[^;]*)(;|$)/g).map(x => x.replace(/;$/, '').replace(/^"|"$/g, '')); return [c[iN], c[iC]]; });
+    ok('2.9.0: Esporta: = + - @ all\'inizio di una cella escono con l\'apostrofo (niente formule nel foglio di calcolo)',
+      /text\/csv/.test(csv.headers()['content-type'] || '') && celle.length === 4 && celle.every(c => c.startsWith("'")), celle);
+    // I file dei contatti non si scaricano dal web
+    if (DIR30) {
+      const cart = fs.readdirSync(path.join(DIR30, 'uploads')).find(n => /^contatti-[a-f0-9]{16}$/.test(n));
+      const file = cart ? fs.readdirSync(path.join(DIR30, 'uploads', cart)).find(n => /\.(csv|jsonl)$/.test(n)) : '';
+      const cx = await browser.newContext();
+      const rf = cart ? await cx.request.get(BASE + PAN + '/uploads/' + cart + '/' + (file || 'index.html'), { maxRedirects: 0 }) : null;
+      ok('2.9.0: la cartella dei file dei contatti è chiusa al web (403/404, .htaccess "Require all denied")', !!cart && fs.readFileSync(path.join(DIR30, 'uploads', cart, '.htaccess'), 'utf8').includes('Require all denied') && !!rf && rf.status() >= 400, [cart, file, rf && rf.status()]);
+      await cx.close();
+    }
+    // Pulizia: i contatti di prova
+    const tkp = await tokenDi(admin.p, PC + '?cerca=formula');
+    await post(admin.p, PC, form({ _csrf: tkp, azione: 'gruppo', cosa: 'elimina', cerca: 'formula', tutti: '1' }), CT);
+  }
+
   // === pulizia: elimina il redattore di prova
   {
     await admin.p.goto(ADMIN + '/utenti.php', { waitUntil: 'networkidle' });

@@ -199,17 +199,21 @@ const senzaTag = s => s.replace(/<style[\s\S]*?<\/style>/gi, '').replace(/<[^>]+
   const importa = async (righe, flussi, lista) => {
     const f = path.join(os.tmpdir(), 'importa-' + Date.now() + '.csv');
     fs.writeFileSync(f, righe.join('\n') + '\n');
-    await vai('/admin/newsletter.php?scheda=iscritti');
-    await p.evaluate(() => { const d = document.getElementById('nlx-importa'); if (d) d.open = true; }); // 2.8.0: riquadro che si apre
-    const imp = p.locator('form:has(input[value=importa])');
-    await imp.locator('input[type=file]').setInputFiles(f);
-    await imp.locator('select[name=lista]').selectOption(String(lista));
-    await imp.locator('input[name=consenso_brevo]').check();
+    // 2.9.0: l'importazione è la pagina a quattro passi di Brevo (newsletter-importa.php): file, abbinamento da solo,
+    // la lista, la spunta del consenso e "Fai partire i flussi" fra le opzioni del passo 4.
+    await vai('/admin/newsletter-importa.php');
+    await p.locator('#nli-file').setInputFiles(f);
+    await Promise.all([p.waitForNavigation(), p.click('#nli-carica button[type=submit]')]);
+    await Promise.all([p.waitForNavigation(), p.click('#nli-abbina button[type=submit]')]);
+    await p.check(`#nli-liste input[name="liste[]"][value="${lista}"]`);
+    await Promise.all([p.waitForNavigation(), p.click('#nli-liste button[type=submit]')]);
+    await p.check('input[name=consenso]');
     let spunta = true;
-    if (flussi) { try { await imp.locator('input[name=flussi_import]').check({ timeout: 2000 }); } catch (e) { spunta = false; } }
-    await Promise.all([p.waitForNavigation(), imp.locator('button[type=submit]').click()]);
+    if (flussi) { try { await p.check('input[name="opz[flussi]"]', { timeout: 2000 }); } catch (e) { spunta = false; } }
+    await Promise.all([p.waitForNavigation(), p.click('#nli-conferma button[type=submit]')]);
+    await p.waitForSelector('#nli-resoconto', { timeout: 60000 });
     fs.rmSync(f, { force: true });
-    return { spunta, flash: (await p.locator('.flash').first().innerText().catch(() => '')).trim() };
+    return { spunta, flash: (await p.locator('#nli-resoconto').innerText().catch(() => '')).trim() };
   };
   const i1 = await importa(['EMAIL;NOME;CONSENSO', 'anna@persona.it;Anna;', 'ugo@persona.it;Ugo;', 'xena@imp.it;Xena;2025-05-01', 'yuri@imp.it;Yuri;'], false, clienti);
   const riga = e => (q(`SELECT stato, fonte, consenso_at FROM {p}newsletter_iscritti WHERE email = '${e}'`) || [])[0] || {};

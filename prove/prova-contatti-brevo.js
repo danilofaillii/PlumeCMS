@@ -236,12 +236,14 @@ const idDi = (e) => +uno(`SELECT id FROM {p}newsletter_iscritti WHERE email = '$
   ok('Modifica in massa con un valore del tipo sbagliato: rifiutata', /non va bene/.test(f), f);
   // Esporta: CSV con le formule neutralizzate.
   await vai('newsletter-contatti.php'); await p.check(`input.nlx-sel[value="${nuova}"]`); await p.selectOption('#nlx-cosa', 'esporta');
-  const [dl] = await Promise.all([p.waitForEvent('download'), p.click('#nlx-applica')]);
+  await p.click('#nlx-applica'); // 2.9.0: Esporta apre la finestra di Brevo
+  const [dl] = await Promise.all([p.waitForEvent('download'), p.click('#nlx-esporta-avvia')]);
   const csv = fs.readFileSync(await dl.path(), 'utf8');
   ok('Esporta: CSV con EMAIL, gli attributi, lo stato e le liste', /^﻿?EMAIL;NOME;COGNOME/.test(csv) && /nuova@nuovi-contatti\.it/.test(csv) && /CITTA/.test(csv) && /LISTE/.test(csv), csv.slice(0, 200));
   await vai('newsletter-contatto.php?id=' + nuova); await p.fill('#nlk-citta', '=CMD("calc")'); await invia('button:has-text("Salva le informazioni")');
   await vai('newsletter-contatti.php'); await p.check(`input.nlx-sel[value="${nuova}"]`); await p.selectOption('#nlx-cosa', 'esporta');
-  const [dl2] = await Promise.all([p.waitForEvent('download'), p.click('#nlx-applica')]);
+  await p.click('#nlx-applica'); // 2.9.0: Esporta apre la finestra di Brevo
+  const [dl2] = await Promise.all([p.waitForEvent('download'), p.click('#nlx-esporta-avvia')]);
   const csv2 = fs.readFileSync(await dl2.path(), 'utf8');
   ok("Esporta: una cella che comincia con = esce con l'apostrofo davanti (niente formule nel foglio di calcolo)", /'=CMD\(""calc""\)/.test(csv2) && !/;=CMD/.test(csv2), csv2.split('\n')[1]);
   f = await gruppo([a3], 'blocca');

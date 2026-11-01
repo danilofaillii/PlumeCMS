@@ -4,15 +4,19 @@
  *   Contatti: le cinque colonne fisse, Personalizza le colonne, ricerca, Carica una lista, filtro dello stato, 50/100/500
  *             per pagina, selezione (anche di tutti quelli del filtro) e le azioni di gruppo: Aggiungi a liste, Togli dalle
  *             liste, Sposta, Metti in lista nera, Modifica (solo data, sì/no, categoria), Esporta, Elimina definitivamente.
- *             Crea un contatto, Importa contatti, Metti in lista nera degli indirizzi.
+ *             Crea un contatto, Importa contatti (2.9.0: la pagina a passi newsletter-importa.php), Esporta (2.9.0: la
+ *             finestra di Brevo, con attributi, separatore e filtri per lista o campagna, a giri), Metti in lista nera
+ *             degli indirizzi.
  *   Liste:    le cartelle con le loro liste; crea, rinomina, sposta in un'altra cartella, elimina.
  * Motore in includes/newsletter-contatti.php. Solo amministratore.
  */
 require_once __DIR__ . '/includes/auth.php';
 require_once __DIR__ . '/includes/admin-functions.php';
 require_once __DIR__ . '/../includes/newsletter.php';
+require_once __DIR__ . '/../includes/newsletter-importa.php'; // 2.9.0
 require_admin(); // sicurezza (ruoli): solo amministratore
 newsletter_schema();
+newsletter_importa_schema(); // 2.9.0: le tabelle delle esportazioni (anche su un sito appena aggiornato)
 
 $adminTitle = 'Contatti';
 $scheda = ($_GET['scheda'] ?? '') === 'liste' ? 'liste' : 'contatti';
@@ -42,36 +46,49 @@ function nlc_scelti(array $p): array {
     return array_values(array_unique(array_filter(array_map('intval', (array)($p['sel'] ?? [])))));
 }
 
-if (($_GET['scarica'] ?? '') === 'tutti') {
-    nlc_esporta(newsletter_contatti_ids([]), 'contatti');
+/**
+ * 2.9.0: Esporta come Brevo (finestra Esporta): i contatti scelti (o tutti quelli del filtro), una lista o una campagna,
+ * con gli attributi e il separatore scelti. Un file piccolo esce subito; uno grande continua a giri e si scarica dal
+ * riquadro Esportazioni. Senza campi della finestra (la 2.8.0, le prove) tutte le colonne e il punto e virgola.
+ */
+function nlc_esporta_avvia(array $p, int $u): never {
+    $orig = (string)($p['esp_origine'] ?? 'scelti');
+    if ($orig === 'lista') $f = ['tipo' => 'lista', 'lista' => (int)($p['esp_lista'] ?? 0), 'chi' => isset(NL_ESP_LISTA[$p['esp_lista_chi'] ?? '']) ? (string)$p['esp_lista_chi'] : 'tutti'];
+    elseif ($orig === 'campagna') $f = ['tipo' => 'campagna', 'campagna' => (int)($p['esp_campagna'] ?? 0), 'chi' => isset(NL_ESP_CAMPAGNA[$p['esp_campagna_chi'] ?? '']) ? (string)$p['esp_campagna_chi'] : 'aperto'];
+    elseif (!empty($p['tutti'])) $f = ['tipo' => 'contatti', 'q' => newsletter_contatti_filtro($p)[2]];
+    else $f = ['tipo' => 'ids', 'ids' => nlc_scelti($p)];
+    $col = isset($p['esp_col']) ? array_filter((array)$p['esp_col'], 'is_string') : array_keys(newsletter_esporta_colonne());
+    $r = newsletter_esporta_crea($f, $col, (string)($p['esp_sep'] ?? ';'), $u);
+    if (!is_int($r)) { flash('error', $r); nlc_torna($p); }
+    if (newsletter_esporta_giro($r, microtime(true) + 8)) newsletter_file_scarica((string)newsletter_esportazione($r)['file'], 'contatti');
+    flash('success', 'Esportazione avviata: i contatti sono tanti e il file si prepara a giri. Quando è pronto lo scarichi dal riquadro Esportazioni qui sotto: la pagina si aggiorna da sola.');
+    header('Location: newsletter-contatti.php#nlx-esportazioni');
+    exit;
 }
 
-/** Il CSV dei contatti (Brevo: Esporta): EMAIL, gli attributi, lo stato, il motivo della lista nera, le liste. */
-function nlc_esporta(array $ids, string $nome): never {
-    $attr = array_filter(newsletter_attributi(), fn($a) => $a['categoria'] !== 'global');
-    header('Content-Type: text/csv; charset=utf-8');
-    header('Content-Disposition: attachment; filename="' . $nome . '-' . date('Y-m-d') . '.csv"');
+if (($_GET['scarica'] ?? '') === 'tutti') {
+    // Tutti i contatti, tutte le colonne (il collegamento di prima): si prepara tutto in questa richiesta.
+    $r = newsletter_esporta_crea(['tipo' => 'contatti', 'q' => []], array_keys(newsletter_esporta_colonne()), ';', $utenteId);
+    while (!newsletter_esporta_giro($r, microtime(true) + 20));
+    newsletter_file_scarica((string)newsletter_esportazione($r)['file'], 'contatti');
+}
+if (isset($_GET['esportazione'])) {
+    $e = newsletter_esportazione((int)$_GET['esportazione']);
+    if ($e && $e['stato'] === 'finita') newsletter_file_scarica((string)$e['file'], 'contatti');
+    flash('error', 'Questa esportazione non c\'è più o non è ancora pronta: i file restano ' . NL_FILE_GIORNI . ' giorni.');
+    header('Location: newsletter-contatti.php#nlx-esportazioni'); exit;
+}
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['azione'] ?? '') === 'esporta_giro') {
+    // 2.9.0: un giro delle esportazioni chiesto dal riquadro Esportazioni: risposta JSON.
+    header('Content-Type: application/json; charset=utf-8');
     header('Cache-Control: no-store');
-    $f = fopen('php://output', 'w');
-    fwrite($f, "\xEF\xBB\xBF");
-    fputcsv($f, array_merge(array_keys($attr), ['ISCRITTO', 'LISTA_NERA', 'MOTIVO', 'LISTE']), ';', '"', '\\');
-    $nomiListe = array_column(newsletter_liste(), 'nome', 'id');
-    foreach (array_chunk($ids, 500) as $pezzo) {
-        $valori = newsletter_valori_di($pezzo);
-        $righe = [];
-        foreach (db()->query('SELECT * FROM ' . tbl('newsletter_iscritti') . ' WHERE id IN (' . implode(',', array_map('intval', $pezzo)) . ')') as $r) $righe[(int)$r['id']] = $r;
-        foreach ($pezzo as $id) {
-            if (!isset($righe[$id])) continue;
-            $r = $righe[$id];
-            $out = [];
-            foreach ($attr as $n => $a) $out[] = $a['tipo'] === 'date' ? (string)($valori[$id][$n] ?? '') : newsletter_valore_testo($a, $valori[$id][$n] ?? '');
-            $out[] = $r['stato'] === 'attivo' ? 'sì' : 'no';
-            $out[] = in_array($r['stato'], NL_BLOCCATI, true) ? 'sì' : 'no';
-            $out[] = newsletter_motivo_testo($r);
-            $out[] = implode(', ', array_map(fn($l) => $nomiListe[$l] ?? '', newsletter_liste_di($id)));
-            fputcsv($f, sicurezza_csv_riga($out), ';', '"', '\\');
-        }
-    }
+    if (!csrf_ok()) { http_response_code(403); echo json_encode(['errore' => 'La sessione è scaduta: ricarica la pagina.']); exit; }
+    session_write_close();
+    @set_time_limit(90);
+    try { newsletter_lavori_giro(8); } catch (Throwable $e) { error_log('esporta giro: ' . $e->getMessage()); }
+    $r = db()->query('SELECT COUNT(*) AS n, COALESCE(SUM(righe), 0) AS f, COALESCE(SUM(totale), 0) AS t FROM ' . tbl('newsletter_esportazioni') . " WHERE stato = 'in_corso'")->fetch();
+    echo json_encode(['finito' => !(int)$r['n'], 'fatte' => (int)$r['f'], 'totale' => (int)$r['t'], 'testo' => (int)$r['f'] . ' contatti su ' . (int)$r['t']]);
     exit;
 }
 
@@ -88,11 +105,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         nlc_torna($_POST);
     }
     if ($azione === 'gruppo') {
+        $cosa = !empty($_POST['esporta_avvia']) ? 'esporta' : (string)($_POST['cosa'] ?? '');
+        if ($cosa === 'esporta') nlc_esporta_avvia($_POST, $utenteId);
         $ids = nlc_scelti($_POST);
-        $cosa = (string)($_POST['cosa'] ?? '');
         $lista = (int)($_POST['lista_dest'] ?? 0);
         if (!$ids) { flash('error', 'Spunta almeno un contatto, oppure scegli "tutti i contatti del filtro".'); nlc_torna($_POST); }
-        if ($cosa === 'esporta') nlc_esporta($ids, 'contatti-scelti');
         if ($cosa === 'aggiungi') {
             if (!$lista || newsletter_nome_lista($lista) === '') { flash('error', 'Scegli la lista in cui aggiungere i contatti.'); nlc_torna($_POST); }
             foreach ($ids as $i) newsletter_in_lista($i, $lista);
@@ -125,28 +142,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             flash('error', 'Scegli un\'azione.');
         }
         nlc_torna($_POST);
-    }
-    if ($azione === 'importa') {
-        $f = $_FILES['csv'] ?? null;
-        if (!$f || $f['error'] !== UPLOAD_ERR_OK) {
-            flash('error', 'Scegli il file CSV con i contatti (per esempio esportato da Brevo).');
-        } elseif (empty($_POST['consenso_brevo'])) {
-            flash('error', 'Serve la spunta: i contatti importati devono avere dato il loro consenso.');
-        } else {
-            $lista = (int)($_POST['lista'] ?? 0);
-            $nuova = trim((string)($_POST['lista_nuova'] ?? ''));
-            if ($nuova !== '') {
-                $r = newsletter_lista_crea($nuova, (int)($_POST['cartella'] ?? 0));
-                if (is_int($r)) $lista = $r;
-                else { $st = db()->prepare('SELECT id FROM ' . tbl('newsletter_liste') . ' WHERE nome = ?'); $st->execute([newsletter_testo_pulito($nuova, 100)]); $lista = (int)$st->fetchColumn(); }
-            }
-            // 2.0.0: i flussi della lista partono per gli importati solo con la spunta (spenta di partenza).
-            $r = newsletter_importa_csv($f['tmp_name'], $lista ?: newsletter_lista_principale(), !empty($_POST['flussi_import']));
-            isset($r['errore']) ? flash('error', $r['errore'])
-                : flash('success', "Importati {$r['nuovi']} contatti nuovi. Già presenti: {$r['gia']} (lasciati com'erano). Saltati perché in lista nera o con i dati cancellati: {$r['saltati']}. Righe scartate perché senza email valida: {$r['scartati']}."
-                    . (!empty($_POST['flussi_import']) ? ' I flussi della lista sono partiti per gli importati.' : ''));
-        }
-        nlc_torna([]);
     }
     if ($azione === 'lista_nera_indirizzi') {
         // "Riempibile a mano": gli indirizzi scritti qui vanno in lista nera (contatti nuovi se non c'erano).
@@ -265,7 +260,8 @@ require_once __DIR__ . '/includes/admin-header.php';
     <h3 style="margin:0">Contatti</h3>
     <div class="nl-riga">
       <a class="btn btn-primary btn-sm" href="newsletter-contatto.php?nuovo=1">Crea un contatto</a>
-      <a class="btn btn-secondary btn-sm" href="#nlx-importa">Importa contatti</a>
+      <a class="btn btn-secondary btn-sm" href="newsletter-importa.php">Importa contatti</a>
+      <button class="btn btn-secondary btn-sm" type="button" data-apri-dialogo="#nlx-esporta">Esporta i contatti</button>
       <button class="btn btn-secondary btn-sm" type="button" data-apri-dialogo="#nlx-colonne">Personalizza le colonne</button>
     </div>
   </div>
@@ -322,6 +318,37 @@ require_once __DIR__ . '/includes/admin-header.php';
       </div>
       <button class="btn btn-secondary btn-sm" type="submit" id="nlx-applica" data-conferma="Applicare l'azione ai contatti scelti?">Applica</button>
     </fieldset>
+    <?php $espCol = newsletter_esporta_colonne(); $espCamp = newsletter_esporta_campagne(); ?>
+    <dialog id="nlx-esporta" class="nl-dialogo" aria-labelledby="nlx-esporta-titolo">
+      <h2 id="nlx-esporta-titolo">Esporta i contatti</h2>
+      <p class="hint">Un file CSV da aprire con Excel, LibreOffice o Fogli Google. Le celle che cominciano con = + - o @ escono con un apostrofo davanti, così il foglio di calcolo non le prende per formule.</p>
+      <fieldset class="nlk-scelte">
+        <legend>Quali contatti</legend>
+        <label><input type="radio" name="esp_origine" value="scelti" checked data-nlx-origine> I contatti scelti nella tabella (le righe spuntate, oppure «Tutti i contatti»)</label>
+        <label><input type="radio" name="esp_origine" value="lista" data-nlx-origine> Una lista</label>
+        <div class="nlx-campi" data-nlx-origine-per="lista">
+          <div class="form-group"><label for="nlx-esp-lista">Lista</label><?= $tendinaListe('esp_lista', '', max(0, (int)$f['lista']), '', 'nlx-esp-lista') ?></div>
+          <div class="form-group"><label for="nlx-esp-lista-chi">Chi</label><select id="nlx-esp-lista-chi" name="esp_lista_chi"><?php foreach (NL_ESP_LISTA as $k => $v): ?><option value="<?= $k ?>"><?= h(ucfirst($v)) ?></option><?php endforeach; ?></select></div>
+        </div>
+        <label><input type="radio" name="esp_origine" value="campagna" data-nlx-origine<?= $espCamp ? '' : ' disabled' ?>> Una campagna<?= $espCamp ? '' : ' (nessuna campagna ancora partita)' ?></label>
+        <?php if ($espCamp): ?><div class="nlx-campi" data-nlx-origine-per="campagna">
+          <div class="form-group"><label for="nlx-esp-camp">Campagna</label><select id="nlx-esp-camp" name="esp_campagna"><?php foreach ($espCamp as $c): ?><option value="<?= (int)$c['id'] ?>"><?= h(newsletter_4byte_fuori((string)$c['oggetto']) ?: '(senza oggetto)') ?></option><?php endforeach; ?></select></div>
+          <div class="form-group"><label for="nlx-esp-camp-chi">Chi</label><select id="nlx-esp-camp-chi" name="esp_campagna_chi"><?php foreach (NL_ESP_CAMPAGNA as $k => $v): ?><option value="<?= $k ?>"><?= h(ucfirst($v)) ?></option><?php endforeach; ?></select></div>
+        </div><?php endif; ?>
+      </fieldset>
+      <fieldset class="nlk-scelte nlx-esp-colonne">
+        <legend>Attributi da esportare</legend>
+        <?php foreach ($espCol as $n => $et): ?><label><input type="checkbox" name="esp_col[]" value="<?= h($n) ?>" checked<?= $n === 'EMAIL' ? ' disabled' : '' ?>> <?= h($et) ?> <small>(<?= h($n) ?>)</small></label><?php endforeach; ?>
+        <p class="hint">EMAIL c'è sempre.</p>
+      </fieldset>
+      <fieldset class="nlk-scelte">
+        <legend>Separatore delle colonne</legend>
+        <label><input type="radio" name="esp_sep" value=";" checked> Punto e virgola (Excel in italiano)</label>
+        <label><input type="radio" name="esp_sep" value=","> Virgola</label>
+      </fieldset>
+      <p class="errore-campo" id="nlx-esporta-err" role="alert" hidden></p>
+      <div class="pn-conferma-azioni"><button type="button" class="btn btn-secondary" data-chiudi-dialogo="#nlx-esporta">Annulla</button><button type="submit" class="btn btn-primary" name="esporta_avvia" value="1" id="nlx-esporta-avvia">Avvia l'esportazione</button></div>
+    </dialog>
   </form>
 
   <div class="ad-tabella"><table class="table nlx-tabella">
@@ -355,23 +382,28 @@ require_once __DIR__ . '/includes/admin-header.php';
     <?php if ($pag < $pagine): ?><a class="btn btn-secondary btn-sm" href="<?= h($link($pag + 1)) ?>">Pagina successiva</a><?php endif; ?>
   </nav>
   <?php endif; ?>
-  <p class="hint"><a href="?scarica=tutti">Scarica tutti i contatti (CSV)</a></p>
+  <p class="hint"><a href="?scarica=tutti">Scarica tutti i contatti (CSV, tutte le colonne)</a></p>
 </div>
 
-<details class="form-card nlx-riquadro" id="nlx-importa">
-  <summary><h3>Importa contatti</h3></summary>
-  <p class="hint">Un file CSV con la colonna EMAIL (e, se ci sono, NOME, COGNOME e la data del consenso in una colonna CONSENSO). Da Brevo: Contatti, seleziona una lista, Esporta, formato CSV, solo i contatti iscritti. Chi è già qui resta com'è ed entra anche nella lista scelta; chi è in lista nera o ha chiesto di cancellare i suoi dati resta fuori.</p>
-  <form method="post" enctype="multipart/form-data">
-    <?= csrf_field() ?><input type="hidden" name="azione" value="importa">
-    <div class="form-group"><label for="nlx-csv">File CSV</label><input type="file" id="nlx-csv" name="csv" accept=".csv,text/csv"<?= pannello_limite_caricamento() > 0 ? ' data-peso-massimo="' . pannello_limite_caricamento() . '"' : '' ?>></div>
-    <div class="form-group"><label for="nlx-imp-lista">Nella lista</label><?= $tendinaListe('lista', '', 0, '', 'nlx-imp-lista') ?></div>
-    <div class="form-group"><label for="nlx-imp-nuova">Oppure in una lista nuova</label><input type="text" id="nlx-imp-nuova" name="lista_nuova" maxlength="100" placeholder="per esempio: Clienti 2026"></div>
-    <div class="form-group"><label for="nlx-imp-cart">Cartella della lista nuova</label><select id="nlx-imp-cart" name="cartella"><?php foreach ($cartelle as $c): ?><option value="<?= (int)$c['id'] ?>"><?= h(newsletter_4byte_fuori($c['nome'])) ?></option><?php endforeach; ?></select></div>
-    <div class="form-group"><label><input type="checkbox" name="consenso_brevo" value="1"> Sono contatti iscritti, con il loro consenso</label>
-      <label><input type="checkbox" name="flussi_import" value="1"> Fai partire i flussi per gli importati</label></div>
-    <button class="btn btn-primary btn-sm" type="submit">Importa</button>
-  </form>
-</details>
+<span id="nlx-importa" data-spostato="newsletter-importa.php" hidden></span>
+<?php $esportazioni = db()->query('SELECT * FROM ' . tbl('newsletter_esportazioni') . ' ORDER BY id DESC LIMIT 10')->fetchAll();
+  $inCorso = array_filter($esportazioni, fn($e) => $e['stato'] === 'in_corso');
+  if ($esportazioni): ?>
+<div class="form-card" id="nlx-esportazioni" style="margin-top:1.25rem"<?= $inCorso ? ' data-nl-giro="newsletter-contatti.php" data-azione="esporta_giro" data-csrf="' . h(csrf_token()) . '"' : '' ?>>
+  <h3>Esportazioni</h3>
+  <p class="hint" style="margin-top:0">I file restano qui <?= NL_FILE_GIORNI ?> giorni, poi si cancellano da soli: contengono dati personali.</p>
+  <?php if ($inCorso): ?><div class="nli-barra" role="progressbar" aria-label="Avanzamento delle esportazioni" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" data-nl-barra><span style="width:0"></span></div>
+  <p data-nl-testo role="status">Preparo il file...</p><p class="errore-campo" data-nl-errore role="alert" hidden></p><button class="btn btn-secondary btn-sm" type="button" data-nl-riprendi hidden>Riprendi</button><?php endif; ?>
+  <div class="ad-tabella"><table class="table">
+    <thead><tr><th scope="col">Quando</th><th scope="col">Cosa</th><th scope="col">Contatti</th><th scope="col">Stato</th><th scope="col">Scarica</th></tr></thead>
+    <tbody><?php foreach ($esportazioni as $e): ?>
+      <tr><td><?= h(date('d/m/Y H:i', strtotime($e['creato']))) ?></td><td><?= h(newsletter_4byte_fuori($e['descrizione'])) ?></td><td><?= (int)$e['righe'] ?><?= $e['stato'] === 'in_corso' ? ' di ' . (int)$e['totale'] : '' ?></td>
+        <td><?= $e['stato'] === 'finita' ? 'Pronta, fino al ' . h(date('d/m/Y', strtotime($e['scade']))) : ($e['stato'] === 'in_corso' ? 'In preparazione' : 'Fermata da un errore') ?></td>
+        <td><?php if ($e['stato'] === 'finita'): ?><a class="btn btn-secondary btn-sm" href="newsletter-contatti.php?esportazione=<?= (int)$e['id'] ?>" aria-label="Scarica il CSV del <?= h(date('d/m/Y H:i', strtotime($e['creato']))) ?>">Scarica il CSV</a><?php else: ?>&#8230;<?php endif; ?></td></tr>
+    <?php endforeach; ?></tbody>
+  </table></div>
+</div>
+<?php endif; ?>
 
 <details class="form-card nlx-riquadro" id="nlx-nera">
   <summary><h3>Metti in lista nera degli indirizzi</h3></summary>

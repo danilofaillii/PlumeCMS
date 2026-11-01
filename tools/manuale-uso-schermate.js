@@ -14,6 +14,8 @@
 // 2.2.0: Scegli dal sito (08-scegli-dal-sito, 11-prenota-1 e 2 con l'esempio eseguito davvero, 17-menu-scegli, 19-popup-scegli; la
 //   finestra 08-scegli-finestra dopo tutti i capitoli, con la pagina in bozza "Condizioni di vendita") e 28-server con il gruppo
 //   "Google e IndexNow" (due foto della stessa pagina unite).
+// 2.9.0: il capitolo 19i (Importare ed esportare i contatti, la lista dei test): SOLO_CAPITOLI=19i, con TMPDIR vuota (in
+//   /tmp/manuale-uso-png possono esserci PNG vecchi che il giro ricopierebbe).
 const { chromium } = require('playwright');
 const pnConferme = require('../prove/conferme-pannello'); // UX 2026-11: conferme del pannello
 const fs = require('fs');
@@ -670,6 +672,54 @@ capitoli['19'] = async () => {
   await foto('19-campagna', { clip: { x: 240, y: 56, width: 960, height: 760 }, segni: [{ sel: '[name=oggetto]', n: 1 }, { sel: '#editor', n: 2 }] });
   await vai('newsletter-flussi.php?nuovo=1');
   await foto('19-flussi', { clip: { x: 240, y: 56, width: 960, height: 600 } });
+};
+
+// 19i. Importare ed esportare i contatti, la lista dei test (2.9.0, come Brevo). Un file CSV vero, i quattro passi, il
+// resoconto con una riga scartata, la finestra Esporta, la lista dei test e la prova di una campagna.
+capitoli['19i'] = async () => {
+  const f = path.join(require('os').tmpdir(), 'manuale-clienti-negozio.csv');
+  fs.writeFileSync(f, ['EMAIL;NOME;COGNOME;Data di nascita;Città', 'marta.gialli@esempio.it;Marta;Gialli;12/05/1990;Bologna', 'luca.neri@esempio.it;Luca;Neri;03/11/1984;Modena',
+    'sara.blu@esempio.it;Sara;Blu;;Bologna', 'luca.neri@esempio.it;Luca;Neri;03/11/1984;Modena', 'paolo.rosa@esempio;Paolo;Rosa;;Parma'].join('\n') + '\n');
+  await vai('newsletter-importa.php');
+  await p.setInputFiles('#nli-file', f);
+  await foto('19-importa-1', { clip: { x: 240, y: 56, width: 960, height: 520 }, segni: [{ sel: '.nli-modo', n: 1 }, { sel: '#nli-file', n: 2 }, { sel: '#nli-carica button[type=submit]', n: 3 }] });
+  await Promise.all([p.waitForNavigation(), p.click('#nli-carica button[type=submit]')]);
+  const riga = (c) => p.locator(`table.nli-abbina tr:has(td:first-child b:text-is("${c}"))`);
+  await riga('Data di nascita').locator('select[data-nli-col]').selectOption(await p.locator('select[data-nli-col] option[value="DATA_NASCITA"]').count() ? 'DATA_NASCITA' : '_NUOVO');
+  await riga('Città').locator('select[data-nli-col]').selectOption('_NUOVO');
+  await riga('Città').locator('input[name$="[nome]"]').fill('CITTA');
+  await foto('19-importa-2', { sel: '#nli-abbina', margine: 8, segni: [{ sel: 'table.nli-abbina tbody tr:first-child select', n: 1 }, { sel: 'table.nli-abbina tbody tr:last-child select[data-nli-col]', n: 2 }, { sel: '#nli-abbina button[type=submit]', n: 3 }] });
+  await Promise.all([p.waitForNavigation(), p.click('#nli-abbina button[type=submit]')]);
+  if (!(await p.locator('#nli-liste').count())) throw new Error('19i: il passo 2 non va avanti: ' + await flash());
+  await p.fill('#nli-nuova', 'Clienti del negozio');
+  await foto('19-importa-3', { sel: '#nli-liste', margine: 8, segni: [{ sel: '#nli-liste fieldset.nlk-scelte', n: 1 }, { sel: '#nli-nuova', n: 2 }, { sel: '#nli-liste button[type=submit]', n: 3 }] });
+  await Promise.all([p.waitForNavigation(), p.click('#nli-liste button[type=submit]')]);
+  await p.check('input[name=consenso]');
+  await foto('19-importa-4', { sel: '#nli-conferma', margine: 8, segni: [{ sel: '.nli-opzioni', n: 1 }, { sel: '.nli-consenso', n: 2 }, { sel: '#nli-conferma button[type=submit]', n: 3 }] });
+  await Promise.all([p.waitForNavigation(), p.click('#nli-conferma button[type=submit]')]);
+  await p.waitForSelector('#nli-resoconto', { timeout: 120000 });
+  await foto('19-resoconto', { sel: '#nli-resoconto', margine: 8, segni: [{ sel: '#nli-resoconto dl', n: 1 }, { sel: 'a[href*="scarica=scarti"]', n: 2 }] });
+  // Esporta: la lista appena importata, con il punto e virgola
+  await p.setViewportSize({ width: 1200, height: 1400 }); // la finestra Esporta intera, senza scorrere
+  await vai('newsletter-contatti.php');
+  await p.click('button:has-text("Esporta i contatti")');
+  await p.check('#nlx-esporta input[name=esp_origine][value=lista]');
+  await p.selectOption('#nlx-esp-lista', { label: 'Clienti del negozio' });
+  await dorme(200);
+  await foto('19-esporta', { sel: '#nlx-esporta', margine: 0, segni: [{ sel: '#nlx-esporta fieldset:nth-of-type(1) legend', n: 1 }, { sel: '#nlx-esporta .nlx-esp-colonne legend', n: 2 }, { sel: '#nlx-esporta fieldset:nth-of-type(3) legend', n: 3 }, { sel: '#nlx-esporta-avvia', n: 4, lato: 'destra' }], dove: p });
+  await p.click('#nlx-esporta button[data-chiudi-dialogo]');
+  await p.setViewportSize({ width: 1200, height: 800 });
+  // La lista dei test e la prova di una campagna
+  await vai('newsletter.php?scheda=impostazioni');
+  await p.fill('#nl-test-indirizzi', 'marta.gialli@esempio.it\nluca.neri@esempio.it');
+  await foto('19-lista-test', { sel: '#nl-test', margine: 8, segni: [{ sel: '#nl-test-indirizzi', n: 1 }, { sel: '#nl-test button[type=submit]', n: 2 }] });
+  await Promise.all([p.waitForNavigation(), p.click('#nl-test button[type=submit]')]);
+  if (!/Lista dei test salvata/.test(await flash())) throw new Error('19i: lista dei test non salvata: ' + await flash());
+  await vai('newsletter.php');
+  if (await p.locator('a[href^="newsletter-campagna.php?id="]').count()) await Promise.all([p.waitForNavigation(), p.locator('a[href^="newsletter-campagna.php?id="]').first().click()]);
+  else await Promise.all([p.waitForNavigation(), p.click('button:has-text("+ Nuova campagna")')]);
+  await p.waitForLoadState('networkidle');
+  await foto('19-prova', { sel: '#nlc-prova', margine: 8, segni: [{ sel: '#nlc-prova label:first-of-type', n: 1 }, { sel: '#nlc-prova-a', n: 2 }, { sel: '#nlc-prova button[value=prova]', n: 3 }] });
 };
 
 // 19s. I social e l'email del mattino (1.5.0), sull'articolo "Chiusi per ferie" del capitolo 4.

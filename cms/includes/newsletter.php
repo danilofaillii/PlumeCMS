@@ -758,6 +758,8 @@ function newsletter_pulizia(bool $forza = false): array {
     if ($ids) { newsletter_togli_iscritti($ids); $log[] = count($ids) . ' iscritti mai confermati tolti'; }
     // Inneschi in attesa di chi nel frattempo non c'è più o non ha confermato in tempo.
     db()->exec('DELETE FROM ' . tbl('newsletter_inneschi_attesa') . ' WHERE creato < DATE_SUB(NOW(), INTERVAL 40 DAY)');
+    // 2.9.0: importazioni in bozza di un giorno, scarti ed esportazioni di 7 giorni.
+    if (function_exists('newsletter_importa_pulizia')) { try { newsletter_importa_pulizia(); } catch (Throwable $e) { $log[] = 'ERRORE pulizia dei file dei contatti: ' . $e->getMessage(); } }
     return $log;
 }
 
@@ -772,51 +774,7 @@ function newsletter_data_csv(string $v): ?string {
     return null;
 }
 
-/**
- * Importazione dei contatti esportati da un altro servizio, per esempio Brevo (CSV). Colonne riconosciute: EMAIL,
- * NOME/FIRSTNAME, COGNOME/LASTNAME e, se c'è, la data del consenso (CONSENSO, DATA CONSENSO, OPTIN...).
- * 2.0.0: entrano come attivi con fonte 'import' e la data del consenso del file (vuota se il file non la porta).
- * Chi è già nell'elenco resta com'è ed entra anche lui nella lista; chi è uscito, è rimbalzato o ha chiesto la
- * cancellazione dei dati (lista di soppressione) si salta. I flussi della lista partono solo con $flussi.
- */
-function newsletter_importa_csv(string $file, int $lista, bool $flussi = false): array {
-    newsletter_schema();
-    $f = fopen($file, 'r');
-    if (!$f) return ['errore' => 'File illeggibile.'];
-    $prima = (string)fgets($f);
-    $prima = preg_replace('/^\xEF\xBB\xBF/', '', $prima);
-    $sep = substr_count($prima, ';') > substr_count($prima, ',') ? ';' : ',';
-    $testa = array_map(fn($x) => mb_strtoupper(trim($x, " \t\n\r\0\x0B\"")), str_getcsv($prima, $sep, '"', '\\'));
-    $col = fn(array $nomi) => array_values(array_filter(array_keys($testa), fn($i) => in_array($testa[$i], $nomi, true)))[0] ?? null;
-    $cE = $col(['EMAIL', 'E-MAIL', 'INDIRIZZO EMAIL']);
-    $cN = $col(['NOME', 'FIRSTNAME', 'FIRST NAME', 'PRENOM']);
-    $cC = $col(['COGNOME', 'LASTNAME', 'LAST NAME', 'NOM']);
-    $cD = $col(['CONSENSO', 'CONSENSO_AT', 'DATA CONSENSO', 'DATA_CONSENSO', 'DATA ISCRIZIONE', 'OPTIN', 'OPT_IN', 'OPTIN_DATE', 'DATE_OPTIN', 'DOUBLE_OPT-IN', 'CONSENT_DATE']);
-    if ($cE === null) return ['errore' => 'Nel file manca la colonna EMAIL.'];
-    $n = ['nuovi' => 0, 'gia' => 0, 'scartati' => 0, 'saltati' => 0];
-    $ora = moduli_adesso();
-    $ins = db()->prepare('INSERT IGNORE INTO ' . tbl('newsletter_iscritti') . " (email, nome, cognome, stato, fonte, consenso_versione, consenso_at, creato, aggiornato)
-        VALUES (?, ?, ?, 'attivo', 'import', 'import', ?, ?, ?)");
-    $chi = db()->prepare('SELECT id, stato FROM ' . tbl('newsletter_iscritti') . ' WHERE email = ?');
-    $pulisci = fn($v) => mb_substr(trim(preg_replace('/[\x{10000}-\x{10FFFF}]/u', '', (string)$v)), 0, 100);
-    while (($r = fgetcsv($f, 0, $sep, '"', '\\')) !== false) {
-        $email = mb_strtolower(trim((string)($r[$cE] ?? '')));
-        if (!filter_var($email, FILTER_VALIDATE_EMAIL) || strlen($email) > 190) { $n['scartati']++; continue; }
-        if (newsletter_soppresso($email)) { $n['saltati']++; continue; }
-        $chi->execute([$email]);
-        $c = $chi->fetch();
-        if ($c && in_array($c['stato'], NL_BLOCCATI, true)) { $n['saltati']++; continue; } // 2.8.0: anche chi è in lista nera a mano
-        if (!$c) {
-            $ins->execute([$email, $pulisci($cN !== null ? ($r[$cN] ?? '') : ''), $pulisci($cC !== null ? ($r[$cC] ?? '') : ''), $cD !== null ? newsletter_data_csv((string)($r[$cD] ?? '')) : null, $ora, $ora]);
-            if ($ins->rowCount()) { $n['nuovi']++; newsletter_storia_scrivi(newsletter_id_da_email($email), 'importato', 'Importato da un file CSV'); } else $n['gia']++;
-        } else {
-            $n['gia']++;
-        }
-        if ($lista) newsletter_in_lista(newsletter_id_da_email($email), $lista, $flussi);
-    }
-    fclose($f);
-    return $n;
-}
+// 2.9.0: newsletter_importa_csv() sta in includes/newsletter-importa.php (involucro del motore nuovo dell'importazione).
 
 // ------------------------------------------------------------
 // Campagne: dall'editor all'email
@@ -1031,3 +989,4 @@ function newsletter_invia_giro(?int $massimo = null): array {
 
 require_once __DIR__ . '/newsletter-flussi.php';
 require_once __DIR__ . '/newsletter-contatti.php'; // 2.8.0: contatti, attributi, cartelle (come Brevo)
+require_once __DIR__ . '/newsletter-importa.php'; // 2.9.0: importazione, esportazione, lista dei test (come Brevo)

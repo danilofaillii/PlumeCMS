@@ -736,3 +736,30 @@ details.nlx-riquadro > summary:focus-visible { outline: 2px solid var(--coral); 
 .nlk-link li, .nlk-cronologia li { padding: .35rem 0; border-bottom: 1px solid var(--border); overflow-wrap: anywhere; }
 .nlk-cronologia time { color: var(--text-muted); margin-right: .4rem; white-space: nowrap; }
 .nlk-pref-stato { font-size: 1rem; margin-bottom: .6rem; }
+/* 2.9.0: Importa contatti (newsletter-importa.php) ed Esporta (newsletter-contatti.php), come Brevo */
+.nli-largo { max-width: 860px; }
+.nli-passi { list-style: none; display: flex; flex-wrap: wrap; gap: .4rem; margin: 0 0 1.1rem; padding: 0; counter-reset: none; }
+.nli-passi li { display: flex; align-items: center; gap: .45rem; padding: .45rem .8rem; border: 1px solid var(--border); border-radius: 999px; font-size: .88rem; color: var(--text-muted); background: var(--surface); }
+.nli-passi li.qui { color: var(--text); font-weight: 700; border-color: var(--coral); box-shadow: inset 0 0 0 1px var(--coral); }
+.nli-passi li.fatto { color: var(--text); }
+.nli-passi a { color: inherit; display: inline-flex; gap: .45rem; align-items: center; min-height: 32px; }
+.nli-numero { display: inline-flex; align-items: center; justify-content: center; width: 1.6rem; height: 1.6rem; border-radius: 50%; border: 1px solid var(--bordo-campo); font-weight: 700; font-size: .8rem; }
+.nli-passi li.qui .nli-numero { background: var(--coral); color: var(--su-accento); border-color: var(--coral); }
+.nli-esempi { list-style: none; margin: 0; padding: 0; font-size: .82rem; color: var(--text-muted); }
+.nli-esempi li { overflow-wrap: anywhere; }
+.nli-abbina select[data-nli-col] { width: 100%; min-width: 0; padding: .55rem .75rem; border: 1px solid var(--bordo-campo); border-radius: 8px; font: inherit; font-size: .92rem; min-height: 44px; }
+.nli-nuovo { margin-top: .6rem; padding: .6rem .7rem 0; border-left: 3px solid var(--coral); background: var(--fondo-2); border-radius: 0 6px 6px 0; }
+.nli-barra { height: 14px; background: var(--fondo-2); border: 1px solid var(--bordo-campo); border-radius: 999px; overflow: hidden; margin: .8rem 0 .5rem; }
+.nli-barra span { display: block; height: 100%; width: 0; background: var(--coral); transition: width .4s; }
+.nli-riepilogo { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 190px), 1fr)); gap: .6rem; margin: 0 0 1rem; }
+.nli-riepilogo div { border: 1px solid var(--border); border-radius: 8px; padding: .55rem .7rem; min-width: 0; }
+.nli-riepilogo dt { font-size: .78rem; color: var(--text-muted); }
+.nli-riepilogo dd { margin: 0; font-weight: 600; overflow-wrap: anywhere; }
+.nli-opzioni .hint { margin: -.1rem 0 .5rem 1.7rem; }
+.nli-consenso { border: 1px solid var(--bordo-campo); border-radius: 8px; padding: .7rem .9rem; margin: 0 0 1rem; }
+.nli-consenso.sbagliato { border: 2px solid var(--errore-testo); }
+.nli-consenso label { display: flex; gap: .5rem; align-items: flex-start; font-weight: 600; }
+.nli-consenso input { margin-top: .25rem; width: 20px; height: 20px; flex: none; }
+.nli-note { margin: 0 0 1rem; padding-left: 1.2rem; font-size: .88rem; }
+.nli-lascia { margin-top: .75rem; }
+.nlx-esp-colonne { max-height: 16rem; overflow: auto; }

@@ -19,6 +19,8 @@ location ~ ^/cron-[a-z-]+\.php$ { deny all; return 404; }
 
 # Nelle cartelle delle immagini e dei pacchetti non si esegue niente (PHP spento: nessun fastcgi_pass qui)
 location ~ ^/(uploads|aggiornamenti|logs|assets)/.*\.(php|phtml|php[0-9]|phps|phar|pl|py|cgi|sh)$ { deny all; return 404; }
+# 2.9.0: file riservati e file dei contatti (importazioni, esportazioni): su Apache li chiude il loro .htaccess.
+location ~ ^/uploads/(riservati|contatti)-[a-f0-9]+/ { deny all; return 404; }
 location ~ ^/uploads/.*\.svg$ { add_header Content-Security-Policy "sandbox; script-src 'none'; default-src 'self' data:"; add_header X-Content-Type-Options nosniff; }
 
 # Il pannello, le API e l'installatore sono cartelle con i loro file PHP
