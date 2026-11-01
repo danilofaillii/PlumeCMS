@@ -165,7 +165,7 @@ const idDi = (e) => +uno(`SELECT id FROM {p}newsletter_iscritti WHERE email = '$
   ok('statistiche dei 90 giorni dai dati che c\'erano (coda ed eventi)', /Inviate\s*1/.test(t) && /Aperte\s*1/.test(t) && /Cliccate\s*1/.test(t) && /esempio\.it\/offerta/.test(t), t.slice(t.indexOf('Statistiche'), t.indexOf('Statistiche') + 300));
   await vai('newsletter-contatto.php?id=' + a1 + '&scheda=cronologia');
   t = await testo('table');
-  ok('Cronologia: campagna ricevuta, apertura, clic, liste', /Ha ricevuto la campagna «PC Campagna inviata»/.test(t) && /Ha aperto/.test(t) && /Ha cliccato/.test(t) && /Aggiunto alla lista «PC Clienti»/.test(t), t.slice(0, 300));
+  ok('Cronologia: campagna ricevuta, apertura, clic, liste', /Ha ricevuto la campagna «PC Campagna inviata»/.test(t) && /Ha aperto/.test(t) && /Ha cliccato/.test(t) && (process.env.MIGRATO || /Aggiunto alla lista «PC Clienti»/.test(t)), t.slice(0, 300)); // le liste di prima della 2.8.0 non hanno storia
   await p.selectOption('#nlk-tipo', 'clic'); await invia('button:has-text("Filtra")');
   t = await testo('table');
   ok('Cronologia filtrata per tipo', /Ha cliccato/.test(t) && !/Ha ricevuto/.test(t), t.slice(0, 200));
