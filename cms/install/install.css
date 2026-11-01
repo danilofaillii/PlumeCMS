@@ -97,3 +97,10 @@ code { background: var(--bg); padding: 1px 5px; border-radius: 4px; font-size: .
    sottile del browser, quasi invisibile sul pulsante blu). */
 .btn:focus-visible, .btn-filo:focus-visible, main a:focus-visible, .sm-spunta:has(input:focus-visible) { outline: 3px solid var(--coral); outline-offset: 2px; }
 .btn:focus-visible { box-shadow: 0 0 0 5px var(--fuoco); }
+/* 2.5.x (scelte di Danilo): l'errore sotto il campo sbagliato, e il pulsante del passo 4 con la carta Su misura */
+.campo.sbagliato input, .campo.sbagliato select { border-color: var(--errore-testo); border-width: 2px; }
+.errore-campo { color: var(--errore-testo); font-size: .86rem; font-weight: 600; margin: 4px 0 0; }
+.errore > p { margin: 0 0 6px; font-weight: 600; }
+.testo-domande { display: none; }
+form:has(.kit-su-misura input:checked) .testo-installa { display: none; }
+form:has(.kit-su-misura input:checked) .testo-domande { display: inline; }
