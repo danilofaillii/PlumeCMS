@@ -70,7 +70,7 @@ const sfondo = (p) => p.evaluate(() => getComputedStyle(document.body).backgroun
   // 5. Tema guasto: avviso e riprova
   await p.goto(B + '/admin/temi.php');
   rispondi = true;
-  await Promise.all([p.waitForNavigation(), p.click('#tema-rotto button:has-text("Attiva")')]);
+  await Promise.all([p.waitForNavigation(), p.click('#tema-rotto button:has-text("Usa questo tema")')]);
   await sito.goto(B + '/non-esiste/', { waitUntil: 'networkidle' });
   await p.goto(B + '/admin/temi.php', { waitUntil: 'networkidle' });
   const av = await p.locator('.tt-guasto').innerText().catch(() => '');
