@@ -17,7 +17,8 @@ Statistiche delle visite senza cookie, Area riservata, Corsi online, Copia del s
 - Novità per versione: `CHANGELOG.md`. Versione corrente: file `VERSIONE`.
 
 Requisiti: PHP 8.2 o più recente (collaudato con 8.4) con PDO MySQL, mbstring, openssl, json; MySQL 8 o MariaDB 10.6+;
-Apache con mod_rewrite oppure Nginx. Nessuna libreria esterna da installare: Quill e SortableJS sono dentro.
+Apache con mod_rewrite oppure Nginx; limite di caricamento (`upload_max_filesize` e `post_max_size`) di almeno 8 MB per i
+pacchetti di aggiornamento. Nessuna libreria esterna da installare: Quill e SortableJS sono dentro.
 
 ## Licenza
 

@@ -229,7 +229,7 @@ async function contrastoParole(pg) {
       const voci = [...col.querySelectorAll('li')];
       return { voci: voci.map(e => e.textContent.trim()), fondo: Math.max(...voci.map(e => e.getBoundingClientRect().bottom)), sinistra: g.getBoundingClientRect().bottom };
     });
-    ok('Scarica: novità, elenco breve con l\'ultima versione in cima', r && r.voci.length >= 3 && r.voci.length <= 8 && /^2\.16\.0: Form a cinque passi/.test(r.voci[0]), r && r.voci);
+    ok('Scarica: novità, elenco breve con l\'ultima versione in cima', r && r.voci.length >= 3 && r.voci.length <= 8 && /^2\.16\.1: Il limite di caricamento/.test(r.voci[0]), r && r.voci);
     const terzi = (r ? r.voci.join(' ') : '').match(/brevo|google|wordpress|linkedin|facebook|instagram|whatsapp|telegram|mailgun|amazon|dropbox|indexnow|search console|gnu/gi) || [];
     ok('Scarica: nelle novità nessun nome di aziende terze', r && terzi.length === 0, terzi);
     ok('Scarica: le novità finiscono non oltre il riquadro Cosa serve', r && r.fondo <= r.sinistra + 2, r && { fondo: r.fondo, sinistra: r.sinistra }); }

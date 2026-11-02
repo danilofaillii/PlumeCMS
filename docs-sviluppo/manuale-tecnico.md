@@ -5059,6 +5059,13 @@ campo è arrivato; prima la risposta era "Token CSRF non valido". Nel browser, `
 (ko se spento); `versione_http()` (`includes/versione-nuova.php`) con il valore spento lancia un errore che dice la causa invece di
 "non risponde" (fopen di un https non parte). `consegna.php` e le chiamate di Google usano cURL quando c'è, quindi non ne dipendono.
 
+**Limite di caricamento di almeno 8 MB** (2.16.1, scelta di Danilo: dalla 2.12.0 lo zip di aggiornamento supera i 2 MB predefiniti
+di PHP). Il limite è il più piccolo fra `upload_max_filesize` e `post_max_size`, in byte, 0 se non si sa: `inst_limite_caricamento()`
+(`install/index.php`), `agg_limite_caricamento()` (`includes/aggiornamenti.php`) e una copia dentro `server_controlli()` (per opcache:
+nessuna funzione nuova chiamata da un altro file). Installatore: riga "Limite di caricamento di almeno 8 MB" in `inst_requisiti()`, solo
+avviso (l'installazione va, e Installa ora scarica da sé). Aggiornamenti: la riga del limite in `agg_controlli()` è NO sotto 8 MB, con
+dove si alza. Controlla il server: riga "Limite di caricamento" nel gruppo PHP e database, avviso sotto 8 MB.
+
 **Download** (`admin/scaricabili.php`): i giorni dei link personali stanno nel riquadro `#dl-riservati` ("Link dei file
 riservati", riga 152), fuori dal form di caricamento; prima un secondo "Salva" sotto "Carica" salvava i giorni e perdeva il file
 scelto (segnalazione di Danilo, 1 novembre 2026).

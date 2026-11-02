@@ -774,6 +774,17 @@ function get_article_by_slug_any(string $slug): ?array {
     return $a ?: null;
 }
 
+/** Il limite di caricamento del server in byte: il più piccolo fra upload_max_filesize e post_max_size (0 se non si sa). */
+function agg_limite_caricamento(): int {
+    $b = function (string $v): int {
+        $v = trim($v); if ($v === '') return 0;
+        $n = (float)$v; $u = strtolower(substr($v, -1));
+        return (int)($u === 'g' ? $n * 1073741824 : ($u === 'm' ? $n * 1048576 : ($u === 'k' ? $n * 1024 : $n)));
+    };
+    $l = array_filter([$b((string)ini_get('upload_max_filesize')), $b((string)ini_get('post_max_size'))], fn($x) => $x > 0);
+    return $l ? (int)min($l) : 0;
+}
+
 /** Controlli di sistema mostrati in cima alla pagina. */
 function agg_controlli(): array {
     $c = [];
@@ -784,6 +795,9 @@ function agg_controlli(): array {
     $c[] = ['ok' => is_file(agg_site_root() . '/index.php') && str_contains((string)file_get_contents(agg_site_root() . '/index.php'), 'sito/index.php'),
         'testo' => 'Sito installato nella radice: ' . agg_site_root() . '/index.php'];
     $lim = ini_get('upload_max_filesize') . ' / ' . ini_get('post_max_size');
-    $c[] = ['ok' => true, 'testo' => 'Limite di caricamento del server: ' . $lim];
+    // 2.16.1: i pacchetti di aggiornamento pesano più di 2 MB; il requisito è almeno 8 MB.
+    $limB = agg_limite_caricamento();
+    $c[] = ['ok' => $limB === 0 || $limB >= 8 * 1048576, 'testo' => 'Limite di caricamento del server: ' . $lim
+        . ($limB > 0 && $limB < 8 * 1048576 ? ' (serve almeno 8 MB: si alza da cPanel, MultiPHP INI Editor, upload_max_filesize e post_max_size a 8M)' : '')];
     return $c;
 }

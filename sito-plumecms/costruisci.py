@@ -441,6 +441,7 @@ def documentazione(pagine_pdf):
 
 REQUISITI = [{'celle': 'Cosa | Serve'}, {'celle': 'PHP | 8.2 o più nuovo, con PDO MySQL, mbstring, openssl, json'},
              {'celle': 'Database | MySQL 8 oppure MariaDB 10.6 o più nuovo'}, {'celle': 'Server web | Apache con mod_rewrite (il .htaccess è già pronto) oppure Nginx'},
+             {'celle': 'Caricamento | limite di almeno 8 MB (upload_max_filesize e post_max_size), per gli aggiornamenti'},
              {'celle': 'Consigliati | GD o Imagick per le immagini, ZipArchive per aggiornamenti e temi'},
              {'celle': 'Spazio | pochi megabyte per il CMS, più le tue immagini'}]
 
@@ -713,6 +714,7 @@ def zip_lavagna(dest):
 # Regola di Danilo (1 novembre 2026): solo i punti salienti, una riga per versione, mai nomi di aziende o servizi di terzi.
 # Le novità per chi scarica: brevi, scritte qui (il CHANGELOG è per chi sviluppa). Da aggiornare a ogni versione.
 NOVITA = [
+    ('2.16.1', 'Il limite di caricamento fra i requisiti', ['Almeno 8 MB per caricare gli aggiornamenti: l\'installatore e il pannello lo controllano.']),
     ('2.16.0', 'Form a cinque passi e consenso', ['Form costruiti in cinque passi, con la loro pagina, il codice da incollare e il QR; consenso e preferenze per ogni contatto.']),
     ('2.15.0', 'Le automazioni', ['Percorsi disegnati sulla tela con inneschi, attese, bivi e rami: ognuno riceve l\'email giusta al momento giusto.']),
     ('2.14.0', 'Report, statistiche e orario migliore', ['Il report di ogni campagna con la mappa dei clic, le statistiche di un periodo e l\'invio all\'ora in cui ognuno apre.']),

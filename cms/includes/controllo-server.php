@@ -69,6 +69,18 @@ function server_controlli(): array {
     $php[] = $c('allow_url_fopen', $fopen ? 'ok' : 'ko', $fopen ? 'Acceso: il sito può chiamare altri siti (per esempio per sapere se c\'è una versione nuova).'
             : 'Spento: il sito non può chiamare altri siti. Non funzionano "Nuova versione disponibile" e Installa ora, e alcune prove di questa pagina.',
         $fopen ? '' : 'Accendilo dal pannello dell\'hosting: in cPanel, MultiPHP INI Editor, scegli il dominio e metti allow_url_fopen su On (Enabled). Poi ricarica questa pagina.');
+    // 2.16.1: il limite di caricamento, requisito di almeno 8 MB per i pacchetti di aggiornamento.
+    $limB = (function (): int {
+        $b = function (string $v): int { $v = trim($v); if ($v === '') return 0; $n = (float)$v; $u = strtolower(substr($v, -1));
+            return (int)($u === 'g' ? $n * 1073741824 : ($u === 'm' ? $n * 1048576 : ($u === 'k' ? $n * 1024 : $n))); };
+        $l = array_filter([$b((string)ini_get('upload_max_filesize')), $b((string)ini_get('post_max_size'))], fn($x) => $x > 0);
+        return $l ? (int)min($l) : 0;
+    })();
+    $limOk = $limB === 0 || $limB >= 8 * 1048576;
+    $limT = ini_get('upload_max_filesize') . ' / ' . ini_get('post_max_size');
+    $php[] = $c('Limite di caricamento', $limOk ? 'ok' : 'avviso', $limOk ? 'upload_max_filesize e post_max_size: ' . $limT . '. Bastano per caricare i pacchetti di aggiornamento.'
+            : 'upload_max_filesize e post_max_size: ' . $limT . '. Sotto gli 8 MB i pacchetti di aggiornamento non si caricano da Impostazioni > Aggiornamenti.',
+        $limOk ? '' : 'Alzali a 8M o più dal pannello dell\'hosting: in cPanel, MultiPHP INI Editor, scegli il dominio, upload_max_filesize e post_max_size a 8M. Poi ricarica questa pagina.');
     $mysql = '';
     try { $mysql = (string)db()->query('SELECT VERSION()')->fetchColumn(); } catch (Throwable $e) {}
     $php[] = $c('Database', $mysql !== '' ? 'ok' : 'ko', $mysql !== '' ? 'MySQL ' . $mysql . ' risponde.' : 'Il database non risponde.', $mysql !== '' ? '' : 'Controlla i dati del database in includes/config.local.php, o chiedi all\'hosting se il database è acceso.');

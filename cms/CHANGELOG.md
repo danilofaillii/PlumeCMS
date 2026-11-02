@@ -2,6 +2,13 @@
 
 Il prodotto si chiama **plumeCMS** (nome scelto il 26 ottobre 2026; prima, per poche ore, "CarbonaraCMS", e ancora prima il provvisorio "Officina": gli zip vecchi si chiamavano `officina-*` e `carbonaracms-*`).
 
+## 2.16.1 (2 novembre 2026) - Il limite di caricamento fra i requisiti
+
+- **Requisito nuovo: limite di caricamento di almeno 8 MB** (`upload_max_filesize` e `post_max_size`), perché i pacchetti di
+  aggiornamento pesano più dei 2 MB che molti hosting hanno di partenza. L'installatore lo controlla al primo passo (sotto
+  8 MB un avviso, l'installazione va avanti), Impostazioni > Aggiornamenti e Controlla il server lo dicono con dove alzarlo.
+- Requisito scritto anche in INSTALLA.md, README.md, nel manuale d'uso e nella tabella "Cosa serve" del sito di plumeCMS.
+
 ## 2.16.0 (2 novembre 2026) - Form a cinque passi, pagine pubbliche e consenso
 
 - **Costruttore dei form a cinque passi** con Avanti: Impostazione, Aspetto e campi, Messaggi, Conferma, Condividi. Tipi

@@ -50,6 +50,17 @@ function inst_url_rilevato(): string {
     return cms_origine() . cms_base();
 }
 
+/** Il limite di caricamento del server in byte: il più piccolo fra upload_max_filesize e post_max_size (0 se non si sa). */
+function inst_limite_caricamento(): int {
+    $b = function (string $v): int {
+        $v = trim($v); if ($v === '') return 0;
+        $n = (float)$v; $u = strtolower(substr($v, -1));
+        return (int)($u === 'g' ? $n * 1073741824 : ($u === 'm' ? $n * 1048576 : ($u === 'k' ? $n * 1024 : $n)));
+    };
+    $l = array_filter([$b((string)ini_get('upload_max_filesize')), $b((string)ini_get('post_max_size'))], fn($x) => $x > 0);
+    return $l ? (int)min($l) : 0;
+}
+
 /** I requisiti: ognuno con esito e spiegazione in italiano semplice. */
 function inst_requisiti(string $radice): array {
     $r = [];
@@ -59,6 +70,11 @@ function inst_requisiti(string $radice): array {
     }
     $r[] = ['gd oppure imagick (immagini)', extension_loaded('gd') || extension_loaded('imagick'), 'Senza, le immagini si caricano lo stesso ma non si ridimensionano.', true];
     $r[] = ['zip (pacchetti di aggiornamento)', class_exists('ZipArchive'), 'Senza, il pannello Aggiornamenti non apre i pacchetti.', true];
+    // 2.16.1 (scelta di Danilo): gli aggiornamenti pesano più di 2 MB, il predefinito di PHP. L'installazione va lo stesso
+    // (e Installa ora scarica da sé, senza caricare niente): per questo è un avviso, non un blocco.
+    $lim = inst_limite_caricamento();
+    $r[] = ['Limite di caricamento di almeno 8 MB (hai ' . ($lim > 0 ? round($lim / 1048576, 1) . ' MB' : 'un limite sconosciuto') . ')', $lim === 0 || $lim >= 8 * 1048576,
+        'Serve per caricare i pacchetti di aggiornamento da Impostazioni > Aggiornamenti (pesano più di 2 MB). Si alza da cPanel, voce MultiPHP INI Editor (o Select PHP Version, Options): upload_max_filesize e post_max_size a 8M o più.', true];
     foreach (['uploads', 'includes', 'aggiornamenti', 'logs'] as $c) {
         $p = $radice . '/' . $c;
         if (!is_dir($p)) @mkdir($p, 0755, true);

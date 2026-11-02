@@ -13,6 +13,10 @@ let n = 0, ko = 0; const ok = (t, c, extra = '') => { n++; if (!c) ko++; console
   ok('senza config.local.php la home apre l\'installatore', p.url().includes('/install/'), p.url());
   await shot('install-1-requisiti');
   ok('requisiti: nessuna voce "Manca"', await p.locator('.requisiti li.no').count() === 0);
+  // 2.16.1: il limite di caricamento di almeno 8 MB, solo avviso (con il limite di partenza di PHP, 2 MB, l'installazione va avanti).
+  { const r = await p.locator('.requisiti li', { hasText: 'Limite di caricamento di almeno 8 MB' }).first();
+    const cl = (await r.count()) ? await r.getAttribute('class') : '';
+    ok('requisiti: c\'è il limite di caricamento di almeno 8 MB (OK o Avviso, mai Manca)', cl === 'ok' || (cl === 'avviso' && /MultiPHP INI Editor/.test(await r.innerText())), cl); }
   await p.click('a.btn:has-text("Avanti")'); await p.waitForLoadState('networkidle');
   // 2. database
   await p.fill('#host', '127.0.0.1:3308'); await p.fill('#nome', DB); await p.fill('#utente', 'danilo'); await p.fill('#password', process.env.DBPASS || '');

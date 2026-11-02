@@ -8,7 +8,8 @@
    Tieni a portata di mano nome, utente e password.
 3. **Apri il sito nel browser.** Finché non esiste `includes/config.local.php`, qualsiasi indirizzo apre l'installatore
    (`/install/`). Il primo passo controlla i requisiti: PHP 8.2 o più recente, le estensioni, le cartelle scrivibili
-   (`uploads/`, `includes/`, `aggiornamenti/`, `logs/`).
+   (`uploads/`, `includes/`, `aggiornamenti/`, `logs/`) e il limite di caricamento di almeno 8 MB (`upload_max_filesize` e
+   `post_max_size`), che serve per caricare i pacchetti di aggiornamento: se è più basso compare un avviso.
 4. **Compila i tre passi**: database (con il prefisso delle tabelle, di norma `cms_`), sito (nome, descrizione, indirizzo
    rilevato e modificabile, lingua, fuso orario, email) e amministratore (nome utente, email, password di almeno 12 caratteri, non tra le più comuni).
 5. **Scegli che sito vuoi fare e installa.** Vuoto (le pagine di sempre), Personale, Attività, Blog o Portfolio: con un

@@ -32,6 +32,12 @@ Questo manuale racconta come si usa plumeCMS. Per costruire un tema c'è il manu
 sbagliata** e in cima riassume quante sono ("2 campi da sistemare"). Se il database non risponde, dice in italiano cosa
 controllare e dove (per esempio "Utente o password del database sbagliati. Controlla in cPanel, voce Database MySQL...").
 
+Un requisito da sapere subito: il **limite di caricamento** dell'hosting deve essere di **almeno 8 MB**. I pacchetti di
+aggiornamento pesano più di 2 MB, il limite che molti hosting hanno di partenza. L'installatore lo controlla al primo
+passo (se è più basso compare un **Avviso**, e l'installazione va avanti lo stesso), e lo ricontrollano Impostazioni >
+Aggiornamenti e Controlla il server. Si alza da cPanel, voce **MultiPHP INI Editor**: scegli il dominio e metti
+`upload_max_filesize` e `post_max_size` a `8M` o più.
+
 ---
 
 ## 1. Il pannello in cinque minuti
@@ -3288,8 +3294,9 @@ all'ultima: non serve passare da quelle in mezzo.
 
 **Se qualcosa non va**
 
-- *"Il file supera il limite di caricamento del server".* Lo zip è più grande di quello che l'hosting accetta: chiedi
-  di alzare il limite, oppure usa **Scarica e prepara**, che non passa dal caricamento.
+- *"Il file supera il limite di caricamento del server".* Lo zip è più grande di quello che l'hosting accetta. Il requisito
+  è di almeno 8 MB: in cPanel, MultiPHP INI Editor, metti `upload_max_filesize` e `post_max_size` a `8M` o più. Oppure
+  usa **Scarica e prepara**, che non passa dal caricamento.
 - *Qualcosa non va dopo l'aggiornamento.* In fondo alla pagina c'è **Snapshot**: la copia fatta prima. **Ripristina**
   torna a com'era.
 
