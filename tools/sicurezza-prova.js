@@ -1909,6 +1909,120 @@ echo json_encode($o);
     }
   }
 
+  // === 36. (2.14.0) Report delle campagne, statistiche, orario migliore: solo l'amministratore; id di campagne inesistenti,
+  // non partite o storti non aprono niente; elenchi e CSV fuori elenco rifiutati; nel CSV le celle con le formule escono con
+  // l'apostrofo; "Salva come lista" solo con il token e dal pannello; parametri del periodo, della lista e del confronto
+  // manipolati senza errori del database; orario migliore con ore e giorni storti, o in un test A/B, rifiutato. Serve CMS_DIR.
+  {
+    const path = require('path'), { execFileSync } = require('child_process');
+    const DIR36 = process.env.CMS_DIR || '';
+    const PR = ADMIN + '/newsletter-report.php', PS = ADMIN + '/newsletter-statistiche.php', PCm = ADMIN + '/newsletter-campagna.php';
+    const ORIG = { 'Origin': BASE.replace(/(https?:\/\/[^/]+).*/, '$1') };
+    if (!DIR36) ok('2.14.0: (senza CMS_DIR le prove del report sono saltate)', true);
+    else {
+      const cli = (...a) => JSON.parse(execFileSync('php', [path.join(__dirname, '..', 'prove', 'report-cli.php'), DIR36, ...a.map(String)], { encoding: 'utf8' }).trim().split('\n').pop());
+      const q = (s) => cli('sql', s);
+      const uno = (s) => { const r = q(s); return r && r[0] ? Object.values(r[0])[0] : null; };
+      const pulisci = () => {
+        const ids = (q("SELECT id FROM {p}newsletter_campagne WHERE nome LIKE 'Sic36%'") || []).map(r => r.id).join(',') || '0';
+        q(`DELETE FROM {p}newsletter_eventi WHERE campagna_id IN (${ids})`); q(`DELETE FROM {p}newsletter_coda WHERE campagna_id IN (${ids})`);
+        q(`DELETE FROM {p}newsletter_ab WHERE campagna_id IN (${ids})`); q("DELETE FROM {p}newsletter_campagne WHERE nome LIKE 'Sic36%'");
+        q("DELETE FROM {p}newsletter_iscritti_liste WHERE iscritto_id IN (SELECT id FROM {p}newsletter_iscritti WHERE email LIKE '%@sic36.it')");
+        q("DELETE FROM {p}newsletter_iscritti WHERE email LIKE '%@sic36.it'"); q("DELETE FROM {p}newsletter_liste WHERE nome LIKE 'Sic36%' OR nome LIKE '%alert(36)%' OR nome = 'Lista36 sic'");
+      };
+      pulisci();
+      q("INSERT INTO {p}newsletter_iscritti (email, nome, cognome, stato, fonte, creato, aggiornato) VALUES ('sic36a@sic36.it', '=cmd|'' /C calc''!A0', '@SUM(1+1)', 'attivo', 'manuale', NOW(), NOW()), ('-2+3@sic36.it', '+39 333', '', 'attivo', 'manuale', NOW(), NOW())");
+      q("INSERT INTO {p}newsletter_campagne (nome, oggetto, corpo, liste, stato, invio_at, destinatari, inviate, creato, aggiornato) VALUES ('Sic36 inviata', 'Sic36', '<p>x</p>', '', 'inviata', NOW(), 2, 2, NOW(), NOW()), ('Sic36 bozza', 'Sic36', '<p>x</p>', '', 'bozza', NULL, 0, 0, NOW(), NOW()), ('Sic36 ab', 'Sic36', '<p>x</p>', '', 'bozza', NULL, 0, 0, NOW(), NOW())");
+      const CI = +uno("SELECT id FROM {p}newsletter_campagne WHERE nome = 'Sic36 inviata'"), CB = +uno("SELECT id FROM {p}newsletter_campagne WHERE nome = 'Sic36 bozza'"), CA = +uno("SELECT id FROM {p}newsletter_campagne WHERE nome = 'Sic36 ab'");
+      q(`UPDATE {p}newsletter_campagne SET tipo = 'ab' WHERE id = ${CA}`);
+      // Le due bozze vanno a una lista vera: così l'invio non si ferma prima per i destinatari, e la prova finale (valori buoni) passa.
+      q("INSERT INTO {p}newsletter_liste (nome, descrizione, creato) VALUES ('Lista36 sic', '', NOW())");
+      const L36 = +uno("SELECT id FROM {p}newsletter_liste WHERE nome = 'Lista36 sic'");
+      q(`INSERT INTO {p}newsletter_iscritti_liste (iscritto_id, lista_id, aggiunto) SELECT id, ${L36}, NOW() FROM {p}newsletter_iscritti WHERE email LIKE '%@sic36.it'`);
+      q(`UPDATE {p}newsletter_campagne SET liste = '${L36}' WHERE id IN (${CB}, ${CA})`);
+      try { q(`INSERT IGNORE INTO {p}newsletter_ab (campagna_id, cosa, oggetto_b, percentuale, criterio, durata, unita) VALUES (${CA}, 'oggetto', 'Sic36 B', 25, 'aperture', 2, 'ore')`); } catch (e) {}
+      q(`INSERT INTO {p}newsletter_coda (campagna_id, iscritto_id, stato, inviata_at) SELECT ${CI}, id, 'inviata', NOW() FROM {p}newsletter_iscritti WHERE email LIKE '%@sic36.it'`);
+      q(`INSERT INTO {p}newsletter_eventi (campagna_id, flusso_id, passo, iscritto_id, tipo, url, creato) SELECT ${CI}, 0, 0, id, 'apertura', '', NOW() FROM {p}newsletter_iscritti WHERE email LIKE '%@sic36.it'`);
+      q(`INSERT INTO {p}newsletter_eventi (campagna_id, flusso_id, passo, iscritto_id, tipo, url, creato) SELECT ${CI}, 0, 0, id, 'clic', 'https://esempio.it/sic36', NOW() FROM {p}newsletter_iscritti WHERE email = 'sic36a@sic36.it'`);
+      const liste = () => +uno("SELECT COUNT(*) FROM {p}newsletter_liste WHERE nome LIKE 'Sic36%' OR nome LIKE '%alert(36)%'");
+      // Senza login
+      const anon = await browser.newContext();
+      const a1 = await anon.request.get(PR + '?id=' + CI, { maxRedirects: 0 });
+      const a2 = await anon.request.get(PR + '?id=' + CI + '&csv=aperto', { maxRedirects: 0 });
+      const a3 = await anon.request.post(PR, { form: { id: String(CI), azione: 'lista', elenco: 'aperto', nome: 'Sic36 anonimo' }, maxRedirects: 0 });
+      ok('2.14.0: senza login niente report, niente CSV, nessuna lista', [a1, a2, a3].every(r => [302, 403].includes(r.status())) && !/sic36a@sic36\.it/.test(await a2.text()) && liste() === 0, [a1.status(), a2.status(), a3.status()]);
+      await anon.close();
+      // Id storti, inesistenti o di campagne non partite
+      const storti = [String(CB), '999999', '-1', '0', 'abc', `${CI} OR 1=1`, `${CI}'`, '1e3'];
+      const esiti = [];
+      for (const s of storti) { const r = await admin.ctx.request.get(PR + '?id=' + encodeURIComponent(s), { maxRedirects: 0 }); esiti.push([s, r.status(), (r.headers()['location'] || '').replace(/.*\//, '')]); }
+      const rArr = await admin.ctx.request.get(PR + '?id[]=' + CI, { maxRedirects: 0 });
+      esiti.push(['id[]', rArr.status(), (rArr.headers()['location'] || '').replace(/.*\//, '')]);
+      ok('2.14.0: report con ' + esiti.length + ' id storti, inesistenti, di una bozza o in un array: nessun report, si torna alle campagne', esiti.every(([, st, loc]) => st === 302 && !/newsletter-report/.test(loc)), esiti);
+      const c1 = await admin.ctx.request.get(PR + '?id=' + CB + '&csv=aperto', { maxRedirects: 0 });
+      const c2 = await admin.ctx.request.get(PR + '?id=' + CI + '&csv=' + encodeURIComponent('../../includes/config.local.php'), { maxRedirects: 0 });
+      const c3 = await admin.ctx.request.get(PR + '?id=' + CI + '&csv[]=aperto', { maxRedirects: 0 });
+      const c4 = await admin.ctx.request.get(PR + '?id=' + CI + '&csv=' + encodeURIComponent("aperto' OR '1'='1"), { maxRedirects: 0 });
+      ok('2.14.0: CSV di una bozza, con un percorso, in un array o con SQL: nessun file', [c1, c2, c4].every(r => r.status() === 302) && ![c1, c2, c3, c4].some(r => /text\/csv/.test(r.headers()['content-type'] || '')), [c1.status(), c2.status(), c3.status(), c4.status()]);
+      // CSV con le formule
+      const csv = await (await admin.ctx.request.get(PR + '?id=' + CI + '&csv=aperto')).text();
+      const righe = csv.replace(/^﻿/, '').trim().split(/\r?\n/).slice(1);
+      ok('2.14.0: CSV: le celle che cominciano con = + - @ escono con l\'apostrofo (nome, cognome, email)', righe.length === 2 && righe.some(r => r.includes("'=cmd|") && r.includes("'@SUM(1+1)")) && righe.some(r => r.startsWith("'-2+3@sic36.it") && r.includes("'+39 333")), righe);
+      const csvL = await (await admin.ctx.request.get(PR + '?id=' + CI + '&csv=cliccato&url=' + encodeURIComponent('https://evil.example/'))).text();
+      ok('2.14.0: CSV per un link che non è della campagna: il link si ignora (escono tutti quelli che hanno cliccato, niente errori)', csvL.trim().split(/\r?\n/).length === 2 && /sic36a@sic36\.it/.test(csvL));
+      // CSRF e valori storti di "Salva come lista"
+      const tk = await tokenDi(admin.p, PR + '?id=' + CI + '&scheda=aperture');
+      const p1 = await admin.ctx.request.post(PR, { headers: ORIG, form: { id: String(CI), azione: 'lista', elenco: 'aperto', nome: 'Sic36 senza token' }, maxRedirects: 0 });
+      const p2 = await admin.ctx.request.post(PR, { headers: { 'Origin': 'https://evil.example' }, form: { _csrf: tk, id: String(CI), azione: 'lista', elenco: 'aperto', nome: 'Sic36 da fuori' }, maxRedirects: 0 });
+      ok('2.14.0: «Salva come lista» senza token o da un altro sito: 403 e nessuna lista', [p1, p2].every(r => r.status() === 403) && liste() === 0, [p1.status(), p2.status()]);
+      for (const f of [{ elenco: 'tutti' }, { elenco: "aperto' OR '1'='1" }, { 'elenco[]': 'aperto' }, { id: String(CB) }, { id: '999999' }, { azione: 'segmento', elenco: 'uscito' }, { azione: 'segmento', elenco: 'rimbalzo' }]) {
+        const x = { _csrf: tk, id: String(CI), azione: 'lista', elenco: 'aperto', nome: 'Sic36 storta', ...f }; if (f['elenco[]']) delete x.elenco;
+        await admin.ctx.request.post(PR, { headers: ORIG, form: x, maxRedirects: 0 });
+      }
+      ok('2.14.0: elenco inventato, in un array o con SQL, campagna non partita o inesistente, segmento di un elenco che non lo ammette: nessuna lista né segmento', liste() === 0 && +uno("SELECT COUNT(*) FROM {p}newsletter_segmenti WHERE nome LIKE 'Sic36%'") === 0);
+      await admin.ctx.request.post(PR, { headers: ORIG, form: { _csrf: tk, id: String(CI), azione: 'lista', elenco: 'aperto', nome: 'Sic36 <img src=x onerror=alert(36)>' }, maxRedirects: 0 });
+      const nomeL = uno("SELECT nome FROM {p}newsletter_liste WHERE nome LIKE 'Sic36%'") || '';
+      await admin.p.goto(ADMIN + '/newsletter-contatti.php?scheda=liste', { waitUntil: 'networkidle' });
+      ok('2.14.0: il nome della lista con del codice si salva senza tag e non esce come codice', !/[<>]/.test(nomeL) && !/<img src=x onerror=alert\(36\)>/.test(await admin.p.content()), nomeL);
+      // Parametri del periodo, della lista e del confronto
+      const periodi = ["periodo=' OR 1=1--", 'periodo[]=30', 'periodo=scelto&da=2025-01-01;DROP TABLE x&a=2025-02-01', 'periodo=scelto&da=9999-99-99&a=0000-00-00', 'periodo=scelto&da=1900-01-01&a=2999-12-31',
+        'periodo=scelto&da[]=1&a[]=2', 'scheda=liste&lista=1 OR 1=1', 'scheda=liste&lista[]=1', 'scheda=liste&lista=-5', `confronta[]=${CI} OR 1=1&confronta[]=${CI}`, 'confronta[][]=1', 'confronta=1', `campagna[]=${CI}`, 'campagna=1 OR 1=1'];
+      const male = [];
+      for (const u of periodi) {
+        const r = await admin.ctx.request.get(PS + '?' + u.replace(/ /g, '%20').replace(/'/g, '%27').replace(/;/g, '%3B'), { maxRedirects: 0 });
+        const t = await r.text();
+        if (![200, 302].includes(r.status()) || /SQLSTATE|Fatal error|Warning:|Uncaught/.test(t) || (r.status() === 302 && /newsletter-report\.php\?id=[1-9]/.test(r.headers()['location'] || ''))) male.push([u, r.status()]);
+      }
+      ok('2.14.0: ' + periodi.length + ' parametri di periodo, lista, confronto e campagna manipolati: nessun errore del database, nessun report aperto per sbaglio', male.length === 0, male);
+      // Orario migliore storto e nel test A/B
+      const tkc = await tokenDi(admin.p, PCm + '?id=' + CB);
+      const prima = () => JSON.stringify(q(`SELECT stato, invio_at, orario_migliore, orario_ora FROM {p}newsletter_campagne WHERE id IN (${CB}, ${CA}) ORDER BY id`));
+      const p0 = prima();
+      for (const f of [{ orario_ora: '25' }, { orario_ora: '-1' }, { orario_ora: '10; DROP TABLE x' }, { 'orario_ora[]': '10' }, { orario_giorno: '2025-02-30' }, { orario_giorno: '2020-01-01' }, { 'orario_giorno[]': '2030-01-01' }, { orario_giorno: "2030-01-01' OR '1'='1" }]) {
+        const x = { _csrf: tkc, azione: 'invia', quando: 'migliore', orario_giorno: '2030-01-01', orario_ora: '10', ...f };
+        if (f['orario_ora[]']) delete x.orario_ora; if (f['orario_giorno[]']) delete x.orario_giorno;
+        await admin.ctx.request.post(PCm + '?id=' + CB, { headers: ORIG, form: x, maxRedirects: 0 });
+      }
+      await admin.ctx.request.post(PCm + '?id=' + CA, { headers: ORIG, form: { _csrf: tkc, azione: 'invia', quando: 'migliore', orario_giorno: '2030-01-01', orario_ora: '10' }, maxRedirects: 0 });
+      await admin.ctx.request.post(PCm + '?id=' + CB, { form: { azione: 'invia', quando: 'migliore', orario_giorno: '2030-01-01', orario_ora: '10' }, maxRedirects: 0 });
+      ok('2.14.0: orario migliore con ore e giorni storti, senza token o in un test A/B: la campagna non cambia', prima() === p0, [p0, prima()]);
+      await admin.ctx.request.post(PCm + '?id=' + CB, { headers: ORIG, form: { _csrf: tkc, azione: 'invia', quando: 'migliore', orario_giorno: '2030-01-01', orario_ora: '7' }, maxRedirects: 0 });
+      const buona = q(`SELECT stato, invio_at, orario_migliore, orario_ora FROM {p}newsletter_campagne WHERE id = ${CB}`)[0] || {};
+      ok('2.14.0: la prova di controllo con i valori buoni programma la campagna (le prove sopra sono vere)', buona.stato === 'programmata' && buona.invio_at === '2030-01-01 00:00:00' && +buona.orario_migliore === 1 && +buona.orario_ora === 7, buona);
+      // Redattore
+      if (red.dentro) {
+        const tr = await tokenDi(red.p, ADMIN + '/media.php');
+        const rr = [];
+        rr.push(await red.ctx.request.get(PR + '?id=' + CI, { maxRedirects: 0 }));
+        rr.push(await red.ctx.request.get(PR + '?id=' + CI + '&csv=aperto', { maxRedirects: 0 }));
+        rr.push(await red.ctx.request.get(PS, { maxRedirects: 0 }));
+        rr.push(await red.ctx.request.post(PR, { headers: ORIG, form: { _csrf: tr, id: String(CI), azione: 'lista', elenco: 'aperto', nome: 'Sic36 dal redattore' }, maxRedirects: 0 }));
+        ok('2.14.0: il redattore non apre report, CSV e statistiche e non crea liste', rr.every(x => [302, 403].includes(x.status()) && !/text\/csv/.test(x.headers()['content-type'] || '')) && liste() <= 1 && +uno("SELECT COUNT(*) FROM {p}newsletter_liste WHERE nome = 'Sic36 dal redattore'") === 0, rr.map(x => x.status()));
+      }
+      pulisci();
+    }
+  }
+
   // === pulizia: elimina il redattore di prova
   {
     await admin.p.goto(ADMIN + '/utenti.php', { waitUntil: 'networkidle' });

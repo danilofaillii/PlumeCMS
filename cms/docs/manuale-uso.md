@@ -2147,11 +2147,12 @@ Più sotto, **Manda una prova** (sotto, "La lista dei test").
 1. **Invia subito**: parte entro 5 minuti, al giro dopo del cron (capitolo 26).
 2. **Programma per giorno e ora**: parte da sola.
 3. Giorno e ora, nell'ora del sito (scritta accanto, per esempio Europe/Rome).
-4. Premi **Manda la campagna** e conferma. Il pulsante resta spento finché una sezione è da completare.
+4. **All'orario migliore**: a ognuno all'ora in cui di solito apre le tue email (sotto, "All'orario migliore").
+5. Premi **Manda la campagna** e conferma. Il pulsante resta spento finché una sezione è da completare.
 
 Una campagna programmata si cambia ancora: **Togli la programmazione** la rimette in bozza, **Annulla la campagna** la ferma
-per sempre. Mentre parte puoi **Sospendere l'invio** e **Riprenderlo**. Dopo, nella stessa pagina c'è il **Report**: quante
-partite, aperte, cliccate, quante persone sono uscite e perché.
+per sempre. Mentre parte puoi **Sospendere l'invio** e **Riprenderlo**. Dopo, nella stessa pagina c'è il riquadro **Report**
+con i numeri principali e il pulsante **Apri il report completo** (sotto, "Il report della campagna").
 
 **Checklist**
 
@@ -2160,6 +2161,35 @@ partite, aperte, cliccate, quante persone sono uscite e perché.
 - [ ] Ho mandato una prova alla lista dei test e l'ho aperta, anche dal telefono.
 - [ ] Il numero dei destinatari è quello che mi aspetto.
 - [ ] In Impostazioni c'è l'indirizzo dell'azienda (sotto, "Il piede dell'email").
+
+### All'orario migliore
+
+Ognuno legge la posta a orari suoi: chi la mattina presto, chi la sera. Con **All'orario migliore** la campagna parte nel
+giorno che scegli, ma a ogni contatto arriva all'ora in cui di solito apre le tue email.
+
+Esempio: "Il catalogo di gennaio" ai Clienti di dicembre, domani. Marco apre sempre verso le 8 e la riceve alle 8:00; Anna
+verso le 18 e la riceve alle 18:00; chi è nuovo, o ha aperto poco, la riceve alle 10:00.
+
+![All'orario migliore](immagini/manuale-uso/19o-orario.jpg)
+
+1. Scegli **All'orario migliore** e il **Giorno**.
+2. **Chi non ha ancora un orario suo, alle**: l'ora per chi non ha abbastanza aperture (10:00 di partenza).
+3. Dopo il salvataggio la sezione dice quanti destinatari hanno un orario loro, e a che ora: per esempio "12 dei 39
+   destinatari hanno un orario loro: 08:00 (6), 18:00 (6)".
+4. **Come si calcola l'orario migliore**: la spiegazione, nella pagina.
+
+Come si calcola: per ogni contatto si guardano le email che ha aperto negli ultimi 12 mesi (campagne e automazioni); l'ora del
+giorno in cui ha aperto più volte è il suo orario, e a parità vale quella dell'apertura più recente. Servono almeno due
+aperture. Nel giorno scelto la campagna parte a mezzanotte e ogni email aspetta l'inizio dell'ora del suo contatto; se scegli
+oggi, chi ha un orario già passato la riceve subito. Il cron passa ogni 5 minuti e rispetta il limite di email all'ora:
+con tanti contatti alla stessa ora qualcuno la riceve un po' dopo. Niente invio a lotti con l'orario migliore, e niente
+orario migliore nel test A/B (i due gruppi devono partire insieme).
+
+**Checklist dell'orario migliore**
+
+- [ ] I miei contatti hanno già aperto qualche campagna (con una lista nuova quasi nessuno ha un orario suo).
+- [ ] L'ora per chi non ha dati è un'ora in cui di solito si legge la posta.
+- [ ] Il giorno lascia a tutti le loro ore: se scelgo oggi nel pomeriggio, chi apre la mattina la riceve subito.
 
 ### Il test A/B
 
@@ -2240,7 +2270,7 @@ usano dopo la fine del test.
 2. Le **viste**: Tutte, Bozze, Programmate, In invio, Inviate, Sospese, Annullate, Archiviate, con quante ce ne sono.
 3. **Azioni**, per ogni campagna:
    - **Apri** (o **Apri e modifica** per una bozza);
-   - **Report**: i numeri della campagna e i link più cliccati (anche in Newsletter e form > Statistiche);
+   - **Report**: il report della campagna (sotto, "Il report della campagna");
    - **Duplica**: una copia in bozza; scegli cosa copiare (mittente, destinatari, oggetto, design, impostazioni);
    - **Invia ai nuovi contatti**: una copia che arriva solo a chi non ha ricevuto la prima (per esempio chi si è iscritto
      dopo). Nasce in bozza: la mandi dal suo riepilogo;
@@ -2248,6 +2278,77 @@ usano dopo la fine del test.
      sola per campagna, e non per quelle mandate a lotti;
    - **Archivia**: la toglie dalla vista Tutte (solo inviate, sospese o annullate); dalla vista Archiviate la rimetti;
    - **Annulla la campagna** (programmata, in invio o sospesa) ed **Elimina** (solo le bozze), in rosso, con la conferma.
+
+### Il report della campagna
+
+Dopo l'invio ogni campagna ha il suo report: **Azioni > Report** nell'elenco, oppure **Apri il report completo** nel
+riepilogo. In alto il nome, l'oggetto, quando è partita e **Esporta il report (CSV)**, il file con tutti i numeri e i link
+da aprire con un foglio di calcolo.
+
+![Il report, la Panoramica](immagini/manuale-uso/19o-report.jpg)
+
+1. Le schede: **Panoramica**, **Aperture**, **Clic**, **Disiscrizioni**, **Rimbalzi**.
+2. **Consegnate**: le email partite meno quelle che il servizio di posta ha poi rifiutato. I tassi si calcolano su queste.
+3. **Aperture uniche** (persone) e **totali** (tutte le volte, anche la stessa persona più volte); lo stesso per i clic.
+4. **Clic sulle aperture**: quanti di quelli che hanno aperto hanno anche cliccato.
+5. **Da guardare**: compare quando un numero supera la sua soglia, e la tessera ha il segno "!". Le soglie: rimbalzi
+   definitivi oltre il 2% delle email provate, disiscrizioni oltre l'1%, segnalazioni di spam oltre lo 0,2%.
+
+Nella scheda **Clic** ci sono i link con le persone, i clic e la loro quota sul totale, e la **mappa dei clic**: l'email come
+la vede chi la riceve, con accanto a ogni link quanti clic ha avuto.
+
+![La mappa dei clic](immagini/manuale-uso/19o-mappa.jpg)
+
+Ogni scheda ha i suoi **elenchi** di contatti: chi ha aperto e chi no (Aperture), chi ha cliccato, anche un solo link (Clic),
+chi si è disiscritto con il motivo e chi ha segnalato spam (Disiscrizioni), i rimbalzi definitivi e temporanei con l'errore
+del server (Rimbalzi).
+
+![Un elenco del report](immagini/manuale-uso/19o-elenco.jpg)
+
+1. Scegli l'elenco.
+2. Ogni contatto porta alla sua scheda. Sotto l'elenco: **Esporta questo elenco (CSV)**, e **Salva come lista** (una lista
+   nuova con chi c'è adesso, le automazioni della lista non partono) o, per chi ha aperto o cliccato, **Salva come
+   segmento** (si aggiorna da solo con chi apre o clicca dopo).
+
+Le prove non contano mai. Chi legge con le immagini bloccate non risulta fra le aperture, e alcuni programmi di posta aprono
+le email da soli: le aperture sono indicative, i clic più sicuri.
+
+**Checklist del report**
+
+- [ ] Due o tre giorni dopo l'invio ho guardato il report: aperture, clic, e se c'è il riquadro "Da guardare".
+- [ ] Ho guardato nella mappa quali link funzionano e quali no, per la prossima campagna.
+- [ ] Se le disiscrizioni superano l'1%, mando meno email, o solo a chi le aspetta.
+- [ ] Ho tolto o messo da parte chi rimbalza (i rimbalzi definitivi vanno in lista nera da soli).
+
+### Le statistiche
+
+**Newsletter e form > Statistiche** ha due schede.
+
+![Le statistiche di un periodo](immagini/manuale-uso/19o-statistiche.jpg)
+
+1. **Periodo**: ultimi 7, 30 o 90 giorni, ultimi 12 mesi, da sempre, oppure dal giorno al giorno (con le due date). Premi
+   **Mostra il periodo**.
+2. I numeri di tutte le campagne partite nel periodo, sommati, con i tassi sulle consegnate e le soglie.
+3. **Andamento**: il tasso di apertura e quello di clic giorno per giorno (per settimana o per mese nei periodi lunghi). Sotto,
+   **I numeri del grafico** apre la tabella con gli stessi numeri.
+
+Più in basso, **Campagne partite nel periodo**: una riga per campagna, il nome porta al suo report. Spunta da due a quattro
+campagne e premi **Confronta le campagne spuntate**: le vedi una accanto all'altra, numero per numero. In fondo i flussi
+automatici e **Perché sono usciti**, con le risposte al questionario di tutte le campagne.
+
+La scheda **Liste e contatti** mostra come cresce una lista (o tutti i contatti) nel periodo:
+
+![Le statistiche di una lista](immagini/manuale-uso/19o-liste.jpg)
+
+1. Iscritti alla fine del periodo, entrati, usciti e la crescita netta.
+2. Il grafico dei nuovi e degli usciti; sotto, la tabella con gli iscritti alla fine di ogni giorno. Più in basso le
+   campagne mandate a quella lista nel periodo, con i loro numeri.
+
+**Checklist delle statistiche**
+
+- [ ] Una volta al mese guardo gli ultimi 30 giorni: il tasso di apertura scende? Le disiscrizioni salgono?
+- [ ] Confronto le campagne simili per capire quale oggetto o quale giorno funziona meglio.
+- [ ] Guardo la crescita delle liste principali: entrano più persone di quante ne escono?
 
 ### Il piede dell'email, la pagina per uscire e le preferenze
 
@@ -2856,8 +2957,9 @@ Nelle tendine ci sono solo i mittenti confermati. "Il predefinito" segue il mitt
 ![Newsletter e form, Statistiche](immagini/manuale-uso/23-consegna-statistiche.jpg)
 
 **Newsletter e form > Statistiche**: per ogni campagna, accanto ad aperture e clic, ci sono **Rimbalzi**, **Uscite** e
-**Spam**, ognuno con il numero di persone e la percentuale. Il numero diventa rosso quando supera le soglie che Gmail e
-Yahoo guardano: spam oltre lo 0,3%, rimbalzi oltre il 2%. In quel caso: pulisci la lista (togli i contatti vecchi o
+**Spam**, ognuno con il numero di persone e la percentuale. Il numero diventa rosso, con il segno "!", quando supera la sua
+soglia: rimbalzi definitivi oltre il 2%, disiscrizioni oltre l'1%, spam oltre lo 0,2% (il capitolo 20, "Il report della
+campagna"). In quel caso: pulisci la lista (togli i contatti vecchi o
 comprati), controlla il dominio e, se l'indirizzo è nuovo, accendi il riscaldamento.
 
 **Checklist della consegna**

@@ -76,7 +76,7 @@ function newsletter_flussi_schema(): void {
             PRIMARY KEY (`id`), UNIQUE KEY `flusso_iscritto` (`flusso_id`, `iscritto_id`), KEY `pronti` (`stato`, `prossimo`)
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8",
     ];
-    $impronta = md5(serialize($tabelle) . DB_NAME . 'grafo');
+    $impronta = md5(serialize($tabelle) . DB_NAME . 'grafo ripetuti');
     if (get_setting('newsletter_flussi_impronta', '') !== $impronta) {
         foreach ($tabelle as $sql) db()->exec($sql);
         // Colonne arrivate con il grafo: in ascolto di cosa, e un contatore dei salti per fermare i giri infiniti.
@@ -87,6 +87,13 @@ function newsletter_flussi_schema(): void {
         // 2.1.0: il mittente scelto per il flusso (0 = il predefinito), includes/consegna.php.
         $col = db()->query('SHOW COLUMNS FROM ' . tbl('newsletter_flussi'))->fetchAll(PDO::FETCH_COLUMN);
         if (!in_array('mittente_id', $col, true)) db()->exec('ALTER TABLE ' . tbl('newsletter_flussi') . ' ADD COLUMN `mittente_id` INT(11) NOT NULL DEFAULT 0 AFTER `inviate`');
+        // 2.14.0: aperture e clic ripetuti (volte, ultimo) e l'indice per contatto (orario migliore, elenchi del report).
+        // Le righe di prima valgono una volta: i conteggi per persona restano quelli di prima.
+        $col = db()->query('SHOW COLUMNS FROM ' . tbl('newsletter_eventi'))->fetchAll(PDO::FETCH_COLUMN);
+        if (!in_array('volte', $col, true)) db()->exec('ALTER TABLE ' . tbl('newsletter_eventi') . ' ADD COLUMN `volte` INT(11) NOT NULL DEFAULT 1');
+        if (!in_array('ultimo', $col, true)) db()->exec('ALTER TABLE ' . tbl('newsletter_eventi') . ' ADD COLUMN `ultimo` DATETIME DEFAULT NULL');
+        $ind = db()->query('SHOW INDEX FROM ' . tbl('newsletter_eventi'))->fetchAll(PDO::FETCH_COLUMN, 2);
+        if (!in_array('iscritto', $ind, true)) db()->exec('ALTER TABLE ' . tbl('newsletter_eventi') . ' ADD KEY `iscritto` (`iscritto_id`, `tipo`, `creato`)');
         save_setting('newsletter_flussi_impronta', $impronta);
     }
 }
@@ -137,18 +144,27 @@ function newsletter_traccia(string $html, array $t, int $iscritto): string {
     return str_contains($html, '</body>') ? str_replace('</body>', $pixel . '</body>', $html) : $html . $pixel;
 }
 
-/** Segna un evento (dall'api). Ritorna true se la firma regge. */
-function newsletter_evento(string $tipo, int $c, int $f, int $p, int $i, string $t, string $url = ''): bool {
+/**
+ * Segna un evento (dall'api). Ritorna true se la firma regge. Una riga per persona e tipo (per i clic, per indirizzo):
+ * i conteggi unici sono per persona. 2.14.0: la stessa apertura o lo stesso clic di nuovo aumenta `volte` e scrive
+ * `ultimo` (aperture e clic totali del report); gli inneschi e i flussi partono solo la prima volta, come prima.
+ * $ripeti false: il clic che vale anche come apertura non conta un'apertura in più.
+ */
+function newsletter_evento(string $tipo, int $c, int $f, int $p, int $i, string $t, string $url = '', bool $ripeti = true): bool {
     if (!$i || !hash_equals(nl_firma($c, $f, $p, $i), $t)) return false;
     newsletter_flussi_schema();
     $tipo = $tipo === 'clic' ? 'clic' : 'apertura';
-    // Una riga per persona e tipo (per i clic, per indirizzo): i conteggi sono per persona.
+    $url = mb_substr($url, 0, 500);
     $st = db()->prepare('SELECT id FROM ' . tbl('newsletter_eventi') . ' WHERE campagna_id = ? AND flusso_id = ? AND passo = ? AND iscritto_id = ? AND tipo = ? AND url = ? LIMIT 1');
-    $st->execute([$c, $f, $p, $i, $tipo, mb_substr($url, 0, 500)]);
-    if ($st->fetchColumn()) return true;
-    db()->prepare('INSERT INTO ' . tbl('newsletter_eventi') . ' (campagna_id, flusso_id, passo, iscritto_id, tipo, url, creato) VALUES (?,?,?,?,?,?,NOW())')->execute([$c, $f, $p, $i, $tipo, mb_substr($url, 0, 500)]);
-    // Un clic vale anche come apertura.
-    if ($tipo === 'clic') newsletter_evento('apertura', $c, $f, $p, $i, $t);
+    $st->execute([$c, $f, $p, $i, $tipo, $url]);
+    $gia = (int)$st->fetchColumn();
+    if ($gia) {
+        if ($ripeti) db()->prepare('UPDATE ' . tbl('newsletter_eventi') . ' SET volte = volte + 1, ultimo = NOW() WHERE id = ?')->execute([$gia]);
+        return true;
+    }
+    db()->prepare('INSERT INTO ' . tbl('newsletter_eventi') . ' (campagna_id, flusso_id, passo, iscritto_id, tipo, url, creato) VALUES (?,?,?,?,?,?,NOW())')->execute([$c, $f, $p, $i, $tipo, $url]);
+    // Un clic vale anche come apertura (una volta: le aperture totali contano il pixel).
+    if ($tipo === 'clic') newsletter_evento('apertura', $c, $f, $p, $i, $t, '', false);
     if ($c) newsletter_flussi_innesco($tipo, $c, $i);
     if ($f) newsletter_flusso_evento($f, $p, $i, $tipo);
     return true;
@@ -156,10 +172,12 @@ function newsletter_evento(string $tipo, int $c, int $f, int $p, int $i, string 
 
 /**
  * 2.1.0: un evento che non arriva da un link dell'email ma dal CMS stesso: 'rimbalzo' (server di posta o avviso del
- * servizio), 'spam' (avviso del servizio), 'uscita' (link di uscita con la campagna firmata). Una riga per persona.
+ * servizio), 'spam' (avviso del servizio), 'uscita' (link di uscita con la campagna firmata), dalla 2.14.0 'soft'.
+ * Una riga per persona.
  */
 function newsletter_evento_interno(string $tipo, int $c, int $f, int $p, int $i): void {
-    if (!$i || (!$c && !$f) || !in_array($tipo, ['rimbalzo', 'spam', 'uscita'], true)) return;
+    // 2.14.0: anche 'soft', il rimbalzo temporaneo (l'ultimo tentativo della coda o l'avviso del servizio), per il report.
+    if (!$i || (!$c && !$f) || !in_array($tipo, ['rimbalzo', 'spam', 'uscita', 'soft'], true)) return;
     newsletter_flussi_schema();
     $st = db()->prepare('SELECT id FROM ' . tbl('newsletter_eventi') . " WHERE campagna_id = ? AND flusso_id = ? AND passo = ? AND iscritto_id = ? AND tipo = ? LIMIT 1");
     $st->execute([$c, $f, $p, $i, $tipo]);
