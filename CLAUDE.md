@@ -108,7 +108,7 @@ Sono gli unici in `cms/docs/`, nello zip, nel sito di plumeCMS e nella pagina Do
 - **Pacchetto di aggiornamento** per un'installazione esistente:
   `python3 tools/cms-pacchetto.py --aggiornamento`. Si carica dal pannello,
   Impostazioni, Aggiornamenti.
-- **Versione**: `cms/VERSIONE` (oggi 2.18.0; sempre tre numeri: "beta" va nel CHANGELOG, mai nel nome dello zip, se no la serie "ultima" del Download non lo riconosce) e una voce in `cms/CHANGELOG.md` a ogni
+- **Versione**: `cms/VERSIONE` (oggi 2.19.0; sempre tre numeri: "beta" va nel CHANGELOG, mai nel nome dello zip, se no la serie "ultima" del Download non lo riconosce) e una voce in `cms/CHANGELOG.md` a ogni
   zip con contenuto diverso. Mai cambiare il contenuto di una versione già data.
 - **Prove** prima di dire finito:
   - `php -n -d short_open_tag=1 -l` su ogni file PHP toccato, `node --check` sui js;
@@ -156,6 +156,18 @@ Le decisioni complete, con data e perché, stanno nel second brain, `plumecms/de
 - **Nome: plumeCMS** (26 ottobre 2026).
 
 ## Stato al 31 ottobre 2026
+
+Fatto: plumeCMS 2.19.0 (2 novembre): il plugin Ponte per l'import da WordPress (richiesta di Danilo: arketypos.it su Aruba dava 401
+con la password per le applicazioni anche con le righe nel `.htaccess`). `includes/ponte-wp/plumecms-ponte.php` (plugin WordPress, sola
+lettura, POST a `/?plume_ponte=1` firmata HMAC nel corpo, codice `PLUME1-` di 48 ore, blocco dopo 20 firme sbagliate), zip da
+`importa-wordpress.php?scarica=ponte`, scelta "Con il plugin Ponte", `importa_wp_ponte()` e `importa_wp_collega_ponte()`, manuale tecnico
+26.6. **Attenzione**: WordPress 6.6 risponde `rest_not_logged_in` sia con utente o password sbagliati sia con le credenziali tolte dal
+server: da fuori non si distinguono (la prova fatta su arketypos.it con credenziali inventate non dimostrava niente). Ponte non ancora
+provato su un hosting vero; il ponte non porta la grafica di Elementor (legge quello che legge l'import). Prove: install 38/38 radice e
+cartella, ponte 49/49 radice e cartella (WordPress vero con `WP_TOGLI_AUTH=1` in `router-wp.php`), import con la password 75/75 in
+cartella (senza la REST chiusa), telefono 54/54, aggiornamento 2.18.0 -> 2.19.0 13/13 con 20 foto uguali, attacchi 434/434 (gruppo 41),
+pacchetto unico 13/13 su un 2.18.0 nuovo e su un 2.18.0 con la home già scritta da un pacchetto: la hero cambiata a mano resta. Le prove
+del pacchetto unico contavano `pagine/home.json` senza il `sito/` davanti: corrette. Zip 2238 KB, PDF 11085 KB.
 
 Fatto: plumeCMS 2.18.0 (2 novembre): quattro richieste di Danilo. (1) Il passo Email delle automazioni RICHIAMA il modello (agente, ramo
 `passo-modello`): `editor:"modello"` e `modello:<id>` restano nel nodo, `nl_passo_modello()` compone dal modello a ogni invio, oggetto e
