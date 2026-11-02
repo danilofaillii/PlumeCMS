@@ -105,7 +105,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             break;
         case 'mittente_togli':
             consegna_mittente_togli((int)($_POST['id'] ?? 0));
-            flash('success', 'Mittente tolto. Le campagne e i flussi che lo usavano partono dal predefinito.');
+            flash('success', 'Mittente tolto. Le campagne e le automazioni che lo usavano partono dal predefinito.');
             $torna = 'mittenti';
             break;
         case 'mailgun_firma':
@@ -373,7 +373,7 @@ require_once __DIR__ . '/includes/admin-header.php';
 </script>
 
 <?php elseif ($scheda === 'mittenti'): ?>
-<p class="ce-intro">Il mittente è il nome e l'indirizzo che le persone vedono quando ricevono un'email. Puoi averne più di uno (per esempio "Anna dello Studio" e "Studio Rossi Notizie"): ogni campagna e ogni flusso può scegliere il suo. Ogni mittente nuovo si conferma con un link mandato a quell'indirizzo.</p>
+<p class="ce-intro">Il mittente è il nome e l'indirizzo che le persone vedono quando ricevono un'email. Puoi averne più di uno (per esempio "Anna dello Studio" e "Studio Rossi Notizie"): ogni campagna e ogni automazione può scegliere il suo. Ogni mittente nuovo si conferma con un link mandato a quell'indirizzo.</p>
 <div class="form-card">
   <h3>I mittenti</h3>
   <table class="ce-tabella" id="ce-mittenti">

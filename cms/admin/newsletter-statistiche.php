@@ -117,12 +117,12 @@ $data = fn(string $d) => date('d/m/Y', strtotime($d));
 
 <?php $flussi = newsletter_flussi(); $motivi = newsletter_uscite_motivi_conta(0); ?>
 <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,320px),1fr));gap:1.2rem">
-  <div class="form-card"><h3>Flussi automatici</h3>
+  <div class="form-card"><h3>Automazioni</h3>
     <table class="table">
-      <thead><tr><th>Flusso</th><th>In corso</th><th>Finiti</th><th>Email mandate</th></tr></thead>
+      <thead><tr><th>Automazione</th><th>In corso</th><th>Finiti</th><th>Email mandate</th></tr></thead>
       <tbody>
-      <?php if (!$flussi): ?><tr><td colspan="4">Nessun flusso. <a href="newsletter-flussi.php?nuovo=1">Creane uno</a>.</td></tr><?php endif; ?>
-      <?php foreach ($flussi as $f): ?><tr><td><a href="newsletter-flussi.php?id=<?= (int)$f['id'] ?>"><?= h($f['nome']) ?></a><?= $f['attivo'] ? '' : ' <span class="badge badge-draft">spento</span>' ?></td><td><?= (int)$f['in_corso'] ?></td><td><?= (int)$f['finiti'] ?></td><td><?= (int)$f['inviate'] ?></td></tr><?php endforeach; ?>
+      <?php if (!$flussi): ?><tr><td colspan="4">Ancora nessuna automazione. <a href="newsletter-flussi.php#fl-crea">Creane una</a>.</td></tr><?php endif; ?>
+      <?php foreach ($flussi as $f): ?><tr><td><a href="newsletter-flussi.php?id=<?= (int)$f['id'] ?>"><?= h($f['nome']) ?></a><?= ($f['stato'] ?? ($f['attivo'] ? 'attiva' : 'inattiva')) === 'attiva' ? '' : ' <span class="badge badge-draft">' . h(defined('NL_AUT_STATI') ? NL_AUT_STATI[$f['stato']] : 'spenta') . '</span>' ?></td><td><?= (int)$f['in_corso'] ?></td><td><?= (int)$f['finiti'] ?></td><td><?= (int)$f['inviate'] ?></td></tr><?php endforeach; ?>
       </tbody>
     </table>
   </div>

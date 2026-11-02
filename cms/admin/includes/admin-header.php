@@ -34,7 +34,7 @@ $menu = [
         // 1.9.1, richiesta di Danilo: Form sta qui, accanto ai suoi invii (prima era una voce a sé). Solo amministratore.
         $sonoAdminMenu ? ['Form', 'form.php', $qui === 'form.php'] : null,
         ['Invii dei form', 'form-submissions.php', $qui === 'form-submissions.php'],
-        ['Flussi automatici', 'newsletter-flussi.php', $qui === 'newsletter-flussi.php'],
+        ['Automazioni', 'newsletter-flussi.php', $qui === 'newsletter-flussi.php'],
         ['Statistiche', 'newsletter-statistiche.php', $qui === 'newsletter-statistiche.php'],
         ['Impostazioni', 'newsletter.php?scheda=impostazioni', $qui === 'newsletter.php' && ($_GET['scheda'] ?? '') === 'impostazioni'],
         ['Attributi dei contatti', 'newsletter-attributi.php', $qui === 'newsletter-attributi.php'],

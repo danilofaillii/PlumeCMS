@@ -1,39 +1,50 @@
 <?php
 /**
- * Newsletter, parte seconda: aperture e clic delle email, e i flussi automatici.
+ * Newsletter, parte seconda: aperture e clic delle email, e le automazioni (fino alla 2.14.0 "flussi automatici").
  *
  * Aperture e clic: ogni email porta un'immagine di un pixel e i link passano da api/nl.php, che segna
  * l'evento in <prefisso>newsletter_eventi e rimanda alla pagina vera. Il conteggio è per persona (una apertura
  * conta una volta). Chi blocca le immagini non risulta: i numeri sono per difetto, come ovunque.
  *
- * Flussi: un grafo. Parte da un innesco (iscrizione, ingresso in una lista, form compilato, apertura o clic di
- * una campagna, nessuna interazione da tanti giorni) e passa di nodo in nodo lungo gli archi: email (con più
- * uscite: subito dopo, se apre, se clicca, se non fa niente entro un tempo), attesa, bivio su condizione, fine.
- * Ogni persona in cammino è una riga di <prefisso>newsletter_corsi: il nodo dove sta, quando si muove, se è in
- * ascolto di un'apertura o un clic. Le email le manda lo stesso cron della newsletter, dentro lo stesso limite;
- * aperture e clic la spostano subito (newsletter_flusso_evento). Un flusso vecchio, scritto come sequenza,
- * si converte in grafo alla lettura (newsletter_flusso_grafo).
+ * Automazioni: un grafo. Parte da uno o più inneschi (iscrizione, lista, tolto da una lista, form, apertura o clic di una
+ * campagna, nessuna interazione da tanti giorni, disiscrizione, anniversario di una data, aggiunta a mano) e passa di nodo
+ * in nodo lungo gli archi: azioni (email, aggiungi o togli da una lista, aggiorna un attributo, webhook) e regole (attesa,
+ * attendi un evento, Sì o No, divisione a più rami, divisione in percentuale, fine). Ogni persona in cammino è una riga di
+ * <prefisso>newsletter_corsi (dalla 2.15.0 con il giro: chi rientra fa un giro nuovo); quello che succede va nel registro
+ * (newsletter_flussi_registro) e nei contatori per passo (newsletter_flussi_numeri). Le email le manda lo stesso cron della
+ * newsletter, dentro lo stesso limite; aperture e clic la spostano subito (newsletter_flusso_evento). Webhook, modelli,
+ * anniversari, statistiche e attività stanno in includes/newsletter-automazioni.php.
  */
 
-const NL_INNESCHI = ['iscrizione' => 'Si iscrive alla newsletter (conferma fatta)', 'lista' => 'Entra in una lista', 'form' => 'Compila un form', 'apertura' => 'Apre una campagna', 'clic' => 'Fa clic in una campagna', 'inattivo' => 'Non apre e non clicca niente da tanti giorni'];
+const NL_INNESCHI = ['iscrizione' => 'Si iscrive alla newsletter (conferma fatta)', 'lista' => 'Entra in una lista', 'lista_tolto' => 'Viene tolto da una lista', 'form' => 'Compila un form', 'apertura' => 'Apre una campagna', 'clic' => 'Fa clic in una campagna', 'inattivo' => 'Non apre e non clicca niente da tanti giorni', 'disiscritto' => 'Si disiscrive dalla newsletter', 'anniversario' => 'Anniversario di una data', 'mano' => 'Aggiunto a mano dal pannello'];
 /** Le condizioni di un bivio. 'id' dice cosa chiede la seconda casella: una lista, un'email del flusso, un numero di giorni. */
 const NL_CONDIZIONI = [
     'in_lista' => ['Sta in una lista', 'lista'], 'non_in_lista' => ['Non sta in una lista', 'lista'],
-    'aperta' => ["Ha aperto un'email di questo flusso", 'email'], 'non_aperta' => ["Non ha aperto un'email di questo flusso", 'email'],
-    'cliccata' => ["Ha cliccato in un'email di questo flusso", 'email'], 'non_cliccata' => ["Non ha cliccato in un'email di questo flusso", 'email'],
+    'aperta' => ["Ha aperto un'email di questa automazione", 'email'], 'non_aperta' => ["Non ha aperto un'email di questa automazione", 'email'],
+    'cliccata' => ["Ha cliccato in un'email di questa automazione", 'email'], 'non_cliccata' => ["Non ha cliccato in un'email di questa automazione", 'email'],
     'inattivo' => ['Non apre e non clicca niente da almeno tanti giorni', 'giorni'], 'attivo' => ['Ha aperto o cliccato qualcosa negli ultimi tanti giorni', 'giorni'],
     'iscritto_da' => ['È iscritto da almeno tanti giorni', 'giorni'],
     // 2.10.0: i segmenti (motore in includes/newsletter-segmenti.php).
     'in_segmento' => ['Fa parte di un segmento', 'segmento'], 'non_in_segmento' => ['Non fa parte di un segmento', 'segmento'],
 ];
-/** Le uscite di ogni tipo di nodo, con l'etichetta che si legge sulla tela. */
+/** Le uscite di ogni tipo di nodo (elenco chiuso dei tipi), con l'etichetta della tela. Divisioni: uscite dei loro rami (nl_uscite()). */
 const NL_USCITE = [
     'innesco' => ['poi' => 'Poi'],
     'email' => ['poi' => 'Subito dopo', 'aperta' => 'Se apre', 'cliccata' => 'Se clicca', 'nessuna' => 'Se non fa niente entro il tempo'],
     'attesa' => ['poi' => 'Poi'],
     'bivio' => ['si' => 'Sì', 'no' => 'No'],
     'fine' => [],
+    // 2.15.0
+    'evento' => ['si' => 'Se succede', 'no' => 'Se non succede in tempo'],
+    'dividi' => [], 'percento' => [],
+    'lista_aggiungi' => ['poi' => 'Poi'], 'lista_togli' => ['poi' => 'Poi'], 'attributo' => ['poi' => 'Poi'], 'webhook' => ['poi' => 'Poi'],
 ];
+const NL_AUT_STATI = ['attiva' => 'Attiva', 'in_pausa' => 'In pausa', 'inattiva' => 'Inattiva'];
+const NL_AUT_MAX_NODI = 100;     // blocchi sulla tela
+const NL_AUT_MAX_INNESCHI = 10;
+const NL_AUT_MAX_RAMI = 8;       // rami di una divisione condizionale (più l'altrimenti)
+const NL_AUT_MAX_SALTI = 250;    // passi di un cammino: oltre si ferma (un giro infinito non arriva mai fin qui: la tela non ne ammette)
+const NL_AUT_PASSI_GIRO = 50;    // passi di un cammino in un giro del cron
 
 function newsletter_flussi_schema(): void {
     static $fatto = false;
@@ -62,6 +73,12 @@ function newsletter_flussi_schema(): void {
             `mittente_id` INT(11) NOT NULL DEFAULT 0,
             `creato` DATETIME NOT NULL,
             `aggiornato` DATETIME NOT NULL,
+            `stato` VARCHAR(10) NOT NULL DEFAULT 'inattiva',
+            `inneschi` TEXT,
+            `tag` VARCHAR(255) NOT NULL DEFAULT '',
+            `rientro` TINYINT(1) NOT NULL DEFAULT 0,
+            `rientro_attesa` INT(11) NOT NULL DEFAULT 0,
+            `uscita` TEXT,
             PRIMARY KEY (`id`), KEY `innesco` (`attivo`, `innesco`, `innesco_id`)
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8",
         'newsletter_corsi' => 'CREATE TABLE IF NOT EXISTS ' . tbl('newsletter_corsi') . " (
@@ -73,10 +90,32 @@ function newsletter_flussi_schema(): void {
             `stato` VARCHAR(10) NOT NULL DEFAULT 'attivo',
             `creato` DATETIME NOT NULL,
             `aggiornato` DATETIME NOT NULL,
-            PRIMARY KEY (`id`), UNIQUE KEY `flusso_iscritto` (`flusso_id`, `iscritto_id`), KEY `pronti` (`stato`, `prossimo`)
+            `ascolto` VARCHAR(10) DEFAULT NULL,
+            `salti` INT(11) NOT NULL DEFAULT 0,
+            `giro` INT(11) NOT NULL DEFAULT 1,
+            PRIMARY KEY (`id`), UNIQUE KEY `flusso_giro` (`flusso_id`, `iscritto_id`, `giro`), KEY `pronti` (`stato`, `prossimo`)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8",
+        // 2.15.0: il registro delle automazioni (Attività) e i contatori per passo (statistiche, divisione in percentuale).
+        'newsletter_flussi_registro' => 'CREATE TABLE IF NOT EXISTS ' . tbl('newsletter_flussi_registro') . " (
+            `id` INT(11) NOT NULL AUTO_INCREMENT,
+            `flusso_id` INT(11) NOT NULL,
+            `corso_id` INT(11) NOT NULL DEFAULT 0,
+            `iscritto_id` INT(11) NOT NULL DEFAULT 0,
+            `nodo` INT(11) NOT NULL DEFAULT 0,
+            `evento` VARCHAR(10) NOT NULL,
+            `dettaglio` VARCHAR(255) NOT NULL DEFAULT '',
+            `creato` DATETIME NOT NULL,
+            PRIMARY KEY (`id`), KEY `flusso` (`flusso_id`, `id`), KEY `iscritto` (`iscritto_id`), KEY `creato` (`creato`)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8",
+        'newsletter_flussi_numeri' => 'CREATE TABLE IF NOT EXISTS ' . tbl('newsletter_flussi_numeri') . " (
+            `flusso_id` INT(11) NOT NULL,
+            `nodo` INT(11) NOT NULL,
+            `chiave` VARCHAR(12) NOT NULL,
+            `n` INT(11) NOT NULL DEFAULT 0,
+            PRIMARY KEY (`flusso_id`, `nodo`, `chiave`)
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8",
     ];
-    $impronta = md5(serialize($tabelle) . DB_NAME . 'grafo ripetuti');
+    $impronta = md5(serialize($tabelle) . DB_NAME . 'grafo ripetuti automazioni giro');
     if (get_setting('newsletter_flussi_impronta', '') !== $impronta) {
         foreach ($tabelle as $sql) db()->exec($sql);
         // Colonne arrivate con il grafo: in ascolto di cosa, e un contatore dei salti per fermare i giri infiniti.
@@ -84,9 +123,23 @@ function newsletter_flussi_schema(): void {
         $col = db()->query('SHOW COLUMNS FROM ' . tbl('newsletter_corsi'))->fetchAll(PDO::FETCH_COLUMN);
         if (!in_array('ascolto', $col, true)) db()->exec('ALTER TABLE ' . tbl('newsletter_corsi') . ' ADD COLUMN `ascolto` VARCHAR(10) DEFAULT NULL');
         if (!in_array('salti', $col, true)) db()->exec('ALTER TABLE ' . tbl('newsletter_corsi') . ' ADD COLUMN `salti` INT(11) NOT NULL DEFAULT 0');
+        // 2.15.0: il giro (chi rientra in un'automazione ne fa uno nuovo). La chiave unica passa da (flusso, iscritto) a
+        // (flusso, iscritto, giro): i cammini di prima sono tutti il giro 1 e restano dove sono.
+        if (!in_array('giro', $col, true)) db()->exec('ALTER TABLE ' . tbl('newsletter_corsi') . ' ADD COLUMN `giro` INT(11) NOT NULL DEFAULT 1');
+        $ind = db()->query('SHOW INDEX FROM ' . tbl('newsletter_corsi'))->fetchAll(PDO::FETCH_COLUMN, 2);
+        if (!in_array('flusso_giro', $ind, true)) db()->exec('ALTER TABLE ' . tbl('newsletter_corsi') . ' ADD UNIQUE KEY `flusso_giro` (`flusso_id`, `iscritto_id`, `giro`)');
+        if (in_array('flusso_iscritto', $ind, true)) db()->exec('ALTER TABLE ' . tbl('newsletter_corsi') . ' DROP INDEX `flusso_iscritto`');
         // 2.1.0: il mittente scelto per il flusso (0 = il predefinito), includes/consegna.php.
         $col = db()->query('SHOW COLUMNS FROM ' . tbl('newsletter_flussi'))->fetchAll(PDO::FETCH_COLUMN);
         if (!in_array('mittente_id', $col, true)) db()->exec('ALTER TABLE ' . tbl('newsletter_flussi') . ' ADD COLUMN `mittente_id` INT(11) NOT NULL DEFAULT 0 AFTER `inviate`');
+        // 2.15.0: stato (attivo = 1 -> attiva; attivo = 0 -> inattiva: fino alla 2.14.0 un flusso spento fermava anche chi
+        // era dentro), più inneschi, tag, rientro, condizioni di uscita. `attivo` resta e si scrive insieme a `stato`.
+        $nuove = ['stato' => "VARCHAR(10) NOT NULL DEFAULT 'inattiva'", 'inneschi' => 'TEXT', 'tag' => "VARCHAR(255) NOT NULL DEFAULT ''",
+            'rientro' => 'TINYINT(1) NOT NULL DEFAULT 0', 'rientro_attesa' => 'INT(11) NOT NULL DEFAULT 0', 'uscita' => 'TEXT'];
+        foreach ($nuove as $k => $tipo) if (!in_array($k, $col, true)) {
+            db()->exec('ALTER TABLE ' . tbl('newsletter_flussi') . " ADD COLUMN `$k` $tipo");
+            if ($k === 'stato') db()->exec('UPDATE ' . tbl('newsletter_flussi') . " SET stato = IF(attivo = 1, 'attiva', 'inattiva')");
+        }
         // 2.14.0: aperture e clic ripetuti (volte, ultimo) e l'indice per contatto (orario migliore, elenchi del report).
         // Le righe di prima valgono una volta: i conteggi per persona restano quelli di prima.
         $col = db()->query('SHOW COLUMNS FROM ' . tbl('newsletter_eventi'))->fetchAll(PDO::FETCH_COLUMN);
@@ -228,16 +281,17 @@ function newsletter_iscritti_per_mese(): array {
 }
 
 // ------------------------------------------------------------
-// Flussi: il grafo
+// Automazioni: il grafo
 // ------------------------------------------------------------
 
+/** Le automazioni, con i numeri dei cammini (giri compresi). */
 function newsletter_flussi(): array {
     newsletter_flussi_schema();
     $out = [];
-    foreach (db()->query('SELECT f.*, (SELECT COUNT(*) FROM ' . tbl('newsletter_corsi') . " c WHERE c.flusso_id = f.id AND c.stato = 'attivo') AS in_corso, (SELECT COUNT(*) FROM " . tbl('newsletter_corsi') . " c WHERE c.flusso_id = f.id AND c.stato = 'finito') AS finiti FROM " . tbl('newsletter_flussi') . ' f ORDER BY f.attivo DESC, f.nome')->fetchAll() as $f) {
-        $f['nome'] = newsletter_4byte_fuori((string)$f['nome']);
-        $f['grafo'] = newsletter_flusso_grafo($f);
-        $out[] = $f;
+    $c = tbl('newsletter_corsi');
+    foreach (db()->query("SELECT f.*, (SELECT COUNT(*) FROM $c c WHERE c.flusso_id = f.id AND c.stato = 'attivo') AS in_corso, (SELECT COUNT(*) FROM $c c WHERE c.flusso_id = f.id AND c.stato = 'finito') AS finiti,
+        (SELECT COUNT(*) FROM $c c WHERE c.flusso_id = f.id) AS entrati, (SELECT COUNT(*) FROM $c c WHERE c.flusso_id = f.id AND c.stato IN ('tolto', 'fermato')) AS usciti FROM " . tbl('newsletter_flussi') . " f ORDER BY f.stato = 'attiva' DESC, f.nome")->fetchAll() as $f) {
+        $out[] = nl_flusso_riga($f);
     }
     return $out;
 }
@@ -247,13 +301,40 @@ function newsletter_flusso(int $id): ?array {
     $st = db()->prepare('SELECT * FROM ' . tbl('newsletter_flussi') . ' WHERE id = ?');
     $st->execute([$id]);
     $f = $st->fetch() ?: null;
-    if ($f) { $f['nome'] = newsletter_4byte_fuori((string)$f['nome']); $f['grafo'] = newsletter_flusso_grafo($f); }
+    return $f ? nl_flusso_riga($f) : null;
+}
+
+/** Una riga del database pronta per l'uso: nome leggibile, grafo, inneschi, stato, uscita. */
+function nl_flusso_riga(array $f): array {
+    $f['nome'] = newsletter_4byte_fuori((string)$f['nome']);
+    $f['grafo'] = newsletter_flusso_grafo($f);
+    $f['stato'] = isset(NL_AUT_STATI[$f['stato'] ?? '']) ? $f['stato'] : ((int)$f['attivo'] ? 'attiva' : 'inattiva');
+    $f['inneschi'] = nl_inneschi_validi(json_decode((string)($f['inneschi'] ?? ''), true) ?: [['tipo' => (string)$f['innesco'], 'id' => (int)$f['innesco_id']]]);
+    $u = json_decode((string)($f['uscita'] ?? ''), true);
+    $f['uscita'] = ['disiscritto' => !empty($u['disiscritto']), 'segmento' => max(0, (int)($u['segmento'] ?? 0))];
+    $f['tag'] = newsletter_4byte_fuori((string)($f['tag'] ?? ''));
     return $f;
+}
+
+/** Gli inneschi puliti: tipo dall'elenco chiuso, id (lista, form, campagna, giorni), attributo per l'anniversario. Al massimo NL_AUT_MAX_INNESCHI, senza doppi. */
+function nl_inneschi_validi($in): array {
+    $out = []; $visti = [];
+    foreach (is_array($in) ? array_slice($in, 0, NL_AUT_MAX_INNESCHI * 3) : [] as $x) {
+        if (!is_array($x) || !isset(NL_INNESCHI[$t = (string)($x['tipo'] ?? '')])) continue;
+        $id = max(-365, min(3650, (int)($x['id'] ?? 0)));
+        $attr = $t === 'anniversario' && preg_match('/^[A-Z0-9_]{1,50}$/', (string)($x['attr'] ?? '')) ? (string)$x['attr'] : '';
+        if (!in_array($t, ['lista', 'lista_tolto', 'form', 'apertura', 'clic', 'inattivo', 'anniversario'], true)) $id = 0;
+        if ($t === 'anniversario') $id = max(0, min(365, $id));
+        if (isset($visti["$t|$id|$attr"]) || count($out) >= NL_AUT_MAX_INNESCHI) continue;
+        $visti["$t|$id|$attr"] = true;
+        $out[] = ['tipo' => $t, 'id' => $id] + ($t === 'anniversario' ? ['attr' => $attr] : []);
+    }
+    return $out;
 }
 
 /** Il grafo di una riga del database. Una sequenza vecchia (elenco di passi) diventa grafo qui. */
 function newsletter_flusso_grafo(array $f): array {
-    $g = json_decode((string)($f['passi'] ?? ''), true) ?: [];
+    $g = json_decode((string)($f['passi'] ?? ''), true, 64) ?: [];
     if (isset($g['nodi'])) return newsletter_flusso_grafo_valido($g);
     // Formato di prima: passi in fila, ognuno con attesa (giorni) e condizione sull'email precedente o su una lista.
     $nodi = [['id' => 0, 'tipo' => 'innesco', 'x' => 40, 'y' => 40, 'dati' => []]];
@@ -293,47 +374,90 @@ function newsletter_flusso_grafo(array $f): array {
     return newsletter_flusso_grafo_valido(['nodi' => $nodi, 'archi' => $archi]);
 }
 
-/** Ripulisce un grafo arrivato dalla tela: nodi con tipo e dati noti, archi solo fra nodi esistenti e da uscite esistenti, una per uscita. */
+/** Le uscite di un nodo, con le etichette: fisse per tipo, quelle delle divisioni dai loro rami. */
+function nl_uscite(array $n): array {
+    if ($n['tipo'] === 'dividi') {
+        $u = [];
+        foreach ($n['dati']['rami'] as $i => $r) $u["r$i"] = $r['nome'] !== '' ? $r['nome'] : 'Ramo ' . ($i + 1);
+        return $u + ['altro' => 'Altrimenti'];
+    }
+    if ($n['tipo'] === 'percento') {
+        $u = [];
+        foreach ($n['dati']['rami'] as $i => $p) $u["p$i"] = $p . '%';
+        return $u;
+    }
+    return NL_USCITE[$n['tipo']] ?? [];
+}
+
+/** Le regole di un ramo: arrivano come array o come JSON in base64 (il costruttore dei segmenti). Non si controllano qui. */
+function nl_regole_grezze($r): array {
+    if (is_string($r) && $r !== '' && strlen($r) < 200000) $r = json_decode($r[0] === '{' ? $r : (string)base64_decode(strtr($r, '-_', '+/'), true), true, 7);
+    return is_array($r) && is_array($r['gruppi'] ?? null) ? ['op' => ($r['op'] ?? 'e') === 'o' ? 'o' : 'e', 'gruppi' => array_slice(array_values($r['gruppi']), 0, 20)] : ['op' => 'e', 'gruppi' => []];
+}
+
+/**
+ * Ripulisce un grafo arrivato dalla tela o dal database: tipi da NL_USCITE (elenco chiuso), dati di ogni tipo con i loro
+ * campi e i loro limiti, al massimo NL_AUT_MAX_NODI blocchi, archi solo fra nodi esistenti e da uscite esistenti, una per uscita.
+ * I giri chiusi e i controlli che vogliono un messaggio (oggetto mancante, percentuali) li guarda newsletter_flusso_salva().
+ */
 function newsletter_flusso_grafo_valido($g): array {
     $g = is_array($g) ? $g : [];
     $nodi = []; $ids = [];
-    foreach ((array)($g['nodi'] ?? []) as $n) {
+    foreach (array_slice(is_array($g['nodi'] ?? null) ? $g['nodi'] : [], 0, NL_AUT_MAX_NODI + 1) as $n) {
         if (!is_array($n)) continue;
         $id = (int)($n['id'] ?? -1);
         $tipo = (string)($n['tipo'] ?? '');
-        if ($id < 0 || isset($ids[$id]) || !isset(NL_USCITE[$tipo])) continue;
+        if ($id < 0 || $id > 100000 || isset($ids[$id]) || !array_key_exists($tipo, NL_USCITE)) continue;
         if ($tipo === 'innesco' && $id !== 0) continue;
         if ($tipo !== 'innesco' && $id === 0) continue;
-        $d = (array)($n['dati'] ?? []);
+        $d = is_array($n['dati'] ?? null) ? $n['dati'] : [];
         // Ogni campo passa da una stringa: un valore strano arrivato dal browser (un elenco, un oggetto) non deve far cadere la pagina.
         $s = fn($k, $max) => mb_substr(trim(is_scalar($d[$k] ?? null) ? (string)$d[$k] : ''), 0, $max);
+        $int = fn($k, $min, $max, $def = 0) => max($min, min($max, is_numeric($d[$k] ?? null) ? (int)$d[$k] : $def));
         $link = $s('pulsante_link', 500);
         if ($link !== '' && !preg_match('~^(https?://|mailto:|tel:)~i', $link)) $link = 'https://' . ltrim($link, '/');
         $cond = is_scalar($d['condizione'] ?? null) ? (string)$d['condizione'] : '';
         $dati = match ($tipo) {
             'email' => [
                 'oggetto' => $s('oggetto', 255), 'anteprima' => $s('anteprima', 255),
-                'corpo' => is_scalar($d['corpo'] ?? null) ? (string)$d['corpo'] : '', 'pulsante_testo' => $s('pulsante_testo', 100), 'pulsante_link' => $link,
-                'ascolto' => max(0, min(365 * 1440, (int)($d['ascolto'] ?? 0))),
-            ],
-            'attesa' => ['minuti' => max(1, min(365 * 1440, (int)($d['minuti'] ?? 1440)))],
-            'bivio' => ['condizione' => isset(NL_CONDIZIONI[$cond]) ? $cond : 'in_lista', 'valore' => max(0, (int)($d['valore'] ?? 0))],
+                'corpo' => is_scalar($d['corpo'] ?? null) ? mb_substr((string)$d['corpo'], 0, 300000) : '', 'pulsante_testo' => $s('pulsante_testo', 100), 'pulsante_link' => $link,
+                'ascolto' => $int('ascolto', 0, 365 * 1440),
+            ] + nl_email_extra($d, $s, $int),
+            'attesa' => ['minuti' => $int('minuti', 1, 365 * 1440, 1440)],
+            'bivio' => ['condizione' => isset(NL_CONDIZIONI[$cond]) ? $cond : 'in_lista', 'valore' => $int('valore', 0, 100000)],
+            'evento' => ['evento' => $s('evento', 10) === 'clic' ? 'clic' : 'apertura', 'email' => $int('email', 0, 100000), 'massimo' => $int('massimo', 1, 365 * 1440, 1440)],
+            'dividi' => ['rami' => array_map(fn($r) => ['nome' => mb_substr(trim(is_array($r) && is_scalar($r['nome'] ?? null) ? (string)$r['nome'] : ''), 0, 60), 'regole' => nl_regole_grezze(is_array($r) ? ($r['regole'] ?? null) : null)],
+                array_slice(array_values(is_array($d['rami'] ?? null) ? $d['rami'] : []), 0, NL_AUT_MAX_RAMI)) ?: [['nome' => '', 'regole' => ['op' => 'e', 'gruppi' => []]]]],
+            'percento' => ['rami' => array_map(fn($p) => max(1, min(99, (int)$p)), array_slice(array_values(array_filter(is_array($d['rami'] ?? null) ? $d['rami'] : [], 'is_numeric')), 0, 5)) ?: [50, 50]],
+            'lista_aggiungi', 'lista_togli' => ['lista' => $int('lista', 0, 1000000)],
+            'attributo' => ['nome' => preg_match('/^[A-Z0-9_]{1,50}$/', $s('nome', 50)) ? $s('nome', 50) : '', 'valore' => $s('valore', 500)],
+            'webhook' => ['url' => $s('url', 500)],
             default => [],
         };
+        if ($tipo === 'percento' && count($dati['rami']) < 2) $dati['rami'] = [50, 50];
         $ids[$id] = true;
         $nodi[] = ['id' => $id, 'tipo' => $tipo, 'x' => max(0, min(6000, (int)($n['x'] ?? 0))), 'y' => max(0, min(6000, (int)($n['y'] ?? 0))), 'dati' => $dati];
     }
     if (!isset($ids[0])) array_unshift($nodi, ['id' => 0, 'tipo' => 'innesco', 'x' => 40, 'y' => 40, 'dati' => []]);
-    $tipi = array_column($nodi, 'tipo', 'id');
+    $uscite = [];
+    foreach ($nodi as $n) $uscite[$n['id']] = nl_uscite($n);
     $archi = []; $visti = [];
-    foreach ((array)($g['archi'] ?? []) as $a) {
+    foreach (array_slice(is_array($g['archi'] ?? null) ? $g['archi'] : [], 0, NL_AUT_MAX_NODI * 12) as $a) {
         if (!is_array($a)) continue;
-        $da = (int)($a['da'] ?? -1); $u = (string)($a['uscita'] ?? ''); $al = (int)($a['a'] ?? -1);
-        if (!isset($tipi[$da], $tipi[$al]) || $da === $al || $al === 0 || !isset(NL_USCITE[$tipi[$da]][$u]) || isset($visti["$da|$u"])) continue;
+        $da = (int)($a['da'] ?? -1); $u = is_scalar($a['uscita'] ?? null) ? (string)$a['uscita'] : ''; $al = (int)($a['a'] ?? -1);
+        if (!isset($uscite[$da], $uscite[$al]) || $da === $al || $al === 0 || !isset($uscite[$da][$u]) || isset($visti["$da|$u"])) continue;
         $visti["$da|$u"] = true;
         $archi[] = ['da' => $da, 'uscita' => $u, 'a' => $al];
     }
     return ['nodi' => $nodi, 'archi' => $archi];
+}
+
+/** I campi del passo Email arrivati con la 2.15.0. Un'email di prima non li ha: valgono i predefiniti, e l'email resta quella di prima. */
+function nl_email_extra(array $d, callable $s, callable $int): array {
+    $orario = $s('orario', 10);
+    return ['editor' => $s('editor', 10) === 'blocchi' ? 'blocchi' : 'semplice', 'design' => is_string($d['design'] ?? null) ? mb_substr($d['design'], 0, 400000) : '',
+        'modello' => $int('modello', 0, 1000000), 'mittente_id' => $int('mittente_id', 0, 1000000),
+        'orario' => in_array($orario, ['ora', 'migliore'], true) ? $orario : 'subito', 'ora' => $int('ora', 0, 23, 10)];
 }
 
 /** Il nodo con questo id, o null. */
@@ -358,35 +482,122 @@ function newsletter_flusso_email(array $g): array {
 /** Il grafo com'è arrivato dal form (JSON nel campo nascosto; il base64 di campi-protetti.js lo scioglie già auth.php). */
 function newsletter_flusso_grafo_dal_form($grafo): array {
     if (is_array($grafo)) return $grafo;
-    $g = json_decode(is_scalar($grafo) ? trim((string)$grafo) : '', true);
-    if (!is_array($g)) throw new RuntimeException('Il disegno del flusso non è arrivato intero. Riprova a salvare.');
+    $s = is_scalar($grafo) ? trim((string)$grafo) : '';
+    $g = strlen($s) <= 2000000 ? json_decode($s, true, 64) : null;
+    if (!is_array($g)) throw new RuntimeException('Il disegno dell\'automazione non è arrivato intero. Riprova a salvare.');
+    if (is_array($g['nodi'] ?? null) && count($g['nodi']) > NL_AUT_MAX_NODI) throw new RuntimeException('Al massimo ' . NL_AUT_MAX_NODI . ' blocchi in un\'automazione: dividila in due.');
     return $g;
 }
 
+/** Il primo nodo che torna indietro (un giro chiuso), o null. Visita in profondità dall'innesco e da ogni nodo. */
+function nl_grafo_giro(array $g): ?int {
+    $fuori = [];
+    foreach ($g['archi'] as $a) $fuori[$a['da']][] = $a['a'];
+    $colore = [];
+    foreach ($g['nodi'] as $n) {
+        if (isset($colore[$n['id']])) continue;
+        $pila = [[$n['id'], 0]];
+        $colore[$n['id']] = 1;
+        while ($pila) {
+            [$v, $i] = $pila[count($pila) - 1];
+            if ($i < count($fuori[$v] ?? [])) {
+                $pila[count($pila) - 1][1]++;
+                $w = $fuori[$v][$i];
+                if (($colore[$w] ?? 0) === 1) return $w;
+                if (!isset($colore[$w])) { $colore[$w] = 1; $pila[] = [$w, 0]; }
+            } else { $colore[$v] = 2; array_pop($pila); }
+        }
+    }
+    return null;
+}
+
+/**
+ * Salva un'automazione. $d: nome, stato (o attivo, come prima), inneschi (JSON o elenco; o innesco e innesco_id, come prima),
+ * grafo, mittente_id, tag, rientro, rientro_attesa (ore), uscita_disiscritto, uscita_segmento. Ritorna l'id.
+ */
 function newsletter_flusso_salva(int $id, array $d): int {
     newsletter_flussi_schema();
+    $vecchio = $id ? newsletter_flusso($id) : null;
     $nome = mb_substr(trim(is_scalar($d['nome'] ?? null) ? (string)$d['nome'] : ''), 0, 100);
-    if ($nome === '') throw new RuntimeException('Il flusso ha bisogno di un nome.');
+    if ($nome === '') throw new RuntimeException('L\'automazione ha bisogno di un nome.');
     $g = newsletter_flusso_grafo_valido(newsletter_flusso_grafo_dal_form($d['grafo'] ?? []));
-    $email = array_filter($g['nodi'], fn($n) => $n['tipo'] === 'email');
-    if (!$email) throw new RuntimeException('Metti almeno un blocco Email sulla tela.');
-    foreach ($email as $n) if ($n['dati']['oggetto'] === '') throw new RuntimeException("Un'email è senza oggetto: aprila e scrivilo.");
+    $tipi = array_count_values(array_column($g['nodi'], 'tipo'));
+    if (count($g['nodi']) < 2) throw new RuntimeException('Metti almeno un blocco sulla tela, dopo l\'innesco.');
     if (newsletter_flusso_arrivo($g, 0, 'poi') === null) throw new RuntimeException("Collega l'innesco al primo blocco: trascina dal suo pallino a un blocco.");
-    foreach ($g['nodi'] as &$n) if ($n['tipo'] === 'email') $n['dati']['corpo'] = newsletter_4byte_dentro($n['dati']['corpo']);
+    if (($giro = nl_grafo_giro($g)) !== null) throw new RuntimeException("Il disegno fa un giro chiuso: un collegamento torna al blocco #$giro. Togli il collegamento che torna indietro (un'automazione va sempre avanti).");
+    $mod = function_exists('nd_modello') ? 'nd_modello' : null;
+    foreach ($g['nodi'] as &$n) {
+        $dn = &$n['dati'];
+        $dove = '#' . $n['id'];
+        switch ($n['tipo']) {
+            case 'email':
+                if ($dn['oggetto'] === '') throw new RuntimeException("L'email $dove è senza oggetto: aprila e scrivilo.");
+                $dn['corpo'] = newsletter_4byte_dentro($dn['corpo']);
+                // Il design a blocchi lo scrive l'editor delle email (nl_aut_design_salva): quello del browser non vale. Un
+                // modello scelto adesso porta il suo design.
+                $prima = $vecchio ? newsletter_flusso_nodo($vecchio['grafo'], $n['id']) : null;
+                $dn['design'] = $prima && $prima['tipo'] === 'email' ? (string)$prima['dati']['design'] : '';
+                if ($dn['modello'] > 0 && $mod && ($m = $mod($dn['modello'])) && $m['editor'] === 'blocchi') { $dn['design'] = (string)$m['design']; $dn['editor'] = 'blocchi'; }
+                $dn['modello'] = 0;
+                break;
+            case 'percento':
+                if (array_sum($dn['rami']) !== 100) throw new RuntimeException("La divisione in percentuale $dove fa " . array_sum($dn['rami']) . '%: le parti devono fare 100.');
+                break;
+            case 'dividi':
+                foreach ($dn['rami'] as $i => &$r) {
+                    if (!$r['regole']['gruppi']) throw new RuntimeException("La divisione $dove: il ramo " . ($i + 1) . ' non ha condizioni. Aggiungine una, o togli il ramo.');
+                    $ok = newsletter_regole_valida($r['regole'], ['flusso' => max(1, $id)]);
+                    if (isset($ok['errore'])) throw new RuntimeException("La divisione $dove, ramo " . ($i + 1) . ': ' . $ok['errore']);
+                    $r['regole'] = $ok['regole'];
+                    $r['nome'] = newsletter_4byte_dentro($r['nome']);
+                }
+                unset($r);
+                break;
+            case 'lista_aggiungi': case 'lista_togli':
+                if ($dn['lista'] < 1) throw new RuntimeException("Il blocco $dove: scegli la lista.");
+                break;
+            case 'attributo':
+                $a = $dn['nome'] !== '' && function_exists('newsletter_attributi') ? (newsletter_attributi()[$dn['nome']] ?? null) : null;
+                if (!$a || in_array($a['categoria'], ['calculated', 'global'], true) || ((int)$a['sistema'] && !in_array($a['colonna'], ['nome', 'cognome'], true))) throw new RuntimeException("Il blocco $dove: scegli l'attributo da cambiare.");
+                if ($dn['valore'] !== '' && !newsletter_valore_leggi($a, $dn['valore'])[0]) throw new RuntimeException("Il blocco $dove: il valore non va bene per l'attributo " . $dn['nome'] . ' (' . (NL_ATTR_TIPI[$a['tipo']] ?? $a['tipo']) . ').');
+                $dn['valore'] = newsletter_4byte_dentro($dn['valore']);
+                break;
+            case 'webhook':
+                if (!function_exists('nl_aut_webhook_controlla')) require_once __DIR__ . '/newsletter-automazioni.php';
+                $e = nl_aut_webhook_controlla($dn['url'], true);
+                if ($e['errore'] !== '') throw new RuntimeException("Il webhook $dove: " . $e['errore']);
+                break;
+        }
+        unset($dn);
+    }
     unset($n);
-    $innescoScelto = is_scalar($d['innesco'] ?? null) ? (string)$d['innesco'] : '';
-    $innesco = isset(NL_INNESCHI[$innescoScelto]) ? $innescoScelto : 'iscrizione';
-    $innescoId = (int)($d['innesco_id'] ?? 0);
-    if ($innesco === 'inattivo' && $innescoId < 1) throw new RuntimeException("Per l'innesco \"non fa niente da tanti giorni\" serve il numero di giorni.");
+    // Inneschi: elenco nuovo (JSON) oppure i due campi di prima.
+    $inn = $d['inneschi'] ?? null;
+    if (is_string($inn)) $inn = json_decode($inn, true, 4);
+    if (!is_array($inn)) $inn = [['tipo' => is_scalar($d['innesco'] ?? null) ? (string)$d['innesco'] : 'iscrizione', 'id' => (int)($d['innesco_id'] ?? 0)]];
+    $inn = nl_inneschi_validi($inn);
+    if (!$inn) throw new RuntimeException('Scegli almeno un innesco: quando entra una persona nell\'automazione.');
+    foreach ($inn as $x) {
+        if ($x['tipo'] === 'inattivo' && $x['id'] < 1) throw new RuntimeException("Per l'innesco \"non fa niente da tanti giorni\" serve il numero di giorni.");
+        if ($x['tipo'] === 'anniversario' && $x['attr'] === '') throw new RuntimeException("Per l'innesco \"anniversario\" scegli l'attributo con la data.");
+    }
+    $stato = is_scalar($d['stato'] ?? null) && isset(NL_AUT_STATI[(string)$d['stato']]) ? (string)$d['stato'] : (!empty($d['attivo']) ? 'attiva' : 'inattiva');
+    $ore = max(0, min(8760, (int)($d['rientro_attesa'] ?? 0)));
+    $rientro = !empty($d['rientro']) ? 1 : 0;
+    if ($rientro && $ore < 1) $ore = 1; // almeno un'ora: due automazioni non si rimbalzano un contatto a ogni giro
+    $uscita = ['disiscritto' => !empty($d['uscita_disiscritto']), 'segmento' => max(0, (int)($d['uscita_segmento'] ?? 0))];
+    if ($uscita['segmento'] && function_exists('newsletter_segmento') && !newsletter_segmento($uscita['segmento'])) $uscita['segmento'] = 0;
+    $tag = implode(', ', array_slice(array_values(array_unique(array_filter(array_map(fn($t) => mb_substr(trim(strip_tags($t)), 0, 40), explode(',', is_scalar($d['tag'] ?? null) ? (string)$d['tag'] : ''))))), 0, 5));
     // Le colonne sono utf8 a tre byte: un'emoji nel nome o nell'oggetto farebbe rifiutare la riga (o la taglierebbe).
     // Il nome passa dalle entità HTML, il grafo si salva in JSON con i caratteri fuori ASCII scritti come \uXXXX.
     $passi = json_encode($g, JSON_INVALID_UTF8_SUBSTITUTE);
-    if ($passi === false) throw new RuntimeException('Il flusso contiene caratteri che non si possono salvare: ' . json_last_error_msg());
-    $v = ['nome' => mb_substr(newsletter_4byte_dentro($nome), 0, 100), 'attivo' => !empty($d['attivo']) ? 1 : 0, 'innesco' => $innesco, 'innesco_id' => $innescoId, 'passi' => $passi];
+    if ($passi === false) throw new RuntimeException('L\'automazione contiene caratteri che non si possono salvare: ' . json_last_error_msg());
+    $v = ['nome' => mb_substr(newsletter_4byte_dentro($nome), 0, 100), 'attivo' => $stato === 'attiva' ? 1 : 0, 'innesco' => $inn[0]['tipo'], 'innesco_id' => $inn[0]['id'], 'passi' => $passi,
+        'stato' => $stato, 'inneschi' => json_encode($inn), 'tag' => mb_substr(newsletter_4byte_dentro($tag), 0, 255), 'rientro' => $rientro, 'rientro_attesa' => $ore, 'uscita' => json_encode($uscita)];
     if ($id) {
-        db()->prepare('UPDATE ' . tbl('newsletter_flussi') . ' SET nome = :nome, attivo = :attivo, innesco = :innesco, innesco_id = :innesco_id, passi = :passi, aggiornato = NOW() WHERE id = :id')->execute($v + ['id' => $id]);
+        db()->prepare('UPDATE ' . tbl('newsletter_flussi') . ' SET nome = :nome, attivo = :attivo, innesco = :innesco, innesco_id = :innesco_id, passi = :passi, stato = :stato, inneschi = :inneschi, tag = :tag, rientro = :rientro, rientro_attesa = :rientro_attesa, uscita = :uscita, aggiornato = NOW() WHERE id = :id')->execute($v + ['id' => $id]);
     } else {
-        db()->prepare('INSERT INTO ' . tbl('newsletter_flussi') . ' (nome, attivo, innesco, innesco_id, passi, creato, aggiornato) VALUES (:nome, :attivo, :innesco, :innesco_id, :passi, NOW(), NOW())')->execute($v);
+        db()->prepare('INSERT INTO ' . tbl('newsletter_flussi') . ' (nome, attivo, innesco, innesco_id, passi, stato, inneschi, tag, rientro, rientro_attesa, uscita, creato, aggiornato) VALUES (:nome, :attivo, :innesco, :innesco_id, :passi, :stato, :inneschi, :tag, :rientro, :rientro_attesa, :uscita, NOW(), NOW())')->execute($v);
         $id = (int)db()->lastInsertId();
     }
     // 2.1.0: il mittente del flusso, solo se è un mittente confermato (0 = il predefinito).
@@ -394,50 +605,112 @@ function newsletter_flusso_salva(int $id, array $d): int {
         $m = consegna_mittente((int)$d['mittente_id']);
         db()->prepare('UPDATE ' . tbl('newsletter_flussi') . ' SET mittente_id = ? WHERE id = ?')->execute([$m && $m['verificato_at'] ? (int)$m['id'] : 0, $id]);
     }
+    if ($stato === 'inattiva') nl_aut_togli_tutti($id, 'automazione inattiva');
+    nl_flussi_attivi(true);
     return $id;
 }
 
 function newsletter_flusso_elimina(int $id): void {
-    db()->prepare('DELETE FROM ' . tbl('newsletter_corsi') . ' WHERE flusso_id = ?')->execute([$id]);
+    foreach (['newsletter_corsi', 'newsletter_flussi_registro', 'newsletter_flussi_numeri'] as $t) db()->prepare('DELETE FROM ' . tbl($t) . ' WHERE flusso_id = ?')->execute([$id]);
     db()->prepare('DELETE FROM ' . tbl('newsletter_flussi') . ' WHERE id = ?')->execute([$id]);
 }
 
-/** Mette una persona in cammino su un flusso, al nodo dopo l'innesco. Una volta sola per flusso e persona. */
-function newsletter_flusso_parti(array $f, int $iscritto): void {
-    $g = $f['grafo'] ?? newsletter_flusso_grafo($f);
-    $primo = newsletter_flusso_arrivo($g, 0, 'poi');
-    if ($primo === null) return;
-    db()->prepare('INSERT IGNORE INTO ' . tbl('newsletter_corsi') . " (flusso_id, iscritto_id, passo, prossimo, stato, ascolto, salti, creato, aggiornato) VALUES (?, ?, ?, NOW(), 'attivo', NULL, 0, NOW(), NOW())")->execute([(int)$f['id'], $iscritto, $primo]);
+/** Una riga del registro dell'automazione (Attività). */
+function nl_registro(int $f, int $corso, int $iscritto, int $nodo, string $evento, string $dettaglio = ''): void {
+    db()->prepare('INSERT INTO ' . tbl('newsletter_flussi_registro') . ' (flusso_id, corso_id, iscritto_id, nodo, evento, dettaglio, creato) VALUES (?, ?, ?, ?, ?, ?, NOW())')
+        ->execute([$f, $corso, $iscritto, $nodo, $evento, mb_substr(newsletter_4byte_dentro($dettaglio), 0, 255)]);
 }
 
-/** Un innesco: fa partire i flussi che lo aspettano, per questo iscritto. */
+/** Un contatore di un passo: passati, inviate, o il ramo preso (r0, p1, si, altro...). */
+function nl_conta(int $f, int $nodo, string $chiave, int $quanti = 1): void {
+    db()->prepare('INSERT INTO ' . tbl('newsletter_flussi_numeri') . ' (flusso_id, nodo, chiave, n) VALUES (?, ?, ?, ?) ON DUPLICATE KEY UPDATE n = n + VALUES(n)')->execute([$f, $nodo, $chiave, $quanti]);
+}
+
+/** Toglie dall'automazione tutti quelli che ci sono dentro (Inattiva, eliminazione di una condizione...). Ritorna quanti. */
+function nl_aut_togli_tutti(int $f, string $perche): int {
+    $ids = db()->prepare('SELECT id, iscritto_id, passo FROM ' . tbl('newsletter_corsi') . " WHERE flusso_id = ? AND stato = 'attivo' LIMIT 5000");
+    $ids->execute([$f]);
+    $n = 0;
+    foreach ($ids->fetchAll() as $c) $n += nl_corso_chiudi((int)$c['id'], 'tolto', $perche, $f, (int)$c['iscritto_id'], (int)$c['passo']);
+    return $n;
+}
+
+/** Chiude un cammino: finito, fermato o tolto, con la riga del registro. Ritorna 1 se l'ha chiuso adesso. */
+function nl_corso_chiudi(int $corso, string $stato, string $perche, int $f, int $iscritto, int $nodo): int {
+    $st = db()->prepare('UPDATE ' . tbl('newsletter_corsi') . " SET stato = ?, prossimo = NULL, ascolto = NULL, aggiornato = NOW() WHERE id = ? AND stato = 'attivo'");
+    $st->execute([$stato, $corso]);
+    if (!$st->rowCount()) return 0;
+    nl_registro($f, $corso, $iscritto, $nodo, $stato === 'finito' ? 'finito' : ($stato === 'tolto' && str_starts_with($perche, 'esce') ? 'uscito' : $stato), $perche);
+    return 1;
+}
+
+/**
+ * Mette una persona in cammino, al nodo dopo l'innesco. Una volta sola per giro: chi è già dentro non rientra; chi ha finito
+ * rientra solo se l'automazione lo permette e l'attesa è passata (l'anniversario rientra una volta l'anno). Ritorna l'id del cammino o 0.
+ */
+function newsletter_flusso_parti(array $f, int $iscritto, string $perche = ''): int {
+    $g = $f['grafo'] ?? newsletter_flusso_grafo($f);
+    $primo = newsletter_flusso_arrivo($g, 0, 'poi');
+    if ($primo === null || !$iscritto) return 0;
+    $st = db()->prepare('SELECT COALESCE(MAX(giro), 0) AS giro, SUM(stato = \'attivo\') AS dentro, MAX(aggiornato) AS ultimo, MAX(creato) AS entrato FROM ' . tbl('newsletter_corsi') . ' WHERE flusso_id = ? AND iscritto_id = ?');
+    $st->execute([(int)$f['id'], $iscritto]);
+    $p = $st->fetch();
+    if ((int)$p['giro'] > 0) {
+        if ((int)$p['dentro'] > 0) return 0;
+        $anno = $perche === 'anniversario' && strtotime((string)$p['entrato']) < time() - 300 * 86400;
+        if (!$anno && (empty($f['rientro']) || strtotime((string)$p['ultimo']) > time() - max(1, (int)$f['rientro_attesa']) * 3600)) return 0;
+    }
+    $ins = db()->prepare('INSERT IGNORE INTO ' . tbl('newsletter_corsi') . " (flusso_id, iscritto_id, passo, prossimo, stato, ascolto, salti, giro, creato, aggiornato) VALUES (?, ?, ?, NOW(), 'attivo', NULL, 0, ?, NOW(), NOW())");
+    $ins->execute([(int)$f['id'], $iscritto, $primo, (int)$p['giro'] + 1]);
+    if (!$ins->rowCount()) return 0;
+    $corso = (int)db()->lastInsertId();
+    nl_registro((int)$f['id'], $corso, $iscritto, 0, 'entrato', (NL_INNESCHI[$perche] ?? $perche) . ((int)$p['giro'] > 0 ? ' (rientro, giro ' . ((int)$p['giro'] + 1) . ')' : ''));
+    nl_conta((int)$f['id'], 0, 'passati');
+    nl_conta((int)$f['id'], $primo, 'passati');
+    return $corso;
+}
+
+/** Le automazioni attive (solo loro fanno entrare qualcuno), una volta per richiesta. */
+function nl_flussi_attivi(bool $ricarica = false): array {
+    static $tutti = null;
+    if ($tutti === null || $ricarica) {
+        $tutti = [];
+        foreach (db()->query('SELECT * FROM ' . tbl('newsletter_flussi') . " WHERE stato = 'attiva'")->fetchAll() as $f) $tutti[] = nl_flusso_riga($f);
+    }
+    return $tutti;
+}
+
+/** Un innesco: fa partire le automazioni attive che lo aspettano (uno dei loro inneschi), per questo iscritto. */
 function newsletter_flussi_innesco(string $innesco, int $innescoId, int $iscritto): void {
     if (!$iscritto) return;
     newsletter_flussi_schema();
     // 2.0.0: solo per chi è attivo. Prima un cammino partiva anche per chi doveva ancora confermare, il giro lo fermava
     // e la chiave unica (flusso, iscritto) non lo faceva più ripartire. Chi aspetta la conferma: l'innesco "form" si
     // ricorda e parte alla conferma (newsletter_conferma_esito); gli altri inneschi arrivano già da soli dopo la conferma.
+    // 2.15.0: "si disiscrive" parte proprio per chi non è più attivo.
     $st = db()->prepare('SELECT stato FROM ' . tbl('newsletter_iscritti') . ' WHERE id = ?');
     $st->execute([$iscritto]);
-    if ($st->fetchColumn() !== 'attivo') {
+    if ($innesco !== 'disiscritto' && $st->fetchColumn() !== 'attivo') {
         if ($innesco === 'form') newsletter_innesco_in_attesa($innesco, $innescoId, $iscritto);
         return;
     }
-    $st = db()->prepare('SELECT * FROM ' . tbl('newsletter_flussi') . ' WHERE attivo = 1 AND innesco = ? AND (innesco_id = 0 OR innesco_id = ?)');
-    $st->execute([$innesco, $innescoId]);
-    foreach ($st->fetchAll() as $f) newsletter_flusso_parti($f, $iscritto);
+    foreach (nl_flussi_attivi() as $f) foreach ($f['inneschi'] as $x) {
+        if ($x['tipo'] === $innesco && ($x['id'] === 0 || $x['id'] === $innescoId)) { newsletter_flusso_parti($f, $iscritto, $innesco); break; }
+    }
 }
 
 /** L'innesco "inattivo da N giorni": a ogni giro cerca gli iscritti attivi che non aprono e non cliccano da N giorni (e sono iscritti da almeno N giorni) e li mette in cammino. */
 function newsletter_flussi_inattivi(): void {
-    $st = db()->query('SELECT * FROM ' . tbl('newsletter_flussi') . " WHERE attivo = 1 AND innesco = 'inattivo' AND innesco_id > 0");
-    foreach ($st->fetchAll() as $f) {
-        $g = max(1, (int)$f['innesco_id']);
+    foreach (nl_flussi_attivi() as $f) foreach ($f['inneschi'] as $x) {
+        if ($x['tipo'] !== 'inattivo' || $x['id'] < 1) continue;
+        $g = $x['id'];
+        // Senza rientro: chi è già passato di qui non si guarda più (come prima). Con il rientro: chi non è dentro e ha finito da abbastanza.
+        $gia = $f['rientro'] ? " AND (c.stato = 'attivo' OR c.aggiornato > DATE_SUB(NOW(), INTERVAL " . max(1, (int)$f['rientro_attesa']) . ' HOUR))' : '';
         $q = db()->prepare('SELECT i.id FROM ' . tbl('newsletter_iscritti') . " i WHERE i.stato = 'attivo' AND COALESCE(i.consenso_at, i.creato) <= DATE_SUB(NOW(), INTERVAL ? DAY)
             AND NOT EXISTS (SELECT 1 FROM " . tbl('newsletter_eventi') . ' e WHERE e.iscritto_id = i.id AND e.creato > DATE_SUB(NOW(), INTERVAL ? DAY))
-            AND NOT EXISTS (SELECT 1 FROM ' . tbl('newsletter_corsi') . ' c WHERE c.flusso_id = ? AND c.iscritto_id = i.id) LIMIT 200');
+            AND NOT EXISTS (SELECT 1 FROM ' . tbl('newsletter_corsi') . " c WHERE c.flusso_id = ? AND c.iscritto_id = i.id$gia) LIMIT 200");
         $q->execute([$g, $g, (int)$f['id']]);
-        foreach ($q->fetchAll(PDO::FETCH_COLUMN) as $i) newsletter_flusso_parti($f, (int)$i);
+        foreach ($q->fetchAll(PDO::FETCH_COLUMN) as $i) newsletter_flusso_parti($f, (int)$i, 'inattivo');
     }
 }
 
@@ -474,114 +747,207 @@ function newsletter_flusso_condizione(array $f, array $nodo, int $iscritto): boo
     return true;
 }
 
-/** Sposta un cammino lungo un'uscita: al nodo di arrivo (da elaborare subito) o alla fine se l'uscita è libera. */
-function newsletter_flusso_vai(array $g, int $corso, int $da, string $uscita, int $salti): void {
+/** Sposta un cammino lungo un'uscita: al nodo di arrivo (da elaborare al prossimo giro) o alla fine se l'uscita è libera. */
+function newsletter_flusso_vai(array $g, int $corso, int $da, string $uscita, int $salti, int $f = 0, int $iscritto = 0): void {
     $a = newsletter_flusso_arrivo($g, $da, $uscita);
-    if ($a === null || $salti > 60) {
-        db()->prepare('UPDATE ' . tbl('newsletter_corsi') . " SET stato = 'finito', prossimo = NULL, ascolto = NULL, aggiornato = NOW() WHERE id = ?")->execute([$corso]);
+    if ($f) nl_conta($f, $da, $uscita);
+    if ($a === null || $salti > NL_AUT_MAX_SALTI) {
+        if ($f) nl_corso_chiudi($corso, 'finito', $a === null ? '' : 'troppi passi: fermato', $f, $iscritto, $da);
+        else db()->prepare('UPDATE ' . tbl('newsletter_corsi') . " SET stato = 'finito', prossimo = NULL, ascolto = NULL, aggiornato = NOW() WHERE id = ?")->execute([$corso]);
         return;
     }
     db()->prepare('UPDATE ' . tbl('newsletter_corsi') . ' SET passo = ?, prossimo = NOW(), ascolto = NULL, salti = ?, aggiornato = NOW() WHERE id = ?')->execute([$a, $salti + 1, $corso]);
-}
-
-/** Un'apertura o un clic su un'email di un flusso: se la persona è in ascolto su quel nodo, parte dall'uscita giusta. */
-function newsletter_flusso_evento(int $flusso, int $nodo, int $iscritto, string $tipo): void {
-    $st = db()->prepare('SELECT * FROM ' . tbl('newsletter_corsi') . " WHERE flusso_id = ? AND iscritto_id = ? AND passo = ? AND stato = 'attivo' AND ascolto = 'email'");
-    $st->execute([$flusso, $iscritto, $nodo]);
-    $c = $st->fetch();
-    if (!$c) return;
-    $f = newsletter_flusso($flusso);
-    if (!$f) return;
-    $g = $f['grafo'];
-    $uscita = null;
-    // Un clic segue "se clicca"; se quell'uscita è libera vale come apertura. Un'apertura con solo "se clicca" collegato resta in ascolto.
-    if ($tipo === 'clic' && newsletter_flusso_arrivo($g, $nodo, 'cliccata') !== null) $uscita = 'cliccata';
-    elseif (newsletter_flusso_arrivo($g, $nodo, 'aperta') !== null) $uscita = 'aperta';
-    if ($uscita === null) return;
-    newsletter_flusso_vai($g, (int)$c['id'], $nodo, $uscita, (int)$c['salti']);
+    if ($f) nl_conta($f, $a, 'passati');
 }
 
 /**
- * Un giro dei flussi: elabora i cammini arrivati alla loro ora, manda al massimo $posti email.
- * Un cammino scorre finché incontra un'attesa, un'email in ascolto, o la fine. Ritorna le righe di log.
+ * Un'apertura o un clic su un'email di un'automazione: chi è in ascolto su quell'email parte dall'uscita giusta; chi è
+ * in "Attendi un evento" su quell'email (o su qualsiasi email dell'automazione) parte dal Sì.
+ */
+function newsletter_flusso_evento(int $flusso, int $nodo, int $iscritto, string $tipo): void {
+    $st = db()->prepare('SELECT * FROM ' . tbl('newsletter_corsi') . " WHERE flusso_id = ? AND iscritto_id = ? AND stato = 'attivo' AND ((passo = ? AND ascolto = 'email') OR ascolto = 'evento')");
+    $st->execute([$flusso, $iscritto, $nodo]);
+    $righe = $st->fetchAll();
+    if (!$righe) return;
+    $f = newsletter_flusso($flusso);
+    if (!$f || $f['stato'] === 'inattiva') return;
+    $g = $f['grafo'];
+    foreach ($righe as $c) {
+        if ($c['ascolto'] === 'evento') {
+            $n = newsletter_flusso_nodo($g, (int)$c['passo']);
+            if ($n && $n['tipo'] === 'evento' && ($n['dati']['evento'] === $tipo || $tipo === 'clic') && in_array($n['dati']['email'], [0, $nodo], true)) {
+                nl_registro($flusso, (int)$c['id'], $iscritto, (int)$c['passo'], 'evento', ($tipo === 'clic' ? 'ha cliccato' : 'ha aperto') . " l'email #$nodo");
+                newsletter_flusso_vai($g, (int)$c['id'], (int)$c['passo'], 'si', (int)$c['salti'], $flusso, $iscritto);
+            }
+            continue;
+        }
+        $uscita = null;
+        // Un clic segue "se clicca"; se quell'uscita è libera vale come apertura. Un'apertura con solo "se clicca" collegato resta in ascolto.
+        if ($tipo === 'clic' && newsletter_flusso_arrivo($g, $nodo, 'cliccata') !== null) $uscita = 'cliccata';
+        elseif (newsletter_flusso_arrivo($g, $nodo, 'aperta') !== null) $uscita = 'aperta';
+        if ($uscita === null) continue;
+        newsletter_flusso_vai($g, (int)$c['id'], $nodo, $uscita, (int)$c['salti'], $flusso, $iscritto);
+    }
+}
+
+/** L'email di un passo, come campagna per newsletter_email(). Un'email di prima (editor semplice) esce identica al byte. */
+function nl_email_campagna(array $f, array $d): array {
+    $c = ['id' => 0, 'oggetto' => $d['oggetto'], 'anteprima' => $d['anteprima'], 'corpo' => $d['corpo'], 'pulsante_testo' => $d['pulsante_testo'], 'pulsante_link' => $d['pulsante_link'], 'mittente_id' => (int)(($d['mittente_id'] ?? 0) ?: ($f['mittente_id'] ?? 0))];
+    if (($d['editor'] ?? '') === 'blocchi') $c += ['editor' => 'blocchi', 'design' => (string)$d['design']];
+    return $c;
+}
+
+/** Quando parte un'email con l'orario: il prossimo "alle HH" (oggi o domani); all'orario migliore, l'ora del contatto. */
+function nl_email_quando(array $d, int $iscritto): int {
+    $h = (int)$d['ora'];
+    if ($d['orario'] === 'migliore') {
+        if (!function_exists('nl_orario_ore')) @include_once __DIR__ . '/newsletter-report.php';
+        if (function_exists('nl_orario_ore')) $h = nl_orario_ore([$iscritto])[$iscritto] ?? $h;
+    }
+    $t = strtotime(date('Y-m-d') . sprintf(' %02d:00:00', $h));
+    return $t > time() ? $t : $t + 86400;
+}
+
+/**
+ * Un giro delle automazioni: elabora i cammini arrivati alla loro ora, manda al massimo $posti email.
+ * Un cammino scorre finché incontra un'attesa, un'email in ascolto, un evento da aspettare o la fine. Ritorna le righe di log.
  */
 function newsletter_flussi_giro(int $posti): array {
     newsletter_flussi_schema();
     $log = [];
     if ($posti <= 0) return $log;
+    nl_flussi_attivi(true);
     newsletter_flussi_inattivi();
-    $righe = db()->query('SELECT c.*, i.email, i.nome, i.cognome, i.stato AS stato_iscritto FROM ' . tbl('newsletter_corsi') . ' c JOIN ' . tbl('newsletter_iscritti') . " i ON i.id = c.iscritto_id WHERE c.stato = 'attivo' AND c.prossimo <= NOW() ORDER BY c.prossimo LIMIT " . (int)($posti * 3))->fetchAll();
+    if (!function_exists('nl_aut_giro_prima')) @include_once __DIR__ . '/newsletter-automazioni.php';
+    if (function_exists('nl_aut_giro_prima')) $log = nl_aut_giro_prima(); // anniversari e condizioni di uscita
+    $righe = db()->query('SELECT c.*, i.email, i.nome, i.cognome, i.stato AS stato_iscritto FROM ' . tbl('newsletter_corsi') . ' c JOIN ' . tbl('newsletter_iscritti') . " i ON i.id = c.iscritto_id WHERE c.stato = 'attivo' AND c.prossimo <= NOW() ORDER BY c.prossimo, c.id LIMIT " . (int)($posti * 3 + 50))->fetchAll();
     $flussi = [];
-    $inviate = 0;
-    $aggiorna = db()->prepare('UPDATE ' . tbl('newsletter_corsi') . ' SET passo = ?, prossimo = ?, ascolto = ?, salti = ?, aggiornato = NOW() WHERE id = ?');
+    $conto = ['inviate' => 0, 'posti' => $posti, 'webhook' => 0];
     foreach ($righe as $r) {
-        if ($inviate >= $posti) break;
+        if ($conto['inviate'] >= $posti) break;
         $f = $flussi[$r['flusso_id']] ??= newsletter_flusso((int)$r['flusso_id']);
-        if (!$f || !$f['attivo'] || $r['stato_iscritto'] !== 'attivo') {
-            db()->prepare('UPDATE ' . tbl('newsletter_corsi') . " SET stato = 'fermato', prossimo = NULL, ascolto = NULL, aggiornato = NOW() WHERE id = ?")->execute([$r['id']]);
-            continue;
-        }
-        $g = $f['grafo'];
         $corso = (int)$r['id']; $iscritto = (int)$r['iscritto_id'];
-        $nodoId = (int)$r['passo']; $salti = (int)$r['salti'];
-        // In ascolto e il tempo è scaduto: nessuna interazione.
-        if ($r['ascolto'] === 'email') {
-            newsletter_flusso_vai($g, $corso, $nodoId, newsletter_flusso_arrivo($g, $nodoId, 'nessuna') !== null ? 'nessuna' : 'poi', $salti);
-            $dopo = db()->query('SELECT passo, salti, stato FROM ' . tbl('newsletter_corsi') . " WHERE id = $corso")->fetch();
-            if (!$dopo || $dopo['stato'] !== 'attivo') continue;
-            $nodoId = (int)$dopo['passo']; $salti = (int)$dopo['salti'];
+        if (!$f) { db()->prepare('UPDATE ' . tbl('newsletter_corsi') . " SET stato = 'fermato', prossimo = NULL, ascolto = NULL, aggiornato = NOW() WHERE id = ?")->execute([$corso]); continue; }
+        $fid = (int)$f['id'];
+        if ($f['stato'] === 'inattiva') { nl_corso_chiudi($corso, 'tolto', 'automazione inattiva', $fid, $iscritto, (int)$r['passo']); continue; }
+        $soloAzioni = false;
+        if ($r['stato_iscritto'] !== 'attivo') {
+            // Chi non riceve più email: esce se l'automazione lo chiede; resta (senza email) se è entrato perché si è disiscritto; sennò si ferma, come prima.
+            if ($f['uscita']['disiscritto']) { nl_corso_chiudi($corso, 'tolto', 'esce: non è più iscritto', $fid, $iscritto, (int)$r['passo']); continue; }
+            if (!in_array('disiscritto', array_column($f['inneschi'], 'tipo'), true)) { nl_corso_chiudi($corso, 'fermato', 'non è più iscritto', $fid, $iscritto, (int)$r['passo']); continue; }
+            $soloAzioni = true;
         }
-        // Scorre i nodi finché il cammino si ferma.
-        for ($passi = 0; $passi < 30; $passi++) {
-            $nodo = newsletter_flusso_nodo($g, $nodoId);
-            if (!$nodo || $nodo['tipo'] === 'fine' || $nodo['tipo'] === 'innesco') {
-                db()->prepare('UPDATE ' . tbl('newsletter_corsi') . " SET stato = 'finito', prossimo = NULL, ascolto = NULL, aggiornato = NOW() WHERE id = ?")->execute([$corso]);
-                break;
-            }
-            if ($nodo['tipo'] === 'attesa') {
-                $a = newsletter_flusso_arrivo($g, $nodoId, 'poi');
-                if ($a === null) { db()->prepare('UPDATE ' . tbl('newsletter_corsi') . " SET stato = 'finito', prossimo = NULL, aggiornato = NOW() WHERE id = ?")->execute([$corso]); break; }
-                $aggiorna->execute([$a, date('Y-m-d H:i:s', time() + $nodo['dati']['minuti'] * 60), null, $salti + 1, $corso]);
-                break;
-            }
-            if ($nodo['tipo'] === 'bivio') {
-                $u = newsletter_flusso_condizione($f, $nodo, $iscritto) ? 'si' : 'no';
-                $a = newsletter_flusso_arrivo($g, $nodoId, $u);
-                if ($a === null || $salti > 60) { db()->prepare('UPDATE ' . tbl('newsletter_corsi') . " SET stato = 'finito', prossimo = NULL, aggiornato = NOW() WHERE id = ?")->execute([$corso]); break; }
-                $nodoId = $a; $salti++;
-                $aggiorna->execute([$nodoId, date('Y-m-d H:i:s'), null, $salti, $corso]);
-                continue;
-            }
-            // Email.
-            if ($inviate >= $posti) break; // resta dov'è, al prossimo giro
-            $d = $nodo['dati'];
-            $c = ['id' => 0, 'oggetto' => $d['oggetto'], 'anteprima' => $d['anteprima'], 'corpo' => $d['corpo'], 'pulsante_testo' => $d['pulsante_testo'], 'pulsante_link' => $d['pulsante_link'], 'mittente_id' => (int)($f['mittente_id'] ?? 0)];
-            [$oggetto, $html, $intest] = newsletter_email($c, ['id' => $iscritto, 'nome' => $r['nome'], 'email' => $r['email']], ['f' => (int)$f['id'], 'p' => $nodoId]);
-            $partita = posta_invia($r['email'], $oggetto, $html, $intest, 'flusso');
-            newsletter_esito_invio($iscritto);
-            if (!$partita && posta_esito() === 'rimbalzo') {
-                // Indirizzo rifiutato per sempre: l'iscritto è rimbalzato, il suo cammino si ferma, gli altri vanno avanti.
-                db()->prepare('UPDATE ' . tbl('newsletter_corsi') . " SET stato = 'fermato', prossimo = NULL, ascolto = NULL, aggiornato = NOW() WHERE id = ?")->execute([$corso]);
-                newsletter_evento_interno('rimbalzo', 0, (int)$f['id'], $nodoId, $iscritto);
-                $log[] = 'flusso ' . $f['nome'] . ': indirizzo rifiutato, iscritto segnato rimbalzato (' . posta_errore() . ')';
-                break;
-            }
-            if (!$partita) { $log[] = 'flusso ' . $f['nome'] . ': email non partita verso ' . $r['email'] . ' (' . posta_errore() . ')'; break; }
-            $inviate++;
-            db()->prepare('UPDATE ' . tbl('newsletter_flussi') . ' SET inviate = inviate + 1 WHERE id = ?')->execute([$f['id']]);
-            // 2.8.0: l'email del flusso nella Cronologia del contatto (le campagne stanno già nella coda).
-            if (function_exists('newsletter_storia_scrivi')) newsletter_storia_scrivi($iscritto, 'flusso_email', $f['nome'] . ': ' . newsletter_4byte_fuori((string)$d['oggetto']), (int)$f['id']);
-            $ascolta = $d['ascolto'] > 0 && (newsletter_flusso_arrivo($g, $nodoId, 'aperta') !== null || newsletter_flusso_arrivo($g, $nodoId, 'cliccata') !== null || newsletter_flusso_arrivo($g, $nodoId, 'nessuna') !== null);
-            if ($ascolta) {
-                $aggiorna->execute([$nodoId, date('Y-m-d H:i:s', time() + $d['ascolto'] * 60), 'email', $salti, $corso]);
-                break;
-            }
-            $a = newsletter_flusso_arrivo($g, $nodoId, 'poi');
-            if ($a === null) { db()->prepare('UPDATE ' . tbl('newsletter_corsi') . " SET stato = 'finito', prossimo = NULL, aggiornato = NOW() WHERE id = ?")->execute([$corso]); break; }
-            $nodoId = $a; $salti++;
-            $aggiorna->execute([$nodoId, date('Y-m-d H:i:s'), null, $salti, $corso]);
-        }
+        nl_corso_scorri($f, $r, $conto, $log, $soloAzioni);
     }
-    if ($inviate) $log[] = "flussi: $inviate email mandate";
+    if ($conto['inviate']) $log[] = 'automazioni: ' . $conto['inviate'] . ' email mandate';
     return $log;
+}
+
+/** Fa scorrere un cammino finché si ferma. $conto: email mandate e posti del giro, webhook chiamati. */
+function nl_corso_scorri(array $f, array $r, array &$conto, array &$log, bool $soloAzioni): void {
+    $g = $f['grafo']; $fid = (int)$f['id'];
+    $corso = (int)$r['id']; $iscritto = (int)$r['iscritto_id'];
+    $nodoId = (int)$r['passo']; $salti = (int)$r['salti'];
+    $aggiorna = db()->prepare('UPDATE ' . tbl('newsletter_corsi') . ' SET passo = ?, prossimo = ?, ascolto = ?, salti = ?, aggiornato = NOW() WHERE id = ?');
+    $ferma = function (int $quando, ?string $ascolto) use (&$nodoId, &$salti, $aggiorna, $corso) { $aggiorna->execute([$nodoId, date('Y-m-d H:i:s', $quando), $ascolto, $salti, $corso]); };
+    // Esce da un'uscita: al nodo dopo (true) o alla fine (false).
+    $vai = function (string $u) use (&$nodoId, &$salti, $g, $fid, $corso, $iscritto, $aggiorna): bool {
+        $a = newsletter_flusso_arrivo($g, $nodoId, $u);
+        nl_conta($fid, $nodoId, $u);
+        if ($a === null || $salti >= NL_AUT_MAX_SALTI) { nl_corso_chiudi($corso, 'finito', $a === null ? '' : 'troppi passi: fermato', $fid, $iscritto, $nodoId); return false; }
+        $nodoId = $a; $salti++;
+        nl_conta($fid, $a, 'passati');
+        $aggiorna->execute([$nodoId, date('Y-m-d H:i:s'), null, $salti, $corso]);
+        return true;
+    };
+    $inviaOra = false;
+    // Il tempo di un ascolto è passato.
+    if ($r['ascolto'] === 'email' && !$vai(newsletter_flusso_arrivo($g, $nodoId, 'nessuna') !== null ? 'nessuna' : 'poi')) return;
+    if ($r['ascolto'] === 'evento') { nl_registro($fid, $corso, $iscritto, $nodoId, 'evento', 'il tempo massimo è passato'); if (!$vai('no')) return; }
+    if ($r['ascolto'] === 'attesa' && !$vai('poi')) return;
+    if ($r['ascolto'] === 'orario') $inviaOra = true;
+    for ($k = 0; $k < NL_AUT_PASSI_GIRO; $k++) {
+        $nodo = newsletter_flusso_nodo($g, $nodoId);
+        if (!$nodo || $nodo['tipo'] === 'fine' || $nodo['tipo'] === 'innesco') { nl_corso_chiudi($corso, 'finito', '', $fid, $iscritto, $nodoId); return; }
+        $d = $nodo['dati'];
+        switch ($nodo['tipo']) {
+            case 'attesa':
+                nl_registro($fid, $corso, $iscritto, $nodoId, 'attesa', 'aspetta fino al ' . date('d/m/Y H:i', time() + $d['minuti'] * 60));
+                $ferma(time() + $d['minuti'] * 60, 'attesa');
+                return;
+            case 'evento':
+                // Già successo da quando è entrato? Allora non serve aspettare.
+                $q = db()->prepare('SELECT COUNT(*) FROM ' . tbl('newsletter_eventi') . ' WHERE flusso_id = ? AND iscritto_id = ? AND tipo = ? AND creato >= ?' . ($d['email'] ? ' AND passo = ?' : ''));
+                $q->execute(array_merge([$fid, $iscritto, $d['evento'], (string)$r['creato']], $d['email'] ? [$d['email']] : []));
+                if ((int)$q->fetchColumn() > 0) { nl_registro($fid, $corso, $iscritto, $nodoId, 'evento', 'era già successo'); if (!$vai('si')) return; continue 2; }
+                $ferma(time() + $d['massimo'] * 60, 'evento');
+                return;
+            case 'bivio':
+                $u = newsletter_flusso_condizione($f, $nodo, $iscritto) ? 'si' : 'no';
+                nl_registro($fid, $corso, $iscritto, $nodoId, 'bivio', $u === 'si' ? 'Sì' : 'No');
+                if (!$vai($u)) return;
+                continue 2;
+            case 'dividi': case 'percento':
+                $u = $nodo['tipo'] === 'dividi' ? nl_dividi_ramo($fid, $nodo, $iscritto) : nl_percento_ramo($fid, $nodo);
+                nl_registro($fid, $corso, $iscritto, $nodoId, 'bivio', nl_uscite($nodo)[$u] ?? $u);
+                if (!$vai($u)) return;
+                continue 2;
+            case 'lista_aggiungi': case 'lista_togli': case 'attributo': case 'webhook':
+                if ($nodo['tipo'] === 'webhook' && $conto['webhook'] >= 20) { $ferma(time(), null); return; } // al prossimo giro: un giro resta breve
+                if (!function_exists('nl_aut_azione')) require_once __DIR__ . '/newsletter-automazioni.php';
+                if ($nodo['tipo'] === 'webhook') $conto['webhook']++;
+                nl_registro($fid, $corso, $iscritto, $nodoId, 'azione', nl_aut_azione($f, $nodo, $r));
+                if (!$vai('poi')) return;
+                continue 2;
+        }
+        // Email.
+        if ($soloAzioni) { nl_registro($fid, $corso, $iscritto, $nodoId, 'email', 'non mandata: non è iscritto'); if (!$vai('poi')) return; continue; }
+        if ($d['orario'] !== 'subito' && !$inviaOra) { $ferma(nl_email_quando($d, $iscritto), 'orario'); return; }
+        if ($conto['inviate'] >= $conto['posti']) { $ferma(time(), $inviaOra ? 'orario' : null); return; } // resta dov'è, al prossimo giro
+        $inviaOra = false;
+        [$oggetto, $html, $intest] = newsletter_email(nl_email_campagna($f, $d), ['id' => $iscritto, 'nome' => $r['nome'], 'email' => $r['email']], ['f' => $fid, 'p' => $nodoId]);
+        $partita = posta_invia($r['email'], $oggetto, $html, $intest, 'flusso');
+        newsletter_esito_invio($iscritto);
+        if (!$partita && posta_esito() === 'rimbalzo') {
+            // Indirizzo rifiutato per sempre: l'iscritto è rimbalzato, il suo cammino si ferma, gli altri vanno avanti.
+            nl_corso_chiudi($corso, 'fermato', 'indirizzo rifiutato dal server di posta', $fid, $iscritto, $nodoId);
+            newsletter_evento_interno('rimbalzo', 0, $fid, $nodoId, $iscritto);
+            $log[] = 'automazione ' . $f['nome'] . ': indirizzo rifiutato, iscritto segnato rimbalzato (' . posta_errore() . ')';
+            return;
+        }
+        if (!$partita) { $log[] = 'automazione ' . $f['nome'] . ': email non partita verso ' . $r['email'] . ' (' . posta_errore() . ')'; $ferma(time(), null); return; }
+        $conto['inviate']++;
+        db()->prepare('UPDATE ' . tbl('newsletter_flussi') . ' SET inviate = inviate + 1 WHERE id = ?')->execute([$fid]);
+        nl_conta($fid, $nodoId, 'inviate');
+        nl_registro($fid, $corso, $iscritto, $nodoId, 'email', newsletter_4byte_fuori((string)$oggetto));
+        // 2.8.0: l'email del flusso nella Cronologia del contatto (le campagne stanno già nella coda).
+        if (function_exists('newsletter_storia_scrivi')) newsletter_storia_scrivi($iscritto, 'flusso_email', $f['nome'] . ': ' . newsletter_4byte_fuori((string)$d['oggetto']), $fid);
+        $ascolta = $d['ascolto'] > 0 && (newsletter_flusso_arrivo($g, $nodoId, 'aperta') !== null || newsletter_flusso_arrivo($g, $nodoId, 'cliccata') !== null || newsletter_flusso_arrivo($g, $nodoId, 'nessuna') !== null);
+        if ($ascolta) { $ferma(time() + $d['ascolto'] * 60, 'email'); return; }
+        if (!$vai('poi')) return;
+    }
+}
+
+/** Il primo ramo di una divisione condizionale che vale per il contatto (r0, r1...), o "altro". */
+function nl_dividi_ramo(int $f, array $nodo, int $iscritto): string {
+    foreach ($nodo['dati']['rami'] as $i => $r) {
+        $ok = newsletter_regole_valida($r['regole'], ['flusso' => $f]);
+        if (isset($ok['regole']) && $ok['regole']['gruppi'] && newsletter_regole_vale($ok['regole'], $iscritto, ['flusso' => $f])) return "r$i";
+    }
+    return 'altro';
+}
+
+/** Il ramo di una divisione in percentuale: quello più indietro rispetto alla sua parte (le proporzioni tornano esatte). */
+function nl_percento_ramo(int $f, array $nodo): string {
+    $st = db()->prepare('SELECT chiave, n FROM ' . tbl('newsletter_flussi_numeri') . ' WHERE flusso_id = ? AND nodo = ?');
+    $st->execute([$f, $nodo['id']]);
+    $n = $st->fetchAll(PDO::FETCH_KEY_PAIR);
+    $tot = 0;
+    foreach ($nodo['dati']['rami'] as $i => $p) $tot += (int)($n["p$i"] ?? 0);
+    $meglio = 'p0'; $max = -INF;
+    foreach ($nodo['dati']['rami'] as $i => $p) {
+        $manca = $p * ($tot + 1) / 100 - (int)($n["p$i"] ?? 0);
+        if ($manca > $max + 1e-9) { $max = $manca; $meglio = "p$i"; }
+    }
+    return $meglio;
 }

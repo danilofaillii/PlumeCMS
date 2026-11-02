@@ -912,6 +912,7 @@ function newsletter_preferenze_lista(int $id, int $lista, bool $vuole): void {
     } elseif ($dentro && !$uscito) {
         db()->prepare('INSERT IGNORE INTO ' . tbl('newsletter_liste_uscite') . ' (contatto_id, lista_id, quando) VALUES (?, ?, NOW())')->execute([$id, $lista]);
         newsletter_storia_scrivi($id, 'lista_uscito', 'Dal centro preferenze: non riceve più la lista ' . $nome, $lista);
+        newsletter_flussi_innesco('lista_tolto', $lista, $id); // 2.15.0: l'innesco "tolto da una lista"
         // Le email di quella lista ancora in coda non partono, se non arrivano anche da un'altra lista o da un segmento della campagna.
     }
 }

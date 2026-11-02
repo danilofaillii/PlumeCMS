@@ -2023,6 +2023,120 @@ echo json_encode($o);
     }
   }
 
+  // === 37. (2.15.0) Automazioni: solo l'amministratore, solo con il token e dal pannello. Webhook verso indirizzi interni
+  // (127.0.0.1, 169.254.169.254, 10.x, 192.168.x, [::1], IPv4 dentro IPv6, numeri decimali ed esadecimali, localhost, porte e
+  // schemi strani) rifiutati al salvataggio; al momento della chiamata un indirizzo interno non parte e un rimando non si segue
+  // (server finto locale, AU_LOCALE solo per la prova del rimando). Grafi con giri chiusi o enormi, tipi e campi inventati,
+  // JSON annidato, inneschi e impostazioni manipolati; testo con codice nel nome, nei rami, nei tag. Serve CMS_DIR.
+  {
+    const path = require('path'), { execFileSync, spawn } = require('child_process');
+    const DIR37 = process.env.CMS_DIR || '';
+    const PF = ADMIN + '/newsletter-flussi.php';
+    const ORIG = { 'Origin': BASE.replace(/(https?:\/\/[^/]+).*/, '$1') };
+    if (!DIR37) ok('2.15.0: (senza CMS_DIR le prove delle automazioni sono saltate)', true);
+    else {
+      const cli = (env, ...a) => JSON.parse(execFileSync('php', [path.join(__dirname, '..', 'prove', 'automazioni-cli.php'), DIR37, ...a.map(String)], { encoding: 'utf8', env: Object.assign({}, process.env, env) }).trim().split('\n').pop());
+      const q = (s) => cli({}, 'sql', s);
+      const uno = (s) => { const r = q(s); return r && r[0] ? Object.values(r[0])[0] : null; };
+      const quante = () => +uno("SELECT COUNT(*) FROM {p}newsletter_flussi WHERE nome LIKE 'Sic37%' OR nome LIKE '%alert(37)%'");
+      const pulisci = () => { for (const r of q("SELECT id FROM {p}newsletter_flussi WHERE nome LIKE 'Sic37%' OR nome LIKE '%alert(37)%'") || []) { for (const t of ['newsletter_corsi', 'newsletter_flussi_registro', 'newsletter_flussi_numeri']) q(`DELETE FROM {p}${t} WHERE flusso_id = ${r.id}`); q(`DELETE FROM {p}newsletter_flussi WHERE id = ${r.id}`); } };
+      pulisci();
+      const n0 = (tipo, dati = {}, id = 1) => ({ id, tipo, x: 40, y: 40 + id * 100, dati });
+      const grafo = (nodi, archi) => JSON.stringify({ nodi: [{ id: 0, tipo: 'innesco', x: 0, y: 0, dati: {} }].concat(nodi), archi: archi || nodi.map((x, i) => ({ da: i ? nodi[i - 1].id : 0, uscita: i ? 'poi' : 'poi', a: x.id })) });
+      const tk = await tokenDi(admin.p, PF + '?nuovo=1');
+      const salva = (campi, headers = ORIG, ctx = admin.ctx) => ctx.request.post(PF, { headers, form: Object.assign({ _csrf: tk, id: '0', azione: 'salva', nome: 'Sic37', stato: 'attiva', inneschi: '[{"tipo":"lista","id":0}]', grafo: grafo([n0('lista_aggiungi', { lista: 1 })]) }, campi), maxRedirects: 0 });
+      // Senza login, senza token, da fuori, redattore
+      const anon = await browser.newContext();
+      const a1 = await anon.request.get(PF, { maxRedirects: 0 });
+      const a2 = await salva({}, ORIG, anon);
+      await anon.close();
+      ok('2.15.0: senza login niente pagina delle automazioni e nessun salvataggio', [302, 403].includes(a1.status()) && [302, 403].includes(a2.status()) && quante() === 0, [a1.status(), a2.status()]);
+      const s1 = await admin.ctx.request.post(PF, { headers: ORIG, form: { id: '0', nome: 'Sic37 senza token', grafo: grafo([n0('fine')]) }, maxRedirects: 0 });
+      const s2 = await salva({ nome: 'Sic37 da fuori' }, { 'Origin': 'https://evil.example' });
+      ok('2.15.0: salvare senza token o da un altro sito: 403 e nessuna automazione', [s1, s2].every(r => r.status() === 403) && quante() === 0, [s1.status(), s2.status()]);
+      if (red.dentro) {
+        const tr = await tokenDi(red.p, ADMIN + '/media.php');
+        const r1 = await red.ctx.request.get(PF, { maxRedirects: 0 });
+        const r2 = await salva({ _csrf: tr, nome: 'Sic37 redattore' }, ORIG, red.ctx);
+        const r3 = await red.ctx.request.get(ADMIN + '/newsletter-design.php?flusso=1&nodo=1', { maxRedirects: 0 });
+        ok('2.15.0: il redattore non apre le automazioni, non le salva, non apre il design di un passo', [r1, r2, r3].every(r => [302, 403].includes(r.status())) && quante() === 0, [r1.status(), r2.status(), r3.status()]);
+      }
+      // Webhook verso indirizzi interni: rifiutati al salvataggio
+      const interni = ['http://127.0.0.1/x', 'https://127.0.0.1/x', 'https://169.254.169.254/latest/meta-data/', 'https://10.0.0.5/x', 'https://192.168.1.1/x', 'https://172.16.0.1/x', 'https://[::1]/x',
+        'https://[::ffff:127.0.0.1]/x', 'https://[::ffff:a9fe:a9fe]/x', 'https://[fd00::1]/x', 'https://[fe80::1]/x', 'https://localhost/x', 'https://sito.localhost/x', 'https://2130706433/x', 'https://0x7f000001/x', 'https://127.1/x',
+        'https://0.0.0.0/x', 'https://100.64.0.1/x', 'https://utente:pw@esempio.it/x', 'https://esempio.it:8080/x', 'javascript:alert(1)', 'file:///etc/passwd', 'gopher://127.0.0.1:25/x', 'ftp://esempio.it/x', 'https://esem pio.it/x', ''];
+      const passati = [];
+      for (const u of interni) { const r = await salva({ nome: 'Sic37 webhook', grafo: grafo([n0('webhook', { url: u })]) }); if (quante() > 0) { passati.push([u, r.status()]); pulisci(); } }
+      ok('2.15.0: ' + interni.length + ' webhook verso indirizzi interni, nascosti, con credenziali, porte o schemi strani: nessuno si salva', passati.length === 0, passati);
+      const rv = await salva({ nome: 'Sic37 webhook buono', grafo: grafo([n0('webhook', { url: 'https://93.184.216.34/ricevi' })]) });
+      ok('2.15.0: la prova di controllo con un indirizzo pubblico in https si salva (le prove sopra sono vere)', quante() === 1, rv.status());
+      pulisci();
+      // Al momento della chiamata: senza la costante delle prove un indirizzo interno non parte; un rimando non si segue mai.
+      const PW = +(process.env.SIC_WEBHOOK || 9296), FILE = path.join(require('os').tmpdir(), 'sic37-arrivi-' + process.pid + '.txt');
+      try { require('fs').unlinkSync(FILE); } catch (e) {}
+      const SRV = `require('http').createServer((q, s) => { require('fs').appendFileSync(process.argv[2], process.argv[1] + q.url + '\\n'); if (q.url === '/rimanda') { s.writeHead(302, { Location: 'http://127.0.0.1:' + (+process.argv[1] + 1) + '/segreto' }); return s.end(); } s.end('ok'); }).listen(+process.argv[1], '127.0.0.1');`;
+      const srv = [spawn(process.execPath, ['-e', SRV, String(PW), FILE], { stdio: 'ignore' }), spawn(process.execPath, ['-e', SRV, String(PW + 1), FILE], { stdio: 'ignore' })];
+      await new Promise(r => setTimeout(r, 600));
+      const arrivi = () => { try { return require('fs').readFileSync(FILE, 'utf8').trim().split('\n').filter(Boolean); } catch (e) { return []; } };
+      const w1 = cli({}, 'webhook', `http://127.0.0.1:${PW}/ok`);
+      const w2 = cli({}, 'webhook', `https://[::1]:${PW}/ok`);
+      ok('2.15.0: alla chiamata, senza la costante delle prove, 127.0.0.1 e [::1] non partono', /non chiamato/.test(w1.esito) && /non chiamato/.test(w2.esito) && arrivi().length === 0, [w1, w2, arrivi()]);
+      const w3 = cli({ AU_LOCALE: `127.0.0.1:${PW}` }, 'webhook', `http://127.0.0.1:${PW}/rimanda`);
+      ok('2.15.0: un rimando verso un indirizzo interno non si segue (il server interno non riceve niente)', /non lo seguo/.test(w3.esito) && arrivi().length === 1 && !arrivi().some(x => x.startsWith(String(PW + 1))), [w3, arrivi()]);
+      srv.forEach(s => s.kill());
+      try { require('fs').unlinkSync(FILE); } catch (e) {}
+      // Grafi
+      const g150 = grafo(Array.from({ length: 150 }, (_, i) => n0('attesa', { minuti: 5 }, i + 1)));
+      const giro = grafo([n0('attesa', { minuti: 5 }, 1), n0('attesa', { minuti: 5 }, 2)], [{ da: 0, uscita: 'poi', a: 1 }, { da: 1, uscita: 'poi', a: 2 }, { da: 2, uscita: 'poi', a: 1 }]);
+      let annidato = '{"a":1}'; for (let i = 0; i < 200; i++) annidato = '{"nodi":[' + annidato + ']}';
+      for (const g of [g150, giro, annidato, 'non è json', '[]', '{"nodi":"x","archi":5}']) await salva({ nome: 'Sic37 grafo', grafo: g });
+      await admin.ctx.request.post(PF, { headers: ORIG, form: { _csrf: tk, id: '0', azione: 'salva', nome: 'Sic37 grafo', stato: 'attiva', 'grafo[]': 'x' }, maxRedirects: 0 });
+      ok('2.15.0: grafi con 150 blocchi, un giro chiuso, JSON annidato 200 volte, testo, elenchi o un array al posto del JSON: nessuno si salva', quante() === 0);
+      // Tipi, campi, inneschi e impostazioni inventati o fuori misura: si salva solo l'elenco chiuso, nei limiti.
+      const strano = JSON.stringify({ nodi: [{ id: 0, tipo: 'innesco', x: -5, y: 1e12, dati: { eval: 1 } }, { id: 1, tipo: 'email', x: 99999999, y: 0, dati: { oggetto: 'Sic37 ogg', ascolto: 1e12, orario: 'mezzanotte', ora: 99, editor: 'php', mittente_id: -4, design: { x: 1 } } },
+        { id: 2, tipo: 'php', dati: { codice: 'system("id")' } }, { id: 3, tipo: 'percento', dati: { rami: [60, 40, 'x', { a: 1 }] } }, { id: 4, tipo: 'attesa', dati: { minuti: -10 } }, { id: 'x', tipo: 'fine' }],
+        archi: [{ da: 0, uscita: 'poi', a: 1 }, { da: 1, uscita: 'poi', a: 3 }, { da: 3, uscita: 'p0', a: 4 }, { da: 3, uscita: 'p9', a: 2 }, { da: 1, uscita: 'segreta', a: 4 }, { da: 4, uscita: 'poi', a: 0 }, { da: 4, uscita: 'poi', a: 999 }] });
+      const innStrani = JSON.stringify([{ tipo: 'eval', id: 1 }, { tipo: 'lista', id: 'abc' }, { tipo: 'anniversario', id: 9999, attr: 'AU_DATA_NON_CE' }].concat(Array.from({ length: 30 }, (_, i) => ({ tipo: 'form', id: i + 1 }))));
+      await salva({ nome: 'Sic37 strano <img src=x onerror=alert(37)>', stato: 'hackerata', tag: '<script>alert(37)</script>, ok', inneschi: innStrani, rientro: '1', rientro_attesa: '99999999', uscita_segmento: '1 OR 1=1', grafo: strano });
+      const rS = q("SELECT * FROM {p}newsletter_flussi WHERE nome LIKE 'Sic37 strano%' OR nome LIKE '%alert(37)%'")[0] || {};
+      const gS = JSON.parse(rS.passi || '{"nodi":[],"archi":[]}'), iS = JSON.parse(rS.inneschi || '[]');
+      const eS = gS.nodi.find(x => x.id === 1) || { dati: {} };
+      ok('2.15.0: tipi inventati tolti, campi nei limiti (ascolto, ora, orario, editor, coordinate), archi da uscite inventate o verso nodi che non ci sono tolti',
+        !gS.nodi.some(x => x.tipo === 'php') && eS.dati.ascolto === 525600 && eS.dati.ora === 23 && eS.dati.orario === 'subito' && eS.dati.editor === 'semplice' && eS.dati.mittente_id === 0 && eS.x === 6000 && (gS.nodi.find(x => x.id === 4) || { dati: {} }).dati.minuti === 1 && gS.archi.every(a => ['0poi1', '1poi3', '3p04'].includes(`${a.da}${a.uscita}${a.a}`)), [gS.nodi, gS.archi]);
+      ok('2.15.0: inneschi inventati tolti, al massimo 10; stato inventato -> Inattiva; rientro al massimo un anno; tag senza tag HTML', iS.length === 10 && iS.every(x => ['lista', 'form', 'anniversario'].includes(x.tipo)) && rS.stato === 'inattiva' && +rS.rientro_attesa === 8760 && !/[<>]/.test(rS.tag || '') && JSON.parse(rS.uscita).segmento === 0, [iS, rS.stato, rS.rientro_attesa, rS.tag, rS.uscita]);
+      await admin.p.goto(PF, { waitUntil: 'networkidle' });
+      const html = await admin.p.content();
+      ok('2.15.0: il nome con del codice esce come testo nell\'elenco', !/<img src=x onerror=alert\(37\)>/.test(html) && /&lt;img src=x onerror=alert\(37\)&gt;/.test(html));
+      // Rami con condizioni inventate o con SQL; percentuali storte
+      const reg = (c) => ({ op: 'e', gruppi: [{ op: 'e', condizioni: [c] }] });
+      for (const r of [reg({ campo: "lista'; DROP TABLE x", op: 'in', valore: [1] }), reg({ campo: 'lista', op: 'in OR 1=1', valore: [1] }), reg({ campo: 'segmento', op: 'in', valore: '1 OR 1=1' }), { gruppi: 'x' }])
+        await salva({ nome: 'Sic37 rami', grafo: grafo([n0('dividi', { rami: [{ nome: 'R', regole: r }] })]) });
+      await salva({ nome: 'Sic37 percento', grafo: grafo([n0('percento', { rami: [99, 99, 99] })]) });
+      await salva({ nome: 'Sic37 attributo', grafo: grafo([n0('attributo', { nome: 'EMAIL', valore: 'rubata@evil.example' })]) });
+      await salva({ nome: 'Sic37 rami', inneschi: JSON.stringify([{ tipo: 'anniversario', id: 0, attr: "X'; DROP TABLE x" }]) });
+      ok('2.15.0: rami con condizioni inventate o con SQL, percentuali oltre 100, attributo EMAIL, anniversario con un attributo inventato: nessuno si salva', +uno("SELECT COUNT(*) FROM {p}newsletter_flussi WHERE nome IN ('Sic37 rami', 'Sic37 percento', 'Sic37 attributo')") === 0);
+      // Attività: togliere il cammino di un'altra automazione, parametri storti
+      const fS = +rS.id || 0;
+      q(`INSERT INTO {p}newsletter_corsi (flusso_id, iscritto_id, passo, prossimo, stato, giro, creato, aggiornato) VALUES (${fS}, 999999, 1, NOW(), 'attivo', 1, NOW(), NOW())`);
+      const corso = +uno(`SELECT id FROM {p}newsletter_corsi WHERE flusso_id = ${fS} AND iscritto_id = 999999`);
+      await admin.ctx.request.post(PF, { headers: ORIG, form: { _csrf: tk, id: String(fS + 100000), azione: 'togli', corso: String(corso) }, maxRedirects: 0 });
+      await admin.ctx.request.post(PF, { headers: ORIG, form: { id: String(fS), azione: 'togli', corso: String(corso) }, maxRedirects: 0 });
+      ok('2.15.0: "Togli" con l\'automazione sbagliata o senza token: il cammino resta', uno(`SELECT stato FROM {p}newsletter_corsi WHERE id = ${corso}`) === 'attivo');
+      const male = [];
+      for (const u of [`id=${fS}&scheda=attivita&passo=abc`, `id=${fS}&scheda=attivita&passo[]=1`, `id=${fS}&scheda=attivita&pag=-5`, `id=${fS}&scheda=attivita&email=${encodeURIComponent("x' OR '1'='1")}`, `id=${fS}&scheda=attivita&email[]=x`, 'id=1 OR 1=1', 'id[]=1', `id=${fS}&scheda[]=x`, 'nuovo=1&modello[]=x', 'nuovo=1&modello=../../x']) {
+        const r = await admin.ctx.request.get(PF + '?' + u, { maxRedirects: 0 });
+        const t = await r.text();
+        if (![200, 302, 404].includes(r.status()) || /SQLSTATE|Fatal error|Warning:|Uncaught/.test(t)) male.push([u, r.status()]);
+      }
+      ok('2.15.0: parametri della pagina e dell\'attività manipolati: nessun errore', male.length === 0, male);
+      const d1 = await admin.ctx.request.get(ADMIN + `/newsletter-design.php?flusso=${fS}&nodo=4`, { maxRedirects: 0 });
+      const d2 = await admin.ctx.request.get(ADMIN + `/newsletter-design.php?flusso=${fS}&nodo=999`, { maxRedirects: 0 });
+      ok('2.15.0: l\'editor a blocchi non si apre su un passo che non è un\'email o che non c\'è', d1.status() === 302 && d2.status() === 302, [d1.status(), d2.status()]);
+      q(`DELETE FROM {p}newsletter_corsi WHERE iscritto_id = 999999`);
+      pulisci();
+    }
+  }
+
   // === pulizia: elimina il redattore di prova
   {
     await admin.p.goto(ADMIN + '/utenti.php', { waitUntil: 'networkidle' });

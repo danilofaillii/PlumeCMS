@@ -264,8 +264,8 @@ require_once __DIR__ . '/includes/admin-header.php';
     <p class="hint" id="nli-o2">Solo con l'aggiornamento acceso: una cella vuota nel file svuota quell'attributo nel contatto. Spenta, le celle vuote non toccano niente.</p>
     <label><input type="checkbox" name="opz[nera]" value="1"<?= $o['nera'] ? ' checked' : '' ?> aria-describedby="nli-o3"> Metti in lista nera email tutti i contatti del file</label>
     <p class="hint" id="nli-o3">Per importare una lista di indirizzi che non devono ricevere niente (per esempio chi si è disiscritto da un altro servizio). Motivo: messo in lista nera con un'importazione.</p>
-    <label><input type="checkbox" name="opz[flussi]" value="1"<?= $o['flussi'] ? ' checked' : '' ?> aria-describedby="nli-o4"> Fai partire i flussi automatici delle liste per i contatti importati</label>
-    <p class="hint" id="nli-o4">Spenta di partenza: chi entra con un'importazione non riceve le email di benvenuto dei flussi.</p>
+    <label><input type="checkbox" name="opz[flussi]" value="1"<?= $o['flussi'] ? ' checked' : '' ?> aria-describedby="nli-o4"> Fai partire le automazioni delle liste per i contatti importati</label>
+    <p class="hint" id="nli-o4">Spenta di partenza: chi entra con un'importazione non riceve le email di benvenuto delle automazioni.</p>
   </fieldset>
   <p class="nl-avviso" role="note"><b>Attenzione:</b> alcune di queste opzioni sovrascrivono i dati dei contatti che ci sono già o li mettono in lista nera, e non si torna indietro.</p>
   <div class="nli-consenso<?= isset($errori['consenso']) ? ' sbagliato' : '' ?>">
