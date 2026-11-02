@@ -1710,12 +1710,17 @@ il consenso di adesso, fonte `brevo`, flussi sempre.
 **Campagne.** Stati: bozza, programmata, in invio, inviata. Nell'oggetto e nel testo `{nome}` diventa il nome
 dell'iscritto. Vanno solo agli attivi.
 
-**Invio.** Dal cron (`cron-newsletter.php`, ogni 5 minuti), `newsletter_invia_giro()` (`:743`):
-- un solo invio alla volta (lock di MySQL);
+**Invio.** Dal cron (`cron-newsletter.php`, ogni 5 minuti), `newsletter_invia_giro()` (`:964`):
+- un solo invio alla volta: `GET_LOCK` con il nome `nl_invio_` più `md5(DB_NAME . '|' . DB_PREFIX)` (`:967`, preso a
+  `:968`, lasciato a `:1035` nel `finally`, stessa variabile `$bloccoInvio`); se è preso, il giro risponde "un altro invio è in
+  corso" e non manda niente. I nomi dei blocchi di MySQL valgono per tutto il server, non per il database: fino alla 2.12.0
+  il nome era solo `<prefisso>newsletter_invio`, e due siti sullo stesso server con lo stesso prefisso (`cms_`, quello
+  predefinito dell'installatore) si fermavano a vicenda un giro. Gli altri blocchi seguono la stessa regola: `nl_lavori_`
+  (15.8), `nl_ab_` (15.12), `importa_wp_` (capitolo 26);
 - avvia le campagne programmate arrivate alla loro ora;
 - al massimo 40 email per giro, entro il limite orario (predefinito 150 l'ora) e, se impostato, quello al giorno (ultime 24
   ore, `per_giorno` in `newsletter_config()`, `:232`; 0 = nessuno; dalla 2.1.0 con il riscaldamento acceso vale il più basso fra
-  questo e quello del giorno di riscaldamento, `:756`, capitolo 35). Dalla 2.0.0 i limiti contano **tutte** le email del CMS
+  questo e quello del giorno di riscaldamento, `:985`, capitolo 35). Dalla 2.0.0 i limiti contano **tutte** le email del CMS
   dal registro della posta (15.3), non solo le campagne; il primo giro dopo l'aggiornamento conta anche la coda;
 - tre tentativi per indirizzo, poi errore; si ferma dopo 3 errori senza nessun invio riuscito;
 - con i posti rimasti, manda le email dei flussi.
@@ -1975,8 +1980,10 @@ prime righe se nessuna si chiama EMAIL. "Crea un nuovo attributo" crea subito l'
 **Passo 4** (`newsletter_importa_conferma()`, `:456`): consenso obbligatorio (anche lato server), "celle vuote" solo con
 "aggiorna" (come Brevo); lo stato diventa `pronta` e la pagina fa subito un giro di 8 secondi.
 
-**Lavoro a giri** (`newsletter_lavori_giro()`, `:746`, con `GET_LOCK`): dalla pagina (`azione=giro`, JSON, token dal campo o
-da `X-CSRF`, `session_write_close`) e dal cron (`includes/cron.php:172`, 15 secondi a passata). `newsletter_importa_giro()`
+**Lavoro a giri** (`newsletter_lavori_giro()`, `:746`, con `GET_LOCK` di nome `nl_lavori_` più `md5(DB_NAME . DB_PREFIX)`,
+`:748`, preso a `:749` e lasciato a `:764` nel `finally` con la stessa variabile `$blocco`: un giro alla volta per sito, e
+due siti sullo stesso server MySQL con lo stesso prefisso non si fermano a vicenda; se è preso, il giro torna vuoto): dalla
+pagina (`azione=giro`, JSON, token dal campo o da `X-CSRF`, `session_write_close`) e dal cron (`includes/cron.php:172`, 15 secondi a passata). `newsletter_importa_giro()`
 (`:476`) legge dal byte `posizione`, a pezzi di 200 righe (`newsletter_importa_pezzo()`, `:552`) dentro una transazione con
 contatori e posizione: per pezzo una domanda per le email già viste, una per la lista di soppressione, una per i contatti
 che ci sono già e una per i loro valori (`newsletter_valori_di()` con i soli nomi abbinati); storia e consensi a blocchi.
@@ -2418,9 +2425,9 @@ sezione sincronizzata cambiata nelle bozze e non nelle inviate, modello di doppi
 ### 15.12 Il test A/B delle campagne (dalla 2.13.0)
 
 Fase 6 del piano di `docs-sviluppo/brevo-confronto.md` (capitoli 1.14 e 3.6). Motore in `includes/newsletter-ab.php`
-(caricato in fondo a `includes/newsletter.php`, `:1041`, e da `newsletter-campagne.php`, `:23`; le pagine che lo usano lo
+(caricato in fondo a `includes/newsletter.php`, `:1045`, e da `newsletter-campagne.php`, `:23`; le pagine che lo usano lo
 richiedono con `require_once`). Le funzioni nuove chiamate da file di prima passano da `function_exists` (opcache):
-`newsletter_invia_giro()` (`newsletter.php:973`), `newsletter_campagne_schema()` (`newsletter-campagne.php:66`),
+`newsletter_invia_giro()` (`newsletter.php:975`), `newsletter_campagne_schema()` (`newsletter-campagne.php:66`),
 `newsletter_campagna_avvia()` (`:227`), `newsletter_campagna_sezioni()` (`:273`), `newsletter_campagna_salva_sezione()`
 (`:300`, `:364`), `newsletter_campagna_crea()` (`:388`), `newsletter_campagna_duplica()` (`:404`),
 `newsletter_campagna_figlia()` (`:442`), `newsletter_pagina_web()` (`:924`). Solo amministratore (le pagine sono le stesse
@@ -2479,7 +2486,7 @@ inviate dalla coda e le persone con aperture e con clic in `newsletter_eventi`, 
 clic vale anche come apertura, come sempre), sceglie (`nl_ab_vincitore()`, `:210`: confronto dei tassi senza arrotondare,
 aperture o clic sulle inviate del gruppo; uguali, anche zero, = `pari`), poi `UPDATE ... SET fase, vincitore, scelto_at WHERE
 fase = 'prova'`: solo chi cambia la riga (`rowCount() = 1`) libera il resto (`riserva` -> `attesa`), che parte con la vincente
-nello stesso giro o nei seguenti. Contro due cron sovrapposti: il blocco `newsletter_invio` del giro, il blocco
+nello stesso giro o nei seguenti. Contro due cron sovrapposti: il blocco `nl_invio_` del giro (`newsletter.php:967`, 15.5), il blocco
 `nl_ab_` più l'impronta del nome del database e del prefisso (`GET_LOCK`, come l'importazione a giri; i nomi dei blocchi valgono per tutto il server MySQL, e con il database dentro due siti sullo stesso server non si fermano a vicenda) e l'UPDATE condizionato; il resto parte una volta sola.
 Riga di log: "campagna N, test A/B: vince la versione B (30% contro 20%), 20 email al resto".
 
