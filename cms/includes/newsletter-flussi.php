@@ -477,7 +477,9 @@ function nl_email_extra(array $d, callable $s, callable $int): array {
     // 2.17.1: "modello" (scelta del pannello: il modello si copia al salvataggio) e "html" (un modello in codice HTML già copiato).
     $ed = $s('editor', 10);
     return ['editor' => in_array($ed, ['blocchi', 'html', 'modello'], true) ? $ed : 'semplice', 'design' => is_string($d['design'] ?? null) ? mb_substr($d['design'], 0, 400000) : '',
-        'html' => '',
+        // Il codice HTML (da un modello) si tiene quando il grafo si rilegge dal database; al salvataggio newsletter_flusso_salva()
+        // lo rimette sempre da quello già salvato o dal modello, quindi quello del browser non conta.
+        'html' => is_string($d['html'] ?? null) ? mb_substr($d['html'], 0, 1500000) : '',
         'modello' => $int('modello', 0, 1000000), 'mittente_id' => $int('mittente_id', 0, 1000000),
         'orario' => in_array($orario, ['ora', 'migliore'], true) ? $orario : 'subito', 'ora' => $int('ora', 0, 23, 10)];
 }
