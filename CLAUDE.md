@@ -106,7 +106,7 @@ Sono gli unici in `cms/docs/`, nello zip, nel sito di plumeCMS e nella pagina Do
 - **Pacchetto di aggiornamento** per un'installazione esistente:
   `python3 tools/cms-pacchetto.py --aggiornamento`. Si carica dal pannello,
   Impostazioni, Aggiornamenti.
-- **Versione**: `cms/VERSIONE` (oggi 2.15.0; sempre tre numeri: "beta" va nel CHANGELOG, mai nel nome dello zip, se no la serie "ultima" del Download non lo riconosce) e una voce in `cms/CHANGELOG.md` a ogni
+- **Versione**: `cms/VERSIONE` (oggi 2.16.0; sempre tre numeri: "beta" va nel CHANGELOG, mai nel nome dello zip, se no la serie "ultima" del Download non lo riconosce) e una voce in `cms/CHANGELOG.md` a ogni
   zip con contenuto diverso. Mai cambiare il contenuto di una versione già data.
 - **Prove** prima di dire finito:
   - `php -n -d short_open_tag=1 -l` su ogni file PHP toccato, `node --check` sui js;
@@ -144,6 +144,18 @@ Le decisioni complete, con data e perché, stanno nel second brain, `plumecms/de
 - **Nome: plumeCMS** (26 ottobre 2026).
 
 ## Stato al 31 ottobre 2026
+
+Fatto: plumeCMS 2.16.0 (2 novembre): fase 9 del piano Brevo, l'ultima: form a cinque passi e pagine pubbliche (agente, ramo
+`fase9-form-brevo`: `admin/form.php` riscritto, `includes/form-brevo.php`, `includes/newsletter-consenso.php`, `admin/newsletter-consenso.php`
+(voce Pagine e consenso), `admin/assets/form-campi.js`, `sito/assets/modulo-esterno.css`; pagina ospitata `/modulo/<slug>/`, l'unica con
+`frame-ancestors *`; QR con `sicurezza_qr_svg()` letto da `prove/qr-decodifica.py`; gruppi di consenso spenti di partenza, attributo di sistema
+TRACCIAMENTO; tabelle `newsletter_gruppi_consenso|contatti_gruppi|pagine_uscita`, colonne nuove in `moduli`, `newsletter_campagne`,
+`newsletter_conferme`). Gruppo di attacchi 38. Corretto da me: Statistiche senza tabelle vuote (al telefono scorreva di lato su un sito senza
+automazioni). Prove: install 37/37 radice e cartella, form 90/90 radice, cartella e aggiornato, form di prima 25/25 (HTML ed email al byte),
+aggiornamento 2.15.0 -> 2.16.0 13/13 con 20 foto uguali, campagne vecchie al byte 15/15, automazioni 89/89 x3, campagne 100/100 (la prova
+ora conta solo le campagne senza nome nuove: `contatti-cli.php semina` ne mette due vecchie), contatti, editor, A/B, report, segmenti, form-avviso
+13/13, omaggio 27/27, email di conferma 44/44, newsletter 37/37, addon 70/70, attacchi 412/412, telefono 54/54, pacchetto unico 13/13.
+Zip 2193 KB, PDF 10837 KB. Con la 2.16.0 il piano in nove fasi è finito.
 
 Fatto: plumeCMS 2.15.0 (2 novembre): fase 8 del piano Brevo, le automazioni (agente, ramo `fase8-automazioni-brevo`:
 `includes/newsletter-automazioni.php` nuovo, `newsletter-flussi.php` e la tela riscritti; inneschi, azioni con webhook firmato solo https
