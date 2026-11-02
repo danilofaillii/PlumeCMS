@@ -1525,26 +1525,26 @@ Modulo (`form:ID`).
 - Ogni form ha: titolo, introduzione, campi, testo del pulsante, consenso, lista della newsletter (con o senza
   conferma), avviso per email, pagina di ringraziamento (`/grazie/?f=ID`).
 
-All'invio (`form_ricevi()`, `includes/form.php:225-275`), in ordine:
+All'invio (`form_ricevi()`, `includes/form.php:580`; dalla 2.16.0 anche i blocchi nuovi, 15.15), in ordine:
 1. campo esca invisibile (`sito_web`): se è pieno, è un robot;
 2. validazione di ogni campo secondo il tipo;
 3. consenso alla privacy obbligatorio;
 4. captcha (prova di lavoro fatta dal browser, 15.4);
 5. limite di invii per IP;
 6. salvataggio dell'invio;
-7. iscrizione alla lista scelta, con o senza doppio consenso (`form_iscrivi()`, `includes/form.php:316`). Dalla 2.0.0
+7. iscrizione alla lista scelta, con o senza doppio consenso (`form_iscrivi()`, `includes/form.php:752`). Dalla 2.0.0
    con il doppio consenso la persona entra **solo** nella lista del form, alla conferma, e l'email di conferma dice per
    cosa è (il titolo del form, o il suo nome, o il nome della lista). Prima del salvataggio, se il form chiede la conferma e
    da quell'IP sono arrivate troppe richieste di iscrizione, il form risponde con l'errore `troppi` (prima: grazie e
    nessuna email);
-8. avviso via email, uno per destinatario (`form_avviso_destinatari()`, `includes/form.php:152`): gli indirizzi della
+8. avviso via email, uno per destinatario (`form_avviso_destinatari()`, `includes/form.php:360`): gli indirizzi della
    colonna `avviso_a` del form, oppure, se è vuota, `posta_notifica_email()` (Impostazioni, Posta in uscita);
 9. innesco dei flussi della newsletter con origine `form`: subito per chi è attivo; per chi deve ancora confermare si
    ricorda in `newsletter_inneschi_attesa` e parte alla conferma (dalla 2.0.0, 15.5).
 
 **A chi va l'avviso (dalla 1.9.0).** Colonna `moduli.avviso_a` (VARCHAR 500), aggiunta da `form_schema()` anche alle tabelle
-nate prima (`includes/form.php:64`). In pannello è la casella "Manda l'avviso a" del riquadro Dopo l'invio
-(`admin/form.php:93`, solo amministratore). `form_avviso_indirizzi()` (`includes/form.php:141`) divide su virgole, punti e
+nate prima (`includes/form.php:87`). In pannello è la casella "Manda l'avviso a" del riquadro Dopo l'invio
+(dalla 2.16.0 nel passo 3, Messaggi, `admin/form.php:277`, solo amministratore). `form_avviso_indirizzi()` (`includes/form.php:349`) divide su virgole, punti e
 virgola, spazi e a capo, valida ogni indirizzo con `FILTER_VALIDATE_EMAIL` (niente intestazioni nascoste con un a capo),
 toglie i doppioni senza badare alle maiuscole, al massimo `FORM_AVVISO_MAX` (5); un indirizzo sbagliato ferma
 `form_salva()` con il suo nome. Prove: `prove/prova-form-avviso.js` (con il server di posta finto), gruppo 25 di
@@ -1553,21 +1553,21 @@ toglie i doppioni senza badare alle maiuscole, al massimo `FORM_AVVISO_MAX` (5);
 Gli invii si leggono in Newsletter e contatti > Invii dei form, e si esportano in CSV (celle protette contro le
 formule, capitolo 18.10).
 
-**Il campo File (dalla 2.1).** `FORM_TIPI_CAMPO` e `FORM_FILE_TIPI` (`includes/form.php:15-31`).
-- Regole del campo (`form_file_regole()`, `:160`): `estensioni` scelte fra pdf, jpg, png, webp, docx, xlsx, odt, txt (mai
+**Il campo File (dalla 2.1).** `FORM_TIPI_CAMPO` e `FORM_FILE_TIPI` (`includes/form.php:19-36`).
+- Regole del campo (`form_file_regole()`, `:222`): `estensioni` scelte fra pdf, jpg, png, webp, docx, xlsx, odt, txt (mai
   tipi che si eseguono o che il browser interpreta: niente svg, html, php) e `peso` da 1 a `FORM_FILE_PESO_MAX` (10) MB. Il
-  peso vero è il minore fra quello scelto e quello del server (`form_file_limite_server()`, `:166`: upload_max_filesize e
+  peso vero è il minore fra quello scelto e quello del server (`form_file_limite_server()`, `:228`: upload_max_filesize e
   post_max_size); il costruttore lo dice ("Il server accetta al massimo...").
-- Nel pannello (`admin/form.php:139`, `fmRegoleFile()`) le caselle dei tipi e la tendina del peso; sul sito
-  (`form_html()`, `:395`) `input type=file` con `accept` e, sotto, i tipi e il peso (`aria-describedby`); il form prende
+- Nel pannello (dalla 2.16.0 `admin/assets/form-campi.js:72`, `fmRegoleFile()`) le caselle dei tipi e la tendina del peso; sul sito
+  (`form_html()`, `:492`) `input type=file` con `accept` e, sotto, i tipi e il peso (`aria-describedby`); il form prende
   `enctype="multipart/form-data"` solo se ha un campo File (gli altri form restano come prima).
-- All'invio (`form_ricevi()`, `:421`; il quarto argomento è `$_FILES`, da `api/modulo.php`), prima del captcha: errore del
-  caricamento o peso oltre il massimo dà `file_peso:ETICHETTA`; poi `form_file_controlla()` (`:192`) guarda il **contenuto
+- All'invio (`form_ricevi()`, `:580`; il quarto argomento è `$_FILES`, da `api/modulo.php`), prima del captcha: errore del
+  caricamento o peso oltre il massimo dà `file_peso:ETICHETTA`; poi `form_file_controlla()` (`:254`) guarda il **contenuto
   vero**: estensione fra quelle del campo; inizio del file (`%PDF-`, `FFD8FF` più `getimagesize`, la firma PNG,
   `RIFF....WEBP`, lo zip di Office con `word/document.xml`, `xl/workbook.xml` o il `mimetype` di odt e senza programmi
   dentro, testo UTF-8 senza NUL); il tipo MIME di `finfo` fra quelli ammessi; nessun `&lt;?php`, `&lt;?=` o `<script`
   dentro (come `media_ha_codice()`). Se no: `file_tipo:ETICHETTA`. Due file nello stesso campo (array) non passano.
-- Il file si salva solo quando tutto il resto è a posto (consenso, captcha, limite): in `form_file_dir()` (`:178`), cioè
+- Il file si salva solo quando tutto il resto è a posto (consenso, captcha, limite): in `form_file_dir()` (`:240`), cioè
   `<cartella dei file riservati>/form/`, con un nome a caso (`bin2hex(random_bytes(16))`) e l'estensione controllata,
   `chmod 0640`. La cartella ha un `.htaccess` che nega tutto (anche quella sopra, capitolo 33) e il router delle prove dà
   403. L'invio ricorda i file nella colonna `moduli_invii.allegati` (JSON: campo, nome com'era, file, peso, tipo), aggiunta da
@@ -1575,12 +1575,12 @@ formule, capitolo 18.10).
 - L'avviso per email allega i file se in tutto stanno sotto `FORM_FILE_ALLEGA_MAX` (4 MB), con `posta_invia(..., $allegati)`;
   più grandi, l'email dice di scaricarli dal pannello.
 - Scarico: `admin/form-submissions.php:31`, `?file=<invio>&n=<numero>`, solo amministratore (`require_admin()` della pagina).
-  `form_allegati()` (`:249`) tiene solo i nomi `^[a-f0-9]{32}\.[a-z]{3,4}$`: un invio toccato nel database che punta fuori
+  `form_allegati()` (`:311`) tiene solo i nomi `^[a-f0-9]{32}\.[a-z]{3,4}$`: un invio toccato nel database che punta fuori
   (`../`, percorso assoluto) dà 404. Sempre `application/octet-stream`, `Content-Disposition: attachment`, `nosniff`, CSP
   `sandbox`. In Invii dei form, sotto i dati, "Scarica <nome>" con il peso.
-- Cancellazione: Elimina in Invii dei form (`form_allegati_cancella()`, `:255`, prima di cancellare le righe), Elimina il form
+- Cancellazione: Elimina in Invii dei form (`form_allegati_cancella()`, `:317`, prima di cancellare le righe), Elimina il form
   (`form_elimina()`), **Cancella dati** della newsletter (`admin/newsletter.php:161`: i file degli invii con quell'email,
-  prima di `newsletter_cancella_dati()`). `form_file_orfani()` (`:269`) toglie i file che nessun invio cita più (non quelli
+  prima di `newsletter_cancella_dati()`). `form_file_orfani()` (`:331`) toglie i file che nessun invio cita più (non quelli
   di meno di un minuto, che possono essere di un invio in corso).
 - Un form con un file oltre `post_max_size` arriva a PHP senza campi: `api/modulo.php:22` torna alla pagina di provenienza
   (dal Referer, solo percorsi interni) con `?modulo=file_peso`. `sito/assets/moduli.js` non salva e non rimette i campi file
@@ -2759,6 +2759,142 @@ Inattiva e nessuno riceve la sua email. Attacchi del gruppo 37 in `tools/sicurez
 design a blocchi delle email delle automazioni non segue le sezioni salvate sincronizzate (si aggiornano solo nelle campagne
 in bozza e nei modelli); il giro delle automazioni parte solo quando il limite orario della newsletter lascia posti (come
 prima).
+
+### 15.15 Form a cinque passi, pagine pubbliche, gruppi di consenso, tracciamento (dalla 2.16.0)
+
+Fase 9 del piano di `docs-sviluppo/brevo-confronto.md` (capitoli 1.7, 1.8, 1.9, 3.5, 3.8, "Fase 9, 2.16.0"). Nel testo per
+chi usa il pannello e per i visitatori nessun paragone con Brevo. Due file nuovi: `includes/form-brevo.php` (tipi, passi,
+attributi, messaggi, conferme, pagina ospitata, codici, QR, domanda di controllo; caricato in cima a `includes/form.php:14`) e
+`includes/newsletter-consenso.php` (gruppi di consenso, tracciamento, registro del consenso, pagine di disiscrizione;
+caricato da `includes/newsletter-campagne.php:25` e da `includes/form-brevo.php`). Chi chiama una funzione nuova da un file
+cambiato carica il file nuovo da sé, o la chiama con `function_exists` (opcache).
+
+**Dati.** Nessuna tabella né colonna rinominata; le migrazioni stanno nelle funzioni di schema.
+- `moduli`, colonne nuove (`fb_schema()`, `includes/form-brevo.php:53`, chiamata in fondo a `form_schema()`,
+  `includes/form.php:97`): `tipo` (`iscrizione`, `popup`, `profilo`, `disiscrizione`, `generico`), `conferma` (`doppia`,
+  `semplice`, `nessuna`), `liste` (le liste in più, id separati da virgola), `doi_modello_id`, `doi_url`, `aggiorna_esistenti`,
+  `gdpr`, `gdpr_testo`, `messaggi` (JSON: `riuscita`, `errore`, `obbligatorio`, `email`, `benvenuto_oggetto`,
+  `benvenuto_testo`; solo le voci diverse dalla partenza, `fb_messaggi_da_salvare()`, `:142`), `dopo_invio` (`pagina`,
+  `messaggio`, `url`), `dopo_url`, `popup_id`. Migrazione una volta (impostazione `form_brevo_migrati`): `lista_id > 0` ->
+  `iscrizione`, altrimenti `generico`; `lista_conferma = 1` -> `doppia`, `0` -> `nessuna`. Il resto ha i valori di partenza,
+  che danno lo stesso form: `form_html()` senza opzioni esce al byte come prima. `lista_conferma` resta e si scrive con la
+  conferma (`form_salva()`, `includes/form.php:366`: `doppia` = 1); chi salva con la spunta di prima (il kit di partenza)
+  non tocca le colonne nuove.
+- Nei campi (JSON) la chiave `attributo` (`form_campi_validi()`, `:163`): il nome di un attributo dei contatti
+  (`fb_attributi_campi()`, `includes/form-brevo.php:106`: normali e di categoria, fra quelli di sistema solo EMAIL, NOME,
+  COGNOME), solo se va con il tipo del campo (`FORM_ATTR_CAMPI`, `:96`, e `fb_attributo_compatibile()`, `:117`: la casella da
+  spuntare solo con un attributo Sì/No; EMAIL solo dal campo Email). I campi di prima "è il nome / il cognome / l'email"
+  puntano da soli a NOME, COGNOME, EMAIL. Per categoria e scelta multipla le opzioni sono quelle dell'attributo. Tre tipi
+  di campo nuovi (`FORM_TIPI_CAMPO`, `includes/form.php:16`): `liste` (Iscrizione a più liste, chiave `liste` con gli id
+  offerti), `gruppi` (Gruppi di consenso, chiave `gruppi`; vuota = tutti), `tracciamento` (mai obbligatorio).
+- `newsletter_gruppi_consenso` (`nome` UNIQUE, `descrizione`, `ingresso` `automatic`|`manual`) e `newsletter_contatti_gruppi`
+  (`contatto_id`, `gruppo_id`, `iscritto`), `newsletter_pagine_uscita` (`nome` UNIQUE, `testi` JSON con le chiavi di
+  `newsletter_pagine_testi()`), tutte in `nl_consenso_schema()` (`includes/newsletter-consenso.php:28`), che aggiunge anche
+  `newsletter_campagne.pagina_uscita_id` e `.gruppo_id`, `newsletter_conferme.altre_liste` e l'attributo di sistema
+  TRACCIAMENTO (colonna `tracciamento` di `newsletter_iscritti`, che c'era dalla 2.8.0 con 1 di partenza). Impostazioni:
+  `newsletter_gruppi_attivi` (spenta di partenza, decisione di Danilo), `newsletter_preferenze_form` (0).
+
+**Il costruttore** (`admin/form.php`, solo amministratore). Elenco con le viste per tipo (`?vedi=`), "+ Nuovo form" con la
+scelta fra cinque tipi (`FORM_TIPI`, `FORM_TIPI_SPIEGA`, `includes/form-brevo.php:22`), poi i passi `?id=N&passo=1..5`
+(`FORM_PASSI`, `:30`; i passi fatti si riaprono dalla fila in cima, `nav.fo-passi`). Ogni passo posta solo i suoi campi:
+`fm_dati()` (`admin/form.php:24`) rimette il form salvato nella forma di `form_salva()` e il passo (`switch` da `:82`)
+cambia solo le sue voci; "Salva" resta sul passo, "Avanti" va al seguente. Il passo 1 di un form nuovo è "Crea il form", con
+i campi di partenza del tipo (`fm_campi_partenza()`, `:34`). Passo 2 (`:213`): titolo, introduzione, pulsante, i campi
+(`admin/assets/form-campi.js`, con la tendina Attributo filtrata per tipo, le liste e i gruppi da offrire), la dichiarazione
+GDPR e il testo della casella. Passo 3 (`:248`): dopo l'invio (pagina di ringraziamento, messaggio al posto del form, un altro
+indirizzo), messaggi di riuscita e d'errore (`{campo}`), l'avviso (come dalla 1.9.0). Passo 4 (`:283`): conferma doppia,
+semplice, nessuna; lista principale e liste in più; "Aggiorna i contatti esistenti"; il modello di doppio opt-in (i modelli
+con l'etichetta optin, `nd_modelli_optin()`) e la pagina dopo il clic; l'email della conferma semplice; il file in regalo; il
+riquadro Email di conferma della 2.7.0 (con titolo e nome del form in campi nascosti per l'anteprima). Passo 5 (`:348`):
+link della pagina ospitata, codice iframe, HTML, HTML semplice, QR (`?qr=1` lo scarica in SVG, `:45`), per il tipo Pop-up
+le regole del popup (`fb_popup_salva()`, `includes/form-brevo.php:446`, che usa il motore dei Popup con `modulo = form:N`),
+per il tipo Aggiornamento del profilo "Usa questo form come centro preferenze". `form_salva()` rifiuta: un form di iscrizione
+senza lista principale, un tipo che iscrive senza campo Email, una casella nuova senza attributo Sì/No in un form che non è
+"Altri form" (quelle di prima restano), un blocco liste vuoto, un indirizzo dopo l'invio o dopo il clic che non comincia con
+`/` (non `//` né `/\`) o con `https://host`, o che contiene spazi, virgolette, `<` `>`.
+
+**All'invio** (`form_ricevi()`, `includes/form.php:580`), oltre ai passi di 15.1: i blocchi liste e gruppi accettano solo gli
+id offerti (un id in più, scritto a mano, ferma l'invio con l'errore del campo); i valori dei campi con un attributo vanno in
+`$x['attributi']`; il form di profilo vale solo con il link firmato del contatto (`pi`, `pt` =
+`newsletter_token_preferenze()`, `fb_contatto_da_link()`, `includes/form-brevo.php:330`), altrimenti l'errore `link`, e
+l'email del campo è sempre quella del contatto; profilo e disiscrizione non chiedono il consenso. Se il captcha manca, una
+risposta alla domanda di controllo (`fb_domanda_valida()`, `:183`: firmata con `moduli_segreto()`, 20 minuti, una volta sola
+in `captcha_usati`) vale al suo posto. Poi: profilo -> `fb_salva_profilo()` (`:406`: attributi senza EMAIL, liste offerte con
+`newsletter_liste_uscite`, gruppi, tracciamento); disiscrizione -> `fb_disiscrizione()` (`:433`: a chi è iscritto parte
+l'email con il link firmato per uscire; il messaggio sul sito è lo stesso per ogni indirizzo); iscrizione -> `form_iscrivi()`
+(`:752`, con le liste in più: entrano con la principale, o alla conferma, `newsletter_conferme.altre_liste`) e
+`fb_dopo_iscrizione()` (`includes/form-brevo.php:375`: attributi per un contatto nuovo, o per uno che c'era solo con
+"Aggiorna i contatti esistenti"; gruppi; tracciamento; una riga nel registro del consenso con la dichiarazione e il testo della
+casella, data e IP; con il GDPR acceso `opt_in = 1`), e con la conferma semplice l'email di benvenuto (`fb_benvenuto()`,
+`:395`). La conferma doppia con un modello passa `modello` a `newsletter_richiesta()` (`includes/newsletter.php:527`), che lo
+dà a `nd_doi_email()` (`includes/newsletter-design.php:698`, parametro nuovo, facoltativo). La pagina dopo il clic:
+`sito/index.php:167` (302 senza memoria, solo se il form non dà un file).
+
+**Dopo l'invio** (`api/modulo.php:51`): dalla pagina ospitata o da un codice incorporato (`ospitata=1`) si torna alla pagina
+ospitata (`?fatto=1`, o con l'errore); il form di profilo si porta dietro `i` e `t`; "un altro indirizzo" vince; "un
+messaggio al posto del form" torna alla pagina con `?modulo=ok&f=N` e `vista_modulo()` (`sito/viste.php:346`) disegna il
+messaggio; i messaggi d'errore scritti nel form passano da `fb_errore()` (`includes/form-brevo.php:155`). Senza JavaScript
+(HTML semplice, o la pagina ospitata con la domanda dentro `<noscript>`): con `captcha` o `domanda` sbagliati `api/modulo.php:58`
+risponde con la pagina "ultimo passo" (`fb_pagina_verifica()`, `:299`): lo stesso form già compilato, con la domanda.
+
+**Pagina ospitata e codici.** `/modulo/<slug>/` (`sito/index.php:217`, `fb_form_da_slug()`, solo form attivi;
+`fb_pagina_ospitata()`, `includes/form-brevo.php:278`; `fb_documento()`, `:261`: solo il form, con `sito.css`, `tema.css`,
+tema e Stile del sito, senza testata né piede). È l'unica pagina con `frame-ancestors *` e senza `X-Frame-Options`
+(`fb_intestazioni_ospitata()`, `:251`); ogni altra pagina resta `frame-ancestors 'self'` (gruppo 38 degli attacchi). Codici
+(`:230-243`): iframe; HTML (`form_html()` con `esterno`: indirizzi interi, `data-base` sul form per la sfida del captcha,
+`sito/assets/moduli.js:77`, e `api/captcha.php` con `Access-Control-Allow-Origin: *`, la sfida non è un segreto; foglio
+`sito/assets/modulo-esterno.css`, colori fissi chiari dentro `.modulo`); HTML semplice (niente script né captcha,
+`semplice=1`). QR: `sicurezza_qr_svg()` di `includes/sicurezza-qr.php` (il QR del secondo fattore, fatto in casa dalla 1.x:
+modalità byte, livello M, versioni 1-10, fino a 213 byte), riusato. `form_html()` (`includes/form.php:492`) ha il quinto
+argomento `$opz` (`ospitata`, `esterno`, `semplice`, `verifica`, `valori`, `contatto`, `riuscito`); senza, esce come prima.
+
+**Disiscrizione e preferenze.** `newsletter_pagina_esci()` (`includes/newsletter-campagne.php:774`): con la campagna firmata
+nel link usa la pagina scelta nella campagna (`nl_pagina_uscita_di_campagna()`, `nl_pagina_uscita_testi()`); con
+`solo_lista` (acceso di partenza, anche nella predefinita) offre "Esci solo da «lista»" per ogni lista della campagna in cui
+il contatto riceve (`nl_liste_campagna_contatto()`, `includes/newsletter-consenso.php:295`, `nl_esci_da_lista()`, `:309`:
+riga in `newsletter_liste_uscite`, storia, innesco `lista_tolto`); una lista che non è della campagna, o una firma falsa, non
+cambia niente. Centro preferenze (`newsletter_pagina_preferenze()`, `:840`): i gruppi di consenso (se accesi) con "Esci da
+tutti i gruppi" (resta iscritto) e la casella del tracciamento; con un form di profilo scelto come centro preferenze,
+`sito/index.php:188` rimanda (302 senza memoria) a `/modulo/<slug>/?i=&t=`, già compilato (`fb_valori_contatto()`,
+`includes/form-brevo.php:336`).
+
+**Gruppi di consenso nelle campagne.** Accesi, la sezione Destinatari ha la tendina del gruppo
+(`admin/newsletter-campagna.php:320`) e senza gruppo la campagna non parte (`newsletter_campagna_sezioni()`,
+`includes/newsletter-campagne.php:292`); `newsletter_campagna_where()` (`:164`) aggiunge `nl_camp_sql_gruppo()` (`:211`,
+`nl_sql_gruppo()`: automatico = dentro se non c'è una riga a 0, manuale = solo con una riga a 1). Una campagna già
+programmata senza gruppo parte come prima. La pagina di disiscrizione si sceglie in Impostazioni aggiuntive
+(`admin/newsletter-campagna.php:461`). Duplica copia gruppo e pagina (`NL_CAMP_PARTI`).
+
+**Consenso al tracciamento.** `newsletter_traccia()` (`includes/newsletter-flussi.php:202`) non mette pixel né link tracciati
+per chi non acconsente (`newsletter_traccia_consentita()`, `:189`, con una piccola memoria per giro); `newsletter_evento()`
+(`:223`) non segna aperture e clic dai link vecchi di chi ha tolto il consenso (il rimando funziona). I segmenti su aperture,
+clic, link, attività e bivi delle automazioni contano solo chi acconsente (`nl_seg_tracciati()`,
+`includes/newsletter-segmenti.php:50`); "non coinvolti" e "rimanda ai non aperti" non toccano chi non acconsente
+(`newsletter_campagna_where()`). L'attributo TRACCIAMENTO si scrive anche dalla scheda del contatto e dall'importazione
+(`newsletter_contatto_colonna()`, `includes/newsletter-contatti.php:438`). Il consenso cambia da: centro preferenze, form con
+il blocco "Consenso al tracciamento", scheda del contatto. Ogni cambio di gruppo o di tracciamento va nel registro del
+consenso (`nl_consenso_registra()`, `includes/newsletter-consenso.php:201`) e nella storia.
+
+**Pagine e consenso** (`admin/newsletter-consenso.php`, voce del menu sotto Attributi dei contatti, solo amministratore):
+scheda Gruppi (acceso o spento, crea, modifica, elimina con la conferma; i contatti dentro contati) e scheda Pagine di
+disiscrizione (la predefinita resta in Newsletter > Impostazioni, con la casella nuova "Offri Esci solo da questa lista").
+
+**Prove**: `prove/prova-form-brevo.js` con `prove/form-brevo-cli.php` (i cinque passi come un utente, la casella solo con un
+attributo Sì/No, GDPR, pagina ospitata e intestazioni, liste offerte e una lista non del form, le tre conferme con il modello e
+la pagina dopo il clic, aggiorna esistenti, iframe e codice HTML su un'altra origine con un secondo server PHP, HTML semplice
+e pagina ospitata senza JavaScript, QR letto da `prove/qr-decodifica.py`, disiscrizione da una lista e pagina della
+campagna, gruppi, tracciamento, form di profilo come centro preferenze, disiscrizione, pop-up, dopo l'invio a un indirizzo);
+`prove/prova-form-vecchi.js` con `prove/form-vecchi-cli.php` (cinque form di prima seminati su una 2.15.0, aggiornata:
+HTML al byte, email, pagine, iscrizioni e dati uguali; ogni passo salvato dal costruttore senza cambiare niente lo lascia
+uguale); `prove/qr-decodifica.py` (un lettore QR scritto a parte: formato BCH, sindromi di Reed-Solomon, dati). Attacchi:
+gruppo 38 di `tools/sicurezza-prova.js`. Rifatte per i passi: `prova-form-avviso.js` (passo 3), `prova-omaggio.js` e
+`prova-email-conferma.js` (passo 4), gruppo 25 degli attacchi.
+
+**Non fatto**: l'anteprima dal vivo del form nel costruttore (c'è "Apri la pagina del form"); il trascinamento dei blocchi
+GDPR (stanno sempre in fondo, sopra il pulsante); le regole di comparsa del pop-up sono quelle dei Popup (secondi,
+scorrimento, uscita), non quelle di Brevo, che le fonti non dicono; reCAPTCHA e Turnstile (differenza voluta: il captcha
+resta quello in casa, e senza JavaScript una domanda); la conferma semplice usa un'email a testo (oggetto e testo nel passo
+4), non un modello; nessun gruppo di consenso si sceglie nelle automazioni.
 
 ## 16. SEO e AEO, file calcolati, feed
 

@@ -407,6 +407,21 @@ hr.ed-divisore-linea{background:var(--bordo)}
 .modulo-campi .errato input,.modulo-campi .errato select,.modulo-campi .errato textarea{border-color:var(--errore);box-shadow:0 0 0 2px rgba(var(--errore-rgb),.35)}
 .modulo-campi .errato>span,.modulo-campi .errato legend{color:var(--errore-testo)}
 
+/* 2.16.0: i form della newsletter (includes/form-brevo.php): GDPR, messaggio di riuscita, domanda di controllo, pagina ospitata */
+.modulo .form-gdpr{border-left:3px solid var(--viola);padding:4px 0 4px 14px;margin:0 0 14px}
+.modulo .form-gdpr-testo{color:var(--testo-2);font-size:14px;line-height:1.55;margin:0}
+.modulo-riuscito{background:rgba(var(--successo-rgb),.12);border:1px solid rgba(var(--successo-rgb),.5);color:var(--testo);border-radius:12px;padding:14px 18px;margin:0 0 10px}
+.modulo .form-domanda{max-width:420px;margin:18px 0 22px}
+.modulo .form-domanda label{display:flex;flex-direction:column;gap:8px;font:600 15px/1.4 var(--f-testo);color:var(--testo)}
+.modulo .form-domanda input{background:var(--vetro);border:1px solid var(--bordo);border-radius:12px;color:var(--testo);font:500 17px var(--f-testo);padding:12px 14px;max-width:8em}
+.modulo .form-domanda.errato input{border-color:var(--errore)}
+.form-senza-js{color:var(--testo-2);font-size:14px;margin:0 0 8px}
+.nl-solo-lista{margin:0 0 10px}
+.fo-ospitata{min-height:100vh}
+.fo-pagina{max-width:680px;margin:0 auto;padding:24px 16px}
+.fo-pagina>.modulo{margin:0}
+.fo-pagina h1{font-size:clamp(26px,3.4vw,36px);margin:0 0 12px}
+
 /* Articoli convertiti in blocchi: le sezioni "Articolo" stanno nella colonna di lettura, senza contenitori propri. */
 .ed-contenitore.ed-articolo{max-width:none;padding:0}
 .ed-articolo-pagina .ed-sezione{position:static}

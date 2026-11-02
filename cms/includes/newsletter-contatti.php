@@ -435,6 +435,11 @@ function newsletter_contatto_colonna(array $c, array $a, $v) {
             if (!$ok || $b === '' || (int)$b === (int)$c['opt_in']) return false;
             db()->prepare("UPDATE $t SET opt_in = ? WHERE id = ?")->execute([(int)$b, $id]);
             return true;
+        case 'tracciamento': // 2.16.0: il consenso al tracciamento di aperture e clic
+            [$ok, $b] = newsletter_valore_leggi($a, $v);
+            if (!$ok || $b === '' || !array_key_exists('tracciamento', $c) || (int)$b === (int)$c['tracciamento']) return false;
+            db()->prepare("UPDATE $t SET tracciamento = ? WHERE id = ?")->execute([(int)$b, $id]);
+            return true;
         case 'email':
             $v = mb_strtolower($v);
             if ($v === (string)$c['email']) return false;

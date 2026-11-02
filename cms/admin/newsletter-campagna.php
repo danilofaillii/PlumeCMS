@@ -317,6 +317,10 @@ require_once __DIR__ . '/includes/admin-header.php';
     </div>
     <p class="hint">L'esclusione vince: chi sta in una lista scelta e anche in una esclusa non la riceve.</p>
     </details>
+    <?php if (function_exists('nl_gruppi_attivi') && nl_gruppi_attivi()): $nlrGruppi = nl_gruppi(); /* 2.16.0: il gruppo di consenso, obbligatorio con i gruppi accesi */ ?>
+    <div class="form-group"><label for="nlr-gruppo">Gruppo di consenso</label><select id="nlr-gruppo" name="gruppo_id" aria-describedby="nlr-gruppo-aiuto"><option value="0">Scegli il gruppo</option><?php foreach ($nlrGruppi as $gid => $g): ?><option value="<?= (int)$gid ?>"<?= (int)($c['gruppo_id'] ?? 0) === (int)$gid ? ' selected' : '' ?>><?= h($g['nome']) ?></option><?php endforeach; ?></select>
+      <div class="hint" id="nlr-gruppo-aiuto">La campagna arriva solo a chi è in questo gruppo. I gruppi li gestisci in <a href="newsletter-consenso.php">Pagine e consenso</a>.<?= !$nlrGruppi ? ' <b>Ancora nessun gruppo: creane uno.</b>' : '' ?></div></div>
+    <?php endif; ?>
     <label class="nl-casella" style="display:flex;gap:.45rem;align-items:center;min-height:36px;margin:.6rem 0"><input type="checkbox" name="non_coinvolti" value="1" <?= (int)$c['non_coinvolti'] ? 'checked' : '' ?>> Non mandare ai contatti non coinvolti</label>
     <p class="hint" style="margin-top:0">Non coinvolti: chi negli ultimi <?= newsletter_non_coinvolti_giorni() ?> giorni ha ricevuto almeno <?= NL_NON_COINVOLTI_EMAIL ?> campagne senza aprirne né cliccarne nessuna (si cambia in <a href="newsletter.php?scheda=impostazioni">Impostazioni</a>).</p>
     <p class="hint nlr-conteggio" role="status">Con le scelte salvate la campagna arriva a <b data-nlr-destinatari><?= (int)$sez['destinatari']['n'] ?></b> contatti iscritti: chi sta in più liste o segmenti la riceve una volta sola. Il numero si aggiorna quando salvi.</p>
@@ -454,6 +458,9 @@ require_once __DIR__ . '/includes/admin-header.php';
     </div>
     <label class="nl-casella" style="display:flex;gap:.45rem;align-items:center;min-height:36px"><input type="checkbox" name="link_web" value="1" <?= (int)$c['link_web'] ? 'checked' : '' ?>> In cima all'email il link «Vedi questa email nel browser»</label>
     <label class="nl-casella" style="display:flex;gap:.45rem;align-items:center;min-height:36px"><input type="checkbox" name="link_preferenze" value="1" <?= (int)$c['link_preferenze'] ? 'checked' : '' ?>> In fondo all'email il link «Aggiorna le tue preferenze»</label>
+    <?php $nlrPagine = function_exists('nl_pagine_uscita') ? nl_pagine_uscita() : []; /* 2.16.0: la pagina di disiscrizione della campagna */ ?>
+    <div class="form-group"><label for="nlr-pagina-uscita">Pagina di disiscrizione</label><select id="nlr-pagina-uscita" name="pagina_uscita_id" aria-describedby="nlr-pagina-uscita-aiuto"><option value="0">La pagina predefinita</option><?php foreach ($nlrPagine as $pid => $pg): ?><option value="<?= (int)$pid ?>"<?= (int)($c['pagina_uscita_id'] ?? 0) === (int)$pid ? ' selected' : '' ?>><?= h($pg['nome']) ?></option><?php endforeach; ?></select>
+      <div class="hint" id="nlr-pagina-uscita-aiuto">La pagina che si apre da «Esci dalla newsletter» in fondo a questa campagna. Le pagine le crei in <a href="newsletter-consenso.php?scheda=pagine">Pagine e consenso</a>.</div></div>
     <label class="nl-casella" style="display:flex;gap:.45rem;align-items:center;min-height:36px"><input type="checkbox" name="utm" value="1" <?= (int)$c['utm'] ? 'checked' : '' ?>> Aggiungi i parametri UTM ai link verso il tuo sito</label>
     <div class="form-group"><label for="nlr-utm">Nome della campagna nei parametri UTM</label><input type="text" id="nlr-utm" name="utm_campagna" maxlength="100" value="<?= h($c['utm_campagna']) ?>" placeholder="per esempio: novita-novembre" aria-describedby="nlr-utm-aiuto">
       <div class="hint" id="nlr-utm-aiuto">Nelle statistiche del sito (per esempio Google Analytics) vedi le visite arrivate da questa campagna. Vuoto: il nome della campagna. Valgono solo i link verso il tuo sito.</div></div>

@@ -350,7 +350,12 @@ function vista_modulo(string $tipo, string $percorso): string {
         $f = form_leggi((int)$m[1]);
         if (!$f || !$f['attivo']) return '';
         // L'errore vale solo per il form che l'ha prodotto (?f=ID), così in pagina non si segnano tutti.
-        [$errore, $campo] = isset($_GET['f']) && (int)$_GET['f'] === (int)$f['id'] ? form_errore($codice) : ['', ''];
+        $questo = isset($_GET['f']) && (int)$_GET['f'] === (int)$f['id'];
+        // 2.16.0: "Un messaggio al posto del form" (passo Messaggi), e i messaggi d'errore scritti nel form.
+        if ($questo && $codice === 'ok' && function_exists('fb_omaggio_html')) {
+            return form_html($f, $percorso, '', '', ['riuscito' => true, 'dopo' => fb_omaggio_html($f, is_string($_GET['o'] ?? null) ? $_GET['o'] : '', is_string($_GET['k'] ?? null) ? $_GET['k'] : '')]);
+        }
+        [$errore, $campo] = $questo ? (function_exists('fb_errore') ? fb_errore($f, $codice) : form_errore($codice)) : ['', ''];
         return form_html($f, $percorso, $errore, $campo);
     }
     if ($tipo !== 'newsletter') {

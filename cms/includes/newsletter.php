@@ -524,6 +524,13 @@ function newsletter_richiesta(array $d, array $opz = []): string {
     // 2.12.0: con un modello di doppio opt-in scelto in Modelli, l'email è quella del modello; i form con la loro email
     // di conferma scritta (opzione 'email') e le email riscritte a mano (oggetto, testo) restano le loro.
     $doi = empty($opz['email']) && trim((string)($opz['testo'] ?? '')) === '' && trim((string)($opz['oggetto'] ?? '')) === '' && function_exists('nd_doi_email') ? nd_doi_email($link, (string)$d['nome'], $email) : null;
+    // 2.16.0: il modello di doppio opt-in scelto nel form (passo Conferma) vince sulle parti dell'email del form.
+    if ((int)($opz['modello'] ?? 0) > 0 && function_exists('nd_doi_email')) $doi = nd_doi_email($link, (string)$d['nome'], $email, (int)$opz['modello']) ?? $doi;
+    // 2.16.0: le altre liste del form, in cui entra anche lui quando conferma.
+    $altre = implode(',', array_values(array_unique(array_filter(array_map('intval', (array)($opz['altre_liste'] ?? [])), fn($x) => $x > 0 && $x !== $lista))));
+    if ($altre !== '') {
+        try { db()->prepare('UPDATE ' . tbl('newsletter_conferme') . ' SET altre_liste = ? WHERE token = ?')->execute([$altre, hash('sha256', $token)]); } catch (PDOException $e) { error_log('newsletter_conferme: ' . $e->getMessage()); }
+    }
     [$oggetto, $html] = $doi ?? nl_email_conferma(['principale' => $principaleQui, 'cosa' => $cosa, 'nome' => (string)$d['nome'], 'link' => $link,
         'parti' => is_array($opz['email'] ?? null) ? $opz['email'] : [], 'opz' => $opz]);
     return posta_invia($email, $oggetto, $html, moduli_intestazioni(), 'conferma') ? '' : 'posta';
@@ -549,6 +556,7 @@ function newsletter_conferma_esito(string $token): ?array {
     $c = $st->fetch();
     if ($c) {
         $id = (int)$c['iscritto_id']; $lista = (int)$c['lista_id']; $form = (int)$c['form_id'];
+        $altre = array_values(array_filter(array_map('intval', explode(',', (string)($c['altre_liste'] ?? ''))))); // 2.16.0
         // Un link vale una volta sola: chi lo usa per primo lo toglie.
         $del = db()->prepare('DELETE FROM ' . tbl('newsletter_conferme') . ' WHERE id = ?');
         $del->execute([(int)$c['id']]);
@@ -559,6 +567,7 @@ function newsletter_conferma_esito(string $token): ?array {
         $i->execute([$hash]);
         $id = (int)$i->fetchColumn();
         $lista = newsletter_lista_principale(); $form = 0;
+        $altre = [];
     }
     if (!$id) return null;
     $i = db()->prepare('SELECT * FROM ' . tbl('newsletter_iscritti') . ' WHERE id = ?');
@@ -583,6 +592,7 @@ function newsletter_conferma_esito(string $token): ?array {
     $gia->execute([$id]);
     $gia = array_map('intval', $gia->fetchAll(PDO::FETCH_COLUMN));
     newsletter_in_lista($id, $lista);
+    foreach ($altre as $l) if (newsletter_nome_lista($l) !== '') newsletter_in_lista($id, $l); // 2.16.0: le altre liste del form
     if ($nuovo) foreach ($gia as $l) newsletter_flussi_innesco('lista', $l, $id);
     // Gli inneschi arrivati mentre aspettava la conferma (un form compilato).
     $att = db()->prepare('SELECT innesco, innesco_id FROM ' . tbl('newsletter_inneschi_attesa') . ' WHERE iscritto_id = ?');
@@ -725,6 +735,8 @@ function newsletter_togli_iscritti(array $ids): void {
     foreach (['newsletter_valori', 'newsletter_storia', 'newsletter_consensi', 'newsletter_liste_uscite'] as $t) {
         db()->exec('DELETE FROM ' . tbl($t) . " WHERE contatto_id IN ($in)");
     }
+    // 2.16.0: i gruppi di consenso (la tabella c'è dalla 2.16.0).
+    try { db()->exec('DELETE FROM ' . tbl('newsletter_contatti_gruppi') . " WHERE contatto_id IN ($in)"); } catch (PDOException $e) {}
     db()->exec('DELETE FROM ' . tbl('newsletter_iscritti') . " WHERE id IN ($in)");
 }
 

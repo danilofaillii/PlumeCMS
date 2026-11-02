@@ -36,7 +36,10 @@ const PIU = ['seo.php?scheda=motori', 'seo.php?scheda=copertura', 'seo.php?sched
   'newsletter-report.php?id=1', 'newsletter-report.php?id=1&scheda=aperture', 'newsletter-report.php?id=1&scheda=clic', 'newsletter-report.php?id=1&scheda=uscite',
   'newsletter-report.php?id=1&scheda=rimbalzi', 'newsletter-statistiche.php?periodo=tutto', 'newsletter-statistiche.php?scheda=liste', 'newsletter-campagna.php?id=1&apri=migliore',
   // 2.15.0: le automazioni (la 1 deve esserci: la tela, l'attività e registro, un modello aperto)
-  'newsletter-flussi.php?id=1', 'newsletter-flussi.php?id=1&scheda=attivita', 'newsletter-flussi.php?nuovo=1&modello=benvenuto'];
+  'newsletter-flussi.php?id=1', 'newsletter-flussi.php?id=1&scheda=attivita', 'newsletter-flussi.php?nuovo=1&modello=benvenuto',
+  // 2.16.0: il costruttore dei form a cinque passi (il form 1 deve esserci), la scelta del tipo, Pagine e consenso
+  'form.php?nuovo=1', 'form.php?nuovo=1&tipo=iscrizione', 'form.php?id=1&passo=2', 'form.php?id=1&passo=3', 'form.php?id=1&passo=4', 'form.php?id=1&passo=5',
+  'newsletter-consenso.php', 'newsletter-consenso.php?scheda=pagine', 'newsletter-consenso.php?scheda=pagine&nuova=1'];
 
 // La misura dentro la pagina: tutto quello che serve sta qui, la pagina non carica niente.
 function misura() {

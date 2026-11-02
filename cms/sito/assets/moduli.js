@@ -74,7 +74,8 @@
       if (!casella.checked) { pronto = false; campo.value = ""; stato.textContent = ""; form.classList.remove("verificato"); return; }
       casella.disabled = true;
       stato.textContent = "Verifica in corso…";
-      fetch(((document.querySelector("meta[name=cms-base]") || {}).content || "") + "/api/captcha.php", { cache: "no-store" })
+      // 2.16.0: nel codice HTML incollato in un altro sito il form dice da dove chiedere la sfida (data-base).
+      fetch((form.getAttribute("data-base") || (document.querySelector("meta[name=cms-base]") || {}).content || "") + "/api/captcha.php", { cache: "no-store" })
         .then(function (r) { return r.json(); })
         .then(function (s) {
           return risolvi(s).then(function (n) {

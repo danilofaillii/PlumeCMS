@@ -1377,30 +1377,66 @@ menu** ne fa uno nuovo.
 
 ## 18. I form
 
-**A cosa serve.** Un **form** raccoglie dati da chi visita: richieste di preventivo, candidature, prenotazioni. Le
-compilazioni arrivano nel pannello e, se vuoi, anche via email.
+**A cosa serve.** Un **form** raccoglie dati da chi visita: richieste di preventivo, candidature, iscrizioni alla
+newsletter. Le compilazioni arrivano nel pannello e, se vuoi, anche via email.
+
+Un form si costruisce in **cinque passi**: **Impostazione**, **Aspetto e campi**, **Messaggi**, **Conferma**,
+**Condividi**. Ogni passo si salva con **Avanti**, che porta al passo dopo; **Salva** salva e resta lì. I passi fatti
+hanno la spunta, nella fila in cima, e si riaprono con un clic.
+
+I tipi di form sono cinque:
+
+- **Iscrizione**: chi lo compila entra in una lista della newsletter;
+- **Pop-up**: come Iscrizione, ma compare in una finestra sopra le pagine del sito;
+- **Aggiornamento del profilo**: chi è iscritto cambia i suoi dati, le liste e i consensi (si apre dal link delle email);
+- **Disiscrizione**: chi scrive la sua email riceve il link per uscire dalla newsletter;
+- **Altri form**: contatti, candidature, richieste. Sono i form di prima.
 
 **Esempio.** Un form "Candidature" da mettere nella pagina "Lavora con noi".
 
 Apri **Newsletter e form > Form** dal menu e premi **+ Nuovo form**.
 
-![Il form nuovo](immagini/manuale-uso/17-form.jpg)
+![Che form vuoi creare?](immagini/manuale-uso/17-tipi.jpg)
 
-1. **Nome (nel pannello)**: "Candidature". Serve a te per riconoscerlo.
-2. **Titolo mostrato sopra il form**, **Testo di introduzione** e **Testo del pulsante** sono quello che legge chi
+1. Per un form della newsletter scegli **Iscrizione** (lo vediamo più sotto, in "Un form di iscrizione alla newsletter").
+2. Per le candidature scegli **Altri form**.
+
+![Passo 1, Impostazione](immagini/manuale-uso/17-form.jpg)
+
+1. In cima ci sono i cinque passi. Adesso sei al primo.
+2. **Nome (nel pannello)**: "Candidature". Serve a te per riconoscerlo.
+3. Premi **Crea il form**. Il form nasce con i campi Nome, Email e Messaggio, e si apre il passo 2.
+
+![Passo 2, Aspetto e campi](immagini/manuale-uso/17-campi.jpg)
+
+1. **Titolo mostrato sopra il form**, **Testo di introduzione** e **Testo del pulsante** sono quello che legge chi
    visita.
-3. **Campi**: si parte con Nome, Email e Messaggio. Per ogni campo scegli l'etichetta, il tipo (testo breve, email,
-   telefono, testo lungo, scelta singola, scelta multipla, casella da spuntare, data, numero, ora, file da allegare) e se è **obbligatorio**. **+ Aggiungi un campo** ne mette un altro;
-   la maniglia **⋮⋮** cambia l'ordine.
-4. Premi **Salva**.
+2. Per ogni campo scegli l'etichetta, il tipo (testo breve, email, telefono, testo lungo, scelta singola, scelta
+   multipla, casella da spuntare, data, numero, ora, file da allegare) e se è **obbligatorio**. La maniglia **⋮⋮**
+   cambia l'ordine.
+3. **Attributo**: il dato del contatto che il campo riempie (Nome, Email, Città...). Serve ai form della newsletter: quello
+   che la persona scrive finisce nella sua scheda in **Contatti**. In un form per le candidature puoi lasciarlo vuoto.
+4. **+ Aggiungi un campo** ne mette un altro.
 
-A destra, **Dopo l'invio** decide cosa succede: iscrivere la persona a una lista della newsletter (con email di
-conferma), avvisarti via email, e cosa scrivere nella pagina di ringraziamento. Per il **Link del pulsante "Continua"**, con **Scegli dal
-sito** scegli la pagina in cui va chi ha compilato il form (per esempio i Servizi).
+Premi **Avanti: messaggi**.
+
+### Il passo 3: dopo l'invio e l'avviso
+
+![Passo 3, Messaggi](immagini/manuale-uso/17-messaggi.jpg)
+
+1. **Cosa vede chi ha compilato il form**: la pagina di ringraziamento (con il suo titolo e il suo testo), un messaggio
+   al posto del form (sulla stessa pagina), oppure un altro indirizzo (una pagina del sito o un sito intero, che scrivi
+   tu).
+2. **Messaggio di riuscita**: il testo che prende il posto del form, se scegli "Un messaggio al posto del form".
+3. Titolo e testo della pagina di ringraziamento, e il **Link del pulsante "Continua"**: con **Scegli dal sito** scegli la
+   pagina in cui va chi ha compilato il form (per esempio i Servizi).
+
+Più sotto, **Messaggi d'errore**: puoi riscrivere quello di un campo obbligatorio rimasto vuoto (`{campo}` diventa il nome
+del campo), quello di un'email scritta male e quello di quando qualcosa non va. Vuoti, restano i messaggi di sempre.
 
 ### A chi arriva l'avviso
 
-![Dopo l'invio: a chi arriva l'avviso](immagini/manuale-uso/17-avviso.jpg)
+![Passo 3: a chi arriva l'avviso](immagini/manuale-uso/17-avviso.jpg)
 
 1. **Avvisami via email a ogni compilazione**: con la spunta, a ogni form compilato parte un'email con tutto quello che
    la persona ha scritto.
@@ -1413,22 +1449,42 @@ Ogni indirizzo riceve la sua email. Se ne scrivi uno sbagliato, il form non si s
 widget Modulo dell'editor l'indirizzo non si sceglie: si sceglie qui, una volta, e vale in ogni pagina in cui metti
 quel form.
 
+Premi **Avanti: conferma**. Per un form di candidature il passo 4 si lascia com'è (nessuna lista): premi **Avanti:
+condividi**.
+
+### Il passo 5: condividere il form
+
+![Passo 5, Condividi](immagini/manuale-uso/17-condividi.jpg)
+
+1. **Link alla pagina del form**: una pagina con solo il form, da mandare a chi vuoi o da mettere nei social. Fai clic
+   nel campo per copiarlo.
+2. **Codice iframe**: per mettere il form in un altro sito (un blog, un sito fatto con un altro programma). Si incolla
+   dove vuoi il form, e si vede la pagina del form dentro una cornice. È il modo più semplice.
+3. **Codice HTML**: il form vero e proprio, con il suo stile e il controllo «Sono una persona».
+4. **Codice HTML semplice**: per i siti che non accettano JavaScript. Dopo l'invio, al posto della casella «Sono una
+   persona», una domanda di controllo («Quanto fa tre più due?»).
+5. **Codice QR**: inquadrato con il telefono apre la pagina del form. **Scarica il codice QR** lo salva come immagine, per
+   volantini e locandine.
+
+Premi **Fine: torna all'elenco**. Nell'elenco dei form le linguette in cima mostrano un tipo alla volta.
+
 ### Mettere il form nella pagina
 
 Apri "Lavora con noi" nell'editor, fai clic sul pulsante "Scrivici" e aggiungi il widget **Modulo** (gruppo "Dal sito").
 
 ![Il widget Modulo, con il form scelto](immagini/manuale-uso/17-widget.jpg)
 
-5. Nella tendina **Quale modulo** scegli **Candidature**. Premi **Pubblica**.
+6. Nella tendina **Quale modulo** scegli **Candidature**. Premi **Pubblica**.
 
 ![Il form sul sito](immagini/manuale-uso/17-sul-sito.jpg)
 
 Sotto il form ci sono sempre la spunta per la privacy e il controllo **Sono una persona**, che ferma i programmi automatici.
+Senza JavaScript (la pagina del form, il codice HTML semplice) al posto della casella c'è una domanda di controllo.
 
 ### I campi Ora e File
 
-Dalla 2.1.0 un form ha due tipi di campo in più. In **Newsletter e form > Form** apri il form, premi **+ Aggiungi un
-campo** e, nella tendina del tipo, scegli:
+Dalla 2.1.0 un form ha due tipi di campo in più. In **Newsletter e form > Form** apri il form, vai al passo **2. Aspetto e
+campi**, premi **+ Aggiungi un campo** e, nella tendina del tipo, scegli:
 
 - **Ora**: chi compila sceglie un orario (per esempio "Ora preferita per essere richiamato").
 - **File da allegare**: chi compila allega un documento (un curriculum, un preventivo, una foto).
@@ -1441,7 +1497,7 @@ campo** e, nella tendina del tipo, scegli:
 2. Sotto il campo, in **File che accetta**, spunta i tipi: qui **PDF** e **Word (docx)**. Ci sono anche JPG, PNG, WebP,
    Excel (xlsx), OpenDocument (odt) e Testo (txt).
 3. **Peso massimo**: 5 MB. La riga sotto dice quanto accetta al massimo il server.
-4. Premi **Salva**.
+4. Premi **Avanti** (o **Salva**, in fondo alla pagina).
 
 Il sito controlla il file vero, non solo il nome: un file pericoloso rinominato in `.pdf` non passa. Sul sito, sotto il
 campo, chi compila legge quali file può mandare e quanto possono pesare.
@@ -1458,22 +1514,23 @@ email, così sai che l'indirizzo è vero.
 
 **Esempio.** Studio Prova regala la "Guida alla cura delle piante" a chi si iscrive alla newsletter.
 
-Prima carica il file in **Download** con la spunta **Riservato** (capitolo 22). Poi apri il form (qui un form nuovo,
-"Guida in regalo") e guarda il riquadro **Dopo l'invio**:
+Prima carica il file in **Download** con la spunta **Riservato** (capitolo 22). Poi crea il form (qui un form di
+**Iscrizione**, "Guida in regalo") e vai al passo **4. Conferma**:
 
-![Dopo l'invio: la lista, la conferma e il file](immagini/manuale-uso/31n-form-file.jpg)
+![Passo 4: la conferma, la lista e il file](immagini/manuale-uso/31n-form-file.jpg)
 
-1. **Iscrivi alla lista della newsletter**: scegli una lista. Senza lista il file non si può dare, e il pannello lo dice.
-2. **Con email di conferma (doppio consenso)**: lasciala spuntata.
-3. **Dopo la conferma, dai questo file**: scegli il file. Nella tendina compaiono solo i file riservati.
+1. **Doppia conferma (consigliata)**: lasciala scelta.
+2. **Lista principale**: scegli una lista. Senza lista il file non si può dare, e il pannello lo dice.
+3. **Dopo la conferma, dai questo file** (riquadro **Un file in regalo**): scegli il file. Nella tendina compaiono solo i
+   file riservati.
 
 Premi **Salva** e metti il form in una pagina con il widget **Modulo**, come sopra.
 
 Chi compila riceve l'email di conferma. Quando preme il pulsante, il sito apre la pagina **Ecco il tuo file** con il
 pulsante **Scarica**, e gli manda anche un'email con il link personale al file (vale 30 giorni).
 
-Chi è già nella lista riceve il file subito per email, senza conferma. Se togli la spunta della conferma, il pulsante
-**Scarica** esce già nella pagina di ringraziamento. L'email di conferma dice per cosa si conferma (il titolo del form),
+Chi è già nella lista riceve il file subito per email, senza conferma. Con **Nessuna conferma** il pulsante **Scarica**
+esce già dopo l'invio. L'email di conferma dice per cosa si conferma (il titolo del form),
 e la persona entra solo nella lista di quel form, non in tutte le liste della newsletter.
 
 ### Cambiare l'email di conferma
@@ -1485,7 +1542,7 @@ tocchi niente, l'email resta quella di sempre.
 **Esempio.** Il form "Guida in regalo" di Studio Prova: oggetto "Ultimo passo per la tua guida, {nome}", pulsante "Sì,
 mandami la guida", colore verde.
 
-Apri il form in **Newsletter e form > Form** e scendi al riquadro **Email di conferma**, sotto Consenso.
+Apri il form in **Newsletter e form > Form**, vai al passo **4. Conferma** e scendi al riquadro **Email di conferma**.
 
 ![Il riquadro Email di conferma, con l'anteprima](immagini/manuale-uso/17-email-conferma.jpg)
 
@@ -1499,7 +1556,7 @@ Apri il form in **Newsletter e form > Form** e scendi al riquadro **Email di con
    quello che non hai ancora salvato.
 5. Premi **Manda una prova a me**: l'email arriva alla tua casella (l'email del tuo utente), con "[PROVA]" davanti
    all'oggetto. Il suo pulsante non conferma niente.
-6. Premi **Salva**, nel riquadro Stato.
+6. Premi **Salva**, in fondo alla pagina.
 
 I segnaposti (li spiega anche il riquadro, in **Come si scrivono il nome e le altre parti che cambiano**):
 
@@ -1516,6 +1573,80 @@ firma che scrivi qui valgono solo per l'email di conferma: gli avvisi dei form, 
 come sono.
 
 Questi testi li cambia solo l'amministratore: il redattore non vede il riquadro.
+
+### Un form di iscrizione alla newsletter
+
+**Esempio.** Studio Prova vuole un form "Iscrizione alle novità": l'email, il nome, la scelta fra due liste ("Offerte
+del mese" e "Consigli per le piante") e la dichiarazione per la privacy.
+
+1. **+ Nuovo form**, scegli **Iscrizione**. Nel passo 1 scrivi il nome e lascia spuntato **Attiva i campi GDPR**. Premi
+   **Crea il form**: il form nasce con Email e Nome, già legati agli attributi del contatto.
+
+![Passo 2 di un form di iscrizione](immagini/manuale-uso/17n-campi.jpg)
+
+1. Ogni campo ha il suo **Attributo**: qui l'Email va in EMAIL. La tendina mostra solo gli attributi che vanno con il tipo
+   del campo: una **casella da spuntare** si lega solo a un attributo Sì/No (per esempio "Cliente"), e senza attributo il
+   form non si salva (il pannello dice perché). Gli attributi si creano in **Attributi dei contatti** (capitolo 20).
+2. **+ Aggiungi un campo** e, nel tipo, **Iscrizione a più liste**: spunta le liste fra cui chi compila può scegliere,
+   qui "Offerte del mese" e "Consigli per le piante". Chi compila entra sempre nella lista principale (passo 4) e, in più,
+   in quelle che spunta.
+3. Un altro campo di tipo **Consenso al tracciamento**: una casella, vuota di partenza. Chi non la spunta riceve le email
+   senza che si contino aperture e clic. Il tipo **Gruppi di consenso** c'è anche lui: compare nel form quando i gruppi
+   sono accesi (sotto, "Pagine e consenso").
+4. **Dichiarazione GDPR**: il testo che sta sopra la casella del consenso. La casella parte sempre vuota: la spunta chi
+   compila. Data, ora, indirizzo IP e il testo esatto della dichiarazione finiscono nella scheda del contatto (registro
+   del consenso).
+
+Premi **Avanti** fino al passo 4.
+
+![Passo 4, Conferma](immagini/manuale-uso/17n-conferma.jpg)
+
+1. **Come entra nella lista**:
+   - **Doppia conferma** (consigliata): riceve un'email con il pulsante per confermare; entra nella lista solo dopo il clic;
+   - **Conferma semplice**: entra subito e riceve un'email che gli dice che è iscritto (oggetto e testo li scrivi nel
+     riquadro **Conferma semplice**, a destra);
+   - **Nessuna conferma**: entra subito, senza email.
+2. **Lista principale**: dove entra chi compila. Sotto puoi spuntare altre liste in cui entra sempre.
+3. **Aggiorna i contatti esistenti**: se chi compila è già nei contatti, quello che scrive prende il posto dei suoi dati
+   (per esempio la città). Spenta, i dati che c'erano restano.
+
+Nello stesso passo, il riquadro **Email di doppio opt-in** sceglie l'email di conferma: quella del form (riquadro
+**Email di conferma**, sotto) oppure un modello fatto con l'editor a blocchi in **Modelli** (capitolo 20), con l'etichetta di
+doppio opt-in. **Dopo il clic di conferma, vai a** porta chi conferma a una pagina tua (per esempio una pagina di
+benvenuto); vuota, si apre la pagina "Email confermata" del sito.
+
+Al passo 5 il **Link alla pagina del form** apre il form da solo:
+
+![La pagina del form](immagini/manuale-uso/17n-ospitata.jpg)
+
+Un form di tipo **Pop-up** ha, nel passo 5, il riquadro **Il pop-up**: su quali pagine, quando compare, ogni quanti giorni
+la stessa persona lo rivede, e **Mostra il pop-up sul sito**. Lo ritrovi anche in **Popup** (capitolo 19).
+
+Un form di **Disiscrizione** chiede solo l'email: a chi è iscritto arriva un'email con il pulsante per uscire, e il sito
+dice sempre la stessa frase, così nessuno scopre chi è iscritto. Un form di **Aggiornamento del profilo** si apre solo dal
+link personale delle email («Aggiorna le tue preferenze»), già compilato; nel passo 5 la spunta **Usa questo form come
+centro preferenze** fa aprire lui al posto della pagina delle preferenze di sempre. L'email lì non si cambia.
+
+### Pagine e consenso
+
+In **Newsletter e form > Pagine e consenso** ci sono due schede.
+
+![Pagine e consenso: i gruppi di consenso](immagini/manuale-uso/17n-consenso.jpg)
+
+1. **Usa i gruppi di consenso**: spenti di partenza. Un gruppo è un tipo di email che il contatto può scegliere di
+   ricevere o no, per esempio "Offerte". Accesi, ogni campagna sceglie il suo gruppo (in **Destinatari**) e arriva solo a
+   chi ci sta dentro; senza gruppo la campagna non parte.
+2. **Nome** e descrizione del gruppo: li legge il contatto nel centro preferenze.
+3. **Chi è dentro all'inizio**: **Automatico** (tutti, finché non escono) o **Manuale** (solo chi lo sceglie).
+4. Premi **Crea il gruppo**.
+
+Nel centro preferenze il contatto spunta i suoi gruppi, oppure preme **Esci da tutti i gruppi**: resta iscritto, ma non
+riceve le email dei gruppi. Lì trova anche la casella del tracciamento.
+
+La scheda **Pagine di disiscrizione** crea altre pagine «Esci dalla newsletter», con testi e domande diversi dalla pagina
+di sempre (che si cambia in **Newsletter e form > Impostazioni**). La scegli nella campagna, in **Impostazioni
+aggiuntive > Pagina di disiscrizione**. In ogni pagina c'è anche **Esci solo da «lista»**: chi arriva da una campagna
+smette di ricevere una lista sola e resta iscritto al resto.
 
 ### Leggere le compilazioni
 
@@ -1536,6 +1667,10 @@ Excel o Numbers.
 - [ ] Se il form ha un campo **File da allegare**: ho mandato io un file di prova e l'ho scaricato da Invii dei form.
 - [ ] Se ho cambiato l'email di conferma: ho guardato l'anteprima, mi sono mandato la prova e l'ho letta anche dal
   telefono; poi ho compilato il form io e ho premuto il pulsante dell'email vera (l'iscrizione risulta attiva).
+- [ ] In un form della newsletter ogni campo ha il suo attributo, e la lista principale è quella giusta (passo 4).
+- [ ] Se il form chiede il consenso: i campi GDPR sono accesi e la dichiarazione dice in parole semplici cosa faccio dei dati.
+- [ ] Se ho incollato il form in un altro sito: l'ho compilato da lì, e la compilazione è arrivata.
+- [ ] Se uso i gruppi di consenso: ogni campagna ha il suo gruppo, e ho guardato il centro preferenze da un'email di prova.
 
 ---
 

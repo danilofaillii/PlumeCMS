@@ -117,6 +117,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             if ($t !== '' && $t !== $v) $salva['motivi'][$k] = newsletter_4byte_dentro(mb_substr($t, 0, 100));
         }
         $salva['questionario'] = !empty($_POST['pg']['questionario']);
+        $salva['solo_lista'] = !empty($_POST['pg']['solo_lista']); // 2.16.0
         $attr = newsletter_attributi();
         $salva['attributi'] = array_values(array_filter((array)($_POST['pg']['attributi'] ?? []), fn($n) => is_string($n) && isset($attr[$n]) && nl_attributo_preferibile($attr[$n])));
         save_setting('newsletter_pagine', json_encode($salva, JSON_UNESCAPED_UNICODE));
@@ -325,11 +326,13 @@ require_once __DIR__ . '/includes/admin-header.php';
   <?= csrf_field() ?><input type="hidden" name="azione" value="pagine">
   <h3>Pagine di disiscrizione e preferenze</h3>
   <p class="hint" style="margin-top:0">Le pagine che si aprono dai link in fondo alle email: «Esci dalla newsletter» e «Aggiorna le tue preferenze». Lascia vuoto un campo per usare il testo di partenza (lo vedi scritto in grigio). <code>{email}</code> diventa l'indirizzo di chi legge, <code>{newsletter}</code> il nome della newsletter.</p>
+  <p class="hint">Questa è la pagina predefinita. Altre pagine, da scegliere campagna per campagna, le crei in <a href="newsletter-consenso.php?scheda=pagine">Pagine e consenso</a>.</p>
   <h4 class="nl-sotto-titolo">Disiscrizione</h4>
   <div class="form-group"><label for="pg-ut">Titolo della pagina</label><input type="text" id="pg-ut" name="pg[uscita_titolo]" maxlength="200" value="<?= $pgV('uscita_titolo') ?>" placeholder="<?= h($pgB['uscita_titolo']) ?>"></div>
   <div class="form-group"><label for="pg-ux">Testo sopra il pulsante «Sì, toglimi dall'elenco»</label><textarea id="pg-ux" name="pg[uscita_testo]" rows="2" class="nlx-corto" placeholder="<?= h($pgB['uscita_testo']) ?>"><?= $pgV('uscita_testo') ?></textarea></div>
   <div class="form-group"><label for="pg-ft">Titolo dopo l'uscita</label><input type="text" id="pg-ft" name="pg[fatto_titolo]" maxlength="200" value="<?= $pgV('fatto_titolo') ?>" placeholder="<?= h($pgB['fatto_titolo']) ?>"></div>
   <div class="form-group"><label for="pg-fx">Testo dopo l'uscita</label><textarea id="pg-fx" name="pg[fatto_testo]" rows="2" class="nlx-corto" placeholder="<?= h($pgB['fatto_testo']) ?>"><?= $pgV('fatto_testo') ?></textarea></div>
+  <label class="nl-casella"><input type="checkbox" name="pg[solo_lista]" value="1"<?= $pgT['solo_lista'] ? ' checked' : '' ?>> Offri «Esci solo da questa lista»: chi arriva da una campagna può smettere di ricevere una lista e restare iscritto al resto</label>
   <label class="nl-casella"><input type="checkbox" name="pg[questionario]" value="1"<?= $pgT['questionario'] ? ' checked' : '' ?>> Fai il questionario: chiedi perché esce</label>
   <div class="form-group"><label for="pg-qt">Domanda del questionario</label><input type="text" id="pg-qt" name="pg[questionario_titolo]" maxlength="200" value="<?= $pgV('questionario_titolo') ?>" placeholder="<?= h($pgB['questionario_titolo']) ?>"></div>
   <fieldset class="nlk-scelte"><legend>Le risposte possibili</legend>

@@ -11,9 +11,12 @@
 require_once __DIR__ . '/moduli.php';
 require_once __DIR__ . '/newsletter.php';
 require_once __DIR__ . '/sicurezza-html.php'; // 2.2: sicurezza_url_pulito() per il link del pulsante Continua
+require_once __DIR__ . '/form-brevo.php'; // 2.16.0: tipi, cinque passi, attributi, conferme, pagina ospitata, codici, QR
 
 const FORM_PAGINA_GRAZIE = '/grazie/';
-const FORM_TIPI_CAMPO = ['testo' => 'Testo breve', 'email' => 'Email', 'telefono' => 'Telefono', 'testolungo' => 'Testo lungo', 'scelta' => 'Scelta singola (menu)', 'multiscelta' => 'Scelta multipla (caselle)', 'spunta' => 'Casella da spuntare', 'data' => 'Data', 'numero' => 'Numero', 'ora' => 'Ora', 'file' => 'File da allegare'];
+const FORM_TIPI_CAMPO = ['testo' => 'Testo breve', 'email' => 'Email', 'telefono' => 'Telefono', 'testolungo' => 'Testo lungo', 'scelta' => 'Scelta singola (menu)', 'multiscelta' => 'Scelta multipla (caselle)', 'spunta' => 'Casella da spuntare', 'data' => 'Data', 'numero' => 'Numero', 'ora' => 'Ora', 'file' => 'File da allegare',
+    // 2.16.0 (includes/form-brevo.php): i blocchi dei form della newsletter
+    'liste' => 'Iscrizione a più liste', 'gruppi' => 'Gruppi di consenso', 'tracciamento' => 'Consenso al tracciamento'];
 /**
  * 2.1: i file che un campo File può accettare. Solo tipi che non si eseguono: etichetta, tipo MIME con cui si allega, tipi
  * MIME ammessi dal contenuto. Si controlla anche come comincia il file (form_file_controlla): un .php rinominato .pdf non passa.
@@ -31,7 +34,7 @@ const FORM_FILE_TIPI = [
 const FORM_FILE_PESO_MAX = 10;        // MB: il massimo che si può scegliere per un campo
 const FORM_FILE_ALLEGA_MAX = 4194304; // fino a 4 MB in tutto, i file vanno anche allegati all'email di avviso
 // Nomi che il modulo usa già per sé: un campo non può chiamarsi così.
-const FORM_NOMI_RISERVATI = ['modulo', 'pagina', 'captcha', 'privacy', 'sito_web', '_csrf', 'popup', 'newsletter', 'f'];
+const FORM_NOMI_RISERVATI = ['modulo', 'pagina', 'captcha', 'privacy', 'sito_web', '_csrf', 'popup', 'newsletter', 'f', 'ospitata', 'semplice', 'domanda', 'domanda_risposta', 'pi', 'pt'];
 
 function form_schema(): void {
     static $fatto = false;
@@ -91,6 +94,7 @@ function form_schema(): void {
         if (!in_array('allegati', $colI, true)) db()->exec('ALTER TABLE ' . tbl('moduli_invii') . ' ADD COLUMN `allegati` TEXT AFTER `letto`');
         save_setting('form_schema_impronta', $impronta);
     }
+    if (function_exists('fb_schema')) fb_schema(); // 2.16.0: tipo, conferma, liste, messaggi... (includes/form-brevo.php)
 }
 
 /** I form, attivi e no. */
@@ -123,7 +127,20 @@ function form_leggi(int $id): ?array {
         foreach (['intro', 'grazie_testo', 'titolo', 'consenso', 'grazie_titolo', 'grazie_link', 'pulsante', 'avviso_a', 'omaggio'] as $k) $m[$k] = (string)($m[$k] ?? '');
         $m['conferma_email'] = nl_email_da_json((string)($m['conferma_email'] ?? '')); // 2.7.0: le parti, con le emoji
         $m = form_4byte_fuori($m);
+        $m = form_nuove_colonne($m); // 2.16.0
     }
+    return $m;
+}
+
+/** 2.16.0: le colonne nuove di un form, con i valori di partenza se mancano (un form letto prima di fb_schema). */
+function form_nuove_colonne(array $m): array {
+    $m['tipo'] = isset(FORM_TIPI[$m['tipo'] ?? '']) ? $m['tipo'] : ((int)($m['lista_id'] ?? 0) > 0 ? 'iscrizione' : 'generico');
+    $m['conferma'] = isset(FORM_CONFERME[$m['conferma'] ?? '']) ? $m['conferma'] : (!empty($m['lista_conferma']) ? 'doppia' : 'nessuna');
+    $m['liste'] = array_values(array_filter(array_map('intval', is_array($m['liste'] ?? null) ? $m['liste'] : explode(',', (string)($m['liste'] ?? '')))));
+    foreach (['doi_modello_id', 'aggiorna_esistenti', 'gdpr', 'popup_id'] as $k) $m[$k] = (int)($m[$k] ?? 0);
+    foreach (['doi_url', 'dopo_url', 'messaggi'] as $k) $m[$k] = (string)($m[$k] ?? '');
+    $m['gdpr_testo'] = newsletter_4byte_fuori((string)($m['gdpr_testo'] ?? ''));
+    $m['dopo_invio'] = isset(FORM_DOPO[$m['dopo_invio'] ?? '']) ? $m['dopo_invio'] : 'pagina';
     return $m;
 }
 
@@ -144,7 +161,10 @@ function form_opzioni(mixed $o): array {
 
 /** I campi ripuliti: nome come chiave, tipo conosciuto, opzioni per le scelte. */
 function form_campi_validi($campi): array {
-    $out = []; $visti = []; $etichette = [];
+    $out = []; $visti = []; $etichette = []; $attrUsati = [];
+    // 2.16.0: gli attributi che i campi possono riempire, le liste e i gruppi che si possono offrire.
+    $attrTutti = function_exists('fb_attributi_campi') ? fb_attributi_campi() : [];
+    $listeOk = null; $gruppiOk = null;
     foreach ((array)$campi as $c) {
         if (!is_array($c)) continue;
         $etichetta = mb_substr(trim(preg_replace('/\s+/u', ' ', (string)($c['etichetta'] ?? ''))), 0, 150);
@@ -165,13 +185,35 @@ function form_campi_validi($campi): array {
         $et = $etichetta; $k = 2;
         while (isset($etichette[mb_strtolower($et)])) $et = $etichetta . ' (' . $k++ . ')';
         $etichette[mb_strtolower($et)] = true;
-        $out[] = [
+        $riga = [
             'nome' => $nome, 'etichetta' => $et, 'tipo' => $tipo,
             'obbligatorio' => !empty($c['obbligatorio']) && $c['obbligatorio'] !== 'false',
             'segnaposto' => mb_substr(trim((string)($c['segnaposto'] ?? '')), 0, 150),
             'opzioni' => in_array($tipo, ['scelta', 'multiscelta'], true) ? form_opzioni($c['opzioni'] ?? '') : [],
             'meta' => in_array($tipo, ['testo', 'email', 'telefono'], true) && in_array($c['meta'] ?? '', ['nome', 'cognome', 'email', 'cellulare'], true) ? $c['meta'] : '',
         ] + ($tipo === 'file' ? form_file_regole($c) : []);
+        // 2.16.0: l'attributo del contatto che il campo riempie. I campi di prima "è il nome / il cognome / l'email" puntano
+        // a NOME, COGNOME, EMAIL; un attributo che non va con il tipo del campo (o già preso da un altro campo) si scarta.
+        $at = strtoupper(trim((string)($c['attributo'] ?? '')));
+        if ($at === '' && $riga['meta'] !== '') $at = ['nome' => 'NOME', 'cognome' => 'COGNOME', 'email' => 'EMAIL', 'cellulare' => ''][$riga['meta']];
+        $a = $at !== '' && !isset($attrUsati[$at]) ? ($attrTutti[$at] ?? null) : null;
+        if ($a && !fb_attributo_compatibile($a, $tipo)) $a = null;
+        $riga['attributo'] = $a ? $at : '';
+        if ($a) {
+            $attrUsati[$at] = true;
+            if (in_array($a['tipo'], ['category', 'multiple-choice'], true)) $riga['opzioni'] = fb_opzioni_attributo($a);
+            if ($riga['meta'] === '' && in_array($at, ['NOME', 'COGNOME'], true) && $tipo === 'testo') $riga['meta'] = strtolower($at);
+        }
+        if ($tipo === 'liste') {
+            $listeOk ??= array_map('intval', array_column(newsletter_liste(), 'id'));
+            $riga['liste'] = array_values(array_unique(array_intersect(array_map('intval', (array)($c['liste'] ?? [])), $listeOk)));
+        }
+        if ($tipo === 'gruppi') {
+            $gruppiOk ??= function_exists('nl_gruppi') ? array_keys(nl_gruppi()) : [];
+            $riga['gruppi'] = array_values(array_unique(array_intersect(array_map('intval', (array)($c['gruppi'] ?? [])), $gruppiOk)));
+        }
+        if ($tipo === 'tracciamento') $riga['obbligatorio'] = false; // un consenso non si chiede per forza
+        $out[] = $riga;
     }
     return $out;
 }
@@ -348,6 +390,51 @@ function form_salva(int $id, array $d): int {
     // 2.7.0: l'email di conferma di questo form (Email di conferma, admin/form.php): solo le parti diverse da quelle comuni
     // o di partenza, pulite, con le emoji come entità. Chi salva senza le parti (il kit di partenza) non le tocca.
     if (array_key_exists('ce', $d)) $v['conferma_email'] = nl_email_da_salvare($d['ce'], false, true) ?: null;
+    // 2.16.0: le colonne nuove (includes/form-brevo.php). Chi salva senza (il kit di partenza, i form di prima) non le
+    // tocca: il tipo e la conferma vengono dalla lista e dalla spunta di prima.
+    $prima = $id ? form_leggi($id) : null;
+    if (array_key_exists('tipo', $d)) $v['tipo'] = is_string($d['tipo']) && isset(FORM_TIPI[$d['tipo']]) ? $d['tipo'] : 'generico';
+    elseif (!$id) $v['tipo'] = $v['lista_id'] ? 'iscrizione' : 'generico';
+    $tipoF = $v['tipo'] ?? ($prima['tipo'] ?? 'generico');
+    if (array_key_exists('conferma', $d)) {
+        $v['conferma'] = is_string($d['conferma']) && isset(FORM_CONFERME[$d['conferma']]) ? $d['conferma'] : 'doppia';
+        $v['lista_conferma'] = $v['conferma'] === 'doppia' ? 1 : 0;
+    } else {
+        // Chi salva con la spunta di prima (lista_conferma): doppia con la spunta, senza "nessuna" (o la semplice che c'era).
+        $v['conferma'] = $v['lista_conferma'] ? 'doppia' : (($prima['conferma'] ?? '') === 'semplice' ? 'semplice' : 'nessuna');
+    }
+    if (array_key_exists('liste', $d)) {
+        $listeOk = array_map('intval', array_column(newsletter_liste(), 'id'));
+        $v['liste'] = implode(',', array_values(array_diff(array_unique(array_intersect(array_map('intval', is_array($d['liste']) ? $d['liste'] : explode(',', (string)$d['liste'])), $listeOk)), [$v['lista_id']])));
+    }
+    if (array_key_exists('doi_modello_id', $d)) {
+        $mid = (int)$d['doi_modello_id'];
+        $v['doi_modello_id'] = $mid > 0 && function_exists('nd_modelli_optin') && in_array($mid, array_map(fn($x) => (int)$x['id'], nd_modelli_optin()), true) ? $mid : 0;
+    }
+    foreach (['doi_url' => 'Dopo il clic di conferma, vai a', 'dopo_url' => 'Dopo l\'invio, vai a'] as $k => $et) {
+        if (!array_key_exists($k, $d)) continue;
+        $u = trim((string)$d[$k]);
+        $pulito = $u === '' ? '' : sicurezza_url_pulito($u);
+        if ($u !== '' && ($pulito === '' || !preg_match('~^(https?://[a-z0-9.-]+|/(?![/\\\\]))~i', $pulito) || preg_match('/[\s"<>]/', $pulito))) throw new RuntimeException("«{$et}»: scrivi un indirizzo del sito che comincia con / (per esempio /grazie-davvero/) oppure un indirizzo intero con https://.");
+        $v[$k] = mb_substr($pulito, 0, 500);
+    }
+    if (array_key_exists('aggiorna_esistenti', $d)) $v['aggiorna_esistenti'] = !empty($d['aggiorna_esistenti']) ? 1 : 0;
+    if (array_key_exists('gdpr', $d)) $v['gdpr'] = !empty($d['gdpr']) ? 1 : 0;
+    if (array_key_exists('gdpr_testo', $d)) $v['gdpr_testo'] = newsletter_4byte_dentro(mb_substr(trim(str_replace("\r", '', strip_tags(is_scalar($d['gdpr_testo']) ? (string)$d['gdpr_testo'] : ''))), 0, 2000)) ?: null;
+    if (array_key_exists('messaggi', $d)) $v['messaggi'] = fb_messaggi_da_salvare($d['messaggi']);
+    if (array_key_exists('dopo_invio', $d)) $v['dopo_invio'] = is_string($d['dopo_invio']) && isset(FORM_DOPO[$d['dopo_invio']]) ? $d['dopo_invio'] : 'pagina';
+    if (($v['dopo_invio'] ?? '') === 'url' && ($v['dopo_url'] ?? ($prima['dopo_url'] ?? '')) === '') throw new RuntimeException('Hai scelto «Un altro indirizzo» dopo l\'invio: scrivi quale, oppure scegli la pagina di ringraziamento.');
+    // Un form di iscrizione (o pop-up) iscrive sempre: serve la lista principale e un campo Email.
+    if (in_array($tipoF, ['iscrizione', 'popup'], true) && !$v['lista_id']) throw new RuntimeException('Un form di iscrizione ha bisogno della lista principale: scegli in quale lista entra chi lo compila (passo Conferma).');
+    if (in_array($tipoF, ['iscrizione', 'popup', 'profilo', 'disiscrizione'], true) && !$emails) throw new RuntimeException('Questo form ha bisogno di un campo di tipo Email: aggiungilo nei campi.');
+    if (in_array($tipoF, ['profilo', 'disiscrizione'], true)) { $v['lista_id'] = 0; $v['omaggio'] = ''; }
+    // La casella da spuntare di un form della newsletter va con un attributo Sì/No (come Brevo). Le caselle che c'erano già
+    // in un form di prima, senza attributo, restano come sono.
+    if ($tipoF !== 'generico') {
+        $vecchie = array_column(array_filter($prima['campi'] ?? [], fn($x) => $x['tipo'] === 'spunta' && $x['attributo'] === ''), 'nome');
+        foreach ($campi as $c) if ($c['tipo'] === 'spunta' && $c['attributo'] === '' && !in_array($c['nome'], $vecchie, true)) throw new RuntimeException('La casella «' . $c['etichetta'] . '» va legata a un attributo Sì/No del contatto (scegli l\'attributo accanto al campo, o crealo in Attributi dei contatti). Per un consenso usa i blocchi GDPR o Consenso al tracciamento.');
+        foreach ($campi as $c) if ($c['tipo'] === 'liste' && !$c['liste']) throw new RuntimeException('Il blocco «' . $c['etichetta'] . '» non ha liste: scegli quali liste offrire.');
+    }
     if ($v['lista_id'] && !$emails) throw new RuntimeException('Per iscrivere a una lista serve un campo di tipo Email.');
     // 2.0.0: il file da dare dopo la conferma è un file riservato di Download, e serve una lista (chi lo riceve è un iscritto).
     if ($v['omaggio'] !== '') {
@@ -392,9 +479,29 @@ function form_errore(string $codice): array {
     return [$msg, $msg !== '' && in_array($codice, ['email', 'cellulare'], true) ? ($codice === 'email' ? 'tipo:email' : 'tipo:telefono') : ''];
 }
 
-/** Il form in HTML, con le stesse difese dei moduli fissi (captcha, campo esca, consenso). $campoErrato segna il campo sbagliato. */
-function form_html(array $m, string $percorso, string $errore = '', string $campoErrato = ''): string {
+/**
+ * Il form in HTML, con le stesse difese dei moduli fissi (captcha, campo esca, consenso). $campoErrato segna il campo sbagliato.
+ * 2.16.0, $opz (includes/form-brevo.php), tutte facoltative; senza, il form esce come prima, al byte:
+ *   ospitata  sulla pagina ospitata /modulo/<slug>/ (e nei codici da incorporare): dopo l'invio si torna lì
+ *   esterno   nel codice HTML per un altro sito: indirizzi interi, script e captcha dal sito
+ *   semplice  HTML semplice, senza JavaScript: niente captcha nel browser, la verifica è una domanda dopo l'invio
+ *   verifica  la pagina "ultimo passo" dell'HTML semplice: la domanda di controllo al posto del captcha
+ *   valori    [c_nome => valore] i campi già scritti; contatto: il contatto del link (form di profilo)
+ *   riuscito  il messaggio di riuscita al posto del form (Messaggi: "Un messaggio al posto del form")
+ */
+function form_html(array $m, string $percorso, string $errore = '', string $campoErrato = '', array $opz = []): string {
     $campi = ''; $id = (int)$m['id'];
+    $m += ['tipo' => 'generico', 'gdpr' => 0, 'gdpr_testo' => ''];
+    $titoloId = "modulo-titolo-f$id";
+    $apriSez = '<section class="modulo" id="modulo-f' . $id . '" data-form="' . $id . '"' . ($m['titolo'] !== '' ? ' aria-labelledby="' . $titoloId . '"' : ' aria-label="' . h($m['nome']) . '"') . '>' . ($m['titolo'] !== '' ? '<h2 id="' . $titoloId . '">' . h($m['titolo']) . '</h2>' : '');
+    if (!empty($opz['riuscito'])) {
+        return $apriSez . '<p class="modulo-riuscito" role="status">' . nl2br(h(fb_messaggi($m)['riuscita'])) . '</p>' . (string)($opz['dopo'] ?? '') . '</section>';
+    }
+    $contatto = $opz['contatto'] ?? null;
+    $val = $opz['valori'] ?? ($contatto ? fb_valori_contatto($m, $contatto) : null);
+    // Il valore già scritto di un campo: ' value="..."' (vuoto quando non c'è, e sempre vuoto nei form di prima).
+    $va = function (string $n) use ($val): string { $x = $val[$n] ?? null; return is_string($x) && $x !== '' ? ' value="' . h($x) . '"' : ''; };
+    $scelto = function (string $n, string $o) use ($val): bool { $x = $val[$n] ?? null; return is_array($x) ? in_array($o, array_map('strval', $x), true) : (is_string($x) && $x === $o); };
     foreach ($m['campi'] as $c) {
         $n = 'c_' . $c['nome'];
         $errato = $campoErrato !== '' && ($campoErrato === $c['etichetta'] || $campoErrato === 'tipo:' . $c['tipo']);
@@ -405,17 +512,17 @@ function form_html(array $m, string $percorso, string $errore = '', string $camp
         $et = '<span>' . h($c['etichetta']) . ($c['obbligatorio'] ? '' : ' <small>(facoltativo)</small>') . '</span>';
         $apri = trim($cl) !== '' ? '<label class="' . trim($cl) . '">' : '<label>';
         switch ($c['tipo']) {
-            case 'testolungo': $campi .= "$apri$et<textarea name=\"$n\" rows=\"4\" maxlength=\"3000\"$req$ph$inv></textarea></label>"; break;
+            case 'testolungo': $campi .= "$apri$et<textarea name=\"$n\" rows=\"4\" maxlength=\"3000\"$req$ph$inv>" . (is_string($val[$n] ?? null) ? h($val[$n]) : '') . "</textarea></label>"; break;
             case 'scelta':
-                $campi .= "$apri$et<select name=\"$n\"$req$inv><option value=\"\">Scegli…</option>" . implode('', array_map(fn($o) => '<option value="' . h($o) . '">' . h($o) . '</option>', $c['opzioni'])) . '</select></label>'; break;
+                $campi .= "$apri$et<select name=\"$n\"$req$inv><option value=\"\">Scegli…</option>" . implode('', array_map(fn($o) => '<option value="' . h($o) . '"' . ($scelto($n, $o) ? ' selected' : '') . '>' . h($o) . '</option>', $c['opzioni'])) . '</select></label>'; break;
             case 'multiscelta':
                 $campi .= '<fieldset class="form-largo multiscelta' . ($errato ? ' errato' : '') . '"' . $inv . '><legend>' . h($c['etichetta']) . ($c['obbligatorio'] ? '' : ' <small>(facoltativo)</small>') . '</legend>'
-                    . implode('', array_map(fn($o) => '<label class="spunta"><input type="checkbox" name="' . $n . '[]" value="' . h($o) . '"> <span>' . h($o) . '</span></label>', $c['opzioni'])) . '</fieldset>'; break;
-            case 'spunta': $campi .= '<label class="spunta' . trim($cl) . '"><input type="checkbox" name="' . $n . '" value="1"' . $req . $inv . '> <span>' . h($c['etichetta']) . ($c['obbligatorio'] ? '' : ' <small>(facoltativo)</small>') . '</span></label>'; break;
-            case 'email': $campi .= "$apri$et<input type=\"email\" name=\"$n\" autocomplete=\"email\" maxlength=\"190\"$req$ph$inv></label>"; break;
-            case 'telefono': $campi .= "$apri$et<input type=\"tel\" name=\"$n\" autocomplete=\"tel\" maxlength=\"30\"$req$ph$inv></label>"; break;
-            case 'data': $campi .= "$apri$et<input type=\"date\" name=\"$n\"$req$inv></label>"; break;
-            case 'ora': $campi .= "$apri$et<input type=\"time\" name=\"$n\" step=\"300\"$req$inv></label>"; break;
+                    . implode('', array_map(fn($o) => '<label class="spunta"><input type="checkbox" name="' . $n . '[]" value="' . h($o) . '"' . ($scelto($n, $o) ? ' checked' : '') . '> <span>' . h($o) . '</span></label>', $c['opzioni'])) . '</fieldset>'; break;
+            case 'spunta': $campi .= '<label class="spunta' . trim($cl) . '"><input type="checkbox" name="' . $n . '" value="1"' . $req . $inv . ($scelto($n, '1') ? ' checked' : '') . '> <span>' . h($c['etichetta']) . ($c['obbligatorio'] ? '' : ' <small>(facoltativo)</small>') . '</span></label>'; break;
+            case 'email': $campi .= "$apri$et<input type=\"email\" name=\"$n\" autocomplete=\"email\" maxlength=\"190\"$req$ph$inv" . $va($n) . ($contatto && $m['tipo'] === 'profilo' ? ' readonly' : '') . "></label>"; break;
+            case 'telefono': $campi .= "$apri$et<input type=\"tel\" name=\"$n\" autocomplete=\"tel\" maxlength=\"30\"$req$ph$inv" . $va($n) . "></label>"; break;
+            case 'data': $campi .= "$apri$et<input type=\"date\" name=\"$n\"$req$inv" . $va($n) . "></label>"; break;
+            case 'ora': $campi .= "$apri$et<input type=\"time\" name=\"$n\" step=\"300\"$req$inv" . $va($n) . "></label>"; break;
             case 'file':
                 // 2.1: un file; i tipi ammessi e il peso massimo scritti sotto il campo (e in accept, per la finestra del browser).
                 $acc = implode(',', array_map(fn($e) => '.' . $e . ($e === 'jpg' ? ',.jpeg' : ''), $c['estensioni']));
@@ -423,30 +530,67 @@ function form_html(array $m, string $percorso, string $errore = '', string $camp
                 $campi .= '<label class="form-file' . $cl . '">' . $et . '<input type="file" name="' . $n . '" accept="' . h($acc) . '" aria-describedby="' . $aiuto . '"' . $req . $inv . '>'
                     . '<small id="' . $aiuto . '" class="form-file-aiuto">' . h(implode(', ', array_map(fn($e) => FORM_FILE_TIPI[$e][0], $c['estensioni']))) . ', fino a ' . str_replace('.', ',', (string)round(form_file_peso($c) / 1048576, 1)) . ' MB</small></label>';
                 break;
-            case 'numero': $campi .= "$apri$et<input type=\"number\" name=\"$n\" step=\"any\"$req$ph$inv></label>"; break;
-            default: $campi .= "$apri$et<input type=\"text\" name=\"$n\" maxlength=\"300\"" . ($c['meta'] === 'nome' ? ' autocomplete="given-name"' : ($c['meta'] === 'cognome' ? ' autocomplete="family-name"' : '')) . "$req$ph$inv></label>";
+            case 'numero': $campi .= "$apri$et<input type=\"number\" name=\"$n\" step=\"any\"$req$ph$inv" . $va($n) . "></label>"; break;
+            case 'liste': case 'gruppi':
+                // 2.16.0: Iscrizione a più liste e Gruppi di consenso: caselle, una per lista o gruppo offerto.
+                $nomi = [];
+                if ($c['tipo'] === 'liste') { foreach (newsletter_liste() as $l) if (in_array((int)$l['id'], $c['liste'], true)) $nomi[(int)$l['id']] = newsletter_4byte_fuori((string)$l['nome']); }
+                elseif (nl_gruppi_attivi()) { foreach (nl_gruppi() as $gid => $g) if (!$c['gruppi'] || in_array($gid, $c['gruppi'], true)) $nomi[$gid] = $g['nome']; }
+                if (!$nomi) break;
+                $campi .= '<fieldset class="form-largo multiscelta form-' . $c['tipo'] . ($errato ? ' errato' : '') . '"' . $inv . '><legend>' . h($c['etichetta']) . ($c['obbligatorio'] ? '' : ' <small>(facoltativo)</small>') . '</legend>'
+                    . implode('', array_map(fn($k, $o) => '<label class="spunta"><input type="checkbox" name="' . $n . '[]" value="' . (int)$k . '"' . ($scelto($n, (string)$k) ? ' checked' : '') . '> <span>' . h($o) . '</span></label>', array_keys($nomi), $nomi)) . '</fieldset>';
+                break;
+            case 'tracciamento':
+                $campi .= '<label class="spunta form-largo form-tracciamento"><input type="checkbox" name="' . $n . '" value="1"' . ($scelto($n, '1') ? ' checked' : '') . '> <span>' . h($c['etichetta']) . ' <small>(facoltativo)</small></span></label>'; break;
+            default: $campi .= "$apri$et<input type=\"text\" name=\"$n\" maxlength=\"300\"" . ($c['meta'] === 'nome' ? ' autocomplete="given-name"' : ($c['meta'] === 'cognome' ? ' autocomplete="family-name"' : '')) . "$req$ph$inv" . $va($n) . "></label>";
         }
     }
     $consenso = $m['consenso'] !== '' ? h($m['consenso']) : 'Ho letto l&#039;<a href="/privacy-policy/" target="_blank">informativa privacy</a> e accetto il trattamento dei miei dati per questa richiesta.';
-    $titoloId = "modulo-titolo-f$id";
-    return '<section class="modulo" id="modulo-f' . $id . '" data-form="' . $id . '"' . ($m['titolo'] !== '' ? ' aria-labelledby="' . $titoloId . '"' : ' aria-label="' . h($m['nome']) . '"') . '>' . ($m['titolo'] !== '' ? '<h2 id="' . $titoloId . '">' . h($m['titolo']) . '</h2>' : '') . ($m['intro'] !== '' ? '<p>' . nl2br(h($m['intro'])) . '</p>' : '')
+    // 2.16.0: i form di profilo e di disiscrizione non chiedono il consenso (si aprono dal link o servono a uscire); con il
+    // GDPR acceso la dichiarazione sta sopra la casella, che resta vuota finché la persona non la spunta.
+    $senzaConsenso = in_array($m['tipo'], ['profilo', 'disiscrizione'], true);
+    $gdpr = !$senzaConsenso && $m['gdpr'] ? '<div class="form-gdpr"><p class="form-gdpr-testo">' . nl2br(h($m['gdpr_testo'] !== '' ? $m['gdpr_testo'] : FORM_GDPR_PARTENZA)) . '</p></div>' : '';
+    $esterno = !empty($opz['esterno']); $semplice = !empty($opz['semplice']); $verifica = !empty($opz['verifica']);
+    $ospitata = !empty($opz['ospitata']) || $esterno;
+    $base = $esterno ? fb_origine() . cms_base() : cms_base();
+    $script = function_exists('sito_versione_asset') && !$esterno ? sito_versione_asset('moduli.js') : $base . '/sito/assets/moduli.js';
+    $conCaptcha = !$semplice && !$verifica;
+    $servizio = ($ospitata ? '<input type="hidden" name="ospitata" value="1">' : '') . ($semplice ? '<input type="hidden" name="semplice" value="1">' : '')
+        . ($contatto ? '<input type="hidden" name="pi" value="' . (int)$contatto['id'] . '"><input type="hidden" name="pt" value="' . h(newsletter_token_preferenze((int)$contatto['id'])) . '">' : '');
+    $privacy = $senzaConsenso ? '' : $gdpr . '<label class="spunta"><input type="checkbox" name="privacy" value="1" required' . (!empty($opz['privacy']) ? ' checked' : '') . '> <span>' . $consenso . '</span></label>';
+    $verificaHtml = $conCaptcha ? '<label class="captcha"><input type="checkbox"> <span>Sono una persona</span> <span class="captcha-stato" aria-live="polite"></span></label>'
+        . ($ospitata && !$esterno ? '<noscript><p class="form-senza-js">Senza JavaScript la casella qui sopra non funziona: rispondi alla domanda di controllo.</p>' . fb_domanda_html($id) . '</noscript>' : '')
+        : ($verifica ? fb_domanda_html($id, $campoErrato === 'domanda') : '');
+    return $apriSez . ($m['intro'] !== '' ? '<p>' . nl2br(h($m['intro'])) . '</p>' : '')
         . ($errore !== '' ? '<p class="modulo-errore" role="alert">' . h($errore) . '</p>' : '')
-        . '<form method="post" action="' . cms_base() . '/api/modulo.php"' . (array_filter($m['campi'], fn($c) => $c['tipo'] === 'file') ? ' enctype="multipart/form-data"' : '') . ' data-captcha>'
-        . '<input type="hidden" name="modulo" value="form:' . $id . '"><input type="hidden" name="pagina" value="' . h($percorso) . '"><input type="hidden" name="captcha" value="">'
+        . '<form method="post" action="' . $base . '/api/modulo.php"' . (array_filter($m['campi'], fn($c) => $c['tipo'] === 'file') ? ' enctype="multipart/form-data"' : '') . ($conCaptcha ? ' data-captcha' : '') . ($esterno && $conCaptcha ? ' data-base="' . h($base) . '"' : '') . '>'
+        . '<input type="hidden" name="modulo" value="form:' . $id . '"><input type="hidden" name="pagina" value="' . h($percorso) . '"><input type="hidden" name="captcha" value="">' . $servizio
         . '<div class="modulo-campi">' . $campi . '</div>'
         . '<div class="esca" aria-hidden="true"><label>Sito web <input name="sito_web" tabindex="-1" autocomplete="off"></label></div>'
-        . '<label class="spunta"><input type="checkbox" name="privacy" value="1" required> <span>' . $consenso . '</span></label>'
-        . '<label class="captcha"><input type="checkbox"> <span>Sono una persona</span> <span class="captcha-stato" aria-live="polite"></span></label>'
+        . $privacy
+        . $verificaHtml
         . '<button class="btn btn-viola" type="submit">' . h($m['pulsante']) . '</button>'
-        . '</form><script src="' . (function_exists('sito_versione_asset') ? sito_versione_asset('moduli.js') : cms_base() . '/sito/assets/moduli.js') . '" defer></script></section>';
+        . '</form>' . ($conCaptcha ? '<script src="' . $script . '" defer></script>' : '') . '</section>';
 }
 
-/** Riceve una compilazione. Ritorna '' oppure il codice d'errore (MODULI_ERRORI o 'campo:NOME'). */
+/**
+ * Riceve una compilazione. Ritorna '' oppure il codice d'errore (MODULI_ERRORI o 'campo:NOME'; dalla 2.16.0 anche 'link'
+ * per un form di profilo senza il link firmato).
+ */
 function form_ricevi(array $m, array $p, string $pagina, array $file = []): string {
     form_schema();
     if (empty($m['attivo'])) return 'robot';
     if (($p['sito_web'] ?? '') !== '') return 'robot';
+    $m += ['tipo' => 'generico', 'conferma' => !empty($m['lista_conferma']) ? 'doppia' : 'nessuna', 'liste' => [], 'gdpr' => 0, 'gdpr_testo' => '', 'aggiorna_esistenti' => 0, 'doi_modello_id' => 0];
+    // 2.16.0: un form di profilo vale solo con il link firmato del contatto (pi, pt); l'email è quella del contatto.
+    $profilo = null;
+    if ($m['tipo'] === 'profilo') {
+        $profilo = fb_contatto_da_link(is_string($p['pi'] ?? null) ? $p['pi'] : '', is_string($p['pt'] ?? null) ? $p['pt'] : '');
+        if (!$profilo) return 'link';
+    }
     $dati = []; $email = ''; $nome = []; $daSalvare = [];
+    // 2.16.0: quello che va nel contatto oltre a nome, cognome ed email (includes/form-brevo.php, fb_dopo_iscrizione).
+    $x = ['attributi' => [], 'liste' => [], 'liste_offerte' => [], 'gruppi' => [], 'gruppi_offerti' => [], 'tracciamento' => null];
     foreach ($m['campi'] as $c) {
         if ($c['tipo'] === 'file') {
             // 2.1: il file si controlla qui (peso, tipo, contenuto vero); si salva solo quando tutto il resto è a posto.
@@ -466,15 +610,39 @@ function form_ricevi(array $m, array $p, string $pagina, array $file = []): stri
             continue;
         }
         $v = $p['c_' . $c['nome']] ?? '';
+        if ($c['tipo'] === 'liste' || $c['tipo'] === 'gruppi') {
+            // 2.16.0: solo le liste (o i gruppi) che il blocco offre: un id in più, scritto a mano nel POST, ferma l'invio.
+            $offerti = $c['tipo'] === 'liste' ? $c['liste'] : (nl_gruppi_attivi() ? ($c['gruppi'] ?: array_keys(nl_gruppi())) : []);
+            if (!$offerti) continue;
+            $scelte = [];
+            foreach (is_array($v) ? $v : ($v === '' ? [] : [$v]) as $k) {
+                if (!is_scalar($k) || !ctype_digit((string)$k) || !in_array((int)$k, $offerti, true)) return 'campo:' . $c['etichetta'];
+                $scelte[(int)$k] = (int)$k;
+            }
+            if ($c['obbligatorio'] && !$scelte) return 'campo:' . $c['etichetta'];
+            $nomi = $c['tipo'] === 'liste' ? array_map('newsletter_nome_lista', $scelte) : array_map(fn($g) => (string)(nl_gruppo($g)['nome'] ?? ''), $scelte);
+            $dati[$c['etichetta']] = implode(', ', array_map('newsletter_4byte_fuori', $nomi));
+            $x[$c['tipo']] = array_merge($x[$c['tipo']], array_values($scelte));
+            $chiave = $c['tipo'] === 'liste' ? 'liste_offerte' : 'gruppi_offerti';
+            $x[$chiave] = array_merge($x[$chiave], $offerti);
+            continue;
+        }
+        if ($c['tipo'] === 'tracciamento') {
+            $x['tracciamento'] = !is_array($v) && (string)$v !== '';
+            $dati[$c['etichetta']] = $x['tracciamento'] ? 'sì' : 'no';
+            continue;
+        }
         if ($c['tipo'] === 'multiscelta') {
             $scelte = array_values(array_unique(array_map(fn($x) => trim((string)$x), is_array($v) ? $v : ($v === '' ? [] : [$v]))));
-            foreach ($scelte as $x) if (!in_array($x, $c['opzioni'], true)) return 'campo:' . $c['etichetta'];
+            foreach ($scelte as $s) if (!in_array($s, $c['opzioni'], true)) return 'campo:' . $c['etichetta'];
+            if (($c['attributo'] ?? '') !== '') $x['attributi'][$c['attributo']] = $scelte;
             $v = implode(', ', $scelte);
         }
         $v = is_array($v) ? '' : trim((string)$v);
         // Audit 2026-11: le emoji di chi scrive restano (prima si toglievano qui, e una scelta con un'emoji fra le opzioni non
         // passava mai il controllo): nel database i dati vanno con form_json_3byte(), il nome senza.
         if ($c['tipo'] === 'spunta') $v = $v !== '' ? 'sì' : '';
+        if ($profilo && $c['tipo'] === 'email') $v = (string)$profilo['email']; // l'email del profilo non si cambia da qui
         if ($c['obbligatorio'] && $v === '') return 'campo:' . $c['etichetta'];
         if ($v !== '') {
             if ($c['tipo'] === 'email' && (!filter_var($v, FILTER_VALIDATE_EMAIL) || strlen($v) > 190)) return 'email';
@@ -487,9 +655,16 @@ function form_ricevi(array $m, array $p, string $pagina, array $file = []): stri
         $dati[$c['etichetta']] = mb_substr($v, 0, $c['tipo'] === 'testolungo' ? 3000 : 300);
         if ($c['tipo'] === 'email' && $email === '') $email = mb_strtolower($v);
         if ($c['meta'] === 'nome' || $c['meta'] === 'cognome') $nome[$c['meta']] = $v;
+        // 2.16.0: il valore per l'attributo del contatto (la casella Sì/No: 1 o 0).
+        if (($c['attributo'] ?? '') !== '' && $c['tipo'] !== 'multiscelta') $x['attributi'][$c['attributo']] = $c['tipo'] === 'spunta' ? ($v !== '' ? '1' : '0') : $dati[$c['etichetta']];
     }
-    if (empty($p['privacy'])) return 'privacy';
-    if (!moduli_captcha_valido((string)($p['captcha'] ?? ''))) return 'captcha';
+    $senzaConsenso = in_array($m['tipo'], ['profilo', 'disiscrizione'], true);
+    if (!$senzaConsenso && empty($p['privacy'])) return 'privacy';
+    // 2.16.0: senza JavaScript (HTML semplice, pagina ospitata) la verifica è la domanda di controllo.
+    if (!moduli_captcha_valido((string)($p['captcha'] ?? ''))) {
+        if (isset($p['domanda_risposta']) && is_string($p['domanda_risposta']) && trim($p['domanda_risposta']) !== '') { if (!fb_domanda_valida($p)) return 'domanda'; }
+        else return 'captcha';
+    }
     if (moduli_troppi('moduli_invii')) return 'troppi';
     // 2.0.0: con la doppia conferma, il limite delle richieste di iscrizione si controlla prima di salvare: la persona
     // vede l'errore di sempre, invece del grazie senza l'email di conferma.
@@ -501,11 +676,11 @@ function form_ricevi(array $m, array $p, string $pagina, array $file = []): stri
     $allegati = [];
     if ($daSalvare) {
         $dir = form_file_dir();
-        foreach ($daSalvare as $x) {
-            $nomeFile = bin2hex(random_bytes(16)) . '.' . $x['est'];
-            if (!@move_uploaded_file($x['tmp'], $dir . '/' . $nomeFile)) { foreach ($allegati as $a) @unlink($dir . '/' . $a['file']); return 'campo:' . $x['campo']; }
+        foreach ($daSalvare as $s) {
+            $nomeFile = bin2hex(random_bytes(16)) . '.' . $s['est'];
+            if (!@move_uploaded_file($s['tmp'], $dir . '/' . $nomeFile)) { foreach ($allegati as $a) @unlink($dir . '/' . $a['file']); return 'campo:' . $s['campo']; }
             @chmod($dir . '/' . $nomeFile, 0640);
-            $allegati[] = ['campo' => $x['campo'], 'nome' => $x['nome'], 'file' => $nomeFile, 'peso' => $x['peso'], 'tipo' => $x['tipo']];
+            $allegati[] = ['campo' => $s['campo'], 'nome' => $s['nome'], 'file' => $nomeFile, 'peso' => $s['peso'], 'tipo' => $s['tipo']];
         }
     }
     try {
@@ -516,12 +691,26 @@ function form_ricevi(array $m, array $p, string $pagina, array $file = []): stri
         throw $e;
     }
     $invioId = (int)db()->lastInsertId();
-    // Nella lista della newsletter, con o senza doppia conferma.
-    if ((int)$m['lista_id'] > 0 && $email !== '') {
+    if ($profilo) {
+        // 2.16.0: Aggiornamento del profilo.
+        try { fb_salva_profilo($m, $profilo, $x); } catch (Throwable $e) { error_log('form profilo: ' . $e->getMessage()); }
+    } elseif ($m['tipo'] === 'disiscrizione') {
+        // 2.16.0: Disiscrizione: l'email con il link per uscire, solo a chi è iscritto.
+        try { if ($email !== '') fb_disiscrizione($m, $email); } catch (Throwable $e) { error_log('form disiscrizione: ' . $e->getMessage()); }
+    } elseif ((int)$m['lista_id'] > 0 && $email !== '') {
+        // Nella lista della newsletter, con o senza doppia conferma.
         try {
             $attivoPrima = newsletter_stato_email($email) === 'attivo';
-            $r = form_iscrivi($email, $nome['nome'] ?? '', $nome['cognome'] ?? '', (int)$m['lista_id'], (bool)$m['lista_conferma'], $m);
+            $cera = newsletter_id_da_email($email) > 0;
+            $r = form_iscrivi($email, $nome['nome'] ?? '', $nome['cognome'] ?? '', (int)$m['lista_id'], (bool)$m['lista_conferma'], $m, array_values(array_unique(array_merge($m['liste'], $x['liste']))));
             if ($r !== '') error_log("form: iscrizione con conferma non riuscita ($r)");
+            // 2.16.0: attributi, gruppi, tracciamento e registro del consenso; con la conferma semplice l'email di benvenuto.
+            if ($r === '') {
+                try {
+                    fb_dopo_iscrizione($m, newsletter_id_da_email($email), $cera, $x);
+                    if ($m['conferma'] === 'semplice' && !$attivoPrima) fb_benvenuto($m, $email, $nome['nome'] ?? '');
+                } catch (Throwable $e) { error_log('form dopo iscrizione: ' . $e->getMessage()); }
+            }
             // 2.0.0: il file del form. Con la conferma da fare arriva dopo la conferma; chi è già iscritto lo riceve
             // subito per email (non sulla pagina: da qui nessuno prende il file scrivendo l'email di un altro);
             // senza conferma, per email e anche sulla pagina di ringraziamento.
@@ -540,7 +729,7 @@ function form_ricevi(array $m, array $p, string $pagina, array $file = []): stri
         // 2.1: i file arrivati vanno allegati se in tutto stanno sotto FORM_FILE_ALLEGA_MAX; più grandi, si scaricano dal pannello.
         $daAllegare = [];
         if ($allegati && array_sum(array_column($allegati, 'peso')) <= FORM_FILE_ALLEGA_MAX) {
-            foreach ($allegati as $x) $daAllegare[] = ['nome' => $x['nome'], 'tipo' => $x['tipo'], 'dati' => (string)@file_get_contents(form_file_dir() . '/' . $x['file'])];
+            foreach ($allegati as $a) $daAllegare[] = ['nome' => $a['nome'], 'tipo' => $a['tipo'], 'dati' => (string)@file_get_contents(form_file_dir() . '/' . $a['file'])];
         }
         $notaFile = $allegati ? '<p style="margin:0 0 10px">' . ($daAllegare ? 'I file sono allegati a questa email.' : 'I file sono troppo grandi per l&#039;email: li scarichi dal pannello, in Invii dei form.') . '</p>' : '';
         foreach (form_avviso_destinatari($m) as $a) {
@@ -550,7 +739,7 @@ function form_ricevi(array $m, array $p, string $pagina, array $file = []): stri
         }
     }
     // L'innesco "Compila un form": subito per chi è attivo; per chi deve ancora confermare si ricorda e parte alla conferma.
-    newsletter_flussi_innesco('form', (int)$m['id'], $email !== '' ? newsletter_id_da_email($email) : 0);
+    if ($m['tipo'] !== 'disiscrizione') newsletter_flussi_innesco('form', (int)$m['id'], $profilo ? (int)$profilo['id'] : ($email !== '' ? newsletter_id_da_email($email) : 0));
     return '';
 }
 
@@ -558,18 +747,21 @@ function form_ricevi(array $m, array $p, string $pagina, array $file = []): stri
  * Un iscritto in una lista, da un form: con conferma manda l'email di conferma (2.0.0: per la lista del form, non per
  * la newsletter principale, con il titolo del form nell'email; entra nella lista solo quando conferma), senza entra
  * subito attivo. Chi è già attivo entra subito nella lista. Ritorna '' oppure il codice d'errore di newsletter_richiesta().
+ * 2.16.0: $altre, le liste in più (passo Conferma e blocco Iscrizione a più liste): entrano con la principale.
  */
-function form_iscrivi(string $email, string $nome, string $cognome, int $lista, bool $conferma, array $m = []): string {
+function form_iscrivi(string $email, string $nome, string $cognome, int $lista, bool $conferma, array $m = [], array $altre = []): string {
     newsletter_schema();
     $st = db()->prepare('SELECT * FROM ' . tbl('newsletter_iscritti') . ' WHERE email = ?');
     $st->execute([$email]);
     $i = $st->fetch();
     $ora = moduli_adesso();
-    if ($i && $i['stato'] === 'attivo') { newsletter_in_lista((int)$i['id'], $lista); return ''; }
+    $altre = array_values(array_filter(array_map('intval', $altre), fn($l) => $l > 0 && $l !== $lista));
+    if ($i && $i['stato'] === 'attivo') { newsletter_in_lista((int)$i['id'], $lista); foreach ($altre as $l) newsletter_in_lista((int)$i['id'], $l); return ''; }
     if ($conferma) {
         $cosa = trim((string)($m['titolo'] ?? '')) ?: trim((string)($m['nome'] ?? '')) ?: newsletter_nome_lista($lista);
         return newsletter_richiesta(['nome' => $nome, 'cognome' => $cognome, 'email' => $email], ['lista' => $lista, 'form' => (int)($m['id'] ?? 0), 'cosa' => $cosa, 'fonte' => 'form',
-            'email' => is_array($m['conferma_email'] ?? null) ? $m['conferma_email'] : nl_email_da_json((string)($m['conferma_email'] ?? ''))]);
+            'email' => is_array($m['conferma_email'] ?? null) ? $m['conferma_email'] : nl_email_da_json((string)($m['conferma_email'] ?? ''))]
+            + ($altre ? ['altre_liste' => $altre] : []) + ((int)($m['doi_modello_id'] ?? 0) > 0 ? ['modello' => (int)$m['doi_modello_id']] : []));
     }
     if (!$i) {
         db()->prepare('INSERT INTO ' . tbl('newsletter_iscritti') . " (email, nome, cognome, stato, fonte, consenso_versione, consenso_at, ip, creato, aggiornato) VALUES (?,?,?,'attivo','form',?,?,?,?,?)")
@@ -580,6 +772,7 @@ function form_iscrivi(string $email, string $nome, string $cognome, int $lista, 
     $id = newsletter_id_da_email($email);
     newsletter_in_lista($id, $lista);
     newsletter_flussi_innesco('lista', $lista, $id);
+    foreach ($altre as $l) { newsletter_in_lista($id, $l); newsletter_flussi_innesco('lista', $l, $id); }
     return '';
 }
 

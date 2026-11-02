@@ -67,8 +67,8 @@ const linkDi = m => ((m && m.html || '').match(/https?:\/\/[^"<\s]+\/newsletter-
   const ebook = +uno("SELECT id FROM {p}newsletter_liste WHERE nome = 'Ebook'");
   await vai('/contatti/');
   const form = +((await p.locator('input[name=modulo]').first().getAttribute('value')) || '').replace('form:', '');
-  const prima = (q(`SELECT lista_id, lista_conferma, titolo, conferma_email FROM {p}moduli WHERE id = ${form}`) || [])[0] || {};
-  q(`UPDATE {p}moduli SET lista_id = ${ebook}, lista_conferma = 1, titolo = 'L''ebook gratis', conferma_email = NULL WHERE id = ${form}`);
+  const prima = (q(`SELECT lista_id, lista_conferma, conferma, titolo, conferma_email FROM {p}moduli WHERE id = ${form}`) || [])[0] || {};
+  q(`UPDATE {p}moduli SET lista_id = ${ebook}, lista_conferma = 1, conferma = 'doppia', titolo = 'L''ebook gratis', conferma_email = NULL WHERE id = ${form}`);
   q("DELETE FROM {p}settings WHERE setting_key = 'newsletter_conferma_email'");
   // Le persone di un giro precedente: chi è già attivo non riceve più l'email di conferma.
   q("DELETE l FROM {p}newsletter_iscritti_liste l JOIN {p}newsletter_iscritti i ON i.id = l.iscritto_id WHERE i.email LIKE '%@persona.it'");
@@ -105,7 +105,7 @@ const linkDi = m => ((m && m.html || '').match(/https?:\/\/[^"<\s]+\/newsletter-
   ok('1. modulo della newsletter, senza modifiche: email e oggetto uguali al byte alla 2.6.0', !!mB && mB.html === vB.html && mB.oggetto === vB.oggetto, mB ? [mB.oggetto, vB.oggetto] : 'nessuna email');
 
   // ===== 2. La scheda del form: il riquadro, l'anteprima, i segnaposti spiegati.
-  await vai('/admin/form.php?id=' + form);
+  await vai('/admin/form.php?id=' + form + '&passo=4');
   await p.waitForFunction(() => (document.querySelector('#fm-conferma .ec-cornice') || {}).srcdoc, null, { timeout: 10000 }).catch(() => {});
   const fr = p.frameLocator('#fm-conferma .ec-cornice');
   ok('2. scheda del form: riquadro Email di conferma con l\'anteprima dell\'email di oggi', /Conferma l'iscrizione/.test(await fr.locator('h1').innerText().catch(() => '')) && /«L'ebook gratis»/.test(await fr.locator('body').innerText().catch(() => '')));
@@ -124,7 +124,7 @@ const linkDi = m => ((m && m.html || '').match(/https?:\/\/[^"<\s]+\/newsletter-
   ok('3. solo le parti scritte si salvano', Object.keys(JSON.parse(comuni || '{}')).sort().join() === 'firma,titolo', comuni);
 
   // ===== 4. Il form: ogni parte, con segnaposti, emoji e codice cattivo.
-  await vai('/admin/form.php?id=' + form);
+  await vai('/admin/form.php?id=' + form + '&passo=4');
   ok('4. nella scheda del form l\'aiuto dice che il titolo vuoto usa quello comune', /testo comune[\s\S]*Titolo comune \uD83C\uDF88/.test(await p.locator('#ec-titolo-aiuto').textContent()));
   await p.click('#fm-conferma-campi > summary');
   const parti = {
@@ -137,7 +137,7 @@ const linkDi = m => ((m && m.html || '').match(/https?:\/\/[^"<\s]+\/newsletter-
     nota: 'Non sei stato tu? Ignora, {nome}.',
   };
   for (const [k, v] of Object.entries(parti)) await p.fill('#fm-conferma #ec-' + k, v);
-  await Promise.all([p.waitForNavigation(), p.click('#fm-form button[type=submit]:not([name=azione])')]);
+  await Promise.all([p.waitForNavigation(), p.click('#fm-form button[name=vai][value=resta]')]);
   ok('4. form salvato', /salvato/.test(await flash()), await flash());
   const salvato = String(uno(`SELECT conferma_email FROM {p}moduli WHERE id = ${form}`) || '');
   ok('4. nel database: niente script, eventi, javascript:; emoji come entità', salvato !== '' && !/<script|onclick|onerror="|javascript:/i.test(salvato) && /&#x1F389;/.test(salvato) && !/[\u{10000}-\u{10FFFF}]/u.test(salvato), salvato.slice(0, 300));
@@ -162,7 +162,7 @@ const linkDi = m => ((m && m.html || '').match(/https?:\/\/[^"<\s]+\/newsletter-
   const attiviPrima = +uno("SELECT COUNT(*) FROM {p}newsletter_iscritti WHERE stato = 'attivo'");
   if (mP) await vai(linkDi(mP).replace(/^https?:\/\/[^/]+/, B));
   ok('6. il link della prova non conferma niente', +uno("SELECT COUNT(*) FROM {p}newsletter_iscritti WHERE stato = 'attivo'") === attiviPrima);
-  await p.goto(B + '/admin/form.php?id=' + form, { waitUntil: 'networkidle' }); // il campo non salvato si perde
+  await p.goto(B + '/admin/form.php?id=' + form + '&passo=4', { waitUntil: 'networkidle' }); // il campo non salvato si perde
 
   // ===== 7. L'email vera: ogni parte cambiata, il link conferma ancora.
   const mC = await compila('carla');
@@ -203,7 +203,7 @@ const linkDi = m => ((m && m.html || '').match(/https?:\/\/[^"<\s]+\/newsletter-
   const rctx = await br.newContext(); const rp = await rctx.newPage();
   await rp.goto(B + '/admin/login.php'); await rp.fill('#username', 'redattore-prova'); await rp.fill('#password', 'Redattore-Prova-2026-xyz');
   await Promise.all([rp.waitForNavigation(), rp.click('button[type=submit]')]);
-  await rp.goto(B + '/admin/form.php?id=' + form, { waitUntil: 'networkidle' });
+  await rp.goto(B + '/admin/form.php?id=' + form + '&passo=4', { waitUntil: 'networkidle' });
   const rForm = await rp.content();
   await rp.goto(B + '/admin/newsletter.php?scheda=impostazioni', { waitUntil: 'networkidle' });
   const rNl = await rp.content();
@@ -229,7 +229,7 @@ const linkDi = m => ((m && m.html || '').match(/https?:\/\/[^"<\s]+\/newsletter-
 
   // ===== 12. Al telefono la scheda non scorre di lato.
   await p.setViewportSize({ width: 390, height: 800 });
-  await vai('/admin/form.php?id=' + form);
+  await vai('/admin/form.php?id=' + form + '&passo=4');
   const largo1 = await p.evaluate(() => document.documentElement.scrollWidth);
   await vai('/admin/newsletter.php?scheda=impostazioni');
   const largo2 = await p.evaluate(() => document.documentElement.scrollWidth);
@@ -238,7 +238,7 @@ const linkDi = m => ((m && m.html || '').match(/https?:\/\/[^"<\s]+\/newsletter-
 
   // Com'era.
   const esc = s => s == null ? 'NULL' : "'" + String(s).replace(/'/g, "''") + "'";
-  q(`UPDATE {p}moduli SET lista_id = ${+prima.lista_id || 0}, lista_conferma = ${+prima.lista_conferma || 0}, titolo = ${esc(prima.titolo || '')}, conferma_email = ${esc(prima.conferma_email)} WHERE id = ${form}`);
+  q(`UPDATE {p}moduli SET lista_id = ${+prima.lista_id || 0}, lista_conferma = ${+prima.lista_conferma || 0}, conferma = ${esc(prima.conferma || 'nessuna')}, titolo = ${esc(prima.titolo || '')}, conferma_email = ${esc(prima.conferma_email)} WHERE id = ${form}`);
   q("DELETE FROM {p}users WHERE username = 'redattore-prova'");
   ok('nessun errore JavaScript', err.length === 0, err);
   await br.close();

@@ -47,10 +47,36 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST' || !in_array($tipo, ['newsletter', 'fo
 try {
     if ($tipo === 'form') {
         $errore = form_ricevi($form, $_POST, $pagina, $_FILES);
-        if ($errore !== '') modulo_torna($pagina . '?modulo=' . rawurlencode($errore) . '&f=' . (int)$form['id'] . $popup . '#modulo-f' . (int)$form['id']);
+        $fid = (int)$form['id'];
+        // 2.16.0: dalla pagina ospitata o da un codice incorporato si torna alla pagina ospitata (anche dentro un iframe di un
+        // altro sito: è l'unica che ci può stare); un form di profilo si porta dietro il suo link firmato.
+        $ospitata = !empty($_POST['ospitata']) && function_exists('fb_url_ospitata');
+        if ($ospitata) $pagina = '/modulo/' . $form['slug'] . '/';
+        $link = '';
+        if (($form['tipo'] ?? '') === 'profilo' && is_string($_POST['pi'] ?? null) && ctype_digit($_POST['pi']) && is_string($_POST['pt'] ?? null) && preg_match('/^[a-f0-9]{32}$/', $_POST['pt'])) $link = '&i=' . (int)$_POST['pi'] . '&t=' . $_POST['pt'];
+        // 2.16.0: HTML semplice, senza JavaScript: niente captcha nel browser, la verifica è una domanda nella pagina "ultimo passo".
+        if (in_array($errore, ['captcha', 'domanda'], true) && $ospitata && (!empty($_POST['semplice']) || isset($_POST['domanda_risposta']))) {
+            require_once __DIR__ . '/../includes/sito-seo.php';
+            require_once __DIR__ . '/../sito/viste.php';
+            fb_intestazioni_ospitata();
+            header('Content-Type: text/html; charset=UTF-8');
+            echo fb_pagina_verifica($form, $_POST, $errore === 'domanda');
+            exit;
+        }
+        if ($errore !== '') modulo_torna($pagina . '?modulo=' . rawurlencode($errore) . '&f=' . $fid . $popup . $link . '#modulo-f' . $fid);
         // 2.0.0: come va il file del form (dopo la conferma, per email, o il link sulla pagina).
         $om = form_ultimo_omaggio();
-        modulo_torna(FORM_PAGINA_GRAZIE . '?f=' . (int)$form['id'] . ($om ? '&o=' . $om['stato'] . (isset($om['k']) ? '&k=' . rawurlencode($om['k']) : '') : ''));
+        $omq = $om ? '&o=' . $om['stato'] . (isset($om['k']) ? '&k=' . rawurlencode($om['k']) : '') : '';
+        // 2.16.0: Messaggi, "Dopo l'invio": un altro indirizzo, un messaggio al posto del form, o la pagina di ringraziamento.
+        $dopo = (string)($form['dopo_invio'] ?? 'pagina');
+        if ($dopo === 'url' && ($u = (string)($form['dopo_url'] ?? '')) !== '') {
+            if (str_starts_with($u, '/') && !str_starts_with($u, '//')) modulo_torna($u);
+            header('Location: ' . $u, true, 303);
+            exit;
+        }
+        if ($ospitata) modulo_torna($pagina . '?fatto=1&f=' . $fid . $omq . $link);
+        if ($dopo === 'messaggio') modulo_torna($pagina . '?modulo=ok&f=' . $fid . $omq . $popup . '#modulo-f' . $fid);
+        modulo_torna(FORM_PAGINA_GRAZIE . '?f=' . $fid . $omq);
     }
     [$dati, $errore] = moduli_leggi($_POST, false);
     if ($errore === '') $errore = newsletter_richiesta($dati);

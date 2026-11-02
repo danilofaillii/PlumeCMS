@@ -22,6 +22,7 @@
 require_once __DIR__ . '/newsletter.php';
 require_once __DIR__ . '/newsletter-ab.php'; // 2.13.0: il test A/B
 require_once __DIR__ . '/newsletter-report.php'; // 2.14.0: report, statistiche, orario migliore
+require_once __DIR__ . '/newsletter-consenso.php'; // 2.16.0: gruppi di consenso, tracciamento, pagine di disiscrizione
 
 const NEWSLETTER_WEB = '/newsletter-web/';
 const NEWSLETTER_PREFERENZE = '/newsletter-preferenze/';
@@ -40,10 +41,10 @@ const NL_CAMP_VISTE = [
 /** Le parti di una campagna che si possono copiare con Duplica, e le colonne di ognuna. */
 const NL_CAMP_PARTI = [
     'mittente' => ['Mittente', ['mittente_id']],
-    'destinatari' => ['Destinatari', ['liste', 'segmenti', 'escludi_liste', 'escludi_segmenti', 'non_coinvolti']],
+    'destinatari' => ['Destinatari', ['liste', 'segmenti', 'escludi_liste', 'escludi_segmenti', 'non_coinvolti', 'gruppo_id']],
     'oggetto' => ['Oggetto e testo di anteprima', ['oggetto', 'anteprima']],
     'design' => ['Design (blocchi, testo, pulsante, codice HTML, testo semplice)', ['editor', 'corpo', 'html', 'pulsante_testo', 'pulsante_link', 'testo', 'testo_modificato', 'design', 'modello_id']],
-    'impostazioni' => ['Impostazioni aggiuntive', ['rispondi_a', 'campo_a', 'tag', 'utm', 'utm_campagna', 'link_web', 'link_preferenze', 'lotti', 'lotti_intervallo']],
+    'impostazioni' => ['Impostazioni aggiuntive', ['rispondi_a', 'campo_a', 'tag', 'utm', 'utm_campagna', 'link_web', 'link_preferenze', 'lotti', 'lotti_intervallo', 'pagina_uscita_id']],
 ];
 /** I motivi del questionario della disiscrizione. Le chiavi restano: i testi si possono cambiare in Impostazioni. */
 const NL_USCITA_MOTIVI = [
@@ -66,6 +67,7 @@ function newsletter_campagne_schema(): void {
     if (function_exists('nd_schema')) nd_schema(); // 2.12.0: design e modello_id nelle campagne, modelli, sezioni salvate
     if (function_exists('nl_ab_schema')) nl_ab_schema(); // 2.13.0: il test A/B (includes/newsletter-ab.php)
     if (function_exists('nl_rep_schema')) nl_rep_schema(); // 2.14.0: orario migliore, eventi ripetuti (includes/newsletter-report.php)
+    if (function_exists('nl_consenso_schema')) nl_consenso_schema(); // 2.16.0: gruppo e pagina di disiscrizione nelle campagne
     $colonne = [
         'nome' => "VARCHAR(150) NOT NULL DEFAULT ''",
         'tipo' => "VARCHAR(8) NOT NULL DEFAULT 'normale'",
@@ -166,8 +168,10 @@ function newsletter_campagna_where(array $c, array &$par): string {
     $rinvio = (int)($c['rinvio_di'] ?? 0);
     if ($rinvio) {
         $par[] = $rinvio; $par[] = $rinvio;
+        // 2.16.0: chi non acconsente al tracciamento non si sa se l'ha aperta: il rinvio non gli arriva (non la riceve due volte).
         return "EXISTS (SELECT 1 FROM $co q WHERE q.iscritto_id = i.id AND q.campagna_id = ? AND q.stato = 'inviata')
-            AND NOT EXISTS (SELECT 1 FROM $ev e WHERE e.iscritto_id = i.id AND e.campagna_id = ? AND e.tipo IN ('apertura', 'clic'))";
+            AND NOT EXISTS (SELECT 1 FROM $ev e WHERE e.iscritto_id = i.id AND e.campagna_id = ? AND e.tipo IN ('apertura', 'clic'))"
+            . (nl_tracciamento_colonna() ? ' AND i.tracciamento = 1' : '') . nl_camp_sql_gruppo($c);
     }
     $liste = array_values(array_intersect(nl_ids((string)($c['liste'] ?? '')), array_map('intval', array_column(newsletter_liste(), 'id'))));
     $segValidi = array_keys(nl_camp_segmenti());
@@ -183,9 +187,11 @@ function newsletter_campagna_where(array $c, array &$par): string {
     if (!empty($c['non_coinvolti'])) {
         $g = newsletter_non_coinvolti_giorni();
         $par[] = $g; $par[] = NL_NON_COINVOLTI_EMAIL; $par[] = $g;
-        $w .= " AND NOT ((SELECT COUNT(*) FROM $co nq WHERE nq.iscritto_id = i.id AND nq.stato = 'inviata' AND nq.inviata_at >= DATE_SUB(NOW(), INTERVAL ? DAY)) >= ?
+        // 2.16.0: senza il consenso al tracciamento aperture e clic non si contano: il contatto non è mai "non coinvolto".
+        $w .= " AND NOT (" . (nl_tracciamento_colonna() ? 'i.tracciamento = 1 AND ' : '') . "(SELECT COUNT(*) FROM $co nq WHERE nq.iscritto_id = i.id AND nq.stato = 'inviata' AND nq.inviata_at >= DATE_SUB(NOW(), INTERVAL ? DAY)) >= ?
             AND NOT EXISTS (SELECT 1 FROM $ev ne WHERE ne.iscritto_id = i.id AND ne.tipo IN ('apertura', 'clic') AND ne.creato >= DATE_SUB(NOW(), INTERVAL ? DAY)))";
     }
+    $w .= nl_camp_sql_gruppo($c); // 2.16.0: il gruppo di consenso della campagna
     $padre = (int)($c['padre_id'] ?? 0);
     if ($padre) {
         $par[] = $padre; $par[] = $padre; $par[] = (int)($c['id'] ?? 0);
@@ -193,6 +199,19 @@ function newsletter_campagna_where(array $c, array &$par): string {
             AND NOT EXISTS (SELECT 1 FROM $co sq JOIN " . tbl('newsletter_campagne') . " sc ON sc.id = sq.campagna_id WHERE sq.iscritto_id = i.id AND sc.padre_id = ? AND sc.id <> ?)";
     }
     return $w;
+}
+
+/** 2.16.0: la colonna tracciamento c'è (dalla 2.8.0: sempre, dopo la migrazione dei contatti). */
+function nl_tracciamento_colonna(): bool {
+    static $c = null;
+    return $c ??= in_array('tracciamento', db()->query('SHOW COLUMNS FROM ' . tbl('newsletter_iscritti'))->fetchAll(PDO::FETCH_COLUMN), true);
+}
+
+/** 2.16.0: con i gruppi di consenso accesi, la campagna va solo a chi è nel suo gruppo. */
+function nl_camp_sql_gruppo(array $c): string {
+    if (!function_exists('nl_gruppi_attivi') || !nl_gruppi_attivi() || !(int)($c['gruppo_id'] ?? 0)) return '';
+    $s = nl_sql_gruppo((int)$c['gruppo_id']);
+    return $s !== '' ? " AND $s" : '';
 }
 
 /** Dopo quanti giorni senza aperture né clic un contatto è "non coinvolto" (Impostazioni della newsletter, 90 di partenza). */
@@ -270,6 +289,11 @@ function newsletter_campagna_sezioni(array $c): array {
     $vuota = newsletter_campagna_where($c, $par) === '';
     $n = $vuota ? 0 : newsletter_campagna_conta($c);
     $out['destinatari'] = ['ok' => !$vuota && $n > 0, 'n' => $n, 'manca' => $vuota ? 'Scegli almeno una lista o un segmento a cui mandarla.' : ($n === 0 ? 'Con queste scelte la campagna non arriva a nessun contatto iscritto: cambia liste, segmenti o esclusioni.' : '')];
+    // 2.16.0: con i gruppi di consenso accesi la campagna ne sceglie uno (come Brevo).
+    if (function_exists('nl_gruppi_attivi') && nl_gruppi_attivi() && !(int)($c['rinvio_di'] ?? 0) && !nl_gruppo((int)($c['gruppo_id'] ?? 0))) {
+        $out['destinatari']['ok'] = false;
+        $out['destinatari']['manca'] = 'Scegli il gruppo di consenso della campagna (Destinatari): i gruppi sono accesi in Pagine e consenso.';
+    }
     $okOgg = trim((string)$c['oggetto']) !== '';
     $out['oggetto'] = ['ok' => $okOgg, 'manca' => $okOgg ? '' : "Scrivi l'oggetto dell'email."];
     [$okDes, $mancaDes] = nl_camp_design_stato($c);
@@ -319,6 +343,8 @@ function newsletter_campagna_salva_sezione(int $id, string $sez, array $p): stri
             $set['escludi_liste'] = nl_ids_scelti($p['escludi_liste'] ?? [], $liste);
             $set['escludi_segmenti'] = nl_ids_scelti($p['escludi_segmenti'] ?? [], $seg);
             $set['non_coinvolti'] = empty($p['non_coinvolti']) ? 0 : 1;
+            // 2.16.0: il gruppo di consenso, solo fra quelli che ci sono.
+            if (array_key_exists('gruppo_id', $p) && function_exists('nl_gruppi')) $set['gruppo_id'] = isset(nl_gruppi()[(int)$p['gruppo_id']]) ? (int)$p['gruppo_id'] : 0;
             break;
         case 'oggetto':
             $set['oggetto'] = newsletter_4byte_dentro(mb_substr(trim(str_replace(["\r", "\n"], ' ', (string)($p['oggetto'] ?? ''))), 0, 200));
@@ -358,6 +384,8 @@ function newsletter_campagna_salva_sezione(int $id, string $sez, array $p): stri
             $set['utm_campagna'] = mb_substr(preg_replace('/[^a-z0-9_-]+/', '-', mb_strtolower(trim((string)($p['utm_campagna'] ?? '')))), 0, 100);
             $set['link_web'] = empty($p['link_web']) ? 0 : 1;
             $set['link_preferenze'] = empty($p['link_preferenze']) ? 0 : 1;
+            // 2.16.0: la pagina di disiscrizione (0 = la predefinita), solo fra quelle che ci sono.
+            if (array_key_exists('pagina_uscita_id', $p) && function_exists('nl_pagine_uscita')) $set['pagina_uscita_id'] = isset(nl_pagine_uscita()[(int)$p['pagina_uscita_id']]) ? (int)$p['pagina_uscita_id'] : 0;
             $lotti = empty($p['lotti_attivi']) || $c['tipo'] === 'ab' ? 1 : (int)($p['lotti'] ?? 1); // niente lotti nel test A/B
             if ($lotti < 1 || $lotti > NL_LOTTI_MAX) return 'I lotti vanno da 2 a ' . NL_LOTTI_MAX . '.';
             $int = (int)($p['lotti_intervallo'] ?? 0);
@@ -637,7 +665,7 @@ function newsletter_pagine_testi(): array {
     $base = newsletter_pagine_partenza();
     $out = [];
     foreach ($base as $k => $v) {
-        if ($k === 'questionario') { $out[$k] = array_key_exists($k, $s) ? (bool)$s[$k] : true; continue; }
+        if ($k === 'questionario' || $k === 'solo_lista') { $out[$k] = array_key_exists($k, $s) ? (bool)$s[$k] : true; continue; }
         if ($k === 'attributi') { $out[$k] = isset($s[$k]) && is_array($s[$k]) ? array_values(array_filter($s[$k], 'is_string')) : $v; continue; }
         if ($k === 'motivi') { $m = is_array($s[$k] ?? null) ? $s[$k] : []; foreach ($v as $mk => $mv) $out[$k][$mk] = trim((string)($m[$mk] ?? '')) !== '' ? (string)$m[$mk] : $mv; continue; }
         $out[$k] = trim((string)($s[$k] ?? '')) !== '' ? (string)$s[$k] : $v;
@@ -652,6 +680,7 @@ function newsletter_pagine_partenza(): array {
         'fatto_titolo' => 'Fatto. Sei fuori.',
         'fatto_testo' => "L'indirizzo {email} non riceverà più la newsletter.\nSe cambi idea, ti iscrivi di nuovo dalla pagina della newsletter.",
         'questionario' => true,
+        'solo_lista' => true, // 2.16.0: "Esci solo da questa lista" (newsletter_liste_uscite)
         'questionario_titolo' => 'Ci dici perché?',
         'grazie_testo' => 'Grazie: la tua risposta ci aiuta a scrivere email migliori.',
         'pref_titolo' => 'Le tue preferenze',
@@ -750,10 +779,22 @@ function newsletter_pagina_esci(array $q, array $post, bool $isPost): string {
     if (!$c) return nl_pag('Link non valido.', '<p>Per uscire dalla newsletter usa il link in fondo a una delle email che hai ricevuto.</p>');
     $id = (int)$c['id'];
     [$camp, $flusso] = newsletter_uscita_traccia($id, $q);
+    // 2.16.0: la pagina scelta nella campagna (Impostazioni aggiuntive); senza campagna firmata, la predefinita.
+    if ($camp && function_exists('nl_pagina_uscita_testi')) $tx = nl_pagina_uscita_testi(nl_pagina_uscita_di_campagna($camp));
     $resto = '';
     foreach (['c', 'f', 'p', 'k'] as $x) if (isset($q[$x]) && is_string($q[$x]) && preg_match('/^[a-f0-9]{1,24}$/', $q[$x])) $resto .= "&$x=" . $q[$x];
     $azione = NEWSLETTER_ESCI . '?i=' . $id . '&t=' . $t . $resto;
     $grazie = '';
+    // 2.16.0: le liste della campagna da cui si può uscire una per una (resta iscritto al resto).
+    $soloListe = $camp && !empty($tx['solo_lista']) && function_exists('nl_liste_campagna_contatto') && $c['stato'] === 'attivo' ? nl_liste_campagna_contatto($camp, $id) : [];
+    if ($isPost && ($post['azione'] ?? '') === 'lista') {
+        $l = is_string($post['lista'] ?? null) && ctype_digit($post['lista']) ? (int)$post['lista'] : 0;
+        if (!isset($soloListe[$l])) return nl_pag($tx['uscita_titolo'], '<p role="alert">Questa lista non è fra quelle dell\'email da cui arrivi. Scegli una delle liste qui sotto, oppure esci da tutto.</p>', '<p><a class="btn btn-viola" href="' . h($azione) . '">Torna indietro</a></p>');
+        nl_esci_da_lista($id, $l);
+        $rimaste = array_diff_key($soloListe, [$l => true]);
+        return nl_pag('Fatto: niente più «' . $soloListe[$l] . '».', '<p role="status">L\'indirizzo ' . h((string)$c['email']) . ' non riceve più le email della lista «' . h($soloListe[$l]) . '». Resta iscritto al resto' . ($rimaste ? ', anche a «' . h(implode('», «', $rimaste)) . '»' : '') . '.</p>',
+            '<form method="post" action="' . h($azione) . '"><p>Non vuoi più nessuna email?</p><button class="btn btn-filo" type="submit">Esci da tutta la newsletter</button></form>');
+    }
     if ($isPost && isset($post['motivo'])) {
         // Il questionario, dopo l'uscita.
         $m = is_string($post['motivo']) ? $post['motivo'] : '';
@@ -766,8 +807,14 @@ function newsletter_pagina_esci(array $q, array $post, bool $isPost): string {
     }
     $pref = '<p><a href="' . h(newsletter_link_preferenze($id)) . '">Preferisci scegliere cosa ricevere? Apri le tue preferenze</a></p>';
     if (!in_array($c['stato'], ['uscito', 'spam'], true)) {
+        $una = '';
+        foreach ($soloListe as $lid => $lnome) {
+            $una .= '<form method="post" action="' . h($azione) . '" class="nl-solo-lista"><input type="hidden" name="azione" value="lista"><input type="hidden" name="lista" value="' . (int)$lid . '">'
+                . '<button class="btn btn-filo" type="submit">Esci solo da «' . h($lnome) . '»</button></form>';
+        }
+        if ($una !== '') $una = '<p>Oppure smetti di ricevere una lista sola, e resta iscritto al resto:</p>' . $una;
         return nl_pag($tx['uscita_titolo'], nl_pag_testo($tx['uscita_testo'], $c),
-            '<form method="post" action="' . h($azione) . '"><button class="btn btn-viola" type="submit">Sì, toglimi dall&#039;elenco</button></form>' . (newsletter_liste_pubbliche() ? $pref : ''));
+            '<form method="post" action="' . h($azione) . '"><button class="btn btn-viola" type="submit">Sì, toglimi dall&#039;elenco</button></form>' . $una . (newsletter_liste_pubbliche() ? $pref : ''));
     }
     $corpo = nl_pag_testo($tx['fatto_testo'], $c) . $grazie;
     $dopo = '<p><a class="btn btn-filo" href="' . h(NEWSLETTER_PAGINA) . '">Pagina della newsletter</a></p>';
@@ -800,10 +847,16 @@ function newsletter_pagina_preferenze(array $q, array $post, bool $isPost): arra
     }
     $azione = NEWSLETTER_PREFERENZE . '?i=' . $id . '&t=' . $t;
     $msg = '';
+    $gruppiOn = function_exists('nl_gruppi_attivi') && nl_gruppi_attivi() && nl_gruppi();
     $liste = newsletter_liste_pubbliche();
     $attr = newsletter_preferenze_attributi();
     if ($isPost) {
         $cosa = is_string($post['azione'] ?? null) ? $post['azione'] : '';
+        if ($cosa === 'esci_gruppi' && $c['stato'] === 'attivo' && $gruppiOn) {
+            // 2.16.0: "Esci da tutti i gruppi" non è la disiscrizione: resta iscritto, ma fuori da ogni gruppo di consenso.
+            foreach (nl_gruppi() as $gid => $g) nl_contatto_gruppo_imposta($id, $gid, false);
+            $msg = 'Sei uscito da tutti i gruppi: resti iscritto, ma non ricevi le email legate ai gruppi.';
+        }
         if ($cosa === 'esci' && $c['stato'] === 'attivo') {
             newsletter_esci($id);
             return [303, '', newsletter_link_uscita($id)];
@@ -818,6 +871,14 @@ function newsletter_pagina_preferenze(array $q, array $post, bool $isPost): arra
             if ($dati) newsletter_valori_salva($id, $dati);
             $voglio = array_map('intval', is_array($post['liste'] ?? null) ? $post['liste'] : []);
             foreach ($liste as $l) newsletter_preferenze_lista($id, (int)$l['id'], in_array((int)$l['id'], $voglio, true));
+            // 2.16.0: i gruppi di consenso (se accesi) e il consenso al tracciamento.
+            if (!empty($post['nlp_consenso']) && function_exists('nl_gruppi')) {
+                if ($gruppiOn) {
+                    $gv = array_map('intval', is_array($post['gruppi'] ?? null) ? $post['gruppi'] : []);
+                    foreach (nl_gruppi() as $gid => $g) nl_contatto_gruppo_imposta($id, $gid, in_array($gid, $gv, true));
+                }
+                nl_tracciamento_imposta($id, !empty($post['tracciamento']));
+            }
             $msg = 'Preferenze salvate.';
             $c = newsletter_contatto($id) ?: $c;
         }
@@ -847,11 +908,26 @@ function newsletter_pagina_preferenze(array $q, array $post, bool $isPost): arra
         $scelte .= '<label class="spunta form-largo"><input type="checkbox" name="liste[]" value="' . (int)$l['id'] . '"' . ($si ? ' checked' : '') . '> <span><b>' . h(newsletter_4byte_fuori((string)$l['nome'])) . '</b>'
             . ((string)$l['descrizione'] !== '' ? '<br><small>' . h(newsletter_4byte_fuori((string)$l['descrizione'])) . '</small>' : '') . '</span></label>';
     }
+    // 2.16.0: i gruppi di consenso e il consenso al tracciamento.
+    $consenso = '';
+    if (function_exists('nl_gruppi')) {
+        if ($gruppiOn) {
+            $mieG = nl_contatto_gruppi($id);
+            foreach (nl_gruppi() as $gid => $g) {
+                $consenso .= '<label class="spunta form-largo"><input type="checkbox" name="gruppi[]" value="' . (int)$gid . '"' . (!empty($mieG[$gid]) ? ' checked' : '') . '> <span><b>' . h($g['nome']) . '</b>'
+                    . ($g['descrizione'] !== '' ? '<br><small>' . h($g['descrizione']) . '</small>' : '') . '</span></label>';
+            }
+        }
+        $consenso .= '<label class="spunta form-largo"><input type="checkbox" name="tracciamento" value="1"' . (nl_tracciamento_ok($id) ? ' checked' : '') . '> <span><b>Sapere se apro le email e clicco i link</b><br><small>Se togli la spunta, le email che ricevi non contano più aperture e clic.</small></span></label>';
+        $consenso = '<input type="hidden" name="nlp_consenso" value="1"><h2>' . ($gruppiOn ? 'I tuoi consensi' : 'Statistiche delle email') . '</h2><div class="modulo-campi">' . $consenso . '</div>';
+    }
     $corpo = $avviso . nl_pag_testo($tx['pref_testo'], $c);
     $esci = '<section class="modulo" aria-label="Le tue preferenze"><form method="post" action="' . h($azione) . '" class="nl-preferenze"><input type="hidden" name="azione" value="salva">'
         . ($campi !== '' ? '<h2>I tuoi dati</h2><div class="modulo-campi">' . $campi . '</div>' : '')
         . ($scelte !== '' ? '<h2>Cosa vuoi ricevere</h2><div class="modulo-campi">' . $scelte . '</div>' : '')
+        . $consenso
         . '<button class="btn btn-viola" type="submit">Salva le preferenze</button></form></section>'
+        . ($gruppiOn ? '<form method="post" action="' . h($azione) . '"><input type="hidden" name="azione" value="esci_gruppi"><p>Non vuoi più le email dei gruppi, ma restare iscritto?</p><button class="btn btn-filo" type="submit">Esci da tutti i gruppi</button></form>' : '')
         . '<form method="post" action="' . h($azione) . '"><input type="hidden" name="azione" value="esci">'
         . '<p>Non vuoi più nessuna email da noi?</p><button class="btn btn-filo" type="submit">Esci da tutte le email</button></form>';
     return [200, nl_pag($tx['pref_titolo'], $corpo, $esci), ''];
