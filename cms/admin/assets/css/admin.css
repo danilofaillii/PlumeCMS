@@ -807,3 +807,25 @@ details.nlx-riquadro > summary:focus-visible { outline: 2px solid var(--coral); 
 .nlv-viste a { padding: .45rem .8rem; border-radius: 999px; font-size: .86rem; color: var(--text); text-decoration: none; border: 1px solid var(--border); min-height: 36px; display: inline-flex; align-items: center; overflow-wrap: anywhere; }
 .nlv-viste a.attiva { border-color: var(--coral); box-shadow: inset 0 0 0 1px var(--coral); font-weight: 700; }
 .nlv-viste a:focus-visible { outline: 2px solid var(--coral); outline-offset: 2px; }
+
+/* 2.18.0, richiesta di Danilo: il menu del pannello "leggibilissimo anche cambiando aspetto; ora è fiacco e poco identificabile".
+   Solo le variabili dell'aspetto (aspetti.css), così vale per Aria, Bottega, Cosmo e Lavagna:
+   - voci principali piene (--sidebar-testo, peso 600) con l'icona nel colore d'accento dell'aspetto (--logo-accento);
+   - il gruppo aperto ha il fondo e una riga d'accento a sinistra, così si vede dove si è;
+   - le sotto-voci nel colore pieno del testo (prima --sidebar-testo-2, grigio), appese a una linea che le lega al gruppo;
+   - la sotto-voce attiva è una pillola piena nel colore attivo, come le voci principali attive. */
+.admin-nav { gap: 3px; }
+.admin-nav > a, .nav-gruppo summary { font-size: .95rem; font-weight: 600; color: var(--sidebar-testo); letter-spacing: .005em; }
+.admin-nav > a .nav-icon, .nav-gruppo summary .nav-icon { color: var(--logo-accento); opacity: 1; }
+.admin-nav > a .nav-icon svg, .nav-gruppo summary .nav-icon svg { stroke-width: 2.1; }
+.admin-nav > a.active .nav-icon { color: inherit; }
+.admin-nav > a:hover, .nav-gruppo summary:hover { background: var(--sidebar-hover); color: var(--sidebar-testo); }
+.nav-gruppo[open] > summary { background: var(--sidebar-hover); box-shadow: inset 3px 0 0 var(--logo-accento); }
+.nav-gruppo summary.active > a, .nav-gruppo summary.active { color: var(--sidebar-testo); }
+.nav-gruppo summary.active { box-shadow: inset 3px 0 0 var(--sidebar-attivo); }
+.nav-freccia { color: var(--sidebar-testo); }
+.nav-sotto { margin: 4px 0 8px 1.55rem; padding: 2px 0 2px .65rem; border-left: 2px solid var(--sidebar-bordo); gap: 2px; }
+.admin-nav .nav-sotto a { color: var(--sidebar-testo); font-weight: 500; font-size: .88rem !important; padding: .45rem .7rem !important; }
+.admin-nav .nav-sotto a:hover { background: var(--sidebar-hover); color: var(--sidebar-testo); }
+.admin-nav .nav-sotto a.active { background: var(--sidebar-attivo); color: var(--sidebar-su-attivo); font-weight: 700; box-shadow: none; }
+.admin-nav .nav-gruppo summary > a { font-size: .95rem; font-weight: 600; color: inherit; }
