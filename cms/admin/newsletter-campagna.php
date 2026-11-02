@@ -11,9 +11,12 @@ require_once __DIR__ . '/includes/admin-functions.php';
 require_once __DIR__ . '/../includes/newsletter.php';
 require_once __DIR__ . '/../includes/newsletter-importa.php'; // 2.9.0: la lista dei test
 require_once __DIR__ . '/../includes/newsletter-campagne.php'; // 2.11.0
+require_once __DIR__ . '/../includes/newsletter-design.php'; // 2.12.0: editor a blocchi e modelli
 require_admin(); // sicurezza (ruoli): solo amministratore
 newsletter_schema();
 newsletter_campagne_schema();
+nd_schema();
+$STRADE = ['blocchi' => 'Editor a blocchi', 'semplice' => 'Editor semplice', 'html' => 'Codice HTML'];
 
 $id = (int)($_GET['id'] ?? 0);
 $c = newsletter_campagna($id);
@@ -33,7 +36,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             if ($e !== '') { flash('error', $e); $vai = '&apri=' . $sez . '#sez-' . $sez; break; }
             flash('success', $sez === 'nome' ? 'Nome della campagna salvato.' : ($SEZIONI[$sez] . ': salvato.'));
             $vai = $sez === 'nome' ? '' : '#sez-' . $sez;
-            if ($sez === 'design' && isset($_POST['cambia_editor'])) $vai = '&apri=design#sez-design';
+            if ($sez === 'design' && isset($_POST['cambia_editor'])) {
+                // 2.12.0: scegliendo l'editor a blocchi si apre subito l'editor.
+                if (($_POST['editor'] ?? '') === 'blocchi') { header('Location: newsletter-design.php?campagna=' . $id); exit; }
+                $vai = '&apri=design#sez-design';
+            }
+            break;
+        case 'usa_modello':
+            $m = nd_modello((int)($_POST['modello_id'] ?? 0));
+            $e = $m && (int)$m['attivo'] ? nd_campagna_da_modello($id, $m) : 'Scegli un modello attivo.';
+            if ($e !== '') { flash('error', $e); $vai = '&apri=design#sez-design'; break; }
+            flash('success', 'Design preso dal modello «' . newsletter_4byte_fuori((string)$m['nome']) . '».');
+            if ($m['editor'] === 'blocchi') { header('Location: newsletter-design.php?campagna=' . $id); exit; }
+            $vai = '&apri=design#sez-design';
             break;
         case 'prova':
             // 2.9.0: la prova va ai contatti spuntati della lista dei test, ognuno con i suoi dati (senza tracciamento: le
@@ -117,6 +132,8 @@ $mittentiScelta = consegna_mittenti_scelta();
 $nomeC = newsletter_4byte_fuori((string)($c['nome'] !== '' ? $c['nome'] : $c['oggetto'])) ?: 'Campagna senza nome';
 $madre = (int)$c['rinvio_di'] ? newsletter_campagna((int)$c['rinvio_di']) : ((int)$c['padre_id'] ? newsletter_campagna((int)$c['padre_id']) : null);
 $dis = $modificabile ? '' : ' disabled';
+$modelliAttivi = nd_modelli(true);
+$modelloUsato = (int)($c['modello_id'] ?? 0) ? nd_modello((int)$c['modello_id']) : null;
 $adminTitle = 'Campagna: ' . $nomeC;
 
 /** L'intestazione di una sezione: titolo, segno di fatto o da completare, riassunto. */
@@ -167,6 +184,14 @@ require_once __DIR__ . '/includes/admin-header.php';
 .nlr-quando label{display:flex;gap:.45rem;align-items:center;min-height:36px;font-weight:400}
 .nlr-testo{font-family:var(--font-mono,monospace);font-size:.85rem;min-height:12rem}
 .nlr-codice{font-family:var(--font-mono,monospace);font-size:.82rem;min-height:22rem}
+.nd-strade-titolo{margin:0 0 .5rem;font-size:.95rem}
+.nd-strade{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,200px),1fr));gap:.6rem;margin:0 0 .6rem}
+.nd-strada{display:flex;flex-direction:column;gap:.35rem;align-items:flex-start;border:1px solid var(--bordo-campo);border-radius:10px;padding:.7rem .8rem;margin:0;min-width:0}
+.nd-strada>span:not(.nd-uso){font-size:.86rem;color:var(--text-muted)}
+.nd-strada select{width:100%}
+.nd-strada .btn{margin-top:auto}
+.nd-in-uso{border:2px solid var(--coral);background:var(--coral-light)}
+.nd-uso{display:inline-block;font-size:.75rem;font-weight:700;padding:.05rem .5rem;border-radius:999px;background:var(--coral);color:var(--su-accento)}
 </style>
 
 <p><a href="newsletter.php">&larr; Tutte le campagne</a></p>
@@ -275,19 +300,39 @@ require_once __DIR__ . '/includes/admin-header.php';
 </details>
 
 <details class="form-card nlx-riquadro nlr-sez" id="sez-design"<?= $aperta('design') ?>>
-  <?= $testa('design', 'Design', $c['editor'] === 'html' ? 'Codice HTML' : 'Editor semplice') ?>
-  <?php if ($modificabile): ?>
-  <form method="post" class="nl-riga" style="gap:.6rem;align-items:center;margin-bottom:1rem"><?= csrf_field() ?><input type="hidden" name="azione" value="sezione"><input type="hidden" name="sez" value="design"><input type="hidden" name="cambia_editor" value="1">
-    <fieldset class="nlk-scelte" style="margin:0"><legend>Come scrivi l'email</legend>
-      <label><input type="radio" name="editor" value="semplice" <?= $c['editor'] !== 'html' ? 'checked' : '' ?>> Editor semplice: testo, titoli, immagini, link e un pulsante</label>
-      <label><input type="radio" name="editor" value="html" <?= $c['editor'] === 'html' ? 'checked' : '' ?>> Codice HTML: incolli un'email già fatta</label>
-    </fieldset>
-    <button class="btn btn-secondary btn-sm" type="submit">Usa questo editor</button>
-  </form>
+  <?= $testa('design', 'Design', ($STRADE[$c['editor']] ?? 'Editor semplice') . ($modelloUsato ? ' (dal modello «' . newsletter_4byte_fuori((string)$modelloUsato['nome']) . '»)' : '')) ?>
+  <?php if ($modificabile): /* 2.12.0: le cinque strade per il design */ ?>
+  <h4 class="nd-strade-titolo">Come fai il design</h4>
+  <div class="nd-strade">
+    <form method="post" class="nd-strada<?= $c['editor'] === 'blocchi' ? ' nd-in-uso' : '' ?>"><?= csrf_field() ?><input type="hidden" name="azione" value="sezione"><input type="hidden" name="sez" value="design"><input type="hidden" name="cambia_editor" value="1"><input type="hidden" name="editor" value="blocchi">
+      <b>Editor a blocchi</b><?= $c['editor'] === 'blocchi' ? ' <span class="nd-uso">In uso</span>' : '' ?><span>Sezioni a colonne, titoli, immagini, pulsanti, social e video: trascini e componi.</span>
+      <?php if ($c['editor'] === 'blocchi'): ?><a class="btn btn-primary btn-sm" href="newsletter-design.php?campagna=<?= $id ?>">Apri l'editor a blocchi</a><?php else: ?><button class="btn btn-secondary btn-sm" type="submit">Usa l'editor a blocchi</button><?php endif; ?>
+    </form>
+    <form method="post" class="nd-strada"<?= $modelliAttivi ? ' data-conferma="Il design di adesso viene sostituito da quello del modello. Continuare?" data-conferma-ok="Usa il modello"' : '' ?>><?= csrf_field() ?><input type="hidden" name="azione" value="usa_modello">
+      <b>Un tuo modello</b><span>Il design di un modello salvato (solo i modelli attivi).</span>
+      <?php if ($modelliAttivi): ?>
+      <label class="sr-solo" for="nd-modello">Modello</label><select id="nd-modello" name="modello_id"><?php foreach ($modelliAttivi as $m): ?><option value="<?= (int)$m['id'] ?>"><?= h(newsletter_4byte_fuori((string)$m['nome'])) ?></option><?php endforeach; ?></select>
+      <button class="btn btn-secondary btn-sm" type="submit">Usa questo modello</button>
+      <?php else: ?><span class="hint">Ancora nessun modello attivo: salvane uno dall'editor a blocchi, o attivalo in <a href="newsletter-modelli.php">Modelli</a>.</span><?php endif; ?>
+    </form>
+    <div class="nd-strada"><b>La galleria</b><span>Modelli pronti: benvenuto, newsletter del mese, offerta, evento, nuovo articolo e altri.</span>
+      <a class="btn btn-secondary btn-sm" href="newsletter-modelli.php?scheda=galleria&amp;campagna=<?= $id ?>">Scegli nella galleria</a></div>
+    <form method="post" class="nd-strada<?= $c['editor'] === 'semplice' ? ' nd-in-uso' : '' ?>"><?= csrf_field() ?><input type="hidden" name="azione" value="sezione"><input type="hidden" name="sez" value="design"><input type="hidden" name="cambia_editor" value="1"><input type="hidden" name="editor" value="semplice">
+      <b>Editor semplice</b><?= $c['editor'] === 'semplice' ? ' <span class="nd-uso">In uso</span>' : '' ?><span>Testo, titoli, immagini, link e un pulsante, come in una lettera.</span>
+      <?php if ($c['editor'] !== 'semplice'): ?><button class="btn btn-secondary btn-sm" type="submit">Usa l'editor semplice</button><?php endif; ?>
+    </form>
+    <form method="post" class="nd-strada<?= $c['editor'] === 'html' ? ' nd-in-uso' : '' ?>"><?= csrf_field() ?><input type="hidden" name="azione" value="sezione"><input type="hidden" name="sez" value="design"><input type="hidden" name="cambia_editor" value="1"><input type="hidden" name="editor" value="html">
+      <b>Codice HTML</b><?= $c['editor'] === 'html' ? ' <span class="nd-uso">In uso</span>' : '' ?><span>Incolli un'email già fatta.</span>
+      <?php if ($c['editor'] !== 'html'): ?><button class="btn btn-secondary btn-sm" type="submit">Usa il codice HTML</button><?php endif; ?>
+    </form>
+  </div>
+  <p class="hint">Cambiando strada non perdi niente: il design di ogni editor resta salvato e lo ritrovi se torni indietro.</p>
   <?php endif; ?>
-  <form method="post" id="nl-form"><?= csrf_field() ?><input type="hidden" name="azione" value="sezione"><input type="hidden" name="sez" value="design"><input type="hidden" name="editor" value="<?= h($c['editor'] === 'html' ? 'html' : 'semplice') ?>">
+  <form method="post" id="nl-form"><?= csrf_field() ?><input type="hidden" name="azione" value="sezione"><input type="hidden" name="sez" value="design"><input type="hidden" name="editor" value="<?= h(isset($STRADE[$c['editor']]) ? $c['editor'] : 'semplice') ?>">
     <fieldset style="border:0;padding:0;margin:0;min-width:0"<?= $dis ?>>
-    <?php if ($c['editor'] === 'html'): ?>
+    <?php if ($c['editor'] === 'blocchi'): ?>
+    <p>L'email è fatta con l'editor a blocchi: la vedi in <a href="#sez-prova">Anteprima e prova</a>. <?= $modificabile ? 'Per cambiarla, «Apri l\'editor a blocchi» qui sopra: le modifiche si salvano da sole.' : '<a href="newsletter-design.php?campagna=' . $id . '">Guarda il design nell\'editor</a>.' ?></p>
+    <?php elseif ($c['editor'] === 'html'): ?>
     <div class="form-group"><label for="nlr-html">Il codice HTML dell'email</label>
       <textarea id="nlr-html" name="html" class="nlr-codice" spellcheck="false" aria-describedby="nlr-html-aiuto"><?= h(newsletter_4byte_fuori((string)$c['html'])) ?></textarea>
       <div class="hint" id="nlr-html-aiuto">Metti <code>{{ unsubscribe }}</code> dove vuoi il link per uscire (se manca, lo aggiungiamo noi in fondo), <code>{{ update_profile }}</code> per le preferenze e <code>{{ mirror }}</code> per la versione web. Valgono i segnaposti come <code>{{ contact.NOME }}</code>. Gli script si tolgono: nessun programma di posta li esegue.</div></div>
@@ -410,7 +455,7 @@ require_once __DIR__ . '/includes/admin-header.php';
   });
 })();
 </script>
-<?php if ($c['editor'] !== 'html'): ?>
+<?php if ($c['editor'] === 'semplice'): ?>
 <script src="<?= pannello_file('assets/quill/quill.js') ?>"></script>
 <script<?= nonce_attr() ?>>
 (function () {

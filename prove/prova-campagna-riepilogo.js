@@ -321,8 +321,8 @@ const href = (html, re) => { const m = html.match(new RegExp('href="([^"]*' + re
   await p.locator('#editor .ql-editor').click(); await p.keyboard.type('Testo di partenza per il codice.');
   await invia('#nl-form button[type=submit]');
   await vai(`newsletter-campagna.php?id=${c7}&apri=design`);
-  await p.check('#sez-design input[name=editor][value=html]');
-  await invia('#sez-design form:has(input[name=cambia_editor]) button');
+  // 2.12.0: le cinque strade del design sono riquadri con il loro pulsante (prima: una scelta e "Usa questo editor").
+  await invia('#sez-design form.nd-strada:has(input[name=editor][value=html]) button');
   const partenza = await p.inputValue('#nlr-html');
   ok('passando al codice HTML si parte dall\'email dell\'editor semplice, con {{ unsubscribe }}', /Testo di partenza per il codice/.test(partenza) && /\{\{ unsubscribe \}\}/.test(partenza) && /<!DOCTYPE html>/.test(partenza));
   await p.fill('#nlr-html', '<html><body><h1>Ciao {{ contact.NOME | default:"amico" }}</h1><script>alert(1)</script><p><a href="{{ mirror }}">Web</a></p></body></html>');

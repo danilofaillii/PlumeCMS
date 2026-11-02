@@ -1,0 +1,84 @@
+/* L'editor delle email a blocchi (2.12.0): sopra editor.css, con le variabili degli aspetti del pannello.
+   La tela mostra l'email con i suoi colori (quelli dello stile dell'email, non del pannello). */
+.nd-app [hidden]{display:none!important}
+.nd-app .admin-salta:not(:focus){position:absolute;left:-9999px}
+.nd-titoletto{margin:16px 0 8px;font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--ed-muto)}
+.nd-titoletto:first-of-type{margin-top:4px}
+.nd-griglia-sezioni{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
+.nd-griglia-sezioni .ed-widget-voce{padding:10px 6px}
+.nd-schema{display:flex;gap:3px;width:70%;height:22px}
+.nd-schema b{display:block;background:var(--bordo-forte);border-radius:3px;flex:1 1 0}
+.ed-widget-voce:hover .nd-schema b,.ed-widget-voce:focus-visible .nd-schema b{background:var(--ed-primo)}
+.nd-avviso{margin:0;padding:10px 14px;background:var(--attenzione-chiaro);color:var(--attenzione-testo);border-bottom:1px solid var(--attenzione-bordo)}
+.nd-cornice{display:block;padding:0;background:var(--tela-fondo)}
+.nd-fondo{min-height:100%;padding:24px 12px 60px;display:flex;justify-content:center;align-items:flex-start}
+.nd-tela{max-width:100%;box-shadow:var(--ombra-grande);transition:width .2s;overflow:visible;position:relative}
+.nd-tela:focus{outline:none}
+.nd-s{position:relative;outline:1px dashed transparent;outline-offset:-1px}
+.nd-s:hover,.nd-s:focus-within{outline-color:var(--bordo-forte)}
+.nd-s.nd-sel{outline:2px solid var(--ed-primo);outline-offset:-2px}
+.nd-s.nd-nascosta>.nd-righe{opacity:.35}
+.nd-righe{display:flex;gap:16px}
+.nd-tel .nd-righe:not(.nd-affianca){flex-direction:column;gap:0}
+.nd-c{flex:1 1 0;min-width:0;min-height:40px}
+.nd-b{position:relative;cursor:pointer;outline:1px dashed transparent;outline-offset:2px;border-radius:2px}
+.nd-b:hover{outline-color:var(--bordo-forte)}
+.nd-b:focus-visible,.nd-b.nd-sel{outline:2px solid var(--ed-primo)}
+.nd-b-dentro{min-height:8px}
+.nd-b-dentro img{vertical-align:top}
+.nd-testo p,.nd-testo ul,.nd-testo ol{margin:0 0 12px}.nd-testo>:last-child{margin-bottom:0}
+.nd-testo ul,.nd-testo ol{padding-left:24px}
+.nd-indirizzo{margin:8px 0 0;white-space:pre-line}
+.nd-segnaposto{opacity:.5}
+.nd-spaziatore{background:repeating-linear-gradient(45deg,transparent 0 6px,rgba(127,127,127,.12) 6px 12px)}
+.nd-vuoto{padding:22px 14px;border:2px dashed var(--bordo-forte);border-radius:8px;color:#4b5563 /* fisso: sulla tela bianca dell'email */;background:#f3f4f6 /* fisso */;font:13px/1.4 var(--ed-font);text-align:center}
+.nd-nota{margin:6px 0 0;font:12px var(--ed-font);color:#b42318 /* fisso: sulla tela bianca dell'email */}
+.nd-colonna-vuota{margin:0;padding:14px 8px;border:2px dashed #c7cad1 /* fisso */;border-radius:8px;color:#4b5563 /* fisso */;font:13px var(--ed-font);text-align:center}
+.nd-tutta-vuota{margin:24px}
+.nd-strumenti{position:absolute;z-index:4;top:-14px;right:4px;display:none;align-items:center;gap:2px;padding:2px 4px;border-radius:7px;background:var(--ed-primo);color:var(--ed-su-primo);font:12px var(--ed-font);box-shadow:var(--ombra-grande)}
+.nd-strumenti-s{top:4px;left:4px;right:auto}
+.nd-b:hover>.nd-strumenti,.nd-b:focus-within>.nd-strumenti,.nd-b.nd-sel>.nd-strumenti,.nd-s:hover>.nd-strumenti,.nd-s.nd-sel>.nd-strumenti,.nd-s:focus-within>.nd-strumenti-s{display:flex}
+.nd-strumenti-nome{padding:0 6px 0 2px;font-weight:600;white-space:nowrap}
+.nd-maniglia{cursor:grab;padding:0 4px}
+.nd-azione{border:0;background:transparent;color:inherit;width:26px;height:24px;border-radius:5px;cursor:pointer;font-size:13px;line-height:1}
+.nd-azione:hover{background:rgba(0,0,0,.18)}
+.nd-app .nd-azione:focus-visible{outline:2px solid var(--ed-su-primo);outline-offset:-2px}
+.sortable-ghost{opacity:.4}
+.nd-c .ed-widget-voce,.nd-sezioni>.ed-widget-voce,.nd-sezioni>.nd-salvato{margin:6px 0;padding:10px;border:2px dashed var(--ed-primo);background:var(--coral-light)}
+.nd-campioni{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
+.nd-campione{width:26px;height:26px;border-radius:50%;border:1px solid var(--bordo-campo);cursor:pointer;padding:0}
+.nd-speciali{display:flex;flex-wrap:wrap;gap:4px;align-items:center;margin-top:6px}
+.nd-speciali .ed-aiuto{margin:0}
+.nd-rete{display:grid;grid-template-columns:minmax(0,7rem) minmax(0,1fr) auto;gap:6px;align-items:center}
+.nd-rete select,.nd-rete input{width:100%;padding:6px 8px;border:1px solid var(--bordo-campo);border-radius:7px;background:var(--ed-campo)}
+.nd-quill .ql-editor{min-height:110px;font-size:14px}
+.nd-media{margin-top:6px}
+.nd-salvata{margin:0 0 14px;padding:10px 12px;border-radius:8px;background:var(--info-chiaro);color:var(--info-testo);border:1px solid var(--info-bordo)}
+.nd-salvata p{margin:0 0 8px}.nd-salvata .ed-b{margin:0 6px 6px 0}
+.nd-salvati{display:flex;flex-direction:column;gap:8px}
+.nd-salvato{border:1px solid var(--ed-bordo);border-radius:9px;padding:9px 10px;background:var(--ed-campo);cursor:grab}
+.nd-salvato-testa{display:flex;flex-direction:column}
+.nd-salvato-testa small{color:var(--ed-muto)}
+.nd-salvato-azioni{display:flex;gap:6px;margin-top:6px}
+.ed-dialogo>.nd-misure-anteprima{display:inline-flex;margin:0 22px 10px;padding:0}
+.nd-misure-anteprima button{width:auto;padding:0 12px}
+.ed-dialogo>.nd-ant-cornice{padding:0}
+.nd-ant-cornice{margin:0 22px;background:#e5e7eb /* fisso: dietro l'email */;border-radius:8px;height:min(70vh,760px);display:flex;justify-content:center}
+.nd-ant-cornice iframe{width:100%;height:100%;border:0;background:#fff /* fisso */;transition:width .2s}
+.nd-ant-cornice.nd-tel iframe{width:390px;max-width:100%}
+.nd-app .ed-controllo input[type=text],.nd-app .ed-controllo input[type=number],.nd-app .ed-controllo select{border-color:var(--bordo-campo)}
+@media (max-width:760px){
+  html:has(.nd-app),body.ed-app.nd-app{height:auto;overflow:visible}
+  .nd-app .ed-barra{position:sticky;top:0;gap:6px;padding:6px 8px}
+  .nd-app .ed-nome{min-width:0;flex:1}
+  .nd-app .ed-nome b{max-width:100%}
+  .nd-app .ed-nome small,.nd-app .ed-stato,.nd-misure,.nd-largo{display:none}
+  .nd-app .ed-b,.nd-app .ed-storia button{min-height:44px}
+  .nd-app .ed-indietro{min-width:44px;min-height:44px;display:inline-flex;align-items:center;justify-content:center}
+  .nd-app .ed-corpo{flex-direction:column;overflow:visible}
+  .nd-app .ed-pannello{width:100%;flex:0 0 auto;max-height:none;border-right:0;border-bottom:1px solid var(--ed-bordo)}
+  .nd-app .ed-pannello-vista{max-height:55vh}
+  .nd-fondo{padding:12px 0 40px}
+  .nd-tela{width:100%!important}
+  .nd-griglia-sezioni,.nd-app .ed-griglia-widget{grid-template-columns:repeat(3,minmax(0,1fr))}
+}
