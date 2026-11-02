@@ -2415,6 +2415,95 @@ sezione sincronizzata cambiata nelle bozze e non nelle inviate, modello di doppi
 `prove/editor-email-cli.php`; attacchi del gruppo 34 in `tools/sicurezza-prova.js`; `prove/prova-ux-editor.js` (5c) e
 `prove/prova-ux-pannello.js` sulle pagine nuove.
 
+### 15.12 Il test A/B delle campagne (dalla 2.13.0)
+
+Fase 6 del piano di `docs-sviluppo/brevo-confronto.md` (capitoli 1.14 e 3.6). Motore in `includes/newsletter-ab.php`
+(caricato in fondo a `includes/newsletter.php`, `:1041`, e da `newsletter-campagne.php`, `:23`; le pagine che lo usano lo
+richiedono con `require_once`). Le funzioni nuove chiamate da file di prima passano da `function_exists` (opcache):
+`newsletter_invia_giro()` (`newsletter.php:973`), `newsletter_campagne_schema()` (`newsletter-campagne.php:66`),
+`newsletter_campagna_avvia()` (`:227`), `newsletter_campagna_sezioni()` (`:273`), `newsletter_campagna_salva_sezione()`
+(`:300`, `:364`), `newsletter_campagna_crea()` (`:388`), `newsletter_campagna_duplica()` (`:404`),
+`newsletter_campagna_figlia()` (`:442`), `newsletter_pagina_web()` (`:924`). Solo amministratore (le pagine sono le stesse
+delle campagne: `require_admin()`). Nel testo per chi usa il pannello non c'è nessun paragone con Brevo.
+
+**Dati** (`nl_ab_schema()`, `newsletter-ab.php:28`, impronta `newsletter_ab_impronta`; chiamata anche da
+`newsletter_campagne_schema()`):
+- `newsletter_ab` (nuova), una riga per campagna di tipo `ab` (`newsletter_campagne.tipo`, colonna della 2.11.0): `cosa`
+  (`oggetto` o `design`), `oggetto_b`, `anteprima_b`, la versione B del design (`editor_b`, `corpo_b`, `pulsante_testo_b`,
+  `pulsante_link_b`, `html_b`, `design_b`, `testo_b`, `testo_modificato_b`: le colonne di `NL_AB_DESIGN`, `:26`, con `_b`;
+  `editor_b` vuoto = la B non è ancora nata), `percentuale` (1-50, per gruppo; 20 di partenza), `criterio` (`aperture` o
+  `clic`; aperture di partenza), `durata` e `unita` (`ore` fino a 23, `giorni` fino a 7: `NL_AB_UNITA`, `:23`; 4 ore di
+  partenza), `fase` (`''` in bozza, `prova` dalla partenza, `resto` quando la vincente è partita al resto, `finita` quando non
+  c'è resto), `gruppo` e `resto` (quanti per gruppo e quanti nel resto, contati alla partenza), `avviato_at`, `vincitore`
+  (`a`, `b`, `pari`, `''`), `scelto_at`.
+- `newsletter_coda.versione` CHAR(1) DEFAULT `'a'` (nuova): `a` e `b` i due gruppi di prova, `r` il resto. Il resto ha lo
+  stato `riserva` finché la vincente non c'è. La chiave unica (`campagna_id`, `iscritto_id`) resta: una persona, una riga,
+  una versione.
+Le campagne normali non hanno righe in `newsletter_ab` e passano da `nl_ab_versione()` senza cambiare: stesso HTML al byte
+(`prove/prova-campagne-vecchie.js`).
+
+**La versione di una campagna** (`nl_ab_versione()`, `:82`): con `b` e il test sull'oggetto prende `oggetto_b` e
+`anteprima_b`; con il test sul contenuto prende le colonne del design B (e `modello_id` 0); con `r` la vincente (`b` se ha
+vinto la B, altrimenti la A: anche nel pari). La usano il giro della coda (`newsletter.php:996`, una copia per campagna e
+versione), l'anteprima e la prova del riepilogo, l'editor a blocchi della B, la versione web (`nl_ab_versione_di()`, `:95`,
+legge la versione dalla coda di quel contatto) e le figlie.
+
+**Il riepilogo** (`admin/newsletter-campagna.php`): Crea campagna ha il tipo "Test A/B" (`admin/newsletter.php`; un tipo fuori
+elenco non crea niente). La sezione **Test A/B** sta dopo Destinatari (`newsletter_campagna_sezioni()`, `:273`; stato da
+`nl_ab_sezione()`, `:162`): da completare se manca l'oggetto B o è uguale a quello della A, se il design B non ha contenuto
+(`nl_camp_design_stato()`, la regola della sezione Design, `newsletter-campagne.php:279`), se i destinatari sono meno di 2;
+come ogni sezione blocca l'invio. Salvataggio con `nl_ab_salva()` (`:136`): cosa, criterio e unità fra le chiavi, percentuale e
+durata con `FILTER_VALIDATE_INT` nei limiti (un valore fuori dai limiti è un errore e niente si salva); scegliendo il
+contenuto la prima volta il design della A si copia nella B. Il cursore (`input type=range`, 1-50) aggiorna con lo script a
+nonce la frase "Versione A a N contatti, versione B a N, la vincente agli altri M" (stesso calcolo di `nl_ab_gruppo()`,
+`:130`: `floor(n * p / 100)`, almeno 1 con due destinatari). Con il test sul contenuto la sezione Design ha le schede
+Versione A e Versione B (`?versione=b`): con la B le cinque strade, il testo semplice, il Quill e il codice HTML lavorano sulla
+B (`newsletter_campagna_salva_sezione()` la scrive con `nl_ab_scrivi_b()`, `:103`, solo nelle colonne di `NL_AB_DESIGN`); un tuo
+modello e la galleria con `nl_ab_da_modello()` (`:114`, anche da `admin/newsletter-modelli.php:58`); l'editor a blocchi con
+`newsletter-design.php?campagna=N&versione=b` (`admin/newsletter-design.php:22`). La versione B si scrive solo in un test sul
+contenuto di una campagna ancora modificabile. Anteprima e prova hanno le schede delle due versioni; la prova le manda tutte e
+due ("[PROVA A]", "[PROVA B]"). Niente lotti nel test A/B (la casella non c'è, il salvataggio e l'avvio li forzano a 1).
+Si manda come ogni campagna: Invia subito o Programma.
+
+**La partenza** (`nl_ab_avvia()`, `:177`, da `newsletter_campagna_avvia()`): la coda si prepara come per ogni campagna, poi le
+righe si mescolano (Fisher-Yates con `random_int`), le prime `gruppo` prendono `a`, le seconde `b`, tutte le altre `r` in
+`riserva`; `fase = prova`, `avviato_at` adesso. Il giro manda solo le righe in `attesa`: partono i due gruppi.
+`newsletter_invia_giro()` chiude una campagna (inviata) solo quando non ha più righe in `attesa` **né in `riserva`**
+(`newsletter.php:1024`): durante il test resta "in invio" (con il 50% non c'è resto e diventa inviata subito, mentre il test
+aspetta ancora la sua fine). Annullare la campagna mette `saltata` anche il resto (`newsletter_campagna_annulla()`, `:502`).
+
+**La scelta** (`newsletter_ab_giro()`, `:234`, chiamato da `newsletter_invia_giro()` subito dopo l'avvio delle programmate,
+prima dei limiti orari): per ogni test in `prova` di una campagna in invio o inviata (non sospesa né annullata) con
+`avviato_at` + durata passati, `nl_ab_scegli()` (`:219`) conta i risultati (`nl_ab_risultati()`, `:195`: per versione le email
+inviate dalla coda e le persone con aperture e con clic in `newsletter_eventi`, unite alla coda per sapere la versione; un
+clic vale anche come apertura, come sempre), sceglie (`nl_ab_vincitore()`, `:210`: confronto dei tassi senza arrotondare,
+aperture o clic sulle inviate del gruppo; uguali, anche zero, = `pari`), poi `UPDATE ... SET fase, vincitore, scelto_at WHERE
+fase = 'prova'`: solo chi cambia la riga (`rowCount() = 1`) libera il resto (`riserva` -> `attesa`), che parte con la vincente
+nello stesso giro o nei seguenti. Contro due cron sovrapposti: il blocco `newsletter_invio` del giro, il blocco
+`nl_ab_` più l'impronta del nome del database e del prefisso (`GET_LOCK`, come l'importazione a giri; i nomi dei blocchi valgono per tutto il server MySQL, e con il database dentro due siti sullo stesso server non si fermano a vicenda) e l'UPDATE condizionato; il resto parte una volta sola.
+Riga di log: "campagna N, test A/B: vince la versione B (30% contro 20%), 20 email al resto".
+
+**Il report** (riquadro "Risultati del test A/B", `admin/newsletter-campagna.php:253`): esito (Non ancora con l'ora della
+scelta, Ha vinto la versione X per il criterio con data e ora, Pari con la A partita al resto), tabella con le due versioni
+(oggetto o "Design A/B", inviate, aperture e clic con i tassi, il segno "Vincente" con la spunta) e la riga del resto. Il
+riquadro di stato sopra dice il test in corso, quante email di prova sono partite e quando si sceglie. Nell'elenco delle
+campagne la scritta "Test A/B" accanto al nome.
+
+**Duplica, figlie**: Duplica di un test A/B crea un test A/B con le stesse impostazioni e la stessa versione B
+(`nl_ab_copia()`, `:260`), fase e vincitore da capo. "Invia ai nuovi contatti" e "Rimanda ai non aperti" creano una campagna
+normale con la versione vincente (oggetto, anteprima e design), solo dopo la scelta; prima, l'errore "Il test A/B non ha ancora
+scelto la versione vincente".
+
+**Non fatto**: la scelta a mano del vincitore (non trovata nelle fonti, piano capitolo 5); le sezioni salvate sincronizzate
+("Aggiorna in tutte le email") non aggiornano il design B di un test (aggiornano le campagne in bozza, cioè la A).
+
+**Prove**: `prove/prova-ab.js` (con `prove/campagne-cli.php`: `semina_ab`, `ab`, `ab_indietro` per spostare indietro la
+partenza del test): Crea campagna > Test A/B, sezione e cursore, valori fuori dai limiti, anteprima e prova delle due
+versioni, gruppi da 10 su 40 a 25%, una versione a persona, aperture vere dal pixel delle email, vincitore per aperture con due
+cron lanciati insieme (resto partito una volta sola), test sul contenuto con la B nell'editor a blocchi, programmato, 50% senza
+resto, versione web della B, vincitore per clic, pari con la A al resto, figlia con la vincente, Duplica, annullata durante il
+test, 390 px; attacchi del gruppo 35 in `tools/sicurezza-prova.js`.
+
 ## 16. SEO e AEO, file calcolati, feed
 
 `includes/seo.php` (configurazione e strumenti), `includes/sito-seo.php` (meta e JSON-LD delle pagine), pagina

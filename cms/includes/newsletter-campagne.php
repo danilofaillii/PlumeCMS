@@ -20,6 +20,7 @@
  */
 
 require_once __DIR__ . '/newsletter.php';
+require_once __DIR__ . '/newsletter-ab.php'; // 2.13.0: il test A/B
 
 const NEWSLETTER_WEB = '/newsletter-web/';
 const NEWSLETTER_PREFERENZE = '/newsletter-preferenze/';
@@ -62,6 +63,7 @@ function newsletter_campagne_schema(): void {
     newsletter_schema();
     newsletter_flussi_schema();
     if (function_exists('nd_schema')) nd_schema(); // 2.12.0: design e modello_id nelle campagne, modelli, sezioni salvate
+    if (function_exists('nl_ab_schema')) nl_ab_schema(); // 2.13.0: il test A/B (includes/newsletter-ab.php)
     $colonne = [
         'nome' => "VARCHAR(150) NOT NULL DEFAULT ''",
         'tipo' => "VARCHAR(8) NOT NULL DEFAULT 'normale'",
@@ -222,7 +224,8 @@ function newsletter_campagna_avvia(array $c): string {
     array_unshift($par, $id);
     db()->prepare('INSERT IGNORE INTO ' . tbl('newsletter_coda') . ' (campagna_id, iscritto_id) SELECT ?, i.id FROM ' . tbl('newsletter_iscritti') . " i WHERE i.stato = 'attivo' AND $w ORDER BY i.id")->execute($par);
     $n = (int)db()->query('SELECT COUNT(*) FROM ' . tbl('newsletter_coda') . ' WHERE campagna_id = ' . $id)->fetchColumn();
-    $lotti = max(1, min(NL_LOTTI_MAX, (int)($c['lotti'] ?? 1)));
+    $ab = ($c['tipo'] ?? '') === 'ab' && function_exists('nl_ab_avvia'); // 2.13.0: niente lotti nel test A/B
+    $lotti = $ab ? 1 : max(1, min(NL_LOTTI_MAX, (int)($c['lotti'] ?? 1)));
     if ($lotti > 1 && $n > 1) {
         $ids = array_map('intval', db()->query('SELECT id FROM ' . tbl('newsletter_coda') . " WHERE campagna_id = $id AND stato = 'attesa' ORDER BY id")->fetchAll(PDO::FETCH_COLUMN));
         $tot = count($ids);
@@ -235,8 +238,9 @@ function newsletter_campagna_avvia(array $c): string {
             $up->execute([$k + 1, date('Y-m-d H:i:s', $base + $k * $passo), $id, $ids[$da], $ids[$a]]);
         }
     }
+    $abLog = $ab ? '; ' . nl_ab_avvia($id) : '';
     db()->prepare('UPDATE ' . tbl('newsletter_campagne') . " SET stato = 'in_invio', destinatari = ?, aggiornato = NOW() WHERE id = ?")->execute([$n, $id]);
-    return "campagna $id avviata: $n destinatari" . ($lotti > 1 ? " in $lotti lotti" : '');
+    return "campagna $id avviata: $n destinatari" . ($lotti > 1 ? " in $lotti lotti" : '') . $abLog;
 }
 
 // ------------------------------------------------------------
@@ -263,12 +267,20 @@ function newsletter_campagna_sezioni(array $c): array {
     $out['destinatari'] = ['ok' => !$vuota && $n > 0, 'n' => $n, 'manca' => $vuota ? 'Scegli almeno una lista o un segmento a cui mandarla.' : ($n === 0 ? 'Con queste scelte la campagna non arriva a nessun contatto iscritto: cambia liste, segmenti o esclusioni.' : '')];
     $okOgg = trim((string)$c['oggetto']) !== '';
     $out['oggetto'] = ['ok' => $okOgg, 'manca' => $okOgg ? '' : "Scrivi l'oggetto dell'email."];
-    $ed = (string)($c['editor'] ?? 'semplice');
-    if ($ed === 'blocchi') $okDes = function_exists('nd_ha_contenuto') && nd_ha_contenuto(nd_design((string)($c['design'] ?? '')));
-    else $okDes = $ed === 'html' ? trim((string)($c['html'] ?? '')) !== '' : trim(strip_tags((string)$c['corpo'], '<img>')) !== '';
-    $out['design'] = ['ok' => $okDes, 'manca' => $okDes ? '' : ['html' => 'Incolla il codice HTML dell\'email.', 'blocchi' => "Nell'editor a blocchi aggiungi almeno un titolo, un testo o un'immagine."][$ed] ?? "Scrivi il testo dell'email."];
+    [$okDes, $mancaDes] = nl_camp_design_stato($c);
+    $out['design'] = ['ok' => $okDes, 'manca' => $mancaDes];
+    // 2.13.0: il test A/B ha la sua sezione, dopo Destinatari, con le sue regole (includes/newsletter-ab.php).
+    if (($c['tipo'] ?? '') === 'ab' && function_exists('nl_ab_sezione')) $out = array_slice($out, 0, 2, true) + ['ab' => nl_ab_sezione($c, $n)] + array_slice($out, 2, null, true);
     $out['impostazioni'] = ['ok' => true, 'manca' => ''];
     return $out;
+}
+
+/** Il design di una campagna è a posto? [bool, frase per chi legge]. */
+function nl_camp_design_stato(array $c): array {
+    $ed = (string)($c['editor'] ?? 'semplice');
+    if ($ed === 'blocchi') $ok = function_exists('nd_ha_contenuto') && nd_ha_contenuto(nd_design((string)($c['design'] ?? '')));
+    else $ok = $ed === 'html' ? trim((string)($c['html'] ?? '')) !== '' : trim(strip_tags((string)$c['corpo'], '<img>')) !== '';
+    return [$ok, $ok ? '' : ['html' => 'Incolla il codice HTML dell\'email.', 'blocchi' => "Nell'editor a blocchi aggiungi almeno un titolo, un testo o un'immagine."][$ed] ?? "Scrivi il testo dell'email."];
 }
 
 /** Le frasi di quello che manca per inviare (vuoto = si può inviare). */
@@ -282,6 +294,12 @@ function newsletter_campagna_salva_sezione(int $id, string $sez, array $p): stri
     $c = newsletter_campagna($id);
     if (!$c || !newsletter_campagna_modificabile($c)) return 'Questa campagna non si può più modificare: è già partita.';
     $set = [];
+    // 2.13.0: il design della versione B di un test A/B sul contenuto si salva nella sua tabella.
+    $versioneB = $sez === 'design' && ($p['versione'] ?? '') === 'b';
+    if ($versioneB) {
+        if (!function_exists('nl_ab') || $c['tipo'] !== 'ab' || nl_ab($id)['cosa'] !== 'design') return 'La versione B del design c\'è solo in un test A/B sul contenuto.';
+        $c = nl_ab_versione($c, 'b');
+    }
     switch ($sez) {
         case 'mittente':
             $m = consegna_mittente((int)($p['mittente_id'] ?? 0));
@@ -335,13 +353,16 @@ function newsletter_campagna_salva_sezione(int $id, string $sez, array $p): stri
             $set['utm_campagna'] = mb_substr(preg_replace('/[^a-z0-9_-]+/', '-', mb_strtolower(trim((string)($p['utm_campagna'] ?? '')))), 0, 100);
             $set['link_web'] = empty($p['link_web']) ? 0 : 1;
             $set['link_preferenze'] = empty($p['link_preferenze']) ? 0 : 1;
-            $lotti = empty($p['lotti_attivi']) ? 1 : (int)($p['lotti'] ?? 1);
+            $lotti = empty($p['lotti_attivi']) || $c['tipo'] === 'ab' ? 1 : (int)($p['lotti'] ?? 1); // niente lotti nel test A/B
             if ($lotti < 1 || $lotti > NL_LOTTI_MAX) return 'I lotti vanno da 2 a ' . NL_LOTTI_MAX . '.';
             $int = (int)($p['lotti_intervallo'] ?? 0);
             if ($lotti > 1 && ($int < 5 || $int > 10080)) return "Fra un lotto e l'altro scrivi da 5 minuti a 7 giorni (10080 minuti): il cron gira ogni 5 minuti.";
             $set['lotti'] = $lotti;
             $set['lotti_intervallo'] = $lotti > 1 ? $int : 0;
             break;
+        case 'ab':
+            if ($c['tipo'] !== 'ab' || !function_exists('nl_ab_salva')) return 'Questa non è una campagna con il test A/B.';
+            return nl_ab_salva($c, $p);
         case 'nome':
             $n = newsletter_4byte_dentro(mb_substr(trim(str_replace(["\r", "\n"], ' ', (string)($p['nome'] ?? ''))), 0, 150));
             if ($n === '') return 'Scrivi il nome della campagna: serve a te per ritrovarla, chi la riceve non lo vede.';
@@ -351,6 +372,7 @@ function newsletter_campagna_salva_sezione(int $id, string $sez, array $p): stri
             return 'Sezione sconosciuta.';
     }
     if (!$set) return '';
+    if ($versioneB) { nl_ab_scrivi_b($id, $set); return ''; }
     $sql = []; $val = [];
     foreach ($set as $k => $v) { $sql[] = "`$k` = ?"; $val[] = $v; }
     $val[] = $id;
@@ -358,25 +380,31 @@ function newsletter_campagna_salva_sezione(int $id, string $sez, array $p): stri
     return '';
 }
 
-/** Crea una campagna (Brevo: Crea campagna > Normale > nome). Ritorna l'id, oppure il messaggio d'errore. */
+/** Crea una campagna (Crea campagna > Normale o Test A/B > nome). Ritorna l'id, oppure il messaggio d'errore. */
 function newsletter_campagna_crea(string $nome, string $tipo = 'normale') {
     newsletter_campagne_schema();
     $nome = newsletter_4byte_dentro(mb_substr(trim(str_replace(["\r", "\n"], ' ', $nome)), 0, 150));
     if ($nome === '') return 'Scrivi il nome della campagna: serve a te per ritrovarla, chi la riceve non lo vede.';
-    if ($tipo !== 'normale') return 'Per adesso si crea solo una campagna normale.';
+    if ($tipo === 'ab' && !function_exists('nl_ab')) $tipo = '';
+    if (!in_array($tipo, ['normale', 'ab'], true)) return 'Scegli il tipo di campagna: normale oppure test A/B.';
     $ora = date('Y-m-d H:i:s');
-    db()->prepare('INSERT INTO ' . tbl('newsletter_campagne') . " (nome, tipo, oggetto, corpo, liste, link_web, link_preferenze, creato, aggiornato) VALUES (?, 'normale', '', '', '', 1, 1, ?, ?)")
-        ->execute([$nome, $ora, $ora]);
-    return (int)db()->lastInsertId();
+    db()->prepare('INSERT INTO ' . tbl('newsletter_campagne') . " (nome, tipo, oggetto, corpo, liste, link_web, link_preferenze, creato, aggiornato) VALUES (?, ?, '', '', '', 1, 1, ?, ?)")
+        ->execute([$nome, $tipo, $ora, $ora]);
+    $id = (int)db()->lastInsertId();
+    if ($tipo === 'ab') nl_ab($id);
+    return $id;
 }
 
 /** Duplica una campagna con le parti scelte (NL_CAMP_PARTI). Le altre partono vuote. Ritorna il nuovo id, o 0. */
-function newsletter_campagna_duplica(int $id, array $parti): int {
+function newsletter_campagna_duplica(int $id, array $parti, bool $comeAb = true): int {
     newsletter_campagne_schema();
     $c = newsletter_campagna($id);
     if (!$c) return 0;
-    $nuovo = newsletter_campagna_crea('Copia di ' . newsletter_4byte_fuori((string)($c['nome'] ?: $c['oggetto'] ?: 'campagna')));
+    // 2.13.0: la copia di un test A/B è un test A/B con le stesse impostazioni (le figlie no: prendono la vincente).
+    $ab = $comeAb && $c['tipo'] === 'ab' && function_exists('nl_ab_copia');
+    $nuovo = newsletter_campagna_crea('Copia di ' . newsletter_4byte_fuori((string)($c['nome'] ?: $c['oggetto'] ?: 'campagna')), $ab ? 'ab' : 'normale');
     if (!is_int($nuovo)) return 0;
+    if ($ab) nl_ab_copia($id, $nuovo);
     $set = [];
     foreach (NL_CAMP_PARTI as $k => [, $colonne]) {
         if (!in_array($k, $parti, true)) continue;
@@ -409,8 +437,20 @@ function newsletter_campagna_figlia(int $id, string $tipo, string $oggetto = '')
     } else {
         return 'Tipo sconosciuto.';
     }
-    $nuovo = newsletter_campagna_duplica($id, array_keys(NL_CAMP_PARTI));
+    // 2.13.0: la figlia di un test A/B è una campagna normale con la versione vincente.
+    $vinta = null;
+    if ($c['tipo'] === 'ab' && function_exists('nl_ab')) {
+        $ab = nl_ab($id);
+        if ($ab['vincitore'] === '') return 'Il test A/B non ha ancora scelto la versione vincente: aspetta la fine del test.';
+        $vinta = nl_ab_versione($c, $ab['vincitore'] === 'b' ? 'b' : 'a');
+    }
+    $nuovo = newsletter_campagna_duplica($id, array_keys(NL_CAMP_PARTI), false);
     if (!$nuovo) return 'Non riesco a creare la campagna.';
+    if ($vinta) {
+        $col = array_merge(['oggetto', 'anteprima'], NL_AB_DESIGN);
+        db()->prepare('UPDATE ' . tbl('newsletter_campagne') . ' SET ' . implode(', ', array_map(fn($k) => "`$k` = ?", $col)) . ' WHERE id = ?')
+            ->execute(array_merge(array_map(fn($k) => $vinta[$k], $col), [$nuovo]));
+    }
     $nomeMadre = newsletter_4byte_fuori((string)($c['nome'] ?: $c['oggetto']));
     if ($tipo === 'rinvio') {
         $ogg = trim(str_replace(["\r", "\n"], ' ', $oggetto));
@@ -459,7 +499,7 @@ function newsletter_campagna_annulla(int $id): bool {
     $st = db()->prepare('UPDATE ' . tbl('newsletter_campagne') . " SET stato = 'annullata', aggiornato = NOW() WHERE id = ? AND stato IN ('programmata', 'in_invio', 'sospesa')");
     $st->execute([$id]);
     if (!$st->rowCount()) return false;
-    db()->prepare('UPDATE ' . tbl('newsletter_coda') . " SET stato = 'saltata' WHERE campagna_id = ? AND stato = 'attesa'")->execute([$id]);
+    db()->prepare('UPDATE ' . tbl('newsletter_coda') . " SET stato = 'saltata' WHERE campagna_id = ? AND stato IN ('attesa', 'riserva')")->execute([$id]); // 2.13.0: anche il resto del test A/B
     return true;
 }
 
@@ -881,6 +921,7 @@ function newsletter_pagina_web(array $q): array {
     $camp = newsletter_campagna($c);
     $iscr = newsletter_contatto($i);
     if (!$camp || !$iscr) return [404, ''];
+    if (function_exists('nl_ab_versione') && nl_ab_e($camp)) $camp = nl_ab_versione($camp, nl_ab_versione_di($c, $i)); // 2.13.0: la versione che ha ricevuto
     [, $html] = newsletter_email($camp, ['id' => $i, 'nome' => (string)$iscr['nome'], 'email' => (string)$iscr['email']], []);
     return [200, $html];
 }

@@ -969,6 +969,9 @@ function newsletter_invia_giro(?int $massimo = null): array {
         $lotti = function_exists('newsletter_campagne_schema');
         if ($lotti) newsletter_campagne_schema();
         $log = newsletter_avvia_programmate();
+        // 2.13.0: i test A/B arrivati alla fine scelgono la versione vincente e liberano il resto (includes/newsletter-ab.php).
+        $ab = function_exists('newsletter_ab_giro');
+        if ($ab) $log = array_merge($log, newsletter_ab_giro());
         // 2.0.0: il limite conta tutte le email del CMS (registro della posta): conferme, avvisi, flussi, campagne.
         // Le campagne della coda restano contate anche se il registro è appena nato (il primo giro dopo l'aggiornamento).
         $cfg = newsletter_config();
@@ -983,14 +986,14 @@ function newsletter_invia_giro(?int $massimo = null): array {
             $posti = min($posti, max(0, $alGiorno - posta_inviate(86400)));
             if ($posti === 0) return array_merge($log, [$caldo > 0 && $caldo === $alGiorno ? "limite del riscaldamento raggiunto ($caldo email in 24 ore)" : 'limite giornaliero raggiunto']);
         }
-        $righe = db()->query('SELECT q.id, q.campagna_id, q.tentativi, i.id AS iscritto_id, i.email, i.nome, i.cognome FROM ' . tbl('newsletter_coda') . ' q
+        $righe = db()->query('SELECT q.id, q.campagna_id, q.tentativi' . ($ab ? ', q.versione' : '') . ', i.id AS iscritto_id, i.email, i.nome, i.cognome FROM ' . tbl('newsletter_coda') . ' q
             JOIN ' . tbl('newsletter_campagne') . ' c ON c.id = q.campagna_id AND c.stato = \'in_invio\'
             JOIN ' . tbl('newsletter_iscritti') . " i ON i.id = q.iscritto_id AND i.stato = 'attivo'
             WHERE q.stato = 'attesa'" . ($lotti ? ' AND (q.dopo IS NULL OR q.dopo <= NOW())' : '') . ' ORDER BY q.id LIMIT ' . (int)$posti)->fetchAll();
         $campagne = [];
         $ok = 0; $ko = 0; $rimbalzi = 0;
         foreach ($righe as $r) {
-            $c = $campagne[$r['campagna_id']] ??= newsletter_campagna((int)$r['campagna_id']);
+            $c = $campagne[$r['campagna_id'] . ($r['versione'] ?? '')] ??= $ab ? nl_ab_versione(newsletter_campagna((int)$r['campagna_id']), (string)$r['versione']) : newsletter_campagna((int)$r['campagna_id']);
             [$oggetto, $html, $intest] = newsletter_email($c, ['id' => $r['iscritto_id'], 'nome' => $r['nome'], 'email' => $r['email']]);
             $partita = posta_invia($r['email'], $oggetto, $html, $intest, 'campagna');
             newsletter_esito_invio((int)$r['iscritto_id'], (int)$r['tentativi'] + 1 >= 3); // 2.8.0: il terzo tentativo è il soft bounce del messaggio
@@ -1014,10 +1017,11 @@ function newsletter_invia_giro(?int $massimo = null): array {
                 if ($ko >= 3 && $ok === 0) { $log[] = 'posta ferma: ' . posta_errore(); break; }
             }
         }
-        // Coda vuota: campagna inviata. Le righe di chi è uscito nel frattempo si chiudono.
+        // Coda vuota: campagna inviata. Le righe di chi è uscito nel frattempo si chiudono. 2.13.0: il resto di un test A/B
+        // (stato 'riserva') aspetta la versione vincente, e la campagna resta in invio.
         db()->exec('UPDATE ' . tbl('newsletter_coda') . ' q JOIN ' . tbl('newsletter_iscritti') . " i ON i.id = q.iscritto_id SET q.stato = 'saltata' WHERE q.stato = 'attesa' AND i.stato <> 'attivo'");
         db()->exec('UPDATE ' . tbl('newsletter_campagne') . " c SET stato = 'inviata', aggiornato = NOW() WHERE stato = 'in_invio'
-            AND NOT EXISTS (SELECT 1 FROM " . tbl('newsletter_coda') . " q WHERE q.campagna_id = c.id AND q.stato = 'attesa')");
+            AND NOT EXISTS (SELECT 1 FROM " . tbl('newsletter_coda') . " q WHERE q.campagna_id = c.id AND q.stato IN ('attesa', 'riserva'))");
         if ($ok || $ko) $log[] = "inviate $ok, non partite $ko";
         if ($rimbalzi) $log[] = "indirizzi rifiutati dal server di posta (rimbalzati): $rimbalzi";
         // I flussi automatici, con i posti rimasti nel limite orario.
@@ -1034,3 +1038,4 @@ require_once __DIR__ . '/newsletter-importa.php'; // 2.9.0: importazione, esport
 require_once __DIR__ . '/newsletter-segmenti.php'; // 2.10.0: segmenti, filtri e viste (come Brevo)
 require_once __DIR__ . '/newsletter-campagne.php'; // 2.11.0: campagne a riepilogo, disiscrizione con il questionario, centro preferenze
 require_once __DIR__ . '/newsletter-design.php'; // 2.12.0: editor delle email a blocchi, modelli, sezioni salvate
+require_once __DIR__ . '/newsletter-ab.php'; // 2.13.0: il test A/B delle campagne

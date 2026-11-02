@@ -37,7 +37,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $cid = (int)($_POST['id'] ?? 0);
     $torna = 'newsletter.php' . (isset($_POST['vista']) && isset(NL_CAMP_VISTE[$_POST['vista']]) ? '?vista=' . $_POST['vista'] : '');
     if ($azione === 'nuova') {
-        // 2.11.0: Crea campagna > Normale > nome della campagna, poi il riepilogo.
+        // 2.11.0: Crea campagna > Normale (2.13.0: o Test A/B) > nome della campagna, poi il riepilogo.
         $r = newsletter_campagna_crea((string)($_POST['nome'] ?? ''), (string)($_POST['tipo'] ?? 'normale'));
         if (is_string($r)) { flash('error', $r); header('Location: newsletter.php?crea=1#nl-crea'); exit; }
         header('Location: newsletter-campagna.php?id=' . $r);
@@ -164,6 +164,7 @@ require_once __DIR__ . '/includes/admin-header.php';
 .nl-viste a.attiva{background:var(--coral);border-color:var(--coral);color:var(--su-accento);font-weight:600}
 .nl-conto{font-size:.78rem;opacity:.85}
 .nl-stato{display:inline-block;padding:.1rem .55rem;border-radius:999px;border:1px solid var(--bordo-campo);font-size:.8rem;white-space:nowrap}
+.nl-tipo-ab{display:inline-block;margin-left:.35rem;padding:0 .45rem;border-radius:6px;background:var(--info-chiaro);color:var(--info-testo);border:1px solid var(--info-bordo);font-size:.75rem;font-weight:700;vertical-align:middle}
 .nl-azioni{position:relative}
 .nl-azioni>summary{list-style:none}.nl-azioni>summary::-webkit-details-marker{display:none}
 .nl-azioni-menu{display:flex;flex-direction:column;gap:.35rem;margin-top:.4rem;min-width:12rem}
@@ -202,6 +203,7 @@ require_once __DIR__ . '/includes/admin-header.php';
     <?= csrf_field() ?><input type="hidden" name="azione" value="nuova">
     <fieldset class="nlk-scelte"><legend>Tipo di campagna</legend>
       <label><input type="radio" name="tipo" value="normale" checked> Normale: una sola versione dell'email per tutti</label>
+      <label><input type="radio" name="tipo" value="ab"> Test A/B: due versioni (oggetto o contenuto) a due gruppi di prova, poi la migliore a tutti gli altri</label>
     </fieldset>
     <div class="form-group"><label for="nl-crea-nome">Nome della campagna</label><input type="text" id="nl-crea-nome" name="nome" maxlength="150" required placeholder="per esempio: Novità di novembre" aria-describedby="nl-crea-aiuto">
       <div class="hint" id="nl-crea-aiuto">Serve a te per ritrovarla nell'elenco: chi riceve l'email non lo vede.</div></div>
@@ -252,7 +254,7 @@ require_once __DIR__ . '/includes/admin-header.php';
         if ((int)$c['padre_id']) $aChi[] = 'solo i nuovi contatti';
       } ?>
     <tr>
-      <td><a href="newsletter-campagna.php?id=<?= $cId ?>"><b><?= h($nomeC($c)) ?></b></a><?php if ($c['oggetto'] !== '' && $c['nome'] !== $c['oggetto']): ?><span class="nlx-sotto">Oggetto: <?= h(newsletter_4byte_fuori($c['oggetto'])) ?></span><?php endif; ?><?php if ($c['tag'] !== ''): ?><span class="nlx-sotto">Tag: <?= h(newsletter_4byte_fuori($c['tag'])) ?></span><?php endif; ?></td>
+      <td><a href="newsletter-campagna.php?id=<?= $cId ?>"><b><?= h($nomeC($c)) ?></b></a><?= $c['tipo'] === 'ab' ? '<span class="nl-tipo-ab">Test A/B</span>' : '' ?><?php if ($c['oggetto'] !== '' && $c['nome'] !== $c['oggetto']): ?><span class="nlx-sotto">Oggetto: <?= h(newsletter_4byte_fuori($c['oggetto'])) ?></span><?php endif; ?><?php if ($c['tag'] !== ''): ?><span class="nlx-sotto">Tag: <?= h(newsletter_4byte_fuori($c['tag'])) ?></span><?php endif; ?></td>
       <td><span class="nl-stato nl-stato-<?= h($c['stato']) ?>"><?= h($statoNome[$c['stato']] ?? $c['stato']) ?></span><?= (int)$c['archiviata'] ? ' <span class="nlx-sotto">archiviata</span>' : '' ?></td>
       <td><small><?= h(implode(', ', array_filter($aChi)) ?: 'nessuno ancora') ?></small></td>
       <td><?= $c['invio_at'] ? h(date('d/m/Y H:i', strtotime($c['invio_at']))) : '' ?></td>

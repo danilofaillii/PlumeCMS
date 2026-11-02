@@ -1826,6 +1826,89 @@ echo json_encode($o);
     }
   }
 
+  // === 35. (2.13.0) Il test A/B delle campagne: solo l'amministratore, solo con il token e dal pannello; percentuali
+  // (oltre 50, zero, negative, con SQL), durate (oltre 23 ore o 7 giorni, zero), unità, criteri e cose da provare fuori
+  // elenco rifiutati senza cambiare niente; tipo di campagna inventato rifiutato; la versione B non si scrive in una campagna
+  // normale, in un test sull'oggetto o in una campagna già partita; il vincitore non si sceglie dal pannello; l'oggetto B con
+  // codice esce come testo. Serve CMS_DIR.
+  {
+    const path = require('path'), { execFileSync } = require('child_process');
+    const DIR35 = process.env.CMS_DIR || '';
+    const PN = ADMIN + '/newsletter.php', PCm = ADMIN + '/newsletter-campagna.php', PD = ADMIN + '/newsletter-design.php';
+    const ORIG = { 'Origin': BASE.replace(/(https?:\/\/[^/]+).*/, '$1') };
+    if (!DIR35) ok('2.13.0: (senza CMS_DIR le prove del test A/B sono saltate)', true);
+    else {
+      const cli = (...a) => JSON.parse(execFileSync('php', [path.join(__dirname, '..', 'prove', 'campagne-cli.php'), DIR35, ...a.map(String)], { encoding: 'utf8' }).trim().split('\n').pop());
+      const q = (s) => cli('sql', s);
+      const uno = (s) => { const r = q(s); return r && r[0] ? Object.values(r[0])[0] : null; };
+      q("DELETE FROM {p}newsletter_campagne WHERE nome LIKE 'Sic35%'");
+      q("INSERT INTO {p}newsletter_campagne (nome, tipo, oggetto, corpo, liste, stato, creato, aggiornato) VALUES ('Sic35 ab', 'ab', 'Sic35 A', '<p>A</p>', '', 'bozza', NOW(), NOW()), ('Sic35 normale', 'normale', 'Sic35', '<p>N</p>', '', 'bozza', NOW(), NOW()), ('Sic35 inviata', 'ab', 'Sic35 A', '<p>A</p>', '', 'inviata', NOW(), NOW())");
+      const CA = +uno("SELECT id FROM {p}newsletter_campagne WHERE nome = 'Sic35 ab'"), CN = +uno("SELECT id FROM {p}newsletter_campagne WHERE nome = 'Sic35 normale'"), CI = +uno("SELECT id FROM {p}newsletter_campagne WHERE nome = 'Sic35 inviata'");
+      q(`DELETE FROM {p}newsletter_ab WHERE campagna_id IN (${CA}, ${CN}, ${CI})`);
+      q(`INSERT INTO {p}newsletter_ab (campagna_id, cosa, oggetto_b, percentuale, criterio, durata, unita) VALUES (${CA}, 'oggetto', 'Sic35 B', 25, 'aperture', 2, 'ore')`);
+      q(`INSERT INTO {p}newsletter_ab (campagna_id, cosa, oggetto_b, editor_b, corpo_b, percentuale, criterio, durata, unita, fase, vincitore) VALUES (${CI}, 'design', 'Sic35 B', 'semplice', '<p>B</p>', 25, 'aperture', 2, 'ore', 'resto', 'b')`);
+      const riga = (c) => JSON.stringify(q(`SELECT cosa, oggetto_b, anteprima_b, editor_b, corpo_b, html_b, percentuale, criterio, durata, unita, fase, vincitore FROM {p}newsletter_ab WHERE campagna_id = ${c}`)[0] || null);
+      const ra0 = riga(CA), ri0 = riga(CI);
+      const quante = () => +uno("SELECT COUNT(*) FROM {p}newsletter_campagne WHERE nome LIKE 'Sic35%'");
+      const n0 = quante();
+      const buono = { azione: 'sezione', sez: 'ab', cosa: 'oggetto', oggetto_b: 'Sic35 B', percentuale: '25', criterio: 'aperture', durata: '2', unita: 'ore' };
+      // Senza login
+      const anon = await browser.newContext();
+      const a1 = await anon.request.post(PCm + '?id=' + CA, { form: { ...buono, percentuale: '50', oggetto_b: 'Sic35 da fuori' }, maxRedirects: 0 });
+      const a2 = await anon.request.post(PN, { form: { azione: 'nuova', tipo: 'ab', nome: 'Sic35 anonimo' }, maxRedirects: 0 });
+      ok('2.13.0: senza login il test A/B non cambia e non nasce nessuna campagna A/B', riga(CA) === ra0 && quante() === n0, [a1.status(), a2.status()]);
+      await anon.close();
+      // Token e origine
+      const tk = await tokenDi(admin.p, PCm + '?id=' + CA);
+      const s1 = await admin.ctx.request.post(PCm + '?id=' + CA, { headers: ORIG, form: { ...buono, percentuale: '50' }, maxRedirects: 0 });
+      const s2 = await admin.ctx.request.post(PCm + '?id=' + CA, { headers: { 'Origin': 'https://evil.example' }, form: { _csrf: tk, ...buono, percentuale: '50' }, maxRedirects: 0 });
+      const s3 = await admin.ctx.request.post(PN, { headers: ORIG, form: { azione: 'nuova', tipo: 'ab', nome: 'Sic35 senza token' }, maxRedirects: 0 });
+      ok('2.13.0: sezione Test A/B e Crea campagna A/B senza token o da un altro sito: 403 e niente fatto', [s1, s2, s3].every(r => r.status() === 403) && riga(CA) === ra0 && quante() === n0, [s1.status(), s2.status(), s3.status()]);
+      // Valori manipolati
+      const storti = [{ percentuale: '51' }, { percentuale: '100' }, { percentuale: '0' }, { percentuale: '-1' }, { percentuale: '25 OR 1=1' }, { percentuale: '1e2' }, { percentuale: '' }, { 'percentuale[]': '25' },
+        { durata: '24' }, { durata: '0' }, { durata: '2; DROP TABLE x' }, { durata: '8', unita: 'giorni' }, { durata: '-3', unita: 'giorni' }, { unita: 'secondi' }, { unita: "ore' OR '1'='1" },
+        { cosa: 'html' }, { cosa: '' }, { criterio: 'rimbalzi' }, { criterio: "aperture'--" }];
+      for (const f of storti) { const x = { _csrf: tk, ...buono, oggetto_b: 'Sic35 cambiato', ...f }; if (f['percentuale[]']) delete x.percentuale; await admin.ctx.request.post(PCm + '?id=' + CA, { headers: ORIG, form: x, maxRedirects: 0 }); }
+      ok('2.13.0: ' + storti.length + ' percentuali, durate, unità, criteri e cose da provare manipolati: rifiutati, il test non cambia', riga(CA) === ra0, riga(CA));
+      // Tipo di campagna inventato
+      for (const t of ['flusso', 'ab<script>', "ab' OR '1'='1", 'AB ']) await admin.ctx.request.post(PN, { headers: ORIG, form: { _csrf: tk, azione: 'nuova', tipo: t, nome: 'Sic35 tipo storto' }, maxRedirects: 0 });
+      ok('2.13.0: tipo di campagna inventato: nessuna campagna nasce', quante() === n0 && +uno("SELECT COUNT(*) FROM {p}newsletter_campagne WHERE tipo NOT IN ('normale', 'ab')") === 0);
+      // La versione B dove non c'è
+      const cn0 = uno(`SELECT corpo FROM {p}newsletter_campagne WHERE id = ${CN}`);
+      await admin.ctx.request.post(PCm + '?id=' + CN, { headers: ORIG, form: { _csrf: tk, ...buono, percentuale: '30' }, maxRedirects: 0 });
+      await admin.ctx.request.post(PCm + '?id=' + CN, { headers: ORIG, form: { _csrf: tk, azione: 'sezione', sez: 'design', versione: 'b', editor: 'semplice', corpo: '<p>Sic35 B intrusa</p>' }, maxRedirects: 0 });
+      await admin.ctx.request.post(PCm + '?id=' + CA, { headers: ORIG, form: { _csrf: tk, azione: 'sezione', sez: 'design', versione: 'b', editor: 'html', html: '<p>Sic35 B intrusa</p>' }, maxRedirects: 0 });
+      ok('2.13.0: la sezione Test A/B e la versione B non si scrivono in una campagna normale né in un test sull\'oggetto', uno(`SELECT COUNT(*) FROM {p}newsletter_ab WHERE campagna_id = ${CN}`) == 0 && uno(`SELECT corpo FROM {p}newsletter_campagne WHERE id = ${CN}`) === cn0 && riga(CA) === ra0);
+      // Campagna già partita
+      await admin.ctx.request.post(PCm + '?id=' + CI, { headers: ORIG, form: { _csrf: tk, ...buono, cosa: 'design', percentuale: '50' }, maxRedirects: 0 });
+      await admin.ctx.request.post(PCm + '?id=' + CI, { headers: ORIG, form: { _csrf: tk, azione: 'sezione', sez: 'design', versione: 'b', editor: 'semplice', corpo: '<p>Sic35 dopo</p>' }, maxRedirects: 0 });
+      const tkd = await tokenDi(admin.p, PD + '?campagna=' + CI + '&versione=b');
+      await admin.ctx.request.post(PD + '?campagna=' + CI + '&versione=b', { headers: ORIG, form: { _csrf: tkd, azione: 'salva', design: JSON.stringify({ sezioni: [{ id: 's1', colonne: [[{ id: 'b1', t: 'titolo', testo: 'Sic35 dopo' }]] }] }) }, maxRedirects: 0 });
+      ok('2.13.0: in una campagna A/B già partita né il test né la versione B cambiano (pannello ed editor a blocchi)', riga(CI) === ri0, riga(CI));
+      // Il vincitore non si sceglie dal pannello
+      for (const az of ['scegli', 'vincitore', 'ab_scegli']) await admin.ctx.request.post(PCm + '?id=' + CI, { headers: ORIG, form: { _csrf: tk, azione: az, vincitore: 'a' }, maxRedirects: 0 });
+      ok('2.13.0: azioni inventate per scegliere il vincitore: niente cambia', riga(CI) === ri0);
+      // Oggetto B con codice
+      await admin.ctx.request.post(PCm + '?id=' + CA, { headers: ORIG, form: { _csrf: tk, ...buono, oggetto_b: 'Sic35 <script>alert(35)</script><img src=x onerror=alert(35)>' }, maxRedirects: 0 });
+      await admin.p.goto(PCm + '?id=' + CA + '&apri=ab', { waitUntil: 'networkidle' });
+      const ha = await admin.p.content();
+      ok('2.13.0: oggetto B con codice: salvato come testo, esce come testo nel riepilogo', !/<script>alert\(35\)|<img src=x onerror=alert\(35\)/.test(ha) && /&lt;script&gt;alert\(35\)/.test(ha));
+      // Redattore
+      if (red.dentro) {
+        const tr = await tokenDi(red.p, ADMIN + '/media.php');
+        const prima = riga(CA) + '|' + quante();
+        const rr = [];
+        rr.push(await red.ctx.request.get(PCm + '?id=' + CA, { maxRedirects: 0 }));
+        rr.push(await red.ctx.request.post(PCm + '?id=' + CA, { headers: ORIG, form: { _csrf: tr, ...buono, percentuale: '50' }, maxRedirects: 0 }));
+        rr.push(await red.ctx.request.post(PN, { headers: ORIG, form: { _csrf: tr, azione: 'nuova', tipo: 'ab', nome: 'Sic35 dal redattore' }, maxRedirects: 0 }));
+        rr.push(await red.ctx.request.post(PD + '?campagna=' + CA + '&versione=b', { headers: ORIG, form: { _csrf: tr, azione: 'salva', design: '{"sezioni":[]}' }, maxRedirects: 0 }));
+        ok('2.13.0: il redattore non apre il riepilogo e non cambia né crea un test A/B', rr.every(x => [302, 403].includes(x.status())) && riga(CA) + '|' + quante() === prima, rr.map(x => x.status()));
+      }
+      q(`DELETE FROM {p}newsletter_ab WHERE campagna_id IN (${CA}, ${CN}, ${CI})`);
+      q("DELETE FROM {p}newsletter_campagne WHERE nome LIKE 'Sic35%'");
+    }
+  }
+
   // === pulizia: elimina il redattore di prova
   {
     await admin.p.goto(ADMIN + '/utenti.php', { waitUntil: 'networkidle' });

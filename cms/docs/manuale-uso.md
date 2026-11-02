@@ -1888,7 +1888,7 @@ pagina sola, il **riepilogo**, divisa in sezioni; quando sono tutte a posto la m
 
 ![Crea una campagna](immagini/manuale-uso/19-crea-campagna.jpg)
 
-1. **Tipo di campagna**: Normale, una sola versione dell'email per tutti.
+1. **Tipo di campagna**: Normale, una sola versione dell'email per tutti (l'altro tipo, Test A/B, più sotto in "Il test A/B").
 2. **Nome della campagna**: serve a te per ritrovarla nell'elenco, chi riceve l'email non lo vede. Qui: Aperti il sabato.
 3. Premi **Crea la campagna**: si apre il suo riepilogo.
 
@@ -2160,6 +2160,77 @@ partite, aperte, cliccate, quante persone sono uscite e perché.
 - [ ] Ho mandato una prova alla lista dei test e l'ho aperta, anche dal telefono.
 - [ ] Il numero dei destinatari è quello che mi aspetto.
 - [ ] In Impostazioni c'è l'indirizzo dell'azienda (sotto, "Il piede dell'email").
+
+### Il test A/B
+
+Un test A/B prova due versioni della stessa campagna su due piccoli gruppi di contatti, scelti a caso. Dopo il tempo che
+decidi, la versione che è andata meglio parte da sola a tutti gli altri. Si provano due cose: **l'oggetto** (stessa email,
+due oggetti) oppure **il contenuto** (stesso oggetto, due design).
+
+Esempio: la campagna "Novità di novembre" a 30 lettori, con due oggetti. 6 lettori ricevono "Le novità di novembre", altri
+6 "Novembre: tre idee per te"; dopo 4 ore vince quello aperto da più persone, e parte agli altri 18.
+
+**Newsletter e form > Campagne email > Crea una campagna.**
+
+![Crea un test A/B](immagini/manuale-uso/19n-crea.jpg)
+
+1. Scegli **Test A/B**.
+2. Scrivi il nome della campagna (lo vedi solo tu).
+3. Premi **Crea la campagna**.
+
+Il riepilogo è quello di ogni campagna, con una sezione in più, **Test A/B**, dopo Destinatari. Compila Mittente,
+Destinatari, Oggetto e Design come per una campagna normale: sono la **versione A**. Poi apri **Test A/B**.
+
+![La sezione Test A/B](immagini/manuale-uso/19n-sezione.jpg)
+
+1. **Cosa vuoi provare**: l'oggetto o il contenuto.
+2. Con l'oggetto: scrivi l'**oggetto della versione B** (e, se vuoi, il suo testo di anteprima). Deve essere diverso da
+   quello della A, sennò la sezione resta da completare.
+3. **Grandezza di ogni gruppo di prova**: sposta il cursore, da 1% a 50%. Sotto leggi quanti contatti ricevono la A, quanti
+   la B e quanti aspettano la vincente. Con 50% non resta nessuno: il test serve solo per sapere quale è andata meglio.
+4. **Come si sceglie la versione vincente**: il tasso di apertura (quanti l'hanno aperta) o il tasso di clic (quanti hanno
+   cliccato un link).
+5. **Durata del test**: in ore (da 1 a 23) o in giorni (da 1 a 7), dalla partenza dei gruppi di prova.
+6. Premi **Salva il test A/B**.
+
+Con il **contenuto**, la versione B nasce come copia della A. Nella sezione Design compaiono due schede:
+
+![Le due versioni del design](immagini/manuale-uso/19n-versioni.jpg)
+
+1. **Versione A** e **Versione B**: scegli quale cambiare. La scheda colorata è quella che stai guardando.
+2. Per ogni versione scegli come fare il design (editor a blocchi, un tuo modello, la galleria, editor semplice, codice
+   HTML), come per una campagna normale. Le due versioni possono usare editor diversi.
+
+In **Anteprima e prova** le schede Versione A e Versione B mostrano le due email; **Manda la prova** manda tutte e due, con
+"[PROVA A]" e "[PROVA B]" davanti all'oggetto.
+
+Si manda con **Invia subito** o con **Programma** (niente invio a lotti nel test A/B). Al primo giro del cron partono i due
+gruppi di prova. Nel riepilogo leggi a che punto è e quando si sceglie:
+
+![Il test in corso](immagini/manuale-uso/19n-in-corso.jpg)
+
+Alla fine della durata, al primo giro del cron (entro 5 minuti), si sceglie la vincente e parte agli altri. Se le due
+versioni hanno lo stesso tasso (anche zero), è **pari** e agli altri parte la versione A. Ognuno riceve una versione sola.
+Nel **Report** della campagna c'è il riquadro **Risultati del test A/B**:
+
+![I risultati del test A/B](immagini/manuale-uso/19n-risultati.jpg)
+
+1. Chi ha vinto, per quale criterio e quando (oppure "Non ancora", con l'ora in cui si sceglie, oppure "Pari").
+2. La versione vincente è segnata con **Vincente**.
+3. **Il resto**: quante email della versione vincente sono partite agli altri.
+
+Nell'elenco delle campagne il test si riconosce dalla scritta **Test A/B** accanto al nome. **Duplica** fa un altro test A/B
+con le stesse impostazioni; **Invia ai nuovi contatti** e **Rimanda ai non aperti** mandano la versione vincente, quindi si
+usano dopo la fine del test.
+
+**Checklist del test A/B**
+
+- [ ] Ho cambiato una cosa sola: l'oggetto oppure il contenuto.
+- [ ] Le due versioni sono davvero diverse (oggetto B diverso dalla A, oppure design B cambiato).
+- [ ] I gruppi di prova hanno abbastanza persone: con pochi contatti il risultato dipende dal caso.
+- [ ] Per il criterio dei clic, tutte e due le versioni hanno un link da cliccare.
+- [ ] La durata lascia il tempo di aprire l'email (qualche ora, o un giorno se scrivi la sera).
+- [ ] Ho guardato l'anteprima delle due versioni e ho mandato la prova.
 
 ### L'elenco delle campagne
 

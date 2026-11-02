@@ -21,6 +21,7 @@
 // 2.10.0: il capitolo 19j (Segmenti, Aggiungi filtro, viste) dopo il 19i, di cui usa i contatti: SOLO_CAPITOLI=19i,19j.
 // 2.11.0: il capitolo 19k (la campagna a riepilogo, l'elenco, la pagina per uscire, il centro preferenze) dopo il 19, il 19i e il
 //   19j: SOLO_CAPITOLI=19,19i,19j,19k, con CMS_DIR_MANUALE e POSTA_MANUALE (la campagna parte davvero).
+// 2.13.0: il capitolo 19n (il test A/B) gira da solo: SOLO_CAPITOLI=19n, con CMS_DIR_MANUALE e POSTA_MANUALE.
 const { chromium } = require('playwright');
 const pnConferme = require('../prove/conferme-pannello'); // UX 2026-11: conferme del pannello
 const fs = require('fs');
@@ -846,6 +847,70 @@ capitoli['19m'] = async () => {
   await p.click('#nd-dlg-anteprima [data-chiudi-dialogo]');
   await vai('newsletter-modelli.php');
   await foto('19m-modelli', { clip: { x: 240, y: 56, width: 960, height: 760 }, segni: [{ sel: '#ndm-nuovo', n: 1 }, { sel: '.ndm-tabella tbody tr:first-child .ndm-stato', n: 2 }, { sel: '.ndm-tabella tbody tr:first-child .ndm-azioni', n: 3 }, { sel: '#ndm-doi', n: 4 }] });
+};
+
+// 19n. Il test A/B (2.13.0): la campagna "Novità di novembre" con due oggetti, mandata a 30 lettori finti (lista "Lettori
+// del blog"); le aperture si segnano dal database e il tempo si sposta con prove/campagne-cli.php (ab_indietro), poi il
+// giro del cron sceglie la vincente. Da solo: SOLO_CAPITOLI=19n, con CMS_DIR_MANUALE e POSTA_MANUALE.
+capitoli['19n'] = async () => {
+  const DIRM = process.env.CMS_DIR_MANUALE;
+  if (!DIRM) throw new Error('19n: serve CMS_DIR_MANUALE');
+  const cli = (...a) => JSON.parse(require('child_process').execFileSync('php', [path.join(__dirname, '..', 'prove', 'campagne-cli.php'), DIRM, ...a.map(String)], { encoding: 'utf8' }).trim().split('\n').pop());
+  cli('sql', "INSERT IGNORE INTO {p}newsletter_liste (nome, descrizione, creato) VALUES ('Lettori del blog', '', NOW())");
+  const lista = +Object.values(cli('sql', "SELECT id FROM {p}newsletter_liste WHERE nome = 'Lettori del blog'")[0])[0];
+  const nomi = ['Anna', 'Bruno', 'Carla', 'Davide', 'Elisa', 'Franco', 'Giada', 'Ivo', 'Laura', 'Marco'];
+  for (let k = 1; k <= 30; k++) {
+    const e = `lettore${k}@esempio.it`;
+    cli('sql', `INSERT IGNORE INTO {p}newsletter_iscritti (email, nome, stato, fonte, creato, aggiornato) VALUES ('${e}', '${nomi[k % 10]}', 'attivo', 'manuale', NOW(), NOW())`);
+    cli('sql', `INSERT IGNORE INTO {p}newsletter_iscritti_liste (iscritto_id, lista_id, aggiunto) SELECT id, ${lista}, NOW() FROM {p}newsletter_iscritti WHERE email = '${e}'`);
+  }
+  await postaFinta();
+  await vai('newsletter.php?crea=1');
+  await p.check('#nl-crea input[name=tipo][value=ab]');
+  await p.fill('#nl-crea-nome', 'Novità di novembre');
+  await foto('19n-crea', { sel: '#nl-crea', margine: 6, segni: [{ sel: '#nl-crea input[name=tipo][value=ab]', n: 1 }, { sel: '#nl-crea-nome', n: 2 }, { sel: '#nl-crea button[type=submit]', n: 3 }] });
+  await Promise.all([p.waitForNavigation(), p.click('#nl-crea button[type=submit]')]);
+  const idC = new URL(p.url()).searchParams.get('id');
+  const qui2 = (x) => `newsletter-campagna.php?id=${idC}${x}`;
+  await vai(qui2('&apri=destinatari'));
+  await p.locator('#sez-destinatari label', { hasText: 'Lettori del blog' }).locator('input[name="liste[]"]').check();
+  await Promise.all([p.waitForNavigation(), p.click('#sez-destinatari button[type=submit]')]);
+  await vai(qui2('&apri=oggetto'));
+  await p.fill('#oggetto', 'Le novità di novembre');
+  await Promise.all([p.waitForNavigation(), p.click('#sez-oggetto button[type=submit]')]);
+  await vai(qui2('&apri=design'));
+  await p.locator('#editor .ql-editor').click(); await p.keyboard.type('Ciao {{ contact.NOME }}, ecco cosa c\'è di nuovo in negozio questo mese.');
+  await Promise.all([p.waitForNavigation(), p.click('#nl-form button[type=submit]')]);
+  await vai(qui2('&apri=ab'));
+  await p.fill('#nlr-oggetto-b', 'Novembre: tre idee per te, {{ contact.NOME }}');
+  await p.evaluate(() => { const r = document.getElementById('nlr-ab-perc'); r.value = 20; r.dispatchEvent(new Event('input', { bubbles: true })); });
+  await foto('19n-sezione', { sel: '#sez-ab', margine: 6, segni: [{ sel: '#sez-ab fieldset.nlk-scelte', n: 1 }, { sel: '#nlr-oggetto-b', n: 2 }, { sel: '#nlr-ab-perc', n: 3 }, { sel: '#sez-ab fieldset.nlk-scelte:nth-of-type(2)', n: 4 }, { sel: '#nlr-ab-durata', n: 5 }, { sel: '#sez-ab button[type=submit]', n: 6 }] });
+  await Promise.all([p.waitForNavigation(), p.click('#sez-ab button[type=submit]')]);
+  await vai(qui2(''));
+  await Promise.all([p.waitForNavigation(), p.click('#nlr-invio button.btn-primary')]);
+  await vai('newsletter.php');
+  await Promise.all([p.waitForNavigation(), p.click('form:has(input[value=giro]) button')]);
+  // Aperture: 2 della A, 4 della B; poi le quattro ore passano
+  const apri = (v, quanti) => cli('sql', `INSERT INTO {p}newsletter_eventi (campagna_id, iscritto_id, tipo, url, creato) SELECT ${idC}, iscritto_id, 'apertura', '', NOW() FROM {p}newsletter_coda WHERE campagna_id = ${idC} AND versione = '${v}' AND stato = 'inviata' ORDER BY id LIMIT ${quanti}`);
+  apri('a', 2); apri('b', 4);
+  await vai(qui2(''));
+  await foto('19n-in-corso', { sel: '.nlr-stato-box', margine: 6, segni: [] });
+  cli('ab_indietro', idC, 4 * 3600 + 60);
+  await vai('newsletter.php');
+  await Promise.all([p.waitForNavigation(), p.click('form:has(input[value=giro]) button')]);
+  await vai(qui2(''));
+  await foto('19n-risultati', { sel: '#nlr-ab-risultati', margine: 6, segni: [{ sel: '#nlr-ab-risultati .nlr-ab-esito', n: 1 }, { sel: '#nlr-ab-risultati tr[data-versione=b] .nlr-stato', n: 2 }, { sel: '#nlr-ab-risultati tr[data-versione=r]', n: 3 }] });
+  // Il test sul contenuto: le schede delle due versioni nella sezione Design
+  await vai('newsletter.php?crea=1');
+  await p.check('#nl-crea input[name=tipo][value=ab]');
+  await p.fill('#nl-crea-nome', 'Due vetrine a confronto');
+  await Promise.all([p.waitForNavigation(), p.click('#nl-crea button[type=submit]')]);
+  const idD = new URL(p.url()).searchParams.get('id');
+  await vai(`newsletter-campagna.php?id=${idD}&apri=ab`);
+  await p.check('#sez-ab input[name=cosa][value=design]');
+  await Promise.all([p.waitForNavigation(), p.click('#sez-ab button[type=submit]')]);
+  await vai(`newsletter-campagna.php?id=${idD}&versione=b&apri=design`);
+  await foto('19n-versioni', { sel: '#sez-design', margine: 6, altezza: 420, segni: [{ sel: '#sez-design .nlr-versioni', n: 1 }, { sel: '#sez-design .nd-strade', n: 2 }] });
 };
 
 // 19j. I segmenti, Aggiungi filtro e le viste (2.10.0). Dopo il 19i: usa i contatti importati ("Clienti del negozio",
