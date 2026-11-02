@@ -2,6 +2,19 @@
 
 Il prodotto si chiama **plumeCMS** (nome scelto il 26 ottobre 2026; prima, per poche ore, "CarbonaraCMS", e ancora prima il provvisorio "Officina": gli zip vecchi si chiamavano `officina-*` e `carbonaracms-*`).
 
+## 2.13.0 (2 novembre 2026) - Il test A/B delle campagne
+
+- **Crea una campagna > Test A/B**: si prova l'**oggetto** (con il testo di anteprima) oppure il **contenuto** (due design,
+  con tutte e cinque le strade, anche l'editor a blocchi; la versione B nasce come copia della A).
+- Nel riepilogo la parte **Test A/B**: grandezza dei due gruppi di prova (fino al 50% dei destinatari, scelti a caso),
+  criterio (aperture o clic), durata in ore (fino a 23) o giorni (fino a 7). Si manda subito o si programma.
+- Alla fine della durata il cron sceglie la versione vincente e la manda a tutti gli altri, una volta sola; a pari merito
+  parte la A. Nessuno riceve due versioni.
+- **Risultati** nel report della campagna (le due versioni con invii, aperture, clic e tassi, la vincente, il resto) e la
+  scritta "Test A/B" nell'elenco. La prova manda tutte e due le versioni; la versione web mostra quella ricevuta.
+- Corretto: il blocco dell'invio delle newsletter valeva per tutto il server MySQL, e due siti sullo stesso server con lo
+  stesso prefisso delle tabelle si fermavano l'invio a vicenda. Ora ha il nome del database.
+
 ## 2.12.0 (2 novembre 2026) - L'editor delle email a blocchi
 
 - **Editor delle email a blocchi** (nella campagna, Design > Editor a blocchi): linguette Contenuti, Modifica, Stile e

@@ -183,6 +183,11 @@ def funzionalita():
                        'plumeCMS fa le cose che ti servono davvero, e le fa nello stesso posto. Ecco cosa trovi dentro, con le schermate vere del pannello.',
                        livello='h1', centro=True)]], larghezza='stretta', **spazi(72, 32))
     blocchi = [
+        ('test-ab', 'test-ab.webp', 'Due versioni, vince la migliore',
+         ['Dalla 2.13.0 il test A/B: due oggetti o due email diverse vanno a due piccoli gruppi presi a caso. Dopo le ore o i giorni che scegli, plumeCMS guarda chi ha aperto o cliccato di più e manda la versione vincente a tutti gli altri.',
+          '<ul><li>Decidi tu quanto sono grandi i gruppi di prova, fino a metà dei destinatari, e cosa conta: aperture o clic.</li>'
+          '<li>Nessuno riceve due versioni; il resto parte una volta sola.</li>'
+          '<li>Il risultato resta nel report della campagna, con i numeri delle due versioni.</li></ul>']),
         ('editor-email', 'editor-email.webp', 'Email belle, senza saper scrivere codice',
          ['Dalla 2.12.0 le email si compongono a blocchi: titoli, testi, immagini, pulsanti, social e video, in una, due o tre colonne. Le trascini, le vedi come al computer e come al telefono, e l\'email esce pronta per ogni programma di posta.',
           '<ul><li>Sei modelli pronti: benvenuto, newsletter del mese, offerta, evento, nuovo articolo, conferma dell\'iscrizione.</li>'
@@ -645,7 +650,7 @@ def editor_json():
 
 
 # ------------------------------------------------------------------ file
-USATE = ['editor-email', 'campagne', 'infografiche', 'segmenti', 'importa-contatti', 'contatti-brevo', 'email-conferma', 'pannello-chiaro', 'copertina', 'installa-ora', 'scegli-sito', 'consegna', 'widget-2-1', 'scegli-media', 'addon', 'su-misura', 'firma', 'widget-attivita', 'social', 'fine-articolo', 'importa-wp', 'tipo-sito', 'primi-passi', 'aspetti', 'controlla-server', 'sezioni', 'copia', 'installa-1', 'installa-2', 'installa-3', 'installa-4', 'installa-5', 'editor-ritratto', 'editor', 'aperture', 'stile', 'modelli', 'versioni', 'seo', 'flussi', 'download', 'sicurezza', 'aggiornamenti', 'temi',
+USATE = ['test-ab', 'editor-email', 'campagne', 'infografiche', 'segmenti', 'importa-contatti', 'contatti-brevo', 'email-conferma', 'pannello-chiaro', 'copertina', 'installa-ora', 'scegli-sito', 'consegna', 'widget-2-1', 'scegli-media', 'addon', 'su-misura', 'firma', 'widget-attivita', 'social', 'fine-articolo', 'importa-wp', 'tipo-sito', 'primi-passi', 'aspetti', 'controlla-server', 'sezioni', 'copia', 'installa-1', 'installa-2', 'installa-3', 'installa-4', 'installa-5', 'editor-ritratto', 'editor', 'aperture', 'stile', 'modelli', 'versioni', 'seo', 'flussi', 'download', 'sicurezza', 'aggiornamenti', 'temi',
          'tema-cosmo', 'tema-aria', 'tema-bottega',
          'tema-estate', 'tema-inverno', 'tema-autunno', 'tema-primavera', 'tema-giallo', 'tema-rosso', 'tema-verde', 'tema-blu']
 
@@ -693,6 +698,7 @@ def zip_lavagna(dest):
 # Regola di Danilo (1 novembre 2026): solo i punti salienti, una riga per versione, mai nomi di aziende o servizi di terzi.
 # Le novità per chi scarica: brevi, scritte qui (il CHANGELOG è per chi sviluppa). Da aggiornare a ogni versione.
 NOVITA = [
+    ('2.13.0', 'Test A/B delle campagne', ['Due versioni provate su due piccoli gruppi: la migliore parte da sola a tutti gli altri.']),
     ('2.12.0', 'Editor delle email a blocchi', ['Email composte trascinando blocchi e colonne, sei modelli pronti, i tuoi modelli e le sezioni salvate.']),
     ('2.11.0', 'Campagne a riepilogo e centro preferenze', ['Ogni campagna in una pagina con le sue parti, invio programmato e a lotti; chi esce dice perché o sceglie le liste da tenere.']),
     ('2.10.0', 'Segmenti e quindici infografiche', ['Gruppi di contatti che si aggiornano da soli e quindici infografiche disegnate nell\'editor: 107 widget.']),

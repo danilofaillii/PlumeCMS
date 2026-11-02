@@ -229,7 +229,7 @@ async function contrastoParole(pg) {
       const voci = [...col.querySelectorAll('li')];
       return { voci: voci.map(e => e.textContent.trim()), fondo: Math.max(...voci.map(e => e.getBoundingClientRect().bottom)), sinistra: g.getBoundingClientRect().bottom };
     });
-    ok('Scarica: novità, elenco breve con l\'ultima versione in cima', r && r.voci.length >= 3 && r.voci.length <= 8 && /^2\.12\.0: Editor delle email a blocchi/.test(r.voci[0]), r && r.voci);
+    ok('Scarica: novità, elenco breve con l\'ultima versione in cima', r && r.voci.length >= 3 && r.voci.length <= 8 && /^2\.13\.0: Test A\/B delle campagne/.test(r.voci[0]), r && r.voci);
     const terzi = (r ? r.voci.join(' ') : '').match(/brevo|google|wordpress|linkedin|facebook|instagram|whatsapp|telegram|mailgun|amazon|dropbox|indexnow|search console|gnu/gi) || [];
     ok('Scarica: nelle novità nessun nome di aziende terze', r && terzi.length === 0, terzi);
     ok('Scarica: le novità finiscono non oltre il riquadro Cosa serve', r && r.fondo <= r.sinistra + 2, r && { fondo: r.fondo, sinistra: r.sinistra }); }
@@ -246,7 +246,7 @@ async function contrastoParole(pg) {
     && await v.evaluate(() => [...document.images].some(i => /contatti-brevo/.test(i.currentSrc || i.src) && i.complete && i.naturalWidth > 0)));
   ok('Funzionalità (2.9.0): I tuoi contatti entrano in quattro passi', /I tuoi contatti entrano in quattro passi/.test(await v.locator('body').innerText())
     && await v.evaluate(() => [...document.images].some(i => /importa-contatti/.test(i.currentSrc || i.src) && i.complete && i.naturalWidth > 0)));
-  for (const [id, t] of [['editor-email', 'Email belle, senza saper scrivere codice'], ['campagne', 'Una campagna, un riepilogo'], ['infografiche', 'Quindici infografiche disegnate'], ['segmenti', 'Scrivi solo a chi ti interessa']])
+  for (const [id, t] of [['test-ab', 'Due versioni, vince la migliore'], ['editor-email', 'Email belle, senza saper scrivere codice'], ['campagne', 'Una campagna, un riepilogo'], ['infografiche', 'Quindici infografiche disegnate'], ['segmenti', 'Scrivi solo a chi ti interessa']])
     ok(`Funzionalità (2.10.0): ${t}`, (await v.locator('body').innerText()).includes(t)
       && await v.evaluate((id) => [...document.images].some(i => new RegExp(id + '\\.webp').test(i.currentSrc || i.src) && i.complete && i.naturalWidth > 0), id));
   ok('Header e footer (2.6.0): il logo è quello dello Stile del sito', await v.evaluate(() => [...document.querySelectorAll('.marchio img')].length >= 2 && [...document.querySelectorAll('.marchio img')].every(i => /marchio/.test(i.getAttribute('src')))));
