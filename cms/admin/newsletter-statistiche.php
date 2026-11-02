@@ -118,22 +118,24 @@ $data = fn(string $d) => date('d/m/Y', strtotime($d));
 <?php $flussi = newsletter_flussi(); $motivi = newsletter_uscite_motivi_conta(0); ?>
 <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,320px),1fr));gap:1.2rem">
   <div class="form-card"><h3>Automazioni</h3>
+    <?php if (!$flussi): ?><p>Ancora nessuna automazione. <a href="newsletter-flussi.php#fl-crea">Creane una</a>.</p><?php else: ?>
     <table class="table">
       <thead><tr><th>Automazione</th><th>In corso</th><th>Finiti</th><th>Email mandate</th></tr></thead>
       <tbody>
-      <?php if (!$flussi): ?><tr><td colspan="4">Ancora nessuna automazione. <a href="newsletter-flussi.php#fl-crea">Creane una</a>.</td></tr><?php endif; ?>
       <?php foreach ($flussi as $f): ?><tr><td><a href="newsletter-flussi.php?id=<?= (int)$f['id'] ?>"><?= h($f['nome']) ?></a><?= ($f['stato'] ?? ($f['attivo'] ? 'attiva' : 'inattiva')) === 'attiva' ? '' : ' <span class="badge badge-draft">' . h(defined('NL_AUT_STATI') ? NL_AUT_STATI[$f['stato']] : 'spenta') . '</span>' ?></td><td><?= (int)$f['in_corso'] ?></td><td><?= (int)$f['finiti'] ?></td><td><?= (int)$f['inviate'] ?></td></tr><?php endforeach; ?>
       </tbody>
     </table>
+    <?php endif; ?>
   </div>
   <div class="form-card" id="st-motivi"><h3>Perché sono usciti (tutte le campagne)</h3>
+    <?php if (!$motivi['totale']): ?><p>Ancora nessuna risposta al questionario della pagina di disiscrizione. Le domande si cambiano in <a href="newsletter.php?scheda=impostazioni#nl-pagine">Impostazioni</a>.</p><?php else: ?>
     <table class="table">
       <thead><tr><th>Motivo</th><th>Risposte</th><th>Sul totale</th></tr></thead>
       <tbody>
-      <?php if (!$motivi['totale']): ?><tr><td colspan="3">Ancora nessuna risposta al questionario della pagina di disiscrizione. Le domande si cambiano in <a href="newsletter.php?scheda=impostazioni#nl-pagine">Impostazioni</a>.</td></tr><?php endif; ?>
-      <?php if ($motivi['totale']) foreach ($motivi['n'] as $k => $v): ?><tr><td><?= h(NL_USCITA_MOTIVI[$k]) ?></td><td><b><?= (int)$v ?></b></td><td><?= round($v * 100 / $motivi['totale']) ?>%</td></tr><?php endforeach; ?>
+      <?php foreach ($motivi['n'] as $k => $v): ?><tr><td><?= h(NL_USCITA_MOTIVI[$k]) ?></td><td><b><?= (int)$v ?></b></td><td><?= round($v * 100 / $motivi['totale']) ?>%</td></tr><?php endforeach; ?>
       </tbody>
     </table>
+    <?php endif; ?>
     <?php if ($motivi['altri']): ?><p style="font-size:.85rem;margin:.6rem 0 .2rem"><b>Le ultime risposte «Altro»</b></p><ul style="font-size:.85rem;margin:0;padding-left:1.2rem"><?php foreach ($motivi['altri'] as $x): ?><li><?= h(newsletter_4byte_fuori((string)$x['altro'])) ?> <span class="nlx-sotto" style="display:inline">(<?= h(substr((string)$x['creato'], 0, 10)) ?>)</span></li><?php endforeach; ?></ul><?php endif; ?>
   </div>
 </div>

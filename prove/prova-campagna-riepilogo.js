@@ -83,8 +83,10 @@ const href = (html, re) => { const m = html.match(new RegExp('href="([^"]*' + re
   await vai('newsletter.php?crea=1');
   ok('Crea una campagna: tipo Normale e il nome', await p.locator('#nl-crea input[name=tipo][value=normale]').isChecked() && await p.locator('#nl-crea-nome').isVisible());
   const tk = await p.locator('#nl-crea input[name=_csrf]').inputValue();
+  // Le campagne senza nome di prima della 2.11.0 (seminate da contatti-cli.php) non contano: si guarda che non ne nasca una nuova.
+  const senzaNome0 = num("SELECT COUNT(*) FROM {p}newsletter_campagne WHERE nome = ''");
   const r0 = await ctx.request.post(B + '/admin/newsletter.php', { form: { _csrf: tk, azione: 'nuova', nome: '  ' }, maxRedirects: 0 });
-  ok('senza nome la campagna non nasce', r0.status() === 302 && !/newsletter-campagna/.test(r0.headers()['location'] || '') && num("SELECT COUNT(*) FROM {p}newsletter_campagne WHERE nome = ''") === 0, r0.headers()['location']);
+  ok('senza nome la campagna non nasce', r0.status() === 302 && !/newsletter-campagna/.test(r0.headers()['location'] || '') && num("SELECT COUNT(*) FROM {p}newsletter_campagne WHERE nome = ''") === senzaNome0, r0.headers()['location']);
   await vai('newsletter.php?crea=1');
   await p.fill('#nl-crea-nome', 'CR Prima');
   await invia('#nl-crea button[type=submit]');
