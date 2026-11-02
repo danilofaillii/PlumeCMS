@@ -159,7 +159,7 @@ def home():
         ('tavolozza', 'Temi', 'Tre temi pronti e un manuale per disegnarti il tuo. Il tema cambia l\'aspetto, mai i contenuti.', '/temi/'),
         ('storia', 'Versioni', 'Ogni salvataggio lascia una versione: la confronti, la guardi in anteprima, ci torni con un clic.', '/funzionalita/#versioni'),
         ('grafico-su', 'SEO e AEO', 'Sitemap, robots, dati strutturati, llms.txt, IndexNow e Search Console. Per Google e per le intelligenze artificiali.', '/funzionalita/#seo'),
-        ('email', 'Newsletter, form e social', 'Iscrizioni con doppia conferma, campagne, flussi automatici, form e popup. E ogni mattina i post pronti per i social.', '/funzionalita/#social'),
+        ('email', 'Newsletter, form e social', 'Iscrizioni con doppia conferma, campagne, automazioni, form e popup. E ogni mattina i post pronti per i social.', '/funzionalita/#social'),
         ('scudo-spunta', 'Sicurezza', 'Due fattori, blocchi contro i tentativi, CSP, pacchetti firmati. Messo alla prova con più di 500 attacchi.', '/funzionalita/#sicurezza'),
     ]
     riq = lambda f: w('riquadro_icona', icona=f[0], titolo=f[1], testo=f[2], link={'url': f[3], 'nuova': False}, livello='h3', vista='impilata', allineamento={'d': 'left'})
@@ -183,6 +183,11 @@ def funzionalita():
                        'plumeCMS fa le cose che ti servono davvero, e le fa nello stesso posto. Ecco cosa trovi dentro, con le schermate vere del pannello.',
                        livello='h1', centro=True)]], larghezza='stretta', **spazi(72, 32))
     blocchi = [
+        ('automazioni', 'automazioni.webp', 'Lavora anche quando dormi',
+         ['Dalla 2.15.0 le automazioni: disegni il percorso sulla tela, con i blocchi uno sotto l\'altro, e plumeCMS lo fa fare a ogni persona che entra. Un benvenuto in tre email, gli auguri il giorno del compleanno, un richiamo a chi non apre da tre mesi.',
+          '<ul><li>Si entra quando ci si iscrive, si viene tolti da una lista, arriva una data o lo decidi tu: fino a dieci inneschi.</li>'
+          '<li>Attese, bivi su aperture e clic, rami con i filtri dei segmenti, divisioni in percentuale.</li>'
+          '<li>Su ogni blocco vedi quanti ci sono adesso e quanti ci sono passati; chi vuoi lo togli con un clic.</li></ul>']),
         ('report', 'report.webp', 'Sai cosa ha funzionato',
          ['Dalla 2.14.0 ogni campagna ha il suo report: consegnate, aperture, clic, disiscrizioni e rimbalzi, con i tassi calcolati sulle email arrivate davvero. Se qualcosa va oltre il segno, il report te lo dice in parole.',
           '<ul><li>La mappa dei clic sull\'email: accanto a ogni link quante persone l\'hanno cliccato.</li>'
@@ -212,7 +217,7 @@ def funzionalita():
          ['Dalla 2.10.0 i segmenti: gruppi di contatti che si aggiornano da soli. Chi abita a Bologna ed è cliente, chi non apre le tue email da tre mesi, chi ha cliccato l\'ultima campagna.',
           '<ul><li>Fino a cento condizioni, unite da E e da O: campi dei contatti, liste, email aperte e cliccate, form inviati.</li>'
           '<li>Il numero dei contatti si aggiorna mentre scrivi le condizioni; dieci modelli pronti per partire.</li>'
-          '<li>Gli stessi filtri nella pagina Contatti, con le viste salvate, e nei bivi dei flussi automatici.</li></ul>']),
+          '<li>Gli stessi filtri nella pagina Contatti, con le viste salvate, e nei rami delle automazioni.</li></ul>']),
         ('importa-contatti', 'importa-contatti.webp', 'I tuoi contatti entrano in quattro passi',
          ['Dalla 2.9.0 porti dentro i contatti da un file CSV, TXT o Excel, oppure li incolli: carichi, abbini ogni colonna a un campo, scegli la lista e confermi.',
           '<ul><li>Le colonne con lo stesso nome di un campo si abbinano da sole; le altre diventano campi nuovi o restano fuori.</li>'
@@ -280,7 +285,7 @@ def funzionalita():
          ['Sitemap, robots.txt, dati strutturati (articoli, domande frequenti, briciole di pane), titoli e descrizioni per ogni pagina, redirect e pagine 404 sotto controllo.',
           'In più quello che serve alle risposte delle intelligenze artificiali: <code>llms.txt</code>, riassunti in testa, risposte brevi. E gli avvisi ai motori con IndexNow e Search Console.']),
         ('newsletter', 'flussi.webp', 'Newsletter, form e popup',
-         ['Iscrizioni con doppia conferma, liste, campagne programmate, flussi automatici (benvenuto, promemoria, bivi), aperture e clic contati. I form li costruisci nel pannello, e per ognuno scegli chi riceve l\'email a ogni compilazione; i popup decidi tu quando e dove.',
+         ['Iscrizioni con doppia conferma, liste, campagne programmate, automazioni (benvenuto, promemoria, bivi), aperture e clic contati. I form li costruisci nel pannello, e per ognuno scegli chi riceve l\'email a ogni compilazione; i popup decidi tu quando e dove.',
           'Le email partono dal tuo server, a giri, senza servizi esterni da pagare.']),
         ('social', 'social.webp', 'I social, pronti ogni mattina',
          ['Il giorno in cui esce un articolo ti arriva un\'email: <strong>"Oggi sul sito"</strong>. Dentro c\'è tutto per pubblicarlo: le due immagini della misura giusta, 1200x630 per LinkedIn e Facebook e 1080x1350 per Instagram, e il testo pronto per ogni canale, con il link e i tuoi hashtag. Copi, incolli, pubblichi.',
@@ -655,7 +660,7 @@ def editor_json():
 
 
 # ------------------------------------------------------------------ file
-USATE = ['report', 'test-ab', 'editor-email', 'campagne', 'infografiche', 'segmenti', 'importa-contatti', 'contatti-brevo', 'email-conferma', 'pannello-chiaro', 'copertina', 'installa-ora', 'scegli-sito', 'consegna', 'widget-2-1', 'scegli-media', 'addon', 'su-misura', 'firma', 'widget-attivita', 'social', 'fine-articolo', 'importa-wp', 'tipo-sito', 'primi-passi', 'aspetti', 'controlla-server', 'sezioni', 'copia', 'installa-1', 'installa-2', 'installa-3', 'installa-4', 'installa-5', 'editor-ritratto', 'editor', 'aperture', 'stile', 'modelli', 'versioni', 'seo', 'flussi', 'download', 'sicurezza', 'aggiornamenti', 'temi',
+USATE = ['automazioni', 'report', 'test-ab', 'editor-email', 'campagne', 'infografiche', 'segmenti', 'importa-contatti', 'contatti-brevo', 'email-conferma', 'pannello-chiaro', 'copertina', 'installa-ora', 'scegli-sito', 'consegna', 'widget-2-1', 'scegli-media', 'addon', 'su-misura', 'firma', 'widget-attivita', 'social', 'fine-articolo', 'importa-wp', 'tipo-sito', 'primi-passi', 'aspetti', 'controlla-server', 'sezioni', 'copia', 'installa-1', 'installa-2', 'installa-3', 'installa-4', 'installa-5', 'editor-ritratto', 'editor', 'aperture', 'stile', 'modelli', 'versioni', 'seo', 'flussi', 'download', 'sicurezza', 'aggiornamenti', 'temi',
          'tema-cosmo', 'tema-aria', 'tema-bottega',
          'tema-estate', 'tema-inverno', 'tema-autunno', 'tema-primavera', 'tema-giallo', 'tema-rosso', 'tema-verde', 'tema-blu']
 
@@ -703,6 +708,7 @@ def zip_lavagna(dest):
 # Regola di Danilo (1 novembre 2026): solo i punti salienti, una riga per versione, mai nomi di aziende o servizi di terzi.
 # Le novità per chi scarica: brevi, scritte qui (il CHANGELOG è per chi sviluppa). Da aggiornare a ogni versione.
 NOVITA = [
+    ('2.15.0', 'Le automazioni', ['Percorsi disegnati sulla tela con inneschi, attese, bivi e rami: ognuno riceve l\'email giusta al momento giusto.']),
     ('2.14.0', 'Report, statistiche e orario migliore', ['Il report di ogni campagna con la mappa dei clic, le statistiche di un periodo e l\'invio all\'ora in cui ognuno apre.']),
     ('2.13.0', 'Test A/B delle campagne', ['Due versioni provate su due piccoli gruppi: la migliore parte da sola a tutti gli altri.']),
     ('2.12.0', 'Editor delle email a blocchi', ['Email composte trascinando blocchi e colonne, sei modelli pronti, i tuoi modelli e le sezioni salvate.']),

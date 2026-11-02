@@ -2,6 +2,25 @@
 
 Il prodotto si chiama **plumeCMS** (nome scelto il 26 ottobre 2026; prima, per poche ore, "CarbonaraCMS", e ancora prima il provvisorio "Officina": gli zip vecchi si chiamavano `officina-*` e `carbonaracms-*`).
 
+## 2.15.0 (2 novembre 2026) - Le automazioni
+
+- **I flussi diventano Automazioni**: barra con nome, tag e stato (Attiva, In pausa, Inattiva), numeri di entrati, in corso,
+  finiti e usciti. Pannello a schede **Inneschi**, **Azioni**, **Regole** (anche da tastiera); "+" sotto un passo per
+  aggiungere e collegare.
+- **Inneschi**: fino a 10 per automazione. Nuovi: tolto da una lista, disiscritto, anniversario di una data (anche N giorni
+  prima, una volta l'anno), aggiunto a mano.
+- **Azioni**: email, aggiungi o togli da una lista, aggiorna un attributo, webhook firmato (solo https, mai verso indirizzi
+  interni o della rete locale).
+- **Regole**: attesa da 1 minuto, attendi un evento (apre o clicca) con un massimo, divisione condizionale fino a 8 rami con
+  "altrimenti" (con i filtri dei segmenti), divisione in percentuale, Fine.
+- **Passo Email**: mittente, oggetto, anteprima, testo semplice, editor a blocchi o modello; parte subito, a un'ora precisa o
+  all'orario migliore.
+- **Impostazioni**: rientro con le ore di attesa, condizioni di uscita (si disiscrive, entra in un segmento) controllate anche
+  durante un'attesa. **Modelli**: Benvenuto, Anniversario, Attività di marketing.
+- **Statistiche per passo** sulla tela (quanti ci sono, quanti sono passati, aperture e clic delle email) e **Attività e
+  registro**: chi è dentro, Togli, Aggiungi a mano, registro di 90 giorni.
+- I flussi di prima continuano dove erano, con le stesse email; un flusso spento diventa Inattiva.
+
 ## 2.14.0 (2 novembre 2026) - Report, statistiche e orario migliore
 
 - **Report della campagna** a schede (Panoramica, Aperture, Clic, Disiscrizioni, Rimbalzi): destinatari, inviate, consegnate,
