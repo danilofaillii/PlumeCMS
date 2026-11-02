@@ -106,7 +106,7 @@ Sono gli unici in `cms/docs/`, nello zip, nel sito di plumeCMS e nella pagina Do
 - **Pacchetto di aggiornamento** per un'installazione esistente:
   `python3 tools/cms-pacchetto.py --aggiornamento`. Si carica dal pannello,
   Impostazioni, Aggiornamenti.
-- **Versione**: `cms/VERSIONE` (oggi 2.12.0; sempre tre numeri: "beta" va nel CHANGELOG, mai nel nome dello zip, se no la serie "ultima" del Download non lo riconosce) e una voce in `cms/CHANGELOG.md` a ogni
+- **Versione**: `cms/VERSIONE` (oggi 2.13.0; sempre tre numeri: "beta" va nel CHANGELOG, mai nel nome dello zip, se no la serie "ultima" del Download non lo riconosce) e una voce in `cms/CHANGELOG.md` a ogni
   zip con contenuto diverso. Mai cambiare il contenuto di una versione già data.
 - **Prove** prima di dire finito:
   - `php -n -d short_open_tag=1 -l` su ogni file PHP toccato, `node --check` sui js;
@@ -144,6 +144,14 @@ Le decisioni complete, con data e perché, stanno nel second brain, `plumecms/de
 - **Nome: plumeCMS** (26 ottobre 2026).
 
 ## Stato al 31 ottobre 2026
+
+Fatto: plumeCMS 2.13.0 (2 novembre): fase 6 del piano Brevo, test A/B (agente, ramo `fase6-ab-brevo`: `includes/newsletter-ab.php`,
+tabella `newsletter_ab`, colonna `newsletter_coda.versione`, gruppo di attacchi 35). Corretto da me il blocco `GET_LOCK` dell'invio
+(`newsletter_invia_giro()`): ora con `md5(DB_NAME|DB_PREFIX)`, prima due siti sullo stesso MySQL si fermavano a vicenda. Prove: install 37/37
+radice e cartella, test A/B 65/65 nuovo e aggiornato, campagne 100/100 radice e cartella, editor email 107/107, aggiornamento 2.12.0 -> 2.13.0
+13/13 con 20 foto uguali, campagne vecchie al byte 15/15, contatti 94/94 su un sito pulito (`prova-contatti-brevo.js` va lanciata prima di
+`prova-ab.js`: con più di 50 contatti la riga cercata va alla seconda pagina), segmenti 179/179, newsletter 37/37, addon 70/70, attacchi
+362/362, pacchetto unico su un sito 2.12.0 13/13. Zip di aggiornamento 2099 KB, PDF 10077 KB.
 
 Fatto: plumeCMS 2.12.0 (2 novembre): fase 5 del piano Brevo (agente, ramo `fase5-editor-email`): editor delle email a blocchi
 (`admin/newsletter-design.php`, `assets/newsletter-design.js|css`, `includes/newsletter-design.php` da JSON a HTML per la posta), modelli
