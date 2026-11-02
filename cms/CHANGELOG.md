@@ -2,6 +2,23 @@
 
 Il prodotto si chiama **plumeCMS** (nome scelto il 26 ottobre 2026; prima, per poche ore, "CarbonaraCMS", e ancora prima il provvisorio "Officina": gli zip vecchi si chiamavano `officina-*` e `carbonaracms-*`).
 
+## 2.16.0 (2 novembre 2026) - Form a cinque passi, pagine pubbliche e consenso
+
+- **Costruttore dei form a cinque passi** con Avanti: Impostazione, Aspetto e campi, Messaggi, Conferma, Condividi. Tipi
+  Iscrizione, Pop-up, Aggiornamento del profilo, Disiscrizione e Altri form, con una linguetta per tipo nell'elenco.
+- **Campi legati agli attributi** del contatto (la casella da spuntare solo con un attributo Sì/No); blocchi nuovi Iscrizione a
+  più liste, Gruppi di consenso, Consenso al tracciamento. **Dichiarazione GDPR** sopra la casella vuota e **registro del
+  consenso** (testo, data, IP).
+- **Conferma** doppia, semplice o nessuna; lista principale e liste in più; aggiorna i contatti esistenti; modello del doppio
+  opt-in scelto fra i modelli delle email e pagina dopo il clic.
+- **Condividi**: pagina del form pronta (`/modulo/<nome>/`, l'unica che si può mettere in un iframe), codice iframe, codice HTML,
+  HTML semplice che funziona senza JavaScript, QR.
+- **Pagine di disiscrizione** in più, scelte nella campagna; uscita da una sola lista; centro preferenze con i gruppi e il
+  tracciamento; un form di profilo può fare da centro preferenze. Voce nuova **Pagine e consenso**.
+- **Gruppi di consenso** (spenti di partenza) e **consenso al tracciamento**: senza consenso le email partono senza pixel e
+  senza link tracciati, e aperture e clic non contano nei segmenti e nelle automazioni.
+- I form di prima restano uguali: stesso HTML, stesse email, stessi file consegnati e stesse iscrizioni.
+
 ## 2.15.0 (2 novembre 2026) - Le automazioni
 
 - **I flussi diventano Automazioni**: barra con nome, tag e stato (Attiva, In pausa, Inattiva), numeri di entrati, in corso,

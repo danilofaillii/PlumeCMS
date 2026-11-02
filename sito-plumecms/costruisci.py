@@ -183,6 +183,11 @@ def funzionalita():
                        'plumeCMS fa le cose che ti servono davvero, e le fa nello stesso posto. Ecco cosa trovi dentro, con le schermate vere del pannello.',
                        livello='h1', centro=True)]], larghezza='stretta', **spazi(72, 32))
     blocchi = [
+        ('form-passi', 'form-passi.webp', 'Un form in cinque passi',
+         ['Dalla 2.16.0 i form si costruiscono in cinque passi, con Avanti: cosa chiedere, come appare, i messaggi, la conferma, dove metterlo. Ogni campo finisce nella scheda del contatto, e chi si iscrive sceglie le liste che vuole.',
+          '<ul><li>Il form ha la sua pagina pronta da condividere, il codice da mettere in un altro sito e il QR da stampare.</li>'
+          '<li>Doppia conferma, semplice o nessuna; la dichiarazione per la privacy con la casella vuota, e il consenso si ricorda con data e ora.</li>'
+          '<li>Chi non vuole essere seguito riceve le email lo stesso, senza che si contino aperture e clic.</li></ul>']),
         ('automazioni', 'automazioni.webp', 'Lavora anche quando dormi',
          ['Dalla 2.15.0 le automazioni: disegni il percorso sulla tela, con i blocchi uno sotto l\'altro, e plumeCMS lo fa fare a ogni persona che entra. Un benvenuto in tre email, gli auguri il giorno del compleanno, un richiamo a chi non apre da tre mesi.',
           '<ul><li>Si entra quando ci si iscrive, si viene tolti da una lista, arriva una data o lo decidi tu: fino a dieci inneschi.</li>'
@@ -660,7 +665,7 @@ def editor_json():
 
 
 # ------------------------------------------------------------------ file
-USATE = ['automazioni', 'report', 'test-ab', 'editor-email', 'campagne', 'infografiche', 'segmenti', 'importa-contatti', 'contatti-brevo', 'email-conferma', 'pannello-chiaro', 'copertina', 'installa-ora', 'scegli-sito', 'consegna', 'widget-2-1', 'scegli-media', 'addon', 'su-misura', 'firma', 'widget-attivita', 'social', 'fine-articolo', 'importa-wp', 'tipo-sito', 'primi-passi', 'aspetti', 'controlla-server', 'sezioni', 'copia', 'installa-1', 'installa-2', 'installa-3', 'installa-4', 'installa-5', 'editor-ritratto', 'editor', 'aperture', 'stile', 'modelli', 'versioni', 'seo', 'flussi', 'download', 'sicurezza', 'aggiornamenti', 'temi',
+USATE = ['form-passi', 'automazioni', 'report', 'test-ab', 'editor-email', 'campagne', 'infografiche', 'segmenti', 'importa-contatti', 'contatti-brevo', 'email-conferma', 'pannello-chiaro', 'copertina', 'installa-ora', 'scegli-sito', 'consegna', 'widget-2-1', 'scegli-media', 'addon', 'su-misura', 'firma', 'widget-attivita', 'social', 'fine-articolo', 'importa-wp', 'tipo-sito', 'primi-passi', 'aspetti', 'controlla-server', 'sezioni', 'copia', 'installa-1', 'installa-2', 'installa-3', 'installa-4', 'installa-5', 'editor-ritratto', 'editor', 'aperture', 'stile', 'modelli', 'versioni', 'seo', 'flussi', 'download', 'sicurezza', 'aggiornamenti', 'temi',
          'tema-cosmo', 'tema-aria', 'tema-bottega',
          'tema-estate', 'tema-inverno', 'tema-autunno', 'tema-primavera', 'tema-giallo', 'tema-rosso', 'tema-verde', 'tema-blu']
 
@@ -708,6 +713,7 @@ def zip_lavagna(dest):
 # Regola di Danilo (1 novembre 2026): solo i punti salienti, una riga per versione, mai nomi di aziende o servizi di terzi.
 # Le novità per chi scarica: brevi, scritte qui (il CHANGELOG è per chi sviluppa). Da aggiornare a ogni versione.
 NOVITA = [
+    ('2.16.0', 'Form a cinque passi e consenso', ['Form costruiti in cinque passi, con la loro pagina, il codice da incollare e il QR; consenso e preferenze per ogni contatto.']),
     ('2.15.0', 'Le automazioni', ['Percorsi disegnati sulla tela con inneschi, attese, bivi e rami: ognuno riceve l\'email giusta al momento giusto.']),
     ('2.14.0', 'Report, statistiche e orario migliore', ['Il report di ogni campagna con la mappa dei clic, le statistiche di un periodo e l\'invio all\'ora in cui ognuno apre.']),
     ('2.13.0', 'Test A/B delle campagne', ['Due versioni provate su due piccoli gruppi: la migliore parte da sola a tutti gli altri.']),
