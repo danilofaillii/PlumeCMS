@@ -1368,7 +1368,9 @@ echo json_encode($o);
       fs.rmSync(tmp, { recursive: true, force: true });
     } else console.log('--  XLSX cattivi: saltati (serve CMS_DIR)');
     // Formule: importate con Copia e incolla, poi esportate: escono con l'apostrofo davanti
-    const testo = 'EMAIL;NOME;COGNOME\nformula1@sic-prova.it;=HYPERLINK("http://cattivo.it","clic");+cmd|\' /C calc\'!A0\nformula2@sic-prova.it;@SOMMA(1,2);-2+3*cmd|\' /C calc\'!A0\n';
+    // Indirizzi nuovi a ogni giro: quelli di un giro prima sono stati cancellati con l'impronta e un'importazione li scarta (giusto).
+    const g30 = Date.now().toString(36);
+    const testo = `EMAIL;NOME;COGNOME\nformula1-${g30}@sic-prova.it;=HYPERLINK("http://cattivo.it","clic");+cmd|' /C calc'!A0\nformula2-${g30}@sic-prova.it;@SOMMA(1,2);-2+3*cmd|' /C calc'!A0\n`;
     const rc = await carica(admin.ctx, await tokenDi(admin.p, PI), { modo: 'incolla', testo });
     const id30 = idDa(rc);
     const tk30 = await tokenDi(admin.p, PI + '?id=' + id30);
