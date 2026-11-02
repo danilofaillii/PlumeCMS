@@ -54,7 +54,8 @@ Le campagne a riepilogo della 2.11.0 (fase 4 del piano Brevo), con la pagina di 
    `pulisci`): va su un sito da buttare.
 2. `node prove/prova-campagna-riepilogo.js <base> <utente> <password> <porta smtp> <cartella posta> <cartella del CMS> [cartella foto]`.
    Il tempo che passa (ora programmata, secondo lotto) si simula spostando le date nel database.
-3. Atteso (2.11.0): 99 su 99, in radice e in cartella.
+3. Atteso (2.11.0): 99 su 99, in radice e in cartella. Dalla 2.14.1: 102 su 102 (anche il clic tracciato si apre e si conta);
+   con la formula vecchia di `nl_url_evento()` (`MODULI_URL . cms_base()`) in cartella 96 su 102.
 
 ## prova-campagne-vecchie.js
 

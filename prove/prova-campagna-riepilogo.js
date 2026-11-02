@@ -208,6 +208,11 @@ const href = (html, re) => { const m = html.match(new RegExp('href="([^"]*' + re
   ok('in cima il link «Vedi questa email nel browser», firmato', /Vedi questa email nel browser/.test(ma2.html) && /\/newsletter-web\/\?c=\d+&i=\d+&t=[a-f0-9]{24}$/.test(linkWeb), linkWeb);
   const clic = decodeURIComponent((ma2.html.match(/href="[^"]*api\/nl\.php\?a=c[^"]*u=([^"&]+)/) || [])[1] || '');
   ok('UTM sul link verso il sito (dentro il link tracciato)', /\/contatti\/\?utm_source=newsletter&utm_medium=email&utm_campaign=cr-prima$/.test(clic), clic);
+  // 2.14.1: il link tracciato punta a <origine><cartella del CMS>/api/nl.php, con la cartella una volta sola, e porta al sito.
+  const clicUrl = ((ma2.html.match(/href="([^"]*api\/nl\.php\?a=c[^"]*)"/) || [])[1] || '').replace(/&amp;/g, '&');
+  const rcl = clicUrl ? await ctx.request.get(clicUrl, { maxRedirects: 0 }) : null;
+  ok('il clic tracciato si apre e porta al sito (anche in cartella)', !!rcl && rcl.status() === 302 && rcl.headers()['location'] === clic && clicUrl.startsWith(B.replace(/\/$/, '') + '/api/nl.php?') && !/\/([^/]+)\/\1\/api\/nl\.php/.test(clicUrl), [clicUrl.replace(/\?.*/, ''), rcl && rcl.status(), rcl && rcl.headers()['location']]);
+  ok('il clic si conta', num(`SELECT COUNT(*) FROM {p}newsletter_eventi WHERE campagna_id = ${c1} AND tipo = 'clic' AND iscritto_id = ${C.a2}`) === 1);
   ok('testo semplice generato: c\'è, con il link per uscire e l\'indirizzo', /Ciao Bruno, ecco le novità/.test(ma2.testo) && /newsletter-esci\/\?i=/.test(ma2.testo) && /Studio CR/.test(ma2.testo), ma2.testo.slice(0, 300));
 
   // ===== Versione web

@@ -106,11 +106,20 @@ function cms_sito_base(): string {
     return rtrim($p, '/');
 }
 
+/**
+ * L'indirizzo assoluto della cartella del CMS (api/, assets, uploads), senza barra finale: origine del sito salvato
+ * (schema, host, porta) più cms_base(). Vale in tutti e tre i casi: CMS e sito nella radice (https://esempio.it), CMS e
+ * sito nella stessa cartella (https://esempio.it/test, dove cms_url_sito() ha già la cartella e aggiungerla di nuovo
+ * darebbe /test/test), CMS in una sottocartella con il sito nella radice (https://esempio.it/cms). Dalla 2.14.1.
+ */
+function cms_url_cms(): string {
+    $origine = preg_replace('~^(https?://[^/]+).*$~', '$1', cms_url_sito()) ?: cms_origine();
+    return $origine . cms_base();
+}
+
 /** L'indirizzo assoluto del pannello, per esempio https://www.esempio.it/cms/admin/. */
 function cms_url_pannello(): string {
-    $o = cms_url_sito();
-    $origine = preg_replace('~^(https?://[^/]+).*$~', '$1', $o) ?: cms_origine();
-    return $origine . cms_base() . '/admin/';
+    return cms_url_cms() . '/admin/';
 }
 
 // ------------------------------------------------------------

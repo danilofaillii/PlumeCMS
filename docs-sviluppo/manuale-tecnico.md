@@ -459,8 +459,9 @@ Il sito scrive `cms_base()` in `<meta name="cms-base">`, per i JavaScript.
 I rimandi che dipendono dalla configurazione sono 302 con `no-store`, mai 301: il browser ricorda un 301 e lo
 ripete anche dopo che la configurazione è cambiata.
 
-Funzioni utili: `cms_url_sito()` (indirizzo del sito senza barra finale), `cms_url_pannello()` (indirizzo del
-pannello con la barra finale), `cms_origine()` (`https://host` della richiesta), `cms_radice()` (cartella del
+Funzioni utili: `cms_url_sito()` (indirizzo del sito senza barra finale), `cms_url_cms()` (indirizzo della cartella
+del CMS, origine del sito più `cms_base()`, per `api/` e gli altri file del CMS; dalla 2.14.1, capitolo 15.14),
+`cms_url_pannello()` (indirizzo del pannello con la barra finale), `cms_origine()` (`https://host` della richiesta), `cms_radice()` (cartella del
 CMS sul disco).
 
 ---
@@ -2608,6 +2609,42 @@ parametri storti, lista con i passi, orario migliore calcolato e coda con le ore
 destinatari sotto un secondo, 390 px); attacchi del gruppo 36 in `tools/sicurezza-prova.js`; `prova-consegna-email.js`
 legge la tabella nuova (`tr[data-campagna]`, soglia 0,2%).
 
+### 15.14 L'indirizzo di pixel e clic con il sito in una cartella (dalla 2.14.1)
+
+Il pixel di apertura e i link tracciati puntano a `api/nl.php`, che sta nella **cartella del CMS**, non in quella del sito.
+`nl_url_evento()` (`includes/newsletter-flussi.php:123`) costruisce l'indirizzo con `cms_url_cms()` (`includes/cms.php:115`):
+l'origine dell'indirizzo del sito salvato (schema, host, porta, presi da `cms_url_sito()`; se manca, `cms_origine()`) più
+`cms_base()`. La stessa funzione serve `cms_url_pannello()` (`:121`) e `consegna_url_api_sito()` (`includes/consegna.php:795`,
+gli indirizzi dei rimbalzi dei servizi), che prima avevano la formula scritta ciascuno per conto suo.
+
+| Installazione | `sito_url` | `cms_base()` | `api/nl.php` |
+|---|---|---|---|
+| sito e CMS nella radice | `https://esempio.it` | `''` | `https://esempio.it/api/nl.php` |
+| sito e CMS nella stessa cartella | `https://esempio.it/test` | `/test` | `https://esempio.it/test/api/nl.php` |
+| CMS in una sottocartella, sito nella radice | `https://esempio.it` | `/cms` | `https://esempio.it/cms/api/nl.php` |
+
+Fino alla 2.10.0 la formula era `MODULI_URL . cms_base()`: giusta solo nel terzo caso, perché `MODULI_URL` è `cms_url_sito()`
+e nel secondo caso ha già la cartella. Le email uscivano con `https://esempio.it/test/test/api/nl.php`: il pixel dava 404 (403 con
+il router delle prove), aperture e clic non si contavano, "Rimanda ai non aperti" mandava di nuovo anche a chi aveva aperto.
+La 2.11.0 aveva messo una toppa (aggiungere la cartella solo se `MODULI_URL` non finiva già con lei), che indovinava dal testo
+dell'indirizzo; la 2.14.1 la sostituisce con la regola: `api/` sta sempre in `<origine><cms_base()>`.
+
+`newsletter_traccia()` (`:134`) riconosce i link già tracciati con `str_contains($u, cms_base() . '/api/nl.php')`, e
+l'indirizzo nuovo lo contiene in tutti e tre i casi. Nella radice `cms_base()` è vuoto e l'origine coincide con `sito_url`:
+l'indirizzo è identico al byte a quello di prima (provato con `nl_url_evento()` vecchia e nuova sulla stessa installazione).
+Le email già spedite non cambiano: chi ha un link di prima della 2.11.0 in un sito in cartella resta con il link rotto.
+
+Gli altri indirizzi delle email (`NEWSLETTER_ESCI`, `NEWSLETTER_WEB`, `NEWSLETTER_PREFERENZE`, `/newsletter-conferma/`,
+`/scarica/`) sono pagine del **sito**, quindi restano `MODULI_URL . <percorso>` senza `cms_base()`. Le immagini caricate
+(`admin/newsletter-immagine.php:35`) usano l'origine più `cms_uploads_url()`, che ha già la cartella del CMS.
+Nel CMS non resta nessun `MODULI_URL . cms_base()` né `cms_url_sito() . cms_base()`; l'unico era nel seme delle prove
+`prove/report-cli.php` (un link a `/contatti/` con la cartella doppia), corretto.
+
+**Prove**: `prove/prova-campagna-riepilogo.js` controlla il pixel (si apre, `image/gif`, niente cartella doppia) e, dalla
+2.14.1, il clic tracciato (302 verso l'indirizzo giusto, indirizzo `<base>/api/nl.php?`, clic contato): 102 su 102 in radice
+e in `/test`; con la formula di prima della 2.11.0 rimessa a mano, 96 su 102 in `/test` (pixel e clic su
+`/test/test/api/nl.php`). `prove/prova-install.js` 37 su 37 in radice e in `/test`.
+
 ## 16. SEO e AEO, file calcolati, feed
 
 `includes/seo.php` (configurazione e strumenti), `includes/sito-seo.php` (meta e JSON-LD delle pagine), pagina
@@ -3514,6 +3551,7 @@ può stare dentro una pagina che risponde 200.
 | `cms_base()` | cartella del CMS nell'indirizzo |
 | `cms_sito_base()` | cartella del sito nell'indirizzo |
 | `cms_url_sito()` | indirizzo del sito, senza barra finale |
+| `cms_url_cms()` | indirizzo della cartella del CMS (origine del sito più `cms_base()`), senza barra finale; dalla 2.14.1 |
 | `cms_url_pannello()` | indirizzo del pannello, con la barra finale |
 | `cms_con_cartella($html)` | aggiunge la cartella ai link che cominciano con `/` |
 | `cms_impostazione($k, $pred)` | impostazione dal database, dal modulo o predefinita |

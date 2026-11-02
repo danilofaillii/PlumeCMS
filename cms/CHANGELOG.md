@@ -2,6 +2,14 @@
 
 Il prodotto si chiama **plumeCMS** (nome scelto il 26 ottobre 2026; prima, per poche ore, "CarbonaraCMS", e ancora prima il provvisorio "Officina": gli zip vecchi si chiamavano `officina-*` e `carbonaracms-*`).
 
+## 2.14.1 (2 novembre 2026) - Aperture e clic contati anche con il sito in una cartella
+
+- Corretto: con il sito installato in una cartella (per esempio `https://esempio.it/test`) le email potevano uscire con la
+  cartella due volte nell'indirizzo del pixel e dei link tracciati (`/test/test/api/nl.php`): l'apertura non si contava e
+  il clic non arrivava. Ora l'indirizzo si fa sempre con l'origine del sito più la cartella del CMS, una volta sola, la
+  stessa regola dell'indirizzo del pannello e di quelli per i rimbalzi dei servizi di invio.
+- Nei siti installati nella radice del dominio gli indirizzi restano identici, carattere per carattere.
+
 ## 2.14.0 (2 novembre 2026) - Report, statistiche e orario migliore
 
 - **Report della campagna** a schede (Panoramica, Aperture, Clic, Disiscrizioni, Rimbalzi): destinatari, inviate, consegnate,

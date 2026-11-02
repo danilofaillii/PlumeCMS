@@ -71,7 +71,7 @@ case 'semina':
         $r = newsletter_contatto_crea(['EMAIL' => "$k@rp-prova.it", 'NOME' => $nome], in_array($k, ['r01', 'r02', 'r03'], true) ? [$l1, $l2] : [$l1]);
         $id[$k] = (int)($r['id'] ?? $r['esiste'] ?? 0);
     }
-    $c1 = $campagna('RP Report', '<p>Ciao {nome}, ecco le novità.</p><p><a href="' . MODULI_URL . cms_base() . '/contatti/">I contatti</a> e <a href="https://esempio.it/fuori?a=1">un sito fuori</a></p>', $l1);
+    $c1 = $campagna('RP Report', '<p>Ciao {nome}, ecco le novità.</p><p><a href="' . MODULI_URL . '/contatti/">I contatti</a> e <a href="https://esempio.it/fuori?a=1">un sito fuori</a></p>', $l1);
     $c2 = $campagna('RP Due', '<p>Seconda.</p><p><a href="https://esempio.it/due">Vai</a></p>', $l2);
     $out = ['liste' => ['report' => $l1, 'due' => $l2], 'campagne' => ['c1' => $c1, 'c2' => $c2], 'contatti' => $id];
     break;

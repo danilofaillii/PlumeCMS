@@ -124,11 +124,10 @@ function nl_url_evento(string $azione, array $t, int $iscritto, string $url = ''
     $c = (int)($t['c'] ?? 0); $f = (int)($t['f'] ?? 0); $p = (int)($t['p'] ?? 0);
     $q = ['a' => $azione, 'c' => $c, 'f' => $f, 'p' => $p, 'i' => $iscritto, 't' => nl_firma($c, $f, $p, $iscritto)];
     if ($url !== '') { $q['u'] = $url; $q['k'] = nl_firma_url($c, $f, $p, $iscritto, $url); }
-    // 2.11.0: con il sito in una cartella MODULI_URL ha già la cartella (cms_url_sito): prima usciva /test/test/api/nl.php e
-    // aperture e clic non si contavano. Nella radice cms_base() è vuoto: l'indirizzo resta identico al byte.
-    $base = MODULI_URL;
-    if (cms_base() !== '' && !str_ends_with($base, cms_base())) $base .= cms_base();
-    return $base . '/api/nl.php?' . http_build_query($q);
+    // 2.14.1: api/nl.php sta nella cartella del CMS, non in quella del sito: origine del sito più cms_base() (cms_url_cms()).
+    // Prima MODULI_URL . cms_base(): con sito e CMS in /test usciva /test/test/api/nl.php (pixel 404, clic persi); la toppa
+    // della 2.11.0 guardava se MODULI_URL finiva con la cartella. Nella radice l'indirizzo resta identico al byte.
+    return cms_url_cms() . '/api/nl.php?' . http_build_query($q);
 }
 
 /** Mette il pixel e riscrive i link dell'email. Il link di uscita resta diretto. */

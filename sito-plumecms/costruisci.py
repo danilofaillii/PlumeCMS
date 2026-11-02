@@ -703,6 +703,7 @@ def zip_lavagna(dest):
 # Regola di Danilo (1 novembre 2026): solo i punti salienti, una riga per versione, mai nomi di aziende o servizi di terzi.
 # Le novità per chi scarica: brevi, scritte qui (il CHANGELOG è per chi sviluppa). Da aggiornare a ogni versione.
 NOVITA = [
+    ('2.14.1', 'Aperture e clic nei siti in una cartella', ['Pixel e link delle email puntano sempre alla cartella giusta, anche con il sito installato in una cartella.']),
     ('2.14.0', 'Report, statistiche e orario migliore', ['Il report di ogni campagna con la mappa dei clic, le statistiche di un periodo e l\'invio all\'ora in cui ognuno apre.']),
     ('2.13.0', 'Test A/B delle campagne', ['Due versioni provate su due piccoli gruppi: la migliore parte da sola a tutti gli altri.']),
     ('2.12.0', 'Editor delle email a blocchi', ['Email composte trascinando blocchi e colonne, sei modelli pronti, i tuoi modelli e le sezioni salvate.']),

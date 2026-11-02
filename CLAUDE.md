@@ -106,7 +106,7 @@ Sono gli unici in `cms/docs/`, nello zip, nel sito di plumeCMS e nella pagina Do
 - **Pacchetto di aggiornamento** per un'installazione esistente:
   `python3 tools/cms-pacchetto.py --aggiornamento`. Si carica dal pannello,
   Impostazioni, Aggiornamenti.
-- **Versione**: `cms/VERSIONE` (oggi 2.14.0; sempre tre numeri: "beta" va nel CHANGELOG, mai nel nome dello zip, se no la serie "ultima" del Download non lo riconosce) e una voce in `cms/CHANGELOG.md` a ogni
+- **Versione**: `cms/VERSIONE` (oggi 2.14.1; sempre tre numeri: "beta" va nel CHANGELOG, mai nel nome dello zip, se no la serie "ultima" del Download non lo riconosce) e una voce in `cms/CHANGELOG.md` a ogni
   zip con contenuto diverso. Mai cambiare il contenuto di una versione già data.
 - **Prove** prima di dire finito:
   - `php -n -d short_open_tag=1 -l` su ogni file PHP toccato, `node --check` sui js;
@@ -144,6 +144,13 @@ Le decisioni complete, con data e perché, stanno nel second brain, `plumecms/de
 - **Nome: plumeCMS** (26 ottobre 2026).
 
 ## Stato al 31 ottobre 2026
+
+Fatto: plumeCMS 2.14.1 (2 novembre): l'indirizzo di pixel e clic delle email in una funzione sola, `cms_url_cms()` (origine del sito
+più `cms_base()`, `includes/cms.php`), usata da `nl_url_evento()`, `cms_url_pannello()` e `consegna_url_api_sito()`: via la toppa
+`str_ends_with` della 2.11.0. Manuale tecnico 15.14. Prove: campagne 102/102 radice e `/test` (controllo nuovo del clic tracciato; con
+la formula di prima 96/102 in `/test`), install 37/37 radice e `/test`, report 72/72 in `/test` (seme `report-cli.php` senza la cartella
+doppia), aggiornamento 2.14.0 -> 2.14.1 13/13, indirizzi identici al byte nella radice. Sito di plumeCMS e PDF non ricostruiti (manuali
+d'uso e dei temi non toccati).
 
 Fatto: plumeCMS 2.14.0 (2 novembre): fase 7 del piano Brevo, report e statistiche (agente, ramo `fase7-report-brevo`:
 `includes/newsletter-report.php`, `admin/newsletter-report.php`, `assets/css/report.css`, statistiche riscritte, colonne `newsletter_eventi.volte`

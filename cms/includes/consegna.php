@@ -793,9 +793,7 @@ function consegna_webhook_segreto(string $servizio): string {
 
 /** L'indirizzo di un file del CMS dal sito pubblico: schema e host del sito, cartella del CMS. */
 function consegna_url_api_sito(string $file): string {
-    $u = parse_url(cms_url_sito());
-    $origine = ($u['scheme'] ?? 'https') . '://' . ($u['host'] ?? 'localhost') . (isset($u['port']) ? ':' . $u['port'] : '');
-    return $origine . cms_base() . $file;
+    return cms_url_cms() . $file; // 2.14.1: la stessa formula, in un posto solo (includes/cms.php)
 }
 
 function consegna_webhook_url(string $servizio): string {
