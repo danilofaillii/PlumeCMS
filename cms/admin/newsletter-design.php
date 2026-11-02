@@ -18,7 +18,10 @@ $camp = $cid ? newsletter_campagna($cid) : null;
 $mod = !$camp && $mid ? nd_modello($mid) : null;
 if (!$camp && (!$mod || $mod['editor'] !== 'blocchi')) { header('Location: ' . ($mid ? 'newsletter-modelli.php' : 'newsletter.php')); exit; }
 $modificabile = $mod || newsletter_campagna_modificabile($camp);
-$indietro = $camp ? 'newsletter-campagna.php?id=' . $cid . '&apri=design#sez-design' : 'newsletter-modelli.php';
+// 2.13.0: ?versione=b, il design della versione B di un test A/B sul contenuto (includes/newsletter-ab.php).
+$verB = $camp && ($_GET['versione'] ?? '') === 'b' && $camp['tipo'] === 'ab' && function_exists('nl_ab') && nl_ab($cid)['cosa'] === 'design';
+if ($verB) $camp = nl_ab_versione($camp, 'b');
+$indietro = $camp ? 'newsletter-campagna.php?id=' . $cid . ($verB ? '&versione=b' : '') . '&apri=design#sez-design' : 'newsletter-modelli.php';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     header('Content-Type: application/json; charset=utf-8');
@@ -43,7 +46,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             if ($camp) {
                 $c = newsletter_campagna($cid);
                 if (!$c || !newsletter_campagna_modificabile($c)) $risposta(['errore' => 'Questa campagna è già partita: il design non si cambia più.']);
-                db()->prepare('UPDATE ' . tbl('newsletter_campagne') . " SET editor = 'blocchi', design = ?, aggiornato = NOW() WHERE id = ?")->execute([nd_json($d), $cid]);
+                if ($verB) nl_ab_scrivi_b($cid, ['editor' => 'blocchi', 'design' => nd_json($d)]);
+                else db()->prepare('UPDATE ' . tbl('newsletter_campagne') . " SET editor = 'blocchi', design = ?, aggiornato = NOW() WHERE id = ?")->execute([nd_json($d), $cid]);
             } else {
                 nd_modello_cambia($mid, ['design' => nd_json($d)]);
             }
@@ -72,7 +76,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 }
 
 $design = nd_design((string)($camp ? $camp['design'] : $mod['design'])) ?? nd_design_vuoto();
-$nome = newsletter_4byte_fuori((string)($camp ? ($camp['nome'] ?: $camp['oggetto']) : $mod['nome'])) ?: 'Email senza nome';
+$nome = (newsletter_4byte_fuori((string)($camp ? ($camp['nome'] ?: $camp['oggetto']) : $mod['nome'])) ?: 'Email senza nome') . ($verB ? ' (versione B)' : '');
 $colori = [];
 foreach ((function () { require_once dirname(__DIR__) . '/includes/editor.php'; return editor_globali()['colori'] ?? []; })() as $g) if (nd_colore($g['valore'] ?? '')) $colori[] = ['nome' => (string)$g['nome'], 'valore' => nd_colore($g['valore'])];
 $dati = [

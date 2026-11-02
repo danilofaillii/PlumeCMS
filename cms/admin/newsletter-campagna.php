@@ -12,6 +12,7 @@ require_once __DIR__ . '/../includes/newsletter.php';
 require_once __DIR__ . '/../includes/newsletter-importa.php'; // 2.9.0: la lista dei test
 require_once __DIR__ . '/../includes/newsletter-campagne.php'; // 2.11.0
 require_once __DIR__ . '/../includes/newsletter-design.php'; // 2.12.0: editor a blocchi e modelli
+require_once __DIR__ . '/../includes/newsletter-ab.php'; // 2.13.0: il test A/B
 require_admin(); // sicurezza (ruoli): solo amministratore
 newsletter_schema();
 newsletter_campagne_schema();
@@ -23,6 +24,13 @@ $c = newsletter_campagna($id);
 if (!$c) { header('Location: newsletter.php'); exit; }
 $modificabile = newsletter_campagna_modificabile($c);
 $SEZIONI = ['mittente' => 'Mittente', 'destinatari' => 'Destinatari', 'oggetto' => 'Oggetto', 'design' => 'Design', 'impostazioni' => 'Impostazioni aggiuntive'];
+// 2.13.0: il test A/B. ?versione=b mostra la versione B nell'anteprima e, nel test sul contenuto, nella sezione Design.
+$isAb = $c['tipo'] === 'ab';
+$ab = $isAb ? nl_ab($id) : null;
+if ($isAb) $SEZIONI = array_slice($SEZIONI, 0, 2, true) + ['ab' => 'Test A/B'] + array_slice($SEZIONI, 2, null, true);
+$ver = $isAb && ($_GET['versione'] ?? $_POST['versione'] ?? '') === 'b' ? 'b' : 'a';
+$verB = $ver === 'b' && $ab['cosa'] === 'design'; // la sezione Design lavora sulla versione B
+$qv = $ver === 'b' ? '&versione=b' : '';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     verify_csrf();
@@ -33,22 +41,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $sez = (string)($_POST['sez'] ?? '');
             if (!isset($SEZIONI[$sez]) && $sez !== 'nome') break;
             $e = newsletter_campagna_salva_sezione($id, $sez, $_POST);
-            if ($e !== '') { flash('error', $e); $vai = '&apri=' . $sez . '#sez-' . $sez; break; }
-            flash('success', $sez === 'nome' ? 'Nome della campagna salvato.' : ($SEZIONI[$sez] . ': salvato.'));
-            $vai = $sez === 'nome' ? '' : '#sez-' . $sez;
+            if ($e !== '') { flash('error', $e); $vai = $qv . '&apri=' . $sez . '#sez-' . $sez; break; }
+            flash('success', $sez === 'nome' ? 'Nome della campagna salvato.' : ($SEZIONI[$sez] . ($sez === 'design' && $verB ? ' della versione B' : '') . ': salvato.'));
+            $vai = $sez === 'nome' ? '' : ($sez === 'design' ? $qv : '') . '#sez-' . $sez;
             if ($sez === 'design' && isset($_POST['cambia_editor'])) {
                 // 2.12.0: scegliendo l'editor a blocchi si apre subito l'editor.
-                if (($_POST['editor'] ?? '') === 'blocchi') { header('Location: newsletter-design.php?campagna=' . $id); exit; }
-                $vai = '&apri=design#sez-design';
+                if (($_POST['editor'] ?? '') === 'blocchi') { header('Location: newsletter-design.php?campagna=' . $id . ($verB ? '&versione=b' : '')); exit; }
+                $vai = $qv . '&apri=design#sez-design';
             }
+            if ($sez === 'ab' && ($_POST['cosa'] ?? '') === 'design') $vai = '&apri=ab#sez-ab';
             break;
         case 'usa_modello':
             $m = nd_modello((int)($_POST['modello_id'] ?? 0));
-            $e = $m && (int)$m['attivo'] && $m['tag'] !== 'optin' ? nd_campagna_da_modello($id, $m) : 'Scegli un modello attivo.';
-            if ($e !== '') { flash('error', $e); $vai = '&apri=design#sez-design'; break; }
-            flash('success', 'Design preso dal modello «' . newsletter_4byte_fuori((string)$m['nome']) . '».');
-            if ($m['editor'] === 'blocchi') { header('Location: newsletter-design.php?campagna=' . $id); exit; }
-            $vai = '&apri=design#sez-design';
+            $e = $m && (int)$m['attivo'] && $m['tag'] !== 'optin' ? ($verB ? nl_ab_da_modello($id, $m) : nd_campagna_da_modello($id, $m)) : 'Scegli un modello attivo.';
+            if ($e !== '') { flash('error', $e); $vai = $qv . '&apri=design#sez-design'; break; }
+            flash('success', 'Design ' . ($verB ? 'della versione B ' : '') . 'preso dal modello «' . newsletter_4byte_fuori((string)$m['nome']) . '».');
+            if ($m['editor'] === 'blocchi') { header('Location: newsletter-design.php?campagna=' . $id . ($verB ? '&versione=b' : '')); exit; }
+            $vai = $qv . '&apri=design#sez-design';
             break;
         case 'prova':
             // 2.9.0: la prova va ai contatti spuntati della lista dei test, ognuno con i suoi dati (senza tracciamento: le
@@ -59,21 +68,28 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $vai = '#sez-prova';
             if (!$test && !filter_var($a, FILTER_VALIDATE_EMAIL)) { flash('error', $a === '' ? 'Spunta almeno un indirizzo della lista dei test, oppure scrivi l\'indirizzo a cui mandare la prova.' : 'L\'indirizzo per la prova non è valido: scrivilo per intero (per esempio nome@esempio.it).'); $vai = '&apri=prova#sez-prova'; break; }
             $spedite = []; $nonPartite = [];
-            foreach ($test as $t) {
-                [$ogg, $html, $intest] = newsletter_email($c, ['id' => (int)$t['id'], 'nome' => (string)$t['nome'], 'email' => (string)$t['email']], []);
-                posta_invia((string)$t['email'], '[PROVA] ' . $ogg, $html, $intest, 'prova') ? $spedite[] = $t['email'] : $nonPartite[] = $t['email'];
+            // 2.13.0: nel test A/B la prova manda le due versioni.
+            $versioni = $isAb ? ['[PROVA A] ' => nl_ab_versione($c, 'a'), '[PROVA B] ' => nl_ab_versione($c, 'b')] : ['[PROVA] ' => $c];
+            foreach ($test as $t) foreach ($versioni as $pre => $cx) {
+                [$ogg, $html, $intest] = newsletter_email($cx, ['id' => (int)$t['id'], 'nome' => (string)$t['nome'], 'email' => (string)$t['email']], []);
+                posta_invia((string)$t['email'], $pre . $ogg, $html, $intest, 'prova') ? $spedite[] = $t['email'] : $nonPartite[] = $t['email'];
             }
+            $spedite = array_values(array_unique($spedite)); $nonPartite = array_values(array_unique($nonPartite));
             if (filter_var($a, FILTER_VALIDATE_EMAIL) && !in_array(mb_strtolower($a), array_map('mb_strtolower', array_column($test, 'email')), true)) {
                 $cid = newsletter_id_da_email(mb_strtolower($a));
                 $chi = $cid ? newsletter_contatto($cid) : null;
-                [$ogg, $html, $intest] = newsletter_email($c, $chi ? ['id' => $cid, 'nome' => (string)$chi['nome'], 'email' => $a] : ['id' => 0, 'nome' => trim((string)($_POST['prova_nome'] ?? '')) ?: 'Giulia', 'email' => $a], []);
-                posta_invia($a, '[PROVA] ' . $ogg, $html, $intest, 'prova') ? $spedite[] = $a : $nonPartite[] = $a;
+                $partita = true;
+                foreach ($versioni as $pre => $cx) {
+                    [$ogg, $html, $intest] = newsletter_email($cx, $chi ? ['id' => $cid, 'nome' => (string)$chi['nome'], 'email' => $a] : ['id' => 0, 'nome' => trim((string)($_POST['prova_nome'] ?? '')) ?: 'Giulia', 'email' => $a], []);
+                    $partita = posta_invia($a, $pre . $ogg, $html, $intest, 'prova') && $partita;
+                }
+                $partita ? $spedite[] = $a : $nonPartite[] = $a;
                 if (!empty($_POST['prova_aggiungi'])) {
                     $e = $cid ? newsletter_lista_test_aggiungi($cid) : "L'indirizzo $a non è un contatto: per metterlo nella lista dei test crealo prima in Contatti.";
                     if ($e !== '') flash('error', $e);
                 }
             }
-            if ($spedite) flash('success', 'Prova spedita a ' . implode(', ', $spedite) . '.');
+            if ($spedite) flash('success', ($isAb ? 'Prova delle due versioni spedita a ' : 'Prova spedita a ') . implode(', ', $spedite) . '.');
             if ($nonPartite) flash('error', 'Prova non partita per ' . implode(', ', $nonPartite) . ': ' . posta_errore());
             break;
         case 'invia':
@@ -120,8 +136,11 @@ $apri = (string)($_GET['apri'] ?? '');
 $antEmail = mb_strtolower(trim((string)($_GET['contatto'] ?? '')));
 $antChi = $antEmail !== '' ? newsletter_contatto(newsletter_id_da_email($antEmail)) : null;
 $antIscr = $antChi ? ['id' => (int)$antChi['id'], 'nome' => (string)$antChi['nome'], 'email' => (string)$antChi['email']] : ['id' => 0, 'nome' => 'Giulia', 'email' => ''];
-[$oggProva, $htmlProva, $intProva] = newsletter_email($c, $antIscr, []);
-$testoProva = posta_testo_da_html($htmlProva);
+$cv = $isAb ? nl_ab_versione($c, $ver) : $c; // la versione mostrata nell'anteprima
+$cd = $verB ? $cv : $c; // la versione mostrata nella sezione Design
+if ($verB && function_exists('nl_camp_design_stato')) { [$okB, $mancaB] = nl_camp_design_stato($cd); $sez['design'] = ['ok' => $okB, 'manca' => $mancaB]; } // il segno della versione che si guarda
+[$oggProva, $htmlProva, $intProva] = newsletter_email($cv, $antIscr, []);
+$testoProva = posta_testo_da_html($verB || $ver === 'a' ? $htmlProva : newsletter_email($cd, $antIscr, [])[1]);
 $liste = newsletter_liste();
 $segmenti = function_exists('newsletter_segmenti') ? newsletter_segmenti() : [];
 $sceltiL = nl_ids((string)$c['liste']); $sceltiS = nl_ids((string)$c['segmenti']);
@@ -133,7 +152,7 @@ $nomeC = newsletter_4byte_fuori((string)($c['nome'] !== '' ? $c['nome'] : $c['og
 $madre = (int)$c['rinvio_di'] ? newsletter_campagna((int)$c['rinvio_di']) : ((int)$c['padre_id'] ? newsletter_campagna((int)$c['padre_id']) : null);
 $dis = $modificabile ? '' : ' disabled';
 $modelliAttivi = array_values(array_filter(nd_modelli(true), fn($m) => $m['tag'] !== 'optin')); // l'email di conferma non è una campagna
-$modelloUsato = (int)($c['modello_id'] ?? 0) ? nd_modello((int)$c['modello_id']) : null;
+$modelloUsato = (int)($cd['modello_id'] ?? 0) ? nd_modello((int)$cd['modello_id']) : null;
 $adminTitle = 'Campagna: ' . $nomeC;
 
 /** L'intestazione di una sezione: titolo, segno di fatto o da completare, riassunto. */
@@ -176,7 +195,9 @@ require_once __DIR__ . '/includes/admin-header.php';
 .nlr-anteprima iframe{width:100%;height:720px;border:1px solid var(--border);border-radius:10px;background:#f4f4f6 /* fisso: il fondo dell email */;display:block;margin:0 auto;transition:width .2s}
 .nlr-anteprima.telefono iframe{width:390px;max-width:100%}
 .nlr-schede{display:flex;gap:.4rem;flex-wrap:wrap;margin:.6rem 0}
-.nlr-schede button[aria-pressed=true]{background:var(--coral);color:var(--su-accento);border-color:var(--coral)}
+.nlr-schede button[aria-pressed=true],.nlr-versioni a[aria-current]{background:var(--coral);color:var(--su-accento);border-color:var(--coral)}
+.nlr-ab-tabella td,.nlr-ab-tabella th{overflow-wrap:anywhere}
+#nlr-ab-perc{width:100%;accent-color:var(--coral)}
 .nlr-numeri{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:.6rem;margin:.6rem 0}
 .nlr-numeri div{border:1px solid var(--border);border-radius:8px;padding:.6rem .8rem}.nlr-numeri b{display:block;font-size:1.4rem}
 .nlr-azioni{display:flex;gap:.5rem;flex-wrap:wrap;align-items:center;margin-top:1rem}
@@ -207,6 +228,7 @@ require_once __DIR__ . '/includes/admin-header.php';
 <?php if ($c['stato'] !== 'bozza'): ?>
 <div class="nlr-stato-box" role="status">
   <?php if ($c['stato'] === 'programmata'): ?>Programmata per il <b><?= h(date('d/m/Y H:i', strtotime((string)$c['invio_at']))) ?></b> (ora di <?= h(date_default_timezone_get()) ?>). Puoi ancora modificarla.
+  <?php elseif ($isAb && $ab['fase'] === 'prova' && in_array($c['stato'], ['in_invio', 'sospesa', 'inviata'], true)): $abScade = nl_ab_scade($ab); ?>Test A/B in corso<?= $c['stato'] === 'sospesa' ? ' (invio sospeso)' : '' ?>: <?= (int)$c['inviate'] ?> di <?= 2 * (int)$ab['gruppo'] ?> email di prova partite (<?= (int)$ab['gruppo'] ?> per versione). La versione vincente si sceglie dopo il <b><?= h(date('d/m/Y H:i', $abScade)) ?></b>, al primo giro del cron (entro 5 minuti)<?= (int)$ab['resto'] ? ', e parte agli altri ' . (int)$ab['resto'] . ' contatti' : '' ?>.
   <?php elseif ($c['stato'] === 'in_invio' || $c['stato'] === 'sospesa'): ?><?= $c['stato'] === 'sospesa' ? 'Invio sospeso' : 'In invio' ?>: <?= (int)$c['inviate'] ?> di <?= (int)$c['destinatari'] ?> partite<?= $c['errori'] ? ', ' . (int)$c['errori'] . ' non partite' : '' ?><?= (int)$c['lotti'] > 1 ? ', in ' . (int)$c['lotti'] . ' lotti ogni ' . (int)$c['lotti_intervallo'] . ' minuti' : '' ?>.
   <?php elseif ($c['stato'] === 'annullata'): ?>Annullata: <?= (int)$c['inviate'] ?> email erano già partite, le altre non partono più.
   <?php else: ?>Inviata: <?= (int)$c['inviate'] ?> email partite<?= $c['errori'] ? ', ' . (int)$c['errori'] . ' non partite' : '' ?>. Per una nuova versione usa «Duplica» nell'elenco.<?php endif; ?>
@@ -228,6 +250,26 @@ require_once __DIR__ . '/includes/admin-header.php';
   <ul class="nlr-motivi" style="margin:0 0 .6rem;padding-left:1.2rem"><?php foreach ($mot['n'] as $k => $v): if (!$v) continue; ?><li><?= h(NL_USCITA_MOTIVI[$k]) ?>: <b><?= $v ?></b></li><?php endforeach; ?></ul><?php endif; ?>
   <p class="hint">Aperture e clic contano una volta per persona. <a href="newsletter-statistiche.php?campagna=<?= $id ?>">Tutti i numeri e i link cliccati</a>.</p>
 </div>
+<?php if ($isAb && $ab['fase'] !== ''): $abR = nl_ab_risultati($id); $abV = (string)$ab['vincitore']; ?>
+<div class="form-card" id="nlr-ab-risultati">
+  <h3>Risultati del test A/B</h3>
+  <p role="status" class="nlr-ab-esito"><?php if ($abV === ''): ?>Non ancora: la versione vincente si sceglie dopo il <b><?= h(date('d/m/Y H:i', nl_ab_scade($ab))) ?></b>, secondo <?= h(mb_strtolower(NL_AB_CRITERI[$ab['criterio']])) ?>.
+  <?php elseif ($abV === 'pari'): ?><b>Pari</b>: le due versioni hanno lo stesso <?= $ab['criterio'] === 'clic' ? 'tasso di clic' : 'tasso di apertura' ?>, e al resto è partita la versione A (scelta il <?= h(date('d/m/Y H:i', strtotime((string)$ab['scelto_at']))) ?>).
+  <?php else: ?><b>Ha vinto la versione <?= strtoupper($abV) ?></b>, per <?= h(mb_strtolower(NL_AB_CRITERI[$ab['criterio']])) ?>: scelta il <?= h(date('d/m/Y H:i', strtotime((string)$ab['scelto_at']))) ?><?= (int)$ab['resto'] ? ' e mandata agli altri ' . (int)$ab['resto'] . ' contatti' : '' ?>.<?php endif; ?></p>
+  <table class="table nlr-ab-tabella">
+    <thead><tr><th>Versione</th><th><?= $ab['cosa'] === 'oggetto' ? 'Oggetto' : 'Contenuto' ?></th><th>Inviate</th><th>Hanno aperto</th><th>Hanno cliccato</th></tr></thead>
+    <tbody>
+    <?php foreach (['a', 'b'] as $v): $x = $abR[$v]; ?>
+      <tr data-versione="<?= $v ?>"><td><b><?= strtoupper($v) ?></b><?= $abV === $v ? ' <span class="nlr-stato nlr-ok"><span aria-hidden="true">&#10003;</span> Vincente</span>' : ($abV === 'pari' && $v === 'a' ? ' <span class="nlr-stato nlr-ok">Partita al resto</span>' : '') ?></td>
+        <td><?= h($ab['cosa'] === 'oggetto' ? newsletter_4byte_fuori((string)nl_ab_versione($c, $v)['oggetto']) : 'Design ' . strtoupper($v)) ?></td>
+        <td><?= (int)$x['inviate'] ?></td><td><?= (int)$x['apertura'] ?> (<?= $x['tasso_aperture'] ?>%)</td><td><?= (int)$x['clic'] ?> (<?= $x['tasso_clic'] ?>%)</td></tr>
+    <?php endforeach; ?>
+    <?php if ((int)$ab['resto']): ?><tr data-versione="r"><td>Il resto</td><td><?= $abV === '' ? 'aspetta la vincente' : 'versione ' . ($abV === 'b' ? 'B' : 'A') ?></td><td><?= (int)$abR['r']['inviate'] ?> di <?= (int)$ab['resto'] ?></td><td><?= (int)$abR['r']['apertura'] ?> (<?= $abR['r']['tasso_aperture'] ?>%)</td><td><?= (int)$abR['r']['clic'] ?> (<?= $abR['r']['tasso_clic'] ?>%)</td></tr><?php endif; ?>
+    </tbody>
+  </table>
+  <p class="hint">Ogni gruppo di prova: <?= (int)$ab['percentuale'] ?>% dei destinatari, scelti a caso; ognuno riceve una versione sola. I tassi sono sulle email inviate al gruppo.</p>
+</div>
+<?php endif; ?>
 <?php endif; ?>
 <?php if ($manca): ?><div class="nlr-manca-testo" role="status" id="nlr-manca"><b>Per inviare <?= count($manca) === 1 ? 'manca una cosa' : 'mancano ' . count($manca) . ' cose' ?>:</b><ul style="margin:.3rem 0 0;padding-left:1.2rem"><?php foreach ($manca as $m): ?><li><?= h($m) ?></li><?php endforeach; ?></ul></div><?php endif; ?>
 
@@ -284,6 +326,41 @@ require_once __DIR__ . '/includes/admin-header.php';
   <?php endif; ?>
 </details>
 
+<?php if ($isAb):
+  $abN = (int)$sez['destinatari']['n']; $abG = nl_ab_gruppo($abN, (int)$ab['percentuale']);
+  $riaAb = NL_AB_COSA[$ab['cosa']] . ' · gruppi del ' . (int)$ab['percentuale'] . '% · ' . mb_strtolower(NL_AB_CRITERI[$ab['criterio']]) . ' · ' . (int)$ab['durata'] . ' ' . ((int)$ab['durata'] === 1 ? ($ab['unita'] === 'ore' ? 'ora' : 'giorno') : $ab['unita']); ?>
+<details class="form-card nlx-riquadro nlr-sez" id="sez-ab"<?= $aperta('ab') ?>>
+  <?= $testa('ab', 'Test A/B', $riaAb) ?>
+  <form method="post"><?= csrf_field() ?><input type="hidden" name="azione" value="sezione"><input type="hidden" name="sez" value="ab">
+    <fieldset style="border:0;padding:0;margin:0;min-width:0"<?= $dis ?>>
+    <fieldset class="nlk-scelte"><legend>Cosa vuoi provare</legend>
+      <label><input type="radio" name="cosa" value="oggetto" <?= $ab['cosa'] === 'oggetto' ? 'checked' : '' ?>> L'oggetto: stessa email, due oggetti diversi</label>
+      <label><input type="radio" name="cosa" value="design" <?= $ab['cosa'] === 'design' ? 'checked' : '' ?>> Il contenuto: stesso oggetto, due design diversi</label>
+    </fieldset>
+    <?php if ($ab['cosa'] === 'oggetto'): ?>
+    <p class="hint">Versione A: «<?= h(trim(newsletter_4byte_fuori((string)$c['oggetto'])) ?: 'ancora da scrivere nella sezione Oggetto') ?>».</p>
+    <div class="form-group"><label for="nlr-oggetto-b">Oggetto della versione B</label><input type="text" id="nlr-oggetto-b" name="oggetto_b" maxlength="200" value="<?= h(newsletter_4byte_fuori((string)$ab['oggetto_b'])) ?>" placeholder="per esempio: Solo per te, {{ contact.NOME }}: le novità"></div>
+    <div class="form-group"><label for="nlr-anteprima-b">Testo di anteprima della versione B (facoltativo)</label><input type="text" id="nlr-anteprima-b" name="anteprima_b" maxlength="200" value="<?= h(newsletter_4byte_fuori((string)$ab['anteprima_b'])) ?>"></div>
+    <?php else: ?>
+    <p class="hint">La versione B è nata come copia della A: cambiala nella sezione Design, scheda «Versione B» (<a href="newsletter-campagna.php?id=<?= $id ?>&amp;versione=b&amp;apri=design#sez-design">apri la versione B</a>).</p>
+    <?php endif; ?>
+    <div class="form-group"><label for="nlr-ab-perc">Grandezza di ogni gruppo di prova: <output id="nlr-ab-perc-val" for="nlr-ab-perc"><?= (int)$ab['percentuale'] ?>%</output></label>
+      <input type="range" id="nlr-ab-perc" name="percentuale" min="1" max="<?= NL_AB_PERC_MAX ?>" step="1" value="<?= (int)$ab['percentuale'] ?>" data-ab-n="<?= $abN ?>" aria-describedby="nlr-ab-gruppi">
+      <div class="hint" id="nlr-ab-gruppi" data-ab-gruppi>Versione A a <?= $abG ?> contatti, versione B a <?= $abG ?>, la vincente agli altri <?= max(0, $abN - 2 * $abG) ?> (contati adesso: <?= $abN ?>).</div></div>
+    <fieldset class="nlk-scelte"><legend>Come si sceglie la versione vincente</legend>
+      <?php foreach (NL_AB_CRITERI as $k => $et): ?><label><input type="radio" name="criterio" value="<?= $k ?>" <?= $ab['criterio'] === $k ? 'checked' : '' ?>> <?= h($et) ?> più alto</label><?php endforeach; ?>
+    </fieldset>
+    <div class="nlr-colonne">
+      <div class="form-group"><label for="nlr-ab-durata">Durata del test</label><input type="number" id="nlr-ab-durata" name="durata" min="1" max="23" value="<?= (int)$ab['durata'] ?>" aria-describedby="nlr-ab-durata-aiuto"></div>
+      <div class="form-group"><label for="nlr-ab-unita">In</label><select id="nlr-ab-unita" name="unita"><option value="ore" <?= $ab['unita'] === 'ore' ? 'selected' : '' ?>>ore (al massimo 23)</option><option value="giorni" <?= $ab['unita'] === 'giorni' ? 'selected' : '' ?>>giorni (al massimo 7)</option></select></div>
+    </div>
+    <p class="hint" id="nlr-ab-durata-aiuto">Dalla partenza dei gruppi di prova. Alla fine il cron sceglie da solo la versione con il tasso più alto e la manda agli altri; a parità parte la versione A. Si manda subito o si programma; niente lotti nel test A/B.</p>
+    <?php if ($modificabile): ?><button class="btn btn-primary" type="submit">Salva il test A/B</button><?php endif; ?>
+    </fieldset>
+  </form>
+</details>
+<?php endif; ?>
+
 <details class="form-card nlx-riquadro nlr-sez" id="sez-oggetto"<?= $aperta('oggetto') ?>>
   <?= $testa('oggetto', 'Oggetto', trim(newsletter_4byte_fuori((string)$c['oggetto'])) ?: 'nessun oggetto') ?>
   <form method="post"><?= csrf_field() ?><input type="hidden" name="azione" value="sezione"><input type="hidden" name="sez" value="oggetto">
@@ -300,15 +377,23 @@ require_once __DIR__ . '/includes/admin-header.php';
 </details>
 
 <details class="form-card nlx-riquadro nlr-sez" id="sez-design"<?= $aperta('design') ?>>
-  <?= $testa('design', 'Design', ($STRADE[$c['editor']] ?? 'Editor semplice') . ($modelloUsato ? ' (dal modello «' . newsletter_4byte_fuori((string)$modelloUsato['nome']) . '»)' : '')) ?>
+  <?= $testa('design', 'Design', ($isAb && $ab['cosa'] === 'design' ? 'Versione A: ' . ($STRADE[$c['editor']] ?? 'Editor semplice') . ' · Versione B: ' . ($STRADE[$ab['editor_b']] ?? 'Editor semplice') : ($STRADE[$c['editor']] ?? 'Editor semplice') . ($modelloUsato ? ' (dal modello «' . newsletter_4byte_fuori((string)$modelloUsato['nome']) . '»)' : ''))) ?>
+  <?php if ($isAb && $ab['cosa'] === 'design'): /* 2.13.0: le due versioni del test sul contenuto */ ?>
+  <nav class="nlr-schede nlr-versioni" aria-label="Versione del design">
+    <a class="btn btn-secondary btn-sm" href="newsletter-campagna.php?id=<?= $id ?>&amp;apri=design#sez-design"<?= $verB ? '' : ' aria-current="page"' ?>>Versione A</a>
+    <a class="btn btn-secondary btn-sm" href="newsletter-campagna.php?id=<?= $id ?>&amp;versione=b&amp;apri=design#sez-design"<?= $verB ? ' aria-current="page"' : '' ?>>Versione B</a>
+  </nav>
+  <p class="hint" style="margin-top:0">Stai cambiando la <b>versione <?= $verB ? 'B' : 'A' ?></b>.</p>
+  <?php endif; ?>
   <?php if ($modificabile): /* 2.12.0: le cinque strade per il design */ ?>
   <h4 class="nd-strade-titolo">Come fai il design</h4>
   <div class="nd-strade">
-    <form method="post" class="nd-strada<?= $c['editor'] === 'blocchi' ? ' nd-in-uso' : '' ?>"><?= csrf_field() ?><input type="hidden" name="azione" value="sezione"><input type="hidden" name="sez" value="design"><input type="hidden" name="cambia_editor" value="1"><input type="hidden" name="editor" value="blocchi">
-      <b>Editor a blocchi</b><?= $c['editor'] === 'blocchi' ? ' <span class="nd-uso">In uso</span>' : '' ?><span>Sezioni a colonne, titoli, immagini, pulsanti, social e video: trascini e componi.</span>
-      <?php if ($c['editor'] === 'blocchi'): ?><a class="btn btn-primary btn-sm" href="newsletter-design.php?campagna=<?= $id ?>">Apri l'editor a blocchi</a><?php else: ?><button class="btn btn-secondary btn-sm" type="submit">Usa l'editor a blocchi</button><?php endif; ?>
+    <?php $vh = $verB ? '<input type="hidden" name="versione" value="b">' : ''; ?>
+    <form method="post" class="nd-strada<?= $cd['editor'] === 'blocchi' ? ' nd-in-uso' : '' ?>"><?= csrf_field() ?><input type="hidden" name="azione" value="sezione"><input type="hidden" name="sez" value="design"><input type="hidden" name="cambia_editor" value="1"><input type="hidden" name="editor" value="blocchi"><?= $vh ?>
+      <b>Editor a blocchi</b><?= $cd['editor'] === 'blocchi' ? ' <span class="nd-uso">In uso</span>' : '' ?><span>Sezioni a colonne, titoli, immagini, pulsanti, social e video: trascini e componi.</span>
+      <?php if ($cd['editor'] === 'blocchi'): ?><a class="btn btn-primary btn-sm" href="newsletter-design.php?campagna=<?= $id ?><?= $verB ? '&amp;versione=b' : '' ?>">Apri l'editor a blocchi</a><?php else: ?><button class="btn btn-secondary btn-sm" type="submit">Usa l'editor a blocchi</button><?php endif; ?>
     </form>
-    <form method="post" class="nd-strada"<?= $modelliAttivi ? ' data-conferma="Il design di adesso viene sostituito da quello del modello. Continuare?" data-conferma-ok="Usa il modello"' : '' ?>><?= csrf_field() ?><input type="hidden" name="azione" value="usa_modello">
+    <form method="post" class="nd-strada"<?= $modelliAttivi ? ' data-conferma="Il design di adesso viene sostituito da quello del modello. Continuare?" data-conferma-ok="Usa il modello"' : '' ?>><?= csrf_field() ?><input type="hidden" name="azione" value="usa_modello"><?= $vh ?>
       <b>Un tuo modello</b><span>Il design di un modello salvato (solo i modelli attivi).</span>
       <?php if ($modelliAttivi): ?>
       <label class="sr-solo" for="nd-modello">Modello</label><select id="nd-modello" name="modello_id"><?php foreach ($modelliAttivi as $m): ?><option value="<?= (int)$m['id'] ?>"><?= h(newsletter_4byte_fuori((string)$m['nome'])) ?></option><?php endforeach; ?></select>
@@ -316,40 +401,40 @@ require_once __DIR__ . '/includes/admin-header.php';
       <?php else: ?><span class="hint">Ancora nessun modello attivo: salvane uno dall'editor a blocchi, o attivalo in <a href="newsletter-modelli.php">Modelli</a>.</span><?php endif; ?>
     </form>
     <div class="nd-strada"><b>La galleria</b><span>Modelli pronti: benvenuto, newsletter del mese, offerta, evento, nuovo articolo e altri.</span>
-      <a class="btn btn-secondary btn-sm" href="newsletter-modelli.php?scheda=galleria&amp;campagna=<?= $id ?>">Scegli nella galleria</a></div>
-    <form method="post" class="nd-strada<?= $c['editor'] === 'semplice' ? ' nd-in-uso' : '' ?>"><?= csrf_field() ?><input type="hidden" name="azione" value="sezione"><input type="hidden" name="sez" value="design"><input type="hidden" name="cambia_editor" value="1"><input type="hidden" name="editor" value="semplice">
-      <b>Editor semplice</b><?= $c['editor'] === 'semplice' ? ' <span class="nd-uso">In uso</span>' : '' ?><span>Testo, titoli, immagini, link e un pulsante, come in una lettera.</span>
-      <?php if ($c['editor'] !== 'semplice'): ?><button class="btn btn-secondary btn-sm" type="submit">Usa l'editor semplice</button><?php endif; ?>
+      <a class="btn btn-secondary btn-sm" href="newsletter-modelli.php?scheda=galleria&amp;campagna=<?= $id ?><?= $verB ? '&amp;versione=b' : '' ?>">Scegli nella galleria</a></div>
+    <form method="post" class="nd-strada<?= $cd['editor'] === 'semplice' ? ' nd-in-uso' : '' ?>"><?= csrf_field() ?><input type="hidden" name="azione" value="sezione"><input type="hidden" name="sez" value="design"><input type="hidden" name="cambia_editor" value="1"><input type="hidden" name="editor" value="semplice"><?= $vh ?>
+      <b>Editor semplice</b><?= $cd['editor'] === 'semplice' ? ' <span class="nd-uso">In uso</span>' : '' ?><span>Testo, titoli, immagini, link e un pulsante, come in una lettera.</span>
+      <?php if ($cd['editor'] !== 'semplice'): ?><button class="btn btn-secondary btn-sm" type="submit">Usa l'editor semplice</button><?php endif; ?>
     </form>
-    <form method="post" class="nd-strada<?= $c['editor'] === 'html' ? ' nd-in-uso' : '' ?>"><?= csrf_field() ?><input type="hidden" name="azione" value="sezione"><input type="hidden" name="sez" value="design"><input type="hidden" name="cambia_editor" value="1"><input type="hidden" name="editor" value="html">
-      <b>Codice HTML</b><?= $c['editor'] === 'html' ? ' <span class="nd-uso">In uso</span>' : '' ?><span>Incolli un'email già fatta.</span>
-      <?php if ($c['editor'] !== 'html'): ?><button class="btn btn-secondary btn-sm" type="submit">Usa il codice HTML</button><?php endif; ?>
+    <form method="post" class="nd-strada<?= $cd['editor'] === 'html' ? ' nd-in-uso' : '' ?>"><?= csrf_field() ?><input type="hidden" name="azione" value="sezione"><input type="hidden" name="sez" value="design"><input type="hidden" name="cambia_editor" value="1"><input type="hidden" name="editor" value="html"><?= $vh ?>
+      <b>Codice HTML</b><?= $cd['editor'] === 'html' ? ' <span class="nd-uso">In uso</span>' : '' ?><span>Incolli un'email già fatta.</span>
+      <?php if ($cd['editor'] !== 'html'): ?><button class="btn btn-secondary btn-sm" type="submit">Usa il codice HTML</button><?php endif; ?>
     </form>
   </div>
   <p class="hint">Cambiando strada non perdi niente: il design di ogni editor resta salvato e lo ritrovi se torni indietro.</p>
   <?php endif; ?>
-  <form method="post" id="nl-form"><?= csrf_field() ?><input type="hidden" name="azione" value="sezione"><input type="hidden" name="sez" value="design"><input type="hidden" name="editor" value="<?= h(isset($STRADE[$c['editor']]) ? $c['editor'] : 'semplice') ?>">
+  <form method="post" id="nl-form"><?= csrf_field() ?><input type="hidden" name="azione" value="sezione"><input type="hidden" name="sez" value="design"><input type="hidden" name="editor" value="<?= h(isset($STRADE[$cd['editor']]) ? $cd['editor'] : 'semplice') ?>"><?= $verB ? '<input type="hidden" name="versione" value="b">' : '' ?>
     <fieldset style="border:0;padding:0;margin:0;min-width:0"<?= $dis ?>>
-    <?php if ($c['editor'] === 'blocchi'): ?>
-    <p>L'email è fatta con l'editor a blocchi: la vedi in <a href="#sez-prova">Anteprima e prova</a>. <?= $modificabile ? 'Per cambiarla, «Apri l\'editor a blocchi» qui sopra: le modifiche si salvano da sole.' : '<a href="newsletter-design.php?campagna=' . $id . '">Guarda il design nell\'editor</a>.' ?></p>
-    <?php elseif ($c['editor'] === 'html'): ?>
+    <?php if ($cd['editor'] === 'blocchi'): ?>
+    <p>L'email è fatta con l'editor a blocchi: la vedi in <a href="#sez-prova">Anteprima e prova</a>. <?= $modificabile ? 'Per cambiarla, «Apri l\'editor a blocchi» qui sopra: le modifiche si salvano da sole.' : '<a href="newsletter-design.php?campagna=' . $id . ($verB ? '&amp;versione=b' : '') . '">Guarda il design nell\'editor</a>.' ?></p>
+    <?php elseif ($cd['editor'] === 'html'): ?>
     <div class="form-group"><label for="nlr-html">Il codice HTML dell'email</label>
-      <textarea id="nlr-html" name="html" class="nlr-codice" spellcheck="false" aria-describedby="nlr-html-aiuto"><?= h(newsletter_4byte_fuori((string)$c['html'])) ?></textarea>
+      <textarea id="nlr-html" name="html" class="nlr-codice" spellcheck="false" aria-describedby="nlr-html-aiuto"><?= h(newsletter_4byte_fuori((string)$cd['html'])) ?></textarea>
       <div class="hint" id="nlr-html-aiuto">Metti <code>{{ unsubscribe }}</code> dove vuoi il link per uscire (se manca, lo aggiungiamo noi in fondo), <code>{{ update_profile }}</code> per le preferenze e <code>{{ mirror }}</code> per la versione web. Valgono i segnaposti come <code>{{ contact.NOME }}</code>. Gli script si tolgono: nessun programma di posta li esegue.</div></div>
     <?php else: ?>
     <input type="hidden" name="corpo" id="corpo">
     <div class="form-group"><label id="editor-etichetta">Testo dell'email</label><div id="editor" aria-labelledby="editor-etichetta"></div></div>
     <div class="form-group"><label for="pulsante_testo">Pulsante in fondo (facoltativo)</label>
-      <input type="text" id="pulsante_testo" name="pulsante_testo" maxlength="100" placeholder="per esempio: Leggi la guida" value="<?= h(newsletter_4byte_fuori($c['pulsante_testo'])) ?>">
-      <div style="margin-top:.4rem"><input type="url" name="pulsante_link" id="nl-pulsante-link" maxlength="500" placeholder="<?= h(cms_url_sito()) ?>/..." value="<?= h($c['pulsante_link']) ?>" aria-label="Link del pulsante" data-link-sito="assoluto"></div></div>
+      <input type="text" id="pulsante_testo" name="pulsante_testo" maxlength="100" placeholder="per esempio: Leggi la guida" value="<?= h(newsletter_4byte_fuori((string)$cd['pulsante_testo'])) ?>">
+      <div style="margin-top:.4rem"><input type="url" name="pulsante_link" id="nl-pulsante-link" maxlength="500" placeholder="<?= h(cms_url_sito()) ?>/..." value="<?= h((string)$cd['pulsante_link']) ?>" aria-label="Link del pulsante" data-link-sito="assoluto"></div></div>
     <?php endif; ?>
-    <details class="pn-aiuto"<?= (int)$c['testo_modificato'] ? ' open' : '' ?>><summary>Testo semplice (per chi legge le email senza grafica)</summary>
-      <label class="nl-casella" style="display:flex;gap:.45rem;align-items:center;min-height:36px"><input type="checkbox" name="testo_modificato" value="1" <?= (int)$c['testo_modificato'] ? 'checked' : '' ?>> Lo scrivo io</label>
+    <details class="pn-aiuto"<?= (int)$cd['testo_modificato'] ? ' open' : '' ?>><summary>Testo semplice (per chi legge le email senza grafica)</summary>
+      <label class="nl-casella" style="display:flex;gap:.45rem;align-items:center;min-height:36px"><input type="checkbox" name="testo_modificato" value="1" <?= (int)$cd['testo_modificato'] ? 'checked' : '' ?>> Lo scrivo io</label>
       <div class="form-group"><label for="nlr-testo">Testo semplice</label>
-        <textarea id="nlr-testo" name="testo" class="nlr-testo" aria-describedby="nlr-testo-aiuto"><?= h((int)$c['testo_modificato'] && trim((string)$c['testo']) !== '' ? newsletter_4byte_fuori((string)$c['testo']) : $testoProva) ?></textarea>
+        <textarea id="nlr-testo" name="testo" class="nlr-testo" aria-describedby="nlr-testo-aiuto"><?= h((int)$cd['testo_modificato'] && trim((string)$cd['testo']) !== '' ? newsletter_4byte_fuori((string)$cd['testo']) : $testoProva) ?></textarea>
         <div class="hint" id="nlr-testo-aiuto">Senza la spunta si rifà da solo dall'email a ogni invio (qui vedi quello di adesso, con i dati dell'anteprima). Con la spunta parte questo, con i segnaposti; il link per uscire si aggiunge se manca.</div></div>
     </details>
-    <?php if ($modificabile): ?><button class="btn btn-primary" type="submit">Salva il design</button><?php endif; ?>
+    <?php if ($modificabile): ?><button class="btn btn-primary" type="submit"><?= $verB ? 'Salva il design della versione B' : 'Salva il design' ?></button><?php endif; ?>
     </fieldset>
   </form>
 </details>
@@ -372,6 +457,7 @@ require_once __DIR__ . '/includes/admin-header.php';
     <label class="nl-casella" style="display:flex;gap:.45rem;align-items:center;min-height:36px"><input type="checkbox" name="utm" value="1" <?= (int)$c['utm'] ? 'checked' : '' ?>> Aggiungi i parametri UTM ai link verso il tuo sito</label>
     <div class="form-group"><label for="nlr-utm">Nome della campagna nei parametri UTM</label><input type="text" id="nlr-utm" name="utm_campagna" maxlength="100" value="<?= h($c['utm_campagna']) ?>" placeholder="per esempio: novita-novembre" aria-describedby="nlr-utm-aiuto">
       <div class="hint" id="nlr-utm-aiuto">Nelle statistiche del sito (per esempio Google Analytics) vedi le visite arrivate da questa campagna. Vuoto: il nome della campagna. Valgono solo i link verso il tuo sito.</div></div>
+    <?php if ($isAb): ?><p class="hint">Invio a lotti: non c'è nel test A/B (i gruppi di prova partono insieme, il resto parte con la vincente).</p><?php else: ?>
     <fieldset class="nlk-scelte"><legend>Invio a lotti</legend>
       <label><input type="checkbox" name="lotti_attivi" value="1" <?= (int)$c['lotti'] > 1 ? 'checked' : '' ?>> Manda la campagna in più lotti, a distanza di tempo</label>
       <div class="nlr-colonne">
@@ -380,6 +466,7 @@ require_once __DIR__ . '/includes/admin-header.php';
       </div>
       <p class="hint">Fino a <?= NL_LOTTI_MAX ?> lotti. Il primo parte all'ora scelta, gli altri dopo: utile per non mandare tutto insieme. Una campagna a lotti non si rimanda ai non aperti.</p>
     </fieldset>
+    <?php endif; ?>
     <?php if ($modificabile): ?><button class="btn btn-primary" type="submit">Salva le impostazioni</button><?php endif; ?>
     </fieldset>
   </form>
@@ -387,8 +474,15 @@ require_once __DIR__ . '/includes/admin-header.php';
 
 <details class="form-card nlx-riquadro nlr-sez" id="sez-prova"<?= $aperta('prova') || $antEmail !== '' ? ' open' : '' ?>>
   <summary><h3>Anteprima e prova</h3><span class="nlr-riassunto">Come la vede chi la riceve, e una prova nella tua casella</span></summary>
+  <?php if ($isAb): ?>
+  <nav class="nlr-schede nlr-versioni" aria-label="Versione dell'anteprima">
+    <a class="btn btn-secondary btn-sm" href="newsletter-campagna.php?id=<?= $id ?>&amp;apri=prova#sez-prova"<?= $ver === 'a' ? ' aria-current="page"' : '' ?>>Versione A</a>
+    <a class="btn btn-secondary btn-sm" href="newsletter-campagna.php?id=<?= $id ?>&amp;versione=b&amp;apri=prova#sez-prova"<?= $ver === 'b' ? ' aria-current="page"' : '' ?>>Versione B</a>
+  </nav>
+  <p class="hint" style="margin-top:0">Anteprima della <b>versione <?= strtoupper($ver) ?></b>. La prova manda tutte e due le versioni.</p>
+  <?php endif; ?>
   <form method="get" class="nl-riga" style="gap:.5rem;align-items:flex-end;margin-bottom:.6rem">
-    <input type="hidden" name="id" value="<?= $id ?>">
+    <input type="hidden" name="id" value="<?= $id ?>"><?= $ver === 'b' ? '<input type="hidden" name="versione" value="b">' : '' ?>
     <div class="form-group" style="margin:0;flex:1;min-width:min(100%,16rem)"><label for="nlr-contatto">Guarda l'anteprima con i dati di un contatto</label>
       <input type="email" id="nlr-contatto" name="contatto" list="nlr-test-elenco" value="<?= h($antEmail) ?>" placeholder="per esempio: tu@esempio.it" aria-describedby="nlr-contatto-aiuto">
       <datalist id="nlr-test-elenco"><?php foreach ($listaTest as $t): ?><option value="<?= h($t['email']) ?>"><?php endforeach; ?></datalist></div>
@@ -418,7 +512,7 @@ require_once __DIR__ . '/includes/admin-header.php';
 <div class="form-card" id="nlr-invio" style="margin-top:1rem">
   <h3><?= $modificabile ? 'Programma' : 'Invio' ?></h3>
   <?php if ($modificabile): ?>
-  <form method="post"<?= $manca ? '' : ' data-conferma="Mandare la campagna a ' . (int)$sez['destinatari']['n'] . ' contatti? Dopo la partenza non si cambia più." data-conferma-ok="Sì, mandala"' ?>><?= csrf_field() ?><input type="hidden" name="azione" value="invia">
+  <form method="post"<?= $manca ? '' : ' data-conferma="' . ($isAb ? 'Partire con il test A/B? Le due versioni vanno a due gruppi di prova, poi la vincente agli altri: in tutto ' . (int)$sez['destinatari']['n'] . ' contatti. Dopo la partenza non si cambia più.' : 'Mandare la campagna a ' . (int)$sez['destinatari']['n'] . ' contatti? Dopo la partenza non si cambia più.') . '" data-conferma-ok="Sì, mandala"' ?>><?= csrf_field() ?><input type="hidden" name="azione" value="invia">
     <fieldset class="nlk-scelte nlr-quando"<?= $manca ? ' disabled' : '' ?>><legend>Quando</legend>
       <label><input type="radio" name="quando" value="subito" <?= $c['stato'] !== 'programmata' ? 'checked' : '' ?>> Invia subito (parte entro 5 minuti)</label>
       <label><input type="radio" name="quando" value="programma" <?= $c['stato'] === 'programmata' ? 'checked' : '' ?>> Programma per giorno e ora</label>
@@ -445,6 +539,13 @@ require_once __DIR__ . '/includes/admin-header.php';
 
 <script<?= nonce_attr() ?>>
 (function () {
+  // 2.13.0: il cursore dei gruppi del test A/B dice quanti contatti va a ogni versione.
+  var cur = document.getElementById('nlr-ab-perc');
+  if (cur) cur.addEventListener('input', function () {
+    var n = +cur.getAttribute('data-ab-n') || 0, p = +cur.value, g = n >= 2 ? Math.max(1, Math.floor(n * p / 100)) : 0;
+    document.getElementById('nlr-ab-perc-val').textContent = p + '%';
+    document.querySelector('[data-ab-gruppi]').textContent = 'Versione A a ' + g + ' contatti, versione B a ' + g + ', la vincente agli altri ' + Math.max(0, n - 2 * g) + ' (contati adesso: ' + n + ').';
+  });
   var box = document.getElementById('nlr-anteprima');
   document.querySelectorAll('[data-nlr-largo]').forEach(function (b) {
     b.addEventListener('click', function () {
@@ -455,7 +556,7 @@ require_once __DIR__ . '/includes/admin-header.php';
   });
 })();
 </script>
-<?php if ($c['editor'] === 'semplice'): ?>
+<?php if ($cd['editor'] === 'semplice'): ?>
 <script src="<?= pannello_file('assets/quill/quill.js') ?>"></script>
 <script<?= nonce_attr() ?>>
 (function () {
@@ -466,7 +567,7 @@ require_once __DIR__ . '/includes/admin-header.php';
     modules: { toolbar: { container: [[{ header: [2, 3, false] }], ['bold', 'italic', 'underline'], ['link', 'image'], [{ list: 'ordered' }, { list: 'bullet' }], ['blockquote'], [{ align: [] }], ['clean']],
       handlers: { image: carica } } }
   });
-  quill.clipboard.dangerouslyPasteHTML(<?= json_encode((string)$c['corpo'], JSON_HEX_TAG | JSON_HEX_AMP | JSON_UNESCAPED_UNICODE) ?>);
+  quill.clipboard.dangerouslyPasteHTML(<?= json_encode((string)$cd['corpo'], JSON_HEX_TAG | JSON_HEX_AMP | JSON_UNESCAPED_UNICODE) ?>);
   // 2.2: il pulsante link sceglie una pagina del sito, con l'indirizzo intero (serve alle email). scegli-link.js arriva con defer.
   document.addEventListener('DOMContentLoaded', function () { if (window.pnLink) window.pnLink.quill(quill, { assoluto: true }); });
   // Le immagini vanno sul server, non dentro l'email: si sceglie dai Media (o si carica dalla stessa finestra, in

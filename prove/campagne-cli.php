@@ -14,6 +14,9 @@
  *   preferenze <contatto>    il link del centro preferenze
  *   semina_vecchie           (su un sito 2.10.0) tre campagne come le fa il pannello di prima, con contatti in una lista "CR Vecchia"
  *   impronte                 lo sha256 dell'HTML di ogni campagna "CR Vecchia" per ogni suo contatto: {campagna: {contatto: sha}}
+ *   semina_ab <n>            (2.13.0) n contatti ab01..@cr-prova.it nella lista "CR AB"; stampa l'id della lista
+ *   ab <campagna>            la riga del test A/B e la coda per versione e stato: {ab, coda: {"a|inviata": n, ...}}
+ *   ab_indietro <campagna> <secondi>  sposta indietro la partenza del test (il tempo che passa, per le prove)
  */
 [$dir, $cmd] = array_pad(array_slice($argv, 1, 2), 2, '');
 $arg = array_slice($argv, 3);
@@ -43,6 +46,7 @@ case 'pulisci':
     if ($camp) { $in = implode(',', array_map('intval', $camp)); db()->exec('DELETE FROM ' . $t('newsletter_coda') . " WHERE campagna_id IN ($in)"); db()->exec('DELETE FROM ' . $t('newsletter_eventi') . " WHERE campagna_id IN ($in)"); db()->exec('DELETE FROM ' . $t('newsletter_campagne') . " WHERE id IN ($in)"); }
     if (function_exists('newsletter_segmenti')) db()->exec('DELETE FROM ' . $t('newsletter_segmenti') . " WHERE nome LIKE 'CR %'");
     try { db()->exec('DELETE FROM ' . $t('newsletter_uscite_motivi') . ' WHERE contatto_id NOT IN (SELECT id FROM ' . $t('newsletter_iscritti') . ')'); } catch (Throwable $e) {}
+    try { db()->exec('DELETE FROM ' . $t('newsletter_ab') . ' WHERE campagna_id NOT IN (SELECT id FROM ' . $t('newsletter_campagne') . ')'); } catch (Throwable $e) {}
     $out = count($ids);
     break;
 case 'semina':
@@ -133,6 +137,22 @@ case 'impronte':
             $out[$c['id']]['o' . $i] = $o;
         }
     }
+    break;
+case 'semina_ab':
+    $cart = (int)array_key_first(newsletter_cartelle());
+    if (!$listaId('CR AB')) newsletter_lista_crea('CR AB', $cart);
+    $la = $listaId('CR AB');
+    for ($k = 1; $k <= (int)$arg[0]; $k++) newsletter_contatto_crea(['EMAIL' => sprintf('ab%02d@cr-prova.it', $k), 'NOME' => 'Nome' . $k], [$la]);
+    $out = $la;
+    break;
+case 'ab':
+    $c = (int)$arg[0];
+    $out = ['ab' => nl_ab($c), 'coda' => []];
+    foreach (db()->query('SELECT versione, stato, COUNT(*) AS n FROM ' . $t('newsletter_coda') . " WHERE campagna_id = $c GROUP BY versione, stato") as $r) $out['coda'][$r['versione'] . '|' . $r['stato']] = (int)$r['n'];
+    break;
+case 'ab_indietro':
+    db()->prepare('UPDATE ' . $t('newsletter_ab') . ' SET avviato_at = DATE_SUB(avviato_at, INTERVAL ? SECOND) WHERE campagna_id = ?')->execute([(int)$arg[1], (int)$arg[0]]);
+    $out = nl_ab((int)$arg[0])['avviato_at'];
     break;
 default:
     fwrite(STDERR, "comando sconosciuto\n"); exit(2);

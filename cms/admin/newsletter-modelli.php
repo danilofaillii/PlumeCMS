@@ -16,6 +16,9 @@ $scheda = ($_GET['scheda'] ?? '') === 'galleria' ? 'galleria' : 'miei';
 $campagna = (int)($_GET['campagna'] ?? $_POST['campagna'] ?? 0);
 $camp = $campagna ? newsletter_campagna($campagna) : null;
 if ($camp && !newsletter_campagna_modificabile($camp)) $camp = null;
+// 2.13.0: la galleria per la versione B di un test A/B sul contenuto (?versione=b).
+$verB = $camp && ($_GET['versione'] ?? $_POST['versione'] ?? '') === 'b' && $camp['tipo'] === 'ab' && function_exists('nl_ab') && nl_ab($campagna)['cosa'] === 'design';
+$qvB = $verB ? '&versione=b' : '';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     verify_csrf();
@@ -52,10 +55,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             if (!empty($_POST['in_campagna']) && !$camp) { flash('error', 'Questa campagna non si può più modificare: è già partita.'); break; }
             if ($camp && !empty($_POST['in_campagna'])) {
                 $g = nd_galleria()[$slug] ?? null;
-                $e = $g ? nd_campagna_da_modello($campagna, null, $g['design']) : 'Modello della galleria sconosciuto.';
-                if ($e === '') { header('Location: newsletter-design.php?campagna=' . $campagna); exit; }
+                $e = $g ? ($verB ? nl_ab_da_modello($campagna, null, $g['design']) : nd_campagna_da_modello($campagna, null, $g['design'])) : 'Modello della galleria sconosciuto.';
+                if ($e === '') { header('Location: newsletter-design.php?campagna=' . $campagna . $qvB); exit; }
                 flash('error', $e);
-                $vai .= '?scheda=galleria&campagna=' . $campagna;
+                $vai .= '?scheda=galleria&campagna=' . $campagna . $qvB;
                 break;
             }
             $n = nd_galleria_copia($slug);
@@ -105,7 +108,7 @@ require_once __DIR__ . '/includes/admin-header.php';
   <a href="newsletter-modelli.php<?= $camp ? '?campagna=' . $campagna : '' ?>"<?= $scheda === 'miei' ? ' class="attiva" aria-current="page"' : '' ?>>I tuoi modelli</a>
   <a href="newsletter-modelli.php?scheda=galleria<?= $camp ? '&amp;campagna=' . $campagna : '' ?>"<?= $scheda === 'galleria' ? ' class="attiva" aria-current="page"' : '' ?>>Galleria</a>
 </nav>
-<?php if ($camp): ?><p class="nlr-stato-box" role="status" style="padding:.7rem 1rem;border-radius:8px;background:var(--info-chiaro);color:var(--info-testo);border:1px solid var(--info-bordo)">Stai scegliendo il design per la campagna «<a href="newsletter-campagna.php?id=<?= $campagna ?>&amp;apri=design#sez-design"><?= h(newsletter_4byte_fuori((string)($camp['nome'] ?: $camp['oggetto']))) ?></a>».</p><?php endif; ?>
+<?php if ($camp): ?><p class="nlr-stato-box" role="status" style="padding:.7rem 1rem;border-radius:8px;background:var(--info-chiaro);color:var(--info-testo);border:1px solid var(--info-bordo)">Stai scegliendo il design per la campagna «<a href="newsletter-campagna.php?id=<?= $campagna ?><?= $verB ? '&amp;versione=b' : '' ?>&amp;apri=design#sez-design"><?= h(newsletter_4byte_fuori((string)($camp['nome'] ?: $camp['oggetto']))) ?></a>»<?= $verB ? ', versione B' : '' ?>.</p><?php endif; ?>
 
 <?php if ($scheda === 'galleria'): ?>
 <div class="form-card">
@@ -118,7 +121,7 @@ require_once __DIR__ . '/includes/admin-header.php';
       <div class="ndm-carta-dentro"><b><?= h($g['nome']) ?></b><p><?= h($g['descrizione']) ?></p>
         <?php if ($g['tag'] === 'optin'): ?><p>Per l'email di conferma dell'iscrizione: il pulsante porta il link di conferma.</p><?php endif; ?>
         <div class="ndm-azioni">
-          <?php if ($camp && $g['tag'] !== 'optin'): ?><form method="post"><?= csrf_field() ?><input type="hidden" name="azione" value="galleria"><input type="hidden" name="slug" value="<?= h($slug) ?>"><input type="hidden" name="campagna" value="<?= $campagna ?>"><input type="hidden" name="in_campagna" value="1"><button class="btn btn-primary btn-sm" type="submit">Usa in questa campagna</button></form><?php endif; ?>
+          <?php if ($camp && $g['tag'] !== 'optin'): ?><form method="post"><?= csrf_field() ?><input type="hidden" name="azione" value="galleria"><input type="hidden" name="slug" value="<?= h($slug) ?>"><input type="hidden" name="campagna" value="<?= $campagna ?>"><input type="hidden" name="in_campagna" value="1"><?= $verB ? '<input type="hidden" name="versione" value="b">' : '' ?><button class="btn btn-primary btn-sm" type="submit">Usa in questa campagna</button></form><?php endif; ?>
           <form method="post"><?= csrf_field() ?><input type="hidden" name="azione" value="galleria"><input type="hidden" name="slug" value="<?= h($slug) ?>"><button class="btn <?= $camp ? 'btn-secondary' : 'btn-primary' ?> btn-sm" type="submit">Aggiungi ai miei modelli</button></form>
         </div>
       </div>

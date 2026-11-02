@@ -78,6 +78,17 @@ L'editor delle email a blocchi della 2.12.0 (fase 5 del piano Brevo), con i mode
    il testo alternativo).
 3. Atteso (2.12.0): tutto OK, in radice e in cartella, su un sito nuovo e su uno aggiornato dalla 2.11.0.
 
+## prova-ab.js
+
+Il test A/B delle campagne della 2.13.0 (fase 6 del piano Brevo), con il tempo spostato.
+
+1. Un CMS installato e il server di posta finto: `python3 -I prove/smtp-finto.py <porta> <cartella> &`. I dati della prova
+   (42 contatti `ab..@cr-prova.it` nella lista "CR AB", campagne "CR AB ...") li mette e li toglie `prove/campagne-cli.php`
+   (`semina_ab`, `pulisci`); la fine del test si fa arrivare con `campagne-cli.php ab_indietro <campagna> <secondi>`, i giri del
+   cron con `campagne-cli.php giro` (due lanciati insieme per il resto partito una volta sola). Va su un sito da buttare.
+2. `node prove/prova-ab.js <base> <utente> <password> <porta smtp> <cartella posta> <cartella del CMS> [cartella foto]`.
+3. Atteso (2.13.0): tutto OK, in radice e in cartella, su un sito nuovo e su uno aggiornato dalla 2.12.0.
+
 ## tools/sicurezza-prova.js
 
 
