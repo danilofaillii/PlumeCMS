@@ -2,6 +2,22 @@
 
 Il prodotto si chiama **plumeCMS** (nome scelto il 26 ottobre 2026; prima, per poche ore, "CarbonaraCMS", e ancora prima il provvisorio "Officina": gli zip vecchi si chiamavano `officina-*` e `carbonaracms-*`).
 
+## 2.12.0 (2 novembre 2026) - L'editor delle email a blocchi
+
+- **Editor delle email a blocchi** (nella campagna, Design > Editor a blocchi): linguette Contenuti, Modifica, Stile e
+  Salvati; otto blocchi (titolo, testo, immagine, pulsante, divisore, spaziatore, social, video) più il piede; sette
+  disposizioni di colonne; trascinamento e tastiera; vista computer e telefono; annulla e ripeti; salvataggio da solo.
+- L'email esce in HTML fatto per la posta: tabelle, stili in linea, pulsanti che si vedono anche in Outlook, immagini con
+  testo alternativo, colonne una sotto l'altra al telefono. Il link per uscire e l'indirizzo dell'azienda si rimettono da
+  soli se mancano.
+- **Modelli** (Newsletter e form > Modelli): i tuoi modelli, attivi o no, da rinominare, duplicare, eliminare; "Salva come
+  modello" dall'editor; una **galleria** di sei modelli pronti (benvenuto, newsletter del mese, offerta, evento, nuovo
+  articolo, conferma dell'iscrizione). L'email di conferma può usare un modello.
+- **Sezioni salvate**: una sezione che usi sempre si salva e si riusa; quelle sincronizzate, cambiate, si aggiornano in
+  tutte le email in bozza e nei modelli.
+- Il Design di una campagna si sceglie fra cinque strade: editor a blocchi, un tuo modello, la galleria, l'editor semplice,
+  il codice HTML. Le campagne di prima restano identiche.
+
 ## 2.11.0 (2 novembre 2026) - Campagne a riepilogo e centro preferenze
 
 - **Crea una campagna** (nome interno) e una **pagina di riepilogo** con cinque parti, ognuna con il suo stato (A posto o Da
