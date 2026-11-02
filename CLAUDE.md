@@ -120,6 +120,16 @@ Sono gli unici in `cms/docs/`, nello zip, nel sito di plumeCMS e nella pagina Do
 - **Regole di interfaccia** (regola globale di Danilo, 1 novembre 2026): prima di toccare pannello, editor, installatore, addon o sito
   si legge `docs-sviluppo/regole-interfaccia.md` (copia in `second-brain/_comune/regole-interfaccia.md`, valida per tutti i progetti;
   se cambia una, si aggiorna l'altra) e si chiude con la sua checklist. Le prove sono `prove/prova-ux-pannello.js` e `prove/prova-ux-editor.js`.
+- **Regola di Danilo (2 novembre 2026): le aperture (hero) nuove hanno l'aspetto e lo stile di quelle che ci sono già.** Proporre
+  disegni in un altro stile (una fioreria chiara con caratteri da rivista) è stato respinto: "non c'entrano nulla con le hero che sono già
+  nel sito". Ogni proposta o disposizione nuova si disegna nella lingua delle undici di `includes/editor-hero*.php` (foglio
+  `sito-plumecms/immagini/aperture.webp`), tema Cosmo: fondo scuro blu notte (`--bg #060a17`) con aloni viola e ciano; occhiello piccolo
+  maiuscolo spaziato in ciano (`.occhiello`); titolo in Space Grotesk 700 maiuscolo, con la parte in evidenza sfumata ciano-viola
+  (`.hero h1 em`, `--grad`); testo Inter grigio (`--testo-2`); pulsante viola pieno e pulsante a filo ciano (`.btn-viola`, `.btn-filo`);
+  la foto è una schermata in una finestra di vetro, in bianco e nero con il velo ciano-viola (`.finestra`); riquadri di vetro con onda e
+  barre "Leggero", "Meno peso", "Più tempo" (`.chip`). Testo d'esempio quello del sito: "Il tuo sito, leggero come una piuma."
+  Cambia solo la disposizione; con gli altri temi i colori seguono il tema. Proposte del 2 novembre: 15 tavole
+  (`https://claude.ai/artifact/D72dbZ333x6ctQLqUk9Uzt`), in attesa della scelta di Danilo.
 - Niente librerie esterne nel CMS (SortableJS e Quill sono serviti in casa).
 - Niente credenziali nel repository né in chat.
 - Italiano ovunque, niente trattini lunghi, niente caratteri a 4 byte nei file
