@@ -234,9 +234,9 @@ $dati = [
 </dialog>
 
 <dialog id="ed-dialogo-media" class="ed-dialogo ed-dialogo-largo">
-  <h2>Immagini</h2>
+  <h2 id="ed-media-titolo">Immagini</h2>
   <div class="ed-media-testa">
-    <label class="ed-b">Carica un'immagine<input type="file" id="ed-media-file" accept="image/jpeg,image/png,image/gif,image/webp"></label>
+    <label class="ed-b"><span id="ed-media-carica-testo">Carica un'immagine</span><input type="file" id="ed-media-file" accept="image/jpeg,image/png,image/gif,image/webp"></label>
     <label class="ed-media-url">oppure incolla un indirizzo<input type="url" id="ed-media-url" placeholder="https://…" aria-label="Indirizzo di un'immagine"><button type="button" class="ed-b" id="ed-media-usa-url">Usa</button></label>
   </div>
   <div class="ed-media-filtri">

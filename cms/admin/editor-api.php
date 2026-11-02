@@ -41,7 +41,7 @@ $tipo = editor_tipo_valido($_POST['tipo'] ?? '');
 $tab = tbl(editor_tabella($tipo));
 $id = (int)($_POST['id'] ?? 0);
 $pagina = $id ? editor_pagina($id, $tipo) : null;
-if (!in_array($azione, ['carica', 'media', 'markdown'], true) && !$pagina) api_esci(['errore' => 'Pagina non trovata.'], 404);
+if (!in_array($azione, ['carica', 'media', 'markdown', 'carica_video', 'video'], true) && !$pagina) api_esci(['errore' => 'Pagina non trovata.'], 404);
 // 2.1: un contenitore di un modulo (una lezione di un corso) lo tocca solo chi ha il suo permesso (di solito l'amministratore).
 $contenitore = editor_contenitore($tipo);
 if ($contenitore && !editor_contenitore_permesso($tipo)) api_esci(['errore' => 'Questo contenuto lo modifica solo un amministratore.'], 403);
@@ -211,6 +211,17 @@ switch ($azione) {
     case 'carica':
         $r = media_carica($_FILES['immagine'] ?? null, 'pagine');
         api_esci($r);
+
+    case 'carica_video':
+        // 2.17.0: un video per l'Apertura "Video" (MP4 o WebM, controllato dall'inizio del file).
+        api_esci(media_carica_video($_FILES['immagine'] ?? null));
+
+    case 'video':
+        // 2.17.0: i video caricati, per la finestra Scegli in modo video. A pagine di 60.
+        $voci = media_video_elenco((string)($_POST['q'] ?? ''));
+        $pagina = max(1, (int)($_POST['pagina'] ?? 1));
+        api_esci(['totale' => count($voci), 'pagina' => $pagina, 'pagine' => max(1, (int)ceil(count($voci) / 60)),
+            'video' => array_map(fn($m) => ['url' => $m['url'], 'nome' => $m['nome'], 'peso' => (int)$m['peso']], array_slice($voci, ($pagina - 1) * 60, 60))]);
 
     case 'media':
         // La stessa libreria della voce Media: tutte le cartelle, a pagine di 60.

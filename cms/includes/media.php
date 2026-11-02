@@ -171,3 +171,58 @@ function media_elimina(string $url): bool {
     }
     return false;
 }
+
+// ------------------------------------------------------------
+// 2.17.0: i video del sito (MP4 e WebM), per l'Apertura "Video". Stanno in <immagini>/video/AAAA/MM/, si caricano da
+// Media o dalla finestra Scegli dell'editor, si vedono con <video> (niente servizi esterni). Restano fuori da
+// media_elenco(), che è delle immagini: le finestre delle foto non li mostrano.
+// ------------------------------------------------------------
+const MEDIA_VIDEO = ['mp4' => 'video/mp4', 'webm' => 'video/webm'];
+
+/** I video caricati, dal più recente: url, nome, sotto (AAAA/MM), peso, tempo. */
+function media_video_elenco(string $cerca = ''): array {
+    $dir = cms_uploads_dir() . '/video';
+    $out = [];
+    if (is_dir($dir)) {
+        foreach (new RecursiveIteratorIterator(new RecursiveDirectoryIterator($dir, FilesystemIterator::SKIP_DOTS)) as $f) {
+            if (!$f->isFile() || !isset(MEDIA_VIDEO[strtolower($f->getExtension())])) continue;
+            $rel = str_replace('\\', '/', substr($f->getPathname(), strlen($dir) + 1));
+            $out[] = ['url' => MEDIA_RADICE_UPLOADS . '/video/' . $rel, 'nome' => $f->getFilename(), 'sotto' => dirname($rel) === '.' ? '' : dirname($rel),
+                'peso' => $f->getSize(), 'tempo' => $f->getMTime()];
+        }
+    }
+    $cerca = mb_strtolower(trim($cerca));
+    if ($cerca !== '') $out = array_values(array_filter($out, fn($v) => str_contains(mb_strtolower($v['nome']), $cerca)));
+    usort($out, fn($a, $b) => $b['tempo'] <=> $a['tempo'] ?: strcmp($a['url'], $b['url']));
+    return $out;
+}
+
+/** Il file è davvero un MP4 o un WebM? Si guarda l'inizio del file, non il nome né il tipo dichiarato dal browser. */
+function media_video_tipo(string $percorso): ?string {
+    $t = (string)@file_get_contents($percorso, false, null, 0, 16);
+    if (strlen($t) >= 12 && substr($t, 4, 4) === 'ftyp') return 'mp4';
+    if (str_starts_with($t, "\x1A\x45\xDF\xA3")) return 'webm';
+    return null;
+}
+
+/** Carica un video in <immagini>/video/AAAA/MM/. Ritorna ['url' => ...] oppure ['errore' => ...]. */
+function media_carica_video(?array $f, int $maxMb = 64): array {
+    $err = (int)($f['error'] ?? UPLOAD_ERR_NO_FILE);
+    if (in_array($err, [UPLOAD_ERR_INI_SIZE, UPLOAD_ERR_FORM_SIZE], true)) return ['errore' => 'Il video supera il limite di caricamento del server (' . ini_get('upload_max_filesize') . '). Accorcialo o rimpiccioliscilo, oppure chiedi al fornitore dello spazio di alzare il limite.'];
+    if (!$f || $err !== UPLOAD_ERR_OK) return ['errore' => 'Caricamento del video non riuscito: riprova.'];
+    if ((int)$f['size'] > $maxMb * 1048576) return ['errore' => "Video troppo pesante: massimo $maxMb MB."];
+    $ext = media_video_tipo((string)$f['tmp_name']);
+    $dichiarata = strtolower(pathinfo((string)$f['name'], PATHINFO_EXTENSION));
+    if ($ext === null || !isset(MEDIA_VIDEO[$dichiarata])) return ['errore' => 'Formati accettati per i video: MP4 e WebM.'];
+    // Niente media_ha_codice(): in qualche MB di dati compressi l'apertura di PHP capita per caso. Il nome ha solo .mp4 o .webm
+    // (scelto qui, mai quello del browser) e la cartella delle immagini non esegue PHP (uploads/.htaccess).
+    $rel = 'video/' . date('Y/m');
+    $dir = cms_uploads_dir() . '/' . $rel;
+    if (!is_dir($dir) && !@mkdir($dir, 0755, true)) return ['errore' => 'La cartella dei media non è scrivibile.'];
+    $base = trim(substr(preg_replace('/[^a-z0-9-]+/', '-', strtolower(pathinfo((string)$f['name'], PATHINFO_FILENAME))), 0, 60), '-') ?: 'video';
+    $nome = $base . '-' . substr(bin2hex(random_bytes(3)), 0, 6) . '.' . $ext;
+    while (file_exists("$dir/$nome")) $nome = $base . '-' . substr(bin2hex(random_bytes(4)), 0, 8) . '.' . $ext;
+    if (!is_uploaded_file((string)$f['tmp_name']) || !move_uploaded_file((string)$f['tmp_name'], "$dir/$nome")) return ['errore' => 'Il video non si è salvato.'];
+    @chmod("$dir/$nome", 0644);
+    return ['url' => MEDIA_RADICE_UPLOADS . '/' . $rel . '/' . $nome];
+}

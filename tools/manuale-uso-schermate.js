@@ -438,6 +438,27 @@ capitoli['10'] = async () => {
   await p.waitForFunction(() => /Pubblicata alle/.test(document.querySelector('#ed-stato').textContent));
 };
 
+// 11v. (2.17.0) L'Apertura con il video: il video caricato in Media (riquadro Video), poi nell'editor la disposizione Video e
+// Scegli in modo video. Non pubblica (la home resta com'è). Da solo: SOLO_CAPITOLI=11v, con TMPDIR vuota.
+capitoli['11v'] = async () => {
+  await vai('media.php');
+  await p.setInputFiles('#md-video-file', path.join(FOTO_PROVA, 'presentazione.mp4'));
+  await Promise.all([p.waitForNavigation(), p.click('.md-video-carica button[type=submit]')]);
+  if (!/Video caricato/.test(await p.locator('.flash').first().innerText())) throw new Error('11v: il video non si carica: ' + await p.locator('.flash').first().innerText());
+  await apriEditor('editor.php?tipo=pagine&id=1');
+  await tela().locator('.ed-w-hero').first().dblclick(); await dorme(600);
+  const disp = await ctl('Disposizione');
+  await disp.locator('select').selectOption('video'); await dorme(1500);
+  const campo = p.locator('#ed-controlli .ed-riga-video');
+  await campo.scrollIntoViewIfNeeded();
+  await campo.locator('button', { hasText: 'Scegli' }).click(); await dorme(900);
+  await p.locator('#ed-dialogo-media .ed-media-griglia button').first().click(); await dorme(1500);
+  if (!(await tela().locator('.ed-hvi-play').count())) throw new Error('11v: nella tela non c\'è il play');
+  await campo.evaluate(e => e.closest('.ed-controllo').setAttribute('data-mu', 'video'));
+  await disp.evaluate(e => e.setAttribute('data-mu', 'disp'));
+  await foto('11-video', { clip: { x: 0, y: 0, width: 1200, height: 760 }, segni: [{ sel: '[data-mu=disp]', n: 2 }, { sel: '[data-mu=video]', n: 3 }] });
+};
+
 // 11. L'apertura della pagina
 capitoli['11'] = async () => {
   await apriEditor('editor.php?tipo=pagine&id=1');

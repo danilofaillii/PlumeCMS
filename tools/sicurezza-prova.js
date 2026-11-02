@@ -2303,6 +2303,74 @@ echo json_encode($o);
     }
   }
 
+  // === 39. (2.17.0) Le quindici aperture nuove: valori cattivi nei campi nuovi (righe del terminale, parola, etichette,
+  // posizioni, video, forma, foto "prima") e in quelli di sempre, salvati con editor_valida come dall'editor vero
+  // (prove/pagina-hero-cattive.php). Le pagine si aprono nel browser con JavaScript acceso: nessuna finestra, nessun
+  // attributo on*, nessuno script, video solo del sito, posizioni dentro 0-100, forma fra le tre. Poi il caricamento dei
+  // video: solo MP4 e WebM veri, solo con il token.
+  if (DIR && fs.existsSync(path.join(__dirname, '..', 'prove', 'pagina-hero-cattive.php'))) {
+    const { execFileSync } = require('child_process');
+    let t39 = {};
+    try { t39 = JSON.parse(execFileSync('php', [path.join(__dirname, '..', 'prove', 'pagina-hero-cattive.php'), DIR], { encoding: 'utf8' }).trim().split('\n').pop()); } catch (e) { t39 = { errore: String(e.message).slice(0, 200) }; }
+    ok('2.17.0: (preparazione) le quindici aperture nuove con i valori cattivi', Array.isArray(t39.ids) && t39.ids.length === 15, t39.errore || t39.ids);
+    const ids39 = t39.ids || [];
+    ok('2.17.0: video esterni, javascript:, data:, "//" e ".." non entrano: restano solo i percorsi del sito .mp4/.webm', (t39.video || []).every(v => v === '' || v === '/uploads/video/buono.mp4') && (t39.video || []).includes('/uploads/video/buono.mp4'), t39.video);
+    ok('2.17.0: forma inventata (../../etc/passwd, svg): torna alla piuma', t39.forma === 'piuma', t39.forma);
+    ok('2.17.0: posizioni delle etichette e punto della lente fuori misura: tenuti fra 0 e 100', (t39.x || []).every(([x, y]) => x >= 0 && x <= 100 && y >= 0 && y <= 100) && (t39.lente || []).every(v => v >= 0 && v <= 100), { x: (t39.x || []).slice(0, 2), lente: t39.lente });
+    ok('2.17.0: una disposizione con caratteri cattivi non entra (torna la classica); una sconosciuta pulita resta e si vede la classica', t39.disposizione === 'classica' && t39.futura === 'futura' && t39.futura_classica === true, { d: t39.disposizione, f: t39.futura, c: t39.futura_classica });
+    const ctx39 = await browser.newContext({ viewport: { width: 1280, height: 900 } });
+    const pg39 = await ctx39.newPage();
+    const fin39 = [], err39 = [], male39 = [];
+    pg39.on('dialog', d => { fin39.push(d.message()); d.dismiss(); });
+    pg39.on('pageerror', e => err39.push(e.message.slice(0, 120)));
+    for (const d of ids39) {
+      const r = await pg39.goto(BASE + '/hero-cattiva-' + d + '/', { waitUntil: 'networkidle' });
+      if (d === 'video') { const b = pg39.locator('.ed-hvi-play'); if (await b.count()) await b.first().click().catch(() => {}); await pg39.waitForTimeout(300); }
+      if (d === 'primadopo') { const c = pg39.locator('.ed-hpd-cursore'); if (await c.count()) { await c.first().focus(); await pg39.keyboard.press('ArrowRight'); } }
+      const e = await pg39.evaluate(() => {
+        const h = document.querySelector('.ed-w-hero'); if (!h) return { manca: true };
+        const tutti = [...h.querySelectorAll('*')];
+        return {
+          on: tutti.filter(x => [...x.attributes].some(a => /^on/i.test(a.name))).length,
+          script: tutti.filter(x => /^(script|iframe|object|embed|foreignobject)$/i.test(x.tagName)).length,
+          link: tutti.flatMap(x => ['href', 'src', 'data-video', 'poster'].map(n => x.getAttribute(n)).filter(Boolean)).filter(u => /^\s*(javascript|data|vbscript):|^\s*\/\/|^https?:\/\/(?!127\.0\.0\.1)/i.test(u) || u.includes('..')),
+          video: [...h.querySelectorAll('video')].map(v => v.getAttribute('src')).filter(s => s !== '/uploads/video/buono.mp4' && !/\/uploads\/video\/buono\.mp4$/.test(s || '')),
+          stili: tutti.map(x => x.getAttribute('style') || '').filter(s => /script|expression|url\((?!&quot;|")|<|javascript/i.test(s)),
+          note: [...h.querySelectorAll('.ed-hno-note li')].length, righe: h.querySelectorAll('.ed-hte-riga').length, nastro: h.querySelectorAll('.ed-hna-foto').length,
+          parola: (h.querySelector('.ed-htr-parola') || {}).textContent || '',
+          testo: h.innerText.includes('<script>alert(39)</script>'),
+        };
+      });
+      if (r.status() !== 200 || e.manca || e.on || e.script || e.link.length || e.video.length || e.stili.length || e.note > 3 || e.righe > 5 || e.nastro > 16 || e.parola.length > 14) male39.push([d, r.status(), e]);
+    }
+    ok('2.17.0: le quindici aperture cattive si aprono (200) senza errori JavaScript e senza finestre aperte da script nascosti', male39.filter(m => m[1] !== 200).length === 0 && err39.length === 0 && fin39.length === 0, { err: err39.slice(0, 3), fin: fin39.slice(0, 3) });
+    ok('2.17.0: nessun attributo on*, nessuno script, nessun link o video esterno o javascript:, stili puliti, al massimo 3 etichette, 5 righe, 14 lettere', male39.length === 0, male39.slice(0, 3));
+    // Caricamento dei video: un PHP travestito, un HTML con nome .mp4, un MP4 vero con nome .php; senza token e da anonimo.
+    const tk39 = await tokenDi(admin.p, ADMIN + '/media.php');
+    const carica39 = async (nome, buf, tipo, token = tk39, ctxr = admin.ctx) => {
+      const r = await ctxr.request.post(ADMIN + '/editor-api.php', { headers: { Origin: BASE, Referer: ADMIN + '/editor.php' }, multipart: { _csrf: token, azione: 'carica_video', tipo: 'pagine', id: '0', immagine: { name: nome, mimeType: tipo, buffer: buf } }, maxRedirects: 0 });
+      let j = {}; try { j = await r.json(); } catch (x) { j = { stato: r.status() }; }
+      return j;
+    };
+    const mp4 = Buffer.concat([Buffer.from([0, 0, 0, 0x18]), Buffer.from('ftypisom'), Buffer.alloc(64)]);
+    const r39a = await carica39('x.mp4', Buffer.from('<?php echo 1; ?>'), 'video/mp4');
+    const r39b = await carica39('x.mp4', Buffer.from('<html><script>alert(1)</script></html>'), 'video/mp4');
+    const r39c = await carica39('x.php', mp4, 'video/mp4');
+    const r39d = await carica39('x.mp4.php', mp4, 'video/mp4');
+    ok('2.17.0: video falsi (PHP o HTML con nome .mp4, un MP4 con nome .php) rifiutati', !r39a.url && !r39b.url && !r39c.url && !r39d.url, [r39a, r39b, r39c, r39d].map(j => j.errore || j.url || j.stato));
+    const r39e = await carica39('x.mp4', mp4, 'video/mp4', 'tokenfalso');
+    const anon39 = await browser.newContext();
+    const r39f = await carica39('x.mp4', mp4, 'video/mp4', tk39, anon39);
+    ok('2.17.0: senza il token giusto o senza essere entrati il video non si carica', !r39e.url && !r39f.url, [r39e.errore || r39e.stato, r39f.errore || r39f.stato]);
+    const r39g = await carica39('vero.mp4', mp4, 'video/mp4');
+    ok('2.17.0: un MP4 vero si carica in uploads/video/, con il nome .mp4 scelto dal sito', !!r39g.url && /\/uploads\/video\/\d{4}\/\d{2}\/vero-[a-f0-9]{6}\.mp4$/.test(r39g.url), r39g);
+    if (r39g.url) {
+      const tm = await tokenDi(admin.p, ADMIN + '/media.php');
+      await post(admin.p, ADMIN + '/media.php', new URLSearchParams({ _csrf: tm, elimina: r39g.url }).toString(), { 'Content-Type': 'application/x-www-form-urlencoded' });
+    }
+    await anon39.close(); await ctx39.close();
+  } else console.log('--  aperture nuove con valori cattivi: saltata (serve CMS_DIR)');
+
   // === pulizia: elimina il redattore di prova
   {
     await admin.p.goto(ADMIN + '/utenti.php', { waitUntil: 'networkidle' });

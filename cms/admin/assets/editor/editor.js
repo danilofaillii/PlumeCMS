@@ -875,6 +875,20 @@
     c.appendChild(img); c.appendChild(u); c.appendChild(b); c.appendChild(x);
     return c;
   }
+  // 2.17.0: un video del sito (MP4 o WebM) per l'Apertura "Video": la finestra Scegli in modo video, o l'indirizzo scritto.
+  function campoVideo(v, salva) {
+    var c = mk('div', 'ed-riga-video');
+    var vd = document.createElement('video'); vd.muted = true; vd.preload = 'metadata'; vd.src = v || ''; vd.hidden = !v; vd.setAttribute('aria-hidden', 'true');
+    var u = document.createElement('input'); u.type = 'text'; u.value = v || ''; u.placeholder = 'per esempio /uploads/video/2026/11/presentazione.mp4'; u.setAttribute('aria-label', 'Indirizzo del video');
+    var b = mk('button', 'ed-b ed-b-piccolo', 'Scegli'); b.type = 'button'; b.title = 'Scegli un video dai Media o caricane uno';
+    var x = mk('button', 'ed-b ed-b-piccolo', '\u00d7'); x.type = 'button'; x.title = 'Togli il video'; x.setAttribute('aria-label', 'Togli il video'); x.hidden = !v;
+    function metti(url) { u.value = url; vd.src = url || ''; vd.hidden = !url; x.hidden = !url; salva(url); }
+    u.addEventListener('change', function () { metti(u.value.trim()); });
+    b.addEventListener('click', function () { apriMedia(function (url) { metti(url); }, 'video'); });
+    x.addEventListener('click', function () { metti(''); });
+    c.appendChild(vd); c.appendChild(u); c.appendChild(b); c.appendChild(x);
+    return c;
+  }
   function campoIcona(v, salva) {
     var set = D.icone || {};
     var nomi = Object.keys(set);
@@ -1001,6 +1015,8 @@
         return campoFamiglia(v || '', salva);
       case 'immagine':
         return campoImmagine(v, salva);
+      case 'video':
+        return campoVideo(v, salva);
       case 'link':
         c = mk('div', 'ed-riga-link');
         v = v && typeof v === 'object' ? v : { url: '', nuova: false, nofollow: false };
@@ -1260,7 +1276,20 @@
 
   // ------------------------------------------------------------ immagini
   var dMedia = $('#ed-dialogo-media'), mediaCallback = null, mediaCartelleFatte = false, mediaTimer = null;
-  function apriMedia(cb) {
+  var mediaModo = 'immagini';
+  // 2.17.0: la stessa finestra sceglie anche i video (modo 'video'): elenco dei video, caricamento di MP4 o WebM.
+  function modoMedia(m) {
+    mediaModo = m === 'video' ? 'video' : 'immagini';
+    var vid = mediaModo === 'video';
+    $('#ed-media-titolo').textContent = vid ? 'Video' : 'Immagini';
+    $('#ed-media-carica-testo').textContent = vid ? 'Carica un video (MP4 o WebM)' : 'Carica un\'immagine';
+    $('#ed-media-file').accept = vid ? 'video/mp4,video/webm' : 'image/jpeg,image/png,image/gif,image/webp';
+    $('#ed-media-cartella').hidden = vid;
+    $('#ed-media-url').closest('label').hidden = vid;
+    $('#ed-media-cerca').setAttribute('aria-label', vid ? 'Cerca un video per nome' : 'Cerca un\'immagine per nome');
+  }
+  function apriMedia(cb, modo) {
+    modoMedia(modo);
     mediaCallback = cb;
     $('#ed-media-errore').hidden = true;
     $('#ed-media-url').value = '';
@@ -1270,6 +1299,25 @@
   function caricaMedia(pagina) {
     var g = $('#ed-media-griglia'), pg = $('#ed-media-pagine');
     g.innerHTML = '<p class="ed-aiuto">Carico…</p>'; pg.innerHTML = '';
+    if (mediaModo === 'video') {
+      api('video', { q: $('#ed-media-cerca').value, pagina: pagina }).then(function (j) {
+        $('#ed-media-conta').textContent = j.totale + ' video';
+        g.innerHTML = j.video.length ? '' : '<p class="ed-aiuto">Ancora nessun video: carica il primo con il pulsante qui sopra (MP4 o WebM).</p>';
+        j.video.forEach(function (m) {
+          var b = document.createElement('button'); b.type = 'button'; b.title = m.url;
+          var vv = document.createElement('video'); vv.src = m.url; vv.muted = true; vv.preload = 'metadata'; b.appendChild(vv);
+          var sp = document.createElement('span'); sp.textContent = m.nome; b.appendChild(sp);
+          b.addEventListener('click', function () { scegliMedia(m.url); });
+          g.appendChild(b);
+        });
+        for (var i = 1; i <= j.pagine; i++) {
+          var pb = document.createElement('button'); pb.type = 'button'; pb.className = 'ed-b ed-b-piccolo' + (i === j.pagina ? ' ed-b-primo' : ''); pb.textContent = i;
+          (function (n) { pb.addEventListener('click', function () { caricaMedia(n); }); })(i);
+          pg.appendChild(pb);
+        }
+      }).catch(function (e) { g.innerHTML = '<p class="ed-errore">' + escapeHtml(e.message) + '</p>'; });
+      return;
+    }
     api('media', { cartella: $('#ed-media-cartella').value, q: $('#ed-media-cerca').value, pagina: pagina }).then(function (j) {
       if (!mediaCartelleFatte) {
         mediaCartelleFatte = true;
@@ -1298,7 +1346,7 @@
   $('#ed-media-file').addEventListener('change', function () {
     var f = this.files[0]; if (!f) return;
     $('#ed-media-errore').hidden = true;
-    api('carica', {}, f).then(function (j) { scegliMedia(j.url); }).catch(function (e) { var p = $('#ed-media-errore'); p.textContent = e.message; p.hidden = false; });
+    api(mediaModo === 'video' ? 'carica_video' : 'carica', {}, f).then(function (j) { scegliMedia(j.url); }).catch(function (e) { var p = $('#ed-media-errore'); p.textContent = e.message; p.hidden = false; });
     this.value = '';
   });
   $('#ed-media-usa-url').addEventListener('click', function () { var u = $('#ed-media-url').value.trim(); if (u) scegliMedia(u); });

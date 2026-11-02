@@ -16,7 +16,7 @@ foreach (array_keys(EDITOR_HERO_DISPOSIZIONI) as $d) foreach (array_keys(EDITOR_
         'testo' => 'Due pulsanti qui sotto: si devono poter cliccare.',
         'pulsanti' => [['testo' => 'Primo pulsante', 'link' => '/servizi/', 'stile' => 'viola'], ['testo' => 'Secondo pulsante', 'link' => '/contatti/', 'stile' => 'filo']],
         'immagine' => $foto, 'onda_mostra' => true, 'etichetta_onda' => 'Onda', 'barre' => [['etichetta' => 'Uno', 'valore' => 70]],
-        'foto_trattamento' => 'velo', 'foto_effetto' => $e] + $w['impostazioni'];
+        'foto_trattamento' => 'velo', 'foto_effetto' => $e, 'video' => (string)(getenv('VIDEO') ?: '')] + $w['impostazioni'];
     $sez = ['id' => editor_id(), 'tipo' => 'sezione', 'impostazioni' => [], 'figli' => [['id' => editor_id(), 'tipo' => 'colonna', 'impostazioni' => [], 'figli' => [$w]]]];
     $slug = 'hp-' . $d . '-' . ($e === '' ? 'nessuno' : $e);
     $st = $pdo->prepare('SELECT id FROM ' . tbl('pages') . ' WHERE slug = ?'); $st->execute([$slug]);

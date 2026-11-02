@@ -30,6 +30,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $r = su_misura_sostituisci((string)($_POST['segnaposto'] ?? ''), $_FILES['file'] ?? null);
         if (isset($r['url'])) flash('success', 'Fatto: la foto nuova ha preso il posto di quella finta' . ($r['righe'] ? ' (' . $r['righe'] . ($r['righe'] === 1 ? ' punto del sito)' : ' punti del sito)') : ', che nessuna pagina mostrava più') . '.');
         else flash('error', $r['errore']);
+    } elseif (($_POST['azione'] ?? '') === 'carica_video') {
+        // 2.17.0: un video MP4 o WebM per l'Apertura "Video" (uploads/video/AAAA/MM/).
+        $r = media_carica_video($_FILES['video'] ?? null);
+        if (isset($r['url'])) flash('success', 'Video caricato: ' . $r['url'] . '. Sceglilo nell\'editor, Apertura con la disposizione Video, campo Video.');
+        else flash('error', $r['errore']);
     } elseif (isset($_POST['elimina'])) {
         $ok = media_elimina((string)$_POST['elimina']);
         flash($ok ? 'success' : 'error', ($ok ? 'Cancellata: ' : 'Non si è potuta cancellare: ') . (string)$_POST['elimina']);
@@ -136,6 +141,39 @@ require_once __DIR__ . '/includes/admin-header.php';
 <?php if (!$voci): ?>
 <div class="empty-state"><p>Nessuna immagine qui.</p></div>
 <?php endif; ?>
+
+<?php $video = media_video_elenco(); ?>
+<section class="form-card md-video" id="video">
+  <h3>Video</h3>
+  <p class="hint">I video MP4 o WebM che il sito mostra da sé, senza servizi esterni: li usa l'Apertura con la disposizione Video, che li fa partire quando si preme play. Meglio corti e leggeri (pochi MB).</p>
+  <form method="post" enctype="multipart/form-data" class="md-video-carica">
+    <?= csrf_field() ?><input type="hidden" name="azione" value="carica_video">
+    <label for="md-video-file">Video da caricare</label>
+    <input type="file" id="md-video-file" name="video" accept="video/mp4,video/webm" required<?= pannello_limite_caricamento() > 0 ? ' data-peso-massimo="' . pannello_limite_caricamento() . '"' : '' ?>>
+    <button type="submit" class="btn btn-primary btn-sm">Carica il video</button>
+  </form>
+  <?php if (!$video): ?>
+  <div class="empty-state"><p>Ancora nessun video: caricane uno con il pulsante qui sopra.</p></div>
+  <?php else: ?>
+  <div class="md-video-griglia">
+    <?php foreach ($video as $vd): ?>
+    <div class="md-video-voce">
+      <video src="<?= h($vd['url']) ?>" preload="metadata" controls muted></video>
+      <div class="md-video-nome" title="<?= h($vd['nome']) ?>"><?= h($vd['nome']) ?> <span><?= round($vd['peso'] / 1048576, 1) ?> MB</span></div>
+      <input type="text" value="<?= h($vd['url']) ?>" readonly title="Clic per copiare l'indirizzo" aria-label="Indirizzo del video <?= h($vd['nome']) ?>" data-copia-se-stesso>
+      <form method="post" data-conferma="Cancellare <?= h($vd['nome']) ?>? Se un'Apertura lo usa, resterà la foto senza il play." data-conferma-ok="Cancella il video" data-conferma-pericolo>
+        <?= csrf_field() ?><input type="hidden" name="elimina" value="<?= h($vd['url']) ?>">
+        <button type="submit" class="btn btn-secondary btn-sm">Cancella</button>
+      </form>
+    </div>
+    <?php endforeach; ?>
+  </div>
+  <?php endif; ?>
+</section>
+<style>.md-video{margin-top:1.5rem}.md-video-carica{display:flex;flex-wrap:wrap;gap:.6rem;align-items:center;margin:.8rem 0 1rem}.md-video-carica label{font-weight:600}
+.md-video-griglia{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:1rem}.md-video-voce{min-width:0;display:grid;gap:.4rem}
+.md-video-voce video{width:100%;aspect-ratio:16/10;border-radius:8px;background:var(--bg)}.md-video-nome{font-size:.8rem;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.md-video-nome span{font-weight:400;color:var(--text-muted)}.md-video-voce input{width:100%;font-size:.7rem;padding:.25rem .4rem;border:1px solid var(--bordo-campo);border-radius:4px;background:var(--campo);color:var(--text)}</style>
 
 <?php if ($pagine > 1): ?>
 <div style="display:flex;gap:0.4rem;justify-content:center;margin-top:1.5rem;flex-wrap:wrap">

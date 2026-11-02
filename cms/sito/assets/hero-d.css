@@ -1,0 +1,140 @@
+/* Disposizioni dell'Apertura del gruppo D (2.17.0): orizzonte, video, note, lente, costellazione, primadopo, trittico.
+   Stessa lingua delle undici; colori solo dalle variabili del sito. Lo script di video e prima e dopo e in hero-c.js. */
+
+.ed-hero-costellazione.ed-hero-v .chip,.ed-hero-trittico.ed-hero-v .chip{background:rgba(var(--bg-rgb),.86);border:1px solid var(--bordo);color:var(--testo-2);box-shadow:0 14px 34px rgba(0,0,0,.22)}
+.ed-hero-costellazione .barra div,.ed-hero-trittico .barra div{background:rgba(var(--inchiostro-rgb),.1)}
+.ed-hero-orizzonte h1,.ed-hero-video h1,.ed-hero-note h1,.ed-hero-lente h1,.ed-hero-costellazione h1,.ed-hero-primadopo h1{font-size:clamp(36px,4.6vw,62px)}
+.ed-hoz-parole,.ed-hvi-parole,.ed-hno-parole,.ed-hle-parole,.ed-hco-parole,.ed-hpd-parole,.ed-htt-parole{position:relative;z-index:2;min-width:0}
+.ed-hvi-griglia,.ed-hno-griglia,.ed-hle-griglia,.ed-hpd-griglia{display:grid;grid-template-columns:1fr 1.15fr;gap:clamp(28px,4vw,56px);align-items:center;padding:clamp(16px,3vw,40px) 0}
+.ed-hvi-solo,.ed-hno-solo,.ed-hle-solo,.ed-hpd-solo{grid-template-columns:1fr}
+.ed-hvi-scena,.ed-hno-scena,.ed-hle-scena,.ed-hpd-scena{position:relative;min-width:0}
+.ed-hero.ed-hero-video .finestra.ed-hvi-foto,.ed-hero.ed-hero-note .finestra.ed-hno-foto,.ed-hero.ed-hero-lente .finestra.ed-hle-foto,.ed-hero.ed-hero-primadopo .finestra.ed-hpd-foto{aspect-ratio:16/10}
+@media (max-width:860px){
+  .ed-hvi-griglia,.ed-hno-griglia,.ed-hle-griglia,.ed-hpd-griglia{grid-template-columns:1fr;gap:32px}
+}
+
+/* 9. Orizzonte: un sole sfumato dietro la finestra, un pavimento a griglia luminosa che corre, la finestra che galleggia. */
+.ed-hero.ed-hero-orizzonte{position:relative;isolation:isolate;overflow:hidden;border-radius:calc(var(--r,18px) + 6px);padding:clamp(20px,3.4vw,48px) clamp(16px,3vw,40px) clamp(110px,13vw,160px)}
+.ed-hoz-sole{position:absolute;left:73%;bottom:-6%;z-index:-2;width:clamp(260px,36vw,460px);aspect-ratio:1;transform:translateX(-50%);border-radius:50%;pointer-events:none;
+  background:linear-gradient(180deg,var(--primario-chiaro),var(--viola) 45%,transparent 78%);opacity:.5;filter:blur(2px)}
+.ed-hoz-suolo{position:absolute;left:-25%;right:-25%;bottom:0;z-index:-1;height:clamp(120px,15vw,190px);pointer-events:none;transform:perspective(320px) rotateX(58deg);transform-origin:50% 100%;
+  background-image:linear-gradient(rgba(var(--ciano-rgb),.55) 1px,transparent 1px),linear-gradient(90deg,rgba(var(--ciano-rgb),.55) 1px,transparent 1px);background-size:48px 48px;
+  -webkit-mask:linear-gradient(transparent,#000 45%);mask:linear-gradient(transparent,#000 45%);animation:ed-hoz-corre 2.4s linear infinite}
+.ed-hoz-griglia{display:grid;grid-template-columns:1.05fr .95fr;gap:clamp(28px,4vw,56px);align-items:center}
+.ed-hoz-solo{grid-template-columns:1fr}
+.ed-hoz-scena{min-width:0;animation:ed-hoz-galleggia 6s ease-in-out infinite}
+.ed-hero.ed-hero-orizzonte .finestra.ed-hoz-foto{aspect-ratio:16/10}
+@keyframes ed-hoz-corre{to{background-position:0 48px}}
+@keyframes ed-hoz-galleggia{50%{transform:translateY(-12px)}}
+@media (prefers-reduced-motion:reduce){.ed-hoz-suolo,.ed-hoz-scena{animation:none}}
+@media (max-width:860px){
+  .ed-hero.ed-hero-orizzonte{padding:20px 16px 110px}
+  .ed-hoz-griglia{grid-template-columns:1fr;gap:32px}
+  .ed-hoz-sole{left:50%;width:300px;bottom:-4%}
+}
+
+/* 10. Video: la finestra con un grande pulsante play che pulsa; al clic il video caricato prende il suo posto. */
+.ed-hvi-vuota{background:var(--bg-2)}
+.ed-hvi-play{position:absolute;left:50%;top:50%;z-index:3;display:grid;place-items:center;width:clamp(72px,8vw,100px);aspect-ratio:1;padding:0;border:0;border-radius:50%;cursor:pointer;
+  transform:translate(-50%,-50%);background:linear-gradient(180deg,var(--primario-chiaro),var(--primario-scuro));
+  box-shadow:0 0 0 14px rgba(var(--viola-rgb),.22),0 0 0 28px rgba(var(--viola-rgb),.1),0 0 50px rgba(var(--viola-rgb),.6);animation:ed-hvi-pulsa 2.6s ease-in-out infinite}
+.ed-hvi-play span{display:block;width:0;height:0;margin-left:12%;border-left:clamp(22px,2.4vw,30px) solid #fff;border-top:clamp(13px,1.45vw,18px) solid transparent;border-bottom:clamp(13px,1.45vw,18px) solid transparent}
+.ed-hvi-play:hover{filter:brightness(1.08)}
+.ed-hvi-play:focus-visible{outline:3px solid var(--ciano);outline-offset:8px}
+@keyframes ed-hvi-pulsa{50%{box-shadow:0 0 0 20px rgba(var(--viola-rgb),.16),0 0 0 40px rgba(var(--viola-rgb),.06),0 0 64px rgba(var(--viola-rgb),.7)}}
+.ed-hvi-video{display:block;width:100%;aspect-ratio:16/10;border-radius:var(--r,18px);background:var(--bg-2);border:1px solid rgba(160,200,255,.28);box-shadow:0 30px 80px rgba(0,0,0,.5)}
+@media (prefers-reduced-motion:reduce){.ed-hvi-play{animation:none}}
+
+/* 11. Note sulla foto: etichette con il pallino ciano appuntate sulla finestra, e un cursore che si muove fra loro. */
+.ed-hno-note{list-style:none;margin:0;padding:0}
+.ed-hno-scena .ed-hno-note li{position:absolute;left:var(--x);top:var(--y);z-index:3;transform:translate(calc(var(--x) * -1),calc(var(--y) * -1));white-space:nowrap}
+.ed-hno-note li{display:flex;align-items:center;gap:9px;padding:8px 14px 8px 10px;border:1px solid rgba(var(--ciano-rgb),.45);border-radius:99px;
+  background:rgba(var(--bg-rgb),.9);color:var(--testo);font:600 11px/1.2 var(--f-testo);letter-spacing:.12em;text-transform:uppercase;box-shadow:0 10px 26px rgba(0,0,0,.28)}
+.ed-hno-note i{flex:none;width:10px;height:10px;border-radius:50%;background:var(--ciano);box-shadow:0 0 0 5px rgba(var(--ciano-rgb),.25);animation:ed-hno-battito 2.4s ease-in-out infinite}
+.ed-hno-cursore{position:absolute;left:64%;top:44%;z-index:4;width:0;height:0;pointer-events:none;border-left:15px solid #fff;border-top:7px solid transparent;border-bottom:27px solid transparent;
+  transform:rotate(-20deg);filter:drop-shadow(0 3px 4px rgba(0,0,0,.6));animation:ed-hno-muovi 7s ease-in-out infinite}
+@keyframes ed-hno-battito{50%{box-shadow:0 0 0 9px rgba(var(--ciano-rgb),.08)}}
+@keyframes ed-hno-muovi{33%{transform:translate(-120%,-60%) rotate(-20deg)}66%{transform:translate(40%,90%) rotate(-20deg)}}
+.ed-hno-senza-foto .ed-hno-note{display:flex;flex-wrap:wrap;gap:10px}
+@media (prefers-reduced-motion:reduce){.ed-hno-note i,.ed-hno-cursore{animation:none}}
+@media (max-width:860px){
+  .ed-hno-scena .ed-hno-note{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px}
+  .ed-hno-scena .ed-hno-note li{position:static;transform:none;white-space:normal}
+  .ed-hno-cursore{display:none}
+}
+
+/* 12. Lente: un cerchio con il bordo sfumato che ingrandisce a colori il punto scelto (--x, --y), sopra la foto con il velo.
+   Il pezzo ingrandito e la stessa foto scalata intorno al punto e ritagliata a cerchio: largo come l'anello (26%). */
+.ed-hle-zoom{position:absolute;inset:0;z-index:2;pointer-events:none;transform:scale(2.4);transform-origin:var(--x) var(--y);clip-path:circle(6.4% at var(--x) var(--y))}
+.ed-hero.ed-hero-lente .ed-hle-zoom img{filter:none}
+.ed-hle-anello{position:absolute;left:var(--x);top:var(--y);z-index:3;width:26%;aspect-ratio:1;transform:translate(-50%,-50%);border-radius:50%;pointer-events:none;
+  box-shadow:0 0 34px rgba(var(--viola-rgb),.5),0 18px 36px rgba(0,0,0,.4)}
+.ed-hle-anello::before{content:"";position:absolute;inset:-3px;padding:4px;border-radius:50%;background:var(--grad);
+  -webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask:linear-gradient(#000 0 0) content-box exclude,linear-gradient(#000 0 0)}
+.ed-hle-manico{position:absolute;left:calc(var(--x) + 9.6%);top:calc(var(--y) + 15.3%);z-index:3;width:9%;height:12px;margin-top:-6px;border-radius:8px;background:var(--grad);transform:rotate(45deg);transform-origin:0 50%;pointer-events:none;box-shadow:0 6px 14px rgba(0,0,0,.35)}
+
+/* 13. Costellazione: niente foto; stelle collegate da linee sottili che disegnano una forma, un punto viola che si accende. */
+.ed-hco-griglia{display:grid;grid-template-columns:1.1fr .9fr;gap:clamp(24px,4vw,56px);align-items:center;padding:clamp(16px,3vw,40px) 0}
+.ed-hco-scena{position:relative;width:100%;max-width:460px;aspect-ratio:1;justify-self:center}
+.ed-hco-cielo{position:absolute;inset:0;width:100%;height:100%;overflow:visible;pointer-events:none}
+.ed-hco-lontane circle{fill:var(--testo);opacity:.5}
+.ed-hco-linee path{fill:none;stroke:var(--ciano);stroke-opacity:.6;stroke-width:.35;stroke-linecap:round;stroke-dasharray:1;stroke-dashoffset:0;animation:ed-hco-traccia 1s ease-out calc(var(--i) * .12s + .2s) both}
+.ed-hco-stelle circle{fill:var(--testo);animation:ed-hco-brilla 3.2s ease-in-out calc(var(--i) * -.45s) infinite}
+.ed-hco-accento{fill:var(--viola)}
+.ed-hco-alone{fill:rgba(var(--viola-rgb),.35);transform-box:fill-box;transform-origin:center;animation:ed-hco-pulsa 2.6s ease-in-out infinite}
+.ed-hero.ed-hero-costellazione .ed-hco-barre{position:absolute;right:0;bottom:2%;z-index:2;width:230px}
+.ed-hero.ed-hero-costellazione .ed-hco-barre .barra:first-child{margin-top:0}
+@keyframes ed-hco-traccia{from{stroke-dashoffset:1}}
+@keyframes ed-hco-brilla{50%{opacity:.45}}
+@keyframes ed-hco-pulsa{50%{transform:scale(1.7);opacity:.35}}
+@media (prefers-reduced-motion:reduce){.ed-hco-linee path,.ed-hco-stelle circle,.ed-hco-alone{animation:none}}
+@media (max-width:860px){
+  .ed-hero.ed-hero-costellazione{position:relative;isolation:isolate}
+  .ed-hco-griglia{grid-template-columns:1fr;gap:20px}
+  .ed-hco-scena{position:static;max-width:none;aspect-ratio:auto}
+  .ed-hco-cielo{z-index:-1;opacity:.2}
+  .ed-hero.ed-hero-costellazione .ed-hco-barre{position:relative;right:auto;bottom:auto;width:auto;max-width:300px}
+}
+
+/* 14. Prima e dopo: la finestra divisa da una maniglia; a destra "dopo" con il velo, a sinistra "prima" (o la stessa, spenta).
+   Il cursore vero e un input range trasparente sopra la finestra: mouse, dito e frecce della tastiera. */
+.ed-hpd-scena{touch-action:pan-y}
+.ed-hpd-prima{position:absolute;inset:0;z-index:2;clip-path:inset(0 calc(100% - var(--pos,50%)) 0 0)}
+.ed-hero.ed-hero-primadopo .ed-hpd-prima img{filter:none}
+.ed-hero.ed-hero-primadopo .ed-hpd-spenta img{filter:grayscale(1) brightness(.62)}
+.ed-hpd-cursore{position:absolute;inset:0;z-index:5;width:100%;height:100%;margin:0;padding:0;opacity:0;cursor:ew-resize;-webkit-appearance:none;appearance:none;background:none;touch-action:pan-y}
+.ed-hpd-cursore::-webkit-slider-thumb{-webkit-appearance:none;width:2px;height:300px}
+.ed-hpd-cursore::-moz-range-thumb{width:2px;height:300px;border:0}
+.ed-hpd-linea{position:absolute;top:0;bottom:0;left:var(--pos,50%);z-index:4;width:2px;margin-left:-1px;background:#fff;pointer-events:none;box-shadow:0 0 14px rgba(255,255,255,.6)}
+.ed-hpd-maniglia{position:absolute;left:50%;top:50%;width:44px;height:44px;transform:translate(-50%,-50%);border-radius:50%;background:#fff;box-shadow:0 6px 18px rgba(0,0,0,.35)}
+.ed-hpd-maniglia::before{content:"\2194";display:block;font:700 22px/44px var(--f-testo);text-align:center;color:var(--primario-scuro)}
+.ed-hpd-cursore:focus-visible~.ed-hpd-linea .ed-hpd-maniglia{outline:3px solid var(--ciano);outline-offset:3px}
+.ed-hpd-eti{position:absolute;top:14px;z-index:4;padding:7px 9px;border-radius:6px;pointer-events:none;background:rgba(0,0,0,.62);color:#fff;font:700 11px/1 var(--f-testo);letter-spacing:.16em;text-transform:uppercase}
+.ed-hpd-eti-prima{left:14px}
+.ed-hpd-eti-dopo{right:14px}
+
+/* 15. Trittico: le parole, la foto in un tablet verticale, tre riquadri di vetro (onda, un numero grande, barre). */
+.ed-htt-griglia{display:grid;grid-template-columns:1fr minmax(200px,.72fr) minmax(220px,.78fr);gap:clamp(24px,3.4vw,48px);align-items:center;padding:clamp(16px,3vw,40px) 0}
+.ed-htt-senza-foto{grid-template-columns:1.2fr .8fr}
+.ed-htt-senza-col{grid-template-columns:1.25fr .75fr}
+.ed-htt-senza-foto.ed-htt-senza-col{grid-template-columns:1fr}
+.ed-hero-trittico h1{font-size:clamp(32px,3.6vw,52px)}
+.ed-hero-trittico p.lead{font-size:17px}
+.ed-htt-tablet{width:100%;max-width:320px;justify-self:center;padding:8px;border-radius:30px;background:var(--bg-2);border:1px solid rgba(160,200,255,.3);
+  box-shadow:0 0 0 1px rgba(var(--viola-rgb),.15),0 30px 70px rgba(0,0,0,.5),0 0 50px rgba(var(--viola-rgb),.22)}
+.ed-hero.ed-hero-trittico .finestra.ed-htt-foto{aspect-ratio:3/4.2;border:0;border-radius:23px;box-shadow:none}
+.ed-hero.ed-hero-trittico .finestra.ed-htt-foto img{object-position:30% 0}
+.ed-htt-col{display:grid;gap:16px;min-width:0}
+.ed-hero-trittico.ed-hero-v .chip{width:auto}
+.ed-htt-col .chip-barre .barra:first-child{margin-top:0}
+.ed-htt-numero b{display:block;margin-top:8px;font:700 clamp(34px,3.4vw,46px)/1 var(--f-titolo);letter-spacing:-.01em;background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent}
+@media (max-width:1020px){
+  .ed-htt-griglia{grid-template-columns:1fr minmax(180px,.7fr)}
+  .ed-htt-col{grid-column:1 / -1;grid-template-columns:repeat(auto-fit,minmax(170px,1fr))}
+  .ed-htt-senza-foto .ed-htt-col{grid-column:auto}
+}
+@media (max-width:700px){
+  .ed-htt-griglia,.ed-htt-senza-foto,.ed-htt-senza-col{grid-template-columns:1fr;gap:28px}
+  .ed-htt-tablet{order:-1;max-width:230px}
+  .ed-htt-col{grid-column:auto;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px}
+}

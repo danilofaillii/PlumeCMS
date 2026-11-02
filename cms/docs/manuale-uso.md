@@ -1048,13 +1048,59 @@ Adesso riscrivi le domande e le risposte con il pannello Modifica (doppio clic s
 ## 11. L'apertura della pagina
 
 **A cosa serve.** L'**Apertura** (hero) è la prima cosa che si vede di una pagina: titolo grande, due righe, pulsanti,
-una foto. Ha undici **disposizioni**: le stesse parole e la stessa foto messe insieme in undici modi.
+una foto. Ha ventisei **disposizioni**: le stesse parole e la stessa foto messe insieme in ventisei modi.
 
 ![La tendina Disposizione dell'Apertura](immagini/manuale-uso/11-disposizione.jpg)
 
-1. Doppio clic sull'Apertura, scheda **Contenuto**, tendina **Disposizione**: Classica, Centrata, Copertina (foto a
-   tutto sfondo), Divisa a metà, Rivista, Scheda, Minimale, Mosaico, Inclinata, Banner (bassa, per le pagine interne),
-   Diagonale. Cambi e guardi: i testi restano.
+1. Doppio clic sull'Apertura, scheda **Contenuto**, tendina **Disposizione**. Cambi e guardi: i testi restano.
+2. Alcune disposizioni hanno un campo in più, che compare sotto le Barre solo quando le scegli (tabella qui sotto).
+
+| Disposizione | Com'è | Adatta a | Campi in più |
+|---|---|---|---|
+| Classica | testo a sinistra, foto a destra con l'onda e le barre | tutti | |
+| Centrata | testo al centro, foto larga sotto | servizi, studi | |
+| Copertina | foto a tutto sfondo, testo bianco sopra | ristoranti, luoghi, eventi | |
+| Divisa a metà | testo su colore, foto fino al bordo | negozi, prodotti | |
+| Rivista | titolo enorme, foto a nastro, numeri a lato | blog, giornali | |
+| Scheda | tutto in un riquadro, ritratto rotondo | professionisti, persone | |
+| Minimale | solo parole, grandi, e i numeri sotto | chi non ha foto | |
+| Mosaico | foto e riquadri a griglia | attività con più servizi | |
+| Inclinata | foto ruotata su forme di colore | creativi | |
+| Banner | fascia bassa | pagine interne | |
+| Diagonale | colore pieno tagliato in obliquo | campagne, lanci | |
+| Prospettiva | la finestra ruotata in 3D entra dal bordo destro; col mouse sopra si raddrizza | software, agenzie | |
+| Computer e telefono | la stessa foto nel computer e nel telefono davanti (al telefono resta solo il telefono) | siti vetrina, app | |
+| Pila di finestre | tre finestre sfalsate, tre parti della stessa foto, con le barre | portfolio, corsi | |
+| Orbita | la foto in un cerchio con due orbite, l'onda che ci gira sopra | coach, consulenti | |
+| Terminale | una riga di comando davanti alla foto scrive le righe una alla volta | prodotti tecnici, hosting | **Righe del terminale** (fino a 5; `$` per un comando, ✓ o `+` per una cosa fatta) |
+| Nastro di schermate | titolo al centro, sotto una fila di foto che scorre e sfuma ai lati | portfolio, agenzie | **Altre foto del nastro** (facoltative, fino a 7) |
+| Titolo traforato | una parola gigante con la foto dentro le lettere; il titolo intero sotto, più piccolo | marchi, lanci | **Parola grande** (vuota: la prima parola del titolo) |
+| Faro | un cono di luce dall'alto sulle parole, la foto che sale dal fondo | eventi, presentazioni | |
+| Orizzonte | sole sfumato e pavimento a griglia luminosa, la foto che galleggia | musica, tecnologia, serate | |
+| Video | la foto con un grande pulsante play: al clic parte il video | corsi, chi spiega con un video | **Video** (MP4 o WebM caricato nei Media; senza, niente play) |
+| Note sulla foto | tre etichette a pallino appuntate sulla foto, un cursore che si muove | software, tutorial | **Etichette sulla foto** (fino a 3: testo e posizione in %) |
+| Lente | una lente ingrandisce a colori un punto della foto | prodotti, artigiani | **Punto da ingrandire** (da sinistra e dall'alto, in %) |
+| Costellazione | senza foto: stelle collegate disegnano una forma, con le barre | chi non ha ancora foto | **Forma della costellazione** (piuma, cerchio, stella) |
+| Prima e dopo | la foto divisa da una maniglia da trascinare (anche con il dito e con le frecce) | restauri, parrucchieri, palestre | **Foto "prima"** (facoltativa: senza, la stessa foto spenta) |
+| Trittico | parole, la foto in un tablet verticale, tre riquadri (onda, un numero grande, barre) | prodotti con numeri | (il numero grande è la prima delle Barre) |
+
+Le disposizioni che si muovono (orbita, nastro, terminale, orizzonte, faro, note) restano ferme per chi ha chiesto al
+computer o al telefono meno movimento. Al telefono ognuna si mette in colonna.
+
+### Esempio: un'Apertura con il video
+
+Vuoi che la home apra con il video di presentazione, che parte solo quando il visitatore preme play.
+
+![L'Apertura Video nell'editor](immagini/manuale-uso/11-video.jpg)
+
+1. In **Media**, in fondo alla pagina, riquadro **Video**: premi **Scegli file**, prendi il video (MP4 o WebM, meglio
+   corto e leggero) e premi **Carica il video**. In alto compare "Video caricato".
+2. Apri la home nell'editor e fai doppio clic sull'Apertura. Tendina **Disposizione**: scegli **Video**.
+3. Sotto le Barre compare il campo **Video**: premi **Scegli**. Si apre la finestra **Video** con il tuo video: fai clic
+   sul video.
+4. Nella tela compare il pulsante play sulla foto. Premi **Pubblica**.
+5. Sul sito premi il play: il video prende il posto della foto e parte. Se togli il video (la **×** accanto a Scegli)
+   resta la foto, senza play.
 
 Sotto ci sono occhiello, titolo (con le parole fra asterischi evidenziate), testo e pulsanti.
 
@@ -1093,6 +1139,7 @@ anche se un giorno sposti il sito.
 
 - [ ] Il titolo dell'Apertura dice in una frase cosa fai.
 - [ ] Il testo sopra la foto si legge bene (se no: velo più intenso, o una disposizione con la foto a lato).
+- [ ] Se la disposizione ha un campo in più (righe, parola, video, etichette, punto, forma, foto "prima"), l'ho riempito.
 - [ ] Ho guardato l'Apertura anche al telefono.
 
 ---

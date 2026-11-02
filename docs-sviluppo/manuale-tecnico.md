@@ -985,7 +985,7 @@ Apertura e Presentazione hanno nella scheda Stile la sezione **Foto** (dalla 1.2
 L'Apertura ha anche l'interruttore **Mostra l'onda sopra la foto** (scheda Contenuto): spento, il riquadro con
 le barre che ondeggiano non compare. Con i valori di partenza le due foto sono identiche a quelle della 1.2.1.
 
-Dalla 1.2.6 l'Apertura ha la tendina **Disposizione** (scheda Contenuto, primo controllo): undici modi di mettere
+Dalla 1.2.6 l'Apertura ha la tendina **Disposizione** (scheda Contenuto, primo controllo): undici modi (ventisei dalla 2.17.0, sotto) di mettere
 insieme gli stessi campi (occhiello, titolo con l'evidenza, testo, pulsanti, foto con la sezione Foto, onda, barre).
 Cambiando disposizione i testi restano.
 
@@ -1017,6 +1017,56 @@ Come è fatto (`includes/editor-hero.php`):
 - le regole sul contenitore si scrivono `.ed-hero.ed-hero-<id>`: `sito.css` ha `.ed-w-hero .hero{padding:0}`, che con
   un solo nome di classe vince e toglie il margine (successo nella 1.2.6, corretto nella 1.2.7).
 
+**Dalla 2.17.0 le disposizioni sono ventisei**: quindici nuove, scelte da Danilo, nella lingua delle undici (finestra di
+vetro con il velo, `.chip` con onda e barre, occhiello, titolo con l'evidenza sfumata). Le undici di prima e la classica
+non cambiano: stessi file, stesso HTML al byte (`editor_hero_foto()` ha due parametri in più, `$src` e `$dentro`, vuoti
+di partenza: `includes/editor-hero.php:81`), foto identiche al pixel in sei temi, con e senza foto.
+
+| Disposizione | Com'è fatta | Campi in più (scheda Contenuto, sotto le Barre, `'condizione' => ['disposizione' => <id>]`) |
+|---|---|---|
+| `prospettiva` | finestra in `perspective` con `rotateY(-26deg)`, si raddrizza con `:hover` (transizione di 1,4 s) | |
+| `dispositivi` | la stessa foto nello schermo del computer (16:10 con la base) e nel telefono (9:19) davanti; al telefono solo il telefono | |
+| `pila` | tre finestre sfalsate (`ed-hpi-f1..3`) con tre `object-position`, le barre in alto a destra | |
+| `orbita` | foto in un cerchio (`inset:24%`), due anelli, `.ed-hor-giro` che ruota in 34 s con il riquadro dell'onda che gira al contrario | |
+| `terminale` | finestra più una riga di comando: ogni riga si scrive con `clip-path` a `steps(--n)` dopo `--t` (solo CSS, `editor_hero_terminale_righe()`, `editor-hero-c.php:55`) | `terminale_righe` (testolungo; fino a 5 righe da 80 caratteri; `$` comando, `✓` o `+` fatto) |
+| `nastro` | parole al centro, una fila di finestre scritta due volte che scorre in 70 s con la maschera che sfuma ai lati | `nastro_foto` (ripetitore di immagini, fino a 7; senza, tagli diversi della foto) |
+| `traforata` | la parola dentro l'h1 in uno `span.finestra` nascosto ai lettori di schermo, `background-clip:text` con la foto e il velo (`--velo-1..2` con `color-mix`, ripiego ciano e viola); il titolo intero resta nell'h1, sotto, più piccolo | `parola` (testo; vuota: la prima parola del titolo; massimo 14 lettere, `editor_hero_parola()`) |
+| `faro` | cono `conic-gradient` dall'alto, finestra che sale dal fondo, tagliata sotto con `clip-path` | |
+| `orizzonte` | sole sfumato dietro la finestra, pavimento a griglia in `perspective` che corre, finestra che galleggia | |
+| `video` | foto con il pulsante play (`button`); al clic `hero-c.js` mette un `<video controls autoplay playsinline>` al posto della foto; senza video niente play | `video` (tipo di controllo nuovo `video`: `editor_video_locale()`, `editor-hero.php:94`) |
+| `note` | etichette in un `ul` sulla finestra a `left:x%;top:y%` con `translate(-x%,-y%)` (restano dentro), cursore che si muove; al telefono in fila sotto la foto | `etichette` (ripetitore fino a 3: testo, x e y 0-100) |
+| `lente` | la stessa foto scalata 2,4 volte intorno al punto con `clip-path:circle()`, a colori, con l'anello sfumato e il manico | `lente_x`, `lente_y` (0-100; il punto si disegna fra 16 e 84, 20 e 80 per non uscire dalla foto) |
+| `costellazione` | niente foto: SVG scritto in casa (`editor_hero_forma()`, `editor-hero-d.php:68`), linee disegnate con `stroke-dashoffset`, punto viola che pulsa; al telefono dietro il testo, tenue | `forma` (scelta: piuma, cerchio, stella, `EDITOR_HERO_FORME`) |
+| `primadopo` | la foto "dopo" con il velo, sopra lo strato "prima" ritagliato a `--pos`; la maniglia è un `input type=range` trasparente sopra la finestra (frecce, Inizio, Fine) più il trascinamento con il dito in `hero-c.js` | `immagine_prima` (facoltativa: senza, la stessa foto in bianco e nero spenta) |
+| `trittico` | tre colonne: parole, foto in un tablet 3:4,2, tre riquadri (onda, la prima barra come numero grande, le altre barre) | |
+
+Come è fatto:
+- `EDITOR_HERO_DISPOSIZIONI` (`includes/editor-hero.php:17`), le funzioni in `includes/editor-hero-c.php` e
+  `includes/editor-hero-d.php`, il CSS in `sito/assets/hero-c.css` e `hero-d.css` (`EDITOR_HERO_CSS`, `editor-hero.php:51`,
+  in quest'ordine dopo `hero-b.css`);
+- lo script `sito/assets/hero-c.js` (`EDITOR_HERO_JS`, `editor-hero.php:57`) serve solo a video e prima e dopo: si carica
+  dove nell'HTML c'è l'attributo `data-ed-hero-js` (asset `hero-js` con `'segno'`, `includes/editor-controlli.php:86`;
+  `editor_asset_pagina()` cerca il segno al posto della classe del widget, `editor-controlli.php:120`); nella tela
+  dell'editor si carica sempre (`admin/editor-anteprima.php:49`) e un `MutationObserver` riprende le Aperture ridisegnate;
+- la tendina Disposizione ha `'accetta' => '/^[a-z]{3,20}$/'` (`includes/editor-widget.php:289`): una disposizione che
+  questo sito non conosce (una pagina arrivata da un sito più nuovo) resta salvata e si vede come la classica;
+- i campi nuovi sono in `includes/editor-widget.php:300` e seguenti; il tipo `video` si pulisce in `editor_pulisci_valore()`
+  (`includes/editor.php:76`): solo percorsi del sito che finiscono in `.mp4` o `.webm`, niente `//`, `..`, `javascript:`,
+  `data:`, indirizzi esterni (ammesso l'indirizzo intero solo se è quello di `cms_uploads_url()` su un altro dominio);
+- i video si caricano in `<immagini>/video/AAAA/MM/` (`media_carica_video()`, `includes/media.php:209`: tipo letto
+  dall'inizio del file, `ftyp` per MP4 e `1A 45 DF A3` per WebM, nome scelto dal sito, 64 MB al massimo), si elencano con
+  `media_video_elenco()` (`media.php:183`, fuori da `media_elenco()`, che resta delle immagini); in Media c'è il riquadro
+  **Video** (`admin/media.php:33`), nell'editor la finestra Scegli in modo video (`modoMedia()` e `campoVideo()` in
+  `admin/assets/editor/editor.js`, azioni `carica_video` e `video` di `admin/editor-api.php:215`);
+- movimento: ogni animazione nuova ha la sua regola `prefers-reduced-motion:reduce`; con meno movimento il terminale è
+  già scritto e il nastro, l'orbita, il pavimento, le stelle stanno fermi;
+- telefono: ogni disposizione va in colonna sotto 860 px (il trittico sotto 1020 e 700), con `overflow-x:clip` dove la
+  scena esce dal riquadro (prospettiva, orbita); nessuna scorre di lato a 390 px.
+
+Prove: `prove/prova-hero.js` (le ventisei, con `SUFFISSO=-nf` senza foto, con `TEMA=` nelle anteprime dei temi),
+`prove/prova-aperture-nuove.js` (i campi nuovi sul sito e nell'editor), `prove/prova-hero-pulsanti.js` (ventisei
+disposizioni per sei effetti), attacchi gruppo 39 (`prove/pagina-hero-cattive.php`).
+
 **Infografiche** (29, prefisso `ig_`): passi, timeline, checklist, tabella, liste, numeri, card, mappa, flusso,
 fasi, barre, prima e dopo, zone, domande; e le quindici disegnate in SVG (imbuto, piramide, matrice, ciclo, ciambella, cerchi
 che si toccano, ragnatela, lancetta, iceberg, omini, viaggio, bilancia, mappa di calore, cerchi concentrici, barre al cento
@@ -1044,7 +1094,7 @@ continuano a mostrarlo.
   - `www.sito.it` e `sito.it/pagina` diventano `https://...` (un `.html`, `.pdf` e simili alla fine resta un file del sito);
   - un nome di pagina come `laser-coaching` diventa `/laser-coaching`.
 - Si rifiuta (link vuoto, il pulsante punta a `#`) tutto ciò che ha uno schema diverso: `javascript:`, `data:`, `vbscript:`, anche scritto con caratteri di controllo in mezzo.
-- Prove: `prove/prova-hero-pulsanti.js` (con `prove/pagina-hero-pulsanti.php`): undici disposizioni per sei effetti più i link scritti a mano, al computer e al telefono, e con `TEMA=` nelle anteprime dei temi. 670 controlli.
+- Prove: `prove/prova-hero-pulsanti.js` (con `prove/pagina-hero-pulsanti.php`): ventisei disposizioni (undici fino alla 2.16) per sei effetti più i link scritti a mano, al computer e al telefono, e con `TEMA=` nelle anteprime dei temi.
 
 ### 9.8 Scrivere un widget nuovo
 
@@ -3741,7 +3791,8 @@ Istruzioni in `prove/LEGGIMI.md`. Le principali:
 | `prova-carica-temi.js` | caricare e scaricare temi da zip, con e senza PHP, firmati e no |
 | `prova-download.js` | download manager: caricamenti buoni e cattivi, widget, conteggio, eliminazione |
 | `prova-sito-plumecms.js` | il pacchetto del sito di plumeCMS (dalla 2.1.0 anche il pacchetto unico) applicato dal pannello, poi ogni pagina e ogni file da scaricare |
-| `prova-hero.js` | le undici disposizioni dell'Apertura al computer e al telefono: un solo h1, niente scorrimento orizzontale, foto caricate, contrasto di titolo e testo, pulsanti visibili (pagine create da `pagina-hero.php`) |
+| `prova-hero.js` | le ventisei disposizioni dell'Apertura (undici fino alla 2.16) al computer e al telefono: un solo h1, niente scorrimento orizzontale, foto caricate, contrasto di titolo e testo, pulsanti visibili (pagine create da `pagina-hero.php`) |
+| `prova-aperture-nuove.js` | 2.17.0: i campi delle quindici disposizioni nuove sul sito (terminale, parola, video al clic, etichette, lente, forma, maniglia con la tastiera e il mouse, meno movimento) e nell'editor (campi solo con la loro disposizione, Scegli in modo video) |
 | `prova-foto-effetti.js` | sezione Foto di Apertura e Presentazione e interruttore dell'onda, dall'editor al sito |
 | `prova-aggiornamento.js` | aggiornare dal pannello con il pacchetto del prodotto |
 | `prova-kit.js` | (1.3.0) installazione con un kit di partenza, poi ogni pagina del menu al computer e al telefono, in radice e in cartella |

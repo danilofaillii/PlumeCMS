@@ -73,6 +73,9 @@ function editor_pulisci_valore(array $ctl, $val) {
         case 'immagine':
             $val = trim((string)$val);
             return preg_match('~^(https?://|/)[^"\'<>\s]*$~', $val) ? mb_substr($val, 0, 500) : '';
+        case 'video':
+            // 2.17.0: un video caricato nel sito (Apertura "Video"): solo MP4 o WebM del sito, niente indirizzi esterni.
+            return function_exists('editor_video_locale') ? editor_video_locale((string)(is_array($val) ? '' : $val)) : '';
         case 'link':
             return ['url' => editor_link_sicuro((string)(is_array($val) ? ($val['url'] ?? '') : $val)), 'nuova' => is_array($val) && !empty($val['nuova']), 'nofollow' => is_array($val) && !empty($val['nofollow'])];
         case 'ripetitore':

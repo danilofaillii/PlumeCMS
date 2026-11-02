@@ -1,15 +1,19 @@
-// Le disposizioni dell'Apertura (1.2.6), come le vede un visitatore: per ogni /hero-<id>/ (prove/pagina-hero.php)
+// Le disposizioni dell'Apertura (1.2.6; 2.17.0 ventisei), come le vede un visitatore: per ogni /hero-<id>/ (prove/pagina-hero.php)
 // una foto al computer (1280) e al telefono (390) e i controlli: un solo h1, niente scorrimento orizzontale, foto
 // caricata (se la disposizione la mostra), titolo e testo leggibili (contrasto almeno 4,5 per il testo, 3 per il
 // titolo grande), pulsanti visibili, nessun errore JavaScript.
 // Con utente, password e id della pagina /hero-classica/ prova anche la tendina Disposizione nell'editor: le undici
-// voci, la tela che cambia disposizione con i fogli caricati, i testi che restano. Non salva niente.
+// voci (ventisei dalla 2.17.0), la tela che cambia disposizione con i fogli caricati, i testi che restano. Non salva niente.
 // uso: node prova-hero.js <base> <cartella delle foto> [id,id,...] [utente password id-pagina]
 const { chromium } = require('playwright');
 const pnConferme = require('./conferme-pannello'); // UX 2026-11: conferme del pannello
 const fs = require('fs');
 const [B, D, IDS, UTENTE, PASSWORD, PAGINA] = process.argv.slice(2);
-const ids = (IDS || 'classica,centrata,copertina,divisa,rivista,scheda,minimale,mosaico,inclinata,banner,diagonale').split(',');
+const ids = (IDS || 'classica,centrata,copertina,divisa,rivista,scheda,minimale,mosaico,inclinata,banner,diagonale,'
+  + 'prospettiva,dispositivi,pila,orbita,terminale,nastro,traforata,faro,orizzonte,video,note,lente,costellazione,primadopo,trittico').split(',');
+const SUFF = process.env.SUFFISSO || ''; // -nf: le pagine senza foto di pagina-hero.php
+// 2.17.0: con TEMA=cosmo (aria, bottega, estate...) e UTENTE e PASSWORD nell'ambiente, le pagine nell'anteprima del tema.
+const TEMA = process.env.TEMA || '';
 let n = 0, ko = 0; const ok = (t, c, extra = '') => { n++; if (!c) ko++; console.log((c ? 'OK  ' : 'KO  ') + t + (extra ? ' ' + JSON.stringify(extra).slice(0, 200) : '')); };
 const contrasto = (p, sel) => p.evaluate((sel) => {
   const el = document.querySelector(sel); if (!el) return null;
@@ -27,15 +31,22 @@ const contrasto = (p, sel) => p.evaluate((sel) => {
 (async () => {
   fs.mkdirSync(D, { recursive: true });
   const br = await chromium.launch();
+  let stato;
+  if (TEMA) {
+    const c = await br.newContext(); const q = await c.newPage();
+    await q.goto(B + '/admin/login.php'); await q.fill('#username', process.env.UTENTE); await q.fill('#password', process.env.PASSWORD);
+    await Promise.all([q.waitForNavigation(), q.click('button[type=submit]')]);
+    stato = await c.storageState(); await c.close();
+  }
   for (const id of ids) {
     for (const [nome, w, h] of [['pc', 1280, 820], ['tel', 390, 844]]) {
-      const p = await (await br.newContext({ viewport: { width: w, height: h }, reducedMotion: 'reduce' })).newPage();
+      const p = await (await br.newContext({ viewport: { width: w, height: h }, reducedMotion: 'reduce', storageState: stato })).newPage();
       const err = []; p.on('pageerror', e => err.push(e.message)); p.on('console', m => { if (m.type() === 'error' && !/favicon/.test(m.text())) err.push(m.text()); });
-      const r = await p.goto(`${B}/hero-${id}/`, { waitUntil: 'networkidle' });
+      const r = await p.goto(`${B}/hero-${id}${SUFF}/` + (TEMA ? `?preview=1&tema=${TEMA}` : ''), { waitUntil: 'networkidle' });
       await p.waitForTimeout(300);
       const hero = p.locator('.ed-w-hero').first();
       const box = await hero.boundingBox();
-      await p.screenshot({ path: `${D}/${id}-${nome}.png`, clip: { x: 0, y: 0, width: w, height: Math.min(Math.ceil((box ? box.y + box.height : h) + 24), 2400) } , fullPage: true });
+      await p.screenshot({ path: `${D}/${TEMA ? TEMA + '-' : ''}${id}${SUFF}-${nome}.png`, clip: { x: 0, y: 0, width: w, height: Math.min(Math.ceil((box ? box.y + box.height : h) + 24), 2400) } , fullPage: true });
       const pre = `${id} ${nome}:`;
       ok(`${pre} 200 e un solo h1`, r.status() === 200 && await p.locator('h1').count() === 1);
       const largo = await p.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
@@ -64,10 +75,10 @@ const contrasto = (p, sel) => p.evaluate((sel) => {
     await p.click('.ed-schede-pannello button[data-pannello="modifica"]'); await p.waitForTimeout(200);
     const tendina = p.locator('#ed-controlli .ed-controllo', { hasText: 'Disposizione' }).first().locator('select');
     const voci = await tendina.locator('option').evaluateAll(os => os.map(o => o.value));
-    ok('editor: la tendina Disposizione ha le undici voci, la classica scelta', voci.length === 11 && await tendina.inputValue() === 'classica', voci);
+    ok('editor: la tendina Disposizione ha le ventisei voci, la classica scelta', voci.length === 26 && await tendina.inputValue() === 'classica', voci);
     const fogli = await tela.locator('link[href*="hero-"]').evaluateAll(ls => ls.map(l => l.getAttribute('href').replace(/.*\//, '').replace(/\?.*/, '')));
-    ok('editor: nella tela i fogli delle disposizioni, in ordine', fogli.join(',') === 'hero-base.css,hero-a.css,hero-b.css', fogli);
-    for (const d of ['copertina', 'mosaico', 'banner', 'classica']) {
+    ok('editor: nella tela i fogli delle disposizioni, in ordine', fogli.join(',') === 'hero-base.css,hero-a.css,hero-b.css,hero-c.css,hero-d.css', fogli);
+    for (const d of ['copertina', 'mosaico', 'banner', 'prospettiva', 'traforata', 'costellazione', 'primadopo', 'classica']) {
       await tendina.selectOption(d); await p.waitForTimeout(1200);
       const h1 = await tela.locator('.ed-w-hero h1').first().innerText();
       const giusta = d === 'classica' ? await tela.locator('.ed-w-hero .ed-hero-v').count() === 0 : await tela.locator(`.ed-w-hero .ed-hero-${d}`).count() === 1;

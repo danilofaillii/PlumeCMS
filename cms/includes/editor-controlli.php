@@ -82,6 +82,8 @@ function editor_carica_widget_esterni(): void {
     }
     // I fogli delle disposizioni dell'Apertura (1.2.6): solo nelle pagine che hanno un'Apertura.
     if (!isset($r['asset']['hero']) && defined('EDITOR_HERO_CSS')) $r['asset']['hero'] = ['css' => EDITOR_HERO_CSS];
+    // 2.17.0: lo script di video e prima e dopo dell'Apertura, solo dove un'Apertura lo chiede (il segno data-ed-hero-js).
+    if (!isset($r['asset']['hero-js']) && defined('EDITOR_HERO_JS')) $r['asset']['hero-js'] = ['js' => [EDITOR_HERO_JS], 'segno' => 'data-ed-hero-js'];
     // Il foglio delle quindici infografiche disegnate: solo nelle pagine che ne hanno una.
     if (defined('IGS_TIPI')) foreach (IGS_TIPI as $t) if (!isset($r['asset'][$t])) $r['asset'][$t] = ['css' => [IGS_CSS]];
     // Compatibilità con la forma a tre funzioni dell'agente modelli: editor_tema_definizioni(), editor_tema_disegna($tipo, $v), editor_tema_css($tipo, $v, $sel, &$css).
@@ -114,7 +116,8 @@ function editor_asset_pagina(string $html): array {
     editor_carica_widget_esterni();
     $out = ['css' => [], 'js' => []];
     foreach (editor_registro()['asset'] as $tipo => $a) {
-        if (!str_contains($html, 'ed-w-' . $tipo)) continue;
+        // 2.17.0: un asset può dire con 'segno' cosa cercare nell'HTML al posto della classe del widget.
+        if (!str_contains($html, (string)($a['segno'] ?? ('ed-w-' . $tipo)))) continue;
         // Un widget può avere più file (1.2.6: le disposizioni dell'Apertura): 'css' => ['a.css', 'b.css'].
         // Le viste mettono ogni <link> davanti al precedente: i fogli dello stesso widget si danno al contrario, così
         // nella pagina escono nell'ordine scritto (hero-base.css prima di hero-a.css e hero-b.css).
