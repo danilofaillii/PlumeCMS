@@ -2,6 +2,25 @@
 
 Il prodotto si chiama **plumeCMS** (nome scelto il 26 ottobre 2026; prima, per poche ore, "CarbonaraCMS", e ancora prima il provvisorio "Officina": gli zip vecchi si chiamavano `officina-*` e `carbonaracms-*`).
 
+## 2.11.0 (2 novembre 2026) - Campagne a riepilogo e centro preferenze
+
+- **Crea una campagna** (nome interno) e una **pagina di riepilogo** con cinque parti, ognuna con il suo stato (A posto o Da
+  completare): **Mittente**, **Destinatari** (liste e segmenti, esclusioni che vincono, senza i contatti non coinvolti,
+  doppioni tolti), **Oggetto**, **Design** (editor semplice o codice HTML, più il testo semplice), **Impostazioni aggiuntive**
+  (Rispondi a, campo "A", versione web, link alle preferenze, UTM sui link del sito, tag, invio a lotti). Finché manca
+  qualcosa la campagna non parte, e il riquadro in cima dice cosa.
+- **Anteprima** con i dati di un contatto, al computer e al telefono; **prova** alla lista dei test; **Invia subito** o
+  **Programma** con giorno e ora; Annulla, Sospendi, Riprendi.
+- **Elenco delle campagne** con le viste (bozze, programmate, inviate, archiviate...) e le azioni: Report, Duplica scegliendo
+  cosa copiare, Invia ai nuovi contatti, Rimanda ai non aperti (una volta sola), Archivia, Elimina solo in bozza.
+- **Versione web** di ogni email e **indirizzo dell'azienda** nel piede (avviso nell'elenco se manca).
+- **Pagina per uscire** con il questionario (perché esci) e **centro preferenze**: chi riceve le email sceglie le liste da
+  tenere, cambia i dati consentiti o esce da tutto; chi è uscito può iscriversi di nuovo. "Perché sono usciti" nelle
+  statistiche e nel report di ogni campagna.
+- Le campagne di prima si aprono nel riepilogo e partono identiche al byte.
+- Corretto: con il sito in una cartella il pixel di apertura e i link delle email avevano la cartella due volte, e aperture
+  e clic non si contavano.
+
 ## 2.10.0 (2 novembre 2026) - Segmenti e quindici infografiche
 
 - **Segmenti** (Newsletter e form > Contatti > Segmenti): gruppi di contatti che si aggiornano da soli.

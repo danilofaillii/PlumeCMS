@@ -7,6 +7,7 @@
 // prova-primi-passi.js, prova-aspetti.js, prova-controlla-server.js, tagliate in alto e messe nella cartella delle schermate.
 // 1.5.0: social viene dall'email del mattino del sito delle schermate del manuale d'uso. 1.6.0: fine-articolo è il riquadro
 // in fondo a "Chiusi per ferie" sullo stesso sito (kit Attività, dopo tools/manuale-uso-schermate.js), fotografato a 2x.
+// 2.11.0: campagne è la foto 19-riepilogo del manuale d'uso (PNG), non viene da qui.
 // 2.10.0: segmenti è la foto 19-segmento del manuale d'uso; infografiche è insieme-1280 di prove/prova-infografiche-15.js, ridotta a 1000 px.
 // 2.9.0: importa-contatti è la foto 19-importa-2 del manuale d'uso (PNG), non viene da qui.
 // 2.8.0: contatti-brevo è la foto 19-contatti del manuale d'uso (PNG), non viene da qui.

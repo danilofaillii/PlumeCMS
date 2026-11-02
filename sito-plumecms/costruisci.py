@@ -183,6 +183,11 @@ def funzionalita():
                        'plumeCMS fa le cose che ti servono davvero, e le fa nello stesso posto. Ecco cosa trovi dentro, con le schermate vere del pannello.',
                        livello='h1', centro=True)]], larghezza='stretta', **spazi(72, 32))
     blocchi = [
+        ('campagne', 'campagne.webp', 'Una campagna, un riepilogo',
+         ['Dalla 2.11.0 ogni campagna ha una pagina sola con le sue parti: mittente, destinatari, oggetto, design, impostazioni. Ognuna dice se è a posto, e finché manca qualcosa la campagna non parte.',
+          '<ul><li>Destinatari da liste e segmenti, con le esclusioni e senza chi non apre da mesi.</li>'
+          '<li>Anteprima con i dati di un contatto vero, prova alla lista dei test, invio subito o programmato, anche a lotti.</li>'
+          '<li>Chi esce dice perché, e dal centro preferenze sceglie quali liste tenere invece di andarsene del tutto.</li></ul>']),
         ('infografiche', 'infografiche.webp', 'Quindici infografiche disegnate',
          ['Dalla 2.10.0 l\'editor ha quindici infografiche nuove: imbuto, piramide, matrice a quattro quadranti, ciclo, ciambella, cerchi che si toccano, ragnatela, lancetta, iceberg, omini, il viaggio, bilancia, mappa di calore, cerchi concentrici e barre al cento per cento.',
           '<ul><li>Scrivi le voci e i numeri: il disegno si fa da solo, con i calcoli giusti.</li>'
@@ -635,7 +640,7 @@ def editor_json():
 
 
 # ------------------------------------------------------------------ file
-USATE = ['infografiche', 'segmenti', 'importa-contatti', 'contatti-brevo', 'email-conferma', 'pannello-chiaro', 'copertina', 'installa-ora', 'scegli-sito', 'consegna', 'widget-2-1', 'scegli-media', 'addon', 'su-misura', 'firma', 'widget-attivita', 'social', 'fine-articolo', 'importa-wp', 'tipo-sito', 'primi-passi', 'aspetti', 'controlla-server', 'sezioni', 'copia', 'installa-1', 'installa-2', 'installa-3', 'installa-4', 'installa-5', 'editor-ritratto', 'editor', 'aperture', 'stile', 'modelli', 'versioni', 'seo', 'flussi', 'download', 'sicurezza', 'aggiornamenti', 'temi',
+USATE = ['campagne', 'infografiche', 'segmenti', 'importa-contatti', 'contatti-brevo', 'email-conferma', 'pannello-chiaro', 'copertina', 'installa-ora', 'scegli-sito', 'consegna', 'widget-2-1', 'scegli-media', 'addon', 'su-misura', 'firma', 'widget-attivita', 'social', 'fine-articolo', 'importa-wp', 'tipo-sito', 'primi-passi', 'aspetti', 'controlla-server', 'sezioni', 'copia', 'installa-1', 'installa-2', 'installa-3', 'installa-4', 'installa-5', 'editor-ritratto', 'editor', 'aperture', 'stile', 'modelli', 'versioni', 'seo', 'flussi', 'download', 'sicurezza', 'aggiornamenti', 'temi',
          'tema-cosmo', 'tema-aria', 'tema-bottega',
          'tema-estate', 'tema-inverno', 'tema-autunno', 'tema-primavera', 'tema-giallo', 'tema-rosso', 'tema-verde', 'tema-blu']
 
@@ -683,6 +688,7 @@ def zip_lavagna(dest):
 # Regola di Danilo (1 novembre 2026): solo i punti salienti, una riga per versione, mai nomi di aziende o servizi di terzi.
 # Le novità per chi scarica: brevi, scritte qui (il CHANGELOG è per chi sviluppa). Da aggiornare a ogni versione.
 NOVITA = [
+    ('2.11.0', 'Campagne a riepilogo e centro preferenze', ['Ogni campagna in una pagina con le sue parti, invio programmato e a lotti; chi esce dice perché o sceglie le liste da tenere.']),
     ('2.10.0', 'Segmenti e quindici infografiche', ['Gruppi di contatti che si aggiornano da soli e quindici infografiche disegnate nell\'editor: 107 widget.']),
     ('2.9.0', 'Importa ed esporta i contatti in pochi passi', ['Da file CSV, TXT o Excel, oppure incollati: abbini le colonne, scegli la lista, confermi; e la lista dei test per le prove.']),
     ('2.8.0', 'Contatti con scheda, liste e campi tuoi', ['Una scheda per ogni persona con la sua storia, colonne che scegli tu, liste in cartelle, campi tuoi anche calcolati e lista nera con il motivo.']),
