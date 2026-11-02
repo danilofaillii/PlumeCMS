@@ -2660,9 +2660,15 @@ Automazioni**. Ognuna ha:
 2. In alto scrivi il nome (per esempio "Benvenuto ai nuovi clienti") e un tag, se ti servono per ritrovarle.
 3. A sinistra, scheda **Inneschi**: c'è già "Si iscrive alla newsletter". Con **+ Aggiungi un innesco** puoi aggiungerne altri
    (per esempio "Entra in una lista: Clienti").
-4. Clicca il blocco **Email** sulla tela: a destra scrivi oggetto e testo (Testo semplice), oppure scegli **Editor a blocchi** e
-   premi **Salva e apri l'editor a blocchi** (lo stesso delle campagne, capitolo 20, "L'editor a blocchi"; con la freccia in
-   alto torni alla tela). Sotto scegli **Quando parte**: appena arriva, a un'ora precisa o all'orario migliore di ogni persona.
+4. Clicca il blocco **Email** sulla tela. In **Contenuto** hai tre strade:
+   - **Testo semplice**: scrivi oggetto e testo lì a destra;
+   - **Editor a blocchi**: premi **Salva e apri l'editor a blocchi** (lo stesso delle campagne, capitolo 20, "L'editor a
+     blocchi"; con la freccia in alto torni alla tela);
+   - **Da un modello**: nella tendina **Quale modello** compaiono tutti i tuoi modelli (Newsletter e form > Modelli), anche quelli
+     in codice HTML e quelli non attivi, segnati. Scegline uno e premi **Salva**: il modello si copia in questa email (il modello
+     resta com'è). Se l'oggetto è vuoto, prende quello del modello. Un modello a blocchi, dopo, lo ritocchi con **Editor a blocchi**.
+
+   Sotto scegli **Quando parte**: appena arriva, a un'ora precisa o all'orario migliore di ogni persona.
 5. Per aggiungere un passo, scegli il blocco dopo cui va, apri la scheda **Azioni** o **Regole** e clicca il pezzo (o premi
    Invio): entra sotto il blocco scelto, già collegato. Per collegare a mano, tira dal pallino di un'uscita fino al blocco.
 6. Nella barra in alto metti lo **Stato** su **Attiva** e premi **Salva**. Il messaggio verde dice cosa succede adesso.

@@ -474,7 +474,10 @@ function newsletter_flusso_grafo_valido($g): array {
 /** I campi del passo Email arrivati con la 2.15.0. Un'email di prima non li ha: valgono i predefiniti, e l'email resta quella di prima. */
 function nl_email_extra(array $d, callable $s, callable $int): array {
     $orario = $s('orario', 10);
-    return ['editor' => $s('editor', 10) === 'blocchi' ? 'blocchi' : 'semplice', 'design' => is_string($d['design'] ?? null) ? mb_substr($d['design'], 0, 400000) : '',
+    // 2.17.1: "modello" (scelta del pannello: il modello si copia al salvataggio) e "html" (un modello in codice HTML già copiato).
+    $ed = $s('editor', 10);
+    return ['editor' => in_array($ed, ['blocchi', 'html', 'modello'], true) ? $ed : 'semplice', 'design' => is_string($d['design'] ?? null) ? mb_substr($d['design'], 0, 400000) : '',
+        'html' => '',
         'modello' => $int('modello', 0, 1000000), 'mittente_id' => $int('mittente_id', 0, 1000000),
         'orario' => in_array($orario, ['ora', 'migliore'], true) ? $orario : 'subito', 'ora' => $int('ora', 0, 23, 10)];
 }
@@ -550,14 +553,24 @@ function newsletter_flusso_salva(int $id, array $d): int {
         $dove = '#' . $n['id'];
         switch ($n['tipo']) {
             case 'email':
-                if ($dn['oggetto'] === '') throw new RuntimeException("L'email $dove è senza oggetto: aprila e scrivilo.");
                 $dn['corpo'] = newsletter_4byte_dentro($dn['corpo']);
-                // Il design a blocchi lo scrive l'editor delle email (nl_aut_design_salva): quello del browser non vale. Un
-                // modello scelto adesso porta il suo design.
+                // Il design a blocchi lo scrive l'editor delle email (nl_aut_design_salva) e il codice HTML arriva solo da un
+                // modello: quelli del browser non valgono. Un modello scelto adesso (2.17.1: a blocchi o in codice HTML, scelto
+                // con "Da un modello") si copia nel passo, e se l'oggetto è vuoto porta anche il suo.
                 $prima = $vecchio ? newsletter_flusso_nodo($vecchio['grafo'], $n['id']) : null;
-                $dn['design'] = $prima && $prima['tipo'] === 'email' ? (string)$prima['dati']['design'] : '';
-                if ($dn['modello'] > 0 && $mod && ($m = $mod($dn['modello'])) && $m['editor'] === 'blocchi') { $dn['design'] = (string)$m['design']; $dn['editor'] = 'blocchi'; }
+                $dn['design'] = $prima && $prima['tipo'] === 'email' ? (string)($prima['dati']['design'] ?? '') : '';
+                $dn['html'] = $prima && $prima['tipo'] === 'email' ? (string)($prima['dati']['html'] ?? '') : '';
+                if ($dn['editor'] === 'modello' && $dn['modello'] <= 0) throw new RuntimeException("L'email $dove: scegli il modello da usare, oppure il testo semplice o l'editor a blocchi.");
+                if ($dn['modello'] > 0) {
+                    $m = $mod ? $mod($dn['modello']) : null;
+                    if (!$m || $m['tag'] === 'optin') throw new RuntimeException("L'email $dove: il modello scelto non c'è più. Scegline un altro.");
+                    if ($m['editor'] === 'html') { $dn['html'] = (string)$m['html']; $dn['editor'] = 'html'; }
+                    else { $dn['design'] = (string)$m['design']; $dn['editor'] = 'blocchi'; }
+                    if ($dn['oggetto'] === '') $dn['oggetto'] = mb_substr(newsletter_4byte_fuori((string)$m['oggetto']), 0, 255);
+                }
+                if ($dn['editor'] === 'html' && trim($dn['html']) === '') $dn['editor'] = 'semplice';
                 $dn['modello'] = 0;
+                if ($dn['oggetto'] === '') throw new RuntimeException("L'email $dove è senza oggetto: aprila e scrivilo.");
                 break;
             case 'percento':
                 if (array_sum($dn['rami']) !== 100) throw new RuntimeException("La divisione in percentuale $dove fa " . array_sum($dn['rami']) . '%: le parti devono fare 100.');
@@ -813,6 +826,7 @@ function newsletter_flusso_evento(int $flusso, int $nodo, int $iscritto, string 
 function nl_email_campagna(array $f, array $d): array {
     $c = ['id' => 0, 'oggetto' => $d['oggetto'], 'anteprima' => $d['anteprima'], 'corpo' => $d['corpo'], 'pulsante_testo' => $d['pulsante_testo'], 'pulsante_link' => $d['pulsante_link'], 'mittente_id' => (int)(($d['mittente_id'] ?? 0) ?: ($f['mittente_id'] ?? 0))];
     if (($d['editor'] ?? '') === 'blocchi') $c += ['editor' => 'blocchi', 'design' => (string)$d['design']];
+    elseif (($d['editor'] ?? '') === 'html' && trim((string)($d['html'] ?? '')) !== '') $c += ['editor' => 'html', 'html' => (string)$d['html']];
     return $c;
 }
 

@@ -203,7 +203,14 @@ foreach (newsletter_attributi() as $n => $a) {
     if (in_array($a['categoria'], ['calculated', 'global'], true) || ((int)$a['sistema'] && !in_array($a['colonna'], ['nome', 'cognome'], true))) continue;
     $attributi[$n] = ['e' => newsletter_attributo_etichetta($a), 't' => $a['tipo'], 'o' => array_map(fn($x) => newsletter_4byte_fuori((string)$x), (array)$a['opzioni'])];
 }
-$modelliEmail = function_exists('nd_modelli') ? array_map(fn($x) => newsletter_4byte_fuori((string)$x), array_column(array_filter(nd_modelli(true), fn($m) => $m['editor'] === 'blocchi' && $m['tag'] !== 'optin'), 'nome', 'id')) : [];
+// 2.17.1 (Danilo: "devo poter scegliere l'email da un modello"): tutti i modelli, a blocchi e in codice HTML, anche quelli non attivi
+// (segnati), tranne quelli dell'email di conferma. Prima solo gli attivi a blocchi, e solo dentro "Editor a blocchi".
+$modelliEmail = [];
+if (function_exists('nd_modelli')) foreach (nd_modelli(false) as $_m) {
+    if ($_m['tag'] === 'optin') continue;
+    $modelliEmail[(string)$_m['id']] = ['n' => newsletter_4byte_fuori((string)$_m['nome']) . ((int)$_m['attivo'] ? '' : ' (non attivo)'), 't' => $_m['editor'] === 'html' ? 'html' : 'blocchi', 'o' => newsletter_4byte_fuori((string)$_m['oggetto'])];
+}
+unset($_m);
 $segmenti = function_exists('newsletter_segmenti') ? array_map(fn($x) => newsletter_4byte_fuori((string)$x), array_column(newsletter_segmenti(), 'nome', 'id')) : [];
 $def = newsletter_regole_definizione();
 $def['campi']['flusso_email'] = ['g' => 'Questa automazione', 'e' => 'Email di questa automazione', 't' => 'flusso_email'];

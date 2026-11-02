@@ -2,6 +2,14 @@
 
 Il prodotto si chiama **plumeCMS** (nome scelto il 26 ottobre 2026; prima, per poche ore, "CarbonaraCMS", e ancora prima il provvisorio "Officina": gli zip vecchi si chiamavano `officina-*` e `carbonaracms-*`).
 
+## 2.17.1 (2 novembre 2026) - Le email delle automazioni dai modelli
+
+- **Automazioni, passo Email**: il Contenuto ha una terza scelta, **Da un modello**, con tutti i modelli di Newsletter e form >
+  Modelli (a blocchi e in codice HTML, anche quelli non attivi, segnati). Al salvataggio il modello si copia nel passo e, con
+  l'oggetto vuoto, ne porta l'oggetto. Prima si poteva solo "partire da un modello" dentro Editor a blocchi, e solo con i
+  modelli attivi a blocchi (segnalazione di Danilo: "devo poter scegliere l'email da un modello").
+- Le email dei passi possono essere in codice HTML (dal modello), come le campagne.
+
 ## 2.17.0 (2 novembre 2026) - Quindici aperture nuove
 
 - **L'Apertura (hero) ha ventisei disposizioni**: alle undici di prima si aggiungono Prospettiva, Computer e telefono, Pila di

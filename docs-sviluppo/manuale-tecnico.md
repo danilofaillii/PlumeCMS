@@ -2698,7 +2698,7 @@ con `automazioni giro`), che la pagina, il giro e ogni evento chiamano prima di 
 **Il grafo.** Elenco chiuso dei tipi in `NL_USCITE` (`:31`) con le uscite fisse; le divisioni hanno le uscite dei loro rami
 (`nl_uscite()`, `:378`). `newsletter_flusso_grafo_valido()` (`:403`), alla lettura e al salvataggio: al massimo
 `NL_AUT_MAX_NODI` (100) blocchi letti, tipi dall'elenco, dati di ogni tipo con i loro campi e i loro limiti (email: oggetto
-255, anteprima 255, corpo 300000, ascolto fino a un anno e, con `nl_email_extra()`, `:456`, editor `semplice` o `blocchi`,
+255, anteprima 255, corpo 300000, ascolto fino a un anno e, con `nl_email_extra()`, `:456`, editor `semplice`, `blocchi`, `html` (2.17.1, dal modello) o `modello` (scelta da copiare al salvataggio),
 `design`, `modello`, `mittente_id`, `orario` `subito`/`ora`/`migliore`, `ora` 0-23; attesa almeno 1 minuto; evento
 `apertura`/`clic`, email, massimo; dividi fino a `NL_AUT_MAX_RAMI` (8) rami con nome e regole grezze, `nl_regole_grezze()`,
 `:393`; percento da 2 a 5 parti fra 1 e 99; liste; attributo con nome `[A-Z0-9_]`; webhook 500 caratteri), coordinate fra 0 e
@@ -2785,7 +2785,7 @@ pannello il costruttore dei segmenti (`window.nlsMonta` e `box.nlsCambio` in `ad
 condizione "Email di questa automazione" con le email della tela in `DEF.flussoEmail`, `:92`). Il passo Email ha mittente,
 oggetto, anteprima, contenuto (Testo semplice con Quill, o Editor a blocchi: "Salva e apri l'editor a blocchi" salva e apre
 `newsletter-design.php?flusso=F&nodo=N` (`admin/newsletter-design.php:20`-`:25`), che scrive il design nel grafo con
-`nl_aut_design_salva()`, `:267`, e torna alla tela; "Parti da un modello" con i modelli a blocchi attivi), quando parte
+`nl_aut_design_salva()`, `:267`, e torna alla tela; dalla 2.17.1 "Da un modello" come terza scelta del Contenuto, con tutti i modelli tranne quelli `optin`, anche in codice HTML e non attivi: `$modelliEmail` in `admin/newsletter-flussi.php`; al salvataggio `newsletter_flusso_salva()` copia `design` o `html`, mette `editor` `blocchi` o `html`, porta l'oggetto se vuoto e rifiuta "modello" senza scelta; `nl_email_campagna()` passa `editor` `html` e `html` a `newsletter_email()`, come una campagna in codice HTML), quando parte
 (subito, a un'ora, all'orario migliore), l'ascolto come prima. Il grafo e gli inneschi viaggiano in JSON nei campi nascosti
 (base64 di `campi-protetti.js` contro ModSecurity); la copia nel browser e il battito della sessione come prima. Scheda
 **Attività e registro** (`?id=N&scheda=attivita`): chi è dentro (50 per pagina, filtro per passo, "Togli" con la conferma,

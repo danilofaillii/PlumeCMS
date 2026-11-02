@@ -714,6 +714,7 @@ def zip_lavagna(dest):
 # Regola di Danilo (1 novembre 2026): solo i punti salienti, una riga per versione, mai nomi di aziende o servizi di terzi.
 # Le novità per chi scarica: brevi, scritte qui (il CHANGELOG è per chi sviluppa). Da aggiornare a ogni versione.
 NOVITA = [
+    ('2.17.1', 'Le email delle automazioni dai modelli', ['Nel passo Email di un\'automazione si sceglie un modello, a blocchi o in codice HTML.']),
     ('2.17.0', 'Quindici aperture nuove', ['Ventisei disposizioni per l\'apertura delle pagine, con video, lente, prima e dopo e terminale; i video si caricano nei Media.']),
     ('2.16.1', 'Il limite di caricamento fra i requisiti', ['Almeno 8 MB per caricare gli aggiornamenti: l\'installatore e il pannello lo controllano.']),
     ('2.16.0', 'Form a cinque passi e consenso', ['Form costruiti in cinque passi, con la loro pagina, il codice da incollare e il QR; consenso e preferenze per ogni contatto.']),
