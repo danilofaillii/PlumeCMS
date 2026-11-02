@@ -106,7 +106,7 @@ Sono gli unici in `cms/docs/`, nello zip, nel sito di plumeCMS e nella pagina Do
 - **Pacchetto di aggiornamento** per un'installazione esistente:
   `python3 tools/cms-pacchetto.py --aggiornamento`. Si carica dal pannello,
   Impostazioni, Aggiornamenti.
-- **Versione**: `cms/VERSIONE` (oggi 2.13.0; sempre tre numeri: "beta" va nel CHANGELOG, mai nel nome dello zip, se no la serie "ultima" del Download non lo riconosce) e una voce in `cms/CHANGELOG.md` a ogni
+- **Versione**: `cms/VERSIONE` (oggi 2.14.0; sempre tre numeri: "beta" va nel CHANGELOG, mai nel nome dello zip, se no la serie "ultima" del Download non lo riconosce) e una voce in `cms/CHANGELOG.md` a ogni
   zip con contenuto diverso. Mai cambiare il contenuto di una versione già data.
 - **Prove** prima di dire finito:
   - `php -n -d short_open_tag=1 -l` su ogni file PHP toccato, `node --check` sui js;
@@ -144,6 +144,13 @@ Le decisioni complete, con data e perché, stanno nel second brain, `plumecms/de
 - **Nome: plumeCMS** (26 ottobre 2026).
 
 ## Stato al 31 ottobre 2026
+
+Fatto: plumeCMS 2.14.0 (2 novembre): fase 7 del piano Brevo, report e statistiche (agente, ramo `fase7-report-brevo`:
+`includes/newsletter-report.php`, `admin/newsletter-report.php`, `assets/css/report.css`, statistiche riscritte, colonne `newsletter_eventi.volte`
+e `ultimo`, evento `soft`, orario migliore con `newsletter_campagne.orario_migliore|orario_ora`, gruppo di attacchi 36). Tassi sulle consegnate.
+Prove: install 37/37 radice e cartella, report 72/72 nuovo e aggiornato (`prova-report.js` vuole il server finto con `rimbalzi`), contatti
+94/94, campagne 100/100, editor 107/107, A/B 65/65, aggiornamento 2.13.0 -> 2.14.0 13/13 con 20 foto uguali, campagne vecchie al byte 15/15,
+segmenti 179/179, newsletter 37/37, addon 70/70, attacchi 374/374, pacchetto unico su un sito 2.13.0 13/13. Zip 2123 KB, PDF 10350 KB.
 
 Fatto: plumeCMS 2.13.0 (2 novembre): fase 6 del piano Brevo, test A/B (agente, ramo `fase6-ab-brevo`: `includes/newsletter-ab.php`,
 tabella `newsletter_ab`, colonna `newsletter_coda.versione`, gruppo di attacchi 35). Corretto da me il blocco `GET_LOCK` dell'invio
