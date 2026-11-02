@@ -2078,12 +2078,14 @@ echo json_encode($o);
       const srv = [spawn(process.execPath, ['-e', SRV, String(PW), FILE], { stdio: 'ignore' }), spawn(process.execPath, ['-e', SRV, String(PW + 1), FILE], { stdio: 'ignore' })];
       await new Promise(r => setTimeout(r, 600));
       const arrivi = () => { try { return require('fs').readFileSync(FILE, 'utf8').trim().split('\n').filter(Boolean); } catch (e) { return []; } };
+      // I due server si spengono anche se una chiamata fallisce: rimasti accesi, il giro dopo trova le porte occupate.
+      try {
       const w1 = cli({}, 'webhook', `http://127.0.0.1:${PW}/ok`);
       const w2 = cli({}, 'webhook', `https://[::1]:${PW}/ok`);
       ok('2.15.0: alla chiamata, senza la costante delle prove, 127.0.0.1 e [::1] non partono', /non chiamato/.test(w1.esito) && /non chiamato/.test(w2.esito) && arrivi().length === 0, [w1, w2, arrivi()]);
       const w3 = cli({ AU_LOCALE: `127.0.0.1:${PW}` }, 'webhook', `http://127.0.0.1:${PW}/rimanda`);
       ok('2.15.0: un rimando verso un indirizzo interno non si segue (il server interno non riceve niente)', /non lo seguo/.test(w3.esito) && arrivi().length === 1 && !arrivi().some(x => x.startsWith(String(PW + 1))), [w3, arrivi()]);
-      srv.forEach(s => s.kill());
+      } finally { srv.forEach(s => s.kill()); }
       try { require('fs').unlinkSync(FILE); } catch (e) {}
       // Grafi
       const g150 = grafo(Array.from({ length: 150 }, (_, i) => n0('attesa', { minuti: 5 }, i + 1)));

@@ -184,7 +184,7 @@ const serverWh = [spawn(process.execPath, ['-e', SERVER, String(WH), ARRIVI], { 
   persona('cdf'); cli('innesco', 'form', 88, C.cdf);
   const visto = (k, chi) => inLista(vista(k), C[chi]);
   // Su un sito con tanti contatti vecchi "non apre da 30 giorni" ne fa entrare 200 a giro: si gira finché arrivano anche i nostri.
-  for (let i = 0; i < 15 && !(visto('inattivo', 'cin') && visto('anniversario', 'can') && visto('anniv2', 'ca3') && visto('iscrizione', 'ci1')); i++) giro();
+  for (let i = 0; i < 60 && !(visto('inattivo', 'cin') && visto('anniversario', 'can') && visto('anniv2', 'ca3') && visto('iscrizione', 'ci1')); i++) giro();
   ok('innesco "si iscrive": entra', visto('iscrizione', 'ci1'));
   ok('innesco "entra in una lista": entra', visto('lista', 'cl1'));
   ok('innesco "viene tolto da una lista" (nuovo): entra', visto('lista_tolto', 'ct1'));
