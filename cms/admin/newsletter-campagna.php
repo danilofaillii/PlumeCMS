@@ -44,7 +44,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             break;
         case 'usa_modello':
             $m = nd_modello((int)($_POST['modello_id'] ?? 0));
-            $e = $m && (int)$m['attivo'] ? nd_campagna_da_modello($id, $m) : 'Scegli un modello attivo.';
+            $e = $m && (int)$m['attivo'] && $m['tag'] !== 'optin' ? nd_campagna_da_modello($id, $m) : 'Scegli un modello attivo.';
             if ($e !== '') { flash('error', $e); $vai = '&apri=design#sez-design'; break; }
             flash('success', 'Design preso dal modello «' . newsletter_4byte_fuori((string)$m['nome']) . '».');
             if ($m['editor'] === 'blocchi') { header('Location: newsletter-design.php?campagna=' . $id); exit; }
@@ -132,7 +132,7 @@ $mittentiScelta = consegna_mittenti_scelta();
 $nomeC = newsletter_4byte_fuori((string)($c['nome'] !== '' ? $c['nome'] : $c['oggetto'])) ?: 'Campagna senza nome';
 $madre = (int)$c['rinvio_di'] ? newsletter_campagna((int)$c['rinvio_di']) : ((int)$c['padre_id'] ? newsletter_campagna((int)$c['padre_id']) : null);
 $dis = $modificabile ? '' : ' disabled';
-$modelliAttivi = nd_modelli(true);
+$modelliAttivi = array_values(array_filter(nd_modelli(true), fn($m) => $m['tag'] !== 'optin')); // l'email di conferma non è una campagna
 $modelloUsato = (int)($c['modello_id'] ?? 0) ? nd_modello((int)$c['modello_id']) : null;
 $adminTitle = 'Campagna: ' . $nomeC;
 

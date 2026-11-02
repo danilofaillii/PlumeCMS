@@ -684,7 +684,7 @@ capitoli['19'] = async () => {
   await p.fill('[name=pulsante_testo]', 'Leggi la notizia');
   await p.fill('[name=pulsante_link]', B + '/aperti-il-sabato/');
   // 2.12.0: le cinque strade del design sono riquadri con il loro pulsante; l'editor semplice è quello in uso.
-  await foto('19-design', { sel: '#sez-design', margine: 6, altezza: 900, segni: [{ sel: '#sez-design .nd-strade', n: 1 }, { sel: '#editor', n: 2 }, { sel: '#pulsante_testo', n: 3 }] });
+  await foto('19-design', { sel: '#sez-design', margine: 6, altezza: 1180, segni: [{ sel: '#sez-design .nd-strade', n: 1 }, { sel: '#editor', n: 2 }, { sel: '#pulsante_testo', n: 3 }] });
   await Promise.all([p.waitForNavigation(), p.click('#nl-form button[type=submit]')]);
   await vai('newsletter-flussi.php?nuovo=1');
   await foto('19-flussi', { clip: { x: 240, y: 56, width: 960, height: 600 } });
