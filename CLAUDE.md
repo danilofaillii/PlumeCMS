@@ -108,7 +108,7 @@ Sono gli unici in `cms/docs/`, nello zip, nel sito di plumeCMS e nella pagina Do
 - **Pacchetto di aggiornamento** per un'installazione esistente:
   `python3 tools/cms-pacchetto.py --aggiornamento`. Si carica dal pannello,
   Impostazioni, Aggiornamenti.
-- **Versione**: `cms/VERSIONE` (oggi 2.17.1; sempre tre numeri: "beta" va nel CHANGELOG, mai nel nome dello zip, se no la serie "ultima" del Download non lo riconosce) e una voce in `cms/CHANGELOG.md` a ogni
+- **Versione**: `cms/VERSIONE` (oggi 2.18.0; sempre tre numeri: "beta" va nel CHANGELOG, mai nel nome dello zip, se no la serie "ultima" del Download non lo riconosce) e una voce in `cms/CHANGELOG.md` a ogni
   zip con contenuto diverso. Mai cambiare il contenuto di una versione già data.
 - **Prove** prima di dire finito:
   - `php -n -d short_open_tag=1 -l` su ogni file PHP toccato, `node --check` sui js;
@@ -156,6 +156,20 @@ Le decisioni complete, con data e perché, stanno nel second brain, `plumecms/de
 - **Nome: plumeCMS** (26 ottobre 2026).
 
 ## Stato al 31 ottobre 2026
+
+Fatto: plumeCMS 2.18.0 (2 novembre): quattro richieste di Danilo. (1) Il passo Email delle automazioni RICHIAMA il modello (agente, ramo
+`passo-modello`): `editor:"modello"` e `modello:<id>` restano nel nodo, `nl_passo_modello()` compone dal modello a ogni invio, oggetto e
+anteprima vuoti dal modello (colonna nuova `newsletter_modelli.anteprima`), "Usato in" e conferme in Modelli, passo fermo con registro e
+avviso in dashboard se il modello manca, Stacca dal modello, modelli in codice HTML dal pannello, gruppo di attacchi 40. Formato del nodo nel
+manuale tecnico. Corretto da me `nl_email_quando()`: dentro l'ora scelta l'email parte subito ("attesa 7 giorni, alle 8" dava 8 giorni).
+(2) Funzionalità del sito a 10 caratteristiche (regola sopra). (3) La hero della home resta: `tieni_apertura` in `sito_importa_pagina()`
+(solo pagine già scritte da un pacchetto, `sito_pagina_da_pacchetto()`), `costruisci.py --senza-home` per i siti sotto la 2.18.0 (il pacchetto
+lo applica il motore vecchio, `sito.php` già caricato): la consegna 2.18.0 è senza home, dalla 2.19.0 la home torna con la hero tenuta.
+(4) Menu del pannello più leggibile (`admin.css`, blocco 2.18.0, solo variabili degli aspetti). Prove: install 38/38 radice e cartella,
+passo da modello 57/57, automazioni 96/96, campagne 100/100, telefono 54/54, aggiornamento 2.17.1 -> 2.18.0 13/13 con 20 foto uguali e i
+passi copiati con la 2.17.1 uguali al byte (9 impronte, colonna `passi` identica), flussi di prima (2.14.0 -> 2.18.0) 18/18, attacchi
+430/430, pacchetto unico 13/13 (il controllo delle pagine accetta 6 senza home), hero tenuta (`$S/hh.sh`). Zip 2228 KB, PDF 10976 KB.
+Le schermate del manuale fuori dal capitolo delle automazioni hanno ancora il menu di prima.
 
 Fatto: plumeCMS 2.17.1 (2 novembre): segnalazione di Danilo, "devo poter scegliere l'email da inserire in un passaggio dai modelli".
 La scelta c'era ma stava dentro "Editor a blocchi" e mostrava solo i modelli attivi a blocchi. Ora il Contenuto del passo Email ha tre

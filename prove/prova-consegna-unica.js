@@ -37,7 +37,8 @@ const py = (codice, ...arg) => execFileSync('python3', ['-I', '-c', codice, ...a
   ok('manifest: il codice del CMS (new/, con il motore e VERSIONE)', dest.includes('new/includes/aggiornamenti.php') && dest.includes('new/VERSIONE') && dest.includes('new/admin/assets/pannello.js'));
   ok('manifest: in Download gli zip del CMS e i due manuali, non più quello degli addon', [`uploads/scaricabili/plumecms-${V}.zip`, `uploads/scaricabili/plumecms-${V}-aggiornamento.zip`, 'uploads/scaricabili/manuale-uso.pdf', 'uploads/scaricabili/manuale-temi.pdf'].every(x => dest.includes(x))
     && !dest.includes('uploads/scaricabili/manuale-uso-addon.pdf') && (m.elimina || []).includes('uploads/scaricabili/manuale-uso-addon.pdf'));
-  ok('manifest: pagine, stile e menu del sito', (m.pagine || []).length === 7 && !!m.editor);
+  // 2.18.0: costruisci.py --senza-home lascia fuori la home (la hero del sito resta): 6 pagine; con la home 7.
+  ok('manifest: pagine, stile e menu del sito', (m.pagine || []).length === ((m.pagine || []).includes('pagine/home.json') ? 7 : 6) && !!m.editor);
 
   // 3. Caricato e applicato dal pannello, poi il sito visitato (prova-sito-plumecms.js).
   const r = spawnSync('node', [path.join(__dirname, 'prova-sito-plumecms.js'), B, DIR, UTENTE, PASSWORD, path.join(tmp, unico), V], { encoding: 'utf8', timeout: 900000 });
