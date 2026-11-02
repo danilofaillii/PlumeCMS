@@ -13,6 +13,7 @@ require_once __DIR__ . '/../includes/newsletter-importa.php'; // 2.9.0: la lista
 require_once __DIR__ . '/../includes/newsletter-campagne.php'; // 2.11.0
 require_once __DIR__ . '/../includes/newsletter-design.php'; // 2.12.0: editor a blocchi e modelli
 require_once __DIR__ . '/../includes/newsletter-ab.php'; // 2.13.0: il test A/B
+require_once __DIR__ . '/../includes/newsletter-report.php'; // 2.14.0: report e orario migliore
 require_admin(); // sicurezza (ruoli): solo amministratore
 newsletter_schema();
 newsletter_campagne_schema();
@@ -97,7 +98,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $manca = newsletter_campagna_manca($c);
             if ($manca) { flash('error', 'Prima di inviare: ' . implode(' ', $manca)); $vai = '#nlr-invio'; break; }
             $n = newsletter_campagna_conta($c);
-            if (($_POST['quando'] ?? '') === 'programma') {
+            $quandoScelto = is_string($_POST['quando'] ?? null) ? $_POST['quando'] : 'subito';
+            if ($quandoScelto === 'migliore' && $isAb) { flash('error', 'L\'invio all\'orario migliore non c\'è nel test A/B: scegli «Invia subito» o «Programma».'); $vai = '#nlr-invio'; break; }
+            if ($quandoScelto === 'migliore') {
+                // 2.14.0: all'orario migliore. La campagna parte all'inizio del giorno scelto (o adesso, se è oggi) e ogni
+                // email aspetta in coda l'ora del suo contatto (nl_orario_applica).
+                $g = is_string($_POST['orario_giorno'] ?? null) ? $_POST['orario_giorno'] : '';
+                $dt = DateTime::createFromFormat('!Y-m-d', $g);
+                $ora = filter_var($_POST['orario_ora'] ?? '', FILTER_VALIDATE_INT, ['options' => ['min_range' => 0, 'max_range' => 23]]);
+                if (!$dt || $dt->format('Y-m-d') !== $g) { flash('error', 'Scegli il giorno dell\'invio all\'orario migliore.'); $vai = '&apri=migliore#nlr-invio'; break; }
+                if ($g < date('Y-m-d')) { flash('error', 'Il giorno scelto è già passato: scegli oggi o un giorno che deve ancora venire.'); $vai = '&apri=migliore#nlr-invio'; break; }
+                if ($ora === false) { flash('error', 'Scegli a che ora mandarla a chi non ha ancora un orario suo (da 0 a 23).'); $vai = '&apri=migliore#nlr-invio'; break; }
+                $inizio = $g === date('Y-m-d') ? date('Y-m-d H:i:s') : $g . ' 00:00:00';
+                db()->prepare('UPDATE ' . tbl('newsletter_campagne') . " SET stato = 'programmata', invio_at = ?, orario_migliore = 1, orario_ora = ?, aggiornato = NOW() WHERE id = ?")->execute([$inizio, $ora, $id]);
+                flash('success', 'Campagna programmata per il ' . $dt->format('d/m/Y') . " all'orario migliore di ogni contatto, verso $n contatti (contati adesso). Chi non ha ancora un orario suo la riceve alle " . sprintf('%02d:00', $ora) . ' (ora di ' . date_default_timezone_get() . ').');
+                break;
+            }
+            db()->prepare('UPDATE ' . tbl('newsletter_campagne') . ' SET orario_migliore = 0 WHERE id = ?')->execute([$id]);
+            if ($quandoScelto === 'programma') {
                 $quando = strtotime((string)($_POST['invio_at'] ?? ''));
                 if (!$quando) { flash('error', 'Scegli giorno e ora dell\'invio.'); $vai = '#nlr-invio'; break; }
                 if ($quando < time() - 60) { flash('error', 'Giorno e ora sono già passati: scegli un momento che deve ancora venire, oppure «Invia subito».'); $vai = '#nlr-invio'; break; }
@@ -178,6 +196,7 @@ $riaDest .= ' · ' . ($modificabile ? (int)$sez['destinatari']['n'] . ' contatti
 require_once __DIR__ . '/includes/admin-header.php';
 ?>
 <link href="<?= pannello_file('assets/quill/quill.snow.css') ?>" rel="stylesheet">
+<link rel="stylesheet" href="<?= pannello_file('assets/css/report.css') ?>">
 <style>
 #editor{min-height:380px;background:var(--campo);color:var(--text);font-size:16px}
 .nlr-sez{margin-top:1rem}
@@ -227,49 +246,30 @@ require_once __DIR__ . '/includes/admin-header.php';
 <?php if ($madre): ?><p class="nlr-stato-box" role="status"><?= (int)$c['rinvio_di'] ? 'Rinvio ai non aperti di' : 'Copia per i nuovi contatti di' ?> «<a href="newsletter-campagna.php?id=<?= (int)$madre['id'] ?>"><?= h(newsletter_4byte_fuori((string)($madre['nome'] ?: $madre['oggetto']))) ?></a>»: <?= (int)$c['rinvio_di'] ? 'arriva solo a chi l\'ha ricevuta e non l\'ha aperta.' : 'arriva solo a chi non ha ricevuto quella campagna (né un\'altra sua copia per i nuovi contatti).' ?></p><?php endif; ?>
 <?php if ($c['stato'] !== 'bozza'): ?>
 <div class="nlr-stato-box" role="status">
-  <?php if ($c['stato'] === 'programmata'): ?>Programmata per il <b><?= h(date('d/m/Y H:i', strtotime((string)$c['invio_at']))) ?></b> (ora di <?= h(date_default_timezone_get()) ?>). Puoi ancora modificarla.
+  <?php if ($c['stato'] === 'programmata' && (int)$c['orario_migliore']): ?>Programmata per il <b><?= h(date('d/m/Y', strtotime((string)$c['invio_at']))) ?></b> all'orario migliore di ogni contatto (chi non ha un orario suo alle <?= sprintf('%02d:00', (int)$c['orario_ora']) ?>, ora di <?= h(date_default_timezone_get()) ?>). Puoi ancora modificarla.
+  <?php elseif ($c['stato'] === 'programmata'): ?>Programmata per il <b><?= h(date('d/m/Y H:i', strtotime((string)$c['invio_at']))) ?></b> (ora di <?= h(date_default_timezone_get()) ?>). Puoi ancora modificarla.
   <?php elseif ($isAb && $ab['fase'] === 'prova' && in_array($c['stato'], ['in_invio', 'sospesa', 'inviata'], true)): $abScade = nl_ab_scade($ab); ?>Test A/B in corso<?= $c['stato'] === 'sospesa' ? ' (invio sospeso)' : '' ?>: <?= (int)$c['inviate'] ?> di <?= 2 * (int)$ab['gruppo'] ?> email di prova partite (<?= (int)$ab['gruppo'] ?> per versione). La versione vincente si sceglie dopo il <b><?= h(date('d/m/Y H:i', $abScade)) ?></b>, al primo giro del cron (entro 5 minuti)<?= (int)$ab['resto'] ? ', e parte agli altri ' . (int)$ab['resto'] . ' contatti' : '' ?>.
-  <?php elseif ($c['stato'] === 'in_invio' || $c['stato'] === 'sospesa'): ?><?= $c['stato'] === 'sospesa' ? 'Invio sospeso' : 'In invio' ?>: <?= (int)$c['inviate'] ?> di <?= (int)$c['destinatari'] ?> partite<?= $c['errori'] ? ', ' . (int)$c['errori'] . ' non partite' : '' ?><?= (int)$c['lotti'] > 1 ? ', in ' . (int)$c['lotti'] . ' lotti ogni ' . (int)$c['lotti_intervallo'] . ' minuti' : '' ?>.
+  <?php elseif ($c['stato'] === 'in_invio' || $c['stato'] === 'sospesa'): ?><?= $c['stato'] === 'sospesa' ? 'Invio sospeso' : 'In invio' ?><?= (int)$c['orario_migliore'] ? ' all\'orario migliore (ogni email parte all\'ora del suo contatto)' : '' ?>: <?= (int)$c['inviate'] ?> di <?= (int)$c['destinatari'] ?> partite<?= $c['errori'] ? ', ' . (int)$c['errori'] . ' non partite' : '' ?><?= (int)$c['lotti'] > 1 ? ', in ' . (int)$c['lotti'] . ' lotti ogni ' . (int)$c['lotti_intervallo'] . ' minuti' : '' ?>.
   <?php elseif ($c['stato'] === 'annullata'): ?>Annullata: <?= (int)$c['inviate'] ?> email erano già partite, le altre non partono più.
   <?php else: ?>Inviata: <?= (int)$c['inviate'] ?> email partite<?= $c['errori'] ? ', ' . (int)$c['errori'] . ' non partite' : '' ?>. Per una nuova versione usa «Duplica» nell'elenco.<?php endif; ?>
   <?= (int)$c['archiviata'] ? '<br>Questa campagna è archiviata.' : '' ?>
 </div>
 <?php endif; ?>
 <?php if (in_array($c['stato'], ['in_invio', 'sospesa', 'inviata', 'annullata'], true)):
-  $ev = newsletter_conteggio_eventi($id); $mot = newsletter_uscite_motivi_conta($id);
-  $usc = (int)db()->query('SELECT COUNT(DISTINCT iscritto_id) FROM ' . tbl('newsletter_eventi') . " WHERE campagna_id = $id AND tipo = 'uscita'")->fetchColumn(); ?>
+  $rn = nl_rep_numeri($id); $mot = newsletter_uscite_motivi_conta($id); ?>
 <div class="form-card" id="nlr-report">
   <h3>Report</h3>
+  <?= nl_rep_soglie_html($rn) ?>
   <div class="nlr-numeri">
-    <div><b><?= (int)$c['inviate'] ?></b>inviate</div>
-    <div><b><?= (int)$ev['apertura'] ?></b>hanno aperto<?= $c['inviate'] ? ' (' . round($ev['apertura'] * 100 / $c['inviate'], 1) . '%)' : '' ?></div>
-    <div><b><?= (int)$ev['clic'] ?></b>hanno cliccato<?= $c['inviate'] ? ' (' . round($ev['clic'] * 100 / $c['inviate'], 1) . '%)' : '' ?></div>
-    <div><b><?= $usc ?></b>sono usciti</div>
+    <?= nl_rep_tessera('inviate', 'inviate', $rn['inviate']) . nl_rep_tessera('consegnate', 'consegnate', $rn['consegnate'])
+      . nl_rep_tessera('apertura', 'hanno aperto', $rn['apertura'], nl_rep_pct_testo($rn['t_apertura'])) . nl_rep_tessera('clic', 'hanno cliccato', $rn['clic'], nl_rep_pct_testo($rn['t_clic']))
+      . nl_rep_tessera('uscita', 'sono usciti', $rn['uscita'], nl_rep_pct_testo($rn['t_uscita']), isset($rn['soglie']['uscite'])) ?>
   </div>
   <?php if ($mot['totale']): ?><p style="margin:.4rem 0 .2rem"><b>Perché sono usciti</b> (dal questionario)</p>
   <ul class="nlr-motivi" style="margin:0 0 .6rem;padding-left:1.2rem"><?php foreach ($mot['n'] as $k => $v): if (!$v) continue; ?><li><?= h(NL_USCITA_MOTIVI[$k]) ?>: <b><?= $v ?></b></li><?php endforeach; ?></ul><?php endif; ?>
-  <p class="hint">Aperture e clic contano una volta per persona. <a href="newsletter-statistiche.php?campagna=<?= $id ?>">Tutti i numeri e i link cliccati</a>.</p>
+  <p class="hint">Persone uniche; i tassi sono sulle email consegnate. <a class="btn btn-secondary btn-sm" href="newsletter-report.php?id=<?= $id ?>">Apri il report completo</a></p>
 </div>
-<?php if ($isAb && $ab['fase'] !== ''): $abR = nl_ab_risultati($id); $abV = (string)$ab['vincitore']; ?>
-<div class="form-card" id="nlr-ab-risultati">
-  <h3>Risultati del test A/B</h3>
-  <p role="status" class="nlr-ab-esito"><?php if ($abV === ''): ?>Non ancora: la versione vincente si sceglie dopo il <b><?= h(date('d/m/Y H:i', nl_ab_scade($ab))) ?></b>, secondo <?= h(mb_strtolower(NL_AB_CRITERI[$ab['criterio']])) ?>.
-  <?php elseif ($abV === 'pari'): ?><b>Pari</b>: le due versioni hanno lo stesso <?= $ab['criterio'] === 'clic' ? 'tasso di clic' : 'tasso di apertura' ?>, e al resto è partita la versione A (scelta il <?= h(date('d/m/Y H:i', strtotime((string)$ab['scelto_at']))) ?>).
-  <?php else: ?><b>Ha vinto la versione <?= strtoupper($abV) ?></b>, per <?= h(mb_strtolower(NL_AB_CRITERI[$ab['criterio']])) ?>: scelta il <?= h(date('d/m/Y H:i', strtotime((string)$ab['scelto_at']))) ?><?= (int)$ab['resto'] ? ' e mandata agli altri ' . (int)$ab['resto'] . ' contatti' : '' ?>.<?php endif; ?></p>
-  <table class="table nlr-ab-tabella">
-    <thead><tr><th>Versione</th><th><?= $ab['cosa'] === 'oggetto' ? 'Oggetto' : 'Contenuto' ?></th><th>Inviate</th><th>Hanno aperto</th><th>Hanno cliccato</th></tr></thead>
-    <tbody>
-    <?php foreach (['a', 'b'] as $v): $x = $abR[$v]; ?>
-      <tr data-versione="<?= $v ?>"><td><b><?= strtoupper($v) ?></b><?= $abV === $v ? ' <span class="nlr-stato nlr-ok"><span aria-hidden="true">&#10003;</span> Vincente</span>' : ($abV === 'pari' && $v === 'a' ? ' <span class="nlr-stato nlr-ok">Partita al resto</span>' : '') ?></td>
-        <td><?= h($ab['cosa'] === 'oggetto' ? newsletter_4byte_fuori((string)nl_ab_versione($c, $v)['oggetto']) : 'Design ' . strtoupper($v)) ?></td>
-        <td><?= (int)$x['inviate'] ?></td><td><?= (int)$x['apertura'] ?> (<?= $x['tasso_aperture'] ?>%)</td><td><?= (int)$x['clic'] ?> (<?= $x['tasso_clic'] ?>%)</td></tr>
-    <?php endforeach; ?>
-    <?php if ((int)$ab['resto']): ?><tr data-versione="r"><td>Il resto</td><td><?= $abV === '' ? 'aspetta la vincente' : 'versione ' . ($abV === 'b' ? 'B' : 'A') ?></td><td><?= (int)$abR['r']['inviate'] ?> di <?= (int)$ab['resto'] ?></td><td><?= (int)$abR['r']['apertura'] ?> (<?= $abR['r']['tasso_aperture'] ?>%)</td><td><?= (int)$abR['r']['clic'] ?> (<?= $abR['r']['tasso_clic'] ?>%)</td></tr><?php endif; ?>
-    </tbody>
-  </table>
-  <p class="hint">Ogni gruppo di prova: <?= (int)$ab['percentuale'] ?>% dei destinatari, scelti a caso; ognuno riceve una versione sola. I tassi sono sulle email inviate al gruppo.</p>
-</div>
-<?php endif; ?>
+<?php if ($isAb && $ab['fase'] !== '') echo nl_rep_ab_html($c, $ab); ?>
 <?php endif; ?>
 <?php if ($manca): ?><div class="nlr-manca-testo" role="status" id="nlr-manca"><b>Per inviare <?= count($manca) === 1 ? 'manca una cosa' : 'mancano ' . count($manca) . ' cose' ?>:</b><ul style="margin:.3rem 0 0;padding-left:1.2rem"><?php foreach ($manca as $m): ?><li><?= h($m) ?></li><?php endforeach; ?></ul></div><?php endif; ?>
 
@@ -514,9 +514,25 @@ require_once __DIR__ . '/includes/admin-header.php';
   <?php if ($modificabile): ?>
   <form method="post"<?= $manca ? '' : ' data-conferma="' . ($isAb ? 'Partire con il test A/B? Le due versioni vanno a due gruppi di prova, poi la vincente agli altri: in tutto ' . (int)$sez['destinatari']['n'] . ' contatti. Dopo la partenza non si cambia più.' : 'Mandare la campagna a ' . (int)$sez['destinatari']['n'] . ' contatti? Dopo la partenza non si cambia più.') . '" data-conferma-ok="Sì, mandala"' ?>><?= csrf_field() ?><input type="hidden" name="azione" value="invia">
     <fieldset class="nlk-scelte nlr-quando"<?= $manca ? ' disabled' : '' ?>><legend>Quando</legend>
-      <label><input type="radio" name="quando" value="subito" <?= $c['stato'] !== 'programmata' ? 'checked' : '' ?>> Invia subito (parte entro 5 minuti)</label>
-      <label><input type="radio" name="quando" value="programma" <?= $c['stato'] === 'programmata' ? 'checked' : '' ?>> Programma per giorno e ora</label>
-      <div class="form-group" style="margin:.3rem 0 0"><label for="nlr-quando">Giorno e ora (ora di <?= h(date_default_timezone_get()) ?>)</label><input type="datetime-local" id="nlr-quando" name="invio_at" value="<?= h($c['invio_at'] ? date('Y-m-d\TH:i', strtotime((string)$c['invio_at'])) : date('Y-m-d\TH:i', strtotime('+1 day 09:00'))) ?>"></div>
+      <?php $omSi = (int)($c['orario_migliore'] ?? 0) && !$isAb; ?>
+      <label><input type="radio" name="quando" value="subito" <?= $c['stato'] !== 'programmata' && !$omSi ? 'checked' : '' ?>> Invia subito (parte entro 5 minuti)</label>
+      <label><input type="radio" name="quando" value="programma" <?= $c['stato'] === 'programmata' && !$omSi ? 'checked' : '' ?>> Programma per giorno e ora</label>
+      <div class="form-group" style="margin:.3rem 0 0"><label for="nlr-quando">Giorno e ora (ora di <?= h(date_default_timezone_get()) ?>)</label><input type="datetime-local" id="nlr-quando" name="invio_at" value="<?= h($c['invio_at'] && !$omSi ? date('Y-m-d\TH:i', strtotime((string)$c['invio_at'])) : date('Y-m-d\TH:i', strtotime('+1 day 09:00'))) ?>"></div>
+      <?php if (!$isAb): ?>
+      <label style="margin-top:.6rem"><input type="radio" name="quando" value="migliore" <?= $omSi ? 'checked' : '' ?>> All'orario migliore: a ognuno all'ora in cui di solito apre</label>
+      <div class="nlr-colonne" id="nlr-migliore">
+        <div class="form-group" style="margin:.3rem 0 0"><label for="nlr-om-giorno">Giorno</label><input type="date" id="nlr-om-giorno" name="orario_giorno" min="<?= date('Y-m-d') ?>" value="<?= h($omSi && $c['invio_at'] ? date('Y-m-d', strtotime((string)$c['invio_at'])) : date('Y-m-d', strtotime('+1 day'))) ?>"></div>
+        <div class="form-group" style="margin:.3rem 0 0"><label for="nlr-om-ora">Chi non ha ancora un orario suo, alle</label>
+          <select id="nlr-om-ora" name="orario_ora"><?php for ($o = 0; $o < 24; $o++): ?><option value="<?= $o ?>"<?= $o === (int)($c['orario_ora'] ?? 10) ? ' selected' : '' ?>><?= sprintf('%02d:00', $o) ?></option><?php endfor; ?></select></div>
+      </div>
+      <?php if ($omSi || ($_GET['apri'] ?? '') === 'migliore'): [$omN, $omCon, $omOre] = nl_orario_riassunto($c); ?>
+      <p class="hint" id="nlr-om-conti" role="status">Adesso: <?= $omCon ?> dei <?= $omN ?> destinatari hanno un orario loro<?php if ($omOre): $omT = []; foreach ($omOre as $omH => $omQ) $omT[] = sprintf("%02d:00", $omH) . " (" . $omQ . ")"; ?>: <?= h(implode(', ', $omT)) ?><?php endif; ?>; gli altri la ricevono all'ora scelta qui sopra.</p>
+      <?php endif; ?>
+      <details class="pn-aiuto"><summary>Come si calcola l'orario migliore</summary>
+        <p>Per ogni contatto guardiamo le email che ha aperto negli ultimi <?= NL_ORARIO_GIORNI === 365 ? '12 mesi' : NL_ORARIO_GIORNI . ' giorni' ?> (campagne e automazioni): l'ora del giorno in cui ha aperto più volte è il suo orario. A parità vale l'ora dell'apertura più recente. Serve almeno <?= NL_ORARIO_MIN === 2 ? 'due aperture' : NL_ORARIO_MIN . ' aperture' ?>: chi ne ha meno, o è nuovo, la riceve all'ora che scegli qui.</p>
+        <p>Nel giorno scelto la campagna parte a mezzanotte (oppure subito, se scegli oggi) e ogni email aspetta l'inizio dell'ora del suo contatto. Se scegli oggi, chi ha un orario già passato la riceve subito. Le ore sono quelle del sito (<?= h(date_default_timezone_get()) ?>). Il cron passa ogni 5 minuti e rispetta il limite di email all'ora: con tanti contatti alla stessa ora, qualcuno la riceve un po' dopo. L'invio a lotti non vale con l'orario migliore.</p>
+      </details>
+      <?php else: ?><p class="hint" style="margin-top:.6rem">L'invio all'orario migliore non c'è nel test A/B: i gruppi di prova partono insieme, così il confronto è giusto.</p><?php endif; ?>
     </fieldset>
     <?php if ($manca): ?><p class="hint" role="status">Il pulsante si accende quando tutte le sezioni sono a posto: guarda il riquadro giallo in cima.</p><?php endif; ?>
     <div class="nlr-azioni"><button class="btn btn-primary" type="submit"<?= $manca ? ' disabled aria-disabled="true"' : '' ?>><?= $c['stato'] === 'programmata' ? 'Salva la programmazione' : 'Manda la campagna' ?></button></div>

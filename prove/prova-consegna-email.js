@@ -282,12 +282,12 @@ const decodifica = eml => eml.replace(/\r?\n\r?\n([A-Za-z0-9+\/=\r\n]{40,})/g, (
 
     // ===== F. Statistiche per campagna
     await vai('/admin/newsletter-statistiche.php');
-    const riga = async id => { const t = p.locator(`tr:has(a[href="newsletter-statistiche.php?campagna=${id}"])`); return [await t.locator('.st-rimbalzi b').innerText(), await t.locator('.st-uscite b').innerText(), await t.locator('.st-spam b').innerText()]; };
+    const riga = async id => { const t = p.locator(`tr[data-campagna="${id}"]`); /* 2.14.0: la tabella del periodo */ return [await t.locator('.st-rimbalzi b').innerText(), await t.locator('.st-uscite b').innerText(), await t.locator('.st-spam b').innerText()]; };
     const sB = await riga(cB), sS = await riga(cS), sM = await riga(cM);
     ok('F. Brevo: 1 rimbalzo, 1 uscita, 1 spam', JSON.stringify(sB) === '["1","1","1"]', sB);
     ok('F. SES: 1 rimbalzo, 0 uscite (quella di Mailgun era senza riferimento), 1 spam', JSON.stringify(sS) === '["1","0","1"]', sS);
     ok('F. Mailgun: 1 rimbalzo, 1 uscita, 1 spam', JSON.stringify(sM) === '["1","1","1"]', sM);
-    ok('F. lo spam al 33% e i rimbalzi sopra il 2% sono in rosso, con la spiegazione delle soglie', await p.locator(`tr:has(a[href="newsletter-statistiche.php?campagna=${cB}"]) .st-spam .kw-bad`).count() === 1 && /0,3%/.test(await testo()));
+    ok('F. lo spam al 33% e i rimbalzi sopra il 2% sono in rosso, con la spiegazione delle soglie', await p.locator(`tr[data-campagna="${cB}"] .st-spam .kw-bad`).count() === 1 && /0,2%/.test(await testo())); // 2.14.0: le soglie 2%, 1%, 0,2%
 
     // ===== G. Riscaldamento
     await vai('/admin/consegna.php?scheda=riscaldamento');

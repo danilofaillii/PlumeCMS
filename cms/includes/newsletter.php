@@ -1015,6 +1015,8 @@ function newsletter_invia_giro(?int $massimo = null): array {
                 db()->prepare('UPDATE ' . tbl('newsletter_coda') . ' SET tentativi = tentativi + 1, errore = ?, stato = ? WHERE id = ?')
                     ->execute([mb_substr(posta_errore(), 0, 255), $fine ? 'errore' : 'attesa', $r['id']]);
                 if ($fine) db()->prepare('UPDATE ' . tbl('newsletter_campagne') . ' SET errori = errori + 1 WHERE id = ?')->execute([$r['campagna_id']]);
+                // 2.14.0: il terzo tentativo rifiutato per un errore temporaneo è un rimbalzo temporaneo della campagna (report).
+                if ($fine && posta_esito() === 'temporaneo') newsletter_evento_interno('soft', (int)$r['campagna_id'], 0, 0, (int)$r['iscritto_id']);
                 $ko++;
                 if ($ko >= 3 && $ok === 0) { $log[] = 'posta ferma: ' . posta_errore(); break; }
             }
@@ -1041,3 +1043,4 @@ require_once __DIR__ . '/newsletter-segmenti.php'; // 2.10.0: segmenti, filtri e
 require_once __DIR__ . '/newsletter-campagne.php'; // 2.11.0: campagne a riepilogo, disiscrizione con il questionario, centro preferenze
 require_once __DIR__ . '/newsletter-design.php'; // 2.12.0: editor delle email a blocchi, modelli, sezioni salvate
 require_once __DIR__ . '/newsletter-ab.php'; // 2.13.0: il test A/B delle campagne
+require_once __DIR__ . '/newsletter-report.php'; // 2.14.0: report delle campagne, statistiche, orario migliore

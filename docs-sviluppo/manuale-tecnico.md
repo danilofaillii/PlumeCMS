@@ -1740,7 +1740,7 @@ segue nodi: email, attesa, bivio (secondo una condizione), fine. Le persone dent
 `newsletter_eventi`, solo per le email vere e non per quelle di prova. La pagina Statistiche mostra campagne,
 clic per link, iscritti per mese. Dalla 2.1.0 anche rimbalzi, uscite e segnalazioni di spam per campagna (eventi `rimbalzo`,
 `uscita`, `spam` scritti da `newsletter_evento_interno()`, `includes/newsletter-flussi.php:153`; conti in
-`newsletter_statistiche_campagne()`, `:173`), con le soglie di Gmail e Yahoo in rosso (spam oltre lo 0,3%, rimbalzi oltre il 2%).
+`newsletter_statistiche_campagne()`, `:173`), con le soglie di Gmail e Yahoo in rosso (spam oltre lo 0,3%, rimbalzi oltre il 2%). Dalla 2.14.0 la pagina è a schede, con il periodo, e le soglie sono quelle del capitolo 15.13.
 
 Prove: `prove/prova-newsletter-difetti.js` (dalla 2.0.0, con `prove/smtp-finto.py ... rimbalzi`,
 `prove/sendmail-finto.py` e `prove/newsletter-cli.php`); per la consegna, capitolo 35.
@@ -2503,6 +2503,110 @@ versioni, gruppi da 10 su 40 a 25%, una versione a persona, aperture vere dal pi
 cron lanciati insieme (resto partito una volta sola), test sul contenuto con la B nell'editor a blocchi, programmato, 50% senza
 resto, versione web della B, vincitore per clic, pari con la A al resto, figlia con la vincente, Duplica, annullata durante il
 test, 390 px; attacchi del gruppo 35 in `tools/sicurezza-prova.js`.
+
+### 15.13 Report delle campagne, statistiche, soglie, orario migliore (dalla 2.14.0)
+
+Fase 7 del piano di `docs-sviluppo/brevo-confronto.md` (capitoli 1.6 soglie, 1.15 orario migliore, 1.16), con l'orario migliore
+scelto da Danilo fra gli extra (decisione 2). Motore in `includes/newsletter-report.php` (caricato in fondo a
+`includes/newsletter.php` e da `newsletter-campagne.php`, `:23`; le pagine lo richiedono con `require_once`). Chi lo chiama da
+un file di prima passa da `function_exists` (opcache): `newsletter_campagne_schema()` (`newsletter-campagne.php:68`) e
+`newsletter_campagna_avvia()` (`:231`). Solo amministratore (`require_admin()` sulle pagine). Nel testo per chi usa il pannello
+non c'è nessun paragone con Brevo.
+
+**Dati** (nessuna tabella nuova, nessuna rinominata):
+- `newsletter_eventi`: `volte` INT DEFAULT 1 e `ultimo` DATETIME NULL, e l'indice `iscritto` (`iscritto_id`, `tipo`, `creato`)
+  per l'orario migliore e gli elenchi. Le aggiunge `newsletter_flussi_schema()` (`newsletter-flussi.php:90`-`:96`, impronta
+  con `ripetuti`), perché è lui che `newsletter_evento()` chiama prima di scrivere: anche il primo pixel dopo l'aggiornamento
+  trova le colonne. Le righe di prima valgono `volte = 1`: i conteggi per persona restano quelli di prima.
+- `newsletter_campagne`: `orario_migliore` TINYINT DEFAULT 0, `orario_ora` TINYINT DEFAULT 10 e l'indice `invio_at` (per i
+  periodi). Le aggiunge `nl_rep_schema()` (`newsletter-report.php:39`, impronta `newsletter_report_impronta`), chiamata da
+  `newsletter_campagne_schema()`.
+- Tipo di evento nuovo `soft` (rimbalzo temporaneo, `tipo` è VARCHAR(10)): `newsletter_evento_interno()` lo accetta
+  (`newsletter-flussi.php:178`); lo scrive il giro della coda al terzo tentativo rifiutato con un errore temporaneo
+  (`newsletter.php:1019`) e l'avviso `temporaneo` di un servizio di spedizione con il riferimento firmato (`consegna.php:872`).
+
+**Aperture e clic ripetuti** (`newsletter_evento()`, `newsletter-flussi.php:153`): una riga per persona, tipo e indirizzo,
+come prima; la stessa apertura o lo stesso clic di nuovo fa `volte = volte + 1, ultimo = NOW()` e basta (gli inneschi dei
+flussi e i flussi partono solo la prima volta, come prima). Un clic vale anche come apertura una volta sola (ottavo argomento
+`$ripeti` a false): le aperture totali contano i pixel.
+
+**I numeri** (`nl_rep_numeri_molte()`, `:70`, in quattro query per gruppo di 500 campagne; `nl_rep_numeri()`, `:120`):
+unici = `COUNT(DISTINCT iscritto_id)` (gli stessi di prima), totali = `SUM(volte)`; rimbalzi temporanei = persone con `soft`
+senza un `rimbalzo`; `rimbalzati_dopo` = persone con `rimbalzo` o `soft` la cui riga della coda è `inviata` (l'avviso è
+arrivato dopo la partenza). `nl_rep_tassi()` (`:102`): **consegnate** = inviate - rimbalzati_dopo; **provate** = inviate +
+errori; tassi di apertura, clic, disiscrizione e spam sulle consegnate, clic sulle aperture = clic unici / aperture uniche,
+rimbalzi (definitivi e temporanei) sulle provate (come prima); un decimale, due per lo spam. Le **soglie** (`NL_SOGLIE`,
+`:21`): rimbalzi definitivi oltre il 2%, disiscrizioni oltre l'1%, spam oltre lo 0,2% (prima: le soglie di Gmail, spam 0,3%
+e rimbalzi 2%), ognuna con la frase di cosa fare; nella pagina con il segno "!" e la parola, mai solo il colore
+(`nl_rep_soglie_html()`, `:504`, `nl_rep_tessera()`, `:512`).
+
+**Il report** (`admin/newsletter-report.php?id=N&scheda=...`): solo campagne in invio, sospese, inviate o annullate
+(`NL_REP_STATI`); un id che non è un numero intero (`ctype_digit`, `:20`), inesistente o di una campagna non partita torna
+all'elenco o al riepilogo. Schede (`NL_REP_SCHEDE`): Panoramica (dettagli, tessere di tutte le voci di `nl_rep_voci()`,
+soglie, "Come si contano", il riquadro del test A/B `nl_rep_ab_html()`, `:483`, lo stesso del riepilogo), Aperture, Clic (link
+con unici, totali e quota dei clic, `nl_rep_link()`, `:125`; **mappa dei clic** `nl_rep_mappa()`, `:136`: l'email della
+campagna per "Giulia" senza tracciamento, con UTM come all'invio, e dopo ogni link tracciato un'etichetta "N clic, N persone,
+N%" con `data-mappa`, in un `iframe` con `sandbox` e `srcdoc`; i link di uscita, preferenze e versione web non si contano),
+Disiscrizioni (motivi del questionario, `newsletter_uscite_motivi_conta($id)`), Rimbalzi. **Elenchi** (`NL_REP_ELENCHI`,
+`:25`; SQL in `nl_rep_elenco_sql()`, `:152`): aperto, non aperto (riga `inviata` senza apertura né rimbalzo), cliccato (una riga
+per persona, `GROUP BY i.id`, filtrabile per uno dei link della campagna: l'`url` che non è fra i suoi si ignora), uscito (con
+il motivo), spam, rimbalzo e soft (con l'errore della coda); 50 per pagina (`pag` fra 1 e 100000), con il link alla scheda del
+contatto. **CSV** (`?csv=<elenco>` o `?csv=report`, `:37`; `nl_rep_csv()`, `:193`): BOM, punto e virgola, a pezzi da 1000,
+ogni riga da `sicurezza_csv_riga()` (le celle che cominciano con `= + - @` prendono l'apostrofo, come l'esportazione della
+2.9.0); un elenco fuori elenco torna alla pagina con l'errore. **Salva come lista** (`nl_rep_in_lista()`, `:235`: una lista
+nuova con `INSERT IGNORE ... SELECT` sulla stessa SQL dell'elenco; le automazioni della lista non partono) e **Salva come
+segmento** solo per aperto e cliccato (`nl_rep_segmento()`, `:249`: condizione `email aperta/cliccata` o `link cliccato` sulla
+campagna, motore della 2.10.0); POST con `verify_csrf()`, il nome senza tag.
+
+**Statistiche** (`admin/newsletter-statistiche.php`, riscritta): `?campagna=N` (gli indirizzi di prima) fa un 302 con
+`no-store` al report (`:19`). Periodo (`nl_rep_periodo()`, `:265`): 7, 30 (predefinito), 90, 365 giorni, da sempre, o dal giorno al
+giorno con date valide (`DateTime::createFromFormat('!Y-m-d')` e confronto sul testo, dal 2000 al 2100, la prima non dopo
+l'ultima); un valore storto torna a 30 giorni con la frase. Il passo dell'andamento (`nl_rep_passo()`, `:285`): giorno fino a 45
+giorni, settimana ISO fino a 200, poi mese. Scheda **Campagne**: le campagne con `invio_at` nel periodo
+(`nl_rep_campagne_periodo()`, `:306`, al massimo 300), i totali come somma (`nl_rep_somma()`, `:320`: chi apre due campagne
+conta due volte) con i tassi sulla somma, l'andamento (`nl_rep_andamento()`, `:327`) in un grafico a linee **SVG fatto dal
+server** (`nl_rep_svg()`, `:385`: un asse solo in percentuale, tacche tonde, griglia, etichette diradate, cerchi per la prima
+serie e quadrati con la linea tratteggiata per la seconda, `<title>` su ogni punto, legenda e tabella "I numeri del grafico"
+in un `details`; colori `--coral` e `--sage` dell'aspetto, in `admin/assets/css/report.css`), la tabella delle campagne (righe
+`data-campagna`, celle `.st-rimbalzi`, `.st-uscite`, `.st-spam` con `.kw-bad` e il segno "!" oltre la soglia), il **confronto**
+fra due e quattro campagne spuntate (`confronta[]`, solo id interi fra quelle del periodo), i flussi e i motivi delle uscite di
+tutte le campagne (`#st-motivi`). Scheda **Liste e contatti** (`nl_rep_lista()`, `:341`, `lista` 0 = tutti i contatti): per
+ogni passo i nuovi (entrati nella lista, o creati), gli usciti (in lista nera, o usciti solo da quella lista nelle preferenze),
+gli iscritti alla fine del passo (una sola query con un `SUM(condizione)` per passo); lo stato è quello di oggi (chi è uscito e
+rientrato conta come iscritto, detto nella pagina); sotto, i numeri delle campagne mandate alla lista nel periodo
+(`FIND_IN_SET` su `liste`).
+
+**Orario migliore**: `nl_orario_ore()` (`:428`): per ogni contatto le prime aperture di ogni email (campagne e flussi) degli
+ultimi `NL_ORARIO_GIORNI` (365) giorni raggruppate per `HOUR(creato)` (le date sono nel fuso del sito: `db()` imposta
+`time_zone`), almeno `NL_ORARIO_MIN` (2) aperture, l'ora con più aperture, a parità quella dell'apertura più recente; a pezzi
+da 1000 id, sull'indice `iscritto`. Nel riepilogo, sezione Programma (`admin/newsletter-campagna.php:520`-`:535`), la terza
+scelta "All'orario migliore" con il giorno e l'ora per chi non ha dati (0-23, 10 di partenza), il riassunto
+`nl_orario_riassunto()` (`:464`, "N dei M destinatari hanno un orario loro" con le ore) quando è scelto, e "Come si calcola"
+in un `details`. Non c'è nel test A/B (rifiutato anche dal server, `:102`). Salvataggio (`:103`): giorno con
+`createFromFormat` e confronto, non nel passato; ora con `FILTER_VALIDATE_INT` 0-23; `invio_at` = mezzanotte del giorno (o
+adesso, se è oggi), `orario_migliore = 1`, `orario_ora`; le altre due scelte rimettono `orario_migliore = 0`. All'avvio
+(`newsletter_campagna_avvia()`, `newsletter-campagne.php:231`) `nl_orario_applica()` (`:448`) scrive in ogni riga della coda
+`dopo` = giorno + ora del contatto (o l'ora scelta), NULL se l'ora è già passata (parte subito); niente lotti. Il giro della
+coda prende solo le righe con `dopo` passato (dalla 2.11.0) e tiene la campagna "in invio" finché ce n'è una in attesa; i limiti
+orari restano sopra (con molti contatti alla stessa ora alcuni partono ai giri dopo).
+
+**Pagine toccate**: riepilogo (`#nlr-report` con le tessere sulle consegnate, le soglie e "Apri il report completo",
+`:260`-`:272`), elenco (Report verso `newsletter-report.php`, anche per le annullate, `admin/newsletter.php:266`), menu (la
+voce Campagne email resta accesa nel report, `admin-header.php:32`). La dashboard conta ancora aperture e clic unici, come prima.
+
+**Cosa cambia per le campagne di prima**: i numeri per persona (inviate, errori, aperture, clic, uscite, spam, rimbalzi) sono
+gli stessi, provato dopo l'aggiornamento 2.13.0 -> 2.14.0; i totali di prima valgono quanto gli unici (le ripetizioni non
+erano salvate) e i rimbalzi temporanei di prima sono 0 (non erano eventi). I tassi cambiano solo quando la base "consegnate"
+è più bassa delle inviate, cioè quando un servizio ha mandato un rimbalzo o un temporaneo dopo la partenza.
+
+**Non fatto**: Condividi il report e il report mandato per email (qui si scarica dal pannello), le aperture "Apple MPP"
+(non si riconoscono senza i dati del servizio), statistiche per passo delle automazioni (fase 8), orario migliore per i flussi.
+
+**Prove**: `prove/prova-report.js` con `prove/report-cli.php` (72 controlli: numeri e tassi contati a mano, clic ripetuti, mappa,
+elenchi, CSV di ogni elenco e del report, lista e segmento, riepilogo, A/B, periodo scelto e predefinito, andamento, confronto,
+parametri storti, lista con i passi, orario migliore calcolato e coda con le ore giuste e il tempo spostato, oggi, 20000
+destinatari sotto un secondo, 390 px); attacchi del gruppo 36 in `tools/sicurezza-prova.js`; `prova-consegna-email.js`
+legge la tabella nuova (`tr[data-campagna]`, soglia 0,2%).
 
 ## 16. SEO e AEO, file calcolati, feed
 

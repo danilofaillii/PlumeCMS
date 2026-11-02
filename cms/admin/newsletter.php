@@ -263,7 +263,7 @@ require_once __DIR__ . '/includes/admin-header.php';
         <details class="nl-azioni"><summary class="btn btn-secondary btn-sm">Azioni<span class="sr-solo"> per «<?= h($nomeC($c)) ?>»</span></summary>
           <div class="nl-azioni-menu">
           <a class="btn btn-secondary btn-sm" href="newsletter-campagna.php?id=<?= $cId ?>"><?= newsletter_campagna_modificabile($c) ? 'Apri e modifica' : 'Apri' ?></a>
-          <?php if (in_array($c['stato'], ['in_invio', 'sospesa', 'inviata'], true)): ?><a class="btn btn-secondary btn-sm" href="newsletter-statistiche.php?campagna=<?= $cId ?>#c<?= $cId ?>">Report</a><?php endif; ?>
+          <?php if (in_array($c['stato'], ['in_invio', 'sospesa', 'inviata', 'annullata'], true)): ?><a class="btn btn-secondary btn-sm" href="newsletter-report.php?id=<?= $cId ?>">Report</a><?php endif; ?>
           <a class="btn btn-secondary btn-sm" href="newsletter.php?duplica=<?= $cId ?>#nl-duplica">Duplica</a>
           <?php if (in_array($c['stato'], ['inviata', 'in_invio', 'sospesa'], true) && !(int)$c['rinvio_di']): ?><form method="post" data-conferma="Preparare una copia di questa campagna per i contatti che non l'hanno ricevuta?" data-conferma-ok="Prepara la copia"><?= csrf_field() ?><input type="hidden" name="azione" value="nuovi"><input type="hidden" name="id" value="<?= $cId ?>"><button class="btn btn-secondary btn-sm" type="submit">Invia ai nuovi contatti</button></form><?php endif; ?>
           <?php if ($c['stato'] === 'inviata' && !(int)$c['rinvio_di'] && !(int)$c['rinvio_fatto'] && (int)$c['lotti'] <= 1): ?><a class="btn btn-secondary btn-sm" href="newsletter.php?rimanda=<?= $cId ?>#nl-rimanda">Rimanda ai non aperti</a><?php endif; ?>

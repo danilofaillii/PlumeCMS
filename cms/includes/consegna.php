@@ -868,6 +868,8 @@ function consegna_segnala(string $servizio, string $evento, string $email, strin
             $esito = 'registrato';
         }
         if ($r && in_array($evento, ['rimbalzo', 'spam', 'uscita'], true)) newsletter_evento_interno($evento, $r['c'], $r['f'], $r['p'], $id);
+        // 2.14.0: il rimbalzo temporaneo di una campagna, per il report (con il file di prima in opcache non si segna: niente errori).
+        if ($r && $evento === 'temporaneo') newsletter_evento_interno('soft', $r['c'], $r['f'], $r['p'], $id);
     }
     db()->prepare('UPDATE ' . tbl('posta_avvisi') . ' SET esito = ? WHERE id = ?')->execute([mb_substr($esito, 0, 160), $idAvviso]);
     return $esito;

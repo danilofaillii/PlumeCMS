@@ -21,6 +21,7 @@
 
 require_once __DIR__ . '/newsletter.php';
 require_once __DIR__ . '/newsletter-ab.php'; // 2.13.0: il test A/B
+require_once __DIR__ . '/newsletter-report.php'; // 2.14.0: report, statistiche, orario migliore
 
 const NEWSLETTER_WEB = '/newsletter-web/';
 const NEWSLETTER_PREFERENZE = '/newsletter-preferenze/';
@@ -64,6 +65,7 @@ function newsletter_campagne_schema(): void {
     newsletter_flussi_schema();
     if (function_exists('nd_schema')) nd_schema(); // 2.12.0: design e modello_id nelle campagne, modelli, sezioni salvate
     if (function_exists('nl_ab_schema')) nl_ab_schema(); // 2.13.0: il test A/B (includes/newsletter-ab.php)
+    if (function_exists('nl_rep_schema')) nl_rep_schema(); // 2.14.0: orario migliore, eventi ripetuti (includes/newsletter-report.php)
     $colonne = [
         'nome' => "VARCHAR(150) NOT NULL DEFAULT ''",
         'tipo' => "VARCHAR(8) NOT NULL DEFAULT 'normale'",
@@ -225,7 +227,10 @@ function newsletter_campagna_avvia(array $c): string {
     db()->prepare('INSERT IGNORE INTO ' . tbl('newsletter_coda') . ' (campagna_id, iscritto_id) SELECT ?, i.id FROM ' . tbl('newsletter_iscritti') . " i WHERE i.stato = 'attivo' AND $w ORDER BY i.id")->execute($par);
     $n = (int)db()->query('SELECT COUNT(*) FROM ' . tbl('newsletter_coda') . ' WHERE campagna_id = ' . $id)->fetchColumn();
     $ab = ($c['tipo'] ?? '') === 'ab' && function_exists('nl_ab_avvia'); // 2.13.0: niente lotti nel test A/B
-    $lotti = $ab ? 1 : max(1, min(NL_LOTTI_MAX, (int)($c['lotti'] ?? 1)));
+    // 2.14.0: all'orario migliore ogni contatto ha la sua ora (includes/newsletter-report.php): niente lotti.
+    $orario = !$ab && (int)($c['orario_migliore'] ?? 0) && function_exists('nl_orario_applica');
+    $lotti = $ab || $orario ? 1 : max(1, min(NL_LOTTI_MAX, (int)($c['lotti'] ?? 1)));
+    $abLog = $orario ? '; ' . nl_orario_applica($id, $c) : '';
     if ($lotti > 1 && $n > 1) {
         $ids = array_map('intval', db()->query('SELECT id FROM ' . tbl('newsletter_coda') . " WHERE campagna_id = $id AND stato = 'attesa' ORDER BY id")->fetchAll(PDO::FETCH_COLUMN));
         $tot = count($ids);
@@ -238,7 +243,7 @@ function newsletter_campagna_avvia(array $c): string {
             $up->execute([$k + 1, date('Y-m-d H:i:s', $base + $k * $passo), $id, $ids[$da], $ids[$a]]);
         }
     }
-    $abLog = $ab ? '; ' . nl_ab_avvia($id) : '';
+    if ($ab) $abLog = '; ' . nl_ab_avvia($id);
     db()->prepare('UPDATE ' . tbl('newsletter_campagne') . " SET stato = 'in_invio', destinatari = ?, aggiornato = NOW() WHERE id = ?")->execute([$n, $id]);
     return "campagna $id avviata: $n destinatari" . ($lotti > 1 ? " in $lotti lotti" : '') . $abLog;
 }

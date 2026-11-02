@@ -89,6 +89,21 @@ Il test A/B delle campagne della 2.13.0 (fase 6 del piano Brevo), con il tempo s
 2. `node prove/prova-ab.js <base> <utente> <password> <porta smtp> <cartella posta> <cartella del CMS> [cartella foto]`.
 3. Atteso (2.13.0): tutto OK, in radice e in cartella, su un sito nuovo e su uno aggiornato dalla 2.12.0.
 
+## prova-report.js
+
+Il report delle campagne, le statistiche e l'orario migliore della 2.14.0 (fase 7 del piano Brevo), con eventi contati a mano
+(scritti in cima al file) e il tempo spostato.
+
+1. Un CMS installato e il server di posta finto **con i rimbalzi**: `python3 -I prove/smtp-finto.py <porta> <cartella> rimbalzi &`.
+   I dati della prova (contatti `@rp-prova.it`, liste, campagne e segmenti "RP ...") li mette e li toglie `prove/report-cli.php`
+   (`semina`, `semina_orario`, `semina_ab`, `pulisci`); `semina_grande 20000` mette i 20000 destinatari per i tempi e
+   `pulisci_grande` li toglie alla fine (le prove dopo, come Contatti a pagine e il limite orario, non li devono vedere).
+   Va su un sito da buttare.
+2. `node prove/prova-report.js <base> <utente> <password> <porta smtp> <cartella posta> <cartella del CMS> [cartella foto]`.
+3. Atteso (2.14.0): tutto OK, in radice e in cartella, su un sito nuovo e su uno aggiornato dalla 2.13.0.
+4. Le campagne di prima: sul sito 2.13.0 `report-cli.php semina`, tre `giro`, `eventi_vecchi`, poi
+   `report-cli.php conta_vecchie > prima.json`; dopo l'aggiornamento lo stesso comando deve dare lo stesso file.
+
 ## tools/sicurezza-prova.js
 
 

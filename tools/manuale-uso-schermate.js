@@ -22,6 +22,8 @@
 // 2.11.0: il capitolo 19k (la campagna a riepilogo, l'elenco, la pagina per uscire, il centro preferenze) dopo il 19, il 19i e il
 //   19j: SOLO_CAPITOLI=19,19i,19j,19k, con CMS_DIR_MANUALE e POSTA_MANUALE (la campagna parte davvero).
 // 2.13.0: il capitolo 19n (il test A/B) gira da solo: SOLO_CAPITOLI=19n, con CMS_DIR_MANUALE e POSTA_MANUALE.
+// 2.14.0: il capitolo 19o (report, statistiche, orario migliore; rifà anche 19-programma e 23-consegna-statistiche) gira da
+//   solo: SOLO_CAPITOLI=19o, con CMS_DIR_MANUALE e POSTA_MANUALE e TMPDIR vuota.
 const { chromium } = require('playwright');
 const pnConferme = require('../prove/conferme-pannello'); // UX 2026-11: conferme del pannello
 const fs = require('fs');
@@ -757,7 +759,7 @@ capitoli['19k'] = async () => {
   await vai(idCamp + '&contatto=marta.gialli@esempio.it');
   await foto('19-anteprima', { sel: '#sez-prova', margine: 6, altezza: 560, segni: [{ sel: '#nlr-contatto', n: 1 }, { sel: '#sez-prova .nlr-schede', n: 2 }, { sel: '#nlr-anteprima iframe', n: 3 }] });
   await vai(idCamp);
-  await foto('19-programma', { sel: '#nlr-invio', margine: 6, segni: [{ sel: '#nlr-invio input[value=subito]', n: 1 }, { sel: '#nlr-invio input[value=programma]', n: 2 }, { sel: '#nlr-quando', n: 3 }, { sel: '#nlr-invio button.btn-primary', n: 4 }] });
+  await foto('19-programma', { sel: '#nlr-invio', margine: 6, segni: [{ sel: '#nlr-invio input[value=subito]', n: 1 }, { sel: '#nlr-invio input[value=programma]', n: 2 }, { sel: '#nlr-quando', n: 3 }, { sel: '#nlr-invio input[value=migliore]', n: 4 }, { sel: '#nlr-invio button.btn-primary', n: 5 }] });
   // L'indirizzo dell'azienda e le pagine pubbliche
   await vai('newsletter.php?scheda=impostazioni#nl-indirizzo');
   await p.fill('#nl-indirizzo-testo', 'Studio Prova, via Emilia 10, 41121 Modena');
@@ -822,7 +824,7 @@ capitoli['19m'] = async () => {
   await p.click('#nd-scheda-stile'); await dorme(200);
   await foto('19m-stile', { clip: { x: 0, y: 50, width: 360, height: 700 }, segni: [{ sel: '#nd-controlli-stile details:nth-of-type(1) > summary', n: 1 }, { sel: '#nd-controlli-stile details:nth-of-type(2) > summary', n: 2 }, { sel: '#nd-controlli-stile details:nth-of-type(3) > summary', n: 3 }] });
   await p.click('[data-nd-misura=tel]'); await dorme(500);
-  await foto('19m-telefono', { clip: { x: 340, y: 50, width: 860, height: 750 }, segni: [{ sel: '[data-nd-misura=tel]', n: 1, sopra: false }] });
+  await foto('19m-telefono', { clip: { x: 340, y: 50, width: 860, height: 750 }, segni: [{ sel: '[data-nd-misura=tel]', n: 1 }] });
   await p.click('[data-nd-misura=pc]'); await dorme(400);
   // La testata salvata e sincronizzata: la prima sezione.
   const s1 = p.locator('.nd-s').first();
@@ -911,6 +913,88 @@ capitoli['19n'] = async () => {
   await Promise.all([p.waitForNavigation(), p.click('#sez-ab button[type=submit]')]);
   await vai(`newsletter-campagna.php?id=${idD}&versione=b&apri=design`);
   await foto('19n-versioni', { sel: '#sez-design', margine: 6, altezza: 420, segni: [{ sel: '#sez-design .nlr-versioni', n: 1 }, { sel: '#sez-design .nd-strade', n: 2 }] });
+};
+
+// 19o. Il report della campagna, le statistiche e l'orario migliore (2.14.0). Gira da solo: SOLO_CAPITOLI=19o, con
+// CMS_DIR_MANUALE e POSTA_MANUALE. La campagna "Le offerte di dicembre" parte davvero a 40 lettori; aperture, clic e
+// un'uscita si scrivono come li scriverebbero i link delle email (a ore diverse, per l'orario migliore).
+capitoli['19o'] = async () => {
+  const DIRM = process.env.CMS_DIR_MANUALE;
+  if (!DIRM) throw new Error('19o: serve CMS_DIR_MANUALE');
+  const cli = (...a) => JSON.parse(require('child_process').execFileSync('php', [path.join(__dirname, '..', 'prove', 'campagne-cli.php'), DIRM, ...a.map(String)], { encoding: 'utf8' }).trim().split('\n').pop());
+  const sql = (s) => cli('sql', s);
+  sql("INSERT IGNORE INTO {p}newsletter_liste (nome, descrizione, creato) VALUES ('Clienti di dicembre', '', NOW())");
+  const lista = +Object.values(sql("SELECT id FROM {p}newsletter_liste WHERE nome = 'Clienti di dicembre'")[0])[0];
+  const nomi = ['Anna', 'Bruno', 'Carla', 'Davide', 'Elisa', 'Franco', 'Giada', 'Ivo', 'Laura', 'Marco'];
+  for (let k = 1; k <= 40; k++) {
+    const e = `cliente-dic${k}@esempio.it`;
+    sql(`INSERT IGNORE INTO {p}newsletter_iscritti (email, nome, stato, fonte, creato, aggiornato) VALUES ('${e}', '${nomi[k % 10]}', 'attivo', 'manuale', DATE_SUB(NOW(), INTERVAL ${k % 20} DAY), NOW())`);
+    sql(`INSERT IGNORE INTO {p}newsletter_iscritti_liste (iscritto_id, lista_id, aggiunto) SELECT id, ${lista}, DATE_SUB(NOW(), INTERVAL ${k % 20} DAY) FROM {p}newsletter_iscritti WHERE email = '${e}'`);
+  }
+  await postaFinta();
+  await vai('newsletter.php?crea=1');
+  await p.fill('#nl-crea-nome', 'Le offerte di dicembre');
+  await Promise.all([p.waitForNavigation(), p.click('#nl-crea button[type=submit]')]);
+  const idC = new URL(p.url()).searchParams.get('id');
+  const qui3 = (x) => `newsletter-campagna.php?id=${idC}${x}`;
+  await vai(qui3('&apri=destinatari'));
+  await p.locator('#sez-destinatari label', { hasText: 'Clienti di dicembre' }).locator('input[name="liste[]"]').check();
+  await Promise.all([p.waitForNavigation(), p.click('#sez-destinatari button[type=submit]')]);
+  await vai(qui3('&apri=oggetto'));
+  await p.fill('#oggetto', 'Le offerte di dicembre, solo per te');
+  await Promise.all([p.waitForNavigation(), p.click('#sez-oggetto button[type=submit]')]);
+  await vai(qui3('&apri=design'));
+  await p.locator('#editor .ql-editor').click(); await p.keyboard.type('Ciao {{ contact.NOME }}, a dicembre in negozio trovi le offerte per i regali.');
+  await p.fill('#pulsante_testo', 'Guarda le offerte'); await p.fill('#nl-pulsante-link', 'https://www.studioprova.it/offerte/');
+  await Promise.all([p.waitForNavigation(), p.click('#nl-form button[type=submit]')]);
+  await vai(qui3(''));
+  await Promise.all([p.waitForNavigation(), p.click('#nlr-invio button.btn-primary')]);
+  await vai('newsletter.php');
+  await Promise.all([p.waitForNavigation(), p.click('form:has(input[value=giro]) button')]);
+  // 24 aperture (alcune ripetute), 9 clic, un'uscita con il motivo: a ore diverse negli ultimi giorni.
+  sql(`INSERT INTO {p}newsletter_eventi (campagna_id, iscritto_id, tipo, url, creato, volte) SELECT ${idC}, q.iscritto_id, 'apertura', '', DATE_SUB(NOW(), INTERVAL (q.iscritto_id % 5) HOUR), 1 + q.iscritto_id % 3 FROM {p}newsletter_coda q WHERE q.campagna_id = ${idC} AND q.stato = 'inviata' ORDER BY q.id LIMIT 24`);
+  sql(`INSERT INTO {p}newsletter_eventi (campagna_id, iscritto_id, tipo, url, creato, volte) SELECT ${idC}, q.iscritto_id, 'clic', 'https://www.studioprova.it/offerte/', NOW(), 1 + q.iscritto_id % 2 FROM {p}newsletter_coda q WHERE q.campagna_id = ${idC} AND q.stato = 'inviata' ORDER BY q.id LIMIT 9`);
+  const usc = +Object.values(sql(`SELECT iscritto_id FROM {p}newsletter_coda WHERE campagna_id = ${idC} AND stato = 'inviata' ORDER BY id DESC LIMIT 1`)[0])[0];
+  sql(`INSERT INTO {p}newsletter_eventi (campagna_id, iscritto_id, tipo, url, creato) VALUES (${idC}, ${usc}, 'uscita', '', NOW())`);
+  sql(`INSERT INTO {p}newsletter_uscite_motivi (contatto_id, campagna_id, motivo, creato) VALUES (${usc}, ${idC}, 'troppe', NOW())`);
+  sql(`UPDATE {p}newsletter_iscritti SET stato = 'uscito', blocco_motivo = 'unsubscribedViaEmail', blocco_at = NOW(), uscito_at = NOW() WHERE id = ${usc}`);
+  // Il report
+  await vai(`newsletter-report.php?id=${idC}`);
+  await fotoFino('19o-report', '#nlr-panoramica', { max: 1000, segni: [{ sel: 'nav.imp-schede', n: 1 }, { sel: '#nlr-panoramica [data-numero=consegnate]', n: 2 }, { sel: '#nlr-panoramica [data-numero=apertura]', n: 3 }, { sel: '#nlr-panoramica [data-numero=clic_su_aperture]', n: 4 }, { sel: '#nlr-soglie', n: 5 }] }); // dalla testata alle tessere
+  await vai(`newsletter-report.php?id=${idC}&scheda=clic`);
+  await foto('19o-mappa', { sel: '#nlr-mappa', margine: 6, altezza: 330, segni: [{ sel: '#nlr-mappa iframe', n: 1 }] });
+  await vai(`newsletter-report.php?id=${idC}&scheda=aperture`);
+  await p.fill('#nlr-salva-nome', 'Hanno aperto a dicembre');
+  await foto('19o-elenco', { sel: '#nlr-elenco', margine: 6, altezza: 360, segni: [{ sel: '#nlr-elenco .nlr-elenchi', n: 1 }, { sel: '.nlr-elenco-tabella tbody tr:first-child a', n: 2 }] });
+  // Le statistiche
+  await vai('newsletter-statistiche.php');
+  await fotoFino('19o-statistiche', '#st-andamento', { max: 1150, segni: [{ sel: '#st-periodo', n: 1 }, { sel: '#st-totali .nlr-numeri', n: 2 }, { sel: '#st-andamento svg', n: 3 }] });
+  await foto('23-consegna-statistiche', { sel: '#st-tabella', margine: 6, segni: [{ sel: '#st-tabella td.st-rimbalzi', n: '' }] });
+  await vai(`newsletter-statistiche.php?scheda=liste&periodo=30&lista=${lista}`);
+  await foto('19o-liste', { sel: '#st-lista', margine: 6, altezza: 420, segni: [{ sel: '#st-lista .nlr-numeri', n: 1 }, { sel: '#st-lista svg', n: 2 }] });
+  // L'orario migliore: aperture passate di dodici clienti, alle 8 o alle 18; poi una campagna nuova, programmata così.
+  sql(`INSERT INTO {p}newsletter_eventi (campagna_id, flusso_id, passo, iscritto_id, tipo, url, creato) SELECT 0, 999999, 1, i.id, 'apertura', '', CONCAT(DATE_SUB(CURDATE(), INTERVAL 3 DAY), IF(i.id % 2, ' 08:10:00', ' 18:20:00')) FROM {p}newsletter_iscritti i WHERE i.email LIKE 'cliente-dic%' ORDER BY i.id LIMIT 12`);
+  sql(`INSERT INTO {p}newsletter_eventi (campagna_id, flusso_id, passo, iscritto_id, tipo, url, creato) SELECT 0, 999999, 2, i.id, 'apertura', '', CONCAT(DATE_SUB(CURDATE(), INTERVAL 9 DAY), IF(i.id % 2, ' 08:40:00', ' 18:05:00')) FROM {p}newsletter_iscritti i WHERE i.email LIKE 'cliente-dic%' ORDER BY i.id LIMIT 12`);
+  await vai('newsletter.php?crea=1');
+  await p.fill('#nl-crea-nome', 'Il catalogo di gennaio');
+  await Promise.all([p.waitForNavigation(), p.click('#nl-crea button[type=submit]')]);
+  const idG = new URL(p.url()).searchParams.get('id');
+  await vai(`newsletter-campagna.php?id=${idG}&apri=destinatari`);
+  await p.locator('#sez-destinatari label', { hasText: 'Clienti di dicembre' }).locator('input[name="liste[]"]').check();
+  await Promise.all([p.waitForNavigation(), p.click('#sez-destinatari button[type=submit]')]);
+  await vai(`newsletter-campagna.php?id=${idG}&apri=oggetto`);
+  await p.fill('#oggetto', 'Il catalogo di gennaio');
+  await Promise.all([p.waitForNavigation(), p.click('#sez-oggetto button[type=submit]')]);
+  await vai(`newsletter-campagna.php?id=${idG}&apri=design`);
+  await p.locator('#editor .ql-editor').click(); await p.keyboard.type('Ciao {{ contact.NOME }}, ecco il catalogo di gennaio.');
+  await Promise.all([p.waitForNavigation(), p.click('#nl-form button[type=submit]')]);
+  await vai(`newsletter-campagna.php?id=${idG}`);
+  await foto('19-programma', { sel: '#nlr-invio', margine: 6, segni: [{ sel: '#nlr-invio input[value=subito]', n: 1 }, { sel: '#nlr-invio input[value=programma]', n: 2 }, { sel: '#nlr-quando', n: 3 }, { sel: '#nlr-invio input[value=migliore]', n: 4 }, { sel: '#nlr-invio button.btn-primary', n: 5 }] });
+  await p.check('#nlr-invio input[value=migliore]');
+  await p.selectOption('#nlr-om-ora', '10');
+  await Promise.all([p.waitForNavigation(), p.click('#nlr-invio button.btn-primary')]);
+  await p.click('#nlr-invio details.pn-aiuto > summary');
+  await foto('19o-orario', { sel: '#nlr-invio', margine: 6, segni: [{ sel: '#nlr-om-giorno', n: 1 }, { sel: '#nlr-om-ora', n: 2 }, { sel: '#nlr-om-conti', n: 3 }, { sel: '#nlr-invio details.pn-aiuto > summary', n: 4 }] });
 };
 
 // 19j. I segmenti, Aggiungi filtro e le viste (2.10.0). Dopo il 19i: usa i contatti importati ("Clienti del negozio",
@@ -1476,7 +1560,7 @@ capitoli['31q'] = async () => {
   await u.click('form[action*="i="] button[type=submit]'); await u.waitForLoadState('networkidle');
   await u.context().close();
   await vai('newsletter-statistiche.php');
-  await fotoFino('23-consegna-statistiche', 'table', { segni: [{ sel: 'td.st-rimbalzi', n: '' }] });
+  await foto('23-consegna-statistiche', { sel: '#st-tabella', margine: 6, segni: [{ sel: '#st-tabella td.st-rimbalzi', n: '' }] }); // 2.14.0: la tabella del periodo
   // 5. Il riscaldamento.
   await vai('consegna.php?scheda=riscaldamento');
   await p.check('#ce-acceso');
