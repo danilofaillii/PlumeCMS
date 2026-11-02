@@ -963,7 +963,9 @@ function newsletter_avvia_programmate(): array {
 /** Un passaggio del cron: manda fino al limite orario. */
 function newsletter_invia_giro(?int $massimo = null): array {
     newsletter_schema();
-    if (!db()->query("SELECT GET_LOCK('" . DB_PREFIX . "newsletter_invio', 0)")->fetchColumn()) return ['un altro invio è in corso'];
+    // 2.13.0: GET_LOCK vale per tutto il server MySQL; con il nome del database due siti sullo stesso server non si fermano a vicenda.
+    $bloccoInvio = db()->quote('nl_invio_' . md5(DB_NAME . '|' . DB_PREFIX));
+    if (!db()->query("SELECT GET_LOCK($bloccoInvio, 0)")->fetchColumn()) return ['un altro invio è in corso'];
     try {
         // 2.11.0: le colonne dei lotti nella coda (dopo: l'ora da cui un lotto può partire).
         $lotti = function_exists('newsletter_campagne_schema');
@@ -1028,7 +1030,7 @@ function newsletter_invia_giro(?int $massimo = null): array {
         $log = array_merge($log, newsletter_flussi_giro($posti - $ok - $ko - $rimbalzi));
         return $log;
     } finally {
-        db()->query("SELECT RELEASE_LOCK('" . DB_PREFIX . "newsletter_invio')");
+        db()->query("SELECT RELEASE_LOCK($bloccoInvio)");
     }
 }
 
