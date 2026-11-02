@@ -2,6 +2,19 @@
 
 Il prodotto si chiama **plumeCMS** (nome scelto il 26 ottobre 2026; prima, per poche ore, "CarbonaraCMS", e ancora prima il provvisorio "Officina": gli zip vecchi si chiamavano `officina-*` e `carbonaracms-*`).
 
+## 2.17.0 (2 novembre 2026) - Quindici aperture nuove
+
+- **L'Apertura (hero) ha ventisei disposizioni**: alle undici di prima si aggiungono Prospettiva, Computer e telefono, Pila di
+  finestre, Orbita, Terminale, Nastro di schermate, Titolo traforato, Faro, Orizzonte, Video, Note sulla foto, Lente,
+  Costellazione, Prima e dopo, Trittico. Stesso aspetto delle undici (finestra con il velo, riquadri di vetro, titolo con
+  l'evidenza), colori del tema, tutte in colonna sotto gli 860 pixel, animazioni ferme per chi chiede meno movimento.
+- **Campi in più** che compaiono solo con la loro disposizione: righe del terminale, altre foto del nastro, parola grande,
+  video, etichette sulla foto, punto da ingrandire, forma della costellazione, foto "prima", numero grande del trittico.
+- **Video nei Media**: un riquadro Video per caricare MP4 e WebM (fino a 64 MB, il tipo si legge dal file) e sceglierli
+  nell'editor. Il video parte al clic sul play; senza video l'apertura mostra la foto.
+- La classica e le undici di prima restano identiche al pixel; un'Apertura con una disposizione che il sito non conosce resta
+  salvata e si vede come la classica.
+
 ## 2.16.1 (2 novembre 2026) - Il limite di caricamento fra i requisiti
 
 - **Requisito nuovo: limite di caricamento di almeno 8 MB** (`upload_max_filesize` e `post_max_size`), perché i pacchetti di

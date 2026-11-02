@@ -271,8 +271,8 @@ def funzionalita():
         ('sezioni', 'sezioni.webp', 'Sezioni pronte: trenta modi di riempire una pagina',
          ['Nell\'editor c\'è la linguetta Sezioni: prezzi, testimonianze, chi siamo, servizi, numeri, domande frequenti, contatti, inviti. Trenta sezioni già impaginate, in nove gruppi, ognuna con la sua anteprima.',
           'Un clic e la sezione entra nella pagina, oppure la trascini dove vuoi. Da lì è una sezione come le altre: cambi testi, colori e widget. E segue i colori del tuo sito e del tema.']),
-        ('aperture', 'aperture.webp', 'Undici aperture fra cui scegliere',
-         ['La prima cosa che si vede di una pagina è la sua apertura. In plumeCMS la scegli con una tendina, fra undici disposizioni: testo e foto affiancati, tutto al centro, foto a tutto sfondo, divisa a metà, da rivista, in una scheda con il ritratto rotondo, solo parole, a mosaico, con la foto inclinata, a fascia bassa per le pagine interne, con il colore tagliato in diagonale.',
+        ('aperture', 'aperture.webp', 'Ventisei aperture fra cui scegliere',
+         ['La prima cosa che si vede di una pagina è la sua apertura. In plumeCMS la scegli con una tendina, fra ventisei disposizioni: testo e foto affiancati, tutto al centro, foto a tutto sfondo, divisa a metà, da rivista, in una scheda, solo parole, a mosaico, inclinata, a fascia bassa, in diagonale. E dalla 2.17.0 altre quindici: la finestra in prospettiva, computer e telefono, la pila di finestre, l\'orbita, il terminale, il nastro di schermate, il titolo traforato, il faro, l\'orizzonte, il video, le note sulla foto, la lente, la costellazione, il prima e dopo, il trittico.',
           'Cambi disposizione e i testi restano dove sono: provi, guardi, scegli. Tutte seguono i colori del tuo sito e dei temi, e si leggono bene anche al telefono.']),
         ('stile', 'stile.webp', 'Stile del sito: colori e caratteri in un posto solo',
          ['Colori, caratteri, titoli, pulsanti, campi dei moduli, larghezza della pagina: tutto in una pagina sola, con l\'anteprima accanto.',
@@ -714,6 +714,7 @@ def zip_lavagna(dest):
 # Regola di Danilo (1 novembre 2026): solo i punti salienti, una riga per versione, mai nomi di aziende o servizi di terzi.
 # Le novità per chi scarica: brevi, scritte qui (il CHANGELOG è per chi sviluppa). Da aggiornare a ogni versione.
 NOVITA = [
+    ('2.17.0', 'Quindici aperture nuove', ['Ventisei disposizioni per l\'apertura delle pagine, con video, lente, prima e dopo e terminale; i video si caricano nei Media.']),
     ('2.16.1', 'Il limite di caricamento fra i requisiti', ['Almeno 8 MB per caricare gli aggiornamenti: l\'installatore e il pannello lo controllano.']),
     ('2.16.0', 'Form a cinque passi e consenso', ['Form costruiti in cinque passi, con la loro pagina, il codice da incollare e il QR; consenso e preferenze per ogni contatto.']),
     ('2.15.0', 'Le automazioni', ['Percorsi disegnati sulla tela con inneschi, attese, bivi e rami: ognuno riceve l\'email giusta al momento giusto.']),

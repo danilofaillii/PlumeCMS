@@ -1,4 +1,4 @@
-# Il foglio delle undici aperture (1.2.6) per la pagina Funzionalità: le foto al computer di prove/prova-hero.js,
+# Il foglio delle aperture (1.2.6 undici, 2.17.0 ventisei) per la pagina Funzionalità: le foto al computer di prove/prova-hero.js,
 # in una griglia con il nome di ognuna. uso: python3 sito-plumecms/foglio-aperture.py <cartella di prova-hero> <cartella schermate>
 # poi: python3 sito-plumecms/costruisci.py --schermate <cartella schermate> (fa aperture.webp).
 import os
@@ -7,8 +7,12 @@ from PIL import Image, ImageDraw, ImageFont
 
 NOMI = [('classica', 'Classica'), ('centrata', 'Centrata'), ('copertina', 'Copertina'), ('divisa', 'Divisa a metà'),
         ('rivista', 'Rivista'), ('scheda', 'Scheda'), ('minimale', 'Minimale'), ('mosaico', 'Mosaico'),
-        ('inclinata', 'Inclinata'), ('banner', 'Banner'), ('diagonale', 'Diagonale')]
-COLONNE, LARGO, ALTO, SPAZIO, TESTA = 4, 440, 282, 24, 44
+        ('inclinata', 'Inclinata'), ('banner', 'Banner'), ('diagonale', 'Diagonale'),
+        ('prospettiva', 'Prospettiva'), ('dispositivi', 'Computer e telefono'), ('pila', 'Pila di finestre'), ('orbita', 'Orbita'),
+        ('terminale', 'Terminale'), ('nastro', 'Nastro di schermate'), ('traforata', 'Titolo traforato'), ('faro', 'Faro'),
+        ('orizzonte', 'Orizzonte'), ('video', 'Video'), ('note', 'Note sulla foto'), ('lente', 'Lente'),
+        ('costellazione', 'Costellazione'), ('primadopo', 'Prima e dopo'), ('trittico', 'Trittico')]
+COLONNE, LARGO, ALTO, SPAZIO, TESTA = 3, 440, 282, 24, 44
 FONDO, TESTO, NUMERO = (11, 13, 26), (236, 238, 248), (139, 120, 255)
 
 
@@ -39,10 +43,10 @@ def main(sorgente, dest):
         maschera = Image.new('L', im.size, 0)
         ImageDraw.Draw(maschera).rounded_rectangle([0, 0, LARGO - 1, ALTO - 1], radius=12, fill=255)
         foglio.paste(im, (x, y + TESTA), maschera)
-    # L'ultima casella, vuota nella griglia da dodici, dice cosa fare.
+    # L'ultima casella (2.17.0: ventisei aperture in tre colonne, la ventisettesima casella) dice cosa fare.
     x, y = SPAZIO + (len(NOMI) % COLONNE) * (LARGO + SPAZIO), SPAZIO + (righe - 1) * (ALTO + TESTA + SPAZIO) + TESTA
     d.rounded_rectangle([x, y, x + LARGO - 1, y + ALTO - 1], radius=12, outline=(60, 64, 96), width=2)
-    for i, riga in enumerate(['Una tendina,', 'undici aperture.', 'I testi restano.']):
+    for i, riga in enumerate(['Una tendina,', 'ventisei aperture.', 'I testi restano.']):
         d.text((x + 36, y + 70 + i * 48), riga, fill=TESTO if i < 2 else NUMERO, font=carattere('Bold', 34))
     os.makedirs(dest, exist_ok=True)
     foglio.save(os.path.join(dest, 'aperture.png'))

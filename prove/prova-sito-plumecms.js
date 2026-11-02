@@ -128,7 +128,7 @@ async function contrastoParole(pg) {
   const imgF = await v.evaluate(async () => { for (const i of document.images) { i.loading = 'eager'; } await new Promise(r => setTimeout(r, 1500)); return [...document.images].filter(i => i.naturalWidth === 0).map(i => i.src); });
   ok('nessuna immagine rotta in Funzionalità', imgF.length === 0, imgF);
   ok('Funzionalità: il blocco del download manager, con la schermata', await v.locator('#download img[src*="download.webp"]').count() === 1 && /Download manager/.test(await v.locator('#download').innerText()));
-  ok('Funzionalità: il blocco delle undici aperture, con il foglio', await v.locator('#aperture img[src*="aperture.webp"]').count() === 1 && /Undici aperture/.test(await v.locator('#aperture').innerText()));
+  ok('Funzionalità: il blocco delle ventisei aperture, con il foglio', await v.locator('#aperture img[src*="aperture.webp"]').count() === 1 && /Ventisei aperture/.test(await v.locator('#aperture').innerText()));
   for (const [id, img, re] of [['kit', 'installa-4.webp', /sito vero/], ['sezioni', 'sezioni.webp', /Sezioni pronte/], ['copia', 'copia.webp', /copia del tuo sito/]])
     ok(`Funzionalità (1.3.0): il blocco ${id}, con la schermata`, await v.locator(`#${id} img[src*="${img}"]`).count() === 1 && re.test(await v.locator(`#${id}`).innerText()));
   for (const [id, img, re] of [['wordpress', 'importa-wp.webp', /Vieni da WordPress/], ['tipo-sito', 'tipo-sito.webp', /Definitivo/], ['primi-passi', 'primi-passi.webp', /Primi passi/],
@@ -229,7 +229,7 @@ async function contrastoParole(pg) {
       const voci = [...col.querySelectorAll('li')];
       return { voci: voci.map(e => e.textContent.trim()), fondo: Math.max(...voci.map(e => e.getBoundingClientRect().bottom)), sinistra: g.getBoundingClientRect().bottom };
     });
-    ok('Scarica: novità, elenco breve con l\'ultima versione in cima', r && r.voci.length >= 3 && r.voci.length <= 8 && /^2\.16\.1: Il limite di caricamento/.test(r.voci[0]), r && r.voci);
+    ok('Scarica: novità, elenco breve con l\'ultima versione in cima', r && r.voci.length >= 3 && r.voci.length <= 8 && /^2\.17\.0: Quindici aperture nuove/.test(r.voci[0]), r && r.voci);
     const terzi = (r ? r.voci.join(' ') : '').match(/brevo|google|wordpress|linkedin|facebook|instagram|whatsapp|telegram|mailgun|amazon|dropbox|indexnow|search console|gnu/gi) || [];
     ok('Scarica: nelle novità nessun nome di aziende terze', r && terzi.length === 0, terzi);
     ok('Scarica: le novità finiscono non oltre il riquadro Cosa serve', r && r.fondo <= r.sinistra + 2, r && { fondo: r.fondo, sinistra: r.sinistra }); }
