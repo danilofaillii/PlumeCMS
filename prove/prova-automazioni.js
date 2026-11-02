@@ -182,8 +182,9 @@ const serverWh = [spawn(process.execPath, ['-e', SERVER, String(WH), ARRIVI], { 
   persona('ca3'); cli('attributo', C.ca3, 'AU_DATA', f2(d2));
   persona('cdp', L.d1); cli('innesco', 'form', 88, C.cdp);
   persona('cdf'); cli('innesco', 'form', 88, C.cdf);
-  giro();
   const visto = (k, chi) => inLista(vista(k), C[chi]);
+  // Su un sito con tanti contatti vecchi "non apre da 30 giorni" ne fa entrare 200 a giro: si gira finché arrivano anche i nostri.
+  for (let i = 0; i < 15 && !(visto('inattivo', 'cin') && visto('anniversario', 'can') && visto('anniv2', 'ca3') && visto('iscrizione', 'ci1')); i++) giro();
   ok('innesco "si iscrive": entra', visto('iscrizione', 'ci1'));
   ok('innesco "entra in una lista": entra', visto('lista', 'cl1'));
   ok('innesco "viene tolto da una lista" (nuovo): entra', visto('lista_tolto', 'ct1'));
@@ -196,6 +197,9 @@ const serverWh = [spawn(process.execPath, ['-e', SERVER, String(WH), ARRIVI], { 
   ok('anniversario: una volta sola, anche al giro dopo', corsi(fInn.anniversario, C.can).length === 1);
   ok('più inneschi: entra dalla lista o dal form, una volta sola per giro', visto('doppio', 'cdp') && visto('doppio', 'cdf') && corsi(fInn.doppio, C.cdp).length === 1);
   ok('registro: chi è entrato e da quale innesco', /Viene tolto da una lista/.test(uno(`SELECT dettaglio FROM {p}newsletter_flussi_registro WHERE flusso_id = ${fInn.lista_tolto} AND evento = 'entrato'`) || ''));
+
+  // Le automazioni degli inneschi non servono più: "non apre da 30 giorni" su un sito con tanti contatti ne farebbe entrare a centinaia.
+  q("UPDATE {p}newsletter_flussi SET stato = 'inattiva', attivo = 0 WHERE nome LIKE 'AU Inn %'");
 
   // ===== 3. Attendi un evento con il massimo
   const fEv = automazione('AU Evento', [{ tipo: 'lista', id: L.ev }], [em(1, 'AU ev email'), nodo(2, 'evento', { evento: 'apertura', email: 1, massimo: 60 }), nodo(3, 'lista_aggiungi', { lista: vista('ev si') }), nodo(4, 'lista_aggiungi', { lista: vista('ev no') })],
@@ -309,7 +313,7 @@ const serverWh = [spawn(process.execPath, ['-e', SERVER, String(WH), ARRIVI], { 
   if (FOTO) await p.screenshot({ path: path.join(FOTO, 'automazione-tela.png') });
   await vai(`newsletter-flussi.php?id=${fSt}&scheda=attivita`);
   ok('attività: chi è dentro adesso, 5 righe', await p.locator('#fl-dentro tbody tr[data-corso]').count() === 5);
-  await p.selectOption('#fl-passo', '1'); await p.waitForLoadState('networkidle');
+  await Promise.all([p.waitForNavigation({ waitUntil: 'networkidle' }), p.selectOption('#fl-passo', '1')]);
   ok('attività: filtro per passo (all\'email non c\'è nessuno) con la frase', await p.locator('#fl-dentro tbody tr[data-corso]').count() === 0 && /Nessuno a questo passo/.test(await p.locator('#fl-dentro').innerText()));
   await vai(`newsletter-flussi.php?id=${fSt}&scheda=attivita&passo=2`);
   const corsoS5 = num(`SELECT id FROM {p}newsletter_corsi WHERE flusso_id = ${fSt} AND iscritto_id = ${C.s5}`);
@@ -379,7 +383,8 @@ const serverWh = [spawn(process.execPath, ['-e', SERVER, String(WH), ARRIVI], { 
     const rM = q(`SELECT * FROM {p}newsletter_flussi WHERE nome = 'AU Modello ${k}'`)[0];
     ok(`modello ${nome}: la tela si apre con ${nNodi} blocchi e si salva (in pausa)`, nn === nNodi && !!rM && rM.stato === 'in_pausa' && JSON.parse(rM.passi).nodi.length === nNodi, [nn, await flash()]);
   }
-  ok('modello Anniversario: l\'innesco usa l\'attributo data', JSON.parse(uno("SELECT inneschi FROM {p}newsletter_flussi WHERE nome = 'AU Modello anniversario'"))[0].attr === 'AU_DATA');
+  const attrAnn = JSON.parse(uno("SELECT inneschi FROM {p}newsletter_flussi WHERE nome = 'AU Modello anniversario'"))[0].attr;
+  ok('modello Anniversario: l\'innesco usa un attributo di tipo data', !!attrAnn && uno(`SELECT tipo FROM {p}newsletter_attributi WHERE nome = '${attrAnn}'`) === 'date', attrAnn);
 
   // ===== 12. Elenco e 390 px
   await vai('newsletter-flussi.php');

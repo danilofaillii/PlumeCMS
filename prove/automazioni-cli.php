@@ -30,6 +30,8 @@ require_once $dir . '/includes/db.php';
 require_once $dir . '/includes/newsletter.php';
 newsletter_schema();
 newsletter_flussi_schema();
+if (function_exists('newsletter_segmenti_schema')) newsletter_segmenti_schema(); // un sito appena installato non ha ancora le tabelle dei segmenti
+if (function_exists('nd_schema')) nd_schema();
 $t = fn($n) => tbl($n);
 $listaId = function (string $n) use ($t): int {
     $id = (int)db()->query('SELECT id FROM ' . $t('newsletter_liste') . ' WHERE nome = ' . db()->quote($n))->fetchColumn();

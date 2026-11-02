@@ -1684,7 +1684,7 @@ richiesta, a `newsletter_ultima_conferma()` (`:393`). Per consegnare qualcosa a 
 dichiara `'eventi' => ['newsletter_confermata' => function (array $e) { if ($e['form'] === 3) { ... } }]`, oppure la pagina di
 conferma legge `newsletter_ultima_conferma()` dopo `newsletter_conferma()`.
 
-**Inneschi in attesa (dalla 2.0.0).** `newsletter_flussi_innesco()` (`includes/newsletter-flussi.php:388`) fa partire i
+**Inneschi in attesa (dalla 2.0.0).** `newsletter_flussi_innesco()` (`includes/newsletter-flussi.php:684`) fa partire i
 flussi solo per chi è attivo. Prima un cammino partiva anche per chi era in attesa, il giro lo fermava (`fermato`) e la
 chiave unica (flusso, iscritto) non lo faceva più ripartire alla conferma. Ora l'innesco `form` di chi deve ancora
 confermare si ricorda in `newsletter_inneschi_attesa` (`newsletter_innesco_in_attesa()`, `includes/newsletter.php:403`) e
@@ -1742,7 +1742,7 @@ i contatori per passo in `newsletter_flussi_numeri`. Il dettaglio nel capitolo 1
 **Statistiche.** Aperture (pixel) e clic (link che passano da `api/nl.php`, firmati) si registrano in
 `newsletter_eventi`, solo per le email vere e non per quelle di prova. La pagina Statistiche mostra campagne,
 clic per link, iscritti per mese. Dalla 2.1.0 anche rimbalzi, uscite e segnalazioni di spam per campagna (eventi `rimbalzo`,
-`uscita`, `spam` scritti da `newsletter_evento_interno()`, `includes/newsletter-flussi.php:153`; conti in
+`uscita`, `spam` scritti da `newsletter_evento_interno()`, `includes/newsletter-flussi.php:231`; conti in
 `newsletter_statistiche_campagne()`, `:173`), con le soglie di Gmail e Yahoo in rosso (spam oltre lo 0,3%, rimbalzi oltre il 2%). Dalla 2.14.0 la pagina è a schede, con il periodo, e le soglie sono quelle del capitolo 15.13.
 
 Prove: `prove/prova-newsletter-difetti.js` (dalla 2.0.0, con `prove/smtp-finto.py ... rimbalzi`,
@@ -1917,7 +1917,7 @@ doppione apre il contatto che c'è, lista nuova dal modulo). JavaScript in `admi
 con `function_exists`): `{{ contact.NOME }}`, filtri `upper`, `lower`, `capfirst`, `default:"testo"` (anche con gli spazi di
 Brevo, `default : 'x'`). FIRSTNAME e LASTNAME valgono come NOME e COGNOME; categoria e scelta multipla escono come etichette,
 le date in italiano, i globali calcolati. Nell'HTML il valore entra con `h()`. `{nome}` resta per le campagne di prima.
-Le email dei flussi lasciano una riga `flusso_email` nella storia (`includes/newsletter-flussi.php:541`).
+Le email dei flussi lasciano una riga `flusso_email` nella storia (`includes/newsletter-flussi.php:924`).
 
 Prove: `prove/prova-contatti-brevo.js` con `prove/contatti-cli.php` (con `MIGRATO=1` anche la migrazione di un sito 2.7.0
 preparato con `contatti-cli.php semina`); attacchi: gruppo 29 di `tools/sicurezza-prova.js`.
@@ -2117,7 +2117,7 @@ base64url); gruppi in `fieldset` con la legenda, ogni condizione con etichette v
 mezzo secondo dopo l'ultimo cambio e dice cosa manca se una condizione è incompleta. `data-nls-copia` copia le regole nel
 modulo di "Salva come segmento" all'invio.
 
-**Flussi**: i bivi usano il motore. `newsletter_flusso_condizione()` (`includes/newsletter-flussi.php:425`) chiama
+**Flussi**: i bivi usano il motore. `newsletter_flusso_condizione()` (`includes/newsletter-flussi.php:722`) chiama
 `newsletter_bivio_vale()` (`newsletter-segmenti.php:548`), che traduce le nove condizioni di prima
 (`newsletter_bivio_regole()`, `:532`: in_lista e non_in_lista -> `lista`; aperta, non_aperta, cliccata, non_cliccata ->
 `flusso_email` con il flusso nel contesto; attivo e inattivo -> `attivita` con `tutti`; iscritto_da -> `iscritto_da`) e le
@@ -2125,7 +2125,7 @@ fa passare dal controllo come tutte le altre. I dati dei flussi non cambiano (st
 nessuna migrazione, stesso esito (lista, email o segmento non scelti: "sta in", "ha aperto", "ha cliccato" no, le negative
 sì, come prima; una condizione sconosciuta vale, come prima). Il codice di prima resta sotto, per quando opcache dà per
 qualche secondo il file vecchio. Condizioni nuove del bivio: `in_segmento` e `non_in_segmento` (`NL_CONDIZIONI`,
-`newsletter-flussi.php:27`; tendina in `admin/assets/flussi.js:228`, segmenti in `FL_DATI.segmenti`,
+`newsletter-flussi.php:28`; tendina in `admin/assets/flussi.js:330`, segmenti in `FL_DATI.segmenti`,
 `admin/newsletter-flussi.php:130`). Il bivio a più rami con le condizioni dei segmenti è della fase 8.
 
 **Campagne**: non cambiano in questa fase (il piano mette destinatari ed esclusioni nella fase 4, 2.11.0: fatto, capitolo 15.10). Il motore è pronto:
@@ -2518,17 +2518,17 @@ non c'è nessun paragone con Brevo.
 
 **Dati** (nessuna tabella nuova, nessuna rinominata):
 - `newsletter_eventi`: `volte` INT DEFAULT 1 e `ultimo` DATETIME NULL, e l'indice `iscritto` (`iscritto_id`, `tipo`, `creato`)
-  per l'orario migliore e gli elenchi. Le aggiunge `newsletter_flussi_schema()` (`newsletter-flussi.php:90`-`:96`, impronta
+  per l'orario migliore e gli elenchi. Le aggiunge `newsletter_flussi_schema()` (`newsletter-flussi.php:146`-`:149`, impronta
   con `ripetuti`), perché è lui che `newsletter_evento()` chiama prima di scrivere: anche il primo pixel dopo l'aggiornamento
   trova le colonne. Le righe di prima valgono `volte = 1`: i conteggi per persona restano quelli di prima.
 - `newsletter_campagne`: `orario_migliore` TINYINT DEFAULT 0, `orario_ora` TINYINT DEFAULT 10 e l'indice `invio_at` (per i
   periodi). Le aggiunge `nl_rep_schema()` (`newsletter-report.php:39`, impronta `newsletter_report_impronta`), chiamata da
   `newsletter_campagne_schema()`.
 - Tipo di evento nuovo `soft` (rimbalzo temporaneo, `tipo` è VARCHAR(10)): `newsletter_evento_interno()` lo accetta
-  (`newsletter-flussi.php:178`); lo scrive il giro della coda al terzo tentativo rifiutato con un errore temporaneo
+  (`newsletter-flussi.php:231`); lo scrive il giro della coda al terzo tentativo rifiutato con un errore temporaneo
   (`newsletter.php:1019`) e l'avviso `temporaneo` di un servizio di spedizione con il riferimento firmato (`consegna.php:872`).
 
-**Aperture e clic ripetuti** (`newsletter_evento()`, `newsletter-flussi.php:153`): una riga per persona, tipo e indirizzo,
+**Aperture e clic ripetuti** (`newsletter_evento()`, `newsletter-flussi.php:206`): una riga per persona, tipo e indirizzo,
 come prima; la stessa apertura o lo stesso clic di nuovo fa `volte = volte + 1, ultimo = NOW()` e basta (gli inneschi dei
 flussi e i flussi partono solo la prima volta, come prima). Un clic vale anche come apertura una volta sola (ottavo argomento
 `$ripeti` a false): le aperture totali contano i pixel.
@@ -2638,7 +2638,7 @@ con `automazioni giro`), che la pagina, il giro e ogni evento chiamano prima di 
   sono lì; quelli di prima, fermi sul nodo dopo con `prossimo` nel futuro, vanno avanti come prima), `evento`, `orario`.
 - `newsletter_flussi_registro` (nuova): `flusso_id`, `corso_id`, `iscritto_id`, `nodo`, `evento` (`entrato`, `email`,
   `attesa`, `bivio`, `evento`, `azione`, `finito`, `tolto`, `uscito`, `fermato`), `dettaglio` (255, con le entità),
-  `creato`. Si pulisce oltre 90 giorni (`nl_aut_pulizia()`, `newsletter-automazioni.php:259`, dalla pulizia di ogni giorno,
+  `creato`. Si pulisce oltre 90 giorni (`nl_aut_pulizia()`, `newsletter-automazioni.php:261`, dalla pulizia di ogni giorno,
   `newsletter.php:771`).
 - `newsletter_flussi_numeri` (nuova): (`flusso_id`, `nodo`, `chiave`) -> `n`, con `INSERT ... ON DUPLICATE KEY UPDATE`
   (`nl_conta()`, `newsletter-flussi.php:625`): `passati` di ogni nodo, `inviate` delle email, l'uscita presa (`poi`, `si`,
@@ -2676,7 +2676,7 @@ una lettura per richiesta) che hanno quell'innesco fra i loro (id 0 = qualunque)
 `disiscritto`; `form` per chi aspetta la conferma resta in attesa come prima. Dove partono gli inneschi nuovi: `lista_tolto`
 da `newsletter_togli_da_liste()` (`newsletter-contatti.php:574`, anche con l'azione "togli da una lista") e dal centro
 preferenze (`newsletter-campagne.php:915`); `disiscritto` da `newsletter_esci()` (`newsletter.php:692`); `anniversario` dal
-giro (`nl_aut_anniversari()`, `newsletter-automazioni.php:135`: giorno e mese della data fra N giorni, attributi data
+giro (`nl_aut_anniversari()`, `newsletter-automazioni.php:137`: giorno e mese della data fra N giorni, attributi data
 personali o di sistema, una volta l'anno, 500 per giro); `mano` dalla scheda Attività. `inattivo` come prima
 (`newsletter_flussi_inattivi()`, `:703`; con il rientro guarda chi ha finito da abbastanza). **Ingresso**
 (`newsletter_flusso_parti()`, `:651`): chi è dentro non rientra; chi ha finito rientra solo con il rientro acceso e l'attesa
@@ -2685,7 +2685,7 @@ unica contro due ingressi insieme; riga `entrato` nel registro con l'innesco.
 
 **Il giro** (`newsletter_flussi_giro()`, `:815`), dentro il giro della newsletter e il suo `GET_LOCK` con il nome del
 database (`newsletter_invia_giro()`), con i posti rimasti nel limite orario: inattivi, poi `nl_aut_giro_prima()`
-(`newsletter-automazioni.php:125`: anniversari, poi le **condizioni di uscita** `nl_aut_uscite()`, `:158`, che guardano tutti
+(`newsletter-automazioni.php:127`: anniversari, poi le **condizioni di uscita** `nl_aut_uscite()`, `:160`, che guardano tutti
 i cammini in corso, anche in attesa: con "si disiscrive" chi non è più attivo esce, con il segmento chi ci è entrato,
 `newsletter_segmento_where()`; e le automazioni Inattive con qualcuno dentro lo tolgono), poi i cammini arrivati alla loro
 ora (`posti * 3 + 50`). Per ogni cammino: automazione Inattiva -> tolto; contatto non attivo -> esce (condizione di uscita),
@@ -2708,9 +2708,10 @@ il cammino e i contatori. Un'apertura o un clic (`newsletter_flusso_evento()`, `
 
 **Webhook** (`newsletter-automazioni.php`): `nl_aut_webhook_controlla()` (`:62`), al salvataggio e alla chiamata: https,
 porta 443, niente utente e password nell'indirizzo, nome con lettere, cifre, punti e trattini, niente `localhost`,
-`.localhost`, `.local`, `.internal`; ogni IP risolto controllato con `nl_aut_ip_interno()` (`:49`: le reti di
+`.localhost`, `.local`, `.internal`, niente nomi fatti di soli numeri (`2130706433`, `0x7f000001`, `127.1`: l'ultima parte deve
+cominciare con una lettera); ogni IP risolto controllato con `nl_aut_ip_interno()` (`:49`: le reti di
 `importa_wp_ip_interno()`, cioè private, riservate, 100.64/10, 0/8, 192.0.0/24, 198.18/15, più IPv4 dentro IPv6 e
-`::/96`); un nome che adesso non si trova si salva (si risolve di nuovo alla chiamata). `nl_aut_webhook()` (`:85`): POST
+`::/96`); un nome che adesso non si trova si salva (si risolve di nuovo alla chiamata). `nl_aut_webhook()` (`:87`): POST
 JSON (`evento`, `automazione` id e nome, `passo`, `contatto` id, email, nome, cognome, `quando`) con `X-Plume-Firma:
 sha256=` (HMAC del corpo con il segreto del sito); `CURLOPT_RESOLVE` sull'IP controllato, `CURLOPT_FOLLOWLOCATION` spento (un
 3xx dice "il servizio rimanda a un altro indirizzo: per sicurezza non lo seguo"), solo http e https, niente proxy,
@@ -2721,7 +2722,7 @@ gli IP interni; non definita di partenza.
 
 **La pagina** (`admin/newsletter-flussi.php`): elenco (inneschi in parole, entrati, in corso, finiti, usciti, email inviate,
 stato con la parola, tag) e "Crea un'automazione" con Da zero e i **modelli** (`nl_aut_modelli()`,
-`newsletter-automazioni.php:282`: Benvenuto con il Sì o No sull'apertura, Anniversario sul primo attributo data, Attività di
+`newsletter-automazioni.php:284`: Benvenuto con il Sì o No sull'apertura, Anniversario sul primo attributo data, Attività di
 marketing per chi non apre da 90 giorni con Attendi un evento e Togli dalla lista principale), che aprono la tela senza
 salvare niente. La tela: barra con nome (di partenza "Automazione n. X", il prossimo id), tag, stato (Attiva, In pausa,
 Inattiva, con la frase d'aiuto), Riordina, Elenco, Salva; i numeri (entrati, in corso, finiti, usciti o tolti); pannello a
@@ -2729,17 +2730,17 @@ schede ARIA (Inneschi con l'elenco degli inneschi e Impostazioni: rientro, uscit
 pannello; Azioni; Regole); i pezzi sono `role="button"` e si aggiungono anche con Invio. Con un blocco scelto, il pezzo nuovo
 entra sotto e si collega alla sua prima uscita libera (il "+" sotto un passo, `aggiungi()` in `admin/assets/flussi.js`). Sulla
 tela ogni blocco mostra i suoi numeri (qui adesso, passati; per le email inviate, aperture e clic con i tassi del report,
-`nl_aut_numeri()`, `:186`, con `nl_rep_tassi()`), e ogni uscita quanti l'hanno presa. La **Divisione condizionale** monta nel
+`nl_aut_numeri()`, `:188`, con `nl_rep_tassi()`), e ogni uscita quanti l'hanno presa. La **Divisione condizionale** monta nel
 pannello il costruttore dei segmenti (`window.nlsMonta` e `box.nlsCambio` in `admin/assets/segmenti.js:43` e `:180`; la
 condizione "Email di questa automazione" con le email della tela in `DEF.flussoEmail`, `:92`). Il passo Email ha mittente,
 oggetto, anteprima, contenuto (Testo semplice con Quill, o Editor a blocchi: "Salva e apri l'editor a blocchi" salva e apre
 `newsletter-design.php?flusso=F&nodo=N` (`admin/newsletter-design.php:20`-`:25`), che scrive il design nel grafo con
-`nl_aut_design_salva()`, `:265`, e torna alla tela; "Parti da un modello" con i modelli a blocchi attivi), quando parte
+`nl_aut_design_salva()`, `:267`, e torna alla tela; "Parti da un modello" con i modelli a blocchi attivi), quando parte
 (subito, a un'ora, all'orario migliore), l'ascolto come prima. Il grafo e gli inneschi viaggiano in JSON nei campi nascosti
 (base64 di `campi-protetti.js` contro ModSecurity); la copia nel browser e il battito della sessione come prima. Scheda
 **Attività e registro** (`?id=N&scheda=attivita`): chi è dentro (50 per pagina, filtro per passo, "Togli" con la conferma,
-`nl_aut_togli()`, `:239`, che controlla che il cammino sia di quell'automazione), "Aggiungi a mano" (`nl_aut_aggiungi()`,
-`:247`, solo con l'innesco e l'automazione Attiva), il registro (200 righe, filtro per email, `nl_aut_registro()`, `:229`). Un
+`nl_aut_togli()`, `:241`, che controlla che il cammino sia di quell'automazione), "Aggiungi a mano" (`nl_aut_aggiungi()`,
+`:249`, solo con l'innesco e l'automazione Attiva), il registro (200 righe, filtro per email, `nl_aut_registro()`, `:231`). Un
 segmento usato da una divisione o da una condizione di uscita non si elimina (`newsletter_segmento_usato()`,
 `newsletter-segmenti.php:694`). Altre pagine: Statistiche (la tabella delle automazioni con lo stato), Importa, Consegna,
 Cron (la parola "automazioni").

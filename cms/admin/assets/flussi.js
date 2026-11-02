@@ -8,7 +8,7 @@
 var FL = (function () {
   var D = FL_DATI, g = D.grafo, tela = document.getElementById('fl-tela'), box = document.getElementById('fl-tela-box'), svg = document.getElementById('fl-archi');
   var pannello = document.getElementById('fl-pannello'), scelto = null, arcoScelto = null, quill = null, ns = 'http://www.w3.org/2000/svg';
-  var ICONE = {innesco: '🚀', email: '✉️', attesa: '⏳', bivio: '🔀', fine: '⏹', evento: '👁', dividi: '🔀', percento: '⚖', lista_aggiungi: '➕', lista_togli: '➖', attributo: '✎', webhook: '↗'};
+  var ICONE = {innesco: '\uD83D\uDE80', email: '✉️', attesa: '⏳', bivio: '\uD83D\uDD00', fine: '⏹', evento: '\uD83D\uDC41', dividi: '\uD83D\uDD00', percento: '⚖', lista_aggiungi: '➕', lista_togli: '➖', attributo: '✎', webhook: '↗'};
   var NOMI = {innesco: 'Inneschi', email: 'Email', attesa: 'Attesa', bivio: 'Sì o No', fine: 'Fine', evento: 'Attendi un evento', dividi: 'Divisione condizionale', percento: 'Divisione in percentuale', lista_aggiungi: 'Aggiungi a una lista', lista_togli: 'Togli da una lista', attributo: 'Aggiorna un attributo', webhook: 'Webhook'};
   var inneschi = (D.inneschi || []).slice();
 
