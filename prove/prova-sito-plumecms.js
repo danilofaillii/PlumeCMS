@@ -86,7 +86,9 @@ async function contrastoParole(pg) {
   const v = await (await br.newContext({ viewport: { width: 1280, height: 900 } })).newPage();
   const errV = []; v.on('pageerror', e => errV.push(e.message.slice(0, 200)));
   v.on('console', m => { if (m.type() === 'error' && !/favicon/.test(m.text())) errV.push(m.text().slice(0, 200)); });
-  const pagine = [...(conHome ? [['/', /leggero come una piuma/i]] : []), ['/funzionalita/', /vuoto/], ['/temi/', /Cambia vestito/], ['/documentazione/', /da leggere anche offline/],
+  // Con la hero tenuta (2.18.0, "l'apertura resta quella del sito") il titolo della home è quello del sito, non quello del pacchetto.
+  const tenuta = /l'apertura resta quella del sito/.test(log);
+  const pagine = [...(conHome ? [['/', tenuta ? /./ : /leggero come una piuma/i]] : []), ['/funzionalita/', /vuoto/], ['/temi/', /Cambia vestito/], ['/documentazione/', /da leggere anche offline/],
     ['/installazione/', /Installalo in 5 minuti/], ['/scarica/', new RegExp('Scarica plumeCMS ' + V.replace(/\./g, '\\.') + '$')], ['/domande-frequenti/', /Domande frequenti/]];
   for (const [u, re] of pagine) {
     const r = await v.goto(B + u, { waitUntil: 'networkidle' });
