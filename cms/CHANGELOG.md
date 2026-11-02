@@ -2,6 +2,20 @@
 
 Il prodotto si chiama **plumeCMS** (nome scelto il 26 ottobre 2026; prima, per poche ore, "CarbonaraCMS", e ancora prima il provvisorio "Officina": gli zip vecchi si chiamavano `officina-*` e `carbonaracms-*`).
 
+## 2.14.0 (2 novembre 2026) - Report, statistiche e orario migliore
+
+- **Report della campagna** a schede (Panoramica, Aperture, Clic, Disiscrizioni, Rimbalzi): destinatari, inviate, consegnate,
+  aperture e clic unici e totali, clic sulle aperture, disiscrizioni con i motivi, rimbalzi definitivi e temporanei, spam.
+  **Mappa dei clic** sull'anteprima dell'email; **elenchi** di chi ha aperto, non ha aperto, cliccato (anche un solo link),
+  è uscito o è rimbalzato, da esportare in CSV o salvare come lista (aperture e clic anche come segmento).
+- **I tassi sono calcolati sulle consegnate** (le inviate meno quelle rimbalzate): per le campagne di prima i numeri per
+  persona restano uguali, il tasso cambia solo se dopo l'invio era arrivato un rimbalzo. Da ora si contano anche i clic
+  ripetuti, e i rimbalzi temporanei diventano un evento.
+- **Statistiche** di un periodo (totali, andamento, confronto fra campagne, flussi) e delle liste (nuovi, usciti, iscritti
+  nel tempo). **Soglie**: rimbalzi oltre il 2%, disiscrizioni oltre l'1%, spam oltre lo 0,2%, dette in parole.
+- **All'orario migliore** (nella parte Programma della campagna): ognuno riceve l'email, nel giorno scelto, all'ora in cui di
+  solito apre la posta (dalle aperture degli ultimi 12 mesi); chi non ha dati, all'ora scelta.
+
 ## 2.13.0 (2 novembre 2026) - Il test A/B delle campagne
 
 - **Crea una campagna > Test A/B**: si prova l'**oggetto** (con il testo di anteprima) oppure il **contenuto** (due design,
