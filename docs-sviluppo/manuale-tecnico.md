@@ -2276,6 +2276,145 @@ Duplica, rinvio, nuovi contatti, Archivia, Annulla, Elimina, questionario, centr
 
 ---
 
+### 15.11 Editor delle email a blocchi, modelli, sezioni salvate (dalla 2.12.0)
+
+Fase 5 del piano di `docs-sviluppo/brevo-confronto.md` (capitoli 1.12, 1.13, 3.6). Motore in `includes/newsletter-design.php`
+(caricato in fondo a `includes/newsletter.php`, `:1036`, e con `require_once` dalle tre pagine che lo usano); le funzioni
+nuove chiamate da file di prima passano da `function_exists` (opcache): `newsletter_email()` (`newsletter.php:861`),
+`newsletter_richiesta()` (`:526`), `newsletter_campagne_schema()`, `newsletter_campagna_sezioni()` e
+`newsletter_campagna_salva_sezione()` (`newsletter-campagne.php:64`, `:267`, `:306`). Solo amministratore (`require_admin()`
+sulle pagine e sulle azioni in JSON). Nel testo per chi usa il pannello non c'è nessun paragone con Brevo.
+
+**Dati** (`nd_schema()`, `newsletter-design.php:97`, impronta `newsletter_design_impronta`; chiamata anche da
+`newsletter_campagne_schema()`, così chi apre una pagina qualsiasi delle campagne dopo l'aggiornamento ha già le colonne):
+- `newsletter_campagne`: `design` MEDIUMTEXT NULL (il JSON) e `modello_id` INT DEFAULT 0. `editor` prende il valore
+  `blocchi` (la colonna è VARCHAR(8) dalla 2.11.0); le campagne di prima restano `semplice` o `html`, con lo stesso HTML al
+  byte (`prove/prova-campagne-vecchie.js`).
+- `newsletter_modelli` (nuova): `nome`, `editor` (`blocchi` o `html`), `design`, `html`, `oggetto` (serve all'email di
+  conferma), `attivo` (0 di partenza), `tag` (`optin` per l'email di conferma), `origine` (lo slug della galleria da cui
+  viene), `creato`, `aggiornato`.
+- `newsletter_sezioni_salvate` (nuova): `nome`, `json` (una sezione), `sincronizzata`, `creato`, `aggiornato`.
+- Impostazione `newsletter_doi_modello` (0 = l'email di conferma predefinita della 2.7.0).
+Il JSON si scrive con `nd_json()` (`:137`) senza `JSON_UNESCAPED_UNICODE`: tutto ASCII, i caratteri a 4 byte come `\uXXXX`
+(le colonne utf8 a 3 byte non li tagliano, e nei campi di testo non entra mai un'entità scritta due volte, trappola della 1.7.0).
+
+**Il design** (`nd_pulisci()`, `:313`): `{v, stile, sezioni[]}`; ogni sezione `{id, layout, fondo, spazio, spazio_x, tel,
+nascosta, salvata, colonne[][]}`; ogni blocco `{id, t, ...}`. Le specifiche sono elenchi chiusi in PHP (`nd_spec_stile()`
+`:39`, `nd_spec_sezione()` `:52`, `nd_spec_blocchi()` `:61`: `[tipo, etichetta, predefinito, altro]`) e arrivano uguali al
+JavaScript dell'editor, che ne fa i controlli: una sola fonte. `nd_valore()` (`:255`) pulisce ogni proprietà per tipo:
+`t` testo su una riga (senza caratteri di controllo, tagliato), `h` testo con la formattazione (`nd_html_pulito()`, `:208`:
+DOM, solo `p br strong b em i u s a ul ol li`, nessun attributo tranne l'`href` passato da `nd_link()`; le liste puntate di
+Quill, `ol > li[data-list=bullet]`, diventano `ul`; libxml codifica `{{ }}` negli `href`, e i quattro link speciali tornano
+come si scrivono), `c` colore solo `#rrggbb` (anche `#rgb`; altrimenti il predefinito: nessun CSS libero, quindi niente
+`expression`, `url(` o `behavior`), `s` scelta fra le chiavi, `n` intero nei limiti, `m` intero o vuoto, `b` sì/no, `l` link
+(`nd_link()`, `:169`: `https?://`, `mailto:`, `tel:`, i quattro speciali `{{ unsubscribe }}`, `{{ update_profile }}`,
+`{{ mirror }}`, `{{ doubleoptin }}`, un percorso del sito che diventa intero, un dominio scritto senza schema che prende
+`https://`; tutto il resto, anche `javascript:`, `data:`, `vbscript:` e il base64, diventa ''), `i` immagine (`nd_img()`,
+`:189`: solo `https?://` e percorsi del sito, niente `data:`), `r` reti social (fino a 12, chiavi di `ND_RETI`). Tipi di
+blocco e proprietà fuori elenco spariscono; le colonne sono quelle del layout (`ND_LAYOUT`, `:26`: 100, 50-50, 33-67, 67-33,
+25-75, 75-25, 33-33-33); limiti: JSON al massimo 400 KB e 16 livelli (`ND_MAX_JSON`, `json_decode` con profondità 16),
+60 sezioni, 300 blocchi. Il design pulito è quello che si salva e quello che si disegna.
+
+**Da JSON a HTML per la posta** (`nd_html()`, `:457`): `<!DOCTYPE html>`, `<meta viewport>`, un solo `<style>` nella testa
+con la media query del telefono (`max-width` = larghezza + 20 px: `.nd-corpo` al 100%, margini laterali di 16 px, e nelle
+sezioni `.nd-impila` le colonne `display:block`); il corpo è una tabella `role="presentation"` larga `stile.larghezza` (600
+di partenza, 480-700) con `bgcolor` e `max-width`; ogni sezione una riga con il suo fondo e i suoi spazi, dentro una tabella
+con una cella per colonna (`width` in px dalla quota, 8 px fra le colonne). Ogni blocco (`nd_blocco_html()`, `:399`) sta in una
+tabella sua con lo spazio sotto (`nd_cella()`, `:386`), tutti gli stili in linea: titoli `h1`/`h2`/`h3` 30/24/19 px; testo con gli
+stili scritti su `p`, `ul`, `ol`, `li`, `a` (`nd_html_stili()`, `:369`; l'ultimo paragrafo senza margine, `nd_ultimo_p()`);
+immagini con `alt`, `width` in px dalla colonna e `height` dalle proporzioni salvate (`w`, `h`: l'editor le legge
+dall'immagine scelta), `display:block` e `max-width` (`nd_immagine()`, `:391`); pulsante a prova di Outlook: tabella con una
+cella `bgcolor` e il link dentro, `mso-padding-alt`, largo quanto la colonna se `pieno`; divisore come `border-top` di una
+cella; spaziatore come cella con `height`; social con le icone PNG di `sito/assets/email/<rete>-<stile>.png` (48 px, tre stili,
+fatte da `tools/icone-email.js` dalle icone di casa: molti programmi di posta non mostrano gli SVG), indirizzo intero con
+`nd_asset()` (`:358`, l'origine più `cms_base()`: giusto anche in cartella); video come immagine con il link (la miniatura di
+YouTube se il link è di YouTube, `nd_youtube()`, `:363`) e una riga "&#9654; testo" sotto; piede con il testo e, se acceso,
+l'indirizzo dell'azienda. Blocchi senza contenuto (immagine senza indirizzo, pulsante senza link) non escono; le sezioni
+nascoste nemmeno. Testo di anteprima nascosto (`div` con `display:none`, che `posta_testo_da_html()` toglie) e "Vedi questa
+email nel browser" come nell'editor semplice. Dove andrebbe il piede obbligatorio resta il segno `<!--nd-piede-->`.
+
+**L'email di una campagna** (`nd_email_campagna()`, `:505`, chiamata da `newsletter_email()`): `nd_html()`, poi
+`{{ doubleoptin }}` diventa la pagina della newsletter (in una campagna non ha senso), i link speciali
+(`nl_camp_link_speciali()`) e i segnaposti `{{ contact.X }}` (`newsletter_personalizza()`, in modo HTML: i valori con
+l'escape; i segnaposti sono intatti fino a qui perché i testi sono escapati senza toccare `{{ }}`), infine
+`nd_piede_obbligatorio()` (`:495`): se nell'HTML non c'è `href` con il link di uscita firmato, o la prima riga dell'indirizzo
+dell'azienda (quando è scritto), una riga in fondo al corpo li rimette. Poi, come per gli altri editor: UTM, tracciamento,
+intestazioni, testo semplice (generato dall'HTML o scritto a mano, sezione Design del riepilogo).
+
+**L'editor** (`admin/newsletter-design.php?campagna=N` o `?modello=N`): una pagina sua come l'editor delle pagine
+(`aspetti.css`, `admin.css`, `editor/editor.css`, `scegli-link.css`, `newsletter-design.css`; script `pannello.js` per Scegli dai
+Media e le conferme, Quill, SortableJS, `scegli-link.js`, `newsletter-design.js`); i dati (`#nd-dati`, `:77`): design, le
+specifiche, layout, reti, caratteri, indirizzo delle icone, i colori del sito che sono `#rrggbb` (`editor_globali()`), le
+sezioni salvate, l'indirizzo dell'azienda, `modificabile`. Una campagna già partita si apre solo da guardare (`Salva` spento,
+avviso), e il server rifiuta comunque. Azioni in POST, risposte JSON con le sezioni salvate aggiornate (`:41`-`:67`): `salva`
+(solo bozza o programmata; `editor = 'blocchi'`), `anteprima` (l'email del server con "Giulia"; per un modello `optin` senza
+piede obbligatorio), `modello` (Salva come modello: `nd_modello_crea()`, attivo se spuntato, con l'oggetto della campagna),
+`sezione_salva`, `sezione_aggiorna`, `sezione_elimina`. CSRF con `csrf_ok()` (token e origine), il design in base64
+(`campiProtetti.codifica()` nel `FormData`, `auth.php` lo rimette in chiaro).
+
+`admin/assets/newsletter-design.js`: lo stato `S` (design, selezione, storia per annulla e ripeti fino a 80 passi, con le
+modifiche dello stesso controllo raggruppate per 1,5 secondi, `cambia()` `:35`); la tela (`disegna()`, `:156`) è un disegno
+in `div` dell'email con i colori dello stile (non l'HTML della posta: quello lo fa il server e si vede in Anteprima), larga
+quanto `stile.larghezza` o 390 px in vista telefono (le colonne `.nd-impila` una sotto l'altra); il testo con la
+formattazione passa da `testoPulito()` (`:79`), lo stesso elenco chiuso del server. Trascinamento con SortableJS: tavolozza
+dei blocchi e delle sezioni e scheda Salvati in `pull: 'clone'`, colonne nel gruppo `blocchi`, l'elenco delle sezioni nel
+gruppo `sezioni` con la maniglia; il modello cambia dopo il giro di SortableJS (`setTimeout`), poi la tela si ridisegna e i
+Sortable rinascono. Tastiera: voci della tavolozza `role=button` con Invio e Spazio (il blocco entra dopo quello selezionato e
+si apre Modifica); blocchi della tela con `tabindex=0`, Invio apre Modifica, Alt+Freccia sposta (`sposta()`, `:240`: dentro
+la colonna, poi nella colonna o sezione vicina), Canc elimina; pulsanti ↑ ↓ ⧉ ★ ✕ con `aria-label`; schede ARIA del
+pannello con le frecce, Inizio e Fine; Ctrl+Z, Ctrl+Y, Ctrl+S (non dentro i campi). I controlli (`campo()`, `:304`) per tipo:
+testo, Quill per il testo con la formattazione (con `pnLink.quill`, indirizzo intero), colore con tavolozza, casella, "Come lo
+stile" e i campioni dei colori del sito, scelte, cursore con numero, interruttore, link con `pnLink.campo(..., {modo:
+'assoluto'})` e i pulsanti dei link speciali (senza "di conferma" nelle campagne), immagine con "Scegli dai Media"
+(`pnMedia.apri`, caricamento in `newsletter-immagine.php`, senza WebP) che legge e salva le misure, reti social. Salvataggio
+automatico 2,5 secondi dopo l'ultima modifica, e alla chiusura della pagina se ci sono modifiche.
+
+**Il riepilogo, sezione Design** (`admin/newsletter-campagna.php:302`): le cinque strade in riquadri (`.nd-strade`, `:306`),
+ognuna con il suo pulsante: Editor a blocchi (`editor=blocchi`; con il design vuoto parte da `nd_design_vuoto()`, `:333`, e
+si apre l'editor, `:39`), Un tuo modello (tendina dei modelli attivi, azione `usa_modello`, `:45`, `nd_campagna_da_modello()`,
+`newsletter-design.php:599`, con la conferma del pannello: il design di adesso si sostituisce), La galleria (link a
+`newsletter-modelli.php?scheda=galleria&campagna=N`), Editor semplice, Codice HTML; "In uso" sulla strada scelta. Cambiando
+strada non si perde niente: `corpo`, `html` e `design` restano nelle loro colonne. Passando al codice HTML dall'editor a
+blocchi si parte dall'HTML dei blocchi (`nl_camp_html_partenza()` con il secondo argomento). La sezione è a posto con
+almeno un blocco visibile che non sia piede, spaziatore o divisore (`nd_ha_contenuto()`, `:341`). Duplica copia anche
+`design` e `modello_id` (parte Design di `NL_CAMP_PARTI`).
+
+**Modelli** (`admin/newsletter-modelli.php`, voce "Modelli" del menu dopo Campagne email, `admin-header.php:33`): "I tuoi
+modelli" con Crea un modello (si apre l'editor), elenco con stato scritto (Attivo / Inattivo, con un segno), tipo, data,
+Modifica, Rendi attivo o inattivo, Duplica (la copia nasce inattiva), Elimina (con la conferma; se era il modello
+dell'email di conferma, l'impostazione torna 0), Rinomina, "Oggetto e uso" (oggetto e tag `optin`). Galleria (`:110`):
+`nd_galleria()` (`:577`) legge `includes/newsletter-modelli/*.json` (sei modelli fatti in casa: benvenuto, newsletter del
+mese, offerta, evento, nuovo articolo, conferma dell'iscrizione con il tag `optin`; senza immagini: colori, titoli e pulsanti,
+così pesano 4 KB in tutto e non chiamano nessun server), ogni JSON passa da `nd_design()`; l'anteprima è un `iframe` con
+`sandbox` e `srcdoc`, ridotto al 45%. Azioni: "Aggiungi ai miei modelli" (`nd_galleria_copia()`, attivo) e, arrivando da una
+campagna che si può ancora cambiare, "Usa in questa campagna" (una campagna partita: errore, niente copia). Lo slug si
+cerca fra le chiavi lette, mai come percorso.
+
+**Sezioni salvate**: la stella di una sezione apre "Salva la sezione per riusarla" (nome, Sincronizzata spuntata di
+partenza; `nd_sezione_crea()`, `:629`); sincronizzata, la sezione della tela prende `salvata = id`. Scheda Salvati: Inserisci
+(dopo la sezione selezionata, con `salvata` solo se è sincronizzata), trascinamento, Elimina (le email tengono la loro
+copia). Selezionando una sezione collegata, il pannello dice da quale viene e offre "Aggiorna in tutte le email"
+(`nd_sezione_aggiorna()`, `:647`: prima il JavaScript salva la campagna, poi il server scrive il contenuto nuovo nella
+sezione salvata e in ogni campagna in **bozza** e ogni modello a blocchi che hanno una sezione con quel `salvata`, cercati con
+`LIKE '%"salvata":ID,%'` e controllati sul JSON letto; le campagne programmate, in invio, inviate o annullate non si toccano;
+rifiutato se la sezione non è sincronizzata o non esiste) e "Scollega da quella salvata".
+
+**L'email di conferma con un modello** (`nd_doi_email()`, `:698`, impostazione letta a `:699`): con `newsletter_doi_modello` su un modello attivo con il
+tag `optin` e l'editor a blocchi, `newsletter_richiesta()` usa quello: oggetto del modello (con i segnaposti) o "Conferma
+l'iscrizione", `{{ doubleoptin }}` diventa il link di conferma (se il modello non ce l'ha, si aggiunge in fondo un pulsante
+"Confermo l'iscrizione"), i segnaposti con il nome di chi si iscrive, nessun piede obbligatorio (non è ancora iscritto). Non
+vale quando la richiesta porta le parti di un form (`opz['email']` non vuoto) o un oggetto o un testo riscritti: i form con
+la loro email di conferma la tengono, e con l'impostazione a 0 l'email è quella della 2.7.0, uguale al byte
+(`prove/prova-email-conferma.js`). Si sceglie in Modelli, riquadro "Email di conferma dell'iscrizione" (`#ndm-conferma`,
+`:168`), solo fra i modelli adatti (`nd_modelli_optin()`, `:689`; il server rifà il controllo).
+
+**Prove**: `prove/prova-editor-email.js` (ogni blocco e i suoi controlli, tastiera e trascinamento, colonne, annulla e
+ripeti, salvataggio automatico, telefono, stile, anteprima, piede rimesso, invio vero al server di posta finto con un
+validatore per la posta scritto nella prova, foto delle email a 600 e 390 px, salva come modello e riusa, galleria, modelli,
+sezione sincronizzata cambiata nelle bozze e non nelle inviate, modello di doppio opt-in, 390 px), con
+`prove/editor-email-cli.php`; attacchi del gruppo 34 in `tools/sicurezza-prova.js`; `prove/prova-ux-editor.js` (5c) e
+`prove/prova-ux-pannello.js` sulle pagine nuove.
+
 ## 16. SEO e AEO, file calcolati, feed
 
 `includes/seo.php` (configurazione e strumenti), `includes/sito-seo.php` (meta e JSON-LD delle pagine), pagina

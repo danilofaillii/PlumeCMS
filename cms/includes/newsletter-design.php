@@ -174,13 +174,13 @@ function nd_link(mixed $v): string {
     if (preg_match('~^https?://[^\s"\'<>\\\\`]+$~i', $v)) return $v;
     if (preg_match('~^mailto:[^\s"\'<>\\\\:`/]+@[^\s"\'<>\\\\`]+$~i', $v)) return $v;
     if (preg_match('~^tel:\+?[0-9 ().-]{3,30}$~i', $v)) return $v;
-    if (preg_match('~^/(?!/)[^\s"\'<>\\\\`]*$~', $v)) return nd_origine() . cms_con_cartella_percorso($v);
+    if (preg_match('~^/(?!/)[^\s"\'<>\\\\`]*$~', $v)) return nd_origine() . nd_con_cartella($v);
     if (preg_match('~^(www\.)?[a-z0-9-]+(\.[a-z0-9-]+)+(/[^\s"\'<>\\\\`]*)?$~i', $v)) return 'https://' . $v;
     return '';
 }
 
 /** Un percorso del sito con la cartella del CMS davanti (se non ce l'ha già). */
-function cms_con_cartella_percorso(string $p): string {
+function nd_con_cartella(string $p): string {
     $b = cms_sito_base();
     return $b !== '' && !str_starts_with($p, $b . '/') && $p !== $b ? $b . $p : $p;
 }
@@ -191,7 +191,7 @@ function nd_img(mixed $v): string {
     $v = trim(preg_replace('/[\x00-\x1F\x7F]+/', '', $v) ?? '');
     if ($v === '' || strlen($v) > 1000) return '';
     if (preg_match('~^https?://[^\s"\'<>\\\\`()]+$~i', $v)) return $v;
-    if (preg_match('~^/(?!/)[^\s"\'<>\\\\`()]*$~', $v)) return nd_origine() . cms_con_cartella_percorso($v);
+    if (preg_match('~^/(?!/)[^\s"\'<>\\\\`()]*$~', $v)) return nd_origine() . nd_con_cartella($v);
     return '';
 }
 
