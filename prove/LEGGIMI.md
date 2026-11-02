@@ -277,6 +277,22 @@ prova anche la tendina nell'editor. Atteso: 154 su 154, più 7 con l'editor. Da 
 (`tema-cli.php attiva cosmo|aria|bottega`). `python3 -I sito-plumecms/foglio-aperture.py <cartella foto> <cartella
 schermate>` fa il foglio delle undici per la pagina Funzionalità del sito di plumeCMS.
 
+Dalla 2.17.0 le disposizioni sono ventisei: senza elenco `prova-hero.js` le prova tutte (atteso 364, più 11 con
+l'editor). `pagina-hero.php` riempie anche i campi nuovi (righe del terminale, parola, etichette, punto della lente,
+forma; il video con `VIDEO=<url di un mp4 del sito>`); con `SUFFISSO=-nf` e la foto vuota fa `/hero-<id>-nf/`, che
+`prova-hero.js` apre con `SUFFISSO=-nf`. Con `TEMA=cosmo` (o un altro tema) e `UTENTE`, `PASSWORD` nell'ambiente le
+pagine si aprono nell'anteprima del tema, da amministratore, e le foto si chiamano `<tema>-<id>-pc.png`.
+
+## prova-aperture-nuove.js (2.17.0)
+
+I campi delle quindici disposizioni nuove, come li usa una persona. Prima `pagina-hero.php` con `VIDEO=` (con e senza foto,
+`SUFFISSO=-nf`). `node prove/prova-aperture-nuove.js <base> <utente> <password> <id di /hero-terminale/>`: righe del
+terminale scritte una alla volta e ferme con meno movimento, parola traforata con il titolo intero nell'h1, video che parte
+al clic (e la pagina senza video né prima e dopo non carica `hero-c.js`), etichette dentro la foto, lente sul punto,
+costellazione, maniglia del prima e dopo con frecce, Inizio e mouse, niente scorrimento di lato a 390 px; nell'editor i
+campi nuovi solo con la loro disposizione e la finestra Scegli in modo video. Atteso: 46 su 46. Non salva niente.
+Attacchi: gruppo 39 di `tools/sicurezza-prova.js` (con `CMS_DIR`), che usa `prove/pagina-hero-cattive.php`.
+
 ## prova-kit.js (1.3.0)
 
 I kit di partenza dell'installatore. Su una cartella appena estratta e un database vuoto (come per `prova-install.js`):

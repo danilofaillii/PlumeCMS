@@ -456,7 +456,7 @@ capitoli['11v'] = async () => {
   if (!(await tela().locator('.ed-hvi-play').count())) throw new Error('11v: nella tela non c\'è il play');
   await campo.evaluate(e => e.closest('.ed-controllo').setAttribute('data-mu', 'video'));
   await disp.evaluate(e => e.setAttribute('data-mu', 'disp'));
-  await foto('11-video', { clip: { x: 0, y: 0, width: 1200, height: 760 }, segni: [{ sel: '[data-mu=disp]', n: 2 }, { sel: '[data-mu=video]', n: 3 }] });
+  await foto('11-video', { clip: { x: 0, y: 0, width: 1200, height: 760 }, segni: [{ sel: '[data-mu=video]', n: 3 }] });
 };
 
 // 11. L'apertura della pagina
