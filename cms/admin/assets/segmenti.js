@@ -1,5 +1,5 @@
 // 2.10.0: il costruttore delle condizioni dei segmenti (admin/newsletter-segmenti.php, "Aggiungi filtro" in
-// admin/newsletter-contatti.php). Niente gestori in linea (la CSP a nonce li vieterebbe): attributi data-*.
+// admin/newsletter-contatti.php; dalla 2.15.0 le divisioni delle automazioni, window.nlsMonta). Niente gestori in linea (la CSP a nonce li vieterebbe): attributi data-*.
 //   data-nls-editor="#campo"   il costruttore: legge e scrive le regole (JSON in base64) nel campo nascosto indicato.
 //                              Gruppi di condizioni uniti da E/O, dentro ogni gruppo E/O; al massimo 100 condizioni.
 //   data-nls-conta="pagina"    conta i contatti a ogni cambio (POST azione=conta) e scrive in [data-nls-numero]
@@ -40,6 +40,7 @@
     function salva() {
       var pulite = { op: regole.op === 'o' ? 'o' : 'e', gruppi: regole.gruppi.filter(function (g) { return g.condizioni.length; }) };
       campo.value = pulite.gruppi.length ? b64(pulite) : '';
+      if (box.nlsCambio) box.nlsCambio(campo.value); // 2.15.0: la divisione delle automazioni legge le regole a ogni cambio
       conta();
     }
     function conta() {
@@ -88,6 +89,7 @@
       if (t === 'link') s = '<div class="form-group nls-largo-campo"><label for="' + id + '">Indirizzo del link</label><input type="url" id="' + id + '" data-k="valore" list="' + id + 'l" maxlength="500" value="' + h(c.valore) + '" placeholder="per esempio: https://esempio.it/offerta"><datalist id="' + id + 'l">' + (DEF.link || []).map(function (u) { return '<option value="' + h(u) + '">'; }).join('') + '</datalist></div>' + camp();
       if (t === 'form') { var f = { '0': 'Qualsiasi form' }; Object.keys(DEF.form).forEach(function (k) { f[k] = DEF.form[k]; }); s = '<div class="form-group"><label for="' + id + '">Quale form</label><select id="' + id + '" data-k="valore">' + opzioni(f, c.valore || 0) + '</select></div>' + periodo(); }
       if (t === 'lista_nera' && op === 'motivo') s = caselle('valore', DEF.motivi, c.valore, 'Motivi');
+      if (t === 'flusso_email') s = '<div class="form-group"><label for="' + id + '">Quale email</label><select id="' + id + '" data-k="valore"><option value="0">Scegli...</option>' + opzioni(DEF.flussoEmail || {}, c.valore || 0) + '</select></div>';
       if (t === 'iscritto_da' || t === 'attivita') s = '<div class="form-group nls-n"><label for="' + id + 'n">' + (t === 'attivita' ? 'Negli ultimi (giorni)' : 'Giorni') + '</label><input type="number" id="' + id + 'n" data-k="n" min="' + (t === 'attivita' ? 1 : 0) + '" max="36500" value="' + h(c.n || 30) + '"></div>';
       return s;
     }
@@ -173,6 +175,9 @@
   }
 
   document.querySelectorAll('[data-nls-editor]').forEach(function (b) { new Editor(b); });
+  // 2.15.0: la tela delle automazioni monta il costruttore nel pannello di una divisione (e cambia DEF.flussoEmail).
+  window.nlsDef = DEF;
+  window.nlsMonta = function (b) { return new Editor(b); };
   // Salva come segmento: il form della finestra prende le regole del filtro al momento dell'invio.
   document.addEventListener('submit', function (ev) {
     ev.target.querySelectorAll('[data-nls-copia]').forEach(function (i) { var d = document.querySelector(i.getAttribute('data-nls-copia')); if (d) i.value = d.value; });

@@ -34,7 +34,9 @@ const PIU = ['seo.php?scheda=motori', 'seo.php?scheda=copertura', 'seo.php?sched
   'newsletter-campagna.php?id=2&apri=ab', 'newsletter-campagna.php?id=2&versione=b&apri=design', 'newsletter-campagna.php?id=2&versione=b&apri=prova',
   // 2.14.0: il report (la campagna 1 partita, se c'è; altrimenti si torna al riepilogo), le statistiche a schede, l'orario migliore
   'newsletter-report.php?id=1', 'newsletter-report.php?id=1&scheda=aperture', 'newsletter-report.php?id=1&scheda=clic', 'newsletter-report.php?id=1&scheda=uscite',
-  'newsletter-report.php?id=1&scheda=rimbalzi', 'newsletter-statistiche.php?periodo=tutto', 'newsletter-statistiche.php?scheda=liste', 'newsletter-campagna.php?id=1&apri=migliore'];
+  'newsletter-report.php?id=1&scheda=rimbalzi', 'newsletter-statistiche.php?periodo=tutto', 'newsletter-statistiche.php?scheda=liste', 'newsletter-campagna.php?id=1&apri=migliore',
+  // 2.15.0: le automazioni (la 1 deve esserci: la tela, l'attività e registro, un modello aperto)
+  'newsletter-flussi.php?id=1', 'newsletter-flussi.php?id=1&scheda=attivita', 'newsletter-flussi.php?nuovo=1&modello=benvenuto'];
 
 // La misura dentro la pagina: tutto quello che serve sta qui, la pagina non carica niente.
 function misura() {

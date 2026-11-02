@@ -74,7 +74,7 @@ require_once __DIR__ . '/includes/admin-header.php';
     <ul>
       <li>fa partire le campagne programmate quando arriva la loro ora;</li>
       <li>manda le email a piccoli giri, senza superare il limite orario della newsletter;</li>
-      <li>fa avanzare i flussi automatici (per esempio il benvenuto ai nuovi iscritti).</li>
+      <li>fa avanzare le automazioni (per esempio il benvenuto ai nuovi iscritti).</li>
     </ul>
   </div>
 

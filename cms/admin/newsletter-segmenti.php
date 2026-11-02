@@ -192,7 +192,7 @@ require_once __DIR__ . '/includes/admin-header.php';
       <?php if ($tutti): ?><form method="post"><?= csrf_field() ?><input type="hidden" name="azione" value="ricalcola"><button class="btn btn-secondary btn-sm" type="submit">Aggiorna i numeri</button></form><?php endif; ?>
     </div>
   </div>
-  <p class="hint" style="margin-top:0">Un segmento raccoglie i contatti che rispettano delle condizioni (attributi, liste, email aperte o cliccate, form inviati, lista nera) e si aggiorna da solo. Lo carichi nella pagina Contatti, lo esporti, ne fai una lista; dai flussi lo usi nei bivi.</p>
+  <p class="hint" style="margin-top:0">Un segmento raccoglie i contatti che rispettano delle condizioni (attributi, liste, email aperte o cliccate, form inviati, lista nera) e si aggiorna da solo. Lo carichi nella pagina Contatti, lo esporti, ne fai una lista; nelle automazioni lo usi nelle divisioni e nelle condizioni di uscita.</p>
   <?php if ($tutti): ?>
   <form method="get" class="nlx-filtri" role="search" aria-label="Cerca i segmenti">
     <div class="form-group"><label for="nls-cerca">Cerca un segmento</label><input type="search" id="nls-cerca" name="cerca" value="<?= h($cerca) ?>" placeholder="per esempio: clienti"></div>

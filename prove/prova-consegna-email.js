@@ -315,7 +315,7 @@ const decodifica = eml => eml.replace(/\r?\n\r?\n([A-Za-z0-9+\/=\r\n]{40,})/g, (
     await vai('/admin/newsletter-flussi.php?nuovo=1');
     const opzFl = await p.locator('#fl-mittente option').count();
     ok('C. il flusso ha la tendina del mittente (predefinito e i due confermati)', opzFl === 3, opzFl);
-    await p.fill('input[name=nome]', 'Flusso con Anna'); await p.check('input[name=attivo]'); await p.selectOption('#fl-mittente', String(anna));
+    await p.fill('input[name=nome]', 'Flusso con Anna'); if (await p.locator('#fl-stato').count()) await p.selectOption('#fl-stato', 'attiva'); else await p.check('input[name=attivo]'); // 2.15.0: lo stato dell'automazione await p.selectOption('#fl-mittente', String(anna));
     await Promise.all([p.waitForNavigation(), p.click('.fl-testa button[type=submit]')]);
     const fl = +uno("SELECT id FROM {p}newsletter_flussi WHERE nome = 'Flusso con Anna' ORDER BY id DESC LIMIT 1");
     ok('C. il flusso salva il mittente scelto', fl > 0 && +uno('SELECT mittente_id FROM {p}newsletter_flussi WHERE id = ' + fl) === anna, fl);

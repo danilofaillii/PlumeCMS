@@ -1,6 +1,7 @@
 <?php
 /**
- * L'editor delle email a blocchi (2.12.0): newsletter-design.php?campagna=N oppure ?modello=N.
+ * L'editor delle email a blocchi (2.12.0): newsletter-design.php?campagna=N oppure ?modello=N; dalla 2.15.0 anche
+ * ?flusso=F&nodo=N, il passo Email di un'automazione (il design sta nel grafo, nl_aut_design_salva()).
  * Pannello a sinistra (Contenuti, Modifica, Stile, Salvati), tela con computer e telefono, annulla e ripeti, salvataggio
  * automatico. Le azioni arrivano in POST da admin/assets/newsletter-design.js e rispondono in JSON; il design viaggia in
  * base64 (campi-protetti.js) e si pulisce sempre con nd_design() (includes/newsletter-design.php). Solo amministratore.
@@ -16,12 +17,16 @@ $cid = (int)($_GET['campagna'] ?? 0);
 $mid = (int)($_GET['modello'] ?? 0);
 $camp = $cid ? newsletter_campagna($cid) : null;
 $mod = !$camp && $mid ? nd_modello($mid) : null;
-if (!$camp && (!$mod || $mod['editor'] !== 'blocchi')) { header('Location: ' . ($mid ? 'newsletter-modelli.php' : 'newsletter.php')); exit; }
-$modificabile = $mod || newsletter_campagna_modificabile($camp);
+$fid = (int)($_GET['flusso'] ?? 0); $nid = (int)($_GET['nodo'] ?? 0);
+$flu = !$camp && !$mod && $fid ? newsletter_flusso($fid) : null;
+$fnodo = $flu ? newsletter_flusso_nodo($flu['grafo'], $nid) : null;
+if ($fnodo && $fnodo['tipo'] !== 'email') $fnodo = null;
+if (!$camp && !$fnodo && (!$mod || $mod['editor'] !== 'blocchi')) { header('Location: ' . ($mid ? 'newsletter-modelli.php' : ($fid ? 'newsletter-flussi.php' : 'newsletter.php'))); exit; }
+$modificabile = $mod || $fnodo || newsletter_campagna_modificabile($camp);
 // 2.13.0: ?versione=b, il design della versione B di un test A/B sul contenuto (includes/newsletter-ab.php).
 $verB = $camp && ($_GET['versione'] ?? '') === 'b' && $camp['tipo'] === 'ab' && function_exists('nl_ab') && nl_ab($cid)['cosa'] === 'design';
 if ($verB) $camp = nl_ab_versione($camp, 'b');
-$indietro = $camp ? 'newsletter-campagna.php?id=' . $cid . ($verB ? '&versione=b' : '') . '&apri=design#sez-design' : 'newsletter-modelli.php';
+$indietro = $camp ? 'newsletter-campagna.php?id=' . $cid . ($verB ? '&versione=b' : '') . '&apri=design#sez-design' : ($fnodo ? 'newsletter-flussi.php?id=' . $fid : 'newsletter-modelli.php');
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     header('Content-Type: application/json; charset=utf-8');
@@ -48,6 +53,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 if (!$c || !newsletter_campagna_modificabile($c)) $risposta(['errore' => 'Questa campagna è già partita: il design non si cambia più.']);
                 if ($verB) nl_ab_scrivi_b($cid, ['editor' => 'blocchi', 'design' => nd_json($d)]);
                 else db()->prepare('UPDATE ' . tbl('newsletter_campagne') . " SET editor = 'blocchi', design = ?, aggiornato = NOW() WHERE id = ?")->execute([nd_json($d), $cid]);
+            } elseif ($fnodo) {
+                nl_aut_design_salva($fid, $nid, nd_json($d));
             } else {
                 nd_modello_cambia($mid, ['design' => nd_json($d)]);
             }
@@ -55,7 +62,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         case 'anteprima':
             // L'email di conferma (tag optin) non è una campagna: niente piede obbligatorio, il pulsante porta il link di conferma.
             if ($mod && $mod['tag'] === 'optin') $risposta(['html' => newsletter_personalizza(str_replace(['<!--nd-piede-->', '{{ doubleoptin }}'], ['', '#'], nd_html($d, ['oggetto' => (string)$mod['oggetto']])), ['id' => 0, 'nome' => 'Giulia', 'email' => ''], true), 'oggetto' => newsletter_4byte_fuori((string)$mod['oggetto'])]);
-            $c =($camp ?: ['id' => 0, 'oggetto' => newsletter_4byte_fuori((string)$mod['oggetto']), 'anteprima' => '']) + ['link_web' => 0, 'link_preferenze' => 0];
+            $c = ($camp ?: ($fnodo ? nl_email_campagna($flu, $fnodo['dati']) : ['id' => 0, 'oggetto' => newsletter_4byte_fuori((string)$mod['oggetto']), 'anteprima' => ''])) + ['link_web' => 0, 'link_preferenze' => 0];
             $c['editor'] = 'blocchi'; $c['design'] = nd_json($d); $c['utm'] = 0;
             [$ogg, $html] = newsletter_email($c, ['id' => 0, 'nome' => 'Giulia', 'email' => ''], []);
             $risposta(['html' => $html, 'oggetto' => $ogg]);
@@ -75,8 +82,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $risposta(['errore' => 'Azione sconosciuta.']);
 }
 
-$design = nd_design((string)($camp ? $camp['design'] : $mod['design'])) ?? nd_design_vuoto();
-$nome = (newsletter_4byte_fuori((string)($camp ? ($camp['nome'] ?: $camp['oggetto']) : $mod['nome'])) ?: 'Email senza nome') . ($verB ? ' (versione B)' : '');
+$design = nd_design((string)($camp ? $camp['design'] : ($fnodo ? $fnodo['dati']['design'] : $mod['design']))) ?? nd_design_vuoto();
+$nome = (newsletter_4byte_fuori((string)($camp ? ($camp['nome'] ?: $camp['oggetto']) : ($fnodo ? $fnodo['dati']['oggetto'] : $mod['nome']))) ?: 'Email senza nome') . ($verB ? ' (versione B)' : '');
+$torna = $camp ? 'Torna al riepilogo della campagna' : ($fnodo ? 'Torna all\'automazione' : 'Torna ai modelli');
 $colori = [];
 foreach ((function () { require_once dirname(__DIR__) . '/includes/editor.php'; return editor_globali()['colori'] ?? []; })() as $g) if (nd_colore($g['valore'] ?? '')) $colori[] = ['nome' => (string)$g['nome'], 'valore' => nd_colore($g['valore'])];
 $dati = [
@@ -103,8 +111,8 @@ $dati = [
 <body class="ed-app nd-app">
 <a class="admin-salta" href="#nd-tela">Vai alla tela dell'email</a>
 <header class="ed-barra">
-  <a class="ed-indietro" href="<?= h($indietro) ?>" aria-label="<?= $camp ? 'Torna al riepilogo della campagna' : 'Torna ai modelli' ?>" title="<?= $camp ? 'Torna al riepilogo della campagna' : 'Torna ai modelli' ?>">&larr;</a>
-  <div class="ed-nome"><b><?= h($nome) ?></b><small><?= $camp ? 'Campagna: il design dell\'email' : 'Modello di email' ?></small></div>
+  <a class="ed-indietro" href="<?= h($indietro) ?>" aria-label="<?= h($torna) ?>" title="<?= h($torna) ?>">&larr;</a>
+  <div class="ed-nome"><b><?= h($nome) ?></b><small><?= $camp ? 'Campagna: il design dell\'email' : ($fnodo ? 'Automazione «' . h($flu['nome']) . '»: email #' . $nid : 'Modello di email') ?></small></div>
   <div class="ed-misure nd-misure" role="group" aria-label="Larghezza della tela">
     <button type="button" data-nd-misura="pc" class="attivo" aria-pressed="true" title="Come su un computer">&#128421;<span class="sr-solo">Computer</span></button>
     <button type="button" data-nd-misura="tel" aria-pressed="false" title="Come su un telefono (390 px)">&#9647;<span class="sr-solo">Telefono</span></button>

@@ -24,6 +24,8 @@
 // 2.13.0: il capitolo 19n (il test A/B) gira da solo: SOLO_CAPITOLI=19n, con CMS_DIR_MANUALE e POSTA_MANUALE.
 // 2.14.0: il capitolo 19o (report, statistiche, orario migliore; rifà anche 19-programma e 23-consegna-statistiche) gira da
 //   solo: SOLO_CAPITOLI=19o, con CMS_DIR_MANUALE e POSTA_MANUALE e TMPDIR vuota.
+// 2.15.0: il capitolo 19p (le automazioni, al posto della foto 19-flussi) gira da solo: SOLO_CAPITOLI=19p, con CMS_DIR_MANUALE e
+//   POSTA_MANUALE e TMPDIR vuota.
 const { chromium } = require('playwright');
 const pnConferme = require('../prove/conferme-pannello'); // UX 2026-11: conferme del pannello
 const fs = require('fs');
@@ -689,8 +691,7 @@ capitoli['19'] = async () => {
   // 2.12.0: le cinque strade del design sono riquadri con il loro pulsante; l'editor semplice è quello in uso.
   await foto('19-design', { sel: '#sez-design', margine: 6, altezza: 1180, segni: [{ sel: '#sez-design .nd-strade', n: 1 }, { sel: '#editor', n: 2 }, { sel: '#pulsante_testo', n: 3 }] });
   await Promise.all([p.waitForNavigation(), p.click('#nl-form button[type=submit]')]);
-  await vai('newsletter-flussi.php?nuovo=1');
-  await foto('19-flussi', { clip: { x: 240, y: 56, width: 960, height: 600 } });
+  // 2.15.0: le foto delle automazioni sono nel capitolo 19p.
 };
 
 // 19i. Importare ed esportare i contatti, la lista dei test (2.9.0, come Brevo). Un file CSV vero, i quattro passi, il
@@ -913,6 +914,35 @@ capitoli['19n'] = async () => {
   await Promise.all([p.waitForNavigation(), p.click('#sez-ab button[type=submit]')]);
   await vai(`newsletter-campagna.php?id=${idD}&versione=b&apri=design`);
   await foto('19n-versioni', { sel: '#sez-design', margine: 6, altezza: 420, segni: [{ sel: '#sez-design .nlr-versioni', n: 1 }, { sel: '#sez-design .nd-strade', n: 2 }] });
+};
+
+// 19p. Le automazioni (2.15.0). Gira da solo: SOLO_CAPITOLI=19p, con CMS_DIR_MANUALE e POSTA_MANUALE. Il modello Benvenuto
+// usato come lo userebbe una persona; dodici iscritti entrano, le email partono davvero, alcune si aprono (come dal pixel).
+capitoli['19p'] = async () => {
+  const DIRM = process.env.CMS_DIR_MANUALE;
+  if (!DIRM) throw new Error('19p: serve CMS_DIR_MANUALE');
+  const cli = (...a) => JSON.parse(require('child_process').execFileSync('php', [path.join(__dirname, '..', 'prove', 'automazioni-cli.php'), DIRM, ...a.map(String)], { encoding: 'utf8' }).trim().split('\n').pop());
+  await postaFinta();
+  cli('smtp', POSTA_PORTA);
+  await vai('newsletter-flussi.php');
+  await foto('19p-crea', { sel: '#fl-crea', margine: 6, segni: [{ sel: '#fl-crea .fl-modello:first-child a', n: 1 }, { sel: '[data-modello=benvenuto] a', n: 2 }] });
+  await Promise.all([p.waitForNavigation(), p.click('[data-modello=benvenuto] a')]);
+  await p.fill('#fl-nome', 'Benvenuto ai nuovi clienti');
+  await p.fill('#fl-tag', 'benvenuto');
+  await p.selectOption('#fl-stato', 'attiva');
+  await Promise.all([p.waitForNavigation(), p.click('#fl-form button[value=salva]')]);
+  const idF = new URL(p.url()).searchParams.get('id');
+  const nomi = ['Anna', 'Bruno', 'Carla', 'Davide', 'Elisa', 'Franco', 'Giada', 'Ivo', 'Laura', 'Marco', 'Nora', 'Paolo'];
+  const ids = nomi.map((n, k) => cli('contatto', `nuovo-cliente${k + 1}@esempio.it`, n, 0));
+  for (const i of ids) cli('innesco', 'iscrizione', 0, i);
+  cli('giro');
+  for (const i of ids.slice(0, 7)) cli('evento', 'apertura', idF, 1, i);
+  for (const i of ids.slice(0, 3)) cli('evento', 'clic', idF, 1, i);
+  await vai('newsletter-flussi.php?id=' + idF);
+  await p.locator('.fl-nodo[data-id="1"] .fl-nodo-corpo').click();
+  await foto('19p-tela', { clip: { x: 240, y: 56, width: 1200, height: 760 }, segni: [{ sel: '#fl-nome', n: 1 }, { sel: '#fl-stato', n: 2 }, { sel: '.fl-schede', n: 3 }, { sel: '.fl-nodo[data-id="1"] .fl-nodo-numeri', n: 4 }, { sel: '.fl-nodo[data-id="2"] .fl-nodo-numeri', n: 5 }, { sel: '#fl-form button[value=salva]', n: 6 }] });
+  await vai(`newsletter-flussi.php?id=${idF}&scheda=attivita`);
+  await foto('19p-attivita', { sel: '#fl-dentro', margine: 6, altezza: 420, segni: [{ sel: '#fl-passo', n: 1 }, { sel: '#fl-dentro tbody tr:first-child button', n: 2 }] });
 };
 
 // 19o. Il report della campagna, le statistiche e l'orario migliore (2.14.0). Gira da solo: SOLO_CAPITOLI=19o, con

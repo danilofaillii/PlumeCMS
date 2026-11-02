@@ -688,6 +688,8 @@ function newsletter_esci(int $id, string $motivo = 'unsubscribedViaEmail'): void
     if ($st->rowCount()) newsletter_storia_scrivi($id, 'bloccato', NL_MOTIVI[$motivo][0]);
     // Chi esce non riceve più niente, neanche le email già in coda.
     db()->prepare('DELETE FROM ' . tbl('newsletter_coda') . " WHERE iscritto_id = ? AND stato = 'attesa'")->execute([$id]);
+    // 2.15.0: l'innesco "si disiscrive" delle automazioni.
+    if ($st->rowCount()) newsletter_flussi_innesco('disiscritto', 0, $id);
 }
 
 /** Il server di posta ha rifiutato l'indirizzo per sempre (5xx): non riceve più niente, né campagne né flussi. */
@@ -716,7 +718,7 @@ function newsletter_togli_iscritti(array $ids): void {
     if (!$ids) return;
     newsletter_flussi_schema();
     $in = implode(',', $ids);
-    foreach (['newsletter_coda', 'newsletter_iscritti_liste', 'newsletter_conferme', 'newsletter_inneschi_attesa', 'newsletter_eventi', 'newsletter_corsi'] as $t) {
+    foreach (['newsletter_coda', 'newsletter_iscritti_liste', 'newsletter_conferme', 'newsletter_inneschi_attesa', 'newsletter_eventi', 'newsletter_corsi', 'newsletter_flussi_registro'] as $t) {
         db()->exec('DELETE FROM ' . tbl($t) . " WHERE iscritto_id IN ($in)");
     }
     // 2.8.0: attributi, storia, consensi e uscite dalle liste.
@@ -765,6 +767,8 @@ function newsletter_pulizia(bool $forza = false): array {
     db()->exec('DELETE FROM ' . tbl('newsletter_inneschi_attesa') . ' WHERE creato < DATE_SUB(NOW(), INTERVAL 40 DAY)');
     // 2.9.0: importazioni in bozza di un giorno, scarti ed esportazioni di 7 giorni.
     if (function_exists('newsletter_importa_pulizia')) { try { newsletter_importa_pulizia(); } catch (Throwable $e) { $log[] = 'ERRORE pulizia dei file dei contatti: ' . $e->getMessage(); } }
+    // 2.15.0: il registro delle automazioni più vecchio di 90 giorni.
+    if (function_exists('nl_aut_pulizia') && ($n = nl_aut_pulizia())) $log[] = "registro delle automazioni: $n righe vecchie tolte";
     return $log;
 }
 
@@ -1044,3 +1048,4 @@ require_once __DIR__ . '/newsletter-campagne.php'; // 2.11.0: campagne a riepilo
 require_once __DIR__ . '/newsletter-design.php'; // 2.12.0: editor delle email a blocchi, modelli, sezioni salvate
 require_once __DIR__ . '/newsletter-ab.php'; // 2.13.0: il test A/B delle campagne
 require_once __DIR__ . '/newsletter-report.php'; // 2.14.0: report delle campagne, statistiche, orario migliore
+require_once __DIR__ . '/newsletter-automazioni.php'; // 2.15.0: automazioni (azioni, webhook, modelli, statistiche per passo, attività)

@@ -281,6 +281,7 @@ const numeroIt = (x) => String(x).replace(/\B(?=(\d{3})+(?!\d))/g, '.');
   await vai('newsletter-flussi.php?id=' + fl);
   const dati = await p.evaluate(() => ({ c: !!FL_DATI.condizioni.in_segmento, s: Object.values(FL_DATI.segmenti || {}) }));
   ok('flussi: il bivio offre "Fa parte di un segmento" con i segmenti salvati', dati.c && dati.s.includes('SG VIP che cliccano'), dati);
+  if (await p.locator('#fl-scheda-regole').count()) await p.click('#fl-scheda-regole'); // 2.15.0: le regole stanno nella loro scheda
   await p.click('.fl-pezzo[data-tipo="bivio"]');
   await p.selectOption('#fp-cond', 'in_segmento');
   ok('flussi: scelto il segmento nel pannello del bivio', (await p.locator('#fp-val option').count()) >= 3);
@@ -288,7 +289,7 @@ const numeroIt = (x) => String(x).replace(/\B(?=(\d{3})+(?!\d))/g, '.');
   ok('flussi: il flusso col bivio sul segmento si salva', /in_segmento/.test(uno(`SELECT passi FROM {p}newsletter_flussi WHERE id = ${fl}`)), await flash());
   const usaId = +JSON.parse(uno(`SELECT passi FROM {p}newsletter_flussi WHERE id = ${fl}`)).nodi.filter(x => x.tipo === 'bivio').pop().dati.valore;
   await vai('newsletter-segmenti.php?id=' + usaId);
-  ok('un segmento usato da un flusso non si elimina e lo dice', (await p.locator('button:has-text("Elimina il segmento")').count()) === 0 && /il flusso «SG Flusso»/.test(await testo()));
+  ok('un segmento usato da un flusso non si elimina e lo dice', (await p.locator('button:has-text("Elimina il segmento")').count()) === 0 && /(il flusso|l'automazione) «SG Flusso»/.test(await testo()));
 
   // ===== Elimina un segmento libero
   await vai('newsletter-segmenti.php?id=' + sV);

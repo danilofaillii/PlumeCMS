@@ -2447,15 +2447,63 @@ con l'email di conferma usa i suoi testi, e per le parti che lasci vuote nel for
 
 Per tornare all'email di partenza svuota i campi e salva.
 
-### I flussi automatici
+### Le automazioni
 
-**Flussi automatici** sono email che partono da sole: il benvenuto a chi si iscrive, un promemoria dopo qualche giorno,
-un'email diversa a chi ha aperto e a chi no. Si disegnano su una tela con quattro blocchi: **Email**, **Attesa**,
-**Bivio**, **Fine**. Il **Bivio** manda la persona per il Sì o per il No secondo una condizione: sta in una lista, ha
-aperto o cliccato un'email del flusso, è attiva o no da tanti giorni, è iscritta da tanti giorni e, dalla 2.10.0, **fa
-parte di un segmento** (o non ne fa parte): il segmento si controlla quando la persona arriva al bivio.
+Le **automazioni** sono email (e altre azioni) che partono da sole: il benvenuto a chi si iscrive, gli auguri il giorno del
+compleanno, un'email diversa a chi ha aperto e a chi no, un "ci manchi" a chi non legge più. Le trovi in **Newsletter e form >
+Automazioni**. Ognuna ha:
 
-![Un flusso nuovo](immagini/manuale-uso/19-flussi.jpg)
+- uno o più **inneschi**: quando una persona entra (si iscrive, entra in una lista, viene tolta da una lista, compila un form,
+  apre o clicca una campagna, non apre niente da tanti giorni, si disiscrive, compie l'anniversario di una data, oppure la
+  aggiungi tu a mano). Basta uno degli inneschi;
+- dei **blocchi** collegati su una tela. Le **azioni**: Email, Aggiungi a una lista, Togli da una lista, Aggiorna un attributo,
+  Webhook (manda i dati del contatto a un altro servizio, solo indirizzi https). Le **regole**: Attesa (almeno 1 minuto),
+  Attendi un evento (aspetta che apra o clicchi, al massimo per un tempo), Sì o No, Divisione condizionale (più rami, ognuno
+  con le sue condizioni come nei segmenti, più "altrimenti"), Divisione in percentuale (per esempio 50 e 50), Fine;
+- uno **stato**: **Attiva** (entra chi fa una delle cose degli inneschi), **In pausa** (non entra nessuno di nuovo, chi è
+  dentro prosegue), **Inattiva** (non entra nessuno e chi è dentro viene tolto).
+
+![Crea un'automazione: da zero o da un modello](immagini/manuale-uso/19p-crea.jpg)
+
+**Esempio: il benvenuto ai nuovi clienti.**
+
+1. Vai in **Newsletter e form > Automazioni** e, sotto **Crea un'automazione**, premi **Usa il modello Benvenuto** (1 nella
+   figura sopra; **Crea da zero** apre una tela con un'email sola). Il modello non si salva finché non premi Salva.
+2. In alto scrivi il nome (per esempio "Benvenuto ai nuovi clienti") e un tag, se ti servono per ritrovarle.
+3. A sinistra, scheda **Inneschi**: c'è già "Si iscrive alla newsletter". Con **+ Aggiungi un innesco** puoi aggiungerne altri
+   (per esempio "Entra in una lista: Clienti").
+4. Clicca il blocco **Email** sulla tela: a destra scrivi oggetto e testo (Testo semplice), oppure scegli **Editor a blocchi** e
+   premi **Salva e apri l'editor a blocchi** (lo stesso delle campagne, capitolo 20, "L'editor a blocchi"; con la freccia in
+   alto torni alla tela). Sotto scegli **Quando parte**: appena arriva, a un'ora precisa o all'orario migliore di ogni persona.
+5. Per aggiungere un passo, scegli il blocco dopo cui va, apri la scheda **Azioni** o **Regole** e clicca il pezzo (o premi
+   Invio): entra sotto il blocco scelto, già collegato. Per collegare a mano, tira dal pallino di un'uscita fino al blocco.
+6. Nella barra in alto metti lo **Stato** su **Attiva** e premi **Salva**. Il messaggio verde dice cosa succede adesso.
+
+![La tela di un'automazione con i numeri di ogni passo](immagini/manuale-uso/19p-tela.jpg)
+
+Nella figura: (1) il nome, (2) lo stato, (3) le schede Inneschi, Azioni e Regole, (4) i numeri dell'email (inviate, aperture,
+clic, con i tassi), (5) quanti aspettano all'Attesa adesso e quanti ci sono passati, (6) Salva. A destra le impostazioni del
+blocco scelto (qui l'email: oggetto, anteprima, mittente, contenuto e, più sotto, quando parte). Su ogni blocco leggi quanti ci sono adesso e quanti ci sono passati;
+su ogni uscita quanti l'hanno presa. Sopra la tela: entrati, in corso, finiti, usciti.
+
+**Le impostazioni** (scheda Inneschi, **Impostazioni**): **Chi ha finito può rientrare**, dopo quante ore (senza la spunta
+ognuno passa una volta sola; l'anniversario rientra comunque una volta l'anno); **Esce prima della fine quando** si disiscrive
+o entra in un segmento (si controlla a ogni giro, anche durante un'attesa); il **mittente** delle email (ogni email può
+sceglierne uno suo).
+
+**Errori che il Salva ti segnala**: un'email senza oggetto, una divisione in percentuale che non fa 100, un ramo senza
+condizioni, un webhook che non è https o porta a questo server, un collegamento che torna indietro (un'automazione va sempre
+avanti), più di 100 blocchi.
+
+**Attività e registro.** In alto, accanto a **Tela**, la scheda **Attività e registro**: chi è dentro adesso (filtrabile per
+passo), con **Togli** per toglierlo dall'automazione; **Aggiungi un contatto a mano** (serve l'innesco "Aggiunto a mano dal
+pannello"); il **registro** degli ultimi 90 giorni: chi è entrato, quali email ha ricevuto, quale ramo ha preso, l'esito dei
+webhook, chi è uscito e perché. Puoi cercare una persona per email.
+
+![Attività: chi è dentro, al passo, con Togli](immagini/manuale-uso/19p-attivita.jpg)
+
+I flussi automatici fatti prima della 2.15.0 sono diventati automazioni da soli: chi era a metà arriva in fondo con le stesse
+email. Un flusso che era spento è ora **Inattiva**.
 
 **Checklist**
 
@@ -2468,6 +2516,9 @@ parte di un segmento** (o non ne fa parte): il segmento si controlla quando la p
   `{{ contact.NOME_ATTRIBUTO }}`.
 - [ ] Le liste stanno in cartelle con un nome chiaro; nessuna lista vuota dimenticata.
 - [ ] Tolgo qualcuno dalla lista nera solo dalla sua scheda, e solo se mi ha dato di nuovo il consenso.
+- [ ] Ogni automazione Attiva ha almeno un innesco, e l'ho provata aggiungendo me stesso (innesco "Aggiunto a mano") prima di
+  lasciarla andare; nella scheda Attività e registro vedo la mia email passare.
+- [ ] Un'automazione che non uso più è Inattiva (o eliminata), non dimenticata in pausa.
 - [ ] Se ho cambiato l'email di conferma: mi sono mandato la prova, e mi sono iscritto io una volta dal sito, premendo il
   pulsante dell'email vera.
 
@@ -2945,10 +2996,11 @@ poche email al giorno e sale da solo.
 Le email che non entrano nel limite di oggi partono il giorno dopo. Conferme di iscrizione e avvisi dei form partono
 sempre. Anche la pagina **Newsletter e form > Campagne** dice "Riscaldamento acceso, giorno ...".
 
-#### 6. Il mittente di una campagna o di un flusso
+#### 6. Il mittente di una campagna o di un'automazione
 
 - Campagna: **Newsletter e form > Campagne email**, apri la campagna, sezione **Mittente**, scegli dalla tendina, poi **Salva il mittente**.
-- Flusso: **Newsletter e form > Flussi automatici**, apri il flusso, a sinistra **Mittente**, poi **Salva**.
+- Automazione: **Newsletter e form > Automazioni**, apri l'automazione, a sinistra **Impostazioni > Mittente delle email** (oppure
+  il mittente di una sola email, nel suo blocco), poi **Salva**.
 
 Nelle tendine ci sono solo i mittenti confermati. "Il predefinito" segue il mittente predefinito anche se lo cambi dopo.
 
@@ -2983,7 +3035,7 @@ quando qualcuno lo visita. Con il cron:
 - ogni mattina ti arrivano le email "Oggi sul sito" e "Social di oggi" (capitolo 21);
 - ogni mattina il sito applica gli aggiornamenti programmati, avvisa i motori di ricerca (IndexNow) delle pagine nuove o
   cambiate e fa i compiti dei moduli installati;
-- i flussi automatici della newsletter vanno avanti (il benvenuto ai nuovi iscritti, i promemoria).
+- le automazioni della newsletter vanno avanti (il benvenuto ai nuovi iscritti, i promemoria).
 
 Si imposta una volta, nel pannello dell'hosting. La pagina **Impostazioni > Log cron** ti dà le righe già pronte.
 

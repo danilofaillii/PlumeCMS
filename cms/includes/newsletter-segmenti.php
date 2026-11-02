@@ -130,7 +130,7 @@ function newsletter_regole_campi(bool $flusso = false): array {
         'attivita' => ['Email', 'Aperture e clic recenti (qualsiasi email)', 'attivita'],
         'form' => ['Form', 'Form inviato', 'form'],
     ];
-    if ($flusso) $c['flusso_email'] = ['Questo flusso', 'Email di questo flusso', 'flusso_email'];
+    if ($flusso) $c['flusso_email'] = ['Questa automazione', 'Email di questa automazione', 'flusso_email'];
     return $c;
 }
 
@@ -297,7 +297,7 @@ function newsletter_condizione_valida($c, array $campi, array $ctx) {
             return $out;
         case 'flusso_email':
             $v = $num('valore');
-            if ($v <= 0) return 'scegli l\'email del flusso.';
+            if ($v <= 0) return 'scegli l\'email dell\'automazione.';
             $out['valore'] = $v;
             return $out;
     }
@@ -687,8 +687,12 @@ function newsletter_segmento_usato(int $id): array {
             if (($c['campo'] ?? '') === 'segmento' && nl_seg_int($c['valore'] ?? 0) === $id) { $out[] = 'il segmento «' . newsletter_4byte_fuori($s['nome']) . '»'; break 2; }
         }
     }
+    // 2.15.0: anche le divisioni a più rami e le condizioni di uscita delle automazioni.
+    $usa = function (array $r) use ($id) { foreach ($r['gruppi'] ?? [] as $g) foreach ((array)($g['condizioni'] ?? []) as $c) if (($c['campo'] ?? '') === 'segmento' && nl_seg_int($c['valore'] ?? 0) === $id) return true; return false; };
     foreach (newsletter_flussi() as $f) foreach ($f['grafo']['nodi'] as $n) {
-        if ($n['tipo'] === 'bivio' && in_array($n['dati']['condizione'], ['in_segmento', 'non_in_segmento'], true) && (int)$n['dati']['valore'] === $id) { $out[] = 'il flusso «' . $f['nome'] . '»'; break; }
+        $si = ($n['tipo'] === 'bivio' && in_array($n['dati']['condizione'], ['in_segmento', 'non_in_segmento'], true) && (int)$n['dati']['valore'] === $id)
+            || ($n['tipo'] === 'dividi' && array_filter($n['dati']['rami'], fn($r) => $usa($r['regole']))) || (int)($f['uscita']['segmento'] ?? 0) === $id;
+        if ($si) { $out[] = 'l\'automazione «' . $f['nome'] . '»'; break; }
     }
     return array_values(array_unique($out));
 }

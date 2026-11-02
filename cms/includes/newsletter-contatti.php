@@ -569,7 +569,10 @@ function newsletter_togli_da_liste(array $ids, array $liste = []): int {
         $w = $liste ? ' AND lista_id IN (' . implode(',', $liste) . ')' : '';
         $righe = db()->query('SELECT iscritto_id, lista_id FROM ' . tbl('newsletter_iscritti_liste') . " WHERE iscritto_id IN ($in)$w")->fetchAll();
         db()->exec('DELETE FROM ' . tbl('newsletter_iscritti_liste') . " WHERE iscritto_id IN ($in)$w");
-        foreach ($righe as $r) newsletter_storia_scrivi((int)$r['iscritto_id'], 'lista_tolto', newsletter_nome_lista((int)$r['lista_id']), (int)$r['lista_id']);
+        foreach ($righe as $r) {
+            newsletter_storia_scrivi((int)$r['iscritto_id'], 'lista_tolto', newsletter_nome_lista((int)$r['lista_id']), (int)$r['lista_id']);
+            newsletter_flussi_innesco('lista_tolto', (int)$r['lista_id'], (int)$r['iscritto_id']); // 2.15.0: l'innesco "tolto da una lista"
+        }
         $n += count($righe);
     }
     return $n;
