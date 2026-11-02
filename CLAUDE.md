@@ -106,7 +106,7 @@ Sono gli unici in `cms/docs/`, nello zip, nel sito di plumeCMS e nella pagina Do
 - **Pacchetto di aggiornamento** per un'installazione esistente:
   `python3 tools/cms-pacchetto.py --aggiornamento`. Si carica dal pannello,
   Impostazioni, Aggiornamenti.
-- **Versione**: `cms/VERSIONE` (oggi 2.17.0; sempre tre numeri: "beta" va nel CHANGELOG, mai nel nome dello zip, se no la serie "ultima" del Download non lo riconosce) e una voce in `cms/CHANGELOG.md` a ogni
+- **Versione**: `cms/VERSIONE` (oggi 2.17.1; sempre tre numeri: "beta" va nel CHANGELOG, mai nel nome dello zip, se no la serie "ultima" del Download non lo riconosce) e una voce in `cms/CHANGELOG.md` a ogni
   zip con contenuto diverso. Mai cambiare il contenuto di una versione già data.
 - **Prove** prima di dire finito:
   - `php -n -d short_open_tag=1 -l` su ogni file PHP toccato, `node --check` sui js;
@@ -154,6 +154,15 @@ Le decisioni complete, con data e perché, stanno nel second brain, `plumecms/de
 - **Nome: plumeCMS** (26 ottobre 2026).
 
 ## Stato al 31 ottobre 2026
+
+Fatto: plumeCMS 2.17.1 (2 novembre): segnalazione di Danilo, "devo poter scegliere l'email da inserire in un passaggio dai modelli".
+La scelta c'era ma stava dentro "Editor a blocchi" e mostrava solo i modelli attivi a blocchi. Ora il Contenuto del passo Email ha tre
+scelte (Testo semplice, Editor a blocchi, Da un modello) con tutti i modelli tranne `optin`, anche in codice HTML e non attivi (segnati);
+al salvataggio il modello si copia (`design` o `html`, editor `blocchi` o `html`), con l'oggetto se vuoto. Due difetti trovati dalle prove:
+`nl_email_extra()` azzerava `html` quando il grafo si rilegge (l'email usciva in testo semplice) e `nl_email_campagna()` carica
+`newsletter-campagne.php` per `nl_camp_html()`. Prove: install 38/38, automazioni 96/96, flussi di prima (sito 2.14.0 -> 2.17.1) 18/18
+(la prova vuole flussi seminati su un sito prima della 2.15.0), aggiornamento 2.17.0 -> 2.17.1 13/13 con 20 foto uguali, attacchi 422/422,
+pacchetto unico 13/13. Schermate del capitolo 19p rifatte. Due giri caduti per MySQL delle prove ripartito: aspettare `SELECT 1`.
 
 Fatto: plumeCMS 2.17.0 (2 novembre): quindici aperture nuove, ventisei in tutto (richiesta di Danilo, tutte e 15 dalle tavole approvate;
 agente, ramo `aperture-15`): `includes/editor-hero-c.php|d.php`, `sito/assets/hero-c.css|d.css`, `hero-c.js` (solo video e prima e dopo,
