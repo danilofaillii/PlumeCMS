@@ -163,6 +163,8 @@ try {
         if ($e && $e['form'] > 0) {
             require_once dirname(__DIR__) . '/includes/form.php';
             if ($f = form_leggi((int)$e['form'])) {
+                // 2.16.0: "Dopo il clic di conferma, vai a" (passo Conferma), quando il form non dà un file.
+                if (($f['doi_url'] ?? '') !== '' && $f['omaggio'] === '') { header('Cache-Control: no-store'); sito_vai($f['doi_url'], 302); }
                 $link = $f['omaggio'] !== '' ? form_omaggio_consegna($f, (int)$e['iscritto'], (string)$e['email']) : '';
                 sito_html(200, ['titolo' => 'Email confermata - ' . SITO_NOME] + $cortesia, form_conferma_html($f, $link));
             }
@@ -182,6 +184,16 @@ try {
         require_once dirname(__DIR__) . '/includes/newsletter-campagne.php';
         header('Cache-Control: no-store');
         $postPref = ($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST';
+        // 2.16.0: con un form di Aggiornamento del profilo scelto come centro preferenze (Pagine e consenso), il link porta lì.
+        $pfId = (int)get_setting('newsletter_preferenze_form', '0');
+        if (!$postPref && $pfId && is_string($q['i'] ?? null) && is_string($q['t'] ?? null)) {
+            require_once dirname(__DIR__) . '/includes/form.php';
+            $pf = form_leggi($pfId);
+            if ($pf && $pf['attivo'] && ($pf['tipo'] ?? '') === 'profilo' && function_exists('fb_contatto_da_link') && fb_contatto_da_link($q['i'], $q['t'])) {
+                header('Cache-Control: no-store');
+                sito_vai('/modulo/' . $pf['slug'] . '/?i=' . (int)$q['i'] . '&t=' . rawurlencode($q['t']), 302);
+            }
+        }
         [$codPref, $htmlPref, $vaiPref] = newsletter_pagina_preferenze($q, $postPref ? $_POST : [], $postPref);
         if ($vaiPref !== '') { header('Location: ' . $vaiPref, true, 303); exit; }
         sito_html($codPref, ['titolo' => 'Le tue preferenze - ' . SITO_NOME] + $cortesia, $htmlPref);
@@ -198,6 +210,20 @@ try {
         header('Content-Type: text/html; charset=UTF-8');
         echo $htmlWeb;
         exit;
+    }
+
+    // 2.16.0: la pagina ospitata di un form (/modulo/<slug>/): l'unica pagina del sito che si può mettere in un iframe di un
+    // altro sito (frame-ancestors * solo qui). Il form di profilo si apre con il link firmato (?i=&t=).
+    if (preg_match('~^/modulo/([a-z0-9-]{1,100})/?$~', $percorso, $mo)) {
+        require_once dirname(__DIR__) . '/includes/form.php';
+        if (function_exists('fb_form_da_slug') && ($fo = fb_form_da_slug($mo[1]))) { // opcache: form.php appena aggiornato
+            $htmlFo = fb_pagina_ospitata($fo, $q);
+            fb_intestazioni_ospitata();
+            header('Content-Type: text/html; charset=UTF-8');
+            if (($_SERVER['REQUEST_METHOD'] ?? 'GET') !== 'HEAD') echo $htmlFo;
+            exit;
+        }
+        sito_non_trovato();
     }
 
     // Pagina di ringraziamento dei form costruiti dal pannello.

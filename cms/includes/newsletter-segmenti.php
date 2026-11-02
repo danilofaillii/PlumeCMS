@@ -45,7 +45,13 @@ const NL_SEG_OPERATORI = [
     'flusso_email' => ['aperta' => "ha aperto l'email", 'non_aperta' => "non ha aperto l'email", 'cliccata' => "ha cliccato nell'email", 'non_cliccata' => "non ha cliccato nell'email"],
 ];
 /** Le colonne di newsletter_iscritti degli attributi di sistema, con il tipo per le condizioni. Elenco chiuso. */
-const NL_SEG_COLONNE = ['email' => 'text', 'nome' => 'text', 'cognome' => 'text', 'ext_id' => 'text', 'opt_in' => 'boolean', 'doi_at' => 'boolean', 'creato' => 'date', 'aggiornato' => 'date'];
+const NL_SEG_COLONNE = ['email' => 'text', 'nome' => 'text', 'cognome' => 'text', 'ext_id' => 'text', 'opt_in' => 'boolean', 'doi_at' => 'boolean', 'creato' => 'date', 'aggiornato' => 'date', 'tracciamento' => 'boolean'];
+/** 2.16.0: le condizioni su aperture e clic contano solo i contatti che acconsentono al tracciamento (gli altri non si sanno). */
+function nl_seg_tracciati(): string {
+    static $c = null;
+    $c ??= in_array('tracciamento', db()->query('SHOW COLUMNS FROM ' . tbl('newsletter_iscritti'))->fetchAll(PDO::FETCH_COLUMN), true);
+    return $c ? 'i.tracciamento = 1 AND ' : '';
+}
 
 function newsletter_segmenti_schema(): void {
     static $fatto = false;
@@ -404,11 +410,11 @@ function nl_seg_condizione_sql(array $c, array &$par, array $ctx): string {
             $prima = str_starts_with($op, 'non_') && ($camp > 0 || $camp === -1) ? $ricevuta() . ' AND ' : '';
             $par[] = $base;
             $s = "EXISTS (SELECT 1 FROM $ev e WHERE e.iscritto_id = i.id AND e.tipo = ?" . nl_seg_campagna($camp, 'e.campagna_id', $par) . nl_seg_periodo($c, 'e.creato', $par) . ')';
-            return str_starts_with($op, 'non_') ? $prima . "NOT $s" : $s;
+            return '(' . nl_seg_tracciati() . (str_starts_with($op, 'non_') ? $prima . "NOT $s" : $s) . ')';
         case 'link':
             $par[] = $c['valore'];
             $s = "EXISTS (SELECT 1 FROM $ev e WHERE e.iscritto_id = i.id AND e.tipo = 'clic' AND e.url = ?" . nl_seg_campagna((int)$c['campagna'], 'e.campagna_id', $par) . ')';
-            return $op === 'cliccato' ? $s : "NOT $s";
+            return '(' . nl_seg_tracciati() . ($op === 'cliccato' ? $s : "NOT $s") . ')';
         case 'form':
             $w = '';
             if ((int)$c['valore'] > 0) { $par[] = (int)$c['valore']; $w = ' AND m.modulo_id = ?'; }
@@ -418,11 +424,12 @@ function nl_seg_condizione_sql(array $c, array &$par, array $ctx): string {
             // Come i bivi "attivo" e "inattivo" dei flussi: con tutti = qualunque evento (anche rimbalzi e uscite).
             $par[] = (int)$c['n'];
             $s = "EXISTS (SELECT 1 FROM $ev e WHERE e.iscritto_id = i.id" . (!empty($c['tutti']) ? '' : " AND e.tipo IN ('apertura', 'clic')") . ' AND e.creato > DATE_SUB(NOW(), INTERVAL ? DAY))';
-            return $op === 'si' ? $s : "NOT $s";
+            $tr = !empty($c['tutti']) ? '' : nl_seg_tracciati();
+            return '(' . $tr . ($op === 'si' ? $s : "NOT $s") . ')';
         case 'flusso_email':
             $par[] = (int)($ctx['flusso'] ?? 0); $par[] = (int)$c['valore']; $par[] = str_contains($op, 'clicc') ? 'clic' : 'apertura';
             $s = "EXISTS (SELECT 1 FROM $ev e WHERE e.flusso_id = ? AND e.passo = ? AND e.iscritto_id = i.id AND e.tipo = ?)";
-            return str_starts_with($op, 'non_') ? "NOT $s" : $s;
+            return '(' . nl_seg_tracciati() . (str_starts_with($op, 'non_') ? "NOT $s" : $s) . ')';
     }
     return '0';
 }

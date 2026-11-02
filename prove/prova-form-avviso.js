@@ -34,7 +34,7 @@ const dorme = ms => new Promise(r => setTimeout(r, ms));
   await vai('/contatti/');
   const id = +((await p.locator('input[name=modulo]').first().getAttribute('value')) || '').replace('form:', '');
   ok('la pagina Contatti ha un form', id > 0, id);
-  const scheda = async () => { await vai('/admin/form.php?id=' + id); };
+  const scheda = async () => { await vai('/admin/form.php?id=' + id + '&passo=3'); }; // 2.16.0: il passo Messaggi del costruttore
   await scheda();
   const prima = { avviso: await p.isChecked('input[name=avviso]'), a: await p.inputValue('#fm-avviso-a') };
   ok('scheda del form: il campo "Manda l\'avviso a", con l\'indirizzo del sito come suggerimento', await p.locator('label[for=fm-avviso-a]').innerText() === 'Manda l\'avviso a' && await p.getAttribute('#fm-avviso-a', 'placeholder') === 'avvisi-sito@esempio.it' && /avvisi-sito@esempio\.it/.test(await p.locator('#fm-avviso-aiuto').innerText()));
@@ -42,7 +42,7 @@ const dorme = ms => new Promise(r => setTimeout(r, ms));
     await scheda();
     if (avviso) await p.check('input[name=avviso]'); else await p.uncheck('input[name=avviso]');
     await p.fill('#fm-avviso-a', a);
-    await Promise.all([p.waitForNavigation(), p.click('#fm-form button[type=submit]:not([name=azione])')]);
+    await Promise.all([p.waitForNavigation(), p.click('#fm-form button[name=vai][value=resta]')]);
     return (await p.locator('.flash').first().innerText().catch(() => '')).trim();
   };
   // Indirizzi sbagliati: il form non si salva e dice quale.

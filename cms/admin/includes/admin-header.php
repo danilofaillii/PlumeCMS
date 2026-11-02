@@ -27,7 +27,7 @@ $menu = [
     // 2.8.0: il menu come Brevo (docs-sviluppo/brevo-confronto.md, capitolo 2): Contatti (con Liste), poi Campagne email,
     // Form, Invii dei form, Flussi automatici, Statistiche, Impostazioni (con Attributi dei contatti). Le voci delle fasi
     // dopo (Segmenti, Modelli, Automazioni) arrivano con le loro pagine.
-    ['Newsletter e form', 'newsletter-contatti.php', 'email', in_array($qui, ['newsletter.php', 'newsletter-campagna.php', 'newsletter-flussi.php', 'newsletter-statistiche.php', 'newsletter-report.php', 'form-submissions.php', 'form.php', 'newsletter-contatti.php', 'newsletter-contatto.php', 'newsletter-attributi.php', 'newsletter-importa.php', 'newsletter-segmenti.php', 'newsletter-modelli.php'], true), array_values(array_filter([
+    ['Newsletter e form', 'newsletter-contatti.php', 'email', in_array($qui, ['newsletter.php', 'newsletter-campagna.php', 'newsletter-flussi.php', 'newsletter-statistiche.php', 'newsletter-report.php', 'form-submissions.php', 'form.php', 'newsletter-contatti.php', 'newsletter-contatto.php', 'newsletter-attributi.php', 'newsletter-importa.php', 'newsletter-segmenti.php', 'newsletter-modelli.php', 'newsletter-consenso.php'], true), array_values(array_filter([
         ['Contatti', 'newsletter-contatti.php', in_array($qui, ['newsletter-contatti.php', 'newsletter-contatto.php', 'newsletter-importa.php', 'newsletter-segmenti.php'], true)],
         ['Campagne email', 'newsletter.php', in_array($qui, ['newsletter.php', 'newsletter-campagna.php', 'newsletter-report.php'], true) && ($_GET['scheda'] ?? '') !== 'impostazioni'],
         ['Modelli', 'newsletter-modelli.php', $qui === 'newsletter-modelli.php'], // 2.12.0
@@ -38,6 +38,7 @@ $menu = [
         ['Statistiche', 'newsletter-statistiche.php', $qui === 'newsletter-statistiche.php'],
         ['Impostazioni', 'newsletter.php?scheda=impostazioni', $qui === 'newsletter.php' && ($_GET['scheda'] ?? '') === 'impostazioni'],
         ['Attributi dei contatti', 'newsletter-attributi.php', $qui === 'newsletter-attributi.php'],
+        $sonoAdminMenu ? ['Pagine e consenso', 'newsletter-consenso.php', $qui === 'newsletter-consenso.php'] : null, // 2.16.0
     ]))],
     // 1.5.0: email del mattino, calendario e testi dei social (includes/social.php). Solo amministratore.
     $sonoAdminMenu ? ['Social', 'social.php', 'megafono', $qui === 'social.php', [

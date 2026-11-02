@@ -185,7 +185,24 @@ function nl_url_evento(string $azione, array $t, int $iscritto, string $url = ''
 }
 
 /** Mette il pixel e riscrive i link dell'email. Il link di uscita resta diretto. */
+/** 2.16.0: il contatto acconsente al tracciamento di aperture e clic (colonna tracciamento, 1 di partenza). */
+function newsletter_traccia_consentita(int $id): bool {
+    static $col = null, $visti = [];
+    if (!$id) return false;
+    if (isset($visti[$id])) return $visti[$id];
+    $col ??= in_array('tracciamento', db()->query('SHOW COLUMNS FROM ' . tbl('newsletter_iscritti'))->fetchAll(PDO::FETCH_COLUMN), true);
+    if (!$col) return true;
+    $st = db()->prepare('SELECT tracciamento FROM ' . tbl('newsletter_iscritti') . ' WHERE id = ?');
+    $st->execute([$id]);
+    $v = $st->fetchColumn();
+    if (count($visti) > 500) $visti = [];
+    return $visti[$id] = $v === false || (int)$v === 1;
+}
+
 function newsletter_traccia(string $html, array $t, int $iscritto): string {
+    // 2.16.0: senza il consenso al tracciamento (centro preferenze, form, scheda del contatto) l'email esce senza pixel e
+    // con i link diretti, come una prova.
+    if (!newsletter_traccia_consentita($iscritto)) return $html;
     $html = preg_replace_callback('~href="(https?://[^"]+)"~i', function ($m) use ($t, $iscritto) {
         $u = html_entity_decode($m[1]);
         if (str_contains($u, cms_base() . '/api/nl.php') || str_contains($u, NEWSLETTER_ESCI)) return $m[0];
@@ -205,6 +222,8 @@ function newsletter_traccia(string $html, array $t, int $iscritto): string {
  */
 function newsletter_evento(string $tipo, int $c, int $f, int $p, int $i, string $t, string $url = '', bool $ripeti = true): bool {
     if (!$i || !hash_equals(nl_firma($c, $f, $p, $i), $t)) return false;
+    // 2.16.0: un link tracciato di un'email di prima, aperto da chi poi ha tolto il consenso: si va dove porta, senza segnare niente.
+    if (!newsletter_traccia_consentita($i)) return true;
     newsletter_flussi_schema();
     $tipo = $tipo === 'clic' ? 'clic' : 'apertura';
     $url = mb_substr($url, 0, 500);

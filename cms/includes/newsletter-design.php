@@ -695,8 +695,9 @@ function nd_modelli_optin(): array {
  * predefinita (le parti di Newsletter > Impostazioni): è la scelta di partenza, e chi non cambia niente riceve l'email di sempre.
  * Il pulsante con il link {{ doubleoptin }} diventa il link di conferma; se il modello non lo ha, si aggiunge in fondo.
  */
-function nd_doi_email(string $link, string $nome, string $email): ?array {
-    $id = (int)get_setting('newsletter_doi_modello', '0');
+function nd_doi_email(string $link, string $nome, string $email, int $modello = 0): ?array {
+    // 2.16.0: un form può scegliere il suo modello (Conferma, «Email di doppio opt-in»); senza, quello di Modelli.
+    $id = $modello > 0 ? $modello : (int)get_setting('newsletter_doi_modello', '0');
     if ($id <= 0) return null;
     $m = nd_modello($id);
     if (!$m || !(int)$m['attivo'] || $m['tag'] !== 'optin' || !($d = nd_design((string)$m['design']))) return null;

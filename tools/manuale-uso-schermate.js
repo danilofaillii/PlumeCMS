@@ -26,6 +26,8 @@
 //   solo: SOLO_CAPITOLI=19o, con CMS_DIR_MANUALE e POSTA_MANUALE e TMPDIR vuota.
 // 2.15.0: il capitolo 19p (le automazioni, al posto della foto 19-flussi) gira da solo: SOLO_CAPITOLI=19p, con CMS_DIR_MANUALE e
 //   POSTA_MANUALE e TMPDIR vuota.
+// 2.16.0: i form a cinque passi: capitoli 17 (rifatto, con il campo File) e 17n (form di iscrizione, pagina del form, Pagine e
+//   consenso), poi 31n e 31r con il costruttore nuovo: SOLO_CAPITOLI=17,17n,31n,31r su un sito col kit appena installato, TMPDIR vuota.
 const { chromium } = require('playwright');
 const pnConferme = require('../prove/conferme-pannello'); // UX 2026-11: conferme del pannello
 const fs = require('fs');
@@ -561,18 +563,40 @@ capitoli['16'] = async () => {
   await foto('17-menu-scegli', { sel: '[data-mu=lp]', margine: 16, segni: [{ sel: '[data-mu=scegli]', lato: 'destra' }] });
 };
 
-// 17. Form: le candidature di "Lavora con noi"
+// 17. Form: le candidature di "Lavora con noi". 2.16.0: il costruttore a cinque passi (Impostazione, Aspetto e campi,
+// Messaggi, Conferma, Condividi), con il campo File del 2.1 nel passo 2.
 capitoli['17'] = async () => {
   await vai('form.php?nuovo=1');
-  await p.fill('[name=nome]', 'Candidature');
-  await p.fill('[name=titolo]', 'Mandaci la tua candidatura');
-  await p.fill('[name=intro]', 'Due righe su di te bastano. Ti rispondiamo entro una settimana.');
-  await p.fill('[name=pulsante]', 'Invia la candidatura');
-  await foto('17-form', { clip: { x: 240, y: 56, width: 960, height: 760 }, segni: [{ sel: '[name=nome]', n: 1 }, { sel: '[name=titolo]', n: 2 }, { sel: '#fm-campi', n: 3 }, { sel: 'button.btn-primary', n: 4, lato: 'destra' }] });
-  // 1.9.0: a chi arriva l'avviso di ogni compilazione.
+  await foto('17-tipi', { sel: '.fo-tipi-scatola', margine: 6, segni: [{ sel: '.fo-tipi li:nth-child(1) a', n: 1 }, { sel: '.fo-tipi li:nth-child(5) a', n: 2 }] });
+  await Promise.all([p.waitForNavigation(), p.click('.fo-tipi li:nth-child(5) a')]);
+  await p.fill('#fm-nome', 'Candidature');
+  await foto('17-form', { clip: { x: 240, y: 56, width: 960, height: 520 }, segni: [{ sel: '.fo-passi', n: 1 }, { sel: '#fm-nome', n: 2 }, { sel: '#fm-form .fo-azioni .btn-primary', n: 3, lato: 'destra' }] });
+  await Promise.all([p.waitForNavigation(), p.click('#fm-form .fo-azioni .btn-primary')]);
+  if (!/passo=2/.test(p.url())) throw new Error('17: il form non è stato creato: ' + await flash());
+  await p.fill('#fm-titolo', 'Mandaci la tua candidatura');
+  await p.fill('#fm-intro', 'Due righe su di te bastano. Ti rispondiamo entro una settimana.');
+  await p.fill('#fm-pulsante', 'Invia la candidatura');
+  // Il campo File (2.1): il curriculum, solo PDF e Word, fino a 5 MB.
+  await p.click('button:has-text("+ Aggiungi un campo")'); await dorme(300);
+  await p.locator('.fm-campo:last-child .fm-etichetta').fill('Curriculum');
+  await p.locator('.fm-campo:last-child .fm-tipo').selectOption('file'); await dorme(300);
+  const tipo = (e) => p.locator(`.fm-campo:last-child .fm-file-tipi input[value=${e}]`);
+  await tipo('jpg').uncheck(); await tipo('png').uncheck(); await tipo('docx').check();
+  await p.locator('.fm-campo:last-child .fm-file-peso select').selectOption('5');
+  await foto('17-campi', { clip: { x: 240, y: 56, width: 960, height: 760 }, segni: [{ sel: '#fm-titolo', n: 1 }, { sel: '.fm-campo:first-child .fm-tipo', n: 2 }, { sel: '.fm-campo:first-child .fm-attributo', n: 3 }, { sel: 'button[data-al-clic="fmAggiungi()"]', n: 4 }] });
+  await foto('17-campo-file', { sel: '.fm-campo:last-child', margine: 30, segni: [{ sel: '.fm-campo:last-child .fm-tipo', n: 1 }, { sel: '.fm-campo:last-child .fm-file-tipi', n: 2 },
+    { sel: '.fm-campo:last-child .fm-file-peso select', n: 3 }] });
+  await Promise.all([p.waitForNavigation(), p.click('#fm-form button[name=vai][value=avanti]')]);
+  if (!/passo=3/.test(p.url())) throw new Error('17: passo 2 non salvato: ' + await flash());
+  // Passo 3: dopo l'invio e l'avviso (1.9.0: a chi arriva).
+  await p.fill('#fm-grazie-titolo', 'Grazie, abbiamo la tua candidatura.');
+  await foto('17-messaggi', { sel: '.sc-scatola:has(input[name=dopo_invio])', altezza: 560, segni: [{ sel: 'input[name=dopo_invio][value=pagina]', n: 1 }, { sel: '#fm-riuscita', n: 2 }, { sel: '#fm-grazie-titolo', n: 3 }] });
   await p.fill('#fm-avviso-a', 'lavoro@studioprova.it, marta@studioprova.it');
   await foto('17-avviso', { sel: '.sc-scatola:has(#fm-avviso-a)', segni: [{ sel: 'input[name=avviso]', n: 1 }, { sel: '#fm-avviso-a', n: 2 }] });
-  await Promise.all([p.waitForNavigation(), p.click('button.btn-primary:has-text("Salva")')]);
+  await Promise.all([p.waitForNavigation(), p.click('#fm-form button[name=vai][value=avanti]')]);
+  await Promise.all([p.waitForNavigation(), p.click('#fm-form button[name=vai][value=avanti]')]);
+  if (!/passo=5/.test(p.url())) throw new Error('17: passo 4 non salvato: ' + await flash());
+  await foto('17-condividi', { clip: { x: 240, y: 56, width: 960, height: 760 }, segni: [{ sel: '#fo-link', n: 1 }, { sel: '#fo-iframe', n: 2 }, { sel: '#fo-html', n: 3 }, { sel: '#fo-semplice', n: 4 }, { sel: '.fo-qr svg', n: 5 }] });
   // Nella pagina, sotto il pulsante "Scrivici"
   await apriEditor('editor.php?tipo=pagine&id=6');
   await tela().locator('#ed-pagina .ed-w-pulsanti').first().click(); await dorme(400);
@@ -580,7 +604,7 @@ capitoli['17'] = async () => {
   const q = await ctl('Quale modulo');
   const val = await q.locator('option', { hasText: 'Candidature' }).getAttribute('value');
   await q.locator('select').selectOption(val); await dorme(1500);
-  await foto('17-widget', { clip: { x: 0, y: 0, width: 1200, height: 700 }, segni: [{ sel: '#ed-controlli .ed-controllo select', n: 5 }] });
+  await foto('17-widget', { clip: { x: 0, y: 0, width: 1200, height: 700 }, segni: [{ sel: '#ed-controlli .ed-controllo select', n: 6 }] });
   await p.click('#ed-pubblica');
   await p.waitForFunction(() => /Pubblicata alle/.test(document.querySelector('#ed-stato').textContent));
   // Una persona compila il form
@@ -599,6 +623,54 @@ capitoli['17'] = async () => {
   await v.close();
   await vai('form-submissions.php');
   await foto('17-invii', { clip: { x: 240, y: 56, width: 960, height: 420 } });
+};
+
+// 17n. (2.16.0) Un form di iscrizione alla newsletter: campi legati agli attributi, Iscrizione a più liste, GDPR, la conferma,
+// la pagina del form; poi Pagine e consenso (gruppi di consenso). Dopo il 17. Da solo: SOLO_CAPITOLI=17n.
+capitoli['17n'] = async () => {
+  await vai('newsletter-contatti.php?scheda=liste');
+  // Due liste da scegliere nel form (si creano qui se mancano).
+  for (const nome of ['Offerte del mese', 'Consigli per le piante']) {
+    if ((await p.content()).includes(nome)) continue;
+    const f = p.locator('form:has(input[value=lista_crea])').first();
+    if (!(await f.count())) break;
+    await f.locator('input[name=nome]').fill(nome);
+    await Promise.all([p.waitForNavigation(), f.locator('button[type=submit]').click()]);
+  }
+  await vai('form.php?nuovo=1&tipo=iscrizione');
+  await p.fill('#fm-nome', 'Iscrizione alle novità');
+  await p.check('input[name=gdpr]');
+  await Promise.all([p.waitForNavigation(), p.click('#fm-form .fo-azioni .btn-primary')]);
+  if (!/passo=2/.test(p.url())) throw new Error('17n: il form non è stato creato: ' + await flash());
+  await p.fill('#fm-titolo', 'Le novità dello studio, una volta al mese');
+  await p.click('button:has-text("+ Aggiungi un campo")'); await dorme(300);
+  await p.locator('.fm-campo:last-child .fm-etichetta').fill('Scegli cosa ricevere');
+  await p.locator('.fm-campo:last-child .fm-tipo').selectOption('liste'); await dorme(300);
+  const scelte = p.locator('.fm-campo:last-child .fm-scelta-liste label');
+  for (const t of ['Offerte del mese', 'Consigli per le piante']) await scelte.filter({ hasText: t }).locator('input').check();
+  await p.click('button:has-text("+ Aggiungi un campo")'); await dorme(300);
+  await p.locator('.fm-campo:last-child .fm-etichetta').fill('Nuovo campo');
+  await p.locator('.fm-campo:last-child .fm-tipo').selectOption('tracciamento'); await dorme(300);
+  await p.fill('#fm-gdpr-testo', 'Usiamo il tuo indirizzo solo per mandarti le email che scegli qui. Puoi uscire quando vuoi con il link in fondo a ogni email.');
+  await foto('17n-campi', { sel: '#fm-form .sc-griglia', margine: 6, segni: [{ sel: '.fm-campo:nth-child(1) .fm-attributo', n: 1 }, { sel: '.fm-campo:nth-last-child(2) .fm-scelta-liste', n: 2 }, { sel: '.fm-campo:last-child .fm-tipo', n: 3 }, { sel: '#fm-gdpr-testo', n: 4 }] });
+  await Promise.all([p.waitForNavigation(), p.click('#fm-form button[name=vai][value=avanti]')]);
+  await Promise.all([p.waitForNavigation(), p.click('#fm-form button[name=vai][value=avanti]')]);
+  if (!/passo=4/.test(p.url())) throw new Error('17n: passo 3 non salvato: ' + await flash());
+  await p.selectOption('#fm-lista', { label: 'Newsletter' });
+  await foto('17n-conferma', { sel: '.sc-scatola:has(input[name=conferma])', altezza: 520, segni: [{ sel: 'input[name=conferma][value=doppia]', n: 1 }, { sel: '#fm-lista', n: 2 }, { sel: 'input[name=aggiorna_esistenti]', n: 3 }] });
+  await Promise.all([p.waitForNavigation(), p.click('#fm-form button[name=vai][value=avanti]')]);
+  if (!/passo=5/.test(p.url())) throw new Error('17n: passo 4 non salvato: ' + await flash());
+  const url = await p.inputValue('#fo-link');
+  const v = await ctx.newPage();
+  await v.setViewportSize({ width: 900, height: 900 });
+  await v.goto(url.replace(/^https?:\/\/[^/]+/, B.replace(/^(https?:\/\/[^/]+).*$/, '$1')), { waitUntil: 'networkidle' });
+  await v.screenshot({ path: path.join(GREZZE, '17n-ospitata.png'), fullPage: true }); console.log('17n-ospitata');
+  await v.close();
+  // Pagine e consenso: i gruppi di consenso (spenti di partenza: li accende chi li vuole).
+  await vai('newsletter-consenso.php');
+  await p.fill('#nc-g-nome', 'Offerte');
+  await p.fill('#nc-g-descr', 'Sconti e promozioni, una volta al mese');
+  await foto('17n-consenso', { clip: { x: 240, y: 56, width: 960, height: 700 }, segni: [{ sel: '#nc-attivi input[name=attivi]', n: 1 }, { sel: '#nc-g-nome', n: 2 }, { sel: '#nc-gruppo input[name=ingresso][value=automatic]', n: 3 }, { sel: '#nc-gruppo button[type=submit]', n: 4, lato: 'destra' }] });
 };
 
 // 18. Popup
@@ -1270,18 +1342,7 @@ async function fotoWidget21() {
     await gal.locator('.ew-gf-filtro', { hasText: 'Ritratti' }).click(); await dorme(700);
     await gal.screenshot({ path: path.join(GREZZE, '08-galleria-filtri.png') }); console.log('08-galleria-filtri');
   }
-  // Il campo File nel form Candidature del capitolo 18.
-  await vai('form.php');
-  await vai(await p.locator('a.ct-nome', { hasText: 'Candidature' }).first().getAttribute('href'));
-  await p.click('button:has-text("+ Aggiungi un campo")'); await dorme(300);
-  await p.locator('.fm-campo:last-child .fm-etichetta').fill('Curriculum');
-  await p.locator('.fm-campo:last-child .fm-tipo').selectOption('file'); await dorme(300);
-  const tipo = (e) => p.locator(`.fm-campo:last-child .fm-file-tipi input[value=${e}]`);
-  await tipo('jpg').uncheck(); await tipo('png').uncheck(); await tipo('docx').check();
-  await p.locator('.fm-campo:last-child .fm-file-peso select').selectOption('5');
-  await foto('17-campo-file', { sel: '.fm-campo:last-child', margine: 30, segni: [{ sel: '.fm-campo:last-child .fm-tipo', n: 1 }, { sel: '.fm-campo:last-child .fm-file-tipi', n: 2 },
-    { sel: '.fm-campo:last-child .fm-file-peso select', n: 3 }] });
-  await Promise.all([p.waitForNavigation(), p.click('button.btn-primary:has-text("Salva")')]);
+  // Il campo File nel form Candidature: dalla 2.16.0 la foto 17-campo-file si fa nel capitolo 17 (passo 2 del costruttore).
 }
 
 // 2.2.0: la finestra Scegli dal sito (capitolo 8), con "con" nella ricerca e una pagina in bozza ("Condizioni di vendita"). Dopo
@@ -1456,16 +1517,20 @@ capitoli['31n'] = async () => {
   await Promise.all([p.waitForNavigation(), p.click('#dl-carica button[type=submit]')]);
   if (!/riservato/.test(await flash())) throw new Error('31n: il file non risulta riservato: ' + await flash());
   // Form > Dopo l'invio: lista, conferma e il file.
-  await vai('form.php?nuovo=1');
-  await p.fill('[name=nome]', 'Guida in regalo');
-  await p.fill('[name=titolo]', 'Ricevi la guida alla cura delle piante');
-  await p.fill('[name=intro]', 'Lasciaci nome ed email: dopo la conferma ti mandiamo la guida in PDF e, una volta al mese, la nostra newsletter.');
-  await p.fill('[name=pulsante]', 'Mandami la guida');
+  // 2.16.0: il costruttore a passi (form di iscrizione): passo 1 crea, passo 2 i testi, passo 4 lista, conferma e file.
+  await vai('form.php?nuovo=1&tipo=iscrizione');
+  await p.fill('#fm-nome', 'Guida in regalo');
+  await Promise.all([p.waitForNavigation(), p.click('#fm-form .fo-azioni .btn-primary')]);
+  await p.fill('#fm-titolo', 'Ricevi la guida alla cura delle piante');
+  await p.fill('#fm-intro', 'Lasciaci nome ed email: dopo la conferma ti mandiamo la guida in PDF e, una volta al mese, la nostra newsletter.');
+  await p.fill('#fm-pulsante', 'Mandami la guida');
+  await Promise.all([p.waitForNavigation(), p.click('#fm-form button[name=vai][value=resta]')]);
+  await p.goto(p.url().replace(/passo=\d/, 'passo=4'), { waitUntil: 'networkidle' });
   await p.selectOption('select[name=lista_id]', { label: 'Newsletter' });
-  await p.check('input[name=lista_conferma]');
+  await p.check('input[name=conferma][value=doppia]');
   await p.selectOption('#fm-omaggio', { label: 'Guida alla cura delle piante (guida-piante.pdf)' });
-  await foto('31n-form-file', { sel: '.sc-scatola:has(#fm-omaggio)', altezza: 300, segni: [{ sel: 'select[name=lista_id]', n: 1 }, { sel: 'input[name=lista_conferma]', n: 2 }, { sel: '#fm-omaggio', n: 3 }] });
-  await Promise.all([p.waitForNavigation(), p.click('button.btn-primary:has-text("Salva")')]);
+  await foto('31n-form-file', { clip: { x: 240, y: 56, width: 960, height: 520 }, segni: [{ sel: 'input[name=conferma][value=doppia]', n: 1 }, { sel: 'select[name=lista_id]', n: 2 }, { sel: '#fm-omaggio', n: 3 }] });
+  await Promise.all([p.waitForNavigation(), p.click('#fm-form button[name=vai][value=resta]')]);
   // La pagina "Guida in regalo" con il form.
   await paginaConWidget('Guida in regalo', 'guida-in-regalo', 'modulo', async () => {
     const q = await ctl('Quale modulo');
@@ -1478,7 +1543,7 @@ capitoli['31n'] = async () => {
   const f = v.locator('form[data-captcha]').first();
   await compilaForm(v, f, { nome: 'Lucia Bassi', email: 'lucia.bassi@esempio.it', messaggio: '' });
   let n0 = postaN();
-  await f.locator('button[type=submit]').click(); await v.waitForURL(/\/grazie\//); await v.waitForLoadState('networkidle');
+  await f.locator('button[type=submit]').click(); await v.waitForURL(/\/grazie\/|modulo=ok/); await v.waitForLoadState('networkidle'); // 2.16.0: un form di iscrizione nuovo mostra il messaggio al posto del form
   const conf = (await postaNuove(n0)).find(e => /lucia\.bassi/.test(e.a));
   const lk = conf && C2.link(conf).find(l => /\?t=[a-f0-9]{64}/.test(l));
   if (!lk) throw new Error('31n: non arriva l\'email di conferma');
@@ -1615,13 +1680,16 @@ capitoli['31r'] = async () => {
   await vai('form.php');
   let guida = p.locator('a.ct-nome', { hasText: 'Guida in regalo' }).first();
   if (!(await guida.count())) {
-    await vai('form.php?nuovo=1');
-    await p.fill('[name=nome]', 'Guida in regalo');
-    await p.fill('[name=titolo]', 'Ricevi la guida alla cura delle piante');
+    await vai('form.php?nuovo=1&tipo=iscrizione');
+    await p.fill('#fm-nome', 'Guida in regalo');
+    await Promise.all([p.waitForNavigation(), p.click('#fm-form .fo-azioni .btn-primary')]);
+    await p.fill('#fm-titolo', 'Ricevi la guida alla cura delle piante');
+    await Promise.all([p.waitForNavigation(), p.click('#fm-form button[name=vai][value=resta]')]);
+    await p.goto(p.url().replace(/passo=\d/, 'passo=4'), { waitUntil: 'networkidle' });
     await p.selectOption('select[name=lista_id]', { label: 'Newsletter' });
-    await p.check('input[name=lista_conferma]');
-    await Promise.all([p.waitForNavigation(), p.click('button.btn-primary:has-text("Salva")')]);
-  } else await Promise.all([p.waitForNavigation(), guida.click()]);
+    await p.check('input[name=conferma][value=doppia]');
+    await Promise.all([p.waitForNavigation(), p.click('#fm-form button[name=vai][value=resta]')]);
+  } else await vai((await guida.getAttribute('href')) + '&passo=4'); // 2.16.0: l'email di conferma sta nel passo 4, Conferma
   await p.waitForLoadState('networkidle');
   if ((await p.locator('#fm-conferma-campi').getAttribute('open')) === null) await p.click('#fm-conferma-campi > summary');
   await p.fill('#ec-oggetto', 'Ultimo passo per la tua guida, {nome}');
@@ -1657,7 +1725,7 @@ U.paste(A, (0, 0)); U.paste(B, (0, A.height)); U.save(o)
     for (const f of ['17-email-conferma-a.png', '17-email-conferma-b.png']) fs.unlinkSync(path.join(GREZZE, f));
     console.log('17-email-conferma');
   }
-  await Promise.all([p.waitForNavigation(), p.click('button.btn-primary:has-text("Salva")')]);
+  await Promise.all([p.waitForNavigation(), p.click('#fm-form button[name=vai][value=resta]')]);
   if (!/salvato/.test(await flash())) throw new Error('31r: il form non si salva: ' + await flash());
   // Newsletter > Impostazioni: il riquadro, senza salvare.
   await vai('newsletter.php?scheda=impostazioni#nl-conferma');

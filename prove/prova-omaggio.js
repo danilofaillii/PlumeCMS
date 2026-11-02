@@ -49,15 +49,15 @@ const linkIn = (e, re) => (testo(e).match(re) || [])[0];
   // 2. Il form dei Contatti: lista, conferma, file.
   await vai('/contatti/');
   const id = +((await p.locator('input[name=modulo]').first().getAttribute('value')) || '').replace('form:', '');
-  const scheda = () => vai('/admin/form.php?id=' + id);
+  const scheda = () => vai('/admin/form.php?id=' + id + '&passo=4'); // 2.16.0: il passo Conferma del costruttore
   await scheda();
-  const prima = { lista: await p.inputValue('select[name=lista_id]'), conferma: await p.isChecked('input[name=lista_conferma]'), omaggio: await p.inputValue('#fm-omaggio') };
+  const prima = { lista: await p.inputValue('select[name=lista_id]'), conferma: await p.isChecked('input[name=conferma][value=doppia]'), omaggio: await p.inputValue('#fm-omaggio') };
   const salva = async (lista, conferma, omaggio) => {
     await scheda();
     await p.selectOption('select[name=lista_id]', lista);
-    if (conferma) await p.check('input[name=lista_conferma]'); else await p.uncheck('input[name=lista_conferma]');
+    await p.check('input[name=conferma][value=' + (conferma ? 'doppia' : 'nessuna') + ']');
     await p.selectOption('#fm-omaggio', omaggio);
-    await Promise.all([p.waitForNavigation(), p.click('#fm-form button[type=submit]:not([name=azione])')]);
+    await Promise.all([p.waitForNavigation(), p.click('#fm-form button[name=vai][value=resta]')]);
     return (await p.locator('.flash').first().innerText().catch(() => '')).trim();
   };
   ok('la tendina offre il file riservato', (await p.locator('#fm-omaggio option').allInnerTexts()).some(t => /La guida omaggio/.test(t)));
@@ -144,9 +144,9 @@ const linkIn = (e, re) => (testo(e).match(re) || [])[0];
 
   // Com'era.
   await scheda();
-  await p.selectOption('select[name=lista_id]', prima.lista); if (prima.conferma) await p.check('input[name=lista_conferma]'); else await p.uncheck('input[name=lista_conferma]');
+  await p.selectOption('select[name=lista_id]', prima.lista); await p.check('input[name=conferma][value=' + (prima.conferma ? 'doppia' : 'nessuna') + ']');
   await p.selectOption('#fm-omaggio', prima.omaggio);
-  await Promise.all([p.waitForNavigation(), p.click('#fm-form button[type=submit]:not([name=azione])')]);
+  await Promise.all([p.waitForNavigation(), p.click('#fm-form button[name=vai][value=resta]')]);
   await vai('/admin/scaricabili.php');
   await Promise.all([p.waitForNavigation(), p.locator('form:has(input[name=nome][value="guida-omaggio"]) button.btn-danger').click()]);
   ok('nessun errore JavaScript', err.length === 0, err);

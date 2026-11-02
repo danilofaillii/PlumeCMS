@@ -1044,11 +1044,11 @@ echo json_encode($o);
     const link = await admin.p.locator('a.ct-nome').first().getAttribute('href').catch(() => null);
     const fid = link ? +(link.match(/id=(\d+)/) || [0, 0])[1] : 0;
     if (fid) {
-      const PAG = ADMIN + '/form.php?id=' + fid;
+      const PAG = ADMIN + '/form.php?id=' + fid + '&passo=3'; // 2.16.0: "Manda l'avviso a" sta nel passo Messaggi
       const leggi = async () => { await admin.p.goto(PAG, { waitUntil: 'networkidle' }); return admin.p.inputValue('#fm-avviso-a'); };
       const prima = await leggi();
       // Tutti i campi del form come sono, con un indirizzo diverso: quello che manderebbe chi attacca.
-      const campiDi = async (avviso) => admin.p.evaluate((avviso) => { const f = document.getElementById('fm-form'); f.querySelector('#fm-campi-json').value = JSON.stringify(window.fmCampi || []); const d = new FormData(f); d.set('avviso_a', avviso); d.delete('azione'); return [...d.entries()].filter(([, v]) => typeof v === 'string'); }, avviso);
+      const campiDi = async (avviso) => admin.p.evaluate((avviso) => { const f = document.getElementById('fm-form'); const cj = f.querySelector('#fm-campi-json'); if (cj) cj.value = JSON.stringify(window.fmCampi || []); const d = new FormData(f); d.set('avviso_a', avviso); d.delete('azione'); return [...d.entries()].filter(([, v]) => typeof v === 'string'); }, avviso);
       const corpo = async (avviso, senzaToken) => { const c = await campiDi(avviso); return form(Object.fromEntries(c.filter(([k]) => !(senzaToken && k === '_csrf')))); };
       const r1 = await post(admin.p, ADMIN + '/form.php', await corpo('spia@cattivo.it', true), CT);
       ok('1.9.0: indirizzo dell\'avviso senza token: 403', r1.status === 403 && (await leggi()) === prima, { status: r1.status });
@@ -2134,6 +2134,168 @@ echo json_encode($o);
       ok('2.15.0: l\'editor a blocchi non si apre su un passo che non è un\'email o che non c\'è', d1.status() === 302 && d2.status() === 302, [d1.status(), d2.status()]);
       q(`DELETE FROM {p}newsletter_corsi WHERE iscritto_id = 999999`);
       pulisci();
+    }
+  }
+
+  // === 38. (2.16.0) Form come Brevo e pagine pubbliche (includes/form-brevo.php, includes/newsletter-consenso.php).
+  // Iframe e clickjacking: frame-ancestors * solo sulla pagina ospitata /modulo/<slug>/, ogni altra pagina (anche il 404 di
+  // /modulo/, un form spento, le pagine della newsletter, il pannello) resta 'self'. Link delle preferenze e form di profilo
+  // con l'id di un altro contatto. Questionario della disiscrizione con testo lunghissimo, emoji e codice. Campi nascosti e
+  // campi del server forzati nel POST, iscrizione a liste e gruppi che il form non offre, uscita da una lista non della
+  // campagna. XSS nei messaggi, nella dichiarazione GDPR, nei nomi di gruppi e pagine. Indirizzi dopo l'invio pericolosi.
+  // Domanda di controllo riusata o falsa. Redattore, senza token, da fuori. Serve CMS_DIR (prove/form-brevo-cli.php).
+  {
+    const path = require('path'), { execFileSync } = require('child_process');
+    const DIR38 = process.env.CMS_DIR || '';
+    const ORIG = { 'Origin': BASE.replace(/(https?:\/\/[^/]+).*/, '$1') };
+    const PFo = ADMIN + '/form.php', PNc = ADMIN + '/newsletter-consenso.php', API = BASE + PAN + '/api/modulo.php';
+    if (!DIR38) ok('2.16.0: (senza CMS_DIR le prove dei form e delle pagine pubbliche sono saltate)', true);
+    else {
+      const cli = (...a) => JSON.parse(execFileSync('php', [path.join(__dirname, '..', 'prove', 'form-brevo-cli.php'), DIR38, ...a.map(String)], { encoding: 'utf8' }).trim().split('\n').pop());
+      const q = (s) => cli('sql', s);
+      const uno = (s) => { const r = q(s); return r && r[0] ? Object.values(r[0])[0] : null; };
+      const sblocca = () => { q('DELETE FROM {p}sicurezza_tentativi'); q('UPDATE {p}moduli_invii SET aggiornato = aggiornato - INTERVAL 2 HOUR WHERE aggiornato > NOW() - INTERVAL 2 HOUR'); q("UPDATE {p}newsletter_iscritti SET aggiornato = aggiornato - INTERVAL 2 HOUR WHERE email LIKE '%@fb-prova.it'"); };
+      cli('pulisci');
+      const L = cli('prepara');
+      const campi = [{ etichetta: 'Email', tipo: 'email', obbligatorio: true, attributo: 'EMAIL' }, { etichetta: 'Nome', tipo: 'testo', attributo: 'NOME' },
+        { etichetta: 'Liste', tipo: 'liste', liste: [L.novita] }, { etichetta: 'Gruppi', tipo: 'gruppi' }, { etichetta: 'Statistiche', tipo: 'tracciamento' }];
+      const F = cli('crea_form', JSON.stringify({ nome: 'FB Sic38', tipo: 'iscrizione', lista_id: L.principale, conferma: 'nessuna', attivo: 1, campi, gdpr: 1, dopo_invio: 'messaggio' }));
+      const FP = cli('crea_form', JSON.stringify({ nome: 'FB Sic38 profilo', tipo: 'profilo', attivo: 1, campi: [{ etichetta: 'Email', tipo: 'email', obbligatorio: true, attributo: 'EMAIL' }, { etichetta: 'Nome', tipo: 'testo', attributo: 'NOME' }] }));
+      const FS = cli('crea_form', JSON.stringify({ nome: 'FB Sic38 spento', tipo: 'iscrizione', lista_id: L.principale, conferma: 'nessuna', attivo: 0, campi }));
+      ok('2.16.0: preparazione (tre form della prova)', F > 0 && FP > 0 && FS > 0, [F, FP, FS]);
+      const slug = uno(`SELECT slug FROM {p}moduli WHERE id = ${F}`), slugP = uno(`SELECT slug FROM {p}moduli WHERE id = ${FP}`), slugS = uno(`SELECT slug FROM {p}moduli WHERE id = ${FS}`);
+      const A = cli('contatto', 'sic38a@fb-prova.it', `${L.principale}`), Bc = cli('contatto', 'sic38b@fb-prova.it', `${L.principale}`);
+      const anon = await browser.newContext();
+      // Clickjacking: solo la pagina ospitata si mette in un iframe.
+      const fa = (r) => (r.headers()['content-security-policy'] || '') + ' | XFO ' + (r.headers()['x-frame-options'] || '');
+      const osp = await anon.request.get(BASE + '/modulo/' + slug + '/', { maxRedirects: 0 });
+      ok('2.16.0: la pagina ospitata del form si mette in un iframe (frame-ancestors *, niente X-Frame-Options)', osp.status() === 200 && /frame-ancestors \*/.test(fa(osp)) && !osp.headers()['x-frame-options'], fa(osp));
+      const prefA = cli('link_pref', A).replace(/^https?:\/\/[^/]+(\/test)?/, BASE);
+      const altre = [BASE + '/', BASE + '/modulo/non-esiste/', BASE + '/modulo/' + slugS + '/', BASE + '/modulo/' + slug + '/../', BASE + '/modulo/' + slug + '/x/', prefA, cli('link_uscita', A, 0).replace(/^https?:\/\/[^/]+(\/test)?/, BASE), BASE + '/newsletter-conferma/?t=00', ADMIN + '/login.php', PFo];
+      const male = [];
+      for (const u of altre) {
+        const r = await anon.request.get(u, { maxRedirects: 0 });
+        if (/frame-ancestors \*/.test(fa(r)) || (r.status() === 200 && !/frame-ancestors 'self'|frame-ancestors 'none'/.test(fa(r)) && !/SAMEORIGIN|DENY/.test(fa(r)))) male.push([u, r.status(), fa(r)]);
+      }
+      ok('2.16.0: clickjacking: ogni altra pagina (404 di /modulo/, form spento, preferenze, uscita, pannello) resta protetta', male.length === 0, male);
+      const capt = await anon.request.get(BASE + PAN + '/api/captcha.php');
+      const mod = await anon.request.post(API, { form: { modulo: 'form:' + F }, maxRedirects: 0 });
+      ok('2.16.0: la sfida del captcha si legge da un altro sito (serve al codice HTML), la risposta del form no', capt.headers()['access-control-allow-origin'] === '*' && !mod.headers()['access-control-allow-origin'], [capt.headers()['access-control-allow-origin'], mod.headers()['access-control-allow-origin']]);
+      // Il link delle preferenze di un altro contatto.
+      const tA = new URL(cli('link_pref', A)).searchParams.get('t');
+      const sbagliato = BASE + '/newsletter-preferenze/?i=' + Bc + '&t=' + tA;
+      const g1 = await anon.request.get(sbagliato);
+      const p1 = await anon.request.post(sbagliato, { form: { azione: 'esci' }, maxRedirects: 0 });
+      ok('2.16.0: link delle preferenze con l\'id di un altro contatto: non valido, niente dati, niente uscita', /non è valido/.test(await g1.text()) && !(await g1.text()).includes('sic38b@') && uno(`SELECT stato FROM {p}newsletter_iscritti WHERE id = ${Bc}`) === 'attivo', p1.status());
+      const g2 = await anon.request.get(BASE + '/modulo/' + slugP + '/?i=' + Bc + '&t=' + tA);
+      sblocca();
+      const r2 = cli('ricevi', FP, JSON.stringify({ pi: String(Bc), pt: tA, c_email: 'sic38b@fb-prova.it', c_nome: 'Rubato' }));
+      ok('2.16.0: form di profilo con l\'id di un altro contatto: niente form, e l\'invio forzato si ferma ("link")', !/<form/.test(await g2.text()) && r2 === 'link' && uno(`SELECT nome FROM {p}newsletter_iscritti WHERE id = ${Bc}`) !== 'Rubato', r2);
+      const r3 = cli('ricevi', FP, JSON.stringify({ pi: String(A), pt: tA, c_email: 'sic38b@fb-prova.it', c_nome: 'Cambiato' }));
+      ok('2.16.0: form di profilo: l\'email di un altro scritta nel campo non cambia l\'email né tocca l\'altro contatto', r3 === '' && uno(`SELECT email FROM {p}newsletter_iscritti WHERE id = ${A}`) === 'sic38a@fb-prova.it' && uno(`SELECT nome FROM {p}newsletter_iscritti WHERE id = ${Bc}`) === 'Prova', r3);
+      // Il questionario: testo lunghissimo, emoji, codice, motivo inventato.
+      const esci = cli('link_uscita', Bc, 0).replace(/^https?:\/\/[^/]+(\/test)?/, BASE);
+      await anon.request.post(esci, { form: {}, maxRedirects: 0 });
+      await anon.request.post(esci, { form: { motivo: 'inventato', altro: 'x' }, maxRedirects: 0 });
+      ok('2.16.0: questionario con un motivo inventato: non si salva', +uno(`SELECT COUNT(*) FROM {p}newsletter_uscite_motivi WHERE contatto_id = ${Bc}`) === 0);
+      const lungo = '<script>alert(38)</script>\u{1F600}' + 'a'.repeat(20000);
+      const qr = await anon.request.post(esci, { form: { motivo: 'altro', altro: lungo }, maxRedirects: 0 });
+      const salvato = String(uno(`SELECT altro FROM {p}newsletter_uscite_motivi WHERE contatto_id = ${Bc} AND motivo = 'altro'`) || '');
+      ok('2.16.0: questionario con 20000 caratteri, emoji e codice: tagliato a 500, emoji come entità, niente tag', qr.status() === 200 && salvato.length > 0 && salvato.length <= 500 && /&#x1F600;/.test(salvato) && !/<script/.test(salvato), [qr.status(), salvato.length, salvato.slice(0, 40)]);
+      // Iscrizione a liste e gruppi che il form non offre; campi del server forzati.
+      sblocca();
+      const nCont = () => +uno("SELECT COUNT(*) FROM {p}newsletter_iscritti WHERE email LIKE 'sic38%@fb-prova.it'");
+      const n0 = nCont();
+      const rl = [cli('ricevi', F, JSON.stringify({ c_email: 'sic38c@fb-prova.it', privacy: '1', c_liste: [String(L.nascosta)] })),
+        cli('ricevi', F, JSON.stringify({ c_email: 'sic38c@fb-prova.it', privacy: '1', c_liste: ['1 OR 1=1'] })),
+        cli('ricevi', F, JSON.stringify({ c_email: 'sic38c@fb-prova.it', privacy: '1', c_liste: Array.from({ length: 2000 }, (_, i) => String(i)) }))];
+      ok('2.16.0: liste che il form non offre (un altro id, SQL, 2000 id): l\'invio si ferma, nessun contatto', rl.every(x => /^campo:/.test(x)) && nCont() === n0, rl);
+      sblocca();
+      const rf = cli('ricevi', F, JSON.stringify({ c_email: 'sic38d@fb-prova.it', privacy: '1', c_liste: [String(L.novita)], stato: 'bloccato', tracciamento: '1', lista_id: String(L.nascosta), liste: [String(L.nascosta)], tipo: 'profilo', pi: String(A), pt: tA, c_inventato: '<b>x</b>', ospitata: '1', fonte: 'admin', aggiorna_esistenti: '1' }));
+      const D = uno("SELECT id FROM {p}newsletter_iscritti WHERE email = 'sic38d@fb-prova.it'");
+      const dl = (q(`SELECT lista_id FROM {p}newsletter_iscritti_liste WHERE iscritto_id = ${+D} ORDER BY lista_id`) || []).map(x => +x.lista_id);
+      const dati = String(uno(`SELECT dati FROM {p}moduli_invii WHERE email = 'sic38d@fb-prova.it'`) || '');
+      ok('2.16.0: campi forzati nel POST (stato, lista, liste, tipo, link di profilo, campo inventato): entra solo nelle liste del form, i campi in più non si salvano', rf === '' && uno(`SELECT stato FROM {p}newsletter_iscritti WHERE id = ${+D}`) === 'attivo' && JSON.stringify(dl) === JSON.stringify([L.principale, L.novita].sort((a, b) => a - b)) && !/inventato|bloccato/.test(dati) && uno(`SELECT nome FROM {p}newsletter_iscritti WHERE id = ${A}`) === 'Cambiato', [rf, dl, dati]);
+      q("UPDATE {p}settings SET setting_value = '1' WHERE setting_key = 'newsletter_gruppi_attivi'");
+      cli('sql', "INSERT INTO {p}newsletter_gruppi_consenso (nome, descrizione, ingresso, creato) VALUES ('FB Sic38 <img src=x onerror=alert(381)>', '<script>alert(382)</script>', 'manual', NOW())");
+      const G = +uno("SELECT id FROM {p}newsletter_gruppi_consenso WHERE nome LIKE 'FB Sic38%'");
+      sblocca();
+      const rg = cli('ricevi', F, JSON.stringify({ c_email: 'sic38e@fb-prova.it', privacy: '1', c_gruppi: [String(G + 1000)] }));
+      ok('2.16.0: un gruppo di consenso che non c\'è: l\'invio si ferma', /^campo:/.test(rg), rg);
+      const pref = await anon.request.get(prefA);
+      const ph = await pref.text();
+      ok('2.16.0: nome e descrizione di un gruppo con del codice escono come testo nel centro preferenze', !/<img src=x onerror=alert\(381\)>|<script>alert\(382\)/.test(ph) && /&lt;img src=x onerror=alert\(381\)&gt;/.test(ph), ph.length);
+      // Uscita da una lista: una lista non della campagna, una firma della campagna falsa.
+      const camp = cli('campagna', 'FB Sic38', `${L.principale}`);
+      const lu = cli('link_uscita', A, camp).replace(/^https?:\/\/[^/]+(\/test)?/, BASE);
+      const pl = await anon.request.post(lu, { form: { azione: 'lista', lista: String(L.novita) }, maxRedirects: 0 });
+      const pl2 = await anon.request.post(lu.replace(/k=[a-f0-9]+/, 'k=' + '0'.repeat(24)), { form: { azione: 'lista', lista: String(L.principale) }, maxRedirects: 0 });
+      ok('2.16.0: uscita da una lista non della campagna, o con la firma della campagna falsa: niente cambia', +uno(`SELECT COUNT(*) FROM {p}newsletter_liste_uscite WHERE contatto_id = ${A}`) === 0 && uno(`SELECT stato FROM {p}newsletter_iscritti WHERE id = ${A}`) === 'attivo', [pl.status(), pl2.status()]);
+      // XSS nei messaggi, nella dichiarazione, nel nome di una pagina di disiscrizione, dal pannello.
+      const tk = await tokenDi(admin.p, PFo + '?id=' + F + '&passo=3');
+      await admin.ctx.request.post(PFo + '?id=' + F + '&passo=3', { headers: ORIG, form: { _csrf: tk, id: String(F), passo: '3', dopo_invio: 'messaggio', 'messaggi[riuscita]': '<script>alert(383)</script>Fatto', 'messaggi[obbligatorio]': '<img src=x onerror=alert(384)> {campo}', vai: 'resta' }, maxRedirects: 0 });
+      await admin.ctx.request.post(PFo + '?id=' + F + '&passo=2', { headers: ORIG, form: { _csrf: tk, id: String(F), passo: '2', titolo: '<svg onload=alert(385)>', gdpr_testo: '<img src=x onerror=alert(386)>Dichiarazione', campi: JSON.stringify(campi.concat([{ etichetta: '<img src=x onerror=alert(387)>', tipo: 'testo' }])), vai: 'resta' }, maxRedirects: 0 });
+      const ms = String(uno(`SELECT CONCAT(COALESCE(messaggi, ''), '|', COALESCE(gdpr_testo, '')) FROM {p}moduli WHERE id = ${F}`));
+      const h1 = await (await anon.request.get(BASE + '/modulo/' + slug + '/')).text();
+      const h2 = await (await anon.request.get(BASE + '/modulo/' + slug + '/?fatto=1&f=' + F)).text();
+      const h3 = await (await anon.request.get(BASE + '/modulo/' + slug + '/?modulo=campo%3ANome&f=' + F)).text();
+      ok('2.16.0: messaggi e dichiarazione salvati senza tag', !/<script|<img/i.test(ms) && /alert\(383\)/.test(ms), ms);
+      ok('2.16.0: titolo, dichiarazione, etichette, messaggio di riuscita e d\'errore con del codice escono come testo nella pagina ospitata', !/<svg onload|<img src=x onerror|<script>alert\(38[3-7]\)/.test(h1 + h2 + h3) && /&lt;svg onload=alert\(385\)&gt;/.test(h1) && /&lt;img src=x onerror=alert\(387\)&gt;/.test(h1), [h1.length, h2.length, h3.length]);
+      const tkN = await tokenDi(admin.p, PNc + '?scheda=pagine&nuova=1');
+      await admin.ctx.request.post(PNc, { headers: ORIG, form: { _csrf: tkN, azione: 'pagina', scheda: 'pagine', id: '0', 'pg[nome]': 'FB Sic38 <script>alert(388)</script>', 'pg[uscita_titolo]': '<img src=x onerror=alert(389)>Esci' }, maxRedirects: 0 });
+      const pid = +uno("SELECT id FROM {p}newsletter_pagine_uscita WHERE nome LIKE 'FB Sic38%'");
+      q(`UPDATE {p}newsletter_campagne SET pagina_uscita_id = ${pid} WHERE id = ${camp}`);
+      const hp = await (await anon.request.get(lu)).text();
+      const ha = await (await admin.ctx.request.get(PNc + '?scheda=pagine')).text();
+      ok('2.16.0: nome e titolo di una pagina di disiscrizione con del codice: salvati senza tag, escono come testo', pid > 0 && !/<script>alert\(388\)|<img src=x onerror=alert\(389\)/.test(hp + ha) && /alert\(389\)|Esci/.test(hp), pid);
+      // Indirizzi dopo l'invio e dopo il clic pericolosi.
+      const tk4 = await tokenDi(admin.p, PFo + '?id=' + F + '&passo=4');
+      const urlMale = ['javascript:alert(1)', '//evil.example/x', '/\\evil.example', 'data:text/html,x', 'https://evil.example/"><script>'];
+      for (const u of urlMale) {
+        await admin.ctx.request.post(PFo + '?id=' + F + '&passo=3', { headers: ORIG, form: { _csrf: tk, id: String(F), passo: '3', dopo_invio: 'url', dopo_url: u, vai: 'resta' }, maxRedirects: 0 });
+        await admin.ctx.request.post(PFo + '?id=' + F + '&passo=4', { headers: ORIG, form: { _csrf: tk4, id: String(F), passo: '4', lista_id: String(L.principale), conferma: 'doppia', doi_url: u, vai: 'resta' }, maxRedirects: 0 });
+      }
+      const du = q(`SELECT dopo_url, doi_url, dopo_invio FROM {p}moduli WHERE id = ${F}`)[0] || {};
+      ok('2.16.0: indirizzi pericolosi dopo l\'invio e dopo il clic (javascript:, //, data:, virgolette): non si salvano', du.dopo_url === '' && du.doi_url === '' && du.dopo_invio === 'messaggio', du);
+      // La domanda di controllo: riusata, falsa, risposta sbagliata.
+      const dom = await (await (await browser.newContext({ javaScriptEnabled: false })).request.get(BASE + '/modulo/' + slug + '/')).text();
+      const tok = (dom.match(/name="domanda" value="([^"]+)"/) || [])[1] || '';
+      const [, x1, x2] = dom.match(/fa (\w+) più (\w+)/) || [];
+      const num = ['zero', 'uno', 'due', 'tre', 'quattro', 'cinque', 'sei', 'sette', 'otto', 'nove', 'dieci'];
+      const giusta = String(num.indexOf(x1) + num.indexOf(x2));
+      const base = { modulo: 'form:' + F, pagina: '/modulo/' + slug + '/', ospitata: '1', c_email: 'sic38f@fb-prova.it', privacy: '1' };
+      sblocca();
+      const d1 = await anon.request.post(API, { form: { ...base, domanda: tok, domanda_risposta: String(+giusta + 1) }, maxRedirects: 0 });
+      const d2 = await anon.request.post(API, { form: { ...base, domanda: Buffer.from('a'.repeat(24) + '|9999999999|' + 'b'.repeat(64)).toString('base64'), domanda_risposta: '5' }, maxRedirects: 0 });
+      const d3 = await anon.request.post(API, { form: { ...base, domanda: tok, domanda_risposta: giusta }, maxRedirects: 0 });
+      sblocca();
+      const d4 = await anon.request.post(API, { form: { ...base, c_email: 'sic38g@fb-prova.it', domanda: tok, domanda_risposta: giusta }, maxRedirects: 0 });
+      ok('2.16.0: domanda di controllo: sbagliata e falsa no, giusta una volta sola (riusata: no)', d1.status() === 200 && d2.status() === 200 && [302, 303].includes(d3.status()) && d4.status() === 200 && !!uno("SELECT id FROM {p}newsletter_iscritti WHERE email = 'sic38f@fb-prova.it'") && !uno("SELECT id FROM {p}newsletter_iscritti WHERE email = 'sic38g@fb-prova.it'"), [d1.status(), d2.status(), d3.status(), d4.status()]);
+      const dPag = await anon.request.post(API, { form: { ...base, pagina: '//evil.example/', ospitata: '' }, maxRedirects: 0 });
+      ok('2.16.0: una pagina di ritorno verso un altro sito: si torna dentro il sito', [302, 303].includes(dPag.status()) && !/evil\.example/.test(dPag.headers()['location'] || ''), dPag.headers()['location']);
+      // Redattore, senza token, da fuori.
+      const tkC = await tokenDi(admin.p, PNc);
+      const s1 = await admin.ctx.request.post(PNc, { headers: ORIG, form: { azione: 'gruppo', scheda: 'gruppi', id: '0', nome: 'FB Sic38 senza token' }, maxRedirects: 0 });
+      const s2 = await admin.ctx.request.post(PNc, { headers: { 'Origin': 'https://evil.example' }, form: { _csrf: tkC, azione: 'gruppi_attivi', scheda: 'gruppi' }, maxRedirects: 0 });
+      const s3 = await admin.ctx.request.post(PFo, { headers: { 'Origin': 'https://evil.example' }, form: { _csrf: tk, id: String(F), azione: 'elimina' }, maxRedirects: 0 });
+      ok('2.16.0: Pagine e consenso e Form senza token o da un altro sito: 403, niente cambia', [s1, s2, s3].every(r => r.status() === 403) && !uno("SELECT id FROM {p}newsletter_gruppi_consenso WHERE nome = 'FB Sic38 senza token'") && uno("SELECT setting_value FROM {p}settings WHERE setting_key = 'newsletter_gruppi_attivi'") === '1' && !!uno(`SELECT id FROM {p}moduli WHERE id = ${F}`), [s1.status(), s2.status(), s3.status()]);
+      if (red.dentro) {
+        const tr = await tokenDi(red.p, ADMIN + '/media.php');
+        const r1 = await red.ctx.request.get(PNc, { maxRedirects: 0 });
+        const r2 = await red.ctx.request.get(PFo + '?id=' + F + '&passo=5', { maxRedirects: 0 });
+        const r3 = await red.ctx.request.post(PNc, { headers: ORIG, form: { _csrf: tr, azione: 'gruppi_attivi', scheda: 'gruppi' }, maxRedirects: 0 });
+        const r4 = await red.ctx.request.get(PFo + '?id=' + F + '&qr=1', { maxRedirects: 0 });
+        ok('2.16.0: il redattore non apre Pagine e consenso né i form (nemmeno il QR) e non cambia niente', r1.status() !== 200 && r2.status() !== 200 && r4.status() !== 200 && uno("SELECT setting_value FROM {p}settings WHERE setting_key = 'newsletter_gruppi_attivi'") === '1', [r1.status(), r2.status(), r3.status(), r4.status()]);
+      } else ok('2.16.0: (redattore di prova non disponibile: prove del redattore saltate)', true);
+      const qrMale = [];
+      for (const u of ['id=999999&qr=1', 'id=abc&qr=1', 'id[]=1&qr=1', 'id=' + F + '&passo=99', 'id=' + F + '&passo[]=1', 'vedi[]=x', 'nuovo=1&tipo[]=x', 'nuovo=1&tipo=<script>']) {
+        const r = await admin.ctx.request.get(PFo + '?' + u, { maxRedirects: 0 });
+        const t = await r.text();
+        if (![200, 302, 404].includes(r.status()) || /SQLSTATE|Fatal error|Warning:|Uncaught|<script>alert/.test(t)) qrMale.push([u, r.status()]);
+      }
+      ok('2.16.0: parametri del costruttore manipolati (id, passo, tipo, vista, QR): nessun errore', qrMale.length === 0, qrMale);
+      await anon.close();
+      cli('pulisci');
     }
   }
 
