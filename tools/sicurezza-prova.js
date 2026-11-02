@@ -2448,6 +2448,37 @@ echo json_encode($o);
     pulisci40();
   } else console.log('--  passo Email da un modello: saltata (serve CMS_DIR)');
 
+  // === 41. (2.19.0) Il plugin Ponte dal pannello: lo zip solo all'amministratore e senza segreti del sito; il collegamento con
+  // il ponte senza token, da un redattore e verso indirizzi interni non parte (lo stato dell'import non cambia).
+  {
+    const IW = ADMIN + '/importa-wordpress.php';
+    const anon41 = await browser.newContext();
+    const a41 = await anon41.request.get(IW + '?scarica=ponte', { maxRedirects: 0 });
+    await anon41.close();
+    const r41 = await red.ctx.request.get(IW + '?scarica=ponte', { maxRedirects: 0 });
+    const z41 = await admin.ctx.request.get(IW + '?scarica=ponte', { maxRedirects: 0 });
+    const corpo41 = z41.status() === 200 ? await z41.body() : Buffer.alloc(0);
+    ok('2.19.0: lo zip del ponte non si scarica da anonimo né da redattore', a41.status() >= 300 && a41.status() < 400 && r41.status() !== 200 && !/^PK/.test((await r41.body()).toString('latin1', 0, 2)), [a41.status(), r41.status()]);
+    ok('2.19.0: l\'amministratore scarica uno zip, senza config, segreti o password del database', z41.status() === 200 && /zip/.test(z41.headers()['content-type'] || '') && corpo41.slice(0, 2).toString() === 'PK' && !/config\.local|CMS_SEGRETO|DB_PASS|DB_NAME/.test(corpo41.toString('latin1')), [z41.status(), z41.headers()['content-type']]);
+    const stato41 = async () => (await admin.p.goto(IW, { waitUntil: 'networkidle' }), await admin.p.locator('.iw').innerText());
+    const prima41 = await stato41();
+    const t41 = await tokenDi(admin.p, IW);
+    const codiceFinto = 'PLUME1-' + 'C'.repeat(43);
+    const senza = await post(admin.p, IW, new URLSearchParams({ azione: 'collega', modo: 'ponte', indirizzo: 'https://example.org', codice: codiceFinto }).toString(), { 'Content-Type': 'application/x-www-form-urlencoded' });
+    const tr41 = await tokenDi(red.p, ADMIN + '/index.php').catch(() => '');
+    await post(red.p, IW, new URLSearchParams({ _csrf: tr41, azione: 'collega', modo: 'ponte', indirizzo: 'https://example.org', codice: codiceFinto }).toString(), { 'Content-Type': 'application/x-www-form-urlencoded' });
+    const interni = [];
+    for (const ind of ['http://127.0.0.1', 'http://169.254.169.254', 'http://10.0.0.1', 'https://localhost', 'http://[::1]', 'file:///etc/passwd', 'gopher://127.0.0.1:6379']) {
+      await post(admin.p, IW, new URLSearchParams({ _csrf: t41, azione: 'collega', modo: 'ponte', indirizzo: ind, codice: codiceFinto }).toString(), { 'Content-Type': 'application/x-www-form-urlencoded' });
+      await admin.p.goto(IW, { waitUntil: 'networkidle' });
+      const msg = (await admin.p.locator('.flash-error').allInnerTexts()).join(' ');
+      if (/Leggo il sito|Il report/.test(await admin.p.locator('.iw').innerText()) || !msg) interni.push([ind, msg]);
+    }
+    const dopo41 = await stato41();
+    ok('2.19.0: collegamento con il ponte senza token o da un redattore: non parte', [0, 400, 403].includes(senza.status) && dopo41 === prima41, [senza.status]);
+    ok('2.19.0: il ponte verso indirizzi interni, file e gopher: rifiutato con un messaggio, nessun lavoro', interni.length === 0, interni);
+  }
+
   // === pulizia: elimina il redattore di prova
   {
     await admin.p.goto(ADMIN + '/utenti.php', { waitUntil: 'networkidle' });

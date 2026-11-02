@@ -407,6 +407,21 @@ più leggere con 2560, la pagina `/prova-foto/` e le foto caricate.
 Le prove di attacco della 1.4.0 (`tools/sicurezza-prova.js`, gruppo 18) controllano anche la scelta dell'aspetto (un
 utente non cambia quello di un altro, valori non ammessi, token e Origin) e le impostazioni delle foto (redattore, token).
 
+## prova-ponte.js (2.19.0)
+
+Il plugin Ponte come un utente, contro lo stesso WordPress di `prova-importa-wp.js` servito con `WP_TOGLI_AUTH=1`: il router
+toglie le credenziali prima di WordPress, come certi hosting.
+
+1. WordPress come sotto (`wp-installa.php`, `wp-riempi.php`), poi
+   `WP_TOGLI_AUTH=1 DBPASS=... PHP_CLI_SERVER_WORKERS=4 php -S 127.0.0.1:8091 -t <cartella WP> prove/router-wp.php`.
+2. Un plumeCMS installato da zero.
+3. `node prove/prova-ponte.js <base CMS> <cartella CMS> <utente> <password> http://127.0.0.1:8091 <cartella WP> <cartella segreti> <cartella schermate>`.
+   La prova toglie il plugin da WordPress e lo ricarica dal pannello (Carica plugin), apre il ponte, prova codici sbagliati e
+   quello giusto, analisi, import con il codice dimenticato a metà, Annulla; poi le difese con richieste fatte a mano (firma,
+   ora, ripetute, rotte vietate, `_method=DELETE`, ponte chiuso, scaduto, plugin spento) e per ultime 20 firme sbagliate, che
+   bloccano 127.0.0.1 (la prova svuota il blocco alla fine). Atteso: 49 su 49. Lascia `ponte-scelta.png`, `ponte-wordpress.png`,
+   `ponte-report.png`, `ponte-riepilogo.png`.
+
 ## prova-importa-wp.js (1.4.0)
 
 L'import da WordPress come un utente, contro un WordPress vero (6.6.2) sul server integrato di PHP.

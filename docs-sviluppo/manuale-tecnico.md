@@ -3850,6 +3850,7 @@ Istruzioni in `prove/LEGGIMI.md`. Le principali:
 | `prova-kit.js` | (1.3.0) installazione con un kit di partenza, poi ogni pagina del menu al computer e al telefono, in radice e in cartella |
 | `prova-sezioni.js` | (1.3.0) la linguetta Sezioni dell'editor: clic, trascinamento, modifica, pubblicazione; `/sezioni-pronte/` (`pagina-sezioni.php`) con il contrasto |
 | `prova-copia.js` | (1.3.0) copia del sito: prepara, scarica, ripristina, e gli zip da respingere (`zip-copie-prova.py`) |
+| `prova-ponte.js` | (2.19.0) il plugin Ponte contro un WordPress vero che toglie le credenziali (`WP_TOGLI_AUTH=1`): messaggio, zip, caricamento e attivazione in WordPress, codice, analisi e import, ripresa, difese del ponte (firma, ora, ripetute, rotte, solo lettura, scadenza, blocco) |
 | `prova-importa-wp.js` | (1.4.0) import da WordPress contro un WordPress vero (`wp-installa.php`, `wp-riempi.php`, `router-wp.php`): errori, report, scelta, ripresa, anteprima protetta, Annulla, Conferma, confronto contenuto per contenuto, in radice e in cartella |
 | `prova-versione.js` | (1.3.0) "c'è una versione nuova" con due installazioni e un sito ufficiale finto che si comporta male (`finto-ufficiale.php`) |
 | `prova-aspetti.js` | (1.4.0) i quattro aspetti del pannello: scelta in Il mio accesso, ogni pagina del menu e l'editor in ognuno, contrasto di ogni testo, colori rimasti scritti a mano |
@@ -4016,6 +4017,7 @@ in quattro file:
 | `includes/importa-wp-analisi.php` | l'analisi a passi, l'indice del sito, il report, SEO di Yoast e Rank Math |
 | `includes/importa-wp-converti.php` | il testo di WordPress in HTML semplice e sicuro |
 | `includes/importa-wp-lavoro.php` | l'import a giri, i media, i menu, Conferma e Annulla |
+| `includes/ponte-wp/plumecms-ponte.php` | (2.19.0) il plugin Ponte per WordPress, 26.6; lo zip lo prepara `importa_wp_ponte_zip()` |
 
 Il sito WordPress non si tocca: si legge e basta, con la REST (`wp-json/wp/v2`; per i siti senza permalink belli
 `?rest_route=/`).
@@ -4030,7 +4032,9 @@ Il sito WordPress non si tocca: si legge e basta, con la REST (`wp-json/wp/v2`; 
    porta non del web, sito in http (credenziali solo in HTTPS), REST chiusa da un plugin (403, `rest_disabled` e simili),
    password per le applicazioni spente (manca `authentication.application-passwords` nell'indice), password normale al posto
    di quella per le applicazioni (non ha la forma di 24 lettere e cifre), utente sconosciuto, credenziali non accettate (con il
-   caso del server che toglie l'intestazione `Authorization`), utente senza permessi.
+   caso del server che toglie l'intestazione `Authorization`: da fuori non si distingue da utente o password sbagliati,
+   WordPress 6.6 risponde `rest_not_logged_in` in tutti e due i casi, quindi il messaggio dice le due cose e offre il ponte),
+   utente senza permessi. Con il plugin Ponte il collegamento è `importa_wp_collega_ponte()` (26.6).
 2. **Analisi** (`importa_wp_analisi_passo()`): a passi (categorie, tag, utenti, pagine, articoli, media, menu, il resto),
    una richiesta per passo, articoli e pagine a 50 per volta con `context=edit` e tutti gli stati (pubblicati, programmati,
    bozze, in attesa di revisione, privati). Si tiene un indice senza i testi: id, slug (`slug` o `generated_slug`, decodificato,
@@ -4121,6 +4125,38 @@ immagini (JPEG, PNG, GIF, WebP, AVIF, SVG), PDF, MP4 o MP3.
 - Un link a un contenuto non importato (per esempio una bozza esclusa) resta verso il vecchio sito.
 - Una copia del sito grande, il primo passo, può superare il tempo di un giro: su un hosting condiviso con limiti stretti
   conviene fare prima la copia da Impostazioni > Copia del sito.
+- Il plugin Ponte è provato contro WordPress 6.6.2 in locale, con le credenziali tolte dal router; non ancora su un hosting vero.
+
+### 26.6 Il plugin Ponte (dalla 2.19.0)
+
+Per i siti dove la password per le applicazioni non arriva a WordPress: hosting che tolgono l'intestazione `Authorization`
+prima di PHP (il caso che l'ha fatto nascere, 2 novembre 2026: un sito su un hosting condiviso dove la password giusta dava 401 anche
+con `SetEnvIf` e `RewriteRule [E=HTTP_AUTHORIZATION]` nel `.htaccess`; da fuori non si è potuto dire se fosse il server), plugin di sicurezza che chiudono la REST a chi viene da fuori.
+
+- **Il plugin** (`includes/ponte-wp/plumecms-ponte.php`, PHP 7.2+, WordPress 5.6+): pagina Strumenti > plumeCMS Ponte
+  (`manage_options`), **Apri il ponte** (`admin-post.php`, nonce `plume_ponte`) crea il codice `PLUME1-` + 43 caratteri
+  base64url (32 byte casuali) nell'opzione `plume_ponte` (non autoload: codice, utente che l'ha aperto, scadenza a 48 ore);
+  **Chiudi il ponte** e la disattivazione del plugin cancellano l'opzione; a scadenza la prima richiesta la cancella.
+- **Le richieste**: `POST <base>/?plume_ponte=1` (gestore su `wp_loaded`, priorità 1), campi `rotta`, `q` (JSON dei parametri),
+  `t` (ora Unix), `n` (32 cifre esadecimali casuali), `firma` = `hash_hmac('sha256', 'plume-ponte|1|t|n|rotta|q', codice)`. Il
+  plugin controlla, in ordine: metodo (405), blocco dell'IP (429 dopo 20 firme sbagliate in 15 minuti, transient
+  `plume_ponte_e_<md5 ip>`), ponte aperto, forma dei campi, firma (`hash_equals`), ora entro 300 secondi, numero non già usato
+  (transient `plume_ponte_n_<n>`), rotta ammessa, utente ancora con `manage_options` (se no chiude il ponte). Poi
+  `wp_set_current_user()`, `rest_do_request()` di una **GET** con i parametri (tolti `_method`, `_envelope`, `_jsonp`), i filtri
+  `rest_post_dispatch` (per `_fields`) e la busta `{ponte:1, versione, codice, header:{x-wp-total, x-wp-totalpages}, corpo}`.
+  Gli errori sono `{ponte:1, errore}`: `metodo`, `bloccato`, `chiuso`, `richiesta`, `firma`, `ora` (con l'ora del server),
+  `ripetuta`, `rotta`, `utente`. La firma sta nel corpo: nessuna intestazione da far passare.
+- **Rotte ammesse** (`plume_ponte_rotta_ammessa()`): `/`, `/wp/v2/...` tranne plugin, temi, block-directory, widget, sidebar,
+  stili globali, font, template, sotto-rotte degli utenti (`users/<id>/...`) e tutto ciò che contiene `application-passwords`;
+  i tipi di contenuto con la REST in un altro namespace. Mai `..`, solo `[A-Za-z0-9/_.-]`, al massimo 200 caratteri.
+- **In plumeCMS**: `importa_wp_json()` passa da `importa_wp_ponte()` quando lo stato ha `ponte: true`; la busta torna nella
+  forma di `importa_wp_get()` e analisi, import, Conferma e Annulla non cambiano. `importa_wp_get()` ha l'opzione `post`
+  (campi in POST, mantenuti anche dopo un rimando sullo stesso sito). Il codice si tiene cifrato in `segreto`, come la
+  password, con le stesse scadenze; senza HTTPS il ponte non parte (tranne `CMS_IMPORTA_WP_LOCALE`). I file dei media si
+  scaricano come prima, senza credenziali. Zip del plugin: `importa-wordpress.php?scarica=ponte` (solo amministratore),
+  costruito al momento con `ZipArchive` (`plumecms-ponte/plumecms-ponte.php` e `readme.txt`).
+- **Prove**: `prove/prova-ponte.js` (49) contro un WordPress vero con `WP_TOGLI_AUTH=1` in `router-wp.php`, che toglie le
+  credenziali come quell'hosting; attacchi lato pannello nel gruppo 41 di `tools/sicurezza-prova.js`.
 
 ---
 

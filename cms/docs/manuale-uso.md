@@ -3514,6 +3514,31 @@ Importa da WordPress**.
 
 Dopo la conferma puoi cancellare la password per le applicazioni da WordPress, dallo stesso punto in cui l'hai creata.
 
+### Se WordPress non accetta la password: il plugin Ponte
+
+Su alcuni hosting il server toglie utente e password dalle richieste prima che arrivino a WordPress: la password è giusta,
+ma WordPress risponde come se non l'avessi scritta. Succede anche con i plugin di sicurezza che chiudono la REST. In questi
+casi ci si collega con il **plugin Ponte**, che non usa la password e non chiede di toccare il server.
+
+![La scelta "Con il plugin Ponte"](immagini/manuale-uso/29-ponte-scelta.jpg)
+
+1. In **Impostazioni > Importa da WordPress** scegli **Con il plugin Ponte** e premi **Scarica il plugin Ponte**: arriva il
+   file *plumecms-ponte.zip*.
+2. Nel pannello di WordPress apri **Plugin > Aggiungi nuovo > Carica plugin**, scegli il file, premi **Installa ora** e poi
+   **Attiva**.
+3. Apri **Strumenti > plumeCMS Ponte** e premi **Apri il ponte**. Compare un codice che comincia con *PLUME1-*: premi
+   **Copia il codice**.
+
+![Il ponte aperto in WordPress](immagini/manuale-uso/29-ponte-wordpress.jpg)
+
+4. Torna in plumeCMS, scrivi l'**indirizzo del sito WordPress**, incolla il **codice del ponte** e premi **Collegati e
+   analizza il sito**. Da qui tutto va come sopra, dal passo 5.
+5. A import finito, in WordPress premi **Chiudi il ponte**, poi disattiva e cancella il plugin da **Plugin**.
+
+Il ponte legge e basta: non scrive, non cancella e non cambia niente su WordPress. Il codice vale 48 ore e non viaggia mai:
+ogni richiesta di plumeCMS è firmata con il codice, e il ponte rifiuta quelle firmate male, quelle vecchie di più di 5 minuti
+e quelle ripetute. Il codice è una chiave: non mandarlo per email e non incollarlo in chat.
+
 **Checklist**
 
 - [ ] WordPress è in https e ha la versione 5.6 o più nuova.
@@ -3526,7 +3551,13 @@ Dopo la conferma puoi cancellare la password per le applicazioni da WordPress, d
 - *"La password non è quella per le applicazioni".* Hai usato la password con cui entri in WordPress: crea quella per le
   applicazioni (passi 1-3).
 - *"Il sito non risponde" o "la REST è chiusa".* Un plugin di sicurezza di WordPress blocca l'accesso: spegnilo il tempo
-  dell'import.
+  dell'import, oppure collegati con il plugin Ponte.
+- *"WordPress non ha accettato utente e password" anche se sono giusti.* Il server toglie le credenziali: usa il plugin Ponte.
+- *"Il ponte è chiuso o scaduto".* Il codice vale 48 ore: riapri il ponte in Strumenti > plumeCMS Ponte e copia il codice nuovo.
+- *"Non trovo il plugin Ponte acceso".* In WordPress, in **Plugin**, attiva *plumeCMS Ponte*; nell'indirizzo scrivi quello
+  della home del sito (con o senza www, come lo apri nel browser).
+- *"L'orologio di questo server e quello del sito WordPress sono distanti".* Uno dei due server ha l'ora sbagliata di più di
+  5 minuti: chiedi all'hosting di sistemarla.
 
 ---
 

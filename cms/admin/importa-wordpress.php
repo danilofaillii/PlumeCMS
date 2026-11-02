@@ -14,6 +14,20 @@ $adminTitle = 'Importa da WordPress';
 $s = importa_wp_stato();
 $fase = (string)($s['fase'] ?? '');
 
+// Il plugin Ponte per WordPress (2.19.0): lo zip si prepara al momento, solo per l'amministratore.
+if (($_GET['scarica'] ?? '') === 'ponte') {
+    try { $zip = importa_wp_ponte_zip(); }
+    catch (ImportaWpErrore $e) { flash('error', $e->getMessage()); header('Location: importa-wordpress.php'); exit; }
+    while (ob_get_level() > 0) ob_end_clean();
+    header('Content-Type: application/zip');
+    header('Content-Disposition: attachment; filename="plumecms-ponte.zip"');
+    header('Content-Length: ' . filesize($zip));
+    header('Cache-Control: no-store');
+    readfile($zip);
+    @unlink($zip);
+    exit;
+}
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $azione = (string)($_POST['azione'] ?? '');
     // Un giro di lavoro: risposta JSON, per lo script della pagina.
@@ -62,18 +76,25 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     try {
         if ($azione === 'collega') {
             if (in_array($fase, ['importa', 'prova'], true)) throw new ImportaWpErrore('C\'è già un import in corso: confermalo o annullalo prima di cominciarne un altro.');
-            $_SESSION['importa_wp_form'] = ['indirizzo' => mb_substr((string)($_POST['indirizzo'] ?? ''), 0, 300), 'utente' => mb_substr((string)($_POST['utente'] ?? ''), 0, 100)];
-            $nuovo = importa_wp_collega((string)($_POST['indirizzo'] ?? ''), (string)($_POST['utente'] ?? ''), (string)($_POST['password'] ?? ''));
+            $modo = ($_POST['modo'] ?? '') === 'ponte' ? 'ponte' : 'password';
+            $_SESSION['importa_wp_form'] = ['indirizzo' => mb_substr((string)($_POST['indirizzo'] ?? ''), 0, 300), 'utente' => mb_substr((string)($_POST['utente'] ?? ''), 0, 100), 'modo' => $modo];
+            $nuovo = $modo === 'ponte'
+                ? importa_wp_collega_ponte((string)($_POST['indirizzo'] ?? ''), (string)($_POST['codice'] ?? ''))
+                : importa_wp_collega((string)($_POST['indirizzo'] ?? ''), (string)($_POST['utente'] ?? ''), (string)($_POST['password'] ?? ''));
             // Le voci di un lavoro vecchio (confermato o annullato) non servono più.
             if (!empty($s['lavoro'])) db()->prepare('DELETE FROM ' . tbl('importa_wp_voci') . ' WHERE lavoro = ?')->execute([(string)$s['lavoro']]);
             importa_wp_stato_salva($nuovo);
             unset($_SESSION['importa_wp_form']);
-            sicurezza_log('importa_wp', (string)($_SESSION['admin_username'] ?? ''), (int)($_SESSION['admin_user_id'] ?? 0), 'collegato a ' . $nuovo['base']);
+            sicurezza_log('importa_wp', (string)($_SESSION['admin_username'] ?? ''), (int)($_SESSION['admin_user_id'] ?? 0), 'collegato a ' . $nuovo['base'] . ($modo === 'ponte' ? ' con il plugin Ponte' : ''));
             header('Location: importa-wordpress.php?avvia=1'); exit;
         } elseif ($azione === 'password') {
             if (!in_array($fase, ['analisi', 'importa'], true)) throw new ImportaWpErrore('Non c\'è un lavoro da riprendere.');
-            if (trim((string)($_POST['password'] ?? '')) === '') throw new ImportaWpErrore('Scrivi la password per le applicazioni.');
-            $s['segreto'] = importa_wp_cifra((string)$_POST['password']);
+            if (trim((string)($_POST['password'] ?? '')) === '') throw new ImportaWpErrore(!empty($s['ponte']) ? 'Scrivi il codice del ponte.' : 'Scrivi la password per le applicazioni.');
+            if (!empty($s['ponte'])) {
+                $codice = importa_wp_ponte_codice((string)$_POST['password']);
+                if ($codice === '') throw new ImportaWpErrore('Il codice del ponte non ha la forma giusta: comincia con PLUME1- ed è lungo 50 caratteri.');
+                $s['segreto'] = importa_wp_cifra($codice);
+            } else $s['segreto'] = importa_wp_cifra((string)$_POST['password']);
             unset($s['errore']);
             importa_wp_stato_salva($s);
             header('Location: importa-wordpress.php?avvia=1'); exit;
@@ -105,7 +126,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 }
 
-$form = $_SESSION['importa_wp_form'] ?? ['indirizzo' => '', 'utente' => ''];
+$form = ($_SESSION['importa_wp_form'] ?? []) + ['indirizzo' => '', 'utente' => '', 'modo' => 'password'];
+$ponte = $form['modo'] === 'ponte';
 $report = $s['report'] ?? null;
 $sito = rtrim(cms_url_sito(), '/');
 $h = fn($x) => htmlspecialchars((string)$x, ENT_QUOTES, 'UTF-8');
@@ -117,8 +139,8 @@ require_once __DIR__ . '/includes/admin-header.php';
 .iw-card h2{font-size:1.1rem;margin:0 0 .6rem}
 .iw-card h3{font-size:.95rem;margin:1.1rem 0 .5rem}
 .iw-nota{font-size:.86rem;color:var(--text-muted);line-height:1.55;margin:.4rem 0 0}
-.iw-passi{margin:.6rem 0 0;padding-left:1.3rem;line-height:1.6;font-size:.92rem}
-.iw-passi li{margin-bottom:.25rem}
+.iw-passi,.iw-passi-ponte{margin:.6rem 0 0;padding-left:1.3rem;line-height:1.6;font-size:.92rem}
+.iw-passi li,.iw-passi-ponte li{margin-bottom:.25rem}
 .iw-griglia{display:grid;grid-template-columns:1fr 1fr;gap:1.2rem}
 @media(max-width:900px){.iw-griglia{grid-template-columns:1fr}}
 .iw-barra{height:14px;background:var(--bg);border:1px solid var(--border);border-radius:999px;overflow:hidden;margin:.8rem 0 .5rem}
@@ -144,6 +166,9 @@ require_once __DIR__ . '/includes/admin-header.php';
 .iw-spunta{display:flex;gap:.5rem;align-items:flex-start;font-size:.9rem;margin:.6rem 0}
 .iw-spunta input{margin-top:.25rem}
 .iw-pwd{font-family:monospace;letter-spacing:.05em}
+.iw-modi{display:flex;flex-wrap:wrap;gap:.5rem;margin:0 0 1rem}
+.iw-modi label{display:flex;gap:.45rem;align-items:center;border:1px solid var(--bordo-campo);border-radius:8px;padding:.5rem .8rem;cursor:pointer;font-weight:600;font-size:.92rem}
+.iw-modi label:has(input:checked){border-color:var(--logo-accento,var(--sage));box-shadow:inset 0 0 0 1px var(--logo-accento,var(--sage))}
 </style>
 <div class="iw">
 
@@ -157,23 +182,59 @@ require_once __DIR__ . '/includes/admin-header.php';
     <div class="iw-card">
       <h2>Porta qui il tuo sito WordPress</h2>
       <p class="iw-nota" style="margin-top:0">plumeCMS legge il sito WordPress (articoli, pagine, categorie, tag, immagini, menu, SEO), ti mostra cosa si può portare e cosa no, e lo importa in prova: lo guardi nell'anteprima e solo quando confermi diventa visibile. Il sito WordPress non viene toccato: si legge e basta.</p>
+      <div data-iw-modo="password"<?= $ponte ? ' hidden' : '' ?>>
       <h3>Prima: crea una password per le applicazioni</h3>
       <ol class="iw-passi">
         <li>Entra nel pannello di WordPress e apri <b>Utenti &gt; Profilo</b>.</li>
         <li>In fondo, in <b>Password per le applicazioni</b>, scrivi un nome (per esempio <i>plumeCMS</i>) e premi <b>Aggiungi una nuova password per le applicazioni</b>.</li>
         <li>Copia la password che compare (sei gruppi di quattro lettere e cifre, come <span class="iw-pwd">abcd efgh ijkl mnop qrst uvwx</span>) e incollala qui accanto, spazi compresi. Non è la password con cui entri in WordPress.</li>
       </ol>
-      <p class="iw-nota">Serve WordPress 5.6 o più nuovo, con il sito in HTTPS. Alla fine dell'import puoi cancellare la password per le applicazioni dallo stesso punto di WordPress.</p>
+      <p class="iw-nota">Serve WordPress 5.6 o più nuovo, con il sito in HTTPS. Alla fine dell'import puoi cancellare la password per le applicazioni dallo stesso punto di WordPress. Se WordPress non la accetta anche se è giusta (succede su alcuni hosting), usa il plugin Ponte.</p>
+      </div>
+      <div data-iw-modo="ponte"<?= $ponte ? '' : ' hidden' ?>>
+      <h3>Prima: metti il plugin Ponte su WordPress</h3>
+      <ol class="iw-passi-ponte">
+        <li>Scarica il plugin: <a class="btn btn-secondary btn-sm" href="importa-wordpress.php?scarica=ponte" id="iw-scarica-ponte">Scarica il plugin Ponte</a></li>
+        <li>Nel pannello di WordPress apri <b>Plugin &gt; Aggiungi nuovo &gt; Carica plugin</b>, scegli il file <i>plumecms-ponte.zip</i>, premi <b>Installa ora</b> e poi <b>Attiva</b>.</li>
+        <li>Apri <b>Strumenti &gt; plumeCMS Ponte</b>, premi <b>Apri il ponte</b> e poi <b>Copia il codice</b>.</li>
+        <li>Incolla il codice qui accanto, insieme all'indirizzo del sito.</li>
+      </ol>
+      <p class="iw-nota">Il ponte serve quando la password per le applicazioni non arriva a WordPress: hosting che tolgono le credenziali dalle richieste, plugin di sicurezza che chiudono la REST. Legge e basta, il codice vale 48 ore e non viaggia mai: ogni richiesta è firmata. A import finito, in WordPress premi <b>Chiudi il ponte</b>, poi disattiva e cancella il plugin.</p>
+      </div>
     </div>
     <div class="iw-card">
       <h2>Collegati al sito</h2>
       <form method="post" autocomplete="off" id="iw-collega">
         <?= csrf_field() ?><input type="hidden" name="azione" value="collega">
+        <div class="iw-modi" role="radiogroup" aria-label="Come ti colleghi">
+          <label><input type="radio" name="modo" value="password"<?= $ponte ? '' : ' checked' ?>> Con la password per le applicazioni</label>
+          <label><input type="radio" name="modo" value="ponte"<?= $ponte ? ' checked' : '' ?>> Con il plugin Ponte</label>
+        </div>
         <div class="form-group"><label for="iw-indirizzo">Indirizzo del sito WordPress</label><input id="iw-indirizzo" name="indirizzo" type="text" inputmode="url" placeholder="per esempio https://www.miosito.it" value="<?= $h($form['indirizzo']) ?>" required></div>
-        <div class="form-group"><label for="iw-utente">Nome utente di WordPress</label><input id="iw-utente" name="utente" type="text" placeholder="il nome con cui entri in WordPress" value="<?= $h($form['utente']) ?>" required autocapitalize="off" spellcheck="false"></div>
-        <div class="form-group"><label for="iw-password">Password per le applicazioni</label><input id="iw-password" name="password" type="password" class="iw-pwd" placeholder="abcd efgh ijkl mnop qrst uvwx" required autocomplete="new-password"><p class="hint">Si tiene cifrata solo per la durata dell'import, poi si cancella. Non compare mai nelle pagine né nei registri.</p></div>
+        <div data-iw-modo="password"<?= $ponte ? ' hidden' : '' ?>>
+          <div class="form-group"><label for="iw-utente">Nome utente di WordPress</label><input id="iw-utente" name="utente" type="text" placeholder="il nome con cui entri in WordPress" value="<?= $h($form['utente']) ?>"<?= $ponte ? '' : ' required' ?> autocapitalize="off" spellcheck="false"></div>
+          <div class="form-group"><label for="iw-password">Password per le applicazioni</label><input id="iw-password" name="password" type="password" class="iw-pwd" placeholder="abcd efgh ijkl mnop qrst uvwx"<?= $ponte ? '' : ' required' ?> autocomplete="new-password"><p class="hint">Si tiene cifrata solo per la durata dell'import, poi si cancella. Non compare mai nelle pagine né nei registri.</p></div>
+        </div>
+        <div data-iw-modo="ponte"<?= $ponte ? '' : ' hidden' ?>>
+          <div class="form-group"><label for="iw-codice">Codice del ponte</label><input id="iw-codice" name="codice" type="password" class="iw-pwd" placeholder="PLUME1-..."<?= $ponte ? ' required' : '' ?> autocomplete="new-password" autocapitalize="off" spellcheck="false"><p class="hint">Lo trovi in WordPress, Strumenti &gt; plumeCMS Ponte. Si tiene cifrato solo per la durata dell'import, poi si cancella.</p></div>
+        </div>
         <div class="iw-azioni"><button class="btn btn-primary" type="submit">Collegati e analizza il sito</button></div>
       </form>
+      <script<?= nonce_attr() ?>>
+      (function () {
+        var f = document.getElementById('iw-collega');
+        function mostra() {
+          var m = f.querySelector('input[name=modo]:checked').value;
+          document.querySelectorAll('[data-iw-modo]').forEach(function (el) {
+            var vedi = el.dataset.iwModo === m;
+            el.hidden = !vedi;
+            el.querySelectorAll('input').forEach(function (i) { i.required = vedi; });
+          });
+        }
+        f.querySelectorAll('input[name=modo]').forEach(function (r) { r.addEventListener('change', mostra); });
+        mostra();
+      })();
+      </script>
     </div>
   </div>
 
@@ -189,8 +250,12 @@ require_once __DIR__ . '/includes/admin-header.php';
     <?php if (($err['tipo'] ?? '') === 'password_persa' || !isset($s['segreto'])): ?>
     <form method="post" autocomplete="off" class="iw-spunta" style="flex-wrap:wrap">
       <?= csrf_field() ?><input type="hidden" name="azione" value="password">
+      <?php if (!empty($s['ponte'])): ?>
+      <span style="width:100%">Per continuare riscrivi il codice del ponte (in WordPress, Strumenti &gt; plumeCMS Ponte; per sicurezza non si tiene oltre un giorno).</span>
+      <?php else: ?>
       <span style="width:100%">Per continuare riscrivi la password per le applicazioni di <b><?= $h($s['utente'] ?? '') ?></b> (per sicurezza non si tiene oltre un giorno).</span>
-      <input name="password" type="password" class="iw-pwd" placeholder="abcd efgh ijkl mnop qrst uvwx" required autocomplete="new-password" style="padding:.5rem .7rem;border:1px solid var(--bordo-campo);border-radius:8px;min-width:280px">
+      <?php endif; ?>
+      <input name="password" type="password" class="iw-pwd" placeholder="<?= !empty($s['ponte']) ? 'PLUME1-...' : 'abcd efgh ijkl mnop qrst uvwx' ?>" required autocomplete="new-password" style="padding:.5rem .7rem;border:1px solid var(--bordo-campo);border-radius:8px;min-width:280px">
       <button class="btn btn-primary" type="submit">Continua</button>
     </form>
     <?php endif; ?>

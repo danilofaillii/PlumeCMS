@@ -226,7 +226,8 @@ def funzionalita():
         ('wordpress', 'importa-wp.webp', 'Vieni da WordPress? Porti tutto con te',
          ['In Impostazioni, Importa da WordPress, scrivi l\'indirizzo del vecchio sito, il tuo utente e una password per le applicazioni. plumeCMS guarda tutto il sito e ti fa il report: quanti articoli, pagine, immagini, categorie, tag, menu, cosa diventano qui e cosa resta fuori, con il perché.',
           'Spunti quello che vuoi portare e premi Importa. I vecchi indirizzi diventano redirect, così i link sparsi per il web e su Google continuano a funzionare.',
-          'Tutto entra <strong>in prova</strong>: i visitatori non vedono niente, tu giri il sito nuovo nell\'anteprima. Ti piace? Conferma. Non ti convince? Annulla, e il sito torna com\'era.']),
+          'Tutto entra <strong>in prova</strong>: i visitatori non vedono niente, tu giri il sito nuovo nell\'anteprima. Ti piace? Conferma. Non ti convince? Annulla, e il sito torna com\'era.',
+          '<ul><li>L\'hosting del vecchio sito blocca la password? Carichi su WordPress il <strong>plugin Ponte</strong>, copi il suo codice e l\'import parte lo stesso: solo lettura, nessun file del server da toccare.</li></ul>']),
         ('addon', 'addon.webp', 'Gli addon: accendi solo quello che ti serve',
          ['In Impostazioni, <strong>Addon</strong>: otto funzioni in più, ognuna con il suo pulsante Accendi. Spento, l\'addon sparisce dal sito, e i suoi dati restano lì per quando lo riaccendi.',
           '<ul><li><strong>Prenotazioni e appuntamenti</strong>, con i posti davvero liberi e il promemoria il giorno prima.</li>'
@@ -595,6 +596,7 @@ def zip_lavagna(dest):
 # Regola di Danilo (1 novembre 2026): solo i punti salienti, una riga per versione, mai nomi di aziende o servizi di terzi.
 # Le novità per chi scarica: brevi, scritte qui (il CHANGELOG è per chi sviluppa). Da aggiornare a ogni versione.
 NOVITA = [
+    ('2.19.0', 'Il plugin Ponte per l\'import', ['L\'import da un vecchio sito parte anche dove l\'hosting blocca la password: un plugin in sola lettura e un codice da copiare.']),
     ('2.18.0', 'Le automazioni richiamano i modelli', ['Correggi un modello e le email delle automazioni escono già corrette; menu del pannello più leggibile.']),
     ('2.17.1', 'Le email delle automazioni dai modelli', ['Nel passo Email di un\'automazione si sceglie un modello, a blocchi o in codice HTML.']),
     ('2.17.0', 'Quindici aperture nuove', ['Ventisei disposizioni per l\'apertura delle pagine, con video, lente, prima e dopo e terminale; i video si caricano nei Media.']),

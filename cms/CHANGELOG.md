@@ -2,6 +2,24 @@
 
 Il prodotto si chiama **plumeCMS** (nome scelto il 26 ottobre 2026; prima, per poche ore, "CarbonaraCMS", e ancora prima il provvisorio "Officina": gli zip vecchi si chiamavano `officina-*` e `carbonaracms-*`).
 
+## 2.19.0 (2 novembre 2026) - Il plugin Ponte per l'import da WordPress
+
+- **Importa da WordPress, Con il plugin Ponte**: per i siti dove la password per le applicazioni non arriva a WordPress
+  (hosting che tolgono le credenziali dalle richieste, plugin di sicurezza che chiudono la REST). Il plugin si scarica dalla
+  pagina dell'import (**Scarica il plugin Ponte**), si carica e si attiva su WordPress, si apre da **Strumenti > plumeCMS
+  Ponte** e dà un codice da incollare in plumeCMS. Richiesta di Danilo, dopo un import che su un hosting condiviso dava 401
+  con la password giusta.
+- Il ponte **legge e basta**: solo richieste GET, solo sulle rotte dei contenuti (mai password per le applicazioni, plugin,
+  temi). Ogni richiesta è firmata con il codice, che non viaggia mai; rifiuta firme sbagliate, richieste vecchie di più di 5
+  minuti o ripetute; dopo 20 firme sbagliate tiene fuori quell'indirizzo per 15 minuti. Il codice vale 48 ore, **Chiudi il
+  ponte** e la disattivazione del plugin lo cancellano.
+- In plumeCMS il codice si tiene cifrato come la password, e si dimentica alla fine dell'import o dopo un giorno fermo. Report,
+  scelta, import a giri, prova, Conferma e Annulla sono gli stessi.
+- **Messaggio delle credenziali non accettate**: dice le due cause possibili (utente o password sbagliati, oppure il server che
+  toglie le credenziali: da fuori WordPress risponde nello stesso modo) e offre il ponte. Prima indicava una riga del
+  `.htaccess`, che su alcuni hosting non basta.
+- **Sito di plumeCMS**: dalla 2.19.0 il pacchetto porta di nuovo la home, con l'apertura tenuta com'è sul sito.
+
 ## 2.18.0 (2 novembre 2026) - Le email delle automazioni richiamano i modelli
 
 - **Automazioni, passo Email "Da un modello"**: l'email richiama il modello e lo legge ogni volta che parte. Correggi il modello

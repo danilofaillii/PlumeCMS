@@ -235,7 +235,7 @@ function importa_wp_controlla(string $url): array {
 
 /**
  * Una GET verso il WordPress. $s: lo stato (base e credenziali). $opz: auth (bool, predefinito vero), max (byte), timeout,
- * file (scrive il corpo li invece di tenerlo). Ritorna ['codice', 'header' (minuscole), 'corpo', 'json', 'url'].
+ * file (scrive il corpo li invece di tenerlo), post (campi da mandare in POST, anche dopo un rimando: serve al plugin Ponte). Ritorna ['codice', 'header' (minuscole), 'corpo', 'json', 'url'].
  * Segue al massimo IMPORTA_WP_REDIRECT rimandi, solo sullo stesso sito. Lancia ImportaWpErrore.
  */
 function importa_wp_get(array $s, string $url, array $opz = []): array {
@@ -257,6 +257,7 @@ function importa_wp_get(array $s, string $url, array $opz = []): array {
         $header = []; $corpo = ''; $letti = 0; $troppo = false;
         $fh = isset($opz['file']) ? fopen($opz['file'], 'wb') : null;
         $c = curl_init();
+        if (isset($opz['post'])) curl_setopt_array($c, [CURLOPT_POST => true, CURLOPT_POSTFIELDS => http_build_query((array)$opz['post'])]);
         curl_setopt_array($c, [
             CURLOPT_URL => $url,
             CURLOPT_RESOLVE => [$o['host'] . ':' . $o['porta'] . ':' . (str_contains($ip, ':') ? "[$ip]" : $ip)],
@@ -328,7 +329,7 @@ function importa_wp_api(array $s, string $rotta, array $q = []): string {
 
 /** Una GET a una rotta che deve rispondere 200 in JSON; altrimenti l'errore, in parole semplici. */
 function importa_wp_json(array $s, string $rotta, array $q = [], bool $auth = true): array {
-    $r = importa_wp_get($s, importa_wp_api($s, $rotta, $q), ['auth' => $auth]);
+    $r = !empty($s['ponte']) ? importa_wp_ponte($s, $rotta, $q) : importa_wp_get($s, importa_wp_api($s, $rotta, $q), ['auth' => $auth]);
     if ($r['codice'] === 200 && is_array($r['json'])) return $r;
     throw importa_wp_errore_risposta($r, $rotta);
 }
@@ -403,8 +404,11 @@ function importa_wp_collega(string $indirizzo, string $utente, string $password)
         if (in_array($code, ['rest_disabled', 'rest_api_disabled', 'rest_cannot_access', 'rest_login_required'], true)) throw importa_wp_errore_risposta($r, 'la REST');
         if (!$appAttive) throw new ImportaWpErrore('Su questo WordPress le password per le applicazioni sono spente: succede se il sito non è in HTTPS o se un plugin di sicurezza le ha disattivate. Riattivale (o metti il sito in HTTPS), poi riprova.', 'app_spente');
         if (!importa_wp_password_per_app($password)) throw new ImportaWpErrore('WordPress non ha accettato la password. Questa sembra la password con cui entri in WordPress: qui serve la password per le applicazioni (24 lettere e cifre in sei gruppi di quattro), che si crea in Utenti > Profilo > Password per le applicazioni.', 'password_normale');
+        // Utente o password sbagliati e credenziali tolte dal server danno la stessa risposta di WordPress (rest_not_logged_in,
+        // provato su WordPress 6.6): da fuori non si distinguono, quindi il messaggio dice tutte e due le cose e offre il ponte.
+        if ($code === 'incorrect_password') throw new ImportaWpErrore('WordPress non ha accettato la password per le applicazioni dell\'utente "' . $utente . '": copiala di nuovo (spazi compresi) o creane una nuova in Utenti > Profilo > Password per le applicazioni.', 'password_sbagliata');
         if ($code === 'invalid_username') throw new ImportaWpErrore('WordPress non conosce l\'utente "' . $utente . '": scrivi il nome con cui entri nel pannello di WordPress (o la sua email).', 'utente');
-        throw new ImportaWpErrore('WordPress non ha accettato utente e password per le applicazioni (risposta ' . $r['codice'] . '). Controlla il nome utente e la password, oppure crea una password nuova in Utenti > Profilo > Password per le applicazioni. Se sono giusti, il server del sito toglie le credenziali dalle richieste: serve una riga nel suo .htaccess (chiedi all\'hosting di passare l\'intestazione Authorization a PHP).', 'credenziali');
+        throw new ImportaWpErrore('WordPress non ha accettato utente e password per le applicazioni (risposta ' . $r['codice'] . '). Controlla il nome utente e la password, oppure crea una password nuova in Utenti > Profilo > Password per le applicazioni. Se sono giusti, il server del sito toglie le credenziali dalle richieste prima che arrivino a WordPress (succede su alcuni hosting): collegati con il plugin Ponte, scelta "Con il plugin Ponte" qui sopra. Il ponte non usa la password e non chiede di toccare il server.', 'credenziali');
     }
     $io = $r['json'];
     $ruoli = (array)($io['roles'] ?? []);
@@ -423,6 +427,101 @@ function importa_wp_collega(string $indirizzo, string $utente, string $password)
         'home' => rtrim((string)($indice['home'] ?? $base), '/'), 'url' => rtrim((string)($indice['url'] ?? $base), '/'),
         'namespaces' => array_values((array)($indice['namespaces'] ?? [])), 'amministratore' => in_array('administrator', $ruoli, true),
         'utente_nome' => (string)($io['name'] ?? $utente),
+    ];
+    $s['analisi'] = ['passo' => 0, 'pagina' => 1];
+    return $s;
+}
+
+// ------------------------------------------------------------
+// Il plugin Ponte (2.19.0)
+// ------------------------------------------------------------
+//
+// Per i siti dove la password per le applicazioni non arriva a WordPress (hosting che tolgono l'intestazione Authorization,
+// plugin di sicurezza che chiudono la REST). Su WordPress si carica il plugin "plumeCMS Ponte" (includes/ponte-wp/, lo zip lo
+// dà admin/importa-wordpress.php?scarica=ponte), lo si apre da Strumenti > plumeCMS Ponte e il codice che mostra si scrive qui.
+// Ogni lettura è una POST a <base>/?plume_ponte=1 con rotta, richiesta (JSON), ora, numero a caso e la firma HMAC-SHA256 con
+// il codice: il codice non viaggia mai. Il plugin risponde con la busta {ponte, codice, header, corpo}: si rimette nella forma
+// di importa_wp_get() e il resto dell'import non cambia. Il codice si tiene cifrato come la password ($s['segreto']).
+
+const IMPORTA_WP_PONTE_FORMA = '/^PLUME1-[A-Za-z0-9_-]{43}$/';
+
+/** Il codice del ponte ripulito (spazi e a capo tolti dalla copia); '' se non ha la forma giusta. */
+function importa_wp_ponte_codice(string $c): string {
+    $c = preg_replace('/\s+/', '', $c) ?? '';
+    return preg_match(IMPORTA_WP_PONTE_FORMA, $c) ? $c : '';
+}
+
+/** Lo zip del plugin Ponte per WordPress, in un file temporaneo (lo cancella chi lo manda). */
+function importa_wp_ponte_zip(): string {
+    if (!class_exists('ZipArchive')) throw new ImportaWpErrore('Sul server manca l\'estensione zip di PHP: serve per preparare il plugin Ponte.', 'server');
+    $tmp = tempnam(sys_get_temp_dir(), 'ponte');
+    $z = new ZipArchive();
+    if ($z->open($tmp, ZipArchive::CREATE | ZipArchive::OVERWRITE) !== true) throw new ImportaWpErrore('Non riesco a preparare lo zip del plugin Ponte.', 'server');
+    $z->addEmptyDir('plumecms-ponte');
+    $z->addFile(__DIR__ . '/ponte-wp/plumecms-ponte.php', 'plumecms-ponte/plumecms-ponte.php');
+    $z->addFromString('plumecms-ponte/readme.txt', "=== plumeCMS Ponte ===\nCollega questo WordPress a plumeCMS per l'import, in sola lettura.\n\n1. Plugin > Aggiungi nuovo > Carica plugin: scegli questo zip, Installa ora, Attiva.\n2. Strumenti > plumeCMS Ponte > Apri il ponte, poi Copia il codice.\n3. In plumeCMS: Impostazioni > Importa da WordPress > Con il plugin Ponte: indirizzo e codice.\n4. A import finito: Chiudi il ponte, poi disattiva e cancella il plugin.\n");
+    $z->close();
+    return $tmp;
+}
+
+/** Una lettura attraverso il ponte. Ritorna ['codice', 'header', 'corpo', 'json', 'url'] come importa_wp_get(). */
+function importa_wp_ponte(array $s, string $rotta, array $q = []): array {
+    $codice = isset($s['segreto']) ? importa_wp_decifra((string)$s['segreto']) : ($s['_password'] ?? null);
+    if ($codice === null) throw new ImportaWpErrore('Il codice del ponte non c\'è più (per sicurezza si dimentica dopo un giorno, o alla chiusura del browser): riscrivilo per continuare.', 'password_persa');
+    $url = $s['base'] . '/?plume_ponte=1';
+    $o = importa_wp_origine($url);
+    if (!$o || ($o['schema'] !== 'https' && !importa_wp_e_locale($o))) throw new ImportaWpErrore('Il sito è in http, senza HTTPS: i contenuti (bozze comprese) viaggerebbero in chiaro. Scrivi l\'indirizzo con https://', 'http');
+    $rotta = '/' . ltrim($rotta, '/');
+    $qj = (string)json_encode($q, JSON_UNESCAPED_SLASHES);
+    $t = (string)time(); $n = bin2hex(random_bytes(16));
+    $campi = ['rotta' => $rotta, 'q' => $qj, 't' => $t, 'n' => $n, 'firma' => hash_hmac('sha256', 'plume-ponte|1|' . $t . '|' . $n . '|' . $rotta . '|' . $qj, (string)$codice)];
+    unset($codice);
+    $r = importa_wp_get($s, $url, ['auth' => false, 'post' => $campi]);
+    $b = $r['json'];
+    if (!is_array($b) || (int)($b['ponte'] ?? 0) !== 1) {
+        throw new ImportaWpErrore('Su ' . $s['base'] . ' non trovo il plugin Ponte acceso (risposta ' . $r['codice'] . '). Su WordPress, in Plugin, controlla che "plumeCMS Ponte" sia attivo, e scrivi qui l\'indirizzo della home del sito.', 'ponte_assente');
+    }
+    if (isset($b['errore'])) {
+        throw match ((string)$b['errore']) {
+            'chiuso' => new ImportaWpErrore('Il ponte su WordPress è chiuso o scaduto (vale 48 ore). Riaprilo in Strumenti > plumeCMS Ponte e copia qui il codice nuovo.', 'ponte_chiuso'),
+            'firma' => new ImportaWpErrore('Il codice del ponte non è quello giusto: copialo di nuovo da Strumenti > plumeCMS Ponte (pulsante Copia il codice). Se hai riaperto il ponte, il codice è cambiato.', 'ponte_codice'),
+            'ora' => new ImportaWpErrore('L\'orologio di questo server e quello del sito WordPress sono distanti più di 5 minuti: il ponte rifiuta le richieste. Chiedi all\'hosting di sistemare l\'ora del server, poi riprova.', 'ponte_ora'),
+            'bloccato' => new ImportaWpErrore('Il ponte ha visto troppi codici sbagliati da questo server e lo tiene fuori per 15 minuti. Aspetta, controlla il codice e riprova.', 'ponte_bloccato'),
+            'utente' => new ImportaWpErrore('L\'utente che ha aperto il ponte non è più amministratore di WordPress, e il ponte si è chiuso. Riaprilo da un amministratore.', 'ponte_chiuso'),
+            'rotta' => new ImportaWpErrore('Il ponte non permette di leggere ' . $rotta . ' (legge solo i contenuti).', 'permessi'),
+            default => new ImportaWpErrore('Il ponte ha rifiutato la richiesta (' . preg_replace('/[^a-z_]/', '', (string)$b['errore']) . '). Riprova.', 'ponte'),
+        };
+    }
+    $intest = [];
+    foreach ((array)($b['header'] ?? []) as $k => $v) $intest[strtolower((string)$k)] = (string)$v;
+    return ['codice' => (int)($b['codice'] ?? 0), 'header' => $intest, 'corpo' => '', 'json' => $b['corpo'] ?? null, 'url' => $url];
+}
+
+/** Il collegamento con il ponte: indirizzo e codice. Come importa_wp_collega(), con lo stesso stato (ponte: true). */
+function importa_wp_collega_ponte(string $indirizzo, string $codice): array {
+    $base = importa_wp_base($indirizzo);
+    if ($base === '' || trim($codice) === '') throw new ImportaWpErrore('Scrivi l\'indirizzo del sito WordPress e il codice del ponte.', 'vuoto');
+    $pulito = importa_wp_ponte_codice($codice);
+    if ($pulito === '') throw new ImportaWpErrore('Il codice del ponte non ha la forma giusta: comincia con PLUME1- ed è lungo 50 caratteri. Copialo con il pulsante Copia il codice in Strumenti > plumeCMS Ponte.', 'ponte_codice');
+    importa_wp_controlla($base);
+    $s = ['base' => $base, 'utente' => '', 'ponte' => true, '_password' => $pulito, 'api' => 'json'];
+    $indice = importa_wp_json($s, '/')['json'];
+    if (!in_array('wp/v2', (array)($indice['namespaces'] ?? []), true)) throw new ImportaWpErrore('Il sito risponde dal ponte ma senza i contenuti (manca wp/v2): un plugin limita la REST anche dall\'interno.', 'rest_chiusa');
+    $io = importa_wp_json($s, '/wp/v2/users/me', ['context' => 'edit'])['json'];
+    if (empty($io['id'])) throw new ImportaWpErrore('Il ponte non dice chi l\'ha aperto: riaprilo da un amministratore di WordPress.', 'permessi');
+    $ruoli = (array)($io['roles'] ?? []);
+    $s['utente'] = (string)($io['username'] ?? $io['slug'] ?? '');
+    unset($s['_password']);
+    $s['segreto'] = importa_wp_cifra($pulito);
+    $s['lavoro'] = bin2hex(random_bytes(8));
+    $s['fase'] = 'analisi';
+    $s['creato'] = time();
+    $s['sito'] = [
+        'nome' => html_entity_decode((string)($indice['name'] ?? ''), ENT_QUOTES, 'UTF-8'),
+        'descrizione' => html_entity_decode((string)($indice['description'] ?? ''), ENT_QUOTES, 'UTF-8'),
+        'home' => rtrim((string)($indice['home'] ?? $base), '/'), 'url' => rtrim((string)($indice['url'] ?? $base), '/'),
+        'namespaces' => array_values((array)($indice['namespaces'] ?? [])), 'amministratore' => in_array('administrator', $ruoli, true),
+        'utente_nome' => (string)($io['name'] ?? $s['utente']),
     ];
     $s['analisi'] = ['passo' => 0, 'pagina' => 1];
     return $s;
