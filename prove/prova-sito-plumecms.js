@@ -60,7 +60,7 @@ async function contrastoParole(pg) {
     const man = JSON.parse(execFileSync('python3', ['-I', '-c', 'import sys,zipfile;print(zipfile.ZipFile(sys.argv[1]).read("manifest.json").decode())', z], { encoding: 'utf8' }));
     const nome = man.nome;
     if ((man.file || []).some(f => f.a === 'new/VERSIONE')) cmsNelPacchetto = true;
-    if ((man.pagine || []).includes('pagine/home.json')) conHome = true; // 2.18.0: costruisci.py --senza-home la lascia fuori
+    if ((man.pagine || []).some(x => /(^|\/)pagine\/home\.json$/.test(x))) conHome = true; // 2.18.0: costruisci.py --senza-home la lascia fuori
     await p.goto(B + '/admin/aggiornamenti.php', { waitUntil: 'networkidle' });
     await p.setInputFiles('input[name=pacchetto]', z);
     await Promise.all([p.waitForNavigation(), p.click('form:has(input[name=pacchetto]) button[type=submit]')]);
@@ -216,7 +216,7 @@ async function contrastoParole(pg) {
       const voci = [...col.querySelectorAll('li')];
       return { voci: voci.map(e => e.textContent.trim()), fondo: Math.max(...voci.map(e => e.getBoundingClientRect().bottom)), sinistra: g.getBoundingClientRect().bottom };
     });
-    ok('Scarica: novità, elenco breve con l\'ultima versione in cima', r && r.voci.length >= 3 && r.voci.length <= 8 && /^2\.18\.0: Le automazioni richiamano i modelli/.test(r.voci[0]), r && r.voci);
+    ok('Scarica: novità, elenco breve con l\'ultima versione in cima', r && r.voci.length >= 3 && r.voci.length <= 8 && r.voci[0].startsWith(V + ': '), r && r.voci);
     const terzi = (r ? r.voci.join(' ') : '').match(/brevo|google|wordpress|linkedin|facebook|instagram|whatsapp|telegram|mailgun|amazon|dropbox|indexnow|search console|gnu/gi) || [];
     ok('Scarica: nelle novità nessun nome di aziende terze', r && terzi.length === 0, terzi);
     ok('Scarica: le novità finiscono non oltre il riquadro Cosa serve', r && r.fondo <= r.sinistra + 2, r && { fondo: r.fondo, sinistra: r.sinistra }); }
