@@ -211,8 +211,8 @@ require_once __DIR__ . '/includes/admin-header.php';
 
 <?php if ($dup): ?>
 <form method="post" class="form-card" id="nl-duplica" style="margin-top:1.25rem">
-  <?= csrf_field() ?><input type="hidden" name="azione" value="duplica"><input type="hidden" name="id" value="<?= (int)$dup['id'] ?>">
   <h3>Duplica «<?= h($nomeC($dup)) ?>»</h3>
+  <?= csrf_field() ?><input type="hidden" name="azione" value="duplica"><input type="hidden" name="id" value="<?= (int)$dup['id'] ?>">
   <fieldset class="nlk-scelte"><legend>Cosa copiare nella campagna nuova</legend>
     <?php foreach (NL_CAMP_PARTI as $k => [$et]): ?><label><input type="checkbox" name="parti[]" value="<?= $k ?>" checked> <?= h($et) ?></label><?php endforeach; ?>
   </fieldset>
@@ -222,8 +222,8 @@ require_once __DIR__ . '/includes/admin-header.php';
 <?php endif; ?>
 <?php if ($rim): $rimErr = newsletter_rinvio_possibile($rim); ?>
 <form method="post" class="form-card" id="nl-rimanda" style="margin-top:1.25rem">
-  <?= csrf_field() ?><input type="hidden" name="azione" value="rinvio"><input type="hidden" name="id" value="<?= (int)$rim['id'] ?>">
   <h3>Rimanda «<?= h($nomeC($rim)) ?>» ai non aperti</h3>
+  <?= csrf_field() ?><input type="hidden" name="azione" value="rinvio"><input type="hidden" name="id" value="<?= (int)$rim['id'] ?>">
   <?php if ($rimErr !== ''): ?><p class="nl-avviso" role="alert"><?= h($rimErr) ?></p><a class="btn btn-secondary" href="newsletter.php">Torna all'elenco</a>
   <?php else: ?>
   <p class="hint" style="margin-top:0">Arriva a <b><?= newsletter_non_aperti((int)$rim['id']) ?></b> contatti che l'hanno ricevuta e non l'hanno aperta (contati adesso). Si fa una volta sola. Un oggetto diverso aiuta: chi non l'ha aperta forse non ha notato il primo.</p>
