@@ -106,7 +106,7 @@ Sono gli unici in `cms/docs/`, nello zip, nel sito di plumeCMS e nella pagina Do
 - **Pacchetto di aggiornamento** per un'installazione esistente:
   `python3 tools/cms-pacchetto.py --aggiornamento`. Si carica dal pannello,
   Impostazioni, Aggiornamenti.
-- **Versione**: `cms/VERSIONE` (oggi 2.16.0; sempre tre numeri: "beta" va nel CHANGELOG, mai nel nome dello zip, se no la serie "ultima" del Download non lo riconosce) e una voce in `cms/CHANGELOG.md` a ogni
+- **Versione**: `cms/VERSIONE` (oggi 2.16.1; sempre tre numeri: "beta" va nel CHANGELOG, mai nel nome dello zip, se no la serie "ultima" del Download non lo riconosce) e una voce in `cms/CHANGELOG.md` a ogni
   zip con contenuto diverso. Mai cambiare il contenuto di una versione già data.
 - **Prove** prima di dire finito:
   - `php -n -d short_open_tag=1 -l` su ogni file PHP toccato, `node --check` sui js;
@@ -154,6 +154,13 @@ Le decisioni complete, con data e perché, stanno nel second brain, `plumecms/de
 - **Nome: plumeCMS** (26 ottobre 2026).
 
 ## Stato al 31 ottobre 2026
+
+Fatto: plumeCMS 2.16.1 (2 novembre): limite di caricamento di almeno 8 MB fra i requisiti (scelta A di Danilo): avviso nell'installatore
+(`inst_limite_caricamento()`, non blocca), riga NO in Aggiornamenti (`agg_limite_caricamento()` in `agg_controlli()`), riga in Controlla il
+server, INSTALLA, README, manuale d'uso e tecnico, "Cosa serve" del sito, `prova-install.js` con il controllo (38). Il motore dei pacchetti
+è cambiato solo dentro: `consegna.py --uno`. Prove: install 38/38 radice e cartella con il limite a 2 MB, controlla il server 21/21,
+aggiornamento 2.16.0 -> 2.16.1 13/13 (1 foto su 20 a 1 livello), conteggi uguali, attacchi 412/412, pacchetto unico 13/13. Il primo giro
+è caduto per MySQL delle prove spento (Docker): si riaccende con dockerd e `docker start cmsdb`, e al riavvio MySQL ci mette minuti.
 
 Fatto: plumeCMS 2.16.0 (2 novembre): fase 9 del piano Brevo, l'ultima: form a cinque passi e pagine pubbliche (agente, ramo
 `fase9-form-brevo`: `admin/form.php` riscritto, `includes/form-brevo.php`, `includes/newsletter-consenso.php`, `admin/newsletter-consenso.php`
