@@ -127,27 +127,9 @@ async function contrastoParole(pg) {
   await v.goto(B + '/funzionalita/', { waitUntil: 'networkidle' });
   const imgF = await v.evaluate(async () => { for (const i of document.images) { i.loading = 'eager'; } await new Promise(r => setTimeout(r, 1500)); return [...document.images].filter(i => i.naturalWidth === 0).map(i => i.src); });
   ok('nessuna immagine rotta in Funzionalità', imgF.length === 0, imgF);
-  ok('Funzionalità: il blocco del download manager, con la schermata', await v.locator('#download img[src*="download.webp"]').count() === 1 && /Download manager/.test(await v.locator('#download').innerText()));
-  ok('Funzionalità: il blocco delle ventisei aperture, con il foglio', await v.locator('#aperture img[src*="aperture.webp"]').count() === 1 && /Ventisei aperture/.test(await v.locator('#aperture').innerText()));
-  for (const [id, img, re] of [['kit', 'installa-4.webp', /sito vero/], ['sezioni', 'sezioni.webp', /Sezioni pronte/], ['copia', 'copia.webp', /copia del tuo sito/]])
-    ok(`Funzionalità (1.3.0): il blocco ${id}, con la schermata`, await v.locator(`#${id} img[src*="${img}"]`).count() === 1 && re.test(await v.locator(`#${id}`).innerText()));
-  for (const [id, img, re] of [['wordpress', 'importa-wp.webp', /Vieni da WordPress/], ['tipo-sito', 'tipo-sito.webp', /Definitivo/], ['primi-passi', 'primi-passi.webp', /Primi passi/],
-    ['aspetti', 'aspetti.webp', /Lavagna/], ['server', 'controlla-server.webp', /Controlla il server/]])
-    ok(`Funzionalità (1.4.0): il blocco ${id}, con la schermata`, await v.locator(`#${id} img[src*="${img}"]`).count() === 1 && re.test(await v.locator(`#${id}`).innerText()));
-  ok('Funzionalità (2.0.0): il blocco degli addon, con la schermata e gli otto addon', await v.locator('#addon img[src*="addon.webp"]').count() === 1 && /Prenotazioni e appuntamenti/.test(await v.locator('#addon').innerText()) && /Copia del sito altrove/.test(await v.locator('#addon').innerText()) && /beta/.test(await v.locator('#addon').innerText()));
-  ok('Funzionalità (2.3.0): il blocco di Installa ora, con la schermata', await v.locator('#installa-ora img[src*="installa-ora.webp"]').count() === 1 && /Installa ora/.test(await v.locator('#installa-ora').innerText()));
-  ok('Funzionalità (2.2.0): il blocco di Scegli dal sito, con la schermata', await v.locator('#scegli-sito img[src*="scegli-sito.webp"]').count() === 1 && /Scegli dal sito/.test(await v.locator('#scegli-sito').innerText()));
-  ok('Funzionalità (2.1.0): il blocco della consegna delle email, con la schermata', await v.locator('#consegna img[src*="consegna.webp"]').count() === 1 && /Consegna delle email/.test(await v.locator('#consegna').innerText()) && /Brevo/.test(await v.locator('#consegna').innerText()));
-  ok('Funzionalità (2.1.0): il blocco dei widget nuovi, con la schermata e 92 widget', await v.locator('#widget-21 img[src*="widget-2-1.webp"]').count() === 1 && /menu del ristorante/i.test(await v.locator('#widget-21').innerText()) && /107/.test(await v.locator('#widget-21').innerText()));
-  ok('Funzionalità (2.1.0): il blocco di Scegli dai Media, con la schermata', await v.locator('#scegli-media img[src*="scegli-media.webp"]').count() === 1 && /Scegli dai Media/.test(await v.locator('#scegli-media').innerText()) && /Carica un.immagine/.test(await v.locator('#scegli-media').innerText()));
-  ok('Funzionalità (2.0.0): Download dice dei file riservati', /riservato/.test(await v.locator('#download').innerText()));
-  ok('Funzionalità (1.10.0): il blocco dei widget per le attività, con la schermata', await v.locator('#widget-attivita img[src*="widget-attivita.webp"]').count() === 1 && /Orari di apertura/.test(await v.locator('#widget-attivita').innerText()));
-  ok('Funzionalità (1.9.0): nel blocco dei form, chi riceve l\'email a ogni compilazione', /chi riceve l.email a ogni compilazione/.test(await v.locator('#newsletter').innerText()));
-  ok('Funzionalità (1.8.0): il blocco della frase in fondo al sito, con la schermata', await v.locator('#firma img[src*="firma.webp"]').count() === 1 && /Impostazioni/.test(await v.locator('#firma').innerText()));
   ok('Funzionalità (1.8.0): la frase in fondo al sito, con il link al sito ufficiale', await v.locator('#firma-sito a[href="https://plumecms.it"]').count() === 1);
-  ok('Funzionalità (1.7.0): il blocco del sito su misura, con la schermata', await v.locator('#su-misura img[src*="su-misura.webp"]').count() === 1 && /Sostituisci/.test(await v.locator('#su-misura').innerText()));
-  ok('Funzionalità (1.6.0): il blocco del riquadro in fondo agli articoli, con la schermata', await v.locator('#fine-articolo img[src*="fine-articolo.webp"]').count() === 1 && /Aggiungi sempre alla fine/.test(await v.locator('#fine-articolo').innerText()));
-  ok('Funzionalità (1.5.0): il blocco dei social, con l\'email del mattino', await v.locator('#social img[src*="social.webp"]').count() === 1 && /pronti ogni mattina/.test(await v.locator('#social').innerText()));
+  // Regola di Danilo (2 novembre 2026): Funzionalità mostra le 10 caratteristiche principali, non un blocco per versione.
+  ok('Funzionalità: dieci caratteristiche, non una per versione', await v.locator('#editor, #partenza, #aspetto, #newsletter, #automazioni, #form, #seo, #wordpress, #addon, #sicurezza').count() === 10 && await v.locator('#report, #test-ab, #firma, #download, #installa-ora, #kit, #versioni').count() === 0);
   ok('Funzionalità (2.0.0): più di 500 attacchi respinti, addon compresi', /più di 500 attacchi, addon compresi/.test(await v.locator('#sicurezza').innerText()));
   ok('favicon del sito', await v.locator('link[rel=icon][href*="favicon.png"]').count() === 1);
 
@@ -238,17 +220,13 @@ async function contrastoParole(pg) {
   // Le immagini dei blocchi si caricano quando si arriva lì (loading=lazy): la pagina si scorre tutta prima di guardarle.
   await v.evaluate(async () => { for (let y = 0; y < document.body.scrollHeight; y += 500) { window.scrollTo(0, y); await new Promise(r => setTimeout(r, 80)); } });
   await v.waitForLoadState('networkidle'); await v.waitForTimeout(500);
-  ok('Funzionalità (2.6.0): Un pannello che si legge a colpo d\'occhio', /Un pannello che si legge a colpo d.occhio/.test(await v.locator('body').innerText())
-    && await v.evaluate(() => [...document.images].some(i => /pannello-chiaro/.test(i.currentSrc || i.src) && i.complete && i.naturalWidth > 0)));
-  ok('Funzionalità (2.7.0): L\'email di conferma la scrivi tu', /L.email di conferma la scrivi tu/.test(await v.locator('body').innerText())
-    && await v.evaluate(() => [...document.images].some(i => /email-conferma/.test(i.currentSrc || i.src) && i.complete && i.naturalWidth > 0)));
-  ok('Funzionalità (2.8.0): Ogni contatto con la sua storia', /Ogni contatto con la sua storia/.test(await v.locator('body').innerText())
-    && await v.evaluate(() => [...document.images].some(i => /contatti-brevo/.test(i.currentSrc || i.src) && i.complete && i.naturalWidth > 0)));
-  ok('Funzionalità (2.9.0): I tuoi contatti entrano in quattro passi', /I tuoi contatti entrano in quattro passi/.test(await v.locator('body').innerText())
-    && await v.evaluate(() => [...document.images].some(i => /importa-contatti/.test(i.currentSrc || i.src) && i.complete && i.naturalWidth > 0)));
-  for (const [id, t] of [['form-passi', 'Un form in cinque passi'], ['automazioni', 'Lavora anche quando dormi'], ['report', 'Sai cosa ha funzionato'], ['test-ab', 'Due versioni, vince la migliore'], ['editor-email', 'Email belle, senza saper scrivere codice'], ['campagne', 'Una campagna, un riepilogo'], ['infografiche', 'Quindici infografiche disegnate'], ['segmenti', 'Scrivi solo a chi ti interessa']])
-    ok(`Funzionalità (2.10.0): ${t}`, (await v.locator('body').innerText()).includes(t)
-      && await v.evaluate((id) => [...document.images].some(i => new RegExp(id + '\\.webp').test(i.currentSrc || i.src) && i.complete && i.naturalWidth > 0), id));
+  const DIECI = [['editor', 'editor', 'L\'editor visuale'], ['partenza', 'installa-4', 'In cinque minuti hai un sito vero'], ['aspetto', 'stile', 'Temi e stile'],
+    ['newsletter', 'campagne', 'Newsletter: contatti, campagne e report'], ['automazioni', 'automazioni', 'Automazioni: lavora anche quando dormi'], ['form', 'form-passi', 'Form e consenso'],
+    ['seo', 'seo', 'SEO e AEO'], ['wordpress', 'importa-wp', 'Vieni da WordPress'], ['addon', 'addon', 'Gli addon'], ['sicurezza', 'sicurezza', 'Al sicuro']];
+  for (const [id, img, t] of DIECI)
+    ok(`Funzionalità: ${t}, con la schermata`, (await v.locator('#' + id).innerText()).includes(t)
+      && await v.evaluate((img) => [...document.images].some(i => new RegExp(img + '\\.webp').test(i.currentSrc || i.src) && i.complete && i.naturalWidth > 0), img));
+  ok('Funzionalità: il blocco degli addon nomina gli otto addon', /Prenotazioni e appuntamenti/.test(await v.locator('#addon').innerText()) && /Copia del sito altrove/.test(await v.locator('#addon').innerText()));
   ok('Header e footer (2.6.0): il logo è quello dello Stile del sito', await v.evaluate(() => [...document.querySelectorAll('.marchio img')].length >= 2 && [...document.querySelectorAll('.marchio img')].every(i => /marchio/.test(i.getAttribute('src')))));
   // 2.5.0: la pagina Temi con le stagioni e le tinte piene, ogni immagine caricata.
   await v.goto(B + '/temi/', { waitUntil: 'networkidle' });

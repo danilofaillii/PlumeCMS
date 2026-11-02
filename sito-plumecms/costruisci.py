@@ -151,15 +151,15 @@ def home():
                 pulsanti(('Guarda l\'installatore, passo per passo', '/installazione/#passi', 'filo'), centro=True)]],
               **spazi(48, 72))
     p.sezione([[w('numeri', colonne={'d': 4, 't': 2, 'm': 2}, voci=[{'valore': '5', 'etichetta': 'passi per installarlo'}, {'valore': '107', 'etichetta': 'widget nell\'editor'},
-                                  {'valore': '3', 'etichetta': 'temi pronti da indossare'}, {'valore': '0', 'etichetta': 'plugin da tenere aggiornati'}])]],
+                                  {'valore': '11', 'etichetta': 'temi pronti da indossare'}, {'valore': '0', 'etichetta': 'plugin da tenere aggiornati'}])]],
               **tinta(), **spazi(56, 56))
     # Le armi del viaggio: cosa c'è dentro.
     funzioni = [
         ('pennello', 'Editor visuale', 'Sezioni, colonne e 107 widget, con le schede Contenuto, Stile e Avanzate per ogni elemento. Vedi quello che fai mentre lo fai.', '/funzionalita/#editor'),
-        ('tavolozza', 'Temi', 'Tre temi pronti e un manuale per disegnarti il tuo. Il tema cambia l\'aspetto, mai i contenuti.', '/temi/'),
-        ('storia', 'Versioni', 'Ogni salvataggio lascia una versione: la confronti, la guardi in anteprima, ci torni con un clic.', '/funzionalita/#versioni'),
+        ('tavolozza', 'Temi', 'Undici temi pronti e un manuale per disegnarti il tuo. Il tema cambia l\'aspetto, mai i contenuti.', '/temi/'),
+        ('storia', 'Versioni', 'Ogni salvataggio lascia una versione: la confronti, la guardi in anteprima, ci torni con un clic.', '/funzionalita/#editor'),
         ('grafico-su', 'SEO e AEO', 'Sitemap, robots, dati strutturati, llms.txt, IndexNow e Search Console. Per Google e per le intelligenze artificiali.', '/funzionalita/#seo'),
-        ('email', 'Newsletter, form e social', 'Iscrizioni con doppia conferma, campagne, automazioni, form e popup. E ogni mattina i post pronti per i social.', '/funzionalita/#social'),
+        ('email', 'Newsletter, form e social', 'Iscrizioni con doppia conferma, campagne, automazioni, form e popup. E ogni mattina i post pronti per i social.', '/funzionalita/#newsletter'),
         ('scudo-spunta', 'Sicurezza', 'Due fattori, blocchi contro i tentativi, CSP, pacchetti firmati. Messo alla prova con più di 500 attacchi.', '/funzionalita/#sicurezza'),
     ]
     riq = lambda f: w('riquadro_icona', icona=f[0], titolo=f[1], testo=f[2], link={'url': f[3], 'nuova': False}, livello='h3', vista='impilata', allineamento={'d': 'left'})
@@ -182,181 +182,60 @@ def funzionalita():
     p.sezione([[titolo('Leggero non vuol dire *vuoto.*', 'Funzionalità',
                        'plumeCMS fa le cose che ti servono davvero, e le fa nello stesso posto. Ecco cosa trovi dentro, con le schermate vere del pannello.',
                        livello='h1', centro=True)]], larghezza='stretta', **spazi(72, 32))
+    # Regola di Danilo (2 novembre 2026): la pagina non è un elenco di quello che esce a ogni versione, ma le 10 caratteristiche
+    # principali di plumeCMS. Una funzione nuova entra dentro la caratteristica a cui appartiene, non diventa un blocco.
     blocchi = [
-        ('form-passi', 'form-passi.webp', 'Un form in cinque passi',
-         ['Dalla 2.16.0 i form si costruiscono in cinque passi, con Avanti: cosa chiedere, come appare, i messaggi, la conferma, dove metterlo. Ogni campo finisce nella scheda del contatto, e chi si iscrive sceglie le liste che vuole.',
-          '<ul><li>Il form ha la sua pagina pronta da condividere, il codice da mettere in un altro sito e il QR da stampare.</li>'
-          '<li>Doppia conferma, semplice o nessuna; la dichiarazione per la privacy con la casella vuota, e il consenso si ricorda con data e ora.</li>'
-          '<li>Chi non vuole essere seguito riceve le email lo stesso, senza che si contino aperture e clic.</li></ul>']),
-        ('automazioni', 'automazioni.webp', 'Lavora anche quando dormi',
-         ['Dalla 2.15.0 le automazioni: disegni il percorso sulla tela, con i blocchi uno sotto l\'altro, e plumeCMS lo fa fare a ogni persona che entra. Un benvenuto in tre email, gli auguri il giorno del compleanno, un richiamo a chi non apre da tre mesi.',
-          '<ul><li>Si entra quando ci si iscrive, si viene tolti da una lista, arriva una data o lo decidi tu: fino a dieci inneschi.</li>'
+        ('editor', 'editor.webp', 'L\'editor visuale: vedi quello che fai mentre lo fai',
+         ['Costruisci le pagine trascinando sezioni, colonne e widget. Ogni elemento ha le sue tre schede: <strong>Contenuto</strong>, <strong>Stile</strong> e <strong>Avanzate</strong>. Al computer, al tablet e al telefono, con misure diverse per ognuno.',
+          '<ul><li>107 widget: titoli, testi, foto, gallerie, prezzi, domande frequenti, orari di apertura, recensioni, eventi, menu del ristorante e 29 infografiche.</li>'
+          '<li>26 aperture fra cui scegliere con una tendina, e 30 sezioni pronte per riempire una pagina in un minuto.</li>'
+          '<li>Le foto le prendi dai Media e i link dal sito, senza scrivere indirizzi. Le foto del telefono si raddrizzano e si alleggeriscono da sole.</li>'
+          '<li>Ogni salvataggio lascia una versione: la confronti, la guardi in anteprima, ci torni con un clic.</li></ul>']),
+        ('partenza', 'installa-4.webp', 'In cinque minuti hai un sito vero, non una pagina bianca',
+         ['Carichi plumeCMS sul tuo spazio, apri il browser e rispondi a cinque domande. All\'ultima scegli che sito vuoi: personale, attività, blog, portfolio, oppure <strong>su misura</strong>: dici che attività fai, in che città e quali servizi offri, e il sito si compone da solo.',
+          '<ul><li>Home, pagine principali e menu sono già costruiti, con testi d\'esempio che ti dicono cosa scriverci.</li>'
+          '<li>Non sei sicuro del tipo di sito? Lo provi, lo cambi, e quando ti convince lo rendi definitivo.</li>'
+          '<li>I Primi passi nella dashboard ti dicono cosa manca perché il sito sia pronto, e Controlla il server ti dice se il tuo spazio va bene.</li></ul>']),
+        ('aspetto', 'stile.webp', 'Temi e stile: il vestito cambia, i contenuti restano',
+         ['Undici temi pronti, da Cosmo alle quattro stagioni: un clic e il sito cambia aspetto, i tuoi testi restano dove sono.',
+          '<ul><li>Stile del sito: colori, caratteri, logo e pulsanti in un posto solo. Cambi il colore principale e cambia ovunque.</li>'
+          '<li>Header, footer e menu li costruisci con lo stesso editor delle pagine.</li>'
+          '<li>Vuoi un tema tutto tuo? C\'è il manuale dei temi, con un tema d\'esempio da cui partire.</li></ul>']),
+        ('newsletter', 'campagne.webp', 'Newsletter: contatti, campagne e report, a casa tua',
+         ['I contatti stanno nel tuo database, non in quello di qualcun altro. Ognuno ha la sua scheda, con la storia di quello che ha ricevuto, aperto e cliccato.',
+          '<ul><li>Importi i contatti da un file in quattro passi, li dividi in liste e in segmenti con i filtri che vuoi.</li>'
+          '<li>Componi le email trascinando blocchi, oppure parti da un modello. Provi due versioni con il test A/B e la migliore parte da sola.</li>'
+          '<li>Il report di ogni campagna ti dice chi ha aperto, chi ha cliccato e dove, e l\'orario migliore per scrivere a ognuno.</li>'
+          '<li>Le email arrivano nella posta, non nello spam: plumeCMS ti guida nella configurazione della consegna.</li></ul>']),
+        ('automazioni', 'automazioni.webp', 'Automazioni: lavora anche quando dormi',
+         ['Disegni il percorso sulla tela, con i blocchi uno sotto l\'altro, e plumeCMS lo fa fare a ogni persona che entra. Un benvenuto in tre email, gli auguri il giorno del compleanno, un richiamo a chi non apre da tre mesi.',
+          '<ul><li>Si entra quando ci si iscrive, si viene tolti da una lista, arriva una data o lo decidi tu.</li>'
           '<li>Attese, bivi su aperture e clic, rami con i filtri dei segmenti, divisioni in percentuale.</li>'
           '<li>Su ogni blocco vedi quanti ci sono adesso e quanti ci sono passati; chi vuoi lo togli con un clic.</li></ul>']),
-        ('report', 'report.webp', 'Sai cosa ha funzionato',
-         ['Dalla 2.14.0 ogni campagna ha il suo report: consegnate, aperture, clic, disiscrizioni e rimbalzi, con i tassi calcolati sulle email arrivate davvero. Se qualcosa va oltre il segno, il report te lo dice in parole.',
-          '<ul><li>La mappa dei clic sull\'email: accanto a ogni link quante persone l\'hanno cliccato.</li>'
-          '<li>Gli elenchi di chi ha aperto, cliccato o no: li esporti o li salvi come lista o segmento.</li>'
-          '<li>All\'orario migliore: ognuno riceve l\'email all\'ora in cui di solito apre la posta.</li></ul>']),
-        ('test-ab', 'test-ab.webp', 'Due versioni, vince la migliore',
-         ['Dalla 2.13.0 il test A/B: due oggetti o due email diverse vanno a due piccoli gruppi presi a caso. Dopo le ore o i giorni che scegli, plumeCMS guarda chi ha aperto o cliccato di più e manda la versione vincente a tutti gli altri.',
-          '<ul><li>Decidi tu quanto sono grandi i gruppi di prova, fino a metà dei destinatari, e cosa conta: aperture o clic.</li>'
-          '<li>Nessuno riceve due versioni; il resto parte una volta sola.</li>'
-          '<li>Il risultato resta nel report della campagna, con i numeri delle due versioni.</li></ul>']),
-        ('editor-email', 'editor-email.webp', 'Email belle, senza saper scrivere codice',
-         ['Dalla 2.12.0 le email si compongono a blocchi: titoli, testi, immagini, pulsanti, social e video, in una, due o tre colonne. Le trascini, le vedi come al computer e come al telefono, e l\'email esce pronta per ogni programma di posta.',
-          '<ul><li>Sei modelli pronti: benvenuto, newsletter del mese, offerta, evento, nuovo articolo, conferma dell\'iscrizione.</li>'
-          '<li>Salvi i tuoi modelli e le sezioni che usi sempre; una sezione cambiata si aggiorna in tutte le email in bozza.</li>'
-          '<li>Il link per uscire e l\'indirizzo dell\'azienda tornano da soli in fondo, se li togli per sbaglio.</li></ul>']),
-        ('campagne', 'campagne.webp', 'Una campagna, un riepilogo',
-         ['Dalla 2.11.0 ogni campagna ha una pagina sola con le sue parti: mittente, destinatari, oggetto, design, impostazioni. Ognuna dice se è a posto, e finché manca qualcosa la campagna non parte.',
-          '<ul><li>Destinatari da liste e segmenti, con le esclusioni e senza chi non apre da mesi.</li>'
-          '<li>Anteprima con i dati di un contatto vero, prova alla lista dei test, invio subito o programmato, anche a lotti.</li>'
-          '<li>Chi esce dice perché, e dal centro preferenze sceglie quali liste tenere invece di andarsene del tutto.</li></ul>']),
-        ('infografiche', 'infografiche.webp', 'Quindici infografiche disegnate',
-         ['Dalla 2.10.0 l\'editor ha quindici infografiche nuove: imbuto, piramide, matrice a quattro quadranti, ciclo, ciambella, cerchi che si toccano, ragnatela, lancetta, iceberg, omini, il viaggio, bilancia, mappa di calore, cerchi concentrici e barre al cento per cento.',
-          '<ul><li>Scrivi le voci e i numeri: il disegno si fa da solo, con i calcoli giusti.</li>'
-          '<li>Prendono i colori del tuo tema e si leggono bene anche sul telefono, dove cambiano composizione.</li>'
-          '<li>Testo vero, non un\'immagine: si legge, si cerca e lo sentono anche gli screen reader.</li></ul>']),
-        ('segmenti', 'segmenti.webp', 'Scrivi solo a chi ti interessa',
-         ['Dalla 2.10.0 i segmenti: gruppi di contatti che si aggiornano da soli. Chi abita a Bologna ed è cliente, chi non apre le tue email da tre mesi, chi ha cliccato l\'ultima campagna.',
-          '<ul><li>Fino a cento condizioni, unite da E e da O: campi dei contatti, liste, email aperte e cliccate, form inviati.</li>'
-          '<li>Il numero dei contatti si aggiorna mentre scrivi le condizioni; dieci modelli pronti per partire.</li>'
-          '<li>Gli stessi filtri nella pagina Contatti, con le viste salvate, e nei rami delle automazioni.</li></ul>']),
-        ('importa-contatti', 'importa-contatti.webp', 'I tuoi contatti entrano in quattro passi',
-         ['Dalla 2.9.0 porti dentro i contatti da un file CSV, TXT o Excel, oppure li incolli: carichi, abbini ogni colonna a un campo, scegli la lista e confermi.',
-          '<ul><li>Le colonne con lo stesso nome di un campo si abbinano da sole; le altre diventano campi nuovi o restano fuori.</li>'
-          '<li>Anche ventimila righe: il lavoro va avanti a giri, e alla fine c\'è il resoconto con il file delle righe scartate.</li>'
-          '<li>Esporti chi vuoi, con i campi che vuoi; le prove delle campagne vanno alla tua lista dei test.</li></ul>']),
-        ('contatti-brevo', 'contatti-brevo.webp', 'Ogni contatto con la sua storia',
-         ['Dalla 2.8.0 i contatti della newsletter hanno un elenco con le colonne che scegli tu, una scheda per ogni persona con la sua storia, liste ordinate in cartelle e campi tuoi.',
-          '<ul><li>Azioni su più contatti insieme: aggiungi a una lista, sposta, esporta, metti in lista nera.</li>'
-          '<li>Campi personalizzati di sei tipi, anche calcolati (quante email ha letto negli ultimi 30 giorni), da usare nelle email.</li>'
-          '<li>Lista nera con il motivo: si è disiscritto, rimbalzo, spam, bloccato da te.</li></ul>']),
-        ('email-conferma', 'email-conferma.webp', 'L\'email di conferma la scrivi tu',
-         ['Chi si iscrive da un form o dalla newsletter riceve un\'email per confermare. Dalla 2.7.0 la scrivi tu, in ogni parte: oggetto, titolo, testo, pulsante, firma e nota in fondo, per ogni form oppure una volta per tutti.',
-          '<ul><li>Segnaposti per il nome di chi si iscrive, la lista, i giorni di validità del link e il nome del sito.</li>'
-          '<li>Anteprima dell\'email com\'è e una prova da mandarti, prima di salvare.</li>'
-          '<li>Il link del pulsante resta sempre quello vero: nessuno può cambiarlo.</li></ul>']),
-        ('pannello-chiaro', 'pannello-chiaro.webp', 'Un pannello che si legge a colpo d\'occhio',
-         ['Dalla 2.6.0 ogni riquadro del pannello ha il titolo su una fascia sua, i campi hanno un bordo che si vede e "Sfoglia" è un pulsante vero. In tutti e quattro gli aspetti, chiari e scuri.',
-          '<ul><li>Le conferme sono una finestra del pannello, con il pulsante rosso quando l\'azione cancella qualcosa.</li>'
-          '<li>Al telefono ogni tabella diventa una scheda per riga.</li>'
-          '<li>Gli errori dicono cosa è successo e cosa fare, sotto il campo giusto: anche un file troppo grande per il server, prima di caricarlo.</li>'
-          '<li>Tutto si usa anche con la tastiera, editor compreso.</li></ul>']),
-        ('editor', 'editor.webp', 'L\'editor visuale: sezioni, colonne, widget',
-         ['Costruisci le pagine trascinando sezioni, colonne e widget. Ogni elemento ha le sue tre schede, come negli editor che conosci: <strong>Contenuto</strong>, <strong>Stile</strong> e <strong>Avanzate</strong>.',
-          '<ul><li>107 widget: titoli, testi, immagini, pulsanti, gallerie, caroselli, prezzi, domande frequenti, contatori, mappe, orari di apertura, recensioni, eventi, menu del ristorante e 14 infografiche.</li>'
-          '<li>Anteprima per computer, tablet e telefono, con valori diversi per ogni misura.</li>'
-          '<li>Colori e caratteri globali: cambi il colore principale e cambia ovunque.</li>'
-          '<li>Foto con velo, bianco e nero ed effetti animati, dalla 1.2.2.</li>'
-          '<li>Foto leggere: dalla 1.4.0 la foto del telefono si raddrizza, si rimpicciolisce se è enorme, perde i dati nascosti (anche la posizione GPS) e accanto nasce la sua versione WebP, più piccola, per i browser che la leggono.</li></ul>']),
+        ('form', 'form-passi.webp', 'Form e consenso: in regola senza fatica',
+         ['I form si costruiscono in cinque passi: cosa chiedere, come appare, i messaggi, la conferma, dove metterlo. Ogni campo finisce nella scheda del contatto, e a ogni compilazione decidi tu chi riceve l\'email.',
+          '<ul><li>Il form ha la sua pagina da condividere, il codice da mettere in un altro sito e il QR da stampare. E i popup decidi tu quando e dove.</li>'
+          '<li>Doppia conferma, dichiarazione per la privacy con la casella vuota, consenso registrato con data e ora.</li>'
+          '<li>Chi vuole uscire esce da una lista sola o sceglie cosa ricevere, e ti dice perché.</li></ul>']),
+        ('seo', 'seo.webp', 'SEO e AEO: ti trovano Google e le intelligenze artificiali',
+         ['Sitemap, robots.txt, dati strutturati, titoli e descrizioni per ogni pagina, redirect e pagine 404 sotto controllo. In più quello che serve alle risposte delle intelligenze artificiali: <code>llms.txt</code>, riassunti in testa, risposte brevi.',
+          '<ul><li>Gli avvisi ai motori partono da soli, con IndexNow e Search Console.</li>'
+          '<li>Ogni mattina un\'email con i contenuti del giorno e i testi pronti per i social, con le immagini già nelle misure giuste.</li></ul>']),
         ('wordpress', 'importa-wp.webp', 'Vieni da WordPress? Porti tutto con te',
          ['In Impostazioni, Importa da WordPress, scrivi l\'indirizzo del vecchio sito, il tuo utente e una password per le applicazioni. plumeCMS guarda tutto il sito e ti fa il report: quanti articoli, pagine, immagini, categorie, tag, menu, cosa diventano qui e cosa resta fuori, con il perché.',
-          'Spunti quello che vuoi portare e premi Importa: la barra ti dice a che punto è. I vecchi indirizzi diventano redirect, così i link sparsi per il web e su Google continuano a funzionare.',
+          'Spunti quello che vuoi portare e premi Importa. I vecchi indirizzi diventano redirect, così i link sparsi per il web e su Google continuano a funzionare.',
           'Tutto entra <strong>in prova</strong>: i visitatori non vedono niente, tu giri il sito nuovo nell\'anteprima. Ti piace? Conferma. Non ti convince? Annulla, e il sito torna com\'era.']),
-        ('kit', 'installa-4.webp', 'Si parte con un sito vero, non con una pagina bianca',
-         ['All\'ultimo passo l\'installatore ti chiede che sito vuoi fare: personale, attività, blog, portfolio, vuoto, oppure su misura.',
-          'Scegli, e plumeCMS parte con la home, le pagine principali e il menu già costruiti, con testi d\'esempio che ti dicono cosa scriverci. Tu cambi le parole e metti le tue foto: il sito c\'è già.']),
-        ('su-misura', 'su-misura.webp', 'Il sito su misura: dici che attività è, il sito si compone',
-         ['All\'installazione scegli <strong>Su misura</strong> e rispondi a quattro domande: che attività è (un negozio, un ristorante, uno studio, un artigiano, un B&amp;B e altre), dove si trova, cosa offri, quali pagine vuoi.',
-          'plumeCMS compone home, pagine, menu e testi pensati per quell\'attività: un ristorante ha il menù e "Prenota un tavolo", un idraulico "Chiedi un preventivo". Con il form dei contatti e la mappa della tua città.',
-          'Dove andrà una foto c\'è un disegno che dice cosa fotografare: la vetrina, la sala, le persone. Quando hai le foto vere, in Media premi <strong>Sostituisci</strong> e la foto prende il suo posto in tutte le pagine.']),
-        ('tipo-sito', 'tipo-sito.webp', 'Non sei sicuro del tipo di sito? Provali',
-         ['Dopo l\'installazione il sito resta in prova: dalla dashboard passi da personale ad attività, a blog, a portfolio con un clic, e guardi come viene. Prima di cambiare, il pannello fa una copia del sito. Le pagine che hai già scritto restano.',
-          'Quando hai trovato quello giusto premi <strong>Definitivo</strong>: il riquadro sparisce e da lì in poi cambi tutto con l\'editor, pagina per pagina.']),
-        ('primi-passi', 'primi-passi.webp', 'Primi passi: cosa manca perché il sito sia pronto',
-         ['Nella dashboard sei caselle: nome e logo, i tuoi colori, le email che partono, il cron, la prima pagina scritta, il tipo di sito deciso (in un sito su misura una in più: le tue foto al posto di quelle finte). Ognuna con il link alla pagina giusta.',
-          'Si spuntano da sole quando le hai fatte. Tutte verdi? Le nascondi e la dashboard torna pulita.']),
-        ('sezioni', 'sezioni.webp', 'Sezioni pronte: trenta modi di riempire una pagina',
-         ['Nell\'editor c\'è la linguetta Sezioni: prezzi, testimonianze, chi siamo, servizi, numeri, domande frequenti, contatti, inviti. Trenta sezioni già impaginate, in nove gruppi, ognuna con la sua anteprima.',
-          'Un clic e la sezione entra nella pagina, oppure la trascini dove vuoi. Da lì è una sezione come le altre: cambi testi, colori e widget. E segue i colori del tuo sito e del tema.']),
-        ('aperture', 'aperture.webp', 'Ventisei aperture fra cui scegliere',
-         ['La prima cosa che si vede di una pagina è la sua apertura. In plumeCMS la scegli con una tendina, fra ventisei disposizioni: testo e foto affiancati, tutto al centro, foto a tutto sfondo, divisa a metà, da rivista, in una scheda, solo parole, a mosaico, inclinata, a fascia bassa, in diagonale. E dalla 2.17.0 altre quindici: la finestra in prospettiva, computer e telefono, la pila di finestre, l\'orbita, il terminale, il nastro di schermate, il titolo traforato, il faro, l\'orizzonte, il video, le note sulla foto, la lente, la costellazione, il prima e dopo, il trittico.',
-          'Cambi disposizione e i testi restano dove sono: provi, guardi, scegli. Tutte seguono i colori del tuo sito e dei temi, e si leggono bene anche al telefono.']),
-        ('stile', 'stile.webp', 'Stile del sito: colori e caratteri in un posto solo',
-         ['Colori, caratteri, titoli, pulsanti, campi dei moduli, larghezza della pagina: tutto in una pagina sola, con l\'anteprima accanto.',
-          'Le pagine usano i colori globali, quindi una modifica qui arriva su tutto il sito. Senza cercare il blu sbagliato pagina per pagina.']),
-        ('aspetti', 'aspetti.webp', 'Il pannello con l\'aspetto che preferisci',
-         ['Il pannello parte chiaro, con l\'aspetto Aria. Se ti trovi meglio con altro, in Il mio accesso scegli fra quattro: Aria (chiaro, bianco e blu), Bottega (caldo, carta crema e terracotta), Cosmo (scuro, notte blu e viola), Lavagna (scuro, verde ardesia e gesso).',
-          'Ogni utente sceglie il suo, e i testi restano leggibili in tutti e quattro: i contrasti sono misurati, non scelti a occhio.']),
-        ('header', 'modelli.webp', 'Header, footer e menu fatti con l\'editor',
-         ['Disegni testata e piede con lo stesso editor delle pagine. Con le condizioni decidi dove vale ciascuno: tutto il sito, una categoria, una pagina sola.',
-          'I menu si costruiscono trascinando le voci, fino a tre livelli, con posizioni per la testata, il piede e il telefono.']),
-        ('versioni', 'versioni.webp', 'Versioni di ogni modifica',
-         ['Ogni salvataggio di pagine, header, footer, menu e stile lascia una versione. La confronti con quella di prima, in parole leggibili, la guardi in anteprima e, se serve, ci torni con un clic.',
-          'Lavori tranquillo: il passo indietro c\'è sempre.']),
-        ('seo', 'seo.webp', 'SEO e AEO: per Google e per le intelligenze artificiali',
-         ['Sitemap, robots.txt, dati strutturati (articoli, domande frequenti, briciole di pane), titoli e descrizioni per ogni pagina, redirect e pagine 404 sotto controllo.',
-          'In più quello che serve alle risposte delle intelligenze artificiali: <code>llms.txt</code>, riassunti in testa, risposte brevi. E gli avvisi ai motori con IndexNow e Search Console.']),
-        ('newsletter', 'flussi.webp', 'Newsletter, form e popup',
-         ['Iscrizioni con doppia conferma, liste, campagne programmate, automazioni (benvenuto, promemoria, bivi), aperture e clic contati. I form li costruisci nel pannello, e per ognuno scegli chi riceve l\'email a ogni compilazione; i popup decidi tu quando e dove.',
-          'Le email partono dal tuo server, a giri, senza servizi esterni da pagare.']),
-        ('social', 'social.webp', 'I social, pronti ogni mattina',
-         ['Il giorno in cui esce un articolo ti arriva un\'email: <strong>"Oggi sul sito"</strong>. Dentro c\'è tutto per pubblicarlo: le due immagini della misura giusta, 1200x630 per LinkedIn e Facebook e 1080x1350 per Instagram, e il testo pronto per ogni canale, con il link e i tuoi hashtag. Copi, incolli, pubblichi.',
-          'Il testo lo scrivi una volta, nella scheda dell\'articolo; se vuoi, uno diverso per LinkedIn, per Facebook e Instagram, per WhatsApp. Le immagini le ritaglia plumeCMS dalla foto in evidenza.',
-          'Per un articolo importante c\'è il <strong>calendario</strong>: prepari i post dei giorni dopo, e ogni mattina arriva quello del giorno, con il link al punto giusto della pagina.']),
-        ('widget-attivita', 'widget-attivita.webp', 'I widget per chi ha un\'attività',
-         ['<strong>Orari di apertura</strong> che dicono da soli "Aperto ora, chiude alle 19:00" o "Chiuso, apre domani alle 9:00", con le ferie e i giorni di chiusura. Google li legge.',
-          'Sul telefono, la <strong>barra dei contatti</strong> fissa in fondo allo schermo: Chiama, WhatsApp, Indicazioni, Scrivici. Le <strong>recensioni</strong> con il voto medio e il pulsante per lasciarne una.',
-          'E poi <strong>Prima e dopo</strong>, due foto con una linea da trascinare; la <strong>Squadra</strong>; lo <strong>Slider</strong>; gli <strong>Eventi</strong>, che spariscono da soli quando sono passati.']),
         ('addon', 'addon.webp', 'Gli addon: accendi solo quello che ti serve',
-         ['In Impostazioni, <strong>Addon</strong>: otto funzioni in più, ognuna con il suo pulsante Accendi. Acceso, l\'addon mette le sue voci nel menu e i suoi widget nell\'editor. Spento, sparisce dal sito, e i suoi dati restano lì per quando lo riaccendi.',
-          '<ul><li><strong>Prenotazioni e appuntamenti</strong>: il calendario con i posti davvero liberi, la conferma per email con il file per il calendario e il promemoria il giorno prima. La prenotazione presa al telefono la scrivi tu dal pannello.</li>'
-          '<li><strong>Eventi con iscrizione</strong>: posti limitati e lista d\'attesa che scorre da sola.</li>'
-          '<li><strong>Raccolta recensioni</strong>: "Com\'è andata?" dopo il servizio o dopo un evento, e le recensioni che approvi vanno sul sito.</li>'
-          '<li><strong>Vetrina prodotti</strong>: catalogo, varianti, carrello e ordini, con bonifico, pagamento alla consegna o il tuo link PayPal o Stripe.</li>'
-          '<li><strong>Statistiche senza cookie</strong>: visite e fonti, senza banner e senza Google Analytics.</li>'
-          '<li><strong>Area riservata</strong> e <strong>Corsi online</strong>: pagine e file per chi ha un account (con la spunta "Solo per i membri" nella scheda), lezioni scritte con l\'editor visuale e messe in ordine trascinando, avanzamento e certificato.</li>'
-          '<li><strong>Copia del sito altrove</strong>: ogni notte la copia del sito su FTP, WebDAV, Google Drive o Dropbox.</li></ul>',
-          'Sono in <strong>beta</strong> dalla 2.0.0: provati a fondo, aspettano i siti veri. Se trovi qualcosa che non va, dimmelo.']),
-        ('scegli-media', 'scegli-media.webp', 'Scegli dai Media, da ogni pagina del pannello',
-         ['Dove il pannello chiede un\'immagine (il logo, l\'immagine per i social, la foto di un popup, di un evento, di un corso, di un prodotto) accanto alla casella c\'è <strong>Scegli dai Media</strong>, con la miniatura dell\'immagine scelta e la X per toglierla. Niente più indirizzi da copiare da una pagina all\'altra.',
-          'Si apre la tua libreria: cerchi per nome, filtri per cartella, scorri anche fra centinaia di immagini (arrivano un po\' alla volta, mentre scorri). Manca la foto? <strong>Carica un\'immagine</strong> dalla stessa finestra, o trascinala sopra: entra in Media e nella casella in un colpo solo.',
-          'Si usa anche con la tastiera e sul telefono, dove la finestra prende tutto lo schermo.']),
-        ('scegli-sito', 'scegli-sito.webp', 'Scegli dal sito: i link senza scriverli',
-         ['Un pulsante che porta alla pagina Contatti, una voce del menu, il link di un popup o di una newsletter: accanto alla casella c\'è <strong>Scegli dal sito</strong>. Scrivi due lettere del titolo, scegli la pagina, e il link entra da solo.',
-          'Trova pagine, articoli, categorie, tag e, con gli addon accesi, eventi, prodotti e corsi. Le bozze hanno il loro segno. Si usa con la tastiera e al telefono.',
-          'Il link resta giusto anche se sposti il sito in un\'altra cartella; nel menu la voce segue la pagina se le cambi indirizzo.']),
-        ('consegna', 'consegna.webp', 'Le email arrivano nella posta, non nello spam',
-         ['Conferme, avvisi dei form, newsletter: servono solo se arrivano. In Impostazioni, <strong>Consegna delle email</strong>, cinque passi, ognuno con il suo stato: il mittente, il dominio, come partono, rimbalzi e spam, riscaldamento.',
-          '<ul><li><strong>Il dominio</strong>: il pannello controlla SPF, DKIM e DMARC e ti dà le righe da copiare nel pannello dell\'hosting. Non serve essere tecnici.</li>'
-          '<li><strong>Come partono</strong>: dal server del sito, con SMTP, oppure con Brevo, Amazon SES o Mailgun. Le chiavi si salvano cifrate.</li>'
-          '<li><strong>Rimbalzi e spam</strong>: chi rimbalza o segna "è spam" esce dagli invii da solo.</li>'
-          '<li><strong>Riscaldamento</strong>: un indirizzo nuovo parte con poche email al giorno e sale da solo, come piace a Gmail.</li></ul>',
-          'Più mittenti, ognuno con il suo nome: ogni campagna e ogni flusso sceglie il suo.']),
-        ('widget-21', 'widget-2-1.webp', 'Il menu del ristorante e altri quattro widget',
-         ['Il <strong>menu del ristorante</strong>: sezioni, piatti e prezzi, i segni vegano, vegetariano, senza glutine e piccante, gli allergeni con i numeri e la legenda, il menu del giorno e le sezioni che escono solo in certi giorni.',
-          'La <strong>richiesta di prenotazione</strong> di un tavolo o di una camera, che arriva per email all\'attività. La <strong>galleria con filtri</strong>, per esempio Matrimoni, Ritratti, Eventi. <strong>Loghi e testo scorrevoli</strong>. Il <strong>contenuto esterno</strong> (Calendly, Spotify, Google Calendar, Typeform) che si carica solo dopo il consenso del visitatore.',
-          'E i widget di prima fanno di più: la mappa con "Come arrivare", il video che parte da solo senza audio, la tabella con grassetto e link, i form con i campi Ora e File. Con la 2.1.0 erano 92 widget; oggi sono 107.']),
-        ('fine-articolo', 'fine-articolo.webp', 'Un riquadro in fondo a ogni articolo',
-         ['Chi arriva alla fine di un articolo è il lettore più interessato che hai. In Articoli, la linguetta <strong>Aggiungi sempre alla fine</strong>: prepari una volta sola un riquadro che esce sotto ogni articolo, anche sotto quelli già pubblicati. Un invito alla newsletter, un contatto, una prenotazione, un libro da consigliare.',
-          'Lo componi con l\'editor visuale, come una pagina: titoli, testi, foto, pulsanti. Esce quando premi Pubblica, con l\'ombra, il bordo e i colori del tuo sito e del tema.',
-          'Lo spegni e lo riaccendi con un clic, senza perdere il lavoro. Ogni modifica lascia una versione, e nella sua pagina vedi l\'anteprima sotto l\'ultimo articolo prima di pubblicare.']),
-        ('firma', 'firma.webp', 'La tua firma in fondo al sito',
-         ['Sotto il piede di ogni pagina c\'è una riga piccola: <strong>Un nuovo sito plumeCMS</strong>, con il link al sito ufficiale. È tua: in Impostazioni > Sito pubblico cambi il testo e l\'indirizzo, oppure la spegni con una spunta.',
-          'Il testo resta testo: niente codice, niente sorprese. E nella dashboard trovi sempre il link al sito ufficiale, per le versioni nuove e i manuali.']),
-        ('download', 'download.webp', 'Download manager: i tuoi file, a portata di clic',
-         ['Manuali, ebook, listini, programmi: li carichi dalla pagina Download del pannello, con titolo, descrizione e versione. Ogni file ha il suo indirizzo da condividere.',
-          'Con la versione nel nome (guida-1.2.pdf) il file entra in una serie: un indirizzo porta sempre alla versione più recente, e nelle pagine il numero si scrive da solo. Carichi la versione nuova e tutto il sito la segue. E vedi quante volte ogni file è stato scaricato: le persone sì, i robot no.',
-          'Nelle pagine li mostri con il widget Download, a elenco o a schede, con icona, peso e pulsante. Come nella <a href="/scarica/">pagina Scarica</a> di questo sito.',
-          'Dalla 2.0.0 un file può essere <strong>riservato</strong>: non ha un indirizzo pubblico e arriva per email, con un link personale, a chi compila un form e conferma la sua email. L\'ebook in cambio dell\'iscrizione, senza servizi esterni.']),
-        ('sicurezza', 'sicurezza.webp', 'Sicurezza, senza doverci pensare ogni giorno',
-         ['Password robuste, accesso a due fattori, blocchi automatici contro chi prova a indovinare, sessioni che scadono, Content Security Policy, registro degli eventi.',
-          'Prima di uscire, plumeCMS è stato messo alla prova con più di 500 attacchi, addon compresi: tutti respinti. La pagina Sicurezza ti dice in verde e in rosso come sta il tuo sito.']),
-        ('aggiornamenti', 'aggiornamenti.webp', 'Aggiornamenti dal pannello, con la rete sotto',
-         ['Un aggiornamento è uno zip: lo carichi da Impostazioni, Aggiornamenti, e premi Applica. Prima di toccare qualunque cosa il pannello fa una copia di sicurezza del database e dei file.',
-          'Se qualcosa va storto, rimette tutto com\'era da solo. Puoi anche programmare l\'aggiornamento per la notte.',
-          'Dalla 1.3.0 non devi nemmeno cercarlo: quando esce una versione nuova la dashboard te lo dice, e dalla 2.3.0 basta Installa ora.']),
-        ('installa-ora', 'installa-ora.webp', 'Nuova versione disponibile? Installa ora',
-         ['In alto a sinistra del pannello c\'è sempre la versione che hai. Quando ne esce una nuova, la dashboard lo scrive subito sotto il link al sito ufficiale: <strong>Nuova versione disponibile</strong>, con il numero.',
-          'Accanto c\'è <strong>Installa ora</strong>: un clic, una conferma, e il pannello scarica lo zip, controlla che sia intero e quello giusto, fa la copia di sicurezza e installa. Se qualcosa non va, rimette tutto com\'era.']),
-        ('server', 'controlla-server.webp', 'Controlla il server: il tuo hosting va bene?',
-         ['In Impostazioni, Controlla il server: il pannello prova tutto quello che serve a plumeCMS. Versione di PHP, estensioni, HTTPS, cron, email, cartelle, protezioni dei file. Non cambia niente: guarda e ti dice.',
-          'Ogni voce ha il suo segno: a posto, da sapere, da sistemare, con la spiegazione in parole semplici. Con il pulsante accanto mandi un\'email di prova e vedi se arriva.']),
-        ('copia', 'copia.webp', 'La copia del tuo sito, con un clic',
-         ['In Impostazioni, Copia del sito: Prepara la copia mette in uno zip il database, le immagini, i temi e i moduli. La scarichi e la tieni al sicuro.',
-          'Se un giorno serve tornare indietro, o spostare il sito su un altro hosting, Ripristina rimette tutto com\'era. Prima, per sicurezza, fa da sola una copia del sito di adesso.']),
+         ['In Impostazioni, <strong>Addon</strong>: otto funzioni in più, ognuna con il suo pulsante Accendi. Spento, l\'addon sparisce dal sito, e i suoi dati restano lì per quando lo riaccendi.',
+          '<ul><li><strong>Prenotazioni e appuntamenti</strong>, con i posti davvero liberi e il promemoria il giorno prima.</li>'
+          '<li><strong>Eventi con iscrizione</strong> e lista d\'attesa, <strong>Raccolta recensioni</strong> dopo il servizio.</li>'
+          '<li><strong>Vetrina prodotti</strong> con carrello e ordini, <strong>Statistiche senza cookie</strong>.</li>'
+          '<li><strong>Area riservata</strong>, <strong>Corsi online</strong> e <strong>Copia del sito altrove</strong>, ogni notte.</li></ul>',
+          'E il download manager: manuali, ebook e listini con il loro indirizzo, anche riservati in cambio dell\'iscrizione.']),
+        ('sicurezza', 'sicurezza.webp', 'Al sicuro, senza doverci pensare ogni giorno',
+         ['Accesso a due fattori, blocchi contro chi prova a indovinare le password, protezioni del browser, registro degli eventi. Prima di uscire plumeCMS è stato messo alla prova con più di 500 attacchi, addon compresi: tutti respinti.',
+          '<ul><li>Gli aggiornamenti si installano dal pannello, con <strong>Installa ora</strong>: prima il pannello fa una copia di sicurezza, e se qualcosa va storto rimette tutto com\'era.</li>'
+          '<li>La copia del sito, con un clic: la scarichi, la tieni da parte, e se serve la rimetti al suo posto o su un altro spazio.</li></ul>']),
     ]
     for i, (ancora, img, tit, testo) in enumerate(blocchi):
         foto = [immagine(img, 'plumeCMS: ' + tit)]
@@ -367,7 +246,7 @@ def funzionalita():
                   testo='Il modo migliore per capire un CMS è usarlo. Ci vogliono cinque minuti.',
                   pulsante_testo='Scarica plumeCMS', link={'url': '/scarica/', 'nuova': False})]], larghezza='stretta', **spazi(72, 80))
     return dict(slug='funzionalita', titolo='Funzionalità', struttura=p.albero(),
-                seo_titolo='Funzionalità di plumeCMS: editor, temi, versioni, SEO, newsletter',
+                seo_titolo='Funzionalità di plumeCMS: le dieci cose che sa fare',
                 seo_descrizione='Cosa c\'è dentro plumeCMS: editor visuale con 107 widget, gli addon (prenotazioni, eventi, negozio, statistiche, area riservata, corsi), import da WordPress, stile globale, header e footer, versioni, SEO e AEO, newsletter, sicurezza, aggiornamenti dal pannello.')
 
 

@@ -86,8 +86,10 @@ Sono gli unici in `cms/docs/`, nello zip, nel sito di plumeCMS e nella pagina Do
   3. *Il sito di plumeCMS* (`sito-plumecms/costruisci.py`): `NOVITA` (regola di Danilo, 1 novembre 2026: nella pagina Scarica **non un changelog** ma un elenco
      breve delle ultime versioni, un titolo per riga (`NOVITA_MOSTRATE`), che non scende sotto il riquadro "Cosa serve" accanto, e
      **mai nomi di aziende o servizi di terzi** nelle novità; lo controlla `prova-sito-plumecms.js`. Fuori dalle novità i nomi restano:
-     Importa da WordPress, Google e gli orari, WhatsApp, LinkedIn e Facebook); un blocco nella pagina Funzionalità con la schermata
-     (pagina aggiunta a `sito-plumecms/schermate.js`, immagine in `USATE`); home, Domande frequenti o Installazione se la
+     Importa da WordPress, Google e gli orari, WhatsApp, LinkedIn e Facebook); nella pagina Funzionalità **solo le 10 caratteristiche principali** (regola di Danilo,
+     2 novembre 2026: "non può essere una sbrodolata di roba che esce a ogni versione"; stile e grafica vanno bene): una funzione nuova
+     si aggiunge dentro la caratteristica a cui appartiene (una riga del suo elenco), mai come blocco nuovo; la schermata solo se rimpiazza
+     quella della caratteristica (immagine in `USATE`); home, Domande frequenti o Installazione se la
      funzionalità le cambia; i numeri scritti nei testi (widget, attacchi). Poi le schermate rifatte sul sito di prova e
      `--schermate`, le parti ricostruite, `prove/prova-sito-plumecms.js` con un controllo per il blocco nuovo.
   Dalla 1.2.5 il numero di versione nelle pagine è automatico (`{versione:plumecms-ultima}`): per una versione del CMS
