@@ -243,6 +243,17 @@ function sito_importa_pagina(array $j): string {
     $st = $pdo->prepare('SELECT id FROM ' . tbl('pages') . ' WHERE slug = ?');
     $st->execute([$slug]);
     $id = (int)$st->fetchColumn();
+    // 2.18.0 (regola di Danilo: "ogni volta che aggiorniamo la versione lascia la hero dell'home page così com'è"): con
+    // "tieni_apertura" la prima sezione della pagina che c'è già, se ha un'Apertura, resta quella del sito e non quella del pacchetto.
+    $tenuta = false;
+    // Solo per una pagina che un pacchetto ha già scritto (una sua versione ha autore "pacchetto"): la home di un sito appena
+    // installato, che viene dal kit, si rimpiazza tutta come prima.
+    if ($id && !empty($j['tieni_apertura']) && ($albero['elementi'][0] ?? null) && sito_sezione_con_apertura($albero['elementi'][0]) && sito_pagina_da_pacchetto($id)) {
+        $prima = editor_pagina($id);
+        $vec = is_array($prima) ? json_decode((string)($prima['struttura'] ?? ''), true) : null;
+        $sez = is_array($vec) ? ($vec['elementi'][0] ?? null) : null;
+        if (is_array($sez) && sito_sezione_con_apertura($sez)) { $albero['elementi'][0] = $sez; $tenuta = true; }
+    }
     if ($id) {
         $set = implode(', ', array_map(fn($k) => "`$k` = ?", array_keys($campi)));
         $pdo->prepare('UPDATE ' . tbl('pages') . " SET $set, cestino = NULL WHERE id = ?")->execute([...array_values($campi), $id]);
@@ -255,7 +266,23 @@ function sito_importa_pagina(array $j): string {
         $esito = 'creata';
     }
     editor_salva($id, $albero, true, 'pacchetto', 'dal pacchetto di aggiornamento');
-    return "Pagina /$slug/ $esito (" . count($albero['elementi']) . ' sezioni).';
+    return "Pagina /$slug/ $esito (" . count($albero['elementi']) . ' sezioni' . ($tenuta ? ', l\'apertura resta quella del sito' : '') . ').';
+}
+
+/** La pagina ha già una versione scritta da un pacchetto di aggiornamento (autore "pacchetto"). */
+function sito_pagina_da_pacchetto(int $id): bool {
+    try {
+        $st = db()->prepare('SELECT 1 FROM ' . tbl('editor_versioni') . " WHERE ambito = ? AND oggetto_id = ? AND autore = 'pacchetto' LIMIT 1");
+        $st->execute([function_exists('editor_ambito') ? editor_ambito('pagine') : 'pagina', $id]);
+        return (bool)$st->fetchColumn();
+    } catch (Throwable $e) { return false; }
+}
+
+/** Una sezione dell'editor che contiene un'Apertura (widget hero), a qualunque profondità. */
+function sito_sezione_con_apertura(array $el): bool {
+    if (($el['tipo'] ?? '') === 'hero') return true;
+    foreach ((array)($el['figli'] ?? []) as $f) if (is_array($f) && sito_sezione_con_apertura($f)) return true;
+    return false;
 }
 
 /**

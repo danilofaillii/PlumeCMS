@@ -172,7 +172,9 @@ def home():
                         'Se il manuale non basta, ce ne sono altri due.',
                   pulsante_testo='Scarica plumeCMS', link={'url': '/scarica/', 'nuova': False})]],
               larghezza='stretta', **tinta(), **spazi(72, 72))
-    return dict(slug='home', titolo='plumeCMS', struttura=p.albero(),
+    # 2.18.0, regola di Danilo: "ogni volta che aggiorniamo la versione lascia la hero dell'home page così com'è". Con
+    # tieni_apertura il pannello (dalla 2.18.0) tiene la prima sezione della home del sito, se ha un'Apertura e la home viene da un pacchetto.
+    return dict(slug='home', titolo='plumeCMS', tieni_apertura=True, struttura=p.albero(),
                 seo_titolo='plumeCMS: il CMS leggero con l\'editor visuale',
                 seo_descrizione='plumeCMS è un CMS in PHP e MySQL con editor visuale, temi, SEO e newsletter già dentro. Si installa dal browser in cinque passi.')
 
@@ -693,7 +695,9 @@ def main():
         favicon(os.path.join(out, 'file', nome), lato)
         file.append({'da': 'file/' + nome, 'a': 'uploads/plumecms/' + nome})
 
-    pagine = [home(), funzionalita(), temi(), documentazione({k: pagine_pdf(v) for k, v in pdf.items()}), installazione(), scarica(note_versioni()), faq()]
+    # --senza-home: la home non va nel pacchetto. Serve finché il sito che lo riceve è sotto la 2.18.0: lì il pacchetto lo applica il
+    # motore vecchio, che non conosce tieni_apertura e rimpiazzerebbe anche la hero.
+    pagine = ([] if '--senza-home' in sys.argv else [home()]) + [funzionalita(), temi(), documentazione({k: pagine_pdf(v) for k, v in pdf.items()}), installazione(), scarica(note_versioni()), faq()]
     nomi = []
     for pg in pagine:
         nome = f'pagine/{pg["slug"]}.json'

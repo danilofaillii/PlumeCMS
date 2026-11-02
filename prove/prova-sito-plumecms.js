@@ -54,12 +54,13 @@ async function contrastoParole(pg) {
 
   const zips = ZIP.split(',');
   let log = '';
-  let cmsNelPacchetto = false;
+  let cmsNelPacchetto = false, conHome = false;
   for (const [k, z] of zips.entries()) {
     // Il nome con cui il pannello lo elenca è quello del suo manifest.
     const man = JSON.parse(execFileSync('python3', ['-I', '-c', 'import sys,zipfile;print(zipfile.ZipFile(sys.argv[1]).read("manifest.json").decode())', z], { encoding: 'utf8' }));
     const nome = man.nome;
     if ((man.file || []).some(f => f.a === 'new/VERSIONE')) cmsNelPacchetto = true;
+    if ((man.pagine || []).includes('pagine/home.json')) conHome = true; // 2.18.0: costruisci.py --senza-home la lascia fuori
     await p.goto(B + '/admin/aggiornamenti.php', { waitUntil: 'networkidle' });
     await p.setInputFiles('input[name=pacchetto]', z);
     await Promise.all([p.waitForNavigation(), p.click('form:has(input[name=pacchetto]) button[type=submit]')]);
@@ -72,7 +73,7 @@ async function contrastoParole(pg) {
     log += (st && st.log || []).join('\n') + '\n';
   }
   ok('resoconto: nome del sito, stile, header e footer, menu', /Impostazioni del sito/.test(log) && /Stile del sito aggiornato/.test(log) && /Header e footer: 2/.test(log) && /Menu di navigazione: 3/.test(log), log.slice(0, 300));
-  ok('resoconto: sette pagine', (log.match(/^Pagina \//gm) || []).length === 7);
+  ok('resoconto: ' + (conHome ? 'sette pagine' : 'sei pagine, la home resta quella del sito'), (log.match(/^Pagina \//gm) || []).length === (conHome ? 7 : 6) && (conHome || !/^Pagina \/home\//m.test(log)));
   if (cmsNelPacchetto) {
     // 2.1.0, il pacchetto unico: nello stesso giro anche il codice del CMS.
     ok(`pacchetto unico: il CMS è passato alla ${V} (VERSIONE e pannello Informazioni)`, fs.readFileSync(path.join(DIR, 'VERSIONE'), 'utf8').trim() === V
@@ -85,7 +86,7 @@ async function contrastoParole(pg) {
   const v = await (await br.newContext({ viewport: { width: 1280, height: 900 } })).newPage();
   const errV = []; v.on('pageerror', e => errV.push(e.message.slice(0, 200)));
   v.on('console', m => { if (m.type() === 'error' && !/favicon/.test(m.text())) errV.push(m.text().slice(0, 200)); });
-  const pagine = [['/', /leggero come una piuma/i], ['/funzionalita/', /vuoto/], ['/temi/', /Cambia vestito/], ['/documentazione/', /da leggere anche offline/],
+  const pagine = [...(conHome ? [['/', /leggero come una piuma/i]] : []), ['/funzionalita/', /vuoto/], ['/temi/', /Cambia vestito/], ['/documentazione/', /da leggere anche offline/],
     ['/installazione/', /Installalo in 5 minuti/], ['/scarica/', new RegExp('Scarica plumeCMS ' + V.replace(/\./g, '\\.') + '$')], ['/domande-frequenti/', /Domande frequenti/]];
   for (const [u, re] of pagine) {
     const r = await v.goto(B + u, { waitUntil: 'networkidle' });
@@ -96,6 +97,7 @@ async function contrastoParole(pg) {
   ok('titolo della scheda: plumeCMS', /plumeCMS/.test(await v.title()), await v.title());
   const voci = (await v.locator('header nav a').allInnerTexts()).map(s => s.trim()).filter(Boolean);
   ok('menu: Home, Funzionalità, Temi, Documentazione, Installazione, Scarica', ['Home', 'Funzionalità', 'Temi', 'Documentazione', 'Installazione'].every(x => voci.some(y => y.toLowerCase() === x.toLowerCase())) && voci.some(y => /scarica/i.test(y)), voci);
+  if (conHome) {
   ok("l'onda non c'è nella home", await v.locator('.chip-onda').count() === 0);
   // Dalla 1.2.6 la home apre con la Copertina; dalla notte del 27 ottobre con la piuma di copertina.js, a colori
   // (trattamento naturale) e con lo zoom lento. La foto deve essere caricata davvero e restare leggera.
@@ -124,6 +126,7 @@ async function contrastoParole(pg) {
   await fermo.close();
   const imgRotte = await v.evaluate(() => [...document.images].filter(i => i.complete && i.naturalWidth === 0).map(i => i.src));
   ok('nessuna immagine rotta nella home', imgRotte.length === 0, imgRotte);
+  } // fine dei controlli sulla home (2.18.0: solo quando il pacchetto la porta)
   await v.goto(B + '/funzionalita/', { waitUntil: 'networkidle' });
   const imgF = await v.evaluate(async () => { for (const i of document.images) { i.loading = 'eager'; } await new Promise(r => setTimeout(r, 1500)); return [...document.images].filter(i => i.naturalWidth === 0).map(i => i.src); });
   ok('nessuna immagine rotta in Funzionalità', imgF.length === 0, imgF);
@@ -136,7 +139,7 @@ async function contrastoParole(pg) {
   // "Installalo in 5 minuti" (pagina Installazione): cosa serve prima e il carosello delle cinque schermate vere
   // dell'installatore (sito-plumecms/installatore.js), che scorre da solo e si ferma per chi chiede meno movimento.
   await v.goto(B + '/', { waitUntil: 'networkidle' });
-  ok('la home porta ai cinque passi dell\'installatore', await v.locator('a[href$="/installazione/#passi"]').count() >= 1);
+  if (conHome) ok('la home porta ai cinque passi dell\'installatore', await v.locator('a[href$="/installazione/#passi"]').count() >= 1);
   await v.goto(B + '/installazione/', { waitUntil: 'networkidle' });
   const prima = await v.locator('#passi').innerText();
   ok('Installazione: prima di cominciare (hosting con PHP 8.2 e MySQL, i dati del database, lo zip)', /Prima di cominciare/.test(prima) && /PHP 8\.2/.test(prima) && /MySQL/.test(prima) && /dati del database/.test(prima) && /zip/i.test(prima));
