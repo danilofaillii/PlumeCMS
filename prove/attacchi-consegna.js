@@ -185,7 +185,7 @@ const uno = s => { const r = q(s); return Array.isArray(r) && r[0] ? Object.valu
     q(`UPDATE {p}newsletter_campagne SET stato = 'bozza' WHERE id = ${camp}`);
     await vai('/admin/newsletter-campagna.php?id=' + camp);
     const tok2 = await a.locator('input[name=_csrf]').first().inputValue();
-    await a.request.post(B + '/admin/newsletter-campagna.php?id=' + camp, { form: { _csrf: tok2, azione: 'salva', oggetto: 'Bersaglio', corpo: '<p>x</p>', mittente_id: String(nonConf) } });
+    await a.request.post(B + '/admin/newsletter-campagna.php?id=' + camp, { form: { _csrf: tok2, azione: 'sezione', sez: 'mittente', mittente_id: String(nonConf) } }); // 2.11.0: la sezione Mittente del riepilogo
     ok('6. una campagna non può usare un mittente non confermato (resta il predefinito)', +uno(`SELECT mittente_id FROM {p}newsletter_campagne WHERE id = ${camp}`) === 0);
 
     // ===== 7. Redattore

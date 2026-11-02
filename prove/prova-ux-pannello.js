@@ -23,7 +23,11 @@ const PIU = ['seo.php?scheda=motori', 'seo.php?scheda=copertura', 'seo.php?sched
   // 2.9.0: Importa contatti (passo 1 e importazioni recenti)
   'newsletter-importa.php',
   // 2.10.0: Segmenti (elenco, modelli, costruttore), Aggiungi filtro aperto nella pagina Contatti
-  'newsletter-segmenti.php', 'newsletter-segmenti.php?nuovo=1', 'newsletter-segmenti.php?nuovo=1&modello=coinvolti', 'newsletter-contatti.php?filtro=1'];
+  'newsletter-segmenti.php', 'newsletter-segmenti.php?nuovo=1', 'newsletter-segmenti.php?nuovo=1&modello=coinvolti', 'newsletter-contatti.php?filtro=1',
+  // 2.11.0: Crea una campagna, Duplica, le viste, il riepilogo con ogni sezione aperta (la campagna 1 deve esserci)
+  'newsletter.php?crea=1', 'newsletter.php?duplica=1', 'newsletter.php?vista=bozze', 'newsletter-campagna.php?id=1', 'newsletter-campagna.php?id=1&apri=mittente',
+  'newsletter-campagna.php?id=1&apri=destinatari', 'newsletter-campagna.php?id=1&apri=oggetto', 'newsletter-campagna.php?id=1&apri=design', 'newsletter-campagna.php?id=1&apri=impostazioni',
+  'newsletter-campagna.php?id=1&apri=prova'];
 
 // La misura dentro la pagina: tutto quello che serve sta qui, la pagina non carica niente.
 function misura() {

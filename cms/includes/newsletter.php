@@ -221,7 +221,9 @@ function newsletter_schema(): void {
             db()->prepare('INSERT IGNORE INTO ' . tbl('newsletter_iscritti_liste') . ' (iscritto_id, lista_id, aggiunto) SELECT i.id, ?, NOW() FROM ' . tbl('newsletter_iscritti') . ' i
                 WHERE NOT EXISTS (SELECT 1 FROM ' . tbl('newsletter_iscritti_liste') . ' l WHERE l.iscritto_id = i.id)')->execute([$principale]);
         }
-        db()->prepare('UPDATE ' . tbl('newsletter_campagne') . " SET liste = ? WHERE liste = ''")->execute([(string)$principale]);
+        // Le campagne di prima delle liste vanno alla principale. 2.11.0: da quando ci sono i segmenti (colonna segmenti)
+        // una campagna nuova può non avere liste, e allora non si tocca.
+        if (!in_array('segmenti', $col, true)) db()->prepare('UPDATE ' . tbl('newsletter_campagne') . " SET liste = ? WHERE liste = ''")->execute([(string)$principale]);
         newsletter_contatti_migra(); // 2.8.0
         save_setting('newsletter_schema_impronta', $impronta);
     }
@@ -841,30 +843,46 @@ function newsletter_personalizza(string $s, array $iscritto, bool $html): string
     return $s;
 }
 
-/** L'email completa per un iscritto (o per una prova: id 0). */
+/**
+ * L'email completa per un iscritto (o per una prova: id 0).
+ * 2.11.0 (includes/newsletter-campagne.php): codice HTML incollato (editor html), versione web e link delle preferenze
+ * (se la campagna li chiede), indirizzo dell'azienda nel piede (se è scritto), UTM, Rispondi a e campo "A" della
+ * campagna, testo semplice scritto a mano. Con i valori di partenza (le campagne di prima) l'HTML è uguale al byte.
+ */
 function newsletter_email(array $c, array $iscritto, ?array $traccia = null): array {
     $oggetto = newsletter_4byte_fuori(newsletter_personalizza($c['oggetto'], $iscritto, false));
     if ($traccia === null && !empty($c['id'])) $traccia = ['c' => (int)$c['id']];
-    $corpo = newsletter_personalizza(newsletter_corpo_email((string)$c['corpo']), $iscritto, true);
     $id = (int)($iscritto['id'] ?? 0);
     $uscita = $id ? newsletter_link_uscita($id, $traccia) : MODULI_URL . NEWSLETTER_ESCI;
-    require_once __DIR__ . '/sicurezza-html.php';
-    $pl = sicurezza_url_pulito((string)($c['pulsante_link'] ?? '')); // 2.2: niente javascript: e simili nel pulsante dell'email
-    $btn = (($c['pulsante_testo'] ?? '') !== '' && $pl !== '')
-        ? '<p style="margin:26px 0"><a href="' . h($pl) . '" target="_blank" style="display:inline-block;background:#7c3aed;color:#fff;padding:14px 26px;border-radius:10px;text-decoration:none;font-weight:700">' . h($c['pulsante_testo']) . '</a></p>'
-        : '';
-    // Il testo di anteprima: quello che i programmi di posta mostrano accanto all'oggetto.
-    $anteprima = $c['anteprima'] !== '' ? '<div style="display:none;max-height:0;overflow:hidden;mso-hide:all">' . h(newsletter_4byte_fuori(newsletter_personalizza($c['anteprima'], $iscritto, false))) . str_repeat('&#8204;&nbsp;', 40) . '</div>' : '';
-    $html = '<!DOCTYPE html><html lang="it"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>' . h($oggetto) . '</title></head>'
-        . '<body style="margin:0;background:#f4f4f6;font-family:Arial,Helvetica,sans-serif;color:#1f2330">' . $anteprima
-        . '<table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr><td align="center" style="padding:24px 12px">'
-        . '<table role="presentation" width="600" cellpadding="0" cellspacing="0" style="max-width:600px;width:100%;background:#fff;border-radius:12px">'
-        . '<tr><td style="background:#060a17;color:#fff;padding:22px 30px;font-weight:700;letter-spacing:.06em">' . (string)cms_impostazione('newsletter_intestazione', mb_strtoupper(h((string)cms_impostazione('sito_nome', CMS_NOME)))) . '</td></tr>'
-        . '<tr><td style="padding:30px">' . $corpo . $btn . '</td></tr>'
-        . '<tr><td style="padding:18px 30px 26px;border-top:1px solid #eee;font-size:12px;line-height:1.6;color:#888">'
-        . 'Ricevi questa email perché ti sei iscritto alla ' . h(lcfirst(newsletter_nome())) . ' di ' . h((string)cms_impostazione('newsletter_firma', cms_impostazione('sito_nome', CMS_NOME))) . '. '
-        . '<a href="' . h($uscita) . '" style="color:#888">Esci dalla newsletter</a>, basta un clic.</td></tr>'
-        . '</table></td></tr></table></body></html>';
+    $x = function_exists('nl_camp_extra') ? nl_camp_extra($c, $iscritto) : ['web' => '', 'pref' => '', 'pref_sempre' => '', 'indirizzo' => ''];
+    if (($c['editor'] ?? 'semplice') === 'html' && function_exists('nl_camp_html')) {
+        $html = nl_camp_html($c, $iscritto, $uscita, $x, $oggetto);
+    } else {
+        $corpo = newsletter_corpo_email((string)$c['corpo']);
+        if (function_exists('nl_camp_link_speciali') && str_contains($corpo, '{{')) $corpo = nl_camp_link_speciali($corpo, $uscita, $x, true);
+        $corpo = newsletter_personalizza($corpo, $iscritto, true);
+        require_once __DIR__ . '/sicurezza-html.php';
+        $pl = sicurezza_url_pulito((string)($c['pulsante_link'] ?? '')); // 2.2: niente javascript: e simili nel pulsante dell'email
+        $btn = (($c['pulsante_testo'] ?? '') !== '' && $pl !== '')
+            ? '<p style="margin:26px 0"><a href="' . h($pl) . '" target="_blank" style="display:inline-block;background:#7c3aed;color:#fff;padding:14px 26px;border-radius:10px;text-decoration:none;font-weight:700">' . h($c['pulsante_testo']) . '</a></p>'
+            : '';
+        // Il testo di anteprima: quello che i programmi di posta mostrano accanto all'oggetto.
+        $anteprima = $c['anteprima'] !== '' ? '<div style="display:none;max-height:0;overflow:hidden;mso-hide:all">' . h(newsletter_4byte_fuori(newsletter_personalizza($c['anteprima'], $iscritto, false))) . str_repeat('&#8204;&nbsp;', 40) . '</div>' : '';
+        $html = '<!DOCTYPE html><html lang="it"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>' . h($oggetto) . '</title></head>'
+            . '<body style="margin:0;background:#f4f4f6;font-family:Arial,Helvetica,sans-serif;color:#1f2330">' . $anteprima
+            . '<table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr><td align="center" style="padding:24px 12px">'
+            . ($x['web'] !== '' ? '<p style="margin:0 0 10px;font-size:12px;color:#888;text-align:center"><a href="' . h($x['web']) . '" style="color:#888">Vedi questa email nel browser</a></p>' : '')
+            . '<table role="presentation" width="600" cellpadding="0" cellspacing="0" style="max-width:600px;width:100%;background:#fff;border-radius:12px">'
+            . '<tr><td style="background:#060a17;color:#fff;padding:22px 30px;font-weight:700;letter-spacing:.06em">' . (string)cms_impostazione('newsletter_intestazione', mb_strtoupper(h((string)cms_impostazione('sito_nome', CMS_NOME)))) . '</td></tr>'
+            . '<tr><td style="padding:30px">' . $corpo . $btn . '</td></tr>'
+            . '<tr><td style="padding:18px 30px 26px;border-top:1px solid #eee;font-size:12px;line-height:1.6;color:#888">'
+            . 'Ricevi questa email perché ti sei iscritto alla ' . h(lcfirst(newsletter_nome())) . ' di ' . h((string)cms_impostazione('newsletter_firma', cms_impostazione('sito_nome', CMS_NOME))) . '. '
+            . '<a href="' . h($uscita) . '" style="color:#888">Esci dalla newsletter</a>, basta un clic.'
+            . ($x['pref'] !== '' ? ' <a href="' . h($x['pref']) . '" style="color:#888">Aggiorna le tue preferenze</a>.' : '')
+            . ($x['indirizzo'] !== '' ? '<br>' . str_replace("\n", '<br>', h($x['indirizzo'])) : '') . '</td></tr>'
+            . '</table></td></tr></table></body></html>';
+    }
+    if (!empty($c['utm']) && function_exists('nl_camp_utm')) $html = nl_camp_utm($html, $c);
     // Pixel di apertura e link tracciati: solo per le email vere, non per le prove.
     if ($id && $traccia) $html = newsletter_traccia($html, $traccia, $id);
     $cfg = newsletter_config();
@@ -872,9 +890,22 @@ function newsletter_email(array $c, array $iscritto, ?array $traccia = null): ar
     $mitt = consegna_intestazioni_mittente((int)($c['mittente_id'] ?? 0));
     $rispondi = $cfg['rispondi_a'];
     if ($mitt !== '' && str_contains($mitt, 'Reply-To:')) $rispondi = '';
+    // 2.11.0: il Rispondi a della campagna vince su quello del mittente e su quello delle impostazioni.
+    $rc = trim((string)($c['rispondi_a'] ?? ''));
+    if ($rc !== '' && filter_var($rc, FILTER_VALIDATE_EMAIL)) { $mitt = preg_replace('/^Reply-To:[^\r\n]*\r\n/m', '', $mitt); $rispondi = $rc; }
     $intest = moduli_intestazioni($rispondi) . $mitt
         . ($id ? "List-Unsubscribe: <$uscita>\r\nList-Unsubscribe-Post: List-Unsubscribe=One-Click\r\n" : '')
         . ($id && $traccia ? 'X-Plume-Rif: ' . consegna_rif((int)($traccia['c'] ?? 0), (int)($traccia['f'] ?? 0), (int)($traccia['p'] ?? 0), $id) . "\r\n" : '');
+    // 2.11.0: il campo "A" e il testo semplice viaggiano in intestazioni interne che posta.php toglie (posta_interne()).
+    if (function_exists('posta_interne')) {
+        $a = trim((string)($c['campo_a'] ?? ''));
+        if ($a !== '') {
+            $a = trim(preg_replace('/\s+/u', ' ', newsletter_4byte_fuori(newsletter_personalizza($a, $iscritto, false))));
+            if ($a !== '') $intest .= 'X-Plume-A: ' . base64_encode(mb_substr($a, 0, 150)) . "\r\n";
+        }
+        $t = function_exists('nl_camp_testo') ? nl_camp_testo($c, $iscritto, $uscita, $x) : null;
+        if ($t !== null) $intest .= 'X-Plume-Testo: ' . base64_encode($t) . "\r\n";
+    }
     return [$oggetto, $html, $intest];
 }
 
@@ -905,6 +936,8 @@ function newsletter_avvia_programmate(): array {
     $pronte = db()->query('SELECT * FROM ' . tbl('newsletter_campagne') . " WHERE stato = 'programmata' AND invio_at <= NOW()")->fetchAll();
     foreach ($pronte as $c) {
         $id = (int)$c['id'];
+        // 2.11.0: liste e segmenti, esclusioni, non coinvolti, figlie, lotti (includes/newsletter-campagne.php).
+        if (function_exists('newsletter_campagna_avvia')) { $log[] = newsletter_campagna_avvia($c); continue; }
         $liste = newsletter_liste_campagna($c);
         if (!$liste) {
             // Le sue liste sono state cancellate: torna bozza, invece di partire verso nessuno o verso tutti.
@@ -927,6 +960,9 @@ function newsletter_invia_giro(?int $massimo = null): array {
     newsletter_schema();
     if (!db()->query("SELECT GET_LOCK('" . DB_PREFIX . "newsletter_invio', 0)")->fetchColumn()) return ['un altro invio è in corso'];
     try {
+        // 2.11.0: le colonne dei lotti nella coda (dopo: l'ora da cui un lotto può partire).
+        $lotti = function_exists('newsletter_campagne_schema');
+        if ($lotti) newsletter_campagne_schema();
         $log = newsletter_avvia_programmate();
         // 2.0.0: il limite conta tutte le email del CMS (registro della posta): conferme, avvisi, flussi, campagne.
         // Le campagne della coda restano contate anche se il registro è appena nato (il primo giro dopo l'aggiornamento).
@@ -945,7 +981,7 @@ function newsletter_invia_giro(?int $massimo = null): array {
         $righe = db()->query('SELECT q.id, q.campagna_id, q.tentativi, i.id AS iscritto_id, i.email, i.nome, i.cognome FROM ' . tbl('newsletter_coda') . ' q
             JOIN ' . tbl('newsletter_campagne') . ' c ON c.id = q.campagna_id AND c.stato = \'in_invio\'
             JOIN ' . tbl('newsletter_iscritti') . " i ON i.id = q.iscritto_id AND i.stato = 'attivo'
-            WHERE q.stato = 'attesa' ORDER BY q.id LIMIT " . (int)$posti)->fetchAll();
+            WHERE q.stato = 'attesa'" . ($lotti ? ' AND (q.dopo IS NULL OR q.dopo <= NOW())' : '') . ' ORDER BY q.id LIMIT ' . (int)$posti)->fetchAll();
         $campagne = [];
         $ok = 0; $ko = 0; $rimbalzi = 0;
         foreach ($righe as $r) {
@@ -991,3 +1027,4 @@ require_once __DIR__ . '/newsletter-flussi.php';
 require_once __DIR__ . '/newsletter-contatti.php'; // 2.8.0: contatti, attributi, cartelle (come Brevo)
 require_once __DIR__ . '/newsletter-importa.php'; // 2.9.0: importazione, esportazione, lista dei test (come Brevo)
 require_once __DIR__ . '/newsletter-segmenti.php'; // 2.10.0: segmenti, filtri e viste (come Brevo)
+require_once __DIR__ . '/newsletter-campagne.php'; // 2.11.0: campagne a riepilogo, disiscrizione con il questionario, centro preferenze

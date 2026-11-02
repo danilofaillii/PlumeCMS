@@ -125,6 +125,8 @@ function newsletter_traccia(string $html, array $t, int $iscritto): string {
     $html = preg_replace_callback('~href="(https?://[^"]+)"~i', function ($m) use ($t, $iscritto) {
         $u = html_entity_decode($m[1]);
         if (str_contains($u, cms_base() . '/api/nl.php') || str_contains($u, NEWSLETTER_ESCI)) return $m[0];
+        // 2.11.0: anche i link firmati delle preferenze e della versione web restano diretti.
+        if (str_contains($u, '/newsletter-preferenze/') || str_contains($u, '/newsletter-web/')) return $m[0];
         return 'href="' . h(nl_url_evento('c', $t, $iscritto, $u)) . '"';
     }, $html);
     $pixel = '<img src="' . h(nl_url_evento('a', $t, $iscritto)) . '" width="1" height="1" alt="" style="display:block;width:1px;height:1px;border:0">';
