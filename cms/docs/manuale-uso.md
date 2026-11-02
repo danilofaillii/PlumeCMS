@@ -1919,9 +1919,12 @@ arrivano nella posta, non nello spam"); se vuoi, scegline un altro dalla tendina
 
 ![La sezione Design](immagini/manuale-uso/19-design.jpg)
 
-1. **Come scrivi l'email**: **Editor semplice** (testo, titoli, immagini, link e un pulsante) oppure **Codice HTML** (incolli
-   un'email già fatta). Per cambiare scegli e premi **Usa questo editor**: passando al codice parti dall'email che avevi.
-2. Il testo: scrivi come in un'email normale. Per un'immagine premi il pulsante con l'immagine nella barra: si apre la
+1. **Come fai il design**: cinque strade, ognuna con il suo pulsante. **Editor a blocchi** (sezioni a colonne, titoli,
+   immagini, pulsanti, social: sotto, "L'editor delle email a blocchi"), **Un tuo modello** (un design salvato), **La
+   galleria** (modelli pronti), **Editor semplice** (testo, titoli, immagini, link e un pulsante, come in una lettera),
+   **Codice HTML** (incolli un'email già fatta). Quella in uso ha la scritta **In uso**. Cambiando strada non perdi niente:
+   passando al codice parti dall'email che avevi.
+2. Con l'editor semplice, il testo: scrivi come in un'email normale. Per un'immagine premi il pulsante con l'immagine nella barra: si apre la
    finestra dei Media (capitolo 7). **Scegli dal sito**, nella barra e accanto al link del pulsante, scrive l'indirizzo
    intero, quello che serve nelle email.
 3. **Pulsante in fondo**: il testo del pulsante e, sotto, il suo link.
@@ -1959,6 +1962,172 @@ Chi si è tolto da una lista dal centro preferenze (sotto) non riceve più le ca
    ritrovarla.
 
 Premi **Salva le impostazioni**.
+
+### L'editor delle email a blocchi
+
+Con l'editor a blocchi l'email si compone come una pagina dell'editor visuale: **sezioni** (righe con una, due o tre colonne)
+e dentro i **blocchi** (titolo, testo, immagine, pulsante, divisore, spaziatore, social, video, piede). L'email che parte è
+fatta apposta per i programmi di posta: si legge bene su Gmail, Outlook, Apple Mail e al telefono, dove le colonne vanno una
+sotto l'altra.
+
+**Esempio.** L'offerta d'autunno: partiamo dal modello "Offerta" della galleria, cambiamo il titolo e il link del pulsante,
+salviamo la testata per riusarla e il design come modello.
+
+**Newsletter e form > Campagne email > Crea una campagna**, nome "Offerta d'autunno", poi la sezione **Design**.
+
+![Le cinque strade del design](immagini/manuale-uso/19m-strade.jpg)
+
+1. **Usa l'editor a blocchi**: parti da un'email con un titolo, un testo, un pulsante e il piede.
+2. **Un tuo modello**: scegli un modello attivo dalla tendina e premi **Usa questo modello**.
+3. **Scegli nella galleria**: i modelli pronti (qui sotto).
+4. **Editor semplice** e 5. **Codice HTML**: come prima.
+
+Premi **Scegli nella galleria**.
+
+![La galleria dei modelli](immagini/manuale-uso/19m-galleria.jpg)
+
+1. **Galleria**: sei modelli pronti (benvenuto, newsletter del mese, offerta, evento, nuovo articolo, conferma
+   dell'iscrizione), ognuno con l'anteprima. Testi e colori sono di esempio.
+2. **Usa in questa campagna**: il design entra nella campagna e si apre l'editor. Qui: Offerta.
+3. **Aggiungi ai miei modelli**: lo copia fra i tuoi modelli, già attivo, per cambiarlo con calma.
+
+![L'editor delle email](immagini/manuale-uso/19m-editor.jpg)
+
+1. Le schede del pannello: **Contenuti** (i blocchi e le sezioni), **Modifica** (quello che hai selezionato), **Stile**
+   (vale per tutta l'email), **Salvati** (le sezioni salvate).
+2. **Blocchi**: trascinane uno nella tela, dentro una colonna; oppure fai clic (o premi Invio): entra dopo il blocco
+   selezionato.
+3. **Sezioni a colonne**: una, due o tre colonne, anche di larghezze diverse (un terzo e due terzi...). Si trascinano allo
+   stesso modo.
+4. La **tela**: l'email come la vedrà chi legge. Fai clic su un blocco per cambiarlo.
+5. **Computer** e **Telefono**: la tela larga quanto l'email, o 390 pixel come un telefono.
+6. **Annulla** e **Ripeti** (anche Ctrl+Z e Ctrl+Y).
+7. **Anteprima**: l'email vera, come esce dal sito, con il nome "Giulia" al posto dei dati.
+8. **Salva**. Le modifiche si salvano anche da sole, dopo due secondi: accanto ai pulsanti leggi "Salvato alle ...".
+
+Fai clic sul titolo grande.
+
+![Un blocco selezionato](immagini/manuale-uso/19m-modifica.jpg)
+
+1. Sopra il blocco: **↑** e **↓** lo spostano (anche nella colonna o nella sezione accanto), **⧉** lo duplica, **✕** lo
+   elimina. Le sezioni hanno gli stessi pulsanti, più **★** per salvarle e **☰** per trascinarle.
+2. La scheda **Modifica** dice cosa hai selezionato.
+3. **Testo**: qui "-30% su tutti i cappotti". La tela cambia mentre scrivi.
+4. I pallini sono i **colori del sito**: un clic e il colore è quello. Con **Come lo stile** il blocco torna ai colori della
+   scheda Stile.
+
+Con la tastiera: Tab fino al blocco, Invio per aprirlo in Modifica, Alt+Freccia su o giù per spostarlo, Canc per
+eliminarlo.
+
+Ora il pulsante: fai clic su **Approfitta dello sconto**.
+
+![Il link del pulsante](immagini/manuale-uso/19m-pulsante.jpg)
+
+1. **Link**: l'indirizzo intero della pagina. Qui la pagina del negozio.
+2. **Scegli dal sito**: cerchi la pagina per titolo, e il link si scrive da solo.
+3. **Link speciali**: **per uscire** (dalla newsletter), **delle preferenze**, **della versione web**. Diventano i link
+   giusti per ogni persona.
+
+Un pulsante senza link non esce nell'email: nella tela lo dice in rosso.
+
+**I blocchi, in breve.**
+
+| Blocco | Cosa scegli |
+|---|---|
+| Titolo | Testo, grandezza (grande, media, piccola), allineamento, colore |
+| Testo | Testo con grassetto, corsivo, link ed elenchi; allineamento, colore, dimensione. `{{ contact.NOME }}` diventa il nome |
+| Immagine | **Scegli dai Media** (o carica), testo alternativo (lo legge chi non vede le immagini), larghezza, link, angoli |
+| Pulsante | Testo, link, allineamento, colori, angoli, largo quanto la colonna |
+| Divisore | Colore, spessore, linea continua, a trattini o a puntini, larghezza |
+| Spaziatore | Altezza dello spazio vuoto |
+| Social | Le reti con i loro indirizzi (Facebook, Instagram, LinkedIn, X, YouTube, TikTok, WhatsApp, Telegram, Pinterest, sito, email), icone a colori, scure o chiare |
+| Video | Il link del video: per YouTube l'immagine del video arriva da sola. Nelle email i video non partono: chi fa clic lo guarda sul sito del video |
+| Piede | Il testo in fondo con il link per uscire, e l'indirizzo dell'azienda (Impostazioni) |
+
+Il link per uscire è obbligatorio: se togli il piede, o il link, all'invio lo rimettiamo noi in fondo, con l'indirizzo
+dell'azienda.
+
+**Lo stile.** Scheda **Stile**.
+
+![Lo stile dell'email](immagini/manuale-uso/19m-stile.jpg)
+
+1. **L'email**: lo sfondo intorno, lo sfondo del corpo, la larghezza (600 pixel va bene quasi sempre), gli angoli.
+2. **Testi**: i caratteri (solo quelli che ogni programma di posta ha: Arial, Georgia, Verdana...), la dimensione, i colori
+   del testo, dei titoli e dei link.
+3. **Pulsanti**: i colori e gli angoli di tutti i pulsanti. Un pulsante può avere colori suoi, dalla scheda Modifica.
+
+**Al telefono.** Premi il pulsante del telefono in alto.
+
+![L'email al telefono](immagini/manuale-uso/19m-telefono.jpg)
+
+1. La tela si stringe a 390 pixel e le colonne vanno una sotto l'altra, come sul telefono di chi legge. Se vuoi le colonne
+   affiancate anche al telefono (per esempio due icone), seleziona la sezione e in **Sul telefono** scegli **Le colonne
+   restano affiancate**.
+
+### Le sezioni salvate
+
+Una sezione che usi spesso (la testata con il logo, il piede con i contatti) si salva una volta e si mette in ogni email.
+Passa sopra la sezione nella tela e premi **★**.
+
+![Salvare una sezione](immagini/manuale-uso/19m-salva-sezione.jpg)
+
+1. **Nome**: lo ritrovi nella scheda Salvati. Qui: Testata delle offerte.
+2. **Sincronizzata**: se poi la cambi e premi **Aggiorna in tutte le email**, cambia in ogni campagna in bozza e in ogni
+   modello che la usa. Senza la spunta è una copia: ogni email tiene la sua.
+3. Premi **Salva la sezione**.
+
+![La scheda Salvati](immagini/manuale-uso/19m-salvati.jpg)
+
+1. La sezione salvata, con scritto se è sincronizzata. **Inserisci** la mette dopo la sezione selezionata (o la trascini
+   nella tela), **Elimina** la toglie da Salvati (le email che la usano tengono la loro copia).
+2. Nella tela la sezione dice "(salvata)".
+
+Cambiare una sezione sincronizzata: cambiala in una email, poi selezionala (clic sul suo bordo).
+
+![Una sezione sincronizzata](immagini/manuale-uso/19m-sincronizzata.jpg)
+
+1. **Aggiorna in tutte le email**: la sezione cambia nelle campagne **in bozza** e nei modelli che la usano. Le campagne già
+   programmate, partite o inviate restano come sono.
+2. **Scollega da quella salvata**: da qui in poi questa email ha la sua copia.
+
+### I modelli
+
+Un modello è un design da riusare: nelle campagne porta solo il design, mittente, destinatari e oggetto restano della
+campagna. Dall'editor di una campagna premi **Salva come modello**.
+
+![Salva come modello](immagini/manuale-uso/19m-modello.jpg)
+
+1. **Nome**: qui Offerta stagionale.
+2. **Attiva subito il modello**: si sceglie nelle campagne solo quando è attivo.
+3. Premi **Salva il modello**.
+
+Per guardare l'email com'è davvero premi **Anteprima**:
+
+![L'anteprima](immagini/manuale-uso/19m-anteprima.jpg)
+
+1. **Computer** o **Telefono**: la larghezza dell'anteprima.
+
+**Newsletter e form > Modelli.**
+
+![I modelli](immagini/manuale-uso/19m-modelli.jpg)
+
+1. **Crea un modello**: scrivi il nome e si apre l'editor a blocchi.
+2. **Attivo** o **Inattivo**, scritto accanto a ogni modello.
+3. **Modifica** (nell'editor a blocchi), **Rendi attivo** o **Rendi inattivo**, **Duplica** (la copia nasce inattiva),
+   **Elimina** (le campagne che lo hanno usato tengono il loro design). **Rinomina** e **Oggetto e uso** stanno sotto il
+   nome.
+4. **Email di conferma dell'iscrizione**: l'email del doppio consenso (sotto, "L'email di conferma dell'iscrizione") può
+   essere quella predefinita, scritta a parti in Impostazioni, oppure un tuo modello. Nella galleria c'è "Conferma
+   dell'iscrizione": aggiungilo ai tuoi modelli, cambialo, e sceglilo qui. Il pulsante con il link di conferma lo porta da
+   solo. I form con una loro email di conferma tengono la loro.
+
+**Checklist dell'editor a blocchi**
+- [ ] Ogni immagine ha il testo alternativo.
+- [ ] Ogni pulsante ha il suo link (nella tela, niente scritte rosse).
+- [ ] Il piede ha il link per uscire e l'indirizzo dell'azienda (Impostazioni).
+- [ ] Guardata al telefono: le colonne si leggono una sotto l'altra.
+- [ ] **Anteprima** guardata, e una prova mandata alla lista dei test (sotto).
+- [ ] Le sezioni sincronizzate cambiate: premuto **Aggiorna in tutte le email**.
 
 ### Anteprima e prova
 

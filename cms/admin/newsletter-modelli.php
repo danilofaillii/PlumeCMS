@@ -49,6 +49,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             break;
         case 'galleria':
             $slug = (string)($_POST['slug'] ?? '');
+            if (!empty($_POST['in_campagna']) && !$camp) { flash('error', 'Questa campagna non si può più modificare: è già partita.'); break; }
             if ($camp && !empty($_POST['in_campagna'])) {
                 $g = nd_galleria()[$slug] ?? null;
                 $e = $g ? nd_campagna_da_modello($campagna, null, $g['design']) : 'Modello della galleria sconosciuto.';
@@ -109,7 +110,7 @@ require_once __DIR__ . '/includes/admin-header.php';
 <?php if ($scheda === 'galleria'): ?>
 <div class="form-card">
   <h3>Galleria dei modelli pronti</h3>
-  <p class="hint" style="margin-top:0">Modelli fatti per le occasioni più comuni. <?= $camp ? '«Usa in questa campagna» porta il design nella campagna e apre l\'editor; «Aggiungi ai miei modelli» lo copia fra i tuoi modelli.' : '«Aggiungi ai miei modelli» lo copia fra i tuoi modelli, già attivo: poi lo cambi come vuoi.' ?> I testi e i colori sono di esempio: cambiali con quelli tuoi.</p>
+  <p class="hint" style="margin:0 0 .9rem">Modelli fatti per le occasioni più comuni. <?= $camp ? '«Usa in questa campagna» porta il design nella campagna e apre l\'editor; «Aggiungi ai miei modelli» lo copia fra i tuoi modelli.' : '«Aggiungi ai miei modelli» lo copia fra i tuoi modelli, già attivo: poi lo cambi come vuoi.' ?> I testi e i colori sono di esempio: cambiali con quelli tuoi.</p>
   <div class="ndm-griglia">
     <?php foreach ($galleria as $slug => $g): ?>
     <div class="ndm-carta">
@@ -128,7 +129,7 @@ require_once __DIR__ . '/includes/admin-header.php';
 <?php else: ?>
 <div class="form-card">
   <h3>I tuoi modelli</h3>
-  <p class="hint" style="margin-top:0">Un modello è un design da riusare: nelle campagne porta solo il design (mittente, destinatari e oggetto restano della campagna). Nasce inattivo: lo scegli nelle campagne quando è attivo.</p>
+  <p class="hint" style="margin:0 0 .9rem">Un modello è un design da riusare: nelle campagne porta solo il design (mittente, destinatari e oggetto restano della campagna). Nasce inattivo: lo scegli nelle campagne quando è attivo.</p>
   <form method="post" class="nl-riga" style="gap:.5rem;align-items:flex-end;margin-bottom:1rem"><?= csrf_field() ?><input type="hidden" name="azione" value="nuovo">
     <div class="form-group" style="margin:0;flex:1;min-width:min(100%,16rem)"><label for="ndm-nuovo">Nome del modello nuovo</label><input type="text" id="ndm-nuovo" name="nome" maxlength="150" required placeholder="per esempio: Newsletter del mese"></div>
     <button class="btn btn-primary" type="submit">Crea un modello</button>
@@ -148,7 +149,7 @@ require_once __DIR__ . '/includes/admin-header.php';
           <div class="form-group"><label for="ndm-ogg-<?= $mi ?>">Oggetto (per l'email di conferma)</label><input type="text" id="ndm-ogg-<?= $mi ?>" name="oggetto" maxlength="200" value="<?= h(newsletter_4byte_fuori((string)$m['oggetto'])) ?>" placeholder="per esempio: Conferma l'iscrizione"></div>
           <label><input type="checkbox" name="optin" value="1"<?= $m['tag'] === 'optin' ? ' checked' : '' ?>> Email di conferma dell'iscrizione (il pulsante con il link di conferma)</label>
           <div><button class="btn btn-secondary btn-sm" type="submit">Salva</button></div></form></details></td>
-      <td data-etichetta="Stato"><span class="ndm-stato <?= (int)$m['attivo'] ? 'ndm-attivo' : 'ndm-spento' ?>"><span aria-hidden="true"><?= (int)$m['attivo'] ? '&#10003;' : '&#8211;' ?></span> <?= (int)$m['attivo'] ? 'Attivo' : 'Inattivo' ?></span></td>
+      <td data-etichetta="Stato"><span class="ndm-stato <?= (int)$m['attivo'] ? 'ndm-attivo' : 'ndm-spento' ?>"><span aria-hidden="true"><?= (int)$m['attivo'] ? '&#10003;' : '&#9675;' ?></span> <?= (int)$m['attivo'] ? 'Attivo' : 'Inattivo' ?></span></td>
       <td data-etichetta="Tipo"><?= $m['editor'] === 'html' ? 'Codice HTML' : 'Editor a blocchi' ?></td>
       <td data-etichetta="Aggiornato"><?= h(date('d/m/Y H:i', strtotime((string)$m['aggiornato']))) ?></td>
       <td data-etichetta="Azioni"><div class="ndm-azioni">
@@ -166,7 +167,7 @@ require_once __DIR__ . '/includes/admin-header.php';
 
 <div class="form-card" id="ndm-conferma">
   <h3>Email di conferma dell'iscrizione</h3>
-  <p class="hint" style="margin-top:0">L'email che parte quando qualcuno si iscrive e deve confermare l'indirizzo (doppio consenso). La predefinita si scrive a parti in <a href="newsletter.php?scheda=impostazioni">Impostazioni</a>, riquadro «Email di conferma». Puoi usare invece un tuo modello attivo con «Email di conferma dell'iscrizione» spuntato (in «Oggetto e uso»): nella galleria c'è «Conferma dell'iscrizione». I form con una loro email di conferma tengono la loro.</p>
+  <p class="hint" style="margin:0 0 .9rem">L'email che parte quando qualcuno si iscrive e deve confermare l'indirizzo (doppio consenso). La predefinita si scrive a parti in <a href="newsletter.php?scheda=impostazioni">Impostazioni</a>, riquadro «Email di conferma». Puoi usare invece un tuo modello attivo con «Email di conferma dell'iscrizione» spuntato (in «Oggetto e uso»): nella galleria c'è «Conferma dell'iscrizione». I form con una loro email di conferma tengono la loro.</p>
   <form method="post" class="nl-riga" style="gap:.5rem;align-items:flex-end"><?= csrf_field() ?><input type="hidden" name="azione" value="doi">
     <div class="form-group" style="margin:0;flex:1;min-width:min(100%,16rem)"><label for="ndm-doi">Email di conferma</label>
       <select id="ndm-doi" name="doi"><option value="0">Predefinita (le parti di Impostazioni)</option><?php foreach ($optin as $m): ?><option value="<?= (int)$m['id'] ?>"<?= $doi === (int)$m['id'] ? ' selected' : '' ?>><?= h(newsletter_4byte_fuori((string)$m['nome'])) ?></option><?php endforeach; ?></select></div>

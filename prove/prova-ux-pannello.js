@@ -27,7 +27,9 @@ const PIU = ['seo.php?scheda=motori', 'seo.php?scheda=copertura', 'seo.php?sched
   // 2.11.0: Crea una campagna, Duplica, le viste, il riepilogo con ogni sezione aperta (la campagna 1 deve esserci)
   'newsletter.php?crea=1', 'newsletter.php?duplica=1', 'newsletter.php?vista=bozze', 'newsletter-campagna.php?id=1', 'newsletter-campagna.php?id=1&apri=mittente',
   'newsletter-campagna.php?id=1&apri=destinatari', 'newsletter-campagna.php?id=1&apri=oggetto', 'newsletter-campagna.php?id=1&apri=design', 'newsletter-campagna.php?id=1&apri=impostazioni',
-  'newsletter-campagna.php?id=1&apri=prova'];
+  'newsletter-campagna.php?id=1&apri=prova',
+  // 2.12.0: Modelli (i tuoi, la galleria); la voce del menu c'è già
+  'newsletter-modelli.php?scheda=galleria'];
 
 // La misura dentro la pagina: tutto quello che serve sta qui, la pagina non carica niente.
 function misura() {

@@ -1688,6 +1688,144 @@ echo json_encode($o);
     }
   }
 
+  // === 34. (2.12.0) Editor delle email a blocchi, modelli, sezioni salvate. Il design arriva in JSON e passa dagli elenchi
+  // chiusi del server: niente HTML né codice nei blocchi, link solo https, mailto, tel e i quattro speciali (niente
+  // javascript:, data:, vbscript:, nemmeno in base64), colori solo #rrggbb (niente expression né url()), tipi e proprietà
+  // inventati via; JSON enorme o annidato rifiutato; modelli e sezioni che non esistono, non sincronizzate o di campagne già
+  // partite non si toccano; senza token, da un altro sito o dal redattore niente. Serve CMS_DIR.
+  {
+    const path = require('path'), { execFileSync } = require('child_process');
+    const DIR34 = process.env.CMS_DIR || '';
+    const PD = ADMIN + '/newsletter-design.php', PM = ADMIN + '/newsletter-modelli.php', PCm = ADMIN + '/newsletter-campagna.php';
+    const ORIG = { 'Origin': BASE.replace(/(https?:\/\/[^/]+).*/, '$1') };
+    if (!DIR34) ok('2.12.0: (senza CMS_DIR le prove dell\'editor delle email sono saltate)', true);
+    else {
+      const php = (f, ...a) => JSON.parse(execFileSync('php', [path.join(__dirname, '..', 'prove', f), DIR34, ...a.map(String)], { encoding: 'utf8', maxBuffer: 64 << 20 }).trim().split('\n').pop());
+      const q = (s) => php('campagne-cli.php', 'sql', s);
+      const uno = (s) => { const r = q(s); return r && r[0] ? Object.values(r[0])[0] : null; };
+      q("DELETE FROM {p}newsletter_campagne WHERE nome LIKE 'Sic34%'");
+      q("DELETE FROM {p}newsletter_modelli WHERE nome LIKE 'Sic34%' OR nome LIKE '%alert(34)%'");
+      q("DELETE FROM {p}newsletter_sezioni_salvate WHERE nome LIKE 'Sic34%'");
+      q("INSERT INTO {p}newsletter_iscritti (email, nome, stato, fonte, creato, aggiornato) VALUES ('sic1@sic34.it', 'Uno', 'attivo', 'manuale', NOW(), NOW())");
+      const I1 = +uno("SELECT id FROM {p}newsletter_iscritti WHERE email = 'sic1@sic34.it'");
+      const base = JSON.stringify({ sezioni: [{ id: 's1', salvata: 0, colonne: [[{ id: 'b1', t: 'titolo', testo: 'Sic34 originale' }]] }] });
+      const conSync = (id) => JSON.stringify({ sezioni: [{ id: 's1', salvata: id, colonne: [[{ id: 'b1', t: 'titolo', testo: 'Sic34 originale' }]] }] });
+      q("INSERT INTO {p}newsletter_sezioni_salvate (nome, json, sincronizzata, creato, aggiornato) VALUES ('Sic34 sync', '{}', 1, NOW(), NOW()), ('Sic34 copia', '{}', 0, NOW(), NOW())");
+      const SS = +uno("SELECT id FROM {p}newsletter_sezioni_salvate WHERE nome = 'Sic34 sync'"), SC = +uno("SELECT id FROM {p}newsletter_sezioni_salvate WHERE nome = 'Sic34 copia'");
+      q(`INSERT INTO {p}newsletter_campagne (nome, oggetto, corpo, liste, stato, editor, design, creato, aggiornato) VALUES ('Sic34 bozza', 'Sic34', '', '', 'bozza', 'blocchi', '${base}', NOW(), NOW()), ('Sic34 inviata', 'Sic34', '', '', 'inviata', 'blocchi', '${conSync(SS)}', NOW(), NOW())`);
+      const CB = +uno("SELECT id FROM {p}newsletter_campagne WHERE nome = 'Sic34 bozza'"), CI = +uno("SELECT id FROM {p}newsletter_campagne WHERE nome = 'Sic34 inviata'");
+      q(`INSERT INTO {p}newsletter_modelli (nome, editor, design, attivo, creato, aggiornato) VALUES ('Sic34 modello', 'blocchi', '${base}', 0, NOW(), NOW())`);
+      const MO = +uno("SELECT id FROM {p}newsletter_modelli WHERE nome = 'Sic34 modello'");
+      const des = (c) => uno(`SELECT design FROM {p}newsletter_campagne WHERE id = ${c}`) || '';
+      const contaMod = () => +uno("SELECT COUNT(*) FROM {p}newsletter_modelli");
+      const m0 = contaMod();
+      // Senza login
+      const anon = await browser.newContext();
+      const a1 = await anon.request.get(PD + '?campagna=' + CB, { maxRedirects: 0 });
+      const a2 = await anon.request.post(PD + '?campagna=' + CB, { form: { azione: 'salva', design: '{"sezioni":[]}' }, maxRedirects: 0 });
+      const a3 = await anon.request.get(PM, { maxRedirects: 0 });
+      const a4 = await anon.request.post(PM, { form: { azione: 'nuovo', nome: 'Sic34 anonimo' }, maxRedirects: 0 });
+      ok('2.12.0: senza login l\'editor e i Modelli non si aprono, niente salvato né creato', [a1, a3].every(r => r.status() !== 200) && des(CB) === base && contaMod() === m0, [a1.status(), a2.status(), a3.status(), a4.status()]);
+      await anon.close();
+      // Token e origine
+      const tk = await tokenDi(admin.p, PD + '?campagna=' + CB);
+      const s1 = await admin.ctx.request.post(PD + '?campagna=' + CB, { headers: ORIG, form: { azione: 'salva', design: '{"sezioni":[]}' }, maxRedirects: 0 });
+      const s2 = await admin.ctx.request.post(PD + '?campagna=' + CB, { headers: { 'Origin': 'https://evil.example' }, form: { _csrf: tk, azione: 'salva', design: '{"sezioni":[]}' }, maxRedirects: 0 });
+      const s3 = await admin.ctx.request.post(PM, { headers: ORIG, form: { azione: 'elimina', id: String(MO) }, maxRedirects: 0 });
+      const s4 = await admin.ctx.request.post(PD + '?campagna=' + CB, { headers: ORIG, form: { azione: 'modello', nome: 'Sic34 senza token', design: base }, maxRedirects: 0 });
+      ok('2.12.0: salva, elimina, salva come modello senza token o da un altro sito: 403 e niente fatto', [s1, s2, s3, s4].every(r => r.status() === 403) && des(CB) === base && contaMod() === m0, [s1.status(), s2.status(), s3.status(), s4.status()]);
+      // Un design cattivo in ogni punto
+      const cattivo = {
+        stile: { fondo: 'red;background:url(javascript:alert(34))', corpo: 'expression(alert(34))', link: '#fff" onmouseover="alert(34)', font: "arial;}</style><script>alert(34)</script>", larghezza: 99999, btn_raggio: '1;x:expression(1)' },
+        sezioni: [{ id: '"><script>', layout: '100;drop', fondo: 'url(//evil.example/x.png)', spazio: -50, salvata: '1 OR 1=1', onclick: 'alert(34)', colonne: [[
+          { id: 'x1', t: 'titolo', testo: '<script>alert(34)</script>Titolo', colore: '#12345g', livello: 'h1 onclick=alert(34)' },
+          { id: 'x2', t: 'testo', html: '<p onclick="alert(34)" style="background:url(javascript:alert(34))">Ciao<script>alert(34)</script><img src=x onerror=alert(34)><iframe src="//evil.example"></iframe><a href="javascript:alert(34)">a</a> <a href=" java&#x09;script:alert(34)">b</a> <a href="data:text/html;base64,PHNjcmlwdD5hbGVydCgzNCk8L3NjcmlwdD4=">c</a> <a href="vbscript:msgbox(34)">d</a> <a href="https://ok.example/">ok</a></p><style>*{x:expression(alert(34))}</style>' },
+          { id: 'x3', t: 'immagine', src: 'javascript:alert(34)', alt: '"><script>alert(34)</script>', link: 'data:text/html;base64,PHNjcmlwdD4=' },
+          { id: 'x4', t: 'immagine', src: 'data:image/svg+xml;base64,PHN2ZyBvbmxvYWQ9YWxlcnQoMzQpPg==', alt: 'svg' },
+          { id: 'x5', t: 'pulsante', testo: 'B64', link: '~b64~amF2YXNjcmlwdDphbGVydCgzNCk=' },
+          { id: 'x6', t: 'pulsante', testo: 'Vb', link: 'VBScript:msgbox(34)', fondo: 'expression(alert(34))' },
+          { id: 'x7', t: 'social', reti: [{ r: 'javascript', url: 'javascript:alert(34)' }, { r: 'facebook', url: 'javascript:alert(34)' }, { r: 'x', url: 'https://x.example/ok' }] },
+          { id: 'x8', t: 'video', url: 'javascript:alert(34)', src: 'https://evil.example/x.png" onerror="alert(34)' },
+          { id: 'x9', t: 'html', html: '<script>alert(34)</script>' },
+          { id: 'x10', t: 'piede', html: '<p><a href="{{ unsubscribe }}" onclick="alert(34)">Esci</a><svg onload=alert(34)></svg></p>', colore: 'black;behavior:url(x.htc)' },
+        ]] }],
+      };
+      const sv = await admin.ctx.request.post(PD + '?campagna=' + CB, { headers: ORIG, form: { _csrf: tk, azione: 'salva', design: JSON.stringify(cattivo) } });
+      const salvatoJ = des(CB);
+      const vieti = /script|javascript|vbscript|expression|onerror|onclick|onmouseover|onload|data:|behavior|evil\.example|<iframe|<svg|<style|url\(/i;
+      const d = JSON.parse(salvatoJ), st = d.stile, b = d.sezioni[0].colonne[0];
+      // Il titolo e il testo alternativo sono testo semplice: possono contenere "<script>" come parole (all'uscita si fa l'escape).
+      const senzaTesti = JSON.parse(salvatoJ); senzaTesti.sezioni[0].colonne[0].forEach(x => { if (x.id === 'x1') delete x.testo; if (x.id === 'x3') delete x.alt; });
+      ok('2.12.0: design cattivo salvato solo dopo la pulizia: nel database niente codice, eventi, schemi pericolosi, url() né expression', sv.status() === 200 && salvatoJ !== base && !vieti.test(JSON.stringify(senzaTesti)) && !/"t":"html"/.test(salvatoJ), JSON.stringify(senzaTesti).match(new RegExp('.{0,80}(' + vieti.source + ').{0,80}', 'i')));
+      ok('2.12.0: colori e caratteri fuori elenco tornano quelli di partenza; numeri dentro i limiti; il layout inventato torna a una colonna', st.fondo === '#f4f4f6' && st.corpo === '#ffffff' && st.link === '#6d28d9' && st.font === 'arial' && st.larghezza === 700 && st.btn_raggio === 8 && d.sezioni[0].layout === '100' && d.sezioni[0].fondo === '' && d.sezioni[0].spazio === 0 && d.sezioni[0].salvata === 0 && /^[a-z0-9]{1,16}$/.test(d.sezioni[0].id), { st, s: d.sezioni[0] });
+      ok('2.12.0: il tipo di blocco inventato («html») sparisce, la proprietà inventata (onclick) anche', b.length === 9 && !b.some(x => x.t === 'html') && !('onclick' in d.sezioni[0]), b.map(x => x.t));
+      const byId = Object.fromEntries(b.map(x => [x.id, x]));
+      ok('2.12.0: link: javascript:, data:, vbscript: e il base64 non passano; https sì; social e video senza schemi pericolosi', byId.x3.src === '' && byId.x3.link === '' && byId.x4.src === '' && byId.x5.link === '' && byId.x6.link === '' && byId.x7.reti.length === 2 && byId.x7.reti[0].url === '' && byId.x7.reti[1].url === 'https://x.example/ok' && byId.x8.url === '' && byId.x8.src === '', [byId.x5.link, byId.x7.reti, byId.x8]);
+      ok('2.12.0: testo con la formattazione: solo i tag dell\'elenco, link https tenuti, gli altri senza href', /<a href="https:\/\/ok\.example\/">ok<\/a>/.test(byId.x2.html) && (byId.x2.html.match(/<a>/g) || []).length === 4 && !/<img|<iframe|<style|style=|onclick/.test(byId.x2.html) && /<a href="\{\{ unsubscribe \}\}">Esci<\/a>/.test(byId.x10.html), byId.x2.html);
+      const em = php('editor-email-cli.php', 'html', CB, I1).html;
+      ok('2.12.0: l\'email di quel design: niente script, eventi, schemi pericolosi; il titolo con <script> esce come testo', !/<script|javascript:|vbscript:|onerror=|onclick=|onmouseover=|expression\(/i.test(em) && /&lt;script&gt;alert\(34\)&lt;\/script&gt;Titolo/.test(em), em.slice(0, 200));
+      // JSON enorme, annidato, troppe sezioni e blocchi
+      const big = JSON.stringify({ sezioni: [{ colonne: [[{ t: 'testo', html: '<p>' + 'x'.repeat(450000) + '</p>' }]] }] });
+      const e1 = await (await admin.ctx.request.post(PD + '?campagna=' + CB, { headers: ORIG, form: { _csrf: tk, azione: 'salva', design: big } })).json();
+      let nido = '1'; for (let i = 0; i < 300; i++) nido = '[' + nido + ']';
+      const e2 = await (await admin.ctx.request.post(PD + '?campagna=' + CB, { headers: ORIG, form: { _csrf: tk, azione: 'salva', design: '{"sezioni":' + nido + '}' } })).json();
+      const e3 = await (await admin.ctx.request.post(PD + '?campagna=' + CB, { headers: ORIG, form: { _csrf: tk, azione: 'salva', design: '"solo una stringa"' } })).json();
+      ok('2.12.0: JSON enorme (oltre 400 KB), annidato 300 volte o non un oggetto: rifiutato con un messaggio, il design resta', !!e1.errore && !!e2.errore && !!e3.errore && des(CB) === salvatoJ, [e1.errore, e2.errore, e3.errore]);
+      const tante = { sezioni: Array.from({ length: 200 }, () => ({ colonne: [Array.from({ length: 30 }, () => ({ t: 'spaziatore' }))] })) };
+      await admin.ctx.request.post(PD + '?campagna=' + CB, { headers: ORIG, form: { _csrf: tk, azione: 'salva', design: JSON.stringify(tante) } });
+      const dt = JSON.parse(des(CB));
+      ok('2.12.0: 200 sezioni da 30 blocchi: ne restano al massimo 60 e 300 blocchi in tutto', dt.sezioni.length <= 60 && dt.sezioni.flatMap(s => s.colonne.flat()).length <= 300, [dt.sezioni.length, dt.sezioni.flatMap(s => s.colonne.flat()).length]);
+      // Campagne partite, modelli e sezioni che non esistono o non sono sincronizzate
+      const ci0 = des(CI);
+      const tki = await tokenDi(admin.p, PD + '?campagna=' + CI);
+      const r1 = await (await admin.ctx.request.post(PD + '?campagna=' + CI, { headers: ORIG, form: { _csrf: tki, azione: 'salva', design: base } })).json();
+      ok('2.12.0: una campagna già inviata non cambia design dall\'editor', !!r1.errore && des(CI) === ci0, r1);
+      const r2 = await admin.ctx.request.post(PD + '?modello=999999', { headers: ORIG, form: { _csrf: tk, azione: 'salva', design: base }, maxRedirects: 0 });
+      ok('2.12.0: un modello che non esiste: nessun salvataggio (rimanda all\'elenco)', r2.status() === 302);
+      const sez = JSON.stringify({ colonne: [[{ t: 'titolo', testo: 'Sic34 cambiata' }]] });
+      const r3 = await (await admin.ctx.request.post(PD + '?campagna=' + CB, { headers: ORIG, form: { _csrf: tk, azione: 'sezione_aggiorna', id: String(SC), sezione: sez } })).json();
+      const r4 = await (await admin.ctx.request.post(PD + '?campagna=' + CB, { headers: ORIG, form: { _csrf: tk, azione: 'sezione_aggiorna', id: '999999', sezione: sez } })).json();
+      const r5 = await (await admin.ctx.request.post(PD + '?campagna=' + CB, { headers: ORIG, form: { _csrf: tk, azione: 'sezione_aggiorna', id: String(SS) + ' OR 1=1', sezione: sez } })).json();
+      ok('2.12.0: «Aggiorna in tutte le email» su una sezione non sincronizzata o inesistente: rifiutato', !!r3.errore && !!r4.errore && uno(`SELECT json FROM {p}newsletter_sezioni_salvate WHERE id = ${SC}`) === '{}', [r3.errore, r4.errore, r5.errore || r5.messaggio]);
+      ok('2.12.0: la campagna inviata che usa la sezione sincronizzata non cambia mai', des(CI) === ci0);
+      // Modelli: usa un modello inattivo o inesistente, galleria con un nome storto, email di conferma con un modello non adatto
+      const tkc = await tokenDi(admin.p, PCm + '?id=' + CB);
+      const dPrima = des(CB);
+      await admin.ctx.request.post(PCm + '?id=' + CB, { headers: ORIG, form: { _csrf: tkc, azione: 'usa_modello', modello_id: String(MO) }, maxRedirects: 0 });
+      await admin.ctx.request.post(PCm + '?id=' + CB, { headers: ORIG, form: { _csrf: tkc, azione: 'usa_modello', modello_id: '999999' }, maxRedirects: 0 });
+      ok('2.12.0: un modello inattivo o inesistente non entra nella campagna', des(CB) === dPrima);
+      const tkm = await tokenDi(admin.p, PM);
+      await admin.ctx.request.post(PM, { headers: ORIG, form: { _csrf: tkm, azione: 'galleria', slug: '../../includes/config' }, maxRedirects: 0 });
+      await admin.ctx.request.post(PM, { headers: ORIG, form: { _csrf: tkm, azione: 'galleria', slug: '1-benvenuto', campagna: String(CI), in_campagna: '1' }, maxRedirects: 0 });
+      await admin.ctx.request.post(PM, { headers: ORIG, form: { _csrf: tkm, azione: 'doi', doi: String(MO) }, maxRedirects: 0 });
+      ok('2.12.0: galleria con un nome storto: niente; galleria in una campagna inviata: niente; email di conferma con un modello senza il tag: rifiutata', contaMod() === m0 && des(CI) === ci0 && (uno("SELECT setting_value FROM {p}settings WHERE setting_key = 'newsletter_doi_modello'") || '0') !== String(MO));
+      // Nomi con codice
+      await admin.ctx.request.post(PD + '?campagna=' + CB, { headers: ORIG, form: { _csrf: tk, azione: 'modello', nome: 'Sic34 <script>alert(34)</script><img src=x onerror=alert(34)>', design: base, attivo: '1' } });
+      await admin.p.goto(PM, { waitUntil: 'networkidle' });
+      const hm = await admin.p.content();
+      ok('2.12.0: nome del modello con codice: esce come testo nell\'elenco dei Modelli', !/<script>alert\(34\)|<img src=x onerror=alert\(34\)/.test(hm) && /&lt;script&gt;alert\(34\)/.test(hm));
+      // Redattore
+      if (red.dentro) {
+        const tr = await tokenDi(red.p, ADMIN + '/media.php');
+        const prima = des(CB) + '|' + contaMod() + '|' + uno("SELECT COUNT(*) FROM {p}newsletter_sezioni_salvate");
+        const rr = [];
+        rr.push(await red.ctx.request.get(PD + '?campagna=' + CB, { maxRedirects: 0 }));
+        rr.push(await red.ctx.request.get(PM, { maxRedirects: 0 }));
+        for (const f of [{ azione: 'salva', design: base }, { azione: 'modello', nome: 'Sic34 dal redattore', design: base }, { azione: 'sezione_salva', nome: 'Sic34 dal redattore', sezione: sez }, { azione: 'sezione_aggiorna', id: String(SS), sezione: sez }, { azione: 'sezione_elimina', id: String(SC) }])
+          rr.push(await red.ctx.request.post(PD + '?campagna=' + CB, { headers: ORIG, form: { _csrf: tr, ...f }, maxRedirects: 0 }));
+        for (const f of [{ azione: 'nuovo', nome: 'Sic34 dal redattore' }, { azione: 'elimina', id: String(MO) }, { azione: 'attiva', id: String(MO), si: '1' }, { azione: 'galleria', slug: '1-benvenuto' }, { azione: 'doi', doi: '0' }])
+          rr.push(await red.ctx.request.post(PM, { headers: ORIG, form: { _csrf: tr, ...f }, maxRedirects: 0 }));
+        ok('2.12.0: il redattore non apre l\'editor delle email né i Modelli e non fa nessuna delle loro azioni',
+          rr.every(x => [302, 403].includes(x.status())) && des(CB) + '|' + contaMod() + '|' + uno("SELECT COUNT(*) FROM {p}newsletter_sezioni_salvate") === prima && +uno(`SELECT attivo FROM {p}newsletter_modelli WHERE id = ${MO}`) === 0, rr.map(x => x.status()));
+      }
+      // Pulizia
+      q("DELETE FROM {p}newsletter_campagne WHERE nome LIKE 'Sic34%'");
+      q("DELETE FROM {p}newsletter_modelli WHERE nome LIKE 'Sic34%'");
+      q("DELETE FROM {p}newsletter_sezioni_salvate WHERE nome LIKE 'Sic34%'");
+      q("DELETE FROM {p}newsletter_iscritti WHERE email = 'sic1@sic34.it'");
+    }
+  }
+
   // === pulizia: elimina il redattore di prova
   {
     await admin.p.goto(ADMIN + '/utenti.php', { waitUntil: 'networkidle' });

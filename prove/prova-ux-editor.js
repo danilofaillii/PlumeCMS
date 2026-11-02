@@ -227,6 +227,43 @@ const nomiMancanti = (p, radice) => p.evaluate((R) => [...document.querySelector
     await p.goto(B + '/admin/', { waitUntil: 'networkidle' });
   } else ok('editor, widget degli addon vuoti: saltato (manca la pagina /addon-tutti/, vedi in cima)', true);
 
+  // 5c. (2.12.0) L'editor delle email, su un modello "UX prova" creato qui e tolto alla fine, in Cosmo e in Aria: contrasto
+  // del pannello, fuoco visibile, schede ARIA, ogni campo di ogni blocco con un nome, 390 px senza scorrimento di lato.
+  await p.goto(B + '/admin/newsletter-modelli.php', { waitUntil: 'networkidle' });
+  await p.fill('#ndm-nuovo', 'UX prova editor email');
+  await Promise.all([p.waitForNavigation(), p.click('form:has(#ndm-nuovo) button[type=submit]')]);
+  const urlEmail = p.url();
+  ok('editor delle email: «Crea un modello» apre l\'editor', /newsletter-design\.php\?modello=\d+/.test(urlEmail), urlEmail);
+  for (const asp of ['cosmo', 'aria']) {
+    await p.goto(B + '/admin/account.php', { waitUntil: 'networkidle' });
+    await p.click(`label.asp-voce:has(input[value=${asp}])`);
+    await Promise.all([p.waitForNavigation(), p.click('button:has-text("Usa questo aspetto")')]);
+    await p.goto(urlEmail, { waitUntil: 'networkidle' }); await p.waitForTimeout(600);
+    let c = await contrasto(p, '.nd-cornice, option, select, [aria-hidden=true], iframe, .ql-editor');
+    ok(`${asp}: editor delle email, contrasto di ogni testo del pannello (${c.misurati})`, c.male.length === 0, c.male);
+    await p.focus('#nd-tavolozza-blocchi .ed-widget-voce'); let fe = await fuoco(p);
+    ok(`${asp}: editor delle email, fuoco visibile sulla prima voce della tavolozza`, fe.visibile, fe);
+    for (const sel of ['[data-nd-misura=tel]', '#nd-anteprima', '#nd-salva', '#nd-scheda-stile']) { await p.focus(sel); fe = await fuoco(p); ok(`${asp}: editor delle email, fuoco visibile su ${sel}`, fe.visibile, fe); }
+    await p.click('#nd-scheda-stile'); await p.waitForTimeout(200);
+    c = await contrasto(p, '.nd-cornice, option, select, [aria-hidden=true], iframe');
+    ok(`${asp}: editor delle email, scheda Stile, contrasto`, c.male.length === 0, c.male);
+    ok(`${asp}: editor delle email, scheda Stile: ogni campo ha un nome`, (await nomiMancanti(p, '#nd-p-stile')).length === 0, await nomiMancanti(p, '#nd-p-stile'));
+  }
+  ok('editor delle email: tablist con quattro schede e i loro pannelli', await p.locator('.ed-schede-pannello[role=tablist] [role=tab]').count() === 4 && await p.locator('[role=tabpanel][aria-labelledby=nd-scheda-salvati]').count() === 1);
+  for (const t of ['titolo', 'testo', 'immagine', 'pulsante', 'divisore', 'spaziatore', 'social', 'video', 'piede']) {
+    await p.click('#nd-scheda-contenuti'); await p.focus(`#nd-tavolozza-blocchi [data-blocco=${t}]`); await p.keyboard.press('Enter'); await p.waitForTimeout(250);
+    const m = await nomiMancanti(p, '#nd-p-modifica');
+    ok(`editor delle email, blocco ${t} aggiunto con Invio: ogni campo ha un nome`, /Blocco:/.test(await p.locator('#nd-modifica-nome').innerText()) && m.length === 0, m);
+  }
+  const ce = await contrasto(p, '.nd-cornice, option, select, [aria-hidden=true], iframe, .ql-editor');
+  ok('editor delle email, scheda Modifica aperta: contrasto', ce.male.length === 0, ce.male);
+  await p.setViewportSize({ width: 390, height: 844 }); await p.waitForTimeout(300);
+  ok('editor delle email a 390 px: niente scorrimento di lato, la tela in vista telefono', await p.evaluate(() => document.documentElement.scrollWidth <= 390) && await p.locator('#nd-tela').evaluate(e => e.offsetWidth <= 390));
+  await p.setViewportSize({ width: 1280, height: 860 });
+  await p.goto(B + '/admin/newsletter-modelli.php', { waitUntil: 'networkidle' });
+  await Promise.all([p.waitForNavigation(), p.click('.ndm-tabella tr:has(b:text-is("UX prova editor email")) button:has-text("Elimina")')]);
+  ok('editor delle email: il modello di prova è stato tolto', await p.locator('.ndm-tabella b:text-is("UX prova editor email")').count() === 0);
+
   // 6. Addon: agenda e vetrina
   await p.goto(B + '/admin/addon-pagina.php?a=prenotazioni&p=agenda', { waitUntil: 'networkidle' });
   const barra = await p.locator('.pa-barra').innerText();

@@ -314,9 +314,9 @@
         x.addEventListener('input', function () { su(tipo === 'm' ? (x.value === '' ? '' : +x.value) : x.value); });
         box.appendChild(lab); box.appendChild(x);
         if (tipo === 'l') {
-          if (window.pnLink) window.pnLink.campo(x, { assoluto: true });
+          if (window.pnLink) window.pnLink.campo(x, { modo: 'assoluto', classe: 'ed-b ed-b-piccolo' });
           var sp = el('div', 'nd-speciali'); sp.appendChild(el('span', 'ed-aiuto', 'Link speciali: '));
-          Object.keys(NOMI_SPECIALI).forEach(function (k) { var b = el('button', 'ed-b ed-b-piccolo', NOMI_SPECIALI[k].replace('il link ', '')); b.type = 'button'; b.title = 'Usa ' + NOMI_SPECIALI[k] + ' (' + k + ')'; b.addEventListener('click', function () { x.value = k; su(k); }); sp.appendChild(b); });
+          Object.keys(NOMI_SPECIALI).forEach(function (k) { if (D.campagna && k === "{{ doubleoptin }}") return; var b = el('button', 'ed-b ed-b-piccolo', NOMI_SPECIALI[k].replace('il link ', '')); b.type = 'button'; b.title = 'Usa ' + NOMI_SPECIALI[k] + ' (' + k + ')'; b.addEventListener('click', function () { x.value = k; su(k); }); sp.appendChild(b); });
           box.appendChild(sp);
         }
         if (tipo === 'i') {

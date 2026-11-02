@@ -74,7 +74,7 @@ function nd_spec_blocchi(): array {
         'pulsante' => ['Pulsante', '▭', ['testo' => ['t', 'Testo del pulsante', 'Scopri di più', 100], 'link' => ['l', 'Link', ''], 'allinea' => $cen,
             'fondo' => ['c', 'Sfondo (vuoto: quello dello stile)', ''], 'colore' => ['c', 'Testo (vuoto: quello dello stile)', ''],
             'raggio' => ['m', 'Angoli (px, vuoto: quelli dello stile)', '', [0, 30]], 'pieno' => ['b', 'Largo quanto la colonna', false], 'spazio' => $spa]],
-        'divisore' => ['Divisore', '―', ['colore' => ['c', 'Colore', '#e5e7eb'], 'spessore' => ['n', 'Spessore (px)', 1, [1, 8]],
+        'divisore' => ['Divisore', '⎯', ['colore' => ['c', 'Colore', '#e5e7eb'], 'spessore' => ['n', 'Spessore (px)', 1, [1, 8]],
             'stile' => ['s', 'Linea', 'solid', ['solid' => 'Continua', 'dashed' => 'A trattini', 'dotted' => 'A puntini']],
             'larghezza' => ['n', 'Larghezza (%)', 100, [10, 100]], 'spazio' => $spa]],
         'spaziatore' => ['Spaziatore', '↕', ['altezza' => ['n', 'Altezza (px)', 24, [4, 160]]]],
