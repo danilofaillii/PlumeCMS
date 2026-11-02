@@ -116,6 +116,8 @@ case 'semina_vecchie':
             ->execute([newsletter_4byte_dentro($o), $a, $c, $pt, $pl, (string)$lv, $ora, $ora]);
         $ids[] = (int)db()->lastInsertId();
     }
+    // Su un sito dalla 2.11.0 in su la colonna nome c'è e il pannello la riempie sempre: il seme fa lo stesso (come la migrazione).
+    try { db()->exec('UPDATE ' . $t('newsletter_campagne') . " SET nome = oggetto WHERE (nome = '' OR nome IS NULL) AND oggetto LIKE 'CR Vecchia%'"); } catch (Throwable $e) {}
     $out = ['campagne' => $ids, 'lista' => $lv];
     break;
 case 'impronte':

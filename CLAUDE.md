@@ -106,7 +106,7 @@ Sono gli unici in `cms/docs/`, nello zip, nel sito di plumeCMS e nella pagina Do
 - **Pacchetto di aggiornamento** per un'installazione esistente:
   `python3 tools/cms-pacchetto.py --aggiornamento`. Si carica dal pannello,
   Impostazioni, Aggiornamenti.
-- **Versione**: `cms/VERSIONE` (oggi 2.11.0; sempre tre numeri: "beta" va nel CHANGELOG, mai nel nome dello zip, se no la serie "ultima" del Download non lo riconosce) e una voce in `cms/CHANGELOG.md` a ogni
+- **Versione**: `cms/VERSIONE` (oggi 2.12.0; sempre tre numeri: "beta" va nel CHANGELOG, mai nel nome dello zip, se no la serie "ultima" del Download non lo riconosce) e una voce in `cms/CHANGELOG.md` a ogni
   zip con contenuto diverso. Mai cambiare il contenuto di una versione già data.
 - **Prove** prima di dire finito:
   - `php -n -d short_open_tag=1 -l` su ogni file PHP toccato, `node --check` sui js;
@@ -144,6 +144,15 @@ Le decisioni complete, con data e perché, stanno nel second brain, `plumecms/de
 - **Nome: plumeCMS** (26 ottobre 2026).
 
 ## Stato al 31 ottobre 2026
+
+Fatto: plumeCMS 2.12.0 (2 novembre): fase 5 del piano Brevo (agente, ramo `fase5-editor-email`): editor delle email a blocchi
+(`admin/newsletter-design.php`, `assets/newsletter-design.js|css`, `includes/newsletter-design.php` da JSON a HTML per la posta), modelli
+(`admin/newsletter-modelli.php`, galleria in `includes/newsletter-modelli/*.json`), sezioni salvate e sincronizzate, icone dei social PNG in
+`sito/assets/email/` (da `tools/icone-email.js`). Prove: install 37/37 radice e cartella, editor email 107/107, campagne 100/100 radice e
+cartella, aggiornamento 2.11.0 -> 2.12.0 13/13 con 20 foto uguali, campagne vecchie al byte 15/15 (il seme `semina_vecchie` ora mette
+nome = oggetto, come il pannello dalla 2.11.0), attacchi 353/353 (gruppo 34), pacchetto unico su un sito 2.11.0 13/13.
+**Zip di aggiornamento 2088 KB, sopra i 2 MB predefiniti di PHP**: decisione chiesta a Danilo (requisito 8 MB o due file). Le prove di
+aggiornamento vogliono il server con `-d upload_max_filesize=64M` (`PHPOPT` in `$S/addon-nuovo.sh`). PDF 9890 KB.
 
 Fatto: plumeCMS 2.11.0 (2 novembre): fase 4 del piano Brevo (agente, ramo `fase4-campagne-brevo`): campagne a riepilogo
 (`includes/newsletter-campagne.php`, `admin/newsletter-campagna.php` riscritta), elenco con viste e azioni, versione web
