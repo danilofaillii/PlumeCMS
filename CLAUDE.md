@@ -106,7 +106,7 @@ Sono gli unici in `cms/docs/`, nello zip, nel sito di plumeCMS e nella pagina Do
 - **Pacchetto di aggiornamento** per un'installazione esistente:
   `python3 tools/cms-pacchetto.py --aggiornamento`. Si carica dal pannello,
   Impostazioni, Aggiornamenti.
-- **Versione**: `cms/VERSIONE` (oggi 2.16.1; sempre tre numeri: "beta" va nel CHANGELOG, mai nel nome dello zip, se no la serie "ultima" del Download non lo riconosce) e una voce in `cms/CHANGELOG.md` a ogni
+- **Versione**: `cms/VERSIONE` (oggi 2.17.0; sempre tre numeri: "beta" va nel CHANGELOG, mai nel nome dello zip, se no la serie "ultima" del Download non lo riconosce) e una voce in `cms/CHANGELOG.md` a ogni
   zip con contenuto diverso. Mai cambiare il contenuto di una versione già data.
 - **Prove** prima di dire finito:
   - `php -n -d short_open_tag=1 -l` su ogni file PHP toccato, `node --check` sui js;
@@ -129,7 +129,7 @@ Sono gli unici in `cms/docs/`, nello zip, nel sito di plumeCMS e nella pagina Do
   la foto è una schermata in una finestra di vetro, in bianco e nero con il velo ciano-viola (`.finestra`); riquadri di vetro con onda e
   barre "Leggero", "Meno peso", "Più tempo" (`.chip`). Testo d'esempio quello del sito: "Il tuo sito, leggero come una piuma."
   Cambia solo la disposizione; con gli altri temi i colori seguono il tema. Proposte del 2 novembre: 15 tavole
-  (`https://claude.ai/artifact/D72dbZ333x6ctQLqUk9Uzt`), in attesa della scelta di Danilo.
+  (`https://claude.ai/artifact/D72dbZ333x6ctQLqUk9Uzt`): Danilo ha scelto tutte e 15, fatte nella 2.17.0.
 - Niente librerie esterne nel CMS (SortableJS e Quill sono serviti in casa).
 - Niente credenziali nel repository né in chat.
 - Italiano ovunque, niente trattini lunghi, niente caratteri a 4 byte nei file
@@ -154,6 +154,18 @@ Le decisioni complete, con data e perché, stanno nel second brain, `plumecms/de
 - **Nome: plumeCMS** (26 ottobre 2026).
 
 ## Stato al 31 ottobre 2026
+
+Fatto: plumeCMS 2.17.0 (2 novembre): quindici aperture nuove, ventisei in tutto (richiesta di Danilo, tutte e 15 dalle tavole approvate;
+agente, ramo `aperture-15`): `includes/editor-hero-c.php|d.php`, `sito/assets/hero-c.css|d.css`, `hero-c.js` (solo video e prima e dopo,
+caricato con il `'segno'` di `editor_asset_pagina()`), campi in più con `'condizione'`, tendina con `'accetta'`, video nei Media
+(`media_carica_video()`, `uploads/video/AAAA/MM/`, campo `video` dell'editor, `editor_video_locale()`). Ritocchi chiesti da Danilo: Orizzonte
+più visibile, Trittico "Installazione 5 min" (campi Numero grande); Faro più luminoso (io). Corretto da me: il Titolo traforato scriveva la
+foto in `url()` senza la cartella (`editor_hero_con_cartella()`). Gruppo di attacchi 39. Prove: install 38/38 radice e cartella, aperture
+364/364 con e senza foto e in cartella, campi nuovi 46/46 (il video va in `uploads/video/.../prova.mp4`, come dal pannello, e `VIDEO=` a
+`pagina-hero.php`), pulsanti 1570/1570 senza tema, Cosmo e Aria (su un sito col kit: le pagine puntano a `/servizi/`), aggiornamento 2.16.1 ->
+2.17.0 13/13 con 20 foto del sito e 22 delle undici aperture identiche, attacchi 422/422, addon 70/70, pacchetto unico 13/13. Foglio delle 26
+in `sito-plumecms/foglio-aperture.py` (tre colonne). Zip 2218 KB, PDF 10910 KB. Aperto: Aggiornamenti a 768 px scorre di lato con un
+pacchetto applicato (da vedere se c'era già).
 
 Fatto: plumeCMS 2.16.1 (2 novembre): limite di caricamento di almeno 8 MB fra i requisiti (scelta A di Danilo): avviso nell'installatore
 (`inst_limite_caricamento()`, non blocca), riga NO in Aggiornamenti (`agg_limite_caricamento()` in `agg_controlli()`), riga in Controlla il
