@@ -2708,6 +2708,9 @@ prima il giorno dopo, poi una ogni 7 giorni, alle 8.
    precisa del giorno**, alle 08:00. Sulla tela ogni blocco dice "Modello: Ebook 05".
 4. Stato **Attiva** e **Salva**. Per correggere un'email da adesso in poi basta correggere il suo modello.
 
+Con "alle 08:00" l'email parte appena arriva il suo turno fra le 8 e le 9: dopo un'attesa di 7 giorni partita da un'email delle
+8:03, la successiva esce sette giorni dopo, alle 8:05 (il controllo gira ogni 5 minuti). Una ogni 7 giorni, non una ogni 8.
+
 ![Il passo Email che richiama il modello Ebook 05](immagini/manuale-uso/19p-modello.jpg)
 
 Nella figura: (1) l'**Oggetto** vuoto, con scritto "dal modello: ..." (vale quello del modello), (2) **Da un modello**, (3)

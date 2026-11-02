@@ -5279,3 +5279,19 @@ avviso, non un rifiuto). Restano:
   dimensioni (200 MB per file, 600 MB in tutto). Non si tocca da solo: cambiare il motore dei pacchetti, anche in un commento,
   costringe `tools/consegna.py` a dare due pacchetti (19.8); va sistemato insieme alla prossima modifica vera del motore;
 - l'evento `upload_rifiutato` del registro della sicurezza (`includes/sicurezza.php:213`) esiste ma nessuno lo scrive.
+
+
+## Aggiunte della 2.18.0 fuori dal passo Email
+
+- **Orario delle email** (`nl_email_quando()`, `includes/newsletter-flussi.php`): se il turno arriva fra l'ora scelta e l'ora dopo,
+  ritorna `time()` e l'email parte al giro dopo (prima andava al giorno seguente: "attesa 7 giorni, alle 8" = 8 giorni).
+- **Menu del pannello** (`admin/assets/css/admin.css`, blocco 2.18.0 in fondo): solo variabili di `aspetti.css` (`--sidebar-testo`,
+  `--logo-accento`, `--sidebar-attivo`, `--sidebar-su-attivo`, `--sidebar-bordo`, `--sidebar-hover`); voci principali peso 600,
+  icone in `--logo-accento`, `.nav-gruppo[open] > summary` con riga d'accento, `.nav-sotto` con la linea a sinistra e le
+  sotto-voci in `--sidebar-testo`, la sotto-voce attiva piena.
+- **Hero tenuta nei pacchetti del sito** (`sito_importa_pagina()`, `includes/sito.php`): con `tieni_apertura` nel JSON della pagina,
+  se la pagina esiste, ha una versione con autore `pacchetto` (`sito_pagina_da_pacchetto()`) e la sua prima sezione contiene un
+  widget `hero` (`sito_sezione_con_apertura()`), la prima sezione resta quella del sito. Il resoconto aggiunge "l'apertura resta
+  quella del sito". `sito-plumecms/costruisci.py` mette `tieni_apertura` sulla home; `--senza-home` la lascia fuori dal pacchetto
+  (per un sito ancora sotto la 2.18.0, dove il pacchetto lo applica il motore vecchio: `sito.php` è già caricato da
+  `aggiornamenti.php` prima che i file nuovi siano scritti). Prova: `$S/hh.sh` con `prove/home-hero-cli.php`.

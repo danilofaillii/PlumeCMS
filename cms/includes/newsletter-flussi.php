@@ -927,6 +927,9 @@ function nl_email_quando(array $d, int $iscritto): int {
         if (function_exists('nl_orario_ore')) $h = nl_orario_ore([$iscritto])[$iscritto] ?? $h;
     }
     $t = strtotime(date('Y-m-d') . sprintf(' %02d:00:00', $h));
+    // 2.18.0: se il turno arriva dentro l'ora scelta (per esempio alle 8:03, dopo un'attesa di 7 giorni partita da un'email delle
+    // 8:03) l'email parte adesso. Prima slittava al giorno dopo, e "attesa 7 giorni, alle 8" mandava un'email ogni 8 giorni.
+    if ($t <= time() && time() < $t + 3600) return time();
     return $t > time() ? $t : $t + 86400;
 }
 

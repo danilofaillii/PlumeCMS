@@ -2,6 +2,25 @@
 
 Il prodotto si chiama **plumeCMS** (nome scelto il 26 ottobre 2026; prima, per poche ore, "CarbonaraCMS", e ancora prima il provvisorio "Officina": gli zip vecchi si chiamavano `officina-*` e `carbonaracms-*`).
 
+## 2.18.0 (2 novembre 2026) - Le email delle automazioni richiamano i modelli
+
+- **Automazioni, passo Email "Da un modello"**: l'email richiama il modello e lo legge ogni volta che parte. Correggi il modello
+  in Modelli e da quel momento le email escono corrette (richiesta di Danilo: una sequenza di email scritta e corretta una volta
+  sola). Oggetto e testo di anteprima vuoti nel passo valgono quelli del modello; scritti nel passo, vincono. Sulla tela il
+  blocco dice "Modello: ...", nel pannello ci sono **Apri il modello** e **Stacca dal modello** (copia il contenuto di adesso
+  e rende l'email indipendente, come nella 2.17.1).
+- **Modello che non c'è più**: l'email non parte, la persona si ferma su quel passo, il registro lo dice e la dashboard lo
+  segnala con il link all'automazione. Un modello inattivo si manda lo stesso.
+- **Modelli**: colonna "Usato in" con le automazioni; conferme che le elencano prima di eliminare o rendere inattivo un
+  modello; testo di anteprima; modelli in codice HTML creati e modificati dal pannello.
+- **Email "a un'ora precisa"**: se il turno arriva dentro l'ora scelta parte subito. Prima slittava al giorno dopo, e "attesa 7
+  giorni, alle 8" mandava un'email ogni 8 giorni.
+- **Menu del pannello** più leggibile in tutti e quattro gli aspetti: voci piene, icone nel colore d'accento, gruppo aperto
+  segnato, sotto-voci nel colore del testo e pagina attiva piena (richiesta di Danilo: "fiacchi e poco identificabili").
+- **Pacchetti del sito**: con `tieni_apertura` una pagina già scritta da un pacchetto tiene la sua prima sezione se è un'Apertura
+  (regola di Danilo: a ogni aggiornamento la hero della home resta com'è).
+- Le email delle automazioni già salvate (anche quelle copiate da un modello con la 2.17.1) restano identiche.
+
 ## 2.17.1 (2 novembre 2026) - Le email delle automazioni dai modelli
 
 - **Automazioni, passo Email**: il Contenuto ha una terza scelta, **Da un modello**, con tutti i modelli di Newsletter e form >
