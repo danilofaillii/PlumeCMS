@@ -244,12 +244,8 @@ const href = (html, re) => { const m = html.match(new RegExp('href="([^"]*' + re
   // a1 apre l'email (il pixel)
   const pixel = (m.find(x => x.dest === 'a1@cr-prova.it').html.match(/<img src="([^"]*api\/nl\.php\?a=a[^"]*)"/) || [])[1].replace(/&amp;/g, '&');
   const rpx = await ctx.request.get(pixel);
-  if (!/image\/gif/.test(rpx.headers()['content-type'] || '')) {
-    // Difetto di prima della 2.11.0 (nl_url_evento, includes/newsletter-flussi.php): con il sito in una cartella il pixel ha la
-    // cartella due volte e non si apre. Non è di questa prova: l'apertura si segna dal database, e si dice.
-    console.log('NOTA: il pixel di apertura non si apre (' + rpx.status() + ', ' + pixel.replace(/\?.*/, '') + '): apertura segnata dal database');
-    q(`INSERT INTO {p}newsletter_eventi (campagna_id, flusso_id, passo, iscritto_id, tipo, url, creato) VALUES (${c2}, 0, 0, ${C.a1}, 'apertura', '', NOW())`);
-  }
+  // 2.11.0: anche con il sito in una cartella il pixel si apre (prima la cartella era due volte nell'indirizzo).
+  ok('il pixel di apertura si apre (anche in cartella)', /image\/gif/.test(rpx.headers()['content-type'] || '') && !/\/([^/]+)\/\1\/api\/nl\.php/.test(pixel), pixel.replace(/\?.*/, ''));
   ok('a1 apre la copia (pixel)', num(`SELECT COUNT(*) FROM {p}newsletter_eventi WHERE campagna_id = ${c2} AND tipo = 'apertura' AND iscritto_id = ${C.a1}`) === 1);
 
   // ===== Rimanda ai non aperti, una volta sola
