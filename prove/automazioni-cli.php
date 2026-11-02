@@ -19,6 +19,8 @@
  *   numeri <flusso>               nl_aut_numeri()
  *   vecchi_semina                 (2.14.0) tre flussi "AU Vecchio" con sei contatti a metà; stampa gli id
  *   impronte                      sha256 di oggetto e HTML di ogni email dei flussi "AU Vecchio" per ogni loro contatto
+ *   modello_crea <nome> <blocchi|html> <testo> <oggetto> [anteprima]   (2.18.0) un modello attivo con quel testo; stampa l'id
+ *   modello_testo <id> <testo> [oggetto]   (2.18.0) cambia il testo (e l'oggetto) di un modello
  */
 [$dir, $cmd] = array_pad(array_slice($argv, 1, 2), 2, '');
 $arg = array_slice($argv, 3);
@@ -70,6 +72,7 @@ case 'pulisci':
     foreach ($au() as $f) newsletter_flusso_elimina((int)$f);
     db()->exec('DELETE FROM ' . $t('newsletter_liste') . " WHERE nome LIKE 'AU %'");
     if (function_exists('newsletter_segmenti')) db()->exec('DELETE FROM ' . $t('newsletter_segmenti') . " WHERE nome LIKE 'AU %'");
+    if (function_exists('nd_schema')) db()->exec('DELETE FROM ' . $t('newsletter_modelli') . " WHERE nome LIKE 'AU %'"); // 2.18.0
     // Le righe della posta che le prove lasciano: il limite orario dei giri dopo resta pieno (trappola della 2.14.0).
     try { db()->exec('UPDATE ' . $t('posta_registro') . " SET quando = quando - INTERVAL 2 DAY WHERE tipo = 'flusso' AND quando > NOW() - INTERVAL 2 DAY"); } catch (Throwable $e) {}
     $out = count($ids);
@@ -121,6 +124,26 @@ case 'modello':
     // Un modello a blocchi attivo, copiato dalla galleria: stampa l'id.
     $slug = array_key_first(nd_galleria());
     $out = nd_galleria_copia((string)$slug);
+    break;
+case 'modello_crea':
+    // 2.18.0 modello_crea <nome> <blocchi|html> <testo> <oggetto> [anteprima]: un modello attivo con quel testo (nel blocco Testo o nel codice HTML).
+    [$nome, $ed, $testo, $ogg] = array_pad($arg, 4, '');
+    $html = '<!DOCTYPE html><html><body><p>' . $testo . ', {nome}</p><p><a href="{{ unsubscribe }}">Esci</a></p></body></html>';
+    $d = nd_pulisci(['sezioni' => [nd_nuova_sezione([[nd_nuovo('titolo', ['testo' => 'Titolo ' . $nome]), nd_nuovo('testo', ['html' => '<p>' . $testo . ', {nome}</p>'])]]), nd_nuova_sezione([[nd_nuovo('piede')]])]]);
+    $out = nd_modello_crea($nome, $d, ['editor' => $ed === 'html' ? 'html' : 'blocchi', 'html' => $html, 'oggetto' => $ogg, 'anteprima' => $arg[4] ?? '', 'attivo' => 1]);
+    break;
+case 'modello_testo':
+    // 2.18.0 modello_testo <id> <testo> [oggetto]: cambia il testo del modello (come l'editor o la pagina del codice) e, se dato, l'oggetto.
+    $m = nd_modello((int)$arg[0]);
+    if (!$m) { $out = false; break; }
+    if ($m['editor'] === 'html') nd_modello_cambia((int)$m['id'], ['html' => '<!DOCTYPE html><html><body><p>' . $arg[1] . ', {nome}</p><p><a href="{{ unsubscribe }}">Esci</a></p></body></html>']);
+    else {
+        $d = nd_design((string)$m['design']);
+        foreach ($d['sezioni'][0]['colonne'][0] as $i => $b) if ($b['t'] === 'testo') $d['sezioni'][0]['colonne'][0][$i]['html'] = '<p>' . $arg[1] . ', {nome}</p>';
+        nd_modello_cambia((int)$m['id'], ['design' => nd_json($d)]);
+    }
+    if (isset($arg[2])) nd_modello_cambia((int)$m['id'], ['oggetto' => $arg[2]]);
+    $out = true;
     break;
 case 'contatto':
     $out = $contatto((string)$arg[0], (string)($arg[1] ?? 'Prova'), (int)($arg[2] ?? 0));
@@ -187,9 +210,28 @@ case 'vecchi_semina':
     db()->prepare('UPDATE ' . $t('newsletter_flussi') . ' SET attivo = 0 WHERE id = ?')->execute([$C]);
     $out = ['A' => $A, 'B' => $B, 'C' => $C, 'lista' => $l, 'contatti' => $ids];
     break;
+case 'copiati_semina':
+    // 2.18.0, su una 2.17.1: un'automazione con tre email (una da un modello a blocchi e una da un modello in codice HTML, che la
+    // 2.17.1 copia al salvataggio, e una semplice) e tre contatti nella sua lista. Stampa gli id.
+    $l = $listaId('AU Copia');
+    $d = nd_pulisci(['sezioni' => [nd_nuova_sezione([[nd_nuovo('titolo', ['testo' => 'Titolo copiato']), nd_nuovo('testo', ['html' => '<p>Testo del modello copiato, {nome}</p>'])]])]]);
+    $mb = nd_modello_crea('AU Copia blocchi', $d, ['oggetto' => 'Oggetto del modello a blocchi, {nome}', 'attivo' => 1]);
+    $mh = nd_modello_crea('AU Copia html', null, ['editor' => 'html', 'html' => '<!DOCTYPE html><html><body><p>Codice del modello copiato, {nome}</p><p><a href="{{ unsubscribe }}">Esci</a></p></body></html>', 'oggetto' => 'Oggetto del modello HTML', 'attivo' => 1]);
+    $em = fn($id, $dati) => ['id' => $id, 'tipo' => 'email', 'x' => 40, 'y' => 40 + 150 * $id, 'dati' => $dati + ['oggetto' => '', 'anteprima' => '', 'corpo' => '', 'pulsante_testo' => '', 'pulsante_link' => '', 'ascolto' => 0]];
+    $g = ['nodi' => [['id' => 0, 'tipo' => 'innesco', 'x' => 40, 'y' => 40, 'dati' => []], $em(1, ['editor' => 'modello', 'modello' => $mb]), $em(2, ['editor' => 'modello', 'modello' => $mh, 'oggetto' => 'Oggetto scritto nel passo']),
+        $em(3, ['oggetto' => 'Semplice {nome}', 'anteprima' => 'Anteprima semplice', 'corpo' => '<p>Ciao {nome}</p>', 'pulsante_testo' => 'Vai', 'pulsante_link' => 'https://esempio.it/vai'])],
+        'archi' => [['da' => 0, 'uscita' => 'poi', 'a' => 1], ['da' => 1, 'uscita' => 'poi', 'a' => 2], ['da' => 2, 'uscita' => 'poi', 'a' => 3]]];
+    $F = newsletter_flusso_salva(0, ['nome' => 'AU Copia A', 'stato' => 'in_pausa', 'inneschi' => json_encode([['tipo' => 'lista', 'id' => $l]]), 'grafo' => json_encode($g)]);
+    $ids = [];
+    foreach (['au01' => 'Anna', 'au02' => 'Bruno', 'au03' => 'Carla'] as $k => $nome) $ids[$k] = $contatto("$k@au-prova.it", $nome, $l);
+    $out = ['flusso' => $F, 'blocchi' => $mb, 'html' => $mh, 'lista' => $l, 'contatti' => $ids];
+    break;
 case 'impronte':
+    // impronte [nome LIKE]: per i flussi "AU Vecchio%" (o quelli dati, 2.18.0: "AU Copia%").
     $out = [];
-    foreach (db()->query('SELECT * FROM ' . $t('newsletter_flussi') . " WHERE nome LIKE 'AU Vecchio%' ORDER BY id")->fetchAll() as $r) {
+    $q = db()->prepare('SELECT * FROM ' . $t('newsletter_flussi') . ' WHERE nome LIKE ? ORDER BY id');
+    $q->execute([(string)($arg[0] ?? 'AU Vecchio%')]);
+    foreach ($q->fetchAll() as $r) {
         $f = newsletter_flusso((int)$r['id']);
         foreach (db()->query('SELECT i.* FROM ' . $t('newsletter_iscritti') . " i WHERE i.email LIKE 'au0_@au-prova.it' ORDER BY i.email")->fetchAll() as $i) {
             foreach ($f['grafo']['nodi'] as $n) {

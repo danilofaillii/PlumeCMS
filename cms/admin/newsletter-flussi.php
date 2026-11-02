@@ -41,6 +41,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $id = newsletter_flusso_salva($id, $_POST);
         $nodo = (int)($_POST['nodo'] ?? 0);
         if ($azione === 'design' && $nodo > 0) { header('Location: newsletter-design.php?flusso=' . $id . '&nodo=' . $nodo); exit; }
+        if ($azione === 'stacca') {
+            // 2.18.0: "Stacca dal modello" (il passo copia il contenuto di adesso e non dipende più dal modello).
+            $sn = newsletter_flusso_nodo(newsletter_flusso($id)['grafo'], (int)($_POST['stacca'] ?? 0));
+            if ($sn && $sn['tipo'] === 'email' && $sn['dati']['editor'] !== 'modello') flash('success', 'L\'email #' . $sn['id'] . ' ora ha una copia sua del modello: se cambi il modello, questa email non cambia più. Automazione salvata.');
+            else flash('error', 'Questa email non richiama un modello: non c\'era niente da staccare. Automazione salvata.');
+            header('Location: newsletter-flussi.php?id=' . $id);
+            exit;
+        }
         $st = newsletter_flusso($id)['stato'];
         flash('success', ['attiva' => 'Automazione salvata e attiva: entra chi arriva da adesso in poi.', 'in_pausa' => 'Automazione salvata, in pausa: non entra nessuno di nuovo, chi è dentro prosegue.', 'inattiva' => 'Automazione salvata, inattiva: non entra nessuno e chi era dentro è stato tolto.'][$st]);
         header('Location: newsletter-flussi.php?id=' . $id);
@@ -122,7 +130,7 @@ require_once __DIR__ . '/includes/admin-header.php';
     $nomeNodo = function (int $n) use ($f, $tipiNomi): string {
         $x = newsletter_flusso_nodo($f['grafo'], $n);
         if (!$x) return 'passo #' . $n . ' (non c\'è più)';
-        return $n === 0 ? 'Inneschi' : '#' . $n . ' ' . $tipiNomi[$x['tipo']] . ($x['tipo'] === 'email' ? ': ' . newsletter_4byte_fuori($x['dati']['oggetto']) : '');
+        return $n === 0 ? 'Inneschi' : '#' . $n . ' ' . $tipiNomi[$x['tipo']] . ($x['tipo'] === 'email' ? ': ' . ($x['dati']['oggetto'] !== '' || $x['dati']['editor'] !== 'modello' ? newsletter_4byte_fuori($x['dati']['oggetto']) : 'dal modello #' . $x['dati']['modello']) : '');
     };
     $haMano = in_array('mano', array_column($f['inneschi'], 'tipo'), true);
 ?>
@@ -143,7 +151,7 @@ require_once __DIR__ . '/includes/admin-header.php';
     <?php foreach ($dentro as $c): ?>
       <tr data-corso="<?= (int)$c['id'] ?>">
         <td><a href="newsletter-contatto.php?id=<?= (int)$c['iscritto_id'] ?>"><?= h((string)$c['email']) ?></a><?= (int)$c['giro'] > 1 ? ' <small>(giro ' . (int)$c['giro'] . ')</small>' : '' ?></td>
-        <td><?= h($nomeNodo((int)$c['passo'])) ?><?= $c['ascolto'] ? ' <small>(' . h(['email' => 'aspetta una reazione', 'evento' => 'aspetta un evento', 'attesa' => 'in attesa', 'orario' => 'aspetta l\'orario dell\'email'][$c['ascolto']] ?? '') . ')</small>' : '' ?></td>
+        <td><?= h($nomeNodo((int)$c['passo'])) ?><?= $c['ascolto'] ? ' <small>(' . h(['email' => 'aspetta una reazione', 'evento' => 'aspetta un evento', 'attesa' => 'in attesa', 'orario' => 'aspetta l\'orario dell\'email', 'modello' => 'fermo: il modello dell\'email non si può mandare, vedi il registro'][$c['ascolto']] ?? '') . ')</small>' : '' ?></td>
         <td><?= h(date('d/m/Y H:i', strtotime((string)$c['creato']))) ?></td>
         <td><?= $c['prossimo'] ? h(date('d/m/Y H:i', strtotime((string)$c['prossimo']))) : '' ?></td>
         <td><form method="post"><?= csrf_field() ?><input type="hidden" name="id" value="<?= $id ?>"><input type="hidden" name="azione" value="togli"><input type="hidden" name="corso" value="<?= (int)$c['id'] ?>"><button type="submit" class="btn btn-danger btn-sm" data-conferma="Togliere <?= h((string)$c['email']) ?> dall'automazione? Non riceve più niente da qui." data-conferma-ok="Togli il contatto" data-conferma-pericolo>Togli <span class="sr-solo"><?= h((string)$c['email']) ?></span></button></form></td>
@@ -191,7 +199,7 @@ $v = $f ?: ['id' => 0, 'nome' => 'Automazione n. ' . $prossimo, 'stato' => 'in_p
 ], 'archi' => [['da' => 0, 'uscita' => 'poi', 'a' => 1]]]];
 $v['grafo'] = newsletter_flusso_grafo_valido($v['grafo']);
 foreach ($v['grafo']['nodi'] as &$nn) {
-    if ($nn['tipo'] === 'email') { $nn['dati']['corpo'] = newsletter_4byte_fuori($nn['dati']['corpo']); $nn['dati']['design'] = $nn['dati']['design'] !== '' ? 'si' : ''; } // il design resta sul server
+    if ($nn['tipo'] === 'email') { $nn['dati']['corpo'] = newsletter_4byte_fuori($nn['dati']['corpo']); $nn['dati']['design'] = $nn['dati']['design'] !== '' ? 'si' : ''; $nn['dati']['html'] = $nn['dati']['html'] !== '' ? 'si' : ''; } // design e codice HTML restano sul server
     if ($nn['tipo'] === 'dividi') foreach ($nn['dati']['rami'] as &$rr) $rr['nome'] = newsletter_4byte_fuori($rr['nome']);
     unset($rr);
     if ($nn['tipo'] === 'attributo') $nn['dati']['valore'] = newsletter_4byte_fuori($nn['dati']['valore']);
@@ -204,13 +212,15 @@ foreach (newsletter_attributi() as $n => $a) {
     $attributi[$n] = ['e' => newsletter_attributo_etichetta($a), 't' => $a['tipo'], 'o' => array_map(fn($x) => newsletter_4byte_fuori((string)$x), (array)$a['opzioni'])];
 }
 // 2.17.1 (Danilo: "devo poter scegliere l'email da un modello"): tutti i modelli, a blocchi e in codice HTML, anche quelli non attivi
-// (segnati), tranne quelli dell'email di conferma. Prima solo gli attivi a blocchi, e solo dentro "Editor a blocchi".
+// (segnati), tranne quelli dell'email di conferma. 2.18.0: il passo richiama il modello; qui anche anteprima (a) e dove aprirlo (u).
 $modelliEmail = [];
 if (function_exists('nd_modelli')) foreach (nd_modelli(false) as $_m) {
     if ($_m['tag'] === 'optin') continue;
-    $modelliEmail[(string)$_m['id']] = ['n' => newsletter_4byte_fuori((string)$_m['nome']) . ((int)$_m['attivo'] ? '' : ' (non attivo)'), 't' => $_m['editor'] === 'html' ? 'html' : 'blocchi', 'o' => newsletter_4byte_fuori((string)$_m['oggetto'])];
+    $_mh = $_m['editor'] === 'html';
+    $modelliEmail[(string)$_m['id']] = ['n' => newsletter_4byte_fuori((string)$_m['nome']) . ((int)$_m['attivo'] ? '' : ' (non attivo)'), 't' => $_mh ? 'html' : 'blocchi', 'o' => newsletter_4byte_fuori((string)$_m['oggetto']), 'a' => newsletter_4byte_fuori((string)($_m['anteprima'] ?? '')),
+        'u' => ($_mh ? 'newsletter-modelli.php?codice=' : 'newsletter-design.php?modello=') . (int)$_m['id'] . ($v['id'] ? '&flusso=' . (int)$v['id'] : '')];
 }
-unset($_m);
+unset($_m, $_mh);
 $segmenti = function_exists('newsletter_segmenti') ? array_map(fn($x) => newsletter_4byte_fuori((string)$x), array_column(newsletter_segmenti(), 'nome', 'id')) : [];
 $def = newsletter_regole_definizione();
 $def['campi']['flusso_email'] = ['g' => 'Questa automazione', 'e' => 'Email di questa automazione', 't' => 'flusso_email'];
@@ -224,7 +234,7 @@ if ($v['id']): ?>
 </nav>
 <?php endif; ?>
 <form method="post" id="fl-form" class="fl-form">
-  <?= csrf_field() ?><input type="hidden" name="id" value="<?= (int)$v['id'] ?>"><input type="hidden" name="grafo" id="fl-grafo"><input type="hidden" name="inneschi" id="fl-inneschi-campo"><input type="hidden" name="nodo" id="fl-nodo-design" value="0">
+  <?= csrf_field() ?><input type="hidden" name="id" value="<?= (int)$v['id'] ?>"><input type="hidden" name="grafo" id="fl-grafo"><input type="hidden" name="inneschi" id="fl-inneschi-campo"><input type="hidden" name="nodo" id="fl-nodo-design" value="0"><input type="hidden" name="stacca" id="fl-stacca" value="-1">
   <div class="fl-testa">
     <label class="sr-solo" for="fl-nome">Nome dell'automazione</label>
     <input type="text" name="nome" id="fl-nome" class="fl-nome" value="<?= h($v['nome']) ?>" placeholder="per esempio: Benvenuto ai nuovi iscritti" maxlength="100" required>

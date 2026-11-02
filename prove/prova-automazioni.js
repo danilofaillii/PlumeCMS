@@ -374,8 +374,9 @@ const serverWh = [spawn(process.execPath, ['-e', SERVER, String(WH), ARRIVI], { 
   await p.check('[name=fp-editor][value=modello]');
   ok('"Da un modello": compare la tendina dei modelli, con il modello a blocchi', await p.locator('#fp-modello').isVisible() && await p.locator(`#fp-modello option[value="${mod}"]`).count() === 1);
   await p.selectOption('#fp-modello', String(mod)); await invia('#fl-form button[value=salva]');
+  // 2.18.0: il passo richiama il modello (id salvato, niente copia); il design del passo a blocchi resta vuoto.
   const dMo = JSON.parse(uno(`SELECT passi FROM {p}newsletter_flussi WHERE id = ${fDe}`)).nodi.find(x => x.id === 1).dati;
-  ok('"Da un modello": il design del modello entra nel passo, che resta a blocchi', dMo.design === uno(`SELECT design FROM {p}newsletter_modelli WHERE id = ${mod}`) && dMo.editor === 'blocchi', dMo.editor);
+  ok('"Da un modello": il passo richiama il modello (editor modello, id salvato, nessuna copia)', dMo.editor === 'modello' && dMo.modello === mod && dMo.design === '', [dMo.editor, dMo.modello]);
   q(`INSERT INTO {p}newsletter_modelli (nome, editor, design, html, oggetto, attivo, tag, origine, creato, aggiornato) VALUES ('AU Modello HTML', 'html', '{}', '<html><body><p>Ciao dal modello HTML, {nome}</p><p><a href="{{ unsubscribe }}">Esci</a></p></body></html>', 'Oggetto dal modello HTML', 0, '', '', NOW(), NOW())`);
   const modH = +uno(`SELECT MAX(id) FROM {p}newsletter_modelli WHERE nome = 'AU Modello HTML'`);
   await vai('newsletter-flussi.php?id=' + fDe); await nodoClic(1);
@@ -383,16 +384,16 @@ const serverWh = [spawn(process.execPath, ['-e', SERVER, String(WH), ARRIVI], { 
   await p.check('[name=fp-editor][value=modello]');
   ok('"Da un modello": c\'è anche il modello in codice HTML non attivo, segnato', /non attivo/.test(await p.locator(`#fp-modello option[value="${modH}"]`).innerText()) && /codice HTML/.test(await p.locator(`#fp-modello option[value="${modH}"]`).innerText()));
   await p.selectOption('#fp-modello', String(modH));
-  ok('"Da un modello": con l\'oggetto vuoto prende quello del modello', await p.inputValue('#fp-oggetto') === 'Oggetto dal modello HTML');
+  ok('"Da un modello": con l\'oggetto vuoto il segnaposto dice quello del modello', await p.inputValue('#fp-oggetto') === '' && await p.getAttribute('#fp-oggetto', 'placeholder') === 'dal modello: Oggetto dal modello HTML');
   await invia('#fl-form button[value=salva]');
   const dMh = JSON.parse(uno(`SELECT passi FROM {p}newsletter_flussi WHERE id = ${fDe}`)).nodi.find(x => x.id === 1).dati;
-  ok('"Da un modello" in codice HTML: il passo prende il codice e l\'oggetto del modello', dMh.editor === 'html' && /Ciao dal modello HTML/.test(dMh.html) && dMh.oggetto === 'Oggetto dal modello HTML', [dMh.editor, dMh.oggetto]);
+  ok('"Da un modello" in codice HTML: il passo richiama il modello, l\'oggetto resta vuoto', dMh.editor === 'modello' && dMh.modello === modH && dMh.html === '' && dMh.oggetto === '', [dMh.editor, dMh.oggetto]);
   persona('de2', L.de); giro();
   const mDh = posta().find(m => m.dest.startsWith('de2@'));
-  ok('l\'email dal modello HTML parte, con il nome e il link per uscire', !!mDh && mDh.oggetto === 'Oggetto dal modello HTML' && /Ciao dal modello HTML, Persona de2/.test(mDh.html) && /newsletter-esci/.test(mDh.html), mDh && mDh.oggetto);
+  ok('l\'email dal modello HTML parte, con l\'oggetto del modello, il nome e il link per uscire', !!mDh && mDh.oggetto === 'Oggetto dal modello HTML' && /Ciao dal modello HTML, Persona de2/.test(mDh.html) && /newsletter-esci/.test(mDh.html), mDh && mDh.oggetto);
   await vai('newsletter-flussi.php?id=' + fDe); await nodoClic(1);
-  ok('riaperto, il passo dice "Codice HTML del modello"', await p.locator('[name=fp-editor][value=html]').isChecked());
-  await p.check('[name=fp-editor][value=modello]'); await invia('#fl-form button[value=salva]');
+  ok('riaperto, il passo dice "Da un modello" con il modello in codice HTML', await p.locator('[name=fp-editor][value=modello]').isChecked() && await p.inputValue('#fp-modello') === String(modH));
+  await p.selectOption('#fp-modello', '0'); await invia('#fl-form button[value=salva]');
   ok('"Da un modello" senza sceglierne uno: non si salva e dice cosa fare', /scegli il modello da usare/.test(await p.locator('body').innerText()));
 
   // ===== 11. Modelli di automazione

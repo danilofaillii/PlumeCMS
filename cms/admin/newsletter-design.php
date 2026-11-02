@@ -21,12 +21,14 @@ $fid = (int)($_GET['flusso'] ?? 0); $nid = (int)($_GET['nodo'] ?? 0);
 $flu = !$camp && !$mod && $fid ? newsletter_flusso($fid) : null;
 $fnodo = $flu ? newsletter_flusso_nodo($flu['grafo'], $nid) : null;
 if ($fnodo && $fnodo['tipo'] !== 'email') $fnodo = null;
-if (!$camp && !$fnodo && (!$mod || $mod['editor'] !== 'blocchi')) { header('Location: ' . ($mid ? 'newsletter-modelli.php' : ($fid ? 'newsletter-flussi.php' : 'newsletter.php'))); exit; }
+// 2.18.0: un modello in codice HTML si modifica nella sua pagina (newsletter-modelli.php?codice=N).
+if (!$camp && !$fnodo && (!$mod || $mod['editor'] !== 'blocchi')) { header('Location: ' . ($mod && $mod['editor'] === 'html' ? 'newsletter-modelli.php?codice=' . $mid . ($fid ? '&flusso=' . $fid : '') : ($mid ? 'newsletter-modelli.php' : ($fid ? 'newsletter-flussi.php' : 'newsletter.php')))); exit; }
 $modificabile = $mod || $fnodo || newsletter_campagna_modificabile($camp);
 // 2.13.0: ?versione=b, il design della versione B di un test A/B sul contenuto (includes/newsletter-ab.php).
 $verB = $camp && ($_GET['versione'] ?? '') === 'b' && $camp['tipo'] === 'ab' && function_exists('nl_ab') && nl_ab($cid)['cosa'] === 'design';
 if ($verB) $camp = nl_ab_versione($camp, 'b');
-$indietro = $camp ? 'newsletter-campagna.php?id=' . $cid . ($verB ? '&versione=b' : '') . '&apri=design#sez-design' : ($fnodo ? 'newsletter-flussi.php?id=' . $fid : 'newsletter-modelli.php');
+// 2.18.0: un modello aperto da un passo Email (?modello=N&flusso=F, "Apri il modello") torna all'automazione.
+$indietro = $camp ? 'newsletter-campagna.php?id=' . $cid . ($verB ? '&versione=b' : '') . '&apri=design#sez-design' : ($fnodo || ($mod && $fid > 0) ? 'newsletter-flussi.php?id=' . $fid : 'newsletter-modelli.php');
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     header('Content-Type: application/json; charset=utf-8');
@@ -84,7 +86,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 $design = nd_design((string)($camp ? $camp['design'] : ($fnodo ? $fnodo['dati']['design'] : $mod['design']))) ?? nd_design_vuoto();
 $nome = (newsletter_4byte_fuori((string)($camp ? ($camp['nome'] ?: $camp['oggetto']) : ($fnodo ? $fnodo['dati']['oggetto'] : $mod['nome']))) ?: 'Email senza nome') . ($verB ? ' (versione B)' : '');
-$torna = $camp ? 'Torna al riepilogo della campagna' : ($fnodo ? 'Torna all\'automazione' : 'Torna ai modelli');
+$torna = $camp ? 'Torna al riepilogo della campagna' : ($fnodo || ($mod && $fid > 0) ? 'Torna all\'automazione' : 'Torna ai modelli');
 $colori = [];
 foreach ((function () { require_once dirname(__DIR__) . '/includes/editor.php'; return editor_globali()['colori'] ?? []; })() as $g) if (nd_colore($g['valore'] ?? '')) $colori[] = ['nome' => (string)$g['nome'], 'valore' => nd_colore($g['valore'])];
 $dati = [

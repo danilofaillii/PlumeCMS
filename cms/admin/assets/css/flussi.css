@@ -99,6 +99,10 @@
 .fl-elimina-box{margin-top:1.2rem;text-align:right}
 .fl-num{margin-left:auto;font-weight:400}
 .fl-manca{color:var(--errore-testo);font-style:normal}
+/* 2.18.0: il passo Email che richiama un modello */
+.fl-nodo-corpo small.fl-dal-modello{display:inline;margin:0}
+.fl-modello-azioni{display:flex;flex-wrap:wrap;gap:.4rem;margin:.4rem 0}
+.fl-modello-azioni [hidden]{display:none}
 .fl-nodo-numeri{flex-wrap:wrap}
 .fl-uscita b{color:var(--text)}
 .fl-pannello .form-group{margin:0 0 .4rem}

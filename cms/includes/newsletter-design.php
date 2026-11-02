@@ -106,6 +106,7 @@ function nd_schema(): void {
         `design` MEDIUMTEXT NULL,
         `html` MEDIUMTEXT NULL,
         `oggetto` VARCHAR(200) NOT NULL DEFAULT '',
+        `anteprima` VARCHAR(255) NOT NULL DEFAULT '',
         `attivo` TINYINT(1) NOT NULL DEFAULT 0,
         `tag` VARCHAR(50) NOT NULL DEFAULT '',
         `origine` VARCHAR(40) NOT NULL DEFAULT '',
@@ -122,7 +123,7 @@ function nd_schema(): void {
         `aggiornato` DATETIME NOT NULL,
         PRIMARY KEY (`id`)
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8";
-    $impronta = md5($modelli . $sezioni . DB_NAME . 'design modello_id');
+    $impronta = md5($modelli . $sezioni . DB_NAME . 'design modello_id anteprima');
     if (get_setting('newsletter_design_impronta', '') === $impronta) return;
     db()->exec($modelli);
     db()->exec($sezioni);
@@ -130,6 +131,9 @@ function nd_schema(): void {
     $col = db()->query('SHOW COLUMNS FROM ' . $t)->fetchAll(PDO::FETCH_COLUMN);
     if (!in_array('design', $col, true)) db()->exec("ALTER TABLE $t ADD COLUMN `design` MEDIUMTEXT NULL");
     if (!in_array('modello_id', $col, true)) db()->exec("ALTER TABLE $t ADD COLUMN `modello_id` INT(11) NOT NULL DEFAULT 0");
+    // 2.18.0: il testo di anteprima del modello (vuoto = nessuno). Lo usano i passi Email delle automazioni che richiamano il modello.
+    $tm = tbl('newsletter_modelli');
+    if (!in_array('anteprima', db()->query('SHOW COLUMNS FROM ' . $tm)->fetchAll(PDO::FETCH_COLUMN), true)) db()->exec("ALTER TABLE $tm ADD COLUMN `anteprima` VARCHAR(255) NOT NULL DEFAULT '' AFTER `oggetto`");
     save_setting('newsletter_design_impronta', $impronta);
 }
 
@@ -540,15 +544,20 @@ function nd_modello_crea(string $nome, ?array $design, array $altro = []) {
     $editor = ($altro['editor'] ?? 'blocchi') === 'html' ? 'html' : 'blocchi';
     $tag = preg_match('/^[a-z0-9_-]{0,50}$/', (string)($altro['tag'] ?? '')) ? (string)($altro['tag'] ?? '') : '';
     $ora = date('Y-m-d H:i:s');
-    db()->prepare('INSERT INTO ' . tbl('newsletter_modelli') . ' (nome, editor, design, html, oggetto, attivo, tag, origine, creato, aggiornato) VALUES (?,?,?,?,?,?,?,?,?,?)')
+    db()->prepare('INSERT INTO ' . tbl('newsletter_modelli') . ' (nome, editor, design, html, oggetto, anteprima, attivo, tag, origine, creato, aggiornato) VALUES (?,?,?,?,?,?,?,?,?,?,?)')
         ->execute([$nome, $editor, nd_json($design ?? nd_design_vuoto()), $editor === 'html' ? newsletter_4byte_dentro(mb_substr((string)($altro['html'] ?? ''), 0, 1500000)) : null,
-            nd_nome($altro['oggetto'] ?? ''), empty($altro['attivo']) ? 0 : 1, $tag, preg_replace('/[^a-z0-9-]/', '', (string)($altro['origine'] ?? '')), $ora, $ora]);
+            nd_nome($altro['oggetto'] ?? ''), nd_anteprima($altro['anteprima'] ?? ''), empty($altro['attivo']) ? 0 : 1, $tag, preg_replace('/[^a-z0-9-]/', '', (string)($altro['origine'] ?? '')), $ora, $ora]);
     return (int)db()->lastInsertId();
 }
 
-/** Cambia una o più colonne di un modello (nome, design, attivo, tag, oggetto). */
+/** Il testo di anteprima di un modello (2.18.0): una riga, al massimo 255 caratteri, emoji come entità. */
+function nd_anteprima(mixed $v): string {
+    return mb_substr(newsletter_4byte_dentro(trim(preg_replace('/\s+/u', ' ', strip_tags(is_scalar($v) ? (string)$v : '')))), 0, 255);
+}
+
+/** Cambia una o più colonne di un modello (nome, design, attivo, tag, oggetto; dalla 2.18.0 anteprima e html). */
 function nd_modello_cambia(int $id, array $set): bool {
-    $ok = ['nome', 'design', 'attivo', 'tag', 'oggetto'];
+    $ok = ['nome', 'design', 'attivo', 'tag', 'oggetto', 'anteprima', 'html'];
     $sql = []; $val = [];
     foreach ($set as $k => $v) if (in_array($k, $ok, true)) { $sql[] = "`$k` = ?"; $val[] = $v; }
     if (!$sql) return false;
@@ -561,7 +570,7 @@ function nd_modello_cambia(int $id, array $set): bool {
 function nd_modello_duplica(int $id): int {
     $m = nd_modello($id);
     if (!$m) return 0;
-    $r = nd_modello_crea('Copia di ' . newsletter_4byte_fuori((string)$m['nome']), nd_design((string)$m['design']), ['editor' => $m['editor'], 'html' => newsletter_4byte_fuori((string)$m['html']), 'tag' => $m['tag'], 'oggetto' => newsletter_4byte_fuori((string)$m['oggetto'])]);
+    $r = nd_modello_crea('Copia di ' . newsletter_4byte_fuori((string)$m['nome']), nd_design((string)$m['design']), ['editor' => $m['editor'], 'html' => newsletter_4byte_fuori((string)$m['html']), 'tag' => $m['tag'], 'oggetto' => newsletter_4byte_fuori((string)$m['oggetto']), 'anteprima' => newsletter_4byte_fuori((string)($m['anteprima'] ?? ''))]);
     return is_int($r) ? $r : 0;
 }
 

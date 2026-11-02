@@ -474,7 +474,8 @@ function newsletter_flusso_grafo_valido($g): array {
 /** I campi del passo Email arrivati con la 2.15.0. Un'email di prima non li ha: valgono i predefiniti, e l'email resta quella di prima. */
 function nl_email_extra(array $d, callable $s, callable $int): array {
     $orario = $s('orario', 10);
-    // 2.17.1: "modello" (scelta del pannello: il modello si copia al salvataggio) e "html" (un modello in codice HTML già copiato).
+    // 2.17.1: "html" (un modello in codice HTML già copiato). 2.18.0: "modello" vuol dire che il passo richiama il modello
+    // numero 'modello' e lo legge a ogni invio (nl_passo_modello()): l'id resta salvato, design e html restano vuoti.
     $ed = $s('editor', 10);
     return ['editor' => in_array($ed, ['blocchi', 'html', 'modello'], true) ? $ed : 'semplice', 'design' => is_string($d['design'] ?? null) ? mb_substr($d['design'], 0, 400000) : '',
         // Il codice HTML (da un modello) si tiene quando il grafo si rilegge dal database; al salvataggio newsletter_flusso_salva()
@@ -549,7 +550,9 @@ function newsletter_flusso_salva(int $id, array $d): int {
     if (count($g['nodi']) < 2) throw new RuntimeException('Metti almeno un blocco sulla tela, dopo l\'innesco.');
     if (newsletter_flusso_arrivo($g, 0, 'poi') === null) throw new RuntimeException("Collega l'innesco al primo blocco: trascina dal suo pallino a un blocco.");
     if (($giro = nl_grafo_giro($g)) !== null) throw new RuntimeException("Il disegno fa un giro chiuso: un collegamento torna al blocco #$giro. Togli il collegamento che torna indietro (un'automazione va sempre avanti).");
+    if (!function_exists('nd_modello')) @include_once __DIR__ . '/newsletter-design.php';
     $mod = function_exists('nd_modello') ? 'nd_modello' : null;
+    $stacca = is_numeric($d['stacca'] ?? null) ? (int)$d['stacca'] : -1; // 2.18.0: il passo da staccare dal suo modello
     foreach ($g['nodi'] as &$n) {
         $dn = &$n['dati'];
         $dove = '#' . $n['id'];
@@ -557,22 +560,32 @@ function newsletter_flusso_salva(int $id, array $d): int {
             case 'email':
                 $dn['corpo'] = newsletter_4byte_dentro($dn['corpo']);
                 // Il design a blocchi lo scrive l'editor delle email (nl_aut_design_salva) e il codice HTML arriva solo da un
-                // modello: quelli del browser non valgono. Un modello scelto adesso (2.17.1: a blocchi o in codice HTML, scelto
-                // con "Da un modello") si copia nel passo, e se l'oggetto è vuoto porta anche il suo.
+                // modello: quelli del browser non valgono.
                 $prima = $vecchio ? newsletter_flusso_nodo($vecchio['grafo'], $n['id']) : null;
                 $dn['design'] = $prima && $prima['tipo'] === 'email' ? (string)($prima['dati']['design'] ?? '') : '';
                 $dn['html'] = $prima && $prima['tipo'] === 'email' ? (string)($prima['dati']['html'] ?? '') : '';
-                if ($dn['editor'] === 'modello' && $dn['modello'] <= 0) throw new RuntimeException("L'email $dove: scegli il modello da usare, oppure il testo semplice o l'editor a blocchi.");
-                if ($dn['modello'] > 0) {
+                if ($dn['editor'] === 'modello') {
+                    // 2.18.0: "Da un modello" richiama il modello (si legge a ogni invio, nl_passo_modello()); la 2.17.1 lo copiava.
+                    if ($dn['modello'] <= 0) throw new RuntimeException("L'email $dove: scegli il modello da usare, oppure il testo semplice o l'editor a blocchi.");
                     $m = $mod ? $mod($dn['modello']) : null;
                     if (!$m || $m['tag'] === 'optin') throw new RuntimeException("L'email $dove: il modello scelto non c'è più. Scegline un altro.");
-                    if ($m['editor'] === 'html') { $dn['html'] = (string)$m['html']; $dn['editor'] = 'html'; }
-                    else { $dn['design'] = (string)$m['design']; $dn['editor'] = 'blocchi'; }
-                    if ($dn['oggetto'] === '') $dn['oggetto'] = mb_substr(newsletter_4byte_fuori((string)$m['oggetto']), 0, 255);
+                    $oggM = trim(newsletter_4byte_fuori((string)$m['oggetto']));
+                    if ($stacca === $n['id']) {
+                        // "Stacca dal modello": il contenuto di adesso si copia nel passo, che da qui in poi è indipendente (come la 2.17.1).
+                        if ($m['editor'] === 'html') { $dn['html'] = (string)$m['html']; $dn['editor'] = 'html'; }
+                        else { $dn['design'] = (string)$m['design']; $dn['editor'] = 'blocchi'; }
+                        if ($dn['oggetto'] === '') $dn['oggetto'] = mb_substr($oggM, 0, 255);
+                        if ($dn['anteprima'] === '') $dn['anteprima'] = mb_substr(trim(newsletter_4byte_fuori((string)($m['anteprima'] ?? ''))), 0, 255);
+                        $dn['modello'] = 0;
+                    } else {
+                        $dn['design'] = ''; $dn['html'] = '';
+                        if ($dn['oggetto'] === '' && $oggM === '') throw new RuntimeException("L'email $dove: scrivi l'oggetto, oppure dallo al modello «" . newsletter_4byte_fuori((string)$m['nome']) . "» (Modelli, «Oggetto e uso»).");
+                    }
+                } else {
+                    $dn['modello'] = 0;
                 }
                 if ($dn['editor'] === 'html' && trim($dn['html']) === '') $dn['editor'] = 'semplice';
-                $dn['modello'] = 0;
-                if ($dn['oggetto'] === '') throw new RuntimeException("L'email $dove è senza oggetto: aprila e scrivilo.");
+                if ($dn['oggetto'] === '' && $dn['editor'] !== 'modello') throw new RuntimeException("L'email $dove è senza oggetto: aprila e scrivilo.");
                 break;
             case 'percento':
                 if (array_sum($dn['rami']) !== 100) throw new RuntimeException("La divisione in percentuale $dove fa " . array_sum($dn['rami']) . '%: le parti devono fare 100.');
@@ -824,9 +837,78 @@ function newsletter_flusso_evento(int $flusso, int $nodo, int $iscritto, string 
     }
 }
 
+/**
+ * 2.18.0: il modello che un passo Email richiama (editor 'modello', id in 'modello'), letto adesso dal database, e il motivo
+ * per cui non si può mandare ('' se si può): il modello non c'è, è quello dell'email di conferma (tag optin), non ha oggetto
+ * (né il passo ne ha uno), non ha contenuto. Un modello inattivo si manda lo stesso: "inattivo" vale per le scelte nuove.
+ */
+function nl_passo_modello(array $d): array {
+    $id = (int)($d['modello'] ?? 0);
+    if (!function_exists('nd_modello')) @include_once __DIR__ . '/newsletter-design.php';
+    $m = $id > 0 && function_exists('nd_modello') ? nd_modello($id) : null;
+    if (!$m) return [null, "modello #$id non trovato: email non mandata"];
+    if ($m['tag'] === 'optin') return [null, "modello #$id è l'email di conferma dell'iscrizione: email non mandata"];
+    if (trim((string)($d['oggetto'] ?? '')) === '' && trim(newsletter_4byte_fuori((string)$m['oggetto'])) === '') return [null, "modello #$id senza oggetto: email non mandata"];
+    if ($m['editor'] === 'html' ? trim((string)$m['html']) === '' : !(function_exists('nd_design') && nd_design((string)$m['design']))) return [null, "modello #$id senza contenuto: email non mandata"];
+    return [$m, ''];
+}
+
+/**
+ * 2.18.0: dove sono richiamati i modelli, per Modelli ("Usato in"), le conferme e la dashboard.
+ * id del modello => [['flusso' => id, 'nome' => nome dell'automazione, 'stato' => stato, 'nodo' => id del passo], ...].
+ */
+function nl_modelli_usati(): array {
+    newsletter_flussi_schema();
+    $out = [];
+    foreach (db()->query('SELECT * FROM ' . tbl('newsletter_flussi') . ' ORDER BY nome, id')->fetchAll() as $r) {
+        if (!str_contains((string)$r['passi'], '"modello"')) continue;
+        $f = nl_flusso_riga($r);
+        foreach ($f['grafo']['nodi'] as $n) {
+            if ($n['tipo'] === 'email' && $n['dati']['editor'] === 'modello' && $n['dati']['modello'] > 0) $out[$n['dati']['modello']][] = ['flusso' => (int)$f['id'], 'nome' => $f['nome'], 'stato' => $f['stato'], 'nodo' => $n['id']];
+        }
+    }
+    return $out;
+}
+
+/**
+ * 2.18.0: per la dashboard, i passi che richiamano un modello che non si può mandare (non c'è più, o è diventato l'email di
+ * conferma) nelle automazioni non inattive, con quante persone sono ferme lì. [['flusso', 'nome', 'stato', 'nodo', 'modello', 'fermi'], ...].
+ */
+function nl_passi_senza_modello(): array {
+    $usati = nl_modelli_usati();
+    if (!$usati) return [];
+    if (!function_exists('nd_schema')) @include_once __DIR__ . '/newsletter-design.php';
+    if (!function_exists('nd_schema')) return [];
+    nd_schema();
+    $buoni = array_map('intval', db()->query('SELECT id FROM ' . tbl('newsletter_modelli') . " WHERE tag <> 'optin'")->fetchAll(PDO::FETCH_COLUMN));
+    $fermi = [];
+    foreach (db()->query('SELECT flusso_id, passo, COUNT(*) AS n FROM ' . tbl('newsletter_corsi') . " WHERE stato = 'attivo' AND ascolto = 'modello' GROUP BY flusso_id, passo")->fetchAll() as $x) $fermi[$x['flusso_id'] . '|' . $x['passo']] = (int)$x['n'];
+    $out = [];
+    foreach ($usati as $mid => $dove) {
+        if (in_array((int)$mid, $buoni, true)) continue;
+        foreach ($dove as $x) if ($x['stato'] !== 'inattiva') $out[] = $x + ['modello' => (int)$mid, 'fermi' => $fermi[$x['flusso'] . '|' . $x['nodo']] ?? 0];
+    }
+    return $out;
+}
+
 /** L'email di un passo, come campagna per newsletter_email(). Un'email di prima (editor semplice) esce identica al byte. */
 function nl_email_campagna(array $f, array $d): array {
     $c = ['id' => 0, 'oggetto' => $d['oggetto'], 'anteprima' => $d['anteprima'], 'corpo' => $d['corpo'], 'pulsante_testo' => $d['pulsante_testo'], 'pulsante_link' => $d['pulsante_link'], 'mittente_id' => (int)(($d['mittente_id'] ?? 0) ?: ($f['mittente_id'] ?? 0))];
+    if (($d['editor'] ?? '') === 'modello') {
+        // 2.18.0: il modello com'è adesso (design a blocchi o codice HTML); oggetto e anteprima del passo vincono, vuoti valgono
+        // quelli del modello. Senza modello usabile il giro non arriva qui (nl_corso_scorri() ferma la persona sul passo).
+        [$m] = nl_passo_modello($d);
+        if (!$m) return $c;
+        if (trim((string)$c['oggetto']) === '') $c['oggetto'] = newsletter_4byte_fuori((string)$m['oggetto']);
+        if (trim((string)$c['anteprima']) === '') $c['anteprima'] = newsletter_4byte_fuori((string)($m['anteprima'] ?? ''));
+        if ($m['editor'] === 'html') {
+            if (!function_exists('nl_camp_html')) @include_once __DIR__ . '/newsletter-campagne.php';
+            $c += ['editor' => 'html', 'html' => (string)$m['html']];
+        } else {
+            $c += ['editor' => 'blocchi', 'design' => (string)$m['design']];
+        }
+        return $c;
+    }
     if (($d['editor'] ?? '') === 'blocchi') $c += ['editor' => 'blocchi', 'design' => (string)$d['design']];
     elseif (($d['editor'] ?? '') === 'html' && trim((string)($d['html'] ?? '')) !== '') {
         // Il codice HTML lo compone nl_camp_html() delle campagne: nel giro del cron quel file può non essere caricato, e senza
@@ -942,6 +1024,19 @@ function nl_corso_scorri(array $f, array $r, array &$conto, array &$log, bool $s
         }
         // Email.
         if ($soloAzioni) { nl_registro($fid, $corso, $iscritto, $nodoId, 'email', 'non mandata: non è iscritto'); if (!$vai('poi')) return; continue; }
+        if (($d['editor'] ?? '') === 'modello') {
+            // 2.18.0: il modello richiamato non si può mandare (eliminato, diventato l'email di conferma, senza oggetto): niente
+            // email vuota. La persona resta su questo passo e riprova ogni ora (prima dell'orario: un passo "alle 8" che aspetta il modello
+            // resta segnato come fermo; quando il modello torna, aspetta le 8 e parte); il registro lo dice una volta, la dashboard lo segnala.
+            [, $perche] = nl_passo_modello($d);
+            if ($perche !== '') {
+                $gia = db()->prepare('SELECT COUNT(*) FROM ' . tbl('newsletter_flussi_registro') . ' WHERE corso_id = ? AND nodo = ? AND dettaglio = ?');
+                $gia->execute([$corso, $nodoId, $perche]);
+                if (!(int)$gia->fetchColumn()) { nl_registro($fid, $corso, $iscritto, $nodoId, 'email', $perche); $log[] = 'automazione ' . $f['nome'] . ", passo #$nodoId: $perche"; }
+                $ferma(time() + 3600, 'modello');
+                return;
+            }
+        }
         if ($d['orario'] !== 'subito' && !$inviaOra) { $ferma(nl_email_quando($d, $iscritto), 'orario'); return; }
         if ($conto['inviate'] >= $conto['posti']) { $ferma(time(), $inviaOra ? 'orario' : null); return; } // resta dov'è, al prossimo giro
         $inviaOra = false;
@@ -961,7 +1056,7 @@ function nl_corso_scorri(array $f, array $r, array &$conto, array &$log, bool $s
         nl_conta($fid, $nodoId, 'inviate');
         nl_registro($fid, $corso, $iscritto, $nodoId, 'email', newsletter_4byte_fuori((string)$oggetto));
         // 2.8.0: l'email del flusso nella Cronologia del contatto (le campagne stanno già nella coda).
-        if (function_exists('newsletter_storia_scrivi')) newsletter_storia_scrivi($iscritto, 'flusso_email', $f['nome'] . ': ' . newsletter_4byte_fuori((string)$d['oggetto']), $fid);
+        if (function_exists('newsletter_storia_scrivi')) newsletter_storia_scrivi($iscritto, 'flusso_email', $f['nome'] . ': ' . newsletter_4byte_fuori((string)($d['oggetto'] !== '' ? $d['oggetto'] : $oggetto)), $fid);
         $ascolta = $d['ascolto'] > 0 && (newsletter_flusso_arrivo($g, $nodoId, 'aperta') !== null || newsletter_flusso_arrivo($g, $nodoId, 'cliccata') !== null || newsletter_flusso_arrivo($g, $nodoId, 'nessuna') !== null);
         if ($ascolta) { $ferma(time() + $d['ascolto'] * 60, 'email'); return; }
         if (!$vai('poi')) return;

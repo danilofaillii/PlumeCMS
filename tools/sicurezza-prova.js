@@ -2371,6 +2371,83 @@ echo json_encode($o);
     await anon39.close(); await ctx39.close();
   } else console.log('--  aperture nuove con valori cattivi: saltata (serve CMS_DIR)');
 
+  // === 40. (2.18.0) Il passo Email che richiama un modello. Id del modello inventato, negativo, testo o con SQL, e il modello
+  // dell'email di conferma (tag optin): nessuna automazione si salva. "Stacca dal modello" con valori storti: nessun errore.
+  // Il redattore non salva automazioni né modelli, non apre la pagina del codice. La pagina del codice di un modello a blocchi
+  // non cambia niente; senza token niente. Nome del modello e dell'automazione con codice: escono come testo sulla tela, nel
+  // pannello del passo, in "Usato in", nelle conferme e nella dashboard (nessuna finestra aperta da script). Serve CMS_DIR.
+  if (DIR) {
+    const { execFileSync } = require('child_process');
+    const cli40 = (...a) => JSON.parse(execFileSync('php', [path.join(__dirname, '..', 'prove', 'automazioni-cli.php'), DIR, ...a.map(String)], { encoding: 'utf8' }).trim().split('\n').pop());
+    const q40 = (s) => cli40('sql', s);
+    const uno40 = (s) => { const r = q40(s); return r && r[0] ? Object.values(r[0])[0] : null; };
+    const PF = ADMIN + '/newsletter-flussi.php', PM = ADMIN + '/newsletter-modelli.php';
+    const ORIG = { 'Origin': BASE.replace(/(https?:\/\/[^/]+).*/, '$1') };
+    const pulisci40 = () => {
+      for (const r of q40("SELECT id FROM {p}newsletter_flussi WHERE nome LIKE 'Sic40%'") || []) { for (const t of ['newsletter_corsi', 'newsletter_flussi_registro', 'newsletter_flussi_numeri']) q40(`DELETE FROM {p}${t} WHERE flusso_id = ${r.id}`); q40(`DELETE FROM {p}newsletter_flussi WHERE id = ${r.id}`); }
+      q40("DELETE FROM {p}newsletter_modelli WHERE nome LIKE 'Sic40%'");
+    };
+    pulisci40();
+    const quante40 = () => +uno40("SELECT COUNT(*) FROM {p}newsletter_flussi WHERE nome LIKE 'Sic40%'");
+    const MB = cli40('modello_crea', 'Sic40 buono', 'blocchi', 'Sic40 testo', 'Sic40 oggetto');
+    q40(`INSERT INTO {p}newsletter_modelli (nome, editor, design, oggetto, attivo, tag, origine, creato, aggiornato) SELECT 'Sic40 conferma', 'blocchi', design, 'Conferma', 1, 'optin', '', NOW(), NOW() FROM {p}newsletter_modelli WHERE id = ${MB}`);
+    q40(`INSERT INTO {p}newsletter_modelli (nome, editor, design, oggetto, attivo, tag, origine, creato, aggiornato) SELECT 'Sic40 <img src=x onerror=alert(40)>', 'blocchi', design, '<script>alert(40)</script>', 1, '', '', NOW(), NOW() FROM {p}newsletter_modelli WHERE id = ${MB}`);
+    const MO = +uno40("SELECT id FROM {p}newsletter_modelli WHERE nome = 'Sic40 conferma'"), MX = +uno40("SELECT id FROM {p}newsletter_modelli WHERE nome LIKE 'Sic40 <img%'");
+    const g40 = (dati) => JSON.stringify({ nodi: [{ id: 0, tipo: 'innesco', x: 0, y: 0, dati: {} }, { id: 1, tipo: 'email', x: 40, y: 140, dati: Object.assign({ oggetto: 'Sic40', anteprima: '', corpo: '', editor: 'modello' }, dati) }], archi: [{ da: 0, uscita: 'poi', a: 1 }] });
+    const tk40 = await tokenDi(admin.p, PF + '?nuovo=1');
+    const salva40 = (campi, ctx = admin.ctx, headers = ORIG) => ctx.request.post(PF, { headers, form: Object.assign({ _csrf: tk40, id: '0', azione: 'salva', nome: 'Sic40', stato: 'in_pausa', inneschi: '[{"tipo":"lista","id":0}]' }, campi), maxRedirects: 0 });
+    const strani = [99999999, -5, 'abc', '1 OR 1=1', `${MB}'; DROP TABLE x`, '', 0, MO, [MB], { id: MB }];
+    const passati40 = [];
+    for (const v of strani) { await salva40({ grafo: g40({ modello: v }) }); if (quante40() > 0) { passati40.push(v); pulisci40(); } }
+    ok('2.18.0: id del modello inventato, negativo, testo, con SQL, vuoto, elenco, oggetto e il modello della conferma: nessuna automazione si salva', passati40.length === 0, passati40);
+    // Un passo che richiama un modello vero si salva (la prova di controllo), poi "Stacca" con valori storti non rompe niente.
+    await salva40({ nome: 'Sic40 <svg onload=alert(40)>', grafo: g40({ modello: MX, oggetto: '' }) });
+    const F40 = +uno40("SELECT id FROM {p}newsletter_flussi WHERE nome LIKE 'Sic40%'") || 0;
+    ok('2.18.0: la prova di controllo con un modello vero si salva, e tiene il riferimento', F40 > 0 && JSON.parse(uno40(`SELECT passi FROM {p}newsletter_flussi WHERE id = ${F40}`)).nodi[1].dati.modello === MX);
+    const male40 = [];
+    for (const st of ['abc', '-1', '99999', '1 OR 1=1', '0']) {
+      const r = await admin.ctx.request.post(PF, { headers: ORIG, form: { _csrf: tk40, id: String(F40), azione: 'stacca', stacca: st, nome: 'Sic40 <svg onload=alert(40)>', stato: 'in_pausa', inneschi: '[{"tipo":"lista","id":0}]', grafo: g40({ modello: MX, oggetto: '' }) }, maxRedirects: 0 });
+      if (r.status() !== 302) male40.push([st, r.status()]);
+    }
+    const d40 = JSON.parse(uno40(`SELECT passi FROM {p}newsletter_flussi WHERE id = ${F40}`)).nodi[1].dati;
+    ok('2.18.0: "Stacca" con un passo che non c\'è, testo o SQL: nessun errore e il passo resta collegato al modello', male40.length === 0 && d40.editor === 'modello' && d40.modello === MX, [male40, d40.editor]);
+    // Redattore e senza token
+    const anon40 = await browser.newContext();
+    const a40 = await anon40.request.get(PM + '?codice=' + MB, { maxRedirects: 0 });
+    await anon40.close();
+    const tkm = await tokenDi(admin.p, PM);
+    const h0 = uno40(`SELECT design FROM {p}newsletter_modelli WHERE id = ${MB}`);
+    const c1 = await admin.ctx.request.post(PM, { headers: ORIG, form: { _csrf: tkm, azione: 'codice', id: String(MB), html: '<p>rubato</p>', oggetto: 'x' }, maxRedirects: 0 });
+    const c2 = await admin.ctx.request.post(PM, { headers: ORIG, form: { azione: 'oggetto', id: String(MB), oggetto: 'Sic40 senza token', optin: '1' }, maxRedirects: 0 });
+    ok('2.18.0: la pagina del codice non cambia un modello a blocchi; senza token niente; anonimo fuori', [302, 403].includes(a40.status()) && c1.status() === 302 && c2.status() === 403 && uno40(`SELECT design FROM {p}newsletter_modelli WHERE id = ${MB}`) === h0 && uno40(`SELECT html FROM {p}newsletter_modelli WHERE id = ${MB}`) === null && uno40(`SELECT oggetto FROM {p}newsletter_modelli WHERE id = ${MB}`) === 'Sic40 oggetto', [a40.status(), c1.status(), c2.status()]);
+    if (red.dentro) {
+      const tr = await tokenDi(red.p, ADMIN + '/media.php');
+      const r1 = await red.ctx.request.post(PF, { headers: ORIG, form: { _csrf: tr, id: '0', azione: 'salva', nome: 'Sic40 redattore', stato: 'attiva', inneschi: '[{"tipo":"lista","id":0}]', grafo: g40({ modello: MB }) }, maxRedirects: 0 });
+      const r2 = await red.ctx.request.get(PM + '?codice=' + MB, { maxRedirects: 0 });
+      const r3 = await red.ctx.request.post(PM, { headers: ORIG, form: { _csrf: tr, azione: 'elimina', id: String(MB) }, maxRedirects: 0 });
+      ok('2.18.0: il redattore non salva un passo da modello, non apre la pagina del codice, non elimina un modello', [r1, r2, r3].every(r => [302, 403].includes(r.status())) && +uno40("SELECT COUNT(*) FROM {p}newsletter_flussi WHERE nome = 'Sic40 redattore'") === 0 && +uno40(`SELECT COUNT(*) FROM {p}newsletter_modelli WHERE id = ${MB}`) === 1, [r1.status(), r2.status(), r3.status()]);
+    }
+    // Il codice nel nome del modello e dell'automazione esce come testo, nel pannello e nelle conferme.
+    const fin40 = [];
+    const ascolta40 = d => { fin40.push(d.message()); d.dismiss(); };
+    admin.p.on('dialog', ascolta40);
+    await admin.p.goto(PF + '?id=' + F40, { waitUntil: 'networkidle' });
+    await admin.p.locator('.fl-nodo[data-id="1"] .fl-nodo-corpo').click();
+    await admin.p.waitForTimeout(300);
+    const tela40 = await admin.p.evaluate(() => ({ html: document.querySelector('.fl-nodo[data-id="1"]').innerHTML + document.getElementById('fl-pannello').innerHTML, on: [...document.querySelectorAll('#fl-tela *, #fl-pannello *')].filter(x => [...x.attributes].some(a => /^on/i.test(a.name))).length }));
+    ok('2.18.0: nome e oggetto del modello con codice: sulla tela e nel pannello del passo escono come testo', tela40.on === 0 && !/<img src=x/.test(tela40.html) && /&lt;img src=x onerror=alert\(40\)&gt;/.test(tela40.html) && !/<script>alert\(40\)/.test(tela40.html), tela40.html.slice(0, 300));
+    await admin.p.goto(PM, { waitUntil: 'networkidle' });
+    const pm40 = await admin.p.content();
+    ok('2.18.0: "Usato in" e le conferme con il nome dell\'automazione con codice: come testo', !/<svg onload=alert\(40\)>/.test(pm40) && /&lt;svg onload=alert\(40\)&gt;/.test(pm40) && await admin.p.locator('svg[onload]').count() === 0);
+    q40(`DELETE FROM {p}newsletter_modelli WHERE id = ${MX}`);
+    await admin.p.goto(ADMIN + '/index.php', { waitUntil: 'networkidle' });
+    const db40 = await admin.p.locator('.db-avvisi').innerHTML().catch(() => '');
+    // L'automazione è in pausa: la dashboard la segnala (solo le inattive no), con il nome come testo.
+    ok('2.18.0: dashboard con il modello sparito: il nome dell\'automazione con codice esce come testo', /&lt;svg onload=alert\(40\)&gt;/.test(db40) && !/<svg onload/.test(db40) && fin40.length === 0, [db40.slice(0, 200), fin40]);
+    admin.p.off('dialog', ascolta40);
+    pulisci40();
+  } else console.log('--  passo Email da un modello: saltata (serve CMS_DIR)');
+
   // === pulizia: elimina il redattore di prova
   {
     await admin.p.goto(ADMIN + '/utenti.php', { waitUntil: 'networkidle' });
