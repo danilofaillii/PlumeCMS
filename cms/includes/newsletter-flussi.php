@@ -826,7 +826,12 @@ function newsletter_flusso_evento(int $flusso, int $nodo, int $iscritto, string 
 function nl_email_campagna(array $f, array $d): array {
     $c = ['id' => 0, 'oggetto' => $d['oggetto'], 'anteprima' => $d['anteprima'], 'corpo' => $d['corpo'], 'pulsante_testo' => $d['pulsante_testo'], 'pulsante_link' => $d['pulsante_link'], 'mittente_id' => (int)(($d['mittente_id'] ?? 0) ?: ($f['mittente_id'] ?? 0))];
     if (($d['editor'] ?? '') === 'blocchi') $c += ['editor' => 'blocchi', 'design' => (string)$d['design']];
-    elseif (($d['editor'] ?? '') === 'html' && trim((string)($d['html'] ?? '')) !== '') $c += ['editor' => 'html', 'html' => (string)$d['html']];
+    elseif (($d['editor'] ?? '') === 'html' && trim((string)($d['html'] ?? '')) !== '') {
+        // Il codice HTML lo compone nl_camp_html() delle campagne: nel giro del cron quel file può non essere caricato, e senza
+        // newsletter_email() ripiegherebbe in silenzio sul testo semplice (trovato dalla prova della 2.17.1).
+        if (!function_exists('nl_camp_html')) @include_once __DIR__ . '/newsletter-campagne.php';
+        $c += ['editor' => 'html', 'html' => (string)$d['html']];
+    }
     return $c;
 }
 
