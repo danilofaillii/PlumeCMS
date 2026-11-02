@@ -106,7 +106,7 @@ Sono gli unici in `cms/docs/`, nello zip, nel sito di plumeCMS e nella pagina Do
 - **Pacchetto di aggiornamento** per un'installazione esistente:
   `python3 tools/cms-pacchetto.py --aggiornamento`. Si carica dal pannello,
   Impostazioni, Aggiornamenti.
-- **Versione**: `cms/VERSIONE` (oggi 2.14.0; sempre tre numeri: "beta" va nel CHANGELOG, mai nel nome dello zip, se no la serie "ultima" del Download non lo riconosce) e una voce in `cms/CHANGELOG.md` a ogni
+- **Versione**: `cms/VERSIONE` (oggi 2.15.0; sempre tre numeri: "beta" va nel CHANGELOG, mai nel nome dello zip, se no la serie "ultima" del Download non lo riconosce) e una voce in `cms/CHANGELOG.md` a ogni
   zip con contenuto diverso. Mai cambiare il contenuto di una versione già data.
 - **Prove** prima di dire finito:
   - `php -n -d short_open_tag=1 -l` su ogni file PHP toccato, `node --check` sui js;
@@ -144,6 +144,18 @@ Le decisioni complete, con data e perché, stanno nel second brain, `plumecms/de
 - **Nome: plumeCMS** (26 ottobre 2026).
 
 ## Stato al 31 ottobre 2026
+
+Fatto: plumeCMS 2.15.0 (2 novembre): fase 8 del piano Brevo, le automazioni (agente, ramo `fase8-automazioni-brevo`:
+`includes/newsletter-automazioni.php` nuovo, `newsletter-flussi.php` e la tela riscritti; inneschi, azioni con webhook firmato solo https
+e mai verso indirizzi interni, regole, statistiche per passo, Attività e registro; tabelle `newsletter_flussi_registro|numeri`, colonne
+`newsletter_flussi.stato|inneschi|tag|rientro|rientro_attesa|uscita` e `newsletter_corsi.giro`; un flusso spento diventa Inattiva). Gruppo
+di attacchi 37. Prove: install 37/37 radice e cartella, automazioni 89/89 radice, cartella e aggiornato (4872 contatti: l'innesco degli
+inattivi ne fa entrare 200 a giro, la prova gira fino a 60 volte), flussi di prima in corso 18/18 (su un sito loro: con le campagne vecchie
+sullo stesso sito le email dei flussi finiscono nella posta dell'altra prova), campagne vecchie al byte 15/15, aggiornamento 2.14.0 -> 2.15.0
+13/13 con 20 foto uguali, contatti 94/94, campagne 100/100, editor email 107/107, A/B 65/65, report 72/72, segmenti 179/179, newsletter 37/37,
+addon 70/70, attacchi 389/389, pacchetto unico su un sito 2.14.0 13/13. Lo zip del CMS si costruisce prima di `consegna.py`
+(`cms-pacchetto.py --aggiornamento` in testa a `$S/v2150.sh`). La prova degli attacchi delle formule ora usa indirizzi nuovi a ogni giro
+(quelli cancellati restano nell'impronta e l'importazione li scarta). Zip 2151 KB, PDF 10463 KB.
 
 Fatto: plumeCMS 2.14.0 (2 novembre): fase 7 del piano Brevo, report e statistiche (agente, ramo `fase7-report-brevo`:
 `includes/newsletter-report.php`, `admin/newsletter-report.php`, `assets/css/report.css`, statistiche riscritte, colonne `newsletter_eventi.volte`
