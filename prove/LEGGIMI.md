@@ -65,6 +65,19 @@ Le campagne fatte con la 2.10.0, dopo l'aggiornamento alla 2.11.0: stesso HTML a
 3. `node prove/prova-campagne-vecchie.js <base> <utente> <password> <porta smtp> <cartella posta> <cartella del CMS> prima.json`.
 4. Atteso: tutto OK (nove email uguali al byte a quelle che dava la 2.10.0).
 
+## prova-editor-email.js
+
+L'editor delle email a blocchi della 2.12.0 (fase 5 del piano Brevo), con i modelli, la galleria e le sezioni salvate.
+
+1. Un CMS installato e il server di posta finto: `python3 -I prove/smtp-finto.py <porta> <cartella> &`. I dati della prova
+   ("EE ...", `@ee-prova.it`, e quelli "CR ..." di `campagne-cli.php semina`) li mette e li toglie `prove/editor-email-cli.php`
+   (`pulisci`): va su un sito da buttare.
+2. `node prove/prova-editor-email.js <base> <utente> <password> <porta smtp> <cartella posta> <cartella del CMS> [cartella foto]`.
+   Con la cartella foto: le schermate dell'editor e le foto dell'email arrivata a 600 e 390 px (`email-600.png`,
+   `email-390.png`), da guardare a occhio. La miniatura di YouTube del blocco video senza rete esterna non si carica (si vede
+   il testo alternativo).
+3. Atteso (2.12.0): tutto OK, in radice e in cartella, su un sito nuovo e su uno aggiornato dalla 2.11.0.
+
 ## tools/sicurezza-prova.js
 
 

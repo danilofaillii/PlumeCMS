@@ -1,0 +1,6 @@
+{"nome":"Evento","descrizione":"Un invito: cosa, quando e dove, con il pulsante per iscriversi.","oggetto":"Ti aspettiamo: segnati la data",
+"design":{"stile":{"fondo":"#ecfdf5","titoli":"#064e3b","link":"#0f766e","btn_fondo":"#0f766e","font_titoli":"georgia"},"sezioni":[
+{"fondo":"#0f766e","spazio":44,"colonne":[[{"t":"testo","allinea":"center","html":"<p>SEI INVITATO</p>","colore":"#ccfbf1","dim":13,"spazio":8},{"t":"titolo","testo":"Il nome dell'evento","allinea":"center","colore":"#ffffff"},{"t":"testo","allinea":"center","html":"<p>Una frase che dice perché vale la pena esserci.</p>","colore":"#ffffff","spazio":0}]]},
+{"layout":"50-50","spazio":28,"colonne":[[{"t":"titolo","testo":"Quando","livello":"h3","allinea":"center","spazio":4},{"t":"testo","allinea":"center","html":"<p>Sabato 15 marzo<br>dalle 10 alle 13</p>"}],[{"t":"titolo","testo":"Dove","livello":"h3","allinea":"center","spazio":4},{"t":"testo","allinea":"center","html":"<p>Via Roma 1<br>Milano</p>"}]]},
+{"spazio":10,"colonne":[[{"t":"testo","html":"<p>Ciao {{ contact.NOME | default:\"a te\" }}, i posti sono pochi: prenota il tuo adesso, ci vuole un minuto.</p>","allinea":"center","spazio":22},{"t":"pulsante","testo":"Prenota il tuo posto","link":"/"},{"t":"spaziatore","altezza":12}]]},
+{"fondo":"#f9fafb","spazio":20,"colonne":[[{"t":"piede"}]]}]}}

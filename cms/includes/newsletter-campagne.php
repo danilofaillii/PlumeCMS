@@ -40,7 +40,7 @@ const NL_CAMP_PARTI = [
     'mittente' => ['Mittente', ['mittente_id']],
     'destinatari' => ['Destinatari', ['liste', 'segmenti', 'escludi_liste', 'escludi_segmenti', 'non_coinvolti']],
     'oggetto' => ['Oggetto e testo di anteprima', ['oggetto', 'anteprima']],
-    'design' => ['Design (testo, pulsante, codice HTML, testo semplice)', ['editor', 'corpo', 'html', 'pulsante_testo', 'pulsante_link', 'testo', 'testo_modificato']],
+    'design' => ['Design (blocchi, testo, pulsante, codice HTML, testo semplice)', ['editor', 'corpo', 'html', 'pulsante_testo', 'pulsante_link', 'testo', 'testo_modificato', 'design', 'modello_id']],
     'impostazioni' => ['Impostazioni aggiuntive', ['rispondi_a', 'campo_a', 'tag', 'utm', 'utm_campagna', 'link_web', 'link_preferenze', 'lotti', 'lotti_intervallo']],
 ];
 /** I motivi del questionario della disiscrizione. Le chiavi restano: i testi si possono cambiare in Impostazioni. */
@@ -61,6 +61,7 @@ function newsletter_campagne_schema(): void {
     $fatto = true;
     newsletter_schema();
     newsletter_flussi_schema();
+    if (function_exists('nd_schema')) nd_schema(); // 2.12.0: design e modello_id nelle campagne, modelli, sezioni salvate
     $colonne = [
         'nome' => "VARCHAR(150) NOT NULL DEFAULT ''",
         'tipo' => "VARCHAR(8) NOT NULL DEFAULT 'normale'",
@@ -262,9 +263,10 @@ function newsletter_campagna_sezioni(array $c): array {
     $out['destinatari'] = ['ok' => !$vuota && $n > 0, 'n' => $n, 'manca' => $vuota ? 'Scegli almeno una lista o un segmento a cui mandarla.' : ($n === 0 ? 'Con queste scelte la campagna non arriva a nessun contatto iscritto: cambia liste, segmenti o esclusioni.' : '')];
     $okOgg = trim((string)$c['oggetto']) !== '';
     $out['oggetto'] = ['ok' => $okOgg, 'manca' => $okOgg ? '' : "Scrivi l'oggetto dell'email."];
-    $html = ($c['editor'] ?? 'semplice') === 'html';
-    $okDes = $html ? trim((string)($c['html'] ?? '')) !== '' : trim(strip_tags((string)$c['corpo'], '<img>')) !== '';
-    $out['design'] = ['ok' => $okDes, 'manca' => $okDes ? '' : ($html ? 'Incolla il codice HTML dell\'email.' : "Scrivi il testo dell'email.")];
+    $ed = (string)($c['editor'] ?? 'semplice');
+    if ($ed === 'blocchi') $okDes = function_exists('nd_ha_contenuto') && nd_ha_contenuto(nd_design((string)($c['design'] ?? '')));
+    else $okDes = $ed === 'html' ? trim((string)($c['html'] ?? '')) !== '' : trim(strip_tags((string)$c['corpo'], '<img>')) !== '';
+    $out['design'] = ['ok' => $okDes, 'manca' => $okDes ? '' : ['html' => 'Incolla il codice HTML dell\'email.', 'blocchi' => "Nell'editor a blocchi aggiungi almeno un titolo, un testo o un'immagine."][$ed] ?? "Scrivi il testo dell'email."];
     $out['impostazioni'] = ['ok' => true, 'manca' => ''];
     return $out;
 }
@@ -300,8 +302,11 @@ function newsletter_campagna_salva_sezione(int $id, string $sez, array $p): stri
             $set['anteprima'] = newsletter_4byte_dentro(mb_substr(trim(str_replace(["\r", "\n"], ' ', (string)($p['anteprima'] ?? ''))), 0, 200));
             break;
         case 'design':
-            $ed = ($p['editor'] ?? '') === 'html' ? 'html' : 'semplice';
+            $ed = in_array($p['editor'] ?? '', ['html', 'blocchi'], true) ? $p['editor'] : 'semplice';
+            if ($ed === 'blocchi' && !function_exists('nd_design')) $ed = 'semplice';
             $set['editor'] = $ed;
+            // 2.12.0: passando all'editor a blocchi senza un design, si parte da quello di partenza (titolo, testo, pulsante, piede).
+            if ($ed === 'blocchi' && !nd_design((string)($c['design'] ?? ''))) $set['design'] = nd_json(nd_design_vuoto());
             if (array_key_exists('corpo', $p)) $set['corpo'] = newsletter_4byte_dentro((string)$p['corpo']);
             if (array_key_exists('pulsante_testo', $p)) {
                 $link = trim((string)($p['pulsante_link'] ?? ''));
@@ -314,7 +319,7 @@ function newsletter_campagna_salva_sezione(int $id, string $sez, array $p): stri
                 $set['html'] = newsletter_4byte_dentro($h);
             }
             // Passando al codice HTML con la casella vuota, si parte dall'email fatta con l'editor semplice.
-            if ($ed === 'html' && trim((string)($set['html'] ?? $c['html'] ?? '')) === '') $set['html'] = newsletter_4byte_dentro(nl_camp_html_partenza(array_merge($c, $set)));
+            if ($ed === 'html' && trim((string)($set['html'] ?? $c['html'] ?? '')) === '') $set['html'] = newsletter_4byte_dentro(nl_camp_html_partenza(array_merge($c, $set), (string)$c['editor']));
             if (array_key_exists('testo', $p)) {
                 $set['testo_modificato'] = empty($p['testo_modificato']) ? 0 : 1;
                 $set['testo'] = newsletter_4byte_dentro(mb_substr(str_replace("\r", '', (string)$p['testo']), 0, 200000));
@@ -543,8 +548,8 @@ function nl_camp_html(array $c, array $iscritto, string $uscita, array $x, strin
 }
 
 /** Il codice HTML di partenza quando si passa all'editor HTML: l'email dell'editor semplice, con {{ unsubscribe }}. */
-function nl_camp_html_partenza(array $c): string {
-    $c['editor'] = 'semplice'; $c['link_web'] = 0; $c['link_preferenze'] = 0; $c['anteprima'] = '';
+function nl_camp_html_partenza(array $c, string $da = 'semplice'): string {
+    $c['editor'] = $da === 'blocchi' ? 'blocchi' : 'semplice'; $c['link_web'] = 0; $c['link_preferenze'] = 0; $c['anteprima'] = '';
     [, $html] = newsletter_email($c, ['id' => 0, 'nome' => '', 'email' => ''], []);
     return str_replace('href="' . h(MODULI_URL . NEWSLETTER_ESCI) . '"', 'href="{{ unsubscribe }}"', $html);
 }

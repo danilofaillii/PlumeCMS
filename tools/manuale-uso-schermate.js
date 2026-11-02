@@ -683,7 +683,8 @@ capitoli['19'] = async () => {
   await p.keyboard.type('Ciao! Da settembre ci trovi in negozio anche il sabato mattina, dalle 9 alle 13. Ti aspettiamo.');
   await p.fill('[name=pulsante_testo]', 'Leggi la notizia');
   await p.fill('[name=pulsante_link]', B + '/aperti-il-sabato/');
-  await foto('19-design', { sel: '#sez-design', margine: 6, altezza: 760, segni: [{ sel: '#sez-design fieldset.nlk-scelte', n: 1 }, { sel: '#editor', n: 2 }, { sel: '#pulsante_testo', n: 3 }] });
+  // 2.12.0: le cinque strade del design sono riquadri con il loro pulsante; l'editor semplice è quello in uso.
+  await foto('19-design', { sel: '#sez-design', margine: 6, altezza: 1180, segni: [{ sel: '#sez-design .nd-strade', n: 1 }, { sel: '#editor', n: 2 }, { sel: '#pulsante_testo', n: 3 }] });
   await Promise.all([p.waitForNavigation(), p.click('#nl-form button[type=submit]')]);
   await vai('newsletter-flussi.php?nuovo=1');
   await foto('19-flussi', { clip: { x: 240, y: 56, width: 960, height: 600 } });
@@ -786,6 +787,65 @@ capitoli['19k'] = async () => {
   await Promise.all([u.waitForNavigation(), u.click('button:has-text("toglimi")')]);
   await u.screenshot({ path: path.join(GREZZE, '19-uscita.png'), clip: { x: 0, y: 70, width: 1200, height: 860 }, fullPage: true }); console.log('19-uscita');
   await u.context().close();
+};
+
+// 19m. L'editor delle email a blocchi, la galleria, le sezioni salvate e i modelli (2.12.0). Una campagna sua, "Offerta
+// d'autunno", dalla galleria; gira da sola (SOLO_CAPITOLI=19m) o dopo il 19k.
+capitoli['19m'] = async () => {
+  await vai('newsletter.php?crea=1');
+  await p.fill('#nl-crea-nome', 'Offerta d\'autunno');
+  await Promise.all([p.waitForNavigation(), p.click('#nl-crea button[type=submit]')]);
+  const idC = new URL(p.url()).searchParams.get('id');
+  await vai(`newsletter-campagna.php?id=${idC}&apri=design`);
+  await foto('19m-strade', { sel: '#sez-design .nd-strade', margine: 10, segni: [{ sel: '#sez-design .nd-strada:nth-child(1) .btn', n: 1 }, { sel: '#sez-design .nd-strada:nth-child(2) b', n: 2 }, { sel: '#sez-design .nd-strada:nth-child(3) .btn', n: 3 }, { sel: '#sez-design .nd-strada:nth-child(4) b', n: 4 }, { sel: '#sez-design .nd-strada:nth-child(5) b', n: 5 }] });
+  await vai(`newsletter-modelli.php?scheda=galleria&campagna=${idC}`);
+  await foto('19m-galleria', { clip: { x: 240, y: 56, width: 960, height: 760 }, segni: [{ sel: 'nav.imp-schede a.attiva', n: 1 }, { sel: '.ndm-carta:nth-child(3) .btn-primary', n: 2 }, { sel: '.ndm-carta:nth-child(3) .btn-secondary', n: 3 }] });
+  await Promise.all([p.waitForNavigation(), p.locator('.ndm-carta:has(b:text-is("Offerta")) button:has-text("Usa in questa campagna")').click()]);
+  await p.waitForSelector('.nd-b'); await dorme(500);
+  await foto('19m-editor', { clip: { x: 0, y: 0, width: 1200, height: 800 }, segni: [{ sel: '.ed-schede-pannello', n: 1 }, { sel: '#nd-tavolozza-blocchi', n: 2 }, { sel: '#nd-tavolozza-sezioni', n: 3 }, { sel: '#nd-tela', n: 4 }, { sel: '.nd-misure', n: 5 }, { sel: '.ed-storia', n: 6 }, { sel: '#nd-anteprima', n: 7 }, { sel: '#nd-salva', n: 8, lato: 'destra' }] });
+  // Il titolo grande dell'offerta: si sceglie nella tela e si cambia nel pannello.
+  const tit = p.locator('.nd-b:has(h1)').first();
+  await tit.click({ position: { x: 8, y: 8 } }); await dorme(300);
+  const marca = (et, nome) => p.evaluate(([et, nome]) => { const c = [...document.querySelectorAll("#nd-controlli .ed-controllo")].find(x => ((x.querySelector("label, .ed-etichetta") || {}).textContent || "") === et); if (c) c.setAttribute("data-mu", nome); }, [et, nome]);
+  await marca("Testo", "testo");
+  await p.locator('#nd-controlli .ed-controllo:has(label:text-is("Testo")) input').fill('-30% su tutti i cappotti');
+  await dorme(300);
+  await foto('19m-modifica', { clip: { x: 0, y: 0, width: 1200, height: 640 }, segni: [{ sel: '.nd-b.nd-sel > .nd-strumenti', n: 1 }, { sel: '#nd-modifica-nome', n: 2 }, { sel: '[data-mu=testo] input', n: 3 }, { sel: '#nd-controlli .nd-campioni', n: 4 }] });
+  const btn = p.locator('.nd-b:has(.nd-pulsante)').first();
+  await btn.click({ position: { x: 8, y: 8 } }); await dorme(300); await marca('Link', 'link');
+  await p.locator('#nd-controlli .ed-controllo:has(label:text-is("Link")) input[type=text]').first().fill(B + '/negozio/');
+  await foto('19m-pulsante', { clip: { x: 0, y: 50, width: 360, height: 560 }, segni: [{ sel: '[data-mu=link] input[type=text]', n: 1 }, { sel: '#nd-controlli .pn-link-scegli', n: 2 }, { sel: '#nd-controlli .nd-speciali', n: 3 }] });
+  // Una sezione nuova con due colonne, trascinata dalla tavolozza... qui con un clic (entra dopo la sezione selezionata).
+  await p.click('#nd-scheda-contenuti');
+  await p.click('#nd-tavolozza-sezioni [data-layout="50-50"]'); await dorme(300);
+  await p.click('#nd-scheda-stile'); await dorme(200);
+  await foto('19m-stile', { clip: { x: 0, y: 50, width: 360, height: 700 }, segni: [{ sel: '#nd-controlli-stile details:nth-of-type(1) > summary', n: 1 }, { sel: '#nd-controlli-stile details:nth-of-type(2) > summary', n: 2 }, { sel: '#nd-controlli-stile details:nth-of-type(3) > summary', n: 3 }] });
+  await p.click('[data-nd-misura=tel]'); await dorme(500);
+  await foto('19m-telefono', { clip: { x: 340, y: 50, width: 860, height: 750 }, segni: [{ sel: '[data-nd-misura=tel]', n: 1, sopra: false }] });
+  await p.click('[data-nd-misura=pc]'); await dorme(400);
+  // La testata salvata e sincronizzata: la prima sezione.
+  const s1 = p.locator('.nd-s').first();
+  await s1.hover({ position: { x: 6, y: 6 } });
+  await s1.locator(':scope > .nd-strumenti [data-nd-azione=salva]').click();
+  await p.fill('#nd-nome-campo', 'Testata delle offerte');
+  await foto('19m-salva-sezione', { sel: '#nd-dlg-nome', margine: 0, segni: [{ sel: '#nd-nome-campo', n: 1 }, { sel: '#nd-nome-spunta', n: 2 }, { sel: '#nd-nome-ok', n: 3 }] });
+  await p.click('#nd-nome-ok');
+  await p.waitForFunction(() => /Sezione salvata/.test(document.getElementById('nd-stato').textContent));
+  await s1.click({ position: { x: 6, y: 30 } }); await dorme(300);
+  await p.click('#nd-scheda-salvati'); await dorme(200);
+  await foto('19m-salvati', { clip: { x: 0, y: 50, width: 1200, height: 520 }, segni: [{ sel: '#nd-elenco-salvati .nd-salvato', n: 1 }, { sel: '.nd-s.nd-sel > .nd-strumenti', n: 2 }] });
+  await p.click('#nd-scheda-modifica'); await dorme(200);
+  await foto('19m-sincronizzata', { clip: { x: 0, y: 50, width: 360, height: 330 }, segni: [{ sel: '#nd-controlli .nd-salvata .ed-b-primo', n: 1 }, { sel: '#nd-controlli .nd-salvata .ed-b:not(.ed-b-primo)', n: 2 }] });
+  await p.click('#nd-come-modello');
+  await p.fill('#nd-nome-campo', 'Offerta stagionale');
+  await foto('19m-modello', { sel: '#nd-dlg-nome', margine: 0, segni: [{ sel: '#nd-nome-campo', n: 1 }, { sel: '#nd-nome-spunta', n: 2 }, { sel: '#nd-nome-ok', n: 3 }] });
+  await p.click('#nd-nome-ok');
+  await p.waitForFunction(() => /Modello salvato/.test(document.getElementById('nd-stato').textContent));
+  await p.click('#nd-anteprima'); await dorme(1500);
+  await foto('19m-anteprima', { sel: '#nd-dlg-anteprima', margine: 0, segni: [{ sel: '.nd-misure-anteprima', n: 1 }] });
+  await p.click('#nd-dlg-anteprima [data-chiudi-dialogo]');
+  await vai('newsletter-modelli.php');
+  await foto('19m-modelli', { clip: { x: 240, y: 56, width: 960, height: 760 }, segni: [{ sel: '#ndm-nuovo', n: 1 }, { sel: '.ndm-tabella tbody tr:first-child .ndm-stato', n: 2 }, { sel: '.ndm-tabella tbody tr:first-child .ndm-azioni', n: 3 }, { sel: '#ndm-doi', n: 4 }] });
 };
 
 // 19j. I segmenti, Aggiungi filtro e le viste (2.10.0). Dopo il 19i: usa i contatti importati ("Clienti del negozio",

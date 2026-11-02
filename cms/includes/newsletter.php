@@ -521,7 +521,10 @@ function newsletter_richiesta(array $d, array $opz = []): string {
     $cosa = trim((string)($opz['cosa'] ?? '')) ?: ($principaleQui ? lcfirst(newsletter_nome()) : (newsletter_nome_lista($lista) ?: 'questa lista'));
     // 2.7.0: l'email si compone in includes/newsletter-email.php, con le parti scritte nel form (opzione 'email'), quelle
     // comuni di Newsletter > Impostazioni e, per quello che resta vuoto, i testi di sempre.
-    [$oggetto, $html] = nl_email_conferma(['principale' => $principaleQui, 'cosa' => $cosa, 'nome' => (string)$d['nome'], 'link' => $link,
+    // 2.12.0: con un modello di doppio opt-in scelto in Modelli, l'email è quella del modello; i form con la loro email
+    // di conferma scritta (opzione 'email') e le email riscritte a mano (oggetto, testo) restano le loro.
+    $doi = empty($opz['email']) && trim((string)($opz['testo'] ?? '')) === '' && trim((string)($opz['oggetto'] ?? '')) === '' && function_exists('nd_doi_email') ? nd_doi_email($link, (string)$d['nome'], $email) : null;
+    [$oggetto, $html] = $doi ?? nl_email_conferma(['principale' => $principaleQui, 'cosa' => $cosa, 'nome' => (string)$d['nome'], 'link' => $link,
         'parti' => is_array($opz['email'] ?? null) ? $opz['email'] : [], 'opz' => $opz]);
     return posta_invia($email, $oggetto, $html, moduli_intestazioni(), 'conferma') ? '' : 'posta';
 }
@@ -855,7 +858,9 @@ function newsletter_email(array $c, array $iscritto, ?array $traccia = null): ar
     $id = (int)($iscritto['id'] ?? 0);
     $uscita = $id ? newsletter_link_uscita($id, $traccia) : MODULI_URL . NEWSLETTER_ESCI;
     $x = function_exists('nl_camp_extra') ? nl_camp_extra($c, $iscritto) : ['web' => '', 'pref' => '', 'pref_sempre' => '', 'indirizzo' => ''];
-    if (($c['editor'] ?? 'semplice') === 'html' && function_exists('nl_camp_html')) {
+    if (($c['editor'] ?? 'semplice') === 'blocchi' && function_exists('nd_email_campagna')) {
+        $html = nd_email_campagna($c, $iscritto, $uscita, $x, $oggetto); // 2.12.0: l'editor a blocchi (includes/newsletter-design.php)
+    } elseif (($c['editor'] ?? 'semplice') === 'html' && function_exists('nl_camp_html')) {
         $html = nl_camp_html($c, $iscritto, $uscita, $x, $oggetto);
     } else {
         $corpo = newsletter_corpo_email((string)$c['corpo']);
@@ -1028,3 +1033,4 @@ require_once __DIR__ . '/newsletter-contatti.php'; // 2.8.0: contatti, attributi
 require_once __DIR__ . '/newsletter-importa.php'; // 2.9.0: importazione, esportazione, lista dei test (come Brevo)
 require_once __DIR__ . '/newsletter-segmenti.php'; // 2.10.0: segmenti, filtri e viste (come Brevo)
 require_once __DIR__ . '/newsletter-campagne.php'; // 2.11.0: campagne a riepilogo, disiscrizione con il questionario, centro preferenze
+require_once __DIR__ . '/newsletter-design.php'; // 2.12.0: editor delle email a blocchi, modelli, sezioni salvate
