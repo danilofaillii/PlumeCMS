@@ -111,13 +111,23 @@ function editor_hero_parola(array $v): string {
  * lettori di schermo; il titolo intero resta nell'h1, sotto e più piccolo: per Google e per chi ascolta la pagina è
  * lo stesso titolo di sempre.
  */
+/**
+ * L'indirizzo di una foto scritto dentro uno stile (url() del CSS): cms_con_cartella() guarda solo gli attributi src e href,
+ * quindi in un sito in una cartella (/test) la cartella si mette qui, come fa per le <img>. Trovato dalle prove della 2.17.0.
+ */
+function editor_hero_con_cartella(string $u): string {
+    $b = function_exists('cms_sito_base') ? cms_sito_base() : '';
+    if ($b === '' || !str_starts_with($u, '/') || str_starts_with($u, '//') || $u === $b || str_starts_with($u, $b . '/')) return $u;
+    return $b . $u;
+}
+
 function editor_hero_traforata(array $v): string {
     $parola = editor_hero_parola($v);
     $img = (string)($v['immagine'] ?? '');
     $t = (string)($v['foto_trattamento'] ?? 'velo');
     $classi = 'finestra ed-htr-velo' . ($img === '' ? ' ed-htr-senza-foto' : '') . (in_array($t, ['bn', 'naturale'], true) ? ' ed-foto-' . $t : '');
     $giga = $parola !== '' ? '<span class="' . $classi . '" aria-hidden="true"><span class="ed-htr-parola" style="--n:' . max(4, mb_strlen($parola))
-        . ($img !== '' ? ';--foto:url(&quot;' . h(str_replace(['\\', '"'], '', $img)) . '&quot;)' : '') . '">' . h($parola) . '</span></span>' : '';
+        . ($img !== '' ? ';--foto:url(&quot;' . h(str_replace(['\\', '"'], '', editor_hero_con_cartella($img))) . '&quot;)' : '') . '">' . h($parola) . '</span></span>' : '';
     $occhiello = (string)($v['occhiello'] ?? '') !== '' ? '<span class="occhiello">' . h($v['occhiello']) . '</span>' : '';
     return editor_hero_apri('traforata')
         . '<div class="ed-htr-corpo">' . $occhiello
