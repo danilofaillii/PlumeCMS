@@ -43,6 +43,13 @@ if ($cronFermo) $avvisi[] = [($cronUltimo ? 'Il cron del mattino non gira dal ' 
 if ($inviiNuovi) $avvisi[] = ["$inviiNuovi " . ($inviiNuovi === 1 ? 'compilazione nuova' : 'compilazioni nuove') . ' dai form.', 'form-submissions.php'];
 if ($pacchettiAttesa) $avvisi[] = ["$pacchettiAttesa " . ($pacchettiAttesa === 1 ? 'pacchetto caricato e non ancora applicato' : 'pacchetti caricati e non ancora applicati') . '.', 'aggiornamenti.php'];
 if (posta_notifica_email() === '') $avvisi[] = ["Manca l'indirizzo degli avvisi: senza, niente email del mattino.", 'impostazioni.php'];
+// 2.18.0: i passi Email che richiamano un modello che non c'è più (le persone si fermano lì, niente email vuote).
+if ($dbAdmin && function_exists('nl_passi_senza_modello')) {
+    try {
+        foreach (nl_passi_senza_modello() as $_x) $avvisi[] = ["Automazione «{$_x['nome']}»: l'email #{$_x['nodo']} richiama il modello #{$_x['modello']}, che non c'è più. Non parte" . ($_x['fermi'] ? " e {$_x['fermi']} " . ($_x['fermi'] === 1 ? 'persona è ferma' : 'persone sono ferme') . ' lì' : '') . ': scegli un altro modello nel passo.', 'newsletter-flussi.php?id=' . $_x['flusso']];
+    } catch (Throwable $e) { error_log('dashboard, modelli delle automazioni: ' . $e->getMessage()); }
+    unset($_x);
+}
 
 if (!$dbAdmin) $avvisi = [];
 // 1.3.0: c'è una versione nuova di plumeCMS? Solo per l'amministratore, da quello che il pannello sa già (includes/versione-nuova.php).

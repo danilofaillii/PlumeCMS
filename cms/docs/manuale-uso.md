@@ -2299,12 +2299,19 @@ Per guardare l'email com'è davvero premi **Anteprima**:
 
 ![I modelli](immagini/manuale-uso/19m-modelli.jpg)
 
-1. **Crea un modello**: scrivi il nome e si apre l'editor a blocchi.
+1. **Crea un modello**: scrivi il nome, scegli **Come lo scrivi** (con l'editor a blocchi, oppure **Incollo il codice
+   HTML**) e si apre l'editor a blocchi o la pagina del codice (oggetto, testo di anteprima, il codice dell'email con
+   `{{ unsubscribe }}` dove vuoi il link per uscire).
 2. **Attivo** o **Inattivo**, scritto accanto a ogni modello.
-3. **Modifica** (nell'editor a blocchi), **Rendi attivo** o **Rendi inattivo**, **Duplica** (la copia nasce inattiva),
-   **Elimina** (le campagne che lo hanno usato tengono il loro design). **Rinomina** e **Oggetto e uso** stanno sotto il
-   nome.
-4. **Email di conferma dell'iscrizione**: l'email del doppio consenso (sotto, "L'email di conferma dell'iscrizione") può
+3. **Modifica** (nell'editor a blocchi) o **Modifica il codice** (per i modelli in codice HTML), **Rendi attivo** o **Rendi
+   inattivo**, **Duplica** (la copia nasce inattiva), **Elimina** (le campagne che lo hanno usato tengono il loro design).
+   **Rinomina** e **Oggetto e uso** (oggetto e testo di anteprima, usati dalle automazioni che richiamano il modello) stanno
+   sotto il nome.
+4. **Usato in**: le automazioni che richiamano il modello, con le email (per esempio "Ebook, email #3, #7"), e il link per
+   aprirle. Se rendi inattivo o elimini un modello usato, la finestra di conferma te le elenca: un modello inattivo le
+   automazioni lo mandano lo stesso; uno eliminato no (quelle email si fermano, vedi "Le automazioni"). Un modello usato non
+   può diventare l'email di conferma dell'iscrizione: duplicalo e spunta la copia.
+5. **Email di conferma dell'iscrizione**: l'email del doppio consenso (sotto, "L'email di conferma dell'iscrizione") può
    essere quella predefinita, scritta a parti in Impostazioni, oppure un tuo modello. Nella galleria c'è "Conferma
    dell'iscrizione": aggiungilo ai tuoi modelli, cambialo, e sceglilo qui. Il pulsante con il link di conferma lo porta da
    solo. I form con una loro email di conferma tengono la loro.
@@ -2665,8 +2672,13 @@ Automazioni**. Ognuna ha:
    - **Editor a blocchi**: premi **Salva e apri l'editor a blocchi** (lo stesso delle campagne, capitolo 20, "L'editor a
      blocchi"; con la freccia in alto torni alla tela);
    - **Da un modello**: nella tendina **Quale modello** compaiono tutti i tuoi modelli (Newsletter e form > Modelli), anche quelli
-     in codice HTML e quelli non attivi, segnati. Scegline uno e premi **Salva**: il modello si copia in questa email (il modello
-     resta com'è). Se l'oggetto è vuoto, prende quello del modello. Un modello a blocchi, dopo, lo ritocchi con **Editor a blocchi**.
+     in codice HTML e quelli non attivi, segnati. Scegline uno e premi **Salva**: l'email **richiama** il modello e lo legge
+     ogni volta che parte. Se correggi il modello in Modelli, da quel momento le email che partono escono corrette, senza
+     toccare l'automazione. **Oggetto** e **Testo di anteprima** lasciati vuoti valgono quelli del modello (nel campo vuoto
+     leggi "dal modello: ..."); scritti qui, valgono quelli scritti qui. Se né il passo né il modello hanno un oggetto, il
+     Salva te lo dice. **Apri il modello** porta all'editor del modello (a blocchi, o alla pagina del codice HTML); con la
+     freccia in alto torni all'automazione. **Stacca dal modello** salva l'automazione e copia in questa email il contenuto di
+     adesso del modello: da lì in poi l'email è sua e cambiare il modello non la tocca più.
 
    Sotto scegli **Quando parte**: appena arriva, a un'ora precisa o all'orario migliore di ogni persona.
 5. Per aggiungere un passo, scegli il blocco dopo cui va, apri la scheda **Azioni** o **Regole** e clicca il pezzo (o premi
@@ -2685,7 +2697,29 @@ ognuno passa una volta sola; l'anniversario rientra comunque una volta l'anno); 
 o entra in un segmento (si controlla a ogni giro, anche durante un'attesa); il **mittente** delle email (ogni email può
 sceglierne uno suo).
 
-**Errori che il Salva ti segnala**: un'email senza oggetto, una divisione in percentuale che non fa 100, un ramo senza
+**Esempio: una sequenza di 11 email da scrivere una volta sola.** Hai un ebook e vuoi mandare a chi lo scarica 11 email: la
+prima il giorno dopo, poi una ogni 7 giorni, alle 8.
+
+1. In **Newsletter e form > Modelli** crea le 11 email come modelli ("Ebook 01" ... "Ebook 11"), ognuna con il suo oggetto e il
+   suo testo di anteprima (**Oggetto e uso**, sotto il nome; per un modello in codice HTML, nella sua pagina).
+2. Crea l'automazione con l'innesco **Entra in una lista: ebook**, poi **Attesa** 1 giorno, **Email**, **Attesa** 7 giorni,
+   **Email**, e così via fino all'undicesima email.
+3. In ogni blocco Email: **Contenuto > Da un modello**, il modello giusto, oggetto e anteprima vuoti, **Quando parte: a un'ora
+   precisa del giorno**, alle 08:00. Sulla tela ogni blocco dice "Modello: Ebook 05".
+4. Stato **Attiva** e **Salva**. Per correggere un'email da adesso in poi basta correggere il suo modello.
+
+![Il passo Email che richiama il modello Ebook 05](immagini/manuale-uso/19p-modello.jpg)
+
+Nella figura: (1) l'**Oggetto** vuoto, con scritto "dal modello: ..." (vale quello del modello), (2) **Da un modello**, (3)
+**Quale modello**, (4) **Apri il modello**, (5) **Stacca dal modello**, (6) il blocco sulla tela con "Modello: Ebook 05".
+
+**Se il modello non c'è più.** Se elimini un modello che un'automazione richiama, l'email di quel passo non parte (mai
+un'email vuota): chi arriva lì si ferma e aspetta. Nel registro dell'automazione leggi "modello #N non trovato: email non
+mandata", nella dashboard c'è un avviso con il link all'automazione, e sulla tela il blocco dice "Modello non trovato". Scegli
+un altro modello nel passo e salva: chi era fermo riparte al giro dopo (entro un'ora). Un modello **inattivo** invece si manda
+lo stesso: "inattivo" vuol dire solo che non compare più fra le scelte nuove.
+
+**Errori che il Salva ti segnala**: un'email senza oggetto (né suo né del modello che richiama), una divisione in percentuale che non fa 100, un ramo senza
 condizioni, un webhook che non è https o porta a questo server, un collegamento che torna indietro (un'automazione va sempre
 avanti), più di 100 blocchi.
 
@@ -2713,6 +2747,8 @@ email. Un flusso che era spento è ora **Inattiva**.
 - [ ] Ogni automazione Attiva ha almeno un innesco, e l'ho provata aggiungendo me stesso (innesco "Aggiunto a mano") prima di
   lasciarla andare; nella scheda Attività e registro vedo la mia email passare.
 - [ ] Un'automazione che non uso più è Inattiva (o eliminata), non dimenticata in pausa.
+- [ ] Prima di eliminare un modello guardo **Usato in**: se lo richiama un'automazione, prima scelgo un altro modello nei suoi
+  passi (o premo **Stacca dal modello**). Nella dashboard nessun avviso "richiama il modello ... che non c'è più".
 - [ ] Se ho cambiato l'email di conferma: mi sono mandato la prova, e mi sono iscritto io una volta dal sito, premendo il
   pulsante dell'email vera.
 

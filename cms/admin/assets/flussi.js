@@ -16,6 +16,8 @@ var FL = (function () {
   function nodo(id) { return g.nodi.find(function (n) { return n.id === id; }); }
   function nuovoId() { return g.nodi.reduce(function (m, n) { return Math.max(m, n.id); }, 0) + 1; }
   function arrivo(da, u) { var a = g.archi.find(function (x) { return x.da === da && x.uscita === u; }); return a ? a.a : null; }
+  // 2.18.0: il segnaposto di oggetto e anteprima di un passo che richiama un modello: quello del modello, o l'esempio.
+  function segnaposto(mm, k, esempio) { return mm ? (mm[k] ? 'dal modello: ' + mm[k] : (k === 'o' ? 'il modello non ha oggetto: scrivilo qui' : 'il modello non ha anteprima')) : esempio; }
   function opz(obj, sc) { return Object.keys(obj).map(function (k) { return '<option value="' + h(k) + '"' + (String(k) === String(sc) ? ' selected' : '') + '>' + h(obj[k]) + '</option>'; }).join(''); }
   function tempo(min) {
     if (!min) return 'subito';
@@ -27,7 +29,9 @@ var FL = (function () {
   function opzUnita(u) { return [[1, 'minuti'], [60, 'ore'], [1440, 'giorni']].map(function (x) { return '<option value="' + x[0] + '"' + (x[0] === u ? ' selected' : '') + '>' + x[1] + '</option>'; }).join(''); }
   function b64(o) { return btoa(unescape(encodeURIComponent(JSON.stringify(o)))).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, ''); }
   function deB64(s) { try { s = s.replace(/-/g, '+').replace(/_/g, '/'); while (s.length % 4) s += '='; return JSON.parse(decodeURIComponent(escape(atob(s)))); } catch (e) { return null; } }
-  function emailDelFlusso() { var o = {}; g.nodi.forEach(function (x) { if (x.tipo === 'email') o[x.id] = '#' + x.id + ' ' + (x.dati.oggetto || 'Email ' + x.id); }); return o; }
+  // Il nome di un'email nei menu e nei riassunti: il suo oggetto; 2.18.0: senza, l'oggetto (o il nome) del modello che richiama.
+  function nomeEmail(x) { var mm = x.dati.editor === 'modello' ? D.modelli[x.dati.modello] : null; return x.dati.oggetto || (mm ? mm.o || mm.n : '') || 'Email ' + x.id; }
+  function emailDelFlusso() { var o = {}; g.nodi.forEach(function (x) { if (x.tipo === 'email') o[x.id] = '#' + x.id + ' ' + nomeEmail(x); }); return o; }
   function dati() { return {grafo: g, inneschi: inneschi}; }
 
   // Le uscite di un blocco: fisse per tipo; le divisioni hanno quelle dei loro rami.
@@ -43,7 +47,14 @@ var FL = (function () {
     var d = n.dati || {};
     switch (n.tipo) {
       case 'innesco': return inneschi.length ? inneschi.map(function (x) { return h(testoInnesco(x)); }).join('<br>') : '<i>Nessun innesco: aggiungine uno a sinistra</i>';
-      case 'email': return (d.oggetto ? h(d.oggetto) : '<i class="fl-manca">Senza oggetto</i>') + '<small>' + (d.editor === 'blocchi' ? 'editor a blocchi' : d.editor === 'html' ? 'codice HTML del modello' : d.editor === 'modello' ? (d.modello && D.modelli[d.modello] ? 'dal modello ' + D.modelli[d.modello].n : 'da un modello da scegliere') : 'testo semplice') + (d.orario === 'ora' ? ', alle ' + d.ora + ':00' : d.orario === 'migliore' ? ', all\'orario migliore' : '') + (d.ascolto > 0 ? '; aspetta una reazione per ' + tempo(d.ascolto) : '') + '</small>';
+      case 'email':
+        // 2.18.0: un passo "Da un modello" richiama il modello: la tela dice quale, e l'oggetto del modello se il passo non ne ha uno.
+        if (d.editor === 'modello') {
+          var mo = d.modello ? D.modelli[d.modello] : null;
+          return (d.oggetto ? h(d.oggetto) : mo && mo.o ? h(mo.o) + ' <small class="fl-dal-modello">(oggetto del modello)</small>' : '<i class="fl-manca">Senza oggetto</i>') + '<small>' + (mo ? 'Modello: ' + h(mo.n) : d.modello ? '<i class="fl-manca">Modello #' + h(d.modello) + ' non trovato</i>' : '<i class="fl-manca">Modello da scegliere</i>') +
+            (d.orario === 'ora' ? ', alle ' + d.ora + ':00' : d.orario === 'migliore' ? ', all\'orario migliore' : '') + (d.ascolto > 0 ? '; aspetta una reazione per ' + tempo(d.ascolto) : '') + '</small>';
+        }
+        return (d.oggetto ? h(d.oggetto) : '<i class="fl-manca">Senza oggetto</i>') + '<small>' + (d.editor === 'blocchi' ? 'editor a blocchi' : d.editor === 'html' ? 'codice HTML del modello' : 'testo semplice') + (d.orario === 'ora' ? ', alle ' + d.ora + ':00' : d.orario === 'migliore' ? ', all\'orario migliore' : '') + (d.ascolto > 0 ? '; aspetta una reazione per ' + tempo(d.ascolto) : '') + '</small>';
       case 'attesa': return 'Aspetta ' + h(tempo(d.minuti || 1440));
       case 'evento': return (d.evento === 'clic' ? 'Clicca in ' : 'Apre ') + h(d.email ? (emailDelFlusso()[d.email] || 'un\'email che non c\'è più') : 'qualsiasi email di questa automazione') + '<small>al massimo ' + h(tempo(d.massimo)) + '</small>';
       case 'bivio': var c = D.condizioni[d.condizione] || ['?', '']; return h(c[0]) + '<small>' + h(valoreBivio(d)) + '</small>';
@@ -59,7 +70,7 @@ var FL = (function () {
   function valoreBivio(d) {
     var c = D.condizioni[d.condizione] || ['', ''];
     if (c[1] === 'lista') return D.liste[d.valore] ? 'lista: ' + D.liste[d.valore] : 'scegli la lista';
-    if (c[1] === 'email') { var e = nodo(d.valore); return e && e.tipo === 'email' ? 'email: ' + (e.dati.oggetto || 'Email ' + e.id) : 'scegli l\'email'; }
+    if (c[1] === 'email') { var e = nodo(d.valore); return e && e.tipo === 'email' ? 'email: ' + nomeEmail(e) : 'scegli l\'email'; }
     if (c[1] === 'giorni') return (d.valore || 0) + ' giorni';
     if (c[1] === 'segmento') return (D.segmenti || {})[d.valore] ? 'segmento: ' + D.segmenti[d.valore] : 'scegli il segmento';
     return '';
@@ -293,13 +304,18 @@ var FL = (function () {
         html += campo('fp-url', 'Indirizzo che riceve i dati', '<input type="url" id="fp-url" value="' + h(d.url) + '" maxlength="500" placeholder="per esempio: https://servizio.esempio.it/ricevi" inputmode="url">', 'Solo https. Ogni volta che una persona passa di qui, il sito manda a questo indirizzo il nome dell\'automazione e i dati del contatto (email, nome, cognome). Gli indirizzi di questo server o della sua rete sono rifiutati; i rimandi a un altro indirizzo non si seguono. L\'esito si legge nel registro.');
         break;
       case 'email':
-        html += campo('fp-oggetto', 'Oggetto', '<input type="text" id="fp-oggetto" value="' + h(d.oggetto) + '" maxlength="255" placeholder="per esempio: Benvenuto, {nome}">', '{nome} diventa il nome della persona.');
-        html += campo('fp-anteprima', 'Testo di anteprima', '<input type="text" id="fp-anteprima" value="' + h(d.anteprima) + '" maxlength="255" placeholder="per esempio: Tre cose da sapere">');
+        var moS = d.editor === 'modello' && d.modello ? D.modelli[d.modello] : null;
+        html += campo('fp-oggetto', 'Oggetto', '<input type="text" id="fp-oggetto" value="' + h(d.oggetto) + '" maxlength="255" placeholder="' + h(segnaposto(moS, 'o', 'per esempio: Benvenuto, {nome}')) + '">', '{nome} diventa il nome della persona.' + (d.editor === 'modello' ? ' Vuoto: vale quello del modello quando l\'email parte.' : ''));
+        html += campo('fp-anteprima', 'Testo di anteprima', '<input type="text" id="fp-anteprima" value="' + h(d.anteprima) + '" maxlength="255" placeholder="' + h(segnaposto(moS, 'a', 'per esempio: Tre cose da sapere')) + '">', d.editor === 'modello' ? 'Vuoto: vale quello del modello.' : '');
         html += campo('fp-mitt', 'Mittente', '<select id="fp-mitt">' + opz(D.mittenti, d.mittente_id) + '</select>');
         // 2.17.1: tre scelte; "Da un modello" elenca tutti i modelli (a blocchi e in codice HTML) e li copia al salvataggio.
         var nMod = Object.keys(D.modelli).length, ed = d.editor === 'html' ? 'html' : d.editor;
         html += '<fieldset class="fl-scelta"><legend>Contenuto</legend><label class="fl-spunta"><input type="radio" name="fp-editor" value="semplice"' + (ed === 'semplice' || !ed ? ' checked' : '') + '> Testo semplice</label><label class="fl-spunta"><input type="radio" name="fp-editor" value="blocchi"' + (ed === 'blocchi' ? ' checked' : '') + '> Editor a blocchi</label><label class="fl-spunta"><input type="radio" name="fp-editor" value="modello"' + (ed === 'modello' ? ' checked' : '') + '> Da un modello</label>' + (ed === 'html' ? '<label class="fl-spunta"><input type="radio" name="fp-editor" value="html" checked> Codice HTML del modello</label>' : '') + '</fieldset>';
-        html += '<div id="fp-da-modello"' + (ed === 'modello' ? '' : ' hidden') + '>' + (nMod ? campo('fp-modello', 'Quale modello', '<select id="fp-modello"><option value="0">Scegli un modello</option>' + Object.keys(D.modelli).map(function (k) { var m = D.modelli[k]; return '<option value="' + h(k) + '"' + (String(k) === String(d.modello) ? ' selected' : '') + '>' + h(m.n) + (m.t === 'html' ? ' (codice HTML)' : '') + '</option>'; }).join('') + '</select>', 'Quando salvi, il modello si copia in questa email: i modelli e le altre email non cambiano. Se l\'oggetto è vuoto, prende quello del modello. Dopo, un modello a blocchi lo cambi con "Editor a blocchi".') : '<p class="hint">Ancora nessun modello. Creali in <a href="newsletter-modelli.php">Newsletter e form, Modelli</a>.</p>') + '</div>';
+        // 2.18.0: il passo richiama il modello e lo legge ogni volta che l'email parte (la 2.17.1 lo copiava al salvataggio).
+        var manca = ed === 'modello' && d.modello && !D.modelli[d.modello];
+        html += '<div id="fp-da-modello"' + (ed === 'modello' ? '' : ' hidden') + '>' + (nMod || manca ? campo('fp-modello', 'Quale modello', '<select id="fp-modello"><option value="0">Scegli un modello</option>' + (manca ? '<option value="' + h(d.modello) + '" selected>Modello #' + h(d.modello) + ' (non trovato)</option>' : '') + Object.keys(D.modelli).map(function (k) { var m = D.modelli[k]; return '<option value="' + h(k) + '"' + (String(k) === String(d.modello) ? ' selected' : '') + '>' + h(m.n) + (m.t === 'html' ? ' (codice HTML)' : '') + '</option>'; }).join('') + '</select>', 'L\'email legge il modello ogni volta che parte: se correggi il modello in Modelli, da quel momento esce corretta. Oggetto e anteprima vuoti qui sopra: valgono quelli del modello.') +
+          (manca ? '<p class="fl-manca" role="alert">Il modello #' + h(d.modello) + ' non c\'è più: questa email non parte e chi arriva qui si ferma. Scegline un altro e salva.</p>' : '') +
+          '<p class="fl-modello-azioni"><a class="btn btn-secondary btn-sm" id="fp-apri-modello" href="#"' + (d.modello && D.modelli[d.modello] ? '' : ' hidden') + '>Apri il modello</a> <button type="button" class="btn btn-secondary btn-sm" id="fp-stacca"' + (d.modello && D.modelli[d.modello] ? '' : ' hidden') + '>Stacca dal modello</button></p><p class="hint" id="fp-stacca-aiuto">"Stacca dal modello" salva l\'automazione e copia in questa email il contenuto di adesso del modello: da lì in poi cambiare il modello non la tocca più.</p>' : '<p class="hint">Ancora nessun modello. Creali in <a href="newsletter-modelli.php">Newsletter e form, Modelli</a>.</p>') + '</div>';
         if (ed === 'html') html += '<p class="hint" id="fp-html-nota">Questa email usa il codice HTML di un modello. Per cambiarla scegli un altro modello, oppure il testo semplice.</p>';
         html += '<div id="fp-semplice"' + (ed === 'semplice' || !ed ? '' : ' hidden') + '><label for="fp-corpo-q">Testo</label><div id="fp-corpo" class="fl-editor"></div>' + campo('fp-pt', 'Pulsante (facoltativo)', '<input type="text" id="fp-pt" value="' + h(d.pulsante_testo) + '" placeholder="per esempio: Scopri di più" maxlength="100"><input type="text" id="fp-pl" value="' + h(d.pulsante_link) + '" placeholder="per esempio: https://esempio.it/pagina" inputmode="url" aria-label="Indirizzo del pulsante">') + '</div>';
         html += '<div id="fp-blocchi"' + (ed === 'blocchi' ? '' : ' hidden') + '>' +
@@ -387,14 +403,21 @@ var FL = (function () {
     pannello.querySelector('#fp-pt').addEventListener('input', function (e) { d.pulsante_testo = e.target.value; });
     pannello.querySelector('#fp-pl').addEventListener('input', function (e) { d.pulsante_link = e.target.value; });
     pannello.querySelectorAll('[name=fp-editor]').forEach(function (r) { r.addEventListener('change', function () {
-      d.editor = r.value; if (r.value !== 'modello') d.modello = 0;
+      d.editor = r.value; if (r.value !== 'modello') d.modello = 0; else if (m) { d.modello = +m.value; mostraModello(); }
       pannello.querySelector('#fp-semplice').hidden = r.value !== 'semplice'; pannello.querySelector('#fp-blocchi').hidden = r.value !== 'blocchi';
       pannello.querySelector('#fp-da-modello').hidden = r.value !== 'modello'; var nota = pannello.querySelector('#fp-html-nota'); if (nota) nota.hidden = r.value !== 'html';
       disegna(); }); });
-    var m = pannello.querySelector('#fp-modello'); if (m) m.addEventListener('change', function () {
-      d.modello = +m.value; var mm = D.modelli[m.value], og = pannello.querySelector('#fp-oggetto');
-      if (mm && mm.o && og && !og.value.trim()) { og.value = mm.o; d.oggetto = mm.o; }
-      disegna(); });
+    // 2.18.0: scegliere un modello non copia più niente: aggiorna i segnaposti di oggetto e anteprima e il link "Apri il modello".
+    var m = pannello.querySelector('#fp-modello'), apri = pannello.querySelector('#fp-apri-modello'), stacca = pannello.querySelector('#fp-stacca');
+    var mostraModello = function () {
+      var mm = D.modelli[d.modello] || null;
+      pannello.querySelector('#fp-oggetto').placeholder = segnaposto(mm, 'o', 'per esempio: Benvenuto, {nome}');
+      pannello.querySelector('#fp-anteprima').placeholder = segnaposto(mm, 'a', 'per esempio: Tre cose da sapere');
+      if (apri) { apri.hidden = !mm; apri.href = mm ? mm.u : '#'; apri.setAttribute('aria-label', mm ? 'Apri il modello ' + mm.n : 'Apri il modello'); }
+      if (stacca) stacca.hidden = !mm;
+    };
+    if (m) { m.addEventListener('change', function () { d.modello = +m.value; mostraModello(); disegna(); }); if (d.editor === 'modello') mostraModello(); }
+    if (stacca) stacca.addEventListener('click', function () { document.getElementById('fl-stacca').value = n.id; var s = document.createElement('button'); s.type = 'submit'; s.name = 'azione'; s.value = 'stacca'; s.hidden = true; form.appendChild(s); s.click(); });
     pannello.querySelector('#fp-apri-design').addEventListener('click', function () { document.getElementById('fl-nodo-design').value = n.id; var s = document.createElement('button'); s.type = 'submit'; s.name = 'azione'; s.value = 'design'; s.hidden = true; form.appendChild(s); s.click(); });
     var or = pannello.querySelector('#fp-orario');
     or.addEventListener('change', function () { d.orario = or.value; scegli(n.id); disegna(); });

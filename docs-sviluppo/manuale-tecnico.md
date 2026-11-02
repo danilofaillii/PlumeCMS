@@ -2698,7 +2698,7 @@ con `automazioni giro`), che la pagina, il giro e ogni evento chiamano prima di 
 **Il grafo.** Elenco chiuso dei tipi in `NL_USCITE` (`:31`) con le uscite fisse; le divisioni hanno le uscite dei loro rami
 (`nl_uscite()`, `:378`). `newsletter_flusso_grafo_valido()` (`:403`), alla lettura e al salvataggio: al massimo
 `NL_AUT_MAX_NODI` (100) blocchi letti, tipi dall'elenco, dati di ogni tipo con i loro campi e i loro limiti (email: oggetto
-255, anteprima 255, corpo 300000, ascolto fino a un anno e, con `nl_email_extra()`, `:456`, editor `semplice`, `blocchi`, `html` (2.17.1, dal modello) o `modello` (scelta da copiare al salvataggio),
+255, anteprima 255, corpo 300000, ascolto fino a un anno e, con `nl_email_extra()`, `:456`, editor `semplice`, `blocchi`, `html` (2.17.1, dal modello) o `modello` (dalla 2.18.0 il passo richiama il modello, sotto),
 `design`, `modello`, `mittente_id`, `orario` `subito`/`ora`/`migliore`, `ora` 0-23; attesa almeno 1 minuto; evento
 `apertura`/`clic`, email, massimo; dividi fino a `NL_AUT_MAX_RAMI` (8) rami con nome e regole grezze, `nl_regole_grezze()`,
 `:393`; percento da 2 a 5 parti fra 1 e 99; liste; attributo con nome `[A-Z0-9_]`; webhook 500 caratteri), coordinate fra 0 e
@@ -2785,7 +2785,7 @@ pannello il costruttore dei segmenti (`window.nlsMonta` e `box.nlsCambio` in `ad
 condizione "Email di questa automazione" con le email della tela in `DEF.flussoEmail`, `:92`). Il passo Email ha mittente,
 oggetto, anteprima, contenuto (Testo semplice con Quill, o Editor a blocchi: "Salva e apri l'editor a blocchi" salva e apre
 `newsletter-design.php?flusso=F&nodo=N` (`admin/newsletter-design.php:20`-`:25`), che scrive il design nel grafo con
-`nl_aut_design_salva()`, `:267`, e torna alla tela; dalla 2.17.1 "Da un modello" come terza scelta del Contenuto, con tutti i modelli tranne quelli `optin`, anche in codice HTML e non attivi: `$modelliEmail` in `admin/newsletter-flussi.php`; al salvataggio `newsletter_flusso_salva()` copia `design` o `html`, mette `editor` `blocchi` o `html`, porta l'oggetto se vuoto e rifiuta "modello" senza scelta; `nl_email_campagna()` passa `editor` `html` e `html` a `newsletter_email()`, come una campagna in codice HTML), quando parte
+`nl_aut_design_salva()`, `:267`, e torna alla tela; dalla 2.17.1 "Da un modello" come terza scelta del Contenuto, con tutti i modelli tranne quelli `optin`, anche in codice HTML e non attivi: `$modelliEmail` in `admin/newsletter-flussi.php:216`; nella 2.17.1 il modello si copiava al salvataggio, dalla 2.18.0 il passo lo richiama, vedi "Il passo Email che richiama un modello" qui sotto), quando parte
 (subito, a un'ora, all'orario migliore), l'ascolto come prima. Il grafo e gli inneschi viaggiano in JSON nei campi nascosti
 (base64 di `campi-protetti.js` contro ModSecurity); la copia nel browser e il battito della sessione come prima. Scheda
 **Attività e registro** (`?id=N&scheda=attivita`): chi è dentro (50 per pagina, filtro per passo, "Togli" con la conferma,
@@ -2804,6 +2804,58 @@ orario, orario migliore, editor a blocchi e modello; i tre modelli; 390 px). `pr
 2.14.0 con tre flussi e sei contatti a metà (`automazioni-cli.php vecchi_semina`, impronte delle 42 email), aggiornato alla
 2.15.0: impronte uguali, i cammini arrivano in fondo con le stesse email e lo stesso esito dei bivi, il flusso spento diventa
 Inattiva e nessuno riceve la sua email. Attacchi del gruppo 37 in `tools/sicurezza-prova.js`.
+
+**Il passo Email che richiama un modello (dalla 2.18.0).** Richiesta di Danilo: le email di una sequenza (per esempio 11 email
+di un ebook) si scrivono e si correggono una volta sola in Modelli, e l'automazione manda sempre l'ultima versione salvata.
+Nella 2.17.1 "Da un modello" copiava il modello nel passo; dalla 2.18.0 lo **richiama**.
+
+- *Formato del nodo* (colonna `passi` di `<prefisso>newsletter_flussi`, JSON con i caratteri fuori ASCII come `\uXXXX`):
+  `{"id":7,"tipo":"email","x":340,"y":980,"dati":{"oggetto":"","anteprima":"","corpo":"","pulsante_testo":"","pulsante_link":"","ascolto":0,"editor":"modello","design":"","html":"","modello":12,"mittente_id":0,"orario":"ora","ora":8}}`.
+  `editor` = `modello` e `modello` = id della riga di `<prefisso>newsletter_modelli`; `design` e `html` vuoti (il passo non ha
+  contenuto suo); `oggetto` e `anteprima` vuoti valgono quelli del modello al momento dell'invio, scritti vincono.
+  `nl_email_extra()` (`includes/newsletter-flussi.php:475`) tiene `modello` (0-1000000) quando il grafo si rilegge;
+  `newsletter_flusso_salva()` (`:543`) non lo rimette più a 0 per `editor` `modello` (sì per gli altri editor), svuota `design`
+  e `html`, rifiuta un id che non c'è o di un modello `optin` ("il modello scelto non c'è più") e l'oggetto vuoto se anche il
+  modello non ne ha ("scrivi l'oggetto, oppure dallo al modello «X»"). Gli altri nodi e le righe non cambiano formato.
+- *All'invio*: `nl_passo_modello()` (`:845`) legge il modello adesso (`nd_modello()`, con `include_once` di
+  `newsletter-design.php` se il giro del cron non l'ha caricato) e dice perché non si può mandare: non c'è, è `optin`, senza
+  oggetto (né nel passo né nel modello), senza contenuto (codice HTML vuoto o design non leggibile). Un modello **inattivo**
+  si manda lo stesso (scelta di dettaglio: "inattivo" vale per le scelte nuove, e la conferma di "Rendi inattivo" lo dice).
+  `nl_email_campagna()` (`:895`) compone la campagna dal modello: `editor` `blocchi` con il `design` o `html` con il codice
+  (carica `newsletter-campagne.php` per `nl_camp_html()`), oggetto e anteprima del passo o del modello; poi
+  `newsletter_email()` come per ogni email (segnaposti, tracciamento, piede e link per uscire).
+- *Modello che non si può mandare*: `nl_corso_scorri()` (`:969`, il blocco dopo il controllo "non è iscritto" e prima
+  dell'orario, `:1027`-`:1039`) non manda niente: il cammino resta sul passo con `ascolto` = `modello` e `prossimo` fra un'ora (`:1036`;
+  prima dell'orario, così un passo "alle 8" che aspetta il modello resta segnato fermo), una riga
+  `email` nel registro con "modello #N non trovato: email non mandata" una volta sola per cammino (lo stesso dettaglio non si
+  riscrive), una riga nel log del giro. Quando il passo richiama un altro modello (o il modello torna), al giro dopo l'email
+  parte (con l'orario `ora`, alla prossima ora scelta). Attività dice "fermo: il modello dell'email non si può mandare".
+- *Dove è usato*: `nl_modelli_usati()` (`:860`, id del modello -> automazioni e passi) per Modelli e le conferme;
+  `nl_passi_senza_modello()` (`:877`) per l'avviso della dashboard (`admin/index.php:47`, solo amministratore, automazioni
+  non inattive, con quante persone sono ferme e il link all'automazione). Chi chiama queste funzioni da un altro file lo fa
+  con `function_exists` (opcache dopo l'aggiornamento).
+- *Pannello del passo* (`admin/assets/flussi.js`): la tela dice "Modello: Ebook 05" (o "Modello #N non trovato") e l'oggetto
+  del modello se il passo non ne ha uno; nel pannello oggetto e anteprima vuoti hanno il segnaposto "dal modello: ..."
+  (`segnaposto()`, `:20`; `nomeEmail()`, `:33`, anche per i menu e i riassunti dei bivi), "Apri il modello" (`newsletter-design.php?modello=N&flusso=F`, o `newsletter-modelli.php?codice=N&flusso=F`
+  per il codice HTML: "Torna" riporta all'automazione, `admin/newsletter-design.php:30`) e **Stacca dal modello**: campo
+  nascosto `stacca` con l'id del passo e azione `stacca` (`admin/newsletter-flussi.php:44`); `newsletter_flusso_salva()`
+  copia allora il contenuto di adesso (`design` o `html`, editor `blocchi` o `html`, oggetto e anteprima se vuoti) e mette
+  `modello` a 0, come la 2.17.1. `$modelliEmail` (`admin/newsletter-flussi.php:216`) porta anche `a` (anteprima) e `u` (dove
+  aprirlo); il grafo mandato al browser ha `design` e `html` come "si" o "" (il contenuto resta sul server).
+- *Modelli* (`admin/newsletter-modelli.php`): colonna **Usato in** con i link; "Rendi inattivo" e "Elimina" di un modello
+  usato con la conferma che elenca le automazioni (`$doveUsato`, `:27`); un modello usato non diventa `optin` (`:67`);
+  **Oggetto e uso** con il testo di anteprima; "Crea un modello" con **Come lo scrivi** (blocchi o codice HTML: parte da
+  `nl_camp_html_partenza()`, `:42`) e la pagina del codice `?codice=N` (`:111`, azione `codice`, `:49`: oggetto, anteprima,
+  codice fino a 1,5 MB, come il Codice HTML delle campagne). Colonna nuova `newsletter_modelli.anteprima` VARCHAR(255)
+  (`nd_schema()`, `includes/newsletter-design.php:109` e `:136`, con l'impronta cambiata), `nd_anteprima()` (`:554`),
+  `nd_modello_cambia()` accetta `anteprima` e `html` (`:559`). Le campagne non cambiano: lì il modello resta un punto di
+  partenza copiato (`nd_campagna_da_modello()`), e l'anteprima del modello non si usa.
+- *Compatibilità*: un passo salvato prima (semplice, a blocchi, o copiato da un modello con la 2.17.1, `editor` `blocchi` o
+  `html`) non cambia e manda la stessa email al byte (`automazioni-cli.php impronte "AU Copia%"` prima e dopo
+  l'aggiornamento). Un passo scritto a mano in un pacchetto con `editor` `blocchi` e `modello` > 0 non copia più il modello
+  (il `modello` torna 0): per richiamarlo si scrive `editor` `modello`.
+- *Prove*: `prove/prova-passo-modello.js` (sopra), `prove/prova-automazioni.js` (passo Email), gruppo di attacchi 40 di
+  `tools/sicurezza-prova.js`.
 
 **Non fatto**: inneschi del sito e dell'e-commerce, SMS (fuori dal piano); la prova di un'automazione (Brevo non l'ha); il
 design a blocchi delle email delle automazioni non segue le sezioni salvate sincronizzate (si aggiornano solo nelle campagne

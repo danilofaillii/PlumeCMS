@@ -26,6 +26,7 @@
 //   solo: SOLO_CAPITOLI=19o, con CMS_DIR_MANUALE e POSTA_MANUALE e TMPDIR vuota.
 // 2.15.0: il capitolo 19p (le automazioni, al posto della foto 19-flussi) gira da solo: SOLO_CAPITOLI=19p, con CMS_DIR_MANUALE e
 //   POSTA_MANUALE e TMPDIR vuota.
+// 2.18.0: il 19p fa anche 19p-modello (il passo Email che richiama il modello "Ebook 05") e rifà 19m-modelli con "Usato in".
 // 2.16.0: i form a cinque passi: capitoli 17 (rifatto, con il campo File) e 17n (form di iscrizione, pagina del form, Pagine e
 //   consenso), poi 31n e 31r con il costruttore nuovo: SOLO_CAPITOLI=17,17n,31n,31r su un sito col kit appena installato, TMPDIR vuota.
 const { chromium } = require('playwright');
@@ -942,7 +943,7 @@ capitoli['19m'] = async () => {
   await foto('19m-anteprima', { sel: '#nd-dlg-anteprima', margine: 0, segni: [{ sel: '.nd-misure-anteprima', n: 1 }] });
   await p.click('#nd-dlg-anteprima [data-chiudi-dialogo]');
   await vai('newsletter-modelli.php');
-  await foto('19m-modelli', { clip: { x: 240, y: 56, width: 960, height: 760 }, segni: [{ sel: '#ndm-nuovo', n: 1 }, { sel: '.ndm-tabella tbody tr:first-child .ndm-stato', n: 2 }, { sel: '.ndm-tabella tbody tr:first-child .ndm-azioni', n: 3 }, { sel: '#ndm-doi', n: 4 }] });
+  await foto('19m-modelli', { clip: { x: 240, y: 56, width: 960, height: 760 }, segni: [{ sel: '#ndm-nuovo', n: 1 }, { sel: '.ndm-tabella tbody tr:first-child .ndm-stato', n: 2 }, { sel: '.ndm-tabella tbody tr:first-child .ndm-azioni', n: 3 }, { sel: '.ndm-tabella tbody tr:first-child .ndm-usato', n: 4 }, { sel: '#ndm-doi', n: 5 }] });
 };
 
 // 19n. Il test A/B (2.13.0): la campagna "Novità di novembre" con due oggetti, mandata a 30 lettori finti (lista "Lettori
@@ -1036,6 +1037,22 @@ capitoli['19p'] = async () => {
   await foto('19p-tela', { clip: { x: 240, y: 56, width: 1200, height: 760 }, segni: [{ sel: '#fl-nome', n: 1 }, { sel: '#fl-stato', n: 2 }, { sel: '.fl-schede', n: 3 }, { sel: '.fl-nodo[data-id="1"] .fl-nodo-numeri', n: 4 }, { sel: '.fl-nodo[data-id="2"] .fl-nodo-numeri', n: 5 }, { sel: '#fl-form button[value=salva]', n: 6 }] });
   await vai(`newsletter-flussi.php?id=${idF}&scheda=attivita`);
   await foto('19p-attivita', { sel: '#fl-dentro', margine: 6, altezza: 420, segni: [{ sel: '#fl-passo', n: 1 }, { sel: '#fl-dentro tbody tr:first-child button', n: 2 }] });
+  // 2.18.0: l'email del passo richiama un modello ("Ebook 05"): Da un modello, Quale modello, oggetto vuoto (vale quello del
+  // modello), Apri il modello, Stacca dal modello, e sulla tela "Modello: Ebook 05". Poi Modelli con "Usato in" (rifà 19m-modelli).
+  const idM = cli('modello_crea', 'Ebook 05', 'blocchi', 'Il quinto capitolo: come scegliere il colore giusto', 'Ebook, capitolo 5: il colore giusto', 'Cinque minuti di lettura');
+  await vai('newsletter-flussi.php?id=' + idF);
+  await p.locator('.fl-nodo[data-id="1"] .fl-nodo-corpo').click();
+  await p.check('[name=fp-editor][value=modello]');
+  await p.selectOption('#fp-modello', String(idM));
+  await p.fill('#fp-oggetto', '');
+  // Il pannello del passo scorre dentro di sé: per la foto si apre tutto, così si vedono anche Apri il modello e Stacca.
+  await p.evaluate(() => { const pn = document.getElementById('fl-pannello'); pn.style.maxHeight = 'none'; pn.style.overflow = 'visible'; pn.style.height = 'auto'; });
+  await dorme(300);
+  const fondoP = await p.evaluate(() => { const r = document.getElementById('fp-stacca-aiuto').getBoundingClientRect(); return Math.ceil(r.bottom + scrollY + 16); });
+  await foto('19p-modello', { clip: { x: 520, y: 290, width: 920, height: Math.max(500, fondoP - 290) }, segni: [{ sel: '#fp-oggetto', n: 1 }, { sel: '[name=fp-editor][value=modello]', n: 2 }, { sel: '#fp-modello', n: 3 }, { sel: '#fp-apri-modello', n: 4 }, { sel: '#fp-stacca', n: 5 }, { sel: '.fl-nodo[data-id="1"] .fl-nodo-corpo', n: 6 }] });
+  await Promise.all([p.waitForNavigation(), p.click('#fl-form button[value=salva]')]);
+  await vai('newsletter-modelli.php');
+  await foto('19m-modelli', { clip: { x: 240, y: 56, width: 960, height: 760 }, segni: [{ sel: '#ndm-nuovo', n: 1 }, { sel: '.ndm-tabella tbody tr:first-child .ndm-stato', n: 2 }, { sel: '.ndm-tabella tbody tr:first-child .ndm-azioni', n: 3 }, { sel: '.ndm-tabella tbody tr:first-child .ndm-usato', n: 4 }, { sel: '#ndm-doi', n: 5 }] });
 };
 
 // 19o. Il report della campagna, le statistiche e l'orario migliore (2.14.0). Gira da solo: SOLO_CAPITOLI=19o, con
