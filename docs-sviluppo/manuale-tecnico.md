@@ -1032,13 +1032,13 @@ di partenza: `includes/editor-hero.php:81`), foto identiche al pixel in sei temi
 | `nastro` | parole al centro, una fila di finestre scritta due volte che scorre in 70 s con la maschera che sfuma ai lati | `nastro_foto` (ripetitore di immagini, fino a 7; senza, tagli diversi della foto) |
 | `traforata` | la parola dentro l'h1 in uno `span.finestra` nascosto ai lettori di schermo, `background-clip:text` con la foto e il velo (`--velo-1..2` con `color-mix`, ripiego ciano e viola); il titolo intero resta nell'h1, sotto, più piccolo | `parola` (testo; vuota: la prima parola del titolo; massimo 14 lettere, `editor_hero_parola()`) |
 | `faro` | cono `conic-gradient` dall'alto, finestra che sale dal fondo, tagliata sotto con `clip-path` | |
-| `orizzonte` | sole sfumato dietro la finestra, pavimento a griglia in `perspective` che corre, finestra che galleggia | |
+| `orizzonte` | sole pieno e sfumato dietro la finestra (opacità 0,85, alone), pavimento a griglia luminosa (linee di 2 px con `drop-shadow`) in `perspective` che corre, finestra che galleggia | |
 | `video` | foto con il pulsante play (`button`); al clic `hero-c.js` mette un `<video controls autoplay playsinline>` al posto della foto; senza video niente play | `video` (tipo di controllo nuovo `video`: `editor_video_locale()`, `editor-hero.php:94`) |
 | `note` | etichette in un `ul` sulla finestra a `left:x%;top:y%` con `translate(-x%,-y%)` (restano dentro), cursore che si muove; al telefono in fila sotto la foto | `etichette` (ripetitore fino a 3: testo, x e y 0-100) |
 | `lente` | la stessa foto scalata 2,4 volte intorno al punto con `clip-path:circle()`, a colori, con l'anello sfumato e il manico | `lente_x`, `lente_y` (0-100; il punto si disegna fra 16 e 84, 20 e 80 per non uscire dalla foto) |
 | `costellazione` | niente foto: SVG scritto in casa (`editor_hero_forma()`, `editor-hero-d.php:68`), linee disegnate con `stroke-dashoffset`, punto viola che pulsa; al telefono dietro il testo, tenue | `forma` (scelta: piuma, cerchio, stella, `EDITOR_HERO_FORME`) |
 | `primadopo` | la foto "dopo" con il velo, sopra lo strato "prima" ritagliato a `--pos`; la maniglia è un `input type=range` trasparente sopra la finestra (frecce, Inizio, Fine) più il trascinamento con il dito in `hero-c.js` | `immagine_prima` (facoltativa: senza, la stessa foto in bianco e nero spenta) |
-| `trittico` | tre colonne: parole, foto in un tablet 3:4,2, tre riquadri (onda, la prima barra come numero grande, le altre barre) | |
+| `trittico` | tre colonne: parole, foto in un tablet 3:4,2, tre riquadri (onda, il numero grande, le barre) | `numero` e `numero_etichetta` (testo; di partenza "5 min" e "Installazione"; con il numero vuoto il riquadro mostra la prima barra in % e le barre le altre) |
 
 Come è fatto:
 - `EDITOR_HERO_DISPOSIZIONI` (`includes/editor-hero.php:17`), le funzioni in `includes/editor-hero-c.php` e

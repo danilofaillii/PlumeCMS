@@ -23,7 +23,6 @@ $hero = function (string $d) use ($foto) {
     $w['impostazioni'] = array_merge($w['impostazioni'], ['terminale_righe' => "\$ carico plumecms.zip\n\u{2713} requisiti a posto\n\u{2713} database collegato\n\$ sito pronto in 5 minuti",
         'parola' => 'Piuma', 'etichette' => [['testo' => 'Trascini qui', 'x' => 22, 'y' => 18], ['testo' => 'Cambi i colori', 'x' => 96, 'y' => 55], ['testo' => 'Pubblichi', 'x' => 45, 'y' => 94]],
         'lente_x' => 52, 'lente_y' => 56, 'forma' => 'piuma', 'video' => (string)(getenv('VIDEO') ?: '')]);
-    if (in_array($d, ['trittico'], true)) $w['impostazioni']['barre'] = [['etichetta' => 'Installazione', 'valore' => 100], ['etichetta' => 'Meno peso', 'valore' => 80], ['etichetta' => 'Più tempo', 'valore' => 65]];
     return ['id' => editor_id(), 'tipo' => 'sezione', 'impostazioni' => [], 'figli' => [['id' => editor_id(), 'tipo' => 'colonna', 'impostazioni' => [], 'figli' => [$w]]]];
 };
 $testo = function () {

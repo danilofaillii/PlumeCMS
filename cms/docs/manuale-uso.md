@@ -1082,7 +1082,7 @@ una foto. Ha ventisei **disposizioni**: le stesse parole e la stessa foto messe 
 | Lente | una lente ingrandisce a colori un punto della foto | prodotti, artigiani | **Punto da ingrandire** (da sinistra e dall'alto, in %) |
 | Costellazione | senza foto: stelle collegate disegnano una forma, con le barre | chi non ha ancora foto | **Forma della costellazione** (piuma, cerchio, stella) |
 | Prima e dopo | la foto divisa da una maniglia da trascinare (anche con il dito e con le frecce) | restauri, parrucchieri, palestre | **Foto "prima"** (facoltativa: senza, la stessa foto spenta) |
-| Trittico | parole, la foto in un tablet verticale, tre riquadri (onda, un numero grande, barre) | prodotti con numeri | (il numero grande è la prima delle Barre) |
+| Trittico | parole, la foto in un tablet verticale, tre riquadri (onda, un numero grande, barre) | prodotti con numeri | **Numero grande** e la sua etichetta (di partenza "5 min", "Installazione"; vuoto: la prima delle Barre in %) |
 
 Le disposizioni che si muovono (orbita, nastro, terminale, orizzonte, faro, note) restano ferme per chi ha chiesto al
 computer o al telefono meno movimento. Al telefono ognuna si mette in colonna.

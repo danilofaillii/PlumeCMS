@@ -23,7 +23,7 @@ foreach ($ids as $i => $d) {
         'nastro_foto' => array_fill(0, 30, ['immagine' => 'javascript:alert(395)']),
         'video' => $video[$i % count($video)],
         'etichette' => array_fill(0, 12, ['testo' => $x, 'x' => 99999, 'y' => -99999]),
-        'lente_x' => 1e9, 'lente_y' => -1e9, 'forma' => '../../etc/passwd<svg onload=alert(396)>', 'immagine_prima' => 'javascript:alert(397)',
+        'lente_x' => 1e9, 'lente_y' => -1e9, 'numero' => $x, 'numero_etichetta' => $x, 'forma' => '../../etc/passwd<svg onload=alert(396)>', 'immagine_prima' => 'javascript:alert(397)',
         'foto_trattamento' => 'velo;}</style><script>alert(398)</script>',
     ]);
     $albero = editor_valida(['elementi' => [['id' => editor_id(), 'tipo' => 'sezione', 'impostazioni' => [], 'figli' => [['id' => editor_id(), 'tipo' => 'colonna', 'impostazioni' => [], 'figli' => [$w]]]]]]);

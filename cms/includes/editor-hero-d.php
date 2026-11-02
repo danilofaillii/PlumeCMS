@@ -131,7 +131,10 @@ function editor_hero_primadopo(array $v): string {
 function editor_hero_trittico(array $v): string {
     $barre = array_values((array)($v['barre'] ?? []));
     $numero = '';
-    if ($barre) {
+    // Il numero grande: quello scritto nel campo "Numero grande" (es. "5 min"); vuoto, la prima delle Barre in percentuale.
+    if (trim((string)($v['numero'] ?? '')) !== '') {
+        $numero = '<div class="chip ed-htt-numero">' . h(mb_substr((string)($v['numero_etichetta'] ?? ''), 0, 40)) . '<b>' . h(mb_substr(trim((string)$v['numero']), 0, 12)) . '</b></div>';
+    } elseif ($barre) {
         $b = array_shift($barre);
         $numero = '<div class="chip ed-htt-numero">' . h($b['etichetta'] ?? '') . '<b>' . max(0, min(100, (int)($b['valore'] ?? 0))) . '%</b></div>';
     }
