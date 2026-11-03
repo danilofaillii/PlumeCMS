@@ -165,7 +165,11 @@ Fatto: plumeCMS 2.20.0 (3 novembre): tolto l'import da WordPress (regola sopra).
 di prova), i gruppi di attacchi 19 e 41, il capitolo 31 del manuale d'uso (gli addon ora 31-39) e il 26 del tecnico (numerazione con il
 buco: i rimandi del codice ai capitoli dopo restano giusti), la caratteristica del sito (al suo posto "Social ogni mattina", `social.webp`),
 la domanda frequente, le novità 2.19.x. `nl_aut_ip_interno()` ha le sue reti interne (prima le prendeva dall'import). L'aggiornamento
-cancella i file (`TOLTI`) e la dashboard cancella una volta impostazioni `importa_wp_*` e tabella `importa_wp_voci`.
+cancella i file (`TOLTI`) e la dashboard cancella una volta impostazioni `importa_wp_*` e tabella `importa_wp_voci`. Prove: install 38/38 radice e
+cartella, pannello senza WordPress (cron) 13/13 nuovo e aggiornato (la voce 2.0.3 del CHANGELOG diceva "(WordPress)": tolto), telefono
+53/53, aggiornamento 2.19.1 -> 2.20.0 13/13 con 20 foto uguali e un import lasciato a metà (dopo: 0 impostazioni, 0 tabelle, 0 file,
+pagina 404), attacchi 411/411, reti interne dei webhook 8/8, pacchetto unico 13/13 con la hero cambiata a mano che resta. Zip 2187 KB,
+PDF 10827 KB.
 
 Fatto (poi tolto nella 2.20.0): plumeCMS 2.19.1 (3 novembre): l'import regge gli errori di WordPress (il primo sito vero, arketypos.it su Aruba: collegamento con
 il ponte riuscito, poi 500). Ponte 1.0.1: risposta in `try` con `register_shutdown_function`, `WP_SANDBOX_SCRAPING` per far tacere il

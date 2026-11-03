@@ -397,7 +397,7 @@ esperti con le regole scritte in `docs-sviluppo/regole-interfaccia.md` e i detta
 ## 2.0.3 (31 ottobre 2026) - L'immagine per i social, come la vogliono i social
 
 - **Segnalazione di Danilo**: su LinkedIn l'anteprima del sito di plumeCMS usciva senza immagine, mentre altri siti sullo stesso
-  hosting (WordPress) funzionano. La testa delle pagine ora dice dell'immagine quello che dicono quei siti:
+  hosting funzionano. La testa delle pagine ora dice dell'immagine quello che dicono quei siti:
   - le barre doppie in un indirizzo incollato a pezzi (`https://sito.it//uploads/...`) diventano una;
   - `og:image:secure_url` (con https) e `twitter:image`, oltre a misure, tipo e descrizione dell'immagine (dalla 2.0.0);
   - il prefisso di Open Graph sul tag `<html>` (`prefix="og: https://ogp.me/ns#"`).
