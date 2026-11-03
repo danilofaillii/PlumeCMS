@@ -81,10 +81,15 @@ $nomiListe = array_map(fn($x) => newsletter_4byte_fuori((string)$x), array_colum
 $date = [];
 foreach (newsletter_attributi() as $n => $a) if ($a['tipo'] === 'date' || (NL_SEG_COLONNE[$a['colonna'] ?? ''] ?? '') === 'date') $date[$n] = newsletter_attributo_etichetta($a);
 $inneschiCosa = ['lista' => $nomiListe, 'lista_tolto' => $nomiListe, 'form' => array_column($forms, 'nome', 'id'), 'apertura' => array_column($campagne, 'oggetto', 'id'), 'clic' => array_column($campagne, 'oggetto', 'id'), 'anniversario' => $date];
+// 2.22.0: le scelte degli inneschi degli addon (Test e questionari: i test, e in '_esiti' i risultati di ogni test per il filtro).
+try { $flCosa = cms_filtro('automazioni_inneschi_cosa', []); } catch (Throwable $e) { error_log('automazioni_inneschi_cosa: ' . $e->getMessage()); $flCosa = []; }
+$inneschiEsiti = is_array($flCosa['_esiti'] ?? null) ? $flCosa['_esiti'] : [];
+foreach (is_array($flCosa) ? $flCosa : [] as $k => $v) if ($k !== '_esiti' && is_array($v) && !isset($inneschiCosa[$k])) $inneschiCosa[$k] = $v;
+unset($flCosa);
 $eventiNomi = ['entrato' => 'È entrato', 'email' => 'Email', 'attesa' => 'Attesa', 'bivio' => 'Ramo scelto', 'evento' => 'Attendi un evento', 'azione' => 'Azione', 'finito' => 'Ha finito', 'tolto' => 'Tolto', 'uscito' => 'È uscito', 'fermato' => 'Fermato'];
 $tipiNomi = ['innesco' => 'Inneschi', 'email' => 'Email', 'attesa' => 'Attesa', 'bivio' => 'Sì o No', 'fine' => 'Fine', 'evento' => 'Attendi un evento', 'dividi' => 'Divisione condizionale', 'percento' => 'Divisione in percentuale', 'lista_aggiungi' => 'Aggiungi a una lista', 'lista_togli' => 'Togli da una lista', 'attributo' => 'Aggiorna un attributo', 'webhook' => 'Webhook'];
 $descriviInneschi = function (array $inn) use ($inneschiCosa): string {
-    return implode('; ', array_map(fn($x) => (NL_INNESCHI[$x['tipo']] ?? $x['tipo']) . ($x['tipo'] === 'inattivo' ? ' (' . $x['id'] . ' giorni)' : ($x['tipo'] === 'anniversario' ? ': ' . ($inneschiCosa['anniversario'][$x['attr']] ?? $x['attr']) : ($x['id'] && isset($inneschiCosa[$x['tipo']][$x['id']]) ? ': ' . $inneschiCosa[$x['tipo']][$x['id']] : ''))), $inn));
+    return implode('; ', array_map(fn($x) => (nl_inneschi_nomi()[$x['tipo']] ?? $x['tipo']) . ($x['tipo'] === 'inattivo' ? ' (' . $x['id'] . ' giorni)' : ($x['tipo'] === 'anniversario' ? ': ' . ($inneschiCosa['anniversario'][$x['attr']] ?? $x['attr']) : ($x['id'] && isset($inneschiCosa[$x['tipo']][$x['id']]) ? ': ' . $inneschiCosa[$x['tipo']][$x['id']] : ''))), $inn));
 };
 require_once __DIR__ . '/includes/admin-header.php';
 ?>
@@ -306,8 +311,9 @@ if ($v['id']): ?>
 var FL_DATI = {
   grafo: <?= json_encode($v['grafo'], $j) ?>,
   inneschi: <?= json_encode($v['inneschi'], $j) ?>,
-  nomiInneschi: <?= json_encode(NL_INNESCHI, $j) ?>,
+  nomiInneschi: <?= json_encode(nl_inneschi_nomi(), $j) ?>,
   cosa: <?= json_encode($inneschiCosa, $j) ?>,
+  esiti: <?= json_encode($inneschiEsiti ?: new stdClass(), $j) ?>,
   condizioni: <?= json_encode(NL_CONDIZIONI, $j) ?>,
   uscite: <?= json_encode(NL_USCITE, $j) ?>,
   liste: <?= json_encode(array_map('strval', $nomiListe), $j) ?>,

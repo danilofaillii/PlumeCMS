@@ -17,6 +17,22 @@
  */
 
 const NL_INNESCHI = ['iscrizione' => 'Si iscrive alla newsletter (conferma fatta)', 'lista' => 'Entra in una lista', 'lista_tolto' => 'Viene tolto da una lista', 'form' => 'Compila un form', 'apertura' => 'Apre una campagna', 'clic' => 'Fa clic in una campagna', 'inattivo' => 'Non apre e non clicca niente da tanti giorni', 'disiscritto' => 'Si disiscrive dalla newsletter', 'anniversario' => 'Anniversario di una data', 'mano' => 'Aggiunto a mano dal pannello'];
+/**
+ * 2.22.0: i nomi degli inneschi, quelli del nucleo più quelli degli addon accesi (filtro automazioni_inneschi: l'addon
+ * Test e questionari aggiunge 'test', "Completa un test"). Un innesco 'test' salvato resta anche con l'addon spento.
+ */
+function nl_inneschi_nomi(): array {
+    static $n = null;
+    if ($n !== null) return $n;
+    $n = NL_INNESCHI;
+    if (function_exists('cms_filtro')) {
+        try { $x = cms_filtro('automazioni_inneschi', []); } catch (Throwable $e) { error_log('automazioni_inneschi: ' . $e->getMessage()); $x = []; }
+        foreach (is_array($x) ? $x : [] as $k => $v) if (is_string($k) && preg_match('/^[a-z][a-z0-9_]{1,19}$/', $k) && !isset($n[$k]) && is_string($v)) $n[$k] = $v;
+    }
+    if (!isset($n['test'])) $n['test'] = 'Completa un test (addon Test e questionari spento)';
+    return $n;
+}
+
 /** Le condizioni di un bivio. 'id' dice cosa chiede la seconda casella: una lista, un'email del flusso, un numero di giorni. */
 const NL_CONDIZIONI = [
     'in_lista' => ['Sta in una lista', 'lista'], 'non_in_lista' => ['Non sta in una lista', 'lista'],
@@ -339,14 +355,16 @@ function nl_flusso_riga(array $f): array {
 function nl_inneschi_validi($in): array {
     $out = []; $visti = [];
     foreach (is_array($in) ? array_slice($in, 0, NL_AUT_MAX_INNESCHI * 3) : [] as $x) {
-        if (!is_array($x) || !isset(NL_INNESCHI[$t = (string)($x['tipo'] ?? '')])) continue;
+        if (!is_array($x) || !isset(nl_inneschi_nomi()[$t = (string)($x['tipo'] ?? '')])) continue;
         $id = max(-365, min(3650, (int)($x['id'] ?? 0)));
         $attr = $t === 'anniversario' && preg_match('/^[A-Z0-9_]{1,50}$/', (string)($x['attr'] ?? '')) ? (string)$x['attr'] : '';
-        if (!in_array($t, ['lista', 'lista_tolto', 'form', 'apertura', 'clic', 'inattivo', 'anniversario'], true)) $id = 0;
+        if (!in_array($t, ['lista', 'lista_tolto', 'form', 'apertura', 'clic', 'inattivo', 'anniversario', 'test'], true)) $id = 0;
         if ($t === 'anniversario') $id = max(0, min(365, $id));
+        // 2.22.0: "Completa un test": id del test e, facoltativo, il risultato (f:<fascia>, a:<area>:<fascia>, p:<profilo>, r:<regola>).
+        if ($t === 'test') { $id = max(0, min(999999999, (int)($x['id'] ?? 0))); $attr = preg_match('/^[a-z]:[a-z0-9:]{1,40}$/', (string)($x['esito'] ?? '')) ? (string)$x['esito'] : ''; }
         if (isset($visti["$t|$id|$attr"]) || count($out) >= NL_AUT_MAX_INNESCHI) continue;
         $visti["$t|$id|$attr"] = true;
-        $out[] = ['tipo' => $t, 'id' => $id] + ($t === 'anniversario' ? ['attr' => $attr] : []);
+        $out[] = ['tipo' => $t, 'id' => $id] + ($t === 'anniversario' ? ['attr' => $attr] : []) + ($t === 'test' ? ['esito' => $attr] : []);
     }
     return $out;
 }
@@ -711,7 +729,7 @@ function newsletter_flusso_parti(array $f, int $iscritto, string $perche = ''): 
     $ins->execute([(int)$f['id'], $iscritto, $primo, (int)$p['giro'] + 1]);
     if (!$ins->rowCount()) return 0;
     $corso = (int)db()->lastInsertId();
-    nl_registro((int)$f['id'], $corso, $iscritto, 0, 'entrato', (NL_INNESCHI[$perche] ?? $perche) . ((int)$p['giro'] > 0 ? ' (rientro, giro ' . ((int)$p['giro'] + 1) . ')' : ''));
+    nl_registro((int)$f['id'], $corso, $iscritto, 0, 'entrato', (nl_inneschi_nomi()[$perche] ?? $perche) . ((int)$p['giro'] > 0 ? ' (rientro, giro ' . ((int)$p['giro'] + 1) . ')' : ''));
     nl_conta((int)$f['id'], 0, 'passati');
     nl_conta((int)$f['id'], $primo, 'passati');
     return $corso;
@@ -727,8 +745,12 @@ function nl_flussi_attivi(bool $ricarica = false): array {
     return $tutti;
 }
 
-/** Un innesco: fa partire le automazioni attive che lo aspettano (uno dei loro inneschi), per questo iscritto. */
-function newsletter_flussi_innesco(string $innesco, int $innescoId, int $iscritto): void {
+/**
+ * Un innesco: fa partire le automazioni attive che lo aspettano (uno dei loro inneschi), per questo iscritto.
+ * 2.22.0: $esiti sono i codici del risultato di un test (innesco 'test'): un innesco con il filtro sul risultato parte
+ * solo se il suo codice è fra questi. Gli altri inneschi non lo usano.
+ */
+function newsletter_flussi_innesco(string $innesco, int $innescoId, int $iscritto, array $esiti = []): void {
     if (!$iscritto) return;
     newsletter_flussi_schema();
     // 2.0.0: solo per chi è attivo. Prima un cammino partiva anche per chi doveva ancora confermare, il giro lo fermava
@@ -742,7 +764,7 @@ function newsletter_flussi_innesco(string $innesco, int $innescoId, int $iscritt
         return;
     }
     foreach (nl_flussi_attivi() as $f) foreach ($f['inneschi'] as $x) {
-        if ($x['tipo'] === $innesco && ($x['id'] === 0 || $x['id'] === $innescoId)) { newsletter_flusso_parti($f, $iscritto, $innesco); break; }
+        if ($x['tipo'] === $innesco && ($x['id'] === 0 || $x['id'] === $innescoId) && (($x['esito'] ?? '') === '' || in_array($x['esito'], $esiti, true))) { newsletter_flusso_parti($f, $iscritto, $innesco); break; }
     }
 }
 

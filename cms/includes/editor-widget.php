@@ -472,7 +472,7 @@ function editor_definizioni(): array {
             ec('testo', 'testolungo', 'Testo', 'Poche domande, risultato subito: scopri a che punto sei.'),
             ec('pulsante_testo', 'testo', 'Testo del pulsante', 'Comincia'),
             ec('pulsante_link', 'testo', 'Link del pulsante', '#'),
-        ], editor_controlli_riquadro_cta('.ed-test', [
+        ], editor_riquadro_test_scelta(), editor_controlli_riquadro_cta('.ed-test', [
             'sfondo' => ['tipo' => 'classico', 'colore' => 'ig:sfondo'], 'bordo' => ['tipo' => 'solid', 'larghezza' => el_(2), 'colore' => 'ig:oro'],
             'raggio' => 16, 'padding' => el_(1.8, 2, 1.8, 2, 'rem'), 'margine' => el_(2.5, 0, 0.5, 0, 'rem'),
             'titolo_colore' => 'ig:titolo', 'titolo_tip' => ['dimensione' => em_(1.15, 'rem'), 'peso' => '800'],
@@ -533,6 +533,17 @@ function editor_definizioni(): array {
  * I controlli di stile dei riquadri "Invito" e "Riquadro del test": riquadro (sfondo, bordo, raggio, spazi, allineamento), titolo, testo, pulsante.
  * $p: i valori di partenza, cioè l'aspetto di oggi. $sel: la classe del riquadro (" .ed-cta").
  */
+/**
+ * 2.22.0: la tendina "Oppure un test" del Riquadro in evidenza, solo se un addon offre dei test (filtro
+ * riquadro_test_scelte, addon Test e questionari). Senza, il widget ha i controlli di prima e disegna lo stesso HTML.
+ */
+function editor_riquadro_test_scelta(): array {
+    if (!function_exists('cms_filtro')) return [];
+    try { $s = cms_filtro('riquadro_test_scelte', []); } catch (Throwable $e) { error_log('riquadro_test_scelte: ' . $e->getMessage()); return []; }
+    if (!is_array($s) || !$s) return [];
+    return [ec('test', 'scelta', 'Oppure porta a un test', '', 'contenuto', ['opzioni' => ['' => 'Nessuno: vale il link qui sopra'] + array_map('strval', $s), 'accetta' => '/^\d{1,9}$/', 'aiuto' => 'Il pulsante apre la pagina del test scelto (se è pubblicato). I test si scrivono nel pannello, in Test.'])];
+}
+
 function editor_controlli_riquadro_cta(string $sel, array $p): array {
     $sel = ' ' . ltrim($sel);
     return [
@@ -741,8 +752,11 @@ function editor_disegna_widget(string $tipo, array $v): string {
             return '<div class="article-cta-box ed-cta"><p class="ed-cta-titolo">' . h($v['titolo']) . '</p><p class="ed-cta-testo">' . h($v['testo']) . '</p>'
                 . '<p><a class="ed-cta-pulsante" href="' . h(editor_link_sicuro((string)$v['pulsante_link']) ?: '#') . '">' . h($v['pulsante_testo']) . '</a></p></div>';
         case 'riquadro_test':
+            // 2.22.0: con l'addon Test e questionari acceso il pulsante può portare a un test scelto dall'elenco (vince sul link).
+            $rtLink = (string)$v['pulsante_link'];
+            if ((int)($v['test'] ?? 0) > 0 && function_exists('cms_filtro')) { try { $rtLink = (string)cms_filtro('riquadro_test_link', $rtLink, (int)$v['test']); } catch (Throwable $e) { error_log('riquadro_test_link: ' . $e->getMessage()); } }
             return '<div class="ed-riquadro-box ed-test"><p class="ed-test-titolo">' . h($v['titolo']) . '</p><p class="ed-test-testo">' . h($v['testo']) . '</p>'
-                . '<p><a class="ed-test-pulsante" href="' . h(editor_link_sicuro((string)$v['pulsante_link']) ?: '#') . '">' . h($v['pulsante_testo']) . '</a></p></div>';
+                . '<p><a class="ed-test-pulsante" href="' . h(editor_link_sicuro($rtLink) ?: '#') . '">' . h($v['pulsante_testo']) . '</a></p></div>';
         case 'leggi_anche':
             $voci = array_filter((array)$v['voci'], fn($x) => trim((string)($x['titolo'] ?? '')) !== '' && editor_link_sicuro((string)($x['link'] ?? '')) !== '');
             if (!$voci) return '<div class="ed-vuoto">Aggiungi gli articoli da consigliare</div>';

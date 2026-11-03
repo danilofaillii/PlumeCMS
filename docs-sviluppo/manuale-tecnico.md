@@ -52,6 +52,7 @@ pagine, gestire il sito) c'è il manuale d'uso, `docs/manuale-uso.md`, con le sc
 36. Copia altrove su Google Drive e Dropbox, riservati fuori dagli elenchi, ripristino pulito (dalla 2.1.0)
 37. I widget della 2.1: menu, richiesta di prenotazione, galleria con filtri, scorrevole, contenuto esterno (dalla 2.1.0)
 41. Le quindici infografiche disegnate (novembre 2026)
+42. Test e questionari (dalla 2.22.0)
 
 Appendice A. Dove i documenti vecchi non corrispondono al codice
 
@@ -5155,6 +5156,58 @@ disegno, niente scorrimento di lato, scritte di almeno 10 px al telefono), i val
 misurato sui pixel (senza tema, Aria, Cosmo, Autunno, corpo scuro, telefono), e dall'editor: le quindici dalla tavolozza, voci
 cambiate, la nota della ciambella, Pubblica, il sito. Attacchi: gruppo 30 di `tools/sicurezza-prova.js` (con `CMS_DIR`).
 La foto del manuale d'uso è `08-infografiche` (`tools/manuale-uso-schermate.js`, `SOLO_CAPITOLI=infografiche`).
+
+## 42. Test e questionari (dalla 2.22.0)
+
+Addon `cms/addon/test/` (capitolo 32 per gli addon in generale). Il dettaglio (formato dei dati, difese, limiti) sta in
+`docs-sviluppo/addon/test.md`; il capitolo 40 del manuale d'uso racconta come si usa.
+
+**Cosa fa.** Test a punteggio, ad aree (con il grafico SVG fatto dal server) e "che tipo sei" (profili); domande a scala,
+scelta singola, sì/no, cursore 0-10, con peso, invertite, obbligatorie, condizionali; fasce in percentuale per il totale
+e per ogni area, regole E/O che vincono sulle fasce, avvertenza; presentazione con l'editor visuale (contenitore
+`test_presentazione`, 9.12); procedura in cinque passi nel pannello con il simulatore; pagina pubblica
+`/fai-il-test/<nome>/` (non `/test/`: il `.htaccess` di ogni sito vieta `^test(/|$)`, `TEST_PERCORSO` `addon/test/includes/test.php:54`),
+una domanda per schermata con JavaScript, pagina unica senza; link al risultato firmato con solo l'esito; risultato per
+email con il consenso, iscrizione a una lista con doppia conferma; innesco delle automazioni "Completa un test" con il
+filtro sul risultato; statistiche anonime e CSV.
+
+**Tabelle** (`test_tabelle()`, `addon/test/includes/test.php:60`, `utf8mb4`): `test_test`, `test_risultati` (esito e punteggi con il
+giorno), `test_risposte` (contatori), `test_tentativi` (codice casuale del browser, per iniziati e abbandoni),
+`test_limiti` (impronta HMAC di IP e giorno), `test_attese` (inneschi in attesa della conferma). Nessun IP in chiaro,
+nessuna email: l'email entra nei Contatti solo con l'iscrizione.
+
+**Funzioni principali.**
+
+| Funzione | Dove | Cosa |
+|---|---|---|
+| `test_normalizza()` | `addon/test/includes/test.php:223` | controlla tutti i dati di un test (pannello e database) |
+| `test_calcola()` | `addon/test/includes/test.php:580` | il risultato, funzione pura: mostrate, punti, percentuali, fasce, regole, profili |
+| `test_fasce_controlla()` | `addon/test/includes/test.php:526` | fasce da 0 a 100 senza buchi né sovrapposizioni, in parole |
+| `test_problemi()` | `addon/test/includes/test.php:543` | cosa impedisce di pubblicare |
+| `test_simula()` | `addon/test/includes/test.php:848` | minimo, metà, massimo e N prove a caso; fasce mai raggiunte |
+| `test_esito_corto()`, `test_esito_da_link()` | `addon/test/includes/test.php:678`, `addon/test/includes/test.php:712` | l'esito nel link e la sua firma |
+| `test_gettone()`, `test_gettone_controlla()` | `addon/test/includes/test.php:737` | il codice del modulo: test, ora di apertura, firma; minimo 3 secondi |
+| `test_limite()` | `addon/test/includes/test.php:769` | 20 invii, 5 email, 120 inizi l'ora per connessione |
+| `test_registra()` | `addon/test/includes/test.php:796` | esito, contatori, tentativo finito |
+| `test_innesca()`, `test_alla_conferma()` | `addon/test/includes/test.php:901` | l'innesco delle automazioni, subito o alla conferma |
+| `test_sito()` | `addon/test/includes/sito.php:14` | gli indirizzi pubblici |
+| `test_modulo_html()`, `test_grafico_svg()` | `addon/test/includes/vista.php:52`, `addon/test/includes/vista.php:98` | il modulo e il grafico |
+
+**File del nucleo toccati.**
+
+| File | Cosa |
+|---|---|
+| `includes/newsletter-flussi.php` | `nl_inneschi_nomi()` `includes/newsletter-flussi.php:24` (filtro `automazioni_inneschi`), `nl_inneschi_validi()` con `esito` per `test`, `newsletter_flussi_innesco(..., $esiti = [])` `includes/newsletter-flussi.php:753` |
+| `admin/newsletter-flussi.php` | filtro `automazioni_inneschi_cosa`, `FL_DATI.esiti` |
+| `admin/assets/flussi.js` | la tendina "Con quale risultato" |
+| `includes/newsletter-contatti.php` | la storia `test` nella Cronologia (fra i form) |
+| `includes/editor-widget.php` | `editor_riquadro_test_scelta()` `includes/editor-widget.php:540`: la tendina "Oppure porta a un test" del Riquadro in evidenza (filtri `riquadro_test_scelte`, `riquadro_test_link`); spento l'addon, controlli e HTML di prima |
+
+Filtri nuovi offerti dal nucleo: `automazioni_inneschi($nomi)`, `automazioni_inneschi_cosa($cosa)`,
+`riquadro_test_scelte($scelte)`, `riquadro_test_link($link, $id)`.
+
+**Prove.** `prove/prova-test.js` e `prove/attacchi-test.js` (con `prove/test-cli.php`), in radice e in cartella; il
+modo di lanciarle è in testa ai file.
 
 ## Appendice A. Dove i documenti vecchi non corrispondono al codice
 
