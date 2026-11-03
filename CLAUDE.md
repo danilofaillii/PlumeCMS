@@ -108,7 +108,7 @@ Sono gli unici in `cms/docs/`, nello zip, nel sito di plumeCMS e nella pagina Do
 - **Pacchetto di aggiornamento** per un'installazione esistente:
   `python3 tools/cms-pacchetto.py --aggiornamento`. Si carica dal pannello,
   Impostazioni, Aggiornamenti.
-- **Versione**: `cms/VERSIONE` (oggi 2.23.0; sempre tre numeri: "beta" va nel CHANGELOG, mai nel nome dello zip, se no la serie "ultima" del Download non lo riconosce) e una voce in `cms/CHANGELOG.md` a ogni
+- **Versione**: `cms/VERSIONE` (oggi 2.24.0; sempre tre numeri: "beta" va nel CHANGELOG, mai nel nome dello zip, se no la serie "ultima" del Download non lo riconosce) e una voce in `cms/CHANGELOG.md` a ogni
   zip con contenuto diverso. Mai cambiare il contenuto di una versione già data.
 - **Prove** prima di dire finito:
   - `php -n -d short_open_tag=1 -l` su ogni file PHP toccato, `node --check` sui js;
@@ -165,6 +165,19 @@ Le decisioni complete, con data e perché, stanno nel second brain, `plumecms/de
 - **Nome: plumeCMS** (26 ottobre 2026).
 
 ## Stato al 31 ottobre 2026
+
+Fatto: plumeCMS 2.24.0 (3-4 novembre): **test a pagine e passi del test a carte con l'anteprima** (richiesta di Danilo; scelta B + D fra
+cinque proposte, prototipo `https://claude.ai/artifact/EKQT5RjxR5WuSd4xzN7nD7`; agente nella worktree `/home/user/wt-test-pagine`, ramo
+`test-pagine`, riletto e riprovato da me). Modo `una|pagine|tutte` e pagine `[{titolo, domande}]` in `dati`, normalizzati in `test_normalizza()`;
+i test vecchi senza modo restano "Una per pagina", identici al byte e alla foto. Sito pagina per pagina con JavaScript, senza tutto in una
+pagina con i titoli. Pannello: in tutti e cinque i passi e per i tre tipi carte compatte che si aprono in una finestra, telefono
+dell'anteprima a destra (sotto 900 px pulsante "Anteprima" a schermo intero); nel passo 2 la lavagna con le colonne-pagine e il trascinamento,
+tendina "Pagina" e "Sposta prima/dopo" senza mouse. Manuale d'uso capitolo 40 riscritto, tecnico 42.2. Prove: install 38/38 radice e
+cartella, tag 57/57 e attacchi 25/25, test 196/196 e attacchi del test 82/82 radice e cartella, automazioni 96/96, passo da modello 57/57,
+telefono 56/56, aggiornamento 2.23.0 -> 2.24.0 13/13 con 0 foto diverse su 20, addon tutti 74/74, contatti 94/94, segmenti 179/179,
+attacchi 411/411, pacchetto unico 13/13 con la hero tenuta, sito di plumeCMS 85/85 (la prova vuole il server con il limite alzato: il
+pacchetto del sito pesa 17,6 MB). Zip 2309 KB, PDF 11663 KB (tetto 12 MB: margine di 600 KB). Non provato: trascinamento col dito su un
+telefono vero, Safari e Firefox, lettore di schermo vero.
 
 Fatto: plumeCMS 2.23.0 (3 novembre): i **tag dei contatti** e i test più completi (richiesta di Danilo; agente in worktree, ramo `tag-test`,
 riletto e riprovato da me). Tag in `includes/newsletter-tag.php` (tabelle `newsletter_tag`, `newsletter_contatti_tag`, `newsletter_tag_attese`,
