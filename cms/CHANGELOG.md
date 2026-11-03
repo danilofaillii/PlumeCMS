@@ -2,6 +2,17 @@
 
 Il prodotto si chiama **plumeCMS** (nome scelto il 26 ottobre 2026; prima, per poche ore, "CarbonaraCMS", e ancora prima il provvisorio "Officina": gli zip vecchi si chiamavano `officina-*` e `carbonaracms-*`).
 
+## 2.21.0 (3 novembre 2026) - Allinea ogni parte di ogni widget
+
+- **Editor, scheda Stile**: ogni parte di testo che ha la sua Tipografia (occhiello, titolo, testo sotto il titolo, nome,
+  ruolo, prezzo, didascalie...) ha subito sotto il suo **Allineamento**: come il widget, sinistra, centro, destra o
+  giustificato, diverso per computer, tablet e telefono. In tutti i widget, anche quelli degli addon. Richiesta di Danilo:
+  nel Titolo il testo sotto restava a sinistra con occhiello e titolo al centro.
+- **Allineamento di tutto il widget**: c'è in ogni widget che ha del testo (37 non l'avevano), vale per tutte le parti,
+  anche per quelle che hanno uno stile loro, e si sceglie con le icone. Il testo sotto il titolo ora segue il titolo.
+- Le pagine già fatte restano come sono: senza una scelta nuova cambia solo dove l'allineamento di tutto il widget era già
+  scelto e una parte non lo seguiva (per esempio il testo sotto il titolo, che ora va al centro con il titolo).
+
 ## 2.20.0 (3 novembre 2026) - Un pannello più snello
 
 - Tolta da Impostazioni una funzione che sui siti veri non dava i risultati attesi (decisione di Danilo). L'aggiornamento

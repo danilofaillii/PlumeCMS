@@ -606,6 +606,16 @@ Doppio clic su un elemento, e a sinistra si apre **Modifica**.
 Finché non scegli un valore, la casella dice **come il sito** e il cursore è grigio: vuol dire che vale quello deciso in
 Stile del sito (capitolo 13), non zero. Appena sposti il cursore o scrivi un numero, il valore diventa tuo.
 
+**Allineare ogni parte.** Nella scheda **Stile** ogni widget ha **Allineamento di tutto il widget**: sinistra, centro,
+destra o giustificato, per tutto quello che c'è dentro. E ogni parte di testo che ha la sua **Tipografia** (occhiello,
+titolo, testo sotto il titolo, nome, ruolo, prezzo...) ha subito sotto il suo **Allineamento**: vale solo per lei e vince
+su quello di tutto il widget. Il primo pulsante (Ø) vuol dire "come il widget".
+
+*Esempio.* Nel widget **Titolo** vuoi occhiello e titolo al centro e il testo sotto a sinistra: in Stile, alla voce
+Titolo, scegli **Allineamento di tutto il widget > Centro**; poi apri **Testo sotto il titolo** e scegli
+**Allineamento del testo sotto > Sinistra**. Anche questi hanno il pallino del monitor: sul telefono puoi allineare in
+un altro modo.
+
 **Solo tablet, solo telefono.** Accanto al nome di alcune impostazioni c'è il **pallino del monitor**: dice per quale
 misura stai scrivendo, e ogni clic passa alla misura dopo (computer, tablet, telefono, come i pulsanti in alto). Quando un valore vale solo
 per il tablet o solo per il telefono, accanto al pallino compare la scritta **solo tablet** o **solo telefono**: sul
@@ -980,7 +990,7 @@ Infine aggiungi un widget **Pulsanti**.
 
 ![La scheda Stile](immagini/manuale-uso/09-stile.jpg)
 
-9. Ogni widget ha la sua scheda **Stile**: colori, caratteri, allineamento, bordi, ombre. Se non tocchi niente, il
+9. Ogni widget ha la sua scheda **Stile**: colori, caratteri, allineamento (di tutto il widget e di ogni sua parte), bordi, ombre. Se non tocchi niente, il
    widget segue i colori e i caratteri del sito (capitolo 13): è quasi sempre la scelta migliore.
 
 ### Al telefono

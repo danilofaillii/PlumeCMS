@@ -431,6 +431,53 @@ function editor_pulisci_gruppo(array $ctl, $val) {
     return null;
 }
 
+/** Il CSS dell'allineamento di una parte: text-align e i margini che spostano un blocco più stretto della colonna. */
+function editor_css_allinea_parte($x): array {
+    $x = (string)$x;
+    $m = ['left' => ['0', 'auto'], 'center' => ['auto', 'auto'], 'right' => ['auto', '0']][$x] ?? null;
+    if (!in_array($x, ['left', 'center', 'right', 'justify'], true)) return [];
+    // justify-content: per le parti fatte a riga flessibile (il titolo della fisarmonica con la sua icona); sugli altri non fa niente.
+    $j = ['left' => 'flex-start', 'center' => 'center', 'right' => 'flex-end'][$x] ?? null;
+    return ['text-align' => $x] + ($m ? ['margin-left' => $m[0], 'margin-right' => $m[1], 'justify-content' => $j] : []);
+}
+
+/**
+ * 2.21.0 (richiesta di Danilo: "voglio la possibilità di allineare tutto"): ogni parte di testo di un widget che ha la sua
+ * Tipografia con un selettore riceve accanto il suo Allineamento (sinistra, centro, destra, giustificato; computer, tablet,
+ * telefono), nella stessa sezione della scheda Stile. Vuoto: segue l'allineamento del widget, come prima. Non si aggiunge se la
+ * parte ha già un allineamento suo, né alle parti che sono pulsanti, linguette, caselle o voci di un menu (si allineano con
+ * l'allineamento del widget, non come testo).
+ */
+function editor_allineamenti_parti(array $controlli): array {
+    $gia = [];
+    foreach ($controlli as $c) if (in_array($c['tipo'] ?? '', ['allineamento', 'scelta', 'scelta_icone'], true) && ($c['proprieta'] ?? '') === 'text-align') $gia[trim((string)($c['selettore'] ?? ''))] = true;
+    $nomi = array_flip(array_column($controlli, 'nome'));
+    $out = [];
+    foreach ($controlli as $c) {
+        $out[] = $c;
+        if (($c['tipo'] ?? '') !== 'tipografia') continue;
+        $selp = (string)($c['selettore'] ?? '');
+        $sez = (string)($c['sezione'] ?? '');
+        if (trim($selp) === '' || isset($gia[trim($selp)]) || ($c['scheda'] ?? 'stile') !== 'stile') continue;
+        if (preg_match('/\b(btn|pulsant|button|input|summary|tab-pulsante|mn-)|(^|\s)a$/i', $selp) || preg_match('/^(Pulsant|Linguett|Casella|Menu)/i', $sez)) continue;
+        // Pezzi dentro una riga di testo (le parole evidenziate di un titolo, valuta e decimali accanto al prezzo): non si allineano da soli.
+        if (preg_match('/tanim-mark|tanim-rot|prezzo-valuta|prezzo-dec|orari-riga/', $selp)) continue;
+        // Le parti che nel disegno sono in linea (l'occhiello è uno span, il sottotitolo del marchio uno small): per allinearle
+        // diventano un blocco, solo quando si sceglie un allineamento.
+        $inLinea = (bool)preg_match('/occhiello|(^|[\s>])(span|small|b|em|strong)$/', trim($selp));
+        $nome = preg_replace('/tipografia/', 'allinea', (string)$c['nome'], 1);
+        if ($nome === $c['nome'] || isset($nomi[$nome])) $nome = $c['nome'] . '_allinea';
+        if (isset($nomi[$nome])) continue;
+        $nomi[$nome] = true;
+        $gia[trim($selp)] = true;
+        // L'etichetta viene da quella della Tipografia: "Tipografia dell'occhiello" diventa "Allineamento dell'occhiello".
+        $et = preg_match('/^Tipografia\b/u', (string)$c['etichetta']) ? preg_replace('/^Tipografia/u', 'Allineamento', (string)$c['etichetta']) : 'Allineamento';
+        $out[] = ec($nome, 'allineamento', $et, ['d' => ''], 'stile', ['sezione' => $sez, 'selettore' => $selp, 'proprieta' => 'text-align',
+            'responsive' => true, 'giustifica' => true, 'parte' => true, 'blocco' => $inLinea, 'opzioni' => ['' => 'Come il widget', 'left' => 'Sinistra', 'center' => 'Centro', 'right' => 'Destra', 'justify' => 'Giustificato']]);
+    }
+    return $out;
+}
+
 /** Le opzioni di un controllo allineamento: left/center/right, più justify o le versioni flex. */
 function editor_opzioni_allineamento(array $ctl): array {
     if (!empty($ctl['opzioni'])) return (array)$ctl['opzioni'];
@@ -621,6 +668,22 @@ function editor_css_gruppo(array &$css, string $sel, $tipo, $valore, string $sta
             return;
         case 'allineamento': case 'scelta': case 'scelta_icone':
             if (!$prop) return;
+            // 2.21.0: l'allineamento di una parte del widget (occhiello, titolo, testo sotto...): il testo e, per i blocchi con una
+            // larghezza massima (il testo sotto il titolo è largo 620 px), anche il blocco, con i margini.
+            if (($ctl['parte'] ?? '') === 'contenuto') {
+                // Tutto il widget: il testo segue, e i blocchi più stretti della colonna si spostano con i margini.
+                editor_css_resp($css, $sel, $valore, fn($x) => in_array((string)$x, ['left', 'center', 'right', 'justify'], true) ? ['text-align' => (string)$x] : []);
+                editor_css_resp($css, $sel . ' > *', $valore, fn($x) => array_diff_key(editor_css_allinea_parte($x), ['text-align' => 1]));
+                return;
+            }
+            if (!empty($ctl['parte'])) {
+                // La radice del widget ripetuta tre volte: la regola vince sugli stili delle disposizioni (per esempio
+                // ".ed-w-hero .hero .lead" con il suo margine), che hanno più classi di ".ed-<id> .lead".
+                $selp = implode(',', array_map(fn($x) => preg_replace('/^(\.ed-[A-Za-z0-9_-]+)/', '$1$1$1', trim($x)), explode(',', $sel)));
+                $blocco = !empty($ctl['blocco']);
+                editor_css_resp($css, $selp, $valore, fn($x) => ($p = editor_css_allinea_parte($x)) && $blocco ? $p + ['display' => 'block'] : $p);
+                return;
+            }
             $mappa = $ctl['mappa'] ?? null;
             editor_css_resp($css, $sel, $valore, fn($x) => [$prop => ($x === '' || $x === null) ? null : editor_css_modello($ctl, (string)($mappa ? ($mappa[$x] ?? null) : $x))]);
             return;

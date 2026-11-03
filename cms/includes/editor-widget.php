@@ -505,7 +505,25 @@ function editor_definizioni(): array {
     // Widget scritti in altri file (editor-widget-tema.php, editor-widget-extra.php): registrati con editor_registra_widget().
     foreach (editor_widget_registrati() as $tipo => $w) if (!isset($d[$tipo])) $d[$tipo] = $w['definizione'];
     foreach ($d as $tipo => &$def) {
-        if (!in_array($tipo, ['sezione', 'colonna'], true)) $def['controlli'] = array_merge($def['controlli'], editor_controlli_comuni());
+        if (in_array($tipo, ['sezione', 'colonna'], true)) continue;
+        // 2.21.0: ogni parte di testo con la sua Tipografia ha anche il suo Allineamento; i widget senza un allineamento
+        // generale lo ricevono (tranne quelli che non hanno testo da allineare: spazi, ancore, pulsanti e barre fisse).
+        $def['controlli'] = editor_allineamenti_parti($def['controlli']);
+        // L'allineamento generale si chiama così, per distinguerlo da quelli delle parti.
+        foreach ($def['controlli'] as &$c) {
+            if ($c['nome'] !== 'allineamento' || !empty($c['parte'])) continue;
+            if ($c['etichetta'] === 'Allineamento') $c['etichetta'] = 'Allineamento di tutto il widget';
+            // Le stesse icone dell'allineamento delle parti (prima era una tendina): stessi valori, cambia solo come si sceglie.
+            if ($c['tipo'] === 'scelta' && ($c['opzioni'] ?? null) === EDITOR_ALLINEAMENTI) $c['tipo'] = 'allineamento';
+        }
+        unset($c);
+        $haAll = (bool)array_filter($def['controlli'], fn($c) => str_contains((string)$c['nome'], 'allinea') && empty($c['parte']));
+        if (!$haAll && !in_array($tipo, ['spaziatore', 'ancora_menu', 'pulsante_fisso', 'barra_contatti', 'prima_dopo'], true)) {
+            $def['controlli'][] = ec('allineamento_contenuto', 'allineamento', 'Allineamento di tutto il widget', ['d' => ''], 'stile', ['sezione' => 'Allineamento',
+                'selettore' => '', 'proprieta' => 'text-align', 'responsive' => true, 'giustifica' => true, 'parte' => 'contenuto',
+                'opzioni' => ['' => 'Come la sezione', 'left' => 'Sinistra', 'center' => 'Centro', 'right' => 'Destra', 'justify' => 'Giustificato']]);
+        }
+        $def['controlli'] = array_merge($def['controlli'], editor_controlli_comuni());
     }
     unset($def);
     return $d;

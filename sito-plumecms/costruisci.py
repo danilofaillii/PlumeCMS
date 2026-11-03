@@ -191,6 +191,7 @@ def funzionalita():
          ['Costruisci le pagine trascinando sezioni, colonne e widget. Ogni elemento ha le sue tre schede: <strong>Contenuto</strong>, <strong>Stile</strong> e <strong>Avanzate</strong>. Al computer, al tablet e al telefono, con misure diverse per ognuno.',
           '<ul><li>107 widget: titoli, testi, foto, gallerie, prezzi, domande frequenti, orari di apertura, recensioni, eventi, menu del ristorante e 29 infografiche.</li>'
           '<li>26 aperture fra cui scegliere con una tendina, e 30 sezioni pronte per riempire una pagina in un minuto.</li>'
+          '<li>Ogni parte si allinea per conto suo: occhiello al centro, testo a sinistra, e un altro allineamento sul telefono.</li>'
           '<li>Le foto le prendi dai Media e i link dal sito, senza scrivere indirizzi. Le foto del telefono si raddrizzano e si alleggeriscono da sole.</li>'
           '<li>Ogni salvataggio lascia una versione: la confronti, la guardi in anteprima, ci torni con un clic.</li></ul>']),
         ('partenza', 'installa-4.webp', 'In cinque minuti hai un sito vero, non una pagina bianca',
@@ -594,6 +595,7 @@ def zip_lavagna(dest):
 # Regola di Danilo (1 novembre 2026): solo i punti salienti, una riga per versione, mai nomi di aziende o servizi di terzi.
 # Le novità per chi scarica: brevi, scritte qui (il CHANGELOG è per chi sviluppa). Da aggiornare a ogni versione.
 NOVITA = [
+    ('2.21.0', 'Allinea ogni parte di ogni widget', ['Occhiello, titolo, testo, nome, prezzo: ognuno con il suo allineamento, anche diverso sul telefono.']),
     ('2.20.0', 'Un pannello più snello', ['Via una funzione che non dava i risultati attesi: restano le cose che si usano davvero.']),
     ('2.18.0', 'Le automazioni richiamano i modelli', ['Correggi un modello e le email delle automazioni escono già corrette; menu del pannello più leggibile.']),
     ('2.17.1', 'Le email delle automazioni dai modelli', ['Nel passo Email di un\'automazione si sceglie un modello, a blocchi o in codice HTML.']),

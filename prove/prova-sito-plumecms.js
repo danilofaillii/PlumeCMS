@@ -232,6 +232,7 @@ async function contrastoParole(pg) {
     ok(`Funzionalità: ${t}, con la schermata`, (await v.locator('#' + id).innerText()).includes(t)
       && await v.evaluate((img) => [...document.images].some(i => new RegExp(img + '\\.webp').test(i.currentSrc || i.src) && i.complete && i.naturalWidth > 0), img));
   ok('Funzionalità (2.20.0): nessun blocco e nessuna riga sull\'import da WordPress', await v.locator('#wordpress, #ponte').count() === 0 && !/WordPress|plugin Ponte/.test(await v.locator('main, body').first().innerText()));
+  ok('Funzionalità (2.21.0): l\'allineamento delle parti sta nel blocco dell\'editor, non in un blocco nuovo', /Ogni parte si allinea per conto suo/.test(await v.locator('#editor').innerText()) && await v.locator('#allinea, #allineamento').count() === 0);
   ok('Funzionalità: il blocco degli addon nomina gli otto addon', /Prenotazioni e appuntamenti/.test(await v.locator('#addon').innerText()) && /Copia del sito altrove/.test(await v.locator('#addon').innerText()));
   ok('Header e footer (2.6.0): il logo è quello dello Stile del sito', await v.evaluate(() => [...document.querySelectorAll('.marchio img')].length >= 2 && [...document.querySelectorAll('.marchio img')].every(i => /marchio/.test(i.getAttribute('src')))));
   // 2.5.0: la pagina Temi con le stagioni e le tinte piene, ogni immagine caricata.

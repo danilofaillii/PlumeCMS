@@ -955,6 +955,33 @@ Ogni controllo appartiene a una scheda. La scheda Avanzate è uguale per tutti g
 - **CSS personalizzato**: al massimo 20000 caratteri, ripulito; la parola `selector` diventa `.ed-<id>` e ogni
   regola resta confinata nell'elemento.
 
+### 9.6b L'allineamento delle parti (dalla 2.21.0)
+
+Richiesta di Danilo: "voglio la possibilità di allineare tutto: occhiello, titolo, testo sotto il titolo; vale per tutti i
+widget". Tutto in tre punti, per tutti i widget insieme (anche quelli che verranno):
+
+- `editor_allineamenti_parti()` (`includes/editor-controlli.php`), chiamata da `editor_definizioni()`: dopo ogni controllo
+  `tipografia` con un `selettore` della scheda Stile mette un controllo `allineamento` (nome: `tipografia` diventa `allinea`,
+  per esempio `occhiello_allinea`; etichetta: "Tipografia dell'occhiello" diventa "Allineamento dell'occhiello"), con
+  `'parte' => true`, `responsive`, `giustifica` e le opzioni "Come il widget", Sinistra, Centro, Destra, Giustificato. Non lo
+  mette se la parte ha già un allineamento suo (`proprieta` `text-align` sullo stesso selettore), né su pulsanti, linguette,
+  caselle, voci di menu, parole evidenziate dentro un titolo, valuta e decimali del prezzo, righe degli orari. `'blocco' => true`
+  per le parti in linea (occhiello, `span`, `small`): quando si sceglie un allineamento diventano `display:block`.
+- `editor_css_allinea_parte()`: `text-align`, i margini (`auto` dalla parte giusta: un blocco con una larghezza massima, come
+  `.sez-intro` del testo sotto il titolo, si sposta) e `justify-content` (per le parti a riga flessibile, come il titolo della
+  fisarmonica). Il selettore ripete la radice tre volte (`.ed-x.ed-x.ed-x .lead`): vince sugli stili delle disposizioni.
+- L'allineamento di tutto il widget: i widget che non lo avevano ricevono `allineamento_contenuto` (`'parte' => 'contenuto'`:
+  `text-align` sulla radice e i margini sui figli diretti), tranne spaziatore, ancora, pulsante e barra fissi, prima e dopo;
+  quelli che lo avevano (`allineamento`) si chiamano "Allineamento di tutto il widget" e, se erano una tendina con
+  `EDITOR_ALLINEAMENTI`, diventano icone (stessi valori). In `editor_css_elemento()` (`includes/editor.php`) l'allineamento di
+  tutto il widget vale anche per ogni parte (radice ripetuta due volte: vince sullo stile del widget, perde contro quello
+  della parte). Nel Titolo, con l'allineamento di tutto il widget, anche `.ed-sottotitolo` si sposta (prima restava a
+  sinistra, largo 620 px); nel Testo con la larghezza massima, `.ed-testo`.
+
+Prova: `prove/pagina-allinea.php` (le pagine `/allinea-<left|center|right|justify>/` con ogni parte allineata e
+`/allinea-tutto-<valore>/`) e `prove/prova-allinea.js`, che nel browser misura dove sta il testo di ogni parte dentro il suo
+riquadro e dove sta il riquadro nel suo contenitore, a 1280 e a 390 px.
+
 ### 9.7 I widget
 
 Ottanta widget, in cinque famiglie.
@@ -3849,6 +3876,7 @@ Istruzioni in `prove/LEGGIMI.md`. Le principali:
 | `prova-foto-leggere.js` | (1.4.0) foto più leggere: foto grande girata con il GPS, PNG piccola, WebP sul sito e originale per chi non la accetta, lato massimo, spento, newsletter, redattore, cancellazione (`foto-prova.php`, `pagina-foto.php`) |
 | `prova-tipo-sito.js` | (1.4.0) il tipo di sito in prova dalla dashboard: cambio con la conferma, copia, pagine tenute e tolte, sito da visitatore, attacchi, Definitivo (`tipo-sito-cli.php`) |
 | `prova-primi-passi.js` | (1.4.0) i Primi passi: email di prova con un server di posta finto (`smtp-finto.py`), logo e colori, cron vero e pulsante, nascondi |
+| `prova-allinea.js` | (2.21.0) l'allineamento di ogni parte di ogni widget e di tutto il widget, misurato nel browser (`pagina-allinea.php`) a 1280 e a 390 px |
 | `prova-cron.js` | (1.4.0) la pagina Log cron, Esegui adesso, il cron vero, gli attacchi, e nessuna pagina del pannello che parla di WordPress |
 | `prova-controlla-server.js` | (1.4.0) Controlla il server: i sette gruppi, protezioni spente (`logs/controllo-aperto` per il router), email, attacchi |
 | `prova-favicon.js` | (1.4.0) l'icona di partenza e quella dello Stile, in radice e in cartella |

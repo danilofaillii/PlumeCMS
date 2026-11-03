@@ -338,8 +338,21 @@ function editor_css_testo(array $css): string {
 
 /** Il CSS automatico di tutti i controlli con 'selettore' di un elemento, più quello della scheda Avanzate. */
 function editor_css_elemento(array &$css, string $sel, string $tipo, array $v, string $per): void {
+    $parti = []; $generale = null;
     foreach (editor_definizioni()[$tipo]['controlli'] as $ctl) {
         if (isset($ctl['selettore']) && array_key_exists($ctl['nome'], $v)) editor_css_controllo($css, $sel, $ctl, $v[$ctl['nome']]);
+        if (!empty($ctl['parte']) && $ctl['parte'] !== 'contenuto') $parti[] = [(string)$ctl['selettore'], !empty($ctl['blocco'])];
+        if ((($ctl['parte'] ?? '') === 'contenuto' || ($ctl['nome'] === 'allineamento' && empty($ctl['parte']))) && array_key_exists($ctl['nome'], $v)) $generale = $v[$ctl['nome']];
+    }
+    // 2.21.0: l'allineamento di tutto il widget vale anche per le parti che hanno uno stile loro (la firma della frase è
+    // centrata, il testo dell'apertura ha una larghezza massima, il titolo della fisarmonica è una riga flessibile). La radice
+    // ripetuta due volte: vince sullo stile del widget e perde contro l'allineamento scelto per la parte (ripetuta tre volte).
+    if ($generale !== null && $parti) {
+        $radice = preg_replace('/^(\.ed-[A-Za-z0-9_-]+)$/', '$1$1', $sel);
+        foreach ($parti as [$p, $blocco]) {
+            $selp = implode(',', array_map(fn($x) => $radice . ' ' . trim($x), explode(',', $p)));
+            editor_css_resp($css, $selp, $generale, fn($x) => ($q = editor_css_allinea_parte($x)) && $blocco ? $q + ['display' => 'block'] : $q);
+        }
     }
     editor_css_avanzate($css, $sel, $v, $per);
 }
@@ -430,11 +443,14 @@ function editor_disegna_elemento_widget(array $w, array &$css, bool $anteprima):
         case 'titolo':
             editor_css_aggiungi($css, "$sel .ed-titolo", 'font-size', $v['dimensione'], fn($x) => $x > 0 ? $x . 'px' : null);
             editor_css_aggiungi($css, $sel, 'text-align', $v['allineamento'], fn($x) => $x ?: null);
+            // 2.21.0: il testo sotto è largo al massimo 620 px: con il titolo al centro o a destra si sposta anche lui.
+            editor_css_resp($css, "$sel .ed-sottotitolo", $v['allineamento'], fn($x) => array_diff_key(editor_css_allinea_parte($x), ['text-align' => 1]));
             break;
         case 'testo':
             editor_css_aggiungi($css, "$sel .ed-testo", 'font-size', $v['dimensione'], fn($x) => $x > 0 ? $x . 'px' : null);
             if ($v['larghezza_max'] > 0) $css['d']["$sel .ed-testo"]['max-width'] = $v['larghezza_max'] . 'px';
             editor_css_aggiungi($css, $sel, 'text-align', $v['allineamento'], fn($x) => $x ?: null);
+            if ($v['larghezza_max'] > 0) editor_css_resp($css, "$sel .ed-testo", $v['allineamento'], fn($x) => array_diff_key(editor_css_allinea_parte($x), ['text-align' => 1]));
             break;
         case 'immagine':
             editor_css_aggiungi($css, "$sel img", 'width', $v['larghezza'], fn($x) => $x . '%');
