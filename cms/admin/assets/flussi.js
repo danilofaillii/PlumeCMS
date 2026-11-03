@@ -436,7 +436,9 @@ var FL = (function () {
     var c = D.cosa[x.tipo] || {}, t = D.nomiInneschi[x.tipo] || x.tipo;
     if (x.tipo === 'inattivo') return t + ' (' + (x.id || '?') + ' giorni)';
     if (x.tipo === 'anniversario') return t + ': ' + (c[x.attr] || 'scegli la data') + (x.id ? ', ' + x.id + ' giorni prima' : '');
-    if (x.tipo in D.cosa && x.tipo !== 'anniversario') return t + ': ' + (x.id ? (c[x.id] || 'non c\'è più') : (x.tipo === 'apertura' || x.tipo === 'clic' ? 'qualsiasi campagna' : 'qualunque'));
+    // 2.22.0: un innesco di un addon con il filtro sul risultato (Completa un test: quale test e con quale risultato).
+    var es = D.esiti && D.esiti[x.tipo] && x.id ? (D.esiti[x.tipo][x.id] || {}) : null;
+    if (x.tipo in D.cosa && x.tipo !== 'anniversario') return t + ': ' + (x.id ? (c[x.id] || 'non c\'è più') : (x.tipo === 'apertura' || x.tipo === 'clic' ? 'qualsiasi campagna' : 'qualunque')) + (es && x.esito ? ', ' + (es[x.esito] || 'risultato che non c\'è più') : '');
     return t;
   }
   function disegnaInneschi(fuoco) {
@@ -445,6 +447,7 @@ var FL = (function () {
       if (x.tipo === 'inattivo') s += '<label for="fi-v' + i + '">Da quanti giorni</label><input type="number" id="fi-v' + i + '" data-k="id" min="1" max="3650" value="' + (x.id || 30) + '">';
       else if (x.tipo === 'anniversario') s += (Object.keys(c).length ? '<label for="fi-a' + i + '">Quale data</label><select id="fi-a' + i + '" data-k="attr">' + opz(c, x.attr) + '</select>' : '<p class="hint">Serve un attributo di tipo Data: crealo in Contatti, Attributi.</p>') + '<label for="fi-v' + i + '">Quanti giorni prima (0 = il giorno stesso)</label><input type="number" id="fi-v' + i + '" data-k="id" min="0" max="365" value="' + (x.id || 0) + '">';
       else if (x.tipo in D.cosa) s += '<label for="fi-v' + i + '">Quale</label><select id="fi-v' + i + '" data-k="id">' + opz(Object.assign({'0': x.tipo === 'apertura' || x.tipo === 'clic' ? 'Qualsiasi campagna' : 'Qualunque'}, c), x.id) + '</select>';
+      if (D.esiti && D.esiti[x.tipo]) s += x.id ? '<label for="fi-e' + i + '">Con quale risultato</label><select id="fi-e' + i + '" data-k="esito">' + opz(Object.assign({'': 'Qualunque risultato'}, D.esiti[x.tipo][x.id] || {}), x.esito || '') + '</select>' : '<p class="hint">Scegli il test per filtrare anche sul risultato.</p>';
       if (x.tipo === 'mano') s += '<p class="hint">Si aggiunge dalla scheda Attività e registro.</p>';
       if (x.tipo === 'iscrizione') s += '<p class="hint">Con la doppia conferma conta quando la persona conferma.</p>';
       return s + '<button type="button" class="btn btn-danger btn-sm" data-togli-innesco="' + i + '">Togli l\'innesco ' + (i + 1) + '</button></fieldset>';
@@ -458,7 +461,9 @@ var FL = (function () {
     var el = e.target, i = el.closest('[data-i]'); if (!i) return;
     var x = inneschi[+i.dataset.i], k = el.dataset.k;
     if (k === 'tipo') { inneschi[+i.dataset.i] = {tipo: el.value, id: el.value === 'inattivo' ? 30 : 0}; disegnaInneschi('#' + el.id); return; }
-    x[k] = k === 'attr' ? el.value : +el.value || 0; disegna();
+    x[k] = k === 'attr' || k === 'esito' ? el.value : +el.value || 0;
+    if (k === 'id' && D.esiti && D.esiti[x.tipo]) { x.esito = ''; disegnaInneschi('#' + el.id); return; }
+    disegna();
   });
   boxInn.addEventListener('input', function (e) { var el = e.target, i = el.closest('[data-i]'); if (i && el.type === 'number') { inneschi[+i.dataset.i].id = +el.value || 0; disegna(); } });
   boxInn.addEventListener('click', function (e) { var b = e.target.closest('[data-togli-innesco]'); if (!b) return; inneschi.splice(+b.dataset.togliInnesco, 1); disegnaInneschi('#fl-innesco-piu'); });

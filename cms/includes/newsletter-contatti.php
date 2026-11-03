@@ -781,7 +781,7 @@ function newsletter_contatto_cronologia(int $id, array $f = [], int $quante = 20
         } catch (PDOException $e) {}
     }
     $mappaS = ['lista_aggiunto' => 'liste', 'lista_tolto' => 'liste', 'bloccato' => 'lista_nera', 'sbloccato' => 'lista_nera', 'soft_bounce' => 'rimbalzi',
-        'attributo' => 'attributi', 'email' => 'attributi', 'creato' => 'iscrizione', 'importato' => 'iscrizione', 'iscrizione' => 'iscrizione', 'doi' => 'iscrizione', 'form' => 'form', 'flusso_email' => 'email', 'preferenze' => 'attributi'];
+        'attributo' => 'attributi', 'email' => 'attributi', 'creato' => 'iscrizione', 'importato' => 'iscrizione', 'iscrizione' => 'iscrizione', 'doi' => 'iscrizione', 'form' => 'form', 'flusso_email' => 'email', 'preferenze' => 'attributi', 'test' => 'form']; // 2.22.0: test con l'addon Test e questionari
     $tipiS = array_keys(array_filter($mappaS, fn($t) => $vuole($t)));
     if ($tipiS) {
         $st = db()->prepare('SELECT * FROM ' . tbl('newsletter_storia') . ' WHERE contatto_id = ? AND tipo IN (\'' . implode("','", $tipiS) . "') AND creato BETWEEN ? AND ? ORDER BY creato DESC, id DESC LIMIT $quante");

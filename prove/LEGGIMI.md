@@ -690,3 +690,17 @@ Download con un server dal limite basso: i giorni dei link riservati in un riqua
 il campo prima dell'invio, il riservato caricato e in elenco, l'invio oltre `post_max_size` con un messaggio in parole (prima
 "Token CSRF non valido"). Sito col kit, server avviato con `php -d upload_max_filesize=1M -d post_max_size=2M -S ...`.
 Uso: `node prove/prova-download-limite.js <base> [utente] [password]`. 8 controlli.
+
+## prova-test.js e attacchi-test.js
+
+L'addon Test e questionari della 2.22.0 (`cms/addon/test/`, `docs-sviluppo/addon/test.md`).
+
+1. Un CMS appena installato (`prova-install.js`, anche in cartella): va su un sito da buttare. Il server di posta finto:
+   `python3 -I prove/smtp-finto.py <porta> <cartella posta> &`.
+2. `node prove/prova-test.js <base> <cartella del CMS> <porta smtp> <cartella posta> [cartella foto]`: accende l'addon dal
+   pannello, crea un test per tipo con la procedura in cinque passi, li fa come un visitatore (con e senza JavaScript, al
+   telefono), controlla i risultati calcolati a mano, link, simulatore, statistiche, CSV, email, lista, automazioni,
+   Riquadro in evidenza, Scegli dal sito, Duplica, Elimina, spento e riacceso. Usa `prove/test-cli.php`.
+3. Subito dopo, sullo stesso sito: `node prove/attacchi-test.js <base> <cartella del CMS> <cartella posta>`.
+   Lascia un redattore `red_test` e un test "XSS ...". Alla fine svuota `<prefisso>test_limiti` (lo fa da sola).
+4. Atteso (2.22.0): tutto OK, in radice e in cartella.
