@@ -207,6 +207,7 @@ def funzionalita():
         ('newsletter', 'campagne.webp', 'Newsletter: contatti, campagne e report, a casa tua',
          ['I contatti stanno nel tuo database, non in quello di qualcun altro. Ognuno ha la sua scheda, con la storia di quello che ha ricevuto, aperto e cliccato.',
           '<ul><li>Importi i contatti da un file in quattro passi, li dividi in liste e in segmenti con i filtri che vuoi.</li>'
+          '<li>Ogni persona ha i suoi tag: li danno i form, i test, l\'importazione e le automazioni, e da un tag può partire un flusso.</li>'
           '<li>Componi le email trascinando blocchi, oppure parti da un modello. Provi due versioni con il test A/B e la migliore parte da sola.</li>'
           '<li>Il report di ogni campagna ti dice chi ha aperto, chi ha cliccato e dove, e l\'orario migliore per scrivere a ognuno.</li>'
           '<li>Le email arrivano nella posta, non nello spam: plumeCMS ti guida nella configurazione della consegna.</li></ul>']),
@@ -234,7 +235,7 @@ def funzionalita():
           '<li><strong>Eventi con iscrizione</strong> e lista d\'attesa, <strong>Raccolta recensioni</strong> dopo il servizio.</li>'
           '<li><strong>Vetrina prodotti</strong> con carrello e ordini, <strong>Statistiche senza cookie</strong>.</li>'
           '<li><strong>Area riservata</strong>, <strong>Corsi online</strong> e <strong>Copia del sito altrove</strong>, ogni notte.</li>'
-          '<li><strong>Test e questionari</strong>: a punteggio, ad aree o "che tipo sei", una domanda per schermata e il risultato con il grafico.</li></ul>',
+          '<li><strong>Test e questionari</strong>: a punteggio, ad aree o "che tipo sei", la risposta breve sullo schermo e quella completa per email.</li></ul>',
           'E il download manager: manuali, ebook e listini con il loro indirizzo, anche riservati in cambio dell\'iscrizione.']),
         ('sicurezza', 'sicurezza.webp', 'Al sicuro, senza doverci pensare ogni giorno',
          ['Accesso a due fattori, blocchi contro chi prova a indovinare le password, protezioni del browser, registro degli eventi. Prima di uscire plumeCMS è stato messo alla prova con più di 500 attacchi, addon compresi: tutti respinti.',
@@ -596,6 +597,7 @@ def zip_lavagna(dest):
 # Regola di Danilo (1 novembre 2026): solo i punti salienti, una riga per versione, mai nomi di aziende o servizi di terzi.
 # Le novità per chi scarica: brevi, scritte qui (il CHANGELOG è per chi sviluppa). Da aggiornare a ogni versione.
 NOVITA = [
+    ('2.23.0', 'Tag delle persone e test più completi', ['Ogni contatto ha i suoi tag, anche dai test; nei test le domande sulla persona e il risultato completo per email.']),
     ('2.22.0', 'Test e questionari', ['Un addon per costruire test a punteggio, ad aree o "che tipo sei": una domanda per schermata, risultato con il grafico.']),
     ('2.21.0', 'Allinea ogni parte di ogni widget', ['Occhiello, titolo, testo, nome, prezzo: ognuno con il suo allineamento, anche diverso sul telefono.']),
     ('2.20.0', 'Un pannello più snello', ['Via una funzione che non dava i risultati attesi: restano le cose che si usano davvero.']),

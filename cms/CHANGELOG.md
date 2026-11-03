@@ -2,6 +2,24 @@
 
 Il prodotto si chiama **plumeCMS** (nome scelto il 26 ottobre 2026; prima, per poche ore, "CarbonaraCMS", e ancora prima il provvisorio "Officina": gli zip vecchi si chiamavano `officina-*` e `carbonaracms-*`).
 
+## 2.23.0 (3 novembre 2026) - Tag delle persone, test più completi
+
+- **I tag dei contatti** (richiesta di Danilo: "i tag permettono la selezione di gruppi di persone e i flussi"): si danno dalla
+  scheda del contatto (con i suggerimenti), dall'elenco con l'azione di gruppo, dai form (passo 1; con la doppia conferma alla
+  conferma), dall'importazione (colonna Tag, aggiungi o sostituisci) e dalle automazioni (azioni Aggiungi tag e Togli tag).
+  Pagina **Tag** con i conteggi, rinomina ed elimina; filtro "Con il tag"; nei segmenti "ha / non ha il tag" (qualsiasi o
+  tutti); innesco "Riceve un tag"; colonna TAG nell'esportazione; la cronologia registra "Tag aggiunto" e "Tag tolto".
+- **Test e questionari, domande sulla persona**: da un catalogo di 25 (età, occupazione, settore con circa 70 voci, stato,
+  figli, reddito e altre), alla fine del test, obbligatorie o facoltative a scelta per ogni test, con "Preferisco non
+  rispondere"; si salvano anonime con l'esito.
+- **Risposta breve e risposta completa** per ogni risultato: la breve sullo schermo, la completa per email. Con "Il risultato
+  completo solo per email" (acceso nei test nuovi) il test finisce con "Lasciami la tua email e ti mando il risultato
+  completo"; l'email ha la risposta completa, quella di ogni area e il grafico. I test di prima restano come sono sullo schermo.
+- **Tag dai test**: chi si iscrive alla newsletter (lista scelta nel pannello) riceve alla conferma le sue risposte sulla
+  persona ("Età: 35-44") e l'esito ("Test Stress: Alto"). Chi lascia l'email senza la newsletter riceve solo il risultato.
+- **Statistiche per gruppi** (anche nel CSV): risultati e punteggi per ogni risposta sulla persona; i gruppi con meno di 5
+  persone non si mostrano, nemmeno per differenza dal totale.
+
 ## 2.22.0 (3 novembre 2026) - Test e questionari
 
 - Addon nuovo **Test e questionari** (Impostazioni > Addon): test a punteggio, ad aree con il grafico a barre e
