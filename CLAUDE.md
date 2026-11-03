@@ -160,6 +160,17 @@ Le decisioni complete, con data e perché, stanno nel second brain, `plumecms/de
 
 ## Stato al 31 ottobre 2026
 
+Fatto: plumeCMS 2.21.0 (3 novembre): l'allineamento di ogni parte di ogni widget (richiesta di Danilo: nel Titolo il testo sotto restava a
+sinistra, largo 620 px, con occhiello e titolo al centro; "vale per tutti i widget"). `editor_allineamenti_parti()` mette un Allineamento
+(`'parte' => true`) dopo ogni Tipografia con selettore (120 parti), `editor_css_allinea_parte()` (text-align, margini, justify-content,
+radice ripetuta tre volte), `allineamento_contenuto` nei 37 widget senza allineamento, l'allineamento di tutto il widget vale per le parti
+(`editor_css_elemento()`, radice due volte), manuale tecnico 9.6b. **Trappola**: con l'allineamento che il widget aveva già, le parti in
+linea (occhiello) non diventano blocco: farlo cambiava l'altezza delle righe (home e Contatti 32 px più basse). Unico cambio voluto sulle
+pagine già fatte: nell'Invito all'azione e nel riquadro del test (allineamento di partenza al centro) il testo sotto ora è centrato.
+Prove: `prova-allinea.js` 7/7 a 1280 e 390 (ogni parte a destra, centro, sinistra, giustificata, e tutto il widget), install 38/38 radice e
+cartella, telefono 53/53, aggiornamento 2.20.0 -> 2.21.0 13/13 con 20 foto uguali, confronto widget per widget (tolto il movimento: contatore,
+slider, caroselli, modulo), attacchi 411/411, pacchetto unico 13/13 con la hero tenuta. Zip 2190 KB, PDF 10829 KB.
+
 Fatto: plumeCMS 2.20.0 (3 novembre): tolto l'import da WordPress (regola sopra). Via `includes/importa-wp*.php`, `includes/ponte-wp/`,
 `admin/importa-wordpress.php`, la voce del menu, `sito_nascosti_import()`, le prove (`prova-importa-wp.js`, `prova-ponte.js`, il WordPress
 di prova), i gruppi di attacchi 19 e 41, il capitolo 31 del manuale d'uso (gli addon ora 31-39) e il 26 del tecnico (numerazione con il
