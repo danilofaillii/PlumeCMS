@@ -16,7 +16,7 @@
  * anniversari, statistiche e attività stanno in includes/newsletter-automazioni.php.
  */
 
-const NL_INNESCHI = ['iscrizione' => 'Si iscrive alla newsletter (conferma fatta)', 'lista' => 'Entra in una lista', 'lista_tolto' => 'Viene tolto da una lista', 'form' => 'Compila un form', 'apertura' => 'Apre una campagna', 'clic' => 'Fa clic in una campagna', 'inattivo' => 'Non apre e non clicca niente da tanti giorni', 'disiscritto' => 'Si disiscrive dalla newsletter', 'anniversario' => 'Anniversario di una data', 'mano' => 'Aggiunto a mano dal pannello'];
+const NL_INNESCHI = ['iscrizione' => 'Si iscrive alla newsletter (conferma fatta)', 'lista' => 'Entra in una lista', 'lista_tolto' => 'Viene tolto da una lista', 'form' => 'Compila un form', 'apertura' => 'Apre una campagna', 'clic' => 'Fa clic in una campagna', 'inattivo' => 'Non apre e non clicca niente da tanti giorni', 'disiscritto' => 'Si disiscrive dalla newsletter', 'anniversario' => 'Anniversario di una data', 'mano' => 'Aggiunto a mano dal pannello', 'tag' => 'Riceve un tag']; // 2.23.0: tag
 /**
  * 2.22.0: i nomi degli inneschi, quelli del nucleo più quelli degli addon accesi (filtro automazioni_inneschi: l'addon
  * Test e questionari aggiunge 'test', "Completa un test"). Un innesco 'test' salvato resta anche con l'addon spento.
@@ -54,6 +54,8 @@ const NL_USCITE = [
     'evento' => ['si' => 'Se succede', 'no' => 'Se non succede in tempo'],
     'dividi' => [], 'percento' => [],
     'lista_aggiungi' => ['poi' => 'Poi'], 'lista_togli' => ['poi' => 'Poi'], 'attributo' => ['poi' => 'Poi'], 'webhook' => ['poi' => 'Poi'],
+    // 2.23.0: i tag dei contatti (includes/newsletter-tag.php).
+    'tag_aggiungi' => ['poi' => 'Poi'], 'tag_togli' => ['poi' => 'Poi'],
 ];
 const NL_AUT_STATI = ['attiva' => 'Attiva', 'in_pausa' => 'In pausa', 'inattiva' => 'Inattiva'];
 const NL_AUT_MAX_NODI = 100;     // blocchi sulla tela
@@ -362,9 +364,16 @@ function nl_inneschi_validi($in): array {
         if ($t === 'anniversario') $id = max(0, min(365, $id));
         // 2.22.0: "Completa un test": id del test e, facoltativo, il risultato (f:<fascia>, a:<area>:<fascia>, p:<profilo>, r:<regola>).
         if ($t === 'test') { $id = max(0, min(999999999, (int)($x['id'] ?? 0))); $attr = preg_match('/^[a-z]:[a-z0-9:]{1,40}$/', (string)($x['esito'] ?? '')) ? (string)$x['esito'] : ''; }
+        // 2.23.0: "Riceve un tag": i tag scelti (id), nessuno = qualunque tag.
+        $tag = [];
+        if ($t === 'tag') {
+            $tag = array_values(array_unique(array_filter(array_map(fn($v) => is_scalar($v) && preg_match('/^\d{1,9}$/', (string)$v) ? (int)$v : 0, array_slice(is_array($x['tag'] ?? null) ? $x['tag'] : [], 0, 50)))));
+            sort($tag);
+            $attr = implode(',', $tag);
+        }
         if (isset($visti["$t|$id|$attr"]) || count($out) >= NL_AUT_MAX_INNESCHI) continue;
         $visti["$t|$id|$attr"] = true;
-        $out[] = ['tipo' => $t, 'id' => $id] + ($t === 'anniversario' ? ['attr' => $attr] : []) + ($t === 'test' ? ['esito' => $attr] : []);
+        $out[] = ['tipo' => $t, 'id' => $id] + ($t === 'anniversario' ? ['attr' => $attr] : []) + ($t === 'test' ? ['esito' => $attr] : []) + ($t === 'tag' ? ['tag' => $tag] : []);
     }
     return $out;
 }
@@ -469,6 +478,7 @@ function newsletter_flusso_grafo_valido($g): array {
             'lista_aggiungi', 'lista_togli' => ['lista' => $int('lista', 0, 1000000)],
             'attributo' => ['nome' => preg_match('/^[A-Z0-9_]{1,50}$/', $s('nome', 50)) ? $s('nome', 50) : '', 'valore' => $s('valore', 500)],
             'webhook' => ['url' => $s('url', 500)],
+            'tag_aggiungi', 'tag_togli' => ['tag' => array_values(array_unique(array_filter(array_map(fn($v) => is_scalar($v) && preg_match('/^\d{1,9}$/', (string)$v) ? (int)$v : 0, array_slice(is_array($d['tag'] ?? null) ? $d['tag'] : [], 0, 20)))))],
             default => [],
         };
         if ($tipo === 'percento' && count($dati['rami']) < 2) $dati['rami'] = [50, 50];
@@ -621,6 +631,12 @@ function newsletter_flusso_salva(int $id, array $d): int {
             case 'lista_aggiungi': case 'lista_togli':
                 if ($dn['lista'] < 1) throw new RuntimeException("Il blocco $dove: scegli la lista.");
                 break;
+            case 'tag_aggiungi': case 'tag_togli':
+                // 2.23.0: solo tag che esistono (i tag nuovi si creano nella pagina Tag).
+                if (!function_exists('newsletter_tag_nomi')) require_once __DIR__ . '/newsletter-tag.php';
+                $dn['tag'] = array_values(array_intersect($dn['tag'], array_keys(newsletter_tag_nomi())));
+                if (!$dn['tag']) throw new RuntimeException("Il blocco $dove: scegli almeno un tag. I tag nuovi si creano in Newsletter e form, Tag.");
+                break;
             case 'attributo':
                 $a = $dn['nome'] !== '' && function_exists('newsletter_attributi') ? (newsletter_attributi()[$dn['nome']] ?? null) : null;
                 if (!$a || in_array($a['categoria'], ['calculated', 'global'], true) || ((int)$a['sistema'] && !in_array($a['colonna'], ['nome', 'cognome'], true))) throw new RuntimeException("Il blocco $dove: scegli l'attributo da cambiare.");
@@ -764,7 +780,11 @@ function newsletter_flussi_innesco(string $innesco, int $innescoId, int $iscritt
         return;
     }
     foreach (nl_flussi_attivi() as $f) foreach ($f['inneschi'] as $x) {
-        if ($x['tipo'] === $innesco && ($x['id'] === 0 || $x['id'] === $innescoId) && (($x['esito'] ?? '') === '' || in_array($x['esito'], $esiti, true))) { newsletter_flusso_parti($f, $iscritto, $innesco); break; }
+        if ($x['tipo'] !== $innesco) continue;
+        // 2.23.0: "Riceve un tag" guarda i tag scelti (nessuno = qualunque); gli altri inneschi come prima.
+        $vale = $innesco === 'tag' ? (empty($x['tag']) || in_array($innescoId, $x['tag'], true))
+            : (($x['id'] === 0 || $x['id'] === $innescoId) && (($x['esito'] ?? '') === '' || in_array($x['esito'], $esiti, true)));
+        if ($vale) { newsletter_flusso_parti($f, $iscritto, $innesco); break; }
     }
 }
 
@@ -1044,6 +1064,15 @@ function nl_corso_scorri(array $f, array $r, array &$conto, array &$log, bool $s
                 if (!function_exists('nl_aut_azione')) require_once __DIR__ . '/newsletter-automazioni.php';
                 if ($nodo['tipo'] === 'webhook') $conto['webhook']++;
                 nl_registro($fid, $corso, $iscritto, $nodoId, 'azione', nl_aut_azione($f, $nodo, $r));
+                if (!$vai('poi')) return;
+                continue 2;
+            case 'tag_aggiungi': case 'tag_togli':
+                // 2.23.0: i tag (includes/newsletter-tag.php, file nuovo: niente copie vecchie in opcache).
+                if (!function_exists('newsletter_tag_aggiungi')) require_once __DIR__ . '/newsletter-tag.php';
+                $nomiT = array_intersect_key(newsletter_tag_nomi(), array_flip($d['tag']));
+                $origine = 'automazione «' . $f['nome'] . '»';
+                $n = $nomiT ? ($nodo['tipo'] === 'tag_aggiungi' ? newsletter_tag_aggiungi($iscritto, array_keys($nomiT), $origine) : newsletter_tag_togli($iscritto, array_keys($nomiT), $origine)) : 0;
+                nl_registro($fid, $corso, $iscritto, $nodoId, 'azione', !$nomiT ? 'i tag non ci sono più: niente da fare' : (($nodo['tipo'] === 'tag_aggiungi' ? ($n ? 'tag aggiunti: ' : 'aveva già i tag: ') : ($n ? 'tag tolti: ' : 'non aveva i tag: ')) . implode(', ', $nomiT)));
                 if (!$vai('poi')) return;
                 continue 2;
         }

@@ -104,6 +104,7 @@ require_once __DIR__ . '/includes/admin-header.php';
   <a href="newsletter-contatti.php">Contatti</a>
   <a href="newsletter-contatti.php?scheda=liste">Liste</a>
   <a href="newsletter-segmenti.php" class="attiva" aria-current="page">Segmenti</a>
+  <a href="newsletter-tag.php">Tag</a>
 </nav>
 
 <?php if ($nuovo && !isset($_GET['modello'])): /* Passo 1: da zero o da un modello */ ?>

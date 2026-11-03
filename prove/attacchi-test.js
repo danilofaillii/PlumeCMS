@@ -6,6 +6,9 @@
 //   C XSS in ogni campo di testo (dal pannello, POST veri con il token): sul sito e nel pannello escono come testo
 //   D link del risultato falsificato o di un altro test; email del risultato senza permesso, a raffica
 //   E SQL injection nei parametri; F CSV con le formule
+//   G (2.23.0) domande sulla persona inventate o fuori elenco, risposte sulla persona del permesso dell'email cambiate, email con
+//     intestazioni iniettate, statistiche per gruppi che non scendono sotto 5 (nemmeno cambiando il periodo), XSS nelle domande
+//     sulla persona e nei due testi, CSRF sul passo 2
 // uso: node prove/attacchi-test.js <base> <cartella del CMS installato> <cartella posta>
 const { chromium } = require('playwright');
 const path = require('path');
@@ -199,6 +202,74 @@ const XSS = '<img src=x onerror=alert(1)><script>alert(2)</script>"\'>';
   const celle = csv.replace(/^﻿/, '').trim().split(/\r?\n/).flatMap(riga => (riga.match(/("([^"]|"")*"|[^;]*)(;|$)/g) || []).map(c => c.replace(/;$/, '').replace(/^"|"$/g, '').replace(/""/g, '"')));
   const formule = celle.filter(c => /^[=+\-@]/.test(c) && !/^-?\d+([.,]\d+)?$/.test(c));
   ok('F CSV: nessuna cella comincia con = + - @ (i nomi con le formule hanno l\'apice davanti)', formule.length === 0 && celle.some(c => c.startsWith("'=HYPERLINK")), formule.slice(0, 3));
+
+  // ================= G. 2.23.0: domande sulla persona, risultato completo per email, statistiche per gruppi
+  const P = T['prova-persona'];
+  if (!P) ok('G: c\'è il test «Prova persona» (prova-test.js della 2.23.0 prima)', false);
+  else {
+    cli('pulisci_limiti');
+    await a.goto(PAG('test'), { waitUntil: 'networkidle' });
+    const tokP = await a.getAttribute('meta[name=pn-csrf]', 'content');
+    const postP = (passo, campi, conToken = true) => a.request.post(PAG('test', `&id=${P.id}&passo=${passo}`), { form: { ...(conToken ? { _csrf: tokP } : {}), azione: 'salva', id: String(P.id), passo: String(passo), vai: 'resta', ...campi }, maxRedirects: 0 });
+    await postP(5, { solo_email: '1', email: '1', lista: String(P.d.dopo.lista), consenso: '', iscrizione: '' });
+    const qP = P.d.domande.map(q => q.k);
+    const formP = (persona, extra = {}) => { const f = form({ [qP[0]]: 's4', [qP[1]]: 's4' }, extra); for (const [k, v] of Object.entries(persona)) f[`p[${k}]`] = v; return f; };
+    const conta = () => n(`SELECT COUNT(*) n FROM {p}test_risultati WHERE test_id = ${P.id}`);
+    let prima = conta();
+    g = await gettone('prova-persona'); await dorme(3100);
+    r = await invia('prova-persona', formP({ eta: 'o99' }, { gettone: g }));
+    ok('G1 risposta sulla persona fuori elenco: 422, niente registrato', r.status === 422 && conta() === prima, r.status);
+    g = await gettone('prova-persona'); await dorme(3100);
+    r = await invia('prova-persona', formP({ eta: "o1' OR '1'='1" }, { gettone: g }));
+    ok('G1 risposta sulla persona con SQL: 422', r.status === 422);
+    g = await gettone('prova-persona'); await dorme(3100);
+    r = await invia('prova-persona', formP({ inventata: 'o1', eta: 'o2', 'occupazione][x': 'o1' }, { gettone: g }));
+    const ultima = () => sql(`SELECT persona FROM {p}test_risultati WHERE test_id = ${P.id} ORDER BY id DESC LIMIT 1`)[0].persona;
+    ok('G1 una domanda sulla persona che il test non fa si scarta: registrato solo {"eta":"o2"}', r.status === 303 && ultima() === '{"eta":"o2"}', [r.status, ultima()]);
+    const loc = r.headers.get('location') || '';
+    const u = new URL(loc);
+    ok('G2 dopo l\'invio: il permesso dell\'email (k) e le risposte sulla persona (pz) firmate insieme', u.searchParams.get('pz') === 'eta=o2' && /^\d{10}\.[a-f0-9]{32}$/.test(u.searchParams.get('k') || ''), loc);
+    const emailP = (campi) => fetch(B + '/fai-il-test/prova-persona/email/', { method: 'POST', redirect: 'manual', headers: { 'content-type': 'application/x-www-form-urlencoded' }, body: new URLSearchParams({ e: u.searchParams.get('e'), f: u.searchParams.get('f'), k: u.searchParams.get('k'), email: 'g2@tq-prova.it', consenso: '1', iscrivi: '1', captcha: 'x', ...campi }).toString() });
+    const nP = C.posta(POSTA).length;
+    r = await emailP({ pz: 'eta=o6.occupazione=o1' });
+    ok('G2 risposte sulla persona cambiate (pz) con il permesso di prima: rifiutato, nessun contatto, nessun tag in attesa', /errore=robot/.test(r.headers.get('location') || '') && n(`SELECT COUNT(*) n FROM {p}newsletter_iscritti WHERE email = 'g2@tq-prova.it'`) === 0, r.headers.get('location'));
+    r = await emailP({});
+    ok('G2 risposte sulla persona tolte (senza pz): rifiutato', /errore=robot/.test(r.headers.get('location') || ''));
+    r = await emailP({ pz: 'eta=o2', email: 'g2@tq-prova.it\r\nBcc: spia@cattivo.example' });
+    ok('G2 email con un\'intestazione iniettata: rifiutata (non è un\'email)', /errore=(email|captcha)/.test(r.headers.get('location') || '') && n(`SELECT COUNT(*) n FROM {p}newsletter_iscritti WHERE email LIKE '%cattivo%'`) === 0, r.headers.get('location'));
+    await dorme(1200);
+    ok('G2 nessuna email partita, nessuna verso spia@', C.posta(POSTA).length === nP && !C.posta(POSTA).some(m => /spia@/.test(m.grezza)));
+    // G3 statistiche per gruppi: un gruppo piccolo nuovo solo negli ultimi giorni non si vede, né cambiando il periodo.
+    cli('risultati_finti', P.id, JSON.stringify([{ totale: 10, fascia: 'basso', persona: { eta: 'o6', occupazione: 'o9', settore: 'o20' } }]));
+    const gruppi = async gg => { await a.goto(PAG('statistiche', `&id=${P.id}&giorni=${gg}`), { waitUntil: 'networkidle' }); return a.locator('#ts-gruppi').innerText(); };
+    const tutti = await Promise.all([0, 7, 30, 90, 365].map(async gg => (await (await a.request.get(PAG('statistiche', `&id=${P.id}&giorni=${gg}`))).text()).split('id="ts-gruppi"')[1] || ''));
+    ok('G3 la tabella per gruppi è la stessa con ogni periodo (due periodi non isolano nessuno)', tutti.every(x => x === tutti[0]) && tutti[0].length > 100);
+    const csvP = await (await a.request.get(PAG('statistiche', `&id=${P.id}&csv=1`))).text();
+    const persone = csvP.split(/\r?\n/).filter(x => /Per gruppi/.test(x) && / - persone"?;/.test(x)).map(x => x.split(';').pop().replace(/"/g, ''));
+    ok('G3 CSV: nessun gruppo mostra fra 1 e 4 persone (solo 0, 5 o più, «meno di 5», «non mostrato»)', persone.length > 10 && persone.every(v => v === '0' || +v >= 5 || v === 'meno di 5' || v === 'non mostrato'), persone.filter(v => /^[1-4]$/.test(v)));
+    const gr = cli('gruppi', P.id);
+    let resti = true;
+    for (const q of gr.domande) { const vis = q.righe.filter(x => !x.nascosto).reduce((t, x) => t + x.n, 0); const resto = gr.totale - vis; if (resto > 0 && resto < 5) resti = false; }
+    ok('G3 per ogni domanda, quello che resta fuori dai gruppi mostrati non è mai fra 1 e 4 persone (niente differenze col totale)', resti);
+    const htmlRed = await (await red.request.get(PAG('statistiche', `&id=${P.id}`))).text();
+    ok('G3 redattore: le statistiche per gruppi non escono', !/ts-gruppi/.test(htmlRed));
+    // G4 XSS nelle domande sulla persona e nei due testi; CSRF sul passo 2.
+    await postP(2, { persona_obbligatorie: '0', 'persona[eta][usa]': '1', 'persona[eta][testo]': 'Senza token', 'persona[eta][risposte]': 'a\nb' }, false);
+    ok('G4 CSRF: il passo 2 senza token non cambia le domande sulla persona', !/Senza token/.test(sql(`SELECT dati FROM {p}test_test WHERE id = ${P.id}`)[0].dati));
+    await postP(2, { persona_obbligatorie: '0', 'persona[eta][usa]': '1', 'persona[eta][ordine]': '1', 'persona[eta][testo]': 'Età ' + XSS, 'persona[eta][nome]': 'Età' + XSS, 'persona[eta][risposte]': '18-24\n' + XSS + '\n' + 'x'.repeat(500),
+      'persona[inventata][usa]': '1', 'persona[inventata][testo]': 'Non esiste' });
+    const dP = JSON.parse(sql(`SELECT dati FROM {p}test_test WHERE id = ${P.id}`)[0].dati);
+    ok('G4 il passo 2 tiene solo domande del catalogo (niente «inventata»), testi tagliati', dP.persona.domande.length === 1 && dP.persona.domande[0].k === 'eta' && dP.persona.domande[0].opzioni.every(o => o.t.length <= 120) && dP.persona.domande[0].nome.length <= 40, dP.persona.domande.map(q => q.k));
+    await postP(4, { 'testi[totale|alto][breve]': '<p>Breve ' + XSS + '</p><a href="javascript:alert(3)">x</a>', 'testi[totale|alto][testo]': '<p>Completa</p><iframe src="https://cattivo.example"></iframe>' });
+    const dP4 = JSON.parse(sql(`SELECT dati FROM {p}test_test WHERE id = ${P.id}`)[0].dati).fasce.find(f => f.k === 'alto');
+    ok('G4 risposta breve e completa ripulite al salvataggio (niente script, onerror, javascript:, iframe)', !/<script|onerror|javascript:|<iframe/i.test(dP4.breve + dP4.testo) && /Breve/.test(dP4.breve), dP4.breve.slice(0, 120));
+    const pagP = await (await fetch(B + '/fai-il-test/prova-persona/')).text();
+    ok('G4 sul sito le domande sulla persona escono come testo', !/<img src=x onerror/.test(pagP) && /&lt;img src=x onerror=alert\(1\)&gt;/.test(pagP));
+    await a.goto(B + '/fai-il-test/prova-persona/', { waitUntil: 'networkidle' });
+    await a.goto(PAG('test', `&id=${P.id}&passo=2`), { waitUntil: 'networkidle' });
+    await a.goto(PAG('statistiche', `&id=${P.id}`), { waitUntil: 'networkidle' });
+    ok('G4 nessun alert nel sito e nel pannello (passo 2, statistiche)', alert === 0, alert);
+  }
 
   cli('pulisci_limiti');
   C.fine(err);

@@ -22,6 +22,7 @@
  * Il formato del campo dati (JSON) è descritto in docs-sviluppo/addon/test.md.
  */
 require_once dirname(__DIR__, 3) . '/includes/moduli.php';
+require_once __DIR__ . '/catalogo-persona.php'; // 2.23.0: le domande sulla persona
 
 const TEST_TIPI = ['punteggio' => 'A punteggio', 'aree' => 'Ad aree', 'profili' => 'Che tipo sei (profili)'];
 const TEST_TIPI_SPIEGA = [
@@ -46,6 +47,12 @@ const TEST_LIMITE_ORA = 20;               // invii del risultato per connessione
 const TEST_LIMITE_EMAIL_ORA = 5;          // email del risultato per connessione in un'ora
 const TEST_LIMITE_INIZI_ORA = 120;        // tentativi nuovi per connessione in un'ora (contatore leggero)
 const TEST_EMAIL_ORE = 2;                 // per quante ore, dopo il test, si può chiedere il risultato per email
+// 2.23.0: le domande sulla persona, i due testi dei risultati, il risultato completo per email.
+const TEST_PERSONA_NR = 'nr';             // la risposta "Preferisco non rispondere" delle domande facoltative (non diventa un tag)
+const TEST_PERSONA_NR_TESTO = 'Preferisco non rispondere';
+const TEST_PERSONA_MAX_OPZIONI = 80;
+const TEST_GRUPPO_MINIMO = 5;             // statistiche per gruppi: sotto questo numero non si mostra niente ("meno di 5")
+const TEST_TITOLO_EMAIL = 'Lasciami la tua email e ti mando il risultato completo';
 /**
  * L'indirizzo delle pagine dei test. Non /test/: il .htaccess di ogni installazione (e gli esempi per Apache e Nginx)
  * vieta la cartella test/ nella radice del CMS (RewriteRule ^(...|test|test-definizioni)(/|$) - [F,L]), quindi /test/<nome>/
@@ -85,6 +92,7 @@ function test_tabelle(): array {
             `profilo` VARCHAR(20) NOT NULL DEFAULT '',
             `regola` VARCHAR(20) NOT NULL DEFAULT '',
             `aree` TEXT NULL,
+            `persona` TEXT NULL,
             PRIMARY KEY (`id`),
             KEY `test` (`test_id`, `giorno`)
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4",
@@ -129,6 +137,9 @@ function test_tabelle(): array {
 
 function test_installa(): string {
     foreach (test_tabelle() as $sql) db()->exec($sql);
+    // 2.23.0: le risposte sulla persona con l'esito (anonime come il resto della riga). Le tabelle della 2.22.0 non hanno la colonna.
+    $col = db()->query('SHOW COLUMNS FROM ' . tbl('test_risultati'))->fetchAll(PDO::FETCH_COLUMN);
+    if (!in_array('persona', $col, true)) db()->exec('ALTER TABLE ' . tbl('test_risultati') . ' ADD COLUMN `persona` TEXT NULL AFTER `aree`');
     save_setting('test_schema_impronta', md5(serialize(test_tabelle()) . DB_NAME));
     return 'tabelle a posto';
 }
@@ -191,12 +202,13 @@ function test_dati_vuoti(string $tipo): array {
     return [
         'scala' => TEST_SCALA_PARTENZA, 'aree' => [], 'profili' => [], 'domande' => [],
         'fasce' => $tipo === 'profili' ? [] : [
-            ['k' => 'basso', 'nome' => 'Basso', 'da' => 0, 'a' => 33, 'testo' => '', 'pulsante_testo' => '', 'pulsante_link' => ''],
-            ['k' => 'medio', 'nome' => 'Medio', 'da' => 34, 'a' => 66, 'testo' => '', 'pulsante_testo' => '', 'pulsante_link' => ''],
-            ['k' => 'alto', 'nome' => 'Alto', 'da' => 67, 'a' => 100, 'testo' => '', 'pulsante_testo' => '', 'pulsante_link' => ''],
+            ['k' => 'basso', 'nome' => 'Basso', 'da' => 0, 'a' => 33, 'breve' => '', 'testo' => '', 'pulsante_testo' => '', 'pulsante_link' => ''],
+            ['k' => 'medio', 'nome' => 'Medio', 'da' => 34, 'a' => 66, 'breve' => '', 'testo' => '', 'pulsante_testo' => '', 'pulsante_link' => ''],
+            ['k' => 'alto', 'nome' => 'Alto', 'da' => 67, 'a' => 100, 'breve' => '', 'testo' => '', 'pulsante_testo' => '', 'pulsante_link' => ''],
         ],
         'regole' => [], 'avvertenza' => TEST_AVVERTENZA, 'casuale' => false, 'presentazione' => '',
-        'dopo' => ['email' => false, 'consenso' => TEST_CONSENSO, 'lista' => 0, 'iscrizione' => TEST_ISCRIZIONE],
+        'dopo' => ['email' => false, 'consenso' => TEST_CONSENSO, 'lista' => 0, 'iscrizione' => TEST_ISCRIZIONE, 'solo_email' => true],
+        'persona' => ['obbligatorie' => false, 'domande' => []],
     ];
 }
 
@@ -209,7 +221,7 @@ function test_fasce_pulite(mixed $in): array {
         if (isset($visti[$k])) $k = test_chiave('', 'f');
         $visti[$k] = true;
         $out[] = ['k' => $k, 'nome' => test_testo($f['nome'] ?? '', 60) ?: 'Fascia', 'da' => max(0, min(100, (int)($f['da'] ?? 0))), 'a' => max(0, min(100, (int)($f['a'] ?? 100))),
-            'testo' => test_ricco($f['testo'] ?? ''), 'pulsante_testo' => test_testo($f['pulsante_testo'] ?? '', 80), 'pulsante_link' => test_link($f['pulsante_link'] ?? '')];
+            'breve' => test_ricco($f['breve'] ?? ''), 'testo' => test_ricco($f['testo'] ?? ''), 'pulsante_testo' => test_testo($f['pulsante_testo'] ?? '', 80), 'pulsante_link' => test_link($f['pulsante_link'] ?? '')];
     }
     usort($out, fn($x, $y) => $x['da'] <=> $y['da'] ?: $x['a'] <=> $y['a']);
     return $out;
@@ -243,7 +255,7 @@ function test_normalizza(mixed $d, string $tipo): array {
             $visti[$k] = true;
             $x = ['k' => $k, 'nome' => test_testo($a['nome'] ?? '', 60) ?: ($chi === 'aree' ? 'Area' : 'Profilo')];
             if ($chi === 'aree') $x['fasce'] = test_fasce_pulite($a['fasce'] ?? []) ?: test_dati_vuoti('punteggio')['fasce'];
-            else $x += ['testo' => test_ricco($a['testo'] ?? ''), 'pulsante_testo' => test_testo($a['pulsante_testo'] ?? '', 80), 'pulsante_link' => test_link($a['pulsante_link'] ?? '')];
+            else $x += ['breve' => test_ricco($a['breve'] ?? ''), 'testo' => test_ricco($a['testo'] ?? ''), 'pulsante_testo' => test_testo($a['pulsante_testo'] ?? '', 80), 'pulsante_link' => test_link($a['pulsante_link'] ?? '')];
             $lista[] = $x;
         }
         $out[$chi] = $lista;
@@ -323,7 +335,7 @@ function test_normalizza(mixed $d, string $tipo): array {
             }
             if (!$cond) continue;
             $regole[] = ['k' => test_chiave($r['k'] ?? '', 'r'), 'nome' => test_testo($r['nome'] ?? '', 80) ?: 'Regola ' . (count($regole) + 1), 'modo' => ($r['modo'] ?? 'e') === 'o' ? 'o' : 'e',
-                'condizioni' => $cond, 'testo' => test_ricco($r['testo'] ?? ''), 'pulsante_testo' => test_testo($r['pulsante_testo'] ?? '', 80), 'pulsante_link' => test_link($r['pulsante_link'] ?? '')];
+                'condizioni' => $cond, 'breve' => test_ricco($r['breve'] ?? ''), 'testo' => test_ricco($r['testo'] ?? ''), 'pulsante_testo' => test_testo($r['pulsante_testo'] ?? '', 80), 'pulsante_link' => test_link($r['pulsante_link'] ?? '')];
         }
     }
     $out['regole'] = $regole;
@@ -332,8 +344,49 @@ function test_normalizza(mixed $d, string $tipo): array {
     $out['presentazione'] = test_testo($d['presentazione'] ?? '', 2000, true);
     $dp = is_array($d['dopo'] ?? null) ? $d['dopo'] : [];
     $out['dopo'] = ['email' => !empty($dp['email']), 'consenso' => test_testo($dp['consenso'] ?? '', 600) ?: TEST_CONSENSO, 'lista' => max(0, (int)($dp['lista'] ?? 0)),
-        'iscrizione' => test_testo($dp['iscrizione'] ?? '', 300) ?: TEST_ISCRIZIONE];
+        'iscrizione' => test_testo($dp['iscrizione'] ?? '', 300) ?: TEST_ISCRIZIONE, 'solo_email' => !empty($dp['solo_email'])];
+    $out['persona'] = test_persona_normalizza($d['persona'] ?? null);
     return $out;
+}
+
+/**
+ * 2.23.0: le domande sulla persona di un test, controllate: {obbligatorie: bool, domande: [{k, nome, testo, opzioni: [{k, t}]}]}.
+ * Solo domande del catalogo (catalogo-persona.php), una volta sola ciascuna, con le risposte scritte dall'autore (da 2 a
+ * TEST_PERSONA_MAX_OPZIONI, chiavi uniche; la chiave TEST_PERSONA_NR è riservata a "Preferisco non rispondere").
+ */
+function test_persona_normalizza(mixed $p): array {
+    $p = is_array($p) ? $p : [];
+    $cat = test_persona_catalogo();
+    $out = ['obbligatorie' => !empty($p['obbligatorie']), 'domande' => []];
+    $viste = [];
+    foreach (is_array($p['domande'] ?? null) ? array_slice($p['domande'], 0, count($cat)) : [] as $q) {
+        if (!is_array($q) || !is_string($q['k'] ?? null) || !isset($cat[$q['k']]) || isset($viste[$q['k']])) continue;
+        $c = $cat[$q['k']];
+        $ops = []; $ko = [];
+        foreach (is_array($q['opzioni'] ?? null) ? array_slice($q['opzioni'], 0, TEST_PERSONA_MAX_OPZIONI) : [] as $o) {
+            if (!is_array($o)) continue;
+            $t = test_testo($o['t'] ?? '', 120);
+            if ($t === '') continue;
+            $k = is_string($o['k'] ?? null) && $o['k'] !== TEST_PERSONA_NR && preg_match('/^[a-z][a-z0-9]{1,15}$/', $o['k']) && !isset($ko[$o['k']]) ? $o['k'] : '';
+            if ($k === '') { $n = count($ops) + 1; do { $k = 'o' . $n++; } while (isset($ko[$k])); }
+            $ko[$k] = true;
+            $ops[] = ['k' => $k, 't' => $t];
+        }
+        if (count($ops) < 2) $ops = $c['opzioni'];
+        $viste[$q['k']] = true;
+        $out['domande'][] = ['k' => $c['k'], 'nome' => test_testo($q['nome'] ?? '', 40) ?: $c['nome'], 'testo' => test_testo($q['testo'] ?? '', 300) ?: $c['testo'], 'opzioni' => $ops];
+    }
+    return $out;
+}
+
+/** 2.23.0: il risultato completo va solo per email (e il riquadro dell'email c'è sempre)? */
+function test_solo_email(array $t): bool {
+    return !empty($t['dati']['dopo']['solo_email']);
+}
+
+/** 2.23.0: il riquadro dell'email c'è (scelto nel passo 5, o perché il risultato completo va solo per email). */
+function test_email_attiva(array $t): bool {
+    return !empty($t['dati']['dopo']['email']) || test_solo_email($t);
 }
 
 /** Una riga del database pronta: dati decodificati e controllati. */
@@ -389,7 +442,10 @@ function test_crea(string $nome, string $tipo, ?array $dati = null): int {
     $tipo = isset(TEST_TIPI[$tipo]) ? $tipo : 'punteggio';
     $nome = test_testo($nome, 200) ?: 'Test senza nome';
     $slug = test_slug_libero(test_slug($nome));
-    $dati = test_normalizza($dati ?? test_dati_vuoti($tipo), $tipo);
+    $dati ??= test_dati_vuoti($tipo);
+    // 2.23.0: per i test nuovi (anche dai modelli) il risultato completo va solo per email; una copia tiene la scelta dell'originale.
+    if (!is_array($dati['dopo'] ?? null) || !array_key_exists('solo_email', $dati['dopo'])) $dati['dopo'] = (is_array($dati['dopo'] ?? null) ? $dati['dopo'] : []) + ['solo_email' => true];
+    $dati = test_normalizza($dati, $tipo);
     $ora = date('Y-m-d H:i:s');
     db()->prepare('INSERT INTO ' . tbl('test_test') . ' (slug, nome, tipo, stato, durata, dati, creato, aggiornato) VALUES (?, ?, ?, \'bozza\', 0, ?, ?, ?)')
         ->execute([$slug, $nome, $tipo, json_encode($dati, JSON_UNESCAPED_SLASHES), $ora, $ora]);
@@ -717,15 +773,91 @@ function test_esito_da_link(array $t, mixed $e, mixed $f): ?array {
     return $c;
 }
 
-/** Il permesso di chiedere il risultato per email, valido TEST_EMAIL_ORE ore dopo il test (non sta nel link da condividere). */
-function test_chiave_email(string $e, ?int $scade = null): string {
+/**
+ * Il permesso di chiedere il risultato per email, valido TEST_EMAIL_ORE ore dopo il test (non sta nel link da condividere).
+ * 2.23.0: $pz sono le risposte sulla persona in forma corta (test_persona_corto()), firmate insieme all'esito: servono solo
+ * per i tag di chi si iscrive. Senza risposte la firma è quella della 2.22.0.
+ */
+function test_chiave_email(string $e, ?int $scade = null, string $pz = ''): string {
     $scade ??= time() + TEST_EMAIL_ORE * 3600;
-    return $scade . '.' . substr(hash_hmac('sha256', 'test-email|' . $e . '|' . $scade, moduli_segreto()), 0, 32);
+    return $scade . '.' . substr(hash_hmac('sha256', 'test-email|' . $e . ($pz !== '' ? '|p=' . $pz : '') . '|' . $scade, moduli_segreto()), 0, 32);
 }
 
-function test_chiave_email_valida(string $e, mixed $k): bool {
+function test_chiave_email_valida(string $e, mixed $k, string $pz = ''): bool {
     if (!is_string($k) || !preg_match('/^(\d{10})\.([a-f0-9]{32})$/', $k, $m) || (int)$m[1] < time()) return false;
-    return hash_equals(test_chiave_email($e, (int)$m[1]), $k);
+    return hash_equals(test_chiave_email($e, (int)$m[1], $pz), $k);
+}
+
+// ------------------------------------------------------------
+// 2.23.0: le domande sulla persona
+// ------------------------------------------------------------
+
+/**
+ * Le risposte sulla persona arrivate con il test, controllate sul test: [risposte (k => chiave della risposta o
+ * TEST_PERSONA_NR), errori (k => 'obbligatoria' | 'valore')]. Una domanda che il test non fa si scarta; una risposta che
+ * non è fra quelle della domanda è un errore; "Preferisco non rispondere" vale solo se le domande sono facoltative.
+ */
+function test_persona_valida(array $t, mixed $in): array {
+    $p = $t['dati']['persona'];
+    $in = is_array($in) ? $in : [];
+    $risposte = []; $errori = [];
+    foreach ($p['domande'] as $q) {
+        $v = is_string($in[$q['k']] ?? null) ? trim($in[$q['k']]) : '';
+        if ($v === '') { if ($p['obbligatorie']) $errori[$q['k']] = 'obbligatoria'; continue; }
+        if ($v === TEST_PERSONA_NR && !$p['obbligatorie']) { $risposte[$q['k']] = TEST_PERSONA_NR; continue; }
+        if (!in_array($v, array_column($q['opzioni'], 'k'), true)) { $errori[$q['k']] = 'valore'; continue; }
+        $risposte[$q['k']] = $v;
+    }
+    return [$risposte, $errori];
+}
+
+/** Le risposte sulla persona in forma corta per il permesso dell'email: "eta=o3.genere=nr" (solo chiavi controllate). */
+function test_persona_corto(array $risposte): string {
+    $pezzi = [];
+    foreach ($risposte as $k => $v) if (preg_match('/^[a-z][a-z0-9]{1,15}$/', (string)$k) && preg_match('/^[a-z][a-z0-9]{1,15}$/', (string)$v)) $pezzi[] = $k . '=' . $v;
+    return mb_substr(implode('.', $pezzi), 0, 1500);
+}
+
+/** Dalla forma corta alle risposte, ricontrollate sul test di adesso (una domanda o una risposta tolta nel frattempo si scarta). */
+function test_persona_da_corto(array $t, string $pz): array {
+    $in = [];
+    foreach (explode('.', $pz) as $x) if (preg_match('/^([a-z][a-z0-9]{1,15})=([a-z][a-z0-9]{1,15})$/', $x, $m)) $in[$m[1]] = $m[2];
+    $out = [];
+    foreach ($t['dati']['persona']['domande'] as $q) {
+        $v = $in[$q['k']] ?? '';
+        if ($v === TEST_PERSONA_NR || in_array($v, array_column($q['opzioni'], 'k'), true)) $out[$q['k']] = $v;
+    }
+    return $out;
+}
+
+/**
+ * I tag di chi si iscrive: le risposte sulla persona come "Nome breve: risposta" ("Età: 35-44"; "Preferisco non
+ * rispondere" non diventa un tag) e l'esito del test ("Test <nome>: <fascia o profilo>"), al massimo 60 caratteri l'uno.
+ */
+function test_tag_persona(array $t, array $risposte, array $e = []): array {
+    $tag = [];
+    foreach ($t['dati']['persona']['domande'] as $q) {
+        $v = $risposte[$q['k']] ?? '';
+        if ($v === '' || $v === TEST_PERSONA_NR) continue;
+        $nomi = array_column($q['opzioni'], 't', 'k');
+        if (isset($nomi[$v])) $tag[] = mb_substr($q['nome'] . ': ' . $nomi[$v], 0, 60);
+    }
+    $esito = test_esito_tag($t, $e);
+    if ($esito !== '') $tag[] = $esito;
+    return $tag;
+}
+
+/** Il tag dell'esito: "Test <nome del test>: <fascia del totale, o profilo>", con il nome del test accorciato per stare in 60 caratteri. */
+function test_esito_tag(array $t, array $e): string {
+    $d = $t['dati'];
+    $per = fn(array $l, string $k) => array_values(array_filter($l, fn($x) => $x['k'] === $k))[0]['nome'] ?? '';
+    $esito = $t['tipo'] === 'profili' ? $per($d['profili'], (string)($e['p'] ?? '')) : $per($d['fasce'], (string)($e['f'] ?? ''));
+    if ($esito === '') return '';
+    $coda = ': ' . mb_substr($esito, 0, 40);
+    $nome = trim(str_replace([',', ';'], ' ', (string)$t['nome']));
+    $spazio = max(5, 60 - 5 - mb_strlen($coda));
+    if (mb_strlen($nome) > $spazio) $nome = rtrim(mb_substr($nome, 0, $spazio - 1)) . '…';
+    return 'Test ' . $nome . $coda;
 }
 
 /**
@@ -753,8 +885,9 @@ function test_gettone_controlla(int $id, mixed $g): string {
 /** "12 domande, circa 3 minuti" (le condizionali contano come "fino a"). */
 function test_quanto_testo(array $t): string {
     $d = $t['dati']['domande'];
-    $fisse = count(array_filter($d, fn($q) => !$q['condizione']));
-    $tutte = count($d);
+    $pers = count($t['dati']['persona']['domande'] ?? []); // 2.23.0: anche le domande sulla persona
+    $fisse = count(array_filter($d, fn($q) => !$q['condizione'])) + $pers;
+    $tutte = count($d) + $pers;
     $min = $t['durata'] > 0 ? $t['durata'] : max(1, (int)ceil($tutte * TEST_SECONDI_DOMANDA / 60));
     $n = $fisse === $tutte ? ($tutte === 1 ? '1 domanda' : $tutte . ' domande') : ($fisse . '-' . $tutte . ' domande');
     return $n . ', circa ' . ($min === 1 ? '1 minuto' : $min . ' minuti');
@@ -793,12 +926,13 @@ function test_tentativo(int $test, string $codice, string $domanda = '', int $pa
 }
 
 /** Registra un risultato per le statistiche: esito e punteggi con il giorno, contatori delle risposte, tentativo finito. */
-function test_registra(array $t, array $r, string $tentativo = ''): void {
+function test_registra(array $t, array $r, string $tentativo = '', array $persona = []): void {
     test_schema();
     $aree = $r['aree'] ? json_encode(array_map(fn($a) => $a['pct'], $r['aree'])) : null;
     if ($t['tipo'] === 'profili') $aree = json_encode(array_map(fn($x) => round($x, 1), $r['profili']));
-    db()->prepare('INSERT INTO ' . tbl('test_risultati') . ' (test_id, giorno, totale, fascia, profilo, regola, aree) VALUES (?, CURDATE(), ?, ?, ?, ?, ?)')
-        ->execute([$t['id'], $r['totale'], $r['fascia'], $r['profilo'], $r['regola'], $aree]);
+    // 2.23.0: le risposte sulla persona stanno con l'esito, nella stessa riga anonima (niente email, niente IP, solo il giorno).
+    db()->prepare('INSERT INTO ' . tbl('test_risultati') . ' (test_id, giorno, totale, fascia, profilo, regola, aree, persona) VALUES (?, CURDATE(), ?, ?, ?, ?, ?, ?)')
+        ->execute([$t['id'], $r['totale'], $r['fascia'], $r['profilo'], $r['regola'], $aree, $persona ? json_encode($persona) : null]);
     $ins = db()->prepare('INSERT INTO ' . tbl('test_risposte') . ' (test_id, domanda, valore, n) VALUES (?, ?, ?, 1) ON DUPLICATE KEY UPDATE n = n + 1');
     foreach ($r['risposte'] as $k => $v) $ins->execute([$t['id'], $k, $v]);
     $fatto = 0;
@@ -834,6 +968,66 @@ function test_statistiche(array $t, int $giorni = 0): array {
     foreach ($q('SELECT domanda, valore, n FROM ' . tbl('test_risposte') . ' WHERE test_id = ?', [$t['id']]) as $x) $risposte[(string)$x['domanda']][(string)$x['valore']] = (int)$x['n'];
     return ['iniziati' => max($iniziati, $completati), 'completati' => $completati, 'abbandoni' => $abbandoni, 'distribuzione' => $dist,
         'media_totale' => $contaTot ? round($sommaTot / $contaTot, 1) : null, 'medie' => $medie, 'risposte' => $risposte];
+}
+
+/**
+ * 2.23.0: le statistiche per gruppi, una tabella per ogni domanda sulla persona: per ogni risposta quanti l'hanno data, la
+ * distribuzione dei risultati (fascia del totale o profilo, in percentuale) e il punteggio medio (totale e per area).
+ * Sempre su tutti i risultati del test (non sul periodo scelto: confrontando due periodi si isolerebbero poche persone).
+ * Un gruppo con meno di TEST_GRUPPO_MINIMO persone non mostra niente ("meno di 5"); se quello che resta fuori dai gruppi
+ * mostrati (gruppi nascosti e chi non ha risposto) è fra 1 e 4 persone, si nasconde anche il gruppo mostrato più piccolo,
+ * perché per differenza dal totale si saprebbe il resto. Ritorna ['totale' => N, 'domande' => [...]].
+ */
+function test_statistiche_gruppi(array $t): array {
+    test_schema();
+    $d = $t['dati'];
+    $st = db()->prepare('SELECT totale, fascia, profilo, aree, persona FROM ' . tbl('test_risultati') . ' WHERE test_id = ? ORDER BY id DESC LIMIT 50000');
+    $st->execute([$t['id']]);
+    $righe = [];
+    foreach ($st as $x) $righe[] = ['totale' => $x['totale'] === null ? null : (int)$x['totale'], 'fascia' => (string)$x['fascia'], 'profilo' => (string)$x['profilo'],
+        'aree' => (array)json_decode((string)$x['aree'], true), 'persona' => (array)json_decode((string)$x['persona'], true)];
+    $tot = count($righe);
+    $chiaveRis = $t['tipo'] === 'profili' ? 'profilo' : 'fascia';
+    $out = ['totale' => $tot, 'domande' => []];
+    foreach ($d['persona']['domande'] as $q) {
+        $ops = array_merge($q['opzioni'], [['k' => TEST_PERSONA_NR, 't' => TEST_PERSONA_NR_TESTO]]);
+        $gruppi = [];
+        foreach ($ops as $o) $gruppi[$o['k']] = ['k' => $o['k'], 't' => $o['t'], 'n' => 0, 'ris' => [], 'somma' => 0.0, 'conta' => 0, 'aree' => [], 'aree_n' => [], 'nascosto' => false];
+        foreach ($righe as $x) {
+            $v = (string)($x['persona'][$q['k']] ?? '');
+            if (!isset($gruppi[$v])) continue;
+            $g = &$gruppi[$v];
+            $g['n']++;
+            if ($x[$chiaveRis] !== '') $g['ris'][$x[$chiaveRis]] = ($g['ris'][$x[$chiaveRis]] ?? 0) + 1;
+            if ($x['totale'] !== null) { $g['somma'] += $x['totale']; $g['conta']++; }
+            if ($t['tipo'] === 'aree') foreach ($x['aree'] as $ak => $av) if (is_numeric($av)) { $g['aree'][$ak] = ($g['aree'][$ak] ?? 0) + (float)$av; $g['aree_n'][$ak] = ($g['aree_n'][$ak] ?? 0) + 1; }
+            unset($g);
+        }
+        // "Preferisco non rispondere" compare solo se le domande sono facoltative o se qualcuno l'ha data prima.
+        if ($d['persona']['obbligatorie'] && !$gruppi[TEST_PERSONA_NR]['n']) unset($gruppi[TEST_PERSONA_NR]);
+        foreach ($gruppi as &$g) $g['nascosto'] = $g['n'] > 0 && $g['n'] < TEST_GRUPPO_MINIMO;
+        unset($g);
+        // Il resto (gruppi nascosti e chi non ha risposto a questa domanda) non deve essere fra 1 e 4 persone.
+        while (true) {
+            $mostrati = array_filter($gruppi, fn($g) => !$g['nascosto'] && $g['n'] > 0);
+            $resto = $tot - array_sum(array_column($mostrati, 'n'));
+            if ($resto === 0 || $resto >= TEST_GRUPPO_MINIMO || !$mostrati) break;
+            uasort($mostrati, fn($a, $b) => $a['n'] <=> $b['n']);
+            $gruppi[array_key_first($mostrati)]['nascosto'] = true;
+        }
+        $righeQ = [];
+        foreach ($gruppi as $g) {
+            $r = ['k' => $g['k'], 't' => $g['t'], 'nascosto' => $g['nascosto'], 'perche' => $g['nascosto'] ? ($g['n'] < TEST_GRUPPO_MINIMO ? 'pochi' : 'resto') : '', 'n' => $g['nascosto'] ? null : $g['n'], 'dist' => [], 'media' => null, 'aree' => []];
+            if (!$g['nascosto'] && $g['n'] > 0) {
+                foreach ($g['ris'] as $rk => $rn) $r['dist'][$rk] = (int)round($rn / $g['n'] * 100);
+                $r['media'] = $g['conta'] ? round($g['somma'] / $g['conta'], 1) : null;
+                foreach ($g['aree'] as $ak => $as) $r['aree'][$ak] = round($as / $g['aree_n'][$ak], 1);
+            }
+            $righeQ[] = $r;
+        }
+        $out['domande'][] = ['k' => $q['k'], 'nome' => $q['nome'], 'testo' => $q['testo'], 'righe' => $righeQ];
+    }
+    return $out;
 }
 
 // ------------------------------------------------------------

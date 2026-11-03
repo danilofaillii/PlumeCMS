@@ -694,6 +694,7 @@ function form_ricevi(array $m, array $p, string $pagina, array $file = []): stri
     if ($profilo) {
         // 2.16.0: Aggiornamento del profilo.
         try { fb_salva_profilo($m, $profilo, $x); } catch (Throwable $e) { error_log('form profilo: ' . $e->getMessage()); }
+        try { form_tag_dai($m, (int)$profilo['id']); } catch (Throwable $e) { error_log('form tag: ' . $e->getMessage()); } // 2.23.0
     } elseif ($m['tipo'] === 'disiscrizione') {
         // 2.16.0: Disiscrizione: l'email con il link per uscire, solo a chi è iscritto.
         try { if ($email !== '') fb_disiscrizione($m, $email); } catch (Throwable $e) { error_log('form disiscrizione: ' . $e->getMessage()); }
@@ -708,6 +709,7 @@ function form_ricevi(array $m, array $p, string $pagina, array $file = []): stri
             if ($r === '') {
                 try {
                     fb_dopo_iscrizione($m, newsletter_id_da_email($email), $cera, $x);
+                    form_tag_dai($m, newsletter_id_da_email($email)); // 2.23.0: i tag del form, subito o alla conferma
                     if ($m['conferma'] === 'semplice' && !$attivoPrima) fb_benvenuto($m, $email, $nome['nome'] ?? '');
                 } catch (Throwable $e) { error_log('form dopo iscrizione: ' . $e->getMessage()); }
             }
@@ -741,6 +743,13 @@ function form_ricevi(array $m, array $p, string $pagina, array $file = []): stri
     // L'innesco "Compila un form": subito per chi è attivo; per chi deve ancora confermare si ricorda e parte alla conferma.
     if ($m['tipo'] !== 'disiscrizione') newsletter_flussi_innesco('form', (int)$m['id'], $profilo ? (int)$profilo['id'] : ($email !== '' ? newsletter_id_da_email($email) : 0));
     return '';
+}
+
+/** 2.23.0: i tag del form (passo 1) a chi lo compila: subito se è iscritto, altrimenti alla conferma (includes/newsletter-tag.php). */
+function form_tag_dai(array $m, int $iscritto): void {
+    if (trim((string)($m['tag'] ?? '')) === '' || $iscritto <= 0) return;
+    if (!function_exists('newsletter_tag_dal_form')) require_once __DIR__ . '/newsletter-tag.php';
+    newsletter_tag_dal_form($m, $iscritto);
 }
 
 /**

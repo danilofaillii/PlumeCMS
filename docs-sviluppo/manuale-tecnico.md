@@ -3021,6 +3021,70 @@ scorrimento, uscita), non quelle di Brevo, che le fonti non dicono; reCAPTCHA e 
 resta quello in casa, e senza JavaScript una domanda); la conferma semplice usa un'email a testo (oggetto e testo nel passo
 4), non un modello; nessun gruppo di consenso si sceglie nelle automazioni.
 
+### 15.16 I tag dei contatti (dalla 2.23.0)
+
+Motore in `includes/newsletter-tag.php` (file nuovo: chi lo usa lo carica con `require_once`, così opcache non può dare una
+copia vecchia insieme ai file cambiati; `includes/newsletter.php:1064` lo carica per tutti). Pagina `admin/newsletter-tag.php`.
+**Non sono tag delle persone** la colonna `tag` di `newsletter_flussi` (etichetta delle automazioni) e il campo `tag` dei
+modelli delle email: non sono stati toccati.
+
+**Tabelle** (`newsletter_tag_schema()`, `includes/newsletter-tag.php:27`, utf8 a tre byte come il resto della newsletter,
+impronta `newsletter_tag_impronta`):
+
+| Tabella | Colonne | Cosa |
+|---|---|---|
+| `<prefisso>newsletter_tag` | `id`, `nome` VARCHAR(255) UNIQUE, `creato` | i tag. La collazione `utf8_general_ci` fa l'unicità senza maiuscole, minuscole e accenti |
+| `<prefisso>newsletter_contatti_tag` | `contatto_id`, `tag_id` (PRIMARY), `aggiunto`; KEY `tag` | chi ha quale tag |
+| `<prefisso>newsletter_tag_attese` | `iscritto_id`, `nome` (PRIMARY), `origine`, `creato` | i tag di chi deve ancora confermare (form con la doppia conferma, addon dei test); 40 giorni, poi la pulizia del cron li toglie |
+| colonna `tag` di `<prefisso>moduli` | VARCHAR(1000), nomi separati da virgola | "A chi compila dai questi tag" del form (`newsletter_tag_colonna_form()`, `includes/newsletter-tag.php:60`, aggiunta anche al salvataggio di un form) |
+
+**Il nome di un tag** (`newsletter_tag_nome()`, `includes/newsletter-tag.php:78`): niente HTML (`strip_tags`, poi via `<` e
+`>`), niente caratteri di controllo, niente virgole e punti e virgola (separano i tag), spazi uniti, al massimo
+`NL_TAG_NOME_MAX` (60) caratteri visibili; le emoji si salvano come entità (`newsletter_4byte_dentro`) e tornano emoji con
+`newsletter_tag_vedi()`. Tetti: `NL_TAG_MASSIMO` 5000 tag in tutto, `NL_TAG_PER_CONTATTO` 200, `NL_TAG_PER_VOLTA` 50 in
+un'assegnazione (`includes/newsletter-tag.php:22`).
+
+**Funzioni**
+
+| Funzione | Dove | Cosa |
+|---|---|---|
+| `newsletter_tag_crea()`, `newsletter_tag_trova()` | `includes/newsletter-tag.php:120`, `:110` | un tag nuovo (o quello che c'è con lo stesso nome); il tetto in parole |
+| `newsletter_tag_aggiungi()` | `includes/newsletter-tag.php:238` | dà tag (nomi: nascono da soli; o id interi) a un contatto; storia `tag_aggiunto`; per ogni tag nuovo l'innesco `tag` delle automazioni |
+| `newsletter_tag_togli()`, `newsletter_tag_imposta()` | `includes/newsletter-tag.php:265`, `:281` | toglie; "sostituisci" dell'importazione |
+| `newsletter_tag_gruppo()` | `includes/newsletter-tag.php:289` | l'azione di gruppo della pagina Contatti |
+| `newsletter_tag_di()`, `newsletter_tag_di_tanti()`, `newsletter_tag_tutti()`, `newsletter_tag_nomi()`, `newsletter_tag_conteggi()` | `includes/newsletter-tag.php:197`, `:207`, `:137`, `:144`, `:152` | elenchi e conteggi |
+| `newsletter_tag_rinomina()`, `newsletter_tag_elimina()` | `includes/newsletter-tag.php:168`, `:180` | rinomina (un nome già usato è rifiutato), elimina (storia `tag_tolto` a chi lo aveva) |
+| `newsletter_tag_in_attesa()`, `newsletter_tag_alla_conferma()`, `newsletter_tag_dai()` | `includes/newsletter-tag.php:304`, `:312`, `:326` | i tag che aspettano la conferma; `newsletter_conferma_esito()` chiama la seconda (`includes/newsletter.php:604`) prima dell'evento `newsletter_confermata` |
+| `newsletter_tag_form_salva()`, `newsletter_tag_dal_form()` | `includes/newsletter-tag.php:351`, `:359` | i tag del form (passo 1); dopo un invio che iscrive o aggiorna il profilo (`form_tag_dai()`, `includes/form.php:749`) |
+
+**Dove si usano**
+
+- *Contatti*: filtro `tag` in `newsletter_contatti_filtro()` (`includes/newsletter-contatti.php:541`), tendina "Con il tag",
+  azioni di gruppo `tag_aggiungi` e `tag_togli` (`admin/newsletter-contatti.php`); scheda del contatto, riquadro Tag (azioni
+  `tag_aggiungi`, `tag_togli`, `admin/newsletter-contatto.php:63`), con il `datalist` dei tag che ci sono; Cronologia con il
+  tipo `tag` (`NL_CRONOLOGIA_TIPI`, mappa della storia `includes/newsletter-contatti.php:795`). `newsletter_togli_iscritti()`
+  toglie anche tag e tag in attesa (`includes/newsletter.php:744`).
+- *Segmenti*: campo `tag` (gruppo "Liste e segmenti", `includes/newsletter-segmenti.php:137`), operatori `qualsiasi`, `tutti`,
+  `nessuno`, `non_tutti` (`:47`), valori = id dei tag che esistono (`newsletter_condizione_valida()`, `:276`), SQL con
+  `EXISTS` o con il conteggio dei tag scelti (`nl_seg_condizione_sql()`, `:403`). La definizione del costruttore ha `tag`
+  (id => nome) e `admin/assets/segmenti.js` mette le caselle. Le divisioni delle automazioni lo usano da sole.
+- *Automazioni* (`includes/newsletter-flussi.php`): innesco `tag` "Riceve un tag" in `NL_INNESCHI` (`:19`), con `tag`
+  (id scelti, nessuno = qualunque) in `nl_inneschi_validi()` (`:369`) e nel confronto di `newsletter_flussi_innesco()`
+  (`:785`); nodi `tag_aggiungi` e `tag_togli` in `NL_USCITE` (`:58`), dati `{tag: [id]}` al massimo 20, controllati al
+  salvataggio (solo tag che esistono, `:634`) ed eseguiti nel giro (`nl_corso_scorri()`, `:1069`, riga del registro). La
+  tela: `admin/newsletter-flussi.php` (`FL_DATI.tag`, i due pezzi nella scheda Azioni) e `admin/assets/flussi.js`
+  (caselle `data-tag`, `nomiTag()`). Le automazioni salvate prima non cambiano: gli inneschi e i nodi di prima si leggono
+  e si eseguono come prima.
+- *Form*: campo "A chi compila dai questi tag" nel passo 1 (`admin/form.php`); `form_tag_dai()` dopo l'iscrizione e dopo
+  l'aggiornamento del profilo.
+- *Importa ed esporta* (`includes/newsletter-importa.php`): abbinamento `_TAG` (le colonne TAG, TAGS, ETICHETTA, ETICHETTE si
+  abbinano da sole se non c'è un attributo con quel nome, `:35`, `:397`), opzione `tag` = `aggiungi` | `sostituisci`
+  (passo 4), la cella si divide su virgola e punto e virgola; i giri lavorano dentro una transazione, per questo
+  `newsletter_importa_schema()` chiama prima `newsletter_tag_schema()` (un CREATE TABLE chiuderebbe la transazione).
+  Esporta: colonna `TAG` in `NL_ESP_EXTRA` (`:33`). Il nome `TAG` è riservato per gli attributi nuovi.
+
+**Prove**: `prove/prova-tag.js` (57 controlli) e `prove/attacchi-tag.js` (25), con `prove/tag-cli.php`.
+
 ## 16. SEO e AEO, file calcolati, feed
 
 `includes/seo.php` (configurazione e strumenti), `includes/sito-seo.php` (meta e JSON-LD delle pagine), pagina
@@ -5166,12 +5230,12 @@ Addon `cms/addon/test/` (capitolo 32 per gli addon in generale). Il dettaglio (f
 scelta singola, sì/no, cursore 0-10, con peso, invertite, obbligatorie, condizionali; fasce in percentuale per il totale
 e per ogni area, regole E/O che vincono sulle fasce, avvertenza; presentazione con l'editor visuale (contenitore
 `test_presentazione`, 9.12); procedura in cinque passi nel pannello con il simulatore; pagina pubblica
-`/fai-il-test/<nome>/` (non `/test/`: il `.htaccess` di ogni sito vieta `^test(/|$)`, `TEST_PERCORSO` `addon/test/includes/test.php:54`),
+`/fai-il-test/<nome>/` (non `/test/`: il `.htaccess` di ogni sito vieta `^test(/|$)`, `TEST_PERCORSO` `addon/test/includes/test.php:61`),
 una domanda per schermata con JavaScript, pagina unica senza; link al risultato firmato con solo l'esito; risultato per
 email con il consenso, iscrizione a una lista con doppia conferma; innesco delle automazioni "Completa un test" con il
 filtro sul risultato; statistiche anonime e CSV.
 
-**Tabelle** (`test_tabelle()`, `addon/test/includes/test.php:60`, `utf8mb4`): `test_test`, `test_risultati` (esito e punteggi con il
+**Tabelle** (`test_tabelle()`, `addon/test/includes/test.php:67`, `utf8mb4`): `test_test`, `test_risultati` (esito e punteggi con il
 giorno), `test_risposte` (contatori), `test_tentativi` (codice casuale del browser, per iniziati e abbandoni),
 `test_limiti` (impronta HMAC di IP e giorno), `test_attese` (inneschi in attesa della conferma). Nessun IP in chiaro,
 nessuna email: l'email entra nei Contatti solo con l'iscrizione.
@@ -5180,18 +5244,18 @@ nessuna email: l'email entra nei Contatti solo con l'iscrizione.
 
 | Funzione | Dove | Cosa |
 |---|---|---|
-| `test_normalizza()` | `addon/test/includes/test.php:223` | controlla tutti i dati di un test (pannello e database) |
-| `test_calcola()` | `addon/test/includes/test.php:580` | il risultato, funzione pura: mostrate, punti, percentuali, fasce, regole, profili |
-| `test_fasce_controlla()` | `addon/test/includes/test.php:526` | fasce da 0 a 100 senza buchi né sovrapposizioni, in parole |
-| `test_problemi()` | `addon/test/includes/test.php:543` | cosa impedisce di pubblicare |
-| `test_simula()` | `addon/test/includes/test.php:848` | minimo, metà, massimo e N prove a caso; fasce mai raggiunte |
-| `test_esito_corto()`, `test_esito_da_link()` | `addon/test/includes/test.php:678`, `addon/test/includes/test.php:712` | l'esito nel link e la sua firma |
-| `test_gettone()`, `test_gettone_controlla()` | `addon/test/includes/test.php:737` | il codice del modulo: test, ora di apertura, firma; minimo 3 secondi |
-| `test_limite()` | `addon/test/includes/test.php:769` | 20 invii, 5 email, 120 inizi l'ora per connessione |
-| `test_registra()` | `addon/test/includes/test.php:796` | esito, contatori, tentativo finito |
-| `test_innesca()`, `test_alla_conferma()` | `addon/test/includes/test.php:901` | l'innesco delle automazioni, subito o alla conferma |
+| `test_normalizza()` | `addon/test/includes/test.php:235` | controlla tutti i dati di un test (pannello e database) |
+| `test_calcola()` | `addon/test/includes/test.php:636` | il risultato, funzione pura: mostrate, punti, percentuali, fasce, regole, profili |
+| `test_fasce_controlla()` | `addon/test/includes/test.php:582` | fasce da 0 a 100 senza buchi né sovrapposizioni, in parole |
+| `test_problemi()` | `addon/test/includes/test.php:599` | cosa impedisce di pubblicare |
+| `test_simula()` | `addon/test/includes/test.php:1042` | minimo, metà, massimo e N prove a caso; fasce mai raggiunte |
+| `test_esito_corto()`, `test_esito_da_link()` | `addon/test/includes/test.php:734`, `addon/test/includes/test.php:768` | l'esito nel link e la sua firma |
+| `test_gettone()`, `test_gettone_controlla()` | `addon/test/includes/test.php:869` | il codice del modulo: test, ora di apertura, firma; minimo 3 secondi |
+| `test_limite()` | `addon/test/includes/test.php:902` | 20 invii, 5 email, 120 inizi l'ora per connessione |
+| `test_registra()` | `addon/test/includes/test.php:929` | esito (con le risposte sulla persona, 2.23.0), contatori, tentativo finito |
+| `test_innesca()`, `test_alla_conferma()` | `addon/test/includes/test.php:1095` | l'innesco delle automazioni, subito o alla conferma |
 | `test_sito()` | `addon/test/includes/sito.php:14` | gli indirizzi pubblici |
-| `test_modulo_html()`, `test_grafico_svg()` | `addon/test/includes/vista.php:52`, `addon/test/includes/vista.php:98` | il modulo e il grafico |
+| `test_modulo_html()`, `test_grafico_svg()` | `addon/test/includes/vista.php:53`, `addon/test/includes/vista.php:116` | il modulo e il grafico |
 
 **File del nucleo toccati.**
 
@@ -5208,6 +5272,41 @@ Filtri nuovi offerti dal nucleo: `automazioni_inneschi($nomi)`, `automazioni_inn
 
 **Prove.** `prove/prova-test.js` e `prove/attacchi-test.js` (con `prove/test-cli.php`), in radice e in cartella; il
 modo di lanciarle è in testa ai file.
+
+### 42.1 Aggiunte della 2.23.0: persona, due testi, risultato completo per email, tag, gruppi
+
+- **Domande sulla persona.** Catalogo in `addon/test/includes/catalogo-persona.php` (`test_persona_catalogo()`, `:62`: chiave
+  => nome breve, testo, risposte `o1`, `o2`...). Nel test: `dati.persona = {obbligatorie: bool, domande: [{k, nome, testo,
+  opzioni: [{k, t}]}]}`, controllato da `test_persona_normalizza()` (`addon/test/includes/test.php:357`: solo chiavi del
+  catalogo, da 2 a 80 risposte, la chiave `nr` riservata). Pannello: passo 2, riquadro "Domande sulla persona", campi
+  `persona[k][usa|ordine|nome|testo|risposte]` e `persona_obbligatorie` (`test_admin_persona()`,
+  `addon/test/includes/admin-test.php:16`: una riga uguale a una risposta di prima tiene la sua chiave). Sul sito: fieldset
+  `.tq-persona` dopo le domande, nomi `p[k]`, `data-k="p-<k>"`, `data-persona` (in `assets/test.js` restano in fondo anche
+  con l'ordine casuale); facoltative con la risposta `nr` "Preferisco non rispondere" (`TEST_PERSONA_NR`, `:51`). Il server:
+  `test_persona_post()` (`addon/test/includes/sito.php:89`) e `test_persona_valida()` (`test.php:800`): domande che il test
+  non fa si scartano, risposte fuori elenco, mancanti (obbligatorie) o `nr` con le obbligatorie danno 422 con l'errore sotto
+  la domanda. Si salvano con l'esito nella colonna nuova `test_risultati.persona` (JSON, aggiunta da `test_installa()` alle
+  tabelle della 2.22.0); `test_quanto_testo()` le conta.
+- **Due testi.** Ogni fascia (del totale e delle aree), profilo e regola ha `breve` (a schermo) e `testo` (la risposta
+  completa). Un test della 2.22.0 ha `breve` vuota: a schermo esce `testo` con lo stesso HTML di prima (provato al byte con
+  il codice di c3b99e9). `test_risultato_parti()` (`addon/test/includes/vista.php:149`) dà `breve`, `testo`, `fascia_testo`.
+- **Il risultato completo per email.** `dopo.solo_email` (acceso nei test nuovi da `test_crea()`, spento nei test di
+  prima): a schermo la breve, sotto "Lasciami la tua email e ti mando il risultato completo" (`TEST_TITOLO_EMAIL`).
+  `test_email_attiva()` (`test.php:388`) = `dopo.email` o `solo_email`. L'email (`test_email_corpo()`, `vista.php:246`):
+  punteggio, completa della regola e della fascia del totale (o del profilo), il grafico delle aree fatto di tabelle (niente
+  SVG), la completa di ogni area, il pulsante, l'avvertenza.
+- **Tag.** Le risposte sulla persona viaggiano firmate insieme al permesso dell'email: `pz` (`test_persona_corto()`,
+  `test.php:815`, "eta=o3.settore=nr") entra nella firma di `k` (`test_chiave_email(..., $pz)`, `test.php:781`); `pz` solo
+  se il test ha una lista; il link da condividere non lo ha. In `test_sito_email()` (`sito.php:145`), solo con la casella
+  della newsletter: `newsletter_tag_in_attesa()` con `test_tag_persona()` (`test.php:837`: "Nome breve: risposta", `nr`
+  escluso) e `test_esito_tag()` (`test.php:851`: "Test <nome>: <fascia o profilo>", 60 caratteri al massimo). Alla
+  conferma i tag arrivano con l'innesco "Riceve un tag"; chi lascia l'email senza newsletter non diventa contatto.
+- **Statistiche per gruppi.** `test_statistiche_gruppi()` (`test.php:981`), sempre su tutti i risultati del test (non sul
+  periodo: due periodi confrontati isolerebbero poche persone). Per ogni risposta: quanti, distribuzione per fascia o
+  profilo in percentuale, media del totale e di ogni area. Un gruppo con 1-4 persone si nasconde (`TEST_GRUPPO_MINIMO`,
+  "meno di 5"); poi, finché quello che resta fuori dai gruppi mostrati (nascosti e senza risposta) è fra 1 e 4, si nasconde
+  anche il gruppo mostrato più piccolo ("non mostrato"), perché per differenza dal totale si ricaverebbe il resto. Tabella
+  in `admin-statistiche.php` (`#ts-gruppi`), righe del CSV da `test_stat_righe_gruppi()` (`admin-statistiche.php:30`).
 
 ## Appendice A. Dove i documenti vecchi non corrispondono al codice
 

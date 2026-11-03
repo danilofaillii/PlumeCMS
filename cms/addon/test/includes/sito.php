@@ -85,24 +85,38 @@ function test_risposte_post(): array {
     return $out;
 }
 
+/** 2.23.0: le risposte sulla persona del POST (p[domanda] => risposta), stringhe corte. Le controlla test_persona_valida(). */
+function test_persona_post(): array {
+    $p = $_POST['p'] ?? [];
+    $out = [];
+    if (!is_array($p)) return $out;
+    foreach (array_slice($p, 0, 60, true) as $k => $v) if (is_string($k) && strlen($k) <= 20 && is_string($v) && strlen($v) <= 20) $out[$k] = $v;
+    return $out;
+}
+
 function test_sito_invia(array $t): never {
     $risposte = test_risposte_post();
+    $personaPost = test_persona_post();
+    $torna = fn(array $o) => ['risposte' => $risposte, 'persona' => $personaPost] + $o;
     // Prima le difese: stessa origine, campo esca, codice del modulo (scaduto dopo un giorno), captcha, limite per connessione.
-    if (!test_stessa_origine() || ($_POST['sito_web'] ?? '') !== '') test_sito_pagina($t, ['risposte' => $risposte, 'errore' => 'robot'], 400);
-    if (($g = test_gettone_controlla((int)$t['id'], $_POST['gettone'] ?? null)) !== '') test_sito_pagina($t, ['risposte' => $risposte, 'errore' => $g], $g === 'presto' ? 429 : 400);
+    if (!test_stessa_origine() || ($_POST['sito_web'] ?? '') !== '') test_sito_pagina($t, $torna(['errore' => 'robot']), 400);
+    if (($g = test_gettone_controlla((int)$t['id'], $_POST['gettone'] ?? null)) !== '') test_sito_pagina($t, $torna(['errore' => $g]), $g === 'presto' ? 429 : 400);
     $r = test_calcola($t, $risposte);
-    if (!$r['ok']) {
+    [$persona, $errP] = test_persona_valida($t, $personaPost); // 2.23.0
+    if (!$r['ok'] || $errP) {
         $err = [];
         foreach ($r['errori'] as $e) if ($e['codice'] !== 'sconosciuta' && !isset($err[$e['domanda']])) $err[$e['domanda']] = $e['codice']; // il valore sbagliato prima di "manca la risposta"
-        test_sito_pagina($t, ['risposte' => $risposte, 'errori' => $err], 422);
+        test_sito_pagina($t, $torna(['errori' => $err, 'errori_persona' => $errP]), 422);
     }
-    if (test_limite('invio', TEST_LIMITE_ORA)) test_sito_pagina($t, ['risposte' => $risposte, 'errore' => 'troppi'], 429);
+    if (test_limite('invio', TEST_LIMITE_ORA)) test_sito_pagina($t, $torna(['errore' => 'troppi']), 429);
     $anteprima = defined('SITO_ANTEPRIMA') && SITO_ANTEPRIMA;
     if ($t['stato'] === 'pubblicato' && !$anteprima) {
-        try { test_registra($t, $r, is_string($_POST['tentativo'] ?? null) ? (string)$_POST['tentativo'] : ''); } catch (Throwable $e) { error_log('test: registra: ' . $e->getMessage()); }
+        try { test_registra($t, $r, is_string($_POST['tentativo'] ?? null) ? (string)$_POST['tentativo'] : '', $persona); } catch (Throwable $e) { error_log('test: registra: ' . $e->getMessage()); }
     }
     $par = test_esito_parametri(test_esito_corto($t, $r));
-    $dopo = cms_url_sito() . test_url($t) . 'risultato/?' . http_build_query($par + ($t['dati']['dopo']['email'] ? ['k' => test_chiave_email($par['e'])] : []) + ($anteprima ? ['preview' => 1] : []));
+    // 2.23.0: le risposte sulla persona viaggiano firmate con il permesso dell'email (pz), solo se c'è una lista: servono ai tag.
+    $pz = test_email_attiva($t) && $t['dati']['dopo']['lista'] > 0 ? test_persona_corto($persona) : '';
+    $dopo = cms_url_sito() . test_url($t) . 'risultato/?' . http_build_query($par + (test_email_attiva($t) ? ['k' => test_chiave_email($par['e'], null, $pz)] + ($pz !== '' ? ['pz' => $pz] : []) : []) + ($anteprima ? ['preview' => 1] : []));
     header('Cache-Control: no-store');
     header('Location: ' . $dopo, true, 303);
     exit;
@@ -117,7 +131,9 @@ function test_sito_risultato(array $t, array $q, array $msg = []): never {
     $e = test_esito_da_link($t, $q['e'] ?? null, $q['f'] ?? null);
     if (!$e) test_sito_link_rotto($t);
     $link = cms_url_sito() . test_url($t) . 'risultato/?' . http_build_query(['e' => $q['e'], 'f' => $q['f']]);
-    $k = test_chiave_email_valida((string)$q['e'], $q['k'] ?? null) ? (string)$q['k'] : '';
+    $pz = is_string($q['pz'] ?? null) && strlen($q['pz']) <= 1500 ? (string)$q['pz'] : '';
+    $k = test_chiave_email_valida((string)$q['e'], $q['k'] ?? null, $pz) ? (string)$q['k'] : '';
+    if ($k !== '') $msg += ['pz' => $pz];
     if (isset($q['inviata'])) $msg += ['ok' => 'Fatto: ti abbiamo mandato il risultato per email.' . (isset($q['iscritto']) ? ' Per la newsletter controlla la posta: c\'è un\'email per confermare.' : '')];
     if (is_string($q['errore'] ?? null) && isset(TEST_ERRORI[$q['errore']])) $msg += ['errore' => $q['errore']];
     header('Cache-Control: no-store');
@@ -130,13 +146,15 @@ function test_sito_email(array $t): never {
     $eStr = is_string($_POST['e'] ?? null) ? $_POST['e'] : '';
     $fStr = is_string($_POST['f'] ?? null) ? $_POST['f'] : '';
     $k = is_string($_POST['k'] ?? null) ? $_POST['k'] : '';
+    $pz = is_string($_POST['pz'] ?? null) && strlen($_POST['pz']) <= 1500 ? $_POST['pz'] : '';
     $e = test_esito_da_link($t, $eStr, $fStr);
     if (!$e) test_sito_link_rotto($t);
-    $torna = function (string $codice, array $extra = []) use ($t, $eStr, $fStr, $k): never {
-        header('Location: ' . cms_url_sito() . test_url($t) . 'risultato/?' . http_build_query(['e' => $eStr, 'f' => $fStr] + ($codice !== '' ? ['k' => $k, 'errore' => $codice] : $extra)) . ($codice !== '' ? '#tq-email' : ''), true, 303);
+    $torna = function (string $codice, array $extra = []) use ($t, $eStr, $fStr, $k, $pz): never {
+        header('Location: ' . cms_url_sito() . test_url($t) . 'risultato/?' . http_build_query(['e' => $eStr, 'f' => $fStr] + ($codice !== '' ? ['k' => $k] + ($pz !== '' ? ['pz' => $pz] : []) + ['errore' => $codice] : $extra)) . ($codice !== '' ? '#tq-email' : ''), true, 303);
         exit;
     };
-    if (!$t['dati']['dopo']['email'] || !test_chiave_email_valida($eStr, $k) || !test_stessa_origine() || ($_POST['sito_web'] ?? '') !== '') $torna('robot');
+    // 2.23.0: pz (le risposte sulla persona) è firmato dentro k: cambiato o inventato, il permesso non vale più.
+    if (!test_email_attiva($t) || !test_chiave_email_valida($eStr, $k, $pz) || !test_stessa_origine() || ($_POST['sito_web'] ?? '') !== '') $torna('robot');
     $email = mb_strtolower(test_testo($_POST['email'] ?? '', 190));
     if (!filter_var($email, FILTER_VALIDATE_EMAIL)) $torna('email');
     if (empty($_POST['consenso'])) $torna('consenso');
@@ -155,6 +173,12 @@ function test_sito_email(array $t): never {
             $rt = test_risultato_da_corto($t, $e);
             newsletter_storia_scrivi($id, 'test', 'Ha completato il test «' . $t['nome'] . '»: ' . (test_risultato_parti($t, $e)['titolo']) . (isset($e['o']) && $e['o'] !== null ? ' (' . (int)$e['o'] . ' su 100)' : ''), (int)$t['id']);
             try { test_innesca($id, $t, test_esiti($rt)); } catch (Throwable $x) { error_log('test: innesco: ' . $x->getMessage()); }
+            // 2.23.0: i tag (risposte sulla persona ed esito) arrivano alla conferma dell'iscrizione, con l'innesco "Riceve un tag".
+            // Solo chi si iscrive: chi lascia l'email senza la newsletter riceve il risultato e basta (scelta di Danilo).
+            try {
+                if (!function_exists('newsletter_tag_in_attesa')) require_once dirname(__DIR__, 3) . '/includes/newsletter-tag.php';
+                newsletter_tag_in_attesa($id, test_tag_persona($t, test_persona_da_corto($t, $pz), $e), 'dal test «' . $t['nome'] . '»');
+            } catch (Throwable $x) { error_log('test: tag: ' . $x->getMessage()); }
             $extra['iscritto'] = 1;
         }
     }

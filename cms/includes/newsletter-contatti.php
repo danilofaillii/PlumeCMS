@@ -86,7 +86,7 @@ function newsletter_attributo_crea(array $d): string {
     if (!isset(NL_ATTR_TIPI[$tipo])) return 'Scegli il tipo dell\'attributo.';
     if ($nome === '' || !preg_match('/^[A-Z][A-Z0-9_]{0,49}$/', $nome)) return 'Scrivi il nome dell\'attributo: lettere, numeri e trattini bassi, e deve cominciare con una lettera (per esempio CITTA o DATA_NASCITA).';
     $tutti = newsletter_attributi(true);
-    if (isset($tutti[$nome]) || isset(NL_ATTR_ALIAS[$nome]) || in_array($nome, ['CONTACT_ID', 'SMS', 'WHATSAPP', 'LANDLINE_NUMBER', 'SUBSCRIBED', 'BLOCKLISTED', 'CONTATTO', 'ISCRITTO', 'LISTA_NERA'], true)) {
+    if (isset($tutti[$nome]) || isset(NL_ATTR_ALIAS[$nome]) || in_array($nome, ['CONTACT_ID', 'SMS', 'WHATSAPP', 'LANDLINE_NUMBER', 'SUBSCRIBED', 'BLOCKLISTED', 'CONTATTO', 'ISCRITTO', 'LISTA_NERA', 'TAG'], true)) {
         return "Esiste già un attributo che si chiama $nome: scegli un altro nome.";
     }
     $personali = array_filter($tutti, fn($a) => !(int)$a['sistema']);
@@ -508,6 +508,7 @@ function newsletter_motivo_testo(array $c): string {
  *   stato   iscritti | lista_nera | in_attesa | errori | motivo:<codice>; valgono ancora gli stati di prima della 2.8.0
  *   segmento  2.10.0: l'id di un segmento caricato
  *   f         2.10.0: "Aggiungi filtro", le regole del motore dei segmenti (JSON in base64, newsletter_regole_valida)
+ *   tag       2.23.0: l'id di un tag (i contatti che hanno quel tag)
  * Ritorna [where, parametri, filtri normalizzati]; con un filtro f che non si legge, errore_filtro nei filtri.
  */
 function newsletter_contatti_filtro(array $q): array {
@@ -536,6 +537,14 @@ function newsletter_contatti_filtro(array $q): array {
     }
     if ($lista > 0) { $w[] = 'EXISTS (SELECT 1 FROM ' . tbl('newsletter_iscritti_liste') . ' l WHERE l.iscritto_id = i.id AND l.lista_id = ?)'; $par[] = $lista; }
     if ($lista === -1) $w[] = 'NOT EXISTS (SELECT 1 FROM ' . tbl('newsletter_iscritti_liste') . ' l WHERE l.iscritto_id = i.id)';
+    // 2.23.0: "con il tag" (includes/newsletter-tag.php, caricato qui: opcache).
+    $tag = max(0, (int)($q['tag'] ?? 0));
+    if ($tag) {
+        if (!function_exists('newsletter_tag_schema')) require_once __DIR__ . '/newsletter-tag.php';
+        newsletter_tag_schema();
+        $w[] = 'EXISTS (SELECT 1 FROM ' . tbl('newsletter_contatti_tag') . ' ct WHERE ct.contatto_id = i.id AND ct.tag_id = ?)';
+        $par[] = $tag;
+    }
     // 2.10.0: segmento caricato e "Aggiungi filtro" con il motore dei segmenti (il file si carica qui: opcache).
     $segmento = max(0, (int)($q['segmento'] ?? 0));
     $fz = is_string($q['f'] ?? null) ? mb_substr(trim($q['f']), 0, 20000) : '';
@@ -550,7 +559,7 @@ function newsletter_contatti_filtro(array $q): array {
         elseif (!$r['regole']['gruppi']) $fz = '';
         else { $fz = rtrim(strtr(base64_encode(json_encode($r['regole'], JSON_INVALID_UTF8_SUBSTITUTE)), '+/', '-_'), '='); $w[] = newsletter_regole_where($r['regole'], $par); }
     }
-    $norm = ['cerca' => $cerca, 'stato' => $stato, 'lista' => $lista, 'segmento' => $segmento, 'f' => $fz];
+    $norm = ['cerca' => $cerca, 'stato' => $stato, 'lista' => $lista, 'segmento' => $segmento, 'f' => $fz, 'tag' => $tag];
     if ($errF !== '') $norm['errore_filtro'] = $errF;
     return [$w ? ' WHERE ' . implode(' AND ', $w) : '', $par, $norm];
 }
@@ -736,6 +745,7 @@ function newsletter_contatto_statistiche(int $id, int $giorni = 90): array {
 const NL_CRONOLOGIA_TIPI = [
     'email' => 'Email ricevute', 'apertura' => 'Aperture', 'clic' => 'Clic', 'form' => 'Form compilati', 'liste' => 'Liste',
     'lista_nera' => 'Lista nera e disiscrizioni', 'rimbalzi' => 'Rimbalzi', 'attributi' => 'Attributi e dati', 'iscrizione' => 'Iscrizione e conferma',
+    'tag' => 'Tag', // 2.23.0
 ];
 
 /**
@@ -781,7 +791,8 @@ function newsletter_contatto_cronologia(int $id, array $f = [], int $quante = 20
         } catch (PDOException $e) {}
     }
     $mappaS = ['lista_aggiunto' => 'liste', 'lista_tolto' => 'liste', 'bloccato' => 'lista_nera', 'sbloccato' => 'lista_nera', 'soft_bounce' => 'rimbalzi',
-        'attributo' => 'attributi', 'email' => 'attributi', 'creato' => 'iscrizione', 'importato' => 'iscrizione', 'iscrizione' => 'iscrizione', 'doi' => 'iscrizione', 'form' => 'form', 'flusso_email' => 'email', 'preferenze' => 'attributi', 'test' => 'form']; // 2.22.0: test con l'addon Test e questionari
+        'attributo' => 'attributi', 'email' => 'attributi', 'creato' => 'iscrizione', 'importato' => 'iscrizione', 'iscrizione' => 'iscrizione', 'doi' => 'iscrizione', 'form' => 'form', 'flusso_email' => 'email', 'preferenze' => 'attributi', 'test' => 'form', // 2.22.0: test con l'addon Test e questionari
+        'tag_aggiunto' => 'tag', 'tag_tolto' => 'tag']; // 2.23.0: i tag
     $tipiS = array_keys(array_filter($mappaS, fn($t) => $vuole($t)));
     if ($tipiS) {
         $st = db()->prepare('SELECT * FROM ' . tbl('newsletter_storia') . ' WHERE contatto_id = ? AND tipo IN (\'' . implode("','", $tipiS) . "') AND creato BETWEEN ? AND ? ORDER BY creato DESC, id DESC LIMIT $quante");
@@ -789,7 +800,8 @@ function newsletter_contatto_cronologia(int $id, array $f = [], int $quante = 20
         foreach ($st as $r) {
             $d = newsletter_4byte_fuori((string)$r['dettaglio']);
             $testo = ['lista_aggiunto' => 'Aggiunto alla lista «' . $d . '»', 'lista_tolto' => 'Tolto dalla lista «' . $d . '»', 'bloccato' => 'In lista nera: ' . $d, 'sbloccato' => $d,
-                'soft_bounce' => 'Soft bounce (errore temporaneo): ' . $d, 'flusso_email' => 'Ha ricevuto l\'email dell\'automazione ' . $d][$r['tipo']] ?? $d;
+                'soft_bounce' => 'Soft bounce (errore temporaneo): ' . $d, 'flusso_email' => 'Ha ricevuto l\'email dell\'automazione ' . $d,
+                'tag_aggiunto' => 'Tag aggiunto: ' . $d, 'tag_tolto' => 'Tag tolto: ' . $d][$r['tipo']] ?? $d;
             $voci[] = ['quando' => $r['creato'], 'tipo' => $mappaS[$r['tipo']], 'testo' => $testo];
         }
     }

@@ -21,7 +21,7 @@
   function opzioni(obj, scelto) { return Object.keys(obj).map(function (k) { return '<option value="' + h(k) + '"' + (String(scelto) === String(k) ? ' selected' : '') + '>' + h(obj[k]) + '</option>'; }).join(''); }
   function caselle(nome, obj, scelti, etichetta) {
     var ks = Object.keys(obj);
-    if (!ks.length) return '<p class="hint">' + h(etichetta === 'liste' ? 'Ancora nessuna lista: creala nella scheda Liste.' : 'Nessuna opzione.') + '</p>';
+    if (!ks.length) return '<p class="hint">' + h(etichetta === 'liste' ? 'Ancora nessuna lista: creala nella scheda Liste.' : (etichetta === 'tag' ? 'Ancora nessun tag: crealo nella pagina Tag, oppure dallo a un contatto dalla sua scheda.' : 'Nessuna opzione.')) + '</p>';
     return '<fieldset class="nls-caselle"><legend class="sr-solo">' + h(etichetta) + '</legend>' + ks.map(function (k) {
       var on = (scelti || []).map(String).indexOf(String(k)) >= 0;
       return '<label><input type="checkbox" data-k="' + nome + '" value="' + h(k) + '"' + (on ? ' checked' : '') + '> ' + h(obj[k]) + '</label>';
@@ -84,6 +84,7 @@
       }
       if ((t === 'category' || t === 'multiple-choice') && ['vuoto', 'pieno'].indexOf(op) < 0) s = caselle('valore', DEF.campi[c.campo].o || {}, c.valore, 'Opzioni');
       if (t === 'lista') s = caselle('valore', DEF.liste, c.valore, 'liste');
+      if (t === 'tag') s = caselle('valore', DEF.tag || {}, c.valore, 'tag'); // 2.23.0
       if (t === 'segmento') s = Object.keys(DEF.segmenti).length ? '<div class="form-group"><label for="' + id + '">Quale segmento</label><select id="' + id + '" data-k="valore"><option value="0">Scegli...</option>' + opzioni(DEF.segmenti, c.valore || 0) + '</select></div>' : '<p class="hint">Ancora nessun altro segmento salvato.</p>';
       if (t === 'email') s = camp() + periodo();
       if (t === 'link') s = '<div class="form-group nls-largo-campo"><label for="' + id + '">Indirizzo del link</label><input type="url" id="' + id + '" data-k="valore" list="' + id + 'l" maxlength="500" value="' + h(c.valore) + '" placeholder="per esempio: https://esempio.it/offerta"><datalist id="' + id + 'l">' + (DEF.link || []).map(function (u) { return '<option value="' + h(u) + '">'; }).join('') + '</datalist></div>' + camp();

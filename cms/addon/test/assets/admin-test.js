@@ -285,7 +285,8 @@
               + '<div class="form-group"><label for="' + p + '-f' + j + '">è in fascia</label><select id="' + p + '-f' + j + '" data-c="fascia">' + opz(fasceDi(c.cosa).map(function (f) { return [f.k, f.nome]; }), c.fascia) + '</select></div>'
               + '<button type="button" class="btn btn-danger btn-sm" data-togli-c="' + j + '" aria-label="Togli la condizione ' + (j + 1) + '"' + (r.condizioni.length <= 1 ? ' disabled' : '') + '>Togli</button></div>';
           }).join('') + '<button type="button" class="btn btn-secondary btn-sm" data-piu-c>+ Aggiungi una condizione</button></fieldset>'
-          + '<div class="form-group"><label for="' + p + '-t">Testo del risultato</label><textarea id="' + p + '-t" data-k="testo" rows="4" class="ts-ricco-r">' + h(r.testo) + '</textarea></div>'
+          + '<div class="form-group"><label for="' + p + '-b">Risposta breve (a schermo)</label><textarea id="' + p + '-b" data-k="breve" rows="3" class="ts-ricco-r">' + h(r.breve || '') + '</textarea></div>'
+          + '<div class="form-group"><label for="' + p + '-t">Risposta completa (per email; a schermo se la breve è vuota)</label><textarea id="' + p + '-t" data-k="testo" rows="4" class="ts-ricco-r">' + h(r.testo) + '</textarea></div>'
           + '<div class="sc-riga ts-riga-pulsante"><div class="form-group"><label for="' + p + '-bt">Testo del pulsante (facoltativo)</label><input type="text" id="' + p + '-bt" data-k="pulsante_testo" maxlength="80" value="' + h(r.pulsante_testo) + '"></div>'
           + '<div class="form-group"><label for="' + p + '-bl">Link del pulsante</label><input type="text" id="' + p + '-bl" data-k="pulsante_link" maxlength="500" value="' + h(r.pulsante_link) + '" placeholder="per esempio: /contatti/" data-link-sito></div></div></li>';
       }).join('') + '</ol>' + (D.regole.length ? '' : '<p class="hint ts-vuoto">Nessuna regola: vale la fascia del totale. Aggiungine una se una combinazione di aree merita un testo suo.</p>')
@@ -293,12 +294,12 @@
       boxReg.querySelectorAll('textarea.ts-ricco-r').forEach(function (ta) {
         ricco(ta);
         var i = +ta.closest('[data-i]').dataset.i;
-        ta.addEventListener('input', function () { D.regole[i].testo = ta.value; });
+        ta.addEventListener('input', function () { D.regole[i][ta.dataset.k] = ta.value; });
       });
       if (fuoco) { var f = boxReg.querySelector(fuoco); if (f) f.focus(); }
     }
     // Quill scrive nel textarea senza evento: si rilegge tutto all'invio.
-    function leggiTesti() { boxReg.querySelectorAll('textarea.ts-ricco-r').forEach(function (ta) { D.regole[+ta.closest('[data-i]').dataset.i].testo = ta.value; }); }
+    function leggiTesti() { boxReg.querySelectorAll('textarea.ts-ricco-r').forEach(function (ta) { D.regole[+ta.closest('[data-i]').dataset.i][ta.dataset.k] = ta.value; }); }
     boxReg.addEventListener('input', function (e) { var li = e.target.closest('[data-i]'); var k = e.target.dataset.k; if (li && k && k !== 'modo') D.regole[+li.dataset.i][k] = e.target.value; });
     boxReg.addEventListener('change', function (e) {
       var li = e.target.closest('[data-i]'); if (!li) return;
@@ -314,7 +315,7 @@
     });
     boxReg.addEventListener('click', function (e) {
       var b = e.target.closest('button'); if (!b || b.closest('.ql-toolbar')) return;
-      if (b.hasAttribute('data-piu-r')) { leggiTesti(); D.regole.push({ k: chiave('r'), nome: 'Regola ' + (D.regole.length + 1), modo: 'e', condizioni: [{ cosa: 'totale', fascia: (D.fasce[0] || {}).k || '' }], testo: '', pulsante_testo: '', pulsante_link: '' }); disegnaRegole('#tsr' + (D.regole.length - 1) + '-n'); return; }
+      if (b.hasAttribute('data-piu-r')) { leggiTesti(); D.regole.push({ k: chiave('r'), nome: 'Regola ' + (D.regole.length + 1), modo: 'e', condizioni: [{ cosa: 'totale', fascia: (D.fasce[0] || {}).k || '' }], breve: '', testo: '', pulsante_testo: '', pulsante_link: '' }); disegnaRegole('#tsr' + (D.regole.length - 1) + '-n'); return; }
       var li = b.closest('[data-i]'); if (!li) return;
       var i = +li.dataset.i, r = D.regole[i];
       leggiTesti();

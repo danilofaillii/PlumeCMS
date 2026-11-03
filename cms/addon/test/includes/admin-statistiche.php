@@ -13,6 +13,34 @@ $id = (int)($_GET['id'] ?? 0);
 $t = $id ? test_leggi($id) : ($tutti ? test_leggi((int)$tutti[0]['id']) : null);
 $giorni = in_array((int)($_GET['giorni'] ?? 0), [7, 30, 90, 365, 0], true) ? (int)($_GET['giorni'] ?? 0) : 0;
 $s = $t ? test_statistiche($t, $giorni) : null;
+$g = $t && $t['dati']['persona']['domande'] ? test_statistiche_gruppi($t) : null; // 2.23.0: per gruppi, sempre su tutti i risultati
+
+/** 2.23.0: il nome di una fascia o di un profilo di un test (le colonne della distribuzione nei gruppi). */
+function test_stat_colonne(array $t): array {
+    return array_column($t['tipo'] === 'profili' ? $t['dati']['profili'] : $t['dati']['fasce'], 'nome', 'k');
+}
+
+/** 2.23.0: un numero di un gruppo come si legge: "meno di 5" o "non mostrato" per i gruppi nascosti. */
+function test_stat_n(array $riga): string {
+    if (!$riga['nascosto']) return (string)(int)$riga['n'];
+    return $riga['perche'] === 'pochi' ? 'meno di ' . TEST_GRUPPO_MINIMO : 'non mostrato';
+}
+
+/** 2.23.0: le righe del CSV dei gruppi (sezione, voce, numero): quanti, la distribuzione e le medie, con la stessa soglia. */
+function test_stat_righe_gruppi(array $t, array $g): array {
+    $r = [];
+    $col = test_stat_colonne($t);
+    foreach ($g['domande'] as $q) foreach ($q['righe'] as $x) {
+        $sez = 'Per gruppi: ' . $q['nome'];
+        $voce = $x['t'];
+        $r[] = [$sez, $voce . ' - persone', test_stat_n($x)];
+        if ($x['nascosto'] || !$x['n']) continue;
+        foreach ($col as $k => $n) $r[] = [$sez, $voce . ' - ' . ($t['tipo'] === 'profili' ? 'profilo ' : 'fascia ') . $n . ' (%)', $x['dist'][$k] ?? 0];
+        if ($x['media'] !== null) $r[] = [$sez, $voce . ' - media del totale (su 100)', $x['media']];
+        foreach ($t['dati']['aree'] as $a) if (isset($x['aree'][$a['k']])) $r[] = [$sez, $voce . ' - media dell\'area ' . $a['nome'] . ' (su 100)', $x['aree'][$a['k']]];
+    }
+    return $r;
+}
 
 /** Le righe aggregate (sezione, voce, numero) che vanno nel CSV e nelle tabelle. */
 function test_stat_righe(array $t, array $s): array {
@@ -44,6 +72,7 @@ if ($t && isset($_GET['csv'])) {
     fwrite($out, "\xEF\xBB\xBF");
     fputcsv($out, ['Sezione', 'Voce', 'Numero'], ';', '"', '');
     foreach (test_stat_righe($t, $s) as $riga) fputcsv($out, sicurezza_csv_riga($riga), ';', '"', '');
+    if ($g) foreach (test_stat_righe_gruppi($t, $g) as $riga) fputcsv($out, sicurezza_csv_riga($riga), ';', '"', ''); // 2.23.0
     fclose($out);
     exit;
 }
@@ -94,5 +123,26 @@ if (!$t): ?>
     </tbody>
   </table></div>
 </div></div>
+<?php if ($g): $col = test_stat_colonne($t); /* 2.23.0 */ ?>
+<div class="sc-scatola ts-scatola" id="ts-gruppi"><h3>Per gruppi</h3><div class="sc-corpo">
+  <p class="hint" style="margin-top:0">Le risposte alle domande sulla persona, su tutti i <?= (int)$g['totale'] ?> risultati del test (non solo sul periodo scelto). Un gruppo con meno di <?= TEST_GRUPPO_MINIMO ?> persone non mostra i suoi numeri, per non riconoscere nessuno; «non mostrato» vuol dire che si nasconde anche quel gruppo, altrimenti per differenza dal totale si saprebbero i numeri dei gruppi piccoli. Le percentuali sono sul numero di persone del gruppo.</p>
+  <?php foreach ($g['domande'] as $q): ?>
+  <h4 class="fo-sotto"><?= h($q['nome']) ?> <span class="ct-muto">(<?= h($q['testo']) ?>)</span></h4>
+  <div class="admin-table-wrap"><table class="ts-tabella-gruppi" data-no-schede>
+    <thead><tr><th scope="col">Risposta</th><th scope="col">Persone</th><?php foreach ($col as $cn): ?><th scope="col"><?= h($cn) ?></th><?php endforeach; ?><?php if ($t['tipo'] !== 'profili'): ?><th scope="col">Media del totale</th><?php endif; ?><?php foreach ($t['dati']['aree'] as $a): ?><th scope="col">Media <?= h($a['nome']) ?></th><?php endforeach; ?></tr></thead>
+    <tbody>
+    <?php $zero = []; foreach ($q['righe'] as $x): if (!$x['nascosto'] && !$x['n']) { $zero[] = $x['t']; continue; } $vuota = $x['nascosto']; ?>
+      <tr<?= $x['nascosto'] ? ' class="ts-nascosto"' : '' ?>><td><?= h($x['t']) ?></td><td><?= h($x['nascosto'] ? test_stat_n($x) : (string)(int)$x['n']) ?></td>
+        <?php foreach ($col as $ck => $cn): ?><td><?= $vuota ? '<span class="ct-muto">-</span>' : (int)($x['dist'][$ck] ?? 0) . '%' ?></td><?php endforeach; ?>
+        <?php if ($t['tipo'] !== 'profili'): ?><td><?= $vuota || $x['media'] === null ? '<span class="ct-muto">-</span>' : h(str_replace('.', ',', (string)$x['media'])) ?></td><?php endif; ?>
+        <?php foreach ($t['dati']['aree'] as $a): ?><td><?= $vuota || !isset($x['aree'][$a['k']]) ? '<span class="ct-muto">-</span>' : h(str_replace('.', ',', (string)$x['aree'][$a['k']])) ?></td><?php endforeach; ?></tr>
+    <?php endforeach; ?>
+    <?php if (count($zero) === count($q['righe'])): ?><tr><td colspan="<?= 2 + count($col) + ($t['tipo'] !== 'profili' ? 1 : 0) + count($t['dati']['aree']) ?>">Ancora nessuna risposta a questa domanda.</td></tr><?php endif; ?>
+    </tbody>
+  </table></div>
+  <?php if ($zero && count($zero) < count($q['righe'])): ?><p class="hint">Nessuno ha risposto: <?= h(implode(', ', $zero)) ?>.</p><?php endif; ?>
+  <?php endforeach; ?>
+</div></div>
+<?php endif; ?>
 <?php endif; ?>
 <?php require CMS_ADMIN . '/includes/admin-footer.php';

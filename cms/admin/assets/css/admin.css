@@ -829,3 +829,16 @@ details.nlx-riquadro > summary:focus-visible { outline: 2px solid var(--coral); 
 .admin-nav .nav-sotto a:hover { background: var(--sidebar-hover); color: var(--sidebar-testo); }
 .admin-nav .nav-sotto a.active { background: var(--sidebar-attivo); color: var(--sidebar-su-attivo); font-weight: 700; box-shadow: none; }
 .admin-nav .nav-gruppo summary > a { font-size: .95rem; font-weight: 600; color: inherit; }
+
+/* 2.23.0: i tag dei contatti (scheda del contatto). Pillole con il bordo dei campi (3:1) e la x di almeno 32 px (44 al telefono). */
+.nlk-tag-elenco { list-style: none; margin: 0 0 .9rem; padding: 0; display: flex; flex-wrap: wrap; gap: .4rem; }
+.nlk-tag-voce { display: inline-flex; align-items: center; gap: .1rem; border: 1px solid var(--bordo-campo); border-radius: 999px; padding: 0 0 0 .75rem; background: var(--campo); max-width: 100%; }
+.nlk-tag-voce > a { color: var(--text); text-decoration: none; font-size: .88rem; overflow-wrap: anywhere; }
+.nlk-tag-voce > a:hover { text-decoration: underline; }
+.nlk-tag-voce > a:focus-visible, .nlk-tag-togli button:focus-visible { outline: 2px solid var(--coral); outline-offset: 2px; }
+.nlk-tag-togli { margin: 0; display: inline-flex; }
+.nlk-tag-togli button { min-width: 32px; min-height: 32px; border: 0; background: transparent; color: var(--text); font-size: 1.1rem; line-height: 1; border-radius: 999px; cursor: pointer; }
+.nlk-tag-togli button:hover { background: var(--errore-chiaro); color: var(--errore-testo); }
+@media (max-width: 640px) { .nlk-tag-togli button { min-width: 44px; min-height: 44px; } }
+.nlx-tag-cella { display: flex; flex-wrap: wrap; gap: .25rem; }
+.nlx-tag-cella span { border: 1px solid var(--border); border-radius: 999px; padding: .05rem .5rem; font-size: .8rem; }

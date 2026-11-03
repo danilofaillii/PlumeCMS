@@ -8,6 +8,7 @@
 require_once __DIR__ . '/includes/auth.php';
 require_once __DIR__ . '/includes/admin-functions.php';
 require_once __DIR__ . '/../includes/newsletter.php';
+require_once __DIR__ . '/../includes/newsletter-tag.php'; // 2.23.0: i tag del contatto
 require_admin(); // sicurezza (ruoli): solo amministratore
 newsletter_schema();
 
@@ -58,6 +59,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if ($r['cambiati']) flash('success', 'Informazioni del contatto salvate.');
         elseif (!$r['errori']) flash('info', 'Niente da salvare: i valori erano già questi (un valore del tipo sbagliato non si salva).');
         $torna(); exit;
+    }
+    if ($azione === 'tag_aggiungi') {
+        // 2.23.0: uno o più tag scritti nel campo (separati da virgola); un tag nuovo nasce da solo.
+        $nomi = newsletter_tag_dividi($_POST['tag'] ?? '');
+        if (!$nomi) { flash('error', 'Scrivi il tag da aggiungere (più tag separati da virgola), poi premi «Aggiungi».'); $_SESSION['nlk_tag_errore'] = 'Scrivi il nome del tag: lettere, numeri e spazi, senza virgole dentro il nome.'; header('Location: newsletter-contatto.php?id=' . $id . '#nlk-tag'); exit; }
+        $n = newsletter_tag_aggiungi($id, $nomi, 'dalla scheda del contatto');
+        $n ? flash('success', $n === 1 ? 'Tag aggiunto.' : "$n tag aggiunti.") : flash('info', count(newsletter_tag_di($id)) >= NL_TAG_PER_CONTATTO ? 'Il contatto ha già ' . NL_TAG_PER_CONTATTO . ' tag: è il massimo.' : 'Il contatto aveva già questi tag.');
+        header('Location: newsletter-contatto.php?id=' . $id . '#nlk-tag'); exit;
+    }
+    if ($azione === 'tag_togli') {
+        newsletter_tag_togli($id, [(int)($_POST['tag_id'] ?? 0)], 'dalla scheda del contatto') ? flash('success', 'Tag tolto.') : flash('info', 'Il contatto non aveva più questo tag.');
+        header('Location: newsletter-contatto.php?id=' . $id . '#nlk-tag'); exit;
     }
     if ($azione === 'liste') {
         $scelte = array_values(array_unique(array_filter(array_map('intval', (array)($_POST['liste'] ?? [])))));
@@ -207,6 +220,21 @@ require_once __DIR__ . '/includes/admin-header.php';
       </dl>
       <?php if ($s['link']): ?><h3>Link cliccati</h3><ul class="nlk-link"><?php foreach ($s['link'] as $l): ?><li><?= h($l['url']) ?> <small>(<?= (int)$l['n'] ?> clic, l'ultimo il <?= h(date('d/m/Y', strtotime($l['ultimo']))) ?>)</small></li><?php endforeach; ?></ul><?php endif; ?>
       <p class="hint">Campagne e automazioni. Chi blocca le immagini non risulta fra le aperture: i numeri sono per difetto.</p>
+    </section>
+    <?php $suoiTag = newsletter_tag_di($id); $tuttiTag = newsletter_tag_nomi(); $tagErr = is_string($_SESSION['nlk_tag_errore'] ?? null) ? $_SESSION['nlk_tag_errore'] : ''; unset($_SESSION['nlk_tag_errore']); ?>
+    <section class="form-card nlk-tag" id="nlk-tag" aria-labelledby="nlk-tag-t" style="margin-top:1rem">
+      <h3 id="nlk-tag-t">Tag</h3>
+      <?php if ($suoiTag): ?><ul class="nlk-tag-elenco" aria-label="I tag del contatto">
+        <?php foreach ($suoiTag as $tid => $tn): ?><li class="nlk-tag-voce"><a href="newsletter-contatti.php?tag=<?= (int)$tid ?>"><?= h($tn) ?></a><form method="post" class="nlk-tag-togli"><?= csrf_field() ?><input type="hidden" name="azione" value="tag_togli"><input type="hidden" name="id" value="<?= $id ?>"><input type="hidden" name="tag_id" value="<?= (int)$tid ?>"><button type="submit" aria-label="Togli il tag <?= h($tn) ?>" title="Togli il tag">&#215;</button></form></li><?php endforeach; ?>
+      </ul><?php else: ?><p class="hint" style="margin-top:0">Nessun tag: aggiungine uno qui sotto (per esempio «Cliente»).</p><?php endif; ?>
+      <form method="post" class="nlk-tag-aggiungi"><?= csrf_field() ?><input type="hidden" name="azione" value="tag_aggiungi"><input type="hidden" name="id" value="<?= $id ?>">
+        <div class="form-group"><label for="nlk-tag-nuovo">Aggiungi un tag</label>
+          <input type="text" id="nlk-tag-nuovo" name="tag" maxlength="600" list="nlk-tag-suggeriti" autocomplete="off" placeholder="per esempio: Cliente" aria-describedby="nlk-tag-aiuto<?= $tagErr !== '' ? ' nlk-tag-err' : '' ?>"<?= $tagErr !== '' ? ' aria-invalid="true"' : '' ?>>
+          <datalist id="nlk-tag-suggeriti"><?php foreach (array_diff_key($tuttiTag, $suoiTag) as $tn): ?><option value="<?= h($tn) ?>"><?php endforeach; ?></datalist>
+          <div class="hint" id="nlk-tag-aiuto">Scrivi: compaiono i tag che ci sono già. Più tag separati da virgola; un tag nuovo nasce da solo. Tutti i tag in <a href="newsletter-tag.php">Tag</a>.</div>
+          <?php if ($tagErr !== ''): ?><p class="errore-campo" id="nlk-tag-err" role="alert"><?= h($tagErr) ?></p><?php endif; ?></div>
+        <button class="btn btn-secondary btn-sm" type="submit">Aggiungi il tag</button>
+      </form>
     </section>
     <?php $formC = newsletter_contatto_cronologia($id, ['tipo' => 'form'], 5); ?>
     <section class="form-card" aria-labelledby="nlk-form" style="margin-top:1rem">

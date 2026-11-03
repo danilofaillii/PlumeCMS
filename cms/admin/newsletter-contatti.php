@@ -17,6 +17,7 @@ require_once __DIR__ . '/includes/admin-functions.php';
 require_once __DIR__ . '/../includes/newsletter.php';
 require_once __DIR__ . '/../includes/newsletter-importa.php'; // 2.9.0
 require_once __DIR__ . '/../includes/newsletter-segmenti.php'; // 2.10.0
+require_once __DIR__ . '/../includes/newsletter-tag.php'; // 2.23.0
 require_admin(); // sicurezza (ruoli): solo amministratore
 newsletter_schema();
 newsletter_importa_schema(); // 2.9.0: le tabelle delle esportazioni (anche su un sito appena aggiornato)
@@ -133,6 +134,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             foreach ($ids as $i) newsletter_in_lista($i, $lista);
             newsletter_togli_da_liste($ids, [$da]);
             flash('success', nlc_n(count($ids)) . ' spostat' . (count($ids) === 1 ? 'o' : 'i') . ' da «' . newsletter_nome_lista($da) . '» a «' . newsletter_nome_lista($lista) . '».');
+        } elseif ($cosa === 'tag_aggiungi' || $cosa === 'tag_togli') {
+            // 2.23.0: aggiungi o togli dei tag (scritti, separati da virgola) ai contatti scelti. Un tag nuovo nasce da solo.
+            $nomi = newsletter_tag_dividi($_POST['tag_nomi'] ?? '');
+            if (!$nomi) { flash('error', 'Scrivi il tag (o più tag separati da virgola) nella casella «Quali tag», poi premi Applica.'); nlc_torna($_POST); }
+            $n = newsletter_tag_gruppo($ids, $nomi, $cosa === 'tag_aggiungi');
+            $quali = '«' . implode('», «', array_map('newsletter_tag_vedi', $nomi)) . '»';
+            flash('success', $cosa === 'tag_aggiungi' ? (count($nomi) === 1 ? 'Tag ' : 'Tag ') . $quali . ' aggiunt' . (count($nomi) === 1 ? 'o' : 'i') . ' a ' . nlc_n($n) . '.' . ($n < count($ids) ? ' Gli altri li avevano già.' : '')
+                : 'Tag ' . $quali . ' tolt' . (count($nomi) === 1 ? 'o' : 'i') . ' a ' . nlc_n($n) . '.' . ($n < count($ids) ? ' Gli altri non li avevano.' : ''));
         } elseif ($cosa === 'blocca') {
             $n = 0;
             $st = db()->prepare('SELECT stato FROM ' . tbl('newsletter_iscritti') . ' WHERE id = ?');
@@ -256,6 +265,7 @@ require_once __DIR__ . '/includes/admin-header.php';
   <a href="newsletter-contatti.php"<?= $scheda === 'contatti' ? ' class="attiva" aria-current="page"' : '' ?>>Contatti</a>
   <a href="newsletter-contatti.php?scheda=liste"<?= $scheda === 'liste' ? ' class="attiva" aria-current="page"' : '' ?>>Liste</a>
   <a href="newsletter-segmenti.php">Segmenti</a>
+  <a href="newsletter-tag.php">Tag</a>
 </nav>
 
 <?php if ($scheda === 'contatti'):
@@ -278,8 +288,9 @@ require_once __DIR__ . '/includes/admin-header.php';
   $colonne = $vistaId ? array_values(array_filter($viste[$vistaId]['colonne'], fn($n) => isset($attributi[$n]))) : nlc_colonne($utenteId);
   $valori = $colonne ? newsletter_valori_di(array_column($righe, 'id'), $colonne) : [];
   $nascosti = '<input type="hidden" name="cerca" value="' . h($f['cerca']) . '"><input type="hidden" name="stato" value="' . h($f['stato']) . '"><input type="hidden" name="lista" value="' . (int)$f['lista'] . '"><input type="hidden" name="per" value="' . $per . '">'
-    . '<input type="hidden" name="segmento" value="' . (int)$f['segmento'] . '"><input type="hidden" name="f" value="' . h($f['f']) . '">' . ($vistaId ? '<input type="hidden" name="vista" value="' . $vistaId . '">' : '');
-  $qBase = array_filter(['cerca' => $f['cerca'], 'stato' => $f['stato'], 'lista' => $f['lista'] ?: null, 'segmento' => $f['segmento'] ?: null, 'f' => $f['f'] ?: null, 'per' => $per !== 50 ? $per : null]);
+    . '<input type="hidden" name="segmento" value="' . (int)$f['segmento'] . '"><input type="hidden" name="f" value="' . h($f['f']) . '"><input type="hidden" name="tag" value="' . (int)$f['tag'] . '">' . ($vistaId ? '<input type="hidden" name="vista" value="' . $vistaId . '">' : '');
+  $qBase = array_filter(['cerca' => $f['cerca'], 'stato' => $f['stato'], 'lista' => $f['lista'] ?: null, 'segmento' => $f['segmento'] ?: null, 'tag' => $f['tag'] ?: null, 'f' => $f['f'] ?: null, 'per' => $per !== 50 ? $per : null]);
+  $nomiTag = newsletter_tag_nomi(); // 2.23.0
   $qLink = $vistaId ? ['vista' => $vistaId] : $qBase; // i link delle pagine restano nella vista
   $segmenti = newsletter_segmenti();
   $nomeSeg = array_column(array_map(fn($x) => ['id' => (int)$x['id'], 'nome' => newsletter_4byte_fuori((string)$x['nome'])], $segmenti), 'nome', 'id');
@@ -309,6 +320,8 @@ require_once __DIR__ . '/includes/admin-header.php';
       <?= $tendinaListe('lista', 'Tutti i contatti', (int)$f['lista'], '<option value="-1"' . ($f['lista'] === -1 ? ' selected' : '') . '>In nessuna lista</option>', 'nlx-lista') ?></div>
     <div class="form-group"><label for="nlx-segmento">Carica un segmento</label>
       <select id="nlx-segmento" name="segmento"><option value="0"><?= $segmenti ? 'Nessun segmento' : 'Ancora nessun segmento' ?></option><?php foreach ($nomeSeg as $sid => $sn): ?><option value="<?= (int)$sid ?>"<?= (int)$f['segmento'] === (int)$sid ? ' selected' : '' ?>><?= h($sn) ?></option><?php endforeach; ?></select></div>
+    <div class="form-group"><label for="nlx-tag">Con il tag</label>
+      <select id="nlx-tag" name="tag"><option value="0"><?= $nomiTag ? 'Qualunque tag' : 'Ancora nessun tag' ?></option><?php foreach ($nomiTag as $tid => $tn): ?><option value="<?= (int)$tid ?>"<?= (int)$f['tag'] === (int)$tid ? ' selected' : '' ?>><?= h($tn) ?></option><?php endforeach; ?></select></div>
     <div class="form-group"><label for="nlx-cerca">Cerca</label>
       <input type="search" id="nlx-cerca" name="cerca" value="<?= h($f['cerca']) ?>" placeholder="per esempio: anna@ oppure Rossi" aria-describedby="nlx-cerca-aiuto">
       <div class="hint" id="nlx-cerca-aiuto">Email (anche un pezzo), nome, cognome o identificativo esterno.</div></div>
@@ -333,7 +346,7 @@ require_once __DIR__ . '/includes/admin-header.php';
   <details class="nlx-riquadro-filtro" id="nlx-filtro"<?= $regoleF || isset($_GET['filtro']) ? ' open' : '' ?>>
     <summary><?= $regoleF ? 'Cambia il filtro' : 'Aggiungi filtro' ?></summary>
     <form method="get" class="nlx-filtro-form" aria-label="Filtra i contatti con delle condizioni">
-      <input type="hidden" name="cerca" value="<?= h($f['cerca']) ?>"><input type="hidden" name="stato" value="<?= h($f['stato']) ?>"><input type="hidden" name="lista" value="<?= (int)$f['lista'] ?>"><input type="hidden" name="segmento" value="<?= (int)$f['segmento'] ?>"><input type="hidden" name="per" value="<?= $per ?>">
+      <input type="hidden" name="cerca" value="<?= h($f['cerca']) ?>"><input type="hidden" name="stato" value="<?= h($f['stato']) ?>"><input type="hidden" name="lista" value="<?= (int)$f['lista'] ?>"><input type="hidden" name="segmento" value="<?= (int)$f['segmento'] ?>"><input type="hidden" name="tag" value="<?= (int)$f['tag'] ?>"><input type="hidden" name="per" value="<?= $per ?>">
       <input type="hidden" name="f" id="nlx-f" value="<?= h($f['f']) ?>">
       <p class="hint">Le stesse condizioni dei segmenti: dati del contatto, liste, email aperte o cliccate, form inviati, lista nera. Il filtro vale insieme alla ricerca e alla lista caricate sopra.</p>
       <div class="nls-editor" data-nls-editor="#nlx-f" data-nls-conta="newsletter-segmenti.php" data-csrf="<?= h(csrf_token()) ?>"></div>
@@ -360,6 +373,8 @@ require_once __DIR__ . '/includes/admin-header.php';
             <option value="aggiungi">Aggiungi a una lista</option>
             <option value="togli">Togli dalle liste</option>
             <option value="sposta"<?= $f['lista'] > 0 ? '' : ' disabled' ?>>Sposta in un'altra lista<?= $f['lista'] > 0 ? '' : ' (carica prima una lista)' ?></option>
+            <option value="tag_aggiungi">Aggiungi un tag</option>
+            <option value="tag_togli">Togli un tag</option>
             <option value="blocca">Metti in lista nera</option>
             <option value="modifica"<?= $modificabili ? '' : ' disabled' ?>>Modifica un attributo<?= $modificabili ? '' : ' (nessun attributo Data, Sì/No o Categoria)' ?></option>
             <option value="esporta">Esporta (CSV)</option>
@@ -367,6 +382,10 @@ require_once __DIR__ . '/includes/admin-header.php';
           </select></div>
         <div class="form-group" data-nlx-per="aggiungi sposta"><label for="nlx-lista-dest">Lista di arrivo</label><?= $tendinaListe('lista_dest', 'Scegli la lista...', 0, '', 'nlx-lista-dest') ?></div>
         <div class="form-group" data-nlx-per="togli"><label for="nlx-lista-da">Da quale lista</label><?= $tendinaListe('lista_da', 'Da tutte le liste', (int)max(0, $f['lista']), '', 'nlx-lista-da') ?></div>
+        <div class="form-group" data-nlx-per="tag_aggiungi tag_togli"><label for="nlx-tag-nomi">Quali tag</label>
+          <input type="text" name="tag_nomi" id="nlx-tag-nomi" maxlength="600" list="nlx-tag-suggeriti" autocomplete="off" placeholder="per esempio: Cliente" aria-describedby="nlx-tag-nomi-aiuto">
+          <datalist id="nlx-tag-suggeriti"><?php foreach ($nomiTag as $tn): ?><option value="<?= h($tn) ?>"><?php endforeach; ?></datalist>
+          <div class="hint" id="nlx-tag-nomi-aiuto">Più tag separati da virgola. Aggiungendo, un tag nuovo nasce da solo.</div></div>
         <div class="form-group" data-nlx-per="modifica"><label for="nlx-attr">Attributo</label>
           <select name="attributo" id="nlx-attr"><?php foreach ($modificabili as $n => $a): ?><option value="<?= h($n) ?>" data-tipo="<?= h($a['tipo']) ?>"><?= h(newsletter_attributo_etichetta($a)) ?> (<?= h(NL_ATTR_TIPI[$a['tipo']]) ?>)</option><?php endforeach; ?></select></div>
         <div class="form-group" data-nlx-per="modifica"><label for="nlx-valore">Nuovo valore</label>

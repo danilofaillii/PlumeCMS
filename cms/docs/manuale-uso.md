@@ -1773,8 +1773,8 @@ partono dal tuo server, a giri, grazie al cron (capitolo 26).
 
 ### I contatti
 
-Dalla 2.8.0 i contatti hanno pagine loro. **Newsletter e form > Contatti** ha tre
-linguette, **Contatti**, **Liste** e **Segmenti** (dalla 2.10.0). Un contatto è una persona con la sua email: può stare in più liste o in nessuna, e per
+Dalla 2.8.0 i contatti hanno pagine loro. **Newsletter e form > Contatti** ha le
+linguette **Contatti**, **Liste**, **Segmenti** (dalla 2.10.0) e **Tag** (dalla 2.23.0, più avanti "I tag dei contatti"). Un contatto è una persona con la sua email: può stare in più liste o in nessuna, e per
 le email è **iscritto**, **in attesa di conferma** (non ha ancora premuto il pulsante dell'email di conferma) oppure **in
 lista nera** (non riceve più niente). Le persone si iscrivono da sole con un form (capitolo 18) e confermano con un'email
 (doppio consenso); oppure le aggiungi tu.
@@ -2074,6 +2074,66 @@ Le viste sono di chi le crea: gli altri amministratori non le vedono.
 - [ ] Ho dato al segmento un nome che dice chi c'è dentro, e una categoria.
 - [ ] Ho aperto **Vedi i contatti** e controllato qualche nome.
 - [ ] Ricordo che una lista fatta da un segmento resta ferma, il segmento no.
+
+### I tag dei contatti
+
+Dalla 2.23.0 ogni contatto può avere dei **tag**: etichette brevi della persona, come «Cliente», «Fiera 2026», «Ha comprato
+il corso» o «Età: 35-44». Un contatto ne può avere tanti (fino a 200), e un tag nasce da solo la prima volta che lo dai a
+qualcuno. Maiuscole e minuscole non contano: «cliente» e «Cliente» sono lo stesso tag. Un tag si scrive senza virgole (la
+virgola separa un tag dall'altro), fino a 60 caratteri.
+
+Attenzione a non confonderli con il campo **Tag** in alto nella tela di un'automazione e con l'etichetta dei modelli delle
+email: quelle servono a ritrovare automazioni e modelli, non sono tag delle persone.
+
+![Il riquadro Tag nella scheda del contatto](immagini/manuale-uso/19t-scheda.jpg)
+
+**Dove si vedono e si danno**
+
+1. **Nella scheda del contatto**, riquadro **Tag** a destra: le pillole con i suoi tag. Un clic sul nome apre i Contatti con
+   quel tag; la **x** lo toglie. Sotto, in **Aggiungi un tag**, scrivi: compaiono i tag che ci sono già. Più tag separati da
+   virgola, poi **Aggiungi il tag**. La **Cronologia** del contatto dice «Tag aggiunto» e «Tag tolto», con da dove (filtro
+   **Tag**).
+2. **Nell'elenco dei Contatti**: spunta i contatti (o la casella **Tutti i contatti** del filtro), scegli l'azione **Aggiungi
+   un tag** o **Togli un tag**, scrivi il tag in **Quali tag** e premi **Applica**. In alto, **Con il tag** mostra solo i
+   contatti che hanno quel tag.
+3. **Nella pagina Tag** (Newsletter e form > **Tag**, o la linguetta Tag accanto a Contatti, Liste e Segmenti): l'elenco dei
+   tag con quanti contatti li hanno (il numero apre i Contatti filtrati) e dove si usano (segmenti, automazioni). Da qui:
+   **Crea un tag**, e per ogni tag **Rinomina o elimina**. Rinominando, i contatti lo tengono con il nome nuovo, e segmenti
+   e automazioni lo seguono. Eliminando, lo perdono tutti i contatti che lo avevano: il pannello chiede conferma e dice
+   quanti sono.
+
+**Dove si usano**
+
+- **Segmenti e Aggiungi filtro**: fra le condizioni c'è **Tag**, nel gruppo «Liste e segmenti», con quattro modi: **ha almeno
+  uno di questi tag**, **ha tutti questi tag**, **non ha nessuno di questi tag**, **non ha tutti questi tag**. Spunti i tag
+  e il numero dei contatti si aggiorna.
+- **Automazioni**: l'innesco **Riceve un tag** fa entrare chi riceve uno dei tag spuntati (nessuno spuntato: qualunque tag),
+  da qualunque parte arrivi: dalla scheda, da un'azione di gruppo, da un form, da un'importazione, da un'altra automazione,
+  da un test. Fra le azioni ci sono **Aggiungi tag** e **Togli tag**: un tag dato da un'automazione può far partire
+  un'altra automazione. Come per gli altri inneschi, entra solo chi è iscritto.
+- **Form**: nel passo 1, **A chi compila dai questi tag** (facoltativo). Li riceve chi entra nei contatti con quel form (o
+  aggiorna il suo profilo). Con la doppia conferma i tag arrivano quando la persona conferma; senza conferma, subito.
+- **Importa contatti**: al passo 2 una colonna si abbina a **Tag (più tag separati da virgola o punto e virgola)**; una colonna
+  che si chiama TAG, TAGS o ETICHETTE si abbina da sola. Al passo 4 scegli per chi c'è già **Aggiungi ai tag che ha** oppure
+  **Sostituisci i tag che ha**. Una cella vuota non toglie niente. L'innesco «Riceve un tag» parte solo con la spunta
+  «Fai partire le automazioni».
+- **Esporta**: c'è la colonna **TAG**, con i tag del contatto separati da virgola.
+
+**Esempio: chi passa allo stand della fiera.**
+
+1. Importa il file dei biglietti da visita con una colonna TAG che dice «Fiera 2026» (oppure, a mano: in Contatti cerca
+   i contatti, spuntali, **Aggiungi un tag**, «Fiera 2026», **Applica**).
+2. In **Automazioni** crea un'automazione con l'innesco **Riceve un tag**, spunta «Fiera 2026», metti l'email «Grazie della
+   visita» e, dopo, l'azione **Togli tag** «Fiera 2026» e **Aggiungi tag** «Contattato dopo la fiera».
+3. Stato **Attiva**, **Salva**. Chi riceve il tag da adesso in poi riceve l'email (dall'importazione, solo con la spunta delle
+   automazioni).
+
+**Checklist**
+
+- [ ] I nomi dei tag dicono una cosa sola e si capiscono fra sei mesi («Fiera 2026», non «f26»).
+- [ ] Prima di eliminare un tag ho guardato in **Tag** dove si usa (segmenti, automazioni).
+- [ ] Nel form ho scritto i tag nel passo 1 e ho ricordato che, con la doppia conferma, arrivano solo dopo la conferma.
+- [ ] Nell'importazione ho scelto «aggiungi» o «sostituisci» pensando ai contatti che ci sono già.
 
 ### Una campagna
 
@@ -4842,6 +4902,12 @@ un testo scritto da te e, se vuoi, un pulsante (per esempio "Prenota una chiamat
 Chi ha fatto il test può farsi mandare il risultato per email e, a parte, iscriversi alla newsletter. Le risposte restano
 **anonime**: il sito conserva solo il risultato, i punteggi e il giorno, mai il nome o l'indirizzo IP.
 
+Dalla 2.23.0: alla fine del test ci possono essere delle **domande sulla persona** (età, occupazione, settore...), che non
+danno punti e servono alle **statistiche per gruppi**; ogni risultato ha due testi, la **risposta breve** (a schermo) e la
+**risposta completa** (per email); con **Il risultato completo solo per email** il test finisce con la risposta breve e
+"Lasciami la tua email e ti mando il risultato completo"; chi si iscrive alla newsletter riceve come **tag** le sue
+risposte sulla persona e l'esito del test.
+
 **Esempio.** Lo studio "Respiro" di Bologna, che insegna a gestire lo stress, vuole un test "Quanto riposi davvero?": otto
 domande, tre fasce, e a chi esce "Riposo in rosso" un pulsante per prenotare una chiamata. Chi lascia l'email e si
 iscrive alla newsletter riceve, nei giorni dopo, tre email pensate per il suo risultato.
@@ -4898,6 +4964,33 @@ domanda scegli la sua **Area**. In un test **a profili** c'è il riquadro **Prof
 scrivi i **Punti** che dà a ogni profilo (per esempio "Cammino senza meta": 2 punti a Esploratore, 0 agli altri).
 **L'ordine dei profili conta**: se due profili hanno gli stessi punti vince quello più in alto.
 
+#### Le domande sulla persona
+
+In fondo al passo 2 c'è il riquadro **Domande sulla persona**: un catalogo pronto di domande su chi fa il test. Non danno
+punti e compaiono **alla fine del test, prima del risultato**.
+
+![Una domanda sulla persona sul sito, facoltativa](immagini/manuale-uso/40-persona.jpg)
+
+Nel catalogo: fascia d'età (18-24, 25-34, 35-44, 45-54, 55-64, 65 e più), genere, occupazione, settore (circa settanta
+settori, dalle sezioni ATECO in parole semplici), stato civile, figli, con chi vive, reddito annuo lordo, titolo di studio,
+regione (le 20 regioni più Estero), grandezza del comune, persone nell'azienda, anni di esperienza, ruolo, contratto,
+modalità di lavoro (in sede, da casa, misto), ore di lavoro a settimana, turni, viaggio casa-lavoro, se si occupa di un
+familiare, attività fisica, ore di sonno, schermi nel tempo libero, giorni di ferie.
+
+1. Scegli se le domande sulla persona sono **Facoltative** (con la risposta «Preferisco non rispondere», che si aggiunge da
+   sola) oppure **Obbligatorie**. Vale per tutte le domande sulla persona di questo test.
+2. Apri le domande che ti servono e spunta **Usa questa domanda**. Per l'esempio dello studio "Respiro": Età, Occupazione,
+   Ore di lavoro, Sonno.
+3. **Ordine**: il numero più basso viene prima.
+4. **Nome breve**: è il nome della domanda nelle statistiche e nei tag ("Età: 35-44"). **Testo della domanda**: quello
+   che legge chi fa il test, lo cambi come vuoi.
+5. **Risposte, una per riga**: le cambi, le togli, ne aggiungi. Attenzione: una risposta con il testo cambiato conta come
+   una risposta nuova nelle statistiche.
+6. **Salva**.
+
+Le risposte sulla persona si salvano con il risultato, anonime come il resto (solo il giorno, niente IP). Diventano tag del
+contatto solo per chi si iscrive alla newsletter (passo 5).
+
 Premi **Salva e vai avanti**.
 
 ### Passo 3: Punteggi e fasce
@@ -4922,8 +5015,11 @@ a cui ha risposto** (le condizionali che non le sono comparse non contano).
 
 ![Il passo 4: i testi dei risultati](immagini/manuale-uso/40-risultati.jpg)
 
-1. Per ogni fascia (o profilo) scrivi il **Testo del risultato**: è quello che legge chi ha fatto il test. Si scrive come
-   nel widget Testo: grassetto, corsivo, elenchi, link.
+1. Per ogni fascia (o profilo) scrivi due testi. La **Risposta breve** è quella che si legge a schermo alla fine del test
+   (due o tre righe: "Il tuo riposo è in rosso: dormi, ma non recuperi"). La **Risposta completa** arriva per email: il
+   testo intero, con cosa fare. Si scrivono come nel widget Testo: grassetto, corsivo, elenchi, link. Se la breve resta
+   vuota, a schermo esce la completa (i test fatti prima della 2.23.0 hanno un testo solo, che è la completa: restano
+   come erano). Lo stesso per i testi delle aree e delle regole.
 2. **Testo del pulsante** e **Link del pulsante**, facoltativi: "Prenota una chiamata", e il link con **Scegli dal sito**
    (cerca `contatti`).
 3. In un test ad aree, ogni area ha i suoi testi (escono sotto il grafico) e ci sono le **Regole sul risultato**: una
@@ -4936,14 +5032,21 @@ a cui ha risposto** (le condizionali che non le sono comparse non contano).
 
 ### Passo 5: Dopo il test, e Pubblica
 
-1. **Offri il risultato per email**: sotto il risultato compare "Vuoi ricevere il risultato per email?", con l'email e
+1. **Il risultato completo solo per email** (acceso di partenza nei test nuovi): il test finisce con la risposta breve e
+   sotto "Lasciami la tua email e ti mando il risultato completo". Spento: a schermo la risposta breve e sotto la completa.
+2. **Offri il risultato per email**: sotto il risultato compare "Vuoi ricevere il risultato per email?", con l'email e
    la casella del **consenso**, che parte vuota. Un test sulla salute tratta un dato particolare: per questo il consenso
-   è una casella sua.
-2. **Iscrizione a una lista**: scegli la lista della newsletter (per esempio "Lettori del test"). Compare una seconda
-   casella, separata, per iscriversi: arriva l'email per confermare, come nei form (doppia conferma).
-3. **Automazioni**: il riquadro elenca le automazioni che usano questo test.
-4. **Privacy**: il riquadro riassume cosa il sito conserva.
-5. Premi **Salva**, poi **Pubblica il test**. Se qualcosa manca (le fasce hanno un buco, un'area senza domande, un
+   è una casella sua. Con il punto 1 acceso il riquadro c'è sempre. L'email parte subito e contiene il punteggio, la
+   risposta completa (della fascia, della regola o del profilo), quella di ogni area con il grafico a barre, il pulsante e
+   l'avvertenza.
+3. **Iscrizione a una lista**: scegli la lista della newsletter (per esempio "Lettori del test"). Compare una seconda
+   casella, separata, per iscriversi: arriva l'email per confermare, come nei form (doppia conferma). Quando conferma, il
+   contatto entra nella lista e riceve come **tag** le sue risposte sulla persona ("Età: 35-44", "Occupazione: Manager";
+   "Preferisco non rispondere" non diventa un tag) e l'esito ("Test Quanto riposi davvero?: Riposo in rosso"). Chi lascia
+   l'email **senza** spuntare la newsletter riceve solo il risultato: non diventa un contatto e non riceve tag.
+4. **Automazioni**: il riquadro elenca le automazioni che usano questo test.
+5. **Privacy**: il riquadro riassume cosa il sito conserva.
+6. Premi **Salva**, poi **Pubblica il test**. Se qualcosa manca (le fasce hanno un buco, un'area senza domande, un
    profilo che nessuna risposta premia), il riquadro **Pubblica** lo elenca e il pulsante resta spento finché non lo
    sistemi.
 
@@ -4980,7 +5083,9 @@ In **Newsletter e form > Automazioni** crea un'automazione e, fra gli **Inneschi
    una regola.
 3. Poi i passi come in ogni automazione (capitolo 20): email, attese, divisioni.
 
-Parte per chi si iscrive dalla pagina del risultato, **dopo** aver confermato l'iscrizione. Così a chi è "in rosso"
+Parte per chi si iscrive dalla pagina del risultato, **dopo** aver confermato l'iscrizione. Dalla 2.23.0 alla conferma
+partono anche le automazioni con l'innesco **Riceve un tag** (capitolo 20, "I tag dei contatti"): per esempio un'email per
+chi ha il tag "Occupazione: Manager", qualunque test abbia fatto. Così a chi è "in rosso"
 mandi tre email sul riposo, a chi va bene una sola di saluto. Nella scheda del contatto, in **Cronologia**, c'è "Ha
 completato il test «Quanto riposi davvero?»: Riposo in rosso (73 su 100)".
 
@@ -4994,7 +5099,16 @@ Apri **Test > Statistiche** e scegli il test e il periodo:
 - **Risultati**: quante persone per fascia o profilo, e quante per regola;
 - **Media per area** (o dei punti per profilo);
 - **Domanda per domanda**: quanti **si sono fermati** a quella domanda, e quante volte è stata data ogni risposta;
-- **Scarica il CSV**: gli stessi numeri, da aprire con Excel. Sono tutti numeri aggregati, senza persone.
+- **Per gruppi** (con le domande sulla persona): una tabella per ogni domanda. Per ogni risposta (per esempio "25-34")
+  quante persone l'hanno data, in che percentuale sono uscite in ogni fascia (o profilo) e il punteggio medio, del totale
+  e di ogni area. Un gruppo con meno di 5 persone non mostra niente: si legge **meno di 5**, perché con così poche persone
+  qualcuno si potrebbe riconoscere. **Non mostrato** vuol dire che si nasconde anche un gruppo più grande, altrimenti dal
+  totale si ricaverebbero i numeri dei gruppi piccoli. Questa parte conta sempre tutti i risultati del test, qualunque
+  periodo scegli. Le risposte che nessuno ha dato sono elencate sotto la tabella.
+- **Scarica il CSV**: gli stessi numeri, gruppi compresi (con la stessa regola dei 5), da aprire con Excel. Sono tutti numeri
+  aggregati, senza persone.
+
+![Le statistiche per gruppi](immagini/manuale-uso/40-gruppi.jpg)
 
 **Cosa non c'è ancora.** Domande con più risposte da spuntare, immagini nelle risposte, un test diviso in pagine con
 più domande per schermata, il pagamento per fare il test. Il risultato per email senza JavaScript (il riquadro
@@ -5014,6 +5128,9 @@ non entra nei Contatti: il suo indirizzo serve solo a mandare l'email.
 - [ ] Il link condiviso apre lo stesso risultato.
 - [ ] Con l'email: il risultato è arrivato; con la lista: è arrivata l'email per confermare.
 - [ ] Il widget **Riquadro in evidenza** porta al test.
+- [ ] Ogni fascia ha la risposta breve (a schermo) e la completa (per email).
+- [ ] Le domande sulla persona sono solo quelle che mi servono davvero, e ho scelto se sono facoltative o obbligatorie.
+- [ ] Ho fatto il test lasciando l'email con la newsletter, ho confermato e nella scheda del contatto ci sono i tag giusti.
 
 **Problemi frequenti**
 
@@ -5025,6 +5142,8 @@ non entra nei Contatti: il suo indirizzo serve solo a mandare l'email.
 | L'automazione "Completa un test" non parte | Parte solo per chi si iscrive alla lista dalla pagina del risultato, dopo la conferma. Controlla anche che l'automazione sia **Attiva** |
 | Chi apre il link condiviso non vede il riquadro dell'email | È voluto: l'email si chiede entro due ore dal test, dalla pagina del risultato |
 | Ho cambiato una fascia e i vecchi link mostrano altro | Il link porta l'esito di allora; se la fascia non c'è più, resta il punteggio |
+| Nelle statistiche per gruppi leggo solo "meno di 5" | È voluto: i gruppi piccoli non si mostrano. Aspetta che più persone facciano il test |
+| Il contatto non ha i tag del test | I tag arrivano solo a chi spunta la newsletter, e solo dopo che ha confermato dall'email |
 
 ---
 

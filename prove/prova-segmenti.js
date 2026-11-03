@@ -72,7 +72,7 @@ const numeroIt = (x) => String(x).replace(/\B(?=(\d{3})+(?!\d))/g, '.');
   // ===== Pagina Segmenti vuota
   await vai('newsletter-segmenti.php');
   let t = await testo();
-  ok('Segmenti: scheda accanto a Contatti e Liste, attiva', (await p.locator('nav.imp-schede a.attiva').innerText()).trim() === 'Segmenti' && (await p.locator('nav.imp-schede a').count()) === 3);
+  ok('Segmenti: scheda accanto a Contatti, Liste e Tag (2.23.0), attiva', (await p.locator('nav.imp-schede a.attiva').innerText()).trim() === 'Segmenti' && (await p.locator('nav.imp-schede a').count()) === 4);
   ok('Segmenti: elenco vuoto che dice cosa fare', /Ancora nessun segmento/.test(t) && /Crea un segmento/.test(t), t.slice(0, 200));
   const r302 = await ctx.request.get(B + '/admin/newsletter-contatti.php?scheda=segmenti', { maxRedirects: 0 });
   ok('newsletter-contatti.php?scheda=segmenti porta alla pagina Segmenti (302, no-store)', r302.status() === 302 && /newsletter-segmenti\.php/.test(r302.headers()['location'] || '') && /no-store/.test(r302.headers()['cache-control'] || ''));

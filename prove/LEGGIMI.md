@@ -704,3 +704,20 @@ L'addon Test e questionari della 2.22.0 (`cms/addon/test/`, `docs-sviluppo/addon
 3. Subito dopo, sullo stesso sito: `node prove/attacchi-test.js <base> <cartella del CMS> <cartella posta>`.
    Lascia un redattore `red_test` e un test "XSS ...". Alla fine svuota `<prefisso>test_limiti` (lo fa da sola).
 4. Atteso (2.22.0): tutto OK, in radice e in cartella.
+
+2.23.0: `prova-test.js` ha la sezione D (domande sulla persona, risposta breve e completa, il risultato completo per email con
+e senza newsletter, i tag alla conferma, l'innesco "Riceve un tag", le statistiche per gruppi con la soglia di 5, il CSV, un
+test scritto con la 2.22.0 confrontato al byte con il codice di c3b99e9, estratto con `git archive` nella cartella
+`addon/test-vecchio` del sito e poi tolto); `attacchi-test.js` il gruppo G. Atteso: 141 su 141 e 71 su 71, in radice e in cartella.
+
+## prova-tag.js e attacchi-tag.js (2.23.0)
+
+I tag dei contatti: scheda del contatto, azioni di gruppo e filtro dei Contatti, pagina Tag, segmenti (contati a mano), automazioni
+(innesco "Riceve un tag", azioni "Aggiungi tag" e "Togli tag", con le email del giro nel server finto), form (passo 1, con e senza
+doppia conferma), importazione (aggiungi e sostituisci), esportazione, telefono a 390 px.
+
+1. Un CMS appena installato (`prova-install.js`, anche in cartella) e il server di posta finto:
+   `python3 -I prove/smtp-finto.py <porta> <cartella posta> &`. Va su un sito da buttare (contatti `@tag-prova.it`).
+2. `node prove/prova-tag.js <base> <cartella del CMS> <porta smtp> <cartella posta> [cartella foto]`. Usa `prove/tag-cli.php`.
+3. Subito dopo, sullo stesso sito: `node prove/attacchi-tag.js <base> <cartella del CMS>` (lascia il redattore `red_tag`).
+4. Atteso (2.23.0): 57 su 57 e 25 su 25, in radice e in cartella.

@@ -71,3 +71,9 @@
 .tq-email .modulo-campi{grid-template-columns:1fr}
 .sr-solo{position:absolute!important;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
 @media (max-width:600px){.tq-domanda,.tq-fine{padding:16px 14px}.tq-opz{font-size:16px}.tq-nav .btn{flex:1 1 auto;justify-content:center}}
+/* 2.23.0: le domande sulla persona (tante risposte su due colonne dove c'è posto), la risposta breve, il riquadro dell'email del risultato completo */
+.tq-opzioni-tante{grid-template-columns:repeat(auto-fill,minmax(min(100%,260px),1fr))}
+.tq-opz-nr{border-style:dashed}
+.tq-persona .tq-aiuto .tq-se{display:inline}
+.tq-breve{font-size:1.05em}
+.tq-email-completo{border-color:var(--ciano)}
