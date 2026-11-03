@@ -342,7 +342,7 @@ function editor_css_elemento(array &$css, string $sel, string $tipo, array $v, s
     foreach (editor_definizioni()[$tipo]['controlli'] as $ctl) {
         if (isset($ctl['selettore']) && array_key_exists($ctl['nome'], $v)) editor_css_controllo($css, $sel, $ctl, $v[$ctl['nome']]);
         if (!empty($ctl['parte']) && $ctl['parte'] !== 'contenuto') $parti[] = [(string)$ctl['selettore'], !empty($ctl['blocco'])];
-        if ((($ctl['parte'] ?? '') === 'contenuto' || ($ctl['nome'] === 'allineamento' && empty($ctl['parte']))) && array_key_exists($ctl['nome'], $v)) $generale = $v[$ctl['nome']];
+        if ((($ctl['parte'] ?? '') === 'contenuto' || ($ctl['nome'] === 'allineamento' && empty($ctl['parte']))) && array_key_exists($ctl['nome'], $v)) { $generale = $v[$ctl['nome']]; $nuovo = ($ctl['parte'] ?? '') === 'contenuto'; }
     }
     // 2.21.0: l'allineamento di tutto il widget vale anche per le parti che hanno uno stile loro (la firma della frase è
     // centrata, il testo dell'apertura ha una larghezza massima, il titolo della fisarmonica è una riga flessibile). La radice
@@ -350,6 +350,9 @@ function editor_css_elemento(array &$css, string $sel, string $tipo, array $v, s
     if ($generale !== null && $parti) {
         $radice = preg_replace('/^(\.ed-[A-Za-z0-9_-]+)$/', '$1$1', $sel);
         foreach ($parti as [$p, $blocco]) {
+            // Con l'allineamento che il widget aveva già, una parte in linea (l'occhiello) segue il testo intorno, come prima:
+            // farla blocco cambierebbe l'altezza della riga delle pagine già fatte.
+            if ($blocco && empty($nuovo)) continue;
             $selp = implode(',', array_map(fn($x) => $radice . ' ' . trim($x), explode(',', $p)));
             editor_css_resp($css, $selp, $generale, fn($x) => ($q = editor_css_allinea_parte($x)) && $blocco ? $q + ['display' => 'block'] : $q);
         }
