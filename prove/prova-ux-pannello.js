@@ -39,7 +39,12 @@ const PIU = ['seo.php?scheda=motori', 'seo.php?scheda=copertura', 'seo.php?sched
   'newsletter-flussi.php?id=1', 'newsletter-flussi.php?id=1&scheda=attivita', 'newsletter-flussi.php?nuovo=1&modello=benvenuto',
   // 2.16.0: il costruttore dei form a cinque passi (il form 1 deve esserci), la scelta del tipo, Pagine e consenso
   'form.php?nuovo=1', 'form.php?nuovo=1&tipo=iscrizione', 'form.php?id=1&passo=2', 'form.php?id=1&passo=3', 'form.php?id=1&passo=4', 'form.php?id=1&passo=5',
-  'newsletter-consenso.php', 'newsletter-consenso.php?scheda=pagine', 'newsletter-consenso.php?scheda=pagine&nuova=1'];
+  'newsletter-consenso.php', 'newsletter-consenso.php?scheda=pagine', 'newsletter-consenso.php?scheda=pagine&nuova=1',
+  // 2.24.0: i cinque passi dell'addon Test (il test 1 deve esserci, l'addon acceso), con una finestra aperta per passo
+  'addon-pagina.php?a=test&p=test&id=1&passo=1', 'addon-pagina.php?a=test&p=test&id=1&passo=1&apri=ts-fin-nome', 'addon-pagina.php?a=test&p=test&id=1&passo=2',
+  'addon-pagina.php?a=test&p=test&id=1&passo=2&apri=ts-fin-domanda', 'addon-pagina.php?a=test&p=test&id=1&passo=2&apri=ts-fin-persona', 'addon-pagina.php?a=test&p=test&id=1&passo=3',
+  'addon-pagina.php?a=test&p=test&id=1&passo=3&apri=ts-fin-fascia', 'addon-pagina.php?a=test&p=test&id=1&passo=4', 'addon-pagina.php?a=test&p=test&id=1&passo=4&apri=ts-fin-avvertenza',
+  'addon-pagina.php?a=test&p=test&id=1&passo=5', 'addon-pagina.php?a=test&p=test&id=1&passo=5&apri=ts-fin-email', 'addon-pagina.php?a=test&p=statistiche&id=1'];
 
 // La misura dentro la pagina: tutto quello che serve sta qui, la pagina non carica niente.
 function misura() {

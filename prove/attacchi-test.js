@@ -271,6 +271,49 @@ const XSS = '<img src=x onerror=alert(1)><script>alert(2)</script>"\'>';
     ok('G4 nessun alert nel sito e nel pannello (passo 2, statistiche)', alert === 0, alert);
   }
 
+  // ================= H. (2.24.0) le pagine: JSON maligno dal passo 2 (chiavi inventate, titoli con HTML e script, 4 byte, migliaia di pagine)
+  {
+    await a.goto(PAG('test'), { waitUntil: 'networkidle' });
+    const tokH = await a.getAttribute('meta[name=pn-csrf]', 'content');
+    await a.request.post(PAG('test'), { form: { _csrf: tokH, azione: 'crea', tipo: 'punteggio', nome: 'Pagine cattive' }, maxRedirects: 0 });
+    const H = sql(`SELECT id, slug FROM {p}test_test ORDER BY id DESC LIMIT 1`)[0];
+    const postH = (passo, campi, conToken = true) => a.request.post(PAG('test', `&id=${H.id}&passo=${passo}`), { form: { ...(conToken ? { _csrf: tokH } : {}), azione: 'salva', id: String(H.id), passo: String(passo), vai: 'resta', ...campi }, maxRedirects: 0 });
+    const datiH = () => JSON.parse(sql(`SELECT dati FROM {p}test_test WHERE id = ${H.id}`)[0].dati);
+    const dom = [{ k: 'ha', testo: 'H uno', tipo: 'scala' }, { k: 'hb', testo: 'H due', tipo: 'sino', opzioni: [{ k: 'si', t: 'Sì', punti: 1 }, { k: 'no', t: 'No', punti: 0 }] }, { k: 'hc', testo: 'H tre', tipo: 'scala', condizione: { domanda: 'hb', valori: ['si'] } }];
+    const TIT = '<script>alert(7)</script><img src=x onerror=alert(8)> Titolo \u{1F600} ' + 'y'.repeat(300);
+    const tante = Array.from({ length: 5000 }, (_, i) => ({ titolo: 'P' + i, domande: ['ha', 'hb'] }));
+    await postH(2, { dati_json: JSON.stringify({ domande: dom, modo: 'pagine', pagine: [{ titolo: TIT, domande: ['hc', 'inventata', 'ha', 'ha', 42, { x: 1 }, '<b>', 'hb'.repeat(500)] }, 'non una pagina', { titolo: ['un', 'elenco'], domande: 'hb' }, ...tante] }) });
+    let dH = datiH();
+    const tutte = dH.pagine.flatMap(p => p.domande);
+    ok('H1 5000 pagine: se ne tengono al massimo 80', dH.pagine.length <= 80 && dH.pagine.length >= 2, dH.pagine.length);
+    ok('H1 chiavi inventate, numeri, oggetti, doppioni scartati: ogni domanda in una pagina sola', tutte.slice().sort().join() === 'ha,hb,hc' && tutte.length === 3, tutte);
+    ok('H1 titoli: testo semplice tagliato a 120, il titolo che non è testo diventa vuoto', dH.pagine.every(p => typeof p.titolo === 'string' && [...p.titolo].length <= 120) && dH.pagine[1].titolo === '' && /^<script>alert\(7\)/.test(dH.pagine[0].titolo), dH.pagine[0].titolo.slice(0, 40));
+    ok('H1 l\'ordine delle domande segue le pagine; la condizione che ora punterebbe a una domanda che viene dopo si toglie', dH.domande.map(q => q.k).join() === tutte.join() && dH.domande.find(q => q.k === 'hc').condizione === null, dH.domande.map(q => q.k));
+    await postH(2, { dati_json: JSON.stringify({ domande: dom, modo: '<script>', pagine: 'non un elenco' }) });
+    dH = datiH();
+    ok('H2 modo inventato: «una» (il comportamento di sempre); pagine non elenco: una pagina con tutte le domande', dH.modo === 'una' && dH.pagine.length === 1 && dH.pagine[0].domande.join() === 'ha,hb,hc', [dH.modo, dH.pagine]);
+    await postH(2, { dati_json: JSON.stringify({ domande: dom, modo: 'pagine', pagine: [{ titolo: 'Senza token', domande: ['ha'] }] }) }, false);
+    ok('H3 CSRF: il passo 2 senza token non cambia modo e pagine', datiH().modo === 'una' && !/Senza token/.test(JSON.stringify(datiH().pagine)));
+    await postH(2, { dati_json: JSON.stringify({ domande: dom, modo: 'pagine', pagine: [{ titolo: TIT, domande: ['ha', 'hb'] }, { titolo: 'Due "virgolette" & <b>', domande: ['hc'] }] }) });
+    dH = datiH();
+    ok('H4 modo «pagine» con due pagine salvato (la condizione ora valida resta)', dH.modo === 'pagine' && dH.pagine.length === 2 && dH.domande.find(q => q.k === 'hc').condizione !== null);
+    await a.request.post(PAG('test'), { form: { _csrf: tokH, azione: 'pubblica', id: String(H.id) }, maxRedirects: 0 });
+    const pagH = await (await fetch(B + '/fai-il-test/' + H.slug + '/')).text();
+    ok('H4 sul sito i titoli delle pagine escono come testo (niente script né img), il carattere a 4 byte arriva intero', !/<script>alert\(7\)/.test(pagH) && !/<img src=x onerror=alert\(8\)>/.test(pagH)
+      && /<h2 class="tq-pagina-titolo" id="tqp-1" data-pagina-titolo="1">&lt;script&gt;alert\(7\)&lt;\/script&gt;/.test(pagH) && pagH.includes('\u{1F600}') && /Due &quot;virgolette&quot; &amp; &lt;b&gt;/.test(pagH));
+    const vH = await pag(br, err);
+    vH.on('dialog', d => { alert++; d.dismiss(); });
+    await vH.goto(B + '/fai-il-test/' + H.slug + '/', { waitUntil: 'networkidle' });
+    await vH.click('#tq-inizia');
+    await a.goto(PAG('test', `&id=${H.id}&passo=2`), { waitUntil: 'networkidle' });
+    await a.click('[data-titolo-pag="0"]');
+    ok('H4 nel pannello il titolo con l\'HTML è testo nella colonna, nel telefono e nel campo', (await a.inputValue('#ts-pag-titolo')).startsWith('<script>alert(7)') && /<script>alert\(7\)/.test(await a.locator('.ts-col[data-pag="0"] .ts-col-titolo').innerText()) && await a.locator('#ts-lavagna script, #ts-tel script, #ts-tel img').count() === 0);
+    await a.keyboard.press('Escape');
+    ok('H4 nessun alert nel sito (pagina a pagine) e nel pannello (lavagna)', alert === 0, alert);
+    const redH = await red.request.post(PAG('test', `&id=${H.id}&passo=2`), { form: { _csrf: await red.getAttribute('meta[name=pn-csrf]', 'content').catch(() => ''), azione: 'salva', id: String(H.id), passo: '2', vai: 'resta', dati_json: JSON.stringify({ domande: dom, modo: 'tutte' }) }, maxRedirects: 0 });
+    ok('H5 redattore: il passo 2 non si salva (resta «pagine»)', datiH().modo === 'pagine', redH.status());
+  }
+
   cli('pulisci_limiti');
   C.fine(err);
   await br.close();

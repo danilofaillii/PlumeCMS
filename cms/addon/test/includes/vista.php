@@ -54,8 +54,13 @@ function test_modulo_html(array $t, array $o = []): string {
     $o += ['risposte' => [], 'errori' => [], 'errore' => '', 'persona' => [], 'errori_persona' => []];
     $d = $t['dati'];
     $azione = cms_sito_base() . test_url($t) . 'invia/';
+    // 2.24.0: a pagine o tutte in una pagina, ogni domanda dice la sua pagina (data-pagina) e i titoli delle pagine escono come
+    // intestazioni (senza JavaScript restano nella pagina unica). Una per pagina (anche i test di prima): l'HTML di sempre.
+    $modo = $d['modo'] ?? 'una';
+    $paginaDi = []; $titoli = [];
+    if ($modo !== 'una') foreach (test_pagine($d) as $n => $pg) { foreach ($pg['domande'] as $k) $paginaDi[$k] = $n + 1; if ($pg['titolo'] !== '' && $pg['domande']) $titoli[$pg['domande'][0]] = [$n + 1, $pg['titolo']]; }
     $out = '<form method="post" action="' . h($azione) . '" class="tq-modulo" id="tq-modulo" data-test="' . (int)$t['id'] . '"'
-        . ($d['casuale'] ? ' data-casuale="1"' : '') . ' data-api="' . h(cms_sito_base() . '/test-api/passo/') . '">'
+        . ($d['casuale'] ? ' data-casuale="1"' : '') . ($modo !== 'una' ? ' data-modo="' . h($modo) . '"' : '') . ' data-api="' . h(cms_sito_base() . '/test-api/passo/') . '">'
         . '<input type="hidden" name="gettone" value="' . h(test_gettone((int)$t['id'])) . '"><input type="hidden" name="tentativo" value="">';
     if ($o['errore'] !== '') $out .= '<p class="modulo-errore" role="alert" id="tq-errore">' . h(TEST_ERRORI[$o['errore']] ?? $o['errore']) . '</p>';
     elseif ($o['errori'] || $o['errori_persona']) { $ne = count($o['errori']) + count($o['errori_persona']); $out .= '<p class="modulo-errore" role="alert" id="tq-errore">' . ($ne === 1 ? 'Una domanda da sistemare: la trovi segnata qui sotto.' : $ne . ' domande da sistemare: le trovi segnate qui sotto.') . '</p>'; }
@@ -66,6 +71,8 @@ function test_modulo_html(array $t, array $o = []): string {
         $err = $o['errori'][$k] ?? '';
         $idAiuto = 'ta-' . $k;
         $cond = $q['condizione'] ? ' data-cond="' . h(json_encode($q['condizione'])) . '"' : '';
+        if (isset($titoli[$k])) $out .= '<h2 class="tq-pagina-titolo" id="tqp-' . $titoli[$k][0] . '" data-pagina-titolo="' . $titoli[$k][0] . '">' . h($titoli[$k][1]) . '</h2>';
+        if ($modo !== 'una') $cond .= ' data-pagina="' . ($paginaDi[$k] ?? 1) . '"';
         $out .= '<fieldset class="tq-domanda' . ($err !== '' ? ' errato' : '') . '" id="td-' . h($k) . '" data-k="' . h($k) . '" data-tipo="' . h($q['tipo']) . '" data-obbl="' . ($q['obbligatoria'] ? '1' : '0') . '"' . $cond
             . ($q['aiuto'] !== '' || $q['condizione'] || $err !== '' ? ' aria-describedby="' . h(trim(($q['aiuto'] !== '' || $q['condizione'] ? $idAiuto : '') . ($err !== '' ? ' te-' . $k : ''))) . '"' : '') . '>'
             . '<legend><span class="tq-num">Domanda ' . ($i + 1) . ' di ' . $tot . ($q['obbligatoria'] && !$q['condizione'] ? '' : ' <small>(facoltativa)</small>') . '</span> <span class="tq-testo-domanda">' . h($q['testo']) . '</span></legend>';
@@ -95,7 +102,7 @@ function test_modulo_html(array $t, array $o = []): string {
         $k = $q['k'];
         $err = $o['errori_persona'][$k] ?? '';
         $val = (string)($o['persona'][$k] ?? '');
-        $out .= '<fieldset class="tq-domanda tq-persona' . ($err !== '' ? ' errato' : '') . '" id="tp-' . h($k) . '" data-k="p-' . h($k) . '" data-persona="1" data-tipo="scelta" data-obbl="' . ($obblP ? '1' : '0') . '" aria-describedby="tpa-' . h($k) . ($err !== '' ? ' tpe-' . h($k) : '') . '">'
+        $out .= '<fieldset class="tq-domanda tq-persona' . ($err !== '' ? ' errato' : '') . '" id="tp-' . h($k) . '" data-k="p-' . h($k) . '" data-persona="1"' . ($modo !== 'una' ? ' data-pagina="' . (count(test_pagine($d)) + 1) . '"' : '') . ' data-tipo="scelta" data-obbl="' . ($obblP ? '1' : '0') . '" aria-describedby="tpa-' . h($k) . ($err !== '' ? ' tpe-' . h($k) : '') . '">'
             . '<legend><span class="tq-num">Domanda ' . (count($d['domande']) + $j + 1) . ' di ' . $tot . ($obblP ? '' : ' <small>(facoltativa)</small>') . '</span> <span class="tq-testo-domanda">' . h($q['testo']) . '</span></legend>'
             . '<p class="tq-aiuto" id="tpa-' . h($k) . '"><span class="tq-se">Su di te:</span> non cambia il risultato e resta anonima.</p>'
             . '<div class="tq-opzioni tq-opzioni-persona' . (count($q['opzioni']) > 12 ? ' tq-opzioni-tante' : '') . '">';

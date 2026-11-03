@@ -77,3 +77,7 @@
 .tq-persona .tq-aiuto .tq-se{display:inline}
 .tq-breve{font-size:1.05em}
 .tq-email-completo{border-color:var(--ciano)}
+/* 2.24.0: il test a pagine. Il titolo della pagina sta sopra le sue domande (senza JavaScript: intestazioni nella pagina unica). */
+.tq-pagina-titolo{font-size:clamp(20px,2.6vw,26px);margin:8px 0 14px;color:var(--testo);overflow-wrap:anywhere}
+.tq-pagina-titolo:focus{outline:2px solid var(--ciano);outline-offset:3px}
+.tq-modulo[data-modo] .tq-domanda+.tq-domanda{margin-top:0}

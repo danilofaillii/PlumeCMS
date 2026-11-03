@@ -5308,6 +5308,47 @@ modo di lanciarle è in testa ai file.
   anche il gruppo mostrato più piccolo ("non mostrato"), perché per differenza dal totale si ricaverebbe il resto. Tabella
   in `admin-statistiche.php` (`#ts-gruppi`), righe del CSV da `test_stat_righe_gruppi()` (`admin-statistiche.php:30`).
 
+### 42.2 Aggiunte della 2.24.0: come si mostrano le domande, e i passi a carte con l'anteprima
+
+- **Il modo e le pagine.** `dati.modo` (`TEST_MODI`, `addon/test/includes/test.php:58`): `una` (una per pagina), `pagine` (a
+  pagine, le sceglie l'autore), `tutte` (tutte in una pagina). `dati.pagine = [{titolo, domande: [chiavi]}]`.
+  `test_normalizza()` (`test.php:241`) chiama `test_pagine_normalizza()` (`test.php:369`): al massimo `TEST_MAX_PAGINE` (80)
+  pagine (quello che arriva oltre si scarta prima di guardarlo), titoli di testo semplice tagliati a 120
+  (`TEST_MAX_TITOLO_PAGINA`), chiavi che non sono domande del test scartate, una domanda in una pagina sola, le domande senza
+  pagina in fondo all'ultima, almeno una pagina; le pagine vuote restano (il pannello le mostra, il sito le salta). L'ordine
+  delle pagine è l'ordine delle domande: se le pagine mettono le domande in un altro ordine, `domande` si riordina e una
+  condizione che punterebbe a una domanda che viene dopo si toglie (dal pannello non succede: la lavagna tiene i due ordini
+  allineati e lo dice). `test_pagine()` (`test.php:402`) dà le pagine che vede chi fa il test (senza le vuote; in `una` una
+  domanda per pagina, in `tutte` una pagina sola, senza titoli).
+- **Il modo predefinito è `una`** (`test_dati_vuoti()`, `test.php:217`, e ogni modo sconosciuto): è quello che il sito faceva
+  prima della 2.24.0 (con JavaScript una domanda per schermata, senza una pagina sola). Un test scritto prima non ha `modo` e
+  la sua pagina resta uguale al byte: con `una`, `test_modulo_html()` (`addon/test/includes/vista.php:53`) non aggiunge
+  niente (provato con il confronto al byte di `prova-test.js` sulla 2.22.0 e con le foto della pagina prima e dopo
+  l'aggiornamento).
+- **Sul sito.** Con `pagine` e `tutte` il modulo ha `data-modo`, ogni domanda `data-pagina` (le domande sulla persona sono
+  sempre l'ultima pagina) e, prima della prima domanda di una pagina con il titolo, `<h2 class="tq-pagina-titolo"
+  data-pagina-titolo>`: senza JavaScript è la pagina unica con i titoli come intestazioni. `assets/test.js`, `paginato()`
+  (`:232`, chiamata a `:101` solo con `data-modo`; senza resta la strada di sempre): "Pagina 2 di 5", la barra
+  (`aria-valuetext`), Indietro e Avanti, l'errore sotto ogni obbligatoria senza risposta della pagina, le condizionali che
+  entrano ed escono anche nella pagina che si guarda (`change`), le pagine con tutte le domande nascoste saltate, l'ordine
+  casuale dentro ogni pagina (la condizionale dopo la sua), "Vedi il risultato" nell'ultima pagina, le risposte nel browser
+  per riprendere. Le difese dell'invio non cambiano: il server ricalcola le domande mostrate come prima.
+- **Il pannello: la stessa forma per i cinque passi e i tre tipi.** `admin-test.php`: `test_admin_carta()` (`:53`, la carta
+  compatta con i bollini, un pulsante che apre la sua finestra), `test_admin_finestra()` e `test_admin_finestra_fine()`
+  (`:58`, `:63`: `<dialog class="ts-finestra">` con la testata in fascia, Chiudi in alto e Fatto in fondo; i campi restano
+  nel modulo anche a finestra chiusa, quindi ogni passo manda gli stessi campi di prima), `test_admin_lato()` (`:67`, il
+  telefono). `assets/admin-test.js`: le finestre (`:36`: Esc chiude, il fuoco torna alla carta, Invio in un campo non salva
+  il passo), l'anteprima a schermo intero sotto 900 px (`:78`, pulsante `[data-ts-anteprima]`, il lato diventa `role=dialog`),
+  e un blocco per passo: 1 presentazione (`:113`), 2 la lavagna (`:137`: una colonna per pagina, una carta per domanda,
+  SortableJS del pannello con `forceFallback` fra le colonne e verso il riquadro `[data-nuova]` che crea una pagina, la scheda
+  della domanda in `#ts-fin-domanda` con la tendina Pagina e Sposta prima/dopo per chi non trascina, il titolo della pagina in
+  `#ts-fin-pagina`, la colonna fissa delle domande sulla persona che apre `#ts-fin-persona`, aree, profili e scala nelle loro
+  finestre; `dati_json` porta anche `modo` e `pagine`), 3 le fasce in fila con la barra 0-100 (`:555`, tratti e buchi; il
+  controllo in parole resta `role=status`), 4 i risultati (`:669`: una carta per fascia, profilo o fascia d'area con Quill nella
+  sua finestra, le regole in `#ts-fin-regola`, «A schermo / Email»), 5 la fine del test (`:812`). Stili in
+  `assets/admin.css` (blocco 2.24.0, solo variabili degli aspetti; `position:relative` sulla lavagna perché il testo
+  `.sr-solo` delle carte non allarghi la pagina).
+
 ## Appendice A. Dove i documenti vecchi non corrispondono al codice
 
 I documenti di `docs-sviluppo/` (fino alla 1.6.4 in `docs/`) sono nati quando il CMS era il pannello di un solo sito.
