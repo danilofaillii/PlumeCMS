@@ -2,7 +2,7 @@
 /**
  * Plugin Name: plumeCMS Ponte
  * Description: Collega questo sito WordPress a plumeCMS per l'import, senza password per le applicazioni. Solo lettura: il ponte non scrive, non cancella e non cambia niente. Si apre da Strumenti &gt; plumeCMS Ponte e si chiude da solo dopo 48 ore.
- * Version: 1.0.0
+ * Version: 1.0.1
  * Requires at least: 5.6
  * Requires PHP: 7.2
  * Author: plumeCMS
@@ -26,7 +26,7 @@
  */
 if (!defined('ABSPATH')) exit;
 
-define('PLUME_PONTE_VERSIONE', '1.0.0');
+define('PLUME_PONTE_VERSIONE', '1.0.1');
 define('PLUME_PONTE_DURATA', 172800);   // 48 ore
 define('PLUME_PONTE_FINESTRA', 300);    // 5 minuti di differenza ammessa fra gli orologi
 define('PLUME_PONTE_ERRORI', 20);       // firme sbagliate prima del blocco
@@ -55,7 +55,14 @@ function plume_ponte_chiudi() {
     delete_option('plume_ponte');
 }
 
-register_deactivation_hook(__FILE__, 'plume_ponte_chiudi');
+/** Disattivato il plugin: via anche l'ultimo errore e la scelta di saltare i filtri. */
+function plume_ponte_disattiva() {
+    plume_ponte_chiudi();
+    delete_option('plume_ponte_errore');
+    delete_option('plume_ponte_senza_filtri');
+}
+
+register_deactivation_hook(__FILE__, 'plume_ponte_disattiva');
 
 // ------------------------------------------------------------
 // La pagina Strumenti > plumeCMS Ponte
@@ -91,6 +98,9 @@ function plume_ponte_pagina() {
       <?php if ($fatto === 'apri' && $s): ?><div class="notice notice-success"><p>Ponte aperto. Copia il codice qui sotto in plumeCMS.</p></div><?php endif; ?>
       <?php if ($fatto === 'chiudi'): ?><div class="notice notice-success"><p>Ponte chiuso: il codice non vale più.</p></div><?php endif; ?>
       <p style="max-width:720px">Il ponte permette a plumeCMS di leggere questo sito per importarlo: articoli, pagine, categorie, tag, immagini, menu e SEO. <b>Solo lettura</b>: il ponte non scrive, non cancella e non cambia niente su WordPress. Non serve la password per le applicazioni.</p>
+      <?php $err = get_option('plume_ponte_errore'); if (is_array($err) && !empty($err['messaggio'])): ?>
+        <div class="notice notice-warning" id="plume-ponte-errore"><p><b>Ultimo errore del ponte</b> (<?php echo esc_html(wp_date('j F Y, H:i', (int)$err['quando'])); ?>, lettura di <code><?php echo esc_html($err['rotta']); ?></code>, fase <?php echo esc_html($err['fase']); ?>):<br><code style="white-space:pre-wrap"><?php echo esc_html($err['messaggio']); ?></code><br>Mandalo a chi ti segue con plumeCMS: dice quale parte di WordPress si è fermata.<?php if (get_option('plume_ponte_senza_filtri')): ?> Il ponte ora salta i filtri degli altri plugin e riprova da solo: in plumeCMS premi Riprova.<?php endif; ?></p></div>
+      <?php endif; ?>
       <?php if ($s): $autore = get_userdata((int)$s['utente']); ?>
         <h2>Il ponte è aperto</h2>
         <ol style="max-width:720px;line-height:1.7">
@@ -198,16 +208,68 @@ add_action('wp_loaded', function () {
     if (!$utente || !user_can($utente, 'manage_options')) { plume_ponte_chiudi(); plume_ponte_rispondi(403, ['errore' => 'utente']); }
     wp_set_current_user($utente->ID);
 
-    $req = new WP_REST_Request('GET', $rotta);
-    $req->set_query_params(array_map(function ($v) { return is_scalar($v) ? (string)$v : $v; }, $param));
-    $server = rest_get_server();
-    $res = rest_ensure_response(rest_do_request($req));
-    // Come la REST vera: _fields e gli altri filtri che WordPress applica dopo la risposta.
-    $res = apply_filters('rest_post_dispatch', $res, $server, $req);
-    $intest = [];
-    foreach ($res->get_headers() as $k => $v) {
-        $k = strtolower((string)$k);
-        if (in_array($k, ['x-wp-total', 'x-wp-totalpages'], true)) $intest[$k] = (string)$v;
+    // 1.0.1: se WordPress o un altro plugin va in errore mentre si prepara la risposta, il ponte risponde lo stesso con il motivo
+    // (solo a chi ha firmato giusto) e lo scrive nella sua pagina. Un errore fatale nei filtri dopo la risposta li fa saltare
+    // dalla richiesta dopo: si applica solo _fields, come fa WordPress.
+    $GLOBALS['plume_ponte_in_corso'] = ['rotta' => $rotta, 'fase' => 'avvio'];
+    ob_start();
+    register_shutdown_function('plume_ponte_fine');
+    // Il gestore degli errori fatali di WordPress (la pagina "errore critico") si registra prima e chiude tutto con wp_die:
+    // con WP_SANDBOX_SCRAPING, la costante che WordPress usa per le sue verifiche interne, si fa da parte e risponde il ponte.
+    if (!defined('WP_SANDBOX_SCRAPING')) define('WP_SANDBOX_SCRAPING', true);
+    try {
+        $req = new WP_REST_Request('GET', $rotta);
+        $req->set_query_params(array_map(function ($v) { return is_scalar($v) ? (string)$v : $v; }, $param));
+        $GLOBALS['plume_ponte_in_corso']['fase'] = 'rest';
+        $server = rest_get_server();
+        $res = rest_ensure_response(rest_do_request($req));
+        $GLOBALS['plume_ponte_in_corso']['fase'] = 'filtri';
+        if (get_option('plume_ponte_senza_filtri')) $res = rest_filter_response_fields($res, $server, $req);
+        else {
+            try { $res = apply_filters('rest_post_dispatch', $res, $server, $req); }
+            catch (Throwable $e) { plume_ponte_segna_errore($e->getMessage() . ' (' . plume_ponte_dove($e->getFile(), $e->getLine()) . ')', 'filtri'); $res = rest_filter_response_fields(rest_ensure_response(rest_do_request($req)), $server, $req); }
+        }
+        $GLOBALS['plume_ponte_in_corso']['fase'] = 'dati';
+        $intest = [];
+        foreach ($res->get_headers() as $k => $v) {
+            $k = strtolower((string)$k);
+            if (in_array($k, ['x-wp-total', 'x-wp-totalpages'], true)) $intest[$k] = (string)$v;
+        }
+        $corpo = $server->response_to_data($res, isset($param['_embed']));
+    } catch (Throwable $e) {
+        $m = $e->getMessage() . ' (' . plume_ponte_dove($e->getFile(), $e->getLine()) . ')';
+        plume_ponte_segna_errore($m, $GLOBALS['plume_ponte_in_corso']['fase']);
+        unset($GLOBALS['plume_ponte_in_corso']);
+        plume_ponte_rispondi(500, ['errore' => 'interno', 'dettaglio' => $m]);
     }
-    plume_ponte_rispondi(200, ['codice' => (int)$res->get_status(), 'header' => $intest, 'corpo' => $server->response_to_data($res, isset($param['_embed']))]);
+    unset($GLOBALS['plume_ponte_in_corso']);
+    plume_ponte_rispondi(200, ['codice' => (int)$res->get_status(), 'header' => $intest, 'corpo' => $corpo]);
 }, 1);
+
+/** Il file di un errore senza il percorso del server: wp-content/plugins/... */
+function plume_ponte_dove($file, $riga) {
+    $f = str_replace('\\', '/', (string)$file);
+    $a = str_replace('\\', '/', ABSPATH);
+    return (strpos($f, $a) === 0 ? substr($f, strlen($a)) : basename($f)) . ':' . (int)$riga;
+}
+
+/** L'ultimo errore, per la pagina Strumenti > plumeCMS Ponte (mai il codice, mai i dati). */
+function plume_ponte_segna_errore($messaggio, $fase) {
+    $c = isset($GLOBALS['plume_ponte_in_corso']['rotta']) ? $GLOBALS['plume_ponte_in_corso']['rotta'] : '';
+    update_option('plume_ponte_errore', ['quando' => time(), 'rotta' => $c, 'fase' => (string)$fase, 'messaggio' => mb_substr((string)$messaggio, 0, 600)], false);
+    if ($fase === 'filtri') update_option('plume_ponte_senza_filtri', 1, false);
+}
+
+/** Alla fine della richiesta: un errore fatale in mezzo al lavoro diventa una risposta del ponte con il motivo. */
+function plume_ponte_fine() {
+    if (empty($GLOBALS['plume_ponte_in_corso'])) return;
+    $e = error_get_last();
+    if (!$e || !in_array($e['type'], [E_ERROR, E_PARSE, E_CORE_ERROR, E_COMPILE_ERROR, E_USER_ERROR, E_RECOVERABLE_ERROR], true)) return;
+    $fase = $GLOBALS['plume_ponte_in_corso']['fase'];
+    $m = strtok((string)$e['message'], "\n") . ' (' . plume_ponte_dove($e['file'], $e['line']) . ')';
+    plume_ponte_segna_errore($m, $fase);
+    unset($GLOBALS['plume_ponte_in_corso']);
+    while (ob_get_level() > 0) ob_end_clean();
+    if (!headers_sent()) { status_header(500); header('Content-Type: application/json; charset=utf-8'); }
+    echo wp_json_encode(['ponte' => 1, 'versione' => PLUME_PONTE_VERSIONE, 'errore' => 'interno', 'fase' => $fase, 'dettaglio' => $m]);
+}

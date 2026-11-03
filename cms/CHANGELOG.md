@@ -2,6 +2,18 @@
 
 Il prodotto si chiama **plumeCMS** (nome scelto il 26 ottobre 2026; prima, per poche ore, "CarbonaraCMS", e ancora prima il provvisorio "Officina": gli zip vecchi si chiamavano `officina-*` e `carbonaracms-*`).
 
+## 2.19.1 (3 novembre 2026) - Il ponte regge gli errori di WordPress
+
+- **Plugin Ponte 1.0.1**: se WordPress o un altro plugin va in errore mentre il ponte prepara una risposta, il ponte risponde lo
+  stesso con il motivo (il file che si è fermato, senza i percorsi del server) e lo scrive in **Strumenti > plumeCMS Ponte**,
+  nel riquadro "Ultimo errore del ponte". Un errore fatale nei filtri che altri plugin mettono dopo la risposta fa saltare quei
+  filtri dalla richiesta dopo: si tiene solo la scelta dei campi, come fa WordPress. Segnalazione di Danilo: sul primo sito vero
+  il collegamento riusciva e la lettura delle categorie dava 500.
+- **plumeCMS** dice "WordPress si è fermato con un errore mentre il ponte leggeva ..." con il motivo, e Riprova continua. Prima un
+  500 diventava "non trovo il plugin Ponte acceso", che non era vero.
+- Per aggiornare il plugin su WordPress: scaricalo di nuovo da Importa da WordPress e caricalo sopra quello di prima (Sostituisci
+  quella attuale con quella caricata).
+
 ## 2.19.0 (2 novembre 2026) - Il plugin Ponte per l'import da WordPress
 
 - **Importa da WordPress, Con il plugin Ponte**: per i siti dove la password per le applicazioni non arriva a WordPress

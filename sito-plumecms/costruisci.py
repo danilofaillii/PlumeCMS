@@ -596,6 +596,7 @@ def zip_lavagna(dest):
 # Regola di Danilo (1 novembre 2026): solo i punti salienti, una riga per versione, mai nomi di aziende o servizi di terzi.
 # Le novità per chi scarica: brevi, scritte qui (il CHANGELOG è per chi sviluppa). Da aggiornare a ogni versione.
 NOVITA = [
+    ('2.19.1', 'Il ponte regge gli errori del vecchio sito', ['Se il vecchio sito va in errore, il ponte dice il motivo e, quando può, lo aggira.']),
     ('2.19.0', 'Il plugin Ponte per l\'import', ['L\'import da un vecchio sito parte anche dove l\'hosting blocca la password: un plugin in sola lettura e un codice da copiare.']),
     ('2.18.0', 'Le automazioni richiamano i modelli', ['Correggi un modello e le email delle automazioni escono già corrette; menu del pannello più leggibile.']),
     ('2.17.1', 'Le email delle automazioni dai modelli', ['Nel passo Email di un\'automazione si sceglie un modello, a blocchi o in codice HTML.']),

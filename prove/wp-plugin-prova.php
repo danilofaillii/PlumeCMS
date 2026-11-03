@@ -28,3 +28,12 @@ add_action('rest_api_init', function () {
         }]);
     }
 });
+
+// 2.19.1: guasti finti per provare il ponte (prova-ponte.js). L'opzione plume_prova_guasto dice quale:
+// "eccezione" un errore che si può intercettare mentre WordPress prepara le categorie, "fatale" un errore fatale nei filtri
+// dopo la risposta (come certi plugin su rest_post_dispatch). Vuota: niente.
+add_action('rest_api_init', function () {
+    $g = get_option('plume_prova_guasto');
+    if ($g === 'eccezione') add_filter('rest_prepare_category', function () { throw new RuntimeException('guasto di prova nelle categorie'); });
+    if ($g === 'fatale') add_filter('rest_post_dispatch', function ($r) { if (isset($_GET['plume_ponte'])) trigger_error('guasto fatale di prova nei filtri', E_USER_ERROR); return $r; }, 5);
+});

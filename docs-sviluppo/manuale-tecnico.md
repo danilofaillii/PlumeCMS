@@ -4146,6 +4146,17 @@ con `SetEnvIf` e `RewriteRule [E=HTTP_AUTHORIZATION]` nel `.htaccess`; da fuori 
   `rest_post_dispatch` (per `_fields`) e la busta `{ponte:1, versione, codice, header:{x-wp-total, x-wp-totalpages}, corpo}`.
   Gli errori sono `{ponte:1, errore}`: `metodo`, `bloccato`, `chiuso`, `richiesta`, `firma`, `ora` (con l'ora del server),
   `ripetuta`, `rotta`, `utente`. La firma sta nel corpo: nessuna intestazione da far passare.
+- **Errori di WordPress (ponte 1.0.1, plumeCMS 2.19.1)**: la risposta si prepara in `try`, con `ob_start()` e
+  `register_shutdown_function('plume_ponte_fine')`; una `Throwable` o un errore fatale diventano `{ponte:1, errore:'interno', fase,
+  dettaglio}` con codice 500 (`fase`: `avvio`, `rest`, `filtri`, `dati`; `dettaglio`: messaggio e `file:riga` relativo ad `ABSPATH`,
+  `plume_ponte_dove()`), e l'ultimo si salva nell'opzione `plume_ponte_errore`, mostrata nella pagina del plugin. Il gestore degli
+  errori fatali di WordPress (`WP_Fatal_Error_Handler`, registrato prima e chiuso con `wp_die`) si fa da parte con
+  `WP_SANDBOX_SCRAPING` definita durante la richiesta del ponte: il filtro `wp_should_handle_php_error` non basta, vale solo per gli
+  errori non fatali. Un errore nella fase `filtri` (un plugin su `rest_post_dispatch`) accende `plume_ponte_senza_filtri`: dalle
+  richieste dopo si applica solo `rest_filter_response_fields()`. La disattivazione cancella le due opzioni. In plumeCMS
+  `importa_wp_ponte()` traduce `interno` in "WordPress si è fermato con un errore mentre il ponte leggeva ..." (tipo
+  `ponte_errore_wp`), e un 500 senza la busta nello stesso messaggio con l'invito ad aggiornare il plugin. Caso vero: arketypos.it,
+  3 novembre 2026, collegamento riuscito e 500 alla lettura delle categorie (causa non vista: ponte 1.0.0).
 - **Rotte ammesse** (`plume_ponte_rotta_ammessa()`): `/`, `/wp/v2/...` tranne plugin, temi, block-directory, widget, sidebar,
   stili globali, font, template, sotto-rotte degli utenti (`users/<id>/...`) e tutto ciò che contiene `application-passwords`;
   i tipi di contenuto con la REST in un altro namespace. Mai `..`, solo `[A-Za-z0-9/_.-]`, al massimo 200 caratteri.
@@ -4155,7 +4166,7 @@ con `SetEnvIf` e `RewriteRule [E=HTTP_AUTHORIZATION]` nel `.htaccess`; da fuori 
   password, con le stesse scadenze; senza HTTPS il ponte non parte (tranne `CMS_IMPORTA_WP_LOCALE`). I file dei media si
   scaricano come prima, senza credenziali. Zip del plugin: `importa-wordpress.php?scarica=ponte` (solo amministratore),
   costruito al momento con `ZipArchive` (`plumecms-ponte/plumecms-ponte.php` e `readme.txt`).
-- **Prove**: `prove/prova-ponte.js` (49) contro un WordPress vero con `WP_TOGLI_AUTH=1` in `router-wp.php`, che toglie le
+- **Prove**: `prove/prova-ponte.js` (56, con i guasti finti di `wp-plugin-prova.php`, opzione `plume_prova_guasto`) contro un WordPress vero con `WP_TOGLI_AUTH=1` in `router-wp.php`, che toglie le
   credenziali come quell'hosting; attacchi lato pannello nel gruppo 41 di `tools/sicurezza-prova.js`.
 
 ---

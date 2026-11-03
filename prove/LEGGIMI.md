@@ -419,7 +419,7 @@ toglie le credenziali prima di WordPress, come certi hosting.
    La prova toglie il plugin da WordPress e lo ricarica dal pannello (Carica plugin), apre il ponte, prova codici sbagliati e
    quello giusto, analisi, import con il codice dimenticato a metà, Annulla; poi le difese con richieste fatte a mano (firma,
    ora, ripetute, rotte vietate, `_method=DELETE`, ponte chiuso, scaduto, plugin spento) e per ultime 20 firme sbagliate, che
-   bloccano 127.0.0.1 (la prova svuota il blocco alla fine). Atteso: 49 su 49. Lascia `ponte-scelta.png`, `ponte-wordpress.png`,
+   bloccano 127.0.0.1 (la prova svuota il blocco alla fine). Atteso: 56 su 56 (dalla 2.19.1 anche i guasti finti: opzione `plume_prova_guasto` del plugin di prova). Lascia `ponte-scelta.png`, `ponte-wordpress.png`,
    `ponte-report.png`, `ponte-riepilogo.png`.
 
 ## prova-importa-wp.js (1.4.0)

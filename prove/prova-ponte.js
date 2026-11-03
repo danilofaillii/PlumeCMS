@@ -27,7 +27,7 @@ fs.mkdirSync(OUT, { recursive: true });
   await dorme(2000);
   // Un ponte lasciato da un giro di prima si chiude, e il plugin si toglie: lo si carica da capo.
   fs.rmSync(path.join(WPDIR, 'wp-content/plugins/plumecms-ponte'), { recursive: true, force: true });
-  execFileSync('php', ['-r', `$_SERVER['HTTP_HOST']='${new URL(WP).host}';require '${WPDIR}/wp-load.php';update_option('active_plugins',array_values(array_filter((array)get_option('active_plugins'),function($x){return strpos($x,'plumecms-ponte')===false;})));delete_option('plume_ponte');global $wpdb;$wpdb->query("DELETE FROM {$wpdb->options} WHERE option_name LIKE '%plume_ponte_%'");`]);
+  execFileSync('php', ['-r', `$_SERVER['HTTP_HOST']='${new URL(WP).host}';require '${WPDIR}/wp-load.php';update_option('active_plugins',array_values(array_filter((array)get_option('active_plugins'),function($x){return strpos($x,'plumecms-ponte')===false;})));delete_option('plume_ponte');delete_option('plume_prova_guasto');global $wpdb;$wpdb->query("DELETE FROM {$wpdb->options} WHERE option_name LIKE '%plume_ponte_%'");`]);
 
   const br = await chromium.launch();
   const ctx = await br.newContext({ viewport: { width: 1280, height: 900 }, acceptDownloads: true }); const p = await ctx.newPage();
@@ -37,7 +37,7 @@ fs.mkdirSync(OUT, { recursive: true });
   await Promise.all([p.waitForNavigation(), p.click('button[type=submit]')]);
   await p.goto(B + '/admin/importa-wordpress.php', { waitUntil: 'networkidle' });
   if (await p.locator('button:has-text("Annulla l\'import")').count()) await Promise.all([p.waitForNavigation(), p.locator('button:has-text("Annulla l\'import")').first().click()]);
-  if (await p.locator('button:has-text("Lascia perdere")').count()) await Promise.all([p.waitForNavigation(), p.locator('button:has-text("Lascia perdere")').first().click()]);
+  if (await p.locator('button:has-text("Lascia perdere"), button:has-text("Ricomincia")').count()) await Promise.all([p.waitForNavigation(), p.locator('button:has-text("Lascia perdere"), button:has-text("Ricomincia")').first().click()]);
 
   ok('due modi di collegarsi, la password per le applicazioni scelta di partenza', await p.isChecked('input[name=modo][value=password]') && await p.locator('#iw-codice').isHidden() && await p.locator('#iw-password').isVisible());
   const messaggio = async () => (await p.locator('.flash-error').allInnerTexts()).join(' ');
@@ -165,6 +165,51 @@ fs.mkdirSync(OUT, { recursive: true });
   ok('firma senza la forma giusta: si rifiuta', r.s === 403 && r.j?.errore === 'richiesta', r);
   ok('nessuna risposta del ponte contiene il codice', !JSON.stringify(r).includes(codice));
 
+  // 2.19.1, ponte 1.0.1: WordPress o un altro plugin va in errore mentre il ponte prepara la risposta (il caso di un sito vero:
+  // 500 alla lettura delle categorie). Il ponte risponde con il motivo, lo scrive nella sua pagina, e un errore fatale nei filtri
+  // li fa saltare dalla richiesta dopo; plumeCMS lo dice in parole semplici e Riprova continua.
+  const wpphp = code => execFileSync('php', ['-r', `$_SERVER['HTTP_HOST']='${new URL(WP).host}';require '${WPDIR}/wp-load.php';` + code]).toString();
+  // Aspetta che l'analisi si fermi con un errore o arrivi al report (la pagina si ricarica da sola alla fine).
+  const giroErrore = async () => {
+    for (let i = 0; i < 240; i++) {
+      await dorme(500);
+      try {
+        const st = await p.evaluate(() => { const e = document.getElementById('iw-errore'); return { errore: e && !e.hidden ? e.innerText : '', report: /Il report di/.test(document.body.innerText) }; });
+        if (st.errore) return st.errore;
+        if (st.report) return '';
+      } catch (e) { /* la pagina si sta ricaricando */ }
+    }
+    return 'tempo scaduto';
+  };
+  wpphp(`update_option('plume_prova_guasto','eccezione');`);
+  r = await ponte(firma(codice, '/wp/v2/categories', { per_page: 100, page: 1, _fields: 'id,name' }));
+  ok('guasto che si intercetta: il ponte risponde con il motivo, non con un 500 vuoto', r.s === 500 && r.j?.ponte === 1 && r.j.errore === 'interno' && /guasto di prova nelle categorie/.test(r.j.dettaglio) && !/\/tmp\/|\/home\//.test(r.j.dettaglio), r);
+  await w.goto(WP + '/wp-admin/tools.php?page=plumecms-ponte');
+  ok('la pagina del ponte mostra l\'ultimo errore, con la rotta', /Ultimo errore del ponte/.test(await w.locator('#plume-ponte-errore').innerText()) && /\/wp\/v2\/categories/.test(await w.locator('#plume-ponte-errore').innerText()) && /guasto di prova/.test(await w.locator('#plume-ponte-errore').innerText()));
+  await w.locator('#plume-ponte-errore').screenshot({ path: `${OUT}/ponte-errore.png` });
+  await p.goto(B + '/admin/importa-wordpress.php', { waitUntil: 'networkidle' });
+  if (await p.locator('button:has-text("Lascia perdere"), button:has-text("Ricomincia")').count()) await Promise.all([p.waitForNavigation(), p.locator('button:has-text("Lascia perdere"), button:has-text("Ricomincia")').first().click()]);
+  await p.click('input[name=modo][value=ponte]');
+  m = await collega(codice);
+  let eg = await giroErrore();
+  ok('plumeCMS: l\'analisi si ferma alle categorie e dice che si è fermato WordPress, con il motivo', /WordPress si è fermato con un errore/.test(eg) && /guasto di prova nelle categorie/.test(eg) && /\/wp\/v2\/categories/.test(eg), eg);
+  await p.screenshot({ path: `${OUT}/ponte-errore-plume.png`, fullPage: false });
+  wpphp(`delete_option('plume_prova_guasto');`);
+  await p.click('#iw-riprendi');
+  eg = await giroErrore();
+  ok('tolto il guasto, Riprova continua fino al report', eg === '' && /Il report di/.test(await p.locator('body').innerText()), eg);
+  // Errore fatale nei filtri dopo la risposta: la prima volta il motivo, poi il ponte li salta e i dati arrivano (con _fields).
+  wpphp(`update_option('plume_prova_guasto','fatale');delete_option('plume_ponte_errore');delete_option('plume_ponte_senza_filtri');`);
+  r = await ponte(firma(codice, '/wp/v2/categories', { per_page: 100, _fields: 'id,name' }));
+  ok('errore fatale nei filtri: risponde il ponte, con la fase', r.s === 500 && r.j?.errore === 'interno' && r.j.fase === 'filtri' && /guasto fatale di prova/.test(r.j.dettaglio), r);
+  r = await ponte(firma(codice, '/wp/v2/categories', { per_page: 100, _fields: 'id,name' }));
+  ok('la richiesta dopo salta i filtri: arrivano le categorie, solo id e nome', r.s === 200 && r.j?.codice === 200 && Array.isArray(r.j.corpo) && r.j.corpo.length > 0 && r.j.corpo.every(c => Object.keys(c).sort().join() === 'id,name') && +r.j.header['x-wp-total'] > 0, r);
+  await w.goto(WP + '/wp-admin/tools.php?page=plumecms-ponte');
+  ok('la pagina del ponte dice che ora salta i filtri', /salta i filtri/.test(await w.locator('#plume-ponte-errore').innerText()));
+  wpphp(`delete_option('plume_prova_guasto');delete_option('plume_ponte_errore');delete_option('plume_ponte_senza_filtri');`);
+  await p.goto(B + '/admin/importa-wordpress.php', { waitUntil: 'networkidle' });
+  if (await p.locator('button:has-text("Lascia perdere"), button:has-text("Ricomincia")').count()) await Promise.all([p.waitForNavigation(), p.locator('button:has-text("Lascia perdere"), button:has-text("Ricomincia")').first().click()]);
+
   // Chiudi il ponte: il codice non vale più, e neanche da plumeCMS.
   await w.goto(WP + '/wp-admin/tools.php?page=plumecms-ponte');
   await Promise.all([w.waitForNavigation(), w.click('button:has-text("Chiudi il ponte")')]);
@@ -202,6 +247,7 @@ fs.mkdirSync(OUT, { recursive: true });
   execFileSync('php', ['-r', `$_SERVER['HTTP_HOST']='${new URL(WP).host}';require '${WPDIR}/wp-load.php';global $wpdb;$wpdb->query("DELETE FROM {$wpdb->options} WHERE option_name LIKE '%plume_ponte_e_%'");delete_option('plume_ponte');`]);
 
   ok('nessun errore di JavaScript nel pannello', err.length === 0, err);
+  wpphp(`delete_option('plume_prova_guasto');delete_option('plume_ponte_errore');delete_option('plume_ponte_senza_filtri');`);
   fs.rmSync(segreto, { force: true });
   await br.close();
   console.log(`${n - ko} su ${n} OK`);

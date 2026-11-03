@@ -3556,6 +3556,11 @@ e quelle ripetute. Il codice è una chiave: non mandarlo per email e non incolla
 - *"Il ponte è chiuso o scaduto".* Il codice vale 48 ore: riapri il ponte in Strumenti > plumeCMS Ponte e copia il codice nuovo.
 - *"Non trovo il plugin Ponte acceso".* In WordPress, in **Plugin**, attiva *plumeCMS Ponte*; nell'indirizzo scrivi quello
   della home del sito (con o senza www, come lo apri nel browser).
+- *"WordPress si è fermato con un errore mentre il ponte leggeva ...".* Un altro plugin di WordPress va in errore: premi
+  **Riprova** (se l'errore viene dai filtri di un plugin, il ponte ora li salta). Se si ripete, in WordPress apri **Strumenti >
+  plumeCMS Ponte**: il riquadro giallo "Ultimo errore del ponte" dice quale plugin si è fermato. Spegnilo il tempo dell'import,
+  oppure manda il messaggio a chi ti segue. Se il messaggio dice di aggiornare il plugin Ponte, scaricalo di nuovo da qui e caricalo
+  su WordPress con **Sostituisci quella attuale con quella caricata**.
 - *"L'orologio di questo server e quello del sito WordPress sono distanti".* Uno dei due server ha l'ora sbagliata di più di
   5 minuti: chiedi all'hosting di sistemarla.
 

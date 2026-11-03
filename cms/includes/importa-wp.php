@@ -479,6 +479,9 @@ function importa_wp_ponte(array $s, string $rotta, array $q = []): array {
     $r = importa_wp_get($s, $url, ['auth' => false, 'post' => $campi]);
     $b = $r['json'];
     if (!is_array($b) || (int)($b['ponte'] ?? 0) !== 1) {
+        // 2.19.1: un 500 senza la busta è WordPress che si è fermato prima che il ponte potesse rispondere (ponte 1.0.0, o un
+        // errore prima del ponte); il plugin c'è, perché il collegamento è riuscito o il sito risponde.
+        if ($r['codice'] >= 500) throw new ImportaWpErrore('WordPress si è fermato con un errore (risposta ' . $r['codice'] . ') mentre il ponte leggeva ' . $rotta . ': lo causa WordPress o un altro plugin. Aggiorna il plugin Ponte su WordPress (scaricalo di nuovo da qui e caricalo sopra quello di prima): dalla versione 1.0.1 il ponte aggira l\'errore quando può e ne scrive il motivo in Strumenti > plumeCMS Ponte. Poi premi Riprova.', 'ponte_errore_wp');
         throw new ImportaWpErrore('Su ' . $s['base'] . ' non trovo il plugin Ponte acceso (risposta ' . $r['codice'] . '). Su WordPress, in Plugin, controlla che "plumeCMS Ponte" sia attivo, e scrivi qui l\'indirizzo della home del sito.', 'ponte_assente');
     }
     if (isset($b['errore'])) {
@@ -489,6 +492,7 @@ function importa_wp_ponte(array $s, string $rotta, array $q = []): array {
             'bloccato' => new ImportaWpErrore('Il ponte ha visto troppi codici sbagliati da questo server e lo tiene fuori per 15 minuti. Aspetta, controlla il codice e riprova.', 'ponte_bloccato'),
             'utente' => new ImportaWpErrore('L\'utente che ha aperto il ponte non è più amministratore di WordPress, e il ponte si è chiuso. Riaprilo da un amministratore.', 'ponte_chiuso'),
             'rotta' => new ImportaWpErrore('Il ponte non permette di leggere ' . $rotta . ' (legge solo i contenuti).', 'permessi'),
+            'interno' => new ImportaWpErrore('WordPress si è fermato con un errore mentre il ponte leggeva ' . $rotta . ': ' . mb_substr(strip_tags((string)($b['dettaglio'] ?? '')), 0, 300) . '. Lo causa WordPress o un altro plugin, non plumeCMS. Premi Riprova: se l\'errore viene dai filtri di un plugin, il ponte ora li salta. Se si ripete, manda questo messaggio a chi ti segue con plumeCMS.', 'ponte_errore_wp'),
             default => new ImportaWpErrore('Il ponte ha rifiutato la richiesta (' . preg_replace('/[^a-z_]/', '', (string)$b['errore']) . '). Riprova.', 'ponte'),
         };
     }
