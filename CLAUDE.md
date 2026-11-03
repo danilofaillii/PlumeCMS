@@ -160,6 +160,18 @@ Le decisioni complete, con data e perché, stanno nel second brain, `plumecms/de
 
 ## Stato al 31 ottobre 2026
 
+Fatto: plumeCMS 2.22.0 (3 novembre): addon **Test e questionari** (`cms/addon/test/`, richiesta di Danilo: un motore per i test come
+quello del burnout; scelte sue: addon, risposte anonime, una sola versione; agente in worktree, ramo `addon-test`, riletto e riprovato da me).
+Tre tipi (punteggio, aree con il grafico, profili), scala, scelta, sì/no, cursore, invertite, pesi, condizionali, fasce in percentuale,
+regole E/O, simulatore, statistiche, CSV, tre modelli, email facoltativa con consenso separato e lista, innesco "Completa un test" con il
+filtro sul risultato, Riquadro in evidenza verso un test. Indirizzo `/fai-il-test/<nome>/` (`TEST_PERCORSO`): `/test/` è chiuso dal
+`.htaccess` di ogni sito. L'invio del test non usa il captcha (funziona senza JavaScript): codice del modulo firmato, 3 secondi minimi,
+campo esca, Origin, 20 invii l'ora per impronta HMAC dell'IP. Classi pubbliche `tq-*` (`.test-*` sono di `sito.css`). Manuale d'uso
+capitolo 40 (schermate dalle prove, non da `manuale-uso-schermate.js`), tecnico 42, `docs-sviluppo/addon/test.md`. Prove: test 102/102 e
+attacchi del test 54/54 in radice e cartella, automazioni 96/96, passo da modello 57/57, addon tutti 74/74 (nove addon, su un sito con il
+kit: `/servizi/`), telefono 55/55, install 38/38 radice e cartella, aggiornamento 2.21.0 -> 2.22.0 13/13 con 20 foto uguali, attacchi
+411/411, pacchetto unico 13/13 con la hero tenuta. Zip 2257 KB, PDF 11296 KB.
+
 Fatto: plumeCMS 2.21.0 (3 novembre): l'allineamento di ogni parte di ogni widget (richiesta di Danilo: nel Titolo il testo sotto restava a
 sinistra, largo 620 px, con occhiello e titolo al centro; "vale per tutti i widget"). `editor_allineamenti_parti()` mette un Allineamento
 (`'parte' => true`) dopo ogni Tipografia con selettore (120 parti), `editor_css_allinea_parte()` (text-align, margini, justify-content,

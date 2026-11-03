@@ -1,4 +1,4 @@
-// 2.0.0: tutti gli otto addon accesi insieme, come li vede l'amministratore e chi visita. Su un CMS installato con il kit Attività.
+// 2.0.0: tutti gli addon accesi insieme (nove dalla 2.22.0, con Test e questionari), come li vede l'amministratore e chi visita. Su un CMS installato con il kit Attività.
 // Accende ogni addon da Impostazioni > Addon, apre ogni pagina del pannello degli addon (dal menu) al computer e al telefono
 // (nessun errore JavaScript o PHP, niente scorrimento di lato), la dashboard, la pagina Widget e l'editor; poi le pagine
 // pubbliche degli addon; poi li spegne tutti e controlla che home, Servizi, Contatti e sitemap tornino uguali a prima.
@@ -9,7 +9,7 @@ const fs = require('fs');
 const path = require('path');
 const [B, UTENTE, PASSWORD, DIR] = process.argv.slice(2);
 let n = 0, ko = 0; const ok = (t, c, extra = '') => { n++; if (!c) ko++; console.log((c ? 'OK  ' : 'KO  ') + t + (extra ? ' ' + JSON.stringify(extra).slice(0, 260) : '')); };
-const ADDON = ['copia-altrove', 'corsi', 'eventi-iscrizione', 'membri', 'prenotazioni', 'recensioni', 'statistiche', 'vetrina'];
+const ADDON = ['copia-altrove', 'corsi', 'eventi-iscrizione', 'membri', 'prenotazioni', 'recensioni', 'statistiche', 'vetrina', 'test'];
 // Il nonce della CSP e i token cambiano a ogni richiesta: si tolgono prima di confrontare.
 const pulisci = h => h.replace(/nonce="[^"]*"/g, '').replace(/name="_csrf" value="[^"]*"/g, '').replace(/data-ora="[^"]*"/g, '').replace(/\d+ (giorni|ore|minuti|secondi)/g, '');
 const log = () => { const f = path.join(DIR, 'logs', 'php-errori.log'); return fs.existsSync(f) ? fs.readFileSync(f, 'utf8') : ''; };
@@ -32,7 +32,7 @@ const log = () => { const f = path.join(DIR, 'logs', 'php-errori.log'); return f
 
   // 1. Accesi tutti, uno alla volta, dalla pagina Addon.
   await p.goto(B + '/admin/addon.php', { waitUntil: 'networkidle' });
-  ok('Impostazioni > Addon: otto carte', await p.locator('[data-addon]').count() === 8, await p.locator('[data-addon]').count());
+  ok('Impostazioni > Addon: una carta per addon (' + ADDON.length + ')', await p.locator('[data-addon]').count() === ADDON.length, await p.locator('[data-addon]').count());
   for (const a of ADDON) {
     await p.goto(B + '/admin/addon.php', { waitUntil: 'networkidle' });
     const b = p.locator(`[data-addon="${a}"] button[value=accendi]`);
@@ -40,7 +40,7 @@ const log = () => { const f = path.join(DIR, 'logs', 'php-errori.log'); return f
   }
   await p.goto(B + '/admin/addon.php', { waitUntil: 'networkidle' });
   const accesi = await p.locator('.ad-card.acceso').count();
-  ok('tutti e otto accesi', accesi === 8, accesi);
+  ok('tutti accesi (' + ADDON.length + ')', accesi === ADDON.length, accesi);
   const attivi = JSON.parse(fs.readFileSync(path.join(DIR, 'moduli', 'addon-attivi.json'), 'utf8'));
   ok('moduli/addon-attivi.json li elenca tutti', ADDON.every(a => attivi.includes(a)), attivi);
 
