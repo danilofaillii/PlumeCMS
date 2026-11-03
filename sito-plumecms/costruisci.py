@@ -235,7 +235,7 @@ def funzionalita():
           '<li><strong>Eventi con iscrizione</strong> e lista d\'attesa, <strong>Raccolta recensioni</strong> dopo il servizio.</li>'
           '<li><strong>Vetrina prodotti</strong> con carrello e ordini, <strong>Statistiche senza cookie</strong>.</li>'
           '<li><strong>Area riservata</strong>, <strong>Corsi online</strong> e <strong>Copia del sito altrove</strong>, ogni notte.</li>'
-          '<li><strong>Test e questionari</strong>: a punteggio, ad aree o "che tipo sei", la risposta breve sullo schermo e quella completa per email.</li></ul>',
+          '<li><strong>Test e questionari</strong>: a punteggio, ad aree o "che tipo sei", la risposta breve sullo schermo e quella completa per email. Le domande si dividono in pagine trascinandole, e un telefono accanto mostra il test come lo vedrà chi lo fa.</li></ul>',
           'E il download manager: manuali, ebook e listini con il loro indirizzo, anche riservati in cambio dell\'iscrizione.']),
         ('sicurezza', 'sicurezza.webp', 'Al sicuro, senza doverci pensare ogni giorno',
          ['Accesso a due fattori, blocchi contro chi prova a indovinare le password, protezioni del browser, registro degli eventi. Prima di uscire plumeCMS è stato messo alla prova con più di 500 attacchi, addon compresi: tutti respinti.',
@@ -597,6 +597,7 @@ def zip_lavagna(dest):
 # Regola di Danilo (1 novembre 2026): solo i punti salienti, una riga per versione, mai nomi di aziende o servizi di terzi.
 # Le novità per chi scarica: brevi, scritte qui (il CHANGELOG è per chi sviluppa). Da aggiornare a ogni versione.
 NOVITA = [
+    ('2.24.0', 'Test a pagine, con l\'anteprima', ['Una domanda per pagina, pagine scelte da te o tutte insieme; nel pannello le domande si spostano fra le pagine e un telefono mostra il test mentre lo scrivi.']),
     ('2.23.0', 'Tag delle persone e test più completi', ['Ogni contatto ha i suoi tag, anche dai test; nei test le domande sulla persona e il risultato completo per email.']),
     ('2.22.0', 'Test e questionari', ['Un addon per costruire test a punteggio, ad aree o "che tipo sei": una domanda per schermata, risultato con il grafico.']),
     ('2.21.0', 'Allinea ogni parte di ogni widget', ['Occhiello, titolo, testo, nome, prezzo: ognuno con il suo allineamento, anche diverso sul telefono.']),
