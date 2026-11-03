@@ -138,6 +138,9 @@ Sono gli unici in `cms/docs/`, nello zip, nel sito di plumeCMS e nella pagina Do
 - **Regola di Danilo (3 novembre 2026): ogni consegna finisce con una riga con data e ora di inizio e di fine del lavoro**, ora
   italiana (Europe/Rome), per esempio "Iniziato: 3 novembre 2026, 16:20. Finito: 3 novembre 2026, 19:05." L'inizio è il momento in cui
   si è partiti con il lavoro di quella versione (il "parti" di Danilo, il primo commit o il lancio dell'agente).
+  **Anche nel SAL ogni voce ha data e ora** (regola di Danilo, 3 novembre 2026): Fatto con l'ora in cui è finita, In corso con l'ora
+  in cui è cominciata (e l'ultimo segno di vita, per esempio l'ultimo file scritto dall'agente), Da fare con l'ora prevista. Le ore si
+  prendono dai commit, dai file e da `TZ=Europe/Rome date`, mai a memoria.
 - Niente librerie esterne nel CMS (SortableJS e Quill sono serviti in casa).
 - Niente credenziali nel repository né in chat.
 - Italiano ovunque, niente trattini lunghi, niente caratteri a 4 byte nei file
