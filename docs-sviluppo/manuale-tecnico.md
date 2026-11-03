@@ -4156,7 +4156,12 @@ con `SetEnvIf` e `RewriteRule [E=HTTP_AUTHORIZATION]` nel `.htaccess`; da fuori 
   richieste dopo si applica solo `rest_filter_response_fields()`. La disattivazione cancella le due opzioni. In plumeCMS
   `importa_wp_ponte()` traduce `interno` in "WordPress si è fermato con un errore mentre il ponte leggeva ..." (tipo
   `ponte_errore_wp`), e un 500 senza la busta nello stesso messaggio con l'invito ad aggiornare il plugin. Caso vero: arketypos.it,
-  3 novembre 2026, collegamento riuscito e 500 alla lettura delle categorie (causa non vista: ponte 1.0.0).
+  3 novembre 2026, collegamento riuscito e 500 alla lettura delle categorie (causa non vista: ponte 1.0.0); con il ponte 1.0.1 il
+  Riprova ha fatto passare le categorie (errore nei filtri saltato) e il motivo vero è comparso sui media: `Unsupported operand
+  types: string * float (wp-includes/media.php:484)`, un'immagine (id 32) con larghezza e altezza salvate come testo vuoto. Lo stesso
+  errore lo dà la REST pubblica con `_fields` che comprende `media_details`; senza, risponde. Dalla 2.19.1 il passo `media` di
+  `importa_wp_analisi_passo()` (`includes/importa-wp-analisi.php`), con un errore `risposta` o `ponte_errore_wp`, rilegge la pagina
+  senza `media_details`: si perde solo il peso (il report: "N senza peso dichiarato"). Guasto finto `media` in `wp-plugin-prova.php`.
 - **Rotte ammesse** (`plume_ponte_rotta_ammessa()`): `/`, `/wp/v2/...` tranne plugin, temi, block-directory, widget, sidebar,
   stili globali, font, template, sotto-rotte degli utenti (`users/<id>/...`) e tutto ciò che contiene `application-passwords`;
   i tipi di contenuto con la REST in un altro namespace. Mai `..`, solo `[A-Za-z0-9/_.-]`, al massimo 200 caratteri.
@@ -4166,7 +4171,7 @@ con `SetEnvIf` e `RewriteRule [E=HTTP_AUTHORIZATION]` nel `.htaccess`; da fuori 
   password, con le stesse scadenze; senza HTTPS il ponte non parte (tranne `CMS_IMPORTA_WP_LOCALE`). I file dei media si
   scaricano come prima, senza credenziali. Zip del plugin: `importa-wordpress.php?scarica=ponte` (solo amministratore),
   costruito al momento con `ZipArchive` (`plumecms-ponte/plumecms-ponte.php` e `readme.txt`).
-- **Prove**: `prove/prova-ponte.js` (56, con i guasti finti di `wp-plugin-prova.php`, opzione `plume_prova_guasto`) contro un WordPress vero con `WP_TOGLI_AUTH=1` in `router-wp.php`, che toglie le
+- **Prove**: `prove/prova-ponte.js` (57, con i guasti finti di `wp-plugin-prova.php`, opzione `plume_prova_guasto`) contro un WordPress vero con `WP_TOGLI_AUTH=1` in `router-wp.php`, che toglie le
   credenziali come quell'hosting; attacchi lato pannello nel gruppo 41 di `tools/sicurezza-prova.js`.
 
 ---

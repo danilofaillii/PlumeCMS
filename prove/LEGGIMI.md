@@ -353,7 +353,7 @@ campagna, popup, utenti, password, account), ognuna senza errori PHP o JavaScrip
 visibile (4,5 a 1, 3 a 1 per il testo grande; si saltano i testi su immagini o gradienti, i controlli spenti e le zone che
 mostrano il sito), e una schermata `<aspetto>-<pagina>.png`; l'editor della home, anche con un widget aperto. Alla fine
 rimette Aria e cerca i colori scritti a mano rimasti in `cms/admin` (le eccezioni volute hanno un commento `fisso`).
-Atteso: 56 su 56. Dura circa 8 minuti. Non crea contenuti.
+Atteso: 57 su 57. Dura circa 8 minuti. Non crea contenuti.
 
 ## prova-social.js (1.5.0)
 
@@ -419,7 +419,7 @@ toglie le credenziali prima di WordPress, come certi hosting.
    La prova toglie il plugin da WordPress e lo ricarica dal pannello (Carica plugin), apre il ponte, prova codici sbagliati e
    quello giusto, analisi, import con il codice dimenticato a metà, Annulla; poi le difese con richieste fatte a mano (firma,
    ora, ripetute, rotte vietate, `_method=DELETE`, ponte chiuso, scaduto, plugin spento) e per ultime 20 firme sbagliate, che
-   bloccano 127.0.0.1 (la prova svuota il blocco alla fine). Atteso: 56 su 56 (dalla 2.19.1 anche i guasti finti: opzione `plume_prova_guasto` del plugin di prova). Lascia `ponte-scelta.png`, `ponte-wordpress.png`,
+   bloccano 127.0.0.1 (la prova svuota il blocco alla fine). Atteso: 57 su 57 (dalla 2.19.1 anche i guasti finti: opzione `plume_prova_guasto` del plugin di prova). Lascia `ponte-scelta.png`, `ponte-wordpress.png`,
    `ponte-report.png`, `ponte-riepilogo.png`.
 
 ## prova-importa-wp.js (1.4.0)

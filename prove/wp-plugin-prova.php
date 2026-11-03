@@ -37,3 +37,15 @@ add_action('rest_api_init', function () {
     if ($g === 'eccezione') add_filter('rest_prepare_category', function () { throw new RuntimeException('guasto di prova nelle categorie'); });
     if ($g === 'fatale') add_filter('rest_post_dispatch', function ($r) { if (isset($_GET['plume_ponte'])) trigger_error('guasto fatale di prova nei filtri', E_USER_ERROR); return $r; }, 5);
 });
+
+// 2.19.1: "media", la prima immagine ha le misure salvate come testo vuoto (il caso di arketypos.it, un logo PNG del 2022):
+// la REST di WordPress va in errore se le si chiede media_details (string * float in wp_constrain_dimensions).
+add_filter('wp_get_attachment_metadata', function ($m, $id) {
+    if (get_option('plume_prova_guasto') !== 'media' || !is_array($m)) return $m;
+    global $wpdb;
+    $primo = (int)$wpdb->get_var("SELECT MIN(ID) FROM {$wpdb->posts} WHERE post_type = 'attachment' AND post_mime_type LIKE 'image/%'");
+    if ((int)$id !== $primo) return $m;
+    $m['width'] = ''; $m['height'] = '';
+    foreach ((array)($m['sizes'] ?? []) as $k => $v) { $m['sizes'][$k]['width'] = ''; $m['sizes'][$k]['height'] = ''; }
+    return $m;
+}, 10, 2);

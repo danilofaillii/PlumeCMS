@@ -3561,6 +3561,8 @@ e quelle ripetute. Il codice è una chiave: non mandarlo per email e non incolla
   plumeCMS Ponte**: il riquadro giallo "Ultimo errore del ponte" dice quale plugin si è fermato. Spegnilo il tempo dell'import,
   oppure manda il messaggio a chi ti segue. Se il messaggio dice di aggiornare il plugin Ponte, scaricalo di nuovo da qui e caricalo
   su WordPress con **Sostituisci quella attuale con quella caricata**.
+- *Nel report "N senza peso dichiarato".* WordPress non sa dire quanto pesano quei file (succede con immagini caricate male
+  anni fa): entrano lo stesso, manca solo il numero del peso.
 - *"L'orologio di questo server e quello del sito WordPress sono distanti".* Uno dei due server ha l'ora sbagliata di più di
   5 minuti: chiedi all'hosting di sistemarla.
 

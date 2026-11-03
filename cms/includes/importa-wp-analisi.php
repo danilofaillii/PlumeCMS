@@ -58,7 +58,15 @@ function importa_wp_analisi_passo(array &$s): bool {
             break;
         case 'media':
             if ($pagina === 1) $s['indice']['media'] = [];
-            $r = importa_wp_json($s, '/wp/v2/media', ['per_page' => 100, 'page' => $pagina, 'orderby' => 'id', 'order' => 'asc', '_fields' => 'id,source_url,mime_type,media_type,media_details,alt_text']);
+            $qm = ['per_page' => 100, 'page' => $pagina, 'orderby' => 'id', 'order' => 'asc', '_fields' => 'id,source_url,mime_type,media_type,media_details,alt_text'];
+            try { $r = importa_wp_json($s, '/wp/v2/media', $qm); }
+            catch (ImportaWpErrore $e) {
+                // 2.19.1: un'immagine con le misure salvate male (testo vuoto al posto dei numeri) fa andare in errore la REST di
+                // WordPress quando le si chiedono media_details (string * float in wp_constrain_dimensions; caso vero, un logo PNG
+                // del 2022). Senza media_details la stessa pagina risponde: si perde solo il peso dei file, che il report dice.
+                if (!in_array($e->tipo, ['risposta', 'ponte_errore_wp'], true)) throw $e;
+                $r = importa_wp_json($s, '/wp/v2/media', ['_fields' => 'id,source_url,mime_type,media_type,alt_text'] + $qm);
+            }
             foreach ($r['json'] as $x) {
                 if (!is_array($x)) continue;
                 $s['indice']['media'][] = ['id' => (int)$x['id'], 'url' => (string)($x['source_url'] ?? ''), 'mime' => (string)($x['mime_type'] ?? ''), 'immagine' => ($x['media_type'] ?? '') === 'image',

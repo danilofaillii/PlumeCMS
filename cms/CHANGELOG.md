@@ -2,7 +2,7 @@
 
 Il prodotto si chiama **plumeCMS** (nome scelto il 26 ottobre 2026; prima, per poche ore, "CarbonaraCMS", e ancora prima il provvisorio "Officina": gli zip vecchi si chiamavano `officina-*` e `carbonaracms-*`).
 
-## 2.19.1 (3 novembre 2026) - Il ponte regge gli errori di WordPress
+## 2.19.1 (3 novembre 2026) - L'import regge gli errori di WordPress
 
 - **Plugin Ponte 1.0.1**: se WordPress o un altro plugin va in errore mentre il ponte prepara una risposta, il ponte risponde lo
   stesso con il motivo (il file che si è fermato, senza i percorsi del server) e lo scrive in **Strumenti > plumeCMS Ponte**,
@@ -11,6 +11,10 @@ Il prodotto si chiama **plumeCMS** (nome scelto il 26 ottobre 2026; prima, per p
   il collegamento riusciva e la lettura delle categorie dava 500.
 - **plumeCMS** dice "WordPress si è fermato con un errore mentre il ponte leggeva ..." con il motivo, e Riprova continua. Prima un
   500 diventava "non trovo il plugin Ponte acceso", che non era vero.
+- **Analisi, immagini con le misure salvate male**: su alcuni siti un'immagine ha larghezza e altezza salvate come testo vuoto, e la
+  REST di WordPress va in errore quando le si chiedono le misure (anche senza il ponte). L'analisi rilegge quella pagina di media
+  senza le misure: entrano tutti i file, il report dice quanti sono senza peso. Caso vero: un logo PNG del 2022 fermava l'analisi
+  di arketypos.it.
 - Per aggiornare il plugin su WordPress: scaricalo di nuovo da Importa da WordPress e caricalo sopra quello di prima (Sostituisci
   quella attuale con quella caricata).
 

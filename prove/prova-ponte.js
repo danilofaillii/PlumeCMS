@@ -198,6 +198,17 @@ fs.mkdirSync(OUT, { recursive: true });
   await p.click('#iw-riprendi');
   eg = await giroErrore();
   ok('tolto il guasto, Riprova continua fino al report', eg === '' && /Il report di/.test(await p.locator('body').innerText()), eg);
+  // 2.19.1: un'immagine con le misure salvate male (caso vero) fa andare in errore la REST con media_details: l'analisi rilegge
+  // la pagina senza e arriva al report, con tutti i file e il peso che manca detto.
+  wpphp(`update_option('plume_prova_guasto','media');`);
+  await p.goto(B + '/admin/importa-wordpress.php', { waitUntil: 'networkidle' });
+  await Promise.all([p.waitForNavigation(), p.locator('button:has-text("Lascia perdere"), button:has-text("Ricomincia")').first().click()]);
+  await p.click('input[name=modo][value=ponte]');
+  m = await collega(codice);
+  eg = await giroErrore();
+  const vmedia = eg === '' ? await p.locator('.iw-voce:has([data-iw-voce=media])').innerText() : '';
+  ok('immagine con le misure guaste: l\'analisi arriva al report con tutti i file e dice del peso', eg === '' && /15 immagini e 1 altro file/.test(vmedia) && /senza peso dichiarato/.test(vmedia), [eg, vmedia]);
+  wpphp(`delete_option('plume_prova_guasto');`);
   // Errore fatale nei filtri dopo la risposta: la prima volta il motivo, poi il ponte li salta e i dati arrivano (con _fields).
   wpphp(`update_option('plume_prova_guasto','fatale');delete_option('plume_ponte_errore');delete_option('plume_ponte_senza_filtri');`);
   r = await ponte(firma(codice, '/wp/v2/categories', { per_page: 100, _fields: 'id,name' }));
