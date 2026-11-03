@@ -7,6 +7,10 @@
 // senza JavaScript, il telefono a 390 px, il widget Riquadro in evidenza e "Scegli dal sito".
 // Su un sito appena installato (va su un sito da buttare), con il server di posta finto acceso:
 //   python3 -I prove/smtp-finto.py <porta> <cartella posta> &
+// 2.23.0 (sezione D): domande sulla persona (facoltative e obbligatorie, "Preferisco non rispondere", alla fine), risposta breve e
+// completa, il risultato completo per email (senza newsletter: niente contatto e niente tag; con la newsletter: dopo la conferma
+// il contatto nella lista con i tag e l'automazione "Riceve un tag"), le statistiche per gruppi con la soglia di 5, il CSV, un
+// test scritto con la 2.22.0 che esce uguale al byte (pagina e risultato, confrontati con il codice di c3b99e9).
 // uso: node prove/prova-test.js <base> <cartella del CMS installato> <porta smtp> <cartella posta> [cartella foto]
 const { chromium } = require('playwright');
 const path = require('path');
@@ -58,10 +62,10 @@ async function domanda(a, q) {
   }
   return i;
 }
-/** Passo 4: scrive nel primo editor ricco dopo l'etichetta della fascia (o del profilo). */
-async function testoRicco(a, legenda, testo, pulsante = null) {
+/** Passo 4: scrive nell'editor ricco della fascia (o del profilo): la risposta completa, oppure (2.23.0) la breve. */
+async function testoRicco(a, legenda, testo, pulsante = null, quale = 'completa') {
   const fs = a.locator('fieldset.ts-testo-ris', { has: a.locator('legend', { hasText: legenda }) }).first();
-  await fs.locator('.ql-editor').click();
+  await fs.locator('.ql-editor').nth(quale === 'breve' ? 0 : 1).click();
   await a.keyboard.type(testo);
   if (pulsante) { await fs.locator('input[name$="[pulsante_testo]"]').fill(pulsante[0]); await fs.locator('input[name$="[pulsante_link]"]').fill(pulsante[1]); }
 }
@@ -151,6 +155,7 @@ const visibile = async v => (await v.locator('.tq-domanda:not([hidden]) .tq-test
   await foto(a, 'a-passo4');
   ok('A: passo 4 salvato', /Passo 4 salvato/.test(await salvaPasso(a)));
   // Passo 5: l'email con il consenso e la lista.
+  ok('A: un test nuovo nasce con «Il risultato completo solo per email» acceso (2.23.0)', await a.isChecked('input[name=solo_email]'));
   await a.check('input[name=email]');
   await a.selectOption('#ts-lista', String(listaId));
   ok('A: passo 5 salvato', /Passo 5 salvato/.test(await salvaPasso(a, false)));
@@ -299,7 +304,7 @@ const visibile = async v => (await v.locator('.tq-domanda:not([hidden]) .tq-test
   await a.selectOption('#tsr0-c0', { label: 'Area Corpo' }); await a.selectOption('#tsr0-f0', { label: 'Alto' });
   await a.click('#ts-regole-ed li[data-i="0"] [data-piu-c]');
   await a.selectOption('#tsr0-c1', { label: 'Area Mente' }); await a.selectOption('#tsr0-f1', { label: 'Alto' });
-  await a.locator('#ts-regole-ed li[data-i="0"] .ql-editor').click(); await a.keyboard.type('Corpo e mente al massimo.');
+  await a.locator('#ts-regole-ed li[data-i="0"] .ql-editor').nth(1).click(); await a.keyboard.type('Corpo e mente al massimo.');
   await a.click('#ts-regole-ed [data-piu-r]');
   await a.fill('#tsr1-n', 'Mai');
   await a.selectOption('#tsr1-c0', { label: 'Area Corpo' }); await a.selectOption('#tsr1-f0', { label: 'Basso' });
@@ -310,6 +315,10 @@ const visibile = async v => (await v.locator('.tq-domanda:not([hidden]) .tq-test
   await vai(a, PAG('test', `&id=${Bid}&passo=3`));
   ok('B: il simulatore dice che la regola «Mai» non vale mai', /La regola «Mai» non vale mai/.test(await a.locator('#simulatore').innerText()));
   await foto(a, 'b-passo3');
+  // 2.23.0: B senza il risultato solo per email (e senza l'email): a schermo il testo completo, niente riquadro.
+  await vai(a, PAG('test', `&id=${Bid}&passo=5`));
+  await a.uncheck('input[name=solo_email]');
+  await salvaPasso(a, false);
   ok('B: pubblicato', /pubblicato/i.test(await pubblica(a, Bid)));
   const DB_ = JSON.parse(sql(`SELECT dati FROM {p}test_test WHERE id = ${Bid}`)[0].dati);
   await vai(v, '/fai-il-test/prova-aree/');
@@ -362,6 +371,175 @@ const visibile = async v => (await v.locator('.tq-domanda:not([hidden]) .tq-test
   ok('telefono: il risultato non scorre di lato', await C.largo(tel) <= 0, await C.largo(tel));
   await foto(tel, 'c-telefono-risultato');
 
+  // =============================================================== D. 2.23.0: persona, due testi, risultato completo per email, tag, gruppi
+  const corto = u0 => Object.fromEntries(new URL(u0).searchParams);
+  // L'email delle aree di B: il grafico fatto di tabelle (niente SVG), la risposta completa della regola, della fascia e di ogni area.
+  const emB = cli('email_corpo', Bid, JSON.stringify({ t: Bid, g: '20261103', o: 88, f: 'alto', a: { [DB_.aree[0].k]: [100, 'alto'], [DB_.aree[1].k]: [78, 'alto'] }, r: DB_.regole[0].k }));
+  ok('B: l\'email del risultato completo ha le barre fatte di tabelle (100% e 78%), niente SVG, la regola e la fascia del totale', /width="100%" style="background:#7c3aed/.test(emB[1]) && /width="78%" style="background:#7c3aed/.test(emB[1]) && !/<svg/.test(emB[1])
+    && /Corpo e mente al massimo/.test(emB[1]) && /Il totale: Alto/.test(emB[1]) && /Totale alto/.test(emB[1]), emB[1].slice(0, 300));
+  const listaP = cli('lista', 'Lettori persona');
+  const tagEta = cli('tag_crea', 'Età: 35-44');
+  const flTag = cli('salva_flusso', JSON.stringify({ nome: 'Benvenuto 35-44', stato: 'attiva', inneschi: [{ tipo: 'tag', id: 0, tag: [tagEta] }], grafo: { nodi: [nodo(0, 'innesco'), em(1, 'Benvenuto 35-44')], archi: [{ da: 0, uscita: 'poi', a: 1 }] } }));
+  ok('D: un\'automazione con l\'innesco «Riceve un tag» (Età: 35-44)', typeof flTag === 'number' && typeof tagEta === 'number', [flTag, tagEta]);
+  const Did = await nuovo(a, 'Prova persona', 'punteggio');
+  await salvaPasso(a);
+  await domanda(a, { testo: 'Persona uno: quanto spesso?' });
+  await domanda(a, { testo: 'Persona due: quanto spesso?' });
+  ok('D: passo 2 con il riquadro «Domande sulla persona» (catalogo pronto, facoltative di partenza)', await a.locator('#ts-persona details.ts-persona-voce').count() >= 20 && await a.isChecked('input[name=persona_obbligatorie][value="0"]'));
+  for (const [k, n] of [['eta', 1], ['occupazione', 2], ['settore', 3]]) {
+    await a.locator(`#tsp-${k}-o`).evaluate(el => { el.closest('details').open = true; });
+    await a.check(`input[name="persona[${k}][usa]"]`);
+    await a.fill(`#tsp-${k}-o`, String(n));
+  }
+  await a.fill('#tsp-eta-t', 'Quanti anni hai, più o meno?');
+  await a.fill('#tsp-occupazione-r', (await a.inputValue('#tsp-occupazione-r')) + '\nInfluencer');
+  ok('D: passo 2 salvato', /Passo 2 salvato/.test(await salvaPasso(a, false)));
+  const DD = JSON.parse(sql(`SELECT dati FROM {p}test_test WHERE id = ${Did}`)[0].dati);
+  const occ = DD.persona.domande[1];
+  ok('D: tre domande sulla persona in ordine (Età, Occupazione, Settore), testo cambiato, una risposta in più con la sua chiave', DD.persona.obbligatorie === false && DD.persona.domande.map(q => q.k).join() === 'eta,occupazione,settore'
+    && DD.persona.domande[0].testo === 'Quanti anni hai, più o meno?' && occ.opzioni.length === 18 && occ.opzioni[17].t === 'Influencer' && occ.opzioni[17].k === 'o18' && occ.opzioni[6].t === 'Manager' && occ.opzioni[6].k === 'o7'
+    && DD.persona.domande[2].opzioni.length >= 60, DD.persona.domande.map(q => [q.k, q.opzioni.length]));
+  await vai(a, PAG('test', `&id=${Did}&passo=4`));
+  ok('D: passo 4 con due testi per fascia (risposta breve e risposta completa)', await a.locator('fieldset.ts-testo-ris').first().locator('.ql-editor').count() === 2 && /Risposta breve/.test(await a.locator('fieldset.ts-testo-ris').first().innerText()));
+  for (const [f, b, c] of [['«Basso»', 'Breve basso.', 'Completa basso.'], ['«Medio»', 'Breve medio.', 'Completa medio.'], ['«Alto»', 'Breve alto.', 'Completa alto: ecco tutto quello che c\'è da sapere.']]) {
+    await testoRicco(a, f, b, null, 'breve'); await testoRicco(a, f, c);
+  }
+  ok('D: passo 4 salvato', /Passo 4 salvato/.test(await salvaPasso(a, false)));
+  const DD4 = JSON.parse(sql(`SELECT dati FROM {p}test_test WHERE id = ${Did}`)[0].dati);
+  ok('D: breve e completa salvate per fascia', /Breve alto/.test(DD4.fasce[2].breve) && /Completa alto/.test(DD4.fasce[2].testo), DD4.fasce[2]);
+  await vai(a, PAG('test', `&id=${Did}&passo=5`));
+  await a.selectOption('#ts-lista', String(listaP));
+  await salvaPasso(a, false);
+  ok('D: pubblicato', /pubblicato/i.test(await pubblica(a, Did)));
+  const vd = await pag(br, err);
+  await vai(vd, '/fai-il-test/prova-persona/');
+  await vd.click('#tq-inizia');
+  await rispondi(vd, 'Sempre'); await rispondi(vd, 'Sempre');
+  ok('D: dopo le domande del test arrivano quelle sulla persona: «Domanda 3 di 5», «Su di te», facoltativa, con «Preferisco non rispondere»',
+    /Quanti anni hai, più o meno/.test(await visibile(vd)) && /Domanda 3 di 5/.test(await vd.locator('.tq-passo').innerText()) && /Su di te/.test(await vd.locator('.tq-domanda:not([hidden])').innerText())
+    && /facoltativa/.test(await vd.locator('.tq-domanda:not([hidden]) legend').innerText()) && await vd.locator('.tq-domanda:not([hidden]) label.tq-opz', { hasText: 'Preferisco non rispondere' }).count() === 1, await visibile(vd));
+  await foto(vd, 'd-persona');
+  await rispondi(vd, '35-44');
+  await rispondi(vd, 'Manager');
+  ok('D: il settore ha l\'elenco lungo (su due colonne dove c\'è posto)', await vd.locator('.tq-domanda:not([hidden]) .tq-opzioni-tante').count() === 1);
+  await rispondi(vd, 'Preferisco non rispondere');
+  await vd.waitForTimeout(3000);
+  await Promise.all([vd.waitForNavigation(), vd.click('#tq-fine button[type=submit]')]);
+  const urlRis = vd.url();
+  ok('D: risultato Alto 100, a schermo la risposta breve e non la completa', (await vd.locator('h1').innerText()).trim() === 'Alto' && (await vd.locator('.tq-punteggio b').innerText()).trim() === '100'
+    && /Breve alto/.test(await vd.locator('.tq-breve').innerText()) && !/Completa alto/.test(await vd.content()));
+  ok('D: sotto il risultato «Lasciami la tua email e ti mando il risultato completo», con consenso e newsletter', /Lasciami la tua email e ti mando il risultato completo/.test(await vd.locator('#tq-email h2').innerText())
+    && await vd.locator('#tq-email input[name=consenso]').count() === 1 && await vd.locator('#tq-email input[name=iscrivi]').count() === 1);
+  ok('D: le risposte sulla persona viaggiano firmate con il permesso dell\'email, non nel link da condividere', corto(urlRis).pz === 'eta=o3.occupazione=o7.settore=nr' && !/pz=/.test(await vd.inputValue('#tq-link')), corto(urlRis).pz);
+  ok('D: il risultato registrato ha le risposte sulla persona (anonime, con l\'esito)', sql(`SELECT persona FROM {p}test_risultati WHERE test_id = ${Did}`).map(x => x.persona).join() === '{"eta":"o3","occupazione":"o7","settore":"nr"}', sql(`SELECT persona FROM {p}test_risultati WHERE test_id = ${Did}`));
+  await foto(vd, 'd-risultato');
+  // Senza la newsletter: arriva il risultato completo, nessun contatto, nessun tag.
+  let nP = C.posta(POSTA).length;
+  let mD = vd.locator('#tq-email form');
+  await mD.locator('input[name=email]').fill('solo-risultato@tq-prova.it');
+  await mD.locator('input[name=consenso]').check();
+  await C.captcha(mD, vd);
+  await Promise.all([vd.waitForNavigation(), mD.locator('button[type=submit]').click()]);
+  const soloRis = await C.nuove(POSTA, nP, 1);
+  const emD = soloRis.find(m => /Il tuo risultato: Prova persona/.test(m.oggetto));
+  ok('D senza newsletter: arriva l\'email con la risposta completa (e il punteggio)', !!emD && /Completa alto/.test(emD.html) && /100 su 100/.test(emD.html) && !soloRis.some(m => /conferma/i.test(m.oggetto)), soloRis.map(m => m.oggetto));
+  ok('D senza newsletter: nessun contatto creato, nessun tag', sql(`SELECT COUNT(*) n FROM {p}newsletter_iscritti WHERE email = 'solo-risultato@tq-prova.it'`)[0].n == 0 && sql(`SELECT COUNT(*) n FROM {p}newsletter_tag_attese`)[0].n == 0);
+  // Con la newsletter: dalla stessa pagina del risultato (il permesso vale due ore).
+  await vai(vd, urlRis);
+  mD = vd.locator('#tq-email form');
+  await mD.locator('input[name=email]').fill('persona@tq-prova.it');
+  await mD.locator('input[name=consenso]').check();
+  await mD.locator('input[name=iscrivi]').check();
+  await C.captcha(mD, vd);
+  nP = C.posta(POSTA).length;
+  await Promise.all([vd.waitForNavigation(), mD.locator('button[type=submit]').click()]);
+  const conNl = await C.nuove(POSTA, nP, 2);
+  const confD = conNl.find(m => !/Il tuo risultato/.test(m.oggetto));
+  const idP = sql(`SELECT id, stato FROM {p}newsletter_iscritti WHERE email = 'persona@tq-prova.it'`)[0];
+  ok('D con newsletter: risultato completo e email di conferma; il contatto aspetta la conferma, ancora senza tag', conNl.some(m => /Completa alto/.test(m.html)) && !!confD && idP && idP.stato === 'in_attesa' && cli('tag_di', 'persona@tq-prova.it').length === 0
+    && sql(`SELECT COUNT(*) n FROM {p}newsletter_tag_attese WHERE iscritto_id = ${idP.id}`)[0].n == 3, conNl.map(m => m.oggetto));
+  await vai(w, C.link(confD).find(l => /conferma/.test(l)));
+  const tagP = cli('tag_di', 'persona@tq-prova.it');
+  ok('D confermato: i tag «Età: 35-44», «Occupazione: Manager» e l\'esito «Test Prova persona: Alto»; «Preferisco non rispondere» non diventa un tag', tagP.join('|') === 'Età: 35-44|Occupazione: Manager|Test Prova persona: Alto', tagP);
+  ok('D confermato: il contatto è nella lista scelta nel test, la cronologia dice i tag aggiunti', sql(`SELECT COUNT(*) n FROM {p}newsletter_iscritti_liste WHERE iscritto_id = ${idP.id} AND lista_id = ${listaP}`)[0].n == 1
+    && sql(`SELECT COUNT(*) n FROM {p}newsletter_storia WHERE contatto_id = ${idP.id} AND tipo = 'tag_aggiunto'`)[0].n == 3);
+  const corsiP = sql(`SELECT flusso_id FROM {p}newsletter_corsi WHERE iscritto_id = ${idP.id}`).map(x => +x.flusso_id);
+  ok('D confermato: parte l\'automazione «Riceve un tag» (Età: 35-44)', corsiP.includes(flTag), corsiP);
+  nP = C.posta(POSTA).length;
+  cli('giro'); cli('giro');
+  ok('D: il giro manda l\'email dell\'automazione «Benvenuto 35-44»', (await C.nuove(POSTA, nP, 1)).some(m => /Benvenuto 35-44/.test(m.oggetto)));
+  // Senza «solo per email»: a schermo la breve e sotto la completa (il link condiviso).
+  await vai(a, PAG('test', `&id=${Did}&passo=5`));
+  await a.uncheck('input[name=solo_email]'); await a.uncheck('input[name=email]');
+  await salvaPasso(a, false);
+  const linkD = (() => { const x = new URL(urlRis); return B + '/fai-il-test/prova-persona/risultato/?e=' + x.searchParams.get('e') + '&f=' + x.searchParams.get('f'); })();
+  await vai(w, linkD);
+  ok('D senza «solo per email»: a schermo la breve e sotto la completa', /Breve alto/.test(await w.locator('.tq-breve').innerText()) && /Completa alto/.test(await w.locator('.tq-testo').nth(1).innerText()) && await w.locator('#tq-email').count() === 0);
+  // Obbligatorie (senza JavaScript): niente "Preferisco non rispondere", la risposta manca o è inventata: 422 con l'errore sotto.
+  await vai(a, PAG('test', `&id=${Did}&passo=2`));
+  await a.check('input[name=persona_obbligatorie][value="1"]');
+  await salvaPasso(a, false);
+  const njD = await (await br.newContext({ javaScriptEnabled: false })).newPage();
+  await njD.goto(B + '/fai-il-test/prova-persona/');
+  ok('D obbligatorie, senza JavaScript: le tre domande sulla persona in fondo, senza «Preferisco non rispondere», la prima risposta required',
+    await njD.locator('.tq-persona').count() === 3 && !/Preferisco non rispondere/.test(await njD.content()) && await njD.locator('.tq-persona').first().locator('input[required]').count() === 1
+    && await njD.locator('.tq-domanda').last().getAttribute('data-k') === 'p-settore');
+  const dk = DD.domande.map(q => q.k);
+  const invia = async (persona) => { const tk = await (await njD.goto(B + '/fai-il-test/prova-persona/')).text().then(h => (h.match(/name="gettone" value="([^"]+)"/) || [])[1]); await njD.waitForTimeout(3200);
+    return njD.request.post(B + '/fai-il-test/prova-persona/invia/', { form: Object.assign({ gettone: tk, [`r[${dk[0]}]`]: 's2', [`r[${dk[1]}]`]: 's2' }, persona), maxRedirects: 0 }); };
+  let rq = await invia({ 'p[eta]': 'o2', 'p[occupazione]': 'o5' });
+  let hq = await rq.text();
+  ok('D obbligatorie: manca il settore: 422, errore sotto la domanda sulla persona, le risposte date restano', rq.status() === 422 && /class="tq-domanda tq-persona errato" id="tp-settore"/.test(hq) && /Manca la risposta/.test(hq) && /name="p\[eta\]" value="o2" checked/.test(hq), rq.status());
+  rq = await invia({ 'p[eta]': 'zz9', 'p[occupazione]': 'o5', 'p[settore]': 'o1' });
+  ok('D: una risposta sulla persona inventata è rifiutata (422, «non va bene»)', rq.status() === 422 && /Questa risposta non va bene/.test(await rq.text()));
+  rq = await invia({ 'p[eta]': 'nr', 'p[occupazione]': 'o5', 'p[settore]': 'o1' });
+  ok('D obbligatorie: «Preferisco non rispondere» mandato a mano è rifiutato', rq.status() === 422);
+  await vai(a, PAG('test', `&id=${Did}&passo=2`));
+  await a.check('input[name=persona_obbligatorie][value="0"]');
+  await salvaPasso(a, false);
+  rq = await invia({});
+  ok('D facoltative: senza nessuna risposta sulla persona il test va al risultato (303)', rq.status() === 303 && /\/risultato\//.test(rq.headers()['location'] || ''), rq.status());
+  // Statistiche per gruppi: 14 risultati (2 veri, 12 finti). 25-34: 6; 35-44: 4 + 1 vero = 5; 45-54: 2.
+  cli('risultati_finti', Did, JSON.stringify([...Array(6)].map(() => ({ totale: 80, fascia: 'alto', persona: { eta: 'o2', occupazione: 'o5', settore: 'o3' } }))
+    .concat([...Array(4)].map((x, i) => ({ totale: i < 2 ? 20 : 50, fascia: i < 2 ? 'basso' : 'medio', persona: { eta: 'o3', occupazione: 'o5', settore: 'o3' } })))
+    .concat([...Array(2)].map(() => ({ totale: 50, fascia: 'medio', persona: { eta: 'o4', occupazione: 'o1', settore: 'o3' } })))));
+  const gr = cli('gruppi', Did);
+  const riga = (q, t) => gr.domande.find(x => x.k === q).righe.find(x => x.t === t);
+  ok('gruppi: 14 risultati; 25-34 mostrato (6, Alto 100%, media 80)', gr.totale === 14 && riga('eta', '25-34').n === 6 && riga('eta', '25-34').dist.alto === 100 && riga('eta', '25-34').media === 80, riga('eta', '25-34'));
+  ok('gruppi: 45-54 (2 persone) «meno di 5»; 35-44 (5 persone) nascosto anche lui, se no per differenza dal totale resterebbero 3 persone', riga('eta', '45-54').nascosto && riga('eta', '45-54').perche === 'pochi' && riga('eta', '45-54').n === null
+    && riga('eta', '35-44').nascosto && riga('eta', '35-44').perche === 'resto' && riga('eta', '35-44').n === null && riga('eta', '18-24').n === 0, gr.domande[0].righe.map(x => [x.t, x.n, x.perche]));
+  ok('gruppi: «Preferisco non rispondere» è un gruppo come gli altri (1 persona: meno di 5)', riga('settore', 'Preferisco non rispondere').nascosto && riga('settore', 'Preferisco non rispondere').perche === 'pochi');
+  await vai(a, PAG('statistiche', `&id=${Did}`));
+  const tg = await a.locator('#ts-gruppi').innerText();
+  ok('statistiche: la tabella «Per gruppi» per ogni domanda sulla persona, con «meno di 5» e «non mostrato»', await a.locator('#ts-gruppi table').count() === 3 && /meno di 5/.test(tg) && /non mostrato/.test(tg)
+    && /25-34\s+6\s+0%\s+0%\s+100%\s+80/.test(tg), tg.slice(0, 400));
+  await vai(a, PAG('statistiche', `&id=${Did}&giorni=7`));
+  ok('statistiche: i gruppi non cambiano con il periodo (sempre su tutti: due periodi non isolano nessuno)', (await a.locator('#ts-gruppi').innerText()) === tg);
+  await foto(a, 'd-gruppi');
+  const csvD = await (await a.request.get(PAG('statistiche', `&id=${Did}&csv=1`))).text();
+  ok('CSV: i gruppi con la stessa soglia (6 persone, meno di 5, non mostrato), nessuna email', /"?Per gruppi: Età"?;"?25-34 - persone"?;6/.test(csvD) && /"?Per gruppi: Età"?;"?45-54 - persone"?;"?meno di 5"?/.test(csvD) && /"?Per gruppi: Età"?;"?35-44 - persone"?;"?non mostrato"?/.test(csvD)
+    && !/35-44 - fascia/.test(csvD) && /25-34 - fascia Alto \(%\)"?;100/.test(csvD) && !/@/.test(csvD), csvD.split('\n').filter(x => /Per gruppi/.test(x)).slice(0, 6));
+  // Un test scritto con la 2.22.0 (un solo testo, niente persona, niente «solo per email»): pagina e risultato uguali al byte.
+  const vecchio = cli('crea_vecchio', JSON.stringify({ slug: 'prova-vecchio', nome: 'Prova vecchio', tipo: 'punteggio', dati: {
+    scala: [{ t: 'Mai', v: 0 }, { t: 'Raramente', v: 1 }, { t: 'A volte', v: 2 }, { t: 'Spesso', v: 3 }, { t: 'Sempre', v: 4 }], aree: [], profili: [],
+    domande: [{ k: 'dvecchia', testo: 'Vecchia domanda?', aiuto: '', tipo: 'scala', invertita: false, peso: 1, obbligatoria: true, area: '', opzioni: [], condizione: null }],
+    fasce: [{ k: 'basso', nome: 'Basso', da: 0, a: 50, testo: '<p>Testo vecchio basso.</p>', pulsante_testo: '', pulsante_link: '' }, { k: 'alto', nome: 'Alto', da: 51, a: 100, testo: '<p>Testo vecchio alto.</p>', pulsante_testo: 'Scrivimi', pulsante_link: '/contatti/' }],
+    regole: [], avvertenza: 'Avvertenza vecchia.', casuale: false, presentazione: '', dopo: { email: true, consenso: 'Consenso vecchio.', lista: listaP, iscrizione: 'Iscriviti.' } } }));
+  const vecchiaCartella = path.join(CMS, 'addon', 'test-vecchio');
+  let oldOk = false;
+  try { execFileSync('bash', ['-c', `rm -rf "${vecchiaCartella}" && mkdir -p "${vecchiaCartella}" && git -C "${path.join(__dirname, '..')}" archive c3b99e9 cms/addon/test | tar -x -C "${vecchiaCartella}" --strip-components=3`]); oldOk = true; } catch (x) { console.log('     (manca il commit c3b99e9: il confronto con la 2.22.0 si salta)'); }
+  if (oldOk) {
+    const esV = { t: vecchio, g: '20261103', o: 75, f: 'alto' };
+    const nuovaV = cli('vista', vecchio, JSON.stringify(esV), '9999999999.' + 'a'.repeat(32));
+    const vecchiaV = JSON.parse(execFileSync('php', [path.join(__dirname, 'test-cli.php'), CMS, 'vista', String(vecchio), JSON.stringify(esV), '9999999999.' + 'a'.repeat(32)], { encoding: 'utf8', env: Object.assign({}, process.env, { TEST_ADDON: vecchiaCartella }) }).trim().split('\n').pop());
+    ok('test della 2.22.0: la pagina con le domande è uguale al byte a quella della 2.22.0', nuovaV.modulo === vecchiaV.modulo && nuovaV.modulo.length > 500, [nuovaV.modulo.length, vecchiaV.modulo.length]);
+    ok('test della 2.22.0: la pagina del risultato (testo unico a schermo, riquadro dell\'email) è uguale al byte', nuovaV.risultato === vecchiaV.risultato && /Testo vecchio alto/.test(nuovaV.risultato) && /Vuoi ricevere il risultato per email/.test(nuovaV.risultato), [nuovaV.risultato.length, vecchiaV.risultato.length]);
+    ok('test della 2.22.0: l\'email ha lo stesso testo (ora con il formato del risultato completo)', /Testo vecchio alto/.test(nuovaV.email[1]) && /75 su 100/.test(nuovaV.email[1]) && nuovaV.email[0] === vecchiaV.email[0]);
+    execFileSync('rm', ['-rf', vecchiaCartella]);
+  }
+  await vai(w, '/fai-il-test/prova-vecchio/');
+  ok('test della 2.22.0 sul sito: nessuna domanda sulla persona', w.url().includes('prova-vecchio') && await w.locator('.tq-persona').count() === 0 && await w.locator('.tq-domanda').count() === 1);
+
   // =============================================================== Statistiche e CSV
   const abb = await pag(br, err);
   await vai(abb, '/fai-il-test/prova-punteggio/');
@@ -391,7 +569,7 @@ const visibile = async v => (await v.locator('.tq-domanda:not([hidden]) .tq-test
 
   // =============================================================== Duplica, Elimina, bozza
   await vai(a, PAG('test'));
-  ok('elenco: tre test con tipo, stato e completati', await a.locator('.ts-tabella tbody tr').count() === 3);
+  ok('elenco: cinque test con tipo, stato e completati (con quelli della 2.23.0)', await a.locator('.ts-tabella tbody tr').count() === 5);
   await a.locator('tr', { hasText: 'Prova profili' }).hover(); // le azioni della riga compaiono al passaggio (come in Contenuti)
   await Promise.all([a.waitForNavigation(), a.locator('tr', { hasText: 'Prova profili' }).locator('button[value=duplica]').click()]);
   ok('Duplica: la copia nasce in bozza', /copia/.test(await flash(a)) && /Prova profili \(copia\)/.test(await a.locator('.fo-sopra').innerText()));
@@ -414,7 +592,7 @@ const visibile = async v => (await v.locator('.tq-domanda:not([hidden]) .tq-test
   ok('spento: /fai-il-test/prova-punteggio/ dà 404 e il pannello dell\'addon 404', (await w.goto(B + '/fai-il-test/prova-punteggio/')).status() === 404 && (await a.goto(PAG('test'))).status() === 404);
   await vai(w, '/riquadro-test/');
   ok('spento: il Riquadro torna al link scritto a mano', /\/contatti\/$/.test(await w.locator('a.ed-test-pulsante').getAttribute('href')));
-  ok('spento: i dati restano', sql(`SELECT COUNT(*) n FROM {p}test_test`)[0].n == 3);
+  ok('spento: i dati restano', sql(`SELECT COUNT(*) n FROM {p}test_test`)[0].n == 5);
   ok('riacceso: tutto torna', /acceso/.test(await C.addon(a, B, 'test', true)) && (await w.goto(B + '/fai-il-test/prova-punteggio/')).status() === 200);
   C.fine(err);
   await br.close();

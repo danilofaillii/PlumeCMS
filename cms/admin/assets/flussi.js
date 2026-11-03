@@ -8,8 +8,8 @@
 var FL = (function () {
   var D = FL_DATI, g = D.grafo, tela = document.getElementById('fl-tela'), box = document.getElementById('fl-tela-box'), svg = document.getElementById('fl-archi');
   var pannello = document.getElementById('fl-pannello'), scelto = null, arcoScelto = null, quill = null, ns = 'http://www.w3.org/2000/svg';
-  var ICONE = {innesco: '\uD83D\uDE80', email: '✉️', attesa: '⏳', bivio: '\uD83D\uDD00', fine: '⏹', evento: '\uD83D\uDC41', dividi: '\uD83D\uDD00', percento: '⚖', lista_aggiungi: '➕', lista_togli: '➖', attributo: '✎', webhook: '↗'};
-  var NOMI = {innesco: 'Inneschi', email: 'Email', attesa: 'Attesa', bivio: 'Sì o No', fine: 'Fine', evento: 'Attendi un evento', dividi: 'Divisione condizionale', percento: 'Divisione in percentuale', lista_aggiungi: 'Aggiungi a una lista', lista_togli: 'Togli da una lista', attributo: 'Aggiorna un attributo', webhook: 'Webhook'};
+  var ICONE = {innesco: '\uD83D\uDE80', email: '✉️', attesa: '⏳', bivio: '\uD83D\uDD00', fine: '⏹', evento: '\uD83D\uDC41', dividi: '\uD83D\uDD00', percento: '⚖', lista_aggiungi: '➕', lista_togli: '➖', attributo: '✎', webhook: '↗', tag_aggiungi: '\uD83C\uDFF7', tag_togli: '\u2715'};
+  var NOMI = {innesco: 'Inneschi', email: 'Email', attesa: 'Attesa', bivio: 'Sì o No', fine: 'Fine', evento: 'Attendi un evento', dividi: 'Divisione condizionale', percento: 'Divisione in percentuale', lista_aggiungi: 'Aggiungi a una lista', lista_togli: 'Togli da una lista', attributo: 'Aggiorna un attributo', webhook: 'Webhook', tag_aggiungi: 'Aggiungi tag', tag_togli: 'Togli tag'};
   var inneschi = (D.inneschi || []).slice();
 
   function h(s) { return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) { return {'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;'}[c]; }); }
@@ -63,9 +63,17 @@ var FL = (function () {
       case 'lista_aggiungi': case 'lista_togli': return D.liste[d.lista] ? h(D.liste[d.lista]) : '<i class="fl-manca">Scegli la lista</i>';
       case 'attributo': return D.attributi[d.nome] ? h(D.attributi[d.nome].e) + ' = ' + h(d.valore === '' ? '(vuoto)' : d.valore) : '<i class="fl-manca">Scegli l\'attributo</i>';
       case 'webhook': return d.url ? h(d.url.replace(/^https?:\/\//, '').slice(0, 40)) : '<i class="fl-manca">Scrivi l\'indirizzo</i>';
+      case 'tag_aggiungi': case 'tag_togli': return nomiTag(d.tag).length ? h(nomiTag(d.tag).join(', ')) : '<i class="fl-manca">Scegli i tag</i>';
       case 'fine': return 'Il cammino finisce qui.';
     }
     return '';
+  }
+  // 2.23.0: i nomi dei tag scelti (quelli che non ci sono più si saltano).
+  function nomiTag(ids) { return (ids || []).filter(function (t) { return D.tag && D.tag[t]; }).map(function (t) { return D.tag[t]; }); }
+  function caselleTag(pref, scelti, legenda) {
+    var ks = Object.keys(D.tag || {});
+    if (!ks.length) return '<p class="hint">Ancora nessun tag: crealo in <a href="newsletter-tag.php">Newsletter e form, Tag</a>.</p>';
+    return '<fieldset class="fl-scelta fl-tag-scelta"><legend>' + h(legenda) + '</legend>' + ks.map(function (k) { return '<label class="fl-spunta"><input type="checkbox" data-tag="' + h(k) + '" id="' + pref + k + '"' + ((scelti || []).map(String).indexOf(String(k)) >= 0 ? ' checked' : '') + '> ' + h(D.tag[k]) + '</label>'; }).join('') + '</fieldset>';
   }
   function valoreBivio(d) {
     var c = D.condizioni[d.condizione] || ['', ''];
@@ -242,7 +250,8 @@ var FL = (function () {
       evento: {evento: 'apertura', email: primaEmail ? +primaEmail : 0, massimo: 4320},
       dividi: {rami: [{nome: '', regole: {op: 'e', gruppi: []}}]}, percento: {rami: [50, 50]},
       lista_aggiungi: {lista: +(Object.keys(D.liste)[0] || 0)}, lista_togli: {lista: +(Object.keys(D.liste)[0] || 0)},
-      attributo: {nome: Object.keys(D.attributi)[0] || '', valore: ''}, webhook: {url: ''}
+      attributo: {nome: Object.keys(D.attributi)[0] || '', valore: ''}, webhook: {url: ''},
+      tag_aggiungi: {tag: []}, tag_togli: {tag: []}
     }[tipo];
   }
   // Senza una posizione: sotto il blocco scelto, collegato alla sua prima uscita libera (il "+" sotto un passo).
@@ -300,6 +309,9 @@ var FL = (function () {
       case 'attributo':
         html += Object.keys(D.attributi).length ? campo('fp-attr', 'Quale attributo', '<select id="fp-attr">' + Object.keys(D.attributi).map(function (k) { return '<option value="' + h(k) + '"' + (k === d.nome ? ' selected' : '') + '>' + h(D.attributi[k].e) + '</option>'; }).join('') + '</select>') + '<div id="fp-attr-valore"></div>' : '<p class="hint">Ancora nessun attributo da cambiare: crealo in Contatti, Attributi.</p>';
         break;
+      case 'tag_aggiungi': case 'tag_togli':
+        html += caselleTag('fp-tag-', d.tag, n.tipo === 'tag_aggiungi' ? 'Quali tag dare' : 'Quali tag togliere') + '<p class="hint">' + (n.tipo === 'tag_aggiungi' ? 'Un tag nuovo del contatto fa partire anche l\'innesco "Riceve un tag" delle altre automazioni.' : 'Se il contatto non ha il tag, non succede niente e si va avanti.') + '</p>';
+        break;
       case 'webhook':
         html += campo('fp-url', 'Indirizzo che riceve i dati', '<input type="url" id="fp-url" value="' + h(d.url) + '" maxlength="500" placeholder="per esempio: https://servizio.esempio.it/ricevi" inputmode="url">', 'Solo https. Ogni volta che una persona passa di qui, il sito manda a questo indirizzo il nome dell\'automazione e i dati del contatto (email, nome, cognome). Gli indirizzi di questo server o della sua rete sono rifiutati; i rimandi a un altro indirizzo non si seguono. L\'esito si legge nel registro.');
         break;
@@ -338,6 +350,7 @@ var FL = (function () {
     if (n.tipo === 'lista_aggiungi' || n.tipo === 'lista_togli') { leggi('#fp-lista', 'change', function (el) { d.lista = +el.value; }); var ls = pannello.querySelector('#fp-lista'); if (ls) d.lista = +ls.value; }
     if (n.tipo === 'attributo') pannelloAttributo(n);
     if (n.tipo === 'webhook') leggi('#fp-url', 'input', function (el) { d.url = el.value.trim(); });
+    if (n.tipo === 'tag_aggiungi' || n.tipo === 'tag_togli') pannello.querySelectorAll('[data-tag]').forEach(function (el) { el.addEventListener('change', function () { d.tag = [].slice.call(pannello.querySelectorAll('[data-tag]:checked')).map(function (x) { return +x.getAttribute('data-tag'); }); disegna(); }); });
     if (n.tipo === 'email') pannelloEmail(n);
   }
   function pannelloBivio(n) {
@@ -436,6 +449,7 @@ var FL = (function () {
     var c = D.cosa[x.tipo] || {}, t = D.nomiInneschi[x.tipo] || x.tipo;
     if (x.tipo === 'inattivo') return t + ' (' + (x.id || '?') + ' giorni)';
     if (x.tipo === 'anniversario') return t + ': ' + (c[x.attr] || 'scegli la data') + (x.id ? ', ' + x.id + ' giorni prima' : '');
+    if (x.tipo === 'tag') return t + ': ' + (nomiTag(x.tag).length ? nomiTag(x.tag).join(', ') : 'qualunque tag');
     // 2.22.0: un innesco di un addon con il filtro sul risultato (Completa un test: quale test e con quale risultato).
     var es = D.esiti && D.esiti[x.tipo] && x.id ? (D.esiti[x.tipo][x.id] || {}) : null;
     if (x.tipo in D.cosa && x.tipo !== 'anniversario') return t + ': ' + (x.id ? (c[x.id] || 'non c\'è più') : (x.tipo === 'apertura' || x.tipo === 'clic' ? 'qualsiasi campagna' : 'qualunque')) + (es && x.esito ? ', ' + (es[x.esito] || 'risultato che non c\'è più') : '');
@@ -448,6 +462,7 @@ var FL = (function () {
       else if (x.tipo === 'anniversario') s += (Object.keys(c).length ? '<label for="fi-a' + i + '">Quale data</label><select id="fi-a' + i + '" data-k="attr">' + opz(c, x.attr) + '</select>' : '<p class="hint">Serve un attributo di tipo Data: crealo in Contatti, Attributi.</p>') + '<label for="fi-v' + i + '">Quanti giorni prima (0 = il giorno stesso)</label><input type="number" id="fi-v' + i + '" data-k="id" min="0" max="365" value="' + (x.id || 0) + '">';
       else if (x.tipo in D.cosa) s += '<label for="fi-v' + i + '">Quale</label><select id="fi-v' + i + '" data-k="id">' + opz(Object.assign({'0': x.tipo === 'apertura' || x.tipo === 'clic' ? 'Qualsiasi campagna' : 'Qualunque'}, c), x.id) + '</select>';
       if (D.esiti && D.esiti[x.tipo]) s += x.id ? '<label for="fi-e' + i + '">Con quale risultato</label><select id="fi-e' + i + '" data-k="esito">' + opz(Object.assign({'': 'Qualunque risultato'}, D.esiti[x.tipo][x.id] || {}), x.esito || '') + '</select>' : '<p class="hint">Scegli il test per filtrare anche sul risultato.</p>';
+      if (x.tipo === 'tag') s += caselleTag('fi-g' + i + '-', x.tag, 'Quali tag (nessuno: qualunque tag)') + '<p class="hint">Parte quando il contatto riceve uno dei tag scelti: dalla scheda, da un\'azione di gruppo, da un form, da un\'importazione, da un\'altra automazione o da un test.</p>';
       if (x.tipo === 'mano') s += '<p class="hint">Si aggiunge dalla scheda Attività e registro.</p>';
       if (x.tipo === 'iscrizione') s += '<p class="hint">Con la doppia conferma conta quando la persona conferma.</p>';
       return s + '<button type="button" class="btn btn-danger btn-sm" data-togli-innesco="' + i + '">Togli l\'innesco ' + (i + 1) + '</button></fieldset>';
@@ -460,7 +475,8 @@ var FL = (function () {
   boxInn.addEventListener('change', function (e) {
     var el = e.target, i = el.closest('[data-i]'); if (!i) return;
     var x = inneschi[+i.dataset.i], k = el.dataset.k;
-    if (k === 'tipo') { inneschi[+i.dataset.i] = {tipo: el.value, id: el.value === 'inattivo' ? 30 : 0}; disegnaInneschi('#' + el.id); return; }
+    if (el.hasAttribute('data-tag')) { x.tag = [].slice.call(i.querySelectorAll('[data-tag]:checked')).map(function (y) { return +y.getAttribute('data-tag'); }); disegna(); return; }
+    if (k === 'tipo') { inneschi[+i.dataset.i] = {tipo: el.value, id: el.value === 'inattivo' ? 30 : 0}; if (el.value === 'tag') inneschi[+i.dataset.i].tag = []; disegnaInneschi('#' + el.id); return; }
     x[k] = k === 'attr' || k === 'esito' ? el.value : +el.value || 0;
     if (k === 'id' && D.esiti && D.esiti[x.tipo]) { x.esito = ''; disegnaInneschi('#' + el.id); return; }
     disegna();

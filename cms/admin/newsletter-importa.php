@@ -199,6 +199,7 @@ require_once __DIR__ . '/includes/admin-header.php';
               <?php foreach ($attrImp as $n => $a): ?><option value="<?= h($n) ?>"<?= $sc === $n ? ' selected' : '' ?>><?= h($n) ?> (<?= h(newsletter_attributo_etichetta($a)) ?>)</option><?php endforeach; ?>
               <option value="_CONSENSO"<?= $sc === '_CONSENSO' ? ' selected' : '' ?>>Data del consenso</option>
             </optgroup>
+            <option value="_TAG"<?= $sc === '_TAG' ? ' selected' : '' ?>>Tag (più tag separati da virgola o punto e virgola)</option>
             <option value="_NUOVO"<?= $sc === '_NUOVO' ? ' selected' : '' ?>>Crea un nuovo attributo...</option>
           </select>
           <div class="nli-nuovo" data-nli-nuovo<?= $sc === '_NUOVO' ? '' : ' hidden' ?>>
@@ -253,7 +254,7 @@ require_once __DIR__ . '/includes/admin-header.php';
   <dl class="nli-riepilogo">
     <div><dt>Da dove</dt><dd><?= $imp['origine'] === 'incolla' ? 'Testo incollato' : h(newsletter_4byte_fuori($imp['nome_file'])) ?></dd></div>
     <div><dt>Righe di contatti</dt><dd><?= (int)$imp['righe'] ?></dd></div>
-    <div><dt>Attributi che si importano</dt><dd><?= h(implode(', ', array_map(fn($n) => $n === '_CONSENSO' ? 'data del consenso' : $n, $abbinati))) ?></dd></div>
+    <div><dt>Attributi che si importano</dt><dd><?= h(implode(', ', array_map(fn($n) => $n === '_CONSENSO' ? 'data del consenso' : ($n === '_TAG' ? 'tag' : $n), $abbinati))) ?></dd></div>
     <div><dt>Liste</dt><dd><?= h(implode(', ', array_map(fn($l) => newsletter_4byte_fuori((string)($nomiListe[$l] ?? '')), $imp['liste']))) ?></dd></div>
   </dl>
   <fieldset class="nlk-scelte nli-opzioni">
@@ -267,6 +268,15 @@ require_once __DIR__ . '/includes/admin-header.php';
     <label><input type="checkbox" name="opz[flussi]" value="1"<?= $o['flussi'] ? ' checked' : '' ?> aria-describedby="nli-o4"> Fai partire le automazioni delle liste per i contatti importati</label>
     <p class="hint" id="nli-o4">Spenta di partenza: chi entra con un'importazione non riceve le email di benvenuto delle automazioni.</p>
   </fieldset>
+  <?php if (in_array('_TAG', $imp['mappatura'], true)): /* 2.23.0 */ ?>
+  <fieldset class="nlk-scelte nli-opzioni" id="nli-tag">
+    <legend>Tag dei contatti che ci sono già</legend>
+    <label><input type="radio" name="opz[tag]" value="aggiungi"<?= ($o['tag'] ?? 'aggiungi') !== 'sostituisci' ? ' checked' : '' ?> aria-describedby="nli-t1"> Aggiungi ai tag che ha</label>
+    <p class="hint" id="nli-t1">I tag del file si aggiungono; quelli che il contatto aveva restano.</p>
+    <label><input type="radio" name="opz[tag]" value="sostituisci"<?= ($o['tag'] ?? '') === 'sostituisci' ? ' checked' : '' ?> aria-describedby="nli-t2"> Sostituisci i tag che ha</label>
+    <p class="hint" id="nli-t2">Il contatto tiene solo i tag scritti nel file. Una cella vuota non toglie niente. I contatti nuovi ricevono i tag del file in tutti e due i casi; i tag nuovi nascono da soli. L'innesco «Riceve un tag» parte solo con la spunta delle automazioni qui sopra.</p>
+  </fieldset>
+  <?php endif; ?>
   <p class="nl-avviso" role="note"><b>Attenzione:</b> alcune di queste opzioni sovrascrivono i dati dei contatti che ci sono già o li mettono in lista nera, e non si torna indietro.</p>
   <div class="nli-consenso<?= isset($errori['consenso']) ? ' sbagliato' : '' ?>">
     <label><input type="checkbox" name="consenso" value="1" required aria-describedby="nli-consenso-aiuto<?= isset($errori['consenso']) ? ' nli-consenso-err' : '' ?>"<?= isset($errori['consenso']) ? ' aria-invalid="true"' : '' ?>> Confermo che questi contatti hanno dato il loro consenso esplicito a ricevere le mie email</label>

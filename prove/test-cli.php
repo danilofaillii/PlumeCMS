@@ -13,6 +13,15 @@
  *   innesco <test> <contatto> <esiti separati da spazio>   newsletter_flussi_innesco('test', ...)
  *   esito_firmato <id> <json corto> i parametri e e f di un link firmato (per gli attacchi: un esito "inventato" ma firmato bene non serve, qui si firma solo per confronto)
  *   pulisci_limiti                 svuota test_limiti (dopo gli invii a raffica)
+ * 2.23.0:
+ *   tag_crea <nome>                l'id del tag (creato se manca)
+ *   tag_di <email>                 i nomi dei tag del contatto con questa email
+ *   risultati_finti <test> <json>  righe di test_risultati: [{totale, fascia, profilo, aree, persona}], con il giorno di oggi
+ *   gruppi <test>                  test_statistiche_gruppi()
+ *   vista <test> <json esito corto> [chiave]   l'HTML della pagina del test e del risultato (per il confronto con la 2.22.0)
+ *   crea_vecchio <json>            un test scritto come lo scriveva la 2.22.0 (riga diretta nel database, dati così come sono)
+ *   email_corpo <test> <json esito> l'email del risultato completo (oggetto e HTML)
+ * Con la variabile d'ambiente TEST_ADDON (cartella) carica l'addon da lì: serve per la copia della 2.22.0.
  */
 [$dir, $cmd] = array_pad(array_slice($argv, 1, 2), 2, '');
 $arg = array_slice($argv, 3);
@@ -22,7 +31,8 @@ require $dir . '/includes/config.php';
 require_once $dir . '/includes/db.php';
 require_once $dir . '/includes/newsletter.php';
 require_once $dir . '/includes/newsletter-flussi.php';
-require_once $dir . '/addon/test/includes/test.php';
+$addonDir = getenv('TEST_ADDON') ?: $dir . '/addon/test';
+require_once $addonDir . '/includes/test.php';
 newsletter_schema();
 newsletter_flussi_schema();
 test_schema();
@@ -77,6 +87,42 @@ switch ($cmd) {
         if (!$id) { db()->prepare('INSERT INTO ' . tbl('pages') . " (title, slug, status, publish_at) VALUES (?, ?, 'published', NOW())")->execute([ucfirst(str_replace('-', ' ', $slug)), $slug]); $id = (int)db()->lastInsertId(); }
         db()->prepare('UPDATE ' . tbl('pages') . ' SET struttura = ?, struttura_bozza = NULL WHERE id = ?')->execute([editor_json($albero), $id]);
         $out = ['id' => $id, 'test' => $albero['elementi'][0]['figli'][0]['figli'][0]['impostazioni']['test'] ?? null];
+        break;
+    case 'tag_crea':
+        require_once $dir . '/includes/newsletter-tag.php';
+        $out = newsletter_tag_crea((string)$arg[0]);
+        break;
+    case 'tag_di':
+        require_once $dir . '/includes/newsletter-tag.php';
+        $out = array_values(newsletter_tag_di(newsletter_id_da_email((string)$arg[0])));
+        break;
+    case 'risultati_finti':
+        $ins = db()->prepare('INSERT INTO ' . tbl('test_risultati') . ' (test_id, giorno, totale, fascia, profilo, regola, aree, persona) VALUES (?, CURDATE(), ?, ?, ?, \'\', ?, ?)');
+        $n = 0;
+        foreach ((array)json_decode((string)$arg[1], true) as $x) { $ins->execute([(int)$arg[0], $x['totale'] ?? null, (string)($x['fascia'] ?? ''), (string)($x['profilo'] ?? ''), isset($x['aree']) ? json_encode($x['aree']) : null, isset($x['persona']) ? json_encode($x['persona']) : null]); $n++; }
+        $out = $n;
+        break;
+    case 'gruppi':
+        $out = test_statistiche_gruppi(test_leggi((int)$arg[0]));
+        break;
+    case 'vista':
+        require_once $addonDir . '/includes/vista.php';
+        $t = test_leggi((int)$arg[0]);
+        $e = (array)json_decode((string)$arg[1], true);
+        $link = cms_url_sito() . test_url($t) . 'risultato/?' . http_build_query(test_esito_parametri($e));
+        $togli = fn(string $h) => preg_replace(['/\?v=\d+/', '/name="gettone" value="[^"]*"/'], ['', 'name="gettone" value=""'], $h);
+        $out = ['modulo' => $togli(test_modulo_html($t)), 'risultato' => $togli(test_risultato_html($t, $e, $link, (string)($arg[2] ?? ''))), 'email' => test_email_corpo($t, $e, $link)];
+        break;
+    case 'crea_vecchio':
+        $x = (array)json_decode((string)$arg[0], true);
+        db()->prepare('INSERT INTO ' . tbl('test_test') . " (slug, nome, tipo, stato, durata, dati, struttura, creato, aggiornato) VALUES (?, ?, ?, 'pubblicato', 0, ?, NULL, NOW(), NOW())")
+            ->execute([(string)$x['slug'], (string)$x['nome'], (string)$x['tipo'], json_encode($x['dati'], JSON_UNESCAPED_SLASHES)]);
+        $out = (int)db()->lastInsertId();
+        break;
+    case 'email_corpo':
+        require_once $addonDir . '/includes/vista.php';
+        $t = test_leggi((int)$arg[0]);
+        $out = test_email_corpo($t, (array)json_decode((string)$arg[1], true), 'https://esempio.it/x');
         break;
     case 'pulisci_limiti':
         $out = db()->exec('DELETE FROM ' . tbl('test_limiti'));

@@ -87,9 +87,10 @@ $inneschiEsiti = is_array($flCosa['_esiti'] ?? null) ? $flCosa['_esiti'] : [];
 foreach (is_array($flCosa) ? $flCosa : [] as $k => $v) if ($k !== '_esiti' && is_array($v) && !isset($inneschiCosa[$k])) $inneschiCosa[$k] = $v;
 unset($flCosa);
 $eventiNomi = ['entrato' => 'È entrato', 'email' => 'Email', 'attesa' => 'Attesa', 'bivio' => 'Ramo scelto', 'evento' => 'Attendi un evento', 'azione' => 'Azione', 'finito' => 'Ha finito', 'tolto' => 'Tolto', 'uscito' => 'È uscito', 'fermato' => 'Fermato'];
-$tipiNomi = ['innesco' => 'Inneschi', 'email' => 'Email', 'attesa' => 'Attesa', 'bivio' => 'Sì o No', 'fine' => 'Fine', 'evento' => 'Attendi un evento', 'dividi' => 'Divisione condizionale', 'percento' => 'Divisione in percentuale', 'lista_aggiungi' => 'Aggiungi a una lista', 'lista_togli' => 'Togli da una lista', 'attributo' => 'Aggiorna un attributo', 'webhook' => 'Webhook'];
+$tipiNomi = ['innesco' => 'Inneschi', 'email' => 'Email', 'attesa' => 'Attesa', 'bivio' => 'Sì o No', 'fine' => 'Fine', 'evento' => 'Attendi un evento', 'dividi' => 'Divisione condizionale', 'percento' => 'Divisione in percentuale', 'lista_aggiungi' => 'Aggiungi a una lista', 'lista_togli' => 'Togli da una lista', 'attributo' => 'Aggiorna un attributo', 'webhook' => 'Webhook', 'tag_aggiungi' => 'Aggiungi tag', 'tag_togli' => 'Togli tag'];
+$nomiTag = newsletter_tag_nomi(); // 2.23.0: i tag dei contatti, per l'innesco "Riceve un tag" e le azioni
 $descriviInneschi = function (array $inn) use ($inneschiCosa): string {
-    return implode('; ', array_map(fn($x) => (nl_inneschi_nomi()[$x['tipo']] ?? $x['tipo']) . ($x['tipo'] === 'inattivo' ? ' (' . $x['id'] . ' giorni)' : ($x['tipo'] === 'anniversario' ? ': ' . ($inneschiCosa['anniversario'][$x['attr']] ?? $x['attr']) : ($x['id'] && isset($inneschiCosa[$x['tipo']][$x['id']]) ? ': ' . $inneschiCosa[$x['tipo']][$x['id']] : ''))), $inn));
+    return implode('; ', array_map(fn($x) => (nl_inneschi_nomi()[$x['tipo']] ?? $x['tipo']) . ($x['tipo'] === 'tag' ? ': ' . (array_intersect_key(newsletter_tag_nomi(), array_flip($x['tag'] ?? [])) ? implode(', ', array_intersect_key(newsletter_tag_nomi(), array_flip($x['tag']))) : 'qualunque tag') : '') . ($x['tipo'] === 'inattivo' ? ' (' . $x['id'] . ' giorni)' : ($x['tipo'] === 'anniversario' ? ': ' . ($inneschiCosa['anniversario'][$x['attr']] ?? $x['attr']) : ($x['id'] && isset($inneschiCosa[$x['tipo']][$x['id']]) ? ': ' . $inneschiCosa[$x['tipo']][$x['id']] : ''))), $inn));
 };
 require_once __DIR__ . '/includes/admin-header.php';
 ?>
@@ -285,6 +286,8 @@ if ($v['id']): ?>
         <div class="fl-pezzo" data-tipo="lista_togli" role="button" tabindex="0"><b>&#10134; Togli da una lista</b><small>Toglie il contatto da una lista</small></div>
         <div class="fl-pezzo" data-tipo="attributo" role="button" tabindex="0"><b>&#9998; Aggiorna un attributo</b><small>Scrive un valore nei dati del contatto</small></div>
         <div class="fl-pezzo" data-tipo="webhook" role="button" tabindex="0"><b>&#8599; Webhook</b><small>Manda i dati del contatto a un altro servizio (https)</small></div>
+        <div class="fl-pezzo" data-tipo="tag_aggiungi" role="button" tabindex="0"><b>&#127991; Aggiungi tag</b><small>Dà uno o più tag al contatto</small></div>
+        <div class="fl-pezzo" data-tipo="tag_togli" role="button" tabindex="0"><b>&#10005; Togli tag</b><small>Toglie uno o più tag al contatto</small></div>
       </section>
       <section class="fl-vista" id="fl-p-regole" role="tabpanel" aria-labelledby="fl-scheda-regole" hidden>
         <p class="hint">Fai clic su una regola (o Invio): entra dopo il blocco scelto sulla tela, collegata. Oppure trascinala sulla tela.</p>
@@ -319,6 +322,7 @@ var FL_DATI = {
   liste: <?= json_encode(array_map('strval', $nomiListe), $j) ?>,
   segmenti: <?= json_encode($segmenti ?: new stdClass(), $j) ?>,
   attributi: <?= json_encode($attributi ?: new stdClass(), $j) ?>,
+  tag: <?= json_encode(array_map('strval', $nomiTag) ?: new stdClass(), $j) ?>,
   modelli: <?= json_encode($modelliEmail ?: new stdClass(), $j) ?>,
   mittenti: <?= json_encode(['0' => 'Quello dell\'automazione'] + array_map('strval', $flMitt), $j) ?>,
   numeri: <?= json_encode($numeri['nodi'] ?: new stdClass(), $j) ?>,

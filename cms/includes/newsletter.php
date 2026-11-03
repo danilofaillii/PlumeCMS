@@ -600,6 +600,9 @@ function newsletter_conferma_esito(string $token): ?array {
     $attese = $att->fetchAll();
     db()->prepare('DELETE FROM ' . tbl('newsletter_inneschi_attesa') . ' WHERE iscritto_id = ?')->execute([$id]);
     foreach ($attese as $x) newsletter_flussi_innesco((string)$x['innesco'], (int)$x['innesco_id'], $id);
+    // 2.23.0: i tag che aspettavano la conferma (form con la doppia conferma, addon dei test), con l'innesco "Riceve un tag".
+    if (!function_exists('newsletter_tag_alla_conferma')) @include_once __DIR__ . '/newsletter-tag.php';
+    if (function_exists('newsletter_tag_alla_conferma')) { try { newsletter_tag_alla_conferma($id); } catch (Throwable $e) { error_log('newsletter_tag_alla_conferma: ' . $e->getMessage()); } }
     $esito = ['iscritto' => $id, 'email' => (string)$iscritto['email'], 'lista' => $lista, 'form' => $form, 'nuovo' => $nuovo];
     newsletter_ultima_conferma($esito);
     if (function_exists('cms_evento')) {
@@ -737,6 +740,8 @@ function newsletter_togli_iscritti(array $ids): void {
     }
     // 2.16.0: i gruppi di consenso (la tabella c'è dalla 2.16.0).
     try { db()->exec('DELETE FROM ' . tbl('newsletter_contatti_gruppi') . " WHERE contatto_id IN ($in)"); } catch (PDOException $e) {}
+    // 2.23.0: i tag del contatto e quelli che aspettavano la conferma (le tabelle ci sono dalla 2.23.0).
+    try { db()->exec('DELETE FROM ' . tbl('newsletter_contatti_tag') . " WHERE contatto_id IN ($in)"); db()->exec('DELETE FROM ' . tbl('newsletter_tag_attese') . " WHERE iscritto_id IN ($in)"); } catch (PDOException $e) {}
     db()->exec('DELETE FROM ' . tbl('newsletter_iscritti') . " WHERE id IN ($in)");
 }
 
@@ -781,6 +786,8 @@ function newsletter_pulizia(bool $forza = false): array {
     if (function_exists('newsletter_importa_pulizia')) { try { newsletter_importa_pulizia(); } catch (Throwable $e) { $log[] = 'ERRORE pulizia dei file dei contatti: ' . $e->getMessage(); } }
     // 2.15.0: il registro delle automazioni più vecchio di 90 giorni.
     if (function_exists('nl_aut_pulizia') && ($n = nl_aut_pulizia())) $log[] = "registro delle automazioni: $n righe vecchie tolte";
+    // 2.23.0: i tag che aspettavano una conferma mai arrivata (40 giorni, come gli inneschi).
+    if (function_exists('newsletter_tag_pulizia')) { try { newsletter_tag_pulizia(); } catch (Throwable $e) { $log[] = 'ERRORE pulizia dei tag in attesa: ' . $e->getMessage(); } }
     return $log;
 }
 
@@ -1054,6 +1061,7 @@ function newsletter_invia_giro(?int $massimo = null): array {
 
 require_once __DIR__ . '/newsletter-flussi.php';
 require_once __DIR__ . '/newsletter-contatti.php'; // 2.8.0: contatti, attributi, cartelle (come Brevo)
+require_once __DIR__ . '/newsletter-tag.php'; // 2.23.0: i tag dei contatti
 require_once __DIR__ . '/newsletter-importa.php'; // 2.9.0: importazione, esportazione, lista dei test (come Brevo)
 require_once __DIR__ . '/newsletter-segmenti.php'; // 2.10.0: segmenti, filtri e viste (come Brevo)
 require_once __DIR__ . '/newsletter-campagne.php'; // 2.11.0: campagne a riepilogo, disiscrizione con il questionario, centro preferenze

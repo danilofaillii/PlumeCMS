@@ -43,6 +43,8 @@ const NL_SEG_OPERATORI = [
     'iscritto_da' => ['almeno' => 'da almeno', 'meno' => 'da meno di'],
     'attivita' => ['si' => 'ha aperto o cliccato qualcosa', 'no' => 'non ha aperto né cliccato niente'],
     'flusso_email' => ['aperta' => "ha aperto l'email", 'non_aperta' => "non ha aperto l'email", 'cliccata' => "ha cliccato nell'email", 'non_cliccata' => "non ha cliccato nell'email"],
+    // 2.23.0: i tag dei contatti (includes/newsletter-tag.php).
+    'tag' => ['qualsiasi' => 'ha almeno uno di questi tag', 'tutti' => 'ha tutti questi tag', 'nessuno' => 'non ha nessuno di questi tag', 'non_tutti' => 'non ha tutti questi tag'],
 ];
 /** Le colonne di newsletter_iscritti degli attributi di sistema, con il tipo per le condizioni. Elenco chiuso. */
 const NL_SEG_COLONNE = ['email' => 'text', 'nome' => 'text', 'cognome' => 'text', 'ext_id' => 'text', 'opt_in' => 'boolean', 'doi_at' => 'boolean', 'creato' => 'date', 'aggiornato' => 'date', 'tracciamento' => 'boolean'];
@@ -59,6 +61,8 @@ function newsletter_segmenti_schema(): void {
     $fatto = true;
     newsletter_schema();
     newsletter_flussi_schema();
+    if (!function_exists('newsletter_tag_schema')) require_once __DIR__ . '/newsletter-tag.php'; // 2.23.0: le condizioni sui tag
+    newsletter_tag_schema();
     $tabelle = [
         'newsletter_segmenti' => 'CREATE TABLE IF NOT EXISTS ' . tbl('newsletter_segmenti') . " (
             `id` INT(11) NOT NULL AUTO_INCREMENT,
@@ -130,6 +134,7 @@ function newsletter_regole_campi(bool $flusso = false): array {
         'iscritto_da' => ['Iscrizione e lista nera', 'Iscritto da tanti giorni', 'iscritto_da'],
         'lista' => ['Liste e segmenti', 'Liste', 'lista'],
         'nessuna_lista' => ['Liste e segmenti', 'In nessuna lista', 'nessuna_lista'],
+        'tag' => ['Liste e segmenti', 'Tag', 'tag'], // 2.23.0
         'segmento' => ['Liste e segmenti', 'Segmento', 'segmento'],
         'email' => ['Email', 'Email aperte, cliccate, ricevute', 'email'],
         'link' => ['Email', 'Link preciso cliccato', 'link'],
@@ -163,8 +168,10 @@ function newsletter_regole_definizione(int $segmentoEscluso = 0): array {
     $link = db()->query('SELECT url FROM ' . tbl('newsletter_eventi') . " WHERE tipo = 'clic' AND url <> '' GROUP BY url ORDER BY MAX(id) DESC LIMIT 200")->fetchAll(PDO::FETCH_COLUMN);
     $motivi = [];
     foreach (NL_MOTIVI as $k => $m) $motivi[$k] = $m[0];
+    if (!function_exists('newsletter_tag_nomi')) require_once __DIR__ . '/newsletter-tag.php'; // 2.23.0
+    $tag = newsletter_tag_nomi();
     return ['campi' => $campi, 'operatori' => NL_SEG_OPERATORI, 'unita' => array_combine(array_keys(NL_SEG_UNITA), ['giorni', 'settimane', 'mesi']),
-        'liste' => $liste, 'segmenti' => $seg, 'campagne' => $camp, 'form' => $form, 'link' => $link, 'motivi' => $motivi, 'massimo' => NL_SEG_CONDIZIONI_MAX];
+        'liste' => $liste, 'segmenti' => $seg, 'campagne' => $camp, 'form' => $form, 'link' => $link, 'motivi' => $motivi, 'tag' => $tag ?: new stdClass(), 'massimo' => NL_SEG_CONDIZIONI_MAX];
 }
 
 // ------------------------------------------------------------
@@ -264,6 +271,14 @@ function newsletter_condizione_valida($c, array $campi, array $ctx) {
         case 'lista':
             $v = $ids($c['valore'] ?? []);
             if (!$v) return 'scegli almeno una lista.';
+            $out['valore'] = $v;
+            return $out;
+        case 'tag':
+            // 2.23.0: solo tag che esistono (un id inventato non arriva all'SQL come condizione vuota).
+            if (!function_exists('newsletter_tag_nomi')) require_once __DIR__ . '/newsletter-tag.php';
+            $esistono = newsletter_tag_nomi();
+            $v = array_values(array_filter($ids($c['valore'] ?? [], 50), fn($x) => isset($esistono[$x])));
+            if (!$v) return 'scegli almeno un tag.';
             $out['valore'] = $v;
             return $out;
         case 'segmento':
@@ -385,6 +400,13 @@ function nl_seg_condizione_sql(array $c, array &$par, array $ctx): string {
         case 'nessuna_lista':
             $s = "EXISTS (SELECT 1 FROM $il l WHERE l.iscritto_id = i.id)";
             return $op === 'si' ? "NOT $s" : $s;
+        case 'tag':
+            // 2.23.0: qualsiasi = almeno uno; tutti = il conteggio dei tag scelti che ha è uguale a quanti sono.
+            $ct = tbl('newsletter_contatti_tag');
+            $in = nl_seg_in($c['valore'], $par);
+            if ($op === 'qualsiasi' || $op === 'nessuno') { $s = "EXISTS (SELECT 1 FROM $ct ct WHERE ct.contatto_id = i.id AND ct.tag_id IN ($in))"; return $op === 'qualsiasi' ? $s : "NOT $s"; }
+            $par[] = count($c['valore']);
+            return "(SELECT COUNT(*) FROM $ct ct WHERE ct.contatto_id = i.id AND ct.tag_id IN ($in)) " . ($op === 'tutti' ? '=' : '<') . ' ?';
         case 'segmento':
             $sid = (int)$c['valore'];
             $visti = $ctx['_visti'] ?? [];
@@ -576,7 +598,7 @@ function newsletter_regole_testo(array $regole): string {
             if ($v !== null) {
                 $def ??= newsletter_regole_definizione();
                 $nomi = match ($tipo) {
-                    'lista' => $def['liste'], 'segmento' => $def['segmenti'], 'form' => $def['form'] + [0 => 'qualsiasi form'], 'lista_nera' => $def['motivi'],
+                    'lista' => $def['liste'], 'tag' => (array)$def['tag'], 'segmento' => $def['segmenti'], 'form' => $def['form'] + [0 => 'qualsiasi form'], 'lista_nera' => $def['motivi'],
                     default => $def['campi'][$c['campo']]['o'] ?? [],
                 };
                 $vv = array_map(fn($x) => $nomi[$x] ?? (is_float($x) ? newsletter_numero_testo($x) : (string)$x), is_array($v) ? $v : [$v]);

@@ -47,18 +47,20 @@ function test_condizione_testo(array $t, array $q): string {
 
 /**
  * Il modulo con tutte le domande. $o: risposte (per rimetterle dopo un errore), errori (domanda => codice), errore
- * (generale), anteprima (true: nella tela dell'editor, senza invio).
+ * (generale), anteprima (true: nella tela dell'editor, senza invio). 2.23.0: persona (le risposte sulla persona date) e
+ * errori_persona (domanda => codice).
  */
 function test_modulo_html(array $t, array $o = []): string {
-    $o += ['risposte' => [], 'errori' => [], 'errore' => ''];
+    $o += ['risposte' => [], 'errori' => [], 'errore' => '', 'persona' => [], 'errori_persona' => []];
     $d = $t['dati'];
     $azione = cms_sito_base() . test_url($t) . 'invia/';
     $out = '<form method="post" action="' . h($azione) . '" class="tq-modulo" id="tq-modulo" data-test="' . (int)$t['id'] . '"'
         . ($d['casuale'] ? ' data-casuale="1"' : '') . ' data-api="' . h(cms_sito_base() . '/test-api/passo/') . '">'
         . '<input type="hidden" name="gettone" value="' . h(test_gettone((int)$t['id'])) . '"><input type="hidden" name="tentativo" value="">';
     if ($o['errore'] !== '') $out .= '<p class="modulo-errore" role="alert" id="tq-errore">' . h(TEST_ERRORI[$o['errore']] ?? $o['errore']) . '</p>';
-    elseif ($o['errori']) $out .= '<p class="modulo-errore" role="alert" id="tq-errore">' . (count($o['errori']) === 1 ? 'Una domanda da sistemare: la trovi segnata qui sotto.' : count($o['errori']) . ' domande da sistemare: le trovi segnate qui sotto.') . '</p>';
-    $tot = count($d['domande']);
+    elseif ($o['errori'] || $o['errori_persona']) { $ne = count($o['errori']) + count($o['errori_persona']); $out .= '<p class="modulo-errore" role="alert" id="tq-errore">' . ($ne === 1 ? 'Una domanda da sistemare: la trovi segnata qui sotto.' : $ne . ' domande da sistemare: le trovi segnate qui sotto.') . '</p>'; }
+    $pers = $d['persona']['domande'];
+    $tot = count($d['domande']) + count($pers);
     foreach ($d['domande'] as $i => $q) {
         $k = $q['k'];
         $err = $o['errori'][$k] ?? '';
@@ -85,6 +87,22 @@ function test_modulo_html(array $t, array $o = []): string {
             $out .= '</div>';
         }
         if ($err !== '') $out .= '<p class="errore-campo" id="te-' . h($k) . '" role="alert">' . h(TEST_ERRORI[$err] ?? '') . '</p>';
+        $out .= '</fieldset>';
+    }
+    // 2.23.0: le domande sulla persona, alla fine e prima del risultato. Non danno punti; facoltative con "Preferisco non rispondere".
+    $obblP = $d['persona']['obbligatorie'];
+    foreach ($pers as $j => $q) {
+        $k = $q['k'];
+        $err = $o['errori_persona'][$k] ?? '';
+        $val = (string)($o['persona'][$k] ?? '');
+        $out .= '<fieldset class="tq-domanda tq-persona' . ($err !== '' ? ' errato' : '') . '" id="tp-' . h($k) . '" data-k="p-' . h($k) . '" data-persona="1" data-tipo="scelta" data-obbl="' . ($obblP ? '1' : '0') . '" aria-describedby="tpa-' . h($k) . ($err !== '' ? ' tpe-' . h($k) : '') . '">'
+            . '<legend><span class="tq-num">Domanda ' . (count($d['domande']) + $j + 1) . ' di ' . $tot . ($obblP ? '' : ' <small>(facoltativa)</small>') . '</span> <span class="tq-testo-domanda">' . h($q['testo']) . '</span></legend>'
+            . '<p class="tq-aiuto" id="tpa-' . h($k) . '"><span class="tq-se">Su di te:</span> non cambia il risultato e resta anonima.</p>'
+            . '<div class="tq-opzioni tq-opzioni-persona' . (count($q['opzioni']) > 12 ? ' tq-opzioni-tante' : '') . '">';
+        foreach ($q['opzioni'] as $i => $op) $out .= '<label class="tq-opz"><input type="radio" name="p[' . h($k) . ']" value="' . h($op['k']) . '"' . ($val === $op['k'] ? ' checked' : '') . ($i === 0 && $obblP ? ' required' : '') . '> <span>' . h($op['t']) . '</span></label>';
+        if (!$obblP) $out .= '<label class="tq-opz tq-opz-nr"><input type="radio" name="p[' . h($k) . ']" value="' . TEST_PERSONA_NR . '"' . ($val === TEST_PERSONA_NR ? ' checked' : '') . '> <span>' . TEST_PERSONA_NR_TESTO . '</span></label>';
+        $out .= '</div>';
+        if ($err !== '') $out .= '<p class="errore-campo" id="tpe-' . h($k) . '" role="alert">' . h(TEST_ERRORI[$err] ?? '') . '</p>';
         $out .= '</fieldset>';
     }
     $out .= '<div class="tq-fine" id="tq-fine"><div class="esca" aria-hidden="true"><label>Sito web <input name="sito_web" tabindex="-1" autocomplete="off"></label></div>'
@@ -131,11 +149,14 @@ function editor_link_sicuro_test(string $u): string {
 function test_risultato_parti(array $t, array $e): array {
     $d = $t['dati'];
     $per = fn(array $l, string $k) => array_values(array_filter($l, fn($x) => $x['k'] === $k))[0] ?? null;
-    $parti = ['titolo' => '', 'pct' => null, 'testo' => '', 'pulsante' => '', 'barre' => [], 'sotto' => ''];
+    // 2.23.0: breve = la risposta breve (a schermo), testo = la risposta completa. Un risultato con il solo testo (i test
+    // della 2.22.0) ha la breve vuota: a schermo esce la completa, come prima.
+    $parti = ['titolo' => '', 'pct' => null, 'testo' => '', 'breve' => '', 'fascia_nome' => '', 'fascia_testo' => '', 'pulsante' => '', 'barre' => [], 'sotto' => ''];
     if ($t['tipo'] === 'profili') {
         $p = $per($d['profili'], (string)($e['p'] ?? ''));
         $parti['titolo'] = $p ? $p['nome'] : 'Il tuo profilo';
         $parti['testo'] = $p ? test_ricco_html($p['testo']) : '';
+        $parti['breve'] = $p ? test_ricco_html($p['breve'] ?? '') : '';
         $parti['pulsante'] = $p ? test_pulsante_html($p) : '';
         foreach ($d['profili'] as $x) $parti['barre'][] = ['nome' => $x['nome'], 'pct' => (int)($e['q'][$x['k']] ?? 0), 'fascia' => ''];
         return $parti;
@@ -145,12 +166,15 @@ function test_risultato_parti(array $t, array $e): array {
     $r = isset($e['r']) ? $per($d['regole'], (string)$e['r']) : null;
     $parti['titolo'] = $r ? $r['nome'] : ($f ? $f['nome'] : 'Il tuo risultato');
     $parti['testo'] = test_ricco_html($r ? $r['testo'] : ($f['testo'] ?? ''));
+    $parti['breve'] = test_ricco_html($r ? ($r['breve'] ?? '') : ($f['breve'] ?? ''));
+    $parti['fascia_nome'] = $f['nome'] ?? '';
+    $parti['fascia_testo'] = $r && $f ? test_ricco_html(($f['testo'] ?? '') !== '' ? $f['testo'] : ($f['breve'] ?? '')) : ''; // con una regola: anche la fascia del totale, nell'email
     $parti['pulsante'] = test_pulsante_html($r ?: ($f ?: []));
     foreach ($d['aree'] as $a) {
         $x = $e['a'][$a['k']] ?? null;
         if (!is_array($x) || !is_numeric($x[0] ?? null)) continue;
         $fa = $per($a['fasce'], (string)($x[1] ?? ''));
-        $parti['barre'][] = ['nome' => $a['nome'], 'pct' => (int)$x[0], 'fascia' => $fa['nome'] ?? '', 'testo' => $fa ? test_ricco_html($fa['testo']) : ''];
+        $parti['barre'][] = ['nome' => $a['nome'], 'pct' => (int)$x[0], 'fascia' => $fa['nome'] ?? '', 'testo' => $fa ? test_ricco_html($fa['testo']) : '', 'breve' => $fa ? test_ricco_html($fa['breve'] ?? '') : ''];
     }
     return $parti;
 }
@@ -163,13 +187,17 @@ function test_risultato_html(array $t, array $e, string $link, string $chiaveEma
     if ($p['pct'] !== null) $out .= '<p class="tq-punteggio"><b>' . $p['pct'] . '</b> <span>su 100</span></p><div class="tq-barra" role="img" aria-label="' . $p['pct'] . ' su 100"><span style="width:' . $p['pct'] . '%"></span></div>';
     $out .= '</header>';
     if (($msg['ok'] ?? '') !== '') $out .= '<p class="tq-ok" role="status">' . h($msg['ok']) . '</p>';
-    if ($p['testo'] !== '') $out .= '<div class="corpo tq-testo">' . $p['testo'] . '</div>';
+    // 2.23.0: a schermo la risposta breve; la completa sotto, oppure solo per email ("Il risultato completo solo per email").
+    // Senza breve (i test della 2.22.0) esce la completa, con lo stesso HTML di prima.
+    $soloEmail = test_solo_email($t);
+    if ($p['breve'] !== '') $out .= '<div class="corpo tq-testo tq-breve">' . $p['breve'] . '</div>';
+    if ($p['testo'] !== '' && ($p['breve'] === '' || !$soloEmail)) $out .= '<div class="corpo tq-testo">' . $p['testo'] . '</div>';
     if ($p['barre']) {
         $titolo = $t['tipo'] === 'profili' ? 'Quanto somigli a ogni profilo' : 'Le aree';
         $out .= '<section class="tq-aree" aria-label="' . h($titolo) . '"><h2>' . h($titolo) . '</h2>' . test_grafico_svg($p['barre'], $titolo);
         if ($t['tipo'] === 'aree') {
             $out .= '<dl class="tq-aree-testi">';
-            foreach ($p['barre'] as $b) $out .= '<dt>' . h($b['nome']) . ': ' . (int)$b['pct'] . ' su 100' . ($b['fascia'] !== '' ? ', ' . h($b['fascia']) : '') . '</dt><dd>' . ($b['testo'] ?? '') . '</dd>';
+            foreach ($p['barre'] as $b) $out .= '<dt>' . h($b['nome']) . ': ' . (int)$b['pct'] . ' su 100' . ($b['fascia'] !== '' ? ', ' . h($b['fascia']) : '') . '</dt><dd>' . (($b['breve'] ?? '') !== '' ? $b['breve'] . (!$soloEmail ? ($b['testo'] ?? '') : '') : ($b['testo'] ?? '')) . '</dd>';
             $out .= '</dl>';
         }
         $out .= '</section>';
@@ -179,7 +207,7 @@ function test_risultato_html(array $t, array $e, string $link, string $chiaveEma
     // Il link da condividere: solo l'esito, firmato.
     $out .= '<section class="tq-condividi"><h2>Condividi il risultato</h2><p class="tq-nota">Il link mostra solo l\'esito, non le tue risposte né chi sei.</p>'
         . '<div class="tq-link"><label for="tq-link" class="sr-solo">Link al risultato</label><input id="tq-link" type="text" readonly value="' . h($link) . '" data-copia><button type="button" class="btn btn-filo" data-copia-link hidden>Copia il link</button></div></section>';
-    if ($d['dopo']['email'] && $chiaveEmail !== '') $out .= test_email_html($t, $e, $link, $chiaveEmail, $msg);
+    if (test_email_attiva($t) && $chiaveEmail !== '') $out .= test_email_html($t, $e, $link, $chiaveEmail, $msg);
     $out .= '<p class="tq-rifai"><a href="' . h(test_url($t)) . '">Rifai il test</a></p></div>'
         . '<script src="' . h(test_asset('test.js')) . '" defer></script>';
     return $out;
@@ -192,10 +220,15 @@ function test_email_html(array $t, array $e, string $link, string $chiave, array
     parse_str((string)$q, $qq);
     $err = (string)($msg['errore'] ?? '');
     $lista = $dp['lista'] > 0 && function_exists('newsletter_nome_lista') && newsletter_nome_lista($dp['lista']) !== '';
-    return '<section class="modulo tq-email" id="tq-email" aria-labelledby="tq-email-t"><h2 id="tq-email-t">Vuoi ricevere il risultato per email?</h2>'
+    // 2.23.0: con "Il risultato completo solo per email" il riquadro lo dice; pz sono le risposte sulla persona firmate con k.
+    $pz = (string)($msg['pz'] ?? '');
+    $solo = test_solo_email($t);
+    return '<section class="modulo tq-email' . ($solo ? ' tq-email-completo' : '') . '" id="tq-email" aria-labelledby="tq-email-t"><h2 id="tq-email-t">' . ($solo ? h(TEST_TITOLO_EMAIL) : 'Vuoi ricevere il risultato per email?') . '</h2>'
+        . ($solo ? '<p class="tq-nota">Qui sopra c\'è la risposta breve. Per email ricevi il risultato completo: il testo intero' . ($t['tipo'] === 'aree' ? ', ogni area con il suo grafico' : '') . ' e cosa puoi fare adesso.</p>' : '')
         . ($err !== '' ? '<p class="modulo-errore" role="alert">' . h(TEST_ERRORI[$err] ?? $err) . '</p>' : '')
         . '<form method="post" action="' . h(cms_sito_base() . test_url($t) . 'email/') . '" data-captcha>'
         . '<input type="hidden" name="modulo" value="test-email:' . (int)$t['id'] . '"><input type="hidden" name="e" value="' . h((string)($qq['e'] ?? '')) . '"><input type="hidden" name="f" value="' . h((string)($qq['f'] ?? '')) . '"><input type="hidden" name="k" value="' . h($chiave) . '"><input type="hidden" name="captcha" value="">'
+        . ($pz !== '' ? '<input type="hidden" name="pz" value="' . h($pz) . '">' : '')
         . '<div class="modulo-campi"><label><span>Email</span><input type="email" name="email" autocomplete="email" maxlength="190" required></label></div>'
         . '<div class="esca" aria-hidden="true"><label>Sito web <input name="sito_web" tabindex="-1" autocomplete="off"></label></div>'
         . '<label class="spunta"><input type="checkbox" name="consenso" value="1" required> <span>' . h($dp['consenso']) . '</span></label>'
@@ -205,11 +238,32 @@ function test_email_html(array $t, array $e, string $link, string $chiave, array
         . '<script src="' . (function_exists('sito_versione_asset') ? sito_versione_asset('moduli.js') : cms_base() . '/sito/assets/moduli.js') . '" defer></script></section>';
 }
 
-/** L'email con il risultato. */
+/**
+ * L'email con il risultato completo (2.23.0): il punteggio, la risposta completa (della regola, e quella della fascia del
+ * totale; oppure del profilo), il grafico delle aree fatto di tabelle (la posta non mostra l'SVG) con la risposta completa di
+ * ogni area, il pulsante del risultato e l'avvertenza. Dove la completa è vuota vale la breve.
+ */
 function test_email_corpo(array $t, array $e, string $link): array {
     $p = test_risultato_parti($t, $e);
-    $corpo = ($p['pct'] !== null ? '<p style="font-size:28px;font-weight:700;margin:0 0 12px">' . $p['pct'] . ' su 100</p>' : '') . $p['testo'];
-    foreach ($p['barre'] as $b) $corpo .= '<p style="margin:6px 0"><b>' . h($b['nome']) . '</b>: ' . (int)$b['pct'] . ' su 100' . ($b['fascia'] !== '' ? ' (' . h($b['fascia']) . ')' : '') . '</p>';
+    $testo = fn(string $completo, string $breve) => $completo !== '' ? $completo : $breve;
+    $corpo = $p['pct'] !== null ? '<p style="font-size:28px;font-weight:700;margin:0 0 12px">' . $p['pct'] . ' su 100</p>' : '';
+    $corpo .= $testo($p['testo'], $p['breve']);
+    if ($p['fascia_testo'] !== '') $corpo .= '<h2 style="font-size:18px;margin:22px 0 8px">Il totale: ' . h($p['fascia_nome']) . '</h2>' . $p['fascia_testo'];
+    if ($p['barre']) {
+        $corpo .= '<h2 style="font-size:18px;margin:26px 0 10px">' . ($t['tipo'] === 'profili' ? 'Quanto somigli a ogni profilo' : 'Le aree') . '</h2>'
+            . '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse">';
+        foreach ($p['barre'] as $b) {
+            $pct = max(0, min(100, (int)$b['pct']));
+            $corpo .= '<tr><td style="padding:10px 0 4px;font-size:15px"><b>' . h($b['nome']) . '</b>' . ($b['fascia'] !== '' ? ' &middot; ' . h($b['fascia']) : '') . '</td><td align="right" style="padding:10px 0 4px;font-size:15px;font-weight:700;white-space:nowrap">' . $pct . ' su 100</td></tr>'
+                . '<tr><td colspan="2" style="padding:0 0 6px"><table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;background:#e7e7ee"><tr>'
+                . ($pct > 0 ? '<td class="tq-barra-email" width="' . $pct . '%" style="background:#7c3aed;height:14px;line-height:14px;font-size:1px">&nbsp;</td>' : '')
+                . ($pct < 100 ? '<td width="' . (100 - $pct) . '%" style="height:14px;line-height:14px;font-size:1px">&nbsp;</td>' : '') . '</tr></table></td></tr>';
+            $tb = $testo((string)($b['testo'] ?? ''), (string)($b['breve'] ?? ''));
+            if ($tb !== '') $corpo .= '<tr><td colspan="2" style="padding:0 0 8px;font-size:15px;line-height:1.55">' . $tb . '</td></tr>';
+        }
+        $corpo .= '</table>';
+    }
+    if ($p['pulsante'] !== '') $corpo .= str_replace(['class="tq-azione"', 'class="btn btn-viola"'], ['style="margin:22px 0"', 'style="display:inline-block;background:#7c3aed;color:#fff;padding:12px 22px;border-radius:10px;text-decoration:none;font-weight:700"'], $p['pulsante']);
     if (trim($t['dati']['avvertenza']) !== '') $corpo .= '<p style="font-size:13px;color:#555;margin-top:20px">' . nl2br(h($t['dati']['avvertenza']), false) . '</p>';
     return ['Il tuo risultato: ' . $t['nome'], moduli_email_html($t['nome'] . ': ' . $p['titolo'], $corpo, 'Rivedi il risultato', $link)];
 }

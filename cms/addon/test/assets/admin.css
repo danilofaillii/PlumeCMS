@@ -94,3 +94,12 @@
 .ts-barre-barra span{display:block;height:100%;background:var(--coral)}
 .ts-tabella-dom td{vertical-align:top}
 @media (max-width:640px){.ts-dom-bottoni{margin-left:0}.fo-azioni{justify-content:stretch}.fo-azioni .btn{flex:1 1 auto}}
+/* 2.23.0: le domande sulla persona (passo 2) e le statistiche per gruppi */
+.ts-persona-voce{border:1px solid var(--border);border-radius:8px;margin:.5rem 0;padding:0 .9rem}
+.ts-persona-voce>summary{cursor:pointer;padding:.7rem 0;display:flex;flex-wrap:wrap;gap:.5rem;align-items:center;min-height:44px}
+.ts-persona-voce>summary .hint{flex:1 1 100%;margin:0}
+.ts-persona-voce>summary:focus-visible{outline:2px solid var(--coral);outline-offset:2px}
+.ts-persona-voce[open]{padding-bottom:.8rem}
+.ts-persona-riga{display:grid;grid-template-columns:minmax(0,7rem) minmax(0,1fr);gap:.8rem}
+.ts-tabella-gruppi td,.ts-tabella-gruppi th{white-space:nowrap}
+.ts-tabella-gruppi tr.ts-nascosto td{color:var(--text-muted)}

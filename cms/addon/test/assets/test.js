@@ -64,12 +64,16 @@
     var chiavi = tutte.map(function (f) { return f.getAttribute('data-k'); });
     if (!form.getAttribute('data-casuale')) return chiavi;
     if (Array.isArray(stato.o) && stato.o.length === chiavi.length && stato.o.every(function (k) { return perK[k]; })) return stato.o;
+    // 2.23.0: le domande sulla persona restano in fondo, nel loro ordine.
+    var persona = chiavi.filter(function (k) { return perK[k].getAttribute('data-persona'); });
+    chiavi = chiavi.filter(function (k) { return !perK[k].getAttribute('data-persona'); });
     var fisse = chiavi.filter(function (k) { return !cond(perK[k]); });
     for (var i = fisse.length - 1; i > 0; i--) { var j = Math.floor(Math.random() * (i + 1)), x = fisse[i]; fisse[i] = fisse[j]; fisse[j] = x; }
     var out = [];
     function metti(k) { out.push(k); chiavi.forEach(function (c) { var x = cond(perK[c]); if (x && x.domanda === k) metti(c); }); }
     fisse.forEach(metti);
     chiavi.forEach(function (k) { if (out.indexOf(k) < 0) out.push(k); });
+    out = out.concat(persona);
     stato.o = out;
     return out;
   }

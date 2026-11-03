@@ -21,6 +21,8 @@
  * ai byte decompressi letto davvero (non quello scritto nello zip).
  */
 
+require_once __DIR__ . '/newsletter-tag.php'; // 2.23.0: la colonna dei tag (file nuovo: opcache non ne ha una copia vecchia)
+
 const NL_IMP_COLONNE_MAX = 200;
 const NL_IMP_CELLA_MAX = 1000;
 const NL_IMP_PEZZO = 200;            // righe per transazione
@@ -28,7 +30,9 @@ const NL_XLSX_TETTO = 41943040;      // 40 MB decompressi in tutto: oltre, è un
 const NL_FILE_GIORNI = 7;            // esportazioni e scarti restano 7 giorni
 const NL_TEST_MASSIMO = 20;          // Brevo: al massimo 20 indirizzi nella lista dei test
 /** Le colonne di stato che l'esportazione aggiunge dopo gli attributi (come la 2.8.0). */
-const NL_ESP_EXTRA = ['ISCRITTO' => 'Iscritto (sì o no)', 'LISTA_NERA' => 'In lista nera (sì o no)', 'MOTIVO' => 'Motivo della lista nera', 'LISTE' => 'Liste'];
+const NL_ESP_EXTRA = ['ISCRITTO' => 'Iscritto (sì o no)', 'LISTA_NERA' => 'In lista nera (sì o no)', 'MOTIVO' => 'Motivo della lista nera', 'LISTE' => 'Liste', 'TAG' => 'Tag']; // 2.23.0: TAG
+/** 2.23.0: i nomi di colonna che si abbinano da soli a "Tag" (_TAG), se non c'è un attributo con quel nome. */
+const NL_IMP_TAG_NOMI = ['TAG', 'TAGS', 'ETICHETTA', 'ETICHETTE'];
 /** Nomi di colonna che si abbinano da soli a un attributo (oltre al nome uguale). _CONSENSO = la data del consenso. */
 const NL_IMP_SINONIMI = [
     'E_MAIL' => 'EMAIL', 'MAIL' => 'EMAIL', 'INDIRIZZO_EMAIL' => 'EMAIL', 'EMAIL_ADDRESS' => 'EMAIL', 'POSTA_ELETTRONICA' => 'EMAIL',
@@ -42,6 +46,7 @@ function newsletter_importa_schema(): void {
     if ($fatto) return;
     $fatto = true;
     newsletter_schema();
+    newsletter_tag_schema(); // 2.23.0: prima dei giri, che lavorano dentro una transazione (un CREATE TABLE la chiuderebbe)
     $tabelle = [
         'newsletter_importazioni' => 'CREATE TABLE IF NOT EXISTS ' . tbl('newsletter_importazioni') . " (
             `id` INT(11) NOT NULL AUTO_INCREMENT,
@@ -371,7 +376,7 @@ function newsletter_importazione(int $id): ?array {
     $i['intestazione'] = json_decode((string)$i['intestazione'], true) ?: [];
     $i['anteprima'] = json_decode(newsletter_4byte_fuori((string)$i['anteprima']), true) ?: [];
     $i['mappatura'] = json_decode((string)$i['mappatura'], true) ?: [];
-    $i['opzioni'] = (json_decode((string)$i['opzioni'], true) ?: []) + ['aggiorna' => false, 'vuote' => false, 'nera' => false, 'flussi' => false];
+    $i['opzioni'] = (json_decode((string)$i['opzioni'], true) ?: []) + ['aggiorna' => false, 'vuote' => false, 'nera' => false, 'flussi' => false, 'tag' => 'aggiungi'];
     $i['dettagli'] = json_decode((string)$i['dettagli'], true) ?: [];
     $i['liste'] = array_values(array_filter(array_map('intval', explode(',', (string)$i['liste']))));
     return $i;
@@ -389,8 +394,8 @@ function newsletter_importa_abbina(array $testa, array $anteprima = []): array {
     $usati = []; $out = [];
     foreach ($testa as $t) {
         $n = newsletter_attributo_nome((string)$t);
-        $n = NL_ATTR_ALIAS[$n] ?? NL_IMP_SINONIMI[$n] ?? $n;
-        $ok = ($n === '_CONSENSO' || isset($attr[$n])) && !isset($usati[$n]);
+        $n = NL_ATTR_ALIAS[$n] ?? NL_IMP_SINONIMI[$n] ?? (in_array($n, NL_IMP_TAG_NOMI, true) && !isset($attr[$n]) ? '_TAG' : $n);
+        $ok = ($n === '_CONSENSO' || $n === '_TAG' || isset($attr[$n])) && !isset($usati[$n]);
         if ($ok) $usati[$n] = true;
         $out[] = $ok ? $n : '';
     }
@@ -403,7 +408,7 @@ function newsletter_importa_abbina(array $testa, array $anteprima = []): array {
 }
 
 /**
- * Passo 2: salva l'abbinamento. $scelte[i] = nome dell'attributo, '' (non importare), '_CONSENSO' o '_NUOVO'; $nuovi[i] =
+ * Passo 2: salva l'abbinamento. $scelte[i] = nome dell'attributo, '' (non importare), '_CONSENSO', '_TAG' (2.23.0) o '_NUOVO'; $nuovi[i] =
  * ['nome', 'tipo'] per "Crea un nuovo attributo" (si crea subito, come in Brevo). Ritorna gli errori per colonna
  * ([indice => messaggio], 'tutti' => messaggio generale); vuoto se è andato bene.
  */
@@ -425,8 +430,8 @@ function newsletter_importa_salva_abbinamento(int $id, array $scelte, array $nuo
             } elseif (!isset($attr[$nome])) { $err[$i] = "L'attributo $nome esiste già ma non si può importare: scegli un altro nome."; $map[] = ''; continue; }
             $s = $nome;
         }
-        if ($s !== '' && $s !== '_CONSENSO' && !isset($attr[$s])) $s = '';
-        if ($s !== '' && isset($usati[$s])) { $err[$i] = 'Questo attributo è già abbinato alla colonna «' . $imp['intestazione'][$usati[$s]] . '»: ogni attributo va a una colonna sola.'; $map[] = ''; continue; }
+        if ($s !== '' && $s !== '_CONSENSO' && $s !== '_TAG' && !isset($attr[$s])) $s = '';
+        if ($s !== '' && isset($usati[$s])) { $err[$i] = ($s === '_TAG' ? 'I tag sono già abbinati' : 'Questo attributo è già abbinato') . ' alla colonna «' . $imp['intestazione'][$usati[$s]] . '»: ' . ($s === '_TAG' ? 'metti tutti i tag in una colonna sola, separati da virgola.' : 'ogni attributo va a una colonna sola.'); $map[] = ''; continue; }
         if ($s !== '') $usati[$s] = $i;
         $map[] = $s;
     }
@@ -459,7 +464,7 @@ function newsletter_importa_conferma(int $id, array $opz, bool $consenso): strin
     if (!in_array('EMAIL', $imp['mappatura'], true)) return 'Torna al passo 2 e abbina la colonna EMAIL.';
     if (!$imp['liste']) return 'Torna al passo 3 e scegli una lista.';
     if (!$consenso) return 'Spunta la casella del consenso: si importano solo contatti che hanno dato il consenso a ricevere le tue email.';
-    $o = ['aggiorna' => !empty($opz['aggiorna']), 'nera' => !empty($opz['nera']), 'flussi' => !empty($opz['flussi'])];
+    $o = ['aggiorna' => !empty($opz['aggiorna']), 'nera' => !empty($opz['nera']), 'flussi' => !empty($opz['flussi']), 'tag' => ($opz['tag'] ?? '') === 'sostituisci' ? 'sostituisci' : 'aggiungi'];
     $o['vuote'] = $o['aggiorna'] && !empty($opz['vuote']); // Brevo: le celle vuote contano solo se si aggiorna
     db()->prepare('UPDATE ' . tbl('newsletter_importazioni') . " SET opzioni = ?, stato = 'pronta', aggiornato = NOW() WHERE id = ? AND stato = 'bozza'")->execute([json_encode($o), $id]);
     return '';
@@ -602,7 +607,12 @@ function newsletter_importa_pezzo(array $imp, array $pezzo): array {
     $st = db()->prepare("SELECT * FROM $t WHERE email IN ($in)");
     $st->execute(array_keys($buone));
     foreach ($st as $c) $esistenti[$c['email']] = $c;
-    $nomi = array_values(array_filter($map, fn($n) => $n !== '' && $n !== '_CONSENSO' && $n !== 'EMAIL'));
+    $nomi = array_values(array_filter($map, fn($n) => $n !== '' && $n !== '_CONSENSO' && $n !== '_TAG' && $n !== 'EMAIL'));
+    // 2.23.0: la colonna dei tag (più tag separati da virgola o punto e virgola), aggiunti a quelli che ha o al loro posto.
+    $colT = array_search('_TAG', $map, true);
+    $tagModo = ($o['tag'] ?? 'aggiungi') === 'sostituisci' ? 'sostituisci' : 'aggiungi';
+    $origineT = 'importazione n. ' . $id;
+    $tagDi = function (array $r) use ($colT): array { return $colT === false ? [] : newsletter_tag_dividi(newsletter_importa_valore((string)($r[$colT] ?? ''))); };
     $prima = $esistenti && $o['aggiorna'] ? newsletter_valori_di(array_map(fn($c) => (int)$c['id'], $esistenti), $nomi) : [];
     $liste = $imp['liste'];
     $nomeFile = $imp['origine'] === 'incolla' ? 'testo incollato' : 'file ' . newsletter_4byte_fuori((string)$imp['nome_file']);
@@ -628,6 +638,7 @@ function newsletter_importa_pezzo(array $imp, array $pezzo): array {
             if ($nome === '' || $nome === 'EMAIL') continue;
             $v = newsletter_importa_valore((string)($r[$i] ?? ''));
             if ($nome === '_CONSENSO') { $consenso = newsletter_data_csv($v); continue; }
+            if ($nome === '_TAG') continue;
             $a = $attr[$nome] ?? null;
             if (!$a) continue;
             if ($a['tipo'] === 'date' && preg_match('/^(\S+)[ T]\d{1,2}:\d{2}/', $v, $m)) $v = $m[1];
@@ -649,6 +660,7 @@ function newsletter_importa_pezzo(array $imp, array $pezzo): array {
             newsletter_importa_valori($c, [], $valori, false, true);
             if ($o['nera']) newsletter_contatto_blocca($cid, 'import', 'importazione n. ' . $id);
             $inListe($cid);
+            if ($tg = $tagDi($r)) newsletter_tag_aggiungi($cid, $tg, $origineT, $flussi);
             $out['nuovi']++;
             continue;
         }
@@ -665,6 +677,11 @@ function newsletter_importa_pezzo(array $imp, array $pezzo): array {
         }
         if ($o['nera'] && newsletter_contatto_blocca($cid, 'import', 'importazione n. ' . $id)) $cambiati[] = 'lista nera';
         $inListe($cid);
+        // 2.23.0: i tag anche a chi c'è già (sono la ragione per cui si è abbinata la colonna). Una cella vuota non cambia niente.
+        if ($tg = $tagDi($r)) {
+            [$piu, $meno] = $tagModo === 'sostituisci' ? newsletter_tag_imposta($cid, $tg, $origineT, $flussi) : [newsletter_tag_aggiungi($cid, $tg, $origineT, $flussi), 0];
+            if ($piu || $meno) $cambiati[] = 'tag';
+        }
         $cambiati ? $out['aggiornati']++ : $out['invariati']++;
     }
     // La storia e il registro del consenso tutti insieme, a blocchi.
@@ -955,6 +972,7 @@ function newsletter_esporta_giro(int $id, float $fino): bool {
         $pezzo = $st->fetchAll();
         if (!$pezzo) { $finita = true; break; }
         $valori = newsletter_valori_di(array_column($pezzo, 'id'), $soloAttr);
+        $tagPezzo = in_array('TAG', $colonne, true) && !isset($attr['TAG']) ? newsletter_tag_di_tanti(array_column($pezzo, 'id')) : []; // 2.23.0
         foreach ($pezzo as $r) {
             $cid = (int)$r['id']; $out = [];
             foreach ($colonne as $n) {
@@ -964,6 +982,7 @@ function newsletter_esporta_giro(int $id, float $fino): bool {
                     'LISTA_NERA' => in_array($r['stato'], NL_BLOCCATI, true) ? 'sì' : 'no',
                     'MOTIVO' => newsletter_motivo_testo($r),
                     'LISTE' => implode(', ', array_map(fn($l) => newsletter_4byte_fuori((string)($nomiListe[$l] ?? '')), newsletter_liste_di($cid))),
+                    'TAG' => implode(', ', $tagPezzo[$cid] ?? []),
                     default => '',
                 };
             }

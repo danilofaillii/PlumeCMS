@@ -16,6 +16,7 @@ il motore nuovo, e Danilo ha `.htaccess` scritti a mano). Il prefisso è la cost
 |---|---|
 | `modulo.php` | manifesto: `installa`, `pannello` (test, statistiche), `menu` (Test, dopo "Newsletter e form", solo admin), `editor_contenitori` (`test_presentazione`), filtri `collegamenti_sito`, `riquadro_test_scelte`, `riquadro_test_link`, `automazioni_inneschi`, `automazioni_inneschi_cosa`, eventi `sito_percorso` e `newsletter_confermata` |
 | `includes/test.php` | il motore: tabelle, lettura e salvataggio, `test_normalizza()`, calcolo, esiti, firma dei link, codice del modulo, limiti, statistiche, simulatore, inneschi |
+| `includes/catalogo-persona.php` | 2.23.0: il catalogo delle domande sulla persona (età, genere, occupazione, settore, stato civile, figli, reddito, studio, regione...), copiate nel test quando si accendono |
 | `includes/modelli.php` | i tre modelli pronti (Quanto riposi davvero?, Il tuo equilibrio fra lavoro e vita, Che viaggiatore sei?), domande scritte per plumeCMS |
 | `includes/vista.php` | l'HTML pubblico: modulo con tutte le domande, grafico SVG, risultato, riquadro dell'email, email del risultato |
 | `includes/sito.php` | gli indirizzi pubblici |
@@ -31,7 +32,7 @@ ricontrollate da `test_schema()` (`test.php:136`) con l'impronta `test_schema_im
 | Tabella | Colonne | Cosa |
 |---|---|---|
 | `<prefisso>test_test` | `id`, `slug` (UNIQUE), `nome`, `tipo` (`punteggio`, `aree`, `profili`), `stato` (`bozza`, `pubblicato`), `durata` (minuti, 0 = calcolata), `dati` (JSON, sotto), `struttura`, `struttura_bozza`, `struttura_aggiornata` (la presentazione con l'editor), `creato`, `aggiornato` | i test |
-| `<prefisso>test_risultati` | `test_id`, `giorno` (DATE), `totale` (0-100 o NULL), `fascia`, `profilo`, `regola` (chiavi), `aree` (JSON chiave => percentuale; nei profili chiave => punti) | un risultato: niente ora, niente IP, niente email |
+| `<prefisso>test_risultati` | `test_id`, `giorno` (DATE), `totale` (0-100 o NULL), `fascia`, `profilo`, `regola` (chiavi), `aree` (JSON chiave => percentuale; nei profili chiave => punti), `persona` (2.23.0: JSON domanda sulla persona => chiave della risposta o `nr`, NULL senza risposte) | un risultato: niente ora, niente IP, niente email |
 | `<prefisso>test_risposte` | `test_id`, `domanda`, `valore`, `n` (PRIMARY sulle prime tre) | contatori delle risposte |
 | `<prefisso>test_tentativi` | `codice` (16 caratteri casuali fatti dal browser, PRIMARY), `test_id`, `giorno`, `ultima` (domanda raggiunta), `passi`, `completato` | iniziati e abbandoni |
 | `<prefisso>test_limiti` | `impronta` (HMAC di IP e giorno), `chiave` (`invio`, `email`, `inizio`), `creato` | i limiti per connessione; righe cancellate dopo un giorno |
@@ -55,12 +56,15 @@ domande    [{k, testo, aiuto, tipo: scala|scelta|sino|cursore, invertita, peso (
              opzioni: [{k, t, punti, profili: {chiave profilo: punti}}], condizione: {domanda, valori: [...]} | null}]
            al massimo 80; nei profili solo scelta e sì/no; sì/no ha sempre le opzioni 'si' e 'no';
            una condizione punta solo a una domanda che viene prima e non è un cursore
-fasce      [{k, nome, da, a, testo, pulsante_testo, pulsante_link}]   del totale (non nei profili), al massimo 8
-regole     [{k, nome, modo: e|o, condizioni: [{cosa: 'totale' | 'area:<k>', fascia}], testo, pulsante_testo, pulsante_link}]
+fasce      [{k, nome, da, a, breve, testo, pulsante_testo, pulsante_link}]   del totale (non nei profili), al massimo 8
+           (2.23.0: breve = risposta breve a schermo, testo = risposta completa; lo stesso nelle fasce delle aree e nei profili)
+regole     [{k, nome, modo: e|o, condizioni: [{cosa: 'totale' | 'area:<k>', fascia}], breve, testo, pulsante_testo, pulsante_link}]
 avvertenza testo semplice (partenza "Questo test non è una diagnosi...")
 casuale    ordine casuale delle domande
 presentazione  testo semplice breve (descrizione per Google e i social)
-dopo       {email: bool, consenso: testo, lista: id, iscrizione: testo}
+dopo       {email: bool, consenso: testo, lista: id, iscrizione: testo, solo_email: bool (2.23.0, acceso nei test nuovi)}
+persona    {obbligatorie: bool, domande: [{k (chiave del catalogo), nome (breve, per tag e statistiche), testo,
+           opzioni: [{k, t}]}]}   2.23.0; da 2 a 80 risposte; la chiave 'nr' ("Preferisco non rispondere") è riservata
 ```
 
 ## Il calcolo
@@ -154,6 +158,29 @@ ogni domanda nuova (`sendBeacon`). All'invio le risposte delle domande nascoste 
   `automazioni_inneschi_cosa` (i test, e in `_esiti` i risultati di ogni test), passati alla tela come `FL_DATI.esiti`.
 - `admin/assets/flussi.js`: per un innesco con `esiti`, la tendina "Con quale risultato".
 
+## 2.23.0: persona, due testi, risultato completo per email, tag, gruppi
+
+- **Domande sulla persona**: in fondo al modulo (fieldset `.tq-persona`, nomi `p[k]`, `data-persona`), facoltative con
+  "Preferisco non rispondere" o obbligatorie (una scelta per test). Il server le controlla con `test_persona_valida()`:
+  domande che il test non fa si scartano; risposte fuori elenco, mancanti con le obbligatorie, o `nr` con le obbligatorie:
+  422 con l'errore sotto la domanda. Si salvano in `test_risultati.persona`, anonime come il resto della riga.
+- **Due testi**: `breve` a schermo, `testo` (completa) per email e a schermo se la breve è vuota o se `solo_email` è spento
+  (allora breve e completa). I test della 2.22.0 non hanno `breve`: la loro pagina e il loro risultato sono uguali al byte
+  a prima (`prova-test.js`, confronto con il codice di c3b99e9).
+- **Il risultato completo per email**: con `solo_email` il riquadro dell'email c'è sempre, con il titolo "Lasciami la tua
+  email e ti mando il risultato completo". L'email (`test_email_corpo()`): punteggio, completa della regola e della fascia
+  del totale (o del profilo), il grafico delle aree fatto di tabelle (larghezza in percentuale, niente SVG), la completa
+  di ogni area, il pulsante, l'avvertenza. Vale per tutti i test (anche quelli di prima: stesso testo, impaginazione nuova).
+- **Tag**: dopo l'invio il permesso dell'email `k` firma anche `pz`, le risposte sulla persona in forma corta
+  ("eta=o3.settore=nr"), solo se il test ha una lista. Cambiare o togliere `pz` invalida `k`. Il link da condividere non
+  ha né `k` né `pz`. Solo chi spunta la newsletter: i tag (`test_tag_persona()`: "Età: 35-44", "Occupazione: Manager",
+  niente `nr`; `test_esito_tag()`: "Test <nome>: <fascia o profilo>") vanno in `newsletter_tag_attese` e arrivano alla
+  conferma, con l'innesco "Riceve un tag" (manuale tecnico 15.16). Chi lascia l'email senza la newsletter non diventa
+  contatto e non ha tag.
+- **Statistiche per gruppi** (`test_statistiche_gruppi()`): sempre su tutti i risultati, non sul periodo; gruppi sotto 5
+  nascosti ("meno di 5"), e nascosto anche il gruppo mostrato più piccolo finché il resto (gruppi nascosti e senza
+  risposta) è fra 1 e 4 ("non mostrato"). Le stesse righe nel CSV.
+
 ## Il widget Riquadro in evidenza
 
 `includes/editor-widget.php`: `editor_riquadro_test_scelta()` aggiunge la tendina "Oppure porta a un test" (controllo
@@ -204,15 +231,17 @@ aggregate.
 
 | Prova | Cosa |
 |---|---|
-| `prove/prova-test.js` | i tre tipi dal pannello, il visitatore con e senza JavaScript, telefono, link, simulatore, statistiche, CSV, email, lista, automazioni, Riquadro, Scegli dal sito, Duplica, Elimina, spento e riacceso |
-| `prove/attacchi-test.js` | pannello (anonimo, redattore, CSRF, Origin), invii (domande inventate, valori fuori scala, bozza, codice del modulo, tempo, esca, raffica), XSS in ogni campo, link falsificati, email senza permesso, SQL injection, CSV |
+| `prove/prova-test.js` | i tre tipi dal pannello, il visitatore con e senza JavaScript, telefono, link, simulatore, statistiche, CSV, email, lista, automazioni, Riquadro, Scegli dal sito, Duplica, Elimina, spento e riacceso; 2.23.0 (sezione D): domande sulla persona, due testi, email del risultato completo con e senza newsletter, tag alla conferma, "Riceve un tag", gruppi con la soglia, CSV, test della 2.22.0 uguale al byte |
+| `prove/attacchi-test.js` | pannello (anonimo, redattore, CSRF, Origin), invii (domande inventate, valori fuori scala, bozza, codice del modulo, tempo, esca, raffica), XSS in ogni campo, link falsificati, email senza permesso, SQL injection, CSV; 2.23.0 (gruppo G): risposte sulla persona inventate, `pz` cambiato, intestazioni iniettate, gruppi che non scendono sotto 5 cambiando il periodo, XSS nelle domande sulla persona e nei due testi, CSRF |
 | `prove/test-cli.php` | gli aiuti da riga di comando delle due prove |
 
 ## Limiti
 
 - Niente domande a più risposte, immagini nelle risposte, più domande per schermata.
 - L'email del risultato vuole JavaScript (captcha); il test no.
-- Chi si fa mandare il risultato senza iscriversi non entra nei Contatti, quindi le automazioni partono solo per chi si iscrive.
+- Chi si fa mandare il risultato senza iscriversi non entra nei Contatti, quindi le automazioni e i tag sono solo per chi si iscrive.
+- Le domande sulla persona sono solo quelle del catalogo (testo e risposte si cambiano, domande nuove no).
+- Le statistiche per gruppi sono a una dimensione (una domanda alla volta): niente incroci, che isolerebbero poche persone.
 - Gli abbandoni contano chi ha cominciato con JavaScript (il codice del tentativo); senza JavaScript l'inizio si conta all'invio.
 - I link condivisi portano l'esito di quel giorno: se l'autore cambia o toglie una fascia, il link mostra il punteggio
   e il testo nuovo (o il solo punteggio).

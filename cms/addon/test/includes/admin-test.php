@@ -8,6 +8,43 @@ require_once __DIR__ . '/admin-comune.php';
 require_once dirname(__DIR__, 3) . '/includes/newsletter.php';
 $adminTitle = 'Test e questionari';
 
+/**
+ * 2.23.0: le domande sulla persona dal passo 2 (campi persona[k][usa|ordine|testo|nome|risposte] e persona_obbligatorie).
+ * Le risposte sono una per riga: una riga uguale a una risposta che c'era tiene la sua chiave (le statistiche restano
+ * attaccate), una riga nuova prende una chiave nuova.
+ */
+function test_admin_persona(array $vecchia): array {
+    $in = is_array($_POST['persona'] ?? null) ? $_POST['persona'] : [];
+    $cat = test_persona_catalogo();
+    $prima = array_column($vecchia['domande'], null, 'k');
+    $scelte = [];
+    foreach ($cat as $k => $c) {
+        $x = is_array($in[$k] ?? null) ? $in[$k] : [];
+        if (empty($x['usa'])) continue;
+        $base = $prima[$k]['opzioni'] ?? $c['opzioni'];
+        $perTesto = [];
+        foreach (array_merge($base, $c['opzioni']) as $o) $perTesto[mb_strtolower($o['t'])] ??= $o['k'];
+        $usate = [];
+        $ops = [];
+        foreach (preg_split('/\R/', is_string($x['risposte'] ?? null) ? $x['risposte'] : '') as $riga) {
+            $t = test_testo($riga, 120);
+            if ($t === '' || mb_strtolower($t) === mb_strtolower(TEST_PERSONA_NR_TESTO)) continue;
+            $kk = $perTesto[mb_strtolower($t)] ?? '';
+            if ($kk === '' || isset($usate[$kk])) $kk = '';
+            $ops[] = ['k' => $kk, 't' => $t];
+            if ($kk !== '') $usate[$kk] = true;
+        }
+        // Le righe nuove: la prima chiave libera o1, o2... (che non sia già di una risposta di prima o del catalogo).
+        $occupate = $usate + array_flip(array_column($base, 'k')) + array_flip(array_column($c['opzioni'], 'k'));
+        $n = 1;
+        foreach ($ops as &$o) if ($o['k'] === '') { while (isset($occupate['o' . $n])) $n++; $o['k'] = 'o' . $n; $occupate[$o['k']] = true; }
+        unset($o);
+        $scelte[] = ['ordine' => (int)($x['ordine'] ?? 0), 'pos' => count($scelte), 'q' => ['k' => $k, 'nome' => $x['nome'] ?? '', 'testo' => $x['testo'] ?? '', 'opzioni' => $ops]];
+    }
+    usort($scelte, fn($a, $b) => $a['ordine'] <=> $b['ordine'] ?: $a['pos'] <=> $b['pos']);
+    return ['obbligatorie' => ($_POST['persona_obbligatorie'] ?? '') === '1', 'domande' => array_column($scelte, 'q')];
+}
+
 /** Un JSON arrivato dal pannello (campi protetti: già decodificato da auth.php). */
 function test_admin_json(string $campo): array {
     $j = json_decode((string)($_POST[$campo] ?? ''), true, 32);
@@ -58,6 +95,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     foreach ($j['aree'] ?? [] as $i => $a) if (is_array($a) && isset($vecchie[$a['k'] ?? ''])) $j['aree'][$i]['fasce'] = $vecchie[$a['k']]['fasce'];
                     foreach (['scala', 'aree', 'profili', 'domande'] as $k) if (array_key_exists($k, $j)) $d[$k] = $j[$k];
                     $d['casuale'] = !empty($_POST['casuale']);
+                    if (isset($_POST['persona_obbligatorie'])) $d['persona'] = test_admin_persona($d['persona']); // 2.23.0
                     $dopo = count(test_normalizza($d, $campi['tipo'] ?? $t['tipo'])['domande']);
                     if ($dopo < $prima) $avvisi[] = ($prima - $dopo) . ($prima - $dopo === 1 ? ' domanda non è stata salvata' : ' domande non sono state salvate') . ': manca il testo, oppure una scelta ha meno di due risposte.';
                     break;
@@ -67,17 +105,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     foreach ($d['aree'] as $i => $a) if (isset($j['aree'][$a['k']])) {
                         // I testi delle fasce si scrivono nel passo 4: una fascia che c'era già li tiene.
                         $vec = array_column($a['fasce'], null, 'k');
-                        $d['aree'][$i]['fasce'] = array_map(fn($f) => is_array($f) && isset($vec[$f['k'] ?? '']) ? $f + array_intersect_key($vec[$f['k']], ['testo' => 1, 'pulsante_testo' => 1, 'pulsante_link' => 1]) : $f, (array)$j['aree'][$a['k']]);
+                        $d['aree'][$i]['fasce'] = array_map(fn($f) => is_array($f) && isset($vec[$f['k'] ?? '']) ? $f + array_intersect_key($vec[$f['k']], ['breve' => 1, 'testo' => 1, 'pulsante_testo' => 1, 'pulsante_link' => 1]) : $f, (array)$j['aree'][$a['k']]);
                     }
                     $vec = array_column($t['dati']['fasce'], null, 'k');
-                    $d['fasce'] = array_map(fn($f) => is_array($f) && isset($vec[$f['k'] ?? '']) ? $f + array_intersect_key($vec[$f['k']], ['testo' => 1, 'pulsante_testo' => 1, 'pulsante_link' => 1]) : $f, (array)$d['fasce']);
+                    $d['fasce'] = array_map(fn($f) => is_array($f) && isset($vec[$f['k'] ?? '']) ? $f + array_intersect_key($vec[$f['k']], ['breve' => 1, 'testo' => 1, 'pulsante_testo' => 1, 'pulsante_link' => 1]) : $f, (array)$d['fasce']);
                     break;
                 case 4:
                     $testi = is_array($_POST['testi'] ?? null) ? $_POST['testi'] : [];
                     $prendi = function (array $x, string $chiave) use ($testi): array {
                         $v = $testi[$chiave] ?? null;
                         if (!is_array($v)) return $x;
-                        foreach (['testo', 'pulsante_testo', 'pulsante_link'] as $c) if (array_key_exists($c, $v)) $x[$c] = $v[$c];
+                        foreach (['breve', 'testo', 'pulsante_testo', 'pulsante_link'] as $c) if (array_key_exists($c, $v)) $x[$c] = $v[$c];
                         return $x;
                     };
                     foreach ($d['fasce'] as $i => $f) $d['fasce'][$i] = $prendi($f, 'totale|' . $f['k']);
@@ -88,7 +126,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $d['avvertenza'] = (string)($_POST['avvertenza'] ?? $d['avvertenza']);
                     break;
                 case 5:
-                    $d['dopo'] = ['email' => !empty($_POST['email']), 'consenso' => $_POST['consenso'] ?? '', 'lista' => (int)($_POST['lista'] ?? 0), 'iscrizione' => $_POST['iscrizione'] ?? ''];
+                    $d['dopo'] = ['email' => !empty($_POST['email']), 'consenso' => $_POST['consenso'] ?? '', 'lista' => (int)($_POST['lista'] ?? 0), 'iscrizione' => $_POST['iscrizione'] ?? '', 'solo_email' => !empty($_POST['solo_email'])];
                     break;
             }
             $campi['dati'] = $d;
@@ -212,6 +250,29 @@ else:
     <label class="nl-casella fo-casella"><input type="checkbox" name="casuale" value="1"<?= $d['casuale'] ? ' checked' : '' ?> aria-describedby="ts-casuale-aiuto"> Domande in ordine casuale</label>
     <div class="hint" id="ts-casuale-aiuto">Ogni persona le vede in un ordine diverso; una condizionale resta subito dopo la domanda da cui dipende.</div>
   </div></div>
+  <?php /* 2.23.0: le domande sulla persona (catalogo in catalogo-persona.php, copiate nel test quando si accendono) */
+    $tsPers = array_column($d['persona']['domande'], null, 'k'); $tsOrd = array_flip(array_keys($tsPers)); $tsCat = test_persona_catalogo();
+    uksort($tsCat, fn($a, $b) => (isset($tsOrd[$a]) ? $tsOrd[$a] : 1000 + array_search($a, array_keys(test_persona_catalogo()), true)) <=> (isset($tsOrd[$b]) ? $tsOrd[$b] : 1000 + array_search($b, array_keys(test_persona_catalogo()), true))); ?>
+  <div class="sc-scatola ts-scatola" id="ts-persona"><h3>Domande sulla persona</h3><div class="sc-corpo">
+    <p class="hint" style="margin-top:0">Non danno punti: compaiono alla fine del test, prima del risultato. Servono alle statistiche per gruppi (per età, occupazione, settore...) e, per chi si iscrive alla newsletter, diventano tag del contatto («Età: 35-44»). Le risposte si salvano anonime con l'esito, come il resto del test.</p>
+    <fieldset class="fo-scelte"><legend>Le domande sulla persona sono</legend>
+      <label class="nl-casella fo-casella"><input type="radio" name="persona_obbligatorie" value="0"<?= $d['persona']['obbligatorie'] ? '' : ' checked' ?>> Facoltative (con la risposta «<?= h(TEST_PERSONA_NR_TESTO) ?>»)</label>
+      <label class="nl-casella fo-casella"><input type="radio" name="persona_obbligatorie" value="1"<?= $d['persona']['obbligatorie'] ? ' checked' : '' ?>> Obbligatorie</label>
+    </fieldset>
+    <p class="hint"><?= $tsPers ? 'In uso: ' . h(implode(', ', array_column($tsPers, 'nome'))) . '.' : 'Nessuna domanda sulla persona in uso: spunta «Usa questa domanda» in quelle che ti servono.' ?> Il numero in «Ordine» decide l'ordine (la più bassa prima).</p>
+    <?php $tsN = 0; foreach ($tsCat as $pk => $pc): $tsN++; $usata = isset($tsPers[$pk]); $q = $usata ? $tsPers[$pk] : $pc; $pid = 'tsp-' . $pk; ?>
+    <details class="ts-persona-voce"<?= $usata ? ' open' : '' ?>><summary><b><?= h($q['nome']) ?></b> <span class="badge <?= $usata ? 'badge-published' : 'badge-draft' ?>"><?= $usata ? 'In uso' : 'Non usata' ?></span> <span class="hint"><?= h($q['testo']) ?></span></summary>
+      <label class="nl-casella fo-casella"><input type="checkbox" name="persona[<?= h($pk) ?>][usa]" value="1"<?= $usata ? ' checked' : '' ?>> Usa questa domanda</label>
+      <div class="sc-riga ts-persona-riga">
+        <div class="form-group"><label for="<?= $pid ?>-o">Ordine</label><input type="number" id="<?= $pid ?>-o" name="persona[<?= h($pk) ?>][ordine]" min="0" max="99" value="<?= $usata ? (int)$tsOrd[$pk] + 1 : $tsN ?>"></div>
+        <div class="form-group"><label for="<?= $pid ?>-n">Nome breve (per i tag e le statistiche)</label><input type="text" id="<?= $pid ?>-n" name="persona[<?= h($pk) ?>][nome]" maxlength="40" value="<?= h($q['nome']) ?>"></div>
+      </div>
+      <div class="form-group"><label for="<?= $pid ?>-t">Testo della domanda</label><input type="text" id="<?= $pid ?>-t" name="persona[<?= h($pk) ?>][testo]" maxlength="300" value="<?= h($q['testo']) ?>"></div>
+      <div class="form-group"><label for="<?= $pid ?>-r">Risposte, una per riga</label><textarea id="<?= $pid ?>-r" name="persona[<?= h($pk) ?>][risposte]" rows="<?= min(12, count($q['opzioni']) + 1) ?>" aria-describedby="<?= $pid ?>-ra"><?= h(implode("\n", array_column($q['opzioni'], 't'))) ?></textarea>
+        <div class="hint" id="<?= $pid ?>-ra">Da 2 a <?= TEST_PERSONA_MAX_OPZIONI ?> risposte. «<?= h(TEST_PERSONA_NR_TESTO) ?>» si aggiunge da sola quando le domande sono facoltative. Cambiare il testo di una risposta la rende una risposta nuova nelle statistiche.</div></div>
+    </details>
+    <?php endforeach; ?>
+  </div></div>
 <?php elseif ($passo === 3):
     $prove = in_array((int)($_GET['prove'] ?? 200), [100, 200, 500, 1000], true) ? (int)($_GET['prove'] ?? 200) : 200;
     $sim = $d['domande'] ? test_simula($t, $prove) : null; ?>
@@ -262,14 +323,15 @@ else:
 <?php elseif ($passo === 4):
     $campoTesto = function (string $chiave, array $x, string $nome) { $id = 'tt-' . substr(md5($chiave), 0, 10); ?>
       <fieldset class="ts-testo-ris"><legend><?= h($nome) ?></legend>
-        <div class="form-group"><label for="<?= $id ?>">Testo del risultato</label><textarea id="<?= $id ?>" name="testi[<?= h($chiave) ?>][testo]" rows="4" class="ts-ricco"><?= h($x['testo']) ?></textarea></div>
+        <div class="form-group"><label for="<?= $id ?>-br">Risposta breve (a schermo)</label><textarea id="<?= $id ?>-br" name="testi[<?= h($chiave) ?>][breve]" rows="3" class="ts-ricco"><?= h($x['breve'] ?? '') ?></textarea></div>
+        <div class="form-group"><label for="<?= $id ?>">Risposta completa (per email; a schermo se la breve è vuota)</label><textarea id="<?= $id ?>" name="testi[<?= h($chiave) ?>][testo]" rows="4" class="ts-ricco"><?= h($x['testo']) ?></textarea></div>
         <div class="sc-riga ts-riga-pulsante"><div class="form-group"><label for="<?= $id ?>-bt">Testo del pulsante (facoltativo)</label><input type="text" id="<?= $id ?>-bt" name="testi[<?= h($chiave) ?>][pulsante_testo]" value="<?= h($x['pulsante_testo']) ?>" maxlength="80" placeholder="per esempio: Prenota una chiamata"></div>
           <div class="form-group"><label for="<?= $id ?>-bl">Link del pulsante</label><input type="text" id="<?= $id ?>-bl" name="testi[<?= h($chiave) ?>][pulsante_link]" value="<?= h($x['pulsante_link']) ?>" maxlength="500" placeholder="per esempio: /contatti/" data-link-sito></div></div>
       </fieldset>
     <?php }; ?>
   <input type="hidden" name="regole_json" id="ts-regole-json" value="">
   <div class="sc-scatola ts-scatola"><h3>4. Risultati</h3><div class="sc-corpo">
-    <p class="hint" style="margin-top:0">Il testo che legge chi ha fatto il test, per ogni <?= $t['tipo'] === 'profili' ? 'profilo' : 'fascia' ?>, e un pulsante facoltativo (per esempio verso una pagina o un servizio). Il testo si ripulisce come quello del widget Testo.</p>
+    <p class="hint" style="margin-top:0">Per ogni <?= $t['tipo'] === 'profili' ? 'profilo' : 'fascia' ?> due testi: la <b>risposta breve</b>, che si legge a schermo alla fine del test, e la <b>risposta completa</b>, che arriva per email (e a schermo se la breve è vuota, o se nel passo 5 il risultato completo non è «solo per email»). Poi un pulsante facoltativo (per esempio verso una pagina o un servizio). I testi si ripuliscono come quello del widget Testo.</p>
     <?php if ($t['tipo'] === 'profili'): foreach ($d['profili'] as $p) $campoTesto('profilo|' . $p['k'], $p, 'Profilo «' . $p['nome'] . '»');
       if (!$d['profili']): ?><p class="hint">Ancora nessun profilo: aggiungili nel <a href="<?= h(test_admin_url('test', ['id' => $t['id'], 'passo' => 2])) ?>">passo 2</a>.</p><?php endif;
     else: foreach ($d['fasce'] as $f) $campoTesto('totale|' . $f['k'], $f, 'Totale: «' . $f['nome'] . '» (da ' . $f['da'] . ' a ' . $f['a'] . ')');
@@ -300,11 +362,13 @@ else:
         foreach (db()->query('SELECT id, nome, inneschi, stato FROM ' . tbl('newsletter_flussi'))->fetchAll() as $f) foreach ((array)json_decode((string)$f['inneschi'], true) as $x) if (($x['tipo'] ?? '') === 'test' && in_array((int)($x['id'] ?? 0), [0, $t['id']], true)) { $flussi[(int)$f['id']] = $f; }
     } catch (Throwable $e) { error_log('test: flussi: ' . $e->getMessage()); } ?>
   <div class="sc-scatola ts-scatola"><h3>5. Dopo il test</h3><div class="sc-corpo">
+    <label class="nl-casella fo-casella"><input type="checkbox" name="solo_email" value="1"<?= $d['dopo']['solo_email'] ? ' checked' : '' ?> aria-describedby="ts-solo-aiuto"> Il risultato completo solo per email</label>
+    <div class="hint" id="ts-solo-aiuto">Il test finisce con la risposta breve e sotto «<?= h(TEST_TITOLO_EMAIL) ?>»: email, consenso e (con una lista) la casella della newsletter. L'email parte subito con la risposta completa, quella di ogni area e il grafico. Spenta: a schermo la risposta breve e sotto la completa.</div>
     <label class="nl-casella fo-casella"><input type="checkbox" name="email" value="1"<?= $d['dopo']['email'] ? ' checked' : '' ?> aria-describedby="ts-email-aiuto"> Offri il risultato per email</label>
     <div class="hint" id="ts-email-aiuto">Sotto il risultato compare «Vuoi ricevere il risultato per email?», con l'email e il consenso da spuntare. Si può chiedere entro <?= TEST_EMAIL_ORE ?> ore dal test, dalla pagina del risultato (non dal link condiviso).</div>
     <div class="form-group"><label for="ts-consenso">Testo del consenso (casella da spuntare)</label><textarea id="ts-consenso" name="consenso" rows="3" maxlength="600" aria-describedby="ts-consenso-aiuto"><?= h($d['dopo']['consenso']) ?></textarea><div class="hint" id="ts-consenso-aiuto">Un test sulla salute tratta un dato particolare: il consenso è separato dall'iscrizione e la casella parte vuota.</div></div>
     <div class="form-group"><label for="ts-lista">Iscrizione a una lista (facoltativa)</label><select id="ts-lista" name="lista" aria-describedby="ts-lista-aiuto"><option value="0">Nessuna: niente casella per la newsletter</option><?php foreach ($liste as $l): ?><option value="<?= (int)$l['id'] ?>"<?= (int)$l['id'] === $d['dopo']['lista'] ? ' selected' : '' ?>><?= h(newsletter_4byte_fuori((string)$l['nome'])) ?></option><?php endforeach; ?></select>
-      <div class="hint" id="ts-lista-aiuto">Con una lista, sotto il consenso compare una seconda casella, separata, per iscriversi. Arriva l'email per confermare (doppia conferma, come i form): solo chi si iscrive entra nei Contatti, con l'esito del test nella sua scheda.</div></div>
+      <div class="hint" id="ts-lista-aiuto">Con una lista, sotto il consenso compare una seconda casella, separata, per iscriversi. Arriva l'email per confermare (doppia conferma, come i form): solo chi si iscrive entra nei Contatti, con l'esito del test nella sua scheda. Alla conferma riceve come tag le risposte sulla persona («Età: 35-44») e l'esito («Test <?= h($t['nome']) ?>: ...»). Chi lascia l'email senza la newsletter riceve solo il risultato.</div></div>
     <div class="form-group"><label for="ts-iscrizione">Testo della casella per iscriversi</label><input type="text" id="ts-iscrizione" name="iscrizione" value="<?= h($d['dopo']['iscrizione']) ?>" maxlength="300"></div>
   </div></div>
   <div class="sc-scatola ts-scatola"><h3>Automazioni</h3><div class="sc-corpo">
@@ -318,6 +382,7 @@ else:
       <li>Le risposte domanda per domanda sono solo contatori («Spesso» scelto 12 volte): nessun legame con una persona.</li>
       <li>Il link al risultato contiene solo l'esito, firmato: non si può inventare un risultato cambiandolo.</li>
       <li>L'email si usa per mandare il risultato e si salva solo se la persona si iscrive alla lista: allora l'esito va nella sua scheda dei Contatti.</li>
+      <li>Le risposte sulla persona si salvano con l'esito, anonime. Nelle statistiche per gruppi un gruppo con meno di <?= TEST_GRUPPO_MINIMO ?> persone non si mostra. Diventano tag solo di chi si iscrive, dopo la conferma.</li>
     </ul>
   </div></div>
 <?php endif; ?>

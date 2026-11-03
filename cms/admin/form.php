@@ -13,6 +13,7 @@ require_once __DIR__ . '/includes/admin-functions.php';
 require_once dirname(__DIR__) . '/includes/form.php';
 require_once dirname(__DIR__) . '/includes/popup.php';
 require_once __DIR__ . '/includes/email-conferma-campi.php'; // 2.7.0: il riquadro Email di conferma
+require_once dirname(__DIR__) . '/includes/newsletter-tag.php'; // 2.23.0: "A chi compila dai questi tag"
 require_admin(); // sicurezza (ruoli): solo amministratore
 $adminTitle = 'Form';
 $id = (int)($_GET['id'] ?? 0);
@@ -72,6 +73,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 'grazie_titolo' => 'Grazie, ricevuto.', 'grazie_testo' => 'Ti rispondo appena posso.',
                 'messaggi' => ['riuscita' => match ($tipo) { 'iscrizione', 'popup' => 'Ci sei quasi: ti abbiamo mandato un\'email. Apri il link per confermare l\'iscrizione.', 'profilo' => 'Fatto: i tuoi dati sono aggiornati.', 'disiscrizione' => 'Se l\'indirizzo è nella newsletter, ti abbiamo mandato un\'email con il link per uscire.', default => fb_messaggi_partenza()['riuscita'] }]];
             $id = form_salva(0, $d);
+            if (array_key_exists('tag', $_POST)) newsletter_tag_form_salva($id, $fmS($_POST['tag'])); // 2.23.0
             flash('success', 'Form creato. Adesso scegli i campi e come appare.');
             header('Location: form.php?id=' . $id . '&passo=2');
             exit;
@@ -110,6 +112,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 exit;
         }
         form_salva($id, $d);
+        if ($passo === 1 && array_key_exists('tag', $p)) newsletter_tag_form_salva($id, $fmS($p['tag'])); // 2.23.0
         $avanti = ($p['vai'] ?? '') === 'avanti' && $passo < 5;
         flash('success', 'Form salvato.' . ($avanti ? '' : ' Lo metti in pagina con il widget Modulo dell\'editor visuale, scegliendo «Form: ' . h((string)$d['nome']) . '», oppure da Condividi.'));
         header('Location: form.php?id=' . $id . '&passo=' . ($avanti ? $passo + 1 : $passo));
@@ -124,7 +127,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if (is_array($campi)) $daPost['campi'] = array_values(array_filter($campi, 'is_array'));
         if ($passo === 4) { $daPost['liste'] = array_map('intval', is_array($_POST['liste'] ?? null) ? $_POST['liste'] : []); $daPost['aggiorna_esistenti'] = (int)!empty($_POST['aggiorna_esistenti']); }
         if ($passo === 3) $daPost['avviso'] = (int)!empty($_POST['avviso']);
-        if ($passo === 1) { $daPost['attivo'] = (int)!empty($_POST['attivo']); $daPost['gdpr'] = (int)!empty($_POST['gdpr']); }
+        if ($passo === 1) { $daPost['attivo'] = (int)!empty($_POST['attivo']); $daPost['gdpr'] = (int)!empty($_POST['gdpr']); $daPost['tag_post'] = $fmS($_POST['tag'] ?? ''); }
         if (is_array($_POST['messaggi'] ?? null)) $daPost['messaggi_post'] = $_POST['messaggi'];
         // 2.7.0: le parti dell'email di conferma tornano nei campi come erano state scritte.
         if (is_array($_POST['ce'] ?? null)) $daPost['conferma_email'] = array_map(fn($x) => is_scalar($x) ? (string)$x : '', array_intersect_key($_POST['ce'], NL_EMAIL_PARTI));
@@ -209,6 +212,13 @@ require_once __DIR__ . '/includes/admin-header.php';
       <div class="hint" id="fm-gdpr-aiuto">Sopra la casella del consenso il form mostra la dichiarazione (la scrivi nel passo 2). La casella parte vuota: la spunta chi compila. Data, indirizzo IP e testo finiscono nel registro del consenso del contatto.</div>
     <?php endif; ?>
     <label class="nl-casella fo-casella"><input type="checkbox" name="attivo" value="1" <?= $v['attivo'] ? 'checked' : '' ?>> Attivo (riceve compilazioni)</label>
+    <?php /* 2.23.0: i tag che riceve chi compila (includes/newsletter-tag.php) */ $fmTag = implode(', ', newsletter_tag_form($v)); $fmTutti = newsletter_tag_nomi(); ?>
+    <?php if ($v['tipo'] !== 'disiscrizione'): ?>
+      <label for="fm-tag">A chi compila dai questi tag (facoltativo)</label>
+      <input type="text" id="fm-tag" name="tag" value="<?= h(is_string($v['tag_post'] ?? null) ? $v['tag_post'] : $fmTag) ?>" maxlength="600" list="fm-tag-suggeriti" autocomplete="off" placeholder="per esempio: Iscritto dalla home, Interessato al corso" aria-describedby="fm-tag-aiuto">
+      <datalist id="fm-tag-suggeriti"><?php foreach ($fmTutti as $tn): ?><option value="<?= h($tn) ?>"><?php endforeach; ?></datalist>
+      <div class="hint" id="fm-tag-aiuto">Più tag separati da virgola; un tag nuovo nasce da solo. Li riceve chi entra nei contatti con questo form (o aggiorna il suo profilo): con la doppia conferma, quando conferma. Possono far partire un'automazione con l'innesco «Riceve un tag».</div>
+    <?php endif; ?>
   </div></div>
 <?php elseif ($passo === 2): ?>
   <input type="hidden" name="campi" id="fm-campi-json">
