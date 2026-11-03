@@ -158,6 +158,10 @@ TOLTI += [f'docs/{d}.md' for d in ('manuale-tecnico', 'cms', 'cms-moduli', 'modu
           'header-footer-menu', 'versioni', 'seo', 'pannello', 'contenuti', 'newsletter', 'aggiornamenti', 'temi')]
 # 2.10.0: le anteprime di Aria, Bottega e Cosmo passano a WebP (zip di aggiornamento sotto i 2 MB predefiniti di PHP).
 TOLTI += [f'temi/{t}/anteprima.png' for t in ('aria', 'bottega', 'cosmo')]
+# 2.20.0: tolta una funzione del pannello (decisione di Danilo, 3 novembre 2026): i suoi file spariscono anche dai siti che si aggiornano.
+TOLTI += ['includes/importa-wp.php', 'includes/importa-wp-analisi.php', 'includes/importa-wp-converti.php', 'includes/importa-wp-lavoro.php',
+          'includes/ponte-wp/plumecms-ponte.php', 'admin/importa-wordpress.php']
+TOLTI += [f'docs/immagini/manuale-uso/29-{f}.jpg' for f in ('collegati', 'report', 'ponte-scelta', 'ponte-wordpress')]
 
 
 def scrivi_aggiornamento(versione, file, dest):

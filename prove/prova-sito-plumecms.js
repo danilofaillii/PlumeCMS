@@ -134,7 +134,7 @@ async function contrastoParole(pg) {
   ok('nessuna immagine rotta in Funzionalità', imgF.length === 0, imgF);
   ok('Funzionalità (1.8.0): la frase in fondo al sito, con il link al sito ufficiale', await v.locator('#firma-sito a[href="https://plumecms.it"]').count() === 1);
   // Regola di Danilo (2 novembre 2026): Funzionalità mostra le 10 caratteristiche principali, non un blocco per versione.
-  ok('Funzionalità: dieci caratteristiche, non una per versione', await v.locator('#editor, #partenza, #aspetto, #newsletter, #automazioni, #form, #seo, #wordpress, #addon, #sicurezza').count() === 10 && await v.locator('#report, #test-ab, #firma, #download, #installa-ora, #kit, #versioni').count() === 0);
+  ok('Funzionalità: dieci caratteristiche, non una per versione', await v.locator('#editor, #partenza, #aspetto, #newsletter, #automazioni, #form, #seo, #social, #addon, #sicurezza').count() === 10 && await v.locator('#report, #test-ab, #firma, #download, #installa-ora, #kit, #versioni').count() === 0);
   ok('Funzionalità (2.0.0): più di 500 attacchi respinti, addon compresi', /più di 500 attacchi, addon compresi/.test(await v.locator('#sicurezza').innerText()));
   ok('favicon del sito', await v.locator('link[rel=icon][href*="favicon.png"]').count() === 1);
 
@@ -204,7 +204,7 @@ async function contrastoParole(pg) {
   ok('Scarica: la licenza GNU GPL, con il link', /GNU GPL versione 3/.test(await v.locator('body').innerText()) && await v.locator('a[href*="gnu.org/licenses/gpl-3.0"]').count() >= 1);
   await v.goto(B + '/domande-frequenti/', { waitUntil: 'networkidle' });
   ok('Domande frequenti: quanto costa e a quali condizioni', /A quali condizioni lo uso\?/.test(await v.locator('body').innerText()));
-  ok('Domande frequenti (1.4.0): chi viene da WordPress', /Vengo da WordPress\. Devo rifare tutto\?/.test(await v.locator('body').innerText()));
+  ok('Domande frequenti (2.20.0): niente più import da un altro CMS', !/WordPress|Importa da/.test(await v.locator('body').innerText()));
   await v.goto(B + '/scarica/', { waitUntil: 'networkidle' });
   // Regola di Danilo (1 novembre 2026): nelle novità un elenco breve delle ultime versioni, senza nomi di aziende terze,
   // che non scende sotto il riquadro "Cosa serve" accanto (al computer).
@@ -227,11 +227,11 @@ async function contrastoParole(pg) {
   await v.waitForLoadState('networkidle'); await v.waitForTimeout(500);
   const DIECI = [['editor', 'editor', 'L\'editor visuale'], ['partenza', 'installa-4', 'In cinque minuti hai un sito vero'], ['aspetto', 'stile', 'Temi e stile'],
     ['newsletter', 'campagne', 'Newsletter: contatti, campagne e report'], ['automazioni', 'automazioni', 'Automazioni: lavora anche quando dormi'], ['form', 'form-passi', 'Form e consenso'],
-    ['seo', 'seo', 'SEO e AEO'], ['wordpress', 'importa-wp', 'Vieni da WordPress'], ['addon', 'addon', 'Gli addon'], ['sicurezza', 'sicurezza', 'Al sicuro']];
+    ['seo', 'seo', 'SEO e AEO'], ['social', 'social', 'Social ogni mattina'], ['addon', 'addon', 'Gli addon'], ['sicurezza', 'sicurezza', 'Al sicuro']];
   for (const [id, img, t] of DIECI)
     ok(`Funzionalità: ${t}, con la schermata`, (await v.locator('#' + id).innerText()).includes(t)
       && await v.evaluate((img) => [...document.images].some(i => new RegExp(img + '\\.webp').test(i.currentSrc || i.src) && i.complete && i.naturalWidth > 0), img));
-  ok('Funzionalità (2.19.0): il blocco di WordPress dice del plugin Ponte, senza un blocco nuovo', /plugin Ponte/.test(await v.locator('#wordpress').innerText()) && await v.locator('#ponte').count() === 0);
+  ok('Funzionalità (2.20.0): nessun blocco e nessuna riga sull\'import da WordPress', await v.locator('#wordpress, #ponte').count() === 0 && !/WordPress|plugin Ponte/.test(await v.locator('main, body').first().innerText()));
   ok('Funzionalità: il blocco degli addon nomina gli otto addon', /Prenotazioni e appuntamenti/.test(await v.locator('#addon').innerText()) && /Copia del sito altrove/.test(await v.locator('#addon').innerText()));
   ok('Header e footer (2.6.0): il logo è quello dello Stile del sito', await v.evaluate(() => [...document.querySelectorAll('.marchio img')].length >= 2 && [...document.querySelectorAll('.marchio img')].every(i => /marchio/.test(i.getAttribute('src')))));
   // 2.5.0: la pagina Temi con le stagioni e le tinte piene, ogni immagine caricata.

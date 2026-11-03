@@ -221,13 +221,12 @@ def funzionalita():
           '<li>Chi vuole uscire esce da una lista sola o sceglie cosa ricevere, e ti dice perché.</li></ul>']),
         ('seo', 'seo.webp', 'SEO e AEO: ti trovano Google e le intelligenze artificiali',
          ['Sitemap, robots.txt, dati strutturati, titoli e descrizioni per ogni pagina, redirect e pagine 404 sotto controllo. In più quello che serve alle risposte delle intelligenze artificiali: <code>llms.txt</code>, riassunti in testa, risposte brevi.',
-          '<ul><li>Gli avvisi ai motori partono da soli, con IndexNow e Search Console.</li>'
-          '<li>Ogni mattina un\'email con i contenuti del giorno e i testi pronti per i social, con le immagini già nelle misure giuste.</li></ul>']),
-        ('wordpress', 'importa-wp.webp', 'Vieni da WordPress? Porti tutto con te',
-         ['In Impostazioni, Importa da WordPress, scrivi l\'indirizzo del vecchio sito, il tuo utente e una password per le applicazioni. plumeCMS guarda tutto il sito e ti fa il report: quanti articoli, pagine, immagini, categorie, tag, menu, cosa diventano qui e cosa resta fuori, con il perché.',
-          'Spunti quello che vuoi portare e premi Importa. I vecchi indirizzi diventano redirect, così i link sparsi per il web e su Google continuano a funzionare.',
-          'Tutto entra <strong>in prova</strong>: i visitatori non vedono niente, tu giri il sito nuovo nell\'anteprima. Ti piace? Conferma. Non ti convince? Annulla, e il sito torna com\'era.',
-          '<ul><li>L\'hosting del vecchio sito blocca la password? Carichi su WordPress il <strong>plugin Ponte</strong>, copi il suo codice e l\'import parte lo stesso: solo lettura, nessun file del server da toccare.</li></ul>']),
+          '<ul><li>Gli avvisi ai motori partono da soli, con IndexNow e Search Console.</li></ul>']),
+        ('social', 'social.webp', 'Social ogni mattina: i post sono già pronti',
+         ['Scrivi il testo nel riquadro Social dell\'articolo. Il giorno in cui esce ti arriva un\'email con il testo pronto per ogni canale, il link, i tuoi hashtag e le immagini nelle misure giuste, una orizzontale e una verticale.',
+          '<ul><li>Il calendario dei post per i giorni dopo, e i testi da copiare con un clic.</li>'
+          '<li>Ogni pagina condivisa mostra la sua immagine, con titolo e descrizione.</li>'
+          '<li>Pubblicare resta a te: plumeCMS non entra nei tuoi account.</li></ul>']),
         ('addon', 'addon.webp', 'Gli addon: accendi solo quello che ti serve',
          ['In Impostazioni, <strong>Addon</strong>: otto funzioni in più, ognuna con il suo pulsante Accendi. Spento, l\'addon sparisce dal sito, e i suoi dati restano lì per quando lo riaccendi.',
           '<ul><li><strong>Prenotazioni e appuntamenti</strong>, con i posti davvero liberi e il promemoria il giorno prima.</li>'
@@ -250,7 +249,7 @@ def funzionalita():
                   pulsante_testo='Scarica plumeCMS', link={'url': '/scarica/', 'nuova': False})]], larghezza='stretta', **spazi(72, 80))
     return dict(slug='funzionalita', titolo='Funzionalità', struttura=p.albero(),
                 seo_titolo='Funzionalità di plumeCMS: le dieci cose che sa fare',
-                seo_descrizione='Cosa c\'è dentro plumeCMS: editor visuale con 107 widget, gli addon (prenotazioni, eventi, negozio, statistiche, area riservata, corsi), import da WordPress, stile globale, header e footer, versioni, SEO e AEO, newsletter, sicurezza, aggiornamenti dal pannello.')
+                seo_descrizione='Cosa c\'è dentro plumeCMS: editor visuale con 107 widget, gli addon (prenotazioni, eventi, negozio, statistiche, area riservata, corsi), social ogni mattina, stile globale, header e footer, versioni, SEO e AEO, newsletter, sicurezza, aggiornamenti dal pannello.')
 
 
 def temi():
@@ -306,7 +305,7 @@ def documentazione(pagine_pdf):
                      w('elenco_icone', voci=[{'testo': t, 'icona': 'spunta', 'link': ''} for t in
                                              ['Il pannello in cinque minuti', 'Il primo articolo, e come programmarlo', 'Una pagina con l\'editor, dall\'inizio alla fine',
                                               'Menu, header, footer, stile e temi', 'Form, popup, newsletter, download', 'SEO, utenti, email, cron, sicurezza',
-                                              'Aggiornare, copiare il sito, portare qui WordPress', 'Gli otto addon, uno per capitolo', 'La checklist prima di andare online']])]),
+                                              'Aggiornare e copiare il sito', 'Gli otto addon, uno per capitolo', 'La checklist prima di andare online']])]),
                (50, [titolo('Cosa c\'è nel manuale dei temi', livello='h3'),
                      w('elenco_icone', voci=[{'testo': t, 'icona': 'spunta', 'link': ''} for t in
                                              ['Il percorso, dal foglio bianco al tema attivo', 'tema.json, stile.json, modelli.json',
@@ -437,7 +436,6 @@ def faq():
               larghezza='stretta', **spazi(72, 24))
     voci = [
         ('Quanto costa? A quali condizioni lo uso?', 'Niente: plumeCMS è software libero, con licenza GNU GPL versione 3. Lo usi per tutti i siti che vuoi, tuoi o dei tuoi clienti, lo modifichi e lo ridistribuisci. Una sola regola: chi lo ridistribuisce, anche modificato, lo fa con la stessa licenza. I tuoi siti, i contenuti e i temi che disegni restano tuoi.'),
-        ('Vengo da WordPress. Devo rifare tutto?', 'No. In Impostazioni, Importa da WordPress, scrivi l\'indirizzo del sito, il tuo utente e una password per le applicazioni (la crei in WordPress, nel tuo profilo). plumeCMS porta articoli, pagine, immagini, categorie, tag, menu e titoli SEO, e mette i redirect dai vecchi indirizzi. Prima guardi tutto in prova, poi confermi. La grafica di WordPress e i plugin non si portano: la rifai con l\'editor e i temi.'),
         ('Devo saper programmare?', 'No. Installi dal browser, costruisci le pagine trascinando i widget, cambi colori e caratteri da una pagina sola. Il codice serve solo se vuoi costruire un tema o un modulo tuo.'),
         ('Devo partire da una pagina bianca?', 'No. All\'installazione scegli che sito vuoi fare (personale, attività, blog, portfolio) e plumeCMS parte con la home, le pagine e il menu già fatti. Poi, nell\'editor, la linguetta Sezioni ti dà trenta sezioni pronte da aggiungere con un clic.'),
         ('Che hosting serve?', 'Un hosting con PHP 8.2 o più nuovo e MySQL 8 (o MariaDB 10.6). Va bene un normale hosting condiviso con cPanel: non servono server dedicati.'),
@@ -548,7 +546,7 @@ def editor_json():
 
 
 # ------------------------------------------------------------------ file
-USATE = ['form-passi', 'automazioni', 'report', 'test-ab', 'editor-email', 'campagne', 'infografiche', 'segmenti', 'importa-contatti', 'contatti-brevo', 'email-conferma', 'pannello-chiaro', 'copertina', 'installa-ora', 'scegli-sito', 'consegna', 'widget-2-1', 'scegli-media', 'addon', 'su-misura', 'firma', 'widget-attivita', 'social', 'fine-articolo', 'importa-wp', 'tipo-sito', 'primi-passi', 'aspetti', 'controlla-server', 'sezioni', 'copia', 'installa-1', 'installa-2', 'installa-3', 'installa-4', 'installa-5', 'editor-ritratto', 'editor', 'aperture', 'stile', 'modelli', 'versioni', 'seo', 'flussi', 'download', 'sicurezza', 'aggiornamenti', 'temi',
+USATE = ['form-passi', 'automazioni', 'report', 'test-ab', 'editor-email', 'campagne', 'infografiche', 'segmenti', 'importa-contatti', 'contatti-brevo', 'email-conferma', 'pannello-chiaro', 'copertina', 'installa-ora', 'scegli-sito', 'consegna', 'widget-2-1', 'scegli-media', 'addon', 'su-misura', 'firma', 'widget-attivita', 'social', 'fine-articolo', 'tipo-sito', 'primi-passi', 'aspetti', 'controlla-server', 'sezioni', 'copia', 'installa-1', 'installa-2', 'installa-3', 'installa-4', 'installa-5', 'editor-ritratto', 'editor', 'aperture', 'stile', 'modelli', 'versioni', 'seo', 'flussi', 'download', 'sicurezza', 'aggiornamenti', 'temi',
          'tema-cosmo', 'tema-aria', 'tema-bottega',
          'tema-estate', 'tema-inverno', 'tema-autunno', 'tema-primavera', 'tema-giallo', 'tema-rosso', 'tema-verde', 'tema-blu']
 
@@ -596,8 +594,7 @@ def zip_lavagna(dest):
 # Regola di Danilo (1 novembre 2026): solo i punti salienti, una riga per versione, mai nomi di aziende o servizi di terzi.
 # Le novità per chi scarica: brevi, scritte qui (il CHANGELOG è per chi sviluppa). Da aggiornare a ogni versione.
 NOVITA = [
-    ('2.19.1', 'L\'import regge gli errori del vecchio sito', ['Se il vecchio sito va in errore, il ponte dice il motivo e, quando può, lo aggira; le immagini salvate male non fermano più l\'analisi.']),
-    ('2.19.0', 'Il plugin Ponte per l\'import', ['L\'import da un vecchio sito parte anche dove l\'hosting blocca la password: un plugin in sola lettura e un codice da copiare.']),
+    ('2.20.0', 'Un pannello più snello', ['Via una funzione che non dava i risultati attesi: restano le cose che si usano davvero.']),
     ('2.18.0', 'Le automazioni richiamano i modelli', ['Correggi un modello e le email delle automazioni escono già corrette; menu del pannello più leggibile.']),
     ('2.17.1', 'Le email delle automazioni dai modelli', ['Nel passo Email di un\'automazione si sceglie un modello, a blocchi o in codice HTML.']),
     ('2.17.0', 'Quindici aperture nuove', ['Ventisei disposizioni per l\'apertura delle pagine, con video, lente, prima e dopo e terminale; i video si caricano nei Media.']),
@@ -634,7 +631,7 @@ NOVITA = [
     ('1.5.0', 'I social, ogni mattina', ['Un\'email con i contenuti del giorno, le immagini pronte e il testo da pubblicare.']),
     ('1.4.2', 'Il manuale d\'uso', ['Ogni capitolo con un esempio vero, le schermate e una checklist.']),
     ('1.4.1', 'Il pannello nuovo si vede subito', ['Dopo un aggiornamento colori e funzioni nuove arrivano al primo clic.']),
-    ('1.4.0', 'Porta qui il tuo vecchio sito', ['Importi pagine e articoli da un altro CMS, li guardi in prova e poi confermi; quattro aspetti del pannello e foto più leggere.']),
+    ('1.4.0', 'Il pannello come piace a te', ['Quattro aspetti del pannello, foto più leggere, i primi passi nella dashboard e il controllo del server.']),
     ('1.3.1', 'Il sito degli aggiornamenti si sceglie', ['Da quale sito arrivano le versioni nuove non è più fisso.']),
     ('1.3.0', 'Si parte con un sito vero', ['Scegli il tipo di sito e parte già fatto; trenta sezioni pronte nell\'editor; copia del sito con un clic.']),
     ('1.2.8', 'Software libero', ['plumeCMS ha una licenza libera: lo usi, lo modifichi, lo condividi.']),

@@ -71,8 +71,8 @@ const giri = () => { try { return (fs.readFileSync(path.join(DIR, 'logs', 'cron-
   for (const pg of pagine) {
     await p.goto(B + '/admin/' + pg, { waitUntil: 'domcontentloaded' });
     const t = await p.evaluate(() => document.body.innerText + ' ' + Array.from(document.querySelectorAll('input[placeholder],textarea[placeholder]')).map(x => x.placeholder).join(' '));
-    // Restano le cose che di WordPress parlano davvero: importare da WordPress, gli indirizzi /?p= e wp-sitemap.xml di un sito
-    // di prima, i paragoni ("come in WordPress").
+    // Restano le cose che di WordPress parlano davvero: gli indirizzi /?p= e wp-sitemap.xml di un sito di prima, i paragoni
+    // ("come in WordPress").
     const righe = t.split('\n').filter(x => /WordPress|\bWP\b|wp-content|wp-config/i.test(x) && !/import|\?p=|wp-sitemap|sito di prima|da WordPress|come (in|i temi di|quell[io] di) WordPress|Menu di WordPress|su WordPress|WordPress si porta qui/i.test(x));
     if (righe.length) trovati.push(pg + ': ' + righe.slice(0, 2).join(' / '));
   }

@@ -45,14 +45,22 @@ function nl_aut_webhook_locali(): array {
     return defined('CMS_WEBHOOK_LOCALE') ? array_values(array_filter(array_map(fn($x) => strtolower(trim($x)), explode(',', (string)CMS_WEBHOOK_LOCALE)))) : [];
 }
 
-/** Un IP interno? Quelli dell'import da WordPress, più gli IPv4 scritti dentro un IPv6 (::ffff:127.0.0.1, ::127.0.0.1). */
+/** Un IP interno? Privati, locali, riservati, link-local (169.254.169.254), la rete condivisa dei provider (100.64.0.0/10) e
+ *  gli IPv4 scritti dentro un IPv6 (::ffff:127.0.0.1, ::127.0.0.1). */
 function nl_aut_ip_interno(string $ip): bool {
-    if (!function_exists('importa_wp_ip_interno')) require_once __DIR__ . '/importa-wp.php';
+    if (!function_exists('sicurezza_ip_privato')) require_once __DIR__ . '/sicurezza-html.php';
     if (filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_IPV6)) {
         $b = (string)inet_pton($ip);
         if (strlen($b) === 16 && (str_starts_with($b, str_repeat("\0", 10) . "\xff\xff") || str_starts_with($b, str_repeat("\0", 12)))) return true;
     }
-    return !filter_var($ip, FILTER_VALIDATE_IP) || importa_wp_ip_interno($ip);
+    if (!filter_var($ip, FILTER_VALIDATE_IP) || sicurezza_ip_privato($ip)) return true;
+    if (filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_IPV4)) {
+        $n = ip2long($ip);
+        foreach ([['100.64.0.0', 10], ['0.0.0.0', 8], ['192.0.0.0', 24], ['198.18.0.0', 15]] as [$rete, $bit]) {
+            if (($n & (-1 << (32 - $bit))) === (ip2long($rete) & (-1 << (32 - $bit)))) return true;
+        }
+    }
+    return false;
 }
 
 /**

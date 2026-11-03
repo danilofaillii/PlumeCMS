@@ -132,7 +132,7 @@ function media_carica(?array $f, string $cartella = 'pagine', int $maxMb = 8): a
         if (!$foto['fatto']) {
             require_once __DIR__ . '/sicurezza-html.php';
             // via metadati e qualunque cosa nascosta dopo i pixel. Se nemmeno questo riesce (un falso, una GIF animata, un
-            // server senza GD) il file resta com'è: solo se dentro non c'è codice (1.7.0, come l'import da WordPress).
+            // server senza GD) il file resta com'è: solo se dentro non c'è codice (1.7.0).
             if (!sicurezza_immagine_ricodifica("$dir/$nome", $ext) && media_ha_codice("$dir/$nome")) {
                 @unlink("$dir/$nome");
                 return ['errore' => 'Il file non è un\'immagine pulita (contiene codice): non è stato caricato.'];

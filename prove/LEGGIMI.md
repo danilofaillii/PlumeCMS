@@ -110,10 +110,10 @@ Il report delle campagne, le statistiche e l'orario migliore della 2.14.0 (fase 
 
 Le prove di attacco: ogni OK è un attacco respinto (238 nella 1.10.0 su un sito Attività, con le 5 nuove del gruppo 26 sui
 widget nuovi; 233 nella 1.9.0 su un sito Attività, con le 6 nuove del gruppo 25 sull'avviso
-dei form; 249 nella 1.8.0 sullo stesso sito su misura in prova, con FINTO_WP: le 7 nuove,
-gruppo 24, sono sulla frase in fondo al sito; 227 su un sito Attività; 242 nella 1.7.0, con FINTO_WP, su un sito su misura ancora in prova: le 41
-nuove, gruppi 23 e 23b, sono sul sito su misura; 226 sullo stesso tipo di sito già definitivo e senza FINTO_WP; 201 nella 1.6.0,
-con FINTO_WP: le 24 nuove, gruppo 22, sono su Aggiungi sempre alla
+dei form; 249 nella 1.8.0 sullo stesso sito su misura in prova: le 7 nuove,
+gruppo 24, sono sulla frase in fondo al sito; 227 su un sito Attività; 242 nella 1.7.0, su un sito su misura ancora in prova: le 41
+nuove, gruppi 23 e 23b, sono sul sito su misura; 226 sullo stesso tipo di sito già definitivo; 201 nella 1.6.0,
+le 24 nuove, gruppo 22, sono su Aggiungi sempre alla
 fine; 177 nella 1.5.0; 118 nella 1.4.0, con `CMS_DIR` e `SEGRETO`; le 21 nuove sono sul
 tipo di sito in prova, i primi passi, Esegui adesso del cron e Controlla il server). Si lanciano contro un'installazione locale, mai contro un sito vero:
 `CMS_DIR=<cartella del CMS installato> node tools/sicurezza-prova.js <base> <utente> <password> [prefisso-pannello]`.
@@ -407,48 +407,6 @@ più leggere con 2560, la pagina `/prova-foto/` e le foto caricate.
 Le prove di attacco della 1.4.0 (`tools/sicurezza-prova.js`, gruppo 18) controllano anche la scelta dell'aspetto (un
 utente non cambia quello di un altro, valori non ammessi, token e Origin) e le impostazioni delle foto (redattore, token).
 
-## prova-ponte.js (2.19.0)
-
-Il plugin Ponte come un utente, contro lo stesso WordPress di `prova-importa-wp.js` servito con `WP_TOGLI_AUTH=1`: il router
-toglie le credenziali prima di WordPress, come certi hosting.
-
-1. WordPress come sotto (`wp-installa.php`, `wp-riempi.php`), poi
-   `WP_TOGLI_AUTH=1 DBPASS=... PHP_CLI_SERVER_WORKERS=4 php -S 127.0.0.1:8091 -t <cartella WP> prove/router-wp.php`.
-2. Un plumeCMS installato da zero.
-3. `node prove/prova-ponte.js <base CMS> <cartella CMS> <utente> <password> http://127.0.0.1:8091 <cartella WP> <cartella segreti> <cartella schermate>`.
-   La prova toglie il plugin da WordPress e lo ricarica dal pannello (Carica plugin), apre il ponte, prova codici sbagliati e
-   quello giusto, analisi, import con il codice dimenticato a metà, Annulla; poi le difese con richieste fatte a mano (firma,
-   ora, ripetute, rotte vietate, `_method=DELETE`, ponte chiuso, scaduto, plugin spento) e per ultime 20 firme sbagliate, che
-   bloccano 127.0.0.1 (la prova svuota il blocco alla fine). Atteso: 57 su 57 (dalla 2.19.1 anche i guasti finti: opzione `plume_prova_guasto` del plugin di prova). Lascia `ponte-scelta.png`, `ponte-wordpress.png`,
-   `ponte-report.png`, `ponte-riepilogo.png`.
-
-## prova-importa-wp.js (1.4.0)
-
-L'import da WordPress come un utente, contro un WordPress vero (6.6.2) sul server integrato di PHP.
-
-1. Una copia di WordPress in una cartella tua (mai l'originale scaricato) e un database vuoto, poi
-   `DBPASS=... php prove/wp-installa.php <cartella WP> http://127.0.0.1:8071 <database>` (wp-config con
-   `WP_ENVIRONMENT_TYPE` local, che permette le password per le applicazioni senza HTTPS; cron spento; permalink con la data;
-   il plugin di prova `wp-plugin-prova.php`, che imita Yoast nella REST e con `WP_REST_CHIUSA=1` chiude la REST) e
-   `php prove/wp-riempi.php <cartella WP> <cartella segreti>` (33 articoli: 27 pubblicati, 4 bozze, 1 in revisione, 1
-   programmato; 6 pagine con una figlia; categorie annidate, 8 tag, 15 immagini GD e un PDF, un menu con sottovoci nella
-   posizione Primary, 5 commenti, un'emoji, uno shortcode, una pagina "Elementor", SEO nei meta di Yoast). Nella cartella dei
-   segreti (fuori dal repository): `app.txt` (la password per le applicazioni, nuova a ogni giro), `login.txt`,
-   `atteso.json`. Si rilanciano tutti e due quando si vuole un WordPress da capo.
-2. Due server per WordPress, con piu processi (WordPress chiama se stesso):
-   `DBPASS=... PHP_CLI_SERVER_WORKERS=4 php -S 127.0.0.1:8071 -t <cartella WP> prove/router-wp.php` e, per la REST chiusa,
-   lo stesso con `WP_REST_CHIUSA=1` sulla 8072.
-3. Un plumeCMS installato da zero (`prova-install.js`), anche in una cartella (`CMS_CARTELLA=/test`).
-4. `node prove/prova-importa-wp.js <base CMS> <cartella CMS> <utente> <password> http://127.0.0.1:8071 <cartella segreti> <cartella schermate> http://127.0.0.1:8072`.
-   La prova scrive nel `config.local.php` del CMS `CMS_IMPORTA_WP_LOCALE` (gli host:porta di prova) e `CMS_IMPORTA_WP_GIRO`
-   0.3 (giri corti, per interrompere e riprendere). Usa `prove/importa-wp-cli.php` per leggere database e file.
-   Atteso: 76 su 76, in radice e in cartella. Lascia `importa-*.png` (collegamento, errore, report, avanzamento, fermo,
-   riepilogo, anteprima, confermato). Alla fine il sito ha l'import confermato: per rifarla serve un CMS nuovo.
-
-Per le prove di attacco dell'import (punto 18 di `tools/sicurezza-prova.js`): `php -S 127.0.0.1:8073 prove/finto-wp.php`
-(un WordPress finto e cattivo), `127.0.0.1:8073` in `CMS_IMPORTA_WP_LOCALE`, e `FINTO_WP=http://127.0.0.1:8073` e `CMS_DIR`
-nell'ambiente. Senza `FINTO_WP` le prove con il sito cattivo si saltano; quelle di SSRF, CSRF e ruoli girano lo stesso.
-
 ## Le prove della 1.4.0 (28 ottobre 2026)
 
 Il server di prova serve più richieste insieme: `PHP_CLI_SERVER_WORKERS=4 php -S ...` (Controlla il server chiede al sito
@@ -477,7 +435,7 @@ il server SMTP finto: toglierlo dopo da Impostazioni. Atteso: 19 su 19.
 
 `node prove/prova-cron.js <base> <cartella CMS> <utente> <password> <cartella schermate>`: la pagina Log cron, le due
 righe con il percorso vero, Esegui adesso, il cron vero, gli attacchi, e 31 pagine del pannello senza frasi che parlino
-del sito come se fosse WordPress (restano i paragoni e l'import). Atteso: 13 su 13.
+del sito come se fosse WordPress (restano i paragoni). Atteso: 13 su 13.
 
 ### prova-controlla-server.js
 

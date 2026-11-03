@@ -2,39 +2,12 @@
 
 Il prodotto si chiama **plumeCMS** (nome scelto il 26 ottobre 2026; prima, per poche ore, "CarbonaraCMS", e ancora prima il provvisorio "Officina": gli zip vecchi si chiamavano `officina-*` e `carbonaracms-*`).
 
-## 2.19.1 (3 novembre 2026) - L'import regge gli errori di WordPress
+## 2.20.0 (3 novembre 2026) - Un pannello più snello
 
-- **Plugin Ponte 1.0.1**: se WordPress o un altro plugin va in errore mentre il ponte prepara una risposta, il ponte risponde lo
-  stesso con il motivo (il file che si è fermato, senza i percorsi del server) e lo scrive in **Strumenti > plumeCMS Ponte**,
-  nel riquadro "Ultimo errore del ponte". Un errore fatale nei filtri che altri plugin mettono dopo la risposta fa saltare quei
-  filtri dalla richiesta dopo: si tiene solo la scelta dei campi, come fa WordPress. Segnalazione di Danilo: sul primo sito vero
-  il collegamento riusciva e la lettura delle categorie dava 500.
-- **plumeCMS** dice "WordPress si è fermato con un errore mentre il ponte leggeva ..." con il motivo, e Riprova continua. Prima un
-  500 diventava "non trovo il plugin Ponte acceso", che non era vero.
-- **Analisi, immagini con le misure salvate male**: su alcuni siti un'immagine ha larghezza e altezza salvate come testo vuoto, e la
-  REST di WordPress va in errore quando le si chiedono le misure (anche senza il ponte). L'analisi rilegge quella pagina di media
-  senza le misure: entrano tutti i file, il report dice quanti sono senza peso. Caso vero: un logo PNG del 2022 fermava l'analisi
-  di arketypos.it.
-- Per aggiornare il plugin su WordPress: scaricalo di nuovo da Importa da WordPress e caricalo sopra quello di prima (Sostituisci
-  quella attuale con quella caricata).
-
-## 2.19.0 (2 novembre 2026) - Il plugin Ponte per l'import da WordPress
-
-- **Importa da WordPress, Con il plugin Ponte**: per i siti dove la password per le applicazioni non arriva a WordPress
-  (hosting che tolgono le credenziali dalle richieste, plugin di sicurezza che chiudono la REST). Il plugin si scarica dalla
-  pagina dell'import (**Scarica il plugin Ponte**), si carica e si attiva su WordPress, si apre da **Strumenti > plumeCMS
-  Ponte** e dà un codice da incollare in plumeCMS. Richiesta di Danilo, dopo un import che su un hosting condiviso dava 401
-  con la password giusta.
-- Il ponte **legge e basta**: solo richieste GET, solo sulle rotte dei contenuti (mai password per le applicazioni, plugin,
-  temi). Ogni richiesta è firmata con il codice, che non viaggia mai; rifiuta firme sbagliate, richieste vecchie di più di 5
-  minuti o ripetute; dopo 20 firme sbagliate tiene fuori quell'indirizzo per 15 minuti. Il codice vale 48 ore, **Chiudi il
-  ponte** e la disattivazione del plugin lo cancellano.
-- In plumeCMS il codice si tiene cifrato come la password, e si dimentica alla fine dell'import o dopo un giorno fermo. Report,
-  scelta, import a giri, prova, Conferma e Annulla sono gli stessi.
-- **Messaggio delle credenziali non accettate**: dice le due cause possibili (utente o password sbagliati, oppure il server che
-  toglie le credenziali: da fuori WordPress risponde nello stesso modo) e offre il ponte. Prima indicava una riga del
-  `.htaccess`, che su alcuni hosting non basta.
-- **Sito di plumeCMS**: dalla 2.19.0 il pacchetto porta di nuovo la home, con l'apertura tenuta com'è sul sito.
+- Tolta da Impostazioni una funzione che sui siti veri non dava i risultati attesi (decisione di Danilo). L'aggiornamento
+  cancella i suoi file e, alla prima apertura della dashboard, i dati che aveva lasciato nel database.
+- **Sito di plumeCMS**: il pacchetto porta di nuovo la home, con l'apertura tenuta com'è sul sito. In Funzionalità la
+  caratteristica **Social ogni mattina** (l'email con i post pronti, il calendario, le immagini nelle misure giuste).
 
 ## 2.18.0 (2 novembre 2026) - Le email delle automazioni richiamano i modelli
 
@@ -718,28 +691,8 @@ Prima stavano nel modulo di danilofailli.it, scritti per quel sito. Ora sono del
   collega da ogni pagina invece di essere importato da `admin.css` ed `editor.css`.
 - Prova nuova `prove/prova-file-pannello.js`: un browser con la memoria della 1.3 sceglie i quattro aspetti e li vede cambiare.
 
-## 1.4.0 (28 ottobre 2026) - Il sito si prova, il pannello si sceglie, WordPress si porta qui
+## 1.4.0 (28 ottobre 2026) - Il sito si prova, il pannello si sceglie
 
-- **Impostazioni, Importa da WordPress**: scrivi indirizzo, utente e password per le applicazioni del sito WordPress (la
-  pagina spiega in tre passi dove si crea, in Utenti > Profilo). Se qualcosa non va lo dice in parole semplici: password
-  normale al posto di quella per le applicazioni, utente sbagliato, sito che non esiste o non risponde, certificato non
-  valido, REST chiusa da un plugin, sito in http.
-- **Il report**: plumeCMS legge tutto il sito (anche bozze e programmati) e mostra quanti articoli, pagine, categorie, tag,
-  media (con il peso), menu, autori, titoli SEO di Yoast o Rank Math, redirect, e per ognuno cosa diventa. Dice anche cosa
-  non si può portare e perché: commenti, page builder come Elementor e Divi (entra il testo), shortcode di plugin, campi
-  personalizzati, prodotti di WooCommerce e altri tipi personalizzati, contenuti con un indirizzo già usato.
-- **Scegli e importa**: tutto o una parte (anche solo le pagine, o gli articoli senza le bozze). Prima si fa da sola una
-  copia del sito; poi l'import va a giri brevi con la barra dell'avanzamento, regge i limiti degli hosting condivisi e, se
-  chiudi la pagina, riprende da dove era. Il testo arriva pulito (i video di YouTube e Vimeo restano video), le immagini si
-  scaricano nella libreria e i link puntano ai nuovi indirizzi.
-- **In prova, poi Conferma o Annulla**: quello che entra è invisibile ai visitatori finché non confermi; lo guardi
-  nell'anteprima del sito, con il riepilogo di cosa è entrato e cosa no. **Conferma** pubblica tutto come era su WordPress
-  (pubblicati, bozze, programmati), accende i redirect 301 dai vecchi indirizzi (con la data, `?p=123`, pagine e categorie
-  annidate) e, se vuoi, mette il menu di WordPress nell'header. **Annulla** toglie tutto quello che è entrato.
-- Sicurezza: solo l'amministratore; la password per le applicazioni resta cifrata solo per la durata dell'import e non
-  compare mai; il CMS chiama solo il sito dato (niente indirizzi interni, niente rimandi verso altri siti, certificato
-  controllato); i file si controllano dal contenuto (un PHP chiamato foto.jpg non entra); i testi passano dal sanificatore.
-  30 prove di attacco nuove.
 - **Il pannello ha quattro aspetti, e ognuno sceglie il suo**: Aria (chiaro, bianco e blu, con molto spazio), Bottega
   (carta crema, terracotta e verde salvia), Cosmo (scuro, notte e viola) e Lavagna (scuro, verde ardesia e testo color
   gesso). Si sceglie in **Il mio accesso**, riquadro "Aspetto del pannello": clic su una delle quattro miniature, poi

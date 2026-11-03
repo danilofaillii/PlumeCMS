@@ -22,8 +22,8 @@ Poi scegli quello che ti serve.
 Una parola sui nomi. **Il pannello** è la parte riservata, dove lavori tu. **Il sito** è quello che vedono le persone.
 **Pubblicare** vuol dire rendere visibile sul sito quello che hai preparato nel pannello.
 
-Il manuale ha due parti. La **prima** (capitoli 1-31) è il CMS di sempre: c'è su ogni sito. La **seconda**
-(capitoli 32-40) racconta gli **addon**, le funzioni in più che accendi solo se ti servono: prenotazioni, eventi,
+Il manuale ha due parti. La **prima** (capitoli 1-30) è il CMS di sempre: c'è su ogni sito. La **seconda**
+(capitoli 31-39) racconta gli **addon**, le funzioni in più che accendi solo se ti servono: prenotazioni, eventi,
 recensioni, negozio, statistiche, area riservata, corsi, copia del sito altrove. Tutte e due stanno nello stesso PDF,
 `manuale-uso.pdf`.
 
@@ -747,7 +747,7 @@ allergeni in piccoli cerchi e, in fondo, la legenda "Allergeni".
 
 Un modulo per chiedere un tavolo (data, ora, persone) o un alloggio (arrivo, partenza, ospiti). La richiesta arriva per
 email: **non è una prenotazione confermata**, la confermi tu rispondendo. Il modulo lo dice anche a chi scrive. Se vuoi
-orari, posti e conferme automatiche c'è l'addon Prenotazioni (capitolo 33): con l'addon acceso, nel pannello Modifica del
+orari, posti e conferme automatiche c'è l'addon Prenotazioni (capitolo 32): con l'addon acceso, nel pannello Modifica del
 widget c'è scritto "Hai l'addon Prenotazioni acceso".
 
 **Esempio: la Trattoria da Anna.**
@@ -2912,7 +2912,7 @@ l'indirizzo `/scarica/guida-ultima/` porta sempre al più recente. Carichi la ve
 
 Un file **riservato** non ha un indirizzo pubblico: nessuno lo scarica scrivendo `/scarica/...`. Lo ricevono, con un
 **link personale**, solo le persone a cui lo dai: chi conferma l'email di un form (capitolo 18), i membri dell'area
-riservata e chi segue un corso (capitoli 38 e 39).
+riservata e chi segue un corso (capitoli 37 e 39).
 
 ![Caricare un file riservato](immagini/manuale-uso/31n-riservato.jpg)
 
@@ -3481,93 +3481,6 @@ un'autorità che il server non conosce) oppure se il sito non risponde.
 
 ---
 
-## 31. Portare qui un sito WordPress
-
-**A cosa serve.** Se hai un sito WordPress, plumeCMS lo legge e porta qui articoli, pagine, immagini, categorie, tag,
-menu e titoli SEO, con i redirect dai vecchi indirizzi. Il sito WordPress non viene toccato. Si apre da **Impostazioni >
-Importa da WordPress**.
-
-![Il collegamento al sito WordPress](immagini/manuale-uso/29-collegati.jpg)
-
-### Prima, in WordPress
-
-1. Entra nel pannello di WordPress e apri **Utenti > Profilo**.
-2. In fondo, in **Password per le applicazioni**, scrivi un nome (per esempio "plumeCMS") e premi **Aggiungi una nuova
-   password per le applicazioni**.
-3. Copia la password che compare: sei gruppi di quattro lettere e cifre. Non è la password con cui entri in WordPress.
-
-### Poi, in plumeCMS
-
-4. Scrivi l'**indirizzo del sito WordPress**, il tuo **nome utente** di WordPress e la **password per le
-   applicazioni**. Premi **Collegati e analizza il sito**.
-5. Arriva il **report**: quanti articoli, pagine, immagini, categorie, tag e menu ci sono, cosa diventano qui, e cosa
-   non si può portare, con il motivo.
-
-![Il report dell'import](immagini/manuale-uso/29-report.jpg)
-
-6. Togli la spunta a quello che non vuoi (o usa Tutto, Solo gli articoli, Solo le pagine) e premi **Importa le voci
-   scelte**. Una barra ti dice a che punto è; se chiudi la pagina, l'import riprende quando la riapri.
-7. Alla fine tutto è **in prova**: i visitatori non vedono niente. Premi **Apri l'anteprima del sito** e guardalo,
-   pagina per pagina. Il riepilogo dice cosa è entrato, cosa no e cosa conviene guardare.
-8. Se ti piace, premi **Conferma l'import**: da quel momento è definitivo. Se non ti convince, **Annulla l'import**
-   toglie tutto quello che è entrato e il sito torna com'era.
-
-Dopo la conferma puoi cancellare la password per le applicazioni da WordPress, dallo stesso punto in cui l'hai creata.
-
-### Se WordPress non accetta la password: il plugin Ponte
-
-Su alcuni hosting il server toglie utente e password dalle richieste prima che arrivino a WordPress: la password è giusta,
-ma WordPress risponde come se non l'avessi scritta. Succede anche con i plugin di sicurezza che chiudono la REST. In questi
-casi ci si collega con il **plugin Ponte**, che non usa la password e non chiede di toccare il server.
-
-![La scelta "Con il plugin Ponte"](immagini/manuale-uso/29-ponte-scelta.jpg)
-
-1. In **Impostazioni > Importa da WordPress** scegli **Con il plugin Ponte** e premi **Scarica il plugin Ponte**: arriva il
-   file *plumecms-ponte.zip*.
-2. Nel pannello di WordPress apri **Plugin > Aggiungi nuovo > Carica plugin**, scegli il file, premi **Installa ora** e poi
-   **Attiva**.
-3. Apri **Strumenti > plumeCMS Ponte** e premi **Apri il ponte**. Compare un codice che comincia con *PLUME1-*: premi
-   **Copia il codice**.
-
-![Il ponte aperto in WordPress](immagini/manuale-uso/29-ponte-wordpress.jpg)
-
-4. Torna in plumeCMS, scrivi l'**indirizzo del sito WordPress**, incolla il **codice del ponte** e premi **Collegati e
-   analizza il sito**. Da qui tutto va come sopra, dal passo 5.
-5. A import finito, in WordPress premi **Chiudi il ponte**, poi disattiva e cancella il plugin da **Plugin**.
-
-Il ponte legge e basta: non scrive, non cancella e non cambia niente su WordPress. Il codice vale 48 ore e non viaggia mai:
-ogni richiesta di plumeCMS è firmata con il codice, e il ponte rifiuta quelle firmate male, quelle vecchie di più di 5 minuti
-e quelle ripetute. Il codice è una chiave: non mandarlo per email e non incollarlo in chat.
-
-**Checklist**
-
-- [ ] WordPress è in https e ha la versione 5.6 o più nuova.
-- [ ] Ho letto nel report cosa non entra (grafica di Elementor, shortcode dei plugin, commenti).
-- [ ] Ho guardato l'anteprima prima di confermare.
-- [ ] Dopo la conferma ho controllato menu e redirect.
-
-**Se qualcosa non va**
-
-- *"La password non è quella per le applicazioni".* Hai usato la password con cui entri in WordPress: crea quella per le
-  applicazioni (passi 1-3).
-- *"Il sito non risponde" o "la REST è chiusa".* Un plugin di sicurezza di WordPress blocca l'accesso: spegnilo il tempo
-  dell'import, oppure collegati con il plugin Ponte.
-- *"WordPress non ha accettato utente e password" anche se sono giusti.* Il server toglie le credenziali: usa il plugin Ponte.
-- *"Il ponte è chiuso o scaduto".* Il codice vale 48 ore: riapri il ponte in Strumenti > plumeCMS Ponte e copia il codice nuovo.
-- *"Non trovo il plugin Ponte acceso".* In WordPress, in **Plugin**, attiva *plumeCMS Ponte*; nell'indirizzo scrivi quello
-  della home del sito (con o senza www, come lo apri nel browser).
-- *"WordPress si è fermato con un errore mentre il ponte leggeva ...".* Un altro plugin di WordPress va in errore: premi
-  **Riprova** (se l'errore viene dai filtri di un plugin, il ponte ora li salta). Se si ripete, in WordPress apri **Strumenti >
-  plumeCMS Ponte**: il riquadro giallo "Ultimo errore del ponte" dice quale plugin si è fermato. Spegnilo il tempo dell'import,
-  oppure manda il messaggio a chi ti segue. Se il messaggio dice di aggiornare il plugin Ponte, scaricalo di nuovo da qui e caricalo
-  su WordPress con **Sostituisci quella attuale con quella caricata**.
-- *Nel report "N senza peso dichiarato".* WordPress non sa dire quanto pesano quei file (succede con immagini caricate male
-  anni fa): entrano lo stesso, manca solo il numero del peso.
-- *"L'orologio di questo server e quello del sito WordPress sono distanti".* Uno dei due server ha l'ora sbagliata di più di
-  5 minuti: chiedi all'hosting di sistemarla.
-
----
-
 ## Parte seconda: gli addon
 
 Gli **addon** sono funzioni in più che arrivano con plumeCMS ma restano spente finché non le accendi. Un sito di un
@@ -3576,15 +3489,15 @@ gli serve, e il pannello resta semplice.
 
 | Capitolo | Addon | Per chi |
 |---|---|---|
-| 32 | Accendere e spegnere | tutti |
-| 33 | Prenotazioni e appuntamenti | parrucchieri, estetiste, studi, consulenti |
-| 34 | Eventi con iscrizione | associazioni, corsi, serate, visite guidate |
-| 35 | Raccolta recensioni | chi ha clienti contenti e vuole farlo sapere |
-| 36 | Vetrina prodotti | botteghe, artigiani, piccoli negozi |
-| 37 | Statistiche delle visite | tutti |
-| 38 | Area riservata (membri) | chi ha pagine e file solo per i suoi iscritti |
-| 39 | Corsi online | formatori, scuole, chi insegna |
-| 40 | Copia del sito altrove | tutti |
+| 31 | Accendere e spegnere | tutti |
+| 32 | Prenotazioni e appuntamenti | parrucchieri, estetiste, studi, consulenti |
+| 33 | Eventi con iscrizione | associazioni, corsi, serate, visite guidate |
+| 34 | Raccolta recensioni | chi ha clienti contenti e vuole farlo sapere |
+| 35 | Vetrina prodotti | botteghe, artigiani, piccoli negozi |
+| 36 | Statistiche delle visite | tutti |
+| 37 | Area riservata (membri) | chi ha pagine e file solo per i suoi iscritti |
+| 38 | Corsi online | formatori, scuole, chi insegna |
+| 39 | Copia del sito altrove | tutti |
 
 **È una beta.** La 2.0.0 è la prima versione con gli addon: sono provati (nel browser, contro gli attacchi,
 nell'installazione e nell'aggiornamento), ma non ancora su tanti siti veri. Ogni capitolo dice anche **cosa non c'è
@@ -3599,7 +3512,7 @@ il sito lavora ma le email non partono.
 
 ---
 
-## 32. Gli addon: accendere e spegnere
+## 31. Gli addon: accendere e spegnere
 
 **A cosa serve.** Decidere quali funzioni in più usa il tuo sito. Si fa da una pagina sola, **Impostazioni > Addon**, ed
 è solo per l'amministratore.
@@ -3651,7 +3564,7 @@ indirizzi dal sito. **I dati restano**: prenotazioni, prodotti, iscritti, recens
 tutti quando lo riaccendi.
 
 Una sola eccezione da ricordare: spegnendo l'**Area riservata**, le pagine e gli articoli "solo per i membri" tornano
-visibili a tutti (capitolo 38).
+visibili a tutti (capitolo 37).
 
 Gli aggiornamenti di plumeCMS non accendono e non spengono niente: gli addon restano come li hai lasciati. Anche la
 **Copia del sito** (capitolo 29) si ricorda quali addon erano accesi.
@@ -3665,7 +3578,7 @@ Gli aggiornamenti di plumeCMS non accendono e non spengono niente: gli addon res
 
 ---
 
-## 33. Prenotazioni e appuntamenti
+## 32. Prenotazioni e appuntamenti
 
 **A cosa serve.** I clienti prenotano dal sito: scelgono il servizio, con chi (se siete in più di uno), il giorno e
 l'ora fra quelli **davvero liberi**. Ricevono subito l'email di conferma, con il file per il calendario del telefono e un
@@ -3680,7 +3593,7 @@ solo lo ottiene, e all'altro il sito chiede di sceglierne un altro.
 e "Colore" (90 minuti, 60 €, solo Anna). Vogliono che si prenoti almeno 2 ore prima e che si possa annullare fino al
 giorno prima.
 
-Accendi l'addon (capitolo 32): nel menu compare **Prenotazioni** con sei pagine, **Agenda**, **Nuova prenotazione**,
+Accendi l'addon (capitolo 31): nel menu compare **Prenotazioni** con sei pagine, **Agenda**, **Nuova prenotazione**,
 **Prenotazioni**, **Servizi**, **Persone e orari** e **Impostazioni**. Finché mancano persone e servizi, ogni pagina ha in cima il riquadro
 giallo **Per cominciare**, che dice cosa fare.
 
@@ -3882,7 +3795,7 @@ oltre la mezzanotte.
 
 ---
 
-## 34. Eventi con iscrizione
+## 33. Eventi con iscrizione
 
 **A cosa serve.** Serate, corsi, laboratori, visite guidate con i posti contati. Ogni evento ha la sua pagina sul sito,
 con data, luogo, descrizione e il modulo per iscriversi. Chi si iscrive può prendere più posti (per sé e per un amico).
@@ -3893,7 +3806,7 @@ l'elenco e scrivi a tutti.
 **Esempio.** L'associazione "Colli Bolognesi" organizza una serata di degustazione il venerdì alle 21, nella sede di via
 Rizzoli 1 a Bologna: 30 posti, al massimo 2 a persona, 15 € a testa. Le iscrizioni chiudono il giovedì sera.
 
-Accendi l'addon (capitolo 32): nel menu compare **Eventi**, con **Eventi**, **Iscritti** e **Impostazioni**.
+Accendi l'addon (capitolo 31): nel menu compare **Eventi**, con **Eventi**, **Iscritti** e **Impostazioni**.
 
 ### Le impostazioni
 
@@ -3982,7 +3895,7 @@ verde dice quanti. Un evento con iscritti non si elimina: mettilo **Annullato** 
 **Cosa non c'è ancora (beta).** Il pagamento dei posti online: il prezzo si scrive, si paga come sempre (all'ingresso,
 con un bonifico). Non ci sono biglietti con il codice QR, eventi che si ripetono (ogni data è un evento a sé) né domande
 in più nel modulo. Gli inviti a lasciare una recensione dopo un evento partono da soli se lo scegli in Raccolta
-recensioni (capitolo 35, "Dopo un evento").
+recensioni (capitolo 34, "Dopo un evento").
 
 **Checklist**
 
@@ -3997,7 +3910,7 @@ recensioni (capitolo 35, "Dopo un evento").
 
 ---
 
-## 35. Raccolta recensioni
+## 34. Raccolta recensioni
 
 **A cosa serve.** Qualche giorno dopo il servizio i clienti ricevono un'email "Com'è andata?" con cinque stelle da
 cliccare. Si apre una pagina del tuo sito dove lasciano le stelle e due righe. Le recensioni arrivano nel pannello: tu
@@ -4010,7 +3923,7 @@ scrivermi più**: chi lo preme non riceve più inviti.
 **Esempio.** Il centro estetico "Rosa" a Bologna vuole chiedere una recensione a due clienti affezionate, Giulia e
 Paola, dopo un trattamento viso, e proporre Google a chi dà almeno 4 stelle.
 
-Accendi l'addon (capitolo 32): nel menu compare **Recensioni**, con **Da approvare e approvate**, **Inviti** e
+Accendi l'addon (capitolo 31): nel menu compare **Recensioni**, con **Da approvare e approvate**, **Inviti** e
 **Impostazioni**.
 
 ### Le impostazioni
@@ -4056,7 +3969,7 @@ Annullato. Un invito in coda si può **Annullare**; uno non usato si può **Elim
 
 ### Dopo un evento
 
-Se usi anche l'addon **Eventi con iscrizione** (capitolo 34), qualche giorno dopo una serata, un corso o un laboratorio
+Se usi anche l'addon **Eventi con iscrizione** (capitolo 33), qualche giorno dopo una serata, un corso o un laboratorio
 gli iscritti ricevono l'email "Com'è andata?" con le stelle, come i clienti delle prenotazioni.
 
 **Esempio.** Venerdì c'è la "Serata dei vini", con venti iscritti. Vuoi chiedere un parere solo a chi è venuto davvero.
@@ -4122,8 +4035,8 @@ solo quelle da 4 stelle in su, le colonne, e il pulsante per Google.
 Le stelle non vanno nei dati per Google: Google non le mostra per le recensioni che un'attività raccoglie sul proprio
 sito. (Il widget **Recensioni** del capitolo 8, scritto a mano, resta: questo è quello che si riempie da solo.)
 
-**Cosa non c'è ancora (beta).** Gli inviti partono da soli dopo le prenotazioni (capitolo 33) e dopo gli eventi
-(capitolo 34), non dopo gli ordini della vetrina (capitolo 36): per quelli si usano gli **Inviti** a mano. Non si possono
+**Cosa non c'è ancora (beta).** Gli inviti partono da soli dopo le prenotazioni (capitolo 32) e dopo gli eventi
+(capitolo 33), non dopo gli ordini della vetrina (capitolo 35): per quelli si usano gli **Inviti** a mano. Non si possono
 allegare foto alle recensioni, né importare quelle di Google.
 
 **Checklist**
@@ -4140,7 +4053,7 @@ allegare foto alle recensioni, né importare quelle di Google.
 
 ---
 
-## 36. Vetrina prodotti
+## 35. Vetrina prodotti
 
 **A cosa serve.** Un piccolo negozio dentro il sito. I clienti guardano i prodotti, li mettono nel carrello e ti mandano
 una **richiesta d'ordine**, con un numero. Tu la ricevi nel pannello e per email. Il cliente paga come preferisci tu:
@@ -4153,7 +4066,7 @@ cliente non può cambiarli.
 **Esempio.** Anna ha una bottega di ceramiche a Bologna, "Bottega Rossi". Vende tazze e grembiuli: spedizione a 7 €,
 gratis sopra i 60 €, oppure ritiro in bottega. I clienti pagano con il bonifico o con PayPal.
 
-Accendi l'addon (capitolo 32): nel menu, dopo **Media**, compare **Vetrina** con **Ordini**, **Prodotti**,
+Accendi l'addon (capitolo 31): nel menu, dopo **Media**, compare **Vetrina** con **Ordini**, **Prodotti**,
 **Categorie** e **Impostazioni del negozio**.
 
 ### Le impostazioni del negozio
@@ -4307,7 +4220,7 @@ cliente ha il link del suo ordine nell'email). I prodotti non compaiono nella ri
 
 ---
 
-## 37. Statistiche delle visite
+## 36. Statistiche delle visite
 
 **A cosa serve.** Sapere quante persone visitano il sito, quali pagine leggono, da dove arrivano (Google, Facebook, una
 newsletter) e se usano il telefono o il computer. Le conta il sito stesso: **niente cookie, niente servizi esterni,
@@ -4316,7 +4229,7 @@ nessun indirizzo IP salvato**. Per questo non serve il banner dei cookie.
 **Esempio.** Anna, di "Bottega Rossi", ha mandato la newsletter d'autunno con un link al sito e ha pubblicato un post su
 Facebook. Vuole sapere quante persone sono arrivate da ognuno, e quali pagine guardano.
 
-Accendi l'addon (capitolo 32): nel menu, subito sotto **Dashboard**, compare **Statistiche** con **Visite** e
+Accendi l'addon (capitolo 31): nel menu, subito sotto **Dashboard**, compare **Statistiche** con **Visite** e
 **Impostazioni e privacy**. Da quel momento il sito conta: le visite di prima non ci sono.
 
 **Tu non conti.** Le pagine che apri mentre sei entrato nel pannello (con lo stesso browser) non si contano, e nemmeno i
@@ -4392,7 +4305,7 @@ contare due volte la stessa persona nello stesso giorno: non si può risalire a 
 
 ---
 
-## 38. Area riservata (membri)
+## 37. Area riservata (membri)
 
 **A cosa serve.** I visitatori del sito si creano un account: si iscrivono con la loro email, entrano con una password e
 trovano pagine, articoli e file che gli altri non vedono. Sono **membri del sito**, non utenti del pannello: non possono
@@ -4401,7 +4314,7 @@ mai entrare nel pannello né cambiare il sito.
 **Esempio.** Lo studio di yoga "Yoga Ponte" a Bologna vuole dare ai suoi soci una pagina "Sequenze da fare a casa" e il
 "Calendario delle lezioni 2027" in PDF. Chi non è socio vede solo il titolo e l'invito a iscriversi.
 
-Accendi l'addon (capitolo 32): nel menu, dopo **Utenti**, compare **Membri**, con **Elenco dei membri**, **Contenuti e
+Accendi l'addon (capitolo 31): nel menu, dopo **Utenti**, compare **Membri**, con **Elenco dei membri**, **Contenuti e
 file riservati** e **Impostazioni**. Il sito ha da subito quattro indirizzi nuovi (al posto di `www.tuosito.it` metti il
 tuo):
 
@@ -4543,16 +4456,16 @@ abbonamenti a pagamento.
 
 ---
 
-## 39. Corsi online
+## 38. Corsi online
 
 **A cosa serve.** Mettere sul sito dei corsi fatti di lezioni: testo, video e materiali da scaricare. Li seguono i
-**membri** dell'area riservata (capitolo 38): ognuno vede quante lezioni gli mancano, riprende da dove era e, alla fine,
+**membri** dell'area riservata (capitolo 37): ognuno vede quante lezioni gli mancano, riprende da dove era e, alla fine,
 riceve un **certificato** con un codice che chiunque può verificare.
 
 **Esempio.** Luca Neri, fotografo e formatore, mette online "Fotografia per cominciare": due moduli, tre lezioni brevi, una
 scheda in PDF. Sara, una sua allieva, lo segue dal telefono e alla fine scarica il certificato.
 
-Accendi l'addon (capitolo 32). I Corsi hanno bisogno dell'Area riservata, che si accende da sola:
+Accendi l'addon (capitolo 31). I Corsi hanno bisogno dell'Area riservata, che si accende da sola:
 
 ![Corsi acceso, e con lui l'Area riservata](immagini/manuale-uso/39-acceso.jpg)
 
@@ -4661,7 +4574,7 @@ Con **Tutti i membri**, ogni membro trova il corso pubblicato. Con **Solo i memb
 segue il corso** scegli il membro nella tendina **Assegna il corso a**, lascia la spunta per mandargli l'email e premi
 **Assegna**: riceve "Hai un corso nuovo". **Togli** glielo toglie (il suo avanzamento resta, se glielo riassegni).
 
-Per far entrare un allievo che non è ancora membro: **Membri > Elenco dei membri > Invita una persona** (capitolo 38).
+Per far entrare un allievo che non è ancora membro: **Membri > Elenco dei membri > Invita una persona** (capitolo 37).
 
 ### Cosa vede l'allieva
 
@@ -4705,7 +4618,7 @@ dominio limitato.
 
 **Checklist**
 
-- [ ] L'Area riservata funziona: iscrizione e accesso provati (capitolo 38).
+- [ ] L'Area riservata funziona: iscrizione e accesso provati (capitolo 37).
 - [ ] Il corso ha la descrizione, almeno un modulo e le lezioni nell'ordine giusto.
 - [ ] Ogni lezione ha testo o video, il testo è scritto nell'editor visuale con **Pubblica** premuto, e la pagina della
   lezione dice "Pubblicato".
@@ -4720,7 +4633,7 @@ dominio limitato.
 
 ---
 
-## 40. Copia del sito altrove
+## 39. Copia del sito altrove
 
 **A cosa serve.** La **Copia del sito** (capitolo 29) fa uno zip di tutto il sito, ma se resta sullo stesso server,
 quando il server si rompe la perdi insieme al sito. Con questo addon, **ogni notte** la copia parte da sola verso un altro
@@ -4737,7 +4650,7 @@ oppure WebDAV: Nextcloud, ownCloud, Koofr, pCloud...), oppure un account Google 
 2. Nel Nextcloud: **File**, poi **Impostazioni** in basso a sinistra: copia l'indirizzo **WebDAV**, per esempio
    `https://cloud.esempio.it/remote.php/dav/files/mario/`.
 
-Accendi l'addon (capitolo 32): in **Impostazioni**, subito sotto Copia del sito, compare **Copia altrove**. Aprila.
+Accendi l'addon (capitolo 31): in **Impostazioni**, subito sotto Copia del sito, compare **Copia altrove**. Aprila.
 
 ### La destinazione
 
@@ -4907,13 +4820,13 @@ sicurezza, WebDAV su https.
 
 | Problema | Cosa fare |
 |---|---|
-| Nel menu non trovo la voce di un addon | L'addon è spento: **Impostazioni > Addon > Accendi** (capitolo 32) |
-| Ho spento un addon: ho perso i dati? | No: si riaccende e tornano tutti (capitolo 32) |
-| Il widget Prenota dice che non ci sono orari liberi | Mancano persone con gli orari, servizi con "Chi lo fa", oppure è un giorno di chiusura o di ferie (capitolo 33) |
-| Un cliente ha pagato ma l'ordine dice ancora Nuovo | Il sito non vede i pagamenti: apri l'ordine e segnalo **Pagato** (capitolo 36) |
-| Le statistiche restano a zero | Sei entrato nel pannello con lo stesso browser: prova dal telefono o in incognito (capitolo 37) |
-| Una pagina riservata è visibile a tutti | L'Area riservata è spenta, oppure la pagina non è spuntata in **Contenuti e file riservati** (capitolo 38) |
-| La copia notturna non arriva sulla destinazione | Guarda il **Registro degli invii** e il Log cron; premi **Prova la connessione** (capitolo 40) |
+| Nel menu non trovo la voce di un addon | L'addon è spento: **Impostazioni > Addon > Accendi** (capitolo 31) |
+| Ho spento un addon: ho perso i dati? | No: si riaccende e tornano tutti (capitolo 31) |
+| Il widget Prenota dice che non ci sono orari liberi | Mancano persone con gli orari, servizi con "Chi lo fa", oppure è un giorno di chiusura o di ferie (capitolo 32) |
+| Un cliente ha pagato ma l'ordine dice ancora Nuovo | Il sito non vede i pagamenti: apri l'ordine e segnalo **Pagato** (capitolo 35) |
+| Le statistiche restano a zero | Sei entrato nel pannello con lo stesso browser: prova dal telefono o in incognito (capitolo 36) |
+| Una pagina riservata è visibile a tutti | L'Area riservata è spenta, oppure la pagina non è spuntata in **Contenuti e file riservati** (capitolo 37) |
+| La copia notturna non arriva sulla destinazione | Guarda il **Registro degli invii** e il Log cron; premi **Prova la connessione** (capitolo 39) |
 
 ---
 
@@ -4931,7 +4844,7 @@ sicurezza, WebDAV su https.
 - [ ] La pagina della privacy c'è ed è collegata nel footer e nei form.
 - [ ] Ho fatto una copia del sito e l'ho scaricata sul mio computer.
 - [ ] Ho aperto il sito dal telefono, come farebbe un cliente, e ho provato a fare quello che deve fare lui.
-- [ ] Gli addon accesi (capitolo 32) sono solo quelli che uso, e ognuno ha la sua checklist fatta.
+- [ ] Gli addon accesi (capitolo 31) sono solo quelli che uso, e ognuno ha la sua checklist fatta.
 
 ## Problemi frequenti
 

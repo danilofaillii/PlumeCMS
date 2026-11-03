@@ -2,8 +2,8 @@
 // Si fanno su un plumeCMS a cui e gia stato applicato il pacchetto del sito (cosi l'editor e i temi mostrano plumeCMS).
 // uso: node sito-plumecms/schermate.js <base> <cartella> <utente> <password>
 // poi: python3 sito-plumecms/costruisci.py --schermate <cartella>. La home ha id 1, come in ogni installazione nuova.
-// 1.4.0: importa-wp, tipo-sito, primi-passi, aspetti e controlla-server vengono dalle prove (servono stati che qui non ci sono:
-// un WordPress collegato, un sito ancora in prova, i primi passi fatti): prova-importa-wp.js, prova-tipo-sito.js,
+// 1.4.0: tipo-sito, primi-passi, aspetti e controlla-server vengono dalle prove (servono stati che qui non ci sono:
+// un sito ancora in prova, i primi passi fatti): prova-tipo-sito.js,
 // prova-primi-passi.js, prova-aspetti.js, prova-controlla-server.js, tagliate in alto e messe nella cartella delle schermate.
 // 1.5.0: social viene dall'email del mattino del sito delle schermate del manuale d'uso. 1.6.0: fine-articolo è il riquadro
 // in fondo a "Chiusi per ferie" sullo stesso sito (kit Attività, dopo tools/manuale-uso-schermate.js), fotografato a 2x.

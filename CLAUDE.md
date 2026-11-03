@@ -58,7 +58,7 @@ Stato, decisioni, contesto e diario non stanno qui: stanno nel second brain
 **Regola di Danilo (29 ottobre 2026): con plumeCMS restano solo due documenti**, il manuale d'uso e il manuale dei temi.
 Sono gli unici in `cms/docs/`, nello zip, nel sito di plumeCMS e nella pagina Download.
 
-0. `cms/docs/manuale-uso.md`: il manuale d'uso per chi usa plumeCMS (40 capitoli in due parti, la seconda per gli addon; esempi, schermate con i passi
+0. `cms/docs/manuale-uso.md`: il manuale d'uso per chi usa plumeCMS (39 capitoli in due parti, la seconda per gli addon; esempi, schermate con i passi
    numerati, checklist). Le schermate le fa `tools/manuale-uso-schermate.js` eseguendo gli esempi su un sito di prova
    (kit Attività, in `/home/studioprova/public_html`): **quando cambia il pannello si rifanno le schermate e si
    ricontrolla il capitolo**. Il PDF è uno solo (dalla 2.1.0) e deve restare sotto 12 MB (`MAX_KB` in `tools/manuali-pdf.js`, alzato da 8 a 12 MB il 1 novembre 2026, decisione di Danilo; oggi
@@ -108,7 +108,7 @@ Sono gli unici in `cms/docs/`, nello zip, nel sito di plumeCMS e nella pagina Do
 - **Pacchetto di aggiornamento** per un'installazione esistente:
   `python3 tools/cms-pacchetto.py --aggiornamento`. Si carica dal pannello,
   Impostazioni, Aggiornamenti.
-- **Versione**: `cms/VERSIONE` (oggi 2.19.1; sempre tre numeri: "beta" va nel CHANGELOG, mai nel nome dello zip, se no la serie "ultima" del Download non lo riconosce) e una voce in `cms/CHANGELOG.md` a ogni
+- **Versione**: `cms/VERSIONE` (oggi 2.20.0; sempre tre numeri: "beta" va nel CHANGELOG, mai nel nome dello zip, se no la serie "ultima" del Download non lo riconosce) e una voce in `cms/CHANGELOG.md` a ogni
   zip con contenuto diverso. Mai cambiare il contenuto di una versione già data.
 - **Prove** prima di dire finito:
   - `php -n -d short_open_tag=1 -l` su ogni file PHP toccato, `node --check` sui js;
@@ -132,6 +132,9 @@ Sono gli unici in `cms/docs/`, nello zip, nel sito di plumeCMS e nella pagina Do
   barre "Leggero", "Meno peso", "Più tempo" (`.chip`). Testo d'esempio quello del sito: "Il tuo sito, leggero come una piuma."
   Cambia solo la disposizione; con gli altri temi i colori seguono il tema. Proposte del 2 novembre: 15 tavole
   (`https://claude.ai/artifact/D72dbZ333x6ctQLqUk9Uzt`): Danilo ha scelto tutte e 15, fatte nella 2.17.0.
+- **Regola di Danilo (3 novembre 2026): niente import da WordPress.** "Funziona malissimo e non ho intenzione di proseguire
+  questa cosa. Non facciamo import da wordpress." Tolto nella 2.20.0 con il plugin Ponte, da codice, prove, manuali, sito di
+  plumeCMS e CHANGELOG. Non riproporlo.
 - Niente librerie esterne nel CMS (SortableJS e Quill sono serviti in casa).
 - Niente credenziali nel repository né in chat.
 - Italiano ovunque, niente trattini lunghi, niente caratteri a 4 byte nei file
@@ -157,7 +160,14 @@ Le decisioni complete, con data e perché, stanno nel second brain, `plumecms/de
 
 ## Stato al 31 ottobre 2026
 
-Fatto: plumeCMS 2.19.1 (3 novembre): l'import regge gli errori di WordPress (il primo sito vero, arketypos.it su Aruba: collegamento con
+Fatto: plumeCMS 2.20.0 (3 novembre): tolto l'import da WordPress (regola sopra). Via `includes/importa-wp*.php`, `includes/ponte-wp/`,
+`admin/importa-wordpress.php`, la voce del menu, `sito_nascosti_import()`, le prove (`prova-importa-wp.js`, `prova-ponte.js`, il WordPress
+di prova), i gruppi di attacchi 19 e 41, il capitolo 31 del manuale d'uso (gli addon ora 31-39) e il 26 del tecnico (numerazione con il
+buco: i rimandi del codice ai capitoli dopo restano giusti), la caratteristica del sito (al suo posto "Social ogni mattina", `social.webp`),
+la domanda frequente, le novità 2.19.x. `nl_aut_ip_interno()` ha le sue reti interne (prima le prendeva dall'import). L'aggiornamento
+cancella i file (`TOLTI`) e la dashboard cancella una volta impostazioni `importa_wp_*` e tabella `importa_wp_voci`.
+
+Fatto (poi tolto nella 2.20.0): plumeCMS 2.19.1 (3 novembre): l'import regge gli errori di WordPress (il primo sito vero, arketypos.it su Aruba: collegamento con
 il ponte riuscito, poi 500). Ponte 1.0.1: risposta in `try` con `register_shutdown_function`, `WP_SANDBOX_SCRAPING` per far tacere il
 gestore degli errori fatali di WordPress (il filtro `wp_should_handle_php_error` non vale per i fatali), ultimo errore nella pagina del
 plugin, filtri di `rest_post_dispatch` saltati dopo un errore lì (`plume_ponte_senza_filtri`). Il motivo vero su arketypos.it: un'immagine
@@ -167,7 +177,7 @@ nella REST pubblica: l'analisi ora rilegge la pagina dei media senza `media_deta
 `plume_prova_guasto`: eccezione, fatale, media), import 75/75, aggiornamento 2.19.0 -> 2.19.1 13/13 con 20 foto uguali, attacchi 434/434,
 sito 82/82, pacchetto unico 13/13 con la hero cambiata a mano che resta. Zip 2240 KB, PDF 11087 KB.
 
-Fatto: plumeCMS 2.19.0 (2 novembre): il plugin Ponte per l'import da WordPress (richiesta di Danilo: arketypos.it su Aruba dava 401
+Fatto (poi tolto nella 2.20.0): plumeCMS 2.19.0 (2 novembre): il plugin Ponte per l'import da WordPress (richiesta di Danilo: arketypos.it su Aruba dava 401
 con la password per le applicazioni anche con le righe nel `.htaccess`). `includes/ponte-wp/plumecms-ponte.php` (plugin WordPress, sola
 lettura, POST a `/?plume_ponte=1` firmata HMAC nel corpo, codice `PLUME1-` di 48 ore, blocco dopo 20 firme sbagliate), zip da
 `importa-wordpress.php?scarica=ponte`, scelta "Con il plugin Ponte", `importa_wp_ponte()` e `importa_wp_collega_ponte()`, manuale tecnico
@@ -542,8 +552,7 @@ Aperto:
   dalla 2.4.0 `https://plumecms.it` (prima `https://plumecms.danilofailli.it`), nessun campo nel pannello (decisione di Danilo);
 - "c'è una versione nuova" in HTTPS: dalla 2.2.0 provato con un certificato vero firmato da un'autorità di prova
   (`prove/prova-versione-https.py`: valido, autorità sconosciuta, altro nome, scaduto); manca la prova contro plumecms.danilofailli.it;
-- import da WordPress provato contro un WordPress locale (6.6.2 vero), non su un hosting vero: da fare con uno dei siti WordPress di
-  Danilo; Apache, SMTP vero e Imagick non provati per la 1.4.0;
+- Apache, SMTP vero e Imagick non provati per la 1.4.0;
 - `tools/` e `prove/` hanno ancora riferimenti a danilofailli.it (strumenti di sviluppo, non vanno nello zip): `--sito`, la prova del burnout;
 - i temi a danilofailli.it arrivano solo con un pacchetto `--sito` dal suo repository (mai lo zip del prodotto).
 

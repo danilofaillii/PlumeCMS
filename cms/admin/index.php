@@ -13,6 +13,14 @@ require_login();
 sito_schema_aggiorna();
 newsletter_schema();
 form_schema();
+// 2.20.0: tolta una funzione del pannello; i dati che aveva lasciato (stato con le credenziali cifrate, categorie nascoste, la
+// tabella delle sue voci) si cancellano una volta, alla prima dashboard dopo l'aggiornamento.
+if (get_setting('importa_wp_schema', '') !== '' || get_setting('importa_wp_stato', '') !== '') {
+    try {
+        db()->exec('DELETE FROM ' . tbl('settings') . " WHERE setting_key IN ('importa_wp_schema', 'importa_wp_stato', 'importa_wp_nascosti')");
+        db()->exec('DROP TABLE IF EXISTS ' . tbl('importa_wp_voci'));
+    } catch (Throwable $e) { error_log('dashboard, pulizia 2.20.0: ' . $e->getMessage()); }
+}
 $adminTitle = 'Dashboard';
 
 $n = fn(string $sql) => (int)db()->query($sql)->fetchColumn();

@@ -1341,14 +1341,6 @@ im.save(o)
   console.log('28-server');
 };
 
-// 29. Importare da WordPress (il collegamento; il report viene dalla prova con un WordPress vero)
-capitoli['29'] = async () => {
-  await vai('importa-wordpress.php');
-  await foto('29-collegati', { clip: { x: 240, y: 56, width: 960, height: 760 } });
-  // Il report: schermata della prova contro un WordPress 6.6.2 vero (prove/prova-importa-wp.js), tagliata e messa in esempi/.
-  if (!SOLO || '29'.startsWith(SOLO)) fs.copyFileSync(path.join(FOTO_PROVA, 'importa-report.png'), path.join(GREZZE, '29-report.png'));
-};
-
 // 1.10.0: i widget per le attività, sul sito (foto del capitolo 8). La pagina /widget-nuovi/ la crea prove/pagina-widget-nuovi.php
 // nella cartella del sito delle schermate (CMS_DIR_MANUALE; senza, la foto si salta). Si fa dopo tutti i capitoli: creata prima,
 // prenderebbe il numero di pagina che il capitolo 17 si aspetta per "Lavora con noi".
