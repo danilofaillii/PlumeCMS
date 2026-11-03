@@ -233,7 +233,7 @@ async function contrastoParole(pg) {
       && await v.evaluate((img) => [...document.images].some(i => new RegExp(img + '\\.webp').test(i.currentSrc || i.src) && i.complete && i.naturalWidth > 0), img));
   ok('Funzionalità (2.20.0): nessun blocco e nessuna riga sull\'import da WordPress', await v.locator('#wordpress, #ponte').count() === 0 && !/WordPress|plugin Ponte/.test(await v.locator('main, body').first().innerText()));
   ok('Funzionalità (2.21.0): l\'allineamento delle parti sta nel blocco dell\'editor, non in un blocco nuovo', /Ogni parte si allinea per conto suo/.test(await v.locator('#editor').innerText()) && await v.locator('#allinea, #allineamento').count() === 0);
-  ok('Funzionalità: il blocco degli addon nomina gli otto addon', /Prenotazioni e appuntamenti/.test(await v.locator('#addon').innerText()) && /Copia del sito altrove/.test(await v.locator('#addon').innerText()));
+  ok('Funzionalità: il blocco degli addon nomina i nove addon', /Prenotazioni e appuntamenti/.test(await v.locator('#addon').innerText()) && /Copia del sito altrove/.test(await v.locator('#addon').innerText()) && /Test e questionari/.test(await v.locator('#addon').innerText()) && /nove funzioni/.test(await v.locator('#addon').innerText()));
   ok('Header e footer (2.6.0): il logo è quello dello Stile del sito', await v.evaluate(() => [...document.querySelectorAll('.marchio img')].length >= 2 && [...document.querySelectorAll('.marchio img')].every(i => /marchio/.test(i.getAttribute('src')))));
   // 2.5.0: la pagina Temi con le stagioni e le tinte piene, ogni immagine caricata.
   await v.goto(B + '/temi/', { waitUntil: 'networkidle' });
@@ -246,7 +246,7 @@ async function contrastoParole(pg) {
   // 1.4.2: il manuale d'uso nella Documentazione, nelle Domande frequenti e nel piede.
   await v.goto(B + '/documentazione/', { waitUntil: 'networkidle' });
   ok('Documentazione (1.6.4): due manuali, il primo è il manuale d\'uso', /Due manuali/.test(await v.locator('body').innerText()) && await v.locator('a[href$="/scarica/manuale-uso/"]').count() >= 1);
-  ok('Documentazione (2.1.0): niente più il manuale degli addon a parte, gli addon sono nel manuale d\'uso', await v.locator('a[href*="manuale-uso-addon"]').count() === 0 && /otto addon/.test(await v.locator('body').innerText()));
+  ok('Documentazione (2.1.0): niente più il manuale degli addon a parte, gli addon sono nel manuale d\'uso', await v.locator('a[href*="manuale-uso-addon"]').count() === 0 && /nove addon/.test(await v.locator('body').innerText()));
   await v.goto(B + '/domande-frequenti/', { waitUntil: 'networkidle' });
   ok('Domande frequenti: lo stesso invito sotto tutti gli articoli; i quaranta capitoli e gli addon (2.0.0)', /stesso invito sotto tutti gli articoli\?/.test(await v.locator('body').innerText()) && /Quaranta capitoli/.test(await v.locator('body').textContent()) && /Cosa sono gli addon\?/.test(await v.locator('body').innerText()));
   ok('Domande frequenti (1.5.0): i social', /Mi aiuta anche con i social\?/.test(await v.locator('body').innerText()));

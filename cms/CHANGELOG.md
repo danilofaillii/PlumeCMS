@@ -2,6 +2,24 @@
 
 Il prodotto si chiama **plumeCMS** (nome scelto il 26 ottobre 2026; prima, per poche ore, "CarbonaraCMS", e ancora prima il provvisorio "Officina": gli zip vecchi si chiamavano `officina-*` e `carbonaracms-*`).
 
+## 2.22.0 (3 novembre 2026) - Test e questionari
+
+- Addon nuovo **Test e questionari** (Impostazioni > Addon): test a punteggio, ad aree con il grafico a barre e
+  "che tipo sei" (profili). Domande a scala, scelta singola, sì/no e cursore da 0 a 10, con peso, invertite,
+  obbligatorie e condizionali; fasce in percentuale per il totale e per ogni area, regole E/O che vincono sulle fasce,
+  avvertenza. Procedura in cinque passi con il simulatore e il controllo delle fasce; tre modelli pronti. Richiesta di
+  Danilo: un motore per i test come quello del burnout, tutto dal pannello.
+- La pagina del test (`/fai-il-test/<nome>/`: l'indirizzo `/test/` è chiuso dal `.htaccess` di ogni sito): presentazione con
+  l'editor visuale e il pulsante Inizia il test, una domanda per schermata con barra di avanzamento, Indietro, tastiera e
+  ripresa dopo il ricaricamento; senza JavaScript tutte le domande in una pagina. Calcolo sempre sul server. Il risultato
+  ha un link da condividere con solo l'esito, firmato.
+- Risultato per email con un consenso separato, iscrizione a una lista con doppia conferma; nelle automazioni l'innesco
+  "Completa un test" con il filtro sul risultato (fascia, area, profilo, regola).
+- Risposte anonime (scelta di Danilo): si conservano esito e punteggi con il solo giorno, mai l'IP. Statistiche: iniziati,
+  completati, abbandoni per domanda, risultati, media per area, CSV.
+- Widget Riquadro in evidenza: con l'addon acceso, il pulsante può portare a un test scelto da un elenco; i test compaiono
+  anche in "Scegli dal sito".
+
 ## 2.21.0 (3 novembre 2026) - Allinea ogni parte di ogni widget
 
 - **Editor, scheda Stile**: ogni parte di testo che ha la sua Tipografia (occhiello, titolo, testo sotto il titolo, nome,

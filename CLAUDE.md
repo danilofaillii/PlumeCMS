@@ -58,7 +58,7 @@ Stato, decisioni, contesto e diario non stanno qui: stanno nel second brain
 **Regola di Danilo (29 ottobre 2026): con plumeCMS restano solo due documenti**, il manuale d'uso e il manuale dei temi.
 Sono gli unici in `cms/docs/`, nello zip, nel sito di plumeCMS e nella pagina Download.
 
-0. `cms/docs/manuale-uso.md`: il manuale d'uso per chi usa plumeCMS (39 capitoli in due parti, la seconda per gli addon; esempi, schermate con i passi
+0. `cms/docs/manuale-uso.md`: il manuale d'uso per chi usa plumeCMS (40 capitoli in due parti, la seconda per gli addon; esempi, schermate con i passi
    numerati, checklist). Le schermate le fa `tools/manuale-uso-schermate.js` eseguendo gli esempi su un sito di prova
    (kit Attività, in `/home/studioprova/public_html`): **quando cambia il pannello si rifanno le schermate e si
    ricontrolla il capitolo**. Il PDF è uno solo (dalla 2.1.0) e deve restare sotto 12 MB (`MAX_KB` in `tools/manuali-pdf.js`, alzato da 8 a 12 MB il 1 novembre 2026, decisione di Danilo; oggi
@@ -108,7 +108,7 @@ Sono gli unici in `cms/docs/`, nello zip, nel sito di plumeCMS e nella pagina Do
 - **Pacchetto di aggiornamento** per un'installazione esistente:
   `python3 tools/cms-pacchetto.py --aggiornamento`. Si carica dal pannello,
   Impostazioni, Aggiornamenti.
-- **Versione**: `cms/VERSIONE` (oggi 2.21.0; sempre tre numeri: "beta" va nel CHANGELOG, mai nel nome dello zip, se no la serie "ultima" del Download non lo riconosce) e una voce in `cms/CHANGELOG.md` a ogni
+- **Versione**: `cms/VERSIONE` (oggi 2.22.0; sempre tre numeri: "beta" va nel CHANGELOG, mai nel nome dello zip, se no la serie "ultima" del Download non lo riconosce) e una voce in `cms/CHANGELOG.md` a ogni
   zip con contenuto diverso. Mai cambiare il contenuto di una versione già data.
 - **Prove** prima di dire finito:
   - `php -n -d short_open_tag=1 -l` su ogni file PHP toccato, `node --check` sui js;

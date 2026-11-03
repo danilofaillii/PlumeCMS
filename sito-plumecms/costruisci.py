@@ -229,11 +229,12 @@ def funzionalita():
           '<li>Ogni pagina condivisa mostra la sua immagine, con titolo e descrizione.</li>'
           '<li>Pubblicare resta a te: plumeCMS non entra nei tuoi account.</li></ul>']),
         ('addon', 'addon.webp', 'Gli addon: accendi solo quello che ti serve',
-         ['In Impostazioni, <strong>Addon</strong>: otto funzioni in più, ognuna con il suo pulsante Accendi. Spento, l\'addon sparisce dal sito, e i suoi dati restano lì per quando lo riaccendi.',
+         ['In Impostazioni, <strong>Addon</strong>: nove funzioni in più, ognuna con il suo pulsante Accendi. Spento, l\'addon sparisce dal sito, e i suoi dati restano lì per quando lo riaccendi.',
           '<ul><li><strong>Prenotazioni e appuntamenti</strong>, con i posti davvero liberi e il promemoria il giorno prima.</li>'
           '<li><strong>Eventi con iscrizione</strong> e lista d\'attesa, <strong>Raccolta recensioni</strong> dopo il servizio.</li>'
           '<li><strong>Vetrina prodotti</strong> con carrello e ordini, <strong>Statistiche senza cookie</strong>.</li>'
-          '<li><strong>Area riservata</strong>, <strong>Corsi online</strong> e <strong>Copia del sito altrove</strong>, ogni notte.</li></ul>',
+          '<li><strong>Area riservata</strong>, <strong>Corsi online</strong> e <strong>Copia del sito altrove</strong>, ogni notte.</li>'
+          '<li><strong>Test e questionari</strong>: a punteggio, ad aree o "che tipo sei", una domanda per schermata e il risultato con il grafico.</li></ul>',
           'E il download manager: manuali, ebook e listini con il loro indirizzo, anche riservati in cambio dell\'iscrizione.']),
         ('sicurezza', 'sicurezza.webp', 'Al sicuro, senza doverci pensare ogni giorno',
          ['Accesso a due fattori, blocchi contro chi prova a indovinare le password, protezioni del browser, registro degli eventi. Prima di uscire plumeCMS è stato messo alla prova con più di 500 attacchi, addon compresi: tutti respinti.',
@@ -297,7 +298,7 @@ def documentazione(pagine_pdf):
                        'Due manuali in PDF. Uno per usare plumeCMS, con le schermate vere e un capitolo per ogni addon; uno per costruirti il tuo tema.',
                        livello='h1', centro=True)]], larghezza='stretta', **spazi(72, 24))
     man = [('lista-spunte', 'Manuale d\'uso', pagine_pdf['manuale-uso'], 'manuale-uso',
-            'Come si fa ogni cosa: articoli, pagine con l\'editor, menu, form, newsletter, sicurezza, aggiornamenti. Nella seconda parte gli otto addon: prenotazioni, eventi, recensioni, negozio, statistiche, area riservata, corsi, copia del sito altrove. Ogni capitolo ha un esempio vero, le schermate con i passi numerati e una checklist.'),
+            'Come si fa ogni cosa: articoli, pagine con l\'editor, menu, form, newsletter, sicurezza, aggiornamenti. Nella seconda parte i nove addon: prenotazioni, eventi, recensioni, negozio, statistiche, area riservata, corsi, copia del sito altrove, test e questionari. Ogni capitolo ha un esempio vero, le schermate con i passi numerati e una checklist.'),
            ('tavolozza', 'Manuale dei temi', pagine_pdf['manuale-temi'], 'manuale-temi',
             'Come si costruisce un tema da zero: cartella, colori, header e footer, CSS, infografiche, PHP, prove, distribuzione. Con il tema d\'esempio Lavagna.')]
     p.sezione([[w('invito_libero', icona=ic, titolo=n, livello='h2', testo=f'{d} {pag} pagine.', pulsante_testo='Scarica il PDF',
@@ -306,7 +307,7 @@ def documentazione(pagine_pdf):
                      w('elenco_icone', voci=[{'testo': t, 'icona': 'spunta', 'link': ''} for t in
                                              ['Il pannello in cinque minuti', 'Il primo articolo, e come programmarlo', 'Una pagina con l\'editor, dall\'inizio alla fine',
                                               'Menu, header, footer, stile e temi', 'Form, popup, newsletter, download', 'SEO, utenti, email, cron, sicurezza',
-                                              'Aggiornare e copiare il sito', 'Gli otto addon, uno per capitolo', 'La checklist prima di andare online']])]),
+                                              'Aggiornare e copiare il sito', 'I nove addon, uno per capitolo', 'La checklist prima di andare online']])]),
                (50, [titolo('Cosa c\'è nel manuale dei temi', livello='h3'),
                      w('elenco_icone', voci=[{'testo': t, 'icona': 'spunta', 'link': ''} for t in
                                              ['Il percorso, dal foglio bianco al tema attivo', 'tema.json, stile.json, modelli.json',
@@ -595,6 +596,7 @@ def zip_lavagna(dest):
 # Regola di Danilo (1 novembre 2026): solo i punti salienti, una riga per versione, mai nomi di aziende o servizi di terzi.
 # Le novità per chi scarica: brevi, scritte qui (il CHANGELOG è per chi sviluppa). Da aggiornare a ogni versione.
 NOVITA = [
+    ('2.22.0', 'Test e questionari', ['Un addon per costruire test a punteggio, ad aree o "che tipo sei": una domanda per schermata, risultato con il grafico.']),
     ('2.21.0', 'Allinea ogni parte di ogni widget', ['Occhiello, titolo, testo, nome, prezzo: ognuno con il suo allineamento, anche diverso sul telefono.']),
     ('2.20.0', 'Un pannello più snello', ['Via una funzione che non dava i risultati attesi: restano le cose che si usano davvero.']),
     ('2.18.0', 'Le automazioni richiamano i modelli', ['Correggi un modello e le email delle automazioni escono già corrette; menu del pannello più leggibile.']),
