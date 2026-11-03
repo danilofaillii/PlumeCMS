@@ -53,6 +53,11 @@ const TEST_PERSONA_NR_TESTO = 'Preferisco non rispondere';
 const TEST_PERSONA_MAX_OPZIONI = 80;
 const TEST_GRUPPO_MINIMO = 5;             // statistiche per gruppi: sotto questo numero non si mostra niente ("meno di 5")
 const TEST_TITOLO_EMAIL = 'Lasciami la tua email e ti mando il risultato completo';
+// 2.24.0: come si mostrano le domande. 'una' è il comportamento di sempre (con JavaScript una domanda per schermata) ed è il
+// modo dei test che non lo dicono (quelli scritti prima della 2.24.0): la loro pagina resta uguale al byte.
+const TEST_MODI = ['una' => 'Una per pagina', 'pagine' => 'A pagine, le scegli tu', 'tutte' => 'Tutte in una pagina'];
+const TEST_MAX_PAGINE = 80;               // quante pagine al massimo (una per domanda, con le domande al massimo)
+const TEST_MAX_TITOLO_PAGINA = 120;
 /**
  * L'indirizzo delle pagine dei test. Non /test/: il .htaccess di ogni installazione (e gli esempi per Apache e Nginx)
  * vieta la cartella test/ nella radice del CMS (RewriteRule ^(...|test|test-definizioni)(/|$) - [F,L]), quindi /test/<nome>/
@@ -209,6 +214,7 @@ function test_dati_vuoti(string $tipo): array {
         'regole' => [], 'avvertenza' => TEST_AVVERTENZA, 'casuale' => false, 'presentazione' => '',
         'dopo' => ['email' => false, 'consenso' => TEST_CONSENSO, 'lista' => 0, 'iscrizione' => TEST_ISCRIZIONE, 'solo_email' => true],
         'persona' => ['obbligatorie' => false, 'domande' => []],
+        'modo' => 'una', 'pagine' => [],
     ];
 }
 
@@ -317,6 +323,10 @@ function test_normalizza(mixed $d, string $tipo): array {
         $chiavi[$k] = count($domande);
         $domande[] = $x;
     }
+    // 2.24.0: il modo e le pagine. L'ordine delle pagine è l'ordine delle domande: se le pagine mettono le domande in un
+    // altro ordine (dal pannello non succede: la lavagna le tiene allineate) si riordinano e si ricontrollano le condizioni.
+    $out['modo'] = isset(TEST_MODI[$d['modo'] ?? '']) ? (string)$d['modo'] : 'una';
+    [$out['pagine'], $domande] = test_pagine_normalizza($d['pagine'] ?? null, $domande);
     $out['domande'] = $domande;
     // Fasce del totale (non nei profili).
     $out['fasce'] = $tipo === 'profili' ? [] : (array_key_exists('fasce', $d) ? test_fasce_pulite($d['fasce']) : $out['fasce']);
@@ -347,6 +357,55 @@ function test_normalizza(mixed $d, string $tipo): array {
         'iscrizione' => test_testo($dp['iscrizione'] ?? '', 300) ?: TEST_ISCRIZIONE, 'solo_email' => !empty($dp['solo_email'])];
     $out['persona'] = test_persona_normalizza($d['persona'] ?? null);
     return $out;
+}
+
+/**
+ * 2.24.0: le pagine di un test, controllate: [{titolo, domande: [chiavi]}]. Al massimo TEST_MAX_PAGINE (quello che arriva
+ * oltre si scarta prima di guardarlo), titoli di testo semplice tagliati, chiavi che non sono domande del test scartate, una
+ * domanda in una sola pagina (la prima), le domande che nessuna pagina ha in fondo all'ultima (con una pagina sola se non ce
+ * n'è nessuna). Le pagine vuote restano (il pannello le mostra; sul sito si saltano). Ritorna [pagine, domande nell'ordine
+ * delle pagine]: una condizione che dopo il riordino punterebbe a una domanda che viene dopo si toglie.
+ */
+function test_pagine_normalizza(mixed $in, array $domande): array {
+    $perK = array_column($domande, null, 'k');
+    $pagine = []; $prese = [];
+    foreach (is_array($in) ? array_slice($in, 0, TEST_MAX_PAGINE) : [] as $p) {
+        if (!is_array($p)) continue;
+        $ks = [];
+        foreach (is_array($p['domande'] ?? null) ? array_slice($p['domande'], 0, TEST_MAX_DOMANDE) : [] as $k) {
+            if (!is_string($k) || !isset($perK[$k]) || isset($prese[$k])) continue;
+            $prese[$k] = true;
+            $ks[] = $k;
+        }
+        $pagine[] = ['titolo' => test_testo($p['titolo'] ?? '', TEST_MAX_TITOLO_PAGINA), 'domande' => $ks];
+    }
+    $resto = array_values(array_filter(array_keys($perK), fn($k) => !isset($prese[$k])));
+    if (!$pagine) $pagine[] = ['titolo' => '', 'domande' => []];
+    if ($resto) $pagine[count($pagine) - 1]['domande'] = array_merge($pagine[count($pagine) - 1]['domande'], $resto);
+    $ordine = array_merge(...array_map(fn($p) => $p['domande'], $pagine));
+    if ($ordine !== array_column($domande, 'k')) {
+        $domande = array_map(fn($k) => $perK[$k], $ordine);
+        $viste = [];
+        foreach ($domande as $i => $q) {
+            if ($q['condizione'] && !isset($viste[$q['condizione']['domanda']])) $domande[$i]['condizione'] = null;
+            $viste[$q['k']] = true;
+        }
+    }
+    return [$pagine, $domande];
+}
+
+/**
+ * 2.24.0: le pagine che vede chi fa il test (senza le domande sulla persona, che sono sempre l'ultima pagina):
+ * [{titolo, domande: [chiavi]}]. Una per pagina: una domanda per pagina, senza titoli; tutte in una pagina: una pagina sola,
+ * senza titolo; a pagine: quelle scelte, senza le vuote.
+ */
+function test_pagine(array $dati): array {
+    $tutte = array_column($dati['domande'], 'k');
+    return match ($dati['modo'] ?? 'una') {
+        'pagine' => array_values(array_filter($dati['pagine'], fn($p) => $p['domande'])),
+        'tutte' => $tutte ? [['titolo' => '', 'domande' => $tutte]] : [],
+        default => array_map(fn($k) => ['titolo' => '', 'domande' => [$k]], $tutte),
+    };
 }
 
 /**
@@ -514,7 +573,7 @@ function test_cornice(int $id): array {
     if (!$t) return [];
     require_once __DIR__ . '/vista.php';
     return ['prima' => '<div class="wrap tq-pagina"><header class="tq-testa"><span class="occhiello">Test</span><h1>' . h($t['nome']) . '</h1><p class="tq-numeri">' . h(test_quanto_testo($t)) . '</p></header></div>',
-        'dopo' => '<div class="wrap tq-pagina"><p><span class="btn btn-viola">Inizia il test</span></p><p class="tq-numeri">Qui sotto chi visita trova le domande, una per schermata.</p></div>',
+        'dopo' => '<div class="wrap tq-pagina"><p><span class="btn btn-viola">Inizia il test</span></p><p class="tq-numeri">Qui sotto chi visita trova le domande, ' . h(['una' => 'una per schermata', 'pagine' => 'divise nelle pagine che hai scelto', 'tutte' => 'tutte in una pagina'][$t['dati']['modo']] ?? 'una per schermata') . '.</p></div>',
         'testa' => '<link rel="stylesheet" href="' . h(test_asset('test.css')) . '">'];
 }
 

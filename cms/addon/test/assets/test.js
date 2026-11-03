@@ -96,6 +96,10 @@
     } catch (e) {}
   }
 
+  // 2.24.0: a pagine (o tutte in una pagina): un'altra strada, qui sotto. Senza data-modo (una per pagina, e i test di
+  // prima) tutto resta com'era.
+  if (form.getAttribute('data-modo')) { paginato(); return; }
+
   // I pezzi della modalità "una per schermata".
   form.setAttribute('novalidate', '');
   form.querySelectorAll('[required]').forEach(function (x) { if (!x.closest('#tq-fine')) x.removeAttribute('required'); });
@@ -218,5 +222,175 @@
     inizia.parentNode.hidden = true;
     box.querySelector('[data-riprendi]').addEventListener('click', function () { avvia(true); });
     box.querySelector('[data-ricomincia]').addEventListener('click', function () { togli(CHIAVE); avvia(false); });
+  }
+  // ---------- 2.24.0: il test a pagine ----------
+  // Ogni domanda ha data-pagina (le domande sulla persona sono l'ultima pagina). Si va pagina per pagina: "Pagina 2 di 5",
+  // la barra che avanza, Indietro e Avanti, le risposte tenute (anche nel browser, per riprendere). Le condizionali entrano
+  // ed escono anche dentro la pagina che si sta guardando; una pagina con tutte le domande nascoste si salta. Con l'ordine
+  // casuale le domande si mescolano dentro la loro pagina (una condizionale resta dopo la sua). Il modulo parte dall'ultima
+  // pagina, con "Vedi il risultato": le risposte delle domande che non si vedono non partono.
+  function paginato() {
+    var numPag = {};
+    tutte.forEach(function (f) { numPag[f.getAttribute('data-k')] = +f.getAttribute('data-pagina') || 1; });
+    var titoli = Array.prototype.slice.call(form.querySelectorAll('[data-pagina-titolo]'));
+    form.setAttribute('novalidate', '');
+    form.querySelectorAll('[required]').forEach(function (x) { if (!x.closest('#tq-fine')) x.removeAttribute('required'); });
+    var testa = document.createElement('div');
+    testa.className = 'tq-progresso';
+    testa.innerHTML = '<div class="tq-barra" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" aria-label="Avanzamento del test"><span></span></div><p class="tq-passo" aria-live="polite"></p>';
+    form.insertBefore(testa, form.firstChild);
+    var nav = document.createElement('div');
+    nav.className = 'tq-nav';
+    nav.innerHTML = '<button type="button" class="btn btn-filo" data-indietro>Indietro</button><button type="button" class="btn btn-viola" data-avanti>Avanti</button>';
+    form.insertBefore(nav, fine);
+    var bIndietro = nav.querySelector('[data-indietro]'), bAvanti = nav.querySelector('[data-avanti]');
+    var barra = testa.querySelector('.tq-barra'), passo = testa.querySelector('.tq-passo');
+    var qui = 0, viste = {};
+
+    // L'ordine: quello del test; con l'ordine casuale, mescolato dentro ogni pagina (e rimesso così anche nella pagina).
+    function ordinePagine() {
+      var chiavi = tutte.map(function (f) { return f.getAttribute('data-k'); });
+      if (!form.getAttribute('data-casuale')) return chiavi;
+      var ok = Array.isArray(stato.o) && stato.o.length === chiavi.length && stato.o.every(function (k) { return perK[k] && stato.o.indexOf(k) >= 0; });
+      var out = ok ? stato.o : [];
+      if (!ok) {
+        var gruppi = [], perG = {};
+        chiavi.forEach(function (k) { var n = numPag[k]; if (!perG[n]) { perG[n] = []; gruppi.push(n); } perG[n].push(k); });
+        gruppi.forEach(function (n) {
+          var g = perG[n];
+          if (perK[g[0]].getAttribute('data-persona')) { out = out.concat(g); return; }
+          var fisse = g.filter(function (k) { var c = cond(perK[k]); return !c || g.indexOf(c.domanda) < 0; });
+          for (var i = fisse.length - 1; i > 0; i--) { var j = Math.floor(Math.random() * (i + 1)), x = fisse[i]; fisse[i] = fisse[j]; fisse[j] = x; }
+          var dentro = [];
+          function metti(k) { dentro.push(k); g.forEach(function (c) { var x = cond(perK[c]); if (x && x.domanda === k && dentro.indexOf(c) < 0) metti(c); }); }
+          fisse.forEach(metti);
+          g.forEach(function (k) { if (dentro.indexOf(k) < 0) dentro.push(k); });
+          out = out.concat(dentro);
+        });
+        stato.o = out;
+      }
+      // Nella pagina le domande di ogni pagina si rimettono nell'ordine scelto (stanno vicine: si riaccodano dopo l'ultima).
+      var dopo = {};
+      chiavi.forEach(function (k) { dopo[numPag[k]] = perK[k].nextSibling; });
+      out.forEach(function (k) { form.insertBefore(perK[k], dopo[numPag[k]]); });
+      return out;
+    }
+    // Le pagine con almeno una domanda che si vede: [{n, k: [chiavi visibili]}].
+    function pagineVisibili() {
+      var vis = visibili(), out = [], perN = {};
+      vis.forEach(function (k) { var n = numPag[k]; if (!perN[n]) { perN[n] = { n: n, k: [] }; out.push(perN[n]); } perN[n].k.push(k); });
+      return out;
+    }
+    function mostra(i, fuoco) {
+      var pp = pagineVisibili(), tot = pp.length, vis = visibili();
+      qui = Math.max(0, Math.min(i, tot - 1));
+      var pg = pp[qui] || { n: 0, k: [] };
+      tutte.forEach(function (f) { f.hidden = pg.k.indexOf(f.getAttribute('data-k')) < 0; });
+      titoli.forEach(function (t) { t.hidden = +t.getAttribute('data-pagina-titolo') !== pg.n; });
+      pg.k.forEach(function (k) { var num = perK[k].querySelector('.tq-num'); if (num) num.firstChild.nodeValue = 'Domanda ' + (vis.indexOf(k) + 1) + ' di ' + vis.length; });
+      var ultima = qui >= tot - 1;
+      fine.hidden = !ultima;
+      var pct = tot ? Math.round(qui / tot * 100) : 100;
+      barra.setAttribute('aria-valuenow', String(pct));
+      barra.setAttribute('aria-valuetext', 'Pagina ' + (qui + 1) + ' di ' + tot);
+      barra.firstChild.style.width = pct + '%';
+      passo.textContent = 'Pagina ' + (qui + 1) + ' di ' + tot;
+      bIndietro.hidden = qui === 0;
+      bAvanti.hidden = ultima;
+      stato.i = qui;
+      salva(CHIAVE, stato);
+      if (pg.k.length && !viste[pg.n]) { viste[pg.n] = true; manda(pg.k[0], vis.indexOf(pg.k[0]) + 1); }
+      if (fuoco !== false) {
+        var t = titoli.filter(function (x) { return !x.hidden; })[0];
+        var dove = t || perK[pg.k[0]] || fine;
+        dove.setAttribute('tabindex', '-1');
+        dove.focus({ preventScroll: true });
+        var top = form.getBoundingClientRect().top + window.pageYOffset - 90;
+        if (window.pageYOffset > top || form.getBoundingClientRect().top > window.innerHeight * 0.5) window.scrollTo(0, Math.max(0, top));
+      }
+    }
+    function errore(f, si) {
+      var p = f.querySelector('.tq-manca');
+      if (!si) { if (p) p.remove(); f.classList.remove('errato'); return; }
+      if (!p) {
+        p = document.createElement('p'); p.className = 'errore-campo tq-manca'; p.setAttribute('role', 'alert'); p.id = 'tm-' + f.getAttribute('data-k');
+        p.textContent = 'Scegli una risposta per andare avanti.';
+        f.appendChild(p);
+        f.setAttribute('aria-describedby', ((f.getAttribute('aria-describedby') || '') + ' ' + p.id).trim());
+      }
+      f.classList.add('errato');
+    }
+    // Le obbligatorie della pagina che si vede hanno una risposta? Se no, l'errore sotto ognuna e il fuoco sulla prima.
+    function paginaCompleta() {
+      var pg = pagineVisibili()[qui], prima = null;
+      (pg ? pg.k : []).forEach(function (k) {
+        var f = perK[k], manca = f.getAttribute('data-obbl') === '1' && valore(f) === '';
+        errore(f, manca);
+        if (manca && !prima) prima = f;
+      });
+      if (prima) { var r = prima.querySelector('input'); if (r) r.focus(); return false; }
+      return true;
+    }
+    function avanti() { if (paginaCompleta()) mostra(qui + 1); }
+    bAvanti.addEventListener('click', avanti);
+    bIndietro.addEventListener('click', function () { mostra(qui - 1); });
+    form.addEventListener('keydown', function (e) {
+      if (e.key !== 'Enter' || fine.contains(e.target) || e.target.tagName === 'BUTTON') return;
+      e.preventDefault();
+      if (!bAvanti.hidden) avanti();
+    });
+    // Una risposta cambiata può far entrare o uscire una condizionale, anche nella pagina che si guarda.
+    form.addEventListener('change', function (e) {
+      var f = e.target.closest('.tq-domanda');
+      if (!f) return;
+      stato.r[f.getAttribute('data-k')] = valore(f);
+      if (valore(f) !== '') errore(f, false);
+      salva(CHIAVE, stato);
+      mostra(qui, false);
+    });
+    form.addEventListener('submit', function (e) {
+      if (e.defaultPrevented) return;
+      if (!paginaCompleta()) { e.preventDefault(); return; }
+      var vis = visibili();
+      tutte.forEach(function (f) {
+        if (vis.indexOf(f.getAttribute('data-k')) >= 0) return;
+        f.querySelectorAll('input').forEach(function (x) { if (x.type === 'radio') x.checked = false; else x.disabled = true; });
+      });
+      form.querySelector('input[name=tentativo]').value = stato.c || '';
+    });
+    function rimetti() {
+      Object.keys(stato.r).forEach(function (k) {
+        var f = perK[k];
+        if (!f) return;
+        var v = String(stato.r[k]);
+        f.querySelectorAll('input[type=radio]').forEach(function (x) { x.checked = x.value === v; });
+        var c = f.querySelector('input[type=range]');
+        if (c && /^\d+$/.test(v)) { c.value = v; var o = c.parentNode.querySelector('output'); if (o) o.textContent = v; }
+      });
+    }
+    function avvia(riprendi) {
+      if (!riprendi || !stato.c) { stato = { r: {}, c: codice() }; form.reset(); form.querySelectorAll('[data-cursore]').forEach(function (r) { var o = r.parentNode.querySelector('output'); if (o) o.textContent = r.value; }); }
+      lista = ordinePagine();
+      if (riprendi) rimetti();
+      app.hidden = false;
+      inizia.parentNode.hidden = true;
+      var box = document.getElementById('tq-riprendi');
+      if (box) box.remove();
+      if (!riprendi) manda('', 0);
+      mostra(riprendi ? (stato.i || 0) : 0);
+    }
+    app.hidden = true;
+    inizia.addEventListener('click', function (e) { e.preventDefault(); avvia(false); });
+    if (stato.c && Object.keys(stato.r).length) {
+      var box = document.createElement('div');
+      box.id = 'tq-riprendi';
+      box.className = 'tq-riprendi';
+      box.setAttribute('role', 'status');
+      box.innerHTML = '<p>Hai già cominciato questo test: le tue risposte sono rimaste in questo browser.</p><p class="tq-azioni"><button type="button" class="btn btn-viola" data-riprendi>Riprendi da dove eri</button> <button type="button" class="btn btn-filo" data-ricomincia>Ricomincia da capo</button></p>';
+      inizia.parentNode.parentNode.insertBefore(box, inizia.parentNode);
+      inizia.parentNode.hidden = true;
+      box.querySelector('[data-riprendi]').addEventListener('click', function () { avvia(true); });
+      box.querySelector('[data-ricomincia]').addEventListener('click', function () { togli(CHIAVE); avvia(false); });
+    }
   }
 })();

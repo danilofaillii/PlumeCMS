@@ -710,6 +710,16 @@ e senza newsletter, i tag alla conferma, l'innesco "Riceve un tag", le statistic
 test scritto con la 2.22.0 confrontato al byte con il codice di c3b99e9, estratto con `git archive` nella cartella
 `addon/test-vecchio` del sito e poi tolto); `attacchi-test.js` il gruppo G. Atteso: 141 su 141 e 71 su 71, in radice e in cartella.
 
+2.24.0: il pannello del test è fatto di carte che si aprono in finestre (`<dialog>`), con il telefono dell'anteprima: gli aiuti
+di `prova-test.js` aprono le carte (`apriCarta`, `fatto`, `apriDomanda`) e trascinano con il mouse vero (`trascina`, SortableJS
+con `forceFallback`). Sezione E: i tre modi (una per pagina, a pagine, tutte), la lavagna (trascinamento fra colonne e verso
+"+ Pagina nuova", la tendina Pagina, Invio ed Esc con il fuoco che torna alla carta, i titoli), l'anteprima che cambia mentre
+scrivi, i cinque passi di tutti e tre i tipi, "Anteprima" a 390 px, il sito pagina per pagina con e senza JavaScript, "Tutte
+in una pagina", un test senza modo che resta una domanda per schermata. `attacchi-test.js` gruppo H: pagine maligne (chiavi
+inventate, doppioni, titoli con HTML e script, 4 byte, 5000 pagine, modo inventato), CSRF e redattore. Atteso: 196 su 196 e
+82 su 82, in radice e in cartella. `prova-ux-pannello.js` ha le pagine dei cinque passi (con una finestra aperta per passo,
+`&apri=<finestra>`): con il filtro `a=test`, dopo `prova-test.js` (il test 1 deve esserci).
+
 ## prova-tag.js e attacchi-tag.js (2.23.0)
 
 I tag dei contatti: scheda del contatto, azioni di gruppo e filtro dei Contatti, pagina Tag, segmenti (contati a mano), automazioni

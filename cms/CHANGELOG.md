@@ -2,6 +2,21 @@
 
 Il prodotto si chiama **plumeCMS** (nome scelto il 26 ottobre 2026; prima, per poche ore, "CarbonaraCMS", e ancora prima il provvisorio "Officina": gli zip vecchi si chiamavano `officina-*` e `carbonaracms-*`).
 
+## 2.24.0 (3 novembre 2026) - Test a pagine, passi a carte con l'anteprima
+
+- **Test e questionari, come si mostrano le domande** (richiesta di Danilo): **Una per pagina** (come prima, e com'è per i
+  test già fatti), **A pagine, le scegli tu** (quante pagine e quali domande in ognuna) oppure **Tutte in una pagina**. Ogni
+  pagina può avere un titolo ("Come inizi la giornata") che chi fa il test legge sopra le domande. Sul sito si va pagina per
+  pagina ("Pagina 2 di 5"), con Indietro e Avanti; le domande condizionali compaiono anche dentro la pagina, una pagina senza
+  domande da mostrare si salta, le domande sulla persona sono l'ultima pagina. Senza JavaScript tutto in una pagina, con i
+  titoli delle pagine.
+- **Il pannello del test, rifatto** (la proposta scelta da Danilo fra cinque): nel passo 2 una lavagna con una colonna per
+  pagina e una carta per domanda, da trascinare fra le colonne o nel riquadro "+ Pagina nuova" (oppure con la tendina
+  "Pagina" nella scheda), e a destra un telefono con l'anteprima dal vivo. Tutti e cinque i passi, per tutti e tre i tipi,
+  hanno la stessa forma: carte compatte che si aprono in una finestra con i campi raggruppati, e il telefono che mostra quello
+  che il passo cambia (la presentazione, la pagina delle domande, il risultato di una fascia, l'email del risultato, la fine
+  del test). Al telefono il pulsante "Anteprima" apre l'anteprima a schermo intero. Niente si perde: ogni campo di prima resta.
+
 ## 2.23.0 (3 novembre 2026) - Tag delle persone, test più completi
 
 - **I tag dei contatti** (richiesta di Danilo: "i tag permettono la selezione di gruppi di persone e i flussi"): si danno dalla

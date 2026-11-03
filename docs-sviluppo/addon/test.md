@@ -21,8 +21,8 @@ il motore nuovo, e Danilo ha `.htaccess` scritti a mano). Il prefisso è la cost
 | `includes/vista.php` | l'HTML pubblico: modulo con tutte le domande, grafico SVG, risultato, riquadro dell'email, email del risultato |
 | `includes/sito.php` | gli indirizzi pubblici |
 | `includes/admin-comune.php`, `admin-test.php`, `admin-statistiche.php` | il pannello |
-| `assets/test.js`, `assets/test.css` | sito: una domanda per schermata, ripresa, richieste leggere; pagina del risultato |
-| `assets/admin-test.js`, `assets/admin.css` | pannello: gli editor dei passi 2, 3 e 4 |
+| `assets/test.js`, `assets/test.css` | sito: una domanda per schermata, oppure (2.24.0) pagina per pagina; ripresa, richieste leggere; pagina del risultato |
+| `assets/admin-test.js`, `assets/admin.css` | pannello: i cinque passi a carte e finestre con il telefono dell'anteprima (2.24.0), la lavagna delle pagine |
 
 ## Tabelle
 
@@ -65,6 +65,9 @@ presentazione  testo semplice breve (descrizione per Google e i social)
 dopo       {email: bool, consenso: testo, lista: id, iscrizione: testo, solo_email: bool (2.23.0, acceso nei test nuovi)}
 persona    {obbligatorie: bool, domande: [{k (chiave del catalogo), nome (breve, per tag e statistiche), testo,
            opzioni: [{k, t}]}]}   2.23.0; da 2 a 80 risposte; la chiave 'nr' ("Preferisco non rispondere") è riservata
+modo       2.24.0: 'una' (una per pagina: il comportamento di prima, e quello dei test che non lo dicono), 'pagine', 'tutte'
+pagine     2.24.0: [{titolo (testo semplice, al massimo 120), domande: [chiavi]}]   al massimo 80; ogni domanda in una
+           pagina sola; l'ordine delle pagine è l'ordine di `domande`; le domande senza pagina vanno in fondo all'ultima
 ```
 
 ## Il calcolo
@@ -129,12 +132,19 @@ dicono "Rispondi solo se alla domanda N hai risposto «...»" e il server ignora
 Un invio con errori torna alla pagina (422) con le risposte date, il riassunto in cima e l'errore sotto ogni domanda
 (`role=alert`, `aria-describedby`).
 
-**Con JavaScript** (`assets/test.js`): la presentazione e Inizia il test; una domanda per schermata (fieldset con legend),
+**Con JavaScript** (`assets/test.js`), modo "Una per pagina" (e i test di prima della 2.24.0): la presentazione e Inizia il test; una domanda per schermata (fieldset con legend),
 barra `role=progressbar` con `aria-valuenow` e `aria-valuetext`, Indietro, Avanti, Invio sulle risposte va avanti, il
 fuoco sulla domanda; la condizionale entra e esce dall'elenco quando cambia la risposta da cui dipende; l'ordine casuale
 mescola le domande fisse e mette ogni condizionale dopo la sua. Le risposte restano in `localStorage`
 (`plume-test-<id>`, con `try/catch`): "Riprendi da dove eri" o "Ricomincia". Le richieste leggere partono all'inizio e a
 ogni domanda nuova (`sendBeacon`). All'invio le risposte delle domande nascoste non partono.
+
+**A pagine e tutte in una pagina** (2.24.0, `paginato()` in `assets/test.js`; il modulo ha `data-modo` e ogni domanda
+`data-pagina`): "Pagina 2 di 5" e la barra, il titolo della pagina sopra le sue domande, Indietro e Avanti, l'errore sotto ogni
+obbligatoria senza risposta della pagina, le condizionali che entrano ed escono anche nella pagina che si guarda, le pagine con
+tutte le domande nascoste saltate, le domande sulla persona nell'ultima pagina con "Vedi il risultato", l'ordine casuale dentro
+ogni pagina. Senza JavaScript: la pagina unica con i titoli delle pagine come intestazioni (`h2.tq-pagina-titolo`). Il modo
+predefinito è "Una per pagina": i test scritti prima non hanno `modo` e la loro pagina resta uguale al byte.
 
 ## Dopo il test
 
@@ -200,13 +210,19 @@ scrive direttamente nella tabella, perché `editor_salva()` scriverebbe nella ta
 `admin-test.php`: elenco (Modifica, Statistiche, Vedi la pagina o Anteprima, Duplica, Elimina con la conferma del
 pannello), Nuovo test (tipo o modello, solo in POST: aprire la pagina non crea niente), la procedura in cinque passi:
 
-| Passo | Campi | Salvataggio |
-|---|---|---|
-| 1 Presentazione | nome, indirizzo, tipo, durata, link all'editor, testo semplice | campi del test |
-| 2 Domande e aree | aree o profili, scala, domande (editor in JS, SortableJS del pannello e frecce), ordine casuale | `dati_json` (le fasce delle aree già scritte restano) |
-| 3 Punteggi e fasce | fasce del totale e di ogni area (controllo dal vivo), simulatore | `fasce_json` (i testi già scritti restano) |
-| 4 Risultati | testi (Quill, `pnLink.quill`), pulsanti (`data-link-sito`), regole (JS), avvertenza | `testi[...]`, `regole_json`, `avvertenza` |
-| 5 Dopo il test | email, consenso, lista, iscrizione; automazioni; privacy; Pubblica / Rimetti in bozza | `dopo` |
+Dalla 2.24.0 ogni passo ha la stessa forma, per i tre tipi: a sinistra carte compatte con i bollini, che si aprono in una
+finestra del pannello (`<dialog class="ts-finestra">`, campi raggruppati in griglie di 2-3 colonne, Esc chiude e il fuoco torna
+alla carta); a destra il telefono con l'anteprima dal vivo di quello che il passo cambia per chi fa il test; sotto 900 px il
+telefono si apre a schermo intero con il pulsante "Anteprima". I campi stanno nel modulo anche a finestra chiusa: ogni passo
+salva gli stessi campi di prima.
+
+| Passo | Carte e finestre | Telefono | Salvataggio |
+|---|---|---|---|
+| 1 Presentazione | Nome e indirizzo, Tipo e durata, Presentazione con l'editor (link), Testo breve | la pagina di presentazione | campi del test |
+| 2 Domande e pagine | il modo (tre pulsanti), la lavagna: una colonna per pagina, una carta per domanda, trascinamento fra colonne e nel riquadro "+ Pagina nuova" (SortableJS del pannello), la scheda della domanda con la tendina Pagina e Sposta prima/dopo, il titolo della pagina, la colonna fissa "su di te" (domande sulla persona); Aree, Profili, Le parole della scala; ordine casuale | la pagina scelta, con il titolo; tocchi una domanda e si apre la sua scheda | `dati_json` con `modo` e `pagine` (le fasce delle aree già scritte restano), `persona[...]` |
+| 3 Punteggi e fasce | le fasce come carte in fila, la barra 0-100 con i buchi, il controllo in parole; simulatore | il risultato della fascia (o del profilo) toccato | `fasce_json` (i testi già scritti restano) |
+| 4 Risultati | una carta per fascia, profilo o fascia d'area (breve e completa con Quill, pulsante con `data-link-sito`), le regole, l'avvertenza | il risultato della carta, "A schermo / Email" | `testi[...]`, `regole_json`, `avvertenza` |
+| 5 Dopo il test | Email del risultato, Newsletter, Automazioni, Privacy; Pubblica / Rimetti in bozza | la fine del test: riquadro dell'email, consenso, newsletter | `dopo` |
 
 I JSON viaggiano nei campi nascosti, in base64 con `campi-protetti.js` (ModSecurity). Ogni POST con `verify_csrf()`;
 le pagine sono di `addon-pagina.php` (solo amministratore).
@@ -231,13 +247,14 @@ aggregate.
 
 | Prova | Cosa |
 |---|---|
-| `prove/prova-test.js` | i tre tipi dal pannello, il visitatore con e senza JavaScript, telefono, link, simulatore, statistiche, CSV, email, lista, automazioni, Riquadro, Scegli dal sito, Duplica, Elimina, spento e riacceso; 2.23.0 (sezione D): domande sulla persona, due testi, email del risultato completo con e senza newsletter, tag alla conferma, "Riceve un tag", gruppi con la soglia, CSV, test della 2.22.0 uguale al byte |
-| `prove/attacchi-test.js` | pannello (anonimo, redattore, CSRF, Origin), invii (domande inventate, valori fuori scala, bozza, codice del modulo, tempo, esca, raffica), XSS in ogni campo, link falsificati, email senza permesso, SQL injection, CSV; 2.23.0 (gruppo G): risposte sulla persona inventate, `pz` cambiato, intestazioni iniettate, gruppi che non scendono sotto 5 cambiando il periodo, XSS nelle domande sulla persona e nei due testi, CSRF |
+| `prove/prova-test.js` | i tre tipi dal pannello, il visitatore con e senza JavaScript, telefono, link, simulatore, statistiche, CSV, email, lista, automazioni, Riquadro, Scegli dal sito, Duplica, Elimina, spento e riacceso; 2.23.0 (sezione D): domande sulla persona, due testi, email del risultato completo con e senza newsletter, tag alla conferma, "Riceve un tag", gruppi con la soglia, CSV, test della 2.22.0 uguale al byte; 2.24.0 (sezione E): i tre modi, i titoli, il trascinamento vero fra colonne e verso "+ Pagina nuova", la tendina Pagina, l'anteprima che cambia mentre scrivi, "Anteprima" a 390 px, i cinque passi dei tre tipi, il sito a pagine con e senza JavaScript, un test senza modo come prima |
+| `prove/attacchi-test.js` | pannello (anonimo, redattore, CSRF, Origin), invii (domande inventate, valori fuori scala, bozza, codice del modulo, tempo, esca, raffica), XSS in ogni campo, link falsificati, email senza permesso, SQL injection, CSV; 2.23.0 (gruppo G): risposte sulla persona inventate, `pz` cambiato, intestazioni iniettate, gruppi che non scendono sotto 5 cambiando il periodo, XSS nelle domande sulla persona e nei due testi, CSRF; 2.24.0 (gruppo H): pagine maligne (chiavi inventate, doppioni, titoli con HTML e script, 4 byte, 5000 pagine, modo inventato), CSRF e redattore sul passo 2 |
 | `prove/test-cli.php` | gli aiuti da riga di comando delle due prove |
 
 ## Limiti
 
-- Niente domande a più risposte, immagini nelle risposte, più domande per schermata.
+- Niente domande a più risposte, immagini nelle risposte.
+- Le pagine (2.24.0) dividono le domande del test; le domande sulla persona sono sempre l'ultima pagina, tutte insieme.
 - L'email del risultato vuole JavaScript (captcha); il test no.
 - Chi si fa mandare il risultato senza iscriversi non entra nei Contatti, quindi le automazioni e i tag sono solo per chi si iscrive.
 - Le domande sulla persona sono solo quelle del catalogo (testo e risposte si cambiano, domande nuove no).
