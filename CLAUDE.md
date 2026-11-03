@@ -135,6 +135,9 @@ Sono gli unici in `cms/docs/`, nello zip, nel sito di plumeCMS e nella pagina Do
 - **Regola di Danilo (3 novembre 2026): niente import da WordPress.** "Funziona malissimo e non ho intenzione di proseguire
   questa cosa. Non facciamo import da wordpress." Tolto nella 2.20.0 con il plugin Ponte, da codice, prove, manuali, sito di
   plumeCMS e CHANGELOG. Non riproporlo.
+- **Regola di Danilo (3 novembre 2026): ogni consegna finisce con una riga con data e ora di inizio e di fine del lavoro**, ora
+  italiana (Europe/Rome), per esempio "Iniziato: 3 novembre 2026, 16:20. Finito: 3 novembre 2026, 19:05." L'inizio è il momento in cui
+  si è partiti con il lavoro di quella versione (il "parti" di Danilo, il primo commit o il lancio dell'agente).
 - Niente librerie esterne nel CMS (SortableJS e Quill sono serviti in casa).
 - Niente credenziali nel repository né in chat.
 - Italiano ovunque, niente trattini lunghi, niente caratteri a 4 byte nei file
