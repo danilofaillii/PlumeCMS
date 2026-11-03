@@ -166,6 +166,20 @@ Le decisioni complete, con data e perché, stanno nel second brain, `plumecms/de
 
 ## Stato al 31 ottobre 2026
 
+Fatto: plumeCMS 2.23.0 (3 novembre): i **tag dei contatti** e i test più completi (richiesta di Danilo; agente in worktree, ramo `tag-test`,
+riletto e riprovato da me). Tag in `includes/newsletter-tag.php` (tabelle `newsletter_tag`, `newsletter_contatti_tag`, `newsletter_tag_attese`,
+colonna `moduli.tag`, nate al primo uso), pagina `admin/newsletter-tag.php`, scheda del contatto, azioni di gruppo e filtro dei Contatti,
+segmenti (ha / non ha), automazioni (innesco "Riceve un tag", azioni Aggiungi e Togli tag), form (tag a chi compila, con la doppia conferma
+alla conferma), importa ed esporta. Addon Test: catalogo di 25 domande sulla persona (`addon/test/includes/catalogo-persona.php`, settore
+con le voci ATECO), scelte per ogni test, obbligatorie o facoltative, poste alla fine; risultato breve a schermo e completo per email
+(firma della chiave con le risposte sulla persona, `test_chiave_email()`); spunta newsletter con la lista scelta nel pannello; le risposte
+sulla persona diventano tag **solo** per chi si iscrive alla newsletter (chi lascia solo l'email riceve il risultato e basta: niente contatto,
+niente tag); statistiche per gruppi (colonna `test_risultati.persona`). Prove: install 38/38 radice e cartella, test 141/141 e attacchi del
+test 71/71 radice e cartella, tag 57/57 e attacchi ai tag 25/25 radice e cartella (`prova-tag.js` su un sito appena installato, prima di
+`prova-test.js`), automazioni 96/96, passo da modello 57/57, telefono 56/56, aggiornamento 2.22.0 -> 2.23.0 13/13 con 0 foto diverse su 20,
+addon tutti 74/74, segmenti 179/179, contatti 94/94 (sito aggiornato e seminato), attacchi 411/411, pacchetto unico 13/13 con la hero tenuta.
+Zip 2287 KB, PDF 11411 KB.
+
 Fatto: plumeCMS 2.22.0 (3 novembre): addon **Test e questionari** (`cms/addon/test/`, richiesta di Danilo: un motore per i test come
 quello del burnout; scelte sue: addon, risposte anonime, una sola versione; agente in worktree, ramo `addon-test`, riletto e riprovato da me).
 Tre tipi (punteggio, aree con il grafico, profili), scala, scelta, sì/no, cursore, invertite, pesi, condizionali, fasce in percentuale,

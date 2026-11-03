@@ -718,6 +718,7 @@ doppia conferma), importazione (aggiungi e sostituisci), esportazione, telefono 
 
 1. Un CMS appena installato (`prova-install.js`, anche in cartella) e il server di posta finto:
    `python3 -I prove/smtp-finto.py <porta> <cartella posta> &`. Va su un sito da buttare (contatti `@tag-prova.it`).
+   Su un sito dove ha già girato `prova-test.js` la pagina Tag non è vuota e la prova si ferma subito: va lanciata prima, o su un sito suo.
 2. `node prove/prova-tag.js <base> <cartella del CMS> <porta smtp> <cartella posta> [cartella foto]`. Usa `prove/tag-cli.php`.
 3. Subito dopo, sullo stesso sito: `node prove/attacchi-tag.js <base> <cartella del CMS>` (lascia il redattore `red_tag`).
 4. Atteso (2.23.0): 57 su 57 e 25 su 25, in radice e in cartella.
