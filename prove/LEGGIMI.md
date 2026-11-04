@@ -108,7 +108,9 @@ Il report delle campagne, le statistiche e l'orario migliore della 2.14.0 (fase 
 
 
 
-Le prove di attacco: ogni OK è un attacco respinto (238 nella 1.10.0 su un sito Attività, con le 5 nuove del gruppo 26 sui
+Le prove di attacco: ogni OK è un attacco respinto (420 nella 2.25.0 su un sito appena installato, radice e cartella `/test`, con le 9
+nuove del gruppo 26b su Scorri di lato; dalla 2.25.0 la prova dell'immagine caricata (gruppo 14) chiede l'indirizzo dalla radice del
+server, perché nei siti in cartella l'indirizzo dato dai Media ha già la cartella; 238 nella 1.10.0 su un sito Attività, con le 5 nuove del gruppo 26 sui
 widget nuovi; 233 nella 1.9.0 su un sito Attività, con le 6 nuove del gruppo 25 sull'avviso
 dei form; 249 nella 1.8.0 sullo stesso sito su misura in prova: le 7 nuove,
 gruppo 24, sono sulla frase in fondo al sito; 227 su un sito Attività; 242 nella 1.7.0, su un sito su misura ancora in prova: le 41
@@ -538,6 +540,25 @@ Prima `php prove/pagina-widget-nuovi.php <cartella CMS>` (la pagina `/widget-nuo
 poi `node prove/prova-widget-nuovi.js <base> <cartella CMS> <utente> <password>`. Controlla anche i calcoli degli orari a
 giorni e ore fissi (`prove/orari-cli.php`). Atteso: 40 su 40. Le prove di attacco sui widget nuovi (gruppo 26) usano
 `prove/widget-cattivi.php` e partono con `CMS_DIR`.
+
+## prova-scorri.js (2.25.0)
+
+Il widget **Scorri di lato** e le sue cinque disposizioni (pellicola, carte, fermo, tempo, profondita).
+1. `php prove/pagina-scorri.php <cartella CMS> <foto> <foto>` (per esempio due WebP di `sito-plumecms/immagini/`): copia le foto
+   in `<immagini>/prova-scorri/` e crea `/scorri-<disposizione>/` (testo, il widget con quattro pagine, due con la foto, testo),
+   `/scorri-due/`, `/scorri-tutte/` e `/scorri-editor/` (solo un testo). Va rilanciato prima di ogni giro: la prova
+   pubblica `/scorri-editor/` con il widget.
+2. `node prove/prova-scorri.js <base> <utente> <password> [cartella foto]`. Per ogni disposizione, a 1280 e 390 px, senza tema e
+   con Cosmo, Aria e Bottega in anteprima: la radice è larga quanto la finestra, la scena si ferma sotto la testata, scorre di
+   lato fino all'ultima pagina, poi la pagina riparte in verticale; mai scorrimento di lato; contrasto di titolo e testo; con Tab
+   dal link prima del widget si arriva ai cinque pulsanti, ognuno in vista, sopra a tutto e non coperto. Poi due widget nella
+   stessa pagina, meno movimento e senza JavaScript (pagine una sotto l'altra), la tela dell'editor e il widget creato dal
+   pannello (pagine aggiunte, Sposta su, trascinamento, Elimina, Linea del tempo con la data, il massimo di 12, Pubblica).
+   `TEMI=,cosmo` e `DISP=pellicola,fermo` per provarne solo alcuni; `SCHERMATE=<cartella>` scrive anche le JPEG del manuale
+   d'uso (`08-scorri-*.jpg`).
+3. Atteso (2.25.0): 601 su 601, in radice e in cartella (`<base>` = `http://127.0.0.1:<porta>/test`).
+Gli attacchi sono il gruppo 26b di `tools/sicurezza-prova.js` (con `CMS_DIR`), che usa `prove/scorri-cattivi.php` e salva la
+pagina `/scorri-cattivi/`.
 
 ## Addon Prenotazioni, Eventi con iscrizione, Raccolta recensioni (2.0.0)
 

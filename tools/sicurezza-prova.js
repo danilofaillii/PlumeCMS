@@ -434,7 +434,7 @@ echo json_encode($o);
       return { url: u, csrf: m ? m[1] : '' };
     }, { base: ADMIN, png });
     let st = 0;
-    if (esito.url) st = await admin.p.evaluate(async (u) => (await fetch(u, { credentials: 'include' })).status, (esito.url.startsWith('http') ? '' : BASE) + esito.url);
+    if (esito.url) st = await admin.p.evaluate(async (u) => (await fetch(u, { credentials: 'include' })).status, (esito.url.startsWith('http') ? '' : new URL(BASE).origin) + esito.url);
     ok('media: l\'immagine caricata risponde 200 al suo indirizzo', !!esito.url && st === 200, { url: esito.url, status: st });
     if (esito.url) {
       const t2 = await tokenDi(admin.p, ADMIN + '/media.php');
@@ -1006,6 +1006,46 @@ echo json_encode($o);
     ok('1.10.0: widget nuovi, il testo cattivo si legge come testo', esame.testo);
     await anon.close();
   } else console.log('--  widget nuovi con testo cattivo: saltata (serve CMS_DIR)');
+
+  // === 26b. (2.25.0) Il widget Scorri di lato con valori cattivi in ogni campo (prove/scorri-cattivi.php: passano da editor_valida
+  // come dall'editor vero, e la pagina si salva): niente attributi on*, niente script, niente link o immagini javascript: o data:,
+  // nessuna immagine esterna, al massimo 12 pagine per widget, CSS senza codice, disposizioni solo quelle note, 4 byte salvati.
+  if (DIR && fs.existsSync(path.join(__dirname, '..', 'prove', 'scorri-cattivi.php'))) {
+    const { execFileSync } = require('child_process');
+    let html = '';
+    try { html = execFileSync('php', [path.join(__dirname, '..', 'prove', 'scorri-cattivi.php'), DIR], { encoding: 'utf8', maxBuffer: 64 * 1024 * 1024 }); } catch (e) { html = ''; }
+    ok('2.25.0: (preparazione) sette Scorri di lato disegnati con 5000 pagine cattive ciascuno', html.length > 2000 && (html.match(/class="sdl sdl-d-/g) || []).length === 7, { lunghezza: html.length });
+    const anon = await browser.newContext({ javaScriptEnabled: false });
+    const pg = await anon.newPage();
+    await pg.setContent('<!doctype html><head><meta charset="utf-8"></head><body>' + html + '</body>');
+    const esame = await pg.evaluate(() => {
+      const tutti = [...document.querySelectorAll('*')];
+      return {
+        on: tutti.filter(e => [...e.attributes].some(a => /^on/i.test(a.name))).map(e => e.outerHTML.slice(0, 80)),
+        script: document.scripts.length,
+        link: tutti.flatMap(e => ['href', 'src', 'action', 'formaction', 'srcset'].map(n => e.getAttribute(n)).filter(Boolean)).filter(u => /^\s*(javascript|data|vbscript):/i.test(u)),
+        esterne: [...document.images].map(i => i.getAttribute('src')).filter(u => !/^\/[^/]/.test(u) || u.includes('..')),
+        pagine: [...document.querySelectorAll('.sdl')].map(r => r.querySelectorAll('.sdl-pagina').length),
+        disp: [...document.querySelectorAll('.sdl')].map(r => r.getAttribute('data-sdl')),
+        vel: [...document.querySelectorAll('.sdl')].map(r => r.getAttribute('data-sdl-vel')),
+        stile: [...document.querySelectorAll('style')].map(s => s.textContent).join(''),
+        testo: document.body.innerText.includes('<script>alert(1)</script>'),
+      };
+    });
+    ok('2.25.0: Scorri di lato, nessun attributo on* e nessuno script', esame.on.length === 0 && esame.script === 0, esame.on);
+    ok('2.25.0: Scorri di lato, nessun link o immagine javascript: o data:', esame.link.length === 0, esame.link);
+    ok('2.25.0: Scorri di lato, nessuna immagine esterna (solo percorsi del sito, senza ..)', esame.esterne.length === 0, esame.esterne);
+    ok('2.25.0: Scorri di lato, al massimo 12 pagine per widget su 5000 mandate', esame.pagine.every(x => x === 12), esame.pagine);
+    ok('2.25.0: Scorri di lato, solo disposizioni e velocità note (una inventata diventa la Pellicola)', esame.disp.every(d => ['pellicola', 'carte', 'fermo', 'tempo', 'profondita'].includes(d)) && esame.vel.every(v => ['0.6', '1', '1.6'].includes(v)), [esame.disp, esame.vel]);
+    ok('2.25.0: Scorri di lato, il CSS non porta codice (colori con </style> scartati)', !/<\/style|<script|alert\(/i.test(esame.stile), esame.stile.slice(0, 200));
+    ok('2.25.0: Scorri di lato, il testo cattivo si legge come testo', esame.testo);
+    await anon.close();
+    const sito = await browser.newContext();
+    const r = await sito.request.get(BASE + '/scorri-cattivi/');
+    const t = await r.text();
+    ok('2.25.0: Scorri di lato salvato con le emoji (4 byte) e le 5000 pagine: la pagina pubblicata risponde 200 e le emoji ci sono', r.status() === 200 && t.includes('\u{1F600}') && (t.match(/class="sdl-pagina /g) || []).length === 84 && !/<img src=x onerror/i.test(t), { s: r.status(), pagine: (t.match(/class="sdl-pagina /g) || []).length });
+    await sito.close();
+  } else console.log('--  Scorri di lato con valori cattivi: saltata (serve CMS_DIR)');
 
   // === 27. (2.0.0) File riservati e file dato dai form: senza la chiave firmata il file non esce, la cartella non si legge
   // dal web, le chiavi manomesse o scadute non valgono, il redattore e le richieste senza token non cambiano niente.

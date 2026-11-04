@@ -53,6 +53,7 @@ pagine, gestire il sito) c'è il manuale d'uso, `docs/manuale-uso.md`, con le sc
 37. I widget della 2.1: menu, richiesta di prenotazione, galleria con filtri, scorrevole, contenuto esterno (dalla 2.1.0)
 41. Le quindici infografiche disegnate (novembre 2026)
 42. Test e questionari (dalla 2.22.0)
+43. Scorri di lato: le pagine che scorrono di lato (dalla 2.25.0)
 
 Appendice A. Dove i documenti vecchi non corrispondono al codice
 
@@ -1093,7 +1094,8 @@ disposizioni per sei effetti), attacchi gruppo 39 (`prove/pagina-hero-cattive.ph
 **Infografiche** (29, prefisso `ig_`): passi, timeline, checklist, tabella, liste, numeri, card, mappa, flusso,
 fasi, barre, prima e dopo, zone, domande; e le quindici disegnate in SVG (imbuto, piramide, matrice, ciclo, ciambella, cerchi
 che si toccano, ragnatela, lancetta, iceberg, omini, viaggio, bilancia, mappa di calore, cerchi concentrici, barre al cento
-per cento: capitolo 41). Usano i colori `--ig-*` della tavolozza (capitolo 12). In tutto i widget sono 107.
+per cento: capitolo 41). Usano i colori `--ig-*` della tavolozza (capitolo 12). In tutto i widget sono 108 (dalla 2.25.0, con
+Scorri di lato, capitolo 43; 107 fino alla 2.24.0).
 
 **Tema** (11, `includes/editor-widget-tema.php`), per header, footer e modelli: logo del sito, nome del sito,
 descrizione del sito, menu di navigazione, ricerca, titolo del contenuto, testo del contenuto, immagine in
@@ -5348,6 +5350,141 @@ modo di lanciarle è in testa ai file.
   sua finestra, le regole in `#ts-fin-regola`, «A schermo / Email»), 5 la fine del test (`:812`). Stili in
   `assets/admin.css` (blocco 2.24.0, solo variabili degli aspetti; `position:relative` sulla lavagna perché il testo
   `.sr-solo` delle carte non allarghi la pagina).
+
+## 43. Scorri di lato: le pagine che scorrono di lato (dalla 2.25.0)
+
+Richiesta di Danilo: "una cosa che mi piace molto del sito Apple: quando la persona scrolla e arriva sul widget, il sito scorre
+orizzontalmente fino all'ultima pagina, alla fine della quale ricomincia a scorrere verticalmente". Cinque proposte in un
+prototipo; Danilo le ha volute **tutte e cinque come disposizioni** dello stesso widget, come quelle dell'Apertura.
+
+### 43.1 Il widget
+
+`includes/editor-widget-scorri.php`, caricato in fondo a `includes/editor-widget-extra.php` (dopo `editor-widget-extra-e.php`).
+Tipo `scorri_lato`, etichetta "Scorri di lato", gruppo Contenuto, registrato con `editor_registra_widget()` (`:81`); fogli
+`sito/assets/scorri.css` e `scorri.js` con `editor_registra_asset()` (`:158`): si caricano solo nelle pagine che hanno la classe
+`ed-w-scorri_lato` (niente `'segno'`: la classe del widget c'è sempre, e la tela dell'editor carica i fogli dei widget registrati
+dalla classe).
+
+| Disposizione (`SDL_DISPOSIZIONI`, `:17`) | Com'è fatta |
+|---|---|
+| `pellicola` | ogni pagina larga quanto la scena, testo a sinistra e immagine a destra; lineette in basso |
+| `carte` | occhiello e titolo della sezione fermi in alto, una fila di carte (`min(400px,76vw)`); la carta più vicina al centro si alza (lo script scrive `translateY` e `scale`) |
+| `fermo` | a sinistra il testo della pagina corrente (dissolvenza, classe `sdl-on`), a destra solo le immagini che scorrono; contatore "2 di 4" |
+| `tempo` | occhiello e titolo fermi, una linea (`.sdl-linea`) che si colora con lo scorrimento, un punto per tappa che si accende (`sdl-raggiunta`), la data sopra |
+| `profondita` | l'immagine è lo sfondo della pagina e si muove a 0,45 della velocità, il testo entra da destra (0,35) e sfuma |
+
+Controlli: `disposizione` (`'accetta' => '/^[a-z]{3,20}$/'`: una disposizione che il sito non conosce resta salvata e si
+disegna come la Pellicola), `occhiello` e `titolo` della sezione (con `'condizione' => ['disposizione' => ['carte','tempo']]`),
+`pagine` (ripetitore con `'max_voci' => SDL_MAX_PAGINE`, 12), nella sezione Scorrimento `velocita` (lenta 1,6, normale 1, veloce
+0,6: moltiplica la strada verticale), `lineette`, `tutto_schermo`; nella scheda Stile `foto` (velo, bianco e nero, naturale) e
+colore e tipografia di occhiello, titoli, titolo della sezione, testo, colore dell'evidenza (con l'allineamento delle parti
+della 2.21.0, che arriva da solo). Campi di una pagina: occhiello, titolo (asterischi con `editor_evidenza()`), testo
+(`editor_paragrafi()`), data (solo Linea del tempo), immagine con il testo alternativo, colore di sfondo (Pellicola, Carte,
+Profondità: diventa `--sdl-sfondo` sulla classe `.sdl-p<N>`, nel CSS dell'elemento), due pulsanti con il link (il primo viola
+pieno, il secondo a filo: classi `.btn-viola` e `.btn-filo` del sito). I nomi `pulsante_link` e `pulsante2_link` finiscono in
+`_link`: l'editor mette da solo "Scegli dal sito" (`eLinkSito()` di `editor.js`).
+
+**Perché le pagine sono campi e non sezioni dell'editor.** Nel prototipo si diceva "ogni pagina si riempie come una sezione".
+L'editor ha tre livelli fissi (sezione, colonna, widget; `editor_valida()`, capitolo 9.2) e nessun modo pulito di mettere un
+albero dentro un widget: le sezioni pronte sono solo dati del nucleo che si copiano nella pagina, i modelli sono header, footer e
+riquadro di fine articolo, e le "sezioni salvate" esistono solo nell'editor delle email. Un contenitore nuovo (CSS, versioni,
+validazione, Scegli dal sito, tela) sarebbe un sistema a parte: si è restati ai campi.
+
+Pulizia: i valori passano da `editor_valida()` come per ogni widget (testi, `immagine`, `colore`, ripetitore tagliato a 12
+voci); nel disegno `sdl_pagine()` (`:44`) rilegge ogni campo (stringhe, lunghezze), `sdl_immagine()` (`:28`) tiene solo i
+percorsi del sito (`/...`, non `//`, niente `..`, niente spazi, virgolette o parentesi) o gli indirizzi che cominciano con
+`cms_uploads_url()` o `SITO_URL`; i link passano da `editor_link_sicuro()`; ogni testo esce con `h()`.
+
+### 43.2 L'HTML
+
+Uno solo per tutte le disposizioni (il disegno è in fondo a `editor-widget-scorri.php`):
+
+```html
+<div class="sdl sdl-d-<disposizione> sdl-foto-<velo|bn|naturale> [sdl-tela]" data-sdl="<disposizione>" data-sdl-vel="1"
+     [data-sdl-pieno="1"] style="--n:4">
+  <div class="sdl-scena">
+    [<div class="sdl-testa"><span class="occhiello">…</span><h2 class="sdl-titolo-sez">…</h2></div>]   carte, tempo
+    <div class="sdl-binario">
+      [<div class="sdl-linea" aria-hidden="true"><b></b></div>]                                        tempo
+      <div class="sdl-pagina sdl-p1 [sdl-con-foto] sdl-on" style="--i:0" role="group" aria-roledescription="pagina" aria-label="1 di 4">
+        [<span class="sdl-data">…</span><span class="sdl-punto" aria-hidden="true"></span>]             tempo
+        <div class="sdl-testo"><span class="occhiello">…</span><h2|h3 class="sdl-titolo">…</h2|h3>
+          <div class="sdl-lead"><p>…</p></div><div class="azioni sdl-azioni"><a class="btn btn-viola sdl-btn">…</a></div></div>
+        <figure class="sdl-finestra"><img …></figure>  (oppure <div class="sdl-finestra sdl-senza" aria-hidden="true">)
+      </div>
+    </div>
+    [<span class="sdl-contatore" aria-hidden="true"><b>1</b> di 4</span>]                               fermo
+    [<div class="sdl-lineette" aria-hidden="true"><i><b></b></i>…</div>]
+  </div>
+</div>
+```
+
+Il titolo delle pagine è `h3` quando c'è il titolo della sezione (`h2`), altrimenti `h2`. Le classi sono `sdl-*`: `.scena`,
+`.finestra`, `.barra`, `.chip` sono di `sito.css` (Apertura) e un widget che le usasse ne prenderebbe le regole. Nella tela
+dell'editor (`$ctx['anteprima']`) la radice ha `sdl-tela` e sopra c'è la nota `.sdl-nota-tela` ("nella tela le pagine stanno in
+fila... l'effetto si vede sul sito e nell'anteprima").
+
+### 43.3 Il CSS (`sito/assets/scorri.css`)
+
+- **Senza `.sdl-vivo`** (senza JavaScript, chi chiede meno movimento, la tela) le pagine stanno una sotto l'altra, ognuna in un
+  riquadro di vetro (`--vetro`, `--bordo`), testo e immagine affiancati (una colonna sotto 760 px); le Carte in una griglia; la
+  Profondità con l'immagine come sfondo. Lineette, contatore, linea e punti nascosti.
+- **Con `.sdl-vivo`**: `.sdl-scena` diventa `position:sticky; top:var(--sdl-alto); height:calc(100svh - var(--sdl-alto));
+  overflow:hidden`, `.sdl-binario` una riga flessibile che lo script sposta con `transform`. Le regole delle disposizioni sono
+  `.sdl-d-<id>.sdl-vivo ...` (due classi sulla radice: la trappola delle aperture).
+- **Titolo fermo**: il testo di ogni pagina è `position:absolute` sulla scena (sticky, quindi contenitore), fuori dal binario,
+  che taglia le immagini con `overflow:hidden`. Per questo il binario resta `position:static`, senza `transform` né `will-change`
+  (lo farebbero diventare il contenitore del testo, che verrebbe tagliato: successo nella prima prova). Le immagini si spostano
+  con la variabile `--sdl-x` sulla radice (`transform:translate3d(var(--sdl-x),0,0)` su `.sdl-finestra`).
+- Foto: `.sdl-foto-velo` mette bianco e nero e il velo ciano e viola dell'Apertura (`mix-blend-mode:multiply`); con le Carte e la
+  Profondità la foto è lo sfondo con un velo scuro e il testo bianco, come la Copertina. Senza foto, la finestra ha cinque disegni
+  fatti dai colori del tema (`rgba(var(--ciano-rgb),a)`, `rgba(var(--viola-rgb),a)`), mai `color-mix`.
+- `.ed-widget.ed-w-scorri_lato{align-self:stretch}`: il contenitore del widget prende sempre la larghezza della colonna, così la
+  misura "a tutta larghezza" non dipende dalla larghezza della radice (con una colonna centrata il contenitore si stringeva e la
+  radice usciva a sinistra di 224 px).
+
+### 43.4 Lo script (`sito/assets/scorri.js`)
+
+- `prepara()` (`:25`) per ogni `.sdl[data-sdl]` che non è `sdl-tela`; `misura()` (`:89`): se `prefers-reduced-motion: reduce`
+  toglie `.sdl-vivo` e ogni stile scritto; altrimenti mette `.sdl-vivo`, `--sdl-alto` (l'altezza della testata ferma del sito,
+  `.top` o un header sticky in cima, `altoTestata()`), con `data-sdl-pieno` larghezza `documentElement.clientWidth` e margine
+  sinistro negativo misurato dal contenitore, la corsa (`corsa()`, `:58`: per il Titolo fermo la distanza fra la prima e
+  l'ultima immagine, per le altre il bordo destro dell'ultima pagina più il margine interno meno la larghezza della scena) e
+  l'altezza della radice = altezza della scena + corsa per la velocità. L'altezza non si azzera mai prima di misurare: la
+  pagina si accorcerebbe per un attimo e chi sta più in basso salterebbe (successo nella prima prova, con le immagini che
+  arrivano mentre si scorre).
+- `giro()` (`:122`), a ogni `scroll` dentro `requestAnimationFrame`: `p` da 0 a 1 = quanto della strada verticale è fatta;
+  sposta il binario (o `--sdl-x`), la pagina corrente `round(p*(n-1))` prende `sdl-on` (e il contatore), riempie le lineette,
+  poi le cose di ogni disposizione (carte, linea e punti, profondità).
+- **Tastiera** (`focusin`, `:44`): un pulsante di una pagina che prende il fuoco porta la sua pagina in vista
+  (`vaiAPagina()`: `window.scrollTo` con `behavior:'instant'`, perché `html` ha `scroll-behavior:smooth`); lo scorrimento che il
+  browser fa da solo dentro la scena (`overflow:hidden` si scorre col codice) si rimette a zero.
+- Ogni widget ha i suoi dati (`r._sdl`): più widget nella stessa pagina vanno ognuno per conto suo. `resize`, `load`,
+  `document.fonts.ready`, le immagini caricate e il cambio di "meno movimento" rimisurano. Niente librerie, niente gestori in
+  linea, niente `localStorage`.
+
+### 43.5 Il ripetitore dell'editor (vale per tutti i widget)
+
+- `'max_voci'`: un ripetitore tiene al massimo quel numero di voci (`includes/editor.php:84`, al massimo 40 come prima);
+  nell'editor "+ Aggiungi" e Duplica si spengono e il pulsante dice "Al massimo 12: togline una per aggiungerne un'altra".
+- Una condizione di un campo di una voce che nomina un controllo del widget (non un campo della voce) si legge dal widget
+  selezionato, con il suo valore di partenza (`valoreDelWidget()`, `admin/assets/editor/editor.js:1082`): la data della pagina
+  compare solo con la Linea del tempo. Prima un nome che non era della voce valeva sempre "vuoto".
+- Ogni voce ha **Sposta su** e **Sposta giù** (con `aria-label`, spenti alla prima e all'ultima voce), oltre alla maniglia per
+  trascinare: si riordina anche con la tastiera.
+
+### 43.6 Prove
+
+- `prove/pagina-scorri.php <cartella CMS> <foto> <foto>`: le pagine `/scorri-<disposizione>/` (testo prima, il widget con quattro
+  pagine, due con la foto, testo dopo), `/scorri-due/` (Pellicola e Carte nella stessa pagina), `/scorri-tutte/`,
+  `/scorri-editor/` (solo un testo, per la prova dell'editor). Le foto si copiano in `<immagini>/prova-scorri/`.
+- `prove/prova-scorri.js <base> <utente> <password> [cartella foto]` (`SCHERMATE=<cartella>` per le schermate del manuale):
+  ogni disposizione a 1280 e 390 px senza tema e con Cosmo, Aria, Bottega in anteprima (la scena si ferma, scorre fino
+  all'ultima pagina, poi la pagina riparte in verticale, mai scorrimento di lato, contrasto di titolo e testo, Tab sui cinque
+  pulsanti in vista e non coperti), due widget insieme, meno movimento e senza JavaScript, la tela, il widget creato dal pannello
+  (pagine aggiunte, spostate con le frecce e trascinando, tolte, Linea del tempo con la data, il massimo di 12, Pubblica).
+- Attacchi: gruppo 26b di `tools/sicurezza-prova.js` con `prove/scorri-cattivi.php` (testi con script, link `javascript:` e
+  `data:`, immagini esterne e finte, colori con `</style>`, emoji, 5000 pagine, disposizione e velocità inventate).
 
 ## Appendice A. Dove i documenti vecchi non corrispondono al codice
 

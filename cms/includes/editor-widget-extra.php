@@ -316,3 +316,4 @@ require_once __DIR__ . '/editor-widget-extra-b.php';
 require_once __DIR__ . '/editor-widget-extra-c.php';
 require_once __DIR__ . '/editor-widget-extra-d.php'; // 1.10.0: orari, barra contatti, recensioni, prima e dopo, squadra, slider, eventi
 require_once __DIR__ . '/editor-widget-extra-e.php'; // 2.1: menu del ristorante, richiesta di prenotazione, galleria con filtri, scorrevole, contenuto esterno
+require_once __DIR__ . '/editor-widget-scorri.php'; // 2.25.0: Scorri di lato (cinque disposizioni, scena ferma che scorre di lato)

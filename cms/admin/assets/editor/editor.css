@@ -85,6 +85,7 @@ button,input,select,textarea{font:inherit;color:inherit}
 .ed-voce-testa{display:flex;align-items:center;gap:6px;padding:7px 8px;cursor:pointer;font-size:13px}
 .ed-voce-testa b{flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-weight:500}
 .ed-voce-testa button{border:0;background:none;cursor:pointer;color:var(--ed-muto);padding:0 3px}
+.ed-voce-testa button:disabled{opacity:.35;cursor:default}
 .ed-voce-maniglia{cursor:grab;color:var(--ed-muto)}
 .ed-voce-corpo{padding:8px 10px 2px;border-top:1px solid var(--ed-bordo);background:var(--ed-pannello);border-radius:0 0 8px 8px}
 .ed-voce-corpo[hidden]{display:none}

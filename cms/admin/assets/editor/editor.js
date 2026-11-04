@@ -1076,29 +1076,44 @@
     voci = copia(voci);
     var aperta = null;
     function salvaTutto() { salva(copia(voci)); }
+    // 2.25.0: un campo di una voce può dipendere da un valore del widget (le pagine di Scorri di lato: la data solo con la Linea
+    // del tempo). Un nome che non è un campo della voce si legge dal widget selezionato, con il suo valore di partenza.
+    var nomiCampi = ctl.campi.map(function (x) { return x.nome; });
+    function valoreDelWidget(nome) { var p = selezionato ? trova(selezionato) : null; return p && DEF[p.el.tipo] ? valoreCondizione(imp, DEF[p.el.tipo], nome) : (imp[nome] === undefined ? '' : imp[nome]); }
+    var massimo = ctl.max_voci || 0, pieno = false;
     function disegnaVoci() {
       c.innerHTML = '';
+      pieno = massimo > 0 && voci.length >= massimo;
       voci.forEach(function (voce, i) {
         var d = mk('div', 'ed-voce');
         var titolo = voce[ctl.titolo_voce] || ctl.campi[0] && voce[ctl.campi[0].nome] || ('Voce ' + (i + 1));
-        var testa = mk('div', 'ed-voce-testa', '<span class="ed-voce-maniglia">⋮⋮</span><b></b><button type="button" data-az="duplica" title="Duplica">⧉</button><button type="button" data-az="elimina" title="Elimina">×</button>');
+        // 2.25.0: anche Sposta su e Sposta giù, per riordinare senza trascinare (tastiera).
+        var testa = mk('div', 'ed-voce-testa', '<span class="ed-voce-maniglia">⋮⋮</span><b></b><button type="button" data-az="su" title="Sposta su" aria-label="Sposta su"' + (i === 0 ? ' disabled' : '') + '>↑</button><button type="button" data-az="giu" title="Sposta giù" aria-label="Sposta giù"' + (i === voci.length - 1 ? ' disabled' : '') + '>↓</button><button type="button" data-az="duplica" title="Duplica" aria-label="Duplica"' + (pieno ? ' disabled' : '') + '>⧉</button><button type="button" data-az="elimina" title="Elimina" aria-label="Elimina">×</button>');
         $('b', testa).textContent = String(titolo).replace(/\*/g, '').slice(0, 60);
         var corpo = mk('div', 'ed-voce-corpo'); corpo.hidden = aperta !== i;
         if (aperta === i) ctl.campi.forEach(function (campo) {
-          if (campo.condizione || campo.se) { var okc = Object.keys(campo.condizione || campo.se).every(function (k) { var neg = k.charAt(0) === '!', nome = neg ? k.slice(1) : k; var att = voce[nome] === undefined ? '' : String(voce[nome]); var attesi = [].concat((campo.condizione || campo.se)[k]); var ok = attesi.some(function (x) { return String(x) === att; }); return neg ? !ok : ok; }); if (!okc) return; }
+          if (campo.condizione || campo.se) { var okc = Object.keys(campo.condizione || campo.se).every(function (k) { var neg = k.charAt(0) === '!', nome = neg ? k.slice(1) : k; var att = voce[nome] !== undefined ? String(voce[nome]) : (nomiCampi.indexOf(nome) < 0 ? String(valoreDelWidget(nome)) : ''); var attesi = [].concat((campo.condizione || campo.se)[k]); var ok = attesi.some(function (x) { return String(x) === att; }); return neg ? !ok : ok; }); if (!okc) return; }
           corpo.appendChild(controllo(voce, Object.assign({}, campo, { responsive: false, sezione: undefined }), function () { salvaTutto(); $('b', testa).textContent = String(voce[ctl.titolo_voce] || titolo).replace(/\*/g, '').slice(0, 60); if (campo.condizione || campo.se || ctl.campi.some(function (x) { var cc = x.condizione || x.se; return cc && Object.keys(cc).some(function (k) { return k.replace(/^!/, '') === campo.nome; }); })) disegnaVoci(); }));
         });
         testa.addEventListener('click', function (e) {
           var b = e.target.closest('button');
           if (b && b.dataset.az === 'elimina') { voci.splice(i, 1); aperta = null; salvaTutto(); disegnaVoci(); return; }
-          if (b && b.dataset.az === 'duplica') { voci.splice(i + 1, 0, copia(voce)); salvaTutto(); disegnaVoci(); return; }
+          if (b && b.dataset.az === 'duplica') { if (pieno) return; voci.splice(i + 1, 0, copia(voce)); salvaTutto(); disegnaVoci(); return; }
+          if (b && (b.dataset.az === 'su' || b.dataset.az === 'giu')) {
+            var j = b.dataset.az === 'su' ? i - 1 : i + 1; if (j < 0 || j >= voci.length) return;
+            var x = voci.splice(i, 1)[0]; voci.splice(j, 0, x); aperta = aperta === i ? j : (aperta === j ? i : aperta); salvaTutto(); disegnaVoci();
+            var nb = $$('.ed-voce', c)[j]; nb = nb && nb.querySelector('[data-az="' + b.dataset.az + '"]:not([disabled])'); if (nb) nb.focus();
+            return;
+          }
           if (e.target.classList.contains('ed-voce-maniglia')) return;
           aperta = aperta === i ? null : i; disegnaVoci();
         });
         d.appendChild(testa); d.appendChild(corpo); c.appendChild(d);
       });
       var agg = mk('button', 'ed-b', '+ Aggiungi'); agg.type = 'button';
+      if (pieno) { agg.disabled = true; agg.title = 'Al massimo ' + massimo + ': togline una per aggiungerne un\'altra'; }
       agg.addEventListener('click', function () {
+        if (pieno) return;
         var n = {};
         ctl.campi.forEach(function (campo) { n[campo.nome] = campo.predefinito; });
         voci.push(n); aperta = voci.length - 1; salvaTutto(); disegnaVoci();
