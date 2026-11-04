@@ -5,6 +5,7 @@
 // schermi densi. Predefinita: releases/banner. Il link da mettere sotto ogni banner: https://plumecms.it
 // 30 ottobre 2026: anche l'immagine per i social (Open Graph) 1200x630, in PNG e in JPG: logo e titolo al centro, perché
 // WhatsApp e alcuni telefoni la tagliano quasi quadrata.
+// 4 novembre 2026: due 970x90 (striscia, "leaderboard" grande). SOLO=970x90 rifà solo i banner con quel pezzo nel nome.
 const { chromium } = require('playwright');
 const fs = require('fs');
 const path = require('path');
@@ -62,6 +63,12 @@ const BANNER = [
   { nome: 'plumecms-160x600-2', l: 160, a: 600, forma: 'alto', disegno: finestra,
     occhiello: 'Editor visuale', titolo: 'Il sito<br>lo fai tu.<br><em>Come lo vuoi tu.</em>', punti: ['Gratis, per sempre', 'In italiano', 'Senza scrivere codice'],
     testo: 'Temi, SEO e newsletter già dentro. Pronto in 5 minuti.', invito: 'Scarica gratis' },
+  { nome: 'plumecms-970x90-1', l: 970, a: 90, forma: 'striscia', disegno: finestra,
+    occhiello: 'Il CMS italiano con l’editor visuale', titolo: 'Il sito lo fai tu. <em>Come lo vuoi tu.</em>',
+    testo: 'Trascini, scrivi, pubblichi. Temi, SEO e newsletter già dentro.', invito: 'Scarica plumeCMS' },
+  { nome: 'plumecms-970x90-2', l: 970, a: 90, forma: 'striscia', punti: ['Gratis', 'In italiano', 'Pronto in 5 minuti'],
+    occhiello: 'Niente plugin da rincorrere', titolo: 'Il tuo sito, <em>leggero come una piuma.</em>',
+    invito: 'Provalo gratis' },
   { nome: 'plumecms-social-1200x630', l: 1200, a: 630, forma: 'social',
     occhiello: 'Il CMS italiano con l’editor visuale', titolo: 'Il sito lo fai tu.<br><em>Come lo vuoi tu.</em>',
     testo: 'Trascini, scrivi, pubblichi. Temi, SEO e newsletter già dentro.', invito: 'Gratis, si installa in 5 minuti' },
@@ -103,6 +110,21 @@ p{color:#d6d2f5;font-size:14px;line-height:1.4}
 .alto .basso{margin-top:auto;display:flex;flex-direction:column;align-items:center;gap:8px;width:100%}
 .alto .invito{font-size:13px;padding:11px 14px;width:100%;text-align:center}
 .alto .url{font-size:9.5px;text-align:center}
+/* 970x90: una riga sola. Il primo con la finestra dell'editor, il secondo con i tre punti al posto del disegno */
+.striscia{width:970px;height:90px;display:flex;align-items:center;gap:22px;padding:0 22px 0 24px}
+.striscia .marchio{font-size:18px;flex:none}
+.striscia .sep{flex:none;width:1px;height:46px;background:rgba(185,173,255,.35)}
+.striscia .testo{display:flex;flex-direction:column;gap:5px;min-width:0;flex:1}
+.striscia .occhiello{font-size:9.5px}
+.striscia h1{font-size:23px;line-height:1.05;white-space:nowrap}
+.striscia p{font-size:12.5px;line-height:1.25;white-space:nowrap}
+.striscia .disegno{flex:none;width:118px;height:76px;display:flex;align-items:center;transform:rotate(-4deg)}
+.striscia ul{list-style:none;display:flex;flex-direction:column;gap:5px;flex:none}
+.striscia li{font-size:12px;color:#fff;display:flex;gap:7px;align-items:center;white-space:nowrap}
+.striscia li::before{content:'';flex:none;width:14px;height:14px;border-radius:50%;background:#5fd6c6 url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 14 14'%3E%3Cpath d='M4 7.2l2 2 4-4.4' fill='none' stroke='%230d0b26' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center/14px no-repeat}
+.striscia .basso{flex:none;display:flex;flex-direction:column;align-items:center;gap:6px}
+.striscia .invito{font-size:13.5px;padding:11px 18px}
+.striscia .url{font-size:10.5px}
 /* 1200x630, l'immagine dei social: tutto al centro, i disegni ai lati come sfondo */
 .social{width:1200px;height:630px;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:18px;padding:0 120px}
 .social .marchio{font-size:40px;gap:16px}
@@ -117,11 +139,16 @@ p{color:#d6d2f5;font-size:14px;line-height:1.4}
 `;
 
 const pagina = (b) => {
-  const marchio = `<div class="marchio">${piuma(b.forma === 'largo' ? 26 : 28)}<span><b>plume</b>CMS</span></div>`;
+  const marchio = `<div class="marchio">${piuma(b.forma === 'largo' || b.forma === 'striscia' ? 26 : 28)}<span><b>plume</b>CMS</span></div>`;
   const corpo = b.forma === 'social'
     ? `<div class="b social"><div class="lato s">${finestra(360, 228)}</div><div class="lato d">${domande(330, 209)}</div>
          <div class="marchio">${piuma(58)}<span><b>plume</b>CMS</span></div><div class="occhiello">${b.occhiello}</div><h1>${b.titolo}</h1><p>${b.testo}</p>
          <span class="invito">${b.invito}</span><span class="url">plumecms.it</span></div>`
+    : b.forma === 'striscia'
+    ? `<div class="b striscia">${marchio}<span class="sep"></span>${b.disegno ? `<div class="disegno">${b.disegno(118, 75)}</div>` : ''}
+         <div class="testo"><div class="occhiello">${b.occhiello}</div><h1>${b.titolo}</h1>${b.testo ? `<p>${b.testo}</p>` : ''}</div>
+         ${b.punti ? `<ul>${b.punti.map(x => `<li>${x}</li>`).join('')}</ul><span class="sep"></span>` : ''}
+         <div class="basso"><span class="invito">${b.invito} &rarr;</span><span class="url">plumecms.it</span></div></div>`
     : b.forma === 'largo'
     ? `<div class="b largo"><div class="testo"><div class="testa">${marchio}<div class="occhiello">${b.occhiello}</div></div><h1>${b.titolo}</h1><p>${b.testo}</p>
          <div class="riga"><span class="invito">${b.invito} &rarr;</span><span class="url">plumecms.it</span></div></div>
@@ -135,7 +162,7 @@ const pagina = (b) => {
 (async () => {
   fs.mkdirSync(OUT, { recursive: true });
   const br = await chromium.launch();
-  for (const b of BANNER) {
+  for (const b of BANNER.filter(x => !process.env.SOLO || x.nome.includes(process.env.SOLO))) {
     for (const scala of b.forma === 'social' ? [1] : [1, 2]) {
       const p = await (await br.newContext({ viewport: { width: b.l, height: b.a }, deviceScaleFactor: scala })).newPage();
       await p.setContent(pagina(b), { waitUntil: 'load' });
