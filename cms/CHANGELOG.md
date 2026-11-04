@@ -2,6 +2,25 @@
 
 Il prodotto si chiama **plumeCMS** (nome scelto il 26 ottobre 2026; prima, per poche ore, "CarbonaraCMS", e ancora prima il provvisorio "Officina": gli zip vecchi si chiamavano `officina-*` e `carbonaracms-*`).
 
+## 2.25.0 (4 novembre 2026) - Scorri di lato
+
+- **Il widget Scorri di lato** (richiesta di Danilo: "come sul sito Apple"): quando chi visita il sito arriva sul widget, la
+  sezione si ferma e le sue pagine scorrono da destra a sinistra fino all'ultima; poi il sito riprende a scorrere in verticale.
+  Cinque **disposizioni**, scelte tutte e cinque da Danilo fra le proposte: **Pellicola** (ogni pagina a tutto schermo, testo da
+  una parte e immagine dall'altra, lineette di avanzamento in basso), **Carte** (una fila di carte con il titolo della sezione
+  fermo in alto; la carta al centro si alza un poco), **Titolo fermo** (a sinistra il testo che cambia con una dissolvenza e il
+  contatore "2 di 4", a destra scorrono le immagini), **Linea del tempo** (una linea che si colora, punti che si accendono, una
+  tappa con la data per pagina), **Profondità** (lo sfondo si muove più piano del testo, che entra da destra e sfuma).
+- Da 2 a 12 **pagine**, ognuna con occhiello, titolo (con la parte fra asterischi sfumata), testo, immagine dai Media con il
+  testo alternativo, colore di sfondo, fino a due pulsanti con il link scelto dal sito, e la data per la Linea del tempo.
+  Scelte del widget: velocità dello scorrimento, lineette sì o no, a tutta larghezza dello schermo.
+- Al telefono funziona con il dito. Chi ha chiesto al telefono o al computer **meno movimento**, e chi ha JavaScript spento,
+  vede le pagine una sotto l'altra. Con la tastiera, il pulsante che prende il fuoco porta la sua pagina in vista. Nella tela
+  dell'editor le pagine stanno in fila, tutte visibili; l'effetto si vede sul sito e nell'anteprima. Più widget nella stessa
+  pagina funzionano insieme. I colori seguono il tema.
+- Negli elenchi dell'editor (pagine, pulsanti, voci...) le frecce **Sposta su** e **Sposta giù** accanto a ogni voce, per
+  riordinare anche senza trascinare. I widget sono 108.
+
 ## 2.24.0 (3 novembre 2026) - Test a pagine, passi a carte con l'anteprima
 
 - **Test e questionari, come si mostrano le domande** (richiesta di Danilo): **Una per pagina** (come prima, e com'è per i

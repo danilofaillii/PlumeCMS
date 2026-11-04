@@ -80,7 +80,8 @@ function editor_pulisci_valore(array $ctl, $val) {
             return ['url' => editor_link_sicuro((string)(is_array($val) ? ($val['url'] ?? '') : $val)), 'nuova' => is_array($val) && !empty($val['nuova']), 'nofollow' => is_array($val) && !empty($val['nofollow'])];
         case 'ripetitore':
             $out = [];
-            foreach (array_slice(is_array($val) ? array_values($val) : [], 0, 40) as $voce) {
+            // 2.25.0: un ripetitore può dire quante voci tiene al massimo ('max_voci', per esempio le 12 pagine di Scorri di lato).
+            foreach (array_slice(is_array($val) ? array_values($val) : [], 0, max(1, min(40, (int)($ctl['max_voci'] ?? 40)))) as $voce) {
                 if (!is_array($voce)) continue;
                 $r = [];
                 foreach ($ctl['campi'] as $c) $r[$c['nome']] = editor_pulisci_valore($c, $voce[$c['nome']] ?? $c['predefinito']);

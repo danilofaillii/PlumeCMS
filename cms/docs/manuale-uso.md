@@ -895,6 +895,71 @@ sopra il disegno; queste note sul sito non compaiono.
 - [ ] I nomi sono corti: niente puntini alla fine delle scritte.
 - [ ] Ho guardato la pagina anche dal telefono.
 
+### Scorri di lato: le pagine che scorrono di lato
+
+**A cosa serve.** Come sulle pagine dei prodotti Apple: chi visita scorre la pagina verso il basso e, quando arriva sul widget,
+la sezione si ferma e le sue **pagine** scorrono da destra a sinistra, una dopo l'altra. Dopo l'ultima la pagina riprende a
+scorrere in verticale. Serve per raccontare in quattro o cinque passi un servizio, un metodo, la storia di un'attività.
+
+Il widget **Scorri di lato** sta nel gruppo **Contenuto** della linguetta **Widget**. Ha cinque **disposizioni**:
+
+| Disposizione | Com'è | Adatta a |
+|---|---|---|
+| **Pellicola** | ogni pagina occupa tutto lo schermo: testo da una parte, immagine dall'altra; in basso le lineette che si riempiono | un prodotto o un servizio in pochi passi, una idea per schermo |
+| **Carte** | una fila di carte con il titolo della sezione fermo in alto; la carta che arriva al centro si alza un poco | servizi, prodotti, caratteristiche: da 4 a 10 voci |
+| **Titolo fermo** | a sinistra il testo resta fermo e cambia con una dissolvenza, con il contatore "2 di 4"; a destra scorrono le immagini | i passi di un metodo, i punti di forza, dove conta il testo |
+| **Linea del tempo** | una linea che si colora mentre scorri e un punto che si accende per ogni tappa, con la data | la storia di un'attività, le fasi di un progetto o di un corso |
+| **Profondità** | l'immagine fa da sfondo e si muove più piano del testo, che entra da destra e sfuma | aperture d'effetto, frasi forti con poche parole |
+
+![Il widget Scorri di lato nell'editor: la tendina Disposizione e le pagine](immagini/manuale-uso/08-scorri-editor.jpg)
+
+**Nella tela** dell'editor le pagine stanno in fila, una accanto all'altra, e si vedono tutte: le scorri con la barra sotto.
+L'effetto vero (la sezione che si ferma e scorre di lato) si vede sul sito e con **Anteprima**.
+
+![La Pellicola sul sito, sulla seconda pagina](immagini/manuale-uso/08-scorri-pellicola.jpg)
+
+**Esempio.** Lo Studio Rossi vuole raccontare la sua storia in quattro tappe, dalla prima consulenza a oggi.
+
+1. Apri la pagina **Chi siamo** nell'editor (**Pagine**, passa con il mouse sopra la pagina, **Editor visuale**).
+2. Linguetta **Widget**, scrivi `scorri` nella ricerca e fai clic su **Scorri di lato**. Entra con quattro pagine d'esempio e
+   a sinistra si apre **Modifica**.
+3. Tendina **Disposizione**: scegli **Linea del tempo**. Compaiono **Occhiello della sezione** (scrivi `La nostra storia`) e
+   **Titolo della sezione** (scrivi `Dal 1998 a *oggi*.`: la parola fra asterischi esce sfumata).
+4. Scendi a **Pagine** e fai clic sulla prima per aprirla. Scrivi la **Data della tappa** (`1998`), il **Titolo**
+   (`La prima consulenza`) e il **Testo**. In **Immagine** premi **Scegli** e prendi una foto dai Media; scrivi sotto il
+   **Testo alternativo** (cosa si vede nella foto).
+5. Se la pagina deve portare da qualche parte, scrivi il testo del **Primo pulsante** (`Leggi la storia`) e accanto a
+   **Link del primo pulsante** premi **Scegli dal sito**.
+6. Fai lo stesso con le altre pagine. Per aggiungerne una premi **+ Aggiungi** (al massimo 12). Per cambiare l'ordine usa le
+   frecce **↑** e **↓** accanto al nome della pagina, oppure trascina la maniglia **⋮⋮**. Per toglierne una premi **×**.
+7. Nella sezione **Scorrimento** scegli la **Velocità** (Lenta vuol dire più rotella per passare da una pagina all'altra) e se
+   mostrare le **lineette**. **A tutta larghezza dello schermo**, acceso, fa uscire il widget dai margini della colonna.
+8. Premi **Pubblica**, poi apri la pagina sul sito e scorri: arrivata sul widget, la pagina si ferma e le tappe scorrono di
+   lato; dopo l'ultima riprende in verticale.
+
+![La Linea del tempo sul sito](immagini/manuale-uso/08-scorri-tempo.jpg)
+
+**Da sapere.**
+
+- Ogni pagina ha occhiello, titolo, testo, immagine, colore di sfondo (Pellicola, Carte, Profondità) e fino a due pulsanti
+  (il primo viola pieno, il secondo a filo). La data si vede solo nella Linea del tempo: cambiando disposizione i testi restano.
+- Le pagine si riempiono con questi campi, non con altri widget.
+- Con le **Carte** e la **Profondità** l'immagine fa da sfondo e il testo diventa bianco, con un velo scuro sotto.
+- Nella scheda **Stile**, **Trattamento delle immagini**: bianco e nero con il velo ciano e viola (come l'Apertura), solo
+  bianco e nero, oppure naturale. Colori e caratteri seguono il tema.
+- Al telefono funziona con il dito. Chi ha chiesto al telefono o al computer **meno movimento**, e chi ha JavaScript spento,
+  vede le pagine una sotto l'altra, tutte leggibili.
+- Con la tastiera: premendo Tab si passa da un pulsante all'altro delle pagine, e la pagina del pulsante scorre in vista.
+- Nella stessa pagina del sito puoi mettere più di un widget Scorri di lato.
+
+**Checklist**
+
+- [ ] Ogni pagina ha un titolo corto e poche righe di testo (con paragrafi lunghi l'effetto si perde).
+- [ ] Ogni immagine ha il testo alternativo.
+- [ ] Nella Linea del tempo ogni pagina ha la data, e le pagine sono in ordine di tempo.
+- [ ] Ho provato la pagina sul sito al computer e al telefono, scorrendo fino in fondo.
+- [ ] I pulsanti portano dove devono (li ho scelti con **Scegli dal sito**).
+
 ### Le novità dei widget di prima
 
 - **Mappa: "Come arrivare".** Nel widget **Mappa**, sezione **Come arrivare**: in **Pulsante "Come arrivare"** scegli
