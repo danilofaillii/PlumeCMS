@@ -108,7 +108,7 @@ Sono gli unici in `cms/docs/`, nello zip, nel sito di plumeCMS e nella pagina Do
 - **Pacchetto di aggiornamento** per un'installazione esistente:
   `python3 tools/cms-pacchetto.py --aggiornamento`. Si carica dal pannello,
   Impostazioni, Aggiornamenti.
-- **Versione**: `cms/VERSIONE` (oggi 2.24.0; sempre tre numeri: "beta" va nel CHANGELOG, mai nel nome dello zip, se no la serie "ultima" del Download non lo riconosce) e una voce in `cms/CHANGELOG.md` a ogni
+- **Versione**: `cms/VERSIONE` (oggi 2.25.0; sempre tre numeri: "beta" va nel CHANGELOG, mai nel nome dello zip, se no la serie "ultima" del Download non lo riconosce) e una voce in `cms/CHANGELOG.md` a ogni
   zip con contenuto diverso. Mai cambiare il contenuto di una versione già data.
 - **Prove** prima di dire finito:
   - `php -n -d short_open_tag=1 -l` su ogni file PHP toccato, `node --check` sui js;
@@ -165,6 +165,22 @@ Le decisioni complete, con data e perché, stanno nel second brain, `plumecms/de
 - **Nome: plumeCMS** (26 ottobre 2026).
 
 ## Stato al 31 ottobre 2026
+
+Fatto: plumeCMS 2.25.0 (4 novembre): il widget **Scorri di lato** (richiesta di Danilo: "come il sito Apple", pagine che scorrono di
+lato quando si arriva al widget, poi di nuovo in verticale; cinque proposte `https://claude.ai/artifact/2EErn1pJPESzSKTJm9EQZd`, "mi piacciono
+tutti": cinque disposizioni Pellicola, Carte, Titolo fermo, Linea del tempo, Profondità; agente nella worktree `/home/user/wt-scorri`, ramo
+`scorri-di-lato`, riletto e riprovato da me). Id `scorri_lato`, `includes/editor-widget-scorri.php`, `sito/assets/scorri.css|js` (classi `sdl-*`),
+pagine a campi (da 2 a 12; niente sezioni salvate nelle pagine dell'editor, manuale tecnico 43.1), elenco ripetibile con `max_voci`, frecce
+Sposta su e giù e campi con condizione (vale per tutti i widget), meno movimento e senza JavaScript con le pagine una sotto l'altra, tela con le
+pagine in fila. 108 widget. Corretto dall'agente anche `tools/sicurezza-prova.js` gruppo 14 (cartella due volte nei siti in cartella). Prove:
+install 38/38 radice e cartella, scorri 601/601 radice e cartella, tag 57/57, test 196/196 e attacchi 82/82 radice e cartella, automazioni
+96/96, passo da modello 57/57, telefono 56/56, aggiornamento 2.24.0 -> 2.25.0 13/13 con 0 foto diverse su 20, addon tutti 74/74, contatti
+94/94, segmenti 179/179, attacchi 420/420 (gruppo 26b), pacchetto unico 13/13 con la hero tenuta, sito di plumeCMS 86/86. Zip 2324 KB, PDF
+11900 KB: Danilo vuole il PDF così com'è (4 novembre); quando supererà i 12 MB si chiede a lui prima di consegnare. Le altre schermate del
+manuale non mostrano ancora le frecce nuove degli elenchi dell'editor.
+**4 novembre**: Danilo ha applicato per errore a danilofailli.it il pacchetto unico della 2.24.0 (con il sito di plumeCMS): menu cambiato.
+Rimedio dato: snapshot delle 07:07 "plumeCMS 2.24.0 e il sito di plumeCMS", poi solo `plumecms-<v>-aggiornamento.zip`. danilofailli.it dal 1
+novembre è plumeCMS senza moduli e prende gli zip di aggiornamento del prodotto, **mai il pacchetto unico**.
 
 Fatto: plumeCMS 2.24.0 (3-4 novembre): **test a pagine e passi del test a carte con l'anteprima** (richiesta di Danilo; scelta B + D fra
 cinque proposte, prototipo `https://claude.ai/artifact/EKQT5RjxR5WuSd4xzN7nD7`; agente nella worktree `/home/user/wt-test-pagine`, ramo
