@@ -323,6 +323,23 @@ poi `node prove/prova-copia.js <base> <cartella CMS> <utente> <password> <cartel
 di prova deve avere i limiti predefiniti di PHP (`upload_max_filesize` 2M, `post_max_size` 8M). Atteso: 30 su 30.
 Ripristina il sito più volte: alla fine il sito è quello della copia fatta all'inizio, più `uploads/copia-estranea.txt`.
 
+## prova-copia-ripristino-sicuro.js (2.25.1)
+
+Il ripristino sicuro della Copia del sito (tabelle di appoggio, scambio in una RENAME, collazioni di un altro server, blocco,
+marcatore, INSERT solo letterali, registro su file, pagina di soccorso). Servono quattro siti installati con lo stesso utente:
+A (kit Attività, prefisso `cms_`), C (kit Personale, prefisso `plume_c_`, database suo), B2 (prefisso `cms_b_` nello STESSO
+database di A, come per `prova-copia-pulita.js`), D (kit Vuoto, per la pagina di soccorso). Per le prove fra server, un sito
+su MariaDB 10.6 (`SITO_MARIADB="<base>|<cartella>"`) e uno su MySQL 5.7 (`SITO_MYSQL57`), installati con `#host` del loro
+server (in Docker: `mariadb:10.6` sulla 3309, `mysql:5.7` sulla 3310). Il server php di C deve essere un
+`php -S 127.0.0.1:<porta> -t <cartella C> prove/router-php-s.php` senza cartella: la prova lo uccide a metà ripristino
+(`CMS_RIPRISTINO_PAUSA` scritto nel config di C) e lo riaccende. `FOTO_MANUALE=1` scrive anche la schermata del manuale
+(`27-soccorso.jpg`, con i segni dei passi) nella cartella di uscita.
+`FOTO_MANUALE=1 SITO_MARIADB=... SITO_MYSQL57=... DBPASS=... node prove/prova-copia-ripristino-sicuro.js <base A> <cartella A>
+<base C> <cartella C> <base B2> <cartella B2> <base D> <cartella D> <utente> <password> <cartella uscita>`.
+Atteso: 79 su 79 (5 novembre 2026; senza i due siti degli altri server 70 su 70). Lascia A come la sua prima copia, C con i
+contenuti del sito MariaDB (o di A), D rimesso; le copie di prova (collazione, rotta, sottoquery, funzione) restano nelle
+cartelle `aggiornamenti/copie/` dei siti. Prima di rilanciarla sugli stessi siti: l'amministratore di C torna `prova`.
+
 ## prova-versione.js (1.3.0)
 
 "C'è una versione nuova" con due installazioni: il sito (`<base cliente>`) e un plumeCMS che fa da sito ufficiale

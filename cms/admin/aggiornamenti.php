@@ -95,8 +95,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $rumore = trim((string)ob_get_clean());
             if (session_status() === PHP_SESSION_NONE) @session_start();
             if ($rumore !== '') $log[] = 'Avvisi di PHP durante il ripristino, non bloccanti: ' . mb_substr($rumore, 0, 1500);
-            $esito = ['ok' => true, 'titolo' => 'Ripristino dallo snapshot ' . $id, 'log' => $log];
-            flash('success', 'Snapshot ' . $id . ' ripristinato. Controlla il sito.');
+            // 2.25.1: con un errore nel database niente è cambiato (motore della Copia del sito): si dice come errore.
+            $okRip = !array_filter($log, fn($r) => str_starts_with($r, 'ERRORE') || str_starts_with($r, 'Database NON'));
+            $esito = ['ok' => $okRip, 'titolo' => ($okRip ? 'Ripristino dallo snapshot ' : 'Ripristino NON fatto dallo snapshot ') . $id, 'log' => $log];
+            flash($okRip ? 'success' : 'error', $okRip ? 'Snapshot ' . $id . ' ripristinato. Controlla il sito.' : 'Lo snapshot ' . $id . ' non si è potuto ripristinare: il database è rimasto com\'era. Il registro qui sotto dice perché.');
         } elseif ($action === 'elimina_snapshot') {
             agg_elimina_snapshot($_POST['id'] ?? '');
             flash('success', 'Snapshot eliminato.');

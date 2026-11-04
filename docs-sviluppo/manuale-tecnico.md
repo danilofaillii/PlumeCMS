@@ -3524,7 +3524,9 @@ immagini, pdf, css, js, caratteri, json, webmanifest, map) e `root/.htaccess`.
 
 - Cartella `aggiornamenti/`: `pacchetti/<id>.zip` e `.json`, `snapshot/<id>/` (database compresso, file,
   descrizione). È chiusa al web con un `.htaccess` scritto da solo.
-- Si tengono gli ultimi 5 snapshot. Uno snapshot si può ripristinare a mano.
+- Si tengono gli ultimi 5 snapshot. Uno snapshot si può ripristinare a mano. Dalla 2.25.1 il ripristino di uno snapshot
+  (`agg_restore_db()`, `includes/aggiornamenti.php:425`) passa dal motore della Copia del sito (19.9): con un errore il
+  database resta com'era, invece di restare a metà.
 - Durante l'applicazione la pagina mostra l'avanzamento (file `progresso-<id>.json`, letto ogni secondo).
 - Gli avvisi di PHP durante l'applicazione vanno nel log, non nella pagina.
 - Ogni pacchetto applicato si registra nel registro della sicurezza, con l'indicazione firmato o no; quelli
@@ -3601,18 +3603,18 @@ nel suo download manager.
 Motore `includes/copia-sito.php`, pagina **Impostazioni > Copia del sito** (`admin/copia-sito.php`), solo per
 l'amministratore, ogni azione in POST con il token CSRF.
 
-- **Prepara la copia** (`copia_crea()`, `includes/copia-sito.php:195`): uno zip in `aggiornamenti/copie/` con
+- **Prepara la copia** (`copia_crea()`, `includes/copia-sito.php:229`): uno zip in `aggiornamenti/copie/` con
   `manifest.json` (formato `plumecms-copia`, versione del CMS, prefisso, sito, quante tabelle, righe e file e, dalla 2.1,
   `elenco_tabelle`: le tabelle della copia senza il prefisso), `db.sql.gz` (le tabelle di questa installazione, stesso
-  formato degli snapshot: dalla 2.1 `copia_dump_db()`, `:163`, sulle tabelle di `copia_tabelle_sito()`, `:152`; prima
+  formato degli snapshot: dalla 2.1 `copia_dump_db()`, `:195`, sulle tabelle di `copia_tabelle_sito()`, `:182`; prima
   `agg_dump_db($file, $prefisso)`) e le cartelle `uploads/`, `temi/`, `moduli/`. Fuori: `includes/config.local.php` e ogni
   file o cartella nascosti. Il manifest ha la firma HMAC-SHA256 dell'impronta dello zip (`sicurezza_pacchetto_impronta()`)
   con la chiave dei pacchetti di questo sito. Lo zip ha permessi 0600; si scarica solo dal pannello (**Scarica**), la
-  cartella è vietata al web. Se ne tengono 6 (`copia_pulisci()`, `:102`; dalla 2.1 mai quella che si sta ripristinando:
+  cartella è vietata al web. Se ne tengono 6 (`copia_pulisci()`, `:132`; dalla 2.1 mai quella che si sta ripristinando:
   prima, con sei copie più nuove, la copia scelta spariva a metà del ripristino).
 - **Due installazioni nello stesso database** (2.1): con i prefissi `cms_` e `cms_b_` le tabelle `cms_b_*` cominciano anche
-  con `cms_`. `copia_tabelle_del_prefisso()` (`:129`) toglie le tabelle di un prefisso più lungo che ha sia `settings` sia
-  `users` (`copia_altri_prefissi()`, `:136`): sono di un'altra installazione. Il ripristino (`copia_ripristina_db()`, `:298`)
+  con `cms_`. `copia_tabelle_del_prefisso()` (`:159`) toglie le tabelle di un prefisso più lungo che ha sia `settings` sia
+  `users` (`copia_altri_prefissi()`, `:166`): sono di un'altra installazione. Il ripristino (`copia_ripristina_db()`, `:594`)
   tocca solo le tabelle di `elenco_tabelle` (per una copia vecchia, la stessa regola applicata ai `CREATE TABLE` del suo
   database) e mai una tabella di un'altra installazione presente in questo database, qualunque cosa dica la copia; le righe
   saltate si contano ("Tabelle di un'altra installazione nello stesso database, lasciate stare"). Gli snapshot degli
@@ -3622,35 +3624,40 @@ l'amministratore, ogni azione in POST con il token CSRF.
   `evi_iscrizioni`, `slot_attivo` di `pren_prenotazioni`), sia in `copia_dump_db()` sia in `agg_dump_db()`: prima l'INSERT
   falliva con l'errore 3105 e il ripristino finiva con errori. La forma `INSERT INTO ... VALUES (` resta quella che il
   ripristino accetta. Prova: `prove/prova-colonne-generate.php <cartella CMS>` (copia e snapshot, 5 controlli). Le copie e
-  gli snapshot fatti prima della 2.1.0 con righe in quelle tabelle non si ripristinano interi.
-- **Ripristina** (`copia_ripristina($file, $tieni)`, `includes/copia-sito.php:358`): da una copia caricata (che entra fra quelle sul
+  gli snapshot fatti prima della 2.1.0 con righe in quelle tabelle non si ripristinano interi. 2.25.1: solo le colonne davvero generate (`VIRTUAL`/`STORED GENERATED`): su MySQL 8 una colonna con
+  `DEFAULT CURRENT_TIMESTAMP` ha Extra `DEFAULT_GENERATED` e fino alla 2.25.0 usciva come `DEFAULT`, così le copie perdevano
+  `created_at` e `updated_at` (al ripristino prendevano l'ora del ripristino).
+- **Ripristina** (`copia_ripristina($file, $tieni)`, `includes/copia-sito.php:800`): da una copia caricata (che entra fra quelle sul
   server) o già sul server; serve la spunta di conferma. Prima fa una copia del sito com'è (`prima-del-ripristino`), poi:
   - nomi dello zip controllati (`copia_nome_voce_ok()`): solo `manifest.json`, `db.sql.gz` e file dentro `uploads/`,
     `temi/`, `moduli/`, niente `..`, percorsi assoluti, barre rovesce, parti nascoste; 300 MB per file, 2 GB in tutto,
     rapporto di compressione sotto controllo;
-  - database (`copia_ripristina_db()`, `includes/copia-sito.php:298`): passano solo `DROP TABLE IF EXISTS`, `CREATE TABLE
-    (...)` e `INSERT INTO ... VALUES` su tabelle con il prefisso della copia, una istruzione per riga, riscritte con il
-    prefisso di questo sito; tutto il resto si salta e si conta. Le viste le crea lo schema del sito. L'impostazione
-    `sito_url` resta quella di questa installazione;
+  - database (`copia_ripristina_db()`, `includes/copia-sito.php:594`): passano solo `DROP TABLE IF EXISTS` (dalla 2.25.1
+    ignorate), `CREATE TABLE (...)` e `INSERT INTO ... VALUES` su tabelle con il prefisso della copia, una istruzione per riga,
+    riscritte con il prefisso di questo sito; tutto il resto si salta e si conta. Dalla 2.25.1 la copia si ricrea in tabelle di
+    appoggio e una sola `RENAME TABLE` la mette al posto di quelle vive: con un errore niente cambia (19.9). Le viste le
+    crea lo schema del sito (e si rifanno dopo lo scambio). L'impostazione `sito_url` resta quella di questa installazione
+    (scritta nella `settings` di appoggio prima dello scambio);
   - file: si scrivono sopra quelli che ci sono. Un file eseguibile (`.php`, `.phtml`, `.phar`,
     `.php.jpg` e simili) entra solo da una copia firmata da questo sito e mai in `uploads/`; da una copia di un altro sito
     si salta, e il pannello lo dice;
   - (2.1) **ripristino pulito**: dopo i file, `uploads/`, `temi/` e `moduli/` diventano come nella copia. I file che ci sono
     nel sito ma non nella copia (un file saltato perché eseguibile conta come "nella copia" e resta) si spostano, non si
     cancellano, in `aggiornamenti/scarto/ripristino-AAAAMMGG-HHMMSS/` con il loro percorso e un `LEGGIMI.txt`
-    (`copia_metti_da_parte()`, `:460`); le cartelle rimaste vuote si tolgono. Restano dove sono: i file e le cartelle
+    (`copia_metti_da_parte()`, `:951`); le cartelle rimaste vuote si tolgono. Restano dove sono: i file e le cartelle
     nascosti (`.htaccess`), i collegamenti simbolici e ciò a cui portano (`copia_file_di()` non li elenca e non entra nelle
     cartelle collegate), i file dei temi del prodotto (`tema.json` con `"autore": "plumeCMS"`, `copia_tema_del_prodotto()`,
-    `:448`: arrivano con gli aggiornamenti). Su un altro disco (`uploads_dir`) copia e cancella invece di `rename`.
+    `:939`: arrivano con gli aggiornamenti). Su un altro disco (`uploads_dir`) copia e cancella invece di `rename`.
     L'esito elenca i file spostati (riquadro `#cs-scartati`, fino a 200, e il registro, fino a 40).
   - (2.1) la casella **"Tieni i file in più"** (`tieni=1`, in tutti e due i moduli di ripristino) fa come prima della 2.1;
   - (2.1) lo scarto: cartella vietata al web come le copie (è dentro `aggiornamenti/`). Le sue cartelle restano
-    `COPIA_SCARTO_GIORNI` (30) giorni: le toglie il ripristino dopo (`copia_scarto_pulisci()`, `:527`). La pagina ha la
-    sezione "File messi da parte dai ripristini" (`#cs-scarto-elenco`, `copia_scarto_elenco()`, `:504`) con **Elimina**
-    (azione `elimina_scarto`, POST con CSRF, solo il nome esatto `ripristino-\d{8}-\d{6}`: `copia_scarto_elimina()`, `:518`,
+    `COPIA_SCARTO_GIORNI` (30) giorni: le toglie il ripristino dopo (`copia_scarto_pulisci()`, `:1018`). La pagina ha la
+    sezione "File messi da parte dai ripristini" (`#cs-scarto-elenco`, `copia_scarto_elenco()`, `:995`) con **Elimina**
+    (azione `elimina_scarto`, POST con CSRF, solo il nome esatto `ripristino-\d{8}-\d{6}`: `copia_scarto_elimina()`, `:1009`,
     rifiuta anche un nome che `basename()` cambierebbe), registrata in `sicurezza_log`;
   - alla fine `temi/.htaccess` si riscrive (`temi_proteggi()`). Se l'utente collegato non c'è più fra quelli della copia,
-    si torna al login.
+    si torna al login (dalla 2.25.1 con l'avviso `motivo=ripristino`, e dopo l'accesso si torna in Copia del sito con il
+    registro letto dal file, 19.9).
 - **Limite di caricamento**: la pagina mostra il limite del server; il browser avvisa prima di mandare un file troppo
   grande, e il server spiega anche quando il file supera `post_max_size` (la richiesta arriva vuota, senza token). Una
   copia grande si mette con il gestore dei file in `aggiornamenti/copie/` (nome `copia-AAAAMMGG-HHMMSS-nome.zip`) e si
@@ -3701,6 +3708,82 @@ circa 13 MB: serve un server che accetti caricamenti di quella misura (quello di
 **Prove** (31 ottobre 2026, costruito in una copia del repository con la versione finta 2.0.9): `prove/prova-consegna-unica.js`
 13 su 13, con dentro `prove/prova-sito-plumecms.js` 85 su 85 (87 su 87 con il blocco Scegli dai Media del sito, provato sul 2.0.3 nuovo), su un 2.0.3 nuovo e su un 2.0.3 con le cinque parti del sito della
 2.0.0 già applicate; dopo, `prove/prova-scegli-media.js` 112 su 112 sul sito aggiornato.
+
+### 19.9 Il ripristino sicuro della copia (dalla 2.25.1)
+
+Il 4 novembre 2026, su un sito vero (hosting con un MySQL che non conosceva le collazioni di MySQL 8), il ripristino di una
+copia ha lasciato il database senza `users`, `settings` e `pages`: `copia_ripristina_db()` eseguiva `DROP TABLE IF EXISTS` e
+subito dopo la `CREATE TABLE` della copia (il testo di `SHOW CREATE TABLE` del server d'origine, con
+`COLLATE=utf8mb4_0900_ai_ci`); la CREATE falliva (errore 1273), la tabella restava cancellata, il ciclo continuava, e la riga
+dopo (`save_setting('sito_url')`) usciva dal pannello come `Fatal error` con i percorsi del server. Dalla 2.25.1:
+
+- **Un ripristino alla volta** (`copia_blocco_prendi()`, `includes/copia-sito.php:357`): `GET_LOCK('plume_ripristino_' .
+  md5(DB_NAME|DB_PREFIX), 0)` per tutto il lavoro (copia di sicurezza, database, file; `copia_blocco_lascia()` alla fine). Un
+  secondo ripristino, o un secondo clic, risponde "un altro ripristino è già in corso" senza toccare niente (nel browser
+  il pulsante si spegne dopo il primo clic). Un processo ucciso chiude la connessione e MySQL libera il blocco da sé.
+- **Le tabelle di lavoro rimaste** (`copia_pulisci_interrotto()`, `:379`): un marcatore `aggiornamenti/copie/.ripristino-in-corso.json`
+  (scritto prima della prima CREATE con i nomi di appoggio e di parcheggio, tolto alla fine) dice che cosa un ripristino
+  interrotto a metà ha lasciato nel database; il ripristino dopo cancella solo quelle tabelle (nomi del marcatore, con il
+  marchio di lavoro e il prefisso del sito dentro) e lo scrive nel registro. Chi chiama ha già il blocco: nessun ripristino è
+  in corso.
+- **I nomi di lavoro** (`copia_nomi_appoggio()`, `:405`): `rip<6 esadecimali>_<prefisso><tabella>` per l'appoggio e
+  `vec<gli stessi esadecimali>_<prefisso><tabella>` per il parcheggio delle tabelle vecchie (`COPIA_APPOGGIO`,
+  `COPIA_PARCHEGGIO`). Prima di cominciare: ogni nome sta nei 64 caratteri di MySQL, nessuno esiste già, il prefisso di lavoro
+  non comincia con quello del sito (copie e snapshot prendono tutto ciò che comincia con il prefisso). Altrimenti ci si ferma
+  con un messaggio che nomina la tabella, senza toccare niente.
+- **L'appoggio** (`copia_ripristina_db()`, `:594`): le righe della copia passano gli stessi filtri di prima (le tre forme,
+  `elenco_tabelle`, mai le tabelle di un'altra installazione con prefisso più lungo), ma le `DROP` si ignorano e le `CREATE` e
+  le `INSERT` vanno sulle tabelle di appoggio. Ogni `CREATE` passa da `copia_create_portabile()` (`:504`); ogni `INSERT` da
+  `copia_insert_letterale()` (`:542`: nella parte `VALUES` solo stringhe fra apici, numeri, `NULL`, `DEFAULT`, parentesi e
+  virgole; una sottoquery, un nome di funzione, una variabile o un nome fra apici inversi fermano il ripristino prima di
+  eseguire la riga: con due installazioni nello stesso database una copia non firmata non copia più i dati dell'altra) e dal
+  confronto con `@@max_allowed_packet` del server di arrivo (una riga più grande ferma il ripristino con "una riga della copia
+  pesa X, il server ne accetta Y"; `copia_dump_db()` e `agg_dump_db()` dalla 2.25.1 chiudono i blocchi INSERT prima di
+  superare 1 MB, `COPIA_INSERT_MAX`). Al primo errore: via le tabelle di appoggio, via il marcatore, `ok=false` con il motivo in
+  parole semplici (`copia_errore_parole()`, `:561`: 1273 collazione, 1115 set di caratteri, 1286 motore, 1062 righe uguali
+  per questo server, 1146 e 1050 copia incompleta o modificata, 1205 database occupato, 1142 permessi, 1114 spazio, 1071
+  chiave troppo lunga, 2006 connessione caduta) e il testo tecnico fra parentesi. Nessuna tabella del sito è stata toccata.
+  Una copia senza nessuna tabella ammessa è un errore ("Nella copia non c'è nessuna tabella di questo sito").
+- **Prima dello scambio**: nella `settings` di appoggio si cancellano le impronte e i segni di versione degli schemi
+  (`setting_key LIKE '%impronta' OR LIKE '%\_schema'`: `sito_schema_impronta`, `sicurezza_schema_impronta`,
+  `newsletter_*_impronta`, `menu_schema`, `modelli_schema`, `scaricabili_schema`, quelli degli addon...; mai
+  `scaricabili_impronte`, che sono dati) e si scrive `sito_url` di questa installazione: al primo accesso le colonne e le tabelle nuove si aggiungono da sole, e non c'è
+  mai una finestra con l'indirizzo dell'altro sito.
+- **Lo scambio**: `SET SESSION lock_wait_timeout = 10` (una query lunga in corso, il cron, non ferma tutto per sempre) e UNA
+  `RENAME TABLE` con tutte le coppie (`viva TO vec..., rip... TO viva`; per una tabella che il sito non aveva solo `rip... TO
+  viva`): MySQL la esegue tutta o niente. Se fallisce: via l'appoggio, il sito è com'era. Poi le `DROP` delle parcheggiate (se
+  una non si cancella resta nel marcatore per il ripristino dopo), `sito_viste()` sempre (le viste `SELECT *` congelano le
+  colonne di quando sono nate), e il marcatore si toglie. Le tabelle del sito che non stanno nella copia restano come sono,
+  elencate nel registro; quelle della copia che il sito non aveva si contano.
+- **Collazioni e set di caratteri** (`copia_server_collazioni()`, `:423`, una volta per richiesta da `SHOW COLLATION` e
+  `SHOW CHARACTER SET`; `copia_collazione_vicina()`, `:446`; `copia_charset_vicino()`, `:463`). Regole (decisione del 4
+  novembre 2026): `utf8mb4_0900_ai_ci` -> `utf8mb4_unicode_ci`; `utf8mb4_0900_bin` e `utf8mb4_0900_as_cs` -> `utf8mb4_bin`;
+  le altre `utf8mb4_0900_*` -> `utf8mb4_unicode_ci`; una `utf8mb3_*` sconosciuta -> `utf8_*` con lo stesso suffisso se c'è,
+  altrimenti `utf8_unicode_ci` o `utf8mb3_unicode_ci` (MySQL 5.7 elenca `utf8_*`, MySQL 8.0.30+ e MariaDB 10.6+ elencano
+  `utf8mb3_*` e accettano `utf8_*` come alias); il set `utf8mb3` sconosciuto -> `utf8` (anche l'introduttore `_utf8mb3'...'`
+  delle colonne generate di Prenotazioni ed Eventi); qualunque altra collazione sconosciuta -> la predefinita del suo set di
+  caratteri qui (`Default = Yes`). Una conosciuta non si tocca; una sconosciuta senza sostituta resta e fa fallire la CREATE
+  in appoggio (fallimento pulito). Le sostituzioni si fanno solo fuori dagli apici (`copia_sql_pezzi()`, `:476`, spezza la
+  riga in pezzi dentro e fuori `'...'`, `"..."` e `` `...` ``, con gli escape di `agg_sql_val()` e l'apice raddoppiato) e
+  lasciano intatto tutto il resto, `AUTO_INCREMENT=N` compreso. Il registro: "Copia fatta su MySQL 8.0.46, qui MariaDB
+  10.6.28: in 17 tabelle la collazione utf8mb4_0900_ai_ci -> utf8mb4_unicode_ci; ...". Il manifest delle copie dalla 2.25.1 ha
+  `server_versione` (`copia_server_versione()`, `:335`). Provato da MySQL 8.0.46 a MariaDB 10.6.28 e a MySQL 5.7.44, e da
+  MariaDB a MySQL 8.
+- **Dopo il database** (`copia_ripristina()`, `:800`): i file come prima, ma un file di `uploads/` di una copia non firmata
+  passa da `media_ha_codice()` (scritto in un file di lavoro in `aggiornamenti/copie/`, controllato, poi messo al suo posto):
+  con codice dentro si salta e il registro lo elenca. Un file che non si scrive (disco pieno, permessi) porta a `ok=false`
+  con la fase `database`: "Il database è stato rimesso, i file no: ripristina la copia prima-del-ripristino, che rimette
+  tutto". Se il database fallisce ci si ferma prima dei file (fase `prima`): "Il ripristino non si è fatto: il sito è come
+  prima", con il motivo. Ogni eccezione dopo il manifest finisce nel registro, mai a video.
+- **Il registro su file** (`copia_registro_scrivi()`, `:760`; `copia_registri()`, `:771`; `copia_registro_ultimo()`, `:785`):
+  `aggiornamenti/copie/<copia>.ripristino.log`, prima riga `plumeCMS ripristino <data> esito=ok|errore copia=<nome>`, ultimi
+  `COPIA_REGISTRI_DA_TENERE` (10); più una riga in `sicurezza_log` (riuscito, non fatto, con errori nei file). Il pannello
+  (`admin/copia-sito.php`) ha tre titoli ("Sito ripristinato dalla copia", "Ripristino con errori dalla copia X: non si è
+  fatto, il sito è come prima", "...: database rimesso, file no") e, senza un esito fresco, il riquadro `#cs-ultimo` con
+  l'ultimo registro letto dal file. Se l'amministratore collegato non c'è più fra gli utenti della copia:
+  `sicurezza_sessione_chiudi()` e `login.php?motivo=ripristino&dopo=copia-sito`; dopo l'accesso `copia-sito.php?ultimo=1`.
+- Per le prove: `define('CMS_RIPRISTINO_PAUSA', <microsecondi>)` nel config rallenta ogni istruzione (serve per interrompere
+  un ripristino a metà e vedere la pulizia). Prova: `prove/prova-copia-ripristino-sicuro.js` (23.4).
 
 ## 20. Cron
 
@@ -3797,7 +3880,7 @@ stesse regole di sicurezza.
 | Dove | Errori a video | Log |
 |---|---|---|
 | sito, API, cron | mai | `logs/php-errori.log` |
-| pannello | sì, ma le deprecazioni solo nel log; l'uscita è bufferizzata, quindi un avviso non rompe i redirect | `logs/php-errori.log` |
+| pannello | no (dalla 2.25.1; prima sì, e il 4 novembre 2026 un sito vero mostrava a tutti un `Fatal error` con i percorsi del server): un'eccezione non gestita o un errore fatale diventa la pagina sobria di `includes/errori.php`; le deprecazioni solo nel log; l'uscita è bufferizzata, quindi un avviso non rompe i redirect | `logs/php-errori.log` |
 | installatore | mai | `logs/php-errori.log` |
 
 Altri log: `logs/cron-daily.log`, `logs/newsletter.log`, `logs/seo.log`. La dashboard avvisa se i cron non
@@ -3807,7 +3890,33 @@ Cosa finisce nel log oltre agli errori di PHP: un modulo che non si carica, un w
 o footer rotto, un tema guasto (`temi: <slug>: <errore>`), il database che non risponde prima del 503, un errore
 dell'installatore.
 
-Un `display_errors` acceso nella configurazione del server non tocca il sito, perché il CMS lo spegne da sé.
+Un `display_errors` acceso nella configurazione del server non tocca il sito né il pannello, perché il CMS lo spegne da sé.
+
+**Le eccezioni non gestite (dalla 2.25.1, `includes/errori.php`).** `errori_attiva('pannello')` (`admin/includes/auth.php:24`)
+ed `errori_attiva('sito')` (`includes/config.php:34`, per sito, API e cron) registrano `set_exception_handler`
+(`errori_eccezione()`, `:47`) e `register_shutdown_function` (`errori_chiusura()`, `:58`, con `error_get_last()` per gli
+errori fatali che non sono eccezioni). Tutto va in `logs/php-errori.log` (classe, messaggio, file:riga e traccia); a video
+(`errori_rispondi()`, `:75`): nel pannello la pagina "Qualcosa non ha funzionato" (500, 503 se è il database) con classe,
+codice SQLSTATE, messaggio e file:riga RELATIVI alla cartella del CMS (`errori_relativo()`, `errori_senza_percorsi()`: mai
+un percorso assoluto), JSON con lo stesso testo per le pagine `-api.php`; nel sito e nelle API il 503 pulito "Torno subito"
+(JSON per `api/`); da riga di comando una riga su STDERR. Il buffer del pannello si svuota ma resta, così le intestazioni
+(CSP) escono lo stesso. Con `define('CMS_DEBUG', true)` nel `config.local.php` tutto come prima della 2.25.1: errori a video
+nel pannello, nessun gestore.
+
+**La pagina di soccorso (dalla 2.25.1, `includes/soccorso.php`).** Prima di qualunque funzione che crei tabelle
+(`sicurezza_schema()`, `sito_schema_aggiorna()`), `auth.php:56` chiama `soccorso_controlla()` (`:49`): `soccorso_stato()`
+(`:28`) apre la connessione e fa due `SHOW TABLES LIKE` (`users` e `settings` del prefisso), niente altro. Tre casi:
+`connessione` (2002, 1045, 1049...: "controlla `includes/config.local.php`: nome del database X e utente Y", mai la
+password), `tabelle` (manca `users`: "il database X non ha le tabelle con il prefisso P"; se nel database c'è una coppia
+`settings` e `users` con un altro prefisso lo dice: forse il config indica il prefisso sbagliato), `settings` (manca solo
+`settings`). Risposta 503 con `Cache-Control: no-store` (`soccorso_rispondi()`, `:74`; JSON per le `-api.php`), stesso
+aspetto del login (`aspetti.css`), senza sessione e senza login; nessuna azione, nessun percorso assoluto. I passi: scaricare
+dalla cartella `aggiornamenti/copie/` la copia `prima-del-ripristino` più recente con il gestore dei file, estrarre
+`db.sql.gz`, importarlo con phpMyAdmin nel database, ricaricare, poi ripristinare la stessa copia dal pannello per i file.
+L'elenco delle copie (nome, data, etichetta, peso, sito d'origine dal manifest: `soccorso_copie()`, `:60`) e l'ultimo
+registro di ripristino si mostrano SOLO se esiste `aggiornamenti/soccorso.txt`, che il proprietario crea con il gestore dei
+file; alla prima pagina del pannello che funziona il file si cancella da solo. Il sito pubblico, che gli utenti non li legge,
+senza `users` risponde come sempre; senza `settings` risponde 503 "Torno subito" come prima (`sito/index.php:351`).
 
 ---
 
@@ -3925,6 +4034,7 @@ Istruzioni in `prove/LEGGIMI.md`. Le principali:
 | File | Cosa prova |
 |---|---|
 | `prova-install.js` | installazione da zero dal browser, in radice e in cartella, poi un giro da utente |
+| `prova-copia-ripristino-sicuro.js` | il ripristino sicuro della copia (19.9): quattro siti più MariaDB e MySQL 5.7, pagina di soccorso, ripristino interrotto |
 | `prova-temi.js` | il motore dei temi con i temi di collaudo (anche quelli rotti di proposito) |
 | `prova-pannello-temi.js` | la pagina Temi |
 | `prova-temi-partenza.js` | ogni tema di partenza: pagine, menu nell'header, contrasto del testo, nessun errore |
@@ -3978,6 +4088,9 @@ può stare dentro una pagina che risponde 200.
 | Lo stile non cambia dopo aver attivato un tema | lo Stile del sito vince sul tema | è voluto: il tema imposta lo Stile del sito all'attivazione; le modifiche successive allo stile restano |
 | 404 su `/favicon.ico` in un sito appena installato | non c'è ancora una favicon di partenza | scegliere l'icona in Stile del sito > Sito (il CMS la indica con `<link rel="icon">`); il file `/favicon.ico` nella radice, che alcuni browser cercano lo stesso, si carica a mano |
 | Una pagina del pannello risponde 200 ma non funziona | errore fatale dentro la pagina | guardare il log e provare nel browser |
+| Il pannello dice "Il database del sito è vuoto o incompleto" (o "non raggiunge il database") | mancano `users` o `settings` del prefisso (un ripristino o un'importazione andati a metà), oppure il `config.local.php` ha dati sbagliati | la pagina di soccorso (22): importare `db.sql.gz` della copia `prima-del-ripristino` con phpMyAdmin; con `aggiornamenti/soccorso.txt` elenca le copie |
+| "Qualcosa non ha funzionato" nel pannello, o "Torno subito" sul sito | un'eccezione non gestita (dalla 2.25.1 mai più a video con i percorsi) | il dettaglio è in `logs/php-errori.log`; `CMS_DEBUG` nel config per vederlo a video |
+| Il ripristino di una copia dice "non si è fatto, il sito è come prima" | il database ha rifiutato una CREATE o una INSERT della copia (collazione o motore sconosciuti, copia modificata, riga oltre `max_allowed_packet`) | leggere il motivo nel registro (19.9); niente è cambiato |
 
 ---
 
@@ -4087,6 +4200,10 @@ può stare dentro una pagina che risponde 200.
 | `kit_elenco()`, `kit_leggi($id)`, `kit_sezioni($blocchi, $mappa)`, `kit_immagini()`, `kit_mappa($sito, $descr)` | i kit di partenza |
 | `versione_controlla($forza)`, `versione_nuova()`, `versione_scarica_e_prepara()` | il controllo della versione e "Scarica e prepara" |
 | `copia_crea($etichetta)`, `copia_ripristina($file)`, `copia_elenco()`, `copia_leggi_manifest($zip)` | la copia del sito |
+| `copia_ripristina_db($gz, $prefisso, $suffissi, $sitoUrl, $manifest)`, `copia_blocco_prendi()`, `copia_pulisci_interrotto()`, `copia_nomi_appoggio($suffissi)` | il ripristino sicuro: appoggio, blocco, marcatore, nomi di lavoro (19.9) |
+| `copia_create_portabile($riga, $cambi)`, `copia_collazione_vicina($nome)`, `copia_charset_vicino($nome)`, `copia_sql_pezzi($sql)`, `copia_insert_letterale($riga)`, `copia_errore_parole($e, $tabella)` | collazioni per questo server, pezzi fuori dagli apici, INSERT solo letterali, errori in parole |
+| `copia_registro_scrivi($copia, $ok, $log)`, `copia_registri()`, `copia_registro_ultimo()` | il registro dei ripristini su file |
+| `errori_attiva($contesto)`, `errori_rispondi(...)`, `soccorso_stato()`, `soccorso_controlla()`, `soccorso_rispondi($stato)` | errori non gestiti e pagina di soccorso (22) |
 | `agg_dump_db($file, $prefisso)` | il database in un file; con il prefisso, solo le tabelle del sito |
 | `scaricabili_sha256($file)` | l'impronta di un file da scaricare, ricordata |
 

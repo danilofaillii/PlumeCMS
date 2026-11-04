@@ -65,15 +65,25 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
             session_write_close();
             ob_start();
-            $r = copia_ripristina($file, !empty($_POST['tieni'])); // 2.1: "tieni i file in più" 
+            $r = copia_ripristina($file, !empty($_POST['tieni'])); // 2.1: "tieni i file in più"
             $rumore = trim((string)ob_get_clean());
             @session_start();
             if ($rumore !== '') $r['log'][] = 'Avvisi di PHP durante il lavoro, non bloccanti: ' . mb_substr($rumore, 0, 1500);
-            $esito = ['ok' => $r['ok'], 'titolo' => ($r['ok'] ? 'Sito ripristinato dalla copia ' : 'Ripristino con errori dalla copia ') . $file, 'log' => $r['log'], 'scarto' => $r['scarto'] ?? null];
-            // Il database nuovo può avere altri utenti: se questo non c'è più, si rientra con quelli della copia.
+            // 2.25.1: tre esiti. Riuscito; non fatto (il database ha rifiutato la copia: niente è cambiato, fase "prima");
+            // database rimesso ma file no (fase "database"). Il registro è già su file (copia_registro_scrivi).
+            $fase = (string)($r['fase'] ?? 'fatto');
+            $titolo = $r['ok'] ? 'Sito ripristinato dalla copia ' . $file
+                : ($fase === 'prima' ? 'Ripristino con errori dalla copia ' . $file . ': non si è fatto, il sito è come prima' : 'Ripristino con errori dalla copia ' . $file . ': database rimesso, file no');
+            $esito = ['ok' => $r['ok'], 'titolo' => $titolo, 'log' => $r['log'], 'scarto' => $r['scarto'] ?? null, 'fase' => $fase];
+            // Il database nuovo può avere altri utenti: se questo non c'è più, si rientra con quelli della copia, e dopo
+            // l'accesso si torna qui, con il registro letto dal file (2.25.1).
             $st = db()->prepare('SELECT COUNT(*) FROM ' . tbl('users') . " WHERE id = ? AND username = ? AND role = 'admin'");
             $st->execute([(int)($_SESSION['admin_user_id'] ?? 0), (string)($_SESSION['admin_username'] ?? '')]);
-            if (!(int)$st->fetchColumn()) logout(); // al login si entra con gli utenti della copia
+            if (!(int)$st->fetchColumn()) {
+                sicurezza_sessione_chiudi('logout');
+                header('Location: login.php?motivo=ripristino&dopo=copia-sito');
+                exit;
+            }
         }
     } catch (Throwable $e) {
         flash('error', $e->getMessage());
@@ -84,6 +94,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 $copie = copia_elenco();
 $scarti = copia_scarto_elenco();
 $pronta = basename((string)($_GET['pronta'] ?? ''));
+// 2.25.1: l'ultimo registro di ripristino, dal file: si vede sempre, anche dopo un nuovo accesso (?ultimo=1 dal login).
+$ultimo = $esito ? null : copia_registro_ultimo();
+if (!empty($_GET['ultimo']) && $ultimo) flash('info', 'Sei rientrato con gli utenti della copia. Qui sotto il registro del ripristino di ' . date('d/m/Y H:i', $ultimo['data']) . '.');
 require_once __DIR__ . '/includes/admin-header.php';
 ?>
 <style>
@@ -128,6 +141,10 @@ require_once __DIR__ . '/includes/admin-header.php';
     <ul><?php foreach (array_slice($sf, 0, 200) as $f): ?><li><?= h($f) ?></li><?php endforeach; ?><?php if (count($sf) > 200): ?><li>... e altri <?= count($sf) - 200 ?></li><?php endif; ?></ul></div>
 <?php endif; ?>
 <pre class="cs-log"><?= h(implode("\n", $esito['log'])) ?></pre></div>
+<?php elseif ($ultimo): ?>
+<div class="cs-esito <?= $ultimo['ok'] ? 'ok' : 'ko' ?>" id="cs-ultimo"><strong>Ultimo ripristino: <?= h(date('d/m/Y H:i', $ultimo['data'])) ?>, dalla copia <?= h($ultimo['copia']) ?>, <?= $ultimo['ok'] ? 'riuscito' : 'con errori' ?></strong>
+<p class="cs-note" style="margin:.3rem 0 0">Il registro resta sul server (<code>aggiornamenti/copie/</code>), così lo rivedi anche se dopo il ripristino sei dovuto rientrare con altri utenti.</p>
+<pre class="cs-log"><?= h(implode("\n", $ultimo['righe'])) ?></pre></div>
 <?php endif; ?>
 
 <div class="cs-avviso" role="note"><span aria-hidden="true">&#9888;</span><div><b>Una copia contiene dati sensibili.</b>Dentro ci sono il database intero (utenti con le password cifrate, iscritti alla newsletter, messaggi dei form, impostazioni) e tutti i file caricati. Conservala in un posto sicuro e non mandarla per email. La password del database (il file <code>includes/config.local.php</code>) non è nella copia.</div></div>
@@ -221,6 +238,8 @@ require_once __DIR__ . '/includes/admin-header.php';
       if (f.querySelector('input[name=azione]').value !== 'crea' && !confirm('Ripristino il sito dalla copia? Database e file vengono sostituiti. Prima faccio una copia del sito di adesso.')) { e.preventDefault(); return; }
       document.getElementById('cs-lavoro-titolo').textContent = f.dataset.lavoro;
       lav.hidden = false;
+      // 2.25.1: un secondo clic non fa partire un secondo lavoro (il server comunque ne accetta uno alla volta).
+      setTimeout(function () { document.querySelectorAll('form[data-lavoro] button[type=submit]').forEach(function (b) { b.disabled = true; }); }, 0);
     });
   });
 })();

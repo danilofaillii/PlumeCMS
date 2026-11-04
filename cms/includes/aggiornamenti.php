@@ -362,8 +362,13 @@ function agg_sql_val($v): string {
  */
 function agg_colonne_generate(PDO $pdo, string $t): array {
     $pos = [];
-    foreach ($pdo->query('SHOW COLUMNS FROM `' . str_replace('`', '``', $t) . '`')->fetchAll(PDO::FETCH_ASSOC) as $i => $c)
-        if (stripos((string)($c['Extra'] ?? ''), 'GENERATED') !== false) $pos[$i] = true;
+    foreach ($pdo->query('SHOW COLUMNS FROM `' . str_replace('`', '``', $t) . '`')->fetchAll(PDO::FETCH_ASSOC) as $i => $c) {
+        // 2.25.1: solo le colonne davvero generate (VIRTUAL GENERATED, STORED GENERATED). Su MySQL 8 una colonna con
+        // DEFAULT CURRENT_TIMESTAMP ha Extra "DEFAULT_GENERATED": fino alla 2.25.0 veniva scritta DEFAULT e le copie
+        // perdevano created_at e updated_at di utenti, pagine, articoli (al ripristino prendevano l'ora del ripristino).
+        $extra = (string)($c['Extra'] ?? '');
+        if (stripos($extra, 'GENERATED') !== false && stripos($extra, 'DEFAULT_GENERATED') === false) $pos[$i] = true;
+    }
     return $pos;
 }
 
@@ -399,9 +404,10 @@ function agg_dump_db(string $gzPath, string $prefisso = ''): array {
         $buf = ''; $n = 0;
         while ($row = $st->fetch(PDO::FETCH_NUM)) {
             $vals = agg_riga_sql($row, $gen);
+            // 2.25.1: i blocchi si chiudono prima di superare 1 MB (max_allowed_packet del server di arrivo, 4 MB su MySQL 5.7).
+            if ($buf !== '' && strlen($buf) + strlen($vals) + 1 > 1048576) { gzwrite($gz, $buf . ";\n"); $buf = ''; }
             $buf .= ($buf === '' ? 'INSERT INTO `' . $t . '` VALUES ' : ',') . $vals;
             $n++; $righe++;
-            if (strlen($buf) > 400000) { gzwrite($gz, $buf . ";\n"); $buf = ''; }
         }
         if ($buf !== '') gzwrite($gz, $buf . ";\n");
         $st->closeCursor();
@@ -413,31 +419,24 @@ function agg_dump_db(string $gzPath, string $prefisso = ''): array {
 }
 
 /**
- * Riesegue un dump riga per riga. Un errore su una riga non ferma il
- * ripristino: le righe fallite vengono raccolte e riportate.
- * Ritorna ['eseguite' => int, 'errori' => string[]].
+ * Rimette il database da un dump (snapshot, ripristino automatico di un pacchetto fallito).
+ * Fino alla 2.25.0 rieseguiva il dump riga per riga (DROP, poi CREATE): un errore su una riga non fermava il ripristino, e una
+ * CREATE fallita lasciava la tabella cancellata. Dalla 2.25.1 passa dallo stesso motore della Copia del sito
+ * (copia_ripristina_db(), includes/copia-sito.php): tabelle di appoggio, poi una sola RENAME TABLE; con un errore niente cambia.
+ * Le tabelle di un'altra installazione nello stesso database (prefisso più lungo con settings e users) e le viste del dump
+ * restano fuori; le viste si rifanno dopo lo scambio.
+ * Ritorna ['ok', 'eseguite' => int, 'errori' => string[], 'righe' => righe per il registro].
  */
 function agg_restore_db(string $gzPath): array {
-    $pdo = db();
-    agg_sql_mode();
-    $gz = gzopen($gzPath, 'rb');
-    if (!$gz) throw new RuntimeException('Snapshot del database illeggibile: ' . $gzPath);
-    $n = 0; $errori = [];
-    $pdo->exec('SET FOREIGN_KEY_CHECKS=0');
-    while (($line = gzgets($gz)) !== false) {
-        $line = rtrim($line, "\r\n");
-        if ($line === '') continue;
-        if (substr($line, -1) === ';') $line = substr($line, 0, -1);
-        try {
-            $pdo->exec($line);
-            $n++;
-        } catch (Throwable $e) {
-            if (count($errori) < 30) $errori[] = substr($line, 0, 80) . ' ... : ' . $e->getMessage();
-        }
+    if (!is_file($gzPath)) throw new RuntimeException('Snapshot del database illeggibile: ' . $gzPath);
+    require_once __DIR__ . '/copia-sito.php';
+    if (!copia_blocco_prendi()) throw new RuntimeException('Un altro ripristino è in corso su questo sito: aspetta che finisca e riprova.');
+    try {
+        $r = copia_ripristina_db($gzPath, DB_PREFIX, null, null, []);
+    } finally {
+        copia_blocco_lascia();
     }
-    gzclose($gz);
-    $pdo->exec('SET FOREIGN_KEY_CHECKS=1');
-    return ['eseguite' => $n, 'errori' => $errori];
+    return ['ok' => $r['ok'], 'eseguite' => $r['eseguite'], 'errori' => $r['ok'] ? [] : array_merge([$r['motivo']], $r['errori']), 'righe' => $r['righe']];
 }
 
 /**
@@ -510,9 +509,11 @@ function agg_ripristina(string $id): array {
     $dir = agg_dir('snapshot') . '/' . basename($id);
     $log = [];
     $r = agg_restore_db($dir . '/db.sql.gz');
-    $log[] = "Database ripristinato: {$r['eseguite']} istruzioni eseguite, {$m['db']['tabelle']} tabelle.";
+    foreach ($r['righe'] as $x) $log[] = $x;
+    // 2.25.1: con un errore il database non cambia (tabelle di appoggio e scambio): si dice e si lascia com'è.
+    $log[] = $r['ok'] ? "Database ripristinato: {$r['eseguite']} istruzioni eseguite, {$m['db']['tabelle']} tabelle." : 'Database NON ripristinato: è rimasto com\'era prima di questo ripristino.';
     foreach ($r['errori'] as $e) $log[] = 'ERRORE nel ripristino: ' . $e;
-    if ($r['errori']) $log[] = count($r['errori']) . ' istruzioni del ripristino sono fallite: mandami questo log.';
+    if ($r['errori']) $log[] = 'Il database non si è potuto rimettere: mandami questo log.';
     foreach ($m['files'] as $f) {
         $abs = agg_dest_path($f['dest']);
         if ($f['esisteva']) {

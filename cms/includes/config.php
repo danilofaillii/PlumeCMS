@@ -29,6 +29,9 @@ if (!cms_installato() && !defined('CMS_INSTALLER')) {
     header('Location: ' . cms_base() . '/install/', true, 302);
     exit;
 }
+// 2.25.1: un'eccezione non gestita nel sito, nelle API o nei cron diventa il 503 pulito "Torno subito" (nel pannello la pagina
+// sobria di auth.php), sempre nel log: mai una traccia con i percorsi del server a chi visita. CMS_DEBUG nel config la spegne.
+if (PUBLISHER_ERRORI === 'log') { require_once __DIR__ . '/errori.php'; errori_attiva('sito'); }
 
 // Ora italiana per tutto il publisher: le date e ore di uscita degli articoli sono italiane.
 date_default_timezone_set(defined('CMS_FUSO') && in_array(CMS_FUSO, timezone_identifiers_list(), true) ? CMS_FUSO : 'Europe/Rome');
