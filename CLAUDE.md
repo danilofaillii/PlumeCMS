@@ -108,7 +108,7 @@ Sono gli unici in `cms/docs/`, nello zip, nel sito di plumeCMS e nella pagina Do
 - **Pacchetto di aggiornamento** per un'installazione esistente:
   `python3 tools/cms-pacchetto.py --aggiornamento`. Si carica dal pannello,
   Impostazioni, Aggiornamenti.
-- **Versione**: `cms/VERSIONE` (oggi 2.25.0; sempre tre numeri: "beta" va nel CHANGELOG, mai nel nome dello zip, se no la serie "ultima" del Download non lo riconosce) e una voce in `cms/CHANGELOG.md` a ogni
+- **Versione**: `cms/VERSIONE` (oggi 2.25.1; sempre tre numeri: "beta" va nel CHANGELOG, mai nel nome dello zip, se no la serie "ultima" del Download non lo riconosce) e una voce in `cms/CHANGELOG.md` a ogni
   zip con contenuto diverso. Mai cambiare il contenuto di una versione già data.
 - **Prove** prima di dire finito:
   - `php -n -d short_open_tag=1 -l` su ogni file PHP toccato, `node --check` sui js;
@@ -118,7 +118,8 @@ Sono gli unici in `cms/docs/`, nello zip, nel sito di plumeCMS e nella pagina Do
   - le pagine si provano nel browser come un utente (Playwright), non con un `curl` che risponde 200.
 - **PHP come sui server veri**: Hostcare (il primo cliente) ha PHP 8.4.27, MySQL 8.0.46
   in modalità stretta, Apache 2.4 con cPanel e ModSecurity. In locale si prova con
-  PHP 8.4.27 in Docker: `dockerd`, immagine `php:8.4-cli` con `pdo_mysql`.
+  PHP 8.4.27 in Docker: `dockerd`, immagine `php:8.4-cli` con `pdo_mysql` (l'immagine di serie NON lo ha: si compila con
+  `docker-php-ext-install pdo_mysql`, fatto il 5 novembre 2026 dal revisore della 2.25.1).
 - **Regole di interfaccia** (regola globale di Danilo, 1 novembre 2026): prima di toccare pannello, editor, installatore, addon o sito
   si legge `docs-sviluppo/regole-interfaccia.md` (copia in `second-brain/_comune/regole-interfaccia.md`, valida per tutti i progetti;
   se cambia una, si aggiorna l'altra) e si chiude con la sua checklist. Le prove sono `prove/prova-ux-pannello.js` e `prove/prova-ux-editor.js`.
@@ -165,6 +166,28 @@ Le decisioni complete, con data e perché, stanno nel second brain, `plumecms/de
 - **Nome: plumeCMS** (26 ottobre 2026).
 
 ## Stato al 31 ottobre 2026
+
+Fatto: plumeCMS 2.25.1 (4-5 novembre): **ripristino sicuro della copia** (segnalazione di Danilo del 4 novembre: la copia di un sito
+rimessa su un altro dominio e un altro database ha lasciato il sito senza tabelle, "Table ... users doesn't exist" a tutti, con i percorsi del
+server a schermo; lui lo ha rimesso in piedi da solo). Causa dimostrata: `copia_ripristina_db()` faceva DROP e poi CREATE tabella per
+tabella, e una copia scritta da MySQL 8 porta `COLLATE=utf8mb4_0900_ai_ci` che MariaDB 10.6 e MySQL 5.7 rifiutano (1273): tabella cancellata e
+non ricreata, `save_setting('sito_url')` in eccezione, pannello morto perché `auth.php` accendeva `display_errors`. Ora (catena di agenti
+`Workflow`: causa, verifica, correzione, tre giri di revisione, worktree `/home/user/wt-ripristino`, ramo `ripristino-sicuro`, riletto e
+riprovato da me): tabelle di appoggio `rip<6hex>_<prefisso><tabella>`, parcheggio `vec<6hex>_`, **una sola RENAME TABLE** a più coppie,
+`GET_LOCK plume_ripristino_<md5(DB_NAME|DB_PREFIX)>`, marcatore `aggiornamenti/copie/.ripristino-in-corso.json` a coppie [marchio, tabella] con il
+prefisso, collazioni e set di caratteri sostituiti con i più vicini (`copia_collazione_vicina()`), INSERT solo letterali, CREATE senza
+vincoli o rimandi (REFERENCES, UNION=, TABLESPACE...), **niente istruzioni impilate** (`agg_split_sql()` con apici semplici, doppi e inversi;
+`db()` e l'installatore con `MULTI_STATEMENTS` spento: il revisore del giro 2 aveva trovato che una copia confezionata eseguiva un secondo
+comando), registro su file `aggiornamenti/copie/ripristino-<data>-<copia>.log` uno per tentativo, `includes/soccorso.php` (pagina 503 del
+pannello senza users o settings; i dati del database solo con `aggiornamenti/soccorso.txt` creato dal proprietario, valido 24 ore, mai
+l'utente), `includes/errori.php` (eccezioni non gestite: pagina sobria nel pannello con file:riga relativi, 503 "Torno subito" nel sito;
+`display_errors` spento anche nel pannello; `CMS_DEBUG` nel config rimette tutto a video), snapshot degli Aggiornamenti sullo stesso motore e
+**solo con le tabelle del prefisso**, `agg_colonne_generate()` corretta (`DEFAULT_GENERATED` non è generata: created_at e updated_at si
+perdevano nelle copie fatte su MySQL 8), `COPIA_INSERT_MAX` a 1 MB meno 1 KB. Manuale d'uso capitolo 29 (schermata 27-soccorso), tecnico
+6.1, 19.4, 19.7-19.9, 22-25. Prove: batteria in corso alle 8:55 del 5 novembre (gli esiti definitivi nel commit dopo).
+Il contenitore della sessione si è riavviato una volta (23:22) e il limite settimanale ha fermato la catena alle 3 (ripresa alle 6:30 col
+"Riprova" di Danilo). Docker: `cmsdb` (MySQL 8.0.46, 3308), `mariadbprova` (MariaDB 10.6, 3309), `mysql57prova` (MySQL 5.7, 3310).
+**Non provato**: hosting vero (Aruba, cPanel), phpMyAdmin vero, Apache con il CMS intero, CMS_DEBUG su un server vero.
 
 Fatto: plumeCMS 2.25.0 (4 novembre): il widget **Scorri di lato** (richiesta di Danilo: "come il sito Apple", pagine che scorrono di
 lato quando si arriva al widget, poi di nuovo in verticale; cinque proposte `https://claude.ai/artifact/2EErn1pJPESzSKTJm9EQZd`, "mi piacciono
@@ -715,6 +738,11 @@ Errori veri, già pagati. Non ripeterli.
 | Una variabile con un nome comune in un file incluso dalle pagine (`admin-header.php`: `$sa`, `$v`, `$nome`) | sovrascrive quella della pagina che lo include: il service account di Google salvato non compariva in SEO (fino alla 2.3.1). Nei file inclusi, nomi con prefisso (`$_menu...`) e `unset` alla fine. E una prova che cerca un testo deve guardare nel riquadro giusto: il messaggio verde conteneva la stessa email e la prova passava lo stesso |
 | Una funzione nuova in un file usata da un altro file nella stessa versione | subito dopo l'aggiornamento opcache (revalidate_freq 2 s, su alcuni hosting mai) può dare il file vecchio insieme al nuovo: "Call to undefined function", home in 500 (2.5.0, trovato dalla prova del pacchetto unico una volta su due). Dalla 2.5.0 il motore chiama `opcache_invalidate` sui file scritti; ma l'aggiornamento lo applica il motore vecchio, quindi chi chiama una funzione nuova di un altro file mette una copia di riserva con `function_exists`. E `php -S` usa opcache (`opcache.enable`, non `enable_cli`) |
 | Uno zip di tema con la cartella che ha un nome diverso dallo `slug` di `tema.json` | il pannello installa nella cartella dello zip (`temi_zip_leggi()`): le pagine e le viste che chiamano `/temi/<slug>/...` danno 404. Su simonescarsella.it (2 novembre 2026, tema `scarsellaproject` installato in `temi/scarsella/`) niente foto e niente popup; sistemato copiando la cartella in cPanel. Proposta a Danilo per la 2.19.0: usare lo slug del tema o avvisare, e servire i file del tema attivo dalla cartella vecchia |
+| `DROP TABLE` e poi `CREATE TABLE` tabella per tabella in un ripristino | se la CREATE fallisce (una collazione che il server non conosce: `utf8mb4_0900_ai_ci` di MySQL 8 su MariaDB o MySQL 5.7) la tabella resta cancellata e il sito muore (arketypos.it, 4 novembre 2026). Si crea in tabelle di appoggio e si scambia con una RENAME sola, dalla 2.25.1 |
+| `display_errors` acceso nel pannello | un errore fatale mostra a chiunque i percorsi del server e il nome delle tabelle. Dalla 2.25.1 spento ovunque: `includes/errori.php` fa la pagina sobria, `CMS_DEBUG` nel config rimette tutto a video |
+| Uno spezzatore di SQL che conosce solo gli apici semplici (`agg_split_sql()` fino alla 2.25.0) | ``CREATE TABLE `x` (`c'` int); DROP TABLE `y` `` passa come una istruzione sola e PDO, con le istruzioni impilate accese, esegue anche la seconda. Tre regioni fra virgolette (', ", `) e `MULTI_STATEMENTS` spento alla creazione della connessione |
+| `SHOW COLUMNS` con `Extra` che contiene `GENERATED` | `DEFAULT_GENERATED` (created_at e updated_at di MySQL 8) non è una colonna generata: `agg_colonne_generate()` la scriveva come `DEFAULT` nei dump e le date si perdevano (fino alla 2.25.0). Si cerca `VIRTUAL GENERATED` o `STORED GENERATED` |
+| Il contenitore della sessione che si riavvia o il limite settimanale che ferma gli agenti | Docker spento (`dockerd` da riaccendere, `docker start cmsdb mariadbprova mysql57prova`), catena `Workflow` da riprendere con `resumeFromRunId`; i server php delle prove spariscono (le prove vanno rilanciate) |
 | Fidarsi del resoconto di un agente | è successo che un agente dichiarasse lavoro mai scritto su disco. Si controllano i file veri e si rifanno le prove |
 
 ## Tono con l'utente
