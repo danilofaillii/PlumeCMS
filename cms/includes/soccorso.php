@@ -10,10 +10,13 @@
  *   - mancano le tabelle del prefisso (users, e di solito tutte le altre); se nel database c'è un'altra installazione
  *     (settings e users con un altro prefisso) lo dice: forse il config indica il prefisso sbagliato;
  *   - manca solo settings (users c'è).
- * Niente percorsi assoluti del server, mai la password. L'elenco delle copie in aggiornamenti/copie/ (nome, data, etichetta,
- * peso, sito d'origine dal manifest) si mostra SOLO se esiste il file aggiornamenti/soccorso.txt, che il proprietario crea con
- * il gestore dei file dell'hosting (la pagina spiega come); nessuna azione dalla pagina (niente download, niente ripristino).
- * Il file soccorso.txt si cancella da solo alla prima pagina del pannello che funziona.
+ * Niente percorsi assoluti del server, mai la password. La pagina esce anche a chi non è entrato nel pannello (il login non
+ * c'è): il nome del database, l'utente, il prefisso delle tabelle, la risposta tecnica del server (che dice utente e host),
+ * gli altri prefissi nel database, l'elenco delle copie in aggiornamenti/copie/ (nome, data, etichetta, peso, sito d'origine
+ * dal manifest) e l'ultimo registro di ripristino si mostrano SOLO se esiste il file aggiornamenti/soccorso.txt, la "porta"
+ * che il proprietario crea con il gestore dei file dell'hosting (la pagina spiega come); a chiunque altro solo le istruzioni,
+ * con il rimando al config. Nessuna azione dalla pagina (niente download, niente ripristino). Il file soccorso.txt si
+ * cancella da solo alla prima pagina del pannello che funziona.
  */
 
 /** Il file che apre l'elenco delle copie nella pagina di soccorso. */
@@ -61,7 +64,7 @@ function soccorso_copie(): array {
     $out = [];
     try {
         require_once __DIR__ . '/copia-sito.php';
-        foreach (copia_elenco() as $c) {
+        foreach (copia_elenco(false) as $c) { // senza il calcolo della firma: la pagina può uscire a chiunque, tante volte
             $m = $c['manifest'];
             $out[] = ['file' => $c['file'], 'data' => $c['data'], 'peso' => $c['peso'], 'etichetta' => is_array($m) ? (string)($m['etichetta'] ?? '') : '',
                 'sito' => is_array($m) ? (string)($m['sito'] ?? '') : '', 'tabelle' => is_array($m) ? (int)($m['tabelle'] ?? 0) : 0, 'valida' => is_array($m)];
@@ -83,10 +86,11 @@ function soccorso_rispondi(array $s): void {
     }
     if (!headers_sent()) header('Content-Type: text/html; charset=UTF-8');
     $db = (string)(defined('DB_NAME') ? DB_NAME : ''); $utente = (string)(defined('DB_USER') ? DB_USER : ''); $pref = DB_PREFIX;
-    $elenco = is_file(soccorso_file_elenco());
-    $copie = $elenco ? soccorso_copie() : [];
+    // La porta del proprietario (aggiornamenti/soccorso.txt): solo con quella escono i dati del database e le copie.
+    $porta = is_file(soccorso_file_elenco());
+    $copie = $porta ? soccorso_copie() : [];
     $registro = null;
-    if ($elenco) { try { require_once __DIR__ . '/copia-sito.php'; $registro = copia_registro_ultimo(); } catch (Throwable $e) {} }
+    if ($porta) { try { require_once __DIR__ . '/copia-sito.php'; $registro = copia_registro_ultimo(); } catch (Throwable $e) {} }
     $css = function_exists('cms_base') ? cms_base() . '/admin/assets/css/aspetti.css' : 'assets/css/aspetti.css';
     ?>
 <!DOCTYPE html>
@@ -126,39 +130,47 @@ function soccorso_rispondi(array $s): void {
 <main class="box" id="soccorso" data-caso="<?= $h($s['caso']) ?>">
   <h1><?= $h($titolo) ?></h1>
   <?php if ($s['caso'] === 'connessione'): ?>
-  <div class="avviso" role="alert">Il sito non riesce a collegarsi al database <b><?= $h($db) ?></b> con l'utente <b><?= $h($utente) ?></b> (sono quelli scritti nel file <code>includes/config.local.php</code>; la password non si mostra).</div>
+  <div class="avviso" role="alert"><?php if ($porta): ?>Il sito non riesce a collegarsi al database <b><?= $h($db) ?></b> con l'utente <b><?= $h($utente) ?></b> (sono quelli scritti nel file <code>includes/config.local.php</code>; la password non si mostra).<?php else: ?>Il sito non riesce a collegarsi al database con i dati scritti nel file <code>includes/config.local.php</code> (nome del database, utente e password).<?php endif; ?></div>
   <p>Finché il database non risponde, né il sito né il pannello possono aprirsi. Nessun dato è stato toccato.</p>
   <h2>Cosa fare</h2>
   <ol>
-    <li>Nel pannello del tuo hosting (la voce dei database MySQL) controlla che il database <b><?= $h($db) ?></b> esista e che l'utente <b><?= $h($utente) ?></b> ne abbia l'accesso.</li>
+    <li>Nel pannello del tuo hosting (la voce dei database MySQL) controlla che il database <?= $porta ? '<b>' . $h($db) . '</b>' : 'scritto nel file (riga <code>DB_NAME</code>)' ?> esista e che l'utente <?= $porta ? '<b>' . $h($utente) . '</b>' : 'scritto nel file (riga <code>DB_USER</code>)' ?> ne abbia l'accesso.</li>
     <li>Se hai spostato il sito o cambiato la password del database, con il gestore dei file dell'hosting apri <code>includes/config.local.php</code> e riscrivi le righe <code>DB_HOST</code>, <code>DB_NAME</code>, <code>DB_USER</code> e <code>DB_PASS</code> con i dati giusti.</li>
     <li>Se il database è fermo per una manutenzione dell'hosting, aspetta qualche minuto e ricarica questa pagina.</li>
   </ol>
+  <?php if ($porta): ?>
   <p class="tec">(Risposta del server: codice <?= (int)$s['codice'] ?>, <?= $h(mb_substr((string)$s['messaggio'], 0, 200)) ?>)</p>
   <?php else: ?>
+  <p class="tec">Il nome del database, l'utente e la risposta tecnica del server si mostrano qui solo con il file <code>soccorso.txt</code> (vedi sotto): questa pagina la vede anche chi non è entrato nel pannello.</p>
+  <?php endif; ?>
+  <?php else: ?>
   <div class="avviso" role="alert">
-    <?php if ($s['caso'] === 'tabelle'): ?>
+    <?php if ($s['caso'] === 'tabelle' && $porta): ?>
       Il database <b><?= $h($db) ?></b> non ha le tabelle del sito con il prefisso <b><?= $h($pref) ?></b>: manca la tabella degli utenti (<code><?= $h($pref) ?>users</code>)<?= empty($s['settings']) ? ' e quella delle impostazioni (<code>' . $h($pref) . 'settings</code>)' : '' ?>. Senza utenti nessuno può entrare nel pannello.
-    <?php else: ?>
+    <?php elseif ($s['caso'] === 'tabelle'): ?>
+      Nel database del sito manca la tabella degli utenti<?= empty($s['settings']) ? ' e quella delle impostazioni' : '' ?>. Senza utenti nessuno può entrare nel pannello.
+    <?php elseif ($porta): ?>
       Nel database <b><?= $h($db) ?></b> manca la tabella delle impostazioni del sito (<code><?= $h($pref) ?>settings</code>): il pannello non può partire.
+    <?php else: ?>
+      Nel database del sito manca la tabella delle impostazioni: il pannello non può partire.
     <?php endif; ?>
   </div>
-  <?php if (!empty($s['altri'])): ?>
+  <?php if ($porta && !empty($s['altri'])): ?>
   <div class="info" role="status">Nel database ci sono tabelle di <?= $h(CMS_NOME) ?> con un altro prefisso: <b><?= $h(implode(', ', array_map(fn($q) => $q === '' ? '(nessun prefisso)' : $q, $s['altri']))) ?></b>. Forse il file <code>includes/config.local.php</code> dice il prefisso sbagliato: controlla la riga <code>define('CMS_PREFISSO', ...)</code>. Se è così, basta correggerla.</div>
   <?php endif; ?>
   <p>Succede quando un ripristino o un'importazione del database si è interrotto a metà, o quando il database è stato svuotato. Il sito pubblico intanto risponde "Torno subito". Il rimedio è rimettere il database da una copia: ci vogliono pochi minuti.</p>
   <h2>Rimettere il sito da una copia</h2>
   <ol id="soccorso-passi">
-    <li>Con il gestore dei file del tuo hosting (o un programma FTP) apri la cartella del sito, poi <code>aggiornamenti/copie/</code>. Scarica la copia più recente che ha <b>prima-del-ripristino</b> nel nome: è quella che il pannello fa da solo prima di ogni ripristino, con il sito com'era. Se non c'è, prendi la copia più recente che hai (anche sul tuo computer).</li>
+    <li>Con il gestore dei file del tuo hosting (o un programma FTP) apri la cartella del sito, poi <code>aggiornamenti/copie/</code>. Scarica la copia più recente che ha <b>prima-del-ripristino</b> nel nome: è quella che il pannello fa da solo prima di ogni ripristino, con il sito com'era. Se non c'è, prendi la copia più recente che hai (anche sul tuo computer), purché fatta su questo hosting: una copia fatta su un altro hosting può essere rifiutata da phpMyAdmin (il suo database è diverso e non conosce le collazioni di questo); quella si ripristina dal pannello, <b>Impostazioni &gt; Copia del sito</b>, che la adatta da solo, dopo che il pannello è ripartito con una copia di questo server.</li>
     <li>Sul computer apri lo zip ed estrai il file <code>db.sql.gz</code>.</li>
-    <li>In phpMyAdmin (dal pannello dell'hosting) scegli a sinistra il database <b><?= $h($db) ?></b>, apri la scheda <b>Importa</b>, scegli il file <code>db.sql.gz</code> e premi <b>Esegui</b>. Il file ha già dentro le istruzioni per sostituire le tabelle; phpMyAdmin legge i file <code>.gz</code> da solo (se lo rifiuta, decomprimi prima il file e carica <code>db.sql</code>).</li>
+    <li>In phpMyAdmin (dal pannello dell'hosting) scegli a sinistra il database <?= $porta ? '<b>' . $h($db) . '</b>' : 'del sito (il nome è nella riga <code>DB_NAME</code> del file <code>includes/config.local.php</code>; con il file <code>soccorso.txt</code> lo vedi anche qui)' ?>, apri la scheda <b>Importa</b>, scegli il file <code>db.sql.gz</code> e premi <b>Esegui</b>. Il file ha già dentro le istruzioni per sostituire le tabelle; phpMyAdmin legge i file <code>.gz</code> da solo (se lo rifiuta, decomprimi prima il file e carica <code>db.sql</code>).</li>
     <li>Torna qui e ricarica la pagina: deve comparire l'accesso al pannello, con gli utenti di quella copia.</li>
     <li>Se la copia aveva anche immagini, temi o moduli diversi, dal pannello (<b>Impostazioni &gt; Copia del sito</b>) ripristina la stessa copia: rimette anche i file.</li>
   </ol>
   <?php endif; ?>
   <h2>Le copie sul server</h2>
-  <?php if (!$elenco): ?>
-  <p>Per vedere qui l'elenco delle copie che stanno sul server (nome, data, peso, da quale sito vengono), crea con il gestore dei file dell'hosting un file vuoto chiamato <code>soccorso.txt</code> nella cartella <code>aggiornamenti/</code> del sito (quella con dentro <code>copie/</code>) e ricarica questa pagina. Il file si cancella da solo quando il pannello riparte. Da questa pagina le copie non si scaricano e non si ripristinano: si prendono con il gestore dei file.</p>
+  <?php if (!$porta): ?>
+  <p>Per vedere qui il nome del database, l'utente e il prefisso delle tabelle del sito, l'elenco delle copie che stanno sul server (nome, data, peso, da quale sito vengono) e l'ultimo registro di ripristino, crea con il gestore dei file dell'hosting un file vuoto chiamato <code>soccorso.txt</code> nella cartella <code>aggiornamenti/</code> del sito (quella con dentro <code>copie/</code>) e ricarica questa pagina. Il file si cancella da solo quando il pannello riparte; finché c'è, quei dati li vede chiunque apra questa pagina: se il sito resta fermo a lungo, toglilo tu. Da questa pagina le copie non si scaricano e non si ripristinano: si prendono con il gestore dei file.</p>
   <?php elseif (!$copie): ?>
   <p>Nella cartella <code>aggiornamenti/copie/</code> non c'è nessuna copia. Usa una copia salvata sul tuo computer.</p>
   <?php else: ?>

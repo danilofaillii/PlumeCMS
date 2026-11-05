@@ -510,10 +510,15 @@ function agg_ripristina(string $id): array {
     $log = [];
     $r = agg_restore_db($dir . '/db.sql.gz');
     foreach ($r['righe'] as $x) $log[] = $x;
-    // 2.25.1: con un errore il database non cambia (tabelle di appoggio e scambio): si dice e si lascia com'è.
+    // 2.25.1: con un errore il database non cambia (tabelle di appoggio e scambio): si dice e si lascia com'è, e non si toccano
+    // nemmeno i file dello snapshot (file vecchi con un database nuovo sarebbero un sito a metà).
     $log[] = $r['ok'] ? "Database ripristinato: {$r['eseguite']} istruzioni eseguite, {$m['db']['tabelle']} tabelle." : 'Database NON ripristinato: è rimasto com\'era prima di questo ripristino.';
     foreach ($r['errori'] as $e) $log[] = 'ERRORE nel ripristino: ' . $e;
-    if ($r['errori']) $log[] = 'Il database non si è potuto rimettere: mandami questo log.';
+    if (!$r['ok']) {
+        $log[] = 'Il database non si è potuto rimettere: mandami questo log.';
+        if ($m['files']) $log[] = 'File dello snapshot non toccati (' . count($m['files']) . '): si rimettono solo insieme al database.';
+        return $log;
+    }
     foreach ($m['files'] as $f) {
         $abs = agg_dest_path($f['dest']);
         if ($f['esisteva']) {
@@ -626,6 +631,12 @@ function agg_applica(string $id): array {
     @ignore_user_abort(true);
     $stato = agg_leggi_stato($id);
     if (!$stato) return ['ok' => false, 'riassunto' => 'pacchetto non trovato', 'log' => []];
+    // 2.25.1: il motore del ripristino si carica ADESSO, prima che il pacchetto riscriva i file: se qualcosa va male, il
+    // ripristino automatico (agg_restore_db) usa il copia-sito.php di questa versione, la stessa di questo file, non quello
+    // appena scritto dal pacchetto. E un ripristino da Copia del sito in corso non si incrocia con un aggiornamento: lo stesso
+    // blocco per tutto il lavoro (copia_blocco_prendi(), rientrante per il ripristino dello snapshot).
+    require_once __DIR__ . '/copia-sito.php';
+    if (!copia_blocco_prendi()) return ['ok' => false, 'riassunto' => 'un ripristino da Copia del sito è in corso su questo sito: aspetta che finisca e riprova (il pacchetto resta in attesa)', 'log' => ['Non applicato: un ripristino da Copia del sito è in corso su questo sito. Niente è stato toccato: aspetta che finisca e riprova.']];
     $zipPath = agg_dir('pacchetti') . '/' . basename($id) . '.zip';
     $log = [];
     $t0 = microtime(true);
@@ -764,6 +775,8 @@ function agg_applica(string $id): array {
         agg_salva_stato($stato);
         agg_progresso($id, $totale, $totale, 'Non applicato: ' . $e->getMessage(), true, false);
         return ['ok' => false, 'riassunto' => $e->getMessage(), 'log' => $log];
+    } finally {
+        copia_blocco_lascia();
     }
 }
 

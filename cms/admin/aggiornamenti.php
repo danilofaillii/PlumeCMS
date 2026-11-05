@@ -65,18 +65,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $id = $_POST['id'] ?? '';
             $p = agg_leggi_stato($id);
             if (!$p) throw new RuntimeException('Pacchetto non trovato.');
-            // Il lavoro gira con la sessione chiusa (serve alla barra) e con
-            // l'output in un buffer: un avviso di PHP che arrivasse al browser
-            // manderebbe le intestazioni e romperebbe la sessione qui sotto.
+            // Il lavoro gira con la sessione chiusa (serve alla barra) e con l'output in un buffer: qualcosa stampato durante
+            // il lavoro (un echo di un modulo; dalla 2.25.1 gli avvisi di PHP vanno solo nel log) manderebbe le intestazioni
+            // e romperebbe la sessione qui sotto.
             session_write_close();
             ob_start();
             $res = agg_applica($id);
             $rumore = trim((string)ob_get_clean());
             if (session_status() === PHP_SESSION_NONE) @session_start();
-            if ($rumore !== '') $res['log'][] = 'Avvisi di PHP durante il lavoro, non bloccanti: ' . mb_substr($rumore, 0, 1500);
+            if ($rumore !== '') $res['log'][] = 'Testo stampato durante il lavoro, non bloccante: ' . mb_substr($rumore, 0, 1500);
             $esito = ['ok' => $res['ok'], 'titolo' => ($res['ok'] ? 'Aggiornamento applicato: ' : 'Aggiornamento fallito: ') . $p['nome'], 'log' => $res['log']];
+            // 2.25.1: "riportato allo stato precedente" solo se il ripristino automatico lo dice; altrimenti il registro spiega.
+            $tornato = (bool)array_filter($res['log'], fn($r) => str_contains($r, 'tornato come prima'));
             if ($res['ok']) flash('success', 'Aggiornamento "' . $p['nome'] . '" applicato. ' . $res['riassunto'] . '.');
-            else flash('error', 'Aggiornamento "' . $p['nome'] . '" fallito: ' . $res['riassunto'] . '. Il sito è stato riportato allo stato precedente.');
+            else flash('error', 'Aggiornamento "' . $p['nome'] . '" fallito: ' . $res['riassunto'] . '. ' . ($tornato ? 'Il sito è stato riportato allo stato precedente.' : 'Il registro qui sotto dice com\'è rimasto il sito.'));
         } elseif ($action === 'elimina') {
             agg_elimina_pacchetto($_POST['id'] ?? '');
             flash('success', 'Pacchetto eliminato.');
@@ -94,11 +96,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $log = agg_ripristina($id);
             $rumore = trim((string)ob_get_clean());
             if (session_status() === PHP_SESSION_NONE) @session_start();
-            if ($rumore !== '') $log[] = 'Avvisi di PHP durante il ripristino, non bloccanti: ' . mb_substr($rumore, 0, 1500);
-            // 2.25.1: con un errore nel database niente è cambiato (motore della Copia del sito): si dice come errore.
+            if ($rumore !== '') $log[] = 'Testo stampato durante il ripristino, non bloccante: ' . mb_substr($rumore, 0, 1500);
+            // 2.25.1: con un errore nel database niente è cambiato (motore della Copia del sito), nemmeno i file: si dice come errore.
             $okRip = !array_filter($log, fn($r) => str_starts_with($r, 'ERRORE') || str_starts_with($r, 'Database NON'));
             $esito = ['ok' => $okRip, 'titolo' => ($okRip ? 'Ripristino dallo snapshot ' : 'Ripristino NON fatto dallo snapshot ') . $id, 'log' => $log];
-            flash($okRip ? 'success' : 'error', $okRip ? 'Snapshot ' . $id . ' ripristinato. Controlla il sito.' : 'Lo snapshot ' . $id . ' non si è potuto ripristinare: il database è rimasto com\'era. Il registro qui sotto dice perché.');
+            flash($okRip ? 'success' : 'error', $okRip ? 'Snapshot ' . $id . ' ripristinato. Controlla il sito.' : 'Lo snapshot ' . $id . ' non si è potuto ripristinare: database e file sono rimasti com\'erano. Il registro qui sotto dice perché.');
         } elseif ($action === 'elimina_snapshot') {
             agg_elimina_snapshot($_POST['id'] ?? '');
             flash('success', 'Snapshot eliminato.');

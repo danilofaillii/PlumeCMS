@@ -52,7 +52,10 @@
  *   - un blocco GET_LOCK per tutto il ripristino (un secondo clic non ne fa partire due), un marcatore su file con i nomi di
  *     appoggio (aggiornamenti/copie/.ripristino-in-corso.json): un ripristino interrotto lascia tabelle che il ripristino dopo
  *     toglie, solo quelle nominate dal marcatore; le INSERT solo con valori letterali (mai una sottoquery o una funzione), e
- *     ogni riga entro max_allowed_packet del server di arrivo;
+ *     ogni riga entro max_allowed_packet del server di arrivo; le CREATE senza vincoli o rimandi verso altre tabelle o verso file
+ *     (REFERENCES, UNION=, CONNECTION=, DATA DIRECTORY, INDEX DIRECTORY, TABLESPACE, fuori dagli apici: plumeCMS non li scrive
+ *     mai, e con due installazioni nello stesso database un vincolo legherebbe una tabella di questo sito a una dell'altro;
+ *     copia_create_ammessa());
  *   - l'indirizzo del sito (sito_url) si scrive nella settings di appoggio PRIMA dello scambio: mai una finestra con
  *     l'indirizzo dell'altro sito;
  *   - il registro del ripristino si scrive sempre su file (copia_registro_scrivi(), <copia>.ripristino.log) e in sicurezza_log,
@@ -104,15 +107,18 @@ function copia_nome_valido(string $f): bool {
     return (bool)preg_match('/^copia-\d{8}-\d{6}-[a-z0-9-]{1,40}\.zip$/', $f);
 }
 
-/** Le copie sul server, dalla più recente: file, peso, data, e il manifest se si legge. */
-function copia_elenco(): array {
+/**
+ * Le copie sul server, dalla più recente: file, peso, data, e il manifest se si legge. $conFirma = false (2.25.1, la pagina di
+ * soccorso) salta il calcolo della firma (l'HMAC di tutto lo zip): 'firmata' resta false.
+ */
+function copia_elenco(bool $conFirma = true): array {
     $out = [];
     foreach ((array)@scandir(copia_dir()) as $f) {
         if (!is_string($f) || !copia_nome_valido($f)) continue;
         $p = copia_dir() . '/' . $f;
         $m = null;
         try { $m = copia_leggi_manifest($p); } catch (Throwable $e) { $m = null; }
-        $out[] = ['file' => $f, 'peso' => (int)filesize($p), 'data' => (int)filemtime($p), 'manifest' => $m, 'firmata' => $m ? copia_firmata($p, $m) : false];
+        $out[] = ['file' => $f, 'peso' => (int)filesize($p), 'data' => (int)filemtime($p), 'manifest' => $m, 'firmata' => ($m && $conFirma) ? copia_firmata($p, $m) : false];
     }
     usort($out, fn($a, $b) => strcmp($b['file'], $a['file']));
     return $out;
@@ -350,19 +356,32 @@ function copia_blocco_nome(): string {
 }
 
 /**
- * Prende il blocco del ripristino (GET_LOCK senza attesa). Ritorna false se un altro ripristino è in corso su questo sito
- * (un secondo clic su Ripristina, un'altra scheda del browser). Se questa stessa connessione lo ha già, true.
- * Un processo PHP ucciso a metà chiude la connessione e MySQL libera il blocco da sé.
+ * Prende il blocco del ripristino (GET_LOCK senza attesa). Ritorna false se un altro ripristino è in corso su questo sito (un
+ * secondo clic su Ripristina, un'altra scheda del browser), o un aggiornamento (agg_applica() lo tiene per tutto il lavoro: il
+ * suo ripristino automatico e un ripristino da Copia del sito non si incrociano mai). Rientrante: se questa stessa connessione
+ * lo ha già, conta un livello in più e copia_blocco_lascia() lo libera solo all'ultimo livello (il ripristino dello snapshot
+ * dentro un aggiornamento non libera il blocco dell'aggiornamento). Un processo PHP ucciso a metà chiude la connessione e
+ * MySQL libera il blocco da sé.
  */
 function copia_blocco_prendi(): bool {
     $pdo = db();
     $nome = $pdo->quote(copia_blocco_nome());
     $chi = $pdo->query("SELECT IS_USED_LOCK($nome)")->fetchColumn();
-    if ($chi !== null && $chi !== false) return (int)$chi === (int)$pdo->query('SELECT CONNECTION_ID()')->fetchColumn();
-    return (int)$pdo->query("SELECT GET_LOCK($nome, 0)")->fetchColumn() === 1;
+    if ($chi !== null && $chi !== false) {
+        if ((int)$chi !== (int)$pdo->query('SELECT CONNECTION_ID()')->fetchColumn()) return false;
+        $GLOBALS['copia_blocco_livelli'] = (int)($GLOBALS['copia_blocco_livelli'] ?? 0) + 1;
+        return true;
+    }
+    if ((int)$pdo->query("SELECT GET_LOCK($nome, 0)")->fetchColumn() !== 1) return false;
+    $GLOBALS['copia_blocco_livelli'] = 1;
+    return true;
 }
 
+/** Lascia il blocco del ripristino (all'ultimo livello: vedi copia_blocco_prendi()). */
 function copia_blocco_lascia(): void {
+    $l = (int)($GLOBALS['copia_blocco_livelli'] ?? 0);
+    if ($l > 1) { $GLOBALS['copia_blocco_livelli'] = $l - 1; return; }
+    $GLOBALS['copia_blocco_livelli'] = 0;
     try { db()->query('SELECT RELEASE_LOCK(' . db()->quote(copia_blocco_nome()) . ')'); } catch (Throwable $e) {}
 }
 
@@ -371,28 +390,47 @@ function copia_marcatore_file(): string {
     return copia_dir() . '/' . COPIA_MARCATORE;
 }
 
+/** I nomi scritti nel marcatore (solo quelli con il marchio di lavoro e il prefisso del sito dentro): ['appoggio' => [...], 'parcheggio' => [...]]. */
+function copia_marcatore_leggi(): array {
+    $out = ['appoggio' => [], 'parcheggio' => []];
+    $f = copia_marcatore_file();
+    if (!is_file($f)) return $out;
+    $m = json_decode((string)@file_get_contents($f), true);
+    if (!is_array($m)) return $out;
+    foreach (['appoggio' => COPIA_APPOGGIO, 'parcheggio' => COPIA_PARCHEGGIO] as $k => $marchio) {
+        $re = '/^' . $marchio . '[0-9a-f]{6}_' . preg_quote(DB_PREFIX, '/') . '[a-z0-9_]{1,60}$/';
+        foreach ((array)($m[$k] ?? []) as $t) if (is_string($t) && preg_match($re, $t)) $out[$k][] = $t;
+    }
+    return $out;
+}
+
+/** Scrive il marcatore con i nomi dati; con nessun nome lo toglie. Ritorna false se non si scrive. */
+function copia_marcatore_scrivi(array $appoggio, array $parcheggio): bool {
+    $appoggio = array_values(array_unique($appoggio)); $parcheggio = array_values(array_unique($parcheggio));
+    if (!$appoggio && !$parcheggio) { @unlink(copia_marcatore_file()); return true; }
+    return @file_put_contents(copia_marcatore_file(), json_encode(['appoggio' => $appoggio, 'parcheggio' => $parcheggio, 'prefisso' => DB_PREFIX, 'quando' => date('Y-m-d H:i:s')]), LOCK_EX) !== false;
+}
+
 /**
  * Toglie le tabelle di appoggio e di parcheggio rimaste da un ripristino interrotto: solo quelle nominate dal marcatore,
  * solo con il nostro prefisso dentro, e solo quando nessun ripristino è in corso (chi chiama ha già il blocco: un ripristino
- * ancora vivo lo terrebbe). Ritorna i nomi tolti. Se una DROP fallisce, il marcatore resta con i nomi rimasti.
+ * ancora vivo lo terrebbe). Ritorna i nomi tolti. Se una DROP fallisce, il marcatore resta con i nomi rimasti (e il ripristino
+ * dopo li porta nel suo marcatore, copia_ripristina_db(); Copia del sito prova a toglierli a ogni apertura della pagina).
  */
 function copia_pulisci_interrotto(): array {
-    $f = copia_marcatore_file();
-    if (!is_file($f)) return [];
-    $m = json_decode((string)@file_get_contents($f), true);
-    $tolte = []; $rimaste = [];
-    if (is_array($m)) {
-        $pdo = db();
-        $esistenti = array_flip(array_map(fn($r) => (string)$r[0], $pdo->query('SHOW TABLES')->fetchAll(PDO::FETCH_NUM)));
-        $re = '/^(' . COPIA_APPOGGIO . '|' . COPIA_PARCHEGGIO . ')[0-9a-f]{6}_' . preg_quote(DB_PREFIX, '/') . '[a-z0-9_]{1,60}$/';
-        foreach (array_merge((array)($m['appoggio'] ?? []), (array)($m['parcheggio'] ?? [])) as $t) {
-            if (!is_string($t) || !preg_match($re, $t) || !isset($esistenti[$t])) continue;
+    if (!is_file(copia_marcatore_file())) return [];
+    $m = copia_marcatore_leggi();
+    $pdo = db();
+    $esistenti = array_flip(array_map(fn($r) => (string)$r[0], $pdo->query('SHOW TABLES')->fetchAll(PDO::FETCH_NUM)));
+    $tolte = []; $rimaste = ['appoggio' => [], 'parcheggio' => []];
+    foreach ($m as $k => $nomi) {
+        foreach ($nomi as $t) {
+            if (!isset($esistenti[$t])) continue;
             try { $pdo->exec('DROP TABLE IF EXISTS `' . $t . '`'); $tolte[] = $t; }
-            catch (Throwable $e) { $rimaste[] = $t; error_log('copia: tabella di appoggio non tolta ' . $t . ': ' . $e->getMessage()); }
+            catch (Throwable $e) { $rimaste[$k][] = $t; error_log('copia: tabella di lavoro non tolta ' . $t . ': ' . $e->getMessage()); }
         }
     }
-    if ($rimaste) @file_put_contents($f, json_encode(['appoggio' => $rimaste, 'parcheggio' => [], 'prefisso' => DB_PREFIX, 'quando' => date('Y-m-d H:i:s')]), LOCK_EX);
-    else @unlink($f);
+    copia_marcatore_scrivi($rimaste['appoggio'], $rimaste['parcheggio']);
     return $tolte;
 }
 
@@ -404,10 +442,13 @@ function copia_pulisci_interrotto(): array {
  */
 function copia_nomi_appoggio(array $suffissi): array {
     $pdo = db();
-    $hex = bin2hex(random_bytes(3));
-    $app = COPIA_APPOGGIO . $hex . '_'; $vec = COPIA_PARCHEGGIO . $hex . '_';
-    if (str_starts_with($app, DB_PREFIX) || str_starts_with($vec, DB_PREFIX)) {
-        throw new RuntimeException('Il prefisso delle tabelle di questo sito (' . DB_PREFIX . ') comincia come i nomi di appoggio del ripristino (' . COPIA_APPOGGIO . ', ' . COPIA_PARCHEGGIO . '): il ripristino sicuro non può partire. Niente è stato toccato.');
+    // I nomi di lavoro non devono cominciare con il prefisso del sito. L'installatore chiude ogni prefisso con "_", quindi non
+    // succede mai; con un prefisso scritto a mano senza (rip1, v, ve...) si cambia la parte casuale, fino a venti volte.
+    for ($giro = 0; ; $giro++) {
+        $hex = bin2hex(random_bytes(3));
+        $app = COPIA_APPOGGIO . $hex . '_'; $vec = COPIA_PARCHEGGIO . $hex . '_';
+        if (DB_PREFIX === '' || (!str_starts_with($app, DB_PREFIX) && !str_starts_with($vec, DB_PREFIX))) break;
+        if ($giro >= 20) throw new RuntimeException('Il prefisso delle tabelle di questo sito (' . DB_PREFIX . ') comincia come i nomi di lavoro del ripristino (' . COPIA_APPOGGIO . ', ' . COPIA_PARCHEGGIO . '): il ripristino sicuro non può partire con questo prefisso. Niente è stato toccato.');
     }
     $esistenti = array_flip(array_map(fn($r) => (string)$r[0], $pdo->query('SHOW TABLES')->fetchAll(PDO::FETCH_NUM)));
     foreach ($suffissi as $s) {
@@ -452,19 +493,23 @@ function copia_collazione_vicina(string $nome): string {
         if (in_array($nome, ['utf8mb4_0900_bin', 'utf8mb4_0900_as_cs'], true)) return $c('utf8mb4_bin') ?: ($s['predefinite']['utf8mb4'] ?? '');
         return $c('utf8mb4_unicode_ci') ?: ($s['predefinite']['utf8mb4'] ?? '');
     }
-    // MySQL 5.7 elenca utf8_*, MySQL 8.0.30+ e MariaDB 10.6+ elencano utf8mb3_* (e accettano utf8_* come alias): si provano tutte e due.
+    // MySQL 5.7 e MariaDB fino alla 10.5 elencano utf8_*, MySQL 8.0.30+ e MariaDB 10.6+ elencano utf8mb3_* (e accettano utf8_*
+    // come alias): una sconosciuta si cerca prima con l'altro nome e lo stesso suffisso (utf8_bin -> utf8mb3_bin, utf8mb3_bin ->
+    // utf8_bin: mai una general_ci al posto di una bin o di una unicode_ci), poi con unicode_ci, poi la predefinita del set.
     if (str_starts_with($nome, 'utf8mb3_')) return $c('utf8_' . substr($nome, 8)) ?: $c('utf8_unicode_ci') ?: $c('utf8mb3_unicode_ci') ?: ($s['predefinite']['utf8'] ?? $s['predefinite']['utf8mb3'] ?? '');
+    if (str_starts_with($nome, 'utf8_')) return $c('utf8mb3_' . substr($nome, 5)) ?: $c('utf8mb3_unicode_ci') ?: $c('utf8_unicode_ci') ?: ($s['predefinite']['utf8mb3'] ?? $s['predefinite']['utf8'] ?? '');
     $set = explode('_', $nome, 2)[0];
     $alias = ['utf8mb3' => 'utf8', 'utf8' => 'utf8mb3'];
     return $s['predefinite'][$set] ?? $s['predefinite'][$alias[$set] ?? ''] ?? '';
 }
 
-/** Il set di caratteri da usare al posto di uno che questo server non conosce: utf8mb3 -> utf8. '' se non c'è. */
+/** Il set di caratteri da usare al posto di uno che questo server non elenca: utf8mb3 -> utf8 e utf8 -> utf8mb3 (alias). '' se non c'è. */
 function copia_charset_vicino(string $nome): string {
     $s = copia_server_collazioni();
     $nome = strtolower($nome);
     if (isset($s['charset'][$nome])) return $nome;
     if ($nome === 'utf8mb3' && isset($s['charset']['utf8'])) return 'utf8';
+    if ($nome === 'utf8' && isset($s['charset']['utf8mb3'])) return 'utf8mb3';
     return '';
 }
 
@@ -499,12 +544,14 @@ function copia_sql_pezzi(string $sql): array {
  * Riscrive una CREATE TABLE per questo server: le collazioni (COLLATE=x della tabella, COLLATE x delle colonne), i set di
  * caratteri (DEFAULT CHARSET=x, CHARACTER SET x) e gli introduttori davanti alle stringhe (_utf8mb3'...' nelle colonne
  * generate) che il server non conosce diventano i più vicini conosciuti. Solo fuori dagli apici; AUTO_INCREMENT=N e tutto
- * il resto restano intatti. In $cambi si contano le sostituzioni ('collazione x -> y' => quante).
+ * il resto restano intatti. In $cambi si contano le tabelle con la sostituzione ('collazione x -> y' => quante CREATE).
  */
 function copia_create_portabile(string $riga, array &$cambi): string {
     $pezzi = copia_sql_pezzi($riga);
     $out = '';
-    $conta = function (string $k) use (&$cambi): void { $cambi[$k] = ($cambi[$k] ?? 0) + 1; };
+    // Una sostituzione si conta una volta per CREATE (per tabella), anche se compare sulla tabella e su più colonne.
+    $fatti = [];
+    $conta = function (string $k) use (&$cambi, &$fatti): void { if (isset($fatti[$k])) return; $fatti[$k] = true; $cambi[$k] = ($cambi[$k] ?? 0) + 1; };
     foreach ($pezzi as $i => [$t, $dentro]) {
         if ($dentro) { $out .= $t; continue; }
         $t = preg_replace_callback('/\b(COLLATE\s*=?\s*)([A-Za-z0-9_]+)/i', function ($m) use ($conta) {
@@ -531,6 +578,22 @@ function copia_create_portabile(string $riga, array &$cambi): string {
         $out .= $t;
     }
     return $out;
+}
+
+/**
+ * sicurezza (2.25.1): una CREATE TABLE della copia ha solo quello che copia_dump_db() e agg_dump_db() scrivono (lo SHOW CREATE
+ * TABLE di una tabella di plumeCMS)? Fuori dagli apici non devono comparire: SELECT e LIKE (CREATE ... AS SELECT, CREATE ... LIKE),
+ * REFERENCES (un vincolo verso un'altra tabella: con due installazioni nello stesso database legherebbe una tabella di questo sito a
+ * una dell'altro, che poi non si cancella più, o cancella righe di questo sito a cascata), UNION= (una tabella MERGE sopra altre
+ * tabelle), CONNECTION= (FEDERATED verso un altro server), DATA DIRECTORY e INDEX DIRECTORY (file fuori dal database), TABLESPACE.
+ * plumeCMS non scrive mai nessuna di queste parole nelle sue tabelle. Ritorna '' se la riga va bene, altrimenti la parola trovata.
+ */
+function copia_create_ammessa(string $riga): string {
+    foreach (copia_sql_pezzi($riga) as [$t, $dentro]) {
+        if ($dentro) continue;
+        if (preg_match('/\b(?:SELECT|LIKE|REFERENCES|TABLESPACE|DATA\s+DIRECTORY|INDEX\s+DIRECTORY)\b|\b(?:UNION|CONNECTION)\s*=/i', $t, $m)) return strtoupper(preg_replace(['/\s+/', '/\s*=/'], [' ', '='], trim($m[0])));
+    }
+    return '';
 }
 
 /**
@@ -621,18 +684,21 @@ function copia_ripristina_db(string $gzPath, string $prefissoCopia, ?array $suff
     // 1. Le tabelle rimaste da un ripristino interrotto, poi i nomi di lavoro, poi il marcatore: prima di toccare il database.
     $tolte = copia_pulisci_interrotto();
     if ($tolte) $righe[] = 'Tabelle di lavoro rimaste da un ripristino interrotto, tolte: ' . count($tolte) . ' (' . implode(', ', array_slice($tolte, 0, 8)) . (count($tolte) > 8 ? '...' : '') . ').';
+    // Le tabelle che una DROP non ha tolto restano nel marcatore, insieme ai nomi di questo ripristino: nessuna si perde.
+    $eredita = copia_marcatore_leggi();
+    if ($eredita['appoggio'] || $eredita['parcheggio']) $righe[] = 'ATTENZIONE: ' . count(array_merge($eredita['appoggio'], $eredita['parcheggio'])) . ' tabelle di lavoro di un ripristino interrotto non si sono cancellate (restano nel marcatore per il ripristino dopo).';
+    $marca = fn(array $appoggio, array $parcheggio): bool => copia_marcatore_scrivi(array_merge($eredita['appoggio'], $appoggio), array_merge($eredita['parcheggio'], $parcheggio));
     $suffissiAmmessi = array_values(array_filter($suffissi, fn($s) => !copia_di_altri(DB_PREFIX . $s, $altriQui)));
     try { $nomi = copia_nomi_appoggio($suffissiAmmessi); } catch (RuntimeException $e) { return $esci($e->getMessage()); }
     $app = $nomi['app']; $vec = $nomi['vec']; $esistenti = $nomi['esistenti'];
     $maxPacket = (int)$pdo->query('SELECT @@max_allowed_packet')->fetchColumn();
-    $marcatore = ['appoggio' => array_map(fn($s) => $app . DB_PREFIX . $s, $suffissiAmmessi), 'parcheggio' => array_map(fn($s) => $vec . DB_PREFIX . $s, $suffissiAmmessi),
-        'prefisso' => DB_PREFIX, 'quando' => date('Y-m-d H:i:s')];
-    if (@file_put_contents(copia_marcatore_file(), json_encode($marcatore), LOCK_EX) === false) return $esci('Non riesco a scrivere il file di lavoro del ripristino in aggiornamenti/copie/ (permessi della cartella, o disco pieno). Niente è stato toccato.');
+    if (!$marca(array_map(fn($s) => $app . DB_PREFIX . $s, $suffissiAmmessi), array_map(fn($s) => $vec . DB_PREFIX . $s, $suffissiAmmessi))) return $esci('Non riesco a scrivere il file di lavoro del ripristino in aggiornamenti/copie/ (permessi della cartella, o disco pieno). Niente è stato toccato.');
     // 2. La copia, tabella per tabella, nelle tabelle di appoggio.
     $gz = gzopen($gzPath, 'rb');
-    if (!$gz) { @unlink(copia_marcatore_file()); throw new RuntimeException('Il database della copia non si legge.'); }
+    if (!$gz) { $marca([], []); throw new RuntimeException('Il database della copia non si legge.'); }
     $p = preg_quote($prefissoCopia, '~');
     $n = 0; $saltate = 0; $altre = 0; $create = []; $cambi = []; $motivo = '';
+    $fkOn = function () use ($pdo): void { try { $pdo->exec('SET FOREIGN_KEY_CHECKS=1'); } catch (Throwable $e) {} };
     $pdo->exec('SET FOREIGN_KEY_CHECKS=0');
     while (($riga = gzgets($gz)) !== false) {
         $riga = rtrim($riga, "\r\n");
@@ -648,7 +714,7 @@ function copia_ripristina_db(string $gzPath, string $prefissoCopia, ?array $suff
         // E solo la forma che scrive agg_dump_db: CREATE TABLE con le colonne (non "AS SELECT" ne "LIKE"), INSERT con VALUES.
         $forma = match ($m[1]) {
             'DROP TABLE IF EXISTS ' => (bool)preg_match('~^DROP TABLE IF EXISTS `[a-z0-9_]+`;?$~', $riga),
-            'CREATE TABLE ' => (bool)preg_match('~^CREATE TABLE `[a-z0-9_]+` \(~', $riga) && !preg_match('~\b(SELECT|LIKE)\b~i', $riga),
+            'CREATE TABLE ' => (bool)preg_match('~^CREATE TABLE `[a-z0-9_]+` \(~', $riga),
             default => (bool)preg_match('~^INSERT INTO `[a-z0-9_]+` VALUES \(~', $riga),
         };
         if (!$forma || ($m[1] !== 'DROP TABLE IF EXISTS ' && count(agg_split_sql($riga)) !== 1)) { $saltate++; continue; }
@@ -657,6 +723,9 @@ function copia_ripristina_db(string $gzPath, string $prefissoCopia, ?array $suff
         $riga = $m[1] . '`' . $app . DB_PREFIX . $suf . '`' . substr($riga, strlen($m[0]));
         if (substr($riga, -1) === ';') $riga = substr($riga, 0, -1);
         if ($m[1] === 'CREATE TABLE ') {
+            // sicurezza: niente vincoli o rimandi verso altre tabelle o verso file (REFERENCES, UNION=...), fuori dagli apici.
+            $parola = copia_create_ammessa($riga);
+            if ($parola !== '') { $motivo = 'La copia contiene un\'istruzione che ' . CMS_NOME . ' non scrive mai nelle copie (nella struttura della tabella ' . $suf . ' c\'è ' . $parola . ': un vincolo o un rimando verso un\'altra tabella, un altro server o un file): è stata modificata. Il ripristino non si fa.'; $errori[] = 'CREATE TABLE con ' . $parola . ' nella tabella ' . $suf; break; }
             $riga = copia_create_portabile($riga, $cambi);
         } else {
             // sicurezza: solo valori letterali; e la riga deve stare in max_allowed_packet del server di arrivo.
@@ -669,7 +738,8 @@ function copia_ripristina_db(string $gzPath, string $prefissoCopia, ?array $suff
             if ($m[1] === 'CREATE TABLE ') $create[$suf] = true;
             if (defined('CMS_RIPRISTINO_PAUSA')) usleep((int)CMS_RIPRISTINO_PAUSA); // solo per le prove (un ripristino lento da interrompere)
         } catch (Throwable $e) {
-            $errori[] = substr($riga, 0, 80) . ' ... : ' . $e->getMessage();
+            // Nel registro mai i valori di un INSERT (ci sono le password cifrate degli utenti): solo la tabella e il peso della riga.
+            $errori[] = ($m[1] === 'CREATE TABLE ' ? substr($riga, 0, 80) . ' ...' : 'INSERT INTO `' . $app . DB_PREFIX . $suf . '` (riga di ' . agg_fmt_bytes(strlen($riga)) . ', valori non riportati)') . ' : ' . mb_substr($e->getMessage(), 0, 300);
             $motivo = copia_errore_parole($e, $suf);
             break;
         }
@@ -690,10 +760,11 @@ function copia_ripristina_db(string $gzPath, string $prefissoCopia, ?array $suff
         } catch (Throwable $e) { $errori[] = 'settings di appoggio: ' . $e->getMessage(); $motivo = copia_errore_parole($e, 'settings'); }
     }
     if ($motivo !== '') {
-        // Niente è cambiato: via le tabelle di appoggio, via il marcatore.
-        foreach (array_keys($create) as $suf) { try { $pdo->exec('DROP TABLE IF EXISTS `' . $app . DB_PREFIX . $suf . '`'); } catch (Throwable $e) { error_log('copia: appoggio non tolto: ' . $e->getMessage()); } }
-        @unlink(copia_marcatore_file());
-        $pdo->exec('SET FOREIGN_KEY_CHECKS=1');
+        // Niente è cambiato: via le tabelle di appoggio, via il marcatore (un appoggio che non si cancella resta nel marcatore).
+        $nonTolte = [];
+        foreach (array_keys($create) as $suf) { try { $pdo->exec('DROP TABLE IF EXISTS `' . $app . DB_PREFIX . $suf . '`'); } catch (Throwable $e) { $nonTolte[] = $app . DB_PREFIX . $suf; error_log('copia: appoggio non tolto: ' . $e->getMessage()); } }
+        $marca($nonTolte, []);
+        $fkOn();
         $r = $esci($motivo);
         $r['eseguite'] = $n; $r['saltate'] = $saltate; $r['altre'] = $altre;
         return $r;
@@ -705,31 +776,40 @@ function copia_ripristina_db(string $gzPath, string $prefissoCopia, ?array $suff
         if (isset($mie[$vivo])) { $coppie[] = '`' . $vivo . '` TO `' . $vec . $vivo . '`'; $parcheggiate[] = $vec . $vivo; }
         elseif (isset($esistenti[$vivo])) {
             // Il nome esiste ma non è una tabella di questa installazione (una vista con quel nome): non si scambia.
-            foreach (array_keys($create) as $s2) { try { $pdo->exec('DROP TABLE IF EXISTS `' . $app . DB_PREFIX . $s2 . '`'); } catch (Throwable $e) {} }
-            @unlink(copia_marcatore_file());
-            $pdo->exec('SET FOREIGN_KEY_CHECKS=1');
+            $nonTolte = [];
+            foreach (array_keys($create) as $s2) { try { $pdo->exec('DROP TABLE IF EXISTS `' . $app . DB_PREFIX . $s2 . '`'); } catch (Throwable $e) { $nonTolte[] = $app . DB_PREFIX . $s2; } }
+            $marca($nonTolte, []);
+            $fkOn();
             return $esci('Nel database c\'è già qualcosa con il nome ' . $vivo . ' che non è una tabella di questo sito: il ripristino non si fa.');
         } else $nuove[] = $suf;
         $coppie[] = '`' . $app . $vivo . '` TO `' . $vivo . '`';
     }
+    // Il tempo massimo di attesa dei blocchi vale solo per la RENAME (una query lunga in corso, il cron, non ferma tutto per
+    // sempre): dopo torna quello di prima, perché la connessione serve ancora alle pagine di questa richiesta.
+    $attesaPrima = 0;
+    try { $attesaPrima = (int)$pdo->query('SELECT @@session.lock_wait_timeout')->fetchColumn(); } catch (Throwable $e) {}
+    $attesaTorna = function () use ($pdo, $attesaPrima): void { if ($attesaPrima > 0) { try { $pdo->exec('SET SESSION lock_wait_timeout = ' . $attesaPrima); } catch (Throwable $e) {} } };
     try {
-        $pdo->exec('SET SESSION lock_wait_timeout = 10'); // una query lunga in corso (il cron) non ferma tutto per sempre
+        $pdo->exec('SET SESSION lock_wait_timeout = 10');
         $pdo->exec('RENAME TABLE ' . implode(', ', $coppie));
     } catch (Throwable $e) {
-        foreach (array_keys($create) as $suf) { try { $pdo->exec('DROP TABLE IF EXISTS `' . $app . DB_PREFIX . $suf . '`'); } catch (Throwable $e2) {} }
-        @unlink(copia_marcatore_file());
-        $pdo->exec('SET FOREIGN_KEY_CHECKS=1');
+        $attesaTorna();
+        $nonTolte = [];
+        foreach (array_keys($create) as $suf) { try { $pdo->exec('DROP TABLE IF EXISTS `' . $app . DB_PREFIX . $suf . '`'); } catch (Throwable $e2) { $nonTolte[] = $app . DB_PREFIX . $suf; } }
+        $marca($nonTolte, []);
+        $fkOn();
         $errori[] = 'RENAME TABLE: ' . $e->getMessage();
         return $esci('Lo scambio delle tabelle non è riuscito, e il sito è rimasto com\'era. ' . copia_errore_parole($e));
     }
-    // 5. Dopo lo scambio: via le tabelle parcheggiate, le viste rifatte (SELECT * congela le colonne di quando sono nate).
+    $attesaTorna();
+    // 5. Dopo lo scambio il database È quello della copia: da qui nessuna eccezione esce (ogni passo in try), così chi chiama
+    // non può scambiare un intoppo di pulizia per un ripristino non fatto. Via le tabelle parcheggiate, le viste rifatte
+    // (SELECT * congela le colonne di quando sono nate).
     $nonTolte = [];
     foreach ($parcheggiate as $t) { try { $pdo->exec('DROP TABLE IF EXISTS `' . $t . '`'); } catch (Throwable $e) { $nonTolte[] = $t; error_log('copia: parcheggio non tolto ' . $t . ': ' . $e->getMessage()); } }
-    $pdo->exec('SET FOREIGN_KEY_CHECKS=1');
-    if ($nonTolte) {
-        @file_put_contents(copia_marcatore_file(), json_encode(['appoggio' => [], 'parcheggio' => $nonTolte, 'prefisso' => DB_PREFIX, 'quando' => date('Y-m-d H:i:s')]), LOCK_EX);
-        $righe[] = 'ATTENZIONE: ' . count($nonTolte) . ' tabelle vecchie non si sono cancellate (restano in parcheggio, le toglie il ripristino dopo): ' . implode(', ', $nonTolte) . '.';
-    } else @unlink(copia_marcatore_file());
+    $fkOn();
+    if ($nonTolte) $righe[] = 'ATTENZIONE: ' . count($nonTolte) . ' tabelle vecchie non si sono cancellate (restano in parcheggio, le toglie il ripristino dopo, o Copia del sito alla prossima apertura): ' . implode(', ', $nonTolte) . '.';
+    $marca([], $nonTolte);
     try {
         require_once __DIR__ . '/sito.php';
         if (function_exists('sito_viste')) sito_viste();
@@ -797,7 +877,8 @@ function copia_registro_ultimo(): ?array {
  * passano da media_ha_codice(); se i file falliscono a metà, ok=false e il registro dice di ripristinare la copia
  * prima-del-ripristino; il registro si scrive sempre su file e in sicurezza_log.
  * Ritorna ['ok', 'log' => righe, 'prima' => la copia di sicurezza, 'scarto' => ['cartella', 'file' => [...]] oppure null,
- * 'fase' => 'prima' (niente cambiato) | 'database' (database rimesso, file no) | 'fatto', 'registro' => il file del registro].
+ * 'fase' => 'prima' (niente cambiato) | 'database' (database rimesso, file no) | 'file' (database e file rimessi, errore solo
+ * nelle operazioni finali: i file in più da mettere da parte o le protezioni dei temi) | 'fatto', 'registro' => il file del registro].
  */
 function copia_ripristina(string $file, bool $tieni = false): array {
     @set_time_limit(0);
@@ -810,15 +891,17 @@ function copia_ripristina(string $file, bool $tieni = false): array {
     $log[] = 'Copia letta: fatta il ' . ($m['creato'] ?? '?') . ' da ' . CMS_NOME . ' ' . ($m['cms_versione'] ?? '?') . ' su ' . ($m['sito'] ?? '?') . ', ' . (int)($m['tabelle'] ?? 0) . ' tabelle, ' . (int)($m['file'] ?? 0) . ' file.';
     $log[] = $firmata ? 'Firmata da questo sito: entrano anche i temi e i moduli con PHP.' : 'Non firmata da questo sito (viene da un altro sito, o è stata modificata): i file eseguibili (.php e simili) si saltano.';
     $chiude = function () use (&$log, &$ok, &$prima, &$scarto, &$fase, $zipPath, $firmata): array {
-        $registro = copia_registro_scrivi(basename($zipPath), $ok, $log);
-        if (function_exists('sicurezza_log')) sicurezza_log('copia', (string)($_SESSION['admin_username'] ?? ''), (int)($_SESSION['admin_user_id'] ?? 0),
-            ($ok ? 'sito ripristinato dalla copia ' : ($fase === 'prima' ? 'ripristino NON fatto (sito come prima) dalla copia ' : 'ripristino con errori nei file dalla copia ')) . basename($zipPath) . ($firmata ? ' (firmata)' : ' (non firmata)'));
+        $registro = copia_registro_scrivi(basename($zipPath), $ok, $log); // sempre, prima di tutto il resto
+        $esito = $ok ? 'sito ripristinato dalla copia ' : match ($fase) { 'prima' => 'ripristino NON fatto (sito come prima) dalla copia ', 'database' => 'ripristino con errori nei file dalla copia ', default => 'ripristino fatto, con errori nelle operazioni finali, dalla copia ' };
+        try { if (function_exists('sicurezza_log')) sicurezza_log('copia', (string)($_SESSION['admin_username'] ?? ''), (int)($_SESSION['admin_user_id'] ?? 0), $esito . basename($zipPath) . ($firmata ? ' (firmata)' : ' (non firmata)')); }
+        catch (Throwable $e) { error_log('copia: registro della sicurezza non scritto: ' . $e->getMessage()); }
         return ['ok' => $ok, 'log' => $log, 'prima' => $prima, 'scarto' => $scarto, 'fase' => $fase, 'registro' => $registro];
     };
-    // sicurezza (2.25.1): un ripristino alla volta. Un secondo clic, o un'altra scheda, non ne fa partire due.
+    // sicurezza (2.25.1): un ripristino alla volta. Un secondo clic, o un'altra scheda, non ne fa partire due; e nemmeno durante
+    // un aggiornamento (agg_applica() tiene lo stesso blocco).
     if (!copia_blocco_prendi()) {
         $ok = false;
-        $log[] = 'Il ripristino non si è fatto: un altro ripristino è già in corso su questo sito. Aspetta che finisca (la pagina di chi lo ha avviato lo dice), poi riprova. Il sito è come prima.';
+        $log[] = 'Il ripristino non si è fatto: un altro ripristino è già in corso su questo sito (o un aggiornamento, che se qualcosa va male rimette il sito da solo). Aspetta che finisca (la pagina di chi lo ha avviato lo dice), poi riprova. Il sito è come prima.';
         return $chiude();
     }
     $tmp = copia_dir() . '/.ripristino-' . bin2hex(random_bytes(6)) . '.sql.gz';
@@ -889,6 +972,7 @@ function copia_ripristina(string $file, bool $tieni = false): array {
             return $chiude();
         }
         $zip->close(); $zip = null;
+        $fase = 'file'; // database e file della copia ci sono tutti: da qui un errore riguarda solo le operazioni finali
         // 4. (2.1) I file che ci sono nel sito ma non nella copia.
         if ($tieni) {
             $log[] = 'File in più (nel sito ma non nella copia): lasciati dove sono, come hai chiesto.';
@@ -903,10 +987,11 @@ function copia_ripristina(string $file, bool $tieni = false): array {
                 $log[] = 'Nessun file in più: uploads/, temi/ e moduli/ sono come nella copia.';
             }
             foreach ($scarto['errori'] as $e) { $log[] = 'ERRORE nello spostare un file in più: ' . $e; $ok = false; }
+            if ($scarto['errori']) $log[] = 'Database e file della copia sono stati rimessi tutti: solo questi file in più non si sono spostati da parte (restano dove sono).';
         }
         // Le protezioni delle cartelle restano quelle del CMS (i .htaccess non sono mai nella copia).
         if (is_file(__DIR__ . '/temi.php')) { require_once __DIR__ . '/temi.php'; if (function_exists('temi_proteggi')) temi_proteggi(); }
-        $fase = 'fatto';
+        if ($ok) $fase = 'fatto';
         $log[] = 'Ripristino finito il ' . date('d/m/Y') . ' alle ' . date('H:i:s') . '.';
         return $chiude();
     } catch (Throwable $e) {
@@ -914,6 +999,9 @@ function copia_ripristina(string $file, bool $tieni = false): array {
         if ($fase === 'prima') {
             $log[] = 'Il ripristino non si è fatto: il sito è come prima (database, immagini, temi e moduli non sono stati toccati).';
             $log[] = 'Motivo: ' . ($e instanceof PDOException ? copia_errore_parole($e) : $e->getMessage());
+        } elseif ($fase === 'file') {
+            $log[] = 'ERRORE nelle operazioni finali (i file in più da mettere da parte, o le protezioni delle cartelle dei temi): ' . $e->getMessage();
+            $log[] = 'Database e file della copia sono stati rimessi tutti: il sito è quello della copia. Controlla la cartella aggiornamenti/scarto/ e, in Sicurezza, che le protezioni delle cartelle ci siano.';
         } else {
             $log[] = 'ERRORE nei file: ' . $e->getMessage();
             $log[] = 'Il database è stato rimesso, i file no: ripristina la copia ' . $prima . ' (prima-del-ripristino), che rimette tutto com\'era.';

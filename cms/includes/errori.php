@@ -7,7 +7,9 @@
  *   - un gestore delle eccezioni (set_exception_handler) e uno di chiusura (register_shutdown_function con error_get_last,
  *     per gli errori fatali che non sono eccezioni) scrivono tutto in logs/php-errori.log e rispondono con una pagina sobria;
  *   - nel pannello la pagina dice la classe dell'errore, il codice (SQLSTATE), il messaggio e file:riga RELATIVI alla cartella
- *     del CMS, mai un percorso assoluto; le pagine -api.php ricevono lo stesso testo in JSON;
+ *     del CMS, mai un percorso assoluto, ma SOLO a chi ha una sessione del pannello (errori_dettaglio_visibile()): a chi non è
+ *     entrato (il login, una pagina aperta da fuori) esce il testo generico con l'ora della riga da cercare nel log; le pagine
+ *     -api.php ricevono lo stesso in JSON;
  *   - nel sito pubblico (e nelle API, nei cron) esce il 503 pulito "Torno subito", senza dettagli;
  *   - con define('CMS_DEBUG', true) nel config.local.php tutto resta come prima (errori a video nel pannello, nessun gestore).
  * Gli avvisi (warning, deprecazioni) vanno nel log come prima (set_error_handler di config.php e auth.php).
@@ -15,6 +17,9 @@
 
 /** Accende i gestori per il contesto dato: 'pannello', oppure 'sito' (sito pubblico, API, cron). */
 function errori_attiva(string $contesto): void {
+    // Nelle tracce (nel log, e in quelle che PHP scrive da sé) mai gli argomenti delle funzioni: un'eccezione dentro
+    // login_esteso('utente', 'password') metterebbe la password in logs/php-errori.log. Vale anche con CMS_DEBUG.
+    @ini_set('zend.exception_ignore_args', '1');
     if (defined('CMS_DEBUG') && CMS_DEBUG) return;
     $GLOBALS['errori_contesto'] = $contesto;
     set_exception_handler('errori_eccezione');
@@ -71,6 +76,11 @@ function errori_chiusura(): void {
     }
 }
 
+/** Il dettaglio dell'errore (messaggio, file:riga) si mostra solo a chi è entrato nel pannello: a un visitatore dice troppo (tabelle, database). */
+function errori_dettaglio_visibile(): bool {
+    return session_status() === PHP_SESSION_ACTIVE && !empty($_SESSION['admin_user_id']);
+}
+
 /** La risposta: JSON per le API del pannello, il 503 pulito per il sito, la pagina sobria per il pannello. */
 function errori_rispondi(string $classe, string $codice, string $messaggio, string $dove, bool $database): void {
     $contesto = (string)($GLOBALS['errori_contesto'] ?? 'sito');
@@ -88,7 +98,9 @@ function errori_rispondi(string $classe, string $codice, string $messaggio, stri
     $stato = $database ? 503 : 500;
     if (!$inviate) { http_response_code($stato); header('Cache-Control: no-store'); }
     if ($contesto === 'pannello') {
-        $dettaglio = $classe . ($codice !== '' && $codice !== '0' ? ' [' . $codice . ']' : '') . ': ' . $messaggio . ' (' . $dove . ')';
+        $visibile = errori_dettaglio_visibile();
+        $dettaglio = $visibile ? $classe . ($codice !== '' && $codice !== '0' ? ' [' . $codice . ']' : '') . ': ' . $messaggio . ' (' . $dove . ')'
+            : 'Errore delle ' . date('H:i:s') . ' del ' . date('d/m/Y') . ': il dettaglio è nel log, a quell\'ora (si mostra qui solo a chi è entrato nel pannello).';
         if ($json) {
             if (!$inviate) header('Content-Type: application/json; charset=utf-8');
             echo json_encode(['errore' => 'Il pannello ha incontrato un errore e si è fermato. Il dettaglio è nel log degli errori del sito (logs/php-errori.log).', 'dettaglio' => $dettaglio], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);

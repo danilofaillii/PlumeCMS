@@ -1,7 +1,8 @@
 <?php
 // Errori e deprecazioni: nel log del publisher (logs/php-errori.log), mai a video sul sito pubblico, nelle API e nei cron.
 // Sul server il php.ini può avere display_errors acceso: una riga "Deprecated" stampata prima di header() rompe un redirect,
-// un JSON o il pixel delle aperture. Il pannello (admin/includes/auth.php) definisce PUBLISHER_ERRORI prima e tiene gli avvisi veri a video.
+// un JSON o il pixel delle aperture. Il pannello (admin/includes/auth.php) definisce PUBLISHER_ERRORI prima e fa da sé: dalla 2.25.1
+// nemmeno lì niente a video (un'eccezione non gestita diventa la pagina sobria di includes/errori.php, tutto nel log).
 if (!defined('PUBLISHER_ERRORI')) {
     define('PUBLISHER_ERRORI', 'log');
     error_reporting(E_ALL);

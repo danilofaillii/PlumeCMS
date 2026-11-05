@@ -63,17 +63,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             } else {
                 $file = basename((string)($_POST['file'] ?? ''));
             }
+            // Il lavoro gira con l'output in un buffer: qualcosa stampato durante il lavoro (un echo di un modulo; dalla 2.25.1
+            // gli avvisi di PHP vanno solo nel log) manderebbe le intestazioni e romperebbe la sessione qui sotto.
             session_write_close();
             ob_start();
             $r = copia_ripristina($file, !empty($_POST['tieni'])); // 2.1: "tieni i file in più"
             $rumore = trim((string)ob_get_clean());
             @session_start();
-            if ($rumore !== '') $r['log'][] = 'Avvisi di PHP durante il lavoro, non bloccanti: ' . mb_substr($rumore, 0, 1500);
-            // 2.25.1: tre esiti. Riuscito; non fatto (il database ha rifiutato la copia: niente è cambiato, fase "prima");
-            // database rimesso ma file no (fase "database"). Il registro è già su file (copia_registro_scrivi).
+            if ($rumore !== '') $r['log'][] = 'Testo stampato durante il lavoro, non bloccante: ' . mb_substr($rumore, 0, 1500);
+            // 2.25.1: quattro esiti. Riuscito; non fatto (il database ha rifiutato la copia: niente è cambiato, fase "prima");
+            // database rimesso ma file no (fase "database"); database e file rimessi, errore solo nelle operazioni finali (fase
+            // "file": i file in più da mettere da parte, le protezioni dei temi). Il registro è già su file (copia_registro_scrivi).
             $fase = (string)($r['fase'] ?? 'fatto');
             $titolo = $r['ok'] ? 'Sito ripristinato dalla copia ' . $file
-                : ($fase === 'prima' ? 'Ripristino con errori dalla copia ' . $file . ': non si è fatto, il sito è come prima' : 'Ripristino con errori dalla copia ' . $file . ': database rimesso, file no');
+                : match ($fase) {
+                    'prima' => 'Ripristino con errori dalla copia ' . $file . ': non si è fatto, il sito è come prima',
+                    'file' => 'Ripristino fatto dalla copia ' . $file . ', con errori nelle operazioni finali (file in più o protezioni dei temi)',
+                    default => 'Ripristino con errori dalla copia ' . $file . ': database rimesso, file no',
+                };
             $esito = ['ok' => $r['ok'], 'titolo' => $titolo, 'log' => $r['log'], 'scarto' => $r['scarto'] ?? null, 'fase' => $fase];
             // Il database nuovo può avere altri utenti: se questo non c'è più, si rientra con quelli della copia, e dopo
             // l'accesso si torna qui, con il registro letto dal file (2.25.1).
@@ -91,6 +98,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 }
 
+// 2.25.1: le tabelle di lavoro lasciate da un ripristino interrotto (nominate dal marcatore) si tolgono anche qui, aprendo la
+// pagina, se nessun ripristino è in corso (il blocco): così non aspettano il ripristino dopo.
+if ($_SERVER['REQUEST_METHOD'] !== 'POST' && is_file(copia_marcatore_file()) && copia_blocco_prendi()) {
+    try { $tolte = copia_pulisci_interrotto(); if ($tolte) flash('info', 'Tabelle di lavoro rimaste da un ripristino interrotto, tolte: ' . count($tolte) . ' (' . implode(', ', array_slice($tolte, 0, 6)) . (count($tolte) > 6 ? '...' : '') . ').'); }
+    catch (Throwable $e) { error_log('copia: pulizia del ripristino interrotto: ' . $e->getMessage()); }
+    finally { copia_blocco_lascia(); }
+}
 $copie = copia_elenco();
 $scarti = copia_scarto_elenco();
 $pronta = basename((string)($_GET['pronta'] ?? ''));

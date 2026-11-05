@@ -8,20 +8,27 @@
 //     collazione sostituita, il sito funziona;
 //  c. copia con una CREATE che non può funzionare (ENGINE=NonEsiste su pages): il ripristino si ferma, NIENTE cambia (stesse
 //     tabelle e impronte, uploads intatti, nessuno scarto nuovo), il pannello spiega in parole semplici, niente appoggio;
-//  d. tabelle di appoggio e marcatore lasciati da un ripristino interrotto (fatti a mano): il ripristino dopo li toglie, e solo
-//     quelli nominati dal marcatore;
+//  d. tabelle di appoggio e marcatore lasciati da un ripristino interrotto (fatti a mano): aprendo Copia del sito si tolgono (e
+//     la pagina lo dice), solo quelle nominate dal marcatore; una che non si cancella (un vincolo la tiene) resta nel marcatore
+//     anche dopo il ripristino seguente, che lo dice;
 //  e. due installazioni nello stesso database: B2 resta intatta; e il rientro dopo un ripristino con un altro amministratore
 //     (login con l'avviso, ritorno in Copia del sito con il registro dal file);
 //  f. pagina di soccorso su D: senza users (e senza settings) /admin/, il login e le API rispondono 503 con la pagina pulita,
-//     senza percorsi del server né tracce; la home 503 "Torno subito"; l'elenco delle copie solo con aggiornamenti/soccorso.txt;
-//     il database si rimette importando db.sql.gz della copia e il pannello torna; credenziali sbagliate: "non raggiunge il
-//     database" senza la password; a 390 px niente scorrimento di lato; la schermata per il manuale (FOTO_MANUALE=1);
+//     senza percorsi del server né tracce; a chi non è entrato mai il nome del database, l'utente, il prefisso né la risposta
+//     tecnica del server: escono (con le copie e l'ultimo registro) solo con aggiornamenti/soccorso.txt; la home 503 "Torno
+//     subito"; il database si rimette importando db.sql.gz della copia e il pannello torna; credenziali sbagliate: "non
+//     raggiunge il database" senza la password; a 390 px niente scorrimento di lato; la schermata per il manuale (FOTO_MANUALE=1);
 //  g. fra server (SITO_MARIADB="<base>|<cartella>" e SITO_MYSQL57="<base>|<cartella>" nell'ambiente): la copia di A (MySQL 8)
 //     ripristinata su MariaDB e su MySQL 5.7, e una copia di MariaDB su MySQL 8: riescono, collazioni sostituite nel registro;
 //  h. ripristino interrotto (CMS_RIPRISTINO_PAUSA nel config di C, server php ucciso a metà, poi riacceso): il sito è intatto,
 //     il ripristino dopo toglie le tabelle di appoggio;
 //  i. copia non firmata con una INSERT che contiene una sottoquery verso l'altra installazione: rifiutata, database intatto;
-//  più: un secondo ripristino mentre uno è in corso viene rifiutato ("un altro ripristino è già in corso").
+//  j. copia non firmata con una CREATE che lega pages all'altra installazione (REFERENCES cms_b_users) o la monta sopra
+//     (ENGINE=MERGE UNION=): rifiutata prima dello scambio, nessun vincolo nel database; le stesse parole in un COMMENT passano;
+//  s. snapshot degli Aggiornamenti (stesso motore): con una CREATE rotta "Ripristino NON fatto" e nemmeno il file dello
+//     snapshot si rimette; con il database buono database e file tornano; B2 intatta;
+//  più: un secondo ripristino mentre uno è in corso viene rifiutato ("un altro ripristino è già in corso"), e anche un
+//  aggiornamento (agg_applica) in quel momento non parte.
 // uso: DBPASS=... node prove/prova-copia-ripristino-sicuro.js <base A> <cartella A> <base C> <cartella C> <base B2> <cartella B2>
 //      <base D> <cartella D> <utente> <password> <cartella uscita>
 // Lascia A come la sua prima copia, C con i contenuti di A. Le prove fra server e il php -S riacceso usano
@@ -198,14 +205,29 @@ let br;
   ok('c. il sito C risponde come prima', (await homeTesto(c, BC)).status === 200 && /Sito A rf/.test(await nomeSito(c, BC)));
 
   // ---- d. Tabelle di appoggio lasciate da un ripristino interrotto (fatte a mano).
+  const marcatoreC = path.join(DC, 'aggiornamenti/copie/.ripristino-in-corso.json');
   for (const t of ['rip0000aa_plume_c_resto', 'vec0000aa_plume_c_resto', 'rip0000bb_plume_c_altra']) esegui(DC, 'CREATE TABLE `' + t + '` (`id` int NOT NULL, PRIMARY KEY (`id`)) ENGINE=InnoDB');
-  fs.writeFileSync(path.join(DC, 'aggiornamenti/copie/.ripristino-in-corso.json'), JSON.stringify({ appoggio: ['rip0000aa_plume_c_resto'], parcheggio: ['vec0000aa_plume_c_resto'], prefisso: 'plume_c_', quando: '2026-11-04 10:00:00' }));
-  metti(DC, zipA);
-  r = await ripristina(c, BC, copiaA, true);
-  ok('d. il ripristino dopo toglie le tabelle nominate dal marcatore e lo dice', r.ok && /Tabelle di lavoro rimaste da un ripristino interrotto, tolte: 2/.test(r.log) && tabelle(DC, 'rip0000aa').length === 0 && tabelle(DC, 'vec0000aa').length === 0, (r.log.match(/Tabelle di lavoro[^\n]*/) || [''])[0]);
+  fs.writeFileSync(marcatoreC, JSON.stringify({ appoggio: ['rip0000aa_plume_c_resto'], parcheggio: ['vec0000aa_plume_c_resto'], prefisso: 'plume_c_', quando: '2026-11-04 10:00:00' }));
+  await vai(c, BC, '/admin/copia-sito.php');
+  let flashC = (await c.locator('.flash').allInnerTexts()).join('\n');
+  ok('d. aprendo Copia del sito le tabelle nominate dal marcatore si tolgono subito, e la pagina lo dice', /Tabelle di lavoro rimaste da un ripristino interrotto, tolte: 2/.test(flashC) && tabelle(DC, 'rip0000aa').length === 0 && tabelle(DC, 'vec0000aa').length === 0, flashC.slice(0, 200));
   ok('d. una tabella con il marchio di appoggio ma NON nel marcatore non si tocca', tabelle(DC, 'rip0000bb').length === 1);
   esegui(DC, 'DROP TABLE `rip0000bb_plume_c_altra`');
-  ok('d. il marcatore è stato tolto', !fs.existsSync(path.join(DC, 'aggiornamenti/copie/.ripristino-in-corso.json')));
+  ok('d. il marcatore è stato tolto', !fs.existsSync(marcatoreC));
+  // Una tabella di lavoro che non si cancella (un vincolo di un'altra tabella la tiene): resta nel marcatore, il ripristino
+  // dopo la dice e la tiene nel suo marcatore, e si toglie quando il vincolo non c'è più.
+  esegui(DC, 'CREATE TABLE `rip0000cc_plume_c_padre` (`id` int NOT NULL, PRIMARY KEY (`id`)) ENGINE=InnoDB');
+  esegui(DC, 'CREATE TABLE `rf_figlio` (`id` int NOT NULL, `p` int, PRIMARY KEY (`id`), CONSTRAINT `fk_rf_figlio` FOREIGN KEY (`p`) REFERENCES `rip0000cc_plume_c_padre` (`id`)) ENGINE=InnoDB');
+  fs.writeFileSync(marcatoreC, JSON.stringify({ appoggio: ['rip0000cc_plume_c_padre'], parcheggio: [], prefisso: 'plume_c_', quando: '2026-11-04 10:00:00' }));
+  await vai(c, BC, '/admin/copia-sito.php');
+  ok('d. una tabella di lavoro che non si cancella resta, e resta nel marcatore', tabelle(DC, 'rip0000cc').length === 1 && fs.existsSync(marcatoreC) && fs.readFileSync(marcatoreC, 'utf8').includes('rip0000cc_plume_c_padre'));
+  metti(DC, zipA);
+  r = await ripristina(c, BC, copiaA, true);
+  ok('d. il ripristino dopo riesce, lo dice, e la tabella resta nel marcatore (non si perde)', r.ok && /ATTENZIONE: 1 tabelle di lavoro di un ripristino interrotto non si sono cancellate/.test(r.log) && tabelle(DC, 'rip0000cc').length === 1 && fs.existsSync(marcatoreC) && fs.readFileSync(marcatoreC, 'utf8').includes('rip0000cc_plume_c_padre') && tabelle(DC, 'vec').length === 0, (r.log.match(/ATTENZIONE[^\n]*/) || [''])[0]);
+  esegui(DC, 'DROP TABLE `rf_figlio`');
+  await vai(c, BC, '/admin/copia-sito.php');
+  flashC = (await c.locator('.flash').allInnerTexts()).join('\n');
+  ok('d. senza il vincolo, aprendo la pagina la tabella si toglie e il marcatore sparisce', /tolte: 1/.test(flashC) && tabelle(DC, 'rip0000cc').length === 0 && !fs.existsSync(marcatoreC), flashC.slice(0, 160));
 
   // ---- e. Due installazioni nello stesso database (A cms_ e B2 cms_b_): B2 intatta. E il rientro con un altro amministratore.
   const impB0 = impronte(DB2, 'cms_b_');
@@ -248,20 +270,74 @@ let br;
   r = await ripristina(a, BA, path.basename(zipF));
   ok('i. INSERT con una funzione (NOW()): rifiutata, database intatto', r.ko && /non scrive mai nelle copie/.test(r.log) && impronte(DA, 'cms_') === impA0 && impostazioni(DA, 'cms_') === setA0);
 
+  // ---- j. Una copia non firmata con una CREATE che lega una tabella di questo sito a una dell'altra installazione (REFERENCES),
+  // o la monta sopra (ENGINE=MERGE UNION=): rifiutata prima dello scambio. Le stesse parole dentro un COMMENT (fra apici) passano.
+  const zipJ = modificaZip(zipA, path.join(OUT, 'copia-20261104-000005-vincolo.zip'), [['\\) ENGINE=', ', `b_user` int DEFAULT 1, KEY `b_user` (`b_user`), CONSTRAINT `fk_rf` FOREIGN KEY (`b_user`) REFERENCES `cms_b_users` (`id`) ON DELETE CASCADE) ENGINE=', 'create:cms_pages']]);
+  ok('j. la copia modificata ha un vincolo REFERENCES verso cms_b_users nella CREATE di pages', /CREATE TABLE `cms_pages`[^\n]*REFERENCES `cms_b_users`/.test(createDi(zipJ)));
+  const vincoli = () => uno(DA, "SELECT COUNT(*) FROM information_schema.REFERENTIAL_CONSTRAINTS WHERE CONSTRAINT_SCHEMA = DATABASE() AND REFERENCED_TABLE_NAME = 'cms_b_users'");
+  metti(DA, zipJ);
+  r = await ripristina(a, BA, path.basename(zipJ));
+  ok('j. CREATE con REFERENCES: la copia è rifiutata prima dello scambio, e il pannello dice la parola e la tabella', r.ko && /non scrive mai nelle copie/.test(r.log) && /REFERENCES/.test(r.log) && /tabella pages/.test(r.log) && /il sito è come prima/.test(r.log), (r.log.match(/Motivo:[^\n]*/) || [''])[0].slice(0, 220));
+  ok('j. nessun vincolo verso cms_b_users nel database, A e B2 intatti, niente appoggio', vincoli() === '0' && impronte(DA, 'cms_') === impA0 && impronte(DB2, 'cms_b_') === impB0 && tabelle(DA, 'rip').length === 0, vincoli());
+  const zipU = modificaZip(zipA, path.join(OUT, 'copia-20261104-000006-union.zip'), [['ENGINE=InnoDB', 'ENGINE=MERGE UNION=(`cms_b_users`) INSERT_METHOD=LAST', 'create:cms_pages']]);
+  metti(DA, zipU);
+  r = await ripristina(a, BA, path.basename(zipU));
+  ok('j. CREATE con UNION= (una tabella MERGE sopra cms_b_users): rifiutata, database intatto', r.ko && /non scrive mai nelle copie/.test(r.log) && /UNION=/.test(r.log) && impronte(DA, 'cms_') === impA0 && tabelle(DA, 'rip').length === 0, (r.log.match(/Motivo:[^\n]*/) || [''])[0].slice(0, 160));
+  const zipK = modificaZip(zipA, path.join(OUT, 'copia-20261104-000007-commento.zip'), [['(`id` int(?:\\(\\d+\\))? NOT NULL AUTO_INCREMENT),', "\\1 COMMENT 'con references, select e union= dentro',", 'create:cms_pages']]);
+  ok('j. la copia con le stesse parole in un COMMENT ha la CREATE di pages con il commento', /CREATE TABLE `cms_pages`[^\n]*COMMENT 'con references, select e union= dentro'/.test(createDi(zipK)));
+  metti(DA, zipK);
+  r = await ripristina(a, BA, path.basename(zipK));
+  ok('j. le stesse parole fra apici (un COMMENT di colonna) non fermano il ripristino: riesce', r.ok && !/ERRORE/.test(r.log), r.titolo);
+
+  // ---- s. Lo snapshot degli Aggiornamenti passa dallo stesso motore: con il database rifiutato niente cambia, nemmeno i file.
+  await vai(a, BA, '/admin/aggiornamenti.php');
+  await Promise.all([a.waitForNavigation(), a.click('button:has-text("Crea uno snapshot adesso")')]);
+  const snapId = ((await a.locator('.flash').first().innerText()).match(/Snapshot creato: (\S+) \(/) || [])[1] || '';
+  const snapDir = path.join(DA, 'aggiornamenti/snapshot', snapId || 'nessuno');
+  ok('s. lo snapshot manuale è stato creato', snapId !== '' && fs.existsSync(path.join(snapDir, 'db.sql.gz')), snapId);
+  // Un file nello snapshot (come quelli che un pacchetto sta per sovrascrivere), e la CREATE di pages che non può funzionare.
+  fs.mkdirSync(path.join(snapDir, 'files/uploads'), { recursive: true });
+  fs.writeFileSync(path.join(snapDir, 'files/uploads/rf-snap.txt'), 'vecchio');
+  const meta = JSON.parse(fs.readFileSync(path.join(snapDir, 'meta.json'), 'utf8')); meta.files = [{ dest: 'uploads/rf-snap.txt', esisteva: true }];
+  fs.writeFileSync(path.join(snapDir, 'meta.json'), JSON.stringify(meta));
+  fs.writeFileSync(path.join(DA, 'uploads/rf-snap.txt'), 'nuovo');
+  fs.copyFileSync(path.join(snapDir, 'db.sql.gz'), path.join(OUT, 'snapshot-buono.sql.gz'));
+  execFileSync('python3', ['-I', '-c', 'import sys,gzip\nd = gzip.decompress(open(sys.argv[1], "rb").read()).decode("utf8")\nd = "\\n".join(r.replace("ENGINE=InnoDB", "ENGINE=NonEsiste") if r.startswith("CREATE TABLE `cms_pages`") else r for r in d.split("\\n"))\nopen(sys.argv[1], "wb").write(gzip.compress(d.encode("utf8")))', path.join(snapDir, 'db.sql.gz')]);
+  const ripristinaSnapshot = async () => {
+    await vai(a, BA, '/admin/aggiornamenti.php');
+    const f = a.locator('form', { has: a.locator(`input[name=id][value="${snapId}"]`) }).filter({ has: a.locator('input[name=action][value=ripristina]') });
+    await Promise.all([a.waitForNavigation({ timeout: 600000 }), f.locator('button:has-text("Ripristina")').click()]);
+    return { titolo: await a.locator('.agg-esito strong').first().innerText().catch(() => ''), log: await a.locator('.agg-esito .agg-log').first().innerText().catch(() => ''), flash: (await a.locator('.flash').allInnerTexts()).join('\n') };
+  };
+  const impS0 = impronte(DA, 'cms_');
+  let rs2 = await ripristinaSnapshot();
+  ok('s. snapshot con una CREATE che non può funzionare: "Ripristino NON fatto", il registro dice il motivo', /Ripristino NON fatto dallo snapshot/.test(rs2.titolo) && /Database NON ripristinato/.test(rs2.log) && /motore di tabelle/.test(rs2.log), rs2.titolo);
+  ok('s. il file dello snapshot NON è stato rimesso (database e file restano com\'erano), e il messaggio lo dice', fs.readFileSync(path.join(DA, 'uploads/rf-snap.txt'), 'utf8') === 'nuovo' && /File dello snapshot non toccati \(1\)/.test(rs2.log) && /database e file sono rimasti com'erano/.test(rs2.flash) && impronte(DA, 'cms_') === impS0 && tabelle(DA, 'rip').length === 0, rs2.flash.slice(0, 160));
+  fs.copyFileSync(path.join(OUT, 'snapshot-buono.sql.gz'), path.join(snapDir, 'db.sql.gz'));
+  rs2 = await ripristinaSnapshot();
+  ok('s. lo stesso snapshot con il database buono: ripristinato, il file rimesso, nessuna tabella di lavoro', /^Ripristino dallo snapshot/.test(rs2.titolo) && /Database ripristinato/.test(rs2.log) && /File rimesso: uploads\/rf-snap\.txt/.test(rs2.log) && fs.readFileSync(path.join(DA, 'uploads/rf-snap.txt'), 'utf8') === 'vecchio' && tabelle(DA, 'rip').length === 0 && tabelle(DA, 'vec').length === 0, rs2.titolo);
+  fs.unlinkSync(path.join(DA, 'uploads/rf-snap.txt'));
+  ok('s. B2 intatta anche dopo lo snapshot (che ha tutto il database): passano solo le tabelle del prefisso', impronte(DB2, 'cms_b_') === impB0);
+
   // ---- f. La pagina di soccorso su D.
   const d = await pagina(br, err); await entraPannello(d, BD, UTENTE, PASSWORD);
   const copiaD = await preparaCopia(d, BD);
   const zipD = path.join(DD, 'aggiornamenti/copie', copiaD);
   const anon = await request.newContext();
   const senzaPercorsi = t => !t.includes(DD) && !/\/home\/|\/tmp\/|\/var\//.test(t) && !/Fatal error|Stack trace|PDOException/.test(t);
-  const nomeDb = (fs.readFileSync(path.join(DD, 'includes/config.local.php'), 'utf8').match(/DB_NAME', '([^']+)'/) || [])[1] || '';
+  const confD = fs.readFileSync(path.join(DD, 'includes/config.local.php'), 'utf8');
+  const nomeDb = (confD.match(/DB_NAME', '([^']+)'/) || [])[1] || '';
+  const utenteDb = (confD.match(/DB_USER', '([^']+)'/) || [])[1] || '';
+  /** I dati che a chi non è entrato non devono uscire: nome del database, utente, prefisso e nomi delle tabelle. */
+  const senzaDati = t => nomeDb !== '' && utenteDb !== '' && !t.includes(nomeDb) && !t.includes(utenteDb) && !/cms_users|cms_settings|prefisso <b>/.test(t);
+  const soccorsoTxt = path.join(DD, 'aggiornamenti/soccorso.txt');
   const nD0 = tabelle(DD, 'cms_').length;
   esegui(DD, 'DROP TABLE `cms_users`');
   let rs = await anon.get(BD + '/admin/');
   let ts = await rs.text();
   ok('f. senza la tabella users /admin/ risponde 503 con la pagina di soccorso, in parole semplici', rs.status() === 503 && /Il database del sito è vuoto o incompleto/.test(ts) && /manca la tabella degli utenti/.test(ts) && ts.includes('data-caso="tabelle"') && /Rimettere il sito da una copia/.test(ts) && /phpMyAdmin/.test(ts), rs.status());
-  ok('f. la pagina dice il database e il prefisso, mai la password, niente percorsi del server né tracce', ts.includes(nomeDb) && ts.includes('cms_users') && !ts.includes(process.env.DBPASS || '§§') && senzaPercorsi(ts) && /Cache-Control: no-store/i.test(Object.entries(rs.headers()).map(x => x.join(': ')).join('\n')));
-  ok('f. senza aggiornamenti/soccorso.txt niente elenco delle copie, e la pagina spiega come averlo', !ts.includes('soccorso-copie') && /soccorso\.txt/.test(ts) && !ts.includes(copiaD));
+  ok('f. a chi non è entrato la pagina non dice il nome del database, l\'utente né il prefisso; mai la password, niente percorsi del server né tracce', senzaDati(ts) && !ts.includes(process.env.DBPASS || '§§') && senzaPercorsi(ts) && /Cache-Control: no-store/i.test(Object.entries(rs.headers()).map(x => x.join(': ')).join('\n')), { db: ts.includes(nomeDb), utente: ts.includes(utenteDb) });
+  ok('f. senza aggiornamenti/soccorso.txt niente elenco delle copie, e la pagina spiega come averlo (con i dati del database)', !ts.includes('soccorso-copie') && /soccorso\.txt/.test(ts) && !ts.includes(copiaD) && /nome del database, l'utente e il prefisso/.test(ts));
   rs = await anon.get(BD + '/admin/login.php'); ts = await rs.text();
   ok('f. anche il login risponde con la pagina di soccorso (503), non con "Errore temporaneo"', rs.status() === 503 && /Il database del sito è vuoto/.test(ts) && !/Errore temporaneo/.test(ts));
   rs = await anon.get(BD + '/admin/editor-api.php?azione=x', { headers: { Accept: 'application/json' } }); ts = await rs.text();
@@ -278,10 +354,11 @@ let br;
   rs = await anon.get(BD + '/admin/'); ts = await rs.text();
   ok('f. senza users e settings la pagina di soccorso lo dice (manca la tabella degli utenti e quella delle impostazioni)', rs.status() === 503 && ts.includes('data-caso="tabelle"') && /e quella delle impostazioni/.test(ts) && senzaPercorsi(ts));
   ok('f. nemmeno adesso è nata una tabella', tabelle(DD, 'cms_').length === nD0 - 2, tabelle(DD, 'cms_').length);
-  fs.writeFileSync(path.join(DD, 'aggiornamenti/soccorso.txt'), '');
+  fs.writeFileSync(soccorsoTxt, '');
   await d.goto(BD + '/admin/', { waitUntil: 'networkidle' });
   ts = await d.locator('body').innerText();
   ok('f. con aggiornamenti/soccorso.txt la pagina elenca le copie sul server: nome, data, etichetta, peso, sito d\'origine', await d.locator('#soccorso-copie').count() === 1 && ts.includes(copiaD) && /manuale/.test(ts) && /KB|MB/.test(ts) && ts.includes(BD), ts.slice(0, 80));
+  ok('f. con il file escono anche il nome del database, il prefisso e le tabelle che mancano, mai la password', ts.includes(nomeDb) && /prefisso cms_/.test(ts) && /cms_users/.test(ts) && /cms_settings/.test(ts) && !ts.includes(process.env.DBPASS || '§§'));
   ok('f. anche con l\'elenco: nessun pulsante, nessun link alle copie, nessun percorso', await d.locator('#soccorso a, #soccorso button, #soccorso form').count() === 0 && senzaPercorsi(await d.content()));
   await d.setViewportSize({ width: 390, height: 844 });
   await d.goto(BD + '/admin/', { waitUntil: 'networkidle' });
@@ -308,14 +385,14 @@ let br;
   ok('f. dopo l\'importazione /admin/ torna a rimandare al login', [301, 302, 303].includes(rs.status()) && /login/.test(rs.headers()['location'] || ''), rs.status());
   const d2 = await pagina(br, err);
   await entraPannello(d2, BD, UTENTE, PASSWORD);
-  ok('f. il login funziona e la dashboard si apre; soccorso.txt si è cancellato da solo', /index\.php/.test(d2.url()) && !(await d2.content()).includes('Fatal') && !fs.existsSync(path.join(DD, 'aggiornamenti/soccorso.txt')), d2.url());
+  ok('f. il login funziona e la dashboard si apre; soccorso.txt si è cancellato da solo', /index\.php/.test(d2.url()) && !(await d2.content()).includes('Fatal') && !fs.existsSync(soccorsoTxt), d2.url());
   await d.goto(BD + '/admin/index.php', { waitUntil: 'networkidle' });
   ok('f. anche la sessione di prima torna a funzionare (gli utenti sono quelli della copia)', /index\.php/.test(d.url()) && /Dashboard/.test(await d.locator('body').innerText()), d.url());
   await d2.context().close();
   // Senza settings (users c'è).
   esegui(DD, 'DROP TABLE `cms_settings`');
   rs = await anon.get(BD + '/admin/'); ts = await rs.text();
-  ok('f. senza la sola tabella settings: la pagina di soccorso dice che mancano le impostazioni', rs.status() === 503 && ts.includes('data-caso="settings"') && /manca la tabella delle impostazioni/.test(ts) && senzaPercorsi(ts));
+  ok('f. senza la sola tabella settings: la pagina di soccorso dice che mancano le impostazioni (senza i dati del database)', rs.status() === 503 && ts.includes('data-caso="settings"') && /manca la tabella delle impostazioni/.test(ts) && senzaPercorsi(ts) && senzaDati(ts));
   importaDump(DD, zipD);
   rs = await anon.get(BD + '/admin/login.php');
   ok('f. dopo l\'importazione il login torna', rs.status() === 200 && /Accesso al pannello/.test(await rs.text()));
@@ -324,10 +401,13 @@ let br;
   fs.writeFileSync(conf, conf0.replace(/define\('DB_PASS', '[^']*'\)/, "define('DB_PASS', 'sbagliata-rf')"));
   for (let i = 0; i < 40; i++) { rs = await anon.get(BD + '/admin/'); if (rs.status() === 503) break; await dorme(500); } // opcache di php -S rilegge il file dopo 2 secondi
   ts = await rs.text();
+  ok('f. con la password del database sbagliata: "non raggiunge il database" e il rimando al config, mai la password; a chi non è entrato nemmeno nome del database, utente e risposta del server', rs.status() === 503 && ts.includes('data-caso="connessione"') && /non raggiunge il database/.test(ts) && /config\.local\.php/.test(ts) && !ts.includes('sbagliata-rf') && senzaDati(ts) && !/Access denied|codice 1045/.test(ts) && senzaPercorsi(ts), rs.status());
+  fs.writeFileSync(soccorsoTxt, '');
+  rs = await anon.get(BD + '/admin/'); ts = await rs.text();
+  ok('f. con il file soccorso.txt la stessa pagina dice il nome del database, l\'utente e la risposta del server (codice 1045), mai la password', rs.status() === 503 && ts.includes(nomeDb) && ts.includes(utenteDb) && /codice 1045/.test(ts) && !ts.includes('sbagliata-rf') && !ts.includes(process.env.DBPASS || '§§'), rs.status());
   fs.writeFileSync(conf, conf0);
-  ok('f. con la password del database sbagliata: "non raggiunge il database", nome del database e utente, mai la password', rs.status() === 503 && ts.includes('data-caso="connessione"') && /non raggiunge il database/.test(ts) && ts.includes(nomeDb) && /config\.local\.php/.test(ts) && !ts.includes('sbagliata-rf') && senzaPercorsi(ts), rs.status());
   for (let i = 0; i < 40; i++) { rs = await anon.get(BD + '/admin/login.php'); if (rs.status() === 200) break; await dorme(500); } // opcache rilegge il config dopo 2 secondi
-  ok('f. con il config rimesso il login torna', rs.status() === 200 && /Accesso al pannello/.test(await rs.text()), rs.status());
+  ok('f. con il config rimesso il login torna, e soccorso.txt si è cancellato da solo', rs.status() === 200 && /Accesso al pannello/.test(await rs.text()) && !fs.existsSync(soccorsoTxt), rs.status());
   await anon.dispose();
 
   // ---- g. Fra server: la copia di A (MySQL 8) su MariaDB e su MySQL 5.7; una copia di MariaDB su MySQL 8 (C).
@@ -368,21 +448,29 @@ let br;
     await dorme(6000);
     const secondo = await c.request.post(BC + '/admin/copia-sito.php', { form: { _csrf: tok, azione: 'ripristina', file: copiaA, conferma: '1' } });
     ok('un secondo ripristino mentre uno è in corso: rifiutato ("un altro ripristino è già in corso"), senza toccare niente', /un altro ripristino è già in corso/.test(await secondo.text()));
-    ok('h. a metà ripristino ci sono tabelle di appoggio e il marcatore', tabelle(DC, 'rip').length > 0 && fs.existsSync(path.join(DC, 'aggiornamenti/copie/.ripristino-in-corso.json')), tabelle(DC, 'rip').length);
+    // E nemmeno un aggiornamento parte (agg_applica prende lo stesso blocco): il pacchetto resta in attesa, niente snapshot.
+    fs.mkdirSync(path.join(DC, 'aggiornamenti/pacchetti'), { recursive: true });
+    fs.writeFileSync(path.join(DC, 'aggiornamenti/pacchetti/rf-finto.json'), JSON.stringify({ id: 'rf-finto', nome: 'finto rf', stato: 'attesa', applica_dal: '', snapshot: null }));
+    const agg = php(DC, `require_once '${DC}/includes/aggiornamenti.php'; $r = agg_applica('rf-finto'); echo json_encode([$r['ok'], $r['riassunto'], agg_leggi_stato('rf-finto')['stato']], JSON_UNESCAPED_UNICODE);`);
+    fs.unlinkSync(path.join(DC, 'aggiornamenti/pacchetti/rf-finto.json'));
+    ok('un aggiornamento mentre il ripristino è in corso: non parte ("un ripristino da Copia del sito è in corso"), il pacchetto resta in attesa', /^\[false,"un ripristino da Copia del sito è in corso[^"]*","attesa"\]/.test(agg), agg.slice(0, 200));
+    ok('h. a metà ripristino ci sono tabelle di appoggio e il marcatore', tabelle(DC, 'rip').length > 0 && fs.existsSync(marcatoreC), tabelle(DC, 'rip').length);
     const pids = pidsServer(portaC);
     for (const pid of pids) { try { process.kill(pid, 'SIGKILL'); } catch (e) {} }
     await lento;
     ok('h. il server php di C ucciso a metà ripristino', pids.length > 0 && await aspettaServer(BC, true), pids);
-    ok('h. il sito è intatto: stesse tabelle e stesse impronte di prima; appoggio e marcatore rimasti', impronte(DC, 'plume_c_') === primaH.imp && tabelle(DC, 'plume_c_').length === primaH.tab && tabelle(DC, 'rip').length > 0 && fs.existsSync(path.join(DC, 'aggiornamenti/copie/.ripristino-in-corso.json')));
+    ok('h. il sito è intatto: stesse tabelle e stesse impronte di prima; appoggio e marcatore rimasti', impronte(DC, 'plume_c_') === primaH.imp && tabelle(DC, 'plume_c_').length === primaH.tab && tabelle(DC, 'rip').length > 0 && fs.existsSync(marcatoreC));
     fs.writeFileSync(confC, confC0);
     const figlio = spawn('php', ['-S', '127.0.0.1:' + portaC, '-t', DC, path.join(__dirname, 'router-php-s.php')], { cwd: DC, env: { ...process.env, PHP_CLI_SERVER_WORKERS: '4', CMS_CARTELLA: '' }, detached: true, stdio: 'ignore' });
     figlio.unref();
     ok('h. server riacceso: il sito risponde', await aspettaServer(BC) && (await homeTesto(c, BC)).status === 200);
     await c.goto(BC + '/admin/copia-sito.php', { waitUntil: 'networkidle' });
-    if (c.url().includes('login.php')) await entraPannello(c, BC, UTENTE, PASSWORD); // la sessione di prima di solito vale ancora
+    if (c.url().includes('login.php')) { await entraPannello(c, BC, UTENTE, PASSWORD); await c.goto(BC + '/admin/copia-sito.php', { waitUntil: 'networkidle' }); } // la sessione di prima di solito vale ancora
+    const flashH = (await c.locator('.flash').allInnerTexts()).join('\n');
+    ok('h. aprendo Copia del sito le tabelle di appoggio rimaste si tolgono, la pagina lo dice, il marcatore sparisce', /Tabelle di lavoro rimaste da un ripristino interrotto, tolte: \d+/.test(flashH) && tabelle(DC, 'rip').length === 0 && !fs.existsSync(marcatoreC), flashH.slice(0, 160));
     metti(DC, zipA);
     r = await ripristina(c, BC, copiaA, true);
-    ok('h. il ripristino dopo toglie le tabelle di appoggio rimaste e riesce', r.ok && /Tabelle di lavoro rimaste da un ripristino interrotto, tolte: \d+/.test(r.log) && tabelle(DC, 'rip').length === 0 && tabelle(DC, 'vec').length === 0 && !fs.existsSync(path.join(DC, 'aggiornamenti/copie/.ripristino-in-corso.json')), (r.log.match(/Tabelle di lavoro[^\n]*/) || [''])[0]);
+    ok('h. il ripristino dopo riesce, senza tabelle di lavoro rimaste', r.ok && tabelle(DC, 'rip').length === 0 && tabelle(DC, 'vec').length === 0 && !fs.existsSync(marcatoreC), r.titolo);
   } finally {
     fs.writeFileSync(confC, confC0);
   }
