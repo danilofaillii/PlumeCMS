@@ -265,6 +265,11 @@ function kit_costruisci(string $kitId, string $sito, string $descrizione, string
         if (!$suMisura) foreach (array_keys(kit_immagini()) as $n) $creati[] = ['t' => 'immagine', 'file' => 'kit/disegno-' . $n . '.svg', 'nome' => 'disegno ' . $n];
         // 1.7.0: le foto finte del sito su misura, nello stesso registro.
         foreach ((array)($kitDati['segnaposto'] ?? []) as $f) $creati[] = ['t' => 'immagine', 'file' => (string)$f, 'nome' => basename((string)$f)];
+        // 2.27.0: la città del sito su misura diventa la sede principale (includes/sedi.php): la Mappa dei Contatti legge da lì.
+        if ($suMisura && !empty($kitDati['sede']['citta'])) {
+            require_once __DIR__ . '/sedi.php';
+            try { if (sedi_da_su_misura((array)$kitDati['sede'])) $log[] = 'sede principale: Sede di ' . $kitDati['sede']['citta']; } catch (Throwable $e) { error_log('kit su-misura, sede: ' . $e->getMessage()); }
+        }
     } else {
         if ($pagina('Home', 'home', kit_vuoto_home($sito, $descrizione))) $log[] = 'pagina Home (impostata come home)';
         // La pagina del blog: l'indirizzo esiste perché esiste la pagina; l'elenco degli articoli lo disegna il sito.

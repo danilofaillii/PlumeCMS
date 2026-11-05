@@ -139,9 +139,17 @@ function sito_jsonld_servizio(array $c): array {
             'provider' => ['@id' => seo_jsonld_id('servizio')], 'instructor' => ['@id' => seo_jsonld_id('persona')], 'inLanguage' => 'it-IT', 'offers' => $offerta,
             'hasCourseInstance' => array_filter(['@type' => 'CourseInstance', 'courseMode' => $modo, 'courseWorkload' => $s['durata'] ?? null, 'instructor' => ['@id' => seo_jsonld_id('persona')]])]);
     }
+    // 2.27.0: con le sedi, l'area servita è l'unione delle loro zone (City e AdministrativeArea); senza, l'impostazione di sempre.
+    $areaSedi = function_exists('sedi_area_servita') ? sedi_area_servita() : [];
     return array_filter(['@type' => 'Service', '@id' => "$u#servizio", 'name' => $c['titolo'], 'description' => $c['tldr'] ?: $c['seo']['descrizione'], 'url' => $u,
         'provider' => ['@id' => seo_jsonld_id('servizio')], 'serviceType' => (string)cms_impostazione('servizio_tipo', '') ?: null,
-        'areaServed' => ($zona = (string)cms_impostazione('servizio_zona', '')) !== '' ? ['@type' => 'Country', 'name' => $zona] : null, 'offers' => $offerta]);
+        'areaServed' => $areaSedi ?: (($zona = (string)cms_impostazione('servizio_zona', '')) !== '' ? ['@type' => 'Country', 'name' => $zona] : null), 'offers' => $offerta]);
+}
+
+/** 2.27.0: i nodi in più della WebPage di una pagina della sede (mainEntity = la sua LocalBusiness). Vuoto per tutte le altre pagine. */
+function sito_jsonld_extra_sede(array $c): array {
+    if (($c['fonte'] ?? '') !== 'pages' || !function_exists('sedi_jsonld_pagina_extra')) return [];
+    return sedi_jsonld_pagina_extra((int)($c['riga']['id'] ?? 0));
 }
 
 function sito_jsonld_termine(array $c): array {

@@ -2,6 +2,36 @@
 
 Il prodotto si chiama **plumeCMS** (nome scelto il 26 ottobre 2026; prima, per poche ore, "CarbonaraCMS", e ancora prima il provvisorio "Officina": gli zip vecchi si chiamavano `officina-*` e `carbonaracms-*`).
 
+## 2.27.0 (5 novembre 2026) - Le sedi e la SEO geografica
+
+- **Le sedi dell'attività** (SEO e AEO > Sedi, solo amministratore; richiesta di Danilo: più sedi fin dall'inizio, anche per chi ne ha
+  una sola). Ogni sede ha nome, tipo di attività da un elenco di 48 voci (ognuna con la categoria che Google riconosce) oppure
+  "Altro, lo scrivo io" (il testo esce con la prima lettera maiuscola; verso Google diventa un'attività generica), via, CAP,
+  città, provincia, paese, coordinate, telefono, email, fascia di prezzo, zona servita (fino a 30 righe), orari nello stesso
+  formato del widget Orari di apertura, ferie, link alla scheda Google e "lascia una recensione" (solo https di google.com,
+  g.page, maps.app.goo.gl), foto, descrizione, principale (una sola), pagina. I dati stanno nel gruppo `sedi` della
+  configurazione SEO: niente tabelle nuove (`includes/sedi.php`, `includes/sedi-tipi.php`, `admin/sedi.php`).
+- **Le coordinate dall'indirizzo**: "Cerca sulla mappa" le chiede dal server al servizio di OpenStreetMap (Nominatim, User-Agent
+  `plumeCMS/<versione> (<sito>)`), con i rifiuti degli indirizzi interni come per i webhook; una mini mappa (tessere di
+  OpenStreetMap, senza librerie) mostra il segnaposto, un clic lo sposta e ricalcola latitudine e longitudine, + e - lo zoom.
+  Le tessere si chiedono solo quando le coordinate ci sono. Se la ricerca non riesce, le coordinate si scrivono a mano.
+- **Dati per Google**: con almeno una sede, in ogni pagina l'Organizzazione ha `location` con una LocalBusiness (o il sottotipo)
+  per sede: `@id`, nome, indirizzo a campi, coordinate, telefono, email, orari, fascia di prezzo, zona servita (City e
+  AdministrativeArea), link alla mappa, foto, `sameAs`, `url` della pagina della sede, `parentOrganization`. Nella pagina di una
+  sede la sua LocalBusiness è la `mainEntity` della WebPage; i servizi prendono `areaServed` dall'unione delle zone delle sedi.
+  Nei titoli c'è `%citta%` (la città della sede principale; senza sedi sparisce con il suo separatore). Senza sedi il sito esce
+  identico a prima, al byte.
+- **La pagina della sede**: una pagina vera dell'editor, creata dal pannello (casella "Crea la pagina della sede" o pulsante
+  "Crea la pagina"), con apertura, Dati dell'attività, Mappa, Orari, descrizione e Barra contatti letti dalla sede; sta nella
+  sitemap come ogni pagina; eliminare la sede non la cancella (lo dice un avviso).
+- **Widget nuovi** (111 in tutto): **Sedi** (le sedi in schede, tutte o scelte, griglia o elenco, con nome, tipo, indirizzo,
+  telefono, email, "Aperto ora", Come arrivare, Lascia una recensione, La sede, e a scelta una mappa in ogni scheda) e **Dati
+  dell'attività** (una sede, per il footer e la pagina Contatti, con gli interruttori su cosa mostrare). **Mappa, Orari di apertura
+  e Barra contatti** hanno la tendina "Dati dalla sede": con una sede scelta prendono indirizzo, coordinate, orari, telefono ed
+  email da lì (e il widget Orari non ripete i dati per Google); con "Nessuna" tutto come prima.
+- **Sito su misura**: la città diventa la sede principale ("Sede di <città>", tipo dall'attività) e la Mappa dei Contatti legge
+  "dalla sede principale". Manuale d'uso capitolo 23, tecnico capitolo 44, `prove/prova-sedi.js`, gruppo 42 degli attacchi.
+
 ## 2.26.0 (5 novembre 2026) - Barre a confronto
 
 - **Barre a confronto**, la sedicesima infografica disegnata (gruppo Infografiche dell'editor, `ig_confronto`: `ig_barre` è già Barre di avanzamento): da 2 a 8 voci con

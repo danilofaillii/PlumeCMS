@@ -310,6 +310,10 @@ function ewx_icona_html(array $v, string $classe = ''): string {
     return '<span class="ew-ic ew-ic-' . $vista . ' ew-ic-' . $forma . ($classe !== '' ? ' ' . $classe : '') . '">' . $svg . '</span>';
 }
 
+// 2.27.0: le sedi (includes/sedi.php): Mappa, Orari e Barra contatti hanno la tendina "Dati dalla sede", i widget Sedi e Dati
+// dell'attività stanno in editor-widget-sedi.php. Le funzioni servono già alle definizioni, quindi il file si carica prima delle parti.
+require_once __DIR__ . '/sedi.php';
+
 // Le definizioni e i disegni, in tre file per argomento.
 require_once __DIR__ . '/editor-widget-extra-a.php';
 require_once __DIR__ . '/editor-widget-extra-b.php';
@@ -317,3 +321,4 @@ require_once __DIR__ . '/editor-widget-extra-c.php';
 require_once __DIR__ . '/editor-widget-extra-d.php'; // 1.10.0: orari, barra contatti, recensioni, prima e dopo, squadra, slider, eventi
 require_once __DIR__ . '/editor-widget-extra-e.php'; // 2.1: menu del ristorante, richiesta di prenotazione, galleria con filtri, scorrevole, contenuto esterno
 require_once __DIR__ . '/editor-widget-scorri.php'; // 2.25.0: Scorri di lato (cinque disposizioni, scena ferma che scorre di lato)
+require_once __DIR__ . '/editor-widget-sedi.php'; // 2.27.0: Sedi e Dati dell'attività (le sedi di includes/sedi.php)

@@ -2402,6 +2402,105 @@ echo json_encode($o);
     pulisci40();
   } else console.log('--  passo Email da un modello: saltata (serve CMS_DIR)');
 
+  // === 42. (2.27.0) Le sedi (admin/sedi.php, includes/sedi.php, seo-api.php sedi_cerca). Codice in ogni campo (anche il tipo
+  // scritto a mano): i tag si tolgono al salvataggio (sedi_testo) e quello che resta esce come testo nel pannello, nel JSON-LD
+  // (JSON_HEX_TAG), nella pagina della sede e nei widget: niente attributi on*, niente script, niente finestre. javascript: e host non di Google nei link rifiutati; coordinate 1e99, NaN e testo rifiutate;
+  // al massimo 50 sedi e 30 righe di zona; redattore, senza token e da un altro sito: niente; il servizio delle coordinate finto
+  // che risponde HTML cattivo non entra nel pannello; CMS_NOMINATIM_URL verso 127.0.0.1 o una rete interna rifiutato. Serve CMS_DIR.
+  if (DIR && fs.existsSync(path.join(__dirname, '..', 'prove', 'sedi-cli.php'))) {
+    const { execFileSync } = require('child_process');
+    const cli42 = (...a) => { try { return JSON.parse(execFileSync('php', [path.join(__dirname, '..', 'prove', 'sedi-cli.php'), DIR, ...a.map(String)], { encoding: 'utf8', maxBuffer: 64 * 1024 * 1024 }).trim().split('\n').pop()); } catch (e) { return { errore_cli: String(e.message).slice(0, 200) }; } };
+    const primaDi42 = cli42('elenco');
+    const ripristina42 = () => { cli42('azzera'); for (const s of Array.isArray(primaDi42) ? primaDi42 : []) cli42('salva', JSON.stringify(Object.assign({}, s, { zona: (s.zona || []).join('\n'), chiusure: (s.chiusure || []).map(c => c.dal + ' - ' + c.al + ': ' + c.motivo).join('\n'), principale: s.principale ? '1' : '' }))); };
+    cli42('azzera');
+    const CATTIVO = '<img src=x onerror=alert(42)>', SCRIPT = '</script><script>alert(42)</script>';
+    const ORIG42 = { 'Origin': BASE.replace(/(https?:\/\/[^/]+).*/, '$1') };
+    const t42 = await tokenDi(admin.p, ADMIN + '/sedi.php');
+    const campi42 = (extra) => Object.assign({ _csrf: t42, azione: 'salva', id: '', 'sede[nome]': 'Sic42 ' + CATTIVO, 'sede[tipo]': 'altro', 'sede[tipo_testo]': 'centro ' + SCRIPT + CATTIVO, 'sede[via]': 'Via ' + CATTIVO, 'sede[cap]': '40125', 'sede[citta]': 'Bologna ' + SCRIPT,
+      'sede[provincia]': 'BO', 'sede[paese]': 'Italia', 'sede[lat]': '44.4949', 'sede[lng]': '11.3426', 'sede[telefono]': '+39 051 123456' + CATTIVO, 'sede[email]': 'sic42@esempio.it', 'sede[prezzo]': '\u20ac',
+      'sede[zona]': 'Bologna ' + CATTIVO + '\nImola', 'sede[orari][lun]': '9-13 ' + CATTIVO, 'sede[chiusure]': '2026-12-25: Natale ' + CATTIVO, 'sede[google_scheda]': 'https://maps.app.goo.gl/sic42', 'sede[google_recensione]': 'https://g.page/r/sic42/review',
+      'sede[descrizione]': 'Descrizione ' + SCRIPT + CATTIVO, 'sede[principale]': '1', crea_pagina: '1' }, extra || {});
+    const s1 = await admin.ctx.request.post(ADMIN + '/sedi.php', { form: campi42(), headers: ORIG42, maxRedirects: 0 });
+    const sedi42 = cli42('elenco');
+    const sic = Array.isArray(sedi42) ? sedi42.find(x => /^Sic42/.test(x.nome)) : null;
+    ok('2.27.0: la sede con codice in ogni campo si salva come testo: nome senza tag, tipo scritto senza tag e con la maiuscola, zona e orari puliti, pagina creata', [302, 303].includes(s1.status()) && !!sic && !/</.test(sic.nome + sic.tipo_testo + sic.via + sic.citta + sic.descrizione + sic.zona.join('') + sic.orari.lun) && /^Centro /.test(sic.tipo_testo) && sic.pagina > 0, sic ? [sic.nome, sic.tipo_testo, sic.citta] : s1.status());
+    await admin.p.goto(ADMIN + '/sedi.php', { waitUntil: 'networkidle' });
+    const pan42 = await admin.p.content();
+    ok('2.27.0: nel pannello Sedi il codice non c\'è più (tag tolti) e niente on*, niente script, niente finestre', !/<img src=x onerror/.test(pan42) && /Sic42/.test(pan42) && await admin.p.locator('img[onerror], svg[onload]').count() === 0 && !/<script>alert\(42\)/.test(pan42));
+    await admin.p.goto(ADMIN + '/sedi.php?modifica=' + encodeURIComponent(sic ? sic.id : 'x'), { waitUntil: 'networkidle' });
+    ok('2.27.0: il modulo di modifica riporta i valori come testo nei campi', await admin.p.locator('img[onerror]').count() === 0 && (await admin.p.inputValue('#sd-nome').catch(() => '')).startsWith('Sic42'));
+    // Il JSON-LD e la pagina della sede sul sito.
+    const sito42 = await browser.newContext();
+    const pg42 = await sito42.newPage();
+    const fin42 = []; pg42.on('dialog', d => { fin42.push(d.message()); d.dismiss().catch(() => {}); });
+    await pg42.goto(BASE + '/', { waitUntil: 'networkidle' });
+    const ldHome = await pg42.locator('script[type="application/ld+json"]').evaluateAll(l => l.map(s => s.textContent));
+    const loc42 = (() => { try { const g = JSON.parse(ldHome[0])['@graph']; const o = g.find(x => x['@id'] && /#organizzazione$/.test(x['@id'])); return o && o.location ? o.location : []; } catch (e) { return []; } })();
+    ok('2.27.0: il JSON-LD della home porta la sede senza codice (tag tolti, JSON_HEX_TAG: nessun </script> dentro lo script), LocalBusiness per il tipo scritto a mano', ldHome.length === 1 && !/<\/script/i.test(ldHome[0]) && !/<img|onerror/.test(ldHome[0]) && loc42.length === 1 && loc42[0]['@type'] === 'LocalBusiness' && /^Sic42/.test(loc42[0].name) && /^Descrizione/.test(loc42[0].description || '') && !/</.test(loc42[0].description) && fin42.length === 0, loc42[0] && [loc42[0]['@type'], loc42[0].name, loc42[0].description]);
+    const pagina42 = sic && sic.pagina ? cli42('sql', 'SELECT slug FROM {p}pages WHERE id = ' + (+sic.pagina)) : [];
+    const slug42 = Array.isArray(pagina42) && pagina42[0] ? pagina42[0].slug : '';
+    const rp42 = slug42 ? await pg42.goto(BASE + '/' + slug42 + '/', { waitUntil: 'networkidle' }) : null;
+    const html42 = rp42 ? await pg42.content() : '';
+    ok('2.27.0: la pagina della sede (slug pulito dal nome) si apre e mostra il codice come testo: niente on*, niente script, niente finestre', !!rp42 && rp42.status() === 200 && /^sic42/.test(slug42) && !/onerror=alert/.test(html42.replace(/&lt;img src=x onerror=alert\(42\)&gt;/g, '')) && await pg42.locator('img[onerror], svg[onload]').count() === 0 && fin42.length === 0 && (html42.match(/<script>alert\(42\)/g) || []).length === 0, [slug42, rp42 && rp42.status()]);
+    // I widget Sedi e Dati dell'attività con la sede cattiva (prove/pagina-sedi.php).
+    try { execFileSync('php', [path.join(__dirname, '..', 'prove', 'pagina-sedi.php'), DIR, sic ? sic.id : 'principale'], { encoding: 'utf8' }); } catch (e) { console.log('    pagina-sedi.php: ' + String(e.message).slice(0, 200)); }
+    const rw42 = await pg42.goto(BASE + '/prova-sedi/', { waitUntil: 'networkidle' });
+    const esame42 = await pg42.evaluate(() => ({ on: [...document.querySelectorAll('.ew-sede *, .ew-dati-attivita *, .ed-w-orari *, .ed-w-barra_contatti *')].filter(e => [...e.attributes].some(a => /^on/i.test(a.name))).length,
+      testo: document.body.innerText.includes('Sic42') && !document.body.innerHTML.includes('onerror=alert'), link: [...document.querySelectorAll('.ew-sede a, .ew-dati-attivita a, .ew-barra-contatti a')].map(a => a.getAttribute('href')).filter(u => /^\s*(javascript|data|vbscript):/i.test(u || '')) }));
+    ok('2.27.0: i widget Sedi, Dati dell\'attività, Orari e Barra con la sede cattiva: solo testo, niente on*, niente link javascript:', rw42.status() === 200 && esame42.on === 0 && esame42.testo && esame42.link.length === 0 && fin42.length === 0, esame42);
+    await sito42.close();
+    cli42('sql', "DELETE FROM {p}pages WHERE slug = 'prova-sedi'");
+    // javascript: e host non di Google nei link; coordinate storte; tipo fuori elenco.
+    const rifiuti = [];
+    for (const [k, v] of [['sede[google_scheda]', 'javascript:alert(42)'], ['sede[google_scheda]', 'https://evil.example/google.com/x'], ['sede[google_recensione]', 'http://google.com/x'], ['sede[google_recensione]', 'https://google.com.evil.example/x'], ['sede[lat]', '1e99'], ['sede[lat]', 'NaN'], ['sede[lng]', 'testo'], ['sede[lat]', '95']]) {
+      const r = await admin.ctx.request.post(ADMIN + '/sedi.php', { form: campi42({ 'sede[nome]': 'Sic42 rifiuto', [k]: v }), headers: ORIG42, maxRedirects: 0 });
+      const t = await r.text();
+      const salvata = (cli42('elenco') || []).some(x => x.nome === 'Sic42 rifiuto');
+      if (!(r.status() === 200 && /sd-errore/.test(t) && !salvata)) rifiuti.push([k, v, r.status(), salvata]);
+    }
+    const tipoFuori = await admin.ctx.request.post(ADMIN + '/sedi.php', { form: campi42({ 'sede[nome]': 'Sic42 rifiuto', 'sede[tipo]': 'Pippo<script>' }), headers: ORIG42, maxRedirects: 0 });
+    if (!(tipoFuori.status() === 200 && !(cli42('elenco') || []).some(x => x.nome === 'Sic42 rifiuto'))) rifiuti.push(['tipo', 'Pippo<script>', tipoFuori.status()]);
+    ok('2.27.0: javascript: e host non di Google nei link, coordinate 1e99, NaN, testo e 95, tipo fuori elenco: errori sotto i campi, niente salvato', rifiuti.length === 0, rifiuti);
+    // 60 sedi e 200 righe di zona.
+    const zona200 = Array.from({ length: 200 }, (_, i) => 'Comune ' + i).join('\n');
+    const z = cli42('salva', JSON.stringify({ nome: 'Sic42 zona', tipo: 'negozio', citta: 'Bologna', zona: zona200 }));
+    ok('2.27.0: 200 righe di zona: ne restano 30, e il pannello lo dice', z && z.errori && z.errori.zona && /30/.test(z.errori.zona) && (cli42('elenco') || []).every(x => (x.zona || []).length <= 30), z && z.errori);
+    let troppe = null, quante = 0;
+    for (let i = 0; i < 60; i++) { const r = cli42('salva', JSON.stringify({ nome: 'Sic42 n' + i, tipo: 'negozio', citta: 'Bologna' })); if (r && r.errori && r.errori._) { troppe = r.errori._; break; } quante++; }
+    ok('2.27.0: 60 sedi: dopo la cinquantesima il salvataggio si ferma con il messaggio del limite', quante <= 50 && !!troppe && /50/.test(troppe) && (cli42('elenco') || []).length <= 50, [quante, troppe]);
+    // Redattore, senza token, da un altro sito.
+    if (red.dentro) {
+      const tRed42 = await tokenDi(red.p, ADMIN + '/index.php');
+      const r1 = await red.ctx.request.post(ADMIN + '/sedi.php', { form: campi42({ _csrf: tRed42, 'sede[nome]': 'Sic42 redattore' }), headers: ORIG42, maxRedirects: 0 });
+      const r2 = await red.ctx.request.post(ADMIN + '/sedi.php', { form: { _csrf: tRed42, azione: 'crea_pagina', id: sic ? sic.id : 'x' }, headers: ORIG42, maxRedirects: 0 });
+      const r3 = await red.ctx.request.post(ADMIN + '/seo-api.php', { form: { _csrf: tRed42, azione: 'sedi_cerca', indirizzo: 'Via Rizzoli 1, Bologna' }, headers: ORIG42, maxRedirects: 0 });
+      const r4 = await red.ctx.request.get(ADMIN + '/sedi.php', { maxRedirects: 0 });
+      ok('2.27.0: il redattore non salva una sede, non crea la pagina, non cerca le coordinate, non apre la pagina Sedi', [r1, r2, r4].every(r => [302, 303, 403].includes(r.status())) && r3.status() === 403 && !(cli42('elenco') || []).some(x => x.nome === 'Sic42 redattore'), [r1.status(), r2.status(), r3.status(), r4.status()]);
+    }
+    const c1 = await admin.ctx.request.post(ADMIN + '/sedi.php', { form: campi42({ _csrf: '', 'sede[nome]': 'Sic42 senza token' }), headers: ORIG42, maxRedirects: 0 });
+    const c2 = await admin.ctx.request.post(ADMIN + '/sedi.php', { form: campi42({ 'sede[nome]': 'Sic42 altro sito' }), headers: { 'Origin': 'https://evil.example' }, maxRedirects: 0 });
+    const c3 = await admin.ctx.request.post(ADMIN + '/seo-api.php', { form: { azione: 'sedi_cerca', indirizzo: 'x' }, maxRedirects: 0 });
+    ok('2.27.0: senza token o da un altro sito niente si salva (403), sedi_cerca senza token 403', c1.status() === 403 && c2.status() === 403 && c3.status() === 403 && !(cli42('elenco') || []).some(x => /senza token|altro sito/.test(x.nome)), [c1.status(), c2.status(), c3.status()]);
+    // Il servizio delle coordinate: indirizzi interni rifiutati dal server; HTML cattivo dal finto non entra nel pannello.
+    const interni = [];
+    for (const u of ['http://127.0.0.1:1/search', 'https://10.0.0.1/search', 'https://192.168.1.1/search', 'http://localhost/search', 'https://[::1]/search', 'https://169.254.169.254/latest', 'https://100.64.0.1/search', 'https://0.0.0.0/search']) {
+      const g = cli42('geocodifica', 'Via Rizzoli 1, Bologna', u, '0');
+      if (!g || g.ok || !/interno|privato/.test(g.errore || '')) interni.push([u, g]);
+    }
+    ok('2.27.0: CMS_NOMINATIM_URL verso 127.0.0.1, 10.x, 192.168.x, localhost, ::1, 169.254.x, 100.64.x, 0.0.0.0: rifiutato come i webhook', interni.length === 0, interni.slice(0, 2));
+    const cfg42 = fs.existsSync(path.join(DIR, 'includes', 'config.local.php')) ? fs.readFileSync(path.join(DIR, 'includes', 'config.local.php'), 'utf8') : '';
+    if (/CMS_NOMINATIM_URL/.test(cfg42) && /CMS_NOMINATIM_PROVA/.test(cfg42)) {
+      const h1 = await admin.ctx.request.post(ADMIN + '/seo-api.php', { form: { _csrf: t42, azione: 'sedi_cerca', indirizzo: 'Via cattivo 1, Bologna' }, headers: ORIG42, maxRedirects: 0 });
+      const j1 = await h1.json().catch(() => null);
+      const h2 = await admin.ctx.request.post(ADMIN + '/seo-api.php', { form: { _csrf: t42, azione: 'sedi_cerca', indirizzo: 'Via numeri 1, Bologna' }, headers: ORIG42, maxRedirects: 0 });
+      const j2 = await h2.json().catch(() => null);
+      ok('2.27.0: il servizio finto che risponde HTML con uno script, o coordinate 1e99 e NaN: il pannello riceve solo un messaggio di errore in parole, senza HTML', h1.status() === 422 && j1 && !j1.ok && !/</.test(j1.errore) && h2.status() === 422 && j2 && !j2.ok && !/</.test(j2.errore), [j1 && j1.errore, j2 && j2.errore]);
+    } else ok('2.27.0: (senza CMS_NOMINATIM_URL e CMS_NOMINATIM_PROVA nel config del sito di prova, la prova del servizio finto con l\'HTML cattivo è saltata)', true);
+    // Pulizia: le pagine delle sedi di prova e le sedi di prima.
+    for (const s of cli42('elenco') || []) if (/^Sic42/.test(s.nome) && s.pagina > 0) cli42('sql', 'DELETE FROM {p}pages WHERE id = ' + (+s.pagina));
+    ripristina42();
+  } else console.log('--  sedi (2.27.0): saltata (serve CMS_DIR)');
+
   // === pulizia: elimina il redattore di prova
   {
     await admin.p.goto(ADMIN + '/utenti.php', { waitUntil: 'networkidle' });

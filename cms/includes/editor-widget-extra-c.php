@@ -176,12 +176,15 @@ ewx_registra('conto_alla_rovescia', 'Conto alla rovescia', 'cronometro', 'Numeri
 
 // ---------------- Mappa (Google Maps)
 ewx_registra('mappa', 'Mappa', 'mappa', 'Elementi', [
-    ec('fornitore', 'scelta', 'Servizio', 'google', 'contenuto', ['opzioni' => ['google' => 'Google Maps (indirizzo)', 'osm' => 'OpenStreetMap (coordinate)'], 'sezione' => 'Mappa']),
-    ec('indirizzo', 'testo', 'Indirizzo o luogo', 'Firenze, Italia', 'contenuto', ['condizione' => ['fornitore' => 'google'], 'sezione' => 'Mappa']),
-    ec('lat', 'testo', 'Latitudine', '43.7696', 'contenuto', ['condizione' => ['fornitore' => 'osm'], 'sezione' => 'Mappa']),
-    ec('lon', 'testo', 'Longitudine', '11.2558', 'contenuto', ['condizione' => ['fornitore' => 'osm'], 'sezione' => 'Mappa']),
+    // 2.27.0: "Dati dalla sede": indirizzo e coordinate dalla sede scelta (includes/sedi.php). Con "Nessuna" i campi qui sotto, come prima.
+    ec('sede', 'scelta', 'Dati dalla sede', '', 'contenuto', ['opzioni' => sedi_opzioni_widget(), 'accetta' => '/^[a-z0-9][a-z0-9-]{0,59}$/', 'sezione' => 'Dati dalla sede',
+        'aiuto' => 'Con una sede scelta la mappa prende indirizzo e coordinate da SEO e AEO, Sedi (con le coordinate arriva da OpenStreetMap). Con "Nessuna" usa i campi qui sotto.']),
+    ec('fornitore', 'scelta', 'Servizio', 'google', 'contenuto', ['opzioni' => ['google' => 'Google Maps (indirizzo)', 'osm' => 'OpenStreetMap (coordinate)'], 'sezione' => 'Mappa', 'condizione' => ['sede' => '']]),
+    ec('indirizzo', 'testo', 'Indirizzo o luogo', 'Firenze, Italia', 'contenuto', ['condizione' => ['fornitore' => 'google', 'sede' => ''], 'sezione' => 'Mappa']),
+    ec('lat', 'testo', 'Latitudine', '43.7696', 'contenuto', ['condizione' => ['fornitore' => 'osm', 'sede' => ''], 'sezione' => 'Mappa']),
+    ec('lon', 'testo', 'Longitudine', '11.2558', 'contenuto', ['condizione' => ['fornitore' => 'osm', 'sede' => ''], 'sezione' => 'Mappa']),
     ec('zoom', 'numero', 'Zoom', 14, 'contenuto', ['min' => 1, 'max' => 20, 'sezione' => 'Mappa']),
-    ec('tipo', 'scelta', 'Tipo di mappa', 'strade', 'contenuto', ['opzioni' => ['strade' => 'Strade', 'satellite' => 'Satellite'], 'condizione' => ['fornitore' => 'google'], 'sezione' => 'Mappa']),
+    ec('tipo', 'scelta', 'Tipo di mappa', 'strade', 'contenuto', ['opzioni' => ['strade' => 'Strade', 'satellite' => 'Satellite'], 'condizione' => ['fornitore' => 'google', 'sede' => ''], 'sezione' => 'Mappa']),
     ec('al_clic', 'interruttore', 'Carica la mappa solo al clic (niente contatti con il servizio prima)', true, 'contenuto', ['sezione' => 'Privacy']),
     ec('testo_pulsante', 'testo', 'Testo del pulsante', 'Mostra la mappa', 'contenuto', ['condizione' => ['al_clic' => true], 'sezione' => 'Privacy']),
     // 2.1: il pulsante "Come arrivare", che apre le indicazioni stradali nell'app di mappe.
@@ -194,6 +197,11 @@ ewx_registra('mappa', 'Mappa', 'mappa', 'Elementi', [
     ec('grigio', 'interruttore', 'In scala di grigi', false, 'stile', ['sezione' => 'Mappa']),
     ec('opacita_hover', 'numero', 'Opacita (%)', '', 'stile', ['min' => 10, 'max' => 100, 'unita' => '%', 'selettore' => '', 'proprieta' => '--ew-op', 'sezione' => 'Mappa']),
 ], function (array $v, array $ctx): string {
+    // 2.27.0: dalla sede scelta: con le coordinate OpenStreetMap, altrimenti l'indirizzo scritto nella sede. Con "nessuna" tutto come prima.
+    if (($sede = function_exists('sedi_per_widget') ? sedi_per_widget($v['sede'] ?? '') : null)) {
+        if (sedi_ha_coordinate($sede)) { $v['fornitore'] = 'osm'; $v['lat'] = $sede['lat']; $v['lon'] = $sede['lng']; }
+        else { $v['fornitore'] = 'google'; $v['indirizzo'] = sedi_indirizzo_testo($sede, true); }
+    }
     $z = max(1, min(20, (int)$v['zoom']));
     if ($v['fornitore'] === 'osm') {
         $lat = (float)str_replace(',', '.', $v['lat']); $lon = (float)str_replace(',', '.', $v['lon']);

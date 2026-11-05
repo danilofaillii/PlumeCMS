@@ -80,11 +80,15 @@ function ewx_orari_stato(array $v, DateTimeImmutable $ora): array {
 
 $ewxOrariPred = ['lun' => '9:00-13:00, 15:00-19:00', 'mar' => '9:00-13:00, 15:00-19:00', 'mer' => '9:00-13:00, 15:00-19:00', 'gio' => '9:00-13:00, 15:00-19:00', 'ven' => '9:00-13:00, 15:00-19:00', 'sab' => '9:00-13:00', 'dom' => 'Chiuso'];
 $ewxOrariGiorni = [];
-foreach (EWX_GIORNI as $k => $nome) $ewxOrariGiorni[] = ec($k, 'testo', $nome, $ewxOrariPred[$k], 'contenuto', ['sezione' => 'Orari', 'aiuto' => $k === 'lun' ? 'Per esempio 9:00-13:00, 15:00-19:00. Chiuso, oppure vuoto, per un giorno di chiusura; 24 ore per sempre aperto.' : '']);
-ewx_registra('orari', 'Orari di apertura', 'orologio', 'Elementi', array_merge($ewxOrariGiorni, [
+foreach (EWX_GIORNI as $k => $nome) $ewxOrariGiorni[] = ec($k, 'testo', $nome, $ewxOrariPred[$k], 'contenuto', ['sezione' => 'Orari', 'condizione' => ['sede' => ''], 'aiuto' => $k === 'lun' ? 'Per esempio 9:00-13:00, 15:00-19:00. Chiuso, oppure vuoto, per un giorno di chiusura; 24 ore per sempre aperto.' : '']);
+ewx_registra('orari', 'Orari di apertura', 'orologio', 'Elementi', array_merge([
+    // 2.27.0: "Dati dalla sede": gli orari (e le chiusure) della sede scelta (includes/sedi.php). Con "Nessuna" i campi qui sotto, come prima.
+    ec('sede', 'scelta', 'Dati dalla sede', '', 'contenuto', ['opzioni' => sedi_opzioni_widget(), 'accetta' => '/^[a-z0-9][a-z0-9-]{0,59}$/', 'sezione' => 'Dati dalla sede',
+        'aiuto' => 'Con una sede scelta gli orari e le chiusure vengono da SEO e AEO, Sedi, e i dati per Google li dà la sede. Con "Nessuna" usa i campi qui sotto.']),
+], $ewxOrariGiorni, [
     ec('chiusure', 'ripetitore', 'Ferie e chiusure', [], 'contenuto', ['campi' => [
         ec('dal', 'testo', 'Dal (AAAA-MM-GG)', ''), ec('al', 'testo', 'Al (AAAA-MM-GG, vuoto: un giorno)', ''), ec('motivo', 'testo', 'Motivo (facoltativo)', 'Ferie'),
-    ], 'titolo_voce' => 'dal', 'sezione' => 'Ferie e chiusure', 'aiuto' => 'Nei giorni di chiusura il widget dice Chiuso e il motivo. Quelle passate si possono lasciare: non contano più.']),
+    ], 'titolo_voce' => 'dal', 'sezione' => 'Ferie e chiusure', 'condizione' => ['sede' => ''], 'aiuto' => 'Nei giorni di chiusura il widget dice Chiuso e il motivo. Quelle passate si possono lasciare: non contano più.']),
     ec('titolo', 'testo', 'Titolo', 'Orari di apertura', 'contenuto', ['sezione' => 'Aspetto']),
     ec('mostra_stato', 'interruttore', 'Mostra "Aperto ora" o "Chiuso"', true, 'contenuto', ['sezione' => 'Aspetto']),
     ec('testo_aperto', 'testo', 'Testo quando è aperto', 'Aperto ora', 'contenuto', ['condizione' => ['mostra_stato' => true], 'sezione' => 'Aspetto']),
@@ -98,6 +102,13 @@ ewx_registra('orari', 'Orari di apertura', 'orologio', 'Elementi', array_merge($
     ewx_col('chiuso_colore', 'Colore di "Chiuso"', '--ew-no', 'Stato'),
     ...ewx_riquadro_stile(' .ew-orari'),
 ]), function (array $v, array $ctx): string {
+    // 2.27.0: dalla sede scelta: i sette giorni e le chiusure sono i suoi; i dati per Google li emette la sede (location dell'Organizzazione), non il widget.
+    $daSede = false;
+    if (($sede = function_exists('sedi_per_widget') ? sedi_per_widget($v['sede'] ?? '') : null)) {
+        foreach (array_keys(EWX_GIORNI) as $g) $v[$g] = $sede['orari'][$g];
+        $v['chiusure'] = $sede['chiusure'];
+        $daSede = true;
+    }
     $ora = new DateTimeImmutable('now');
     $oggi = array_keys(EWX_GIORNI)[(int)$ora->format('N') - 1];
     [$aperto, $frase] = ewx_orari_stato($v, $ora);
@@ -122,7 +133,7 @@ ewx_registra('orari', 'Orari di apertura', 'orologio', 'Elementi', array_merge($
         . (trim($v['titolo']) !== '' ? '<h3 class="ew-orari-titolo">' . h($v['titolo']) . '</h3>' : '')
         . ($v['mostra_stato'] ? '<p class="ew-orari-stato ' . ($aperto ? 'ew-aperto' : 'ew-chiuso-ora') . '" aria-live="polite"><span class="ew-orari-punto" aria-hidden="true"></span><span class="ew-orari-frase">' . h($frase) . '</span></p>' : '')
         . '<ul class="ew-orari-giorni">' . $righe . '</ul>' . ($ferie !== '' ? '<ul class="ew-orari-ferie">' . $ferie . '</ul>' : '') . '</div>';
-    if ($v['dati_google'] && $schema && !$ctx['anteprima']) {
+    if ($v['dati_google'] && $schema && !$ctx['anteprima'] && !$daSede) {
         $ld = ['@context' => 'https://schema.org', '@type' => 'LocalBusiness', 'name' => (string)cms_impostazione('sito_nome', CMS_NOME), 'url' => defined('SITO_URL') ? SITO_URL . '/' : '', 'openingHoursSpecification' => $schema];
         $out .= '<script type="application/ld+json">' . json_encode($ld, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_HEX_TAG | JSON_HEX_AMP) . '</script>';
     }
@@ -131,14 +142,17 @@ ewx_registra('orari', 'Orari di apertura', 'orologio', 'Elementi', array_merge($
 
 // ---------------- Barra dei contatti per il telefono
 ewx_registra('barra_contatti', 'Barra contatti (telefono)', 'telefono', 'Elementi', [
-    ec('telefono', 'testo', 'Numero da chiamare', '', 'contenuto', ['sezione' => 'Pulsanti', 'aiuto' => 'Con il prefisso se serve, per esempio +39 051 123456. Vuoto: niente pulsante Chiama.']),
+    // 2.27.0: "Dati dalla sede": telefono, indirizzo per le indicazioni ed email dalla sede scelta (includes/sedi.php). Con "Nessuna" i campi qui sotto, come prima.
+    ec('sede', 'scelta', 'Dati dalla sede', '', 'contenuto', ['opzioni' => sedi_opzioni_widget(), 'accetta' => '/^[a-z0-9][a-z0-9-]{0,59}$/', 'sezione' => 'Dati dalla sede',
+        'aiuto' => 'Con una sede scelta telefono, indicazioni ed email vengono da SEO e AEO, Sedi (il numero WhatsApp resta qui). Con "Nessuna" usa i campi qui sotto.']),
+    ec('telefono', 'testo', 'Numero da chiamare', '', 'contenuto', ['sezione' => 'Pulsanti', 'condizione' => ['sede' => ''], 'aiuto' => 'Con il prefisso se serve, per esempio +39 051 123456. Vuoto: niente pulsante Chiama.']),
     ec('etichetta_telefono', 'testo', 'Etichetta', 'Chiama', 'contenuto', ['sezione' => 'Pulsanti']),
     ec('whatsapp', 'testo', 'Numero WhatsApp', '', 'contenuto', ['sezione' => 'Pulsanti', 'aiuto' => 'Con il prefisso del paese, per esempio 39333...']),
     ec('etichetta_whatsapp', 'testo', 'Etichetta', 'WhatsApp', 'contenuto', ['sezione' => 'Pulsanti']),
     ec('messaggio', 'testo', 'Messaggio WhatsApp già scritto', (string)cms_impostazione('whatsapp_messaggio', 'Ciao, '), 'contenuto', ['sezione' => 'Pulsanti']),
-    ec('indirizzo', 'testo', 'Indirizzo per le indicazioni', '', 'contenuto', ['sezione' => 'Pulsanti', 'aiuto' => 'Via, numero e città: il pulsante apre le indicazioni stradali sul telefono.']),
+    ec('indirizzo', 'testo', 'Indirizzo per le indicazioni', '', 'contenuto', ['sezione' => 'Pulsanti', 'condizione' => ['sede' => ''], 'aiuto' => 'Via, numero e città: il pulsante apre le indicazioni stradali sul telefono.']),
     ec('etichetta_indirizzo', 'testo', 'Etichetta', 'Indicazioni', 'contenuto', ['sezione' => 'Pulsanti']),
-    ec('email', 'testo', 'Email', '', 'contenuto', ['sezione' => 'Pulsanti']),
+    ec('email', 'testo', 'Email', '', 'contenuto', ['sezione' => 'Pulsanti', 'condizione' => ['sede' => '']]),
     ec('etichetta_email', 'testo', 'Etichetta', 'Scrivici', 'contenuto', ['sezione' => 'Pulsanti']),
     ec('dove', 'scelta', 'Dove si vede', 'telefono', 'contenuto', ['opzioni' => ['telefono' => 'Solo sul telefono', 'sempre' => 'Sempre'], 'sezione' => 'Comportamento']),
     ewx_col('sfondo', 'Sfondo della barra', '--ew-bg', 'Aspetto'),
@@ -146,6 +160,12 @@ ewx_registra('barra_contatti', 'Barra contatti (telefono)', 'telefono', 'Element
     ewx_col('separatore', 'Colore delle righe fra i pulsanti', '--ew-bc', 'Aspetto'),
     ewx_var('altezza', 'Altezza', '--ew-h', 'Aspetto', ['d' => ['v' => 62, 'u' => 'px']]),
 ], function (array $v, array $ctx): string {
+    // 2.27.0: dalla sede scelta: telefono, destinazione delle indicazioni (le coordinate se ci sono) ed email, dove la sede li ha.
+    if (($sede = function_exists('sedi_per_widget') ? sedi_per_widget($v['sede'] ?? '') : null)) {
+        if ($sede['telefono'] !== '') $v['telefono'] = $sede['telefono'];
+        if (($dest = sedi_destinazione($sede)) !== '') $v['indirizzo'] = $dest;
+        if ($sede['email'] !== '') $v['email'] = $sede['email'];
+    }
     $voci = [];
     $tel = preg_replace('/[^\d+]/', '', (string)$v['telefono']);
     if ($tel !== '') $voci[] = ['tel:' . $tel, 'telefono', $v['etichetta_telefono'] ?: 'Chiama', false];

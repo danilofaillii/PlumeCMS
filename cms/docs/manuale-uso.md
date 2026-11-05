@@ -3157,6 +3157,77 @@ scelgono con **Scegli dai Media**, come l'immagine social.
 
 Il sito manda ai social l'indirizzo intero dell'immagine, con le misure: l'anteprima esce giusta già la prima volta.
 
+### Le sedi e la SEO geografica
+
+**A cosa serve.** Chi cerca "idraulico a Bologna" o "ristorante a Imola" trova le attività che dicono a Google dove stanno:
+indirizzo, coordinate, orari, telefono, zona servita e il tipo di attività. In **SEO e AEO > Sedi** scrivi le sedi della tua
+attività (anche una sola: serve lo stesso) e da quel momento **ogni pagina del sito** le dichiara nei dati per Google, senza
+che tu debba toccare le pagine. In più ogni sede può avere la sua pagina nel sito, e i widget Sedi, Dati dell'attività,
+Mappa, Orari di apertura e Barra contatti leggono i dati da lì: li scrivi una volta sola.
+
+**Esempio.** Un ristorante con due sedi, a Bologna e a Imola.
+
+![Il modulo della sede](immagini/manuale-uso/23-sedi-modulo.jpg)
+
+1. Apri **SEO e AEO > Sedi** e, nel riquadro **Nuova sede**, scrivi il **Nome della sede**: "Sede di Bologna". Con una
+   sede sola va bene anche il nome dell'attività.
+2. Scegli il **Tipo di attività** dall'elenco: "Ristorante, trattoria o pizzeria". Sono le categorie che Google
+   riconosce. Se la tua non c'è, scegli l'ultima voce, **Altro, lo scrivo io**, e scrivi che attività è nella casella che
+   compare ("centro di meditazione"): si salva con la prima lettera maiuscola, "Centro di meditazione".
+3. Compila **Dove sta**: via e numero, CAP, **Città** (obbligatoria: va nei titoli e a Google), provincia.
+4. Premi **Cerca sulla mappa**: il sito chiede le coordinate dell'indirizzo al servizio delle mappe (dal server: il tuo
+   browser non parla con nessuno) e le scrive nei due campi.
+
+![Le coordinate e la mini mappa](immagini/manuale-uso/23-sedi-mappa.jpg)
+
+5. Sotto compare una **mini mappa** con il segnaposto. Se il punto non è giusto, fai clic sulla mappa dove sta la sede:
+   latitudine e longitudine si aggiornano da sole. Con **+** e **-** cambi lo zoom. Se la ricerca non trova niente,
+   puoi scrivere le coordinate a mano (le trovi su qualunque mappa online, con il clic destro sul punto).
+6. Compila **Contatti e prezzi**: telefono con il prefisso, email, fascia di prezzo, e la **Zona servita**: i comuni o
+   le province dove lavori, uno per riga ("Bologna", "Casalecchio di Reno", "Provincia di Bologna"). Google la legge
+   come l'area che servi.
+7. Scrivi gli **Orari di apertura**, giorno per giorno, come nel widget Orari ("9:00-13:00, 15:00-19:00", "Chiuso"), e
+   le ferie ("2026-12-24 - 2026-12-26: Natale").
+8. In **Google, foto e pagina** incolla il link alla **scheda Google** e il link **"lascia una recensione"** del tuo
+   Profilo dell'attività (solo indirizzi https di google.com, g.page o maps.app.goo.gl: altri non si accettano), scegli
+   una **foto** dai Media e lascia accesa la casella **Crea la pagina della sede**.
+9. Premi **Salva la sede**. Il messaggio verde dice che la sede è salvata e che la sua pagina è pronta:
+   `/sede-di-bologna/`, pubblicata, con l'apertura, i dati dell'attività, la mappa, gli orari, la descrizione e la barra
+   dei contatti, tutti letti dalla sede. La cambi con l'editor quando vuoi, da Pagine.
+10. Ripeti per "Sede di Imola". Nell'elenco in alto vedi le due sedi con **Modifica**, **Rendi principale** ed
+    **Elimina**. La **sede principale** è una sola: dà la città ai titoli e ai widget che leggono "la sede principale".
+
+![L'elenco delle sedi](immagini/manuale-uso/23-sedi-elenco.jpg)
+
+**Le sedi sul sito.** Nell'editor trovi due widget nuovi nel gruppo Dal sito: **Sedi** mostra le sedi in schede (tutte,
+oppure solo quelle che scegli), in griglia o in elenco, con nome, tipo, indirizzo, telefono da chiamare con un tocco,
+email, "Aperto ora" o "Chiuso", i pulsanti **Come arrivare**, **Lascia una recensione su Google** (solo se hai messo il
+link) e **La sede** (solo se la pagina c'è), e a scelta una mappa in ogni scheda; **Dati dell'attività** mostra una sede
+sola, in colonna o in riga, con gli interruttori su cosa mostrare: va bene nel footer e nella pagina Contatti. I widget
+**Mappa**, **Orari di apertura** e **Barra contatti** hanno la tendina **Dati dalla sede**: scegli una sede e prendono da
+lei indirizzo, coordinate, orari, telefono ed email; con "Nessuna" usano i campi di sempre. Nel sito su misura la città
+che hai scritto nell'installatore è già una sede, e la mappa dei Contatti legge da lì.
+
+**I titoli con la città.** In **Globale SEO** il formato dei titoli accetta anche `%citta%`, la città della sede
+principale: "%titolo% %sep% %citta% %sep% %sito%" dà "Chi siamo - Bologna - Studio Prova". Senza sedi `%citta%` sparisce con
+il suo separatore.
+
+**Cosa Google accetta e cosa no.** Google legge le sue categorie (le voci dell'elenco): un tipo scritto a mano arriva come
+attività generica, con il tuo testo nella descrizione; sul sito esce come l'hai scritto. Le coordinate devono essere numeri
+veri: latitudine fra -90 e 90, longitudine fra -180 e 180. I link di Google solo https e solo dei suoi domini. Le
+recensioni restano su Google: il sito mostra il pulsante per lasciarne una, ma nessuna stella e nessun voto, perché Google
+non accetta le stelle che un'attività pubblica di sé. Se elimini una sede, la sua pagina resta nel sito: se non la vuoi più,
+cestinala da Pagine. Per vedere i dati che Google legge: **Schema e AEO > Anteprima del JSON-LD di un indirizzo** (nella
+pagina di una sede la sua scheda è la `mainEntity`).
+
+**Checklist delle sedi**
+
+- [ ] Ogni sede ha città, indirizzo e coordinate (cercate dalla mappa o scritte a mano).
+- [ ] Il tipo di attività è una voce dell'elenco, oppure "Altro" con il testo scritto.
+- [ ] Orari e zona servita sono compilati: entrano nei dati per Google.
+- [ ] La sede principale è quella giusta (dà la città ai titoli).
+- [ ] La pagina di ogni sede c'è e la Mappa, gli Orari e la Barra contatti del sito leggono "dalla sede".
+
 **Redirect e 404** elenca i rimandi dai vecchi indirizzi e le pagine che qualcuno ha cercato senza trovarle: da qui le
 rimandi dove devono andare. Tutte e due le caselle di un rimando hanno **Scegli dal sito**: per il nuovo indirizzo scegli la
 pagina giusta senza scriverla. Anche gli indirizzi da mandare a Google e IndexNow e quello dei dati per Google (scheda
@@ -3170,6 +3241,7 @@ Schema e AEO) si scelgono così.
 - [ ] Le pagine principali hanno un punteggio sopra 70.
 - [ ] Ho guardato Redirect e 404 almeno una volta al mese.
 - [ ] L'immagine social predefinita c'è, 1200 x 630, in JPG o PNG.
+- [ ] Le sedi dell'attività sono scritte in SEO e AEO > Sedi (anche una sola).
 
 ---
 
