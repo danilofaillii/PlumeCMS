@@ -61,8 +61,8 @@ Sono gli unici in `cms/docs/`, nello zip, nel sito di plumeCMS e nella pagina Do
 0. `cms/docs/manuale-uso.md`: il manuale d'uso per chi usa plumeCMS (40 capitoli in due parti, la seconda per gli addon; esempi, schermate con i passi
    numerati, checklist). Le schermate le fa `tools/manuale-uso-schermate.js` eseguendo gli esempi su un sito di prova
    (kit Attività, in `/home/studioprova/public_html`): **quando cambia il pannello si rifanno le schermate e si
-   ricontrolla il capitolo**. Il PDF è uno solo (dalla 2.1.0) e deve restare sotto 12 MB (`MAX_KB` in `tools/manuali-pdf.js`, alzato da 8 a 12 MB il 1 novembre 2026, decisione di Danilo; oggi
-   7,3 MB con le schermate JPEG a qualità 55). Nel PDF vanno JPEG: Chromium rimette i PNG senza tavolozza e pesano di più.
+   ricontrolla il capitolo**. Il PDF è uno solo (dalla 2.1.0) e deve restare sotto 14 MB (`MAX_KB` in `tools/manuali-pdf.js`, alzato da 8 a 12 MB il 1 novembre 2026 e da 12 a 14 MB il
+   5 novembre 2026, decisioni di Danilo; oggi 12,3 MB con le schermate JPEG a qualità 55: quando supererà i 14 MB si chiede di nuovo a lui). Nel PDF vanno JPEG: Chromium rimette i PNG senza tavolozza e pesano di più.
    `cms/docs/manuale-temi.md`: il manuale per chi costruisce un tema, con il tema d'esempio Lavagna.
    **Copia nel second brain** (richiesta di Danilo, 1 novembre 2026): i tre manuali (uso, temi, tecnico) stanno anche in
    `second-brain/_comune/manuali-plumecms/` come `plumecms-manuale-*.md`, per tutti i progetti. A ogni versione si rimpiazzano
@@ -108,7 +108,7 @@ Sono gli unici in `cms/docs/`, nello zip, nel sito di plumeCMS e nella pagina Do
 - **Pacchetto di aggiornamento** per un'installazione esistente:
   `python3 tools/cms-pacchetto.py --aggiornamento`. Si carica dal pannello,
   Impostazioni, Aggiornamenti.
-- **Versione**: `cms/VERSIONE` (oggi 2.27.0; sempre tre numeri: "beta" va nel CHANGELOG, mai nel nome dello zip, se no la serie "ultima" del Download non lo riconosce) e una voce in `cms/CHANGELOG.md` a ogni
+- **Versione**: `cms/VERSIONE` (oggi 2.29.0; sempre tre numeri: "beta" va nel CHANGELOG, mai nel nome dello zip, se no la serie "ultima" del Download non lo riconosce) e una voce in `cms/CHANGELOG.md` a ogni
   zip con contenuto diverso. Mai cambiare il contenuto di una versione già data.
 - **Prove** prima di dire finito:
   - `php -n -d short_open_tag=1 -l` su ogni file PHP toccato, `node --check` sui js;
@@ -166,6 +166,45 @@ Le decisioni complete, con data e perché, stanno nel second brain, `plumecms/de
 - **Nome: plumeCMS** (26 ottobre 2026).
 
 ## Stato al 31 ottobre 2026
+
+Fatto: plumeCMS 2.29.0 (5 novembre, 13:10-in corso): **gli strumenti SEO**, con la 2.28.0 nella stessa consegna (richiesta di Danilo: "fai le pagine per
+zona" più quattro strumenti: tabella SEO di tutto il sito con semafori e modifica in riga; link interni suggeriti nell'editor; schema Prodotto per la
+Vetrina, How-to e Video dal pannello; immagini senza alt in un elenco con la correzione in posto). Due agenti in parallelo in due worktree
+(`/home/user/wt-zone`, ramo `zone`; `/home/user/wt-seo`, ramo `seo-strumenti`), riletti e uniti da me con tredici file in conflitto (menu e fila delle
+schede ora Sedi, Zone, Tabella SEO; `includes/seo.php` e `sito/index.php` con i nodi JSON-LD di zone e schema insieme; manuale tecnico 45 e 46;
+`costruisci.py`; gruppi 43 e 44 degli attacchi; capitoli 23z, 23t, 23u delle schermate). **Tabella SEO** (`includes/seo-tabella.php`, `admin/seo-tabella.php`,
+`admin/assets/seo-tabella.js`, azione `tabella_salva` di `seo-api.php`; anche il redattore, che è in `AUTH_REDATTORE_PAGINE` e vede solo quella voce del
+gruppo SEO e AEO): una riga per contenuto con titolo per Google, descrizione, lunghezze, robots, immagini senza alt, semafori (titolo 30-60, rosso
+oltre 70 o doppio; descrizione 70-160, rossa se manca o doppia); salva da `contenuti_salva_rapido()` (che ora accetta `seo_title`, `seo_description`,
+`meta_description`, `robots`) e la risposta ricalcola tutte le righe. **Link interni suggeriti** (`includes/seo-link.php`, `seo_link_suggeriti()`:
+indice per richiesta da `sito_contenuti_elenco('cerca')`, punti per termine, al massimo 5; voce `link_interni` di `seo_analisi()`, riquadro Collega con
+Copia il link e, nell'editor, Inserisci nel Testo selezionato). **Schema** (`includes/seo-schema.php`, colonna `seo_schema` JSON di articles e pages via
+`contenuti_schema_colonne()`, riquadro "Dati per Google in più" nella scheda, `seo_schema_applica()` nei nodi del sito; video solo https o file del
+sito, miniatura e data obbligatorie, 20 passi; la Vetrina aveva già Product+Offer). **Senza alt** (`includes/media-alt.php`, tabella `media_alt` nata al
+primo uso, `media_alt_applica()` in `sito_html()` sulle `<img>` con alt vuoto, zero query con `media_alt_n` a 0; Media > Senza alt con "Nelle pagine" e
+"Nella libreria"). Manuale d'uso capitoli 7 e 23 (schermate 23-tabella, 23-collega, 23-schema, 07-senza-alt, rifatte da me sul sito col kit: quelle
+dell'agente avevano 26 contenuti di prova), tecnico 46, `prove/prova-seo-strumenti.js` 71, gruppo 44 degli attacchi. **PDF 12638 KB: tetto alzato da 12 a
+14 MB, decisione di Danilo del 5 novembre** (`MAX_KB`, `prova-consegna-unica.js`). Prove mie sullo zip (`$S/v2290.sh` e `$S/v6/*.sh`, 14:36-in corso; il
+contenitore si è riavviato alle 14:40 a metà batteria: server riaccesi sui siti già installati con `$S/v6/riprendi.sh`, prove rimaste rifatte): kit
+attività 34/34 radice e 44/44 cartella, sedi 58/58 radice e cartella, zone 58/58 radice, cartella e sito aggiornato, strumenti SEO 71/71 radice e
+cartella, install 38/38 radice e cartella, widget nuovi 40/40, telefono 57/57, addon tutti 74/74, ux pannello 103/103 sulle pagine nuove (Tabella SEO, Media, Zone, Sedi) nei quattro aspetti (la prova completa su un sito col kit senza dati dà 404 sulle pagine che vogliono un flusso o un test: non di questa versione), attacchi: primo giro sui due siti con 2 KO per difetti della batteria (porta 9296 presa dal giro
+in parallelo; tabella `media_alt` non ancora nata), giro pulito su un sito nuovo in corso, aggiornamento 2.27.0 -> 2.29.0 13/13 con 1 foto su 20 a 1 livello (ricerca al telefono, rumore) e JSON-LD e sitemap di 7
+indirizzi identici al byte, sito su misura 34/34, pacchetto unico 13/13 con la hero tenuta, sito di plumeCMS 91/91, zero errori fatali. Zip 2452 KB.
+**Non provato**: il JSON-LD di Product, HowTo e VideoObject nel validatore di Google (rete chiusa), la Tabella SEO con migliaia di contenuti, Safari e
+Firefox, lettore di schermo vero.
+
+Fatto: plumeCMS 2.28.0 (5 novembre, 13:26-14:04, agente; nella consegna della 2.29.0): **le pagine per zona**, la seconda fase della SEO geografica
+(richiesta di Danilo: "è dove la SEO locale si vince"). `includes/zone.php` (registro nel gruppo `zone` di `seo_config`, niente tabelle: `zone_crea_bozze`,
+`zone_albero`, `zone_riquadri_guidati` con il segnaposto `[DA SCRIVERE]`, `zone_segnaposto_restanti`, `zone_pubblicabile`, `zone_blocco_pubblicazione`
+chiamata da `editor_salva`, `contenuti_salva`, `contenuti_stato_massa`, `editor-api.php` risponde 409; `zone_jsonld_servizio`: Service, `areaServed`,
+`provider` = la LocalBusiness della sede o l'Organizzazione, `mainEntity`, briciole Home > servizio > zona; `ZONE_MAX` 200, `ZONE_GIRO_MAX` 30),
+`admin/zone.php` (solo amministratore; il redattore scrive e pubblica le bozze con la stessa regola), widget `zone` "Altre zone"
+(`includes/editor-widget-zone.php`, `sito/assets/zone.css`, gruppo Dal sito; **112 widget**), `sito-dati.php`: l'anteprima da amministratore mostra una
+bozza mai pubblicata. Le bozze nascono con l'apertura, tre riquadri Testo da scrivere a mano e la pubblicazione bloccata da ogni strada finché un
+segnaposto resta, anche per l'amministratore: niente pagine vuote tutte uguali. Senza pagine per zona il sito esce identico al byte. Manuale d'uso
+capitolo 23 (sezione "Le pagine per zona", schermate 23-zone-modulo, -elenco, -editor), tecnico 45, `prove/prova-zone.js` 58, `prove/zone-cli.php`,
+gruppo 43 degli attacchi, sito (novità, riga nel blocco SEO, 112 widget). Il commit dell'agente aveva l'identità git del sito di prova
+(`plumecms@localhost`): rifatto con `--reset-author`.
 
 Fatto: plumeCMS 2.27.0 (5 novembre, 9:58-11:15): **le sedi e la SEO geografica** (richiesta di Danilo: "Come gestiamo la SEO geografica?
 Voglio implementare anche questa parte"; decisioni sue: più sedi fin dall'inizio, "così lo apriamo ad attività multi sede"; tipo di attività
@@ -784,6 +823,10 @@ Errori veri, già pagati. Non ripeterli.
 | Un id di widget nuovo scelto senza guardare `igx_definizioni()` | `ig_barre` esisteva già (Barre di avanzamento, HTML): `editor_definizioni()` fa `igx + igs` e tiene la prima, il disegno andava a `igs_disegna()` con i campi dell'altra: widget vuoto senza errori (2.26.0). Prima di un id nuovo: `grep "'ig_<nome>'"` in tutti i file dei widget |
 | Un numero di infografiche scritto nei cicli degli script (`i < 15` in `manuale-uso-schermate.js`, `'L'.repeat(15)` nelle prove) | la foto d'insieme del manuale usciva con quindici anche con la sedicesima sul sito. I cicli contano `IGS_TIPI` o `.igx`, non un numero fisso; dove resta un numero, grep di `15` e `quindici` a ogni infografica nuova |
 | La rete della sessione verso un servizio esterno (OpenStreetMap: tessere e Nominatim rispondono 000 anche via proxy) | le schermate del manuale che mostrano una mappa escono con tessere finte (`TESSERE_FINTE=1` in `manuale-uso-schermate.js`) e la ricerca vera non si prova: si dice a Danilo e si rifanno con la rete aperta |
+| Un agente che fa commit nella sua worktree senza `git config user.email` | il commit esce con l'identità del sito di prova (`plumecms@localhost`) e il ramo risulta "Unverified" (2.28.0): nel compito dell'agente si scrive di impostare `user.email noreply@anthropic.com` e `user.name Claude`, oppure si amenda con `--reset-author` prima dell'unione |
+| Il contenitore che si riavvia a metà batteria (5 novembre, 14:40) | i server `php -S`, i server finti e gli script delle prove spariscono; i siti installati e i database (volumi Docker) restano. Si riaccende Docker (`rm -f /var/run/docker.pid`, `dockerd`, `docker start`), si aspetta `SELECT 1`, si riaccendono i server sui siti già installati e si rifanno solo le prove mancanti (`$S/v6/riprendi.sh`); gli attacchi lanciati nello stesso istante in cui MySQL risponde non entrano nel pannello ("Non riesco a entrare come amministratore"): si aspetta qualche secondo e si rilancia |
+| Le schermate del manuale fatte sul sito dove sono girate le prove dell'agente | la Tabella SEO mostrava 26 contenuti di prova e "25 con qualcosa da sistemare" (2.29.0). Le schermate si rifanno su un sito col kit appena installato (`SOLO_CAPITOLI`, `CMS_DIR_MANUALE`, `TMPDIR` vuota) prima del PDF |
+| Due batterie di attacchi lanciate insieme sullo stesso contenitore | il gruppo 37 (webhook) accende due server finti sulle porte 9296 e 9297 (`SIC_WEBHOOK`): la seconda batteria trova le porte prese e "il servizio non risponde" (5 novembre, sito aggiornato). E il controllo del gruppo 44 contava le righe di `media_alt`, tabella che nasce al primo uso: su un sito dove nessun alt è mai stato salvato la query falliva (ora la prova crea prima la tabella). Gli attacchi si lanciano uno alla volta, o con `SIC_WEBHOOK` diverso |
 | Fidarsi del resoconto di un agente | è successo che un agente dichiarasse lavoro mai scritto su disco. Si controllano i file veri e si rifanno le prove |
 
 ## Tono con l'utente

@@ -2680,6 +2680,7 @@ echo json_encode($o);
     const c5 = await admin.ctx.request.post(ADMIN + '/seo-api.php', { form: { _csrf: t44, azione: 'tabella_salva', tipo: 'pagine', id: '999999', seo_title: 'x' }, headers: ORIG44, maxRedirects: 0 });
     const c6 = await admin.ctx.request.post(ADMIN + '/seo-api.php', { form: { _csrf: t44, azione: 'media_alt_salva', url: '../../includes/config.local.php', alt: 'x' }, headers: ORIG44, maxRedirects: 0 });
     const c7 = await admin.ctx.request.post(ADMIN + '/seo-api.php', { form: { _csrf: t44, azione: 'media_alt_salva', url: '/includes/config.local.php', alt: 'x' }, headers: ORIG44, maxRedirects: 0 });
+    cli44('alt_libreria'); // la tabella media_alt nasce al primo uso: su un sito dove nessun alt è mai stato salvato la query sotto fallirebbe (trovato il 5 novembre sui siti della batteria)
     const nAlt = cli44('sql', "SELECT COUNT(*) c FROM {p}media_alt WHERE percorso LIKE '%config%'");
     ok('2.29.0: tabella_salva con tipo modelli o id inesistente, media_alt_salva con un file fuori dalla libreria: rifiutati (404 o 400), niente scritto', c4.status() === 404 && c5.status() === 400 && c6.status() === 400 && c7.status() === 400 && Array.isArray(nAlt) && +nAlt[0].c === 0, [c4.status(), c5.status(), c6.status(), c7.status()]);
     if (red.dentro) {
