@@ -64,6 +64,8 @@ table.st-tab{width:100%;border-collapse:collapse;font-size:.86rem}
 .st-alt a{font-weight:600;color:var(--attenzione-testo)}
 .st-vuoto{padding:1rem;text-align:center;color:var(--text-muted)}
 [hidden]{display:none!important}
+.st-scorri{overflow-x:auto}
+@media (max-width:900px){.st-tab th{white-space:normal}.st-tab td.st-cont{min-width:130px}.st-tab td.st-campo{min-width:150px}}
 @media (max-width:640px){.st-tab td.st-cont,.st-tab td.st-campo{max-width:none;min-width:0}}
 </style>
 
@@ -90,6 +92,7 @@ table.st-tab{width:100%;border-collapse:collapse;font-size:.86rem}
     <div class="form-group"><label for="st-ordina">Ordina per</label><select id="st-ordina"><option value="semaforo">Semaforo (prima i problemi)</option><option value="titolo">Titolo</option><option value="tipo">Tipo</option></select></div>
     <label class="st-spunta"><input type="checkbox" id="st-solo-problemi"> Solo i contenuti con problemi</label>
   </form>
+  <div class="st-scorri"><?php /* al tablet la tabella scorre dentro il riquadro, sotto 640 px diventa schede (pannello.js) */ ?>
   <table class="st-tab" id="st-tabella" data-csrf="<?= h($csrf) ?>">
     <thead><tr><th>Contenuto</th><th>Titolo per Google</th><th>Descrizione per Google</th><th>Robots</th><th>Immagini senza alt</th></tr></thead>
     <tbody>
@@ -105,6 +108,7 @@ table.st-tab{width:100%;border-collapse:collapse;font-size:.86rem}
     <?php endforeach; ?>
     </tbody>
   </table>
+  </div>
   <p class="st-vuoto" id="st-nessuno" hidden>Nessun contenuto corrisponde ai filtri: prova una parola più corta, togli il tipo, oppure spegni "Solo i contenuti con problemi".</p>
   <p class="hint" style="margin-top:.8rem">Il titolo per Google va da 30 a 60 caratteri (sopra 70 Google lo taglia), la descrizione da 70 a 160. Un titolo o una descrizione uguali in due contenuti escono rossi: scrivine di diversi. Per il resto (keyword, In breve, domande frequenti) apri la scheda del contenuto, riquadro Controllo SEO.</p>
   <?php endif; ?>

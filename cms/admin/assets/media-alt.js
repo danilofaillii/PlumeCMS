@@ -25,11 +25,11 @@
         });
         c.value = j.alt; c.setAttribute('data-salvato', j.alt);
         if (voce) voce.classList.toggle('ma-fatta', j.alt !== '');
-        if (esito) { esito.className = 'ma-esito ma-ok'; esito.textContent = j.alt !== '' ? 'Salvato: vale in tutte le pagine che usano questa foto senza un alt loro.' : 'Alt tolto.'; }
+        if (esito) { esito.className = 'ma-esito ma-ok'; esito.setAttribute('role', 'status'); esito.textContent = j.alt !== '' ? 'Salvato: vale in tutte le pagine che usano questa foto senza un alt loro.' : 'Alt tolto.'; }
         var ns = document.getElementById('ma-n-senza'), nc = document.getElementById('ma-n-con');
         if (ns && nc && voce && voce.closest('#ma-elenco-libreria')) { var fatte = document.querySelectorAll('#ma-elenco-libreria .ma-voce.ma-fatta').length; ns.textContent = Math.max(0, +ns.getAttribute('data-base') || (ns.setAttribute('data-base', ns.textContent), +ns.textContent)) - fatte; nc.textContent = (+nc.getAttribute('data-base') || (nc.setAttribute('data-base', nc.textContent), +nc.textContent)) + fatte; }
       })
-      .catch(function (e) { if (esito) { esito.className = 'ma-esito ma-no'; esito.textContent = 'Non salvato: ' + e.message; } })
+      .catch(function (e) { if (esito) { esito.className = 'ma-esito ma-no'; esito.setAttribute('role', 'alert'); esito.textContent = 'Non salvato: ' + e.message; } })
       .then(function () { c.disabled = false; });
   }
   campi.forEach(function (c) {

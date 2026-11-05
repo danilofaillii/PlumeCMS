@@ -50,11 +50,11 @@
         }
         (j.righe || []).forEach(function (x) { var r = trova(x.tipo, x.id); if (r) aggiornaRiga(r, x); });
         var np = document.getElementById('st-n-problemi'); if (np && typeof j.con_problemi === 'number') np.textContent = j.con_problemi;
-        esito.className = 'st-esito st-ok'; esito.textContent = 'Salvato';
+        esito.className = 'st-esito st-ok'; esito.setAttribute('role', 'status'); esito.textContent = 'Salvato';
         setTimeout(function () { if (esito.textContent === 'Salvato') esito.textContent = ''; }, 2500);
         filtra();
       })
-      .catch(function (e) { esito.className = 'st-esito st-no'; esito.textContent = 'Non salvato: ' + e.message; })
+      .catch(function (e) { esito.className = 'st-esito st-no'; esito.setAttribute('role', 'alert'); esito.textContent = 'Non salvato: ' + e.message; })
       .then(function () { campo.disabled = false; });
   }
   righe.forEach(function (tr) {
