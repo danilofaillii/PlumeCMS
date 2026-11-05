@@ -21,6 +21,8 @@ require_once __DIR__ . '/sito-dati.php';
 require_once __DIR__ . '/contenuti.php';
 require_once __DIR__ . '/sedi.php'; // 2.27.0: le sedi (gruppo "sedi" della configurazione, nodi LocalBusiness, %citta%)
 require_once __DIR__ . '/zone.php'; // 2.28.0: le pagine per zona (gruppo "zone" della configurazione, nodo Service, briciole)
+require_once __DIR__ . '/seo-link.php'; // 2.29.0: i link interni suggeriti (seo_link_suggeriti), nella voce link_interni dell'analisi
+require_once __DIR__ . '/seo-schema.php'; // 2.29.0: i dati per Google in più (Prodotto, How-to, Video) di un contenuto
 
 const SEO_INDEXNOW_API = 'https://api.indexnow.org/indexnow';
 const SEO_GOOGLE_TOKEN = 'https://oauth2.googleapis.com/token';
@@ -1038,7 +1040,7 @@ function seo_jsonld_di(string $percorso): array {
                 $briciole = [['Home', '/'], ['Blog', SITO_PAGINA_BLOG]];
                 if ($cat) $briciole[] = [sito_categorie()[$cat]['name'] ?? $cat, "/category/$cat/"];
                 $briciole[] = [$c['titolo'], $c['percorso']];
-                $nodi = array_merge(sito_jsonld_articolo($c), [sito_jsonld_briciole($briciole)]);
+                $nodi = seo_schema_applica(array_merge(sito_jsonld_articolo($c), [sito_jsonld_briciole($briciole)]), $c); // 2.29.0: i dati in più
             } elseif ($c['tipo'] === 'glossario') {
                 $nodi = [sito_jsonld_pagina($c['percorso'], $c['titolo'], $c['tldr']), sito_jsonld_termine($c)];
             } else {
@@ -1049,6 +1051,7 @@ function seo_jsonld_di(string $percorso): array {
                 $nodiZona = function_exists('sito_jsonld_zona') ? sito_jsonld_zona($c) : [];
                 if ($nodiZona) $nodi = array_merge($nodi, $nodiZona);
                 elseif (!empty($c['servizio']['tipo'])) $nodi[] = sito_jsonld_servizio($c);
+                $nodi = seo_schema_applica($nodi, $c); // 2.29.0: Prodotto, How-to, Video scelti nella scheda
                 if ($c['faq']) $nodi[] = sito_jsonld_faq($c);
             }
             break;
@@ -1180,7 +1183,16 @@ function seo_analisi(array $c): array {
         if (str_starts_with($u, '#') || str_starts_with($u, 'mailto:') || str_starts_with($u, 'tel:')) continue;
         if (!preg_match('~^https?://~', $u) || str_contains($u, (string)parse_url(SITO_URL, PHP_URL_HOST))) $interni++; else $esterni++;
     }
-    $v('link_interni', $interni >= 2 ? 'ok' : ($interni === 1 ? 'attenzione' : 'no'), "$interni link interni (almeno 2).", 6);
+    // 2.29.0: i link interni suggeriti (includes/seo-link.php). Con dei suggerimenti la riga dice quante pagine parlano di X e
+    // diventa verde quando almeno una delle suggerite è già collegata; senza suggerimenti il testo resta quello di prima.
+    $sug = seo_link_suggeriti((string)($c['tipo_contenuto'] ?? ''), (int)($c['id'] ?? 0), $html, $kw, $titolo, $slug);
+    if ($sug['voci']) {
+        $nSug = count($sug['voci']);
+        $v('link_interni', ($interni >= 2 || $sug['collegati'] > 0) ? 'ok' : ($interni === 1 ? 'attenzione' : 'no'),
+            "Collegamenti interni: $interni nel testo; " . ($sug['da_collegare'] > 0 ? ($nSug === 1 ? 'una pagina parla' : "$nSug pagine parlano") . ' di «' . $sug['parola'] . '», ' . ($sug['collegati'] > 0 ? $sug['collegati'] . ' già collegat' . ($sug['collegati'] === 1 ? 'a' : 'e') . ', collega le altre.' : ($nSug === 1 ? 'collegala.' : 'collegale.')) : ($nSug === 1 ? 'la pagina che parla' : "le $nSug pagine che parlano") . ' di «' . $sug['parola'] . '» ' . ($nSug === 1 ? 'è già collegata.' : 'sono già collegate.')), 6);
+    } else {
+        $v('link_interni', $interni >= 2 ? 'ok' : ($interni === 1 ? 'attenzione' : 'no'), "$interni link interni (almeno 2).", 6);
+    }
     $v('link_esterni', $esterni >= 1 ? 'ok' : 'attenzione', $esterni ? "$esterni link esterni (le fonti)." : 'Nessun link esterno: le fonti dei numeri vanno linkate.', 4);
 
     // Lunghezza
@@ -1210,11 +1222,12 @@ function seo_analisi(array $c): array {
     foreach ($voci as $x) { $totale += $x['peso']; $preso += $x['stato'] === 'ok' ? $x['peso'] : ($x['stato'] === 'attenzione' ? $x['peso'] / 2 : 0); }
     $punteggio = $totale ? (int)round($preso / $totale * 100) : 0;
     return ['punteggio' => $punteggio, 'colore' => $punteggio >= 80 ? 'verde' : ($punteggio >= 50 ? 'giallo' : 'rosso'), 'voci' => $voci,
-        'parole' => $nParole, 'keyword' => $kw, 'titolo_px' => $pxT, 'descrizione_px' => $pxD, 'ok' => count(array_filter($voci, fn($x) => $x['stato'] === 'ok')), 'totale' => count($voci)];
+        'parole' => $nParole, 'keyword' => $kw, 'titolo_px' => $pxT, 'descrizione_px' => $pxD, 'ok' => count(array_filter($voci, fn($x) => $x['stato'] === 'ok')), 'totale' => count($voci),
+        'suggeriti' => $sug]; // 2.29.0: i link interni suggeriti (parola, voci, collegati, da_collegare)
 }
 
 /** L'HTML del riquadro del controllo (per la scheda del contenuto e la panoramica). */
-function seo_analisi_html(array $a): string {
+function seo_analisi_html(array $a, array $opz = []): string {
     // 1.4.0: i colori degli stati del pannello, che seguono l'aspetto scelto
     $colore = ['verde' => 'var(--successo-testo)', 'giallo' => 'var(--attenzione-testo)', 'rosso' => 'var(--errore-testo)'][$a['colore']];
     $segno = ['ok' => '&#10003;', 'attenzione' => '&#9679;', 'no' => '&#10007;'];
@@ -1222,7 +1235,30 @@ function seo_analisi_html(array $a): string {
     $out = '<div class="seo-punteggio" style="display:flex;align-items:center;gap:1rem;margin-bottom:.8rem"><div style="width:58px;height:58px;border-radius:50%;border:4px solid ' . $colore . ';display:flex;align-items:center;justify-content:center;font-weight:700;font-size:1.1rem;color:' . $colore . '">' . $a['punteggio'] . '</div>'
         . '<div><b>' . $a['ok'] . ' controlli su ' . $a['totale'] . ' a posto</b><div class="hint">' . $a['parole'] . ' parole' . ($a['keyword'] !== '' ? ' &middot; keyword: ' . h($a['keyword']) : ' &middot; nessuna keyword') . '</div></div></div><ul style="list-style:none;padding:0;margin:0;font-size:.86rem">';
     foreach ($a['voci'] as $x) $out .= '<li style="padding:.28rem 0;border-bottom:1px solid var(--border);display:flex;gap:.5rem"><span style="color:' . $cl[$x['stato']] . ';font-weight:700;width:1em">' . $segno[$x['stato']] . '</span><span>' . h($x['testo']) . '</span></li>';
-    return $out . '</ul>';
+    return $out . '</ul>' . seo_link_html($a['suggeriti'] ?? [], $opz);
+}
+
+/**
+ * 2.29.0: il riquadro "Collega" sotto l'analisi: le pagine suggerite non ancora collegate, con "Copia il link" (data-copia-link,
+ * l'indirizzo intero) e, nell'editor ($opz['inserisci']), "Inserisci nel Testo selezionato" (data-inserisci-link con /percorso/).
+ * I pulsanti li muovono admin/assets/seo-controllo.js (scheda) e admin/assets/editor/editor.js (editor). Vuoto senza suggerimenti.
+ */
+function seo_link_html(array $sug, array $opz = []): string {
+    $daCollegare = array_values(array_filter($sug['voci'] ?? [], fn($v) => empty($v['collegato'])));
+    if (!$daCollegare) return '';
+    $editor = !empty($opz['editor']);
+    $btn = $editor ? 'ed-b ed-b-piccolo' : 'btn btn-secondary btn-sm';
+    $n = count($daCollegare);
+    $out = '<div class="seo-collega" style="margin-top:.8rem;padding:.7rem .8rem;border:1px solid var(--border);border-radius:8px;font-size:.86rem"><b>Collega</b>: '
+        . ($n === 1 ? 'una pagina parla' : "$n pagine parlano") . ' di &laquo;' . h((string)($sug['parola'] ?? '')) . '&raquo;. Metti un link nel testo' . ($editor ? ': copia l\'indirizzo, oppure seleziona prima un widget Testo e premi Inserisci.' : ' (copia l\'indirizzo e usalo con il pulsante link del testo).')
+        . '<ul style="list-style:none;padding:0;margin:.5rem 0 0">';
+    foreach ($daCollegare as $v) {
+        $out .= '<li style="display:flex;flex-wrap:wrap;gap:.4rem .6rem;align-items:center;padding:.3rem 0;border-top:1px solid var(--border)"><span style="flex:1 1 180px;min-width:0"><b>' . h($v['titolo']) . '</b> <small style="color:var(--text-muted);overflow-wrap:anywhere">' . h($v['percorso']) . '</small></span>'
+            . '<button type="button" class="' . $btn . '" data-copia-link="' . h($v['url']) . '">Copia il link</button>'
+            . (!empty($opz['inserisci']) ? '<button type="button" class="' . $btn . '" data-inserisci-link="' . h($v['percorso']) . '" data-inserisci-titolo="' . h($v['titolo']) . '">Inserisci nel Testo selezionato</button>' : '')
+            . '</li>';
+    }
+    return $out . '</ul><span class="seo-collega-esito" role="status" style="display:block;margin-top:.3rem;color:var(--text-muted)"></span></div>';
 }
 
 /** Tutti i contenuti pubblicati con il punteggio, per la Panoramica. */
@@ -1233,7 +1269,7 @@ function seo_panoramica(): array {
         $w = contenuti_sql_stato($tipo, 'pubblicato');
         foreach (db()->query("SELECT * FROM " . tbl($tab) . " WHERE $w")->fetchAll() as $r) {
             if ($tipo === 'pagine' && trim((string)$r['html']) === '' && trim((string)$r['struttura']) === '') continue;
-            $riga = $r + ['contenuto' => (string)($r[$campo] ?? '')];
+            $riga = $r + ['contenuto' => (string)($r[$campo] ?? ''), 'tipo_contenuto' => $tipo]; // 2.29.0: il tipo per i link suggeriti
             // Una pagina o un articolo fatti con l'editor: il testo e quello disegnato.
             if (trim((string)($r['struttura'] ?? '')) !== '') {
                 require_once __DIR__ . '/editor.php';

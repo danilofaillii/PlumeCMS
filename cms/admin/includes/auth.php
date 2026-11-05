@@ -88,7 +88,8 @@ function is_logged_in(): bool {
  * Un modulo aggiunge le sue pagine con il filtro 'redattore_pagine'.
  */
 const AUTH_REDATTORE_PAGINE = ['index.php', 'contenuti.php', 'contenuto.php', 'editor.php', 'editor-api.php', 'editor-anteprima.php', 'seo-api.php', 'link-api.php',
-    'media.php', 'categories.php', 'versioni.php', 'account.php', 'password.php', 'logout.php', 'login.php'];
+    'media.php', 'categories.php', 'versioni.php', 'account.php', 'password.php', 'logout.php', 'login.php',
+    'seo-tabella.php']; // 2.29.0: la Tabella SEO (titolo per Google e descrizione dei contenuti, come dalla scheda), non la configurazione SEO
 
 /** Il redattore può aprire questa pagina (nome del file, con il ?tipo= se serve)? Lo usano require_login e il menu. */
 function auth_redattore_puo(string $pagina, string $tipo = ''): bool {

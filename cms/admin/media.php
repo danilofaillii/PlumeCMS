@@ -47,6 +47,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     exit;
 }
 
+// 2.29.0: Media > Senza alt (media.php?scheda=alt): le immagini senza testo alternativo, con la correzione in posto (includes/media-alt.php).
+if (($_GET['scheda'] ?? '') === 'alt') { require __DIR__ . '/includes/media-alt-pagina.php'; exit; }
+
 $cartella = (string)($_GET['cartella'] ?? '');
 $q = trim((string)($_GET['q'] ?? ''));
 $miniature = !empty($_GET['miniature']);
@@ -63,6 +66,9 @@ $link = fn(array $extra) => 'media.php?' . http_build_query(array_filter($extra 
 
 require_once __DIR__ . '/includes/admin-header.php';
 ?>
+<nav class="imp-schede" aria-label="Schede dei Media"><?php /* 2.29.0: Libreria e Senza alt */ ?>
+  <a href="media.php" class="attiva" aria-current="page">Libreria</a><a href="media.php?scheda=alt">Senza alt</a>
+</nav>
 
 <div style="display:flex;justify-content:space-between;align-items:center;gap:1rem;flex-wrap:wrap;margin-bottom:1rem">
   <p style="color:var(--text-muted);font-size:0.9rem;margin:0"><?= $totale ?> immagini<?= $q !== '' ? ' per «' . h($q) . '»' : '' ?><?= $miniature ? '' : ', senza le miniature' ?></p>

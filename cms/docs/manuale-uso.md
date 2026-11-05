@@ -476,6 +476,26 @@ nella cartella **Da sostituire**, e un avviso in cima ti dice quanti ne restano.
 Una foto per la home in larghezza va bene orizzontale (il disegno è largo), una per "Chi siamo" va bene verticale.
 Sostituisci lo usa solo l'amministratore.
 
+### Le immagini senza alt
+
+**A cosa serve.** Il **testo alternativo** (alt) di una foto dice cosa c'è nella foto a chi non la vede: chi legge il sito
+con un lettore di schermo, e Google, che senza non la capisce e non la porta in Google Immagini. Nell'editor lo scrivi nel
+widget, nella casella "Testo alternativo". La scheda **Senza alt** di Media raccoglie tutte le foto a cui manca, per
+sistemarle da lì.
+
+![Media, Senza alt](immagini/manuale-uso/07-senza-alt.jpg)
+
+1. Apri **Media** e premi la scheda **Senza alt**. Il primo riquadro, **Nelle pagine**, elenca le immagini dei contenuti
+   pubblicati con il testo alternativo vuoto: la pagina, il widget, il nome del file.
+2. Scrivi nella casella cosa si vede ("Il laboratorio, con il tornio e gli scaffali dei vasi") e premi Invio, o esci dalla
+   casella: si salva da solo, "Salvato" compare sotto. L'alt va nella libreria e vale per **tutte** le pagine che usano
+   quella foto senza un alt loro: la riga sparisce al prossimo giro.
+3. Se preferisci scriverlo nel widget, **Apri nell'editor** ti porta alla pagina.
+
+Il secondo riquadro, **Nella libreria**, elenca tutte le immagini dei Media che non hanno ancora un alt loro, con la stessa
+casella: non è obbligatorio scriverlo per ognuna, conta per le foto che usi nelle pagine. In fondo, **Le immagini con
+l'alt** le rimostra per cambiarlo. Nella Tabella SEO (capitolo 23) la colonna "Immagini senza alt" conta le stesse foto.
+
 ### Scegliere un'immagine da qualunque pagina del pannello
 
 Dove il pannello chiede un'immagine (l'immagine social della SEO, il logo, la foto di un popup, di un corso, di un
@@ -529,7 +549,7 @@ Dove trovi Scegli dai Media:
 
 - [ ] La cartella Da sostituire è vuota (e la voce dei Primi passi è verde).
 - [ ] Le foto hanno un nome che dice cosa sono (vetrina-natale.jpg è meglio di IMG_4021.jpg).
-- [ ] Ogni foto usata nelle pagine ha il testo alternativo (lo scrivi dove la usi).
+- [ ] Ogni foto usata nelle pagine ha il testo alternativo (lo scrivi dove la usi, oppure in Media > Senza alt).
 
 **Se qualcosa non va**
 
@@ -3157,6 +3177,96 @@ scelgono con **Scegli dai Media**, come l'immagine social.
 
 Il sito manda ai social l'indirizzo intero dell'immagine, con le misure: l'anteprima esce giusta già la prima volta.
 
+### La tabella SEO
+
+**A cosa serve.** Vedere in un colpo solo titoli e descrizioni di tutto il sito e sistemarli lì, senza aprire ogni pagina.
+In **SEO e AEO > Tabella SEO** c'è una riga per ogni articolo e ogni pagina (anche le bozze, con lo stato scritto accanto).
+
+![La Tabella SEO](immagini/manuale-uso/23-tabella.jpg)
+
+1. **Cerca** restringe alle righe con quella parola nel titolo o nell'indirizzo; la tendina **Tipo** lascia solo articoli o
+   solo pagine; **Ordina per** parte dal semaforo (prima i problemi), oppure titolo o tipo.
+2. **Solo i contenuti con problemi** nasconde le righe già a posto: così lavori solo su quelle da sistemare.
+3. **Titolo per Google**: la casella mostra il titolo che esce nei risultati. Vuota, il sito usa il titolo con il formato di
+   Globale SEO (lo leggi in grigio nella casella stessa). Scrivine uno migliore e premi Invio, o esci dalla casella: si
+   salva da solo, "Salvato" compare sotto e il semaforo si aggiorna subito.
+4. **Descrizione per Google**: le due righe sotto il titolo nei risultati. Stessa cosa: scrivi ed esci dalla casella.
+5. Il **semaforo** sopra ogni casella dice come sta, con il colore e con le parole: verde a posto (titolo da 30 a 60
+   caratteri, descrizione da 70 a 160); giallo da migliorare (troppo corto o troppo lungo); rosso da sistemare (manca, il
+   titolo supera i 70 caratteri e Google lo taglia, oppure è **uguale** a quello di un altro contenuto: Google non sa quale
+   mostrare). Quando correggi un doppione, anche l'altra riga cambia colore.
+
+Le altre colonne: **Robots** (index o noindex, quello che vale davvero sul sito) e **Immagini senza alt**, il numero di foto
+di quel contenuto senza testo alternativo, con il link a Media > Senza alt (capitolo 7). I tre numeri in alto dicono quanti
+contenuti ci sono, quanti hanno qualcosa da sistemare e quante immagini senza alt.
+
+Quello che scrivi qui è lo stesso che scriveresti nella scheda o nelle Impostazioni dell'editor: la pagina resta com'è, cambia
+solo quello che Google legge, e in Versioni trovi la revisione. Anche un redattore può usare la tabella (vede solo questa
+voce del gruppo SEO e AEO). Per il resto del controllo SEO (keyword, In breve, domande frequenti) apri la scheda del contenuto.
+
+**Checklist della tabella**
+
+- [ ] Nessuna riga rossa: ogni contenuto ha titolo e descrizione, e nessun doppione.
+- [ ] I titoli stanno fra 30 e 60 caratteri, le descrizioni fra 70 e 160.
+- [ ] La colonna "Immagini senza alt" è a 0 sulle pagine importanti.
+
+### I link interni suggeriti
+
+**A cosa serve.** Google capisce meglio un sito dove le pagine si collegano fra loro, e chi legge trova la pagina giusta
+con un clic. Il controllo SEO ora ti dice **quali** pagine collegare: "questo articolo parla di X, hai tre pagine su X,
+collegale".
+
+**Esempio.** Stai scrivendo l'articolo "Come scegliere un vaso in terracotta", con la keyword "vaso in terracotta", e nel
+sito ci sono già la pagina "Vasi in terracotta per il giardino" e "La nostra terracotta: come nasce un vaso".
+
+![Il riquadro Collega nelle Impostazioni dell'editor](immagini/manuale-uso/23-collega.jpg)
+
+1. Nell'editor premi **Impostazioni**: sotto i campi c'è il controllo SEO. La riga **Collegamenti interni** dice "0 nel
+   testo; 2 pagine parlano di «vaso in terracotta», collegale", e sotto il riquadro **Collega** elenca le pagine, con
+   l'indirizzo.
+2. **Copia il link** mette l'indirizzo negli appunti (il pulsante dice "Copiato"): incollalo nel pulsante link del widget
+   Testo, dove vuoi tu nel discorso.
+3. Oppure, più veloce: chiudi la finestra, fai clic sul widget **Testo** dove vuoi il link, riapri Impostazioni e premi
+   **Inserisci nel Testo selezionato**: in fondo a quel testo compare un paragrafo con il link e il titolo della pagina (poi
+   lo sposti o lo riscrivi come preferisci). La riga diventa verde: "1 nel testo; 1 già collegata". Ricordati di salvare.
+
+I suggerimenti arrivano dalla keyword e dalle parole del titolo, cercate nei titoli, nelle keyword, nei riassunti e negli
+indirizzi dei contenuti pubblicati (al massimo cinque; mai l'articolo stesso, le bozze o le pagine riservate ai membri). Le
+pagine già collegate non si ripropongono. Lo stesso riquadro, con Copia il link, sta nella scheda classica, sotto il
+Controllo SEO (premi Ricontrolla dopo aver scritto la keyword).
+
+### Dati per Google in più: prodotto, how-to, video
+
+**A cosa serve.** Google mostra un risultato più ricco quando sa che una pagina è un prodotto (con prezzo e
+disponibilità), una guida a passi o un video. Nella scheda di ogni articolo e pagina, riquadro **SEO e Google**, la tendina
+**Dati per Google in più** glielo dice. "Nessuno" (il valore di partenza) lascia la pagina com'è.
+
+![Dati per Google in più: Prodotto](immagini/manuale-uso/23-schema.jpg)
+
+1. Apri la scheda del contenuto (Pagine o Articoli, poi il titolo) e nel riquadro SEO e Google scegli nella tendina
+   **Prodotto**, **How-to** oppure **Video**: compaiono i suoi campi.
+2. **Prodotto**: il nome, il prezzo (24,90), la valuta (EUR), la disponibilità (Disponibile, Esaurito, In prenotazione,
+   Ultimi pezzi), e se vuoi il codice, la marca e una foto (vuota, usa l'immagine in evidenza). La descrizione è quella per
+   Google della pagina.
+3. **How-to**: il nome della guida ("Come rinvasare una pianta"), il tempo totale in minuti e i **passi**, uno per riga
+   con il nome e sotto cosa si fa; **Aggiungi un passo** ne mette un altro, **Togli** lo leva (fino a venti).
+4. **Video**: il nome, la descrizione, la **miniatura** (un'immagine, obbligatoria), la data di caricamento, l'indirizzo del
+   file video (un video caricato nei Media, oppure un indirizzo https) o quello dell'incorporo, la durata (1:30).
+5. Premi **Aggiorna**. Se un campo non va (un prezzo scritto male, un indirizzo che non comincia con https), il messaggio
+   rosso dice quale: la pagina si salva lo stesso, i dati in più no, finché non lo correggi.
+
+Per vedere cosa riceve Google: **SEO e AEO > Schema e AEO**, Anteprima del JSON-LD di un indirizzo: ci trovi il nodo
+Product, HowTo o VideoObject, e la pagina che lo indica come suo contenuto principale.
+
+Le schede dei prodotti della **Vetrina** (capitolo 35) dicono già a Google prezzo, disponibilità e codice: lì non devi fare
+niente.
+
+**Checklist dei dati in più**
+
+- [ ] Ogni pagina di un prodotto, di una guida o di un video ha il suo tipo scelto nella tendina.
+- [ ] Il video ha la miniatura e la data (senza, Google non lo prende).
+- [ ] L'anteprima del JSON-LD mostra il nodo senza avvisi.
+
 ### Le sedi e la SEO geografica
 
 **A cosa serve.** Chi cerca "idraulico a Bologna" o "ristorante a Imola" trova le attività che dicono a Google dove stanno:
@@ -3298,8 +3408,8 @@ Schema e AEO) si scelgono così.
 
 **Checklist**
 
-- [ ] Ogni pagina importante ha titolo e descrizione per Google.
-- [ ] Le pagine principali hanno un punteggio sopra 70.
+- [ ] Ogni pagina importante ha titolo e descrizione per Google (la Tabella SEO è tutta verde).
+- [ ] Le pagine principali hanno un punteggio sopra 70, e il riquadro Collega non ha più pagine da collegare.
 - [ ] Ho guardato Redirect e 404 almeno una volta al mese.
 - [ ] L'immagine social predefinita c'è, 1200 x 630, in JPG o PNG.
 - [ ] Le sedi dell'attività sono scritte in SEO e AEO > Sedi (anche una sola).

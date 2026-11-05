@@ -10,6 +10,7 @@ require_once __DIR__ . '/includes/admin-functions.php';
 require_once dirname(__DIR__) . '/includes/contenuti.php';
 require_once dirname(__DIR__) . '/includes/editor.php';
 require_once dirname(__DIR__) . '/includes/social.php'; // 1.5.0: il riquadro Social
+require_once dirname(__DIR__) . '/includes/seo-schema.php'; // 2.29.0: i dati per Google in più (Prodotto, How-to, Video)
 require_login();
 // Un contenuto nuovo nasce nell'editor visuale: la scheda classica serve solo ai contenuti che esistono già.
 if (empty($_GET['id']) && $_SERVER['REQUEST_METHOD'] !== 'POST' && !isset($_GET['scheda'])) { header('Location: editor.php?nuova=1&tipo=' . (isset(contenuti_tipi()[$_GET['tipo'] ?? '']) && ($_GET['tipo'] ?? '') !== 'pagine' ? $_GET['tipo'] : 'pagine')); exit; }
@@ -57,6 +58,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 }
                 // 1.5.0: i testi del riquadro Social, nella loro tabella (un salvataggio rapido dall'elenco non li tocca).
                 if (array_key_exists('social_testo', $d)) social_contenuto_salva($tipo, $id, $d);
+                // 2.29.0: i dati per Google in più (schema[...]), nella colonna seo_schema; con un campo sbagliato restano quelli di prima.
+                $erroriSchema = seo_schema_salva($tipo, $id, $d);
+                if ($erroriSchema) flash('error', seo_schema_errori_testo($erroriSchema));
                 // 2.1: i riquadri dei moduli e degli addon nella scheda (filtro scheda_riquadri, sotto) salvano i loro campi qui.
                 // Chi ascolta controlla da sé chi può farlo (per esempio solo l'amministratore) e che il suo campo sia arrivato.
                 cms_evento('scheda_salvata', $tipo, $id, $d);
@@ -201,12 +205,16 @@ require_once __DIR__ . '/includes/admin-header.php';
           <?php endif; ?>
           <label>Indicizzazione</label>
           <select name="robots"><option value="" <?= $sc['robots'] === '' ? 'selected' : '' ?>>Automatica (visibile a Google)</option><option value="index" <?= $sc['robots'] === 'index' ? 'selected' : '' ?>>Sempre visibile</option><option value="noindex" <?= $sc['robots'] === 'noindex' ? 'selected' : '' ?>>Nascosto a Google (noindex)</option></select>
+          <?php if ($id && seo_schema_per_tipo($tipo)): // 2.29.0: Prodotto, How-to, Video (includes/seo-schema.php, admin/assets/seo-schema.js) ?>
+          <?= seo_schema_form_html(seo_schema_leggi((string)($r['seo_schema'] ?? ''))) ?>
+          <?php endif; ?>
         </div>
       </div>
+      <?php if ($id && seo_schema_per_tipo($tipo)): ?><script src="<?= pannello_file('assets/seo-schema.js') ?>" defer></script><?php endif; ?>
 
       <?php // seo: il controllo come Rank Math (includes/seo.php, seo_analisi). Il pulsante ricontrolla i campi del modulo senza salvare.
       require_once dirname(__DIR__) . '/includes/seo.php';
-      $seoAnalisi = seo_analisi($sc + ['faq' => admin_faq_da_testo((string)$sc['faq_testo'])]); ?>
+      $seoAnalisi = seo_analisi($sc + ['faq' => admin_faq_da_testo((string)$sc['faq_testo']), 'tipo_contenuto' => $tipo, 'id' => $id]); // 2.29.0: tipo e id per i link suggeriti ?>
       <div class="sc-scatola" id="seo-controllo">
         <h3>Controllo SEO: <?= $seoAnalisi['punteggio'] ?>/100</h3>
         <div class="sc-corpo">

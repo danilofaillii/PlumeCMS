@@ -61,6 +61,7 @@ function contenuti_schema_colonne(): array {
             'struttura_aggiornata' => 'DATETIME DEFAULT NULL',
             // Da dove viene la struttura: "conversione N data" se l'ha scritta editor_converti_articoli(), vuoto se nasce dall'editor.
             'struttura_origine'    => "VARCHAR(80) NOT NULL DEFAULT ''",
+            'seo_schema'           => 'LONGTEXT', // 2.29.0: i dati per Google in più (Prodotto, How-to, Video), JSON (includes/seo-schema.php)
         ],
         'pages' => [
             'cestino'      => 'DATETIME DEFAULT NULL',
@@ -70,6 +71,7 @@ function contenuti_schema_colonne(): array {
             'excerpt'      => 'TEXT',
             'author'       => "VARCHAR(100) NOT NULL DEFAULT ''",
             'publish_time' => "TIME NOT NULL DEFAULT '06:00:00'",
+            'seo_schema'   => 'LONGTEXT', // 2.29.0: i dati per Google in più (includes/seo-schema.php)
         ],
     ];
 }
@@ -396,8 +398,9 @@ function contenuti_salva_rapido(string $tipo, int $id, array $d): void {
     $base = ['title' => $d['title'] ?? $r['title'], 'slug' => $d['slug'] ?? $r['slug'], 'stato' => $d['stato'] ?? (contenuti_stato($tipo, $r) === 'bozza' ? 'bozza' : 'pubblicato'),
         'data' => $d['data'] ?? substr(contenuti_quando($tipo, $r), 0, 10), 'ora' => $d['ora'] ?? substr(contenuti_quando($tipo, $r), 11, 5),
         'contenuto' => $r[$t['campo_contenuto']], 'excerpt' => $r['excerpt'], 'author' => $r['author'] ?? (string)cms_impostazione('autore_predefinito', ''),
-        'seo_title' => $r['seo_title'], 'seo_description' => $r['seo_description'], 'meta_description' => $r['meta_description'],
-        'robots' => $r['robots'], 'tldr' => $r['tldr'], 'faq' => $r['faq'], 'immagine' => $r['immagine_url'] ?: ($r['featured_image'] ?? '')];
+        // 2.29.0: la Tabella SEO (admin/seo-tabella.php) passa titolo per Google, descrizioni e robots; chi non li passa tiene quelli salvati.
+        'seo_title' => $d['seo_title'] ?? $r['seo_title'], 'seo_description' => $d['seo_description'] ?? $r['seo_description'], 'meta_description' => $d['meta_description'] ?? $r['meta_description'],
+        'robots' => $d['robots'] ?? $r['robots'], 'tldr' => $r['tldr'], 'faq' => $r['faq'], 'immagine' => $r['immagine_url'] ?: ($r['featured_image'] ?? '')];
     if ($t['tassonomie']) $base += ['categorie' => $d['categorie'] ?? contenuti_categorie_di($r), 'tags' => $d['tags'] ?? implode(', ', contenuti_tag_di($r))];
     if ($t['attributi']) {
         $base += ['immagine_alt' => $r['featured_image_alt'], 'type' => $r['type'], 'keyword_target' => $r['keyword_target'], 'keywords_secondarie' => $r['keywords_secondarie'],

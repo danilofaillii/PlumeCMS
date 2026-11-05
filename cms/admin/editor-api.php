@@ -195,7 +195,8 @@ switch ($azione) {
         $riga['seo_title'] = (string)($_POST['seo_titolo'] ?? $pagina['seo_title']);
         $riga['seo_description'] = (string)($_POST['seo_descrizione'] ?? $pagina['seo_description']);
         if (!empty($_POST['slug'])) $riga['slug'] = (string)$_POST['slug'];
-        try { api_esci(['html' => seo_analisi_html(seo_analisi($riga))]); } catch (Throwable $e) { api_esci(['html' => '<p class="ed-aiuto">Controllo SEO non disponibile: ' . h($e->getMessage()) . '</p>']); }
+        $riga['tipo_contenuto'] = $tipo; // 2.29.0: i link interni suggeriti escludono il contenuto stesso (includes/seo-link.php)
+        try { api_esci(['html' => seo_analisi_html(seo_analisi($riga), ['editor' => true, 'inserisci' => true])]); } catch (Throwable $e) { api_esci(['html' => '<p class="ed-aiuto">Controllo SEO non disponibile: ' . h($e->getMessage()) . '</p>']); }
 
     case 'togli':
         if ($contenitore) { // 2.1: il contenitore torna al testo di prima, se il modulo lo sa fare

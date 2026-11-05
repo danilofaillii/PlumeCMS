@@ -1219,6 +1219,37 @@
     }, 300);
   }
   ['titolo', 'seo_titolo', 'seo_descrizione', 'slug'].forEach(function (n) { if (fImp[n]) fImp[n].addEventListener('input', controlloSeo); });
+  // 2.29.0: il riquadro Collega del controllo SEO (includes/seo-link.php): "Copia il link" mette l'indirizzo negli appunti,
+  // "Inserisci nel Testo selezionato" aggiunge un paragrafo con il link in fondo al widget Testo selezionato nella tela.
+  function copiaNegliAppunti(testo) {
+    var vecchia = function () {
+      var ta = document.createElement('textarea'); ta.value = testo; ta.setAttribute('readonly', ''); ta.style.position = 'fixed'; ta.style.left = '-9999px';
+      document.body.appendChild(ta); ta.select(); var ok = false; try { ok = document.execCommand('copy'); } catch (e) {} ta.remove(); if (!ok) throw new Error('non copiato');
+    };
+    if (navigator.clipboard && navigator.clipboard.writeText) return navigator.clipboard.writeText(testo).catch(function () { return vecchia(); });
+    return new Promise(function (ris) { vecchia(); ris(); });
+  }
+  var edSeo = $('#ed-seo');
+  if (edSeo) edSeo.addEventListener('click', function (e) {
+    var b = e.target.closest('[data-copia-link], [data-inserisci-link]');
+    if (!b) return;
+    e.preventDefault();
+    var riq = b.closest('.seo-collega'), esito = riq ? riq.querySelector('.seo-collega-esito') : null;
+    var dire = function (t) { if (esito) esito.textContent = t; };
+    if (b.hasAttribute('data-copia-link')) {
+      copiaNegliAppunti(b.getAttribute('data-copia-link')).then(function () { var t = b.textContent; b.textContent = 'Copiato'; dire('Indirizzo copiato: incollalo nel pulsante link di un widget Testo.'); setTimeout(function () { b.textContent = t; }, 1800); })
+        .catch(function () { dire('Non riesco a copiare: seleziona l\'indirizzo e copialo a mano: ' + b.getAttribute('data-copia-link')); });
+      return;
+    }
+    var p = selezionato ? trova(selezionato) : null;
+    if (!p || p.el.tipo !== 'testo') { dire('Seleziona prima un widget Testo nella pagina (chiudi questa finestra, fai clic sul testo, riapri Impostazioni), oppure usa Copia il link.'); return; }
+    var imp = p.el.impostazioni = p.el.impostazioni || {};
+    imp.contenuto = (imp.contenuto || '') + '<p><a href="' + escapeHtml(b.getAttribute('data-inserisci-link')) + '">' + escapeHtml(b.getAttribute('data-inserisci-titolo')) + '</a></p>';
+    cambiato(selezionato); mostraControlli();
+    b.disabled = true; b.textContent = 'Inserito';
+    dire('Link inserito in fondo al widget Testo: lo vedi nella tela. Ricordati di salvare.');
+    controlloSeo();
+  });
   fImp.addEventListener('submit', function (e) {
     e.preventDefault();
     var campi = { titolo: fImp.titolo.value, seo_titolo: fImp.seo_titolo.value, seo_descrizione: fImp.seo_descrizione.value, robots: fImp.robots.value, stato: fImp.stato.value };

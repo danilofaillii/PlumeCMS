@@ -61,8 +61,10 @@ $menu = [
         ['Informazioni', 'informazioni.php', $qui === 'informazioni.php'],
     ]))],
     // seo: Search Console, Bing, IndexNow, statistiche, robots, sitemap, redirect e 404, dati strutturati, llms.txt. Solo amministratore.
-    $sonoAdminMenu ? ['SEO e AEO', 'seo.php', 'cerca', in_array($qui, ['seo.php', 'sedi.php', 'zone.php'], true), [
+    // 2.29.0: il gruppo esiste anche per il redattore: il filtro dei ruoli (sotto) gli lascia solo la Tabella SEO, che può aprire.
+    ['SEO e AEO', 'seo.php', 'cerca', in_array($qui, ['seo.php', 'sedi.php', 'zone.php', 'seo-tabella.php'], true), [
         ['Panoramica', 'seo.php?scheda=panoramica', $qui === 'seo.php' && in_array($_GET['scheda'] ?? 'panoramica', ['panoramica'], true)],
+        ['Tabella SEO', 'seo-tabella.php', $qui === 'seo-tabella.php'], // 2.29.0: titoli, descrizioni e semafori di tutto il sito (admin/seo-tabella.php)
         ['Motori di ricerca', 'seo.php?scheda=motori', $qui === 'seo.php' && ($_GET['scheda'] ?? '') === 'motori'],
         ['Copertura e prestazioni', 'seo.php?scheda=copertura', $qui === 'seo.php' && in_array($_GET['scheda'] ?? '', ['copertura', 'prestazioni'], true)],
         ['Analisi e tag', 'seo.php?scheda=analisi', $qui === 'seo.php' && ($_GET['scheda'] ?? '') === 'analisi'],
@@ -71,7 +73,7 @@ $menu = [
         ['Redirect e 404', 'seo.php?scheda=redirect', $qui === 'seo.php' && ($_GET['scheda'] ?? '') === 'redirect'],
         ['Sedi', 'sedi.php', $qui === 'sedi.php'], // 2.27.0: le sedi e la SEO geografica (admin/sedi.php)
         ['Zone', 'zone.php', $qui === 'zone.php'], // 2.28.0: le pagine per zona (admin/zone.php)
-    ]] : null,
+    ]],
     // Il gruppo Impostazioni è dell'amministratore: per il redattore il filtro dei ruoli qui sotto lo toglie tutto (anche Log cron, cron-log.php è solo admin).
     ['Impostazioni', $sonoAdminMenu ? 'impostazioni.php' : 'cron-log.php', 'impostazioni', in_array($qui, ['impostazioni.php', 'consegna.php', 'addon.php', 'aggiornamenti.php', 'copia-sito.php', 'cron-log.php', 'sicurezza.php', 'controlla-server.php'], true), array_values(array_filter([
         $sonoAdminMenu ? ['Configurazione email', 'impostazioni.php', $qui === 'impostazioni.php' && ($_GET['scheda'] ?? '') !== 'sito'] : null,

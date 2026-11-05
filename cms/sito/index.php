@@ -56,6 +56,9 @@ function sito_html(int $codice, array $meta, string $corpo, string $jsonld = '',
     // Il pannello SEO e AEO aggiunge i suoi tag (verifica, statistiche, codice libero) al documento finito.
     // {versione:<serie>} nei testi (titolo della scheda compreso) diventa l'ultima versione caricata in Download (1.2.5).
     $html = seo_inietta_html(vista_pagina($meta, $corpo, $jsonld, $attivo));
+    // 2.29.0: l'alt scritto nella libreria dei Media entra nelle <img> con l'alt vuoto (includes/media-alt.php); senza alt salvati niente cambia.
+    if (!function_exists('media_alt_applica') && is_file(dirname(__DIR__) . '/includes/media-alt.php')) require_once dirname(__DIR__) . '/includes/media-alt.php';
+    if (function_exists('media_alt_applica')) $html = media_alt_applica($html);
     if (str_contains($html, '{versione:')) { require_once dirname(__DIR__) . '/includes/scaricabili.php'; $html = scaricabili_versioni_nel_testo($html); }
     $html = cms_con_cartella($html);
     // 1.4.0: le foto con la loro WebP accanto si servono in WebP a chi la accetta; la pagina dipende allora da Accept.
@@ -309,6 +312,7 @@ try {
                     [$corpo, $cssFine] = vista_fine_articolo($corpo);
                     $testa .= $cssFine;
                     $nodi = array_merge(sito_jsonld_articolo($c), [sito_jsonld_briciole($briciole)]);
+                    if (function_exists('seo_schema_applica')) $nodi = seo_schema_applica($nodi, $c); // 2.29.0: Prodotto, How-to, Video scelti nella scheda
                     sito_html(200, $meta, $corpo, sito_jsonld_script($nodi) . $testa, SITO_PAGINA_BLOG);
                 }
                 if ($c['tipo'] === 'glossario') {
@@ -324,6 +328,7 @@ try {
                 $nodiZona = function_exists('sito_jsonld_zona') ? sito_jsonld_zona($c) : [];
                 if ($nodiZona) $nodi = array_merge($nodi, $nodiZona);
                 elseif (!empty($c['servizio']['tipo'])) $nodi[] = sito_jsonld_servizio($c);
+                if (function_exists('seo_schema_applica')) $nodi = seo_schema_applica($nodi, $c); // 2.29.0: Prodotto, How-to, Video scelti nella scheda
                 if (!empty($c['editor'])) {
                     [$corpo, $testa] = vista_pagina_editor($c);
                     $faq = array_merge($c['faq'], $c['editor_disegno'][2]);

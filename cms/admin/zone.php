@@ -116,7 +116,7 @@ td .zn-tipo{display:block;font-size:.8rem;color:var(--text-muted)}
 </style>
 
 <nav class="imp-schede" aria-label="Schede di SEO e AEO">
-  <?php foreach (['panoramica' => 'Panoramica', 'motori' => 'Motori di ricerca', 'copertura' => 'Copertura', 'prestazioni' => 'Prestazioni', 'analisi' => 'Analisi e tag', 'globale' => 'Globale SEO', 'schema' => 'Schema e AEO', 'redirect' => 'Redirect e 404', 'log' => 'Registro'] as $k => $v): ?><a href="seo.php?scheda=<?= $k ?>"><?= h($v) ?></a><?php endforeach; ?><a href="sedi.php">Sedi</a><a href="zone.php" class="attiva" aria-current="page">Zone</a>
+  <?php foreach (['panoramica' => 'Panoramica', 'motori' => 'Motori di ricerca', 'copertura' => 'Copertura', 'prestazioni' => 'Prestazioni', 'analisi' => 'Analisi e tag', 'globale' => 'Globale SEO', 'schema' => 'Schema e AEO', 'redirect' => 'Redirect e 404', 'log' => 'Registro'] as $k => $v): ?><a href="seo.php?scheda=<?= $k ?>"><?= h($v) ?></a><?php endforeach; ?><a href="sedi.php">Sedi</a><a href="zone.php" class="attiva" aria-current="page">Zone</a><a href="seo-tabella.php">Tabella SEO</a>
 </nav>
 
 <div class="form-card zn-elenco" id="zn-elenco">

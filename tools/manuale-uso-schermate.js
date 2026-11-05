@@ -1315,6 +1315,55 @@ capitoli['23z'] = async () => {
   await foto('23-zone-editor', { clip: { x: 0, y: 0, width: 1200, height: 800 }, segni: [{ sel: '#ed-pubblica', n: 7 }, { sel: '#ed-stato', n: 8, lato: 'destra' }] });
 };
 
+// 23t. (2.29.0) La Tabella SEO, il riquadro Collega dell'editor (i link interni suggeriti) e i dati per Google in più.
+// Vuole CMS_DIR_MANUALE: prove/seo-strumenti-cli.php crea una pagina e un articolo di prova e li toglie alla fine. Gira dopo il 23s
+// (le pagine di prova nascono quando i numeri delle pagine non contano più). Da solo: SOLO_CAPITOLI=23t.
+capitoli['23t'] = async () => {
+  const DIRM = process.env.CMS_DIR_MANUALE; if (!DIRM) throw new Error('23t: serve CMS_DIR_MANUALE');
+  const cli = (...a) => JSON.parse(require('child_process').execFileSync('php', [path.join(__dirname, '..', 'prove', 'seo-strumenti-cli.php'), DIRM, ...a.map(String)], { encoding: 'utf8' }).trim().split('\n').pop());
+  const vasi = cli('pagina', 'vasi-in-terracotta', 'Vasi in terracotta per il giardino', JSON.stringify([
+    { tipo: 'titolo', impostazioni: { testo: 'Vasi in terracotta per il giardino', livello: 'h1' } },
+    { tipo: 'testo', impostazioni: { contenuto: '<p>I vasi in terracotta fatti a mano, per il giardino e il terrazzo: misure, colori e prezzi.</p>' } }]));
+  const terra = cli('pagina', 'come-nasce-la-terracotta', 'La nostra terracotta: come nasce un vaso', JSON.stringify([{ tipo: 'testo', impostazioni: { contenuto: '<p>Dalla creta al forno: come nasce la terracotta dei nostri vasi.</p>' } }]));
+  const art = cli('articolo', 'come-scegliere-un-vaso', 'Come scegliere un vaso in terracotta', 'vaso in terracotta', 'Come scegliere un vaso in terracotta per le piante del terrazzo: misura, spessore, foro di scolo, e dove comprarlo bene.', JSON.stringify([
+    { tipo: 'titolo', impostazioni: { testo: 'Come scegliere un vaso in terracotta', livello: 'h1' } },
+    { tipo: 'testo', impostazioni: { contenuto: '<p>Un vaso in terracotta respira: la pianta sta meglio. Ecco come scegliere la misura e lo spessore giusti per il terrazzo.</p>' } }]));
+  await vai('seo-tabella.php');
+  await foto('23-tabella', { clip: { x: 240, y: 56, width: 960, height: 760 }, segni: [{ sel: '#st-cerca', n: 1 }, { sel: '#st-solo-problemi', n: 2 },
+    { sel: '#st-tabella tbody tr:first-child input[data-campo=seo_title]', n: 3 }, { sel: '#st-tabella tbody tr:first-child textarea[data-campo=descrizione]', n: 4, lato: 'destra' }, { sel: '#st-tabella tbody tr:first-child td.st-campo .st-sem', n: 5 }] });
+  await apriEditor('editor.php?tipo=articoli&id=' + art.id);
+  await p.click('#ed-apri-impostazioni');
+  await p.waitForSelector('#ed-seo .seo-collega', { timeout: 20000 }); await dorme(400);
+  // Il riquadro del controllo SEO scorre dentro la finestra (260 px): per la foto si allarga, con una finestra del browser più alta,
+  // così si vedono insieme la riga "Collegamenti interni" e il riquadro Collega.
+  await p.setViewportSize({ width: 1200, height: 2200 });
+  await p.evaluate(() => { const b = document.getElementById('ed-seo'); b.style.maxHeight = 'none'; const l = [...b.querySelectorAll('li')].find(x => /Collegamenti interni/.test(x.textContent)); if (l) l.id = 'mu-riga-link'; });
+  await dorme(300);
+  await foto('23-collega', { sel: '#ed-seo', margine: 8, segni: [{ sel: '#mu-riga-link', n: 1 }, { sel: '#ed-seo .seo-collega [data-copia-link]', n: 2 }, { sel: '#ed-seo .seo-collega [data-inserisci-link]', n: 3, lato: 'destra' }] });
+  await p.setViewportSize({ width: 1200, height: 800 });
+  await p.click('#ed-dialogo-impostazioni [data-chiudi]');
+  await vai('contenuto.php?tipo=pagine&id=' + vasi.id);
+  await p.selectOption('#sc-schema-tipo', 'prodotto');
+  await p.fill('#sc-schema-prodotto-nome', 'Vaso in terracotta 30 cm'); await p.fill('#sc-schema-prodotto-prezzo', '24,90'); await p.fill('#sc-schema-prodotto-codice', 'VT-30'); await p.fill('#sc-schema-prodotto-marca', 'Studio Prova');
+  await p.locator('#sc-schema').scrollIntoViewIfNeeded(); await dorme(200);
+  await foto('23-schema', { sel: '#sc-schema', margine: 14, segni: [{ sel: '#sc-schema-tipo', n: 1 }, { sel: '#sc-schema-prodotto-nome', n: 2 }, { sel: '#sc-schema-prodotto-prezzo', n: 3 }, { sel: '#sc-schema-prodotto-disponibilita', n: 4 }] });
+  for (const id of [vasi.id, terra.id]) { cli('sql', 'DELETE FROM {p}pages WHERE id = ' + id); cli('sql', "DELETE FROM {p}pagine_revisioni WHERE tipo = 'pagine' AND pagina_id = " + id); }
+  cli('sql', 'DELETE FROM {p}articles WHERE id = ' + art.id); cli('sql', "DELETE FROM {p}pagine_revisioni WHERE tipo = 'articoli' AND pagina_id = " + art.id);
+};
+
+// 23u. (2.29.0) Media > Senza alt: una pagina con una foto senza testo alternativo, la correzione in posto. Vuole CMS_DIR_MANUALE.
+capitoli['23u'] = async () => {
+  const DIRM = process.env.CMS_DIR_MANUALE; if (!DIRM) throw new Error('23u: serve CMS_DIR_MANUALE');
+  const cli = (...a) => JSON.parse(require('child_process').execFileSync('php', [path.join(__dirname, '..', 'prove', 'seo-strumenti-cli.php'), DIRM, ...a.map(String)], { encoding: 'utf8' }).trim().split('\n').pop());
+  const f = cli('foto_copia', path.join(FOTO_PROVA, 'squadra.jpg'), 'la-squadra');
+  const lab = cli('pagina', 'il-laboratorio', 'Il laboratorio', JSON.stringify([{ tipo: 'titolo', impostazioni: { testo: 'Il laboratorio', livello: 'h1' } }, { tipo: 'immagine', impostazioni: { immagine: f.url, alt: '' } }]));
+  await vai('media.php?scheda=alt');
+  await foto('07-senza-alt', { clip: { x: 240, y: 56, width: 960, height: 520 }, segni: [{ sel: '.imp-schede a[href="media.php?scheda=alt"]', n: 1 }, { sel: '#ma-elenco-pagine input[data-alt-url]', n: 2 }, { sel: '#ma-elenco-pagine .ma-dove a[href*="editor.php"]', n: 3, lato: 'destra' }] });
+  cli('sql', 'DELETE FROM {p}pages WHERE id = ' + lab.id); cli('sql', "DELETE FROM {p}pagine_revisioni WHERE tipo = 'pagine' AND pagina_id = " + lab.id);
+  cli('sql', "DELETE FROM {p}media_alt WHERE percorso LIKE '%la-squadra%'");
+  cli('foto_togli', 'la-squadra'); try { require('fs').unlinkSync(f.file); } catch (e) {}
+};
+
 // 22. Utenti e ruoli: un redattore
 capitoli['22'] = async () => {
   await vai('utenti.php');

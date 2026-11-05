@@ -622,6 +622,32 @@ Gli attacchi sono il gruppo 43 di `tools/sicurezza-prova.js` (con `CMS_DIR`): co
 con SQL, 210 zone contro il limite di 200, pubblicazione con i segnaposto da ogni strada anche dall'amministratore e ripubblicazione
 con il segnaposto rimesso, il segnaposto mai nel JSON-LD, redattore, senza token e da un altro sito.
 
+## prova-seo-strumenti.js (2.29.0)
+
+Gli strumenti SEO, come li userebbe una persona. Crea quattro pagine e un articolo di prova (fatti con l'editor, con la keyword
+"vaso in terracotta") e due foto PNG minime nella libreria, poi: la Tabella SEO (SEO e AEO > Tabella SEO) con i semafori giusti
+(Blog senza descrizione, "Chi siamo" con il titolo doppio, l'articolo a posto, la pagina dei vasi con un'immagine senza alt), i
+filtri (solo problemi, tipo, ricerca, nessun risultato), la modifica nella riga di titolo per Google e descrizione salvata senza
+ricaricare e letta sul sito (`<title>` e meta description), la revisione lasciata; nell'editor il riquadro **Collega** del
+controllo SEO con le pagine suggerite, Copia il link (gli appunti del browser: il contesto ha i permessi `clipboard-read` e
+`clipboard-write`), Inserisci nel Testo selezionato (prima senza un Testo selezionato, poi con), la riga dei link interni verde,
+il link sul sito dopo Pubblica; la scheda classica con Copia il link; i dati per Google in più dalla scheda (Prodotto, How-to con
+tre passi aggiunti dal pulsante, Video prima con un indirizzo `javascript:` rifiutato e poi giusto, "Nessuno" che toglie il nodo)
+con i nodi nel JSON-LD del sito e Servizi identica al byte; la Vetrina accesa da Impostazioni > Addon e il Product della scheda
+di un prodotto creato dalla riga di comando; Media > Senza alt (Nelle pagine e Nella libreria, due alt salvati senza ricaricare,
+l'alt che esce sul sito, la colonna della tabella a 0); il redattore (menu con la sola Tabella SEO, seo.php e sedi.php chiuse,
+salva dalla riga, apre Senza alt); 1280 e 390 px senza scorrimento di lato; la pulizia (pagine, articolo, prodotto, foto, alt,
+redattore, Chi siamo e Blog come prima, la Vetrina com'era).
+1. Un sito installato con il kit Attività (`prova-kit.js`; la prova usa `/servizi/`, `/chi-siamo/` e `/blog/`).
+2. `node prove/prova-seo-strumenti.js <base> <cartella CMS> <utente> <password> [cartella foto]`. Usa `prove/seo-strumenti-cli.php`
+   (sql, analisi, suggeriti, jsonld, tabella, alt_pagine, alt_libreria, alt_azzera, pagina, articolo, addon, prodotto, foto,
+   foto_togli, redattore).
+3. Atteso (2.29.0): 71 su 71, in radice e in cartella.
+Gli attacchi sono il gruppo 44 di `tools/sicurezza-prova.js` (con `CMS_DIR`): codice nei campi della tabella e degli schema,
+foto e video `javascript:`, `data:` e `http:`, 500 passi di how-to, senza token e da un altro sito, tipo `modelli` e id
+inesistente, un alt per un file fuori dalla libreria, redattore (configurazione SEO, coordinate), keyword con codice nei
+suggerimenti, alt con codice sul sito.
+
 ## prova-scorri.js (2.25.0)
 
 Il widget **Scorri di lato** e le sue cinque disposizioni (pellicola, carte, fermo, tempo, profondita).
