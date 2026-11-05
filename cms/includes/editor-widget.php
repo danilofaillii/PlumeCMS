@@ -72,7 +72,7 @@ const EDITOR_FOTO_EFFETTI = ['' => 'Nessuno', 'zoom' => 'Zoom lento', 'bagliore'
 // Le dieci disposizioni dell'Apertura in più della classica (1.2.6).
 require_once __DIR__ . '/editor-hero.php';
 
-// Le quindici infografiche disegnate in SVG: imbuto, piramide, matrice... (stesso gruppo e stessa cornice delle ig_*).
+// Le sedici infografiche disegnate in SVG: imbuto, piramide, matrice... (stesso gruppo e stessa cornice delle ig_*).
 require_once __DIR__ . '/editor-infografiche.php';
 
 const EDITOR_ALLINEAMENTI = ['' => 'Come la sezione', 'left' => 'Sinistra', 'center' => 'Centro', 'right' => 'Destra'];
@@ -1129,7 +1129,7 @@ function igx_chiusura(array $v): string {
 
 /** Il widget ig_* in HTML. */
 function igx_disegna(string $tipo, array $v): string {
-    if (in_array($tipo, IGS_TIPI, true)) return (string)igs_disegna($tipo, $v); // le quindici disegnate (editor-infografiche.php)
+    if (in_array($tipo, IGS_TIPI, true)) return (string)igs_disegna($tipo, $v); // le sedici disegnate (editor-infografiche.php)
     switch ($tipo) {
         case 'ig_passi':
             $dueCifre = in_array($v['stile'], ['badge', 'card'], true) || ($v['stile'] === 'pieno' && $v['numero_grande']);

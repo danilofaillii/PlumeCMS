@@ -2,7 +2,15 @@
 
 Il prodotto si chiama **plumeCMS** (nome scelto il 26 ottobre 2026; prima, per poche ore, "CarbonaraCMS", e ancora prima il provvisorio "Officina": gli zip vecchi si chiamavano `officina-*` e `carbonaracms-*`).
 
-## 2.25.1 (5 novembre 2026) - Ripristino sicuro della copia
+## 2.26.0 (5 novembre 2026) - Barre a confronto
+
+- **Barre a confronto**, la sedicesima infografica disegnata (gruppo Infografiche dell'editor, `ig_confronto`: `ig_barre` è già Barre di avanzamento): da 2 a 8 voci con
+  un nome e un valore (euro, anni, percentuali...), barre orizzontali in proporzione al valore più alto, il numero alla fine
+  (si può spegnere), l'unità dopo il numero. Serve per un capitale che cresce negli anni, gli anni per raddoppiare, i costi a
+  confronto. Al computer il nome sta a sinistra della barra, al telefono sopra; chi non vede sente tutti i valori. Nata nel
+  modulo del sito TascaPiena come `tp_barre`, dove cinque articoli la usano, entra nel nucleo com'era: in quei siti i widget
+  salvati si rinominano in `ig_confronto` con le stesse impostazioni. 109 widget. Manuale d'uso capitolo 8, tecnico 41.
+
 
 - **Il ripristino di una copia non cancella più niente prima di sapere che la copia si ricrea** (il 4 novembre 2026 su un
   sito vero il ripristino eseguiva DROP TABLE e subito dopo la CREATE della copia; la CREATE, scritta da un MySQL 8, portava

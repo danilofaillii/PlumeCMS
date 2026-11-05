@@ -11,7 +11,7 @@
 //   e, nel config.local.php del sito, CMS_DNS_PROVA con i record finti di studiorossi.it (senza, la foto del Dominio dice che il DNS non
 //   risponde); il capitolo 40 il WebDAV finto (COPIA_PORTA, 8297 se manca). I widget della 2.1 (08-menu-ristorante, 08-galleria-filtri)
 //   vogliono CMS_DIR_MANUALE. Il giro completo cancella prima tutte le foto: ognuna deve nascere da qui.
-// Infografiche disegnate: le quindici infografiche disegnate (08-infografiche), una foto d'insieme dalla pagina di prove/pagina-infografiche-15.php:
+// Infografiche disegnate: le sedici infografiche disegnate (08-infografiche; quindici fino alla 2.25.1), una foto d'insieme dalla pagina di prove/pagina-infografiche-15.php:
 //   vuole CMS_DIR_MANUALE; da sola con SOLO_CAPITOLI=infografiche.
 // 2.2.0: Scegli dal sito (08-scegli-dal-sito, 11-prenota-1 e 2 con l'esempio eseguito davvero, 17-menu-scegli, 19-popup-scegli; la
 //   finestra 08-scegli-finestra dopo tutti i capitoli, con la pagina in bozza "Condizioni di vendita") e 28-server con il gruppo
@@ -1377,9 +1377,9 @@ async function fotoWidget21() {
 
 // 2.2.0: la finestra Scegli dal sito (capitolo 8), con "con" nella ricerca e una pagina in bozza ("Condizioni di vendita"). Dopo
 // tutti i capitoli: la pagina in bozza prenderebbe un numero di pagina che un capitolo dopo si aspetta.
-// Infografiche disegnate: le quindici infografiche disegnate, in una foto d'insieme (capitolo 8). La pagina /infografiche-15/ la crea
+// Infografiche disegnate: le sedici infografiche disegnate (2.26.0), in una foto d'insieme (capitolo 8). La pagina /infografiche-15/ la crea
 // prove/pagina-infografiche-15.php nella cartella del sito delle schermate (CMS_DIR_MANUALE; senza, la foto si salta). Ogni
-// infografica si fotografa da sola a 1200 px, poi le quindici si mettono in una griglia di tre colonne. Dopo tutti i capitoli,
+// infografica si fotografa da sola a 1200 px, poi le sedici si mettono in una griglia di tre colonne. Dopo tutti i capitoli,
 // come le altre pagine di prova. Da sola: SOLO_CAPITOLI=infografiche.
 async function fotoInfografiche() {
   if (!process.env.CMS_DIR_MANUALE || (SOLO && !'08'.startsWith(SOLO.slice(0, 2)))) return;
@@ -1387,7 +1387,7 @@ async function fotoInfografiche() {
   await p.goto(B + '/infografiche-15/', { waitUntil: 'networkidle' }); await dorme(600);
   await p.addStyleTag({ content: 'header{visibility:hidden}.igx .igx-firma{display:none}' });
   const pezzi = [];
-  for (let i = 0; i < 15; i++) {
+  for (let i = 0; i < 16; i++) {
     const f = path.join(GREZZE, `08-infografica-${String(i).padStart(2, '0')}.png`);
     await p.locator('.igx').nth(i).screenshot({ path: f }); pezzi.push(f);
   }

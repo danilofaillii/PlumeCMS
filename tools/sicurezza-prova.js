@@ -1353,7 +1353,7 @@ echo json_encode($o);
     await post(admin.p, PC, form({ _csrf: tkp, azione: 'gruppo', cosa: 'elimina', cerca: 'formula', tutti: '1' }), CT);
   }
 
-  // === 32. (infografiche disegnate, 2.9.0) Le quindici infografiche disegnate con valori cattivi in ogni campo (prove/pagina-infografiche-15.php cattivi:
+  // === 32. (infografiche disegnate, 2.9.0; sedici dalla 2.26.0) Le infografiche disegnate con valori cattivi in ogni campo (prove/pagina-infografiche-15.php cattivi:
   // passano da editor_valida come dall'editor vero): HTML e script nei testi, colori fuori dalla palette e colori liberi che
   // provano a chiudere lo stile, numeri enormi, negativi, NaN e INF, 45 voci in ogni ripetitore. La pagina si apre nel browser
   // con JavaScript acceso: nessuna finestra, nessun attributo on*, nessuno script, stili solo con le variabili dei colori
@@ -1362,7 +1362,7 @@ echo json_encode($o);
     const { execFileSync } = require('child_process');
     let out = '';
     try { out = execFileSync('php', [path.join(__dirname, '..', 'prove', 'pagina-infografiche-15.php'), DIR, 'cattivi'], { encoding: 'utf8' }); } catch (e) { out = String(e.message).slice(0, 200); }
-    ok('infografiche: (preparazione) la pagina delle quindici infografiche con i valori cattivi', /infografiche-15-cattivi/.test(out), out.trim());
+    ok('infografiche: (preparazione) la pagina delle sedici infografiche con i valori cattivi', /infografiche-15-cattivi/.test(out), out.trim());
     const ctx = await browser.newContext({ viewport: { width: 1280, height: 900 } });
     const pg = await ctx.newPage();
     const finestre = [], errori = [];
@@ -1382,17 +1382,17 @@ echo json_encode($o);
         classi: dentro.filter(e => e.closest('.igs')).map(e => e.getAttribute('class') || '').filter(c => !/^[a-z0-9_ -]*$/.test(c)),
         numeri: dentro.filter(e => e.closest('.igs')).flatMap(e => ['x', 'y', 'cx', 'cy', 'r', 'width', 'height', 'points', 'd', 'viewBox'].map(n => e.getAttribute(n)).filter(v => v !== null && /NaN|INF|e\+/i.test(v))),
         testo: [...document.querySelectorAll('.igs text')].some(t => t.textContent.includes('<svg onload=alert(1)>')),
-        voci: { imbuto: conta('imbuto', 'polygon'), piramide: conta('piramide', 'polygon'), matrice: conta('matrice', 'rect.igs-tinta'), ciclo: conta('ciclo', 'circle'), ciambella: conta('ciambella', 'circle.igs-tratto'), venn: conta('venn', 'circle.igs-tinta'), radar: conta('radar', 'circle.igs-p2'), iceberg: conta('iceberg', 'text.igs-su'), omini: conta('omini', 'circle'), viaggio: conta('viaggio', 'circle.igs-anello-carta'), bilancia: conta('bilancia', 'text.igs-tm'), calore: conta('calore', 'rect title'), cerchi: conta('cerchi', 'g > circle'), barre: conta('barre100', 'rect.igs-p') },
+        voci: { imbuto: conta('imbuto', 'polygon'), piramide: conta('piramide', 'polygon'), matrice: conta('matrice', 'rect.igs-tinta'), ciclo: conta('ciclo', 'circle'), ciambella: conta('ciambella', 'circle.igs-tratto'), venn: conta('venn', 'circle.igs-tinta'), radar: conta('radar', 'circle.igs-p2'), iceberg: conta('iceberg', 'text.igs-su'), omini: conta('omini', 'circle'), viaggio: conta('viaggio', 'circle.igs-anello-carta'), bilancia: conta('bilancia', 'text.igs-tm'), calore: conta('calore', 'rect title'), cerchi: conta('cerchi', 'g > circle'), barre: conta('barre100', 'rect.igs-p'), confronto: conta('confronto', 'rect.igs-p') },
         peso: document.documentElement.outerHTML.length,
       };
     });
-    ok('infografiche: le quindici infografiche cattive si aprono (200), tutte e quindici, senza errori JavaScript', r.status() === 200 && esame.widget === 15 && errori.length === 0, { stato: r.status(), widget: esame.widget, errori });
+    ok('infografiche: le sedici infografiche cattive si aprono (200), tutte e sedici, senza errori JavaScript', r.status() === 200 && esame.widget === 16 && errori.length === 0, { stato: r.status(), widget: esame.widget, errori });
     ok('infografiche: nessuna finestra aperta da script nascosti nei testi', finestre.length === 0, finestre);
     ok('infografiche: nessun attributo on* e nessun elemento attivo (script, iframe, immagini, link, use) dentro le infografiche', esame.on.length === 0 && esame.script.length === 0, { on: esame.on, el: esame.script.slice(0, 5) });
     ok('infografiche: i colori manipolati non entrano: stili solo con --c e --c2 esadecimali, classi pulite', esame.stili.length === 0 && esame.classi.length === 0, { stili: esame.stili.slice(0, 3), classi: esame.classi.slice(0, 3) });
     ok('infografiche: i numeri manipolati (enormi, negativi, NaN, INF) non arrivano nelle coordinate del disegno', esame.numeri.length === 0, esame.numeri.slice(0, 5));
     ok('infografiche: il testo cattivo si legge come testo', esame.testo);
-    const v = esame.voci, lim = { imbuto: 6, piramide: 6, matrice: 4, ciclo: 6, ciambella: 6, venn: 3, radar: 8, iceberg: 6, omini: 20, viaggio: 7, bilancia: 16, calore: 144, cerchi: 4, barre: 24 };
+    const v = esame.voci, lim = { imbuto: 6, piramide: 6, matrice: 4, ciclo: 6, ciambella: 6, venn: 3, radar: 8, iceberg: 6, omini: 20, viaggio: 7, bilancia: 16, calore: 144, cerchi: 4, barre: 24, confronto: 8 };
     ok('infografiche: 45 voci per ripetitore: si disegnano al massimo quelle ammesse (6 gradini, 3 cerchi, 8 aspetti, 12 x 12 caselle...)', Object.entries(lim).every(([k, m]) => v[k] <= m) && v.imbuto === 6 && v.radar === 8 && v.calore > 0, v);
     ok('infografiche: la pagina resta leggera (meno di 1,5 MB di HTML con 45 voci per ripetitore)', esame.peso < 1500000, esame.peso);
     await ctx.close();

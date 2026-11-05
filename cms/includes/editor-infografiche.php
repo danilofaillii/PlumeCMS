@@ -1,7 +1,8 @@
 <?php
 /**
- * Le quindici infografiche disegnate: imbuto, piramide, matrice, ciclo, ciambella, cerchi che si toccano, ragnatela,
- * lancetta, iceberg, omini, viaggio, bilancia, mappa di calore, cerchi concentrici, barre al cento per cento.
+ * Le sedici infografiche disegnate: imbuto, piramide, matrice, ciclo, ciambella, cerchi che si toccano, ragnatela,
+ * lancetta, iceberg, omini, viaggio, bilancia, mappa di calore, cerchi concentrici, barre al cento per cento e, dalla 2.26.0,
+ * barre a confronto (ig_confronto: ig_barre è già Barre di avanzamento; nata nel modulo del sito TascaPiena come tp_barre, 5 novembre 2026).
  * Widget del nucleo nel gruppo Infografiche (prefisso ig_), con la stessa cornice delle altre quattordici (igx_cornice,
  * igx_controlli_testa, igx_controlli_coda in editor-widget.php).
  *
@@ -14,7 +15,7 @@
  * Solo funzioni e costanti: niente variabili in cima al file.
  */
 
-const IGS_TIPI = ['ig_imbuto', 'ig_piramide', 'ig_matrice', 'ig_ciclo', 'ig_ciambella', 'ig_venn', 'ig_radar', 'ig_lancetta', 'ig_iceberg', 'ig_omini', 'ig_viaggio', 'ig_bilancia', 'ig_calore', 'ig_cerchi', 'ig_barre100'];
+const IGS_TIPI = ['ig_imbuto', 'ig_piramide', 'ig_matrice', 'ig_ciclo', 'ig_ciambella', 'ig_venn', 'ig_radar', 'ig_lancetta', 'ig_iceberg', 'ig_omini', 'ig_viaggio', 'ig_bilancia', 'ig_calore', 'ig_cerchi', 'ig_barre100', 'ig_confronto'];
 const IGS_LARGO = 560;
 const IGS_STRETTO = 320;
 const IGS_CSS = 'infografiche-svg.css';
@@ -53,7 +54,7 @@ function igs_voce(array $campi, string $colore = ''): array {
     return $campi + ['colore' => $colore, 'colore_libero' => ''];
 }
 
-/** Le definizioni dei quindici widget. */
+/** Le definizioni dei sedici widget. */
 function igs_definizioni(): array {
     $c = igx_controlli_coda();
     $d = [];
@@ -188,6 +189,16 @@ function igs_definizioni(): array {
         ec('barre', 'ripetitore', 'Barre (da 1 a 4)', [['nome' => 'Prima', 'valori' => '55 25 5 15'], ['nome' => 'Dopo 3 mesi', 'valori' => '45 10 20 25']],
             'contenuto', ['campi' => [ec('nome', 'testo', 'Nome della barra', ''), ec('valori', 'testo', 'Percentuali delle voci, nell\'ordine (es. 55 25 5 15)', '')], 'titolo_voce' => 'nome', 'aiuto' => 'Ogni barra fa 100: se le percentuali non fanno 100, l\'editor te lo dice.']),
         ec('mostra_percentuali', 'interruttore', 'Scrivi le percentuali dentro le barre', true),
+        igs_ctl_colore(),
+    ]);
+    // 2.26.0: barre a confronto (da 2 a 8 voci con un valore: euro, anni, percentuali; la più lunga è il valore più alto).
+    $d['ig_confronto'] = $def('Barre a confronto', '▭', igs_testa('QUANTO COSTA, A CONFRONTO', 'I numeri uno accanto all\'altro', 'ciano'), [
+        ec('voci', 'ripetitore', 'Voci (da 2 a 8)', [
+            igs_voce(['nome' => 'Dopo 10 anni', 'valore' => 19672], 'ciano'), igs_voce(['nome' => 'Dopo 20 anni', 'valore' => 38697], 'verde'), igs_voce(['nome' => 'Dopo 30 anni', 'valore' => 76123], 'oro'),
+        ], 'contenuto', ['campi' => [ec('nome', 'testo', 'Nome', ''), ec('valore', 'numero', 'Valore', 0, 'contenuto', ['min' => 0, 'max' => 1000000000, 'passo' => 0.01]), ...igs_ctl_colori()],
+            'titolo_voce' => 'nome', 'aiuto' => 'Da 2 a 8 voci. La barra più lunga è il valore più alto; le altre in proporzione.']),
+        ec('unita', 'testo', 'Dopo il numero (€, anni, %...)', '€'),
+        ec('mostra_valori', 'interruttore', 'Scrivi il valore alla fine della barra', true),
         igs_ctl_colore(),
     ]);
     return $d;
@@ -1018,4 +1029,44 @@ function igs_barre100(array $v, int $W): array {
         $x += $w;
     }
     return ['svg' => $o, 'h' => $y + 8, 'aria' => 'Barre al cento per cento. ' . implode('. ', $aria) . '.', 'note' => $note];
+}
+
+// ------------------------------------------------------------
+// 16. Barre a confronto (2.26.0)
+// ------------------------------------------------------------
+/** Da 2 a 8 voci con un valore: barre orizzontali in proporzione al valore più alto, il numero alla fine. Nata come tp_barre nel modulo di TascaPiena. */
+function igs_confronto(array $v, int $W): array {
+    $voci = igs_voci($v['voci'] ?? [], ['nome', 'valore'], 8);
+    $note = [igs_nota_troppe($v['voci'] ?? [], 8, 'voci')];
+    if (count($voci) < 1) return ['vuoto' => 'Aggiungi almeno una voce con nome e valore.', 'note' => $note];
+    $max = 0.0;
+    foreach ($voci as $x) $max = max($max, (float)str_replace(',', '.', (string)($x['valore'] ?? 0)));
+    if ($max <= 0) return ['vuoto' => 'I valori devono essere maggiori di zero.', 'note' => $note];
+    $unita = igs_pulito($v['unita'] ?? '', 12);
+    $L = $W >= 500;
+    $fs = $L ? 13.5 : 12.5;
+    $bh = $L ? 26 : 22;
+    $valori = array_map(fn($x) => (float)str_replace(',', '.', (string)($x['valore'] ?? 0)), $voci);
+    $testi = array_map(fn($n) => igs_num($n) . ($unita !== '' ? ' ' . $unita : ''), $valori);
+    $wv = !empty($v['mostra_valori']) ? max(array_map(fn($t) => igs_largh($t, $fs, true), $testi)) + 10 : 0;
+    // Al computer il nome sta a sinistra della barra; al telefono sopra.
+    $lw = $L ? min(0.42 * $W, max(array_map(fn($x) => igs_largh(igs_pulito($x['nome'] ?? '', 80), $fs), $voci)) + 14) : 0;
+    $x0 = $lw;
+    $larg = $W - $x0 - $wv;
+    $o = ''; $aria = []; $y = 2;
+    foreach ($voci as $k => $x) {
+        $nome = igs_pulito($x['nome'] ?? '', 80);
+        $wb = max(3, $larg * $valori[$k] / $max);
+        if ($L) {
+            $o .= igs_testo(0, $y + $bh / 2 + $fs * .35, [igs_tronca($nome, $fs, $lw - 12)], 'igs-t', $fs, 'start', 600);
+        } else {
+            $o .= igs_testo(0, $y + $fs, [igs_tronca($nome, $fs, $W)], 'igs-t', $fs, 'start', 600);
+            $y += $fs + 8;
+        }
+        $o .= '<g' . igs_c($x, $v, $k) . '><rect class="igs-p" x="' . igs_n($x0) . '" y="' . igs_n($y) . '" width="' . igs_n($wb) . '" height="' . $bh . '" rx="4"/></g>';
+        if ($wv > 0) $o .= igs_testo($x0 + $wb + 8, $y + $bh / 2 + $fs * .35, [$testi[$k]], 'igs-tm igs-num', $fs, 'start', 700);
+        $aria[] = $nome . ': ' . $testi[$k];
+        $y += $bh + ($L ? 16 : 14);
+    }
+    return ['svg' => $o, 'h' => $y - ($L ? 16 : 14) + 4, 'aria' => 'Barre a confronto. ' . implode('. ', $aria) . '.', 'note' => $note];
 }

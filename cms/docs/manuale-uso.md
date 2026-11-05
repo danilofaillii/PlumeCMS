@@ -845,10 +845,10 @@ Se l'indirizzo non è di questi servizi, nell'editor compare un messaggio e sul 
 ### Le infografiche disegnate
 
 Nel gruppo **Infografiche** della linguetta **Widget**, accanto alle quattordici di sempre (passi, linea del tempo,
-tabella...), ci sono quindici infografiche disegnate: forme, frecce e numeri, come in una presentazione fatta bene. Si
+tabella...), ci sono sedici infografiche disegnate: forme, frecce e numeri, come in una presentazione fatta bene. Si
 aggiungono come gli altri widget e partono con un esempio già scritto: cambi le voci e il disegno si rifà da solo.
 
-![Le quindici infografiche disegnate, con i valori di partenza](immagini/manuale-uso/08-infografiche.jpg)
+![Le sedici infografiche disegnate, con i valori di partenza](immagini/manuale-uso/08-infografiche.jpg)
 
 | Infografica | A cosa serve | Cosa compili |
 |---|---|---|
@@ -867,6 +867,7 @@ aggiungono come gli altri widget e partono con un esempio già scritto: cambi le
 | **Mappa di calore** | Dove si concentra qualcosa in una griglia: giorni e orari, mesi e servizi | I nomi delle **colonne** separati dalla virgola; per ogni **riga** il nome e un valore da 0 a 4 per colonna (`1 2 4 0`) |
 | **Cerchi concentrici** | Tre livelli uno dentro l'altro, dal cuore all'esterno | Da 2 a 4 **cerchi**, dal più grande al centro: nome e una riga di spiegazione |
 | **Barre al cento per cento** | Come si divide un tutto, e come cambia fra due momenti | Da 2 a 6 **voci** con il colore; da 1 a 4 **barre** con le percentuali nell'ordine delle voci (`55 25 5 15`), che fanno 100 |
+| **Barre a confronto** | Numeri uno accanto all'altro: un capitale che cresce negli anni, gli anni per raddoppiare, costi a confronto | Da 2 a 8 **voci** con nome, valore e colore; la barra più lunga è il valore più alto, le altre in proporzione; **Dopo il numero** (€, anni, %) e l'interruttore per scrivere il valore alla fine della barra |
 
 Testata, occhiello, titolo, colori, chiusura e firma si cambiano come nelle altre infografiche (scheda **Stile**, campo
 **Tema**). Il titolo e l'occhiello della testata diventano bianchi o neri da soli, secondo il colore che scegli: si leggono

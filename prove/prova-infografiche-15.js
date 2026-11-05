@@ -1,4 +1,4 @@
-// Le quindici infografiche disegnate: imbuto, piramide, matrice, ciclo, ciambella, cerchi che si toccano, ragnatela,
+// Le sedici infografiche disegnate (2.26.0: più Barre a confronto): imbuto, piramide, matrice, ciclo, ciambella, cerchi che si toccano, ragnatela,
 // lancetta, iceberg, omini, viaggio, bilancia, mappa di calore, cerchi concentrici, barre al cento per cento.
 // Come le vede un visitatore al computer (1280) e al telefono (390): i numeri calcolati giusti, i dati per chi non vede,
 // niente scritte sovrapposte o fuori dal disegno, niente scorrimento di lato, scritte grandi abbastanza al telefono,
@@ -15,7 +15,7 @@ const fs = require('fs');
 const [B, DIR, UTENTE, PASSWORD, FOTO] = process.argv.slice(2);
 let n = 0, ko = 0; const ok = (t, c, extra = '') => { n++; if (!c) ko++; console.log((c ? 'OK  ' : 'KO  ') + t + (extra !== '' ? ' ' + JSON.stringify(extra).slice(0, 300) : '')); };
 const pagina = modo => execFileSync('php', [path.join(__dirname, 'pagina-infografiche-15.php'), DIR, modo], { encoding: 'utf8' });
-const TIPI = ['imbuto', 'piramide', 'matrice', 'ciclo', 'ciambella', 'venn', 'radar', 'lancetta', 'iceberg', 'omini', 'viaggio', 'bilancia', 'calore', 'cerchi', 'barre100'];
+const TIPI = ['imbuto', 'piramide', 'matrice', 'ciclo', 'ciambella', 'venn', 'radar', 'lancetta', 'iceberg', 'omini', 'viaggio', 'bilancia', 'calore', 'cerchi', 'barre100', 'confronto'];
 
 // I testi di ogni SVG visibile: niente sovrapposizioni fra scritte, niente scritte fuori dal disegno, la misura vera al telefono.
 async function geometria(p) {
@@ -103,12 +103,12 @@ async function contrasti(p, cornice = false) {
   // 1. Al computer, con i valori di partenza.
   const pc = await nuova(await contesto(1280));
   const r = await pc.goto(B + '/infografiche-15/', { waitUntil: 'networkidle' });
-  ok('la pagina con le quindici risponde 200', r.status() === 200);
+  ok('la pagina con le sedici risponde 200', r.status() === 200);
   const conta = await pc.evaluate(T => T.map(t => [t, document.querySelectorAll('.ed-w-ig_' + t + ' figure.igs svg[role=img]').length]), TIPI);
-  ok('ci sono tutte e quindici, ognuna con le due versioni del disegno (larga e stretta)', conta.every(([, k]) => k === 2), conta.filter(([, k]) => k !== 2));
+  ok('ci sono tutte e sedici, ognuna con le due versioni del disegno (larga e stretta)', conta.every(([, k]) => k === 2), conta.filter(([, k]) => k !== 2));
   ok('il foglio delle infografiche si carica una volta sola', await pc.locator('link[href*="infografiche-svg.css"]').count() === 1);
   const vis = await pc.evaluate(() => [...document.querySelectorAll('.igs svg')].filter(s => getComputedStyle(s).display !== 'none').map(s => s.classList.contains('igs-largo') ? 'L' : 'S').join(''));
-  ok('al computer si vede la versione larga di tutte', vis === 'L'.repeat(15), vis);
+  ok('al computer si vede la versione larga di tutte', vis === 'L'.repeat(16), vis);
   const aria = await pc.evaluate(T => Object.fromEntries(T.map(t => [t, (document.querySelector('.ed-w-ig_' + t + ' .igs-largo') || {}).getAttribute?.('aria-label') || ''])), TIPI);
   const attesi = {
     imbuto: ['Visite al sito 1.200', 'Contatti 340 (resa 28%)', 'Appuntamenti 85 (resa 25%)', 'Clienti 32 (resa 38%)'],
@@ -119,6 +119,7 @@ async function contrasti(p, cornice = false) {
     omini: ['7 su 10: clienti arrivano dal passaparola'], viaggio: ['1. La chiamata', '5. Il ritorno (la meta)'],
     bilancia: ['pende a sinistra', 'PRO: Più clienti; Meno attesa; Prezzo chiaro'], calore: ['8-10: Lun 1, Mar 1', '18-20: Lun 3, Mar 4'],
     cerchi: ['Cosa: i servizi che vendi', 'Perché: la ragione per cui esisti'], barre100: ['Prima: Lavoro 55%, Urgenze 25%', 'Dopo 3 mesi: Lavoro 45%'],
+    confronto: ['Barre a confronto. Dopo 10 anni: 19.672 €', 'Dopo 30 anni: 76.123 €'],
   };
   const mancano = Object.entries(attesi).flatMap(([t, l]) => l.filter(x => !aria[t].includes(x)).map(x => t + ': ' + x));
   ok('chi non vede sente tutti i dati (aria-label con i numeri calcolati: resa dell\'imbuto, zona della lancetta, inclinazione della bilancia)', mancano.length === 0, mancano);
@@ -137,6 +138,7 @@ async function contrasti(p, cornice = false) {
       viaggio: [w('viaggio').querySelectorAll('circle.igs-anello-carta').length, w('viaggio').querySelectorAll('polygon.igs-p').length],
       bilancia: +bil.getAttribute('y1') > +bil.getAttribute('y2'), calore: w('calore').querySelectorAll('rect title').length,
       cerchi: w('cerchi').querySelectorAll('g > circle').length, barre: barre.map(x => Math.round(x / barre.reduce((a, b) => a + b, 0) * 100)),
+      confronto: [...w('confronto').querySelectorAll('rect.igs-p')].map(x => +x.getAttribute('width')), confrontoTesti: testi('confronto'),
     };
   });
   ok('imbuto: 4 gradini e la resa calcolata 28%, 25%, 38%', conti.imbuto === 4 && conti.resa.join() === '28%,25%,38%', conti);
@@ -145,20 +147,22 @@ async function contrasti(p, cornice = false) {
   ok('lancetta 8,6; iceberg con le voci; omini 7 colorati su 10', conti.lancetta && conti.iceberg === 2 && conti.omini.join() === '14,6', conti.omini);
   ok('viaggio: 4 tappe numerate e la bandiera sulla quinta; bilancia che pende dalla parte dei pro (3 contro 2)', conti.viaggio.join() === '4,1' && conti.bilancia, conti.viaggio);
   ok('mappa di calore 6 x 7 caselle, cerchi concentrici 3, barre al cento per cento larghe come le percentuali (55 25 5 15)', conti.calore === 42 && conti.cerchi === 3 && conti.barre.join() === '55,25,5,15', conti.barre);
+  const cf = conti.confronto;
+  ok('barre a confronto: 3 barre in proporzione ai valori (19.672, 38.697, 76.123: la terza è la più lunga), con i numeri all\'italiana e l\'unità', cf.length === 3 && Math.abs(cf[0] / cf[2] - 19672 / 76123) < .01 && Math.abs(cf[1] / cf[2] - 38697 / 76123) < .01 && conti.confrontoTesti.includes('76.123 €') && conti.confrontoTesti.includes('Dopo 10 anni'), [cf, conti.confrontoTesti]);
   let g = await geometria(pc);
-  ok('al computer: nessuna scritta sovrapposta né fuori dal disegno, niente scorrimento di lato', g.sovrapposte.length === 0 && g.fuori.length === 0 && g.largo <= 0 && g.svg === 15, g);
-  if (FOTO) { fs.mkdirSync(FOTO, { recursive: true }); for (let i = 0; i < 15; i++) await pc.locator('.igx').nth(i).screenshot({ path: path.join(FOTO, `${String(i + 1).padStart(2, '0')}-${TIPI[i]}-1280.png`) }); }
+  ok('al computer: nessuna scritta sovrapposta né fuori dal disegno, niente scorrimento di lato', g.sovrapposte.length === 0 && g.fuori.length === 0 && g.largo <= 0 && g.svg === 16, g);
+  if (FOTO) { fs.mkdirSync(FOTO, { recursive: true }); for (let i = 0; i < 16; i++) await pc.locator('.igx').nth(i).screenshot({ path: path.join(FOTO, `${String(i + 1).padStart(2, '0')}-${TIPI[i]}-1280.png`) }); }
   ok('le note per l\'editor non si vedono sul sito', await pc.evaluate(() => [...document.querySelectorAll('.igx .ed-vuoto')].every(e => getComputedStyle(e).display === 'none')));
 
   // 2. Al telefono.
   const tel = await nuova(await contesto(390, 844));
   await tel.goto(B + '/infografiche-15/', { waitUntil: 'networkidle' });
   const visT = await tel.evaluate(() => [...document.querySelectorAll('.igs svg')].filter(s => getComputedStyle(s).display !== 'none').map(s => s.classList.contains('igs-largo') ? 'L' : 'S').join(''));
-  ok('al telefono si vede la versione stretta di tutte', visT === 'S'.repeat(15), visT);
+  ok('al telefono si vede la versione stretta di tutte', visT === 'S'.repeat(16), visT);
   g = await geometria(tel);
   ok('al telefono: nessuna scritta sovrapposta né fuori, niente scorrimento di lato', g.sovrapposte.length === 0 && g.fuori.length === 0 && g.largo <= 0, g);
   ok('al telefono le scritte più piccole restano di almeno 10 px', g.minimo >= 10, g.minimo);
-  if (FOTO) for (let i = 0; i < 15; i++) await tel.locator('.igx').nth(i).screenshot({ path: path.join(FOTO, `${String(i + 1).padStart(2, '0')}-${TIPI[i]}-390.png`) });
+  if (FOTO) for (let i = 0; i < 16; i++) await tel.locator('.igx').nth(i).screenshot({ path: path.join(FOTO, `${String(i + 1).padStart(2, '0')}-${TIPI[i]}-390.png`) });
   const t768 = await nuova(await contesto(768));
   await t768.goto(B + '/infografiche-15/', { waitUntil: 'networkidle' });
   g = await geometria(t768);
@@ -179,6 +183,7 @@ async function contrasti(p, cornice = false) {
       omini: [w('omini', 1).querySelectorAll('.igs-largo g .igs-p').length, w('omini', 1).querySelectorAll('.igs-largo .igs-spento').length],
       calore: w('calore').querySelectorAll('.igs-largo rect title').length, radar: w('radar').querySelectorAll('.igs-largo circle.igs-p2').length,
       lancetta: [...w('lancetta').querySelectorAll('.ed-vuoto')].map(e => e.textContent).join(' | '),
+      confronto: [w('confronto').querySelectorAll('.igs-largo rect.igs-p').length, !w('confronto', 1).querySelector('.igs-largo text.igs-tm'), !w('confronto', 2).querySelector('svg'), [...w('confronto', 2).querySelectorAll('.ed-vuoto')].map(e => e.textContent).join(' | ')],
       barre: [...w('barre100', 1).querySelectorAll('.igs-largo text')].map(t => [t.textContent, getComputedStyle(t).fill.replace(/color\(srgb ([\d.]+) ([\d.]+) ([\d.]+)\)/, (m, a, b, c) => 'rgb(' + [a, b, c].map(x => Math.round(Math.min(1, x) * 255)).join(', ') + ')')]),
     };
   });
@@ -186,6 +191,7 @@ async function contrasti(p, cornice = false) {
   ok('estremi: la ciambella che non fa 100 lo scrive per l\'editor (nascosto sul sito), con il conto', /fanno 180%/.test(est.ciambella) && /Si vedono solo 6 voci su 7/.test(est.ciambella), est.ciambella);
   ok('estremi: omini con quanti più del totale (15 su 3) ne colora 3; mappa di calore al massimo 12 x 12; ragnatela 8 aspetti', est.omini.join() === '3,0' && est.calore === 144 && est.radar === 8, est);
   ok('estremi: lancetta con massimo uguale al minimo e valore fuori scala lo dice all\'editor', /massimo deve essere più grande/.test(est.lancetta) && /fuori dalla scala/.test(est.lancetta), est.lancetta);
+  ok('estremi: barre a confronto al massimo 8 voci su 9; senza il valore alla fine niente numero; tutte a zero niente disegno e lo dice', est.confronto[0] === 8 && est.confronto[1] && est.confronto[2] && /maggiori di zero/.test(est.confronto[3]), est.confronto);
   const barreCol = Object.fromEntries(est.barre.filter(([t]) => /%/.test(t)).map(([t, f]) => [t, f]));
   ok('estremi: sopra un colore libero chiaro il testo è nero, sopra uno scuro è bianco', est.barre.filter(([t]) => t === '50%').map(([, f]) => f).join() === 'rgb(0, 0, 0),rgb(255, 255, 255)', barreCol);
 
@@ -199,21 +205,21 @@ async function contrasti(p, cornice = false) {
     const c = await contrasti(adm, true);
     const disegno = c.filter(x => !x.w.startsWith('cornice')), bassi = disegno.filter(x => x.c < 4.5);
     const cornice = c.filter(x => x.w.startsWith('cornice')), cBassi = cornice.filter(x => x.c < (x.grande ? 3 : 4.5));
-    ok(`contrasto, ${nome}: ${disegno.length} scritte dei disegni tutte almeno 4,5 (la più bassa ${Math.min(...disegno.map(x => x.c))})`, disegno.length >= 15 * 4 && bassi.length === 0, bassi.slice(0, 8));
-    ok(`contrasto, ${nome}: occhiello, titolo e firma delle quindici almeno 4,5 (il titolo, grande, almeno 3)`, cBassi.length === 0, cBassi.slice(0, 8));
+    ok(`contrasto, ${nome}: ${disegno.length} scritte dei disegni tutte almeno 4,5 (la più bassa ${Math.min(...disegno.map(x => x.c))})`, disegno.length >= 16 * 4 && bassi.length === 0, bassi.slice(0, 8));
+    ok(`contrasto, ${nome}: occhiello, titolo e firma delle sedici almeno 4,5 (il titolo, grande, almeno 3)`, cBassi.length === 0, cBassi.slice(0, 8));
   }
   await adm.setViewportSize({ width: 1280, height: 900 });
 
-  // 5. Dall'editor: le quindici dalla tavolozza, una voce cambiata, la ciambella che non fa 100, pubblica, il sito.
+  // 5. Dall'editor: le sedici dalla tavolozza, una voce cambiata, la ciambella che non fa 100, pubblica, il sito.
   const { id } = JSON.parse(pagina('vuota'));
   await adm.goto(B + '/admin/editor.php?tipo=pagine&id=' + id + '&parti=vuota', { waitUntil: 'networkidle' }); await adm.waitForTimeout(1200);
   const inTavolozza = await adm.evaluate(T => T.filter(t => document.querySelector('#ed-pannello-widget .ed-widget-voce[data-tipo=ig_' + t + ']')), TIPI);
-  ok('le quindici sono nella tavolozza, nel gruppo Infografiche', inTavolozza.length === 15 && await adm.evaluate(() => [...document.querySelectorAll('.ed-gruppo-widget')].some(g => /Infografiche/.test(g.textContent) && g.querySelector('[data-tipo=ig_imbuto]') && g.querySelector('[data-tipo=ig_passi]'))), inTavolozza.length);
+  ok('le sedici sono nella tavolozza, nel gruppo Infografiche', inTavolozza.length === 16 && await adm.evaluate(() => [...document.querySelectorAll('.ed-gruppo-widget')].some(g => /Infografiche/.test(g.textContent) && g.querySelector('[data-tipo=ig_imbuto]') && g.querySelector('[data-tipo=ig_passi]'))), inTavolozza.length);
   for (const t of TIPI) { await adm.click('.ed-schede-pannello button[data-pannello=widget]'); await adm.locator('.ed-widget-voce[data-tipo=ig_' + t + ']').click(); await adm.waitForTimeout(350); }
   const tela = adm.frameLocator('.ed-tela iframe');
   await adm.waitForTimeout(1200);
-  ok('nella tela dell\'editor ci sono le quindici, disegnate (con il loro foglio di stile)', await tela.locator('figure.igs').count() === 15 && await tela.locator('figure.igs').first().evaluate(e => getComputedStyle(e).containerType) === 'inline-size');
-  // l'ultima aggiunta (barre al cento per cento) è aperta in Modifica: si cambia il nome della prima voce
+  ok('nella tela dell\'editor ci sono le sedici, disegnate (con il loro foglio di stile)', await tela.locator('figure.igs').count() === 16 && await tela.locator('figure.igs').first().evaluate(e => getComputedStyle(e).containerType) === 'inline-size');
+  // l'ultima aggiunta (barre a confronto, 2.26.0) è aperta in Modifica: si cambia il nome della prima voce
   const campo = async (etichetta, valore, voce = 0, ripetitore = null) => {
     const rip = ripetitore ? adm.locator('#ed-pannello-modifica .ed-controllo', { hasText: ripetitore }).locator('.ed-ripetitore').first() : adm.locator('#ed-pannello-modifica .ed-ripetitore').first();
     if (await rip.locator('.ed-voce').nth(voce).locator('.ed-voce-corpo').isHidden()) await rip.locator('.ed-voce-testa b').nth(voce).click();
@@ -221,6 +227,9 @@ async function contrasti(p, cornice = false) {
     const i = c.locator('input[type=number], input[type=text], input:not([type]), textarea').first();
     await i.fill(String(valore)); await i.dispatchEvent('input'); await adm.waitForTimeout(700);
   };
+  await campo('Nome', 'Capitale oggi', 0, 'Voci (da 2 a 8)');
+  ok('barre a confronto: il nome cambiato si vede subito nella tela', await tela.locator('.ed-w-ig_confronto .igs-largo text', { hasText: 'Capitale oggi' }).count() === 1);
+  await tela.locator('.ed-w-ig_barre100').click(); await adm.waitForTimeout(500);
   await campo('Nome', 'Clienti nuovi', 0, 'Voci, con il loro colore');
   ok('barre al cento per cento: il nome cambiato si vede subito nella tela', await tela.locator('.ed-w-ig_barre100 .igs-largo text', { hasText: 'Clienti nuovi' }).count() === 1);
   // la ciambella: si seleziona nella tela e si porta la prima voce a 50 (totale 105)
@@ -237,7 +246,7 @@ async function contrasti(p, cornice = false) {
   const vis2 = await nuova(await contesto(1280));
   await vis2.goto(B + '/infografiche-15-editor/', { waitUntil: 'networkidle' });
   const sito = await vis2.evaluate(() => ({ n: document.querySelectorAll('figure.igs').length, imbuto: document.querySelector('.ed-w-ig_imbuto .igs-largo').getAttribute('aria-label'), barre: document.querySelector('.ed-w-ig_barre100 .igs-largo').getAttribute('aria-label'), nota: [...document.querySelectorAll('.igs-nota')].every(e => getComputedStyle(e).display === 'none') }));
-  ok('sul sito le quindici aggiunte dall\'editor, con le voci cambiate; la nota della ciambella non si vede', sito.n === 15 && /Richieste di preventivo 170 \(resa 14%\)/.test(sito.imbuto) && /Clienti nuovi/.test(sito.barre) && sito.nota, sito);
+  ok('sul sito le sedici aggiunte dall\'editor, con le voci cambiate; la nota della ciambella non si vede', sito.n === 16 && /Richieste di preventivo 170 \(resa 14%\)/.test(sito.imbuto) && /Clienti nuovi/.test(sito.barre) && sito.nota, sito);
   pagina('togli');
 
   ok('nessun errore JavaScript e nessuna finestra aperta da script', err.length === 0, err);

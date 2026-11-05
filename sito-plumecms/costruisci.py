@@ -150,12 +150,12 @@ def home():
                     {'titolo': 'Scrivi e pubblica', 'testo': 'Trascini sezioni, colonne e widget, guardi l\'anteprima, premi Pubblica. Se sbagli, torni indietro: ogni modifica resta nelle versioni.'}]),
                 pulsanti(('Guarda l\'installatore, passo per passo', '/installazione/#passi', 'filo'), centro=True)]],
               **spazi(48, 72))
-    p.sezione([[w('numeri', colonne={'d': 4, 't': 2, 'm': 2}, voci=[{'valore': '5', 'etichetta': 'passi per installarlo'}, {'valore': '108', 'etichetta': 'widget nell\'editor'},
+    p.sezione([[w('numeri', colonne={'d': 4, 't': 2, 'm': 2}, voci=[{'valore': '5', 'etichetta': 'passi per installarlo'}, {'valore': '109', 'etichetta': 'widget nell\'editor'},
                                   {'valore': '11', 'etichetta': 'temi pronti da indossare'}, {'valore': '0', 'etichetta': 'plugin da tenere aggiornati'}])]],
               **tinta(), **spazi(56, 56))
     # Le armi del viaggio: cosa c'è dentro.
     funzioni = [
-        ('pennello', 'Editor visuale', 'Sezioni, colonne e 108 widget, con le schede Contenuto, Stile e Avanzate per ogni elemento. Vedi quello che fai mentre lo fai.', '/funzionalita/#editor'),
+        ('pennello', 'Editor visuale', 'Sezioni, colonne e 109 widget, con le schede Contenuto, Stile e Avanzate per ogni elemento. Vedi quello che fai mentre lo fai.', '/funzionalita/#editor'),
         ('tavolozza', 'Temi', 'Undici temi pronti e un manuale per disegnarti il tuo. Il tema cambia l\'aspetto, mai i contenuti.', '/temi/'),
         ('storia', 'Versioni', 'Ogni salvataggio lascia una versione: la confronti, la guardi in anteprima, ci torni con un clic.', '/funzionalita/#editor'),
         ('grafico-su', 'SEO e AEO', 'Sitemap, robots, dati strutturati, llms.txt, IndexNow e Search Console. Per Google e per le intelligenze artificiali.', '/funzionalita/#seo'),
@@ -189,7 +189,7 @@ def funzionalita():
     blocchi = [
         ('editor', 'editor.webp', 'L\'editor visuale: vedi quello che fai mentre lo fai',
          ['Costruisci le pagine trascinando sezioni, colonne e widget. Ogni elemento ha le sue tre schede: <strong>Contenuto</strong>, <strong>Stile</strong> e <strong>Avanzate</strong>. Al computer, al tablet e al telefono, con misure diverse per ognuno.',
-          '<ul><li>108 widget: titoli, testi, foto, gallerie, prezzi, domande frequenti, orari di apertura, recensioni, eventi, menu del ristorante, 29 infografiche e Scorri di lato, le pagine che scorrono di lato come nei siti dei grandi marchi.</li>'
+          '<ul><li>109 widget: titoli, testi, foto, gallerie, prezzi, domande frequenti, orari di apertura, recensioni, eventi, menu del ristorante, 30 infografiche (anche le barre a confronto, per i numeri uno accanto all\'altro) e Scorri di lato, le pagine che scorrono di lato come nei siti dei grandi marchi.</li>'
           '<li>26 aperture fra cui scegliere con una tendina, e 30 sezioni pronte per riempire una pagina in un minuto.</li>'
           '<li>Ogni parte si allinea per conto suo: occhiello al centro, testo a sinistra, e un altro allineamento sul telefono.</li>'
           '<li>Le foto le prendi dai Media e i link dal sito, senza scrivere indirizzi. Le foto del telefono si raddrizzano e si alleggeriscono da sole.</li>'
@@ -252,7 +252,7 @@ def funzionalita():
                   pulsante_testo='Scarica plumeCMS', link={'url': '/scarica/', 'nuova': False})]], larghezza='stretta', **spazi(72, 80))
     return dict(slug='funzionalita', titolo='Funzionalità', struttura=p.albero(),
                 seo_titolo='Funzionalità di plumeCMS: le dieci cose che sa fare',
-                seo_descrizione='Cosa c\'è dentro plumeCMS: editor visuale con 108 widget, gli addon (prenotazioni, eventi, negozio, statistiche, area riservata, corsi), social ogni mattina, stile globale, header e footer, versioni, SEO e AEO, newsletter, sicurezza, aggiornamenti dal pannello.')
+                seo_descrizione='Cosa c\'è dentro plumeCMS: editor visuale con 109 widget, gli addon (prenotazioni, eventi, negozio, statistiche, area riservata, corsi), social ogni mattina, stile globale, header e footer, versioni, SEO e AEO, newsletter, sicurezza, aggiornamenti dal pannello.')
 
 
 def temi():
@@ -597,6 +597,7 @@ def zip_lavagna(dest):
 # Regola di Danilo (1 novembre 2026): solo i punti salienti, una riga per versione, mai nomi di aziende o servizi di terzi.
 # Le novità per chi scarica: brevi, scritte qui (il CHANGELOG è per chi sviluppa). Da aggiornare a ogni versione.
 NOVITA = [
+    ('2.26.0', 'Barre a confronto', ['Una sedicesima infografica disegnata: da 2 a 8 voci con un valore (euro, anni, percentuali), barre in proporzione al più alto e il numero alla fine. 109 widget.']),
     ('2.25.1', 'Ripristino sicuro della copia', ['La copia di un sito si rimette anche su un altro spazio o un altro database: se qualcosa non va, niente si cancella e il sito resta com\'era, con il motivo scritto in parole semplici. E se il pannello non parte, una pagina di soccorso dice cosa fare.']),
     ('2.25.0', 'Scorri di lato', ['Un widget con più pagine: arrivati lì la pagina scorre di lato fino all\'ultima, poi riprende in verticale. Cinque disposizioni.']),
     ('2.24.0', 'Test a pagine, con l\'anteprima', ['Una domanda per pagina, pagine scelte da te o tutte insieme; nel pannello le domande si spostano fra le pagine e un telefono mostra il test mentre lo scrivi.']),

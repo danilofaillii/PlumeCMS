@@ -350,6 +350,15 @@ snapshot manuale in più), C con i contenuti del sito MariaDB (o di A), D rimess
 sottoquery, funzione, impilata, nome, insert-impilata, insert-strana, tablespace, vincolo, union, commento) restano nelle
 cartelle `aggiornamenti/copie/` dei siti. Prima di rilanciarla sugli stessi siti: l'amministratore di C torna `prova`.
 
+## prova-infografiche-15.js (2.10.0; sedici dalla 2.26.0)
+
+Le infografiche disegnate in SVG (`includes/editor-infografiche.php`), quindici dalla 2.10.0 e sedici dalla 2.26.0 (Barre a
+confronto). `prove/pagina-infografiche-15.php <cartella CMS> normali|estremi|notte|cattivi|vuota|togli` scrive le pagine di prova
+(la prova le rifà da sola). `node prove/prova-infografiche-15.js <base> <cartella CMS> <utente> <password> [cartella delle foto]`:
+a 1280, 768 e 390 px i numeri calcolati, gli aria-label, nessuna scritta sovrapposta o fuori; i valori estremi; il contrasto
+senza tema, con Aria, Cosmo, Autunno e con il corpo scuro; dall'editor tutte dalla tavolozza, voci cambiate, pubblica, il
+sito. Atteso: 47 su 47 (2.26.0; 44 fino alla 2.25.1). I valori cattivi stanno nel gruppo 32 di `tools/sicurezza-prova.js`.
+
 ## prova-versione.js (1.3.0)
 
 "C'è una versione nuova" con due installazioni: il sito (`<base cliente>`) e un plumeCMS che fa da sito ufficiale

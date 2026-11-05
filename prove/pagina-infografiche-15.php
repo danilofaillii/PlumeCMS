@@ -1,5 +1,5 @@
 <?php
-// Le pagine di prova delle quindici infografiche disegnate, una per sezione (più di sei colonne in una sezione spariscono).
+// Le pagine di prova delle sedici infografiche disegnate (2.26.0: più Barre a confronto), una per sezione (più di sei colonne in una sezione spariscono).
 // uso: php prove/pagina-infografiche-15.php <cartella CMS> normali  -> /infografiche-15/: le quindici con i valori di partenza
 //      php prove/pagina-infografiche-15.php <cartella CMS> estremi  -> /infografiche-15-estremi/: minimi, massimi, testi lunghi,
 //                                                                       zero voci, totali sbagliati, colori liberi
@@ -76,6 +76,10 @@ if ($modo === 'notte') {
         $sez([$w('ig_cerchi', ['cerchi' => [['nome' => 'Uno', 'testo' => '']]])]),
         $sez([$w('ig_barre100', ['voci' => array_map(fn($i) => ['nome' => $i % 2 ? $lungo : $parola], range(1, 7)), 'barre' => array_map(fn($i) => ['nome' => $lungo, 'valori' => '1 2 3 4 5 6 7 8'], range(1, 5))])]),
         $sez([$w('ig_barre100', ['voci' => [['nome' => 'Una', 'colore' => '', 'colore_libero' => '#ffee00'], ['nome' => 'Due', 'colore_libero' => '#101010']], 'barre' => [['nome' => 'Vuota', 'valori' => '0 0'], ['nome' => 'Piena', 'valori' => '50 50']]])]),
+        // 2.26.0: barre a confronto: 9 voci (se ne vedono 8) con nomi lunghi e valori da 0,01 a un miliardo; una sola voce; tutte a zero
+        $sez([$w('ig_confronto', ['voci' => array_map(fn($i) => ['nome' => $i % 2 ? $lungo : $parola . ' ' . $i, 'valore' => $i === 1 ? 1000000000 : ($i === 2 ? 0.01 : $i * 1000)], range(1, 9)), 'unita' => $parola])]),
+        $sez([$w('ig_confronto', ['voci' => [['nome' => 'Sola', 'valore' => 7, 'colore_libero' => '#ffee00']], 'unita' => '', 'mostra_valori' => false])]),
+        $sez([$w('ig_confronto', ['voci' => [['nome' => 'Zero', 'valore' => 0], ['nome' => 'Zero bis', 'valore' => 0]]])]),
     ];
 } else {
     $slug = 'infografiche-15-cattivi'; $titolo = 'Infografiche 15 cattivi';
@@ -98,6 +102,7 @@ if ($modo === 'notte') {
         $sez([$w('ig_calore', ['colonne' => str_repeat($x . ',', 60), 'righe' => $voci(['nome' => $x, 'valori' => str_repeat('99999 ', 300)]), 'etichetta_poco' => $x, 'etichetta_tanto' => $x, 'colore' => $c])]),
         $sez([$w('ig_cerchi', ['cerchi' => $voci(['nome' => $x, 'testo' => $x]), 'colore' => $c, 'colore_libero' => $c])]),
         $sez([$w('ig_barre100', ['voci' => $voci(['nome' => $x, 'colore' => $c, 'colore_libero' => $c]), 'barre' => $voci(['nome' => $x, 'valori' => str_repeat('-5 1e9 ', 100)])])]),
+        $sez([$w('ig_confronto', ['voci' => $voci(['nome' => $x, 'valore' => '1e99', 'colore' => $c, 'colore_libero' => $c]), 'unita' => $x, 'mostra_valori' => $x, 'colore' => $c])]),
     ];
 }
 $pdo = db();
