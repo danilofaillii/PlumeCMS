@@ -2,6 +2,41 @@
 
 Il prodotto si chiama **plumeCMS** (nome scelto il 26 ottobre 2026; prima, per poche ore, "CarbonaraCMS", e ancora prima il provvisorio "Officina": gli zip vecchi si chiamavano `officina-*` e `carbonaracms-*`).
 
+## 2.29.0 (5 novembre 2026) - Gli strumenti SEO
+
+- **La Tabella SEO** (SEO e AEO > Tabella SEO, anche per il redattore): tutto il sito in una tabella, una riga per ogni
+  contenuto (articoli, pagine e i tipi dei moduli, bozze comprese) con il titolo, il titolo per Google, la descrizione, le
+  lunghezze, robots, un semaforo per il titolo (verde da 30 a 60 caratteri; giallo fuori; rosso se manca, oltre 70 o uguale a
+  quello di un altro contenuto) e uno per la descrizione (verde da 70 a 160; giallo fuori; rosso se manca o doppia), le
+  immagini senza alt. Titolo per Google e descrizione si correggono nella riga e si salvano senza ricaricare (passano dalla
+  stessa strada della scheda: revisione, redirect, IndexNow; l'albero dell'editor non si tocca); un doppione risolto aggiorna
+  anche l'altra riga. Filtri: solo i contenuti con problemi, per tipo, ricerca; ordine per semaforo, titolo o tipo. Al telefono la
+  tabella diventa schede. `includes/seo-tabella.php`, `admin/seo-tabella.php`, `admin/assets/seo-tabella.js`, azione
+  `tabella_salva` di `seo-api.php`.
+- **I link interni suggeriti**: nel controllo SEO (Impostazioni dell'editor e scheda classica) il riquadro **Collega**: dalla
+  parola chiave del contenuto e dalle parole del titolo cerca fra i contenuti pubblicati (titolo, parola chiave, riassunto,
+  indirizzo; fuori i riservati "Solo per i membri", le bozze, la home e il blog) e propone fino a 5 pagine o articoli con
+  **Copia il link** (gli appunti) e, nell'editor, **Inserisci nel Testo selezionato** (un paragrafo con il link in fondo al
+  widget Testo selezionato). La riga dell'analisi dice "Collegamenti interni: N nel testo; 3 pagine parlano di X, collegale" e
+  diventa verde quando almeno una delle suggerite è collegata; le già collegate non si ripropongono. `includes/seo-link.php`
+  (`seo_link_suggeriti()`, indice leggero per richiesta, niente tabelle).
+- **Dati per Google in più: Prodotto, How-to, Video.** Nel riquadro "SEO e Google" della scheda di un articolo o di una pagina la
+  tendina **Dati per Google in più**: Nessuno, Prodotto (nome, prezzo, valuta, disponibilità, codice, marca, foto), How-to (nome,
+  tempo totale, fino a venti passi con nome e testo), Video (nome, descrizione, miniatura, data di caricamento, indirizzo del file
+  o dell'incorporo solo https, durata). I campi stanno nella colonna `seo_schema` (JSON, aggiunta anche alle tabelle vecchie),
+  controllati (numeri, date, indirizzi, nessun HTML), e il sito li scrive come nodi del JSON-LD (Product con Offer, HowTo con
+  HowToStep, VideoObject) con la WebPage che li indica in `mainEntity`. Un contenuto senza niente scelto esce identico a prima,
+  al byte. La scheda di un prodotto della Vetrina aveva già il suo Product con Offer. `includes/seo-schema.php`,
+  `admin/assets/seo-schema.js`.
+- **Le immagini senza alt** (Media > Senza alt, anche per il redattore): due elenchi, **Nelle pagine** (le immagini dei contenuti
+  pubblicati con l'alt vuoto nel widget Immagine, Galleria, Carosello, Slider, Scorri di lato, loghi..., nel testo della scheda
+  e l'immagine in evidenza, con il link all'editor) e **Nella libreria** (le immagini dei Media senza un alt loro), con una casella
+  per riga salvata senza ricaricare. L'alt scritto nella libreria entra in ogni pagina che usa quella foto con l'alt vuoto
+  (tabella `media_alt`, nata al primo uso; senza alt salvati il sito esce identico a prima). La Tabella SEO conta le immagini senza
+  alt con la stessa funzione. `includes/media-alt.php`, `admin/includes/media-alt-pagina.php`, `admin/assets/media-alt.js`,
+  azione `media_alt_salva` di `seo-api.php`.
+- Manuale d'uso capitoli 7 e 23, tecnico capitolo 46, `prove/prova-seo-strumenti.js` (71), gruppo 44 degli attacchi (13).
+
 ## 2.27.0 (5 novembre 2026) - Le sedi e la SEO geografica
 
 - **Le sedi dell'attività** (SEO e AEO > Sedi, solo amministratore; richiesta di Danilo: più sedi fin dall'inizio, anche per chi ne ha

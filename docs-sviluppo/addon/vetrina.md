@@ -76,7 +76,7 @@ cartella del sito con `cms_con_cartella()`).
 | Indirizzo | Funzione |
 |---|---|
 | `/negozio/` (`?categoria=<slug>`, `?ordina=prezzo\|prezzo-giu\|nuovi`) | `vt_pagina_elenco()` `sito.php:96`; categoria che non c'è: 404 |
-| `/negozio/<slug>/` | `vt_pagina_prodotto()` `:123`, con JSON-LD Product e Offer (o AggregateOffer se le varianti hanno prezzi diversi), `JSON_HEX_TAG` |
+| `/negozio/<slug>/` | `vt_pagina_prodotto()` `:123`, con JSON-LD Product e Offer (o AggregateOffer se le varianti hanno prezzi diversi), `JSON_HEX_TAG`. Dalla 2.29.0 anche una pagina o un articolo del nucleo possono dichiarare un Product dalla scheda ("Dati per Google in più", `includes/seo-schema.php`, manuale tecnico 46.3): la scheda del prodotto della Vetrina resta com'è |
 | `/negozio/carrello/` | `vt_pagina_carrello()` `:177`; POST `azione=aggiungi\|aggiorna\|togli` |
 | `/negozio/ordine/` | `vt_pagina_ordine()` `:235`; POST: ordine, poi 303 alla pagina dell'ordine |
 | `/negozio/ordine/fatto/?n=&k=` | `vt_pagina_fatto()` `:296` |

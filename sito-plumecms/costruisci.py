@@ -224,7 +224,8 @@ def funzionalita():
         ('seo', 'seo.webp', 'SEO e AEO: ti trovano Google e le intelligenze artificiali',
          ['Sitemap, robots.txt, dati strutturati, titoli e descrizioni per ogni pagina, redirect e pagine 404 sotto controllo. In più quello che serve alle risposte delle intelligenze artificiali: <code>llms.txt</code>, riassunti in testa, risposte brevi.',
           '<ul><li>Gli avvisi ai motori partono da soli, con IndexNow e Search Console.</li>'
-          '<li>Le sedi dell\'attività, anche una sola: indirizzo, coordinate cercate dalla mappa, orari, zona servita e tipo di attività entrano nei dati che Google legge in ogni pagina; una pagina per ogni sede, e i widget che mostrano sedi, orari e contatti.</li></ul>']),
+          '<li>Le sedi dell\'attività, anche una sola: indirizzo, coordinate cercate dalla mappa, orari, zona servita e tipo di attività entrano nei dati che Google legge in ogni pagina; una pagina per ogni sede, e i widget che mostrano sedi, orari e contatti.</li>'
+          '<li>La Tabella SEO: ogni pagina con titolo, descrizione e un semaforo, da correggere lì senza aprire l\'editor; i link interni suggeriti mentre scrivi; prodotto, guida a passi e video fra i dati che Google legge; le immagini senza testo alternativo in un elenco, da sistemare in posto.</li></ul>']),
         ('social', 'social.webp', 'Social ogni mattina: i post sono già pronti',
          ['Scrivi il testo nel riquadro Social dell\'articolo. Il giorno in cui esce ti arriva un\'email con il testo pronto per ogni canale, il link, i tuoi hashtag e le immagini nelle misure giuste, una orizzontale e una verticale.',
           '<ul><li>Il calendario dei post per i giorni dopo, e i testi da copiare con un clic.</li>'
@@ -598,6 +599,7 @@ def zip_lavagna(dest):
 # Regola di Danilo (1 novembre 2026): solo i punti salienti, una riga per versione, mai nomi di aziende o servizi di terzi.
 # Le novità per chi scarica: brevi, scritte qui (il CHANGELOG è per chi sviluppa). Da aggiornare a ogni versione.
 NOVITA = [
+    ('2.29.0', 'Gli strumenti SEO', ['Una tabella di tutto il sito con titoli, descrizioni e semafori, da correggere lì senza aprire l\'editor; i link interni suggeriti mentre scrivi; prodotto, guida a passi e video nei dati per i motori di ricerca; le immagini senza testo alternativo in un elenco, da sistemare in posto. 111 widget.']),
     ('2.27.0', 'Le sedi e la SEO geografica', ['Più sedi con indirizzo, coordinate cercate dalla mappa, orari e zona servita nei dati per i motori di ricerca; una pagina per sede e i widget Sedi e Dati dell\'attività. 111 widget.']),
     ('2.26.0', 'Barre a confronto', ['Una sedicesima infografica disegnata: da 2 a 8 voci con un valore (euro, anni, percentuali), barre in proporzione al più alto e il numero alla fine. 109 widget.']),
     ('2.25.1', 'Ripristino sicuro della copia', ['La copia di un sito si rimette anche su un altro spazio o un altro database: se qualcosa non va, niente si cancella e il sito resta com\'era, con il motivo scritto in parole semplici. E se il pannello non parte, una pagina di soccorso dice cosa fare.']),

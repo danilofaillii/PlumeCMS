@@ -260,7 +260,7 @@ pre.seo-pre{background:var(--codice-fondo);color:var(--codice-testo);padding:.9r
 </style>
 
 <nav class="seo-schede">
-  <?php foreach ($schede as $k => $v): ?><a href="?scheda=<?= $k ?>" class="<?= $scheda === $k ? 'attiva' : '' ?>"><?= h($v) ?></a><?php endforeach; ?><a href="sedi.php"><?php /* 2.27.0: le sedi hanno una pagina loro (admin/sedi.php) */ ?>Sedi</a>
+  <?php foreach ($schede as $k => $v): ?><a href="?scheda=<?= $k ?>" class="<?= $scheda === $k ? 'attiva' : '' ?>"><?= h($v) ?></a><?php endforeach; ?><a href="sedi.php"><?php /* 2.27.0: le sedi hanno una pagina loro (admin/sedi.php) */ ?>Sedi</a><a href="seo-tabella.php"><?php /* 2.29.0: la Tabella SEO (admin/seo-tabella.php) */ ?>Tabella SEO</a>
 </nav>
 
 <?php if ($scheda === 'panoramica'): $righe = seo_panoramica(); $mancanti = array_filter($righe, fn($r) => !$r['tldr'] || !$r['faq'] || !$r['descrizione'] || !$r['immagine']); ?>

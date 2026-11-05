@@ -141,7 +141,7 @@ require_once __DIR__ . '/includes/admin-header.php';
 </style>
 
 <nav class="imp-schede" aria-label="Schede di SEO e AEO">
-  <?php foreach (['panoramica' => 'Panoramica', 'motori' => 'Motori di ricerca', 'copertura' => 'Copertura', 'prestazioni' => 'Prestazioni', 'analisi' => 'Analisi e tag', 'globale' => 'Globale SEO', 'schema' => 'Schema e AEO', 'redirect' => 'Redirect e 404', 'log' => 'Registro'] as $k => $v): ?><a href="seo.php?scheda=<?= $k ?>"><?= h($v) ?></a><?php endforeach; ?><a href="sedi.php" class="attiva" aria-current="page">Sedi</a>
+  <?php foreach (['panoramica' => 'Panoramica', 'motori' => 'Motori di ricerca', 'copertura' => 'Copertura', 'prestazioni' => 'Prestazioni', 'analisi' => 'Analisi e tag', 'globale' => 'Globale SEO', 'schema' => 'Schema e AEO', 'redirect' => 'Redirect e 404', 'log' => 'Registro'] as $k => $v): ?><a href="seo.php?scheda=<?= $k ?>"><?= h($v) ?></a><?php endforeach; ?><a href="sedi.php" class="attiva" aria-current="page">Sedi</a><a href="seo-tabella.php">Tabella SEO</a>
 </nav>
 
 <div class="form-card sd-elenco" id="sd-elenco">

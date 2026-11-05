@@ -1,6 +1,6 @@
 # plumeCMS: manuale tecnico
 
-Versione del manuale: 1.21, per plumeCMS 2.0.3 e le novità fino alla 2.27.0 (5 novembre 2026).
+Versione del manuale: 1.22, per plumeCMS 2.0.3 e le novità fino alla 2.29.0 (5 novembre 2026).
 
 Questo manuale descrive come è fatto plumeCMS e come funziona, pezzo per pezzo. È scritto leggendo il codice:
 ogni numero, limite e nome di funzione viene dai file veri, con il riferimento `file:riga` quando serve a chi
@@ -55,6 +55,7 @@ pagine, gestire il sito) c'è il manuale d'uso, `docs/manuale-uso.md`, con le sc
 42. Test e questionari (dalla 2.22.0)
 43. Scorri di lato: le pagine che scorrono di lato (dalla 2.25.0)
 44. Le sedi e la SEO geografica (dalla 2.27.0)
+46. Gli strumenti SEO: Tabella SEO, link interni suggeriti, Prodotto, How-to e Video, immagini senza alt (dalla 2.29.0)
 
 Appendice A. Dove i documenti vecchi non corrispondono al codice
 
@@ -585,7 +586,8 @@ Due ruoli (`admin/utenti.php:12`):
 Il redattore può aprire solo queste pagine (`AUTH_REDATTORE_PAGINE`, `admin/includes/auth.php:81-82`):
 `index`, `contenuti`, `contenuto`, `editor`, `editor-api`, `editor-anteprima`, `seo-api`, `link-api` (2.2, Scegli dal sito:
 capitolo 38), `media`,
-`categories`, `versioni`, `account`, `password`, `logout`, `login`. L'editor con `tipo=modelli` (header,
+`categories`, `versioni`, `account`, `password`, `logout`, `login`, e dalla 2.29.0 `seo-tabella` (la Tabella SEO, capitolo 46:
+titolo per Google e descrizione dei contenuti, non la configurazione SEO). L'editor con `tipo=modelli` (header,
 footer e il riquadro in fondo agli articoli) è sempre negato. Un modulo aggiunge pagine con il filtro `redattore_pagine`.
 
 Fuori dal suo elenco il redattore viene rimandato alla dashboard; un POST o una pagina `*-api.php` ricevono 403.
@@ -612,7 +614,7 @@ admin), `is_admin()`, `current_user()`.
 | Form | `form.php` | admin |
 | Popup | `popup.php` | admin |
 | Categorie, Tag | `categories.php`, `categories.php?tipo=tag` | tutti |
-| Media | `media.php` | tutti |
+| Media | `media.php`; `media.php?scheda=alt` le immagini senza alt (46.4) | tutti |
 | Download | `scaricabili.php`: i file da scaricare (14.1) | admin |
 | Utenti | `utenti.php` | admin |
 | Newsletter e form | `newsletter.php` (Campagne, Iscritti e liste), `form-submissions.php`, `newsletter-flussi.php` (Automazioni, 15.14), `newsletter-statistiche.php` | admin |
@@ -626,7 +628,8 @@ admin), `is_admin()`, `current_user()`.
 | Editor > Impostazioni | `editor-impostazioni.php` | admin |
 | Editor > Informazioni | `informazioni.php` | admin |
 | Social | `social.php` con le schede mattino, calendario, testi, impostazioni (27) | admin |
-| SEO e AEO | `seo.php` con le schede panoramica, motori, copertura, prestazioni, analisi, globale, schema, redirect, registro | admin |
+| SEO e AEO | `seo.php` con le schede panoramica, motori, copertura, prestazioni, analisi, globale, schema, redirect, registro; `sedi.php` (44) | admin |
+| SEO e AEO > Tabella SEO | `seo-tabella.php`: titoli, descrizioni e semafori di tutto il sito (46.1) | tutti (il redattore vede solo questa voce del gruppo) |
 | Impostazioni | `impostazioni.php` (email e SMTP), `sicurezza.php`, `aggiornamenti.php`, `copia-sito.php` (19.7), `cron-log.php` (20), `controlla-server.php` (7.4) | admin |
 
 Pagine fuori dal menu: `contenuto.php` (scheda classica di un contenuto), `editor.php` (editor visuale),
@@ -1513,6 +1516,10 @@ Il redattore vede e ripristina solo le versioni dei contenuti.
 
 La cartella `uploads/` ha il suo `.htaccess` (capitolo 21) che vieta di eseguire script e chiude gli SVG in una
 sandbox.
+
+Dalla 2.29.0 ogni immagine della libreria può avere un testo alternativo suo (tabella `media_alt`, `includes/media-alt.php`),
+scritto da Media > Senza alt: entra nelle `<img>` con l'alt vuoto di tutte le pagine (`media_alt_applica()` in `sito_html()`).
+Capitolo 46.4.
 
 ### 14.1 Download manager (dalla 1.2.4)
 
@@ -3120,7 +3127,8 @@ Una sola impostazione JSON, `seo_config` (predefiniti in `seo_predefiniti()`, fi
 
 Panoramica, motori, copertura, prestazioni, analisi, globale, schema, redirect, registro. Il menu laterale ne
 mostra sette (copertura e prestazioni insieme, il registro si apre dalla pagina). Dalla 2.27.0 la fila delle schede e il
-menu hanno anche **Sedi**, che è una pagina sua, `admin/sedi.php` (capitolo 44).
+menu hanno anche **Sedi**, che è una pagina sua, `admin/sedi.php` (capitolo 44); dalla 2.29.0 anche **Tabella SEO**,
+`admin/seo-tabella.php`, aperta anche al redattore (capitolo 46.1).
 
 ### 16.3 Meta e JSON-LD
 
@@ -3136,7 +3144,9 @@ accendibile e spegnibile. Dalla 2.27.0 l'Organizzazione porta le sedi in `locati
 `seo_analisi()` controlla: keyword nel titolo, nella descrizione, nell'indirizzo, all'inizio; densità della
 keyword e delle correlate; lunghezza del testo, del titolo e della descrizione; immagine e testo alternativo;
 link interni ed esterni; paragrafi; primo paragrafo; riassunto; domande frequenti; leggibilità; trattini lunghi.
-Il redattore la usa dall'editor (`seo-api.php`).
+Il redattore la usa dall'editor (`seo-api.php`). Dalla 2.29.0 la voce dei link interni porta i link suggeriti
+(`includes/seo-link.php`, capitolo 46.2): con `tipo_contenuto` e `id` nella riga passata a `seo_analisi()` il contenuto stesso
+resta fuori dai suggerimenti; `seo_analisi_html($a, $opz)` aggiunge il riquadro Collega (`seo_link_html()`).
 
 ### 16.5 Redirect e 404
 
@@ -5849,6 +5859,133 @@ sito, JSON-LD, titolo, sitemap, widget sul sito e nell'editor, eliminazione, red
 200 righe di zona, redattore, senza token, da un altro sito, servizio finto con HTML cattivo, `CMS_NOMINATIM_URL` verso
 indirizzi interni). Non provato: il servizio vero di OpenStreetMap e le tessere vere (la rete della sessione di sviluppo
 non li raggiunge: le prove usano il servizio finto e tessere finte).
+
+## 46. Gli strumenti SEO: Tabella SEO, link interni suggeriti, Prodotto, How-to e Video, immagini senza alt (dalla 2.29.0)
+
+Quattro richieste di Danilo (5 novembre 2026): "una tabella SEO di tutto il sito, da sistemare da lì senza aprire l'editor";
+"link interni suggeriti nell'editor: questo articolo parla di X, hai tre pagine su X, collegale"; "tre schema in più dal
+pannello: prodotto (per la Vetrina), how-to, video"; "le immagini senza alt in un elenco, con la correzione in posto".
+Criterio di accettazione: senza niente di nuovo compilato il sito esce identico a prima, HTML e JSON-LD al byte (provato con
+l'aggiornamento 2.27.0 -> 2.29.0 e con la pagina Servizi prima e dopo in `prove/prova-seo-strumenti.js`).
+
+### 46.1 La Tabella SEO
+
+`includes/seo-tabella.php`, pagina `admin/seo-tabella.php` (anche al redattore: `AUTH_REDATTORE_PAGINE`,
+`admin/includes/auth.php:92`; nel menu il gruppo SEO e AEO esiste anche per lui e il filtro dei ruoli gli lascia solo questa
+voce, `admin/includes/admin-header.php:65-67`; nella fila delle schede di `seo.php:263` e di `sedi.php`), script
+`admin/assets/seo-tabella.js`.
+
+- **Le righe** (`seo_tabella_righe()`, `:85`): per ogni tipo di `contenuti_tipi()` tutte le righe non nel cestino (bozze e
+  programmati compresi, con lo stato). Per ognuna: il titolo effettivo (`seo_tabella_titolo_effettivo()`, `:31`: il titolo per
+  Google se c'è, altrimenti `seo_titolo()` del titolo con il formato del suo tipo, home compresa), la descrizione che il sito usa
+  (`seo_tabella_descrizione()`, `:40`: `seo_description`, altrimenti `meta_description`, la stessa regola di
+  `sito-dati.php`), la regola di indicizzazione che vale sul sito (`seo_tabella_robots()`, `:49`), le immagini senza alt
+  (`media_alt_contenuto()`, 46.4), i doppioni (titoli e descrizioni uguali, confrontati con `seo_tabella_norm()`).
+- **I semafori** (`seo_tabella_semaforo_titolo()` `:55` e `_descrizione()` `:66`): titolo verde da 30 a 60 caratteri, giallo
+  fuori ma presente, rosso se manca, oltre 70 o uguale a quello di un altro contenuto; descrizione verde da 70 a 160, giallo fuori,
+  rossa se manca o doppia. Ogni semaforo ha il colore, un segno e il testo in parole (mai solo il colore); l'ordine di partenza
+  mette i problemi in cima (`peso`).
+- **Il salvataggio nella riga**: `seo-api.php` azione `tabella_salva` (`:71`, token CSRF, tipo e id) -> `seo_tabella_salva()`
+  (`:128`): tag tolti, titolo a 255 e descrizione a 500 caratteri; la descrizione va nella colonna che la riga già usa (se
+  tutte e due vuote: `seo_description` per un contenuto fatto con l'editor, che legge quella, `meta_description` per uno della
+  scheda); poi `contenuti_salva_rapido()`, che dalla 2.29.0 accetta `seo_title`, `seo_description`, `meta_description` e
+  `robots` (`includes/contenuti.php:396`): la stessa strada della scheda (revisione, redirect, IndexNow), l'albero dell'editor
+  non si tocca. La risposta porta i semafori di tutte le righe: un doppione risolto aggiorna anche l'altra riga.
+- **Lo script**: salva al `change` (uscita dalla casella) e con Invio nel titolo; filtri ricerca, tipo, solo problemi; ordine per
+  semaforo, titolo o tipo; "Nessun contenuto corrisponde" con il suggerimento. Al telefono `pannello.js` fa diventare la tabella
+  schede (cinque colonne, righe regolari).
+
+### 46.2 I link interni suggeriti
+
+`includes/seo-link.php`, caricato da `includes/seo.php:23`.
+
+- **L'indice** (`seo_link_indice()`, `:43`): una volta per richiesta, da `sito_contenuti_elenco('cerca')` (solo i contenuti
+  pubblicati e pubblici: l'Area riservata toglie i "Solo per i membri"), senza home, pagina del blog, rediretti e glossario. Per
+  ogni voce i campi normalizzati con `seo_norm()`: titolo, parola chiave, indirizzo (lo slug con gli spazi), riassunto
+  (estratto, In breve, descrizione). Niente tabelle.
+- **I suggerimenti** (`seo_link_suggeriti($tipo, $id, $html, $keyword, $titolo, $slug)`, `:85`): i termini sono le parole
+  significative della keyword e del titolo (`seo_link_termini()`, `:20`: almeno tre lettere, senza le parole vuote di
+  `SEO_LINK_STOP`); per ogni candidato i punti: 3 se il termine sta nella sua keyword, 2 nel titolo, 1 nell'indirizzo, 1 nel
+  riassunto (l'inizio di una parola: "vaso" trova "vaso" e "vasoio", non "travaso"), più 4 se la keyword intera è la sua o sta
+  nel suo titolo. Soglia 2 punti, al massimo 5 voci (`SEO_LINK_MAX`), il contenuto stesso escluso (per tipo e id, oppure per
+  indirizzo quando l'id non c'è). `seo_link_collegato()` (`:73`) dice se l'indirizzo è già in un `href` del testo (con o
+  senza la cartella, relativo o assoluto). La parola X è la keyword, oppure il termine che ricorre di più fra le voci.
+- **Nell'analisi** (`seo_analisi()`, `includes/seo.php:1181`): con suggerimenti la voce `link_interni` diventa
+  "Collegamenti interni: N nel testo; K pagine parlano di «X», collegale" (o "... 1 già collegata, collega le altre"), stato
+  `ok` con almeno due link nel testo oppure almeno una suggerita collegata; senza suggerimenti il testo di prima. Il risultato
+  porta `suggeriti`. Chi chiama passa `tipo_contenuto` e `id`: la scheda (`admin/contenuto.php:217` e
+  `assets/seo-controllo.js`, che li legge dall'indirizzo), l'editor (`admin/editor-api.php:196`), la Panoramica (`seo.php:1265`).
+- **Il riquadro Collega** (`seo_link_html()`, `includes/seo.php:1239`, dentro `seo_analisi_html($a, $opz)`): le voci non
+  ancora collegate con "Copia il link" (`data-copia-link`, l'indirizzo intero da `cms_url_sito()`) e, con `$opz['inserisci']`
+  (solo l'editor), "Inserisci nel Testo selezionato" (`data-inserisci-link` con `/percorso/`). Nella scheda `seo-controllo.js`
+  copia negli appunti (con la casella nascosta e `execCommand` se gli appunti non si possono usare); nell'editor
+  `editor.js` copia, oppure aggiunge `<p><a href="/percorso/">Titolo</a></p>` in fondo a `impostazioni.contenuto` del widget
+  Testo selezionato (`selezionato` di tipo `testo`), `cambiato()` + `mostraControlli()` e rilancia il controllo; senza un Testo
+  selezionato lo dice nel riquadro. Il link che il widget salva passa da `editor_ricco_pulito()` come ogni altro.
+
+### 46.3 Dati per Google in più: Prodotto, How-to, Video
+
+`includes/seo-schema.php`, caricato da `includes/seo.php:24`.
+
+- **Dove stanno**: colonna `seo_schema` (LONGTEXT, JSON) di `articles` e `pages`, aggiunta anche alle tabelle vecchie da
+  `contenuti_schema_colonne()` (`includes/contenuti.php:64` e `:74`, quindi da `sito_schema_aggiorna()` al primo giro). Solo
+  per articoli e pagine (`seo_schema_per_tipo()`, `SEO_SCHEMA_TABELLE`). Forma: `{"tipo":"prodotto","prodotto":{...}}`,
+  vuota quando non c'è niente scelto (`seo_schema_json()`, `:181`). `contenuti_salva()` non tocca la colonna;
+  `contenuti_duplica()` e le revisioni la portano con sé come ogni colonna.
+- **Il riquadro** (`seo_schema_form_html()`, `:281`, nel riquadro "SEO e Google" di `admin/contenuto.php:209`, solo con un id):
+  tendina `schema[tipo]` (Nessuno, Prodotto, How-to, Video) e i campi del tipo scelto; `admin/assets/seo-schema.js` mostra i
+  campi del tipo, aggiunge e toglie i passi (fino a `SEO_SCHEMA_PASSI_MAX` = 20) rinumerandoli. Si salva con la scheda:
+  `seo_schema_salva()` (`:191`, da `contenuto.php:62`) -> `seo_schema_valida()` (`:112`); con un campo sbagliato i dati di prima
+  restano e il messaggio rosso dice quali campi (`seo_schema_errori_testo()`), il resto della scheda si salva lo stesso.
+- **I controlli**: testi senza tag né righe (`seo_schema_testo()`, 200 caratteri; i testi lunghi 1000), prezzo da `24,90` a
+  `"24.90"` (`seo_schema_prezzo()`), valuta tre lettere, disponibilità fra `SEO_SCHEMA_DISPONIBILITA`, tempo in minuti, data
+  `AAAA-MM-GG` vera, durata `1:30` o secondi (`seo_schema_secondi()`, poi `PT1M30S` con `seo_schema_durata_iso()`), indirizzi
+  con `seo_schema_url()` (`:53`): un percorso del sito oppure https (http solo per le immagini); per il video il file e
+  l'incorporo solo https, e almeno uno dei due; `javascript:`, `data:`, `..`, spazi e virgolette rifiutati. I passi oltre i 20 si
+  scartano senza fermarsi.
+- **Sul sito** (`seo_schema_nodo()` `:217` e `seo_schema_applica()` `:260`, chiamata in `sito/index.php:315` e `:327` e in
+  `seo_jsonld_di()`, `includes/seo.php:1040` e `:1047`): con la colonna vuota i nodi tornano identici; altrimenti il nodo
+  (`Product` con `offers` Offer: price, priceCurrency, availability `https://schema.org/<...>`, url; `image` dalla foto o
+  dall'immagine in evidenza, `sku`, `brand`, `description` dalla descrizione per Google o da In breve o dall'estratto;
+  `HowTo` con `totalTime` e `step` di `HowToStep` numerati con `url` `#passo-N`; `VideoObject` con `thumbnailUrl`, `uploadDate`,
+  `contentUrl`, `embedUrl`, `duration`) entra nel `@graph` e la WebPage lo indica in `mainEntity` (se non ne ha già una: la pagina
+  di una sede tiene la sua). I percorsi del sito diventano assoluti con `SITO_URL`. L'uscita passa da `sito_jsonld_script()`,
+  `JSON_HEX_TAG`.
+- **La Vetrina**: la scheda di un prodotto (`addon/vetrina/includes/sito.php:123`, `vt_pagina_prodotto()`) aveva già il suo
+  Product con Offer o AggregateOffer, `sku`, `image`, `description`: non cambia, `prova-seo-strumenti.js` lo controlla.
+
+### 46.4 Le immagini senza alt
+
+`includes/media-alt.php`, pagina `admin/includes/media-alt-pagina.php` (inclusa da `admin/media.php` con `?scheda=alt`), script
+`admin/assets/media-alt.js`.
+
+- **La libreria**: tabella `media_alt` (`percorso` 500, `alt` 300, `aggiornato`; `media_alt_schema()`, `:21`, al primo uso). La
+  chiave di un'immagine è il percorso senza l'origine del sito e senza la cartella del CMS (`media_alt_chiave()`, `:37`:
+  `/uploads/pagine/2026/11/foto.jpg`), così la stessa foto si riconosce scritta in tre modi. `media_alt_salva()` (`:79`,
+  da `seo-api.php` azione `media_alt_salva`, `:91`) accetta solo immagini che stanno in `media_elenco()`, toglie i tag, 300
+  caratteri; vuoto cancella la riga; aggiorna l'impostazione `media_alt_n` (quante righe con l'alt). `media_alt_tutti()` legge la
+  tabella una volta per richiesta e **non fa nessuna query quando `media_alt_n` è 0**.
+- **Sul sito**: `media_alt_applica()` (`:123`, chiamata da `sito_html()`, `sito/index.php:60-61`, prima di
+  `cms_con_cartella()`): ogni `<img>` con `alt=""` o senza alt di un'immagine con l'alt in libreria lo riceve
+  (`htmlspecialchars`). Senza alt salvati l'HTML torna identico. Vale anche per la foto decorativa dell'Apertura (che non ha un
+  campo alt): un alt in più su una foto dentro `aria-hidden` non fa danni.
+- **Nelle pagine**: `media_alt_widget()` (`:153`) legge la definizione del widget: per ogni controllo di tipo `immagine` con
+  accanto un campo `alt` (o `<nome>_alt`), per ogni `galleria` (voci con `immagine` e `alt`) e per ogni `ripetitore` con un
+  campo immagine e il suo alt (le pagine di Scorri di lato, i loghi), segna le immagini con l'alt vuoto **e** senza un alt in
+  libreria. `media_alt_contenuto()` (`:187`) somma i widget della versione pubblicata (`struttura`), le `<img>` senza alt del
+  testo della scheda (solo senza editor) e l'immagine in evidenza degli articoli senza `featured_image_alt`;
+  `media_alt_nelle_pagine()` (`:215`) lo fa per tutti i contenuti pubblicati con i link all'editor e alla scheda. L'Apertura resta
+  fuori per scelta (foto decorativa). La Tabella SEO conta con `media_alt_contenuto()`.
+- **La pagina**: Nelle pagine (una casella per riga, che scrive l'alt in libreria: vale per tutte le pagine con quella foto
+  senza un alt loro; un'immagine esterna non ha la casella e rimanda all'editor), Nella libreria (60 per pagina), "Le immagini con
+  l'alt" per cambiarlo. Lo script salva al `change` e con Invio e aggiorna le righe della stessa foto.
+
+### 46.5 Prove
+
+`prove/prova-seo-strumenti.js` (71 controlli, con `prove/seo-strumenti-cli.php`), gruppo 44 di `tools/sicurezza-prova.js`
+(13 attacchi: codice nei campi della tabella e degli schema, foto e video `javascript:`, `data:` e `http:`, 500 passi, senza
+token e da un altro sito, tipo `modelli` e id inesistente, un alt per un file fuori dalla libreria, redattore, keyword con
+codice, alt con codice sul sito). Le schermate del manuale d'uso: capitoli `23t` e `23u` di `tools/manuale-uso-schermate.js`.
 
 ## Appendice A. Dove i documenti vecchi non corrispondono al codice
 

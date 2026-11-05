@@ -163,6 +163,7 @@ async function post(p, url, body, headers = {}) {
     if (red.dentro) {
       const REDATTORE = ['admin/index.php', 'admin/contenuti.php', 'admin/contenuto.php', 'admin/editor.php', 'admin/editor-api.php', 'admin/editor-anteprima.php', 'admin/seo-api.php',
         'admin/media.php', 'admin/categories.php', 'admin/versioni.php', 'admin/account.php', 'admin/password.php', 'admin/guida-infografiche.php',
+        'admin/seo-tabella.php', // 2.29.0: la Tabella SEO (contenuti, non configurazione)
         // i vecchi indirizzi che rimandano alle schede dei contenuti
         'admin/articles.php', 'admin/article-edit.php', 'admin/article-delete.php', 'admin/pages.php', 'admin/page-edit.php', 'admin/page-delete.php', 'admin/aforismi.php', 'admin/aforisma-edit.php', 'admin/aforisma-delete.php'];
       const fuori = [];
@@ -178,7 +179,7 @@ async function post(p, url, body, headers = {}) {
       // il menu del redattore non mostra le voci che non puo aprire
       await red.p.goto(ADMIN + '/index.php', { waitUntil: 'networkidle' });
       const voci = await red.p.locator('.admin-nav a').evaluateAll(a => a.map(x => x.getAttribute('href')));
-      const vietate = voci.filter(h => h && !/^(index|contenuti|contenuto|editor|media|categories|versioni|account|password|guida-infografiche)\.php/.test(h) && !/^\.\.\//.test(h));
+      const vietate = voci.filter(h => h && !/^(index|contenuti|contenuto|editor|media|categories|versioni|account|password|guida-infografiche|seo-tabella)\.php/.test(h) && !/^\.\.\//.test(h)); // 2.29.0: seo-tabella.php
       ok('redattore: nel menu solo le voci che puo aprire', vietate.length === 0, vietate);
     }
   } else {
@@ -2500,6 +2501,122 @@ echo json_encode($o);
     for (const s of cli42('elenco') || []) if (/^Sic42/.test(s.nome) && s.pagina > 0) cli42('sql', 'DELETE FROM {p}pages WHERE id = ' + (+s.pagina));
     ripristina42();
   } else console.log('--  sedi (2.27.0): saltata (serve CMS_DIR)');
+
+  // === 44. (2.29.0) Gli strumenti SEO: la Tabella SEO (seo-api.php tabella_salva), i dati per Google in più (schema[...] nella scheda,
+  // includes/seo-schema.php), i link interni suggeriti (includes/seo-link.php), gli alt della libreria (media_alt_salva). Codice nei
+  // campi della tabella e degli schema (tag tolti, escape in uscita, JSON_HEX_TAG nel JSON-LD); redattore che prova a salvare la
+  // configurazione SEO o un contenuto che non esiste; senza token e da un altro sito; video javascript:, data: e http:; 500 passi di
+  // how-to; una keyword con codice nei suggerimenti; un alt per un file fuori dalla libreria. Serve CMS_DIR.
+  if (DIR && fs.existsSync(path.join(__dirname, '..', 'prove', 'seo-strumenti-cli.php'))) {
+    const { execFileSync } = require('child_process');
+    const cli44 = (...a) => { try { return JSON.parse(execFileSync('php', [path.join(__dirname, '..', 'prove', 'seo-strumenti-cli.php'), DIR, ...a.map(String)], { encoding: 'utf8', maxBuffer: 64 * 1024 * 1024 }).trim().split('\n').pop()); } catch (e) { return { errore_cli: String(e.message).slice(0, 200) }; } };
+    const CATTIVO = '<img src=x onerror=alert(44)>', SCRIPT = '</script><script>alert(44)</script>';
+    const ORIG44 = { 'Origin': BASE.replace(/(https?:\/\/[^/]+).*/, '$1') };
+    const foto44 = cli44('foto', 'sic44');
+    const pag44 = cli44('pagina', 'sic44-pagina', 'Pagina sic44 sui vasi in terracotta', JSON.stringify([{ tipo: 'testo', impostazioni: { contenuto: '<p>Vasi in terracotta per il giardino.</p>' } }, { tipo: 'immagine', impostazioni: { immagine: foto44.url || '', alt: '' } }]));
+    const art44 = cli44('articolo', 'sic44-articolo', 'Articolo sic44 sui vasi', CATTIVO + ' vasi terracotta', 'Descrizione sic44.', JSON.stringify([{ tipo: 'testo', impostazioni: { contenuto: '<p>Un articolo sui vasi.</p>' } }]));
+    // Il token: la Tabella SEO non ha un form, ma il meta pn-csrf (quello che usa seo-tabella.js).
+    const tokenMeta44 = async (p, url) => { await p.goto(url, { waitUntil: 'networkidle' }); return await p.evaluate(() => { const m = document.querySelector('meta[name=pn-csrf]'); return m ? m.content : ''; }); };
+    const t44 = await tokenMeta44(admin.p, ADMIN + '/seo-tabella.php');
+    // 1. Codice nella Tabella SEO: titolo per Google e descrizione.
+    const s1 = await admin.ctx.request.post(ADMIN + '/seo-api.php', { form: { _csrf: t44, azione: 'tabella_salva', tipo: 'pagine', id: String(pag44.id || 0), seo_title: 'Sic44 ' + CATTIVO + SCRIPT, descrizione: 'Descr sic44 ' + SCRIPT + CATTIVO }, headers: ORIG44, maxRedirects: 0 });
+    const j1 = await s1.json().catch(() => null);
+    const riga44 = cli44('sql', 'SELECT seo_title, seo_description, meta_description FROM {p}pages WHERE id = ' + (+pag44.id));
+    const salvati44 = Array.isArray(riga44) && riga44[0] ? riga44[0] : {};
+    ok('2.29.0: la Tabella SEO salva titolo e descrizione con codice come testo (tag tolti), risposta senza HTML grezzo', s1.status() === 200 && j1 && j1.ok && !/</.test((salvati44.seo_title || '') + (salvati44.seo_description || '') + (salvati44.meta_description || '')) && /^Sic44/.test(salvati44.seo_title || '') && !/<img src=x/.test(JSON.stringify(j1)), [s1.status(), salvati44]);
+    await admin.p.goto(ADMIN + '/seo-tabella.php', { waitUntil: 'networkidle' });
+    ok('2.29.0: nella Tabella SEO i valori escono nelle caselle come testo, niente on*, niente script', await admin.p.locator('img[onerror], svg[onload]').count() === 0 && !/<script>alert\(44\)/.test(await admin.p.content()) && (await admin.p.locator(`#st-tabella tr[data-tipo="pagine"][data-id="${pag44.id}"] input[data-campo=seo_title]`).inputValue().catch(() => '')).startsWith('Sic44'));
+    const sito44 = await browser.newContext();
+    const pg44 = await sito44.newPage();
+    const fin44 = []; pg44.on('dialog', d => { fin44.push(d.message()); d.dismiss().catch(() => {}); });
+    const rs1 = await pg44.goto(BASE + '/sic44-pagina/', { waitUntil: 'networkidle' });
+    const h44 = await pg44.content();
+    ok('2.29.0: sul sito <title> e meta description con il testo salvato escono con l\'escape: niente script, niente finestre', !!rs1 && rs1.status() === 200 && /<title>Sic44/.test(h44) && !/<script>alert\(44\)/.test(h44) && await pg44.locator('img[onerror]').count() === 0 && fin44.length === 0);
+    // 2. Codice nei dati per Google in più (Prodotto) dalla scheda, e un video javascript:, data: e http:.
+    const tSc = await tokenDi(admin.p, ADMIN + '/contenuto.php?tipo=pagine&id=' + pag44.id);
+    const scheda44 = (extra) => Object.assign({ _csrf: tSc, azione: 'salva', invio: 'pubblica', title: 'Pagina sic44 sui vasi in terracotta', slug: 'sic44-pagina', contenuto: '', stato: 'pubblicato', robots: '' }, extra || {});
+    const s2 = await admin.ctx.request.post(ADMIN + '/contenuto.php?tipo=pagine&id=' + pag44.id, { form: scheda44({ 'schema[tipo]': 'prodotto', 'schema[prodotto][nome]': 'Vaso ' + CATTIVO + SCRIPT, 'schema[prodotto][prezzo]': '24,90', 'schema[prodotto][valuta]': 'EUR', 'schema[prodotto][disponibilita]': 'InStock', 'schema[prodotto][codice]': 'C' + CATTIVO, 'schema[prodotto][marca]': 'M' + SCRIPT, 'schema[prodotto][foto]': 'javascript:alert(44)' }), headers: ORIG44, maxRedirects: 0 });
+    const sc44 = cli44('sql', "SELECT COALESCE(seo_schema, '') s FROM {p}pages WHERE id = " + (+pag44.id));
+    const schemaS = Array.isArray(sc44) && sc44[0] ? String(sc44[0].s) : '';
+    // La foto javascript: è un errore: i dati non si salvano affatto (restano quelli di prima, cioè niente).
+    ok('2.29.0: Prodotto con codice nei campi e foto javascript: il salvataggio dei dati in più si rifiuta (campo foto), la colonna resta vuota', [302, 303].includes(s2.status()) && schemaS === '', [s2.status(), schemaS.slice(0, 100)]);
+    const s3 = await admin.ctx.request.post(ADMIN + '/contenuto.php?tipo=pagine&id=' + pag44.id, { form: scheda44({ 'schema[tipo]': 'prodotto', 'schema[prodotto][nome]': 'Vaso ' + CATTIVO + SCRIPT, 'schema[prodotto][prezzo]': '24,90', 'schema[prodotto][valuta]': 'EUR', 'schema[prodotto][disponibilita]': 'InStock', 'schema[prodotto][codice]': 'C' + CATTIVO, 'schema[prodotto][marca]': 'M' + SCRIPT, 'schema[prodotto][foto]': '' }), headers: ORIG44, maxRedirects: 0 });
+    const sc44b = cli44('sql', "SELECT COALESCE(seo_schema, '') s FROM {p}pages WHERE id = " + (+pag44.id));
+    const schemaB = Array.isArray(sc44b) && sc44b[0] ? String(sc44b[0].s) : '';
+    let dati44 = null; try { dati44 = JSON.parse(schemaB); } catch (e) {}
+    ok('2.29.0: Prodotto con codice nei campi: salvato come testo, senza tag', [302, 303].includes(s3.status()) && dati44 && dati44.tipo === 'prodotto' && !/</.test(dati44.prodotto.nome + dati44.prodotto.codice + dati44.prodotto.marca) && /^Vaso /.test(dati44.prodotto.nome), dati44 && dati44.prodotto);
+    const rs2 = await pg44.goto(BASE + '/sic44-pagina/', { waitUntil: 'networkidle' });
+    const ld44 = await pg44.locator('script[type="application/ld+json"]').evaluateAll(l => l.map(s => s.textContent));
+    const grafo44 = (() => { try { return JSON.parse(ld44[0])['@graph']; } catch (e) { return []; } })();
+    const prod44 = grafo44.find(x => x['@type'] === 'Product');
+    ok('2.29.0: il JSON-LD del sito porta il Product con i testi puliti, JSON_HEX_TAG (nessun </script> dentro lo script), niente finestre', !!rs2 && rs2.status() === 200 && ld44.length === 1 && !/<\/script/i.test(ld44[0]) && !/<img|onerror/.test(ld44[0]) && !!prod44 && /^Vaso /.test(prod44.name) && fin44.length === 0, prod44 && [prod44.name, prod44.sku]);
+    await admin.p.goto(ADMIN + '/contenuto.php?tipo=pagine&id=' + pag44.id, { waitUntil: 'networkidle' });
+    ok('2.29.0: la scheda rimostra i dati in più come testo nei campi', await admin.p.locator('img[onerror]').count() === 0 && (await admin.p.inputValue('#sc-schema-prodotto-nome').catch(() => '')).startsWith('Vaso '));
+    const rifiutiV = [];
+    for (const [campo, valore] of [['url', 'javascript:alert(44)'], ['url', 'data:text/html,<script>alert(44)</script>'], ['url', 'http://video.esempio.it/x.mp4'], ['incorporo', 'javascript:alert(44)'], ['incorporo', 'http://player.esempio.it/x'], ['miniatura', 'javascript:alert(44)']]) {
+      const f = { 'schema[tipo]': 'video', 'schema[video][nome]': 'Video sic44', 'schema[video][descrizione]': 'Descrizione.', 'schema[video][miniatura]': foto44.url || '/uploads/x.png', 'schema[video][data]': '2026-11-05', 'schema[video][url]': 'https://video.esempio.it/ok.mp4', 'schema[video][incorporo]': '', 'schema[video][durata]': '1:00' };
+      f['schema[video][' + campo + ']'] = valore;
+      const r = await admin.ctx.request.post(ADMIN + '/contenuto.php?tipo=pagine&id=' + pag44.id, { form: scheda44(f), headers: ORIG44, maxRedirects: 0 });
+      const dopo = cli44('sql', "SELECT COALESCE(seo_schema, '') s FROM {p}pages WHERE id = " + (+pag44.id));
+      const ds = Array.isArray(dopo) && dopo[0] ? String(dopo[0].s) : '';
+      if (!([302, 303].includes(r.status()) && !/video/.test(ds) && !/javascript|data:/.test(ds))) rifiutiV.push([campo, valore, r.status(), ds.slice(0, 80)]);
+    }
+    ok('2.29.0: video con indirizzo javascript:, data: o http:, incorporo javascript: o http:, miniatura javascript:: i dati in più non si salvano (restano quelli di prima)', rifiutiV.length === 0, rifiutiV);
+    // 3. 500 passi di how-to: ne restano 20, niente errore fatale.
+    const passi500 = {};
+    for (let i = 0; i < 500; i++) passi500['schema[howto][passi][' + i + '][nome]'] = 'Passo ' + i;
+    const s4 = await admin.ctx.request.post(ADMIN + '/contenuto.php?tipo=pagine&id=' + pag44.id, { form: scheda44(Object.assign({ 'schema[tipo]': 'howto', 'schema[howto][nome]': 'Guida sic44', 'schema[howto][tempo]': '10' }, passi500)), headers: ORIG44, maxRedirects: 0 });
+    const sc44c = cli44('sql', "SELECT COALESCE(seo_schema, '') s FROM {p}pages WHERE id = " + (+pag44.id));
+    let howto44 = null; try { howto44 = JSON.parse(Array.isArray(sc44c) && sc44c[0] ? String(sc44c[0].s) : ''); } catch (e) {}
+    const rs3 = await pg44.goto(BASE + '/sic44-pagina/', { waitUntil: 'networkidle' });
+    const grafo44c = await pg44.locator('script[type="application/ld+json"]').evaluateAll(l => l.map(s => { try { return JSON.parse(s.textContent)['@graph']; } catch (e) { return []; } }));
+    const howtoNodo = (grafo44c[0] || []).find(x => x['@type'] === 'HowTo');
+    ok('2.29.0: 500 passi di how-to: si tengono i primi 20, la pagina risponde 200 con 20 HowToStep', [302, 303].includes(s4.status()) && howto44 && howto44.tipo === 'howto' && howto44.howto.passi.length === 20 && !!rs3 && rs3.status() === 200 && !!howtoNodo && howtoNodo.step.length === 20, [s4.status(), howto44 && howto44.howto.passi.length, howtoNodo && howtoNodo.step.length]);
+    // 4. Senza token, da un altro sito, redattore.
+    const titPrima44 = (cli44('sql', 'SELECT seo_title t FROM {p}pages WHERE id = ' + (+pag44.id)) || [{}])[0].t;
+    const c1 = await admin.ctx.request.post(ADMIN + '/seo-api.php', { form: { azione: 'tabella_salva', tipo: 'pagine', id: String(pag44.id), seo_title: 'senza token' }, headers: ORIG44, maxRedirects: 0 });
+    const c2 = await admin.ctx.request.post(ADMIN + '/seo-api.php', { form: { _csrf: t44, azione: 'tabella_salva', tipo: 'pagine', id: String(pag44.id), seo_title: 'altro sito' }, headers: { 'Origin': 'https://evil.example' }, maxRedirects: 0 });
+    const c3 = await admin.ctx.request.post(ADMIN + '/seo-api.php', { form: { azione: 'media_alt_salva', url: foto44.url || '', alt: 'senza token' }, headers: ORIG44, maxRedirects: 0 });
+    const tit44 = cli44('sql', 'SELECT seo_title t FROM {p}pages WHERE id = ' + (+pag44.id));
+    ok('2.29.0: tabella_salva senza token o da un altro sito, media_alt_salva senza token: 403 e niente salvato', c1.status() === 403 && c2.status() === 403 && c3.status() === 403 && Array.isArray(tit44) && tit44[0].t === titPrima44 && !/senza token|altro sito/.test(String(tit44[0].t)), [c1.status(), c2.status(), c3.status(), tit44 && tit44[0].t]);
+    const c4 = await admin.ctx.request.post(ADMIN + '/seo-api.php', { form: { _csrf: t44, azione: 'tabella_salva', tipo: 'modelli', id: '1', seo_title: 'x' }, headers: ORIG44, maxRedirects: 0 });
+    const c5 = await admin.ctx.request.post(ADMIN + '/seo-api.php', { form: { _csrf: t44, azione: 'tabella_salva', tipo: 'pagine', id: '999999', seo_title: 'x' }, headers: ORIG44, maxRedirects: 0 });
+    const c6 = await admin.ctx.request.post(ADMIN + '/seo-api.php', { form: { _csrf: t44, azione: 'media_alt_salva', url: '../../includes/config.local.php', alt: 'x' }, headers: ORIG44, maxRedirects: 0 });
+    const c7 = await admin.ctx.request.post(ADMIN + '/seo-api.php', { form: { _csrf: t44, azione: 'media_alt_salva', url: '/includes/config.local.php', alt: 'x' }, headers: ORIG44, maxRedirects: 0 });
+    const nAlt = cli44('sql', "SELECT COUNT(*) c FROM {p}media_alt WHERE percorso LIKE '%config%'");
+    ok('2.29.0: tabella_salva con tipo modelli o id inesistente, media_alt_salva con un file fuori dalla libreria: rifiutati (404 o 400), niente scritto', c4.status() === 404 && c5.status() === 400 && c6.status() === 400 && c7.status() === 400 && Array.isArray(nAlt) && +nAlt[0].c === 0, [c4.status(), c5.status(), c6.status(), c7.status()]);
+    if (red.dentro) {
+      const tRed44 = await tokenMeta44(red.p, ADMIN + '/seo-tabella.php');
+      const r1 = await red.ctx.request.post(ADMIN + '/seo.php?scheda=globale', { form: { _csrf: tRed44, azione: 'salva_titoli', 'titolo[sep]': 'x' }, headers: ORIG44, maxRedirects: 0 });
+      const r2 = await red.ctx.request.post(ADMIN + '/seo-api.php', { form: { _csrf: tRed44, azione: 'sedi_cerca', indirizzo: 'x' }, headers: ORIG44, maxRedirects: 0 });
+      const r3 = await red.ctx.request.post(ADMIN + '/seo-api.php', { form: { _csrf: tRed44, azione: 'tabella_salva', tipo: 'pagine', id: '999999', seo_title: 'x' }, headers: ORIG44, maxRedirects: 0 });
+      const r4 = await red.ctx.request.get(ADMIN + '/seo-tabella.php', { maxRedirects: 0 });
+      ok('2.29.0: il redattore apre la Tabella SEO (200) ma non salva la configurazione SEO (302/403), non cerca le coordinate (403), non salva un contenuto che non esiste (400)', r4.status() === 200 && [302, 303, 403].includes(r1.status()) && r2.status() === 403 && r3.status() === 400, [r4.status(), r1.status(), r2.status(), r3.status()]);
+    }
+    // 5. Una keyword con codice nei suggerimenti: l'analisi (scheda ed editor) la mostra come testo.
+    const a1 = await admin.ctx.request.post(ADMIN + '/seo-api.php', { form: { _csrf: t44, azione: 'analisi', title: 'Articolo sic44 sui vasi', slug: 'sic44-articolo', keyword_target: CATTIVO + ' vasi terracotta', contenuto: '<p>Un articolo sui vasi in terracotta.</p>', tipo_contenuto: 'articoli', id: String(art44.id || 0) }, headers: ORIG44, maxRedirects: 0 });
+    const ja1 = await a1.json().catch(() => null);
+    const tEd44 = await tokenDi(admin.p, ADMIN + '/editor.php?tipo=articoli&id=' + art44.id);
+    const a2 = await post(admin.p, ADMIN + '/editor-api.php', new URLSearchParams({ azione: 'seo', tipo: 'articoli', id: String(art44.id), _csrf: tEd44, albero: '{"versione":1,"elementi":[]}', titolo: 'Articolo sic44 sui vasi' }).toString(), { 'Content-Type': 'application/x-www-form-urlencoded' });
+    let ja2 = null; try { ja2 = JSON.parse(a2.body); } catch (e) {}
+    const htmlA = (ja1 && ja1.html || '') + (ja2 && ja2.html || '');
+    ok('2.29.0: keyword con codice: il riquadro Collega e la riga dei link (scheda ed editor) escono con l\'escape, niente tag', a1.status() === 200 && ja1 && /seo-collega|Collegamenti interni|link interni/.test(ja1.html || '') && !/<img src=x onerror/.test(htmlA) && /&lt;img src=x onerror=alert\(44\)&gt;|&lt;img/.test(htmlA) && (a2.status === 200), [a1.status(), a2.status, (htmlA.match(/parlano di [^.]{0,80}/) || [''])[0]]);
+    // 6. Un alt con codice: salvato come testo, sul sito con l'escape.
+    const alt1 = await admin.ctx.request.post(ADMIN + '/seo-api.php', { form: { _csrf: t44, azione: 'media_alt_salva', url: foto44.url || '', alt: 'Alt "sic44" ' + SCRIPT + CATTIVO }, headers: ORIG44, maxRedirects: 0 });
+    const jalt = await alt1.json().catch(() => null);
+    const rs4 = await pg44.goto(BASE + '/sic44-pagina/', { waitUntil: 'networkidle' });
+    const img44 = await pg44.locator('img[src*="sic44"]').first().getAttribute('alt').catch(() => null);
+    const h44b = await pg44.content();
+    ok('2.29.0: un alt con codice: salvato senza tag e sul sito esce nell\'attributo con l\'escape (virgolette comprese), niente script', alt1.status() === 200 && jalt && jalt.ok && !/</.test(jalt.alt) && /^Alt "sic44"/.test(jalt.alt) && !!rs4 && img44 !== null && img44.startsWith('Alt "sic44"') && !/<script>alert\(44\)/.test(h44b) && fin44.length === 0, [jalt && jalt.alt, img44]);
+    await sito44.close();
+    // Pulizia.
+    cli44('sql', "DELETE FROM {p}pages WHERE slug = 'sic44-pagina'"); cli44('sql', "DELETE FROM {p}articles WHERE slug = 'sic44-articolo'");
+    cli44('sql', "DELETE FROM {p}revisioni WHERE (tipo = 'pagine' AND contenuto_id = " + (+pag44.id) + ") OR (tipo = 'articoli' AND contenuto_id = " + (+art44.id) + ")");
+    cli44('sql', "DELETE FROM {p}pagine_revisioni WHERE (tipo = 'pagine' AND pagina_id = " + (+pag44.id) + ") OR (tipo = 'articoli' AND pagina_id = " + (+art44.id) + ")");
+    cli44('sql', "DELETE FROM {p}media_alt WHERE percorso LIKE '%sic44%'");
+    cli44('sql', "UPDATE {p}settings SET setting_value = (SELECT COUNT(*) FROM {p}media_alt WHERE alt <> '') WHERE setting_key = 'media_alt_n'");
+    cli44('foto_togli', 'sic44');
+  } else console.log('--  strumenti SEO (2.29.0): saltata (serve CMS_DIR)');
 
   // === pulizia: elimina il redattore di prova
   {

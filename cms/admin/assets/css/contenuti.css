@@ -104,3 +104,15 @@
 .sc-social-canali label{display:block;margin-top:.5rem}
 .sc-social-img{display:flex;gap:.6rem;align-items:flex-start;margin-top:.8rem}
 .sc-social-img img{display:block;max-height:120px;width:auto;border:1px solid var(--border);border-radius:6px}
+
+/* 2.29.0: i dati per Google in più nel riquadro SEO della scheda (includes/seo-schema.php) */
+.sc-schema{margin-top:.6rem;padding-top:.6rem;border-top:1px solid var(--border)}
+.sc-schema [hidden]{display:none!important}
+.sc-schema .sc-schema-campi{margin-top:.4rem;padding:.6rem .7rem;border:1px solid var(--border);border-radius:8px;background:var(--bg)}
+.sc-schema .form-group{margin:0 0 .5rem}
+.sc-schema-passi{display:grid;gap:.5rem;margin-bottom:.5rem}
+.sc-schema-passo{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:.5rem;align-items:start}
+.sc-schema-passo>div{display:grid;gap:.35rem}
+.sc-schema-n{display:inline-flex;align-items:center;justify-content:center;width:1.7rem;height:1.7rem;border-radius:50%;background:var(--coral);color:var(--su-accento);font-size:.78rem;font-weight:700;margin-top:.3rem}
+.sc-schema-passo textarea{min-height:52px}
+.sc-schema input:focus-visible,.sc-schema textarea:focus-visible,.sc-schema select:focus-visible{outline:2px solid var(--coral);outline-offset:1px}
