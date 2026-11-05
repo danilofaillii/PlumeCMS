@@ -167,7 +167,7 @@ Le decisioni complete, con data e perché, stanno nel second brain, `plumecms/de
 
 ## Stato al 31 ottobre 2026
 
-Fatto: plumeCMS 2.29.0 (5 novembre, 13:10-in corso): **gli strumenti SEO**, con la 2.28.0 nella stessa consegna (richiesta di Danilo: "fai le pagine per
+Fatto: plumeCMS 2.29.0 (5 novembre, 13:10-15:10): **gli strumenti SEO**, con la 2.28.0 nella stessa consegna (richiesta di Danilo: "fai le pagine per
 zona" più quattro strumenti: tabella SEO di tutto il sito con semafori e modifica in riga; link interni suggeriti nell'editor; schema Prodotto per la
 Vetrina, How-to e Video dal pannello; immagini senza alt in un elenco con la correzione in posto). Due agenti in parallelo in due worktree
 (`/home/user/wt-zone`, ramo `zone`; `/home/user/wt-seo`, ramo `seo-strumenti`), riletti e uniti da me con tredici file in conflitto (menu e fila delle
@@ -184,11 +184,11 @@ sito, miniatura e data obbligatorie, 20 passi; la Vetrina aveva già Product+Off
 primo uso, `media_alt_applica()` in `sito_html()` sulle `<img>` con alt vuoto, zero query con `media_alt_n` a 0; Media > Senza alt con "Nelle pagine" e
 "Nella libreria"). Manuale d'uso capitoli 7 e 23 (schermate 23-tabella, 23-collega, 23-schema, 07-senza-alt, rifatte da me sul sito col kit: quelle
 dell'agente avevano 26 contenuti di prova), tecnico 46, `prove/prova-seo-strumenti.js` 71, gruppo 44 degli attacchi. **PDF 12638 KB: tetto alzato da 12 a
-14 MB, decisione di Danilo del 5 novembre** (`MAX_KB`, `prova-consegna-unica.js`). Prove mie sullo zip (`$S/v2290.sh` e `$S/v6/*.sh`, 14:36-in corso; il
+14 MB, decisione di Danilo del 5 novembre** (`MAX_KB`, `prova-consegna-unica.js`). Prove mie sullo zip (`$S/v2290.sh` e `$S/v6/*.sh`, 14:36-15:08; il
 contenitore si è riavviato alle 14:40 a metà batteria: server riaccesi sui siti già installati con `$S/v6/riprendi.sh`, prove rimaste rifatte): kit
 attività 34/34 radice e 44/44 cartella, sedi 58/58 radice e cartella, zone 58/58 radice, cartella e sito aggiornato, strumenti SEO 71/71 radice e
-cartella, install 38/38 radice e cartella, widget nuovi 40/40, telefono 57/57, addon tutti 74/74, ux pannello 103/103 sulle pagine nuove (Tabella SEO, Media, Zone, Sedi) nei quattro aspetti (la prova completa su un sito col kit senza dati dà 404 sulle pagine che vogliono un flusso o un test: non di questa versione), attacchi: primo giro sui due siti con 2 KO per difetti della batteria (porta 9296 presa dal giro
-in parallelo; tabella `media_alt` non ancora nata), giro pulito su un sito nuovo in corso, aggiornamento 2.27.0 -> 2.29.0 13/13 con 1 foto su 20 a 1 livello (ricerca al telefono, rumore) e JSON-LD e sitemap di 7
+cartella, install 38/38 radice e cartella, widget nuovi 40/40, telefono 57/57, addon tutti 74/74, ux pannello 103/103 sulle pagine nuove (Tabella SEO, Media, Zone, Sedi) nei quattro aspetti (la prova completa su un sito col kit senza dati dà 404 sulle pagine che vogliono un flusso o un test: non di questa versione), attacchi 459/459 su un sito nuovo e su uno aggiornato, lanciati uno alla volta (il primo giro
+in parallelo aveva 2 KO per difetti della batteria: porta 9296 presa dall'altro giro, tabella `media_alt` non ancora nata; prova corretta), aggiornamento 2.27.0 -> 2.29.0 13/13 con 1 foto su 20 a 1 livello (ricerca al telefono, rumore) e JSON-LD e sitemap di 7
 indirizzi identici al byte, sito su misura 34/34, pacchetto unico 13/13 con la hero tenuta, sito di plumeCMS 91/91, zero errori fatali. Zip 2452 KB.
 **Non provato**: il JSON-LD di Product, HowTo e VideoObject nel validatore di Google (rete chiusa), la Tabella SEO con migliaia di contenuti, Safari e
 Firefox, lettore di schermo vero.
