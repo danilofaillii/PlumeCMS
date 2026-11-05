@@ -28,7 +28,7 @@ switch ($cmd) {
         $in = json_decode((string)($argv[3] ?? '{}'), true) ?: [];
         $v = sedi_valida($in, (string)($in['id'] ?? ''));
         if ($v['errori']) $esci(['errori' => $v['errori']]);
-        $esci(['sede' => sedi_salva($v['sede']), 'errori' => []]);
+        try { $esci(['sede' => sedi_salva($v['sede']), 'errori' => []]); } catch (Throwable $e) { $esci(['errori' => ['_' => $e->getMessage()]]); }
     case 'geocodifica':
         $esci(sedi_geocodifica((string)($argv[3] ?? ''), isset($argv[4]) && $argv[4] !== '' ? $argv[4] : null, isset($argv[5]) ? $argv[5] === '1' : null));
     case 'jsonld':

@@ -1247,6 +1247,51 @@ capitoli['21'] = async () => {
   await foto('23-service-account', { sel: '.seo-card:has(.seo-sa-passi)', segni: [{ sel: '.seo-sa-passi > summary', n: 1 }, { sel: 'textarea[name=sa_json]', n: 2 }] });
 };
 
+// 23s. Le sedi e la SEO geografica (2.27.0): il modulo di una sede compilato come nel manuale, le coordinate chieste al servizio
+// (il sito delle schermate ha nel config CMS_NOMINATIM_URL verso prove/nominatim-finto.php e CMS_NOMINATIM_PROVA), la mini mappa,
+// l'elenco con due sedi. Le tessere di OpenStreetMap arrivano da Internet: dove la rete è chiusa (TESSERE_FINTE=1) la prova
+// risponde lei con una tessera disegnata (sfondo chiaro e righe), così la foto mostra la mini mappa e non nove immagini rotte.
+// Da solo: SOLO_CAPITOLI=23s, con TMPDIR vuota. Lascia le due sedi e la pagina /sede-di-bologna/ sul sito delle schermate.
+capitoli['23s'] = async () => {
+  if (process.env.TESSERE_FINTE) {
+    const tessera = path.join(require('os').tmpdir(), 'tessera-finta.png');
+    require('child_process').execFileSync('python3', ['-c', `
+import sys
+from PIL import Image, ImageDraw
+im = Image.new('RGB', (256, 256), (242, 239, 233)); d = ImageDraw.Draw(im)
+for i in range(0, 256, 32): d.line([(i, 0), (i, 256)], fill=(255, 255, 255), width=5); d.line([(0, i), (256, i)], fill=(255, 255, 255), width=5)
+d.rectangle([40, 60, 120, 110], fill=(226, 222, 212)); d.rectangle([150, 140, 230, 200], fill=(226, 222, 212)); d.rectangle([60, 160, 110, 230], fill=(200, 222, 190))
+d.line([(0, 128), (256, 100)], fill=(252, 214, 164), width=9)
+im.save(sys.argv[1])`, tessera]);
+    await p.route('https://tile.openstreetmap.org/**', r => r.fulfill({ status: 200, contentType: 'image/png', body: fs.readFileSync(tessera) }));
+  }
+  await vai('sedi.php');
+  await p.fill('#sd-nome', 'Sede di Bologna');
+  await p.selectOption('#sd-tipo', 'ristorante');
+  await p.fill('#sd-descrizione', 'La sede storica, in centro, a due passi dalla stazione.');
+  await p.fill('#sd-via', 'Via Rizzoli 1'); await p.fill('#sd-cap', '40125'); await p.fill('#sd-citta', 'Bologna'); await p.fill('#sd-provincia', 'BO');
+  await foto('23-sedi-modulo', { sel: '#sd-modulo', altezza: 820, segni: [{ sel: '#sd-nome', n: 1 }, { sel: '#sd-tipo', n: 2 }, { sel: '#sd-citta', n: 3 }, { sel: '#sd-cerca', n: 4, lato: 'destra' }] });
+  await p.click('#sd-cerca');
+  await p.waitForFunction(() => /Trovato|non|errore/i.test(document.getElementById('sd-geo-esito').textContent), null, { timeout: 15000 });
+  await dorme(600);
+  await foto('23-sedi-mappa', { sel: '.sd-largo:has(#sd-lat)', margine: 10, segni: [{ sel: '#sd-tessere', n: 5 }] });
+  await p.fill('#sd-telefono', '+39 051 123456'); await p.fill('#sd-email', 'bologna@studioprova.it');
+  await p.selectOption('#sd-prezzo', '€€');
+  await p.fill('#sd-zona', 'Bologna\nCasalecchio di Reno\nProvincia di Bologna');
+  for (const g of ['lun', 'mar', 'mer', 'gio', 'ven']) await p.fill('#sd-orario-' + g, '9:00-13:00, 15:00-19:00');
+  await p.fill('#sd-orario-sab', '9-13'); await p.fill('#sd-orario-dom', 'Chiuso');
+  await p.fill('#sd-chiusure', '2026-12-24 - 2026-12-26: Natale');
+  await p.fill('#sd-google-scheda', 'https://maps.app.goo.gl/esempio'); await p.fill('#sd-google-recensione', 'https://g.page/r/esempio/review');
+  await Promise.all([p.waitForNavigation(), p.click('#sd-modulo button[type=submit]')]);
+  await p.fill('#sd-nome', 'Sede di Imola');
+  await p.selectOption('#sd-tipo', 'altro'); await p.fill('#sd-tipo-testo', 'centro di meditazione');
+  await p.fill('#sd-via', 'Via Emilia 10'); await p.fill('#sd-citta', 'Imola'); await p.fill('#sd-provincia', 'BO');
+  await p.uncheck('input[name=crea_pagina]');
+  await Promise.all([p.waitForNavigation(), p.click('#sd-modulo button[type=submit]')]);
+  await foto('23-sedi-elenco', { sel: '#sd-elenco', segni: [{ sel: '#sd-tabella tr:nth-child(2) form:has(input[value=principale]) button', n: 10, lato: 'destra' }] });
+  if (process.env.TESSERE_FINTE) await p.unroute('https://tile.openstreetmap.org/**');
+};
+
 // 22. Utenti e ruoli: un redattore
 capitoli['22'] = async () => {
   await vai('utenti.php');

@@ -30,7 +30,8 @@ foreach ($citta as $nome => [$lat, $lon]) {
     if (str_contains($l, $nome)) {
         // Un numero civico sposta un po' il punto, così due indirizzi nella stessa città non hanno le stesse coordinate.
         $n = preg_match('/\b(\d{1,4})\b/', $q, $m) ? (int)$m[1] : 0;
-        echo json_encode([['place_id' => 1000 + $n, 'lat' => (string)round((float)$lat + $n * 0.0001, 6), 'lon' => (string)round((float)$lon + $n * 0.0001, 6), 'display_name' => trim($q) . ', Italia (finto)']]);
+        $nomePosto = trim($q) . (preg_match('/italia/i', $q) ? '' : ', Italia');
+        echo json_encode([['place_id' => 1000 + $n, 'lat' => (string)round((float)$lat + $n * 0.0001, 6), 'lon' => (string)round((float)$lon + $n * 0.0001, 6), 'display_name' => $nomePosto]]);
         exit;
     }
 }

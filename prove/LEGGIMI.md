@@ -108,7 +108,7 @@ Il report delle campagne, le statistiche e l'orario migliore della 2.14.0 (fase 
 
 
 
-Le prove di attacco: ogni OK è un attacco respinto (420 nella 2.25.0 su un sito appena installato, radice e cartella `/test`, con le 9
+Le prove di attacco: ogni OK è un attacco respinto (433 nella 2.27.0, con le 13 nuove del gruppo 42 sulle sedi; 420 nella 2.25.0 su un sito appena installato, radice e cartella `/test`, con le 9
 nuove del gruppo 26b su Scorri di lato; dalla 2.25.0 la prova dell'immagine caricata (gruppo 14) chiede l'indirizzo dalla radice del
 server, perché nei siti in cartella l'indirizzo dato dai Media ha già la cartella; 238 nella 1.10.0 su un sito Attività, con le 5 nuove del gruppo 26 sui
 widget nuovi; 233 nella 1.9.0 su un sito Attività, con le 6 nuove del gruppo 25 sull'avviso
@@ -576,6 +576,27 @@ Prima `php prove/pagina-widget-nuovi.php <cartella CMS>` (la pagina `/widget-nuo
 poi `node prove/prova-widget-nuovi.js <base> <cartella CMS> <utente> <password>`. Controlla anche i calcoli degli orari a
 giorni e ore fissi (`prove/orari-cli.php`). Atteso: 40 su 40. Le prove di attacco sui widget nuovi (gruppo 26) usano
 `prove/widget-cattivi.php` e partono con `CMS_DIR`.
+
+## prova-sedi.js (2.27.0)
+
+Le sedi e la SEO geografica, come le userebbe una persona. Nel pannello (SEO e AEO, Sedi) crea due sedi: una dal tipo in
+elenco, con le coordinate chieste al servizio finto e il segnaposto spostato sulla mini mappa (le tessere di OpenStreetMap
+le risponde la prova stessa e ne controlla gli indirizzi z/x/y), salvata con "Crea la pagina della sede"; una con "Altro, lo
+scrivo io" ("centro di meditazione" -> "Centro di meditazione"), prima con gli errori sotto i campi. Poi il sito: la pagina
+della sede, il JSON-LD di home, pagina e pagina della sede (due LocalBusiness con i campi, `mainEntity`, `areaServed` dei
+servizi), il titolo con `%citta%`, la sitemap, i widget Sedi e Dati dell'attività sul sito e nell'editor (la pagina
+`/prova-sedi/` di `prove/pagina-sedi.php`), Mappa, Orari e Barra "dalla sede", l'eliminazione di una sede con la pagina che
+resta, il redattore fuori, 1280 e 390 px senza scorrimento di lato.
+1. Un sito installato (va bene il kit Attività: la prova usa `/chi-siamo/` e `/servizi/`), e il servizio delle coordinate finto:
+   `php -S 127.0.0.1:<porta> prove/nominatim-finto.php &`; nel `config.local.php` del sito:
+   `define('CMS_NOMINATIM_URL', 'http://127.0.0.1:<porta>/search'); define('CMS_NOMINATIM_PROVA', true);`
+   (senza `CMS_NOMINATIM_PROVA` un servizio su 127.0.0.1 è rifiutato, come per i webhook).
+2. `node prove/prova-sedi.js <base> <cartella CMS> <utente> <password> [cartella foto]`. Usa `prove/sedi-cli.php` (elenco, azzera,
+   salva, geocodifica, jsonld, sql, redattore). Alla fine toglie le sedi e le pagine che ha creato.
+3. Atteso (2.27.0): 58 su 58, in radice e in cartella.
+Gli attacchi sono il gruppo 42 di `tools/sicurezza-prova.js` (con `CMS_DIR`): codice in ogni campo, link `javascript:` e host non di
+Google, coordinate storte, 60 sedi e 200 righe di zona, redattore, senza token, servizio finto che risponde HTML cattivo,
+`CMS_NOMINATIM_URL` verso indirizzi interni.
 
 ## prova-scorri.js (2.25.0)
 

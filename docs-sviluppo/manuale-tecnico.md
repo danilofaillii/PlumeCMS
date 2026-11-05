@@ -1,6 +1,6 @@
 # plumeCMS: manuale tecnico
 
-Versione del manuale: 1.21, per plumeCMS 2.0.3 e le novità della 2.1.0 (31 ottobre 2026).
+Versione del manuale: 1.21, per plumeCMS 2.0.3 e le novità fino alla 2.27.0 (5 novembre 2026).
 
 Questo manuale descrive come è fatto plumeCMS e come funziona, pezzo per pezzo. È scritto leggendo il codice:
 ogni numero, limite e nome di funzione viene dai file veri, con il riferimento `file:riga` quando serve a chi
@@ -54,6 +54,7 @@ pagine, gestire il sito) c'è il manuale d'uso, `docs/manuale-uso.md`, con le sc
 41. Le sedici infografiche disegnate (novembre 2026)
 42. Test e questionari (dalla 2.22.0)
 43. Scorri di lato: le pagine che scorrono di lato (dalla 2.25.0)
+44. Le sedi e la SEO geografica (dalla 2.27.0)
 
 Appendice A. Dove i documenti vecchi non corrispondono al codice
 
@@ -1099,8 +1100,9 @@ disposizioni per sei effetti), attacchi gruppo 39 (`prove/pagina-hero-cattive.ph
 **Infografiche** (29, prefisso `ig_`): passi, timeline, checklist, tabella, liste, numeri, card, mappa, flusso,
 fasi, barre, prima e dopo, zone, domande; e le sedici disegnate in SVG (imbuto, piramide, matrice, ciclo, ciambella, cerchi
 che si toccano, ragnatela, lancetta, iceberg, omini, viaggio, bilancia, mappa di calore, cerchi concentrici, barre al cento
-per cento, barre a confronto: capitolo 41). Usano i colori `--ig-*` della tavolozza (capitolo 12). In tutto i widget sono 109
-(dalla 2.26.0, con Barre a confronto; 108 dalla 2.25.0 con Scorri di lato, capitolo 43; 107 fino alla 2.24.0).
+per cento, barre a confronto: capitolo 41). Usano i colori `--ig-*` della tavolozza (capitolo 12). In tutto i widget sono 111
+(dalla 2.27.0, con Sedi e Dati dell'attività, capitolo 44; 109 dalla 2.26.0 con Barre a confronto; 108 dalla 2.25.0 con Scorri di
+lato, capitolo 43; 107 fino alla 2.24.0).
 
 **Tema** (11, `includes/editor-widget-tema.php`), per header, footer e modelli: logo del sito, nome del sito,
 descrizione del sito, menu di navigazione, ricerca, titolo del contenuto, testo del contenuto, immagine in
@@ -3111,19 +3113,23 @@ Una sola impostazione JSON, `seo_config` (predefiniti in `seo_predefiniti()`, fi
 - sitemap (pagine, immagini, divisa);
 - schema (Article, FAQ, Breadcrumb, WebSite, SearchAction, Speakable, Organization, Person);
 - AEO (risposta nel primo paragrafo entro 60 parole, riassunto di 40-60 parole);
-- organizzazione e persona.
+- organizzazione e persona;
+- sedi (dalla 2.27.0: `['elenco' => [...]]`, le sedi dell'attività come elenco JSON, capitolo 44).
 
 ### 16.2 Le schede
 
 Panoramica, motori, copertura, prestazioni, analisi, globale, schema, redirect, registro. Il menu laterale ne
-mostra sette (copertura e prestazioni insieme, il registro si apre dalla pagina).
+mostra sette (copertura e prestazioni insieme, il registro si apre dalla pagina). Dalla 2.27.0 la fila delle schede e il
+menu hanno anche **Sedi**, che è una pagina sua, `admin/sedi.php` (capitolo 44).
 
 ### 16.3 Meta e JSON-LD
 
 `sito_meta()` scrive titolo, descrizione (se manca: i primi 160 caratteri del testo), robots, canonical,
 Open Graph e `article:*`. Il JSON-LD ha una parte fissa (WebSite con SearchAction, Organization o
 ProfessionalService, Person) e una per pagina (BlogPosting, FAQPage, BreadcrumbList, Speakable), ognuna
-accendibile e spegnibile.
+accendibile e spegnibile. Dalla 2.27.0 l'Organizzazione porta le sedi in `location`, la pagina di una sede ha
+`mainEntity`, i servizi prendono `areaServed` dalle zone delle sedi e i titoli accettano `%citta%` (`seo_titolo()`,
+`includes/seo.php:768`): tutto solo se c'è almeno una sede, altrimenti l'uscita è quella di prima al byte (capitolo 44).
 
 ### 16.4 Analisi del contenuto
 
@@ -4476,6 +4482,12 @@ come gli altri cinque, con una differenza: i suoi dati non stanno in un file di 
 `su_misura_kit()` dalle risposte. Tutto il resto (registro `kit_prova`, impronte, cambio di tipo con copia del sito,
 Definitivo) è quello dei kit.
 
+Dalla 2.27.0 la città scritta nelle risposte diventa anche la **sede principale** ("Sede di <città>", id `su-misura`,
+tipo dall'attività con `sedi_tipo_da_su_misura()`, `includes/sedi-tipi.php:107`): `su_misura_kit()` mette `'sede' =>
+['citta', 'attivita']` nel kit (`includes/sito-su-misura.php:487`) e `kit_costruisci()` chiama `sedi_da_su_misura()`
+(`includes/kit-partenza.php:271`, anche quando il sito si ricompone dalla dashboard); la Mappa della pagina Contatti nasce
+con `'sede' => 'principale'` (`:477`), e l'indirizzo scritto resta di riserva. Capitolo 44.
+
 ### 29.1 Le risposte
 
 `includes/sito-su-misura.php`. Le costanti: `SU_MISURA_PAGINE` (`:34`, otto pagine facoltative, ognuna `[nome, slug,
@@ -5693,6 +5705,150 @@ fila... l'effetto si vede sul sito e nell'anteprima").
   (pagine aggiunte, spostate con le frecce e trascinando, tolte, Linea del tempo con la data, il massimo di 12, Pubblica).
 - Attacchi: gruppo 26b di `tools/sicurezza-prova.js` con `prove/scorri-cattivi.php` (testi con script, link `javascript:` e
   `data:`, immagini esterne e finte, colori con `</style>`, emoji, 5000 pagine, disposizione e velocità inventate).
+
+## 44. Le sedi e la SEO geografica (dalla 2.27.0)
+
+Decisione di Danilo: più sedi fin dall'inizio (attività multi sede); il tipo di attività da un elenco, e se non c'è lo scrive
+lui con l'iniziale maiuscola; le pagine per zona ("Idraulico a Casalecchio") non sono in questa versione. Criterio di
+accettazione: senza sedi configurate il sito esce identico a prima, HTML e JSON-LD al byte (provato con due server sullo
+stesso database, 2.26.0 e 2.27.0, su dieci indirizzi).
+
+### 44.1 I dati
+
+`includes/sedi.php`, caricato da `includes/seo.php:22` (e viceversa: i due file si richiedono a vicenda con `require_once`,
+le funzioni si usano solo a runtime). Le sedi stanno nel gruppo `sedi` della configurazione SEO (`seo_predefiniti()`,
+`includes/seo.php:158`: `['elenco' => []]`), quindi nell'impostazione JSON `seo_config`: niente tabelle nuove. Una sede
+(`sedi_vuota()`, `:35`): `id` (slug stabile, `sedi_id_libero()` `:173`, dal nome: "Sede di Bologna" -> `sede-di-bologna`),
+`nome` (80), `tipo` (una chiave di `SEDI_TIPI`) e `tipo_testo` (solo con `altro`), `via` (120), `cap` (10), `citta` (80),
+`provincia` (40), `paese` ("Italia"), `lat` e `lng` (testo con al massimo sei decimali, `sedi_coordinata()` `:49`: numero
+vero, anche con la virgola, fra -90/90 e -180/180; `1e99`, `NaN` e un testo diventano vuoto; una coordinata sola vale
+nessuna), `telefono` (40, solo cifre, spazi, `+().-/`), `email` (validata, se no vuota), `prezzo` (`SEDI_PREZZI` `:24`,
+vuoto o da uno a quattro euro), `zona` (righe pulite senza doppioni, al massimo `SEDI_ZONA_MAX` 30, `sedi_zona_righe()`
+`:70`), `orari` (lun..dom, lo stesso testo del widget Orari), `chiusure` (fino a 20, `dal`, `al`, `motivo`;
+`sedi_chiusure_da_testo()` `:83` legge "AAAA-MM-GG - AAAA-MM-GG: motivo"), `google_scheda` e `google_recensione`
+(`sedi_link_google_ok()` `:59`: solo https, host `google.com` e sottodomini, `g.page`, `maps.app.goo.gl`, niente spazi
+o apici; altro vuoto e l'errore nel pannello), `foto` (come il controllo immagine dell'editor), `descrizione` (600, senza
+tag), `principale` (una sola: `sedi_tutte()` `:134` tiene la prima segnata, o la prima dell'elenco), `pagina` (id della
+tabella `pages`, 0 senza). `sedi_normalizza()` (`:102`) ripulisce ogni sede letta o scritta; `sedi_salva_elenco()`
+(`:164`) scrive le emoji come entità (la tabella delle impostazioni è utf8 a 3 byte); `SEDI_MAX` (`:20`) 50 sedi,
+`sedi_salva()` (`:213`) oltre lancia un `RuntimeException` con il messaggio del limite. `sedi_valida()` (`:185`) è il
+controllo del pannello: ritorna la sede pulita e gli errori per campo (nome, tipo, tipo scritto vuoto, città, email,
+coordinate, i due link, la zona oltre le 30 righe), che `admin/sedi.php` mette sotto i campi (`aria-invalid`,
+`aria-describedby`, `role="alert"`) con il riassunto in cima e i valori scritti che restano.
+
+**I tipi** (`includes/sedi-tipi.php`, solo costanti e funzioni pure): `SEDI_TIPI` (`:12`) ha 48 voci `chiave => [nome,
+tipo di schema.org]` in ordine alfabetico per nome, con `altro` ("Altro, lo scrivo io", `LocalBusiness`) per ultimo; i tipi
+sono i sottotipi di `LocalBusiness` che Google riconosce (Restaurant, BarOrPub, Dentist, Plumber, HairSalon, HealthClub,
+Store, Hotel, BedAndBreakfast, LegalService, AccountingService...). `sedi_tipo_testo_pulito()` (`:91`): senza tag e
+entità, spazi singoli, al massimo `SEDI_TIPO_TESTO_MAX` 60 caratteri, `mb_strtoupper` sul primo carattere e il resto
+com'è. `sedi_tipo_schema()` (`:83`): un tipo scritto a mano esce come `LocalBusiness`, e il testo va nella
+`description` (se la sede non ne ha una) e sul sito (`sedi_tipo_nome()`, `:100`).
+
+### 44.2 Dati per Google
+
+`sedi_jsonld()` (`includes/sedi.php:440`): `@type` dal tipo, `@id` `SITO_URL/#sede-<id>` (`sedi_jsonld_id()`), `name`,
+`description`, `url` (la pagina della sede, solo se c'è ed è pubblicata, `sedi_url_pagina()` `:357`), `image` (assoluta:
+un percorso dalla radice prende l'origine del sito, `sedi_url_assoluto()` `:289`, perché i Media danno già la cartella),
+`telephone`, `email`, `address` (PostalAddress a campi, `addressCountry` `IT` per l'Italia, altrimenti il paese scritto),
+`geo` (GeoCoordinates come numeri, solo con tutte e due le coordinate), `hasMap` (`sedi_link_mappa()` `:277`, dalle
+coordinate o dall'indirizzo), `openingHoursSpecification` (`sedi_orari_schema()` `:314`, con `ewx_orari_intervalli()` del
+widget Orari: `sedi_orari_motore()` `:300` carica i file dei widget se la pagina non lo ha ancora fatto), `priceRange`,
+`areaServed` (`sedi_area_servita_di()` `:419`: `AdministrativeArea` per le righe che cominciano con provincia, regione,
+area metropolitana o che sono una sigla di due maiuscole, `City` per le altre), `sameAs` (la scheda Google più i profili
+dell'organizzazione), `parentOrganization`. Entra nel JSON-LD in tre punti: `seo_jsonld_fissi()` (`includes/seo.php:984`)
+mette `location` nel nodo dell'Organizzazione solo se `sedi_jsonld_elenco()` non è vuoto; `sito_jsonld_extra_sede()`
+(`includes/sito-seo.php:150`) dà `['mainEntity' => ['@id' => ...]]` alla WebPage della pagina di una sede
+(`sedi_jsonld_pagina_extra()`, `sedi_di_pagina()` `:364`, con l'id vero della riga `pages`: `$c['riga']['id']`, non
+`$c['id']` che per le pagine è `3000000 + id`), sia sul sito (`sito/index.php:321`) sia nell'anteprima del pannello
+(`seo_jsonld_di()`, `includes/seo.php:1043`); `sito_jsonld_servizio()` usa `sedi_area_servita()` (`:429`, l'unione senza
+doppioni) e, senza sedi, l'impostazione `servizio_zona` come prima. Tutto testo: l'escape lo fa `json_encode` con
+`JSON_HEX_TAG` in `sito_jsonld_script()`. Il widget Orari che legge da una sede non emette più la sua LocalBusiness
+parziale (`$daSede`, `includes/editor-widget-extra-d.php:107`): i dati li dà la sede. `%citta%` nei formati dei titoli
+(`seo_titolo()`, `includes/seo.php:768`): la città della sede principale (`sedi_citta_titolo()` `:480`); senza città la
+regex toglie `%citta%` con il `%sep%` accanto, così non resta " - - ".
+
+### 44.3 La pagina della sede
+
+`sedi_crea_pagina()` (`includes/sedi.php:375`): una pagina vera con `contenuti_salva('pagine', 0, ...)` (titolo = nome,
+slug da `contenuti_slug()` con `-2`, `-3`... se preso, pubblicata, `index`, descrizione per Google dalla descrizione della
+sede) e un albero dell'editor salvato con `editor_salva()`: Apertura (occhiello = città e provincia, titolo = nome, testo =
+descrizione, foto della sede), una sezione a due colonne con Dati dell'attività e Testo a sinistra e la Mappa a destra,
+Orari, Barra contatti, tutti con `'sede' => <id>`. La sede ricorda l'id (`pagina`); se la pagina è già lì (non nel
+cestino) la funzione ritorna quell'id. Nel pannello: la casella "Crea la pagina della sede" (accesa di partenza per una
+sede nuova) o il pulsante "Crea la pagina" sulle sedi senza pagina; la tendina "Pagina della sede" collega anche una
+pagina che c'è già. `sedi_elimina()` (`:232`) non tocca la pagina: la conferma e il messaggio lo dicono. La pagina sta
+nella sitemap come ogni pagina.
+
+### 44.4 I widget
+
+`includes/editor-widget-sedi.php`, caricato in fondo a `includes/editor-widget-extra.php` dopo Scorri di lato
+(`editor-widget-extra.php` carica `sedi.php` prima delle parti A-E, perché le tendine "Dati dalla sede" si compongono
+quando il file si legge). Niente variabili in cima: ogni file dei widget si carica dentro una funzione. Due widget nel
+gruppo "Dal sito", registrati con `ewx_registra()`:
+
+| Tipo | Nome | Cosa fa |
+|---|---|---|
+| `sedi` (`:108`) | Sedi | tutte le sedi o un elenco scelto (ripetitore `scelte` con una tendina per voce, `'accetta'` perché gli id possono non esistere ancora), griglia (`colonne` responsive, 1-3, al telefono sempre una) o elenco, livello del nome, interruttori su cosa mostrare, pulsanti Come arrivare, Lascia una recensione (solo con il link), La sede (solo con la pagina), mappa in ogni scheda (al clic o subito, `ews_mappa()` `:45`: OpenStreetMap con il segnaposto dalle coordinate, altrimenti l'indirizzo) |
+| `dati_attivita` (`:148`) | Dati dell'attività (sede) | una sede (la principale di partenza, o scelta), titolo, in colonna o in riga, gli stessi interruttori: per il footer e la pagina Contatti |
+
+`ews_scheda()` (`:68`) disegna la scheda: `<article class="ew-sede">` con nome, tipo, foto, indirizzo, telefono (`tel:`),
+email (`mailto:`), stato "Aperto ora" o "Chiuso" calcolato con `ewx_orari_stato()` e rimesso al minuto dallo script del
+widget Orari (`data-ew-orari`, `sito/assets/widget.js`), gli orari di oggi (`sedi_orari_oggi()`), i pulsanti. Fogli:
+`editor_registra_asset()` con `widget.css` e `sedi.css` (`sito/assets/sedi.css`, classi `ew-sede*`, `ew-sedi*`,
+`ew-dati*`; le regole che scavalcano `widget.css` hanno due classi, così l'ordine dei fogli non conta) e `widget.js` (la
+mappa al clic, `data-ew-mappa`). Senza sedi il widget non esce sul sito e nella tela dice dove aggiungerle.
+
+**Mappa, Orari di apertura, Barra contatti**: il controllo `sede` ("Dati dalla sede", prima sezione; `includes/editor-widget-extra-c.php:180`,
+`editor-widget-extra-d.php:86` e `:146`), tendina di `sedi_opzioni_widget()` (`includes/sedi.php:490`: "Nessuna: uso i
+campi qui sotto", "La sede principale", poi ogni sede) con `'accetta' => '/^[a-z0-9][a-z0-9-]{0,59}$/'`. I campi scritti a
+mano hanno `'condizione' => ['sede' => '']`: restano per chi non usa le sedi e spariscono dal pannello con una sede scelta.
+Nel disegno (`sedi_per_widget()` `:498`, null con `''` o con un id che non c'è): la Mappa prende OpenStreetMap con le
+coordinate della sede, altrimenti Google Maps con il suo indirizzo (`editor-widget-extra-c.php:201`); gli Orari i sette
+giorni e le chiusure (`editor-widget-extra-d.php:107`); la Barra telefono, destinazione delle indicazioni (le coordinate
+se ci sono, `sedi_destinazione()`) ed email, dove la sede li ha (`:164`). Con "Nessuna" l'HTML è quello di prima.
+
+### 44.5 Il pannello
+
+`admin/sedi.php`, solo amministratore (`require_admin()`), raggiungibile dal menu SEO e AEO (`admin/includes/admin-header.php:72`)
+e dalla fila delle schede di `admin/seo.php:263`. Una pagina sua e non una scheda di `seo.php`: la pagina SEO ha già nove
+schede e il modulo di una sede ha venti campi e la mini mappa. In alto l'elenco (tabella con cinque colonne, al telefono
+schede; Modifica, Rendi principale, Elimina con `data-conferma` e il pulsante rosso, "Crea la pagina" o il link alla
+pagina e "Apri nell'editor"), sotto il modulo (`sedi.php?modifica=<id>` lo riempie con quella sede). Azioni POST con
+`verify_csrf()`: `salva` (`:28`; con errori la pagina si ridisegna con i valori scritti), `elimina` (`:47`), `principale`
+(`:54`), `crea_pagina` (`:59`). Il tipo scritto a mano compare solo con "Altro" (`admin/assets/sedi.js:17`). La casella
+della foto ha `data-immagine` (Scegli dai Media). Le sezioni del modulo sono fasce (`.sd-fascia`), le etichette normali,
+gli errori sotto i campi; a 390 px una colonna, niente scorrimento di lato.
+
+**Le coordinate** (`admin/assets/sedi.js`, niente librerie, niente gestori in linea): "Cerca sulla mappa" manda a
+`admin/seo-api.php` l'azione `sedi_cerca` (`:53`, solo amministratore, token CSRF) con l'indirizzo composto dai campi;
+`sedi_geocodifica()` (`includes/sedi.php:515`) chiama dal server `SEDI_NOMINATIM_URL`
+(`https://nominatim.openstreetmap.org/search`, `?q=<indirizzo>&format=jsonv2&limit=1`) con lo User-Agent
+`plumeCMS/<versione> (<sito>)` (`seo_http()` ha dalla 2.27.0 i parametri `$agente` e `$hostExtra`,
+`includes/seo.php:232`), legge `lat`, `lon` e `display_name` del primo risultato e li ripulisce con `sedi_coordinata()`;
+ogni esito negativo è un messaggio in parole (nessun posto, codice di risposta, formato che non si legge, coordinate non
+leggibili) e le coordinate si scrivono a mano. `CMS_NOMINATIM_URL` nel config sostituisce il servizio (serve alle prove:
+`prove/nominatim-finto.php`); un servizio su un indirizzo interno o privato (`localhost`, `127.0.0.1`, `10.x`,
+`192.168.x`, `::1`, `169.254.x`, `100.64.x`, `0.0.0.0`: `sedi_ip_interno()` `:548`, come `nl_aut_ip_interno()` dei
+webhook, più il controllo di `sicurezza_uscita_controlla()` sul nome risolto) è rifiutato, e la chiamata vera vuole
+https; solo con `CMS_NOMINATIM_PROVA` true nel config la chiamata salta il controllo (`sedi_http_prova()` `:565`), per
+il servizio finto delle prove. La **mini mappa**: una griglia 3x3 di tessere `https://tile.openstreetmap.org/{z}/{x}/{y}.png`
+intorno al punto (zoom 16 di partenza, da 3 a 19 con + e -), il segnaposto in posizione percentuale dentro la griglia;
+un clic ricalcola latitudine e longitudine con la matematica delle tessere (Web Mercator: `lon2x`, `lat2y`, `x2lon`,
+`y2lat`, `sedi.js:24-27`) e ridisegna (se il punto cade in un'altra tessera la griglia si ricentra lì). Le tessere si
+chiedono solo quando la mappa è aperta, cioè quando le coordinate ci sono: senza, nessuna richiesta parte dal browser.
+La CSP del pannello ammette le immagini `https:`.
+
+### 44.6 Sicurezza e prove
+
+Ogni campo passa da `sedi_normalizza()`/`sedi_valida()`; solo l'amministratore salva (il redattore torna alla dashboard,
+`sedi_cerca` risponde 403); CSRF e Origin come in ogni pagina; nel JSON-LD solo testo con `JSON_HEX_TAG`; nei widget e nel
+pannello tutto con `h()`. Prove: `prove/prova-sedi.js` (58 controlli: pannello con il servizio finto e le tessere finte,
+sito, JSON-LD, titolo, sitemap, widget sul sito e nell'editor, eliminazione, redattore, 1280 e 390 px; con
+`prove/sedi-cli.php`, `prove/pagina-sedi.php`, `prove/nominatim-finto.php`) e il gruppo 42 di `tools/sicurezza-prova.js`
+(codice in ogni campo compreso il tipo scritto, `javascript:` e host non di Google nei link, coordinate storte, 60 sedi,
+200 righe di zona, redattore, senza token, da un altro sito, servizio finto con HTML cattivo, `CMS_NOMINATIM_URL` verso
+indirizzi interni). Non provato: il servizio vero di OpenStreetMap e le tessere vere (la rete della sessione di sviluppo
+non li raggiunge: le prove usano il servizio finto e tessere finte).
 
 ## Appendice A. Dove i documenti vecchi non corrispondono al codice
 
