@@ -55,6 +55,7 @@ pagine, gestire il sito) c'è il manuale d'uso, `docs/manuale-uso.md`, con le sc
 42. Test e questionari (dalla 2.22.0)
 43. Scorri di lato: le pagine che scorrono di lato (dalla 2.25.0)
 44. Le sedi e la SEO geografica (dalla 2.27.0)
+45. Le pagine per zona (dalla 2.28.0)
 
 Appendice A. Dove i documenti vecchi non corrispondono al codice
 
@@ -1100,9 +1101,9 @@ disposizioni per sei effetti), attacchi gruppo 39 (`prove/pagina-hero-cattive.ph
 **Infografiche** (29, prefisso `ig_`): passi, timeline, checklist, tabella, liste, numeri, card, mappa, flusso,
 fasi, barre, prima e dopo, zone, domande; e le sedici disegnate in SVG (imbuto, piramide, matrice, ciclo, ciambella, cerchi
 che si toccano, ragnatela, lancetta, iceberg, omini, viaggio, bilancia, mappa di calore, cerchi concentrici, barre al cento
-per cento, barre a confronto: capitolo 41). Usano i colori `--ig-*` della tavolozza (capitolo 12). In tutto i widget sono 111
-(dalla 2.27.0, con Sedi e Dati dell'attività, capitolo 44; 109 dalla 2.26.0 con Barre a confronto; 108 dalla 2.25.0 con Scorri di
-lato, capitolo 43; 107 fino alla 2.24.0).
+per cento, barre a confronto: capitolo 41). Usano i colori `--ig-*` della tavolozza (capitolo 12). In tutto i widget sono 112
+(dalla 2.28.0, con Altre zone, capitolo 45; 111 dalla 2.27.0 con Sedi e Dati dell'attività, capitolo 44; 109 dalla 2.26.0 con Barre
+a confronto; 108 dalla 2.25.0 con Scorri di lato, capitolo 43; 107 fino alla 2.24.0).
 
 **Tema** (11, `includes/editor-widget-tema.php`), per header, footer e modelli: logo del sito, nome del sito,
 descrizione del sito, menu di navigazione, ricerca, titolo del contenuto, testo del contenuto, immagine in
@@ -3115,12 +3116,13 @@ Una sola impostazione JSON, `seo_config` (predefiniti in `seo_predefiniti()`, fi
 - AEO (risposta nel primo paragrafo entro 60 parole, riassunto di 40-60 parole);
 - organizzazione e persona;
 - sedi (dalla 2.27.0: `['elenco' => [...]]`, le sedi dell'attività come elenco JSON, capitolo 44).
+- zone (dalla 2.28.0: `['elenco' => [...], 'titolo', 'descrizione']`, il registro delle pagine per zona e i due modelli, capitolo 45).
 
 ### 16.2 Le schede
 
 Panoramica, motori, copertura, prestazioni, analisi, globale, schema, redirect, registro. Il menu laterale ne
 mostra sette (copertura e prestazioni insieme, il registro si apre dalla pagina). Dalla 2.27.0 la fila delle schede e il
-menu hanno anche **Sedi**, che è una pagina sua, `admin/sedi.php` (capitolo 44).
+menu hanno anche **Sedi**, che è una pagina sua, `admin/sedi.php` (capitolo 44), e dalla 2.28.0 **Zone**, `admin/zone.php` (capitolo 45).
 
 ### 16.3 Meta e JSON-LD
 
@@ -5709,7 +5711,7 @@ fila... l'effetto si vede sul sito e nell'anteprima").
 ## 44. Le sedi e la SEO geografica (dalla 2.27.0)
 
 Decisione di Danilo: più sedi fin dall'inizio (attività multi sede); il tipo di attività da un elenco, e se non c'è lo scrive
-lui con l'iniziale maiuscola; le pagine per zona ("Idraulico a Casalecchio") non sono in questa versione. Criterio di
+lui con l'iniziale maiuscola; le pagine per zona ("Idraulico a Casalecchio") sono arrivate con la 2.28.0 (capitolo 45). Criterio di
 accettazione: senza sedi configurate il sito esce identico a prima, HTML e JSON-LD al byte (provato con due server sullo
 stesso database, 2.26.0 e 2.27.0, su dieci indirizzi).
 
@@ -5849,6 +5851,133 @@ sito, JSON-LD, titolo, sitemap, widget sul sito e nell'editor, eliminazione, red
 200 righe di zona, redattore, senza token, da un altro sito, servizio finto con HTML cattivo, `CMS_NOMINATIM_URL` verso
 indirizzi interni). Non provato: il servizio vero di OpenStreetMap e le tessere vere (la rete della sessione di sviluppo
 non li raggiunge: le prove usano il servizio finto e tessere finte).
+
+## 45. Le pagine per zona (dalla 2.28.0)
+
+La seconda fase della SEO geografica. Richiesta di Danilo: "le pagine per zona, già in programma: è dove la SEO locale si
+vince". Disegno promesso e rispettato: un generatore nel pannello che crea **solo bozze**, ognuna con tre riquadri guidati da
+scrivere a mano, e la pubblicazione bloccata finché un segnaposto resta, così non nascono pagine vuote tutte uguali. Criterio di
+accettazione: senza pagine per zona il sito esce identico a prima, HTML e JSON-LD al byte (provato con l'aggiornamento 2.27.0 ->
+2.28.0 su sette indirizzi più la sitemap).
+
+### 45.1 Il registro
+
+`includes/zone.php`, caricato da `includes/seo.php:23` subito dopo `sedi.php` (e `zone.php` richiede `sedi.php`: i tre file si
+richiedono a vicenda con `require_once`, le funzioni si usano solo a runtime). Il registro sta nel gruppo `zone` della
+configurazione SEO (`seo_predefiniti()`, `includes/seo.php:160`: `zone_predefiniti()` `includes/zone.php:41`, cioè `['elenco'
+=> [], 'titolo' => '%servizio% a %zona%', 'descrizione' => ...]`), quindi nell'impostazione JSON `seo_config`: niente tabelle
+nuove. Una voce (`zone_vuota()` `:45`, `zone_normalizza()` `:50`): `pagina` (id della tabella `pages`), `servizio` (80, `sedi_testo()`),
+`zona` (80), `sede` (un id di sede, `principale` o vuoto), `servizio_pagina` (`"pagine:12"`, o `"servizi:3"` se il sito ha un
+tipo di contenuto `servizi`: la pagina del servizio per le briciole, facoltativa), `creata`. Costanti: `ZONE_MAX` 200 pagine in
+tutto (`:28`), `ZONE_GIRO_MAX` 30 zone per giro (`:30`), `ZONE_SEGNAPOSTO` `[DA SCRIVERE]` (`:32`).
+
+`zone_tutte()` (`:67`): legge il registro, normalizza, carica in una query le righe di `pages` (id, title, slug, status, cestino,
+publish_at) e tiene solo le voci la cui pagina esiste ancora, con la riga in `'riga'`; una lettura per richiesta. Una pagina
+eliminata per sempre sparisce quindi dal registro alla lettura; `zone_pulisci()` (`:103`) riscrive il registro senza le voci morte
+e la chiama solo il pannello (`admin/zone.php:67`), mai il sito mentre disegna una pagina. Una pagina nel cestino resta nel
+registro con lo stato "Nel cestino" e non esce dal widget né dai dati per Google (`zone_pubblicata()` `:183` vuole
+`contenuti_stato()` uguale a `pubblicato`). `zone_salva_elenco()` (`:94`) scrive le emoji come entità; `zone_registra()` (`:113`)
+rifiuta oltre `ZONE_MAX`; `zone_elimina()` (`:124`) toglie dal registro e basta (la pagina resta, lo dice il pannello);
+`zone_di_pagina()` (`:133`) e `zone_di_percorso()` (`:138`, dallo slug: serve al widget, che conosce solo il percorso della
+pagina) trovano la voce. I modelli del titolo e della descrizione si ricordano dall'ultimo giro (`zone_modelli()` `:146`,
+`zone_modelli_salva()` `:152`); `zone_componi()` (`:158`) sostituisce `%servizio%` e `%zona%` senza badare alle maiuscole;
+`zone_esiste()` (`:163`) trova la coppia servizio + zona già presente (confronto senza maiuscole e spazi doppi).
+
+### 45.2 Il generatore e le bozze guidate
+
+`zone_valida()` (`:235`) controlla i campi del pannello e ritorna i valori puliti e gli errori per campo: servizio di almeno due
+caratteri; zone una per riga senza doppioni (`sedi_testo()` a 80), almeno una e al massimo `ZONE_GIRO_MAX` (oltre, errore: "Al
+massimo 30 zone per giro"); sede: con una sede sola è quella (anche se il modulo manda altro), senza sedi vuota, con più sedi
+`principale` o un id esistente; pagina del servizio nel formato `tipo:id` con il tipo fra `contenuti_tipi()` e la riga che c'è
+(`zone_servizio_pagina()` `:220`); modello del titolo con dentro sia `%servizio%` sia `%zona%` (senza, le pagine avrebbero tutte
+lo stesso titolo e lo stesso slug); descrizione al massimo 300. `zone_pagine_sito()` (`:200`) compone la tendina: le pagine non nel
+cestino tranne la home e, se c'è il tipo `servizi`, anche quei contenuti.
+
+`zone_crea_bozze()` (`:306`): per ogni zona, se la coppia esiste va fra le "esistenti" (il pannello dice "C'è già"); se il
+registro ha già 200 voci si ferma con il messaggio; altrimenti titolo dal modello, descrizione dal modello tagliata a 160, slug da
+`contenuti_slug()` del titolo (quindi `../` e punti spariscono) con `-2`, `-3`... se preso, `contenuti_salva('pagine', 0, ...)` con
+`stato => 'bozza'`, `robots index`, descrizione per Google; poi l'albero con `editor_salva($id, ..., false, ...)` (bozza
+dell'editor, `struttura_bozza`) e `zone_registra()`. Mai pubblicata da qui. L'albero (`zone_albero()` `:278`): Apertura con
+occhiello = la zona, titolo "Servizio a *Zona*" (la zona con il gradiente), testo = la descrizione, pulsante "Contattaci" verso
+`/contatti/` solo se quella pagina c'è ed è pubblicata; una sezione a tre colonne con tre widget Testo (`zone_riquadri_guidati()`
+`:264`: `<h3>` "Cosa facciamo a Zona", "Un caso vero a Zona", "Come si arriva a Zona", poi `<p>[DA SCRIVERE] Cosa fai a Zona:
+...</p>` e `<p><em>Aiuto per chi scrive: ...</em></p>`, tutto con `htmlspecialchars`); una sezione stretta con il widget Altre
+zone e, se c'è almeno una sede, Dati dell'attività con `'sede'` = la sede scelta (o `principale`); la Barra contatti dalla
+stessa sede. Senza sedi gli ultimi due non entrano (sul sito uscirebbero vuoti).
+
+### 45.3 La pubblicazione bloccata
+
+`zone_segnaposto_restanti()` (`:345`) conta i widget dell'albero che hanno una stringa (in qualunque impostazione, anche dentro un
+ripetitore) con `[DA SCRIVERE]` o la sua forma con le entità; `zone_segnaposto_pagina()` (`:366`) lo fa sulla bozza dell'editor
+se c'è, altrimenti sulla versione pubblicata. `zone_pubblicabile()` (`:388`): una pagina fuori dal registro si pubblica sempre;
+una pagina per zona solo con zero segnaposto, nell'albero passato (quello che l'editor sta per pubblicare) o in quello salvato.
+`zone_blocco_pubblicazione()` (`:395`) lancia un `RuntimeException` con il messaggio di `zone_messaggio_blocco()` (`:380`):
+"Questa pagina per zona ha ancora N riquadri da scrivere (cerca [DA SCRIVERE] nel testo): compilali, poi pubblica. Per ora resta
+in bozza." Le strade che pubblicano una pagina la chiamano tutte, e tutte con `function_exists` più `require_once` guardato da
+`is_file` (la trappola di opcache e dell'aggiornamento applicato dal motore vecchio):
+
+| Strada | Dove | Cosa succede |
+|---|---|---|
+| Pubblica dell'editor, ripristino di una versione pubblicata, qualunque `editor_salva()` con `$pubblica` su `pagine` | `includes/editor.php:633` | l'eccezione; `admin/editor-api.php:81` la prende e risponde 409 con `errore`: `editor.js` lo mostra nello stato e in un avviso, la bozza nella tela resta |
+| Scheda del contenuto (Pubblica), modifica rapida dall'elenco, Impostazioni dell'editor (stato Pubblicata) | `includes/contenuti.php:288`, dentro `contenuti_salva()` quando una pagina passa da bozza a pubblicata | l'eccezione prima di scrivere: `contenuto.php` la mostra in rosso, `editor-api.php` risponde 400 (`impostazioni` passa da `contenuti_salva_rapido()`) |
+| Azione "Pubblica" in blocco | `includes/contenuti.php:523`, `contenuti_stato_massa()`: `zone_pubblicabili_tra()` (`:401`) toglie dall'elenco le pagine fermate | le altre si pubblicano; `admin/contenuti.php:36` aggiunge un messaggio rosso per ogni pagina fermata, con il titolo e il motivo |
+
+Salvare la bozza va sempre bene. Il redattore non entra in `zone.php` (solo amministratore) ma scrive e pubblica la bozza con la
+stessa regola (`editor_puo_pubblicare()` come per ogni pagina). In anteprima dal pannello (`?preview=1`, solo amministratore)
+dalla 2.28.0 esce anche una pagina con la sola `struttura_bozza` (`includes/sito-dati.php:122`): le bozze per zona nascono così,
+e "Vedi la pagina" dell'editor le mostra; per un visitatore una bozza resta 404.
+
+### 45.4 Il widget Altre zone
+
+`includes/editor-widget-zone.php`, caricato in fondo a `includes/editor-widget-extra.php:325` dopo Sedi, niente variabili in
+cima. `ewx_registra('zone', 'Altre zone', 'mappa', 'Dal sito', ...)` (`:17`): titolo ("Lavoriamo anche a...", vuoto = niente
+titolo) con il livello (h2, h3, h4, testo), disposizione in riga (etichette tonde) o in elenco, interruttore "nel link anche il
+servizio", stile del titolo, dei link (anche al passaggio) e dello sfondo delle etichette, riquadro. Il disegno trova la pagina da
+`$ctx['percorso']` (`zone_di_percorso()`) e prende `zone_altre_pubblicate()` (`includes/zone.php:415`: le altre voci con lo
+stesso servizio, pubblicate, in ordine di zona); fuori da una pagina per zona o senza altre pubblicate ritorna `''` sul sito e un
+`ewx_vuoto()` nella tela con il motivo. HTML: `<nav class="ew-zone ew-zone-riga|elenco" aria-label>` con `<ul class="ew-zone-elenco">`
+e link `.ew-zone-link` assoluti (`zone_url()`). Foglio `sito/assets/zone.css` (`editor_registra_asset('zone', ['css' => 'zone.css'])`,
+`:41`), caricato solo dove c'è il widget, niente JavaScript; i colori dalle variabili del sito (`--ew-ttc`, `--ew-lc`, `--ew-lb`
+scritte dai controlli). 112 widget in tutto.
+
+### 45.5 Dati per Google
+
+`includes/sito-seo.php:156` `sito_jsonld_extra_zona()` dà alla WebPage `mainEntity` = il Service della zona (`zone_jsonld_pagina_extra()`
+`includes/zone.php:443`, id `<url>#servizio`, `zone_jsonld_id()` `:426`); `sito_jsonld_zona()` (`:163`) dà i due nodi in più:
+`zone_jsonld_servizio()` (`:431`, `@type Service`, `name` = il titolo della pagina, `description` = la descrizione per Google,
+`url`, `serviceType` = il servizio, `provider` = `@id` della LocalBusiness della sede di riferimento (`sedi_jsonld_id()`, la sede
+è in `location` dell'Organizzazione) oppure l'Organizzazione se la voce non ha una sede, `areaServed` = la zona con la stessa
+regola delle sedi, `sedi_area_servita_di()`: `AdministrativeArea` per "Provincia di ...", regioni e sigle, `City` per il
+resto) e le briciole di `zone_briciole_voci()` (`:448`: Home > la pagina del servizio se collegata e pubblicata > la zona,
+con `sito_jsonld_briciole()`, che `seo_jsonld_filtra()` toglie se l'interruttore delle briciole è spento). Entrano in
+`sito/index.php:321` e nell'anteprima del pannello (`seo_jsonld_di()`, `includes/seo.php:1046`), tutti e due con `function_exists`;
+in una pagina per zona il Service di zona vince sul Service generico del campo `servizio`. Il segnaposto non esce mai nel
+JSON-LD: una pagina con segnaposto non è pubblicata, e il nodo prende solo titolo e descrizione.
+
+### 45.6 Il pannello
+
+`admin/zone.php`, solo amministratore (`require_admin()` `:17`), dal menu SEO e AEO (`admin/includes/admin-header.php:73`) e dalle
+schede di `admin/seo.php:263` e `admin/sedi.php:144`. In alto il registro: tabella Servizio, Zona, Pagina (link al sito se
+pubblicata, all'anteprima se bozza, con il titolo sotto), Stato (Bozza, Pubblicata, Programmata, Nel cestino; parola più colore),
+Da scrivere ("riquadri da scrivere: N" oppure "pronta" con la spunta), Apri nell'editor, Togli dal registro (`data-conferma`,
+pulsante rosso); con più di un servizio il filtro `?servizio=` (`#zn-filtro-servizio`, tendina con `data-invia-al-cambio` e un
+pulsante in `noscript`). Sotto il generatore (`#zn-modulo`, `:158`): servizio, pagina del servizio, zone (precompilate dall'unione
+delle zone servite delle sedi, `sedi_area_servita()`), sede di riferimento (con una sede sola una tendina spenta più un campo
+nascosto; senza sedi un avviso con il link a Sedi), modello del titolo e della descrizione, i tre riquadri spiegati, "Crea le
+bozze". Azioni POST con `verify_csrf()`: `crea` (`:29`; con errori la pagina si ridisegna con i valori scritti, errori sotto i
+campi con `aria-invalid` e `role="alert"`, riassunto in cima; dopo la creazione un messaggio verde con i titoli e l'avviso sui
+segnaposto, uno azzurro con "C'è già", e il rimando a `zone.php?servizio=<servizio>`), `togli` (`:47`). Fasce, etichette normali,
+una sola azione principale per riquadro, a 390 px una colonna, niente scorrimento di lato.
+
+### 45.7 Sicurezza e prove
+
+Ogni campo passa da `zone_valida()`/`zone_normalizza()` (`sedi_testo()`: niente tag), lo slug da `contenuti_slug()`, la pagina
+del servizio da `tipo:id` esistente; solo l'amministratore crea e toglie; CSRF e Origin come in ogni pagina; nei titoli, nel
+pannello e nel widget tutto con `h()`, nel JSON-LD `JSON_HEX_TAG`; al massimo 30 zone a giro e 200 pagine in tutto; una pagina
+con segnaposto non si pubblica da nessuna strada, nemmeno dall'amministratore, e ripubblicarla con il segnaposto rimesso è
+rifiutato. Prove: `prove/prova-zone.js` (58 controlli; con `prove/zone-cli.php`: elenco, azzera, crea, segnaposto, togli, scrivi,
+pubblica, pubblicabile, jsonld, sql, redattore) e il gruppo 43 di `tools/sicurezza-prova.js` (12 attacchi). Non provato: un
+tipo di contenuto `servizi` di un modulo vero nella tendina (il nucleo non ne ha), il JSON-LD nel validatore di Google.
 
 ## Appendice A. Dove i documenti vecchi non corrispondono al codice
 

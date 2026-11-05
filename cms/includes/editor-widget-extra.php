@@ -322,3 +322,4 @@ require_once __DIR__ . '/editor-widget-extra-d.php'; // 1.10.0: orari, barra con
 require_once __DIR__ . '/editor-widget-extra-e.php'; // 2.1: menu del ristorante, richiesta di prenotazione, galleria con filtri, scorrevole, contenuto esterno
 require_once __DIR__ . '/editor-widget-scorri.php'; // 2.25.0: Scorri di lato (cinque disposizioni, scena ferma che scorre di lato)
 require_once __DIR__ . '/editor-widget-sedi.php'; // 2.27.0: Sedi e Dati dell'attività (le sedi di includes/sedi.php)
+require_once __DIR__ . '/editor-widget-zone.php'; // 2.28.0: Altre zone (le pagine per zona di includes/zone.php)

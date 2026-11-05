@@ -119,7 +119,7 @@ function sito_contenuti(): array {
     // Una pagina esce con il testo della scheda oppure con la struttura dell'editor (che vince).
     foreach (db()->query('SELECT ' . sito_colonne_leggere('pages', ['html', 'content', 'struttura', 'struttura_bozza']) . ", ((struttura IS NOT NULL AND struttura <> '')" . (sito_anteprima() ? " OR (struttura_bozza IS NOT NULL AND struttura_bozza <> '')" : '') . ") AS con_editor FROM " . tbl('pages')
         . ' WHERE cestino IS NULL AND ' . (sito_anteprima() ? '1' : "status = 'published' AND (publish_at IS NULL OR publish_at <= NOW())")
-        . " AND ((html IS NOT NULL AND html <> '') OR (struttura IS NOT NULL AND struttura <> ''))")->fetchAll() as $p) {
+        . " AND ((html IS NOT NULL AND html <> '') OR (struttura IS NOT NULL AND struttura <> '')" . (sito_anteprima() ? " OR (struttura_bozza IS NOT NULL AND struttura_bozza <> '')" : '') . ")")->fetchAll() as $p) { // 2.28.0: in anteprima anche una bozza mai pubblicata (le pagine per zona nascono così)
         $percorso = $p['slug'] === $home ? '/' : '/' . $p['slug'] . '/';
         $servizio = json_decode((string)$p['servizio'], true);
         $tutti[] = [

@@ -3228,6 +3228,67 @@ pagina di una sede la sua scheda è la `mainEntity`).
 - [ ] La sede principale è quella giusta (dà la città ai titoli).
 - [ ] La pagina di ogni sede c'è e la Mappa, gli Orari e la Barra contatti del sito leggono "dalla sede".
 
+### Le pagine per zona
+
+**A cosa serve.** Chi cerca "idraulico a Casalecchio di Reno" trova chi ha una pagina che parla proprio di quello: il servizio in
+quella zona. È dove la SEO locale si vince. In **SEO e AEO > Zone** scrivi un servizio e le zone che servi e plumeCMS crea una
+pagina per ogni zona, **in bozza**: "Idraulico a Bologna", "Idraulico a Casalecchio di Reno", "Idraulico a Provincia di Bologna".
+Ogni bozza nasce già con l'apertura, i dati della sede, la barra dei contatti e il widget **Altre zone** (che rimanda alle altre
+zone pubblicate dello stesso servizio), e con **tre riquadri da scrivere a mano**: cosa fai in quella zona, un caso vero, come si
+arriva. Finché un riquadro ha ancora il segnaposto `[DA SCRIVERE]`, la pagina **non si pubblica**, da nessuna parte del pannello.
+Il motivo: dieci pagine uguali con solo il nome del comune cambiato Google le ignora (e a volte le penalizza); dieci pagine con
+tre frasi vere ciascuna, no.
+
+**Esempio.** Un idraulico con la sede a Bologna, che lavora anche a Casalecchio di Reno e in provincia.
+
+![Il generatore delle pagine per zona](immagini/manuale-uso/23-zone-modulo.jpg)
+
+1. Apri **SEO e AEO > Zone** e, nel riquadro **Crea le pagine per zona**, scrivi il **Servizio** come lo cercherebbe un cliente:
+   "Idraulico".
+2. In **Pagina del servizio** scegli la pagina del sito che racconta il servizio ("Servizi"): entra nelle briciole che Google legge
+   (Home, Servizi, la zona). Se non c'è, lascia "Nessuna".
+3. Le **Zone** sono già scritte: sono le zone servite delle tue sedi (capitolo sopra). Aggiungi o togli righe, una zona per riga,
+   al massimo 30 per giro.
+4. Scegli la **Sede di riferimento**: la sede che serve queste zone (con una sede sola è già scelta). I widget Dati dell'attività
+   e Barra contatti delle pagine leggono da lei, e per Google è lei che fa il servizio in quella zona.
+5. Guarda i due modelli: il **titolo** "%servizio% a %zona%" diventa "Idraulico a Bologna" (e l'indirizzo
+   `/idraulico-a-bologna/`), la **descrizione per Google** allo stesso modo. Cambiali se vuoi, tenendo `%servizio%` e `%zona%`.
+   Premi **Crea le bozze**.
+
+![L'elenco delle pagine per zona](immagini/manuale-uso/23-zone-elenco.jpg)
+
+6. Il messaggio verde dice le bozze create. Nell'elenco in alto ogni pagina ha lo stato (**Bozza**) e "riquadri da scrivere: 3".
+   Premi **Apri nell'editor** su "Idraulico a Casalecchio di Reno".
+
+![La bozza nell'editor](immagini/manuale-uso/23-zone-editor.jpg)
+
+7. Nella pagina trovi tre riquadri con il segnaposto `[DA SCRIVERE]` e, sotto ognuno, una riga di aiuto. Fai clic sul testo,
+   scrivi al posto del segnaposto e cancella la riga di aiuto: in **Cosa facciamo a Casalecchio di Reno** due o tre frasi concrete
+   (quali interventi, per chi, in quanto tempo); in **Un caso vero** un lavoro fatto davvero lì; in **Come si arriva** da quale sede
+   partite e quanto ci mettete. Se premi **Pubblica** prima di aver finito, l'editor te lo dice: "Questa pagina per zona ha ancora
+   3 riquadri da scrivere: compilali, poi pubblica", e la pagina resta bozza (la bozza si salva sempre).
+8. Scritti i tre riquadri, premi **Pubblica**. La pagina esce sul sito, entra nella sitemap e il widget **Altre zone** delle altre
+   pagine dello stesso servizio la elenca (solo le pagine pubblicate: le bozze no).
+9. Ripeti per le altre zone. Nell'elenco di **Zone** le pagine finite hanno la spunta "pronta". Se un giorno vuoi una pagina fuori
+   dal registro (resta nel sito com'è), **Togli dal registro**; se la vuoi via del tutto, cestinala da Pagine: sparisce da sola
+   dal registro.
+
+**Chi può fare cosa.** Le bozze le crea solo l'amministratore. Scriverle e pubblicarle può farlo anche un redattore, con la stessa
+regola: con un segnaposto dentro, Pubblica non passa. La regola vale da ogni strada: l'editor, la scheda del contenuto, l'azione
+"Pubblica" in blocco dall'elenco delle pagine, la modifica rapida, le Impostazioni dell'editor.
+
+**Cosa dice a Google.** Nella pagina per zona i dati per Google hanno un servizio ("Idraulico a Casalecchio di Reno") con la zona
+servita (un comune, o una provincia se la riga comincia con "Provincia di") e la sede che lo fa; la pagina lo ha come
+contenuto principale; le briciole sono Home, la pagina del servizio, la zona. Per vederli: **Schema e AEO > Anteprima del JSON-LD
+di un indirizzo**. Senza pagine per zona il sito resta com'è.
+
+**Checklist delle pagine per zona**
+
+- [ ] Il servizio è scritto come lo cerca un cliente, e le zone sono comuni o province veri.
+- [ ] Ogni pagina ha i tre riquadri scritti a mano, con frasi vere per quella zona: niente copia e incolla fra le zone.
+- [ ] La sede di riferimento è quella giusta e la pagina del servizio è collegata.
+- [ ] Le pagine finite sono pubblicate ("pronta" nell'elenco) e si vedono a vicenda nel widget Altre zone.
+
 **Redirect e 404** elenca i rimandi dai vecchi indirizzi e le pagine che qualcuno ha cercato senza trovarle: da qui le
 rimandi dove devono andare. Tutte e due le caselle di un rimando hanno **Scegli dal sito**: per il nuovo indirizzo scegli la
 pagina giusta senza scriverla. Anche gli indirizzi da mandare a Google e IndexNow e quello dei dati per Google (scheda
@@ -3242,6 +3303,7 @@ Schema e AEO) si scelgono così.
 - [ ] Ho guardato Redirect e 404 almeno una volta al mese.
 - [ ] L'immagine social predefinita c'è, 1200 x 630, in JPG o PNG.
 - [ ] Le sedi dell'attività sono scritte in SEO e AEO > Sedi (anche una sola).
+- [ ] Per ogni servizio che faccio in più comuni ci sono le pagine per zona, scritte a mano e pubblicate.
 
 ---
 

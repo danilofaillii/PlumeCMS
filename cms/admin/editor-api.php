@@ -78,7 +78,9 @@ switch ($azione) {
         $a = api_albero();
         $pubblica = !empty($_POST['pubblica']);
         if ($pubblica && !editor_puo_pubblicare()) api_esci(['errore' => 'Solo un amministratore può pubblicare dall\'editor (Editor > Impostazioni dell\'editor). La bozza resta salvata.'], 403); // menu
-        editor_salva($id, $a, $pubblica, (string)(current_user()['username'] ?? ''), (string)($_POST['nota'] ?? ''), $tipo);
+        // 2.28.0: una pagina per zona con i riquadri [DA SCRIVERE] non si pubblica: il messaggio arriva nella tela, la bozza resta com'era.
+        try { editor_salva($id, $a, $pubblica, (string)(current_user()['username'] ?? ''), (string)($_POST['nota'] ?? ''), $tipo); }
+        catch (RuntimeException $e) { api_esci(['errore' => $e->getMessage()], 409); }
         if ($contenitore) {
             // 2.1: lo stato di un contenitore è la sua struttura pubblicata, già scritta da salva().
         } elseif ($pubblica && $tipo === 'modelli') {

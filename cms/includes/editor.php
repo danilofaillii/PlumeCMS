@@ -630,6 +630,11 @@ function editor_decodifica(?string $json): ?array {
 /** Salva la bozza; con $pubblica anche la versione pubblica. In entrambi i casi resta una versione (includes/versioni.php). */
 function editor_salva(int $id, array $albero, bool $pubblica, string $autore = '', string $nota = '', string $tipo = 'pagine'): void {
     editor_schema();
+    // 2.28.0: una pagina per zona con i riquadri [DA SCRIVERE] non si pubblica (includes/zone.php): RuntimeException con il messaggio.
+    if ($pubblica && $tipo === 'pagine') {
+        if (!function_exists('zone_blocco_pubblicazione') && is_file(__DIR__ . '/zone.php')) require_once __DIR__ . '/zone.php';
+        if (function_exists('zone_blocco_pubblicazione')) zone_blocco_pubblicazione($id, $albero);
+    }
     $json = editor_json($albero);
     if ($tipo === 'modelli' && function_exists('modelli_salva_struttura')) { modelli_salva_struttura($id, $json, $pubblica, $autore); return; }
     if ($d = editor_contenitore($tipo)) { $d['salva']($id, $json, $pubblica, $autore); editor_versione_dopo_salva($id, $tipo, $pubblica, $autore, $nota); return; } // 2.1

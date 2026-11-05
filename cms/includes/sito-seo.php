@@ -152,6 +152,21 @@ function sito_jsonld_extra_sede(array $c): array {
     return sedi_jsonld_pagina_extra((int)($c['riga']['id'] ?? 0));
 }
 
+/** 2.28.0: il nodo in più della WebPage di una pagina per zona (mainEntity = il suo Service). Vuoto per tutte le altre pagine. */
+function sito_jsonld_extra_zona(array $c): array {
+    if (($c['fonte'] ?? '') !== 'pages' || !function_exists('zone_di_pagina')) return [];
+    $z = zone_di_pagina((int)($c['riga']['id'] ?? 0));
+    return $z ? zone_jsonld_pagina_extra($z, $c) : [];
+}
+
+/** 2.28.0: i nodi di una pagina per zona: il Service (name, areaServed, provider) e le briciole Home > servizio > zona. Vuoto per le altre. */
+function sito_jsonld_zona(array $c): array {
+    if (($c['fonte'] ?? '') !== 'pages' || !function_exists('zone_di_pagina')) return [];
+    $z = zone_di_pagina((int)($c['riga']['id'] ?? 0));
+    if (!$z) return [];
+    return [zone_jsonld_servizio($z, $c), sito_jsonld_briciole(zone_briciole_voci($z, $c))];
+}
+
 function sito_jsonld_termine(array $c): array {
     $u = sito_assoluto($c['percorso']);
     return array_filter(['@type' => 'DefinedTerm', '@id' => "$u#termine", 'name' => $c['titolo'], 'description' => $c['tldr'] ?: null, 'url' => $u,
