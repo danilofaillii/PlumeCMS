@@ -3530,11 +3530,11 @@ immagini, pdf, css, js, caratteri, json, webmanifest, map) e `root/.htaccess`.
 - Cartella `aggiornamenti/`: `pacchetti/<id>.zip` e `.json`, `snapshot/<id>/` (database compresso, file,
   descrizione). È chiusa al web con un `.htaccess` scritto da solo.
 - Si tengono gli ultimi 5 snapshot. Uno snapshot si può ripristinare a mano. Dalla 2.25.1 il ripristino di uno snapshot
-  (`agg_restore_db()`, `includes/aggiornamenti.php:446`) passa dal motore della Copia del sito (19.9): con un errore il
-  database resta com'era, invece di restare a metà, e i file dello snapshot non si toccano (`agg_ripristina()`, `:521`: file
+  (`agg_restore_db()`, `includes/aggiornamenti.php:445`) passa dal motore della Copia del sito (19.9): con un errore il
+  database resta com'era, invece di restare a metà, e i file dello snapshot non si toccano (`agg_ripristina()`, `:522`: file
   vecchi con un database nuovo sarebbero un sito a metà; il titolo dice "Ripristino NON fatto" e il messaggio "database e file
-  sono rimasti com'erano"). Lo snapshot dalla 2.25.1 ha solo le tabelle del sito (`agg_dump_db($file, DB_PREFIX)`, `:399`, che
-  con il prefisso toglie anche quelle di un'altra installazione con `copia_tabelle_del_prefisso()`; fino alla 2.25.0 tutto il
+  sono rimasti com'erano"). Lo snapshot dalla 2.25.1 ha solo le tabelle del sito (`agg_crea_snapshot()` passa ad `agg_dump_db($file, $prefisso, $solo)`,
+  `:399`, l'elenco di `copia_tabelle_del_prefisso()`, senza quelle di un'altra installazione; fino alla 2.25.0 tutto il
   database, comprese le tabelle di un altro sito nello stesso database, con i suoi utenti), e il ripristino rimette solo le
   tabelle del prefisso del sito (fino alla 2.25.0 rieseguiva tutto, anche le tabelle di un'altra installazione o di altri
   programmi nello stesso database). Alla fine la modalità SQL di sessione torna quella di prima del ripristino
@@ -3639,7 +3639,7 @@ l'amministratore, ogni azione in POST con il token CSRF.
   tocca solo le tabelle di `elenco_tabelle` (per una copia vecchia, la stessa regola applicata ai `CREATE TABLE` del suo
   database) e mai una tabella di un'altra installazione presente in questo database, qualunque cosa dica la copia; le righe
   saltate si contano ("Tabelle di un'altra installazione nello stesso database, lasciate stare"). Gli snapshot degli
-  Aggiornamenti dalla 2.25.1 contengono solo le tabelle del sito (`agg_dump_db($file, DB_PREFIX)`) e il loro ripristino rimette
+  Aggiornamenti dalla 2.25.1 contengono solo le tabelle del sito (`agg_dump_db()` con l'elenco `$solo`) e il loro ripristino rimette
   solo quelle (19.4).
 - **Colonne generate** (2.1.0): `agg_colonne_generate($pdo, $tabella)` e `agg_riga_sql($riga, $generate)`
   (`includes/aggiornamenti.php`) scrivono `DEFAULT` al posto delle colonne `GENERATED ALWAYS AS` (`email_attiva` di
@@ -3773,7 +3773,7 @@ dopo (`save_setting('sito_url')`) usciva dal pannello come `Fatal error` con i p
   le `INSERT` vanno sulle tabelle di appoggio. **Una riga, una istruzione** (secondo giro di correzioni, 5 novembre 2026): una
   `CREATE` o una `INSERT` con un punto e virgola fuori dalle virgolette (`agg_split_sql()` che conta più di una istruzione, o
   `copia_riga_impilata()`, `:655`, sulla riga senza il `;` finale) ferma il ripristino ("contiene un secondo comando dopo un
-  punto e virgola"), come una sottoquery; fino a quel giro `agg_split_sql()` (`includes/aggiornamenti.php:567`) e il filtro
+  punto e virgola"), come una sottoquery; fino a quel giro `agg_split_sql()` (`includes/aggiornamenti.php:568`) e il filtro
   "una istruzione per riga" conoscevano solo gli apici semplici: un apice semplice dentro un nome fra apici inversi
   (``CREATE TABLE `x` (`c'` int); DROP TABLE `y` ``) apriva una stringa finta che inghiottiva il `;`, la riga contava come una
   sola istruzione, e la connessione (che allora eseguiva le istruzioni impilate, 6.1) eseguiva anche la `DROP`. Ora
@@ -4290,7 +4290,7 @@ può stare dentro una pagina che risponde 200.
 | `copia_registro_file($copia)`, `copia_registro_scrivi($copia, $ok, $log)`, `copia_registri()`, `copia_registro_ultimo()` | il registro dei ripristini su file, un file per tentativo |
 | `agg_split_sql($sql)`, `agg_sql_mode()`, `agg_sql_mode_torna()`, `db_attr_istruzioni_impilate()` | un file SQL in istruzioni (apici semplici, doppi e inversi), la modalità SQL lasca e il ritorno a quella di prima, l'attributo PDO che spegne le istruzioni impilate (6.1) |
 | `errori_attiva($contesto)`, `errori_rispondi(...)`, `soccorso_stato()`, `soccorso_controlla()`, `soccorso_porta()`, `soccorso_messaggio_coperto($msg)`, `soccorso_rispondi($stato)` | errori non gestiti e pagina di soccorso (22) |
-| `agg_dump_db($file, $prefisso)` | il database in un file; con il prefisso, solo le tabelle del sito |
+| `agg_dump_db($file, $prefisso, $solo)` | il database in un file; con il prefisso, solo le tabelle che cominciano così; con `$solo` (2.25.1), solo quelle dell'elenco |
 | `scaricabili_sha256($file)` | l'impronta di un file da scaricare, ricordata |
 
 ---

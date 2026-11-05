@@ -396,17 +396,16 @@ function agg_riga_sql(array $row, array $generate): string {
  * Scrive tutto il database in un file .sql.gz, una istruzione per riga. Ritorna statistiche.
  * Con $prefisso (1.3.0, la copia del sito) solo le tabelle che cominciano con quel prefisso.
  */
-function agg_dump_db(string $gzPath, string $prefisso = ''): array {
+function agg_dump_db(string $gzPath, string $prefisso = '', ?array $solo = null): array {
     $pdo = db();
     $gz = gzopen($gzPath, 'wb6');
     if (!$gz) throw new RuntimeException('Impossibile scrivere ' . $gzPath);
     gzwrite($gz, "SET SESSION sql_mode = 'NO_ENGINE_SUBSTITUTION';\n");
     gzwrite($gz, "SET FOREIGN_KEY_CHECKS=0;\n");
     $tables = $pdo->query('SHOW TABLES')->fetchAll(PDO::FETCH_COLUMN);
-    if ($prefisso !== '') { // 2.25.1: solo le tabelle del prefisso, senza quelle di un'altra installazione (prefisso più lungo con settings e users)
-        require_once __DIR__ . '/copia-sito.php';
-        $tables = copia_tabelle_del_prefisso($tables, $prefisso);
-    }
+    if ($prefisso !== '') $tables = array_values(array_filter($tables, fn($t) => str_starts_with((string)$t, $prefisso)));
+    // 2.25.1: $solo = l'elenco delle tabelle da scrivere (lo snapshot passa copia_tabelle_del_prefisso(): fuori un'altra installazione)
+    if ($solo !== null) $tables = array_values(array_filter($tables, fn($t) => in_array((string)$t, $solo, true)));
     $righe = 0;
     foreach ($tables as $t) {
         $create = $pdo->query('SHOW CREATE TABLE `' . str_replace('`', '``', $t) . '`')->fetch(PDO::FETCH_NUM);
@@ -466,7 +465,9 @@ function agg_crea_snapshot(string $etichetta, array $destinazioni = []): string 
     $id = date('Ymd-His') . '-' . agg_slugify($etichetta);
     $dir = agg_dir('snapshot') . '/' . $id;
     @mkdir($dir . '/files', 0755, true);
-    $db = agg_dump_db($dir . '/db.sql.gz', DB_PREFIX); // 2.25.1: solo le tabelle del prefisso (prima tutto il database, anche di un altro sito)
+    // 2.25.1: solo le tabelle del sito, senza quelle di un'altra installazione nello stesso database (prima tutto il database, con i suoi utenti)
+    require_once __DIR__ . '/copia-sito.php';
+    $db = agg_dump_db($dir . '/db.sql.gz', DB_PREFIX, copia_tabelle_del_prefisso(db()->query('SHOW TABLES')->fetchAll(PDO::FETCH_COLUMN), DB_PREFIX));
     $files = [];
     foreach ($destinazioni as $dest) {
         $abs = agg_dest_path($dest);
