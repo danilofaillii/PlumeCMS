@@ -933,6 +933,24 @@ CSS: ogni valore si raccoglie per misura (computer, tablet, telefono) e per sele
 telefono ereditano dalla misura più grande. L'uscita è il CSS del computer, poi `@media (max-width: <tablet>px)`
 e `@media (max-width: <telefono>px)`, con le soglie dello Stile del sito (predefinite 1024 e 767).
 
+**Fogli e script dei widget (dalla 2.26.1).** I widget registrati con un file in `sito/assets/` (i widget extra:
+`widget.css` e `widget.js`; le disposizioni dell'Apertura: `hero-*.css`) dichiarano i loro file con
+`editor_registra_asset()`, e `editor_asset_pagina($html)` (`includes/editor-controlli.php:115`) restituisce quelli dei widget
+presenti in quell'HTML (classe `ed-w-<tipo>` o `'segno'`), ogni file una volta, i fogli dati al contrario perché le viste
+mettono ogni `<link>` davanti al precedente. Si chiama in due punti:
+- **il corpo**: `vista_pagina_editor()` e `vista_articolo_editor()` (`sito/viste.php`), le presentazioni dei Test
+  (`addon/test/includes/sito.php:53`), le lezioni dei Corsi (`addon/corsi/includes/pagine.php:43`), l'anteprima delle versioni
+  (`admin/versioni.php`): i file vanno nelle righe per la testa, insieme al CSS degli elementi (`<style id="ed-css">`);
+- **la cornice**: `vista_pagina()` (`sito/viste.php:97`) passa header, corpo e footer già disegnati a `vista_asset_cornice()`
+  (`sito/viste.php:139`), che aggiunge solo i file che la pagina non ha già (cerca `href="..."` e `src="..."` con lo stesso
+  indirizzo di `sito_versione_asset()` nelle righe per la testa e nel corpo). I fogli vanno prima di `<style id="ed-css-tema">`
+  (il CSS di header e footer), così le impostazioni dei singoli elementi vincono; gli script in fondo, dopo la firma. Guarda
+  anche `editor_serve_script()`: un header sticky o un'animazione all'ingresso nel footer caricano `editor-pagina.js`.
+  Così prende i widget di header e footer del Theme Builder (capitolo 11) e del riquadro di fine articolo (capitolo 28) in
+  ogni vista, anche quelle senza editor (blog, articoli classici, 404, viste dei temi, pagine degli addon). Fino alla 2.26.0
+  c'era solo il primo punto: un footer con Icone social e Barra contatti aveva lo stile solo nelle pagine con un widget extra
+  nel corpo (la barra, solo per il telefono, usciva in chiaro al computer). Prova: `prove/prova-cornice-widget.js`.
+
 ### 9.5 I controlli di gruppo
 
 Come in Elementor, un controllo può essere un gruppo di valori (`EDITOR_TIPI_GRUPPO`,
@@ -1338,6 +1356,9 @@ sempre alla fine). Non passa da `modelli_scegli()` e non ha condizioni né prede
 Cornici sul sito: `<header class="ed-testata ed-modello" id="testata">` e
 `<footer class="ed-piede ed-modello" id="piede">`. Un modello con un errore finisce nel log e il sito torna a
 header e footer del codice.
+
+I fogli e gli script dei widget che stanno in un header o in un footer (Icone social, Barra contatti, Elenco con icone...)
+li aggiunge `vista_pagina()` in ogni pagina, una volta sola, dalla 2.26.1 (capitolo 9.4, "Fogli e script dei widget").
 
 ### 11.2 Menu
 
@@ -4146,6 +4167,7 @@ Istruzioni in `prove/LEGGIMI.md`. Le principali:
 | `prova-riquadri.js` | (1.4.0) Riquadri e Pulsante fisso: posizione e allineamento dall'editor al sito (`pagina-riquadri.php`) |
 | `prova-scegli-media.js` | (2.1.0) Scegli dai Media su ogni campo immagine: cerca, sceglie, carica, salva, X, tastiera, 130 immagini a pagine, telefono (34) |
 | `prova-consegna-unica.js` | (2.1.0) la consegna con il pacchetto unico: contenuto, manifest, applicato dal pannello con `prova-sito-plumecms.js`, pannello aggiornato (19.8) |
+| `prova-cornice-widget.js` | (2.26.1) i widget extra del footer (Icone social, Barra contatti) con il loro stile in ogni pagina: `widget.css` e `widget.js` una volta sola, barra nascosta a 1280 px e fissa in fondo a 390 px, anche nel 404 (`cornice-widget-cli.php`, 9.4) |
 | `foto-sito.js`, `quanto-foto.py` | schermate prima e dopo, confrontate al pixel |
 | `router-php-s.php` | router per `php -S` che imita l'`.htaccess` |
 | `tema-cli.php` | attiva, disattiva, ripristina lo stile da riga di comando, per le prove |

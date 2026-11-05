@@ -93,6 +93,9 @@ function vista_pagina(array $meta, string $corpo, string $jsonld = '', string $a
     // 1.8.0: la firma sotto il piede ("Un nuovo sito plumeCMS"), che si cambia o si spegne in Impostazioni.
     require_once dirname(__DIR__) . '/includes/firma.php';
     $piede .= firma_html();
+    // 2.26.1: fogli e script dei widget che stanno in header e footer (e nel riquadro di fine articolo, dentro il corpo).
+    [$cssCornice, $jsCornice] = vista_asset_cornice($testata . $corpo . $piede, $jsonld . $corpo);
+    $piede .= $jsCornice;
 
     $testa = '<meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -102,7 +105,7 @@ function vista_pagina(array $meta, string $corpo, string $jsonld = '', string $a
 <link rel="preload" href="' . SITO_ASSET . 'font/inter-latin.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="stylesheet" href="' . sito_versione_asset('sito.css') . '">
 <link rel="stylesheet" href="' . sito_versione_asset('tema.css') . '">
-' . (function_exists('temi_css_link') && ($tl = temi_css_link()) !== '' ? $tl . "\n" : '') . design_head() . $cssModelli . '
+' . (function_exists('temi_css_link') && ($tl = temi_css_link()) !== '' ? $tl . "\n" : '') . design_head() . $cssCornice . $cssModelli . '
 ' . vista_favicon() . '
 <link rel="alternate" type="application/rss+xml" title="' . h(SITO_NOME) . '" href="' . SITO_URL . '/feed/">
 ' . $jsonld;
@@ -124,6 +127,41 @@ function vista_pagina(array $meta, string $corpo, string $jsonld = '', string $a
 ' . $piede . '
 </body>
 </html>';
+}
+
+/**
+ * 2.26.1: i fogli di stile e gli script dei widget che la pagina mostra fuori dal suo corpo dell'editor: header e footer
+ * del Theme Builder, il riquadro di fine articolo. Fino alla 2.26.0 si sceglievano guardando solo il corpo, e un widget
+ * extra nel footer (social, barra contatti) usciva senza stile nelle pagine che non avevano un widget della stessa famiglia.
+ * $html: dove cercare i widget; $gia: testa e corpo della pagina, dove un file già messo non si rimette (una volta sola).
+ * Ritorna [<link> per la testa, prima del CSS dei modelli così le regole dei singoli elementi vincono; <script> per il fondo].
+ */
+function vista_asset_cornice(string $html, string $gia): array {
+    $css = [];
+    $js = [];
+    // editor-pagina.js: un header sticky o un'animazione all'ingresso nel footer.
+    if (function_exists('editor_serve_script') && editor_serve_script($html)) $js[] = 'editor-pagina.js';
+    if (function_exists('editor_asset_pagina')) {
+        $a = editor_asset_pagina($html);
+        // Il ripiego di editor-widget-extra.php (senza il framework dei controlli) dà un elenco semplice: lì solo fogli.
+        if (array_is_list($a)) $a = ['css' => array_reverse($a), 'js' => []];
+        $css = (array)($a['css'] ?? []);
+        $js = array_merge($js, (array)($a['js'] ?? []));
+    }
+    $testa = '';
+    foreach ($css as $f) {
+        $u = sito_versione_asset((string)$f);
+        if (str_contains($gia, 'href="' . $u . '"') || str_contains($testa, 'href="' . $u . '"')) continue;
+        // I fogli arrivano al contrario (editor_asset_pagina): messi uno davanti all'altro escono nell'ordine scritto.
+        $testa = '<link rel="stylesheet" href="' . $u . '">' . "\n" . $testa;
+    }
+    $fondo = '';
+    foreach (array_unique($js) as $f) {
+        $u = sito_versione_asset((string)$f);
+        if (str_contains($gia, 'src="' . $u . '"')) continue;
+        $fondo .= '<script src="' . $u . '" defer></script>';
+    }
+    return [$testa, $fondo];
 }
 
 /** temi: la vista del tema attivo, se ne ha una con questo nome (includes/temi.php), altrimenti null. */

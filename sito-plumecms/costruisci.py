@@ -597,6 +597,7 @@ def zip_lavagna(dest):
 # Regola di Danilo (1 novembre 2026): solo i punti salienti, una riga per versione, mai nomi di aziende o servizi di terzi.
 # Le novità per chi scarica: brevi, scritte qui (il CHANGELOG è per chi sviluppa). Da aggiornare a ogni versione.
 NOVITA = [
+    ('2.26.1', 'Footer sempre in ordine', ['Le icone social e la barra dei contatti messe nel footer o nell\'header hanno il loro stile in tutte le pagine, non solo in quelle che contengono un widget simile. La barra resta solo sul telefono.']),
     ('2.26.0', 'Barre a confronto', ['Una sedicesima infografica disegnata: da 2 a 8 voci con un valore (euro, anni, percentuali), barre in proporzione al più alto e il numero alla fine. 109 widget.']),
     ('2.25.1', 'Ripristino sicuro della copia', ['La copia di un sito si rimette anche su un altro spazio o un altro database: se qualcosa non va, niente si cancella e il sito resta com\'era, con il motivo scritto in parole semplici. E se il pannello non parte, una pagina di soccorso dice cosa fare.']),
     ('2.25.0', 'Scorri di lato', ['Un widget con più pagine: arrivati lì la pagina scorre di lato fino all\'ultima, poi riprende in verticale. Cinque disposizioni.']),

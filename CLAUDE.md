@@ -108,7 +108,7 @@ Sono gli unici in `cms/docs/`, nello zip, nel sito di plumeCMS e nella pagina Do
 - **Pacchetto di aggiornamento** per un'installazione esistente:
   `python3 tools/cms-pacchetto.py --aggiornamento`. Si carica dal pannello,
   Impostazioni, Aggiornamenti.
-- **Versione**: `cms/VERSIONE` (oggi 2.26.0; sempre tre numeri: "beta" va nel CHANGELOG, mai nel nome dello zip, se no la serie "ultima" del Download non lo riconosce) e una voce in `cms/CHANGELOG.md` a ogni
+- **Versione**: `cms/VERSIONE` (oggi 2.26.1; sempre tre numeri: "beta" va nel CHANGELOG, mai nel nome dello zip, se no la serie "ultima" del Download non lo riconosce) e una voce in `cms/CHANGELOG.md` a ogni
   zip con contenuto diverso. Mai cambiare il contenuto di una versione già data.
 - **Prove** prima di dire finito:
   - `php -n -d short_open_tag=1 -l` su ogni file PHP toccato, `node --check` sui js;
@@ -757,6 +757,7 @@ Errori veri, già pagati. Non ripeterli.
 | Il contenitore della sessione che si riavvia o il limite settimanale che ferma gli agenti | Docker spento (`dockerd` da riaccendere, `docker start cmsdb mariadbprova mysql57prova`), catena `Workflow` da riprendere con `resumeFromRunId`; i server php delle prove spariscono (le prove vanno rilanciate) |
 | Un id di widget nuovo scelto senza guardare `igx_definizioni()` | `ig_barre` esisteva già (Barre di avanzamento, HTML): `editor_definizioni()` fa `igx + igs` e tiene la prima, il disegno andava a `igs_disegna()` con i campi dell'altra: widget vuoto senza errori (2.26.0). Prima di un id nuovo: `grep "'ig_<nome>'"` in tutti i file dei widget |
 | Un numero di infografiche scritto nei cicli degli script (`i < 15` in `manuale-uso-schermate.js`, `'L'.repeat(15)` nelle prove) | la foto d'insieme del manuale usciva con quindici anche con la sedicesima sul sito. I cicli contano `IGS_TIPI` o `.igx`, non un numero fisso; dove resta un numero, grep di `15` e `quindici` a ogni infografica nuova |
+| `editor_asset_pagina()` chiamato solo sul corpo della pagina | header e footer non entravano nel conto: un footer con Icone social e Barra contatti usciva senza stile (barra in chiaro al computer, icone senza cerchio) nelle pagine senza un widget extra nel corpo (Cucina Creativa, 5 novembre 2026). Dalla 2.26.1 `vista_pagina()` aggiunge i file di header, footer e fine articolo con `vista_asset_cornice()`. Un pezzo nuovo che esce in tutte le pagine passa da lì, e le pagine di prova usano widget del nucleo (`pulsante` è un widget extra, `pulsanti` no) |
 | Fidarsi del resoconto di un agente | è successo che un agente dichiarasse lavoro mai scritto su disco. Si controllano i file veri e si rifanno le prove |
 
 ## Tono con l'utente

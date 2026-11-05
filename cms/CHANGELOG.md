@@ -2,6 +2,20 @@
 
 Il prodotto si chiama **plumeCMS** (nome scelto il 26 ottobre 2026; prima, per poche ore, "CarbonaraCMS", e ancora prima il provvisorio "Officina": gli zip vecchi si chiamavano `officina-*` e `carbonaracms-*`).
 
+## 2.26.1 (5 novembre 2026) - I widget del footer hanno sempre il loro stile
+
+- **I widget extra nell'header e nel footer escono con il loro stile in tutte le pagine.** Fino alla 2.26.0 i fogli di stile e
+  gli script dei widget (`sito/assets/widget.css` e `widget.js`) si sceglievano guardando solo il corpo della pagina: un footer
+  con le Icone social e la Barra contatti aveva lo stile solo nelle pagine che contenevano anche loro un widget della stessa
+  famiglia. Nelle altre la barra contatti, pensata solo per il telefono, compariva in chiaro anche al computer e le icone social
+  perdevano il cerchio colorato. Trovato costruendo un sito vero (una pagina con apertura, titolo, passi, immagine e pulsanti,
+  footer senza stile; la home, con l'Elenco con icone, a posto). Ora `vista_pagina()` guarda anche header, footer e il riquadro
+  di fine articolo, in ogni vista (pagine e articoli dell'editor, articoli classici, blog, 404, pagine degli addon Test e Corsi,
+  anteprime): i file che mancano si aggiungono una volta sola, quelli che la pagina ha già non si ripetono. Il foglio va prima
+  del CSS di header e footer, così le impostazioni dei singoli elementi vincono. Un header sticky o un'animazione all'ingresso
+  nel footer caricano anche `editor-pagina.js`. Le pagine che avevano già tutto restano identiche. Prova: `prove/prova-cornice-widget.js`.
+  Manuale tecnico capitolo 9.
+
 ## 2.26.0 (5 novembre 2026) - Barre a confronto
 
 - **Barre a confronto**, la sedicesima infografica disegnata (gruppo Infografiche dell'editor, `ig_confronto`: `ig_barre` è già Barre di avanzamento): da 2 a 8 voci con

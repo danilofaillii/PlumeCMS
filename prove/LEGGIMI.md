@@ -789,3 +789,19 @@ doppia conferma), importazione (aggiungi e sostituisci), esportazione, telefono 
 2. `node prove/prova-tag.js <base> <cartella del CMS> <porta smtp> <cartella posta> [cartella foto]`. Usa `prove/tag-cli.php`.
 3. Subito dopo, sullo stesso sito: `node prove/attacchi-tag.js <base> <cartella del CMS>` (lascia il redattore `red_tag`).
 4. Atteso (2.23.0): 57 su 57 e 25 su 25, in radice e in cartella.
+
+## prova-cornice-widget.js (2.26.1)
+
+I fogli e gli script dei widget extra che stanno nel footer (o nell'header) escono in ogni pagina, non solo dove il corpo ha
+un widget della stessa famiglia. Trovato costruendo il sito di Cucina Creativa (5 novembre 2026).
+
+1. Un plumeCMS installato (anche appena installato con `prova-install.js`). `prove/cornice-widget-cli.php <cartella> prepara`
+   (lo lancia la prova) mette un footer "Footer con contatti (prova cornice)" con Icone social e Barra contatti, pubblicato e
+   predefinito, e due pagine: `/senza-widget-extra/` (titolo, testo, passi, immagine, pulsanti) e `/anche-nel-corpo/` (con le
+   Icone social anche nel corpo). Alla fine `togli` le toglie e rimette predefinito il footer di prima.
+2. `node prove/prova-cornice-widget.js <base> <cartella del CMS> [cartella foto] [comando php]` (per esempio
+   `"docker exec php84 php"` se il CMS gira in Docker). Guarda quattro pagine (le due, la home, un 404) a 1280 e a 390 px:
+   `widget.css` e `widget.js` una volta sola, il foglio prima del CSS di header e footer, le icone social tonde e colorate, la
+   barra contatti nascosta al computer e fissa in fondo al telefono.
+3. Atteso (2.26.1): 39 su 39, in radice e in cartella, su un sito nuovo (PHP 8.4) e su uno aggiornato dalla 2.26.0. Sulla
+   2.26.0: 11 su 39 (i 28 KO sono il difetto: footer senza stile in tutte le pagine senza widget extra nel corpo).
