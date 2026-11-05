@@ -260,7 +260,7 @@ pre.seo-pre{background:var(--codice-fondo);color:var(--codice-testo);padding:.9r
 </style>
 
 <nav class="seo-schede">
-  <?php foreach ($schede as $k => $v): ?><a href="?scheda=<?= $k ?>" class="<?= $scheda === $k ? 'attiva' : '' ?>"><?= h($v) ?></a><?php endforeach; ?>
+  <?php foreach ($schede as $k => $v): ?><a href="?scheda=<?= $k ?>" class="<?= $scheda === $k ? 'attiva' : '' ?>"><?= h($v) ?></a><?php endforeach; ?><a href="sedi.php"><?php /* 2.27.0: le sedi hanno una pagina loro (admin/sedi.php) */ ?>Sedi</a>
 </nav>
 
 <?php if ($scheda === 'panoramica'): $righe = seo_panoramica(); $mancanti = array_filter($righe, fn($r) => !$r['tldr'] || !$r['faq'] || !$r['descrizione'] || !$r['immagine']); ?>
@@ -508,7 +508,7 @@ pre.seo-pre{background:var(--codice-fondo);color:var(--codice-testo);padding:.9r
   <div class="seo-card">
     <h3>Titoli e meta</h3>
     <form method="post"><?= csrf_field() ?><input type="hidden" name="azione" value="salva_titoli">
-      <p class="seo-nota">Segnaposto: <code>%titolo%</code>, <code>%sep%</code>, <code>%sito%</code>. Con i valori di partenza i titoli restano quelli di oggi ("Titolo - <?= h(SITO_NOME) ?>"). Il titolo per Google scritto in un contenuto vince sempre sul formato.</p>
+      <p class="seo-nota">Segnaposto: <code>%titolo%</code>, <code>%sep%</code>, <code>%sito%</code> e, dalla 2.27.0, <code>%citta%</code> (la città della sede principale, scheda Sedi: senza sedi sparisce con il suo separatore). Con i valori di partenza i titoli restano quelli di oggi ("Titolo - <?= h(SITO_NOME) ?>"). Il titolo per Google scritto in un contenuto vince sempre sul formato.</p>
       <div class="seo-inline"><div class="form-group"><label>Separatore</label><input type="text" name="titolo[sep]" value="<?= h($t['sep']) ?>" maxlength="5"></div><div class="form-group" style="flex:3"><label>Nome del sito nei titoli</label><input type="text" name="titolo[sito]" value="<?= h($t['sito']) ?>"></div></div>
       <?php foreach ($seoTitoli as $k => $nome): ?>
       <div class="form-group" style="margin-top:.8rem"><label><?= $nome ?></label><input type="text" name="titolo[<?= $k ?>]" value="<?= h($t[$k] ?? '%titolo% %sep% %sito%') ?>"></div>

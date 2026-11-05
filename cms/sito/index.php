@@ -318,7 +318,7 @@ try {
                 }
                 // Quello che arriva dal pannello vince sui valori di partenza.
                 $c['servizio'] += sito_servizi_predefiniti()[$c['percorso']] ?? [];
-                $nodi = [sito_jsonld_pagina($c['percorso'], $c['titolo'], $c['seo']['descrizione'])];
+                $nodi = [sito_jsonld_pagina($c['percorso'], $c['titolo'], $c['seo']['descrizione'], sito_jsonld_extra_sede($c))]; // 2.27.0: mainEntity nella pagina di una sede
                 if (!empty($c['servizio']['tipo'])) $nodi[] = sito_jsonld_servizio($c);
                 if (!empty($c['editor'])) {
                     [$corpo, $testa] = vista_pagina_editor($c);

@@ -19,6 +19,7 @@
 
 require_once __DIR__ . '/sito-dati.php';
 require_once __DIR__ . '/contenuti.php';
+require_once __DIR__ . '/sedi.php'; // 2.27.0: le sedi (gruppo "sedi" della configurazione, nodi LocalBusiness, %citta%)
 
 const SEO_INDEXNOW_API = 'https://api.indexnow.org/indexnow';
 const SEO_GOOGLE_TOKEN = 'https://oauth2.googleapis.com/token';
@@ -153,6 +154,8 @@ function seo_predefiniti(): array {
             'nome' => (string)cms_impostazione('autore_predefinito', ''), 'ruolo' => (string)cms_impostazione('sito_sottotitolo', ''),
             'immagine' => '', 'descrizione' => '', 'conosce' => '', 'credenziale' => '', 'credenziale_ente' => '', 'sameas' => '',
         ],
+        // 2.27.0: le sedi dell'attività (includes/sedi.php): un elenco JSON, vuoto di partenza. Senza sedi il sito esce come prima.
+        'sedi' => ['elenco' => []],
     ];
     return cms_filtro('seo_predefiniti', $p);
 }
@@ -226,18 +229,19 @@ function seo_log_elenco(int $n = 100, string $servizio = ''): array {
  * Chiamata HTTP. Ritorna ['codice' => int, 'corpo' => string, 'errore' => string].
  * codice 0 = la rete non ha risposto (DNS, timeout, rete chiusa): l'errore lo dice in italiano.
  */
-function seo_http(string $url, string $metodo = 'GET', ?string $corpo = null, array $intestazioni = [], int $timeout = 12): array {
+function seo_http(string $url, string $metodo = 'GET', ?string $corpo = null, array $intestazioni = [], int $timeout = 12, string $agente = '', array $hostExtra = []): array {
+    // 2.27.0: $agente (lo User-Agent, per i servizi che lo chiedono: Nominatim) e $hostExtra (host ammessi oltre a quelli di base).
     $out = ['codice' => 0, 'corpo' => '', 'errore' => ''];
     // sicurezza: solo host consentiti, mai verso indirizzi privati, nessun redirect seguito, solo http e https.
     require_once __DIR__ . '/sicurezza-html.php';
-    $ctrl = sicurezza_uscita_controlla($url);
+    $ctrl = sicurezza_uscita_controlla($url, $hostExtra);
     if (!$ctrl['ok']) { $out['errore'] = $ctrl['errore']; return $out; }
     if (function_exists('curl_init')) {
         $ch = curl_init($url);
         curl_setopt_array($ch, [
             CURLOPT_RETURNTRANSFER => true, CURLOPT_TIMEOUT => $timeout, CURLOPT_CONNECTTIMEOUT => min(6, $timeout),
             CURLOPT_FOLLOWLOCATION => false, CURLOPT_CUSTOMREQUEST => $metodo, CURLOPT_HTTPHEADER => $intestazioni,
-            CURLOPT_USERAGENT => CMS_NOME . ' (SEO)', CURLOPT_PROTOCOLS => CURLPROTO_HTTP | CURLPROTO_HTTPS, CURLOPT_MAXFILESIZE => 5000000,
+            CURLOPT_USERAGENT => $agente !== '' ? $agente : CMS_NOME . ' (SEO)', CURLOPT_PROTOCOLS => CURLPROTO_HTTP | CURLPROTO_HTTPS, CURLOPT_MAXFILESIZE => 5000000,
             // L'IP appena controllato e quello che si usa davvero (niente cambio di DNS fra il controllo e la chiamata).
             CURLOPT_RESOLVE => [$ctrl['host'] . ':' . $ctrl['porta'] . ':' . $ctrl['ip']],
         ]);
@@ -764,6 +768,11 @@ function seo_tipi_moduli(): array {
 function seo_titolo(string $titolo, string $tipo = 'altro'): string {
     $t = seo_cfg()['titolo'];
     $formato = $t[$tipo] ?? $t['altro'];
+    // 2.27.0: %citta% è la città della sede principale; senza sedi (o senza città) sparisce con il suo separatore, senza lasciare " - - ".
+    if (str_contains($formato, '%citta%')) {
+        $citta = sedi_citta_titolo();
+        $formato = $citta === '' ? preg_replace('/\s*%sep%\s*%citta%|%citta%\s*%sep%\s*|%citta%/u', '', $formato) : str_replace('%citta%', $citta, $formato);
+    }
     $out = str_replace(['%titolo%', '%sep%', '%sito%'], [$titolo, $t['sep'], $t['sito']], $formato);
     return trim(preg_replace('/\s+/u', ' ', $out));
 }
@@ -971,6 +980,9 @@ function seo_jsonld_fissi(): array {
         if ($o['email'] !== '') $org['email'] = $o['email'];
         if ($o['indirizzo'] !== '') $org['address'] = ['@type' => 'PostalAddress', 'streetAddress' => $o['indirizzo'], 'addressCountry' => 'IT'];
         if (seo_righe($o['sameas'])) $org['sameAs'] = seo_righe($o['sameas']);
+        // 2.27.0: le sedi come location (LocalBusiness o sottotipo, una per sede). Senza sedi il nodo resta quello di prima.
+        $sedi = sedi_jsonld_elenco();
+        if ($sedi) $org['location'] = $sedi;
         $nodi[] = $org;
     }
     if (!empty($s['person'])) {
@@ -1028,7 +1040,7 @@ function seo_jsonld_di(string $percorso): array {
                 $nodi = [sito_jsonld_pagina($c['percorso'], $c['titolo'], $c['tldr']), sito_jsonld_termine($c)];
             } else {
                 $c['servizio'] += sito_servizi_predefiniti()[$c['percorso']] ?? [];
-                $nodi = [sito_jsonld_pagina($c['percorso'], $c['titolo'], $c['seo']['descrizione'])];
+                $nodi = [sito_jsonld_pagina($c['percorso'], $c['titolo'], $c['seo']['descrizione'], sito_jsonld_extra_sede($c))]; // 2.27.0: mainEntity nella pagina di una sede
                 if (!empty($c['servizio']['tipo'])) $nodi[] = sito_jsonld_servizio($c);
                 if ($c['faq']) $nodi[] = sito_jsonld_faq($c);
             }

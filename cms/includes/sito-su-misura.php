@@ -473,7 +473,8 @@ function su_misura_kit(?array $r = null): array {
             ]],
         ];
         // La mappa solo se si sa dove: si carica al clic (niente contatti con Google prima).
-        if ($r['citta'] !== '') $sezioni[] = ['widget' => [['mappa', ['fornitore' => 'google', 'indirizzo' => $r['citta'], 'zoom' => 13, 'al_clic' => true, 'margine_sotto' => ['d' => 0]]]]];
+        // 2.27.0: la mappa legge "dalla sede principale" (la città diventa una sede, includes/sedi.php); l'indirizzo scritto resta di riserva.
+        if ($r['citta'] !== '') $sezioni[] = ['widget' => [['mappa', ['sede' => 'principale', 'fornitore' => 'google', 'indirizzo' => $r['citta'], 'zoom' => 13, 'al_clic' => true, 'margine_sotto' => ['d' => 0]]]]];
         $pagine[] = ['titolo' => 'Contatti', 'slug' => 'contatti', 'sezioni' => $sezioni];
         $menu[] = ['Contatti', '/contatti/'];
     }
@@ -482,6 +483,8 @@ function su_misura_kit(?array $r = null): array {
         'form' => ['titolo' => 'Scrivici', 'intro' => 'Ti rispondiamo entro un giorno lavorativo.'],
         'home' => $home, 'pagine' => $pagine, 'menu' => $menu,
         'segnaposto' => array_keys($usate),
+        // 2.27.0: la sede principale dalle risposte (nome "Sede di <città>", tipo dall'attività): la scrive kit_costruisci().
+        'sede' => ['citta' => $r['citta'], 'attivita' => $aid],
     ];
 }
 

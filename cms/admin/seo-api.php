@@ -5,6 +5,7 @@
  *             contenuto, content_format, immagine, immagine_alt, tldr, faq, type) -> punteggio, voci, html del riquadro
  *   jsonld    url -> il JSON-LD che quella pagina emette, validato
  *   ispeziona url -> verdetto di Search Console (richiede il service account)
+ *   sedi_cerca indirizzo -> lat, lng, nome dal servizio delle mappe (2.27.0, solo amministratore)
  * Usata dalla scheda del contenuto (assets/seo-controllo.js) e dall'editor visuale (Impostazioni della pagina).
  */
 require_once __DIR__ . '/includes/auth.php';
@@ -48,6 +49,13 @@ try {
                 array_walk_recursive($n, function ($v, $k) use ($ids, &$avvisi, $n) { if ($k === '@id' && !in_array($v, $ids, true) && !str_contains($v, '#pagina') && !str_contains($v, '#logo')) $avvisi[] = 'Riferimento ' . $v . ' senza nodo (in ' . ($n['@type'] ?? '?') . ').'; });
             }
             seo_api_esci(['testo' => $testo, 'nodi' => count($g['@graph']), 'tipi' => array_values(array_unique(array_map(fn($n) => $n['@type'] ?? '?', $g['@graph']))), 'avvisi' => array_values(array_unique($avvisi))]);
+
+        case 'sedi_cerca':
+            // 2.27.0: le coordinate di un indirizzo, dal server (includes/sedi.php, Nominatim di OpenStreetMap). Solo amministratore.
+            if (!is_admin()) seo_api_esci(['errore' => 'Riservato all\'amministratore.'], 403);
+            require_once dirname(__DIR__) . '/includes/sedi.php';
+            $g = sedi_geocodifica((string)($_POST['indirizzo'] ?? ''));
+            seo_api_esci($g['ok'] ? ['ok' => true, 'lat' => $g['lat'], 'lng' => $g['lng'], 'nome' => $g['nome']] : ['ok' => false, 'errore' => $g['errore']], $g['ok'] ? 200 : 422);
 
         case 'ispeziona':
             if (!is_admin()) seo_api_esci(['errore' => 'Riservato all\'amministratore.'], 403);
