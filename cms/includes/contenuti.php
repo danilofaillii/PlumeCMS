@@ -285,6 +285,11 @@ function contenuti_salva(string $tipo, int $id, array $d, string $autore = ''): 
     if (!contenuti_slug_libero($tipo, $slug, $id)) throw new RuntimeException("C'è già " . ($tipo === 'pagine' ? 'una pagina' : 'un articolo') . " con l'indirizzo /$slug/.");
 
     $stato = ($d['stato'] ?? 'bozza') === 'pubblicato' ? 'published' : 'draft';
+    // 2.28.0: una pagina per zona con i riquadri [DA SCRIVERE] non passa a pubblicata (includes/zone.php): RuntimeException con il messaggio.
+    if ($tipo === 'pagine' && $stato === 'published' && $prima && ($prima['status'] ?? 'draft') !== 'published') {
+        if (!function_exists('zone_blocco_pubblicazione') && is_file(__DIR__ . '/zone.php')) require_once __DIR__ . '/zone.php';
+        if (function_exists('zone_blocco_pubblicazione')) zone_blocco_pubblicazione($id);
+    }
     $data = preg_match('/^\d{4}-\d{2}-\d{2}$/', (string)($d['data'] ?? '')) ? $d['data'] : date('Y-m-d');
     // Senza ora: un contenuto che c'è tiene la sua, uno nuovo prende quella di adesso (fino alla 1.2.7 le 06:00, nel futuro
     // per chi scriveva di notte: la pagina appena pubblicata dall'editor restava programmata fino al mattino).
@@ -513,6 +518,11 @@ function contenuti_stato_massa(string $tipo, array $ids, string $stato): int {
         $st->execute([(string)get_setting('pagina_home', '')]);
         $ids = array_diff($ids, [(int)$st->fetchColumn()]);
         if (!$ids) return 0;
+    }
+    if ($tipo === 'pagine' && $stato === 'pubblicato') {
+        // 2.28.0: le pagine per zona con i riquadri [DA SCRIVERE] restano bozze (includes/zone.php); il pannello dice quali.
+        if (!function_exists('zone_pubblicabili_tra') && is_file(__DIR__ . '/zone.php')) require_once __DIR__ . '/zone.php';
+        if (function_exists('zone_pubblicabili_tra')) { [$ids] = zone_pubblicabili_tra($ids); if (!$ids) return 0; }
     }
     $in = implode(',', array_map('intval', $ids));
     $s = $stato === 'bozza' ? 'draft' : 'published';

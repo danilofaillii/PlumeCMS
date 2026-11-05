@@ -318,8 +318,12 @@ try {
                 }
                 // Quello che arriva dal pannello vince sui valori di partenza.
                 $c['servizio'] += sito_servizi_predefiniti()[$c['percorso']] ?? [];
-                $nodi = [sito_jsonld_pagina($c['percorso'], $c['titolo'], $c['seo']['descrizione'], sito_jsonld_extra_sede($c))]; // 2.27.0: mainEntity nella pagina di una sede
-                if (!empty($c['servizio']['tipo'])) $nodi[] = sito_jsonld_servizio($c);
+                // 2.27.0: mainEntity nella pagina di una sede; 2.28.0: Service, mainEntity e briciole nella pagina per zona (includes/zone.php).
+                $extraZona = function_exists('sito_jsonld_extra_zona') ? sito_jsonld_extra_zona($c) : [];
+                $nodi = [sito_jsonld_pagina($c['percorso'], $c['titolo'], $c['seo']['descrizione'], sito_jsonld_extra_sede($c) + $extraZona)];
+                $nodiZona = function_exists('sito_jsonld_zona') ? sito_jsonld_zona($c) : [];
+                if ($nodiZona) $nodi = array_merge($nodi, $nodiZona);
+                elseif (!empty($c['servizio']['tipo'])) $nodi[] = sito_jsonld_servizio($c);
                 if (!empty($c['editor'])) {
                     [$corpo, $testa] = vista_pagina_editor($c);
                     $faq = array_merge($c['faq'], $c['editor_disegno'][2]);

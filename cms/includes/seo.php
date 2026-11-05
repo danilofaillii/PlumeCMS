@@ -20,6 +20,7 @@
 require_once __DIR__ . '/sito-dati.php';
 require_once __DIR__ . '/contenuti.php';
 require_once __DIR__ . '/sedi.php'; // 2.27.0: le sedi (gruppo "sedi" della configurazione, nodi LocalBusiness, %citta%)
+require_once __DIR__ . '/zone.php'; // 2.28.0: le pagine per zona (gruppo "zone" della configurazione, nodo Service, briciole)
 
 const SEO_INDEXNOW_API = 'https://api.indexnow.org/indexnow';
 const SEO_GOOGLE_TOKEN = 'https://oauth2.googleapis.com/token';
@@ -156,6 +157,8 @@ function seo_predefiniti(): array {
         ],
         // 2.27.0: le sedi dell'attività (includes/sedi.php): un elenco JSON, vuoto di partenza. Senza sedi il sito esce come prima.
         'sedi' => ['elenco' => []],
+        // 2.28.0: le pagine per zona (includes/zone.php): il registro e i modelli del titolo e della descrizione.
+        'zone' => function_exists('zone_predefiniti') ? zone_predefiniti() : ['elenco' => [], 'titolo' => '%servizio% a %zona%', 'descrizione' => ''],
     ];
     return cms_filtro('seo_predefiniti', $p);
 }
@@ -1040,8 +1043,12 @@ function seo_jsonld_di(string $percorso): array {
                 $nodi = [sito_jsonld_pagina($c['percorso'], $c['titolo'], $c['tldr']), sito_jsonld_termine($c)];
             } else {
                 $c['servizio'] += sito_servizi_predefiniti()[$c['percorso']] ?? [];
-                $nodi = [sito_jsonld_pagina($c['percorso'], $c['titolo'], $c['seo']['descrizione'], sito_jsonld_extra_sede($c))]; // 2.27.0: mainEntity nella pagina di una sede
-                if (!empty($c['servizio']['tipo'])) $nodi[] = sito_jsonld_servizio($c);
+                // 2.27.0: mainEntity nella pagina di una sede; 2.28.0: Service, mainEntity e briciole nella pagina per zona (includes/zone.php).
+                $extraZona = function_exists('sito_jsonld_extra_zona') ? sito_jsonld_extra_zona($c) : [];
+                $nodi = [sito_jsonld_pagina($c['percorso'], $c['titolo'], $c['seo']['descrizione'], sito_jsonld_extra_sede($c) + $extraZona)];
+                $nodiZona = function_exists('sito_jsonld_zona') ? sito_jsonld_zona($c) : [];
+                if ($nodiZona) $nodi = array_merge($nodi, $nodiZona);
+                elseif (!empty($c['servizio']['tipo'])) $nodi[] = sito_jsonld_servizio($c);
                 if ($c['faq']) $nodi[] = sito_jsonld_faq($c);
             }
             break;

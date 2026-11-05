@@ -2,6 +2,34 @@
 
 Il prodotto si chiama **plumeCMS** (nome scelto il 26 ottobre 2026; prima, per poche ore, "CarbonaraCMS", e ancora prima il provvisorio "Officina": gli zip vecchi si chiamavano `officina-*` e `carbonaracms-*`).
 
+## 2.28.0 (5 novembre 2026) - Le pagine per zona
+
+- **Le pagine per zona** (SEO e AEO > Zone, solo amministratore; richiesta di Danilo: "è dove la SEO locale si vince"). Si scrive il
+  servizio ("Idraulico"), le zone una per riga (già scritte dall'unione delle zone servite delle sedi, al massimo 30 per giro e 200
+  pagine in tutto), la sede di riferimento e, se si vuole, la pagina del servizio; **Crea le bozze** fa nascere una pagina vera
+  dell'editor per ogni zona, "Idraulico a Casalecchio di Reno" (`/idraulico-a-casalecchio-di-reno/`, titolo e descrizione per
+  Google da due modelli con `%servizio%` e `%zona%`), **sempre in bozza**, mai pubblicata dal generatore. Una coppia servizio +
+  zona che c'è già non si rifà. Il registro sta nel gruppo `zone` della configurazione SEO: niente tabelle nuove
+  (`includes/zone.php`, `admin/zone.php`).
+- **Le bozze guidate**: ogni pagina nasce con l'apertura (occhiello = la zona, titolo "Idraulico a *Casalecchio di Reno*", testo
+  dalla descrizione, pulsante Contattaci se la pagina Contatti c'è), tre riquadri Testo con un segnaposto `[DA SCRIVERE]` ciascuno
+  e una riga di aiuto (cosa fai in quella zona, un caso vero, come si arriva), il widget Altre zone, Dati dell'attività e la Barra
+  contatti letti dalla sede. Il blocco guidato esiste per impedire pagine vuote tutte uguali, che Google ignora.
+- **La pubblicazione bloccata finché i segnaposto ci sono**: una pagina per zona con un `[DA SCRIVERE]` nel testo non si pubblica da
+  nessuna strada (Pubblica dell'editor, scheda del contenuto, azione in blocco, modifica rapida, Impostazioni dell'editor,
+  ripristino di una versione), nemmeno dall'amministratore: "Questa pagina per zona ha ancora N riquadri da scrivere: compilali,
+  poi pubblica", e resta bozza. Salvare la bozza va sempre bene. Il redattore non crea le bozze (solo l'amministratore) ma le
+  scrive e le pubblica con la stessa regola.
+- **Widget Altre zone** (112 widget in tutto, gruppo Dal sito): in una pagina per zona elenca le altre pagine per zona dello stesso
+  servizio, solo quelle pubblicate, in riga o in elenco, con un titolo a scelta ("Lavoriamo anche a..."); fuori da una pagina per
+  zona o senza altre zone pubblicate non mostra niente. Niente JavaScript; `sito/assets/zone.css` solo dove serve.
+- **Dati per Google della pagina per zona**: un nodo Service con `name` "Idraulico a Casalecchio di Reno", `serviceType`,
+  `areaServed` la zona (City o AdministrativeArea, la stessa regola delle sedi), `provider` la LocalBusiness della sede di
+  riferimento (o l'Organizzazione), `mainEntity` della WebPage e le briciole Home > pagina del servizio > zona. Senza pagine per zona
+  il sito esce identico a prima, al byte.
+- In anteprima dal pannello (`?preview=1`, solo amministratore) si vede anche una bozza mai pubblicata, com'è nell'editor: le pagine
+  per zona nascono così. Manuale d'uso capitolo 23, tecnico capitolo 45, `prove/prova-zone.js`, gruppo 43 degli attacchi.
+
 ## 2.27.0 (5 novembre 2026) - Le sedi e la SEO geografica
 
 - **Le sedi dell'attività** (SEO e AEO > Sedi, solo amministratore; richiesta di Danilo: più sedi fin dall'inizio, anche per chi ne ha

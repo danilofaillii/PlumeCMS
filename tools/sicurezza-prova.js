@@ -2501,6 +2501,104 @@ echo json_encode($o);
     ripristina42();
   } else console.log('--  sedi (2.27.0): saltata (serve CMS_DIR)');
 
+  // === 43. (2.28.0) Le pagine per zona (admin/zone.php, includes/zone.php, widget Altre zone, pubblicazione bloccata dai
+  // segnaposto). Codice in servizio, zone e modelli: i tag si tolgono (sedi_testo) e quello che resta esce come testo nel
+  // pannello, nei titoli, nel JSON-LD e nel widget; lo slug dal titolo passa da contenuti_slug (niente ../, niente punti);
+  // il modello senza %zona% e 500 zone in un colpo rifiutati con l'errore sotto il campo; la pagina del servizio inventata
+  // rifiutata; al massimo 200 pagine per zona; una bozza con [DA SCRIVERE] non si pubblica da nessuna strada (editor, scheda,
+  // azione in blocco, Impostazioni dell'editor), nemmeno dall'amministratore, e il segnaposto non entra mai nel JSON-LD;
+  // il redattore non crea le bozze e non toglie dal registro; senza token o da un altro sito niente. Serve CMS_DIR.
+  if (DIR && fs.existsSync(path.join(__dirname, '..', 'prove', 'zone-cli.php'))) {
+    const { execFileSync } = require('child_process');
+    const cli43 = (...a) => { try { return JSON.parse(execFileSync('php', [path.join(__dirname, '..', 'prove', 'zone-cli.php'), DIR, ...a.map(String)], { encoding: 'utf8', maxBuffer: 64 * 1024 * 1024 }).trim().split('\n').pop()); } catch (e) { return { errore_cli: String(e.message).slice(0, 200) }; } };
+    const mie43 = () => (cli43('elenco') || []).filter(z => /^Sic43/.test(z.servizio));
+    const pulisci43 = () => { for (const z of mie43()) cli43('togli', z.pagina); };
+    pulisci43();
+    const CATTIVO = '<img src=x onerror=alert(43)>', SCRIPT = '</script><script>alert(43)</script>';
+    const ORIG43 = { 'Origin': BASE.replace(/(https?:\/\/[^/]+).*/, '$1') };
+    const t43 = await tokenDi(admin.p, ADMIN + '/zone.php');
+    const campi43 = (extra) => Object.assign({ _csrf: t43, azione: 'crea', 'zone[servizio]': 'Sic43 ' + CATTIVO, 'zone[zone]': 'Bologna ' + SCRIPT + '\nImola ' + CATTIVO, 'zone[sede]': 'principale', 'zone[servizio_pagina]': '',
+      'zone[titolo]': '../../etc/passwd %servizio% a %zona% ' + CATTIVO, 'zone[descrizione]': 'Descrizione ' + SCRIPT + CATTIVO }, extra || {});
+    const c1 = await admin.ctx.request.post(ADMIN + '/zone.php', { form: campi43(), headers: ORIG43, maxRedirects: 0 });
+    const z43 = mie43();
+    ok('2.28.0: servizio, zone, titolo e descrizione con codice: due bozze create come testo (niente tag nel servizio, nella zona, nel titolo), slug pulito senza ../ e punti', [302, 303].includes(c1.status()) && z43.length === 2 && z43.every(z => !/</.test(z.servizio + z.zona + z.titolo) && /^[a-z0-9-]+$/.test(z.slug) && !/\.\./.test(z.slug) && z.stato === 'bozza' && z.segnaposto === 3), z43.map(z => [z.titolo, z.slug]) || c1.status());
+    const descr43 = z43.length ? cli43('sql', 'SELECT seo_description FROM {p}pages WHERE id = ' + (+z43[0].pagina)) : [];
+    ok('2.28.0: la descrizione per Google è testo senza tag', Array.isArray(descr43) && descr43[0] && /^Descrizione/.test(descr43[0].seo_description) && !/</.test(descr43[0].seo_description), descr43);
+    await admin.p.goto(ADMIN + '/zone.php', { waitUntil: 'networkidle' });
+    const pan43 = await admin.p.content();
+    ok('2.28.0: nel pannello Zone il codice non c\'è (tag tolti): niente on*, niente script, niente finestre', /Sic43/.test(pan43) && !/<img src=x onerror/.test(pan43) && await admin.p.locator('img[onerror], svg[onload]').count() === 0 && !/<script>alert\(43\)/.test(pan43));
+    // La bozza con i segnaposto non si pubblica: editor (salva con pubblica=1 e Impostazioni), scheda, azione in blocco. Anche dall'amministratore.
+    const idZ = z43.length ? +z43[0].pagina : 0;
+    const alberoZ = idZ ? (cli43('sql', 'SELECT struttura_bozza FROM {p}pages WHERE id = ' + idZ)[0] || {}).struttura_bozza || '' : '';
+    const tE = await tokenDi(admin.p, ADMIN + '/editor.php?tipo=pagine&id=' + idZ);
+    const s1 = await admin.ctx.request.post(ADMIN + '/editor-api.php', { form: { _csrf: tE, azione: 'salva', tipo: 'pagine', id: String(idZ), albero: alberoZ, pubblica: '1', nota: '' }, headers: ORIG43, maxRedirects: 0 });
+    const s2 = await admin.ctx.request.post(ADMIN + '/editor-api.php', { form: { _csrf: tE, azione: 'impostazioni', tipo: 'pagine', id: String(idZ), titolo: 'Sic43 zona', slug: z43[0] ? z43[0].slug : 'x', stato: 'published', seo_titolo: '', seo_descrizione: '', robots: '' }, headers: ORIG43, maxRedirects: 0 });
+    const s3 = await admin.ctx.request.post(ADMIN + '/contenuto.php?tipo=pagine&id=' + idZ, { form: { _csrf: tE, azione: 'salva', title: 'Sic43 zona', slug: z43[0] ? z43[0].slug : 'x', invio: 'pubblica', stato: 'pubblicato', contenuto: '', faq_testo: '' }, headers: ORIG43, maxRedirects: 0 });
+    const s4 = await admin.ctx.request.post(ADMIN + '/contenuti.php?tipo=pagine', { form: { _csrf: tE, azione: 'pubblica', 'ids[]': String(idZ) }, headers: ORIG43, maxRedirects: 0 });
+    const s5 = await admin.ctx.request.post(ADMIN + '/contenuti.php?tipo=pagine', { form: { _csrf: tE, azione: 'rapido', uno: String(idZ), title: 'Sic43 zona', slug: z43[0] ? z43[0].slug : 'x', stato: 'pubblicato', data: '', ora: '' }, headers: ORIG43, maxRedirects: 0 });
+    const j1 = await s1.json().catch(() => null), j2 = await s2.json().catch(() => null);
+    const dopo43 = cli43('elenco').find(z => z.pagina === idZ) || {};
+    ok('2.28.0: una bozza con [DA SCRIVERE] non si pubblica da nessuna strada (editor 409, Impostazioni 400, scheda, azione in blocco, modifica rapida): resta bozza con i 3 segnaposto', s1.status() === 409 && j1 && /riquadri da scrivere/.test(j1.errore) && s2.status() === 400 && j2 && /riquadri da scrivere/.test(j2.errore) && [302, 303].includes(s3.status()) && [302, 303].includes(s4.status()) && [302, 303].includes(s5.status()) && dopo43.stato === 'bozza' && dopo43.segnaposto === 3, [s1.status(), s2.status(), s3.status(), s4.status(), s5.status(), dopo43.stato]);
+    const an43 = await browser.newContext();
+    const r404 = await an43.request.get(BASE + '/' + (z43[0] ? z43[0].slug : 'x') + '/', { maxRedirects: 0 });
+    ok('2.28.0: la bozza per un visitatore è 404 (il segnaposto non esce mai sul sito)', r404.status() === 404, r404.status());
+    // Scritta e pubblicata, la pagina mostra il codice come testo e il JSON-LD è pulito; ripubblicarla con il segnaposto è rifiutato.
+    for (const z of z43) { cli43('scrivi', z.pagina); cli43('pubblica', z.pagina); }
+    const pg43 = await an43.newPage();
+    const fin43 = []; pg43.on('dialog', d => { fin43.push(d.message()); d.dismiss().catch(() => {}); });
+    const rp43 = z43[0] ? await pg43.goto(BASE + '/' + z43[0].slug + '/', { waitUntil: 'networkidle' }) : null;
+    const html43 = rp43 ? await pg43.content() : '';
+    const ld43 = await pg43.locator('script[type="application/ld+json"]').evaluateAll(l => l.map(s => s.textContent));
+    const serv43 = (() => { try { return JSON.parse(ld43[0])['@graph'].find(x => x['@type'] === 'Service'); } catch (e) { return null; } })();
+    ok('2.28.0: la pagina per zona pubblicata mostra il codice come testo: niente on*, niente script, niente finestre; Altre zone con il link pulito', !!rp43 && rp43.status() === 200 && /Sic43/.test(html43) && await pg43.locator('img[onerror], svg[onload]').count() === 0 && (html43.match(/<script>alert\(43\)/g) || []).length === 0 && fin43.length === 0 && await pg43.locator('.ew-zone .ew-zone-link').count() === 1 && !/</.test(await pg43.locator('.ew-zone .ew-zone-link').first().innerText()), [rp43 && rp43.status(), fin43]);
+    ok('2.28.0: il JSON-LD della pagina per zona: Service con name e serviceType senza tag, niente </script> e niente segnaposto', ld43.length === 1 && !/<\/script/i.test(ld43[0]) && !/<img|onerror/.test(ld43[0]) && !ld43[0].includes('[DA SCRIVERE]') && serv43 && /^Sic43/.test(serv43.serviceType) && !/</.test(serv43.name + serv43.serviceType) && serv43.areaServed && !/</.test(serv43.areaServed.name), serv43 && [serv43.name, serv43.serviceType]);
+    const s6 = await admin.ctx.request.post(ADMIN + '/editor-api.php', { form: { _csrf: tE, azione: 'salva', tipo: 'pagine', id: String(idZ), albero: alberoZ, pubblica: '1', nota: '' }, headers: ORIG43, maxRedirects: 0 });
+    const rp43b = z43[0] ? await pg43.goto(BASE + '/' + z43[0].slug + '/', { waitUntil: 'networkidle' }) : null;
+    ok('2.28.0: ripubblicare la pagina con il segnaposto rimesso è rifiutato (409) e sul sito resta la versione scritta', s6.status() === 409 && !!rp43b && rp43b.status() === 200 && !(await pg43.content()).includes('[DA SCRIVERE]'), s6.status());
+    await an43.close();
+    // Rifiuti: modello senza %zona%, 500 zone in un colpo, pagina del servizio inventata o con SQL, servizio vuoto.
+    const prima43 = (cli43('elenco') || []).length;
+    const rifiuti43 = [];
+    for (const [nome, extra] of [['modello senza %zona%', { 'zone[titolo]': 'Servizio in zona' }], ['500 zone', { 'zone[zone]': Array.from({ length: 500 }, (_, i) => 'Comune ' + i).join('\n') }],
+      ['pagina del servizio inventata', { 'zone[servizio_pagina]': 'pagine:99999999' }], ['pagina del servizio con SQL', { 'zone[servizio_pagina]': "pages:1' OR 1=1" }], ['pagina del servizio con ../', { 'zone[servizio_pagina]': '../../etc/passwd' }], ['servizio vuoto', { 'zone[servizio]': '' }]]) {
+      const r = await admin.ctx.request.post(ADMIN + '/zone.php', { form: campi43(Object.assign({ 'zone[servizio]': 'Sic43 rifiuto', 'zone[zone]': 'Ferrara' }, extra)), headers: ORIG43, maxRedirects: 0 });
+      const t = await r.text();
+      const creato = (cli43('elenco') || []).length !== prima43;
+      if (!(r.status() === 200 && /zn-errore/.test(t) && !creato)) rifiuti43.push([nome, r.status(), creato]);
+    }
+    ok('2.28.0: modello senza %zona%, 500 zone in un colpo, pagina del servizio inventata, con SQL o con ../, servizio vuoto: errore sotto il campo, niente creato', rifiuti43.length === 0, rifiuti43);
+    // Il limite di 200 pagine per zona: sette giri da 30 si fermano a 200 con il messaggio.
+    let fermo43 = '', creati43 = 0;
+    for (let g = 0; g < 7 && fermo43 === ''; g++) {
+      const r = cli43('crea', JSON.stringify({ servizio: 'Sic43 limite', zone: Array.from({ length: 30 }, (_, i) => 'Zona ' + (g * 30 + i + 1)).join('\n'), sede: 'principale' }));
+      if (r && r.errore) fermo43 = r.errore;
+      creati43 += r && r.create ? r.create.length : 0;
+    }
+    ok('2.28.0: 210 zone in sette giri: il registro si ferma a 200 pagine per zona con il messaggio del limite', (cli43('elenco') || []).length === 200 && /200/.test(fermo43), [(cli43('elenco') || []).length, creati43, fermo43.slice(0, 80)]);
+    for (const z of (cli43('elenco') || []).filter(z => z.servizio === 'Sic43 limite')) cli43('togli', z.pagina);
+    // Redattore: niente bozze, niente Togli dal registro, niente pannello; ma una bozza con i segnaposto non la pubblica nemmeno lui.
+    if (red.dentro) {
+      const tr = await tokenDi(red.p, ADMIN + '/index.php');
+      const r1 = await red.ctx.request.post(ADMIN + '/zone.php', { form: campi43({ _csrf: tr, 'zone[servizio]': 'Sic43 redattore', 'zone[zone]': 'Ferrara' }), headers: ORIG43, maxRedirects: 0 });
+      const r2 = await red.ctx.request.post(ADMIN + '/zone.php', { form: { _csrf: tr, azione: 'togli', id: String(idZ) }, headers: ORIG43, maxRedirects: 0 });
+      const r3 = await red.ctx.request.get(ADMIN + '/zone.php', { maxRedirects: 0 });
+      const b43 = cli43('crea', JSON.stringify({ servizio: 'Sic43 bozza', zone: 'Modena', sede: 'principale' }));
+      const idB43 = b43 && b43.create && b43.create[0] ? +b43.create[0].pagina : 0;
+      const alberoB = idB43 ? (cli43('sql', 'SELECT struttura_bozza FROM {p}pages WHERE id = ' + idB43)[0] || {}).struttura_bozza || '' : '';
+      const trE = await tokenDi(red.p, ADMIN + '/editor.php?tipo=pagine&id=' + idB43);
+      const r4 = await red.ctx.request.post(ADMIN + '/editor-api.php', { form: { _csrf: trE, azione: 'salva', tipo: 'pagine', id: String(idB43), albero: alberoB, pubblica: '1', nota: '' }, headers: ORIG43, maxRedirects: 0 });
+      const r5 = await red.ctx.request.post(ADMIN + '/contenuto.php?tipo=pagine&id=' + idB43, { form: { _csrf: trE, azione: 'salva', title: 'Sic43 bozza a Modena', slug: b43.create[0].slug, invio: 'pubblica', stato: 'pubblicato', contenuto: '', faq_testo: '' }, headers: ORIG43, maxRedirects: 0 });
+      const vB = cli43('elenco').find(z => z.pagina === idB43) || {};
+      ok('2.28.0: il redattore non crea bozze, non toglie dal registro, non apre Zone; una bozza con i segnaposto non la pubblica (editor 409 o 403, scheda): resta bozza', [r1, r2, r3].every(r => [302, 303, 403].includes(r.status())) && !(cli43('elenco') || []).some(z => z.servizio === 'Sic43 redattore') && !!(cli43('elenco') || []).find(z => z.pagina === idZ) && [403, 409].includes(r4.status()) && [302, 303].includes(r5.status()) && vB.stato === 'bozza' && vB.segnaposto === 3, [r1.status(), r2.status(), r3.status(), r4.status(), r5.status(), vB.stato]);
+    }
+    // Senza token e da un altro sito.
+    const n1 = await admin.ctx.request.post(ADMIN + '/zone.php', { form: campi43({ _csrf: '', 'zone[servizio]': 'Sic43 senza token', 'zone[zone]': 'Ferrara' }), headers: ORIG43, maxRedirects: 0 });
+    const n2 = await admin.ctx.request.post(ADMIN + '/zone.php', { form: campi43({ 'zone[servizio]': 'Sic43 altro sito', 'zone[zone]': 'Ferrara' }), headers: { 'Origin': 'https://evil.example' }, maxRedirects: 0 });
+    const n3 = await admin.ctx.request.post(ADMIN + '/zone.php', { form: { azione: 'togli', id: String(idZ) }, headers: { 'Origin': 'https://evil.example' }, maxRedirects: 0 });
+    ok('2.28.0: senza token o da un altro sito niente si crea e niente si toglie (403)', n1.status() === 403 && n2.status() === 403 && n3.status() === 403 && !(cli43('elenco') || []).some(z => /senza token|altro sito/.test(z.servizio)) && !!(cli43('elenco') || []).find(z => z.pagina === idZ), [n1.status(), n2.status(), n3.status()]);
+    pulisci43();
+  } else console.log('--  pagine per zona (2.28.0): saltata (serve CMS_DIR)');
+
   // === pulizia: elimina il redattore di prova
   {
     await admin.p.goto(ADMIN + '/utenti.php', { waitUntil: 'networkidle' });

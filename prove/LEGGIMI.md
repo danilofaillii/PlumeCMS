@@ -108,7 +108,7 @@ Il report delle campagne, le statistiche e l'orario migliore della 2.14.0 (fase 
 
 
 
-Le prove di attacco: ogni OK è un attacco respinto (433 nella 2.27.0, con le 13 nuove del gruppo 42 sulle sedi; 420 nella 2.25.0 su un sito appena installato, radice e cartella `/test`, con le 9
+Le prove di attacco: ogni OK è un attacco respinto (445 nella 2.28.0, con le 12 nuove del gruppo 43 sulle pagine per zona; 433 nella 2.27.0, con le 13 nuove del gruppo 42 sulle sedi; 420 nella 2.25.0 su un sito appena installato, radice e cartella `/test`, con le 9
 nuove del gruppo 26b su Scorri di lato; dalla 2.25.0 la prova dell'immagine caricata (gruppo 14) chiede l'indirizzo dalla radice del
 server, perché nei siti in cartella l'indirizzo dato dai Media ha già la cartella; 238 nella 1.10.0 su un sito Attività, con le 5 nuove del gruppo 26 sui
 widget nuovi; 233 nella 1.9.0 su un sito Attività, con le 6 nuove del gruppo 25 sull'avviso
@@ -597,6 +597,30 @@ resta, il redattore fuori, 1280 e 390 px senza scorrimento di lato.
 Gli attacchi sono il gruppo 42 di `tools/sicurezza-prova.js` (con `CMS_DIR`): codice in ogni campo, link `javascript:` e host non di
 Google, coordinate storte, 60 sedi e 200 righe di zona, redattore, senza token, servizio finto che risponde HTML cattivo,
 `CMS_NOMINATIM_URL` verso indirizzi interni.
+
+## prova-zone.js (2.28.0)
+
+Le pagine per zona, come le userebbe una persona. Su un sito col kit Attività e una sede "Sede di Bologna" (la crea la prova con
+`prove/sedi-cli.php`): dal pannello (SEO e AEO, Zone) crea tre bozze per "Idraulico" (Bologna, Casalecchio di Reno, Provincia di
+Bologna) con la pagina Servizi collegata; controlla titoli, indirizzi, stato bozza, i tre segnaposto `[DA SCRIVERE]`, il
+registro; gli errori sotto i campi (servizio di una lettera, modello senza `%zona%`, 31 zone); la stessa coppia che non si ricrea
+(anche con maiuscole diverse) e una pagina cancellata che sparisce dal registro. Poi prova a pubblicare una bozza con i segnaposto
+da ogni strada (Pubblica dell'editor, scheda del contenuto, azione in blocco, Impostazioni dell'editor, salvataggio diretto con
+`pubblica=1`): rifiutata con il messaggio, resta bozza. Compila i riquadri con `prove/zone-cli.php scrivi` (scrive l'albero come
+farebbe una persona nell'editor), prima due su tre (rifiuto con "1 riquadro"), poi tutti, e pubblica dall'editor: la pagina esce
+200 con il JSON-LD (Service con `name`, `serviceType`, `areaServed` City o AdministrativeArea, `provider` = la sede; `mainEntity`;
+briciole Home > Servizi > zona), il widget Altre zone con le sole zone pubblicate, la sitemap, il titolo; home e Servizi senza nodi
+in più; il filtro per servizio e Togli dal registro; il redattore fuori dal pannello Zone ma che scrive e pubblica la bozza con la
+stessa regola; 1280 e 390 px senza scorrimento di lato.
+1. Un sito installato col kit Attività (la prova usa `/servizi/` e `/contatti/`).
+2. `node prove/prova-zone.js <base> <cartella CMS> <utente> <password> [cartella foto]`. Usa `prove/zone-cli.php` (elenco, azzera,
+   crea, segnaposto, togli, scrivi, pubblica, pubblicabile, jsonld, sql, redattore) e `prove/sedi-cli.php`. Alla fine toglie le
+   pagine per zona e le sedi che ha creato.
+3. Atteso (2.28.0): 58 su 58, in radice e in cartella, su un sito nuovo e su uno aggiornato dalla 2.27.0.
+Gli attacchi sono il gruppo 43 di `tools/sicurezza-prova.js` (con `CMS_DIR`): codice in servizio, zone, modelli e descrizione,
+`../` nel modello del titolo (lo slug resta pulito), modello senza `%zona%`, 500 zone in un colpo, pagina del servizio inventata o
+con SQL, 210 zone contro il limite di 200, pubblicazione con i segnaposto da ogni strada anche dall'amministratore e ripubblicazione
+con il segnaposto rimesso, il segnaposto mai nel JSON-LD, redattore, senza token e da un altro sito.
 
 ## prova-scorri.js (2.25.0)
 

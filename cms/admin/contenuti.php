@@ -31,7 +31,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 contenuti_salva_rapido($tipo, $ids[0], $d);
                 flash('success', $T['Uno'] . ' aggiornat' . contenuti_desinenza($T) . '.');
                 break;
-            case 'pubblica': $n = contenuti_stato_massa($tipo, $ids, 'pubblicato'); flash('success', "$n " . ($n === 1 ? $T['uno'] . ' pubblicat' . contenuti_desinenza($T) : $T['tanti'] . ' pubblicat' . contenuti_desinenza($T, true)) . '.'); break;
+            case 'pubblica':
+                $n = contenuti_stato_massa($tipo, $ids, 'pubblicato'); flash('success', "$n " . ($n === 1 ? $T['uno'] . ' pubblicat' . contenuti_desinenza($T) : $T['tanti'] . ' pubblicat' . contenuti_desinenza($T, true)) . '.');
+                // 2.28.0: le pagine per zona con i riquadri [DA SCRIVERE] restano bozze: si dice quali (includes/zone.php).
+                if ($tipo === 'pagine' && function_exists('zone_pubblicabili_tra')) { [, $fermate] = zone_pubblicabili_tra($ids); foreach ($fermate as $fid => $msg) flash('error', '«' . (string)(contenuti_leggi('pagine', (int)$fid)['title'] ?? $fid) . '»: ' . $msg); }
+                break;
             case 'bozza': $n = contenuti_stato_massa($tipo, $ids, 'bozza'); flash('success', "$n in bozza."); break;
             case 'cestina': $n = contenuti_cestina($tipo, $ids); flash('success', "$n nel cestino." . ($n < count($ids) ? ' La home resta fuori dal cestino.' : '')); break;
             case 'ripristina': $n = contenuti_ripristina($tipo, $ids); flash('success', "$n ripristinati."); break;

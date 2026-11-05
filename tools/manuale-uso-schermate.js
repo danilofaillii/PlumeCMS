@@ -29,6 +29,8 @@
 // 2.18.0: il 19p fa anche 19p-modello (il passo Email che richiama il modello "Ebook 05") e rifà 19m-modelli con "Usato in".
 // 2.16.0: i form a cinque passi: capitoli 17 (rifatto, con il campo File) e 17n (form di iscrizione, pagina del form, Pagine e
 //   consenso), poi 31n e 31r con il costruttore nuovo: SOLO_CAPITOLI=17,17n,31n,31r su un sito col kit appena installato, TMPDIR vuota.
+// 2.27.0 e 2.28.0: le sedi (23s, con TESSERE_FINTE=1 dove la rete non raggiunge OpenStreetMap) e le pagine per zona (23z, dopo il
+//   23s): SOLO_CAPITOLI=23s,23z, con TMPDIR vuota, su un sito col kit con CMS_NOMINATIM_URL e CMS_NOMINATIM_PROVA nel config.
 const { chromium } = require('playwright');
 const pnConferme = require('../prove/conferme-pannello'); // UX 2026-11: conferme del pannello
 const fs = require('fs');
@@ -1290,6 +1292,27 @@ im.save(sys.argv[1])`, tessera]);
   await Promise.all([p.waitForNavigation(), p.click('#sd-modulo button[type=submit]')]);
   await foto('23-sedi-elenco', { sel: '#sd-elenco', segni: [{ sel: '#sd-tabella tr:nth-child(2) form:has(input[value=principale]) button', n: 10, lato: 'destra' }] });
   if (process.env.TESSERE_FINTE) await p.unroute('https://tile.openstreetmap.org/**');
+};
+
+// 23z. Le pagine per zona (2.28.0): dopo il 23s (usa le due sedi che lascia). Il generatore compilato come nel manuale (servizio
+// Idraulico, pagina del servizio Servizi, le zone già scritte dalle sedi, la sede di Bologna), l'elenco con le tre bozze, la bozza
+// nell'editor con i tre riquadri [DA SCRIVERE] e il rifiuto di Pubblica. Da solo: SOLO_CAPITOLI=23s,23z, con TMPDIR vuota.
+// Lascia le tre bozze sul sito delle schermate.
+capitoli['23z'] = async () => {
+  await vai('zone.php');
+  await p.fill('#zn-servizio', 'Idraulico');
+  const vServizi = await p.locator('#zn-servizio-pagina option').evaluateAll(os => (os.find(o => /Servizi \(\/servizi\/\)/.test(o.textContent)) || {}).value || '');
+  if (vServizi) await p.selectOption('#zn-servizio-pagina', vServizi);
+  if (!(await p.locator('#zn-sede').isDisabled())) await p.selectOption('#zn-sede', 'sede-di-bologna');
+  await foto('23-zone-modulo', { sel: '#zn-modulo', segni: [{ sel: '#zn-servizio', n: 1 }, { sel: '#zn-servizio-pagina', n: 2 }, { sel: '#zn-zone', n: 3 }, { sel: '#zn-sede', n: 4 }, { sel: '#zn-modulo button[type=submit]', n: 5, lato: 'destra' }] });
+  await Promise.all([p.waitForNavigation(), p.click('#zn-modulo button[type=submit]')]);
+  if (!/bozze create/.test(await flash())) throw new Error('23z: le bozze non si sono create: ' + await flash());
+  await foto('23-zone-elenco', { sel: '#zn-elenco', segni: [{ sel: '#zn-tabella tbody tr:nth-child(2) a[href*="editor.php"]', n: 6, lato: 'destra' }] });
+  const idZona = await p.locator('#zn-tabella tbody tr:nth-child(2) a[href*="editor.php"]').getAttribute('href');
+  await apriEditor(idZona);
+  await p.click('#ed-pubblica'); await dorme(2500); // la conferma e l'avviso li accetta pnConferme: resta il messaggio nello stato
+  if (!/riquadri da scrivere/.test(await p.locator('#ed-stato').innerText())) throw new Error('23z: Pubblica non è stato rifiutato: ' + await p.locator('#ed-stato').innerText());
+  await foto('23-zone-editor', { clip: { x: 0, y: 0, width: 1200, height: 800 }, segni: [{ sel: '#ed-pubblica', n: 7 }, { sel: '#ed-stato', n: 8, lato: 'destra' }] });
 };
 
 // 22. Utenti e ruoli: un redattore

@@ -61,7 +61,7 @@ $menu = [
         ['Informazioni', 'informazioni.php', $qui === 'informazioni.php'],
     ]))],
     // seo: Search Console, Bing, IndexNow, statistiche, robots, sitemap, redirect e 404, dati strutturati, llms.txt. Solo amministratore.
-    $sonoAdminMenu ? ['SEO e AEO', 'seo.php', 'cerca', in_array($qui, ['seo.php', 'sedi.php'], true), [
+    $sonoAdminMenu ? ['SEO e AEO', 'seo.php', 'cerca', in_array($qui, ['seo.php', 'sedi.php', 'zone.php'], true), [
         ['Panoramica', 'seo.php?scheda=panoramica', $qui === 'seo.php' && in_array($_GET['scheda'] ?? 'panoramica', ['panoramica'], true)],
         ['Motori di ricerca', 'seo.php?scheda=motori', $qui === 'seo.php' && ($_GET['scheda'] ?? '') === 'motori'],
         ['Copertura e prestazioni', 'seo.php?scheda=copertura', $qui === 'seo.php' && in_array($_GET['scheda'] ?? '', ['copertura', 'prestazioni'], true)],
@@ -70,6 +70,7 @@ $menu = [
         ['Schema e AEO', 'seo.php?scheda=schema', $qui === 'seo.php' && ($_GET['scheda'] ?? '') === 'schema'],
         ['Redirect e 404', 'seo.php?scheda=redirect', $qui === 'seo.php' && ($_GET['scheda'] ?? '') === 'redirect'],
         ['Sedi', 'sedi.php', $qui === 'sedi.php'], // 2.27.0: le sedi e la SEO geografica (admin/sedi.php)
+        ['Zone', 'zone.php', $qui === 'zone.php'], // 2.28.0: le pagine per zona (admin/zone.php)
     ]] : null,
     // Il gruppo Impostazioni è dell'amministratore: per il redattore il filtro dei ruoli qui sotto lo toglie tutto (anche Log cron, cron-log.php è solo admin).
     ['Impostazioni', $sonoAdminMenu ? 'impostazioni.php' : 'cron-log.php', 'impostazioni', in_array($qui, ['impostazioni.php', 'consegna.php', 'addon.php', 'aggiornamenti.php', 'copia-sito.php', 'cron-log.php', 'sicurezza.php', 'controlla-server.php'], true), array_values(array_filter([
