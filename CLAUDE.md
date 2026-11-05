@@ -108,7 +108,7 @@ Sono gli unici in `cms/docs/`, nello zip, nel sito di plumeCMS e nella pagina Do
 - **Pacchetto di aggiornamento** per un'installazione esistente:
   `python3 tools/cms-pacchetto.py --aggiornamento`. Si carica dal pannello,
   Impostazioni, Aggiornamenti.
-- **Versione**: `cms/VERSIONE` (oggi 2.26.0; sempre tre numeri: "beta" va nel CHANGELOG, mai nel nome dello zip, se no la serie "ultima" del Download non lo riconosce) e una voce in `cms/CHANGELOG.md` a ogni
+- **Versione**: `cms/VERSIONE` (oggi 2.27.0; sempre tre numeri: "beta" va nel CHANGELOG, mai nel nome dello zip, se no la serie "ultima" del Download non lo riconosce) e una voce in `cms/CHANGELOG.md` a ogni
   zip con contenuto diverso. Mai cambiare il contenuto di una versione già data.
 - **Prove** prima di dire finito:
   - `php -n -d short_open_tag=1 -l` su ogni file PHP toccato, `node --check` sui js;
@@ -166,6 +166,32 @@ Le decisioni complete, con data e perché, stanno nel second brain, `plumecms/de
 - **Nome: plumeCMS** (26 ottobre 2026).
 
 ## Stato al 31 ottobre 2026
+
+Fatto: plumeCMS 2.27.0 (5 novembre, 9:58-11:15): **le sedi e la SEO geografica** (richiesta di Danilo: "Come gestiamo la SEO geografica?
+Voglio implementare anche questa parte"; decisioni sue: più sedi fin dall'inizio, "così lo apriamo ad attività multi sede"; tipo di attività
+dall'elenco e, se manca, scritto a mano con l'iniziale maiuscola; le pagine per zona restano per una versione loro, con le bozze guidate).
+Agente nella worktree `/home/user/wt-sedi`, ramo `sedi`, riletto e riprovato da me. `includes/sedi.php` (dati nel gruppo `sedi` di
+`seo_config`, niente tabelle: `sedi_tutte/salva/valida/normalizza`, `sedi_jsonld*`, `sedi_crea_pagina`, `sedi_geocodifica`, `sedi_da_su_misura`),
+`includes/sedi-tipi.php` (48 tipi con la categoria di schema.org, `altro` + `tipo_testo` con `mb_strtoupper` sul primo carattere; verso Google
+un tipo scritto a mano è `LocalBusiness`), `admin/sedi.php` (pagina sua, non la decima scheda di seo.php; solo admin; "Cerca sulla mappa" dal
+server via `seo-api.php` azione `sedi_cerca`: Nominatim di OpenStreetMap con `seo_http` e il controllo degli host come i webhook,
+`CMS_NOMINATIM_URL` e `CMS_NOMINATIM_PROVA` nel config per le prove con `prove/nominatim-finto.php`), `admin/assets/sedi.js` (mini mappa 3x3 di
+tessere OSM senza librerie, clic sposta il segnaposto, + e -), JSON-LD: `location` dell'Organizzazione con una LocalBusiness o sottotipo per
+sede (`@id`, indirizzo a campi, geo, orari, prezzo, areaServed City/AdministrativeArea, hasMap, sameAs, url, parentOrganization), `mainEntity`
+nella pagina della sede, `areaServed` dei servizi dall'unione delle zone, `%citta%` nei titoli; pagina della sede vera dell'editor (apertura,
+Dati dell'attività, Mappa, Orari, Testo, Barra contatti "dalla sede"); widget `sedi` e `dati_attivita` (`includes/editor-widget-sedi.php`,
+`sito/assets/sedi.css`, gruppo "Dal sito"; 111 widget); Mappa, Orari e Barra contatti con la tendina "Dati dalla sede" (`'accetta'`); sito su
+misura: la città diventa la sede `su-misura` principale e la Mappa dei Contatti legge da lì. Senza sedi il sito esce identico al byte (criterio
+di accettazione, provato). Manuale d'uso capitolo 23 (sezione "Le sedi e la SEO geografica", schermate 23-sedi-*: la mini mappa è disegnata con
+TESSERE FINTE perché la rete della sessione non raggiunge OpenStreetMap, `TESSERE_FINTE=1` nello script), tecnico 44 (nuovo) e 9, 16, 29,
+`prove/prova-sedi.js` 58, gruppo 42 degli attacchi (13), sito (novità senza nomi di terzi, riga nel blocco SEO, 111 widget). Prove mie
+(`$S/v2270.sh`, 11:05-11:12, sullo zip): kit attività 34/34 radice e 44/44 cartella, sedi 58/58 radice e cartella, install 38/38 radice e
+cartella, widget nuovi 40/40, telefono 55/55, addon tutti 74/74, attacchi 433/433 su un sito nuovo e su uno aggiornato, aggiornamento 2.26.0 ->
+2.27.0 13/13 con 0 foto diverse su 20 e JSON-LD e sitemap di 7 indirizzi identici al byte, sito su misura 34/34 con la sede "Sede di Bologna"
+(Restaurant nel JSON-LD dei Contatti), pacchetto unico 13/13 con la hero tenuta, sito di plumeCMS 89/89, zero errori fatali. Zip 2395 KB,
+**PDF 12191 KB su 12288: è l'ultima versione che ci sta; la prossima con una schermata nuova lo supera e si chiede a Danilo prima**.
+**Non provato**: Nominatim e le tessere di OpenStreetMap veri (rete chiusa), il JSON-LD nel validatore di Google, `prova-ux-pannello.js`
+sulla pagina Sedi, un clic sulla mini mappa da tastiera (le coordinate si scrivono nei campi).
 
 Fatto: plumeCMS 2.26.0 (5 novembre, 9:13-9:40): **Barre a confronto**, la sedicesima infografica disegnata (richiesta di Danilo: portare nel
 nucleo il widget `tp_barre` del modulo del sito TascaPiena, `migrazione-plumecms/pacchetto/modulo/tascapiena/widget-infografiche.php` nel
@@ -757,6 +783,7 @@ Errori veri, già pagati. Non ripeterli.
 | Il contenitore della sessione che si riavvia o il limite settimanale che ferma gli agenti | Docker spento (`dockerd` da riaccendere, `docker start cmsdb mariadbprova mysql57prova`), catena `Workflow` da riprendere con `resumeFromRunId`; i server php delle prove spariscono (le prove vanno rilanciate) |
 | Un id di widget nuovo scelto senza guardare `igx_definizioni()` | `ig_barre` esisteva già (Barre di avanzamento, HTML): `editor_definizioni()` fa `igx + igs` e tiene la prima, il disegno andava a `igs_disegna()` con i campi dell'altra: widget vuoto senza errori (2.26.0). Prima di un id nuovo: `grep "'ig_<nome>'"` in tutti i file dei widget |
 | Un numero di infografiche scritto nei cicli degli script (`i < 15` in `manuale-uso-schermate.js`, `'L'.repeat(15)` nelle prove) | la foto d'insieme del manuale usciva con quindici anche con la sedicesima sul sito. I cicli contano `IGS_TIPI` o `.igx`, non un numero fisso; dove resta un numero, grep di `15` e `quindici` a ogni infografica nuova |
+| La rete della sessione verso un servizio esterno (OpenStreetMap: tessere e Nominatim rispondono 000 anche via proxy) | le schermate del manuale che mostrano una mappa escono con tessere finte (`TESSERE_FINTE=1` in `manuale-uso-schermate.js`) e la ricerca vera non si prova: si dice a Danilo e si rifanno con la rete aperta |
 | Fidarsi del resoconto di un agente | è successo che un agente dichiarasse lavoro mai scritto su disco. Si controllano i file veri e si rifanno le prove |
 
 ## Tono con l'utente
