@@ -108,7 +108,7 @@ Sono gli unici in `cms/docs/`, nello zip, nel sito di plumeCMS e nella pagina Do
 - **Pacchetto di aggiornamento** per un'installazione esistente:
   `python3 tools/cms-pacchetto.py --aggiornamento`. Si carica dal pannello,
   Impostazioni, Aggiornamenti.
-- **Versione**: `cms/VERSIONE` (oggi 2.25.1; sempre tre numeri: "beta" va nel CHANGELOG, mai nel nome dello zip, se no la serie "ultima" del Download non lo riconosce) e una voce in `cms/CHANGELOG.md` a ogni
+- **Versione**: `cms/VERSIONE` (oggi 2.26.0; sempre tre numeri: "beta" va nel CHANGELOG, mai nel nome dello zip, se no la serie "ultima" del Download non lo riconosce) e una voce in `cms/CHANGELOG.md` a ogni
   zip con contenuto diverso. Mai cambiare il contenuto di una versione già data.
 - **Prove** prima di dire finito:
   - `php -n -d short_open_tag=1 -l` su ogni file PHP toccato, `node --check` sui js;
@@ -166,6 +166,18 @@ Le decisioni complete, con data e perché, stanno nel second brain, `plumecms/de
 - **Nome: plumeCMS** (26 ottobre 2026).
 
 ## Stato al 31 ottobre 2026
+
+Fatto: plumeCMS 2.26.0 (5 novembre, 9:13-9:40): **Barre a confronto**, la sedicesima infografica disegnata (richiesta di Danilo: portare nel
+nucleo il widget `tp_barre` del modulo del sito TascaPiena, `migrazione-plumecms/pacchetto/modulo/tascapiena/widget-infografiche.php` nel
+repository `danilofaillii/TascaPiena`; travaso registrato in `second-brain/_ponti.md`). Copiata com'è in `includes/editor-infografiche.php`
+(`igs_confronto()`, definizione in `igs_definizioni()`, `IGS_TIPI`): il nome proposto `ig_barre` era già "Barre di avanzamento" (una delle
+quattordici in HTML di `editor-widget.php`), quindi l'id è **`ig_confronto`**. 109 widget, 30 infografiche. Per TascaPiena: file del modulo
+nuovo (`$S/tp/widget-infografiche.php`, consegnato a Danilo) che con un nucleo 2.26.0 rinomina una volta i widget `tp_barre` salvati in
+`ig_confronto` (REPLACE su `struttura` e `struttura_bozza` di pages, articles e modelli, impostazione `tp_barre_rinominato`) e non registra
+più `tp_barre`; provato su un sito 2.25.1 aggiornato (la prima richiesta dopo il cambio esce senza il widget, dalla seconda è `ig_confronto`).
+Manuale d'uso capitolo 8 (tabella e schermata 08-infografiche con le sedici: `tools/manuale-uso-schermate.js` aveva 15 scritto nel ciclo),
+tecnico 41 e 9.7, `prova-infografiche-15.js` 47 (era 44), gruppo 32 degli attacchi a 16, sito (novità, 109 widget, 30 infografiche,
+controllo 2.26.0). Prove (`$S/v2260.sh`, 9:25-9:33): install 38/38 radice e cartella dallo zip, infografiche 47/47 radice e cartella (dallo zip) e 47/47 dal repository con la schermata, telefono 54/54, addon tutti 74/74 (sul sito aggiornato col kit: su un sito senza kit la prova cerca `/servizi/` e dà 73/74, non è un difetto), attacchi 420/420 su un sito nuovo e su uno aggiornato (gruppo 32 con le sedici), aggiornamento 2.25.1 -> 2.26.0 13/13 con 1 foto su 20 a 1 livello (ricerca al telefono, rumore) e le quindici di prima intatte, pacchetto unico 13/13 con la hero tenuta, sito di plumeCMS 88/88, modulo di TascaPiena rinominato 1 pagina su 1, zero errori fatali. Zip 2360 KB, PDF 12032 KB (tetto 12288).
 
 Fatto: plumeCMS 2.25.1 (4-5 novembre): **ripristino sicuro della copia** (segnalazione di Danilo del 4 novembre: la copia di un sito
 rimessa su un altro dominio e un altro database ha lasciato il sito senza tabelle, "Table ... users doesn't exist" a tutti, con i percorsi del
@@ -743,6 +755,8 @@ Errori veri, già pagati. Non ripeterli.
 | Uno spezzatore di SQL che conosce solo gli apici semplici (`agg_split_sql()` fino alla 2.25.0) | ``CREATE TABLE `x` (`c'` int); DROP TABLE `y` `` passa come una istruzione sola e PDO, con le istruzioni impilate accese, esegue anche la seconda. Tre regioni fra virgolette (', ", `) e `MULTI_STATEMENTS` spento alla creazione della connessione |
 | `SHOW COLUMNS` con `Extra` che contiene `GENERATED` | `DEFAULT_GENERATED` (created_at e updated_at di MySQL 8) non è una colonna generata: `agg_colonne_generate()` la scriveva come `DEFAULT` nei dump e le date si perdevano (fino alla 2.25.0). Si cerca `VIRTUAL GENERATED` o `STORED GENERATED` |
 | Il contenitore della sessione che si riavvia o il limite settimanale che ferma gli agenti | Docker spento (`dockerd` da riaccendere, `docker start cmsdb mariadbprova mysql57prova`), catena `Workflow` da riprendere con `resumeFromRunId`; i server php delle prove spariscono (le prove vanno rilanciate) |
+| Un id di widget nuovo scelto senza guardare `igx_definizioni()` | `ig_barre` esisteva già (Barre di avanzamento, HTML): `editor_definizioni()` fa `igx + igs` e tiene la prima, il disegno andava a `igs_disegna()` con i campi dell'altra: widget vuoto senza errori (2.26.0). Prima di un id nuovo: `grep "'ig_<nome>'"` in tutti i file dei widget |
+| Un numero di infografiche scritto nei cicli degli script (`i < 15` in `manuale-uso-schermate.js`, `'L'.repeat(15)` nelle prove) | la foto d'insieme del manuale usciva con quindici anche con la sedicesima sul sito. I cicli contano `IGS_TIPI` o `.igx`, non un numero fisso; dove resta un numero, grep di `15` e `quindici` a ogni infografica nuova |
 | Fidarsi del resoconto di un agente | è successo che un agente dichiarasse lavoro mai scritto su disco. Si controllano i file veri e si rifanno le prove |
 
 ## Tono con l'utente
