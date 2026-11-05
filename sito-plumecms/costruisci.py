@@ -240,7 +240,7 @@ def funzionalita():
         ('sicurezza', 'sicurezza.webp', 'Al sicuro, senza doverci pensare ogni giorno',
          ['Accesso a due fattori, blocchi contro chi prova a indovinare le password, protezioni del browser, registro degli eventi. Prima di uscire plumeCMS è stato messo alla prova con più di 500 attacchi, addon compresi: tutti respinti.',
           '<ul><li>Gli aggiornamenti si installano dal pannello, con <strong>Installa ora</strong>: prima il pannello fa una copia di sicurezza, e se qualcosa va storto rimette tutto com\'era.</li>'
-          '<li>La copia del sito, con un clic: la scarichi, la tieni da parte, e se serve la rimetti al suo posto o su un altro spazio.</li></ul>']),
+          '<li>La copia del sito, con un clic: la scarichi, la tieni da parte, e se serve la rimetti al suo posto o su un altro spazio, anche con un database diverso. Se il ripristino non può riuscire, niente si cancella: il sito resta com\'era e il pannello dice perché.</li></ul>']),
     ]
     for i, (ancora, img, tit, testo) in enumerate(blocchi):
         foto = [immagine(img, 'plumeCMS: ' + tit)]
@@ -597,6 +597,7 @@ def zip_lavagna(dest):
 # Regola di Danilo (1 novembre 2026): solo i punti salienti, una riga per versione, mai nomi di aziende o servizi di terzi.
 # Le novità per chi scarica: brevi, scritte qui (il CHANGELOG è per chi sviluppa). Da aggiornare a ogni versione.
 NOVITA = [
+    ('2.25.1', 'Ripristino sicuro della copia', ['La copia di un sito si rimette anche su un altro spazio o un altro database: se qualcosa non va, niente si cancella e il sito resta com\'era, con il motivo scritto in parole semplici. E se il pannello non parte, una pagina di soccorso dice cosa fare.']),
     ('2.25.0', 'Scorri di lato', ['Un widget con più pagine: arrivati lì la pagina scorre di lato fino all\'ultima, poi riprende in verticale. Cinque disposizioni.']),
     ('2.24.0', 'Test a pagine, con l\'anteprima', ['Una domanda per pagina, pagine scelte da te o tutte insieme; nel pannello le domande si spostano fra le pagine e un telefono mostra il test mentre lo scrivi.']),
     ('2.23.0', 'Tag delle persone e test più completi', ['Ogni contatto ha i suoi tag, anche dai test; nei test le domande sulla persona e il risultato completo per email.']),
