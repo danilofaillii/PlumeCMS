@@ -107,7 +107,7 @@ $tipiOpz = sedi_tipi();
 require_once __DIR__ . '/includes/admin-header.php';
 ?>
 <style>
-.sd-elenco .sd-principale{display:inline-block;margin-left:.4rem;padding:.1rem .5rem;border-radius:999px;font-size:.72rem;font-weight:700;letter-spacing:.04em;text-transform:uppercase;background:var(--successo-chiaro);color:var(--successo-testo);border:1px solid var(--successo-bordo)}
+.sd-elenco .sd-principale{display:inline-block;margin-left:.4rem;padding:.1rem .5rem;border-radius:999px;font-size:.72rem;font-weight:700;letter-spacing:.04em;text-transform:uppercase;background:var(--sage-light);color:var(--successo-testo);border:1px solid var(--successo-bordo)}
 .sd-elenco td .sd-tipo{display:block;font-size:.8rem;color:var(--text-muted)}
 .sd-azioni{display:flex;flex-wrap:wrap;gap:.35rem;align-items:center}
 .sd-azioni form{display:inline}
