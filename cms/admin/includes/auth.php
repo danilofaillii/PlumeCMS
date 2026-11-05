@@ -1,10 +1,12 @@
 <?php
 // Il pannello gestisce da sé errori e avvisi: includes/config.php, trovando questa costante, non li spegne.
 define('PUBLISHER_ERRORI', 'pannello');
-// Errori: tutto nel log del publisher; a schermo solo errori e avvisi veri, mai le deprecazioni
-// (su PHP 8.4 una deprecazione stampata prima di un header() rompeva i redirect dopo un salvataggio).
+// Errori: tutto nel log del publisher, mai le deprecazioni a video (su PHP 8.4 una deprecazione stampata prima di un header()
+// rompeva i redirect dopo un salvataggio). 2.25.1: niente più errori a video con i percorsi del server (il 4 novembre 2026 un
+// sito vero mostrava a tutti "Fatal error: Uncaught PDOException ... in /web/htdocs/..."): un'eccezione non gestita diventa la
+// pagina sobria di includes/errori.php, con file:riga relativi. Con define('CMS_DEBUG', true) nel config tutto come prima.
 error_reporting(E_ALL);
-ini_set('display_errors', '1');
+ini_set('display_errors', '0');
 ini_set('log_errors', '1');
 @mkdir(dirname(__DIR__, 2) . '/logs', 0755, true);
 ini_set('error_log', dirname(__DIR__, 2) . '/logs/php-errori.log');
@@ -17,6 +19,9 @@ require_once __DIR__ . '/../../includes/config.php';
 require_once __DIR__ . '/../../includes/db.php';
 require_once __DIR__ . '/../../includes/sicurezza.php';
 require_once __DIR__ . '/../../includes/pannello-aspetto.php'; // 1.4.0: gli aspetti del pannello
+require_once __DIR__ . '/../../includes/errori.php';   // 2.25.1: le eccezioni non gestite, senza percorsi del server
+require_once __DIR__ . '/../../includes/soccorso.php'; // 2.25.1: la pagina di soccorso quando mancano users o settings
+if (defined('CMS_DEBUG') && CMS_DEBUG) ini_set('display_errors', '1'); else errori_attiva('pannello');
 
 /**
  * Indirizzo di un foglio o di uno script del pannello con la sua data nell'indirizzo (1.4.1): "assets/css/admin.css?v=1730112345".
@@ -45,6 +50,10 @@ if (PHP_SAPI !== 'cli' && ($_SERVER['PATH_INFO'] ?? '') !== '' && ($_SERVER['REQ
 // sicurezza: a fine pagina il buffer calcola gli hash dei gestori in linea e manda le intestazioni (CSP compresa).
 // Il buffer si apre sempre (anche sopra output_buffering del php.ini): il callback deve vedere l'HTML finito.
 if (PHP_SAPI !== 'cli') ob_start('sicurezza_pannello_fine');
+
+// 2.25.1: prima di tutto (prima di sicurezza_schema() e di qualunque funzione che crei tabelle): il database risponde e ha
+// users e settings del prefisso? Altrimenti la pagina di soccorso, senza sessione (includes/soccorso.php).
+if (PHP_SAPI !== 'cli') soccorso_controlla();
 
 // sicurezza: cookie HttpOnly, SameSite=Lax, Secure su https; un id di sessione sconosciuto non viene accettato.
 sicurezza_sessione_avvia();

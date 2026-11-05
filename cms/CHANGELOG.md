@@ -2,6 +2,87 @@
 
 Il prodotto si chiama **plumeCMS** (nome scelto il 26 ottobre 2026; prima, per poche ore, "CarbonaraCMS", e ancora prima il provvisorio "Officina": gli zip vecchi si chiamavano `officina-*` e `carbonaracms-*`).
 
+## 2.25.1 (5 novembre 2026) - Ripristino sicuro della copia
+
+- **Il ripristino di una copia non cancella più niente prima di sapere che la copia si ricrea** (il 4 novembre 2026 su un
+  sito vero il ripristino eseguiva DROP TABLE e subito dopo la CREATE della copia; la CREATE, scritta da un MySQL 8, portava
+  una collazione che il database dell'hosting non conosceva, la tabella restava cancellata e il sito finiva senza utenti,
+  impostazioni e pagine, con il pannello morto). Ora la copia si ricrea prima in **tabelle di appoggio** (`rip<6 esadecimali>_`
+  davanti al nome vero); al primo errore si cancellano quelle e il sito resta com'era, con il motivo in parole semplici
+  ("Il ripristino non si è fatto: il sito è come prima"). Se tutto va bene, **una sola RENAME TABLE** scambia le tabelle vive
+  con quelle di appoggio (tutta o niente); le vecchie vanno in parcheggio (`vec<esadecimali>_`) e poi si cancellano. Le tabelle
+  del sito che non stanno nella copia restano e il registro le elenca; le viste degli articoli si rifanno; le impronte degli
+  schemi si azzerano, così al primo accesso le colonne nuove si aggiungono da sole; l'indirizzo del sito si scrive nelle
+  impostazioni di appoggio prima dello scambio.
+- **Copie fatte su un altro server**: le collazioni e i set di caratteri che il database di arrivo non conosce diventano i più
+  vicini conosciuti (`utf8mb4_0900_ai_ci` -> `utf8mb4_unicode_ci`, `utf8mb3` -> `utf8`...), solo fuori dagli apici, e il
+  registro lo dice ("Copia fatta su MySQL 8.0.46, qui MariaDB 10.6.28: in 17 tabelle la collazione utf8mb4_0900_ai_ci -> utf8mb4_unicode_ci"). Nel
+  manifest della copia c'è `server_versione`. Provato da MySQL 8 a MariaDB 10.6 e a MySQL 5.7, e da MariaDB a MySQL 8. Una
+  collazione `utf8_*` di una copia fatta su MySQL 5.7 diventa la `utf8mb3_*` con lo stesso suffisso sui server che elencano
+  solo quelle (`utf8_bin` -> `utf8mb3_bin`, mai una `general_ci` al posto di una `bin`), e viceversa.
+- Un ripristino alla volta (blocco del database, un secondo clic non ne fa partire due); un marcatore su file dice quali tabelle
+  di lavoro ha in mano un ripristino, e un ripristino interrotto a metà (processo ucciso dall'hosting) le lascia: il ripristino
+  dopo le toglie. Le righe INSERT della copia accettano solo valori letterali (una sottoquery o una funzione la fanno rifiutare,
+  prima di toccare il database); una riga più grande di `max_allowed_packet` del server ferma il ripristino con il messaggio
+  giusto, e le copie nuove scrivono blocchi sotto 1 MB. La struttura di una tabella (CREATE) non può portare vincoli o rimandi
+  verso altre tabelle, altri server o file (REFERENCES, UNION=, CONNECTION=, DATA DIRECTORY, INDEX DIRECTORY, TABLESPACE, fuori
+  dagli apici): plumeCMS non li scrive mai, e con due installazioni nello stesso database un vincolo legherebbe una tabella di
+  questo sito a una dell'altro; la copia è rifiutata prima dello scambio, con la parola e la tabella nel motivo. Lo stesso
+  blocco lo prende un aggiornamento (Impostazioni > Aggiornamenti) per tutto il suo lavoro: un ripristino e un aggiornamento
+  non si incrociano mai. Le tabelle di lavoro lasciate da un ripristino interrotto si tolgono anche aprendo Copia del sito, e
+  una che non si cancella resta scritta nel marcatore anche dopo il ripristino seguente.
+- **Il registro del ripristino resta su file** (`aggiornamenti/copie/ripristino-<data e ora>-<copia>.log`, un file per
+  tentativo, se ne tengono dieci) e in sicurezza_log: Copia del sito mostra sempre l'ultimo; se la copia ha altri utenti, dopo il nuovo accesso si torna lì con il registro. Se i file
+  falliscono dopo il database, il registro dice di ripristinare la copia prima-del-ripristino; se fallisce solo quello che
+  viene dopo i file (i file in più da mettere da parte, le protezioni dei temi), il titolo dice "Ripristino fatto, con errori
+  nelle operazioni finali": database e file ci sono tutti. Nel registro di una riga fallita mai i valori (ci sono le password
+  cifrate degli utenti): solo la tabella e il peso. I file di `uploads/` di una copia non firmata passano dal controllo dei
+  caricamenti (un file con codice dentro si salta e si elenca).
+- **La pagina di soccorso del pannello**: se il database non si raggiunge, o mancano le tabelle `users` o `settings` del
+  prefisso, ogni pagina del pannello (anche il login) risponde con una pagina pulita (503) che dice in parole semplici cosa
+  succede e i passi per rimettere il sito da una copia con phpMyAdmin. La pagina la vede chiunque (sta al posto del login): a
+  chi non è entrato non dice il nome del database, il prefisso delle tabelle né la risposta tecnica del server; questi dati
+  (servono in phpMyAdmin), l'elenco delle copie sul server (senza scaricarle né ripristinarle) e le prime 15 righe dell'ultimo
+  registro di ripristino escono solo con il file `aggiornamenti/soccorso.txt`, che il proprietario crea con il gestore dei file
+  e che vale 24 ore (poi la pagina lo ignora e dice di ricrearlo; la pagina ricorda di cancellarlo a lavoro finito). Mai
+  percorsi del server, mai la password, mai l'utente del database (nella risposta del server utente e host sono coperti).
+  La pagina avverte che una copia fatta su un altro hosting può essere rifiutata da phpMyAdmin (le collazioni) e si ripristina
+  dal pannello. Il sito pubblico risponde "Torno subito" (503) come prima.
+- **Niente più errori a video con i percorsi del server**: nel pannello `display_errors` è spento e un'eccezione non gestita
+  diventa una pagina sobria con classe, codice, messaggio e file:riga relativi alla cartella del CMS (JSON per le pagine
+  `-api.php`), tutto nel log; il dettaglio solo a chi è entrato nel pannello, agli altri l'ora della riga da cercare nel log;
+  nelle tracce del log mai gli argomenti delle funzioni (una password passata a una funzione non ci finisce); nel sito il 503
+  pulito. Con `define('CMS_DEBUG', true)` nel config tutto come prima.
+- Gli snapshot degli Aggiornamenti (e il ripristino automatico di un pacchetto fallito) usano lo stesso motore: con un errore
+  il database resta com'era, invece di restare a metà, e nemmeno i file dello snapshot si rimettono (file vecchi con un
+  database nuovo sarebbero un sito a metà). Lo snapshot contiene solo le tabelle del sito (fino alla 2.25.0 tutto il database,
+  anche le tabelle di un altro sito nello stesso database con i suoi utenti) e il ripristino rimette solo quelle: fino alla
+  2.25.0 rieseguiva tutto, anche le tabelle di un'altra installazione o di altri programmi nello stesso database.
+- Corretto: le copie e gli snapshot fatti su MySQL 8 perdevano le date `created_at` e `updated_at` di utenti, pagine e articoli
+  (MySQL 8 segna quelle colonne "DEFAULT_GENERATED" e il dump le scriveva come DEFAULT, come le colonne generate di
+  Prenotazioni ed Eventi): al ripristino prendevano l'ora del ripristino. Ora si scrivono i valori veri.
+- **Sicurezza, secondo giro di correzioni (5 novembre 2026)**: una riga della copia come ``CREATE TABLE `x` (`c'` int); DROP TABLE
+  `y` `` passava i controlli (lo spezzatore delle istruzioni conosceva solo gli apici semplici: l'apice dentro il nome fra apici
+  inversi nascondeva il punto e virgola) e la connessione eseguiva anche il secondo comando. Ora: lo spezzatore (`agg_split_sql()`,
+  anche per i file SQL dei pacchetti) e i pezzi fuori dalle virgolette conoscono apici semplici, doppi e inversi; una CREATE o
+  una INSERT con un punto e virgola fuori dalle virgolette ferma il ripristino ("contiene un secondo comando"), e in ogni CREATE
+  i nomi fra apici inversi devono essere solo lettere, cifre e trattino basso (fino a 64), come tutti quelli di plumeCMS; la
+  connessione del CMS (`db()`, e quella dell'installatore) non esegue più istruzioni impilate (`MULTI_STATEMENTS` spento alla
+  creazione). Inoltre: una CREATE con `TABLESPACE`, `DATA DIRECTORY` o `INDEX DIRECTORY` (anche dentro `/*!50100 ... */`) è
+  rifiutata con il motivo vero ("contiene una clausola che il ripristino non accetta: TABLESPACE"), non "è stata modificata";
+  il marcatore del ripristino scrive il prefisso del sito e ogni nome come coppia [marchio di lavoro, tabella], e non fa
+  cancellare una tabella di un'altra installazione nello stesso database; un errore qualunque fra il marcatore e lo scambio
+  (anche uno SHOW COLLATION fallito) toglie subito le tabelle di appoggio già create; alla fine di un ripristino (copia o
+  snapshot) la modalità SQL di sessione torna quella di prima.
+- **Terzo giro (5 novembre 2026)**: lo snapshot degli Aggiornamenti contiene solo le tabelle del sito (prima tutto il database,
+  anche un altro sito nello stesso database con i suoi utenti); i blocchi INSERT delle copie si chiudono a 1 MB meno 1 KB (la
+  riga che arriva al server, con il marchio di lavoro, sta in un `max_allowed_packet` di 1 MB esatto); nei dati di una INSERT il
+  punto e virgola fuori dalle virgolette non è mai ammesso; due registri dello stesso secondo si ordinano bene (`-2` è l'ultimo);
+  la pagina di soccorso copre il nome dell'utente del database solo come parola intera.
+- Prove: `prove/prova-copia-ripristino-sicuro.js` (su quattro siti, più MariaDB e MySQL 5.7); manuale d'uso capitolo 29 con
+  "Se il ripristino non si può fare" e "Se il pannello dice che il database è vuoto"; manuale tecnico 6.1, 19.4, 19.7, 19.8,
+  19.9, 22, 23.4, 24 e 25.
+
 ## 2.25.0 (4 novembre 2026) - Scorri di lato
 
 - **Il widget Scorri di lato** (richiesta di Danilo: "come sul sito Apple"): quando chi visita il sito arriva sul widget, la

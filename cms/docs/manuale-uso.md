@@ -3573,12 +3573,84 @@ Il registro lo dice: "Tabelle di un'altra installazione nello stesso database, l
 La copia contiene dati personali (utenti, iscritti, messaggi dei form): tienila in un posto sicuro e non mandarla per
 email.
 
+### Se il ripristino non si può fare
+
+Dalla 2.25.1 il ripristino è **sicuro**: prima ricrea la copia in tabelle di lavoro e, solo se tutto è andato bene, la mette
+al posto del sito in un colpo solo. Se il database rifiuta anche una sola tabella della copia (una copia modificata, un
+hosting con un database che non accetta qualcosa), il pannello dice **"Ripristino con errori: non si è fatto, il sito è come
+prima"**, con il motivo in parole semplici e, fra parentesi, il messaggio tecnico. Niente è cambiato: né il database né le
+immagini, i temi e i moduli.
+
+1. Leggi il motivo nel registro, sotto il titolo. Esempi: "La copia usa un ordinamento dei caratteri che questo server non
+   conosce", "La copia contiene un'istruzione che plumeCMS non scrive mai nelle copie" (la copia è stata modificata: una
+   funzione nei dati, o un vincolo verso un'altra tabella nella struttura), "Una riga della copia pesa X, il server ne
+   accetta Y".
+2. Una copia fatta su un altro hosting di solito passa lo stesso: le differenze fra i database (MySQL 8, MySQL 5.7, MariaDB)
+   le sistema il ripristino da solo e lo scrive nel registro ("Copia fatta su MySQL 8.0.46, qui MariaDB 10.6.28: in 17
+   tabelle la collazione utf8mb4_0900_ai_ci -> utf8mb4_unicode_ci"). Se non passa, rifai la copia dal sito di origine e riprova; se il motivo parla
+   di permessi o di spazio, risolvi nel pannello dell'hosting.
+3. Il registro resta sul server: in **Copia del sito** lo rivedi in cima, nel riquadro **Ultimo ripristino**, anche dopo
+   essere rientrato con altri utenti (quando la copia ha un amministratore diverso, dopo il ripristino si rientra con quello
+   e si torna da soli in questa pagina).
+4. Se il registro dice "Il database è stato rimesso, i file no" (lo spazio sul server è finito a metà), ripristina dall'elenco
+   la copia con **prima-del-ripristino** nel nome: rimette tutto com'era.
+5. Se il titolo dice **"Ripristino fatto ..., con errori nelle operazioni finali"**, il sito è quello della copia (database e
+   file ci sono tutti): non è riuscito solo lo spostamento da parte dei file in più, o la riscrittura delle protezioni delle
+   cartelle dei temi. Leggi quali nel registro; le protezioni le riscrive **Sicurezza**.
+
+Il pannello fa un ripristino alla volta: un secondo clic, o un'altra scheda, risponde "un altro ripristino è già in corso";
+lo stesso vale fra un ripristino e un aggiornamento (Impostazioni > Aggiornamenti): uno aspetta l'altro. Se un ripristino si
+interrompe a metà (il server lo ferma), le sue tabelle di lavoro si tolgono da sole la prima volta che apri Copia del sito, e la
+pagina lo dice.
+
+### Se il pannello dice che il database è vuoto
+
+![La pagina di soccorso del pannello](immagini/manuale-uso/27-soccorso.jpg)
+
+Se il database del sito perde le tabelle degli utenti o delle impostazioni (un ripristino o un'importazione interrotti a
+metà, un database svuotato per sbaglio), il pannello non può aprirsi: al posto dell'accesso compare la pagina **"Il database
+del sito è vuoto o incompleto"** (1), con i passi per rimettere tutto (2). Il sito intanto dice ai visitatori "Torno subito".
+Niente di tecnico e nessun dato sensibile: la password e l'utente del database non compaiono mai, e a chi apre la pagina
+senza essere entrato nel pannello (la vede chiunque, al posto dell'accesso) non compaiono nemmeno il nome del database e il
+prefisso delle tabelle: escono solo con il file `soccorso.txt`, spiegato sotto.
+
+1. Con il gestore dei file del tuo hosting (o un programma FTP) apri la cartella del sito, poi `aggiornamenti/copie/`.
+   Scarica la copia più recente con **prima-del-ripristino** nel nome: è quella che il pannello fa da solo prima di ogni
+   ripristino, con il sito com'era. Se non c'è, prendi la copia più recente che hai (anche quella sul tuo computer), purché
+   fatta su questo stesso hosting: una copia fatta su un altro hosting può essere rifiutata da phpMyAdmin (il suo database è
+   diverso e non conosce le collazioni di questo, lo stesso guasto del 4 novembre 2026); quella si ripristina dal pannello,
+   **Impostazioni > Copia del sito**, che la adatta da solo, dopo che il pannello è ripartito con una copia di questo server.
+2. Sul computer apri lo zip ed estrai il file `db.sql.gz`.
+3. Apri phpMyAdmin dal pannello dell'hosting, scegli a sinistra il database del sito (il nome è nel file
+   `includes/config.local.php`, riga `DB_NAME`; con il file `soccorso.txt` lo dice anche la pagina), apri la scheda
+   **Importa**, scegli `db.sql.gz` e premi **Esegui**. Il file contiene già le istruzioni per sostituire le tabelle;
+   phpMyAdmin legge i file `.gz` da solo (se lo rifiuta, decomprimilo prima sul computer e carica `db.sql`).
+4. Torna al pannello e ricarica la pagina: compare l'accesso, con gli utenti di quella copia.
+5. Se la copia aveva anche immagini, temi o moduli diversi, da **Impostazioni > Copia del sito** ripristina la stessa copia:
+   rimette anche i file.
+
+Per vedere nella pagina il nome del database e il prefisso delle tabelle (ti servono in phpMyAdmin), l'elenco delle copie
+che stanno sul server (3) (nome, data, peso, da quale sito vengono) e le prime righe dell'ultimo registro di ripristino, crea
+con il gestore dei file un file vuoto chiamato `soccorso.txt` nella cartella `aggiornamenti/` del sito e ricarica. Il file
+vale 24 ore (dopo la pagina lo ignora e ti dice di cancellarlo e ricrearlo) e si cancella da solo quando il pannello riparte;
+finché c'è, quei dati li vede chiunque apra la pagina: a lavoro finito cancellalo tu, come la pagina ricorda. L'utente del
+database non compare mai. Dalla pagina non si scarica e non si ripristina niente: le copie si prendono con il gestore dei file.
+
+Se invece la pagina dice **"Il pannello non raggiunge il database"**, il problema è nei dati di collegamento: controlla nel
+pannello dell'hosting che il database e l'utente esistano, e nel file `includes/config.local.php` che nome del database,
+utente e password siano quelli giusti (con `soccorso.txt` la pagina dice il nome del database che sta usando e la risposta
+del server, con l'utente e l'host coperti).
+
 **Checklist**
 
 - [ ] Faccio una copia una volta al mese, e prima di ogni cambiamento grosso.
 - [ ] Ne tengo una sul mio computer, fuori dal server.
 - [ ] Dopo un ripristino guardo il riquadro dei file spostati da parte (o "Nessun file in più") e, se serve, la sezione
   **File messi da parte dai ripristini**.
+- [ ] Dopo un ripristino leggo il registro: "Sito ripristinato", oppure il motivo per cui non si è fatto (il sito è come
+  prima).
+- [ ] Se il pannello dice che il database è vuoto, prendo la copia prima-del-ripristino con il gestore dei file e la importo
+  con phpMyAdmin, come dice la pagina.
 
 ---
 

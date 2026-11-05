@@ -10,8 +10,12 @@ $avviso = '';
 if (isset($_GET['annulla'])) { unset($_SESSION['sic_pre']); header('Location: login.php'); exit; }
 $passo2 = !empty($_SESSION['sic_pre']) && time() - (int)$_SESSION['sic_pre']['quando'] <= 300;
 $motivi = ['scaduta' => 'La sessione è scaduta: entra di nuovo.', 'inattiva' => 'Sei rimasto fermo troppo a lungo: entra di nuovo.', 'revocata' => 'Questa sessione è stata chiusa (cambio password o "Esci da tutti i dispositivi"): entra di nuovo.',
-    'ip' => 'Il tuo indirizzo IP non è fra quelli consentiti per il pannello.', 'reimpostata' => 'Password reimpostata: entra con quella nuova.'];
+    'ip' => 'Il tuo indirizzo IP non è fra quelli consentiti per il pannello.', 'reimpostata' => 'Password reimpostata: entra con quella nuova.',
+    // 2.25.1: dopo un ripristino da una copia con altri utenti si rientra con quelli, e si torna in Copia del sito con il registro.
+    'ripristino' => 'Il sito è stato ripristinato da una copia che ha altri utenti: entra con il nome e la password di quella copia. Dopo, il registro del ripristino ti aspetta in Copia del sito.'];
 if (isset($_GET['motivo']) && isset($motivi[$_GET['motivo']])) $avviso = $motivi[$_GET['motivo']];
+// Dove andare dopo l'accesso: la dashboard, oppure Copia del sito (?dopo=copia-sito). Il modulo ripete la query nel POST.
+$dopoLogin = (($_GET['dopo'] ?? '') === 'copia-sito') ? 'copia-sito.php?ultimo=1' : 'index.php';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     try {
@@ -19,7 +23,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $error = 'Richiesta rifiutata: apri il pannello dal suo indirizzo e riprova.';
         } elseif ($passo2 && isset($_POST['codice'])) {
             // sicurezza: secondo passo, il codice dell'app di autenticazione (o un codice di recupero).
-            if (login_2fa((string)$_POST['codice'])) { header('Location: index.php'); exit; }
+            if (login_2fa((string)$_POST['codice'])) { header('Location: ' . $dopoLogin); exit; }
             $passo2 = !empty($_SESSION['sic_pre']);
             $error = $passo2 ? 'Codice non valido. Riprova, oppure usa un codice di recupero.' : 'Tempo scaduto: ricomincia con nome e password.';
         } else {
@@ -28,7 +32,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $pass = $_POST['password'] ?? '';
             $secondi = 0;
             $esito = login_esteso($user, $pass, $secondi);
-            if ($esito === 'ok') { header('Location: index.php'); exit; }
+            if ($esito === 'ok') { header('Location: ' . $dopoLogin); exit; }
             if ($esito === '2fa') { $passo2 = true; }
             elseif ($esito === 'bloccato') $error = 'Troppi tentativi: riprova fra ' . max(1, (int)ceil($secondi / 60)) . ' minuti. Se hai dimenticato la password, usa il link qui sotto.';
             else $error = 'Nome utente o password non corretti. Controlla le maiuscole e riprova.';

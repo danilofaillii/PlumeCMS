@@ -343,12 +343,25 @@ function agg_pdo_buffered_attr(): int {
 /**
  * Mette la connessione fuori dalla modalita stretta del server: gli snapshot
  * e i file SQL dei pacchetti possono portare date vuote '0000-00-00'.
+ * 2.25.1: prima di cambiarla legge la modalita di sessione che c'e (quella di db(), stretta) e la tiene da parte:
+ * agg_sql_mode_torna() la rimette alla fine di un ripristino (copia_ripristina(), agg_restore_db()), cosi le pagine di quella
+ * stessa richiesta (il pannello dopo il ripristino) tornano a lavorare in modalita stretta come sempre.
  */
 function agg_sql_mode(): void {
-    static $fatto = false;
-    if ($fatto) return;
-    db()->exec("SET SESSION sql_mode = 'NO_ENGINE_SUBSTITUTION'");
-    $fatto = true;
+    if (!empty($GLOBALS['agg_sql_mode_lasca'])) return;
+    $pdo = db();
+    $prima = (string)$pdo->query('SELECT @@session.sql_mode')->fetchColumn();
+    $pdo->exec("SET SESSION sql_mode = 'NO_ENGINE_SUBSTITUTION'");
+    $GLOBALS['agg_sql_mode_lasca'] = true;
+    $GLOBALS['agg_sql_mode_prima'] = $prima;
+}
+
+/** 2.25.1: rimette la modalita SQL di sessione che c'era prima di agg_sql_mode() (niente da fare se non e stata cambiata). */
+function agg_sql_mode_torna(): void {
+    if (empty($GLOBALS['agg_sql_mode_lasca'])) return;
+    $GLOBALS['agg_sql_mode_lasca'] = false;
+    try { db()->exec('SET SESSION sql_mode = ' . db()->quote((string)($GLOBALS['agg_sql_mode_prima'] ?? ''))); }
+    catch (Throwable $e) { error_log('aggiornamenti: modalita SQL non rimessa: ' . $e->getMessage()); }
 }
 
 function agg_sql_val($v): string {
@@ -362,8 +375,13 @@ function agg_sql_val($v): string {
  */
 function agg_colonne_generate(PDO $pdo, string $t): array {
     $pos = [];
-    foreach ($pdo->query('SHOW COLUMNS FROM `' . str_replace('`', '``', $t) . '`')->fetchAll(PDO::FETCH_ASSOC) as $i => $c)
-        if (stripos((string)($c['Extra'] ?? ''), 'GENERATED') !== false) $pos[$i] = true;
+    foreach ($pdo->query('SHOW COLUMNS FROM `' . str_replace('`', '``', $t) . '`')->fetchAll(PDO::FETCH_ASSOC) as $i => $c) {
+        // 2.25.1: solo le colonne davvero generate (VIRTUAL GENERATED, STORED GENERATED). Su MySQL 8 una colonna con
+        // DEFAULT CURRENT_TIMESTAMP ha Extra "DEFAULT_GENERATED": fino alla 2.25.0 veniva scritta DEFAULT e le copie
+        // perdevano created_at e updated_at di utenti, pagine, articoli (al ripristino prendevano l'ora del ripristino).
+        $extra = (string)($c['Extra'] ?? '');
+        if (stripos($extra, 'GENERATED') !== false && stripos($extra, 'DEFAULT_GENERATED') === false) $pos[$i] = true;
+    }
     return $pos;
 }
 
@@ -385,7 +403,10 @@ function agg_dump_db(string $gzPath, string $prefisso = ''): array {
     gzwrite($gz, "SET SESSION sql_mode = 'NO_ENGINE_SUBSTITUTION';\n");
     gzwrite($gz, "SET FOREIGN_KEY_CHECKS=0;\n");
     $tables = $pdo->query('SHOW TABLES')->fetchAll(PDO::FETCH_COLUMN);
-    if ($prefisso !== '') $tables = array_values(array_filter($tables, fn($t) => str_starts_with((string)$t, $prefisso)));
+    if ($prefisso !== '') { // 2.25.1: solo le tabelle del prefisso, senza quelle di un'altra installazione (prefisso più lungo con settings e users)
+        require_once __DIR__ . '/copia-sito.php';
+        $tables = copia_tabelle_del_prefisso($tables, $prefisso);
+    }
     $righe = 0;
     foreach ($tables as $t) {
         $create = $pdo->query('SHOW CREATE TABLE `' . str_replace('`', '``', $t) . '`')->fetch(PDO::FETCH_NUM);
@@ -399,9 +420,10 @@ function agg_dump_db(string $gzPath, string $prefisso = ''): array {
         $buf = ''; $n = 0;
         while ($row = $st->fetch(PDO::FETCH_NUM)) {
             $vals = agg_riga_sql($row, $gen);
+            // 2.25.1: i blocchi si chiudono prima di superare 1 MB (max_allowed_packet del server di arrivo, 4 MB su MySQL 5.7).
+            if ($buf !== '' && strlen($buf) + strlen($vals) + 1 > 1047552) { gzwrite($gz, $buf . ";\n"); $buf = ''; } // 1 MB meno 1 KB, come COPIA_INSERT_MAX
             $buf .= ($buf === '' ? 'INSERT INTO `' . $t . '` VALUES ' : ',') . $vals;
             $n++; $righe++;
-            if (strlen($buf) > 400000) { gzwrite($gz, $buf . ";\n"); $buf = ''; }
         }
         if ($buf !== '') gzwrite($gz, $buf . ";\n");
         $st->closeCursor();
@@ -413,31 +435,25 @@ function agg_dump_db(string $gzPath, string $prefisso = ''): array {
 }
 
 /**
- * Riesegue un dump riga per riga. Un errore su una riga non ferma il
- * ripristino: le righe fallite vengono raccolte e riportate.
- * Ritorna ['eseguite' => int, 'errori' => string[]].
+ * Rimette il database da un dump (snapshot, ripristino automatico di un pacchetto fallito).
+ * Fino alla 2.25.0 rieseguiva il dump riga per riga (DROP, poi CREATE): un errore su una riga non fermava il ripristino, e una
+ * CREATE fallita lasciava la tabella cancellata. Dalla 2.25.1 passa dallo stesso motore della Copia del sito
+ * (copia_ripristina_db(), includes/copia-sito.php): tabelle di appoggio, poi una sola RENAME TABLE; con un errore niente cambia.
+ * Le tabelle di un'altra installazione nello stesso database (prefisso più lungo con settings e users) e le viste del dump
+ * restano fuori; le viste si rifanno dopo lo scambio.
+ * Ritorna ['ok', 'eseguite' => int, 'errori' => string[], 'righe' => righe per il registro].
  */
 function agg_restore_db(string $gzPath): array {
-    $pdo = db();
-    agg_sql_mode();
-    $gz = gzopen($gzPath, 'rb');
-    if (!$gz) throw new RuntimeException('Snapshot del database illeggibile: ' . $gzPath);
-    $n = 0; $errori = [];
-    $pdo->exec('SET FOREIGN_KEY_CHECKS=0');
-    while (($line = gzgets($gz)) !== false) {
-        $line = rtrim($line, "\r\n");
-        if ($line === '') continue;
-        if (substr($line, -1) === ';') $line = substr($line, 0, -1);
-        try {
-            $pdo->exec($line);
-            $n++;
-        } catch (Throwable $e) {
-            if (count($errori) < 30) $errori[] = substr($line, 0, 80) . ' ... : ' . $e->getMessage();
-        }
+    if (!is_file($gzPath)) throw new RuntimeException('Snapshot del database illeggibile: ' . $gzPath);
+    require_once __DIR__ . '/copia-sito.php';
+    if (!copia_blocco_prendi()) throw new RuntimeException('Un altro ripristino è in corso su questo sito: aspetta che finisca e riprova.');
+    try {
+        $r = copia_ripristina_db($gzPath, DB_PREFIX, null, null, []);
+    } finally {
+        copia_blocco_lascia();
+        agg_sql_mode_torna(); // 2.25.1: la connessione torna in modalita stretta per il resto della richiesta
     }
-    gzclose($gz);
-    $pdo->exec('SET FOREIGN_KEY_CHECKS=1');
-    return ['eseguite' => $n, 'errori' => $errori];
+    return ['ok' => $r['ok'], 'eseguite' => $r['eseguite'], 'errori' => $r['ok'] ? [] : array_merge([$r['motivo']], $r['errori']), 'righe' => $r['righe']];
 }
 
 /**
@@ -450,7 +466,7 @@ function agg_crea_snapshot(string $etichetta, array $destinazioni = []): string 
     $id = date('Ymd-His') . '-' . agg_slugify($etichetta);
     $dir = agg_dir('snapshot') . '/' . $id;
     @mkdir($dir . '/files', 0755, true);
-    $db = agg_dump_db($dir . '/db.sql.gz');
+    $db = agg_dump_db($dir . '/db.sql.gz', DB_PREFIX); // 2.25.1: solo le tabelle del prefisso (prima tutto il database, anche di un altro sito)
     $files = [];
     foreach ($destinazioni as $dest) {
         $abs = agg_dest_path($dest);
@@ -510,9 +526,16 @@ function agg_ripristina(string $id): array {
     $dir = agg_dir('snapshot') . '/' . basename($id);
     $log = [];
     $r = agg_restore_db($dir . '/db.sql.gz');
-    $log[] = "Database ripristinato: {$r['eseguite']} istruzioni eseguite, {$m['db']['tabelle']} tabelle.";
+    foreach ($r['righe'] as $x) $log[] = $x;
+    // 2.25.1: con un errore il database non cambia (tabelle di appoggio e scambio): si dice e si lascia com'è, e non si toccano
+    // nemmeno i file dello snapshot (file vecchi con un database nuovo sarebbero un sito a metà).
+    $log[] = $r['ok'] ? 'Database ripristinato.' : 'Database NON ripristinato: è rimasto com\'era prima di questo ripristino.';
     foreach ($r['errori'] as $e) $log[] = 'ERRORE nel ripristino: ' . $e;
-    if ($r['errori']) $log[] = count($r['errori']) . ' istruzioni del ripristino sono fallite: mandami questo log.';
+    if (!$r['ok']) {
+        $log[] = 'Il database non si è potuto rimettere: mandami questo log.';
+        if ($m['files']) $log[] = 'File dello snapshot non toccati (' . count($m['files']) . '): si rimettono solo insieme al database.';
+        return $log;
+    }
     foreach ($m['files'] as $f) {
         $abs = agg_dest_path($f['dest']);
         if ($f['esisteva']) {
@@ -536,21 +559,25 @@ function agg_ripristina(string $id): array {
  * delle stringhe: un ; dentro un testo tra apici non spezza niente, e le
  * righe di commento che iniziano con -- vengono tolte invece di far saltare
  * il blocco.
+ * 2.25.1 (sicurezza): le regioni fra virgolette sono tre, '...', "..." (con la barra di escape e la virgoletta raddoppiata) e
+ * `...` (un nome: solo l'apice inverso raddoppiato, nessuna barra). Fino alla 2.25.0 contava solo gli apici semplici: un apice
+ * semplice dentro un nome fra apici inversi (CREATE TABLE `x` (`c'` int); DROP TABLE `y`) apriva una stringa finta che
+ * inghiottiva il punto e virgola, la riga contava come UNA istruzione e il ripristino della copia la eseguiva intera.
  */
 function agg_split_sql(string $sql): array {
     $out = [];
     $cur = '';
     $len = strlen($sql);
-    $inStr = false;
+    $inStr = ''; // la virgoletta che ha aperto la regione in corso: ', " o `; '' = fuori
     $lineStart = true;
     for ($i = 0; $i < $len; $i++) {
         $c = $sql[$i];
-        if ($inStr) {
+        if ($inStr !== '') {
             $cur .= $c;
-            if ($c === '\\' && $i + 1 < $len) { $cur .= $sql[++$i]; continue; }
-            if ($c === "'") {
-                if ($i + 1 < $len && $sql[$i + 1] === "'") { $cur .= "'"; $i++; continue; }
-                $inStr = false;
+            if ($c === '\\' && $inStr !== '`' && $i + 1 < $len) { $cur .= $sql[++$i]; continue; }
+            if ($c === $inStr) {
+                if ($i + 1 < $len && $sql[$i + 1] === $inStr) { $cur .= $inStr; $i++; continue; }
+                $inStr = '';
             }
             continue;
         }
@@ -559,7 +586,7 @@ function agg_split_sql(string $sql): array {
             continue;
         }
         $lineStart = ($c === "\n");
-        if ($c === "'") { $inStr = true; $cur .= $c; continue; }
+        if ($c === "'" || $c === '"' || $c === '`') { $inStr = $c; $cur .= $c; continue; }
         if ($c === ';') {
             $s = trim($cur);
             if ($s !== '') $out[] = $s;
@@ -625,6 +652,12 @@ function agg_applica(string $id): array {
     @ignore_user_abort(true);
     $stato = agg_leggi_stato($id);
     if (!$stato) return ['ok' => false, 'riassunto' => 'pacchetto non trovato', 'log' => []];
+    // 2.25.1: il motore del ripristino si carica ADESSO, prima che il pacchetto riscriva i file: se qualcosa va male, il
+    // ripristino automatico (agg_restore_db) usa il copia-sito.php di questa versione, la stessa di questo file, non quello
+    // appena scritto dal pacchetto. E un ripristino da Copia del sito in corso non si incrocia con un aggiornamento: lo stesso
+    // blocco per tutto il lavoro (copia_blocco_prendi(), rientrante per il ripristino dello snapshot).
+    require_once __DIR__ . '/copia-sito.php';
+    if (!copia_blocco_prendi()) return ['ok' => false, 'riassunto' => 'un ripristino da Copia del sito è in corso su questo sito: aspetta che finisca e riprova (il pacchetto resta in attesa)', 'log' => ['Non applicato: un ripristino da Copia del sito è in corso su questo sito. Niente è stato toccato: aspetta che finisca e riprova.']];
     $zipPath = agg_dir('pacchetti') . '/' . basename($id) . '.zip';
     $log = [];
     $t0 = microtime(true);
@@ -763,6 +796,8 @@ function agg_applica(string $id): array {
         agg_salva_stato($stato);
         agg_progresso($id, $totale, $totale, 'Non applicato: ' . $e->getMessage(), true, false);
         return ['ok' => false, 'riassunto' => $e->getMessage(), 'log' => $log];
+    } finally {
+        copia_blocco_lascia();
     }
 }
 

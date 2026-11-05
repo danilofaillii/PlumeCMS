@@ -299,7 +299,8 @@ Attacchi: gruppo 39 di `tools/sicurezza-prova.js` (con `CMS_DIR`), che usa `prov
 
 I kit di partenza dell'installatore. Su una cartella appena estratta e un database vuoto (come per `prova-install.js`):
 `DBPASS=... node prove/prova-kit.js <base> <kit> <db> <cartella schermate>`, con `<kit>` fra `vuoto`, `personale`,
-`attivita`, `blog`, `portfolio`. Installa scegliendo il kit al passo 4, poi visita ogni pagina del menu dell'header al
+`attivita`, `blog`, `portfolio`; `DBHOST=127.0.0.1:3309` per un database su un altro server (MariaDB, MySQL 5.7; di
+partenza `127.0.0.1:3308`), `PREFISSO=cms_b_` per una seconda installazione nello stesso database. Installa scegliendo il kit al passo 4, poi visita ogni pagina del menu dell'header al
 computer e al telefono: 200, un solo h1, niente scorrimento orizzontale, immagini caricate, nessun segnaposto `{...}`
 rimasto, link interni nella cartella del sito; apre la home nell'editor. Con il CMS in una cartella la base è quella con la
 cartella (`http://127.0.0.1:8082/test`, server con `CMS_CARTELLA=/test`). Ogni kit vuole un'installazione nuova.
@@ -322,6 +323,32 @@ copia, zip slip, percorso assoluto, file nascosto, copia di un altro sito con PH
 poi `node prove/prova-copia.js <base> <cartella CMS> <utente> <password> <cartella zip> <cartella schermate>`. Il server
 di prova deve avere i limiti predefiniti di PHP (`upload_max_filesize` 2M, `post_max_size` 8M). Atteso: 30 su 30.
 Ripristina il sito più volte: alla fine il sito è quello della copia fatta all'inizio, più `uploads/copia-estranea.txt`.
+
+## prova-copia-ripristino-sicuro.js (2.25.1)
+
+Il ripristino sicuro della Copia del sito (tabelle di appoggio, scambio in una RENAME, collazioni di un altro server, blocco,
+marcatore a coppie [marchio, tabella] con il prefisso, che non tocca le tabelle di un'altra installazione, e pulizia aprendo
+Copia del sito, INSERT solo letterali, CREATE senza vincoli o rimandi verso altre tabelle (REFERENCES, UNION=) e con TABLESPACE
+rifiutato con il motivo vero, istruzioni impilate (secondo giro, 5 novembre 2026: una CREATE con un apice dentro un nome fra
+apici inversi e un secondo comando, un nome con l'apice, una INSERT con un punto e virgola fuori dalle virgolette: rifiutate;
+una INSERT con punto e virgola e apici inversi dentro un valore: accettata; `db()` che non esegue due istruzioni in una),
+registro su file uno per tentativo, pagina di soccorso con il nome del database e il prefisso (mai l'utente) solo con
+`aggiornamenti/soccorso.txt`, che vale 24 ore, registro a 15 righe, snapshot degli Aggiornamenti sullo stesso motore con la
+modalità SQL rimessa, un aggiornamento che non parte durante un ripristino). Servono quattro siti
+installati con lo stesso utente: A (kit Attività, prefisso `cms_`), C (kit Personale, prefisso `plume_c_`, database suo), B2
+(prefisso `cms_b_` nello STESSO database di A, come per `prova-copia-pulita.js`), D (kit Vuoto, per la pagina di soccorso).
+Per le prove fra server, un sito su MariaDB 10.6 (`SITO_MARIADB="<base>|<cartella>"`) e uno su MySQL 5.7 (`SITO_MYSQL57`),
+installati con l'host del loro server (`DBHOST=127.0.0.1:3309 node prove/prova-kit.js ...`; in Docker: `mariadb:10.6` sulla
+3309, `mysql:5.7` sulla 3310). Il server php di C deve essere un
+`php -S 127.0.0.1:<porta> -t <cartella C> prove/router-php-s.php` senza cartella: la prova lo uccide a metà ripristino
+(`CMS_RIPRISTINO_PAUSA` scritto nel config di C) e lo riaccende. `FOTO_MANUALE=1` scrive anche la schermata del manuale
+(`27-soccorso.jpg`, con i segni dei passi) nella cartella di uscita.
+`FOTO_MANUALE=1 SITO_MARIADB=... SITO_MYSQL57=... DBPASS=... node prove/prova-copia-ripristino-sicuro.js <base A> <cartella A>
+<base C> <cartella C> <base B2> <cartella B2> <base D> <cartella D> <utente> <password> <cartella uscita>`.
+Atteso: 114 su 114 (5 novembre 2026, secondo giro; senza i due siti degli altri server 105 su 105). Lascia A come la sua prima copia (con uno
+snapshot manuale in più), C con i contenuti del sito MariaDB (o di A), D rimesso; le copie di prova (collazione, rotta,
+sottoquery, funzione, impilata, nome, insert-impilata, insert-strana, tablespace, vincolo, union, commento) restano nelle
+cartelle `aggiornamenti/copie/` dei siti. Prima di rilanciarla sugli stessi siti: l'amministratore di C torna `prova`.
 
 ## prova-versione.js (1.3.0)
 

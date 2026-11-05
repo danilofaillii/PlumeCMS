@@ -63,17 +63,34 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             } else {
                 $file = basename((string)($_POST['file'] ?? ''));
             }
+            // Il lavoro gira con l'output in un buffer: qualcosa stampato durante il lavoro (un echo di un modulo; dalla 2.25.1
+            // gli avvisi di PHP vanno solo nel log) manderebbe le intestazioni e romperebbe la sessione qui sotto.
             session_write_close();
             ob_start();
-            $r = copia_ripristina($file, !empty($_POST['tieni'])); // 2.1: "tieni i file in più" 
+            $r = copia_ripristina($file, !empty($_POST['tieni'])); // 2.1: "tieni i file in più"
             $rumore = trim((string)ob_get_clean());
             @session_start();
-            if ($rumore !== '') $r['log'][] = 'Avvisi di PHP durante il lavoro, non bloccanti: ' . mb_substr($rumore, 0, 1500);
-            $esito = ['ok' => $r['ok'], 'titolo' => ($r['ok'] ? 'Sito ripristinato dalla copia ' : 'Ripristino con errori dalla copia ') . $file, 'log' => $r['log'], 'scarto' => $r['scarto'] ?? null];
-            // Il database nuovo può avere altri utenti: se questo non c'è più, si rientra con quelli della copia.
+            if ($rumore !== '') $r['log'][] = 'Testo stampato durante il lavoro, non bloccante: ' . mb_substr($rumore, 0, 1500);
+            // 2.25.1: quattro esiti. Riuscito; non fatto (il database ha rifiutato la copia: niente è cambiato, fase "prima");
+            // database rimesso ma file no (fase "database"); database e file rimessi, errore solo nelle operazioni finali (fase
+            // "file": i file in più da mettere da parte, le protezioni dei temi). Il registro è già su file (copia_registro_scrivi).
+            $fase = (string)($r['fase'] ?? 'fatto');
+            $titolo = $r['ok'] ? 'Sito ripristinato dalla copia ' . $file
+                : match ($fase) {
+                    'prima' => 'Ripristino con errori dalla copia ' . $file . ': non si è fatto, il sito è come prima',
+                    'file' => 'Ripristino fatto dalla copia ' . $file . ', con errori nelle operazioni finali (file in più o protezioni dei temi)',
+                    default => 'Ripristino con errori dalla copia ' . $file . ': database rimesso, file no',
+                };
+            $esito = ['ok' => $r['ok'], 'titolo' => $titolo, 'log' => $r['log'], 'scarto' => $r['scarto'] ?? null, 'fase' => $fase];
+            // Il database nuovo può avere altri utenti: se questo non c'è più, si rientra con quelli della copia, e dopo
+            // l'accesso si torna qui, con il registro letto dal file (2.25.1).
             $st = db()->prepare('SELECT COUNT(*) FROM ' . tbl('users') . " WHERE id = ? AND username = ? AND role = 'admin'");
             $st->execute([(int)($_SESSION['admin_user_id'] ?? 0), (string)($_SESSION['admin_username'] ?? '')]);
-            if (!(int)$st->fetchColumn()) logout(); // al login si entra con gli utenti della copia
+            if (!(int)$st->fetchColumn()) {
+                sicurezza_sessione_chiudi('logout');
+                header('Location: login.php?motivo=ripristino&dopo=copia-sito');
+                exit;
+            }
         }
     } catch (Throwable $e) {
         flash('error', $e->getMessage());
@@ -81,9 +98,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 }
 
+// 2.25.1: le tabelle di lavoro lasciate da un ripristino interrotto (nominate dal marcatore) si tolgono anche qui, aprendo la
+// pagina, se nessun ripristino è in corso (il blocco): così non aspettano il ripristino dopo.
+if ($_SERVER['REQUEST_METHOD'] !== 'POST' && is_file(copia_marcatore_file()) && copia_blocco_prendi()) {
+    try { $tolte = copia_pulisci_interrotto(); if ($tolte) flash('info', 'Tabelle di lavoro rimaste da un ripristino interrotto, tolte: ' . count($tolte) . ' (' . implode(', ', array_slice($tolte, 0, 6)) . (count($tolte) > 6 ? '...' : '') . ').'); }
+    catch (Throwable $e) { error_log('copia: pulizia del ripristino interrotto: ' . $e->getMessage()); }
+    finally { copia_blocco_lascia(); }
+}
 $copie = copia_elenco();
 $scarti = copia_scarto_elenco();
 $pronta = basename((string)($_GET['pronta'] ?? ''));
+// 2.25.1: l'ultimo registro di ripristino, dal file: si vede sempre, anche dopo un nuovo accesso (?ultimo=1 dal login).
+$ultimo = $esito ? null : copia_registro_ultimo();
+if (!empty($_GET['ultimo']) && $ultimo) flash('info', 'Sei rientrato con gli utenti della copia. Qui sotto il registro del ripristino di ' . date('d/m/Y H:i', $ultimo['data']) . '.');
 require_once __DIR__ . '/includes/admin-header.php';
 ?>
 <style>
@@ -128,6 +155,10 @@ require_once __DIR__ . '/includes/admin-header.php';
     <ul><?php foreach (array_slice($sf, 0, 200) as $f): ?><li><?= h($f) ?></li><?php endforeach; ?><?php if (count($sf) > 200): ?><li>... e altri <?= count($sf) - 200 ?></li><?php endif; ?></ul></div>
 <?php endif; ?>
 <pre class="cs-log"><?= h(implode("\n", $esito['log'])) ?></pre></div>
+<?php elseif ($ultimo): ?>
+<div class="cs-esito <?= $ultimo['ok'] ? 'ok' : 'ko' ?>" id="cs-ultimo"><strong>Ultimo ripristino: <?= h(date('d/m/Y H:i', $ultimo['data'])) ?>, dalla copia <?= h($ultimo['copia']) ?>, <?= $ultimo['ok'] ? 'riuscito' : 'con errori' ?></strong>
+<p class="cs-note" style="margin:.3rem 0 0">Il registro resta sul server (<code>aggiornamenti/copie/</code>), così lo rivedi anche se dopo il ripristino sei dovuto rientrare con altri utenti.</p>
+<pre class="cs-log"><?= h(implode("\n", $ultimo['righe'])) ?></pre></div>
 <?php endif; ?>
 
 <div class="cs-avviso" role="note"><span aria-hidden="true">&#9888;</span><div><b>Una copia contiene dati sensibili.</b>Dentro ci sono il database intero (utenti con le password cifrate, iscritti alla newsletter, messaggi dei form, impostazioni) e tutti i file caricati. Conservala in un posto sicuro e non mandarla per email. La password del database (il file <code>includes/config.local.php</code>) non è nella copia.</div></div>
@@ -221,6 +252,8 @@ require_once __DIR__ . '/includes/admin-header.php';
       if (f.querySelector('input[name=azione]').value !== 'crea' && !confirm('Ripristino il sito dalla copia? Database e file vengono sostituiti. Prima faccio una copia del sito di adesso.')) { e.preventDefault(); return; }
       document.getElementById('cs-lavoro-titolo').textContent = f.dataset.lavoro;
       lav.hidden = false;
+      // 2.25.1: un secondo clic non fa partire un secondo lavoro (il server comunque ne accetta uno alla volta).
+      setTimeout(function () { document.querySelectorAll('form[data-lavoro] button[type=submit]').forEach(function (b) { b.disabled = true; }); }, 0);
     });
   });
 })();

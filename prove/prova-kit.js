@@ -14,7 +14,7 @@ let n = 0, ko = 0; const ok = (t, c, extra = '') => { n++; if (!c) ko++; console
   await p.goto(B + '/', { waitUntil: 'networkidle' });
   ok('senza config la home apre l\'installatore', p.url().includes('/install/'), p.url());
   await p.click('a.btn:has-text("Avanti")'); await p.waitForLoadState('networkidle');
-  await p.fill('#host', '127.0.0.1:3308'); await p.fill('#nome', DB); await p.fill('#utente', 'danilo'); await p.fill('#password', process.env.DBPASS || '');
+  await p.fill('#host', process.env.DBHOST || '127.0.0.1:3308'); await p.fill('#nome', DB); await p.fill('#utente', 'danilo'); await p.fill('#password', process.env.DBPASS || ''); // DBHOST=127.0.0.1:3309 per un altro server (MariaDB, MySQL 5.7)
   await p.fill('#prefisso', process.env.PREFISSO || 'cms_'); await p.check('input[name=crea]'); // PREFISSO=cms_b_ per due installazioni nello stesso database (2.1)
   await Promise.all([p.waitForNavigation(), p.click('button[type=submit]')]);
   await p.fill('#nome', 'Studio Prova'); await p.fill('#descrizione', 'Un sito di prova costruito dal kit di partenza.'); await p.fill('#email', 'sito@esempio.it');

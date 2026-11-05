@@ -1,7 +1,8 @@
 <?php
 // Errori e deprecazioni: nel log del publisher (logs/php-errori.log), mai a video sul sito pubblico, nelle API e nei cron.
 // Sul server il php.ini può avere display_errors acceso: una riga "Deprecated" stampata prima di header() rompe un redirect,
-// un JSON o il pixel delle aperture. Il pannello (admin/includes/auth.php) definisce PUBLISHER_ERRORI prima e tiene gli avvisi veri a video.
+// un JSON o il pixel delle aperture. Il pannello (admin/includes/auth.php) definisce PUBLISHER_ERRORI prima e fa da sé: dalla 2.25.1
+// nemmeno lì niente a video (un'eccezione non gestita diventa la pagina sobria di includes/errori.php, tutto nel log).
 if (!defined('PUBLISHER_ERRORI')) {
     define('PUBLISHER_ERRORI', 'log');
     error_reporting(E_ALL);
@@ -29,6 +30,9 @@ if (!cms_installato() && !defined('CMS_INSTALLER')) {
     header('Location: ' . cms_base() . '/install/', true, 302);
     exit;
 }
+// 2.25.1: un'eccezione non gestita nel sito, nelle API o nei cron diventa il 503 pulito "Torno subito" (nel pannello la pagina
+// sobria di auth.php), sempre nel log: mai una traccia con i percorsi del server a chi visita. CMS_DEBUG nel config la spegne.
+if (PUBLISHER_ERRORI === 'log') { require_once __DIR__ . '/errori.php'; errori_attiva('sito'); }
 
 // Ora italiana per tutto il publisher: le date e ore di uscita degli articoli sono italiane.
 date_default_timezone_set(defined('CMS_FUSO') && in_array(CMS_FUSO, timezone_identifiers_list(), true) ? CMS_FUSO : 'Europe/Rome');

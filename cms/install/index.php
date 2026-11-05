@@ -88,7 +88,11 @@ function inst_pdo(array $db, bool $senzaDb = false): PDO {
     $host = $db['host']; $porta = '';
     if (preg_match('/^(.+):(\d+)$/', $host, $m)) { $host = $m[1]; $porta = ';port=' . $m[2]; }
     $dsn = 'mysql:host=' . $host . $porta . ($senzaDb ? '' : ';dbname=' . $db['nome']) . ';charset=utf8mb4';
-    return new PDO($dsn, $db['utente'], $db['password'], [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION, PDO::ATTR_TIMEOUT => 5]);
+    $opzioni = [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION, PDO::ATTR_TIMEOUT => 5];
+    // 2.25.1: come db() (includes/db.php, che qui non e ancora caricato): niente istruzioni impilate, l'installatore ne manda una alla volta.
+    if (class_exists('Pdo\\Mysql') && defined('Pdo\\Mysql::ATTR_MULTI_STATEMENTS')) $opzioni[constant('Pdo\\Mysql::ATTR_MULTI_STATEMENTS')] = false;
+    elseif (defined('PDO::MYSQL_ATTR_MULTI_STATEMENTS')) $opzioni[constant('PDO::MYSQL_ATTR_MULTI_STATEMENTS')] = false;
+    return new PDO($dsn, $db['utente'], $db['password'], $opzioni);
 }
 
 /**

@@ -9,15 +9,29 @@ function tbl(string $name): string {
     return '`' . DB_PREFIX . $name . '`';
 }
 
+/**
+ * 2.25.1 (sicurezza): l'attributo PDO che spegne le istruzioni impilate ("CREATE ...; DROP ..." in una sola exec()), da passare
+ * alla creazione della connessione (dopo non si cambia). Su PHP 8.4 sta in Pdo\Mysql, prima in PDO::MYSQL_ATTR_*; null se il
+ * driver non lo ha. Il CMS manda sempre un'istruzione alla volta: con le impilate accese una riga di una copia modificata che
+ * supera i controlli porterebbe un secondo comando.
+ */
+function db_attr_istruzioni_impilate(): ?int {
+    if (class_exists('Pdo\\Mysql') && defined('Pdo\\Mysql::ATTR_MULTI_STATEMENTS')) return constant('Pdo\\Mysql::ATTR_MULTI_STATEMENTS');
+    if (defined('PDO::MYSQL_ATTR_MULTI_STATEMENTS')) return constant('PDO::MYSQL_ATTR_MULTI_STATEMENTS');
+    return null;
+}
+
 function db(): PDO {
     static $pdo = null;
     if ($pdo === null) {
         $dsn = 'mysql:host=' . DB_HOST . ';dbname=' . DB_NAME . ';charset=' . DB_CHARSET;
-        $pdo = new PDO($dsn, DB_USER, DB_PASS, [
+        $opzioni = [
             PDO::ATTR_ERRMODE            => PDO::ERRMODE_EXCEPTION,
             PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
             PDO::ATTR_EMULATE_PREPARES   => false,
-        ]);
+        ];
+        if (db_attr_istruzioni_impilate() !== null) $opzioni[db_attr_istruzioni_impilate()] = false; // 2.25.1: mai due istruzioni in una
+        $pdo = new PDO($dsn, DB_USER, DB_PASS, $opzioni);
         // MySQL alla stessa ora di PHP (scarto calcolato adesso, ora legale compresa): NOW() e time()
         // devono dire la stessa cosa, se no un articolo programmato alle 06:00 esce alle 07:00 o alle 08:00.
         $pdo->exec("SET time_zone = '" . date('P') . "'");
