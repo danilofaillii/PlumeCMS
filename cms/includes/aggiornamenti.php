@@ -403,7 +403,10 @@ function agg_dump_db(string $gzPath, string $prefisso = ''): array {
     gzwrite($gz, "SET SESSION sql_mode = 'NO_ENGINE_SUBSTITUTION';\n");
     gzwrite($gz, "SET FOREIGN_KEY_CHECKS=0;\n");
     $tables = $pdo->query('SHOW TABLES')->fetchAll(PDO::FETCH_COLUMN);
-    if ($prefisso !== '') $tables = array_values(array_filter($tables, fn($t) => str_starts_with((string)$t, $prefisso)));
+    if ($prefisso !== '') { // 2.25.1: solo le tabelle del prefisso, senza quelle di un'altra installazione (prefisso più lungo con settings e users)
+        require_once __DIR__ . '/copia-sito.php';
+        $tables = copia_tabelle_del_prefisso($tables, $prefisso);
+    }
     $righe = 0;
     foreach ($tables as $t) {
         $create = $pdo->query('SHOW CREATE TABLE `' . str_replace('`', '``', $t) . '`')->fetch(PDO::FETCH_NUM);
@@ -418,7 +421,7 @@ function agg_dump_db(string $gzPath, string $prefisso = ''): array {
         while ($row = $st->fetch(PDO::FETCH_NUM)) {
             $vals = agg_riga_sql($row, $gen);
             // 2.25.1: i blocchi si chiudono prima di superare 1 MB (max_allowed_packet del server di arrivo, 4 MB su MySQL 5.7).
-            if ($buf !== '' && strlen($buf) + strlen($vals) + 1 > 1048576) { gzwrite($gz, $buf . ";\n"); $buf = ''; }
+            if ($buf !== '' && strlen($buf) + strlen($vals) + 1 > 1047552) { gzwrite($gz, $buf . ";\n"); $buf = ''; } // 1 MB meno 1 KB, come COPIA_INSERT_MAX
             $buf .= ($buf === '' ? 'INSERT INTO `' . $t . '` VALUES ' : ',') . $vals;
             $n++; $righe++;
         }
@@ -463,7 +466,7 @@ function agg_crea_snapshot(string $etichetta, array $destinazioni = []): string 
     $id = date('Ymd-His') . '-' . agg_slugify($etichetta);
     $dir = agg_dir('snapshot') . '/' . $id;
     @mkdir($dir . '/files', 0755, true);
-    $db = agg_dump_db($dir . '/db.sql.gz');
+    $db = agg_dump_db($dir . '/db.sql.gz', DB_PREFIX); // 2.25.1: solo le tabelle del prefisso (prima tutto il database, anche di un altro sito)
     $files = [];
     foreach ($destinazioni as $dest) {
         $abs = agg_dest_path($dest);
@@ -526,7 +529,7 @@ function agg_ripristina(string $id): array {
     foreach ($r['righe'] as $x) $log[] = $x;
     // 2.25.1: con un errore il database non cambia (tabelle di appoggio e scambio): si dice e si lascia com'è, e non si toccano
     // nemmeno i file dello snapshot (file vecchi con un database nuovo sarebbero un sito a metà).
-    $log[] = $r['ok'] ? "Database ripristinato: {$r['eseguite']} istruzioni eseguite, {$m['db']['tabelle']} tabelle." : 'Database NON ripristinato: è rimasto com\'era prima di questo ripristino.';
+    $log[] = $r['ok'] ? 'Database ripristinato.' : 'Database NON ripristinato: è rimasto com\'era prima di questo ripristino.';
     foreach ($r['errori'] as $e) $log[] = 'ERRORE nel ripristino: ' . $e;
     if (!$r['ok']) {
         $log[] = 'Il database non si è potuto rimettere: mandami questo log.';

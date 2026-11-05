@@ -55,9 +55,9 @@ Il prodotto si chiama **plumeCMS** (nome scelto il 26 ottobre 2026; prima, per p
   pulito. Con `define('CMS_DEBUG', true)` nel config tutto come prima.
 - Gli snapshot degli Aggiornamenti (e il ripristino automatico di un pacchetto fallito) usano lo stesso motore: con un errore
   il database resta com'era, invece di restare a metà, e nemmeno i file dello snapshot si rimettono (file vecchi con un
-  database nuovo sarebbero un sito a metà). Lo snapshot contiene tutto il database, ma il ripristino rimette solo le tabelle
-  del prefisso del sito: fino alla 2.25.0 rieseguiva tutto, anche le tabelle di un'altra installazione o di altri programmi
-  nello stesso database.
+  database nuovo sarebbero un sito a metà). Lo snapshot contiene solo le tabelle del sito (fino alla 2.25.0 tutto il database,
+  anche le tabelle di un altro sito nello stesso database con i suoi utenti) e il ripristino rimette solo quelle: fino alla
+  2.25.0 rieseguiva tutto, anche le tabelle di un'altra installazione o di altri programmi nello stesso database.
 - Corretto: le copie e gli snapshot fatti su MySQL 8 perdevano le date `created_at` e `updated_at` di utenti, pagine e articoli
   (MySQL 8 segna quelle colonne "DEFAULT_GENERATED" e il dump le scriveva come DEFAULT, come le colonne generate di
   Prenotazioni ed Eventi): al ripristino prendevano l'ora del ripristino. Ora si scrivono i valori veri.
@@ -74,6 +74,11 @@ Il prodotto si chiama **plumeCMS** (nome scelto il 26 ottobre 2026; prima, per p
   cancellare una tabella di un'altra installazione nello stesso database; un errore qualunque fra il marcatore e lo scambio
   (anche uno SHOW COLLATION fallito) toglie subito le tabelle di appoggio già create; alla fine di un ripristino (copia o
   snapshot) la modalità SQL di sessione torna quella di prima.
+- **Terzo giro (5 novembre 2026)**: lo snapshot degli Aggiornamenti contiene solo le tabelle del sito (prima tutto il database,
+  anche un altro sito nello stesso database con i suoi utenti); i blocchi INSERT delle copie si chiudono a 1 MB meno 1 KB (la
+  riga che arriva al server, con il marchio di lavoro, sta in un `max_allowed_packet` di 1 MB esatto); nei dati di una INSERT il
+  punto e virgola fuori dalle virgolette non è mai ammesso; due registri dello stesso secondo si ordinano bene (`-2` è l'ultimo);
+  la pagina di soccorso copre il nome dell'utente del database solo come parola intera.
 - Prove: `prove/prova-copia-ripristino-sicuro.js` (su quattro siti, più MariaDB e MySQL 5.7); manuale d'uso capitolo 29 con
   "Se il ripristino non si può fare" e "Se il pannello dice che il database è vuoto"; manuale tecnico 6.1, 19.4, 19.7, 19.8,
   19.9, 22, 23.4, 24 e 25.

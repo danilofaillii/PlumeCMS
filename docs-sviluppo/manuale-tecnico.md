@@ -3530,12 +3530,14 @@ immagini, pdf, css, js, caratteri, json, webmanifest, map) e `root/.htaccess`.
 - Cartella `aggiornamenti/`: `pacchetti/<id>.zip` e `.json`, `snapshot/<id>/` (database compresso, file,
   descrizione). È chiusa al web con un `.htaccess` scritto da solo.
 - Si tengono gli ultimi 5 snapshot. Uno snapshot si può ripristinare a mano. Dalla 2.25.1 il ripristino di uno snapshot
-  (`agg_restore_db()`, `includes/aggiornamenti.php:443`) passa dal motore della Copia del sito (19.9): con un errore il
-  database resta com'era, invece di restare a metà, e i file dello snapshot non si toccano (`agg_ripristina()`, `:518`: file
+  (`agg_restore_db()`, `includes/aggiornamenti.php:446`) passa dal motore della Copia del sito (19.9): con un errore il
+  database resta com'era, invece di restare a metà, e i file dello snapshot non si toccano (`agg_ripristina()`, `:521`: file
   vecchi con un database nuovo sarebbero un sito a metà; il titolo dice "Ripristino NON fatto" e il messaggio "database e file
-  sono rimasti com'erano"). Lo snapshot ha tutto il database (`agg_dump_db()` senza prefisso, `:399`), ma il ripristino rimette
-  solo le tabelle del prefisso del sito (fino alla 2.25.0 rieseguiva tutto, anche le tabelle di un'altra installazione o di
-  altri programmi nello stesso database). Alla fine la modalità SQL di sessione torna quella di prima del ripristino
+  sono rimasti com'erano"). Lo snapshot dalla 2.25.1 ha solo le tabelle del sito (`agg_dump_db($file, DB_PREFIX)`, `:399`, che
+  con il prefisso toglie anche quelle di un'altra installazione con `copia_tabelle_del_prefisso()`; fino alla 2.25.0 tutto il
+  database, comprese le tabelle di un altro sito nello stesso database, con i suoi utenti), e il ripristino rimette solo le
+  tabelle del prefisso del sito (fino alla 2.25.0 rieseguiva tutto, anche le tabelle di un'altra installazione o di altri
+  programmi nello stesso database). Alla fine la modalità SQL di sessione torna quella di prima del ripristino
 (`agg_sql_mode()`, `:350`, la legge prima di metterla a `NO_ENGINE_SUBSTITUTION`; `agg_sql_mode_torna()`, `:360`, la rimette:
 le pagine di quella richiesta tornano in modalità stretta). `agg_applica()` (`:647`) carica `copia-sito.php` prima di scrivere i file del
   pacchetto (così il ripristino automatico usa il motore della stessa versione di `aggiornamenti.php`, non quello appena
@@ -3623,20 +3625,22 @@ l'amministratore, ogni azione in POST con il token CSRF.
   `elenco_tabelle`: le tabelle della copia senza il prefisso), `db.sql.gz` (le tabelle di questa installazione, stesso
   formato degli snapshot: dalla 2.1 `copia_dump_db()`, `:208`, sulle tabelle di `copia_tabelle_sito()`, `:195`; prima
   `agg_dump_db($file, $prefisso)`) e le cartelle `uploads/`, `temi/`, `moduli/`. Fuori: `includes/config.local.php` e ogni
-  file o cartella nascosti. Il manifest ha la firma HMAC-SHA256 dell'impronta dello zip (`sicurezza_pacchetto_impronta()`)
-  con la chiave dei pacchetti di questo sito. Lo zip ha permessi 0600; si scarica solo dal pannello (**Scarica**), la
+  file o cartella nascosti. Il manifest ha la firma HMAC-SHA256 dell'impronta dello zip (`sicurezza_pacchetto_impronta()`,
+  `sicurezza.php:858`: l'impronta copre i file dello zip ma non `manifest.json`, che quindi non fa fede: il ripristino filtra
+  `elenco_tabelle` contro le altre installazioni e controlla ogni riga del dump, qualunque cosa dica il manifest) con la chiave
+  dei pacchetti di questo sito. Lo zip ha permessi 0600; si scarica solo dal pannello (**Scarica**), la
   cartella è vietata al web. Se ne tengono 6 (`copia_pulisci()`, `:145`; dalla 2.1 mai quella che si sta ripristinando:
   prima, con sei copie più nuove, la copia scelta spariva a metà del ripristino).
 - **Due installazioni nello stesso database** (2.1): con i prefissi `cms_` e `cms_b_` le tabelle `cms_b_*` cominciano anche
-  con `cms_`. `copia_tabelle_del_prefisso()` (`:179`) toglie le tabelle di un prefisso più lungo che ha sia `settings` sia
+  con `cms_`. `copia_tabelle_del_prefisso()` (`:172`) toglie le tabelle di un prefisso più lungo che ha sia `settings` sia
   `users` (`copia_altri_prefissi()`, `:179`): sono di un'altra installazione (un prefisso finisce sempre con `_`: l'installatore
   lo aggiunge, `install/index.php`; un'installazione già rotta, senza `users` o senza `settings`, o un prefisso scritto a mano
   senza il trattino basso finale, non si riconoscono: limite noto). Il ripristino (`copia_ripristina_db()`, `:718`)
   tocca solo le tabelle di `elenco_tabelle` (per una copia vecchia, la stessa regola applicata ai `CREATE TABLE` del suo
   database) e mai una tabella di un'altra installazione presente in questo database, qualunque cosa dica la copia; le righe
   saltate si contano ("Tabelle di un'altra installazione nello stesso database, lasciate stare"). Gli snapshot degli
-  Aggiornamenti restano su tutto il database (`agg_dump_db()` senza prefisso), ma dalla 2.25.1 il loro ripristino rimette solo
-  le tabelle del prefisso (19.4).
+  Aggiornamenti dalla 2.25.1 contengono solo le tabelle del sito (`agg_dump_db($file, DB_PREFIX)`) e il loro ripristino rimette
+  solo quelle (19.4).
 - **Colonne generate** (2.1.0): `agg_colonne_generate($pdo, $tabella)` e `agg_riga_sql($riga, $generate)`
   (`includes/aggiornamenti.php`) scrivono `DEFAULT` al posto delle colonne `GENERATED ALWAYS AS` (`email_attiva` di
   `evi_iscrizioni`, `slot_attivo` di `pren_prenotazioni`), sia in `copia_dump_db()` sia in `agg_dump_db()`: prima l'INSERT
@@ -3645,7 +3649,7 @@ l'amministratore, ogni azione in POST con il token CSRF.
   gli snapshot fatti prima della 2.1.0 con righe in quelle tabelle non si ripristinano interi. 2.25.1: solo le colonne davvero generate (`VIRTUAL`/`STORED GENERATED`): su MySQL 8 una colonna con
   `DEFAULT CURRENT_TIMESTAMP` ha Extra `DEFAULT_GENERATED` e fino alla 2.25.0 usciva come `DEFAULT`, così le copie perdevano
   `created_at` e `updated_at` (al ripristino prendevano l'ora del ripristino).
-- **Ripristina** (`copia_ripristina($file, $tieni)`, `includes/copia-sito.php:970`): da una copia caricata (che entra fra quelle sul
+- **Ripristina** (`copia_ripristina($file, $tieni)`, `includes/copia-sito.php:971`): da una copia caricata (che entra fra quelle sul
   server) o già sul server; serve la spunta di conferma. Prima fa una copia del sito com'è (`prima-del-ripristino`), poi:
   - nomi dello zip controllati (`copia_nome_voce_ok()`): solo `manifest.json`, `db.sql.gz` e file dentro `uploads/`,
     `temi/`, `moduli/`, niente `..`, percorsi assoluti, barre rovesce, parti nascoste; 300 MB per file, 2 GB in tutto,
@@ -3662,16 +3666,16 @@ l'amministratore, ogni azione in POST con il token CSRF.
   - (2.1) **ripristino pulito**: dopo i file, `uploads/`, `temi/` e `moduli/` diventano come nella copia. I file che ci sono
     nel sito ma non nella copia (un file saltato perché eseguibile conta come "nella copia" e resta) si spostano, non si
     cancellano, in `aggiornamenti/scarto/ripristino-AAAAMMGG-HHMMSS/` con il loro percorso e un `LEGGIMI.txt`
-    (`copia_metti_da_parte()`, `:1129`); le cartelle rimaste vuote si tolgono. Restano dove sono: i file e le cartelle
+    (`copia_metti_da_parte()`, `:1130`); le cartelle rimaste vuote si tolgono. Restano dove sono: i file e le cartelle
     nascosti (`.htaccess`), i collegamenti simbolici e ciò a cui portano (`copia_file_di()` non li elenca e non entra nelle
     cartelle collegate), i file dei temi del prodotto (`tema.json` con `"autore": "plumeCMS"`, `copia_tema_del_prodotto()`,
-    `:1117`: arrivano con gli aggiornamenti). Su un altro disco (`uploads_dir`) copia e cancella invece di `rename`.
+    `:1118`: arrivano con gli aggiornamenti). Su un altro disco (`uploads_dir`) copia e cancella invece di `rename`.
     L'esito elenca i file spostati (riquadro `#cs-scartati`, fino a 200, e il registro, fino a 40).
   - (2.1) la casella **"Tieni i file in più"** (`tieni=1`, in tutti e due i moduli di ripristino) fa come prima della 2.1;
   - (2.1) lo scarto: cartella vietata al web come le copie (è dentro `aggiornamenti/`). Le sue cartelle restano
-    `COPIA_SCARTO_GIORNI` (30) giorni: le toglie il ripristino dopo (`copia_scarto_pulisci()`, `:1196`). La pagina ha la
-    sezione "File messi da parte dai ripristini" (`#cs-scarto-elenco`, `copia_scarto_elenco()`, `:1173`) con **Elimina**
-    (azione `elimina_scarto`, POST con CSRF, solo il nome esatto `ripristino-\d{8}-\d{6}`: `copia_scarto_elimina()`, `:1187`,
+    `COPIA_SCARTO_GIORNI` (30) giorni: le toglie il ripristino dopo (`copia_scarto_pulisci()`, `:1197`). La pagina ha la
+    sezione "File messi da parte dai ripristini" (`#cs-scarto-elenco`, `copia_scarto_elenco()`, `:1174`) con **Elimina**
+    (azione `elimina_scarto`, POST con CSRF, solo il nome esatto `ripristino-\d{8}-\d{6}`: `copia_scarto_elimina()`, `:1188`,
     rifiuta anche un nome che `basename()` cambierebbe), registrata in `sicurezza_log`;
   - alla fine `temi/.htaccess` si riscrive (`temi_proteggi()`). Se falliscono solo queste operazioni finali (un file in più
     che non si sposta da parte, un'eccezione di `temi_proteggi()`) la fase è `file`: titolo "Ripristino fatto dalla copia X,
@@ -3755,7 +3759,9 @@ dopo (`save_setting('sito_url')`) usciva dal pannello come `Fatal error` con i p
   per `cms_` la coppia `["rip1a2b3c_", "b_users"]` sarebbe `rip1a2b3c_cms_b_users`, cioè `users` di `cms_b_`) si ignora e non
   si tocca. Una tabella che non si cancella (un vincolo di un'altra tabella la tiene) resta nel marcatore, e il ripristino dopo
   la porta nel suo marcatore insieme ai nomi nuovi ("ATTENZIONE: N tabelle di lavoro di un ripristino interrotto non si sono
-  cancellate"): nessun nome si perde.
+  cancellate"): nessun nome si perde. Unico buco: una CREATE che il server esegue ma di cui il client non riceve la risposta
+  (connessione caduta, 2013) lascia una tabella `rip<hex>_` fuori dal marcatore; è innocua (il nome non comincia con il
+  prefisso, non entra nelle copie) e si vede con `SHOW TABLES`.
 - **I nomi di lavoro** (`copia_nomi_appoggio()`, `:476`): `rip<6 esadecimali>_<prefisso><tabella>` per l'appoggio e
   `vec<gli stessi esadecimali>_<prefisso><tabella>` per il parcheggio delle tabelle vecchie (`COPIA_APPOGGIO`,
   `COPIA_PARCHEGGIO`). Prima di cominciare: ogni nome sta nei 64 caratteri di MySQL, nessuno esiste già, il prefisso di lavoro
@@ -3767,7 +3773,7 @@ dopo (`save_setting('sito_url')`) usciva dal pannello come `Fatal error` con i p
   le `INSERT` vanno sulle tabelle di appoggio. **Una riga, una istruzione** (secondo giro di correzioni, 5 novembre 2026): una
   `CREATE` o una `INSERT` con un punto e virgola fuori dalle virgolette (`agg_split_sql()` che conta più di una istruzione, o
   `copia_riga_impilata()`, `:655`, sulla riga senza il `;` finale) ferma il ripristino ("contiene un secondo comando dopo un
-  punto e virgola"), come una sottoquery; fino a quel giro `agg_split_sql()` (`includes/aggiornamenti.php:564`) e il filtro
+  punto e virgola"), come una sottoquery; fino a quel giro `agg_split_sql()` (`includes/aggiornamenti.php:567`) e il filtro
   "una istruzione per riga" conoscevano solo gli apici semplici: un apice semplice dentro un nome fra apici inversi
   (``CREATE TABLE `x` (`c'` int); DROP TABLE `y` ``) apriva una stringa finta che inghiottiva il `;`, la riga contava come una
   sola istruzione, e la connessione (che allora eseguiva le istruzioni impilate, 6.1) eseguiva anche la `DROP`. Ora
@@ -3787,7 +3793,8 @@ dopo (`save_setting('sito_url')`) usciva dal pannello come `Fatal error` con i p
   eseguire la riga: con due installazioni nello stesso database una copia non firmata non copia più i dati dell'altra) e dal
   confronto con `@@max_allowed_packet` del server di arrivo (una riga più grande ferma il ripristino con "una riga della copia
   pesa X, il server ne accetta Y"; `copia_dump_db()` e `agg_dump_db()` dalla 2.25.1 chiudono i blocchi INSERT prima di
-  superare 1 MB, `COPIA_INSERT_MAX`). Al primo errore: via le tabelle di appoggio, via il marcatore, `ok=false` con il motivo in
+  superare 1 MB meno 1 KB, `COPIA_INSERT_MAX` = 1047552: il margine serve perché la riga che arriva al server porta in più il
+  marchio di lavoro e il `;`, e con `max_allowed_packet` a 1 MB esatto passa comunque). Al primo errore: via le tabelle di appoggio, via il marcatore, `ok=false` con il motivo in
   parole semplici (`copia_errore_parole()`, `:685`: 1273 collazione, 1115 set di caratteri, 1286 motore, 1062 righe uguali
   per questo server, 1146 e 1050 copia incompleta o modificata, 1205 database occupato, 1142 permessi, 1114 spazio, 1071
   chiave troppo lunga, 2006 connessione caduta) e il testo tecnico fra parentesi; nel registro di una `INSERT` fallita mai i
@@ -3826,7 +3833,7 @@ dopo (`save_setting('sito_url')`) usciva dal pannello come `Fatal error` con i p
   una colonna conta una): "Copia fatta su MySQL 8.0.46, qui MariaDB 10.6.28: in 17 tabelle la collazione utf8mb4_0900_ai_ci ->
   utf8mb4_unicode_ci; ...". Il manifest delle copie dalla 2.25.1 ha `server_versione` (`copia_server_versione()`, `:348`).
   Provato da MySQL 8.0.46 a MariaDB 10.6.28 e a MySQL 5.7.44, e da MariaDB a MySQL 8.
-- **Dopo il database** (`copia_ripristina()`, `:970`): i file come prima, ma un file di `uploads/` di una copia non firmata
+- **Dopo il database** (`copia_ripristina()`, `:971`): i file come prima, ma un file di `uploads/` di una copia non firmata
   passa da `media_ha_codice()` (scritto in un file di lavoro in `aggiornamenti/copie/`, controllato, poi messo al suo posto):
   con codice dentro si salta e il registro lo elenca. Un file che non si scrive (disco pieno, permessi) porta a `ok=false`
   con la fase `database`: "Il database è stato rimesso, i file no: ripristina la copia prima-del-ripristino, che rimette
@@ -3835,8 +3842,9 @@ dopo (`save_setting('sito_url')`) usciva dal pannello come `Fatal error` con i p
   parte, `temi_proteggi()`) è la fase `file`: "Database e file della copia sono stati rimessi tutti". Ogni eccezione dopo il
   manifest finisce nel registro, mai a video (anche `sicurezza_log()` in `try`: il registro su file è già scritto).
 - **Il registro su file** (`copia_registro_file()`, `:918`; `copia_registro_scrivi()`, `:928`; `copia_registri()`, `:939`;
-  `copia_registro_ultimo()`, `:954`): un file per tentativo, `aggiornamenti/copie/ripristino-<AAAAMMGG-HHMMSS>-<copia>.log`
-  (due tentativi della stessa copia non si sovrascrivono; nello stesso secondo il secondo prende `-2`), prima riga
+  `copia_registro_ultimo()`, `:955`): un file per tentativo, `aggiornamenti/copie/ripristino-<AAAAMMGG-HHMMSS>-<copia>.log`
+  (due tentativi della stessa copia non si sovrascrivono; nello stesso secondo il secondo prende `-2`, e nell'elenco viene
+  prima di quello senza numero: a parità di data vince il tentativo con il numero più alto), prima riga
   `plumeCMS ripristino <data> esito=ok|errore copia=<nome>`, ultimi `COPIA_REGISTRI_DA_TENERE` (10) per data nel nome; più una
   riga in `sicurezza_log` (riuscito, non fatto, con errori nei file, con errori
   nelle operazioni finali). Il pannello (`admin/copia-sito.php`) ha quattro titoli ("Sito ripristinato dalla copia",
@@ -3993,7 +4001,7 @@ nome del database e l'host è quello che serve a un attacco al MySQL dell'hostin
 rimando a `includes/config.local.php`. Alla prima pagina del pannello che funziona il file si cancella da solo; la pagina
 avverte che finché c'è quei dati li vede chiunque e ricorda di cancellarlo a lavoro finito. Il sito pubblico, che gli utenti
 non li legge, senza `users` risponde come sempre; senza `settings` risponde 503 "Torno subito" come prima
-(`sito/index.php:351`).
+(`sito/index.php:354`).
 
 ---
 

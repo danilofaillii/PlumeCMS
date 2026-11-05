@@ -81,7 +81,7 @@ const COPIA_PARCHEGGIO = 'vec';
 /** 2.25.1: il marcatore di un ripristino in corso, in aggiornamenti/copie/: i nomi di appoggio e di parcheggio da togliere se si interrompe. */
 const COPIA_MARCATORE = '.ripristino-in-corso.json';
 /** 2.25.1: i blocchi INSERT del dump si chiudono prima di superare questa misura (max_allowed_packet parte da 4 MB su MySQL 5.7). */
-const COPIA_INSERT_MAX = 1048576;
+const COPIA_INSERT_MAX = 1047552; // 1 MB meno 1 KB: la riga che il ripristino manda al server ha in più il marchio di lavoro e il ";"
 /** 2.25.1: quanti registri dei ripristini (ripristino-<data e ora>-<copia>.log, uno per tentativo) restano in aggiornamenti/copie/. */
 const COPIA_REGISTRI_DA_TENERE = 10;
 const COPIA_CARTELLE = ['uploads', 'temi', 'moduli'];
@@ -668,7 +668,7 @@ function copia_insert_letterale(string $riga): bool {
     if ($p === false) return false;
     foreach (copia_sql_pezzi(substr($riga, $p + 8)) as [$t, $dentro]) {
         if ($dentro) { if ($t[0] === '`') return false; continue; }
-        if (!preg_match('/^(?:\s|[(),;]|-?\d+(?:\.\d+)?(?:[eE][+-]?\d+)?|NULL|DEFAULT)*$/i', $t)) return false;
+        if (!preg_match('/^(?:\s|[(),]|-?\d+(?:\.\d+)?(?:[eE][+-]?\d+)?|NULL|DEFAULT)*$/i', $t)) return false;
     }
     return true;
 }
@@ -939,14 +939,15 @@ function copia_registro_scrivi(string $copia, bool $ok, array $log): string {
 function copia_registri(): array {
     $out = [];
     foreach ((array)@scandir(copia_dir()) as $f) {
-        if (!is_string($f) || !preg_match('/^ripristino-(\d{4})(\d{2})(\d{2})-(\d{2})(\d{2})(\d{2})-(copia-\d{8}-\d{6}-[a-z0-9-]{1,40}\.zip)(?:-\d+)?\.log$/', $f, $m)) continue;
+        if (!is_string($f) || !preg_match('/^ripristino-(\d{4})(\d{2})(\d{2})-(\d{2})(\d{2})(\d{2})-(copia-\d{8}-\d{6}-[a-z0-9-]{1,40}\.zip)(?:-(\d+))?\.log$/', $f, $m)) continue;
         $p = copia_dir() . '/' . $f;
         $righe = preg_split('/\r?\n/', rtrim((string)@file_get_contents($p, false, null, 0, 262144)));
         $testa = (string)array_shift($righe);
         $quando = mktime((int)$m[4], (int)$m[5], (int)$m[6], (int)$m[2], (int)$m[3], (int)$m[1]) ?: (int)filemtime($p);
-        $out[] = ['file' => $p, 'copia' => $m[7], 'data' => $quando, 'ok' => str_contains($testa, 'esito=ok'), 'righe' => $righe];
+        $out[] = ['file' => $p, 'copia' => $m[7], 'data' => $quando, 'tentativo' => (int)($m[8] ?? 1), 'ok' => str_contains($testa, 'esito=ok'), 'righe' => $righe];
     }
-    usort($out, fn($a, $b) => $b['data'] <=> $a['data'] ?: strcmp($b['file'], $a['file']));
+    // dal più recente; nello stesso secondo il tentativo con il numero più alto (-2, -3) è l'ultimo
+    usort($out, fn($a, $b) => $b['data'] <=> $a['data'] ?: $b['tentativo'] <=> $a['tentativo'] ?: strcmp($b['file'], $a['file']));
     return $out;
 }
 

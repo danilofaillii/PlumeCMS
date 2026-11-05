@@ -42,7 +42,7 @@ function soccorso_porta(): string {
 
 /** 2.25.1: la risposta tecnica del server senza l'utente e l'host del database ("Access denied for user 'x'@'y'" -> "... 'utente'@'host'"). */
 function soccorso_messaggio_coperto(string $msg): string {
-    if (defined('DB_USER') && DB_USER !== '') $msg = str_replace(DB_USER, 'utente', $msg);
+    if (defined('DB_USER') && DB_USER !== '') $msg = preg_replace('/(?<![A-Za-z0-9_])' . preg_quote(DB_USER, '/') . '(?![A-Za-z0-9_])/', 'utente', $msg); // parola intera: un nome corto non copre pezzi di altre parole
     $msg = preg_replace("/'utente'@'[^']*'/", "'utente'@'host'", $msg);
     if (defined('DB_HOST') && DB_HOST !== '') $msg = str_replace(DB_HOST, 'host', $msg);
     return $msg;
