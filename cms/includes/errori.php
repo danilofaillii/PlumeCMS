@@ -52,8 +52,8 @@ function errori_senza_percorsi(string $testo): string {
 function errori_eccezione(Throwable $e): void {
     try {
         error_log('Eccezione non gestita (' . ($GLOBALS['errori_contesto'] ?? 'sito') . '): ' . get_class($e) . ': ' . $e->getMessage() . ' in ' . $e->getFile() . ':' . $e->getLine() . "\n" . $e->getTraceAsString());
-        $codice = $e instanceof PDOException ? (string)$e->getCode() : (string)$e->getCode();
-        errori_rispondi(get_class($e), $codice, $e->getMessage(), errori_relativo($e->getFile()) . ':' . $e->getLine(), $e instanceof PDOException);
+        // Il codice: per una PDOException lo SQLSTATE (una stringa, "42S02"), per le altre il numero (quasi sempre 0, che non si mostra).
+        errori_rispondi(get_class($e), (string)$e->getCode(), $e->getMessage(), errori_relativo($e->getFile()) . ':' . $e->getLine(), $e instanceof PDOException);
     } catch (Throwable $e2) {
         error_log('errori_eccezione: ' . $e2->getMessage());
     }

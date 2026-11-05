@@ -23,10 +23,20 @@
 //  h. ripristino interrotto (CMS_RIPRISTINO_PAUSA nel config di C, server php ucciso a metà, poi riacceso): il sito è intatto,
 //     il ripristino dopo toglie le tabelle di appoggio;
 //  i. copia non firmata con una INSERT che contiene una sottoquery verso l'altra installazione: rifiutata, database intatto;
+//  k. (secondo giro di correzioni, 5 novembre 2026) istruzioni impilate: una CREATE con un apice semplice dentro un nome fra
+//     apici inversi seguita da un secondo comando (DROP TABLE `cms_b_users`) e' rifiutata e la tabella dell'altra
+//     installazione resta; un nome con l'apice da solo e' rifiutato; una INSERT con un punto e virgola fuori dalle virgolette
+//     (poi un UPDATE sull'altra installazione) e' rifiutata; una INSERT con un valore che contiene punto e virgola e apici
+//     inversi passa; una CREATE con /*!50100 TABLESPACE */ e' rifiutata con il motivo vero (non "modificata"); la connessione
+//     del CMS non esegue due istruzioni in una exec();
 //  j. copia non firmata con una CREATE che lega pages all'altra installazione (REFERENCES cms_b_users) o la monta sopra
 //     (ENGINE=MERGE UNION=): rifiutata prima dello scambio, nessun vincolo nel database; le stesse parole in un COMMENT passano;
 //  s. snapshot degli Aggiornamenti (stesso motore): con una CREATE rotta "Ripristino NON fatto" e nemmeno il file dello
-//     snapshot si rimette; con il database buono database e file tornano; B2 intatta;
+//     snapshot si rimette; con il database buono database e file tornano; B2 intatta; dopo agg_restore_db la modalita SQL di
+//     sessione e' quella di prima;
+//  registro: un file per tentativo (ripristino-<data e ora>-<copia>.log); marcatore con le coppie [marchio, tabella] e il
+//     prefisso, mai una tabella di un'altra installazione; pagina di soccorso senza l'utente del database, registro a 15 righe,
+//     soccorso.txt che vale 24 ore e il promemoria di cancellarlo;
 //  più: un secondo ripristino mentre uno è in corso viene rifiutato ("un altro ripristino è già in corso"), e anche un
 //  aggiornamento (agg_applica) in quel momento non parte.
 // uso: DBPASS=... node prove/prova-copia-ripristino-sicuro.js <base A> <cartella A> <base C> <cartella C> <base B2> <cartella B2>
@@ -63,6 +73,9 @@ function elenco(dir) {
 }
 const scarti = dir => (fs.existsSync(path.join(dir, 'aggiornamenti/scarto')) ? fs.readdirSync(path.join(dir, 'aggiornamenti/scarto')) : []).filter(x => /^ripristino-/.test(x)).sort();
 const copie = dir => (fs.existsSync(path.join(dir, 'aggiornamenti/copie')) ? fs.readdirSync(path.join(dir, 'aggiornamenti/copie')) : []).filter(x => /\.zip$/.test(x)).sort();
+/** I registri dei ripristini di una copia (un file per tentativo: ripristino-<data e ora>-<copia>.log), dal piu recente. */
+const registriDi = (dir, copia) => fs.readdirSync(path.join(dir, 'aggiornamenti/copie')).filter(x => x.startsWith('ripristino-') && x.endsWith('-' + copia + '.log') || /-\d+\.log$/.test(x) && x.includes('-' + copia + '-')).sort().reverse();
+const registroDi = (dir, copia) => { const r = registriDi(dir, copia); return r.length ? fs.readFileSync(path.join(dir, 'aggiornamenti/copie', r[0]), 'utf8') : ''; };
 /** Mette una copia (zip) fra quelle sul server di un sito. */
 function metti(dir, zip, nome = null) { fs.mkdirSync(path.join(dir, 'aggiornamenti/copie'), { recursive: true }); const n = nome || path.basename(zip); fs.copyFileSync(zip, path.join(dir, 'aggiornamenti/copie', n)); return n; }
 /**
@@ -172,13 +185,14 @@ let br;
   ok('a. la home di C ha il nome e il menu di A (Servizi del kit Attività)', /Sito A rf/.test(tC) && (await c.locator('header nav a', { hasText: 'Servizi' }).count()) >= 1, tC);
   ok('a. il file di uploads di A è in C; quello con codice dentro no (copia non firmata), e il registro lo dice', fs.existsSync(path.join(DC, 'uploads/pagine/2026/11/foto-di-a-rf.txt')) && !fs.existsSync(path.join(DC, 'uploads/pagine/2026/11/cattivo-rf.svg')) && /con codice dentro[^\n]*cattivo-rf\.svg/.test(r.log));
   ok('a. il file che c\'era solo in C è andato nello scarto', !fs.existsSync(path.join(DC, 'uploads/solo-c-rf.txt')) && /solo-c-rf\.txt/.test(r.testo));
-  ok('a. il registro è anche su file (aggiornamenti/copie/<copia>.ripristino.log, esito=ok)', /esito=ok/.test(fs.readFileSync(path.join(DC, 'aggiornamenti/copie', copiaA + '.ripristino.log'), 'utf8')));
+  ok('a. il registro è anche su file (aggiornamenti/copie/ripristino-<data e ora>-<copia>.log, esito=ok)', /esito=ok/.test(registroDi(DC, copiaA)) && /^ripristino-\d{8}-\d{6}-/.test(registriDi(DC, copiaA)[0] || ''), registriDi(DC, copiaA)[0]);
   await vai(c, BC, '/admin/index.php');
   ok('a. la dashboard di C si apre dopo lo scambio (le impronte degli schemi azzerate si rifanno da sole)', /Dashboard/.test(await c.locator('body').innerText()) && !(await c.content()).includes('Fatal error'));
   await vai(c, BC, '/admin/copia-sito.php');
   ok('a. Copia del sito mostra l\'ultimo registro letto dal file', await c.locator('#cs-ultimo').count() === 1 && /riuscito/.test(await c.locator('#cs-ultimo').innerText()));
   r = await ripristina(c, BC, copiaA, true);
   ok('a2. la stessa copia ripristinata di nuovo su C (tutte le tabelle già esistono: tutte parcheggiate e tolte): riesce', r.ok && tabelle(DC, 'vec').length === 0, r.titolo);
+  ok('a2. un registro per tentativo: la stessa copia ha ora due file di registro', registriDi(DC, copiaA).length === 2, registriDi(DC, copiaA));
 
   // ---- b. Collazioni sconosciute in ogni CREATE.
   const zipB = modificaZip(zipA, path.join(OUT, 'copia-20261104-000001-collazione.zip'), [['COLLATE=utf8mb4_0900_ai_ci', 'COLLATE=utf8mb4_uca1400_ai_ci', 'create'], ['DEFAULT CHARSET=utf8mb3;$', 'DEFAULT CHARSET=utf8mb3 COLLATE=utf8mb3_uca1400_ai_ci;', 'create']]);
@@ -201,13 +215,13 @@ let br;
   ok('c. in parole semplici: cosa è successo (motore di tabelle) e il testo tecnico fra parentesi', /Il ripristino non si è fatto: il sito è come prima/.test(r.log) && /Motivo: [^\n]*motore di tabelle[^\n]*\(SQLSTATE[^\n]*NonEsiste/.test(r.log), (r.log.match(/Motivo:[^\n]*/) || [''])[0].slice(0, 200));
   ok('c. NIENTE è cambiato: stesse tabelle, stesse impronte e impostazioni, uploads intatti, nessuno scarto nuovo', impronte(DC, 'plume_c_') === primaC.imp && impostazioni(DC, 'plume_c_') === primaC.set && tabelle(DC, 'plume_c_').length === primaC.tab && elenco(path.join(DC, 'uploads')) === primaC.up && scarti(DC).join() === primaC.scarti.join(), { diverse: diverse(impronte(DC, 'plume_c_'), primaC.imp), set: diverse(impostazioni(DC, 'plume_c_'), primaC.set), tab: tabelle(DC, 'plume_c_').length === primaC.tab, up: elenco(path.join(DC, 'uploads')) === primaC.up, scarti: scarti(DC).join() === primaC.scarti.join() });
   ok('c. nessuna tabella di appoggio rimasta, niente marcatore, ma la copia prima-del-ripristino è stata fatta', tabelle(DC, 'rip').length === 0 && tabelle(DC, 'vec').length === 0 && !fs.existsSync(path.join(DC, 'aggiornamenti/copie/.ripristino-in-corso.json')) && (copie(DC).filter(x => /prima-del-ripristino/.test(x)).pop() || '') > primaC.ultima);
-  ok('c. il registro su file dice esito=errore', /esito=errore/.test(fs.readFileSync(path.join(DC, 'aggiornamenti/copie', path.basename(zipC) + '.ripristino.log'), 'utf8')));
+  ok('c. il registro su file dice esito=errore', /esito=errore/.test(registroDi(DC, path.basename(zipC))));
   ok('c. il sito C risponde come prima', (await homeTesto(c, BC)).status === 200 && /Sito A rf/.test(await nomeSito(c, BC)));
 
   // ---- d. Tabelle di appoggio lasciate da un ripristino interrotto (fatte a mano).
   const marcatoreC = path.join(DC, 'aggiornamenti/copie/.ripristino-in-corso.json');
   for (const t of ['rip0000aa_plume_c_resto', 'vec0000aa_plume_c_resto', 'rip0000bb_plume_c_altra']) esegui(DC, 'CREATE TABLE `' + t + '` (`id` int NOT NULL, PRIMARY KEY (`id`)) ENGINE=InnoDB');
-  fs.writeFileSync(marcatoreC, JSON.stringify({ appoggio: ['rip0000aa_plume_c_resto'], parcheggio: ['vec0000aa_plume_c_resto'], prefisso: 'plume_c_', quando: '2026-11-04 10:00:00' }));
+  fs.writeFileSync(marcatoreC, JSON.stringify({ prefisso: 'plume_c_', appoggio: [['rip0000aa_', 'resto']], parcheggio: [['vec0000aa_', 'resto']], quando: '2026-11-04 10:00:00' }));
   await vai(c, BC, '/admin/copia-sito.php');
   let flashC = (await c.locator('.flash').allInnerTexts()).join('\n');
   ok('d. aprendo Copia del sito le tabelle nominate dal marcatore si tolgono subito, e la pagina lo dice', /Tabelle di lavoro rimaste da un ripristino interrotto, tolte: 2/.test(flashC) && tabelle(DC, 'rip0000aa').length === 0 && tabelle(DC, 'vec0000aa').length === 0, flashC.slice(0, 200));
@@ -218,12 +232,13 @@ let br;
   // dopo la dice e la tiene nel suo marcatore, e si toglie quando il vincolo non c'è più.
   esegui(DC, 'CREATE TABLE `rip0000cc_plume_c_padre` (`id` int NOT NULL, PRIMARY KEY (`id`)) ENGINE=InnoDB');
   esegui(DC, 'CREATE TABLE `rf_figlio` (`id` int NOT NULL, `p` int, PRIMARY KEY (`id`), CONSTRAINT `fk_rf_figlio` FOREIGN KEY (`p`) REFERENCES `rip0000cc_plume_c_padre` (`id`)) ENGINE=InnoDB');
-  fs.writeFileSync(marcatoreC, JSON.stringify({ appoggio: ['rip0000cc_plume_c_padre'], parcheggio: [], prefisso: 'plume_c_', quando: '2026-11-04 10:00:00' }));
+  fs.writeFileSync(marcatoreC, JSON.stringify({ prefisso: 'plume_c_', appoggio: [['rip0000cc_', 'padre']], parcheggio: [], quando: '2026-11-04 10:00:00' }));
   await vai(c, BC, '/admin/copia-sito.php');
-  ok('d. una tabella di lavoro che non si cancella resta, e resta nel marcatore', tabelle(DC, 'rip0000cc').length === 1 && fs.existsSync(marcatoreC) && fs.readFileSync(marcatoreC, 'utf8').includes('rip0000cc_plume_c_padre'));
+  const nelMarcatore = (f, marchio, tab) => { try { const m = JSON.parse(fs.readFileSync(f, 'utf8')); return m.prefisso === 'plume_c_' && [...m.appoggio, ...m.parcheggio].some(v => v[0] === marchio && v[1] === tab); } catch (e) { return false; } };
+  ok('d. una tabella di lavoro che non si cancella resta, e resta nel marcatore (coppia [marchio, tabella] con il prefisso)', tabelle(DC, 'rip0000cc').length === 1 && fs.existsSync(marcatoreC) && nelMarcatore(marcatoreC, 'rip0000cc_', 'padre'));
   metti(DC, zipA);
   r = await ripristina(c, BC, copiaA, true);
-  ok('d. il ripristino dopo riesce, lo dice, e la tabella resta nel marcatore (non si perde)', r.ok && /ATTENZIONE: 1 tabelle di lavoro di un ripristino interrotto non si sono cancellate/.test(r.log) && tabelle(DC, 'rip0000cc').length === 1 && fs.existsSync(marcatoreC) && fs.readFileSync(marcatoreC, 'utf8').includes('rip0000cc_plume_c_padre') && tabelle(DC, 'vec').length === 0, (r.log.match(/ATTENZIONE[^\n]*/) || [''])[0]);
+  ok('d. il ripristino dopo riesce, lo dice, e la tabella resta nel marcatore (non si perde)', r.ok && /ATTENZIONE: 1 tabelle di lavoro di un ripristino interrotto non si sono cancellate/.test(r.log) && tabelle(DC, 'rip0000cc').length === 1 && fs.existsSync(marcatoreC) && nelMarcatore(marcatoreC, 'rip0000cc_', 'padre') && tabelle(DC, 'vec').length === 0, (r.log.match(/ATTENZIONE[^\n]*/) || [''])[0]);
   esegui(DC, 'DROP TABLE `rf_figlio`');
   await vai(c, BC, '/admin/copia-sito.php');
   flashC = (await c.locator('.flash').allInnerTexts()).join('\n');
@@ -233,6 +248,18 @@ let br;
   const impB0 = impronte(DB2, 'cms_b_');
   const nUtentiB = uno(DB2, 'SELECT COUNT(*) FROM `cms_b_users`');
   ok('e. B2 ha le sue tabelle cms_b_ nello stesso database di A', JSON.parse(impB0)['cms_b_users'] !== undefined && tabelle(DA, 'cms_b_').length > 10);
+  // Il marcatore di A non puo far cancellare una tabella di lavoro dell'altra installazione (rip..._cms_b_users: per cms_ sarebbe
+  // "b_users", che e' di cms_b_), ne' si legge un marcatore scritto per un altro prefisso.
+  const marcatoreA = path.join(DA, 'aggiornamenti/copie/.ripristino-in-corso.json');
+  esegui(DA, 'CREATE TABLE `rip0000dd_cms_b_users` (`id` int NOT NULL, PRIMARY KEY (`id`)) ENGINE=InnoDB');
+  esegui(DA, 'CREATE TABLE `rip0000ee_cms_pages` (`id` int NOT NULL, PRIMARY KEY (`id`)) ENGINE=InnoDB');
+  fs.writeFileSync(marcatoreA, JSON.stringify({ prefisso: 'cms_', appoggio: [['rip0000dd_', 'b_users']], parcheggio: [], quando: '2026-11-05 10:00:00' }));
+  await vai(a, BA, '/admin/copia-sito.php');
+  ok('e. un marcatore di A che nomina rip0000dd_cms_b_users (una tabella dell\'installazione cms_b_) non la fa cancellare, e il marcatore si toglie', tabelle(DA, 'rip0000dd').length === 1 && !fs.existsSync(marcatoreA) && !/tolte: /.test((await a.locator('.flash').allInnerTexts()).join('\n')));
+  fs.writeFileSync(marcatoreA, JSON.stringify({ prefisso: 'cms_b_', appoggio: [['rip0000ee_', 'pages']], parcheggio: [], quando: '2026-11-05 10:00:00' }));
+  await vai(a, BA, '/admin/copia-sito.php');
+  ok('e. un marcatore scritto per un altro prefisso (cms_b_) non vale per A: la tabella resta', tabelle(DA, 'rip0000ee').length === 1 && !fs.existsSync(marcatoreA));
+  esegui(DA, 'DROP TABLE `rip0000dd_cms_b_users`'); esegui(DA, 'DROP TABLE `rip0000ee_cms_pages`');
   esegui(DC, "UPDATE `plume_c_users` SET username = 'altro-rf' WHERE id = (SELECT id FROM (SELECT MIN(id) AS id FROM `plume_c_users`) x)");
   const copiaC = await preparaCopia(c, BC);
   metti(DA, path.join(DC, 'aggiornamenti/copie', copiaC));
@@ -260,7 +287,7 @@ let br;
 
   // ---- i. Una copia non firmata con una INSERT che contiene una sottoquery verso l'altra installazione.
   const zipI = modificaZip(zipA, path.join(OUT, 'copia-20261104-000003-sottoquery.zip'), [], ["INSERT INTO `cms_settings` VALUES ((SELECT password_hash FROM `cms_b_users` LIMIT 1),'rf_rubata',NULL);"]);
-  const impA0 = impronte(DA, 'cms_'); const setA0 = impostazioni(DA, 'cms_');
+  let impA0 = impronte(DA, 'cms_'); const setA0 = impostazioni(DA, 'cms_');
   metti(DA, zipI);
   r = await ripristina(a, BA, path.basename(zipI));
   ok('i. INSERT con una sottoquery: la copia è rifiutata prima di toccare il database, e il pannello lo dice', r.ko && /non scrive mai nelle copie/.test(r.log) && /il sito è come prima/.test(r.log), (r.log.match(/Motivo:[^\n]*/) || [''])[0].slice(0, 160));
@@ -269,6 +296,37 @@ let br;
   metti(DA, zipF);
   r = await ripristina(a, BA, path.basename(zipF));
   ok('i. INSERT con una funzione (NOW()): rifiutata, database intatto', r.ko && /non scrive mai nelle copie/.test(r.log) && impronte(DA, 'cms_') === impA0 && impostazioni(DA, 'cms_') === setA0);
+
+  // ---- k. Istruzioni impilate (secondo giro di correzioni): la connessione, le CREATE e le INSERT con un secondo comando.
+  const impilate = php(DA, `try { db()->exec("CREATE TABLE \`rf_imp1\` (id int); CREATE TABLE \`rf_imp2\` (id int)"); echo 'eseguite'; } catch (Throwable $e) { echo 'rifiutate'; } $n = count(db()->query("SHOW TABLES LIKE 'rf_imp%'")->fetchAll()); db()->exec('DROP TABLE IF EXISTS \`rf_imp1\`'); db()->exec('DROP TABLE IF EXISTS \`rf_imp2\`'); echo ' ' . $n;`);
+  ok('k. la connessione del CMS (db()) non esegue due istruzioni in una exec(): rifiutate, nessuna tabella nata', impilate === 'rifiutate 0', impilate);
+  const nomeB2 = uno(DB2, "SELECT setting_value FROM `cms_b_settings` WHERE setting_key='sito_nome'");
+  const zipK1 = modificaZip(zipA, path.join(OUT, 'copia-20261104-000009-impilata.zip'), [['`title`', "`tit'le`", 'create:cms_pages'], [';$', '; DROP TABLE `cms_b_users`;', 'create:cms_pages']]);
+  ok('k. la copia modificata ha nella CREATE di pages un nome con l\'apice (`tit\'le`) e un secondo comando (DROP TABLE `cms_b_users`)', /CREATE TABLE `cms_pages`[^\n]*`tit'le`[^\n]*; DROP TABLE `cms_b_users`;$/m.test(createDi(zipK1)));
+  metti(DA, zipK1);
+  r = await ripristina(a, BA, path.basename(zipK1));
+  ok('k. CREATE con un apice dentro un nome fra apici inversi e un secondo comando: rifiutata (ferma il ripristino), con il motivo', r.ko && /non scrive mai nelle copie/.test(r.log) && /secondo comando dopo un punto e virgola/.test(r.log) && /tabella pages/.test(r.log) && /il sito è come prima/.test(r.log), (r.log.match(/Motivo:[^\n]*/) || [''])[0].slice(0, 220));
+  ok('k. la tabella vittima cms_b_users è intatta, A e B2 intatti, niente appoggio', tabelle(DA, 'cms_b_users').length === 1 && impronte(DA, 'cms_') === impA0 && impronte(DB2, 'cms_b_') === impB0 && tabelle(DA, 'rip').length === 0);
+  const zipK2 = modificaZip(zipA, path.join(OUT, 'copia-20261104-000010-nome.zip'), [['`title`', "`tit'le`", 'create:cms_pages']]);
+  metti(DA, zipK2);
+  r = await ripristina(a, BA, path.basename(zipK2));
+  ok('k. un nome di colonna con un apice da solo (`tit\'le`): rifiutato, con il nome nel motivo', r.ko && /non scrive mai nelle copie/.test(r.log) && /nome di tabella, colonna o chiave/.test(r.log) && /tit'le/.test(r.log) && impronte(DA, 'cms_') === impA0, (r.log.match(/Motivo:[^\n]*/) || [''])[0].slice(0, 220));
+  const zipK3 = modificaZip(zipA, path.join(OUT, 'copia-20261104-000011-insert-impilata.zip'), [], ["INSERT INTO `cms_settings` VALUES ('rf_imp','x',NULL); UPDATE `cms_b_settings` SET setting_value = 'rubato' WHERE setting_key = 'sito_nome';"]);
+  metti(DA, zipK3);
+  r = await ripristina(a, BA, path.basename(zipK3));
+  ok('k. INSERT con un punto e virgola fuori dalle virgolette (poi un UPDATE sull\'altra installazione): rifiutata', r.ko && /secondo comando dopo un punto e virgola/.test(r.log) && /tabella settings/.test(r.log) && impronte(DA, 'cms_') === impA0, (r.log.match(/Motivo:[^\n]*/) || [''])[0].slice(0, 220));
+  ok('k. B2 non è stata toccata (il nome del sito è quello di prima), niente appoggio', uno(DB2, "SELECT setting_value FROM `cms_b_settings` WHERE setting_key='sito_nome'") === nomeB2 && impronte(DB2, 'cms_b_') === impB0 && tabelle(DA, 'rip').length === 0);
+  const zipK5 = modificaZip(zipA, path.join(OUT, 'copia-20261104-000013-tablespace.zip'), [['\\) ENGINE=', ') /*!50100 TABLESPACE `innodb_system` */ ENGINE=', 'create:cms_pages']]);
+  ok('k. la copia modificata ha /*!50100 TABLESPACE */ nella CREATE di pages', /CREATE TABLE `cms_pages`[^\n]*TABLESPACE `innodb_system`/.test(createDi(zipK5)));
+  metti(DA, zipK5);
+  r = await ripristina(a, BA, path.basename(zipK5));
+  ok('k. CREATE con TABLESPACE: rifiutata con il motivo vero ("clausola che il ripristino non accetta: TABLESPACE"), non "modificata"', r.ko && /clausola che il ripristino non accetta: TABLESPACE/.test(r.log) && !/è stata modificata/.test((r.log.match(/Motivo:[^\n]*/) || [''])[0]) && impronte(DA, 'cms_') === impA0 && tabelle(DA, 'rip').length === 0, { motivo: (r.log.match(/Motivo:[^\n]*/) || [''])[0].slice(0, 160), diverse: diverse(impronte(DA, 'cms_'), impA0) });
+  const valoreStrano = 'a;b `c` d; DROP TABLE `cms_b_users`; e "f" g';
+  const zipK4 = modificaZip(zipA, path.join(OUT, 'copia-20261104-000012-insert-strana.zip'), [], ["INSERT INTO `cms_settings` VALUES ('rf_strana','" + valoreStrano + "',NULL);"]);
+  metti(DA, zipK4);
+  r = await ripristina(a, BA, path.basename(zipK4));
+  ok('k. INSERT con un valore stringa che contiene punto e virgola, apici inversi e doppi apici: accettata, il valore è intero', r.ok && uno(DA, "SELECT setting_value FROM `cms_settings` WHERE setting_key='rf_strana'") === valoreStrano && tabelle(DA, 'cms_b_users').length === 1, r.titolo);
+  impA0 = impronte(DA, 'cms_'); // dopo un ripristino riuscito users (last_login) è quello della copia: da qui "intatto" vuol dire questo
 
   // ---- j. Una copia non firmata con una CREATE che lega una tabella di questo sito a una dell'altra installazione (REFERENCES),
   // o la monta sopra (ENGINE=MERGE UNION=): rifiutata prima dello scambio. Le stesse parole dentro un COMMENT (fra apici) passano.
@@ -318,6 +376,8 @@ let br;
   ok('s. lo stesso snapshot con il database buono: ripristinato, il file rimesso, nessuna tabella di lavoro', /^Ripristino dallo snapshot/.test(rs2.titolo) && /Database ripristinato/.test(rs2.log) && /File rimesso: uploads\/rf-snap\.txt/.test(rs2.log) && fs.readFileSync(path.join(DA, 'uploads/rf-snap.txt'), 'utf8') === 'vecchio' && tabelle(DA, 'rip').length === 0 && tabelle(DA, 'vec').length === 0, rs2.titolo);
   fs.unlinkSync(path.join(DA, 'uploads/rf-snap.txt'));
   ok('s. B2 intatta anche dopo lo snapshot (che ha tutto il database): passano solo le tabelle del prefisso', impronte(DB2, 'cms_b_') === impB0);
+  const modo = php(DA, `require_once '${DA}/includes/aggiornamenti.php'; $p = db()->query('SELECT @@session.sql_mode')->fetchColumn(); $r = agg_restore_db('${snapDir}/db.sql.gz'); $d = db()->query('SELECT @@session.sql_mode')->fetchColumn(); echo ($r['ok'] ? 'ok ' : 'ko ') . ($d === $p ? 'uguale' : 'diversa: ' . $d) . ' ' . (str_contains($p, 'STRICT_TRANS_TABLES') ? 'stretta' : 'lasca');`);
+  ok('s. dopo agg_restore_db la modalità SQL di sessione è quella di prima (stretta), e lo snapshot è passato', modo === 'ok uguale stretta', modo);
 
   // ---- f. La pagina di soccorso su D.
   const d = await pagina(br, err); await entraPannello(d, BD, UTENTE, PASSWORD);
@@ -337,7 +397,7 @@ let br;
   let ts = await rs.text();
   ok('f. senza la tabella users /admin/ risponde 503 con la pagina di soccorso, in parole semplici', rs.status() === 503 && /Il database del sito è vuoto o incompleto/.test(ts) && /manca la tabella degli utenti/.test(ts) && ts.includes('data-caso="tabelle"') && /Rimettere il sito da una copia/.test(ts) && /phpMyAdmin/.test(ts), rs.status());
   ok('f. a chi non è entrato la pagina non dice il nome del database, l\'utente né il prefisso; mai la password, niente percorsi del server né tracce', senzaDati(ts) && !ts.includes(process.env.DBPASS || '§§') && senzaPercorsi(ts) && /Cache-Control: no-store/i.test(Object.entries(rs.headers()).map(x => x.join(': ')).join('\n')), { db: ts.includes(nomeDb), utente: ts.includes(utenteDb) });
-  ok('f. senza aggiornamenti/soccorso.txt niente elenco delle copie, e la pagina spiega come averlo (con i dati del database)', !ts.includes('soccorso-copie') && /soccorso\.txt/.test(ts) && !ts.includes(copiaD) && /nome del database, l'utente e il prefisso/.test(ts));
+  ok('f. senza aggiornamenti/soccorso.txt niente elenco delle copie, e la pagina spiega come averlo (con il nome del database e il prefisso, mai l\'utente)', !ts.includes('soccorso-copie') && /soccorso\.txt/.test(ts) && !ts.includes(copiaD) && /nome del database e il prefisso/.test(ts) && /utente del database e la password non si mostrano mai/.test(ts));
   rs = await anon.get(BD + '/admin/login.php'); ts = await rs.text();
   ok('f. anche il login risponde con la pagina di soccorso (503), non con "Errore temporaneo"', rs.status() === 503 && /Il database del sito è vuoto/.test(ts) && !/Errore temporaneo/.test(ts));
   rs = await anon.get(BD + '/admin/editor-api.php?azione=x', { headers: { Accept: 'application/json' } }); ts = await rs.text();
@@ -354,11 +414,22 @@ let br;
   rs = await anon.get(BD + '/admin/'); ts = await rs.text();
   ok('f. senza users e settings la pagina di soccorso lo dice (manca la tabella degli utenti e quella delle impostazioni)', rs.status() === 503 && ts.includes('data-caso="tabelle"') && /e quella delle impostazioni/.test(ts) && senzaPercorsi(ts));
   ok('f. nemmeno adesso è nata una tabella', tabelle(DD, 'cms_').length === nD0 - 2, tabelle(DD, 'cms_').length);
+  // Un soccorso.txt vecchio di 25 ore non vale piu: la pagina lo dice e non mostra niente.
   fs.writeFileSync(soccorsoTxt, '');
+  const vecchio = new Date(Date.now() - 25 * 3600 * 1000); fs.utimesSync(soccorsoTxt, vecchio, vecchio);
+  rs = await anon.get(BD + '/admin/'); ts = await rs.text();
+  ok('f. un soccorso.txt più vecchio di 24 ore non vale: la pagina dice di ricrearlo e non mostra né il database né le copie', rs.status() === 503 && ts.includes('soccorso-scaduto') && /più di 24 ore/.test(ts) && !ts.includes('soccorso-copie') && senzaDati(ts) && fs.existsSync(soccorsoTxt), rs.status());
+  const adesso = new Date(); fs.utimesSync(soccorsoTxt, adesso, adesso);
+  // Un registro lungo (30 righe) di un ripristino di D, per vedere il taglio a 15 righe.
+  const registroFinto = path.join(DD, 'aggiornamenti/copie/ripristino-20261105-010101-' + copiaD + '.log');
+  fs.writeFileSync(registroFinto, 'plumeCMS ripristino 2026-11-05 01:01:01 esito=ok copia=' + copiaD + '\n' + Array.from({ length: 30 }, (_, i) => 'riga di registro numero ' + (i + 1)).join('\n') + '\n');
   await d.goto(BD + '/admin/', { waitUntil: 'networkidle' });
   ts = await d.locator('body').innerText();
   ok('f. con aggiornamenti/soccorso.txt la pagina elenca le copie sul server: nome, data, etichetta, peso, sito d\'origine', await d.locator('#soccorso-copie').count() === 1 && ts.includes(copiaD) && /manuale/.test(ts) && /KB|MB/.test(ts) && ts.includes(BD), ts.slice(0, 80));
-  ok('f. con il file escono anche il nome del database, il prefisso e le tabelle che mancano, mai la password', ts.includes(nomeDb) && /prefisso cms_/.test(ts) && /cms_users/.test(ts) && /cms_settings/.test(ts) && !ts.includes(process.env.DBPASS || '§§'));
+  ok('f. con il file escono anche il nome del database, il prefisso e le tabelle che mancano; mai la password, mai l\'utente del database', ts.includes(nomeDb) && /prefisso cms_/.test(ts) && /cms_users/.test(ts) && /cms_settings/.test(ts) && !ts.includes(process.env.DBPASS || '§§') && !ts.includes(utenteDb), { utente: ts.includes(utenteDb) });
+  ok('f. dell\'ultimo registro escono solo le prime 15 righe (di 30), e la pagina lo dice', /le prime 15 righe di 30/.test(ts) && /riga di registro numero 15/.test(ts) && !/riga di registro numero 16/.test(ts));
+  ok('f. la pagina ricorda di cancellare soccorso.txt a lavoro finito (vale 24 ore)', await d.locator('#soccorso-ricorda').count() === 1 && /A lavoro finito cancella il file/.test(ts) && /24 ore/.test(ts));
+  fs.unlinkSync(registroFinto);
   ok('f. anche con l\'elenco: nessun pulsante, nessun link alle copie, nessun percorso', await d.locator('#soccorso a, #soccorso button, #soccorso form').count() === 0 && senzaPercorsi(await d.content()));
   await d.setViewportSize({ width: 390, height: 844 });
   await d.goto(BD + '/admin/', { waitUntil: 'networkidle' });
@@ -404,7 +475,7 @@ let br;
   ok('f. con la password del database sbagliata: "non raggiunge il database" e il rimando al config, mai la password; a chi non è entrato nemmeno nome del database, utente e risposta del server', rs.status() === 503 && ts.includes('data-caso="connessione"') && /non raggiunge il database/.test(ts) && /config\.local\.php/.test(ts) && !ts.includes('sbagliata-rf') && senzaDati(ts) && !/Access denied|codice 1045/.test(ts) && senzaPercorsi(ts), rs.status());
   fs.writeFileSync(soccorsoTxt, '');
   rs = await anon.get(BD + '/admin/'); ts = await rs.text();
-  ok('f. con il file soccorso.txt la stessa pagina dice il nome del database, l\'utente e la risposta del server (codice 1045), mai la password', rs.status() === 503 && ts.includes(nomeDb) && ts.includes(utenteDb) && /codice 1045/.test(ts) && !ts.includes('sbagliata-rf') && !ts.includes(process.env.DBPASS || '§§'), rs.status());
+  ok('f. con il file soccorso.txt la stessa pagina dice il nome del database e la risposta del server (codice 1045) con utente e host coperti; mai la password, mai l\'utente', rs.status() === 503 && ts.includes(nomeDb) && !ts.includes(utenteDb) && /codice 1045/.test(ts) && /utente(?:'|&#039;)@(?:'|&#039;)host/.test(ts) && !ts.includes('sbagliata-rf') && !ts.includes(process.env.DBPASS || '§§'), { status: rs.status(), utente: ts.includes(utenteDb) });
   fs.writeFileSync(conf, conf0);
   for (let i = 0; i < 40; i++) { rs = await anon.get(BD + '/admin/login.php'); if (rs.status() === 200) break; await dorme(500); } // opcache rilegge il config dopo 2 secondi
   ok('f. con il config rimesso il login torna, e soccorso.txt si è cancellato da solo', rs.status() === 200 && /Accesso al pannello/.test(await rs.text()) && !fs.existsSync(soccorsoTxt), rs.status());

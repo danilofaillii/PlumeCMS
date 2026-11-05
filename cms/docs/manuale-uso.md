@@ -3610,8 +3610,8 @@ pagina lo dice.
 Se il database del sito perde le tabelle degli utenti o delle impostazioni (un ripristino o un'importazione interrotti a
 metà, un database svuotato per sbaglio), il pannello non può aprirsi: al posto dell'accesso compare la pagina **"Il database
 del sito è vuoto o incompleto"** (1), con i passi per rimettere tutto (2). Il sito intanto dice ai visitatori "Torno subito".
-Niente di tecnico e nessun dato sensibile: la password del database non compare mai, e a chi apre la pagina senza essere
-entrato nel pannello (la vede chiunque, al posto dell'accesso) non compaiono nemmeno il nome del database, l'utente e il
+Niente di tecnico e nessun dato sensibile: la password e l'utente del database non compaiono mai, e a chi apre la pagina
+senza essere entrato nel pannello (la vede chiunque, al posto dell'accesso) non compaiono nemmeno il nome del database e il
 prefisso delle tabelle: escono solo con il file `soccorso.txt`, spiegato sotto.
 
 1. Con il gestore dei file del tuo hosting (o un programma FTP) apri la cartella del sito, poi `aggiornamenti/copie/`.
@@ -3629,15 +3629,17 @@ prefisso delle tabelle: escono solo con il file `soccorso.txt`, spiegato sotto.
 5. Se la copia aveva anche immagini, temi o moduli diversi, da **Impostazioni > Copia del sito** ripristina la stessa copia:
    rimette anche i file.
 
-Per vedere nella pagina il nome del database, l'utente e il prefisso delle tabelle, l'elenco delle copie che stanno sul server
-(3) (nome, data, peso, da quale sito vengono) e l'ultimo registro di ripristino, crea con il gestore dei file un file vuoto
-chiamato `soccorso.txt` nella cartella `aggiornamenti/` del sito e ricarica. Il file si cancella da solo quando il pannello
-riparte; finché c'è, quei dati li vede chiunque apra la pagina: se il sito resta fermo a lungo, toglilo tu. Dalla pagina non
-si scarica e non si ripristina niente: le copie si prendono con il gestore dei file.
+Per vedere nella pagina il nome del database e il prefisso delle tabelle (ti servono in phpMyAdmin), l'elenco delle copie
+che stanno sul server (3) (nome, data, peso, da quale sito vengono) e le prime righe dell'ultimo registro di ripristino, crea
+con il gestore dei file un file vuoto chiamato `soccorso.txt` nella cartella `aggiornamenti/` del sito e ricarica. Il file
+vale 24 ore (dopo la pagina lo ignora e ti dice di cancellarlo e ricrearlo) e si cancella da solo quando il pannello riparte;
+finché c'è, quei dati li vede chiunque apra la pagina: a lavoro finito cancellalo tu, come la pagina ricorda. L'utente del
+database non compare mai. Dalla pagina non si scarica e non si ripristina niente: le copie si prendono con il gestore dei file.
 
 Se invece la pagina dice **"Il pannello non raggiunge il database"**, il problema è nei dati di collegamento: controlla nel
 pannello dell'hosting che il database e l'utente esistano, e nel file `includes/config.local.php` che nome del database,
-utente e password siano quelli giusti (con `soccorso.txt` la pagina dice quali sta usando e la risposta del server).
+utente e password siano quelli giusti (con `soccorso.txt` la pagina dice il nome del database che sta usando e la risposta
+del server, con l'utente e l'host coperti).
 
 **Checklist**
 

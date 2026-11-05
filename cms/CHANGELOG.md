@@ -31,8 +31,8 @@ Il prodotto si chiama **plumeCMS** (nome scelto il 26 ottobre 2026; prima, per p
   blocco lo prende un aggiornamento (Impostazioni > Aggiornamenti) per tutto il suo lavoro: un ripristino e un aggiornamento
   non si incrociano mai. Le tabelle di lavoro lasciate da un ripristino interrotto si tolgono anche aprendo Copia del sito, e
   una che non si cancella resta scritta nel marcatore anche dopo il ripristino seguente.
-- **Il registro del ripristino resta su file** (`aggiornamenti/copie/<copia>.ripristino.log`) e in sicurezza_log: Copia del
-  sito mostra sempre l'ultimo; se la copia ha altri utenti, dopo il nuovo accesso si torna lì con il registro. Se i file
+- **Il registro del ripristino resta su file** (`aggiornamenti/copie/ripristino-<data e ora>-<copia>.log`, un file per
+  tentativo, se ne tengono dieci) e in sicurezza_log: Copia del sito mostra sempre l'ultimo; se la copia ha altri utenti, dopo il nuovo accesso si torna lì con il registro. Se i file
   falliscono dopo il database, il registro dice di ripristinare la copia prima-del-ripristino; se fallisce solo quello che
   viene dopo i file (i file in più da mettere da parte, le protezioni dei temi), il titolo dice "Ripristino fatto, con errori
   nelle operazioni finali": database e file ci sono tutti. Nel registro di una riga fallita mai i valori (ci sono le password
@@ -41,9 +41,11 @@ Il prodotto si chiama **plumeCMS** (nome scelto il 26 ottobre 2026; prima, per p
 - **La pagina di soccorso del pannello**: se il database non si raggiunge, o mancano le tabelle `users` o `settings` del
   prefisso, ogni pagina del pannello (anche il login) risponde con una pagina pulita (503) che dice in parole semplici cosa
   succede e i passi per rimettere il sito da una copia con phpMyAdmin. La pagina la vede chiunque (sta al posto del login): a
-  chi non è entrato non dice il nome del database, l'utente, il prefisso delle tabelle né la risposta tecnica del server; questi
-  dati, l'elenco delle copie sul server (senza scaricarle né ripristinarle) e l'ultimo registro di ripristino escono solo con il
-  file `aggiornamenti/soccorso.txt`, che il proprietario crea con il gestore dei file. Mai percorsi del server, mai la password.
+  chi non è entrato non dice il nome del database, il prefisso delle tabelle né la risposta tecnica del server; questi dati
+  (servono in phpMyAdmin), l'elenco delle copie sul server (senza scaricarle né ripristinarle) e le prime 15 righe dell'ultimo
+  registro di ripristino escono solo con il file `aggiornamenti/soccorso.txt`, che il proprietario crea con il gestore dei file
+  e che vale 24 ore (poi la pagina lo ignora e dice di ricrearlo; la pagina ricorda di cancellarlo a lavoro finito). Mai
+  percorsi del server, mai la password, mai l'utente del database (nella risposta del server utente e host sono coperti).
   La pagina avverte che una copia fatta su un altro hosting può essere rifiutata da phpMyAdmin (le collazioni) e si ripristina
   dal pannello. Il sito pubblico risponde "Torno subito" (503) come prima.
 - **Niente più errori a video con i percorsi del server**: nel pannello `display_errors` è spento e un'eccezione non gestita
@@ -59,8 +61,22 @@ Il prodotto si chiama **plumeCMS** (nome scelto il 26 ottobre 2026; prima, per p
 - Corretto: le copie e gli snapshot fatti su MySQL 8 perdevano le date `created_at` e `updated_at` di utenti, pagine e articoli
   (MySQL 8 segna quelle colonne "DEFAULT_GENERATED" e il dump le scriveva come DEFAULT, come le colonne generate di
   Prenotazioni ed Eventi): al ripristino prendevano l'ora del ripristino. Ora si scrivono i valori veri.
+- **Sicurezza, secondo giro di correzioni (5 novembre 2026)**: una riga della copia come ``CREATE TABLE `x` (`c'` int); DROP TABLE
+  `y` `` passava i controlli (lo spezzatore delle istruzioni conosceva solo gli apici semplici: l'apice dentro il nome fra apici
+  inversi nascondeva il punto e virgola) e la connessione eseguiva anche il secondo comando. Ora: lo spezzatore (`agg_split_sql()`,
+  anche per i file SQL dei pacchetti) e i pezzi fuori dalle virgolette conoscono apici semplici, doppi e inversi; una CREATE o
+  una INSERT con un punto e virgola fuori dalle virgolette ferma il ripristino ("contiene un secondo comando"), e in ogni CREATE
+  i nomi fra apici inversi devono essere solo lettere, cifre e trattino basso (fino a 64), come tutti quelli di plumeCMS; la
+  connessione del CMS (`db()`, e quella dell'installatore) non esegue più istruzioni impilate (`MULTI_STATEMENTS` spento alla
+  creazione). Inoltre: una CREATE con `TABLESPACE`, `DATA DIRECTORY` o `INDEX DIRECTORY` (anche dentro `/*!50100 ... */`) è
+  rifiutata con il motivo vero ("contiene una clausola che il ripristino non accetta: TABLESPACE"), non "è stata modificata";
+  il marcatore del ripristino scrive il prefisso del sito e ogni nome come coppia [marchio di lavoro, tabella], e non fa
+  cancellare una tabella di un'altra installazione nello stesso database; un errore qualunque fra il marcatore e lo scambio
+  (anche uno SHOW COLLATION fallito) toglie subito le tabelle di appoggio già create; alla fine di un ripristino (copia o
+  snapshot) la modalità SQL di sessione torna quella di prima.
 - Prove: `prove/prova-copia-ripristino-sicuro.js` (su quattro siti, più MariaDB e MySQL 5.7); manuale d'uso capitolo 29 con
-  "Se il ripristino non si può fare" e "Se il pannello dice che il database è vuoto"; manuale tecnico 19.4, 19.7, 19.9, 22 e 24.
+  "Se il ripristino non si può fare" e "Se il pannello dice che il database è vuoto"; manuale tecnico 6.1, 19.4, 19.7, 19.8,
+  19.9, 22, 23.4, 24 e 25.
 
 ## 2.25.0 (4 novembre 2026) - Scorri di lato
 

@@ -343,12 +343,25 @@ function agg_pdo_buffered_attr(): int {
 /**
  * Mette la connessione fuori dalla modalita stretta del server: gli snapshot
  * e i file SQL dei pacchetti possono portare date vuote '0000-00-00'.
+ * 2.25.1: prima di cambiarla legge la modalita di sessione che c'e (quella di db(), stretta) e la tiene da parte:
+ * agg_sql_mode_torna() la rimette alla fine di un ripristino (copia_ripristina(), agg_restore_db()), cosi le pagine di quella
+ * stessa richiesta (il pannello dopo il ripristino) tornano a lavorare in modalita stretta come sempre.
  */
 function agg_sql_mode(): void {
-    static $fatto = false;
-    if ($fatto) return;
-    db()->exec("SET SESSION sql_mode = 'NO_ENGINE_SUBSTITUTION'");
-    $fatto = true;
+    if (!empty($GLOBALS['agg_sql_mode_lasca'])) return;
+    $pdo = db();
+    $prima = (string)$pdo->query('SELECT @@session.sql_mode')->fetchColumn();
+    $pdo->exec("SET SESSION sql_mode = 'NO_ENGINE_SUBSTITUTION'");
+    $GLOBALS['agg_sql_mode_lasca'] = true;
+    $GLOBALS['agg_sql_mode_prima'] = $prima;
+}
+
+/** 2.25.1: rimette la modalita SQL di sessione che c'era prima di agg_sql_mode() (niente da fare se non e stata cambiata). */
+function agg_sql_mode_torna(): void {
+    if (empty($GLOBALS['agg_sql_mode_lasca'])) return;
+    $GLOBALS['agg_sql_mode_lasca'] = false;
+    try { db()->exec('SET SESSION sql_mode = ' . db()->quote((string)($GLOBALS['agg_sql_mode_prima'] ?? ''))); }
+    catch (Throwable $e) { error_log('aggiornamenti: modalita SQL non rimessa: ' . $e->getMessage()); }
 }
 
 function agg_sql_val($v): string {
@@ -435,6 +448,7 @@ function agg_restore_db(string $gzPath): array {
         $r = copia_ripristina_db($gzPath, DB_PREFIX, null, null, []);
     } finally {
         copia_blocco_lascia();
+        agg_sql_mode_torna(); // 2.25.1: la connessione torna in modalita stretta per il resto della richiesta
     }
     return ['ok' => $r['ok'], 'eseguite' => $r['eseguite'], 'errori' => $r['ok'] ? [] : array_merge([$r['motivo']], $r['errori']), 'righe' => $r['righe']];
 }
@@ -542,21 +556,25 @@ function agg_ripristina(string $id): array {
  * delle stringhe: un ; dentro un testo tra apici non spezza niente, e le
  * righe di commento che iniziano con -- vengono tolte invece di far saltare
  * il blocco.
+ * 2.25.1 (sicurezza): le regioni fra virgolette sono tre, '...', "..." (con la barra di escape e la virgoletta raddoppiata) e
+ * `...` (un nome: solo l'apice inverso raddoppiato, nessuna barra). Fino alla 2.25.0 contava solo gli apici semplici: un apice
+ * semplice dentro un nome fra apici inversi (CREATE TABLE `x` (`c'` int); DROP TABLE `y`) apriva una stringa finta che
+ * inghiottiva il punto e virgola, la riga contava come UNA istruzione e il ripristino della copia la eseguiva intera.
  */
 function agg_split_sql(string $sql): array {
     $out = [];
     $cur = '';
     $len = strlen($sql);
-    $inStr = false;
+    $inStr = ''; // la virgoletta che ha aperto la regione in corso: ', " o `; '' = fuori
     $lineStart = true;
     for ($i = 0; $i < $len; $i++) {
         $c = $sql[$i];
-        if ($inStr) {
+        if ($inStr !== '') {
             $cur .= $c;
-            if ($c === '\\' && $i + 1 < $len) { $cur .= $sql[++$i]; continue; }
-            if ($c === "'") {
-                if ($i + 1 < $len && $sql[$i + 1] === "'") { $cur .= "'"; $i++; continue; }
-                $inStr = false;
+            if ($c === '\\' && $inStr !== '`' && $i + 1 < $len) { $cur .= $sql[++$i]; continue; }
+            if ($c === $inStr) {
+                if ($i + 1 < $len && $sql[$i + 1] === $inStr) { $cur .= $inStr; $i++; continue; }
+                $inStr = '';
             }
             continue;
         }
@@ -565,7 +583,7 @@ function agg_split_sql(string $sql): array {
             continue;
         }
         $lineStart = ($c === "\n");
-        if ($c === "'") { $inStr = true; $cur .= $c; continue; }
+        if ($c === "'" || $c === '"' || $c === '`') { $inStr = $c; $cur .= $c; continue; }
         if ($c === ';') {
             $s = trim($cur);
             if ($s !== '') $out[] = $s;

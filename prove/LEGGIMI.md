@@ -327,9 +327,14 @@ Ripristina il sito più volte: alla fine il sito è quello della copia fatta all
 ## prova-copia-ripristino-sicuro.js (2.25.1)
 
 Il ripristino sicuro della Copia del sito (tabelle di appoggio, scambio in una RENAME, collazioni di un altro server, blocco,
-marcatore e pulizia aprendo Copia del sito, INSERT solo letterali, CREATE senza vincoli o rimandi verso altre tabelle
-(REFERENCES, UNION=), registro su file, pagina di soccorso con i dati del database solo con `aggiornamenti/soccorso.txt`,
-snapshot degli Aggiornamenti sullo stesso motore, un aggiornamento che non parte durante un ripristino). Servono quattro siti
+marcatore a coppie [marchio, tabella] con il prefisso, che non tocca le tabelle di un'altra installazione, e pulizia aprendo
+Copia del sito, INSERT solo letterali, CREATE senza vincoli o rimandi verso altre tabelle (REFERENCES, UNION=) e con TABLESPACE
+rifiutato con il motivo vero, istruzioni impilate (secondo giro, 5 novembre 2026: una CREATE con un apice dentro un nome fra
+apici inversi e un secondo comando, un nome con l'apice, una INSERT con un punto e virgola fuori dalle virgolette: rifiutate;
+una INSERT con punto e virgola e apici inversi dentro un valore: accettata; `db()` che non esegue due istruzioni in una),
+registro su file uno per tentativo, pagina di soccorso con il nome del database e il prefisso (mai l'utente) solo con
+`aggiornamenti/soccorso.txt`, che vale 24 ore, registro a 15 righe, snapshot degli Aggiornamenti sullo stesso motore con la
+modalità SQL rimessa, un aggiornamento che non parte durante un ripristino). Servono quattro siti
 installati con lo stesso utente: A (kit Attività, prefisso `cms_`), C (kit Personale, prefisso `plume_c_`, database suo), B2
 (prefisso `cms_b_` nello STESSO database di A, come per `prova-copia-pulita.js`), D (kit Vuoto, per la pagina di soccorso).
 Per le prove fra server, un sito su MariaDB 10.6 (`SITO_MARIADB="<base>|<cartella>"`) e uno su MySQL 5.7 (`SITO_MYSQL57`),
@@ -340,10 +345,10 @@ installati con l'host del loro server (`DBHOST=127.0.0.1:3309 node prove/prova-k
 (`27-soccorso.jpg`, con i segni dei passi) nella cartella di uscita.
 `FOTO_MANUALE=1 SITO_MARIADB=... SITO_MYSQL57=... DBPASS=... node prove/prova-copia-ripristino-sicuro.js <base A> <cartella A>
 <base C> <cartella C> <base B2> <cartella B2> <base D> <cartella D> <utente> <password> <cartella uscita>`.
-Atteso: 97 su 97 (5 novembre 2026; senza i due siti degli altri server 88 su 88). Lascia A come la sua prima copia (con uno
+Atteso: 114 su 114 (5 novembre 2026, secondo giro; senza i due siti degli altri server 105 su 105). Lascia A come la sua prima copia (con uno
 snapshot manuale in più), C con i contenuti del sito MariaDB (o di A), D rimesso; le copie di prova (collazione, rotta,
-sottoquery, funzione, vincolo, union, commento) restano nelle cartelle `aggiornamenti/copie/` dei siti. Prima di rilanciarla
-sugli stessi siti: l'amministratore di C torna `prova`.
+sottoquery, funzione, impilata, nome, insert-impilata, insert-strana, tablespace, vincolo, union, commento) restano nelle
+cartelle `aggiornamenti/copie/` dei siti. Prima di rilanciarla sugli stessi siti: l'amministratore di C torna `prova`.
 
 ## prova-versione.js (1.3.0)
 

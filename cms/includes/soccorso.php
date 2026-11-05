@@ -10,18 +10,42 @@
  *   - mancano le tabelle del prefisso (users, e di solito tutte le altre); se nel database c'è un'altra installazione
  *     (settings e users con un altro prefisso) lo dice: forse il config indica il prefisso sbagliato;
  *   - manca solo settings (users c'è).
- * Niente percorsi assoluti del server, mai la password. La pagina esce anche a chi non è entrato nel pannello (il login non
- * c'è): il nome del database, l'utente, il prefisso delle tabelle, la risposta tecnica del server (che dice utente e host),
- * gli altri prefissi nel database, l'elenco delle copie in aggiornamenti/copie/ (nome, data, etichetta, peso, sito d'origine
- * dal manifest) e l'ultimo registro di ripristino si mostrano SOLO se esiste il file aggiornamenti/soccorso.txt, la "porta"
- * che il proprietario crea con il gestore dei file dell'hosting (la pagina spiega come); a chiunque altro solo le istruzioni,
- * con il rimando al config. Nessuna azione dalla pagina (niente download, niente ripristino). Il file soccorso.txt si
- * cancella da solo alla prima pagina del pannello che funziona.
+ * Niente percorsi assoluti del server, mai la password, mai l'utente del database. La pagina esce anche a chi non è entrato nel
+ * pannello (il login non c'è): il nome del database e il prefisso delle tabelle (quello che serve in phpMyAdmin), la risposta
+ * tecnica del server (con l'utente e l'host del database coperti), gli altri prefissi nel database, l'elenco delle copie in
+ * aggiornamenti/copie/ (nome, data, etichetta, peso, sito d'origine dal manifest) e le prime SOCCORSO_REGISTRO_RIGHE righe
+ * dell'ultimo registro di ripristino si mostrano SOLO se esiste il file aggiornamenti/soccorso.txt, la "porta" che il
+ * proprietario crea con il gestore dei file dell'hosting (la pagina spiega come), e solo per SOCCORSO_PORTA_ORE ore dalla sua
+ * creazione (dopo la pagina lo ignora e dice di ricrearlo: un file dimenticato non resta una porta aperta per sempre); a
+ * chiunque altro solo le istruzioni, con il rimando al config. Nessuna azione dalla pagina (niente download, niente
+ * ripristino). Il file soccorso.txt si cancella da solo alla prima pagina del pannello che funziona, e la pagina ricorda di
+ * cancellarlo a lavoro finito.
  */
+
+/** 2.25.1: per quante ore vale il file aggiornamenti/soccorso.txt dalla sua creazione. */
+const SOCCORSO_PORTA_ORE = 24;
+/** 2.25.1: quante righe dell'ultimo registro di ripristino mostra la pagina (il resto sta nel file, in aggiornamenti/copie/). */
+const SOCCORSO_REGISTRO_RIGHE = 15;
 
 /** Il file che apre l'elenco delle copie nella pagina di soccorso. */
 function soccorso_file_elenco(): string {
     return dirname(__DIR__) . '/aggiornamenti/soccorso.txt';
+}
+
+/** 2.25.1: la porta è aperta? 'si' (il file c'è ed è fresco), 'scaduto' (c'è ma ha più di SOCCORSO_PORTA_ORE ore), 'no'. */
+function soccorso_porta(): string {
+    $f = soccorso_file_elenco();
+    if (!is_file($f)) return 'no';
+    $t = (int)@filemtime($f);
+    return $t > 0 && $t >= time() - SOCCORSO_PORTA_ORE * 3600 ? 'si' : 'scaduto';
+}
+
+/** 2.25.1: la risposta tecnica del server senza l'utente e l'host del database ("Access denied for user 'x'@'y'" -> "... 'utente'@'host'"). */
+function soccorso_messaggio_coperto(string $msg): string {
+    if (defined('DB_USER') && DB_USER !== '') $msg = str_replace(DB_USER, 'utente', $msg);
+    $msg = preg_replace("/'utente'@'[^']*'/", "'utente'@'host'", $msg);
+    if (defined('DB_HOST') && DB_HOST !== '') $msg = str_replace(DB_HOST, 'host', $msg);
+    return $msg;
 }
 
 /**
@@ -85,9 +109,11 @@ function soccorso_rispondi(array $s): void {
         return;
     }
     if (!headers_sent()) header('Content-Type: text/html; charset=UTF-8');
-    $db = (string)(defined('DB_NAME') ? DB_NAME : ''); $utente = (string)(defined('DB_USER') ? DB_USER : ''); $pref = DB_PREFIX;
-    // La porta del proprietario (aggiornamenti/soccorso.txt): solo con quella escono i dati del database e le copie.
-    $porta = is_file(soccorso_file_elenco());
+    $db = (string)(defined('DB_NAME') ? DB_NAME : ''); $pref = DB_PREFIX;
+    // La porta del proprietario (aggiornamenti/soccorso.txt, fresca di meno di SOCCORSO_PORTA_ORE ore): solo con quella escono
+    // il nome del database, il prefisso, la risposta del server, le copie e il registro. L'utente del database mai.
+    $stato = soccorso_porta();
+    $porta = $stato === 'si';
     $copie = $porta ? soccorso_copie() : [];
     $registro = null;
     if ($porta) { try { require_once __DIR__ . '/copia-sito.php'; $registro = copia_registro_ultimo(); } catch (Throwable $e) {} }
@@ -130,18 +156,18 @@ function soccorso_rispondi(array $s): void {
 <main class="box" id="soccorso" data-caso="<?= $h($s['caso']) ?>">
   <h1><?= $h($titolo) ?></h1>
   <?php if ($s['caso'] === 'connessione'): ?>
-  <div class="avviso" role="alert"><?php if ($porta): ?>Il sito non riesce a collegarsi al database <b><?= $h($db) ?></b> con l'utente <b><?= $h($utente) ?></b> (sono quelli scritti nel file <code>includes/config.local.php</code>; la password non si mostra).<?php else: ?>Il sito non riesce a collegarsi al database con i dati scritti nel file <code>includes/config.local.php</code> (nome del database, utente e password).<?php endif; ?></div>
+  <div class="avviso" role="alert"><?php if ($porta): ?>Il sito non riesce a collegarsi al database <b><?= $h($db) ?></b> con l'utente e la password scritti nel file <code>includes/config.local.php</code> (utente e password non si mostrano).<?php else: ?>Il sito non riesce a collegarsi al database con i dati scritti nel file <code>includes/config.local.php</code> (nome del database, utente e password).<?php endif; ?></div>
   <p>Finché il database non risponde, né il sito né il pannello possono aprirsi. Nessun dato è stato toccato.</p>
   <h2>Cosa fare</h2>
   <ol>
-    <li>Nel pannello del tuo hosting (la voce dei database MySQL) controlla che il database <?= $porta ? '<b>' . $h($db) . '</b>' : 'scritto nel file (riga <code>DB_NAME</code>)' ?> esista e che l'utente <?= $porta ? '<b>' . $h($utente) . '</b>' : 'scritto nel file (riga <code>DB_USER</code>)' ?> ne abbia l'accesso.</li>
+    <li>Nel pannello del tuo hosting (la voce dei database MySQL) controlla che il database <?= $porta ? '<b>' . $h($db) . '</b>' : 'scritto nel file (riga <code>DB_NAME</code>)' ?> esista e che l'utente scritto nel file (riga <code>DB_USER</code>) ne abbia l'accesso.</li>
     <li>Se hai spostato il sito o cambiato la password del database, con il gestore dei file dell'hosting apri <code>includes/config.local.php</code> e riscrivi le righe <code>DB_HOST</code>, <code>DB_NAME</code>, <code>DB_USER</code> e <code>DB_PASS</code> con i dati giusti.</li>
     <li>Se il database è fermo per una manutenzione dell'hosting, aspetta qualche minuto e ricarica questa pagina.</li>
   </ol>
   <?php if ($porta): ?>
-  <p class="tec">(Risposta del server: codice <?= (int)$s['codice'] ?>, <?= $h(mb_substr((string)$s['messaggio'], 0, 200)) ?>)</p>
+  <p class="tec">(Risposta del server: codice <?= (int)$s['codice'] ?>, <?= $h(mb_substr(soccorso_messaggio_coperto((string)$s['messaggio']), 0, 200)) ?>; l'utente e l'host del database sono coperti)</p>
   <?php else: ?>
-  <p class="tec">Il nome del database, l'utente e la risposta tecnica del server si mostrano qui solo con il file <code>soccorso.txt</code> (vedi sotto): questa pagina la vede anche chi non è entrato nel pannello.</p>
+  <p class="tec">Il nome del database e la risposta tecnica del server si mostrano qui solo con il file <code>soccorso.txt</code> (vedi sotto): questa pagina la vede anche chi non è entrato nel pannello.</p>
   <?php endif; ?>
   <?php else: ?>
   <div class="avviso" role="alert">
@@ -169,8 +195,10 @@ function soccorso_rispondi(array $s): void {
   </ol>
   <?php endif; ?>
   <h2>Le copie sul server</h2>
-  <?php if (!$porta): ?>
-  <p>Per vedere qui il nome del database, l'utente e il prefisso delle tabelle del sito, l'elenco delle copie che stanno sul server (nome, data, peso, da quale sito vengono) e l'ultimo registro di ripristino, crea con il gestore dei file dell'hosting un file vuoto chiamato <code>soccorso.txt</code> nella cartella <code>aggiornamenti/</code> del sito (quella con dentro <code>copie/</code>) e ricarica questa pagina. Il file si cancella da solo quando il pannello riparte; finché c'è, quei dati li vede chiunque apra questa pagina: se il sito resta fermo a lungo, toglilo tu. Da questa pagina le copie non si scaricano e non si ripristinano: si prendono con il gestore dei file.</p>
+  <?php if ($stato === 'scaduto'): ?>
+  <p id="soccorso-scaduto">Il file <code>aggiornamenti/soccorso.txt</code> c'è ma ha più di <?= (int)SOCCORSO_PORTA_ORE ?> ore: la pagina non lo considera più (un file dimenticato non deve restare una porta aperta). Se ti serve ancora, cancellalo e crealo di nuovo con il gestore dei file, poi ricarica; a lavoro finito cancellalo.</p>
+  <?php elseif (!$porta): ?>
+  <p>Per vedere qui il nome del database e il prefisso delle tabelle del sito (servono in phpMyAdmin), l'elenco delle copie che stanno sul server (nome, data, peso, da quale sito vengono) e le prime righe dell'ultimo registro di ripristino, crea con il gestore dei file dell'hosting un file vuoto chiamato <code>soccorso.txt</code> nella cartella <code>aggiornamenti/</code> del sito (quella con dentro <code>copie/</code>) e ricarica questa pagina. L'utente del database e la password non si mostrano mai. Il file vale <?= (int)SOCCORSO_PORTA_ORE ?> ore e si cancella da solo quando il pannello riparte; finché c'è, quei dati li vede chiunque apra questa pagina: a lavoro finito cancellalo tu. Da questa pagina le copie non si scaricano e non si ripristinano: si prendono con il gestore dei file.</p>
   <?php elseif (!$copie): ?>
   <p>Nella cartella <code>aggiornamenti/copie/</code> non c'è nessuna copia. Usa una copia salvata sul tuo computer.</p>
   <?php else: ?>
@@ -185,9 +213,10 @@ function soccorso_rispondi(array $s): void {
   </table>
   <?php if ($registro): ?>
   <h2>L'ultimo ripristino</h2>
-  <p>Dalla copia <code><?= $h($registro['copia']) ?></code>, il <?= $h(date('d/m/Y H:i', $registro['data'])) ?>: <b><?= $registro['ok'] ? 'riuscito' : 'con errori' ?></b>.</p>
-  <pre class="registro"><?= $h(implode("\n", $registro['righe'])) ?></pre>
+  <p>Dalla copia <code><?= $h($registro['copia']) ?></code>, il <?= $h(date('d/m/Y H:i', $registro['data'])) ?>: <b><?= $registro['ok'] ? 'riuscito' : 'con errori' ?></b><?= count($registro['righe']) > SOCCORSO_REGISTRO_RIGHE ? ' (le prime ' . (int)SOCCORSO_REGISTRO_RIGHE . ' righe di ' . count($registro['righe']) . '; il registro intero è in <code>aggiornamenti/copie/</code>)' : '' ?>.</p>
+  <pre class="registro"><?= $h(implode("\n", array_slice($registro['righe'], 0, SOCCORSO_REGISTRO_RIGHE))) ?></pre>
   <?php endif; ?>
+  <p id="soccorso-ricorda" class="tec">A lavoro finito cancella il file <code>aggiornamenti/soccorso.txt</code> (il pannello lo toglie da solo appena riparte; vale comunque <?= (int)SOCCORSO_PORTA_ORE ?> ore).</p>
   <?php endif; ?>
 </main>
 </body>
