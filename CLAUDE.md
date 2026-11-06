@@ -167,7 +167,7 @@ Le decisioni complete, con data e perché, stanno nel second brain, `plumecms/de
 
 ## Stato al 31 ottobre 2026
 
-Fatto: plumeCMS 2.31.0 (6 novembre, 22:48-23:25): **avvisi senza il pannello in vista** (segnalazione di Danilo dal sito di Cucina Creativa:
+Fatto: plumeCMS 2.31.0 (6 novembre, 22:48-23:19): **avvisi senza il pannello in vista** (segnalazione di Danilo dal sito di Cucina Creativa:
 rispondendo a una richiesta di prenotazione, il cliente riceveva citati il pulsante "Apri nel pannello" e l'indirizzo del pannello in chiaro).
 `moduli_email_avviso()` e `moduli_avviso_pannello()` (`includes/moduli.php`, impostazione `avvisi_pulsante_pannello`, **spenta di partenza anche sui
 siti aggiornati**) nei cinque avvisi con il Reply-To del visitatore: form, Richiesta di prenotazione, addon Prenotazioni, Vetrina (email al negozio),
