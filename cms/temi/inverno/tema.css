@@ -1,0 +1,41 @@
+/* Inverno: ghiaccio, blu profondo, brina. Solo forme: i colori stanno in stile.json. */
+:root{--r:6px;--vetro:#fff;--vetro-2:#eef4f9;--velo-1:#9cc3dd;--velo-2:#1d4e89;--velo-3:#0b1e33}
+body{background-image:radial-gradient(rgba(29,78,137,.07) 1.2px,transparent 1.6px),radial-gradient(rgba(29,78,137,.05) 1px,transparent 1.4px);background-size:26px 26px,26px 26px;background-position:0 0,13px 13px}
+.top,.ed-testata{background:rgba(244,248,251,.9);border-bottom-color:rgba(15,33,51,.18)}
+.btn{letter-spacing:.14em;font-weight:600}
+.btn-viola,.btn-ciano{box-shadow:none}
+.btn-viola{background:var(--g-colore-primario)}
+.btn-ciano{background:var(--g-colore-secondario)}
+.btn-filo{box-shadow:none}
+.occhiello{letter-spacing:.3em}
+h1,h2,.sez-titolo{letter-spacing:-.02em}
+.card,.servizio,.ew-post{box-shadow:0 1px 0 rgba(15,33,51,.06);border-top:3px solid var(--g-colore-primario)}
+.card:hover,.ew-post:hover{box-shadow:0 14px 30px rgba(15,33,51,.10)}
+.ed-piede{border-top:1px solid rgba(15,33,51,.18)}
+
+/* Leggibilità dei widget (uguale nei temi della 2.5.0, cambiano solo i colori): testo dei pulsanti, pulsanti dentro
+   un articolo (.corpo colora i link), messaggi, mappa, slider, infografiche su testata scura. */
+:root{--grad:linear-gradient(100deg,#1f5577,#1d4e89);--primario-chiaro:#1d4e89;--primario-scuro:#163d6b;--secondario-chiaro:#1f5577;--secondario-scuro:#1a4865;--su-secondario:#ffffff;
+  --errore:#a8201a;--errore-chiaro:#a8201a;--errore-testo:#a8201a;--errore-rgb:168,32,26;--successo:#1e6b45;--successo-chiaro:#1e6b45;--successo-rgb:30,107,69}
+.btn-viola,:where(.corpo) a.btn-viola{color:#ffffff}
+:where(.corpo) a.btn-ciano{color:var(--su-secondario)}
+:where(.corpo) a.btn-filo{color:var(--ciano)}
+.ew-btn.btn-viola,:where(.corpo) a.ew-btn.btn-viola{color:var(--ew-bc,#ffffff)}
+.ew-btn.btn-ciano,:where(.corpo) a.ew-btn.btn-ciano{color:var(--ew-bc,var(--su-secondario))}
+.ew-prezzo-pulsante.btn-viola,:where(.corpo) a.ew-prezzo-pulsante{color:var(--ew-btc,#ffffff)}
+:where(.corpo) a.ew-cond-voce{color:var(--ew-c2,#fff)}
+.ew-col-ufficiali .ew-social-voce.ew-social-whatsapp{--ew-uff:#0f7a3c}.ew-col-ufficiali .ew-social-voce.ew-social-youtube{--ew-uff:#cc0000}.ew-col-ufficiali .ew-social-voce.ew-social-telegram{--ew-uff:#1a6fa0}
+.ew-col-ufficiali .ew-social-voce.ew-social-spotify{--ew-uff:#137a3a}.ew-col-ufficiali .ew-social-voce.ew-social-telefono{--ew-uff:#15803d}.ew-col-ufficiali .ew-social-voce.ew-social-rss{--ew-uff:#b8460f}.ew-col-ufficiali .ew-social-voce.ew-social-facebook{--ew-uff:#1465d0}
+.ew-col-ufficiali .ew-cond-voce.ew-social-whatsapp{--ew-uff:#0f7a3c}.ew-col-ufficiali .ew-cond-voce.ew-social-youtube{--ew-uff:#cc0000}.ew-col-ufficiali .ew-cond-voce.ew-social-telegram{--ew-uff:#1a6fa0}.ew-col-ufficiali .ew-cond-voce.ew-social-facebook{--ew-uff:#1465d0}
+body .ew-mappa-avvia{background:var(--bg-2);color:var(--testo)}
+body .ew-sl{background:linear-gradient(120deg,#163d6b,#0f2133)}
+body .ed-hero.ed-hero-copertina{background-color:#163d6b;background-image:radial-gradient(120% 90% at 85% 0%,rgba(255,255,255,.10),transparent 60%),linear-gradient(160deg,#163d6b,#0f2133)}
+body .ed-hdi-fondo{background-color:#163d6b;background-image:linear-gradient(120deg,#163d6b 0%,#163d6b 45%,#0f2133 100%)}
+body .ed-hero-diagonale .btn-viola{color:#163d6b}
+body .ew-cta-pulsante{color:var(--ew-pc,#ffffff)}
+body .ew-ev-data{color:var(--ew-c1,#ffffff)}
+body .ew-barra-riempi{background:var(--ew-c1,#1d4e89);color:var(--ew-ic,#ffffff)}
+.igx .igx-c-oro{--c:var(--ig-oro-scuro);--c2:var(--ig-oro-scuro-2)}
+body .ew-sl-occhiello{color:var(--ew-ac,rgba(255,255,255,.9))}
+:where(.corpo) h2.ew-sl-titolo,:where(.corpo) h3.ew-sl-titolo{color:var(--ew-tc,#fff)}
+.igx-occhiello-auto[class*="igx-testata-scuro"]{--occ:var(--ig-oro-chiaro)}

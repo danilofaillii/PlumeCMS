@@ -1,0 +1,59 @@
+/* Le sedici infografiche disegnate (widget ig_imbuto ... ig_barre100, ig_confronto, includes/editor-infografiche.php).
+   La cornice (testata, corpo, chiusura, firma) e i colori igx-c-* stanno in sito.css: qui solo il disegno.
+   Ogni infografica ha due SVG: .igs-largo (viewBox 560) e .igs-stretto (viewBox 320). Il riquadro .igs è un contenitore:
+   sotto 500 px di larghezza si vede lo stretto, così al telefono le scritte restano grandi come al computer.
+   Colori: --c e --c2 della voce (classi igx-c-*), --tit, --tx, --sfondo, --bordo-c, --riga, --muto della card. */
+.igx .igs{margin:.4rem 0 0;padding:0;container-type:inline-size}
+.igx .igs-svg{display:block;width:100%;height:auto;max-width:600px;margin:0 auto;overflow:visible;font-family:inherit}
+.igx .igs .igs-stretto{display:none}
+@container (max-width:499.98px){
+  .igx .igs .igs-largo{display:none}
+  .igx .igs .igs-stretto{display:block;max-width:400px}
+}
+.igx .igs-nota{margin:0 0 .6rem}
+.igx.igx-disegnata .igx-firma-riga{color:var(--tx)}
+.igx.igs-testa-piatta .igx-testa{background:var(--t1)}
+
+/* testo */
+.igx .igs-svg text{font-family:inherit}
+.igx .igs-t{fill:var(--tit)}
+.igx .igs-tm{fill:var(--tx)}
+.igx .igs-inv{fill:var(--sfondo)}
+.igx .igs-num{font-variant-numeric:tabular-nums}
+.igx .igs-alone{paint-order:stroke;stroke:var(--sfondo);stroke-width:8px;stroke-linejoin:round}
+/* Testo sopra un colore pieno: bianco o nero, quello con il contrasto più alto sul colore della voce (anche nei temi
+   e con un colore libero). Il calcolo è la luminanza di WCAG con gamma 2,2: sopra 0,179 il nero vince. */
+/* fisso: bianco per i browser senza i colori relativi */
+.igx .igs-su,.igx .igs-su2{fill:#fff}
+@supports (color:rgb(from red r g b)) and (width:calc(pow(2,2) * 1px)){
+  .igx .igs-su{fill:rgb(from var(--c) clamp(0, (.17913 - (.2126 * pow(r / 255, 2.2) + .7152 * pow(g / 255, 2.2) + .0722 * pow(b / 255, 2.2))) * 10000000, 255) clamp(0, (.17913 - (.2126 * pow(r / 255, 2.2) + .7152 * pow(g / 255, 2.2) + .0722 * pow(b / 255, 2.2))) * 10000000, 255) clamp(0, (.17913 - (.2126 * pow(r / 255, 2.2) + .7152 * pow(g / 255, 2.2) + .0722 * pow(b / 255, 2.2))) * 10000000, 255))}
+  .igx .igs-su2{fill:rgb(from var(--c2) clamp(0, (.17913 - (.2126 * pow(r / 255, 2.2) + .7152 * pow(g / 255, 2.2) + .0722 * pow(b / 255, 2.2))) * 10000000, 255) clamp(0, (.17913 - (.2126 * pow(r / 255, 2.2) + .7152 * pow(g / 255, 2.2) + .0722 * pow(b / 255, 2.2))) * 10000000, 255) clamp(0, (.17913 - (.2126 * pow(r / 255, 2.2) + .7152 * pow(g / 255, 2.2) + .0722 * pow(b / 255, 2.2))) * 10000000, 255))}
+  /* la testata delle quindici: titolo e occhiello sul primo colore della testata */
+  .igx.igs-testa-auto{--tt:rgb(from var(--t1) clamp(0, (.17913 - (.2126 * pow(r / 255, 2.2) + .7152 * pow(g / 255, 2.2) + .0722 * pow(b / 255, 2.2))) * 10000000, 255) clamp(0, (.17913 - (.2126 * pow(r / 255, 2.2) + .7152 * pow(g / 255, 2.2) + .0722 * pow(b / 255, 2.2))) * 10000000, 255) clamp(0, (.17913 - (.2126 * pow(r / 255, 2.2) + .7152 * pow(g / 255, 2.2) + .0722 * pow(b / 255, 2.2))) * 10000000, 255))}
+  .igx.igs-occhiello-auto .igx-occhiello{color:var(--tt)}
+}
+
+/* forme */
+.igx .igs-p{fill:var(--c)}
+.igx .igs-p2{fill:var(--c2)}
+.igx .igs-tratto{stroke:var(--c)}
+.igx .igs-tinta{fill:var(--c);fill-opacity:.13}
+.igx .igs-bordo{stroke:var(--c);stroke-width:1.5}
+.igx .igs-bordo-2{stroke:var(--c);stroke-width:2;fill-opacity:.2}
+.igx .igs-pieno{fill:var(--tit)}
+.igx .igs-linea{stroke:var(--tit)}
+.igx .igs-filo{stroke:var(--bordo-c);stroke-width:1}
+.igx .igs-filo-scuro{stroke:var(--tx);stroke-width:1;opacity:.55}
+.igx .igs-anello{stroke:var(--riga)}
+.igx .igs-anello-r{fill:var(--riga)}
+.igx .igs-anello-carta{stroke:var(--sfondo)}
+.igx .igs-spento{fill:var(--muto);fill-opacity:.38}
+.igx .igs-prima{fill:var(--muto);fill-opacity:.22;stroke:var(--muto);stroke-width:1.5;stroke-dasharray:4 3}
+.igx .igs-prima-l{fill:var(--muto)}
+.igx .igs-dopo{fill:var(--c);fill-opacity:.26;stroke:var(--c2);stroke-width:2;stroke-linejoin:round}
+.igx .igs-acqua{fill:var(--c);fill-opacity:.15}
+.igx .igs-ghiaccio{fill:var(--bianco);stroke:var(--c);stroke-width:1.5;stroke-linejoin:round}
+.igx .igs-strada{stroke:var(--bordo-c);stroke-linejoin:round}
+.igx .igs-mezzeria{stroke:var(--tx);opacity:.55}
+/* fisso: il grigio in più delle quindici ("Altro", "Elimina"), uguale in tutti i temi; il testo sopra lo sceglie igs-su */
+.igx .igs-c-grigio{--c:#8a8178;--c2:#6f675f}

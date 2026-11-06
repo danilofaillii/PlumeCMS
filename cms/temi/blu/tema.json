@@ -1,0 +1,41 @@
+{
+  "nome": "Blu",
+  "versione": "1.0",
+  "autore": "plumeCMS",
+  "anteprima": "anteprima.webp",
+  "css": "tema.css",
+  "stile": "stile.json",
+  "modelli": "modelli.json",
+  "descrizione": "Tinta piena: tutto il sito su blu puro, testo bianco, titoli con le grazie e pulsanti gialli. Come una galleria d'arte.",
+  "infografiche": {
+    "sfondo": "#ffffff",
+    "bianco": "#ffffff",
+    "bordo": "#000000",
+    "riga": "#e5e5e5",
+    "titolo": "#000000",
+    "testo": "#1a1a1a",
+    "muto": "#4d4d4d",
+    "situazione": "#f2f2f2",
+    "su_scuro": "#e6e6e6",
+    "voci": {
+      "rosso": "#c00000",
+      "oro": "#e0a83a",
+      "verde": "#00703a",
+      "ciano": "#005a99",
+      "viola": "#6a1b9a",
+      "scuro": "#000000"
+    },
+    "variabili": {
+      "rosso-chiaro": "#f9e6e6",
+      "verde-chiaro": "#e6f1eb",
+      "ciano-chiaro": "#e6eef5",
+      "viola-chiaro": "#f0e8f5",
+      "oro-chiaro": "#f7e9ce",
+      "oro-scuro": "#7f5900",
+      "oro-scuro-2": "#6b4b00",
+      "oro-scuro-chiaro": "#f6ecd6",
+      "mattone-chiaro": "#f9e6e6",
+      "lilla": "#f0e8f5"
+    }
+  }
+}

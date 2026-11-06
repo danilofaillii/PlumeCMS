@@ -1,0 +1,30 @@
+{
+  "nome": "Lavagna",
+  "versione": "1.0",
+  "autore": "plumeCMS, esempio del manuale",
+  "descrizione": "Verde ardesia, testo color gesso, giallo e menta. Il tema d'esempio del manuale dei temi.",
+  "anteprima": "anteprima.png",
+  "css": "tema.css",
+  "stile": "stile.json",
+  "modelli": "modelli.json",
+  "infografiche": {
+    "sfondo": "#26332e",
+    "bianco": "#2c3a35",
+    "bordo": "#3a4a44",
+    "riga": "#33423c",
+    "titolo": "#f1efe6",
+    "testo": "#d6d3c6",
+    "muto": "#a8a597",
+    "situazione": "#2f3d38",
+    "su_testata": "#ffffff",
+    "su_scuro": "#d6d3c6",
+    "voci": {
+      "rosso": "#d9694c",
+      "oro": "#e0b63c",
+      "verde": "#5f9c87",
+      "ciano": "#4f97ad",
+      "viola": "#8f78b8",
+      "scuro": "#121a17"
+    }
+  }
+}

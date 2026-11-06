@@ -1,0 +1,4 @@
+{"nome":"Conferma dell'iscrizione","descrizione":"L'email del doppio consenso: un pulsante per confermare l'indirizzo.","oggetto":"Conferma l'iscrizione","tag":"optin",
+"design":{"stile":{"fondo":"#f4f4f6","titoli":"#111827","link":"#4338ca","btn_fondo":"#4338ca"},"sezioni":[
+{"fondo":"#111827","spazio":18,"colonne":[[{"t":"titolo","testo":"Il nome del tuo sito","livello":"h3","colore":"#ffffff","spazio":0}]]},
+{"spazio":36,"colonne":[[{"t":"titolo","testo":"Manca un clic","livello":"h2"},{"t":"testo","html":"<p>Ciao {{ contact.NOME | default:\"a te\" }},</p><p>premi il pulsante e confermi l'iscrizione alla nostra newsletter. Il link vale qualche giorno.</p>","spazio":24},{"t":"pulsante","testo":"Confermo l'iscrizione","link":"{{ doubleoptin }}","allinea":"left","spazio":24},{"t":"testo","html":"<p>Se la richiesta l'ha fatta qualcun altro, ignora questa email: senza conferma l'indirizzo resta fuori.</p>","dim":13,"colore":"#6b7280","spazio":0}]]}]}}

@@ -1,0 +1,87 @@
+# .htaccess per il CMS nella radice del dominio (Apache). Copialo come ".htaccess" accanto a index.php.
+# Ogni indirizzo che non è un file vero passa da index.php, che lo serve dal database.
+Options -Indexes
+DirectoryIndex index.php
+ServerSignature Off
+# Il tipo giusto per fogli di stile, script, immagini e caratteri: alcuni server li mandano senza tipo e, con
+# "nosniff", il browser li scarta (il pannello appare senza grafica). Dalla 1.1.7.
+<IfModule mod_mime.c>
+  AddType text/css .css
+  AddType application/javascript .js
+  AddType image/svg+xml .svg
+  AddType image/webp .webp
+  AddType font/woff2 .woff2
+  AddType font/woff .woff
+</IfModule>
+RewriteEngine On
+
+# Un solo indirizzo: https (togli queste tre righe se il certificato non c'è ancora)
+RewriteCond %{HTTPS} !=on
+RewriteCond %{HTTP:X-Forwarded-Proto} !=https
+RewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
+
+# Sicurezza: cartelle e file che dal web non si leggono mai
+#  - includes (codice e config.local.php), logs, aggiornamenti (pacchetti e snapshot), privato, data, sql, docs, tools,
+#    test, test-definizioni, moduli/*/includes
+#  - file di versione e documenti: VERSIONE, *.md, *.log, *.sql, *.json, *.lock, *.ini, *.sh, *.zip, *.gz, .git*, .env
+RewriteRule ^(includes|logs|aggiornamenti|privato|data|sql|docs|tools|test|test-definizioni)(/|$) - [F,L]
+RewriteRule ^moduli/[^/]+/(includes|sql|docs)(/|$) - [F,L]
+# I file PHP dei moduli si eseguono solo attraverso il nucleo (admin/, api/, share/), mai chiamati direttamente.
+RewriteRule ^moduli/.*\.(php|phtml|phar)$ - [F,L]
+# 2.0.0: gli addon come i moduli (il PHP solo attraverso il nucleo), e l'elenco di quelli accesi non si legge dal web.
+RewriteRule ^addon/[^/]+/(includes|sql|docs)(/|$) - [F,L]
+RewriteRule ^addon/.*\.(php|phtml|phar|php[0-9]|phps)$ - [F,L,NC]
+RewriteRule ^moduli/addon-attivi\.json$ - [F,L]
+# temi: il PHP di un tema (funzioni.php, viste/) gira solo dentro il sito; CSS, immagini e caratteri si servono.
+RewriteRule ^temi/.*\.(php|phtml|phar|php[0-9]|phps)$ - [F,L,NC]
+RewriteRule ^(VERSIONE|CHANGELOG\.md|README\.md|INSTALLA\.md|composer\.(json|lock)|package(-lock)?\.json)$ - [F,L]
+RewriteRule (^|/)\.(git|env|htpasswd|installato|gitkeep) - [F,L]
+
+# I cron si lanciano da riga di comando: dal web mai (con CMS_CRON_TOKEN e un cron via HTTP togli questa riga).
+RewriteRule ^cron-[a-z-]+\.php$ - [F,L]
+# Nelle cartelle delle immagini e dei pacchetti non si esegue niente
+RewriteRule ^(uploads|aggiornamenti|logs|assets)/.*\.(php|phtml|php[0-9]|phps|phar|pl|py|cgi|sh)$ - [F,L]
+
+# File veri (immagini, CSS, JS, PDF): li serve Apache. La home passa comunque da index.php.
+RewriteCond %{REQUEST_FILENAME} -f
+RewriteRule ^. - [L]
+# Le cartelle del pannello, delle API e dell'installatore
+RewriteCond %{REQUEST_FILENAME} -d
+RewriteRule ^(admin|api|install|share)(/|$) - [L]
+
+RewriteRule ^ index.php [L,QSA]
+
+<FilesMatch "\.(log|sql|md|mjs|json|lock|ini|sh|zip|gz|bak|old|orig|dist|env)$">
+  <IfModule mod_authz_core.c>
+    Require all denied
+  </IfModule>
+  <IfModule !mod_authz_core.c>
+    Order allow,deny
+    Deny from all
+  </IfModule>
+</FilesMatch>
+<FilesMatch "^(config\.local\.php|\.env|\.htaccess|\.htpasswd|VERSIONE)$">
+  <IfModule mod_authz_core.c>
+    Require all denied
+  </IfModule>
+  <IfModule !mod_authz_core.c>
+    Order allow,deny
+    Deny from all
+  </IfModule>
+</FilesMatch>
+
+# Il CMS manda da solo le intestazioni di sicurezza (CSP, nosniff, frame, referrer). Qui solo quelle che valgono anche per i file statici.
+<IfModule mod_headers.c>
+  Header always unset X-Powered-By
+  Header always set X-Content-Type-Options "nosniff"
+</IfModule>
+
+<IfModule mod_expires.c>
+  ExpiresActive On
+  ExpiresByType image/jpeg "access plus 1 year"
+  ExpiresByType image/png "access plus 1 year"
+  ExpiresByType image/webp "access plus 1 year"
+  ExpiresByType image/svg+xml "access plus 1 year"
+  ExpiresByType text/css "access plus 1 month"
+  ExpiresByType application/javascript "access plus 1 month"
+</IfModule>

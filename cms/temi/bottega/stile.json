@@ -1,0 +1,53 @@
+{
+  "colori": {
+    "sistema": {
+      "primario": "#b4532a",
+      "secondario": "#3f6b5a",
+      "testo": "#2b2118",
+      "accento": "#c98a1a",
+      "sfondo": "#faf6ef"
+    },
+    "personalizzati": [
+      {
+        "id": "sfondo-2",
+        "nome": "Sfondo secondario",
+        "valore": "#f2eadd"
+      },
+      {
+        "id": "testo-2",
+        "nome": "Testo attenuato",
+        "valore": "#5b4a3c"
+      },
+      {
+        "id": "testo-3",
+        "nome": "Testo discreto",
+        "valore": "#8a7766"
+      },
+      {
+        "id": "bordo",
+        "nome": "Bordi",
+        "valore": "rgba(43,33,24,.14)"
+      }
+    ]
+  },
+  "font": {
+    "sistema": {
+      "primario": {
+        "famiglia": "Georgia"
+      },
+      "secondario": {
+        "famiglia": "Georgia"
+      },
+      "testo": {
+        "famiglia": "Inter"
+      },
+      "accento": {
+        "famiglia": "Inter"
+      }
+    },
+    "personalizzati": []
+  },
+  "sfondo": {
+    "sfumature_sito": false
+  }
+}
