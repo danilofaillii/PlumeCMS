@@ -386,7 +386,8 @@ function evi_email_attivita(array $e, array $i, string $tipo): bool {
     $e['occupati'] = evi_occupati((int)$e['id']);
     $corpo = '<p><b>' . h((string)$i['nome']) . '</b> &middot; ' . h((string)$i['email']) . ($i['telefono'] !== '' ? ' &middot; ' . h((string)$i['telefono']) : '') . '</p>' . evi_riepilogo_html($e, $i)
         . '<p>Iscritti adesso: <b>' . (int)$e['occupati'] . ((int)$e['posti'] > 0 ? ' su ' . (int)$e['posti'] : '') . '</b> posti.</p>';
-    return posta_invia($a, evi_riga($tit . ': ' . $i['nome'] . ', ' . $e['titolo']), moduli_email_html($tit, $corpo, 'Apri gli iscritti', cms_url_pannello() . 'addon-pagina.php?a=eventi-iscrizione&p=iscritti&e=' . (int)$e['id']), moduli_intestazioni((string)$i['email']), 'evento');
+    // 2.31.0: il Reply-To è il cliente: il pulsante del pannello solo se acceso in Configurazione email (moduli_email_avviso()).
+    return posta_invia($a, evi_riga($tit . ': ' . $i['nome'] . ', ' . $e['titolo']), (function_exists('moduli_email_avviso') ? moduli_email_avviso($tit, $corpo, 'Apri gli iscritti', cms_url_pannello() . 'addon-pagina.php?a=eventi-iscrizione&p=iscritti&e=' . (int)$e['id']) : moduli_email_html($tit, $corpo)), moduli_intestazioni((string)$i['email']), 'evento');
 }
 
 /** Scrive a tutti gli iscritti di un evento (anche a chi aspetta, se scelto). Ritorna [mandate, non partite]. */

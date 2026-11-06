@@ -842,3 +842,8 @@ details.nlx-riquadro > summary:focus-visible { outline: 2px solid var(--coral); 
 @media (max-width: 640px) { .nlk-tag-togli button { min-width: 44px; min-height: 44px; } }
 .nlx-tag-cella { display: flex; flex-wrap: wrap; gap: .25rem; }
 .nlx-tag-cella span { border: 1px solid var(--border); border-radius: 999px; padding: .05rem .5rem; font-size: .8rem; }
+
+/* 2.31.0: anteprima di un avviso in Impostazioni > Configurazione email (iframe sandbox con srcdoc). */
+.av-cornice{display:block;width:100%;height:520px;border:1px solid var(--border);border-radius:8px;background:#f4f4f6 /* fisso: il fondo delle email */}
+@media (max-width:640px){.av-cornice{height:460px}#avvisi .btn{min-height:44px;justify-content:center}}
+#avvisi_pulsante_pannello{width:20px;height:20px;flex:0 0 auto}

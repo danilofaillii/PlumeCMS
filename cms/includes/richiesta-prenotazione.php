@@ -124,7 +124,9 @@ function rp_ricevi(array $p, string $pagina): string {
     if (!$a && posta_notifica_email() !== '') $a = [posta_notifica_email()];
     $oggetto = 'Richiesta di prenotazione: ' . ($alloggio ? 'dal ' . $dati['Arrivo'] . ', ' . $persone . ' ospiti' : $dati['Data'] . ' alle ' . $dati['Ora'] . ', ' . $persone . ($persone === '1' ? ' persona' : ' persone'));
     $righe = implode('', array_map(fn($k, $v) => '<p style="margin:0 0 10px"><b>' . h($k) . ':</b> ' . nl2br(h($v)) . '</p>', array_keys($dati), $dati));
-    $corpo = moduli_email_html('Nuova richiesta di prenotazione', $righe . '<p>Rispondi a questa email per scrivere a ' . h($nome) . ': la richiesta non è ancora confermata.</p><p style="color:#888;font-size:13px">Dalla pagina ' . h($pagina) . ', il ' . date('d/m/Y H:i') . '.</p>', 'Apri nel pannello', cms_url_pannello() . 'form-submissions.php?modulo=' . rp_form_id());
+    // 2.31.0: il pulsante del pannello solo se acceso in Configurazione email (il Reply-To è il cliente: con Rispondi lo riceverebbe citato).
+    $testo = $righe . '<p>Rispondi a questa email per scrivere a ' . h($nome) . ': la richiesta non è ancora confermata.</p><p style="color:#888;font-size:13px">Dalla pagina ' . h($pagina) . ', il ' . date('d/m/Y H:i') . '.</p>';
+    $corpo = function_exists('moduli_email_avviso') ? moduli_email_avviso('Nuova richiesta di prenotazione', $testo, 'Apri nel pannello', cms_url_pannello() . 'form-submissions.php?modulo=' . rp_form_id()) : moduli_email_html('Nuova richiesta di prenotazione', $testo);
     foreach ($a as $x) {
         if (!posta_invia($x, $oggetto, $corpo, moduli_intestazioni($email), 'avviso_form')) error_log('richiesta di prenotazione: avviso non partito: ' . posta_errore());
     }

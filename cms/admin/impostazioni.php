@@ -8,6 +8,7 @@ require_once __DIR__ . '/includes/admin-functions.php';
 require_once __DIR__ . '/../includes/sito.php';
 require_once __DIR__ . '/../includes/posta.php';
 require_once __DIR__ . '/../includes/firma.php';
+require_once __DIR__ . '/../includes/moduli.php';
 require_admin();
 
 // UX 2026-11 (punto 4 deciso da Danilo): due schede. "Configurazione email" (impostazioni.php) ha solo la posta;
@@ -52,6 +53,17 @@ function indirizzo_sito_salva(string $url, bool $forza): array {
     return ['ok' => true, 'messaggio' => 'Indirizzo del sito cambiato: ' . $nuovo . '. Da ora link, sitemap, canonical ed email usano questo indirizzo. Ricordati di aggiungerlo in Search Console.'];
 }
 
+/**
+ * 2.31.0: l'avviso d'esempio (un form compilato da Maria Rossi) per l'anteprima e la prova di "Gli avvisi che ricevi".
+ * Passa da moduli_email_avviso(), la stessa strada degli avvisi veri. Ritorna [oggetto, html].
+ */
+function avviso_esempio(bool $pulsante): array {
+    $dati = ['Nome' => 'Maria Rossi', 'Email' => 'maria.rossi@esempio.it', 'Messaggio' => "Buongiorno, vorrei sapere se avete posto sabato sera per quattro persone.\nGrazie!"];
+    $righe = implode('', array_map(fn($k, $v) => '<p style="margin:0 0 10px"><b>' . h($k) . ':</b> ' . nl2br(h($v)) . '</p>', array_keys($dati), $dati));
+    $testo = $righe . '<p style="color:#888;font-size:13px">Dalla pagina /contatti/, il ' . date('d/m/Y H:i') . '.</p>';
+    return ['Nuova compilazione: Contatti', moduli_email_avviso('Form «Contatti»', $testo, 'Apri nel pannello', cms_url_pannello() . 'form-submissions.php', $pulsante)];
+}
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     verify_csrf();
     if (($_POST['action'] ?? '') === 'save_posta') {
@@ -70,6 +82,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         save_setting('posta_smtp', json_encode($posta, JSON_UNESCAPED_UNICODE));
         save_setting('notifica_email', trim($_POST['notification_email'] ?? ''));
         flash('success', $posta['host'] ? 'Posta salvata: si spedisce da ' . $posta['host'] . '.' : 'Posta salvata: senza server SMTP si usa mail() di PHP.');
+    } elseif (($_POST['action'] ?? '') === 'save_avvisi') {
+        // 2.31.0: il pulsante "Apri nel pannello" negli avvisi con il Reply-To del visitatore (moduli_email_avviso()).
+        $acceso = !empty($_POST['avvisi_pulsante_pannello']);
+        save_setting('avvisi_pulsante_pannello', $acceso ? '1' : '0');
+        flash('success', $acceso ? 'Salvato: negli avvisi c\'è il pulsante "Apri nel pannello". Se rispondi a un cliente, lo riceve anche lui nel messaggio citato.' : 'Salvato: negli avvisi niente pulsante e niente indirizzo del pannello. Quando rispondi, il cliente non li vede.');
+    } elseif (($_POST['action'] ?? '') === 'prova_avviso') {
+        $a = posta_notifica_email();
+        if (!filter_var($a, FILTER_VALIDATE_EMAIL)) $a = (string)(current_user()['email'] ?? '');
+        if (!filter_var($a, FILTER_VALIDATE_EMAIL)) {
+            flash('error', 'Non so a chi mandare la prova: scrivi l\'indirizzo in "Dove arrivano l\'email del mattino e gli avvisi dei form", qui sopra, e salva.');
+        } else {
+            [$ogg, $html] = avviso_esempio(moduli_avviso_pannello());
+            if (posta_invia($a, '[PROVA] ' . $ogg, $html, moduli_intestazioni(), 'prova')) flash('success', "Avviso di prova spedito a $a, " . (moduli_avviso_pannello() ? 'con' : 'senza') . ' il pulsante. Controlla anche nello spam.');
+            else flash('error', 'La prova non è partita: ' . posta_errore());
+        }
     } elseif (($_POST['action'] ?? '') === 'save_firma') {
         // 1.8.0: la frase in fondo al sito (includes/firma.php).
         $f = firma_salva(['mostra' => !empty($_POST['firma_mostra']), 'testo' => $_POST['firma_testo'] ?? '', 'url' => $_POST['firma_url'] ?? '']);
@@ -90,7 +117,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
     }
     $azioneSito = in_array($_POST['action'] ?? '', ['save_firma', 'save_indirizzo'], true);
-    header('Location: impostazioni.php' . ($azioneSito ? '?scheda=sito#' . (($_POST['action'] ?? '') === 'save_firma' ? 'firma-sito' : 'indirizzo-sito') : ''));
+    header('Location: impostazioni.php' . ($azioneSito ? '?scheda=sito#' . (($_POST['action'] ?? '') === 'save_firma' ? 'firma-sito' : 'indirizzo-sito') : (in_array($_POST['action'] ?? '', ['save_avvisi', 'prova_avviso'], true) ? '#avvisi' : '')));
     exit;
 }
 
@@ -143,6 +170,33 @@ require_once __DIR__ . '/includes/admin-header.php';
       <input type="hidden" name="action" value="prova_posta">
       <div class="form-group" style="margin:0;flex:1;min-width:220px"><label for="prova_a">Manda una email di prova a</label><input type="email" id="prova_a" name="prova_a" value="<?= h($notifica) ?>" required></div>
       <button type="submit" class="btn btn-secondary">Manda la prova</button>
+    </form>
+  </div>
+  <?php /* 2.31.0: il pulsante del pannello negli avvisi con il Reply-To del visitatore. */
+  $avvPulsante = moduli_avviso_pannello(); [$avvOgg, $avvHtml] = avviso_esempio($avvPulsante); ?>
+  <div class="form-card" id="avvisi" style="margin-top:1rem">
+    <h3>Gli avvisi che ricevi</h3>
+    <p style="font-size:0.85rem;color:var(--text-muted);margin-bottom:1rem">
+      Quando qualcuno compila un form, chiede una prenotazione, fa un ordine o si iscrive a un evento ti arriva un avviso.
+      Se premi Rispondi, la risposta va a lui, e il programma di posta di solito ci mette sotto l'avviso intero.
+    </p>
+    <form method="post">
+      <?= csrf_field() ?>
+      <input type="hidden" name="action" value="save_avvisi">
+      <div class="form-group" style="display:flex;gap:.5rem;align-items:flex-start">
+        <input type="checkbox" id="avvisi_pulsante_pannello" name="avvisi_pulsante_pannello" value="1"<?= $avvPulsante ? ' checked' : '' ?> style="margin-top:.1rem" aria-describedby="avvisi-aiuto">
+        <label for="avvisi_pulsante_pannello" style="margin:0;text-transform:none;letter-spacing:0">Negli avvisi che hanno come risposta il cliente, mostra il pulsante "Apri nel pannello"</label>
+      </div>
+      <div class="hint" id="avvisi-aiuto">Spenta (di partenza): niente pulsante e niente indirizzo del pannello, così chi riceve la tua risposta non li vede. Accesa: arrivi al pannello con un clic, ma rispondendo il cliente riceve anche il pulsante e l'indirizzo. Gli avvisi solo per te, come una recensione da approvare, hanno il pulsante sempre.</div>
+      <div style="margin-top:1rem"><button type="submit" class="btn btn-primary">Salva gli avvisi</button></div>
+    </form>
+    <p class="hint" style="margin-top:1.2rem">Anteprima di un avviso, così come esce adesso (<?= $avvPulsante ? 'con il pulsante' : 'senza pulsante' ?>). Oggetto: <b><?= h($avvOgg) ?></b></p>
+    <iframe class="av-cornice" title="Anteprima di un avviso" sandbox srcdoc="<?= h($avvHtml) ?>"></iframe>
+    <form method="post" style="margin-top:.8rem">
+      <?= csrf_field() ?>
+      <input type="hidden" name="action" value="prova_avviso">
+      <button type="submit" class="btn btn-secondary">Manda un avviso di prova</button>
+      <span class="hint">Va <?= $notifica !== '' ? 'a <b>' . h($notifica) . '</b>' : 'all\'email del tuo utente' ?>, con i dati finti di Maria Rossi.</span>
     </form>
   </div>
   <p class="hint" style="margin-top:1rem">Indirizzo del sito e frase in fondo al sito stanno nella scheda

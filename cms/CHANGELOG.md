@@ -2,6 +2,17 @@
 
 Il prodotto si chiama **plumeCMS** (nome scelto il 26 ottobre 2026; prima, per poche ore, "CarbonaraCMS", e ancora prima il provvisorio "Officina": gli zip vecchi si chiamavano `officina-*` e `carbonaracms-*`).
 
+## 2.31.0 (6 novembre 2026) - Avvisi senza il pannello in vista
+
+- **Il pulsante "Apri nel pannello" non arriva più al cliente** (segnalazione di Danilo dal sito di Cucina Creativa: rispondendo a
+  una richiesta di prenotazione, il programma di posta citava l'avviso intero e il cliente riceveva il pulsante e, sotto,
+  l'indirizzo del pannello in chiaro). Gli avvisi che hanno come risposta il visitatore (form, Richiesta di prenotazione, addon
+  Prenotazioni, Vetrina, Iscrizioni agli eventi) escono senza pulsante e senza indirizzo del pannello, né nell'HTML né nel testo
+  semplice. Vale anche per i siti aggiornati: chi vuole il pulsante lo riaccende in **Impostazioni > Configurazione email**,
+  riquadro **Gli avvisi che ricevi**, con l'anteprima di un avviso d'esempio e **Manda un avviso di prova**. Gli avvisi solo per
+  te (una recensione da approvare, una copia del sito non partita) tengono il pulsante. `moduli_avviso_pannello()` e
+  `moduli_email_avviso()` in `includes/moduli.php`, impostazione `avvisi_pulsante_pannello`.
+
 ## 2.30.0 (6 novembre 2026) - Infografiche grandi quanto vuoi
 
 - **Larghezza dell'infografica** (richiesta di Danilo: "le infografiche sono minuscole, devo poterle ingrandire quanto voglio,

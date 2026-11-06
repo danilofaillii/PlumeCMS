@@ -792,7 +792,9 @@ widget c'è scritto "Hai l'addon Prenotazioni acceso".
    (allergie, seggiolone...), il **Testo del pulsante**. Nella sezione **Dopo l'invio** c'è il **Messaggio dopo l'invio**.
 5. Premi **Pubblica**. Poi prova tu: compila il modulo sul sito, spunta la privacy e **Sono una persona**, premi **Invia
    la richiesta**. Deve comparire "Grazie, abbiamo ricevuto la tua richiesta...", e nella casella di posta l'email
-   "Richiesta di prenotazione: ...". Con **Rispondi** scrivi direttamente al cliente.
+   "Richiesta di prenotazione: ...". Con **Rispondi** scrivi direttamente al cliente. Dalla 2.31.0 l'email non ha il pulsante
+   **Apri nel pannello**: rispondendo, il cliente riceverebbe sotto la tua risposta anche l'indirizzo del tuo pannello. Se lo
+   vuoi lo stesso, si accende in **Impostazioni > Configurazione email**, riquadro **Gli avvisi che ricevi** (capitolo 25).
 
 **Esempio: il B&B Le Colline.** Come sopra, ma **Cosa si prenota**: **Un alloggio (arrivo, partenza, ospiti)**,
 **Titolo** `Chiedi la disponibilità`, **Quante persone al massimo** `6`. Il cliente sceglie arrivo e partenza (la
@@ -1604,7 +1606,10 @@ del campo), quello di un'email scritta male e quello di quando qualcosa non va. 
    l'avviso va all'indirizzo degli avvisi del sito (**Impostazioni > Posta in uscita**, capitolo 25): sotto la casella
    c'è scritto quale.
 
-Ogni indirizzo riceve la sua email. Se ne scrivi uno sbagliato, il form non si salva e il pannello ti dice quale. Nel
+Ogni indirizzo riceve la sua email. Se ne scrivi uno sbagliato, il form non si salva e il pannello ti dice quale.
+Nell'avviso **Rispondi** scrive a chi ha compilato. Per questo, dalla 2.31.0, l'avviso non ha il pulsante **Apri nel pannello**
+né l'indirizzo del pannello: se rispondi, la persona non li riceve citati sotto la tua risposta. Lo rimetti in **Impostazioni >
+Configurazione email**, riquadro **Gli avvisi che ricevi** (capitolo 25). Nel
 widget Modulo dell'editor l'indirizzo non si sceglie: si sceglie qui, una volta, e vale in ogni pagina in cui metti
 quel form.
 
@@ -3477,10 +3482,36 @@ Configurazione email ha solo la posta. L'indirizzo del sito e la frase in fondo 
 
 Premi **Salva**, poi manda l'email di prova (anche dai Primi passi, sulla dashboard). Se arriva, hai finito.
 
+### Gli avvisi che ricevi: il pulsante del pannello
+
+Quando qualcuno compila un form, chiede una prenotazione (widget Richiesta di prenotazione o addon Prenotazioni), fa un ordine
+nella Vetrina o si iscrive a un evento, ti arriva un avviso. **Rispondi** scrive a lui, non a te. E il programma di posta, quando
+rispondi, di solito mette sotto la tua risposta l'avviso intero. Fino alla 2.30.0 l'avviso aveva il pulsante **Apri nel pannello**
+e, sotto, l'indirizzo del tuo pannello scritto per esteso: il cliente li riceveva tutti e due.
+
+Dalla 2.31.0 questi avvisi escono senza pulsante e senza indirizzo del pannello. Se ti serve il clic diretto, lo riaccendi qui,
+sapendo che chi riceve la tua risposta lo vede.
+
+![Gli avvisi che ricevi](immagini/manuale-uso/23-avvisi.jpg)
+
+1. **Negli avvisi che hanno come risposta il cliente, mostra il pulsante "Apri nel pannello"**: spenta di partenza. Spunta e
+   premi **Salva gli avvisi** per riaccenderla, togli la spunta e salva per spegnerla.
+2. L'**anteprima** è un avviso d'esempio (un form compilato da Maria Rossi), così come esce adesso: con la casella spenta non c'è
+   nessun pulsante; accesa, compare **Apri nel pannello** con l'indirizzo sotto.
+3. **Manda un avviso di prova**: lo stesso avviso d'esempio arriva all'indirizzo degli avvisi (quello scritto qui sopra, in
+   "Dove arrivano l'email del mattino e gli avvisi dei form"). L'oggetto comincia con `[PROVA]`.
+
+Gli avvisi che arrivano solo a te, senza una persona dietro a cui rispondere (una recensione da approvare, una copia del sito
+che non è partita), hanno il pulsante sempre: lì non c'è nessun cliente che possa riceverlo.
+
+Il lavoro di tutti i giorni non cambia: le richieste le trovi comunque nel pannello, in **Newsletter e form > Invii dei form**,
+nelle Prenotazioni, negli Ordini della Vetrina e negli Iscritti di ogni evento.
+
 **Checklist**
 
 - [ ] L'email di prova è arrivata (controlla anche lo spam).
 - [ ] Il mittente è un indirizzo del mio dominio (info@tuosito.it), non una casella gratuita.
+- [ ] Ho deciso se voglio il pulsante **Apri nel pannello** negli avvisi, sapendo che rispondendo lo vede anche il cliente.
 
 **Se qualcosa non va**
 
@@ -4113,7 +4144,8 @@ Apri **Prenotazioni > Impostazioni**.
    riceve prima "richiesta ricevuta", e la conferma arriva quando premi **Conferma** nel pannello. Sotto: **Il cliente
    può scegliere con chi** e **Manda il promemoria il giorno prima**.
 4. **Avvisi delle prenotazioni a**: l'email del salone, "salone@forbicidoro.it". Vuoto: l'indirizzo degli avvisi del
-   sito.
+   sito. Rispondendo all'avviso scrivi al cliente; il pulsante **Apri nel pannello** c'è solo se lo accendi in Configurazione
+   email (capitolo 25, "Gli avvisi che ricevi").
 5. **Indirizzo dell'attività**: "Via dell'Indipendenza 10, Bologna". Esce nelle email e nel calendario del cliente.
 
 Più in basso: **Una frase in più nelle email di conferma** ("Se arrivi in ritardo di più di 15 minuti..."), la **Pagina
@@ -4277,7 +4309,7 @@ Accendi l'addon (capitolo 31): nel menu compare **Eventi**, con **Eventi**, **Is
 Apri **Eventi > Impostazioni**:
 
 - **Avvisi delle iscrizioni a**: l'email dell'associazione, "info@collibolognesi.it" (vuoto: l'indirizzo degli avvisi
-  del sito);
+  del sito; il pulsante **Apri gli iscritti** nell'avviso c'è solo se lo accendi, capitolo 25, "Gli avvisi che ricevi");
 - **Pagina dell'informativa privacy** (con **Scegli dal sito**: cerca `privacy`);
 - **Mandami un'email a ogni iscrizione e cancellazione**: spunta se vuoi saperlo subito;
 - **Manda agli iscritti il promemoria il giorno prima**: lasciala spuntata;
@@ -4626,7 +4658,8 @@ Un clic su un prodotto apre la sua pagina:
 
 La pagina "Grazie, abbiamo ricevuto la tua richiesta" dà il numero (per esempio `2026-0001`) e come pagare: IBAN e
 causale "Ordine 2026-0001", oppure il pulsante che apre PayPal con l'importo giusto. Il cliente riceve subito un'email con
-il riepilogo e le istruzioni; tu ricevi l'avviso con i suoi dati (se rispondi all'avviso, la risposta va al cliente).
+il riepilogo e le istruzioni; tu ricevi l'avviso con i suoi dati (se rispondi all'avviso, la risposta va al cliente; per questo il pulsante **Apri l'ordine
+nel pannello** c'è solo se lo accendi, capitolo 25, "Gli avvisi che ricevi").
 
 Il carrello non chiede di registrarsi. Il sito lo ricorda per 30 giorni con un cookie tecnico, solo da quando si
 aggiunge un prodotto.

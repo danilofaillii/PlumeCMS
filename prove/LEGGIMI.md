@@ -295,6 +295,18 @@ costellazione, maniglia del prima e dopo con frecce, Inizio e mouse, niente scor
 campi nuovi solo con la loro disposizione e la finestra Scegli in modo video. Atteso: 46 su 46. Non salva niente.
 Attacchi: gruppo 39 di `tools/sicurezza-prova.js` (con `CMS_DIR`), che usa `prove/pagina-hero-cattive.php`.
 
+## prova-avvisi-pannello.js (2.31.0)
+
+Il pulsante "Apri nel pannello" negli avvisi con il Reply-To del visitatore (Impostazioni > Configurazione email, "Gli avvisi che
+ricevi"). Su un CMS installato (anche nuovo, senza kit), con una porta libera per il server di posta finto, che la prova accende
+e spegne da sola:
+`node prove/prova-avvisi-pannello.js <base> <utente> <password> <cartella del CMS> <porta smtp> <cartella posta> [cartella foto]`.
+Manda i cinque avvisi veri (form, richiesta di prenotazione, Prenotazioni, Vetrina, Iscrizioni agli eventi) con
+`prove/avvisi-cli.php` (che scrive anche il server SMTP finto e l'indirizzo degli avvisi `negozio@esempio.it`), prima con la
+casella mai salvata, poi accesa, poi spenta dal pannello; controlla riquadro, anteprima (iframe sandbox), prova dal pannello,
+390 px. Lascia un form "Prova avvisi" e i suoi invii: va su un sito da buttare. Atteso (2.31.0): 36 su 36 in radice, in
+cartella e su un sito aggiornato dalla 2.30.0.
+
 ## prova-kit.js (1.3.0)
 
 I kit di partenza dell'installatore. Su una cartella appena estratta e un database vuoto (come per `prova-install.js`):

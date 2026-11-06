@@ -581,7 +581,8 @@ function pren_email_attivita(array $p, string $tipo, string $prima = ''): bool {
     $corpo = '<p><b>' . h((string)$p['nome']) . '</b> &middot; <a href="mailto:' . h((string)$p['email']) . '">' . h((string)$p['email']) . '</a>' . ($p['telefono'] !== '' ? ' &middot; ' . h((string)$p['telefono']) : '') . '</p>'
         . pren_riepilogo_html($p) . ($prima !== '' ? '<p style="color:#666">Prima era: ' . h($prima) . '</p>' : '')
         . ($p['note'] !== '' ? '<p><b>Note:</b> ' . nl2br(h((string)$p['note'])) . '</p>' : '');
-    $ok = posta_invia($a, pren_riga($tit . ': ' . $p['nome'] . ', ' . pren_quando($p)), moduli_email_html($tit, $corpo, 'Apri nel pannello', cms_url_pannello() . 'addon-pagina.php?a=prenotazioni&p=elenco&id=' . (int)$p['id']), moduli_intestazioni((string)$p['email']), 'prenotazione');
+    // 2.31.0: il Reply-To è il cliente: il pulsante del pannello solo se acceso in Configurazione email (moduli_email_avviso()).
+    $ok = posta_invia($a, pren_riga($tit . ': ' . $p['nome'] . ', ' . pren_quando($p)), (function_exists('moduli_email_avviso') ? moduli_email_avviso($tit, $corpo, 'Apri nel pannello', cms_url_pannello() . 'addon-pagina.php?a=prenotazioni&p=elenco&id=' . (int)$p['id']) : moduli_email_html($tit, $corpo)), moduli_intestazioni((string)$p['email']), 'prenotazione');
     if (!$ok) error_log('prenotazioni: avviso non partito: ' . posta_errore());
     return $ok;
 }

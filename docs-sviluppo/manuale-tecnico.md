@@ -1,6 +1,6 @@
 # plumeCMS: manuale tecnico
 
-Versione del manuale: 1.22, per plumeCMS 2.0.3 e le novità fino alla 2.29.0 (5 novembre 2026).
+Versione del manuale: 1.23, per plumeCMS 2.0.3 e le novità fino alla 2.31.0 (6 novembre 2026).
 
 Questo manuale descrive come è fatto plumeCMS e come funziona, pezzo per pezzo. È scritto leggendo il codice:
 ogni numero, limite e nome di funzione viene dai file veri, con il riferimento `file:riga` quando serve a chi
@@ -1723,6 +1723,26 @@ formule, capitolo 18.10).
   server). Il rifiuto del destinatario è l'eccezione `PostaRifiutata` (`:52`) con il codice SMTP; con `mail()` e con le API l'esito
   è solo `ok` o `errore` (i rimbalzi delle API arrivano dopo, con gli avvisi dei servizi: capitolo 35).
 - Gli avvisi (form, sicurezza) vanno all'indirizzo `notifica_email`.
+- **Il pulsante del pannello negli avvisi con il Reply-To del visitatore (dalla 2.31.0).** Segnalazione di Danilo (6 novembre
+  2026, sito di Cucina Creativa): l'avviso di una richiesta di prenotazione ha `Reply-To` il cliente e diceva "Rispondi a questa
+  email"; rispondendo, il programma di posta citava l'avviso intero e il cliente riceveva il pulsante "Apri nel pannello" e, sotto,
+  l'indirizzo del pannello in chiaro ("Se il pulsante non si apre, copia questo indirizzo nel browser", `moduli_email_html()`).
+  Ora `moduli_email_avviso($titolo, $corpo, $pulsante, $link, ?bool $pulsanteAcceso = null)` (`includes/moduli.php:177`) chiama
+  `moduli_email_html()` con il pulsante solo se `moduli_avviso_pannello()` (`:169`, impostazione `avvisi_pulsante_pannello` =
+  `'1'`; assente o `'0'`: spenta, anche sui siti aggiornati). Spenta, nel corpo non c'è nessun `cms_url_pannello()`, né
+  nell'HTML né nel testo semplice di `posta_testo_da_html()`. La usano i cinque avvisi con `moduli_intestazioni(<email del
+  visitatore>)`: `form_ricevi()` (`includes/form.php:741`), `rp_ricevi()` (`includes/richiesta-prenotazione.php:129`),
+  `pren_email_attivita()` (`addon/prenotazioni/includes/prenotazioni.php:585`), l'email al negozio di `vt_email_ordine()`
+  (`addon/vetrina/includes/vetrina.php:889`), `evi_email_attivita()` (`addon/eventi-iscrizione/includes/eventi.php:390`). Ogni
+  chiamata ha `function_exists('moduli_email_avviso')` con la riserva `moduli_email_html($titolo, $corpo)` senza pulsante (la
+  trappola di opcache dopo l'aggiornamento). Restano con il pulsante gli avvisi senza Reply-To del visitatore (recensione da
+  approvare, copia altrove non partita) e le email al visitatore con un link suo ("Vedi il tuo ordine", "Rivedi il risultato").
+  Il pannello: Impostazioni > Configurazione email, riquadro `#avvisi` "Gli avvisi che ricevi" (`admin/impostazioni.php:177`),
+  azioni `save_avvisi` (`:85`) e `prova_avviso` (`:90`, all'indirizzo degli avvisi o all'email dell'utente, oggetto `[PROVA]`,
+  senza Reply-To), anteprima con `avviso_esempio()` (`:60`, un form "Contatti" compilato da Maria Rossi, passa da
+  `moduli_email_avviso()`) in un `<iframe class="av-cornice" sandbox srcdoc>` scritto dal server, niente JavaScript. L'idea di
+  mettere il link nell'oggetto è stata scartata: anche l'oggetto torna al cliente ("Re: ..."). Prove: `prove/prova-avvisi-pannello.js`
+  (con `prove/avvisi-cli.php`, che manda i cinque avvisi dalle funzioni vere al server di posta finto), gruppo 45 degli attacchi.
 - La password SMTP è salvata nel database insieme alle altre impostazioni della posta (in chiaro, come prima). Le chiavi dei
   servizi della 2.1.0 invece sono cifrate (capitolo 35).
 

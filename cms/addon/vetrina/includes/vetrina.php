@@ -884,8 +884,9 @@ function vt_email_ordine(array $o): array {
         $c2 = '<p>Nuova richiesta d\'ordine <b>' . h($o['numero']) . '</b> da <b>' . h($o['nome']) . '</b>.</p>'
             . '<p>Email: ' . h($o['email']) . '<br>Telefono: ' . h($o['telefono']) . '<br>Pagamento: ' . h(VT_METODI[$o['metodo']] ?? $o['metodo']) . '</p>'
             . vt_email_riepilogo($o) . $dove . ($o['note'] !== '' ? '<p><b>Note:</b><br>' . nl2br(h((string)$o['note'])) . '</p>' : '');
+        // 2.31.0: il Reply-To è il cliente: il pulsante del pannello solo se acceso in Configurazione email (moduli_email_avviso()).
         $esito['negozio'] = posta_invia($negozio, 'Nuovo ordine ' . $o['numero'] . ' (' . vt_euro($o['totale_cent']) . ')',
-            moduli_email_html('Nuovo ordine ' . $o['numero'], $c2, 'Apri l\'ordine nel pannello', $pannello), moduli_intestazioni(vt_rispondi_a($o['email'])), 'vetrina');
+            (function_exists('moduli_email_avviso') ? moduli_email_avviso('Nuovo ordine ' . $o['numero'], $c2, 'Apri l\'ordine nel pannello', $pannello) : moduli_email_html('Nuovo ordine ' . $o['numero'], $c2)), moduli_intestazioni(vt_rispondi_a($o['email'])), 'vetrina');
     }
     return $esito;
 }

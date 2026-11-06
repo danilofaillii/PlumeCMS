@@ -160,6 +160,24 @@ function moduli_email_html(string $titolo, string $corpo, string $pulsante = '',
         . '</table></td></tr></table></body></html>';
 }
 
+/**
+ * 2.31.0: il pulsante "Apri nel pannello" negli avvisi che hanno come Reply-To il visitatore (form, richiesta di prenotazione,
+ * Prenotazioni, Vetrina, Iscrizioni agli eventi). Quando il negozio preme Rispondi, il programma di posta cita il messaggio intero
+ * e il cliente riceveva il pulsante e l'indirizzo del pannello in chiaro. Impostazione avvisi_pulsante_pannello
+ * (Impostazioni > Configurazione email, "Gli avvisi che ricevi"), spenta di partenza.
+ */
+function moduli_avviso_pannello(): bool {
+    return (string)cms_impostazione('avvisi_pulsante_pannello', '0') === '1';
+}
+
+/**
+ * 2.31.0: l'email di un avviso con il Reply-To del visitatore. Con l'impostazione spenta esce senza pulsante e senza indirizzo
+ * del pannello (niente cms_url_pannello() nel corpo); accesa, come prima. $pulsanteAcceso forza la scelta (anteprima e prova).
+ */
+function moduli_email_avviso(string $titolo, string $corpo, string $pulsante, string $link, ?bool $pulsanteAcceso = null): string {
+    return ($pulsanteAcceso ?? moduli_avviso_pannello()) ? moduli_email_html($titolo, $corpo, $pulsante, $link) : moduli_email_html($titolo, $corpo);
+}
+
 /** La riga in testa alle email del sito (HTML): il modulo del sito dà la sua, altrimenti il nome del sito in maiuscolo. */
 function moduli_email_intestazione(): string {
     return (string)cms_impostazione('email_intestazione', mb_strtoupper(h((string)cms_impostazione('sito_nome', CMS_NOME))));

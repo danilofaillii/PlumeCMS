@@ -108,7 +108,7 @@ Sono gli unici in `cms/docs/`, nello zip, nel sito di plumeCMS e nella pagina Do
 - **Pacchetto di aggiornamento** per un'installazione esistente:
   `python3 tools/cms-pacchetto.py --aggiornamento`. Si carica dal pannello,
   Impostazioni, Aggiornamenti.
-- **Versione**: `cms/VERSIONE` (oggi 2.30.0; sempre tre numeri: "beta" va nel CHANGELOG, mai nel nome dello zip, se no la serie "ultima" del Download non lo riconosce) e una voce in `cms/CHANGELOG.md` a ogni
+- **Versione**: `cms/VERSIONE` (oggi 2.31.0; sempre tre numeri: "beta" va nel CHANGELOG, mai nel nome dello zip, se no la serie "ultima" del Download non lo riconosce) e una voce in `cms/CHANGELOG.md` a ogni
   zip con contenuto diverso. Mai cambiare il contenuto di una versione già data.
 - **Prove** prima di dire finito:
   - `php -n -d short_open_tag=1 -l` su ogni file PHP toccato, `node --check` sui js;
@@ -166,6 +166,19 @@ Le decisioni complete, con data e perché, stanno nel second brain, `plumecms/de
 - **Nome: plumeCMS** (26 ottobre 2026).
 
 ## Stato al 31 ottobre 2026
+
+Fatto: plumeCMS 2.31.0 (6 novembre, 22:48-23:25): **avvisi senza il pannello in vista** (segnalazione di Danilo dal sito di Cucina Creativa:
+rispondendo a una richiesta di prenotazione, il cliente riceveva citati il pulsante "Apri nel pannello" e l'indirizzo del pannello in chiaro).
+`moduli_email_avviso()` e `moduli_avviso_pannello()` (`includes/moduli.php`, impostazione `avvisi_pulsante_pannello`, **spenta di partenza anche sui
+siti aggiornati**) nei cinque avvisi con il Reply-To del visitatore: form, Richiesta di prenotazione, addon Prenotazioni, Vetrina (email al negozio),
+Iscrizioni agli eventi; ognuno con `function_exists` e la riserva senza pulsante. Gli avvisi solo interni (recensione, copia altrove) restano col
+pulsante. Pannello: Impostazioni > Configurazione email, riquadro `#avvisi` "Gli avvisi che ricevi" con casella, anteprima in iframe sandbox
+(srcdoc dal server) e "Manda un avviso di prova". Link nell'oggetto scartato: torna al cliente con "Re:". Manuale d'uso capitoli 8, 18, 25 (schermata
+nuova 23-avvisi, rifatta anche 23-email), 32, 33, 35; tecnico 15.3. Prove (zip, PHP 8.3 locale per le prove nel browser, sintassi anche su PHP 8.4.27):
+install 38/38 radice e cartella, kit attività 34/34, `prova-avvisi-pannello.js` 36/36 radice, cartella e sito aggiornato, attacchi 462/462 (gruppo 45
+nuovo), aggiornamento 2.30.0 -> 2.31.0 13/13 con 20 foto su 20 identiche, ux pannello 159/159 su Impostazioni nei quattro aspetti, sito di plumeCMS
+col pacchetto unico 93/93. PDF 12696 KB. Prima che `consegna.py` faccia il pacchetto unico serve lo zip della versione prima in `releases/cms`
+(altrimenti escono due pacchetti). **Non provato**: un programma di posta vero (Gmail, Outlook) che cita l'avviso; Apache vero.
 
 Fatto: plumeCMS 2.30.0 (6 novembre, 17:20-18:04): **infografiche grandi quanto vuoi** (segnalazione di Danilo con la schermata: un Iceberg
 largo 310 px in una pagina larga 1400, "devo poterle ingrandire quanto voglio; vale per tutte"). Due cause: la scheda `.igx` ha

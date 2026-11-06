@@ -1380,6 +1380,12 @@ capitoli['22'] = async () => {
 capitoli['23'] = async () => {
   await vai('impostazioni.php');
   await foto('23-email', { clip: { x: 240, y: 56, width: 960, height: 1120 }, segni: [{ sel: '[name=smtp_host]', n: 1 }, { sel: '[name=prova_a]', n: 2 }] });
+  // 2.31.0: "Gli avvisi che ricevi", il pulsante del pannello negli avvisi con il Reply-To del visitatore (spento di partenza).
+  // L'anteprima è un iframe con srcdoc: fuori dalla finestra Chromium non lo disegna nella foto a pagina intera. Finestra alta per la foto.
+  const vp23 = p.viewportSize(); await p.setViewportSize({ width: vp23.width, height: 2400 });
+  await p.frameLocator('#avvisi iframe.av-cornice').locator('h1').waitFor(); await dorme(400);
+  await foto('23-avvisi', { sel: '#avvisi', segni: [{ sel: '#avvisi_pulsante_pannello', n: 1 }, { sel: '#avvisi iframe.av-cornice', n: 2 }, { sel: '#avvisi button.btn-secondary', n: 3 }] });
+  await p.setViewportSize(vp23);
 };
 
 // 24. Il cron

@@ -600,6 +600,7 @@ def zip_lavagna(dest):
 # Regola di Danilo (1 novembre 2026): solo i punti salienti, una riga per versione, mai nomi di aziende o servizi di terzi.
 # Le novità per chi scarica: brevi, scritte qui (il CHANGELOG è per chi sviluppa). Da aggiornare a ogni versione.
 NOVITA = [
+    ('2.31.0', 'Avvisi senza il pannello in vista', ['Gli avvisi di form, prenotazioni, ordini ed eventi escono senza il pulsante e l\'indirizzo del pannello: rispondendo, il cliente non li riceve citati. Si riaccendono da Configurazione email, con anteprima e prova.']),
     ('2.30.0', 'Infografiche grandi quanto vuoi', ['Ogni infografica ha la sua larghezza, diversa per computer, tablet e telefono: fino a tutta la colonna, con il disegno che cresce insieme.']),
     ('2.29.1', 'Si installa su più hosting', ['L\'installazione non si ferma più sugli hosting che non hanno una delle estensioni di PHP per le lettere accentate: gli indirizzi delle pagine si fanno lo stesso.']),
     ('2.29.0', 'Gli strumenti SEO', ['Una tabella di tutto il sito con titoli, descrizioni e semafori, da correggere lì senza aprire l\'editor; i link interni suggeriti mentre scrivi; prodotto, guida a passi e video nei dati per i motori di ricerca; le immagini senza testo alternativo in un elenco, da sistemare in posto. 112 widget.']),

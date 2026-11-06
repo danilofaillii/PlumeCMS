@@ -736,7 +736,9 @@ function form_ricevi(array $m, array $p, string $pagina, array $file = []): stri
         $notaFile = $allegati ? '<p style="margin:0 0 10px">' . ($daAllegare ? 'I file sono allegati a questa email.' : 'I file sono troppo grandi per l&#039;email: li scarichi dal pannello, in Invii dei form.') . '</p>' : '';
         foreach (form_avviso_destinatari($m) as $a) {
             $righe = implode('', array_map(fn($k, $v) => '<p style="margin:0 0 10px"><b>' . h($k) . ':</b> ' . nl2br(h($v)) . '</p>', array_keys($dati), $dati));
-            [$oggetto, $corpo] = ['Nuova compilazione: ' . $m['nome'], moduli_email_html('Form «' . $m['nome'] . '»', $righe . $notaFile . '<p style="color:#888;font-size:13px">Dalla pagina ' . h($pagina) . ', il ' . date('d/m/Y H:i') . '.</p>', 'Apri nel pannello', cms_url_pannello() . 'form-submissions.php?modulo=' . (int)$m['id'])];
+            // 2.31.0: il pulsante del pannello solo se acceso in Configurazione email (il Reply-To è chi ha compilato).
+            $testo = $righe . $notaFile . '<p style="color:#888;font-size:13px">Dalla pagina ' . h($pagina) . ', il ' . date('d/m/Y H:i') . '.</p>';
+            [$oggetto, $corpo] = ['Nuova compilazione: ' . $m['nome'], function_exists('moduli_email_avviso') ? moduli_email_avviso('Form «' . $m['nome'] . '»', $testo, 'Apri nel pannello', cms_url_pannello() . 'form-submissions.php?modulo=' . (int)$m['id']) : moduli_email_html('Form «' . $m['nome'] . '»', $testo)];
             if (!posta_invia($a, $oggetto, $corpo, moduli_intestazioni($email), 'avviso_form', $daAllegare)) error_log('form: avviso non partito: ' . posta_errore());
         }
     }

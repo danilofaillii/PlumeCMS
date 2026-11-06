@@ -2716,6 +2716,29 @@ echo json_encode($o);
     cli44('foto_togli', 'sic44');
   } else console.log('--  strumenti SEO (2.29.0): saltata (serve CMS_DIR)');
 
+  // === 45. (2.31.0) Il pulsante "Apri nel pannello" negli avvisi (Impostazioni > Configurazione email, "Gli avvisi che ricevi",
+  // impostazione avvisi_pulsante_pannello). Il redattore non la accende e non manda la prova; senza token o da un altro sito si
+  // rifiuta; l'anteprima è un iframe sandbox con srcdoc (niente script, niente tag fuori dall'attributo).
+  {
+    const ORIG45 = { 'Content-Type': 'application/x-www-form-urlencoded', 'Origin': BASE.replace(/(https?:\/\/[^/]+).*/, '$1') };
+    const stato45 = async () => { await admin.p.goto(ADMIN + '/impostazioni.php', { waitUntil: 'networkidle' }); return await admin.p.locator('#avvisi_pulsante_pannello').isChecked().catch(() => null); };
+    const prima45 = await stato45();
+    const tRed45 = await tokenDi(red.p, ADMIN + '/contenuti.php?tipo=articoli');
+    const r1 = await red.ctx.request.post(ADMIN + '/impostazioni.php', { maxRedirects: 0, headers: ORIG45, data: new URLSearchParams({ _csrf: tRed45, action: 'save_avvisi', avvisi_pulsante_pannello: prima45 ? '' : '1' }).toString() });
+    const r2 = await red.ctx.request.post(ADMIN + '/impostazioni.php', { maxRedirects: 0, headers: ORIG45, data: new URLSearchParams({ _csrf: tRed45, action: 'prova_avviso' }).toString() });
+    const dopoRed45 = await stato45();
+    ok('2.31.0: il redattore non cambia il pulsante degli avvisi e non manda la prova (rimando o 403, valore uguale)', [302, 303, 403].includes(r1.status()) && [302, 303, 403].includes(r2.status()) && dopoRed45 === prima45, [r1.status(), r2.status(), prima45, dopoRed45]);
+    const a1 = await admin.ctx.request.post(ADMIN + '/impostazioni.php', { maxRedirects: 0, headers: ORIG45, data: new URLSearchParams({ action: 'save_avvisi', avvisi_pulsante_pannello: prima45 ? '' : '1' }).toString() });
+    const tAd45 = await tokenDi(admin.p, ADMIN + '/impostazioni.php');
+    const a2 = await admin.ctx.request.post(ADMIN + '/impostazioni.php', { maxRedirects: 0, headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'Origin': 'https://evil.example' }, data: new URLSearchParams({ _csrf: tAd45, action: 'save_avvisi', avvisi_pulsante_pannello: prima45 ? '' : '1' }).toString() });
+    const dopoAd45 = await stato45();
+    ok('2.31.0: senza token o da un altro sito il pulsante degli avvisi non cambia', a1.status() === 403 && [400, 403].includes(a2.status()) && dopoAd45 === prima45, [a1.status(), a2.status(), dopoAd45]);
+    const cornice45 = admin.p.locator('#avvisi iframe.av-cornice');
+    const sb45 = await cornice45.getAttribute('sandbox').catch(() => null);
+    const html45 = await admin.p.content();
+    ok('2.31.0: l\'anteprima dell\'avviso sta in un iframe sandbox senza permessi, e la pagina non ha tag dell\'email fuori dall\'attributo', sb45 === '' && (await admin.p.locator('body > table, #avvisi > table').count()) === 0 && !/<iframe[^>]*srcdoc="[^"]*<[a-z]/i.test(html45), [sb45]);
+  }
+
   // === pulizia: elimina il redattore di prova
   {
     await admin.p.goto(ADMIN + '/utenti.php', { waitUntil: 'networkidle' });
