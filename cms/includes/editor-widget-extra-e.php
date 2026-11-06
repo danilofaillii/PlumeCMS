@@ -253,7 +253,7 @@ ewx_registra('richiesta_prenotazione', 'Richiesta di prenotazione', 'calendario-
 // ---------------- Galleria con filtri
 
 function ewe_slug(string $t): string {
-    $a = @iconv('UTF-8', 'ASCII//TRANSLIT//IGNORE', $t);
+    $a = (function_exists('cms_ascii') ? cms_ascii($t) : @iconv('UTF-8', 'ASCII//TRANSLIT//IGNORE', $t));
     return trim((string)preg_replace('/[^a-z0-9]+/', '-', strtolower($a !== false ? $a : $t)), '-') ?: 'altro';
 }
 

@@ -600,6 +600,7 @@ def zip_lavagna(dest):
 # Regola di Danilo (1 novembre 2026): solo i punti salienti, una riga per versione, mai nomi di aziende o servizi di terzi.
 # Le novità per chi scarica: brevi, scritte qui (il CHANGELOG è per chi sviluppa). Da aggiornare a ogni versione.
 NOVITA = [
+    ('2.29.1', 'Si installa su più hosting', ['L\'installazione non si ferma più sugli hosting che non hanno una delle estensioni di PHP per le lettere accentate: gli indirizzi delle pagine si fanno lo stesso.']),
     ('2.29.0', 'Gli strumenti SEO', ['Una tabella di tutto il sito con titoli, descrizioni e semafori, da correggere lì senza aprire l\'editor; i link interni suggeriti mentre scrivi; prodotto, guida a passi e video nei dati per i motori di ricerca; le immagini senza testo alternativo in un elenco, da sistemare in posto. 112 widget.']),
     ('2.28.0', 'Le pagine per zona', ['Una pagina per ogni coppia servizio e zona, "Idraulico a Casalecchio di Reno", creata in bozza con tre riquadri guidati da scrivere: finché restano vuoti non si pubblica. Dati per i motori di ricerca con servizio, zona e sede, e il widget Altre zone. 112 widget.']),
     ('2.27.0', 'Le sedi e la SEO geografica', ['Più sedi con indirizzo, coordinate cercate dalla mappa, orari e zona servita nei dati per i motori di ricerca; una pagina per sede e i widget Sedi e Dati dell\'attività. 111 widget.']),

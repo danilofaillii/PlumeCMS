@@ -108,7 +108,7 @@ Sono gli unici in `cms/docs/`, nello zip, nel sito di plumeCMS e nella pagina Do
 - **Pacchetto di aggiornamento** per un'installazione esistente:
   `python3 tools/cms-pacchetto.py --aggiornamento`. Si carica dal pannello,
   Impostazioni, Aggiornamenti.
-- **Versione**: `cms/VERSIONE` (oggi 2.29.0; sempre tre numeri: "beta" va nel CHANGELOG, mai nel nome dello zip, se no la serie "ultima" del Download non lo riconosce) e una voce in `cms/CHANGELOG.md` a ogni
+- **Versione**: `cms/VERSIONE` (oggi 2.29.1; sempre tre numeri: "beta" va nel CHANGELOG, mai nel nome dello zip, se no la serie "ultima" del Download non lo riconosce) e una voce in `cms/CHANGELOG.md` a ogni
   zip con contenuto diverso. Mai cambiare il contenuto di una versione già data.
 - **Prove** prima di dire finito:
   - `php -n -d short_open_tag=1 -l` su ogni file PHP toccato, `node --check` sui js;
@@ -166,6 +166,17 @@ Le decisioni complete, con data e perché, stanno nel second brain, `plumecms/de
 - **Nome: plumeCMS** (26 ottobre 2026).
 
 ## Stato al 31 ottobre 2026
+
+Fatto: plumeCMS 2.29.1 (6 novembre, 15:30-15:50): **installazione senza iconv** (segnalazione di Danilo con la schermata: la 2.27.0 su
+Hostcare si fermava al passo 4 con "Call to undefined function iconv()" subito dopo "amministratore admin"; l'estensione PHP iconv su quel
+server non c'è). Quattro punti la chiamavano senza `function_exists`: `contenuti_slug()` (il primo a scattare, dal kit), `form.php` (nomi dei
+campi, slug del form), `editor-widget-extra-e.php`; `design.php` aveva il controllo. Ora tutti passano da `cms_ascii()` (`includes/cms.php`: iconv,
+altrimenti `Transliterator` di intl, altrimenti tabella delle accentate), chiamata con `function_exists('cms_ascii')` e iconv di riserva. Manuale
+tecnico 2.1. Prove con `PHPOPT="-d disable_functions=iconv"` (`$S/v7/batteria.sh`, `$S/v7/fine.sh`): la 2.29.0 riproduce l'errore; la 2.29.1 installa
+38/38 radice e cartella, kit attività 34/34, sito su misura 34/34, zone 58/58, strumenti SEO 71/71, attacchi 459/459; con iconv aggiornamento
+2.29.0 -> 2.29.1 13/13 con 1 foto su 20 a 1 livello e JSON-LD e sitemap identici, pacchetto unico 13/13 con la hero tenuta; zero errori fatali.
+Il sito rimasto a metà si ripara così (provato): file 2.29.1 sopra, cancellare `includes/config.local.php`, rifare l'installazione con lo stesso
+database e lo stesso prefisso (le tabelle già fatte restano, l'amministratore del primo tentativo resta con la sua password).
 
 Fatto: plumeCMS 2.29.0 (5 novembre, 13:10-15:10): **gli strumenti SEO**, con la 2.28.0 nella stessa consegna (richiesta di Danilo: "fai le pagine per
 zona" più quattro strumenti: tabella SEO di tutto il sito con semafori e modifica in riga; link interni suggeriti nell'editor; schema Prodotto per la
@@ -827,6 +838,7 @@ Errori veri, già pagati. Non ripeterli.
 | Il contenitore che si riavvia a metà batteria (5 novembre, 14:40) | i server `php -S`, i server finti e gli script delle prove spariscono; i siti installati e i database (volumi Docker) restano. Si riaccende Docker (`rm -f /var/run/docker.pid`, `dockerd`, `docker start`), si aspetta `SELECT 1`, si riaccendono i server sui siti già installati e si rifanno solo le prove mancanti (`$S/v6/riprendi.sh`); gli attacchi lanciati nello stesso istante in cui MySQL risponde non entrano nel pannello ("Non riesco a entrare come amministratore"): si aspetta qualche secondo e si rilancia |
 | Le schermate del manuale fatte sul sito dove sono girate le prove dell'agente | la Tabella SEO mostrava 26 contenuti di prova e "25 con qualcosa da sistemare" (2.29.0). Le schermate si rifanno su un sito col kit appena installato (`SOLO_CAPITOLI`, `CMS_DIR_MANUALE`, `TMPDIR` vuota) prima del PDF |
 | Due batterie di attacchi lanciate insieme sullo stesso contenitore | il gruppo 37 (webhook) accende due server finti sulle porte 9296 e 9297 (`SIC_WEBHOOK`): la seconda batteria trova le porte prese e "il servizio non risponde" (5 novembre, sito aggiornato). E il controllo del gruppo 44 contava le righe di `media_alt`, tabella che nasce al primo uso: su un sito dove nessun alt è mai stato salvato la query falliva (ora la prova crea prima la tabella). Gli attacchi si lanciano uno alla volta, o con `SIC_WEBHOOK` diverso |
+| Una funzione di un'estensione PHP non richiesta dall'installatore (`iconv()`) chiamata senza `function_exists` | su un hosting che non ce l'ha (Hostcare) l'installazione si ferma a metà con "Call to undefined function" (2.29.1). Le estensioni fuori dalla lista dei requisiti si usano solo con una riserva; si prova con `php -d disable_functions=<funzione>` |
 | Fidarsi del resoconto di un agente | è successo che un agente dichiarasse lavoro mai scritto su disco. Si controllano i file veri e si rifanno le prove |
 
 ## Tono con l'utente

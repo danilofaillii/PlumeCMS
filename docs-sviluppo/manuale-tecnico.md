@@ -158,6 +158,12 @@ Controllati dall'installatore (`install/index.php:53-67`):
 
 MySQL 8.0 (o MariaDB compatibile). Il CMS lavora in modalità SQL stretta (capitolo 6).
 
+`iconv` **non** è un requisito (2.29.1): su Hostcare manca, e l'installatore si fermava con "Call to undefined function iconv()".
+Ogni traslitterazione in ASCII (slug di `contenuti_slug()`, nomi dei campi e indirizzo dei form, `design.php`, un widget) passa da
+`cms_ascii()` (`includes/cms.php`): iconv se c'è, altrimenti `Transliterator` di intl, altrimenti una tabella delle lettere accentate.
+I chiamanti la usano con `function_exists('cms_ascii')` e iconv come riserva (trappola di opcache: l'aggiornamento lo applica il
+motore vecchio). Per provare: `php -d disable_functions=iconv -S ...`.
+
 Il CMS è provato su PHP 8.3 con MySQL 8.0, con Apache vero per i `.htaccess`. Il primo server di produzione
 (Hostcare) ha PHP 8.4.27, MySQL 8.0.46 in modalità stretta, Apache 2.4 con cPanel e ModSecurity: su PHP 8.4.27
 sono provate la sintassi di ogni file e i `.htaccess`, non ancora il CMS intero.

@@ -173,7 +173,7 @@ function form_campi_validi($campi): array {
         // Il nome tecnico: quello che arriva, oppure dall'etichetta senza accenti. Mai due uguali.
         $nome = preg_replace('/[^a-z0-9_]+/', '_', strtolower(trim((string)($c['nome'] ?? ''))));
         if (trim((string)$nome, '_') === '') {
-            $ascii = @iconv('UTF-8', 'ASCII//TRANSLIT//IGNORE', $etichetta);
+            $ascii = (function_exists('cms_ascii') ? cms_ascii($etichetta) : @iconv('UTF-8', 'ASCII//TRANSLIT//IGNORE', $etichetta));
             $nome = preg_replace('/[^a-z0-9]+/', '_', strtolower($ascii !== false ? $ascii : $etichetta));
         }
         $nome = mb_substr(trim((string)$nome, '_'), 0, 40) ?: 'campo';
@@ -367,7 +367,7 @@ function form_salva(int $id, array $d): int {
     form_schema();
     $nome = mb_substr(trim((string)($d['nome'] ?? '')), 0, 100);
     if ($nome === '') throw new RuntimeException('Il form ha bisogno di un nome.');
-    $slug = preg_replace('/[^a-z0-9-]+/', '-', strtolower(iconv('UTF-8', 'ASCII//TRANSLIT//IGNORE', (string)(($d['slug'] ?? '') ?: $nome)) ?: $nome));
+    $slug = preg_replace('/[^a-z0-9-]+/', '-', strtolower((function_exists('cms_ascii') ? cms_ascii((string)(($d['slug'] ?? '') ?: $nome)) : iconv('UTF-8', 'ASCII//TRANSLIT//IGNORE', (string)(($d['slug'] ?? '') ?: $nome))) ?: $nome));
     $slug = mb_substr(trim($slug, '-'), 0, 100) ?: 'form';
     $c = db()->prepare('SELECT COUNT(*) FROM ' . tbl('moduli') . ' WHERE slug = ? AND id <> ?');
     $c->execute([$slug, $id]);

@@ -2,6 +2,14 @@
 
 Il prodotto si chiama **plumeCMS** (nome scelto il 26 ottobre 2026; prima, per poche ore, "CarbonaraCMS", e ancora prima il provvisorio "Officina": gli zip vecchi si chiamavano `officina-*` e `carbonaracms-*`).
 
+## 2.29.1 (6 novembre 2026) - Installazione senza iconv
+
+- **L'installazione si fermava su alcuni hosting** con "Call to undefined function iconv()" subito dopo aver creato
+  l'amministratore (segnalazione di Danilo, installazione su Hostcare: l'estensione PHP iconv non c'è). Quattro punti la usavano
+  senza controllare che esistesse: gli indirizzi delle pagine (`contenuti_slug()`), il nome dei campi e l'indirizzo dei form, un
+  widget. Ora passano tutti da `cms_ascii()` (`includes/cms.php`): iconv se c'è, altrimenti intl, altrimenti una tabella delle
+  lettere accentate. Con iconv presente il risultato è lo stesso di prima.
+
 ## 2.29.0 (5 novembre 2026) - Gli strumenti SEO
 
 - **La Tabella SEO** (SEO e AEO > Tabella SEO, anche per il redattore): tutto il sito in una tabella, una riga per ogni

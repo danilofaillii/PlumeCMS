@@ -291,7 +291,7 @@ function design_json(array $v): string {
 
 function design_slug(string $s): string {
     $s = strtolower(trim($s));
-    if (function_exists('iconv')) $s = (string)@iconv('UTF-8', 'ASCII//TRANSLIT//IGNORE', $s) ?: $s;
+    $s = (function_exists('cms_ascii') ? cms_ascii($s) : (function_exists('iconv') ? (string)@iconv('UTF-8', 'ASCII//TRANSLIT//IGNORE', $s) : $s)) ?: $s;
     $s = preg_replace('/[^a-z0-9]+/', '-', $s);
     return trim(substr($s, 0, 40), '-');
 }

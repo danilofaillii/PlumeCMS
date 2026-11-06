@@ -25,6 +25,26 @@ function cms_radice(): string {
 if (!defined('CMS_ADMIN')) define('CMS_ADMIN', dirname(__DIR__) . '/admin'); // per le pagine dei moduli: gli include del pannello
 
 /** La versione del CMS (file VERSIONE nella radice). */
+/**
+ * 2.29.1: un testo UTF-8 in lettere ASCII ("Caffè Città" -> "Caffe Citta"), per slug e nomi dei campi. Su Hostcare l'estensione
+ * iconv manca e l'installatore si fermava con "Call to undefined function iconv()": qui iconv se c'è, altrimenti intl
+ * (Transliterator), altrimenti una tabella delle lettere accentate. I caratteri che restano fuori si tolgono.
+ */
+function cms_ascii(string $s): string {
+    if (function_exists('iconv')) { $a = @iconv('UTF-8', 'ASCII//TRANSLIT//IGNORE', $s); if (is_string($a) && $a !== '') return $a; }
+    if (class_exists('Transliterator')) { $tr = \Transliterator::create('Any-Latin; Latin-ASCII'); if ($tr) { $a = $tr->transliterate($s); if (is_string($a)) return (string)preg_replace('/[^\x20-\x7E]/', '', $a); } }
+    static $mappa = null;
+    if ($mappa === null) {
+        $da = 'ÀÁÂÃÄÅàáâãäåÈÉÊËèéêëÌÍÎÏìíîïÒÓÔÕÖØòóôõöøÙÚÛÜùúûüÝýÿÑñÇçŠšŽžĆćČčĐđŁłŃńŚśŹźŻżĘęĄąŐőŰű';
+        $a  = 'AAAAAAaaaaaaEEEEeeeeIIIIiiiiOOOOOOooooooUUUUuuuuYyyNnCcSsZzCcCcDdLlNnSsZzZzEeAaOoUu';
+        $mappa = [];
+        $lettere = preg_split('//u', $da, -1, PREG_SPLIT_NO_EMPTY);
+        foreach ($lettere as $i => $l) $mappa[$l] = $a[$i];
+        $mappa += ['Æ' => 'AE', 'æ' => 'ae', 'Œ' => 'OE', 'œ' => 'oe', 'ß' => 'ss', '’' => "'", '‘' => "'", '“' => '"', '”' => '"', '–' => '-', '—' => '-', '…' => '...', '€' => 'EUR'];
+    }
+    return (string)preg_replace('/[^\x20-\x7E]/', '', strtr($s, $mappa));
+}
+
 function cms_versione(): string {
     static $v = null;
     if ($v !== null) return $v;

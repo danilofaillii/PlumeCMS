@@ -204,7 +204,7 @@ function contenuti_categorie(): array {
 }
 
 function contenuti_slug(string $s): string {
-    $s = iconv('UTF-8', 'ASCII//TRANSLIT//IGNORE', mb_strtolower(trim($s))) ?: mb_strtolower(trim($s));
+    $s = (function_exists('cms_ascii') ? cms_ascii(mb_strtolower(trim($s))) : iconv('UTF-8', 'ASCII//TRANSLIT//IGNORE', mb_strtolower(trim($s)))) ?: mb_strtolower(trim($s));
     return trim(preg_replace('/[^a-z0-9]+/', '-', strtolower($s)), '-');
 }
 
