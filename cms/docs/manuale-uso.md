@@ -893,6 +893,16 @@ Testata, occhiello, titolo, colori, chiusura e firma si cambiano come nelle altr
 **Tema**). Il titolo e l'occhiello della testata diventano bianchi o neri da soli, secondo il colore che scegli: si leggono
 sempre. Le scritte sopra i colori pieni (i gradini dell'imbuto, le tappe del ciclo) fanno lo stesso.
 
+**Più grande.** Di partenza un'infografica è larga al massimo 700 pixel, e in una colonna che centra i widget si stringe
+ancora. Per ingrandirla quanto vuoi, vale per tutte e trenta:
+
+1. Fai clic sull'infografica nella pagina.
+2. Nel pannello a sinistra apri la scheda **Stile**.
+3. Il primo campo è **Larghezza dell'infografica**: scegli l'unità (**%**, **px** o **vw**) e scrivi il numero. **100%** riempie la
+   colonna, **60%** ne prende poco più di metà, **1000 px** la fa larga mille pixel (mai più della colonna).
+4. Con le icone del computer, del tablet e del telefono in alto puoi dare una misura diversa a ogni schermo.
+5. Il disegno e le sue scritte crescono con la scheda. Il campo vuoto lascia l'infografica com'era.
+
 **Al telefono** ogni infografica si ridisegna stretta: le scritte restano grandi come al computer e alcune si spostano
 (la legenda della ciambella va sotto, il viaggio sale dal basso verso l'alto, le spiegazioni dei cerchi concentrici vanno
 sotto il disegno).

@@ -108,7 +108,7 @@ Sono gli unici in `cms/docs/`, nello zip, nel sito di plumeCMS e nella pagina Do
 - **Pacchetto di aggiornamento** per un'installazione esistente:
   `python3 tools/cms-pacchetto.py --aggiornamento`. Si carica dal pannello,
   Impostazioni, Aggiornamenti.
-- **Versione**: `cms/VERSIONE` (oggi 2.29.1; sempre tre numeri: "beta" va nel CHANGELOG, mai nel nome dello zip, se no la serie "ultima" del Download non lo riconosce) e una voce in `cms/CHANGELOG.md` a ogni
+- **Versione**: `cms/VERSIONE` (oggi 2.30.0; sempre tre numeri: "beta" va nel CHANGELOG, mai nel nome dello zip, se no la serie "ultima" del Download non lo riconosce) e una voce in `cms/CHANGELOG.md` a ogni
   zip con contenuto diverso. Mai cambiare il contenuto di una versione già data.
 - **Prove** prima di dire finito:
   - `php -n -d short_open_tag=1 -l` su ogni file PHP toccato, `node --check` sui js;
@@ -166,6 +166,16 @@ Le decisioni complete, con data e perché, stanno nel second brain, `plumecms/de
 - **Nome: plumeCMS** (26 ottobre 2026).
 
 ## Stato al 31 ottobre 2026
+
+Fatto: plumeCMS 2.30.0 (6 novembre, 17:20-18:04): **infografiche grandi quanto vuoi** (segnalazione di Danilo con la schermata: un Iceberg
+largo 310 px in una pagina larga 1400, "devo poterle ingrandire quanto voglio; vale per tutte"). Due cause: la scheda `.igx` ha
+`max-width:700px` e il disegno `.igs-svg` 600 px; e in una colonna con "Widget allineati: centro" il widget si stringe al contenuto
+(riprodotto: 246 px con il disegno a 180). Ora il primo campo di Stile delle trenta `ig_*` (`igx_controlli_testa()`) è `larghezza_ig`, misura
+responsive `%`/`px`/`vw` sul contenitore del widget (selettore vuoto); con un valore `igx_larghezza_libera()` mette `igx-libera` sulla scheda e il
+blocco 2.30.0 di `sito.css` toglie i due tetti (mai oltre la colonna, al centro). Senza valore niente classe e niente CSS. Il widget generico
+"Infografica" (gruppo Contenuto) non ha tetti: si allarga da Avanzate, Larghezza. Manuale d'uso capitolo 8 ("Più grande", cinque passi, senza
+schermata nuova), tecnico 41. Prove: `$S/v8/misura.js` 60/60 (sezione normale, Articolo, colonna centrata; 1440 e 390 px; 100%, 1000 px con
+100% al telefono, 60%), sullo zip (`$S/v9/batteria.sh`): install 38/38 radice e cartella, infografiche disegnate 47/47, larghezza 60/60, attacchi 459/459, aggiornamento 2.29.1 -> 2.30.0 13/13 con HTML identico a parte il numero dei fogli e il conto alla rovescia (anche sul foglio con tutti i widget), pacchetto unico 13/13 con la hero tenuta, zero errori fatali. PDF 12639 KB.
 
 Fatto: plumeCMS 2.29.1 (6 novembre, 15:30-15:50): **installazione senza iconv** (segnalazione di Danilo con la schermata: la 2.27.0 su
 Hostcare si fermava al passo 4 con "Call to undefined function iconv()" subito dopo "amministratore admin"; l'estensione PHP iconv su quel

@@ -786,6 +786,11 @@ hr.ed-divisore-linea{background:var(--bordo)}
 /* nella colonna di lettura e nell'anteprima */
 .ed-articolo-pagina .ed-widget[class*=ed-w-ig_]{margin:2em 0}
 .ed-widget[class*=ed-w-ig_] .igx{margin:0 auto}
+/* 2.30.0: la larghezza scelta dell'infografica (Stile, Larghezza dell'infografica): il widget prende la misura, la scheda lo riempie e
+   il disegno cresce con lei. Senza la classe igx-libera niente cambia. */
+.ed-widget[class*=ed-w-ig_]:has(>.igx-libera),.ed-widget[class*=ed-w-ig_]:has(.igx-libera){max-width:100%;margin-left:auto;margin-right:auto}
+.ed-widget[class*=ed-w-ig_] .igx.igx-libera{width:100%;max-width:100%}
+.igx.igx-libera .igs-svg,.igx.igx-libera .igs .igs-stretto{max-width:none}
 @media (max-width:640px){
   .igx{--pad:1.2rem}
   .igx .igx-col-2,.igx .igx-col-3,.igx .igx-rami,.igx .igx-flusso-riga,.igx .igx-check.igx-disp-griglia2,.igx .igx-fare-non,.igx .igx-risposte,.igx .igx-pd-coppia,.igx .igx-liste{grid-template-columns:1fr}

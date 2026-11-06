@@ -2,6 +2,15 @@
 
 Il prodotto si chiama **plumeCMS** (nome scelto il 26 ottobre 2026; prima, per poche ore, "CarbonaraCMS", e ancora prima il provvisorio "Officina": gli zip vecchi si chiamavano `officina-*` e `carbonaracms-*`).
 
+## 2.30.0 (6 novembre 2026) - Infografiche grandi quanto vuoi
+
+- **Larghezza dell'infografica** (richiesta di Danilo: "le infografiche sono minuscole, devo poterle ingrandire quanto voglio,
+  altrimenti si perdono nella pagina; vale per tutte"). Tutte e trenta le infografiche hanno come primo campo della scheda Stile la
+  larghezza, in percentuale, pixel o larghezza dello schermo, diversa per computer, tablet e telefono: 100% riempie la colonna anche
+  quando la colonna centra i widget e li stringeva. Con una larghezza scritta cadono i tetti di prima (700 px la scheda, 600 px il
+  disegno) e il disegno cresce con la scheda; mai oltre la colonna. Senza larghezza le pagine restano identiche.
+  `igx_controlli_testa()` e `igx_larghezza_libera()` in `includes/editor-widget.php`, blocco 2.30.0 di `sito.css`.
+
 ## 2.29.1 (6 novembre 2026) - Installazione senza iconv
 
 - **L'installazione si fermava su alcuni hosting** con "Call to undefined function iconv()" subito dopo aver creato

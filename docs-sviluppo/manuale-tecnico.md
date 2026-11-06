@@ -5391,6 +5391,15 @@ composto, regola del 72, fondo emergenza, mutuo contro affitto, primo figlio) ed
 `ig_confronto` (`ig_barre` è già Barre di avanzamento, capitolo 9.7); nei siti che la usavano come `tp_barre` i widget salvati si rinominano (`"tipo":"tp_barre"` nelle colonne
 `struttura` e `struttura_bozza`).
 
+**La larghezza** (2.30.0, richiesta di Danilo: "le infografiche sono minuscole, devo poterle ingrandire quanto voglio; vale per tutte").
+Vale per le trenta `ig_*`: `igx_controlli_testa()` ha come primo controllo di Stile `larghezza_ig` (misura responsive in `%`, `px` o `vw`,
+selettore vuoto, cioè il contenitore del widget, proprietà `width`: la percentuale si calcola sulla colonna anche quando la colonna centra i
+widget e li stringe al contenuto). Con un valore su almeno un dispositivo `igx_larghezza_libera()` mette la classe `igx-libera` sulla scheda
+(`igx_cornice()`), e `sito.css` (blocco 2.30.0, dopo `.ed-widget[class*=ed-w-ig_] .igx`) toglie i due tetti: la scheda a 700 px
+(`.igx{max-width:700px}`) diventa larga quanto il widget e il disegno a 600 px (`.igs-svg`, 400 px lo stretto) cresce con lei; il widget non
+supera la colonna (`max-width:100%`) e resta al centro. Senza valore niente classe e niente CSS: le pagine escono identiche al byte. Il widget
+generico "Infografica" (gruppo Contenuto) non ha tetti e si allarga già da Avanzate, Larghezza.
+
 | Tipo | Nome | Funzione | Voci |
 |---|---|---|---|
 | `ig_imbuto` | Imbuto | `igs_imbuto()` (`includes/editor-infografiche.php:387`) | `gradini` 3-6 (nome, valore); resa = valore / valore precedente |

@@ -807,6 +807,11 @@ function igx_opzioni_tema(): array {
 /** Controlli della cornice (testata, intro, chiusura, firma) che hanno tutti i widget ig_*. */
 function igx_controlli_testa(string $occhiello = '', string $titolo = 'Titolo dell\'infografica', string $testata = 'scuro'): array {
     return array_merge([
+        // 2.30.0: la larghezza di ogni infografica (richiesta di Danilo: "sono minuscole, devo poterle ingrandire quanto voglio").
+        // Si scrive sul contenitore del widget (selettore vuoto: così la percentuale vale sulla colonna anche quando la colonna centra
+        // i widget); con un valore la scheda prende la classe igx-libera (igx_cornice) e la larghezza massima di 700 px della scheda e
+        // di 600 px del disegno cadono (sito.css). Vuoto: tutto come prima, al byte.
+        ec('larghezza_ig', 'misura', 'Larghezza dell\'infografica (vuoto = come prima, al massimo 700 px)', ['d' => ['v' => '', 'u' => '%']], 'stile', ['selettore' => '', 'proprieta' => 'width', 'responsive' => true, 'unita' => ['%', 'px', 'vw'], 'intervalli' => ['%' => [10, 100, 1], 'px' => [200, 2400, 10], 'vw' => [10, 100, 1]], 'aiuto' => 'Per ingrandirla: 100% riempie la colonna, oppure scrivi i pixel. Si può dare una misura diversa al computer, al tablet e al telefono.']),
         ec('tema', 'scelta', 'Tema', 'carta', 'stile', ['opzioni' => igx_opzioni_tema(), 'aiuto' => 'Scegli un tema: i campi di stile qui sotto prendono i suoi valori e restano modificabili. Con "Salva come tema" tieni le tue modifiche con un nome.']),
         ec('occhiello', 'testo', 'Occhiello (riga piccola sopra il titolo)', $occhiello),
         ec('titolo', 'testo', 'Titolo', $titolo),
@@ -1092,6 +1097,14 @@ function igx_num(int $i, bool $dueCifre = false): string {
     return $dueCifre ? str_pad((string)($i + 1), 2, '0', STR_PAD_LEFT) : (string)($i + 1);
 }
 
+/** 2.30.0: la larghezza dell'infografica è stata scritta (su almeno un dispositivo)? Allora la scheda prende la classe igx-libera. */
+function igx_larghezza_libera(array $v): bool {
+    $l = $v['larghezza_ig'] ?? null;
+    if (!is_array($l)) return false;
+    foreach (['d', 't', 'm'] as $k) if (is_array($l[$k] ?? null) && trim((string)($l[$k]['v'] ?? '')) !== '' && (float)$l[$k]['v'] > 0) return true;
+    return false;
+}
+
 /** La cornice: testata, intro, corpo, chiusura, firma. */
 function igx_cornice(string $tipo, array $v, string $corpo, string $classi = ''): string {
     $scura = $tipo === 'ig_mappa' && ($v['stile'] ?? '') === 'scuro';
@@ -1103,7 +1116,7 @@ function igx_cornice(string $tipo, array $v, string $corpo, string $classi = '')
     if ((int)$v['bordo_spessore'] !== 1) $vars[] = '--bordo-sp:' . max(0, min(4, (int)$v['bordo_spessore'])) . 'px';
     $out = '<div class="igx igx-' . substr($tipo, 3) . ' igx-testata-' . h($v['testata']) . ' igx-occhiello-' . h($v['occhiello_colore']) . ' igx-corpo-' . h($v['corpo']) . ($scura ? ' igx-scura' : '')
         . (igx_esa($v['testata_colore']) !== '' ? ' igx-testata-libera' : '') . ' igx-angoli-' . h($v['angoli']) . ($v['ombra'] ? ' igx-ombra' : '') . ' igx-spazio-' . h($v['spaziatura']) . ' igx-testo-' . h($v['testo_dimensione']) . ' igx-font-' . h($v['carattere']) . ($v['testata_allineamento'] === 'centro' ? ' igx-testata-centro' : '')
-        . ($classi !== '' ? ' ' . $classi : '') . '"' . ($vars ? ' style="' . implode(';', $vars) . '"' : '') . '>';
+        . (igx_larghezza_libera($v) ? ' igx-libera' : '') . ($classi !== '' ? ' ' . $classi : '') . '"' . ($vars ? ' style="' . implode(';', $vars) . '"' : '') . '>';
     $testa = ($v['occhiello'] !== '' && $v['mostra_occhiello'] ? '<p class="igx-occhiello">' . igx_t($v['occhiello']) . '</p>' : '')
         . ($v['titolo'] !== '' ? '<h3 class="igx-titolo">' . igx_t($v['titolo']) . '</h3>' : '')
         . (trim((string)$v['sottotitolo']) !== '' ? '<p class="igx-sottotitolo">' . igx_t($v['sottotitolo']) . '</p>' : '');
