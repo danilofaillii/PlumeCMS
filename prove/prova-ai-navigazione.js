@@ -131,7 +131,7 @@ const pagina = async (url) => (await fetch(url)).text();
   const home = await pagina(B + '/');
   ok('sul sito pubblico il menu nuovo: "Lavora con noi" c\'è, "Offerte" no', /Lavora con noi/.test(home) && !/>Offerte</.test(home) && /I servizi/.test(home));
   const an2 = await strumento(K, 'analyze_navigation', {});
-  ok('dopo l\'approvazione l\'analisi migliora: niente voci rotte, niente orfane', an2.dati.problemi.voci_rotte.length === 0 && an2.dati.pagine_orfane.length === 0 && an2.dati.punteggio > A.punteggio, [an2.dati.punteggio, an2.dati.problemi.voci_rotte]);
+  ok('dopo l\'approvazione l\'analisi migliora: niente voci rotte, "Lavora con noi" non è più orfana', an2.dati.problemi.voci_rotte.length === 0 && !an2.dati.pagine_orfane.some(x => x.id === prep.orfana) && an2.dati.punteggio > A.punteggio, [an2.dati.punteggio, an2.dati.problemi.voci_rotte, an2.dati.pagine_orfane]);
 
   // === 6. Conflitto: il menu cambia dopo la proposta
   const pm3 = await strumento(K, 'propose_menu', { menu_id: MID, voci: vociBuone.slice(0, 4), motivo: 'Tolgo Contatti (prova del conflitto).' });

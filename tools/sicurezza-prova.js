@@ -2902,7 +2902,7 @@ echo json_encode($o);
       }
       ok('2.32.0: import_photo con un indirizzo fuori elenco o interno (127.0.0.1 su un\'altra porta, 169.254.169.254, ::1, file:): rifiutati', fot.length === 0, fot);
       const fc = await call(tutto, 'import_photo', { archivio: 'openverse', id: 'cc0a', alt: 'Prova sic46 codice', url: 'http://127.0.0.1:' + PF + '/file/codice.jpg' });
-      const fileC = fc.dati && fc.dati.url ? path.join(DIR, fc.dati.url) : '';
+      const fileC = fc.dati && fc.dati.url ? path.join(DIR, fc.dati.url.slice(new URL(BASE).pathname.replace(/\/$/, '').length)) : ''; // 2.33.0: nei siti in cartella l'indirizzo ha la cartella davanti
       const contC = fileC && fs.existsSync(fileC) ? fs.readFileSync(fileC, 'latin1') : '';
       ok('2.32.0: una foto con codice PHP e script in coda: o rifiutata o ricodificata senza codice', fc.errore || (contC !== '' && !/<\?php|<script/i.test(contC)), [fc.errore, fc.dati && (fc.dati.url || fc.dati.errore)]);
       const fs1 = await call(tutto, 'import_photo', { archivio: 'openverse', id: 'cc0a', alt: 'Prova sic46 svg', url: 'http://127.0.0.1:' + PF + '/file/svg.jpg' });
