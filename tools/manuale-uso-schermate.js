@@ -31,6 +31,7 @@
 //   consenso), poi 31n e 31r con il costruttore nuovo: SOLO_CAPITOLI=17,17n,31n,31r su un sito col kit appena installato, TMPDIR vuota.
 // 2.27.0 e 2.28.0: le sedi (23s, con TESSERE_FINTE=1 dove la rete non raggiunge OpenStreetMap) e le pagine per zona (23z, dopo il
 //   23s): SOLO_CAPITOLI=23s,23z, con TMPDIR vuota, su un sito col kit con CMS_NOMINATIM_URL e CMS_NOMINATIM_PROVA nel config.
+// 2.32.0: il capitolo 41 (AI collegate, tre foto): SOLO_CAPITOLI=41, con CMS_DIR_MANUALE e TMPDIR vuota, su un sito col kit.
 const { chromium } = require('playwright');
 const pnConferme = require('../prove/conferme-pannello'); // UX 2026-11: conferme del pannello
 const fs = require('fs');
@@ -2384,6 +2385,39 @@ capitoli['40'] = async () => {
   if (!/Copia mandata/.test(await flash())) throw new Error('40: la copia non parte: ' + await flash());
   await foto('40-mandata', { clip: { x: 240, y: 56, width: 960, height: 120 }, segni: [{ sel: '.flash', n: 9 }] });
   await foto('40-registro', { sel: '#ca-registro', margine: 10 });
+};
+
+// 41. (2.32.0) AI collegate: l'indirizzo del connettore, la pagina del consenso (un client "Claude" registrato qui, che torna a
+// claude.ai: la pagina si fotografa senza premere niente) e le proposte (due, fatte con una chiave sul server MCP del sito, su
+// una pagina del kit). Vuole CMS_DIR_MANUALE (prove/ai-cli.php accende l'addon e pulisce alla fine). Da solo: SOLO_CAPITOLI=41.
+capitoli['41'] = async () => {
+  const DIRM = process.env.CMS_DIR_MANUALE; if (!DIRM) throw new Error('41: serve CMS_DIR_MANUALE');
+  const cli = (...a) => JSON.parse(require('child_process').execFileSync('php', [path.join(__dirname, '..', 'prove', 'ai-cli.php'), DIRM, ...a.map(String)], { encoding: 'utf8' }).trim().split('\n').pop());
+  cli('accendi'); cli('pulisci');
+  await dorme(2500);
+  const MCP = B + '/api/mcp';
+  const json = async (url, corpo, token) => (await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: 'Bearer ' + token } : {}) }, body: JSON.stringify(corpo) })).json();
+  await addonPag('ai-collegate', 'collegate');
+  await p.click('#come-claude summary'); await dorme(200);
+  await foto('41-collegate', { sel: '#indirizzo', margine: 10, segni: [{ sel: '#aic-url', n: 1 }, { sel: '#come-claude summary', n: 2 }] });
+  // La pagina del consenso, come la vede chi ha premuto Connetti in Claude.
+  const reg = await json(MCP + '/register', { client_name: 'Claude', redirect_uris: ['https://claude.ai/api/mcp/auth_callback'], token_endpoint_auth_method: 'none' });
+  const sfida = require('crypto').createHash('sha256').update('manuale-uso-verifier-0123456789-abcdefghijklmnop').digest('base64').replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+  await p.goto(MCP + '/authorize?' + new URLSearchParams({ response_type: 'code', client_id: reg.client_id, redirect_uri: 'https://claude.ai/api/mcp/auth_callback', code_challenge: sfida, code_challenge_method: 'S256', scope: 'leggi bozze proposte foto', state: 'manuale' }).toString(), { waitUntil: 'networkidle' });
+  if (!(await p.locator('#aic-consenso').count())) throw new Error('41: la pagina del consenso non si apre: ' + p.url());
+  await foto('41-consenso', { sel: '#aic-consenso', margine: 10, segni: [{ sel: '#aic-consenso .aic-chi', n: 1 }, { sel: '#aic-consenso .aic-dati dd', n: 2 }, { sel: '#aic-consenso .aic-permessi', n: 3 }, { sel: '#aic-consenso button[value=consenti]', n: 4 }] });
+  // Due proposte su una pagina pubblicata del kit, da una chiave che si chiama Claude.
+  const k = cli('chiave', 'leggi,proposte', 'Claude').chiave;
+  const chiama = async (nome, args) => { const r = await json(MCP, { jsonrpc: '2.0', id: 1, method: 'tools/call', params: { name: nome, arguments: args } }, k); return JSON.parse(r.result.content[0].text); };
+  const pag = (await chiama('list_content', { tipo: 'pagine', stato: 'pubblicato', per_pagina: 50 })).contenuti.filter(c => c.percorso !== '/').sort((a, b) => (/chi siamo/i.test(b.titolo) ? 1 : 0) - (/chi siamo/i.test(a.titolo) ? 1 : 0))[0];
+  if (!pag) throw new Error('41: nessuna pagina pubblicata');
+  await chiama('propose_change', { tipo: 'pagine', id: pag.id, campo: 'descrizione_seo', valore: 'Chi siamo, come lavoriamo e dove trovarci: orari, contatti e la nostra storia, in due minuti di lettura.', motivo: 'La descrizione per Google manca: senza, Google sceglie da solo un pezzo della pagina.' });
+  await chiama('propose_change', { tipo: 'pagine', id: pag.id, campo: 'titolo_seo', valore: pag.titolo + ': la nostra storia e come lavoriamo', motivo: 'Il titolo per Google è corto: con qualche parola in più si capisce subito di cosa parla la pagina.' });
+  await addonPag('ai-collegate', 'proposte');
+  const art = '#proposta-' + (await p.locator('article.aic-proposta').first().getAttribute('data-proposta'));
+  await foto('41-proposte', { clip: { x: 240, y: 56, width: 960, height: 744 }, segni: [{ sel: art + ' h3 a', n: 1 }, { sel: art + ' .aic-motivo', n: 2 }, { sel: art + ' .aic-confronto', n: 3 },
+    { sel: art + ' button[value=approva]', n: 4 }, { sel: art + ' details.aic-modifica summary', n: 5 }, { sel: '#aic-gruppo button', n: 6, lato: 'destra' }] });
+  cli('pulisci');
 };
 
 module.exports = { capitoli };
