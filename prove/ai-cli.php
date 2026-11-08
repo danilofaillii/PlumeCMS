@@ -75,6 +75,7 @@ switch ($cmd) {
         aic_schema();
         foreach (['ai_connessioni', 'ai_token', 'ai_codici', 'ai_client', 'ai_proposte', 'ai_registro', 'ai_foto', 'ai_richieste'] as $t) db()->exec('DELETE FROM ' . tbl($t));
         foreach (['pages', 'articles'] as $t) db()->exec('DELETE FROM ' . tbl($t) . " WHERE slug LIKE 'ai-prova%'");
+        db()->exec('DELETE FROM ' . tbl('settings') . " WHERE setting_key = 'aic_impostazioni'");
         $esci(['ok' => true]);
     case 'tentativi':
         db()->exec('DELETE FROM ' . tbl('sicurezza_tentativi'));
