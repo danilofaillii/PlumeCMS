@@ -184,6 +184,23 @@ def funzionalita():
     p.sezione([[titolo('Leggero non vuol dire *vuoto.*', 'Funzionalità',
                        'plumeCMS fa le cose che ti servono davvero, e le fa nello stesso posto. Ecco cosa trovi dentro, con le schermate vere del pannello.',
                        livello='h1', centro=True)]], larghezza='stretta', **spazi(72, 32))
+    # 2.34.0, richiesta di Danilo: il collegamento con le AI "ben visibile e messo in evidenza". È l'unica eccezione alle dieci
+    # caratteristiche (sotto): una fascia sua, prima di tutte, con la schermata vera del menu proposto accanto a quello di oggi.
+    p.sezione([(45, [titolo('Collega la tua AI. *Tu decidi, lei lavora.*', 'Novità · AI collegate',
+                            'La tua intelligenza artificiale entra nel sito con il tuo permesso, legge tutto e si mette al lavoro. Non pubblica mai: quello che cambia lo approvi tu, con un clic.'),
+                     ricco('<ul><li><strong>Fa l\'audit SEO</strong> di ogni pagina e di ogni articolo: titoli, descrizioni, foto senza testo alternativo, link interni, frasi che invecchiano.</li>'
+                           '<li><strong>Sistema la navigazione</strong>: trova le voci rotte, i doppioni e le pagine che nessuno raggiunge, e ti mostra il menu nuovo accanto a quello di oggi.</li>'
+                           '<li><strong>Scrive nel tuo stile</strong>: impara come scrivi dagli articoli che hai già, propone idee sugli argomenti che mancano e scrive in bozza quelle che approvi.</li>'
+                           '<li><strong>Trova le foto</strong> che mancano, gratuite e usabili anche per lavoro.</li></ul>'),
+                     pulsanti(('Scarica plumeCMS', '/scarica/', 'viola'), ('Leggi come si collega', '/documentazione/', 'filo'))]),
+               (55, [immagine('ai-collegate.webp', 'plumeCMS: il menu proposto dalla AI accanto a quello di oggi, da approvare con un clic')])],
+              allineamento_verticale='center', ancora='ai', **tinta(), **spazi(72, 40))
+    p.sezione([[titolo(t, livello='h3'), ricco(d)] for t, d in (
+        ('Con il tuo permesso', 'La colleghi con un indirizzo e premi Consenti nel pannello. Ogni collegamento ha i suoi permessi e lo spegni quando vuoi.'),
+        ('Sempre in bozza', 'Le pagine e gli articoli nuovi restano bozze. Pubblicare è un gesto tuo, e nessuna impostazione lo cambia.'),
+        ('Proposte da approvare', 'Quello che è già online lo cambia solo con una proposta: vedi il prima e il dopo, approvi o scarti.'),
+        ('Qualsiasi AI', 'Funziona con le AI che sanno collegarsi a un sito e, con una chiave personale, anche con le altre.'))],
+              **tinta(), **spazi(8, 72))
     # Regola di Danilo (2 novembre 2026): la pagina non è un elenco di quello che esce a ogni versione, ma le 10 caratteristiche
     # principali di plumeCMS. Una funzione nuova entra dentro la caratteristica a cui appartiene, non diventa un blocco.
     blocchi = [
@@ -239,7 +256,7 @@ def funzionalita():
           '<li><strong>Vetrina prodotti</strong> con carrello e ordini, <strong>Statistiche senza cookie</strong>.</li>'
           '<li><strong>Area riservata</strong>, <strong>Corsi online</strong> e <strong>Copia del sito altrove</strong>, ogni notte.</li>'
           '<li><strong>Test e questionari</strong>: a punteggio, ad aree o "che tipo sei", la risposta breve sullo schermo e quella completa per email. Le domande si dividono in pagine trascinandole, e un telefono accanto mostra il test come lo vedrà chi lo fa.</li>'
-          '<li><strong>AI collegate</strong>: la tua AI legge il sito, fa l\'audit SEO, scrive bozze complete con i widget veri e trova foto con licenza libera. Non pubblica mai: le bozze le pubblichi tu, e le modifiche a quello che è già online arrivano come proposte da approvare. Rivede anche i menu e gli articoli già online: ti mostra il menu sistemato accanto a quello di oggi e le schede degli articoli da approvare in un clic. Impara lo stile dei tuoi articoli e ti propone idee di articoli nuovi sugli argomenti che mancano: scrive in bozza solo quelle che approvi, con il tuo stile.</li></ul>',
+          '<li><strong>AI collegate</strong>: la tua AI lavora sul sito e non pubblica mai. Cosa sa fare lo trovi <a href="#ai">in cima a questa pagina</a>.</li></ul>',
           'E il download manager: manuali, ebook e listini con il loro indirizzo, anche riservati in cambio dell\'iscrizione.']),
         ('sicurezza', 'sicurezza.webp', 'Al sicuro, senza doverci pensare ogni giorno',
          ['Accesso a due fattori, blocchi contro chi prova a indovinare le password, protezioni del browser, registro degli eventi. Prima di uscire plumeCMS è stato messo alla prova con più di 500 attacchi, addon compresi: tutti respinti.',
@@ -255,8 +272,8 @@ def funzionalita():
                   testo='Il modo migliore per capire un CMS è usarlo. Ci vogliono cinque minuti.',
                   pulsante_testo='Scarica plumeCMS', link={'url': '/scarica/', 'nuova': False})]], larghezza='stretta', **spazi(72, 80))
     return dict(slug='funzionalita', titolo='Funzionalità', struttura=p.albero(),
-                seo_titolo='Funzionalità di plumeCMS: le dieci cose che sa fare',
-                seo_descrizione='Cosa c\'è dentro plumeCMS: editor visuale con 112 widget, gli addon (prenotazioni, eventi, negozio, statistiche, area riservata, corsi), social ogni mattina, stile globale, header e footer, versioni, SEO e AEO, newsletter, sicurezza, aggiornamenti dal pannello.')
+                seo_titolo='Funzionalità di plumeCMS: la tua AI collegata e le dieci cose che sa fare',
+                seo_descrizione='Cosa c\'è dentro plumeCMS: la tua AI collegata al sito, editor visuale con 112 widget, gli addon (prenotazioni, eventi, negozio, statistiche, area riservata, corsi), social ogni mattina, stile globale, header e footer, versioni, SEO e AEO, newsletter, sicurezza, aggiornamenti dal pannello.')
 
 
 def temi():
@@ -553,7 +570,7 @@ def editor_json():
 
 
 # ------------------------------------------------------------------ file
-USATE = ['form-passi', 'automazioni', 'report', 'test-ab', 'editor-email', 'campagne', 'infografiche', 'segmenti', 'importa-contatti', 'contatti-brevo', 'email-conferma', 'pannello-chiaro', 'copertina', 'installa-ora', 'scegli-sito', 'consegna', 'widget-2-1', 'scegli-media', 'addon', 'su-misura', 'firma', 'widget-attivita', 'social', 'fine-articolo', 'tipo-sito', 'primi-passi', 'aspetti', 'controlla-server', 'sezioni', 'copia', 'installa-1', 'installa-2', 'installa-3', 'installa-4', 'installa-5', 'editor-ritratto', 'editor', 'aperture', 'stile', 'modelli', 'versioni', 'seo', 'flussi', 'download', 'sicurezza', 'aggiornamenti', 'temi',
+USATE = ['ai-collegate', 'form-passi', 'automazioni', 'report', 'test-ab', 'editor-email', 'campagne', 'infografiche', 'segmenti', 'importa-contatti', 'contatti-brevo', 'email-conferma', 'pannello-chiaro', 'copertina', 'installa-ora', 'scegli-sito', 'consegna', 'widget-2-1', 'scegli-media', 'addon', 'su-misura', 'firma', 'widget-attivita', 'social', 'fine-articolo', 'tipo-sito', 'primi-passi', 'aspetti', 'controlla-server', 'sezioni', 'copia', 'installa-1', 'installa-2', 'installa-3', 'installa-4', 'installa-5', 'editor-ritratto', 'editor', 'aperture', 'stile', 'modelli', 'versioni', 'seo', 'flussi', 'download', 'sicurezza', 'aggiornamenti', 'temi',
          'tema-cosmo', 'tema-aria', 'tema-bottega',
          'tema-estate', 'tema-inverno', 'tema-autunno', 'tema-primavera', 'tema-giallo', 'tema-rosso', 'tema-verde', 'tema-blu']
 
