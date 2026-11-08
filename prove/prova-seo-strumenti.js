@@ -177,7 +177,8 @@ const entra = async (br, utente, password, vp = { width: 1280, height: 900 }) =>
   // === 3. I dati per Google in più
   // Prodotto nella scheda della pagina dei vasi.
   await p.goto(B + '/admin/contenuto.php?tipo=pagine&id=' + vasi.id, { waitUntil: 'networkidle' });
-  ok('la scheda ha la tendina "Dati per Google in più" con Nessuno, Prodotto, How-to, Video, e i campi nascosti', await p.locator('#sc-schema-tipo option').count() === 4 && await p.locator('[data-schema-campi=prodotto]').isHidden());
+  // 2.35.0: c'è anche Programma (SoftwareApplication, prova-seo-plume.js).
+  ok('la scheda ha la tendina "Dati per Google in più" con Nessuno, Prodotto, How-to, Video, Programma, e i campi nascosti', await p.locator('#sc-schema-tipo option').count() === 5 && await p.locator('[data-schema-campi=prodotto]').isHidden() && await p.locator('[data-schema-campi=programma]').isHidden());
   await p.selectOption('#sc-schema-tipo', 'prodotto');
   ok('scelto Prodotto compaiono i suoi campi', await p.locator('[data-schema-campi=prodotto]').isVisible() && await p.locator('[data-schema-campi=howto]').isHidden());
   await p.fill('#sc-schema-prodotto-nome', 'Vaso in terracotta 30 cm'); await p.fill('#sc-schema-prodotto-prezzo', '24,90'); await p.selectOption('#sc-schema-prodotto-disponibilita', 'InStock');
