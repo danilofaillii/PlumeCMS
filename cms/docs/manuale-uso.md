@@ -5734,7 +5734,7 @@ Quando l'AI vuole cambiare qualcosa che è già online, nel menu compare il nume
 
 ![Le proposte: prima e dopo](immagini/manuale-uso/41-proposte.jpg)
 
-1. **Il campo e la pagina**: per esempio "Titolo per Google: Potature". Il link apre la scheda della pagina.
+1. **Il campo e la pagina**: per esempio "Titolo per Google: Chi siamo". Il link apre la scheda della pagina.
 2. **Perché**: il motivo che ha scritto l'AI.
 3. **Adesso** e **Proposta**: il valore di oggi e quello nuovo, affiancati.
 4. **Approva**: la modifica va subito sul sito (la versione di prima resta nelle revisioni). **Scarta**: non cambia niente.
