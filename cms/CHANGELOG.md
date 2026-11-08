@@ -2,6 +2,35 @@
 
 Il prodotto si chiama **plumeCMS** (nome scelto il 26 ottobre 2026; prima, per poche ore, "CarbonaraCMS", e ancora prima il provvisorio "Officina": gli zip vecchi si chiamavano `officina-*` e `carbonaracms-*`).
 
+## 2.32.0 (8 novembre 2026) - AI collegate
+
+- **Addon AI collegate** (richiesta di Danilo: un connettore fra il CMS e qualsiasi AI). Si accende da **Impostazioni >
+  Addon** e collega la tua AI (Claude, ChatGPT, le altre che parlano MCP) al sito con un indirizzo da incollare
+  (`https://tuosito.it/api/mcp`, anche con il sito in una cartella). La prima volta la tua AI apre il pannello: entri (anche
+  con il secondo fattore), vedi chi chiede e dove torna, scegli i permessi a caselle e premi **Consenti**. Solo
+  l'amministratore può dare il permesso; si revoca quando vuoi da **AI collegate > Collegamenti**.
+- **L'AI non pubblica mai.** Scrive bozze complete (testo, widget veri dell'editor, campi SEO, foto) che pubblichi tu dalla
+  scheda o dall'editor; non esiste un'opzione per farla pubblicare. Quello che tocca un contenuto già online (titolo, titolo e
+  descrizione per Google, testo di un widget, domande frequenti, immagine in evidenza, alt della libreria) diventa una
+  **proposta**: in **AI collegate > Proposte** vedi prima e dopo e il motivo, e scegli **Approva**, **Modifica e approva**,
+  **Scarta** o **Approva le selezionate**. Il numero delle proposte da decidere esce nel menu.
+- **Cosa sa fare**: leggere contenuti, menu e impostazioni SEO; il catalogo dei widget con i campi; l'**audit SEO** di tutto il
+  sito o di un contenuto con il motore di plumeCMS (titoli e descrizioni, doppioni, immagini senza alt, link interni rotti o
+  verso bozze, contenuti scarni, pagine fuori dai menu, immagini pesanti, senza immagine per i social), ordinato per gravità
+  con un suggerimento; cercare e importare **foto con licenza libera anche per uso commerciale** (un archivio aperto senza
+  chiave; altri due con la loro chiave gratuita, da scrivere in **AI collegate > Impostazioni**), con autore e licenza
+  salvati; le statistiche delle visite, se l'addon Statistiche è acceso.
+- **Permessi** a scelta: leggere, bozze, proposte, foto, statistiche. Mai utenti, password, aggiornamenti, copie, codice, temi,
+  sicurezza. **Chiavi personali** (mostrate una volta, revocabili) per le AI che non fanno il collegamento con il permesso, e
+  lo schema **OpenAPI** con gli stessi strumenti come chiamate REST. **Registro** di ogni azione, con il filtro.
+- Sicurezza: autorizzazione OAuth 2.1 con PKCE obbligatorio, token di un'ora e rinnovo di trenta giorni che cambia a ogni uso
+  (salvati solo come impronta legata al sito), revoca, limiti di velocità, testi dell'AI passati dagli stessi filtri del
+  redattore, foto scaricate solo dagli archivi in elenco e controllate come un caricamento. Gruppo 46 delle prove di attacco.
+- Nel nucleo, tre ritocchi che con l'addon spento non cambiano niente: il login torna al consenso dopo l'accesso
+  (`admin/login.php`), una voce di menu di un addon può mostrare un numero (`includes/cms.php`), `media_carica()` accetta un
+  file scaricato dal server (`includes/media.php`). Il `.htaccess` d'esempio passa l'intestazione Authorization a PHP e quello
+  di Nginx manda `/api/mcp` a `index.php`.
+
 ## 2.31.0 (6 novembre 2026) - Avvisi senza il pannello in vista
 
 - **Il pulsante "Apri nel pannello" non arriva più al cliente** (segnalazione di Danilo dal sito di Cucina Creativa: rispondendo a
