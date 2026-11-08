@@ -261,8 +261,9 @@ async function token(corpo) { return http('POST', MCP + '/token', { corpo, tipo:
   const righe = await p.locator('#collegate tbody tr').count();
   ok('Collegamenti: l\'AI collegata compare con permessi e ultima attività', righe === 1 && /Claude di prova/.test(await p.locator('#collegate').innerText()) && /leggi, bozze, proposte, foto/.test(await p.locator('#collegate').innerText()), righe);
   if (FOTO) await p.screenshot({ path: path.join(FOTO, 'ai-collegate.png'), fullPage: true });
-  await p.click('#collegate tbody tr button.btn-danger'); await p.waitForLoadState('networkidle');
-  ok('Revoca dal pannello: la connessione non entra più (401) e sparisce dall\'elenco', (await rpc(t6.json.access_token, 'ping')).stato === 401 && /Ancora nessuna AI collegata/.test(await p.locator('#collegate').innerText()));
+  await p.click('#collegate tbody tr button.btn-danger'); await p.locator('#collegate .empty-state').waitFor({ timeout: 8000 }).catch(() => {});
+  const rvP = (await rpc(t6.json.access_token, 'ping')).stato, rvT = await p.locator('#collegate').innerText();
+  ok('Revoca dal pannello: la connessione non entra più (401) e sparisce dall\'elenco', rvP === 401 && /Ancora nessuna AI collegata/.test(rvT), [rvP, rvT.slice(0, 200)]);
 
   // === 10. Rifiuta e redattore
   const k4 = pkce();
@@ -299,8 +300,20 @@ async function token(corpo) { return http('POST', MCP + '/token', { corpo, tipo:
   ok('REST senza chiave: 401', (await http('POST', MCP + '/rest/site_info', { corpo: {} })).stato === 401);
   const mcpK = await rpc(chiave, 'tools/call', { name: 'list_content', arguments: {} });
   ok('la stessa chiave vale sul server MCP', mcpK.stato === 200 && !mcpK.json.result.isError);
-  await p.click('#chiavi tbody tr button.btn-danger'); await p.waitForLoadState('networkidle');
+  await p.click('#chiavi tbody tr button.btn-danger'); await p.locator('.flash, .alert').first().waitFor({ timeout: 8000 }).catch(() => {}); await p.waitForLoadState('networkidle');
   ok('chiave revocata dal pannello: 401', (await http('POST', MCP + '/rest/site_info', { token: chiave, corpo: {} })).stato === 401);
+
+  // Statistiche: lo strumento c'è solo con l'addon Statistiche acceso, e vuole il suo permesso.
+  const statPrima = cli('statistiche', 'spegni').attivi;
+  const kSt = cli('chiave', 'leggi,statistiche', 'Chiave statistiche').chiave;
+  const senzaSt = (await rpc(kSt, 'tools/list')).json.result.tools.map(t => t.name);
+  cli('statistiche', 'accendi');
+  await new Promise(r => setTimeout(r, 2500));
+  const conSt = (await rpc(kSt, 'tools/list')).json.result.tools.map(t => t.name);
+  const gs = await strumento(kSt, 'get_stats', { giorni: 7 });
+  const gsNo = await strumento(kf, 'get_stats', {});
+  ok('get_stats solo con l\'addon Statistiche acceso e con il permesso "statistiche"', !senzaSt.includes('get_stats') && conSt.includes('get_stats') && !gs.errore && gs.dati.totali && Array.isArray(gs.dati.pagine) && gsNo.errore, [statPrima, gs.dati, gsNo.dati]);
+  cli('statistiche', 'spegni');
 
   // === 12. Registro e impostazioni
   await p.goto(B + '/admin/addon-pagina.php?a=ai-collegate&p=registro', { waitUntil: 'networkidle' });

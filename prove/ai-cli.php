@@ -3,6 +3,7 @@
 // tools/sicurezza-prova.js). Stampa JSON.
 // uso: php prove/ai-cli.php <cartella CMS> <comando> [argomenti]
 //   accendi | spegni            accende o spegne l'addon (moduli/addon-attivi.json) e crea le tabelle
+//   statistiche <accendi|spegni> accende o spegne l'addon Statistiche (per lo strumento get_stats)
 //   chiave <permessi> [nome]    una chiave personale con quei permessi (separati da virgola); stampa la chiave in chiaro
 //   token-scaduto <chiave>      fa scadere tutti i token della connessione di quella chiave (o token di accesso)
 //   token-altro-sito <chiave>   cambia l'audience dei token di quella connessione in un altro sito
@@ -31,6 +32,13 @@ switch ($cmd) {
         addon_scrivi($att);
         if ($cmd === 'accendi') { require_once $addon; aic_installa(); }
         $esci(['attivi' => $att]);
+    case 'statistiche':
+        require_once $dir . '/includes/addon.php';
+        $att = cms_addon_attivi();
+        $su = ($argv[3] ?? '') === 'accendi';
+        addon_scrivi($su ? array_values(array_unique(array_merge($att, ['statistiche']))) : array_values(array_diff($att, ['statistiche'])));
+        if ($su) { $def = require $dir . '/addon/statistiche/modulo.php'; ($def['installa'])(); }
+        $esci(['attivi' => cms_addon_attivi()]);
     case 'chiave':
         require_once $addon;
         $perm = aic_scope_pulito(explode(',', (string)($argv[3] ?? '')));
