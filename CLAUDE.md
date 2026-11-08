@@ -88,7 +88,8 @@ Sono gli unici in `cms/docs/`, nello zip, nel sito di plumeCMS e nella pagina Do
      **mai nomi di aziende o servizi di terzi** nelle novità; lo controlla `prova-sito-plumecms.js`. Fuori dalle novità i nomi restano:
      Importa da WordPress, Google e gli orari, WhatsApp, LinkedIn e Facebook); nella pagina Funzionalità **solo le 10 caratteristiche principali** (regola di Danilo,
      2 novembre 2026: "non può essere una sbrodolata di roba che esce a ogni versione"; stile e grafica vanno bene): una funzione nuova
-     si aggiunge dentro la caratteristica a cui appartiene (una riga del suo elenco), mai come blocco nuovo; la schermata solo se rimpiazza
+     si aggiunge dentro la caratteristica a cui appartiene (una riga del suo elenco), mai come blocco nuovo; **unica eccezione** (Danilo, 8 novembre 2026, 2.34.0): il collegamento con le AI ha una fascia sua
+     in evidenza (`#ai`) prima delle dieci, con la schermata `ai-collegate.webp`; la schermata solo se rimpiazza
      quella della caratteristica (immagine in `USATE`); home, Domande frequenti o Installazione se la
      funzionalità le cambia; i numeri scritti nei testi (widget, attacchi). Poi le schermate rifatte sul sito di prova e
      `--schermate`, le parti ricostruite, `prove/prova-sito-plumecms.js` con un controllo per il blocco nuovo.
@@ -108,7 +109,7 @@ Sono gli unici in `cms/docs/`, nello zip, nel sito di plumeCMS e nella pagina Do
 - **Pacchetto di aggiornamento** per un'installazione esistente:
   `python3 tools/cms-pacchetto.py --aggiornamento`. Si carica dal pannello,
   Impostazioni, Aggiornamenti.
-- **Versione**: `cms/VERSIONE` (oggi 2.33.0; sempre tre numeri: "beta" va nel CHANGELOG, mai nel nome dello zip, se no la serie "ultima" del Download non lo riconosce) e una voce in `cms/CHANGELOG.md` a ogni
+- **Versione**: `cms/VERSIONE` (oggi 2.34.0; sempre tre numeri: "beta" va nel CHANGELOG, mai nel nome dello zip, se no la serie "ultima" del Download non lo riconosce) e una voce in `cms/CHANGELOG.md` a ogni
   zip con contenuto diverso. Mai cambiare il contenuto di una versione già data.
 - **Prove** prima di dire finito:
   - `php -n -d short_open_tag=1 -l` su ogni file PHP toccato, `node --check` sui js;
@@ -166,6 +167,22 @@ Le decisioni complete, con data e perché, stanno nel second brain, `plumecms/de
 - **Nome: plumeCMS** (26 ottobre 2026).
 
 ## Stato al 31 ottobre 2026
+
+Fatto: plumeCMS 2.34.0 (8 novembre, 17:54-18:58): **AI collegate, stile del sito e idee per articoli** (terza fase del connettore; richiesta
+di Danilo: "articoli nuovi in base all'argomento, nello stile di quelli già scritti"). Agente nella worktree `/home/user/wt-ai3`, ramo `ai-stile`
+(17:55-18:35), riletto, unito e riprovato da me. `cms/addon/ai-collegate/includes/stile.php` e `idee.php`, pagine Stile del sito e Idee per articoli
+(piano editoriale per mese, data solo promemoria), tabelle `ai_stile` (10 versioni) e `ai_idee`; strumenti `analyze_style` (misure calcolate dal
+server, nessun modello di linguaggio sul server), `save_style_profile`, `get_style_profile`, `suggest_topics`, `propose_article_ideas`,
+`list_article_ideas`; `create_draft` e `update_draft` con `idea_id` e gli avvisi `coerenza` verso il profilo (non bloccano); `aic_testo()` toglie
+anche il contenuto di script e style. Permessi: profilo con "bozze", idee con "proposte" (niente permesso nuovo). Richiesta di Danilo nella stessa
+versione: la fascia "Collega la tua AI" in evidenza in cima a Funzionalità (`#ai`, schermata pulita del menu proposto fatta con `$S/v15/foto-ai.js`,
+nomi delle pagine di prova sostituiti nella foto), riga breve negli addon che rimanda lì; eccezione alla regola delle dieci caratteristiche. Manuale
+d'uso 41 (schermate 41-stile, 41-idee, 41-piano), tecnico 47.17-47.22, `prove/prova-ai-stile.js` 53 (con 300 articoli), gruppo 48 degli attacchi (15).
+Prove mie sullo zip (`$S/v16/batteria.sh`, 18:43-18:51): install 38/38 radice e cartella, robots e articoli 14/14 radice e cartella, kit 34/34 e
+44/44, AI 90/90, navigazione 52/52, stile e idee 53/53 su kit in radice e in cartella, aggiornamento 2.33.0 -> 2.34.0 13/13 con 0 foto su 20 e poi
+AI 90/90 e stile 53/53, attacchi 516/516, pacchetto unico 13/13, sito di plumeCMS 98/98, zero errori fatali. PDF 13218 KB, zip 2588 KB.
+**Non provato**: Claude e ChatGPT veri, misure dello stile su articoli scritti da persone (solo testi seminati), `suggest_topics` con i dati veri
+delle Statistiche, Apache vero.
 
 Fatto: plumeCMS 2.33.0 (8 novembre, 16:49-17:55): **AI collegate, navigazione e schede degli articoli** (seconda fase del connettore; richiesta
 di Danilo: "analizzi tutte le pagine richiamate dai menu e standardizzi la navigazione; analizza gli articoli e proponi le modifiche SEO").
