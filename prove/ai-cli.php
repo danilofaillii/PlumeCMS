@@ -20,6 +20,7 @@
 //   nav-ripristina              rimette le voci di prima del menu Principale e toglie le pagine "ai-prova-nav-*"
 //   menu-cambia <id>            aggiunge una voce al menu (per la prova del conflitto: il menu è cambiato dopo la proposta)
 //   menu <id>                   stampa le voci del menu
+//   nav-molte <n>               n pagine pubblicate "ai-prova-nav-m-*" e quattro menu "AI prova *" da 40 voci (prova dei tempi)
 //   articolo-prova <slug>       un articolo pubblicato fatto con l'editor, con parola chiave, attacco che non risponde, salto
 //                               H2 > H4, un paragrafo lungo, frasi datate e un'immagine senza alt; stampa id e id dei widget
 $_SERVER['HTTP_HOST'] = '127.0.0.1'; $_SERVER['REQUEST_URI'] = '/';
@@ -126,6 +127,7 @@ switch ($cmd) {
     case 'menu-cambia':
     case 'menu':
     case 'articolo-prova':
+    case 'nav-molte':
         require_once $dir . '/includes/editor-controlli.php';
         require_once $dir . '/includes/editor.php';
         require_once $dir . '/includes/contenuti.php';
@@ -150,7 +152,25 @@ switch ($cmd) {
             if (is_array($prima) && $principale) menu_salva((int)$principale['id'], $principale['nome'], $principale['posizione'], $prima);
             db()->exec('DELETE FROM ' . tbl('pages') . " WHERE slug LIKE 'ai-prova-nav-%'");
             db()->exec('DELETE FROM ' . tbl('articles') . " WHERE slug LIKE 'ai-prova-art-%'");
+            db()->exec('DELETE FROM ' . tbl('menu') . " WHERE nome LIKE 'AI prova %'");
+            db()->exec('DELETE FROM ' . tbl('settings') . " WHERE setting_key = 'aic_prova_menu'");
             $esci(['ok' => true]);
+        }
+        if ($cmd === 'nav-molte') {
+            $n = max(1, min(1000, (int)($argv[3] ?? 300)));
+            $ids = [];
+            for ($i = 1; $i <= $n; $i++) {
+                $id = contenuti_salva('pagine', 0, ['title' => 'Pagina di prova ' . $i, 'slug' => 'ai-prova-nav-m-' . $i, 'stato' => 'pubblicato', 'contenuto' => '']);
+                $alb = editor_valida(['elementi' => [editor_sezione([editor_widget('titolo', ['testo' => 'Pagina ' . $i, 'livello' => 'h1']), editor_widget('testo', ['contenuto' => '<p>Vedi <a href="/ai-prova-nav-m-' . ($i % $n + 1) . '/">la prossima</a>.</p>'])])]]);
+                editor_salva($id, $alb, true, 'prova');
+                $ids[] = $i;
+            }
+            foreach ([1, 2, 3, 4] as $k) {
+                $voci = [];
+                foreach (array_slice($ids, ($k - 1) * 40, 40) as $i) $voci[] = ['etichetta' => 'Voce ' . $i, 'tipo' => 'pagina', 'rif' => 'ai-prova-nav-m-' . $i, 'figli' => []];
+                menu_salva(0, 'AI prova ' . $k, $k === 1 ? 'piede-1' : '', $voci);
+            }
+            $esci(['pagine' => $n]);
         }
         if ($cmd === 'articolo-prova') {
             $slug = (string)($argv[3] ?? 'ai-prova-art-1');
