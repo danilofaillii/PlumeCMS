@@ -108,7 +108,7 @@ Sono gli unici in `cms/docs/`, nello zip, nel sito di plumeCMS e nella pagina Do
 - **Pacchetto di aggiornamento** per un'installazione esistente:
   `python3 tools/cms-pacchetto.py --aggiornamento`. Si carica dal pannello,
   Impostazioni, Aggiornamenti.
-- **Versione**: `cms/VERSIONE` (oggi 2.31.0; sempre tre numeri: "beta" va nel CHANGELOG, mai nel nome dello zip, se no la serie "ultima" del Download non lo riconosce) e una voce in `cms/CHANGELOG.md` a ogni
+- **Versione**: `cms/VERSIONE` (oggi 2.32.0; sempre tre numeri: "beta" va nel CHANGELOG, mai nel nome dello zip, se no la serie "ultima" del Download non lo riconosce) e una voce in `cms/CHANGELOG.md` a ogni
   zip con contenuto diverso. Mai cambiare il contenuto di una versione già data.
 - **Prove** prima di dire finito:
   - `php -n -d short_open_tag=1 -l` su ogni file PHP toccato, `node --check` sui js;
@@ -166,6 +166,25 @@ Le decisioni complete, con data e perché, stanno nel second brain, `plumecms/de
 - **Nome: plumeCMS** (26 ottobre 2026).
 
 ## Stato al 31 ottobre 2026
+
+Fatto: plumeCMS 2.32.0 (8 novembre, 13:24-16:19): **addon "AI collegate"**, il connettore MCP fra il CMS e qualsiasi AI (richiesta di Danilo:
+"le persone, connettendo la loro AI, possano creare pagine, gestire e migliorare la SEO, fare un audit"; decisioni sue: addon, l'AI crea contenuti
+completi e li lascia sempre in bozza, mai pubblicare; il resto è "proposta" da approvare). `cms/addon/ai-collegate/` (ai.php, oauth.php, mcp.php,
+strumenti.php, proposte.php, foto.php, pagine admin-*): server MCP Streamable HTTP su `/api/mcp` (JSON-RPC, risposte JSON, GET 405), OAuth 2.1 con il CMS
+come server di autorizzazione (metadati RFC 9728 e 8414 anche con la cartella, registrazione dinamica, consenso nel pannello solo per l'amministratore,
+anche con 2FA, PKCE S256 obbligatorio, codice monouso, token come hash, rinnovo ruotato che chiude la connessione se riusato, revoca), chiavi personali e
+OpenAPI per le AI senza MCP; strumenti site_info, list_content, get_content, list_menus, get_seo_settings, list_widgets, site_audit, audit_content,
+create_draft, update_draft, propose_change, search_photos, import_photo (Openverse senza chiave, Pexels e Unsplash con chiave; host in elenco;
+`CMS_AI_FOTO_PROVA` per le prove), list_proposals, get_stats; pagine "AI collegate" (connessioni, chiavi, registro) e "Proposte dell'AI" (prima e dopo,
+Approva, Modifica, Scarta, in gruppo). Nucleo toccato poco: `login.php` (ritorno al consenso solo con `r` di 32 esadecimali), `cms_menu_integra()` con la
+chiave `conta`, `media_carica()` con `da_server` solo dalla cartella temporanea, `.htaccess` e esempi con `Authorization` e `/api/mcp` in Nginx. Fatto in
+due agenti: il primo fermato a metà dal riavvio del contenitore delle 15:10 (lavoro salvato in `a83fff6`), il secondo ha riletto, corretto e finito;
+controllo automatico ogni 40 minuti con `send_later` (Danilo: "non fermarti mai; se ti fermi riprendi da solo"). Manuale d'uso capitolo 41 (3
+schermate), tecnico 47 (47.3 elenca cosa verificare con i client veri), `prove/prova-ai-collegate.js` 90, gruppo 46 degli attacchi (26). Prove
+dell'agente sullo zip: install 38/38 radice e cartella, AI 90/90 radice, cartella e aggiornato, aggiornamento 2.31.0 -> 2.32.0 13/13 con HTML uguale,
+addon tutti 84/84, ux 95/95, telefono 61/61, attacchi 488/488 nuovo e aggiornato, sito 92/92, pacchetto unico 13/13, Apache vero (mod_php) con
+`/api/mcp`, `.well-known` e `Authorization`. Prove mie sullo zip unito (`$S/v10/batteria.sh`, 16:11-16:18): install 38/38 radice e cartella, AI 90/90 radice, cartella e sito aggiornato, aggiornamento 2.31.0 -> 2.32.0 13/13 con 1 foto su 20 a 1 livello, attacchi 488/488, zero errori fatali. PDF 12894 KB, zip 2523 KB. **Non provato**: Claude e ChatGPT veri (rete chiusa: documenti ufficiali
+non raggiungibili, costruito sulla specifica MCP 2025-06-18 e 2025-11-25), le API vere degli archivi di foto, PHP-FPM, Nginx, un hosting vero.
 
 Fatto: plumeCMS 2.31.0 (6 novembre, 22:48-23:19): **avvisi senza il pannello in vista** (segnalazione di Danilo dal sito di Cucina Creativa:
 rispondendo a una richiesta di prenotazione, il cliente riceveva citati il pulsante "Apri nel pannello" e l'indirizzo del pannello in chiaro).
@@ -862,6 +881,7 @@ Errori veri, già pagati. Non ripeterli.
 | Le schermate del manuale fatte sul sito dove sono girate le prove dell'agente | la Tabella SEO mostrava 26 contenuti di prova e "25 con qualcosa da sistemare" (2.29.0). Le schermate si rifanno su un sito col kit appena installato (`SOLO_CAPITOLI`, `CMS_DIR_MANUALE`, `TMPDIR` vuota) prima del PDF |
 | Due batterie di attacchi lanciate insieme sullo stesso contenitore | il gruppo 37 (webhook) accende due server finti sulle porte 9296 e 9297 (`SIC_WEBHOOK`): la seconda batteria trova le porte prese e "il servizio non risponde" (5 novembre, sito aggiornato). E il controllo del gruppo 44 contava le righe di `media_alt`, tabella che nasce al primo uso: su un sito dove nessun alt è mai stato salvato la query falliva (ora la prova crea prima la tabella). Gli attacchi si lanciano uno alla volta, o con `SIC_WEBHOOK` diverso |
 | Una funzione di un'estensione PHP non richiesta dall'installatore (`iconv()`) chiamata senza `function_exists` | su un hosting che non ce l'ha (Hostcare) l'installazione si ferma a metà con "Call to undefined function" (2.29.1). Le estensioni fuori dalla lista dei requisiti si usano solo con una riserva; si prova con `php -d disable_functions=<funzione>` |
+| Un agente in sottofondo quando il contenitore si riavvia | l'agente muore senza resoconto e non riparte da solo (8 novembre, 15:10: la 2.32.0 ferma un'ora). Nel compito: commit di lavoro ogni 20-30 minuti e un file di avanzamento (`$S/ai/AVANZAMENTO.md`); e un controllo programmato con `send_later` ogni 40 minuti che salva, rilancia un agente nuovo dall'ultimo commit e lo dice a Danilo |
 | Fidarsi del resoconto di un agente | è successo che un agente dichiarasse lavoro mai scritto su disco. Si controllano i file veri e si rifanno le prove |
 
 ## Tono con l'utente
