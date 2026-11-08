@@ -3992,6 +3992,7 @@ gli serve, e il pannello resta semplice.
 | 38 | Corsi online | formatori, scuole, chi insegna |
 | 39 | Copia del sito altrove | tutti |
 | 40 | Test e questionari | coach, studi, scuole, chi vuole far conoscere un servizio con un test |
+| 41 | AI collegate | chi usa un'AI e vuole che legga il sito, faccia l'audit SEO e prepari bozze |
 
 **È una beta.** La 2.0.0 è la prima versione con gli addon: sono provati (nel browser, contro gli attacchi,
 nell'installazione e nell'aggiornamento), ma non ancora su tanti siti veri. Ogni capitolo dice anche **cosa non c'è
@@ -5648,6 +5649,160 @@ non entra nei Contatti: il suo indirizzo serve solo a mandare l'email.
 
 ---
 
+## 41. AI collegate
+
+**A cosa serve.** Collegare la tua AI (Claude, ChatGPT o un'altra che sa usare i connettori) al sito. Una volta
+collegata, in una chat le chiedi per esempio "fai l'audit SEO del sito", "scrivi la pagina Potature con un titolo, tre
+paragrafi e due domande frequenti", "trova una foto per l'articolo sulle rose": lei legge il sito, lavora, e quello che
+scrive lo trovi nel pannello.
+
+**La regola fissa: l'AI non pubblica mai.** Non c'è un'impostazione che glielo permetta.
+- Quello che crea è sempre una **bozza**: la guardi nell'editor e la pubblichi tu.
+- Quello che vorrebbe cambiare in una pagina **già online** (un titolo per Google, una descrizione, un testo, una foto,
+  l'alt di un'immagine) arriva come **proposta**: la approvi, la correggi o la scarti tu.
+- Non tocca mai utenti, password, aggiornamenti, copie del sito, temi né la sicurezza.
+
+Cosa ti serve: il sito in **https**, essere **amministratore** (il redattore non può collegare un'AI) e un account della tua
+AI che permetta i connettori personalizzati (MCP). Accendi l'addon (capitolo 31): nel menu compare **AI collegate**.
+
+**Esempio.** Giulia ha un vivaio e usa Claude. Vuole che l'AI controlli la SEO del sito e le prepari la pagina "Potature".
+
+### L'indirizzo del connettore
+
+Apri **AI collegate > Collegamenti**.
+
+![L'indirizzo del connettore e le istruzioni](immagini/manuale-uso/41-collegate.jpg)
+
+1. **Indirizzo da incollare nella tua AI**: per esempio `https://vivaiogiulia.it/api/mcp`. Un clic sulla casella la
+   seleziona e la copia.
+2. **Come collegare Claude**, **Come collegare ChatGPT**, **Altre AI**: si aprono con un clic e hanno i passi per
+   ognuna.
+
+### Collegare Claude
+
+1. In Claude (sito o app): **Impostazioni**, poi **Connettori**, poi **Aggiungi connettore personalizzato**.
+2. Scrivi un nome (per esempio "Vivaio Giulia") e incolla l'indirizzo del connettore. Premi **Aggiungi**.
+3. Premi **Connetti** accanto al connettore. Si apre la pagina di accesso del tuo pannello: entra con nome e password (e il
+   codice dell'app, se hai il secondo fattore).
+4. Si apre **Collegare un'AI al sito** (passo sotto). Premi **Consenti**.
+5. Torni in Claude: il connettore è collegato. Prova con "Fai l'audit SEO del sito".
+
+I nomi dei menu di Claude e di ChatGPT cambiano con i loro aggiornamenti: se non trovi la voce, cerca "connettori" o "MCP".
+
+### Collegare ChatGPT
+
+1. In ChatGPT: **Impostazioni**, poi **App e connettori**. Se serve, accendi la **Modalità sviluppatore** (in
+   **Impostazioni avanzate**).
+2. Premi **Crea** (o **Aggiungi connettore**), scrivi un nome, incolla l'indirizzo del connettore come **URL del server
+   MCP** e come autenticazione scegli **OAuth**.
+3. Conferma: si apre la pagina di accesso del pannello. Entra e premi **Consenti**.
+4. In una chat scegli il connettore fra gli strumenti e chiedi quello che ti serve.
+
+### Il permesso: Consenti o Rifiuta
+
+![La pagina del consenso](immagini/manuale-uso/41-consenso.jpg)
+
+1. **Chi chiede**: il nome dell'AI (per esempio "Claude") e il nome del tuo sito.
+2. **Torna a**: l'indirizzo dove torna dopo. Deve essere quello della tua AI (per esempio `claude.ai` o `chatgpt.com`).
+3. **Permessi**: spunta solo quelli che vuoi dare.
+   - **leggi**: leggere pagine, articoli, menu, impostazioni SEO e l'elenco dei widget; fare l'audit SEO;
+   - **bozze**: creare e modificare bozze (mai pubblicarle);
+   - **proposte**: proporre modifiche a quello che è già online e agli alt delle immagini;
+   - **foto**: cercare foto con licenza libera e metterle nei Media;
+   - **statistiche**: leggere le visite (solo con l'addon Statistiche acceso).
+4. **Consenti** collega l'AI; **Rifiuta** no. Se non hai appena premuto Connetti nella tua AI, o "Torna a" non è della tua
+   AI, premi **Rifiuta**.
+
+La richiesta dura un quarto d'ora: se scade, premi di nuovo Connetti nella tua AI.
+
+### Le bozze dell'AI
+
+Quando l'AI scrive una pagina o un articolo, lo trovi in **Pagine** o **Articoli** in bozza, con titolo, testo fatto con i
+widget veri dell'editor, titolo e descrizione per Google, domande frequenti e foto. Nelle revisioni e nelle versioni il nome
+dell'autore è "AI: Claude" (o il nome della tua AI).
+
+1. Apri la bozza nell'editor e rileggila: testo, foto, link.
+2. Correggi quello che serve.
+3. Premi **Pubblica**. Solo tu puoi farlo.
+
+L'AI può modificare una bozza finché è bozza. Una volta pubblicata, la pagina per lei è chiusa: può solo proporre.
+
+### Le proposte
+
+Quando l'AI vuole cambiare qualcosa che è già online, nel menu compare il numero: **AI collegate (2)**. Apri **AI collegate
+> Proposte**.
+
+![Le proposte: prima e dopo](immagini/manuale-uso/41-proposte.jpg)
+
+1. **Il campo e la pagina**: per esempio "Titolo per Google: Potature". Il link apre la scheda della pagina.
+2. **Perché**: il motivo che ha scritto l'AI.
+3. **Adesso** e **Proposta**: il valore di oggi e quello nuovo, affiancati.
+4. **Approva**: la modifica va subito sul sito (la versione di prima resta nelle revisioni). **Scarta**: non cambia niente.
+5. **Modifica e approva**: correggi il testo nella casella e premi **Salva e approva**.
+6. **Approva le selezionate**: spunta più proposte e approvale tutte insieme.
+
+Una proposta nuova sullo stesso campo prende il posto di quella vecchia, che diventa **Superata**. I filtri in alto
+mostrano anche le approvate e le scartate.
+
+### Le foto
+
+L'AI cerca foto con licenza libera anche per uso commerciale e le mette nei **Media** con l'alt già scritto. Autore e
+licenza restano in **AI collegate > Registro**, riquadro **Foto importate dalle AI**: con la licenza **CC BY** l'autore va
+citato vicino alla foto o nei crediti del sito.
+
+Per avere più foto, in **AI collegate > Impostazioni** puoi aggiungere le chiavi gratuite di **Pexels** e **Unsplash**:
+1. Apri il link accanto al campo, crea l'account e copia la chiave (per Unsplash la "Access Key" di una "New Application").
+2. Incollala nel campo e premi **Salva le chiavi**. La chiave non si rivede più: compare "Chiave salvata".
+3. Per toglierla spunta **Togli la chiave** e salva.
+
+### Chiavi personali (per le AI senza il collegamento con il permesso)
+
+Alcune AI (un GPT con le Azioni, uno script, un'altra app) non fanno il collegamento con la pagina del consenso. Per loro,
+in **AI collegate > Collegamenti**, riquadro **Chiavi personali**:
+1. **Nome della chiave**: per esempio "GPT del negozio", così la riconosci dopo.
+2. Spunta i permessi.
+3. Premi **Crea la chiave** e **copiala subito**: si vede una volta sola.
+4. Nella tua AI aggiungi un'azione dallo schema all'indirizzo `https://tuosito.it/api/mcp/openapi`, autenticazione **Chiave
+   API** di tipo **Bearer**, e incolla la chiave.
+
+### Revocare
+
+In **AI collegate > Collegamenti**, accanto all'AI o alla chiave, premi **Revoca** e conferma. Da quel momento non entra
+più; le bozze e le proposte che ha lasciato restano. Per ricollegarla serve di nuovo il tuo permesso. Revoca subito se perdi
+il telefono o il computer con l'AI collegata, o se una chiave è finita in mani sbagliate.
+
+### Il registro
+
+**AI collegate > Registro** elenca ogni azione delle AI: quando, quale AI, quale strumento, su quale pagina, con quale esito
+(riuscita, errore, negata). I filtri in alto scelgono l'AI, lo strumento o l'esito. Il registro tiene sei mesi.
+
+**Se qualcosa non va.**
+- L'AI dice che non riesce a collegarsi e il pannello non si apre: controlla che il sito sia in **https** e che l'addon sia
+  acceso.
+- L'AI si collega ma poi riceve sempre "non autorizzato": il server non le passa il permesso. Su un sito aggiornato da una
+  versione di prima, chiedi a chi ti gestisce l'hosting di aggiungere al file `.htaccess` del sito, subito sotto
+  `RewriteEngine On`, le due righe che stanno nello stesso punto di `install/esempi/htaccess-radice.txt`.
+- Il sito sta in una cartella (per esempio `https://esempio.it/sito`) e l'AI non trova come collegarsi: serve una riga
+  nel `.htaccess` della radice del dominio (la trova chi ti gestisce l'hosting nel manuale tecnico, capitolo 47).
+- "Troppe richieste in un minuto": l'AI ha lavorato troppo in fretta. Aspetta un minuto e chiedile di riprendere.
+
+**Cosa non c'è ancora.** L'AI non pubblica e non pubblicherà (è la regola). Non scrive negli addon (prenotazioni, eventi,
+prodotti, corsi) né nella newsletter. Questo addon è provato con un client scritto per le prove, non ancora con Claude e
+ChatGPT veri su un sito vero: se un passo non va come scritto qui, segnalalo.
+
+### Checklist
+
+- [ ] Il sito si apre in **https** e l'addon **AI collegate** è acceso.
+- [ ] Ho copiato l'indirizzo del connettore da **Collegamenti** e l'ho incollato nella mia AI.
+- [ ] Nella pagina del consenso "Torna a" era l'indirizzo della mia AI, e ho dato solo i permessi che servono.
+- [ ] In **Collegamenti** la mia AI compare con i permessi giusti.
+- [ ] Ho riletto nell'editor ogni bozza scritta dall'AI prima di pubblicarla.
+- [ ] Ho guardato le **Proposte** e deciso ognuna.
+- [ ] Per le foto CC BY ho citato l'autore.
+- [ ] Le chiavi personali che non uso più sono revocate.
+
+---
+
 ## Problemi frequenti degli addon
 
 | Problema | Cosa fare |
@@ -5660,6 +5815,8 @@ non entra nei Contatti: il suo indirizzo serve solo a mandare l'email.
 | Una pagina riservata è visibile a tutti | L'Area riservata è spenta, oppure la pagina non è spuntata in **Contenuti e file riservati** (capitolo 37) |
 | La copia notturna non arriva sulla destinazione | Guarda il **Registro degli invii** e il Log cron; premi **Prova la connessione** (capitolo 39) |
 | Non riesco a pubblicare un test | Il riquadro **Pubblica** del passo 5 dice cosa manca, di solito un buco fra le fasce (capitolo 40) |
+| L'AI collegata riceve sempre "non autorizzato" | Su un sito aggiornato manca una riga nel `.htaccess`, oppure il collegamento è stato revocato: ricollegala (capitolo 41) |
+| Ho chiesto all'AI di pubblicare ma la pagina è ancora in bozza | È la regola: l'AI scrive solo bozze. Apri la bozza e premi **Pubblica** tu (capitolo 41) |
 
 ---
 
