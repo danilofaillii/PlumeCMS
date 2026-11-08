@@ -29,7 +29,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             aic_stile_salva((string)$ora['testo'], aic_stile_misure_breve(aic_stile_analizza()), $chi, 0, 'misure');
             flash('success', 'Misure ricalcolate sugli articoli pubblicati di adesso. Il testo del profilo è lo stesso.');
         } elseif ($azione === 'ripristina') {
-            aic_stile_ripristina((int)($_POST['id'] ?? 0), $chi);
+            aic_stile_ripristina(ctype_digit((string)($_POST['id'] ?? '')) ? (int)$_POST['id'] : 0, $chi);
             aic_registra(['id' => 0, 'nome' => $chi], 'stile', 'ok', 'versione del profilo di stile ripristinata da ' . $chi);
             flash('success', 'Versione ripristinata: ora è il profilo in uso. Quella che c\'era resta fra le versioni precedenti.');
         }

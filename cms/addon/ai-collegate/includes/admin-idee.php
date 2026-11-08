@@ -15,7 +15,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     verify_csrf();
     $chi = (string)(current_user()['username'] ?? '');
     $azione = (string)($_POST['azione'] ?? '');
-    $id = (int)($_POST['id'] ?? 0);
+    $id = ctype_digit((string)($_POST['id'] ?? '')) ? (int)$_POST['id'] : 0; // solo cifre: "12' OR 1=1" non diventa 12
     $vista = array_key_exists($_POST['vista'] ?? '', $viste) ? (string)$_POST['vista'] : 'attesa';
     $i = aic_idea($id);
     try {
