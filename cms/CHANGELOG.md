@@ -2,6 +2,34 @@
 
 Il prodotto si chiama **plumeCMS** (nome scelto il 26 ottobre 2026; prima, per poche ore, "CarbonaraCMS", e ancora prima il provvisorio "Officina": gli zip vecchi si chiamavano `officina-*` e `carbonaracms-*`).
 
+## 2.35.0 (8 novembre 2026) - Più chiaro per Google e per le AI (audit SEO e AEO di plumecms.it)
+
+- **llms.txt calcolato con le pagine.** Il file per le intelligenze artificiali elencava solo gli articoli, scriveva le
+  intestazioni anche vuote ("Guide complete (pillar)" senza voci) e un link al Glossario con "0 termini" verso una pagina che non
+  c'era. Ora ha la sezione **Pagine** con le pagine pubblicate e indicizzabili (la home per prima, con il riquadro In breve o la
+  descrizione per Google accanto; mai le bozze né quelle nascoste a Google), non scrive le sezioni vuote, nomina il Glossario
+  solo se ha termini e il feed solo se ci sono articoli. In testa la descrizione generale del sito di SEO e AEO, se c'è,
+  altrimenti quella di prima. Il llms.txt scritto a mano nel pannello vince sempre.
+- **Dati per Google "Programma"** (SoftwareApplication) nel riquadro Dati per Google in più della scheda di pagine e articoli:
+  nome, versione (anche `{versione:<serie>}` del Download, che il sito sostituisce con l'ultima), categoria, dove funziona,
+  prezzo (0 se gratuito) e valuta, licenza, indirizzo per scaricarlo, cosa serve. Autore ed editore sono l'Organizzazione di SEO
+  e AEO. Niente valutazioni a stelle: Google le vuole solo vere. Senza il tipo scelto la pagina esce identica.
+- **La parola chiave anche per le pagine** (prima solo gli articoli): campo nella scheda, colonna `keyword_target` di pages
+  aggiunta da sola, letta dal controllo SEO e dalla Tabella SEO.
+- **I pacchetti portano i campi SEO delle pagine**: In breve (`tldr`), domande frequenti della scheda (`faq`), parola chiave
+  (`keyword`) e dati per Google in più (`seo_schema`, controllati come quelli della scheda: un valore sbagliato ferma il
+  pacchetto e il sito torna com'era). Senza queste chiavi una pagina si importa come prima.
+- **La voce "seo" del manifest**: un pacchetto scrive solo le impostazioni ammesse di SEO e AEO (nome del sito nei titoli,
+  descrizione generale, Organizzazione, Persona con nome e ruolo, interruttori dei dati strutturati), controllate. Le
+  verifiche, le chiavi e i codici di statistica un pacchetto non li tocca. La conosce solo il motore dalla 2.35.0: il
+  pacchetto del sito si applica dopo l'aggiornamento del CMS (`tools/consegna.py` fa due pacchetti).
+- **Il sito di plumeCMS**: titoli e descrizioni per Google nuovi su sette pagine, In breve e parola chiave su tutte, "In breve"
+  sotto l'apertura della home, cinque domande nuove (gratis, differenza con WordPress, ChatGPT e Claude, Plume CMS, chi c'è
+  dietro) e la risposta sull'hosting con i requisiti veri, la pagina nuova **plumeCMS e WordPress a confronto**
+  (`/plumecms-wordpress/`), "Leggi anche" in fondo a Temi, Documentazione, Scarica e Domande frequenti, Domande frequenti nel
+  menu principale, i dati Programma nella home e How-to con i cinque passi nell'Installazione; SEO e AEO dal pacchetto (nome
+  "plumeCMS" nei titoli, descrizione, Organizzazione con il marchio, Persona Danilo Failli).
+
 ## 2.34.0 (8 novembre 2026) - AI collegate: lo stile del sito e gli articoli nuovi
 
 - **Lo stile del sito** (richiesta di Danilo: "la creazione degli articoli nuovi dovrà seguire lo stile di quelli già scritti").
