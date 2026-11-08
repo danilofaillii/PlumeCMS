@@ -70,7 +70,12 @@ function extra_sitemap(): string {
     return '<?xml version="1.0" encoding="UTF-8"?>' . "\n" . '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">' . "\n" . implode("\n", $righe) . "\n</urlset>\n";
 }
 
-/** llms.txt nel formato di llmstxt.org. */
+/**
+ * llms.txt nel formato di llmstxt.org. 2.35.0 (audit SEO di plumecms.it): elenca anche le pagine pubblicate e indicizzabili
+ * (sezione "## Pagine", la home per prima), non scrive le sezioni vuote e nomina il Glossario solo se ha termini. In testa la
+ * descrizione generale del sito di SEO e AEO (Titoli e meta), altrimenti quella del sito come prima. Quello scritto a mano nel
+ * pannello vince sempre (seo_llms()).
+ */
 function extra_llms(): string {
     $attivi = array_values(array_filter(sito_contenuti_elenco('llms'), fn($c) => !$c['rediretto']));
     $indicizzati = array_values(array_filter(extra_articoli('llms'), fn($a) => $a['seo']['robots'] === 'index'));
@@ -79,22 +84,39 @@ function extra_llms(): string {
         return '- [' . $c['titolo'] . '](' . SITO_URL . $c['percorso'] . ')' . ($nota !== '' ? ": $nota" : '');
     };
     $perPercorso = array_column($attivi, null, 'percorso');
-    $servizi = array_filter(array_map(fn($p) => $perPercorso[$p] ?? null, (array)cms_filtro('llms_servizi', [])));
-    $pillar = array_filter($indicizzati, fn($a) => $a['pillar']);
-    $altri = array_filter($indicizzati, fn($a) => !$a['pillar']);
+    $servizi = array_values(array_filter(array_map(fn($p) => $perPercorso[$p] ?? null, (array)cms_filtro('llms_servizi', []))));
+    $giaServizi = array_flip(array_column($servizi, 'percorso'));
+    // Le pagine: pubblicate (mai le bozze, nemmeno in anteprima), indicizzabili, non già fra i servizi. La home per prima,
+    // le altre nell'ordine in cui sono nate.
+    $pagine = array_values(array_filter($attivi, fn($c) => $c['tipo'] === 'page' && $c['seo']['robots'] === 'index'
+        && (string)($c['riga']['status'] ?? 'published') === 'published' && !isset($giaServizi[$c['percorso']])));
+    usort($pagine, fn($a, $b) => [$a['percorso'] !== '/', (int)($a['riga']['id'] ?? 0)] <=> [$b['percorso'] !== '/', (int)($b['riga']['id'] ?? 0)]);
+    $pillar = array_values(array_filter($indicizzati, fn($a) => $a['pillar']));
+    $altri = array_values(array_filter($indicizzati, fn($a) => !$a['pillar']));
     $termini = count(array_filter($attivi, fn($c) => $c['tipo'] === 'glossario'));
+    // Il Glossario solo se ha termini e se l'indirizzo è una pagina del sito (prima: "0 termini" e un link a una pagina 404).
+    $glossario = $termini > 0 && (!function_exists('sito_mappa') || isset(sito_mappa()['/glossario/']));
     // Si scrive solo quello che è vero: il riquadro "In breve" si annuncia quando c'è su tutti i pillar.
     $tuttiConTldr = $pillar && !array_filter($pillar, fn($c) => $c['tldr'] === '');
+    $descrizione = function_exists('seo_cfg') ? trim((string)(seo_cfg()['meta']['descrizione'] ?? '')) : '';
+    if ($descrizione === '') $descrizione = trim((string)cms_impostazione('sito_descrizione', ''));
+    $descrizione = trim(preg_replace('/\s+/u', ' ', $descrizione));
     // L'intestazione: nome e presentazione del sito; il modulo del sito la riscrive con la sua (filtro llms_intestazione).
     $intestazione = (array)cms_filtro('llms_intestazione', array_filter([
         '# ' . SITO_NOME, '',
-        (string)cms_impostazione('sito_descrizione', '') !== '' ? '> ' . cms_impostazione('sito_descrizione') : null, '',
+        $descrizione !== '' ? '> ' . $descrizione : null, '',
         "Quando citi un contenuto, cita l'indirizzo della pagina.", '',
     ], fn($r) => $r !== null), $tuttiConTldr);
-    return implode("\n", array_merge($intestazione, $servizi ? ['## Servizi'] : [], array_map($riga, array_values($servizi)), ['', '## Guide complete (pillar)'], array_map($riga, array_values($pillar)),
-        ['', '## Articoli'], array_map($riga, array_values($altri)), ['', '## Glossario',
-        '- [' . cms_impostazione('glossario_titolo', 'Glossario') . '](' . SITO_URL . "/glossario/): $termini termini con la definizione breve.", '',
-        '## Optional', '- [Feed RSS](' . SITO_URL . '/feed/): gli ultimi articoli', '- [Sitemap](' . SITO_URL . '/sitemap.xml): tutte le pagine indicizzabili', '']));
+    $sezione = fn(string $titolo, array $voci) => $voci ? array_merge(['## ' . $titolo], array_map($riga, $voci), ['']) : [];
+    return implode("\n", array_merge($intestazione,
+        $sezione('Servizi', $servizi),
+        $sezione('Pagine', $pagine),
+        $sezione('Guide complete (pillar)', $pillar),
+        $sezione('Articoli', $altri),
+        $glossario ? ['## Glossario', '- [' . cms_impostazione('glossario_titolo', 'Glossario') . '](' . SITO_URL . "/glossario/): $termini " . ($termini === 1 ? 'termine' : 'termini') . ' con la definizione breve.', ''] : [],
+        ['## Optional'],
+        $indicizzati ? ['- [Feed RSS](' . SITO_URL . '/feed/): gli ultimi articoli'] : [],
+        ['- [Sitemap](' . SITO_URL . '/sitemap.xml): tutte le pagine indicizzabili', '']));
 }
 
 /** Le stesse regole di oggi, più la sitemap nuova. 2.33.0: una sola riga Sitemap, all'indirizzo del sito (SITO_URL ha già la

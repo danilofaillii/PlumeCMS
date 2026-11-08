@@ -60,6 +60,8 @@ function sito_schema_aggiorna(): array {
             'faq'              => 'TEXT',
             'servizio'         => 'TEXT',
             'immagine_url'     => "VARCHAR(500) NOT NULL DEFAULT ''",
+            // 2.35.0: la parola chiave anche per le pagine (prima solo gli articoli), dalla scheda e dai pacchetti.
+            'keyword_target'   => "VARCHAR(255) NOT NULL DEFAULT ''",
             'publish_at'       => 'DATETIME DEFAULT NULL',
             'wp_id'            => 'INT(11) DEFAULT NULL',
             // Editor delle pagine (includes/editor.php): versione pubblica, bozza, ultima modifica.
@@ -216,6 +218,9 @@ function sito_robots_articolo(array $a): string {
 /**
  * Una pagina fatta con l'editor, da un pacchetto di aggiornamento (1.2.3, voce "pagine" del manifest).
  * JSON: {slug, titolo, struttura (albero dell'editor), seo_titolo, seo_descrizione, robots, estratto}.
+ * 2.35.0, facoltativi (senza le chiavi la pagina si importa come prima): tldr (il riquadro "In breve"), faq ([{domanda,
+ * risposta}], le domande frequenti della scheda), keyword (la parola chiave) e seo_schema (i dati per Google in più, passati
+ * da seo_schema_valida() come quelli della scheda: un valore sbagliato ferma il pacchetto, che rimette il sito come prima).
  * La pagina con lo stesso slug si aggiorna (se era nel cestino ne esce), altrimenti nasce; esce pubblicata.
  * L'albero passa da editor_valida come quello dell'editor, e il salvataggio lascia una versione: quella di prima
  * resta in Editor > Versioni.
@@ -239,6 +244,7 @@ function sito_importa_pagina(array $j): string {
         'robots' => in_array($j['robots'] ?? '', ['index', 'noindex'], true) ? $j['robots'] : '',
         'excerpt' => sito_senza_4byte((string)($j['estratto'] ?? '')),
     ];
+    foreach (sito_importa_pagina_seo($j, $slug) as $k => $v) $campi[$k] = $v;
     $pdo = db();
     $st = $pdo->prepare('SELECT id FROM ' . tbl('pages') . ' WHERE slug = ?');
     $st->execute([$slug]);
@@ -267,6 +273,36 @@ function sito_importa_pagina(array $j): string {
     }
     editor_salva($id, $albero, true, 'pacchetto', 'dal pacchetto di aggiornamento');
     return "Pagina /$slug/ $esito (" . count($albero['elementi']) . ' sezioni' . ($tenuta ? ', l\'apertura resta quella del sito' : '') . ').';
+}
+
+/**
+ * 2.35.0: i campi SEO facoltativi di una pagina di un pacchetto (tldr, faq, keyword, seo_schema), puliti come li pulisce la
+ * scheda. Solo le chiavi presenti nel JSON: una pagina senza queste chiavi resta com'era.
+ */
+function sito_importa_pagina_seo(array $j, string $slug): array {
+    $out = [];
+    if (array_intersect_key($j, ['tldr' => 1, 'faq' => 1, 'keyword' => 1, 'seo_schema' => 1])) sito_schema_aggiorna(); // le colonne nuove, se il sito non le ha ancora
+    if (array_key_exists('tldr', $j)) $out['tldr'] = mb_substr(sito_senza_4byte(trim(preg_replace('/\s+/u', ' ', strip_tags((string)(is_scalar($j['tldr']) ? $j['tldr'] : ''))))), 0, 2000);
+    if (array_key_exists('faq', $j)) {
+        $faq = [];
+        foreach (array_slice(is_array($j['faq']) ? array_values($j['faq']) : [], 0, 50) as $f) {
+            if (!is_array($f)) continue;
+            $d = mb_substr(sito_senza_4byte(trim(preg_replace('/\s+/u', ' ', strip_tags((string)(is_scalar($f['domanda'] ?? null) ? $f['domanda'] : ''))))), 0, 300);
+            $r = mb_substr(sito_senza_4byte(trim(preg_replace('/\s+/u', ' ', strip_tags((string)(is_scalar($f['risposta'] ?? null) ? $f['risposta'] : ''))))), 0, 2000);
+            if ($d !== '' && $r !== '') $faq[] = ['domanda' => $d, 'risposta' => $r];
+        }
+        $out['faq'] = $faq ? json_encode($faq, JSON_UNESCAPED_UNICODE) : '';
+    }
+    if (array_key_exists('keyword', $j)) {
+        if (sito_colonna_esiste('pages', 'keyword_target')) $out['keyword_target'] = mb_substr(sito_senza_4byte(trim(strip_tags((string)(is_scalar($j['keyword']) ? $j['keyword'] : '')))), 0, 255);
+    }
+    if (array_key_exists('seo_schema', $j)) {
+        require_once __DIR__ . '/seo-schema.php';
+        $v = seo_schema_valida(is_array($j['seo_schema']) ? $j['seo_schema'] : ['tipo' => '__']);
+        if ($v['errori']) throw new RuntimeException("Pagina $slug: dati per Google in più non validi (" . implode(' ', $v['errori']) . ')');
+        $out['seo_schema'] = seo_schema_json($v['dati']);
+    }
+    return $out;
 }
 
 /** La pagina ha già una versione scritta da un pacchetto di aggiornamento (autore "pacchetto"). */

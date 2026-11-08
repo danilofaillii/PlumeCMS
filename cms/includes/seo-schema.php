@@ -1,6 +1,8 @@
 <?php
 /**
  * 2.29.0: i dati per Google in più di un contenuto: Prodotto, How-to (una guida a passi), Video.
+ * 2.35.0: Programma (SoftwareApplication: nome, versione, categoria, sistema, prezzo, licenza, download, requisiti), per chi
+ * presenta un software come la home di plumecms.it. Niente valutazioni (aggregateRating): inventarle è vietato da Google.
  *
  * Si scelgono nel riquadro "SEO e Google" della scheda di un articolo o di una pagina (admin/contenuto.php, tendina "Dati per
  * Google in più") e stanno nella colonna `seo_schema` (JSON) di articles e pages, aggiunta anche alle tabelle vecchie da
@@ -12,7 +14,10 @@
  * al massimo SEO_SCHEMA_PASSI_MAX passi; il JSON-LD esce con JSON_HEX_TAG come tutto il resto (sito_jsonld_script).
  */
 
-const SEO_SCHEMA_TIPI = ['' => 'Nessuno', 'prodotto' => 'Prodotto (prezzo e disponibilità)', 'howto' => 'How-to (una guida a passi)', 'video' => 'Video'];
+const SEO_SCHEMA_TIPI = ['' => 'Nessuno', 'prodotto' => 'Prodotto (prezzo e disponibilità)', 'howto' => 'How-to (una guida a passi)', 'video' => 'Video', 'programma' => 'Programma (un software da scaricare o usare)'];
+/** 2.35.0: le categorie di schema.org per un programma (applicationCategory), con il nome per il pannello. */
+const SEO_SCHEMA_CATEGORIE = ['WebApplication' => 'Applicazione web', 'DeveloperApplication' => 'Per sviluppatori', 'BusinessApplication' => 'Per il lavoro',
+    'DesignApplication' => 'Grafica e design', 'EducationalApplication' => 'Istruzione', 'MultimediaApplication' => 'Foto, audio e video', 'UtilitiesApplication' => 'Utilità', 'GameApplication' => 'Gioco'];
 const SEO_SCHEMA_PASSI_MAX = 20;
 const SEO_SCHEMA_DISPONIBILITA = ['InStock' => 'Disponibile', 'OutOfStock' => 'Esaurito', 'PreOrder' => 'In prenotazione', 'LimitedAvailability' => 'Ultimi pezzi'];
 const SEO_SCHEMA_TABELLE = ['articles', 'pages'];
@@ -29,6 +34,7 @@ function seo_schema_vuoto(): array {
         'prodotto' => ['nome' => '', 'prezzo' => '', 'valuta' => 'EUR', 'disponibilita' => 'InStock', 'codice' => '', 'marca' => '', 'foto' => ''],
         'howto' => ['nome' => '', 'tempo' => '', 'passi' => []],
         'video' => ['nome' => '', 'descrizione' => '', 'miniatura' => '', 'data' => '', 'url' => '', 'incorporo' => '', 'durata' => ''],
+        'programma' => ['nome' => '', 'versione' => '', 'categoria' => 'WebApplication', 'sistema' => '', 'prezzo' => '', 'valuta' => 'EUR', 'licenza' => '', 'download' => '', 'requisiti' => ''],
     ];
 }
 
@@ -65,7 +71,7 @@ function seo_schema_leggi($json): array {
     $d = is_array($json) ? $json : json_decode((string)$json, true);
     if (!is_array($d) || !isset(SEO_SCHEMA_TIPI[(string)($d['tipo'] ?? '')]) || (string)$d['tipo'] === '') return $s;
     $s['tipo'] = (string)$d['tipo'];
-    foreach (['prodotto', 'howto', 'video'] as $k) {
+    foreach (['prodotto', 'howto', 'video', 'programma'] as $k) {
         if (!is_array($d[$k] ?? null)) continue;
         foreach ($s[$k] as $campo => $pred) {
             if ($campo === 'passi') {
@@ -87,6 +93,17 @@ function seo_schema_prezzo(string $x): ?string {
     $x = str_replace(',', '.', $x);
     if (!preg_match('/^\d{1,8}(\.\d{1,2})?$/', $x)) return null;
     return number_format((float)$x, 2, '.', '');
+}
+
+/**
+ * 2.35.0: la versione di un programma: numeri, lettere, punti, trattini e più (2.35.0, 1.0-beta), fino a 30 caratteri, oppure
+ * {versione:<serie>} del download manager, che il sito sostituisce con l'ultima versione caricata (sito_html). '' se non va bene.
+ */
+function seo_schema_versione(string $x): string {
+    $x = trim($x);
+    if (preg_match('/^[0-9A-Za-z][0-9A-Za-z.+\-]{0,29}$/', $x)) return $x;
+    if (preg_match('/^\{versione:[a-z0-9][a-z0-9._-]{0,120}\}$/', $x)) return $x;
+    return '';
 }
 
 /** Minuti e secondi ("1:30", "90", "1.30") -> secondi; null se non si legge. */
@@ -173,6 +190,29 @@ function seo_schema_valida($in): array {
         $sec = seo_schema_secondi($durata);
         if ($durata !== '' && ($sec === null || $sec > 86400 * 7)) $errori['video_durata'] = 'La durata si scrive come minuti:secondi (1:30) oppure in secondi.';
         $s['video']['durata'] = $sec !== null && $sec <= 86400 * 7 ? (string)$sec : '';
+    } elseif ($tipo === 'programma') {
+        $g = is_array($in['programma'] ?? null) ? $in['programma'] : [];
+        $s['programma']['nome'] = seo_schema_testo($g['nome'] ?? '', 200);
+        if ($s['programma']['nome'] === '') $errori['programma_nome'] = 'Scrivi il nome del programma.';
+        $ver = trim((string)(is_scalar($g['versione'] ?? null) ? $g['versione'] : ''));
+        $s['programma']['versione'] = seo_schema_versione($ver);
+        if ($ver !== '' && $s['programma']['versione'] === '') $errori['programma_versione'] = 'La versione si scrive con numeri e punti (per esempio 2.35.0), oppure {versione:<serie>} del Download.';
+        $cat = (string)(is_scalar($g['categoria'] ?? null) ? $g['categoria'] : '');
+        if ($cat !== '' && !isset(SEO_SCHEMA_CATEGORIE[$cat])) $errori['programma_categoria'] = 'Scegli una categoria fra quelle dell\'elenco.';
+        $s['programma']['categoria'] = isset(SEO_SCHEMA_CATEGORIE[$cat]) ? $cat : 'WebApplication';
+        $s['programma']['sistema'] = seo_schema_testo($g['sistema'] ?? '', 200);
+        $prezzo = seo_schema_prezzo((string)(is_scalar($g['prezzo'] ?? null) ? $g['prezzo'] : ''));
+        if ($prezzo === null) $errori['programma_prezzo'] = 'Scrivi il prezzo come numero: 0 se è gratuito, per esempio 24,90 se si paga.';
+        $s['programma']['prezzo'] = $prezzo ?? '';
+        $valuta = strtoupper(trim((string)(is_scalar($g['valuta'] ?? null) ? $g['valuta'] : 'EUR'))) ?: 'EUR';
+        if (!preg_match('/^[A-Z]{3}$/', $valuta)) { $errori['programma_valuta'] = 'La valuta è un codice di tre lettere (EUR, USD, GBP).'; $valuta = 'EUR'; }
+        $s['programma']['valuta'] = $valuta;
+        foreach (['licenza' => 'L\'indirizzo della licenza', 'download' => 'L\'indirizzo per scaricarlo'] as $campo => $nomeCampo) {
+            $x = trim((string)(is_scalar($g[$campo] ?? null) ? $g[$campo] : ''));
+            $s['programma'][$campo] = seo_schema_url($x, true);
+            if ($x !== '' && $s['programma'][$campo] === '') $errori['programma_' . $campo] = $nomeCampo . ' comincia con https:// oppure è un percorso del sito (per esempio /scarica/).';
+        }
+        $s['programma']['requisiti'] = seo_schema_testo($g['requisiti'] ?? '', 300);
     }
     return ['dati' => $s, 'errori' => $errori];
 }
@@ -201,7 +241,9 @@ function seo_schema_salva(string $tipo, int $id, array $post): array {
 /** Il messaggio per il pannello quando i dati in più non si sono salvati: i campi, in parole. */
 function seo_schema_errori_testo(array $errori): string {
     $nomi = ['prodotto_nome' => 'Nome del prodotto', 'prodotto_prezzo' => 'Prezzo', 'prodotto_valuta' => 'Valuta', 'prodotto_foto' => 'Foto del prodotto', 'howto_nome' => 'Nome della guida', 'howto_tempo' => 'Tempo totale', 'howto_passi' => 'Passi',
-        'video_nome' => 'Nome del video', 'video_descrizione' => 'Descrizione del video', 'video_miniatura' => 'Miniatura', 'video_data' => 'Data di caricamento', 'video_url' => 'Indirizzo del video', 'video_incorporo' => 'Indirizzo dell\'incorporo', 'video_durata' => 'Durata', 'tipo' => 'Dati per Google in più'];
+        'video_nome' => 'Nome del video', 'video_descrizione' => 'Descrizione del video', 'video_miniatura' => 'Miniatura', 'video_data' => 'Data di caricamento', 'video_url' => 'Indirizzo del video', 'video_incorporo' => 'Indirizzo dell\'incorporo', 'video_durata' => 'Durata', 'tipo' => 'Dati per Google in più',
+        'programma_nome' => 'Nome del programma', 'programma_versione' => 'Versione', 'programma_categoria' => 'Categoria', 'programma_prezzo' => 'Prezzo del programma', 'programma_valuta' => 'Valuta',
+        'programma_licenza' => 'Licenza', 'programma_download' => 'Indirizzo per scaricarlo'];
     $righe = [];
     foreach ($errori as $k => $m) $righe[] = ($nomi[$k] ?? $k) . ': ' . $m;
     return 'I dati per Google in più non sono stati salvati (il resto sì). ' . implode(' ', $righe);
@@ -249,6 +291,27 @@ function seo_schema_nodo(array $c): ?array {
             if ($v['incorporo'] !== '') $nodo['embedUrl'] = $v['incorporo'];
             if ($v['durata'] !== '' && (int)$v['durata'] > 0) $nodo['duration'] = seo_schema_durata_iso((int)$v['durata']);
             return $nodo;
+        case 'programma':
+            // 2.35.0: SoftwareApplication. Google chiede nome e offerta (il prezzo, anche 0); il riquadro ricco lo mostra solo con
+            // valutazioni vere, che qui non si scrivono mai: i dati servono a Google e alle AI per capire che cos'è il programma.
+            $g = $s['programma'];
+            if ($g['nome'] === '' || $g['prezzo'] === '') return null;
+            $nodo = ['@type' => 'SoftwareApplication', '@id' => "$u#programma", 'name' => $g['nome'], 'url' => $u,
+                'applicationCategory' => isset(SEO_SCHEMA_CATEGORIE[$g['categoria']]) ? $g['categoria'] : 'WebApplication'];
+            if ($descrizione !== '') $nodo['description'] = mb_substr($descrizione, 0, 500);
+            if ($g['sistema'] !== '') $nodo['operatingSystem'] = $g['sistema'];
+            if ($g['versione'] !== '') $nodo['softwareVersion'] = $g['versione'];
+            if (!empty($c['immagine']['url'])) $nodo['image'] = seo_schema_assoluto((string)$c['immagine']['url']);
+            $nodo['offers'] = ['@type' => 'Offer', 'price' => $g['prezzo'] === '0.00' ? '0' : $g['prezzo'], 'priceCurrency' => $g['valuta'] ?: 'EUR'];
+            if ($g['download'] !== '') { $nodo['downloadUrl'] = seo_schema_assoluto($g['download']); $nodo['offers']['url'] = $nodo['downloadUrl']; }
+            if ($g['licenza'] !== '') $nodo['license'] = seo_schema_assoluto($g['licenza']);
+            if ($g['requisiti'] !== '') $nodo['softwareRequirements'] = $g['requisiti'];
+            // Autore ed editore: l'Organizzazione di SEO e AEO, se il suo nodo è acceso (seo_jsonld_fissi()).
+            if (function_exists('seo_jsonld_id') && function_exists('seo_cfg') && !empty(seo_cfg()['schema']['organization'])) {
+                $nodo['author'] = ['@id' => seo_jsonld_id('servizio')];
+                $nodo['publisher'] = ['@id' => seo_jsonld_id('servizio')];
+            }
+            return $nodo;
     }
     return null;
 }
@@ -271,7 +334,7 @@ function seo_schema_applica(array $nodi, array $c): array {
 
 /** Il nome del tipo scelto, per il pannello ("Prodotto", "How-to", "Video") o '' se niente. */
 function seo_schema_nome_tipo(string $tipo): string {
-    return ['prodotto' => 'Prodotto', 'howto' => 'How-to', 'video' => 'Video'][$tipo] ?? '';
+    return ['prodotto' => 'Prodotto', 'howto' => 'How-to', 'video' => 'Video', 'programma' => 'Programma'][$tipo] ?? '';
 }
 
 /**
@@ -314,5 +377,16 @@ function seo_schema_form_html(array $s): string {
         . '<div class="sc-riga">' . $campo('video][url', 'Indirizzo del file video (https o /uploads/video/...)', $vd['url'], ' maxlength="500" placeholder="https://..."') . $campo('video][incorporo', 'Oppure l\'indirizzo dell\'incorporo (https)', $vd['incorporo'], ' maxlength="500" placeholder="https://..."') . '</div>'
         . $campo('video][durata', 'Durata (minuti:secondi, facoltativa)', $vd['durata'] !== '' ? intdiv((int)$vd['durata'], 60) . ':' . str_pad((string)((int)$vd['durata'] % 60), 2, '0', STR_PAD_LEFT) : '', ' placeholder="per esempio: 1:30"')
         . '<div class="hint">Solo indirizzi https (o un video caricato nei Media). Miniatura e data sono obbligatorie per Google.</div></div>';
+    // 2.35.0: Programma (SoftwareApplication)
+    $pg = $s['programma'];
+    $out .= '<div class="sc-schema-campi" data-schema-campi="programma"' . ($s['tipo'] === 'programma' ? '' : ' hidden') . '>'
+        . '<div class="sc-riga">' . $campo('programma][nome', 'Nome del programma', $pg['nome'], ' maxlength="200" placeholder="per esempio: Agenda Studio"') . $campo('programma][versione', 'Versione (facoltativa)', $pg['versione'], ' maxlength="140" placeholder="per esempio: 2.1.0"') . '</div>'
+        . '<div class="sc-riga"><div class="form-group"><label for="sc-schema-programma-categoria">Categoria</label><select name="schema[programma][categoria]" id="sc-schema-programma-categoria">';
+    foreach (SEO_SCHEMA_CATEGORIE as $k => $n) $out .= '<option value="' . $k . '"' . $sel($pg['categoria'], $k) . '>' . h($n) . '</option>';
+    $out .= '</select></div>' . $campo('programma][sistema', 'Dove funziona (facoltativo)', $pg['sistema'], ' maxlength="200" placeholder="per esempio: Windows, macOS, server con PHP"') . '</div>'
+        . '<div class="sc-riga">' . $campo('programma][prezzo', 'Prezzo (0 se è gratuito)', $pg['prezzo'] === '0.00' ? '0' : $pg['prezzo'], ' inputmode="decimal" placeholder="per esempio: 0"') . $campo('programma][valuta', 'Valuta (tre lettere)', $pg['valuta'] ?: 'EUR', ' maxlength="3" placeholder="EUR"') . '</div>'
+        . '<div class="sc-riga">' . $campo('programma][licenza', 'Indirizzo della licenza (facoltativo)', $pg['licenza'], ' maxlength="500" placeholder="https://..."') . $campo('programma][download', 'Indirizzo per scaricarlo (facoltativo)', $pg['download'], ' maxlength="500" placeholder="https://... oppure /scarica/..."') . '</div>'
+        . $campo('programma][requisiti', 'Cosa serve per usarlo (facoltativo)', $pg['requisiti'], ' maxlength="300" placeholder="per esempio: PHP 8.2 e MySQL 8"')
+        . '<div class="hint">Dice a Google e alle intelligenze artificiali che questa pagina presenta un programma. La descrizione è quella per Google della pagina. Le stelle delle recensioni non si scrivono qui: Google le vuole solo vere.</div></div>';
     return $out . '</div>';
 }

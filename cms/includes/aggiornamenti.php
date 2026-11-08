@@ -48,6 +48,21 @@ const AGG_EDITOR_AMBITI = ['stile', 'modelli', 'menu', 'temi'];
 /** Le impostazioni del sito che un pacchetto può scrivere con la voce "impostazioni" (1.2.3): solo nome e descrizioni. */
 const AGG_IMPOSTAZIONI = ['sito_nome', 'sito_titolo', 'sito_sottotitolo', 'sito_descrizione', 'home_descrizione'];
 
+/**
+ * 2.35.0: le impostazioni di SEO e AEO che un pacchetto può scrivere con la voce "seo" (gruppo => chiavi): nome del sito nei
+ * titoli, descrizione generale, Organizzazione e Persona (solo nome e ruolo: niente dati personali), interruttori dei dati
+ * strutturati. Tutto il resto di seo_config (verifiche, chiavi, codici di statistica, robots) un pacchetto non lo tocca.
+ * La voce la conosce solo il motore dalla 2.35.0: un pacchetto che la usa si applica dopo l'aggiornamento del CMS
+ * (tools/consegna.py fa due pacchetti).
+ */
+const AGG_SEO = [
+    'titolo' => ['sito', 'sep'],
+    'meta' => ['descrizione', 'og_immagine'],
+    'org' => ['tipo', 'nome', 'nome_sito', 'logo', 'descrizione', 'lingua', 'area'],
+    'persona' => ['nome', 'ruolo'],
+    'schema' => ['website', 'searchaction', 'organization', 'person', 'faq', 'breadcrumb', 'article'],
+];
+
 const AGG_SNAPSHOT_DA_TENERE = 5;
 
 // ------------------------------------------------------------
@@ -175,6 +190,7 @@ function agg_leggi_manifest(string $zipPath): array {
         'editor'      => '',
         'editor_ambiti' => ['stile', 'modelli', 'menu'],
         'impostazioni' => [],
+        'seo'         => [],
         'note'        => trim((string)($m['note'] ?? '')),
         'firmato'     => $firma !== '',
     ];
@@ -232,6 +248,9 @@ function agg_leggi_manifest(string $zipPath): array {
         if (!in_array($k, AGG_IMPOSTAZIONI, true) || !is_string($v)) { $zip->close(); throw new RuntimeException("Impostazione non ammessa in un pacchetto: $k (solo " . implode(', ', AGG_IMPOSTAZIONI) . ')'); }
         $out['impostazioni'][$k] = mb_substr(trim($v), 0, 300);
     }
+    if (isset($m['seo'])) {
+        try { $out['seo'] = agg_seo_valida($m['seo']); } catch (RuntimeException $e) { $zip->close(); throw $e; }
+    }
     foreach (['articoli', 'test', 'pagine'] as $chiave) {
         foreach ((array)($m[$chiave] ?? []) as $f) {
             $f = (string)$f;
@@ -242,6 +261,41 @@ function agg_leggi_manifest(string $zipPath): array {
         }
     }
     $zip->close();
+    return $out;
+}
+
+/**
+ * 2.35.0: la voce "seo" del manifest, controllata: solo i gruppi e le chiavi di AGG_SEO, testi senza tag e senza righe (al massimo
+ * 500 caratteri), gli interruttori 0 o 1, il tipo dell'Organizzazione una parola di schema.org, logo e immagine social un percorso
+ * del sito o un indirizzo https. Qualcosa fuori posto ferma il pacchetto, con il motivo.
+ */
+function agg_seo_valida($seo): array {
+    if (!is_array($seo)) throw new RuntimeException('La voce "seo" del manifest deve essere un oggetto.');
+    $out = [];
+    foreach ($seo as $gruppo => $valori) {
+        if (!isset(AGG_SEO[$gruppo]) || !is_array($valori)) throw new RuntimeException("Gruppo SEO non ammesso in un pacchetto: $gruppo (solo " . implode(', ', array_keys(AGG_SEO)) . ')');
+        foreach ($valori as $k => $v) {
+            if (!in_array($k, AGG_SEO[$gruppo], true)) throw new RuntimeException("Impostazione SEO non ammessa in un pacchetto: $gruppo.$k");
+            if ($gruppo === 'schema') {
+                if (!in_array($v, [0, 1, '0', '1', true, false], true)) throw new RuntimeException("SEO $gruppo.$k: vale 0 oppure 1.");
+                $out[$gruppo][$k] = (int)(bool)$v;
+                continue;
+            }
+            if (!is_string($v)) throw new RuntimeException("SEO $gruppo.$k: deve essere un testo.");
+            $t = trim(preg_replace('/\s+/u', ' ', strip_tags($v)));
+            if (function_exists('sito_senza_4byte')) $t = sito_senza_4byte($t);
+            $t = mb_substr($t, 0, 500);
+            if ($gruppo === 'org' && $k === 'tipo' && !preg_match('/^[A-Za-z]{1,60}$/', $t)) throw new RuntimeException('SEO org.tipo: una parola di schema.org, per esempio Organization.');
+            if (($gruppo === 'org' && $k === 'logo') || ($gruppo === 'meta' && $k === 'og_immagine')) {
+                if ($t !== '' && (str_contains($t, '..') || !preg_match('~^(/[A-Za-z0-9/_.%\-]+|https://[A-Za-z0-9.\-]+(:\d+)?(/[A-Za-z0-9/_.%\-]*)?)$~', $t) || str_starts_with($t, '//'))) {
+                    throw new RuntimeException("SEO $gruppo.$k: un percorso del sito (/uploads/...) oppure un indirizzo https.");
+                }
+                // Nel JSON-LD il logo va intero: un percorso del sito prende l'indirizzo davanti.
+                if ($t !== '' && $t[0] === '/' && defined('SITO_URL')) $t = SITO_URL . $t;
+            }
+            $out[$gruppo][$k] = $t;
+        }
+    }
     return $out;
 }
 
@@ -671,7 +725,7 @@ function agg_applica(string $id): array {
         agg_sql_mode();
         $m = agg_leggi_manifest($zipPath);
         $totale = 4 + count($m['file']) + count($m['elimina']) + count($m['sql']) + count($m['articoli']) + count($m['test']) + count($m['azioni']) + count($m['redirect'])
-            + count($m['pagine']) + ($m['editor'] !== '' ? 1 : 0) + ($m['impostazioni'] ? 1 : 0);
+            + count($m['pagine']) + ($m['editor'] !== '' ? 1 : 0) + ($m['impostazioni'] ? 1 : 0) + ($m['seo'] ? 1 : 0);
         agg_progresso($id, ++$passo, $totale, 'Pacchetto letto: ' . count($m['file']) . ' file, ' . count($m['sql']) . ' file SQL, ' . count($m['articoli']) . ' articoli');
         $log[] = 'Pacchetto letto: ' . count($m['file']) . ' file, ' . count($m['sql']) . ' file SQL, ' . count($m['articoli']) . ' articoli, ' . count($m['redirect']) . ' redirect.';
 
@@ -748,6 +802,13 @@ function agg_applica(string $id): array {
             foreach ($m['impostazioni'] as $k => $v) save_setting($k, sito_senza_4byte($v));
             $log[] = 'Impostazioni del sito: ' . implode(', ', array_keys($m['impostazioni'])) . '.';
             agg_progresso($id, ++$passo, $totale, 'Nome e descrizioni del sito');
+        }
+        // 2.35.0: SEO e AEO (voce "seo", solo le chiavi di AGG_SEO): ogni gruppo come lo salva il pannello, le altre chiavi restano.
+        if ($m['seo']) {
+            require_once __DIR__ . '/seo.php';
+            foreach ($m['seo'] as $gruppo => $valori) seo_salva($gruppo, $valori);
+            $log[] = 'SEO e AEO: ' . implode(', ', array_map(fn($g, $v) => $g . ' (' . implode(', ', array_keys($v)) . ')', array_keys($m['seo']), $m['seo'])) . '.';
+            agg_progresso($id, ++$passo, $totale, 'SEO e AEO');
         }
         if ($m['editor'] !== '') {
             require_once __DIR__ . '/editor-opzioni.php';

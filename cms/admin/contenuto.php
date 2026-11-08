@@ -202,6 +202,8 @@ require_once __DIR__ . '/includes/admin-header.php';
             <div><label>Keyword principale</label><input type="text" name="keyword_target" value="<?= h($sc['keyword_target']) ?>"></div>
             <div><label>Keyword correlate (virgola)</label><input type="text" name="keywords_secondarie" value="<?= h($sc['keywords_secondarie']) ?>"></div>
           </div>
+          <?php elseif ($tipo === 'pagine'): // 2.35.0: la parola chiave anche per le pagine ?>
+          <label for="sc-keyword">Parola chiave principale</label><input type="text" name="keyword_target" id="sc-keyword" value="<?= h($sc['keyword_target']) ?>" maxlength="255" placeholder="per esempio: idraulico a Bologna">
           <?php endif; ?>
           <label>Indicizzazione</label>
           <select name="robots"><option value="" <?= $sc['robots'] === '' ? 'selected' : '' ?>>Automatica (visibile a Google)</option><option value="index" <?= $sc['robots'] === 'index' ? 'selected' : '' ?>>Sempre visibile</option><option value="noindex" <?= $sc['robots'] === 'noindex' ? 'selected' : '' ?>>Nascosto a Google (noindex)</option></select>
