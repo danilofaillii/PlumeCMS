@@ -6373,7 +6373,7 @@ Per le prove: `define('CMS_AI_FOTO_PROVA', 'http://127.0.0.1:<porta>')` nel conf
 ### 47.10 Pannello e prove
 
 Pagine (`addon-pagina.php?a=ai-collegate&p=`): `collegate` (indirizzo del connettore da copiare, passi per Claude, ChatGPT e le
-altre AI, AI collegate con Revoca, chiavi personali), `proposte`, `registro` (ultime 200 azioni con filtri per AI, strumento,
+altre AI, AI collegate con Revoca, chiavi personali), `proposte`, `registro` (ultime 200 azioni, con il nome italiano dello strumento e quello inglese al passaggio del mouse; filtri per AI, azione,
 esito; foto importate con autore e licenza; il registro tiene sei mesi), `impostazioni` (chiavi degli archivi), `consenso`. Niente
 gestori in linea: conferme con `data-conferma`, copia con `data-copia-se-stesso`; tabelle a schede al telefono.
 

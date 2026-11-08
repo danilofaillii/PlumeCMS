@@ -5773,8 +5773,8 @@ il telefono o il computer con l'AI collegata, o se una chiave è finita in mani 
 
 ### Il registro
 
-**AI collegate > Registro** elenca ogni azione delle AI: quando, quale AI, quale strumento, su quale pagina, con quale esito
-(riuscita, errore, negata). I filtri in alto scelgono l'AI, lo strumento o l'esito. Il registro tiene sei mesi.
+**AI collegate > Registro** elenca ogni azione delle AI: quando, quale AI, che cosa ha fatto (per esempio "Crea una bozza"), su quale pagina, con quale esito
+(riuscita, errore, negata). I filtri in alto scelgono l'AI, l'azione o l'esito. Il registro tiene sei mesi.
 
 **Se qualcosa non va.**
 - L'AI dice che non riesce a collegarsi e il pannello non si apre: controlla che il sito sia in **https** e che l'addon sia

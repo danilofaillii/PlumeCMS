@@ -20,6 +20,11 @@ $clienti = db()->query('SELECT DISTINCT client FROM ' . tbl('ai_registro') . " W
 $strumenti = db()->query('SELECT DISTINCT strumento FROM ' . tbl('ai_registro') . ' ORDER BY strumento LIMIT 100')->fetchAll(PDO::FETCH_COLUMN);
 $foto = db()->query('SELECT * FROM ' . tbl('ai_foto') . ' ORDER BY id DESC LIMIT 100')->fetchAll();
 $nomiEsito = ['ok' => 'riuscita', 'errore' => 'errore', 'negato' => 'negata'];
+// Il nome dello strumento in italiano (quello inglese, per le AI, resta nel suggerimento al passaggio del mouse).
+require_once __DIR__ . '/strumenti.php';
+$_aicNomi = array_map(fn($x) => (string)$x['titolo'], aic_strumenti()) + ['get_stats' => 'Statistiche delle visite', 'initialize' => 'Inizio della sessione', 'registrazione' => 'Registrazione dell\'AI',
+    'consenso' => 'Permesso', 'collegamento' => 'Collegamento', 'token' => 'Accesso', 'revoca' => 'Revoca', 'chiave' => 'Chiave personale', 'proposta' => 'Decisione su una proposta', 'limite' => 'Troppe richieste'];
+$nomeStrumento = fn(string $x): string => $_aicNomi[$x] ?? $x;
 require CMS_ADMIN . '/includes/admin-header.php';
 aic_admin_schede('registro');
 ?>
@@ -28,7 +33,7 @@ aic_admin_schede('registro');
   <form method="get" class="aic-filtro">
     <input type="hidden" name="a" value="ai-collegate"><input type="hidden" name="p" value="registro">
     <div class="form-group"><label for="aic-f-client">AI</label><select name="client" id="aic-f-client"><option value="">Tutte</option><?php foreach ($clienti as $c): ?><option value="<?= h((string)$c) ?>"<?= $c === $fClient ? ' selected' : '' ?>><?= h((string)$c) ?></option><?php endforeach; ?></select></div>
-    <div class="form-group"><label for="aic-f-strumento">Strumento</label><select name="strumento" id="aic-f-strumento"><option value="">Tutti</option><?php foreach ($strumenti as $c): ?><option value="<?= h((string)$c) ?>"<?= $c === $fStrumento ? ' selected' : '' ?>><?= h((string)$c) ?></option><?php endforeach; ?></select></div>
+    <div class="form-group"><label for="aic-f-strumento">Azione</label><select name="strumento" id="aic-f-strumento"><option value="">Tutte</option><?php foreach ($strumenti as $c): ?><option value="<?= h((string)$c) ?>"<?= $c === $fStrumento ? ' selected' : '' ?>><?= h($nomeStrumento((string)$c)) ?></option><?php endforeach; ?></select></div>
     <div class="form-group"><label for="aic-f-esito">Esito</label><select name="esito" id="aic-f-esito"><?php foreach ($esiti as $k => $n): ?><option value="<?= h($k) ?>"<?= $k === $fEsito ? ' selected' : '' ?>><?= h($n) ?></option><?php endforeach; ?></select></div>
     <button class="btn btn-secondary btn-sm" type="submit">Filtra</button>
   </form>
@@ -36,13 +41,13 @@ aic_admin_schede('registro');
   <div class="empty-state"><?= $dove ? 'Nessuna azione con questi filtri: togli un filtro.' : 'Ancora nessuna azione: qui compare ogni chiamata di un\'AI collegata, con l\'esito.' ?></div>
   <?php else: ?>
   <table class="table" id="aic-registro">
-    <thead><tr><th>Quando</th><th>AI</th><th>Strumento</th><th>Contenuto</th><th>Esito</th><th>Dettagli</th></tr></thead>
+    <thead><tr><th>Quando</th><th>AI</th><th>Azione</th><th>Contenuto</th><th>Esito</th><th>Dettagli</th></tr></thead>
     <tbody>
     <?php foreach ($righe as $r): ?>
     <tr>
       <td><?= h(aic_data($r['creato'])) ?></td>
       <td><?= h((string)$r['client']) ?></td>
-      <td><code><?= h((string)$r['strumento']) ?></code></td>
+      <td title="<?= h((string)$r['strumento']) ?>"><?= h($nomeStrumento((string)$r['strumento'])) ?></td>
       <td><?php if ((int)$r['contenuto_id'] > 0 && in_array($r['tipo'], ['articoli', 'pagine'], true)): ?><a href="contenuto.php?tipo=<?= h((string)$r['tipo']) ?>&amp;id=<?= (int)$r['contenuto_id'] ?>"><?= h((string)$r['tipo']) ?> <?= (int)$r['contenuto_id'] ?></a><?php else: ?>&ndash;<?php endif; ?></td>
       <td><span class="aic-esito aic-esito-<?= h((string)$r['esito']) ?>"><?= ['ok' => '&#10003; ', 'errore' => '! ', 'negato' => '&#10007; '][$r['esito']] ?? '' ?><?= h($nomiEsito[$r['esito']] ?? (string)$r['esito']) ?></span></td>
       <td><?= h((string)$r['dettagli']) ?></td>

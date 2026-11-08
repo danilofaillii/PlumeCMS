@@ -322,7 +322,7 @@ async function token(corpo) { return http('POST', MCP + '/token', { corpo, tipo:
   // === 12. Registro e impostazioni
   await p.goto(B + '/admin/addon-pagina.php?a=ai-collegate&p=registro', { waitUntil: 'networkidle' });
   const reg2 = await p.locator('#aic-registro').innerText();
-  ok('Registro: le azioni con strumento ed esito (anche negate)', /create_draft/.test(reg2) && /negata/.test(reg2) && /Autrice by1/.test(await p.locator('#foto').innerText()));
+  ok('Registro: le azioni con il nome in italiano ed esito (anche negate)', /Crea una bozza/.test(reg2) && !/create_draft/.test(reg2) && /negata/.test(reg2) && /Autrice by1/.test(await p.locator('#foto').innerText()));
   await p.selectOption('#aic-f-esito', 'negato'); await Promise.all([p.waitForNavigation(), p.click('.aic-filtro button')]);
   ok('Registro filtrato per esito', (await p.locator('#aic-registro tbody tr').count()) > 0 && !/riuscita/.test(await p.locator('#aic-registro tbody').innerText()));
   await p.goto(B + '/admin/addon-pagina.php?a=ai-collegate&p=impostazioni', { waitUntil: 'networkidle' });

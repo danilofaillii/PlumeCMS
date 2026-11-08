@@ -62,7 +62,7 @@ aic_admin_schede('proposte');
 ?>
 <article class="form-card aic-proposta" id="proposta-<?= (int)$p['id'] ?>" data-proposta="<?= (int)$p['id'] ?>" data-stato="<?= h((string)$p['stato']) ?>">
   <h3><?php if ($p['stato'] === 'attesa'): ?><input type="checkbox" class="aic-scelta" name="scelte[]" value="<?= (int)$p['id'] ?>" form="aic-gruppo" aria-label="Seleziona la proposta <?= (int)$p['id'] ?>"> <?php endif; ?><?= h($campo) ?>: <a href="<?= h($link) ?>"><?= h($titolo) ?></a> <span class="aic-stato aic-<?= h((string)$p['stato']) ?>"><?= h($stati[$p['stato']] ?? $p['stato']) ?></span></h3>
-  <p class="hint">Da <b><?= h((string)$p['client']) ?></b>, <?= h(aic_data($p['creato'])) ?><?= $p['widget_id'] !== '' ? ' &middot; widget ' . h((string)$p['widget_id']) : '' ?><?= $p['deciso'] ? ' &middot; ' . h((string)$p['nota']) . ' il ' . h(aic_data($p['deciso'])) . ($p['deciso_da'] !== '' ? ' da ' . h((string)$p['deciso_da']) : '') : '' ?></p>
+  <p class="hint">Da <b><?= h((string)$p['client']) ?></b>, <?= h(aic_data($p['creato'])) ?><?= $p['widget_id'] !== '' ? ' &middot; in un widget della pagina' : '' ?><?= $p['deciso'] ? ' &middot; ' . h((string)$p['nota']) . ' il ' . h(aic_data($p['deciso'])) . ($p['deciso_da'] !== '' ? ' da ' . h((string)$p['deciso_da']) : '') : '' ?></p>
   <p class="aic-motivo"><b>Perché:</b> <?= nl2br(h((string)$p['motivo']), false) ?></p>
   <?php if ($p['tipo'] === 'media'): ?><p><img class="aic-anteprima" src="<?= h(cms_url_sito() . (string)$p['media_url']) ?>" alt=""></p><?php endif; ?>
   <div class="aic-confronto">
