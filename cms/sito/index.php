@@ -150,6 +150,21 @@ try {
         }
     }
 
+    // 2. Vecchi indirizzi /articoli/<slug>/ (2.33.0: il passo mancava dalla 1.2.8). Se lo slug è di un articolo uscito, 301
+    // al suo indirizzo, prima dei redirect: una regola "start" importata su /articoli/ (verso il blog) portava ogni articolo
+    // al blog. Se lo slug non è di un articolo, o un contenuto ha proprio questo indirizzo, si prosegue come prima.
+    if (preg_match('~^/articoli/([^/]+)/?$~', $percorso, $ma)) {
+        $art = null; $esiste = false;
+        foreach (sito_contenuti() as $c) {
+            if ($c['percorso'] === '/articoli/' . $ma[1] . '/') { $esiste = true; break; }
+            if (!$art && $c['tipo'] === 'post' && $c['slug'] === $ma[1] && sito_uscito($c['riga'])) $art = $c;
+        }
+        if ($art && !$esiste) {
+            $r = $art['rediretto'] ? sito_redirect_per($art['percorso'], '') : null;
+            sito_vai($r['a'] ?? $art['percorso']);
+        }
+    }
+
     // 3. Redirect
     if ($r = sito_redirect_per($percorso, $query)) sito_vai($r['a'], $r['codice'] ?: 301);
     if ($percorso === '/wp-sitemap.xml') sito_vai('/sitemap.xml');

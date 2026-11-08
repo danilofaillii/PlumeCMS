@@ -28,6 +28,13 @@ Il prodotto si chiama **plumeCMS** (nome scelto il 26 ottobre 2026; prima, per p
 - Sicurezza: etichette solo testo, indirizzi controllati (mai `javascript:`, `data:`, `//` verso altri siti), contenuti
   verificati, approvazioni solo dall'amministratore con il token del pannello. Gruppo 47 delle prove di attacco (15).
 - Prove: `prove/prova-ai-navigazione.js` (52 controlli, anche con 300 pagine e cinque menu).
+- **Correzioni** (segnalate da Danilo). Il **robots.txt** predefinito chiudeva con due righe `Sitemap:`: identiche con il CMS
+  nella radice, e la seconda sbagliata con il CMS in una cartella (la cartella due volte). Ora una riga sola, all'indirizzo del
+  sito (`sito/extra.php`). I **vecchi indirizzi `/articoli/<slug>/`** tornano all'articolo con un 301: il passo era sparito
+  dalla 1.2.8, e con una regola dei redirect che comincia con `/articoli/` (per esempio importata, verso il blog) ogni vecchio
+  indirizzo finiva sul blog invece che sull'articolo. Il controllo viene prima dei redirect e vale solo per gli articoli
+  pubblicati; per il resto la regola vale come prima (`sito/index.php`). Prova `prove/prova-robots-articoli.js` (14 controlli,
+  radice e cartella, con e senza la regola).
 
 ## 2.32.0 (8 novembre 2026) - AI collegate
 

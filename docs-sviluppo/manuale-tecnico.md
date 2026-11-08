@@ -394,7 +394,7 @@ Poi decide, **in quest'ordine** (`sito/index.php`):
 | 1 | c'è una query string: evento `sito_query($q, $percorso)` | un modulo può rispondere e chiudere |
 | 2 | home con `?p=ID` o `?page_id=ID` | 301 all'indirizzo vero del contenuto |
 | 2b | home con `?s=testo` | pagina di ricerca, 200 |
-| 3 | `/articoli/qualcosa` | 301 a `/qualcosa` |
+| 3 | `/articoli/<slug>/` (dalla 2.33.0, `sito/index.php:153`) | se `<slug>` è di un articolo uscito e nessun contenuto ha proprio questo indirizzo, 301 all'indirizzo dell'articolo (o al redirect dell'articolo, se ne ha uno), **prima** dei redirect: una regola `start` importata su `/articoli/` verso il blog vale solo per gli slug che non sono articoli. Altrimenti si prosegue. Dalla 1.2.8 alla 2.32.0 il passo mancava |
 | 4 | un redirect della tabella `redirect` (16.5) | il codice del redirect, di solito 301 |
 | 5 | `/wp-sitemap.xml` | 301 a `/sitemap.xml` |
 | 6 | gli indirizzi dei moduli del sito (evento `sito_percorso`), poi i percorsi fissi della newsletter: `/newsletter-grazie/`, `/newsletter-conferma/`, `/newsletter-esci/` | pagine dei moduli (15) |
@@ -3191,7 +3191,7 @@ Nessuno di questi è un file sul disco: il CMS li scrive a ogni richiesta.
 
 | Indirizzo | Cosa contiene |
 |---|---|
-| `/robots.txt` | il testo personale, altrimenti: `Allow: /`, divieti per pannello, cron, log, API, ricerca, autori, feed; i blocchi dei crawler AI scelti; l'indirizzo della sitemap |
+| `/robots.txt` | il testo personale, altrimenti: `Allow: /`, divieti per pannello, cron, log, API, ricerca, autori, feed; i blocchi dei crawler AI scelti; l'indirizzo della sitemap, in **una** riga `Sitemap: <SITO_URL>/sitemap.xml` (`extra_robots()`, `sito/extra.php:102`; `SITO_URL` ha già la cartella. Fino alla 2.32.0 c'era una seconda riga con `cms_base()`: uguale alla prima nella radice, `/test/test/sitemap.xml` in cartella. Un robots.txt personale scritto nel pannello resta com'è) |
 | `/sitemap.xml` | home, articoli e (a scelta) pagine indicizzabili, categorie con articoli; a scelta le immagini; oppure l'indice di `sitemap-articoli.xml`, `sitemap-pagine.xml`, `sitemap-categorie.xml` |
 | `/llms.txt` | il testo personale, altrimenti: nome e descrizione del sito, nota di citazione (filtro `llms_intestazione`), servizi (filtro `llms_servizi`), guide pillar, articoli, glossario, feed e sitemap |
 | `/llms-full.txt` | il testo completo dei contenuti, solo se acceso |

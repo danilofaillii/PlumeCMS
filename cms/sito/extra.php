@@ -97,7 +97,8 @@ function extra_llms(): string {
         '## Optional', '- [Feed RSS](' . SITO_URL . '/feed/): gli ultimi articoli', '- [Sitemap](' . SITO_URL . '/sitemap.xml): tutte le pagine indicizzabili', '']));
 }
 
-/** Le stesse regole di oggi, più la sitemap nuova. */
+/** Le stesse regole di oggi, più la sitemap nuova. 2.33.0: una sola riga Sitemap, all'indirizzo del sito (SITO_URL ha già la
+ * cartella; la seconda riga con cms_base() era doppia nella radice e sbagliata in cartella, /test/test/sitemap.xml). */
 function extra_robots(): string {
     return "User-agent: *
 Allow: /
@@ -114,6 +115,5 @@ Disallow: /page/
 Disallow: /*/feed/
 
 Sitemap: " . SITO_URL . "/sitemap.xml
-Sitemap: " . SITO_URL . cms_base() . "/sitemap.xml
 ";
 }

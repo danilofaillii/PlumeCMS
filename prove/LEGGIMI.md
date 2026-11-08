@@ -911,3 +911,11 @@ doppia conferma), importazione (aggiungi e sostituisci), esportazione, telefono 
 2. `node prove/prova-tag.js <base> <cartella del CMS> <porta smtp> <cartella posta> [cartella foto]`. Usa `prove/tag-cli.php`.
 3. Subito dopo, sullo stesso sito: `node prove/attacchi-tag.js <base> <cartella del CMS>` (lascia il redattore `red_tag`).
 4. Atteso (2.23.0): 57 su 57 e 25 su 25, in radice e in cartella.
+
+## prova-robots-articoli.js (2.33.0)
+
+robots.txt con una sola riga `Sitemap:` (all'indirizzo del sito, anche in cartella) e i vecchi indirizzi `/articoli/<slug>/`
+con un 301 all'articolo, anche con una regola `start` su `/articoli/` nella tabella dei redirect (che resta valida per gli slug
+che non sono articoli, e per le bozze). 14 controlli. Su un sito appena installato (serve l'articolo di partenza `/benvenuto/`),
+radice e cartella: `node prove/prova-robots-articoli.js <base> <cartella del CMS>`. Mette e toglie i suoi redirect e la sua
+bozza con `prove/redirect-cli.php`. Con la 2.32.0 dà 9 su 14 (i due difetti).
