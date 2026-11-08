@@ -161,7 +161,7 @@ switch ($cmd) {
         if ($cmd === 'stile-molti') {
             $n = max(1, min(1000, (int)($argv[3] ?? 300)));
             for ($i = 1; $i <= $n; $i++) contenuti_salva('articoli', 0, ['title' => 'Articolo di prova numero ' . $i, 'slug' => 'ai-prova-stile-m-' . $i, 'stato' => 'pubblicato', 'data' => date('Y-m-d', time() - (400 + $i) * 86400), 'ora' => '07:00',
-                'contenuto' => $testo($i, 'il tema numero ' . $i, $i % 3 === 0), 'keyword_target' => 'tema ' . $i, 'keywords_secondarie' => $i % 3 === 0 ? 'concime naturale' : '']);
+                'contenuto' => str_repeat($testo($i, 'il tema numero ' . $i, $i % 3 === 0), 8), /* circa 800 parole, come un articolo vero */ 'keyword_target' => 'tema ' . $i, 'keywords_secondarie' => $i % 3 === 0 ? 'concime naturale' : '']);
             $esci(['articoli' => $n]);
         }
         $orto = contenuti_categoria_crea('Orto prova'); $balcone = contenuti_categoria_crea('Balcone prova');

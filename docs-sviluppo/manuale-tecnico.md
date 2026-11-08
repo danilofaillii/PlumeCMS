@@ -6551,7 +6551,7 @@ senza editor usa il testo della scheda (Markdown convertito). Misure, tutte cont
   struttura dei widget (sequenze con i doppioni di fila contati una volta, primo widget, widget più usati);
 - da 3 a 5 estratti (al massimo `AIC_STILE_ESTRATTO_MAX`, 600 caratteri): per articolo, dai più recenti, il paragrafo di almeno 15
   parole più vicino al paragrafo medio del sito che usa la persona dominante, senza due estratti uguali; il criterio è nel JSON.
-`come_leggerlo` (`aic_stile_come_leggerlo()` `:340`) spiega ogni misura. Tempi: 47 ms con 311 articoli pubblicati (ne legge 50).
+`come_leggerlo` (`aic_stile_come_leggerlo()` `:340`) spiega ogni misura. Tempi: 114 ms con 311 articoli pubblicati, 300 da circa 800 parole (ne legge 50).
 
 ### 47.18 Il profilo di stile e la coerenza delle bozze
 
@@ -6584,7 +6584,7 @@ slug di un articolo, o nel titolo o slug di una pagina. Spunti, ognuno con `tipo
 - `tag_con_un_articolo`, `categoria_povera` (due articoli o meno);
 - `molto_letto_senza_collegati`: solo con l'addon Statistiche (`cms_modulo('statistiche')` e `function_exists('st_classifica')`),
   le 30 pagine più viste in 90 giorni che sono articoli collegati da al massimo un altro articolo.
-Più `temi_coperti` (categorie con il conto, tag, parole chiave, titoli). Non inventa titoli. Tempi: 125 ms con 311 articoli.
+Più `temi_coperti` (categorie con il conto, tag, parole chiave, titoli). Non inventa titoli. Tempi: 607 ms con 311 articoli, 300 da circa 800 parole.
 
 ### 47.20 Le idee: propose_article_ideas, list_article_ideas, idea_id
 

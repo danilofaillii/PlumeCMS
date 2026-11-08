@@ -227,7 +227,8 @@ function aic_idee_collegati($in): array {
     if (!is_array($in)) return [[], []];
     $out = []; $avvisi = [];
     foreach (array_slice(array_values($in), 0, AIC_IDEE_COLLEGATI_MAX * 2) as $x) {
-        $tipo = is_array($x) && in_array($x['tipo'] ?? 'articoli', ['articoli', 'pagine'], true) ? (string)($x['tipo'] ?? 'articoli') : 'articoli';
+        $tipo = is_array($x) ? ($x['tipo'] ?? 'articoli') : 'articoli';
+        if (!in_array($tipo, ['articoli', 'pagine'], true)) { $avvisi[] = 'Un contenuto da collegare con un tipo diverso da articoli o pagine è stato ignorato.'; continue; }
         $id = is_array($x) ? ($x['id'] ?? 0) : $x;
         if (!is_int($id) && !(is_string($id) && ctype_digit($id))) { $avvisi[] = 'Un articolo da collegare senza un id valido è stato ignorato.'; continue; }
         $r = contenuti_leggi($tipo, (int)$id);
