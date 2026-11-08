@@ -109,7 +109,7 @@ Sono gli unici in `cms/docs/`, nello zip, nel sito di plumeCMS e nella pagina Do
 - **Pacchetto di aggiornamento** per un'installazione esistente:
   `python3 tools/cms-pacchetto.py --aggiornamento`. Si carica dal pannello,
   Impostazioni, Aggiornamenti.
-- **Versione**: `cms/VERSIONE` (oggi 2.34.0; sempre tre numeri: "beta" va nel CHANGELOG, mai nel nome dello zip, se no la serie "ultima" del Download non lo riconosce) e una voce in `cms/CHANGELOG.md` a ogni
+- **Versione**: `cms/VERSIONE` (oggi 2.35.0; sempre tre numeri: "beta" va nel CHANGELOG, mai nel nome dello zip, se no la serie "ultima" del Download non lo riconosce) e una voce in `cms/CHANGELOG.md` a ogni
   zip con contenuto diverso. Mai cambiare il contenuto di una versione già data.
 - **Prove** prima di dire finito:
   - `php -n -d short_open_tag=1 -l` su ogni file PHP toccato, `node --check` sui js;
@@ -167,6 +167,24 @@ Le decisioni complete, con data e perché, stanno nel second brain, `plumecms/de
 - **Nome: plumeCMS** (26 ottobre 2026).
 
 ## Stato al 31 ottobre 2026
+
+Fatto: plumeCMS 2.35.0 (8 novembre, 22:32-23:30): **le correzioni SEO e AEO dell'audit di plumecms.it** (audit del 8 novembre, rapporto
+`https://claude.ai/artifact/9s9NSqmh15jtfe1FQpP8Hm`, fatto con il connettore AI collegate di plumecms.it: prima prova vera con un client Claude). Agente nella
+worktree `/home/user/wt-seo2`, ramo `seo-plume` (22:34-23:10), riletto, unito e riprovato da me. Prodotto: llms.txt calcolato con la sezione Pagine, senza
+sezioni vuote né Glossario senza termini (prima linkava /glossario/ in 404); tipo "Programma" (SoftwareApplication) nei Dati per Google in più
+(`seo-schema.php`, senza aggregateRating); i dati in più ora escono anche nella home (difetto dalla 2.29.0); colonna `pages.keyword_target`;
+`sito_importa_pagina_seo()` (tldr, faq, keyword, seo_schema dai pacchetti); voce `seo` del manifest (`AGG_SEO`, `agg_seo_valida()`: solo titolo.sito e sep,
+meta.descrizione e og_immagine, org, persona nome e ruolo, interruttori di schema). Il motore dei pacchetti è cambiato e il sito usa le voci nuove:
+**consegna in due pacchetti** (`-1-cms.zip` poi `-2-sito.zip`; con il motore vecchio il sito esce senza i campi nuovi: 121/128, poi 128/128).
+Sito di plumeCMS: titoli e descrizioni dell'audit, In breve e parola chiave su ogni pagina (in home anche visibile sotto l'apertura tenuta), domande
+nuove (gratis, WordPress, ChatGPT e Claude, Plume CMS, hosting, chi c'è dietro), pagina `/plumecms-wordpress/`, Leggi anche, Domande frequenti nel menu
+principale, Programma in home e How-to in Installazione, voce seo (nome "plumeCMS", Organizzazione, Persona Danilo Failli "Creatore di plumeCMS").
+Danilo: niente GitHub pubblico (decisione), Bing Webmaster collegato. Prove mie sullo zip (`$S/v17/batteria.sh`, 23:12-23:21): install 38/38 radice e
+cartella, robots 14/14, kit 34/34 e 44/44, AI 90/90, navigazione 52/52, stile 53/53, strumenti SEO 71/71 su kit in radice e cartella, seo-plume 42/42 su
+kit radice e cartella e sul sito aggiornato (41/42 su un sito senza kit: vuole /servizi/), aggiornamento 2.34.0 -> 2.35.0 13/13 con 0 foto su 20, attacchi
+523/523 (gruppo 49), sito di plumeCMS con i due pacchetti su un 2.34.0 132/132, zero errori fatali. `prova-consegna-unica.js` dà 11/13 perché si aspetta
+un pacchetto solo (con due pacchetti non è adattata). PDF 13223 KB, zip 2594 KB. **Non provato**: validatori di Google sul JSON-LD, Apache vero; l'alt
+della copertina (l'Apertura non ha il campo alt e la hero è tenuta).
 
 Fatto: plumeCMS 2.34.0 (8 novembre, 17:54-18:52): **AI collegate, stile del sito e idee per articoli** (terza fase del connettore; richiesta
 di Danilo: "articoli nuovi in base all'argomento, nello stile di quelli già scritti"). Agente nella worktree `/home/user/wt-ai3`, ramo `ai-stile`

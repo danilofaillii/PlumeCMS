@@ -9,6 +9,8 @@
 //  4. La voce "seo" del manifest: letta se buona, respinta se chiede chiavi non ammesse o un logo javascript:.
 //  Con SALVA_HTML=<file> salva l'HTML di alcune pagine e esce (prima dell'aggiornamento); con CONFRONTA_HTML=<file> lo confronta
 //  per primo (dopo l'aggiornamento: il sito deve uscire identico al byte, a parte llms.txt).
+// Vuole un sito col kit Attività (prove/prova-kit.js ... attivita ...): il controllo dell'In breve nel llms.txt usa la pagina /servizi/.
+// Su un sito appena installato senza quel kit dà 41 su 42, non è un difetto.
 // uso: node prove/prova-seo-plume.js <base> <cartella CMS> <utente> <password> [cartella foto]
 const { chromium } = require('playwright');
 const pnConferme = require('./conferme-pannello');
