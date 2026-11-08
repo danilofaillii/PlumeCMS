@@ -25,7 +25,7 @@ const AIC_STILE_VUOTE = ['a', 'ad', 'al', 'allo', 'alla', 'ai', 'agli', 'alle', 
     'quali', 'quando', 'quanto', 'quella', 'quelle', 'quelli', 'quello', 'questa', 'queste', 'questi', 'questo', 'qui', 'se', 'sei', 'senza', 'si', 'sia', 'siamo', 'sono',
     'sopra', 'sotto', 'sta', 'stato', 'stati', 'su', 'sua', 'sue', 'sui', 'sul', 'sull', 'sulla', 'sulle', 'suo', 'suoi', 'tra', 'tu', 'ti', 'te', 'tuo', 'tua', 'tuoi', 'tue',
     'tutto', 'tutta', 'tutti', 'tutte', 'un', 'una', 'uno', 'vi', 'voi', 'vostro', 'vostra', 'gia', 'cosi', 'puo', 'puoi', 'essere', 'stesso', 'stessa', 'altro', 'altra', 'altri',
-    'altre', 'ora', 'quindi', 'pero', 'mentre', 'oltre', 'entro', 'verso', 'tanto', 'tanta', 'tanti', 'tante', 'solo', 'sempre', 'bene', 'dire', 'detto', 'nostro', 'via'];
+    'altre', 'com', 'dov', 'quell', 'quest', 'nient', 'd', 's', 'm', 't', 'v', 'n', 'ora', 'quindi', 'pero', 'mentre', 'oltre', 'entro', 'verso', 'tanto', 'tanta', 'tanti', 'tante', 'solo', 'sempre', 'bene', 'dire', 'detto', 'nostro', 'via'];
 /** Le parole che dicono la persona del testo (euristica dichiarata in come_leggerlo). */
 const AIC_STILE_TU = ['tu', 'ti', 'te', 'tuo', 'tua', 'tuoi', 'tue', 'puoi', 'devi', 'vuoi', 'sai', 'hai', 'sei', 'fai', 'scegli', 'prova', 'pensa', 'immagina', 'scopri', 'ricorda'];
 const AIC_STILE_VOI = ['voi', 'vi', 'vostro', 'vostra', 'vostri', 'vostre', 'potete', 'dovete', 'volete', 'avete', 'siete', 'fate'];
@@ -84,6 +84,12 @@ function aic_stile_piano(string $html): string {
 function aic_stile_parole(string $testo): array {
     preg_match_all('/[\p{L}\p{N}]+/u', $testo, $m);
     return $m[0];
+}
+
+/** Le parole con un segno vuoto ('') dove finisce una frase o un pezzo (punteggiatura): le espressioni non scavalcano i confini. */
+function aic_stile_token(string $testo): array {
+    preg_match_all('/[\p{L}\p{N}]+|[.!?;:,()\x{2026}"\x{201C}\x{201D}\x{AB}\x{BB}]/u', $testo, $m);
+    return array_map(fn($x) => preg_match('/^[\p{L}\p{N}]/u', $x) ? $x : '', $m[0]);
 }
 
 /** Le frasi: si spezza dopo . ! ? e i puntini, quando segue uno spazio e una maiuscola, un numero o una virgoletta. */
@@ -154,6 +160,7 @@ function aic_stile_misura(string $tipo, array $r, bool $bozza = false): array {
     if (preg_match_all('~<h[23]\b[^>]*>([\s\S]*?)</h[23]>~i', $html, $mh)) foreach ($mh[1] as $x) if (str_ends_with(aic_stile_piano($x), '?')) $titoliDomanda++;
     $faq = function_exists('sito_faq_da_json') ? sito_faq_da_json((string)($r['faq'] ?? '')) : (json_decode((string)($r['faq'] ?? ''), true) ?: []);
     $link = aic_stile_link_interni($html);
+    $token = aic_stile_token(aic_stile_piano((string)preg_replace('~</(p|h[1-6]|li|blockquote|div|td)>~i', ' . $0', $html)));
     return [
         'parole' => count($parole),
         'frasi' => count($frasi),
@@ -171,7 +178,7 @@ function aic_stile_misura(string $tipo, array $r, bool $bozza = false): array {
         'domande_frequenti' => count($faq) + $titoliDomanda,
         'persona' => aic_stile_persona($parole),
         'editor' => $e['editor'], 'widget' => $e['widget'],
-        '_attacco' => $attacco, '_chiusura' => $chiusura, '_paragrafi' => $paragrafi, '_parole' => $parole,
+        '_attacco' => $attacco, '_chiusura' => $chiusura, '_paragrafi' => $paragrafi, '_parole' => $parole, '_token' => $token,
     ];
 }
 
@@ -249,7 +256,7 @@ function aic_stile_analizza(array $a = []): array {
         $x = aic_stile_misura('articoli', $r);
         $x['_r'] = $r;
         $m[] = $x;
-        $perArt[] = $x['_parole'];
+        $perArt[] = $x['_token'];
         $persone[$x['persona']['persona']]++;
         foreach (contenuti_categorie_di($r) as $c) if ($c !== '') $cat[$c] = ($cat[$c] ?? 0) + 1;
         $ts = sito_lista((string)($r['tag_slugs'] ?? '')) ?: array_map('contenuti_slug', sito_lista((string)($r['tags'] ?? '')));
@@ -284,7 +291,7 @@ function aic_stile_analizza(array $a = []): array {
     }
     // Estratti rappresentativi: il paragrafo più vicino al paragrafo medio del sito, uno per articolo, con la persona dominante
     // se c'è, dai più recenti; al massimo cinque.
-    $estratti = [];
+    $estratti = []; $giaVisti = [];
     foreach ($m as $x) {
         if (count($estratti) >= 5) break;
         $migliore = null; $dist = PHP_INT_MAX;
@@ -293,8 +300,9 @@ function aic_stile_analizza(array $a = []): array {
             if ($np < 15) continue;
             if ($dom !== 'impersonale' && aic_stile_persona(aic_stile_parole($p))['persona'] !== $dom) continue;
             $dd = abs($np - $parMed);
-            if ($dd < $dist) { $dist = $dd; $migliore = $p; }
+            if ($dd < $dist && !isset($giaVisti[aic_stile_norm($p)])) { $dist = $dd; $migliore = $p; }
         }
+        if ($migliore !== null) $giaVisti[aic_stile_norm($migliore)] = true; // due paragrafi uguali in due articoli valgono un estratto
         if ($migliore !== null) $estratti[] = ['articolo' => (string)$x['_r']['title'], 'id' => (int)$x['_r']['id'], 'testo' => mb_strlen($migliore) > AIC_STILE_ESTRATTO_MAX ? mb_substr($migliore, 0, AIC_STILE_ESTRATTO_MAX - 3) . '...' : $migliore];
     }
     $tagOut = []; foreach (array_slice($tag, 0, 15, true) as $s => $v) $tagOut[] = ['tag' => (string)($tagNomi[$s] ?? $s), 'articoli' => $v];

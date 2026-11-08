@@ -103,16 +103,19 @@ function aic_idee_spunti(array $a = []): array {
     foreach ($correlate as $k) {
         if ($haDedicato($k) !== null) continue;
         $dove = $doveCitato($k);
-        $aggiungi('parola_chiave_senza_articolo', $k, 'È fra le parole chiave correlate' . ($dove ? ' e la citano ' . count($dove) . ' articoli' : '') . ', ma nessun articolo ha questo argomento nel titolo, nella parola chiave o nell\'indirizzo.', $dove, 60 + 10 * count($dove));
+        $aggiungi('parola_chiave_senza_articolo', $k, 'È fra le parole chiave correlate' . ($dove ? ' e la citano ' . count($dove) . ' articoli' : '') . ', ma nessun articolo ha questo argomento nel titolo, nella parola chiave o nell\'indirizzo.', $dove, 80 + 10 * min(8, count($dove)));
     }
     // 2. Espressioni ricorrenti nel testo (in almeno tre articoli) senza un articolo dedicato.
-    $perArt = array_map(fn($x) => aic_stile_parole($x['testo']), $art);
+    // Un'espressione che sta in quasi tutti gli articoli (oltre il 60%, con almeno cinque articoli) è una formula dello stile
+    // ("ora tocca a te"), non un argomento: non diventa uno spunto.
+    $perArt = array_map(fn($x) => aic_stile_token($x['testo']), $art);
     $ric = aic_stile_ricorrenti($perArt);
+    $formula = count($art) >= 5 ? (int)floor(count($art) * 0.6) : PHP_INT_MAX;
     foreach (array_merge($ric['espressioni_di_3'], $ric['espressioni_di_2']) as $e) {
-        if ($e['articoli'] < 3 || count(aic_idee_termini($e['testo'])) < 2) continue;
+        if ($e['articoli'] < 3 || $e['articoli'] > $formula || count(aic_idee_termini($e['testo'])) < 2) continue;
         if ($haDedicato($e['testo']) !== null) continue;
         $dove = $doveCitato($e['testo']);
-        $aggiungi('tema_citato_senza_articolo', $e['testo'], '«' . $e['testo'] . '» compare ' . $e['volte'] . ' volte in ' . $e['articoli'] . ' articoli, ma non ha un articolo suo.', $dove, 40 + 8 * $e['articoli']);
+        $aggiungi('tema_citato_senza_articolo', $e['testo'], '«' . $e['testo'] . '» compare ' . $e['volte'] . ' volte in ' . $e['articoli'] . ' articoli, ma non ha un articolo suo.', $dove, 40 + 5 * min(8, $e['articoli']));
     }
     // 3. Domande frequenti delle schede e sottotitoli a domanda che possono diventare articoli.
     foreach ($art as $x) {
@@ -184,7 +187,7 @@ function aic_idee_come_leggerlo(): array {
     return [
         'Gli spunti sono calcolati dal sito sugli articoli pubblicati (al massimo i ' . AIC_IDEE_MAX_ARTICOLI . ' più recenti) e sulle pagine: non sono titoli, sono il materiale da cui proporre articoli nuovi.',
         'Un tema "ha un articolo dedicato" se tutte le sue parole (senza le parole vuote) stanno nel titolo, nella parola chiave o nell\'indirizzo di un articolo, o nel titolo di una pagina.',
-        'Tipi: parola_chiave_senza_articolo (fra le parole correlate delle schede), tema_citato_senza_articolo (espressione in almeno tre articoli), domanda_che_diventa_articolo (domande frequenti e sottotitoli a domanda), tag_con_un_articolo, categoria_povera (due articoli o meno), molto_letto_senza_collegati (solo con l\'addon Statistiche: tra le 30 pagine più viste in 90 giorni, collegato da al massimo un articolo).',
+        'Tipi: parola_chiave_senza_articolo (fra le parole correlate delle schede), tema_citato_senza_articolo (espressione in almeno tre articoli ma non in quasi tutti: quelle oltre il 60% degli articoli sono formule dello stile), domanda_che_diventa_articolo (domande frequenti e sottotitoli a domanda), tag_con_un_articolo, categoria_povera (due articoli o meno), molto_letto_senza_collegati (solo con l\'addon Statistiche: tra le 30 pagine più viste in 90 giorni, collegato da al massimo un articolo).',
         '"nasce_da" sono gli articoli in cui il tema compare; "link_interni_consigliati" sono gli articoli che il nuovo articolo dovrebbe collegare (e da cui farsi collegare). "forza" ordina gli spunti: più alta, più utile.',
         'Poi proponi le idee con propose_article_ideas (titolo, parola chiave, a chi serve, scaletta, articoli da collegare, motivo): le approva l\'amministratore. Le approvate le leggi con list_article_ideas e le scrivi con create_draft passando idea_id.',
     ];
