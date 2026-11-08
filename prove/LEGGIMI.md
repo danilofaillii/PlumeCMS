@@ -939,3 +939,19 @@ con un 301 all'articolo, anche con una regola `start` su `/articoli/` nella tabe
 che non sono articoli, e per le bozze). 14 controlli. Su un sito appena installato (serve l'articolo di partenza `/benvenuto/`),
 radice e cartella: `node prove/prova-robots-articoli.js <base> <cartella del CMS>`. Mette e toglie i suoi redirect e la sua
 bozza con `prove/redirect-cli.php`. Con la 2.32.0 dà 9 su 14 (i due difetti).
+
+## prova-seo-plume.js (2.35.0)
+
+Le correzioni SEO e AEO dell'audit di plumecms.it: llms.txt calcolato con le pagine (niente sezioni vuote, niente Glossario senza
+termini, mai bozze né pagine nascoste a Google, quello scritto a mano che vince), i dati per Google "Programma" dalla scheda nel
+browser (anche i valori cattivi e 390 px), la parola chiave delle pagine, le pagine dei pacchetti con `tldr`, `faq`, `keyword` e
+`seo_schema`, la voce `seo` del manifest.
+1. Un CMS installato con il kit Attività (`prove/prova-kit.js ... attivita ...`), radice o cartella.
+2. `node prove/prova-seo-plume.js <base> <cartella del CMS> <utente> <password> [cartella foto]` (con `prove/seo-plume-cli.php`
+   e `prove/seo-strumenti-cli.php`). Per il sito identico dopo l'aggiornamento: sul sito 2.34.0 col kit
+   `SALVA_HTML=<file> node prove/prova-seo-plume.js ...` (salva sette indirizzi e esce), poi l'aggiornamento, poi
+   `CONFRONTA_HTML=<file> node prove/prova-seo-plume.js ...` (confronta al byte e fa il resto).
+3. Atteso (2.35.0): 42 su 42 in radice e in cartella; 49 su 49 con `CONFRONTA_HTML` dopo l'aggiornamento 2.34.0 -> 2.35.0.
+   Alla fine toglie le pagine di prova e rimette llms e descrizione generale.
+
+Gli attacchi sono il gruppo 49 di `tools/sicurezza-prova.js` (7, con `CMS_DIR`).
