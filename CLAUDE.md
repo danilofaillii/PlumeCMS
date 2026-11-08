@@ -168,7 +168,7 @@ Le decisioni complete, con data e perché, stanno nel second brain, `plumecms/de
 
 ## Stato al 31 ottobre 2026
 
-Fatto: plumeCMS 2.34.0 (8 novembre, 17:54-18:58): **AI collegate, stile del sito e idee per articoli** (terza fase del connettore; richiesta
+Fatto: plumeCMS 2.34.0 (8 novembre, 17:54-18:52): **AI collegate, stile del sito e idee per articoli** (terza fase del connettore; richiesta
 di Danilo: "articoli nuovi in base all'argomento, nello stile di quelli già scritti"). Agente nella worktree `/home/user/wt-ai3`, ramo `ai-stile`
 (17:55-18:35), riletto, unito e riprovato da me. `cms/addon/ai-collegate/includes/stile.php` e `idee.php`, pagine Stile del sito e Idee per articoli
 (piano editoriale per mese, data solo promemoria), tabelle `ai_stile` (10 versioni) e `ai_idee`; strumenti `analyze_style` (misure calcolate dal
