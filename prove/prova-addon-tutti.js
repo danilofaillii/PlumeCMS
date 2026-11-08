@@ -1,4 +1,4 @@
-// 2.0.0: tutti gli addon accesi insieme (nove dalla 2.22.0, con Test e questionari), come li vede l'amministratore e chi visita. Su un CMS installato con il kit Attività.
+// 2.0.0: tutti gli addon accesi insieme (nove dalla 2.22.0, con Test e questionari; dieci dalla 2.32.0, con AI collegate), come li vede l'amministratore e chi visita. Su un CMS installato con il kit Attività.
 // Accende ogni addon da Impostazioni > Addon, apre ogni pagina del pannello degli addon (dal menu) al computer e al telefono
 // (nessun errore JavaScript o PHP, niente scorrimento di lato), la dashboard, la pagina Widget e l'editor; poi le pagine
 // pubbliche degli addon; poi li spegne tutti e controlla che home, Servizi, Contatti e sitemap tornino uguali a prima.
@@ -9,7 +9,7 @@ const fs = require('fs');
 const path = require('path');
 const [B, UTENTE, PASSWORD, DIR] = process.argv.slice(2);
 let n = 0, ko = 0; const ok = (t, c, extra = '') => { n++; if (!c) ko++; console.log((c ? 'OK  ' : 'KO  ') + t + (extra ? ' ' + JSON.stringify(extra).slice(0, 260) : '')); };
-const ADDON = ['copia-altrove', 'corsi', 'eventi-iscrizione', 'membri', 'prenotazioni', 'recensioni', 'statistiche', 'vetrina', 'test'];
+const ADDON = ['copia-altrove', 'corsi', 'eventi-iscrizione', 'membri', 'prenotazioni', 'recensioni', 'statistiche', 'vetrina', 'test', 'ai-collegate'];
 // Il nonce della CSP e i token cambiano a ogni richiesta: si tolgono prima di confrontare.
 const pulisci = h => h.replace(/nonce="[^"]*"/g, '').replace(/name="_csrf" value="[^"]*"/g, '').replace(/data-ora="[^"]*"/g, '').replace(/\d+ (giorni|ore|minuti|secondi)/g, '');
 const log = () => { const f = path.join(DIR, 'logs', 'php-errori.log'); return fs.existsSync(f) ? fs.readFileSync(f, 'utf8') : ''; };
@@ -88,6 +88,10 @@ const log = () => { const f = path.join(DIR, 'logs', 'php-errori.log'); return f
     const larga = await v.evaluate(() => document.documentElement.scrollWidth);
     ok('sito ' + u + ' con tutti gli addon accesi: si apre, al telefono senza scorrimento di lato', r.status() === 200 && larga <= 392, { s: r.status(), larga });
   }
+  // 2.32.0: AI collegate accesa: il server MCP chiede il permesso (401) e i metadati rispondono.
+  const mcpSu = await p.request.post(B + '/api/mcp', { data: { jsonrpc: '2.0', id: 1, method: 'ping' }, maxRedirects: 0 });
+  const prmSu = await p.request.get(B + '/.well-known/oauth-protected-resource');
+  ok('AI collegate accesa: /api/mcp 401 con WWW-Authenticate, metadati della risorsa 200', mcpSu.status() === 401 && /resource_metadata/.test(mcpSu.headers()['www-authenticate'] || '') && prmSu.status() === 200, [mcpSu.status(), prmSu.status()]);
   const cookie = (await v.context().cookies()).map(c => c.name);
   ok('chi visita le pagine normali non riceve cookie (Statistiche senza cookie)', !cookie.some(c => !/^(carrello|membri)/i.test(c)) || cookie.length === 0, cookie);
 
@@ -105,6 +109,7 @@ const log = () => { const f = path.join(DIR, 'logs', 'php-errori.log'); return f
     ok('spenti: ' + u + ' è uguale a prima di accenderli', ora === prima[u], ora.length + ' / ' + prima[u].length);
   }
   ok('spenti: /negozio/ dà 404', (await p.request.get(B + '/negozio/')).status() === 404);
+  ok('spenti: /api/mcp e i metadati della risorsa danno 404', (await p.request.post(B + '/api/mcp', { data: {} })).status() === 404 && (await p.request.get(B + '/.well-known/oauth-protected-resource')).status() === 404);
   const nuovo = log().slice(logPrima);
   ok('nessun errore PHP nel log durante la prova', !/Fatal|Warning|Uncaught|Deprecated/.test(nuovo), nuovo.slice(0, 300));
   ok('nessun errore JavaScript', err.length === 0, err);
