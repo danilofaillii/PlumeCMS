@@ -624,7 +624,6 @@ function aic_nav_blocchi(array $c, array $a): array {
         $la = $a['leggi_anche'];
         if (!is_array($la) || !is_array($la['voci'] ?? null) || !$la['voci']) throw new AicErrore('"leggi_anche" vuole {titolo, voci:[{tipo, id}]}: da 2 a 6 contenuti pubblicati del sito.');
         if (count($la['voci']) > 6) throw new AicErrore('"leggi_anche": al massimo 6 voci.');
-        if (in_array('leggi_anche', array_column($giaW, 'tipo'), true)) throw new AicErrore('La pagina ha già un blocco Leggi anche: per cambiarlo usa propose_change sul suo testo, o chiedi all\'amministratore.');
         $voci = []; $visti = [];
         foreach (array_values($la['voci']) as $i => $v) {
             $t = is_array($v) && in_array($v['tipo'] ?? '', ['pagine', 'articoli'], true) ? $v['tipo'] : '';
@@ -637,6 +636,7 @@ function aic_nav_blocchi(array $c, array $a): array {
             $visti[$k] = true;
             $voci[] = ['titolo' => $d['titolo'], 'link' => $d['percorso']];
         }
+        if (in_array('leggi_anche', array_column($giaW, 'tipo'), true)) throw new AicErrore('La pagina ha già un blocco Leggi anche: per cambiarlo chiedi all\'amministratore (si modifica nell\'editor).');
         $titolo = aic_testo($la['titolo'] ?? '', 80) ?: 'Leggi anche';
         $widget[] = ['tipo' => 'leggi_anche', 'impostazioni' => ['titolo' => $titolo, 'voci' => $voci]];
         $html .= '<h2>' . h($titolo) . '</h2><ul>' . implode('', array_map(fn($v) => '<li><a href="' . h($v['link']) . '">' . h($v['titolo']) . '</a></li>', $voci)) . '</ul>';

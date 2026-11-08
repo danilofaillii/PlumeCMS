@@ -195,7 +195,7 @@ function aic_tipo($t, bool $media = false): string {
 
 function aic_riga(string $tipo, $id): array {
     $r = is_numeric($id) && (int)$id > 0 ? contenuti_leggi($tipo, (int)$id) : null;
-    if (!$r || !empty($r['cestino'])) throw new AicErrore('Contenuto non trovato (' . $tipo . ' ' . (int)$id . '): controlla l\'id con list_content.', 404);
+    if (!$r || !empty($r['cestino'])) throw new AicErrore('Contenuto non trovato (' . $tipo . ' ' . (is_numeric($id) ? (int)$id : '?') . '): controlla l\'id con list_content.', 404);
     return $r;
 }
 

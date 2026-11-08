@@ -191,7 +191,7 @@ const pagina = async (url) => (await fetch(url)).text();
 
   // === 9. propose_navigation_fix
   const chi = +sql("SELECT id FROM {p}pages WHERE slug = 'chi-siamo'")[0].id, serv = +sql("SELECT id FROM {p}pages WHERE slug = 'servizi'")[0].id;
-  const nf = await strumento(K, 'propose_navigation_fix', { tipo: 'pagine', id: chi, motivo: 'Chi siamo non rimanda alle altre pagine.', leggi_anche: { titolo: 'Altre pagine', voci: [{ tipo: 'pagine', id: serv }, { tipo: 'pagine', id: prep.orfana }] }, briciole: true });
+  const nf = await strumento(K, 'propose_navigation_fix', { tipo: 'pagine', id: prep.orfana, motivo: 'Lavora con noi non rimanda alle altre pagine.', leggi_anche: { titolo: 'Altre pagine', voci: [{ tipo: 'pagine', id: serv }, { tipo: 'pagine', id: chi }] }, briciole: true });
   ok('propose_navigation_fix su un pubblicato: proposta "Blocchi in fondo alla pagina" e la nota sulle briciole', !nf.errore && nf.dati.campo === 'navigazione' && nf.dati.avvisi.some(a => /Briciole/.test(a)), nf.dati);
   const nfB = await strumento(K, 'propose_navigation_fix', { tipo: 'pagine', id: prep.bozza, motivo: 'Bozza: invito verso Contatti.', invito: { titolo: 'Ti interessa?', testo: 'Scrivici.', pulsante: 'Scrivici' } });
   const bz = sql('SELECT struttura, struttura_bozza, status FROM {p}pages WHERE id = ' + prep.bozza)[0];
@@ -202,8 +202,8 @@ const pagina = async (url) => (await fetch(url)).text();
   await p.goto(URLP, { waitUntil: 'networkidle' });
   ok('Proposte: prima e dopo leggibili dei blocchi in fondo', /Leggi anche|Altre pagine/.test(await p.locator('#proposta-' + nf.dati.proposta + ' .aic-dopo').innerText()) && /ultima sezione/.test(await p.locator('#proposta-' + nf.dati.proposta + ' .aic-prima').innerText()));
   await Promise.all([p.waitForNavigation(), p.click('#proposta-' + nf.dati.proposta + ' button[value=approva]')]); await p.waitForLoadState('networkidle');
-  const sitoChi = await pagina(B + '/chi-siamo/');
-  ok('approvata: sul sito Chi siamo finisce con "Altre pagine" e i link', /Altre pagine/.test(sitoChi) && /ai-prova-nav-orfana\//.test(sitoChi));
+  const sitoLav = await pagina(B + '/ai-prova-nav-orfana/');
+  ok('approvata: sul sito "Lavora con noi" finisce con "Altre pagine" e i link a Servizi e Chi siamo', /Altre pagine/.test(sitoLav) && /href="[^"]*\/servizi\/"/.test(sitoLav) && /href="[^"]*\/chi-siamo\/"/.test(sitoLav));
 
   // === 10. Telefono e tempi
   await p.setViewportSize({ width: 390, height: 800 });
