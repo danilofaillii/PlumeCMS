@@ -156,6 +156,38 @@ function aic_tabelle(): array {
             `creato` DATETIME NOT NULL,
             PRIMARY KEY (`id`), KEY `url` (`url`(191))
         ) $e",
+        // 2.34.0: il profilo di stile del sito, una riga per versione (l'ultima è quella in uso; si tengono le dieci precedenti).
+        'ai_stile' => 'CREATE TABLE IF NOT EXISTS ' . tbl('ai_stile') . " (
+            `id` INT(11) NOT NULL AUTO_INCREMENT,
+            `testo` TEXT NOT NULL,
+            `misure` MEDIUMTEXT,
+            `autore` VARCHAR(200) NOT NULL DEFAULT '',
+            `connessione_id` INT(11) NOT NULL DEFAULT 0,
+            `origine` VARCHAR(12) NOT NULL DEFAULT 'ai',
+            `creato` DATETIME NOT NULL,
+            PRIMARY KEY (`id`)
+        ) $e",
+        // 2.34.0: le idee per articoli nuovi proposte dalle AI (attesa, da_scrivere, scritta, scartata) e il piano editoriale.
+        'ai_idee' => 'CREATE TABLE IF NOT EXISTS ' . tbl('ai_idee') . " (
+            `id` INT(11) NOT NULL AUTO_INCREMENT,
+            `connessione_id` INT(11) NOT NULL DEFAULT 0,
+            `client` VARCHAR(200) NOT NULL DEFAULT '',
+            `titolo` VARCHAR(300) NOT NULL DEFAULT '',
+            `parola_chiave` VARCHAR(200) NOT NULL DEFAULT '',
+            `pubblico` VARCHAR(500) NOT NULL DEFAULT '',
+            `scaletta` TEXT,
+            `collegati` TEXT,
+            `motivo` TEXT,
+            `stato` VARCHAR(12) NOT NULL DEFAULT 'attesa',
+            `articolo_id` INT(11) NOT NULL DEFAULT 0,
+            `data_prevista` DATE DEFAULT NULL,
+            `ordine` INT(11) NOT NULL DEFAULT 0,
+            `nota` VARCHAR(500) NOT NULL DEFAULT '',
+            `creato` DATETIME NOT NULL,
+            `deciso` DATETIME DEFAULT NULL,
+            `deciso_da` VARCHAR(100) NOT NULL DEFAULT '',
+            PRIMARY KEY (`id`), KEY `stato` (`stato`, `ordine`), KEY `connessione` (`connessione_id`)
+        ) $e",
     ];
 }
 
