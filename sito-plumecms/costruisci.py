@@ -747,7 +747,7 @@ def zip_lavagna(dest):
 # Regola di Danilo (1 novembre 2026): solo i punti salienti, una riga per versione, mai nomi di aziende o servizi di terzi.
 # Le novità per chi scarica: brevi, scritte qui (il CHANGELOG è per chi sviluppa). Da aggiornare a ogni versione.
 NOVITA = [
-    ('2.35.0', 'Più chiaro per i motori di ricerca e le AI', ['Il file per le AI elenca anche le pagine e salta le parti vuote; nei dati per i motori di ricerca una pagina può presentare un programma, con versione, prezzo e licenza; il sito di plumeCMS ha riassunti, domande nuove e il confronto con WordPress.']),
+    ('2.35.0', 'Più chiaro per i motori di ricerca e le AI', ['Il file per le AI elenca anche le pagine e salta le parti vuote; nei dati per i motori di ricerca una pagina può presentare un programma, con versione, prezzo e licenza; il sito di plumeCMS ha riassunti, domande nuove e una pagina di confronto.']),
     ('2.34.0', 'Articoli nuovi con il tuo stile', ['La tua AI impara come scrivi dagli articoli già pubblicati e ti propone idee sugli argomenti che mancano: tu approvi, le metti in un piano per mese, e lei scrive in bozza solo quelle, con il tuo stile.']),
     ('2.33.0', 'Menu e articoli rivisti dall\'AI', ['La tua AI controlla tutti i menu e gli articoli già online: propone il menu sistemato, affiancato a quello di oggi, e le modifiche SEO di ogni articolo raggruppate. Approvi tutto, una per una o niente.']),
     ('2.32.0', 'AI collegate', ['Collega la tua AI al sito con un indirizzo e il tuo permesso: legge le pagine, fa l\'audit SEO, scrive bozze complete con i widget e trova foto con licenza libera. Non pubblica mai: le bozze le pubblichi tu, le modifiche a quello che è già online sono proposte da approvare.']),

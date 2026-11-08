@@ -14,6 +14,8 @@ Il prodotto si chiama **plumeCMS** (nome scelto il 26 ottobre 2026; prima, per p
   nome, versione (anche `{versione:<serie>}` del Download, che il sito sostituisce con l'ultima), categoria, dove funziona,
   prezzo (0 se gratuito) e valuta, licenza, indirizzo per scaricarlo, cosa serve. Autore ed editore sono l'Organizzazione di SEO
   e AEO. Niente valutazioni a stelle: Google le vuole solo vere. Senza il tipo scelto la pagina esce identica.
+- **La home porta i dati per Google in più della sua scheda.** Dalla 2.29.0 Prodotto, How-to e Video scelti nella scheda della
+  pagina che fa da home non uscivano nel JSON-LD (la home ha una strada sua nel sito): ora escono, anche il Programma.
 - **La parola chiave anche per le pagine** (prima solo gli articoli): campo nella scheda, colonna `keyword_target` di pages
   aggiunta da sola, letta dal controllo SEO e dalla Tabella SEO.
 - **I pacchetti portano i campi SEO delle pagine**: In breve (`tldr`), domande frequenti della scheda (`faq`), parola chiave

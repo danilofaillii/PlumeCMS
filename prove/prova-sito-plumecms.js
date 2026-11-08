@@ -73,7 +73,8 @@ async function contrastoParole(pg) {
     log += (st && st.log || []).join('\n') + '\n';
   }
   ok('resoconto: nome del sito, stile, header e footer, menu', /Impostazioni del sito/.test(log) && /Stile del sito aggiornato/.test(log) && /Header e footer: 2/.test(log) && /Menu di navigazione: 3/.test(log), log.slice(0, 300));
-  ok('resoconto: ' + (conHome ? 'sette pagine' : 'sei pagine, la home resta quella del sito'), (log.match(/^Pagina \//gm) || []).length === (conHome ? 7 : 6) && (conHome || !/^Pagina \/home\//m.test(log)));
+  // 2.35.0: otto pagine (la nuova plumeCMS e WordPress a confronto)
+  ok('resoconto: ' + (conHome ? 'otto pagine' : 'sette pagine, la home resta quella del sito'), (log.match(/^Pagina \//gm) || []).length === (conHome ? 8 : 7) && (conHome || !/^Pagina \/home\//m.test(log)));
   if (cmsNelPacchetto) {
     // 2.1.0, il pacchetto unico: nello stesso giro anche il codice del CMS.
     ok(`pacchetto unico: il CMS è passato alla ${V} (VERSIONE e pannello Informazioni)`, fs.readFileSync(path.join(DIR, 'VERSIONE'), 'utf8').trim() === V
@@ -89,7 +90,7 @@ async function contrastoParole(pg) {
   // Con la hero tenuta (2.18.0, "l'apertura resta quella del sito") il titolo della home è quello del sito, non quello del pacchetto.
   const tenuta = /l'apertura resta quella del sito/.test(log);
   const pagine = [...(conHome ? [['/', tenuta ? /./ : /leggero come una piuma/i]] : []), ['/funzionalita/', /vuoto/], ['/temi/', /Cambia vestito/], ['/documentazione/', /da leggere anche offline/],
-    ['/installazione/', /Installalo in 5 minuti/], ['/scarica/', new RegExp('Scarica plumeCMS ' + V.replace(/\./g, '\\.') + '$')], ['/domande-frequenti/', /Domande frequenti/]];
+    ['/installazione/', /Installalo in 5 minuti/], ['/scarica/', new RegExp('Scarica plumeCMS ' + V.replace(/\./g, '\\.') + '$')], ['/domande-frequenti/', /Domande frequenti/], ['/plumecms-wordpress/', /plumeCMS e WordPress, a confronto/]];
   for (const [u, re] of pagine) {
     const r = await v.goto(B + u, { waitUntil: 'networkidle' });
     const h1 = (await v.locator('h1').first().innerText({ timeout: 15000 }).catch(async () => 'senza h1: ' + (await v.title()) + ' | ' + (await v.locator('body').innerText()).slice(0, 300))).replace(/\s+/g, ' ');
@@ -204,7 +205,7 @@ async function contrastoParole(pg) {
   ok('Scarica: la licenza GNU GPL, con il link', /GNU GPL versione 3/.test(await v.locator('body').innerText()) && await v.locator('a[href*="gnu.org/licenses/gpl-3.0"]').count() >= 1);
   await v.goto(B + '/domande-frequenti/', { waitUntil: 'networkidle' });
   ok('Domande frequenti: quanto costa e a quali condizioni', /A quali condizioni lo uso\?/.test(await v.locator('body').innerText()));
-  ok('Domande frequenti (2.20.0): niente più import da un altro CMS', !/WordPress|Importa da/.test(await v.locator('body').innerText()));
+  ok('Domande frequenti (2.20.0): niente più import da un altro CMS', !/Importa da|importare da WordPress|plugin Ponte/i.test(await v.locator('body').innerText()));
   await v.goto(B + '/scarica/', { waitUntil: 'networkidle' });
   // Regola di Danilo (1 novembre 2026): nelle novità un elenco breve delle ultime versioni, senza nomi di aziende terze,
   // che non scende sotto il riquadro "Cosa serve" accanto (al computer).
@@ -231,7 +232,7 @@ async function contrastoParole(pg) {
   for (const [id, img, t] of DIECI)
     ok(`Funzionalità: ${t}, con la schermata`, (await v.locator('#' + id).innerText()).includes(t)
       && await v.evaluate((img) => [...document.images].some(i => new RegExp(img + '\\.webp').test(i.currentSrc || i.src) && i.complete && i.naturalWidth > 0), img));
-  ok('Funzionalità (2.20.0): nessun blocco e nessuna riga sull\'import da WordPress', await v.locator('#wordpress, #ponte').count() === 0 && !/WordPress|plugin Ponte/.test(await v.locator('main, body').first().innerText()));
+  ok('Funzionalità (2.20.0): nessun blocco e nessuna riga sull\'import da WordPress', await v.locator('#wordpress, #ponte').count() === 0 && !/Importa da WordPress|importare da WordPress|plugin Ponte/i.test(await v.locator('main, body').first().innerText()));
   ok('Funzionalità (2.21.0): l\'allineamento delle parti sta nel blocco dell\'editor, non in un blocco nuovo', /Ogni parte si allinea per conto suo/.test(await v.locator('#editor').innerText()) && await v.locator('#allinea, #allineamento').count() === 0);
   ok('Funzionalità (2.23.0): i tag stanno nel blocco della newsletter, non in un blocco nuovo', /Ogni persona ha i suoi tag/.test(await v.locator('#newsletter').innerText()) && await v.locator('#tag').count() === 0);
   ok('Funzionalità (2.24.0): le pagine del test stanno nella riga del test, non in un blocco nuovo', /trascinandole, e un telefono accanto/.test(await v.locator('body').innerText()));
@@ -267,6 +268,74 @@ async function contrastoParole(pg) {
   ok('Domande frequenti (1.5.0): i social', /Mi aiuta anche con i social\?/.test(await v.locator('body').innerText()));
   ok('Domande frequenti (1.4.2): la guida per imparare a usarlo', /una guida per imparare a usarlo/.test(await v.locator('body').innerText()));
   ok('Domande frequenti (2.1.0): il manuale d\'uso è un file solo', /in un file solo/.test(await v.locator('body').textContent()) && !/in due file/.test(await v.locator('body').textContent()));
+  // === 2.35.0: le correzioni SEO e AEO dell'audit di plumecms.it
+  {
+    const cliP = (...a) => JSON.parse(execFileSync('php', [path.join(__dirname, 'seo-plume-cli.php'), DIR, ...a.map(String)], { encoding: 'utf8', maxBuffer: 32 * 1024 * 1024 }).trim().split('\n').pop());
+    const grafoDi = async (u) => { const h = await (await v.request.get(B + u)).text(); const m = h.match(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/); try { return m ? JSON.parse(m[1])['@graph'] : []; } catch (e) { return []; } };
+    ok('2.35.0: il resoconto ha SEO e AEO dal pacchetto', /SEO e AEO: titolo \(sito\), meta \(descrizione\), org \(/.test(log), (log.match(/SEO e AEO:[^\n]*/) || [''])[0]);
+    const attesi = { '/': ['plumeCMS, il CMS italiano leggero con editor visuale', 'plumeCMS è un CMS italiano gratuito e open source in PHP e MySQL: editor visuale, temi, SEO, newsletter e AI collegata già dentro. Online in 5 minuti.'],
+      '/funzionalita/': ['Funzionalità di plumeCMS: editor, newsletter, SEO e AI', 'Editor visuale con 112 widget, newsletter e automazioni, SEO e AEO, dieci addon e la tua AI collegata: tutto quello che plumeCMS fa senza plugin.'],
+      '/temi/': ['Temi di plumeCMS: undici pronti e il tuo', 'Undici temi pronti per plumeCMS: cambi aspetto al sito con un clic e i contenuti restano dove sono. E il manuale per costruirne uno tuo.'],
+      '/documentazione/': ['Manuali di plumeCMS: guida d\'uso e temi in PDF', null], '/installazione/': ['Installare plumeCMS in 5 minuti: requisiti e passi', null],
+      '/scarica/': ['Scarica plumeCMS: CMS gratuito e open source', null],
+      '/domande-frequenti/': ['Domande frequenti su plumeCMS: hosting, AI, sicurezza', 'plumeCMS è gratis? Funziona con ChatGPT e Claude? Che hosting serve? Le risposte alle domande più frequenti, con i requisiti veri.'],
+      '/plumecms-wordpress/': ['plumeCMS e WordPress a confronto: cosa cambia', null] };
+    const lung = [];
+    for (const [u, [t, d]] of Object.entries(attesi)) {
+      if (u === '/' && !conHome) continue;
+      await v.goto(B + u, { waitUntil: 'domcontentloaded' });
+      const titolo = await v.title(), descr = await v.locator('meta[name=description]').getAttribute('content');
+      lung.push([u, titolo.length, (descr || '').length]);
+      ok(`2.35.0: ${u} ha il titolo per Google nuovo` + (d ? ' e la descrizione nuova' : ''), titolo === t && (!d || descr === d), [titolo, descr]);
+    }
+    ok('2.35.0: titoli fra 30 e 60 caratteri, descrizioni fra 70 e 160', lung.every(([, t, d]) => t >= 30 && t <= 60 && d >= 70 && d <= 160), lung);
+    const slugs = ['home', 'funzionalita', 'temi', 'documentazione', 'installazione', 'scarica', 'domande-frequenti', 'plumecms-wordpress'];
+    const righe = slugs.map(s => cliP('pagina', s));
+    ok('2.35.0: In breve (40-60 parole) e parola chiave su tutte le pagine del pacchetto', righe.every(r => r.tldr && r.tldr.split(/\s+/).length >= 40 && r.tldr.split(/\s+/).length <= 60 && r.keyword_target), righe.map(r => [r.tldr && r.tldr.split(/\s+/).length, r.keyword_target]));
+    if (conHome) {
+      await v.goto(B + '/', { waitUntil: 'networkidle' });
+      ok('2.35.0: la home mostra "In breve" sotto l\'apertura, con la frase che definisce', /In breve\.\s*plumeCMS è un CMS italiano gratuito e open source/.test(await v.locator('body').innerText()));
+      const gh = await grafoDi('/'); const sw = gh.find(x => x['@type'] === 'SoftwareApplication');
+      ok('2.35.0: nella home i dati Programma: plumeCMS, versione ' + V + ', gratuito, licenza GPL 3, download dalla serie', sw && sw.name === 'plumeCMS' && sw.softwareVersion === V && sw.offers.price === '0' && sw.offers.priceCurrency === 'EUR'
+        && sw.license === 'https://www.gnu.org/licenses/gpl-3.0.html' && /\/scarica\/plumecms-ultima\/$/.test(sw.downloadUrl) && sw.applicationCategory === 'WebApplication' && /PHP 8\.2/.test(sw.operatingSystem) && !sw.aggregateRating, sw);
+      const org = gh.find(x => x['@id'] && /#organizzazione$/.test(x['@id'])), per = gh.find(x => x['@type'] === 'Person'), sito = gh.find(x => x['@type'] === 'WebSite');
+      ok('2.35.0: Organizzazione plumeCMS con il marchio e la descrizione, Persona Danilo Failli, ricerca del sito (SearchAction)', org && org.name === 'plumeCMS' && /marchio\.png$/.test(org.logo.url) && /CMS italiano gratuito/.test(org.description || '')
+        && per && per.name === 'Danilo Failli' && per.jobTitle === 'Creatore di plumeCMS' && sito && sito.potentialAction && sito.potentialAction['@type'] === 'SearchAction', [org && org.logo, per && [per.name, per.jobTitle], sito && sito.potentialAction]);
+      const rc = await v.request.get(B + '/?s=temi');
+      ok('2.35.0: la ricerca del sito che la SearchAction annuncia risponde', rc.status() === 200 && /temi/i.test(await rc.text()), rc.status());
+    }
+    const gi = await grafoDi('/installazione/'); const ht = gi.find(x => x['@type'] === 'HowTo');
+    ok('2.35.0: Installazione con i dati How-to dei cinque passi dell\'installatore', ht && ht.step.length === 5 && ht.step[0].name === 'Requisiti' && ht.step[4].name === 'Fine' && ht.totalTime === 'PT5M', ht && ht.step.map(s => s.name));
+    await v.goto(B + '/domande-frequenti/', { waitUntil: 'networkidle' });
+    const tf = await v.locator('body').innerText();
+    const nuove = ['plumeCMS è gratis?', 'Che differenza c\'è tra plumeCMS e WordPress?', 'Posso collegare ChatGPT o Claude al mio sito?', 'plumeCMS c\'entra con Plume CMS?', 'Che hosting serve?', 'Chi c\'è dietro plumeCMS?'];
+    const gf = (await grafoDi('/domande-frequenti/')).find(x => x['@type'] === 'FAQPage');
+    const nomiF = gf ? gf.mainEntity.map(q => q.name) : [];
+    ok('2.35.0: Domande frequenti con le sei domande dell\'audit, visibili e nei dati FAQPage', nuove.every(q => tf.includes(q) && nomiF.some(x => x.startsWith(q))), nuove.filter(q => !tf.includes(q) || !nomiF.some(x => x.startsWith(q))));
+    ok('2.35.0: nessuna domanda doppia', new Set(nomiF).size === nomiF.length && nomiF.filter(x => /hosting serve/.test(x)).length === 1, nomiF.length);
+    ok('2.35.0: la risposta sull\'hosting ha i requisiti veri (PHP 8.2, MySQL, 8 MB, cPanel)', /PHP 8\.2[\s\S]*8 MB[\s\S]*cPanel/.test(gf.mainEntity.find(q => /hosting serve/.test(q.name)).acceptedAnswer.text));
+    ok('2.35.0: "Leggi anche" delle Domande frequenti porta al confronto', await v.locator('main a[href$="/plumecms-wordpress/"], .ed-pagina a[href$="/plumecms-wordpress/"]').count() >= 1);
+    await v.goto(B + '/plumecms-wordpress/', { waitUntil: 'networkidle' });
+    const tc = await v.locator('body').innerText();
+    const gc = await grafoDi('/plumecms-wordpress/');
+    ok('2.35.0: la pagina del confronto: tabella, per chi è meglio, domande, invito a Scarica e Installazione', await v.locator('.ed-pagina table').count() === 1 && /Scegli plumeCMS se/.test(tc) && /Scegli WordPress se/.test(tc)
+      && await v.locator('.ed-pagina details').count() >= 4 && await v.locator('.ed-pagina a[href$="/scarica/"]').count() >= 1 && await v.locator('.ed-pagina a[href$="/installazione/"]').count() >= 1);
+    ok('2.35.0: il confronto nomina solo WordPress fra gli altri CMS', !/Joomla|Drupal|Ghost|Wix|Squarespace|Webflow|Grav|Kirby|Bludit|WonderCMS|Statamic|Plume CMS/.test(tc));
+    ok('2.35.0: il confronto ha WebPage e FAQPage nel JSON-LD', gc.some(x => x['@type'] === 'WebPage') && gc.some(x => x['@type'] === 'FAQPage'), gc.map(x => x['@type']));
+    ok('2.35.0: il confronto è nel menu del piede', await v.locator('footer a[href$="/plumecms-wordpress/"]').count() >= 1);
+    const vociP = (await v.locator('header nav a').allInnerTexts()).map(x => x.trim()).filter(Boolean);
+    ok('2.35.0: "Domande frequenti" nel menu principale, che resta corto (7 voci al massimo)', vociP.some(x => /^Domande frequenti$/i.test(x)) && new Set(vociP.map(x => x.toLowerCase())).size <= 7, vociP);
+    for (const u of ['/temi/', '/documentazione/', '/scarica/']) {
+      await v.goto(B + u, { waitUntil: 'networkidle' });
+      ok(`2.35.0: ${u} finisce con "Leggi anche" verso altre pagine`, /Leggi anche/.test(await v.locator('.ed-pagina').innerText()) && await v.locator('.ed-pagina a.btn-filo, .ed-pagina .ed-pulsanti a').count() >= 2);
+    }
+    await v.goto(B + '/funzionalita/', { waitUntil: 'networkidle' });
+    ok('2.35.0: Funzionalità ha una riga (non un blocco) verso il confronto', await v.locator('.ed-pagina a[href$="/plumecms-wordpress/"]').count() === 1 && await v.locator('#confronto, #wordpress').count() === 0);
+    const llms = await (await v.request.get(B + '/llms.txt')).text();
+    ok('2.35.0: llms.txt con la sezione Pagine (le pagine del pacchetto con il loro In breve), senza Glossario e senza sezioni vuote', /\n## Pagine\n/.test(llms) && /\/funzionalita\/\): plumeCMS ha già dentro/.test(llms) && /\/plumecms-wordpress\/\)/.test(llms) && !/glossario/i.test(llms) && !/Guide complete/.test(llms), llms.slice(0, 300));
+    const cfg = cliP('seo_cfg');
+    ok('2.35.0: in SEO e AEO il nome nei titoli è "plumeCMS" e la Persona non ha dati inventati', cfg.titolo.sito === 'plumeCMS' && cfg.persona.nome === 'Danilo Failli' && cfg.persona.sameas === '' && cfg.persona.immagine === '' && cfg.persona.credenziale === '', [cfg.titolo.sito, cfg.persona]);
+  }
   ok('nessun errore JavaScript sul sito', errV.length === 0, errV);
   await br.close();
   console.log(`\n${n - ko} su ${n} OK`);
