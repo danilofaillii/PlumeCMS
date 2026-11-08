@@ -6623,7 +6623,7 @@ Stili nel blocco 2.34.0 di `assets/admin.css`, solo variabili degli aspetti; ogn
   (radice e cartella), con `prove/ai-cli.php` (comandi `stile-semina`: dieci articoli in seconda persona con frasi brevi, una domanda
   nell'attacco, due H2, un elenco e un link, il buco "concime naturale"; `stile-molti <n>`; `stile-pulisci`); `SENZA_MOLTE=1` salta
   i 300 articoli;
-- `tools/sicurezza-prova.js` gruppo 48 (16 attacchi, con `CMS_DIR`).
+- `tools/sicurezza-prova.js` gruppo 48 (15 attacchi, con `CMS_DIR`).
 
 ## Appendice A. Dove i documenti vecchi non corrispondono al codice
 

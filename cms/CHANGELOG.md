@@ -32,7 +32,7 @@ Il prodotto si chiama **plumeCMS** (nome scelto il 26 ottobre 2026; prima, per p
   "proposte". Nessun permesso nuovo: i collegamenti che ci sono già funzionano.
 - Sicurezza: profilo e idee solo testo (via anche il contenuto di `<script>` e `<style>`), lunghezze tagliate, collegati solo
   verso contenuti pubblicati di questo sito, `idea_id` solo numeri e solo in stato "da scrivere", azioni del pannello solo
-  dall'amministratore con il token. Gruppo 48 delle prove di attacco (16).
+  dall'amministratore con il token. Gruppo 48 delle prove di attacco (15).
 - Prove: `prove/prova-ai-stile.js` (53 controlli, anche con 300 articoli).
 
 ## 2.33.0 (8 novembre 2026) - AI collegate: navigazione e schede degli articoli

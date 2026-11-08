@@ -313,7 +313,7 @@ dell'addon a 390 px.
 4. Atteso (2.32.0): 90 su 90 in radice, in cartella e su un sito aggiornato dalla 2.31.0. Pulisce le sue tabelle alla fine
    (`ai-cli.php pulisci`), lascia la pagina `ai-prova-pubblicata` e le foto importate nei Media.
 
-Gli attacchi all'addon sono il gruppo 46 di `tools/sicurezza-prova.js` (26, con `CMS_DIR`; la batteria intera 488 sulla 2.32.0, 503 sulla 2.33.0 con il gruppo 47): accende l'addon e il server finto
+Gli attacchi all'addon sono il gruppo 46 di `tools/sicurezza-prova.js` (26, con `CMS_DIR`; la batteria intera 488 sulla 2.32.0, 503 sulla 2.33.0 con il gruppo 47, 516 sulla 2.34.0 con il gruppo 48): accende l'addon e il server finto
 delle foto sulla porta `SIC_FOTO` (9298), e alla fine li rimette come erano.
 
 ## prova-ai-stile.js (2.34.0)
@@ -334,7 +334,7 @@ coerenza con uno scostamento voluto), `update_draft` che rientra nello stile, 39
 2. `node prove/prova-ai-stile.js <base> <cartella del CMS> <utente> <password> [cartella foto]`.
 3. Atteso (2.34.0): 53 su 53 in radice e in cartella. Alla fine toglie articoli, profilo, idee e la bozza scritta (`stile-pulisci`).
 
-Gli attacchi sono il gruppo 48 di `tools/sicurezza-prova.js` (16, con `CMS_DIR`).
+Gli attacchi sono il gruppo 48 di `tools/sicurezza-prova.js` (15, con `CMS_DIR`).
 
 ## prova-ai-navigazione.js (2.33.0)
 
