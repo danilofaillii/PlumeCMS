@@ -21,7 +21,9 @@ function aic_admin_schede(string $qui): void {
     echo '<link rel="stylesheet" href="' . h(cms_base() . '/addon/ai-collegate/assets/admin.css?v=' . (is_file($f) ? filemtime($f) : 0)) . '">';
     $n = aic_proposte_in_attesa();
     echo '<nav class="imp-schede" aria-label="AI collegate">';
-    foreach (['collegate' => 'Collegamenti', 'proposte' => 'Proposte' . ($n ? " ($n da decidere)" : ''), 'registro' => 'Registro', 'impostazioni' => 'Impostazioni'] as $k => $t)
+    require_once __DIR__ . '/idee.php';
+    $ni = aic_idee_in_attesa();
+    foreach (['collegate' => 'Collegamenti', 'proposte' => 'Proposte' . ($n ? " ($n da decidere)" : ''), 'idee' => 'Idee per articoli' . ($ni ? " ($ni da decidere)" : ''), 'stile' => 'Stile del sito', 'registro' => 'Registro', 'impostazioni' => 'Impostazioni'] as $k => $t)
         echo '<a href="' . h(aic_admin_url($k)) . '"' . ($k === $qui ? ' class="attiva" aria-current="page"' : '') . '>' . h($t) . '</a>';
     echo '</nav>';
 }

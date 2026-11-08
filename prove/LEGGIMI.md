@@ -313,8 +313,28 @@ dell'addon a 390 px.
 4. Atteso (2.32.0): 90 su 90 in radice, in cartella e su un sito aggiornato dalla 2.31.0. Pulisce le sue tabelle alla fine
    (`ai-cli.php pulisci`), lascia la pagina `ai-prova-pubblicata` e le foto importate nei Media.
 
-Gli attacchi all'addon sono il gruppo 46 di `tools/sicurezza-prova.js` (26, con `CMS_DIR`; la batteria intera 488 sulla 2.32.0, 503 sulla 2.33.0 con il gruppo 47): accende l'addon e il server finto
+Gli attacchi all'addon sono il gruppo 46 di `tools/sicurezza-prova.js` (26, con `CMS_DIR`; la batteria intera 488 sulla 2.32.0, 503 sulla 2.33.0 con il gruppo 47, 516 sulla 2.34.0 con il gruppo 48): accende l'addon e il server finto
 delle foto sulla porta `SIC_FOTO` (9298), e alla fine li rimette come erano.
+
+## prova-ai-stile.js (2.34.0)
+
+La terza fase dell'addon AI collegate: lo stile del sito e gli articoli nuovi dagli argomenti, come li usano un'AI (con una chiave
+personale, via MCP) e l'amministratore (nel browser). Dieci articoli seminati con uno stile riconoscibile (`ai-cli.php
+stile-semina`: frasi brevi in seconda persona, una domanda nell'attacco, due H2, un elenco, un link interno; metà con l'editor;
+il buco "concime naturale" fra le parole correlate e nel testo di quattro articoli; la categoria "Balcone prova" con un articolo e
+il tag "Lumache prova" su uno solo); poi `analyze_style` (misure coerenti con quelle volute), `save_style_profile` e
+`get_style_profile` (permessi, testo corto, script), la pagina Stile del sito (misure in parole, Ripristina, Salva a mano),
+`suggest_topics` (il buco primo, categoria povera, tag con un articolo, le formule dello stile scartate), `propose_article_ideas`
+buone e cattive (tutte o nessuna), Approva, Scarta, Modifica con la data prevista e Sposta prima nella pagina Idee per articoli,
+`list_article_ideas` con l'ordine del piano, `create_draft` con `idea_id` (stati sbagliati rifiutati senza bozze, il legame, la
+coerenza con uno scostamento voluto), `update_draft` che rientra nello stile, 390 px, e i tempi con 300 articoli (`stile-molti`;
+`SENZA_MOLTE=1` li salta).
+
+1. Un CMS installato con il kit Attività (`prove/prova-kit.js ... attivita ...`), radice o cartella. L'addon lo accende la prova.
+2. `node prove/prova-ai-stile.js <base> <cartella del CMS> <utente> <password> [cartella foto]`.
+3. Atteso (2.34.0): 53 su 53 in radice e in cartella. Alla fine toglie articoli, profilo, idee e la bozza scritta (`stile-pulisci`).
+
+Gli attacchi sono il gruppo 48 di `tools/sicurezza-prova.js` (15, con `CMS_DIR`).
 
 ## prova-ai-navigazione.js (2.33.0)
 

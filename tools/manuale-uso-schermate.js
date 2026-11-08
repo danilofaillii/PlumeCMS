@@ -33,6 +33,7 @@
 //   23s): SOLO_CAPITOLI=23s,23z, con TMPDIR vuota, su un sito col kit con CMS_NOMINATIM_URL e CMS_NOMINATIM_PROVA nel config.
 // 2.32.0: il capitolo 41 (AI collegate, tre foto): SOLO_CAPITOLI=41, con CMS_DIR_MANUALE e TMPDIR vuota, su un sito col kit.
 // 2.33.0: il capitolo 41n (la proposta di menu affiancata e la scheda di un articolo): SOLO_CAPITOLI=41n, come il 41.
+// 2.34.0: il capitolo 41s (Stile del sito, Idee per articoli, il piano al telefono): SOLO_CAPITOLI=41s, come il 41.
 const { chromium } = require('playwright');
 const pnConferme = require('../prove/conferme-pannello'); // UX 2026-11: conferme del pannello
 const fs = require('fs');
@@ -2450,6 +2451,45 @@ capitoli['41n'] = async () => {
   const sc = '#scheda-' + pc.gruppo;
   await foto('41-scheda', { sel: sc, margine: 10, segni: [{ sel: sc + ' > h3', n: 1 }, { sel: sc + ' button[value=scheda_approva]', n: 2 }, { sel: sc + ' button[value=scheda_scarta]', n: 3 }, { sel: sc + ' article.aic-nella-scheda button[value=approva]', n: 4 }] });
   cli('pulisci'); cli('nav-ripristina');
+};
+
+// 41s. (2.34.0) AI collegate, stile del sito e idee per articoli: dieci articoli seminati con uno stile riconoscibile
+// (prove/ai-cli.php stile-semina), un profilo di stile salvato da una chiave "Claude" e poi corretto (così c'è una versione
+// precedente), tre idee proposte, una approvata con la data prevista e la pagina del piano al telefono. Alla fine toglie
+// articoli, profilo e idee. Vuole CMS_DIR_MANUALE. Da solo: SOLO_CAPITOLI=41s.
+capitoli['41s'] = async () => {
+  const DIRM = process.env.CMS_DIR_MANUALE; if (!DIRM) throw new Error('41s: serve CMS_DIR_MANUALE');
+  const cli = (...a) => JSON.parse(require('child_process').execFileSync('php', [path.join(__dirname, '..', 'prove', 'ai-cli.php'), DIRM, ...a.map(String)], { encoding: 'utf8' }).trim().split('\n').pop());
+  cli('accendi'); cli('pulisci'); cli('stile-pulisci');
+  const sem = cli('stile-semina');
+  await dorme(2500);
+  const k = cli('chiave', 'leggi,bozze,proposte', 'Claude').chiave;
+  const chiama = async (nome, args) => { const r = await (await fetch(B + '/api/mcp', { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + k }, body: JSON.stringify({ jsonrpc: '2.0', id: 1, method: 'tools/call', params: { name: nome, arguments: args } }) })).json(); return JSON.parse(r.result.content[0].text); };
+  const base = 'Tono: amichevole e pratico, come un vicino di orto che dà un consiglio.\nPersona: diamo del tu a chi legge, sempre.\nLessico da usare: parole semplici dell\'orto (vanga, semi, annaffiatoio).\nDa evitare: termini tecnici senza spiegazione, il voi.\nStruttura: una domanda nell\'attacco, due sottotitoli, un elenco breve, un link a un altro articolo, una chiusura che invita a provare.\nRegole: frasi brevi, sotto le otto parole; paragrafi di tre o quattro frasi.';
+  await chiama('save_style_profile', { profilo: base.replace('amichevole e pratico', 'pratico') });
+  const sv = await chiama('save_style_profile', { profilo: base + '\nEsempi: "Vuoi sapere come seminare i pomodori? Ti spiego tutto." "Ora tocca a te. Prova e raccontami."' });
+  if (!sv.salvato) throw new Error('41s: il profilo non si salva: ' + JSON.stringify(sv));
+  await addonPag('ai-collegate', 'stile');
+  await foto('41-stile', { clip: { x: 240, y: 56, width: 960, height: 744 }, segni: [{ sel: '#aic-profilo-testo', n: 1 }, { sel: '#misure dl.aic-misure', n: 2 }] });
+  const pi = await chiama('propose_article_ideas', { idee: [
+    { titolo: 'Il concime naturale per l\'orto di casa', parola_chiave: 'concime naturale', a_chi_serve: 'Chi ha un orto piccolo e non vuole usare prodotti chimici', scaletta: ['Cos\'è il concime naturale', 'Come lo prepari con gli scarti di cucina', 'Quando lo usi', 'Gli errori da evitare'], collegati: [{ id: sem.ids[5] }, { id: sem.ids[1] }], motivo: 'Lo citano quattro articoli del sito, ma nessun articolo ne parla davvero: chi lo cerca su Google non trova una pagina sua.' },
+    { titolo: 'Erbe aromatiche sul balcone: le cinque più facili', parola_chiave: 'erbe aromatiche balcone', a_chi_serve: 'Chi non ha un orto ma un balcone al sole', scaletta: ['Le cinque erbe', 'Il vaso giusto', 'Quanta acqua'], collegati: [{ id: sem.ids[2] }], motivo: 'La categoria Balcone ha un solo articolo: chi la apre trova poco.' },
+    { titolo: 'Lumache nell\'orto: i rimedi senza veleni', parola_chiave: 'lumache orto rimedi', a_chi_serve: 'Chi trova le foglie mangiate ogni mattina', scaletta: ['Come riconosci il danno', 'Tre rimedi naturali'], collegati: [{ id: sem.ids[6] }], motivo: 'Il tag Lumache ha un solo articolo.' }] });
+  if (!pi.idee) throw new Error('41s: le idee non nascono: ' + JSON.stringify(pi));
+  await addonPag('ai-collegate', 'idee');
+  const i1 = '#idea-' + pi.idee[0].idea_id;
+  await foto('41-idee', { clip: { x: 240, y: 56, width: 960, height: 744 }, segni: [{ sel: '.aic-viste a', n: 1 }, { sel: i1 + ' .aic-dati', n: 2 }, { sel: i1 + ' button[value=approva]', n: 3 }, { sel: i1 + ' button[value=scarta]', n: 4 }, { sel: i1 + ' details.aic-modifica summary', n: 5 }] });
+  // Due idee approvate con la data prevista, una scritta in bozza, e il piano al telefono.
+  const oggi = new Date(); const mese = new Date(oggi.getFullYear(), oggi.getMonth() + 1, 1);
+  const d = (g) => mese.getFullYear() + '-' + String(mese.getMonth() + 1).padStart(2, '0') + '-' + String(g).padStart(2, '0');
+  cli('sql', `UPDATE {p}ai_idee SET stato = 'da_scrivere', data_prevista = '${d(10)}', deciso = NOW(), deciso_da = '${UTENTE}' WHERE id = ${pi.idee[0].idea_id}`);
+  cli('sql', `UPDATE {p}ai_idee SET stato = 'da_scrivere', data_prevista = '${d(24)}', deciso = NOW(), deciso_da = '${UTENTE}' WHERE id = ${pi.idee[1].idea_id}`);
+  await chiama('create_draft', { tipo: 'articoli', titolo: 'Il concime naturale per l\'orto di casa', idea_id: pi.idee[0].idea_id, testo: '<p>Vuoi un orto più forte? Usa il concime naturale. Lo fai in casa.</p><h2>Cosa ti serve</h2><p>Prendi gli scarti di cucina. Mettili in un angolo. Girali ogni settimana.</p>' });
+  await p.setViewportSize({ width: 390, height: 800 });
+  await addonPag('ai-collegate', 'idee&vista=piano');
+  await foto('41-piano', { clip: { x: 0, y: 0, width: 390, height: 800 } });
+  await p.setViewportSize({ width: 1200, height: 800 });
+  cli('stile-pulisci'); cli('pulisci');
 };
 
 module.exports = { capitoli };

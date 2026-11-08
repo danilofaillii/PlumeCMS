@@ -7,6 +7,7 @@
  * farlo. Manuale tecnico, capitolo 47. Il manifesto non fa query.
  */
 $aic = __DIR__ . '/includes/ai.php';
+$idee = __DIR__ . '/includes/idee.php'; // 2.34.0: le idee per articoli (il numero di quelle da decidere nel menu)
 $pag = fn(string $p) => 'addon-pagina.php?a=ai-collegate&p=' . $p;
 return [
     'etichetta' => 'AI collegate',
@@ -19,14 +20,18 @@ return [
         'registro' => __DIR__ . '/includes/admin-registro.php',
         'impostazioni' => __DIR__ . '/includes/admin-impostazioni.php',
         'consenso' => __DIR__ . '/includes/admin-consenso.php',
+        'stile' => __DIR__ . '/includes/admin-stile.php',   // 2.34.0
+        'idee' => __DIR__ . '/includes/admin-idee.php',     // 2.34.0
     ],
     'menu' => [[
         'nome' => 'AI collegate', 'url' => $pag('collegate'), 'icona' => 'scintilla', 'admin' => true, 'dopo' => 'SEO e AEO',
-        'conta' => function () use ($aic) { require_once $aic; return aic_proposte_in_attesa(); },
-        'attivo' => [$pag('collegate'), $pag('proposte'), $pag('registro'), $pag('impostazioni'), $pag('consenso')],
+        'conta' => function () use ($aic, $idee) { require_once $aic; require_once $idee; return aic_proposte_in_attesa() + aic_idee_in_attesa(); },
+        'attivo' => [$pag('collegate'), $pag('proposte'), $pag('idee'), $pag('stile'), $pag('registro'), $pag('impostazioni'), $pag('consenso')],
         'sotto' => [
             ['nome' => 'Collegamenti', 'url' => $pag('collegate'), 'attivo' => [$pag('collegate'), $pag('consenso')]],
             ['nome' => 'Proposte', 'url' => $pag('proposte'), 'attivo' => [$pag('proposte')], 'conta' => function () use ($aic) { require_once $aic; return aic_proposte_in_attesa(); }],
+            ['nome' => 'Idee per articoli', 'url' => $pag('idee'), 'attivo' => [$pag('idee')], 'conta' => function () use ($aic, $idee) { require_once $aic; require_once $idee; return aic_idee_in_attesa(); }],
+            ['nome' => 'Stile del sito', 'url' => $pag('stile'), 'attivo' => [$pag('stile')]],
             ['nome' => 'Registro', 'url' => $pag('registro'), 'attivo' => [$pag('registro')]],
             ['nome' => 'Impostazioni', 'url' => $pag('impostazioni'), 'attivo' => [$pag('impostazioni')]],
         ],

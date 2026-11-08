@@ -2,6 +2,39 @@
 
 Il prodotto si chiama **plumeCMS** (nome scelto il 26 ottobre 2026; prima, per poche ore, "CarbonaraCMS", e ancora prima il provvisorio "Officina": gli zip vecchi si chiamavano `officina-*` e `carbonaracms-*`).
 
+## 2.34.0 (8 novembre 2026) - AI collegate: lo stile del sito e gli articoli nuovi
+
+- **Lo stile del sito** (richiesta di Danilo: "la creazione degli articoli nuovi dovrà seguire lo stile di quelli già scritti").
+  Lo strumento nuovo `analyze_style` misura gli articoli pubblicati (gli ultimi 50 al massimo): lunghezza media e mediana,
+  frase e paragrafo medi, sottotitoli, elenchi, domande a chi legge, se dai del tu, del voi, parli con il noi o in modo
+  impersonale, le parole e le espressioni che ripeti, come apri e come chiudi, grassetti, emoji, link interni, immagini,
+  domande frequenti, categorie e tag, titoli e descrizioni per Google, la struttura tipica dei widget, e da tre a cinque
+  estratti rappresentativi. Tutto contato dal sito con regole dichiarate: il sito non usa un'intelligenza artificiale sua.
+- **Il profilo di stile**: l'AI lo scrive in parole (tono, persona, lessico da usare ed evitare, struttura, regole, esempi) con
+  `save_style_profile` e lo rilegge con `get_style_profile` prima di scrivere. Uno per sito, con le ultime dieci versioni.
+  Nella pagina nuova **AI collegate > Stile del sito** lo leggi, lo correggi a mano, vedi le misure scritte in parole e
+  rimetti in uso una versione di prima con **Ripristina**.
+- **Le bozze confrontate con lo stile**: `create_draft` e `update_draft` rispondono all'AI dove la bozza si allontana dal
+  profilo (troppo lunga o corta, frasi lunghe, un'altra persona, niente sottotitoli, niente link interni, niente domande
+  frequenti). Sono avvisi: la bozza si salva comunque.
+- **Idee per articoli nuovi.** `suggest_topics` trova dagli argomenti del sito quello che manca: temi citati in più articoli
+  senza un articolo loro, tag con un solo articolo, categorie povere, domande dei lettori che meritano un articolo, e (con
+  l'addon Statistiche) gli articoli molto letti che nessun altro collega; ogni spunto con il perché, gli articoli da cui nasce
+  e i link da mettere. Con `propose_article_ideas` l'AI propone fino a venti idee (titolo, parola chiave, a chi serve,
+  scaletta, articoli da collegare, motivo), tutte o nessuna.
+- **La pagina Idee per articoli**: per ogni idea **Approva l'idea** (diventa "da scrivere"), **Scarta** o **Modifica** (anche una
+  nota per l'AI e la data prevista). Il **piano editoriale** mette le idee approvate in fila per mese, con **Sposta prima** e
+  **Sposta dopo**. La data è solo un promemoria: niente si pubblica da solo, niente email nuove.
+- **Dall'idea alla bozza**: `list_article_ideas` dà all'AI le idee approvate nell'ordine del piano; `create_draft` con
+  `idea_id` scrive la bozza e lega l'idea, che diventa "scritta (in bozza)" con il link. Solo le idee approvate, una bozza per
+  idea. L'AI non pubblica mai.
+- Permessi: misure, spunti, profilo e idee si leggono con "leggi"; il profilo si salva con "bozze"; le idee si propongono con
+  "proposte". Nessun permesso nuovo: i collegamenti che ci sono già funzionano.
+- Sicurezza: profilo e idee solo testo (via anche il contenuto di `<script>` e `<style>`), lunghezze tagliate, collegati solo
+  verso contenuti pubblicati di questo sito, `idea_id` solo numeri e solo in stato "da scrivere", azioni del pannello solo
+  dall'amministratore con il token. Gruppo 48 delle prove di attacco (15).
+- Prove: `prove/prova-ai-stile.js` (53 controlli, anche con 300 articoli).
+
 ## 2.33.0 (8 novembre 2026) - AI collegate: navigazione e schede degli articoli
 
 - **La navigazione rivista dall'AI** (richiesta di Danilo: "analizzi tutte le pagine del sito, richiamate dai vari menu, e

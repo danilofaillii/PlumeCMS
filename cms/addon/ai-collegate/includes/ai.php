@@ -156,6 +156,38 @@ function aic_tabelle(): array {
             `creato` DATETIME NOT NULL,
             PRIMARY KEY (`id`), KEY `url` (`url`(191))
         ) $e",
+        // 2.34.0: il profilo di stile del sito, una riga per versione (l'ultima è quella in uso; si tengono le dieci precedenti).
+        'ai_stile' => 'CREATE TABLE IF NOT EXISTS ' . tbl('ai_stile') . " (
+            `id` INT(11) NOT NULL AUTO_INCREMENT,
+            `testo` TEXT NOT NULL,
+            `misure` MEDIUMTEXT,
+            `autore` VARCHAR(200) NOT NULL DEFAULT '',
+            `connessione_id` INT(11) NOT NULL DEFAULT 0,
+            `origine` VARCHAR(12) NOT NULL DEFAULT 'ai',
+            `creato` DATETIME NOT NULL,
+            PRIMARY KEY (`id`)
+        ) $e",
+        // 2.34.0: le idee per articoli nuovi proposte dalle AI (attesa, da_scrivere, scritta, scartata) e il piano editoriale.
+        'ai_idee' => 'CREATE TABLE IF NOT EXISTS ' . tbl('ai_idee') . " (
+            `id` INT(11) NOT NULL AUTO_INCREMENT,
+            `connessione_id` INT(11) NOT NULL DEFAULT 0,
+            `client` VARCHAR(200) NOT NULL DEFAULT '',
+            `titolo` VARCHAR(300) NOT NULL DEFAULT '',
+            `parola_chiave` VARCHAR(200) NOT NULL DEFAULT '',
+            `pubblico` VARCHAR(500) NOT NULL DEFAULT '',
+            `scaletta` TEXT,
+            `collegati` TEXT,
+            `motivo` TEXT,
+            `stato` VARCHAR(12) NOT NULL DEFAULT 'attesa',
+            `articolo_id` INT(11) NOT NULL DEFAULT 0,
+            `data_prevista` DATE DEFAULT NULL,
+            `ordine` INT(11) NOT NULL DEFAULT 0,
+            `nota` VARCHAR(500) NOT NULL DEFAULT '',
+            `creato` DATETIME NOT NULL,
+            `deciso` DATETIME DEFAULT NULL,
+            `deciso_da` VARCHAR(100) NOT NULL DEFAULT '',
+            PRIMARY KEY (`id`), KEY `stato` (`stato`, `ordine`), KEY `connessione` (`connessione_id`)
+        ) $e",
     ];
 }
 
@@ -220,8 +252,9 @@ function aic_impostazioni_salva(array $v): void {
 /** Testo semplice: niente tag, niente caratteri di controllo, niente caratteri a 4 byte, una riga se $righe è falso. */
 function aic_testo($s, int $max = 500, bool $righe = false): string {
     $s = is_scalar($s) ? mb_scrub((string)$s, 'UTF-8') : '';
-    $s = html_entity_decode(strip_tags($s), ENT_QUOTES | ENT_HTML5, 'UTF-8');
-    $s = strip_tags($s); // un tag scritto come entità (&lt;script&gt;) torna tag dopo la decodifica: via anche lui
+    $via = fn(string $x) => (string)preg_replace('~<(script|style)\b[\s\S]*?(</\1\s*>|$)~i', ' ', $x); // 2.34.0: anche il contenuto di script e stili
+    $s = html_entity_decode(strip_tags($via($s)), ENT_QUOTES | ENT_HTML5, 'UTF-8');
+    $s = strip_tags($via($s)); // un tag scritto come entità (&lt;script&gt;) torna tag dopo la decodifica: via anche lui
     $s = (string)preg_replace('/[\x{10000}-\x{10FFFF}]/u', '', $s);
     $s = (string)preg_replace($righe ? '/[\x00-\x09\x0B\x0C\x0E-\x1F\x7F]/' : '/[\x00-\x1F\x7F]+/', $righe ? '' : ' ', $s);
     if (!$righe) $s = (string)preg_replace('/\s+/u', ' ', $s);

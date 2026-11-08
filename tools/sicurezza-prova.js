@@ -3060,6 +3060,134 @@ echo json_encode($o);
     }
   } else console.log('--  AI collegate, navigazione (2.33.0): saltata (serve CMS_DIR e l\'addon nella cartella)');
 
+  // === 48. (2.34.0) AI collegate, stile del sito e idee per articoli: analyze_style, save_style_profile, get_style_profile,
+  // suggest_topics, propose_article_ideas, list_article_ideas, create_draft e update_draft con idea_id, le pagine Stile del sito
+  // e Idee per articoli. HTML e script nel profilo e nelle idee; profilo enorme, non testo, con caratteri a 4 byte; troppe idee
+  // (in una chiamata e in attesa); idea_id inesistenti, in uno stato sbagliato, scritti come SQL o su una pagina; collegati
+  // verso bozze o scritti come SQL; Ripristina, Salva, Approva e Scarta senza CSRF, da un'altra origine o dal redattore; permessi
+  // del token insufficienti; token revocato; non più di dieci versioni del profilo. Serve CMS_DIR.
+  const DIR48 = process.env.CMS_DIR || '';
+  if (DIR48 && fs.existsSync(path.join(DIR48, 'addon', 'ai-collegate', 'includes', 'idee.php')) && fs.existsSync(path.join(__dirname, '..', 'prove', 'ai-cli.php'))) {
+    const { execFileSync } = require('child_process');
+    const cli48 = (...a) => { try { return JSON.parse(execFileSync('php', [path.join(__dirname, '..', 'prove', 'ai-cli.php'), DIR48, ...a.map(String)], { encoding: 'utf8', maxBuffer: 64 * 1024 * 1024 }).trim().split('\n').pop()); } catch (e) { return { errore_cli: String(e.message).slice(0, 200) }; } };
+    const attivi48 = path.join(DIR48, 'moduli', 'addon-attivi.json');
+    const eraAcceso48 = (() => { try { return JSON.parse(fs.readFileSync(attivi48, 'utf8')).includes('ai-collegate'); } catch (e) { return false; } })();
+    cli48('accendi');
+    const MCP48 = BASE + '/api/mcp';
+    let id48 = 1;
+    const call48 = async (token, nome, args) => {
+      const r = await fetch(MCP48, { method: 'POST', headers: { Authorization: 'Bearer ' + token, 'Content-Type': 'application/json' }, body: JSON.stringify({ jsonrpc: '2.0', id: id48++, method: 'tools/call', params: { name: nome, arguments: args || {} } }) });
+      let j = null; try { j = await r.json(); } catch (e) {}
+      const res = j && j.result; let dati = null; try { dati = JSON.parse(res.content[0].text); } catch (e) {}
+      return { stato: r.status, errore: !res || !!res.isError, dati };
+    };
+    const uno48 = (q) => { const x = cli48('sql', q); return Array.isArray(x) ? x[0] || {} : {}; };
+    const n48 = (t, dove = '') => +(uno48('SELECT COUNT(*) n FROM {p}' + t + dove).n || 0);
+    try {
+      cli48('pulisci'); cli48('stile-pulisci');
+      const sem = cli48('stile-semina');
+      const kk = cli48('chiave', 'leggi,bozze,proposte', 'Sic48');
+      const K = kk.chiave;
+      // 1. Il profilo con HTML e script: salvato come testo semplice; nella pagina nessuna finestra e nessun tag.
+      const cattivo = 'Tono: <script>alert(481)</script>diretto.\n<img src=x onerror=alert(482)>Persona: tu.\n&lt;script&gt;alert(483)&lt;/script&gt;\n"><svg onload=alert(484)>Regole: frasi brevi e chiare per tutti.';
+      const sp = await call48(K, 'save_style_profile', { profilo: cattivo });
+      const salvato = uno48('SELECT testo FROM {p}ai_stile ORDER BY id DESC LIMIT 1').testo || '';
+      ok('2.34.0: save_style_profile con script, eventi, entità e svg: salvato senza tag e senza il contenuto degli script', !sp.errore && salvato !== '' && !/<|alert\(481\)|alert\(483\)|onerror|onload/i.test(salvato) && /Regole: frasi brevi/.test(salvato), [sp.dati && sp.dati.errore, salvato.slice(0, 200)]);
+      const fin48 = []; const onDialog48 = d => { fin48.push(d.message()); d.dismiss().catch(() => {}); };
+      admin.p.on('dialog', onDialog48);
+      const URLS = ADMIN + '/addon-pagina.php?a=ai-collegate&p=stile', URLI = ADMIN + '/addon-pagina.php?a=ai-collegate&p=idee';
+      await admin.p.goto(URLS, { waitUntil: 'networkidle' });
+      ok('2.34.0: la pagina Stile del sito mostra il profilo come testo (niente finestre, niente tag fuori dal campo)', fin48.length === 0 && await admin.p.locator('#profilo img, #profilo svg[onload], #profilo script').count() === 0, fin48);
+      // 2. Profilo enorme, non testo, con caratteri a 4 byte.
+      const v0 = n48('ai_stile');
+      const enorme = await call48(K, 'save_style_profile', { profilo: 'Regola lunghissima. '.repeat(5000) });
+      const lista = await call48(K, 'save_style_profile', { profilo: ['Tono: diretto', 'Persona: tu'] });
+      const ogg = await call48(K, 'save_style_profile', { profilo: { tono: 'diretto e chiaro per tutti quanti i lettori del sito' } });
+      ok('2.34.0: profilo da 100.000 caratteri, come elenco o come oggetto: rifiutato, nessuna versione nuova', enorme.errore && lista.errore && ogg.errore && n48('ai_stile') === v0, [enorme.dati, lista.dati, ogg.dati]);
+      const emoji = await call48(K, 'save_style_profile', { profilo: 'Tono: allegro \u{1F600}\u{1F331} con le emoji.\nPersona: tu.\nRegole: frasi brevi e chiare.' });
+      const te = uno48('SELECT testo FROM {p}ai_stile ORDER BY id DESC LIMIT 1').testo || '';
+      ok('2.34.0: profilo con caratteri a 4 byte: salvato senza (nessun errore del database)', !emoji.errore && /allegro/.test(te) && !/[\u{10000}-\u{10FFFF}]/u.test(te), [emoji.dati, te]);
+      for (let i = 0; i < 13; i++) await call48(K, 'save_style_profile', { profilo: 'Versione numero ' + i + ' del profilo: tono diretto, persona tu, frasi brevi.' });
+      ok('2.34.0: dopo 13 salvataggi in più restano al massimo 11 versioni (quella in uso e le dieci precedenti)', n48('ai_stile') === 11, n48('ai_stile'));
+      // 3. Ripristina e Salva senza CSRF, da un'altra origine, dal redattore.
+      const vecchia = uno48('SELECT id FROM {p}ai_stile ORDER BY id ASC LIMIT 1').id;
+      const ultimaPrima = uno48('SELECT id, testo FROM {p}ai_stile ORDER BY id DESC LIMIT 1');
+      const r1 = await admin.ctx.request.post(URLS, { form: { azione: 'ripristina', id: String(vecchia) }, maxRedirects: 0 });
+      const tk = await tokenDi(admin.p, URLS);
+      const r2 = await admin.ctx.request.post(URLS, { form: { _csrf: tk, azione: 'ripristina', id: String(vecchia) }, headers: { Origin: 'https://evil.example' }, maxRedirects: 0 });
+      const r3 = await admin.ctx.request.post(URLS, { form: { azione: 'salva', testo: 'Tono: cambiato senza CSRF da un attacco esterno al sito.' }, maxRedirects: 0 });
+      let rr = 'saltato';
+      if (red.dentro) {
+        const tr = await tokenDi(red.p, ADMIN + '/contenuti.php?tipo=articoli');
+        const a = await red.ctx.request.post(URLS, { form: { _csrf: tr, azione: 'ripristina', id: String(vecchia) }, maxRedirects: 0 });
+        const b = await red.ctx.request.post(URLS, { form: { _csrf: tr, azione: 'salva', testo: 'Tono: cambiato dal redattore che non dovrebbe poterlo fare.' }, maxRedirects: 0 });
+        rr = [a.status(), b.status()];
+      }
+      const ultimaDopo = uno48('SELECT id, testo FROM {p}ai_stile ORDER BY id DESC LIMIT 1');
+      ok('2.34.0: Ripristina e Salva il profilo senza CSRF, da un\'altra origine o dal redattore: rifiutati, il profilo non cambia', [400, 403].includes(r1.status()) && [400, 403].includes(r2.status()) && [400, 403].includes(r3.status()) && ultimaDopo.id === ultimaPrima.id && ultimaDopo.testo === ultimaPrima.testo, [r1.status(), r2.status(), r3.status(), rr]);
+      // 4. Idee con HTML e script, troppe, oltre il limite in attesa, collegati sbagliati.
+      const bozza = cli48('sql', "SELECT id FROM {p}articles WHERE status = 'draft' LIMIT 1");
+      const iC = await call48(K, 'propose_article_ideas', { idee: [{ titolo: '<script>alert(485)</script>Titolo <b>idea</b> sic48', parola_chiave: '<img src=x onerror=alert(486)>chiave', a_chi_serve: '"><svg onload=alert(487)>lettori', scaletta: Array.from({ length: 50 }, (_, i) => '<i>punto</i> ' + i), collegati: [{ id: "1 OR 1=1" }, { id: -5 }, { tipo: 'utenti', id: 1 }, { id: sem.ids[0] }].concat(bozza[0] ? [{ id: +bozza[0].id }] : []), motivo: '<script>alert(488)</script>Motivo valido per la prova.' }] });
+      const ri = iC.dati && iC.dati.idee ? uno48('SELECT * FROM {p}ai_idee WHERE id = ' + (+iC.dati.idee[0].idea_id)) : {};
+      const coll = JSON.parse(ri.collegati || '[]');
+      ok('2.34.0: idee con script, eventi e svg: salvate senza tag; scaletta tagliata a 15; collegati solo pubblicati (niente SQL, negativi, tipi inventati, bozze)', !iC.errore && !/<|alert\(48[5-8]\)|onerror|onload/i.test(JSON.stringify(ri)) && JSON.parse(ri.scaletta || '[]').length === 15 && coll.length === 1 && coll[0].id === sem.ids[0], [iC.dati, ri.titolo, coll]);
+      await admin.p.goto(URLI + '&vista=attesa', { waitUntil: 'networkidle' });
+      ok('2.34.0: la pagina Idee per articoli mostra i testi delle idee come testo (niente finestre, niente tag)', fin48.length === 0 && await admin.p.locator('article.aic-idea script, article.aic-idea img[onerror], article.aic-idea svg').count() === 0, fin48);
+      admin.p.off('dialog', onDialog48);
+      const i0 = n48('ai_idee');
+      const t21 = await call48(K, 'propose_article_ideas', { idee: Array.from({ length: 21 }, (_, i) => ({ titolo: 'Idea sic48 numero ' + i, motivo: 'Troppe idee.' })) });
+      const tNo = await call48(K, 'propose_article_ideas', { idee: 'non un elenco' });
+      const tObj = await call48(K, 'propose_article_ideas', { idee: { a: { titolo: 'Idea oggetto', motivo: 'x motivo' } } });
+      cli48('sql', `INSERT INTO {p}ai_idee (connessione_id, client, titolo, motivo, stato, creato) SELECT ${+kk.connessione}, 'Sic48', 'riempi', 'riempi', 'attesa', NOW() FROM (SELECT 1 FROM {p}settings a, {p}settings b LIMIT 98) t`);
+      const pieno = n48('ai_idee', ` WHERE connessione_id = ${+kk.connessione} AND stato = 'attesa'`);
+      const oltre = await call48(K, 'propose_article_ideas', { idee: Array.from({ length: 5 }, (_, i) => ({ titolo: 'Oltre il limite ' + i, motivo: 'Oltre il limite delle idee in attesa.' })) });
+      ok('2.34.0: 21 idee, idee non in elenco, oltre 100 idee in attesa: rifiutate, nessuna salvata', t21.errore && tNo.errore && tObj.errore && pieno >= 99 && oltre.errore && oltre.stato === 200 && n48('ai_idee', " WHERE titolo LIKE 'Oltre il limite%'") === 0 && n48('ai_idee') === i0 + 98, [t21.dati, tNo.dati, oltre.dati, pieno]);
+      cli48('sql', "DELETE FROM {p}ai_idee WHERE motivo = 'riempi'");
+      // 5. idea_id sbagliati: nessuna bozza.
+      const ideaAtt = iC.dati.idee[0].idea_id;
+      const scart = await call48(K, 'propose_article_ideas', { idee: [{ titolo: 'Idea da scartare sic48', motivo: 'Per la prova degli stati.' }, { titolo: 'Idea approvata sic48', motivo: 'Per la prova delle pagine.' }] });
+      const [idS, idOk] = scart.dati.idee.map(x => x.idea_id);
+      cli48('sql', `UPDATE {p}ai_idee SET stato = 'scartata' WHERE id = ${idS}`); cli48('sql', `UPDATE {p}ai_idee SET stato = 'da_scrivere' WHERE id = ${idOk}`);
+      const a0 = n48('articles');
+      const prove = [];
+      for (const v of [99999999, ideaAtt, idS, '1 OR 1=1', -1, 1.5, [idOk], { id: idOk }, '0x10']) prove.push(await call48(K, 'create_draft', { tipo: 'articoli', titolo: 'Bozza sic48 idea', idea_id: v, testo: '<p>x</p>' }));
+      prove.push(await call48(K, 'create_draft', { tipo: 'pagine', titolo: 'Pagina sic48 idea', idea_id: idOk, testo: '<p>x</p>' }));
+      ok('2.34.0: create_draft con idea_id inesistente, da decidere, scartato, come SQL, negativo, decimale, elenco, oggetto, esadecimale o su una pagina: rifiutata, nessuna bozza', prove.every(x => x.errore) && n48('articles') === a0, prove.map(x => x.dati && x.dati.errore && x.dati.errore.slice(0, 50)));
+      const bz = cli48('sql', "SELECT id FROM {p}articles WHERE status = 'published' AND slug LIKE 'ai-prova-stile-%' LIMIT 1")[0];
+      const upPub = await call48(K, 'update_draft', { tipo: 'articoli', id: +bz.id, idea_id: idOk });
+      ok('2.34.0: update_draft con idea_id su un articolo pubblicato: rifiutata, l\'idea resta da scrivere', upPub.errore && uno48('SELECT stato FROM {p}ai_idee WHERE id = ' + idOk).stato === 'da_scrivere', upPub.dati);
+      // 6. Approva e Scarta dal pannello senza CSRF, da un'altra origine, dal redattore, con id falsati.
+      const q1 = await admin.ctx.request.post(URLI, { form: { azione: 'approva', id: String(ideaAtt) }, maxRedirects: 0 });
+      const tk2 = await tokenDi(admin.p, URLI);
+      const q2 = await admin.ctx.request.post(URLI, { form: { _csrf: tk2, azione: 'approva', id: String(ideaAtt) }, headers: { Origin: 'https://evil.example' }, maxRedirects: 0 });
+      let qr = 'saltato';
+      if (red.dentro) {
+        const tr = await tokenDi(red.p, ADMIN + '/contenuti.php?tipo=articoli');
+        qr = [(await red.ctx.request.post(URLI, { form: { _csrf: tr, azione: 'approva', id: String(ideaAtt) }, maxRedirects: 0 })).status(), (await red.ctx.request.post(URLI, { form: { _csrf: tr, azione: 'scarta', id: String(ideaAtt) }, maxRedirects: 0 })).status()];
+      }
+      const orig = BASE.replace(/(https?:\/\/[^/]+).*/, '$1');
+      for (const v of ["1 OR 1=1", "0", "-1", ideaAtt + "' OR '1'='1"]) await admin.ctx.request.post(URLI, { form: { _csrf: tk2, azione: 'approva', id: v }, headers: { Origin: orig }, maxRedirects: 0 });
+      const statoAtt = uno48('SELECT stato FROM {p}ai_idee WHERE id = ' + ideaAtt).stato;
+      ok('2.34.0: Approva un\'idea senza CSRF, da un\'altra origine, dal redattore o con un id falsato: l\'idea resta da decidere', [400, 403].includes(q1.status()) && [400, 403].includes(q2.status()) && statoAtt === 'attesa' && n48('ai_idee', " WHERE stato = 'da_scrivere'") === 1, [q1.status(), q2.status(), qr, statoAtt]);
+      // 7. Permessi insufficienti e token revocato.
+      const kl = cli48('chiave', 'leggi', 'Sic48 lettura').chiave;
+      const pl = [await call48(kl, 'save_style_profile', { profilo: 'Tono: tentativo con la sola lettura per cambiare il profilo.' }), await call48(kl, 'propose_article_ideas', { idee: [{ titolo: 'Idea sola lettura', motivo: 'senza permesso' }] }), await call48(kl, 'create_draft', { tipo: 'articoli', titolo: 'Bozza sola lettura', idea_id: idOk })];
+      ok('2.34.0: una chiave di sola lettura non salva il profilo ("bozze"), non propone idee ("proposte"), non scrive bozze da idee', /"bozze"/.test(pl[0].dati.errore) && /"proposte"/.test(pl[1].dati.errore) && /"bozze"/.test(pl[2].dati.errore), pl.map(x => x.dati));
+      const kb = cli48('chiave', 'bozze', 'Sic48 senza lettura').chiave;
+      const pb = [await call48(kb, 'analyze_style'), await call48(kb, 'suggest_topics'), await call48(kb, 'list_article_ideas'), await call48(kb, 'get_style_profile')];
+      ok('2.34.0: una chiave senza "leggi" non misura lo stile, non legge spunti, idee o profilo', pb.every(x => x.errore && /"leggi"/.test(x.dati.errore)), pb.map(x => x.dati));
+      const kr = cli48('chiave', 'leggi,bozze,proposte', 'Sic48 revocata');
+      cli48('sql', 'UPDATE {p}ai_connessioni SET revocato = NOW() WHERE id = ' + (+kr.connessione));
+      const v1 = n48('ai_stile'), i1 = n48('ai_idee');
+      const rv = [await call48(kr.chiave, 'analyze_style'), await call48(kr.chiave, 'save_style_profile', { profilo: 'Tono: tentativo con un token revocato per cambiare il profilo.' }), await call48(kr.chiave, 'propose_article_ideas', { idee: [{ titolo: 'Idea revocata', motivo: 'token revocato' }] })];
+      ok('2.34.0: il token di una connessione revocata: 401 su analyze_style, save_style_profile e propose_article_ideas, niente salvato', rv.every(x => x.stato === 401) && n48('ai_stile') === v1 && n48('ai_idee') === i1, rv.map(x => x.stato));
+    } finally {
+      cli48('sql', "DELETE FROM {p}sicurezza_tentativi WHERE chiave LIKE 'limite:aic:%'");
+      cli48('stile-pulisci'); cli48('pulisci');
+      if (!eraAcceso48) cli48('spegni');
+    }
+  } else console.log('--  AI collegate, stile e idee (2.34.0): saltata (serve CMS_DIR e l\'addon nella cartella)');
+
   // === pulizia: elimina il redattore di prova
   {
     await admin.p.goto(ADMIN + '/utenti.php', { waitUntil: 'networkidle' });

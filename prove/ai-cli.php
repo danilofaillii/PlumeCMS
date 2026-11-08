@@ -23,6 +23,13 @@
 //   nav-molte <n>               n pagine pubblicate "ai-prova-nav-m-*" e quattro menu "AI prova *" da 40 voci (prova dei tempi)
 //   articolo-prova <slug>       un articolo pubblicato fatto con l'editor, con parola chiave, attacco che non risponde, salto
 //                               H2 > H4, un paragrafo lungo, frasi datate e un'immagine senza alt; stampa id e id dei widget
+//   stile-semina                2.34.0: dieci articoli pubblicati "ai-prova-stile-*" con uno stile riconoscibile (frasi brevi
+//                               in seconda persona, una domanda nell'attacco, due H2, un elenco, un link interno; metà con
+//                               l'editor, metà classici), categorie "Orto" (nove) e "Balcone" (una), il tag "Lumache" su un solo
+//                               articolo e il buco voluto: "concime naturale" fra le parole correlate e nel testo di quattro
+//                               articoli, senza un articolo dedicato. Stampa gli id
+//   stile-molti <n>             n articoli pubblicati "ai-prova-stile-m-*" (prova dei tempi)
+//   stile-pulisci               toglie gli articoli "ai-prova-stile-*", le categorie e il tag di prova, profilo e idee
 $_SERVER['HTTP_HOST'] = '127.0.0.1'; $_SERVER['REQUEST_URI'] = '/';
 $dir = $argv[1];
 require $dir . '/includes/config.php';
@@ -122,6 +129,59 @@ switch ($cmd) {
         file_put_contents($f, $c);
         if (function_exists('opcache_reset')) @opcache_reset();
         $esci(['ok' => true]);
+    case 'stile-semina':
+    case 'stile-molti':
+    case 'stile-pulisci':
+        require_once $dir . '/includes/editor-controlli.php';
+        require_once $dir . '/includes/editor.php';
+        require_once $dir . '/includes/contenuti.php';
+        editor_carica_widget_esterni();
+        require_once $addon;
+        aic_schema();
+        if ($cmd === 'stile-pulisci') {
+            db()->exec('DELETE FROM ' . tbl('articles') . " WHERE slug LIKE 'ai-prova-stile-%'");
+            db()->exec('DELETE a FROM ' . tbl('articles') . ' a JOIN ' . tbl('ai_idee') . ' i ON i.articolo_id = a.id'); // le bozze scritte dalle idee
+            db()->exec('DELETE FROM ' . tbl('categories') . " WHERE slug IN ('orto-prova', 'balcone-prova')");
+            db()->exec('DELETE FROM ' . tbl('tags') . " WHERE slug IN ('lumache-prova', 'estate-prova')");
+            db()->exec('DELETE FROM ' . tbl('ai_stile'));
+            db()->exec('DELETE FROM ' . tbl('ai_idee'));
+            $esci(['ok' => true]);
+        }
+        $titoli = ['Come seminare i pomodori', 'Annaffiare l\'orto d\'estate', 'Le erbe aromatiche in vaso', 'Potare la salvia', 'Il compost in giardino',
+            'Coltivare le fragole in vaso', 'Difendere l\'orto dalle lumache', 'Raccogliere il basilico', 'Preparare il terreno in autunno', 'Scegliere i semi giusti'];
+        $testo = function (int $i, string $titolo, bool $concime) {
+            $t = mb_strtolower($titolo);
+            return '<p>Vuoi sapere ' . $t . '? Ti spiego tutto. Bastano pochi passi. Non serve esperienza.</p>'
+                . '<h2>Cosa ti serve</h2><p>Prendi una vanga. Scegli un angolo al sole. Tieni a portata un annaffiatoio. ' . ($concime ? 'Aggiungi un po\' di concime naturale al terreno. ' : '') . 'Il resto lo impari strada facendo.</p>'
+                . '<ul><li>Una vanga piccola</li><li>Semi freschi</li><li>Acqua tiepida</li></ul>'
+                . '<h2>Come fare</h2><p>Scava piano. Metti i semi. Copri con la terra. Annaffia ogni mattina. Guarda le foglie crescere. ' . ($concime ? 'Il concime naturale fa il resto. ' : '') . 'Hai dubbi? Leggi anche <a href="/ai-prova-stile-' . ($i === 1 ? 2 : $i - 1) . '/">la guida di prima</a>.</p>'
+                . '<p>Sbagli? Nessun problema. Riprova la settimana dopo. Ogni orto è diverso. Il tuo ti insegnerà molto.</p>'
+                . '<p>Ora tocca a te. Prova e raccontami com\'è andata.</p>';
+        };
+        if ($cmd === 'stile-molti') {
+            $n = max(1, min(1000, (int)($argv[3] ?? 300)));
+            for ($i = 1; $i <= $n; $i++) contenuti_salva('articoli', 0, ['title' => 'Articolo di prova numero ' . $i, 'slug' => 'ai-prova-stile-m-' . $i, 'stato' => 'pubblicato', 'data' => date('Y-m-d', time() - (400 + $i) * 86400), 'ora' => '07:00',
+                'contenuto' => str_repeat($testo($i, 'il tema numero ' . $i, $i % 3 === 0), 8), /* circa 800 parole, come un articolo vero */ 'keyword_target' => 'tema ' . $i, 'keywords_secondarie' => $i % 3 === 0 ? 'concime naturale' : '']);
+            $esci(['articoli' => $n]);
+        }
+        $orto = contenuti_categoria_crea('Orto prova'); $balcone = contenuti_categoria_crea('Balcone prova');
+        $ids = [];
+        foreach ($titoli as $k => $titolo) {
+            $i = $k + 1;
+            $slug = 'ai-prova-stile-' . $i;
+            db()->prepare('DELETE FROM ' . tbl('articles') . ' WHERE slug = ?')->execute([$slug]);
+            $concime = in_array($i, [2, 4, 6, 8], true);
+            $faq = $i % 2 ? json_encode([['domanda' => 'Quanto tempo serve per ' . mb_strtolower($titolo) . '?', 'risposta' => 'Bastano pochi minuti al giorno.']], JSON_UNESCAPED_UNICODE) : '';
+            $html = $testo($i, $titolo, $concime);
+            $editor = $i % 2 === 0;
+            $id = contenuti_salva('articoli', 0, ['title' => $titolo, 'slug' => $slug, 'stato' => 'pubblicato', 'data' => date('Y-m-d', time() - (20 - $i) * 86400), 'ora' => '08:00',
+                'contenuto' => $editor ? '' : $html, 'keyword_target' => mb_strtolower($titolo), 'keywords_secondarie' => $concime ? 'concime naturale, orto biologico' : 'orto biologico',
+                'seo_title' => $titolo . ': la guida facile', 'seo_description' => 'Ti spiego ' . mb_strtolower($titolo) . ' in pochi passi, senza esperienza: cosa ti serve e come fare.',
+                'faq' => $faq, 'categorie' => [$i === 3 ? $balcone : $orto], 'tags' => $i === 7 ? 'Lumache prova, Estate prova' : 'Estate prova']);
+            if ($editor) editor_salva($id, editor_valida(['elementi' => [editor_sezione([editor_widget('testo', ['contenuto' => $html]), editor_widget('immagine', ['immagine' => '/uploads/segnaposto/nessuna.jpg', 'alt' => 'Orto'])])]]), true, 'prova', '', 'articoli');
+            $ids[] = $id;
+        }
+        $esci(['ids' => $ids, 'categoria_povera' => $balcone, 'tag_uno' => 'lumache-prova']);
     case 'nav-prepara':
     case 'nav-ripristina':
     case 'menu-cambia':

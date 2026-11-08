@@ -6173,12 +6173,14 @@ cambiano niente; `/api/mcp` e `/.well-known/*` danno il 404 del sito).
 | `includes/ai.php` | permessi, durate, limiti (`:12-41`), tabelle (`aic_tabelle()` `:53`, nate al primo uso con `aic_schema()` `:165`), indirizzi, testi puliti, token, registro, limiti di velocità |
 | `includes/oauth.php` | OAuth 2.1: metadati, registrazione dinamica, authorize, consenso, token, rinnovo, revoca |
 | `includes/mcp.php` | server MCP (JSON-RPC su POST), REST e OpenAPI, smistamento degli indirizzi |
-| `includes/strumenti.php` | i ventuno strumenti (ventidue con l'addon Statistiche), audit, alberi dell'editor, bozze |
+| `includes/strumenti.php` | i ventisei strumenti (ventisette con l'addon Statistiche), audit, alberi dell'editor, bozze |
+| `includes/stile.php` | 2.34.0: misure dello stile, profilo e versioni, coerenza delle bozze (47.17-47.18) |
+| `includes/idee.php` | 2.34.0: spunti, idee per articoli, piano editoriale (47.19-47.21) |
 | `includes/navigazione.php` | 2.33.0: analisi della navigazione, proposte di menu e dei blocchi in fondo alle pagine (47.11-47.13) |
 | `includes/revisione.php` | 2.33.0: schede degli articoli, elenco da rivedere, proposte raggruppate (47.14-47.15) |
 | `includes/proposte.php` | proposte: creazione, applicazione con le strade del CMS, scarto |
 | `includes/foto.php` | ricerca e importazione delle foto |
-| `includes/admin-*.php`, `assets/admin.css` | pannello: Collegamenti, Proposte, Registro, Impostazioni, Consenso |
+| `includes/admin-*.php`, `assets/admin.css` | pannello: Collegamenti, Proposte, Idee per articoli, Stile del sito, Registro, Impostazioni, Consenso |
 | `prove/prova-ai-collegate.js`, `prove/ai-cli.php`, `prove/foto-finte.php` | prove (47.10) |
 
 Tabelle (prefisso del sito): `ai_client` (client registrati), `ai_richieste` (authorize in attesa del consenso, 15 minuti),
@@ -6521,6 +6523,107 @@ Prove:
   (radice e cartella), con `prove/ai-cli.php` (comandi `nav-prepara`, `nav-ripristina`, `menu-cambia`, `menu`, `nav-molte`,
   `articolo-prova`); `SENZA_MOLTE=1` salta la parte con 300 pagine;
 - `tools/sicurezza-prova.js` gruppo 47 (15 attacchi, con `CMS_DIR`).
+
+### 47.17 Lo stile del sito: analyze_style (dalla 2.34.0)
+
+Richiesta di Danilo (8 novembre 2026): "Dagli articoli, proponi la possibilità di crearne di nuovi in base all'argomento. La creazione
+degli articoli nuovi dovrà seguire lo stile di quelli già scritti." Il server MCP **non chiama mai un modello di linguaggio**: scrive
+l'AI collegata; il CMS le dà dati, misure e regole e conserva quello che produce. Le bozze restano bozze (47.4).
+
+`addon/ai-collegate/includes/stile.php`, caricato da `strumenti.php:12`. `aic_stile_analizza()` (`:244`) legge con una query sola
+(`aic_stile_articoli()` `:197`) gli articoli pubblicati più recenti, al massimo `AIC_STILE_MAX_ARTICOLI` (50, `:13`; parametri
+`quanti` e `salta` per leggere i precedenti), e per ognuno `aic_stile_misura()` (`:145`). Il testo **non si disegna** (niente
+`editor_disegna()`): `aic_stile_estrai()` (`:44`) prende l'HTML dei widget Testo, i Titoli come `<hN>`, i testi degli altri widget
+come paragrafi, conta i widget di immagini e i campi link verso `/...`, e tiene la sequenza dei tipi di widget; per un articolo
+senza editor usa il testo della scheda (Markdown convertito). Misure, tutte contate:
+- parole (`aic_stile_parole()` `:84`: lettere e numeri), frasi (`aic_stile_frasi()` `:96`: si spezza dopo `. ! ?` e i puntini prima
+  di una maiuscola, un numero o una virgoletta), paragrafi (`<p>` di almeno tre parole); media e mediana (`:189-190`);
+- H2 e H3, elenchi e voci, grassetti, emoji (`aic_stile_emoji()` `:106`: caratteri a 4 byte, entità sopra U+1F000 e U+2600-27BF),
+  link interni (`aic_stile_link_interni()` `:116`, più i campi link dei widget), immagini (anche l'immagine in evidenza), domande
+  frequenti della scheda più i sottotitoli che finiscono con `?`, domande ai lettori (frasi con `?`) e attacchi con una domanda;
+- persona (`aic_stile_persona()` `:129`): parole della seconda persona (`AIC_STILE_TU` `:30`), del voi (`:31`) e del noi (`:32`)
+  ogni mille; sopra `AIC_STILE_SOGLIA_PERSONA` (6) l'articolo ha quella persona, altrimenti è impersonale ("ci" non conta);
+- parole ed espressioni ricorrenti (`aic_stile_ricorrenti()` `:209`): escluse le parole vuote (`AIC_STILE_VUOTE` `:20`), in almeno
+  due articoli; le espressioni di 2 e 3 parole non scavalcano la punteggiatura (`aic_stile_token()` `:90` mette un segno vuoto) e non
+  finiscono con una parola vuota;
+- attacchi e chiusure (prime e ultime due frasi del primo e dell'ultimo paragrafo) di cinque articoli; categorie e tag (nomi dei tag
+  con una query sola, non `contenuti_tag_di()` per riga); lunghezza di titolo, titolo per Google e descrizione per Google;
+  struttura dei widget (sequenze con i doppioni di fila contati una volta, primo widget, widget più usati);
+- da 3 a 5 estratti (al massimo `AIC_STILE_ESTRATTO_MAX`, 600 caratteri): per articolo, dai più recenti, il paragrafo di almeno 15
+  parole più vicino al paragrafo medio del sito che usa la persona dominante, senza due estratti uguali; il criterio è nel JSON.
+`come_leggerlo` (`aic_stile_come_leggerlo()` `:340`) spiega ogni misura. Tempi: 114 ms con 311 articoli pubblicati, 300 da circa 800 parole (ne legge 50).
+
+### 47.18 Il profilo di stile e la coerenza delle bozze
+
+Tabella `ai_stile` (`ai.php:160`): una riga per versione (`testo`, `misure` JSON, `autore`, `connessione_id`, `origine` fra `ai`,
+`pannello`, `ripristino`, `misure`, `creato`); quella in uso è l'ultima. `aic_stile_salva()` (`stile.php:397`) scrive e cancella le
+righe oltre la versione in uso più `AIC_STILE_VERSIONI` (10). `save_style_profile` (permesso **`bozze`**: scrive testo che non va
+sul sito; nessun permesso nuovo, così i collegamenti esistenti lo hanno già) passa il testo da `aic_stile_testo_pulito()` (`:387`:
+solo testo semplice con `aic_testo()`, che dalla 2.34.0 toglie anche il contenuto di `<script>` e `<style>` (`ai.php:255`), niente
+caratteri a 4 byte, da 40 a `AIC_STILE_PROFILO_MAX` 8000 caratteri) e salva con le misure **ricalcolate dal sito** in quel momento
+(`aic_stile_misure_breve()` `:356`, senza gli esempi lunghi). `get_style_profile` (`aic_stile_profilo_per_ai()` `:415`) dice anche
+quando manca. `aic_stile_ripristina()` (`:408`) copia una versione vecchia in una nuova.
+
+Coerenza: `aic_stile_coerenza()` (`:427`), chiamata da `create_draft` e `update_draft` (`strumenti.php:750`, `:788`) solo per gli
+articoli e solo se c'è un profilo con misure. Misura la bozza (`struttura_bozza` se c'è) con `aic_stile_misura()` e segnala: parole
+oltre il 40% dalla mediana; persona diversa dalla dominante (con almeno 60 parole); frase media oltre il 35%; nessun H2 se il sito
+ne ha almeno 1,5, o più di due volte e mezza; nessun link interno se il sito ne ha almeno 0,5; niente domande frequenti se le ha
+almeno metà del sito; nessuna domanda ai lettori se le fa il 60%. **Solo avvisi**: la bozza è salvata comunque.
+
+### 47.19 Gli spunti: suggest_topics
+
+`addon/ai-collegate/includes/idee.php`, caricato da `strumenti.php:13`. `aic_idee_spunti()` (`:49`): con due query lette fino a
+`AIC_IDEE_MAX_ARTICOLI` (1000) articoli pubblicati e le pagine pubblicate; il testo di ognuno senza disegnare (`aic_idee_testo()`
+`:35`). Un tema "ha un articolo dedicato" se tutti i suoi termini (`aic_idee_termini()` `:28`) stanno in titolo, parola chiave o
+slug di un articolo, o nel titolo o slug di una pagina. Spunti, ognuno con `tipo`, `tema`, `perche`, `nasce_da` (fino a 5 articoli),
+`link_interni_consigliati` (fino a 4) e `forza` (ordine):
+- `parola_chiave_senza_articolo` (parole correlate delle schede; forza 80 + 10 per articolo che la cita, fino a 8);
+- `tema_citato_senza_articolo` (espressioni ricorrenti in almeno 3 articoli; quelle in oltre il 60% degli articoli, con almeno
+  cinque, sono formule dello stile e si saltano);
+- `domanda_che_diventa_articolo` (domande frequenti delle schede e sottotitoli H2/H3 a domanda);
+- `tag_con_un_articolo`, `categoria_povera` (due articoli o meno);
+- `molto_letto_senza_collegati`: solo con l'addon Statistiche (`cms_modulo('statistiche')` e `function_exists('st_classifica')`),
+  le 30 pagine più viste in 90 giorni che sono articoli collegati da al massimo un altro articolo.
+Più `temi_coperti` (categorie con il conto, tag, parole chiave, titoli). Non inventa titoli. Tempi: 607 ms con 311 articoli, 300 da circa 800 parole.
+
+### 47.20 Le idee: propose_article_ideas, list_article_ideas, idea_id
+
+Tabella `ai_idee` (`ai.php:171`): `titolo`, `parola_chiave`, `pubblico`, `scaletta` e `collegati` (JSON), `motivo`, `stato`
+(`AIC_IDEE_STATI` `idee.php:19`: `attesa`, `da_scrivere`, `scritta`, `scartata`), `articolo_id`, `data_prevista`, `ordine`, `nota`
+(dell'amministratore per l'AI), `deciso`, `deciso_da`.
+- `propose_article_ideas` (permesso **`proposte`**: le approva l'amministratore), `aic_idee_proponi()` (`:258`): da 1 a
+  `AIC_IDEE_PER_CHIAMATA` (20), **tutte o nessuna** (ognuna validata da `aic_idea_valida()` `:244` prima di scriverne una; titolo di
+  almeno 5 caratteri e motivo obbligatori; titoli doppi nella stessa chiamata rifiutati; scrittura in una transazione), al massimo
+  `AIC_IDEE_MAX_ATTESA` (100) in attesa per collegamento (429 in REST); testi da `aic_testo()`, scaletta fino a 15 punti, collegati
+  (`aic_idee_collegati()` `:226`) solo articoli o pagine pubblicati di questo sito (gli altri tolti con un avviso), fino a 8;
+- `list_article_ideas` (`leggi`), `aic_idee_elenco()` (`:305`): filtro per stato (senza: `da_scrivere`), ordine del piano (mese
+  della data prevista, senza data in fondo, poi `ordine`), con la data prevista, la nota e la bozza (`aic_idea_per_ai()` `:292`);
+- `create_draft` e `update_draft` con `idea_id` (`strumenti.php:733`, `:761`): `aic_idea_per_bozza()` (`idee.php:324`) controlla
+  **prima di salvare** che sia un numero (non testo, elenco o decimale), che l'idea esista, che il tipo sia `articoli` e che lo stato
+  sia `da_scrivere` (oppure `scritta` con la stessa bozza, per `update_draft`); dopo il salvataggio `aic_idea_lega()` (`:336`) la
+  porta a `scritta` con `articolo_id`. La bozza resta bozza come sempre.
+
+### 47.21 Pannello: Stile del sito e Idee per articoli
+
+Due pagine nuove del manifesto (`stile`, `idee`), voci del sottomenu e schede (`admin-comune.php`); il numero nel menu somma
+proposte e idee da decidere (`aic_idee_in_attesa()` `idee.php:209`). Solo amministratore (`addon-pagina.php`), ogni azione con
+`verify_csrf()` e gli id accettati solo se fatti di cifre.
+- `admin-stile.php`: il profilo in un campo (Salva il profilo, `:17`, tiene le misure del profilo in uso), chi e quando, le misure in
+  parole (`dl.aic-misure`), Ricalcola le misure (`:26`), le versioni precedenti con Ripristina e la finestra di conferma (`:31`).
+- `admin-idee.php`: viste Da decidere, Piano editoriale, Scartate, Tutte; per ogni idea Approva l'idea, Scarta (con conferma),
+  "Modifica" (`details`: titolo, parola chiave, a chi serve, scaletta una riga per punto, nota per l'AI, data prevista con il
+  calendario, "e approva"); il piano diviso per mese (`section.aic-mese`) con Sposta prima e Sposta dopo dentro il mese
+  (`aic_idea_sposta()` `idee.php:371`) e il link alla bozza con il suo stato. La data prevista è un promemoria: nessun cron, nessuna
+  email, nessuna pubblicazione programmata.
+Stili nel blocco 2.34.0 di `assets/admin.css`, solo variabili degli aspetti; ogni stato ha la parola.
+
+### 47.22 Prove della 2.34.0
+
+- `prove/prova-ai-stile.js <base> <cartella CMS> <utente> <password> [cartella foto]` su un sito col kit Attività: 53 controlli
+  (radice e cartella), con `prove/ai-cli.php` (comandi `stile-semina`: dieci articoli in seconda persona con frasi brevi, una domanda
+  nell'attacco, due H2, un elenco e un link, il buco "concime naturale"; `stile-molti <n>`; `stile-pulisci`); `SENZA_MOLTE=1` salta
+  i 300 articoli;
+- `tools/sicurezza-prova.js` gruppo 48 (15 attacchi, con `CMS_DIR`).
 
 ## Appendice A. Dove i documenti vecchi non corrispondono al codice
 

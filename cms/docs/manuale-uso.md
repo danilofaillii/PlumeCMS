@@ -5847,13 +5847,96 @@ Le proposte di uno stesso articolo arrivano insieme in **AI collegate > Proposte
 L'AI può mandare al massimo venti proposte per articolo alla volta; se una non va bene (per esempio un widget che non c'è più),
 non ne salva nessuna e se ne accorge da sola.
 
-### Checklist della navigazione e delle schede
+### Lo stile del sito
+
+Dalla 2.34.0 l'AI può imparare **come scrivi**: legge gli articoli che hai già pubblicato e il sito le dà le misure (quante
+parole hanno di solito, se le frasi sono brevi o lunghe, se dai del tu o del voi a chi legge, se cominci con una domanda, quanti
+sottotitoli usi, le parole che ripeti più spesso, come apri e come chiudi). Il sito conta e basta: è l'AI che le legge e scrive in
+parole il **profilo di stile**, cioè le regole da seguire quando scrive un articolo nuovo. Il profilo resta nel sito e lo puoi
+leggere e correggere tu.
+
+**Esempio.** Giulia ha venti articoli sul suo blog, scritti dando del tu, con frasi corte e una domanda all'inizio. Vuole che gli
+articoli nuovi dell'AI sembrino scritti da lei.
+
+Frasi pronte da scrivere alla tua AI:
+- "Analizza lo stile degli articoli del sito e salva il profilo di stile."
+- "Leggi il profilo di stile e dimmi in cinque righe come scrivo."
+- "Aggiorna il profilo di stile: ho pubblicato altri articoli."
+
+Poi apri **AI collegate > Stile del sito**:
+
+![Stile del sito: il profilo, le misure degli articoli, le versioni precedenti](immagini/manuale-uso/41-stile.jpg)
+
+1. **Il profilo di stile**: il testo scritto dall'AI, con la data e chi l'ha salvato. Se qualcosa non ti somiglia (per esempio
+   "tono formale" e tu invece scherzi spesso), correggilo nel campo e premi **Salva il profilo**.
+2. **Le misure degli articoli**: quello che il sito ha contato, scritto in parole (per esempio "97 parole a metà classifica",
+   "Dà del tu a chi legge"). **Ricalcola le misure** conta di nuovo dopo che hai pubblicato altri articoli; il testo del profilo
+   resta com'è.
+
+Più in basso, **Versioni precedenti**: ogni volta che il profilo cambia, quello di prima resta lì (le ultime dieci), con chi l'ha
+salvato e quando. **Ripristina** lo rimette in uso, dopo la conferma; quello di adesso non si perde, passa fra le versioni.
+
+Da sapere:
+- Il sito misura al massimo gli **ultimi 50 articoli pubblicati**. Senza articoli pubblicati non c'è uno stile da misurare: l'AI
+  te lo dice.
+- Il profilo è solo testo (al massimo 8000 caratteri): niente formattazione.
+- Quando l'AI scrive una bozza, il sito la confronta con il profilo e le dice dove si allontana (troppo lunga, frasi troppo
+  lunghe, del voi invece del tu, niente sottotitoli, niente link ad altri articoli). Sono avvisi per lei: la bozza è salvata
+  comunque e la rileggi tu prima di pubblicarla.
+
+### Idee e articoli nuovi
+
+L'AI può guardare gli **argomenti** del sito e trovare quello che manca: un tema che citi in tanti articoli ma senza un articolo
+suo, una categoria con un solo articolo, un tag usato una volta, una domanda dei lettori che merita una risposta lunga, un
+articolo molto letto (se hai acceso l'addon Statistiche) che nessun altro articolo collega. Con questo materiale ti **propone
+idee** di articoli; tu decidi quali scrivere, e lei scrive solo quelle, sempre in bozza, seguendo il profilo di stile.
+
+**Esempio.** In quattro articoli di Giulia c'è scritto "concime naturale", ma nessun articolo ne parla davvero. L'AI propone
+"Il concime naturale per l'orto di casa", con la scaletta e gli articoli da collegare.
+
+Frasi pronte:
+- "Guarda gli argomenti del sito e proponimi cinque idee per articoli nuovi."
+- "Quali argomenti mancano nella categoria Orto? Proponi tre idee."
+- "Scrivi in bozza le idee che ho approvato, seguendo il profilo di stile."
+- "Scrivi la prossima idea del piano editoriale."
+
+Le idee arrivano in **AI collegate > Idee per articoli**; nel menu del pannello compare il numero di quelle da decidere.
+
+![Idee per articoli: le idee da decidere](immagini/manuale-uso/41-idee.jpg)
+
+1. In alto scegli cosa vedere: **Da decidere**, **Piano editoriale**, **Scartate**, **Tutte**.
+2. Ogni idea ha il titolo, la parola chiave, a chi serve, il **Perché** scritto dall'AI, la scaletta e gli articoli da collegare.
+3. **Approva l'idea**: diventa "Da scrivere" e passa nel piano editoriale. L'AI la trova da sola quando le chiedi di scrivere.
+4. **Scarta**: dopo la conferma l'idea va fra le scartate. Non cambia niente sul sito.
+5. **Modifica prima di approvare**: si apre un riquadro dove cambi titolo, parola chiave, scaletta (un punto per riga), scrivi una
+   **nota per l'AI** (per esempio "cita il nostro corso di aprile") e scegli la **data prevista**. Con "E approva l'idea"
+   spuntato, salvando la approvi anche.
+
+**Il piano editoriale.** Nella vista **Piano editoriale** le idee approvate stanno divise per **mese** della data prevista (in
+fondo quelle senza data). Dentro il mese le metti in ordine con **Sposta prima** e **Sposta dopo**; la data la cambi da
+**Modifica o dai una data**. Quando l'AI ha scritto la bozza, l'idea diventa **Scritta (in bozza)** e c'è il link per aprirla
+nell'editor.
+
+![Il piano editoriale diviso per mese, al telefono](immagini/manuale-uso/41-piano.jpg)
+
+Da sapere:
+- La data prevista è **solo un promemoria** per te: niente si pubblica da solo e non arrivano email. La bozza la pubblichi tu,
+  quando vuoi, dall'editor.
+- L'AI può scrivere solo le idee **approvate**. Se le chiedi di scrivere un'idea ancora da decidere o scartata, non lo fa.
+- Ogni idea si scrive una volta: per cambiare la bozza, l'AI modifica quella che c'è già.
+- L'AI può proporre al massimo venti idee alla volta; se una è sbagliata (per esempio senza il perché) non ne salva nessuna.
+
+### Checklist della navigazione, delle schede e degli articoli nuovi
 
 - [ ] Ho chiesto all'AI l'analisi della navigazione e ho letto i suoi consigli.
 - [ ] Prima di approvare un menu ho guardato le voci **tolte**: nessuna pagina importante sparisce.
 - [ ] Dopo l'approvazione ho aperto il sito dal telefono e il menu si legge bene.
 - [ ] Per le briciole di pane, se le voglio, ho messo il widget nell'header.
 - [ ] Ho approvato o scartato tutte le schede degli articoli; quelle approvate le ho rilette sul sito.
+- [ ] Ho letto il profilo in **Stile del sito** e ho corretto quello che non mi somiglia.
+- [ ] Ho deciso tutte le **idee per articoli**: approvate, corrette o scartate.
+- [ ] Ho dato una data prevista alle idee approvate e le ho messe in ordine nel piano.
+- [ ] Ogni bozza scritta da un'idea l'ho riletta nell'editor prima di pubblicarla.
 
 **Se qualcosa non va.**
 - L'AI dice che non riesce a collegarsi e il pannello non si apre: controlla che il sito sia in **https** e che l'addon sia
@@ -5867,9 +5950,14 @@ non ne salva nessuna e se ne accorge da sola.
 
 - "Approva il menu" dà un messaggio rosso "è cambiato dopo la proposta": qualcuno ha toccato il menu dopo che l'AI l'ha
   proposto. Scarta la proposta e chiedine una nuova.
+- L'AI dice che non può scrivere un'idea: l'idea è ancora **da decidere** (o è scartata). Approvala in **Idee per articoli**.
+- L'AI dice che non c'è uno stile da misurare: il sito non ha ancora articoli pubblicati. Pubblicane qualcuno, oppure scrivi il
+  profilo tu in **Stile del sito**.
+- Gli articoli dell'AI non ti somigliano: apri **Stile del sito**, correggi il profilo (per esempio "frasi più corte, mai il voi")
+  e chiedile di rileggerlo prima di scrivere.
 
-**Cosa non c'è ancora.** L'AI non pubblica e non pubblicherà (è la regola). Non cambia da sola menu, header e footer: li
-propone. Non scrive negli addon (prenotazioni, eventi,
+**Cosa non c'è ancora.** L'AI non pubblica e non pubblicherà (è la regola), nemmeno alla data prevista del piano editoriale.
+Non cambia da sola menu, header e footer: li propone. Non scrive negli addon (prenotazioni, eventi,
 prodotti, corsi) né nella newsletter. Questo addon è provato con un client scritto per le prove, non ancora con Claude e
 ChatGPT veri su un sito vero: se un passo non va come scritto qui, segnalalo.
 

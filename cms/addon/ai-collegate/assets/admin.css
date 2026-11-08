@@ -66,3 +66,26 @@
 .aic-nella-scheda{border-top:1px solid var(--border);padding-top:.9rem;margin-top:.9rem}
 .aic-nella-scheda h4{margin:0 0 .3rem;font-size:1rem}
 .aic-nella-scheda h4 a{color:inherit}
+/* 2.34.0: Stile del sito e Idee per articoli. Ogni stato ha la sua parola, non solo il colore. */
+.aic-profilo-form textarea{width:100%;min-width:0;font-size:.95rem;line-height:1.55}
+.aic-chi-salvato{margin:.2rem 0 .8rem}
+.aic-misure{display:grid;grid-template-columns:minmax(9rem,auto) minmax(0,1fr);gap:.45rem 1rem;margin:.6rem 0 1rem}
+.aic-misure dt{font-weight:600;color:var(--text)}
+.aic-misure dd{margin:0;overflow-wrap:anywhere;color:var(--text)}
+.aic-inizio{overflow-wrap:anywhere}
+.aic-scaletta,.aic-collegati{margin:.2rem 0 .8rem 1.3rem;padding:0;line-height:1.5}
+.aic-scaletta li,.aic-collegati li{margin:.15rem 0;overflow-wrap:anywhere}
+.aic-idea h3{overflow-wrap:anywhere}
+.aic-stato.aic-idea-attesa{border-color:var(--attenzione-bordo);color:var(--attenzione-testo);background:var(--mustard-light)}
+.aic-stato.aic-idea-da_scrivere{border-color:var(--info-bordo);color:var(--info-testo);background:var(--info-chiaro)}
+.aic-stato.aic-idea-scritta{border-color:var(--successo-bordo);color:var(--successo-testo);background:var(--sage-light)}
+.aic-stato.aic-idea-scartata{border-color:var(--errore-bordo);color:var(--errore-testo);background:var(--errore-chiaro)}
+.aic-viste{gap:.5rem;align-items:center}
+.aic-viste .btn{min-height:44px;display:inline-flex;align-items:center}
+.aic-mese{margin:1.4rem 0 .4rem}
+.aic-mese-titolo{font-size:1.15rem;margin:0 0 .6rem;padding:.4rem 0;border-bottom:2px solid var(--bordo-forte);color:var(--text)}
+.aic-idea .aic-azioni .btn-sm{min-height:44px}
+.aic-modifica summary{cursor:pointer;font-weight:600;padding:.75rem 0;min-height:44px;box-sizing:border-box}
+.aic-modifica input[type=text],.aic-modifica input[type=date]{width:100%;min-width:0}
+@media (max-width:640px){.aic-misure{grid-template-columns:minmax(0,1fr)}.aic-misure dd{margin-bottom:.4rem}}
+.aic-profilo-form .btn,#versioni .btn,#misure .btn{min-height:44px}
