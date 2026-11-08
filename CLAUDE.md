@@ -108,7 +108,7 @@ Sono gli unici in `cms/docs/`, nello zip, nel sito di plumeCMS e nella pagina Do
 - **Pacchetto di aggiornamento** per un'installazione esistente:
   `python3 tools/cms-pacchetto.py --aggiornamento`. Si carica dal pannello,
   Impostazioni, Aggiornamenti.
-- **Versione**: `cms/VERSIONE` (oggi 2.32.0; sempre tre numeri: "beta" va nel CHANGELOG, mai nel nome dello zip, se no la serie "ultima" del Download non lo riconosce) e una voce in `cms/CHANGELOG.md` a ogni
+- **Versione**: `cms/VERSIONE` (oggi 2.33.0; sempre tre numeri: "beta" va nel CHANGELOG, mai nel nome dello zip, se no la serie "ultima" del Download non lo riconosce) e una voce in `cms/CHANGELOG.md` a ogni
   zip con contenuto diverso. Mai cambiare il contenuto di una versione già data.
 - **Prove** prima di dire finito:
   - `php -n -d short_open_tag=1 -l` su ogni file PHP toccato, `node --check` sui js;
@@ -166,6 +166,25 @@ Le decisioni complete, con data e perché, stanno nel second brain, `plumecms/de
 - **Nome: plumeCMS** (26 ottobre 2026).
 
 ## Stato al 31 ottobre 2026
+
+Fatto: plumeCMS 2.33.0 (8 novembre, 16:49-17:55): **AI collegate, navigazione e schede degli articoli** (seconda fase del connettore; richiesta
+di Danilo: "analizzi tutte le pagine richiamate dai menu e standardizzi la navigazione; analizza gli articoli e proponi le modifiche SEO").
+Agente nella worktree `/home/user/wt-ai2`, ramo `ai-navigazione` (16:52-17:31), riletto, unito e riprovato da me. Strumenti nuovi in
+`cms/addon/ai-collegate/includes/navigazione.php` e `revisione.php`: `analyze_navigation` (menu, header e footer, voci rotte, doppioni, etichette,
+profondità, orfane, punteggio), `propose_menu` (proposta di tipo `menu`, approvata con `menu_salva()`, ferma se il menu è cambiato; voci solo verso
+pubblicati e link sicuri, 200 voci e 3 livelli), `propose_navigation_fix` (Leggi anche e invito ai Contatti; proposta `navigazione`),
+`review_article`, `list_articles_to_review`, `propose_article_changes` (fino a 20, colonna `gruppo` in `ai_proposte`, tutte o nessuna; Approva
+tutte e Scarta tutte). Pagina Proposte con i due menu affiancati; "Modifica" tolto per i menu; descrizioni degli strumenti in italiano come nella
+2.32.0. Più due correzioni segnalate da Danilo: robots.txt con una sola riga `Sitemap:` (`sito/extra.php`; la seconda con `cms_base()` era doppia
+in radice e con la cartella due volte in cartella) e il passo 2 di `sito/index.php` rimesso: `/articoli/<slug>/` di un articolo uscito va
+all'articolo con un 301 prima dei redirect (una regola `start` su `/articoli/` lo mandava al blog). Manuale d'uso capitolo 41 (schermate 41-menu,
+41-scheda), tecnico 47.11-47.16, 16.6 e la tabella dell'instradamento, `prove/prova-ai-navigazione.js` 52 (vuole il kit Attività: su un sito
+appena installato senza kit dà KO, non è un difetto), `prove/prova-robots-articoli.js` 14 (con `prove/redirect-cli.php`), gruppo 47 degli attacchi
+(15; corretto anche il gruppo 46 in cartella). Prove mie sullo zip (`$S/v11`, `$S/v13`, `$S/v14`): install 38/38 radice e cartella, AI 90/90
+radice, cartella, aggiornato e cartella col kit, navigazione 52/52 sito aggiornato col kit e cartella col kit, robots e articoli 9/14 sulla
+2.33.0 senza correzioni (difetti riprodotti) e 14/14 radice, cartella e sito aggiornato, aggiornamento 2.32.0 -> 2.33.0 13/13 con 0 foto su 20,
+attacchi 501/501 (prima e dopo le correzioni), pacchetto unico 13/13, sito di plumeCMS 95/95, zero errori fatali. PDF 13052 KB, zip 2554 KB.
+**Non provato**: Claude e ChatGPT veri sugli strumenti nuovi, Apache vero, la pagina Proposte nei quattro aspetti con `prova-ux-pannello.js`.
 
 Fatto: plumeCMS 2.32.0 (8 novembre, 13:24-16:19): **addon "AI collegate"**, il connettore MCP fra il CMS e qualsiasi AI (richiesta di Danilo:
 "le persone, connettendo la loro AI, possano creare pagine, gestire e migliorare la SEO, fare un audit"; decisioni sue: addon, l'AI crea contenuti
