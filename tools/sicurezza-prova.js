@@ -3188,6 +3188,105 @@ echo json_encode($o);
     }
   } else console.log('--  AI collegate, stile e idee (2.34.0): saltata (serve CMS_DIR e l\'addon nella cartella)');
 
+  // === 49. (2.35.0) SEO e AEO dell'audit di plumecms.it: i dati per Google "Programma" dalla scheda (script, javascript:, data:,
+  // prezzo non numerico, testi enormi), le pagine dei pacchetti con seo_schema e tldr cattivi, la voce "seo" del manifest fuori
+  // dalle chiavi ammesse, il llms.txt che non deve mostrare pagine nascoste a Google, bozze, pagine nel cestino. Serve CMS_DIR.
+  const DIR49 = process.env.CMS_DIR || '';
+  if (DIR49 && fs.existsSync(path.join(__dirname, '..', 'prove', 'seo-plume-cli.php')) && fs.existsSync(path.join(DIR49, 'includes', 'seo-schema.php'))
+      && fs.readFileSync(path.join(DIR49, 'includes', 'seo-schema.php'), 'utf8').includes("'programma'")) {
+    const { execFileSync } = require('child_process');
+    const os49 = require('os');
+    const run49 = (file, a) => { try { return JSON.parse(execFileSync('php', [path.join(__dirname, '..', 'prove', file), DIR49, ...a.map(String)], { encoding: 'utf8', maxBuffer: 64 * 1024 * 1024 }).trim().split('\n').pop()); } catch (e) { return { errore_cli: String(e.message).slice(0, 200) }; } };
+    const cli49 = (...a) => run49('seo-plume-cli.php', a), scli49 = (...a) => run49('seo-strumenti-cli.php', a);
+    const tmp49 = fs.mkdtempSync(path.join(os49.tmpdir(), 'sic49-'));
+    const SLUGS49 = ['sic49-programma', 'sic49-import', 'sic49-nascosta', 'sic49-bozza', 'sic49-cestino'];
+    const pulisci49 = () => { for (const x of SLUGS49) scli49('sql', `DELETE FROM {p}pages WHERE slug = '${x}'`); };
+    pulisci49();
+    try {
+      const grafo49 = async (u) => { const r = await admin.ctx.request.get(BASE + u); const h = await r.text(); const m = h.match(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/); let g = null; try { g = m ? JSON.parse(m[1])['@graph'] : null; } catch (e) {} return { h, g }; };
+      const pg = scli49('pagina', 'sic49-programma', 'Pagina programma', JSON.stringify([{ tipo: 'testo', impostazioni: { contenuto: '<p>Prova.</p>' } }]));
+      const scheda = ADMIN + '/contenuto.php?tipo=pagine&id=' + pg.id;
+      const salva = async (campi) => {
+        await admin.p.goto(scheda, { waitUntil: 'networkidle' });
+        await admin.p.evaluate((campi) => {
+          const s = document.querySelector('#sc-schema-tipo'); s.value = 'programma'; s.dispatchEvent(new Event('change'));
+          for (const [k, v] of Object.entries(campi)) { const el = document.querySelector('[name="schema[programma][' + k + ']"]'); if (el) { if (el.tagName === 'SELECT') { const o = document.createElement('option'); o.value = v; el.appendChild(o); } el.removeAttribute('maxlength'); el.value = v; } }
+        }, campi);
+        await Promise.all([admin.p.waitForNavigation().catch(() => {}), admin.p.locator('button.btn-primary[data-valore="pubblica"]').click()]);
+        return await admin.p.locator('body').innerText();
+      };
+      // 1. un programma buono, poi i tentativi: devono lasciare i dati buoni
+      await salva({ nome: 'Programma buono', prezzo: '0', licenza: 'https://www.gnu.org/licenses/gpl-3.0.html', download: '/scarica/x/' });
+      const g0 = await grafo49('/sic49-programma/'); const base = g0.g;
+      const buono = (base || []).find(x => x['@type'] === 'SoftwareApplication');
+      const tentativi = [
+        ['licenza javascript:', { licenza: 'javascript:alert(document.cookie)' }],
+        ['download data:', { download: 'data:text/html;base64,PHNjcmlwdD5hbGVydCgxKTwvc2NyaXB0Pg==' }],
+        ['download //altro-sito', { download: '//cattivo.example/x' }],
+        ['licenza con le virgolette', { licenza: 'https://x.example/"><script>alert(1)</script>' }],
+        ['prezzo non numerico', { prezzo: '1e9; DROP TABLE x' }],
+        ['categoria fuori elenco', { categoria: 'EvilApplication' }],
+        ['versione con lo script', { versione: '</script><script>alert(1)</script>' }],
+        ['valuta strana', { valuta: '<b>' }],
+      ];
+      const esiti = [];
+      for (const [nome, campi] of tentativi) {
+        const t = await salva(campi);
+        const g = (await grafo49('/sic49-programma/')).g; const sw = (g || []).find(x => x['@type'] === 'SoftwareApplication');
+        esiti.push([nome, t.includes('non sono stati salvati'), JSON.stringify(sw) === JSON.stringify(buono)]);
+      }
+      ok('2.35.0: Programma con licenza javascript:, download data: o //altro sito, virgolette, prezzo non numerico, categoria, versione o valuta cattive: respinto, restano i dati buoni', !!buono && esiti.every(e => e[1] && e[2]), esiti.filter(e => !(e[1] && e[2])));
+      // 2. script e testi enormi: tolti e tagliati, mai uno <script> in più nella pagina
+      await salva({ nome: '<script>alert(1)</script>' + 'N'.repeat(5000), sistema: '<img src=x onerror=alert(1)>' + 'S'.repeat(100000), requisiti: '</script><script>alert(2)</script>' + 'R'.repeat(5000), prezzo: '0' });
+      const { h, g } = await grafo49('/sic49-programma/');
+      const sw = (g || []).find(x => x['@type'] === 'SoftwareApplication');
+      ok('2.35.0: Programma con script e testi enormi: tag tolti, testi tagliati (200 e 300), nessuno script in più nella pagina', sw && sw.name.length <= 200 && !/[<>]/.test(sw.name + sw.operatingSystem + sw.softwareRequirements) && sw.operatingSystem.length <= 200 && sw.softwareRequirements.length <= 300
+        && !h.includes('<script>alert') && !h.includes('onerror=alert') && (h.match(/<script/g) || []).length === (g0.h.match(/<script/g) || []).length, sw && [sw.name.length, sw.operatingSystem.length, sw.softwareRequirements.length]);
+      // 3. pacchetti: pagina con seo_schema cattivo (si ferma) e tldr e faq cattivi (puliti)
+      const albero = { versione: 1, elementi: [{ id: 'si01', tipo: 'sezione', impostazioni: {}, figli: [{ id: 'si02', tipo: 'colonna', impostazioni: {}, figli: [{ id: 'si03', tipo: 'testo', impostazioni: { contenuto: '<p>x</p>' } }] }] }] };
+      const scrivi = (nome, j) => { const f = path.join(tmp49, nome + '.json'); fs.writeFileSync(f, JSON.stringify(j)); return f; };
+      const cattivi = [
+        { tipo: 'programma', programma: { nome: 'X', prezzo: '0', licenza: 'javascript:alert(1)' } },
+        { tipo: 'programma', programma: { nome: 'X', prezzo: '0', download: 'data:text/html,<script>alert(1)</script>' } },
+        { tipo: 'programma', programma: { nome: '', prezzo: '0' } },
+        { tipo: 'video', video: { nome: 'v', descrizione: 'd', miniatura: 'javascript:x', data: '2026-01-01', url: 'https://x.example/v.mp4' } },
+        { tipo: '<script>' }, 'non un oggetto',
+      ];
+      const r3 = cattivi.map((sc, i) => cli49('importa', scrivi('c' + i, { slug: 'sic49-import', titolo: 'Import', struttura: albero, seo_schema: sc })));
+      const nato = cli49('pagina', 'sic49-import');
+      ok('2.35.0: pacchetto con seo_schema cattivo (javascript:, data:, senza nome, video con miniatura javascript:, tipo inventato, non oggetto): la pagina si ferma e non nasce', r3.every(r => r.errore && /non validi/.test(r.errore)) && !!nato.errore, r3.map(r => r.errore || r.esito));
+      const r4 = cli49('importa', scrivi('t', { slug: 'sic49-import', titolo: 'Import', struttura: albero, tldr: '<script>alert(1)</script>' + 'T'.repeat(50000) + '\u{1F600}', keyword: '<b>k</b>' + 'K'.repeat(1000), faq: [{ domanda: '<script>alert(1)</script>D', risposta: '<img src=x onerror=alert(1)>R' }, 'nonoggetto', { domanda: ['a'], risposta: { x: 1 } }] }));
+      const ri = cli49('pagina', 'sic49-import');
+      const fq = JSON.parse(ri.faq || '[]');
+      const pagina49 = await (await admin.ctx.request.get(BASE + '/sic49-import/')).text();
+      ok('2.35.0: pacchetto con tldr, keyword e faq cattivi: senza tag, tagliati (2000, 255), niente caratteri a 4 byte, voci rotte scartate, niente script nella pagina', !r4.errore && ri.tldr && ri.tldr.length <= 2000 && !/[<>]/.test(ri.tldr) && !/[\u{10000}-\u{10FFFF}]/u.test(ri.tldr)
+        && ri.keyword_target.length <= 255 && !/[<>]/.test(ri.keyword_target) && fq.length === 1 && !/[<>]/.test(fq[0].domanda + fq[0].risposta) && !pagina49.includes('<script>alert') && !pagina49.includes('onerror=alert'), [r4, ri.tldr && ri.tldr.length, fq]);
+      // 4. la voce "seo" del manifest fuori dalle chiavi ammesse
+      const zip49 = (nome, seo) => { const d = path.join(tmp49, nome); fs.mkdirSync(d); fs.writeFileSync(path.join(d, 'manifest.json'), JSON.stringify({ nome: 'sic49', seo })); const z = d + '.zip'; execFileSync('python3', ['-c', 'import sys,zipfile,os\nz=zipfile.ZipFile(sys.argv[2],"w")\nz.write(os.path.join(sys.argv[1],"manifest.json"),"manifest.json")\nz.close()', d, z]); return z; };
+      const seoCattive = [{ analisi: { codice_head: '<script>alert(1)</script>' } }, { llms: { personale: 'x' } }, { robots_txt: { personale: 'Disallow: /' } }, { verifica: { google: 'x' } },
+        { org: { logo: 'javascript:alert(1)' } }, { org: { logo: '//cattivo.example/x.png' } }, { meta: { og_immagine: 'data:image/svg+xml,<svg onload=alert(1)>' } }, { persona: { credenziale: 'x' } }, { org: { telefono: '1' } },
+        { schema: { searchaction: '<script>' } }, { titolo: { sito: ['array'] } }, 'stringa', { org: { tipo: 'X"><script>' } }];
+      const r5 = seoCattive.map((seo, i) => cli49('manifest', zip49('m' + i, seo)));
+      ok('2.35.0: voce "seo" del manifest con codice delle statistiche, llms, robots, verifiche, logo javascript: o //, og:image data:, credenziali, telefono, interruttore non 0/1, testi non testo: il pacchetto è respinto', r5.every(r => !!r.errore), r5.map((r, i) => r.errore ? 'ok' : i));
+      const r6 = cli49('manifest', zip49('mb', { org: { nome: '<script>alert(1)</script>Org', descrizione: 'D'.repeat(3000) } }));
+      ok('2.35.0: voce "seo" buona ma con tag e testi lunghi: tag tolti, 500 caratteri al massimo', r6.seo && r6.seo.org.nome === 'alert(1)Org' && r6.seo.org.descrizione.length === 500, r6);
+      // 5. llms.txt: niente noindex, bozze, cestino; testo semplice
+      const tre = ['sic49-nascosta', 'sic49-bozza', 'sic49-cestino'].map(x => scli49('pagina', x, 'Pagina ' + x, JSON.stringify([{ tipo: 'testo', impostazioni: { contenuto: '<p>x</p>' } }])));
+      scli49('sql', `UPDATE {p}pages SET robots = 'noindex' WHERE id = ${tre[0].id}`);
+      scli49('sql', `UPDATE {p}pages SET status = 'draft' WHERE id = ${tre[1].id}`);
+      scli49('sql', `UPDATE {p}pages SET cestino = NOW() WHERE id = ${tre[2].id}`);
+      const rl = await admin.ctx.request.get(BASE + '/llms.txt');
+      const tl = await rl.text();
+      const rlA = await (await browser.newContext()).request.get(BASE + '/llms.txt?preview=1');
+      const tlA = await rlA.text();
+      ok('2.35.0: llms.txt non mostra le pagine nascoste a Google, le bozze, quelle nel cestino (nemmeno all\'amministratore o con ?preview=1); è testo semplice', rl.status() === 200 && /^text\/plain/.test(rl.headers()['content-type'] || '')
+        && !/sic49-(nascosta|bozza|cestino)/.test(tl + tlA) && tl.includes('## Pagine'), [rl.headers()['content-type'], tl.match(/sic49-[a-z]+/g)]);
+    } finally {
+      pulisci49();
+      fs.rmSync(tmp49, { recursive: true, force: true });
+    }
+  } else console.log('--  SEO e AEO 2.35.0 (Programma, pacchetti, llms.txt): saltata (serve CMS_DIR con la 2.35.0)');
+
   // === pulizia: elimina il redattore di prova
   {
     await admin.p.goto(ADMIN + '/utenti.php', { waitUntil: 'networkidle' });
