@@ -2902,7 +2902,7 @@ echo json_encode($o);
       }
       ok('2.32.0: import_photo con un indirizzo fuori elenco o interno (127.0.0.1 su un\'altra porta, 169.254.169.254, ::1, file:): rifiutati', fot.length === 0, fot);
       const fc = await call(tutto, 'import_photo', { archivio: 'openverse', id: 'cc0a', alt: 'Prova sic46 codice', url: 'http://127.0.0.1:' + PF + '/file/codice.jpg' });
-      const fileC = fc.dati && fc.dati.url ? path.join(DIR, fc.dati.url) : '';
+      const fileC = fc.dati && fc.dati.url ? path.join(DIR, fc.dati.url.slice(new URL(BASE).pathname.replace(/\/$/, '').length)) : ''; // 2.33.0: nei siti in cartella l'indirizzo ha la cartella davanti
       const contC = fileC && fs.existsSync(fileC) ? fs.readFileSync(fileC, 'latin1') : '';
       ok('2.32.0: una foto con codice PHP e script in coda: o rifiutata o ricodificata senza codice', fc.errore || (contC !== '' && !/<\?php|<script/i.test(contC)), [fc.errore, fc.dati && (fc.dati.url || fc.dati.errore)]);
       const fs1 = await call(tutto, 'import_photo', { archivio: 'openverse', id: 'cc0a', alt: 'Prova sic46 svg', url: 'http://127.0.0.1:' + PF + '/file/svg.jpg' });
@@ -2936,6 +2936,129 @@ echo json_encode($o);
       if (!eraAcceso) cli46('spegni');
     }
   } else console.log('--  AI collegate (2.32.0): saltata (serve CMS_DIR e l\'addon nella cartella)');
+
+  // === 47. (2.33.0) AI collegate, navigazione e schede degli articoli: analyze_navigation, propose_menu, propose_navigation_fix,
+  // review_article, list_articles_to_review, propose_article_changes e le azioni nuove della pagina Proposte (Approva il menu,
+  // Approva tutte e Scarta tutte di una scheda). Etichette con HTML e script, indirizzi javascript:, data:, vbscript:, //evil,
+  // http, con la barra rovescia o con spazi davanti; id di bozze, di contenuti inesistenti, di un menu che non c'è o scritti come
+  // SQL; menu di quattro livelli o di 201 voci; etichette lunghissime; oltre il limite delle proposte in attesa (anche a metà
+  // di una scheda: nessuna salvata); approvazione senza CSRF, da un'altra origine, dal redattore, con un codice di scheda
+  // falsato; il token di una connessione revocata. Serve CMS_DIR e il kit Attività (la pagina Contatti).
+  const DIR47 = process.env.CMS_DIR || '';
+  if (DIR47 && fs.existsSync(path.join(DIR47, 'addon', 'ai-collegate', 'includes', 'navigazione.php')) && fs.existsSync(path.join(__dirname, '..', 'prove', 'ai-cli.php'))) {
+    const { execFileSync } = require('child_process');
+    const cli47 = (...a) => { try { return JSON.parse(execFileSync('php', [path.join(__dirname, '..', 'prove', 'ai-cli.php'), DIR47, ...a.map(String)], { encoding: 'utf8', maxBuffer: 64 * 1024 * 1024 }).trim().split('\n').pop()); } catch (e) { return { errore_cli: String(e.message).slice(0, 200) }; } };
+    const attivi47 = path.join(DIR47, 'moduli', 'addon-attivi.json');
+    const eraAcceso47 = (() => { try { return JSON.parse(fs.readFileSync(attivi47, 'utf8')).includes('ai-collegate'); } catch (e) { return false; } })();
+    cli47('accendi');
+    const MCP47 = BASE + '/api/mcp';
+    let id47 = 1;
+    const call47 = async (token, nome, args) => {
+      const r = await fetch(MCP47, { method: 'POST', headers: { Authorization: 'Bearer ' + token, 'Content-Type': 'application/json' }, body: JSON.stringify({ jsonrpc: '2.0', id: id47++, method: 'tools/call', params: { name: nome, arguments: args || {} } }) });
+      let j = null; try { j = await r.json(); } catch (e) {}
+      const res = j && j.result; let dati = null; try { dati = JSON.parse(res.content[0].text); } catch (e) {}
+      return { stato: r.status, errore: !res || !!res.isError, dati };
+    };
+    const conta47 = (dove = '') => { const x = cli47('sql', 'SELECT COUNT(*) n FROM {p}ai_proposte' + dove); return Array.isArray(x) ? +x[0].n : -1; };
+    try {
+      cli47('pulisci'); cli47('nav-ripristina');
+      const prep = cli47('nav-prepara');
+      const art = cli47('articolo-prova', 'ai-prova-art-sic47');
+      const kk = cli47('chiave', 'leggi,bozze,proposte', 'Sic47');
+      const K = kk.chiave, MID = prep.menu;
+      // 1. Indirizzi cattivi nelle voci: tutti rifiutati, nessuna proposta.
+      const p0 = conta47();
+      const brutti = ['javascript:alert(47)', 'JaVaScRiPt:alert(47)', ' javascript:alert(47)', 'data:text/html,<script>alert(47)</script>', 'vbscript:msgbox(47)', '//evil.example/', '/\\evil.example', 'http://evil.example/', 'https://utente:pw@evil.example/', '/"><script>alert(47)</script>', '/../../admin/', 'https://evil.example/"onmouseover="alert(47)'];
+      const passati = [];
+      for (const u of brutti) { const r = await call47(K, 'propose_menu', { menu_id: MID, voci: [{ etichetta: 'Sic47', url: u }], motivo: 'Attacco 47 agli indirizzi.' }); if (!r.errore) passati.push(u); }
+      ok('2.33.0: propose_menu con indirizzi javascript:, data:, vbscript:, //evil, barra rovescia, http, credenziali, virgolette o ../: tutti rifiutati, nessuna proposta', passati.length === 0 && conta47() === p0, passati);
+      // 2. Id di contenuti sbagliati e menu che non c'è.
+      const ids = [
+        await call47(K, 'propose_menu', { menu_id: MID, voci: [{ etichetta: 'Sic47', tipo: 'pagina', id: prep.bozza }], motivo: 'Attacco 47: bozza.' }),
+        await call47(K, 'propose_menu', { menu_id: MID, voci: [{ etichetta: 'Sic47', tipo: 'pagina', id: 99999999 }], motivo: 'Attacco 47: inesistente.' }),
+        await call47(K, 'propose_menu', { menu_id: MID, voci: [{ etichetta: 'Sic47', tipo: 'pagina', rif: "x' OR 1=1 --" }], motivo: 'Attacco 47: rif SQL.' }),
+        await call47(K, 'propose_menu', { menu_id: MID, voci: [{ etichetta: 'Sic47', tipo: 'categoria', rif: '../../etc' }], motivo: 'Attacco 47: categoria.' }),
+        await call47(K, 'propose_menu', { menu_id: '1 OR 1=1', voci: [{ etichetta: 'Sic47', url: '/' }], motivo: 'Attacco 47: menu SQL.' }),
+        await call47(K, 'propose_menu', { menu_id: -1, voci: [{ etichetta: 'Sic47', url: '/' }], motivo: 'Attacco 47: menu negativo.' }),
+        await call47(K, 'propose_menu', { menu_id: art.id + 1000, voci: [{ etichetta: 'Sic47', url: '/' }], motivo: 'Attacco 47: id di un altro tipo.' }),
+      ];
+      ok('2.33.0: voci verso una bozza, un id inesistente, un rif o un menu_id con SQL, una categoria con ../, un menu che non c\'è: rifiutate', ids.every(x => x.errore) && conta47() === p0, ids.map(x => x.dati && x.dati.errore && x.dati.errore.slice(0, 60)));
+      // 3. Troppo profondo, troppo grande, etichette lunghissime o solo HTML.
+      const prof = await call47(K, 'propose_menu', { menu_id: MID, voci: [{ etichetta: 'A', url: '/', figli: [{ etichetta: 'B', url: '/', figli: [{ etichetta: 'C', url: '/', figli: [{ etichetta: 'D', url: '/' }] }] }] }], motivo: 'Attacco 47: profondo.' });
+      const tante = await call47(K, 'propose_menu', { menu_id: MID, voci: Array.from({ length: 201 }, (_, i) => ({ etichetta: 'V' + i, url: '/' })), motivo: 'Attacco 47: enorme.' });
+      const nidi = await call47(K, 'propose_menu', { menu_id: MID, voci: [{ etichetta: 'A', url: '/', figli: Array.from({ length: 250 }, (_, i) => ({ etichetta: 'F' + i, url: '/' })) }], motivo: 'Attacco 47: figli enormi.' });
+      const soloHtml = await call47(K, 'propose_menu', { menu_id: MID, voci: [{ etichetta: '<svg onload=alert(47)></svg>', url: '/' }], motivo: 'Attacco 47: solo HTML.' });
+      ok('2.33.0: menu di quattro livelli, di 201 voci, con 250 sottovoci o con un\'etichetta solo HTML: rifiutati', [prof, tante, nidi, soloHtml].every(x => x.errore) && conta47() === p0, [prof, tante, nidi, soloHtml].map(x => x.dati && x.dati.errore && x.dati.errore.slice(0, 60)));
+      // 4. Etichette con codice: salvate come testo, mostrate come testo, lunghe tagliate a 100.
+      const lungo = 'L'.repeat(5000);
+      const pc = await call47(K, 'propose_menu', { menu_id: MID, motivo: 'Attacco 47: <script>alert(471)</script><img src=x onerror=alert(472)> motivo.', voci: [{ etichetta: 'Home<script>alert(473)</script>', url: '/' }, { etichetta: '<img src=x onerror=alert(474)>Contatti', url: '/contatti/' }, { etichetta: lungo, url: '/contatti/#modulo' }] });
+      const salvata = pc.dati && pc.dati.proposta ? (cli47('sql', 'SELECT dopo, motivo FROM {p}ai_proposte WHERE id = ' + (+pc.dati.proposta))[0] || {}) : {};
+      ok('2.33.0: etichette e motivo con script e eventi: salvati senza tag, etichetta lunga tagliata a 100', !pc.errore && !/<script|onerror|<img|<svg/i.test(JSON.stringify(salvata)) && (JSON.parse(salvata.dopo || '[]')[2] || {}).etichetta.length === 100, [pc.dati && pc.dati.errore, salvata.dopo && salvata.dopo.slice(0, 200)]);
+      const fin47 = []; const onDialog = d => { fin47.push(d.message()); d.dismiss().catch(() => {}); };
+      admin.p.on('dialog', onDialog);
+      await admin.p.goto(ADMIN + '/addon-pagina.php?a=ai-collegate&p=proposte', { waitUntil: 'networkidle' });
+      const box47 = '#proposta-' + (pc.dati ? pc.dati.proposta : 0);
+      ok('2.33.0: nella pagina Proposte gli alberi del menu mostrano le etichette come testo (niente finestre, niente tag)', fin47.length === 0 && await admin.p.locator(box47 + ' img[onerror], ' + box47 + ' script').count() === 0 && /Home/.test(await admin.p.locator(box47 + ' .aic-dopo').innerText()), fin47);
+      admin.p.off('dialog', onDialog);
+      // 5. Approvazione senza CSRF, da un'altra origine, dal redattore; codice di scheda falsato.
+      const URLP = ADMIN + '/addon-pagina.php?a=ai-collegate&p=proposte';
+      const pid = pc.dati ? String(pc.dati.proposta) : '0';
+      const a1 = await admin.ctx.request.post(URLP, { form: { id: pid, azione: 'approva' }, maxRedirects: 0 });
+      const tk = await tokenDi(admin.p, URLP);
+      const a2 = await admin.ctx.request.post(URLP, { form: { _csrf: tk, id: pid, azione: 'approva' }, headers: { Origin: 'https://evil.example' }, maxRedirects: 0 });
+      let a3s = 'saltato';
+      if (red.dentro) {
+        const tr = await tokenDi(red.p, ADMIN + '/contenuti.php?tipo=articoli');
+        const a3 = await red.ctx.request.post(URLP, { form: { _csrf: tr, id: pid, azione: 'approva' }, maxRedirects: 0 });
+        const a3b = await red.ctx.request.post(URLP, { form: { _csrf: tr, gruppo: 'x', azione: 'scheda_approva' }, maxRedirects: 0 });
+        a3s = [a3.status(), a3b.status()];
+      }
+      const statoPc = (cli47('sql', 'SELECT stato FROM {p}ai_proposte WHERE id = ' + (+pid))[0] || {}).stato;
+      const menuIntatto = (cli47('menu', MID) || []).some(v => v.etichetta === 'Offerte');
+      ok('2.33.0: Approva il menu senza CSRF, da un\'altra origine o dal redattore: rifiutato, la proposta resta da decidere e il menu non cambia', [400, 403].includes(a1.status()) && [400, 403].includes(a2.status()) && statoPc === 'attesa' && menuIntatto, [a1.status(), a2.status(), a3s, statoPc, menuIntatto]);
+      const sch = await call47(K, 'propose_article_changes', { tipo: 'articoli', id: art.id, motivo: 'Attacco 47: scheda.', modifiche: [{ campo: 'titolo_seo', valore: 'Titolo sic47 nuovo per la scheda' }, { campo: 'in_breve', valore: 'In breve sic47.' }] });
+      const tk2 = await tokenDi(admin.p, URLP);
+      const falsi = ["' OR 1=1 --", sch.dati && sch.dati.gruppo ? sch.dati.gruppo + "' OR '1'='1" : 'x', '%', ''];
+      for (const g of falsi) await admin.ctx.request.post(URLP, { form: { _csrf: tk2, gruppo: g, azione: 'scheda_approva' }, headers: { Origin: BASE.replace(/(https?:\/\/[^/]+).*/, '$1') }, maxRedirects: 0 });
+      ok('2.33.0: Approva tutte con un codice di scheda falsato (SQL, %, vuoto): nessuna proposta approvata', !sch.errore && conta47(" WHERE stato = 'approvata'") === 0, [sch.dati && sch.dati.errore, conta47(" WHERE stato = 'approvata'")]);
+      // 6. Oltre il limite delle proposte in attesa: anche a metà scheda non se ne salva nessuna.
+      cli47('sql', `INSERT INTO {p}ai_proposte (connessione_id, client, tipo, contenuto_id, campo, prima, dopo, motivo, stato, creato) SELECT ${+kk.connessione}, 'Sic47', 'articoli', 0, 'titolo', '', '', 'riempi', 'attesa', NOW() FROM (SELECT 1 FROM {p}settings a, {p}settings b LIMIT 196) t`);
+      const inAttesa = conta47(` WHERE connessione_id = ${+kk.connessione} AND stato = 'attesa'`);
+      const oltre = await call47(K, 'propose_article_changes', { tipo: 'articoli', id: art.id, motivo: 'Attacco 47: oltre il limite.', modifiche: Array.from({ length: 5 }, (_, i) => ({ campo: ['titolo_seo', 'descrizione_seo', 'estratto', 'parola_chiave', 'titolo'][i], valore: 'Valore sic47 numero ' + i })) });
+      const oltre2 = await call47(K, 'propose_article_changes', { tipo: 'articoli', id: art.id, motivo: 'Attacco 47: 21 modifiche.', modifiche: Array.from({ length: 21 }, (_, i) => ({ campo: 'titolo_seo', valore: 'T' + i })) });
+      ok('2.33.0: oltre 200 proposte in attesa (a metà scheda) o 21 modifiche in una chiamata: rifiutate, nessuna salvata', inAttesa >= 196 && oltre.errore && /Nessuna proposta salvata/.test(oltre.dati.errore) && oltre2.errore && conta47(` WHERE connessione_id = ${+kk.connessione} AND stato = 'attesa'`) === inAttesa, [inAttesa, oltre.dati, oltre2.dati && oltre2.dati.errore]);
+      cli47('sql', "DELETE FROM {p}ai_proposte WHERE motivo = 'riempi'");
+      // 7. propose_navigation_fix cattive.
+      const chi = (cli47('sql', "SELECT id FROM {p}pages WHERE slug = 'chi-siamo'")[0] || {}).id;
+      const nf = [
+        await call47(K, 'propose_navigation_fix', { tipo: 'pagine', id: chi, motivo: 'Attacco 47: bozza.', leggi_anche: { voci: [{ tipo: 'pagine', id: prep.bozza }] } }),
+        await call47(K, 'propose_navigation_fix', { tipo: 'pagine', id: chi, motivo: 'Attacco 47: inesistente.', leggi_anche: { voci: [{ tipo: 'pagine', id: 99999999 }] } }),
+        await call47(K, 'propose_navigation_fix', { tipo: 'pagine', id: chi, motivo: 'Attacco 47: sé stessa.', leggi_anche: { voci: [{ tipo: 'pagine', id: chi }] } }),
+        await call47(K, 'propose_navigation_fix', { tipo: 'pagine', id: prep.orfana, motivo: 'Attacco 47: invito.', invito: { link: 'javascript:alert(47)' } }),
+        await call47(K, 'propose_navigation_fix', { tipo: 'pagine', id: prep.orfana, motivo: 'Attacco 47: invito.', invito: { link: '//evil.example' } }),
+        await call47(K, 'propose_navigation_fix', { tipo: 'utenti', id: 1, motivo: 'Attacco 47: tipo.', invito: {} }),
+        await call47(K, 'propose_navigation_fix', { tipo: 'pagine', id: prep.orfana, motivo: 'Attacco 47: troppe.', leggi_anche: { voci: Array.from({ length: 7 }, () => ({ tipo: 'pagine', id: chi })) } }),
+      ];
+      ok('2.33.0: propose_navigation_fix verso una bozza, un id inesistente, sé stessa, con link javascript: o //evil, tipo inventato, 7 voci: rifiutate', nf.every(x => x.errore), nf.map(x => x.dati && x.dati.errore && x.dati.errore.slice(0, 50)));
+      const nfOk = await call47(K, 'propose_navigation_fix', { tipo: 'pagine', id: prep.orfana, motivo: 'Attacco 47: titoli con codice.', invito: { titolo: '<script>alert(475)</script>Scrivici', testo: '<img src=x onerror=alert(476)>Ciao', pulsante: '"><b>Vai</b>' } });
+      const dNf = nfOk.dati && nfOk.dati.proposta ? (cli47('sql', 'SELECT dopo FROM {p}ai_proposte WHERE id = ' + (+nfOk.dati.proposta))[0] || {}).dopo || '' : '';
+      ok('2.33.0: i testi dei blocchi proposti (titolo, testo, pulsante) senza tag', !nfOk.errore && dNf !== '' && !/<script|onerror|<img|<b>/i.test(dNf), [nfOk.dati, dNf.slice(0, 200)]);
+      // 8. Letture con id sbagliati, token revocato.
+      const rv = [await call47(K, 'review_article', { tipo: 'articoli', id: 99999999 }), await call47(K, 'review_article', { tipo: 'utenti', id: 1 }), await call47(K, 'review_article', { tipo: 'pagine', id: '1 OR 1=1' })];
+      ok('2.33.0: review_article con id inesistente, tipo inventato o id con SQL: errore', rv.every(x => x.errore), rv.map(x => x.dati));
+      const kr = cli47('chiave', 'leggi,proposte', 'Sic47 revocata');
+      cli47('sql', 'UPDATE {p}ai_connessioni SET revocato = NOW() WHERE id = ' + (+kr.connessione));
+      const rr = [await call47(kr.chiave, 'analyze_navigation'), await call47(kr.chiave, 'propose_menu', { menu_id: MID, voci: [{ etichetta: 'Home', url: '/' }], motivo: 'Attacco 47: revocata.' })];
+      ok('2.33.0: il token di una connessione revocata: 401 su analyze_navigation e propose_menu, nessuna proposta', rr.every(x => x.stato === 401) && conta47(` WHERE connessione_id = ${+kr.connessione}`) === 0, rr.map(x => x.stato));
+      const kl = cli47('chiave', 'leggi', 'Sic47 lettura').chiave;
+      const pl = [await call47(kl, 'propose_menu', { menu_id: MID, voci: [{ etichetta: 'Home', url: '/' }], motivo: 'Attacco 47: sola lettura.' }), await call47(kl, 'propose_article_changes', { tipo: 'articoli', id: art.id, motivo: 'Attacco 47.', modifiche: [{ campo: 'titolo_seo', valore: 'x sic47' }] }), await call47(kl, 'propose_navigation_fix', { tipo: 'pagine', id: chi, motivo: 'Attacco 47.', invito: {} })];
+      ok('2.33.0: una chiave di sola lettura non propone menu, schede o blocchi (permesso "proposte")', pl.every(x => x.errore && /"proposte"/.test(x.dati.errore)), pl.map(x => x.dati));
+    } finally {
+      cli47('sql', "DELETE FROM {p}sicurezza_tentativi WHERE chiave LIKE 'limite:aic:%'");
+      cli47('nav-ripristina'); cli47('pulisci');
+      if (!eraAcceso47) cli47('spegni');
+    }
+  } else console.log('--  AI collegate, navigazione (2.33.0): saltata (serve CMS_DIR e l\'addon nella cartella)');
 
   // === pulizia: elimina il redattore di prova
   {

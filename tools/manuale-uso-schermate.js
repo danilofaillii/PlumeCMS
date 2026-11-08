@@ -32,6 +32,7 @@
 // 2.27.0 e 2.28.0: le sedi (23s, con TESSERE_FINTE=1 dove la rete non raggiunge OpenStreetMap) e le pagine per zona (23z, dopo il
 //   23s): SOLO_CAPITOLI=23s,23z, con TMPDIR vuota, su un sito col kit con CMS_NOMINATIM_URL e CMS_NOMINATIM_PROVA nel config.
 // 2.32.0: il capitolo 41 (AI collegate, tre foto): SOLO_CAPITOLI=41, con CMS_DIR_MANUALE e TMPDIR vuota, su un sito col kit.
+// 2.33.0: il capitolo 41n (la proposta di menu affiancata e la scheda di un articolo): SOLO_CAPITOLI=41n, come il 41.
 const { chromium } = require('playwright');
 const pnConferme = require('../prove/conferme-pannello'); // UX 2026-11: conferme del pannello
 const fs = require('fs');
@@ -2418,6 +2419,37 @@ capitoli['41'] = async () => {
   await foto('41-proposte', { clip: { x: 240, y: 56, width: 960, height: 744 }, segni: [{ sel: art + ' h3 a', n: 1 }, { sel: art + ' .aic-motivo', n: 2 }, { sel: art + ' .aic-confronto', n: 3 },
     { sel: art + ' button[value=approva]', n: 4 }, { sel: art + ' details.aic-modifica summary', n: 5 }, { sel: '#aic-gruppo button', n: 6, lato: 'destra' }] });
   cli('pulisci');
+};
+
+// 41n. (2.33.0) AI collegate, navigazione e schede degli articoli: il menu Principale rovinato apposta (prove/ai-cli.php
+// nav-prepara), una proposta di menu fatta con una chiave "Claude" (i due alberi affiancati) e la scheda di un articolo con tre
+// proposte raggruppate. Alla fine rimette il menu com'era. Vuole CMS_DIR_MANUALE. Da solo: SOLO_CAPITOLI=41n.
+capitoli['41n'] = async () => {
+  const DIRM = process.env.CMS_DIR_MANUALE; if (!DIRM) throw new Error('41n: serve CMS_DIR_MANUALE');
+  const cli = (...a) => JSON.parse(require('child_process').execFileSync('php', [path.join(__dirname, '..', 'prove', 'ai-cli.php'), DIRM, ...a.map(String)], { encoding: 'utf8' }).trim().split('\n').pop());
+  cli('accendi'); cli('pulisci'); cli('nav-ripristina');
+  const prep = cli('nav-prepara');
+  const art = cli('articolo-prova', 'ai-prova-art-manuale');
+  await dorme(2500);
+  const k = cli('chiave', 'leggi,proposte', 'Claude').chiave;
+  const chiama = async (nome, args) => { const r = await (await fetch(B + '/api/mcp', { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + k }, body: JSON.stringify({ jsonrpc: '2.0', id: 1, method: 'tools/call', params: { name: nome, arguments: args } }) })).json(); return JSON.parse(r.result.content[0].text); };
+  const pm = await chiama('propose_menu', { menu_id: prep.menu, motivo: 'Due voci portano a pagine che non ci sono, "Servizi" compare due volte e "Lavora con noi" non si trova da nessuna parte: la metto sotto "Chi siamo". Cinque voci al primo livello, nomi brevi.',
+    voci: [{ etichetta: 'Home', url: '/' }, { etichetta: 'Chi siamo', tipo: 'pagina', rif: 'chi-siamo', figli: [{ etichetta: 'Lavora con noi', tipo: 'pagina', id: prep.orfana }] }, { etichetta: 'I servizi', tipo: 'pagina', rif: 'servizi' }, { etichetta: 'Blog', url: '/blog/' }, { etichetta: 'Contatti', url: '/contatti/' }] });
+  if (!pm.proposta) throw new Error('41n: la proposta di menu non nasce: ' + JSON.stringify(pm));
+  await addonPag('ai-collegate', 'proposte');
+  const box = '#proposta-' + pm.proposta;
+  await foto('41-menu', { sel: box, margine: 10, segni: [{ sel: box + ' .aic-riepilogo', n: 1 }, { sel: box + ' .aic-prima .aic-segno-tolta', n: 2 }, { sel: box + ' .aic-dopo .aic-segno-nuova', n: 3 }, { sel: box + ' button[value=approva]', n: 4 }] });
+  // Scarta il menu (per la foto della scheda) e la scheda dell'articolo con tre proposte.
+  await p.click(box + ' button[value=scarta]'); await p.waitForLoadState('networkidle');
+  const pc = await chiama('propose_article_changes', { tipo: 'articoli', id: art.id, motivo: 'La parola chiave "potare le rose" manca nel titolo per Google, la descrizione è troppo corta e mancano le domande frequenti.', modifiche: [
+    { campo: 'titolo_seo', valore: 'Potare le rose in inverno: la guida in cinque passi' },
+    { campo: 'descrizione_seo', valore: 'Quando e come potare le rose in inverno: attrezzi, tagli giusti ed errori da evitare, spiegati passo per passo.' },
+    { campo: 'domande_frequenti', valore: [{ domanda: 'Quando si potano le rose?', risposta: 'A fine inverno, prima che riprendano a crescere.' }, { domanda: 'Servono forbici speciali?', risposta: 'Bastano forbici affilate e pulite.' }] }] });
+  if (!pc.gruppo) throw new Error('41n: la scheda non nasce: ' + JSON.stringify(pc));
+  await addonPag('ai-collegate', 'proposte');
+  const sc = '#scheda-' + pc.gruppo;
+  await foto('41-scheda', { sel: sc, margine: 10, segni: [{ sel: sc + ' > h3', n: 1 }, { sel: sc + ' button[value=scheda_approva]', n: 2 }, { sel: sc + ' button[value=scheda_scarta]', n: 3 }, { sel: sc + ' article.aic-nella-scheda button[value=approva]', n: 4 }] });
+  cli('pulisci'); cli('nav-ripristina');
 };
 
 module.exports = { capitoli };

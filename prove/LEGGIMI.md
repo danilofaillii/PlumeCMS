@@ -313,8 +313,26 @@ dell'addon a 390 px.
 4. Atteso (2.32.0): 90 su 90 in radice, in cartella e su un sito aggiornato dalla 2.31.0. Pulisce le sue tabelle alla fine
    (`ai-cli.php pulisci`), lascia la pagina `ai-prova-pubblicata` e le foto importate nei Media.
 
-Gli attacchi all'addon sono il gruppo 46 di `tools/sicurezza-prova.js` (26, con `CMS_DIR`; la batteria intera 488 sulla 2.32.0): accende l'addon e il server finto
+Gli attacchi all'addon sono il gruppo 46 di `tools/sicurezza-prova.js` (26, con `CMS_DIR`; la batteria intera 488 sulla 2.32.0, 503 sulla 2.33.0 con il gruppo 47): accende l'addon e il server finto
 delle foto sulla porta `SIC_FOTO` (9298), e alla fine li rimette come erano.
+
+## prova-ai-navigazione.js (2.33.0)
+
+La seconda fase dell'addon AI collegate: navigazione e schede degli articoli, come le usano un'AI (con una chiave personale, via
+MCP) e l'amministratore (nel browser). Il menu Principale del kit rovinato apposta (`ai-cli.php nav-prepara`: voce verso una bozza,
+voce doppia, voce verso una pagina che non c'è, etichetta lunga a maiuscole miste, otto voci) e una pagina orfana; poi
+`analyze_navigation`, `propose_menu` cattive e buone, i due alberi nel pannello, Approva il menu e il sito pubblico, il conflitto
+quando il menu cambia dopo la proposta (`menu-cambia`), `review_article` e `list_articles_to_review` su un articolo pieno di
+problemi (`articolo-prova`), `propose_article_changes` raggruppate con Approva tutte e Scarta tutte, `propose_navigation_fix` su un
+pubblicato e su una bozza, la pagina Proposte a 390 px, e i tempi con 300 pagine e cinque menu (`nav-molte`; `SENZA_MOLTE=1` li salta).
+
+1. Un CMS installato con il kit Attività (`prove/prova-kit.js ... attivita ...`), radice o cartella. L'addon lo accende la prova.
+2. `node prove/prova-ai-navigazione.js <base> <cartella del CMS> <utente> <password> [cartella foto]`.
+3. Atteso (2.33.0): 52 su 52 in radice e in cartella. Alla fine rimette il menu (`nav-ripristina`) e toglie pagine e articoli di prova;
+   le 300 pagine di `nav-molte` le toglie anche lei. Le proposte approvate cambiano davvero la pagina "Lavora con noi" (di prova) e
+   l'articolo di prova, che poi vengono cancellati.
+
+Gli attacchi sono il gruppo 47 di `tools/sicurezza-prova.js` (15, con `CMS_DIR` e il kit Attività).
 
 ## prova-avvisi-pannello.js (2.31.0)
 

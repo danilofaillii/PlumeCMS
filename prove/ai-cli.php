@@ -15,6 +15,14 @@
 //   pulisci                     toglie connessioni, token, codici, client, proposte, registro, foto dell'addon e i contenuti "ai-prova-*"
 //   tentativi                   svuota la tabella dei tentativi (limiti di velocità e forza bruta)
 //   config-foto <url>           aggiunge CMS_AI_FOTO_PROVA al config.local.php (il server finto delle foto)
+//   nav-prepara                 2.33.0: rovina apposta il menu Principale (voce verso una bozza, voce doppia, etichetta lunga e
+//                               maiuscole miste) e crea una pagina orfana pubblicata; salva le voci di prima; stampa gli id
+//   nav-ripristina              rimette le voci di prima del menu Principale e toglie le pagine "ai-prova-nav-*"
+//   menu-cambia <id>            aggiunge una voce al menu (per la prova del conflitto: il menu è cambiato dopo la proposta)
+//   menu <id>                   stampa le voci del menu
+//   nav-molte <n>               n pagine pubblicate "ai-prova-nav-m-*" e quattro menu "AI prova *" da 40 voci (prova dei tempi)
+//   articolo-prova <slug>       un articolo pubblicato fatto con l'editor, con parola chiave, attacco che non risponde, salto
+//                               H2 > H4, un paragrafo lungo, frasi datate e un'immagine senza alt; stampa id e id dei widget
 $_SERVER['HTTP_HOST'] = '127.0.0.1'; $_SERVER['REQUEST_URI'] = '/';
 $dir = $argv[1];
 require $dir . '/includes/config.php';
@@ -114,5 +122,77 @@ switch ($cmd) {
         file_put_contents($f, $c);
         if (function_exists('opcache_reset')) @opcache_reset();
         $esci(['ok' => true]);
+    case 'nav-prepara':
+    case 'nav-ripristina':
+    case 'menu-cambia':
+    case 'menu':
+    case 'articolo-prova':
+    case 'nav-molte':
+        require_once $dir . '/includes/editor-controlli.php';
+        require_once $dir . '/includes/editor.php';
+        require_once $dir . '/includes/contenuti.php';
+        require_once $dir . '/includes/menu-nav.php';
+        editor_carica_widget_esterni();
+        $pagina = function (string $slug, string $titolo, string $stato, array $widget) {
+            db()->prepare('DELETE FROM ' . tbl('pages') . ' WHERE slug = ?')->execute([$slug]);
+            $id = contenuti_salva('pagine', 0, ['title' => $titolo, 'slug' => $slug, 'stato' => $stato, 'contenuto' => '']);
+            editor_salva($id, editor_valida(['elementi' => [editor_sezione($widget)]]), $stato === 'pubblicato', 'prova');
+            return $id;
+        };
+        $principale = menu_per_posizione('principale');
+        if ($cmd === 'menu') { $st = db()->prepare('SELECT voci FROM ' . tbl('menu') . ' WHERE id = ?'); $st->execute([(int)($argv[3] ?? 0)]); $esci(json_decode((string)$st->fetchColumn(), true)); }
+        if ($cmd === 'menu-cambia') {
+            $st = db()->prepare('SELECT * FROM ' . tbl('menu') . ' WHERE id = ?'); $st->execute([(int)($argv[3] ?? 0)]); $m = $st->fetch();
+            $v = json_decode((string)$m['voci'], true); $v[] = ['etichetta' => 'Aggiunta a mano', 'tipo' => 'link', 'url' => '/', 'figli' => []];
+            menu_salva((int)$m['id'], $m['nome'], $m['posizione'], $v);
+            $esci(['ok' => true]);
+        }
+        if ($cmd === 'nav-ripristina') {
+            $prima = json_decode((string)get_setting('aic_prova_menu', ''), true);
+            if (is_array($prima) && $principale) menu_salva((int)$principale['id'], $principale['nome'], $principale['posizione'], $prima);
+            db()->exec('DELETE FROM ' . tbl('pages') . " WHERE slug LIKE 'ai-prova-nav-%'");
+            db()->exec('DELETE FROM ' . tbl('articles') . " WHERE slug LIKE 'ai-prova-art-%'");
+            db()->exec('DELETE FROM ' . tbl('menu') . " WHERE nome LIKE 'AI prova %'");
+            db()->exec('DELETE FROM ' . tbl('settings') . " WHERE setting_key = 'aic_prova_menu'");
+            $esci(['ok' => true]);
+        }
+        if ($cmd === 'nav-molte') {
+            $n = max(1, min(1000, (int)($argv[3] ?? 300)));
+            $ids = [];
+            for ($i = 1; $i <= $n; $i++) {
+                $id = contenuti_salva('pagine', 0, ['title' => 'Pagina di prova ' . $i, 'slug' => 'ai-prova-nav-m-' . $i, 'stato' => 'pubblicato', 'contenuto' => '']);
+                $alb = editor_valida(['elementi' => [editor_sezione([editor_widget('titolo', ['testo' => 'Pagina ' . $i, 'livello' => 'h1']), editor_widget('testo', ['contenuto' => '<p>Vedi <a href="/ai-prova-nav-m-' . ($i % $n + 1) . '/">la prossima</a>.</p>'])])]]);
+                editor_salva($id, $alb, true, 'prova');
+                $ids[] = $i;
+            }
+            foreach ([1, 2, 3, 4] as $k) {
+                $voci = [];
+                foreach (array_slice($ids, ($k - 1) * 40, 40) as $i) $voci[] = ['etichetta' => 'Voce ' . $i, 'tipo' => 'pagina', 'rif' => 'ai-prova-nav-m-' . $i, 'figli' => []];
+                menu_salva(0, 'AI prova ' . $k, $k === 1 ? 'piede-1' : '', $voci);
+            }
+            $esci(['pagine' => $n]);
+        }
+        if ($cmd === 'articolo-prova') {
+            $slug = (string)($argv[3] ?? 'ai-prova-art-1');
+            db()->prepare('DELETE FROM ' . tbl('articles') . ' WHERE slug = ?')->execute([$slug]);
+            $id = contenuti_salva('articoli', 0, ['title' => 'Potare le rose in inverno', 'slug' => $slug, 'stato' => 'pubblicato', 'data' => date('Y-m-d', time() - 86400), 'ora' => '08:00', 'contenuto' => '',
+                'keyword_target' => 'potare le rose', 'seo_title' => 'Rose', 'seo_description' => 'Una guida.']);
+            $lungo = str_repeat('Le rose hanno bisogno di cure costanti durante tutto il periodo freddo e la potatura va fatta con attrezzi puliti e affilati. ', 9);
+            $t1 = editor_widget('testo', ['contenuto' => '<p>Il giardino è un posto bellissimo dove passare il tempo libero con la famiglia, quest\'anno più che mai.</p><h2>Gli attrezzi</h2><p>' . $lungo . '</p><h4>Le forbici</h4><p>Recentemente sono uscite forbici nuove, come nel ' . (date('Y') - 2) . '.</p>']);
+            $im = editor_widget('immagine', ['immagine' => '/uploads/segnaposto/nessuna.jpg', 'alt' => '']);
+            editor_salva($id, editor_valida(['elementi' => [editor_sezione([$t1, $im])]]), true, 'prova', '', 'articoli');
+            $esci(['id' => $id, 'testo_id' => $t1['id']]);
+        }
+        // nav-prepara
+        if (!$principale) $esci(['errore' => 'manca il menu principale']);
+        if (get_setting('aic_prova_menu', '') === '') save_setting('aic_prova_menu', json_encode($principale['voci'], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES));
+        $orfana = $pagina('ai-prova-nav-orfana', 'Lavora con noi', 'pubblicato', [editor_widget('titolo', ['testo' => 'Lavora con noi', 'livello' => 'h1']), editor_widget('testo', ['contenuto' => '<p>Cerchiamo persone.</p>'])]);
+        $bozza = $pagina('ai-prova-nav-bozza', 'Offerte', 'bozza', [editor_widget('titolo', ['testo' => 'Offerte', 'livello' => 'h1'])]);
+        $voci = json_decode((string)get_setting('aic_prova_menu', ''), true);
+        $voci[] = ['etichetta' => 'Offerte', 'tipo' => 'link', 'url' => '/ai-prova-nav-bozza/', 'figli' => []];
+        $voci[] = ['etichetta' => 'Servizi', 'tipo' => 'link', 'url' => '/servizi/', 'figli' => []];
+        $voci[] = ['etichetta' => 'Tutte Le Nostre Domande Frequenti', 'tipo' => 'link', 'url' => '/inesistente-ai-prova/', 'figli' => []];
+        menu_salva((int)$principale['id'], $principale['nome'], $principale['posizione'], $voci);
+        $esci(['menu' => (int)$principale['id'], 'orfana' => $orfana, 'bozza' => $bozza]);
 }
 $esci(['errore' => 'comando sconosciuto']);

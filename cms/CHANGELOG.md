@@ -2,6 +2,33 @@
 
 Il prodotto si chiama **plumeCMS** (nome scelto il 26 ottobre 2026; prima, per poche ore, "CarbonaraCMS", e ancora prima il provvisorio "Officina": gli zip vecchi si chiamavano `officina-*` e `carbonaracms-*`).
 
+## 2.33.0 (8 novembre 2026) - AI collegate: navigazione e schede degli articoli
+
+- **La navigazione rivista dall'AI** (richiesta di Danilo: "analizzi tutte le pagine del sito, richiamate dai vari menu, e
+  standardizzi la navigazione"). Lo strumento nuovo `analyze_navigation` legge tutti i menu, l'header e il footer, e dice dove
+  porta ogni voce: voci verso pagine in bozza, nel cestino o che non esistono, voci doppie, etichette troppo lunghe o con le
+  maiuscole miste, la stessa pagina con nomi diversi nei menu, voci al terzo livello, menu con più di sette voci, pagine
+  pubblicate che nessun menu raggiunge (orfane) o che stanno solo nel piede, la voce Contatti, la voce del blog, le briciole
+  di pane, le pagine dei menu senza un invito all'azione in fondo o senza link verso le altre. Con un punteggio e i consigli.
+- **Il menu proposto, accanto a quello di adesso.** Con `propose_menu` l'AI manda il menu nuovo intero: in **AI collegate >
+  Proposte** vedi i due menu affiancati (al telefono uno sotto l'altro), con le voci **nuove**, **tolte**, **spostate** e con
+  il **nome nuovo** scritte accanto, e il motivo. **Approva il menu** lo salva (il menu di prima resta nelle versioni); se nel
+  frattempo qualcuno ha cambiato il menu, l'approvazione si ferma e non sovrascrive niente. Una proposta per menu alla volta.
+  Le voci portano solo a pagine pubblicate o a indirizzi sicuri; al massimo 200 voci e tre livelli.
+- **Leggi anche e invito in fondo alle pagine**: con `propose_navigation_fix` l'AI propone di aggiungere in fondo a una pagina
+  un blocco "Leggi anche" e un invito verso Contatti. Su una pagina pubblicata è una proposta da approvare; su una bozza va
+  subito nella bozza. Le briciole di pane non hanno un'impostazione da accendere: l'AI lo dice e non propone niente.
+- **Le schede degli articoli.** `list_articles_to_review` mette in fila gli articoli che hanno più bisogno di una revisione;
+  `review_article` li legge uno per uno: titolo e descrizione per Google, se le prime frasi rispondono alla domanda, i
+  sottotitoli in ordine, i paragrafi lunghi, la parola chiave, le domande frequenti, i link interni da aggiungere, le
+  immagini senza alt, le frasi che invecchiano ("quest'anno", anni passati, "recentemente") con il punto preciso.
+  `propose_article_changes` lascia fino a venti proposte insieme: in **Proposte** stanno sotto "Scheda dell'articolo ..." con
+  **Approva tutte** e **Scarta tutte**, oppure si decidono una per una. O si salvano tutte, o nessuna.
+- Regola che resta: l'AI non pubblica mai; menu, header, footer e contenuti pubblicati non li cambia mai da sola.
+- Sicurezza: etichette solo testo, indirizzi controllati (mai `javascript:`, `data:`, `//` verso altri siti), contenuti
+  verificati, approvazioni solo dall'amministratore con il token del pannello. Gruppo 47 delle prove di attacco (15).
+- Prove: `prove/prova-ai-navigazione.js` (52 controlli, anche con 300 pagine e cinque menu).
+
 ## 2.32.0 (8 novembre 2026) - AI collegate
 
 - **Addon AI collegate** (richiesta di Danilo: un connettore fra il CMS e qualsiasi AI). Si accende da **Impostazioni >
