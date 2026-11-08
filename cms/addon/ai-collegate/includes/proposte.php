@@ -95,7 +95,16 @@ function aic_proposta_valore_pulito(string $tipo, string $campo, $v, string $wid
     throw new AicErrore('Campo sconosciuto.');
 }
 
-function aic_proposta_crea(array $conn, array $a): array {
+/** Crea una proposta. $gruppo (2.33.0): il codice della scheda dell'articolo che lega più proposte (propose_article_changes). */
+function aic_proposta_crea(array $conn, array $a, string $gruppo = ''): array {
+    return aic_proposta_salva($conn, aic_proposta_prepara($conn, $a), $gruppo);
+}
+
+/**
+ * 2.33.0: la parte che controlla (nessuna scrittura): ritorna la riga da salvare o lancia AicErrore. Divisa da
+ * aic_proposta_salva() perché propose_article_changes controlla tutte le modifiche prima di scriverne una (o tutte o nessuna).
+ */
+function aic_proposta_prepara(array $conn, array $a, int $giaInAttesa = 0): array {
     aic_schema();
     $tipo = (string)($a['tipo'] ?? '');
     $campo = (string)($a['campo'] ?? '');
@@ -107,7 +116,7 @@ function aic_proposta_crea(array $conn, array $a): array {
     if (!array_key_exists('valore', $a)) throw new AicErrore('Manca il valore nuovo.');
     $n = db()->prepare('SELECT COUNT(*) FROM ' . tbl('ai_proposte') . " WHERE connessione_id = ? AND stato = 'attesa'");
     $n->execute([(int)$conn['id']]);
-    if ((int)$n->fetchColumn() >= AIC_PROPOSTE_MAX) throw new AicErrore('Ci sono già ' . AIC_PROPOSTE_MAX . ' proposte in attesa da questo collegamento: aspetta che l\'amministratore decida.', 429);
+    if ((int)$n->fetchColumn() + $giaInAttesa >= AIC_PROPOSTE_MAX) throw new AicErrore('Ci sono già ' . AIC_PROPOSTE_MAX . ' proposte in attesa da questo collegamento: aspetta che l\'amministratore decida.', 429);
     $r = null; $url = ''; $widget = ''; $wTipo = ''; $id = 0;
     if ($tipo === 'media') {
         require_once __DIR__ . '/strumenti.php';
@@ -135,11 +144,17 @@ function aic_proposta_crea(array $conn, array $a): array {
     $dopo = aic_proposta_valore_pulito($tipo, $campo, $a['valore'], $wTipo);
     $prima = aic_proposta_valore_attuale($tipo, $r, $campo, $widget, $url);
     if ($dopo === $prima) throw new AicErrore('Il valore proposto è uguale a quello di adesso.');
+    return ['tipo' => $tipo, 'contenuto_id' => $id, 'media_url' => $url, 'campo' => $campo, 'widget_id' => $widget, 'prima' => $prima, 'dopo' => $dopo, 'motivo' => $motivo];
+}
+
+/** 2.33.0: scrive una proposta preparata da aic_proposta_prepara(). */
+function aic_proposta_salva(array $conn, array $x, string $gruppo = ''): array {
+    ['tipo' => $tipo, 'contenuto_id' => $id, 'media_url' => $url, 'campo' => $campo, 'widget_id' => $widget, 'prima' => $prima, 'dopo' => $dopo, 'motivo' => $motivo] = $x;
     // Una proposta nuova sullo stesso campo prende il posto di quella in attesa (che diventa "superata").
     db()->prepare('UPDATE ' . tbl('ai_proposte') . " SET stato = 'superata', deciso = NOW(), nota = 'sostituita da una proposta più recente' WHERE stato = 'attesa' AND tipo = ? AND contenuto_id = ? AND media_url = ? AND campo = ? AND widget_id = ?")
         ->execute([$tipo, $id, $url, $campo, $widget]);
-    db()->prepare('INSERT INTO ' . tbl('ai_proposte') . ' (connessione_id, client, tipo, contenuto_id, media_url, campo, widget_id, prima, dopo, motivo, stato, creato) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, \'attesa\', NOW())')
-        ->execute([(int)$conn['id'], mb_substr((string)$conn['nome'], 0, 200), $tipo, $id, $url, $campo, $widget, $prima, $dopo, $motivo]);
+    db()->prepare('INSERT INTO ' . tbl('ai_proposte') . ' (connessione_id, client, tipo, contenuto_id, media_url, campo, widget_id, prima, dopo, motivo, stato, creato, gruppo) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, \'attesa\', NOW(), ?)')
+        ->execute([(int)$conn['id'], mb_substr((string)$conn['nome'], 0, 200), $tipo, $id, $url, $campo, $widget, $prima, $dopo, $motivo, preg_replace('/[^a-z0-9-]/', '', $gruppo)]);
     return ['id' => (int)db()->lastInsertId(), 'tipo' => $tipo, 'contenuto_id' => $id, 'campo' => $campo, 'prima' => $prima, 'dopo' => $dopo];
 }
 
@@ -158,6 +173,15 @@ function aic_proposta_applica(array $p, ?string $valore, string $autore): void {
     if ($p['stato'] !== 'attesa') throw new RuntimeException('Questa proposta è già stata decisa.');
     $tipo = (string)$p['tipo']; $campo = (string)$p['campo'];
     require_once __DIR__ . '/strumenti.php';
+    if ($tipo === 'menu' || $campo === 'navigazione') {
+        // 2.33.0: un menu intero o i blocchi in fondo a una pagina. Niente "Modifica e approva": si approva o si scarta.
+        require_once __DIR__ . '/navigazione.php';
+        if ($valore !== null) throw new RuntimeException('Questa proposta non si corregge qui: approvala e ritocca dal pannello, oppure scartala.');
+        if ($tipo === 'menu') aic_nav_applica_menu($p);
+        else aic_nav_applica_correzione($p, $autore);
+        db()->prepare('UPDATE ' . tbl('ai_proposte') . " SET stato = 'approvata', deciso = NOW(), deciso_da = ?, nota = 'approvata' WHERE id = ?")->execute([mb_substr($autore, 0, 100), (int)$p['id']]);
+        return;
+    }
     if ($tipo === 'media') {
         require_once cms_radice() . '/includes/media-alt.php';
         $v = $valore === null ? (string)$p['dopo'] : aic_testo($valore, 300);
@@ -233,9 +257,18 @@ function aic_faq_da_testo(string $t): array {
     return $out;
 }
 
+/** 2.33.0: il nome del campo di una proposta nel pannello (anche i due della navigazione, che propose_change non conosce). */
+function aic_campo_etichetta(string $campo): string {
+    return ['voci' => 'Menu', 'navigazione' => 'Blocchi in fondo alla pagina'][$campo] ?? (aic_campi_proposta()[$campo][0] ?? $campo);
+}
+
 /** Il valore di una proposta da mostrare nel pannello (testo leggibile). */
 function aic_proposta_leggibile(string $campo, ?string $v): string {
     $v = (string)$v;
+    if ($campo === 'navigazione') {
+        $f = json_decode($v, true);
+        return is_array($f) ? 'In fondo si aggiunge una sezione:' . "\n" . (string)($f['leggibile'] ?? '') : $v;
+    }
     if ($campo === 'domande_frequenti') {
         $f = json_decode($v, true);
         return is_array($f) ? implode("\n\n", array_map(fn($x) => ($x['domanda'] ?? '') . "\n" . ($x['risposta'] ?? ''), $f)) : $v;

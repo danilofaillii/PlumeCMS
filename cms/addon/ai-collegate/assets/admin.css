@@ -42,3 +42,27 @@
 .aic-filtro .form-group{margin:0;min-width:10rem}
 .aic-filtri{margin-top:-.4rem}
 @media (max-width:640px){.aic-confronto{grid-template-columns:minmax(0,1fr)}.aic-dati{grid-template-columns:minmax(0,1fr)}}
+/* 2.33.0: proposte di menu (due alberi affiancati) e schede degli articoli (proposte raggruppate). Ogni segno ha la sua parola. */
+.aic-riepilogo{margin:.2rem 0 .7rem;font-weight:600}
+.aic-confronto-menu .aic-valore{max-height:none}
+.aic-menu-albero{list-style:none;margin:0;padding:0}
+.aic-menu-albero li{margin:.3rem 0;padding:.25rem .45rem;border-radius:6px;border-left:3px solid transparent}
+.aic-menu-sotto{margin:.25rem 0 0 1.1rem;padding-left:.6rem;border-left:1px dashed var(--bordo-campo)}
+.aic-voce{display:flex;flex-wrap:wrap;gap:.25rem .45rem;align-items:baseline;min-width:0}
+.aic-voce-url{color:var(--text-muted);font-size:.82rem;overflow-wrap:anywhere}
+.aic-era{color:var(--text-muted);font-size:.82rem;font-style:italic}
+.aic-segno{display:inline-block;font-size:.72rem;font-weight:700;padding:.05rem .45rem;border-radius:999px;border:1px solid var(--border);color:var(--text);text-transform:lowercase}
+.aic-segno-nuova{border-color:var(--successo-bordo);color:var(--successo-testo);background:var(--sage-light)}
+.aic-segno-tolta{border-color:var(--errore-bordo);color:var(--errore-testo);background:var(--errore-chiaro)}
+.aic-segno-spostata{border-color:var(--info-bordo);color:var(--info-testo);background:var(--info-chiaro)}
+.aic-segno-nome-nuovo{border-color:var(--attenzione-bordo);color:var(--attenzione-testo);background:var(--mustard-light)}
+.aic-menu-albero li.aic-v-nuova{border-left-color:var(--successo-bordo);background:var(--sage-light)}
+.aic-menu-albero li.aic-v-tolta{border-left-color:var(--errore-bordo);background:var(--errore-chiaro)}
+.aic-menu-albero li.aic-v-tolta>.aic-voce b{text-decoration:line-through}
+.aic-menu-albero li.aic-v-spostata{border-left-color:var(--info-bordo)}
+.aic-legenda .aic-segno{margin:0 .1rem}
+.aic-scheda>h3 .aic-conta-scheda{font-size:.8rem;font-weight:600;color:var(--testata-testo);margin-left:.3rem}
+.aic-azioni-scheda{margin:.2rem 0 1rem}
+.aic-nella-scheda{border-top:1px solid var(--border);padding-top:.9rem;margin-top:.9rem}
+.aic-nella-scheda h4{margin:0 0 .3rem;font-size:1rem}
+.aic-nella-scheda h4 a{color:inherit}

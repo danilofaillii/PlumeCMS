@@ -37,6 +37,8 @@ const AIC_ALBERO_MAX_SEZIONI = 60;
 const AIC_ALBERO_MAX_BYTE = 400000;
 /** Le proposte in attesa che una connessione può lasciare al massimo (oltre, si aspetta che l'amministratore decida). */
 const AIC_PROPOSTE_MAX = 200;
+/** 2.33.0: le proposte di una scheda dell'articolo in una chiamata sola (propose_article_changes). */
+const AIC_SCHEDA_MAX = 20;
 /** I widget che un'AI non può usare: codice grezzo e contenuti di siti esterni. */
 const AIC_WIDGET_VIETATI = ['html', 'contenuto_esterno'];
 
@@ -136,7 +138,8 @@ function aic_tabelle(): array {
             `creato` DATETIME NOT NULL,
             `deciso` DATETIME DEFAULT NULL,
             `deciso_da` VARCHAR(100) NOT NULL DEFAULT '',
-            PRIMARY KEY (`id`), KEY `stato` (`stato`, `creato`)
+            `gruppo` VARCHAR(60) NOT NULL DEFAULT '',
+            PRIMARY KEY (`id`), KEY `stato` (`stato`, `creato`), KEY `gruppo` (`gruppo`)
         ) $e",
         'ai_foto' => 'CREATE TABLE IF NOT EXISTS ' . tbl('ai_foto') . " (
             `id` INT(11) NOT NULL AUTO_INCREMENT,
@@ -158,6 +161,9 @@ function aic_tabelle(): array {
 
 function aic_installa(): string {
     foreach (aic_tabelle() as $sql) db()->exec($sql);
+    // 2.33.0: la colonna "gruppo" delle proposte (le schede degli articoli: più proposte legate da un codice) sulle tabelle nate prima.
+    $cols = array_column(db()->query('SHOW COLUMNS FROM ' . tbl('ai_proposte'))->fetchAll(), 'Field');
+    if (!in_array('gruppo', $cols, true)) db()->exec('ALTER TABLE ' . tbl('ai_proposte') . " ADD COLUMN `gruppo` VARCHAR(60) NOT NULL DEFAULT '', ADD KEY `gruppo` (`gruppo`)");
     save_setting('aic_schema_impronta', md5(serialize(aic_tabelle()) . DB_NAME));
     return 'tabelle a posto';
 }
