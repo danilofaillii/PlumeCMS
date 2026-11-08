@@ -6173,7 +6173,9 @@ cambiano niente; `/api/mcp` e `/.well-known/*` danno il 404 del sito).
 | `includes/ai.php` | permessi, durate, limiti (`:12-41`), tabelle (`aic_tabelle()` `:53`, nate al primo uso con `aic_schema()` `:165`), indirizzi, testi puliti, token, registro, limiti di velocità |
 | `includes/oauth.php` | OAuth 2.1: metadati, registrazione dinamica, authorize, consenso, token, rinnovo, revoca |
 | `includes/mcp.php` | server MCP (JSON-RPC su POST), REST e OpenAPI, smistamento degli indirizzi |
-| `includes/strumenti.php` | i quindici strumenti (sedici con l'addon Statistiche), audit, alberi dell'editor, bozze |
+| `includes/strumenti.php` | i ventuno strumenti (ventidue con l'addon Statistiche), audit, alberi dell'editor, bozze |
+| `includes/navigazione.php` | 2.33.0: analisi della navigazione, proposte di menu e dei blocchi in fondo alle pagine (47.11-47.13) |
+| `includes/revisione.php` | 2.33.0: schede degli articoli, elenco da rivedere, proposte raggruppate (47.14-47.15) |
 | `includes/proposte.php` | proposte: creazione, applicazione con le strade del CMS, scarto |
 | `includes/foto.php` | ricerca e importazione delle foto |
 | `includes/admin-*.php`, `assets/admin.css` | pannello: Collegamenti, Proposte, Registro, Impostazioni, Consenso |
@@ -6294,6 +6296,11 @@ strumento li tocca. `aic_esegui()` (`strumenti.php:124`) controlla il permesso, 
 | `propose_change`, `list_proposals` | proposte | 47.7 |
 | `search_photos`, `import_photo` | foto | 47.9 |
 | `get_stats` | statistiche | visite, pagine, fonti, dispositivi (`st_totali()`, `st_classifica()` dell'addon Statistiche) |
+| `analyze_navigation` | leggi | 2.33.0: menu, header e footer, dove porta ogni voce, problemi, orfane, punteggio (47.11) |
+| `propose_menu` | proposte | 2.33.0: un menu intero come proposta (47.12) |
+| `propose_navigation_fix` | proposte | 2.33.0: Leggi anche e invito in fondo a una pagina (47.13) |
+| `review_article`, `list_articles_to_review` | leggi | 2.33.0: scheda di revisione di un articolo, elenco da rivedere (47.14) |
+| `propose_article_changes` | proposte | 2.33.0: fino a 20 proposte raggruppate per un articolo (47.15) |
 
 **Mai pubblicato.** `create_draft` forza `stato = 'bozza'` (`strumenti.php:670`) e salva l'albero con `editor_salva(..., false)`
 (`:674`), quindi solo in `struttura_bozza`; `update_draft` riscrive la scheda con `stato` bozza (`:701`). Le chiavi `stato`,
@@ -6385,6 +6392,135 @@ Prove:
   Statistiche; le quattro pagine a 390 px). Usa `prove/ai-cli.php` e `prove/foto-finte.php` (va acceso prima su quella porta).
 - `tools/sicurezza-prova.js`, gruppo 46 (26 attacchi; 488 in tutto sulla 2.32.0): accende l'addon e il server finto delle foto (`SIC_FOTO`, 9298), alla fine
   rispegne l'addon se era spento e toglie le righe `limite:aic:%` dai tentativi.
+
+### 47.11 Navigazione: l'analisi (dalla 2.33.0)
+
+Richiesta di Danilo (8 novembre 2026): "analizzi tutte le pagine del sito, richiamate dai vari menu e standardizzi la navigazione
+[...]. Analizza anche gli articoli e proponi le modifiche SEO." Decisioni sue, le stesse della 2.32.0: l'AI lascia sempre in bozza e
+non pubblica mai; tutto ciò che tocca contenuti pubblicati o elementi globali (menu, header, footer) è una **proposta**.
+
+File nuovo `addon/ai-collegate/includes/navigazione.php`, caricato da `strumenti.php:10`. Soglie: `AIC_NAV_ETICHETTA_MAX` 25
+caratteri, `AIC_NAV_PRIMO_LIVELLO_MAX` 7, `AIC_NAV_PROFONDITA_MAX` 2 (`:15-19`); i widget che valgono come invito finale in
+`AIC_NAV_WIDGET_INVITO` (`:21`).
+
+- **Indice** (`aic_nav_indice()` `:36`): una `SELECT *` per pages e articles (cestino compreso) e una per categories, una volta per
+  richiesta: per chiave `pagine:<id>`, per slug, per percorso. Niente query per voce: le pagine dei menu si leggono dall'indice e i
+  loro link dalla colonna `struttura` già caricata.
+- **Dove porta una voce** (`aic_nav_risolvi()` `:78`, `aic_nav_risolvi_url()` `:101`): esito `ok`, `bozza`, `programmato`,
+  `cestino`, `inesistente`, `esterno`, `ancora`, `contatto` (mailto, tel) o `sistema` (blog, archivi, pagine dei moduli e degli
+  addon da `sito_mappa()`, redirect, file, `AIC_PERCORSI_SPECIALI`). Un indirizzo del sito scritto intero o con la cartella
+  (`aic_nav_percorso_interno()` `:56`) vale come il percorso.
+- **Header e footer**: i modelli pubblicati (Theme Builder), con i widget `menu_nav` (quale menu mostrano), i link di ogni widget
+  (chiavi che finiscono in `link`, `url`, `href` e gli `href` dentro l'HTML, `aic_nav_link_da_valore()` `:134`) e il widget
+  `breadcrumb`. Un menu esce nell'header se ha la posizione `principale` o un widget dell'header lo mostra; nel footer per le
+  posizioni `piede-*` o un widget del footer; `telefono` conta come header (`aic_nav_dove_menu()` `:201`).
+- **`aic_nav_analizza()`** (`:214`): albero di ogni menu con esito e destinazione di ogni voce; problemi (voci rotte, doppioni nello
+  stesso menu, etichette oltre 25 caratteri, maiuscole miste con `aic_nav_stile_etichetta()` `:182`: "Ogni Parola" contro
+  "Frase", una parola sola non conta; stesso contenuto con nomi diversi fra un menu e l'altro; voci oltre il secondo livello;
+  più di sette voci al primo livello); pagine **orfane** (pubblicate, non la home, non raggiunte da un menu in uso, né dai link
+  di header e footer, né dai link delle pagine dei menu) e **solo nel piede**; briciole (`presenti`, `impostazione: false`: non
+  esiste un'impostazione, solo il widget); Contatti (etichetta o percorso con "contatt", oppure mailto/tel); blog (se ci sono
+  articoli pubblicati: voce verso `SITO_PAGINA_BLOG`, una categoria o etichetta "Blog", "Articoli", "Notizie"); per ogni pagina dei
+  menu titolo, slug, invito finale (`aic_nav_ha_invito()` `:158`: l'ultima sezione ha un widget di invito o un link a
+  contatti/prenota/mailto/tel; per una scheda classica gli ultimi 600 caratteri) e quante pagine dei menu collega. Punteggio da 100
+  meno i pesi di ogni problema (voci rotte 12 l'una fino a 40, orfane 4 fino a 20, Contatti mancante 10, ...), suggerimenti in
+  italiano. Liste tagliate a 100 voci, pagine dei menu a 150.
+
+Tempi misurati (prova, PHP 8.3, MySQL 8): 0,15 s con il kit più 300 pagine pubblicate e cinque menu.
+
+### 47.12 Navigazione: la proposta di menu
+
+`propose_menu` (`aic_nav_proponi_menu()` `navigazione.php:469`):
+- `menu_id` deve essere una riga della tabella `menu` (letta fresca, `aic_nav_menu_fresco()` `:457`: niente cache della richiesta);
+- le voci passano da `aic_nav_voci_da_ai()` (`:404`) **prima** di `menu_pulisci_voci()` (che toglierebbe in silenzio il troppo): al
+  massimo 200 voci e tre livelli (errore, non taglio); etichetta da `aic_testo()` a 100 caratteri (un'etichetta che dopo aver tolto i
+  tag è vuota: errore); `pagina` e `articolo` per `id` o `rif` (slug) di un contenuto **pubblicato**; `categoria` esistente; `link`
+  solo con `aic_nav_url_sicuro()` (`:372`): percorso del sito senza `//`, `..`, barre rovesce, spazi, virgolette o `<>`; `https://`
+  con un host semplice e senza credenziali; `#ancora`; `mailto:` con un'email valida; `tel:`; un link interno che porta a una bozza o
+  a niente: errore. `classi` dall'AI non entrano. Le voci che c'erano tengono il loro id (stessa destinazione,
+  `aic_nav_chiave_voce()` `:389`, che confronta per indirizzo: "Servizi" come pagina e come link a `/servizi/` sono la stessa voce);
+- uguale al menu di adesso (senza contare gli id, `aic_nav_canonico()` `:451`): errore; oltre `AIC_PROPOSTE_MAX`: 429;
+- **una proposta per menu**: la vecchia ancora aperta va in `scartata` con la nota "sostituita da una proposta di menu più recente";
+- riga in `ai_proposte` con `tipo` `menu`, `contenuto_id` = id del menu, `campo` `voci`, `prima` e `dopo` = JSON delle voci nel
+  formato del menu.
+
+**Approvare** (`aic_nav_applica_menu()` `:499`, da `aic_proposta_applica()` `proposte.php:176`): il menu riletto dal database deve
+essere uguale a `prima` (senza gli id); se no `RuntimeException` "Il menu «...» è cambiato dopo la proposta" e la proposta resta da
+decidere. Le destinazioni si ricontrollano (una pagina tolta nel frattempo ferma l'approvazione). Poi `menu_salva()`, che scrive anche
+la versione (`menu_versione()`, ambito `menu` di `editor_versioni`): il menu di prima si recupera da Editor > Versioni. Niente
+"Modifica e approva" per i menu (scelta: il pannello Menu ha il suo stato in JavaScript; precaricarlo con la proposta era troppo per
+questa versione): la nota della proposta dice di approvare e ritoccare in Menu di navigazione, o di scartare.
+
+**Il confronto** (`aic_nav_confronto()` `:548`): le voci in piano con una chiave per destinazione (e il numero della ripetizione);
+`nuova` (solo nel dopo), `tolta` (solo nel prima), `spostata` (cambia genitore, o non sta nella sottosequenza comune più lunga delle
+voci rimaste nello stesso livello, `aic_nav_lcs()` `:522`), `nome nuovo` (con "era «...»"). `aic_nav_albero_html()` (`:588`) scrive
+gli alberi con la parola di ogni segno accanto (mai solo il colore).
+
+### 47.13 Navigazione: Leggi anche e invito in fondo
+
+`propose_navigation_fix` (`aic_nav_proponi_correzione()` `navigazione.php:706`, blocchi da `aic_nav_blocchi()` `:618`):
+`leggi_anche` = widget `leggi_anche` con da 1 a 6 contenuti pubblicati del sito (non la pagina stessa; errore se la pagina ha già un
+Leggi anche); `invito` = widget `cta` (titolo, testo, pulsante, link; senza link la prima pagina pubblicata con "contatt" nello slug
+o nel titolo, `aic_nav_pagina_contatti()` `:609`; errore se la pagina finisce già con un invito); testi da `aic_testo()`;
+`briciole: true` aggiunge solo l'avviso: le briciole non hanno un'impostazione, si mettono con il widget Briciole di pane nell'header,
+e lo strumento non propone niente (decisione: non inventare un'impostazione).
+- **pubblicato fatto con l'editor**: proposta `campo` `navigazione`, `prima` = la fine della pagina in parole
+  (`aic_nav_fine_leggibile()` `:672`), `dopo` = JSON `{sezione, leggibile}` con la sezione già validata da `editor_valida()`;
+  approvata con `aic_nav_applica_correzione()` (`:752`): ricontrolla i link della sezione, la aggiunge in fondo all'albero
+  pubblicato (`editor_valida`, `editor_blinda_codice`, `editor_salva(..., true)`) e alla bozza dell'editor se c'è;
+- **pubblicato con la scheda classica**: una proposta normale `testo` con il blocco HTML in coda;
+- **bozza**: i blocchi vanno subito nella bozza (`editor_salva(..., false)` o la scheda in bozza), solo se il collegamento ha anche
+  il permesso `bozze`.
+
+### 47.14 Le schede degli articoli: review_article
+
+`addon/ai-collegate/includes/revisione.php`, caricato da `strumenti.php:11`. `aic_rev_analizza()` (`:124`) parte dalle stesse cose di
+`audit_content`: HTML disegnato del pubblicato (`aic_html_contenuto()`), `seo_analisi()` (che porta i link interni suggeriti di
+`seo_link_suggeriti()`), riga della Tabella SEO, `media_alt_contenuto()`, `aic_link_problemi()`; in più:
+- **attacco** (`aic_rev_attacco()` `:105`): le prime tre frasi del primo paragrafo di almeno 8 parole; "risponde" se contiene la
+  parola chiave (o il 60% dei suoi termini) oppure, senza parola chiave, metà dei termini del titolo; una domanda come prima frase non
+  conta come risposta;
+- **sottotitoli** (`aic_rev_sottotitoli()` `:77`): in ordine dall'HTML, salti di livello (in un articolo si parte da H1, il titolo
+  della pagina), H1 di troppo;
+- **paragrafi** oltre `AIC_REV_PARAGRAFO_MAX` (120 parole), con il numero e l'inizio;
+- **parola chiave** in titolo per Google, attacco, sottotitoli e indirizzo;
+- **domande frequenti** (anche i sottotitoli che sono domande);
+- **link interni**: i 3-5 suggeriti non ancora collegati;
+- **frasi datate** (`aic_rev_datate()` `:54`, espressioni in `AIC_REV_DATATE` `:14` e anni da 15 anni fa all'anno scorso) nel
+  titolo, nei campi per Google e nei blocchi di testo (`aic_rev_blocchi()` `:25`: per widget dell'albero pubblicato con `widget_id`,
+  o per paragrafo della scheda), con un estratto;
+- **widget di testo** con l'id (per `propose_article_changes` campo `testo`), ultima modifica e giorni passati;
+- **punteggio di revisione**: quello di `seo_analisi()` meno 8 (attacco), 6 (salti), 4 (H1 di troppo), 6 (testo lungo senza
+  sottotitoli), 3 per paragrafo lungo (fino a 9), 4 per frase datata (fino a 12); e i consigli in italiano.
+
+`list_articles_to_review` (`aic_rev_elenco()` `:196`): tutti i pubblicati del tipo (al massimo 1000, il blog escluso fra le pagine),
+analisi leggera, ordine per punteggio di revisione e poi ultima modifica, pagine di 20 al massimo. Tempi: 0,85 s per 305 pagine.
+
+### 47.15 Le schede degli articoli: propose_article_changes
+
+`aic_rev_proponi()` (`revisione.php:218`): fino a `AIC_SCHEDA_MAX` (20, `ai.php:41`) modifiche sullo stesso contenuto, una per campo
+(e per widget o immagine); motivo generale obbligatorio, ognuna può avere il suo. **O tutte o nessuna**: `aic_proposta_crea()` è
+divisa in `aic_proposta_prepara()` (`proposte.php:107`, controlla e calcola prima e dopo senza scrivere, con il conto delle
+proposte già preparate per il limite di 200) e `aic_proposta_salva()` (`:151`); tutte si preparano prima di scriverne una. (Una
+transazione non bastava: le `CREATE TABLE IF NOT EXISTS` dei moduli caricati nel mezzo la chiudono da sole.) Le proposte portano lo
+stesso codice nella colonna nuova `gruppo` di `ai_proposte` (`<tipo>-<id>-<12 hex>`; aggiunta da `aic_installa()` `ai.php:166`
+sulle tabelle nate nella 2.32.0); `list_proposals` lo restituisce.
+
+### 47.16 Pannello: Proposte (dalla 2.33.0)
+
+`admin-proposte.php`: le proposte con lo stesso `gruppo` stanno in un riquadro `section.aic-scheda` "Scheda dell'articolo: <titolo>"
+(o "della pagina") con **Approva tutte** e **Scarta tutte** (azioni `scheda_approva`, `scheda_scarta` `:17`: le proposte in attesa con
+quel codice, ripulito a `[a-z0-9-]`, con CSRF e finestra di conferma), e dentro le proposte una per una (titolo `h4`,
+`article.aic-nella-scheda`). Una proposta di menu (`article.aic-proposta-menu`) mostra il riepilogo, i due alberi in `.aic-confronto`
+(uno sotto l'altro sotto 640 px), la legenda dei segni, **Approva il menu** con la conferma e **Scarta**. Le proposte `navigazione`
+hanno prima e dopo in parole. Nomi dei campi nuovi da `aic_campo_etichetta()` (`proposte.php:261`). Stili in `assets/admin.css`
+(blocco 2.33.0), solo variabili degli aspetti; ogni segno ha la parola.
+
+Prove:
+- `prove/prova-ai-navigazione.js <base> <cartella CMS> <utente> <password> [cartella foto]` su un sito col kit Attività: 52 controlli
+  (radice e cartella), con `prove/ai-cli.php` (comandi `nav-prepara`, `nav-ripristina`, `menu-cambia`, `menu`, `nav-molte`,
+  `articolo-prova`); `SENZA_MOLTE=1` salta la parte con 300 pagine;
+- `tools/sicurezza-prova.js` gruppo 47 (15 attacchi, con `CMS_DIR`).
 
 ## Appendice A. Dove i documenti vecchi non corrispondono al codice
 

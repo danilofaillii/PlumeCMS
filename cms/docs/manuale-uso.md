@@ -5776,6 +5776,85 @@ il telefono o il computer con l'AI collegata, o se una chiave è finita in mani 
 **AI collegate > Registro** elenca ogni azione delle AI: quando, quale AI, che cosa ha fatto (per esempio "Crea una bozza"), su quale pagina, con quale esito
 (riuscita, errore, negata). I filtri in alto scelgono l'AI, l'azione o l'esito. Il registro tiene sei mesi.
 
+### Rivedere la navigazione con l'AI
+
+Dalla 2.33.0 l'AI collegata può controllare **tutti i menu del sito**, l'header e il footer, e dirti cosa rende difficile
+trovare le pagine: voci che portano a pagine in bozza o che non esistono più, voci doppie, nomi troppo lunghi o scritti in modi
+diversi, troppe voci in fila, sottomenu troppo profondi, pagine pubblicate che nessun menu raggiunge, pagine senza un invito
+all'azione in fondo. Poi ti **propone** il menu sistemato: non lo cambia mai da sola.
+
+**Esempio.** Il menu di Giulia ha otto voci, una porta alla pagina "Offerte" ancora in bozza, "Servizi" compare due volte e la
+pagina "Lavora con noi" non si trova da nessuna parte.
+
+Frasi pronte da scrivere alla tua AI:
+- "Analizza la navigazione del sito e dimmi cosa non va, in ordine di gravità."
+- "Proponi un menu principale più semplice: al massimo sei voci, nomi brevi, Contatti per ultimo."
+- "Metti le pagine che nessun menu raggiunge dove servono, e spiegami perché."
+- "Aggiungi in fondo alle pagine dei servizi un blocco Leggi anche e un invito verso Contatti."
+
+Quando l'AI propone un menu, nel menu del pannello compare il numero: apri **AI collegate > Proposte**.
+
+![La proposta di menu: il menu di adesso e quello proposto, affiancati](immagini/manuale-uso/41-menu.jpg)
+
+1. **Il riepilogo**: quante voci nuove, tolte, spostate e con il nome nuovo. Sopra c'è il **Perché** scritto dall'AI.
+2. **Il menu adesso**, a sinistra: le voci che spariscono sono barrate con la parola **tolta**; accanto, se la voce porta a una
+   bozza o a una pagina che non c'è, lo dice (**bozza**, **non porta a niente**).
+3. **Il menu proposto**, a destra: **nuova** per le voci aggiunte, **spostata** per quelle in un altro posto, **nome nuovo** con
+   il nome di prima ("era «Servizi»"). Al telefono i due menu stanno uno sotto l'altro.
+4. **Approva il menu**: conferma nella finestra e il menu cambia subito sul sito. Il menu di prima resta nelle versioni: se ci
+   ripensi, lo ritrovi in **Editor > Versioni**. **Scarta**: non cambia niente.
+
+Da sapere:
+- La proposta di menu non si corregge qui: se ti va quasi bene, approvala e ritocca le voci in **Editor > Menu di navigazione**;
+  altrimenti scartala e chiedi all'AI una proposta nuova ("togli Blog dal menu principale").
+- Se dopo la proposta qualcuno ha cambiato il menu a mano, **Approva il menu** si ferma con un messaggio rosso e non tocca
+  niente: scarta la proposta e chiedine una nuova, che parta dal menu di oggi.
+- Per ogni menu c'è una sola proposta aperta: se l'AI ne manda un'altra, la vecchia diventa **Scartata**.
+- Le voci possono portare solo a pagine e articoli **pubblicati** o a indirizzi sicuri: l'AI non può mettere nel menu una bozza.
+- **Blocchi in fondo alla pagina**: se l'AI propone un "Leggi anche" o un invito verso Contatti in fondo a una pagina già online,
+  arriva una proposta con scritto cosa c'è oggi alla fine della pagina e cosa si aggiunge. Approvata, la sezione nuova va in
+  fondo alla pagina; la ritocchi nell'editor come le altre. Su una bozza l'AI la aggiunge da sola: la vedi quando apri la bozza.
+- **Briciole di pane** (il percorso "Home > Servizi > Potature" sopra il titolo): non c'è un interruttore. L'AI te lo dice e non
+  propone niente; se le vuoi, aggiungi il widget **Briciole di pane** nell'header, da **Editor > Header e footer** (capitolo 15).
+
+### Le schede degli articoli
+
+L'AI può rivedere gli articoli già pubblicati **uno alla volta**, partendo da quelli che ne hanno più bisogno, e proporti le
+modifiche SEO tutte insieme, raggruppate per articolo.
+
+Per ogni articolo guarda: titolo e descrizione per Google, se le **prime due o tre frasi** rispondono subito alla domanda di chi
+cerca, se i **sottotitoli** sono in ordine, i paragrafi troppo lunghi, la parola chiave, le domande frequenti, i link verso altre
+pagine del sito, le immagini senza alt, e le frasi che invecchiano ("quest'anno", "recentemente", un anno passato scritto
+nel testo), con il punto preciso dove stanno.
+
+Frasi pronte:
+- "Dimmi quali articoli hanno più bisogno di una revisione."
+- "Rivedi il primo articolo dell'elenco e proponi le modifiche SEO."
+- "Lavora tutti gli articoli, uno alla volta, e fermati dopo cinque."
+- "Nell'articolo sulle rose togli le frasi datate e aggiungi tre domande frequenti."
+
+Le proposte di uno stesso articolo arrivano insieme in **AI collegate > Proposte**:
+
+![La scheda dell'articolo: le proposte raggruppate](immagini/manuale-uso/41-scheda.jpg)
+
+1. **Scheda dell'articolo**: il titolo dell'articolo (il link apre la sua scheda) e quante proposte ci sono.
+2. **Approva tutte**: conferma nella finestra e tutte le modifiche vanno sul sito insieme (le versioni di prima restano nelle
+   revisioni).
+3. **Scarta tutte**: nessuna modifica.
+4. Oppure decidi **una per una**: ognuna ha il suo prima e dopo, **Approva**, **Scarta** e **Modifica e approva**, come le
+   proposte singole.
+
+L'AI può mandare al massimo venti proposte per articolo alla volta; se una non va bene (per esempio un widget che non c'è più),
+non ne salva nessuna e se ne accorge da sola.
+
+### Checklist della navigazione e delle schede
+
+- [ ] Ho chiesto all'AI l'analisi della navigazione e ho letto i suoi consigli.
+- [ ] Prima di approvare un menu ho guardato le voci **tolte**: nessuna pagina importante sparisce.
+- [ ] Dopo l'approvazione ho aperto il sito dal telefono e il menu si legge bene.
+- [ ] Per le briciole di pane, se le voglio, ho messo il widget nell'header.
+- [ ] Ho approvato o scartato tutte le schede degli articoli; quelle approvate le ho rilette sul sito.
+
 **Se qualcosa non va.**
 - L'AI dice che non riesce a collegarsi e il pannello non si apre: controlla che il sito sia in **https** e che l'addon sia
   acceso.
@@ -5786,7 +5865,11 @@ il telefono o il computer con l'AI collegata, o se una chiave è finita in mani 
   nel `.htaccess` della radice del dominio (la trova chi ti gestisce l'hosting nel manuale tecnico, capitolo 47).
 - "Troppe richieste in un minuto": l'AI ha lavorato troppo in fretta. Aspetta un minuto e chiedile di riprendere.
 
-**Cosa non c'è ancora.** L'AI non pubblica e non pubblicherà (è la regola). Non scrive negli addon (prenotazioni, eventi,
+- "Approva il menu" dà un messaggio rosso "è cambiato dopo la proposta": qualcuno ha toccato il menu dopo che l'AI l'ha
+  proposto. Scarta la proposta e chiedine una nuova.
+
+**Cosa non c'è ancora.** L'AI non pubblica e non pubblicherà (è la regola). Non cambia da sola menu, header e footer: li
+propone. Non scrive negli addon (prenotazioni, eventi,
 prodotti, corsi) né nella newsletter. Questo addon è provato con un client scritto per le prove, non ancora con Claude e
 ChatGPT veri su un sito vero: se un passo non va come scritto qui, segnalalo.
 
@@ -5816,6 +5899,7 @@ ChatGPT veri su un sito vero: se un passo non va come scritto qui, segnalalo.
 | La copia notturna non arriva sulla destinazione | Guarda il **Registro degli invii** e il Log cron; premi **Prova la connessione** (capitolo 39) |
 | Non riesco a pubblicare un test | Il riquadro **Pubblica** del passo 5 dice cosa manca, di solito un buco fra le fasce (capitolo 40) |
 | L'AI collegata riceve sempre "non autorizzato" | Su un sito aggiornato manca una riga nel `.htaccess`, oppure il collegamento è stato revocato: ricollegala (capitolo 41) |
+| Approvando un menu proposto dall'AI esce "è cambiato dopo la proposta" | Il menu è stato cambiato dopo la proposta: scartala e chiedi all'AI una proposta nuova (capitolo 41) |
 | Ho chiesto all'AI di pubblicare ma la pagina è ancora in bozza | È la regola: l'AI scrive solo bozze. Apri la bozza e premi **Pubblica** tu (capitolo 41) |
 
 ---
