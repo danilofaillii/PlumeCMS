@@ -6378,7 +6378,7 @@ esito; foto importate con autore e licenza; il registro tiene sei mesi), `impost
 gestori in linea: conferme con `data-conferma`, copia con `data-copia-se-stesso`; tabelle a schede al telefono.
 
 Prove:
-- `prove/prova-ai-collegate.js <base> <cartella CMS> <utente> <password> <porta foto finte> [cartella foto]`: 89 controlli (OAuth
+- `prove/prova-ai-collegate.js <base> <cartella CMS> <utente> <password> <porta foto finte> [cartella foto]`: 90 controlli (OAuth
   intero con il consenso nel browser, anche con un amministratore a due fattori; PKCE; rinnovo ruotato e riusato; codice riusato;
   revoca da endpoint e pannello; Rifiuta; redattore; tutti gli strumenti; bozza mai pubblicata; proposte approvate, corrette, in
   gruppo, scartate; foto con autore e licenza dai tre archivi finti; chiave personale, REST e OpenAPI; `get_stats` solo con

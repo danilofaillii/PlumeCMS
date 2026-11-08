@@ -310,7 +310,7 @@ dell'addon a 390 px.
    La prova scrive `CMS_AI_FOTO_PROVA` nel `config.local.php` del sito.
 3. `node prove/prova-ai-collegate.js <base> <cartella del CMS> <utente> <password> <porta delle foto finte> [cartella foto]`
    (in cartella la base è `http://127.0.0.1:<porta>/test` e la cartella del CMS quella con `/test`).
-4. Atteso (2.32.0): 89 su 89 in radice, in cartella e su un sito aggiornato dalla 2.31.0. Pulisce le sue tabelle alla fine
+4. Atteso (2.32.0): 90 su 90 in radice, in cartella e su un sito aggiornato dalla 2.31.0. Pulisce le sue tabelle alla fine
    (`ai-cli.php pulisci`), lascia la pagina `ai-prova-pubblicata` e le foto importate nei Media.
 
 Gli attacchi all'addon sono il gruppo 46 di `tools/sicurezza-prova.js` (27, con `CMS_DIR`): accende l'addon e il server finto

@@ -74,6 +74,9 @@ async function autorizza(br, clientId, sfida, { scope = 'leggi bozze proposte fo
   info.testo = await p.locator('#aic-consenso').innerText();
   info.caselle = await p.locator('#aic-consenso input[name="permessi[]"]').evaluateAll(l => l.map(x => x.value + ':' + x.checked));
   if (foto) await p.screenshot({ path: path.join(FOTO, foto + '.png'), fullPage: true });
+  await p.setViewportSize({ width: 390, height: 800 });
+  info.largo390 = await p.evaluate(() => document.documentElement.scrollWidth);
+  await p.setViewportSize({ width: 1280, height: 900 });
   for (const t of togli) await p.uncheck(`#aic-consenso input[value="${t}"]`);
   await p.click(rifiuta ? '#aic-consenso button[value=rifiuta]' : '#aic-consenso button[value=consenti]');
   await p.waitForFunction(() => !!document.getElementById('aic-fatto') || false, null, { timeout: 8000 }).catch(() => {});
@@ -122,6 +125,7 @@ async function token(corpo) { return http('POST', MCP + '/token', { corpo, tipo:
   const a1 = await autorizza(br, CID, k1.c, { togli: ['foto'], foto: FOTO ? 'ai-consenso' : '' });
   ok('authorize porta al login del pannello con la richiesta (dopo=ai-collegate)', a1.alLogin, a1.urlConsenso);
   ok('dopo il login, la pagina del consenso con il nome dell\'AI e l\'host di ritorno', /p=consenso/.test(a1.urlConsenso) && /Claude di prova/.test(a1.testo) && /127\.0\.0\.1/.test(a1.testo), a1.testo);
+  ok('la pagina del consenso a 390 px non scorre di lato', a1.largo390 <= 391, a1.largo390);
   ok('le caselle sono i permessi chiesti, spuntati', JSON.stringify(a1.caselle) === JSON.stringify(['leggi:true', 'bozze:true', 'proposte:true', 'foto:true']), a1.caselle);
   ok('Consenti: pagina "Permesso dato" e ritorno al client con code, state e iss', /Permesso dato/.test(a1.fatto) && a1.ritorno && a1.ritorno.searchParams.get('code') && a1.ritorno.searchParams.get('state') === a1.state && a1.ritorno.searchParams.get('iss') === B, a1.ritorno && a1.ritorno.href);
   await a1.contesto.close();
