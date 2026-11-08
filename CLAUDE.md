@@ -168,7 +168,7 @@ Le decisioni complete, con data e perché, stanno nel second brain, `plumecms/de
 
 ## Stato al 31 ottobre 2026
 
-Fatto: plumeCMS 2.35.0 (8 novembre, 22:32-23:30): **le correzioni SEO e AEO dell'audit di plumecms.it** (audit del 8 novembre, rapporto
+Fatto: plumeCMS 2.35.0 (8 novembre, 22:32-23:22): **le correzioni SEO e AEO dell'audit di plumecms.it** (audit del 8 novembre, rapporto
 `https://claude.ai/artifact/9s9NSqmh15jtfe1FQpP8Hm`, fatto con il connettore AI collegate di plumecms.it: prima prova vera con un client Claude). Agente nella
 worktree `/home/user/wt-seo2`, ramo `seo-plume` (22:34-23:10), riletto, unito e riprovato da me. Prodotto: llms.txt calcolato con la sezione Pagine, senza
 sezioni vuote né Glossario senza termini (prima linkava /glossario/ in 404); tipo "Programma" (SoftwareApplication) nei Dati per Google in più
