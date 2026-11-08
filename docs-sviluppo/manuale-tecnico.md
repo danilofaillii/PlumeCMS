@@ -1,6 +1,6 @@
 # plumeCMS: manuale tecnico
 
-Versione del manuale: 1.24, per plumeCMS 2.0.3 e le novità fino alla 2.32.0 (8 novembre 2026).
+Versione del manuale: 1.24, per plumeCMS 2.0.3 e le novità fino alla 2.35.0 (8 novembre 2026).
 
 Questo manuale descrive come è fatto plumeCMS e come funziona, pezzo per pezzo. È scritto leggendo il codice:
 ogni numero, limite e nome di funzione viene dai file veri, con il riferimento `file:riga` quando serve a chi
@@ -3193,7 +3193,7 @@ Nessuno di questi è un file sul disco: il CMS li scrive a ogni richiesta.
 |---|---|
 | `/robots.txt` | il testo personale, altrimenti: `Allow: /`, divieti per pannello, cron, log, API, ricerca, autori, feed; i blocchi dei crawler AI scelti; l'indirizzo della sitemap, in **una** riga `Sitemap: <SITO_URL>/sitemap.xml` (`extra_robots()`, `sito/extra.php:102`; `SITO_URL` ha già la cartella. Fino alla 2.32.0 c'era una seconda riga con `cms_base()`: uguale alla prima nella radice, `/test/test/sitemap.xml` in cartella. Un robots.txt personale scritto nel pannello resta com'è) |
 | `/sitemap.xml` | home, articoli e (a scelta) pagine indicizzabili, categorie con articoli; a scelta le immagini; oppure l'indice di `sitemap-articoli.xml`, `sitemap-pagine.xml`, `sitemap-categorie.xml` |
-| `/llms.txt` | il testo personale, altrimenti: nome e descrizione del sito, nota di citazione (filtro `llms_intestazione`), servizi (filtro `llms_servizi`), guide pillar, articoli, glossario, feed e sitemap |
+| `/llms.txt` | il testo personale, altrimenti: nome e descrizione del sito, nota di citazione (filtro `llms_intestazione`), servizi (filtro `llms_servizi`), guide pillar, articoli, glossario, feed e sitemap. Dalla 2.35.0 (`extra_llms()`, `sito/extra.php:79`, capitolo 48.1) anche le **pagine** pubblicate e indicizzabili, la home per prima; niente sezioni vuote, Glossario solo con termini, feed solo con articoli, in testa la descrizione generale di SEO e AEO |
 | `/llms-full.txt` | il testo completo dei contenuti, solo se acceso |
 | file di verifica | il file `.html` di Google, `/BingSiteAuth.xml`, `/<chiave IndexNow>.txt` |
 
@@ -3523,7 +3523,8 @@ tabella `<prefisso>sicurezza_tentativi` dal database.
 | `impostazioni` | `{"sito_nome": "...", ...}`; ammesse solo `sito_nome`, `sito_titolo`, `sito_sottotitolo`, `sito_descrizione`, `home_descrizione` | le scrive nelle impostazioni |
 | `editor` | un JSON nel formato di Editor > Impostazioni, Esporta (`formato: "editor-impostazioni"`) | lo importa come il pulsante Importa |
 | `editor_ambiti` | quali parti di `editor` importare: `stile`, `modelli`, `menu`, `temi` | predefinito: stile, modelli, menu |
-| `pagine` | un JSON per pagina: `{slug, titolo, struttura, seo_titolo, seo_descrizione, robots, estratto}` | crea la pagina o aggiorna quella con lo stesso slug, pubblicata; la versione di prima resta in Versioni (`sito_importa_pagina()`) |
+| `pagine` | un JSON per pagina: `{slug, titolo, struttura, seo_titolo, seo_descrizione, robots, estratto}`; dalla 2.35.0 anche, facoltativi, `tldr`, `faq`, `keyword`, `seo_schema` (capitolo 48.3) | crea la pagina o aggiorna quella con lo stesso slug, pubblicata; la versione di prima resta in Versioni (`sito_importa_pagina()`) |
+| `seo` | dalla 2.35.0: `{"titolo": {...}, "meta": {...}, "org": {...}, "persona": {...}, "schema": {...}}`, solo le chiavi di `AGG_SEO` (capitolo 48.4) | le scrive in `seo_config` con `seo_salva()`, gruppo per gruppo; le altre chiavi restano |
 
 Chi usa queste voci mette anche l'azione `sito-pagine-e-stile`, che da sola non fa niente: un motore più vecchio
 della 1.2.3 non la conosce e rifiuta il pacchetto, invece di saltare in silenzio le voci che non sa leggere.
@@ -6092,6 +6093,8 @@ voce, `admin/includes/admin-header.php:65-67`; nella fila delle schede di `seo.p
 
 ### 46.3 Dati per Google in più: Prodotto, How-to, Video
 
+Dalla 2.35.0 c'è anche il tipo **Programma** (SoftwareApplication): capitolo 48.2.
+
 `includes/seo-schema.php`, caricato da `includes/seo.php:24`.
 
 - **Dove stanno**: colonna `seo_schema` (LONGTEXT, JSON) di `articles` e `pages`, aggiunta anche alle tabelle vecchie da
@@ -6624,6 +6627,129 @@ Stili nel blocco 2.34.0 di `assets/admin.css`, solo variabili degli aspetti; ogn
   nell'attacco, due H2, un elenco e un link, il buco "concime naturale"; `stile-molti <n>`; `stile-pulisci`); `SENZA_MOLTE=1` salta
   i 300 articoli;
 - `tools/sicurezza-prova.js` gruppo 48 (15 attacchi, con `CMS_DIR`).
+
+## 48. SEO e AEO dell'audit di plumecms.it (dalla 2.35.0)
+
+L'audit SEO e AEO di plumecms.it (8 novembre 2026, fatto con il connettore AI collegate e scaricando le pagine) ha trovato difetti
+che valgono per ogni sito fatto con plumeCMS (il llms.txt, l'identità nei dati per Google) e altri solo del sito di plumeCMS
+(titoli, riassunti, domande, il confronto con WordPress). Le prime correzioni stanno nel prodotto, le seconde nel pacchetto di
+`sito-plumecms/costruisci.py`, che per portarle ha avuto bisogno di due cose nuove nel motore dei pacchetti (48.3 e 48.4).
+
+### 48.1 llms.txt calcolato con le pagine
+
+`extra_llms()` (`sito/extra.php:79`), chiamata da `seo_llms()` (`includes/seo.php:839`) quando il testo personale di SEO e AEO è
+vuoto: il testo personale vince sempre.
+
+- **Intestazione**: `# <nome del sito>`, poi `> ` con la descrizione generale di SEO e AEO (`seo_cfg()['meta']['descrizione']`) o,
+  se è vuota, `sito_descrizione` come prima; poi la nota di citazione. Il filtro `llms_intestazione` resta.
+- **Sezioni**, scritte solo se hanno almeno una voce (prima uscivano anche vuote): Servizi (filtro `llms_servizi`), **Pagine**,
+  Guide complete (pillar), Articoli, Glossario, Optional. Ogni voce è `- [titolo](indirizzo): <In breve o descrizione per Google>`.
+- **Pagine**: da `sito_contenuti_elenco('llms')` (che toglie già i contenuti riservati degli addon), solo `tipo` `page`, con
+  `robots` index, `status` published (anche in anteprima: le bozze non escono mai) e non già fra i servizi; la home per prima,
+  le altre nell'ordine di nascita (id). Le pagine nel cestino e quelle con un redirect non ci sono (`sito_contenuti()`).
+- **Glossario** solo con almeno un termine e se `/glossario/` è nella mappa (`sito_mappa()`): prima usciva "0 termini" con un
+  link a una pagina che su plumecms.it dava 404. "termine" al singolare con un termine solo.
+- **Optional**: il feed solo se c'è almeno un articolo indicizzabile; la sitemap sempre.
+
+Senza pagine né articoli il file resta valido: intestazione e Optional con la sitemap.
+
+### 48.2 Dati per Google "Programma" (SoftwareApplication)
+
+`includes/seo-schema.php`, lo stesso motore di Prodotto, How-to e Video (46.3).
+
+- `SEO_SCHEMA_TIPI` ha `programma`; `SEO_SCHEMA_CATEGORIE` (`:19`) le otto categorie di schema.org (`applicationCategory`):
+  WebApplication, DeveloperApplication, BusinessApplication, DesignApplication, EducationalApplication, MultimediaApplication,
+  UtilitiesApplication, GameApplication. Campi in `seo_schema_vuoto()`: nome, versione, categoria, sistema, prezzo, valuta,
+  licenza, download, requisiti.
+- **Controlli** (`seo_schema_valida()`, ramo `programma` a `:193`): nome obbligatorio (200 caratteri, senza tag); versione con
+  `seo_schema_versione()` (`:102`: numeri, lettere, punti, `+` e `-`, 30 caratteri, oppure `{versione:<serie>}` del download
+  manager, che `sito_html()` sostituisce con l'ultima versione caricata: `sito/index.php:62`); categoria fra quelle dell'elenco;
+  sistema 200 e requisiti 300 caratteri senza tag; prezzo obbligatorio con `seo_schema_prezzo()` (0 per gratuito); valuta tre
+  lettere; licenza e download con `seo_schema_url($x, true)`: https o un percorso del sito, mai `javascript:`, `data:`, `//`,
+  virgolette. Un campo sbagliato: niente si salva, i dati di prima restano, il messaggio dice quali campi.
+- **Il nodo** (`seo_schema_nodo()`, `case 'programma'` a `:294`): `SoftwareApplication` con `@id` `<pagina>#programma`, `name`,
+  `url`, `applicationCategory`, `description` (la descrizione per Google, o In breve, o l'estratto), `operatingSystem`,
+  `softwareVersion`, `image` (l'immagine in evidenza), `offers` (Offer con `price`, `"0"` se gratuito, `priceCurrency` e, se c'è,
+  `url` di download), `downloadUrl`, `license`, `softwareRequirements`; `author` e `publisher` puntano all'Organizzazione
+  (`seo_jsonld_id('servizio')`) quando il suo nodo è acceso. **Niente `aggregateRating` né `review`**: Google li vuole veri e il
+  riquadro ricco a stelle senza di loro non esce; i dati servono lo stesso a Google e alle AI per capire che cos'è il programma.
+  `seo_schema_applica()` lo indica in `mainEntity` della WebPage come gli altri tipi.
+- **La home** (difetto trovato qui, c'era dalla 2.29.0): la pagina scelta come home esce dal ramo `home` di `sito/index.php`
+  (`:300`) e di `seo_jsonld_di()`, che non chiamavano `seo_schema_applica()`: i dati in più della sua scheda si perdevano. Ora li
+  porta, e senza dati scelti i nodi restano identici.
+- **Il riquadro** (`seo_schema_form_html()`, `:380`): nome e versione, categoria (tendina) e dove funziona, prezzo e valuta,
+  licenza e indirizzo per scaricarlo, cosa serve; lo mostra `admin/assets/seo-schema.js` senza modifiche (attributo
+  `data-schema-campi`). Senza il tipo scelto la pagina esce identica al byte.
+
+### 48.3 La parola chiave delle pagine e i campi SEO delle pagine dei pacchetti
+
+- **Parola chiave delle pagine**: colonna `keyword_target` di `pages` (`includes/sito.php:64`, aggiunta alle tabelle vecchie da
+  `sito_schema_aggiorna()` al primo giro dopo l'aggiornamento). Campo "Parola chiave principale" nella scheda di una pagina
+  (`admin/contenuto.php:205`), salvato da `contenuti_salva()` solo se il modulo lo manda e la colonna c'è
+  (`includes/contenuti.php:332`: il salvataggio rapido della Tabella SEO non lo tocca), letto in `sito_contenuti()`
+  (`includes/sito-dati.php:135`) e quindi dal controllo SEO, dalla Tabella SEO e dai link suggeriti. Nel JSON-LD delle pagine non
+  esce (solo gli articoli hanno `keywords`): l'HTML del sito non cambia.
+- **Pagine dei pacchetti**: `sito_importa_pagina()` (`includes/sito.php:247`) chiama `sito_importa_pagina_seo()` (`:282`), che
+  legge **solo le chiavi presenti**: `tldr` (senza tag, spazi uniti, 2000 caratteri, senza caratteri a 4 byte), `faq` (al massimo
+  50 voci `{domanda, risposta}`, senza tag, 300 e 2000 caratteri, le voci vuote o rotte scartate, salvate come la scheda in JSON),
+  `keyword` (255 caratteri, se la colonna c'è), `seo_schema` (passato da `seo_schema_valida()` come i campi della scheda: con un
+  errore `RuntimeException` "dati per Google in più non validi" e il pacchetto si ferma e rimette il sito com'era; `{"tipo": ""}`
+  toglie i dati). Senza queste chiavi la pagina si importa come prima e i campi che ha restano.
+
+**Trappola del motore nuovo.** `sito_importa_pagina()` sta in `includes/sito.php`, caricato prima che il pacchetto scriva i file:
+in un pacchetto unico con codice 2.35.0 e pagine, sul sito 2.34.0 le pagine le importa ancora la funzione vecchia, che salta le
+chiavi nuove senza errore (né In breve, né domande, né parola chiave, né Programma e How-to). Per questo il sito di plumeCMS si
+consegna in due pacchetti (48.4).
+
+### 48.4 La voce "seo" del manifest
+
+`includes/aggiornamenti.php`: `AGG_SEO` (`:58`) dice i gruppi e le chiavi di `seo_config` che un pacchetto può scrivere:
+
+| Gruppo | Chiavi |
+|---|---|
+| `titolo` | `sito` (il nome del sito nei titoli), `sep` |
+| `meta` | `descrizione` (la descrizione generale), `og_immagine` |
+| `org` | `tipo`, `nome`, `nome_sito`, `logo`, `descrizione`, `lingua`, `area` |
+| `persona` | `nome`, `ruolo` (niente immagine, profili, credenziali: dati personali che scrive la persona) |
+| `schema` | `website`, `searchaction`, `organization`, `person`, `faq`, `breadcrumb`, `article` (0 o 1) |
+
+- `agg_seo_valida()` (`:272`, da `agg_leggi_manifest()` `:252`): un gruppo o una chiave fuori elenco, un interruttore che non è 0
+  o 1, un testo che non è testo, un `org.tipo` che non è una parola, un logo o un'immagine social che non è un percorso del sito
+  o un https fermano il pacchetto con il motivo. I testi perdono tag, righe e caratteri a 4 byte, al massimo 500 caratteri; un
+  logo scritto come percorso (`/uploads/...`) prende `SITO_URL` davanti, perché il JSON-LD lo vuole intero.
+- `agg_applica()` (`:807`): dopo le impostazioni del sito e prima di stile e pagine, `seo_salva($gruppo, $valori)` per ogni gruppo,
+  con una riga nel resoconto ("SEO e AEO: titolo (sito), meta (descrizione), ..."). Verifiche, chiavi, statistiche, robots, llms
+  e sedi un pacchetto non li tocca mai.
+- **Il motore vecchio** (fino alla 2.34.0) non conosce la voce: la salta senza errore. `tools/consegna.py` copia ora anche `seo` nel
+  manifest unito (`unisci()`), così il controllo delle voci note la ferma e chiede `--due`; e siccome il motore è cambiato
+  (`motore_cambiato()`), la consegna della 2.35.0 esce già in due pacchetti: `plumecms-2.35.0-1-cms.zip` (il CMS) e
+  `plumecms-2.35.0-2-sito.zip` (il sito, applicato dal motore nuovo). Con `--senza-pagine` anche `seo` resta fuori.
+
+### 48.5 Il sito di plumeCMS (`sito-plumecms/costruisci.py`)
+
+- `IN_BREVE` e `PAROLA_CHIAVE`: il riquadro In breve (40-60 parole) e la parola chiave di ognuna delle otto pagine, nei campi
+  `tldr` e `keyword` del JSON (`seo_pagina()`); la home mostra il suo anche sotto l'apertura (sezione 2: `tieni_apertura` tocca
+  solo la prima).
+- Titoli e descrizioni per Google nuovi (lunghezze controllate da `prova-sito-plumecms.js`: titolo 30-60, descrizione 70-160).
+- Home: `seo_schema` Programma (nome plumeCMS, versione `{versione:plumecms-ultima}`, WebApplication, "Server web con PHP 8.2 e
+  MySQL", prezzo 0 EUR, licenza GPL 3, download `/scarica/plumecms-ultima/`, requisiti). Installazione: How-to con i cinque
+  `PASSI_INSTALLA` e 5 minuti.
+- Domande frequenti: "plumeCMS è gratis?" (la vecchia "Quanto costa?" riscritta), hosting con i requisiti veri, differenza con
+  WordPress, ChatGPT e Claude, Plume CMS, chi c'è dietro; "Leggi anche" verso il confronto.
+- Pagina nuova `plumecms-wordpress` (`confronto()`): tabella onesta, per chi è meglio ciascuno, domande, invito a Scarica e
+  Installazione; nel menu del piede e in una riga di Funzionalità (non un blocco: regola delle dieci caratteristiche).
+- "Leggi anche" (`leggi_anche()`) in fondo a Temi, Documentazione, Scarica; Domande frequenti nel menu principale (sei voci).
+- Manifest: voce `seo` (`IN_BREVE_SITO` come descrizione generale e dell'Organizzazione, logo `marchio.png`, Persona "Danilo
+  Failli" con ruolo "Creatore di plumeCMS", `searchaction` acceso: la ricerca `/?s=` del sito risponde). `note` dice "Richiede
+  plumeCMS 2.35.0".
+
+### 48.6 Prove
+
+`prove/prova-seo-plume.js` (42 controlli, con `prove/seo-plume-cli.php` e `prove/seo-strumenti-cli.php`, su un sito col kit
+Attività, radice e cartella; con `SALVA_HTML` e `CONFRONTA_HTML` il confronto al byte di sette indirizzi prima e dopo
+l'aggiornamento), gruppo 49 di `tools/sicurezza-prova.js` (7: Programma con script, `javascript:`, `data:`, `//`, prezzo non
+numerico, testi enormi; pagine dei pacchetti con `seo_schema`, `tldr`, `keyword` e `faq` cattivi; voce `seo` fuori dalle chiavi
+ammesse; llms.txt senza pagine nascoste, bozze, cestino), controlli 2.35.0 di `prove/prova-sito-plumecms.js`.
 
 ## Appendice A. Dove i documenti vecchi non corrispondono al codice
 

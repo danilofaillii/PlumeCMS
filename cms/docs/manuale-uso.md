@@ -3139,12 +3139,27 @@ Nella scheda di ogni articolo e di ogni pagina (e nelle Impostazioni dell'editor
 
 - **Titolo per Google**: il titolo che esce nei risultati. Vuoto vuol dire uguale al titolo.
 - **Descrizione per Google**: le due righe sotto il titolo nei risultati (fino a 160 caratteri).
-- **Keyword principale**: la parola o la frase con cui vuoi essere trovato ("negozio di vasi a Bologna").
+- **Keyword principale**: la parola o la frase con cui vuoi essere trovato ("negozio di vasi a Bologna"). Dalla 2.35.0
+  c'è anche nelle pagine, con il nome **Parola chiave principale**.
 - **Controllo SEO**: un punteggio da 0 a 100 e l'elenco di cosa sistemare, in parole chiare. Si aggiorna con
   **Ricontrolla**.
 - **In breve**: da 40 a 60 parole che rispondono subito alla domanda principale. Le intelligenze artificiali le
   usano volentieri.
 - **Domande frequenti**: una domanda per blocco, con la risposta sotto. Diventano dati per Google.
+
+### Il file per le intelligenze artificiali (llms.txt)
+
+All'indirizzo `/llms.txt` il sito dice alle intelligenze artificiali cosa contiene, in un testo semplice. Lo compone da solo:
+
+- in testa il nome del sito e la **descrizione generale** (SEO e AEO, scheda Globale SEO; se è vuota, quella di Impostazioni);
+- la sezione **Pagine**, con la home per prima e, accanto a ogni pagina, il suo **In breve** (o la descrizione per Google);
+- gli articoli, le guide, il glossario e il feed, solo se ci sono.
+
+Le pagine nascoste a Google, le bozze e quelle nel cestino non ci sono mai. Se preferisci scriverlo tu, in **SEO e AEO >
+Schema e AEO**, riquadro llms.txt e llms-full.txt, il tuo testo prende il posto di quello calcolato; svuota il riquadro per tornare a quello
+automatico.
+
+- [ ] Apri `/llms.txt` del tuo sito: ci sono le pagine importanti, ognuna con due righe che dicono cosa contiene.
 
 ### Il pannello SEO e AEO
 
@@ -3250,7 +3265,7 @@ indirizzi dei contenuti pubblicati (al massimo cinque; mai l'articolo stesso, le
 pagine già collegate non si ripropongono. Lo stesso riquadro, con Copia il link, sta nella scheda classica, sotto il
 Controllo SEO (premi Ricontrolla dopo aver scritto la keyword).
 
-### Dati per Google in più: prodotto, how-to, video
+### Dati per Google in più: prodotto, how-to, video, programma
 
 **A cosa serve.** Google mostra un risultato più ricco quando sa che una pagina è un prodotto (con prezzo e
 disponibilità), una guida a passi o un video. Nella scheda di ogni articolo e pagina, riquadro **SEO e Google**, la tendina
@@ -3259,7 +3274,7 @@ disponibilità), una guida a passi o un video. Nella scheda di ogni articolo e p
 ![Dati per Google in più: Prodotto](immagini/manuale-uso/23-schema.jpg)
 
 1. Apri la scheda del contenuto (Pagine o Articoli, poi il titolo) e nel riquadro SEO e Google scegli nella tendina
-   **Prodotto**, **How-to** oppure **Video**: compaiono i suoi campi.
+   **Prodotto**, **How-to**, **Video** oppure **Programma**: compaiono i suoi campi.
 2. **Prodotto**: il nome, il prezzo (24,90), la valuta (EUR), la disponibilità (Disponibile, Esaurito, In prenotazione,
    Ultimi pezzi), e se vuoi il codice, la marca e una foto (vuota, usa l'immagine in evidenza). La descrizione è quella per
    Google della pagina.
@@ -3267,18 +3282,23 @@ disponibilità), una guida a passi o un video. Nella scheda di ogni articolo e p
    con il nome e sotto cosa si fa; **Aggiungi un passo** ne mette un altro, **Togli** lo leva (fino a venti).
 4. **Video**: il nome, la descrizione, la **miniatura** (un'immagine, obbligatoria), la data di caricamento, l'indirizzo del
    file video (un video caricato nei Media, oppure un indirizzo https) o quello dell'incorporo, la durata (1:30).
-5. Premi **Aggiorna**. Se un campo non va (un prezzo scritto male, un indirizzo che non comincia con https), il messaggio
+5. **Programma** (dalla 2.35.0, per la pagina che presenta un software da scaricare o da usare): il nome, la versione
+   (2.1.0; chi usa il Download può scrivere `{versione:<nome della serie>}` e la versione si aggiorna da sola), la categoria
+   (Applicazione web, Per il lavoro, Per sviluppatori...), dove funziona ("Windows e macOS"), il prezzo (0 se è gratuito) e
+   la valuta, e se vuoi l'indirizzo della licenza, quello per scaricarlo e cosa serve per usarlo. Le stelle delle recensioni
+   non si scrivono: Google le vuole solo vere.
+6. Premi **Aggiorna**. Se un campo non va (un prezzo scritto male, un indirizzo che non comincia con https), il messaggio
    rosso dice quale: la pagina si salva lo stesso, i dati in più no, finché non lo correggi.
 
 Per vedere cosa riceve Google: **SEO e AEO > Schema e AEO**, Anteprima del JSON-LD di un indirizzo: ci trovi il nodo
-Product, HowTo o VideoObject, e la pagina che lo indica come suo contenuto principale.
+Product, HowTo, VideoObject o SoftwareApplication, e la pagina che lo indica come suo contenuto principale.
 
 Le schede dei prodotti della **Vetrina** (capitolo 35) dicono già a Google prezzo, disponibilità e codice: lì non devi fare
 niente.
 
 **Checklist dei dati in più**
 
-- [ ] Ogni pagina di un prodotto, di una guida o di un video ha il suo tipo scelto nella tendina.
+- [ ] Ogni pagina di un prodotto, di una guida, di un video o di un programma ha il suo tipo scelto nella tendina.
 - [ ] Il video ha la miniatura e la data (senza, Google non lo prende).
 - [ ] L'anteprima del JSON-LD mostra il nodo senza avvisi.
 

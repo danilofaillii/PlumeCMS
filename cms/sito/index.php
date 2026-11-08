@@ -298,6 +298,8 @@ try {
             case 'home':
                 $GLOBALS['sito_percorso'] = '/'; $GLOBALS['sito_genere'] = 'home';
                 $nodi = [sito_jsonld_pagina('/', $v['c']['titolo'], (string)cms_impostazione('home_descrizione', ''), sito_jsonld_about())];
+                // 2.35.0: anche la home porta i dati per Google in più della sua scheda (fino alla 2.34.0 li perdeva); senza, identica.
+                if (function_exists('seo_schema_applica')) $nodi = seo_schema_applica($nodi, $v['c']);
                 if (!empty($v['c']['editor'])) {
                     $c = $v['c'];
                     [$corpo, $testa] = vista_pagina_editor($c);

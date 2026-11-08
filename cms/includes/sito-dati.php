@@ -132,7 +132,7 @@ function sito_contenuti(): array {
             'immagine' => sito_immagine((string)$p['immagine_url']),
             'seo' => [
                 'titolo' => (string)$p['seo_title'], 'descrizione' => (string)($p['seo_description'] ?: $p['meta_description']),
-                'keyword' => '', 'canonical' => '', 'robots' => $p['robots'] === 'noindex' ? 'noindex' : 'index', 'immagine_social' => '',
+                'keyword' => (string)($p['keyword_target'] ?? ''), 'canonical' => '', 'robots' => $p['robots'] === 'noindex' ? 'noindex' : 'index', 'immagine_social' => '', // 2.35.0: la parola chiave delle pagine
             ],
             'tldr' => sito_4byte_veri((string)$p['tldr']), 'faq' => sito_faq_da_json($p['faq']), 'pillar' => false,
             'servizio' => is_array($servizio) ? $servizio : [], 'rediretto' => isset($daRedirect[$percorso]),

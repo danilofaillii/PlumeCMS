@@ -115,7 +115,9 @@ def unisci(cms, sito, senza_pagine):
                 + ('' if senza_pagine else f', {len(sito.get("pagine", []))} pagine') + '.',
     }
     if not senza_pagine:
-        for k in ('impostazioni', 'editor', 'editor_ambiti', 'pagine', 'azioni'):
+        # 2.35.0: anche "seo" (la conosce solo il motore dalla 2.35.0): copiata qui, il controllo delle voci sotto la ferma e
+        # chiede due pacchetti, invece di perderla in silenzio.
+        for k in ('impostazioni', 'editor', 'editor_ambiti', 'pagine', 'azioni', 'seo'):
             if sito.get(k):
                 m[k] = sito[k]
     # due voci con la stessa destinazione: vince l'ultima, ma è quasi sempre un errore di costruzione
@@ -181,7 +183,7 @@ def main():
             s = os.path.join(lavoro, 'sito')
             m2 = dict(m_sito)
             if senza_pagine:
-                for k in ('impostazioni', 'editor', 'editor_ambiti', 'pagine', 'azioni'):
+                for k in ('impostazioni', 'editor', 'editor_ambiti', 'pagine', 'azioni', 'seo'):
                     m2.pop(k, None)
             pacchetto(s, m2, p2)
             pacchetti = [p1, p2]

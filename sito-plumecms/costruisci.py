@@ -16,7 +16,7 @@ Di solito non si carica da solo: tools/consegna.py lo unisce all'aggiornamento d
 
 Il pacchetto, applicato a un plumeCMS: nome e descrizioni del sito, Stile del sito, header e footer (predefiniti),
 menu Principale e Piede, le pagine home, funzionalita, temi, documentazione, installazione, scarica,
-domande-frequenti; i file da scaricare in uploads/scaricabili/ (si aprono da /scarica/<nome>/) e le immagini
+domande-frequenti, plumecms-wordpress (2.35.0); SEO e AEO (voce "seo": nome nei titoli, descrizione, Organizzazione, Persona); i file da scaricare in uploads/scaricabili/ (si aprono da /scarica/<nome>/) e le immagini
 in uploads/plumecms/. Le altre pagine del sito restano dove sono, fuori dal menu.
 """
 import hashlib
@@ -111,6 +111,52 @@ def tinta():
     return {'sfondo': 'colore', 'colore_sfondo': 'globale:sfondo-2'}
 
 
+# ------------------------------------------------------------------ SEO e AEO delle pagine (2.35.0, audit di plumecms.it)
+# "In breve" (40-60 parole, la frase che definisce: le AI citano le definizioni) e la parola chiave di ogni pagina. Vanno nei
+# campi della pagina (tldr, keyword: sito_importa_pagina dalla 2.35.0); la home mostra il suo anche sotto l'apertura.
+IN_BREVE = {
+    'home': 'plumeCMS è un CMS italiano gratuito e open source (licenza GPL 3) scritto in PHP e MySQL. Ha dentro editor visuale, temi, '
+            'newsletter con automazioni, SEO e AEO, dieci addon e il collegamento con le AI come Claude e ChatGPT. Si installa su un '
+            'normale hosting in cinque minuti, dal browser.',
+    'funzionalita': 'plumeCMS ha già dentro editor visuale con 112 widget, temi, newsletter con automazioni, form, SEO e AEO, e dieci '
+                    'addon da accendere solo se servono, fra cui prenotazioni, negozio e statistiche senza cookie. La tua AI si collega '
+                    'al sito, lavora in bozza e propone: approvi tu. Niente plugin da installare né da tenere aggiornati.',
+    'temi': 'plumeCMS ha undici temi pronti: Cosmo, Aria, Bottega, le quattro stagioni e quattro tinte piene. Un tema cambia colori, '
+            'caratteri, pulsanti, header e footer, mentre pagine, articoli, menu e immagini restano dove sono. Prima lo guardi in '
+            'anteprima, poi lo attivi con un clic. Il manuale dei temi spiega come costruirne uno tuo.',
+    'documentazione': 'plumeCMS ha due manuali in PDF, gratuiti. Il manuale d\'uso spiega ogni cosa del pannello con esempi veri, '
+                      'schermate e checklist, e ha un capitolo per ognuno dei dieci addon. Il manuale dei temi spiega come costruire '
+                      'un tema da zero, con il tema d\'esempio Lavagna. Tutti e due sono anche dentro lo zip, nella cartella docs.',
+    'installazione': 'plumeCMS si installa in circa cinque minuti su un normale hosting con PHP 8.2 e MySQL 8 o MariaDB 10.6. Carichi '
+                     'lo zip nella cartella del sito, apri l\'indirizzo nel browser e l\'installatore ti guida in cinque passi: '
+                     'requisiti, database, sito e amministratore, tipo di sito, fine. Funziona anche in una cartella del dominio.',
+    'scarica': 'plumeCMS si scarica gratis: è software libero con licenza GNU GPL 3, da usare per tutti i siti che vuoi. Lo zip completo '
+               'serve per un sito nuovo; il pacchetto di aggiornamento è per chi ha già plumeCMS e si carica dal pannello, con la '
+               'copia di sicurezza prima. Con lo zip ci sono anche i due manuali in PDF.',
+    'domande-frequenti': 'Le risposte alle domande più frequenti su plumeCMS: quanto costa (niente, licenza GNU GPL 3), che hosting '
+                         'serve (PHP 8.2 e MySQL), come si collega la tua AI, come si aggiorna senza rischi, cosa succede ai contenuti '
+                         'quando cambi tema e che differenza c\'è con WordPress. Risposte brevi, con i requisiti veri.',
+    'plumecms-wordpress': 'plumeCMS e WordPress sono due CMS gratuiti in PHP e MySQL. plumeCMS ha già dentro editor visuale, newsletter '
+                          'con automazioni, form, SEO e AEO e il collegamento con la tua AI, senza plugin. WordPress ha in più un '
+                          'ecosistema enorme di temi e plugin, una comunità mondiale e tantissimi professionisti che lo conoscono.',
+}
+# La descrizione generale del sito e dell'Organizzazione (SEO e AEO), la stessa della home.
+IN_BREVE_SITO = 'plumeCMS è un CMS italiano gratuito e open source in PHP e MySQL: editor visuale, temi, SEO, newsletter e AI collegata già dentro. Online in 5 minuti.'
+PAROLA_CHIAVE = {'home': 'CMS italiano', 'funzionalita': 'funzionalità CMS', 'temi': 'temi CMS', 'documentazione': 'manuale CMS',
+                 'installazione': 'installare un CMS', 'scarica': 'CMS gratuito', 'domande-frequenti': 'plumeCMS',
+                 'plumecms-wordpress': 'alternativa a WordPress'}
+
+
+def seo_pagina(slug, **campi):
+    """I campi SEO della pagina nel JSON del pacchetto: In breve, parola chiave e, se c'è, il resto (seo_schema...)."""
+    return dict(tldr=IN_BREVE[slug], keyword=PAROLA_CHIAVE[slug], **campi)
+
+
+def leggi_anche(*voci):
+    """In fondo a una pagina: due o tre link utili, con il widget Pulsanti a filo (2.35.0, "Leggi anche" dell'audit)."""
+    return [titolo('Leggi anche', livello='h3', centro=True), pulsanti(*[(t, l, 'filo') for t, l in voci], centro=True)]
+
+
 # ------------------------------------------------------------------ le pagine
 def home():
     p = Pagina('home')
@@ -125,6 +171,8 @@ def home():
                   # con lo zoom lento che la fa respirare (fermo per chi chiede meno movimento, sito.css).
                   immagine=U + 'copertina.webp', onda_mostra=False, etichetta_onda='', barre=[],
                   foto_trattamento='naturale', foto_effetto='zoom')]], **spazi(64, 72))
+    # 2.35.0: la frase che definisce, subito sotto l'apertura (l'apertura resta quella del sito: tieni_apertura tocca solo la prima sezione).
+    p.sezione([[ricco(f'<p><strong>In breve.</strong> {IN_BREVE["home"]}</p>')]], larghezza='stretta', **spazi(40, 8))
     # Il mondo di prima: il problema in cui ci si riconosce.
     p.sezione([(45, [titolo('Volevi un sito. *Ti sei ritrovato a fare il meccanico.*', 'Ti suona familiare?',
                             'Si parte con un\'idea chiara e si finisce la domenica pomeriggio a capire perché un aggiornamento '
@@ -175,8 +223,13 @@ def home():
     # 2.18.0, regola di Danilo: "ogni volta che aggiorniamo la versione lascia la hero dell'home page così com'è". Con
     # tieni_apertura il pannello (dalla 2.18.0) tiene la prima sezione della home del sito, se ha un'Apertura e la home viene da un pacchetto.
     return dict(slug='home', titolo='plumeCMS', tieni_apertura=True, struttura=p.albero(),
-                seo_titolo='plumeCMS: il CMS leggero con l\'editor visuale',
-                seo_descrizione='plumeCMS è un CMS in PHP e MySQL con editor visuale, temi, SEO e newsletter già dentro. Si installa dal browser in cinque passi.')
+                seo_titolo='plumeCMS, il CMS italiano leggero con editor visuale',
+                seo_descrizione='plumeCMS è un CMS italiano gratuito e open source in PHP e MySQL: editor visuale, temi, SEO, newsletter e AI collegata già dentro. Online in 5 minuti.',
+                # 2.35.0: i dati per Google "Programma" (SoftwareApplication). La versione la scrive il sito dall'ultimo zip del Download.
+                **seo_pagina('home', seo_schema={'tipo': 'programma', 'programma': {
+                    'nome': 'plumeCMS', 'versione': VU, 'categoria': 'WebApplication', 'sistema': 'Server web con PHP 8.2 e MySQL',
+                    'prezzo': '0', 'valuta': 'EUR', 'licenza': 'https://www.gnu.org/licenses/gpl-3.0.html', 'download': f'/scarica/{SERIE}/',
+                    'requisiti': 'PHP 8.2 o più nuovo, MySQL 8 oppure MariaDB 10.6, limite di caricamento di almeno 8 MB'}}))
 
 
 def funzionalita():
@@ -270,10 +323,14 @@ def funzionalita():
         p.sezione(colonne, allineamento_verticale='center', ancora=ancora, **(tinta() if i % 2 else {}), **spazi(64, 64))
     p.sezione([[w('invito_libero', icona='download', titolo='Provalo sul tuo server.', livello='h2',
                   testo='Il modo migliore per capire un CMS è usarlo. Ci vogliono cinque minuti.',
-                  pulsante_testo='Scarica plumeCMS', link={'url': '/scarica/', 'nuova': False})]], larghezza='stretta', **spazi(72, 80))
+                  pulsante_testo='Scarica plumeCMS', link={'url': '/scarica/', 'nuova': False}),
+                # 2.35.0: una riga, non un blocco (regola delle dieci caratteristiche), verso il confronto.
+                ricco('<p style="text-align:center">Vieni da WordPress? Leggi <a href="/plumecms-wordpress/">plumeCMS e WordPress a confronto</a>: cosa c\'è già dentro e cosa ha in più WordPress.</p>')]],
+              larghezza='stretta', **spazi(72, 80))
     return dict(slug='funzionalita', titolo='Funzionalità', struttura=p.albero(),
-                seo_titolo='Funzionalità di plumeCMS: la tua AI collegata e le dieci cose che sa fare',
-                seo_descrizione='Cosa c\'è dentro plumeCMS: la tua AI collegata al sito, editor visuale con 112 widget, gli addon (prenotazioni, eventi, negozio, statistiche, area riservata, corsi), social ogni mattina, stile globale, header e footer, versioni, SEO e AEO, newsletter, sicurezza, aggiornamenti dal pannello.')
+                seo_titolo='Funzionalità di plumeCMS: editor, newsletter, SEO e AI',
+                seo_descrizione='Editor visuale con 112 widget, newsletter e automazioni, SEO e AEO, dieci addon e la tua AI collegata: tutto quello che plumeCMS fa senza plugin.',
+                **seo_pagina('funzionalita'))
 
 
 def temi():
@@ -309,9 +366,12 @@ def temi():
                      pulsanti(('Manuale dei temi (PDF)', '/scarica/manuale-temi/', 'viola'), ('Tema Lavagna (zip)', '/scarica/tema-lavagna/', 'filo'))]),
                (50, [immagine('temi.webp', 'La pagina Temi del pannello di plumeCMS')])],
               allineamento_verticale='center', **tinta(), **spazi(72, 72))
+    p.sezione([leggi_anche(('Cosa sa fare plumeCMS', '/funzionalita/'), ('Installalo in 5 minuti', '/installazione/'), ('Scarica plumeCMS', '/scarica/'))],
+              larghezza='stretta', **spazi(56, 80))
     return dict(slug='temi', titolo='Temi', struttura=p.albero(),
                 seo_titolo='Temi di plumeCMS: undici pronti e il tuo',
-                seo_descrizione='I temi di plumeCMS cambiano l\'aspetto del sito senza toccare i contenuti. Undici temi pronti (Cosmo, Aria, Bottega, le quattro stagioni, giallo, rosso, verde e blu) e un manuale per costruire il tuo.')
+                seo_descrizione='Undici temi pronti per plumeCMS: cambi aspetto al sito con un clic e i contenuti restano dove sono. E il manuale per costruirne uno tuo.',
+                **seo_pagina('temi'))
 
 
 def documentazione(pagine_pdf):
@@ -338,9 +398,11 @@ def documentazione(pagine_pdf):
                                               'Lavagna, il tema d\'esempio completo', 'Errori comuni e come uscirne']])])],
               **tinta(), **spazi(64, 64))
     p.sezione([[ricco('I due manuali sono anche dentro lo zip di plumeCMS, nella cartella <code>docs/</code>.')]],
-              larghezza='stretta', **spazi(48, 80))
-    return dict(slug='documentazione', titolo='Documentazione', struttura=p.albero(),
-                seo_titolo='Documentazione di plumeCMS: manuale d\'uso e manuale dei temi in PDF',
+              larghezza='stretta', **spazi(48, 32))
+    p.sezione([leggi_anche(('Installalo in 5 minuti', '/installazione/'), ('Domande frequenti', '/domande-frequenti/'), ('Scarica plumeCMS', '/scarica/'))],
+              larghezza='stretta', **spazi(32, 80))
+    return dict(slug='documentazione', titolo='Documentazione', struttura=p.albero(), **seo_pagina('documentazione'),
+                seo_titolo='Manuali di plumeCMS: guida d\'uso e temi in PDF',
                 seo_descrizione='Scarica in PDF il manuale d\'uso di plumeCMS (con le schermate) e il manuale per costruire i temi.')
 
 
@@ -413,7 +475,10 @@ def installazione():
                 pulsanti(('Manuale d\'uso (PDF)', '/scarica/manuale-uso/', 'filo'), ('Scarica plumeCMS', '/scarica/', 'viola'))]],
               larghezza='stretta', **spazi(32, 80))
     return dict(slug='installazione', titolo='Installazione', struttura=p.albero(),
-                seo_titolo='Installa plumeCMS in 5 minuti: i cinque passi dell\'installatore',
+                **seo_pagina('installazione', seo_schema={'tipo': 'howto', 'howto': {
+                    'nome': 'Come installare plumeCMS', 'tempo': '5',
+                    'passi': [{'nome': n, 'testo': lungo} for n, _, lungo in PASSI_INSTALLA]}}),
+                seo_titolo='Installare plumeCMS in 5 minuti: requisiti e passi',
                 seo_descrizione='Cosa serve, le schermate vere dei cinque passi dell\'installatore, l\'installazione in una cartella e i compiti pianificati di plumeCMS.')
 
 
@@ -448,9 +513,11 @@ def scarica(note):
     p.sezione([[titolo('Un consiglio, prima di aggiornare', livello='h3'),
                 ricco('Il pacchetto di aggiornamento è fatto per i siti nati con lo zip di plumeCMS. Se il tuo sito ha moduli suoi, '
                       'cioè pezzi di codice scritti apposta per lui, l\'aggiornamento va preparato insieme a quei moduli.')]],
-              larghezza='stretta', **spazi(56, 80))
-    return dict(slug='scarica', titolo='Scarica', struttura=p.albero(),
-                seo_titolo=f'Scarica plumeCMS {VU}',
+              larghezza='stretta', **spazi(56, 32))
+    p.sezione([leggi_anche(('Come si installa', '/installazione/'), ('Cosa sa fare', '/funzionalita/'), ('Domande frequenti', '/domande-frequenti/'))],
+              larghezza='stretta', **spazi(32, 80))
+    return dict(slug='scarica', titolo='Scarica', struttura=p.albero(), **seo_pagina('scarica'),
+                seo_titolo='Scarica plumeCMS: CMS gratuito e open source',
                 seo_descrizione=f'Scarica plumeCMS {VU}: lo zip completo per un sito nuovo o il pacchetto di aggiornamento per chi lo usa già.')
 
 
@@ -459,10 +526,15 @@ def faq():
     p.sezione([[titolo('Domande frequenti', 'Prima di partire', 'Le domande che arrivano più spesso, con risposte brevi.', livello='h1', centro=True)]],
               larghezza='stretta', **spazi(72, 24))
     voci = [
-        ('Quanto costa? A quali condizioni lo uso?', 'Niente: plumeCMS è software libero, con licenza GNU GPL versione 3. Lo usi per tutti i siti che vuoi, tuoi o dei tuoi clienti, lo modifichi e lo ridistribuisci. Una sola regola: chi lo ridistribuisce, anche modificato, lo fa con la stessa licenza. I tuoi siti, i contenuti e i temi che disegni restano tuoi.'),
+        # 2.35.0 (audit): la domanda come la scrive chi cerca, "plumeCMS è gratis?"; e le nuove subito sotto.
+        ('plumeCMS è gratis? A quali condizioni lo uso?', 'Sì: plumeCMS è software libero, con licenza GNU GPL versione 3, e paghi solo il dominio e l\'hosting. Lo usi per tutti i siti che vuoi, tuoi o dei tuoi clienti, lo modifichi e lo ridistribuisci. Una sola regola: chi lo ridistribuisce, anche modificato, lo fa con la stessa licenza. I tuoi siti, i contenuti e i temi che disegni restano tuoi.'),
         ('Devo saper programmare?', 'No. Installi dal browser, costruisci le pagine trascinando i widget, cambi colori e caratteri da una pagina sola. Il codice serve solo se vuoi costruire un tema o un modulo tuo.'),
         ('Devo partire da una pagina bianca?', 'No. All\'installazione scegli che sito vuoi fare (personale, attività, blog, portfolio) e plumeCMS parte con la home, le pagine e il menu già fatti. Poi, nell\'editor, la linguetta Sezioni ti dà trenta sezioni pronte da aggiungere con un clic.'),
-        ('Che hosting serve?', 'Un hosting con PHP 8.2 o più nuovo e MySQL 8 (o MariaDB 10.6). Va bene un normale hosting condiviso con cPanel: non servono server dedicati.'),
+        ('Che hosting serve?', 'Un hosting con PHP 8.2 o più nuovo (con PDO MySQL, mbstring, openssl e json) e MySQL 8 oppure MariaDB 10.6. Il limite di caricamento dei file deve essere di almeno 8 MB, per caricare gli aggiornamenti. Va bene un normale hosting condiviso con cPanel: non servono server dedicati. Il primo passo dell\'installatore controlla tutto e ti dice cosa manca.'),
+        ('Che differenza c\'è tra plumeCMS e WordPress?', 'Sono tutti e due gratuiti, in PHP e MySQL. plumeCMS ha già dentro, senza plugin, l\'editor visuale a trascinamento, newsletter con automazioni, form, SEO e AEO, statistiche senza cookie e il collegamento con la tua AI. WordPress ha in più un ecosistema enorme di temi e plugin, una comunità in tutto il mondo e tantissimi professionisti che lo conoscono. Il confronto completo è nella pagina plumeCMS e WordPress a confronto.'),
+        ('Posso collegare ChatGPT o Claude al mio sito?', 'Sì, con l\'addon AI collegate. Lo accendi in Impostazioni > Addon, dai alla tua AI l\'indirizzo del sito e premi Consenti nel pannello. L\'AI legge il sito, fa l\'audit SEO e scrive pagine e articoli, ma sempre in bozza; le modifiche a quello che è già online sono proposte. Pubblichi e approvi solo tu.'),
+        ('plumeCMS c\'entra con Plume CMS?', 'No. Plume CMS è un progetto diverso, più vecchio e fermo da anni. plumeCMS, scritto tutto attaccato, è nato nel 2026 in Italia ed è un progetto nuovo, con il suo codice.'),
+        ('Chi c\'è dietro plumeCMS?', 'Danilo Failli, in Italia: ha ideato plumeCMS e ne segue lo sviluppo. Le versioni nuove escono su questo sito, nella pagina Scarica, con i due manuali aggiornati.'),
         ('Posso installarlo in una cartella del mio dominio?', 'Sì. All\'installazione scrivi l\'indirizzo con la cartella, per esempio https://tuosito.it/nuovo, e plumeCMS sistema da solo link e percorsi.'),
         ('Se cambio tema, perdo le pagine?', 'No. Il tema cambia l\'aspetto: colori, caratteri, header e footer. Pagine, articoli, menu e immagini restano come sono. E lo stile di prima resta nelle Versioni.'),
         ('Se un aggiornamento va storto?', 'Prima di applicarlo il pannello fa una copia del database e dei file che cambia. Se un passo fallisce, rimette tutto com\'era da solo.'),
@@ -486,13 +558,69 @@ def faq():
         ('Posso costruirmi un tema mio?', 'Sì: c\'è un manuale apposta, con un tema d\'esempio completo da smontare e rifare tuo.'),
     ]
     p.sezione([[w('faq', voci=[{'domanda': d, 'risposta': r} for d, r in voci], prima_aperta=True)]], larghezza='stretta', **spazi(24, 56))
+    p.sezione([leggi_anche(('plumeCMS e WordPress a confronto', '/plumecms-wordpress/'), ('I manuali', '/documentazione/'), ('Scarica plumeCMS', '/scarica/'))],
+              larghezza='stretta', **spazi(8, 48))
     p.sezione([[w('invito_libero', icona='domanda', titolo='Non trovi la risposta?', livello='h2',
                   testo='Nel manuale d\'uso ogni capitolo finisce con "Se qualcosa non va", e in fondo ci sono i problemi più frequenti.',
                   pulsante_testo='Scarica il manuale d\'uso', link={'url': '/scarica/manuale-uso/', 'nuova': False})]],
               larghezza='stretta', **tinta(), **spazi(64, 80))
     return dict(slug='domande-frequenti', titolo='Domande frequenti', struttura=p.albero(),
-                seo_titolo='Domande frequenti su plumeCMS',
-                seo_descrizione='Hosting, installazione, temi, aggiornamenti, versioni, sicurezza: le risposte alle domande più frequenti su plumeCMS.')
+                seo_titolo='Domande frequenti su plumeCMS: hosting, AI, sicurezza',
+                seo_descrizione='plumeCMS è gratis? Funziona con ChatGPT e Claude? Che hosting serve? Le risposte alle domande più frequenti, con i requisiti veri.',
+                **seo_pagina('domande-frequenti'))
+
+
+def confronto():
+    """2.35.0: "plumeCMS e WordPress a confronto" (audit SEO di plumecms.it, parola chiave "alternativa a WordPress"). Onesta:
+    cosa c'è già dentro plumeCMS e cosa ha in più WordPress, senza affermazioni che non si possono verificare."""
+    p = Pagina('plumecms-wordpress')
+    p.sezione([[titolo('plumeCMS e WordPress, *a confronto.*', 'Confronto',
+                       'Due CMS gratuiti, in PHP e MySQL, che si installano su un normale hosting. Cambia quello che trovi dentro '
+                       'appena installato, e quello che c\'è intorno.', livello='h1', centro=True)]], larghezza='stretta', **spazi(72, 24))
+    p.sezione([[ricco(f'<p><strong>In breve.</strong> {IN_BREVE["plumecms-wordpress"]}</p>')]], larghezza='stretta', **spazi(16, 32))
+    righe = [{'celle': 'Cosa | plumeCMS | WordPress'},
+             {'celle': 'Licenza e prezzo | GNU GPL 3, gratuito | GNU GPL 2 o successiva, gratuito'},
+             {'celle': 'Editor visuale | Già dentro: sezioni, colonne e 112 widget a trascinamento | Già dentro l\'editor a blocchi; i costruttori a trascinamento sono plugin'},
+             {'celle': 'Newsletter e automazioni | Già dentro, con i contatti nel tuo database | Con un plugin o un servizio esterno'},
+             {'celle': 'Form e consenso | Già dentro | Con un plugin'},
+             {'celle': 'SEO e AEO | Già dentro: sitemap, dati strutturati, llms.txt, avvisi ai motori | Sitemap di base già dentro; il resto con un plugin'},
+             {'celle': 'Statistiche | Addon senza cookie | Con un plugin o un servizio esterno'},
+             {'celle': 'La tua AI collegata | Addon AI collegate: scrive in bozza e propone, approvi tu | Con un adattatore da installare e configurare'},
+             {'celle': 'Aggiornamenti | Dal pannello, con la copia di sicurezza prima e il ripristino se qualcosa va storto | Dal pannello; sistema, temi e plugin si aggiornano ognuno per conto suo'},
+             {'celle': 'Temi ed estensioni | 11 temi pronti e 10 addon | Migliaia di temi e decine di migliaia di plugin'},
+             {'celle': 'Comunità | Un progetto nuovo, nato in Italia nel 2026 | Una comunità in tutto il mondo e tantissimi professionisti'},
+             {'celle': 'Lingua | Pannello e manuali in italiano | Tradotto in molte lingue, italiano compreso'}]
+    p.sezione([[titolo('Cosa trovi, appena installato', livello='h2', centro=True), w('tabella', intestazione=True, righe=righe)]],
+              **tinta(), **spazi(64, 64))
+    p.sezione([[titolo('Scegli plumeCMS se', livello='h3'),
+                w('elenco_icone', voci=[{'testo': t, 'icona': 'spunta', 'link': ''} for t in [
+                    'vuoi newsletter, form, SEO e statistiche nello stesso pannello, senza plugin da scegliere e aggiornare',
+                    'il sito è tuo o di una piccola attività e preferisci un pannello in italiano',
+                    'vuoi che la tua AI lavori sul sito senza pubblicare niente da sola',
+                    'ti basta un normale hosting condiviso']])],
+               [titolo('Scegli WordPress se', livello='h3'),
+                w('elenco_icone', voci=[{'testo': t, 'icona': 'spunta', 'link': ''} for t in [
+                    'ti serve una funzione molto particolare che esiste già come plugin',
+                    'vuoi scegliere fra migliaia di temi',
+                    'lavori con un professionista o un\'agenzia che usa già WordPress',
+                    'conti su una comunità grande e su tante guide in tutte le lingue']])]], **spazi(64, 48))
+    domande = [
+        ('Posso spostare un sito da WordPress a plumeCMS?', 'Non c\'è un\'importazione automatica. Pagine e articoli si ricostruiscono con l\'editor visuale; il kit di partenza dell\'installatore ti dà già home, pagine e menu da riempire.'),
+        ('Con plumeCMS servono plugin?', 'No. Quello che di solito chiede un plugin è già dentro, e le funzioni in più (prenotazioni, eventi, negozio, statistiche, area riservata, corsi, AI collegate) sono addon che accendi in Impostazioni > Addon.'),
+        ('Posso usare un tema di WordPress?', 'No: i temi di plumeCMS sono fatti in un altro modo. Ci sono undici temi pronti e il manuale dei temi spiega come costruirne uno tuo.'),
+        ('Quanto costa passare a plumeCMS?', 'plumeCMS è gratuito, con licenza GNU GPL 3. Servono solo un dominio e un hosting con PHP 8.2 e MySQL, come per WordPress.')]
+    p.sezione([[titolo('Le domande sul confronto', livello='h2', centro=True),
+                w('faq', voci=[{'domanda': d, 'risposta': r} for d, r in domande], prima_aperta=True)]],
+              larghezza='stretta', **tinta(), **spazi(64, 64))
+    p.sezione([[w('invito_libero', icona='razzo', titolo='Provalo: ci vogliono cinque minuti.', livello='h2',
+                  testo='Il modo migliore per scegliere un CMS è usarlo. Scarica plumeCMS e installalo sul tuo hosting, anche in una cartella di prova.',
+                  pulsante_testo='Scarica plumeCMS', link={'url': '/scarica/', 'nuova': False}),
+                pulsanti(('Come si installa', '/installazione/', 'filo'), ('Domande frequenti', '/domande-frequenti/', 'filo'), centro=True)]],
+              larghezza='stretta', **spazi(72, 80))
+    return dict(slug='plumecms-wordpress', titolo='plumeCMS e WordPress a confronto', struttura=p.albero(),
+                seo_titolo='plumeCMS e WordPress a confronto: cosa cambia',
+                seo_descrizione='plumeCMS o WordPress? Cosa trovi già dentro plumeCMS senza plugin, cosa ha in più WordPress e per chi è meglio ciascuno. Un confronto onesto.',
+                **seo_pagina('plumecms-wordpress'))
 
 
 # ------------------------------------------------------------------ stile, header, footer, menu
@@ -555,9 +683,10 @@ def editor_json():
             spazio_sopra={'d': 0, 'm': 0}, spazio_sotto={'d': 32, 'm': 32})]}
     voce = lambda i, e, slug: {'id': i, 'etichetta': e, 'tipo': 'pagina', 'rif': slug, 'url': '', 'nuova': False, 'classi': '', 'figli': []}
     principale = [voce('plm01', 'Home', 'home'), voce('plm02', 'Funzionalità', 'funzionalita'), voce('plm03', 'Temi', 'temi'),
-                  voce('plm04', 'Documentazione', 'documentazione'), voce('plm05', 'Installazione', 'installazione')]
+                  voce('plm04', 'Documentazione', 'documentazione'), voce('plm05', 'Installazione', 'installazione'),
+                  voce('plm06', 'Domande frequenti', 'domande-frequenti')]  # 2.35.0: anche nel menu principale (prima solo nel piede)
     piede = [voce('plp01', 'Funzionalità', 'funzionalita'), voce('plp02', 'Temi', 'temi'), voce('plp03', 'Installazione', 'installazione'),
-             voce('plp04', 'Domande frequenti', 'domande-frequenti'), voce('plp05', 'Scarica', 'scarica')]
+             voce('plp04', 'Domande frequenti', 'domande-frequenti'), voce('plp06', 'plumeCMS e WordPress', 'plumecms-wordpress'), voce('plp05', 'Scarica', 'scarica')]
     link = lambda i, e, u: {'id': i, 'etichetta': e, 'tipo': 'link', 'rif': '', 'url': u, 'nuova': False, 'classi': '', 'figli': []}
     manuali = [link('plq00', 'Manuale d\'uso (PDF)', '/scarica/manuale-uso/'), link('plq02', 'Manuale dei temi (PDF)', '/scarica/manuale-temi/'),
                link('plq03', f'plumeCMS {VU} (zip)', f'/scarica/{SERIE}/'), link('plq04', 'Tema Lavagna (zip)', '/scarica/tema-lavagna/')]
@@ -618,6 +747,7 @@ def zip_lavagna(dest):
 # Regola di Danilo (1 novembre 2026): solo i punti salienti, una riga per versione, mai nomi di aziende o servizi di terzi.
 # Le novità per chi scarica: brevi, scritte qui (il CHANGELOG è per chi sviluppa). Da aggiornare a ogni versione.
 NOVITA = [
+    ('2.35.0', 'Più chiaro per i motori di ricerca e le AI', ['Il file per le AI elenca anche le pagine e salta le parti vuote; nei dati per i motori di ricerca una pagina può presentare un programma, con versione, prezzo e licenza; il sito di plumeCMS ha riassunti, domande nuove e una pagina di confronto.']),
     ('2.34.0', 'Articoli nuovi con il tuo stile', ['La tua AI impara come scrivi dagli articoli già pubblicati e ti propone idee sugli argomenti che mancano: tu approvi, le metti in un piano per mese, e lei scrive in bozza solo quelle, con il tuo stile.']),
     ('2.33.0', 'Menu e articoli rivisti dall\'AI', ['La tua AI controlla tutti i menu e gli articoli già online: propone il menu sistemato, affiancato a quello di oggi, e le modifiche SEO di ogni articolo raggruppate. Approvi tutto, una per una o niente.']),
     ('2.32.0', 'AI collegate', ['Collega la tua AI al sito con un indirizzo e il tuo permesso: legge le pagine, fa l\'audit SEO, scrive bozze complete con i widget e trova foto con licenza libera. Non pubblica mai: le bozze le pubblichi tu, le modifiche a quello che è già online sono proposte da approvare.']),
@@ -738,7 +868,7 @@ def main():
 
     # --senza-home: la home non va nel pacchetto. Serve finché il sito che lo riceve è sotto la 2.18.0: lì il pacchetto lo applica il
     # motore vecchio, che non conosce tieni_apertura e rimpiazzerebbe anche la hero.
-    pagine = ([] if '--senza-home' in sys.argv else [home()]) + [funzionalita(), temi(), documentazione({k: pagine_pdf(v) for k, v in pdf.items()}), installazione(), scarica(note_versioni()), faq()]
+    pagine = ([] if '--senza-home' in sys.argv else [home()]) + [funzionalita(), temi(), documentazione({k: pagine_pdf(v) for k, v in pdf.items()}), installazione(), scarica(note_versioni()), faq(), confronto()]
     nomi = []
     for pg in pagine:
         nome = f'pagine/{pg["slug"]}.json'
@@ -753,11 +883,20 @@ def main():
         'impostazioni': {'sito_nome': 'plumeCMS', 'sito_titolo': 'plumeCMS', 'sito_sottotitolo': 'il CMS leggero come una piuma',
                          'sito_descrizione': 'Un CMS in PHP e MySQL con editor visuale, temi, SEO e newsletter già dentro.',
                          'home_descrizione': 'plumeCMS è un CMS in PHP e MySQL con editor visuale, temi, SEO e newsletter già dentro. Si installa dal browser in cinque passi.'},
+        # 2.35.0: SEO e AEO dal pacchetto (voce "seo", motore 2.35.0: AGG_SEO in includes/aggiornamenti.php). Il nome nei titoli
+        # era "PlumeCMS"; la Persona solo con nome e ruolo (immagine, profili e credenziali li scrive Danilo nel pannello).
+        'seo': {'titolo': {'sito': 'plumeCMS'},
+                'meta': {'descrizione': IN_BREVE_SITO},
+                'org': {'tipo': 'Organization', 'nome': 'plumeCMS', 'nome_sito': 'plumeCMS', 'logo': U + 'marchio.png',
+                        'descrizione': IN_BREVE_SITO, 'lingua': 'it', 'area': 'Italia'},
+                'persona': {'nome': 'Danilo Failli', 'ruolo': 'Creatore di plumeCMS'},
+                'schema': {'searchaction': 1}},
         'editor': 'editor.json',
         'editor_ambiti': ['stile', 'modelli', 'menu'],
         'pagine': nomi,
         'azioni': ['sito-pagine-e-stile'],
-        'note': f'Richiede plumeCMS 1.2.3 o successivo: prima il pacchetto {ZIP_AGG}.zip, poi questo. '
+        'note': f'Richiede plumeCMS {V} o successivo (dalla 2.35.0 il pacchetto porta anche SEO e AEO e i campi SEO delle pagine, '
+                f'che un motore più vecchio salta): prima il pacchetto {ZIP_AGG}.zip, poi questo. '
                 'Cambia Stile del sito, header e footer predefiniti, menu Principale e la home; le altre pagine restano, fuori dal menu.',
     }
     dividi_e_costruisci(out, manifest, MAX_KB)
@@ -804,7 +943,7 @@ def dividi_e_costruisci(out, manifest, max_kb):
         os.makedirs(cartella)
         m = {'nome': f'Sito di plumeCMS ({V})' + (f', parte {k} di {totale}' if totale > 1 else ''), 'creato': manifest['creato'], 'file': voci}
         if k == 1:
-            m.update({x: manifest[x] for x in ('descrizione', 'impostazioni', 'editor', 'editor_ambiti', 'pagine', 'azioni')})
+            m.update({x: manifest[x] for x in ('descrizione', 'impostazioni', 'seo', 'editor', 'editor_ambiti', 'pagine', 'azioni')})
             m['note'] = manifest['note'] + (f' Dopo questa parte vanno caricate le altre ({totale - 1}), in ordine: portano i file da scaricare.' if totale > 1 else '')
             # 1.6.4: il manuale tecnico non si offre più (decisione di Danilo): via dal Download del sito che lo aveva.
             m['elimina'] = ['uploads/scaricabili/manuale-tecnico.pdf']

@@ -329,6 +329,8 @@ function contenuti_salva(string $tipo, int $id, array $d, string $autore = ''): 
     if ($tipo === 'pagine') {
         $v['publish_at'] = "$data $ora";
         $v['publish_time'] = $ora;
+        // 2.35.0: la parola chiave anche per le pagine; solo se il modulo la manda (il salvataggio rapido non la tocca).
+        if (array_key_exists('keyword_target', $d) && function_exists('sito_colonna_esiste') && sito_colonna_esiste('pages', 'keyword_target')) $v['keyword_target'] = mb_substr(sito_senza_4byte(trim((string)$d['keyword_target'])), 0, 255);
     } else {
         $v['publish_date'] = $data;
         $v['publish_time'] = $ora;

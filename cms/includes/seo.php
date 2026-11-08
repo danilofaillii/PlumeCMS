@@ -1032,6 +1032,7 @@ function seo_jsonld_di(string $percorso): array {
     switch ($v['genere']) {
         case 'home':
             $nodi = [sito_jsonld_pagina('/', $v['c']['titolo'], (string)cms_impostazione('home_descrizione', ''), sito_jsonld_about())];
+            $nodi = seo_schema_applica($nodi, $v['c']); // 2.35.0: anche la home
             break;
         case 'contenuto':
             $c = $v['c'];
