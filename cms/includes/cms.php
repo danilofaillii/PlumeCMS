@@ -292,11 +292,17 @@ function cms_pagina_modulo(string $modulo, string $pagina): void {
  * voce del nucleo dopo cui va) oppure gruppo (il nome del gruppo in cui entra come sottovoce). $qui e $tipo: la pagina aperta.
  */
 function cms_menu_integra(array $menu, string $qui, string $tipo, bool $admin): array {
-    $voce = function (array $v) use ($qui, $tipo): array {
+    // 2.32.0: 'conta' => funzione che ritorna un numero (per esempio le proposte da decidere): se è più di zero esce "Nome (N)".
+    $nome = function (array $v): string {
+        $n = 0;
+        if (isset($v['conta']) && is_callable($v['conta'])) { try { $n = (int)($v['conta'])(); } catch (Throwable $e) { $n = 0; } }
+        return (string)$v['nome'] . ($n > 0 ? ' (' . $n . ')' : '');
+    };
+    $voce = function (array $v) use ($qui, $tipo, $nome): array {
         $attivo = in_array($qui, (array)($v['attivo'] ?? []), true) && (empty($v['attivo_tipo']) || $v['attivo_tipo'] === $tipo);
         $sotto = [];
-        foreach ((array)($v['sotto'] ?? []) as $s) $sotto[] = [(string)$s['nome'], (string)$s['url'], in_array($qui, (array)($s['attivo'] ?? []), true)];
-        return [(string)$v['nome'], (string)$v['url'], (string)($v['icona'] ?? '&#9679;'), $attivo, $sotto];
+        foreach ((array)($v['sotto'] ?? []) as $s) $sotto[] = [$nome($s), (string)$s['url'], in_array($qui, (array)($s['attivo'] ?? []), true)];
+        return [$nome($v), (string)$v['url'], (string)($v['icona'] ?? '&#9679;'), $attivo, $sotto];
     };
     foreach (cms_moduli_elenco('menu') as $x) {
         $v = $x['valore'];

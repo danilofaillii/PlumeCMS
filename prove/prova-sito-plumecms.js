@@ -217,7 +217,7 @@ async function contrastoParole(pg) {
       return { voci: voci.map(e => e.textContent.trim()), fondo: Math.max(...voci.map(e => e.getBoundingClientRect().bottom)), sinistra: g.getBoundingClientRect().bottom };
     });
     ok('Scarica: novità, elenco breve con l\'ultima versione in cima', r && r.voci.length >= 3 && r.voci.length <= 8 && r.voci[0].startsWith(V + ': '), r && r.voci);
-    const terzi = (r ? r.voci.join(' ') : '').match(/brevo|google|wordpress|linkedin|facebook|instagram|whatsapp|telegram|mailgun|amazon|dropbox|indexnow|search console|gnu/gi) || [];
+    const terzi = (r ? r.voci.join(' ') : '').match(/brevo|google|wordpress|linkedin|facebook|instagram|whatsapp|telegram|mailgun|amazon|dropbox|indexnow|search console|gnu|claude|chatgpt|openai|anthropic|openverse|pexels|unsplash/gi) || [];
     ok('Scarica: nelle novità nessun nome di aziende terze', r && terzi.length === 0, terzi);
     ok('Scarica: le novità finiscono non oltre il riquadro Cosa serve', r && r.fondo <= r.sinistra + 2, r && { fondo: r.fondo, sinistra: r.sinistra }); }
   // 2.6.0: il blocco del pannello più chiaro in Funzionalità, con la sua schermata caricata; il logo di header e footer dallo Stile.
@@ -241,7 +241,8 @@ async function contrastoParole(pg) {
   ok('Funzionalità (2.28.0): le pagine per zona stanno nella riga della SEO, non in un blocco nuovo, e i widget sono 112', /Le pagine per zona, "Idraulico a Casalecchio di Reno"/.test(await v.locator('#seo').innerText()) && await v.locator('#zone').count() === 0 && /112 widget/.test(await v.locator('body').innerText()) && !/111 widget/.test(await v.locator('body').innerText()));
   ok('Funzionalità (2.29.0): gli strumenti SEO stanno nella riga della SEO, non in un blocco nuovo', /La Tabella SEO: ogni pagina con titolo, descrizione e un semaforo/.test(await v.locator('#seo').innerText()) && await v.locator('#tabella-seo, #strumenti-seo').count() === 0);
   ok('Funzionalità (2.25.1): il ripristino sicuro della copia sta nella riga della copia, nel blocco della sicurezza', /anche con un database diverso\. Se il ripristino non può riuscire, niente si cancella/.test(await v.locator('#sicurezza').innerText()));
-  ok('Funzionalità: il blocco degli addon nomina i nove addon', /Prenotazioni e appuntamenti/.test(await v.locator('#addon').innerText()) && /Copia del sito altrove/.test(await v.locator('#addon').innerText()) && /Test e questionari/.test(await v.locator('#addon').innerText()) && /nove funzioni/.test(await v.locator('#addon').innerText()));
+  ok('Funzionalità: il blocco degli addon nomina i dieci addon', /Prenotazioni e appuntamenti/.test(await v.locator('#addon').innerText()) && /Copia del sito altrove/.test(await v.locator('#addon').innerText()) && /Test e questionari/.test(await v.locator('#addon').innerText()) && /dieci funzioni/.test(await v.locator('#addon').innerText()));
+  ok('Funzionalità (2.32.0): nel blocco degli addon la riga AI collegate, senza nomi di servizi', /AI collegate/.test(await v.locator('#addon').innerText()) && /Non pubblica mai/.test(await v.locator('#addon').innerText()) && !/Claude|ChatGPT|OpenAI|Anthropic|Openverse|Pexels|Unsplash/.test(await v.locator('#addon').innerText()));
   ok('Header e footer (2.6.0): il logo è quello dello Stile del sito', await v.evaluate(() => [...document.querySelectorAll('.marchio img')].length >= 2 && [...document.querySelectorAll('.marchio img')].every(i => /marchio/.test(i.getAttribute('src')))));
   // 2.5.0: la pagina Temi con le stagioni e le tinte piene, ogni immagine caricata.
   await v.goto(B + '/temi/', { waitUntil: 'networkidle' });
@@ -254,7 +255,7 @@ async function contrastoParole(pg) {
   // 1.4.2: il manuale d'uso nella Documentazione, nelle Domande frequenti e nel piede.
   await v.goto(B + '/documentazione/', { waitUntil: 'networkidle' });
   ok('Documentazione (1.6.4): due manuali, il primo è il manuale d\'uso', /Due manuali/.test(await v.locator('body').innerText()) && await v.locator('a[href$="/scarica/manuale-uso/"]').count() >= 1);
-  ok('Documentazione (2.1.0): niente più il manuale degli addon a parte, gli addon sono nel manuale d\'uso', await v.locator('a[href*="manuale-uso-addon"]').count() === 0 && /nove addon/.test(await v.locator('body').innerText()));
+  ok('Documentazione (2.1.0): niente più il manuale degli addon a parte, gli addon sono nel manuale d\'uso', await v.locator('a[href*="manuale-uso-addon"]').count() === 0 && /dieci addon/.test(await v.locator('body').innerText()));
   await v.goto(B + '/domande-frequenti/', { waitUntil: 'networkidle' });
   ok('Domande frequenti: lo stesso invito sotto tutti gli articoli; i quaranta capitoli e gli addon (2.0.0)', /stesso invito sotto tutti gli articoli\?/.test(await v.locator('body').innerText()) && /Quaranta capitoli/.test(await v.locator('body').textContent()) && /Cosa sono gli addon\?/.test(await v.locator('body').innerText()));
   ok('Domande frequenti (1.5.0): i social', /Mi aiuta anche con i social\?/.test(await v.locator('body').innerText()));

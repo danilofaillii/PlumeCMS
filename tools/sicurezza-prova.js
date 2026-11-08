@@ -2739,6 +2739,204 @@ echo json_encode($o);
     ok('2.31.0: l\'anteprima dell\'avviso sta in un iframe sandbox senza permessi, e la pagina non ha tag dell\'email fuori dall\'attributo', sb45 === '' && (await admin.p.locator('body > table, #avvisi > table').count()) === 0 && !/<iframe[^>]*srcdoc="[^"]*<[a-z]/i.test(html45), [sb45]);
   }
 
+  // === 46. (2.32.0) L'addon AI collegate: il server MCP (/api/mcp), l'OAuth 2.1 (authorize, token, register, revoke), le chiavi
+  // personali e il REST. Senza token, token scaduto, revocato o di un altro sito; PKCE sbagliato o assente; redirect_uri diverso;
+  // codice riusato; registrazione con javascript:, data:, http esterno o frammento; permessi gonfiati (anche con il rinnovo);
+  // nessun modo di pubblicare; update_draft su un pubblicato; HTML, script e caratteri a 4 byte nei testi; alberi giganti e
+  // corpo oltre 1 MB; import_photo da host fuori elenco, interni (127.0.0.1, 169.254.169.254), con codice nel file o SVG;
+  // CSRF e Origin estraneo sul consenso; Origin estraneo sul server MCP; limite di velocità; redattore. Accende l'addon (se era
+  // spento lo rispegne alla fine) e il server finto delle foto (prove/foto-finte.php, porta SIC_FOTO, 9298). Serve CMS_DIR.
+  if (DIR && fs.existsSync(path.join(DIR, 'addon', 'ai-collegate', 'modulo.php')) && fs.existsSync(path.join(__dirname, '..', 'prove', 'ai-cli.php'))) {
+    const { execFileSync, spawn } = require('child_process');
+    const crypto = require('crypto');
+    const cli46 = (...a) => { try { return JSON.parse(execFileSync('php', [path.join(__dirname, '..', 'prove', 'ai-cli.php'), DIR, ...a.map(String)], { encoding: 'utf8', maxBuffer: 64 * 1024 * 1024 }).trim().split('\n').pop()); } catch (e) { return { errore_cli: String(e.message).slice(0, 200) }; } };
+    const attiviFile = path.join(DIR, 'moduli', 'addon-attivi.json');
+    const eraAcceso = (() => { try { return JSON.parse(fs.readFileSync(attiviFile, 'utf8')).includes('ai-collegate'); } catch (e) { return false; } })();
+    cli46('accendi');
+    const PF = +(process.env.SIC_FOTO || 9298);
+    const srvFoto = spawn('php', ['-S', '127.0.0.1:' + PF, path.join(__dirname, '..', 'prove', 'foto-finte.php')], { stdio: 'ignore' });
+    cli46('config-foto', 'http://127.0.0.1:' + PF);
+    await new Promise(r => setTimeout(r, 2500)); // opcache del server di prova: il config nuovo si legge dopo un paio di secondi
+    const MCP = BASE + '/api/mcp', CB = 'http://127.0.0.1:9/callback';
+    const b64u = (b) => b.toString('base64').replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+    const pk = () => { const v = b64u(crypto.randomBytes(32)); return { v, c: b64u(crypto.createHash('sha256').update(v).digest()) }; };
+    const h46 = async (metodo, url, { corpo, form, token, intest = {} } = {}) => {
+      const h = { ...intest }; let b;
+      if (token) h.Authorization = 'Bearer ' + token;
+      if (form) { h['Content-Type'] = 'application/x-www-form-urlencoded'; b = new URLSearchParams(form).toString(); }
+      else if (corpo !== undefined) { h['Content-Type'] = 'application/json'; b = typeof corpo === 'string' ? corpo : JSON.stringify(corpo); }
+      const r = await fetch(url, { method: metodo, headers: h, body: b, redirect: 'manual' });
+      const testo = await r.text(); let json = null; try { json = JSON.parse(testo); } catch (e) {}
+      return { stato: r.status, json, testo, h: r.headers };
+    };
+    let idr = 1;
+    const call = async (token, nome, args, intest) => {
+      const r = await h46('POST', MCP, { token, intest, corpo: { jsonrpc: '2.0', id: idr++, method: 'tools/call', params: { name: nome, arguments: args || {} } } });
+      const res = r.json && r.json.result; let dati = null; try { dati = JSON.parse(res.content[0].text); } catch (e) {}
+      return { stato: r.stato, errore: !res || !!res.isError, dati };
+    };
+    const sqlUno = (q) => { const x = cli46('sql', q); return Array.isArray(x) ? x[0] || {} : {}; };
+    try {
+      cli46('pulisci');
+      const pub = cli46('pagina-pubblicata', 'ai-prova-sic46');
+      const tutto = cli46('chiave', 'leggi,bozze,proposte,foto', 'Sic46 tutto').chiave;
+      // 1. Senza token, token inventato, scaduto, revocato, di un altro sito.
+      const s0 = await h46('POST', MCP, { corpo: { jsonrpc: '2.0', id: 1, method: 'tools/list' } });
+      const s1 = await call('pca_' + b64u(crypto.randomBytes(32)), 'site_info');
+      const kScad = cli46('chiave', 'leggi', 'Sic46 scaduta').chiave; cli46('token-scaduto', kScad);
+      const kAltro = cli46('chiave', 'leggi', 'Sic46 altro sito').chiave; cli46('token-altro-sito', kAltro);
+      const kRev = cli46('chiave', 'leggi', 'Sic46 revocata'); cli46('sql', 'UPDATE {p}ai_connessioni SET revocato = NOW() WHERE id = ' + (+kRev.connessione));
+      const [s2, s3, s4] = [await call(kScad, 'site_info'), await call(kAltro, 'site_info'), await call(kRev.chiave, 'site_info')];
+      ok('2.32.0: server MCP senza token, con un token inventato, scaduto, di un altro sito o revocato: 401 con WWW-Authenticate', [s0, s1, s2, s3, s4].every(x => (x.stato || x.stato) === 401) && /resource_metadata=/.test(s0.h.get('www-authenticate') || ''), [s0.stato, s1.stato, s2.stato, s3.stato, s4.stato]);
+      const rNo = await h46('POST', MCP + '/rest/site_info', { corpo: {}, token: kScad });
+      ok('2.32.0: REST con una chiave scaduta: 401', rNo.stato === 401, rNo.stato);
+      // 2. Origin estraneo, gruppi JSON-RPC, corpo oltre 1 MB, GET.
+      const o1 = await call(tutto, 'site_info', {}, { Origin: 'https://evil.example' });
+      const o2 = await h46('POST', MCP, { token: tutto, corpo: [{ jsonrpc: '2.0', id: 1, method: 'ping' }, { jsonrpc: '2.0', id: 2, method: 'ping' }] });
+      const o3 = await h46('POST', MCP, { token: tutto, corpo: '{"jsonrpc":"2.0","id":1,"method":"ping","x":"' + 'a'.repeat(1100000) + '"}' });
+      ok('2.32.0: Origin estraneo 403, gruppo di messaggi JSON-RPC 400, corpo oltre 1 MB 413', o1.stato === 403 && o2.stato === 400 && o3.stato === 413, [o1.stato, o2.stato, o3.stato]);
+      // 3. Registrazione dinamica con redirect cattivi.
+      const regCattivi = [];
+      for (const u of ['javascript:alert(46)', 'data:text/html,<script>alert(46)</script>', 'http://evil.example/cb', 'https://buono.example/cb#frammento', 'https://utente:pw@buono.example/cb', 'file:///etc/passwd', 'https://x.example/"><script>']) {
+        const r = await h46('POST', MCP + '/register', { corpo: { client_name: 'Sic46', redirect_uris: [u] } });
+        if (r.stato !== 400) regCattivi.push([u, r.stato]);
+      }
+      const regNome = await h46('POST', MCP + '/register', { corpo: { client_name: '<img src=x onerror=alert(46)>Sic46 &#128512; \u{1F600}', redirect_uris: [CB] } });
+      ok('2.32.0: registrazione con redirect javascript:, data:, http esterno, frammento, credenziali, file: o virgolette: tutte 400', regCattivi.length === 0, regCattivi);
+      ok('2.32.0: il nome del client con tag ed emoji si salva come testo pulito, senza caratteri a 4 byte', regNome.stato === 201 && !/[<>]/.test(regNome.json.client_name) && !/[\u{10000}-\u{10FFFF}]/u.test(regNome.json.client_name), regNome.json && regNome.json.client_name);
+      const CID = regNome.json.client_id;
+      // 4. authorize: senza PKCE, con plain, con scope gonfiati, con redirect diverso, risorsa di un altro sito.
+      const auth = (q) => h46('GET', MCP + '/authorize?' + new URLSearchParams({ response_type: 'code', client_id: CID, redirect_uri: CB, state: 's46', ...q }).toString());
+      const k1 = pk();
+      const a1 = await auth({});
+      const a2 = await auth({ code_challenge: k1.c, code_challenge_method: 'plain' });
+      const a3 = await auth({ code_challenge: k1.c, code_challenge_method: 'S256', scope: 'leggi utenti pubblica' });
+      const a4 = await auth({ code_challenge: k1.c, code_challenge_method: 'S256', redirect_uri: 'https://evil.example/cb' });
+      const a5 = await auth({ code_challenge: k1.c, code_challenge_method: 'S256', resource: 'https://altro-sito.example/api/mcp' });
+      const loc = (r) => r.h.get('location') || '';
+      ok('2.32.0: authorize senza PKCE o con "plain": rimanda con error=invalid_request, senza codice', /error=invalid_request/.test(loc(a1)) && /error=invalid_request/.test(loc(a2)) && !/code=/.test(loc(a1) + loc(a2)), [loc(a1).slice(0, 90), loc(a2).slice(0, 90)]);
+      ok('2.32.0: authorize con permessi inventati (utenti, pubblica): invalid_scope; con una risorsa di un altro sito: invalid_target', /error=invalid_scope/.test(loc(a3)) && /error=invalid_target/.test(loc(a5)), [loc(a3).slice(0, 80), loc(a5).slice(0, 80)]);
+      ok('2.32.0: authorize con un redirect_uri non registrato: pagina d\'errore, nessun rimando', a4.stato === 400 && loc(a4) === '' && !/evil\.example/.test(a4.testo.replace(/<[^>]+>/g, '')), a4.stato);
+      // 5. Consenso: CSRF e Origin estraneo, poi un consenso vero dal browser per i codici.
+      const aOk = await auth({ code_challenge: k1.c, code_challenge_method: 'S256', scope: 'leggi bozze' });
+      const urlLogin = new URL(loc(aOk), BASE);
+      const rid = urlLogin.searchParams.get('r');
+      const urlCons = ADMIN + '/addon-pagina.php?a=ai-collegate&p=consenso&r=' + rid;
+      const c1 = await admin.ctx.request.post(urlCons, { form: { azione: 'consenti', 'permessi[]': 'leggi' }, maxRedirects: 0 });
+      const tCons = await tokenDi(admin.p, urlCons);
+      const c2 = await admin.ctx.request.post(urlCons, { form: { _csrf: tCons, azione: 'consenti', 'permessi[]': 'leggi' }, headers: { Origin: 'https://evil.example' }, maxRedirects: 0 });
+      const codiciDopo = sqlUno('SELECT COUNT(*) n FROM {p}ai_codici').n;
+      ok('2.32.0: consenso senza token CSRF o da un altro sito: rifiutato (403), nessun codice creato', [400, 403].includes(c1.status()) && [400, 403].includes(c2.status()) && +codiciDopo === 0, [c1.status(), c2.status(), codiciDopo]);
+      if (red.dentro) {
+        const rc = await red.ctx.request.get(urlCons, { maxRedirects: 0 });
+        const tRed = await tokenDi(red.p, ADMIN + '/contenuti.php?tipo=articoli');
+        const rc2 = await red.ctx.request.post(urlCons, { form: { _csrf: tRed, azione: 'consenti', 'permessi[]': 'leggi' }, maxRedirects: 0 });
+        const rc3 = await red.ctx.request.post(ADMIN + '/addon-pagina.php?a=ai-collegate&p=collegate', { form: { _csrf: tRed, azione: 'chiave', nome: 'red', 'permessi[]': 'bozze' }, maxRedirects: 0 });
+        ok('2.32.0: il redattore non apre il consenso, non lo dà e non crea chiavi (rimando o 403, niente nel database)', ![200].includes(rc.status()) && ![200].includes(rc2.status()) && ![200].includes(rc3.status()) && +sqlUno('SELECT COUNT(*) n FROM {p}ai_codici').n === 0 && +sqlUno("SELECT COUNT(*) n FROM {p}ai_connessioni WHERE nome = 'red'").n === 0, [rc.status(), rc2.status(), rc3.status()]);
+      }
+      let ritorno = null;
+      await admin.ctx.route('http://127.0.0.1:9/**', r => { ritorno = new URL(r.request().url()); r.fulfill({ status: 200, contentType: 'text/html', body: 'ok' }); });
+      const consenti = async (sfida, scope) => {
+        ritorno = null;
+        const r = await auth({ code_challenge: sfida, code_challenge_method: 'S256', scope });
+        await admin.p.goto(new URL(loc(r), BASE).href, { waitUntil: 'networkidle' });
+        if (!(await admin.p.locator('#aic-consenso').count())) return null;
+        await admin.p.click('#aic-consenso button[value=consenti]');
+        for (let i = 0; i < 50 && !ritorno; i++) await admin.p.waitForTimeout(100);
+        return ritorno && ritorno.searchParams.get('code');
+      };
+      const tok = (f) => h46('POST', MCP + '/token', { form: { client_id: CID, redirect_uri: CB, ...f } });
+      const code1 = await consenti(k1.c, 'leggi bozze');
+      const t1 = await tok({ grant_type: 'authorization_code', code: code1 || 'x', code_verifier: pk().v });
+      const t2 = await tok({ grant_type: 'authorization_code', code: code1 || 'x' });
+      const t3 = await tok({ grant_type: 'authorization_code', code: code1 || 'x', code_verifier: k1.v, redirect_uri: 'http://127.0.0.1:9/altro' });
+      const t4 = await tok({ grant_type: 'authorization_code', code: code1 || 'x', code_verifier: k1.v, client_id: 'aic_' + '0'.repeat(32) });
+      ok('2.32.0: token con PKCE sbagliato, senza code_verifier, con un redirect_uri diverso o un altro client: rifiutati', !!code1 && t1.stato === 400 && t2.stato === 400 && t3.stato === 400 && [400, 401].includes(t4.stato), [!!code1, t1.stato, t2.stato, t3.stato, t4.stato]);
+      const t5 = await tok({ grant_type: 'authorization_code', code: code1 || 'x', code_verifier: k1.v });
+      const t6 = await tok({ grant_type: 'authorization_code', code: code1 || 'x', code_verifier: k1.v });
+      const dopoRiuso = await call(t5.json && t5.json.access_token, 'site_info');
+      ok('2.32.0: codice usato due volte: la seconda volta invalid_grant e i token del primo uso non valgono più', t5.stato === 200 && t6.stato === 400 && dopoRiuso.stato === 401, [t5.stato, t6.stato, dopoRiuso.stato]);
+      const k2 = pk();
+      const code2 = await consenti(k2.c, 'leggi bozze');
+      const t7 = await tok({ grant_type: 'authorization_code', code: code2 || 'x', code_verifier: k2.v });
+      const gonfio = await tok({ grant_type: 'refresh_token', refresh_token: t7.json && t7.json.refresh_token, scope: 'leggi bozze proposte foto' });
+      ok('2.32.0: rinnovo che chiede più permessi di quelli dati: invalid_scope', t7.stato === 200 && gonfio.stato === 400 && gonfio.json && gonfio.json.error === 'invalid_scope', [t7.stato, gonfio.stato, gonfio.json]);
+      const AT = t7.json && t7.json.access_token;
+      const fotoNo = await call(AT, 'search_photos', { query: 'vaso' });
+      ok('2.32.0: un collegamento con "leggi bozze" non cerca foto e non propone modifiche', fotoNo.errore && /permesso "foto"/.test(fotoNo.dati.errore) && (await call(AT, 'propose_change', { tipo: 'pagine', id: pub.id, campo: 'titolo', valore: 'x', motivo: 'prova sic46' })).errore, fotoNo.dati);
+      await admin.ctx.unroute('http://127.0.0.1:9/**');
+      // 6. Nessun modo di pubblicare.
+      const pubbl = await call(tutto, 'create_draft', { tipo: 'articoli', titolo: 'Sic46 pubblica', slug: 'ai-prova-sic46-pub', stato: 'pubblicato', pubblica: true, status: 'published', publish: true, data: '2020-01-01' });
+      const st46 = sqlUno("SELECT status, struttura FROM {p}articles WHERE slug = 'ai-prova-sic46-pub'");
+      const nomi46 = (await h46('POST', MCP, { token: tutto, corpo: { jsonrpc: '2.0', id: 9, method: 'tools/list' } })).json.result.tools.map(t => t.name);
+      const pubT = await h46('POST', MCP, { token: tutto, corpo: { jsonrpc: '2.0', id: 10, method: 'tools/call', params: { name: 'publish_content', arguments: { tipo: 'pagine', id: pub.id } } } });
+      const pubR = await h46('POST', MCP + '/rest/publish', { token: tutto, corpo: { id: 1 } });
+      ok('2.32.0: create_draft che chiede "pubblicato" in ogni modo resta bozza; nessuno strumento pubblica (publish_content e /rest/publish non esistono)', !pubbl.errore && st46.status === 'draft' && !nomi46.some(n => /publish|pubblic|user|password|update_cms|theme|backup/.test(n)) && pubT.json && pubT.json.error && pubR.stato === 404, [st46.status, nomi46.length, pubR.stato]);
+      // 7. update_draft su un pubblicato e su un programmato.
+      const udp = await call(tutto, 'update_draft', { tipo: 'pagine', id: pub.id, titolo: 'Sic46 cambiato', albero: { elementi: [{ tipo: 'titolo', impostazioni: { testo: 'cambiato' } }] } });
+      const dopoPub = sqlUno('SELECT title, struttura_bozza FROM {p}pages WHERE id = ' + (+pub.id));
+      cli46('sql', "UPDATE {p}articles SET status = 'published', publish_date = DATE_ADD(CURDATE(), INTERVAL 10 DAY) WHERE slug = 'ai-prova-sic46-pub'");
+      const prog = sqlUno("SELECT id FROM {p}articles WHERE slug = 'ai-prova-sic46-pub'");
+      const udq = await call(tutto, 'update_draft', { tipo: 'articoli', id: prog.id, titolo: 'Sic46 cambiato' });
+      ok('2.32.0: update_draft su una pagina pubblicata e su un articolo programmato: rifiutato, niente cambia (né la scheda né la bozza dell\'editor)', udp.errore && udq.errore && dopoPub.title === 'Pagina pubblicata di prova' && !dopoPub.struttura_bozza && sqlUno('SELECT title FROM {p}articles WHERE id = ' + (+prog.id)).title === 'Sic46 pubblica', [udp.dati, udq.dati]);
+      // 8. HTML, script, 4 byte e slug.
+      const cat = await call(tutto, 'create_draft', { tipo: 'articoli', titolo: '<script>alert(46)</script>Titolo \u{1F600} sic46', slug: '../../ai-prova-sic46-<b>slug', estratto: '<img src=x onerror=alert(46)>estratto', testo: '<p onclick="alert(46)">Ciao</p><script>alert(46)</script><iframe src="https://evil.example"></iframe><a href="javascript:alert(46)">x</a> \u{1F680}',
+        seo: { titolo_seo: '<svg onload=alert(46)>', descrizione_seo: 'desc \u{1F600} <script>x</script>', domande_frequenti: [{ domanda: '<b>Q</b>\u{1F600}', risposta: '<script>r</script>R' }], in_breve: '<style>*{}</style>breve' },
+        albero: { elementi: [{ tipo: 'testo', impostazioni: { contenuto: '<p>ok</p><script>alert(46)</script><img src=x onerror=alert(46)> \u{1F600}', css_personalizzato: 'body{display:none}', attributi: 'onclick|alert(46)' } }, { tipo: 'pulsante', impostazioni: { testo: 'Vai', link: { url: 'javascript:alert(46)' } } }] } });
+      const rc = cat.dati && cat.dati.id ? cli46('sql', 'SELECT * FROM {p}articles WHERE id = ' + (+cat.dati.id))[0] || {} : {};
+      const tuttoTesto = JSON.stringify(rc);
+      ok('2.32.0: testi dell\'AI con script, eventi, iframe, javascript:, stili e CSS personalizzato: nel database niente di tutto questo', !cat.errore && !/<script|onerror|onclick|onload|<iframe|javascript:|<style|css_personalizzato|display:none/i.test(tuttoTesto) && /Ciao/.test(rc.content || rc.contenuto || tuttoTesto), cat.dati);
+      ok('2.32.0: nessun carattere a 4 byte nel database, slug pulito senza ../', !/[\u{10000}-\u{10FFFF}]/u.test(tuttoTesto) && /^[a-z0-9-]+$/.test(rc.slug || '') && !/\.\./.test(rc.slug || ''), rc.slug);
+      // 9. Alberi giganti.
+      const tanti = Array.from({ length: 260 }, () => ({ tipo: 'titolo', impostazioni: { testo: 'x' } }));
+      const g1 = await call(tutto, 'create_draft', { tipo: 'pagine', titolo: 'Sic46 grande', slug: 'ai-prova-sic46-g1', albero: { elementi: tanti } });
+      const g2 = await call(tutto, 'create_draft', { tipo: 'pagine', titolo: 'Sic46 colonne', slug: 'ai-prova-sic46-g2', albero: { elementi: [{ tipo: 'sezione', figli: Array.from({ length: 7 }, () => ({ tipo: 'colonna', figli: [{ tipo: 'titolo', impostazioni: { testo: 'x' } }] })) }] } });
+      const g3 = await call(tutto, 'create_draft', { tipo: 'pagine', titolo: 'Sic46 pesante', slug: 'ai-prova-sic46-g3', albero: { elementi: [{ tipo: 'testo', impostazioni: { contenuto: 'x'.repeat(450000) } }] } });
+      const g4 = await call(tutto, 'create_draft', { tipo: 'pagine', titolo: 'Sic46 sezioni', slug: 'ai-prova-sic46-g4', albero: { elementi: Array.from({ length: 70 }, () => ({ tipo: 'sezione', figli: [{ tipo: 'colonna', figli: [] }] })) } });
+      ok('2.32.0: alberi con 260 widget, 7 colonne, oltre 400 KB o 70 sezioni: rifiutati con un errore chiaro, nessuna bozza', [g1, g2, g3, g4].every(x => x.errore && x.dati && x.dati.errore) && +sqlUno("SELECT COUNT(*) n FROM {p}pages WHERE slug LIKE 'ai-prova-sic46-g%'").n === 0, [g1, g2, g3, g4].map(x => (x.dati && x.dati.errore || '').slice(0, 50)));
+      // 10. Foto: host fuori elenco, interni, file con codice, SVG.
+      const fot = [];
+      for (const u of ['https://evil.example/x.jpg', 'http://127.0.0.1:' + (PF + 1) + '/x.jpg', 'http://169.254.169.254/latest/meta-data/', 'https://169.254.169.254/x.jpg', 'http://[::1]/x.jpg', 'file:///etc/passwd', 'http://127.0.0.1:' + PF + '.evil.example/x.jpg']) {
+        const r = await call(tutto, 'import_photo', { archivio: 'openverse', id: 'cc0a', alt: 'Prova sic46', url: u });
+        if (!r.errore) fot.push([u, r.dati && r.dati.url]);
+      }
+      ok('2.32.0: import_photo con un indirizzo fuori elenco o interno (127.0.0.1 su un\'altra porta, 169.254.169.254, ::1, file:): rifiutati', fot.length === 0, fot);
+      const fc = await call(tutto, 'import_photo', { archivio: 'openverse', id: 'cc0a', alt: 'Prova sic46 codice', url: 'http://127.0.0.1:' + PF + '/file/codice.jpg' });
+      const fileC = fc.dati && fc.dati.url ? path.join(DIR, fc.dati.url) : '';
+      const contC = fileC && fs.existsSync(fileC) ? fs.readFileSync(fileC, 'latin1') : '';
+      ok('2.32.0: una foto con codice PHP e script in coda: o rifiutata o ricodificata senza codice', fc.errore || (contC !== '' && !/<\?php|<script/i.test(contC)), [fc.errore, fc.dati && (fc.dati.url || fc.dati.errore)]);
+      const fs1 = await call(tutto, 'import_photo', { archivio: 'openverse', id: 'cc0a', alt: 'Prova sic46 svg', url: 'http://127.0.0.1:' + PF + '/file/svg.jpg' });
+      const fs2 = await call(tutto, 'import_photo', { archivio: 'openverse', id: 'cc0a', alt: 'Prova sic46 html', url: 'http://127.0.0.1:' + PF + '/file/html.jpg' });
+      const fs3 = await call(tutto, 'import_photo', { archivio: 'openverse', id: 'nc1', alt: 'Prova sic46 nc' });
+      const fs4 = await call(tutto, 'import_photo', { archivio: 'openverse', id: '../../etc', alt: 'Prova sic46 id' });
+      ok('2.32.0: import_photo di un SVG con script, di una pagina HTML, di una foto non commerciale o con un id con ../: rifiutati', fs1.errore && fs2.errore && fs3.errore && fs4.errore, [fs1.dati, fs2.dati, fs3.dati, fs4.dati].map(x => (x && x.errore || '').slice(0, 50)));
+      // 11. Proposte con codice: escape nel pannello.
+      const pc = await call(tutto, 'propose_change', { tipo: 'pagine', id: pub.id, campo: 'titolo_seo', valore: 'Sic46 <img src=x onerror=alert(46)>', motivo: 'Motivo <script>alert(46)</script><img src=x onerror=alert(46)> sic46' });
+      const pc2 = await call(tutto, 'propose_change', { tipo: 'pagine', id: pub.id, campo: 'testo', widget_id: pub.testo_id, valore: '<p>Nuovo</p><script>alert(46)</script><img src=x onerror=alert(46)>', motivo: 'Testo con codice sic46' });
+      const fin46 = []; admin.p.on('dialog', d => { fin46.push(d.message()); d.dismiss().catch(() => {}); });
+      await admin.p.goto(ADMIN + '/addon-pagina.php?a=ai-collegate&p=proposte', { waitUntil: 'networkidle' });
+      const htmlP = await admin.p.content();
+      ok('2.32.0: proposte con codice nel valore e nel motivo: salvate senza tag pericolosi e mostrate come testo nel pannello (niente finestre)', !pc.errore && !pc2.errore && await admin.p.locator('img[onerror], #proposta-' + (pc.dati && pc.dati.proposta) + ' script').count() === 0 && !/<script>alert\(46\)/.test(htmlP) && fin46.length === 0 && !/<script|onerror/i.test(JSON.stringify(cli46('sql', 'SELECT dopo, motivo FROM {p}ai_proposte'))), [pc.dati, pc2.dati && pc2.dati.dopo]);
+      // 12. Il registro non contiene token.
+      const reg46 = JSON.stringify(cli46('sql', 'SELECT dettagli FROM {p}ai_registro'));
+      ok('2.32.0: nel registro delle AI e nella tabella dei token nessun token in chiaro', !/pc[akrs]_[A-Za-z0-9_-]{20}/.test(reg46) && !JSON.stringify(cli46('sql', 'SELECT hash FROM {p}ai_token')).includes(tutto.slice(4, 30)));
+      // 13. Limite di velocità per connessione (60 al minuto).
+      const kLim = cli46('chiave', 'leggi', 'Sic46 limite').chiave;
+      let primo429 = 0;
+      for (let i = 1; i <= 64 && !primo429; i++) { const r = await h46('POST', MCP, { token: kLim, corpo: { jsonrpc: '2.0', id: i, method: 'ping' } }); if (r.stato === 429) primo429 = i; }
+      ok('2.32.0: oltre 60 chiamate in un minuto con la stessa chiave: 429', primo429 === 61, primo429);
+      cli46('sql', "DELETE FROM {p}sicurezza_tentativi WHERE chiave LIKE 'limite:aic:fall:%'"); // i token sbagliati delle prove sopra contano anche loro
+      let fall429 = 0;
+      for (let i = 1; i <= 32 && !fall429; i++) { const r = await h46('POST', MCP, { token: 'pck_' + b64u(crypto.randomBytes(32)), corpo: { jsonrpc: '2.0', id: i, method: 'ping' } }); if (r.stato === 429) fall429 = i; }
+      ok('2.32.0: oltre 30 token sbagliati in dieci minuti dallo stesso indirizzo: 429', fall429 === 31, fall429);
+    } finally {
+      srvFoto.kill();
+      cli46('sql', "DELETE FROM {p}sicurezza_tentativi WHERE chiave LIKE 'limite:aic:%'");
+      cli46('pulisci'); cli46('config-foto', '');
+      if (!eraAcceso) cli46('spegni');
+    }
+  } else console.log('--  AI collegate (2.32.0): saltata (serve CMS_DIR e l\'addon nella cartella)');
+
   // === pulizia: elimina il redattore di prova
   {
     await admin.p.goto(ADMIN + '/utenti.php', { waitUntil: 'networkidle' });

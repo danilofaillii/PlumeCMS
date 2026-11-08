@@ -295,6 +295,27 @@ costellazione, maniglia del prima e dopo con frecce, Inizio e mouse, niente scor
 campi nuovi solo con la loro disposizione e la finestra Scegli in modo video. Atteso: 46 su 46. Non salva niente.
 Attacchi: gruppo 39 di `tools/sicurezza-prova.js` (con `CMS_DIR`), che usa `prove/pagina-hero-cattive.php`.
 
+## prova-ai-collegate.js (2.32.0)
+
+L'addon AI collegate come lo userebbero una persona e un'AI: un client MCP scritto nella prova (Node, senza librerie) fa il
+collegamento OAuth 2.1 intero (metadati della risorsa e del server, registrazione dinamica, PKCE S256, consenso nel pannello con
+il browser, codice, token, rinnovo ruotato e riusato, revoca da endpoint e da pannello, Rifiuta, redattore, amministratore a due
+fattori), poi tutti gli strumenti (lettura, audit, bozza mai pubblicata anche chiedendo "pubblicato", modifica di una bozza,
+rifiuto su un pubblicato, proposte approvate, corrette, in gruppo e scartate, foto dai tre archivi finti con autore e licenza,
+`get_stats` solo con l'addon Statistiche), la chiave personale creata nel pannello con REST e OpenAPI, e le quattro pagine
+dell'addon a 390 px.
+
+1. Un CMS installato (anche senza kit), radice o cartella. L'addon lo accende la prova (`prove/ai-cli.php <cartella> accendi`).
+2. Il server finto degli archivi di foto: `setsid nohup php -S 127.0.0.1:<porta> prove/foto-finte.php >/dev/null 2>&1 </dev/null &`.
+   La prova scrive `CMS_AI_FOTO_PROVA` nel `config.local.php` del sito.
+3. `node prove/prova-ai-collegate.js <base> <cartella del CMS> <utente> <password> <porta delle foto finte> [cartella foto]`
+   (in cartella la base è `http://127.0.0.1:<porta>/test` e la cartella del CMS quella con `/test`).
+4. Atteso (2.32.0): 90 su 90 in radice, in cartella e su un sito aggiornato dalla 2.31.0. Pulisce le sue tabelle alla fine
+   (`ai-cli.php pulisci`), lascia la pagina `ai-prova-pubblicata` e le foto importate nei Media.
+
+Gli attacchi all'addon sono il gruppo 46 di `tools/sicurezza-prova.js` (26, con `CMS_DIR`; la batteria intera 488 sulla 2.32.0): accende l'addon e il server finto
+delle foto sulla porta `SIC_FOTO` (9298), e alla fine li rimette come erano.
+
 ## prova-avvisi-pannello.js (2.31.0)
 
 Il pulsante "Apri nel pannello" negli avvisi con il Reply-To del visitatore (Impostazioni > Configurazione email, "Gli avvisi che

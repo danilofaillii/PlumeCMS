@@ -23,6 +23,8 @@ location ~ ^/(uploads|aggiornamenti|logs|assets)/.*\.(php|phtml|php[0-9]|phps|ph
 location ~ ^/uploads/(riservati|contatti)-[a-f0-9]+/ { deny all; return 404; }
 location ~ ^/uploads/.*\.svg$ { add_header Content-Security-Policy "sandbox; script-src 'none'; default-src 'self' data:"; add_header X-Content-Type-Options nosniff; }
 
+# 2.32.0: il connettore delle AI (addon AI collegate) sta sotto /api/ ma non è un file: lo serve index.php
+location ^~ /api/mcp { rewrite ^ /index.php last; }
 # Il pannello, le API e l'installatore sono cartelle con i loro file PHP
 location ~ ^/(admin|api|install|share)/ {
     try_files $uri $uri/ $uri/index.php =404;
