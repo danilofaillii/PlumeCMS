@@ -16,9 +16,12 @@ require_once __DIR__ . '/oauth.php';
 function aic_sito_percorso(string $percorso, array $q): void {
     if (str_starts_with($percorso, '/.well-known/')) {
         $metadati = null;
-        if ($percorso === '/.well-known/oauth-protected-resource' || $percorso === '/.well-known/oauth-protected-resource/api/mcp') $metadati = aic_metadati_risorsa();
-        elseif ($percorso === '/.well-known/oauth-authorization-server' || str_starts_with($percorso, '/.well-known/oauth-authorization-server/')
-            || $percorso === '/.well-known/openid-configuration' || str_starts_with($percorso, '/.well-known/openid-configuration/')) $metadati = aic_metadati_server();
+        // Con il sito in una cartella (https://esempio.it/test) i client che seguono RFC 8414 e RFC 9728 alla lettera chiedono i
+        // metadati alla radice del dominio con la cartella in coda (/.well-known/oauth-protected-resource/test/api/mcp): ci
+        // arrivano solo se la radice del dominio li passa al CMS (manuale tecnico 47.2); qui si accettano tutte e due le forme.
+        $cart = cms_sito_base();
+        if (in_array($percorso, ['/.well-known/oauth-protected-resource', '/.well-known/oauth-protected-resource/api/mcp', '/.well-known/oauth-protected-resource' . $cart . '/api/mcp'], true)) $metadati = aic_metadati_risorsa();
+        elseif (in_array($percorso, ['/.well-known/oauth-authorization-server', '/.well-known/oauth-authorization-server' . $cart, '/.well-known/openid-configuration', '/.well-known/openid-configuration' . $cart], true)) $metadati = aic_metadati_server();
         if ($metadati === null) return;
         if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'OPTIONS') aic_cors_preflight();
         aic_json(200, $metadati, ['Access-Control-Allow-Origin: *', 'Cache-Control: public, max-age=3600']);
@@ -72,7 +75,12 @@ function aic_ingresso(): array {
     $tok = aic_bearer();
     if ($tok === '') aic_non_autorizzato();
     $conn = aic_autentica($tok);
-    if (!$conn) aic_non_autorizzato('invalid_token');
+    if (!$conn) {
+        // Token sbagliati a raffica dallo stesso indirizzo: dopo 30 in dieci minuti si risponde 429 (indovinarli è impossibile,
+        // ma ogni tentativo è una query).
+        if (!aic_limite('fall:' . aic_ip_hash(), 30, 600)) aic_json(429, ['errore' => 'Troppi token non validi da questo indirizzo: aspetta dieci minuti.'], ['Retry-After: 600']);
+        aic_non_autorizzato('invalid_token');
+    }
     if (!aic_limite('ip:' . aic_ip_hash(), AIC_LIMITE_STRUMENTI_IP, 60) || !aic_limite('conn:' . (int)$conn['id'], AIC_LIMITE_STRUMENTI, 60)) {
         aic_registra($conn, 'limite', 'negato', 'troppe richieste in un minuto');
         aic_json(429, ['jsonrpc' => '2.0', 'id' => null, 'error' => ['code' => -32000, 'message' => 'Troppe richieste in un minuto: aspetta un poco e riprova.']], ['Retry-After: 60']);

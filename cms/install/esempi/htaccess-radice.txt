@@ -15,6 +15,10 @@ ServerSignature Off
 </IfModule>
 RewriteEngine On
 
+# 2.32.0: l'intestazione Authorization arriva a PHP anche con PHP-FPM o CGI (le AI collegate entrano con un token Bearer).
+RewriteCond %{HTTP:Authorization} .
+RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
+
 # Un solo indirizzo: https (togli queste tre righe se il certificato non c'è ancora)
 RewriteCond %{HTTPS} !=on
 RewriteCond %{HTTP:X-Forwarded-Proto} !=https

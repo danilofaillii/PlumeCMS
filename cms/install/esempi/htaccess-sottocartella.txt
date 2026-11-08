@@ -26,6 +26,10 @@ ServerSignature Off
 </IfModule>
 RewriteEngine On
 
+# 2.32.0: l'intestazione Authorization arriva a PHP anche con PHP-FPM o CGI (le AI collegate entrano con un token Bearer).
+RewriteCond %{HTTP:Authorization} .
+RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
+
 # Sicurezza: cartelle e file che dal web non si leggono mai (vedi htaccess-radice.txt per il dettaglio)
 RewriteRule ^(includes|logs|aggiornamenti|privato|data|sql|docs|tools|test|test-definizioni)(/|$) - [F,L]
 RewriteRule ^moduli/[^/]+/(includes|sql|docs)(/|$) - [F,L]

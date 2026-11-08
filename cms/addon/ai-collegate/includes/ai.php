@@ -313,13 +313,16 @@ function aic_connessioni(bool $tutte = false): array {
         . ($tutte ? '' : ' WHERE c.revocato IS NULL') . ' ORDER BY c.id DESC LIMIT 300')->fetchAll();
 }
 
-/** Pulizia: richieste e codici scaduti, token scaduti da più di un giorno, registro più vecchio di sei mesi. */
+/** Pulizia: richieste e codici scaduti, token scaduti da più di un giorno, registro più vecchio di sei mesi, client mai usati. */
 function aic_pulisci(): void {
     aic_schema();
     db()->exec('DELETE FROM ' . tbl('ai_richieste') . ' WHERE scade < NOW()');
     db()->exec('DELETE FROM ' . tbl('ai_codici') . ' WHERE scade < DATE_SUB(NOW(), INTERVAL 1 DAY)');
     db()->exec('DELETE FROM ' . tbl('ai_token') . ' WHERE scade IS NOT NULL AND scade < DATE_SUB(NOW(), INTERVAL 1 DAY)');
     db()->exec('DELETE FROM ' . tbl('ai_registro') . ' WHERE creato < DATE_SUB(NOW(), INTERVAL 180 DAY)');
+    // I client registrati da più di sette giorni che non hanno mai avuto un collegamento né un codice: registrazioni lasciate a metà.
+    db()->exec('DELETE c FROM ' . tbl('ai_client') . ' c LEFT JOIN ' . tbl('ai_connessioni') . ' n ON n.client_id = c.client_id LEFT JOIN ' . tbl('ai_codici') . ' k ON k.client_id = c.client_id
+        WHERE c.creato < DATE_SUB(NOW(), INTERVAL 7 DAY) AND n.id IS NULL AND k.id IS NULL');
 }
 
 // ------------------------------------------------------------
