@@ -140,6 +140,7 @@ switch ($cmd) {
         aic_schema();
         if ($cmd === 'stile-pulisci') {
             db()->exec('DELETE FROM ' . tbl('articles') . " WHERE slug LIKE 'ai-prova-stile-%'");
+            db()->exec('DELETE a FROM ' . tbl('articles') . ' a JOIN ' . tbl('ai_idee') . ' i ON i.articolo_id = a.id'); // le bozze scritte dalle idee
             db()->exec('DELETE FROM ' . tbl('categories') . " WHERE slug IN ('orto-prova', 'balcone-prova')");
             db()->exec('DELETE FROM ' . tbl('tags') . " WHERE slug IN ('lumache-prova', 'estate-prova')");
             db()->exec('DELETE FROM ' . tbl('ai_stile'));

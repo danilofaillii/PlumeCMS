@@ -252,8 +252,9 @@ function aic_impostazioni_salva(array $v): void {
 /** Testo semplice: niente tag, niente caratteri di controllo, niente caratteri a 4 byte, una riga se $righe è falso. */
 function aic_testo($s, int $max = 500, bool $righe = false): string {
     $s = is_scalar($s) ? mb_scrub((string)$s, 'UTF-8') : '';
-    $s = html_entity_decode(strip_tags($s), ENT_QUOTES | ENT_HTML5, 'UTF-8');
-    $s = strip_tags($s); // un tag scritto come entità (&lt;script&gt;) torna tag dopo la decodifica: via anche lui
+    $via = fn(string $x) => (string)preg_replace('~<(script|style)\b[\s\S]*?(</\1\s*>|$)~i', ' ', $x); // 2.34.0: anche il contenuto di script e stili
+    $s = html_entity_decode(strip_tags($via($s)), ENT_QUOTES | ENT_HTML5, 'UTF-8');
+    $s = strip_tags($via($s)); // un tag scritto come entità (&lt;script&gt;) torna tag dopo la decodifica: via anche lui
     $s = (string)preg_replace('/[\x{10000}-\x{10FFFF}]/u', '', $s);
     $s = (string)preg_replace($righe ? '/[\x00-\x09\x0B\x0C\x0E-\x1F\x7F]/' : '/[\x00-\x1F\x7F]+/', $righe ? '' : ' ', $s);
     if (!$righe) $s = (string)preg_replace('/\s+/u', ' ', $s);

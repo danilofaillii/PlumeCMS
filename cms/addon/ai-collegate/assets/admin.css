@@ -85,6 +85,7 @@
 .aic-mese{margin:1.4rem 0 .4rem}
 .aic-mese-titolo{font-size:1.15rem;margin:0 0 .6rem;padding:.4rem 0;border-bottom:2px solid var(--bordo-forte);color:var(--text)}
 .aic-idea .aic-azioni .btn-sm{min-height:44px}
-.aic-modifica summary{cursor:pointer;font-weight:600;min-height:44px;display:flex;align-items:center}
+.aic-modifica summary{cursor:pointer;font-weight:600;padding:.75rem 0;min-height:44px;box-sizing:border-box}
 .aic-modifica input[type=text],.aic-modifica input[type=date]{width:100%;min-width:0}
 @media (max-width:640px){.aic-misure{grid-template-columns:minmax(0,1fr)}.aic-misure dd{margin-bottom:.4rem}}
+.aic-profilo-form .btn,#versioni .btn,#misure .btn{min-height:44px}

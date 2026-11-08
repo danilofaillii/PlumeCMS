@@ -449,7 +449,7 @@ function aic_stile_coerenza(string $tipo, int $id): ?array {
     if ($h2 >= 1.5 && $x['h2'] === 0) $sc[] = ['misura' => 'sottotitoli', 'bozza' => 0, 'sito' => $h2, 'avviso' => 'La bozza non ha sottotitoli H2; gli articoli del sito ne hanno in media ' . $h2 . '.'];
     elseif ($h2 > 0 && $x['h2'] > max(4, $h2 * 2.5)) $sc[] = ['misura' => 'sottotitoli', 'bozza' => $x['h2'], 'sito' => $h2, 'avviso' => 'La bozza ha ' . $x['h2'] . ' sottotitoli H2; gli articoli del sito ne hanno in media ' . $h2 . '.'];
     $li = (float)($pm['link_interni']['per_articolo'] ?? 0);
-    if ($li >= 1 && $x['link_interni'] === 0) $sc[] = ['misura' => 'link interni', 'bozza' => 0, 'sito' => $li, 'avviso' => 'La bozza non ha link interni; gli articoli del sito ne hanno in media ' . $li . ' (vedi link_interni_consigliati di suggest_topics o review_article).'];
+    if ($li >= 0.5 && $x['link_interni'] === 0) $sc[] = ['misura' => 'link interni', 'bozza' => 0, 'sito' => $li, 'avviso' => 'La bozza non ha link interni; gli articoli del sito ne hanno in media ' . $li . ' (vedi link_interni_consigliati di suggest_topics o review_article).'];
     $faq = (int)($pm['domande_frequenti']['articoli_con_domande_frequenti_percento'] ?? 0);
     if ($faq >= 50 && $x['domande_frequenti'] === 0) $sc[] = ['misura' => 'domande frequenti', 'bozza' => 0, 'sito' => $faq . '%', 'avviso' => 'Il ' . $faq . '% degli articoli del sito ha domande frequenti; la bozza no (campo seo.domande_frequenti).'];
     $dq = (int)($pm['domande_ai_lettori']['articoli_con_domande_percento'] ?? 0);
