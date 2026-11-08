@@ -8,6 +8,8 @@
 //   token-altro-sito <chiave>   cambia l'audience dei token di quella connessione in un altro sito
 //   sql <query>                 una query con {p} al posto del prefisso (SELECT stampa le righe)
 //   redattore <crea|elimina>    l'utente redattore "ai_prova_red" (password Red-AI-Prova-2026)
+//   admin2fa <crea|elimina>     un amministratore "ai_prova_2fa" (password Adm-AI-Prova-2026) con il secondo fattore acceso; stampa il segreto
+//   totp <segreto>              il codice a sei cifre di adesso per quel segreto
 //   pagina-pubblicata <slug>    una pagina pubblicata fatta con l'editor (titolo e testo), per le proposte; stampa id e id dei widget
 //   pulisci                     toglie connessioni, token, codici, client, proposte, registro, foto dell'addon e i contenuti "ai-prova-*"
 //   tentativi                   svuota la tabella dei tentativi (limiti di velocità e forza bruta)
@@ -58,6 +60,22 @@ switch ($cmd) {
             db()->prepare('INSERT INTO ' . tbl('users') . ' (' . implode(',', array_keys($v)) . ') VALUES (' . implode(',', array_fill(0, count($v), '?')) . ')')->execute(array_values($v));
         }
         $esci(['ok' => true]);
+    case 'admin2fa':
+        require_once $dir . '/includes/sicurezza.php';
+        sicurezza_schema();
+        db()->prepare('DELETE FROM ' . tbl('users') . ' WHERE username = ?')->execute(['ai_prova_2fa']);
+        $segreto = '';
+        if (($argv[3] ?? '') === 'crea') {
+            $segreto = sicurezza_totp_segreto();
+            $cols = array_column(db()->query('SHOW COLUMNS FROM ' . tbl('users'))->fetchAll(), 'Field');
+            $v = ['username' => 'ai_prova_2fa', 'password_hash' => password_hash('Adm-AI-Prova-2026', PASSWORD_DEFAULT), 'role' => 'admin', 'email' => 'admin2fa@ai-prova.it', 'totp_segreto' => $segreto, 'totp_attivo' => 1, 'totp_recupero' => '[]'];
+            $v = array_intersect_key($v, array_flip($cols));
+            db()->prepare('INSERT INTO ' . tbl('users') . ' (' . implode(',', array_keys($v)) . ') VALUES (' . implode(',', array_fill(0, count($v), '?')) . ')')->execute(array_values($v));
+        }
+        $esci(['segreto' => $segreto]);
+    case 'totp':
+        require_once $dir . '/includes/sicurezza.php';
+        $esci(['codice' => sicurezza_totp_codice((string)($argv[3] ?? ''), (int)floor(time() / 30))]);
     case 'pagina-pubblicata':
         require_once $dir . '/includes/editor-controlli.php';
         require_once $dir . '/includes/editor.php';

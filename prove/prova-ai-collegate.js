@@ -54,7 +54,7 @@ async function registra(nome) {
 }
 function pkce() { const v = b64u(crypto.randomBytes(32)); return { v, c: b64u(crypto.createHash('sha256').update(v).digest()) }; }
 /** Il percorso nel browser: authorize -> login -> consenso -> ritorno al client. Ritorna i parametri del ritorno. */
-async function autorizza(br, clientId, sfida, { scope = 'leggi bozze proposte foto', togli = [], rifiuta = false, utente = UTENTE, password = PASSWORD, state = 'st-' + Date.now(), foto = '' } = {}) {
+async function autorizza(br, clientId, sfida, { scope = 'leggi bozze proposte foto', togli = [], rifiuta = false, utente = UTENTE, password = PASSWORD, state = 'st-' + Date.now(), foto = '', segreto2fa = '' } = {}) {
   const c = await br.newContext({ viewport: { width: 1280, height: 900 } }); const p = await c.newPage();
   let ritorno = null;
   await p.route('http://127.0.0.1:9/**', r => { ritorno = new URL(r.request().url()); r.fulfill({ status: 200, contentType: 'text/html', body: '<p>ritorno</p>' }); });
@@ -63,7 +63,13 @@ async function autorizza(br, clientId, sfida, { scope = 'leggi bozze proposte fo
   const alLogin = /login\.php\?dopo=ai-collegate&r=[a-f0-9]{32}/.test(p.url());
   await p.fill('#username', utente); await p.fill('#password', password);
   await Promise.all([p.waitForNavigation(), p.click('button[type=submit]')]);
-  const info = { alLogin, urlConsenso: p.url(), pagina: p, contesto: c, state };
+  let passo2 = false;
+  if (segreto2fa && await p.locator('#codice').count()) {
+    passo2 = true;
+    await p.fill('#codice', cli('totp', segreto2fa).codice);
+    await Promise.all([p.waitForNavigation(), p.click('button[type=submit]')]);
+  }
+  const info = { alLogin, passo2, urlConsenso: p.url(), pagina: p, contesto: c, state };
   if (!/p=consenso/.test(p.url())) return info;
   info.testo = await p.locator('#aic-consenso').innerText();
   info.caselle = await p.locator('#aic-consenso input[name="permessi[]"]').evaluateAll(l => l.map(x => x.value + ':' + x.checked));
@@ -267,6 +273,15 @@ async function token(corpo) { return http('POST', MCP + '/token', { corpo, tipo:
   ok('il redattore non arriva al consenso (pagina riservata all\'amministratore)', !/p=consenso/.test(a5.urlConsenso) && !a5.ritorno, a5.urlConsenso);
   await a5.contesto.close();
   cli('redattore', 'elimina');
+  // Un amministratore con il secondo fattore: dopo la password chiede il codice e poi torna al consenso.
+  const seg = cli('admin2fa', 'crea').segreto;
+  const k5 = pkce();
+  const a6 = await autorizza(br, CID, k5.c, { utente: 'ai_prova_2fa', password: 'Adm-AI-Prova-2026', segreto2fa: seg });
+  await a6.contesto.close();
+  const t7 = a6.ritorno ? await token({ grant_type: 'authorization_code', code: a6.ritorno.searchParams.get('code'), redirect_uri: CB, client_id: CID, code_verifier: k5.v }) : { stato: 0 };
+  ok('amministratore con il secondo fattore: password, codice, consenso e token', a6.passo2 && /p=consenso/.test(a6.urlConsenso) && t7.stato === 200, [a6.passo2, a6.urlConsenso, t7.stato]);
+  if (t7.json) await http('POST', MCP + '/revoke', { corpo: { token: t7.json.refresh_token, client_id: CID }, tipo: 'form' });
+  cli('admin2fa', 'elimina');
 
   // === 11. Chiave personale dal pannello, REST e OpenAPI
   await p.fill('#aic-nome-chiave', 'GPT del negozio');
