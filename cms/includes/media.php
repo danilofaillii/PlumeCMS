@@ -124,7 +124,10 @@ function media_carica(?array $f, string $cartella = 'pagine', int $maxMb = 8): a
     $base = trim(substr(preg_replace('/[^a-z0-9-]+/', '-', strtolower(pathinfo($f['name'], PATHINFO_FILENAME))), 0, 60), '-') ?: 'immagine';
     $nome = $base . '-' . substr(bin2hex(random_bytes(3)), 0, 6) . '.' . $ext;
     while (file_exists("$dir/$nome")) $nome = $base . '-' . substr(bin2hex(random_bytes(4)), 0, 8) . '.' . $ext;
-    if (!move_uploaded_file($f['tmp_name'], "$dir/$nome")) return ['errore' => 'Il file non si è salvato.'];
+    // 2.32.0: 'da_server' => true per un file scaricato dal CMS stesso (le foto dell'addon AI collegate), che non arriva da un
+    // modulo: si sposta con rename, solo dalla cartella temporanea di sistema. $_FILES non può avere questa chiave.
+    $daServer = ($f['da_server'] ?? false) === true && str_starts_with((string)realpath((string)$f['tmp_name']), rtrim((string)realpath(sys_get_temp_dir()), '/') . '/');
+    if (!($daServer ? @rename($f['tmp_name'], "$dir/$nome") || @copy($f['tmp_name'], "$dir/$nome") : move_uploaded_file($f['tmp_name'], "$dir/$nome"))) return ['errore' => 'Il file non si è salvato.'];
     if ($ext === 'svg') file_put_contents("$dir/$nome", $svgPulito);
     else {
         // 1.4.0: foto più leggere (lato massimo, orientamento, WebP accanto); se non si può, la ripulitura di sempre.

@@ -1,0 +1,44 @@
+/* Addon AI collegate: le pagine del pannello. Solo variabili degli aspetti (Aria, Bottega, Cosmo, Lavagna). */
+.aic-copia{width:100%;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:.92rem;min-width:0}
+.aic-regola{background:var(--info-chiaro);color:var(--info-testo);border:1px solid var(--info-bordo);border-radius:var(--radius);padding:.7rem .9rem;margin:.9rem 0}
+.aic-passi{margin:.6rem 0 .6rem 1.2rem;padding:0;line-height:1.55}
+.aic-passi li{margin:.25rem 0}
+.aic-chiave{background:var(--sage-light);color:var(--successo-testo);border:1px solid var(--successo-bordo);border-radius:var(--radius);padding:.8rem 1rem;margin:0 0 1rem}
+.aic-chiave label{display:block;font-weight:600;margin:.4rem 0 .3rem}
+.aic-permessi{border:1px solid var(--border);border-radius:var(--radius);padding:.6rem .9rem;margin:.6rem 0 1rem;min-width:0}
+.aic-permessi legend{font-weight:600;padding:0 .3rem}
+.aic-spunta{display:flex;gap:.55rem;align-items:flex-start;margin:.35rem 0;font-weight:400;min-height:24px;cursor:pointer}
+.aic-spunta input{margin-top:.25rem;width:18px;height:18px;flex:none}
+.aic-nuova-chiave{margin-top:1rem;border-top:1px solid var(--border);padding-top:1rem}
+.aic-consenso{max-width:44rem}
+.aic-chi{font-size:1.05rem}
+.aic-dati{display:grid;grid-template-columns:auto minmax(0,1fr);gap:.3rem .9rem;margin:.6rem 0}
+.aic-dati dt{color:var(--text-muted)}
+.aic-dati dd{margin:0;overflow-wrap:anywhere}
+.aic-azioni{display:flex;flex-wrap:wrap;gap:.6rem;align-items:center;margin:.8rem 0 .2rem}
+.aic-azioni form{margin:0}
+.aic-azioni .btn{min-height:44px}
+.aic-gruppo{display:flex;flex-wrap:wrap;gap:1rem;align-items:center;margin:0 0 1rem}
+.aic-proposta h3 a{color:inherit}
+.aic-motivo{margin:.4rem 0 .8rem;overflow-wrap:anywhere}
+.aic-confronto{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:.8rem}
+.aic-etichetta{font-size:.8rem;font-weight:600;text-transform:uppercase;letter-spacing:.04em;color:var(--text-muted);margin:0 0 .3rem}
+.aic-valore{border:1px solid var(--bordo-campo);border-radius:8px;padding:.6rem .7rem;background:var(--campo);color:var(--text);overflow-wrap:anywhere;max-height:22rem;overflow:auto;font-size:.92rem;line-height:1.5}
+.aic-prima{border-left:4px solid var(--bordo-forte)}
+.aic-dopo{border-left:4px solid var(--coral)}
+.aic-anteprima{max-width:100%;max-height:160px;border-radius:6px;display:block;margin:0 0 .4rem}
+.aic-html pre{white-space:pre-wrap;overflow-wrap:anywhere;max-height:16rem;overflow:auto;font-size:.82rem}
+.aic-modifica{margin-top:.6rem}
+.aic-modifica textarea{width:100%;min-width:0}
+.aic-stato{display:inline-block;font-size:.75rem;font-weight:600;padding:.1rem .5rem;border-radius:999px;border:1px solid var(--border);color:var(--text);vertical-align:middle}
+.aic-stato.aic-attesa{border-color:var(--attenzione-bordo);color:var(--attenzione-testo);background:var(--mustard-light)}
+.aic-stato.aic-approvata{border-color:var(--successo-bordo);color:var(--successo-testo);background:var(--sage-light)}
+.aic-stato.aic-scartata{border-color:var(--errore-bordo);color:var(--errore-testo);background:var(--errore-chiaro)}
+.aic-esito{font-weight:600}
+.aic-esito-ok{color:var(--successo-testo)}
+.aic-esito-errore{color:var(--attenzione-testo)}
+.aic-esito-negato{color:var(--errore-testo)}
+.aic-filtro{display:flex;flex-wrap:wrap;gap:.8rem;align-items:flex-end;margin:0 0 1rem}
+.aic-filtro .form-group{margin:0;min-width:10rem}
+.aic-filtri{margin-top:-.4rem}
+@media (max-width:640px){.aic-confronto{grid-template-columns:minmax(0,1fr)}.aic-dati{grid-template-columns:minmax(0,1fr)}}

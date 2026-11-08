@@ -3,7 +3,11 @@ require_once __DIR__ . '/includes/auth.php';
 // sicurezza (attacco 2): pagina per anonimi, nessun dettaglio tecnico a video; tutto nel log.
 ini_set('display_errors', '0');
 
-if (is_logged_in()) { header('Location: index.php'); exit; }
+// Dove andare dopo l'accesso: la dashboard, oppure Copia del sito (?dopo=copia-sito), oppure (2.32.0) il consenso di
+// un'AI che chiede di collegarsi (?dopo=ai-collegate&r=<richiesta>, addon AI collegate). Il modulo ripete la query nel POST.
+$dopoLogin = (($_GET['dopo'] ?? '') === 'copia-sito') ? 'copia-sito.php?ultimo=1' : 'index.php';
+if (($_GET['dopo'] ?? '') === 'ai-collegate' && preg_match('/^[a-f0-9]{32}$/', (string)($_GET['r'] ?? ''))) $dopoLogin = 'addon-pagina.php?a=ai-collegate&p=consenso&r=' . $_GET['r'];
+if (is_logged_in()) { header('Location: ' . $dopoLogin); exit; }
 
 $error = '';
 $avviso = '';
@@ -14,8 +18,6 @@ $motivi = ['scaduta' => 'La sessione è scaduta: entra di nuovo.', 'inattiva' =>
     // 2.25.1: dopo un ripristino da una copia con altri utenti si rientra con quelli, e si torna in Copia del sito con il registro.
     'ripristino' => 'Il sito è stato ripristinato da una copia che ha altri utenti: entra con il nome e la password di quella copia. Dopo, il registro del ripristino ti aspetta in Copia del sito.'];
 if (isset($_GET['motivo']) && isset($motivi[$_GET['motivo']])) $avviso = $motivi[$_GET['motivo']];
-// Dove andare dopo l'accesso: la dashboard, oppure Copia del sito (?dopo=copia-sito). Il modulo ripete la query nel POST.
-$dopoLogin = (($_GET['dopo'] ?? '') === 'copia-sito') ? 'copia-sito.php?ultimo=1' : 'index.php';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     try {
