@@ -6383,7 +6383,7 @@ Prove:
   revoca da endpoint e pannello; Rifiuta; redattore; tutti gli strumenti; bozza mai pubblicata; proposte approvate, corrette, in
   gruppo, scartate; foto con autore e licenza dai tre archivi finti; chiave personale, REST e OpenAPI; `get_stats` solo con
   Statistiche; le quattro pagine a 390 px). Usa `prove/ai-cli.php` e `prove/foto-finte.php` (va acceso prima su quella porta).
-- `tools/sicurezza-prova.js`, gruppo 46 (27 attacchi): accende l'addon e il server finto delle foto (`SIC_FOTO`, 9298), alla fine
+- `tools/sicurezza-prova.js`, gruppo 46 (26 attacchi; 488 in tutto sulla 2.32.0): accende l'addon e il server finto delle foto (`SIC_FOTO`, 9298), alla fine
   rispegne l'addon se era spento e toglie le righe `limite:aic:%` dai tentativi.
 
 ## Appendice A. Dove i documenti vecchi non corrispondono al codice
