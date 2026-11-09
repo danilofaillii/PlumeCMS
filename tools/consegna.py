@@ -156,6 +156,10 @@ def main():
         errore(f'manca {sito}' + (': ci sono solo le parti piccole, rifallo senza --max-kb' if parti else ': prima python3 sito-plumecms/costruisci.py'))
     senza_pagine = '--senza-pagine' in sys.argv
     prima = versione_prima()
+    # 2.36.0: la voce "seo" la conosce il motore dalla 2.35.0. Se la versione installata prima è almeno quella, il pacchetto
+    # unico la può portare (prima la consegna si fermava sempre con "voci che il motore installato non conosce: seo").
+    if prima is not None and versione(prima) >= (2, 35, 0):
+        VOCI_NOTE.add('seo')
     cambiato = False
     if prima is None:
         print(f'avviso: nessuna versione prima della {V} in releases/cms: il motore dei pacchetti non si può confrontare, escono due pacchetti')
