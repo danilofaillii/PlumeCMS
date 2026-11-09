@@ -6813,7 +6813,7 @@ server nuovo. Dopo ogni blocco salva dove è arrivato. All'inizio di un giro, se
 quelle salvate (un giro ucciso fra l'INSERT e il salvataggio), la tabella si rifà. Finite tutte, conta le righe sui due
 database: le tabelle diverse (una riga scritta durante la copia: un accesso, un tentativo respinto) si ricopiano, al più tre
 volte, poi `CambiaDbErrore`. Ogni errore passa da `cambiadb_fallito()` (`:550`): via le tabelle di lavoro dal database nuovo
-(`cambiadb_dest_disfa()` `:569`, solo i nomi del lavoro), via il lavoro, l'esito in `ultimo.json`: il sito torna normale sul
+(`cambiadb_dest_disfa()` `:570`, solo i nomi del lavoro), via il lavoro, l'esito in `ultimo.json`: il sito torna normale sul
 database di prima, che si è solo letto.
 
 ### 49.4 Manutenzione
@@ -6829,35 +6829,35 @@ recente della scadenza, e nella fase manuale non quando il config indica già il
 
 ### 49.5 Scambio e passaggio
 
-`cambiadb_scambia_e_passa()` (`:588`): ricontrolla che nel database nuovo non siano comparse tabelle col prefisso (senza
+`cambiadb_scambia_e_passa()` (`:589`): ricontrolla che nel database nuovo non siano comparse tabelle col prefisso (senza
 "Sostituisci"), una vista con il nome di una nostra tabella ferma tutto; poi UNA `RENAME TABLE` (`lock_wait_timeout` 10): le
 tabelle già presenti col prefisso in parcheggio `vec<hex>_`, le tabelle di appoggio al nome vero; le due viste degli articoli
-rifatte come `sito_viste()` con il prefisso nuovo; un ultimo conteggio sui nomi veri. Poi `cambiadb_config_passa()` (`:825`):
-legge il config, prepara il nuovo con `cambiadb_config_nuovo()` (`:736`: una riga `define()` per DB_HOST, DB_NAME, DB_USER,
+rifatte come `sito_viste()` con il prefisso nuovo; un ultimo conteggio sui nomi veri. Poi `cambiadb_config_passa()` (`:828`):
+legge il config, prepara il nuovo con `cambiadb_config_nuovo()` (`:737`: una riga `define()` per DB_HOST, DB_NAME, DB_USER,
 DB_PASS e CMS_PREFISSO con `var_export()`, come l'installatore, DB_HOST con `;port=N` se la porta non è 3306; CMS_PREFISSO si
 aggiunge sotto DB_PASS se manca; se una riga non c'è esattamente una volta nella forma dell'installatore, `null` e si passa a
-mano), controlla che file e cartella si scrivano (`cambiadb_config_scrivibile()` `:779`), salva la copia di prima
-(`cambiadb_config_salva_copia()` `:754`: `includes/config.local.prima-AAAAMMGG-HHMMSS.php`, 0600, che comincia con
-`CAMBIADB_GUARDIA` `:751`, `<?php http_response_code(404); exit; ... ?>`; se `includes/` non si scrive, in
+mano), controlla che file e cartella si scrivano (`cambiadb_config_scrivibile()` `:780`), salva la copia di prima
+(`cambiadb_config_salva_copia()` `:755`: `includes/config.local.prima-AAAAMMGG-HHMMSS.php`, 0600, che comincia con
+`CAMBIADB_GUARDIA` `:752`, `<?php http_response_code(404); exit; ... ?>`; se `includes/` non si scrive, in
 `aggiornamenti/cambia-db/`; `includes/` è vietata dal `.htaccess`, da Nginx e dal router delle prove, e anche servito come PHP
 il file esce subito), scrive con un file temporaneo nella stessa cartella e `rename()` con i permessi di prima
-(`cambiadb_config_scrivi()` `:785`, `agg_opcache_dimentica()` sul config), rilegge il file e ci si collega con i valori letti
-dal tokenizzatore di PHP (`cambiadb_config_valori()` `:700`, il file non si esegue; `cambiadb_config_controlla()` `:801`: users con
+(`cambiadb_config_scrivi()` `:786`, `agg_opcache_dimentica()` sul config), rilegge il file e ci si collega con i valori letti
+dal tokenizzatore di PHP (`cambiadb_config_valori()` `:701`, il file non si esegue; `cambiadb_config_controlla()` `:802`: users con
 almeno una riga, settings, la vista degli articoli). Se il controllo fallisce rimette il config di prima; lo scambio nel
 database nuovo si disfa con una RENAME inversa (le parcheggiate tornano al loro nome). Riuscito: `cambiadb_dopo_passaggio()`
-(`:636`) cancella le parcheggiate, scrive `ultimo.json`, toglie il lavoro. La richiesta dopo usa il database nuovo.
+(`:637`) cancella le parcheggiate, scrive `ultimo.json`, toglie il lavoro. La richiesta dopo usa il database nuovo.
 
 **Config non scrivibile** (fase `manuale`): il lavoro resta con `fase = manuale` (il sito in manutenzione fino a
 `CAMBIADB_SCADENZA_MANUALE`), una copia del config se la cartella lo permette, e la pagina mostra le cinque righe
-(`cambiadb_righe_manuali()`) con i passi di cPanel. "Ho cambiato il file, controlla" (`cambiadb_controlla_manuale()` `:848`):
+(`cambiadb_righe_manuali()`) con i passi di cPanel. "Ho cambiato il file, controlla" (`cambiadb_controlla_manuale()` `:851`):
 il config deve indicare host, nome, utente e prefisso del database nuovo (`cambiadb_config_e_dest()`), poi lo stesso controllo;
-qui `db()` è già il database nuovo e le parcheggiate si tolgono da lì. **Annulla** (`cambiadb_annulla()` `:653`) disfa il
-database nuovo e toglie il lavoro, mai se il config indica già il nuovo. **Ricomincia** (`cambiadb_ricomincia()` `:674`, con la
+qui `db()` è già il database nuovo e le parcheggiate si tolgono da lì. **Annulla** (`cambiadb_annulla()` `:654`) disfa il
+database nuovo e toglie il lavoro, mai se il config indica già il nuovo. **Ricomincia** (`cambiadb_ricomincia()` `:675`, con la
 password dell'amministratore): dopo la scadenza il sito ha lavorato sul database di prima, quindi la copia si rifà da capo.
 
 ### 49.6 Tornare indietro
 
-`cambiadb_torna()` (`:868`): solo dopo un passaggio `fatto` con la copia del config, con la spunta di conferma e la password
+`cambiadb_torna()` (`:871`): solo dopo un passaggio `fatto` con la copia del config, con la spunta di conferma e la password
 dell'amministratore (`admin/cambia-db.php:81`). Prima controlla che il database di prima risponda e abbia le tabelle (con i
 valori della copia), salva il config di adesso come un'altra copia e rimette quello di prima. Se il config non si scrive mostra
 le righe da rimettere. Il database di prima non si cancella mai da plumeCMS; quello nuovo resta com'è.

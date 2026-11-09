@@ -799,13 +799,14 @@ function cambiadb_config_scrivi(string $testo): bool {
  * Il controllo dopo il passaggio, con i valori riletti dal file scritto: ci si collega, users e settings si leggono, c'è
  * almeno un utente. Ritorna '' se va bene, altrimenti il motivo in parole semplici.
  */
-function cambiadb_config_controlla(string $testo): string {
+function cambiadb_config_controlla(string $testo, string $prefissoSenzaRiga = ''): string {
     if (defined('CMS_CAMBIADB_GUASTO') && CMS_CAMBIADB_GUASTO === 'controllo') return 'guasto di prova (CMS_CAMBIADB_GUASTO).'; // solo per le prove
     $v = cambiadb_config_valori($testo);
     foreach (['DB_HOST', 'DB_NAME', 'DB_USER', 'DB_PASS'] as $k) if (!isset($v[$k])) return 'Nel config scritto non trovo ' . $k . '.';
     $host = $v['DB_HOST']; $porta = 3306;
     if (preg_match('/^(.*?);port=(\d+)$/', $host, $m)) { $host = $m[1]; $porta = (int)$m[2]; }
-    $pref = $v['CMS_PREFISSO'] ?? 'newdf_';
+    // Un config senza CMS_PREFISSO (installazioni di prima) usa il predefinito di cms.php: chi chiama sa qual era.
+    $pref = $v['CMS_PREFISSO'] ?? ($prefissoSenzaRiga !== '' ? $prefissoSenzaRiga : DB_PREFIX);
     try {
         $pdo = cambiadb_connetti(['host' => $host, 'porta' => $porta, 'nome' => $v['DB_NAME'], 'utente' => $v['DB_USER'], 'prefisso' => $pref], $v['DB_PASS'], 5);
         $n = (int)$pdo->query('SELECT COUNT(*) FROM `' . $pref . 'users`')->fetchColumn();
@@ -872,7 +873,7 @@ function cambiadb_torna(string $utente): array {
     if (!$u || ($u['fase'] ?? '') !== 'fatto') throw new CambiaDbErrore('Non c\'è un cambio da annullare.');
     $vecchio = (string)($u['backup'] ?? '') !== '' ? cambiadb_config_leggi_copia((string)$u['backup']) : null;
     if ($vecchio === null) throw new CambiaDbErrore('Non trovo la copia del config di prima (il cambio è stato completato incollando le righe a mano). Rimetti a mano nel file includes/config.local.php le righe del database di prima.');
-    $motivo = cambiadb_config_controlla($vecchio);
+    $motivo = cambiadb_config_controlla($vecchio, (string)($u['prima']['prefisso'] ?? ''));
     if ($motivo !== '') throw new CambiaDbErrore('Il database di prima non risponde più come serve: ' . $motivo . ' Il sito resta sul database nuovo.');
     $f = cambiadb_config_file();
     $adesso = (string)@file_get_contents($f);
