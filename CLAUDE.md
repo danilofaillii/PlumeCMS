@@ -109,7 +109,7 @@ Sono gli unici in `cms/docs/`, nello zip, nel sito di plumeCMS e nella pagina Do
 - **Pacchetto di aggiornamento** per un'installazione esistente:
   `python3 tools/cms-pacchetto.py --aggiornamento`. Si carica dal pannello,
   Impostazioni, Aggiornamenti.
-- **Versione**: `cms/VERSIONE` (oggi 2.36.0; sempre tre numeri: "beta" va nel CHANGELOG, mai nel nome dello zip, se no la serie "ultima" del Download non lo riconosce) e una voce in `cms/CHANGELOG.md` a ogni
+- **Versione**: `cms/VERSIONE` (oggi 2.37.0; sempre tre numeri: "beta" va nel CHANGELOG, mai nel nome dello zip, se no la serie "ultima" del Download non lo riconosce) e una voce in `cms/CHANGELOG.md` a ogni
   zip con contenuto diverso. Mai cambiare il contenuto di una versione già data.
 - **Prove** prima di dire finito:
   - `php -n -d short_open_tag=1 -l` su ogni file PHP toccato, `node --check` sui js;
@@ -167,6 +167,24 @@ Le decisioni complete, con data e perché, stanno nel second brain, `plumecms/de
 - **Nome: plumeCMS** (26 ottobre 2026).
 
 ## Stato al 31 ottobre 2026
+
+Fatto: plumeCMS 2.37.0 (9 novembre, 13:29-15:45): **Cambia database** in Impostazioni (richiesta di Danilo: "migrare tutto il db su un altro DB e
+a fine copia utilizzare il nuovo DB"). Agente nella worktree `/home/user/wt-db`, ramo `cambia-db` (13:30-14:46, in parallelo alla 2.36.0), unito da me alla
+2.36.0 (conflitti solo in VERSIONE, CHANGELOG e NOVITA). `includes/cambia-db.php` e `admin/cambia-db.php`: Prova la connessione (3 s, versione, permessi
+con tabella e vista di prova, tabelle col prefisso già presenti e spunta "Sostituisci", stesso database riconosciuto dal server, errori in parole, 10 prove
+ogni 10 minuti), copia a giri in tabelle di appoggio `rip<hex>_` e una RENAME sola, collazioni del server di arrivo (`copia_collazioni_di(PDO)` in
+`copia-sito.php`), conteggio delle righe tabella per tabella, sito in 503 e pannello solo sulla pagina del cambio durante la copia (controllo in
+`config.php` e `auth.php`; dopo 10 minuti senza giri torna normale da solo), config salvato in `includes/config.local.prima-<data>.php` (comincia con
+404 ed exit) e scritto con file temporaneo e rinomina, controllo dopo il passaggio con ritorno indietro se fallisce, righe da incollare se il config non
+si scrive, "Torna al database di prima", password del database nuovo cifrata con CMS_SEGRETO e mai nei log; il database di prima non si cancella mai.
+Costanti per le prove `CMS_CAMBIADB_PAUSA`, `_SCADENZA`, `_GIRO`, `_GUASTO`. Manuale d'uso capitolo 29 "Cambiare database" (schermate 27-cambia-db,
+27-cambia-db-fatto), tecnico 49, `prove/prova-cambia-db.js` (siti serviti dall'utente non root `cdbprova` in `/srv/cdb-prova`, `$S/db/sito-utente.sh`;
+utenti MySQL `cdbutente` e `cdbpoco` sui tre server; lo scenario errori vuole il database `cdb_poco`), gruppo 50 degli attacchi (14). Prove mie sullo zip
+(`$S/v19/batteria.sh`, rilanciata dopo il riavvio del contenitore delle 15:12 che aveva spento Docker): install 38/38 radice e cartella, cambia database
+verso MariaDB 10.6 e MySQL 5.7 22/22, verso MySQL 8 con tutti gli scenari 52/53 e poi 13/13 sullo scenario errori rifatto con `cdb_poco` (il KO era la
+prova senza il database), in cartella 22/22, aggiornamento 2.36.0 -> 2.37.0 13/13 con 1 foto su 20 a 1 livello, zone sul sito aggiornato 81/81, attacchi
+538/538, pacchetto unico 13/13, sito di plumeCMS 132/132, zero errori fatali. PDF 13321 KB, zip 2632 KB. **Non provato**: hosting cPanel vero, un MySQL
+remoto vero, database grandi (provato con circa 3.800 righe), PHP 8.4.27 sul pannello intero.
 
 Fatto: plumeCMS 2.36.0 (9 novembre, 12:49-14:52): **pagine per zona senza limite** (richiesta di Danilo: "il limite di 200 va tolto, ci sono siti
 che lo superano di tanto"; il 200 era una scelta prudente della 2.28.0, registro in un'unica impostazione letta a ogni pagina). Agente nella worktree
