@@ -168,7 +168,7 @@ Le decisioni complete, con data e perché, stanno nel second brain, `plumecms/de
 
 ## Stato al 31 ottobre 2026
 
-Fatto: plumeCMS 2.36.0 (9 novembre, 12:49-15:00): **pagine per zona senza limite** (richiesta di Danilo: "il limite di 200 va tolto, ci sono siti
+Fatto: plumeCMS 2.36.0 (9 novembre, 12:49-14:52): **pagine per zona senza limite** (richiesta di Danilo: "il limite di 200 va tolto, ci sono siti
 che lo superano di tanto"; il 200 era una scelta prudente della 2.28.0, registro in un'unica impostazione letta a ogni pagina). Agente nella worktree
 `/home/user/wt-zone2`, ramo `zone-senza-limite` (12:50-13:36), riletto, unito e riprovato da me. Registro nella tabella `<prefisso>zone` (`zone_installa()`,
 utf8mb4, `pagina` unica), migrazione una volta da `seo_config.zone.elenco` (`zone_migra()`, transazione, `migrato` e `voci` nel JSON; con `voci` 0 nessuna
