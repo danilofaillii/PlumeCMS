@@ -168,7 +168,7 @@ Le decisioni complete, con data e perché, stanno nel second brain, `plumecms/de
 
 ## Stato al 31 ottobre 2026
 
-Fatto: plumeCMS 2.37.1 (9 novembre, 16:05-17:40): **le pagine per zona rimaste fuori dal registro** (il tetto di 200 della 2.35.0:
+Fatto: plumeCMS 2.37.1 (9 novembre, 17:04-17:19, ore dal clone e dal commit): **le pagine per zona rimaste fuori dal registro** (il tetto di 200 della 2.35.0:
 il laboratorio con 262 pagine pubblicate e 62 senza Service). Il tetto era già tolto nella 2.36.0, ma le pagine perse non tornavano:
 `zone_fuori_registro()` le riconosce dal widget Altre zone e dall'apertura, il pannello Zone le propone alla prima apertura
 (Rimettile nel registro / Lasciale fuori), i doppioni restano fuori. Manuale tecnico 45.9. Prove: `prova-zone.js` 90/90 in radice su
