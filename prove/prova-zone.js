@@ -278,8 +278,8 @@ async function pubblicaDallEditor(p, id) {
   ok('2.36.0: Cerca "località 123" (minuscole): una riga, "Località 123", e "Mostra tutte"', /cerca=/.test(p.url()) && await p.locator('#zn-tabella tbody tr').count() === 1 && (await p.locator('#zn-tabella tbody tr td:nth-child(2)').innerText()) === LOC(123) && await p.locator('#zn-filtro a[href="zone.php"]').count() === 1);
   await p.goto(B + '/admin/zone.php?cerca=Casalecchio', { waitUntil: 'networkidle' });
   ok('2.36.0: Cerca "Casalecchio": la pagina di Idraulico (anche nel titolo)', await p.locator('#zn-tabella tbody tr').count() === 1 && /Idraulico/.test(await p.locator('#zn-tabella tbody tr').innerText()));
-  await p.goto(B + '/admin/zone.php?servizio=Giardiniere&cerca=' + encodeURIComponent('Località 45'), { waitUntil: 'networkidle' });
-  ok('2.36.0: ricerca e servizio insieme: "Località 45" fra i Giardiniere dà 045 e 450', (await p.locator('#zn-tabella tbody tr td:nth-child(2)').allInnerTexts()).join(',') === LOC(45) + ',' + LOC(450));
+  await p.goto(B + '/admin/zone.php?servizio=Giardiniere&cerca=' + encodeURIComponent('Località 04'), { waitUntil: 'networkidle' });
+  ok('2.36.0: ricerca e servizio insieme: "Località 04" fra i Giardiniere dà le dieci da 040 a 049', (await p.locator('#zn-tabella tbody tr td:nth-child(2)').allInnerTexts()).join(',') === Array.from({ length: 10 }, (_, i) => LOC(40 + i)).join(','));
   for (const q of ['%', '_', '\\']) {
     await p.goto(B + '/admin/zone.php?cerca=' + encodeURIComponent(q), { waitUntil: 'networkidle' });
     ok('2.36.0: Cerca "' + q + '" è testo, non un carattere jolly: nessuna riga e il messaggio che suggerisce cosa provare', await p.locator('#zn-tabella').count() === 0 && /Nessuna pagina per zona per/.test(await p.locator('#zn-nessuna').innerText()) && /parola più corta/.test(await p.locator('#zn-nessuna').innerText()));

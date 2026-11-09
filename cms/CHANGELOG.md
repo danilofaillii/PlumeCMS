@@ -2,6 +2,28 @@
 
 Il prodotto si chiama **plumeCMS** (nome scelto il 26 ottobre 2026; prima, per poche ore, "CarbonaraCMS", e ancora prima il provvisorio "Officina": gli zip vecchi si chiamavano `officina-*` e `carbonaracms-*`).
 
+## 2.36.0 (9 novembre 2026) - Pagine per zona senza limite
+
+- **Niente più tetto di 200 pagine per zona.** Richiesta di Danilo: "ci sono siti che lo superano di tanto". Il registro delle
+  pagine per zona passa dalla configurazione SEO (un JSON letto a ogni pagina) a una tabella sua, `<prefisso>zone`, che nasce al
+  primo uso. Il sito legge solo la zona che gli serve; un sito senza pagine per zona non fa nessuna query in più e non crea la
+  tabella (provato: stesse query della 2.35.0 su home, Servizi, Contatti e sitemap).
+- **Il registro di prima passa da solo nella tabella**, una volta, alla prima pagina aperta dopo l'aggiornamento: pagine per zona,
+  dati per Google, widget Altre zone, sitemap e llms.txt restano identici al byte. Se la copia non riesce, niente si perde: il
+  registro di prima resta nella configurazione, il pannello Zone lo dice e la copia si riprova.
+- **Fino a 100 zone per giro** (erano 30). Su un hosting lento il giro si fa a pezzi di 15 secondi e la pagina continua da sola
+  ("Sto creando le bozze a pezzi").
+- **L'elenco di Zone a pagine** da 50, con la **ricerca** per zona, servizio o titolo oltre alla tendina dei servizi, e i numeri in
+  cima (in tutto, pubblicate, bozze con riquadri da scrivere) contati dal database. "Togli dal registro" torna alla stessa pagina.
+- **Widget Altre zone: Quante mostrarne** (0 = tutte, come prima: le pagine già fatte non cambiano) e **Quali mostrare** (le prime in
+  ordine alfabetico, oppure le più vicine a questa zona nell'elenco, metà prima e metà dopo, così ogni pagina ne mostra di diverse).
+  Quando un servizio ha più di 30 pagine pubblicate e il widget le mostra tutte, il pannello Zone consiglia di metterne fra 12 e 20.
+- **llms.txt con migliaia di zone**: oltre 50 pagine per zona, una riga per servizio con dieci esempi e il rimando alla sitemap
+  invece di una riga per pagina (con 5.000 zone: 1,4 KB invece di 610 KB). Sotto le 50 il file non cambia.
+- Corretto: il widget Altre zone leggeva la home dal database una volta per link (con 5.000 zone, 5.099 query per pagina; ora 101).
+- Prova di carico con 5.000 pagine per zona: una pagina normale 103-123 ms, una pagina per zona con 15 zone vicine 125 ms, sitemap
+  86 ms, pannello Zone 200-250 ms (manuale tecnico 45.8).
+
 ## 2.35.0 (8 novembre 2026) - Più chiaro per Google e per le AI (audit SEO e AEO di plumecms.it)
 
 - **llms.txt calcolato con le pagine.** Il file per le intelligenze artificiali elencava solo gli articoli, scriveva le

@@ -220,6 +220,7 @@ async function contrastoParole(pg) {
     ok('Scarica: novità, elenco breve con l\'ultima versione in cima', r && r.voci.length >= 3 && r.voci.length <= 8 && r.voci[0].startsWith(V + ': '), r && r.voci);
     const terzi = (r ? r.voci.join(' ') : '').match(/brevo|google|wordpress|linkedin|facebook|instagram|whatsapp|telegram|mailgun|amazon|dropbox|indexnow|search console|gnu|claude|chatgpt|openai|anthropic|openverse|pexels|unsplash/gi) || [];
     ok('Scarica: nelle novità nessun nome di aziende terze', r && terzi.length === 0, terzi);
+    if ((([a, b]) => a > 2 || (a === 2 && b >= 36))(V.split('.').map(Number))) ok('Scarica (2.36.0): fra le novità le pagine per zona senza limite', r && r.voci.some(x => /^2\.36\.0: Pagine per zona senza limite/.test(x)), r && r.voci);
     ok('Scarica: le novità finiscono non oltre il riquadro Cosa serve', r && r.fondo <= r.sinistra + 2, r && { fondo: r.fondo, sinistra: r.sinistra }); }
   // 2.6.0: il blocco del pannello più chiaro in Funzionalità, con la sua schermata caricata; il logo di header e footer dallo Stile.
   await v.goto(B + '/funzionalita/', { waitUntil: 'networkidle' });
