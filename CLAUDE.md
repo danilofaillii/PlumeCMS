@@ -168,7 +168,7 @@ Le decisioni complete, con data e perché, stanno nel second brain, `plumecms/de
 
 ## Stato al 31 ottobre 2026
 
-Fatto: plumeCMS 2.37.0 (9 novembre, 13:29-15:45): **Cambia database** in Impostazioni (richiesta di Danilo: "migrare tutto il db su un altro DB e
+Fatto: plumeCMS 2.37.0 (9 novembre, 13:29-15:40): **Cambia database** in Impostazioni (richiesta di Danilo: "migrare tutto il db su un altro DB e
 a fine copia utilizzare il nuovo DB"). Agente nella worktree `/home/user/wt-db`, ramo `cambia-db` (13:30-14:46, in parallelo alla 2.36.0), unito da me alla
 2.36.0 (conflitti solo in VERSIONE, CHANGELOG e NOVITA). `includes/cambia-db.php` e `admin/cambia-db.php`: Prova la connessione (3 s, versione, permessi
 con tabella e vista di prova, tabelle col prefisso già presenti e spunta "Sostituisci", stesso database riconosciuto dal server, errori in parole, 10 prove
