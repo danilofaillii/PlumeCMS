@@ -29,8 +29,9 @@ const py = (codice, ...arg) => execFileSync('python3', ['-I', '-c', codice, ...a
 
   // 2. Il manifest del pacchetto unico.
   const m = JSON.parse(py('import sys,zipfile;print(zipfile.ZipFile(sys.argv[1]).read("manifest.json").decode())', path.join(tmp, unico)));
-  const note = ['nome', 'descrizione', 'creato', 'applica_dal', 'sql', 'file', 'redirect', 'elimina', 'articoli', 'test', 'azioni', 'pagine', 'editor', 'editor_ambiti', 'impostazioni', 'note', 'firma'];
-  ok('manifest: solo voci che il motore 2.0.3 conosce', Object.keys(m).every(k => note.includes(k)), Object.keys(m));
+  const note = ['nome', 'descrizione', 'creato', 'applica_dal', 'sql', 'file', 'redirect', 'elimina', 'articoli', 'test', 'azioni', 'pagine', 'editor', 'editor_ambiti', 'impostazioni', 'note', 'firma', 'seo'];
+  // 2.36.0: "seo" la conosce il motore dalla 2.35.0 (consegna.py la mette nel pacchetto unico solo sopra quella versione).
+  ok('manifest: solo voci che il motore installato conosce', Object.keys(m).every(k => note.includes(k)), Object.keys(m));
   ok('manifest: azioni conosciute (sito-pagine-e-stile)', (m.azioni || []).every(a => ['attiva-sito-nuovo', 'sito-pagine-e-stile'].includes(a)), m.azioni);
   const dest = m.file.map(f => f.a);
   ok('manifest: nessuna destinazione doppia', new Set(dest).size === dest.length);
@@ -38,7 +39,7 @@ const py = (codice, ...arg) => execFileSync('python3', ['-I', '-c', codice, ...a
   ok('manifest: in Download gli zip del CMS e i due manuali, non più quello degli addon', [`uploads/scaricabili/plumecms-${V}.zip`, `uploads/scaricabili/plumecms-${V}-aggiornamento.zip`, 'uploads/scaricabili/manuale-uso.pdf', 'uploads/scaricabili/manuale-temi.pdf'].every(x => dest.includes(x))
     && !dest.includes('uploads/scaricabili/manuale-uso-addon.pdf') && (m.elimina || []).includes('uploads/scaricabili/manuale-uso-addon.pdf'));
   // 2.18.0: costruisci.py --senza-home lascia fuori la home (la hero del sito resta): 6 pagine; con la home 7.
-  ok('manifest: pagine, stile e menu del sito', (m.pagine || []).length === ((m.pagine || []).some(x => /(^|\/)pagine\/home\.json$/.test(x)) ? 7 : 6) && !!m.editor);
+  ok('manifest: pagine, stile e menu del sito', (m.pagine || []).length === ((m.pagine || []).some(x => /(^|\/)pagine\/home\.json$/.test(x)) ? 8 : 7) && !!m.editor); // 2.35.0: la pagina plumecms-wordpress in più
 
   // 3. Caricato e applicato dal pannello, poi il sito visitato (prova-sito-plumecms.js).
   const r = spawnSync('node', [path.join(__dirname, 'prova-sito-plumecms.js'), B, DIR, UTENTE, PASSWORD, path.join(tmp, unico), V], { encoding: 'utf8', timeout: 900000 });
