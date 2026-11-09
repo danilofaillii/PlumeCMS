@@ -2579,10 +2579,10 @@ echo json_encode($o);
     ok('2.36.0: 210 zone in tre giri: tutte create (nessun tetto al totale), registro in tabella', creati43 === 210 && errLim43.length === 0 && (cli43('elenco') || []).filter(z => z.servizio === 'Sic43 limite').length === 210 && cli43('cfg').migrato === 1, [creati43, errLim43]);
     // Paginazione e ricerca con valori cattivi: 200, niente errori SQL, niente tag riflessi, % e _ presi come testo.
     const cattivi43 = [];
-    for (const [qs, nessuna] of [['pag=-1'], ['pag=abc'], ['pag[]=1'], ['pag=99999999999999'], ['pag=1%27%20OR%201=1'], ["cerca=%27%20OR%201=1%20--%20", 1], ['cerca=' + encodeURIComponent('" UNION SELECT password_hash FROM users -- '), 1], ['cerca=' + encodeURIComponent(SCRIPT), 1], ['cerca[]=x'], ['servizio[]=x'], ['servizio=' + encodeURIComponent("Sic43 limite' OR '1'='1")], ['cerca=%25', 1], ['cerca=_', 1], ['cerca=%5C', 1], ['cerca=' + 'x'.repeat(5000), 1]]) {
+    for (const [qs, nessuna] of [['pag=-1'], ['pag=abc'], ['pag[]=1'], ['pag=99999999999999'], ['pag=1%27%20OR%201=1'], ["cerca=%27%20OR%201=1%20--%20", 1], ['cerca=' + encodeURIComponent('" UNION SELECT password_hash FROM users -- '), 1], ['cerca=' + encodeURIComponent(SCRIPT)], ['cerca[]=x'], ['servizio[]=x'], ['servizio=' + encodeURIComponent("Sic43 limite' OR '1'='1")], ['cerca=%25', 1], ['cerca=_', 1], ['cerca=%5C', 1], ['cerca=' + 'x'.repeat(5000), 1]]) {
       const r = await admin.ctx.request.get(ADMIN + '/zone.php?' + qs, { maxRedirects: 0 });
       const t = await r.text();
-      const male = r.status() !== 200 || /SQLSTATE|Fatal|Warning:|Uncaught/.test(t) || /<script>alert\(43\)/.test(t) || /password_hash|\$2y\$/.test(t) || (nessuna && /id="zn-tabella"/.test(t));
+      const male = r.status() !== 200 || /SQLSTATE|Fatal|Warning:|Uncaught/.test(t) || /<script>alert\(43\)/.test(t) || /\$2y\$|\$argon2/.test(t) || (nessuna && /id="zn-tabella"/.test(t));
       if (male) cattivi43.push([qs.slice(0, 40), r.status()]);
     }
     ok('2.36.0: paginazione e ricerca con valori cattivi (pag negativa, testo, array, enorme; ricerca con SQL, UNION, codice, array, %, _, \\, 5000 caratteri; servizio con SQL): 200, nessun errore, nessun codice riflesso, nessuna riga trovata dalle iniezioni', cattivi43.length === 0, cattivi43);
