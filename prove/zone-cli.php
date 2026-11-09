@@ -2,7 +2,7 @@
 // Comandi da riga di comando per le prove delle pagine per zona (2.28.0: prova-zone.js, gruppo 43 di tools/sicurezza-prova.js). Stampa JSON.
 // uso: php prove/zone-cli.php <cartella CMS> <comando> [argomenti]
 //   elenco                      il registro delle pagine per zona (con stato e segnaposto restanti)
-//   azzera                      toglie dal registro ogni pagina per zona e cancella le sue pagine (DELETE, non il cestino)
+//   azzera                      toglie dal registro ogni pagina per zona e cancella le sue pagine (DELETE, non il cestino), anche quelle fuori dal registro (2.37.1)
 //   crea <json>                 crea le bozze come dal pannello (zone_valida + zone_crea_bozze): {servizio, zone: "a\nb", sede, servizio_pagina, titolo, descrizione}
 //   segnaposto <id pagina>      quanti riquadri [DA SCRIVERE] restano
 //   togli <id pagina>           toglie la pagina dal registro e la cancella (per la pulizia delle prove)
@@ -16,6 +16,8 @@
 //   semina <N> [servizio] [stato] 2.36.0, prova di carico: N pagine per zona pubblicate (o in bozza con stato=bozza) copiate da una
 //                               pagina per zona vera (creata e scritta qui), inserite a blocchi direttamente nelle tabelle
 //   conta                       quante voci ha il registro (zone_conta)
+//   fuori                       2.37.1: le pagine per zona fuori dal registro (zone_fuori_registro): {voci: [...], doppioni: [...]}
+//   controllato <0|1>           2.37.1: il segno "il pannello ha già cercato le pagine fuori dal registro"
 //   widget <id pagina> <json>   cambia le impostazioni del widget Altre zone della pagina (pubblicata e bozza), passando da editor_valida: {"quante":5,"ordine":"vicine"}
 $_SERVER['HTTP_HOST'] = '127.0.0.1'; $_SERVER['REQUEST_URI'] = '/';
 require $argv[1] . '/includes/config.php';
@@ -33,6 +35,8 @@ switch ($cmd) {
     case 'azzera':
         $tolte = [];
         foreach (zone_tutte() as $id => $z) { db()->prepare('DELETE FROM ' . tbl('pages') . ' WHERE id = ?')->execute([$id]); $tolte[] = $z['riga']['slug']; }
+        // 2.37.1: anche le pagine per zona rimaste fuori dal registro (Togli dal registro, i doppioni) di un giro di prima.
+        if (function_exists('zone_fuori_registro')) { $f = zone_fuori_registro(); foreach (array_merge($f['voci'], $f['doppioni']) as $z) { db()->prepare('DELETE FROM ' . tbl('pages') . ' WHERE id = ?')->execute([$z['pagina']]); $tolte[] = $z['slug']; } }
         zone_salva_elenco([]);
         $esci(['zone' => 0, 'pagine_tolte' => $tolte]);
     case 'crea':
@@ -97,7 +101,14 @@ switch ($cmd) {
     case 'cfg':
         $c = seo_cfg(true)['zone'] ?? [];
         $righe = 0; try { $righe = (int)db()->query('SELECT COUNT(*) FROM ' . tbl('zone'))->fetchColumn(); } catch (Throwable $e) { $righe = -1; }
-        $esci(['migrato' => (int)($c['migrato'] ?? 0), 'voci' => (int)($c['voci'] ?? 0), 'elenco' => count((array)($c['elenco'] ?? [])), 'tabella' => $righe]);
+        $esci(['migrato' => (int)($c['migrato'] ?? 0), 'voci' => (int)($c['voci'] ?? 0), 'elenco' => count((array)($c['elenco'] ?? [])), 'tabella' => $righe, 'controllato' => (int)($c['controllato'] ?? 0)]);
+    case 'fuori':
+        $f = zone_fuori_registro();
+        $corto = fn(array $v) => ['pagina' => $v['pagina'], 'servizio' => $v['servizio'], 'zona' => $v['zona'], 'sede' => $v['sede'], 'servizio_pagina' => $v['servizio_pagina'], 'titolo' => $v['titolo']];
+        $esci(['voci' => array_map($corto, $f['voci']), 'doppioni' => array_map($corto, $f['doppioni'])]);
+    case 'controllato':
+        seo_salva('zone', ['controllato' => (int)($argv[3] ?? 0)]);
+        $esci(['controllato' => (int)(seo_cfg(true)['zone']['controllato'] ?? 0)]);
     case 'conta': $esci(['conta' => zone_conta()]);
     case 'widget':
         $id = (int)($argv[3] ?? 0); $imp = json_decode((string)($argv[4] ?? '{}'), true) ?: [];

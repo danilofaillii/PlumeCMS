@@ -5928,8 +5928,8 @@ del sito non la crea mai.
 
 **Il gruppo `zone` della configurazione SEO** (`zone_predefiniti()` `:56`, usato da `seo_predefiniti()` `includes/seo.php:163`):
 `titolo` e `descrizione` (i modelli dell'ultimo giro), `elenco` (il registro della 2.35.0, vuoto dopo la migrazione), `migrato`
-(1 quando il registro è passato nella tabella) e `voci` (quante righe ha la tabella, riscritto da `zone_aggiorna_voci()` `:134`
-dopo ogni scrittura). **Senza zone nessuna query**: `zone_attive()` (`:91`) guarda `voci` nella configurazione, già letta da ogni
+(1 quando il registro è passato nella tabella), `voci` (quante righe ha la tabella, riscritto da `zone_aggiorna_voci()` `:134`
+dopo ogni scrittura) e, dalla 2.37.1, `controllato` (1 quando il pannello ha già cercato le pagine fuori dal registro, 45.9). **Senza zone nessuna query**: `zone_attive()` (`:91`) guarda `voci` nella configurazione, già letta da ogni
 pagina per i titoli; con `voci` a 0 ogni lettura del registro ritorna subito vuota. Misurato: home, Servizi, Contatti e sitemap di
 un sito col kit Attività fanno 99, 97, 101 e 26 query sia con la 2.35.0 sia con la 2.36.0 senza zone, e la tabella non nasce.
 
@@ -5937,7 +5937,7 @@ un sito col kit Attività fanno 99, 97, 101 e 26 query sia con la 2.35.0 sia con
 una transazione con `INSERT IGNORE` (la pagina è unica: rifarla non fa doppioni), fa il commit e solo dopo scrive `elenco` vuoto,
 `migrato` 1 e `voci`. Se qualcosa fallisce a metà la transazione torna indietro, il JSON resta intatto e la richiesta dopo
 riprova; nel frattempo il sito tratta le pagine come pagine normali (niente Service di zona, widget Altre zone vuoto) e il pannello
-Zone lo dice in rosso (`admin/zone.php:95`). Se il commit riesce ma la scrittura della configurazione no, la richiesta dopo rifà la
+Zone lo dice in rosso (`admin/zone.php:106`). Se il commit riesce ma la scrittura della configurazione no, la richiesta dopo rifà la
 copia con `INSERT IGNORE` (nessun doppione) e chiude. La chiama `zone_attive()`, cioè la prima pagina che legge il registro (sito o
 pannello), e `zone_pronta_per_scrivere()` prima di ogni scrittura, che con la migrazione fallita si ferma con un messaggio
 (scrivere nella tabella e segnare `migrato` perderebbe il registro di prima).
@@ -6044,26 +6044,27 @@ JSON-LD: una pagina con segnaposto non è pubblicata, e il nodo prende solo tito
 
 ### 45.6 Il pannello
 
-`admin/zone.php`, solo amministratore (`require_admin()` `:19`), dal menu SEO e AEO (`admin/includes/admin-header.php:75`) e dalle
-schede di `admin/seo.php:263` e `admin/sedi.php:144`. All'apertura `zone_migra()` (`:95`; se fallisce un messaggio rosso dice che
-niente è perso) e `zone_pulisci()`. In alto il registro: i numeri contati dalla query (`#zn-numeri`, `zone_conteggi()` `:100`: in
-tutto, pubblicate, bozze con riquadri da scrivere); l'avviso `.zn-avviso` (`zone_avvisi_widget()` `includes/zone.php:357`, `:104`)
+`admin/zone.php`, solo amministratore (`require_admin()` `:21`), dal menu SEO e AEO (`admin/includes/admin-header.php:75`) e dalle
+schede di `admin/seo.php:263` e `admin/sedi.php:144`. All'apertura `zone_migra()` (`:106`; se fallisce un messaggio rosso dice che
+niente è perso) e `zone_pulisci()`. In alto il registro: i numeri contati dalla query (`#zn-numeri`, `zone_conteggi()` `:119`: in
+tutto, pubblicate, bozze con riquadri da scrivere); l'avviso `.zn-avviso` (`zone_avvisi_widget()` `includes/zone.php:357`, `:123`)
 per ogni servizio con più di 30 pagine pubblicate in cui il widget Altre zone le mostra tutte (guarda le 40 pagine più recenti di
 quel servizio, `zone_widget_mostra_tutte()` `:382`), che consiglia Quante mostrarne fra 12 e 20 e "Le più vicine"; il modulo GET
-`#zn-filtro` (`:187`, `role="search"`): la tendina dei servizi con più di un servizio (`#zn-filtro-servizio`, `data-invia-al-cambio`)
+`#zn-filtro` (`:235`, `role="search"`): la tendina dei servizi con più di un servizio (`#zn-filtro-servizio`, `data-invia-al-cambio`)
 e la ricerca `#zn-cerca` (nella zona, nel servizio e nel titolo: `zone_filtri()` `includes/zone.php:308`, `LIKE` legato con `%`,
 `_` e `\` dell'utente resi testo da `addcslashes`); "Righe 51-100 di 450" (`#zn-quante`); la tabella da 50 righe (`zone_elenco()`
-`:101`, ordine servizio, zona, pagina): Servizio, Zona, Pagina (link al sito se pubblicata, all'anteprima se bozza), Stato (parola
+`:120`, ordine servizio, zona, pagina): Servizio, Zona, Pagina (link al sito se pubblicata, all'anteprima se bozza), Stato (parola
 più colore), Da scrivere ("riquadri da scrivere: N", contati sulle 50 righe mostrate, o "pronta"), Apri nell'editor, Togli dal
 registro (`data-conferma`, pulsante rosso; il campo nascosto `torna` riporta alla stessa pagina dello stesso filtro, ripulito con
-`sedi_testo()` e un numero di pagina solo di cifre); la paginazione `#zn-pagine` (`:219`: Prima pagina, Pagina precedente, "Pagina 2
+`sedi_testo()` e un numero di pagina solo di cifre); la paginazione `#zn-pagine` (`:267`: Prima pagina, Pagina precedente, "Pagina 2
 di 9", Pagina successiva, Ultima pagina; `?pag=` solo cifre, fino a 7, oltre la fine vale l'ultima). Ricerca senza risultati
 (`#zn-nessuna`) e registro vuoto hanno due messaggi diversi. Sotto il generatore (`#zn-modulo`). Azioni POST con `verify_csrf()`:
-`crea` (`:54`; con errori la pagina si ridisegna con i valori scritti, errori sotto i campi con `aria-invalid` e `role="alert"`),
-`continua` (`:65`), `ferma` (`:68`), `togli` (`:72`). **Il giro a pezzi**: `crea` chiama `zone_crea_bozze()` con
+`crea` (`:56`; con errori la pagina si ridisegna con i valori scritti, errori sotto i campi con `aria-invalid` e `role="alert"`),
+`continua` (`:67`), `ferma` (`:70`), `togli` (`:74`), dalla 2.37.1 `ritrova` (`:84`) e `lascia_fuori` (`:89`) del riquadro
+`#zn-fuori` (`:201`, 45.9). **Il giro a pezzi**: `crea` chiama `zone_crea_bozze()` con
 `zone_pezzo_secondi()`; se tornano `restanti`, le zone che mancano e i conti stanno in `$_SESSION['zone_pezzi']` e la pagina va a
 `zone.php?continua=1`, che mostra "Sto creando le bozze a pezzi: N zone fatte, ne restano M" (`#zn-continua`, `aria-live`) e la
-rimanda da sola dopo 400 ms con uno script col nonce (`:174`; senza JavaScript il pulsante "Continua a creare le bozze"; "Ferma il
+rimanda da sola dopo 400 ms con uno script col nonce (`:197`; senza JavaScript il pulsante "Continua a creare le bozze"; "Ferma il
 giro" svuota la sessione). Alla fine un solo messaggio verde ("100 bozze create: «...» e altre 92") e uno azzurro per "C'è già",
 con al massimo otto titoli ciascuno, e il rimando a `zone.php?servizio=<servizio>`. A 390 px una colonna, niente scorrimento di
 lato (provato con 50 righe e la paginazione).
@@ -6076,12 +6077,12 @@ nel pannello e nel widget tutto con `h()`, nel JSON-LD `JSON_HEX_TAG`; nessuna q
 filtro, pagina, percorso e id sempre legati; `LIMIT` con interi del codice); al massimo 100 zone a giro, nessun tetto al totale;
 "Quante mostrarne" e "Quali mostrare" passano da `editor_valida()` (numero fra 0 e 200, una delle due scelte) e il widget li
 ritaglia di nuovo; una pagina con segnaposto non si pubblica da nessuna strada, nemmeno dall'amministratore. Prove:
-`prove/prova-zone.js` (81 controlli: i 58 della 2.28.0, con 101 zone al posto di 31, più 23 della 2.36.0: 450 bozze in cinque giri
+`prove/prova-zone.js` (90 controlli: i 58 della 2.28.0, con 101 zone al posto di 31, più 23 della 2.36.0: 450 bozze in cinque giri
 dal pannello, il primo a pezzi con `CMS_ZONE_PEZZO_SECONDI` 0,2, numeri, paginazione, ricerca anche con `%`, `_` e `\`, Quante
-mostrarne e Quali mostrare, avviso oltre 30, Togli che torna alla stessa pagina), `prove/prova-zone-migra.js` (le fasi prima,
+mostrarne e Quali mostrare, avviso oltre 30, Togli che torna alla stessa pagina; più 9 della 2.37.1, le pagine fuori dal registro, 45.9), `prove/prova-zone-migra.js` (le fasi prima,
 dopo e pannello attorno all'aggiornamento 2.35.0 -> 2.36.0, anche con una migrazione che fallisce), `prove/zone-cli.php` (elenco,
 azzera, crea, segnaposto, togli, scrivi, pubblica, pubblicabile, jsonld, sql, redattore; dalla 2.36.0 cfg, conta, widget e semina
-`<N>` per la prova di carico) e il gruppo 43 di `tools/sicurezza-prova.js` (15 attacchi). Non provato: un tipo di contenuto
+`<N>` per la prova di carico; dalla 2.37.1 fuori e controllato, e azzera toglie anche le pagine per zona fuori dal registro) e il gruppo 43 di `tools/sicurezza-prova.js` (15 attacchi). Non provato: un tipo di contenuto
 `servizi` di un modulo vero nella tendina, il JSON-LD nel validatore di Google, MariaDB e MySQL 5.7 (la tabella usa solo
 `utf8mb4_bin` e la collazione predefinita del server).
 
@@ -6111,6 +6112,52 @@ Il limite che resta non è delle zone: `sito_contenuti()` legge a ogni pagina un
 3,6 KB di memoria per pagina). Con 5.000 pagine per zona sono 18 MB e 60 ms in più per pagina; con 20.000 sarebbero circa 75 MB, vicino
 ai 128 MB di `memory_limit` di molti hosting. Oltre qualche migliaio di pagine serve un elenco dei contenuti a pezzi nel nucleo (non
 fatto nella 2.36.0).
+
+### 45.9 Le pagine rimaste fuori dal registro (2.37.1)
+
+**Il problema.** Fino alla 2.35.0 il registro stava nel JSON di `seo_config` con `ZONE_MAX = 200`: `zone_tutte()` smetteva di
+leggere a 200 voci, `zone_salva_elenco()` tagliava a 200 e `zone_pulisci()`, chiamata a ogni apertura di SEO e AEO > Zone,
+riscriveva il registro a 200. Le pagine create oltre restavano nel sito (anche pubblicate) ma senza nodo Service, senza briciole
+e fuori dal widget Altre zone. Il caso vero: un laboratorio con 7 servizi su circa 40 zone, 262 pagine per zona pubblicate, 62
+senza dati per Google. La 2.36.0 ha tolto il tetto (tabella `<prefisso>zone`, 45.1) e la migrazione copia il JSON: ma le 62 non
+erano più nel JSON, quindi nemmeno nella tabella. Sul tipo della colonna `setting_value` non serve fare niente: dalla 2.36.0 il
+gruppo `zone` della configurazione tiene solo modelli e contatori, il registro non ci sta più.
+
+**Il riconoscimento** (`zone_fuori_registro()` `includes/zone.php:802`): una query sola sulle pagine non nel cestino con
+`COALESCE(NULLIF(struttura_bozza, ''), struttura) LIKE '%"tipo":"zone"%'` (il widget Altre zone, che solo il generatore mette) e,
+se il registro ha voci, `LEFT JOIN <prefisso>zone ... WHERE z.id IS NULL`; senza voci la tabella non si tocca. Per ogni riga
+`zone_impronta()` (`:840`) legge l'albero salvato con `json_decode` (senza `editor_valida()`: servono tre campi): la prima Apertura
+con l'occhiello (la zona), il titolo dell'Apertura come lo scrive `zone_albero()` ("Idraulico a \*Bologna\*", il servizio è la
+parte prima di " a \*", con la zona uguale all'occhiello); se il titolo dell'Apertura è stato cambiato, il titolo della pagina
+letto con il modello del titolo di `zone_modelli()` (`%servizio%` diventa il gruppo, `%zona%` l'occhiello); la sede dal primo
+widget Dati dell'attività o Barra contatti (lo stesso valore che il generatore aveva scritto nel registro: un id, `principale`, o
+vuoto senza sedi). Senza widget Altre zone, senza occhiello o senza servizio la pagina non si riconosce e resta com'è. La pagina del
+servizio è quella usata più spesso dalle voci dello stesso servizio (`zone_pagina_servizio_usata()` `:873`), se esiste ancora.
+Una coppia servizio + zona che ha già una pagina nel registro (`zone_esiste()`), o già vista prima nello stesso giro, va in
+`doppioni`: la 2.35.0, non trovando più la prima, poteva crearne un'altra con lo slug `-2`. I doppioni non si rimettono mai.
+
+**Il pannello** (`admin/zone.php:111`): dopo `zone_pulisci()`, se il segno `controllato` è 0 (la prima apertura dopo
+l'aggiornamento, su ogni sito) oppure c'è `?ritrova=1`, chiama `zone_fuori_registro()`. Senza pagine da rimettere mette il segno e
+non mostra niente (con `?ritrova=1` dice "Nessuna pagina per zona da rimettere nel registro" e gli eventuali doppioni); con pagine
+da rimettere mostra il riquadro `#zn-fuori`: "61 pagine per zona sono fuori dal registro", il perché (il tetto della 2.35.0), le
+prime `ZONE_FUORI_MOSTRATE` (20) con titolo, servizio, zona e indirizzo, "e altre N", i doppioni per nome, e due pulsanti:
+**Rimettile nel registro** (`ritrova`: `zone_ritrova()` `:884` ricalcola l'elenco sul server, mai preso dal modulo, registra
+ogni voce con `zone_registra()` e conta una volta sola alla fine) e **Lasciale fuori** (`lascia_fuori`: solo il segno). Finché non si
+sceglie, il riquadro torna a ogni apertura. In fondo all'elenco il link "Cerca le pagine per zona fuori dal registro"
+(`#zn-cerca-fuori`, `:280`) lo rifà a mano, per esempio dopo un "Togli dal registro" di cui ci si è pentiti. Le chiamate da
+`admin/zone.php` alle funzioni nuove passano da `function_exists` (la trappola di opcache subito dopo l'aggiornamento).
+
+**Tempi** (MariaDB 10.11, PHP 8.3, `php -S`): con 5.000 voci nel registro e nessuna pagina fuori la ricerca costa 46-48 ms (la si fa
+solo alla prima apertura o a mano); con 4.801 pagine fuori 1,1 s per trovarle e 2,8 s per rimetterle (una `zone_esiste()` per
+pagina). Il caso vero (62 pagine) resta sotto i 100 ms.
+
+**Prove** (`prove/prova-zone.js`, parte 11, 9 controlli): sul sito delle 450 bozze, tolte dal registro 62 voci come faceva la
+2.35.0 (20 pubblicate, 42 bozze) più quella tolta con Togli, una con il titolo dell'Apertura cambiato, una non riconoscibile e un
+doppione creato dopo: la pagina pubblicata fuori dal registro senza Service; `zone fuori` trova 61 pagine; il riquadro alla prima
+apertura (20 per nome, "e altre 41", il doppione); Rimettile nel registro (il registro torna al numero di prima, il segno è messo);
+i numeri in cima; due riaperture che non tolgono niente; il Service e le briciole di nuovo nella pagina pubblicata, identici a
+prima; la ricerca a mano; Lasciala fuori. Non provato: un sito vero aggiornato dalla 2.35.0 con più di 200 pagine (la prova toglie
+le voci con una query, come le aveva tolte la 2.35.0).
 
 ## 46. Gli strumenti SEO: Tabella SEO, link interni suggeriti, Prodotto, How-to e Video, immagini senza alt (dalla 2.29.0)
 

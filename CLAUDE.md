@@ -109,7 +109,7 @@ Sono gli unici in `cms/docs/`, nello zip, nel sito di plumeCMS e nella pagina Do
 - **Pacchetto di aggiornamento** per un'installazione esistente:
   `python3 tools/cms-pacchetto.py --aggiornamento`. Si carica dal pannello,
   Impostazioni, Aggiornamenti.
-- **Versione**: `cms/VERSIONE` (oggi 2.37.0; sempre tre numeri: "beta" va nel CHANGELOG, mai nel nome dello zip, se no la serie "ultima" del Download non lo riconosce) e una voce in `cms/CHANGELOG.md` a ogni
+- **Versione**: `cms/VERSIONE` (oggi 2.37.1; sempre tre numeri: "beta" va nel CHANGELOG, mai nel nome dello zip, se no la serie "ultima" del Download non lo riconosce) e una voce in `cms/CHANGELOG.md` a ogni
   zip con contenuto diverso. Mai cambiare il contenuto di una versione già data.
 - **Prove** prima di dire finito:
   - `php -n -d short_open_tag=1 -l` su ogni file PHP toccato, `node --check` sui js;
@@ -167,6 +167,13 @@ Le decisioni complete, con data e perché, stanno nel second brain, `plumecms/de
 - **Nome: plumeCMS** (26 ottobre 2026).
 
 ## Stato al 31 ottobre 2026
+
+Fatto: plumeCMS 2.37.1 (9 novembre, 16:05-17:40): **le pagine per zona rimaste fuori dal registro** (il tetto di 200 della 2.35.0:
+il laboratorio con 262 pagine pubblicate e 62 senza Service). Il tetto era già tolto nella 2.36.0, ma le pagine perse non tornavano:
+`zone_fuori_registro()` le riconosce dal widget Altre zone e dall'apertura, il pannello Zone le propone alla prima apertura
+(Rimettile nel registro / Lasciale fuori), i doppioni restano fuori. Manuale tecnico 45.9. Prove: `prova-zone.js` 90/90 in radice su
+MariaDB 10.11 (sessione cloud, niente Docker MySQL 8): **non fatti** zip, PDF, schermate del manuale, sito di plumeCMS ricostruito,
+attacchi, prova in cartella e second brain.
 
 Fatto: plumeCMS 2.37.0 (9 novembre, 13:29-15:40): **Cambia database** in Impostazioni (richiesta di Danilo: "migrare tutto il db su un altro DB e
 a fine copia utilizzare il nuovo DB"). Agente nella worktree `/home/user/wt-db`, ramo `cambia-db` (13:30-14:46, in parallelo alla 2.36.0), unito da me alla

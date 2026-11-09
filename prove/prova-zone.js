@@ -12,6 +12,9 @@
 // CMS_ZONE_PEZZO_SECONDI a 0.2 nel config: la pagina continua da sola), i numeri in cima, la paginazione da 50, la ricerca (anche con
 // % e _ presi come testo), "Quante mostrarne" e "Quali mostrare" del widget Altre zone (0 = tutte, identico a senza il campo),
 // l'avviso oltre 30 pagine pubblicate, Togli dal registro che torna alla stessa pagina dell'elenco.
+// 2.37.1 (le pagine per zona rimaste fuori dal registro della 2.35.0, fermo a 200): 62 voci tolte dal registro come faceva la 2.35.0,
+// il riquadro alla prima apertura del pannello, "Rimettile nel registro", il Service e le briciole che tornano nella pagina pubblicata,
+// i doppioni, una pagina che non si riconosce, "Cerca le pagine per zona fuori dal registro", "Lasciale fuori".
 //
 // uso: node prove/prova-zone.js <base> <cartella CMS> <utente> <password> [cartella foto]
 const { chromium } = require('playwright');
@@ -317,6 +320,55 @@ async function pubblicaDallEditor(p, id) {
   await p.goto(B + '/admin/zone.php?servizio=Giardiniere&pag=2', { waitUntil: 'networkidle' });
   await Promise.all([p.waitForNavigation(), p.locator('#zn-tabella tbody tr').first().locator('form[data-conferma] button').click()]);
   ok('2.36.0: Togli dal registro dalla pagina 2 torna alla pagina 2 dello stesso filtro', /pag=2/.test(p.url()) && /servizio=Giardiniere/.test(p.url()) && giardinieri() === nG - 1, p.url());
+
+  // === 11. (2.37.1) Le pagine rimaste fuori dal registro: il caso del laboratorio (262 pagine pubblicate, registro fermo a 200 con
+  // la 2.35.0). Si tolgono dal registro 62 voci come faceva la 2.35.0 (20 pubblicate, 42 bozze), più la Località 051 già tolta
+  // sopra con "Togli dal registro"; la 442 ha un doppione nato dopo (la 2.35.0 non trovava più la prima e ne faceva un'altra), la 420
+  // ha il titolo dell'apertura cambiato (il servizio si legge dal titolo della pagina), la 421 ha cambiato anche quello (non si riconosce).
+  const C0 = cli('conta').conta;
+  const gz = (a, b) => cli('sql', `SELECT z.pagina, z.zona, p.slug FROM {p}zone z JOIN {p}pages p ON p.id = z.pagina WHERE z.servizio = 'Giardiniere' AND z.zona BETWEEN '${LOC(a)}' AND '${LOC(b)}' ORDER BY z.zona`);
+  const pubbl = gz(1, 20), bozze = gz(401, 442);
+  const sl = pubbl[4].slug; // Località 005, pubblicata
+  const svcPrima = (await grafo(v, '/' + sl + '/')).find(x => x['@type'] === 'Service');
+  cli('sql', `DELETE FROM {p}zone WHERE pagina IN (${pubbl.concat(bozze).map(z => z.pagina).join(',')})`);
+  cli('controllato', 1); // il registro accorciato com'era prima dell'aggiornamento: nessuna ricerca da sola finché non si azzera il segno
+  const svcFuori = (await grafo(v, '/' + sl + '/')).find(x => x['@type'] === 'Service');
+  ok('2.37.1: una pagina pubblicata fuori dal registro (come le 62 del laboratorio) esce senza il Service nei dati per Google', !!svcPrima && !svcFuori);
+  const p420 = bozze.find(z => z.zona === LOC(420)).pagina, p421 = bozze.find(z => z.zona === LOC(421)).pagina, p442 = bozze.find(z => z.zona === LOC(442)).pagina;
+  cli('sql', `UPDATE {p}pages SET struttura_bozza = REPLACE(struttura_bozza, 'Giardiniere a *${LOC(420)}*', 'Il verde di *${LOC(420)}*') WHERE id = ${p420}`);
+  cli('sql', `UPDATE {p}pages SET title = 'Il verde di ${LOC(421)}', struttura_bozza = REPLACE(struttura_bozza, 'Giardiniere a *${LOC(421)}*', 'Il verde di *${LOC(421)}*') WHERE id = ${p421}`);
+  const dop = cli('crea', JSON.stringify({ servizio: 'Giardiniere', zone: LOC(442), sede: 'sede-di-bologna' }));
+  const f11 = cli('fuori');
+  const k11 = f11.voci.map(z => z.zona);
+  ok('2.37.1: zone_fuori_registro trova 61 pagine (20 pubblicate, 40 bozze, la 051), servizio dall\'apertura o dal titolo della pagina (420), la sede dal widget; la 421 no; la vecchia 442 è un doppione', f11.voci.length === 61 && k11.includes(LOC(51)) && k11.includes(LOC(420)) && !k11.includes(LOC(421)) && !k11.includes(LOC(442)) && f11.voci.every(z => z.servizio === 'Giardiniere' && z.sede === 'sede-di-bologna') && f11.doppioni.length === 1 && f11.doppioni[0].pagina === p442 && !!dop, [f11.voci.length, f11.doppioni.map(z => z.zona), dop]);
+  // La prima apertura del pannello dopo l'aggiornamento: il riquadro esce da solo.
+  cli('controllato', 0);
+  await p.goto(B + '/admin/zone.php', { waitUntil: 'networkidle' });
+  const box = await p.locator('#zn-fuori').innerText().catch(() => '');
+  await foto(p, 'zone-fuori-registro');
+  ok('2.37.1: la prima apertura di Zone dopo l\'aggiornamento mostra "61 pagine per zona sono fuori dal registro", 20 per nome e "e altre 41", il doppione e i due pulsanti', /61 pagine per zona sono fuori dal registro/.test(box) && /200/.test(box) && await p.locator('#zn-fuori li').count() === 21 && /e altre 41/.test(box) && /doppioni/.test(await p.locator('#zn-doppioni').innerText()) && await p.locator('#zn-ritrova').count() === 1 && await p.locator('#zn-lascia-fuori').count() === 1, box.slice(0, 200));
+  await Promise.all([p.waitForNavigation(), p.click('#zn-ritrova')]);
+  const flR = await p.locator('.flash-success').innerText().catch(() => '');
+  ok('2.37.1: "Rimettile nel registro": 61 pagine rimesse, il messaggio lo dice, il riquadro sparisce, il registro torna a ' + C0 + ' voci (449 di Giardiniere, senza la 421)', /61 pagine per zona rimesse nel registro/.test(flR) && await p.locator('#zn-fuori').count() === 0 && cli('conta').conta === C0 && giardinieri() === 449 && !voce(p421) && !!voce(p420) && cli('cfg').controllato === 1, [flR.slice(0, 80), cli('conta').conta, giardinieri()]);
+  ok('2.37.1: i numeri in cima contano anche le pagine rimesse', new RegExp('^' + C0 + ' pagine per zona in tutto').test((await p.locator('#zn-numeri').innerText()).replace(/\s+/g, ' ')));
+  for (let i = 0; i < 2; i++) await p.goto(B + '/admin/zone.php', { waitUntil: 'networkidle' });
+  ok('2.37.1: riaprire il pannello due volte non toglie nessuna voce (' + C0 + ') e non ripropone il riquadro', cli('conta').conta === C0 && await p.locator('#zn-fuori').count() === 0);
+  const g11 = await grafo(v, '/' + sl + '/');
+  const svc = g11.find(x => x['@type'] === 'Service'), bc = g11.find(x => x['@type'] === 'BreadcrumbList');
+  ok('2.37.1: la pagina pubblicata rimessa nel registro ha di nuovo il Service (Giardiniere, area servita la sua zona) e le briciole fino alla zona', !!svc && svc.serviceType === 'Giardiniere' && JSON.stringify(svc.areaServed || '').includes(LOC(5)) && JSON.stringify(svc) === JSON.stringify(svcPrima) && !!bc && JSON.stringify(bc).includes(LOC(5)), svc);
+  // "Cerca le pagine per zona fuori dal registro" a mano: niente da rimettere, il doppione detto.
+  await Promise.all([p.waitForNavigation(), p.click('#zn-cerca-fuori')]);
+  const box2 = await p.locator('#zn-fuori').innerText().catch(() => '');
+  ok('2.37.1: "Cerca le pagine per zona fuori dal registro": nessuna da rimettere, il doppione della 442 detto per nome, nessun pulsante', /Nessuna pagina per zona da rimettere/.test(box2) && box2.includes('Giardiniere a ' + LOC(442)) && await p.locator('#zn-ritrova').count() === 0, box2.slice(0, 200));
+  // "Lasciale fuori": una pagina tolta con Togli dal registro, il segno azzerato; il riquadro non torna più da solo.
+  const pTolta = gz(300, 300)[0].pagina;
+  cli('sql', `DELETE FROM {p}zone WHERE pagina = ${pTolta}`); cli('controllato', 0);
+  await p.goto(B + '/admin/zone.php', { waitUntil: 'networkidle' });
+  const box3 = await p.locator('#zn-fuori h3').innerText().catch(() => '');
+  await Promise.all([p.waitForNavigation(), p.click('#zn-lascia-fuori')]);
+  await p.goto(B + '/admin/zone.php', { waitUntil: 'networkidle' });
+  ok('2.37.1: "Lasciala fuori": la pagina resta fuori dal registro, il segno è messo e il riquadro non torna alla riapertura', /1 pagina per zona è fuori dal registro/.test(box3) && await p.locator('#zn-fuori').count() === 0 && !voce(pTolta) && cli('cfg').controllato === 1, box3);
+  cli('sql', `DELETE FROM {p}pages WHERE id IN (${[p421, p442, pTolta].join(',')})`); // le tre pagine rimaste fuori
 
   // === 9. Il pannello e il sito a 1280 e 390 px
   await p.goto(B + '/admin/zone.php', { waitUntil: 'networkidle' });

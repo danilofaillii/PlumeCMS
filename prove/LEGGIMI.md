@@ -687,7 +687,9 @@ stessa regola; 1280 e 390 px senza scorrimento di lato.
 2. `node prove/prova-zone.js <base> <cartella CMS> <utente> <password> [cartella foto]`. Usa `prove/zone-cli.php` (elenco, azzera,
    crea, segnaposto, togli, scrivi, pubblica, pubblicabile, jsonld, sql, redattore) e `prove/sedi-cli.php`. Alla fine toglie le
    pagine per zona e le sedi che ha creato.
-3. Atteso (2.28.0): 58 su 58, in radice e in cartella, su un sito nuovo e su uno aggiornato dalla 2.27.0.
+3. Atteso (2.28.0): 58 su 58, in radice e in cartella, su un sito nuovo e su uno aggiornato dalla 2.27.0. Atteso (2.37.1): 90 su 90
+   (con la parte 2.36.0 e la parte 11 della 2.37.1: 62 voci tolte dal registro come faceva la 2.35.0, il riquadro "fuori dal
+   registro", Rimettile nel registro, i doppioni, Lasciale fuori), provato in radice su MariaDB 10.11.
 Gli attacchi sono il gruppo 43 di `tools/sicurezza-prova.js` (con `CMS_DIR`): codice in servizio, zone, modelli e descrizione,
 `../` nel modello del titolo (lo slug resta pulito), modello senza `%zona%`, 500 zone in un colpo, pagina del servizio inventata o
 con SQL, 210 zone contro il limite di 200, pubblicazione con i segnaposto da ogni strada anche dall'amministratore e ripubblicazione

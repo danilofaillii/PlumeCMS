@@ -6,6 +6,8 @@
  *   zone.php?servizio=Idraulico           il registro filtrato per servizio
  *   zone.php?cerca=bologna&pag=2          la ricerca per zona, servizio o titolo, e la pagina dell'elenco
  *   zone.php?continua=1                   "Crea le bozze" a pezzi: la pagina continua da sola con le zone che restano
+ *   zone.php?ritrova=1                    2.37.1: cerca le pagine per zona rimaste fuori dal registro (la 2.35.0 si fermava a 200);
+ *                                         la prima apertura dopo l'aggiornamento le cerca da sola
  * Il generatore crea solo BOZZE: ogni pagina ha tre riquadri guidati con il segnaposto [DA SCRIVERE] e finché restano la pagina
  * non si pubblica da nessuna strada (zone_blocco_pubblicazione). Chi scrive (anche un redattore) apre la bozza nell'editor,
  * compila i riquadri e pubblica. Come sedi.php, una pagina sua e non una scheda di seo.php.
@@ -79,6 +81,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 parse_str((string)($_POST['torna'] ?? ''), $torna);
                 $torna = array_filter(['servizio' => sedi_testo($torna['servizio'] ?? $filtro, 80), 'cerca' => sedi_testo($torna['cerca'] ?? '', 80), 'pag' => preg_match('/^\d{1,7}$/', (string)($torna['pag'] ?? '')) ? (string)$torna['pag'] : '']);
                 header('Location: zone.php' . ($torna ? '?' . http_build_query($torna) : '')); exit;
+            case 'ritrova':
+                if (!function_exists('zone_ritrova')) throw new RuntimeException('Ricarica la pagina fra qualche secondo e riprova: l\'aggiornamento sta ancora finendo.');
+                $n = zone_ritrova();
+                flash($n > 0 ? 'success' : 'info', $n > 0 ? ($n === 1 ? '1 pagina per zona rimessa nel registro' : $n . ' pagine per zona rimesse nel registro') . ': da adesso hanno di nuovo i dati per Google (il servizio e la zona servita), le briciole e il widget Altre zone. Le trovi nell\'elenco qui sotto.' : 'Nessuna pagina per zona da rimettere nel registro: sono già tutte qui sotto.');
+                header('Location: zone.php'); exit;
+            case 'lascia_fuori':
+                if (function_exists('zone_segna_controllato')) zone_segna_controllato();
+                flash('info', 'Va bene: quelle pagine restano fuori dal registro e il pannello non te le propone più. Se cambi idea, in fondo all\'elenco c\'è «Cerca le pagine per zona fuori dal registro».');
+                header('Location: zone.php'); exit;
             default:
                 throw new RuntimeException('Azione sconosciuta.');
         }
@@ -95,6 +106,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 $migrata = zone_migra(); // un registro della 2.35.0 rimasto nella configurazione passa nella tabella (una volta sola)
 if (!$migrata) flash('error', 'Il registro delle pagine per zona della versione di prima non è riuscito a passare nella tabella nuova del database: per ora l\'elenco qui sotto è vuoto, ma niente è perso. Ricarica la pagina fra qualche minuto; se resta così, il dettaglio è nel log degli errori.');
 zone_pulisci(); // le pagine sparite dal cestino escono dal registro
+// 2.37.1: le pagine per zona rimaste fuori dal registro (la 2.35.0 si fermava a 200). La prima apertura dopo l'aggiornamento le cerca
+// da sola; se non ce ne sono il pannello non le cerca più, se ci sono il riquadro resta finché non si sceglie. ?ritrova=1 le cerca sempre.
+$fuori = null;
+$cercaFuori = isset($_GET['ritrova']);
+if ($migrata && function_exists('zone_fuori_registro') && ($cercaFuori || empty(zone_cfg()['controllato']))) {
+    $fuori = zone_fuori_registro();
+    if (!$fuori['voci']) { zone_segna_controllato(); if (!$cercaFuori && !$fuori['doppioni']) $fuori = null; }
+}
 $servizi = zone_servizi();
 if ($filtro !== '' && !in_array(mb_strtolower($filtro), array_map('mb_strtolower', $servizi), true)) $filtro = '';
 $conteggiTutte = zone_conteggi();
@@ -154,7 +173,11 @@ td .zn-tipo{display:block;font-size:.8rem;color:var(--text-muted)}
 .zn-pagine{display:flex;flex-wrap:wrap;gap:.5rem;align-items:center;margin-top:.9rem}
 .zn-pagine span{font-size:.88rem;color:var(--text-muted)}
 .zn-ferma{margin:-.4rem 0 1.2rem}
-@media (max-width:760px){.zn-campi{grid-template-columns:minmax(0,1fr)}.zn-riquadri{grid-template-columns:minmax(0,1fr)}.zn-filtro select{max-width:100%}}
+.zn-fuori{border-left:4px solid var(--attenzione-bordo)}
+.zn-fuori ul{margin:.2rem 0 .8rem;padding-left:1.2rem;font-size:.88rem;line-height:1.6}
+.zn-fuori li span{color:var(--text-muted)}
+.zn-cerca-fuori{margin:.5rem 0 0;font-size:.86rem}
+@media (max-width:760px){.zn-fuori .btn{min-height:44px}.zn-campi{grid-template-columns:minmax(0,1fr)}.zn-riquadri{grid-template-columns:minmax(0,1fr)}.zn-filtro select{max-width:100%}}
 [hidden]{display:none!important}
 </style>
 
@@ -172,6 +195,31 @@ td .zn-tipo{display:block;font-size:.8rem;color:var(--text-muted)}
 </form>
 <form method="post" class="zn-ferma" id="zn-ferma"><?= csrf_field() ?><input type="hidden" name="azione" value="ferma"><button class="btn btn-secondary btn-sm" type="submit">Ferma il giro (le bozze già create restano)</button></form>
 <script<?= nonce_attr() ?>>setTimeout(function () { var f = document.getElementById('zn-continua'); if (f) { var b = document.getElementById('zn-continua-bottone'); if (b) { b.disabled = true; b.textContent = 'Continuo...'; } f.submit(); } }, 400);</script>
+<?php endif; ?>
+
+<?php if ($fuori !== null): $nf = count($fuori['voci']); $nd = count($fuori['doppioni']); ?>
+<div class="form-card zn-fuori" id="zn-fuori" role="region" aria-labelledby="zn-fuori-titolo">
+  <?php if ($nf > 0): ?>
+  <h3 id="zn-fuori-titolo"><?= $nf === 1 ? '1 pagina per zona è fuori dal registro' : $nf . ' pagine per zona sono fuori dal registro' ?></h3>
+  <p class="zn-sotto"><?= $nf === 1 ? 'È nel sito, ma non' : 'Sono nel sito, ma non' ?> in questo elenco: fino alla versione 2.35.0 il registro teneva al massimo 200 pagine per zona e le altre restavano fuori. Così a Google mancano il servizio e la zona servita, mancano le briciole e il widget <b>Altre zone</b> non <?= $nf === 1 ? 'la' : 'le' ?> elenca. <?= $nf === 1 ? 'Si riconosce' : 'Si riconoscono' ?> dal widget Altre zone e dall'apertura con cui <?= $nf === 1 ? 'è nata' : 'sono nate' ?>: servizio e zona si leggono da lì. <b><?= $nf === 1 ? 'Rimettila nel registro' : 'Rimettile nel registro' ?></b> e <?= $nf === 1 ? 'torna' : 'tornano' ?> nell'elenco qui sotto, con i dati per Google; le pagine non cambiano.</p>
+  <ul>
+    <?php foreach (array_slice($fuori['voci'], 0, ZONE_FUORI_MOSTRATE) as $v): ?><li><b><?= h($v['titolo']) ?></b> <span>(servizio «<?= h($v['servizio']) ?>», zona «<?= h($v['zona']) ?>», /<?= h($v['slug']) ?>/)</span></li><?php endforeach; ?>
+    <?php if ($nf > ZONE_FUORI_MOSTRATE): ?><li>e altre <?= $nf - ZONE_FUORI_MOSTRATE ?></li><?php endif; ?>
+  </ul>
+  <?php else: ?>
+  <h3 id="zn-fuori-titolo">Nessuna pagina per zona da rimettere nel registro</h3>
+  <p class="zn-sotto">Fra le pagine del sito, quelle nate come pagine per zona sono già tutte nell'elenco qui sotto.</p>
+  <?php endif; ?>
+  <?php if ($nd > 0): ?>
+  <p class="zn-sotto" id="zn-doppioni"><?= $nd === 1 ? '1 pagina ha' : $nd . ' pagine hanno' ?> lo stesso servizio e la stessa zona di una pagina che è già nel registro, e restano fuori: sono doppioni. Guarda quale tenere e cestina l'altra da Pagine: <?= implode(', ', array_map(fn($v) => '«' . h($v['titolo']) . '» (/' . h($v['slug']) . '/)', array_slice($fuori['doppioni'], 0, 8))) ?><?= $nd > 8 ? ' e altre ' . ($nd - 8) : '' ?>.</p>
+  <?php endif; ?>
+  <?php if ($nf > 0): ?>
+  <div class="zn-azioni">
+    <form method="post"><?= csrf_field() ?><input type="hidden" name="azione" value="ritrova"><button class="btn btn-primary" type="submit" id="zn-ritrova"><?= $nf === 1 ? 'Rimettila nel registro' : 'Rimettile nel registro' ?></button></form>
+    <form method="post"><?= csrf_field() ?><input type="hidden" name="azione" value="lascia_fuori"><button class="btn btn-secondary" type="submit" id="zn-lascia-fuori"><?= $nf === 1 ? 'Lasciala fuori' : 'Lasciale fuori' ?></button></form>
+  </div>
+  <?php endif; ?>
+</div>
 <?php endif; ?>
 
 <div class="form-card zn-elenco" id="zn-elenco">
@@ -229,6 +277,7 @@ td .zn-tipo{display:block;font-size:.8rem;color:var(--text-muted)}
   <?php endif; ?>
   <p class="hint" style="margin-top:.8rem">Le bozze si scrivono dall'editor (anche un redattore può): cerca i tre riquadri con <code><?= h(ZONE_SEGNAPOSTO) ?></code>, scrivi il testo al loro posto e cancella la riga di aiuto, poi <b>Pubblica</b>. Le pagine pubblicate stanno nella sitemap come ogni pagina e si elencano a vicenda con il widget Altre zone (con tante zone, in ogni pagina il widget ne mostra quante decidi tu: <b>Quante mostrarne</b>). Per vedere i dati che Google legge: SEO e AEO, Schema e AEO, <b>Anteprima del JSON-LD di un indirizzo</b>.</p>
   <?php endif; ?>
+  <p class="zn-cerca-fuori"><a href="zone.php?ritrova=1#zn-fuori" id="zn-cerca-fuori">Cerca le pagine per zona fuori dal registro</a> <span class="hint">(per esempio quelle tolte con "Togli dal registro", o rimaste fuori con le versioni fino alla 2.35.0)</span></p>
 </div>
 
 <form method="post" class="form-card" id="zn-modulo" autocomplete="off">

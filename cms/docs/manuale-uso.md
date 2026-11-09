@@ -3422,6 +3422,22 @@ tre frasi vere ciascuna, no.
    dal registro (resta nel sito com'è), **Togli dal registro**; se la vuoi via del tutto, cestinala da Pagine: sparisce da sola
    dal registro.
 
+**Pagine per zona fuori dal registro.** Fino alla versione 2.35.0 il registro teneva al massimo 200 pagine per zona: se ne avevi di
+più, le altre erano nel sito ma senza i dati per Google, senza briciole e fuori dal widget Altre zone. Dalla 2.37.1, la prima volta
+che apri **SEO e AEO > Zone** dopo l'aggiornamento, plumeCMS le cerca da solo. Se ne trova, in cima compare un riquadro con il
+bordo giallo: "62 pagine per zona sono fuori dal registro", con l'elenco.
+
+1. Scorri l'elenco: per ogni pagina vedi titolo, servizio, zona e indirizzo. Se servizio e zona sono quelli giusti, premi
+   **Rimettile nel registro**.
+2. Compare il messaggio verde "62 pagine per zona rimesse nel registro" e il riquadro sparisce. Le pagine sono nell'elenco, con i
+   numeri in cima aggiornati. Il testo delle pagine non cambia.
+3. Se il riquadro dice che qualche pagina è un **doppione** (stesso servizio e stessa zona di una pagina che è già nel registro),
+   apri le due pagine, tieni quella scritta meglio e cestina l'altra da Pagine.
+4. Se quelle pagine non le vuoi nel registro, premi **Lasciale fuori**: il riquadro non torna più.
+
+Per rifare la ricerca quando vuoi, in fondo all'elenco c'è **Cerca le pagine per zona fuori dal registro**: serve anche per
+riprendere una pagina tolta con Togli dal registro.
+
 **Con tante zone: Quante mostrarne.** Il widget **Altre zone** di partenza elenca tutte le altre pagine pubblicate dello stesso
 servizio. Con dieci zone va bene; con trecento ogni pagina avrebbe trecento link, che nessuno legge e Google pesa poco. Quando un
 servizio supera le 30 pagine pubblicate, l'elenco di **Zone** te lo dice in un riquadro azzurro. Allora:
@@ -3466,6 +3482,7 @@ Schema e AEO) si scelgono così.
 - [ ] L'immagine social predefinita c'è, 1200 x 630, in JPG o PNG.
 - [ ] Le sedi dell'attività sono scritte in SEO e AEO > Sedi (anche una sola).
 - [ ] Per ogni servizio che faccio in più comuni ci sono le pagine per zona, scritte a mano e pubblicate.
+- [ ] Aperto SEO e AEO > Zone dopo l'aggiornamento alla 2.37.1: nessun riquadro "fuori dal registro", oppure le pagine rimesse.
 
 ---
 

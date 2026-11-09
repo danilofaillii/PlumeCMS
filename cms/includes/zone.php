@@ -51,10 +51,10 @@ const ZONE_DESCRIZIONE_PREDEFINITA = '%servizio% a %zona%: interventi, tempi e c
 
 /**
  * Il gruppo "zone" della configurazione SEO al valore di partenza (seo_predefiniti() lo usa). "elenco" è il registro della 2.35.0
- * (vuoto dopo la migrazione), "migrato" il segno che la migrazione è fatta, "voci" quante righe ha la tabella.
+ * (vuoto dopo la migrazione), "migrato" il segno della migrazione, "voci" le righe della tabella, "controllato" (2.37.1) zone_fuori_registro().
  */
 function zone_predefiniti(): array {
-    return ['elenco' => [], 'titolo' => ZONE_TITOLO_PREDEFINITO, 'descrizione' => ZONE_DESCRIZIONE_PREDEFINITA, 'migrato' => 0, 'voci' => 0];
+    return ['elenco' => [], 'titolo' => ZONE_TITOLO_PREDEFINITO, 'descrizione' => ZONE_DESCRIZIONE_PREDEFINITA, 'migrato' => 0, 'voci' => 0, 'controllato' => 0];
 }
 
 /** 2.36.0: la tabella del registro, nata al primo uso (mai da una visita del sito senza zone: la chiamano solo le scritture e la migrazione). */
@@ -780,4 +780,120 @@ function zone_briciole_voci(array $z, array $c): array {
     if ($serv && $serv['pubblicata']) $voci[] = [$serv['titolo'], $serv['percorso']];
     $voci[] = [$z['zona'], $c['percorso']];
     return $voci;
+}
+
+// ------------------------------------------------------------
+// Le pagine per zona rimaste fuori dal registro (2.37.1)
+// ------------------------------------------------------------
+
+/** Quante pagine fuori dal registro il pannello elenca per nome (le altre si contano). */
+const ZONE_FUORI_MOSTRATE = 20;
+
+/**
+ * 2.37.1: le pagine per zona che non sono nel registro. Fino alla 2.35.0 il registro si fermava a 200 voci e il pannello, a ogni
+ * apertura, lo riscriveva a 200: le pagine dalla 201esima in poi restavano nel sito ma senza Service, briciole e widget Altre zone.
+ * La 2.36.0 ha tolto il tetto, ma quelle pagine non sono tornate da sole. Qui si ritrovano dall'impronta che il generatore lascia
+ * nell'albero dell'editor (zone_albero()): il widget Altre zone e un'Apertura con l'occhiello = la zona; il servizio si legge dal
+ * titolo dell'Apertura ("Idraulico a *Bologna*") o, se è stato cambiato, dal titolo della pagina con il modello del titolo; la sede
+ * dal widget Dati dell'attività o Barra contatti; la pagina del servizio è quella che usano le altre voci dello stesso servizio.
+ * Una pagina nel cestino non conta. Una coppia servizio + zona che ha già la sua pagina nel registro (un doppione nato quando la
+ * 2.35.0 aveva perso la prima) non si rimette: esce in 'doppioni'. Ritorna ['voci' => [voce + titolo, slug], 'doppioni' => [...]].
+ */
+function zone_fuori_registro(): array {
+    $out = ['voci' => [], 'doppioni' => []];
+    try {
+        $attive = zone_attive();
+        $sql = 'SELECT p.id, p.title, p.slug, p.created_at, COALESCE(NULLIF(p.struttura_bozza, \'\'), p.struttura) AS albero FROM ' . tbl('pages') . ' p'
+            . ($attive ? ' LEFT JOIN ' . tbl('zone') . ' z ON z.pagina = p.id' : '')
+            . ' WHERE p.cestino IS NULL AND COALESCE(NULLIF(p.struttura_bozza, \'\'), p.struttura) LIKE :impronta' . ($attive ? ' AND z.id IS NULL' : '') . ' ORDER BY p.id';
+        $st = db()->prepare($sql);
+        $st->execute([':impronta' => '%"tipo":"zone"%']);
+        $righe = $st->fetchAll();
+    } catch (Throwable $e) { error_log('zone_fuori_registro: ' . $e->getMessage()); return $out; }
+    if (!$righe) return $out;
+    $modello = zone_modelli()['titolo'];
+    $paginaServizio = [];
+    $visti = [];
+    $k = fn(string $s) => mb_strtolower(trim(preg_replace('/\s+/u', ' ', $s) ?? ''));
+    foreach ($righe as $r) {
+        $impronta = zone_impronta(json_decode((string)$r['albero'], true), (string)$r['title'], $modello);
+        if (!$impronta) continue;
+        $voce = zone_normalizza($impronta + ['pagina' => (int)$r['id'], 'creata' => (string)$r['created_at']]);
+        if ($voce['servizio'] === '' || $voce['zona'] === '') continue;
+        $chiave = $k($voce['servizio']) . "\n" . $k($voce['zona']);
+        $voce['titolo'] = (string)$r['title'];
+        $voce['slug'] = (string)$r['slug'];
+        if (isset($visti[$chiave]) || zone_esiste($voce['servizio'], $voce['zona'])) { $out['doppioni'][] = $voce; continue; }
+        $visti[$chiave] = true;
+        $ks = $k($voce['servizio']);
+        if (!array_key_exists($ks, $paginaServizio)) $paginaServizio[$ks] = $attive ? zone_pagina_servizio_usata($voce['servizio']) : '';
+        $voce['servizio_pagina'] = $paginaServizio[$ks];
+        $out['voci'][] = $voce;
+    }
+    return $out;
+}
+
+/**
+ * L'impronta di una pagina per zona nell'albero dell'editor (com'è salvato, senza passare dal controllo dei widget: si leggono solo
+ * tre campi). Ritorna ['servizio', 'zona', 'sede'] oppure null se l'albero non ha il widget Altre zone o un'Apertura con l'occhiello.
+ */
+function zone_impronta($albero, string $titoloPagina, string $modello): ?array {
+    if (!is_array($albero)) return null;
+    $hero = null; $conZone = false; $sede = '';
+    $giro = function (array $nodi) use (&$giro, &$hero, &$conZone, &$sede): void {
+        foreach ($nodi as $e) {
+            if (!is_array($e)) continue;
+            $tipo = (string)($e['tipo'] ?? '');
+            if (in_array($tipo, ['sezione', 'colonna'], true)) { $giro((array)($e['figli'] ?? [])); continue; }
+            $imp = is_array($e['impostazioni'] ?? null) ? $e['impostazioni'] : [];
+            if ($tipo === 'zone') $conZone = true;
+            elseif ($tipo === 'hero' && $hero === null && trim((string)($imp['occhiello'] ?? '')) !== '') $hero = $imp;
+            elseif (($tipo === 'dati_attivita' || $tipo === 'barra_contatti') && $sede === '' && is_string($imp['sede'] ?? null)) $sede = $imp['sede'];
+        }
+    };
+    $giro((array)($albero['elementi'] ?? []));
+    if (!$conZone || $hero === null) return null;
+    $zona = sedi_testo((string)$hero['occhiello'], 80);
+    $kz = mb_strtolower($zona);
+    $servizio = '';
+    // Il titolo dell'Apertura come lo scrive il generatore: "<servizio> a *<zona>*".
+    if (preg_match('/^(.+) a \*([^*]+)\*\s*$/su', trim((string)($hero['titolo'] ?? '')), $m) && mb_strtolower(trim($m[2])) === $kz) $servizio = $m[1];
+    // Altrimenti il titolo della pagina con il modello del titolo ("%servizio% a %zona%"), la zona presa dall'occhiello.
+    if ($servizio === '' && stripos($modello, '%servizio%') !== false) {
+        $re = preg_quote($modello, '/');
+        $re = str_ireplace([preg_quote('%servizio%', '/'), preg_quote('%zona%', '/')], ['(?<servizio>.+)', preg_quote($zona, '/')], $re);
+        if (preg_match('/^' . $re . '$/iu', trim($titoloPagina), $m)) $servizio = $m['servizio'];
+    }
+    $servizio = sedi_testo($servizio, 80);
+    if ($servizio === '' || $zona === '') return null;
+    return ['servizio' => $servizio, 'zona' => $zona, 'sede' => $sede];
+}
+
+/** La pagina del servizio che usano più spesso le voci dello stesso servizio ("pagine:12"), o vuoto. */
+function zone_pagina_servizio_usata(string $servizio): string {
+    $t = fn(string $s) => function_exists('sito_senza_4byte') ? sito_senza_4byte($s) : $s;
+    try {
+        $st = db()->prepare('SELECT z.servizio_pagina FROM ' . tbl('zone') . ' z WHERE ' . ZONE_SQL_SERVIZIO . " AND z.servizio_pagina <> '' GROUP BY z.servizio_pagina ORDER BY COUNT(*) DESC, z.servizio_pagina LIMIT 1");
+        $st->execute([':servizio' => $t($servizio), ':servizio_k' => $t($servizio)]);
+        $rif = (string)($st->fetchColumn() ?: '');
+    } catch (Throwable $e) { error_log('zone_pagina_servizio_usata: ' . $e->getMessage()); return ''; }
+    return $rif !== '' && zone_servizio_pagina($rif) ? $rif : '';
+}
+
+/** Rimette nel registro le pagine di zone_fuori_registro() (ricalcolate qui, mai prese dal modulo). Ritorna quante. */
+function zone_ritrova(): int {
+    $fuori = zone_fuori_registro();
+    $n = 0;
+    try {
+        foreach ($fuori['voci'] as $v) { zone_registra(array_intersect_key($v, zone_vuota()), false); $n++; }
+    } finally {
+        if ($n > 0) zone_aggiorna_voci();
+    }
+    zone_segna_controllato();
+    return $n;
+}
+
+/** Il pannello ha cercato le pagine fuori dal registro (e non le cerca più da solo a ogni apertura). */
+function zone_segna_controllato(): void {
+    if (empty(zone_cfg()['controllato'])) seo_salva('zone', ['controllato' => 1]);
 }

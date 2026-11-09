@@ -2,6 +2,25 @@
 
 Il prodotto si chiama **plumeCMS** (nome scelto il 26 ottobre 2026; prima, per poche ore, "CarbonaraCMS", e ancora prima il provvisorio "Officina": gli zip vecchi si chiamavano `officina-*` e `carbonaracms-*`).
 
+## 2.37.1 (9 novembre 2026) - Le pagine per zona rimaste fuori dal registro
+
+- **Tornano nel registro le pagine per zona perse con la 2.35.0.** Fino alla 2.35.0 il registro delle pagine per zona si fermava a
+  200 voci, e aprire SEO e AEO > Zone lo riscriveva a 200: le pagine oltre restavano nel sito, anche pubblicate, ma senza i dati per
+  Google (il servizio e la zona servita), senza briciole e fuori dal widget Altre zone. Il caso vero: un laboratorio con 7 servizi su
+  circa 40 zone, 262 pagine pubblicate, 62 senza dati. La 2.36.0 ha tolto il tetto, ma quelle pagine non erano più nel registro
+  e non sono tornate da sole.
+- **Alla prima apertura di Zone** dopo l'aggiornamento il pannello le cerca: le riconosce dal widget Altre zone e dall'apertura con
+  cui sono nate (servizio e zona si leggono da lì, la sede dal widget Dati dell'attività o Barra contatti) e mostra un riquadro:
+  "62 pagine per zona sono fuori dal registro", le prime 20 per nome, **Rimettile nel registro** oppure **Lasciale fuori**. Le
+  pagine non cambiano: tornano nell'elenco, nei dati per Google, nelle briciole e nel widget Altre zone. Se non ce ne sono, non si
+  vede niente.
+- **I doppioni restano fuori**: una pagina con lo stesso servizio e la stessa zona di una già nel registro (la 2.35.0, non trovando
+  più la prima, poteva crearne un'altra) si dice per nome, da cestinare a mano.
+- **Cerca le pagine per zona fuori dal registro**, in fondo all'elenco di Zone, rifà la ricerca quando vuoi (per esempio dopo un
+  Togli dal registro di cui ti sei pentito).
+- Prove: `prove/prova-zone.js` 90 su 90 (9 controlli nuovi, con 62 voci tolte dal registro come faceva la 2.35.0 su un registro di
+  450); ricerca in 46 ms con 5.000 pagine per zona nel registro, 4.801 pagine fuori ritrovate e rimesse in 4 secondi.
+
 ## 2.37.0 (9 novembre 2026) - Cambia database
 
 - **Impostazioni > Cambia database** (richiesta di Danilo: "migrare tutto il db su un altro DB e a fine copia utilizzare il
