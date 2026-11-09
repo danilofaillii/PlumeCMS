@@ -194,9 +194,9 @@ require_once __DIR__ . '/includes/admin-header.php';
 <?php if ($u && ($u['fase'] ?? '') === 'fatto' && DB_NAME === ($u['dest']['nome'] ?? '')): ?>
 <div class="form-card cdb-esito-ok" id="cdb-fatto">
   <h3>Il sito usa il database nuovo</h3>
-  <p role="status">Dal <?= h(date('d/m/Y H:i', (int)$u['quando'])) ?> il sito usa <b><?= h($u['dest']['nome']) ?></b> su <?= h($u['dest']['host']) ?> (<?= h((string)($u['versione_dest'] ?? '')) ?>), prefisso <code><?= h($u['dest']['prefisso']) ?></code>: <?= (int)$u['tabelle'] ?> tabelle e <?= number_format((int)$u['righe'], 0, ',', '.') ?> righe copiate e controllate una per una.</p>
+  <p role="status">Dal <?= h(date('d/m/Y H:i', (int)$u['quando'])) ?> il sito usa <b><?= h($u['dest']['nome']) ?></b> su <?= h($u['dest']['host']) ?> (<?= h((string)($u['versione_dest'] ?? '')) ?>), prefisso <code><?= h($u['dest']['prefisso']) ?></code>: <?= (int)$u['tabelle'] ?> tabelle e <?= number_format((int)$u['righe'], 0, ',', '.') ?> righe copiate, con il numero di righe controllato tabella per tabella.</p>
   <?php if (!empty($u['cambi'])): ?><p class="cdb-nota">Adattate al server nuovo: <?= h(implode('; ', array_map(fn($k, $n) => $k . ' (' . $n . ($n === 1 ? ' tabella)' : ' tabelle)'), array_keys($u['cambi']), $u['cambi']))) ?>.</p><?php endif; ?>
-  <p><b>Il database di prima (<?= h((string)($u['prima']['nome'] ?? '')) ?>) resta intatto.</b> <?= h(CMS_NOME) ?> non lo cancella mai: quando hai visto per qualche giorno che tutto funziona, puoi eliminarlo a mano dal pannello dell'hosting (in cPanel: Database MySQL).</p>
+  <p><b class="cdb-intatto">Il database di prima (<?= h((string)($u['prima']['nome'] ?? '')) ?>) resta intatto.</b> <?= h(CMS_NOME) ?> non lo cancella mai: quando hai visto per qualche giorno che tutto funziona, puoi eliminarlo a mano dal pannello dell'hosting (in cPanel: Database MySQL).</p>
   <details id="torna"<?= $righeTorna ? ' open' : '' ?>><summary>Torna al database di prima</summary>
     <p class="cdb-nota">Il sito riprende a usare il database di prima, così com'era al momento del passaggio. <b>Le modifiche fatte dopo il passaggio (articoli, contatti, invii dei form) stanno solo nel database nuovo</b> e nel database di prima non ci sono.</p>
     <?php if ($righeTorna): ?>

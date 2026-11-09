@@ -2510,7 +2510,7 @@ capitoli['27c'] = async () => {
   for (let i = 0; i < 300 && await p.locator('#cdb-lavoro').count(); i++) await dorme(500);
   await p.waitForLoadState('networkidle'); await dorme(500);
   if (!await p.locator('#cdb-fatto').count()) throw new Error('27c: il passaggio non è riuscito');
-  await foto('27-cambia-db-fatto', { sel: '#cdb-fatto', segni: [{ sel: '#cdb-fatto p b', n: 1 }, { sel: '#torna summary', n: 2 }] });
+  await foto('27-cambia-db-fatto', { sel: '#cdb-fatto', segni: [{ sel: '#cdb-fatto .cdb-intatto', n: 1 }, { sel: '#torna summary', n: 2, lato: 'destra' }] });
   // Di nuovo sul database di prima, per i capitoli dopo.
   await p.locator('#torna summary').click(); await p.check('#torna input[name=conferma]'); await p.fill('#cdb-password-torna', PASSWORD);
   await Promise.all([p.waitForNavigation(), p.click('#torna button[type=submit]')]);
