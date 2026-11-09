@@ -52,3 +52,11 @@ if (PHP_SAPI !== 'cli' && !headers_sent()) sicurezza_intestazioni_base();
 if (!defined('SITE_URL'))  define('SITE_URL', getenv('SITE_URL') ?: ((string)cms_predefinito('sito_url') ?: cms_origine()) . cms_base());
 if (!defined('SITE_NAME')) define('SITE_NAME', (string)(cms_predefinito('sito_nome') ?? CMS_NOME) . ((string)cms_predefinito('sito_sottotitolo') !== '' ? ' — ' . cms_predefinito('sito_sottotitolo') : ''));
 if (!defined('SITE_DESC')) define('SITE_DESC', (string)(cms_predefinito('sito_descrizione') ?? ''));
+
+// 2.37.0: durante un cambio del database (Impostazioni > Cambia database) il sito risponde 503 "Torno subito", le API in JSON, i cron
+// saltano il giro: nessuna scrittura va nel database che si sta lasciando. Costa un is_file() quando non c'è un cambio in corso.
+if (PUBLISHER_ERRORI === 'log' && is_file(dirname(__DIR__) . '/aggiornamenti/cambia-db/lavoro.json') && is_file(__DIR__ . '/cambia-db.php')) {
+    require_once __DIR__ . '/db.php';
+    require_once __DIR__ . '/cambia-db.php';
+    if (function_exists('cambiadb_manutenzione_sito')) cambiadb_manutenzione_sito();
+}
