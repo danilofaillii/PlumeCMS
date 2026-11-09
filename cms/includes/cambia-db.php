@@ -575,6 +575,7 @@ function cambiadb_dest_disfa(PDO $dest, array $l): void {
         foreach ((array)$l['rinominate'] as $t) if (isset($esistenti[$pd . $t])) $coppie[] = '`' . $pd . $t . '` TO `' . $l['app'] . $pd . $t . '`';
         foreach ((array)($l['parcheggiate'] ?? []) as $t) if (isset($esistenti[$l['vec'] . $t])) $coppie[] = '`' . $l['vec'] . $t . '` TO `' . $t . '`';
         if ($coppie) $dest->exec('RENAME TABLE ' . implode(', ', $coppie));
+        foreach ((array)($l['viste_nostre'] ?? []) as $v) if (is_string($v) && preg_match('/^[a-z0-9_]{1,64}$/', $v)) $dest->exec('DROP VIEW IF EXISTS `' . $v . '`');
         $esistenti = array_flip(array_map(fn($r) => (string)$r[0], $dest->query('SHOW TABLES')->fetchAll(PDO::FETCH_NUM)));
     }
     foreach ($l['tabelle'] as $tb) {
@@ -602,6 +603,8 @@ function cambiadb_scambia_e_passa(array $l, PDO $dest): array {
     $dest->exec('SET SESSION lock_wait_timeout = 10');
     $dest->exec('RENAME TABLE ' . implode(', ', $coppie));
     $l['scambiato'] = true; $l['rinominate'] = array_column($l['tabelle'], 't'); $l['parcheggiate'] = $parcheggiate;
+    // Le viste degli articoli che il database nuovo non aveva: se il passaggio non riesce, si tolgono (quelle che c'erano restano).
+    $l['viste_nostre'] = array_values(array_diff([$pd . 'v_published_articles', $pd . 'v_scheduled_articles'], $q['viste']));
     cambiadb_lavoro_scrivi($l);
     try {
         // Le due viste degli articoli, come sito_viste() (includes/sito.php), con il prefisso nuovo.

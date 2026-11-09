@@ -135,6 +135,7 @@ function logPulito() {
   if (SCENARI.includes('guasto') && process.env.T_DB_GIA) {
     // Il controllo dopo il config nuovo non va (CMS_CAMBIADB_GUASTO): config di prima rimesso, e nel database nuovo le tabelle
     // che c'erano (sostituite con "Sostituisci") tornano al loro nome con le loro righe; niente tabelle di lavoro.
+    await ctx.clearCookies(); await entra(p); // una sessione nuova: il limite delle prove è per sessione
     const tdb = T.db; T.db = process.env.T_DB_GIA;
     const primaDest = cli('sql-db', ...DEST(), "SHOW TABLES");
     const conf0 = fs.readFileSync(CONFIG, 'utf8');
@@ -170,8 +171,8 @@ function logPulito() {
     await dorme(1500);
     await p2.goto(B + '/admin/cambia-db.php', { waitUntil: 'domcontentloaded' });
     const pct1 = Number(await p2.locator('[data-nl-barra]').getAttribute('aria-valuenow'));
-    await dorme(4000);
-    const pct2 = Number(await p2.locator('[data-nl-barra]').getAttribute('aria-valuenow').catch(() => 100));
+    let pct2 = pct1;
+    for (let i = 0; i < 20 && pct2 <= pct1; i++) { await dorme(500); pct2 = Number(await p2.locator('[data-nl-barra]').getAttribute('aria-valuenow', { timeout: 2000 }).catch(() => 100)); }
     ok('riaperta, la copia riprende da dove era (la barra va avanti)', pct2 > pct1 || await p2.locator('#cdb-lavoro').count() === 0, { pct1, pct2 });
     // chiusa di nuovo, più della scadenza: il sito torna normale
     await p2.goto('about:blank'); await dorme(16000);
@@ -191,6 +192,7 @@ function logPulito() {
 
   if (SCENARI.includes('copia')) {
     const req = (await br.newContext()).request;
+    await q.context().clearCookies(); await entra(q); // una sessione nuova: il limite delle prove è per sessione
     const pagPrima = await scaricaPagine(req);
     const contePrima = cli('conte', CMS); const imprPrima = cli('impronte', CMS);
     await apri(q); await compila(q, datiBuoni());
@@ -272,6 +274,7 @@ function logPulito() {
   if (SCENARI.includes('manuale')) {
     // Il database nuovo va svuotato delle tabelle del cambio di prima: si usa "Sostituisci".
     fs.chmodSync(CONFIG, 0o444);
+    await q.context().clearCookies(); await entra(q); // una sessione nuova: il limite delle prove è per sessione
     await apri(q); await compila(q, datiBuoni());
     await avvia(q, await q.locator('input[name=sostituisci]').count() > 0);
     await aspettaFine(q);
