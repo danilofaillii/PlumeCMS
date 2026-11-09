@@ -497,18 +497,26 @@ function copia_nomi_appoggio(array $suffissi): array {
 function copia_server_collazioni(): array {
     static $c = null;
     if ($c !== null) return $c;
+    return $c = copia_collazioni_di(db());
+}
+
+/**
+ * 2.37.0: le collazioni e i set di caratteri di un server qualunque (il database nuovo di Cambia database), nella forma di
+ * copia_server_collazioni(): ['collazioni' => [nome => set], 'predefinite' => [set => nome], 'charset' => [set => true]].
+ */
+function copia_collazioni_di(PDO $pdo): array {
     $coll = []; $pred = []; $cs = [];
-    foreach (db()->query('SHOW COLLATION')->fetchAll(PDO::FETCH_ASSOC) as $r) {
+    foreach ($pdo->query('SHOW COLLATION')->fetchAll(PDO::FETCH_ASSOC) as $r) {
         $nome = strtolower((string)($r['Collation'] ?? '')); $set = strtolower((string)($r['Charset'] ?? ''));
         if ($nome === '') continue;
         $coll[$nome] = $set;
         if (strtolower((string)($r['Default'] ?? '')) === 'yes') $pred[$set] = $nome;
     }
-    foreach (db()->query('SHOW CHARACTER SET')->fetchAll(PDO::FETCH_ASSOC) as $r) {
+    foreach ($pdo->query('SHOW CHARACTER SET')->fetchAll(PDO::FETCH_ASSOC) as $r) {
         $set = strtolower((string)($r['Charset'] ?? ''));
         if ($set !== '') $cs[$set] = true;
     }
-    return $c = ['collazioni' => $coll, 'predefinite' => $pred, 'charset' => $cs];
+    return ['collazioni' => $coll, 'predefinite' => $pred, 'charset' => $cs];
 }
 
 /**
@@ -517,8 +525,8 @@ function copia_server_collazioni(): array {
  * utf8mb3_* -> utf8_* con lo stesso suffisso se conosciuta, altrimenti utf8_unicode_ci; qualunque altra -> la predefinita del
  * suo set di caratteri qui (SHOW COLLATION, Default = Yes). Una conosciuta torna com'è; '' se non si trova niente.
  */
-function copia_collazione_vicina(string $nome): string {
-    $s = copia_server_collazioni();
+function copia_collazione_vicina(string $nome, ?array $srv = null): string {
+    $s = $srv ?? copia_server_collazioni(); // 2.37.0: $srv = copia_collazioni_di() di un altro server (Cambia database)
     $nome = strtolower($nome);
     if (isset($s['collazioni'][$nome])) return $nome;
     $c = fn(string $x): string => isset($s['collazioni'][$x]) ? $x : '';
@@ -537,8 +545,8 @@ function copia_collazione_vicina(string $nome): string {
 }
 
 /** Il set di caratteri da usare al posto di uno che questo server non elenca: utf8mb3 -> utf8 e utf8 -> utf8mb3 (alias). '' se non c'è. */
-function copia_charset_vicino(string $nome): string {
-    $s = copia_server_collazioni();
+function copia_charset_vicino(string $nome, ?array $srv = null): string {
+    $s = $srv ?? copia_server_collazioni();
     $nome = strtolower($nome);
     if (isset($s['charset'][$nome])) return $nome;
     if ($nome === 'utf8mb3' && isset($s['charset']['utf8'])) return 'utf8';
@@ -579,7 +587,7 @@ function copia_sql_pezzi(string $sql): array {
  * generate) che il server non conosce diventano i più vicini conosciuti. Solo fuori dagli apici; AUTO_INCREMENT=N e tutto
  * il resto restano intatti. In $cambi si contano le tabelle con la sostituzione ('collazione x -> y' => quante CREATE).
  */
-function copia_create_portabile(string $riga, array &$cambi): string {
+function copia_create_portabile(string $riga, array &$cambi, ?array $srv = null): string {
     $pezzi = copia_sql_pezzi($riga);
     $out = '';
     // Una sostituzione si conta una volta per CREATE (per tabella), anche se compare sulla tabella e su più colonne.
@@ -587,22 +595,22 @@ function copia_create_portabile(string $riga, array &$cambi): string {
     $conta = function (string $k) use (&$cambi, &$fatti): void { if (isset($fatti[$k])) return; $fatti[$k] = true; $cambi[$k] = ($cambi[$k] ?? 0) + 1; };
     foreach ($pezzi as $i => [$t, $dentro]) {
         if ($dentro) { $out .= $t; continue; }
-        $t = preg_replace_callback('/\b(COLLATE\s*=?\s*)([A-Za-z0-9_]+)/i', function ($m) use ($conta) {
-            $v = copia_collazione_vicina($m[2]);
+        $t = preg_replace_callback('/\b(COLLATE\s*=?\s*)([A-Za-z0-9_]+)/i', function ($m) use ($conta, $srv) {
+            $v = copia_collazione_vicina($m[2], $srv);
             if ($v === '' || strcasecmp($v, $m[2]) === 0) return $m[0];
             $conta('la collazione ' . strtolower($m[2]) . ' -> ' . $v);
             return $m[1] . $v;
         }, $t);
-        $t = preg_replace_callback('/\b((?:CHARSET|CHARACTER\s+SET)\s*=?\s*)([A-Za-z0-9_]+)/i', function ($m) use ($conta) {
-            $v = copia_charset_vicino($m[2]);
+        $t = preg_replace_callback('/\b((?:CHARSET|CHARACTER\s+SET)\s*=?\s*)([A-Za-z0-9_]+)/i', function ($m) use ($conta, $srv) {
+            $v = copia_charset_vicino($m[2], $srv);
             if ($v === '' || strcasecmp($v, $m[2]) === 0) return $m[0];
             $conta('il set di caratteri ' . strtolower($m[2]) . ' -> ' . $v);
             return $m[1] . $v;
         }, $t);
         // L'introduttore (_utf8mb3) sta subito prima di una stringa fra apici.
         if (isset($pezzi[$i + 1]) && $pezzi[$i + 1][1]) {
-            $t = preg_replace_callback('/(^|[\s(,=])_([A-Za-z0-9]+)$/', function ($m) use ($conta) {
-                $v = copia_charset_vicino($m[2]);
+            $t = preg_replace_callback('/(^|[\s(,=])_([A-Za-z0-9]+)$/', function ($m) use ($conta, $srv) {
+                $v = copia_charset_vicino($m[2], $srv);
                 if ($v === '' || strcasecmp($v, $m[2]) === 0) return $m[0];
                 $conta('il set di caratteri ' . strtolower($m[2]) . ' -> ' . $v);
                 return $m[1] . '_' . $v;

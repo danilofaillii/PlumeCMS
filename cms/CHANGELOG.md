@@ -2,6 +2,32 @@
 
 Il prodotto si chiama **plumeCMS** (nome scelto il 26 ottobre 2026; prima, per poche ore, "CarbonaraCMS", e ancora prima il provvisorio "Officina": gli zip vecchi si chiamavano `officina-*` e `carbonaracms-*`).
 
+## 2.37.0 (9 novembre 2026) - Cambia database
+
+- **Impostazioni > Cambia database** (richiesta di Danilo: "migrare tutto il db su un altro DB e a fine copia utilizzare il
+  nuovo DB"): sposta tutto il database del sito su un altro database, dello stesso hosting o di un altro server MySQL o
+  MariaDB, e a copia controllata fa usare al sito quello nuovo. Solo per l'amministratore, con la sua password per partire.
+- **Prova la connessione** prima di tutto: tempo massimo breve, versione del server, permessi provati con una tabella e una
+  vista create e tolte, tabelle già presenti con il prefisso scelto (allora serve la spunta "Sostituisci le tabelle con
+  questo prefisso nel database nuovo", e si sostituiscono solo quelle). Lo stesso database di adesso con lo stesso prefisso si
+  rifiuta, anche scritto con un altro indirizzo del server (lo dice il server stesso). Errori in parole semplici, senza il
+  messaggio del server; al più dieci prove ogni dieci minuti per sessione.
+- **La copia a giri** con la barra di avanzamento, con le difese del ripristino sicuro della 2.25.1: tabelle di appoggio nel
+  database nuovo e una sola RENAME alla fine, collazioni e set di caratteri adattati al server di arrivo (MySQL 8 verso
+  MariaDB 10.6 e MySQL 5.7 provati), colonne generate scritte DEFAULT, date di creazione conservate, una istruzione alla volta,
+  INSERT sotto il limite del server. Durante la copia il sito dice "Torno subito" (503 con Retry-After) e il pannello mostra
+  solo la pagina del cambio. Se la pagina si chiude, riaprendola la copia riprende; dopo dieci minuti il sito torna normale da
+  solo sul database di prima. Alla fine le righe si contano tabella per tabella; una tabella cambiata durante la copia si
+  ricopia, e se i conti non tornano ci si ferma senza cambiare niente.
+- **Il passaggio**: una copia del config di prima non leggibile dal web (`includes/config.local.prima-<data>.php`, comincia con
+  un'uscita immediata), il config nuovo con lo stesso formato dell'installatore (cambiano solo le righe del database e del
+  prefisso), scritto con un file temporaneo e una rinomina, poi una prova sul database nuovo; se la prova non va torna il
+  config di prima. Se il config non si può scrivere, la pagina mostra all'amministratore le cinque righe da incollare con il
+  gestore dei file e "Ho cambiato il file, controlla".
+- **Il database di prima non si cancella mai**: la pagina lo dice, e **Torna al database di prima** rimette il config salvato
+  (con l'avviso che le modifiche fatte dopo il passaggio stanno solo nel database nuovo).
+- Prove: `prove/prova-cambia-db.js` (con `prove/cambia-db-cli.php`), gruppo 50 degli attacchi.
+
 ## 2.36.0 (9 novembre 2026) - Pagine per zona senza limite
 
 - **Niente più tetto di 200 pagine per zona.** Richiesta di Danilo: "ci sono siti che lo superano di tanto". Il registro delle

@@ -346,3 +346,10 @@ function render_flash(): string {
     $_SESSION['flash'] = [];
     return $out;
 }
+
+// 2.37.0: durante un cambio del database il pannello mostra solo Impostazioni > Cambia database (includes/cambia-db.php).
+// Solo se il file del lavoro esiste: altrimenti non costa niente.
+if (PHP_SAPI !== 'cli' && is_file(dirname(__DIR__, 2) . '/aggiornamenti/cambia-db/lavoro.json') && is_file(dirname(__DIR__, 2) . '/includes/cambia-db.php')) {
+    require_once dirname(__DIR__, 2) . '/includes/cambia-db.php';
+    if (function_exists('cambiadb_pannello_blocca')) cambiadb_pannello_blocca();
+}
