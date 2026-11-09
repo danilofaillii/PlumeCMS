@@ -109,7 +109,7 @@ Sono gli unici in `cms/docs/`, nello zip, nel sito di plumeCMS e nella pagina Do
 - **Pacchetto di aggiornamento** per un'installazione esistente:
   `python3 tools/cms-pacchetto.py --aggiornamento`. Si carica dal pannello,
   Impostazioni, Aggiornamenti.
-- **Versione**: `cms/VERSIONE` (oggi 2.35.0; sempre tre numeri: "beta" va nel CHANGELOG, mai nel nome dello zip, se no la serie "ultima" del Download non lo riconosce) e una voce in `cms/CHANGELOG.md` a ogni
+- **Versione**: `cms/VERSIONE` (oggi 2.36.0; sempre tre numeri: "beta" va nel CHANGELOG, mai nel nome dello zip, se no la serie "ultima" del Download non lo riconosce) e una voce in `cms/CHANGELOG.md` a ogni
   zip con contenuto diverso. Mai cambiare il contenuto di una versione già data.
 - **Prove** prima di dire finito:
   - `php -n -d short_open_tag=1 -l` su ogni file PHP toccato, `node --check` sui js;
@@ -167,6 +167,22 @@ Le decisioni complete, con data e perché, stanno nel second brain, `plumecms/de
 - **Nome: plumeCMS** (26 ottobre 2026).
 
 ## Stato al 31 ottobre 2026
+
+Fatto: plumeCMS 2.36.0 (9 novembre, 12:49-15:00): **pagine per zona senza limite** (richiesta di Danilo: "il limite di 200 va tolto, ci sono siti
+che lo superano di tanto"; il 200 era una scelta prudente della 2.28.0, registro in un'unica impostazione letta a ogni pagina). Agente nella worktree
+`/home/user/wt-zone2`, ramo `zone-senza-limite` (12:50-13:36), riletto, unito e riprovato da me. Registro nella tabella `<prefisso>zone` (`zone_installa()`,
+utf8mb4, `pagina` unica), migrazione una volta da `seo_config.zone.elenco` (`zone_migra()`, transazione, `migrato` e `voci` nel JSON; con `voci` 0 nessuna
+query e nessuna tabella), `ZONE_MAX` tolto, `ZONE_GIRO_MAX` 100 con il giro a pezzi dopo 15 s (`CMS_ZONE_PEZZO_SECONDI`), pannello Zone con 50 righe per
+pagina, ricerca e avviso oltre 30 pubblicate, widget Altre zone con "Quante mostrarne" (0 = tutte, identico a prima) e "Quali mostrare", llms.txt
+raggruppato oltre 50, `zone_url()` senza la lettura della home a ogni link (5.099 query diventate 101). Prova di carico con 5.000 zone (manuale tecnico
+45.8): pagina per zona 125-217 ms, pagine normali con le stesse query; il collo vero oltre le decine di migliaia di pagine è `sito_contenuti()` del nucleo.
+Corretti anche `tools/consegna.py` (la voce `seo` vale nel pacchetto unico quando la versione di prima è almeno la 2.35.0) e `prova-consegna-unica.js`
+(voce seo, 8 pagine). Prove mie sullo zip (`$S/v18/batteria.sh` e `rifai.sh`; il primo giro in parallelo con l'agente della 2.37.0 ha avuto timeout di
+Chromium per il carico e il disco pieno: rifatte una alla volta): install 38/38 radice e cartella, kit e zone 81/81 su MySQL 8 radice e cartella, **MariaDB
+10.6 e MySQL 5.7**, seo-plume 42/42, aggiornamento 2.35.0 -> 2.36.0 13/13 con la migrazione (prima 6/6, dopo 7/7, pannello 3/3) e 2 foto su 20 diverse
+(la 404 con l'alone animato e la ricerca a 1 livello: rumore), attacchi 526/526, pacchetto unico 13/13, sito di plumeCMS 131/131, zero errori fatali.
+PDF 13241 KB, zip 2604 KB. **Disco del contenitore**: arrivato al 99% (641 MB liberi) con due agenti; tolti siti e database di prova vecchi, 4,3 GB liberi.
+**Non provato**: oltre 5.000 zone, un hosting lento vero (il giro a pezzi è provato a 0,2 s), Apache vero.
 
 Fatto: plumeCMS 2.35.0 (8 novembre, 22:32-23:22): **le correzioni SEO e AEO dell'audit di plumecms.it** (audit del 8 novembre, rapporto
 `https://claude.ai/artifact/9s9NSqmh15jtfe1FQpP8Hm`, fatto con il connettore AI collegate di plumecms.it: prima prova vera con un client Claude). Agente nella
