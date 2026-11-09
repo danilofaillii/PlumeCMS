@@ -854,11 +854,21 @@ function cambiadb_config_passa(array $d, string $pass): array {
 function cambiadb_controlla_manuale(): string {
     $l = cambiadb_lavoro();
     if (!$l || $l['fase'] !== 'manuale') return 'Nessun cambio in attesa del config.';
-    if (!cambiadb_config_e_dest($l)) return 'Il file includes/config.local.php indica ancora il database di prima (o le righe non sono scritte esatte). Controlla di averlo salvato con le righe qui sotto, poi riprova.';
-    $motivo = cambiadb_config_controlla((string)@file_get_contents(cambiadb_config_file()));
+    // Si legge il file com'è adesso, non le costanti di questa richiesta: con opcache (su alcuni hosting senza il controllo
+    // delle date dei file) il config appena cambiato a mano può arrivare ancora vecchio. Il file si fa dimenticare a opcache,
+    // così la richiesta dopo legge quello nuovo.
+    $f = cambiadb_config_file();
+    clearstatcache(true, $f);
+    agg_opcache_dimentica($f);
+    $testo = (string)@file_get_contents($f);
+    $v = cambiadb_config_valori($testo);
+    $d = $l['dest'];
+    if (($v['DB_HOST'] ?? '') !== cambiadb_host_config($d) || ($v['DB_NAME'] ?? '') !== $d['nome'] || ($v['DB_USER'] ?? '') !== $d['utente'] || ($v['CMS_PREFISSO'] ?? '') !== $d['prefisso'])
+        return 'Il file includes/config.local.php indica ancora il database di prima (o le righe non sono scritte esatte). Controlla di averlo salvato con le righe qui sotto, poi riprova.';
+    $motivo = cambiadb_config_controlla($testo);
     if ($motivo !== '') return $motivo;
-    // Qui db() è già il database nuovo: le parcheggiate si tolgono da lì.
-    cambiadb_dopo_passaggio($l, db(), (string)($l['backup'] ?? ''));
+    try { $dest = cambiadb_connetti($d, (string)($v['DB_PASS'] ?? ''), 5); } catch (CambiaDbErrore $e) { return $e->getMessage(); }
+    cambiadb_dopo_passaggio($l, $dest, (string)($l['backup'] ?? ''));
     return '';
 }
 
