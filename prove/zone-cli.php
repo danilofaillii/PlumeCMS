@@ -133,7 +133,7 @@ switch ($cmd) {
         $fatte = 0; $t0 = microtime(true);
         for ($i = 0; $i < $n; $i += 500) {
             $pdo->beginTransaction();
-            $ins = $pdo->prepare("INSERT INTO $pt (title, slug, status, publish_at, robots, seo_description, struttura, struttura_bozza, html, content, created_at, updated_at) VALUES (?, ?, ?, ?, 'index', ?, ?, NULL, '', '', NOW(), NOW())");
+            $ins = $pdo->prepare("INSERT INTO $pt (title, slug, status, publish_at, robots, seo_description, struttura, struttura_bozza, html, created_at, updated_at) VALUES (?, ?, ?, ?, 'index', ?, ?, NULL, '', NOW(), NOW())");
             $reg = $pdo->prepare("INSERT INTO $zt (pagina, servizio, zona, sede, servizio_pagina, creata) VALUES (?, ?, ?, '', '', NOW())");
             for ($j = $i; $j < min($n, $i + 500); $j++) {
                 $zona = sprintf('Comune %05d', $j + 1);

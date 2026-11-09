@@ -443,7 +443,11 @@ function zone_pubblicata(array $z): bool {
 
 /** L'indirizzo assoluto della pagina di una voce. */
 function zone_url(array $z): string {
-    return SITO_URL . contenuti_percorso('pagine', $z['riga']);
+    // 2.36.0: la home letta una volta per richiesta (contenuti_percorso() la legge a ogni chiamata: con migliaia di zone nel widget
+    // erano migliaia di query). Stesso risultato di contenuti_percorso('pagine', ...).
+    static $home = null;
+    if ($home === null) $home = (string)get_setting('pagina_home', '');
+    return SITO_URL . ((string)$z['riga']['slug'] === $home ? '/' : '/' . $z['riga']['slug'] . '/');
 }
 
 // ------------------------------------------------------------
@@ -706,6 +710,46 @@ function zone_altre_pubblicate(array $z, int $quante = 0, string $ordine = 'alfa
     }
     usort($out, fn($a, $b) => strcoll(mb_strtolower($a['zona']), mb_strtolower($b['zona'])));
     return $out;
+}
+
+/** Oltre quante pagine per zona pubblicate llms.txt le raggruppa per servizio invece di elencarle una per una (2.36.0). */
+const ZONE_LLMS_MAX = 50;
+/** Quante pagine d'esempio per servizio nel gruppo di llms.txt. */
+const ZONE_LLMS_ESEMPI = 10;
+
+/**
+ * 2.36.0: llms.txt con migliaia di pagine per zona. $pagine sono le voci della sezione Pagine (contenuti di sito_contenuti_elenco).
+ * Fino a ZONE_LLMS_MAX pagine per zona fra loro non cambia niente (llms.txt identico alla 2.35.0). Oltre, le pagine per zona escono
+ * dalla sezione Pagine e diventano una riga per servizio ("Idraulico: 5000 zone servite, per esempio ...", le prime
+ * ZONE_LLMS_ESEMPI in ordine di zona) con il rimando alla sitemap. Ritorna [le pagine che restano, le righe della sezione].
+ */
+function zone_llms_raggruppa(array $pagine): array {
+    if (!zone_attive()) return [$pagine, []];
+    $ids = [];
+    foreach ($pagine as $i => $c) if (($c['fonte'] ?? '') === 'pages') $ids[(int)($c['riga']['id'] ?? 0)] = $i;
+    if (count($ids) <= ZONE_LLMS_MAX) return [$pagine, []]; // meno pagine che soglia: niente da raggruppare, nessuna query
+    $voci = [];
+    try {
+        foreach (db()->query('SELECT pagina, servizio, zona FROM ' . tbl('zone'))->fetchAll() as $r) if (isset($ids[(int)$r['pagina']])) $voci[(int)$r['pagina']] = $r;
+    } catch (Throwable $e) { error_log('zone_llms_raggruppa: ' . $e->getMessage()); return [$pagine, []]; }
+    if (count($voci) <= ZONE_LLMS_MAX) return [$pagine, []];
+    $perServizio = [];
+    foreach ($voci as $id => $r) {
+        $sv = function_exists('sito_4byte_veri') ? sito_4byte_veri((string)$r['servizio']) : (string)$r['servizio'];
+        $k = mb_strtolower($sv);
+        $perServizio[$k]['nome'] = $perServizio[$k]['nome'] ?? $sv;
+        $perServizio[$k]['voci'][] = ['zona' => function_exists('sito_4byte_veri') ? sito_4byte_veri((string)$r['zona']) : (string)$r['zona'], 'c' => $pagine[$ids[$id]]];
+    }
+    ksort($perServizio);
+    $righe = [];
+    foreach ($perServizio as $g) {
+        usort($g['voci'], fn($a, $b) => strcoll(mb_strtolower($a['zona']), mb_strtolower($b['zona'])));
+        $n = count($g['voci']);
+        $esempi = array_map(fn($x) => '[' . $x['zona'] . '](' . SITO_URL . $x['c']['percorso'] . ')', array_slice($g['voci'], 0, ZONE_LLMS_ESEMPI));
+        $righe[] = '- ' . $g['nome'] . ': ' . $n . ($n === 1 ? ' zona servita' : ' zone servite') . ', una pagina per zona (' . ($n > ZONE_LLMS_ESEMPI ? 'le prime: ' : '') . implode(', ', $esempi) . ($n > ZONE_LLMS_ESEMPI ? '; tutte nella [sitemap](' . SITO_URL . '/sitemap.xml)' : '') . ')';
+    }
+    $resto = array_values(array_filter($pagine, fn($c) => !(($c['fonte'] ?? '') === 'pages' && isset($voci[(int)($c['riga']['id'] ?? 0)]))));
+    return [$resto, $righe];
 }
 
 function zone_jsonld_id(array $c): string {
