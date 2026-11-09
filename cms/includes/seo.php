@@ -160,7 +160,7 @@ function seo_predefiniti(): array {
         // 2.27.0: le sedi dell'attività (includes/sedi.php): un elenco JSON, vuoto di partenza. Senza sedi il sito esce come prima.
         'sedi' => ['elenco' => []],
         // 2.28.0: le pagine per zona (includes/zone.php): il registro e i modelli del titolo e della descrizione.
-        'zone' => function_exists('zone_predefiniti') ? zone_predefiniti() : ['elenco' => [], 'titolo' => '%servizio% a %zona%', 'descrizione' => ''],
+        'zone' => function_exists('zone_predefiniti') ? zone_predefiniti() : ['elenco' => [], 'titolo' => '%servizio% a %zona%', 'descrizione' => '', 'migrato' => 0, 'voci' => 0], // 2.36.0: il registro nella tabella <prefisso>zone
     ];
     return cms_filtro('seo_predefiniti', $p);
 }

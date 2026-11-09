@@ -328,7 +328,7 @@ function aic_t_get_seo_settings(array $conn, array $a): array {
     $out = ['titoli' => $c['titolo'], 'descrizione_del_sito' => (string)($c['meta']['descrizione'] ?? ''), 'immagine_social_predefinita' => (string)($c['meta']['og_immagine'] ?? ''),
         'robots_per_tipo' => $c['robots'], 'dati_strutturati' => $c['schema'], 'in_breve' => $c['aeo'], 'organizzazione' => $c['org'], 'persona' => $c['persona'], 'sitemap' => $c['sitemap']];
     if (is_file(cms_radice() . '/includes/sedi.php')) { require_once cms_radice() . '/includes/sedi.php'; if (function_exists('sedi_tutte')) $out['sedi'] = array_values(array_map(fn($s) => array_diff_key($s, ['google_recensione' => 1]), sedi_tutte())); }
-    if (is_file(cms_radice() . '/includes/zone.php')) { require_once cms_radice() . '/includes/zone.php'; if (function_exists('zone_tutte')) $out['pagine_per_zona'] = array_values(zone_tutte()); }
+    if (is_file(cms_radice() . '/includes/zone.php')) { require_once cms_radice() . '/includes/zone.php'; if (function_exists('zone_elenco')) { $el = zone_elenco(['per_pagina' => 200]); $out['pagine_per_zona'] = array_values($el['voci']); $out['pagine_per_zona_totale'] = $el['totale']; } elseif (function_exists('zone_tutte')) $out['pagine_per_zona'] = array_values(zone_tutte()); } // 2.36.0: le prime 200 e il totale (senza tetto le zone possono essere migliaia)
     return $out;
 }
 

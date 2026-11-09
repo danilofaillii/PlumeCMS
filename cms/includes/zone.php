@@ -11,10 +11,14 @@
  * esiste per impedire pagine vuote tutte uguali: finché un segnaposto resta, la pagina NON si pubblica da nessuna strada
  * (editor, scheda del contenuto, azione in blocco, impostazioni dell'editor, ripristino di una versione): zone_blocco_pubblicazione().
  *
- * Il registro delle pagine per zona sta nel gruppo "zone" della configurazione SEO (impostazione seo_config, includes/seo.php):
- * niente tabelle nuove. Ogni voce: pagina (id della tabella pages), servizio, zona, sede (id, "principale" o vuoto),
+ * Il registro delle pagine per zona: fino alla 2.35.0 stava nel gruppo "zone" della configurazione SEO (l'impostazione seo_config,
+ * un JSON letto a ogni richiesta) con un tetto di 200 voci; dalla 2.36.0 sta nella tabella <prefisso>zone (zone_installa(), nata
+ * al primo uso), senza tetto. Ogni voce: pagina (id della tabella pages, unico), servizio, zona, sede (id, "principale" o vuoto),
  * servizio_pagina ("pagine:12", la pagina del servizio a cui collegare le briciole, facoltativa), creata. Le pagine sparite si
- * ignorano alla lettura e il pannello le toglie dal registro.
+ * ignorano alla lettura (JOIN con pages) e il pannello le toglie dal registro. Il gruppo "zone" della configurazione tiene i
+ * modelli del titolo e della descrizione, il segno della migrazione ("migrato") e quante voci ha la tabella ("voci"): con voci a 0
+ * il sito non fa nessuna query sulle zone (e non crea la tabella). Un registro della 2.35.0 rimasto nel JSON passa nella tabella
+ * una volta sola (zone_migra()).
  *
  * Dati per Google (includes/sito-seo.php): nella pagina per zona un nodo Service con name "%servizio% a %zona%", areaServed la
  * zona (City o AdministrativeArea, la stessa regola delle sedi), provider la LocalBusiness della sede di riferimento (o
@@ -24,29 +28,120 @@
 
 require_once __DIR__ . '/sedi.php';
 
-/** Quante pagine per zona in tutto. */
-const ZONE_MAX = 200;
-/** Quante zone in un giro di "Crea le bozze". */
-const ZONE_GIRO_MAX = 30;
+/** Quante zone in un giro di "Crea le bozze" (2.36.0: erano 30; il totale non ha più un tetto). */
+const ZONE_GIRO_MAX = 100;
+/** Quanti secondi di lavoro per pezzo: oltre, il giro si ferma e la pagina continua da sola con le zone che restano. */
+const ZONE_PEZZO_SECONDI = 15;
+/** I secondi per pezzo davvero usati: CMS_ZONE_PEZZO_SECONDI nel config li cambia (le prove lo mettono a 0.2 per vedere i pezzi). */
+function zone_pezzo_secondi(): float {
+    return defined('CMS_ZONE_PEZZO_SECONDI') && is_numeric(CMS_ZONE_PEZZO_SECONDI) ? max(0.05, (float)CMS_ZONE_PEZZO_SECONDI) : (float)ZONE_PEZZO_SECONDI;
+}
+/** Quante righe per pagina nell'elenco del pannello. */
+const ZONE_PER_PAGINA = 50;
+/** Oltre quante pagine pubblicate di un servizio il pannello consiglia di limitare il widget Altre zone. */
+const ZONE_AVVISO_WIDGET = 30;
 /** Il segnaposto dei riquadri guidati: finché c'è, la pagina resta bozza. */
 const ZONE_SEGNAPOSTO = '[DA SCRIVERE]';
 const ZONE_TITOLO_PREDEFINITO = '%servizio% a %zona%';
 const ZONE_DESCRIZIONE_PREDEFINITA = '%servizio% a %zona%: interventi, tempi e contatti della sede più vicina. Scrivici o chiama per un preventivo.';
 
 // ------------------------------------------------------------
-// Lettura e scrittura del registro
+// La tabella del registro
 // ------------------------------------------------------------
 
-/** Il gruppo "zone" della configurazione SEO al valore di partenza (seo_predefiniti() lo usa). */
+/**
+ * Il gruppo "zone" della configurazione SEO al valore di partenza (seo_predefiniti() lo usa). "elenco" è il registro della 2.35.0
+ * (vuoto dopo la migrazione), "migrato" il segno che la migrazione è fatta, "voci" quante righe ha la tabella.
+ */
 function zone_predefiniti(): array {
-    return ['elenco' => [], 'titolo' => ZONE_TITOLO_PREDEFINITO, 'descrizione' => ZONE_DESCRIZIONE_PREDEFINITA];
+    return ['elenco' => [], 'titolo' => ZONE_TITOLO_PREDEFINITO, 'descrizione' => ZONE_DESCRIZIONE_PREDEFINITA, 'migrato' => 0, 'voci' => 0];
+}
+
+/** 2.36.0: la tabella del registro, nata al primo uso (mai da una visita del sito senza zone: la chiamano solo le scritture e la migrazione). */
+function zone_installa(): void {
+    static $fatto = false;
+    if ($fatto) return;
+    db()->exec('CREATE TABLE IF NOT EXISTS ' . tbl('zone') . " (
+        `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+        `pagina` INT UNSIGNED NOT NULL,
+        `servizio` VARCHAR(255) NOT NULL DEFAULT '',
+        `zona` VARCHAR(255) NOT NULL DEFAULT '',
+        `sede` VARCHAR(60) NOT NULL DEFAULT '',
+        `servizio_pagina` VARCHAR(60) NOT NULL DEFAULT '',
+        `creata` DATETIME DEFAULT NULL,
+        PRIMARY KEY (`id`),
+        UNIQUE KEY `pagina` (`pagina`),
+        KEY `servizio` (`servizio`(100), `zona`(100)),
+        KEY `zona` (`zona`(100)),
+        KEY `sede` (`sede`)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+    $fatto = true;
+}
+
+/** Il gruppo "zone" della configurazione com'è adesso. */
+function zone_cfg(): array {
+    $c = function_exists('seo_cfg') ? (seo_cfg()['zone'] ?? []) : [];
+    return is_array($c) ? $c : [];
+}
+
+/**
+ * Ci sono pagine per zona? Senza, nessuna query: il sito di chi non usa le zone non paga niente (il numero sta nella
+ * configurazione SEO, già letta per i titoli). Con un registro della 2.35.0 ancora nel JSON, prima lo migra.
+ */
+function zone_attive(): bool {
+    $c = zone_cfg();
+    if (empty($c['migrato']) && !empty($c['elenco']) && is_array($c['elenco'])) { zone_migra(); $c = zone_cfg(); }
+    return (int)($c['voci'] ?? 0) > 0;
+}
+
+/**
+ * 2.36.0: il registro della 2.35.0 (seo_config.zone.elenco) passa nella tabella, una volta sola. Copia in una transazione con
+ * INSERT IGNORE (pagina è unica: rifarla non fa doppioni), poi svuota l'elenco del JSON e mette migrato = 1. Se qualcosa va storto
+ * a metà la transazione torna indietro e il JSON resta com'era: niente si perde, e la richiesta dopo riprova.
+ */
+function zone_migra(): bool {
+    $c = zone_cfg();
+    $elenco = is_array($c['elenco'] ?? null) ? $c['elenco'] : [];
+    if (!empty($c['migrato'])) return true;
+    $pdo = db();
+    try {
+        zone_installa();
+        $pdo->beginTransaction();
+        $st = $pdo->prepare('INSERT IGNORE INTO ' . tbl('zone') . ' (pagina, servizio, zona, sede, servizio_pagina, creata) VALUES (?, ?, ?, ?, ?, ?)');
+        foreach ($elenco as $z) {
+            if (!is_array($z)) continue;
+            $n = zone_normalizza($z);
+            if ($n['pagina'] <= 0 || $n['servizio'] === '' || $n['zona'] === '') continue;
+            $st->execute(zone_valori_sql($n));
+        }
+        $pdo->commit();
+    } catch (Throwable $e) {
+        if ($pdo->inTransaction()) $pdo->rollBack();
+        error_log('zone_migra: ' . $e->getMessage());
+        return false;
+    }
+    seo_salva('zone', ['elenco' => [], 'migrato' => 1, 'voci' => zone_conta_tabella()]);
+    zone_azzera_cache();
+    return true;
+}
+
+/** Quante righe ha la tabella (0 se non c'è). */
+function zone_conta_tabella(): int {
+    try { return (int)db()->query('SELECT COUNT(*) FROM ' . tbl('zone'))->fetchColumn(); } catch (Throwable $e) { return 0; }
+}
+
+/** Riscrive nella configurazione quante voci ha la tabella: dopo ogni scrittura del registro. */
+function zone_aggiorna_voci(): void {
+    $n = zone_conta_tabella();
+    if ((int)(zone_cfg()['voci'] ?? -1) !== $n) seo_salva('zone', ['voci' => $n]);
+    zone_azzera_cache();
 }
 
 function zone_vuota(): array {
     return ['pagina' => 0, 'servizio' => '', 'zona' => '', 'sede' => '', 'servizio_pagina' => '', 'creata' => ''];
 }
 
-/** Una voce del registro letta dal JSON, con ogni campo pulito. */
+/** Una voce del registro (dalla tabella, dal JSON di prima o dal generatore), con ogni campo pulito. */
 function zone_normalizza(array $z): array {
     $v = zone_vuota();
     $v['pagina'] = max(0, (int)($z['pagina'] ?? 0));
@@ -60,86 +155,237 @@ function zone_normalizza(array $z): array {
     return $v;
 }
 
+/** I valori di una voce per l'INSERT, nell'ordine pagina, servizio, zona, sede, servizio_pagina, creata. Le emoji come entità. */
+function zone_valori_sql(array $n): array {
+    $t = fn(string $s) => function_exists('sito_senza_4byte') ? sito_senza_4byte($s) : $s;
+    return [$n['pagina'], $t($n['servizio']), $t($n['zona']), $n['sede'], $n['servizio_pagina'], $n['creata'] !== '' ? $n['creata'] : null];
+}
+
+/** Le colonne lette insieme alla voce: la riga della pagina (id, title, slug, status, cestino, publish_at). */
+const ZONE_SELECT = 'SELECT z.pagina, z.servizio, z.zona, z.sede, z.servizio_pagina, z.creata, p.id AS p_id, p.title AS p_title, p.slug AS p_slug, p.status AS p_status, p.cestino AS p_cestino, p.publish_at AS p_publish_at';
+
+/** Una riga della query diventa la voce di sempre, con la riga della pagina in 'riga'. */
+function zone_da_riga(array $r): array {
+    $v = zone_normalizza(['pagina' => $r['pagina'], 'servizio' => function_exists('sito_4byte_veri') ? sito_4byte_veri((string)$r['servizio']) : $r['servizio'],
+        'zona' => function_exists('sito_4byte_veri') ? sito_4byte_veri((string)$r['zona']) : $r['zona'], 'sede' => $r['sede'], 'servizio_pagina' => $r['servizio_pagina'], 'creata' => (string)$r['creata']]);
+    $v['riga'] = ['id' => $r['p_id'], 'title' => $r['p_title'], 'slug' => $r['p_slug'], 'status' => $r['p_status'], 'cestino' => $r['p_cestino'], 'publish_at' => $r['p_publish_at']];
+    return $v;
+}
+
 /**
- * Tutte le pagine per zona, per id della pagina, con la riga della tabella pages in 'riga' (id, title, slug, status, cestino,
- * publish_at). Le voci la cui pagina non esiste più si ignorano (e zone_pulisci() le toglie dal registro). Una lettura per richiesta.
+ * La query del registro: la voce più la riga della pagina (JOIN: le voci la cui pagina non c'è più non escono). $dove e $ordine
+ * sono testo del codice, mai dell'utente: i valori passano sempre da $parametri (legati). Ritorna le voci per id della pagina.
+ */
+function zone_query(string $dove = '', array $parametri = [], string $ordine = 'z.id', int $quante = 0, int $da = 0): array {
+    if (!zone_attive()) return [];
+    $sql = ZONE_SELECT . ' FROM ' . tbl('zone') . ' z JOIN ' . tbl('pages') . ' p ON p.id = z.pagina' . ($dove !== '' ? " WHERE $dove" : '') . " ORDER BY $ordine";
+    if ($quante > 0) $sql .= ' LIMIT ' . max(0, $da) . ', ' . $quante;
+    try {
+        $st = db()->prepare($sql);
+        $st->execute($parametri);
+        $out = [];
+        foreach ($st->fetchAll() as $r) { $z = zone_da_riga($r); if ($z['pagina'] > 0 && $z['servizio'] !== '' && $z['zona'] !== '') $out[$z['pagina']] = $z; }
+        return $out;
+    } catch (Throwable $e) { error_log('zone_query: ' . $e->getMessage()); return []; }
+}
+
+/** La condizione SQL "la pagina è pubblicata adesso" (la stessa regola di contenuti_stato()), con :ora = adesso secondo PHP. */
+const ZONE_SQL_PUBBLICATA = "(p.cestino IS NULL AND p.status <> 'draft' AND (p.publish_at IS NULL OR p.publish_at <= :ora))";
+
+/** Lo stesso servizio senza badare alle maiuscole (e solo a quelle: "Pulizie" e "Pulìzie" restano due servizi, come prima). */
+const ZONE_SQL_SERVIZIO = '(z.servizio = :servizio AND LOWER(z.servizio) COLLATE utf8mb4_bin = LOWER(:servizio_k))';
+
+function zone_cache(?array $nuova = null, bool $azzera = false): array {
+    static $c = [];
+    if ($azzera) $c = [];
+    if ($nuova !== null) $c = $nuova + $c;
+    return $c;
+}
+
+function zone_azzera_cache(): void {
+    zone_cache(null, true);
+    zone_tutte(true);
+}
+
+/**
+ * Tutte le pagine per zona, per id della pagina, con la riga della tabella pages in 'riga'. Dalla 2.36.0 si usa solo dove servono
+ * davvero tutte (gli strumenti, le prove): il sito e il pannello leggono con query mirate (zone_di_pagina, zone_di_percorso,
+ * zone_elenco, zone_altre_pubblicate).
  */
 function zone_tutte(bool $azzera = false): array {
     static $cache = null;
-    if ($cache !== null && !$azzera) return $cache;
-    $elenco = seo_cfg($azzera)['zone']['elenco'] ?? [];
-    $voci = [];
-    foreach (is_array($elenco) ? $elenco : [] as $z) {
-        if (!is_array($z)) continue;
-        $n = zone_normalizza($z);
-        if ($n['pagina'] <= 0 || $n['servizio'] === '' || $n['zona'] === '' || isset($voci[$n['pagina']])) continue;
-        $voci[$n['pagina']] = $n;
-        if (count($voci) >= ZONE_MAX) break;
-    }
-    $righe = [];
-    if ($voci) {
-        $in = implode(',', array_map('intval', array_keys($voci)));
-        foreach (db()->query('SELECT id, title, slug, status, cestino, publish_at FROM ' . tbl('pages') . " WHERE id IN ($in)")->fetchAll() as $r) $righe[(int)$r['id']] = $r;
-    }
-    $out = [];
-    foreach ($voci as $id => $z) {
-        if (!isset($righe[$id])) continue; // la pagina non c'è più: il registro la ignora
-        $z['riga'] = $righe[$id];
-        $out[$id] = $z;
-    }
-    return $cache = $out;
+    if ($azzera) { $cache = null; return []; }
+    if ($cache !== null) return $cache;
+    return $cache = zone_query();
 }
 
-/** Scrive il registro (senza le righe delle pagine). Le emoji diventano entità: la tabella delle impostazioni è utf8 a 3 byte. */
+/** Prima di scrivere nel registro: la tabella c'è e un registro della 2.35.0 è già passato lì (altrimenti si perderebbe). */
+function zone_pronta_per_scrivere(): void {
+    if (!zone_migra()) throw new RuntimeException('Il registro delle pagine per zona non è riuscito a passare nella tabella nuova del database: riprova fra poco. Se l\'errore resta, il registro della versione di prima è ancora intatto nella configurazione SEO (il dettaglio è nel log degli errori).');
+}
+
+/** Scrive il registro intero (per le prove: azzera). Le voci che non ci sono più si tolgono. */
 function zone_salva_elenco(array $elenco): void {
-    $pulito = [];
-    foreach ($elenco as $z) { $n = zone_normalizza(is_array($z) ? $z : []); if ($n['pagina'] > 0) $pulito[] = $n; }
-    array_walk_recursive($pulito, function (&$x) { if (is_string($x)) $x = sito_senza_4byte($x); });
-    seo_salva('zone', ['elenco' => array_slice($pulito, 0, ZONE_MAX)]);
-    zone_tutte(true);
+    zone_pronta_per_scrivere();
+    $pdo = db();
+    $pdo->beginTransaction();
+    try {
+        $pdo->exec('DELETE FROM ' . tbl('zone'));
+        $st = $pdo->prepare('INSERT IGNORE INTO ' . tbl('zone') . ' (pagina, servizio, zona, sede, servizio_pagina, creata) VALUES (?, ?, ?, ?, ?, ?)');
+        foreach ($elenco as $z) { $n = zone_normalizza(is_array($z) ? $z : []); if ($n['pagina'] > 0 && $n['servizio'] !== '' && $n['zona'] !== '') $st->execute(zone_valori_sql($n)); }
+        $pdo->commit();
+    } catch (Throwable $e) { if ($pdo->inTransaction()) $pdo->rollBack(); throw $e; }
+    zone_aggiorna_voci();
 }
 
 /** Toglie dal registro le voci la cui pagina è sparita. Ritorna quante. Si chiama dal pannello, mai mentre il sito disegna una pagina. */
 function zone_pulisci(): int {
-    $salvate = seo_cfg()['zone']['elenco'] ?? [];
-    $salvate = is_array($salvate) ? array_filter($salvate, fn($z) => is_array($z) && (int)($z['pagina'] ?? 0) > 0) : [];
-    $vive = zone_tutte(true);
-    $tolte = count($salvate) - count($vive);
-    if ($tolte > 0) zone_salva_elenco(array_values($vive));
-    return max(0, $tolte);
+    if (!zone_attive()) return 0;
+    $n = (int)db()->exec('DELETE z FROM ' . tbl('zone') . ' z LEFT JOIN ' . tbl('pages') . ' p ON p.id = z.pagina WHERE p.id IS NULL');
+    if ($n > 0) zone_aggiorna_voci();
+    return max(0, $n);
 }
 
-/** Aggiunge (o aggiorna) una voce del registro. */
-function zone_registra(array $z): void {
+/** Aggiunge (o aggiorna) una voce del registro. Nessun tetto al totale (2.36.0). $conta false: il numero delle voci lo aggiorna chi chiama (un giro intero). */
+function zone_registra(array $z, bool $conta = true): void {
     $z = zone_normalizza($z);
     if ($z['pagina'] <= 0) throw new RuntimeException('La pagina per zona non ha un id.');
-    $tutte = zone_tutte();
-    if (!isset($tutte[$z['pagina']]) && count($tutte) >= ZONE_MAX) throw new RuntimeException('Si possono tenere al massimo ' . ZONE_MAX . ' pagine per zona.');
     if ($z['creata'] === '') $z['creata'] = date('Y-m-d H:i:s');
-    $tutte[$z['pagina']] = $z;
-    zone_salva_elenco(array_values($tutte));
+    zone_pronta_per_scrivere();
+    db()->prepare('INSERT INTO ' . tbl('zone') . ' (pagina, servizio, zona, sede, servizio_pagina, creata) VALUES (?, ?, ?, ?, ?, ?)
+        ON DUPLICATE KEY UPDATE servizio = VALUES(servizio), zona = VALUES(zona), sede = VALUES(sede), servizio_pagina = VALUES(servizio_pagina)')->execute(zone_valori_sql($z));
+    if ($conta || (int)(zone_cfg()['voci'] ?? 0) === 0) zone_aggiorna_voci(); else zone_cache(null, true);
 }
 
 /** Toglie una pagina dal registro: la pagina resta nel sito (lo dice il pannello). */
 function zone_elimina(int $pagina): bool {
-    $tutte = zone_tutte();
-    if (!isset($tutte[$pagina])) return false;
-    unset($tutte[$pagina]);
-    zone_salva_elenco(array_values($tutte));
-    return true;
+    if ($pagina <= 0 || !zone_attive()) return false;
+    $st = db()->prepare('DELETE FROM ' . tbl('zone') . ' WHERE pagina = ?');
+    $st->execute([$pagina]);
+    $tolta = $st->rowCount() > 0;
+    zone_aggiorna_voci();
+    return $tolta;
 }
 
-/** La voce del registro di questa pagina (id della tabella pages), oppure null. */
+/** La voce del registro di questa pagina (id della tabella pages), oppure null. Una query per pagina e per richiesta (nessuna senza zone). */
 function zone_di_pagina(int $pagina): ?array {
-    return $pagina > 0 ? (zone_tutte()[$pagina] ?? null) : null;
+    if ($pagina <= 0 || !zone_attive()) return null;
+    $c = zone_cache();
+    if (array_key_exists('p' . $pagina, $c)) return $c['p' . $pagina];
+    $z = zone_query('z.pagina = :pagina', [':pagina' => $pagina])[$pagina] ?? null;
+    zone_cache(['p' . $pagina => $z]);
+    return $z;
 }
 
 /** La voce del registro della pagina a questo percorso ("/idraulico-a-bologna/"), oppure null. */
 function zone_di_percorso(string $percorso): ?array {
     $slug = trim($percorso, '/');
-    if ($slug === '' || str_contains($slug, '/')) return null;
-    foreach (zone_tutte() as $z) if ($z['riga']['slug'] === $slug) return $z;
-    return null;
+    if ($slug === '' || str_contains($slug, '/') || !zone_attive()) return null;
+    $c = zone_cache();
+    if (array_key_exists('s' . $slug, $c)) return $c['s' . $slug];
+    $voci = zone_query('p.slug = :slug', [':slug' => $slug]);
+    $z = null;
+    foreach ($voci as $x) if ($x['riga']['slug'] === $slug) { $z = $x; break; }
+    zone_cache(['s' . $slug => $z]);
+    return $z;
+}
+
+/**
+ * 2.36.0: una pagina dell'elenco del pannello. $f: servizio (filtro esatto, senza maiuscole), cerca (nel servizio, nella zona o nel
+ * titolo), pagina (da 1), per_pagina. Ritorna ['voci' => [...], 'totale' => N, 'pagina' => P, 'pagine' => quante pagine].
+ */
+function zone_elenco(array $f = []): array {
+    [$dove, $par] = zone_filtri($f);
+    $per = max(1, min(500, (int)($f['per_pagina'] ?? ZONE_PER_PAGINA)));
+    $totale = zone_conta($dove, $par);
+    $pagine = max(1, (int)ceil($totale / $per));
+    $pag = max(1, min($pagine, (int)($f['pagina'] ?? 1)));
+    $voci = $totale > 0 ? zone_query($dove, $par, 'z.servizio, z.zona, z.pagina', $per, ($pag - 1) * $per) : [];
+    return ['voci' => $voci, 'totale' => $totale, 'pagina' => $pag, 'pagine' => $pagine, 'per_pagina' => $per];
+}
+
+/** La condizione e i parametri dei filtri dell'elenco. La ricerca usa LIKE con i caratteri jolly dell'utente resi innocui. */
+function zone_filtri(array $f): array {
+    $dove = []; $par = [];
+    $servizio = sedi_testo($f['servizio'] ?? '', 80);
+    if ($servizio !== '') { $dove[] = ZONE_SQL_SERVIZIO; $par[':servizio'] = $servizio; $par[':servizio_k'] = $servizio; }
+    $cerca = sedi_testo($f['cerca'] ?? '', 80);
+    if ($cerca !== '') {
+        $like = '%' . addcslashes(function_exists('sito_senza_4byte') ? sito_senza_4byte($cerca) : $cerca, '\\%_') . '%';
+        $dove[] = '(z.servizio LIKE :c1 OR z.zona LIKE :c2 OR p.title LIKE :c3)';
+        $par[':c1'] = $like; $par[':c2'] = $like; $par[':c3'] = $like;
+    }
+    return [implode(' AND ', $dove), $par];
+}
+
+/** Quante voci (con la pagina che c'è ancora) rispondono alla condizione. */
+function zone_conta(string $dove = '', array $par = []): int {
+    if (!zone_attive()) return 0;
+    try {
+        $st = db()->prepare('SELECT COUNT(*) FROM ' . tbl('zone') . ' z JOIN ' . tbl('pages') . ' p ON p.id = z.pagina' . ($dove !== '' ? " WHERE $dove" : ''));
+        $st->execute($par);
+        return (int)$st->fetchColumn();
+    } catch (Throwable $e) { error_log('zone_conta: ' . $e->getMessage()); return 0; }
+}
+
+/**
+ * 2.36.0: i numeri in cima all'elenco, con una query: quante in tutto, pubblicate e bozze che hanno ancora un riquadro
+ * [DA SCRIVERE] (cercato nel testo salvato della bozza dell'editor, o della versione pubblicata se la bozza non c'è).
+ */
+function zone_conteggi(array $f = []): array {
+    $out = ['totale' => 0, 'pubblicate' => 0, 'da_scrivere' => 0];
+    if (!zone_attive()) return $out;
+    [$dove, $par] = zone_filtri($f);
+    $par[':ora'] = date('Y-m-d H:i:s');
+    $par[':seg'] = '%' . addcslashes(ZONE_SEGNAPOSTO, '\\%_') . '%';
+    try {
+        $st = db()->prepare('SELECT COUNT(*) AS totale, COALESCE(SUM(' . ZONE_SQL_PUBBLICATA . '), 0) AS pubblicate,
+            COALESCE(SUM(p.cestino IS NULL AND p.status = \'draft\' AND COALESCE(NULLIF(p.struttura_bozza, \'\'), p.struttura) LIKE :seg), 0) AS da_scrivere
+            FROM ' . tbl('zone') . ' z JOIN ' . tbl('pages') . ' p ON p.id = z.pagina' . ($dove !== '' ? " WHERE $dove" : ''));
+        $st->execute($par);
+        $r = $st->fetch();
+        foreach ($out as $k => $x) $out[$k] = (int)($r[$k] ?? 0);
+    } catch (Throwable $e) { error_log('zone_conteggi: ' . $e->getMessage()); }
+    return $out;
+}
+
+/**
+ * 2.36.0: i servizi con più di ZONE_AVVISO_WIDGET pagine pubblicate in cui il widget Altre zone le mostra tutte ("Quante mostrarne"
+ * a 0). Si guardano al massimo 40 pagine per servizio (le più recenti): ['servizio' => ..., 'pubblicate' => N, 'tutte' => quante
+ * delle pagine guardate mostrano tutto]. Per l'avviso del pannello.
+ */
+function zone_avvisi_widget(): array {
+    if (!zone_attive()) return [];
+    $out = [];
+    try {
+        $st = db()->prepare('SELECT MIN(z.servizio) AS servizio, COUNT(*) AS n FROM ' . tbl('zone') . ' z JOIN ' . tbl('pages') . ' p ON p.id = z.pagina WHERE ' . ZONE_SQL_PUBBLICATA . ' GROUP BY LOWER(z.servizio) COLLATE utf8mb4_bin HAVING COUNT(*) > ' . ZONE_AVVISO_WIDGET . ' ORDER BY n DESC LIMIT 20');
+        $st->execute([':ora' => date('Y-m-d H:i:s')]);
+        $servizi = $st->fetchAll();
+    } catch (Throwable $e) { error_log('zone_avvisi_widget: ' . $e->getMessage()); return []; }
+    if (!$servizi) return [];
+    require_once __DIR__ . '/editor-controlli.php';
+    require_once __DIR__ . '/editor.php';
+    foreach ($servizi as $s) {
+        $st = db()->prepare('SELECT p.struttura FROM ' . tbl('zone') . ' z JOIN ' . tbl('pages') . ' p ON p.id = z.pagina WHERE ' . ZONE_SQL_SERVIZIO . ' AND ' . ZONE_SQL_PUBBLICATA . ' ORDER BY z.id DESC LIMIT 40');
+        $st->execute([':servizio' => $s['servizio'], ':servizio_k' => $s['servizio'], ':ora' => date('Y-m-d H:i:s')]);
+        $tutte = 0;
+        foreach ($st->fetchAll(PDO::FETCH_COLUMN) as $json) {
+            $albero = json_decode((string)$json, true);
+            if (is_array($albero) && zone_widget_mostra_tutte($albero['elementi'] ?? [])) $tutte++;
+        }
+        if ($tutte > 0) $out[] = ['servizio' => function_exists('sito_4byte_veri') ? sito_4byte_veri((string)$s['servizio']) : (string)$s['servizio'], 'pubblicate' => (int)$s['n'], 'tutte' => $tutte];
+    }
+    return $out;
+}
+
+/** L'albero ha un widget Altre zone con "Quante mostrarne" a 0 (tutte)? */
+function zone_widget_mostra_tutte(array $nodi): bool {
+    foreach ($nodi as $e) {
+        if (!is_array($e)) continue;
+        if (in_array($e['tipo'] ?? '', ['sezione', 'colonna'], true)) { if (zone_widget_mostra_tutte((array)($e['figli'] ?? []))) return true; continue; }
+        if (($e['tipo'] ?? '') === 'zone' && (int)($e['impostazioni']['quante'] ?? 0) <= 0) return true;
+    }
+    return false;
 }
 
 /** I modelli del titolo e della descrizione salvati l'ultima volta (quelli di partenza se mai cambiati). */
@@ -161,15 +407,26 @@ function zone_componi(string $modello, string $servizio, string $zona): string {
 
 /** La voce che ha già questa coppia servizio + zona (senza badare a maiuscole e spazi), oppure null. */
 function zone_esiste(string $servizio, string $zona): ?array {
+    if (!zone_attive()) return null;
     $k = fn(string $s) => mb_strtolower(trim(preg_replace('/\s+/u', ' ', $s) ?? ''));
-    foreach (zone_tutte() as $z) if ($k($z['servizio']) === $k($servizio) && $k($z['zona']) === $k($zona)) return $z;
+    // La query trova i candidati con la collazione della tabella (senza maiuscole e senza accenti), il confronto di sempre decide.
+    $t = fn(string $s) => function_exists('sito_senza_4byte') ? sito_senza_4byte($s) : $s;
+    foreach (zone_query('z.servizio = :servizio AND z.zona = :zona', [':servizio' => $t(sedi_testo($servizio, 80)), ':zona' => $t(sedi_testo($zona, 80))]) as $z)
+        if ($k($z['servizio']) === $k($servizio) && $k($z['zona']) === $k($zona)) return $z;
     return null;
 }
 
 /** I servizi che hanno pagine per zona, senza doppioni, in ordine alfabetico. */
 function zone_servizi(): array {
+    if (!zone_attive()) return [];
     $out = [];
-    foreach (zone_tutte() as $z) { $k = mb_strtolower($z['servizio']); if (!isset($out[$k])) $out[$k] = $z['servizio']; }
+    try {
+        foreach (db()->query('SELECT DISTINCT z.servizio COLLATE utf8mb4_bin AS s FROM ' . tbl('zone') . ' z JOIN ' . tbl('pages') . ' p ON p.id = z.pagina')->fetchAll(PDO::FETCH_COLUMN) as $sv) {
+            $sv = function_exists('sito_4byte_veri') ? sito_4byte_veri((string)$sv) : (string)$sv;
+            $k = mb_strtolower($sv);
+            if ($sv !== '' && !isset($out[$k])) $out[$k] = $sv;
+        }
+    } catch (Throwable $e) { error_log('zone_servizi: ' . $e->getMessage()); }
     ksort($out);
     return array_values($out);
 }
@@ -241,7 +498,7 @@ function zone_valida(array $in): array {
     $zone = [];
     foreach ($righeScritte as $r) { $r = sedi_testo($r, 80); if ($r !== '' && !in_array(mb_strtolower($r), array_map('mb_strtolower', $zone), true)) $zone[] = $r; }
     if (!$zone) $errori['zone'] = 'Scrivi almeno una zona, una per riga: per esempio "Bologna", "Casalecchio di Reno", "Provincia di Bologna".';
-    elseif (count($zone) > ZONE_GIRO_MAX) $errori['zone'] = 'Al massimo ' . ZONE_GIRO_MAX . ' zone per giro: ne hai scritte ' . count($zone) . '. Togline qualcuna e rifai un altro giro per le altre.';
+    elseif (count($zone) > ZONE_GIRO_MAX) $errori['zone'] = 'Al massimo ' . ZONE_GIRO_MAX . ' zone per giro: ne hai scritte ' . count($zone) . '. Tieni le prime ' . ZONE_GIRO_MAX . ', crea le bozze, poi rifai un giro con le altre (in tutto puoi averne quante vuoi).';
     $v['zone'] = $zone;
     $sedi = sedi_tutte();
     $sede = (string)($in['sede'] ?? '');
@@ -300,14 +557,16 @@ function zone_albero(string $servizio, string $zona, string $sedeScelta, string 
 
 /**
  * Crea le bozze: una pagina (tabella pages, stato bozza) con l'albero dell'editor per ogni zona che non ha già la sua pagina
- * per questo servizio. Ritorna ['create' => [[pagina, titolo, slug]], 'esistenti' => [[zona, titolo]], 'errore' => '' o il motivo
- * dello stop (il limite di ZONE_MAX)]. Mai pubblicate da qui.
+ * per questo servizio. Ritorna ['create' => [[pagina, titolo, slug]], 'esistenti' => [[zona, titolo]], 'restanti' => [le zone non
+ * ancora fatte], 'errore' => '']. Mai pubblicate da qui. 2.36.0: niente tetto al totale; con $secondi > 0 il giro si ferma dopo
+ * quei secondi di lavoro e le zone che restano tornano in 'restanti' (il pannello continua da solo con un altro pezzo).
  */
-function zone_crea_bozze(array $v, string $autore = ''): array {
+function zone_crea_bozze(array $v, string $autore = '', float $secondi = 0): array {
+    $inizio = microtime(true);
     require_once __DIR__ . '/editor-controlli.php';
     require_once __DIR__ . '/editor.php';
     editor_carica_widget_esterni();
-    $out = ['create' => [], 'esistenti' => [], 'errore' => ''];
+    $out = ['create' => [], 'esistenti' => [], 'restanti' => [], 'errore' => ''];
     $servizio = sedi_testo($v['servizio'] ?? '', 80);
     $zone = array_slice(array_values(array_filter(array_map(fn($z) => sedi_testo($z, 80), (array)($v['zone'] ?? [])))), 0, ZONE_GIRO_MAX);
     if ($servizio === '' || !$zone) throw new RuntimeException('Servono il servizio e almeno una zona.');
@@ -316,23 +575,28 @@ function zone_crea_bozze(array $v, string $autore = ''): array {
     $modTitolo = sedi_testo($v['titolo'] ?? '', 120) ?: ZONE_TITOLO_PREDEFINITO;
     $modDescr = sedi_testo($v['descrizione'] ?? '', 300) ?: ZONE_DESCRIZIONE_PREDEFINITA;
     $rif = preg_match('/^[a-z0-9_]{1,40}:\d{1,10}$/', (string)($v['servizio_pagina'] ?? '')) && zone_servizio_pagina((string)$v['servizio_pagina']) ? (string)$v['servizio_pagina'] : '';
+    zone_pronta_per_scrivere();
     zone_modelli_salva($modTitolo, $modDescr);
-    foreach ($zone as $zona) {
-        $gia = zone_esiste($servizio, $zona);
-        if ($gia) { $out['esistenti'][] = ['zona' => $zona, 'titolo' => (string)$gia['riga']['title'], 'pagina' => $gia['pagina']]; continue; }
-        if (count(zone_tutte()) >= ZONE_MAX) { $out['errore'] = 'Hai raggiunto il massimo di ' . ZONE_MAX . ' pagine per zona: le zone dopo "' . $zona . '" non si sono create.'; break; }
-        $titolo = zone_componi($modTitolo, $servizio, $zona);
-        if ($titolo === '') $titolo = $servizio . ' a ' . $zona;
-        $descrizione = mb_substr(zone_componi($modDescr, $servizio, $zona), 0, 160);
-        $base = contenuti_slug($titolo) ?: contenuti_slug($servizio . '-a-' . $zona) ?: 'zona';
-        $base = mb_substr($base, 0, 150);
-        $slug = $base; $n = 2;
-        while (!contenuti_slug_libero('pagine', $slug, 0)) $slug = $base . '-' . $n++;
-        $id = contenuti_salva('pagine', 0, ['title' => $titolo, 'slug' => $slug, 'stato' => 'bozza', 'data' => date('Y-m-d'), 'contenuto' => '', 'robots' => 'index', 'seo_description' => $descrizione], $autore);
-        $albero = editor_valida(['elementi' => zone_albero($servizio, $zona, $sede, $titolo, $descrizione)]);
-        editor_salva($id, $albero, false, $autore, 'Pagina per zona (bozza guidata)', 'pagine');
-        zone_registra(['pagina' => $id, 'servizio' => $servizio, 'zona' => $zona, 'sede' => $sede, 'servizio_pagina' => $rif]);
-        $out['create'][] = ['pagina' => $id, 'titolo' => $titolo, 'slug' => $slug, 'zona' => $zona];
+    try {
+        foreach ($zone as $i => $zona) {
+            if ($secondi > 0 && $i > 0 && microtime(true) - $inizio > $secondi) { $out['restanti'] = array_slice($zone, $i); break; }
+            $gia = zone_esiste($servizio, $zona);
+            if ($gia) { $out['esistenti'][] = ['zona' => $zona, 'titolo' => (string)$gia['riga']['title'], 'pagina' => $gia['pagina']]; continue; }
+            $titolo = zone_componi($modTitolo, $servizio, $zona);
+            if ($titolo === '') $titolo = $servizio . ' a ' . $zona;
+            $descrizione = mb_substr(zone_componi($modDescr, $servizio, $zona), 0, 160);
+            $base = contenuti_slug($titolo) ?: contenuti_slug($servizio . '-a-' . $zona) ?: 'zona';
+            $base = mb_substr($base, 0, 150);
+            $slug = $base; $n = 2;
+            while (!contenuti_slug_libero('pagine', $slug, 0)) $slug = $base . '-' . $n++;
+            $id = contenuti_salva('pagine', 0, ['title' => $titolo, 'slug' => $slug, 'stato' => 'bozza', 'data' => date('Y-m-d'), 'contenuto' => '', 'robots' => 'index', 'seo_description' => $descrizione], $autore);
+            $albero = editor_valida(['elementi' => zone_albero($servizio, $zona, $sede, $titolo, $descrizione)]);
+            editor_salva($id, $albero, false, $autore, 'Pagina per zona (bozza guidata)', 'pagine');
+            zone_registra(['pagina' => $id, 'servizio' => $servizio, 'zona' => $zona, 'sede' => $sede, 'servizio_pagina' => $rif], false);
+            $out['create'][] = ['pagina' => $id, 'titolo' => $titolo, 'slug' => $slug, 'zona' => $zona];
+        }
+    } finally {
+        if ($out['create']) zone_aggiorna_voci(); // il numero delle voci una volta per giro, non a ogni bozza
     }
     return $out;
 }
@@ -411,12 +675,33 @@ function zone_pubblicabili_tra(array $ids): array {
 // Per il widget Altre zone e per i dati per Google
 // ------------------------------------------------------------
 
-/** Le altre pagine per zona dello stesso servizio, pubblicate, in ordine di zona: [['zona', 'titolo', 'url']]. */
-function zone_altre_pubblicate(array $z): array {
+/**
+ * Le altre pagine per zona dello stesso servizio, pubblicate, in ordine di zona: [['zona', 'titolo', 'url']]. La query prende solo
+ * quelle da mostrare. $quante 0 = tutte (come fino alla 2.35.0, stesso ordine al byte). $ordine: "alfabetico" (le prime $quante in
+ * ordine di zona) oppure "vicine" (le $quante più vicine a questa zona nell'elenco alfabetico, metà prima e metà dopo: ogni pagina
+ * ne mostra di diverse e tutte ricevono link). L'elenco esce sempre in ordine alfabetico.
+ */
+function zone_altre_pubblicate(array $z, int $quante = 0, string $ordine = 'alfabetico'): array {
+    if (!zone_attive() || (int)($z['pagina'] ?? 0) <= 0) return [];
+    $k = mb_strtolower((string)$z['servizio']);
+    $t = fn(string $s) => function_exists('sito_senza_4byte') ? sito_senza_4byte($s) : $s;
+    $base = ZONE_SQL_SERVIZIO . ' AND z.pagina <> :pagina AND ' . ZONE_SQL_PUBBLICATA;
+    $par = [':servizio' => $t((string)$z['servizio']), ':servizio_k' => $t((string)$z['servizio']), ':pagina' => (int)$z['pagina'], ':ora' => date('Y-m-d H:i:s')];
+    $quante = max(0, $quante);
+    if ($quante > 0 && $ordine === 'vicine') {
+        // Le seguenti e le precedenti nell'elenco (fino a $quante per parte), poi metà e metà; se una parte è corta, l'altra riempie.
+        $dopo = array_values(zone_query($base . ' AND z.zona > :zona', $par + [':zona' => $t((string)$z['zona'])], 'z.zona, z.pagina', $quante));
+        $prima = array_values(zone_query($base . ' AND z.zona < :zona', $par + [':zona' => $t((string)$z['zona'])], 'z.zona DESC, z.pagina DESC', $quante));
+        $nPrima = min(count($prima), intdiv($quante, 2));
+        $nDopo = min(count($dopo), $quante - $nPrima);
+        $nPrima = min(count($prima), $quante - $nDopo);
+        $voci = array_merge(array_slice($prima, 0, $nPrima), array_slice($dopo, 0, $nDopo));
+    } else {
+        $voci = zone_query($base, $par, 'z.zona, z.pagina', $quante);
+    }
     $out = [];
-    $k = mb_strtolower($z['servizio']);
-    foreach (zone_tutte() as $id => $x) {
-        if ($id === (int)$z['pagina'] || mb_strtolower($x['servizio']) !== $k || !zone_pubblicata($x)) continue;
+    foreach ($voci as $x) {
+        if ((int)$x['pagina'] === (int)$z['pagina'] || mb_strtolower($x['servizio']) !== $k || !zone_pubblicata($x)) continue;
         $out[] = ['zona' => $x['zona'], 'titolo' => (string)$x['riga']['title'], 'url' => zone_url($x)];
     }
     usort($out, fn($a, $b) => strcoll(mb_strtolower($a['zona']), mb_strtolower($b['zona'])));
