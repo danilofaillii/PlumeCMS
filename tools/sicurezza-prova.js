@@ -2506,7 +2506,9 @@ echo json_encode($o);
   // segnaposto). Codice in servizio, zone e modelli: i tag si tolgono (sedi_testo) e quello che resta esce come testo nel
   // pannello, nei titoli, nel JSON-LD e nel widget; lo slug dal titolo passa da contenuti_slug (niente ../, niente punti);
   // il modello senza %zona% e 500 zone in un colpo rifiutati con l'errore sotto il campo; la pagina del servizio inventata
-  // rifiutata; al massimo 200 pagine per zona; una bozza con [DA SCRIVERE] non si pubblica da nessuna strada (editor, scheda,
+  // rifiutata; 2.36.0: niente tetto al totale (210 in tre giri passano) ma al massimo 100 zone a giro; paginazione, ricerca,
+  // "torna" e "continua" con valori cattivi (parametri legati, %/_ come testo, niente tag riflessi); "Quante mostrarne" e "Quali
+  // mostrare" del widget con valori cattivi (fra 0 e 200, solo le due scelte); una bozza con [DA SCRIVERE] non si pubblica da nessuna strada (editor, scheda,
   // azione in blocco, Impostazioni dell'editor), nemmeno dall'amministratore, e il segnaposto non entra mai nel JSON-LD;
   // il redattore non crea le bozze e non toglie dal registro; senza token o da un altro sito niente. Serve CMS_DIR.
   if (DIR && fs.existsSync(path.join(__dirname, '..', 'prove', 'zone-cli.php'))) {
@@ -2567,15 +2569,44 @@ echo json_encode($o);
       const creato = (cli43('elenco') || []).length !== prima43;
       if (!(r.status() === 200 && /zn-errore/.test(t) && !creato)) rifiuti43.push([nome, r.status(), creato]);
     }
-    ok('2.28.0: modello senza %zona%, 500 zone in un colpo, pagina del servizio inventata, con SQL o con ../, servizio vuoto: errore sotto il campo, niente creato', rifiuti43.length === 0, rifiuti43);
-    // Il limite di 200 pagine per zona: sette giri da 30 si fermano a 200 con il messaggio.
-    let fermo43 = '', creati43 = 0;
-    for (let g = 0; g < 7 && fermo43 === ''; g++) {
-      const r = cli43('crea', JSON.stringify({ servizio: 'Sic43 limite', zone: Array.from({ length: 30 }, (_, i) => 'Zona ' + (g * 30 + i + 1)).join('\n'), sede: 'principale' }));
-      if (r && r.errore) fermo43 = r.errore;
-      creati43 += r && r.create ? r.create.length : 0;
+    ok('2.28.0: modello senza %zona%, 500 zone in un colpo (più di 100), pagina del servizio inventata, con SQL o con ../, servizio vuoto: errore sotto il campo, niente creato', rifiuti43.length === 0, rifiuti43);
+    // 2.36.0: niente tetto al totale: 210 zone in tre giri (100, 100, 10) si creano tutte, senza messaggio di limite.
+    let creati43 = 0; const errLim43 = [];
+    for (const [g, q] of [[0, 100], [1, 100], [2, 10]]) {
+      const r = cli43('crea', JSON.stringify({ servizio: 'Sic43 limite', zone: Array.from({ length: q }, (_, i) => 'Zona ' + (g * 100 + i + 1)).join('\n'), sede: 'principale' }));
+      creati43 += r && r.create ? r.create.length : 0; if (r && (r.errore || (r.errori && Object.keys(r.errori).length))) errLim43.push(r.errore || r.errori);
     }
-    ok('2.28.0: 210 zone in sette giri: il registro si ferma a 200 pagine per zona con il messaggio del limite', (cli43('elenco') || []).length === 200 && /200/.test(fermo43), [(cli43('elenco') || []).length, creati43, fermo43.slice(0, 80)]);
+    ok('2.36.0: 210 zone in tre giri: tutte create (nessun tetto al totale), registro in tabella', creati43 === 210 && errLim43.length === 0 && (cli43('elenco') || []).filter(z => z.servizio === 'Sic43 limite').length === 210 && cli43('cfg').migrato === 1, [creati43, errLim43]);
+    // Paginazione e ricerca con valori cattivi: 200, niente errori SQL, niente tag riflessi, % e _ presi come testo.
+    const cattivi43 = [];
+    for (const [qs, nessuna] of [['pag=-1'], ['pag=abc'], ['pag[]=1'], ['pag=99999999999999'], ['pag=1%27%20OR%201=1'], ["cerca=%27%20OR%201=1%20--%20", 1], ['cerca=' + encodeURIComponent('" UNION SELECT password_hash FROM users -- '), 1], ['cerca=' + encodeURIComponent(SCRIPT)], ['cerca[]=x'], ['servizio[]=x'], ['servizio=' + encodeURIComponent("Sic43 limite' OR '1'='1")], ['cerca=%25', 1], ['cerca=_', 1], ['cerca=%5C', 1], ['cerca=' + 'x'.repeat(5000), 1]]) {
+      const r = await admin.ctx.request.get(ADMIN + '/zone.php?' + qs, { maxRedirects: 0 });
+      const t = await r.text();
+      const male = r.status() !== 200 || /SQLSTATE|Fatal|Warning:|Uncaught/.test(t) || /<script>alert\(43\)/.test(t) || /\$2y\$|\$argon2/.test(t) || (nessuna && /id="zn-tabella"/.test(t));
+      if (male) cattivi43.push([qs.slice(0, 40), r.status()]);
+    }
+    ok('2.36.0: paginazione e ricerca con valori cattivi (pag negativa, testo, array, enorme; ricerca con SQL, UNION, codice, array, %, _, \\, 5000 caratteri; servizio con SQL): 200, nessun errore, nessun codice riflesso, nessuna riga trovata dalle iniezioni', cattivi43.length === 0, cattivi43);
+    const tcont = await tokenDi(admin.p, ADMIN + '/zone.php');
+    const c43 = await admin.ctx.request.post(ADMIN + '/zone.php', { form: { _csrf: tcont, azione: 'continua' }, headers: ORIG43, maxRedirects: 0 });
+    const torna43 = await admin.ctx.request.post(ADMIN + '/zone.php', { form: { _csrf: tcont, azione: 'togli', id: '0', torna: 'servizio=x&cerca=' + encodeURIComponent(SCRIPT) + '&pag=1;evil' }, headers: ORIG43, maxRedirects: 0 });
+    ok('2.36.0: "Continua" senza un giro in corso non crea niente (rimanda con l\'avviso); "torna" con codice non entra nel rimando', [302, 303].includes(c43.status()) && !/[<>]/.test(c43.headers()['location'] || '') && [302, 303].includes(torna43.status()) && !/[<>"]|evil|alert/.test(torna43.headers()['location'] || ''), [c43.status(), c43.headers()['location'], torna43.headers()['location']]);
+    // Quante mostrarne e Quali mostrare con valori cattivi (salvati dall'editor come bozza): restano fra 0 e 200 e fra le due scelte.
+    const zLim = (cli43('elenco') || []).find(z => z.servizio === 'Sic43 limite');
+    const alberoL = zLim ? (cli43('sql', 'SELECT struttura_bozza FROM {p}pages WHERE id = ' + (+zLim.pagina))[0] || {}).struttura_bozza || '' : '';
+    const wq43 = [];
+    for (const [q, o] of [[-5, '<script>'], [99999, "vicine' OR 1=1"], ['1; DROP TABLE x', 'tutte'], [[1, 2], { a: 1 }], ['3e9', null]]) {
+      let a; try { a = JSON.parse(alberoL); } catch (e) { a = null; }
+      if (!a) { wq43.push('albero'); break; }
+      const giro = (n) => { for (const e of n) { if (e.tipo === 'sezione' || e.tipo === 'colonna') giro(e.figli || []); else if (e.tipo === 'zone') { e.impostazioni = Object.assign({}, e.impostazioni, { quante: q, ordine: o }); } } };
+      giro(a.elementi);
+      const tE2 = await tokenDi(admin.p, ADMIN + '/editor.php?tipo=pagine&id=' + zLim.pagina);
+      const r = await admin.ctx.request.post(ADMIN + '/editor-api.php', { form: { _csrf: tE2, azione: 'salva', tipo: 'pagine', id: String(zLim.pagina), albero: JSON.stringify(a), pubblica: '0', nota: '' }, headers: ORIG43, maxRedirects: 0 });
+      const salvato = JSON.parse((cli43('sql', 'SELECT struttura_bozza FROM {p}pages WHERE id = ' + (+zLim.pagina))[0] || {}).struttura_bozza || '{}');
+      let imp = null; const trova = (n) => { for (const e of n || []) { if (e.tipo === 'sezione' || e.tipo === 'colonna') trova(e.figli); else if (e.tipo === 'zone') imp = e.impostazioni || {}; } }; trova(salvato.elementi);
+      const qq = imp && imp.quante !== undefined ? imp.quante : 0, oo = imp && imp.ordine !== undefined ? imp.ordine : 'alfabetico';
+      if (r.status() !== 200 || !(Number.isInteger(qq) && qq >= 0 && qq <= 200) || !['alfabetico', 'vicine'].includes(oo)) wq43.push([JSON.stringify(q), JSON.stringify(o), r.status(), qq, oo]);
+    }
+    ok('2.36.0: "Quante mostrarne" e "Quali mostrare" con valori cattivi (negativo, enorme, SQL, array, codice): salvati come numero fra 0 e 200 e una delle due scelte', wq43.length === 0, wq43);
     for (const z of (cli43('elenco') || []).filter(z => z.servizio === 'Sic43 limite')) cli43('togli', z.pagina);
     // Redattore: niente bozze, niente Togli dal registro, niente pannello; ma una bozza con i segnaposto non la pubblica nemmeno lui.
     if (red.dentro) {

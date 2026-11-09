@@ -3393,16 +3393,20 @@ tre frasi vere ciascuna, no.
 2. In **Pagina del servizio** scegli la pagina del sito che racconta il servizio ("Servizi"): entra nelle briciole che Google legge
    (Home, Servizi, la zona). Se non c'è, lascia "Nessuna".
 3. Le **Zone** sono già scritte: sono le zone servite delle tue sedi (capitolo sopra). Aggiungi o togli righe, una zona per riga,
-   al massimo 30 per giro.
+   al massimo 100 per giro. In tutto puoi averne quante vuoi: per 450 comuni fai cinque giri (100, 100, 100, 100, 50).
 4. Scegli la **Sede di riferimento**: la sede che serve queste zone (con una sede sola è già scelta). I widget Dati dell'attività
    e Barra contatti delle pagine leggono da lei, e per Google è lei che fa il servizio in quella zona.
 5. Guarda i due modelli: il **titolo** "%servizio% a %zona%" diventa "Idraulico a Bologna" (e l'indirizzo
    `/idraulico-a-bologna/`), la **descrizione per Google** allo stesso modo. Cambiali se vuoi, tenendo `%servizio%` e `%zona%`.
-   Premi **Crea le bozze**.
+   Premi **Crea le bozze**. Su un hosting lento un giro lungo si fa a pezzi: compare "Sto creando le bozze a pezzi" con quante
+   zone sono fatte e quante restano, e la pagina continua da sola. Non chiuderla finché non compare il messaggio verde.
 
 ![L'elenco delle pagine per zona](immagini/manuale-uso/23-zone-elenco.jpg)
 
-6. Il messaggio verde dice le bozze create. Nell'elenco in alto ogni pagina ha lo stato (**Bozza**) e "riquadri da scrivere: 3".
+6. Il messaggio verde dice le bozze create. In cima all'elenco ci sono i numeri: quante pagine per zona in tutto, quante pubblicate e
+   quante bozze hanno ancora riquadri da scrivere. Ogni pagina ha lo stato (**Bozza**) e "riquadri da scrivere: 3". L'elenco mostra 50
+   pagine alla volta: sotto ci sono **Pagina successiva** e **Pagina precedente**. Per trovarne una scrivi il comune (o il servizio)
+   nella casella **Cerca** e premi **Cerca**; con più servizi c'è anche la tendina **Servizio**. **Mostra tutte** toglie la ricerca.
    Premi **Apri nell'editor** su "Idraulico a Casalecchio di Reno".
 
 ![La bozza nell'editor](immagini/manuale-uso/23-zone-editor.jpg)
@@ -3417,6 +3421,17 @@ tre frasi vere ciascuna, no.
 9. Ripeti per le altre zone. Nell'elenco di **Zone** le pagine finite hanno la spunta "pronta". Se un giorno vuoi una pagina fuori
    dal registro (resta nel sito com'è), **Togli dal registro**; se la vuoi via del tutto, cestinala da Pagine: sparisce da sola
    dal registro.
+
+**Con tante zone: Quante mostrarne.** Il widget **Altre zone** di partenza elenca tutte le altre pagine pubblicate dello stesso
+servizio. Con dieci zone va bene; con trecento ogni pagina avrebbe trecento link, che nessuno legge e Google pesa poco. Quando un
+servizio supera le 30 pagine pubblicate, l'elenco di **Zone** te lo dice in un riquadro azzurro. Allora:
+
+1. Apri una pagina per zona di quel servizio nell'editor e fai clic sul widget **Altre zone**.
+2. In **Quante mostrarne** scrivi un numero fra **12 e 20** (0 vuol dire tutte).
+3. In **Quali mostrare** scegli **Le più vicine a questa zona nell'elenco alfabetico**: ogni pagina mostra zone diverse (quelle
+   prima e dopo la sua in ordine alfabetico), così tutte ricevono qualche link. "Le prime in ordine alfabetico" mostrerebbe sempre
+   le stesse.
+4. Premi **Pubblica** e ripeti per le altre pagine di quel servizio.
 
 **Chi può fare cosa.** Le bozze le crea solo l'amministratore. Scriverle e pubblicarle può farlo anche un redattore, con la stessa
 regola: con un segnaposto dentro, Pubblica non passa. La regola vale da ogni strada: l'editor, la scheda del contenuto, l'azione
@@ -3433,6 +3448,8 @@ di un indirizzo**. Senza pagine per zona il sito resta com'è.
 - [ ] Ogni pagina ha i tre riquadri scritti a mano, con frasi vere per quella zona: niente copia e incolla fra le zone.
 - [ ] La sede di riferimento è quella giusta e la pagina del servizio è collegata.
 - [ ] Le pagine finite sono pubblicate ("pronta" nell'elenco) e si vedono a vicenda nel widget Altre zone.
+- [ ] Con più di 30 pagine pubblicate per un servizio, il widget Altre zone ne mostra fra 12 e 20, "Le più vicine" (nessun riquadro
+      azzurro nell'elenco di Zone).
 
 **Redirect e 404** elenca i rimandi dai vecchi indirizzi e le pagine che qualcuno ha cercato senza trovarle: da qui le
 rimandi dove devono andare. Tutte e due le caselle di un rimando hanno **Scegli dal sito**: per il nuovo indirizzo scegli la

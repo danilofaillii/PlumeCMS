@@ -91,6 +91,8 @@ function extra_llms(): string {
     $pagine = array_values(array_filter($attivi, fn($c) => $c['tipo'] === 'page' && $c['seo']['robots'] === 'index'
         && (string)($c['riga']['status'] ?? 'published') === 'published' && !isset($giaServizi[$c['percorso']])));
     usort($pagine, fn($a, $b) => [$a['percorso'] !== '/', (int)($a['riga']['id'] ?? 0)] <=> [$b['percorso'] !== '/', (int)($b['riga']['id'] ?? 0)]);
+    // 2.36.0: con più di 50 pagine per zona pubblicate, una riga per servizio invece di migliaia di righe (includes/zone.php).
+    [$pagine, $zoneRighe] = function_exists('zone_llms_raggruppa') ? zone_llms_raggruppa($pagine) : [$pagine, []];
     $pillar = array_values(array_filter($indicizzati, fn($a) => $a['pillar']));
     $altri = array_values(array_filter($indicizzati, fn($a) => !$a['pillar']));
     $termini = count(array_filter($attivi, fn($c) => $c['tipo'] === 'glossario'));
@@ -111,6 +113,7 @@ function extra_llms(): string {
     return implode("\n", array_merge($intestazione,
         $sezione('Servizi', $servizi),
         $sezione('Pagine', $pagine),
+        $zoneRighe ? array_merge(['## Pagine per zona'], $zoneRighe, ['']) : [],
         $sezione('Guide complete (pillar)', $pillar),
         $sezione('Articoli', $altri),
         $glossario ? ['## Glossario', '- [' . cms_impostazione('glossario_titolo', 'Glossario') . '](' . SITO_URL . "/glossario/): $termini " . ($termini === 1 ? 'termine' : 'termini') . ' con la definizione breve.', ''] : [],

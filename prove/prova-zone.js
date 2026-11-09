@@ -8,6 +8,10 @@
 // AdministrativeArea, provider = la sede; mainEntity; briciole Home > Servizi > zona), il widget Altre zone con le sole zone
 // pubblicate, la sitemap, il titolo; il filtro per servizio, Togli dal registro, una pagina cancellata che sparisce dal registro;
 // il redattore fuori dal pannello ma che scrive e pubblica la bozza con la stessa regola; 1280 e 390 px senza scorrimento di lato.
+// 2.36.0 (registro nella tabella <prefisso>zone, senza tetto): 450 bozze in cinque giri dal pannello, quattro da 100 e uno da 50 (il primo a pezzi, con
+// CMS_ZONE_PEZZO_SECONDI a 0.2 nel config: la pagina continua da sola), i numeri in cima, la paginazione da 50, la ricerca (anche con
+// % e _ presi come testo), "Quante mostrarne" e "Quali mostrare" del widget Altre zone (0 = tutte, identico a senza il campo),
+// l'avviso oltre 30 pagine pubblicate, Togli dal registro che torna alla stessa pagina dell'elenco.
 //
 // uso: node prove/prova-zone.js <base> <cartella CMS> <utente> <password> [cartella foto]
 const { chromium } = require('playwright');
@@ -90,19 +94,19 @@ async function pubblicaDallEditor(p, id) {
   ok('nella tabella pages: status draft, descrizione per Google dal modello, index', righe.length === 3 && righe.every(r => r.status === 'draft' && /^Idraulico a .*: pronto intervento, preventivi gratuiti/.test(r.seo_description) && r.robots === 'index'), righe);
   const tab = await p.locator('#zn-tabella').innerText();
   ok('la tabella mostra le tre pagine con Bozza e "riquadri da scrivere: 3", Apri nell\'editor e Togli dal registro', await p.locator('#zn-tabella tbody tr').count() === 3 && (tab.match(/riquadri da scrivere: 3/g) || []).length === 3 && await p.locator('#zn-tabella .zn-stato.zn-bozza').count() === 3 && await p.locator('#zn-tabella a[href*="editor.php?tipo=pagine&id="]').count() === 3 && await p.locator('#zn-tabella form[data-conferma] button').count() === 3);
-  ok('con un servizio solo non c\'è il filtro', await p.locator('#zn-filtro').count() === 0);
+  ok('con un servizio solo non c\'è la tendina dei servizi, ma c\'è la ricerca (2.36.0)', await p.locator('#zn-filtro-servizio').count() === 0 && await p.locator('#zn-cerca').count() === 1);
   await foto(p, 'zone-elenco');
 
   // === 3. Gli errori sotto i campi; la stessa coppia non si ricrea
   await p.goto(B + '/admin/zone.php', { waitUntil: 'networkidle' });
   await p.fill('#zn-servizio', 'I');
   await p.fill('#zn-titolo', 'Servizio in zona');
-  await p.fill('#zn-zone', Array.from({ length: 31 }, (_, i) => 'Comune ' + (i + 1)).join('\n'));
+  await p.fill('#zn-zone', Array.from({ length: 101 }, (_, i) => 'Comune ' + (i + 1)).join('\n'));
   await p.locator('#zn-servizio').evaluate(e => e.removeAttribute('required'));
   await Promise.all([p.waitForNavigation(), p.click('#zn-modulo button[type=submit]')]);
   const errori = await p.locator('.zn-errore[role=alert]').allInnerTexts();
-  ok('servizio di una lettera, modello senza %zona%, 31 zone: tre errori sotto i campi e il riassunto in cima, niente creato', errori.length === 3 && /3 campi da sistemare/.test(await p.locator('.flash-error').innerText()) && await p.locator('#zn-titolo[aria-invalid=true]').count() === 1 && cli('elenco').length === 3, errori);
-  ok('i valori scritti restano nel modulo', (await p.inputValue('#zn-titolo')) === 'Servizio in zona' && (await p.inputValue('#zn-zone')).split('\n').length === 31);
+  ok('servizio di una lettera, modello senza %zona%, 101 zone: tre errori sotto i campi e il riassunto in cima, niente creato', errori.length === 3 && /3 campi da sistemare/.test(await p.locator('.flash-error').innerText()) && await p.locator('#zn-titolo[aria-invalid=true]').count() === 1 && cli('elenco').length === 3, errori);
+  ok('i valori scritti restano nel modulo', (await p.inputValue('#zn-titolo')) === 'Servizio in zona' && (await p.inputValue('#zn-zone')).split('\n').length === 101 && /Al massimo 100 zone per giro/.test(errori.join(' ')));
   await p.goto(B + '/admin/zone.php', { waitUntil: 'networkidle' });
   await p.fill('#zn-servizio', 'idraulico');
   await p.fill('#zn-zone', 'bologna\nCasalecchio di Reno\nImola');
@@ -221,6 +225,98 @@ async function pubblicaDallEditor(p, id) {
   ok('scritti i riquadri, il redattore pubblica la pagina per zona', eR2.avvisi.length === 0 && voce(idS).stato === 'pubblicato', eR2);
   await red.c.close();
   cli('redattore', 'elimina');
+
+  // === 10. (2.36.0) Senza tetto: 450 bozze in cinque giri da 100 dal pannello, paginazione, ricerca, Quante mostrarne, avviso
+  const fs = require('fs');
+  const CONF = path.join(DIR, 'includes', 'config.local.php');
+  const confPrima = fs.readFileSync(CONF, 'utf8');
+  fs.writeFileSync(CONF, confPrima + "\ndefine('CMS_ZONE_PEZZO_SECONDI', 0.2); // prova-zone.js\n");
+  await p.waitForTimeout(3000); // opcache del server di prova
+  const visti = []; const guarda = f => { if (f === p.mainFrame()) visti.push(f.url()); }; p.on('framenavigated', guarda);
+  const LOC = (i) => 'Località ' + String(i).padStart(3, '0');
+  const giro = async (g, quante = 100) => {
+    await p.goto(B + '/admin/zone.php', { waitUntil: 'networkidle' });
+    await p.fill('#zn-servizio', 'Giardiniere');
+    await p.fill('#zn-zone', Array.from({ length: quante }, (_, i) => LOC(g * 100 + i + 1)).join('\n'));
+    await p.click('#zn-modulo button[type=submit]');
+    await p.waitForURL(/servizio=Giardiniere/, { timeout: 180000 });
+    await p.waitForLoadState('networkidle');
+    return p.locator('.flash-success').innerText().catch(() => '');
+  };
+  const fl10 = await giro(0);
+  fs.writeFileSync(CONF, confPrima); // il config di prima (letto prima, scritto dopo)
+  await p.waitForTimeout(3000);
+  const pezzi = visti.filter(u => /continua=1/.test(u)).length;
+  ok('2.36.0: un giro da 100 zone a pezzi (0,2 secondi per pezzo): la pagina continua da sola e alla fine dice "100 bozze create"', pezzi >= 2 && /100 bozze create/.test(fl10) && /e altre 92/.test(fl10), [pezzi, fl10.slice(0, 160)]);
+  p.off('framenavigated', guarda);
+  const giardinieri = () => +cli('sql', "SELECT COUNT(*) AS n FROM {p}zone WHERE servizio = 'Giardiniere'")[0].n;
+  const fl = [];
+  for (let g = 1; g < 5; g++) fl.push(await giro(g, g === 4 ? 50 : 100));
+  const nG = giardinieri();
+  ok('2.36.0: cinque giri dal pannello (quattro da 100, uno da 50): 450 pagine per zona di Giardiniere nel registro oltre le altre, senza nessun tetto (prima: 200 in tutto)', nG === 450 && cli('conta').conta >= 454 && fl.slice(0, 3).every(x => /^100 bozze create/.test(x)) && /^50 bozze create/.test(fl[3]), [nG, cli('conta'), fl.map(x => x.slice(0, 30))]);
+  const reg10 = cli('cfg');
+  ok('2.36.0: il registro sta nella tabella (migrato = 1, voci = le righe), niente nel JSON della configurazione', reg10.migrato === 1 && reg10.elenco === 0 && reg10.voci === reg10.tabella && reg10.tabella >= 450, reg10);
+  // I numeri in cima e la paginazione da 50.
+  await p.goto(B + '/admin/zone.php', { waitUntil: 'networkidle' });
+  const tot10 = cli('conta').conta;
+  const numeri = await p.locator('#zn-numeri').innerText();
+  ok('2.36.0: in cima i numeri contati dalla query: in tutto, pubblicate, bozze con riquadri da scrivere', new RegExp('^' + tot10 + ' pagine per zona in tutto').test(numeri.replace(/\s+/g, ' ')) && /\d+ pubblicat/.test(numeri) && /bozze con riquadri da scrivere/.test(numeri), numeri);
+  ok('2.36.0: l\'elenco mostra 50 righe per pagina con "Pagina 1 di N" e Pagina successiva', await p.locator('#zn-tabella tbody tr').count() === 50 && new RegExp('Pagina 1 di ' + Math.ceil(tot10 / 50)).test(await p.locator('#zn-pagine').innerText()) && await p.locator('#zn-pagine a[rel=next]').count() === 1);
+  await p.goto(B + '/admin/zone.php?servizio=Giardiniere', { waitUntil: 'networkidle' });
+  await Promise.all([p.waitForNavigation(), p.click('#zn-pagine a[rel=next]')]);
+  const prime2 = await p.locator('#zn-tabella tbody tr td:nth-child(2)').allInnerTexts();
+  ok('2.36.0: Pagina successiva (filtro Giardiniere): pag=2, righe 51-100, la prima è "Località 051"', /pag=2/.test(p.url()) && /servizio=Giardiniere/.test(p.url()) && prime2.length === 50 && prime2[0] === LOC(51) && /Righe 51-100 di 450/.test(await p.locator('#zn-quante').innerText()), [p.url(), prime2[0]]);
+  await p.goto(B + '/admin/zone.php?servizio=Giardiniere&pag=9', { waitUntil: 'networkidle' });
+  const ult = await p.locator('#zn-tabella tbody tr td:nth-child(2)').allInnerTexts();
+  ok('2.36.0: l\'ultima pagina (9) ha le ultime 50, fino a "Località 450", senza Pagina successiva', ult.length === 50 && ult[49] === LOC(450) && await p.locator('#zn-pagine a[rel=next]').count() === 0 && await p.locator('#zn-pagine a[rel=prev]').count() === 1);
+  await p.goto(B + '/admin/zone.php?pag=99999', { waitUntil: 'networkidle' });
+  ok('2.36.0: una pagina oltre la fine mostra l\'ultima, senza errori', await p.locator('#zn-tabella tbody tr').count() > 0 && /Pagina (\d+) di \1/.test(await p.locator('#zn-pagine').innerText()));
+  // La ricerca.
+  await p.goto(B + '/admin/zone.php', { waitUntil: 'networkidle' });
+  await p.fill('#zn-cerca', 'località 123');
+  await Promise.all([p.waitForNavigation(), p.click('#zn-filtro button[type=submit]')]);
+  ok('2.36.0: Cerca "località 123" (minuscole): una riga, "Località 123", e "Mostra tutte"', /cerca=/.test(p.url()) && await p.locator('#zn-tabella tbody tr').count() === 1 && (await p.locator('#zn-tabella tbody tr td:nth-child(2)').innerText()) === LOC(123) && await p.locator('#zn-filtro a[href="zone.php"]').count() === 1);
+  await p.goto(B + '/admin/zone.php?cerca=Casalecchio', { waitUntil: 'networkidle' });
+  ok('2.36.0: Cerca "Casalecchio": la pagina di Idraulico (anche nel titolo)', await p.locator('#zn-tabella tbody tr').count() === 1 && /Idraulico/.test(await p.locator('#zn-tabella tbody tr').innerText()));
+  await p.goto(B + '/admin/zone.php?servizio=Giardiniere&cerca=' + encodeURIComponent('Località 04'), { waitUntil: 'networkidle' });
+  ok('2.36.0: ricerca e servizio insieme: "Località 04" fra i Giardiniere dà le dieci da 040 a 049', (await p.locator('#zn-tabella tbody tr td:nth-child(2)').allInnerTexts()).join(',') === Array.from({ length: 10 }, (_, i) => LOC(40 + i)).join(','));
+  for (const q of ['%', '_', '\\']) {
+    await p.goto(B + '/admin/zone.php?cerca=' + encodeURIComponent(q), { waitUntil: 'networkidle' });
+    ok('2.36.0: Cerca "' + q + '" è testo, non un carattere jolly: nessuna riga e il messaggio che suggerisce cosa provare', await p.locator('#zn-tabella').count() === 0 && /Nessuna pagina per zona per/.test(await p.locator('#zn-nessuna').innerText()) && /parola più corta/.test(await p.locator('#zn-nessuna').innerText()));
+  }
+  // Quante mostrarne e Quali mostrare: 25 Giardinieri pubblicati.
+  const g10 = cli('sql', "SELECT z.pagina, z.zona, p.slug FROM {p}zone z JOIN {p}pages p ON p.id = z.pagina WHERE z.servizio = 'Giardiniere' ORDER BY z.zona LIMIT 31");
+  for (const z of g10.slice(0, 25)) { cli('scrivi', z.pagina); cli('pubblica', z.pagina); }
+  const links = async (slug) => { await v.goto(B + '/' + slug + '/', { waitUntil: 'networkidle' }); return v.locator('.ew-zone .ew-zone-link').allInnerTexts(); };
+  const nascita = await v.goto(B + '/' + g10[1].slug + '/', { waitUntil: 'networkidle' });
+  const htmlSenza = await v.locator('.ew-zone').evaluate(e => e.outerHTML);
+  const l0 = await links(g10[0].slug);
+  ok('2.36.0: "Quante mostrarne" non scritto (le pagine di prima): il widget elenca tutte le altre 24 zone pubblicate', nascita.status() === 200 && l0.length === 24 && l0[0] === LOC(2) && l0[23] === LOC(25), l0.length);
+  cli('widget', g10[1].pagina, JSON.stringify({ quante: 0 }));
+  await v.goto(B + '/' + g10[1].slug + '/', { waitUntil: 'networkidle' });
+  ok('2.36.0: "Quante mostrarne" a 0 dà il widget identico al byte a quello senza il campo', (await v.locator('.ew-zone').evaluate(e => e.outerHTML)) === htmlSenza);
+  cli('widget', g10[9].pagina, JSON.stringify({ quante: 5 }));
+  const l5 = await links(g10[9].slug);
+  ok('2.36.0: "Quante mostrarne" 5 (ordine alfabetico): le prime cinque, Località 001-005', l5.join(',') === [1, 2, 3, 4, 5].map(LOC).join(','), l5);
+  cli('widget', g10[9].pagina, JSON.stringify({ quante: 4, ordine: 'vicine' }));
+  const l4 = await links(g10[9].slug);
+  ok('2.36.0: "Quante mostrarne" 4 con "Le più vicine" su Località 010: 008, 009, 011, 012 in ordine', l4.join(',') === [8, 9, 11, 12].map(LOC).join(','), l4);
+  cli('widget', g10[0].pagina, JSON.stringify({ quante: 4, ordine: 'vicine' }));
+  const l4b = await links(g10[0].slug);
+  ok('2.36.0: "Le più vicine" sulla prima zona (001): le quattro dopo, 002-005 (la parte prima è vuota e quella dopo riempie)', l4b.join(',') === [2, 3, 4, 5].map(LOC).join(','), l4b);
+  cli('widget', g10[24].pagina, JSON.stringify({ quante: 3, ordine: 'vicine' }));
+  const l3 = await links(g10[24].slug);
+  ok('2.36.0: "Le più vicine" sull\'ultima pubblicata (025): 022, 023, 024 (le bozze non contano)', l3.join(',') === [22, 23, 24].map(LOC).join(','), l3);
+  // L'avviso oltre 30 pubblicate.
+  await p.goto(B + '/admin/zone.php', { waitUntil: 'networkidle' });
+  ok('2.36.0: con 25 pagine pubblicate nessun avviso sul widget', await p.locator('.zn-avviso').count() === 0);
+  for (const z of g10.slice(25, 31)) { cli('scrivi', z.pagina); cli('pubblica', z.pagina); }
+  await p.goto(B + '/admin/zone.php', { waitUntil: 'networkidle' });
+  const av = await p.locator('.zn-avviso').allInnerTexts();
+  ok('2.36.0: con 31 pagine pubblicate di Giardiniere e il widget che le mostra tutte, l\'avviso consiglia "Quante mostrarne" fra 12 e 20', av.length === 1 && /«Giardiniere»/.test(av[0]) && /31/.test(av[0]) && /Quante mostrarne/.test(av[0]) && /12 e 20/.test(av[0]), av);
+  await p.goto(B + '/admin/zone.php?servizio=Giardiniere&pag=2', { waitUntil: 'networkidle' });
+  await Promise.all([p.waitForNavigation(), p.locator('#zn-tabella tbody tr').first().locator('form[data-conferma] button').click()]);
+  ok('2.36.0: Togli dal registro dalla pagina 2 torna alla pagina 2 dello stesso filtro', /pag=2/.test(p.url()) && /servizio=Giardiniere/.test(p.url()) && giardinieri() === nG - 1, p.url());
 
   // === 9. Il pannello e il sito a 1280 e 390 px
   await p.goto(B + '/admin/zone.php', { waitUntil: 'networkidle' });
