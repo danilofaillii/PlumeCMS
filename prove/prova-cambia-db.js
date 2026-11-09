@@ -1,7 +1,8 @@
 // Cambia database (2.37.0): Impostazioni > Cambia database provato come una persona, nel browser.
 // uso: node prova-cambia-db.js <base> <cartella del CMS installato> <utente> <password>
 // Il database nuovo dall'ambiente: T_HOST (127.0.0.1), T_PORT, T_DB, T_USER, T_PASS, T_PREF (di partenza il prefisso del sito).
-// SCENARI (separati da virgole, di partenza tutti): errori, gia, interrotta, copia, torna, manuale.
+// SCENARI (separati da virgole, di partenza tutti): errori, gia, guasto, interrotta, copia, torna, manuale.
+//   guasto     CMS_CAMBIADB_GUASTO: il controllo dopo il config nuovo fallisce; tutto torna com'era, anche nel database nuovo
 //   errori     credenziali sbagliate, database che non c'è, porta chiusa, campi cattivi, lo stesso database, troppi tentativi
 //   gia        T_DB_GIA: un database con tabelle già col prefisso: la prova si ferma, poi la casella "Sostituisci"
 //   interrotta pagina chiusa a metà: si riapre e riprende; poi chiusa più della scadenza: il sito torna normale, si annulla
@@ -18,7 +19,7 @@ const path = require('path');
 const pnConferme = require('./conferme-pannello');
 const [B, CMS, UTENTE, PASSWORD] = process.argv.slice(2);
 const T = { host: process.env.T_HOST || '127.0.0.1', port: process.env.T_PORT || '3308', db: process.env.T_DB, user: process.env.T_USER, pass: process.env.T_PASS, pref: process.env.T_PREF || '' };
-const SCENARI = (process.env.SCENARI || 'errori,gia,interrotta,copia,torna,manuale').split(',');
+const SCENARI = (process.env.SCENARI || 'errori,gia,guasto,interrotta,copia,torna,manuale').split(',');
 const CLI = path.join(__dirname, 'cambia-db-cli.php');
 let n = 0, ko = 0; const ok = (t, c, extra = '') => { n++; if (!c) ko++; console.log((c ? 'OK  ' : 'KO  ') + t + (extra !== '' ? ' ' + JSON.stringify(extra).slice(0, 300) : '')); };
 const dorme = ms => new Promise(r => setTimeout(r, ms));
@@ -95,8 +96,11 @@ function logPulito() {
     const c = cfg(); const [h, pt] = c.DB_HOST.split(';port=');
     await compila(p, { host: h, porta: pt || '3306', nome: c.DB_NAME, utente: c.DB_USER, password: process.env.SRC_PASS || '', prefisso: c.CMS_PREFISSO });
     t = await testoErrore(p); ok('lo stesso database con lo stesso prefisso: rifiutato', /database che il sito usa adesso/.test(t), t);
-    await compila(p, { host: 'localhost', porta: pt || '3306', nome: c.DB_NAME, utente: c.DB_USER, password: process.env.SRC_PASS || '', prefisso: c.CMS_PREFISSO });
-    t = await testoErrore(p); ok('lo stesso database scritto con un altro nome del server (localhost): rifiutato o non raggiungibile, mai accettato', /database che il sito usa adesso|non risponde|non esiste|sbagliati/.test(t) && await p.locator('#pronto').count() === 0, t);
+    if (process.env.ALT_HOST) {
+      // Lo stesso server MySQL raggiunto da un altro indirizzo (l'IP del contenitore, porta interna): lo riconosce dalla risposta del server.
+      await compila(p, { host: process.env.ALT_HOST, porta: process.env.ALT_PORT || '3306', nome: c.DB_NAME, utente: c.DB_USER, password: process.env.SRC_PASS || '', prefisso: c.CMS_PREFISSO });
+      t = await testoErrore(p); ok('lo stesso database raggiunto da un altro indirizzo (' + process.env.ALT_HOST + '): riconosciuto e rifiutato', /database che il sito usa adesso/.test(t) && await p.locator('#pronto').count() === 0, t);
+    }
     if (process.env.T_POCO_USER) {
       await compila(p, { ...datiBuoni(), utente: process.env.T_POCO_USER, password: process.env.T_POCO_PASS, nome: process.env.T_POCO_DB });
       t = await testoErrore(p); ok('utente senza tutti i permessi: detto quale manca', /non ha il permesso di/.test(t), t);
@@ -126,6 +130,26 @@ function logPulito() {
     ok('con la password dell\'amministratore sbagliata non parte', /password non è giusta/.test(await testoErrore(p)) && !fs.existsSync(path.join(CMS, 'aggiornamenti/cambia-db/lavoro.json')));
     T.db = tdb;
     await p.click('button:has-text("Cambia i dati del database")').catch(() => {}); await p.waitForLoadState('domcontentloaded');
+  }
+
+  if (SCENARI.includes('guasto') && process.env.T_DB_GIA) {
+    // Il controllo dopo il config nuovo non va (CMS_CAMBIADB_GUASTO): config di prima rimesso, e nel database nuovo le tabelle
+    // che c'erano (sostituite con "Sostituisci") tornano al loro nome con le loro righe; niente tabelle di lavoro.
+    const tdb = T.db; T.db = process.env.T_DB_GIA;
+    const primaDest = cli('sql-db', ...DEST(), "SHOW TABLES");
+    const conf0 = fs.readFileSync(CONFIG, 'utf8');
+    fs.writeFileSync(CONFIG, conf0 + "\ndefine('CMS_CAMBIADB_GUASTO', 'controllo');\n"); await dorme(2500);
+    await apri(p); await compila(p, datiBuoni());
+    await avvia(p, true);
+    await aspettaFine(p);
+    const confDopo = fs.readFileSync(CONFIG, 'utf8');
+    ok('guasto nel controllo dopo il passaggio: il pannello lo dice e il config è quello di prima', /controllo non è andato/.test(await p.locator('#cdb-errore').innerText().catch(() => '')) && confDopo.includes("'DB_NAME', '" + prima.DB_NAME + "'"), await p.locator('body').innerText().then(t => t.slice(0, 200)));
+    const dopoDest = cli('sql-db', ...DEST(), "SHOW TABLES");
+    ok('guasto: nel database nuovo le tabelle che c\'erano sono tornate al loro nome, nessuna tabella di lavoro né copiata', JSON.stringify(dopoDest) === JSON.stringify(primaDest), { prima: primaDest, dopo: dopoDest });
+    const r = await (await br.newContext()).request.get(B + '/');
+    ok('guasto: il sito risponde sul database di prima', r.status() === 200 && cfg().DB_NAME === prima.DB_NAME, r.status());
+    fs.writeFileSync(CONFIG, fs.readFileSync(CONFIG, 'utf8').replace("\ndefine('CMS_CAMBIADB_GUASTO', 'controllo');\n", '')); await dorme(2500);
+    T.db = tdb;
   }
 
   if (SCENARI.includes('interrotta')) {

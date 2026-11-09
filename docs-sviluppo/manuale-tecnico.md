@@ -6751,6 +6751,129 @@ l'aggiornamento), gruppo 49 di `tools/sicurezza-prova.js` (7: Programma con scri
 numerico, testi enormi; pagine dei pacchetti con `seo_schema`, `tldr`, `keyword` e `faq` cattivi; voce `seo` fuori dalle chiavi
 ammesse; llms.txt senza pagine nascoste, bozze, cestino), controlli 2.35.0 di `prove/prova-sito-plumecms.js`.
 
+## 49. Cambia database (dalla 2.37.0)
+
+Richiesta di Danilo (9 novembre 2026): "Aggiungiamo una nuova funzione in Impostazioni: cambia DB. Questo permette di migrare
+tutto il db su un altro DB e a fine copia utilizzare il nuovo DB." Pagina `admin/cambia-db.php` (Impostazioni > Cambia
+database, voce in `admin/includes/admin-header.php:86`, solo amministratore), motore `includes/cambia-db.php`.
+
+### 49.1 File e stato
+
+- `includes/cambia-db.php`: tutto il motore. Costanti in testa (`:44`-`:57`): `CAMBIADB_SCADENZA` 600 secondi senza un giro
+  prima che la manutenzione finisca da sola, `CAMBIADB_SCADENZA_MANUALE` 3600 per la fase manuale, `CAMBIADB_GIRO` 4 secondi di
+  lavoro per giro, `CAMBIADB_BLOCCO` 500 righe per lettura, `CAMBIADB_RIPROVE` 3, `CAMBIADB_PROVE_MAX` 10 in
+  `CAMBIADB_PROVE_FINESTRA` 600 secondi, `CAMBIADB_TIMEOUT` 3 secondi di connessione. Per le prove, nel config:
+  `CMS_CAMBIADB_SCADENZA`, `CMS_CAMBIADB_SCADENZA_MANUALE`, `CMS_CAMBIADB_GIRO`, `CMS_CAMBIADB_PAUSA` (microsecondi dopo ogni
+  blocco: una copia lenta da interrompere).
+- `aggiornamenti/cambia-db/lavoro.json` (0600, cartella vietata dal web come tutto `aggiornamenti/`): il lavoro in corso.
+  `fase` (`copia` o `manuale`), `dest` (host, porta, nome, utente, prefisso, `sostituisci`, `pass` cifrata), `prima` (i dati del
+  database di adesso senza password), `app` e `vec` (i marchi `rip<6hex>_` e `vec<6hex>_` nel database nuovo), `tabelle`
+  (suffisso, righe all'avvio, righe copiate, creata, fatta, colonne della chiave primaria), `riprove`, `cambi` (collazioni
+  adattate), `aggiornato` (l'ora dell'ultimo giro: la manutenzione la guarda), dopo lo scambio `scambiato`, `rinominate`,
+  `parcheggiate`, e nella fase manuale `motivo_manuale` e `backup`. Si scrive con un file temporaneo e una rinomina
+  (`cambiadb_scrivi_json()`).
+- `aggiornamenti/cambia-db/ultimo.json`: l'esito dell'ultimo cambio (`fatto`, `errore`, `annullato`, `tornato`), senza
+  password; `backup` è il nome della copia del config di prima, `registrato` dice se il passaggio è già nel registro di
+  sicurezza (si scrive al primo caricamento della pagina con il config nuovo, nel database nuovo: `admin/cambia-db.php`).
+- La password del database nuovo: in `lavoro.json` e in sessione (`$_SESSION['cambiadb_provato']`, fra la prova e l'avvio,
+  mezz'ora) solo cifrata, AES-256-GCM con la chiave da `CMS_SEGRETO` (`cambiadb_cifra()` `:188`). Torna in chiaro solo nelle
+  righe da incollare a mano (fase manuale, solo all'amministratore, solo in quella pagina) e nel config scritto.
+
+### 49.2 Prova della connessione
+
+`cambiadb_valida()` (`:211`): host solo nome DNS o IP (niente schema, barre, porta, punto e virgola: il DSN non si può
+allungare), porta 1-65535, nome del database `^[A-Za-z0-9_$-]{1,64}$` e prefisso `^[a-z0-9_]{1,20}$` chiuso da `_` come
+l'installatore, mai un prefisso che somiglia ai marchi di lavoro, utente senza caratteri di controllo. `cambiadb_connetti()`
+(`:251`): DSN con `host` e `port` separati, `PDO::ATTR_TIMEOUT` 3, istruzioni impilate spente (`db_attr_istruzioni_impilate()`),
+`sql_mode` lasco come il ripristino, `FOREIGN_KEY_CHECKS=0`, e lo stesso `time_zone` della connessione di adesso (i TIMESTAMP
+escono e rientrano uguali). Un errore di connessione diventa `CambiaDbErrore` con le parole di `cambiadb_errore_connessione()`
+(`:282`: 1045, 1044, 1049, 2005, 2002 e 2003, 2006 e 2013); l'eccezione di PDO non esce mai (porterebbe utente e host), nel log
+va solo il codice. `cambiadb_prova()` (`:338`): rifiuta lo stesso database con lo stesso prefisso (`cambiadb_stesso()` `:300`:
+prima quello scritto, poi `@@hostname|@@port|DATABASE()` dei due server, `cambiadb_identita()` `:294`, così l'IP del
+contenitore e 127.0.0.1 sono lo stesso server), prova i permessi con `plumeprova_<8hex>` (CREATE, INSERT, ALTER, INDEX,
+CREATE VIEW, DROP) e dice quale manca, conta tabelle e viste con il prefisso (`cambiadb_tabelle_dest()` `:308`, con
+`copia_tabelle_del_prefisso()`: mai le tabelle di un'altra installazione con un prefisso più lungo). Il limite delle prove è per
+sessione (`cambiadb_prova_ammessa()` `:364`), conta anche l'avvio; un campo sbagliato non consuma una prova.
+
+### 49.3 La copia
+
+`cambiadb_avvia()` (`:402`): con il blocco del ripristino (`copia_blocco_prendi()`: un ripristino o un aggiornamento non si
+incrociano), ricollega, rifiuta di nuovo lo stesso database e le tabelle già presenti senza "Sostituisci", elenca le tabelle
+del sito (`copia_tabelle_sito()`: solo quelle vere del prefisso, come gli snapshot dalla 2.25.1) con righe e chiave primaria,
+sceglie i marchi liberi (`cambiadb_marchi()` `:318`, nomi entro 64 caratteri) e scrive il lavoro. Da quel momento il sito è in
+manutenzione. `cambiadb_giro()` (`:458`), chiesto dalla pagina con `admin/assets/contatti.js` (`data-nl-giro`, POST
+`azione=giro`, risposta `{finito, fatte, totale, testo}`): con il blocco, al più `CAMBIADB_GIRO` secondi, tabella per tabella
+crea la tabella di appoggio `rip<hex>_<prefisso nuovo><tabella>` con `SHOW CREATE TABLE` riscritta da
+`copia_create_portabile()` sulle collazioni del server di arrivo (`copia_collazioni_di()`, dalla 2.37.0 i tre aiutanti di
+`includes/copia-sito.php` prendono un parametro facoltativo con le collazioni di un altro server; `cambiadb_crea_tabella()`
+`:440`), poi legge a blocchi di 500 righe in ordine di chiave primaria (`LIMIT/OFFSET`; una tabella senza chiave in una lettura
+sola) con la connessione di adesso non bufferizzata e scrive INSERT con `agg_riga_sql()` (DEFAULT per le colonne generate,
+`agg_colonne_generate()` che lascia stare `DEFAULT_GENERATED`), chiusi sotto `COPIA_INSERT_MAX` e sotto `max_allowed_packet` del
+server nuovo. Dopo ogni blocco salva dove è arrivato. All'inizio di un giro, se le righe nella tabella di appoggio non sono
+quelle salvate (un giro ucciso fra l'INSERT e il salvataggio), la tabella si rifà. Finite tutte, conta le righe sui due
+database: le tabelle diverse (una riga scritta durante la copia: un accesso, un tentativo respinto) si ricopiano, al più tre
+volte, poi `CambiaDbErrore`. Ogni errore passa da `cambiadb_fallito()` (`:550`): via le tabelle di lavoro dal database nuovo
+(`cambiadb_dest_disfa()` `:569`, solo i nomi del lavoro), via il lavoro, l'esito in `ultimo.json`: il sito torna normale sul
+database di prima, che si è solo letto.
+
+### 49.4 Manutenzione
+
+`includes/config.php:56`: solo se `aggiornamenti/cambia-db/lavoro.json` esiste (altrimenti un `is_file()` e basta) e solo nel
+contesto `PUBLISHER_ERRORI === 'log'` (sito, API, cron), carica il motore e chiama `cambiadb_manutenzione_sito()` (`:136`):
+503 "Torno subito" con `Retry-After: 120` e `no-store` (la stessa pagina di `errori_rispondi()`), JSON per `/api/`, uscita
+senza errore per i cron da riga di comando. `admin/includes/auth.php:350`: `cambiadb_pannello_blocca()` (`:160`) lascia aperti
+`cambia-db.php`, login, uscita, account e recupero della password; le altre pagine rimandano a `cambia-db.php`
+(all'amministratore), rispondono 503 in JSON (`*-api.php`) o una pagina 503 al redattore (un rimando lo farebbe girare in
+tondo fra `require_admin()` e la dashboard). `cambiadb_manutenzione_attiva()` (`:120`): fase `copia` o `manuale`, ultimo giro più
+recente della scadenza, e nella fase manuale non quando il config indica già il database nuovo.
+
+### 49.5 Scambio e passaggio
+
+`cambiadb_scambia_e_passa()` (`:588`): ricontrolla che nel database nuovo non siano comparse tabelle col prefisso (senza
+"Sostituisci"), una vista con il nome di una nostra tabella ferma tutto; poi UNA `RENAME TABLE` (`lock_wait_timeout` 10): le
+tabelle già presenti col prefisso in parcheggio `vec<hex>_`, le tabelle di appoggio al nome vero; le due viste degli articoli
+rifatte come `sito_viste()` con il prefisso nuovo; un ultimo conteggio sui nomi veri. Poi `cambiadb_config_passa()` (`:825`):
+legge il config, prepara il nuovo con `cambiadb_config_nuovo()` (`:736`: una riga `define()` per DB_HOST, DB_NAME, DB_USER,
+DB_PASS e CMS_PREFISSO con `var_export()`, come l'installatore, DB_HOST con `;port=N` se la porta non è 3306; CMS_PREFISSO si
+aggiunge sotto DB_PASS se manca; se una riga non c'è esattamente una volta nella forma dell'installatore, `null` e si passa a
+mano), controlla che file e cartella si scrivano (`cambiadb_config_scrivibile()` `:779`), salva la copia di prima
+(`cambiadb_config_salva_copia()` `:754`: `includes/config.local.prima-AAAAMMGG-HHMMSS.php`, 0600, che comincia con
+`CAMBIADB_GUARDIA` `:751`, `<?php http_response_code(404); exit; ... ?>`; se `includes/` non si scrive, in
+`aggiornamenti/cambia-db/`; `includes/` è vietata dal `.htaccess`, da Nginx e dal router delle prove, e anche servito come PHP
+il file esce subito), scrive con un file temporaneo nella stessa cartella e `rename()` con i permessi di prima
+(`cambiadb_config_scrivi()` `:785`, `agg_opcache_dimentica()` sul config), rilegge il file e ci si collega con i valori letti
+dal tokenizzatore di PHP (`cambiadb_config_valori()` `:700`, il file non si esegue; `cambiadb_config_controlla()` `:801`: users con
+almeno una riga, settings, la vista degli articoli). Se il controllo fallisce rimette il config di prima; lo scambio nel
+database nuovo si disfa con una RENAME inversa (le parcheggiate tornano al loro nome). Riuscito: `cambiadb_dopo_passaggio()`
+(`:636`) cancella le parcheggiate, scrive `ultimo.json`, toglie il lavoro. La richiesta dopo usa il database nuovo.
+
+**Config non scrivibile** (fase `manuale`): il lavoro resta con `fase = manuale` (il sito in manutenzione fino a
+`CAMBIADB_SCADENZA_MANUALE`), una copia del config se la cartella lo permette, e la pagina mostra le cinque righe
+(`cambiadb_righe_manuali()`) con i passi di cPanel. "Ho cambiato il file, controlla" (`cambiadb_controlla_manuale()` `:848`):
+il config deve indicare host, nome, utente e prefisso del database nuovo (`cambiadb_config_e_dest()`), poi lo stesso controllo;
+qui `db()` è già il database nuovo e le parcheggiate si tolgono da lì. **Annulla** (`cambiadb_annulla()` `:653`) disfa il
+database nuovo e toglie il lavoro, mai se il config indica già il nuovo. **Ricomincia** (`cambiadb_ricomincia()` `:674`, con la
+password dell'amministratore): dopo la scadenza il sito ha lavorato sul database di prima, quindi la copia si rifà da capo.
+
+### 49.6 Tornare indietro
+
+`cambiadb_torna()` (`:868`): solo dopo un passaggio `fatto` con la copia del config, con la spunta di conferma e la password
+dell'amministratore (`admin/cambia-db.php:81`). Prima controlla che il database di prima risponda e abbia le tabelle (con i
+valori della copia), salva il config di adesso come un'altra copia e rimette quello di prima. Se il config non si scrive mostra
+le righe da rimettere. Il database di prima non si cancella mai da plumeCMS; quello nuovo resta com'è.
+
+### 49.7 Registro e sicurezza
+
+Nel registro di sicurezza (evento `cambia_db`): le prove della connessione (riuscite o no, con server, porta e nome), l'avvio
+rifiutato per la password sbagliata, l'avvio con tabelle e righe, l'annullamento, la copia fermata con il motivo, il passaggio
+(scritto nel database nuovo) e il ritorno. Mai la password. Tutte le azioni in POST con `verify_csrf()` (il giro con
+`csrf_ok()` e risposta JSON 403); avvio, ricomincia e ritorno con la password dell'amministratore
+(`sicurezza_password_verifica()`); il redattore non apre la pagina (`require_admin()`). Prove: `prove/prova-cambia-db.js`
+(scenari errori, gia, interrotta, copia, torna, manuale; `prove/cambia-db-cli.php` per seminare, contare e confrontare le righe
+senza caricare il CMS), gruppo 50 di `tools/sicurezza-prova.js`. Il capitolo 29 del manuale d'uso ha la sezione "Cambiare
+database" (schermate `27-cambia-db`, `27-cambia-db-fatto`, capitolo `27c` di `tools/manuale-uso-schermate.js` con
+`CAMBIADB_MANUALE`).
+
 ## Appendice A. Dove i documenti vecchi non corrispondono al codice
 
 I documenti di `docs-sviluppo/` (fino alla 1.6.4 in `docs/`) sono nati quando il CMS era il pannello di un solo sito.

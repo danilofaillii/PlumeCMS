@@ -3287,6 +3287,116 @@ echo json_encode($o);
     }
   } else console.log('--  SEO e AEO 2.35.0 (Programma, pacchetti, llms.txt): saltata (serve CMS_DIR con la 2.35.0)');
 
+  // === 50. Cambia database (2.37.0): solo l'amministratore, CSRF, campi controllati, limite delle prove, la password del database
+  //          nuovo mai nella pagina né nei registri, il config (e le sue copie) mai dal web, il ritorno solo con conferma e password.
+  {
+    const fs = require('fs'), path = require('path');
+    const U50 = ADMIN + '/cambia-db.php';
+    const DIR50 = process.env.CMS_DIR || '';
+    const esiste = (await admin.ctx.request.get(U50, { maxRedirects: 0 })).status() === 200;
+    if (esiste) {
+      const form = (o) => new URLSearchParams(o).toString();
+      const H = { 'Content-Type': 'application/x-www-form-urlencoded' };
+      // La risposta intera (post() ne tiene 4000 caratteri) e i rimandi come 302: con la sessione del contesto, Origin del sito.
+      const post50 = async (chi, o) => { const rx = await chi.ctx.request.post(U50, { form: o, headers: { Origin: new URL(BASE).origin }, maxRedirects: 0 }); return { status: rx.status(), body: await rx.text() }; };
+      const t50 = await tokenDi(admin.p, U50);
+      const buono = { azione: 'prova', host: '127.0.0.1', porta: '9338', nome: 'cdb_attacco', utente: 'nessuno', password: 'x', prefisso: 'cms_' };
+      // 1. senza CSRF
+      let r = await post(admin.p, U50, form(buono), H);
+      ok('2.37.0: Cambia database senza token CSRF: rifiutato (403)', r.status === 403, r.status);
+      for (const az of ['avvia', 'annulla', 'torna', 'ricomincia', 'controlla']) {
+        r = await post(admin.p, U50, form({ azione: az, password_admin: PASSWORD, conferma: '1' }), H);
+        if (r.status !== 403) { ok('2.37.0: azione ' + az + ' senza token CSRF: rifiutata', false, r.status); break; }
+      }
+      ok('2.37.0: avvia, annulla, torna, ricomincia, controlla senza token CSRF: tutte rifiutate (403)', true);
+      r = await post(admin.p, U50, form({ azione: 'giro' }), Object.assign({ Accept: 'application/json' }, H));
+      ok('2.37.0: un giro della copia senza token: 403 in JSON', r.status === 403, r.status);
+      // 2. dal redattore
+      const rr = await red.ctx.request.get(U50, { maxRedirects: 0 });
+      ok('2.37.0: il redattore non apre Cambia database (rimandato alla dashboard)', rr.status() === 302 && !/cambia-db/.test(rr.headers()['location'] || ''), [rr.status(), rr.headers()['location']]);
+      const tr = await tokenDi(red.p, ADMIN + '/index.php');
+      r = await post(red.p, U50, form(Object.assign({ _csrf: tr }, buono)), H);
+      ok('2.37.0: il redattore non prova connessioni (403)', r.status === 403, r.status);
+      r = await post(red.p, U50, form({ _csrf: tr, azione: 'torna', conferma: '1', password_admin: REDPW }), H);
+      ok('2.37.0: il redattore non torna al database di prima (403)', r.status === 403, r.status);
+      // 3. campi cattivi: niente connessione, errori sotto i campi, niente codice riflesso
+      const cattivi = [
+        ['host con schema', { host: 'http://127.0.0.1' }, /nome del server o il suo indirizzo IP/],
+        ['host con percorso', { host: '127.0.0.1/admin' }, /nome del server o il suo indirizzo IP/],
+        ['host con la porta dentro', { host: '127.0.0.1:3306' }, /nome del server o il suo indirizzo IP/],
+        ['host con un punto e virgola (DSN)', { host: '127.0.0.1;dbname=altro' }, /nome del server o il suo indirizzo IP/],
+        ['porta non numerica', { porta: '3306 OR 1=1' }, /La porta è un numero/],
+        ['porta 0', { porta: '0' }, /La porta è un numero/],
+        ['porta 70000', { porta: '70000' }, /La porta è un numero/],
+        ['nome del database con apice inverso e SQL', { nome: 'x`; DROP DATABASE y; --' }, /Il nome del database può avere solo/],
+        ['nome del database con ;', { nome: 'a;charset=latin1' }, /Il nome del database può avere solo/],
+        ['nome del database con codice', { nome: '"><script>alert(1)</script>' }, /Il nome del database può avere solo/],
+        ['prefisso con apice inverso', { prefisso: 'a`b' }, /Il prefisso può avere solo/],
+        ['prefisso con SQL', { prefisso: "cms_'; DROP TABLE x; --" }, /Il prefisso può avere solo/],
+        ['prefisso con i nomi di lavoro', { prefisso: 'rip0a0b0c_' }, /nomi di lavoro/],
+        ['utente con a capo', { utente: "a\nb" }, /utente del database non è valido/],
+      ];
+      let sbagli = [];
+      for (const [nome, o, re] of cattivi) {
+        const tk = await tokenDi(admin.p, U50);
+        r = await post50(admin, Object.assign({}, buono, { _csrf: tk }, o));
+        if (r.status !== 200 || !re.test(r.body) || r.body.includes('<script>alert(1)</script>') || /Connessione riuscita/.test(r.body)) sbagli.push(nome);
+      }
+      ok('2.37.0: ' + cattivi.length + ' campi cattivi (host con schema, percorso, porta o DSN; porta non numerica o fuori misura; nome e prefisso con SQL o codice; utente con a capo): fermati sul campo, nessuna connessione, niente codice nella pagina', sbagli.length === 0, sbagli);
+      // 4. la password del database nuovo: mai nella risposta, nei registri, nella pagina della sicurezza
+      const segreto = 'SicSegreto50-' + Math.random().toString(36).slice(2);
+      const tk4 = await tokenDi(admin.p, U50);
+      r = await post50(admin, Object.assign({}, buono, { _csrf: tk4, porta: process.env.SIC_CDB_PORTA || '3308', utente: 'sic50_nessuno', password: segreto }));
+      const regSic = await (await admin.ctx.request.get(ADMIN + '/sicurezza.php')).text();
+      let nelLog = false;
+      if (DIR50) for (const f of fs.readdirSync(path.join(DIR50, 'logs'))) { try { if (fs.readFileSync(path.join(DIR50, 'logs', f), 'utf8').includes(segreto)) nelLog = true; } catch (e) {} }
+      let nelloStato = false;
+      if (DIR50) { const d = path.join(DIR50, 'aggiornamenti', 'cambia-db'); if (fs.existsSync(d)) for (const f of fs.readdirSync(d)) { try { if (fs.readFileSync(path.join(d, f), 'utf8').includes(segreto)) nelloStato = true; } catch (e) {} } }
+      ok('2.37.0: la password del database nuovo (sbagliata) non torna nella risposta, nel registro di sicurezza, nei log, nei file di stato; l\'errore è in parole semplici senza il messaggio del server', !r.body.includes(segreto) && !regSic.includes(segreto) && !nelLog && !nelloStato && /sbagliati|non risponde|non esiste/.test(r.body) && !/SQLSTATE|Access denied/.test(r.body), { risposta: r.body.includes(segreto), registro: regSic.includes(segreto), nelLog, nelloStato });
+      // 5. troppi tentativi: dieci ogni dieci minuti per sessione
+      {
+        const altro = await entra(browser, UTENTE, PASSWORD);
+        let fermo = false, giri = 0;
+        for (; giri < 12 && !fermo; giri++) {
+          const tk = await tokenDi(altro.p, U50);
+          const rx = await post50(altro, Object.assign({}, buono, { _csrf: tk }));
+          fermo = /troppe volte/.test(rx.body);
+        }
+        ok('2.37.0: "Prova la connessione" ripetuta: dopo dieci tentativi in dieci minuti si ferma (il pannello non diventa uno scanner di porte)', fermo && giri === 11, giri);
+        await altro.ctx.close();
+      }
+      // 6. il config e le sue copie mai dal web; lo stato del cambio nemmeno
+      const daFuori = await browser.newContext();
+      const vietati = ['/includes/config.local.php', '/aggiornamenti/cambia-db/lavoro.json', '/aggiornamenti/cambia-db/ultimo.json'];
+      let finto = '';
+      if (DIR50) {
+        const copie = fs.readdirSync(path.join(DIR50, 'includes')).filter(f => /^config\.local\.prima-/.test(f));
+        if (!copie.length) { finto = path.join(DIR50, 'includes', 'config.local.prima-20260101-000000.php'); fs.writeFileSync(finto, "<?php http_response_code(404); exit; /* plumeCMS, Cambia database: copia del config.local.php di prima. Non si apre dal web. */ ?>\n<?php define('DB_PASS', 'sic50-finta');\n"); copie.push(path.basename(finto)); }
+        for (const c of copie) vietati.push('/includes/' + c);
+      }
+      const aperti = [];
+      for (const v of vietati) { const rv = await daFuori.request.get(BASE + PAN + v, { maxRedirects: 0 }); const tv = await rv.text(); if (![403, 404].includes(rv.status()) || /DB_PASS|define\(|"dest"/.test(tv)) aperti.push(v + ' ' + rv.status()); }
+      if (finto) fs.unlinkSync(finto);
+      ok('2.37.0: il config, le sue copie (config.local.prima-*.php) e lo stato del cambio non si aprono dal web (' + vietati.length + ' indirizzi)', aperti.length === 0, aperti);
+      await daFuori.close();
+      // 7. tornare indietro: mai senza conferma e password; avvia senza una prova riuscita
+      const conf0 = DIR50 ? fs.readFileSync(path.join(DIR50, 'includes', 'config.local.php'), 'utf8') : '';
+      let tk7 = await tokenDi(admin.p, U50);
+      const t1 = await post50(admin, { _csrf: tk7, azione: 'torna', password_admin: PASSWORD });
+      tk7 = await tokenDi(admin.p, U50);
+      const t2 = await post50(admin, { _csrf: tk7, azione: 'torna', conferma: '1', password_admin: 'sbagliata' });
+      tk7 = await tokenDi(admin.p, U50);
+      const t3 = await post50(admin, { _csrf: tk7, azione: 'avvia', password_admin: PASSWORD });
+      tk7 = await tokenDi(admin.p, U50);
+      const t4 = await post50(admin, { _csrf: tk7, azione: 'ricomincia', password_admin: 'sbagliata' });
+      const conf1 = DIR50 ? fs.readFileSync(path.join(DIR50, 'includes', 'config.local.php'), 'utf8') : '';
+      ok('2.37.0: "Torna al database di prima" senza conferma o con la password sbagliata, "avvia" senza una prova riuscita, "ricomincia" senza password: niente cambia (config uguale)', [t1, t2, t3, t4].every(x => x.status === 302) && conf0 === conf1 && !fs.existsSync(path.join(DIR50 || '/nessuna', 'aggiornamenti', 'cambia-db', 'lavoro.json')), [t1.status, t2.status, t3.status, t4.status]);
+      // 8. GET con i parametri: niente prova (solo POST)
+      const rg = await admin.ctx.request.get(U50 + '?azione=prova&host=127.0.0.1&porta=3308&nome=x&utente=y&password=z');
+      ok('2.37.0: i parametri in GET non fanno partire niente (solo POST con token)', rg.status() === 200 && !/Connessione riuscita|troppe volte|sbagliati/.test(await rg.text()));
+    } else console.log('--  Cambia database: saltata (pagina assente, CMS prima della 2.37.0)');
+  }
+
   // === pulizia: elimina il redattore di prova
   {
     await admin.p.goto(ADMIN + '/utenti.php', { waitUntil: 'networkidle' });

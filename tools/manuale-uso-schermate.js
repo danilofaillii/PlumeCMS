@@ -34,6 +34,7 @@
 // 2.32.0: il capitolo 41 (AI collegate, tre foto): SOLO_CAPITOLI=41, con CMS_DIR_MANUALE e TMPDIR vuota, su un sito col kit.
 // 2.33.0: il capitolo 41n (la proposta di menu affiancata e la scheda di un articolo): SOLO_CAPITOLI=41n, come il 41.
 // 2.34.0: il capitolo 41s (Stile del sito, Idee per articoli, il piano al telefono): SOLO_CAPITOLI=41s, come il 41.
+// 2.37.0: il capitolo 27c (Cambia database, due foto): SOLO_CAPITOLI=27c con CAMBIADB_MANUALE (un database vuoto), TMPDIR vuota.
 const { chromium } = require('playwright');
 const pnConferme = require('../prove/conferme-pannello'); // UX 2026-11: conferme del pannello
 const fs = require('fs');
@@ -2490,6 +2491,30 @@ capitoli['41s'] = async () => {
   await foto('41-piano', { clip: { x: 0, y: 0, width: 390, height: 800 } });
   await p.setViewportSize({ width: 1200, height: 800 });
   cli('stile-pulisci'); cli('pulisci');
+};
+
+// 2.37.0: Cambia database (capitolo 29 del manuale), due foto: la prova della connessione riuscita e il passaggio fatto.
+// Fa un cambio vero verso il database di CAMBIADB_MANUALE ("host:porta:database:utente:password", vuoto con il prefisso
+// del sito) e alla fine torna al database di prima. Senza CAMBIADB_MANUALE si salta. Da solo: SOLO_CAPITOLI=27c.
+capitoli['27c'] = async () => {
+  const dest = (process.env.CAMBIADB_MANUALE || '').split(':');
+  if (dest.length < 5) { console.log('27c: saltato (manca CAMBIADB_MANUALE)'); return; }
+  const [host, porta, nome, utente, ...pw] = dest;
+  await vai('cambia-db.php');
+  await p.fill('#cdb-host', host); await p.fill('#cdb-porta', porta); await p.fill('#cdb-nome', nome); await p.fill('#cdb-utente', utente); await p.fill('#cdb-password', pw.join(':'));
+  await Promise.all([p.waitForNavigation(), p.click('#cdb-modulo button[type=submit]')]);
+  if (!await p.locator('#pronto').count()) throw new Error('27c: la prova della connessione non riesce: ' + (await p.locator('.flash-error, .errore-campo').allTextContents()).join(' '));
+  await foto('27-cambia-db', { clip: { x: 240, y: 56, width: 960, height: 520 }, segni: [{ sel: '#pronto .cdb-riepilogo', n: 1 }, { sel: '#cdb-password-avvia', n: 2 }, { sel: '#pronto button[type=submit]', n: 3 }] });
+  await p.fill('#cdb-password-avvia', PASSWORD);
+  await Promise.all([p.waitForNavigation(), p.click('#pronto button[type=submit]')]);
+  for (let i = 0; i < 300 && await p.locator('#cdb-lavoro').count(); i++) await dorme(500);
+  await p.waitForLoadState('networkidle'); await dorme(500);
+  if (!await p.locator('#cdb-fatto').count()) throw new Error('27c: il passaggio non è riuscito');
+  await foto('27-cambia-db-fatto', { sel: '#cdb-fatto', segni: [{ sel: '#cdb-fatto p b', n: 1 }, { sel: '#torna summary', n: 2 }] });
+  // Di nuovo sul database di prima, per i capitoli dopo.
+  await p.locator('#torna summary').click(); await p.check('#torna input[name=conferma]'); await p.fill('#cdb-password-torna', PASSWORD);
+  await Promise.all([p.waitForNavigation(), p.click('#torna button[type=submit]')]);
+  await dorme(2500);
 };
 
 module.exports = { capitoli };

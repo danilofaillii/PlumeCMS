@@ -548,6 +548,7 @@ function cambiadb_giro(): array {
 
 /** La copia non va: via le tabelle di lavoro dal database nuovo, via il lavoro, l'esito con il motivo. Il sito torna normale. */
 function cambiadb_fallito(array $l, ?PDO $dest, string $motivo): void {
+    $l = cambiadb_lavoro() ?? $l; // lo stato più recente: dopo lo scambio dice quali tabelle rimettere al loro nome
     try {
         $dest = $dest ?? cambiadb_connetti($l['dest'], cambiadb_decifra((string)$l['dest']['pass']), 5);
         cambiadb_dest_disfa($dest, $l);
@@ -799,6 +800,7 @@ function cambiadb_config_scrivi(string $testo): bool {
  * almeno un utente. Ritorna '' se va bene, altrimenti il motivo in parole semplici.
  */
 function cambiadb_config_controlla(string $testo): string {
+    if (defined('CMS_CAMBIADB_GUASTO') && CMS_CAMBIADB_GUASTO === 'controllo') return 'guasto di prova (CMS_CAMBIADB_GUASTO).'; // solo per le prove
     $v = cambiadb_config_valori($testo);
     foreach (['DB_HOST', 'DB_NAME', 'DB_USER', 'DB_PASS'] as $k) if (!isset($v[$k])) return 'Nel config scritto non trovo ' . $k . '.';
     $host = $v['DB_HOST']; $porta = 3306;

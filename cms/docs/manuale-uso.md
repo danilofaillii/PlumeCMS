@@ -3947,6 +3947,89 @@ pannello dell'hosting che il database e l'utente esistano, e nel file `includes/
 utente e password siano quelli giusti (con `soccorso.txt` la pagina dice il nome del database che sta usando e la risposta
 del server, con l'utente e l'host coperti).
 
+### Cambiare database
+
+**A cosa serve.** Spostare tutto il database del sito su un altro database e, a copia finita, far usare al sito quello
+nuovo, senza toccare i file. Serve quando l'hosting ti chiede di cambiare database, quando passi a un piano con un database
+più grande, o quando il database sta su un altro server MySQL o MariaDB. Si apre da **Impostazioni > Cambia database** ed è
+solo per l'amministratore. Il database di adesso non viene mai cambiato né cancellato.
+
+**Prima, nel pannello dell'hosting.** In cPanel apri **Database MySQL**:
+
+1. in **Crea nuovo database** scrivi un nome (per esempio `nuovo`: cPanel lo chiama `account_nuovo`) e premi **Crea
+   database**;
+2. in **Aggiungi nuovo utente** scegli nome e password (annotali) e premi **Crea utente**;
+3. in **Aggiungi utente al database** scegli l'utente e il database, premi **Aggiungi** e spunta **TUTTI I PRIVILEGI**.
+
+**Poi, nel pannello di plumeCMS.**
+
+![Cambia database: la prova della connessione riuscita](immagini/manuale-uso/27-cambia-db.jpg)
+
+1. Nel riquadro **Il database nuovo** scrivi **Server** (quasi sempre `localhost`, senza `http://`), **Porta** (quasi sempre
+   `3306`), **Nome del database** e **Utente** come li mostra cPanel (con la parte davanti al trattino basso), la **Password
+   dell'utente** e il **Prefisso delle tabelle** (di partenza lo stesso di adesso: va bene così).
+2. Premi **Prova la connessione**. Il pannello si collega, dice la versione del server, prova i permessi (crea e toglie una
+   tabella di prova) e guarda se nel database nuovo ci sono già tabelle con quel prefisso. Se va bene compare **Connessione
+   riuscita: pronto per la copia** con il riepilogo (1). Se no, l'errore dice cosa sistemare: utente o password sbagliati, il
+   database che non esiste, il server che non risponde, un permesso che manca.
+3. Se il database nuovo ha già tabelle con lo stesso prefisso, la pagina lo dice e chiede la spunta **Sostituisci le
+   tabelle con questo prefisso nel database nuovo** (si sostituiscono solo quelle; le altre tabelle di quel database restano).
+   Altrimenti scegli un altro prefisso.
+4. Scrivi **La tua password** (quella con cui entri nel pannello) (2) e premi **Copia e passa al database nuovo** (3).
+5. Lascia aperta la pagina: la copia va a giri, con la barra di avanzamento. Intanto i visitatori vedono **«Torno subito»** e
+   il pannello mostra solo questa pagina, così nessuna modifica si perde. Su un sito normale ci vuole meno di un minuto.
+6. Alla fine il pannello conta le righe di ogni tabella nei due database. Se tutto torna, salva una copia del file
+   `includes/config.local.php` (si chiama `config.local.prima-<data>.php`, sta nella stessa cartella e non si apre da
+   internet), scrive quello nuovo e prova il sito sul database nuovo. Se la prova non va, rimette il file di prima da solo.
+
+![Il sito usa il database nuovo](immagini/manuale-uso/27-cambia-db-fatto.jpg)
+
+7. Compare **Il sito usa il database nuovo** con quante tabelle e righe sono state copiate e la riga **Il database di prima
+   resta intatto** (1). Il sito e il pannello funzionano subito; gli utenti e le password sono gli stessi.
+
+**Dopo.** Il database di prima resta dov'è: plumeCMS non lo cancella mai. Guarda il sito per qualche giorno; quando sei
+sicuro, eliminalo tu da cPanel (**Database MySQL**, **Elimina**). Se qualcosa non va, apri **Torna al database di prima** (2),
+spunta la conferma, scrivi la tua password e premi il pulsante: il sito riprende il database di prima così com'era al momento
+del passaggio. **Le modifiche fatte dopo il passaggio (articoli, contatti, messaggi dei form) stanno solo nel database nuovo.**
+
+**Se il file del database non si può scrivere.** Su alcuni hosting il file `includes/config.local.php` è protetto. Allora,
+a copia finita, la pagina dice **Ultimo passo: cambia a mano il file del database** e mostra cinque righe da incollare:
+
+1. in cPanel apri **Gestione file**, la cartella del sito, poi `includes`;
+2. clic destro su `config.local.php`, **Modifica** (se non si apre, prima **Permessi**: 644);
+3. al posto delle righe che cominciano con `define('DB_HOST'`, `define('DB_NAME'`, `define('DB_USER'`, `define('DB_PASS'` e
+   `define('CMS_PREFISSO'` incolla le cinque righe della pagina, e salva;
+4. torna nel pannello e premi **Ho cambiato il file, controlla**.
+
+Le righe contengono la password del database nuovo: non copiarle altrove. Finché non controlli il sito resta in «Torno
+subito», al massimo un'ora; poi torna da solo sul database di prima.
+
+**Se chiudi la pagina durante la copia**, la copia si ferma. Riaprendo **Cambia database** entro qualche minuto riprende da
+dove era. Dopo 10 minuti il sito torna normale da solo sul database di prima, e la pagina dice **La copia si è fermata**:
+**Ricomincia la copia** (con la tua password) la rifà da capo, **Annulla il cambio** cancella dal database nuovo le tabelle
+copiate fin lì.
+
+**Checklist del cambio**
+
+- [ ] Ho fatto una copia del sito (sopra) prima di cominciare.
+- [ ] Il database nuovo e il suo utente esistono, con tutti i privilegi.
+- [ ] **Prova la connessione** dice "Connessione riuscita".
+- [ ] Ho lasciato aperta la pagina fino a "Il sito usa il database nuovo".
+- [ ] Ho aperto il sito e il pannello e funzionano.
+- [ ] Dopo qualche giorno senza problemi elimino il database di prima da cPanel (mai prima).
+
+**Problemi frequenti del cambio**
+
+| Il pannello dice | Cosa fare |
+|---|---|
+| Utente o password del database nuovo sbagliati | Controlla in cPanel il nome esatto dell'utente (con la parte davanti al trattino basso) e riscrivi la password. |
+| Il database «...» non esiste su quel server | Crealo in cPanel, oppure correggi il nome (anche la parte davanti al trattino basso). |
+| Il server non risponde sulla porta ... | Quasi sempre il server è `localhost` e la porta `3306`. Un database su un altro server deve accettare collegamenti da questo. |
+| L'utente si collega, ma non ha il permesso di ... | In cPanel, **Aggiungi utente al database** con **TUTTI I PRIVILEGI**. |
+| Hai provato la connessione troppe volte | Aspetta dieci minuti: il limite c'è perché nessuno usi la pagina per cercare server altrui. |
+| Questo è il database che il sito usa adesso | Hai scritto i dati del database di adesso: scegli il database nuovo, o almeno un altro prefisso. |
+| Il numero di righe non torna | Qualcosa ha scritto nel database durante la copia. Riprova più tardi: il sito resta sul database di prima. |
+
 **Checklist**
 
 - [ ] Faccio una copia una volta al mese, e prima di ogni cambiamento grosso.
