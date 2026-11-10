@@ -19,6 +19,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $id = (int)($_POST['id'] ?? 0);
     $tipoPost = ($_POST['tipo'] ?? $tipo) === 'footer' ? 'footer' : 'header';
     try {
+        // 2.39.0: da qui si toccano solo header e footer. Il riquadro di fine articolo e i disegni dei popup hanno le loro pagine
+        // (fine-articolo.php, popup.php): un id di un altro tipo si rifiuta, anche scritto a mano.
+        if (($_POST['azione'] ?? '') !== 'crea' && $id > 0) {
+            $mt = modelli_leggi($id);
+            if (!$mt || !in_array($mt['tipo'], ['header', 'footer'], true)) throw new RuntimeException('Questo modello non è un header né un footer: si cambia dalla sua pagina.');
+        }
         switch ($_POST['azione'] ?? '') {
             case 'crea':
                 $nuovo = modelli_crea($tipoPost, (string)($_POST['nome'] ?? ''));

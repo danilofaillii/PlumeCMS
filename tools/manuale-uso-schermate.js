@@ -36,6 +36,8 @@
 // 2.34.0: il capitolo 41s (Stile del sito, Idee per articoli, il piano al telefono): SOLO_CAPITOLI=41s, come il 41.
 // 2.37.0: il capitolo 27c (Cambia database, due foto): SOLO_CAPITOLI=27c con CAMBIADB_MANUALE (un database vuoto), TMPDIR vuota.
 // 2.38.0: il capitolo 27p (Pulizia, una foto): SOLO_CAPITOLI=27p con CMS_DIR_MANUALE, su un sito col kit appena installato, TMPDIR vuota.
+// 2.39.0: il capitolo 18e (popup costruito con l'editor, due foto) dopo il 18 (che rifà 18-popup e 19-popup-scegli con le carte nuove):
+//   SOLO_CAPITOLI=18,18e su un sito col kit appena installato, TMPDIR vuota.
 const { chromium } = require('playwright');
 const pnConferme = require('../prove/conferme-pannello'); // UX 2026-11: conferme del pannello
 const fs = require('fs');
@@ -743,6 +745,25 @@ capitoli['18'] = async () => {
   await Promise.all([p.waitForNavigation(), p.locator('a', { hasText: 'Saldi di gennaio' }).first().click()]);
   await p.uncheck('[name=attivo]');
   await Promise.all([p.waitForNavigation(), p.click('button.btn-primary:has-text("Salva")')]);
+};
+
+// 18e. (2.39.0) Il popup costruito con l'editor visuale: la scheda con le due carte e "Apri nell'editor" (18-popup-editor),
+// la tela dell'editor con la finestra e il pulsante "Torna al popup" (18-popup-tela). Due foto sole, per il peso del PDF.
+capitoli['18e'] = async () => {
+  await vai('popup.php?nuovo=1');
+  await p.fill('[name=nome]', 'Benvenuto nella bottega');
+  await p.fill('[name=titolo]', 'Benvenuto: il primo caffè lo offriamo noi');
+  await p.check('#pp-c-editor'); await dorme(200);
+  await p.selectOption('#pp-larghezza', 'media');
+  await p.selectOption('[name=innesco]', 'secondi'); await p.fill('[name=valore]', '5');
+  const fondo18 = await p.locator('#pp-posizione').boundingBox();
+  await foto('18-popup-editor', { clip: { x: 240, y: 56, width: 960, height: Math.round(fondo18.y + fondo18.height + 40 - 56) }, segni: [{ sel: '#pp-c-editor', n: 1 }, { sel: '#pp-apri-editor', n: 2 }, { sel: '#pp-larghezza', n: 3 }, { sel: '#pp-posizione', n: 4 }] });
+  await Promise.all([p.waitForNavigation(), p.click('#pp-apri-editor')]);
+  const mid = +(p.url().match(/id=(\d+)/) || [0, 0])[1];
+  if (!mid) throw new Error('18e: "Apri nell\'editor" non apre l\'editor');
+  await apriEditor('editor.php?tipo=modelli&id=' + mid);
+  await foto('18-popup-tela', { clip: { x: 0, y: 0, width: 1200, height: 700 }, segni: [{ sel: '#ed-torna-popup', n: 5 }, { sel: '#ed-pubblica', n: 6, lato: 'destra' }] });
+  // Il popup resta spento e il disegno in bozza: non copre le schermate dopo.
 };
 
 // 19. Newsletter

@@ -25,7 +25,9 @@ require_once __DIR__ . '/menu-nav.php';
 const MODELLI_VERSIONE_SCHEMA = '1';
 // 1.6.0: "fine" è il riquadro che esce in fondo a ogni articolo (Articoli > Aggiungi sempre alla fine, admin/fine-articolo.php).
 // Uno solo: lo sceglie modelli_fine(), non le condizioni; acceso quando è pubblicato.
-const MODELLI_TIPI = ['header' => 'Header', 'footer' => 'Footer', 'fine' => 'Fine articolo'];
+// 2.39.0: "popup" è il disegno di un popup costruito con l'editor (includes/popup.php, colonna popup.modello_id). Non sta nel
+// Theme Builder, non ha condizioni né stellina: dove e quando esce lo decide la scheda del popup (admin/popup.php).
+const MODELLI_TIPI = ['header' => 'Header', 'footer' => 'Footer', 'fine' => 'Fine articolo', 'popup' => 'Popup'];
 /** Dove può uscire un modello: tutto il sito, ogni tipo di contenuto (anche dei moduli), gli archivi, una categoria, un contenuto preciso. */
 function modelli_dove(): array {
     static $d = null;
@@ -441,6 +443,8 @@ function modelli_cornice(string $tipo, string $dentro, int $id = 0): string {
 function modelli_pezzo(string $tipo): ?array {
     try {
         $ant = $GLOBALS['modelli_anteprima'] ?? null;
+        // 2.39.0: nella tela di un popup niente header e footer, solo la finestra sulla pagina velata.
+        if (is_array($ant) && ($ant['tipo'] ?? '') === 'popup') return ['', ''];
         if (is_array($ant) && ($ant['tipo'] ?? '') === $tipo) {
             return [modelli_cornice($tipo, '<div class="ed-pagina ed-modello-pagina" id="ed-pagina"></div>', (int)($ant['id'] ?? 0)), ''];
         }
@@ -560,4 +564,19 @@ function modelli_segnaposto_fine(): string {
         . '<p>Qui va il testo dell\'articolo. Il riquadro che stai componendo esce sotto, in fondo a ogni articolo.</p></div>'
         . modelli_cornice_fine('<div class="ed-pagina ed-modello-pagina" id="ed-pagina"></div>')
         . '</article></div></div>';
+}
+
+/**
+ * 2.39.0: la tela dell'editor del disegno di un popup. La pagina velata e, sopra, la finestra larga come la larghezza
+ * scelta nella scheda del popup, con il pulsante Chiudi (fuori dal disegno, non si può togliere) e la tela dentro.
+ * $p: la riga del popup (includes/popup.php), o null se il modello non è collegato a nessun popup.
+ */
+function modelli_segnaposto_popup(?array $p): string {
+    $l = (string)($p['larghezza'] ?? 'media');
+    $pos = (string)($p['posizione'] ?? 'centro');
+    $classi = 'popup-finestra ed-popup-finestra' . ($l !== 'media' ? ' ed-popup-l-' . preg_replace('/[^a-z-]/', '', $l) : '') . (isset($p['sfondo_finestra']) && !$p['sfondo_finestra'] ? ' ed-popup-senza-fondo' : '');
+    return '<div class="ed-popup-tela ed-popup-p-' . preg_replace('/[^a-z-]/', '', $pos) . '">'
+        . '<div class="' . $classi . '" role="presentation">'
+        . '<span class="popup-chiudi ed-popup-chiudi" aria-hidden="true" title="Il pulsante Chiudi c\'è sempre: non fa parte del disegno">×</span>'
+        . '<div class="ed-pagina ed-modello-pagina popup-disegno" id="ed-pagina"></div></div></div>';
 }

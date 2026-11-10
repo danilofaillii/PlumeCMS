@@ -76,6 +76,18 @@ if (!empty($_GET['anteprima'])) {
         $tipoModello = (string)($v['dati']['tipo'] ?? (modelli_leggi((int)$v['oggetto_id'])['tipo'] ?? 'header'));
         $GLOBALS['sito_percorso'] = '/';
         $GLOBALS['modelli_versione'] = ['tipo' => $tipoModello, 'id' => (int)$v['oggetto_id'], 'albero' => $albero];
+        if ($tipoModello === 'popup') {
+            // 2.39.0: il disegno di un popup si vede aperto sulla home, con quella versione al posto del disegno.
+            require_once dirname(__DIR__) . '/includes/popup.php';
+            $pp = popup_per_modello((int)$v['oggetto_id']) ?? ['id' => 0, 'nome' => 'Popup', 'innesco' => 'secondi', 'valore' => 0, 'frequenza_giorni' => 0, 'modello_id' => (int)$v['oggetto_id'], 'larghezza' => 'media', 'posizione' => 'centro', 'sfondo_finestra' => 1];
+            [$dis, $cssDis] = editor_disegna($albero, '/');
+            $GLOBALS['sito_senza_popup'] = true;
+            $corpo = '<div class="wrap" style="padding:72px 0;text-align:center"><p style="opacity:.7">Sotto la finestra: la home. Il popup è aperto con la versione ' . (int)$v['id'] . ' del disegno.</p></div>'
+                . popup_html_editor($pp, $dis, $cssDis, '/', 0, true) . '<script src="' . sito_versione_asset('popup.js') . '" defer></script>';
+            $html = vista_pagina(['titolo' => 'Anteprima della versione ' . (int)$v['id'], 'descrizione' => '', 'robots' => 'noindex', 'canonical' => '', 'og' => []], $corpo, '', '/');
+            echo cms_con_cartella(preg_replace('~(<body[^>]*>)~', '$1' . $fascia, $html, 1));
+            exit;
+        }
         if ($tipoModello === 'fine') {
             // 1.6.0: il riquadro di fine articolo si vede in fondo a un articolo d'esempio.
             [$corpo, $cssFine] = vista_fine_articolo('<div class="wrap"><div class="art" style="grid-template-columns:minmax(0,1fr)"><article class="corpo">'

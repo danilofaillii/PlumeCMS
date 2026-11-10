@@ -112,6 +112,7 @@ function editor_esporta(): array {
     $modelli = [];
     foreach (modelli_tutti(true) as $m) {
         if (!empty($m['cestino'])) continue;
+        if ($m['tipo'] === 'popup') continue; // 2.39.0: il disegno di un popup vive con il suo popup, non con header e footer
         $modelli[] = [
             'tipo' => (string)$m['tipo'], 'nome' => (string)$m['nome'], 'status' => (string)$m['status'], 'predefinito' => (int)$m['predefinito'],
             'condizioni' => $m['condizioni'], 'priorita' => (int)$m['priorita'],
@@ -203,10 +204,11 @@ function editor_importa_anteprima(array $d): array {
     // Modelli: per tipo e nome.
     if (isset($d['modelli'])) {
         $miei = [];
-        foreach (modelli_tutti(true) as $m) if (empty($m['cestino'])) $miei[editor_importa_chiave_modello($m)] = $m;
+        foreach (modelli_tutti(true) as $m) if (empty($m['cestino']) && $m['tipo'] !== 'popup') $miei[editor_importa_chiave_modello($m)] = $m;
         $righe = [];
         foreach ($d['modelli'] as $m) {
             if (!is_array($m) || trim((string)($m['nome'] ?? '')) === '') continue;
+            if (($m['tipo'] ?? '') === 'popup') continue; // 2.39.0: un disegno di popup non diventa un header
             $k = editor_importa_chiave_modello($m);
             $tipo = explode('|', $k)[0];
             $etichetta = ucfirst($tipo) . ': ' . (string)$m['nome'];
@@ -292,10 +294,11 @@ function editor_importa(array $d, array $ambiti, string $autore = ''): array {
     }
     if (in_array('modelli', $ambiti, true) && isset($d['modelli'])) {
         $miei = [];
-        foreach (modelli_tutti(true) as $m) if (empty($m['cestino'])) $miei[editor_importa_chiave_modello($m)] = $m;
+        foreach (modelli_tutti(true) as $m) if (empty($m['cestino']) && $m['tipo'] !== 'popup') $miei[editor_importa_chiave_modello($m)] = $m;
         $n = 0;
         foreach ($d['modelli'] as $m) {
             if (!is_array($m) || trim((string)($m['nome'] ?? '')) === '') continue;
+            if (($m['tipo'] ?? '') === 'popup') continue; // 2.39.0: un disegno di popup non diventa un header
             $k = editor_importa_chiave_modello($m);
             $tipo = explode('|', $k)[0];
             $struttura = editor_importa_albero($m['struttura'] ?? null);

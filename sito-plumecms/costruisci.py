@@ -288,7 +288,8 @@ def funzionalita():
           '<li>Su ogni blocco vedi quanti ci sono adesso e quanti ci sono passati; chi vuoi lo togli con un clic.</li></ul>']),
         ('form', 'form-passi.webp', 'Form e consenso: in regola senza fatica',
          ['I form si costruiscono in cinque passi: cosa chiedere, come appare, i messaggi, la conferma, dove metterlo. Ogni campo finisce nella scheda del contatto, e a ogni compilazione decidi tu chi riceve l\'email.',
-          '<ul><li>Il form ha la sua pagina da condividere, il codice da mettere in un altro sito e il QR da stampare. E i popup decidi tu quando e dove.</li>'
+          '<ul><li>Il form ha la sua pagina da condividere, il codice da mettere in un altro sito e il QR da stampare.</li>'
+          '<li>I popup li costruisci con l\'editor visuale, come una pagina, oppure con pochi campi; al centro, in basso a destra o come barra, e decidi tu quando e dove.</li>'
           '<li>Doppia conferma, dichiarazione per la privacy con la casella vuota, consenso registrato con data e ora.</li>'
           '<li>Chi vuole uscire esce da una lista sola o sceglie cosa ricevere, e ti dice perché.</li></ul>']),
         ('seo', 'seo.webp', 'SEO e AEO: ti trovano Google e le intelligenze artificiali',
@@ -750,6 +751,7 @@ def zip_lavagna(dest):
 # Regola di Danilo (1 novembre 2026): solo i punti salienti, una riga per versione, mai nomi di aziende o servizi di terzi.
 # Le novità per chi scarica: brevi, scritte qui (il CHANGELOG è per chi sviluppa). Da aggiornare a ogni versione.
 NOVITA = [
+    ('2.39.0', 'Popup costruiti con l\'editor visuale', ['Un popup si compone come una pagina: sezioni, colonne e tutti i widget, con bozza, pubblicazione e versioni. Oppure con i campi semplici di sempre.', 'Larghezza e posizione della finestra a scelta: al centro, in basso a destra o come barra in fondo o in cima. Un pulsante con il link #chiudi chiude il popup.']),
     ('2.38.1', 'I widget del riquadro in fondo agli articoli, di header e footer con il loro stile', ['Un riquadro con immagine messo in fondo agli articoli, nell\'header o nel footer esce sul sito come nell\'editor.']),
     ('2.38.0', 'Pulizia e dati delle immagini', ['Un controllo di cosa si può togliere, con il peso di ogni voce e del database: copie e snapshot vecchi, log, versioni, cestino, registri, immagini non usate; togli tutto o solo una parte, sempre dopo un riepilogo.', 'Ogni foto ha la sua scheda: testo alternativo con il consiglio, titolo, didascalia, descrizione, autore e licenza, e dove è usata. Le foto a cui manca qualcosa in un elenco, i dati della foto principale per i motori di ricerca e il nome del file leggibile.']),
     ('2.37.0', 'Cambia database', ['Sposta tutto il sito su un altro database, anche su un altro server: copia a giri con la barra, righe contate tabella per tabella, passaggio solo a conti tornati, il database di prima intatto e il ritorno con un clic.']),

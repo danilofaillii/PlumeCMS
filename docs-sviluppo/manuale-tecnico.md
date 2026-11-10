@@ -61,6 +61,8 @@ pagine, gestire il sito) c'è il manuale d'uso, `docs/manuale-uso.md`, con le sc
 48. SEO e AEO dell'audit di plumecms.it (dalla 2.35.0)
 49. Cambia database (dalla 2.37.0)
 50. Pulizia (dalla 2.38.0)
+51. I dati delle immagini (dalla 2.38.0)
+52. Popup costruiti con l'editor visuale (dalla 2.39.0)
 
 Appendice A. Dove i documenti vecchi non corrispondono al codice
 
@@ -1339,7 +1341,7 @@ priorità. Al primo avvio nascono "Header del sito" e "Footer del sito".
 **Condizioni.** Ogni modello può dire dove si usa: tutto il sito, un tipo di contenuto, gli archivi, una
 categoria, un contenuto preciso; ogni condizione può anche escludere. Al massimo 40 condizioni.
 
-**Quale modello si usa** (`modelli_scegli()`, `includes/modelli.php:350-381`), in quest'ordine:
+**Quale modello si usa** (`modelli_scegli()`, `includes/modelli.php:380-413`), in quest'ordine:
 1. in anteprima, `?header=ID` o `?footer=ID`;
 2. la scelta del contenuto (campo Header e footer della pagina: nessuno, oppure un modello preciso);
 3. le condizioni dei modelli pubblicati. Vince il punteggio più alto: peso della condizione per 1000 più la
@@ -1698,6 +1700,8 @@ formule, capitolo 18.10).
 - Quando: dopo N secondi, a una percentuale di scorrimento, all'uscita (il mouse va verso la barra).
 - Valore dell'innesco 0-600; frequenza 0-365 giorni, ricordata nel browser del visitatore (`localStorage`).
 - Dentro un popup può stare un modulo: newsletter, `form:ID` o un modulo di un modulo del sito.
+- Dalla 2.39.0 un popup può essere "Costruito con l'editor visuale": il suo contenuto è un modello dell'editor di tipo
+  `popup` (capitolo 52). Larghezza, posizione e fondo della finestra valgono per tutti e due i modi.
 
 ### 15.3 Posta
 
@@ -4428,18 +4432,18 @@ e non esce in cima o in fondo alla pagina ma dentro l'articolo.
 
 ### 28.1 Il modello `fine`
 
-`MODELLI_TIPI` (`includes/modelli.php:28`) vale `header`, `footer`, `fine` ("Fine articolo"). La tabella
+`MODELLI_TIPI` (`includes/modelli.php:30`) vale `header`, `footer`, `fine` ("Fine articolo") e, dalla 2.39.0, `popup` (il disegno di un popup, capitolo 52). La tabella
 `modelli` non cambia: il tipo è una colonna di testo.
 
 | Funzione | Cosa fa |
 |---|---|
-| `modelli_fine()` (`includes/modelli.php:483`) | il riquadro: il primo modello `fine` fuori dal cestino, o `null` |
-| `modelli_fine_crea()` (`includes/modelli.php:489`) | lo crea se manca (in bozza, nome "Fine articolo") e ritorna l'id: due clic su Crea non ne fanno due |
-| `modelli_fine_acceso($m)` (`includes/modelli.php:495`) | esce sul sito: `status = 'published'`, una struttura pubblicata, fuori dal cestino |
-| `modelli_fine_dove_vederlo()` (`includes/modelli.php:501`) | `/slug/` dell'ultimo articolo pubblicato e già uscito (data e ora non nel futuro), o `''` |
-| `modelli_cornice_fine($dentro, $id)` (`includes/modelli.php:511`) | la cornice: `<aside class="fine-articolo ed-modello" id="fine-articolo" aria-label="In fondo all'articolo">` |
-| `modelli_fine_articolo()` (`includes/modelli.php:520`) | `[html, css]` del riquadro per l'articolo che si mostra, o `null` |
-| `modelli_segnaposto_fine()` (`includes/modelli.php:557`) | la tela dell'editor: un articolo finto (righe grigie) con la cornice e, dentro, `#ed-pagina` |
+| `modelli_fine()` (`includes/modelli.php:487`) | il riquadro: il primo modello `fine` fuori dal cestino, o `null` |
+| `modelli_fine_crea()` (`includes/modelli.php:493`) | lo crea se manca (in bozza, nome "Fine articolo") e ritorna l'id: due clic su Crea non ne fanno due |
+| `modelli_fine_acceso($m)` (`includes/modelli.php:499`) | esce sul sito: `status = 'published'`, una struttura pubblicata, fuori dal cestino |
+| `modelli_fine_dove_vederlo()` (`includes/modelli.php:505`) | `/slug/` dell'ultimo articolo pubblicato e già uscito (data e ora non nel futuro), o `''` |
+| `modelli_cornice_fine($dentro, $id)` (`includes/modelli.php:515`) | la cornice: `<aside class="fine-articolo ed-modello" id="fine-articolo" aria-label="In fondo all'articolo">` |
+| `modelli_fine_articolo()` (`includes/modelli.php:524`) | `[html, css]` del riquadro per l'articolo che si mostra, o `null` |
+| `modelli_segnaposto_fine()` (`includes/modelli.php:561`) | la tela dell'editor: un articolo finto (righe grigie) con la cornice e, dentro, `#ed-pagina` |
 
 **Struttura di partenza** (`modelli_crea()`, `includes/modelli.php:178`): una sezione larga quanto
 l'articolo (`larghezza` `articolo`), senza spazio sopra e sotto (lo spazio lo dà la cornice), con un Titolo h3
@@ -4454,7 +4458,7 @@ struttura pubblicata c'è. Ogni cambio di stato scrive una versione ("pubblicato
 
 **Quando esce** (`modelli_fine_articolo()`), in quest'ordine:
 1. l'anteprima di una versione (Editor > Versioni, `$GLOBALS['modelli_versione']` di tipo `fine`): disegna quella;
-2. `?preview=1&fine=ID` aperto da un amministratore (`modelli_anteprima_admin()`, `includes/modelli.php:361`:
+2. `?preview=1&fine=ID` aperto da un amministratore (`modelli_anteprima_admin()`, `includes/modelli.php:363`:
    `SITO_ANTEPRIMA` e il ruolo `admin` letto dal database): disegna la **bozza** di quel modello, anche spento. È
    quello che usano l'anteprima della pagina e la tela dell'editor;
 3. altrimenti il riquadro, solo se `modelli_fine_acceso()`.
@@ -7235,6 +7239,113 @@ usano in ogni disegno; `sito/index.php` lo carica in testa per il JSON-LD. `medi
 
 `prove/prova-immagini.js` (con `prove/immagini-cli.php` e `prove/foto-finte.php`), gruppo 52 di `tools/sicurezza-prova.js`.
 `prove/prova-seo-strumenti.js` controlla la scheda col nome nuovo.
+
+## 52. Popup costruiti con l'editor visuale (dalla 2.39.0)
+
+Richiesta di Danilo: "devo poter costruire un popup come se fosse una pagina classica". Un popup ha due modi: **Campi
+semplici** (il popup di prima, capitolo 15.2) e **Costruito con l'editor visuale**, che mostra un modello dell'editor di tipo
+`popup` (lo stesso meccanismo del riquadro di fine articolo, capitolo 28): sezioni, colonne e tutti i widget, bozza, Pubblica,
+versioni, anteprima. Dove e quando esce lo decide la scheda del popup, come prima: il modello non ha condizioni né stellina.
+
+### 52.1 Dati
+
+Tabella `popup`, colonne nuove (`includes/popup.php:44-48`, aggiunte alle tabelle di prima da `popup_schema()`,
+`includes/popup.php:24`, con `POPUP_COLONNE_NUOVE`, `:64`; l'impronta dello schema cambia con il CREATE e fa girare l'ALTER una
+volta):
+
+| Colonna | Valori | Partenza (= il popup di prima) |
+|---|---|---|
+| `contenuto` | `campi`, `editor` (`POPUP_CONTENUTI`, `:20`) | `campi` |
+| `modello_id` | id di un modello di tipo `popup` | 0 |
+| `larghezza` | `media` 560 px, `stretta` 420, `larga` 900, `piena` (`POPUP_LARGHEZZE`, `:21`) | `media` |
+| `posizione` | `centro`, `basso-destra`, `barra-basso`, `barra-alto` (`POPUP_POSIZIONI`, `:22`) | `centro` |
+| `sfondo_finestra` | 1 con fondo, bordo, ombra e margine; 0 senza | 1 |
+
+`popup_riga()` (`:74`) riporta ai valori di partenza qualunque valore fuori elenco. `popup_salva()` (`:100`): i valori fuori
+elenco (anche mandati come liste) diventano quelli di partenza; chi non manda `contenuto`, `larghezza`, `posizione` o
+`sfondo_finestra` (il pop-up dei form, `fb_popup_salva()`) lascia quelli che ci sono; `modello_id` non si legge mai dal POST: lo
+scrive solo `popup_modello_crea()`. Il controllo "popup vuoto" vale solo per i campi semplici. La scheda manda sempre
+`sfondo_finestra` (un campo nascosto a 0 prima della casella).
+
+Il modello: `MODELLI_TIPI` ha `popup` (`includes/modelli.php:30`). La colonna `modelli.tipo` è VARCHAR(10): ci sta.
+
+### 52.2 Le funzioni
+
+| Funzione | Cosa fa |
+|---|---|
+| `popup_prova_id()` (`includes/popup.php:173`) | l'id di `?popup_prova=ID` solo se l'amministratore guarda in anteprima (`modelli_anteprima_admin()`), altrimenti 0 |
+| `popup_per()` (`:140`) | con `popup_prova` ritorna solo quel popup (anche spento) con `_prova`: aperto subito, con la bozza del disegno, senza la memoria dei giorni |
+| `popup_modello($p)` (`:185`) | il modello del popup solo se esiste, è di tipo `popup` e non è nel cestino (un header collegato a mano non vale) |
+| `popup_modello_pubblicato($m)` (`:194`) | `status = 'published'`, una struttura pubblicata, fuori dal cestino |
+| `popup_modello_modifiche($m)` (`:199`) | c'è una bozza diversa dalla versione pubblicata ("Ci sono modifiche non pubblicate") |
+| `popup_per_modello($mid)` (`:204`) | il popup di un modello (per l'editor e le versioni) |
+| `popup_modello_crea($id)` (`:217`) | crea il modello al primo "Apri nell'editor" (nome "Popup: " e il nome del popup): Titolo con occhiello e titolo dei campi semplici (altrimenti "Un momento, prima di andare"), Testo (il testo dei campi o un esempio), Pulsanti (il pulsante dei campi o "Ho capito" con `#chiudi`), in una sezione contenuta con 40 px sopra e sotto (32 al telefono). Due clic non ne fanno due |
+| `popup_elimina($id)` (`:238`) | elimina il popup e il suo modello (`modelli_elimina()`, anche le revisioni) |
+| `popup_disegno($p, $percorso, $bozza)` (`:246`) | `[html, css]` di `editor_disegna()` sul modello pubblicato (o sulla bozza in anteprima); `null` se manca, non è pubblicato o è vuoto; un errore va nel log, la pagina resta |
+| `popup_classi($p, $editor)` (`:262`) | `popup-editor`, `popup-l-<larghezza>`, `popup-p-<posizione>`, `popup-senza-fondo`; nessuna con i valori di partenza |
+| `popup_moduli_dentro($html, $id, $tutti)` (`:272`) | il campo nascosto `popup` dopo ogni captcha e gli id dei form con il prefisso `popup-ID-`; con l'editor anche `aria-describedby`, `for` e `form-file-` |
+| `popup_html($popup, $percorso)` (`:282`) | il markup dei popup e `popup.js`; i campi semplici escono come prima, al byte |
+| `popup_html_editor(...)` (`:319`) | il popup con il disegno (sotto) |
+
+### 52.3 Sul sito
+
+`popup_html_editor()` (`includes/popup.php:319`) scrive `<style id="ed-css-popup-ID">` con il CSS del disegno, poi
+`<div class="popup popup-editor ..." id="popup-ID" data-innesco data-valore data-giorni [data-subito] [data-prova] hidden>`, la
+`.popup-finestra` con `role="dialog"`, `aria-modal` (`true` solo al centro: nelle altre posizioni la pagina resta usabile),
+`aria-labelledby` sul primo titolo `h1`-`h6` del disegno (con il suo id, o con `popup-titolo-ID` aggiunto) o `aria-label` con il
+nome del popup; dentro il pulsante `.popup-chiudi` e `<div class="popup-disegno ed-modello" data-modello="M">` con il disegno.
+La X non fa parte del disegno e non si toglie.
+
+I fogli e gli script dei widget del disegno non li scrive il popup: li carica la pagina con `vista_asset_modelli()` di
+`sito/viste.php` (2.38.1), che guarda testata, corpo, popup e piede e aggiunge quelli che la testa non ha già (anche
+`editor-pagina.js`). Un popup a campi non cambia: l'unica differenza con la 2.38.0 è il `?v=` di `popup.js` e degli altri file.
+
+Form dentro il disegno: come nei campi semplici, il campo `popup` fa tornare la pagina con `&popup=ID` (`api/modulo.php:37`);
+con `?modulo=` e il campo nella pagina il popup ha `data-subito` e si riapre sulla risposta.
+
+`popup.js` (`sito/assets/popup.js`): apre con il fuoco sul primo elemento e ricorda dove era; chiude con la X, con il clic sul
+velo, con Esc e con qualunque link `href="#chiudi"` dentro la finestra (niente salto nell'indirizzo); chiudere scrive la memoria
+dei giorni (non in anteprima, `data-prova`); al centro il Tab resta dentro la finestra e il corpo della pagina non scorre; dopo
+l'apertura manda un `resize` perché i widget (caroselli, schede) si misurino ora che si vedono.
+
+CSS in `sito/assets/sito.css` (blocco 2.39.0 dopo `.popup .modulo h2`): `.popup-editor .popup-finestra{padding:0}` (lo spazio lo
+danno le sezioni), larghezze, `.popup-senza-fondo`, posizioni (in basso a destra con 16 px dall'angolo; barre larghe quanto lo
+schermo, alte al massimo il 70%), nelle tre posizioni nuove niente velo e `pointer-events:none` sul contenitore. Le barre
+ignorano la larghezza. L'animazione delle posizioni nuove solo con `prefers-reduced-motion: no-preference`. La finestra resta
+`max-height:92vh; overflow:auto`: un disegno più alto dello schermo si scorre dentro.
+
+Il codice `#chiudi` passa da `editor_link_sicuro()` come ogni ancora; `javascript:` resta fuori come sempre.
+
+### 52.4 Nel pannello
+
+`admin/popup.php` (solo amministratore): carte "Campi semplici" e "Costruito con l'editor visuale" (radio `contenuto`; i campi e
+il riquadro dell'editor si alternano con `:has()`, senza JavaScript), "Apri nell'editor" (azione `editor`: salva come editor,
+`popup_modello_crea()`, rimanda a `editor.php?tipo=modelli&id=M`), stato del disegno, avvisi se il popup è acceso e il disegno non
+è pubblicato (anche nel messaggio dopo Salva e nell'elenco), "Versioni del disegno", riquadro "Aspetto della finestra",
+anteprima in un iframe con `?preview=1&popup_prova=ID`. Elimina usa `popup_elimina()`.
+
+Editor (`admin/editor.php:55-73`): per un modello `popup` la freccia e "Torna al popup" (`#ed-torna-popup`) portano a
+`popup.php?id=P`, sotto il nome "Popup: la finestra che compare sopra le pagine", "Vedi sul sito" apre `/?preview=1&popup_prova=P`.
+Tela (`admin/editor-anteprima.php:31-37`): `modelli_segnaposto_popup()` (`includes/modelli.php:574`) mette la finestra larga come
+nella scheda, con la X finta (`aria-hidden`), sulla pagina velata; `modelli_pezzo()` (`includes/modelli.php:447`) toglie header e
+footer; `sito_senza_popup` spegne i popup veri; foglio `admin/assets/editor/anteprima-popup.css`. Pubblica dall'editor pubblica il
+modello (`editor-api.php`, `modelli_stato()`), con le regole di "Chi pubblica". Il redattore non apre i modelli (`auth.php`).
+
+Versioni (`admin/versioni.php:79`): l'anteprima di una versione del disegno mostra la home con il popup aperto con quell'albero.
+
+Header e footer (`admin/modelli.php:22`): ogni azione su un id che non è un header o un footer si rifiuta. Esporta e importa
+dell'editor (`includes/editor-opzioni.php:115`, `:207`, `:211`, `:297`, `:301`): i modelli `popup` non escono nel file e, se ci
+sono, non si importano (prima un tipo sconosciuto diventava un header).
+
+Copia del sito, snapshot e pacchetti: la tabella `popup` e i modelli passano come tutte le altre (nessun cambio).
+
+### 52.5 Prove
+
+`prove/prova-popup-editor.js` (con `prove/popup-cli.php`): scheda, Apri nell'editor, tela, acceso e non pubblicato, disegno con
+Titolo, Testo, Immagine, Pulsanti (`#chiudi`) e Form pubblicato, comparsa dopo i secondi, X, Esc, `#chiudi` e memoria dei giorni,
+Tab, form con un errore, tre larghezze, quattro posizioni (misurate), telefono 390 px, schermo basso, senza fondo, meno movimento,
+secondo popup mai pubblicato, elenco, versioni, Header e footer, eliminazione; con `PRIMA` e `CAMPI` il popup a campi identico al
+byte a prima dell'aggiornamento (tolto il `?v=`). Gruppo 53 di `tools/sicurezza-prova.js`.
 
 ## Appendice A. Dove i documenti vecchi non corrispondono al codice
 

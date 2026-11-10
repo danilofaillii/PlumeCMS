@@ -3603,6 +3603,101 @@ echo json_encode($o);
     cli52('pulisci');
   } else console.log('--  Dati delle immagini: saltata (manca CMS_DIR o la 2.38.0)');
 
+  // === 53. (2.39.0) Popup costruiti con l'editor visuale: il redattore non apre la scheda né il disegno e non salva; CSRF e Origin;
+  //          modello_id mandato a mano (di un header, di un altro tipo) ignorato, anche messo nel database un header non esce come
+  //          popup; larghezza, posizione, contenuto e fondo fuori elenco (anche come liste) tornano ai valori di partenza; HTML e
+  //          script nel nome e nei titoli escono come testo; "#chiudi" resta un'ancora, javascript: non passa mai; l'anteprima
+  //          popup_prova è solo dell'amministratore; Header e footer non tocca i disegni dei popup. Serve CMS_DIR.
+  {
+    const DIR53 = process.env.CMS_DIR || '';
+    const U53 = ADMIN + '/popup.php';
+    const ha53 = DIR53 && require('fs').existsSync(require('path').join(DIR53, 'admin', 'assets', 'editor', 'anteprima-popup.css'));
+    if (ha53) {
+      const { execFileSync } = require('child_process');
+      const q53 = (a, x) => execFileSync('php', [require('path').join(__dirname, '..', 'prove', 'popup-cli.php'), DIR53, a, x], { encoding: 'utf8' }).trim();
+      const ORIG = { Origin: new URL(BASE).origin };
+      const conta = () => +q53('uno', 'SELECT COUNT(*) FROM {p}popup');
+      const base53 = { nome: 'Sic53', attivo: '1', contenuto: 'campi', titolo: 'Sic53 titolo', dove: 'tutte', innesco: 'uscita', valore: '8', frequenza_giorni: '7', larghezza: 'media', posizione: 'centro', sfondo_finestra: '1' };
+      const salva53 = async (chi, o, extra = ORIG) => { const r = await chi.ctx.request.post(U53, { form: o, headers: extra, maxRedirects: 0 }); return { status: r.status(), loc: r.headers()['location'] || '' }; };
+      // 1. il redattore
+      const rg = await red.ctx.request.get(U53 + '?nuovo=1', { maxRedirects: 0 });
+      ok('2.39.0: il redattore non apre la scheda dei popup', rg.status() === 302 && !/popup\.php/.test(rg.headers()['location'] || ''), [rg.status(), rg.headers()['location']]);
+      const n0 = conta();
+      const trd = await tokenDi(red.p, ADMIN + '/index.php');
+      await salva53(red, { ...base53, _csrf: trd, azione: 'editor' });
+      ok('2.39.0: il redattore non crea un popup né un disegno (con il suo token)', conta() === n0 && +q53('uno', "SELECT COUNT(*) FROM {p}modelli WHERE tipo = 'popup' AND nome LIKE '%Sic53%'") === 0);
+      // 2. CSRF e Origin
+      let r = await post(admin.p, U53, new URLSearchParams(base53).toString(), { 'Content-Type': 'application/x-www-form-urlencoded' });
+      ok('2.39.0: salvataggio senza token CSRF: rifiutato, nessun popup', r.status === 403 && conta() === n0, r.status);
+      let tk = await tokenDi(admin.p, U53 + '?nuovo=1');
+      r = await salva53(admin, { ...base53, _csrf: tk }, { Origin: 'https://evil.example' });
+      ok('2.39.0: salvataggio da un\'altra origine: rifiutato, nessun popup', r.status === 403 && conta() === n0, r.status);
+      // 3. modello_id di un header e valori fuori elenco
+      const H = +q53('uno', "SELECT id FROM {p}modelli WHERE tipo = 'header' ORDER BY id LIMIT 1");
+      tk = await tokenDi(admin.p, U53 + '?nuovo=1');
+      r = await salva53(admin, { ...base53, _csrf: tk, nome: 'Sic53 fuori elenco', contenuto: 'php', larghezza: 'enorme"><script>alert(53)</script>', posizione: 'ovunque', sfondo_finestra: '2', modello_id: String(H) });
+      const P53 = +q53('uno', "SELECT MAX(id) FROM {p}popup WHERE nome = 'Sic53 fuori elenco'");
+      const riga = P53 ? JSON.parse(q53('uno', `SELECT JSON_OBJECT('c', contenuto, 'l', larghezza, 'p', posizione, 's', sfondo_finestra, 'm', modello_id) FROM {p}popup WHERE id = ${P53}`)) : {};
+      ok('2.39.0: contenuto, larghezza, posizione e fondo fuori elenco tornano ai valori di partenza; modello_id mandato a mano ignorato', riga.c === 'campi' && riga.l === 'media' && riga.p === 'centro' && riga.s === 0 && riga.m === 0, riga);
+      tk = await tokenDi(admin.p, U53 + '?id=' + P53);
+      const arr = await admin.ctx.request.post(U53, { data: '_csrf=' + tk + '&id=' + P53 + '&nome=Sic53+liste&titolo=t&contenuto[]=editor&larghezza[]=larga&posizione[]=centro&dove[]=home&innesco[]=secondi&sfondo_finestra[]=1', headers: Object.assign({ 'Content-Type': 'application/x-www-form-urlencoded' }, ORIG), maxRedirects: 0 });
+      const riga2 = JSON.parse(q53('uno', `SELECT JSON_OBJECT('c', contenuto, 'l', larghezza, 'd', dove, 'i', innesco) FROM {p}popup WHERE id = ${P53}`));
+      ok('2.39.0: valori mandati come liste: nessun errore del server, valori di partenza', [302, 303].includes(arr.status()) && riga2.c === 'campi' && riga2.l === 'media' && riga2.d === 'tutte' && riga2.i === 'secondi', [arr.status(), riga2]);
+      // 4. un header messo a mano come disegno del popup: non esce
+      q53('esegui', `UPDATE {p}popup SET contenuto = 'editor', modello_id = ${H}, attivo = 1, innesco = 'secondi', valore = 0, nome = 'Sic53 header' WHERE id = ${P53}`);
+      const anon53 = await browser.newContext();
+      let h = await (await anon53.request.get(BASE + '/')).text();
+      ok('2.39.0: un header collegato a mano a un popup non esce come popup', !h.includes('id="popup-' + P53 + '"'));
+      // "Apri nell'editor" con quell'header collegato: nasce un disegno suo, l'header non si apre come popup
+      tk = await tokenDi(admin.p, U53 + '?id=' + P53);
+      r = await salva53(admin, { ...base53, _csrf: tk, id: String(P53), nome: 'Sic53 header', azione: 'editor' });
+      const M53 = +((r.loc.match(/id=(\d+)/) || [0, 0])[1]);
+      ok('2.39.0: "Apri nell\'editor" con un header collegato a mano: nasce un disegno di tipo popup, non si apre l\'header', M53 > 0 && M53 !== H && q53('uno', `SELECT tipo FROM {p}modelli WHERE id = ${M53}`) === 'popup', [r.loc, H]);
+      // 5. il redattore e il disegno del popup
+      const re = await red.ctx.request.get(ADMIN + '/editor.php?tipo=modelli&id=' + M53, { maxRedirects: 0 });
+      ok('2.39.0: il redattore non apre il disegno del popup nell\'editor', re.status() !== 200 || !(await re.text()).includes('ed-iframe'), re.status());
+      const tre = await tokenDi(red.p, ADMIN + '/index.php');
+      const rs = await red.ctx.request.post(ADMIN + '/editor-api.php', { form: { _csrf: tre, id: String(M53), tipo: 'modelli', azione: 'salva', albero: JSON.stringify({ versione: 1, elementi: [] }), pubblica: '1' }, headers: ORIG, maxRedirects: 0 });
+      ok('2.39.0: il redattore non salva né pubblica il disegno del popup', rs.status() >= 400 && q53('uno', `SELECT status FROM {p}modelli WHERE id = ${M53}`) === 'draft', rs.status());
+      // 6. HTML e script nel nome e nei titoli, javascript: e #chiudi
+      const XSS = '"><img src=x onerror=alert(53)><script>alert(53)</script>';
+      const albero = { versione: 1, elementi: [{ id: 'sic53s', tipo: 'sezione', impostazioni: {}, figli: [{ id: 'sic53c', tipo: 'colonna', impostazioni: {}, figli: [
+        { id: 'sic53t', tipo: 'testo', impostazioni: { contenuto: '<p>Sic53 testo</p>' } },
+        { id: 'sic53p', tipo: 'pulsanti', impostazioni: { voci: [{ testo: 'Chiudi53', link: '#chiudi', stile: 'viola' }, { testo: 'Js53', link: 'javascript:alert(53)//#chiudi', stile: 'viola' }, { testo: 'Js53b', link: ' JaVaScRiPt:alert(1)', stile: 'viola' }] } },
+      ] }] }] };
+      const tka = await tokenDi(admin.p, ADMIN + '/editor.php?tipo=modelli&id=' + M53);
+      const rp = await admin.ctx.request.post(ADMIN + '/editor-api.php', { form: { _csrf: tka, id: String(M53), tipo: 'modelli', azione: 'salva', albero: JSON.stringify(albero), pubblica: '1' }, headers: ORIG, maxRedirects: 0 });
+      tk = await tokenDi(admin.p, U53 + '?id=' + P53);
+      await salva53(admin, { ...base53, _csrf: tk, id: String(P53), nome: 'Sic53' + XSS, contenuto: 'editor', innesco: 'secondi', valore: '0', titolo: XSS, occhiello: XSS, pulsante_link: 'javascript:alert(53)#chiudi', pulsante_testo: 'x' });
+      h = await (await anon53.request.get(BASE + '/')).text();
+      const blocco = (h.split('id="popup-' + P53 + '"')[1] || '').split('popup.js')[0];
+      ok('2.39.0: il disegno pubblicato esce (preparazione)', rp.status() === 200 && blocco.includes('Sic53 testo'), [rp.status(), blocco.length]);
+      ok('2.39.0: HTML e script nel nome del popup escono come testo (aria-label)', blocco !== '' && blocco.includes('aria-label="Sic53&quot;&gt;&lt;img') && !/<img src=x|<script>alert/i.test(blocco), blocco.slice(0, 200));
+      ok('2.39.0: "#chiudi" resta un\'ancora; javascript: (anche con #chiudi dentro o con le maiuscole) non diventa mai un link', blocco.includes('href="#chiudi"') && !/href="\s*javascript:/i.test(blocco));
+      tk = await tokenDi(admin.p, U53 + '?id=' + P53);
+      await salva53(admin, { ...base53, _csrf: tk, id: String(P53), nome: 'Sic53 campi', contenuto: 'campi', innesco: 'secondi', valore: '0', titolo: XSS, occhiello: XSS, testo: '<p onclick="alert(53)">ciao</p><script>alert(53)</script>', pulsante_link: 'javascript:alert(53)#chiudi', pulsante_testo: 'x' });
+      h = await (await anon53.request.get(BASE + '/')).text();
+      const b2 = (h.split('id="popup-' + P53 + '"')[1] || '').split('popup.js')[0];
+      ok('2.39.0: popup a campi con script nei titoli, nel testo e javascript: nel pulsante: tutto come testo, nessun link pericoloso', b2.includes('&lt;img src=x') && !/<script>alert|<img src=x|onclick=|href="\s*javascript:/i.test(b2), b2.slice(0, 200));
+      // 7. anteprima popup_prova solo per l'amministratore
+      q53('esegui', `UPDATE {p}popup SET attivo = 0 WHERE id = ${P53}`);
+      h = await (await anon53.request.get(BASE + '/?preview=1&popup_prova=' + P53)).text();
+      ok('2.39.0: l\'anteprima ?popup_prova di un popup spento non si vede da fuori', !h.includes('id="popup-' + P53 + '"'));
+      h = await (await red.ctx.request.get(BASE + '/?preview=1&popup_prova=' + P53)).text();
+      ok('2.39.0: l\'anteprima ?popup_prova non si vede nemmeno dal redattore', !h.includes('id="popup-' + P53 + '"'));
+      h = await (await admin.ctx.request.get(BASE + '/?preview=1&popup_prova=' + P53)).text();
+      ok('2.39.0: l\'anteprima ?popup_prova la vede l\'amministratore (controllo)', h.includes('id="popup-' + P53 + '"'));
+      // 8. Header e footer non tocca i disegni dei popup
+      tk = await tokenDi(admin.p, ADMIN + '/modelli.php');
+      for (const az of ['predefinito', 'pubblica', 'cestina', 'elimina', 'condizioni']) await admin.ctx.request.post(ADMIN + '/modelli.php', { form: { _csrf: tk, azione: az, id: String(M53), tipo: 'header', condizioni: '[]' }, headers: ORIG, maxRedirects: 0 });
+      const mm = JSON.parse(q53('uno', `SELECT JSON_OBJECT('t', tipo, 'p', predefinito, 'c', cestino) FROM {p}modelli WHERE id = ${M53}`) || '{}');
+      ok('2.39.0: da Header e footer un disegno di popup non diventa predefinito, non va nel cestino, non si elimina', mm.t === 'popup' && mm.p === 0 && mm.c === null, mm);
+      await anon53.close();
+      // pulizia
+      q53('esegui', `DELETE FROM {p}modelli WHERE id = ${M53}`); q53('esegui', "DELETE FROM {p}popup WHERE nome LIKE 'Sic53%'");
+    } else console.log('--  Popup con l\'editor: saltata (' + (DIR53 ? 'CMS prima della 2.39.0' : 'serve CMS_DIR') + ')');
+  }
+
   // === pulizia: elimina il redattore di prova
   {
     await admin.p.goto(ADMIN + '/utenti.php', { waitUntil: 'networkidle' });
