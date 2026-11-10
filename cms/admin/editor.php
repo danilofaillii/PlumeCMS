@@ -52,8 +52,15 @@ if ($contenitore && !editor_contenitore_permesso($tipo)) { http_response_code(40
 // modelli: header e footer del Theme Builder si aprono con lo stesso editor; la scheda di ritorno è l'elenco dei modelli.
 $modello = $tipo === 'modelli';
 $fine = $modello && ($pagina['tipo'] ?? '') === 'fine'; // 1.6.0: il riquadro di fine articolo torna alla sua pagina
-$elenco = $fine ? 'fine-articolo.php' : ($modello ? 'modelli.php' : 'contenuti.php?tipo=' . $tipo);
-$scheda = $fine ? 'fine-articolo.php' : ($modello ? 'modelli.php' : 'contenuto.php?tipo=' . $tipo . '&id=' . $id);
+// 2.39.0: il disegno di un popup torna alla scheda del suo popup.
+$popupDi = null;
+if ($modello && ($pagina['tipo'] ?? '') === 'popup') {
+    require_once dirname(__DIR__) . '/includes/popup.php';
+    $popupDi = popup_per_modello($id);
+}
+$popupModello = $modello && ($pagina['tipo'] ?? '') === 'popup';
+$elenco = $fine ? 'fine-articolo.php' : ($popupModello ? 'popup.php' : ($modello ? 'modelli.php' : 'contenuti.php?tipo=' . $tipo));
+$scheda = $fine ? 'fine-articolo.php' : ($popupModello ? 'popup.php' . ($popupDi ? '?id=' . (int)$popupDi['id'] : '') : ($modello ? 'modelli.php' : 'contenuto.php?tipo=' . $tipo . '&id=' . $id));
 if ($contenitore) $elenco = $scheda = (string)$pagina['scheda'];
 // Le tendine Header e Footer del contenuto (includes/modelli.php), se il Theme Builder c'è.
 $opzioniModelli = null;
@@ -63,6 +70,7 @@ if (!$modello && !$contenitore && is_file(dirname(__DIR__) . '/includes/modelli.
 }
 $percorso = $modello ? '/?preview=1&' . h($pagina['tipo']) . '=' . $id : editor_percorso_pagina($pagina); // modelli: l'anteprima sul sito forza questo modello
 if ($fine) $percorso = (modelli_fine_dove_vederlo() ?: '/') . '?preview=1&fine=' . $id; // sotto l'ultimo articolo pubblicato
+if ($popupModello) $percorso = '/?preview=1&popup_prova=' . (int)($popupDi['id'] ?? 0); // 2.39.0: il popup aperto sulla home, con la bozza
 $home = !$modello && editor_e_home($pagina);
 
 // Prima apertura: da dove partire. Nessuna pagina cambia da sola.
@@ -143,7 +151,7 @@ $dati = [
   <a class="ed-indietro" href="<?= h($scheda) ?>" title="Torna alla scheda" aria-label="Torna alla scheda">←</a>
   <?php /* 2.5.x (controllo UX): per header, footer e riquadro di fine articolo sotto il nome c'era l'indirizzo tecnico dell'anteprima
      (/?preview=1&header=3); ora si dice che cosa è. E l'avviso del titolo H1 si legge, non solo nel colore del nome. */ ?>
-  <div class="ed-nome"><b id="ed-titolo-pagina"><?= h($pagina['title']) ?></b><small id="ed-percorso"><?= h($modello ? ($fine ? 'Riquadro in fondo a ogni articolo' : (($pagina['tipo'] ?? '') === 'footer' ? 'Footer: il piede delle pagine' : 'Header: la testata delle pagine')) : $percorso) ?></small><small class="ed-avviso-h1" id="ed-avviso-h1" hidden>Manca il titolo principale (H1)</small></div>
+  <div class="ed-nome"><b id="ed-titolo-pagina"><?= h($pagina['title']) ?></b><small id="ed-percorso"><?= h($modello ? ($fine ? 'Riquadro in fondo a ogni articolo' : ($popupModello ? 'Popup: la finestra che compare sopra le pagine' : (($pagina['tipo'] ?? '') === 'footer' ? 'Footer: il piede delle pagine' : 'Header: la testata delle pagine'))) : $percorso) ?></small><small class="ed-avviso-h1" id="ed-avviso-h1" hidden>Manca il titolo principale (H1)</small></div>
   <p class="ed-solo-computer" role="note">L'editor visuale si usa da computer o tablet: su uno schermo così stretto la pagina non ci sta. Puoi cambiare i testi dalla <a href="<?= h($scheda) ?>">scheda</a>.</p>
   <div class="ed-misure" role="group" aria-label="Misura dello schermo">
     <button type="button" data-misura="d" class="attivo" title="Computer" aria-label="Guarda la pagina come su un computer" aria-pressed="true">&#128421;</button>
@@ -154,6 +162,7 @@ $dati = [
     <button type="button" id="ed-annulla" title="Annulla (Ctrl+Z)" aria-label="Annulla l'ultima modifica" disabled>↶</button>
     <button type="button" id="ed-ripeti" title="Ripeti (Ctrl+Y)" aria-label="Ripeti la modifica annullata" disabled>↷</button>
   </div>
+  <?php if ($popupModello): ?><a class="ed-b" id="ed-torna-popup" href="<?= h($scheda) ?>">Torna al popup</a><?php endif; ?>
   <span class="ed-stato" id="ed-stato" role="status"></span>
   <button type="button" class="ed-b" id="ed-apri-impostazioni">Impostazioni</button>
   <button type="button" class="ed-b" id="ed-apri-revisioni">Revisioni</button>

@@ -30,11 +30,14 @@ function sito_versione_asset(string $f): string {
     return SITO_ASSET . $f . (is_file($p) ? '?v=' . filemtime($p) : '');
 }
 
-/** I popup attivi per questa pagina (genere e percorso li mette il front controller). */
-function vista_popup(): string {
+/**
+ * I popup attivi per questa pagina (genere e percorso li mette il front controller).
+ * $pagina (2.39.0): testa e corpo già pronti, così un popup costruito con l'editor non ricarica i fogli e gli script che la pagina ha già.
+ */
+function vista_popup(string $pagina = ''): string {
     if (empty($GLOBALS['sito_percorso']) || !empty($GLOBALS['sito_senza_popup'])) return '';
     require_once dirname(__DIR__) . '/includes/popup.php';
-    return popup_html(popup_per($GLOBALS['sito_percorso'], (string)($GLOBALS['sito_genere'] ?? 'altro')), $GLOBALS['sito_percorso']);
+    return popup_html(popup_per($GLOBALS['sito_percorso'], (string)($GLOBALS['sito_genere'] ?? 'altro')), $GLOBALS['sito_percorso'], $pagina);
 }
 
 /**
@@ -106,7 +109,7 @@ function vista_pagina(array $meta, string $corpo, string $jsonld = '', string $a
 ' . vista_favicon() . '
 <link rel="alternate" type="application/rss+xml" title="' . h(SITO_NOME) . '" href="' . SITO_URL . '/feed/">
 ' . $jsonld;
-    $popup = vista_popup();
+    $popup = vista_popup($testa . $corpo);
     // temi: un tema può ridisegnare la pagina intera (viste/documento.php) con i pezzi già pronti.
     $doc = vista_tema('documento', ['testa' => $testa, 'testata' => $testata, 'corpo' => $corpo, 'piede' => $piede, 'popup' => $popup, 'meta' => $meta]);
     if ($doc !== null) return $doc;

@@ -391,6 +391,31 @@ hr.ed-divisore-linea{background:var(--bordo)}
 .popup-chiudi{position:absolute;top:12px;right:12px;width:36px;height:36px;border-radius:50%;border:1px solid var(--bordo);background:var(--vetro);color:var(--testo);font-size:22px;line-height:1;cursor:pointer}
 .popup .modulo{margin:18px 0 0;padding:0;border:0;background:none;backdrop-filter:none}
 .popup .modulo h2{font-size:22px}
+/* 2.39.0: popup costruiti con l'editor, larghezza, posizione e fondo della finestra (includes/popup.php, popup_classi).
+   Con i valori di partenza (media, centro, con il fondo) nessuna classe in più: il popup di prima resta com'era. */
+.popup-editor .popup-finestra{padding:0}
+.popup-editor .popup-chiudi{z-index:3}
+.popup-disegno{position:relative;z-index:1}
+.popup-l-stretta .popup-finestra{width:min(420px,100%)}
+.popup-l-larga .popup-finestra{width:min(900px,100%)}
+.popup-l-piena .popup-finestra{width:100%}
+.popup-senza-fondo .popup-finestra{background:none;border:0;box-shadow:none;padding:0}
+.popup-p-basso-destra,.popup-p-barra-basso,.popup-p-barra-alto{background:none;backdrop-filter:none;pointer-events:none}
+.popup-p-basso-destra .popup-finestra,.popup-p-barra-basso .popup-finestra,.popup-p-barra-alto .popup-finestra{pointer-events:auto}
+.popup-p-basso-destra{align-items:flex-end;justify-content:flex-end}
+.popup-p-basso-destra .popup-finestra{max-height:calc(100vh - 32px)}
+.popup-p-barra-basso,.popup-p-barra-alto{padding:0}
+.popup-p-barra-basso{align-items:flex-end}
+.popup-p-barra-alto{align-items:flex-start}
+.popup-p-barra-basso .popup-finestra,.popup-p-barra-alto .popup-finestra{width:100%;max-height:70vh;border-radius:0;border-left:0;border-right:0}
+.popup-p-barra-basso .popup-finestra{border-bottom:0}
+.popup-p-barra-alto .popup-finestra{border-top:0}
+@media (prefers-reduced-motion:no-preference){
+  .popup-p-basso-destra:not([hidden]) .popup-finestra,.popup-p-barra-basso:not([hidden]) .popup-finestra{animation:popup-su .25s ease-out}
+  .popup-p-barra-alto:not([hidden]) .popup-finestra{animation:popup-giu .25s ease-out}
+}
+@keyframes popup-su{from{transform:translateY(24px);opacity:0}to{transform:none;opacity:1}}
+@keyframes popup-giu{from{transform:translateY(-24px);opacity:0}to{transform:none;opacity:1}}
 .modulo .form-largo{grid-column:1/-1}
 .modulo label small{color:var(--testo-3);font-weight:400}
 .modulo select{width:100%;padding:12px 14px;border-radius:10px;border:1px solid var(--bordo);background:var(--bg);color:var(--testo);font:inherit}

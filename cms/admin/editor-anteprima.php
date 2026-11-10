@@ -28,6 +28,13 @@ $corpo = ($tipo !== 'pagine' && $tipo !== 'modelli' && !editor_contenitore($tipo
     . '<div class="ed-pagina" id="ed-pagina"></div>';
 // modelli: la tela sta nell'header (o nel footer); al posto del contenuto un segnaposto.
 if ($tipo === 'modelli') $corpo = ($pagina['tipo'] ?? '') === 'fine' ? modelli_segnaposto_fine() : modelli_segnaposto_contenuto((string)($pagina['tipo'] ?? 'header'));
+// 2.39.0: il disegno di un popup: la finestra larga come nella scheda del popup, sulla pagina velata; niente popup veri del sito.
+if ($tipo === 'modelli' && ($pagina['tipo'] ?? '') === 'popup') {
+    require_once dirname(__DIR__) . '/includes/popup.php';
+    $corpo = modelli_segnaposto_popup(popup_per_modello($id));
+    $GLOBALS['sito_senza_popup'] = true;
+    $testa .= '<link rel="stylesheet" href="' . pannello_file('assets/editor/anteprima-popup.css') . '">';
+}
 // Un articolo fatto di sezioni "Articolo" (la conversione a blocchi) sta nella colonna di lettura, come sul sito.
 if ($tipo !== 'pagine' && $tipo !== 'modelli' && !editor_contenitore($tipo)) {
     $albero = editor_decodifica((string)($pagina['struttura_bozza'] ?: $pagina['struttura'])) ?? ['elementi' => []];
