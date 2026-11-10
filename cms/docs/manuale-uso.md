@@ -476,25 +476,77 @@ nella cartella **Da sostituire**, e un avviso in cima ti dice quanti ne restano.
 Una foto per la home in larghezza va bene orizzontale (il disegno è largo), una per "Chi siamo" va bene verticale.
 Sostituisci lo usa solo l'amministratore.
 
-### Le immagini senza alt
+### La scheda dell'immagine
 
-**A cosa serve.** Il **testo alternativo** (alt) di una foto dice cosa c'è nella foto a chi non la vede: chi legge il sito
-con un lettore di schermo, e Google, che senza non la capisce e non la porta in Google Immagini. Nell'editor lo scrivi nel
-widget, nella casella "Testo alternativo". La scheda **Senza alt** di Media raccoglie tutte le foto a cui manca, per
-sistemarle da lì.
+**A cosa serve.** Ogni foto della libreria ha una sua **scheda**: lì scrivi una volta sola cosa si vede, chi l'ha scattata e a
+quali condizioni la puoi usare, e il sito lo usa dappertutto. Si apre con un clic sulla foto in **Media** (oppure con il
+pulsante **Scheda e dati** sotto la foto).
 
-![Media, Senza alt](immagini/manuale-uso/07-senza-alt.jpg)
+![La scheda dell'immagine](immagini/manuale-uso/07-scheda.jpg)
 
-1. Apri **Media** e premi la scheda **Senza alt**. Il primo riquadro, **Nelle pagine**, elenca le immagini dei contenuti
-   pubblicati con il testo alternativo vuoto: la pagina, il widget, il nome del file.
-2. Scrivi nella casella cosa si vede ("Il laboratorio, con il tornio e gli scaffali dei vasi") e premi Invio, o esci dalla
-   casella: si salva da solo, "Salvato" compare sotto. L'alt va nella libreria e vale per **tutte** le pagine che usano
-   quella foto senza un alt loro: la riga sparisce al prossimo giro.
-3. Se preferisci scriverlo nel widget, **Apri nell'editor** ti porta alla pagina.
+1. **Testo alternativo (alt)**: cosa si vede, per chi non vede la foto (chi usa un lettore di schermo) e per Google. Sotto
+   la casella il pannello conta i caratteri e ti consiglia: da 5 a 125 caratteri, e non cominciare con "immagine di" o
+   "foto di" (si capisce già). Vale in tutte le pagine che usano la foto senza un alt loro: se nel widget scrivi un alt
+   diverso, vince quello del widget.
+2. **Didascalia**: la riga che può comparire sotto la foto. Esce nei widget **Immagine** e **Galleria** solo se nel widget
+   accendi **Mostra la didascalia della libreria** e lì la didascalia è vuota. Il **Titolo**, sopra, è un nome leggibile
+   per la libreria e per Google: non compare sul sito.
+3. **Descrizione**: più lunga dell'alt, racconta la foto e il contesto ("Le tre persone del laboratorio, in grembiule,
+   davanti al forno..."). Serve a chi usa un lettore di schermo e a Google.
+4. **Autore o crediti** e **L'autore è** (una persona o un'organizzazione): chi ha scattato la foto.
+5. **Licenza**, **Pagina della licenza**, **Indirizzo della fonte**: a quali condizioni la usi e da dove viene.
+6. **Dove è usata**: le pagine, gli articoli, i modelli (header, footer), i form, i popup e le newsletter dove compare.
+   "forse" vuol dire che il nome del file compare in una bozza o in un punto che il pannello non sa leggere bene.
 
-Il secondo riquadro, **Nella libreria**, elenca tutte le immagini dei Media che non hanno ancora un alt loro, con la stessa
-casella: non è obbligatorio scriverlo per ognuna, conta per le foto che usi nelle pagine. In fondo, **Le immagini con
-l'alt** le rimostra per cambiarlo. Nella Tabella SEO (capitolo 23) la colonna "Immagini senza alt" conta le stesse foto.
+In fondo alla scheda ci sono dimensioni, peso, formato e data della foto. Premi **Salva i dati della foto**. Se un campo
+è sbagliato (per esempio un indirizzo che non comincia con https://) il pannello lo segna in rosso e dice cosa scrivere;
+gli altri campi restano come li hai scritti.
+
+**Crediti e licenze: perché contano.** Una foto trovata su internet non è tua: chi l'ha scattata decide come si può usare.
+Con **CC0** o **pubblico dominio** puoi usarla senza obblighi; con **CC BY** devi citare l'autore (scrivilo nella
+didascalia e accendi "Mostra la didascalia della libreria"); con **CC BY-SA** anche la tua versione deve restare con la
+stessa licenza; con **tutti i diritti riservati** serve il permesso di chi l'ha scattata. Le foto tue o del tuo
+fotografo: scrivi il nome e "Tutti i diritti riservati". Se non sai la licenza, lascia **Non indicata**: meglio niente che
+una licenza sbagliata. Le foto che importa l'AI collegata (capitolo 41) arrivano con autore, licenza e fonte già scritti:
+controllali.
+
+Google legge questi dati per la foto principale della pagina (quella in evidenza, o la foto dell'Apertura): titolo,
+didascalia, descrizione, autore e licenza finiscono nei dati per Google della pagina, e Google Immagini può mostrare "Dettagli
+della licenza". Senza dati scritti non esce niente in più.
+
+**Il nome del file.** Le foto del telefono si chiamano IMG_20261108_123456.jpg o DSC0001.jpg. Quando carichi una foto in Media,
+scrivi il **Titolo (facoltativo)** accanto al pulsante: un nome così diventa leggibile (vetrina-di-sera-a1b2c3.jpg). Le
+foto già caricate non cambiano nome, perché le pagine che le usano si romperebbero. Nella scheda, **Rinomina il file**
+c'è solo per una foto che non è usata da nessuna parte.
+
+### Dati delle immagini: le foto a cui manca qualcosa
+
+La scheda **Dati delle immagini** di Media (prima si chiamava "Senza alt") raccoglie le foto a cui manca qualcosa, per
+sistemarle senza aprirle una per una.
+
+![Media, Dati delle immagini](immagini/manuale-uso/07-dati.jpg)
+
+1. Apri **Media** e premi la scheda **Dati delle immagini**.
+2. Scegli il filtro: **Senza alt**, **Senza descrizione**, **Importate senza crediti** (foto prese dall'AI senza autore
+   né licenza), **Pesanti** (oltre 500 KB: rallentano le pagine), **Tutte**. Fra parentesi quante sono.
+3. Con **Senza alt**, il primo riquadro, **Nelle pagine**, elenca le immagini dei contenuti pubblicati con il testo
+   alternativo vuoto: la pagina, il widget, il nome del file. Scrivi nella casella cosa si vede ("Il laboratorio, con il
+   tornio e gli scaffali dei vasi") e premi Invio, o esci dalla casella: si salva da solo, "Salvato" compare sotto. L'alt
+   va nella libreria e vale per **tutte** le pagine che usano quella foto senza un alt loro.
+4. Se preferisci scriverlo nel widget, **Apri nell'editor** ti porta alla pagina.
+
+Il secondo riquadro, **Nella libreria**, elenca le foto del filtro scelto, con la casella giusta (l'alt, la descrizione o
+l'autore) e il link **Scheda** per tutti gli altri campi. Con **Senza alt**, in fondo, **Le immagini con l'alt** le
+rimostra per cambiarlo. Nella Tabella SEO (capitolo 23) la colonna "Immagini senza alt" conta le stesse foto.
+
+**Con l'AI collegata** (capitolo 41) puoi farti aiutare. Frasi pronte da scrivere alla tua AI:
+
+- "Guarda le immagini del mio sito senza alt e proponi un testo alternativo per ognuna."
+- "Compila gli alt mancanti e una descrizione per le foto delle pagine principali."
+- "Proponi titolo e didascalia per le foto importate questo mese."
+
+L'AI non cambia niente da sola: le sue proposte arrivano in **AI collegate > Proposte**, raggruppate sotto **Dati delle
+immagini**, e le approvi tutte insieme (**Approva tutte**) o una per una.
 
 ### Scegliere un'immagine da qualunque pagina del pannello
 
@@ -548,8 +600,11 @@ Dove trovi Scegli dai Media:
 **Checklist**
 
 - [ ] La cartella Da sostituire è vuota (e la voce dei Primi passi è verde).
-- [ ] Le foto hanno un nome che dice cosa sono (vetrina-natale.jpg è meglio di IMG_4021.jpg).
-- [ ] Ogni foto usata nelle pagine ha il testo alternativo (lo scrivi dove la usi, oppure in Media > Senza alt).
+- [ ] Le foto hanno un nome che dice cosa sono (vetrina-natale.jpg è meglio di IMG_4021.jpg): scrivi il titolo quando le carichi.
+- [ ] Ogni foto usata nelle pagine ha il testo alternativo (lo scrivi dove la usi, oppure in Media > Dati delle immagini).
+- [ ] Le foto principali delle pagine hanno anche titolo e descrizione nella loro scheda.
+- [ ] Le foto non tue hanno autore e licenza; con CC BY l'autore è citato nella didascalia.
+- [ ] Il filtro Pesanti è vuoto (o quasi).
 
 **Se qualcosa non va**
 
@@ -3227,7 +3282,7 @@ In **SEO e AEO > Tabella SEO** c'è una riga per ogni articolo e ogni pagina (an
    mostrare). Quando correggi un doppione, anche l'altra riga cambia colore.
 
 Le altre colonne: **Robots** (index o noindex, quello che vale davvero sul sito) e **Immagini senza alt**, il numero di foto
-di quel contenuto senza testo alternativo, con il link a Media > Senza alt (capitolo 7). I tre numeri in alto dicono quanti
+di quel contenuto senza testo alternativo, con il link a Media > Dati delle immagini (capitolo 7). I tre numeri in alto dicono quanti
 contenuti ci sono, quanti hanno qualcosa da sistemare e quante immagini senza alt.
 
 Quello che scrivi qui è lo stesso che scriveresti nella scheda o nelle Impostazioni dell'editor: la pagina resta com'è, cambia
@@ -3301,6 +3356,26 @@ niente.
 - [ ] Ogni pagina di un prodotto, di una guida, di un video o di un programma ha il suo tipo scelto nella tendina.
 - [ ] Il video ha la miniatura e la data (senza, Google non lo prende).
 - [ ] L'anteprima del JSON-LD mostra il nodo senza avvisi.
+
+### Le immagini e Google
+
+Le foto aiutano a farsi trovare anche su Google Immagini. Tre cose contano, tutte nella **scheda dell'immagine** in Media
+(capitolo 7):
+
+1. il **testo alternativo**, per ogni foto usata nelle pagine (Media > Dati delle immagini, filtro Senza alt, le trova tutte);
+2. **titolo, didascalia e descrizione** della foto principale di ogni pagina (l'immagine in evidenza, o la foto
+   dell'Apertura): finiscono nei dati per Google della pagina;
+3. **autore e licenza**: con quelli Google può mostrare accanto alla foto "Dettagli della licenza" e il nome di chi l'ha
+   scattata.
+
+Puoi controllarlo in **SEO e AEO > Schema e AEO**, Anteprima del JSON-LD di un indirizzo: la pagina ha
+`primaryImageOfPage` con i dati della foto. La sitemap delle immagini resta com'è: Google ne legge solo l'indirizzo.
+
+**Checklist delle immagini**
+
+- [ ] Media > Dati delle immagini, filtro Senza alt: niente nel riquadro "Nelle pagine".
+- [ ] La foto principale della home e dei servizi ha titolo, descrizione e, se non è tua, autore e licenza.
+- [ ] Il filtro Pesanti è vuoto.
 
 ### Le sedi e la SEO geografica
 
@@ -5940,6 +6015,17 @@ Per avere più foto, in **AI collegate > Impostazioni** puoi aggiungere le chiav
 1. Apri il link accanto al campo, crea l'account e copia la chiave (per Unsplash la "Access Key" di una "New Application").
 2. Incollala nel campo e premi **Salva le chiavi**. La chiave non si rivede più: compare "Chiave salvata".
 3. Per toglierla spunta **Togli la chiave** e salva.
+
+Dalla 2.38.0 autore, licenza, pagina della licenza e fonte della foto importata stanno nella sua **scheda** in Media
+(capitolo 7), già scritti e modificabili.
+
+### I dati delle immagini con l'AI
+
+L'AI legge le immagini della libreria con i loro dati e cosa manca a ognuna (alt, descrizione, crediti, peso) e propone
+alt, titolo, didascalia e descrizione per fino a 50 foto alla volta. Le proposte arrivano in **Proposte** raggruppate
+sotto **Dati delle immagini: N immagini**: guarda il prima e dopo, poi **Approva tutte** o decidi una per una. Autore e
+licenza non li propone: li scrivi tu nella scheda della foto. Per esempio: "Compila gli alt mancanti delle foto usate nelle
+pagine", "Scrivi una descrizione per le foto della home".
 
 ### Chiavi personali (per le AI senza il collegamento con il permesso)
 

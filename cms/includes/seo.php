@@ -1033,6 +1033,7 @@ function seo_jsonld_di(string $percorso): array {
         case 'home':
             $nodi = [sito_jsonld_pagina('/', $v['c']['titolo'], (string)cms_impostazione('home_descrizione', ''), sito_jsonld_about())];
             $nodi = seo_schema_applica($nodi, $v['c']); // 2.35.0: anche la home
+            if (function_exists('media_dati_jsonld')) $nodi = media_dati_jsonld($nodi, $v['c']); // 2.38.0
             break;
         case 'contenuto':
             $c = $v['c'];
@@ -1042,6 +1043,7 @@ function seo_jsonld_di(string $percorso): array {
                 if ($cat) $briciole[] = [sito_categorie()[$cat]['name'] ?? $cat, "/category/$cat/"];
                 $briciole[] = [$c['titolo'], $c['percorso']];
                 $nodi = seo_schema_applica(array_merge(sito_jsonld_articolo($c), [sito_jsonld_briciole($briciole)]), $c); // 2.29.0: i dati in più
+                if (function_exists('media_dati_jsonld')) $nodi = media_dati_jsonld($nodi, $c); // 2.38.0
             } elseif ($c['tipo'] === 'glossario') {
                 $nodi = [sito_jsonld_pagina($c['percorso'], $c['titolo'], $c['tldr']), sito_jsonld_termine($c)];
             } else {
@@ -1053,6 +1055,7 @@ function seo_jsonld_di(string $percorso): array {
                 if ($nodiZona) $nodi = array_merge($nodi, $nodiZona);
                 elseif (!empty($c['servizio']['tipo'])) $nodi[] = sito_jsonld_servizio($c);
                 $nodi = seo_schema_applica($nodi, $c); // 2.29.0: Prodotto, How-to, Video scelti nella scheda
+                if (function_exists('media_dati_jsonld')) $nodi = media_dati_jsonld($nodi, $c); // 2.38.0
                 if ($c['faq']) $nodi[] = sito_jsonld_faq($c);
             }
             break;

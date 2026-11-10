@@ -35,20 +35,48 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $r = media_carica_video($_FILES['video'] ?? null);
         if (isset($r['url'])) flash('success', 'Video caricato: ' . $r['url'] . '. Sceglilo nell\'editor, Apertura con la disposizione Video, campo Video.');
         else flash('error', $r['errore']);
+    } elseif (($_POST['azione'] ?? '') === 'dati_salva') {
+        // 2.38.0: la scheda dell'immagine (admin/includes/media-scheda.php, includes/media-dati.php). Anche il redattore.
+        require_once dirname(__DIR__) . '/includes/media-dati.php';
+        $url = (string)($_POST['url'] ?? '');
+        $campi = array_intersect_key($_POST, array_flip(['alt', 'titolo', 'didascalia', 'descrizione', 'autore', 'autore_tipo', 'licenza', 'licenza_nome', 'licenza_url', 'fonte_url']));
+        $r = media_dati_salva($url, $campi);
+        if (isset($r['ok'])) flash('success', 'Dati della foto salvati.');
+        elseif ($r['errori']) { $_SESSION['media_scheda_errori'] = $r['errori']; $_SESSION['media_scheda_inviati'] = array_map(fn($v) => mb_substr(is_scalar($v) ? (string)$v : '', 0, 2000), $campi); }
+        else flash('error', $r['errore']);
+        if (media_dati_voce($url)) { header('Location: media.php?immagine=' . rawurlencode($url)); exit; }
+    } elseif (($_POST['azione'] ?? '') === 'dati_rinomina') {
+        // 2.38.0: rinomina il file di una foto che nessuno usa, dal titolo (media_dati_rinomina()).
+        require_once dirname(__DIR__) . '/includes/media-dati.php';
+        $url = (string)($_POST['url'] ?? '');
+        $r = media_dati_rinomina($url, media_dati_di($url, true)['titolo']);
+        if (isset($r['ok'])) { flash('success', 'File rinominato: ' . basename($r['url']) . '.'); header('Location: media.php?immagine=' . rawurlencode($r['url'])); exit; }
+        flash('error', $r['errore']);
+        if (media_dati_voce($url)) { header('Location: media.php?immagine=' . rawurlencode($url)); exit; }
     } elseif (isset($_POST['elimina'])) {
         $ok = media_elimina((string)$_POST['elimina']);
         flash($ok ? 'success' : 'error', ($ok ? 'Cancellata: ' : 'Non si è potuta cancellare: ') . (string)$_POST['elimina']);
     } else {
-        $r = media_carica($_FILES['file'] ?? null, 'pagine');
-        if (isset($r['url'])) flash('success', 'Caricata: ' . $r['url'] . (!empty($r['webp']) ? ' (con la versione WebP accanto)' : ''));
+        // 2.38.0: con il titolo, un nome da macchina fotografica diventa leggibile e il titolo va nei dati della foto.
+        $titolo = trim((string)($_POST['titolo'] ?? ''));
+        $r = media_carica($_FILES['file'] ?? null, 'pagine', 8, $titolo);
+        if (isset($r['url'])) {
+            if ($titolo !== '') { require_once dirname(__DIR__) . '/includes/media-dati.php'; media_dati_salva($r['url'], ['titolo' => $titolo]); }
+            flash('success', 'Caricata: ' . $r['url'] . ' (' . (!empty($r['webp']) ? 'con la versione WebP accanto; ' : '') . 'qui sotto scrivi alt, titolo e didascalia).');
+            header('Location: media.php?immagine=' . rawurlencode($r['url']));
+            exit;
+        }
         else flash('error', $r['errore']);
     }
     header('Location: media.php?' . http_build_query(array_intersect_key($_GET, array_flip(['cartella', 'q', 'miniature']))));
     exit;
 }
 
-// 2.29.0: Media > Senza alt (media.php?scheda=alt): le immagini senza testo alternativo, con la correzione in posto (includes/media-alt.php).
-if (($_GET['scheda'] ?? '') === 'alt') { require __DIR__ . '/includes/media-alt-pagina.php'; exit; }
+// 2.29.0: Media > Senza alt (media.php?scheda=alt), dalla 2.38.0 Media > Dati delle immagini (scheda=dati, con i filtri;
+// scheda=alt resta e apre il filtro "Senza alt"): la correzione in posto (includes/media-alt.php, includes/media-dati.php).
+if (in_array($_GET['scheda'] ?? '', ['alt', 'dati'], true)) { require __DIR__ . '/includes/media-alt-pagina.php'; exit; }
+// 2.38.0: la scheda di un'immagine (media.php?immagine=<indirizzo>).
+if (isset($_GET['immagine'])) { require __DIR__ . '/includes/media-scheda.php'; exit; }
 
 $cartella = (string)($_GET['cartella'] ?? '');
 $q = trim((string)($_GET['q'] ?? ''));
@@ -67,18 +95,22 @@ $link = fn(array $extra) => 'media.php?' . http_build_query(array_filter($extra 
 require_once __DIR__ . '/includes/admin-header.php';
 ?>
 <nav class="imp-schede" aria-label="Schede dei Media"><?php /* 2.29.0: Libreria e Senza alt */ ?>
-  <a href="media.php" class="attiva" aria-current="page">Libreria</a><a href="media.php?scheda=alt">Senza alt</a>
+  <a href="media.php" class="attiva" aria-current="page">Libreria</a><a href="media.php?scheda=dati">Dati delle immagini</a>
 </nav>
 
 <div style="display:flex;justify-content:space-between;align-items:center;gap:1rem;flex-wrap:wrap;margin-bottom:1rem">
   <p style="color:var(--text-muted);font-size:0.9rem;margin:0"><?= $totale ?> immagini<?= $q !== '' ? ' per «' . h($q) . '»' : '' ?><?= $miniature ? '' : ', senza le miniature' ?></p>
-  <form method="post" enctype="multipart/form-data" style="display:flex;gap:0.5rem;align-items:center">
+  <form method="post" enctype="multipart/form-data" style="display:flex;gap:0.5rem;align-items:center;flex-wrap:wrap" class="md-carica">
     <?= csrf_field() ?>
-    <input type="file" name="file" accept="image/jpeg,image/png,image/gif,image/webp,image/avif,image/svg+xml" required<?= pannello_limite_caricamento() > 0 ? ' data-peso-massimo="' . pannello_limite_caricamento() . '"' : '' ?> style="font-size:0.85rem">
+    <input type="file" name="file" accept="image/jpeg,image/png,image/gif,image/webp,image/avif,image/svg+xml" required<?= pannello_limite_caricamento() > 0 ? ' data-peso-massimo="' . pannello_limite_caricamento() . '"' : '' ?> style="font-size:0.85rem" aria-label="Immagine da caricare">
+    <label class="sr-solo" for="md-titolo-nuova">Titolo della foto (facoltativo)</label>
+    <input type="text" id="md-titolo-nuova" name="titolo" maxlength="200" placeholder="Titolo (facoltativo), per esempio: Vetrina di sera" class="md-titolo-nuova" aria-describedby="md-titolo-aiuto">
     <button type="submit" class="btn btn-primary btn-sm">Carica in uploads/pagine</button>
   </form>
 </div>
 
+<p class="hint" id="md-titolo-aiuto" style="margin:-.4rem 0 1rem">Con un titolo, una foto con il nome della macchina fotografica (IMG_2026..., DSC0001...) prende un nome leggibile. Clicca una foto per aprire la sua scheda: alt, titolo, didascalia, descrizione, crediti e dove è usata.</p>
+<style>.md-titolo-nuova{min-width:14rem;padding:.4rem .6rem;border:1px solid var(--bordo-campo);border-radius:8px;background:var(--campo);color:var(--text);font:inherit;font-size:.85rem}@media (max-width:640px){.md-carica,.md-titolo-nuova{width:100%;min-width:0}}</style>
 <?php if (is_admin()): $fotoCfg = foto_impostazioni(); $motore = foto_motore(); ?>
 <details class="form-card md-foto" id="foto-leggere"<?= isset($_GET['foto']) ? ' open' : '' ?>>
   <summary><b>Foto più leggere</b> <span class="badge <?= $fotoCfg['attivo'] && $motore ? 'badge-published' : 'badge-draft' ?>"><?= $fotoCfg['attivo'] && $motore ? 'acceso' : 'spento' ?></span></summary>
@@ -115,7 +147,7 @@ require_once __DIR__ . '/includes/admin-header.php';
 <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:1rem">
   <?php foreach ($voci as $img): ?>
   <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden">
-    <a href="<?= h($img['url']) ?>" target="_blank" style="aspect-ratio:16/9;overflow:hidden;background:var(--bg);display:flex;align-items:center;justify-content:center">
+    <a href="media.php?immagine=<?= h(rawurlencode($img['url'])) ?>" aria-label="Apri la scheda di <?= h($img['nome']) ?>" style="aspect-ratio:16/9;overflow:hidden;background:var(--bg);display:flex;align-items:center;justify-content:center">
       <img src="<?= h($img['url']) ?>" alt="" loading="lazy" style="max-width:100%;max-height:100%;object-fit:contain">
     </a>
     <div style="padding:0.6rem 0.75rem">
@@ -127,6 +159,7 @@ require_once __DIR__ . '/includes/admin-header.php';
       <input type="text" value="<?= h($img['url']) ?>" readonly title="Clic per copiare l'indirizzo"
              style="width:100%;font-size:0.7rem;padding:0.25rem 0.4rem;margin-top:0.4rem;border:1px solid var(--bordo-campo);border-radius:4px;background:var(--campo);color:var(--text)"
              data-copia-se-stesso>
+      <a href="media.php?immagine=<?= h(rawurlencode($img['url'])) ?>" class="btn btn-secondary btn-sm md-scheda" style="font-size:0.7rem;padding:0.2rem 0.5rem;margin-top:0.4rem">Scheda e dati</a>
       <?php if ($img['cartella'] === 'segnaposto' && is_admin()): ?>
       <form method="post" enctype="multipart/form-data" class="md-sostituisci">
         <?= csrf_field() ?><input type="hidden" name="azione" value="sostituisci"><input type="hidden" name="segnaposto" value="<?= h($img['url']) ?>">

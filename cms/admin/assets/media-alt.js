@@ -38,3 +38,36 @@
     c.addEventListener('keydown', function (e) { if (e.key === 'Enter') { e.preventDefault(); salva(c); } });
   });
 })();
+
+/*
+ * 2.38.0: Media > Dati delle immagini. Le caselle [data-dato-url][data-dato-campo] (descrizione, autore) salvano quel campo dei
+ * dati della foto quando si esce dalla casella (o con Invio nelle caselle di una riga): POST a seo-api.php, azione media_dato_salva.
+ */
+(function () {
+  var campi = Array.prototype.slice.call(document.querySelectorAll('[data-dato-url][data-dato-campo]'));
+  campi.forEach(function (c) {
+    c.setAttribute('data-salvato', c.value.trim());
+    function salva() {
+      var valore = c.value.trim();
+      if (valore === (c.getAttribute('data-salvato') || '')) return;
+      var esito = c.parentNode.querySelector('.ma-esito');
+      var fd = new FormData();
+      fd.append('_csrf', c.getAttribute('data-alt-csrf')); fd.append('azione', 'media_dato_salva');
+      fd.append('url', c.getAttribute('data-dato-url')); fd.append('campo', c.getAttribute('data-dato-campo')); fd.append('valore', valore);
+      if (esito) { esito.className = 'ma-esito'; esito.textContent = 'Salvo...'; }
+      c.disabled = true;
+      fetch('seo-api.php', { method: 'POST', body: fd, credentials: 'same-origin' })
+        .then(function (r) { return r.json().catch(function () { return { errore: 'Risposta del server non leggibile (' + r.status + ').' }; }); })
+        .then(function (j) {
+          if (j.errore) throw new Error(j.errore);
+          c.value = j.valore; c.setAttribute('data-salvato', j.valore);
+          var voce = c.closest('.ma-voce'); if (voce) voce.classList.toggle('ma-fatta', j.valore !== '');
+          if (esito) { esito.className = 'ma-esito ma-ok'; esito.setAttribute('role', 'status'); esito.textContent = j.valore !== '' ? 'Salvato nei dati della foto.' : 'Tolto.'; }
+        })
+        .catch(function (e) { if (esito) { esito.className = 'ma-esito ma-no'; esito.setAttribute('role', 'alert'); esito.textContent = 'Non salvato: ' + e.message; } })
+        .then(function () { c.disabled = false; });
+    }
+    c.addEventListener('change', salva);
+    if (c.tagName === 'INPUT') c.addEventListener('keydown', function (e) { if (e.key === 'Enter') { e.preventDefault(); salva(); } });
+  });
+})();

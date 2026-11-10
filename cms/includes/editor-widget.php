@@ -184,6 +184,7 @@ function editor_definizioni(): array {
             ec('immagine', 'immagine', 'Immagine', ''),
             ec('alt', 'testo', 'Testo alternativo (per chi non vede e per Google)', ''),
             ec('didascalia', 'testo', 'Didascalia', ''),
+            ec('didascalia_libreria', 'interruttore', 'Mostra la didascalia della libreria', false, 'contenuto', ['aiuto' => 'Se la didascalia qui sopra è vuota, esce quella scritta nella scheda della foto, in Media.']),
             ec('link', 'link', 'Link', ['url' => '', 'nuova' => false]),
             ec('larghezza', 'numero', 'Larghezza (%)', ['d' => 100], 'stile', ['sezione' => 'Immagine', 'min' => 5, 'max' => 100, 'responsive' => true]),
             es_mis('larghezza_max', 'Larghezza massima', ' img', 'Immagine', 'max-width', [], ['px', '%', 'vw'], ['intervalli' => ['px' => [0, 2000, 1]]]),
@@ -639,6 +640,8 @@ function editor_disegna_widget(string $tipo, array $v): string {
             $img = '<img src="' . h($v['immagine']) . '" alt="' . h($v['alt']) . '" loading="lazy">';
             $u = editor_link_sicuro((string)($v['link']['url'] ?? ''));
             if ($u !== '') $img = '<a href="' . h($u) . '"' . editor_attr_link($v['link']) . '>' . $img . '</a>';
+            // 2.38.0: con l'interruttore acceso e la didascalia vuota, quella della libreria (includes/media-dati.php).
+            if ($v['didascalia'] === '' && !empty($v['didascalia_libreria']) && function_exists('media_dati_didascalia')) $v['didascalia'] = media_dati_didascalia((string)$v['immagine']);
             return '<figure class="ed-immagine' . ($v['ritratto'] ? ' ed-ritratto' : '') . '">' . $img . ($v['didascalia'] !== '' ? '<figcaption>' . h($v['didascalia']) . '</figcaption>' : '') . '</figure>';
         case 'pulsanti':
             $out = '';

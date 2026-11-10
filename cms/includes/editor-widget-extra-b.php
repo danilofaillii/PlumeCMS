@@ -26,7 +26,8 @@ function ewx_controlli_galleria_stile(): array {
 }
 
 function ewx_gal_voce(array $x, array $v, bool $anteprima, string $extra = ''): string {
-    $img = ewx_img($x['immagine'], $x['alt'] ?: $x['didascalia']);
+    // 2.38.0: senza alt nella voce vale prima l'alt della libreria, poi la didascalia (prima la didascalia toglieva il posto all'alt della libreria).
+    $img = ewx_img($x['immagine'], $x['alt'] ?: ((function_exists('media_alt_di') ? media_alt_di((string)$x['immagine']) : '') ?: $x['didascalia']));
     $did = $x['didascalia'] !== '' && $v['didascalia'] !== 'nessuna' ? '<figcaption>' . h($x['didascalia']) . '</figcaption>' : '';
     $url = $v['clic'] === 'link' ? editor_link_sicuro($x['link']) : ($v['clic'] === 'lightbox' ? $x['immagine'] : '');
     $lb = $v['clic'] === 'lightbox' ? ' data-ew-lb data-did="' . h($x['didascalia']) . '"' : '';
@@ -41,8 +42,12 @@ ewx_registra('galleria', 'Galleria', 'griglia', 'Gallerie', [
     ewx_colonne(4),
     ewx_var('altezza_riga', 'Altezza delle righe (giustificata)', '--ew-rowh', 'Disposizione', ['d' => ['v' => 220, 'u' => 'px']], ['condizione' => ['disposizione' => 'giustificata']]),
     ...ewx_controlli_galleria_stile(),
+    ec('didascalia_libreria', 'interruttore', 'Mostra la didascalia della libreria', false, 'contenuto', ['sezione' => 'Comportamento', 'aiuto' => 'Per le foto senza didascalia qui, quella scritta nella loro scheda in Media (con Didascalia: Sotto o Al passaggio).']),
 ], function (array $v, array $ctx): string {
     $imm = ewx_immagini($v['immagini']);
+    // 2.38.0: le didascalie vuote prese dalla libreria, solo con l'interruttore acceso.
+    if (!empty($v['didascalia_libreria']) && function_exists('media_dati_didascalia')) foreach ($imm as &$x) if ($x['didascalia'] === '') $x['didascalia'] = media_dati_didascalia((string)$x['immagine']);
+    unset($x);
     if (!$imm) return ewx_vuoto('Aggiungi le immagini della galleria');
     $disp = in_array($v['disposizione'], ['mosaico', 'giustificata'], true) ? $v['disposizione'] : 'griglia';
     ewx_css_colonne($ctx, ' .ew-galleria', $v['colonne']);

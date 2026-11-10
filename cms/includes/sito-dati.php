@@ -34,7 +34,13 @@ function sito_faq_da_json($j): array {
 
 function sito_immagine(string $img): ?array {
     if ($img === '') return null;
-    if (!preg_match('~^https?://~', $img)) $img = SITO_URL . cms_base() . '/' . ltrim($img, '/');
+    // 2.38.0: in un sito in una cartella l'indirizzo salvato dalla libreria ha già la cartella (/test/uploads/...): prima usciva
+    // con la cartella tre volte (og:image e JSON-LD). Nella radice del dominio il risultato è quello di sempre.
+    if (!preg_match('~^https?://~', $img)) {
+        $origine = (string)preg_replace('~^(https?://[^/]+).*$~', '$1', SITO_URL);
+        $base = cms_base();
+        $img = $base !== '' && str_starts_with($img, $base . '/') ? $origine . $img : $origine . $base . '/' . ltrim($img, '/');
+    }
     return ['url' => $img, 'alt' => ''];
 }
 

@@ -162,6 +162,15 @@ function aic_foto_dettagli(string $arch, string $id): array {
     return $f;
 }
 
+/** 2.38.0: la licenza di una foto d'archivio nei codici della libreria (media_dati_licenze()): [codice, nome per "archivio"]. */
+function aic_foto_licenza_libreria(array $f): array {
+    return match ((string)($f['licenza_codice'] ?? '')) {
+        'cc0' => ['cc0', ''], 'pdm' => ['pd', ''], 'by' => ['cc-by', ''],
+        'pexels', 'unsplash' => ['archivio', mb_substr((string)$f['licenza'], 0, 100)],
+        default => ['', ''],
+    };
+}
+
 function aic_foto_importa(array $conn, array $a): array {
     $arch = (string)($a['archivio'] ?? '');
     if (!isset(AIC_FOTO_API[$arch])) throw new AicErrore('Archivio sconosciuto: openverse, pexels o unsplash.');
@@ -194,11 +203,20 @@ function aic_foto_importa(array $conn, array $a): array {
     @unlink($tmp);
     if (!isset($m['url'])) throw new AicErrore('La foto non si è salvata nei Media: ' . ($m['errore'] ?? 'errore sconosciuto') . '.');
     // L'alt in libreria (la foto è nuova: nessuna pagina la usa ancora). Scritto qui perché media_elenco() della richiesta non la conosce.
+    // 2.38.0: con l'alt anche titolo, autore, licenza e fonte nei dati della foto (includes/media-dati.php), modificabili nella scheda.
     require_once cms_radice() . '/includes/media-alt.php';
-    media_alt_schema();
-    $k = media_alt_chiave($m['url']);
-    db()->prepare('INSERT INTO ' . tbl('media_alt') . ' (percorso, alt, aggiornato) VALUES (?, ?, NOW()) ON DUPLICATE KEY UPDATE alt = VALUES(alt), aggiornato = NOW()')->execute([$k, media_alt_pulito($alt)]);
-    save_setting('media_alt_n', (string)(int)db()->query('SELECT COUNT(*) FROM ' . tbl('media_alt') . " WHERE alt <> ''")->fetchColumn());
+    if (is_file(cms_radice() . '/includes/media-dati.php')) require_once cms_radice() . '/includes/media-dati.php';
+    if (function_exists('media_dati_salva')) {
+        [$codLic, $nomeLic] = aic_foto_licenza_libreria($f);
+        $sd = media_dati_salva($m['url'], ['alt' => $alt, 'titolo' => $f['titolo'], 'autore' => $f['autore'], 'autore_tipo' => 'persona', 'licenza' => $codLic, 'licenza_nome' => $nomeLic,
+            'licenza_url' => $f['licenza_url'], 'fonte_url' => $f['fonte_url']], null, $arch);
+        if (isset($sd['errore'])) media_dati_salva($m['url'], ['alt' => $alt, 'titolo' => $f['titolo'], 'autore' => $f['autore'], 'licenza' => $codLic, 'licenza_nome' => $nomeLic], null, $arch); // un indirizzo dell'archivio non valido non ferma l'import
+    } else {
+        media_alt_schema();
+        $k = media_alt_chiave($m['url']);
+        db()->prepare('INSERT INTO ' . tbl('media_alt') . ' (percorso, alt, aggiornato) VALUES (?, ?, NOW()) ON DUPLICATE KEY UPDATE alt = VALUES(alt), aggiornato = NOW()')->execute([$k, media_alt_pulito($alt)]);
+        save_setting('media_alt_n', (string)(int)db()->query('SELECT COUNT(*) FROM ' . tbl('media_alt') . " WHERE alt <> ''")->fetchColumn());
+    }
     aic_schema();
     db()->prepare('INSERT INTO ' . tbl('ai_foto') . ' (url, archivio, foto_id, titolo, autore, autore_url, licenza, licenza_url, fonte_url, connessione_id, creato) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())')
         ->execute([$m['url'], $arch, $f['id'], $f['titolo'], $f['autore'], $f['autore_url'], $f['licenza'], $f['licenza_url'], $f['fonte_url'], (int)$conn['id']]);

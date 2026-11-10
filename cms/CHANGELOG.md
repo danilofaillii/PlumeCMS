@@ -2,7 +2,7 @@
 
 Il prodotto si chiama **plumeCMS** (nome scelto il 26 ottobre 2026; prima, per poche ore, "CarbonaraCMS", e ancora prima il provvisorio "Officina": gli zip vecchi si chiamavano `officina-*` e `carbonaracms-*`).
 
-## 2.38.0 (10 novembre 2026) - Pulizia
+## 2.38.0 (10 novembre 2026) - Pulizia e dati delle immagini
 
 - **Impostazioni > Pulizia** (richiesta di Danilo: "fa un check di cosa c'è di eliminabile e propone la cancellazione totale o
   parziale, indicando il peso per ogni voce, compreso il DB"): una pagina solo per l'amministratore che elenca, a gruppi, quello
@@ -30,6 +30,34 @@ Il prodotto si chiama **plumeCMS** (nome scelto il 26 ottobre 2026; prima, per p
 - **Dashboard**: oltre 200 MB recuperabili un avviso discreto con il link alla Pulizia (stima ricordata per un giorno). Niente si
   cancella da solo.
 - Prove: `prove/prova-pulizia.js` (con `prove/pulizia-cli.php`), gruppo 51 degli attacchi.
+- **La scheda dell'immagine** (richiesta di Danilo: "lavoriamo ai dati per le immagini: alt, descrizione, altro che ti viene in
+  mente"): in Media un clic su una foto apre la sua scheda, con testo alternativo (con il conteggio dei caratteri e il consiglio:
+  da 5 a 125, niente "immagine di"), titolo, didascalia, descrizione, autore (persona o organizzazione), licenza (tutti i diritti
+  riservati, CC0, pubblico dominio, CC BY, CC BY-SA, licenza dell'archivio, altra), pagina della licenza e indirizzo della fonte;
+  in sola lettura dimensioni, peso, formato, data e **dove è usata** (pagine, articoli, modelli, impostazioni, newsletter, form,
+  popup; "forse" quando il nome del file compare solo in una bozza o in un punto che non si sa leggere). Anche per il redattore.
+  Testo semplice: l'HTML si toglie, gli indirizzi solo http o https, le lunghezze tagliate.
+- I dati stanno nella stessa tabella degli alt della 2.29.0 (`<prefisso>media_alt`), con colonne nuove aggiunte al primo uso:
+  gli alt di prima restano come sono.
+- **Media > Dati delle immagini** (era "Senza alt"): filtri Senza alt, Senza descrizione, Importate senza crediti, Pesanti
+  (oltre 500 KB), Tutte, con la correzione in posto come prima per l'alt (e per descrizione e autore).
+- **Sul sito**: nei widget Immagine e Galleria l'interruttore "Mostra la didascalia della libreria" (spento di partenza) mette
+  la didascalia della scheda dove quella del widget è vuota. Nelle gallerie, una foto senza alt prende quello della libreria
+  prima della didascalia. Niente attributo title.
+- **Dati per Google**: l'immagine principale di una pagina o di un articolo (quella in evidenza, oppure la foto della prima
+  Apertura) con dati nella libreria diventa un ImageObject completo nel JSON-LD (contentUrl, misure, titolo, didascalia,
+  descrizione, creditText, creator, copyrightNotice, license, acquireLicensePage), solo con i valori scritti. Senza dati le
+  pagine escono identiche. Nella sitemap delle immagini niente titolo e didascalia: Google non li legge più dal 2022.
+- **Nome del file leggibile**: caricando in Media una foto con il nome della macchina fotografica (IMG_2026..., DSC0001,
+  PXL_...) e un titolo, il file prende il nome dal titolo. I file già caricati non cambiano nome; nella scheda "Rinomina il
+  file dal titolo" c'è solo per una foto che nessuno usa.
+- **AI collegate**: `import_photo` scrive anche titolo, autore, licenza e fonte nella scheda della foto; strumenti nuovi
+  `list_media` (le immagini con i dati e cosa manca, a pagine, con i filtri) e `propose_media_data` (alt, titolo, didascalia e
+  descrizione per fino a 50 immagini in una chiamata, raggruppate in Proposte sotto "Dati delle immagini", con Approva tutte).
+- Corretto: in un sito installato in una cartella l'immagine per i social (og:image) e l'immagine dei dati per Google di un
+  articolo o di una pagina uscivano con la cartella ripetuta (`/test/test/test/uploads/...`). Nella radice del dominio non
+  cambia niente.
+- Prove: `prove/prova-immagini.js`, gruppo 52 degli attacchi.
 
 ## 2.37.0 (9 novembre 2026) - Cambia database
 

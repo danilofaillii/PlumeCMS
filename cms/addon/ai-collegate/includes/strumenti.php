@@ -11,6 +11,7 @@ require_once __DIR__ . '/navigazione.php'; // 2.33.0: analyze_navigation, propos
 require_once __DIR__ . '/revisione.php';   // 2.33.0: review_article, list_articles_to_review, propose_article_changes
 require_once __DIR__ . '/stile.php';       // 2.34.0: analyze_style, save_style_profile, get_style_profile, coerenza delle bozze
 require_once __DIR__ . '/idee.php';        // 2.34.0: suggest_topics, propose_article_ideas, list_article_ideas
+require_once __DIR__ . '/immagini.php';    // 2.38.0: list_media, propose_media_data
 foreach (['contenuti.php', 'seo.php', 'seo-tabella.php', 'media.php', 'media-alt.php'] as $_aicF) require_once cms_radice() . '/includes/' . $_aicF;
 unset($_aicF);
 
@@ -155,6 +156,19 @@ function aic_strumenti(): array {
             'descrizione' => 'Le idee per articoli del sito con lo stato (attesa: da decidere; da_scrivere: approvate; scritta: c\'è la bozza; scartata), nell\'ordine del piano editoriale, con la data prevista (solo un promemoria dell\'amministratore: niente si pubblica da solo), la scaletta, gli articoli da collegare, la nota dell\'amministratore e, per le scritte, la bozza. Senza "stato": quelle da scrivere.',
             'schema' => ['type' => 'object', 'properties' => ['stato' => ['type' => 'string', 'enum' => ['attesa', 'da_scrivere', 'scritta', 'scartata', 'tutte']], 'pagina' => ['type' => 'integer', 'minimum' => 1], 'per_pagina' => ['type' => 'integer', 'minimum' => 1, 'maximum' => 50]]],
             'fn' => 'aic_t_list_article_ideas'],
+        'list_media' => ['titolo' => 'Le immagini e i loro dati', 'scope' => 'leggi', 'sola_lettura' => true,
+            'descrizione' => 'Le immagini della libreria dei Media con i loro dati (alt, titolo, didascalia, descrizione, autore, licenza, archivio da cui sono state importate), dimensioni, peso e cosa manca a ognuna. Filtri: "alt" (senza testo alternativo), "descrizione" (senza descrizione), "crediti" (importate senza autore né licenza), "pesanti" (oltre 500 KB), "tutte". A pagine di 50 al massimo. Poi propose_media_data.',
+            'schema' => ['type' => 'object', 'properties' => ['filtro' => ['type' => 'string', 'enum' => ['alt', 'descrizione', 'crediti', 'pesanti', 'tutte']], 'pagina' => ['type' => 'integer', 'minimum' => 1], 'per_pagina' => ['type' => 'integer', 'minimum' => 1, 'maximum' => AIC_MEDIA_PER_PAGINA]]],
+            'fn' => 'aic_t_list_media'],
+        'propose_media_data' => ['titolo' => 'Proponi i dati delle immagini', 'scope' => 'proposte', 'sola_lettura' => false,
+            'descrizione' => 'Propone alt, titolo, didascalia e descrizione per fino a ' . AIC_MEDIA_MAX . ' immagini della libreria in una chiamata (o tutte o nessuna). Non cambia niente subito: l\'amministratore vede le proposte raggruppate sotto "Dati delle immagini" in AI collegate > Proposte, con prima e dopo, e le approva tutte insieme o una per una. Testo semplice: alt da 5 a 125 caratteri, cosa si vede, senza "immagine di"; titolo breve; didascalia di una riga; descrizione fino a 2000 caratteri. Autore e licenza non si propongono.',
+            'schema' => ['type' => 'object', 'properties' => [
+                'immagini' => ['type' => 'array', 'minItems' => 1, 'maxItems' => AIC_MEDIA_MAX, 'items' => ['type' => 'object', 'properties' => [
+                    'url' => ['type' => 'string', 'description' => 'L\'indirizzo dell\'immagine nella libreria (da list_media)'],
+                    'alt' => ['type' => 'string', 'maxLength' => 300], 'titolo' => ['type' => 'string', 'maxLength' => 200], 'didascalia' => ['type' => 'string', 'maxLength' => 500],
+                    'descrizione' => ['type' => 'string', 'maxLength' => 2000], 'motivo' => ['type' => 'string', 'maxLength' => 1000]], 'required' => ['url']]],
+                'motivo' => ['type' => 'string', 'maxLength' => 1000, 'description' => 'Il motivo generale (vale per le immagini senza un motivo loro)'],
+            ], 'required' => ['immagini', 'motivo']], 'fn' => 'aic_t_propose_media_data'],
         'list_proposals' => ['titolo' => 'Le tue proposte', 'scope' => 'proposte', 'sola_lettura' => true,
             'descrizione' => 'Le proposte fatte da questo collegamento, con lo stato: in attesa, approvata, scartata, superata.',
             'schema' => ['type' => 'object', 'properties' => ['stato' => ['type' => 'string', 'enum' => ['attesa', 'approvata', 'scartata', 'superata', 'tutte']]]], 'fn' => 'aic_t_list_proposals'],
