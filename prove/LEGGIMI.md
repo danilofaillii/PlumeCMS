@@ -955,3 +955,18 @@ browser (anche i valori cattivi e 390 px), la parola chiave delle pagine, le pag
    Alla fine toglie le pagine di prova e rimette llms e descrizione generale.
 
 Gli attacchi sono il gruppo 49 di `tools/sicurezza-prova.js` (7, con `CMS_DIR`).
+
+## prova-immagini.js (2.38.0)
+
+I dati delle immagini: la scheda dell'immagine in Media (salva e rileggi, lunghezze, HTML scartato, indirizzo javascript: segnato
+sotto il campo), Dove è usata e Rinomina il file, l'alt della libreria vinto dall'alt del widget, la didascalia della libreria solo
+con l'interruttore, il JSON-LD ImageObject (anche dalla foto dell'Apertura, mai per una foto senza dati, nessun campo vuoto), og:image
+con la cartella una volta sola, il nome leggibile al caricamento, Media > Dati delle immagini con i filtri e la correzione in posto,
+la foto importata dall'AI con i crediti, `list_media` e `propose_media_data` via MCP con una chiave e Approva tutte nel pannello, il
+redattore, 390 px.
+1. Un CMS installato (col kit o senza), radice o cartella, e il server finto delle foto: `php -S 127.0.0.1:<porta> prove/foto-finte.php`.
+2. `node prove/prova-immagini.js <base> <cartella del CMS> <utente> <password> <porta delle foto finte> [cartella foto]`
+   (con `prove/immagini-cli.php` e `prove/ai-cli.php`; accende l'addon AI collegate e lo rispegne alla fine).
+3. Atteso (2.38.0): 58 su 58 in radice e in cartella. Alla fine toglie pagine, dati e foto di prova.
+
+Gli attacchi sono il gruppo 52 di `tools/sicurezza-prova.js` (13, con `CMS_DIR`).

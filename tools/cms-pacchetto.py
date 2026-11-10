@@ -162,6 +162,8 @@ TOLTI += [f'temi/{t}/anteprima.png' for t in ('aria', 'bottega', 'cosmo')]
 TOLTI += ['includes/importa-wp.php', 'includes/importa-wp-analisi.php', 'includes/importa-wp-converti.php', 'includes/importa-wp-lavoro.php',
           'includes/ponte-wp/plumecms-ponte.php', 'admin/importa-wordpress.php']
 TOLTI += [f'docs/immagini/manuale-uso/29-{f}.jpg' for f in ('collegati', 'report', 'ponte-scelta', 'ponte-wordpress')]
+# 2.38.0: Media > Senza alt è diventata Dati delle immagini (schermata 07-dati al posto di 07-senza-alt).
+TOLTI += ['docs/immagini/manuale-uso/07-senza-alt.jpg']
 
 
 def scrivi_aggiornamento(versione, file, dest):
