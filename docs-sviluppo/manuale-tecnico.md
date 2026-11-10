@@ -7057,7 +7057,7 @@ alt, titolo, didascalia, descrizione e autore (licenza e indirizzi solo dalla sc
   Galleria (`includes/editor-widget-extra-b.php:45` e 49): con la didascalia del widget vuota esce quella della libreria
   (`media_dati_didascalia()`). Nella Galleria la didascalia si vede solo con "Didascalia: Sotto" o "Al passaggio", come prima.
 - **Niente attributo `title`**: per scelta (non lo legge quasi nessuno ed esce come un fumetto fastidioso).
-- **JSON-LD**: `media_dati_jsonld()` (riga 421), chiamata dopo `seo_schema_applica()` in home, articoli e pagine
+- **JSON-LD**: `media_dati_jsonld()` (riga 422), chiamata dopo `seo_schema_applica()` in home, articoli e pagine
   (`sito/index.php:305`, 336, 353) e nell'anteprima del pannello (`includes/seo.php:1036`, 1046, 1058). L'immagine principale
   (`media_dati_immagine_principale()`, riga 374) è quella in evidenza, altrimenti la foto della prima Apertura dell'albero
   pubblicato. Se ha dati oltre all'alt e all'archivio, la WebPage riceve `primaryImageOfPage` = `media_dati_image_object()`
@@ -7067,6 +7067,11 @@ alt, titolo, didascalia, descrizione e autore (licenza e indirizzi solo dalla sc
   dominio, CC BY, CC BY-SA), `acquireLicensePage` (l'indirizzo della fonte: dove si chiede o si prende la licenza). Solo i
   valori scritti; niente inventato. Negli articoli `primaryImageOfPage` c'era già (solo `url`): con i dati diventa completo.
   Senza dati (`media_dati_n` a 0, o la foto principale senza dati) i nodi restano identici al byte.
+- **Siti in una cartella**: `sito_immagine()` (`includes/sito-dati.php:35`) metteva la cartella tre volte davanti a un'immagine
+  salvata dalla libreria (`/test/uploads/...` diventava `https://sito/test/test/test/uploads/...` in og:image e nel JSON-LD). Ora:
+  origine, poi il percorso se ha già la cartella del CMS, altrimenti origine, cartella del CMS e percorso. Nella radice del dominio
+  il risultato è quello di prima (provato al byte con l'aggiornamento). L'indirizzo assoluto dell'ImageObject si fa dalla chiave
+  allo stesso modo.
 - **Sitemap delle immagini**: non cambia. Google ha tolto `image:caption`, `image:title`, `image:geo_location` e
   `image:license` dalla sitemap delle immagini (annuncio di maggio 2022, letti fino all'agosto 2022): resta solo
   `image:loc`. Titolo e didascalia arrivano a Google dal JSON-LD e dalla pagina. (Non verificato di nuovo contro i documenti di
