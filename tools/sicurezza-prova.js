@@ -3428,6 +3428,83 @@ echo json_encode($o);
     } else console.log('--  Cambia database: saltata (pagina assente, CMS prima della 2.37.0)');
   }
 
+  // === 51. Pulizia (2.38.0): solo l'amministratore, CSRF e Origin, niente in GET, nomi di file e di tabelle mai dal browser (percorsi con
+  //          .., fuori dalle cartelle ammesse, tabelle senza prefisso o inventate), numeri negativi o enormi nei "tieni le ultime N",
+  //          password sbagliata: in ogni caso niente si toglie. Serve CMS_DIR per mettere snapshot e copie finte e guardare i file.
+  {
+    const fs = require('fs'), path = require('path');
+    const U51 = ADMIN + '/pulizia.php';
+    const DIR51 = process.env.CMS_DIR || '';
+    const esiste = (await admin.ctx.request.get(U51, { maxRedirects: 0 })).status() === 200;
+    if (esiste && DIR51) {
+      const snapDir = path.join(DIR51, 'aggiornamenti', 'snapshot'), copieDir = path.join(DIR51, 'aggiornamenti', 'copie');
+      fs.mkdirSync(snapDir, { recursive: true }); fs.mkdirSync(copieDir, { recursive: true });
+      const snap = [1, 2, 3, 4].map(i => '2026010' + i + '-100000-sic51-' + i);
+      for (const [i, id] of snap.entries()) { fs.mkdirSync(path.join(snapDir, id), { recursive: true }); fs.writeFileSync(path.join(snapDir, id, 'db.sql.gz'), 'x'.repeat(1000)); fs.writeFileSync(path.join(snapDir, id, 'meta.json'), JSON.stringify({ id, etichetta: 'sic51', creato: '2026-01-0' + (i + 1) + ' 10:00:00', db: [], files: [] })); }
+      const copie = ['copia-20260101-080000-sic51.zip', 'copia-20260102-080000-sic51.zip'];
+      for (const c of copie) fs.writeFileSync(path.join(copieDir, c), 'y'.repeat(500));
+      const sentinella = path.join(DIR51, 'uploads', 'sic51-sentinella.png'); fs.writeFileSync(sentinella, 'z');
+      const conta = () => snap.filter(id => fs.existsSync(path.join(snapDir, id))).length + copie.filter(c => fs.existsSync(path.join(copieDir, c))).length;
+      const intatto = () => conta() === 6 && fs.existsSync(path.join(DIR51, 'includes', 'config.local.php')) && fs.existsSync(sentinella) && fs.existsSync(path.join(DIR51, 'index.php'));
+      const ORIG = { Origin: new URL(BASE).origin };
+      const post51 = async (chi, o) => { const rx = await chi.ctx.request.post(U51, { form: o, headers: ORIG, maxRedirects: 0 }); return { status: rx.status(), body: await rx.text() }; };
+      const tutto = (extra) => Object.assign({ azione: 'esegui', 'voci[]': 'snapshot', 'p[snapshot][n]': '0', 'p[snapshot][zero]': '1', password_admin: PASSWORD }, extra);
+      // 1. senza CSRF, con Origin esterno
+      let r = await post(admin.p, U51, new URLSearchParams(tutto({})).toString(), { 'Content-Type': 'application/x-www-form-urlencoded' });
+      ok('2.38.0: Pulizia senza token CSRF: rifiutata (403), niente tolto', r.status === 403 && intatto(), r.status);
+      let tk = await tokenDi(admin.p, U51);
+      const ev = await admin.ctx.request.post(U51, { form: tutto({ _csrf: tk }), headers: { Origin: 'https://evil.example' }, maxRedirects: 0 });
+      ok('2.38.0: Pulizia con Origin esterno: rifiutata (403), niente tolto', ev.status() === 403 && intatto(), ev.status());
+      // 2. dal redattore
+      const rr = await red.ctx.request.get(U51, { maxRedirects: 0 });
+      ok('2.38.0: il redattore non apre la Pulizia (rimandato alla dashboard)', rr.status() === 302 && !/pulizia/.test(rr.headers()['location'] || ''), [rr.status(), rr.headers()['location']]);
+      const tr = await tokenDi(red.p, ADMIN + '/index.php');
+      r = await post51(red, tutto({ _csrf: tr, password_admin: REDPW }));
+      ok('2.38.0: il redattore non toglie niente (con il suo token e la sua password)', [302, 403].includes(r.status) && intatto(), r.status);
+      // 3. GET con i parametri
+      await admin.ctx.request.get(U51 + '?' + new URLSearchParams(tutto({ _csrf: tk })).toString());
+      ok('2.38.0: in GET con tutti i parametri (anche il token e la password) niente si toglie', intatto());
+      // 4. numeri cattivi nei "tieni le ultime N" e nei giorni
+      const cattivi = ['-1', '-999', '99999999', '1e9', '3 OR 1=1', '2;DROP TABLE x', '0x10', ' ', '1.5'];
+      let passati = [];
+      for (const v of cattivi) { tk = await tokenDi(admin.p, U51); r = await post51(admin, { _csrf: tk, azione: 'esegui', 'voci[]': 'snapshot', 'p[snapshot][n]': v, password_admin: PASSWORD }); if (!intatto() || /Pulizia fatta/.test(r.body)) passati.push(v); }
+      tk = await tokenDi(admin.p, U51);
+      const arr = await admin.ctx.request.post(U51, { multipart: undefined, form: undefined, data: '_csrf=' + tk + '&azione=esegui&voci[]=snapshot&p[snapshot][n][]=1&password_admin=' + encodeURIComponent(PASSWORD), headers: Object.assign({ 'Content-Type': 'application/x-www-form-urlencoded' }, ORIG), maxRedirects: 0 });
+      if (!intatto()) passati.push('lista');
+      for (const v of ['-30', '99999999', 'tutti']) { tk = await tokenDi(admin.p, U51); r = await post51(admin, { _csrf: tk, azione: 'esegui', 'voci[]': 'registri', 'p[registri][giorni]': v, password_admin: PASSWORD }); if (/Pulizia fatta/.test(r.body)) passati.push('giorni ' + v); }
+      tk = await tokenDi(admin.p, U51); r = await post51(admin, { _csrf: tk, azione: 'esegui', 'voci[]': 'registri', 'p[registri][giorni]': '5', password_admin: PASSWORD });
+      if (/Pulizia fatta/.test(r.body) || !/da 30 a/.test(r.body)) passati.push('registri 5 giorni (sotto il minimo di 30)');
+      ok('2.38.0: ' + (cattivi.length + 5) + ' numeri cattivi (negativi, enormi, con SQL, esadecimali, decimali, liste, registri sotto i 30 giorni): errore sotto il campo, niente tolto', passati.length === 0 && arr.status() === 200, passati);
+      // 5. nomi di file e di tabelle dal browser: mai usati
+      tk = await tokenDi(admin.p, U51);
+      const form5 = '_csrf=' + tk + '&azione=esegui&password_admin=' + encodeURIComponent(PASSWORD) + '&' + [
+        'voci[]=copie', 'voci[]=media', 'voci[]=pacchetti', 'voci[]=lavoro', 'voci[]=../../includes', 'voci[]=tabella', 'voci[]=settings',
+        'p[copie][scelta][]=../../includes/config.local.php', 'p[copie][scelta][]=../../index.php', 'p[copie][scelta][]=' + encodeURIComponent('/etc/passwd'),
+        'p[media][scelta][]=../../includes/config.local.php', 'p[media][scelta][]=sic51-sentinella.png', 'p[media][scelta][]=' + encodeURIComponent('/uploads/sic51-sentinella.png'),
+        'p[pacchetti][scelta][]=../copie/copia-20260101-080000-sic51', 'p[lavoro][scelta][]=cms_settings', 'p[lavoro][scelta][]=users', 'p[tabella][nome]=cms_users',
+      ].join('&');
+      const x5 = await admin.ctx.request.post(U51, { data: form5, headers: Object.assign({ 'Content-Type': 'application/x-www-form-urlencoded' }, ORIG), maxRedirects: 0 });
+      const t5 = await x5.text();
+      const sitoOk = (await admin.ctx.request.get(BASE + '/')).status() === 200 && (await admin.ctx.request.get(ADMIN + '/index.php')).status() === 200;
+      ok('2.38.0: percorsi con .., fuori dalle cartelle ammesse, tabelle senza prefisso o inventate, voci inventate: niente tolto (config, index.php, sentinella, copie, snapshot ci sono), il sito e il pannello rispondono', intatto() && sitoOk && !/Pulizia fatta: liberati [1-9]/.test(t5), [x5.status(), conta()]);
+      // 6. la password sbagliata
+      tk = await tokenDi(admin.p, U51);
+      r = await post51(admin, tutto({ _csrf: tk, password_admin: 'sbagliata-sic51' }));
+      ok('2.38.0: password sbagliata: "La password non è giusta", niente tolto', /La password non è giusta/.test(r.body) && intatto());
+      // 7. senza la seconda conferma, "tieni 0" non toglie l'ultimo snapshot
+      tk = await tokenDi(admin.p, U51);
+      r = await post51(admin, { _csrf: tk, azione: 'esegui', 'voci[]': 'snapshot', 'p[snapshot][n]': '0', password_admin: PASSWORD });
+      ok('2.38.0: "tieni 0 snapshot" senza la seconda conferma: niente tolto', /seconda conferma|spunta la conferma/.test(r.body) && intatto());
+      // 8. il codice nelle scelte non torna nella pagina come HTML
+      tk = await tokenDi(admin.p, U51);
+      r = await post51(admin, { _csrf: tk, azione: 'riepilogo', 'voci[]': 'copie', 'p[copie][scelta][]': '"><script>alert(51)</script>' });
+      ok('2.38.0: il codice in una scelta non torna nella pagina come HTML', !r.body.includes('<script>alert(51)</script>'));
+      for (const id of snap) fs.rmSync(path.join(snapDir, id), { recursive: true, force: true });
+      for (const c of copie) fs.rmSync(path.join(copieDir, c), { force: true });
+      fs.rmSync(sentinella, { force: true });
+    } else console.log('--  Pulizia: saltata (' + (esiste ? 'serve CMS_DIR' : 'pagina assente, CMS prima della 2.38.0') + ')');
+  }
+
   // === pulizia: elimina il redattore di prova
   {
     await admin.p.goto(ADMIN + '/utenti.php', { waitUntil: 'networkidle' });

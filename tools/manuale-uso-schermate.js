@@ -35,6 +35,7 @@
 // 2.33.0: il capitolo 41n (la proposta di menu affiancata e la scheda di un articolo): SOLO_CAPITOLI=41n, come il 41.
 // 2.34.0: il capitolo 41s (Stile del sito, Idee per articoli, il piano al telefono): SOLO_CAPITOLI=41s, come il 41.
 // 2.37.0: il capitolo 27c (Cambia database, due foto): SOLO_CAPITOLI=27c con CAMBIADB_MANUALE (un database vuoto), TMPDIR vuota.
+// 2.38.0: il capitolo 27p (Pulizia, una foto): SOLO_CAPITOLI=27p con CMS_DIR_MANUALE, su un sito col kit appena installato, TMPDIR vuota.
 const { chromium } = require('playwright');
 const pnConferme = require('../prove/conferme-pannello'); // UX 2026-11: conferme del pannello
 const fs = require('fs');
@@ -2515,6 +2516,19 @@ capitoli['27c'] = async () => {
   await p.locator('#torna summary').click(); await p.check('#torna input[name=conferma]'); await p.fill('#cdb-password-torna', PASSWORD);
   await Promise.all([p.waitForNavigation(), p.click('#torna button[type=submit]')]);
   await dorme(2500);
+};
+
+// 2.38.0: la Pulizia (capitolo 29 del manuale, "Fare pulizia"), una foto: il totale in cima e la prima voce. Mette sul sito gli
+// avanzi finti di prove/pulizia-cli.php (snapshot, copie, log, versioni...) e alla fine toglie quelli fuori dalle voci.
+// Vuole CMS_DIR_MANUALE. Da solo: SOLO_CAPITOLI=27p, su un sito col kit appena installato, TMPDIR vuota.
+capitoli['27p'] = async () => {
+  const DIRP = process.env.CMS_DIR_MANUALE || '';
+  if (!DIRP) { console.log('27p: saltato (manca CMS_DIR_MANUALE)'); return; }
+  const pcli = (...a) => require('child_process').execFileSync('php', [path.join(__dirname, '..', 'prove', 'pulizia-cli.php'), DIRP, ...a], { encoding: 'utf8' });
+  pcli('semina');
+  await vai('pulizia.php');
+  await foto('27-pulizia', { clip: { x: 240, y: 56, width: 960, height: 744 }, segni: [{ sel: '#totale .pul-totale', n: 1 }, { sel: '#voce-pacchetti .pul-elenco', n: 2 }, { sel: '#voce-pacchetti .pul-spunta', n: 3 }, { sel: '.pul-fondo button[type=submit]', n: 4 }] });
+  pcli('via');
 };
 
 module.exports = { capitoli };

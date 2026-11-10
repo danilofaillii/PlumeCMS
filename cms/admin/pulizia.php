@@ -115,8 +115,8 @@ require_once __DIR__ . '/includes/admin-header.php';
 .pul-riga{display:flex;flex-wrap:wrap;gap:.6rem 1rem;align-items:center;margin:.6rem 0}
 .pul-riga .form-group{margin:0}
 .pul-riga input[type=number]{width:7rem}
-.pul-spunta{display:flex;gap:.5rem;align-items:flex-start;font-size:.95rem;margin:.8rem 0 0;font-weight:600}
-.pul-spunta input{margin-top:.25rem;flex:0 0 auto;width:1.15rem;height:1.15rem}
+.pul-spunta{display:flex;gap:.5rem;align-items:center;font-size:.95rem;margin:.6rem 0 0;font-weight:600;min-height:44px;cursor:pointer}
+.pul-spunta input{flex:0 0 auto;width:1.15rem;height:1.15rem}
 .pul-elenco{width:100%;border-collapse:collapse;font-size:.88rem;margin:.4rem 0}
 .pul-elenco th,.pul-elenco td{text-align:left;padding:.35rem .5rem;border-bottom:1px solid var(--border);vertical-align:middle;overflow-wrap:anywhere}
 .pul-elenco td.pul-num,.pul-elenco th.pul-num{text-align:right;white-space:nowrap}
@@ -129,6 +129,8 @@ require_once __DIR__ . '/includes/admin-header.php';
 .pul-riepilogo{margin:.4rem 0 1rem 1.1rem;line-height:1.6}
 .pul-riepilogo li{margin:.2rem 0}
 .pul-esito-ok{border-left:4px solid var(--successo-bordo)}
+.pul-elenco input[type=checkbox]{width:1.15rem;height:1.15rem}
+@media(max-width:640px){.pul-fondo{position:static;box-shadow:none}.pul-peso{float:none;display:block;margin-top:.2rem}}
 .pul-nota{font-size:.85rem;color:var(--text-muted);line-height:1.5;margin:.4rem 0 0}
 </style>
 <div class="pul-largo">

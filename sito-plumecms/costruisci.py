@@ -315,7 +315,8 @@ def funzionalita():
          ['Accesso a due fattori, blocchi contro chi prova a indovinare le password, protezioni del browser, registro degli eventi. Prima di uscire plumeCMS è stato messo alla prova con più di 500 attacchi, addon compresi: tutti respinti.',
           '<ul><li>Gli aggiornamenti si installano dal pannello, con <strong>Installa ora</strong>: prima il pannello fa una copia di sicurezza, e se qualcosa va storto rimette tutto com\'era.</li>'
           '<li>La copia del sito, con un clic: la scarichi, la tieni da parte, e se serve la rimetti al suo posto o su un altro spazio, anche con un database diverso. Se il ripristino non può riuscire, niente si cancella: il sito resta com\'era e il pannello dice perché.</li>'
-          '<li>Cambia database: sposti tutto il sito su un altro database, anche su un altro server, con una barra di avanzamento; il pannello conta le righe, passa al nuovo solo se tornano e il database di prima resta intatto.</li></ul>']),
+          '<li>Cambia database: sposti tutto il sito su un altro database, anche su un altro server, con una barra di avanzamento; il pannello conta le righe, passa al nuovo solo se tornano e il database di prima resta intatto.</li>'
+          '<li>Pulizia: il pannello ti dice quanto pesano copie vecchie, log, versioni, cestino, registri del database e immagini non usate, e ti fa togliere tutto o solo una parte, dopo un riepilogo.</li></ul>']),
     ]
     for i, (ancora, img, tit, testo) in enumerate(blocchi):
         foto = [immagine(img, 'plumeCMS: ' + tit)]
@@ -748,6 +749,7 @@ def zip_lavagna(dest):
 # Regola di Danilo (1 novembre 2026): solo i punti salienti, una riga per versione, mai nomi di aziende o servizi di terzi.
 # Le novità per chi scarica: brevi, scritte qui (il CHANGELOG è per chi sviluppa). Da aggiornare a ogni versione.
 NOVITA = [
+    ('2.38.0', 'Pulizia', ['Un controllo di cosa si può togliere, con il peso di ogni voce e del database: copie e snapshot vecchi, log, versioni, cestino, registri, immagini non usate; togli tutto o solo una parte, sempre dopo un riepilogo.']),
     ('2.37.0', 'Cambia database', ['Sposta tutto il sito su un altro database, anche su un altro server: copia a giri con la barra, righe contate tabella per tabella, passaggio solo a conti tornati, il database di prima intatto e il ritorno con un clic.']),
     ('2.36.0', 'Pagine per zona senza limite', ['Le pagine per zona non hanno più un tetto di 200: fino a cento zone per giro, l\'elenco a pagine con la ricerca e i numeri in cima, e il widget Altre zone che ne mostra quante vuoi, anche le più vicine. Il sito resta veloce con migliaia di zone.']),
     ('2.35.0', 'Più chiaro per i motori di ricerca e le AI', ['Il file per le AI elenca anche le pagine e salta le parti vuote; nei dati per i motori di ricerca una pagina può presentare un programma, con versione, prezzo e licenza; il sito di plumeCMS ha riassunti, domande nuove e una pagina di confronto.']),
