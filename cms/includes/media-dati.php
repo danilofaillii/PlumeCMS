@@ -165,6 +165,10 @@ function media_dati_pulisci(array $in, array $prima, ?array $soloQuesti = null):
  */
 function media_dati_salva(string $url, array $in, ?array $soloQuesti = null, string $origine = ''): array {
     $voce = media_dati_voce($url);
+    if (!$voce && ($f = media_dati_file($url)) !== '' && in_array(strtolower(pathinfo($f, PATHINFO_EXTENSION)), MEDIA_ESTENSIONI, true) && !foto_e_webp_compagna(basename($f)) && !media_e_miniatura(basename($f))) {
+        // Un file appena caricato in questa stessa richiesta (media_elenco() è già stato letto): c'è sul disco, nella cartella delle immagini.
+        $voce = ['chiave' => media_alt_chiave($url), 'url' => $url];
+    }
     if (!$voce) return ['errore' => 'Questa immagine non sta nella libreria dei Media.', 'errori' => []];
     $k = $voce['chiave'];
     $prima = media_dati_di($url, true);

@@ -56,7 +56,7 @@ aic_admin_schede('proposte');
 /** Una proposta. $dentro: dentro una scheda dell'articolo (titolo più piccolo, senza la fascia). */
 $mostra = function (array $p, bool $dentro = false) use ($stati): void {
     $titolo = ''; $link = '';
-    if ($p['tipo'] === 'media') { $titolo = 'Immagine ' . basename((string)$p['media_url']); $link = 'media.php?scheda=alt'; }
+    if ($p['tipo'] === 'media') { $titolo = 'Immagine ' . basename((string)$p['media_url']); $link = is_file(cms_radice() . '/includes/media-dati.php') ? 'media.php?immagine=' . rawurlencode((string)$p['media_url']) : 'media.php?scheda=alt'; }
     elseif ($p['tipo'] === 'menu') { $m = aic_nav_menu_fresco((int)$p['contenuto_id']); $titolo = $m ? '«' . $m['nome'] . '»' : 'menu eliminato'; $link = 'menu.php?id=' . (int)$p['contenuto_id']; }
     else { $r = contenuti_leggi((string)$p['tipo'], (int)$p['contenuto_id']); $titolo = $r ? (string)$r['title'] : 'contenuto eliminato'; $link = 'contenuto.php?tipo=' . $p['tipo'] . '&id=' . (int)$p['contenuto_id']; }
     $campo = aic_campo_etichetta((string)$p['campo']);
@@ -132,16 +132,19 @@ foreach ($elenco as $p):
     $fatti[$g] = true;
     $dellaScheda = array_values(array_filter($elenco, fn($x) => (string)($x['gruppo'] ?? '') === $g));
     $daDecidere = count(array_filter($dellaScheda, fn($x) => $x['stato'] === 'attesa'));
+    // 2.38.0: un gruppo "media-0-..." sono i dati di più immagini (propose_media_data).
+    $sMedia = str_starts_with($g, 'media-');
     $sTipo = str_starts_with($g, 'pagine-') ? 'pagine' : 'articoli';
     $sId = (int)(explode('-', $g)[1] ?? 0);
-    $sRiga = contenuti_leggi($sTipo, $sId);
+    $sRiga = $sMedia ? null : contenuti_leggi($sTipo, $sId);
     $sTitolo = $sRiga ? (string)$sRiga['title'] : 'contenuto eliminato';
+    $sImmagini = $sMedia ? count(array_unique(array_map(fn($x) => (string)$x['media_url'], $dellaScheda))) : 0;
 ?>
 <section class="form-card aic-scheda" id="scheda-<?= h($g) ?>" data-gruppo="<?= h($g) ?>" aria-labelledby="scheda-t-<?= h($g) ?>">
-  <h3 id="scheda-t-<?= h($g) ?>">Scheda <?= $sTipo === 'articoli' ? 'dell\'articolo' : 'della pagina' ?>: <a href="<?= h('contenuto.php?tipo=' . $sTipo . '&id=' . $sId) ?>"><?= h($sTitolo) ?></a> <span class="aic-conta-scheda"><?= count($dellaScheda) ?> <?= count($dellaScheda) === 1 ? 'proposta' : 'proposte' ?><?= $daDecidere && $daDecidere < count($dellaScheda) ? ', ' . $daDecidere . ' da decidere' : '' ?></span></h3>
+  <h3 id="scheda-t-<?= h($g) ?>"><?php if ($sMedia): ?>Dati delle immagini: <?= $sImmagini === 1 ? 'una immagine' : $sImmagini . ' immagini' ?><?php else: ?>Scheda <?= $sTipo === 'articoli' ? 'dell\'articolo' : 'della pagina' ?>: <a href="<?= h('contenuto.php?tipo=' . $sTipo . '&id=' . $sId) ?>"><?= h($sTitolo) ?></a><?php endif; ?> <span class="aic-conta-scheda"><?= count($dellaScheda) ?> <?= count($dellaScheda) === 1 ? 'proposta' : 'proposte' ?><?= $daDecidere && $daDecidere < count($dellaScheda) ? ', ' . $daDecidere . ' da decidere' : '' ?></span></h3>
   <?php if ($daDecidere): ?>
   <div class="aic-azioni aic-azioni-scheda">
-    <form method="post" data-conferma="Approvare tutte le <?= (int)$daDecidere ?> proposte di questa scheda? Le modifiche vanno subito sul sito (le versioni di prima restano nelle revisioni)." data-conferma-ok="Approva tutte"><?= csrf_field() ?><input type="hidden" name="gruppo" value="<?= h($g) ?>"><input type="hidden" name="stato" value="attesa"><button class="btn btn-primary btn-sm" name="azione" value="scheda_approva">Approva tutte</button></form>
+    <form method="post" data-conferma="Approvare tutte le <?= (int)$daDecidere ?> proposte di questa scheda? Le modifiche vanno subito sul sito<?= $sMedia ? ' (i dati di prima si possono riscrivere nella scheda di ogni foto)' : ' (le versioni di prima restano nelle revisioni)' ?>." data-conferma-ok="Approva tutte"><?= csrf_field() ?><input type="hidden" name="gruppo" value="<?= h($g) ?>"><input type="hidden" name="stato" value="attesa"><button class="btn btn-primary btn-sm" name="azione" value="scheda_approva">Approva tutte</button></form>
     <form method="post" data-conferma="Scartare tutte le <?= (int)$daDecidere ?> proposte di questa scheda? Sul sito non cambia niente." data-conferma-ok="Scarta tutte"><?= csrf_field() ?><input type="hidden" name="gruppo" value="<?= h($g) ?>"><input type="hidden" name="stato" value="attesa"><button class="btn btn-danger btn-sm" name="azione" value="scheda_scarta">Scarta tutte</button></form>
     <span class="hint">Oppure decidi una per una qui sotto.</span>
   </div>

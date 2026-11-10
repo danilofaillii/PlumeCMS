@@ -26,7 +26,16 @@ function aic_campi_proposta(): array {
         'alt_immagine' => ['Alt dell\'immagine in evidenza', ['articoli']],
         'testo' => ['Testo', ['articoli', 'pagine']],
         'alt' => ['Alt di un\'immagine della libreria', ['media']],
+        // 2.38.0: gli altri dati di un'immagine della libreria (propose_media_data, includes/media-dati.php)
+        'titolo_immagine' => ['Titolo di un\'immagine della libreria', ['media']],
+        'didascalia' => ['Didascalia di un\'immagine della libreria', ['media']],
+        'descrizione_immagine' => ['Descrizione di un\'immagine della libreria', ['media']],
     ];
+}
+
+/** 2.38.0: il campo dei dati della libreria (includes/media-dati.php) di un campo di proposta "media". */
+function aic_campo_media(string $campo): string {
+    return ['alt' => 'alt', 'titolo_immagine' => 'titolo', 'didascalia' => 'didascalia', 'descrizione_immagine' => 'descrizione'][$campo] ?? 'alt';
 }
 
 /** Il widget dell'albero con quell'id (riferimento), oppure null. */
@@ -43,7 +52,12 @@ function aic_campo_testo_widget(string $tipo): ?string {
 
 /** Il valore di adesso di un campo di una proposta (per "prima"). */
 function aic_proposta_valore_attuale(string $tipo, ?array $r, string $campo, string $widget = '', string $url = ''): string {
-    if ($tipo === 'media') { require_once cms_radice() . '/includes/media-alt.php'; return media_alt_di($url); }
+    if ($tipo === 'media') {
+        require_once cms_radice() . '/includes/media-alt.php';
+        if ($campo === 'alt' || !is_file(cms_radice() . '/includes/media-dati.php')) return media_alt_di($url);
+        require_once cms_radice() . '/includes/media-dati.php';
+        return (string)media_dati_di($url, true)[aic_campo_media($campo)];
+    }
     switch ($campo) {
         case 'titolo': return (string)$r['title'];
         case 'titolo_seo': return (string)$r['seo_title'];
@@ -80,6 +94,9 @@ function aic_proposta_valore_pulito(string $tipo, string $campo, $v, string $wid
         case 'in_breve': return aic_testo($v, 1000, true);
         case 'estratto': return aic_testo($v, 2000, true);
         case 'alt_immagine': case 'alt': return aic_testo($v, 300);
+        case 'titolo_immagine': return aic_testo($v, 200);
+        case 'didascalia': return aic_testo($v, 500);
+        case 'descrizione_immagine': return aic_testo($v, 2000, true);
         case 'domande_frequenti':
             require_once __DIR__ . '/strumenti.php';
             return aic_faq(is_string($v) ? (json_decode($v, true) ?? []) : $v);
@@ -184,8 +201,15 @@ function aic_proposta_applica(array $p, ?string $valore, string $autore): void {
     }
     if ($tipo === 'media') {
         require_once cms_radice() . '/includes/media-alt.php';
-        $v = $valore === null ? (string)$p['dopo'] : aic_testo($valore, 300);
-        $r = media_alt_salva((string)$p['media_url'], $v);
+        try { $v = $valore === null ? (string)$p['dopo'] : aic_proposta_valore_pulito('media', $campo, $valore); }
+        catch (AicErrore $e) { throw new RuntimeException($e->getMessage()); }
+        if ($campo === 'alt') $r = media_alt_salva((string)$p['media_url'], $v);
+        else {
+            // 2.38.0: titolo, didascalia, descrizione nei dati della foto (gli altri campi restano come sono).
+            require_once cms_radice() . '/includes/media-dati.php';
+            $k = aic_campo_media($campo);
+            $r = media_dati_salva((string)$p['media_url'], [$k => $v], [$k]);
+        }
         if (isset($r['errore'])) throw new RuntimeException($r['errore']);
     } else {
         $r = contenuti_leggi($tipo, (int)$p['contenuto_id']);
