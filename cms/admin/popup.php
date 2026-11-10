@@ -46,6 +46,26 @@ $moduli = editor_moduli_disponibili();
 require_once __DIR__ . '/includes/admin-header.php';
 ?>
 <link rel="stylesheet" href="<?= pannello_file('assets/css/contenuti.css') ?>">
+<style>
+/* 2.39.0: le due carte di "Cosa mostra"; i campi semplici e il riquadro dell'editor si alternano senza JavaScript. */
+.pp-carte{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:.7rem;margin:0 0 .4rem;border:0;padding:0}
+@media (max-width:640px){.pp-carte{grid-template-columns:minmax(0,1fr)}}
+.pp-carte legend{font-size:.78rem;font-weight:600;color:var(--text-muted);margin-bottom:.35rem;padding:0}
+.sc-corpo label.pp-carta{display:flex;gap:.6rem;align-items:flex-start;margin:0;padding:.8rem .9rem;border:2px solid var(--bordo-campo);border-radius:10px;background:var(--campo);color:var(--text);cursor:pointer;font-weight:400;font-size:.88rem;min-height:44px}
+.pp-carta input{margin-top:.2rem;accent-color:var(--coral)}
+.pp-carta b{display:block;font-size:.92rem}
+.pp-carta span{color:var(--text-muted);font-size:.8rem}
+.sc-corpo label.pp-carta:has(input:checked){border-color:var(--coral);background:var(--coral-light)}
+.pp-carta:has(input:focus-visible){outline:2px solid var(--coral);outline-offset:2px}
+.pp-scheda:has(#pp-c-editor:checked) .pp-campi{display:none}
+.pp-scheda:has(#pp-c-campi:checked) .pp-editor{display:none}
+.pp-stato-disegno{display:flex;gap:.5rem;align-items:center;flex-wrap:wrap;margin:.2rem 0 .7rem;font-size:.88rem}
+.pp-avviso{margin:.6rem 0 0;padding:.6rem .8rem;border-radius:8px;border:1px solid var(--attenzione-bordo);background:var(--mustard-light);color:var(--attenzione-testo);font-size:.85rem}
+.pp-avviso-breve{font-size:.76rem;color:var(--attenzione-testo)}
+.pp-anteprima{width:100%;height:520px;border:1px solid var(--border);border-radius:10px;background:var(--fondo-2);display:block}
+.pp-azioni{display:flex;gap:.5rem;flex-wrap:wrap;align-items:center}
+.pp-casella{display:flex !important;gap:.5rem;align-items:center;font-weight:400 !important;color:var(--text) !important;font-size:.88rem !important}
+</style>
 <?php if (!$p && !$nuovo): $tutti = popup_tutti(); ?>
 <div class="ct-testa"><p style="color:var(--text-muted);font-size:.88rem;margin:0">Una finestra che compare sopra la pagina: dopo qualche secondo, a una certa profondità, o quando il mouse esce. Chi la chiude non la rivede per i giorni che scegli.</p><a href="popup.php?nuovo=1" class="btn btn-primary">+ Nuovo popup</a></div>
 <div class="admin-table-wrap ct-tabella">
@@ -77,26 +97,6 @@ require_once __DIR__ . '/includes/admin-header.php';
   $modifiche = popup_modello_modifiche($m);
   $anteprima = $v['id'] ? cms_sito_base() . '/?preview=1&popup_prova=' . (int)$v['id'] : '';
 ?>
-<style>
-/* 2.39.0: le due carte di "Cosa mostra"; i campi semplici e il riquadro dell'editor si alternano senza JavaScript. */
-.pp-carte{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:.7rem;margin:0 0 .4rem;border:0;padding:0}
-@media (max-width:640px){.pp-carte{grid-template-columns:minmax(0,1fr)}}
-.pp-carte legend{font-size:.78rem;font-weight:600;color:var(--text-muted);margin-bottom:.35rem;padding:0}
-.sc-corpo label.pp-carta{display:flex;gap:.6rem;align-items:flex-start;margin:0;padding:.8rem .9rem;border:2px solid var(--bordo-campo);border-radius:10px;background:var(--campo);color:var(--text);cursor:pointer;font-weight:400;font-size:.88rem;min-height:44px}
-.pp-carta input{margin-top:.2rem;accent-color:var(--coral)}
-.pp-carta b{display:block;font-size:.92rem}
-.pp-carta span{color:var(--text-muted);font-size:.8rem}
-.sc-corpo label.pp-carta:has(input:checked){border-color:var(--coral);background:var(--coral-light)}
-.pp-carta:has(input:focus-visible){outline:2px solid var(--coral);outline-offset:2px}
-.pp-scheda:has(#pp-c-editor:checked) .pp-campi{display:none}
-.pp-scheda:has(#pp-c-campi:checked) .pp-editor{display:none}
-.pp-stato-disegno{display:flex;gap:.5rem;align-items:center;flex-wrap:wrap;margin:.2rem 0 .7rem;font-size:.88rem}
-.pp-avviso{margin:.6rem 0 0;padding:.6rem .8rem;border-radius:8px;border:1px solid var(--attenzione-bordo);background:var(--mustard-light);color:var(--attenzione-testo);font-size:.85rem}
-.pp-avviso-breve{font-size:.76rem;color:var(--attenzione-testo)}
-.pp-anteprima{width:100%;height:520px;border:1px solid var(--border);border-radius:10px;background:var(--fondo-2);display:block}
-.pp-azioni{display:flex;gap:.5rem;flex-wrap:wrap;align-items:center}
-.pp-casella{display:flex !important;gap:.5rem;align-items:center;font-weight:400 !important;color:var(--text) !important;font-size:.88rem !important}
-</style>
 <form method="post" class="pp-scheda">
   <?= csrf_field() ?><input type="hidden" name="id" value="<?= (int)$v['id'] ?>">
   <div class="sc-griglia">

@@ -970,3 +970,20 @@ redattore, 390 px.
 3. Atteso (2.38.0): 58 su 58 in radice e in cartella. Alla fine toglie pagine, dati e foto di prova.
 
 Gli attacchi sono il gruppo 52 di `tools/sicurezza-prova.js` (13, con `CMS_DIR`).
+
+## prova-popup-editor.js
+
+I popup costruiti con l'editor visuale (2.39.0): scheda con le due carte, "Apri nell'editor" e la tela con la finestra, popup
+acceso con il disegno non pubblicato (non esce), disegno con Titolo, Testo, Immagine, Pulsanti con `#chiudi` e un Form pubblicato
+dall'editor, comparsa dopo i secondi, X, Esc e `#chiudi` con la memoria dei giorni, Tab dentro la finestra, form con un errore che
+riapre il popup, larghezze e quattro posizioni misurate, telefono a 390 px, schermo basso, finestra senza fondo, meno movimento,
+elenco, versioni, Header e footer, eliminazione.
+
+1. Un CMS con un form acceso (il kit Attività: `prove/prova-kit.js ... attivita ...`). Lascia popup e modelli di prova: va su un
+   sito da buttare.
+2. Per il popup a campi identico al byte: sul sito 2.38.0 un popup a campi acceso (id N), poi
+   `node prove/prova-popup-editor.js impronta <base> N > prima.txt`, poi l'aggiornamento (`prove/prova-aggiornamento.js`).
+3. `[PRIMA=prima.txt CAMPI=N] node prove/prova-popup-editor.js <base> <cartella del CMS> <utente> <password> [cartella foto]`
+   (usa `prove/popup-cli.php`). Il `?v=` dei file cambia a ogni aggiornamento ed è l'unica cosa che il confronto toglie.
+4. Atteso (2.39.0): 63 su 63 (62 senza PRIMA), in radice e in cartella. Con `php -S` dopo una copia dei file a mano opcache tiene
+   i file vecchi: si riaccende il server (dal pannello Aggiornamenti il motore chiama `opcache_invalidate`).
