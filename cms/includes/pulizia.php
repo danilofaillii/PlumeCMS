@@ -707,7 +707,7 @@ function pulizia_media_controlla(): array {
         if (!isset($gruppi[$k])) $gruppi[$k] = ['nome' => '', 'url' => '', 'byte' => 0, 'data' => 0, 'file' => 0, 'membri' => [], 'rel' => [], 'stem' => $stem, 'strano' => false];
         $g = &$gruppi[$k];
         $g['membri'][] = $url; $g['rel'][] = $rel; $g['file']++; $g['byte'] += (int)$m['peso'];
-        $webp = media_percorso_webp_pulizia($url);
+        $webp = pulizia_webp_di($url);
         if ($webp !== null && is_file($webp)) $g['byte'] += (int)@filesize($webp);
         $g['data'] = max($g['data'], (int)$m['tempo']);
         if (!$m['miniatura'] || $g['url'] === '') { if (!$m['miniatura'] || $g['nome'] === '') { $g['nome'] = $rel; $g['url'] = $url; } }
@@ -808,7 +808,7 @@ function pulizia_media_controlla(): array {
 }
 
 /** Il percorso sul disco della WebP accanto a un'immagine JPEG o PNG della libreria (foto.jpg.webp), o null. */
-function media_percorso_webp_pulizia(string $url): ?string {
+function pulizia_webp_di(string $url): ?string {
     if (!preg_match('/\.(jpe?g|png)$/i', $url)) return null;
     $up = rtrim(cms_uploads_url(), '/');
     if (!str_starts_with($url, $up . '/')) return null;
@@ -1112,7 +1112,7 @@ function pulizia_esegui_media(array $piano, array $p, array $r): array {
         $membri = (array)($e['membri'] ?? []);
         $tolti = 0;
         foreach ($membri as $url) {
-            $webp = media_percorso_webp_pulizia($url);
+            $webp = pulizia_webp_di($url);
             $peso = 0;
             $disco = pulizia_media_disco($url);
             if ($disco !== null && is_file($disco)) $peso += (int)@filesize($disco);
