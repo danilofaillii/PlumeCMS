@@ -221,6 +221,7 @@ async function contrastoParole(pg) {
     const terzi = (r ? r.voci.join(' ') : '').match(/brevo|google|wordpress|linkedin|facebook|instagram|whatsapp|telegram|mailgun|amazon|dropbox|indexnow|search console|gnu|claude|chatgpt|openai|anthropic|openverse|pexels|unsplash/gi) || [];
     ok('Scarica: nelle novità nessun nome di aziende terze', r && terzi.length === 0, terzi);
     if ((([a, b]) => a > 2 || (a === 2 && b >= 36))(V.split('.').map(Number))) ok('Scarica (2.36.0): fra le novità le pagine per zona senza limite', r && r.voci.some(x => /^2\.36\.0: Pagine per zona senza limite/.test(x)), r && r.voci);
+    if ((([a, b]) => a > 2 || (a === 2 && b >= 39))(V.split('.').map(Number))) ok('Scarica (2.39.0): fra le novità i popup costruiti con l\'editor visuale', r && r.voci.some(x => /^2\.39\.0: Popup costruiti con l'editor visuale/.test(x)), r && r.voci);
     ok('Scarica: le novità finiscono non oltre il riquadro Cosa serve', r && r.fondo <= r.sinistra + 2, r && { fondo: r.fondo, sinistra: r.sinistra }); }
   // 2.6.0: il blocco del pannello più chiaro in Funzionalità, con la sua schermata caricata; il logo di header e footer dallo Stile.
   await v.goto(B + '/funzionalita/', { waitUntil: 'networkidle' });
@@ -253,6 +254,7 @@ async function contrastoParole(pg) {
   ok('Funzionalità (2.34.0): nel blocco degli addon la riga AI collegate rimanda alla fascia, senza ripetere tutto', /AI collegate/.test(await v.locator('#addon').innerText()) && await v.locator('#addon a[href$="#ai"]').count() === 1 && !/Impara lo stile|Rivede anche i menu/.test(await v.locator('#addon').innerText()));
   ok('Funzionalità (2.37.0): Cambia database è una riga dentro la sicurezza, non un blocco nuovo (dieci caratteristiche)', /Cambia database/.test(await v.locator('#sicurezza').innerText()) && /database di prima resta intatto/.test(await v.locator('#sicurezza').innerText()) && await v.locator('#cambia-database, #cambia-db').count() === 0);
   ok('Funzionalità (2.38.0): la Pulizia è una riga dentro la sicurezza, non un blocco nuovo (dieci caratteristiche)', /Pulizia: il pannello ti dice quanto pesano/.test(await v.locator('#sicurezza').innerText()) && await v.locator('#pulizia').count() === 0);
+  ok('Funzionalità (2.39.0): i popup con l\'editor visuale sono una riga dentro i form, non un blocco nuovo (dieci caratteristiche)', /I popup li costruisci con l'editor visuale/.test(await v.locator('#form').innerText()) && await v.locator('#popup, #popup-editor').count() === 0);
   ok('Funzionalità (2.38.0): la scheda delle foto è una riga dentro la SEO, non un blocco nuovo (dieci caratteristiche)', /Ogni foto ha la sua scheda/.test(await v.locator('#seo').innerText()) && /Google Immagini/.test(await v.locator('#seo').innerText()) && await v.locator('#dati-immagini, #immagini').count() === 0);
   ok('Header e footer (2.6.0): il logo è quello dello Stile del sito', await v.evaluate(() => [...document.querySelectorAll('.marchio img')].length >= 2 && [...document.querySelectorAll('.marchio img')].every(i => /marchio/.test(i.getAttribute('src')))));
   // 2.5.0: la pagina Temi con le stagioni e le tinte piene, ogni immagine caricata.

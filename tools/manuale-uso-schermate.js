@@ -756,7 +756,8 @@ capitoli['18e'] = async () => {
   await p.check('#pp-c-editor'); await dorme(200);
   await p.selectOption('#pp-larghezza', 'media');
   await p.selectOption('[name=innesco]', 'secondi'); await p.fill('[name=valore]', '5');
-  await foto('18-popup-editor', { clip: { x: 240, y: 56, width: 960, height: 620 }, segni: [{ sel: '#pp-c-editor', n: 1 }, { sel: '#pp-apri-editor', n: 2 }, { sel: '#pp-larghezza', n: 3 }, { sel: '#pp-posizione', n: 4 }] });
+  const fondo18 = await p.locator('#pp-posizione').boundingBox();
+  await foto('18-popup-editor', { clip: { x: 240, y: 56, width: 960, height: Math.round(fondo18.y + fondo18.height + 40 - 56) }, segni: [{ sel: '#pp-c-editor', n: 1 }, { sel: '#pp-apri-editor', n: 2 }, { sel: '#pp-larghezza', n: 3 }, { sel: '#pp-posizione', n: 4 }] });
   await Promise.all([p.waitForNavigation(), p.click('#pp-apri-editor')]);
   const mid = +(p.url().match(/id=(\d+)/) || [0, 0])[1];
   if (!mid) throw new Error('18e: "Apri nell\'editor" non apre l\'editor');

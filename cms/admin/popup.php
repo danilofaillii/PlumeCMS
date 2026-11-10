@@ -150,6 +150,15 @@ require_once __DIR__ . '/includes/admin-header.php';
         <div style="display:flex;gap:.5rem;margin-top:.8rem;flex-wrap:wrap"><button type="submit" class="btn btn-primary">Salva</button><a class="btn btn-secondary" href="popup.php">Elenco</a></div>
         <?php if ($v['id']): ?><div style="margin-top:.6rem;text-align:right"><button type="submit" class="sc-cestina" name="azione" value="elimina" data-conferma="Eliminare il popup<?= $m ? ' e il suo disegno' : '' ?>?" data-conferma-pericolo data-conferma-ok="Elimina il popup">Elimina</button></div><?php endif; ?>
       </div></div>
+      <div class="sc-scatola"><h3>Dove e quando</h3><div class="sc-corpo">
+        <label for="pp-dove">Su quali pagine</label>
+        <select name="dove" id="pp-dove"><?php foreach (POPUP_DOVE as $k => $n): ?><option value="<?= $k ?>" <?= $v['dove'] === $k ? 'selected' : '' ?>><?= h($n) ?></option><?php endforeach; ?></select>
+        <label for="pp-percorsi">Indirizzi (uno per riga, solo per "indirizzi elencati")</label><textarea name="percorsi" id="pp-percorsi" rows="3" placeholder="/contatti/&#10;/servizi/" data-link-sito="riga"><?= h($v['percorsi']) ?></textarea>
+        <label for="pp-innesco">Quando compare</label>
+        <select name="innesco" id="pp-innesco"><?php foreach (POPUP_INNESCHI as $k => $n): ?><option value="<?= $k ?>" <?= $v['innesco'] === $k ? 'selected' : '' ?>><?= h($n) ?></option><?php endforeach; ?></select>
+        <label for="pp-valore">Secondi, oppure percentuale della pagina</label><input type="number" name="valore" id="pp-valore" value="<?= (int)$v['valore'] ?>" min="0" max="600">
+        <label for="pp-giorni">Ogni quanti giorni la stessa persona lo rivede (0 = sempre)</label><input type="number" name="frequenza_giorni" id="pp-giorni" value="<?= (int)$v['frequenza_giorni'] ?>" min="0" max="365">
+      </div></div>
       <div class="sc-scatola"><h3>Aspetto della finestra</h3><div class="sc-corpo">
         <label for="pp-larghezza">Larghezza</label>
         <select name="larghezza" id="pp-larghezza"><?php foreach (POPUP_LARGHEZZE as $k => $n): ?><option value="<?= h($k) ?>" <?= $v['larghezza'] === $k ? 'selected' : '' ?>><?= h($n) ?></option><?php endforeach; ?></select>
@@ -159,15 +168,6 @@ require_once __DIR__ . '/includes/admin-header.php';
         <input type="hidden" name="sfondo_finestra" value="0">
         <label class="pp-casella" style="margin-top:.7rem"><input type="checkbox" name="sfondo_finestra" value="1" <?= $v['sfondo_finestra'] ? 'checked' : '' ?>> Finestra con il fondo, il bordo e il margine</label>
         <p class="hint">Togli la spunta se il disegno ha già il suo fondo: allora decide tutto il disegno.</p>
-      </div></div>
-      <div class="sc-scatola"><h3>Dove e quando</h3><div class="sc-corpo">
-        <label for="pp-dove">Su quali pagine</label>
-        <select name="dove" id="pp-dove"><?php foreach (POPUP_DOVE as $k => $n): ?><option value="<?= $k ?>" <?= $v['dove'] === $k ? 'selected' : '' ?>><?= h($n) ?></option><?php endforeach; ?></select>
-        <label for="pp-percorsi">Indirizzi (uno per riga, solo per "indirizzi elencati")</label><textarea name="percorsi" id="pp-percorsi" rows="3" placeholder="/contatti/&#10;/servizi/" data-link-sito="riga"><?= h($v['percorsi']) ?></textarea>
-        <label for="pp-innesco">Quando compare</label>
-        <select name="innesco" id="pp-innesco"><?php foreach (POPUP_INNESCHI as $k => $n): ?><option value="<?= $k ?>" <?= $v['innesco'] === $k ? 'selected' : '' ?>><?= h($n) ?></option><?php endforeach; ?></select>
-        <label for="pp-valore">Secondi, oppure percentuale della pagina</label><input type="number" name="valore" id="pp-valore" value="<?= (int)$v['valore'] ?>" min="0" max="600">
-        <label for="pp-giorni">Ogni quanti giorni la stessa persona lo rivede (0 = sempre)</label><input type="number" name="frequenza_giorni" id="pp-giorni" value="<?= (int)$v['frequenza_giorni'] ?>" min="0" max="365">
       </div></div>
     </aside>
   </div>
