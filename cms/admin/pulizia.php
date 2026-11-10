@@ -138,7 +138,7 @@ require_once __DIR__ . '/includes/admin-header.php';
   <h3>Pulizia fatta: liberati <?= h(pulizia_peso((int)$resoconto['byte'])) ?></h3>
   <ul class="pul-riepilogo" role="status">
     <?php foreach ($resoconto['voci'] as $r): ?>
-      <li><b><?= h($r['titolo']) ?></b>: <?= h($r['messaggio']) ?><?= $r['byte'] ? ' Liberati ' . h(pulizia_peso((int)$r['byte'])) . '.' : '' ?>
+      <li><b><?= h($r['titolo']) ?></b>: <?= h(rtrim($r['messaggio'], '.') . '.') ?><?= $r['byte'] ? ' Liberati ' . h(pulizia_peso((int)$r['byte'])) . '.' : '' ?>
         <?php foreach ((array)$r['errori'] as $e): ?><br><span class="errore-campo" role="alert"><?= h($e) ?></span><?php endforeach; ?></li>
     <?php endforeach; ?>
   </ul>

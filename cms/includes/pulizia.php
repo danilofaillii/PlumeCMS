@@ -22,6 +22,7 @@
 
 require_once __DIR__ . '/aggiornamenti.php';
 require_once __DIR__ . '/copia-sito.php';
+if (is_file(__DIR__ . '/cambia-db.php')) require_once __DIR__ . '/cambia-db.php'; // CAMBIADB_GUARDIA: si tolgono solo le copie scritte dal cambio
 
 /** Oltre questo peso recuperabile la dashboard mostra l'avviso (200 MB). */
 const PULIZIA_SOGLIA_AVVISO = 209715200;
@@ -495,7 +496,7 @@ function pulizia_piano_log(array $p, array $piano): array {
     if (!is_dir($dir)) { $piano['riassunto'] = 'La cartella dei log è vuota.'; return $piano; }
     $limite = time() - $g * 86400;
     foreach ((array)@scandir($dir) as $n) {
-        if (!is_string($n) || $n === '.' || $n === '..' || in_array($n, PULIZIA_LOG_PROTETTI, true)) continue;
+        if (!is_string($n) || $n === '' || $n[0] === '.' || in_array($n, PULIZIA_LOG_PROTETTI, true)) continue; // mai i file nascosti (.htaccess, .gitkeep)
         $f = $dir . '/' . $n;
         if (!is_file($f) || is_link($f)) continue;
         $dim = (int)@filesize($f); $mt = (int)@filemtime($f);
@@ -971,7 +972,7 @@ function pulizia_esegui_log(array $piano, array $p, array $r): array {
     $dir = pulizia_log_dir();
     foreach (pulizia_proposti($piano) as $e) {
         $n = basename((string)$e['chiave']);
-        if (in_array($n, PULIZIA_LOG_PROTETTI, true)) continue;
+        if ($n === '' || $n[0] === '.' || in_array($n, PULIZIA_LOG_PROTETTI, true)) continue;
         $f = $dir . '/' . $n;
         if (!is_file($f) || !pulizia_dentro($f, $dir)) continue;
         if (in_array($n, PULIZIA_LOG_IN_USO, true)) {
