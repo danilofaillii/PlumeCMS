@@ -109,7 +109,7 @@ Sono gli unici in `cms/docs/`, nello zip, nel sito di plumeCMS e nella pagina Do
 - **Pacchetto di aggiornamento** per un'installazione esistente:
   `python3 tools/cms-pacchetto.py --aggiornamento`. Si carica dal pannello,
   Impostazioni, Aggiornamenti.
-- **Versione**: `cms/VERSIONE` (oggi 2.37.0; sempre tre numeri: "beta" va nel CHANGELOG, mai nel nome dello zip, se no la serie "ultima" del Download non lo riconosce) e una voce in `cms/CHANGELOG.md` a ogni
+- **Versione**: `cms/VERSIONE` (oggi 2.38.0; sempre tre numeri: "beta" va nel CHANGELOG, mai nel nome dello zip, se no la serie "ultima" del Download non lo riconosce) e una voce in `cms/CHANGELOG.md` a ogni
   zip con contenuto diverso. Mai cambiare il contenuto di una versione già data.
 - **Prove** prima di dire finito:
   - `php -n -d short_open_tag=1 -l` su ogni file PHP toccato, `node --check` sui js;
@@ -167,6 +167,25 @@ Le decisioni complete, con data e perché, stanno nel second brain, `plumecms/de
 - **Nome: plumeCMS** (26 ottobre 2026).
 
 ## Stato al 31 ottobre 2026
+
+Fatto: plumeCMS 2.38.0 (10 novembre, 12:43-14:10): **Pulizia e dati delle immagini** (richieste di Danilo: "pulizia: fa un check di cosa c'è
+di eliminabile e propone la cancellazione totale o parziale, indicando il peso per ogni voce, compreso il DB" e "dati per le immagini: alt, descrizione,
+altro"). Due agenti in parallelo nelle worktree `/home/user/wt-pulizia` (ramo `pulizia`, 12:46-13:31) e `/home/user/wt-img` (ramo `immagini`, 12:46-13:41),
+uniti da me (conflitti in CHANGELOG, manuale tecnico, `prova-sito-plumecms.js`, `sicurezza-prova.js`, NOVITA). **Pulizia** (`includes/pulizia.php`,
+`admin/pulizia.php`, Impostazioni > Pulizia, solo admin): file (pacchetti applicati, snapshot tieni N, copie, file messi da parte, avanzi del cambio database,
+log, file dei contatti), database (versioni dell'editor tieni N mai pubblicate o con nota, cestino, righe vecchie dei registri senza accessi e blocchi,
+tabelle `rip`/`vec` solo del sito, Ottimizza), immagini non usate a richiesta (cerca il percorso in tutte le colonne di testo e nei temi; i "forse usati"
+non si propongono), riepilogo, password, resoconto, avviso in dashboard oltre 200 MB; niente si cancella da solo. Manuale tecnico 50, `prove/prova-pulizia.js`
+48 (con `pulizia-cli.php`), gruppo 51. **Dati delle immagini** (`includes/media-dati.php`, `admin/includes/media-scheda.php`, `media-scheda.js`): scheda
+della foto in Media (alt, titolo, didascalia, descrizione, autore, licenza, fonte, dove è usata), colonne nuove di `media_alt`, Media > Dati delle immagini
+(era Senza alt), interruttore "Mostra la didascalia della libreria" in Immagine e Galleria, ImageObject nell'immagine principale del JSON-LD, nome leggibile
+al caricamento, AI collegate `list_media` e `propose_media_data` (`addon/ai-collegate/includes/immagini.php`); corretto og:image con la cartella ripetuta
+tre volte (`sito_immagine()`). Manuale tecnico 51, `prove/prova-immagini.js` 58, gruppo 52. Prove mie sullo zip (`$S/v20/batteria.sh`, 13:43-14:01): install
+38/38 radice e cartella, kit, immagini 58/58 e pulizia 48/48 su MySQL 8 radice e cartella, **MariaDB 10.6 e MySQL 5.7**, strumenti SEO 71/71, AI 90/90,
+aggiornamento 2.37.0 -> 2.38.0 13/13 con 0 foto su 20, pulizia sul sito aggiornato 47/48 per un difetto della prova (righe di accesso seminate a 200 giorni
+che `sicurezza.php:179` toglie da sé una volta su 200 oltre i 180: seminate a 150) poi 48/48 due volte, attacchi 561/561, pacchetto unico 13/13, sito di
+plumeCMS 134/134, zero errori fatali. PDF 13537 KB (tetto 14 MB: margine 800 KB), zip 2684 KB. **Non provato**: hosting vero con cartelle enormi, un
+validatore di Google sull'ImageObject, Claude vero sugli strumenti nuovi.
 
 Fatto: plumeCMS 2.37.0 (9 novembre, 13:29-15:40): **Cambia database** in Impostazioni (richiesta di Danilo: "migrare tutto il db su un altro DB e
 a fine copia utilizzare il nuovo DB"). Agente nella worktree `/home/user/wt-db`, ramo `cambia-db` (13:30-14:46, in parallelo alla 2.36.0), unito da me alla
