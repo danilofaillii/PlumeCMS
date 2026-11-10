@@ -29,6 +29,15 @@ $immagine = function (string $f, string $tipo = 'png') {
 $pdo = db();
 
 if ($cmd === 'semina') {
+    // prima togli i resti di una semina di prima (la prova si può rilanciare sullo stesso sito)
+    versioni_pronto(); sicurezza_schema();
+    $pdo->exec('DELETE FROM ' . tbl('editor_versioni') . ' WHERE oggetto_id IN (900001, 900002)');
+    $pdo->exec('DELETE FROM ' . tbl('pages') . " WHERE slug IN ('pulizia-vecchia-cestino', 'pulizia-recente-cestino')");
+    $pdo->exec('DELETE FROM ' . tbl('sicurezza_log') . " WHERE utente = 'pul'");
+    $pdo->exec('DELETE FROM ' . tbl('sicurezza_tentativi') . " WHERE chiave LIKE 'pulprova:%'");
+    try { $pdo->exec('DELETE FROM ' . tbl('seo_log') . " WHERE servizio = 'prova' AND azione = 'pulizia'"); } catch (Throwable $e) {}
+    try { $pdo->exec('DELETE FROM ' . tbl('newsletter_esportazioni') . " WHERE descrizione LIKE 'prova pulizia%'"); } catch (Throwable $e) {}
+    try { $pdo->exec('DROP TABLE IF EXISTS `' . DB_PREFIX . 'pulprova_vuota`'); } catch (Throwable $e) {}
     // snapshot: 5, uno al giorno, 100 KB ciascuno
     for ($i = 1; $i <= 5; $i++) {
         $id = sprintf('202611%02d-100000-prova-pulizia-%d', $i, $i);

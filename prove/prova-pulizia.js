@@ -35,8 +35,11 @@ const PUL = B + '/admin/pulizia.php';
   ok('ogni voce ha peso (le stime del database: il numero) e numero uguali al calcolo del server da riga di comando (' + Object.keys(voci).length + ' voci)', diversi.length === 0, diversi.map(k => [k, voci[k], piani[k].byte, piani[k].n]));
   // pesi confrontati con il disco (come du)
   const snapDir = path.join(DIR, 'aggiornamenti', 'snapshot');
-  const duSnap = ['20261101-100000-prova-pulizia-1', '20261102-100000-prova-pulizia-2'].reduce((t, s) => t + du(path.join(snapDir, s)), 0);
-  ok('snapshot: la proposta "tieni gli ultimi 3" toglie i due più vecchi, peso uguale al disco', voci.snapshot.n === 2 && voci.snapshot.byte === duSnap, [voci.snapshot, duSnap]);
+  // gli snapshot del sito (anche quello vero di un aggiornamento, su un sito aggiornato), dal più recente
+  const snapTutti = fs.readdirSync(snapDir).filter(d => fs.existsSync(path.join(snapDir, d, 'meta.json'))).map(d => ({ d, c: JSON.parse(fs.readFileSync(path.join(snapDir, d, 'meta.json'), 'utf8')).creato })).sort((a, b) => b.c.localeCompare(a.c)).map(x => x.d);
+  const snapTieni = snapTutti.slice(0, 3).sort(), snapVia = snapTutti.slice(3);
+  const duSnap = snapVia.reduce((t, s) => t + du(path.join(snapDir, s)), 0);
+  ok('snapshot: la proposta "tieni gli ultimi 3" toglie i più vecchi (' + snapVia.length + ' su ' + snapTutti.length + '), peso uguale al disco', voci.snapshot.n === snapVia.length && snapVia.length >= 2 && voci.snapshot.byte === duSnap, [voci.snapshot, duSnap]);
   const copieDir = path.join(DIR, 'aggiornamenti', 'copie');
   const duCopie = ['copia-20261101-080000-prova.zip', 'copia-20261102-080000-prova.zip'].reduce((t, f) => t + fs.statSync(path.join(copieDir, f)).size, 0);
   ok('copie: proposte tutte tranne la più recente, peso uguale al disco', voci.copie.n === 2 && voci.copie.byte === duCopie, [voci.copie, duCopie]);
@@ -79,7 +82,7 @@ const PUL = B + '/admin/pulizia.php';
   await p.check('#voce-snapshot input[name="voci[]"]');
   await p.evaluate(() => { const i = document.querySelector('#pul-snapshot-n'); i.removeAttribute('min'); i.value = '-1'; });
   await p.click('button:has-text("Prepara il riepilogo")'); await p.waitForLoadState('networkidle');
-  ok('"tieni gli ultimi -1": errore sotto il campo, niente riepilogo, niente tolto', await p.locator('#pul-snapshot-n-errore').count() === 1 && await p.locator('#riepilogo').count() === 0 && cli('stato').snapshot.length === 5);
+  ok('"tieni gli ultimi -1": errore sotto il campo, niente riepilogo, niente tolto', await p.locator('#pul-snapshot-n-errore').count() === 1 && await p.locator('#riepilogo').count() === 0 && cli('stato').snapshot.length === snapTutti.length);
 
   // 5. blocco con un ripristino in corso
   cli('marcatore', 'on');
@@ -100,17 +103,17 @@ const PUL = B + '/admin/pulizia.php';
   await p.click('button:has-text("Prepara il riepilogo")'); await p.waitForLoadState('networkidle');
   const riep = await p.locator('#riepilogo').innerText().catch(() => '');
   ok('riepilogo: "Stai per togliere", le voci, "Per un totale di", la password chiesta', /Stai per togliere/.test(riep) && /Per un totale di/.test(riep) && /Snapshot degli aggiornamenti/.test(riep) && await p.locator('#pul-password').count() === 1, riep.slice(0, 200));
-  ok('riepilogo: niente è stato ancora tolto', cli('stato').snapshot.length === 5);
+  ok('riepilogo: niente è stato ancora tolto', cli('stato').snapshot.length === snapTutti.length);
   await p.fill('#pul-password', 'sbagliata-davvero');
   await p.click('button:has-text("Togli adesso")'); await p.waitForLoadState('networkidle');
   const st1 = cli('stato');
-  ok('password sbagliata: errore sotto il campo e niente tolto', await p.locator('#pul-password-errore').count() === 1 && st1.snapshot.length === 5 && st1.copie.length === 3 && st1.lavoro.length === 4, [st1.snapshot.length, st1.copie.length]);
+  ok('password sbagliata: errore sotto il campo e niente tolto', await p.locator('#pul-password-errore').count() === 1 && st1.snapshot.length === snapTutti.length && st1.copie.length === 3 && st1.lavoro.length === 4, [st1.snapshot.length, st1.copie.length]);
   await p.fill('#pul-password', PW);
   await p.click('button:has-text("Togli adesso")'); await p.waitForLoadState('networkidle');
   const reso = await p.locator('#resoconto').innerText().catch(() => '');
   ok('resoconto: "Pulizia fatta: liberati ..." con le voci', /Pulizia fatta: liberati/.test(reso) && /snapshot tolti/.test(reso) && /ottimizzat.*prima .*dopo /.test(reso), reso.slice(0, 300));
   const st = cli('stato');
-  ok('snapshot: restano gli ultimi 3', JSON.stringify(st.snapshot) === JSON.stringify(['20261103-100000-prova-pulizia-3', '20261104-100000-prova-pulizia-4', '20261105-100000-prova-pulizia-5']), st.snapshot);
+  ok('snapshot: restano gli ultimi 3', JSON.stringify(st.snapshot.slice().sort()) === JSON.stringify(snapTieni), [st.snapshot, snapTieni]);
   ok('pacchetti: resta solo quello in attesa', st.pacchetti.filter(f => /vecchio/.test(f)).length === 0 && st.pacchetti.includes('20261103-090000-in-attesa.zip'), st.pacchetti);
   ok('copie: resta la più recente', JSON.stringify(st.copie.filter(f => /^copia-/.test(f))) === JSON.stringify(['copia-20261103-080000-prova.zip']), st.copie);
   ok('file messi da parte: tolti', st.scarto.length === 0, st.scarto);
