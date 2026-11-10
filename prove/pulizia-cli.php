@@ -92,7 +92,8 @@ if ($cmd === 'semina') {
     $pdo->prepare('INSERT INTO ' . tbl('pages') . " (title, slug, status, html, cestino) VALUES ('Pulizia recente nel cestino', 'pulizia-recente-cestino', 'draft', '', DATE_SUB(NOW(), INTERVAL 5 DAY))")->execute();
     // registri
     sicurezza_schema();
-    $pdo->exec('INSERT INTO ' . tbl('sicurezza_log') . " (evento, utente, ip, dettagli, creato) VALUES ('csrf_rifiutato', 'pul', '1.2.3.4', 'vecchio', DATE_SUB(NOW(), INTERVAL 200 DAY)), ('csrf_rifiutato', 'pul', '1.2.3.4', 'vecchio 2', DATE_SUB(NOW(), INTERVAL 120 DAY)), ('login', 'pul', '1.2.3.4', 'accesso vecchio da tenere', DATE_SUB(NOW(), INTERVAL 200 DAY)), ('blocco', 'pul', '1.2.3.4', 'ip:9.9.9.9 blocco vecchio da tenere', DATE_SUB(NOW(), INTERVAL 200 DAY))");
+    // accessi e blocchi a 150 giorni: oltre i 90 della pulizia, sotto i 180 dopo cui sicurezza.php li toglie da solo (una volta su 200)
+    $pdo->exec('INSERT INTO ' . tbl('sicurezza_log') . " (evento, utente, ip, dettagli, creato) VALUES ('csrf_rifiutato', 'pul', '1.2.3.4', 'vecchio', DATE_SUB(NOW(), INTERVAL 200 DAY)), ('csrf_rifiutato', 'pul', '1.2.3.4', 'vecchio 2', DATE_SUB(NOW(), INTERVAL 120 DAY)), ('login', 'pul', '1.2.3.4', 'accesso vecchio da tenere', DATE_SUB(NOW(), INTERVAL 150 DAY)), ('blocco', 'pul', '1.2.3.4', 'ip:9.9.9.9 blocco vecchio da tenere', DATE_SUB(NOW(), INTERVAL 150 DAY))");
     $pdo->exec('INSERT INTO ' . tbl('sicurezza_tentativi') . " (chiave, falliti, ultimo, bloccato_fino) VALUES ('pulprova:vecchio', 2, DATE_SUB(NOW(), INTERVAL 3 DAY), NULL), ('pulprova:bloccato', 9, DATE_SUB(NOW(), INTERVAL 3 DAY), DATE_ADD(NOW(), INTERVAL 1 DAY))");
     require_once $R . '/includes/seo.php';
     if (function_exists('seo_schema')) seo_schema();
