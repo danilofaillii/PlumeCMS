@@ -28,6 +28,9 @@ Il prodotto si chiama **plumeCMS** (nome scelto il 26 ottobre 2026; prima, per p
 - **AI collegate**: `import_photo` scrive anche titolo, autore, licenza e fonte nella scheda della foto; strumenti nuovi
   `list_media` (le immagini con i dati e cosa manca, a pagine, con i filtri) e `propose_media_data` (alt, titolo, didascalia e
   descrizione per fino a 50 immagini in una chiamata, raggruppate in Proposte sotto "Dati delle immagini", con Approva tutte).
+- Corretto: in un sito installato in una cartella l'immagine per i social (og:image) e l'immagine dei dati per Google di un
+  articolo o di una pagina uscivano con la cartella ripetuta (`/test/test/test/uploads/...`). Nella radice del dominio non
+  cambia niente.
 - Prove: `prove/prova-immagini.js`, gruppo 52 degli attacchi.
 
 ## 2.37.0 (9 novembre 2026) - Cambia database

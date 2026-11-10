@@ -394,7 +394,8 @@ function media_dati_image_object(string $url): array {
     if (!$d) return [];
     $pieni = array_filter([$d['titolo'], $d['didascalia'], $d['descrizione'], $d['autore'], $d['licenza'], $d['licenza_url'], $d['fonte_url']], fn($x) => $x !== '');
     if (!$pieni) return []; // solo l'archivio di provenienza, niente da dire a Google
-    $ass = preg_match('~^https?://~', $url) ? $url : (defined('SITO_URL') ? SITO_URL : cms_url_sito()) . (str_starts_with($url, '/') ? '' : '/') . $url;
+    // L'indirizzo assoluto dalla chiave (percorso senza la cartella del CMS): origine, cartella del CMS, percorso.
+    $ass = preg_match('~^https?://~', $k) ? $k : preg_replace('~^(https?://[^/]+).*$~', '$1', defined('SITO_URL') ? SITO_URL : cms_url_sito()) . cms_base() . $k;
     $info = media_dati_file_info($url);
     $lic = media_dati_licenze()[$d['licenza']] ?? ['', ''];
     $licenza = $d['licenza_url'] !== '' ? $d['licenza_url'] : $lic[1];

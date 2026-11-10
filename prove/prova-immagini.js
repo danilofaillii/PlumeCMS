@@ -117,6 +117,8 @@ const scheda = (u) => B + '/admin/media.php?immagine=' + encodeURIComponent(u);
   const hA = await (await p.request.get(B + art.percorso)).text();
   const ga = ldjson(hA); const ioA = (ga['@graph'].find(x => x['@type'] === 'WebPage') || {}).primaryImageOfPage || {};
   ok('articolo: ImageObject con creator Organization, copyrightNotice e senza license (diritti riservati senza pagina)', ioA.creator && ioA.creator['@type'] === 'Organization' && ioA.copyrightNotice === 'Studio Fotografico Prova' && !('license' in ioA) && ioA.caption === 'Didascalia di B nella libreria', ioA);
+  const og = (hA.match(/<meta property="og:image" content="([^"]+)"/) || [])[1] || '';
+  ok('og:image e ImageObject dell\'articolo con la cartella del sito una volta sola', og === new URL(B).origin + CART + '/uploads/pagine/2026/11/imgprova-b.jpg' && ioA.contentUrl === og, [og, ioA.contentUrl]);
   const h2 = await (await p.request.get(B + pag.percorso)).text();
   ok('galleria: B senza alt nel widget prende l\'alt della libreria e, con l\'interruttore, la didascalia', /imgprova-b\.jpg" alt="Alt di B nella libreria"/.test(h2) && /<figcaption>Didascalia di B nella libreria<\/figcaption>/.test(h2));
   ok('galleria: C con alt e didascalia nel widget li tiene', /imgprova-c\.jpg" alt="Alt di C nel widget"/.test(h2) && /<figcaption>Didascalia di C nel widget<\/figcaption>/.test(h2));
