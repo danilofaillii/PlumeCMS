@@ -83,7 +83,7 @@ if (!empty($_GET['anteprima'])) {
             [$dis, $cssDis] = editor_disegna($albero, '/');
             $GLOBALS['sito_senza_popup'] = true;
             $corpo = '<div class="wrap" style="padding:72px 0;text-align:center"><p style="opacity:.7">Sotto la finestra: la home. Il popup è aperto con la versione ' . (int)$v['id'] . ' del disegno.</p></div>'
-                . popup_html_editor($pp, $dis, $cssDis, '/', 0, true, '') . '<script src="' . sito_versione_asset('popup.js') . '" defer></script>';
+                . popup_html_editor($pp, $dis, $cssDis, '/', 0, true) . '<script src="' . sito_versione_asset('popup.js') . '" defer></script>';
             $html = vista_pagina(['titolo' => 'Anteprima della versione ' . (int)$v['id'], 'descrizione' => '', 'robots' => 'noindex', 'canonical' => '', 'og' => []], $corpo, '', '/');
             echo cms_con_cartella(preg_replace('~(<body[^>]*>)~', '$1' . $fascia, $html, 1));
             exit;

@@ -278,11 +278,8 @@ function popup_moduli_dentro(string $html, int $id, bool $tutti): string {
         : (string)preg_replace('/\b(id|aria-labelledby)="modulo(["-])/', '$1="popup-' . $id . '-modulo$2', $html);
 }
 
-/**
- * L'HTML dei popup per la pagina, più lo script. Vuoto se non ce ne sono.
- * $pagina (2.39.0): l'HTML della pagina già pronto, per non caricare due volte i fogli e gli script dei widget del disegno.
- */
-function popup_html(array $popup, string $percorso, string $pagina = ''): string {
+/** L'HTML dei popup per la pagina, più lo script. Vuoto se non ce ne sono. */
+function popup_html(array $popup, string $percorso): string {
     if (!$popup) return '';
     $h = '';
     $riapri = is_string($_GET['popup'] ?? null) ? (int)$_GET['popup'] : 0;
@@ -292,7 +289,7 @@ function popup_html(array $popup, string $percorso, string $pagina = ''): string
         if (($p['contenuto'] ?? 'campi') === 'editor') {
             $d = popup_disegno($p, $percorso, $prova);
             if ($d === null) continue;
-            $h .= popup_html_editor($p, $d[0], $d[1], $percorso, $riapri, $prova, $pagina . $h);
+            $h .= popup_html_editor($p, $d[0], $d[1], $percorso, $riapri, $prova);
             continue;
         }
         $modulo = $p['modulo'] !== '' ? vista_modulo($p['modulo'], $percorso) : '';
@@ -316,10 +313,10 @@ function popup_html(array $popup, string $percorso, string $pagina = ''): string
 
 /**
  * 2.39.0: un popup costruito con l'editor. Il disegno pubblicato con il suo CSS (come il riquadro di fine articolo, senza
- * <article>), i fogli e gli script dei widget che usa (gli stessi delle pagine, editor_asset_pagina), il pulsante Chiudi
+ * <article>; fogli e script dei widget li aggiunge la pagina, vista_asset_modelli), il pulsante Chiudi
  * sempre fuori dal disegno, il nome della finestra dal primo titolo del disegno (o dal nome del popup).
  */
-function popup_html_editor(array $p, string $html, string $css, string $percorso, int $riapri, bool $prova, string $gia): string {
+function popup_html_editor(array $p, string $html, string $css, string $percorso, int $riapri, bool $prova): string {
     $pid = (int)$p['id'];
     $html = popup_moduli_dentro($html, $pid, true);
     $conModulo = str_contains($html, 'name="popup" value="' . $pid . '"');
@@ -334,20 +331,13 @@ function popup_html_editor(array $p, string $html, string $css, string $percorso
         }
         $etichetta = ' aria-labelledby="' . h($tid) . '"';
     }
-    // I fogli e gli script dei widget usati, se la pagina (o un popup prima) non li ha già.
-    $testa = '';
-    $coda = '';
-    if (function_exists('editor_asset_pagina')) {
-        $asset = editor_asset_pagina($html);
-        foreach (array_reverse($asset['css'] ?? []) as $f) { $u = sito_versione_asset($f); if (!str_contains($gia, $u)) $testa .= '<link rel="stylesheet" href="' . $u . '">'; }
-        foreach ($asset['js'] ?? [] as $f) { $u = sito_versione_asset($f); if (!str_contains($gia, $u)) $coda .= '<script src="' . $u . '" defer></script>'; }
-    }
-    if ((function_exists('editor_serve_script') ? editor_serve_script($html) : false) && !str_contains($gia . $coda, 'editor-pagina.js')) $coda .= '<script src="' . sito_versione_asset('editor-pagina.js') . '" defer></script>';
+    // I fogli e gli script dei widget del disegno li carica la pagina (vista_asset_modelli in sito/viste.php, 2.38.1): guarda
+    // testata, corpo, popup e piede, e mette quelli che la testa non ha già. Qui basta il CSS del disegno.
     $stile = $css !== '' ? '<style id="ed-css-popup-' . $pid . '">' . str_replace('</', '<\\/', $css) . '</style>' : '';
-    return $testa . $stile
+    return $stile
         . '<div class="popup' . popup_classi($p, true) . '" id="popup-' . $pid . '" data-innesco="' . h($p['innesco']) . '" data-valore="' . (int)$p['valore'] . '" data-giorni="' . (int)$p['frequenza_giorni'] . '"' . ($subito ? ' data-subito="1"' : '') . ($prova ? ' data-prova="1"' : '') . ' hidden>'
         . '<div class="popup-finestra" role="dialog" aria-modal="' . (($p['posizione'] ?? 'centro') === 'centro' ? 'true' : 'false') . '"' . $etichetta . '>'
         . '<button type="button" class="popup-chiudi" aria-label="Chiudi">×</button>'
         . '<div class="popup-disegno ed-modello" data-modello="' . (int)$p['modello_id'] . '">' . $html . '</div>'
-        . '</div></div>' . $coda;
+        . '</div></div>';
 }
