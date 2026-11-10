@@ -40,10 +40,11 @@ const cli = (...a) => JSON.parse(execFileSync('php', [path.join(__dirname, 'asse
     ok(nome + ': nessun errore JavaScript', err.length === 0, err);
   }
   // Senza widget nei modelli la pagina non riceve fogli in più: lo stesso articolo con il riquadro spento.
+  // moduli.js può stare due volte (un form in pagina e uno in un popup): lo script lo sa e lavora una volta sola (sito/assets/moduli.js).
   cli('togli');
   const pg = await (await br.newContext()).newPage();
   await pg.goto(B + '/', { waitUntil: 'networkidle' });
-  const doppi = await pg.$$eval('link[rel=stylesheet],script[src]', l => { const v = l.map(x => x.getAttribute('href') || x.getAttribute('src')); return v.filter((x, i) => v.indexOf(x) !== i); });
+  const doppi = await pg.$$eval('link[rel=stylesheet],script[src]', l => { const v = l.map(x => x.getAttribute('href') || x.getAttribute('src')); return v.filter((x, i) => v.indexOf(x) !== i && !/\/moduli\.js/.test(x)); });
   ok('home: nessun foglio o script ripetuto', doppi.length === 0, doppi);
   await br.close();
   console.log(`${n - ko} su ${n} OK`);
