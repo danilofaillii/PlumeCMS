@@ -109,7 +109,7 @@ Sono gli unici in `cms/docs/`, nello zip, nel sito di plumeCMS e nella pagina Do
 - **Pacchetto di aggiornamento** per un'installazione esistente:
   `python3 tools/cms-pacchetto.py --aggiornamento`. Si carica dal pannello,
   Impostazioni, Aggiornamenti.
-- **Versione**: `cms/VERSIONE` (oggi 2.38.1; sempre tre numeri: "beta" va nel CHANGELOG, mai nel nome dello zip, se no la serie "ultima" del Download non lo riconosce) e una voce in `cms/CHANGELOG.md` a ogni
+- **Versione**: `cms/VERSIONE` (oggi 2.39.0; sempre tre numeri: "beta" va nel CHANGELOG, mai nel nome dello zip, se no la serie "ultima" del Download non lo riconosce) e una voce in `cms/CHANGELOG.md` a ogni
   zip con contenuto diverso. Mai cambiare il contenuto di una versione già data.
 - **Prove** prima di dire finito:
   - `php -n -d short_open_tag=1 -l` su ogni file PHP toccato, `node --check` sui js;
@@ -167,6 +167,23 @@ Le decisioni complete, con data e perché, stanno nel second brain, `plumecms/de
 - **Nome: plumeCMS** (26 ottobre 2026).
 
 ## Stato al 31 ottobre 2026
+
+Fatto: plumeCMS 2.39.0 (10 novembre, 16:31-17:45): **popup costruiti con l'editor visuale** (richiesta di Danilo: "devo poter costruire un popup
+come se fosse una pagina classica"). Agente nella worktree `/home/user/wt-popup`, ramo `popup-editor` (16:32-17:22), unito da me sopra la 2.38.1 (conflitti
+in VERSIONE, CHANGELOG, NOVITA, LEGGIMI delle prove). Scheda del popup con due carte "Campi semplici" e "Costruito con l'editor visuale"; il disegno è un
+modello dell'editor di tipo `popup` (`modelli.php`, fuori da Header e footer, senza condizioni, fuori da esporta/importa dell'editor), colonne nuove di
+`popup`: `contenuto`, `modello_id` (scritto solo da `popup_modello_crea()`, mai dal modulo), `larghezza` (stretta, media = 560 px di oggi, larga, piena),
+`posizione` (centro, in basso a destra, barra in basso, barra in alto: fuori dal centro niente velo e `aria-modal` falso), `sfondo_finestra`; anteprima
+`?preview=1&popup_prova=ID` solo admin; tela dell'editor con la finestra e "Torna al popup"; `#chiudi` chiude e conta per i giorni; fuoco, Tab dentro,
+Esc, meno movimento; i fogli dei widget nel popup li carica `vista_asset_modelli()` della 2.38.1. Un popup a campi esce identico al byte. Manuale d'uso
+capitolo 19 (schermate 18-popup-editor, 18-popup-tela, rifatte 18-popup, 18-sul-sito, 19-popup-scegli), tecnico 52, `prove/prova-popup-editor.js` 63 (con
+`prove/popup-cli.php`), gruppo 53 degli attacchi (17). Prove mie sullo zip unito (`$S/v22/batteria.sh`, 17:10-17:39): install 38/38 radice e cartella,
+fine articolo 41/41, kit 34/34 e 44/44, widget dei modelli 11/11 radice e cartella, popup editor 62/62 in cartella e 63/63 sul sito aggiornato con il
+confronto al byte, aggiornamento 2.38.1 -> 2.39.0 13/13 con 1 foto su 20 a 1 livello, widget dei modelli sul sito aggiornato 10/11 per la prova (moduli.js
+due volte con un form in pagina e uno nel popup, voluto: lo script lavora una volta sola; prova corretta, poi 11/11), attacchi 579/579, pacchetto unico
+13/13, sito di plumeCMS 136/136, zero errori fatali. **Non provato**: caroselli e schede dentro un popup nel browser (gli asset li dà la 2.38.1, provata
+su fine articolo e footer), media query dentro una finestra stretta (le colonne restano affiancate in un popup da 420 px al computer), Safari, Firefox,
+lettore di schermo, Apache vero.
 
 Fatto: plumeCMS 2.38.1 (10 novembre, 16:40-17:12): **i widget dei modelli con il loro stile** (segnalazione di Danilo con due schermate: un
 Riquadro con immagine con la foto a sinistra nel riquadro "Aggiungi sempre alla fine" era giusto nell'editor e sul sito usciva con la foto sopra, larga
