@@ -6967,7 +6967,7 @@ database" (schermate `27-cambia-db`, `27-cambia-db-fatto`, capitolo `27c` di `to
 
 Richiesta di Danilo: "Pulizia: fa un check di cosa c'è di eliminabile e propone la cancellazione totale o parziale, indicando il
 peso per ogni voce, compreso il DB." Motore `cms/includes/pulizia.php`, pagina `cms/admin/pulizia.php` (Impostazioni > Pulizia,
-voce del menu in `admin/includes/admin-header.php:87`), avviso della dashboard in `admin/index.php:53-61`. Prove:
+voce del menu in `admin/includes/admin-header.php:87`), avviso della dashboard in `admin/index.php:53-60`. Prove:
 `prove/prova-pulizia.js` con `prove/pulizia-cli.php`, gruppo 51 di `tools/sicurezza-prova.js`. Nessuna tabella nuova: l'unica
 impostazione nuova è `pulizia_stima` (JSON `{quando, byte}`). Il motore dei pacchetti non cambia.
 
