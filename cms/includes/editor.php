@@ -15,6 +15,8 @@
 
 require_once __DIR__ . '/sito-mappa.php';
 require_once __DIR__ . '/editor-widget.php';
+// 2.38.0: i dati delle immagini (alt e didascalia della libreria nei widget Immagine e Galleria).
+if (is_file(__DIR__ . '/media-dati.php')) require_once __DIR__ . '/media-dati.php';
 
 const EDITOR_VERSIONE = 1;
 const EDITOR_REVISIONI = 30;

@@ -99,7 +99,7 @@ function media_filtra(string $cartella = '', string $cerca = '', bool $miniature
  * Carica un'immagine in <cartella delle immagini>/<cartella>/AAAA/MM/ (cms_uploads_dir(); può stare fuori dalla cartella del CMS). Ritorna ['url' => ...] oppure ['errore' => ...].
  * Il tipo si legge dal file, non dall'estensione dichiarata. SVG accettato solo senza script.
  */
-function media_carica(?array $f, string $cartella = 'pagine', int $maxMb = 8): array {
+function media_carica(?array $f, string $cartella = 'pagine', int $maxMb = 8, string $titolo = ''): array {
     if (!$f || ($f['error'] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_ERR_OK) return ['errore' => 'Caricamento non riuscito (limite del server: ' . ini_get('upload_max_filesize') . ').'];
     if ($f['size'] > $maxMb * 1048576) return ['errore' => "Immagine troppo pesante: massimo $maxMb MB."];
     $tipi = [IMAGETYPE_JPEG => 'jpg', IMAGETYPE_PNG => 'png', IMAGETYPE_GIF => 'gif', IMAGETYPE_WEBP => 'webp', IMAGETYPE_AVIF => 'avif'];
@@ -122,6 +122,11 @@ function media_carica(?array $f, string $cartella = 'pagine', int $maxMb = 8): a
     if (!is_dir($dir) && !@mkdir($dir, 0755, true)) return ['errore' => 'La cartella delle immagini non è scrivibile.'];
     // sicurezza: nome leggibile più un suffisso casuale (nessuno indovina l'indirizzo di un file dal suo nome originale).
     $base = trim(substr(preg_replace('/[^a-z0-9-]+/', '-', strtolower(pathinfo($f['name'], PATHINFO_FILENAME))), 0, 60), '-') ?: 'immagine';
+    // 2.38.0: un nome da macchina fotografica (IMG_20261108_123456, DSC0001...) con un titolo scritto prende il nome dal titolo.
+    if (trim($titolo) !== '' && is_file(__DIR__ . '/media-dati.php')) {
+        require_once __DIR__ . '/media-dati.php';
+        if (function_exists('media_dati_nome_da_fotocamera') && media_dati_nome_da_fotocamera((string)$f['name']) && ($slugTitolo = media_dati_slug($titolo)) !== '') $base = $slugTitolo;
+    }
     $nome = $base . '-' . substr(bin2hex(random_bytes(3)), 0, 6) . '.' . $ext;
     while (file_exists("$dir/$nome")) $nome = $base . '-' . substr(bin2hex(random_bytes(4)), 0, 8) . '.' . $ext;
     // 2.32.0: 'da_server' => true per un file scaricato dal CMS stesso (le foto dell'addon AI collegate), che non arriva da un

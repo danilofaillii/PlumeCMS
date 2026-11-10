@@ -18,6 +18,8 @@ require_once __DIR__ . '/viste.php';
 require_once __DIR__ . '/extra.php';
 require_once dirname(__DIR__) . '/includes/moduli.php';
 require_once dirname(__DIR__) . '/includes/newsletter.php';
+// 2.38.0: i dati delle immagini della libreria (alt, didascalie, ImageObject nel JSON-LD); senza dati nessuna query.
+if (is_file(dirname(__DIR__) . '/includes/media-dati.php')) require_once dirname(__DIR__) . '/includes/media-dati.php';
 const NEWSLETTER_PREFERENZE_SITO = '/newsletter-preferenze/'; // 2.11.0, come NEWSLETTER_PREFERENZE di includes/newsletter-campagne.php
 const NEWSLETTER_WEB_SITO = '/newsletter-web/';
 
@@ -300,6 +302,7 @@ try {
                 $nodi = [sito_jsonld_pagina('/', $v['c']['titolo'], (string)cms_impostazione('home_descrizione', ''), sito_jsonld_about())];
                 // 2.35.0: anche la home porta i dati per Google in più della sua scheda (fino alla 2.34.0 li perdeva); senza, identica.
                 if (function_exists('seo_schema_applica')) $nodi = seo_schema_applica($nodi, $v['c']);
+                if (function_exists('media_dati_jsonld')) $nodi = media_dati_jsonld($nodi, $v['c']); // 2.38.0: l'immagine principale con i suoi dati
                 if (!empty($v['c']['editor'])) {
                     $c = $v['c'];
                     [$corpo, $testa] = vista_pagina_editor($c);
@@ -330,6 +333,7 @@ try {
                     $testa .= $cssFine;
                     $nodi = array_merge(sito_jsonld_articolo($c), [sito_jsonld_briciole($briciole)]);
                     if (function_exists('seo_schema_applica')) $nodi = seo_schema_applica($nodi, $c); // 2.29.0: Prodotto, How-to, Video scelti nella scheda
+                    if (function_exists('media_dati_jsonld')) $nodi = media_dati_jsonld($nodi, $c); // 2.38.0
                     sito_html(200, $meta, $corpo, sito_jsonld_script($nodi) . $testa, SITO_PAGINA_BLOG);
                 }
                 if ($c['tipo'] === 'glossario') {
@@ -346,6 +350,7 @@ try {
                 if ($nodiZona) $nodi = array_merge($nodi, $nodiZona);
                 elseif (!empty($c['servizio']['tipo'])) $nodi[] = sito_jsonld_servizio($c);
                 if (function_exists('seo_schema_applica')) $nodi = seo_schema_applica($nodi, $c); // 2.29.0: Prodotto, How-to, Video scelti nella scheda
+                if (function_exists('media_dati_jsonld')) $nodi = media_dati_jsonld($nodi, $c); // 2.38.0
                 if (!empty($c['editor'])) {
                     [$corpo, $testa] = vista_pagina_editor($c);
                     $faq = array_merge($c['faq'], $c['editor_disegno'][2]);

@@ -28,7 +28,36 @@ function media_alt_schema(): void {
         `aggiornato` DATETIME DEFAULT NULL,
         PRIMARY KEY (`percorso`(191))
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+    // 2.38.0: i dati delle immagini (includes/media-dati.php) stanno nella stessa tabella, una colonna per campo, aggiunte qui
+    // al primo uso: le righe e gli alt di prima restano come sono.
+    try {
+        $cols = array_map('strval', db()->query('SHOW COLUMNS FROM ' . tbl('media_alt'))->fetchAll(PDO::FETCH_COLUMN));
+        $nuove = [];
+        foreach (MEDIA_ALT_COLONNE_DATI as $c => $def) if (!in_array($c, $cols, true)) $nuove[] = 'ADD COLUMN `' . $c . '` ' . $def;
+        if ($nuove) db()->exec('ALTER TABLE ' . tbl('media_alt') . ' ' . implode(', ', $nuove));
+    } catch (Throwable $e) { error_log('media_alt_schema: ' . $e->getMessage()); }
 }
+
+/** 2.38.0: cancella la riga di un'immagine solo se non le resta niente (né alt né altri dati). */
+function media_alt_togli_se_vuota(string $k): void {
+    $vuote = "alt = ''";
+    foreach (array_keys(MEDIA_ALT_COLONNE_DATI) as $c) if ($c !== 'autore_tipo' && $c !== 'origine') $vuote .= " AND `$c` = ''";
+    db()->prepare('DELETE FROM ' . tbl('media_alt') . " WHERE percorso = ? AND $vuote")->execute([$k]);
+}
+
+/** 2.38.0: le colonne dei dati delle immagini (testo semplice, utf8mb4, NOT NULL con un valore di partenza: va con sql_mode stretto). */
+const MEDIA_ALT_COLONNE_DATI = [
+    'titolo' => "VARCHAR(200) NOT NULL DEFAULT ''",
+    'didascalia' => "VARCHAR(500) NOT NULL DEFAULT ''",
+    'descrizione' => "VARCHAR(2000) NOT NULL DEFAULT ''",
+    'autore' => "VARCHAR(200) NOT NULL DEFAULT ''",
+    'autore_tipo' => "VARCHAR(20) NOT NULL DEFAULT ''",
+    'licenza' => "VARCHAR(20) NOT NULL DEFAULT ''",
+    'licenza_nome' => "VARCHAR(100) NOT NULL DEFAULT ''",
+    'licenza_url' => "VARCHAR(500) NOT NULL DEFAULT ''",
+    'fonte_url' => "VARCHAR(500) NOT NULL DEFAULT ''",
+    'origine' => "VARCHAR(20) NOT NULL DEFAULT ''",
+];
 
 /**
  * La chiave di un'immagine: il percorso senza l'origine del sito e senza la cartella del CMS ("/uploads/pagine/2026/11/foto.jpg"),
@@ -84,7 +113,11 @@ function media_alt_salva(string $url, $alt): array {
     if (!$nella) return ['errore' => 'Questa immagine non sta nella libreria dei Media.'];
     $a = media_alt_pulito($alt);
     media_alt_schema();
-    if ($a === '') db()->prepare('DELETE FROM ' . tbl('media_alt') . ' WHERE percorso = ?')->execute([$k]);
+    if ($a === '') {
+        // 2.38.0: la riga resta se ha altri dati (titolo, didascalia, crediti...): si svuota solo l'alt.
+        db()->prepare('UPDATE ' . tbl('media_alt') . " SET alt = '', aggiornato = NOW() WHERE percorso = ?")->execute([$k]);
+        media_alt_togli_se_vuota($k);
+    }
     else db()->prepare('INSERT INTO ' . tbl('media_alt') . ' (percorso, alt, aggiornato) VALUES (?, ?, NOW()) ON DUPLICATE KEY UPDATE alt = VALUES(alt), aggiornato = NOW()')->execute([$k, $a]);
     save_setting('media_alt_n', (string)(int)db()->query('SELECT COUNT(*) FROM ' . tbl('media_alt') . " WHERE alt <> ''")->fetchColumn());
     media_alt_tutti(true);

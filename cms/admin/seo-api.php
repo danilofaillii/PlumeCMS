@@ -9,6 +9,7 @@
  *   tabella_salva tipo, id, seo_title, descrizione -> la Tabella SEO salva titolo per Google e descrizione di un contenuto (2.29.0,
  *             anche il redattore: passa da contenuti_salva_rapido come la scheda); risponde con le righe ricalcolate
  *   media_alt_salva url, alt -> l'alt di un'immagine della libreria (2.29.0, Media > Senza alt; anche il redattore)
+ *   media_dato_salva url, campo, valore -> un campo dei dati di un'immagine (2.38.0, Media > Dati delle immagini; anche il redattore)
  * Usata dalla scheda del contenuto (assets/seo-controllo.js) e dall'editor visuale (Impostazioni della pagina).
  */
 require_once __DIR__ . '/includes/auth.php';
@@ -94,6 +95,15 @@ try {
             require_once dirname(__DIR__) . '/includes/media-alt.php';
             $r = media_alt_salva((string)($_POST['url'] ?? ''), (string)($_POST['alt'] ?? ''));
             seo_api_esci($r, isset($r['errore']) ? 400 : 200);
+
+        case 'media_dato_salva':
+            // 2.38.0: un campo dei dati di un'immagine della libreria (Media > Dati delle immagini; anche il redattore).
+            require_once dirname(__DIR__) . '/includes/media-dati.php';
+            $campo = (string)($_POST['campo'] ?? '');
+            if (!in_array($campo, ['alt', 'titolo', 'didascalia', 'descrizione', 'autore'], true)) seo_api_esci(['errore' => 'Campo sconosciuto.'], 400);
+            $r = media_dati_salva((string)($_POST['url'] ?? ''), [$campo => (string)($_POST['valore'] ?? '')], [$campo]);
+            if (isset($r['errore'])) seo_api_esci(['errore' => $r['errore']], 400);
+            seo_api_esci(['ok' => true, 'campo' => $campo, 'valore' => (string)$r['dati'][$campo], 'percorso' => $r['percorso']]);
 
         default:
             seo_api_esci(['errore' => 'Azione sconosciuta.'], 400);
