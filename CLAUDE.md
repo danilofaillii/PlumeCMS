@@ -109,7 +109,7 @@ Sono gli unici in `cms/docs/`, nello zip, nel sito di plumeCMS e nella pagina Do
 - **Pacchetto di aggiornamento** per un'installazione esistente:
   `python3 tools/cms-pacchetto.py --aggiornamento`. Si carica dal pannello,
   Impostazioni, Aggiornamenti.
-- **Versione**: `cms/VERSIONE` (oggi 2.38.0; sempre tre numeri: "beta" va nel CHANGELOG, mai nel nome dello zip, se no la serie "ultima" del Download non lo riconosce) e una voce in `cms/CHANGELOG.md` a ogni
+- **Versione**: `cms/VERSIONE` (oggi 2.38.1; sempre tre numeri: "beta" va nel CHANGELOG, mai nel nome dello zip, se no la serie "ultima" del Download non lo riconosce) e una voce in `cms/CHANGELOG.md` a ogni
   zip con contenuto diverso. Mai cambiare il contenuto di una versione già data.
 - **Prove** prima di dire finito:
   - `php -n -d short_open_tag=1 -l` su ogni file PHP toccato, `node --check` sui js;
@@ -167,6 +167,16 @@ Le decisioni complete, con data e perché, stanno nel second brain, `plumecms/de
 - **Nome: plumeCMS** (26 ottobre 2026).
 
 ## Stato al 31 ottobre 2026
+
+Fatto: plumeCMS 2.38.1 (10 novembre, 16:40-17:12): **i widget dei modelli con il loro stile** (segnalazione di Danilo con due schermate: un
+Riquadro con immagine con la foto a sinistra nel riquadro "Aggiungi sempre alla fine" era giusto nell'editor e sul sito usciva con la foto sopra, larga
+quanto tutto). Causa: `editor_asset_pagina()` era chiamata solo dalle viste del contenuto (`vista_articolo_editor`, `vista_pagina_editor`), mai per i
+widget del riquadro di fine articolo, di header e footer e dei popup: `widget.css` non c'era. Ora `vista_asset_modelli()` (`sito/viste.php`), chiamata da
+`vista_pagina()` dopo `vista_popup()` con testata, corpo, popup e piede, aggiunge in fondo alla testa i fogli che mancano e in fondo al piede gli script
+(ed `editor-pagina.js`), mai due volte lo stesso indirizzo. Manuale tecnico 28, `prove/prova-asset-modelli.js` 11 (con `prove/asset-modelli-cli.php`; la
+2.38.0 dà 5/11). Prove sullo zip (`$S/v21/batteria.sh`, 16:58-17:09): install 38/38 radice e cartella, fine articolo 41/41, kit 34/34 e 44/44, widget dei
+modelli 11/11 radice, cartella e sito aggiornato, aggiornamento 2.38.0 -> 2.38.1 13/13 con 1 foto su 20 a 1 livello, attacchi 561/561, pacchetto unico
+13/13, sito di plumeCMS 134/134, zero errori fatali. La 2.39.0 (popup con l'editor, agente in `/home/user/wt-popup`, ramo `popup-editor`) si appoggia qui.
 
 Fatto: plumeCMS 2.38.0 (10 novembre, 12:43-14:10): **Pulizia e dati delle immagini** (richieste di Danilo: "pulizia: fa un check di cosa c'è
 di eliminabile e propone la cancellazione totale o parziale, indicando il peso per ogni voce, compreso il DB" e "dati per le immagini: alt, descrizione,
