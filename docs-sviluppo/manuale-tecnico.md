@@ -6210,6 +6210,8 @@ Dalla 2.35.0 c'è anche il tipo **Programma** (SoftwareApplication): capitolo 48
 
 ### 46.4 Le immagini senza alt
 
+Dalla 2.38.0 la pagina si chiama Media > Dati delle immagini, con altri filtri e la scheda dell'immagine: capitolo 51.
+
 `includes/media-alt.php`, pagina `admin/includes/media-alt-pagina.php` (inclusa da `admin/media.php` con `?scheda=alt`), script
 `admin/assets/media-alt.js`.
 
@@ -6959,6 +6961,145 @@ rifiutato per la password sbagliata, l'avvio con tabelle e righe, l'annullamento
 senza caricare il CMS), gruppo 50 di `tools/sicurezza-prova.js`. Il capitolo 29 del manuale d'uso ha la sezione "Cambiare
 database" (schermate `27-cambia-db`, `27-cambia-db-fatto`, capitolo `27c` di `tools/manuale-uso-schermate.js` con
 `CAMBIADB_MANUALE`).
+
+## 51. I dati delle immagini (dalla 2.38.0)
+
+Richiesta di Danilo: "lavoriamo ai dati per le immagini: alt, descrizione, altro che ti viene in mente". Motore in
+`cms/includes/media-dati.php`; pannello in `cms/admin/includes/media-scheda.php` (la scheda) e
+`cms/admin/includes/media-alt-pagina.php` (Dati delle immagini); sito in `cms/includes/editor-widget.php`,
+`cms/includes/editor-widget-extra-b.php`, `cms/sito/index.php` e `cms/includes/seo.php`; addon in
+`cms/addon/ai-collegate/includes/immagini.php`, `proposte.php`, `foto.php`. (Il capitolo 50 è lasciato alla Pulizia della
+stessa versione.)
+
+### 51.1 Dove stanno i dati: la tabella degli alt, con colonne nuove
+
+La libreria dei Media è fatta di file (`media_elenco()`, `includes/media.php`), non di righe con un id: la chiave di
+un'immagine è il suo percorso senza origine né cartella del CMS (`media_alt_chiave()`, `includes/media-alt.php`). Per questo i
+dati stanno nella stessa tabella degli alt della 2.29.0, `<prefisso>media_alt` (una riga per percorso), con le colonne di
+`MEDIA_ALT_COLONNE_DATI` (`includes/media-alt.php:49`): `titolo` 200, `didascalia` 500, `descrizione` 2000, `autore` 200,
+`autore_tipo` (persona, organizzazione), `licenza` (codice), `licenza_nome` 100, `licenza_url` 500, `fonte_url` 500, `origine`
+(l'archivio da cui l'AI l'ha importata). Tutte `VARCHAR NOT NULL DEFAULT ''` in utf8mb4 (vanno con `sql_mode` stretto; niente
+TEXT, che in MySQL 8 non accetta un valore di partenza letterale); somma delle colonne sotto il limite di riga di InnoDB.
+`media_alt_schema()` (`includes/media-alt.php:21`) le aggiunge con un solo `ALTER TABLE` al primo uso, una volta per
+richiesta: le righe e gli alt di prima restano come sono. La tabella `<prefisso>media` dello schema di base non la scrive
+nessuno (c'era già così): resta com'è.
+
+Una riga si cancella solo quando non le resta niente (`media_alt_togli_se_vuota()`, `includes/media-alt.php:42`): prima
+`media_alt_salva()` cancellava la riga quando l'alt diventava vuoto, ora la svuota e basta.
+
+Due impostazioni tengono il sito senza query quando non ci sono dati: `media_alt_n` (righe con l'alt, dalla 2.29.0) e
+`media_dati_n` (righe con almeno un dato fra titolo, didascalia, descrizione, autore, licenza, indirizzi, archivio). Le
+ricalcola `media_dati_conta()` (`includes/media-dati.php:190`) a ogni salvataggio.
+
+### 51.2 Il motore (`includes/media-dati.php`)
+
+- `media_dati_licenze()` (riga 28): codice => etichetta e pagina della licenza di partenza (CC0, pubblico dominio, CC BY 4.0,
+  CC BY-SA 4.0 con la pagina ufficiale; tutti i diritti riservati, licenza dell'archivio, altra senza).
+- `media_dati_testo()` (riga 42): testo semplice. Toglie i tag (anche il contenuto di `script` e `style`), poi decodifica le
+  entità e toglie di nuovo i tag (un `&lt;script&gt;` torna tag dopo la decodifica), i caratteri a 4 byte e quelli di
+  controllo; una riga sola, la descrizione tiene gli a capo. Tagliato alla lunghezza del campo.
+- `media_dati_url()` (riga 54): vuoto, oppure solo `http://` o `https://` con un host, senza spazi, virgolette, `<>`,
+  barre inverse né credenziali. Il resto (javascript:, data:, `//host`, relativi) è un errore del campo, non un taglio.
+- `media_dati_pulisci()` (riga 142) e `media_dati_salva()` (riga 166): i campi assenti restano quelli di prima (o solo quelli
+  di `$soloQuesti`); un errore su un campo ferma tutto il salvataggio e torna `['errore', 'errori' => [campo => messaggio]]`.
+  L'immagine deve stare nella libreria (`media_dati_voce()`, riga 103); un file appena caricato nella stessa richiesta (che
+  `media_elenco()` non conosce, perché lo legge una volta) vale se è un file della cartella delle immagini con un'estensione
+  dei Media, non una WebP compagna né una miniatura.
+- `media_dati_file()` e `media_dati_file_info()` (righe 111 e 122): il file sul disco (solo cartella delle immagini e
+  `assets/img/`) e le misure, peso, formato e data per la scheda e per il JSON-LD.
+- `media_dati_usata()` (riga 221): dove compare una foto. Cerca il nome del file (unico: ha il suffisso casuale) con un `LIKE`
+  sulle colonne di testo (`media_dati_colonne_testo()`, da `information_schema`) dei contenuti (`contenuti_tipi()`) e di
+  `modelli`, `settings`, `seo_config`, `newsletter_campagne`, `newsletter_modelli`, `newsletter_sezioni`, `newsletter_flussi`,
+  `moduli`, `popup`, `menu_nav` (quelle che non ci sono si saltano). "Certo" quando il percorso compare nella versione
+  pubblicata (struttura, testo, immagine in evidenza) di un contenuto non nel cestino, o in un modello pubblicato; altrimenti
+  "forse" con la nota (solo nella bozza, solo il nome del file, un'altra tabella). Le tabelle di registro e le versioni
+  dell'editor non si guardano (sono grandi e dicono il passato).
+- `media_dati_elenco()` (riga 343) e `media_dati_filtri()` (riga 338): le immagini (senza miniature) con i dati e cosa manca:
+  `alt`, `descrizione`, `crediti` (importata dall'AI, cioè con `origine`, senza autore né licenza), `pesanti` (oltre 500 KB,
+  `MEDIA_DATI_PESANTE`, gli SVG no).
+
+### 51.3 La scheda dell'immagine e Dati delle immagini
+
+`admin/media.php?immagine=<indirizzo>` include `admin/includes/media-scheda.php` (`admin/media.php:79`). Un clic sulla foto in
+Libreria (prima apriva il file in un'altra scheda) e il pulsante "Scheda e dati" portano lì. Il modulo manda l'azione
+`dati_salva` (`admin/media.php:38`), con il token e per chi può aprire Media (anche il redattore, come la libreria). Con
+errori, i valori scritti e i messaggi passano dalla sessione e tornano nei campi: errore sotto il campo con `aria-invalid` e
+`aria-describedby`, riassunto in cima con `role="alert"`. Il conteggio dei caratteri dell'alt e il consiglio (da 5 a 125, niente
+"immagine di") stanno in `admin/assets/media-scheda.js`, senza gestori in linea. Le variabili della scheda hanno il prefisso
+`$_sk` (il file sta nello spazio di `media.php`).
+
+**Rinomina il file**: azione `dati_rinomina` (`admin/media.php:48`, `media_dati_rinomina()`, `includes/media-dati.php:309`).
+Solo per le cartelle Archivio, Editor delle pagine e Contenuti (mai Newsletter, già spedite, né Da sostituire, né le
+copertine del pannello), solo se `media_dati_usata()` non trova niente, nemmeno "forse", e solo con un titolo salvato: nome
+nuovo dallo slug del titolo con il suffisso casuale, con la WebP compagna, e la riga dei dati spostata sul percorso nuovo. Chi
+avesse copiato l'indirizzo fuori dal sito (un'email già spedita, un altro sito) perde il collegamento: la conferma lo dice. I
+file già caricati non si rinominano mai da soli.
+
+**Nome leggibile al caricamento**: `media_carica()` ha il parametro `$titolo` (`includes/media.php`, riga 128): se il nome del
+file è da macchina fotografica o telefono (`media_dati_nome_da_fotocamera()`, riga 292: IMG_, DSC, DSCN, PXL_, P1010001,
+20261108_123456, "WhatsApp Image ...", nomi fatti di sole cifre) e il titolo c'è, il nome viene dallo slug del titolo
+(`media_dati_slug()`, con `cms_ascii()` e la riserva iconv). In Libreria c'è la casella "Titolo (facoltativo)" accanto al
+caricamento; dopo il caricamento si apre la scheda della foto nuova con il titolo già scritto.
+
+**Media > Dati delle immagini** (era "Senza alt"): `media.php?scheda=dati&filtro=<alt|descrizione|crediti|pesanti|tutte>`;
+`media.php?scheda=alt`, l'indirizzo della 2.29.0, apre il filtro Senza alt (le prove della 2.29.0 restano valide con il nome
+nuovo della scheda). "Nelle pagine" resta con i filtri Senza alt e Tutte. La correzione in posto: l'alt come prima
+(`media_alt_salva`), descrizione e autore con `seo-api.php` azione `media_dato_salva` (`admin/seo-api.php:99`), che accetta solo
+alt, titolo, didascalia, descrizione e autore (licenza e indirizzi solo dalla scheda, con i loro controlli).
+
+### 51.4 Sul sito
+
+- **Alt**: dalla 2.29.0 `media_alt_applica()` mette l'alt della libreria nelle `<img>` con l'alt vuoto: un alt scritto nel widget
+  vince sempre. Nella Galleria (e nel Carosello, stessa funzione `ewx_gal_voce()`, `includes/editor-widget-extra-b.php:30`) una
+  voce senza alt usava la didascalia come alt, e allora l'alt della libreria non entrava: ora l'ordine è alt della voce, alt della
+  libreria, didascalia. È l'unico cambio di HTML con soli alt salvati (prima della 2.38.0 la foto aveva come alt la didascalia).
+- **Didascalia**: interruttore `didascalia_libreria` (spento) nell'Immagine (`includes/editor-widget.php:187` e 644) e nella
+  Galleria (`includes/editor-widget-extra-b.php:45` e 49): con la didascalia del widget vuota esce quella della libreria
+  (`media_dati_didascalia()`). Nella Galleria la didascalia si vede solo con "Didascalia: Sotto" o "Al passaggio", come prima.
+- **Niente attributo `title`**: per scelta (non lo legge quasi nessuno ed esce come un fumetto fastidioso).
+- **JSON-LD**: `media_dati_jsonld()` (riga 421), chiamata dopo `seo_schema_applica()` in home, articoli e pagine
+  (`sito/index.php:305`, 336, 353) e nell'anteprima del pannello (`includes/seo.php:1036`, 1046, 1058). L'immagine principale
+  (`media_dati_immagine_principale()`, riga 374) è quella in evidenza, altrimenti la foto della prima Apertura dell'albero
+  pubblicato. Se ha dati oltre all'alt e all'archivio, la WebPage riceve `primaryImageOfPage` = `media_dati_image_object()`
+  (riga 391): `url` e `contentUrl` assoluti, `width` e `height` dal file, `name` (titolo), `caption` (didascalia),
+  `description`, `creditText` e `creator` (Person o Organization con il nome) dall'autore, `copyrightNotice` (l'autore, tranne
+  con CC0 e pubblico dominio), `license` (la pagina della licenza scritta, altrimenti quella ufficiale per CC0, pubblico
+  dominio, CC BY, CC BY-SA), `acquireLicensePage` (l'indirizzo della fonte: dove si chiede o si prende la licenza). Solo i
+  valori scritti; niente inventato. Negli articoli `primaryImageOfPage` c'era già (solo `url`): con i dati diventa completo.
+  Senza dati (`media_dati_n` a 0, o la foto principale senza dati) i nodi restano identici al byte.
+- **Sitemap delle immagini**: non cambia. Google ha tolto `image:caption`, `image:title`, `image:geo_location` e
+  `image:license` dalla sitemap delle immagini (annuncio di maggio 2022, letti fino all'agosto 2022): resta solo
+  `image:loc`. Titolo e didascalia arrivano a Google dal JSON-LD e dalla pagina. (Non verificato di nuovo contro i documenti di
+  Google in questa sessione: la rete è chiusa.)
+
+### 51.5 Dove si caricano i file
+
+`includes/editor.php` carica `media-dati.php` (con `is_file`, per la trappola di opcache nell'aggiornamento) perché i widget lo
+usano in ogni disegno; `sito/index.php` lo carica in testa per il JSON-LD. `media-dati.php` carica `media.php` e
+`media-alt.php`; `contenuti.php` ed `editor.php` li carica quando servono (`media_dati_usata()` e
+`media_dati_immagine_principale()`), perché nel sito il JSON-LD si calcola prima del disegno dell'albero.
+
+### 51.6 AI collegate
+
+- `import_photo` (`addon/ai-collegate/includes/foto.php`, riga 209): dopo il caricamento scrive con `media_dati_salva()` alt,
+  titolo, autore (persona), licenza (`aic_foto_licenza_libreria()`, riga 166: cc0, pdm come pubblico dominio, by come CC BY,
+  Pexels e Unsplash come "licenza dell'archivio" con il nome), pagina della licenza, fonte e `origine` (l'archivio). Se un
+  indirizzo dell'archivio non passa i controlli, si salva il resto senza indirizzi. La tabella `ai_foto` resta com'era.
+- `list_media` (`immagini.php`, `aic_t_list_media()`; permesso "leggi"): filtri come Dati delle immagini, a pagine di 50 al
+  massimo, con dati, misure, peso e cosa manca.
+- `propose_media_data` (`aic_t_propose_media_data()`; permesso "proposte"): fino a `AIC_MEDIA_MAX` (50) immagini, ognuna con
+  alt, titolo, didascalia, descrizione (campi di proposta `alt`, `titolo_immagine`, `didascalia`, `descrizione_immagine`,
+  `proposte.php:30`); tutte controllate con `aic_proposta_prepara()` prima di scriverne una (o tutte o nessuna), con il limite
+  di `AIC_PROPOSTE_MAX` proposte in attesa per collegamento; gruppo `media-0-<12 hex>`. Autore e licenza non si propongono.
+  L'approvazione (`aic_proposta_applica()`) passa da `media_alt_salva()` per l'alt e da `media_dati_salva()` con un solo campo
+  per gli altri (`aic_campo_media()`, `proposte.php:37`). La pagina Proposte mostra il gruppo come "Dati delle immagini: N
+  immagini" (`admin-proposte.php:136`) con Approva tutte e Scarta tutte; il link di una proposta porta alla scheda della foto.
+- Descrizioni in italiano in `strumenti.php:159` e 163; l'OpenAPI (`/api/mcp/openapi`) le prende dallo stesso registro.
+
+### 51.7 Prove
+
+`prove/prova-immagini.js` (con `prove/immagini-cli.php` e `prove/foto-finte.php`), gruppo 52 di `tools/sicurezza-prova.js`.
+`prove/prova-seo-strumenti.js` controlla la scheda col nome nuovo.
 
 ## Appendice A. Dove i documenti vecchi non corrispondono al codice
 

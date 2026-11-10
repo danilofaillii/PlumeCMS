@@ -239,7 +239,8 @@ const entra = async (br, utente, password, vp = { width: 1280, height: 900 }) =>
 
   // === 4. Le immagini senza alt
   const r4 = await p.goto(B + '/admin/media.php?scheda=alt', { waitUntil: 'networkidle' });
-  ok('Media ha la scheda Senza alt, che si apre (200)', r4.status() === 200 && await p.locator('.imp-schede a.attiva[href="media.php?scheda=alt"]').count() === 1);
+  // 2.38.0: "Senza alt" è diventata Dati delle immagini; media.php?scheda=alt apre il filtro Senza alt.
+  ok('Media ha la scheda Dati delle immagini (era Senza alt), che si apre (200) sul filtro Senza alt', r4.status() === 200 && await p.locator('.imp-schede a.attiva[href="media.php?scheda=dati"]').count() === 1 && await p.locator('.md-filtri a[data-filtro=alt][aria-current=page]').count() === 1);
   const voceVasi = p.locator('#ma-elenco-pagine .ma-voce', { hasText: 'Vasi in terracotta' });
   ok('"Nelle pagine" elenca l\'immagine della pagina dei vasi (widget Immagine), con il link all\'editor e la casella', await voceVasi.count() === 1 && /Immagine/.test(await voceVasi.innerText()) && await voceVasi.locator('a[href*="editor.php"]').count() === 1 && await voceVasi.locator('input[data-alt-url]').count() === 1, await voceVasi.innerText().catch(() => ''));
   ok('"Nella libreria" elenca le immagini senza alt, fra cui prova-seo-2.png', await p.locator('#ma-elenco-libreria .ma-voce', { hasText: 'prova-seo-2.png' }).count() === 1);
@@ -283,7 +284,7 @@ const entra = async (br, utente, password, vp = { width: 1280, height: 900 }) =>
     await rp.waitForFunction((id) => { const e = document.querySelector(`#st-tabella tr[data-tipo="pagine"][data-id="${id}"] td.st-campo:nth-child(2) .st-esito`); return e && /Salvato|Non salvato/.test(e.textContent); }, terra.id, { timeout: 15000 });
     ok('il redattore salva il titolo per Google di una pagina dalla riga', cli('sql', `SELECT seo_title t FROM {p}pages WHERE id = ${terra.id}`)[0].t === 'La terracotta fatta a mano: come nasce ogni vaso');
     const ra = await rp.goto(B + '/admin/media.php?scheda=alt', { waitUntil: 'networkidle' });
-    ok('il redattore apre Media > Senza alt', ra.status() === 200 && await rp.locator('#ma-libreria').count() === 1);
+    ok('il redattore apre Media > Dati delle immagini (Senza alt)', ra.status() === 200 && await rp.locator('#ma-libreria').count() === 1);
     await red.c.close();
   }
 

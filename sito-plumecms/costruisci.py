@@ -296,7 +296,8 @@ def funzionalita():
           '<ul><li>Gli avvisi ai motori partono da soli, con IndexNow e Search Console.</li>'
           '<li>Le sedi dell\'attività, anche una sola: indirizzo, coordinate cercate dalla mappa, orari, zona servita e tipo di attività entrano nei dati che Google legge in ogni pagina; una pagina per ogni sede, e i widget che mostrano sedi, orari e contatti.</li>'
           '<li>Le pagine per zona, "Idraulico a Casalecchio di Reno": nascono in bozza dal servizio e dalle zone che servi, con tre riquadri da scrivere a mano (cosa fai lì, un caso vero, come si arriva) e non si pubblicano finché restano vuoti; ognuna dice a Google il servizio, la zona e la sede, e rimanda alle altre zone.</li>'
-          '<li>La Tabella SEO: ogni pagina con titolo, descrizione e un semaforo, da correggere lì senza aprire l\'editor; i link interni suggeriti mentre scrivi; prodotto, guida a passi e video fra i dati che Google legge; le immagini senza testo alternativo in un elenco, da sistemare in posto.</li></ul>']),
+          '<li>La Tabella SEO: ogni pagina con titolo, descrizione e un semaforo, da correggere lì senza aprire l\'editor; i link interni suggeriti mentre scrivi; prodotto, guida a passi e video fra i dati che Google legge; le immagini senza testo alternativo in un elenco, da sistemare in posto.</li>'
+          '<li>Ogni foto ha la sua scheda: testo alternativo, titolo, didascalia, descrizione, autore e licenza, che diventano i dati della foto principale per Google Immagini; e l\'elenco delle foto a cui manca qualcosa.</li></ul>']),
         ('social', 'social.webp', 'Social ogni mattina: i post sono già pronti',
          ['Scrivi il testo nel riquadro Social dell\'articolo. Il giorno in cui esce ti arriva un\'email con il testo pronto per ogni canale, il link, i tuoi hashtag e le immagini nelle misure giuste, una orizzontale e una verticale.',
           '<ul><li>Il calendario dei post per i giorni dopo, e i testi da copiare con un clic.</li>'
@@ -748,6 +749,7 @@ def zip_lavagna(dest):
 # Regola di Danilo (1 novembre 2026): solo i punti salienti, una riga per versione, mai nomi di aziende o servizi di terzi.
 # Le novità per chi scarica: brevi, scritte qui (il CHANGELOG è per chi sviluppa). Da aggiornare a ogni versione.
 NOVITA = [
+    ('2.38.0', 'Dati delle immagini', ['Ogni foto ha la sua scheda: testo alternativo con il consiglio, titolo, didascalia, descrizione, autore e licenza, e dove è usata. Le foto a cui manca qualcosa in un elenco, i dati della foto principale per i motori di ricerca e il nome del file leggibile.']),
     ('2.37.0', 'Cambia database', ['Sposta tutto il sito su un altro database, anche su un altro server: copia a giri con la barra, righe contate tabella per tabella, passaggio solo a conti tornati, il database di prima intatto e il ritorno con un clic.']),
     ('2.36.0', 'Pagine per zona senza limite', ['Le pagine per zona non hanno più un tetto di 200: fino a cento zone per giro, l\'elenco a pagine con la ricerca e i numeri in cima, e il widget Altre zone che ne mostra quante vuoi, anche le più vicine. Il sito resta veloce con migliaia di zone.']),
     ('2.35.0', 'Più chiaro per i motori di ricerca e le AI', ['Il file per le AI elenca anche le pagine e salta le parti vuote; nei dati per i motori di ricerca una pagina può presentare un programma, con versione, prezzo e licenza; il sito di plumeCMS ha riassunti, domande nuove e una pagina di confronto.']),

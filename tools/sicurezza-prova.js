@@ -3428,6 +3428,105 @@ echo json_encode($o);
     } else console.log('--  Cambia database: saltata (pagina assente, CMS prima della 2.37.0)');
   }
 
+  // === 52. (2.38.0) I dati delle immagini: la scheda dell'immagine (media.php, azioni dati_salva e dati_rinomina), la correzione in
+  // posto (seo-api.php, media_dato_salva), il sito (didascalia e JSON-LD ImageObject), l'addon AI collegate (list_media,
+  // propose_media_data). HTML e script nei campi; indirizzi javascript:, data:, relativi in fonte e licenza; licenza fuori elenco;
+  // immagini inesistenti, fuori dalla libreria o di un altro dominio; testi enormi; senza token e con un token sbagliato; campi
+  // che la correzione in posto non accetta; rinomina di una foto usata o fuori dalla libreria; il redattore che approva proposte;
+  // proposte oltre il limite, con codice o con indirizzi fuori dalla libreria. Serve CMS_DIR.
+  if (DIR && fs.existsSync(path.join(__dirname, '..', 'prove', 'immagini-cli.php')) && fs.existsSync(path.join(DIR, 'includes', 'media-dati.php'))) {
+    const { execFileSync, spawn } = require('child_process');
+    const cli52 = (...a) => { try { return JSON.parse(execFileSync('php', [path.join(__dirname, '..', 'prove', 'immagini-cli.php'), DIR, ...a.map(String)], { encoding: 'utf8', maxBuffer: 64 * 1024 * 1024 }).trim().split('\n').pop()); } catch (e) { return { errore_cli: String(e.message).slice(0, 200) }; } };
+    const ai52 = (...a) => { try { return JSON.parse(execFileSync('php', [path.join(__dirname, '..', 'prove', 'ai-cli.php'), DIR, ...a.map(String)], { encoding: 'utf8', maxBuffer: 64 * 1024 * 1024 }).trim().split('\n').pop()); } catch (e) { return { errore_cli: String(e.message).slice(0, 200) }; } };
+    const CATTIVO = '<img src=x onerror=alert(52)>', SCRIPT = '</script><script>alert(52)</script>';
+    const ORIG52 = { Origin: BASE.replace(/(https?:\/\/[^/]+).*/, '$1') };
+    const A52 = cli52('foto', 'imgprova-sic52a.jpg', 400, 300).url, B52 = cli52('foto', 'imgprova-sic52b.jpg', 300, 200).url;
+    const pag52 = cli52('pagina', 'img-prova-sic52', A52, B52, B52);
+    const M = ADMIN + '/media.php';
+    const salva52 = (chi, t, campi, url = A52) => chi.ctx.request.post(M, { form: Object.assign({ _csrf: t, azione: 'dati_salva', url }, campi), headers: ORIG52, maxRedirects: 0 });
+    const t52 = await tokenDi(admin.p, M + '?immagine=' + encodeURIComponent(A52));
+    // 1. senza token e con un token sbagliato
+    const s0 = await admin.ctx.request.post(M, { form: { azione: 'dati_salva', url: A52, alt: 'senza token' }, headers: ORIG52, maxRedirects: 0 });
+    const s0b = await salva52(admin, 'a'.repeat(64), { alt: 'token sbagliato' });
+    const sa0 = await admin.ctx.request.post(ADMIN + '/seo-api.php', { form: { azione: 'media_dato_salva', url: A52, campo: 'alt', valore: 'senza token' }, headers: ORIG52 });
+    ok('2.38.0: scheda dell\'immagine e correzione in posto senza token o con un token sbagliato: 403, niente salvato', s0.status() === 403 && s0b.status() === 403 && sa0.status() === 403 && cli52('dati', A52).alt === '', [s0.status(), s0b.status(), sa0.status()]);
+    // 2. HTML e script nei campi, testi enormi
+    const s1 = await salva52(admin, t52, { alt: 'Alt ' + CATTIVO + SCRIPT, titolo: 'Tit ' + SCRIPT + 'x'.repeat(5000), didascalia: 'Did ' + CATTIVO + '&lt;script&gt;alert(52)&lt;/script&gt;', descrizione: 'D'.repeat(100000), autore: 'Aut ' + CATTIVO, licenza: 'cc-by', fonte_url: 'https://archivio.example/sic52' });
+    const d1 = cli52('dati', A52);
+    ok('2.38.0: codice nei campi salvato come testo (tag tolti, anche scritti come entità), lunghezze tagliate', [302, 303].includes(s1.status()) && !/[<>]/.test(d1.alt + d1.titolo + d1.didascalia + d1.autore) && !/alert\(52\)<|script/.test(d1.didascalia) && d1.titolo.length === 200 && d1.descrizione.length === 2000 && /^Alt/.test(d1.alt), [s1.status(), d1.alt, d1.didascalia, d1.titolo.length, d1.descrizione.length]);
+    await admin.p.goto(M + '?immagine=' + encodeURIComponent(A52), { waitUntil: 'networkidle' });
+    ok('2.38.0: la scheda rimostra i valori come testo nei campi, niente on* né script', await admin.p.locator('img[onerror]').count() === 0 && !/<script>alert\(52\)/.test(await admin.p.content()));
+    const sito52 = await browser.newContext(); const pg52 = await sito52.newPage();
+    const fin52 = []; pg52.on('dialog', d => { fin52.push(d.message()); d.dismiss().catch(() => {}); });
+    await pg52.goto(BASE + pag52.percorso, { waitUntil: 'networkidle' });
+    const ld52 = await pg52.locator('script[type="application/ld+json"]').evaluateAll(l => l.map(s => s.textContent));
+    ok('2.38.0: sul sito didascalia e JSON-LD ImageObject senza script (JSON_HEX_TAG), niente finestre', ld52.length === 1 && !/<\/script/i.test(ld52[0]) && /ImageObject/.test(ld52[0]) && await pg52.locator('img[onerror]').count() === 0 && fin52.length === 0 && !/<script>alert\(52\)/.test(await pg52.content()));
+    await sito52.close();
+    // 3. indirizzi pericolosi in fonte e licenza, licenza fuori elenco
+    const rif = [];
+    for (const [campo, valore] of [['fonte_url', 'javascript:alert(52)'], ['fonte_url', 'data:text/html,<script>alert(52)</script>'], ['licenza_url', 'JaVaScRiPt:alert(52)'], ['licenza_url', '//evil.example/x'], ['fonte_url', '/pagina-del-sito/'], ['fonte_url', 'https://u:p@evil.example/'], ['fonte_url', 'https://evil.example/" onmouseover="x'], ['licenza', 'gpl<script>']]) {
+      const r = await salva52(admin, t52, { [campo]: valore });
+      const d = cli52('dati', A52);
+      if (!([302, 303].includes(r.status()) && d[campo] !== valore && !/javascript|data:|evil/i.test(d.fonte_url + d.licenza_url) && d.licenza === 'cc-by')) rif.push([campo, valore, r.status(), d[campo]]);
+    }
+    ok('2.38.0: fonte e pagina della licenza javascript:, data:, relative, con credenziali o virgolette, licenza fuori elenco: rifiutate, restano i valori di prima', rif.length === 0, rif);
+    // 4. immagini inesistenti, fuori dalla libreria, di un altro dominio
+    const fuori = [];
+    for (const u of ['/uploads/pagine/2026/11/non-esiste.jpg', '/uploads/../includes/config.local.php', '/includes/config.local.php', 'https://evil.example/uploads/x.jpg', '/uploads/pagine/2026/11/imgprova-sic52a.jpg.webp', "/uploads/x.jpg' OR 1=1 -- "]) {
+      const r = await salva52(admin, t52, { alt: 'Alt fuori ' + u }, u);
+      const api = await admin.ctx.request.post(ADMIN + '/seo-api.php', { form: { _csrf: t52, azione: 'media_dato_salva', url: u, campo: 'alt', valore: 'x' }, headers: ORIG52 });
+      const n = cli52('dati', u);
+      if (n.alt !== '' || api.status() !== 400) fuori.push([u, r.status(), api.status(), n.alt]);
+    }
+    ok('2.38.0: immagini inesistenti, fuori dalla libreria, di un altro dominio o con SQL: rifiutate, nessuna riga', fuori.length === 0, fuori);
+    // 5. la correzione in posto accetta solo i suoi campi
+    const campiNo = [];
+    for (const c of ['licenza', 'origine', 'percorso', 'fonte_url', "alt' OR '1"]) {
+      const r = await admin.ctx.request.post(ADMIN + '/seo-api.php', { form: { _csrf: t52, azione: 'media_dato_salva', url: A52, campo: c, valore: 'javascript:alert(52)' }, headers: ORIG52 });
+      if (r.status() !== 400) campiNo.push([c, r.status()]);
+    }
+    ok('2.38.0: la correzione in posto rifiuta i campi che non sono suoi (licenza, origine, percorso, fonte...)', campiNo.length === 0 && cli52('dati', A52).origine === '', campiNo);
+    // 6. rinomina: una foto usata, una fuori dalla libreria
+    const rn1 = await admin.ctx.request.post(M, { form: { _csrf: t52, azione: 'dati_rinomina', url: A52 }, headers: ORIG52, maxRedirects: 0 });
+    const rn2 = await admin.ctx.request.post(M, { form: { _csrf: t52, azione: 'dati_rinomina', url: '/includes/config.local.php' }, headers: ORIG52, maxRedirects: 0 });
+    ok('2.38.0: Rinomina di una foto usata da una pagina o fuori dalla libreria: niente rinominato', fs.existsSync(path.join(DIR, 'uploads/pagine/2026/11/imgprova-sic52a.jpg')) && fs.existsSync(path.join(DIR, 'includes/config.local.php')) && [302, 303].includes(rn1.status()) && [302, 303].includes(rn2.status()));
+    // 7. il redattore: salva i dati (la libreria è sua), ma non le impostazioni delle foto
+    const tr = await tokenDi(red.p, M + '?immagine=' + encodeURIComponent(B52));
+    const rr = await salva52(red, tr, { alt: 'Alt del redattore ' + CATTIVO }, B52);
+    const rf = await red.ctx.request.post(M, { form: { _csrf: tr, azione: 'foto_impostazioni', foto_leggere: '1', foto_lato_max: '900' }, headers: ORIG52, maxRedirects: 0 });
+    ok('2.38.0: il redattore salva i dati di una foto come testo, ma non cambia le impostazioni delle foto (403)', [302, 303].includes(rr.status()) && cli52('dati', B52).alt === 'Alt del redattore' && rf.status() === 403, [rr.status(), rf.status(), cli52('dati', B52).alt]);
+    // 8. AI collegate: propose_media_data
+    if (fs.existsSync(path.join(DIR, 'addon', 'ai-collegate', 'includes', 'immagini.php'))) {
+      const attiviFile = path.join(DIR, 'moduli', 'addon-attivi.json');
+      const eraAcceso = (() => { try { return JSON.parse(fs.readFileSync(attiviFile, 'utf8')).includes('ai-collegate'); } catch (e) { return false; } })();
+      ai52('accendi'); ai52('sql', "DELETE FROM {p}ai_proposte WHERE tipo = 'media'");
+      const k52 = ai52('chiave', 'leggi,proposte', 'Chiave sic52').chiave;
+      const call52 = async (nome, args, token = k52) => {
+        const r = await fetch(BASE + '/api/mcp', { method: 'POST', headers: { Authorization: 'Bearer ' + token, 'Content-Type': 'application/json', Accept: 'application/json, text/event-stream', 'MCP-Protocol-Version': '2025-06-18' }, body: JSON.stringify({ jsonrpc: '2.0', id: 52, method: 'tools/call', params: { name: nome, arguments: args } }) });
+        const j = await r.json().catch(() => null); const res = j && j.result; let d = null; try { d = JSON.parse(res.content[0].text); } catch (e) {}
+        return { stato: r.status, errore: !!(res && res.isError), d };
+      };
+      const conta = () => +(ai52('sql', "SELECT COUNT(*) n FROM {p}ai_proposte WHERE tipo = 'media' AND stato = 'attesa'")[0] || {}).n || 0;
+      const p1 = await call52('propose_media_data', { motivo: 'Troppe', immagini: Array.from({ length: 51 }, () => ({ url: B52, alt: 'Alt valido' })) });
+      const p2 = await call52('propose_media_data', { motivo: 'Fuori libreria', immagini: [{ url: B52, alt: 'Alt valido' }, { url: 'javascript:alert(52)', alt: 'x x x' }] });
+      const p3 = await call52('propose_media_data', { motivo: 'Senza campi', immagini: [{ url: B52, licenza: 'cc0', fonte_url: 'javascript:alert(52)' }] });
+      ok('2.38.0: propose_media_data oltre 50 immagini, con un indirizzo javascript: o senza campi proponibili: rifiutate, nessuna proposta', p1.errore && p2.errore && p3.errore && conta() === 0, [p1.d, p2.d, p3.d]);
+      const p4 = await call52('propose_media_data', { motivo: 'Codice ' + SCRIPT, immagini: [{ url: B52, alt: 'Alt ' + CATTIVO + SCRIPT, descrizione: 'Descr ' + CATTIVO }] });
+      const righe = ai52('sql', "SELECT dopo, motivo FROM {p}ai_proposte WHERE tipo = 'media' AND stato = 'attesa'");
+      ok('2.38.0: propose_media_data con codice nei valori: proposte salvate come testo, nessun cambio prima dell\'approvazione', !p4.errore && Array.isArray(righe) && righe.length === 2 && righe.every(x => !/[<>]/.test(x.dopo + x.motivo)) && cli52('dati', B52).alt === 'Alt del redattore', righe);
+      const pr = ai52('sql', "SELECT id FROM {p}ai_proposte WHERE tipo = 'media' AND stato = 'attesa' ORDER BY id LIMIT 1")[0] || {};
+      const trp = await tokenDi(red.p, ADMIN + '/media.php');
+      const ra = await red.ctx.request.post(ADMIN + '/addon-pagina.php?a=ai-collegate&p=proposte', { form: { _csrf: trp, azione: 'approva', id: String(pr.id || 0) }, headers: ORIG52, maxRedirects: 0 });
+      ok('2.38.0: il redattore non approva le proposte sui dati delle immagini', ![200, 302, 303].includes(ra.status()) || conta() === 2, [ra.status(), conta()]);
+      const kNo = ai52('chiave', 'leggi', 'Chiave sic52 sola lettura').chiave;
+      const p5 = await call52('propose_media_data', { motivo: 'Senza permesso', immagini: [{ url: B52, alt: 'Alt valido' }] }, kNo);
+      ok('2.38.0: propose_media_data senza il permesso "proposte": negato', p5.errore && conta() === 2);
+      ai52('sql', "DELETE FROM {p}ai_proposte WHERE tipo = 'media'");
+      if (!eraAcceso) ai52('spegni');
+    }
+    cli52('pulisci');
+  } else console.log('--  Dati delle immagini: saltata (manca CMS_DIR o la 2.38.0)');
+
   // === pulizia: elimina il redattore di prova
   {
     await admin.p.goto(ADMIN + '/utenti.php', { waitUntil: 'networkidle' });

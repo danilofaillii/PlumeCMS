@@ -1355,14 +1355,25 @@ capitoli['23t'] = async () => {
   cli('sql', 'DELETE FROM {p}articles WHERE id = ' + art.id); cli('sql', "DELETE FROM {p}pagine_revisioni WHERE tipo = 'articoli' AND pagina_id = " + art.id);
 };
 
-// 23u. (2.29.0) Media > Senza alt: una pagina con una foto senza testo alternativo, la correzione in posto. Vuole CMS_DIR_MANUALE.
+// 23u. (2.29.0) Media > Senza alt, dalla 2.38.0 Dati delle immagini e la scheda dell'immagine (foto 07-dati e 07-scheda): una pagina con
+// una foto senza testo alternativo, la correzione in posto. Vuole CMS_DIR_MANUALE.
 capitoli['23u'] = async () => {
   const DIRM = process.env.CMS_DIR_MANUALE; if (!DIRM) throw new Error('23u: serve CMS_DIR_MANUALE');
   const cli = (...a) => JSON.parse(require('child_process').execFileSync('php', [path.join(__dirname, '..', 'prove', 'seo-strumenti-cli.php'), DIRM, ...a.map(String)], { encoding: 'utf8' }).trim().split('\n').pop());
   const f = cli('foto_copia', path.join(FOTO_PROVA, 'squadra.jpg'), 'la-squadra');
   const lab = cli('pagina', 'il-laboratorio', 'Il laboratorio', JSON.stringify([{ tipo: 'titolo', impostazioni: { testo: 'Il laboratorio', livello: 'h1' } }, { tipo: 'immagine', impostazioni: { immagine: f.url, alt: '' } }]));
-  await vai('media.php?scheda=alt');
-  await foto('07-senza-alt', { clip: { x: 240, y: 56, width: 960, height: 520 }, segni: [{ sel: '.imp-schede a[href="media.php?scheda=alt"]', n: 1 }, { sel: '#ma-elenco-pagine input[data-alt-url]', n: 2 }, { sel: '#ma-elenco-pagine .ma-dove a[href*="editor.php"]', n: 3, lato: 'destra' }] });
+  // 2.38.0: Senza alt è diventata Dati delle immagini (con i filtri); la foto 07-dati prende il posto di 07-senza-alt.
+  await vai('media.php?scheda=dati');
+  await foto('07-dati', { clip: { x: 240, y: 56, width: 960, height: 600 }, segni: [{ sel: '.imp-schede a[href="media.php?scheda=dati"]', n: 1 }, { sel: '.md-filtri', n: 2 }, { sel: '#ma-elenco-pagine input[data-alt-url]', n: 3 }, { sel: '#ma-elenco-pagine .ma-dove a[href*="editor.php"]', n: 4, lato: 'destra' }] });
+  // 2.38.0: la scheda dell'immagine, con i campi compilati come nell'esempio del capitolo 7.
+  await vai('media.php?immagine=' + encodeURIComponent(f.url));
+  await p.fill('#ms-alt', 'La squadra del laboratorio davanti al forno');
+  await p.fill('#ms-titolo', 'La squadra del laboratorio');
+  await p.fill('#ms-didascalia', 'Marta, Luca e Giulia nel laboratorio di via Rizzoli');
+  await p.fill('#ms-descrizione', 'Le tre persone del laboratorio, in grembiule, davanti al forno per la ceramica; sugli scaffali i vasi appena cotti.');
+  await p.fill('#ms-autore', 'Studio Prova'); await p.selectOption('#ms-autore_tipo', 'organizzazione'); await p.selectOption('#ms-licenza', 'riservati');
+  await p.dispatchEvent('#ms-alt', 'input'); await dorme(200);
+  await foto('07-scheda', { clip: { x: 240, y: 56, width: 960, height: 1180 }, segni: [{ sel: '#ms-alt', n: 1 }, { sel: '#ms-didascalia', n: 2 }, { sel: '#ms-descrizione', n: 3 }, { sel: '#ms-autore', n: 4 }, { sel: '#ms-licenza', n: 5 }, { sel: '#ms-usata', n: 6 }] });
   cli('sql', 'DELETE FROM {p}pages WHERE id = ' + lab.id); cli('sql', "DELETE FROM {p}pagine_revisioni WHERE tipo = 'pagine' AND pagina_id = " + lab.id);
   cli('sql', "DELETE FROM {p}media_alt WHERE percorso LIKE '%la-squadra%'");
   cli('foto_togli', 'la-squadra'); try { require('fs').unlinkSync(f.file); } catch (e) {}

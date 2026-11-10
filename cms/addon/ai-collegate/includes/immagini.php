@@ -7,7 +7,7 @@
  *    tutte controllate prima di scriverne una (o tutte o nessuna), legate dal gruppo "media-0-<12 hex>": l'amministratore le
  *    vede insieme in Proposte e le approva tutte o una per una. Mai scrittura diretta: si applicano solo con l'approvazione
  *    (aic_proposta_applica: media_alt_salva o media_dati_salva).
- * Manuale tecnico, 50.6.
+ * Manuale tecnico, 51.6.
  */
 require_once __DIR__ . '/ai.php';
 require_once __DIR__ . '/proposte.php';
