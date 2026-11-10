@@ -2,6 +2,37 @@
 
 Il prodotto si chiama **plumeCMS** (nome scelto il 26 ottobre 2026; prima, per poche ore, "CarbonaraCMS", e ancora prima il provvisorio "Officina": gli zip vecchi si chiamavano `officina-*` e `carbonaracms-*`).
 
+## 2.39.0 (10 novembre 2026) - Popup costruiti con l'editor visuale
+
+- **Popup come una pagina** (richiesta di Danilo: "devo poter costruire un popup come se fosse una pagina classica"): nella scheda
+  del popup, "Cosa mostra" ha due carte. **Campi semplici** è il popup di sempre (occhiello, titolo, testo, immagine, pulsante,
+  modulo). **Costruito con l'editor visuale** apre l'editor delle pagine: sezioni, colonne e tutti i widget, con bozza, Pubblica,
+  versioni e anteprima. Il disegno è un modello dell'editor di tipo "popup" (come il riquadro di fine articolo): non sta fra gli
+  header e i footer, non ha condizioni; dove e quando esce lo decide la scheda del popup, come prima.
+- **Apri nell'editor**: salva la scheda e, al primo clic, crea il disegno con un titolo, un testo e un pulsante da cambiare (presi
+  dai campi semplici, se il popup li aveva; altrimenti un esempio con il pulsante "Ho capito" che chiude). Nell'editor la tela
+  mostra la finestra larga come scelto nella scheda, sulla pagina velata, con la X fuori dal disegno (non si toglie), e il
+  pulsante "Torna al popup".
+- **Stato del disegno** nella scheda: non ancora creato, bozza, pubblicato, "Ci sono modifiche non pubblicate". Un popup acceso
+  con il disegno non pubblicato non esce sul sito, e la scheda, l'elenco e il messaggio dopo Salva lo dicono in chiaro.
+  Anteprima del popup aperto sulla home dentro la scheda (`?preview=1&popup_prova=ID`, solo per l'amministratore).
+- **Aspetto della finestra**, per tutti e due i modi: larghezza (media 560 px come prima, stretta 420, larga 900, tutta la
+  larghezza), posizione (al centro sulla pagina velata come prima, in basso a destra, barra in fondo, barra in cima: nelle tre
+  nuove la pagina resta usabile), finestra con o senza fondo, bordo e margine. Con i valori di partenza un popup a campi esce
+  identico al byte a prima.
+- **#chiudi**: un link con indirizzo `#chiudi` dentro un popup (un pulsante del disegno, o il pulsante dei campi semplici) chiude
+  il popup e conta come chiuso per i giorni scelti.
+- **Sul sito**: il disegno pubblicato con il suo CSS, i form dentro funzionano e con un errore la pagina riapre il popup sulla
+  risposta, gli id dei form cambiano dentro il popup (niente doppioni con lo stesso form in pagina), la finestra si scorre dentro
+  se il disegno è più alto dello schermo. Finestra di dialogo con il nome dal primo titolo del disegno (o dal nome del popup), il
+  fuoco entra e torna dov'era, al centro il Tab resta dentro la finestra, Esc chiude, con "meno movimento" niente animazione.
+- Solo l'amministratore, come prima; il disegno si pubblica con le regole di "Chi pubblica". Eliminando il popup si elimina anche
+  il suo disegno. Esporta e importa dell'editor non portano i disegni dei popup (vivono con il loro popup), e Header e footer
+  rifiuta un modello che non è un header o un footer.
+- Tabella `popup`: colonne nuove `contenuto`, `modello_id`, `larghezza`, `posizione`, `sfondo_finestra`, aggiunte anche alle
+  tabelle di prima con i valori di partenza. Prove: `prove/prova-popup-editor.js` (con `prove/popup-cli.php`), gruppo 53 degli
+  attacchi.
+
 ## 2.38.0 (10 novembre 2026) - Pulizia e dati delle immagini
 
 - **Impostazioni > Pulizia** (richiesta di Danilo: "fa un check di cosa c'è di eliminabile e propone la cancellazione totale o

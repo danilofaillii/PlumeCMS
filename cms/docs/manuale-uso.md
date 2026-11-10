@@ -1896,14 +1896,20 @@ Excel o Numbers.
 ## 19. I popup
 
 **A cosa serve.** Una finestra che compare sopra la pagina: un'offerta, un avviso, un invito a iscriversi. Si apre da
-**Popup**, **+ Nuovo popup**.
+**Popup**, **+ Nuovo popup**. Un popup si costruisce in due modi, che scegli in cima alla scheda, in **Cosa mostra**:
+
+- **Campi semplici**: riempi titolo, testo, immagine e pulsante, e il popup prende la grafica del sito. È il modo più veloce.
+- **Costruito con l'editor visuale**: lo componi come una pagina, con sezioni, colonne e tutti i widget (foto, pulsanti, un form,
+  un video, un conto alla rovescia...). È il modo per un popup con la grafica che vuoi tu.
+
+### Il popup con i campi semplici
 
 ![Il popup nuovo](immagini/manuale-uso/18-popup.jpg)
 
-1. **Cosa mostra**: occhiello, **titolo**, testo, un'immagine, un pulsante con il suo link; oppure un form dentro il
-   popup (tendina **Modulo dentro il popup**). Per l'immagine premi **Scegli dai Media** accanto alla casella
-   **Immagine** e scegli la foto (capitolo 7).
-   Il link del pulsante si sceglie con **Scegli dal sito**.
+1. **Cosa mostra**: lascia scelta la carta **Campi semplici** e scrivi occhiello, **titolo**, testo, un'immagine, un pulsante
+   con il suo link; oppure un form dentro il popup (tendina **Modulo dentro il popup**). Per l'immagine premi **Scegli dai
+   Media** accanto alla casella **Immagine** e scegli la foto (capitolo 7).
+   Il link del pulsante si sceglie con **Scegli dal sito**. Con il link **#chiudi** il pulsante chiude il popup, come la X.
 2. **Su quali pagine**: tutte, solo la home, solo gli articoli, solo le pagine, oppure gli indirizzi che scrivi tu. Nella
    casella degli indirizzi **Scegli dal sito** aggiunge una pagina per riga: premilo una volta per ogni pagina.
 
@@ -1914,10 +1920,50 @@ Excel o Numbers.
 
 ![Il popup sul sito](immagini/manuale-uso/18-sul-sito.jpg)
 
+### Il popup costruito con l'editor visuale
+
+**Esempio.** La bottega vuole un popup di benvenuto con una foto, due righe e il pulsante "No grazie" che lo chiude.
+
+![La scheda del popup con l'editor visuale](immagini/manuale-uso/18-popup-editor.jpg)
+
+1. In **Popup**, **+ Nuovo popup**, scrivi il **Nome** (lo vedi solo tu nel pannello) e in **Cosa mostra** scegli la carta
+   **Costruito con l'editor visuale**. I campi semplici spariscono e compare il pulsante **Apri nell'editor**.
+2. Premi **Apri nell'editor**. La scheda si salva e si apre l'editor visuale con un disegno di partenza: un titolo, un testo e
+   un pulsante "Ho capito" che chiude il popup. Se avevi già scritto titolo e testo nei campi semplici, il disegno parte da
+   quelli.
+3. Nella **Larghezza** scegli quanto è larga la finestra: media (come i popup di sempre), stretta, larga o tutta la larghezza
+   dello schermo.
+4. Nella **Posizione** scegli dove compare: al centro sopra la pagina velata (come sempre), in basso a destra, oppure come
+   una barra in fondo o in cima allo schermo. In basso a destra e nelle barre la pagina resta usabile sotto il popup.
+
+![L'editor del popup](immagini/manuale-uso/18-popup-tela.jpg)
+
+5. Nell'editor la finestra del popup è larga come hai scelto, sopra la pagina velata. Cambia il titolo e il testo, trascina
+   un widget **Immagine** e scegli la foto, aggiungi un **Form** se vuoi raccogliere contatti. La **X** in alto a destra c'è
+   sempre: non fa parte del disegno e non si può togliere, così chi visita può sempre chiudere il popup. Il pulsante **Torna al
+   popup** ti riporta alla scheda.
+6. Per un pulsante che chiude il popup, nel widget **Pulsanti** scrivi come link **#chiudi** (con il cancelletto). Chi lo
+   preme chiude il popup, che non ricompare per i giorni che hai scelto, proprio come con la X.
+7. Premi **Pubblica**. Finché il disegno non è pubblicato, il popup **non esce sul sito** anche se è acceso: la scheda lo
+   dice con un avviso giallo, e nell'elenco dei popup leggi "non esce: disegno da pubblicare".
+8. Torna alla scheda (**Torna al popup**): in **Il disegno** leggi **Pubblicato**. Se cambi qualcosa nell'editor e salvi solo
+   la bozza, leggi "Ci sono modifiche non pubblicate": sul sito resta la versione pubblicata. Sotto, l'**Anteprima** mostra il
+   popup aperto sulla home, anche con le modifiche non ancora pubblicate.
+9. Scegli **Su quali pagine**, **Quando compare** e ogni quanti giorni, spunta **Acceso** e premi **Salva**.
+
+Il riquadro **Aspetto della finestra** vale anche per i popup con i campi semplici. Se il tuo disegno ha già un suo fondo
+colorato, togli la spunta **Finestra con il fondo, il bordo e il margine**: così decide tutto il disegno. Le versioni del
+disegno (per tornare a una versione di prima) sono in **Versioni del disegno**. Eliminando il popup si elimina anche il suo
+disegno.
+
 **Checklist**
 
 - [ ] Il popup non compare prima di 5-10 secondi (chi arriva deve prima vedere la pagina).
 - [ ] La stessa persona non lo rivede ogni volta (almeno 7 giorni).
+- [ ] Con l'editor visuale: ho premuto **Pubblica**, e nella scheda leggo **Pubblicato**, senza l'avviso giallo.
+- [ ] C'è un modo chiaro per dire di no: la X c'è sempre, e se serve un pulsante con il link **#chiudi**.
+- [ ] L'ho guardato dal telefono: la finestra sta nello schermo e si chiude.
+- [ ] Se dentro c'è un form, l'ho provato: arriva l'email, e con un errore il popup si riapre con il messaggio.
 - [ ] L'ho spento quando l'offerta è finita.
 
 ---
