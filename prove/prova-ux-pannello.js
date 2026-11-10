@@ -17,6 +17,8 @@ const PIU = ['seo.php?scheda=motori', 'seo.php?scheda=copertura', 'seo.php?sched
   'seo.php?scheda=redirect', 'seo.php?scheda=registro', 'newsletter.php?scheda=liste', 'newsletter.php?scheda=impostazioni', 'account.php', 'password.php', 'newsletter-campagna.php',
   'tipo-sito.php', 'fine-articolo.php', 'sicurezza.php?scheda=impostazioni', 'sicurezza.php?scheda=registro', 'consegna.php?scheda=dominio',
   'form.php?id=1', // 2.7.0: la scheda di un form, con il riquadro Email di conferma
+  'media.php?scheda=dati', 'media.php?scheda=dati&filtro=tutte', 'media.php?scheda=dati&filtro=descrizione', // 2.38.0: Dati delle immagini (la scheda di una foto: UX_SCHEDA=<indirizzo>)
+  ...(process.env.UX_SCHEDA ? ['media.php?immagine=' + encodeURIComponent(process.env.UX_SCHEDA)] : []),
   'addon-pagina.php?a=ai-collegate&p=idee&vista=piano', 'addon-pagina.php?a=ai-collegate&p=idee&vista=tutte', // 2.34.0: Idee per articoli (con l'addon acceso)
   // 2.8.0: Contatti, scheda del contatto, Attributi dei contatti (le voci del menu ci sono già)
   'newsletter-contatti.php?scheda=liste', 'newsletter-contatto.php?id=1', 'newsletter-contatto.php?id=1&scheda=cronologia', 'newsletter-contatto.php?id=1&scheda=liste',

@@ -1373,7 +1373,7 @@ capitoli['23u'] = async () => {
   await p.fill('#ms-descrizione', 'Le tre persone del laboratorio, in grembiule, davanti al forno per la ceramica; sugli scaffali i vasi appena cotti.');
   await p.fill('#ms-autore', 'Studio Prova'); await p.selectOption('#ms-autore_tipo', 'organizzazione'); await p.selectOption('#ms-licenza', 'riservati');
   await p.dispatchEvent('#ms-alt', 'input'); await dorme(200);
-  await foto('07-scheda', { clip: { x: 240, y: 56, width: 960, height: 1180 }, segni: [{ sel: '#ms-alt', n: 1 }, { sel: '#ms-didascalia', n: 2 }, { sel: '#ms-descrizione', n: 3 }, { sel: '#ms-autore', n: 4 }, { sel: '#ms-licenza', n: 5 }, { sel: '#ms-usata', n: 6 }] });
+  await foto('07-scheda', { clip: { x: 240, y: 56, width: 960, height: 1400 }, segni: [{ sel: '#ms-alt', n: 1 }, { sel: '#ms-didascalia', n: 2 }, { sel: '#ms-descrizione', n: 3 }, { sel: '#ms-autore', n: 4 }, { sel: '#ms-licenza', n: 5 }, { sel: '#ms-usata', n: 6 }] });
   cli('sql', 'DELETE FROM {p}pages WHERE id = ' + lab.id); cli('sql', "DELETE FROM {p}pagine_revisioni WHERE tipo = 'pagine' AND pagina_id = " + lab.id);
   cli('sql', "DELETE FROM {p}media_alt WHERE percorso LIKE '%la-squadra%'");
   cli('foto_togli', 'la-squadra'); try { require('fs').unlinkSync(f.file); } catch (e) {}

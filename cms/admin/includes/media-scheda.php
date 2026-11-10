@@ -29,6 +29,7 @@ $_skPeso = $_skInfo['peso'] >= 1048576 ? number_format($_skInfo['peso'] / 104857
 require_once __DIR__ . '/admin-header.php';
 ?>
 <style>
+.ms-colonna{min-width:0;display:grid;gap:1.2rem;align-content:start}
 .ms-griglia{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,2fr);gap:1.2rem;align-items:start}
 .ms-foto{background:var(--bg);border:1px solid var(--border);border-radius:10px;display:flex;align-items:center;justify-content:center;aspect-ratio:4/3;overflow:hidden}
 .ms-foto img{max-width:100%;max-height:100%;object-fit:contain}
@@ -37,6 +38,8 @@ require_once __DIR__ . '/admin-header.php';
 .ms-dati li span:first-child{color:var(--text-muted)}
 .ms-dati li span:last-child{overflow-wrap:anywhere;text-align:right}
 .ms-campo input[type=text],.ms-campo input[type=url],.ms-campo select,.ms-campo textarea{width:100%}
+.ms-campo textarea{min-height:6.5rem;height:auto;font:inherit;line-height:1.5;resize:vertical}
+.ms-sotto{margin:1.2rem 0 .2rem;padding-top:.8rem;border-top:1px solid var(--border);font-size:.82rem;text-transform:uppercase;letter-spacing:.04em;color:var(--text-muted)}
 .ms-conta{font-size:.78rem;color:var(--text-muted);margin-top:.2rem}
 .ms-conta.ms-fuori{color:var(--attenzione-testo,var(--text))}
 .ms-sbagliato input,.ms-sbagliato select,.ms-sbagliato textarea{border:2px solid var(--errore,#b00020)}
@@ -55,6 +58,7 @@ require_once __DIR__ . '/admin-header.php';
 <p><a href="media.php">&larr; Torna alla libreria</a></p>
 <?php if ($_skErrori): ?><div class="flash flash-error" role="alert"><?= count($_skErrori) === 1 ? 'Un campo da sistemare: lo trovi segnato in rosso qui sotto.' : count($_skErrori) . ' campi da sistemare: li trovi segnati in rosso qui sotto.' ?></div><?php endif; ?>
 <div class="ms-griglia">
+  <div class="ms-colonna">
   <section class="form-card ms-lato" aria-labelledby="ms-t-foto">
     <h3 id="ms-t-foto"><?= h($_skVoce['nome']) ?></h3>
     <div class="ms-foto"><img src="<?= h($_skVoce['url']) ?>" alt=""></div>
@@ -68,6 +72,35 @@ require_once __DIR__ . '/admin-header.php';
       <?php if ($_skDati['origine'] !== ''): ?><li><span>Arrivata da</span><span>importata dall'AI collegata (<?= h($_skDati['origine']) ?>)</span></li><?php endif; ?>
     </ul>
   </section>
+
+<section class="form-card" id="ms-usata" aria-labelledby="ms-t-usata">
+    <h3 id="ms-t-usata">Dove è usata</h3>
+    <?php if (!$_skUsata): ?>
+    <div class="empty-state">Non la trovo in nessuna pagina, articolo, modello, form, popup o newsletter. Puoi usarla dall'editor, con Scegli dai Media.</div>
+    <?php else: ?>
+    <?php if (array_filter($_skUsata, fn($_x) => !$_x['certo'])): ?><p class="hint">"Forse" vuol dire che il nome del file compare, ma non nella versione pubblicata (una bozza, un modello spento) o in un punto che non so leggere.</p><?php endif; ?>
+    <ul class="ms-usata">
+      <?php foreach ($_skUsata as $_u): ?>
+      <li><b><?= h($_u['dove']) ?></b>: <?= $_u['link'] !== '' ? '<a href="' . h($_u['link']) . '">' . h($_u['titolo'] !== '' ? $_u['titolo'] : 'apri') . '</a>' : h($_u['titolo']) ?><?php if (!$_u['certo']): ?><span class="ms-forse">forse</span><?php endif; ?><?= $_u['nota'] !== '' ? ' <span class="hint">(' . h($_u['nota']) . ')</span>' : '' ?></li>
+      <?php endforeach; ?>
+    </ul>
+    <?php endif; ?>
+    <?php if (in_array($_skVoce['cartella'], ['uploads', 'pagine', 'contenuti'], true)): ?>
+    <details class="pn-aiuto" id="ms-rinomina"><summary>Rinomina il file</summary>
+      <?php if ($_skUsata): ?>
+      <p class="hint">Non si può: la foto è usata (o forse usata) qui sopra, e cambiare il nome del file romperebbe quei collegamenti. Il nome del file conta poco per Google: conta molto di più l'alt.</p>
+      <?php else: ?>
+      <p class="hint">La foto non è usata da nessuna parte: puoi darle un nome leggibile, preso dal titolo (per esempio <code>vetrina-di-sera-a1b2c3.jpg</code>). Scrivi e salva prima il titolo.</p>
+      <form method="post" data-conferma="Rinominare il file con il nome preso dal titolo? Se qualcuno ha copiato l'indirizzo di prima fuori dal sito, quel link non funzionerà più." data-conferma-ok="Rinomina il file">
+        <?= csrf_field() ?><input type="hidden" name="azione" value="dati_rinomina"><input type="hidden" name="url" value="<?= h($_skVoce['url']) ?>">
+        <button class="btn btn-secondary btn-sm" type="submit"<?= $_skDati['titolo'] === '' ? ' disabled aria-describedby="ms-rin-perche"' : '' ?>>Rinomina il file dal titolo</button>
+        <?php if ($_skDati['titolo'] === ''): ?><span class="hint" id="ms-rin-perche">Si accende quando la foto ha un titolo salvato.</span><?php endif; ?>
+      </form>
+      <?php endif; ?>
+    </details>
+    <?php endif; ?>
+  </section>
+  </div>
 
   <form method="post" class="form-card ms-modulo" id="ms-modulo" aria-labelledby="ms-t-dati">
     <h3 id="ms-t-dati">I dati della foto</h3>
@@ -107,32 +140,6 @@ require_once __DIR__ . '/admin-header.php';
   </form>
 </div>
 
-<section class="form-card" id="ms-usata" aria-labelledby="ms-t-usata">
-  <h3 id="ms-t-usata">Dove è usata</h3>
-  <?php if (!$_skUsata): ?>
-  <div class="empty-state">Non la trovo in nessuna pagina, articolo, modello, form, popup o newsletter. Puoi usarla dall'editor, con Scegli dai Media.</div>
-  <?php else: ?>
-  <p class="hint">"Forse" vuol dire che il nome del file compare, ma non nella versione pubblicata (una bozza, un modello spento) o in un punto che non so leggere.</p>
-  <ul class="ms-usata">
-    <?php foreach ($_skUsata as $_u): ?>
-    <li><b><?= h($_u['dove']) ?></b>: <?= $_u['link'] !== '' ? '<a href="' . h($_u['link']) . '">' . h($_u['titolo'] !== '' ? $_u['titolo'] : 'apri') . '</a>' : h($_u['titolo']) ?><?php if (!$_u['certo']): ?><span class="ms-forse">forse</span><?php endif; ?><?= $_u['nota'] !== '' ? ' <span class="hint">(' . h($_u['nota']) . ')</span>' : '' ?></li>
-    <?php endforeach; ?>
-  </ul>
-  <?php endif; ?>
-  <?php if (in_array($_skVoce['cartella'], ['uploads', 'pagine', 'contenuti'], true)): ?>
-  <details class="pn-aiuto" id="ms-rinomina"><summary>Rinomina il file</summary>
-    <?php if ($_skUsata): ?>
-    <p class="hint">Non si può: la foto è usata (o forse usata) qui sopra, e cambiare il nome del file romperebbe quei collegamenti. Il nome del file conta poco per Google: conta molto di più l'alt.</p>
-    <?php else: ?>
-    <p class="hint">La foto non è usata da nessuna parte: puoi darle un nome leggibile, preso dal titolo (per esempio <code>vetrina-di-sera-a1b2c3.jpg</code>). Scrivi e salva prima il titolo.</p>
-    <form method="post" data-conferma="Rinominare il file con il nome preso dal titolo? Se qualcuno ha copiato l'indirizzo di prima fuori dal sito, quel link non funzionerà più." data-conferma-ok="Rinomina il file">
-      <?= csrf_field() ?><input type="hidden" name="azione" value="dati_rinomina"><input type="hidden" name="url" value="<?= h($_skVoce['url']) ?>">
-      <button class="btn btn-secondary btn-sm" type="submit"<?= $_skDati['titolo'] === '' ? ' disabled aria-describedby="ms-rin-perche"' : '' ?>>Rinomina il file dal titolo</button>
-      <?php if ($_skDati['titolo'] === ''): ?><span class="hint" id="ms-rin-perche">Si accende quando la foto ha un titolo salvato.</span><?php endif; ?>
-    </form>
-    <?php endif; ?>
-  </details>
-  <?php endif; ?>
-</section>
+
 <script src="<?= pannello_file('assets/media-scheda.js') ?>" defer></script>
 <?php require_once __DIR__ . '/admin-footer.php'; ?>
