@@ -75,7 +75,7 @@ function media_dati_tutti(bool $forza = false): array {
         media_alt_schema();
         $vuote = [];
         foreach (array_keys(MEDIA_DATI_TESTI) as $c) $vuote[] = "`$c` <> ''";
-        foreach (array_merge(MEDIA_DATI_URL, ['licenza']) as $c) $vuote[] = "`$c` <> ''";
+        foreach (array_merge(MEDIA_DATI_URL, ['licenza', 'origine']) as $c) $vuote[] = "`$c` <> ''";
         foreach (db()->query('SELECT * FROM ' . tbl('media_alt') . ' WHERE ' . implode(' OR ', $vuote))->fetchAll() as $r) $tutti[(string)$r['percorso']] = array_intersect_key($r, media_dati_vuoti()) + media_dati_vuoti();
     } catch (Throwable $e) { error_log('media_dati_tutti: ' . $e->getMessage()); }
     return $tutti;
@@ -192,7 +192,7 @@ function media_dati_conta(): void {
     save_setting('media_alt_n', (string)(int)db()->query('SELECT COUNT(*) FROM ' . tbl('media_alt') . " WHERE alt <> ''")->fetchColumn());
     $vuote = [];
     foreach (array_keys(MEDIA_DATI_TESTI) as $c) $vuote[] = "`$c` <> ''";
-    foreach (array_merge(MEDIA_DATI_URL, ['licenza']) as $c) $vuote[] = "`$c` <> ''";
+    foreach (array_merge(MEDIA_DATI_URL, ['licenza', 'origine']) as $c) $vuote[] = "`$c` <> ''";
     save_setting('media_dati_n', (string)(int)db()->query('SELECT COUNT(*) FROM ' . tbl('media_alt') . ' WHERE ' . implode(' OR ', $vuote))->fetchColumn());
     media_alt_tutti(true);
     media_dati_tutti(true);
@@ -219,6 +219,7 @@ function media_dati_importata(array $d): bool {
  * sa in che modo). Ogni voce: dove (testo), titolo, link (nel pannello, '' se non c'è), certo (bool), nota.
  */
 function media_dati_usata(string $url): array {
+    require_once __DIR__ . '/contenuti.php';
     $k = media_alt_chiave($url);
     $nome = basename((string)parse_url($k, PHP_URL_PATH));
     if ($k === '' || $nome === '' || strlen($nome) < 5) return [];
@@ -372,7 +373,8 @@ function media_dati_didascalia(string $url): string {
 /** L'immagine principale di un contenuto: quella in evidenza, altrimenti la foto della prima Apertura dell'editor. */
 function media_dati_immagine_principale(array $c): string {
     if (!empty($c['immagine']['url'])) return (string)$c['immagine']['url'];
-    if (empty($c['editor']) || !function_exists('editor_decodifica')) return '';
+    if (empty($c['editor'])) return '';
+    require_once __DIR__ . '/editor.php';
     $json = (string)($c['riga']['struttura'] ?? '');
     if ($json === '' && function_exists('sito_campo') && !empty($c['fonte']) && !empty($c['riga']['id'])) $json = (string)sito_campo((string)$c['fonte'], 'struttura', (int)$c['riga']['id']);
     $albero = $json !== '' ? editor_decodifica($json) : null;
@@ -390,6 +392,8 @@ function media_dati_image_object(string $url): array {
     $k = media_alt_chiave($url);
     $d = $k !== '' ? (media_dati_tutti()[$k] ?? null) : null;
     if (!$d) return [];
+    $pieni = array_filter([$d['titolo'], $d['didascalia'], $d['descrizione'], $d['autore'], $d['licenza'], $d['licenza_url'], $d['fonte_url']], fn($x) => $x !== '');
+    if (!$pieni) return []; // solo l'archivio di provenienza, niente da dire a Google
     $ass = preg_match('~^https?://~', $url) ? $url : (defined('SITO_URL') ? SITO_URL : cms_url_sito()) . (str_starts_with($url, '/') ? '' : '/') . $url;
     $info = media_dati_file_info($url);
     $lic = media_dati_licenze()[$d['licenza']] ?? ['', ''];
