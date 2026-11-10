@@ -50,6 +50,15 @@ $dbAdmin = is_admin(); // sicurezza (ruoli): il redattore vede solo i contenuti;
 if ($cronFermo) $avvisi[] = [($cronUltimo ? 'Il cron del mattino non gira dal ' . date('d/m H:i', $cronUltimo) : 'Il cron del mattino non è mai partito') . ': controlla la riga in cPanel.', 'cron-log.php'];
 if ($inviiNuovi) $avvisi[] = ["$inviiNuovi " . ($inviiNuovi === 1 ? 'compilazione nuova' : 'compilazioni nuove') . ' dai form.', 'form-submissions.php'];
 if ($pacchettiAttesa) $avvisi[] = ["$pacchettiAttesa " . ($pacchettiAttesa === 1 ? 'pacchetto caricato e non ancora applicato' : 'pacchetti caricati e non ancora applicati') . '.', 'aggiornamenti.php'];
+// 2.38.0: tanto spazio da liberare (stima ricordata per un giorno, includes/pulizia.php): un avviso discreto, niente si cancella da solo.
+if ($dbAdmin && is_file(dirname(__DIR__) . '/includes/pulizia.php')) {
+    try {
+        require_once dirname(__DIR__) . '/includes/pulizia.php';
+        $_pul = pulizia_stima();
+        if ($_pul > PULIZIA_SOGLIA_AVVISO) $avvisi[] = ['Si possono liberare circa ' . pulizia_peso($_pul) . ' (copie vecchie, snapshot, log, righe vecchie del database): guarda la Pulizia.', 'pulizia.php'];
+    } catch (Throwable $e) { error_log('dashboard, pulizia: ' . $e->getMessage()); }
+    unset($_pul);
+}
 if (posta_notifica_email() === '') $avvisi[] = ["Manca l'indirizzo degli avvisi: senza, niente email del mattino.", 'impostazioni.php'];
 // 2.18.0: i passi Email che richiamano un modello che non c'è più (le persone si fermano lì, niente email vuote).
 if ($dbAdmin && function_exists('nl_passi_senza_modello')) {

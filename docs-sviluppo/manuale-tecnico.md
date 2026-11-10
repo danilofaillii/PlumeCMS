@@ -58,6 +58,9 @@ pagine, gestire il sito) c'è il manuale d'uso, `docs/manuale-uso.md`, con le sc
 45. Le pagine per zona (dalla 2.28.0)
 46. Gli strumenti SEO: Tabella SEO, link interni suggeriti, Prodotto, How-to e Video, immagini senza alt (dalla 2.29.0)
 47. AI collegate: il connettore MCP fra il sito e qualsiasi AI (dalla 2.32.0)
+48. SEO e AEO dell'audit di plumecms.it (dalla 2.35.0)
+49. Cambia database (dalla 2.37.0)
+50. Pulizia (dalla 2.38.0)
 
 Appendice A. Dove i documenti vecchi non corrispondono al codice
 
@@ -6959,6 +6962,125 @@ rifiutato per la password sbagliata, l'avvio con tabelle e righe, l'annullamento
 senza caricare il CMS), gruppo 50 di `tools/sicurezza-prova.js`. Il capitolo 29 del manuale d'uso ha la sezione "Cambiare
 database" (schermate `27-cambia-db`, `27-cambia-db-fatto`, capitolo `27c` di `tools/manuale-uso-schermate.js` con
 `CAMBIADB_MANUALE`).
+
+## 50. Pulizia (dalla 2.38.0)
+
+Richiesta di Danilo: "Pulizia: fa un check di cosa c'è di eliminabile e propone la cancellazione totale o parziale, indicando il
+peso per ogni voce, compreso il DB." Motore `cms/includes/pulizia.php`, pagina `cms/admin/pulizia.php` (Impostazioni > Pulizia,
+voce del menu in `admin/includes/admin-header.php:87`), avviso della dashboard in `admin/index.php:53-60`. Prove:
+`prove/prova-pulizia.js` con `prove/pulizia-cli.php`, gruppo 51 di `tools/sicurezza-prova.js`. Nessuna tabella nuova: l'unica
+impostazione nuova è `pulizia_stima` (JSON `{quando, byte}`). Il motore dei pacchetti non cambia.
+
+### 50.1 Le voci e il piano
+
+`pulizia_definizioni()` (`includes/pulizia.php:234`) elenca le tredici voci con gruppo (`file`, `db`, `media`), modo e se sono
+"pesanti" (password nel riepilogo); `pulizia_ids()` (`:279`) toglie `cambiadb` senza `includes/cambia-db.php`. I modi:
+
+| Modo | Parametro | Voci |
+|---|---|---|
+| `ultime` | `n`, tieni le ultime N (minimo 0 per gli snapshot, 1 per le versioni) | snapshot (3), versioni (20) |
+| `giorni` | `giorni`, più vecchi di N giorni (minimo 0; 30 per i registri) | log (30), contatti (7), cestino (30), registri (90) |
+| `scelta` | `scelta[]`, chiavi spuntate fra quelle dell'elenco | pacchetti, copie, media |
+| `tutto` | nessuno | scarto, cambiadb, lavoro |
+| `ottimizza` | nessuno | ottimizza |
+
+`pulizia_parametri()` (`:303`) legge `$_POST['p'][id]` con `pulizia_numero()` (`:290`: solo cifre, al più sei, fra il minimo e
+`PULIZIA_N_MAX`; una lista, un segno meno, un decimale, `1e9`, uno spazio danno null e l'errore sotto il campo). Le scelte sono
+solo stringhe di al più 600 caratteri, e contano solo se uguali a una chiave dell'elenco calcolato in quel momento.
+
+`pulizia_piano($id, $p, $media)` (`:332`) chiama `pulizia_piano_<id>()`: ritorna `elementi` (chiave, nome, byte, data,
+proposto, nota, righe), `byte`, `n`, `righe` dei proposti, `bloccata` (il motivo, e allora niente si propone), `finito` (false se
+una misura si è fermata per il tempo), `stima` (pesi del database da `AVG_ROW_LENGTH`). La pagina mostra i piani con i parametri di
+partenza (`pulizia_voci()`, `:823`), il riepilogo li ricalcola con quelli scelti, l'esecuzione (`pulizia_esegui()`, `:878`) li
+ricalcola ancora e passa a `pulizia_esegui_<id>()` solo gli elementi proposti; Ottimizza va sempre per ultima.
+
+### 50.2 Le voci, una per una
+
+- **pacchetti** (`:360`, `:908`): `agg_lista_pacchetti()` con stato `applicato`; si tolgono `.zip` e `.json`. Quelli in attesa o
+  falliti restano.
+- **snapshot** (`:373`, `:390`, `:920`): `agg_lista_snapshot()` più le cartelle senza `meta.json` di più di un giorno (snapshot
+  rimasti a metà, sempre proposti). Con `n` 0 l'esecuzione vuole `p[snapshot][zero]` (la seconda conferma del riepilogo).
+  Bloccata se il blocco del ripristino è preso da un'altra connessione (`pulizia_blocco_ripristino()`, `:128`, su
+  `copia_blocco_nome()`) o se un cambio del database è in corso. `AGG_SNAPSHOT_DA_TENERE` (5) resta il tetto automatico.
+- **copie** (`:407`, `:934`): `copia_elenco(false)` (senza la firma, più veloce); di partenza tutte tranne la più recente.
+  Bloccata con il marcatore `aggiornamenti/copie/.ripristino-in-corso.json`, con il blocco preso o con un cambio in corso
+  (`pulizia_motivo_lavoro()`, `:143`).
+- **scarto** (`:420`, `:947`): `copia_scarto_elenco()`; bloccata come le copie.
+- **cambiadb** (`:428`, `:454`, `:958`): le copie `config.local.prima-<data>.php` in `includes/` e in `aggiornamenti/cambia-db/`
+  (solo quelle che cominciano con `CAMBIADB_GUARDIA`), `ultimo.json` e i file temporanei di `lavoro.json`/`ultimo.json`; mai
+  `config.local.php`, mai `lavoro.json`. Bloccata se `lavoro.json` esiste. Dopo non c'è più "Torna al database di prima".
+- **log** (`:465-516`, `:971`): in `logs/` mai i file nascosti (`.htaccess`, `.gitkeep`) né `PULIZIA_LOG_PROTETTI`
+  (`cron-stato.json`, `controllo-accesso.txt`). I log in uso (`PULIZIA_LOG_IN_USO`) si accorciano alle ultime
+  `PULIZIA_LOG_RIGHE` (50) righe (`pulizia_coda_peso()`, `:468`, legge dalla fine) e riprendono la data di prima con `touch()`:
+  la dashboard legge la data di `cron-daily.log` per dire se il cron gira (`admin/index.php:42`). Gli altri si tolgono se
+  archiviati (`pulizia_log_archiviato()`: `.gz`, `.zip`, `.1`, `.old`, `.bak`, `nome.log.qualcosa`) o fermi da più di N giorni.
+- **contatti** (`:519-556`, `:997`): i file `imp-`, `scarti-`, `esp-` (stesso schema di `newsletter_file_privato()`) nelle
+  cartelle `uploads/contatti-<16 esadecimali>/`, più vecchi di N giorni, tranne quelli delle importazioni non finite e delle
+  esportazioni in corso. Dopo, la riga dell'esportazione si toglie e `scarti_file`/`file` delle importazioni finite si svuotano.
+- **versioni** (`:559`, `:1017`): `editor_versioni` letta senza i dati, ordinata per ambito, oggetto e id; oltre le prime N di
+  ogni oggetto si tolgono le righe con `pubblicata = 0` e `nota_mano = 0` (la stessa regola di `versioni_pota()`). In PHP e non
+  con le funzioni finestra: MySQL 5.7 non le ha. Il peso è `LENGTH(dati)` più nome, nota e 120 byte.
+- **cestino** (`:583-611`, `:1038`): i tipi di `contenuti_tipi()` con la colonna `cestino`; si eliminano con
+  `contenuti_elimina()` (le stesse righe di revisione del pannello).
+- **registri** (`:613-645`, `:1056`): `pulizia_registri()` con la colonna della data e le condizioni: `sicurezza_log` senza
+  `login` e `blocco` (servono a `sicurezza_ip_fidato()`, `includes/sicurezza.php:275`, e alla scelta dell'IP fidato),
+  `sicurezza_tentativi` finiti da più di un giorno e non bloccati, `sicurezza_csp`, `seo_log`, `posta_registro`,
+  `newsletter_flussi_registro`, `ai_registro`, `copia_altrove_registro` (solo se la tabella c'è). **`newsletter_eventi` non si
+  propone**: la leggono i report delle campagne (`includes/newsletter-report.php`), i segmenti, il test A/B e le automazioni,
+  che la usano anche per non ripetere un passo (`includes/newsletter-flussi.php:248`, `:272`): togliere righe cambierebbe i
+  report e potrebbe far ripartire un passo. Lo stesso per `stat_visite` (sono i dati delle Statistiche).
+- **lavoro** (`:210`, `:647`, `:1070`): le tabelle `rip<6 esadecimali>_<prefisso>…` e `vec<…>_<prefisso>…` (non le viste), senza
+  quelle che sarebbero di un'altra installazione con un prefisso più lungo (`copia_altri_prefissi()`); con il prefisso vuoto
+  nessuna. Si tolgono con il blocco del ripristino preso, e solo i nomi ricalcolati in quel momento.
+- **ottimizza** (`:658`, `:1087`): le tabelle del sito con `DATA_FREE` maggiore di zero; `OPTIMIZE TABLE` una per una (al più
+  240 secondi), il peso prima e dopo (dati, indici e spazio vuoto) nel messaggio. Fuori dal totale: `DATA_FREE` è una stima del
+  server (con le tabelle nello spazio condiviso dice lo spazio libero di tutto il file).
+- **media** (`:667`, `:687`, `:1109`): solo dopo "Controlla le immagini" (`?media=1`, in GET: legge e basta). Vedi 50.3.
+
+### 50.3 Il controllo delle immagini
+
+`pulizia_media_controlla()` (`:687`): le immagini di `media_elenco()` si raggruppano per cartella e nome senza estensione e
+senza `-LxA` (originale e miniature insieme; la WebP accanto `foto.jpg.webp` conta nel peso). Poi si leggono, in modo non
+bufferizzato, tutte le colonne di testo (`char`, `text`, `json`, `blob`, `enum`, `set`) di tutte le tabelle del sito
+(`copia_tabelle_sito()`), decomprimendo `editor_versioni.dati` quando `compresso` è 1, e i file `.css .json .html .php .js .txt
+.svg` sotto 2 MB di `temi/` e `moduli/`. Da ogni testo (con `\/` reso `/` e una seconda lettura con `rawurldecode`) si prendono i
+nomi di immagine con fino a sei cartelle davanti. Il giudizio:
+
+- **usata**: un percorso citato finisce con il percorso dell'immagine dentro `uploads/` (o `assets/img/`), da una tabella che non
+  è `editor_versioni` o da un file;
+- **forse usata** (elencata, mai proposta): citata solo in una versione vecchia; lo stesso nome citato in un'altra cartella; il
+  nome senza estensione citato con un'altra estensione o misura; un nome con spazi o lettere speciali (il riconoscimento non è
+  sicuro); caricata meno di un'ora fa;
+- **libera**: tutto il resto. Nella pagina nessuna è spuntata di partenza.
+
+Se il controllo supera `PULIZIA_TEMPO_MEDIA` (25 s, `CMS_PULIZIA_TEMPO_MEDIA` nel config) o una query fallisce, `finito` è false
+e la voce è bloccata: nessuna immagine proposta. All'esecuzione il controllo si rifà e si tolgono solo le chiavi spuntate ancora
+libere, con `media_elimina()` su ogni membro del gruppo. Restano fuori i video (`uploads/video/`) e i file dei Download.
+
+### 50.4 Misure e tempi
+
+`pulizia_misura()` (`:64`) conta byte e file di una cartella senza seguire i collegamenti, fino a `pulizia_scadenza()` (`:49`,
+`PULIZIA_TEMPO` 8 secondi per richiesta, `CMS_PULIZIA_TEMPO` nel config): oltre, `finito` false e la pagina scrive "o più". Il
+peso del database viene da `information_schema.TABLES` (`pulizia_pesi_tabelle()`, `:173`, solo le tabelle di
+`copia_tabelle_sito()`), con `information_schema_stats_expiry = 0` sulla sessione dove esiste (MySQL 8: senza, i numeri restano
+quelli di un giorno prima). Le cancellazioni di file passano da `pulizia_togli_file()` e `pulizia_togli_cartella()`
+(`:101`, `:108`), che controllano con `realpath` che il percorso stia dentro la cartella della voce e non sia un collegamento.
+
+### 50.5 La pagina, il riepilogo, la sicurezza
+
+`admin/pulizia.php`: `require_admin()`; ogni POST passa da `verify_csrf()` (`:27`, token e Origin). `azione=riepilogo` ricalcola
+i piani e mostra "Stai per togliere" con i campi nascosti (`pul_nascosti()`, `:94`: solo id, numeri interi e scelte con
+`h()`); `azione=esegui` (`:49`) vuole la password dell'amministratore (`sicurezza_password_verifica()`) se fra le voci con
+qualcosa da togliere ce n'è una pesante, e per "tieni 0 snapshot" la spunta della seconda conferma. Errori sotto il campo con
+`aria-invalid`; password sbagliata registrata in `sicurezza_log` (evento `pulizia`). A cose fatte il resoconto va in sessione e la
+pagina rimanda a `pulizia.php#resoconto`; la riga `pulizia` del registro di sicurezza dice cosa si è tolto e quanto. Il GET non
+toglie mai niente (solo `?media=1`, che legge).
+
+### 50.6 La dashboard
+
+`pulizia_stima()` (`:853`): la stima ricordata in `pulizia_stima` se ha meno di un giorno, altrimenti i piani di partenza senza
+immagini e Ottimizza, con 3 secondi di misure, poi ricordata. La pagina della Pulizia la aggiorna a ogni apertura, l'esecuzione la
+azzera. Oltre `PULIZIA_SOGLIA_AVVISO` (200 MB) un avviso fra gli avvisi della dashboard, solo per l'amministratore. Niente cron.
 
 ## Appendice A. Dove i documenti vecchi non corrispondono al codice
 

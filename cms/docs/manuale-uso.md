@@ -4058,6 +4058,72 @@ copiate fin lì.
 - [ ] Se il pannello dice che il database è vuoto, prendo la copia prima-del-ripristino con il gestore dei file e la importo
   con phpMyAdmin, come dice la pagina.
 
+### Fare pulizia
+
+**A cosa serve.** Col tempo sul server si accumulano cose che non servono più: copie di sicurezza vecchie, pacchetti già
+installati, log lunghi, versioni vecchie delle pagine, contenuti dimenticati nel cestino, righe vecchie dei registri,
+immagini caricate e mai usate. **Impostazioni > Pulizia** le trova, dice quanto pesa ognuna (anche il database, tabella per
+tabella) e ti fa togliere tutto o solo una parte. È solo per l'amministratore, e niente si toglie da solo: decidi sempre tu,
+dopo un riepilogo.
+
+![La Pulizia: il totale in cima e la prima voce](immagini/manuale-uso/27-pulizia.jpg)
+
+1. Apri **Impostazioni > Pulizia**. In cima, **Quanto si può liberare** (1): il peso che si toglie con le proposte di
+   partenza e il peso del database. Aprendo **Il peso del database, tabella per tabella** vedi righe, dati e indici di ogni
+   tabella del sito.
+2. Sotto ci sono le voci, in tre gruppi: **File del sito**, **Database**, **Immagini**. Ogni voce dice in una riga cos'è,
+   **Cosa perdi** se la togli, e la **Proposta**: quanti elementi e quanto pesano. Nelle voci con un elenco (2) le spunte
+   dicono cosa si toglie: togline una per tenerla.
+3. Dove c'è un numero (**Tieni gli ultimi**, **Più vecchi di (giorni)**) puoi cambiarlo: il riepilogo ricalcola con il
+   numero che scrivi.
+4. Spunta **Metti nel riepilogo** (3) nelle voci che vuoi togliere, poi premi **Prepara il riepilogo** (4), in fondo.
+5. Il riepilogo dice **Stai per togliere** voce per voce, con il peso e cosa si perde, e **Per un totale di ...**. Niente è
+   stato ancora tolto. Per snapshot, copie, immagini e database scrivi **La tua password** (quella con cui entri nel pannello).
+6. Premi **Togli adesso**. Compare **Pulizia fatta: liberati ...** con quello che si è tolto per ogni voce. L'operazione è
+   scritta nel registro di **Impostazioni > Sicurezza**.
+
+**Le immagini non usate.** Nella voce **Immagini che nessuna parte del sito usa** premi **Controlla le immagini**: il pannello
+cerca ogni immagine della libreria in pagine, articoli, header e footer, impostazioni, form, popup, email, addon e temi (ci
+vogliono pochi secondi). Le immagini **forse usate** (per esempio con lo stesso nome in un'altra cartella, o citate solo in
+una versione vecchia di una pagina) sono elencate a parte e non si propongono. Quelle non usate compaiono con l'anteprima e
+**nessuna è spuntata**: guardale e spunta solo quelle che vuoi togliere. Se un altro sito mostra una tua immagine con un
+collegamento diretto, lì sparisce.
+
+**Cosa si può togliere sempre**
+
+- **Pacchetti di aggiornamento già applicati**: il sito ha già tutto quello che portavano.
+- **Log del sito**: quelli fermi da tempo e quelli archiviati si tolgono, quelli in uso si accorciano alle ultime 50 righe.
+- **File dei contatti** (esportazioni e importazioni vecchie): sono dati personali, è meglio non tenerli. I contatti nel
+  database restano tutti.
+- **Tabelle rimaste da un ripristino o da un cambio interrotto**: copie di lavoro rimaste a metà, il sito non le usa.
+- **File messi da parte dai ripristini**, se non devi recuperare niente.
+
+**Cosa togliere con prudenza**
+
+- **Snapshot degli aggiornamenti**: di partenza restano gli ultimi 3. Con 0 si tolgono tutti, anche l'ultimo, e il riepilogo
+  chiede una seconda conferma: dopo non si può tornare indietro da nessun aggiornamento.
+- **Copie del sito sul server**: di partenza resta la più recente. Prima scarica sul tuo computer quelle che vuoi tenere.
+  Mentre un ripristino è in corso (o rimasto a metà) la voce è bloccata e lo dice.
+- **Avanzi del cambio database**: dopo non si può più usare **Torna al database di prima**. Toglili solo quando il sito
+  funziona da giorni sul database nuovo. Durante un cambio la voce è bloccata.
+- **Versioni vecchie dell'editor**: di partenza restano le ultime 20 di ogni pagina (le versioni pubblicate e quelle con una
+  nota scritta a mano restano sempre).
+- **Contenuti nel cestino** da più di 30 giorni: si eliminano per sempre.
+- **Righe vecchie dei registri** (almeno 30 giorni): gli accessi e i blocchi del registro di sicurezza restano; gli eventi
+  della newsletter non si toccano mai, servono ai report.
+- **Ottimizza le tabelle**: restituisce lo spazio vuoto rimasto dentro le tabelle dopo molte cancellazioni. Si fa per ultima;
+  per qualche secondo le tabelle restano bloccate, meglio farlo quando il sito ha poche visite.
+
+Quando si possono liberare più di 200 MB, la dashboard lo dice con un avviso e il link **Apri** alla Pulizia.
+
+**Checklist della pulizia**
+
+- [ ] Ho una copia del sito recente sul mio computer prima di togliere snapshot e copie.
+- [ ] Ho letto **Cosa perdi** nelle voci che ho spuntato.
+- [ ] Nelle immagini ho spuntato solo quelle che ho guardato.
+- [ ] Ho letto il riepilogo prima di premere **Togli adesso**.
+- [ ] Dopo la pulizia ho aperto il sito e qualche pagina del pannello: tutto come prima.
+
 ---
 
 ## 30. Controlla il server

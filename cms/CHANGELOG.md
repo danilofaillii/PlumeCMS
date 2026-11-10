@@ -2,6 +2,35 @@
 
 Il prodotto si chiama **plumeCMS** (nome scelto il 26 ottobre 2026; prima, per poche ore, "CarbonaraCMS", e ancora prima il provvisorio "Officina": gli zip vecchi si chiamavano `officina-*` e `carbonaracms-*`).
 
+## 2.38.0 (10 novembre 2026) - Pulizia
+
+- **Impostazioni > Pulizia** (richiesta di Danilo: "fa un check di cosa c'è di eliminabile e propone la cancellazione totale o
+  parziale, indicando il peso per ogni voce, compreso il DB"): una pagina solo per l'amministratore che elenca, a gruppi, quello
+  che si può togliere senza rompere il sito, con il peso e quanti elementi per ogni voce, il totale recuperabile in cima e il peso
+  del database tabella per tabella (dati e indici, solo le tabelle del sito). I pesi delle cartelle si contano con un tempo
+  massimo: una cartella enorme non blocca la pagina, e il peso si segna "o più".
+- **File**: pacchetti di aggiornamento già applicati; snapshot (tieni gli ultimi N, di partenza 3; con 0 serve una seconda
+  conferma); copie del sito a scelta (di partenza resta la più recente; bloccate durante un ripristino); file messi da parte dai
+  ripristini; avanzi del cambio database (solo senza un cambio in corso, con l'avviso che dopo non si torna al database di prima);
+  log (fermi da più di N giorni e archiviati si tolgono, quelli in uso si accorciano alle ultime 50 righe con la data di prima;
+  mai `cron-stato.json` né `controllo-accesso.txt`); file dei contatti più vecchi di N giorni (mai quelli in lavorazione).
+- **Database**: versioni vecchie dell'editor (tieni le ultime N per oggetto, di partenza 20; mai le pubblicate e quelle con una
+  nota), contenuti nel cestino da più di N giorni (eliminati per sempre), righe vecchie dei registri (sicurezza senza accessi e
+  blocchi, protezione delle pagine, motori di ricerca, posta, automazioni, AI collegate, copie altrove) e tentativi di accesso
+  finiti; gli eventi della newsletter non si toccano (servono ai report e alle automazioni); tabelle di lavoro `rip`/`vec`
+  rimaste da un ripristino o da un cambio interrotto (solo del sito, mai di un'altra installazione); Ottimizza le tabelle con il
+  peso prima e dopo.
+- **Immagini non usate**: un controllo a richiesta cerca il percorso di ogni immagine in tutte le colonne di testo delle tabelle
+  del sito (pagine, articoli, modelli, impostazioni, form, popup, newsletter, addon, anche le versioni compresse) e nei file dei
+  temi e dei moduli. Quelle forse usate (stesso nome in un'altra cartella, solo in una versione vecchia, nome con spazi, caricate
+  da meno di un'ora) non si propongono; quelle non usate si tolgono solo spuntandole una per una.
+- **Riepilogo prima di togliere** ("Stai per togliere: ... per un totale di X"), password dell'amministratore per snapshot,
+  copie, immagini e database, resoconto con quanto si è liberato, riga nel registro di sicurezza. Ogni piano si ricalcola sul
+  server: dal browser arrivano solo numeri controllati e scelte che devono stare nell'elenco del momento. Niente in GET.
+- **Dashboard**: oltre 200 MB recuperabili un avviso discreto con il link alla Pulizia (stima ricordata per un giorno). Niente si
+  cancella da solo.
+- Prove: `prove/prova-pulizia.js` (con `prove/pulizia-cli.php`), gruppo 51 degli attacchi.
+
 ## 2.37.0 (9 novembre 2026) - Cambia database
 
 - **Impostazioni > Cambia database** (richiesta di Danilo: "migrare tutto il db su un altro DB e a fine copia utilizzare il
