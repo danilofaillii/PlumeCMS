@@ -970,3 +970,12 @@ redattore, 390 px.
 3. Atteso (2.38.0): 58 su 58 in radice e in cartella. Alla fine toglie pagine, dati e foto di prova.
 
 Gli attacchi sono il gruppo 52 di `tools/sicurezza-prova.js` (13, con `CMS_DIR`).
+
+## prova-asset-modelli.js (2.38.1)
+
+I widget dei modelli escono con il loro stile. Su un sito col kit Attività: `node prove/prova-asset-modelli.js <base> <cartella CMS>`.
+La prova chiama `php prove/asset-modelli-cli.php <cartella CMS>`: un Riquadro con immagine con la foto a sinistra nel riquadro
+"Aggiungi sempre alla fine" (pubblicato) e uno con la foto a destra nel footer predefinito. Da visitatore, a 1360 e 390 px:
+`widget.css` caricato una volta sola, foto a sinistra del testo e larga metà nel riquadro di fine articolo, a destra nel footer,
+al telefono sopra (come nell'editor), niente scorrimento di lato, nessun errore; alla fine spegne il riquadro e controlla che
+la home non abbia fogli o script ripetuti. Atteso: 11 su 11 in radice e in cartella; la 2.38.0 dà 5 su 11 (il difetto).

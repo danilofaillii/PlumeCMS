@@ -107,6 +107,11 @@ function vista_pagina(array $meta, string $corpo, string $jsonld = '', string $a
 <link rel="alternate" type="application/rss+xml" title="' . h(SITO_NOME) . '" href="' . SITO_URL . '/feed/">
 ' . $jsonld;
     $popup = vista_popup();
+    // 2.38.1: i fogli e gli script dei widget dei modelli (header, footer, "Aggiungi sempre alla fine") e dei popup.
+    // Prima li caricava solo la pagina per il suo contenuto: un Riquadro con immagine nel riquadro di fine articolo
+    // usciva senza il suo stile (foto sopra e larga quanto tutto invece che a sinistra). Si aggiungono solo quelli
+    // che la pagina non ha già; la pagina che non ne ha bisogno esce identica.
+    [$testa, $piede] = vista_asset_modelli($testa, $testata . $corpo . $popup . $piede, $piede);
     // temi: un tema può ridisegnare la pagina intera (viste/documento.php) con i pezzi già pronti.
     $doc = vista_tema('documento', ['testa' => $testa, 'testata' => $testata, 'corpo' => $corpo, 'piede' => $piede, 'popup' => $popup, 'meta' => $meta]);
     if ($doc !== null) return $doc;
@@ -124,6 +129,29 @@ function vista_pagina(array $meta, string $corpo, string $jsonld = '', string $a
 ' . $piede . '
 </body>
 </html>';
+}
+
+/**
+ * 2.38.1: i fogli e gli script dei widget presenti nella pagina intera ($tutto: testata, contenuto, popup, piede) che la
+ * testa non carica ancora. I fogli vanno in fondo alla testa, dopo quelli del sito, del tema e del contenuto (come per
+ * le pagine dell'editor: il CSS dei singoli elementi, scritto nei <style>, vince sempre per specificità); gli script e
+ * editor-pagina.js (video, animazioni, sticky) in fondo al piede. Ritorna [testa, piede].
+ */
+function vista_asset_modelli(string $testa, string $tutto, string $piede): array {
+    if (!function_exists('editor_asset_pagina') || !str_contains($tutto, 'ed-w-') && !str_contains($tutto, 'data-ed-hero-js')) return [$testa, $piede];
+    $asset = editor_asset_pagina($tutto);
+    $gia = $testa . $tutto;
+    foreach ((array)($asset['css'] ?? []) as $f) {
+        $href = sito_versione_asset($f);
+        if (!str_contains($gia, 'href="' . $href . '"')) $testa .= "\n" . '<link rel="stylesheet" href="' . $href . '">';
+    }
+    $js = (array)($asset['js'] ?? []);
+    if (function_exists('editor_serve_script') && editor_serve_script($tutto)) $js[] = 'editor-pagina.js';
+    foreach ($js as $f) {
+        $src = sito_versione_asset($f);
+        if (!str_contains($gia . $piede, 'src="' . $src . '"')) $piede .= '<script src="' . $src . '" defer></script>';
+    }
+    return [$testa, $piede];
 }
 
 /** temi: la vista del tema attivo, se ne ha una con questo nome (includes/temi.php), altrimenti null. */

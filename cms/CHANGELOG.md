@@ -2,6 +2,15 @@
 
 Il prodotto si chiama **plumeCMS** (nome scelto il 26 ottobre 2026; prima, per poche ore, "CarbonaraCMS", e ancora prima il provvisorio "Officina": gli zip vecchi si chiamavano `officina-*` e `carbonaracms-*`).
 
+## 2.38.1 (10 novembre 2026) - I widget dei modelli con il loro stile
+
+- Corretto (segnalazione di Danilo con due schermate): un Riquadro con immagine con la foto a sinistra, messo nel riquadro
+  "Aggiungi sempre alla fine", nell'editor era giusto e sul sito usciva con la foto sopra, larga quanto tutto il riquadro.
+  La pagina caricava i fogli di stile dei widget solo per il suo contenuto, non per i widget del riquadro di fine articolo,
+  di header e footer composti con l'editor e dei popup. Ora la pagina aggiunge quelli che mancano, una volta sola; le pagine
+  che non ne avevano bisogno escono identiche.
+- Prove: `prove/prova-asset-modelli.js` (con `prove/asset-modelli-cli.php`).
+
 ## 2.38.0 (10 novembre 2026) - Pulizia e dati delle immagini
 
 - **Impostazioni > Pulizia** (richiesta di Danilo: "fa un check di cosa c'è di eliminabile e propone la cancellazione totale o

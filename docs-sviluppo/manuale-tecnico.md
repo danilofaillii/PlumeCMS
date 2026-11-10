@@ -4468,6 +4468,14 @@ Un riquadro che disegnato non ha né testo né immagini, video, form, pulsanti o
 `vista_articolo_editor()` o `vista_articolo()`: `[$corpo, $cssFine] = vista_fine_articolo($corpo)`, e il CSS va
 nell'head. Pagine, home, archivi, glossario non lo ricevono.
 
+**I fogli e gli script dei widget dei modelli (dalla 2.38.1).** Le viste dell'editor (`vista_articolo_editor()`,
+`vista_pagina_editor()`) caricano con `editor_asset_pagina()` solo i fogli dei widget del contenuto. Quelli del riquadro di
+fine articolo, di header, footer e dei popup li aggiunge `vista_asset_modelli($testa, $tutto, $piede)` (`sito/viste.php:140`),
+chiamata da `vista_pagina()` (`sito/viste.php:114`) con testata, corpo, popup e piede: i fogli che la testa non ha già vanno in
+fondo alla testa, gli script (ed `editor-pagina.js` se `editor_serve_script()` lo chiede) in fondo al piede, mai due volte lo
+stesso indirizzo. Fino alla 2.38.0 un Riquadro con immagine con la foto a sinistra nel riquadro di fine articolo usciva senza
+`widget.css`: foto sopra, larga quanto il riquadro (prova `prove/prova-asset-modelli.js`, con `prove/asset-modelli-cli.php`).
+
 `vista_fine_articolo($corpo)` (`sito/viste.php:245`) cerca l'`<article class="corpo">` (la colonna di lettura) e mette
 il riquadro **prima del `</article>` che lo chiude**, dopo il testo e le domande frequenti: `vista_chiusura_article()`
 conta gli `<article>` annidati, così il riquadro non finisce dentro l'ultima scheda di una Griglia di articoli. Senza
