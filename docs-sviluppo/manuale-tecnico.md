@@ -3379,6 +3379,20 @@ Un valore della CSP non valido diventa `rapporto`.
 si usa una volta; nel database resta solo l'impronta del token. Al massimo 3 richieste l'ora per email e 10 per
 IP. Reimpostare chiude tutte le sessioni e manda un'email.
 
+Le due pagine sono per chi non è entrato, quindi non passano da `admin-header.php` (che carica `admin-functions.php` e con lui
+`includes/functions.php`, dove sta `h()`): `admin/includes/auth.php` non carica `functions.php` (vedi il commento di
+`pannello_file()`, `admin/includes/auth.php:32-34`). `password-dimenticata.php:7` carica `includes/admin-functions.php` dalla 2.0.0;
+`password-reimposta.php:7` dalla **2.39.1**. Fino alla 2.39.0 la pagina del link si fermava su `h($t)` (riga 49 di allora) con
+"Call to undefined function h()": con un token valido restavano il titolo e i requisiti (o la pagina sobria di `errori.php`), senza
+i campi né il pulsante; con un token non valido funzionava (quel ramo non chiama `h()`), per questo nessuna prova lo vedeva. Dalla
+2.39.1 anche: il token e le due password presi solo se sono testo (`password-reimposta.php:11` e `:17`; `t[]=` vale come nessun
+token, senza avvisi nel log). Il modulo non ha un token CSRF: lo protegge il token del link (segreto, 64 esadecimali, monouso) più
+`sicurezza_origine_ok()` (`password-reimposta.php:18`, Origin o Referer di un altro sito e Origin `null` rifiutati). Prove:
+`prove/prova-password-reimposta.js` (25 controlli, il giro completo con il server di posta finto) e il gruppo 54 degli attacchi.
+Controllo fatto nella 2.39.1 su tutte le pagine che si aprono senza essere entrati (`login.php`, `logout.php`, le due della
+password, il consenso OAuth che passa da `addon-pagina.php`, le API in `api/`, l'installatore, `soccorso.php` ed `errori.php`
+con il loro `$h`): solo `password-reimposta.php` chiamava una funzione non caricata.
+
 ### 18.4 Due fattori (TOTP)
 
 - Codici a 6 cifre ogni 30 secondi (come Google Authenticator), con un passo di tolleranza; lo stesso codice non

@@ -3698,6 +3698,72 @@ echo json_encode($o);
     } else console.log('--  Popup con l\'editor: saltata (' + (DIR53 ? 'CMS prima della 2.39.0' : 'serve CMS_DIR') + ')');
   }
 
+  // === 54. (2.39.1) La pagina per scegliere la password nuova (admin/password-reimposta.php), da anonimo: token sbagliato,
+  //          scaduto, storto o in forma di lista; POST da un'altra origine (Origin o Referer) rifiutato senza cambiare niente;
+  //          il token vale una volta sola; in nessuna risposta un errore fatale o un percorso del server, e niente nel log.
+  //          I token si scrivono nel database per il redattore di prova (la sua password torna la stessa). Serve CMS_DIR.
+  //          Va per ultimo: la password reimpostata chiude le sessioni del redattore.
+  {
+    const DIR54 = process.env.CMS_DIR || '';
+    if (DIR54) {
+      const fs54 = require('fs'), path54 = require('path'), crypto54 = require('crypto');
+      const { execFileSync } = require('child_process');
+      const q54 = (a, x) => execFileSync('php', [path54.join(__dirname, '..', 'prove', 'popup-cli.php'), DIR54, a, x], { encoding: 'utf8' }).trim();
+      const U54 = ADMIN + '/password-reimposta.php';
+      const LOG54 = path54.join(DIR54, 'logs', 'php-errori.log');
+      const logPrima = fs54.existsSync(LOG54) ? fs54.statSync(LOG54).size : 0;
+      const RID = +q54('uno', `SELECT id FROM {p}users WHERE username = '${RED}'`);
+      const tokenNuovo = (minuti) => { const t = crypto54.randomBytes(32).toString('hex'); q54('esegui', `INSERT INTO {p}sicurezza_token (token, scopo, utente_id, scade, creato) VALUES (SHA2('${t}', 256), 'password', ${RID}, DATE_ADD(NOW(), INTERVAL ${minuti} MINUTE), NOW())`); return t; };
+      const hash = () => q54('uno', `SELECT password_hash FROM {p}users WHERE id = ${RID}`);
+      const anon54 = await browser.newContext();
+      const testi = [];
+      const leggi54 = async (r) => { const h = await r.text(); testi.push(h); return h; };
+      const nonValido = (h) => /non è valido o è scaduto/.test(h) && !/name="password"/.test(h);
+      // token sbagliato, storto, in lista
+      let h = await leggi54(await anon54.request.get(U54 + '?t=' + crypto54.randomBytes(32).toString('hex')));
+      ok('2.39.1: password nuova con un token inventato: "non è valido o è scaduto", niente modulo', nonValido(h));
+      h = await leggi54(await anon54.request.get(U54 + '?t=' + encodeURIComponent('"><script>alert(54)</script>')));
+      ok('2.39.1: token storto con HTML: stesso messaggio, l\'HTML non torna nella pagina', nonValido(h) && !h.includes('<script>alert(54)'));
+      const ra = await anon54.request.get(U54 + '?t[]=1&t[]=2');
+      h = await leggi54(ra);
+      ok('2.39.1: token in forma di lista: nessun errore del server, stesso messaggio', ra.status() === 200 && nonValido(h), ra.status());
+      // token scaduto
+      const tScad = tokenNuovo(-5);
+      h = await leggi54(await anon54.request.get(U54 + '?t=' + tScad));
+      ok('2.39.1: token scaduto: "non è valido o è scaduto", niente modulo', nonValido(h));
+      const h0 = hash();
+      await leggi54(await anon54.request.post(U54, { form: { t: tScad, password: REDPW, password2: REDPW }, headers: { Origin: new URL(BASE).origin }, maxRedirects: 0 }));
+      ok('2.39.1: token scaduto mandato con il modulo: la password non cambia', hash() === h0);
+      // token buono: la pagina ha il modulo (controllo), poi le altre origini
+      const tBuono = tokenNuovo(30);
+      h = await leggi54(await anon54.request.get(U54 + '?t=' + tBuono));
+      ok('2.39.1: token buono: la pagina ha i due campi e il pulsante (controllo)', /id="password"/.test(h) && /id="password2"/.test(h) && /type="submit"/.test(h));
+      let r54 = await anon54.request.post(U54, { form: { t: tBuono, password: REDPW, password2: REDPW }, headers: { Origin: 'https://evil.example' }, maxRedirects: 0 });
+      h = await leggi54(r54);
+      ok('2.39.1: CSRF, POST da un\'altra origine (Origin): rifiutato, password uguale, token ancora buono', r54.status() === 200 && /Richiesta rifiutata/.test(h) && hash() === h0, r54.status());
+      r54 = await anon54.request.post(U54, { form: { t: tBuono, password: REDPW, password2: REDPW }, headers: { Referer: 'https://evil.example/pagina' }, maxRedirects: 0 });
+      h = await leggi54(r54);
+      ok('2.39.1: CSRF, POST da un\'altra origine (solo Referer): rifiutato, password uguale', /Richiesta rifiutata/.test(h) && hash() === h0, r54.status());
+      r54 = await anon54.request.post(U54, { form: { t: tBuono, password: REDPW, password2: REDPW }, headers: { Origin: 'null' }, maxRedirects: 0 });
+      h = await leggi54(r54);
+      ok('2.39.1: CSRF, POST con Origin "null" (iframe sandbox): rifiutato, password uguale', /Richiesta rifiutata/.test(h) && hash() === h0, r54.status());
+      // una volta sola
+      r54 = await anon54.request.post(U54, { form: { t: tBuono, password: REDPW, password2: REDPW }, headers: { Origin: new URL(BASE).origin }, maxRedirects: 0 });
+      ok('2.39.1: token buono dalla sua origine: password salvata, si va al login (controllo)', r54.status() === 302 && /login\.php\?motivo=reimpostata/.test(r54.headers()['location'] || '') && hash() !== h0, [r54.status(), r54.headers()['location']]);
+      const h1 = hash();
+      r54 = await anon54.request.post(U54, { form: { t: tBuono, password: REDPW + '!', password2: REDPW + '!' }, headers: { Origin: new URL(BASE).origin }, maxRedirects: 0 });
+      h = await leggi54(r54);
+      ok('2.39.1: lo stesso token una seconda volta: non vale più, la password non cambia', r54.status() === 200 && nonValido(h) && hash() === h1, r54.status());
+      // niente errori fatali o percorsi del server, a video e nel log
+      const tutto = testi.join('\n');
+      ok('2.39.1: in nessuna risposta un errore fatale o un percorso del server', !/Fatal error|Uncaught|Stack trace|Call to undefined/i.test(tutto) && !tutto.includes(DIR54) && !/\/(home|tmp|var|srv)\/[^\s"<]*\.php/.test(tutto));
+      const nuovo = fs54.existsSync(LOG54) ? fs54.readFileSync(LOG54, 'utf8').slice(logPrima) : '';
+      ok('2.39.1: nessun errore né avviso nel log per la pagina della password nuova', !/password-reimposta/.test(nuovo), nuovo.split('\n').filter(l => /password-reimposta/.test(l)).slice(0, 2));
+      await anon54.close();
+      q54('esegui', `DELETE FROM {p}sicurezza_token WHERE utente_id = ${RID} AND scopo = 'password'`);
+    } else console.log('--  Password nuova (2.39.1): saltata (serve CMS_DIR)');
+  }
+
   // === pulizia: elimina il redattore di prova
   {
     await admin.p.goto(ADMIN + '/utenti.php', { waitUntil: 'networkidle' });

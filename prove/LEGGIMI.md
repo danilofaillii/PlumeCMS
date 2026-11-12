@@ -996,3 +996,22 @@ elenco, versioni, Header e footer, eliminazione.
    (usa `prove/popup-cli.php`). Il `?v=` dei file cambia a ogni aggiornamento ed è l'unica cosa che il confronto toglie.
 4. Atteso (2.39.0): 63 su 63 (62 senza PRIMA), in radice e in cartella. Con `php -S` dopo una copia dei file a mano opcache tiene
    i file vecchi: si riaccende il server (dal pannello Aggiornamenti il motore chiama `opcache_invalidate`).
+
+## prova-password-reimposta.js
+
+La password dimenticata dall'inizio alla fine, come un utente (2.39.1): login, "Password dimenticata?", email dell'amministratore,
+l'email arriva al server di posta finto, il link dell'email apre "Scegli la password nuova" con i due campi e il pulsante visibili,
+password corta, diverse e con il nome utente rifiutate con i campi ancora lì, salvataggio e ritorno al login con il messaggio,
+login con la password nuova sì e con la vecchia no, il link usato una seconda volta non vale più, un token inventato e uno storto
+con HTML danno "non è valido o è scaduto", un POST con un token inventato non cambia niente, telefono a 390 px senza scorrimento di
+lato (anche "Password dimenticata"), nessun errore fatale nuovo in `logs/php-errori.log`. Alla fine rimette la password di partenza
+con un secondo giro (link nuovo) e controlla che si entri.
+
+1. Un CMS installato (anche senza kit), con l'utente `prova` e la password `Collaudo-Officina-2026` di `prova-install.js`.
+2. `node prove/prova-password-reimposta.js <base> <cartella del CMS> <porta smtp> [utente] [password]`. La prova accende da sé
+   `prove/smtp-finto.py` sulla porta data, mette quel server in Impostazioni > Configurazione email (resta lì: sito di prova),
+   e all'inizio toglie i conteggi delle richieste di link di quel sito (3 l'ora per email), così si può rifare. Usa
+   `prove/popup-cli.php` per leggere l'email dell'utente.
+3. Atteso (2.39.1): 25 su 25 in radice e in cartella (base `http://127.0.0.1:<porta>/test`, cartella del CMS `.../test`) e sul sito
+   aggiornato dalla 2.39.0. Sulla 2.39.0: 11 su 25 (14 KO: la pagina del link dà 500 con "Call to undefined function h()", i campi
+   non ci sono, la password non cambia, quindi anche il login con la nuova, il rifiuto della vecchia, il link "già usato" e il log).

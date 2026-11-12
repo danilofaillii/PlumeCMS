@@ -8,13 +8,13 @@ require_once __DIR__ . '/includes/admin-functions.php'; // h() per il token e pe
 ini_set('display_errors', '0'); // pagina per anonimi: niente dettagli tecnici a video
 if (is_logged_in()) { header('Location: index.php'); exit; }
 
-$t = (string)($_REQUEST['t'] ?? '');
+$t = is_string($_REQUEST['t'] ?? null) ? $_REQUEST['t'] : ''; // una lista (t[]=) vale come nessun token, senza avvisi nel log
 $uid = sicurezza_token_leggi('password', $t);
 $error = ''; $fatto = false;
 if ($uid && $_SERVER['REQUEST_METHOD'] === 'POST') {
     $st = db()->prepare('SELECT * FROM ' . tbl('users') . ' WHERE id = ?'); $st->execute([$uid]);
     $u = $st->fetch();
-    $p1 = (string)($_POST['password'] ?? ''); $p2 = (string)($_POST['password2'] ?? '');
+    $p1 = is_string($_POST['password'] ?? null) ? $_POST['password'] : ''; $p2 = is_string($_POST['password2'] ?? null) ? $_POST['password2'] : '';
     if (!sicurezza_origine_ok()) $error = 'Richiesta rifiutata: apri il link dal browser e riprova.';
     elseif (!$u) $error = 'Utente non trovato.';
     elseif (($e = sicurezza_password_errore($p1, (string)$u['username'], (string)$u['email'])) !== '') $error = $e;

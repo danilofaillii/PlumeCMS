@@ -2,6 +2,21 @@
 
 Il prodotto si chiama **plumeCMS** (nome scelto il 26 ottobre 2026; prima, per poche ore, "CarbonaraCMS", e ancora prima il provvisorio "Officina": gli zip vecchi si chiamavano `officina-*` e `carbonaracms-*`).
 
+## 2.39.1 (12 novembre 2026) - La pagina per scegliere la password nuova
+
+- **Cosa si vedeva** (segnalazione di un utente): dal link dell'email "password dimenticata" si apriva la pagina "Scegli la
+  password nuova" con il titolo e la frase "Almeno 12 caratteri...", ma senza i due campi della password e senza il pulsante (su
+  alcuni server, al posto della pagina, "Qualcosa non ha funzionato"). La password quindi non si poteva cambiare.
+- **Perché**: la pagina usava una funzione del pannello (quella che rende sicuro il testo scritto nella pagina) senza caricare il
+  file che la contiene. Con un link valido si fermava proprio lì, prima dei campi; con un link scaduto funzionava, ed è per questo
+  che le prove di prima non se ne accorgevano.
+- **Cosa cambia**: la pagina carica quel file e mostra di nuovo i campi e il pulsante; la password nuova si salva e si entra con
+  quella. Un link già usato, scaduto o inventato dice "Questo link non è valido o è scaduto". Controllate anche tutte le altre
+  pagine che si aprono senza essere entrati (login, password dimenticata, consenso delle AI collegate, installatore, API): non
+  avevano lo stesso problema.
+- Prove nuove: `prove/prova-password-reimposta.js` (il giro completo dall'email al login con la password nuova, anche al telefono
+  e in una cartella) e il gruppo 54 degli attacchi (token sbagliato, scaduto, usato due volte, richiesta da un altro sito).
+
 ## 2.39.0 (10 novembre 2026) - Popup costruiti con l'editor visuale
 
 - **Popup come una pagina** (richiesta di Danilo: "devo poter costruire un popup come se fosse una pagina classica"): nella scheda
