@@ -1010,7 +1010,7 @@ con un secondo giro (link nuovo) e controlla che si entri.
 1. Un CMS installato (anche senza kit), con l'utente `prova` e la password `Collaudo-Officina-2026` di `prova-install.js`.
 2. `node prove/prova-password-reimposta.js <base> <cartella del CMS> <porta smtp> [utente] [password]`. La prova accende da sé
    `prove/smtp-finto.py` sulla porta data, mette quel server in Impostazioni > Configurazione email (resta lì: sito di prova),
-   e all'inizio toglie i conteggi delle richieste di link di quel sito (3 l'ora per email), così si può rifare. Usa
+   e all'inizio toglie i conteggi delle richieste di link (3 l'ora per email) e dei login sbagliati di quel sito, così si può rifare. Usa
    `prove/popup-cli.php` per leggere l'email dell'utente.
 3. Atteso (2.39.1): 25 su 25 in radice e in cartella (base `http://127.0.0.1:<porta>/test`, cartella del CMS `.../test`) e sul sito
    aggiornato dalla 2.39.0. Sulla 2.39.0: 11 su 25 (14 KO: la pagina del link dà 500 con "Call to undefined function h()", i campi

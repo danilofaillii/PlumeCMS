@@ -28,7 +28,7 @@ const MALI = /Fatal error|Eccezione non gestita|undefined function|Uncaught/i;
   const smtp = spawn('python3', ['-I', path.join(__dirname, 'smtp-finto.py'), String(SMTP), POSTA], { stdio: 'ignore' });
   await new Promise(r => setTimeout(r, 800));
   const logPrima = logOra().length;
-  // Le richieste di link contano 3 l'ora per email: una prova rifatta sullo stesso sito non deve fermarsi lì.
+  // Le richieste di link contano 3 l'ora per email e i login sbagliati bloccano: una prova rifatta sullo stesso sito non deve fermarsi lì.
   sql('esegui', "DELETE FROM {p}sicurezza_tentativi WHERE chiave LIKE 'reset-%' OR chiave LIKE 'ip:%' OR chiave LIKE 'utente:%'");
   const EMAIL = sql('uno', `SELECT email FROM {p}users WHERE username = '${UTENTE.replace(/'/g, '')}'`);
   const br = await chromium.launch();
