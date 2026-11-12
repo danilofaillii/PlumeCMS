@@ -1,0 +1,45 @@
+/* 2.27.0: i widget Sedi e Dati dell'attività (includes/editor-widget-sedi.php). Classi ew-sede*, ew-sedi*, ew-dati*.
+   Si carica dopo widget.css (che dà .ew-orari, .ew-mappa e .btn del sito) e solo nelle pagine che hanno uno dei due widget.
+   Colori solo dalle variabili del sito: con i temi seguono il tema. */
+
+.ew-sedi{display:grid;gap:clamp(16px,2.5vw,24px)}
+.ew-sedi-griglia{grid-template-columns:repeat(2,minmax(0,1fr))}
+.ew-sedi-elenco{grid-template-columns:minmax(0,1fr)}
+@media (max-width:640px){.ew-sedi-griglia{grid-template-columns:minmax(0,1fr)!important}}
+
+.ew-sede{position:relative;display:flex;flex-direction:column;min-width:0;border:1px solid var(--bordo);border-radius:var(--r,18px);background:var(--vetro);overflow:hidden}
+.ew-sede-foto{margin:0;aspect-ratio:16/9;overflow:hidden;background:var(--bg-2,var(--bg))}
+.ew-sede-foto img{width:100%;height:100%;object-fit:cover;display:block}
+.ew-sede-corpo{display:grid;gap:10px;padding:clamp(16px,2.5vw,24px);min-width:0}
+.ew-sede-nome{margin:0;font:700 1.3rem/1.2 var(--f-titolo);color:var(--ew-tc,var(--testo))}
+.ew-sede-tipo{margin:0;font:600 .78rem/1.3 var(--f-testo);letter-spacing:.1em;text-transform:uppercase;color:var(--testo-2)}
+.ew-sede-indirizzo{font-style:normal;display:flex;gap:8px;align-items:flex-start;color:var(--ew-dc,var(--testo-corpo));line-height:1.45}
+.ew-sede-indirizzo svg,.ew-sede-contatti svg,.ew-sede-oggi svg{width:18px;height:18px;flex:none;margin-top:3px;color:var(--ciano)}
+.ew-sede-contatti{display:flex;flex-wrap:wrap;gap:6px 20px;margin:0;color:var(--ew-dc,var(--testo-corpo))}
+.ew-sede-contatti a{display:inline-flex;align-items:center;gap:6px;color:inherit;text-decoration:none;min-height:24px}
+.ew-sede-contatti a:hover,.ew-sede-contatti a:focus-visible{text-decoration:underline}
+.ew-sede-contatti svg{margin-top:0}
+.ew-sede-orari.ew-orari{gap:4px}
+.ew-sede-oggi{margin:0;display:flex;gap:8px;align-items:center;color:var(--testo-2);font-size:.95em}
+.ew-sede-oggi svg{margin-top:0}
+.ew-sede-azioni{display:flex;flex-wrap:wrap;gap:10px;margin-top:4px}
+.ew-sede-azioni .btn{display:inline-flex;align-items:center;gap:8px;min-height:44px}
+.ew-sede-azioni .btn svg{width:18px;height:18px}
+.ew-sede-mappa.ew-mappa{height:var(--ew-mh,220px);border:0;border-top:1px solid var(--bordo);border-radius:0;margin-top:auto}
+
+/* Elenco: scheda larga, con la mappa (o la foto) di lato dove c'è spazio. */
+.ew-sedi-elenco .ew-sede-con-mappa{display:grid;grid-template-columns:minmax(0,3fr) minmax(0,2fr)}
+.ew-sedi-elenco .ew-sede-con-mappa .ew-sede-mappa.ew-mappa{height:100%;min-height:var(--ew-mh,220px);border-top:0;border-left:1px solid var(--bordo);margin:0}
+.ew-sedi-elenco .ew-sede-con-foto:not(.ew-sede-con-mappa){display:grid;grid-template-columns:minmax(0,2fr) minmax(0,3fr)}
+.ew-sedi-elenco .ew-sede-con-foto:not(.ew-sede-con-mappa) .ew-sede-foto{aspect-ratio:auto;min-height:200px}
+@media (max-width:640px){.ew-sedi-elenco .ew-sede{display:flex}.ew-sedi-elenco .ew-sede-con-mappa .ew-sede-mappa.ew-mappa{height:var(--ew-mh,220px);min-height:0;border-left:0;border-top:1px solid var(--bordo)}}
+
+/* Dati dell'attività: una sede sola, senza riquadro, per il footer e la pagina Contatti. */
+.ew-dati-attivita{display:grid;gap:12px}
+.ew-dati-titolo{margin:0;font:700 1.1rem/1.25 var(--f-titolo);color:var(--ew-ttc,var(--testo))}
+.ew-dati-attivita .ew-sede{border:0;background:transparent;border-radius:0;overflow:visible}
+.ew-dati-attivita .ew-sede-corpo{padding:0}
+.ew-dati-attivita .ew-sede-foto{border-radius:var(--r,18px);margin-bottom:12px}
+.ew-dati-orizzontale .ew-sede-corpo{display:flex;flex-wrap:wrap;align-items:center;gap:10px 28px}
+.ew-dati-orizzontale .ew-sede-nome{font-size:1.1rem}
+.ew-dati-orizzontale .ew-sede-azioni{margin-top:0}

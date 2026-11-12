@@ -1,0 +1,39 @@
+/* Addon Prenotazioni: il calendario dei posti e la pagina personale. Sopra i fogli del sito (.modulo, .btn, .spunta),
+   con le variabili del tema: segue i colori dello Stile del sito. */
+.pren [hidden],.pren-pagina [hidden]{display:none!important}
+.pren .modulo-campi select{width:100%}
+.pren-servizio-fisso{margin:0;font-size:17px}
+.pren-servizio-fisso span{color:var(--testo-2);margin-left:6px}
+.pren-quando{border:0;padding:0;margin:0 0 18px;min-width:0}
+.pren-quando legend{font:600 12px/1 var(--f-testo);letter-spacing:.14em;text-transform:uppercase;color:var(--testo-2);margin-bottom:10px;padding:0}
+.pren-settimana{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.pren-mese{flex:1;text-align:center;font-weight:600;text-transform:capitalize}
+.pren-prima,.pren-dopo{width:40px;height:40px;border-radius:50%;border:1px solid var(--bordo);background:var(--vetro);color:var(--testo);font-size:22px;line-height:1;cursor:pointer}
+.pren-prima:disabled,.pren-dopo:disabled{opacity:.35;cursor:default}
+.pren-giorni{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:6px}
+.pren-giorno{display:flex;flex-direction:column;align-items:center;gap:2px;padding:8px 0;border-radius:12px;border:1px solid var(--bordo);background:var(--vetro);color:var(--testo);cursor:pointer;font:inherit;min-width:0}
+.pren-giorno .pren-g{font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--testo-2)}
+.pren-giorno b{font-size:18px}
+.pren-giorno:disabled{opacity:.35;cursor:default;text-decoration:line-through}
+.pren-giorno[aria-pressed=true],.pren-ora[aria-pressed=true]{background:linear-gradient(180deg,var(--primario-chiaro),var(--primario-scuro));color:#fff;border-color:transparent}
+.pren-giorno[aria-pressed=true] .pren-g{color:#fff}
+.pren-griglia-ore{display:grid;grid-template-columns:repeat(auto-fill,minmax(78px,1fr));gap:8px}
+.pren-ora{padding:10px 0;border-radius:10px;border:1px solid var(--bordo);background:var(--vetro);color:var(--testo);font:600 16px var(--f-testo);cursor:pointer}
+.pren-giorno:focus-visible,.pren-ora:focus-visible,.pren-prima:focus-visible,.pren-dopo:focus-visible{outline:2px solid var(--ciano);outline-offset:2px}
+.pren-nota{color:var(--testo-2);margin:0 0 10px;font-size:15px}
+.pren-titolo-giorno{font-weight:600;color:var(--testo)}
+.pren-riepilogo{background:rgba(var(--viola-rgb),.10);border:1px solid var(--bordo);border-radius:12px;padding:12px 16px;margin:0 0 18px;font-weight:600}
+.pren-chiuso{color:var(--testo-2)}
+.pren-ok{background:rgba(var(--successo-rgb),.12);border:1px solid rgba(var(--successo-rgb),.5);border-radius:12px;padding:12px 16px;margin:0 0 18px}
+.pren-dettagli{display:grid;grid-template-columns:auto 1fr;gap:8px 18px;margin:0 0 24px;font-size:18px}
+.pren-dettagli dt{color:var(--testo-2)}
+.pren-dettagli dd{margin:0;font-weight:600;min-width:0;overflow-wrap:anywhere}
+.pren-stato-annullata{color:var(--errore-testo)}
+.pren-azioni{display:flex;flex-wrap:wrap;gap:12px;margin:0 0 14px}
+.pren-azioni form{margin:0}
+.pren-pagina .btn{border:1px solid var(--bordo)}
+.pren-annulla{color:var(--errore-testo)}
+.pren-conferma{border:1px solid var(--bordo);border-radius:12px;padding:16px;margin:0 0 14px}
+.pren-h2{font-size:24px;margin:28px 0 0}
+.pren-pagina .modulo{margin-top:12px}
+@media (max-width:600px){.pren-giorni{gap:4px}.pren-giorno b{font-size:16px}.pren-dettagli{font-size:16px;grid-template-columns:1fr;gap:2px}.pren-dettagli dd{margin-bottom:8px}}

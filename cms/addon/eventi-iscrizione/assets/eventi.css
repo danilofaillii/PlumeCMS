@@ -1,0 +1,24 @@
+/* Addon Eventi con iscrizione: la pagina dell'evento, il modulo d'iscrizione, la pagina personale. Sopra i fogli del sito. */
+.evi [hidden],.evi-pagina [hidden]{display:none!important}
+.evi-pagina{max-width:820px}
+.evi-pagina h1{margin:12px 0 20px}
+.evi-foto{margin:0 0 24px;border-radius:var(--r,16px);overflow:hidden;line-height:0}
+.evi-foto img{width:100%;height:auto;max-height:460px;object-fit:cover}
+.evi-scheda{display:grid;grid-template-columns:auto 1fr;gap:8px 18px;margin:0 0 24px;font-size:18px}
+.evi-scheda dt{color:var(--testo-2)}
+.evi-scheda dd{margin:0;font-weight:600;min-width:0;overflow-wrap:anywhere}
+.evi-posti{color:var(--successo,inherit)}
+.evi-pieno{color:var(--errore-testo)}
+.evi-descrizione{margin:0 0 12px}
+.evi .modulo-campi select{width:100%}
+.evi-attesa-nota{background:rgba(var(--viola-rgb),.10);border:1px solid var(--bordo);border-radius:12px;padding:12px 16px}
+.evi-chiuse{color:var(--testo-2);font-weight:600}
+.evi-ok{background:rgba(var(--successo-rgb),.12);border:1px solid rgba(var(--successo-rgb),.5);border-radius:12px;padding:12px 16px;margin:0 0 18px}
+.evi-azioni{display:flex;flex-wrap:wrap;gap:12px;margin:0 0 14px}
+.evi-azioni form{margin:0}
+.evi-pagina .btn{border:1px solid var(--bordo)}
+.evi-annulla{color:var(--errore-testo)}
+.evi-conferma{border:1px solid var(--bordo);border-radius:12px;padding:16px;margin:0 0 14px}
+.evi-stato-cancellata{color:var(--errore-testo)}
+.evi-link-pagina{margin:10px 0 0}
+@media (max-width:600px){.evi-scheda{font-size:16px;grid-template-columns:1fr;gap:2px}.evi-scheda dd{margin-bottom:8px}}

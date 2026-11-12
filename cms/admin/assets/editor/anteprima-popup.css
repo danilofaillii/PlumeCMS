@@ -1,0 +1,14 @@
+/* 2.39.0: la tela dell'editor del disegno di un popup (includes/modelli.php, modelli_segnaposto_popup).
+   La pagina velata e la finestra larga come nella scheda del popup; si somma a sito.css e anteprima.css. */
+.ed-popup-tela{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:48px 16px;background:rgba(var(--bg-rgb),.7);background-image:repeating-linear-gradient(135deg,rgba(var(--inchiostro-rgb),.025) 0 12px,transparent 12px 24px)}
+.ed-popup-tela.ed-popup-p-basso-destra{align-items:flex-end;justify-content:flex-end}
+.ed-popup-tela.ed-popup-p-barra-basso{align-items:flex-end;padding:48px 0 0}
+.ed-popup-tela.ed-popup-p-barra-alto{align-items:flex-start;padding:0 0 48px}
+.ed-popup-tela .ed-popup-finestra{max-height:none;overflow:visible;padding:0}
+.ed-popup-tela .ed-popup-l-stretta{width:min(420px,100%)}
+.ed-popup-tela .ed-popup-l-larga{width:min(900px,100%)}
+.ed-popup-tela .ed-popup-l-piena{width:100%}
+.ed-popup-tela.ed-popup-p-barra-basso .ed-popup-finestra,.ed-popup-tela.ed-popup-p-barra-alto .ed-popup-finestra{width:100%;border-radius:0}
+.ed-popup-tela .ed-popup-senza-fondo{background:none;border:1px dashed rgba(var(--inchiostro-rgb),.25);box-shadow:none}
+.ed-popup-tela .ed-popup-chiudi{display:flex;align-items:center;justify-content:center;z-index:7;cursor:default;pointer-events:none}
+.ed-popup-tela .ed-pagina{min-height:120px}

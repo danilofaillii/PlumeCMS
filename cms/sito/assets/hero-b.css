@@ -1,0 +1,104 @@
+/* Disposizioni dell'Apertura del gruppo B (1.2.6): minimale, mosaico, inclinata, banner, diagonale. */
+/* hero-base.css si carica dopo questo file: dove serve scavalcarlo, il selettore comincia con .ed-hero.ed-hero-<id>. */
+
+/* Minimale: solo parole, grandi e ariose, al centro; i numeri sotto una linea sottile. */
+.ed-hero-minimale .ed-hmi-corpo{max-width:980px;margin:0 auto;text-align:center;padding:clamp(36px,7vw,104px) 0 clamp(20px,3vw,40px)}
+.ed-hero-minimale .occhiello{display:inline-flex;align-items:center;gap:14px}
+.ed-hero-minimale .occhiello::before,.ed-hero-minimale .occhiello::after{content:"";width:32px;height:1px;background:currentColor;opacity:.55}
+.ed-hero-minimale h1{font-size:clamp(40px,7.2vw,100px);line-height:1;letter-spacing:-.03em;text-transform:none;font-weight:600;margin:26px auto 28px;max-width:16ch;text-wrap:balance}
+.ed-hero-minimale p.lead{font-size:clamp(18px,1.7vw,21px);line-height:1.6;max-width:620px;margin:0 auto 40px}
+.ed-hero-minimale .azioni{justify-content:center}
+.ed-hero.ed-hero-minimale .ed-hero-numeri{justify-content:center;gap:24px clamp(40px,7vw,96px);margin:clamp(48px,6vw,80px) auto 0;padding-top:clamp(28px,3vw,40px);border-top:1px solid var(--bordo);max-width:760px}
+.ed-hero.ed-hero-minimale .ed-hero-numero{text-align:center}
+.ed-hero.ed-hero-minimale .ed-hero-numero b{font-size:clamp(36px,4.6vw,60px);font-weight:600;letter-spacing:-.02em}
+
+/* Mosaico: parole a sinistra, a destra una griglia di riquadri arrotondati. */
+.ed-hmo-griglia{display:grid;grid-template-columns:1fr 1.05fr;gap:clamp(32px,5vw,64px);align-items:center;padding:clamp(16px,3vw,40px) 0}
+.ed-hero-mosaico h1{font-size:clamp(36px,4.6vw,62px)}
+.ed-hero-mosaico p.lead{font-size:18px}
+.ed-hmo-mosaico{display:grid;grid-template-columns:1.25fr 1fr;grid-template-rows:1fr auto auto;gap:14px;min-width:0}
+.ed-hero.ed-hero-mosaico .finestra.ed-hmo-foto{grid-column:1;grid-row:1 / span 2;aspect-ratio:4/5;height:100%;border:1px solid var(--bordo)}
+.ed-hmo-colore{grid-column:2;grid-row:1;position:relative;min-height:120px;border-radius:var(--r);overflow:hidden;
+  background:radial-gradient(circle at 78% 24%,rgba(255,255,255,.28) 0 14%,transparent 14.5%),var(--grad)}
+.ed-hmo-colore span{position:absolute;left:-18%;bottom:-38%;width:90%;aspect-ratio:1;border-radius:50%;border:2px solid rgba(255,255,255,.4)}
+.ed-hmo-colore span::after{content:"";position:absolute;inset:18%;border-radius:50%;border:2px solid rgba(255,255,255,.25)}
+.ed-hero.ed-hero-mosaico .chip{width:auto;backdrop-filter:none;background:var(--bg-2);border:1px solid var(--bordo);border-radius:var(--r);padding:18px 20px}
+.ed-hero.ed-hero-mosaico .ed-hmo-onda{grid-column:2;grid-row:2}
+.ed-hero.ed-hero-mosaico .ed-hmo-barre{grid-column:1 / -1;grid-row:3;display:grid;grid-template-columns:1fr 1fr;gap:0 24px}
+.ed-hero-mosaico .ed-hmo-barre .barra{margin-top:0}
+.ed-hmo-senza-foto{grid-template-columns:1fr 1fr;grid-template-rows:auto auto}
+.ed-hero.ed-hero-mosaico .ed-hmo-senza-foto .ed-hmo-colore{grid-column:1;grid-row:1}
+@media (max-width:860px){
+  .ed-hmo-griglia{grid-template-columns:1fr;gap:32px}
+  .ed-hmo-mosaico{max-width:520px;width:100%;gap:10px}
+  .ed-hero.ed-hero-mosaico .ed-hmo-barre{grid-template-columns:1fr}
+  .ed-hero.ed-hero-mosaico .ed-hmo-barre .barra+.barra{margin-top:12px}
+  .ed-hero.ed-hero-mosaico .chip{padding:14px 16px}
+}
+
+/* Inclinata: la foto ruotata di qualche grado, con ombra morbida, su forme di colore trasparenti. */
+.ed-hero-inclinata{overflow-x:clip}
+.ed-hin-griglia{display:grid;grid-template-columns:1.1fr .9fr;gap:clamp(40px,6vw,88px);align-items:center;padding:clamp(20px,4vw,56px) 0}
+.ed-hin-solo{grid-template-columns:1fr}
+.ed-hero-inclinata h1{font-size:clamp(36px,5vw,66px)}
+.ed-hin-scena{position:relative;width:100%;max-width:400px;justify-self:center;padding:clamp(24px,4vw,44px)}
+.ed-hero.ed-hero-inclinata .finestra.ed-hin-foto{z-index:1;transform:rotate(4deg);border:1px solid var(--bordo);
+  box-shadow:0 40px 70px -30px rgba(0,0,0,.55),0 16px 40px -18px rgba(var(--viola-rgb),.45)}
+.ed-hin-forma{position:absolute;z-index:0;pointer-events:none}
+.ed-hin-f1{top:0;left:-4%;width:72%;aspect-ratio:1;border-radius:50%;background:radial-gradient(circle at 35% 35%,rgba(var(--viola-rgb),.55),rgba(var(--viola-rgb),.18) 70%)}
+.ed-hin-f2{right:-2%;bottom:2%;width:58%;aspect-ratio:1;border-radius:34px;transform:rotate(-10deg);background:linear-gradient(150deg,rgba(var(--ciano-rgb),.45),rgba(var(--ciano-rgb),.12))}
+.ed-hin-f3{top:8%;right:4%;width:22%;aspect-ratio:1;border-radius:50%;border:2px solid rgba(var(--ciano-rgb),.7)}
+@keyframes ed-hin-galleggia{from{transform:translate(0,0)}to{transform:translate(10px,-12px)}}
+@keyframes ed-hin-galleggia-2{from{transform:rotate(-10deg) translate(0,0)}to{transform:rotate(-6deg) translate(-8px,8px)}}
+.ed-hin-f1{animation:ed-hin-galleggia 14s ease-in-out infinite alternate}
+.ed-hin-f2{animation:ed-hin-galleggia-2 18s ease-in-out infinite alternate}
+@media (prefers-reduced-motion:reduce){.ed-hin-f1,.ed-hin-f2{animation:none}}
+@media (max-width:860px){
+  .ed-hin-griglia{grid-template-columns:1fr;gap:16px}
+  .ed-hin-scena{max-width:300px}
+}
+
+/* Banner: fascia bassa per le pagine interne, tutto su una riga al computer. */
+.ed-hba-riga{display:flex;align-items:center;gap:clamp(16px,2.6vw,32px);padding:clamp(20px,2.6vw,30px) clamp(20px,3vw,36px);border:1px solid var(--bordo);border-radius:var(--r);
+  background:linear-gradient(110deg,rgba(var(--viola-rgb),.14),rgba(var(--ciano-rgb),.06))}
+.ed-hero.ed-hero-banner .finestra.ed-hba-foto{flex:none;width:clamp(64px,7vw,92px);aspect-ratio:1;border-radius:50%;box-shadow:0 0 0 3px var(--bg),0 0 0 5px rgba(var(--viola-rgb),.6)}
+.ed-hba-parole{flex:1;min-width:0}
+.ed-hero-banner h1{font-size:clamp(26px,2.8vw,38px);line-height:1.1;letter-spacing:-.01em;text-transform:none;margin:8px 0 6px}
+.ed-hero-banner p.lead{font-size:16px;line-height:1.55;max-width:62ch;margin:0}
+.ed-hero-banner .azioni{flex:none;flex-wrap:nowrap;gap:10px}
+.ed-hero-banner .btn{padding:13px 18px;font-size:13px}
+@media (max-width:960px){
+  .ed-hba-riga{flex-wrap:wrap}
+  .ed-hba-parole{flex:1 1 300px}
+  .ed-hero-banner .azioni{flex:1 1 100%;flex-wrap:wrap}
+}
+@media (max-width:560px){
+  .ed-hba-riga{flex-direction:column;align-items:flex-start;gap:14px}
+  .ed-hba-parole{flex:none;width:100%}
+  .ed-hero.ed-hero-banner .finestra.ed-hba-foto{width:56px}
+  .ed-hero-banner .azioni{flex:none;width:100%}
+}
+
+/* Diagonale: fondo pieno con il gradiente, tagliato in obliquo; la foto in cornice chiara esce dal taglio.
+   Il testo sta sulla parte scura del gradiente (primario scuro), dove il bianco ha contrasto alto. */
+.ed-hero-diagonale{display:grid;grid-template-columns:1fr;align-items:start}
+.ed-hdi-fondo{grid-area:1 / 1;align-self:stretch;margin-bottom:clamp(40px,5vw,72px);border-radius:var(--r) var(--r) 0 0;
+  padding:clamp(48px,6vw,84px) 46% clamp(96px,10vw,140px) clamp(28px,5vw,64px);
+  background-color:var(--primario-scuro);
+  background-image:linear-gradient(100deg,var(--primario-scuro) 0%,var(--primario-scuro) 40%,var(--viola) 74%,var(--ciano) 100%);
+  clip-path:polygon(0 0,100% 0,100% 80%,0 100%)}
+.ed-hdi-fondo.ed-hdi-solo{padding-right:clamp(28px,5vw,64px)}
+.ed-hero-diagonale .occhiello{color:#fff;opacity:.9}
+.ed-hero-diagonale h1{color:#fff;font-size:clamp(36px,4.8vw,64px)}
+.ed-hero-diagonale h1 em{background:none;color:#fff;text-decoration:underline;text-decoration-color:rgba(255,255,255,.5);text-decoration-thickness:.07em;text-underline-offset:.14em}
+.ed-hero-diagonale p.lead{color:#fff}
+.ed-hero-diagonale .btn-viola{background:#fff;color:var(--primario-scuro);box-shadow:0 14px 30px -12px rgba(0,0,0,.45)}
+.ed-hero-diagonale .btn-filo{border-color:rgba(255,255,255,.75);color:#fff;box-shadow:none}
+.ed-hdi-cornice{grid-area:1 / 1;justify-self:end;align-self:end;position:relative;z-index:1;width:min(31%,360px);margin-right:clamp(28px,5vw,72px);padding:10px;
+  background:#fff;border-radius:calc(var(--r) + 10px);transform:rotate(2deg);box-shadow:0 40px 70px -30px rgba(0,0,0,.6)}
+.ed-hero.ed-hero-diagonale .finestra.ed-hdi-foto{border-radius:var(--r)}
+@media (max-width:860px){
+  .ed-hdi-fondo{grid-area:auto;margin-bottom:0;padding:44px 22px 110px;clip-path:polygon(0 0,100% 0,100% 82%,0 100%);
+    background-image:linear-gradient(170deg,var(--primario-scuro) 0%,var(--primario-scuro) 55%,var(--viola) 100%)}
+  .ed-hdi-cornice{grid-area:auto;width:62%;max-width:300px;margin:-96px 18px 0 0;padding:8px}
+}

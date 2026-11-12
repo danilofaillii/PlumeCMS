@@ -1,0 +1,41 @@
+{
+  "nome": "Autunno",
+  "versione": "1.0",
+  "autore": "plumeCMS",
+  "anteprima": "anteprima.webp",
+  "css": "tema.css",
+  "stile": "stile.json",
+  "modelli": "modelli.json",
+  "descrizione": "Bosco a ottobre: castagna scuro, zucca, ocra e vino, titoli con le grazie e una luce calda. Per chi vuole un sito raccolto e accogliente.",
+  "infografiche": {
+    "sfondo": "#fbf3e6",
+    "bianco": "#fffaf2",
+    "bordo": "#e8d6bd",
+    "riga": "#f1e4d0",
+    "titolo": "#2b1d13",
+    "testo": "#4d3a2b",
+    "muto": "#6e5845",
+    "situazione": "#f5eadb",
+    "su_scuro": "#e8d9c6",
+    "voci": {
+      "rosso": "#a8442f",
+      "oro": "#e0a83a",
+      "verde": "#556b2f",
+      "ciano": "#3a6a6b",
+      "viola": "#7a4b6e",
+      "scuro": "#231912"
+    },
+    "variabili": {
+      "rosso-chiaro": "#f6ecea",
+      "verde-chiaro": "#eef0ea",
+      "ciano-chiaro": "#ebf0f0",
+      "viola-chiaro": "#f2edf0",
+      "oro-chiaro": "#f7e9ce",
+      "oro-scuro": "#7f5900",
+      "oro-scuro-2": "#6b4b00",
+      "oro-scuro-chiaro": "#f6ecd6",
+      "mattone-chiaro": "#f6ecea",
+      "lilla": "#f2edf0"
+    }
+  }
+}
