@@ -109,7 +109,7 @@ Sono gli unici in `cms/docs/`, nello zip, nel sito di plumeCMS e nella pagina Do
 - **Pacchetto di aggiornamento** per un'installazione esistente:
   `python3 tools/cms-pacchetto.py --aggiornamento`. Si carica dal pannello,
   Impostazioni, Aggiornamenti.
-- **Versione**: `cms/VERSIONE` (oggi 2.39.0; sempre tre numeri: "beta" va nel CHANGELOG, mai nel nome dello zip, se no la serie "ultima" del Download non lo riconosce) e una voce in `cms/CHANGELOG.md` a ogni
+- **Versione**: `cms/VERSIONE` (oggi 2.39.1; sempre tre numeri: "beta" va nel CHANGELOG, mai nel nome dello zip, se no la serie "ultima" del Download non lo riconosce) e una voce in `cms/CHANGELOG.md` a ogni
   zip con contenuto diverso. Mai cambiare il contenuto di una versione già data.
 - **Prove** prima di dire finito:
   - `php -n -d short_open_tag=1 -l` su ogni file PHP toccato, `node --check` sui js;
@@ -167,6 +167,19 @@ Le decisioni complete, con data e perché, stanno nel second brain, `plumecms/de
 - **Nome: plumeCMS** (26 ottobre 2026).
 
 ## Stato al 31 ottobre 2026
+
+Fatto: plumeCMS 2.39.1 (12 novembre, 15:54-16:50): **la pagina per scegliere la password nuova** (segnalazione di un utente: dal link dell'email
+"password dimenticata" la pagina mostrava titolo e "Almeno 12 caratteri" ma non i campi né il pulsante). Causa: `admin/password-reimposta.php` caricava solo
+`includes/auth.php` e usava `h()` (sta in `functions.php`, caricato da `admin-functions.php`): con un token valido "Call to undefined function h()" alla riga
+49; con un token scaduto la pagina andava, per questo nessuna prova se n'era accorta. Agente nella worktree `/home/user/wt-pwd`, ramo `password-reimposta`
+(15:56-16:31), unito da me con un fast-forward. Correzione: `require_once` di `admin-functions.php`, token e password presi solo se sono testo; controllate
+con un analizzatore statico (`$S/pwd/funzioni.php`) tutte le pagine che si aprono senza accesso: rotta era solo questa. Manuale tecnico 18.3,
+`prove/prova-password-reimposta.js` 25 (accende `smtp-finto.py`, alla fine rimette la password di partenza; sulla 2.39.0 dà 11/25), gruppo 54 degli attacchi
+(13). Prove mie sullo zip del ramo principale (`$S/v23/batteria.sh`, 16:33-16:46): install 38/38 radice e cartella, password 25/25 radice e cartella e sul
+sito aggiornato, 2.39.0 11/25 con l'errore nel log, aggiornamento 2.39.0 -> 2.39.1 13/13 con 0 foto su 20, kit 34/34, attacchi 592/592, pacchetto unico
+13/13, sito di plumeCMS 137/137, zero errori fatali. Nella stessa sessione detto a Danilo come rimettere a mano la password nel database (hash bcrypt fatto
+sul Mac con `htpasswd -bnBC 12`, campo `password_hash`, poi svuotare `sicurezza_tentativi` se bloccato): `password_verify` accetta bcrypt e al login il CMS
+lo rifà in argon2id. **Non provato**: Apache vero, un programma di posta vero, Safari e Firefox.
 
 Fatto: plumeCMS 2.39.0 (10 novembre, 16:31-17:45): **popup costruiti con l'editor visuale** (richiesta di Danilo: "devo poter costruire un popup
 come se fosse una pagina classica"). Agente nella worktree `/home/user/wt-popup`, ramo `popup-editor` (16:32-17:22), unito da me sopra la 2.38.1 (conflitti
