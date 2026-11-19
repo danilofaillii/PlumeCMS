@@ -377,7 +377,7 @@ try {
                     $GLOBALS['sito_blog_elenco'] = $v;
                     [$corpo, $testa] = vista_pagina_editor($c);
                     unset($GLOBALS['sito_blog_elenco']);
-                    if (!$v['per_widget']) $corpo .= vista_blog($v);
+                    if (!$v['per_widget']) $corpo .= vista_blog_sotto($v, !str_contains($corpo, '<h1'));
                     $nodi = [sito_jsonld_pagina($percorso, $nomeBlog, '')];
                     $faq = array_merge($c['faq'], $c['editor_disegno'][2]);
                     if ($faq && $v['pagina'] === 1) $nodi[] = sito_jsonld_faq(['faq' => $faq] + $c);

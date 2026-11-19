@@ -49,7 +49,7 @@ function sito_mappa(): array {
         // 2.40.0: la pagina del blog fatta con l'editor. Se il disegno ha un widget che elenca tutti gli articoli (Ultimi articoli
         // o Griglia di articoli senza filtri, sito_blog_widget_per), le pagine si contano con il suo "quanti per pagina" e quel
         // widget mostra la pagina N; senza, sotto il disegno esce l'elenco del blog, 12 per pagina come prima. La voce 'per_widget'
-        // c'è solo per le pagine dell'editor: il blog classico ha la voce di sempre.
+        // c'è solo per i disegni veri: il blog classico e la pagina Blog di partenza (solo il titolo) hanno la voce di sempre.
         $perWidget = !empty($blog['editor']) ? sito_blog_per_widget($blog) : null;
         $gruppi = sito_pagine($nel, $perWidget ?: SITO_BLOG_PER_PAGINA);
         foreach ($gruppi as $i => $g) $m[sito_paginato(SITO_PAGINA_BLOG, $i + 1)] = ['genere' => 'blog', 'pagina' => $i + 1, 'totale' => count($gruppi), 'articoli' => $g, 'c' => $blog]
@@ -119,21 +119,27 @@ function sito_blog_widget_per(string $tipo, array $v): int {
 
 /**
  * 2.40.0: nella pagina del blog fatta con l'editor, quanti per pagina mostra il primo widget che elenca tutti gli articoli
- * (sito_blog_widget_per), oppure 0 se il disegno non ne ha. Lo stesso albero che esce sul sito (sito_pagina_editor): quello
+ * (sito_blog_widget_per), oppure 0 se il disegno non ne ha (l'elenco del blog esce sotto il disegno). null se il disegno è la
+ * pagina Blog di partenza, quella che fanno l'installatore e i kit (un solo widget Titolo, oppure niente): il blog esce come
+ * sempre, con la vista standard, identico alla 2.39.2. Lo stesso albero che esce sul sito (sito_pagina_editor): quello
  * pubblicato, oppure la bozza in anteprima se non è mai stata pubblicata.
  */
-function sito_blog_per_widget(array $blog): int {
+function sito_blog_per_widget(array $blog): ?int {
     try {
         require_once __DIR__ . '/editor.php';
         $albero = editor_decodifica(sito_campo($blog['fonte'], 'struttura', (int)$blog['riga']['id']));
         if (!$albero && sito_anteprima()) $albero = editor_decodifica(sito_campo($blog['fonte'], 'struttura_bozza', (int)$blog['riga']['id']));
-        foreach ($albero['elementi'] ?? [] as $s) foreach ($s['figli'] as $c) foreach ($c['figli'] as $w) {
+        $widget = [];
+        foreach ($albero['elementi'] ?? [] as $s) foreach ($s['figli'] as $c) foreach ($c['figli'] as $w) $widget[] = $w;
+        if (count($widget) === 0 || (count($widget) === 1 && $widget[0]['tipo'] === 'titolo')) return null;
+        foreach ($widget as $w) {
             if (!in_array($w['tipo'], ['articoli', 'griglia_contenuti'], true)) continue;
             $per = sito_blog_widget_per($w['tipo'], editor_valori($w['tipo'], $w['impostazioni'] ?? []));
             if ($per > 0) return $per;
         }
     } catch (Throwable $e) {
         error_log('sito_blog_per_widget: ' . $e->getMessage());
+        return null;
     }
     return 0;
 }

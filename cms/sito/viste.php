@@ -481,6 +481,20 @@ function vista_blog(array $v): string {
         . vista_griglia($v['articoli']) . vista_paginazione(SITO_PAGINA_BLOG, $v['pagina'], $v['totale']) . '</div>';
 }
 
+/**
+ * 2.40.0: l'elenco del blog sotto il disegno della pagina del blog fatta con l'editor, quando il disegno non ha un widget che
+ * elenca tutti gli articoli. Con $conTitolo (il disegno non ha un H1) è la vista standard intera; altrimenti senza il suo titolo,
+ * così la pagina resta con un solo H1: filtri, schede e paginazione.
+ */
+function vista_blog_sotto(array $v, bool $conTitolo): string {
+    if ($conTitolo) return vista_blog($v);
+    $filtri = '<a href="' . SITO_PAGINA_BLOG . '">Tutti</a>';
+    $cat = sito_categorie();
+    foreach (sito_filtri_blog() as $s) if (isset($cat[$s])) $filtri .= '<a href="/category/' . $s . '/">' . h($cat[$s]['name']) . '</a>';
+    return '<div class="wrap" style="padding-top:24px;padding-bottom:40px"><nav class="filtri" aria-label="Categorie">' . $filtri . '</nav>'
+        . vista_griglia($v['articoli']) . vista_paginazione(SITO_PAGINA_BLOG, $v['pagina'], $v['totale']) . '</div>';
+}
+
 function vista_archivio(array $v): string {
     if (($t = vista_tema('archivio', ['v' => $v])) !== null) return $t;
     $etichetta = ['category' => 'Categoria', 'tag' => 'Tag'][$v['tassonomia']] ?? 'Archivio';
