@@ -1034,3 +1034,33 @@ e nel browser il clic sul 3 della paginazione. Alla fine toglie quello che ha se
    cartella del CMS `.../test`). Usa `prove/paginazione-cli.php` (semina, blog-editor, seo, seo-salva, seo-rimetti, titolo-blog,
    doppio, audit, pulisci).
 3. Atteso (2.39.2): 92 su 92 in radice e in cartella, con e senza kit, e sul sito aggiornato dalla 2.39.1. Sulla 2.39.1 (kit Attività in radice): 52 su 92 (40 KO: canonical, titoli, descrizioni e JSON-LD delle pagine 2 e 3 del blog, titoli uguali di categoria e tag, page/N/ oltre l'ultima in 301 invece di 404, tag indicizzato senza canonical, separatore e titolo scritto a mano, barre doppie, sitemap con gli articoli noindex, titolo della home con il nome due volte, i due controlli nel browser).
+
+## prova-seo-proposte.js
+
+Le proposte P1-P4 del controllo SEO (2.40.0), leggendo l'HTML vero (richieste senza seguire i rimandi) e nel browser. Semina con
+`prove/paginazione-cli.php semina 30` (30 articoli, la categoria `pagine-prova` con la sua descrizione, il tag) e con
+`prove/seo-proposte-cli.php` la pagina "Blog di prova" (`/blog-di-prova/`) scelta come pagina del blog, in cinque varianti:
+- `articoli` (titolo, testo, Ultimi articoli con 10 per pagina e "Solo i pillar" spento), `griglia` (Griglia di articoli, numeri,
+  15 per pagina), `senza` (titolo e testo): per ognuna tutte le pagine 200, il disegno che si vede, un solo H1, gli articoli giusti
+  per pagina e tutti diversi, la paginazione con i link `page/N/` veri, canonical, titolo con "Pagina N", descrizione con "Pagina N
+  di M.", Open Graph, JSON-LD con il suo indirizzo, `page/1/` in 301, oltre l'ultima 404, sitemap senza `page/N/`; nel browser il
+  clic sul 2;
+- `titolo` (solo il titolo, come la pagina Blog di partenza) e `classica` (scritta nella scheda): la vista standard come prima e,
+  con il terzo argomento, **uguale al byte alla 2.39.2** (tolte le righe `og:` e `twitter:` nuove e i `?v=` dei file);
+- P2: la descrizione della categoria nella pagina 1 e con "Pagina 2 di 3." nella 2; una descrizione con HTML, script e lunga esce
+  pulita e tagliata; una categoria senza descrizione resta senza;
+- P3: `og:*` e `twitter:card` su blog, categoria, tag (il tag noindex senza `og:url`), immagine predefinita e immagine della pagina
+  del blog;
+- P4: accende Eventi, Test e Vetrina; la sitemap ha l'evento fra 20 giorni, il test pubblicato e `/negozio/condizioni/`, non l'evento
+  di 40 giorni fa, le bozze, i risultati; ogni pagina nuova della sitemap 200, index, canonical = loc, titoli e descrizioni non doppi.
+Alla fine toglie quello che ha seminato, rimette gli addon come erano e il blog su `/blog/`.
+
+1. Un CMS installato col kit Attività, radice o cartella.
+2. `node prove/prova-seo-proposte.js <base> <cartella del CMS> [base della 2.39.2]`. Il terzo argomento, facoltativo, è un server
+   con i file dello zip 2.39.2, lo stesso `config.local.php`, `install/.installato`, `moduli/addon-attivi.json` e la cartella
+   `uploads` del sito (un collegamento): servono per i confronti al byte (in cartella anche lui con `/test`).
+3. Atteso (2.40.0): 242 su 242 in radice e in cartella col terzo argomento (237 senza: i cinque confronti al byte saltano), e 237
+   su 237 sul sito aggiornato dalla 2.39.2. Sulla 2.39.2 (kit Attività in radice, senza il terzo argomento): 131 su 232 (101 KO:
+   il disegno del blog che non si vede e gli articoli 12 per pagina invece di quelli del widget, la paginazione della Griglia,
+   l'elenco sotto il disegno, Open Graph e twitter:card assenti su blog, categorie e tag, la descrizione della categoria, la
+   sitemap senza evento, test e condizioni, i due controlli nel browser).
