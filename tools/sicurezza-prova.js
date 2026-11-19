@@ -3764,6 +3764,27 @@ echo json_encode($o);
     } else console.log('--  Password nuova (2.39.1): saltata (serve CMS_DIR)');
   }
 
+  // === 55. (2.39.2) Le pagine degli elenchi (/blog/page/N/) con valori strani, da anonimo: numeri enormi, negativi, zero, con
+  //          lo zero davanti, testo, HTML, barre doppie, page/ ripetuto. Mai 200 (doppione della prima pagina), mai un errore
+  //          fatale o un percorso del server, mai l'HTML rimandato indietro; page/1/ va alla prima pagina con un 301 sul sito stesso.
+  {
+    const B55 = BASE.replace(/\/$/, '');
+    const blog55 = '/blog/';
+    const prova55 = async (u) => { const r = await fetch(B55 + u, { redirect: 'manual' }); return { s: r.status, l: r.headers.get('location') || '', h: await r.text() }; };
+    const pulita55 = (h) => !/Fatal error|Uncaught|Stack trace|Warning:|Notice:|Deprecated:/i.test(h) && !/\/(home|tmp|var|srv)\/[^\s"<]*\.php/.test(h);
+    const strani = ['99999999999999999999999999', '-1', '0', '00', '02', 'abc', '1e5', '2.5', '%3Cscript%3Ealert(55)%3C%2Fscript%3E', '%00', '2/page/3', '9223372036854775808'];
+    for (const v of strani) {
+      const r = await prova55(blog55 + 'page/' + v + '/');
+      ok(`2.39.2: ${blog55}page/${decodeURIComponent(v).slice(0, 30)}/: niente 200, niente errori né percorsi, niente HTML rimandato`, r.s !== 200 && r.s < 500 && pulita55(r.h) && !r.h.includes('<script>alert(55)'), [r.s, r.l]);
+    }
+    let r = await prova55(blog55 + 'page/1/');
+    ok('2.39.2: page/1/ -> 301 alla prima pagina, sullo stesso sito', r.s === 301 && r.l === B55 + blog55, [r.s, r.l]);
+    r = await prova55('/' + blog55 + 'page/2/');
+    ok('2.39.2: barre doppie in testa: 301 sullo stesso sito (mai verso un altro dominio)', r.s === 301 && r.l.startsWith(new URL(B55).origin + '/'), [r.s, r.l]);
+    r = await prova55('//evil.example/');
+    ok('2.39.2: //evil.example/ non porta a un altro dominio', !(r.s >= 300 && r.s < 400 && /evil\.example/.test(new URL(r.l, B55).host)), [r.s, r.l]);
+  }
+
   // === pulizia: elimina il redattore di prova
   {
     await admin.p.goto(ADMIN + '/utenti.php', { waitUntil: 'networkidle' });

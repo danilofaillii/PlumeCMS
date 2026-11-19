@@ -751,6 +751,7 @@ def zip_lavagna(dest):
 # Regola di Danilo (1 novembre 2026): solo i punti salienti, una riga per versione, mai nomi di aziende o servizi di terzi.
 # Le novità per chi scarica: brevi, scritte qui (il CHANGELOG è per chi sviluppa). Da aggiornare a ogni versione.
 NOVITA = [
+    ('2.39.2', 'Pagine degli elenchi chiare per i motori di ricerca', ['Ogni pagina del blog, delle categorie e dei tag indica sé stessa, con "Pagina 2" nel titolo e nella descrizione; una pagina che non esiste risponde "non trovata".']),
     ('2.39.1', 'La pagina per scegliere la password nuova', ['Dal link dell\'email "password dimenticata" la pagina mostra di nuovo i campi della password nuova e il pulsante per salvarla.']),
     ('2.39.0', 'Popup costruiti con l\'editor visuale', ['Un popup si compone come una pagina: sezioni, colonne e tutti i widget, con bozza, pubblicazione e versioni. Oppure con i campi semplici di sempre.', 'Larghezza e posizione della finestra a scelta: al centro, in basso a destra o come barra in fondo o in cima. Un pulsante con il link #chiudi chiude il popup.']),
     ('2.38.1', 'I widget del riquadro in fondo agli articoli, di header e footer con il loro stile', ['Un riquadro con immagine messo in fondo agli articoli, nell\'header o nel footer esce sul sito come nell\'editor.']),

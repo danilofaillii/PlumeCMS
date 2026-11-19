@@ -2,6 +2,26 @@
 
 Il prodotto si chiama **plumeCMS** (nome scelto il 26 ottobre 2026; prima, per poche ore, "CarbonaraCMS", e ancora prima il provvisorio "Officina": gli zip vecchi si chiamavano `officina-*` e `carbonaracms-*`).
 
+## 2.39.2 (19 novembre 2026) - Paginazione per i motori di ricerca
+
+- **Cosa si vedeva** (segnalazione da un sito vero): le pagine successive del blog (`/blog/page/2/`, `/blog/page/3/`...) dicevano a
+  Google di essere la prima pagina (il "canonical" puntava alla prima), pur chiedendo di essere indicizzate, e avevano titolo e
+  descrizione identici alla prima. Search Console le segnala come doppioni, e Google riceve due indicazioni in contrasto.
+- **Cosa cambia**: ogni pagina di un elenco (blog, categorie, tag, archivi per data) indica sé stessa come pagina da indicizzare; dalla
+  pagina 2 il titolo dice "Pagina 2" con il separatore e il nome del sito scelti in SEO e AEO ("Blog - Pagina 2 - Nome del sito") e la
+  descrizione finisce con "Pagina 2 di 4."; i dati strutturati della pagina del blog usano il suo indirizzo. L'impostazione
+  "Paginazione" di SEO e AEO vale come prima. La prima pagina non cambia.
+- **Pagine che non esistono**: una pagina oltre l'ultima (`/blog/page/99/` con 4 pagine), `page/0/` o un numero scritto male ora
+  rispondono "pagina non trovata" (404) invece di rimandare alla prima pagina. `page/1/` rimanda alla prima, come prima.
+- **Dal controllo di tutto il sito** (fatto insieme, correzioni piccole): un indirizzo con le barre doppie (`//servizi/`) mostrava la
+  home e ora porta all'indirizzo giusto; con "Articoli: noindex" (o pagine, categorie) in SEO e AEO quegli indirizzi restavano nella
+  sitemap e ora ne escono; **il titolo della home** dei siti senza un titolo scritto per la home non ripete più il nome del sito due
+  volte ("Studio Prova - Studio Prova" diventa "Studio Prova"). Le altre cose trovate sono proposte, nel manuale tecnico (capitolo 53).
+- **HTML che cambia sulle pagine già fatte**: le pagine 2, 3... degli elenchi (canonical, titolo, descrizione, dati strutturati del
+  blog); il titolo della home nel caso detto sopra; il tag indicizzato da SEO e AEO prende il canonical. Nient'altro.
+- Prove nuove: `prove/prova-paginazione-seo.js` (blog fatto con l'editor, categoria e tag con tre pagine, in radice e in cartella) e il
+  gruppo 55 degli attacchi (pagine con numeri strani, barre doppie).
+
 ## 2.39.1 (12 novembre 2026) - La pagina per scegliere la password nuova
 
 - **Cosa si vedeva** (segnalazione di un utente): dal link dell'email "password dimenticata" si apriva la pagina "Scegli la

@@ -390,6 +390,8 @@ Ogni richiesta, del sito o del pannello, passa da `config.php`, in quest'ordine:
 newsletter, poi:
 - `SITO_ANTEPRIMA` è vero con `?preview=1` e la sessione di un amministratore; in anteprima aggiunge `no-store`;
 - `temi_avvia_sito()` carica il tema attivo (capitolo 12);
+- dalla 2.39.2 (`sito/index.php:128`) un indirizzo con le barre doppie (`//servizi/`, `/servizi//`) va con un 301 all'indirizzo con
+  le barre singole, query compresa, sullo stesso sito (capitolo 53);
 - ricava il percorso da `REQUEST_URI` e, se il sito sta in una cartella, toglie la cartella.
 
 Poi decide, **in quest'ordine** (`sito/index.php`):
@@ -410,7 +412,7 @@ Poi decide, **in quest'ordine** (`sito/index.php`):
 | 10 | percorsi che finiscono con `/feed/` | feed RSS, o 404 |
 | 11 | il percorso è nella mappa del sito (`sito_mappa()`) | la pagina, secondo il genere (sotto) |
 | 12 | il percorso senza barra finale esiste con la barra | 301 con la barra |
-| 13 | paginazione oltre l'ultima pagina (`/blog/page/9/`) | 301 alla prima pagina |
+| 13 | `.../page/1/` di un elenco (blog, archivio, glossario) | 301 alla prima pagina (`sito/index.php:387`); dalla 2.39.2 una pagina oltre l'ultima (`/blog/page/9/`), `page/0/` e i numeri con lo zero davanti non hanno più il 301: 404 (capitolo 53) |
 | 14 | nient'altro | 404, registrato nella tabella `seo_404` |
 | - | il database non risponde (`PDOException`) | 503 con `Retry-After: 600` |
 
@@ -3199,7 +3201,7 @@ Nessuno di questi è un file sul disco: il CMS li scrive a ogni richiesta.
 | Indirizzo | Cosa contiene |
 |---|---|
 | `/robots.txt` | il testo personale, altrimenti: `Allow: /`, divieti per pannello, cron, log, API, ricerca, autori, feed; i blocchi dei crawler AI scelti; l'indirizzo della sitemap, in **una** riga `Sitemap: <SITO_URL>/sitemap.xml` (`extra_robots()`, `sito/extra.php:102`; `SITO_URL` ha già la cartella. Fino alla 2.32.0 c'era una seconda riga con `cms_base()`: uguale alla prima nella radice, `/test/test/sitemap.xml` in cartella. Un robots.txt personale scritto nel pannello resta com'è) |
-| `/sitemap.xml` | home, articoli e (a scelta) pagine indicizzabili, categorie con articoli; a scelta le immagini; oppure l'indice di `sitemap-articoli.xml`, `sitemap-pagine.xml`, `sitemap-categorie.xml` |
+| `/sitemap.xml` | home, articoli e (a scelta) pagine indicizzabili, categorie con articoli; a scelta le immagini; oppure l'indice di `sitemap-articoli.xml`, `sitemap-pagine.xml`, `sitemap-categorie.xml`. Dalla 2.39.2 "indicizzabile" conta anche il robots per tipo di SEO e AEO (`seo_sitemap_voci()`, `includes/seo.php:898`: con "Articoli: noindex" gli articoli escono dalla sitemap; con "auto" identica a prima). Le pagine `page/N/` degli elenchi non ci sono mai |
 | `/llms.txt` | il testo personale, altrimenti: nome e descrizione del sito, nota di citazione (filtro `llms_intestazione`), servizi (filtro `llms_servizi`), guide pillar, articoli, glossario, feed e sitemap. Dalla 2.35.0 (`extra_llms()`, `sito/extra.php:79`, capitolo 48.1) anche le **pagine** pubblicate e indicizzabili, la home per prima; niente sezioni vuote, Glossario solo con termini, feed solo con articoli, in testa la descrizione generale di SEO e AEO |
 | `/llms-full.txt` | il testo completo dei contenuti, solo se acceso |
 | file di verifica | il file `.html` di Google, `/BingSiteAuth.xml`, `/<chiave IndexNow>.txt` |
@@ -7360,6 +7362,59 @@ Titolo, Testo, Immagine, Pulsanti (`#chiudi`) e Form pubblicato, comparsa dopo i
 Tab, form con un errore, tre larghezze, quattro posizioni (misurate), telefono 390 px, schermo basso, senza fondo, meno movimento,
 secondo popup mai pubblicato, elenco, versioni, Header e footer, eliminazione; con `PRIMA` e `CAMPI` il popup a campi identico al
 byte a prima dell'aggiornamento (tolto il `?v=`). Gruppo 53 di `tools/sicurezza-prova.js`.
+
+## 53. Le pagine degli elenchi per i motori di ricerca e il controllo SEO (dalla 2.39.2)
+
+**Il difetto** (segnalazione di un sito vero con la 2.39.1): le pagine 2, 3... del blog (`/blog/page/2/`) dichiaravano la prima
+pagina come canonical, con `index, follow` e titolo e descrizione uguali alla prima. Segnali in contrasto per Google (una pagina da
+indicizzare che dice di essere un'altra) e doppioni di titolo e descrizione in Search Console. Le categorie avevano già il canonical
+sul loro indirizzo ma lo stesso titolo su tutte le pagine; una pagina oltre l'ultima (`/category/x/page/7/` con 3 pagine) rispondeva
+con un 301 alla prima, che Google legge come un "soft 404". Gli elenchi paginati del CMS sono quelli della mappa (`sito_mappa()`,
+`includes/sito-mappa.php`): il blog (la pagina scelta in `pagina_blog`, 12 per pagina), le categorie, i tag e gli archivi per data
+(10 per pagina), il glossario (pagine 2-15 solo con `glossario_pagine`, sempre noindex). Nessun altro elenco pagina con l'indirizzo:
+la Griglia di articoli dell'editor ha la paginazione nel browser (senza indirizzi), la ricerca e gli elenchi degli addon non paginano.
+
+**La regola di adesso**, in `sito_meta()` (`includes/sito-seo.php:67` blog, `:78` archivi) e `sito_meta_paginata()` (`:95`):
+- **canonical**: ogni pagina sul suo indirizzo (`SITO_URL` + percorso, quindi con la cartella una volta sola). Il blog prima puntava
+  a `SITO_PAGINA_BLOG`. Il tag ha il canonical quando è indicizzato (robots per tipo "Tag: index"); da noindex resta senza, come
+  prima (la regola di Rank Math);
+- **titolo**: dalla pagina 2 `<nome> %sep% Pagina N` passato al formato del tipo (`seo_titolo()`): "Blog di prova - Pagina 2 - Nome
+  del sito", con il separatore scelto in SEO e AEO. Un titolo per Google scritto a mano nella scheda della pagina del blog prende
+  " %sep% Pagina N" prima della coda " %sep% <nome del sito>" se finisce così, altrimenti in fondo;
+- **descrizione**: dalla pagina 2, se la prima ne ha una, la stessa con "Pagina N di M." in coda (un punto in mezzo se manca); una
+  vuota resta vuota. `og:title`, `og:description` e `og:url`, se la pagina li ha, seguono titolo, descrizione e canonical
+  (blog e archivi oggi non scrivono Open Graph);
+- **robots**: invariato. La pagina N prende quello della prima, oppure "Paginazione" di SEO e AEO (`seo_robots_tipo('paginazione')`)
+  se non è "auto": già così per blog e archivi, provato;
+- **JSON-LD**: il WebPage del blog ha come `url` e `@id` l'indirizzo della pagina N e il nome "Blog - Pagina N" (`sito/index.php:371`);
+  categorie e tag non hanno un nodo di pagina;
+- **page/1/** va alla prima pagina con un 301 per blog, archivi (anche per data) e glossario; **page/N/ oltre l'ultima**, `page/0/`,
+  `page/02/`, numeri enormi o negativi e testo rispondono **404** con la pagina 404 del sito (`sito/index.php:387`);
+- **sitemap**: le pagine `page/N/` restano fuori; **llms.txt** non le elenca;
+- **doppioni**: la Tabella SEO (`seo_tabella_righe()`) e `site_audit` dell'addon AI collegate lavorano per contenuto, non per
+  indirizzo: le pagine degli elenchi non ci sono e non contano come doppioni (provato, e provato che un doppione vero si vede).
+
+**Il controllo SEO del 19 novembre 2026** (sito col kit Attività e tutti gli addon accesi, radice e cartella, HTML letto con richieste
+senza seguire i rimandi; rapporto completo in `$S/pag/CONTROLLO.md` della sessione). Corretto in questa versione, perché chiaramente
+sbagliato e con una correzione piccola:
+1. **barre doppie**: `//servizi/` era letto da `parse_url()` come un nome di dominio e rispondeva 200 con la home (canonical alla
+   home: un doppione a un indirizzo strano); `/servizi//` dava 404. Ora 301 all'indirizzo con le barre singole (`sito/index.php:128`),
+   sempre sullo stesso sito (`//evil.example/` va a `/evil.example/`, che è un 404);
+2. **sitemap e robots per tipo**: con "Articoli: noindex" (o pagine, categorie) gli indirizzi erano noindex ma restavano nella sitemap
+   (`includes/seo.php:898`); la pagina del blog segue il suo robots;
+3. **titolo della home**: senza un titolo scritto per la home il formato "%titolo% %sep% %sito%" dava "Studio Prova - Studio Prova";
+   `seo_titolo_home()` (`includes/seo.php:790`) toglie il doppione solo quando il titolo è proprio il nome del sito e il formato è
+   quello di partenza (anche `og:title` e la Tabella SEO, `includes/seo-tabella.php:36`). **Cambia il titolo della home** dei siti
+   che erano in questo caso;
+4. **og:url** di articoli e pagine uguale al canonical (`includes/sito-seo.php:59`): cambia solo con un canonical diverso
+   dall'indirizzo (oggi nessun contenuto del nucleo lo ha).
+
+Proposte non fatte (nel rapporto, con la gravità): il blog che non mostra la pagina fatta con l'editor scelta come pagina del
+blog (esce la vista standard); la descrizione della categoria non usata come meta description; blog e archivi senza Open Graph;
+eventi, test e condizioni della Vetrina indicizzabili ma fuori dalla sitemap; categoria vuota 200 noindex (non 404); titolo
+"Iscrizione confermata" anche con un link di conferma non valido; maiuscole (`/SERVIZI/`) e `/index.php` in 404 invece di un 301.
+
+Prove: `prove/prova-paginazione-seo.js` (con `prove/paginazione-cli.php`), gruppo 55 degli attacchi.
 
 ## Appendice A. Dove i documenti vecchi non corrispondono al codice
 
