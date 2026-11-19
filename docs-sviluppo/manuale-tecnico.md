@@ -7436,7 +7436,9 @@ sempre il disegno avrebbe cambiato il blog di tutti i siti. Per questo la regola
 
 **La mappa** (`sito_mappa()`, `includes/sito-mappa.php:47`). Per la pagina del blog fatta con l'editor `sito_blog_per_widget()` (`:127`)
 legge lo stesso albero che esce sul sito (`struttura`, oppure `struttura_bozza` in anteprima se non è mai stata pubblicata, come
-`sito_pagina_editor()`) e risponde:
+`sito_pagina_editor()`). La mappa si fa a ogni richiesta e quasi ogni sito ha la pagina Blog di partenza fatta con l'editor: il JSON si
+legge com'è (sezioni, colonne, widget, con i limiti di `editor_valida`) e `includes/editor.php` si carica solo se c'è un widget
+`articoli` o `griglia_contenuti`. Risponde:
 - `null` se il disegno ha zero widget o uno solo di tipo `titolo` (la pagina Blog di partenza), oppure se l'albero non si legge: la
   voce della mappa resta quella di prima (niente `per_widget`) e il blog esce con `vista_blog()`, uguale al byte alla 2.39.2 (tolte
   le righe Open Graph, 54.3);
@@ -7453,7 +7455,7 @@ indicizzati, che possono uscire in un elenco), e la voce prende `per_widget`. Co
 
 **L'uscita** (`sito/index.php:375`). Con `per_widget` la voce va in `$GLOBALS['sito_blog_elenco']`, il disegno esce con
 `vista_pagina_editor()` (CSS, fogli e script dei widget come le altre pagine dell'editor) e la variabile si toglie subito dopo.
-Durante il disegno il widget chiama `sito_blog_elenco_prendi()` (`includes/sito-mappa.php:153`): il primo che soddisfa
+Durante il disegno il widget chiama `sito_blog_elenco_prendi()` (`includes/sito-mappa.php:164`): il primo che soddisfa
 `sito_blog_widget_per()` prende la voce (`preso`), solo sul sito (mai nella tela, `editor_ctx['anteprima']`) e solo se il disegno è
 quello della pagina del blog (`editor_percorso === SITO_PAGINA_BLOG`). Ultimi articoli (`includes/editor-widget.php:713`) mostra le
 schede della pagina N (`vista_scheda`) e `vista_paginazione(SITO_PAGINA_BLOG, N, M)` (`nav.paginazione`, link `page/N/` veri);
