@@ -516,11 +516,15 @@ ewx_registra('griglia_contenuti', 'Griglia di articoli', 'giornale', 'Dal sito',
         default: usort($tutti, fn($a, $b) => strcmp($b['data'], $a['data']));
     }
     $lista = array_slice($tutti, max(0, (int)$v['salta']), max(1, min(60, (int)$v['quanti'])));
+    // 2.40.0: nella pagina del blog fatta con l'editor, la prima griglia che elenca tutti gli articoli mostra la pagina N del blog
+    // con la paginazione page/N/ vera (sito_blog_elenco_prendi), non quella nel browser.
+    $pb = function_exists('sito_blog_elenco_prendi') ? sito_blog_elenco_prendi('griglia_contenuti', $v) : null;
+    if ($pb !== null) $lista = $pb['articoli'];
     if (!$lista) return '<p class="ew-posts-vuoto vuoto">' . h($v['messaggio_vuoto']) . '</p>';
     $asp = in_array($v['aspetto'], ['schede', 'compatto', 'copertina'], true) ? $v['aspetto'] : 'classico';
     ewx_css_colonne($ctx, ' .ew-posts-griglia', $v['colonne']);
     $tag = ewx_tag($v);
-    $pag = $v['paginazione'] !== 'nessuna' && count($lista) > (int)$v['per_pagina'] ? ' data-ew-pagina="' . max(1, (int)$v['per_pagina']) . '" data-modo="' . ($v['paginazione'] === 'altri' ? 'altri' : 'numeri') . '"' : '';
+    $pag = $pb === null && $v['paginazione'] !== 'nessuna' && count($lista) > (int)$v['per_pagina'] ? ' data-ew-pagina="' . max(1, (int)$v['per_pagina']) . '" data-modo="' . ($v['paginazione'] === 'altri' ? 'altri' : 'numeri') . '"' : '';
     $out = '<div class="ew-posts ew-posts-' . $asp . '"' . $pag . '><div class="ew-posts-griglia' . ($asp === 'schede' ? ' griglia' : '') . '">';
     foreach ($lista as $i => $c) {
         if ($asp === 'schede') { $out .= str_replace('<a class="card', '<a class="ew-post card', vista_scheda($c)); continue; }
@@ -543,6 +547,7 @@ ewx_registra('griglia_contenuti', 'Griglia di articoli', 'giornale', 'Dal sito',
     }
     $out .= '</div>';
     if ($pag !== '') $out .= '<nav class="ew-posts-pag" aria-label="Pagine"></nav>';
+    if ($pb !== null) $out .= vista_paginazione(SITO_PAGINA_BLOG, (int)$pb['pagina'], (int)$pb['totale']);
     return $out . '</div>';
 });
 

@@ -708,6 +708,12 @@ function editor_disegna_widget(string $tipo, array $v): string {
             return '<div class="ed-video" data-src="' . h($emb) . '"' . ($v['copertina'] !== '' ? ' style="background-image:url(\'' . h($v['copertina']) . '\')"' : '') . '>'
                 . '<button type="button" aria-label="Guarda il video ' . h($v['titolo']) . '"><span>▶</span>' . ($v['titolo'] !== '' ? '<b>' . h($v['titolo']) . '</b>' : '') . '<small>Il video si apre da ' . (str_contains($emb, 'vimeo') ? 'Vimeo' : 'YouTube') . '</small></button></div>';
         case 'articoli':
+            // 2.40.0: nella pagina del blog fatta con l'editor, il primo widget che elenca tutti gli articoli mostra la pagina N del
+            // blog, con la paginazione page/N/ (sito_blog_elenco_prendi). Altrove, gli ultimi articoli come sempre.
+            if (($pb = function_exists('sito_blog_elenco_prendi') ? sito_blog_elenco_prendi('articoli', $v) : null) !== null) {
+                return ($pb['articoli'] ? '<div class="griglia">' . implode('', array_map('vista_scheda', $pb['articoli'])) . '</div>' : '<p class="vuoto">Qui non ci sono ancora articoli.</p>')
+                    . vista_paginazione(SITO_PAGINA_BLOG, (int)$pb['pagina'], (int)$pb['totale']);
+            }
             $cat = trim((string)$v['categoria']);
             $art = sito_ultimi(max(1, min(12, (int)$v['numero'])), fn($a) => (!$v['solo_pillar'] || $a['pillar']) && ($cat === '' || in_array($cat, $a['categorie'], true)));
             return $art ? '<div class="griglia">' . implode('', array_map('vista_scheda', $art)) . '</div>' : '<div class="ed-vuoto">Ancora nessun articolo da mostrare con questi filtri.</div>';

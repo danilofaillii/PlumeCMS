@@ -178,6 +178,21 @@ function evi_url_evento(array $e): string {
     return '/evento/' . $e['slug'] . '/';
 }
 
+/**
+ * 2.40.0: le voci della sitemap (filtro sitemap_voci del nucleo): gli eventi pubblicati iniziati da meno di 30 giorni (o futuri),
+ * come la regola del robots della pagina dell'evento (sito.php, evi_sito_pagina). Il loc è uguale al canonical della pagina.
+ */
+function evi_sitemap_voci(): array {
+    $out = [];
+    $limite = time() - 30 * 86400;
+    foreach (evi_eventi(true) as $e) {
+        if ($e['stato'] !== 'pubblicato' || (int)$e['inizio_ts'] < $limite) continue;
+        $out[] = ['loc' => cms_url_sito() . evi_url_evento($e), 'lastmod' => str_replace(' ', 'T', (string)$e['aggiornato']), 'tipo' => 'pagine',
+            'immagine' => (string)$e['foto'] !== '' ? (str_starts_with((string)$e['foto'], '/') ? (string)preg_replace('~^(https?://[^/]+).*$~', '$1', cms_url_sito()) . $e['foto'] : (string)$e['foto']) : ''];
+    }
+    return $out;
+}
+
 /** Lo stato dei posti in parole, per la pagina e per il widget dell'elenco. */
 function evi_posti_testo(array $e): string {
     if ($e['stato'] === 'annullato') return 'Evento annullato';

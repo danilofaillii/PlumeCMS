@@ -70,6 +70,9 @@ function sito_meta(string $percorso, array $v): array {
         // titolo e descrizione uguali alla prima: segnali in contrasto per Google e doppioni in Search Console).
         $meta = ['titolo' => $c['seo']['titolo'] ?: seo_titolo($c['titolo'], 'pagina'), 'descrizione' => $c['seo']['descrizione'],
             'robots' => $v['pagina'] > 1 ? seo_robots_tipo('paginazione', $c['seo']['robots']) : $c['seo']['robots'], 'canonical' => $url, 'og' => []];
+        // 2.40.0: Open Graph anche per il blog (fino alla 2.39.2 nessuno: un link condiviso usciva senza anteprima curata).
+        // L'immagine è quella della pagina del blog se nella scheda ce n'è una, altrimenti quella predefinita di SEO e AEO.
+        $meta['og'] = sito_og_elenco($meta, $c['seo']['immagine_social'] ?: (string)($c['immagine']['url'] ?? ''));
         return sito_meta_paginata($meta, (int)$v['pagina'], (int)$v['totale'], $c['titolo'], 'pagina', $c['seo']['titolo'] !== '');
     }
     if ($v['genere'] === 'glossario') {
@@ -79,11 +82,44 @@ function sito_meta(string $percorso, array $v): array {
         $robots = seo_robots_tipo(['category' => 'categorie', 'tag' => 'tag', 'data' => 'data'][$v['tassonomia']] ?? 'categorie', $v['robots']);
         if ($v['pagina'] > 1) $robots = seo_robots_tipo('paginazione', $robots);
         // 2.39.2: il tag ha il canonical quando è indicizzato (come le categorie); da noindex resta senza, come prima.
-        $meta = ['titolo' => seo_titolo($v['nome'], 'archivio'), 'descrizione' => '', 'robots' => $robots,
+        // 2.40.0: la descrizione della categoria scritta in Articoli > Categorie diventa la meta description (pulita dall'HTML e
+        // tagliata intorno a 160 caratteri); senza, resta vuota come prima. I tag e gli archivi per data non hanno descrizione.
+        $meta = ['titolo' => seo_titolo($v['nome'], 'archivio'), 'descrizione' => $v['tassonomia'] === 'category' ? sito_descrizione_breve((string)($v['descrizione'] ?? '')) : '', 'robots' => $robots,
             'canonical' => $v['tassonomia'] === 'tag' && $robots !== 'index' ? '' : $url, 'og' => []];
+        // 2.40.0: Open Graph per categorie e tag (og:url solo se c'è il canonical: un tag noindex resta senza).
+        if (in_array($v['tassonomia'], ['category', 'tag'], true)) $meta['og'] = sito_og_elenco($meta, '');
         return sito_meta_paginata($meta, (int)$v['pagina'], (int)$v['totale'], (string)$v['nome'], 'archivio', false);
     }
     return ['titolo' => $v['titolo'] ?? SITO_NOME, 'descrizione' => '', 'robots' => $v['robots'] ?? 'noindex', 'canonical' => '', 'og' => []];
+}
+
+/**
+ * 2.40.0: l'Open Graph di una pagina d'elenco (blog, categoria, tag), come lo scrivono articoli e pagine: tipo website, og:url
+ * uguale al canonical (assente se il canonical manca), titolo, descrizione se c'è, immagine ($immagine, altrimenti la predefinita
+ * di SEO e AEO), nome del sito e lingua. Con og:title la pagina scrive anche twitter:card e twitter:image (vista_pagina).
+ */
+function sito_og_elenco(array $meta, string $immagine): array {
+    return array_filter([
+        'og:type' => 'website', 'og:url' => (string)$meta['canonical'], 'og:title' => (string)$meta['titolo'],
+        'og:locale' => 'it_IT', 'og:site_name' => SITO_NOME, 'og:description' => (string)$meta['descrizione'],
+        'og:image' => $immagine !== '' ? $immagine : seo_og_immagine_predefinita(),
+    ], fn($x) => $x !== '');
+}
+
+/**
+ * 2.40.0: un testo scritto nel pannello (per esempio la descrizione di una categoria) pronto per la meta description: senza HTML
+ * (e senza il contenuto di script e style), entità decodificate, spazi uniti, tagliato all'ultima parola intera prima di $max
+ * caratteri con i puntini. Un testo vuoto resta vuoto.
+ */
+function sito_descrizione_breve(string $testo, int $max = 160): string {
+    $t = (string)preg_replace('~<(script|style)\b[^>]*>.*?</\1\s*>~is', ' ', $testo);
+    $t = html_entity_decode(strip_tags($t), ENT_QUOTES | ENT_HTML5, 'UTF-8');
+    $t = trim((string)preg_replace('/\s+/u', ' ', $t));
+    if (mb_strlen($t) <= $max) return $t;
+    $corto = mb_substr($t, 0, $max - 1);
+    $spazio = mb_strrpos($corto, ' ');
+    if ($spazio !== false && $spazio > $max / 2) $corto = mb_substr($corto, 0, $spazio);
+    return rtrim($corto, " ,;:.-") . "\u{2026}";
 }
 
 /**

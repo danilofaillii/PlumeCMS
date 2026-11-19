@@ -72,6 +72,9 @@ $percorso = $modello ? '/?preview=1&' . h($pagina['tipo']) . '=' . $id : editor_
 if ($fine) $percorso = (modelli_fine_dove_vederlo() ?: '/') . '?preview=1&fine=' . $id; // sotto l'ultimo articolo pubblicato
 if ($popupModello) $percorso = '/?preview=1&popup_prova=' . (int)($popupDi['id'] ?? 0); // 2.39.0: il popup aperto sulla home, con la bozza
 $home = !$modello && editor_e_home($pagina);
+// 2.40.0: la pagina scelta come pagina del blog (Impostazioni): un avviso nel pannello dei widget dice come si comportano lì
+// Ultimi articoli e Griglia di articoli (sul sito mostrano tutti gli articoli, a pagine).
+$paginaBlog = !$modello && !$contenitore && $tipo === 'pagine' && !$home && $percorso === (string)get_setting('pagina_blog', '/blog/');
 
 // Prima apertura: da dove partire. Nessuna pagina cambia da sola.
 if (isset($_GET['parti']) && trim((string)$pagina['struttura']) === '' && trim((string)$pagina['struttura_bozza']) === '') {
@@ -183,6 +186,7 @@ $dati = [
       <input type="search" id="ed-cerca-widget" placeholder="Cerca un widget…" aria-label="Cerca un widget">
       <?php /* 2.5.x (controllo UX): l'aiuto in cima, dove si legge; in fondo, dopo cento widget, non lo vedeva nessuno */ ?>
       <p class="ed-aiuto ed-aiuto-sopra">Trascina un widget nella pagina, oppure fai clic: entra sotto l'elemento selezionato.</p>
+      <?php if ($paginaBlog): ?><p class="ed-aiuto ed-aiuto-blog" role="note"><b>Questa è la pagina del blog.</b> Sul sito il primo widget Ultimi articoli o Griglia di articoli che mostra tutti gli articoli (senza categoria, tag e "Solo i pillar") li divide in pagine, con i numeri Pagina 2, 3 e così via. Se non ce n'è nessuno, sotto il disegno esce l'elenco del blog.</p><?php endif; ?>
       <p class="ed-aiuto" id="ed-widget-nessuno" hidden>Nessun widget con questo nome. Prova con un'altra parola (per esempio: titolo, foto, pulsante, form).</p>
       <div id="ed-elenco-widget"></div>
     </section>

@@ -314,5 +314,10 @@ function vt_pagina_condizioni(): never {
     $corpo = '<div class="vt-condizioni"><span class="occhiello">' . h((string)$s['nome_negozio']) . '</span><h1>Condizioni di vendita</h1>'
         . implode('', array_map(fn($par) => '<p>' . nl2br(h(trim($par))) . '</p>', preg_split('/\n\s*\n/', $testo) ?: []))
         . vt_email_dati_attivita() . '</div>';
-    vt_pagina(200, 'Condizioni di vendita', $corpo, ['robots' => 'index', 'canonical' => vt_url_assoluto(vt_base() . 'condizioni/')]);
+    // 2.40.0: una descrizione presa dal testo delle condizioni (prima nessuna) e l'Open Graph come le altre pagine.
+    $desc = function_exists('sito_descrizione_breve') ? sito_descrizione_breve($testo) : mb_substr(trim((string)preg_replace('/\s+/u', ' ', $testo)), 0, 155);
+    $url = vt_url_assoluto(vt_base() . 'condizioni/');
+    $titolo = seo_titolo('Condizioni di vendita', 'altro');
+    vt_pagina(200, 'Condizioni di vendita', $corpo, ['robots' => 'index', 'canonical' => $url, 'titolo' => $titolo, 'descrizione' => $desc,
+        'og' => array_filter(['og:type' => 'website', 'og:url' => $url, 'og:title' => $titolo, 'og:locale' => 'it_IT', 'og:site_name' => SITO_NOME, 'og:description' => $desc], fn($x) => $x !== '')]);
 }

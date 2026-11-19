@@ -369,6 +369,20 @@ try {
             case 'blog':
                 // 2.39.2: la pagina N del blog ha il suo indirizzo come url e @id (prima quello della prima pagina).
                 $nomeBlog = (string)cms_impostazione('blog_nome', 'Blog') . ($v['pagina'] > 1 ? ' - Pagina ' . (int)$v['pagina'] : '');
+                // 2.40.0: la pagina del blog fatta con l'editor esce con il suo disegno (fino alla 2.39.2 usciva la vista standard e
+                // il disegno non si vedeva). Il primo widget che elenca tutti gli articoli mostra la pagina N con i link page/N/
+                // (sito_blog_elenco_prendi); se il disegno non ne ha, sotto esce l'elenco del blog. Il blog classico resta com'era.
+                if (array_key_exists('per_widget', $v)) {
+                    $c = $v['c'];
+                    $GLOBALS['sito_blog_elenco'] = $v;
+                    [$corpo, $testa] = vista_pagina_editor($c);
+                    unset($GLOBALS['sito_blog_elenco']);
+                    if (!$v['per_widget']) $corpo .= vista_blog($v);
+                    $nodi = [sito_jsonld_pagina($percorso, $nomeBlog, '')];
+                    $faq = array_merge($c['faq'], $c['editor_disegno'][2]);
+                    if ($faq && $v['pagina'] === 1) $nodi[] = sito_jsonld_faq(['faq' => $faq] + $c);
+                    sito_html(200, $meta, $corpo, sito_jsonld_script($nodi) . $testa, SITO_PAGINA_BLOG);
+                }
                 sito_html(200, $meta, vista_blog($v), sito_jsonld_script([sito_jsonld_pagina($percorso, $nomeBlog, '')]), SITO_PAGINA_BLOG);
             case 'glossario':
                 sito_html(200, $meta, vista_glossario($v['termini']),

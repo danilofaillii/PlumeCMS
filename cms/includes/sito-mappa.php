@@ -46,8 +46,14 @@ function sito_mappa(): array {
     $blog = array_values(array_filter($attivi, fn($c) => $c['percorso'] === SITO_PAGINA_BLOG))[0] ?? null;
     if ($blog) {
         $nel = array_values(array_filter($articoli, fn($a) => $a['seo']['robots'] === 'index'));
-        $gruppi = sito_pagine($nel, SITO_BLOG_PER_PAGINA);
-        foreach ($gruppi as $i => $g) $m[sito_paginato(SITO_PAGINA_BLOG, $i + 1)] = ['genere' => 'blog', 'pagina' => $i + 1, 'totale' => count($gruppi), 'articoli' => $g, 'c' => $blog];
+        // 2.40.0: la pagina del blog fatta con l'editor. Se il disegno ha un widget che elenca tutti gli articoli (Ultimi articoli
+        // o Griglia di articoli senza filtri, sito_blog_widget_per), le pagine si contano con il suo "quanti per pagina" e quel
+        // widget mostra la pagina N; senza, sotto il disegno esce l'elenco del blog, 12 per pagina come prima. La voce 'per_widget'
+        // c'è solo per le pagine dell'editor: il blog classico ha la voce di sempre.
+        $perWidget = !empty($blog['editor']) ? sito_blog_per_widget($blog) : null;
+        $gruppi = sito_pagine($nel, $perWidget ?: SITO_BLOG_PER_PAGINA);
+        foreach ($gruppi as $i => $g) $m[sito_paginato(SITO_PAGINA_BLOG, $i + 1)] = ['genere' => 'blog', 'pagina' => $i + 1, 'totale' => count($gruppi), 'articoli' => $g, 'c' => $blog]
+            + ($perWidget !== null ? ['per_widget' => $perWidget] : []);
     }
 
     // Categorie e tag: articoli attivi, 10 per pagina. Una categoria vuota risponde lo stesso.
@@ -90,6 +96,60 @@ function sito_mappa(): array {
     for ($n = 1; $n <= SITO_PAGINE_GLOSSARIO; $n++) $m[sito_paginato('/glossario/', $n)] = ['genere' => 'glossario', 'pagina' => $n, 'termini' => $termini];
 
     return $m;
+}
+
+/**
+ * 2.40.0: quanti articoli per pagina mostra un widget della pagina del blog quando fa da elenco del blog, oppure 0 se non elenca
+ * tutti gli articoli. Ultimi articoli: senza categoria e senza "Solo i pillar", per pagina il suo "Quanti" (1-12). Griglia di
+ * articoli: articoli o tutti i contenuti da leggere, senza categoria, tag, "Solo i pillar" e "Salta i primi", dal più recente;
+ * per pagina il suo "Per pagina" se ha la paginazione, altrimenti il suo "Quanti". $v: i valori del widget (editor_valori).
+ */
+function sito_blog_widget_per(string $tipo, array $v): int {
+    if ($tipo === 'articoli') {
+        if (trim((string)($v['categoria'] ?? '')) !== '' || !empty($v['solo_pillar'])) return 0;
+        return max(1, min(12, (int)($v['numero'] ?? 3)));
+    }
+    if ($tipo === 'griglia_contenuti') {
+        if (!in_array((string)($v['fonte'] ?? 'articoli'), ['articoli', 'tutti'], true) || trim((string)($v['categoria'] ?? '')) !== '' || trim((string)($v['tag'] ?? '')) !== ''
+            || !empty($v['solo_pillar']) || (int)($v['salta'] ?? 0) > 0 || (string)($v['ordine'] ?? 'recenti') !== 'recenti') return 0;
+        return ($v['paginazione'] ?? 'nessuna') !== 'nessuna' ? max(1, min(30, (int)($v['per_pagina'] ?? 6))) : max(1, min(60, (int)($v['quanti'] ?? 6)));
+    }
+    return 0;
+}
+
+/**
+ * 2.40.0: nella pagina del blog fatta con l'editor, quanti per pagina mostra il primo widget che elenca tutti gli articoli
+ * (sito_blog_widget_per), oppure 0 se il disegno non ne ha. Lo stesso albero che esce sul sito (sito_pagina_editor): quello
+ * pubblicato, oppure la bozza in anteprima se non è mai stata pubblicata.
+ */
+function sito_blog_per_widget(array $blog): int {
+    try {
+        require_once __DIR__ . '/editor.php';
+        $albero = editor_decodifica(sito_campo($blog['fonte'], 'struttura', (int)$blog['riga']['id']));
+        if (!$albero && sito_anteprima()) $albero = editor_decodifica(sito_campo($blog['fonte'], 'struttura_bozza', (int)$blog['riga']['id']));
+        foreach ($albero['elementi'] ?? [] as $s) foreach ($s['figli'] as $c) foreach ($c['figli'] as $w) {
+            if (!in_array($w['tipo'], ['articoli', 'griglia_contenuti'], true)) continue;
+            $per = sito_blog_widget_per($w['tipo'], editor_valori($w['tipo'], $w['impostazioni'] ?? []));
+            if ($per > 0) return $per;
+        }
+    } catch (Throwable $e) {
+        error_log('sito_blog_per_widget: ' . $e->getMessage());
+    }
+    return 0;
+}
+
+/**
+ * 2.40.0: chiamata dai widget Ultimi articoli e Griglia di articoli mentre si disegna la pagina del blog fatta con l'editor
+ * (sito/index.php mette la voce della mappa in $GLOBALS['sito_blog_elenco']). Il primo widget che elenca tutti gli articoli
+ * prende la voce: gli articoli della pagina N, il numero della pagina e quante sono. Gli altri widget, la tela dell'editor e
+ * ogni altra pagina ricevono null e si disegnano come sempre.
+ */
+function sito_blog_elenco_prendi(string $tipo, array $v): ?array {
+    $b = $GLOBALS['sito_blog_elenco'] ?? null;
+    if (!is_array($b) || !empty($b['preso']) || !empty($GLOBALS['editor_ctx']['anteprima'])) return null;
+    if (($GLOBALS['editor_percorso'] ?? '') !== SITO_PAGINA_BLOG || sito_blog_widget_per($tipo, $v) <= 0) return null;
+    $GLOBALS['sito_blog_elenco']['preso'] = true;
+    return $b;
 }
 
 function sito_data_estesa(string $iso): string {

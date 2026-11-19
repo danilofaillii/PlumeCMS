@@ -483,6 +483,8 @@ function vt_sitemap_voci(): array {
         $out[] = ['loc' => vt_url_assoluto(vt_base() . $p['slug'] . '/'), 'lastmod' => (string)$p['aggiornato'], 'tipo' => 'pagine',
             'immagine' => $p['foto'] ? (preg_match('~^https?://~', $p['foto'][0]) ? $p['foto'][0] : vt_origine() . $p['foto'][0]) : ''];
     }
+    // 2.40.0: anche le condizioni di vendita (pagina index con il canonical), se il testo c'è. Carrello e ordine restano fuori (noindex).
+    if (trim((string)(vt_impostazioni()['condizioni'] ?? '')) !== '') $out[] = ['loc' => vt_url_assoluto(vt_base() . 'condizioni/'), 'lastmod' => '', 'tipo' => 'pagine', 'immagine' => ''];
     return $out;
 }
 

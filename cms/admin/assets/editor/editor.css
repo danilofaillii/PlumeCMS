@@ -348,3 +348,5 @@ button,input,select,textarea{font:inherit;color:inherit}
 .ed-misura-pulsante{display:inline-flex;align-items:center;gap:4px}
 .ed-misura-solo{font-size:10px;font-weight:700;letter-spacing:.02em;color:var(--accento-testo);white-space:nowrap}
 .ed-misura-solo[hidden]{display:none}
+/* 2.40.0: l'avviso della pagina del blog nel pannello dei widget */
+.ed-aiuto-blog{margin:0 0 12px;padding:8px 10px;border-left:3px solid var(--ed-primo);background:var(--ed-campo);color:var(--ed-testo);border-radius:4px}

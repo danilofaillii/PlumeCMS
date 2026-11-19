@@ -41,6 +41,12 @@ return [
             }
             return $voci;
         },
+        // 2.40.0: le pagine degli eventi nella sitemap: solo pubblicati e iniziati da meno di 30 giorni, la stessa regola del robots
+        // della pagina (dopo 30 giorni esce noindex). Bozze, annullati, iscrizione e pagina personale restano fuori.
+        'sitemap_voci' => function (array $voci) use ($evi) {
+            require_once $evi;
+            try { return array_merge($voci, evi_sitemap_voci()); } catch (Throwable $e) { error_log('eventi sitemap: ' . $e->getMessage()); return $voci; }
+        },
     ],
     'eventi' => [
         'sito_percorso' => function (string $percorso, array $q) {

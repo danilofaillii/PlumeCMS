@@ -54,7 +54,15 @@ return [
             foreach (test_tutti() as $t) { $cosa['test'][(string)$t['id']] = (string)$t['nome']; $cosa['_esiti']['test'][(string)$t['id']] = test_esiti_nomi($t); }
             return $cosa;
         },
-        // I test fuori dalla sitemap? No: le pagine dei test pubblicati sono pagine vere. Le pagine dei risultati sono noindex.
+        // 2.40.0: le pagine dei test pubblicati nella sitemap (sono pagine vere, index con il canonical). Bozze e pagine dei
+        // risultati (noindex) restano fuori.
+        'sitemap_voci' => function (array $voci) use ($tst) {
+            require_once $tst;
+            try {
+                foreach (test_tutti(true) as $t) $voci[] = ['loc' => cms_url_sito() . test_url($t), 'lastmod' => str_replace(' ', 'T', (string)$t['aggiornato']), 'tipo' => 'pagine', 'immagine' => ''];
+            } catch (Throwable $e) { error_log('test sitemap: ' . $e->getMessage()); }
+            return $voci;
+        },
     ],
     'eventi' => [
         'sito_percorso' => function (string $percorso, array $q) {
