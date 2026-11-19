@@ -1015,3 +1015,22 @@ con un secondo giro (link nuovo) e controlla che si entri.
 3. Atteso (2.39.1): 25 su 25 in radice e in cartella (base `http://127.0.0.1:<porta>/test`, cartella del CMS `.../test`) e sul sito
    aggiornato dalla 2.39.0. Sulla 2.39.0: 11 su 25 (14 KO: la pagina del link dà 500 con "Call to undefined function h()", i campi
    non ci sono, la password non cambia, quindi anche il login con la nuova, il rifiuto della vecchia, il link "già usato" e il log).
+
+## prova-paginazione-seo.js
+
+Le pagine degli elenchi per i motori di ricerca (2.39.2), leggendo l'HTML vero (richieste senza seguire i rimandi) e nel browser.
+Semina 30 articoli `articolo-paginato-NN` nella categoria `pagine-prova` e con il tag `pagine-prova-tag`, la pagina "Blog di
+prova" (`/blog-di-prova/`) fatta con l'editor e scelta come pagina del blog. Per il blog (3 pagine), la categoria (3) e il tag
+(3, noindex): ogni pagina 200, canonical sul suo indirizzo (il tag noindex senza canonical), titolo con "Pagina N" diverso dalla
+prima, robots come la prima, descrizione con "Pagina N di 3.", og:url uguale al canonical se c'è, JSON-LD della pagina con il suo
+indirizzo, niente cartella due volte; `page/1/` in 301 alla prima; `page/4/`, `99`, `0`, `02`, `abc`, `-1` e un numero enorme in
+404 vera. Poi: tag indicizzato da SEO e AEO con il canonical, "Paginazione: noindex" dalla pagina 2, separatore "|" e titolo per
+Google scritto a mano, sitemap senza `page/N/`, Tabella SEO e `site_audit` senza doppioni (e un doppione vero che si vede), barre
+doppie in 301, parametri con il canonical pulito, sitemap che segue "Articoli: noindex", titolo della home senza il nome due volte,
+e nel browser il clic sul 3 della paginazione. Alla fine toglie quello che ha seminato e rimette la configurazione SEO di prima.
+
+1. Un CMS installato (meglio col kit Attività), radice o cartella.
+2. `node prove/prova-paginazione-seo.js <base> <cartella del CMS>` (base con la cartella se c'è: `http://127.0.0.1:<porta>/test`,
+   cartella del CMS `.../test`). Usa `prove/paginazione-cli.php` (semina, blog-editor, seo, seo-salva, seo-rimetti, titolo-blog,
+   doppio, audit, pulisci).
+3. Atteso (2.39.2): 92 su 92 in radice e in cartella, con e senza kit, e sul sito aggiornato dalla 2.39.1. Sulla 2.39.1 (kit Attività in radice): 52 su 92 (40 KO: canonical, titoli, descrizioni e JSON-LD delle pagine 2 e 3 del blog, titoli uguali di categoria e tag, page/N/ oltre l'ultima in 301 invece di 404, tag indicizzato senza canonical, separatore e titolo scritto a mano, barre doppie, sitemap con gli articoli noindex, titolo della home con il nome due volte, i due controlli nel browser).
