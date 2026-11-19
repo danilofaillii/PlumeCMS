@@ -126,15 +126,26 @@ function sito_blog_widget_per(string $tipo, array $v): int {
  */
 function sito_blog_per_widget(array $blog): ?int {
     try {
-        require_once __DIR__ . '/editor.php';
-        $albero = editor_decodifica(sito_campo($blog['fonte'], 'struttura', (int)$blog['riga']['id']));
-        if (!$albero && sito_anteprima()) $albero = editor_decodifica(sito_campo($blog['fonte'], 'struttura_bozza', (int)$blog['riga']['id']));
+        // La mappa si fa a ogni richiesta e quasi ogni sito ha la pagina Blog di partenza fatta con l'editor: qui si legge il JSON
+        // così com'è (sezioni, colonne, widget, come editor_valida) e l'editor si carica solo se c'è un widget degli articoli.
+        $json = sito_campo($blog['fonte'], 'struttura', (int)$blog['riga']['id']);
+        if (trim($json) === '' && sito_anteprima()) $json = sito_campo($blog['fonte'], 'struttura_bozza', (int)$blog['riga']['id']);
+        $albero = json_decode($json, true);
+        if (!is_array($albero) || !is_array($albero['elementi'] ?? null)) return null;
         $widget = [];
-        foreach ($albero['elementi'] ?? [] as $s) foreach ($s['figli'] as $c) foreach ($c['figli'] as $w) $widget[] = $w;
+        foreach (array_slice($albero['elementi'], 0, 200) as $s) {
+            if (!is_array($s) || ($s['tipo'] ?? '') !== 'sezione') continue;
+            foreach (array_slice((array)($s['figli'] ?? []), 0, 6) as $c) {
+                if (!is_array($c) || ($c['tipo'] ?? '') !== 'colonna') continue;
+                foreach (array_slice((array)($c['figli'] ?? []), 0, 100) as $w) if (is_array($w) && is_string($w['tipo'] ?? null)) $widget[] = $w;
+            }
+        }
         if (count($widget) === 0 || (count($widget) === 1 && $widget[0]['tipo'] === 'titolo')) return null;
         foreach ($widget as $w) {
             if (!in_array($w['tipo'], ['articoli', 'griglia_contenuti'], true)) continue;
-            $per = sito_blog_widget_per($w['tipo'], editor_valori($w['tipo'], $w['impostazioni'] ?? []));
+            require_once __DIR__ . '/editor.php';
+            if (!isset(editor_definizioni()[$w['tipo']])) continue;
+            $per = sito_blog_widget_per($w['tipo'], editor_valori($w['tipo'], editor_pulisci_impostazioni($w['tipo'], $w['impostazioni'] ?? [])));
             if ($per > 0) return $per;
         }
     } catch (Throwable $e) {
