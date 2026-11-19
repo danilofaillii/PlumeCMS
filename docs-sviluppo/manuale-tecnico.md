@@ -7411,8 +7411,9 @@ sbagliato e con una correzione piccola:
 
 Proposte non fatte (nel rapporto, con la gravità): il blog che non mostra la pagina fatta con l'editor scelta come pagina del
 blog (esce la vista standard); la descrizione della categoria non usata come meta description; blog e archivi senza Open Graph;
-eventi, test e condizioni della Vetrina indicizzabili ma fuori dalla sitemap; categoria vuota 200 noindex (non 404); titolo
-"Iscrizione confermata" anche con un link di conferma non valido; maiuscole (`/SERVIZI/`) e `/index.php` in 404 invece di un 301.
+eventi, test e condizioni della Vetrina indicizzabili ma fuori dalla sitemap; categoria vuota 200 noindex (non 404, scelta voluta);
+titolo "Iscrizione confermata" anche con un link di conferma non valido; llms.txt che non segue il robots per tipo; le pagine 2-15
+del glossario che ripetono lo stesso elenco. Maiuscole (`/SERVIZI/`) e `/index.php` rispondono 404: nessun doppione, va bene così.
 
 Prove: `prove/prova-paginazione-seo.js` (con `prove/paginazione-cli.php`), gruppo 55 degli attacchi.
 
