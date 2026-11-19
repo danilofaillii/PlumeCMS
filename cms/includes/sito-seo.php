@@ -54,7 +54,8 @@ function sito_meta(string $percorso, array $v): array {
             'robots' => $robots,
             'canonical' => $c['seo']['canonical'] ?: $url,
             'og' => array_filter([
-                'og:type' => $c['tipo'] === 'post' ? 'article' : 'website', 'og:url' => $url, 'og:title' => $titolo,
+                // 2.39.2: og:url uguale al canonical (prima era sempre l'indirizzo della pagina, anche con un canonical scelto nella scheda).
+                'og:type' => $c['tipo'] === 'post' ? 'article' : 'website', 'og:url' => $c['seo']['canonical'] ?: $url, 'og:title' => $titolo,
                 'og:locale' => 'it_IT', 'og:site_name' => SITO_NOME, 'og:description' => $c['seo']['descrizione'],
                 'og:image' => $immagine,
                 'article:published_time' => $c['tipo'] === 'post' ? $c['data'] : '',
@@ -64,9 +65,11 @@ function sito_meta(string $percorso, array $v): array {
     }
     if ($v['genere'] === 'blog') {
         $c = $v['c'];
-        // Come oggi: le pagine 2, 3... del blog puntano alla prima.
-        return ['titolo' => $c['seo']['titolo'] ?: seo_titolo($c['titolo'], 'pagina'), 'descrizione' => $c['seo']['descrizione'],
-            'robots' => $v['pagina'] > 1 ? seo_robots_tipo('paginazione', $c['seo']['robots']) : $c['seo']['robots'], 'canonical' => SITO_URL . SITO_PAGINA_BLOG, 'og' => []];
+        // 2.39.2: ogni pagina dell'elenco ha il suo canonical (fino alla 2.39.1 le pagine 2, 3... puntavano alla prima, con
+        // titolo e descrizione uguali alla prima: segnali in contrasto per Google e doppioni in Search Console).
+        $meta = ['titolo' => $c['seo']['titolo'] ?: seo_titolo($c['titolo'], 'pagina'), 'descrizione' => $c['seo']['descrizione'],
+            'robots' => $v['pagina'] > 1 ? seo_robots_tipo('paginazione', $c['seo']['robots']) : $c['seo']['robots'], 'canonical' => $url, 'og' => []];
+        return sito_meta_paginata($meta, (int)$v['pagina'], (int)$v['totale'], $c['titolo'], 'pagina', $c['seo']['titolo'] !== '');
     }
     if ($v['genere'] === 'glossario') {
         return ['titolo' => seo_titolo('Glossario', 'altro'), 'descrizione' => '', 'robots' => 'noindex', 'canonical' => '', 'og' => []];
@@ -74,10 +77,39 @@ function sito_meta(string $percorso, array $v): array {
     if ($v['genere'] === 'archivio') {
         $robots = seo_robots_tipo(['category' => 'categorie', 'tag' => 'tag', 'data' => 'data'][$v['tassonomia']] ?? 'categorie', $v['robots']);
         if ($v['pagina'] > 1) $robots = seo_robots_tipo('paginazione', $robots);
-        return ['titolo' => seo_titolo($v['nome'], 'archivio'), 'descrizione' => '', 'robots' => $robots,
-            'canonical' => $v['tassonomia'] === 'tag' ? '' : $url, 'og' => []];
+        // 2.39.2: il tag ha il canonical quando è indicizzato (come le categorie); da noindex resta senza, come prima.
+        $meta = ['titolo' => seo_titolo($v['nome'], 'archivio'), 'descrizione' => '', 'robots' => $robots,
+            'canonical' => $v['tassonomia'] === 'tag' && $robots !== 'index' ? '' : $url, 'og' => []];
+        return sito_meta_paginata($meta, (int)$v['pagina'], (int)$v['totale'], (string)$v['nome'], 'archivio', false);
     }
     return ['titolo' => $v['titolo'] ?? SITO_NOME, 'descrizione' => '', 'robots' => $v['robots'] ?? 'noindex', 'canonical' => '', 'og' => []];
+}
+
+/**
+ * 2.39.2: titolo e descrizione della pagina N (N >= 2) di un elenco (blog, categorie, tag, archivi per data). Il titolo prende
+ * "Pagina N" con il separatore di SEO e AEO, prima del nome del sito ("Blog %sep% Pagina 2 %sep% Nome del sito"); un titolo
+ * scritto a mano nella scheda lo prende prima della coda " %sep% %sito%" se finisce così, altrimenti in fondo. La descrizione,
+ * se c'è, finisce con "Pagina N di M." (una vuota resta vuota). La pagina 1 esce com'era.
+ */
+function sito_meta_paginata(array $meta, int $n, int $totale, string $nome, string $tipo, bool $titoloScritto): array {
+    if ($n < 2) return $meta;
+    $t = seo_cfg()['titolo'];
+    $sep = trim((string)$t['sep']);
+    $pagina = 'Pagina ' . $n;
+    if (!$titoloScritto) {
+        $meta['titolo'] = seo_titolo($nome . ' ' . $sep . ' ' . $pagina, $tipo);
+    } else {
+        $coda = ' ' . $sep . ' ' . trim((string)$t['sito']);
+        $meta['titolo'] = str_ends_with($meta['titolo'], $coda) && trim((string)$t['sito']) !== ''
+            ? substr($meta['titolo'], 0, -strlen($coda)) . ' ' . $sep . ' ' . $pagina . $coda
+            : $meta['titolo'] . ' ' . $sep . ' ' . $pagina;
+    }
+    $d = rtrim((string)$meta['descrizione']);
+    if ($d !== '') $meta['descrizione'] = $d . (preg_match('/[.!?\x{2026}]$/u', $d) ? '' : '.') . ' ' . $pagina . ' di ' . max($n, $totale) . '.';
+    foreach (['og:title' => $meta['titolo'], 'og:description' => $meta['descrizione'], 'og:url' => $meta['canonical']] as $k => $x) {
+        if (isset($meta['og'][$k])) $meta['og'][$k] = $x;
+    }
+    return $meta;
 }
 
 // ------------------------------------------------------------

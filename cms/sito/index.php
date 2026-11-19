@@ -10,7 +10,7 @@
  *  4. file calcolati: robots.txt, sitemap.xml, llms.txt, feed
  *  5. la mappa degli indirizzi: articoli, pagine, archivi, glossario, blog
  *  6. indirizzo senza slash finale che esiste con lo slash: 301
- *  7. paginazione oltre l'ultima pagina: 301 alla prima; tutto il resto 404
+ *  7. paginazione: page/1/ con un 301 alla prima; oltre l'ultima pagina e tutto il resto 404 (2.39.2)
  */
 
 require_once dirname(__DIR__) . '/includes/sito-seo.php';
@@ -360,7 +360,9 @@ try {
                 if ($c['faq']) $nodi[] = sito_jsonld_faq($c);
                 sito_html(200, $meta, vista_pagina_generica($c), sito_jsonld_script($nodi), $c['percorso']);
             case 'blog':
-                sito_html(200, $meta, vista_blog($v), sito_jsonld_script([sito_jsonld_pagina(SITO_PAGINA_BLOG, (string)cms_impostazione('blog_nome', 'Blog'), '')]), SITO_PAGINA_BLOG);
+                // 2.39.2: la pagina N del blog ha il suo indirizzo come url e @id (prima quello della prima pagina).
+                $nomeBlog = (string)cms_impostazione('blog_nome', 'Blog') . ($v['pagina'] > 1 ? ' - Pagina ' . (int)$v['pagina'] : '');
+                sito_html(200, $meta, vista_blog($v), sito_jsonld_script([sito_jsonld_pagina($percorso, $nomeBlog, '')]), SITO_PAGINA_BLOG);
             case 'glossario':
                 sito_html(200, $meta, vista_glossario($v['termini']),
                     sito_jsonld_script([sito_jsonld_pagina('/glossario/', (string)cms_impostazione('glossario_titolo', 'Glossario'), ''), sito_jsonld_glossario($v['termini'])]), '/glossario/');
@@ -375,8 +377,10 @@ try {
     // 6. Slash finale
     if (!str_ends_with($percorso, '/') && isset($mappa[$percorso . '/'])) sito_vai($percorso . '/' . ($query !== '' ? "?$query" : ''));
 
-    // 7. Paginazione oltre l'ultima pagina (archivi che contavano articoli assorbiti dai pillar)
-    if (preg_match('~^(/(?:category|tag)/[^/]+/|' . preg_quote(SITO_PAGINA_BLOG, '~') . ')page/\d+/$~', $percorso, $m) && isset($mappa[$m[1]])) sito_vai($m[1]);
+    // 7. Paginazione: .../page/1/ di un elenco va alla prima pagina con un 301. 2.39.2: una pagina oltre l'ultima (page/99/ con
+    // 4 pagine), page/0/ e i numeri con lo zero davanti rispondono 404 (fino alla 2.39.1 un 301 alla prima pagina: Google lo
+    // legge come un doppione, un "soft 404").
+    if (preg_match('~^(/.*/)page/1/$~', $percorso, $m) && in_array($mappa[$m[1]]['genere'] ?? '', ['blog', 'archivio', 'glossario'], true)) sito_vai($m[1]);
 
     sito_non_trovato();
 } catch (PDOException $e) {
