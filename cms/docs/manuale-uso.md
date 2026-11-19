@@ -421,7 +421,9 @@ Le crei mentre scrivi un articolo (capitolo 4), oppure dalla voce **Categorie** 
 ![Una categoria nuova](immagini/manuale-uso/06-categorie.jpg)
 
 1. **Nome**: come si legge sul sito ("Novità"). Lo **Slug** (l'indirizzo) si fa da solo dal nome, se lo lasci vuoto.
-   La **Descrizione** esce in cima alla pagina della categoria e aiuta Google.
+   La **Descrizione** esce in cima alla pagina della categoria e, dalla 2.40.0, è anche la descrizione che Google mostra sotto
+   il titolo nei risultati di ricerca (senza grassetti e link, accorciata intorno a 160 caratteri; dalla seconda pagina con
+   "Pagina 2 di 3."). Esce anche nell'anteprima quando qualcuno condivide il link della categoria.
 2. Premi **Aggiungi**.
 
 A destra c'è l'elenco, con quanti articoli ha ogni voce, e i link per modificarla o eliminarla.
@@ -429,7 +431,7 @@ A destra c'è l'elenco, con quanti articoli ha ogni voce, e i link per modificar
 **Checklist**
 
 - [ ] Le categorie sono poche e chiare (meglio 3-6 che 20).
-- [ ] Ogni categoria ha una descrizione di una o due frasi.
+- [ ] Ogni categoria ha una descrizione di una o due frasi, scritta per chi la legge su Google (che cosa trova lì dentro).
 
 **Se qualcosa non va**
 
@@ -1180,6 +1182,40 @@ Manca una cosa: nessuno la trova, perché non è nel menu. Lo sistemi nel capito
 - *Ho cancellato qualcosa per sbaglio.* **Annulla** (la freccia in alto, o Ctrl+Z). Se hai già salvato, c'è Revisioni
   (capitolo 12).
 - *La pagina dice "La pagina non ha un titolo H1".* Aggiungi un widget Titolo con livello H1, oppure un'Apertura.
+
+### Esempio: il blog costruito con l'editor
+
+**A cosa serve.** La pagina del blog (`/blog/`) l'ha creata l'installazione, con il solo titolo "Blog": finché resta così, sul
+sito il blog esce come sempre, con "Gli articoli", le schede e i numeri delle pagine. Dalla 2.40.0 puoi disegnarla con l'editor
+come qualsiasi pagina (un'apertura, due righe, gli articoli) e sul sito esce il tuo disegno.
+
+1. **Pagine**, passa con il mouse sopra **Blog** e premi **Editor visuale**. Nel pannello dei widget, in alto, un riquadro dice
+   "Questa è la pagina del blog" e come si comportano lì i widget degli articoli.
+2. Sotto il titolo aggiungi un **Testo** con due righe ("Consigli, novità e storie dal negozio, ogni settimana.").
+3. Trascina sotto il widget **Ultimi articoli**. Nella scheda **Contenuto** spegni **Solo i pillar** e lascia vuota **Solo una
+   categoria**: così mostra tutti gli articoli. **Quanti** diventa quanti articoli per pagina (per esempio 9). Al posto di Ultimi
+   articoli puoi usare **Griglia di articoli** (senza categoria, tag e "Salta i primi", ordine "Dal più recente"): con
+   **Paginazione** "Numeri di pagina" conta il suo **Per pagina**.
+4. Premi **Pubblica** e apri il blog sul sito: c'è il tuo disegno, e sotto gli articoli ci sono i numeri **1 2 3**. Il 2 porta
+   a `/blog/page/2/`, con il disegno in cima e gli articoli dal decimo in poi.
+
+Cosa fa il sito da solo, come per il blog di sempre: ogni pagina ha il suo indirizzo per Google, il titolo con "Pagina 2", la
+descrizione con "Pagina 2 di 4."; una pagina che non c'è (`/blog/page/9/` con 4 pagine) risponde "pagina non trovata". Se nel
+disegno non metti nessun widget che mostra tutti gli articoli (per esempio solo un'apertura e un testo, oppure Ultimi articoli di
+una sola categoria), l'elenco del blog esce da solo sotto il disegno, con i numeri delle pagine: il blog non resta mai senza
+articoli. Solo il **primo** widget che mostra tutti gli articoli si divide in pagine; gli altri restano com'erano.
+
+**Checklist**
+
+- [ ] Nel widget degli articoli "Solo i pillar" è spento e nessuna categoria è scelta.
+- [ ] Sul sito, il numero 2 in fondo porta a `/blog/page/2/` e il disegno si vede anche lì.
+- [ ] La pagina ha un solo titolo H1.
+
+**Se qualcosa non va**
+
+- *Sul sito vedo il mio disegno e sotto un secondo elenco.* Il widget degli articoli ha un filtro (categoria, tag, "Solo i
+  pillar", "Salta i primi", ordine diverso da "Dal più recente"): toglilo e l'elenco sotto sparisce.
+- *Sul sito vedo ancora "Gli articoli" e non il mio disegno.* La pagina ha solo il titolo, oppure non hai premuto **Pubblica**.
 
 ---
 

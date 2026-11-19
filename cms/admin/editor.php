@@ -186,7 +186,7 @@ $dati = [
       <input type="search" id="ed-cerca-widget" placeholder="Cerca un widget…" aria-label="Cerca un widget">
       <?php /* 2.5.x (controllo UX): l'aiuto in cima, dove si legge; in fondo, dopo cento widget, non lo vedeva nessuno */ ?>
       <p class="ed-aiuto ed-aiuto-sopra">Trascina un widget nella pagina, oppure fai clic: entra sotto l'elemento selezionato.</p>
-      <?php if ($paginaBlog): ?><p class="ed-aiuto ed-aiuto-blog" role="note"><b>Questa è la pagina del blog.</b> Sul sito il primo widget Ultimi articoli o Griglia di articoli che mostra tutti gli articoli (senza categoria, tag e "Solo i pillar") li divide in pagine, con i numeri Pagina 2, 3 e così via. Se non ce n'è nessuno, sotto il disegno esce l'elenco del blog.</p><?php endif; ?>
+      <?php if ($paginaBlog): ?><p class="ed-aiuto ed-aiuto-blog" role="note"><b>Questa è la pagina del blog.</b> Sul sito il primo widget Ultimi articoli o Griglia di articoli che mostra tutti gli articoli (senza categoria, tag e "Solo i pillar") li divide in pagine: 1, 2, 3 e così via (in Ultimi articoli spegni "Solo i pillar"). Se non ce n'è nessuno, l'elenco del blog esce sotto il disegno. Finché la pagina ha solo il titolo, il blog esce com'è sempre stato.</p><?php endif; ?>
       <p class="ed-aiuto" id="ed-widget-nessuno" hidden>Nessun widget con questo nome. Prova con un'altra parola (per esempio: titolo, foto, pulsante, form).</p>
       <div id="ed-elenco-widget"></div>
     </section>

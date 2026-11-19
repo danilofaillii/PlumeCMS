@@ -261,6 +261,7 @@ def funzionalita():
          ['Costruisci le pagine trascinando sezioni, colonne e widget. Ogni elemento ha le sue tre schede: <strong>Contenuto</strong>, <strong>Stile</strong> e <strong>Avanzate</strong>. Al computer, al tablet e al telefono, con misure diverse per ognuno.',
           '<ul><li>112 widget: titoli, testi, foto, gallerie, prezzi, domande frequenti, orari di apertura, recensioni, eventi, menu del ristorante, le sedi, 30 infografiche (anche le barre a confronto, per i numeri uno accanto all\'altro) e Scorri di lato, le pagine che scorrono di lato come nei siti dei grandi marchi.</li>'
           '<li>26 aperture fra cui scegliere con una tendina, e 30 sezioni pronte per riempire una pagina in un minuto.</li>'
+          '<li>Anche il blog si disegna con l\'editor: gli articoli si dividono in pagine da soli, con un indirizzo per ogni pagina.</li>'
           '<li>Ogni parte si allinea per conto suo: occhiello al centro, testo a sinistra, e un altro allineamento sul telefono.</li>'
           '<li>Le foto le prendi dai Media e i link dal sito, senza scrivere indirizzi. Le foto del telefono si raddrizzano e si alleggeriscono da sole.</li>'
           '<li>Ogni salvataggio lascia una versione: la confronti, la guardi in anteprima, ci torni con un clic.</li></ul>']),
@@ -751,6 +752,7 @@ def zip_lavagna(dest):
 # Regola di Danilo (1 novembre 2026): solo i punti salienti, una riga per versione, mai nomi di aziende o servizi di terzi.
 # Le novità per chi scarica: brevi, scritte qui (il CHANGELOG è per chi sviluppa). Da aggiornare a ogni versione.
 NOVITA = [
+    ('2.40.0', 'Il blog disegnato con l\'editor', ['La pagina del blog si costruisce con l\'editor visuale e gli articoli si dividono in pagine da soli; la descrizione delle categorie vale anche per i motori di ricerca, i link condivisi di blog e categorie hanno l\'anteprima, e eventi e test entrano nella mappa del sito.']),
     ('2.39.2', 'Pagine degli elenchi chiare per i motori di ricerca', ['Ogni pagina del blog, delle categorie e dei tag indica sé stessa, con "Pagina 2" nel titolo e nella descrizione; una pagina che non esiste risponde "non trovata".']),
     ('2.39.1', 'La pagina per scegliere la password nuova', ['Dal link dell\'email "password dimenticata" la pagina mostra di nuovo i campi della password nuova e il pulsante per salvarla.']),
     ('2.39.0', 'Popup costruiti con l\'editor visuale', ['Un popup si compone come una pagina: sezioni, colonne e tutti i widget, con bozza, pubblicazione e versioni. Oppure con i campi semplici di sempre.', 'Larghezza e posizione della finestra a scelta: al centro, in basso a destra o come barra in fondo o in cima. Un pulsante con il link #chiudi chiude il popup.']),

@@ -57,14 +57,19 @@ HTML che cambia sulle pagine già fatte: pagine 2+ degli elenchi; titolo (e og:t
 | Doppioni del CMS | Tabella SEO e `site_audit` | lavorano per contenuto: nessuna pagina d'elenco, nessun doppione inventato; un doppione vero (due descrizioni uguali) si vede |
 | Open redirect | `//evil.example/` | 301 a `/evil.example/` sullo stesso sito, poi 404 |
 
-## Proposte (non toccate)
+## Proposte (non toccate nella 2.39.2)
+
+> Aggiornamento del 19 novembre 2026: **P1, P2, P3 e P4 sono fatte nella 2.40.0** (manuale tecnico, capitolo 54; prova
+> `prove/prova-seo-proposte.js`). P1 con una regola in più: la pagina Blog di partenza dell'installatore e dei kit (fatta con
+> l'editor, un solo widget Titolo) continua a uscire con la vista standard, altrimenti il blog di tutti i siti sarebbe cambiato.
+> P5-P8 restano proposte.
 
 | # | Cosa | Come l'ho visto | Dove | Gravità |
 |---|---|---|---|---|
-| P1 | La pagina scelta come pagina del blog, se è fatta con l'editor, non mostra il suo disegno: esce la vista standard del blog ("Gli articoli", griglia, paginazione). Chi costruisce il blog con l'editor non lo vede sul sito | `/blog-di-prova/` costruita con titolo e Ultimi articoli: sul sito "Gli articoli" | `sito/index.php` caso `blog`, `sito/viste.php` `vista_blog()` | media (non SEO, ma è la causa probabile della confusione "widget elenco articoli") |
-| P2 | La descrizione della categoria (scritta in Categorie) non diventa la meta description della categoria | `/category/pagine-prova/`: niente description, la categoria ne ha una | `includes/sito-seo.php:78` | media |
-| P3 | Blog, categorie e tag senza Open Graph (og:title, og:url, og:description): un link condiviso esce senza anteprima curata | `/blog-di-prova/`, `/category/pagine-prova/` | `includes/sito-seo.php:67`, `:78` | bassa |
-| P4 | Eventi, test e condizioni della Vetrina sono indicizzabili ma fuori dalla sitemap (i prodotti e il negozio ci sono) | `/evento/evento-di-prova/`, `/fai-il-test/test-di-prova/`, `/negozio/condizioni/` index, assenti dalla sitemap | filtro `sitemap_voci` degli addon Eventi e Test | media (eventi) |
+| P1 (fatta nella 2.40.0) | La pagina scelta come pagina del blog, se è fatta con l'editor, non mostra il suo disegno: esce la vista standard del blog ("Gli articoli", griglia, paginazione). Chi costruisce il blog con l'editor non lo vede sul sito | `/blog-di-prova/` costruita con titolo e Ultimi articoli: sul sito "Gli articoli" | `sito/index.php` caso `blog`, `sito/viste.php` `vista_blog()` | media (non SEO, ma è la causa probabile della confusione "widget elenco articoli") |
+| P2 (fatta nella 2.40.0) | La descrizione della categoria (scritta in Categorie) non diventa la meta description della categoria | `/category/pagine-prova/`: niente description, la categoria ne ha una | `includes/sito-seo.php:78` | media |
+| P3 (fatta nella 2.40.0) | Blog, categorie e tag senza Open Graph (og:title, og:url, og:description): un link condiviso esce senza anteprima curata | `/blog-di-prova/`, `/category/pagine-prova/` | `includes/sito-seo.php:67`, `:78` | bassa |
+| P4 (fatta nella 2.40.0) | Eventi, test e condizioni della Vetrina sono indicizzabili ma fuori dalla sitemap (i prodotti e il negozio ci sono) | `/evento/evento-di-prova/`, `/fai-il-test/test-di-prova/`, `/negozio/condizioni/` index, assenti dalla sitemap | filtro `sitemap_voci` degli addon Eventi e Test | media (eventi) |
 | P5 | Categoria vuota: 200 noindex con il canonical, non 404. Scelta voluta del codice ("una categoria vuota risponde lo stesso": i menu possono puntarci prima del primo articolo); con noindex Google non la indicizza | `/category/vuota/` | `includes/sito-mappa.php` | bassa |
 | P6 | Con un link di conferma della newsletter non valido il titolo della scheda dice "Iscrizione confermata" (la pagina è noindex) | `/newsletter-conferma/?t=x` | `sito/index.php` passo newsletter | bassa |
 | P7 | llms.txt e llms-full.txt contano solo il robots della scheda, non il robots per tipo di SEO e AEO (come la sitemap prima della correzione 5) | lettura del codice | `sito/extra.php` `extra_llms()`, `includes/seo.php` `seo_llms_full()` | bassa |

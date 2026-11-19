@@ -3785,6 +3785,38 @@ echo json_encode($o);
     ok('2.39.2: //evil.example/ non porta a un altro dominio', !(r.s >= 300 && r.s < 400 && /evil\.example/.test(new URL(r.l, B55).host)), [r.s, r.l]);
   }
 
+  // === 56. (2.40.0) La pagina del blog fatta con l'editor e la descrizione delle categorie, da anonimo. Una descrizione di categoria
+  //          con script, immagine con onerror e HTML esce pulita nella meta description e nell'Open Graph (mai l'HTML vero nella
+  //          testa); page/N/ della pagina del blog dell'editor con valori strani: mai 200, mai errori o percorsi del server; i
+  //          parametri non cambiano la pagina mostrata; la sitemap resta XML senza HTML. Serve CMS_DIR (semina da riga di comando).
+  if (DIR) {
+    const cp56 = require('child_process');
+    const cli56 = (f, ...a) => { try { return JSON.parse(cp56.execFileSync('php', [path.join(__dirname, '..', 'prove', f), DIR, ...a], { encoding: 'utf8' }).trim().split('\n').pop()); } catch (e) { return { errore: String(e.message).slice(0, 200) }; } };
+    const B56 = BASE.replace(/\/$/, '');
+    const prova56 = async (u) => { const r = await fetch(B56 + u, { redirect: 'manual' }); return { s: r.status, l: r.headers.get('location') || '', h: await r.text() }; };
+    const pulita56 = (h) => !/Fatal error|Uncaught|Stack trace|Warning:|Notice:|Deprecated:/i.test(h) && !/\/(home|tmp|var|srv)\/[^\s"<]*\.php/.test(h);
+    const testa56 = (h) => (h.split('</head>')[0] || '');
+    cli56('seo-proposte-cli.php', 'pulisci'); cli56('paginazione-cli.php', 'pulisci');
+    cli56('paginazione-cli.php', 'semina', '30'); cli56('seo-proposte-cli.php', 'blog', 'articoli');
+    cli56('seo-proposte-cli.php', 'categoria', '<script>alert(56)</script><img src=x onerror=alert(56)>Descrizione "cattiva" & <b>forte</b> <style>body{display:none}</style>');
+    let r = await prova56('/category/pagine-prova/');
+    const d56 = (testa56(r.h).match(/<meta name="description" content="([^"]*)"/) || [])[1] || '';
+    ok('2.40.0: descrizione di categoria con script e HTML: nella testa niente script, img, onerror né style, la meta description è il testo pulito', r.s === 200 && !/<script>alert\(56\)|<img src=x|onerror=|<style>body/.test(testa56(r.h)) && d56.startsWith('Descrizione &quot;cattiva&quot; &amp; forte') && !d56.includes('alert') && !d56.includes('display:none'), [r.s, d56]);
+    ok('2.40.0: og:description con la stessa descrizione pulita', (testa56(r.h).match(/<meta property="og:description" content="([^"]*)"/) || [])[1] === d56);
+    for (const v of ['99999999999999999999999999', '-1', '0', '02', 'abc', '%3Cscript%3Ealert(56)%3C%2Fscript%3E', '2/page/3']) {
+      r = await prova56('/blog-di-prova/page/' + v + '/');
+      ok(`2.40.0: blog dell'editor page/${decodeURIComponent(v).slice(0, 30)}/: niente 200, niente errori né percorsi`, r.s !== 200 && r.s < 500 && pulita56(r.h) && !r.h.includes('<script>alert(56)'), [r.s, r.l]);
+    }
+    const p1 = await prova56('/blog-di-prova/'), pq = await prova56('/blog-di-prova/?pagina=3&paged=2&page=abc');
+    const schede56 = (h) => [...h.matchAll(/<a class="card[^"]*" href="([^"]+)"/g)].map(m => m[1]).join(',');
+    ok('2.40.0: blog dell\'editor con ?pagina= ?paged= ?page=: 200, la prima pagina (i parametri non scelgono la pagina), niente errori', pq.s === 200 && pulita56(pq.h) && schede56(pq.h) === schede56(p1.h) && schede56(p1.h) !== '', [pq.s]);
+    r = await prova56('/blog-di-prova/page/2/');
+    ok('2.40.0: blog dell\'editor pagina 2: 200 senza errori né percorsi', r.s === 200 && pulita56(r.h), r.s);
+    r = await prova56('/sitemap.xml');
+    ok('2.40.0: sitemap: XML senza HTML né errori', r.s === 200 && r.h.startsWith('<?xml') && !/<script|Fatal error|Warning:/i.test(r.h), r.s);
+    cli56('seo-proposte-cli.php', 'pulisci'); cli56('paginazione-cli.php', 'pulisci');
+  } else console.log('--  Blog dell\'editor e descrizioni delle categorie (2.40.0): saltato (serve CMS_DIR)');
+
   // === pulizia: elimina il redattore di prova
   {
     await admin.p.goto(ADMIN + '/utenti.php', { waitUntil: 'networkidle' });

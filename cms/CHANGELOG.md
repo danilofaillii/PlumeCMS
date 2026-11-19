@@ -2,6 +2,31 @@
 
 Il prodotto si chiama **plumeCMS** (nome scelto il 26 ottobre 2026; prima, per poche ore, "CarbonaraCMS", e ancora prima il provvisorio "Officina": gli zip vecchi si chiamavano `officina-*` e `carbonaracms-*`).
 
+## 2.40.0 (19 novembre 2026) - Blog fatto con l'editor e SEO di categorie, eventi e test
+
+Le quattro proposte del controllo SEO della 2.39.2, tutte fatte.
+
+- **Il blog fatto con l'editor si vede**: se la pagina scelta come pagina del blog è costruita con l'editor visuale, sul sito esce il
+  suo disegno (fino alla 2.39.2 usciva sempre l'elenco standard "Gli articoli" e il disegno non si vedeva). Il primo widget **Ultimi
+  articoli** o **Griglia di articoli** che mostra tutti gli articoli (senza categoria, tag e "Solo i pillar") li divide in pagine,
+  quanti per pagina lo dice il widget, con i numeri 1, 2, 3 in fondo e gli indirizzi `page/2/`, `page/3/`. Se il disegno non ha un
+  widget così, l'elenco del blog esce sotto il disegno. Tutte le regole della 2.39.2 per le pagine 2, 3... restano (titolo con
+  "Pagina 2", descrizione con "Pagina 2 di 4.", pagina oltre l'ultima "non trovata"). Nell'editor, sulla pagina del blog, un avviso
+  lo spiega.
+- **Non cambia** il blog scritto nella scheda e nemmeno la pagina Blog che crea l'installazione (ha solo il titolo): finché resta
+  così il blog esce come prima.
+- **La descrizione della categoria vale anche per Google**: quella scritta in Articoli > Categorie diventa la descrizione della pagina
+  della categoria nei risultati di ricerca (senza HTML, tagliata intorno a 160 caratteri), con "Pagina 2 di 3." dalla seconda pagina.
+  Una categoria senza descrizione resta com'era.
+- **Anteprima sui social** per blog, categorie e tag: un link condiviso esce con titolo, descrizione e immagine (quella della pagina
+  del blog se c'è, altrimenti l'immagine predefinita di SEO e AEO).
+- **Sitemap più completa**: entrano le pagine degli eventi pubblicati (fino a 30 giorni dopo l'inizio, come la loro indicizzazione),
+  dei test pubblicati e le condizioni di vendita del negozio. Bozze, risultati dei test e pagine d'iscrizione restano fuori. Le
+  condizioni di vendita hanno ora anche una descrizione.
+- **HTML che cambia sulle pagine già fatte**: righe Open Graph e `twitter:card` in testa a blog, categorie e tag; la descrizione delle
+  categorie che ne hanno una; la pagina del blog fatta con l'editor (con qualcosa in più del solo titolo). Il resto è uguale.
+- Prove nuove: `prove/prova-seo-proposte.js` (con `prove/seo-proposte-cli.php`) e il gruppo 56 degli attacchi.
+
 ## 2.39.2 (19 novembre 2026) - Paginazione per i motori di ricerca
 
 - **Cosa si vedeva** (segnalazione da un sito vero): le pagine successive del blog (`/blog/page/2/`, `/blog/page/3/`...) dicevano a

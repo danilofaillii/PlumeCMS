@@ -63,6 +63,8 @@ pagine, gestire il sito) c'è il manuale d'uso, `docs/manuale-uso.md`, con le sc
 50. Pulizia (dalla 2.38.0)
 51. I dati delle immagini (dalla 2.38.0)
 52. Popup costruiti con l'editor visuale (dalla 2.39.0)
+53. Le pagine degli elenchi per i motori di ricerca e il controllo SEO (dalla 2.39.2)
+54. Il blog fatto con l'editor, la descrizione e l'Open Graph degli elenchi, la sitemap degli addon (dalla 2.40.0)
 
 Appendice A. Dove i documenti vecchi non corrispondono al codice
 
@@ -412,12 +414,14 @@ Poi decide, **in quest'ordine** (`sito/index.php`):
 | 10 | percorsi che finiscono con `/feed/` | feed RSS, o 404 |
 | 11 | il percorso è nella mappa del sito (`sito_mappa()`) | la pagina, secondo il genere (sotto) |
 | 12 | il percorso senza barra finale esiste con la barra | 301 con la barra |
-| 13 | `.../page/1/` di un elenco (blog, archivio, glossario) | 301 alla prima pagina (`sito/index.php:387`); dalla 2.39.2 una pagina oltre l'ultima (`/blog/page/9/`), `page/0/` e i numeri con lo zero davanti non hanno più il 301: 404 (capitolo 53) |
+| 13 | `.../page/1/` di un elenco (blog, archivio, glossario) | 301 alla prima pagina (`sito/index.php:404`); dalla 2.39.2 una pagina oltre l'ultima (`/blog/page/9/`), `page/0/` e i numeri con lo zero davanti non hanno più il 301: 404 (capitolo 53) |
 | 14 | nient'altro | 404, registrato nella tabella `seo_404` |
 | - | il database non risponde (`PDOException`) | 503 con `Retry-After: 600` |
 
 Generi della mappa (passo 11): `home` (fatta con l'editor oppure scritta nel codice), `contenuto` (articolo,
-pagina, voce di glossario), `blog`, `glossario`, `archivio` (categoria o tag). Un genere sconosciuto lancia
+pagina, voce di glossario), `blog`, `glossario`, `archivio` (categoria o tag). Il `blog` (`sito/index.php:369`) dalla 2.40.0 esce con
+il disegno della pagina del blog quando è fatta con l'editor e non è la pagina Blog di partenza (voce `per_widget` della mappa,
+capitolo 54); altrimenti con `vista_blog()` come prima. Un genere sconosciuto lancia
 l'evento `sito_genere($voce, $meta)`: è il modo in cui un modulo serve pagine sue.
 
 Ogni pagina HTML passa da `sito_html()`, che applica in ordine `vista_pagina()` (la cornice: head, header,
@@ -3201,7 +3205,7 @@ Nessuno di questi è un file sul disco: il CMS li scrive a ogni richiesta.
 | Indirizzo | Cosa contiene |
 |---|---|
 | `/robots.txt` | il testo personale, altrimenti: `Allow: /`, divieti per pannello, cron, log, API, ricerca, autori, feed; i blocchi dei crawler AI scelti; l'indirizzo della sitemap, in **una** riga `Sitemap: <SITO_URL>/sitemap.xml` (`extra_robots()`, `sito/extra.php:102`; `SITO_URL` ha già la cartella. Fino alla 2.32.0 c'era una seconda riga con `cms_base()`: uguale alla prima nella radice, `/test/test/sitemap.xml` in cartella. Un robots.txt personale scritto nel pannello resta com'è) |
-| `/sitemap.xml` | home, articoli e (a scelta) pagine indicizzabili, categorie con articoli; a scelta le immagini; oppure l'indice di `sitemap-articoli.xml`, `sitemap-pagine.xml`, `sitemap-categorie.xml`. Dalla 2.39.2 "indicizzabile" conta anche il robots per tipo di SEO e AEO (`seo_sitemap_voci()`, `includes/seo.php:898`: con "Articoli: noindex" gli articoli escono dalla sitemap; con "auto" identica a prima). Le pagine `page/N/` degli elenchi non ci sono mai |
+| `/sitemap.xml` | home, articoli e (a scelta) pagine indicizzabili, categorie con articoli; a scelta le immagini; oppure l'indice di `sitemap-articoli.xml`, `sitemap-pagine.xml`, `sitemap-categorie.xml`. Dalla 2.39.2 "indicizzabile" conta anche il robots per tipo di SEO e AEO (`seo_sitemap_voci()`, `includes/seo.php:898`: con "Articoli: noindex" gli articoli escono dalla sitemap; con "auto" identica a prima). Le pagine `page/N/` degli elenchi non ci sono mai. Dalla 2.40.0 gli addon aggiungono con il filtro `sitemap_voci` anche gli eventi pubblicati iniziati da meno di 30 giorni, i test pubblicati e le condizioni del negozio (capitolo 54.4) |
 | `/llms.txt` | il testo personale, altrimenti: nome e descrizione del sito, nota di citazione (filtro `llms_intestazione`), servizi (filtro `llms_servizi`), guide pillar, articoli, glossario, feed e sitemap. Dalla 2.35.0 (`extra_llms()`, `sito/extra.php:79`, capitolo 48.1) anche le **pagine** pubblicate e indicizzabili, la home per prima; niente sezioni vuote, Glossario solo con termini, feed solo con articoli, in testa la descrizione generale di SEO e AEO |
 | `/llms-full.txt` | il testo completo dei contenuti, solo se acceso |
 | file di verifica | il file `.html` di Google, `/BingSiteAuth.xml`, `/<chiave IndexNow>.txt` |
@@ -4735,7 +4739,7 @@ spento finché l'amministratore non lo accende da **Impostazioni > Addon**.
 | evento `sito_contenuto($c, $meta)` | `sito/index.php:236`, prima di disegnare un articolo o una pagina | Area riservata: pagina "Solo per i membri" |
 | filtro `contenuto_riservato(null, $c)` | `includes/sito-dati.php:164`, in testa a `sito_html_contenuto()` | Area riservata: il testo riservato non esce in llms-full.txt né nei widget |
 | evento `sito_pagina_servita($codice, $percorso)` | `sito/index.php:39`, risposte HTML | Statistiche |
-| filtro `sitemap_voci($voci)` | `includes/seo.php:879` | Vetrina: negozio e prodotti nella sitemap (e quindi nella coda IndexNow) |
+| filtro `sitemap_voci($voci)` | `includes/seo.php:912` | Vetrina: negozio, prodotti e (dalla 2.40.0) condizioni nella sitemap (e quindi nella coda IndexNow); dalla 2.40.0 anche Eventi (`evi_sitemap_voci()`) e Test (capitolo 54.4) |
 | (2.1) filtro `contenuti_elenco($tutti, $dove)` | `includes/sito-dati.php:155` (`sito_contenuti_elenco()`) | Area riservata: i riservati fuori da ricerca, feed, sitemap, llms (capitolo 36) |
 | (2.1) filtro `scheda_riquadri` ed evento `scheda_salvata` | `admin/contenuto.php:285` e `:62` | Area riservata: "Solo per i membri" dalla scheda (capitolo 36) |
 | (2.1) chiave `oauth_ritorno` del manifesto | `admin/oauth-ritorno.php` (file nuovo) | Copia altrove: il ritorno da Google e da Dropbox (capitolo 35) |
@@ -7374,7 +7378,7 @@ con un 301 alla prima, che Google legge come un "soft 404". Gli elenchi paginati
 (10 per pagina), il glossario (pagine 2-15 solo con `glossario_pagine`, sempre noindex). Nessun altro elenco pagina con l'indirizzo:
 la Griglia di articoli dell'editor ha la paginazione nel browser (senza indirizzi), la ricerca e gli elenchi degli addon non paginano.
 
-**La regola di adesso**, in `sito_meta()` (`includes/sito-seo.php:67` blog, `:78` archivi) e `sito_meta_paginata()` (`:95`):
+**La regola di adesso**, in `sito_meta()` (`includes/sito-seo.php:67` blog, `:81` archivi) e `sito_meta_paginata()` (`:131`):
 - **canonical**: ogni pagina sul suo indirizzo (`SITO_URL` + percorso, quindi con la cartella una volta sola). Il blog prima puntava
   a `SITO_PAGINA_BLOG`. Il tag ha il canonical quando è indicizzato (robots per tipo "Tag: index"); da noindex resta senza, come
   prima (la regola di Rank Math);
@@ -7383,13 +7387,13 @@ la Griglia di articoli dell'editor ha la paginazione nel browser (senza indirizz
   " %sep% Pagina N" prima della coda " %sep% <nome del sito>" se finisce così, altrimenti in fondo;
 - **descrizione**: dalla pagina 2, se la prima ne ha una, la stessa con "Pagina N di M." in coda (un punto in mezzo se manca); una
   vuota resta vuota. `og:title`, `og:description` e `og:url`, se la pagina li ha, seguono titolo, descrizione e canonical
-  (blog e archivi oggi non scrivono Open Graph);
+  (dalla 2.40.0 blog, categorie e tag scrivono l'Open Graph, capitolo 54.3);
 - **robots**: invariato. La pagina N prende quello della prima, oppure "Paginazione" di SEO e AEO (`seo_robots_tipo('paginazione')`)
   se non è "auto": già così per blog e archivi, provato;
-- **JSON-LD**: il WebPage del blog ha come `url` e `@id` l'indirizzo della pagina N e il nome "Blog - Pagina N" (`sito/index.php:371`);
+- **JSON-LD**: il WebPage del blog ha come `url` e `@id` l'indirizzo della pagina N e il nome "Blog - Pagina N" (`sito/index.php:386`; per il blog fatto con l'editor `:381`);
   categorie e tag non hanno un nodo di pagina;
 - **page/1/** va alla prima pagina con un 301 per blog, archivi (anche per data) e glossario; **page/N/ oltre l'ultima**, `page/0/`,
-  `page/02/`, numeri enormi o negativi e testo rispondono **404** con la pagina 404 del sito (`sito/index.php:387`);
+  `page/02/`, numeri enormi o negativi e testo rispondono **404** con la pagina 404 del sito (`sito/index.php:404`);
 - **sitemap**: le pagine `page/N/` restano fuori; **llms.txt** non le elenca;
 - **doppioni**: la Tabella SEO (`seo_tabella_righe()`) e `site_audit` dell'addon AI collegate lavorano per contenuto, non per
   indirizzo: le pagine degli elenchi non ci sono e non contano come doppioni (provato, e provato che un doppione vero si vede).
@@ -7409,13 +7413,98 @@ sbagliato e con una correzione piccola:
 4. **og:url** di articoli e pagine uguale al canonical (`includes/sito-seo.php:59`): cambia solo con un canonical diverso
    dall'indirizzo (oggi nessun contenuto del nucleo lo ha).
 
-Proposte non fatte (nel rapporto, con la gravità): il blog che non mostra la pagina fatta con l'editor scelta come pagina del
-blog (esce la vista standard); la descrizione della categoria non usata come meta description; blog e archivi senza Open Graph;
-eventi, test e condizioni della Vetrina indicizzabili ma fuori dalla sitemap; categoria vuota 200 noindex (non 404, scelta voluta);
+Proposte non fatte nella 2.39.2 (nel rapporto, con la gravità): il blog che non mostra la pagina fatta con l'editor scelta come pagina
+del blog (esce la vista standard); la descrizione della categoria non usata come meta description; blog e archivi senza Open Graph;
+eventi, test e condizioni della Vetrina indicizzabili ma fuori dalla sitemap (queste quattro, P1-P4, **fatte nella 2.40.0**, capitolo
+54); categoria vuota 200 noindex (non 404, scelta voluta);
 titolo "Iscrizione confermata" anche con un link di conferma non valido; llms.txt che non segue il robots per tipo; le pagine 2-15
 del glossario che ripetono lo stesso elenco. Maiuscole (`/SERVIZI/`) e `/index.php` rispondono 404: nessun doppione, va bene così.
 
 Prove: `prove/prova-paginazione-seo.js` (con `prove/paginazione-cli.php`), gruppo 55 degli attacchi.
+
+## 54. Il blog fatto con l'editor, la descrizione e l'Open Graph degli elenchi, la sitemap degli addon (dalla 2.40.0)
+
+Le proposte P1-P4 del controllo SEO del 19 novembre 2026 (`docs-sviluppo/controllo-seo-2026-11-19.md`), richiesta del proprietario:
+"falle tutte".
+
+### 54.1 La pagina del blog fatta con l'editor (P1)
+
+**Prima**: la pagina scelta in `pagina_blog` (`SITO_PAGINA_BLOG`) usciva sempre con `vista_blog()` (occhiello "Il blog", "Gli
+articoli", filtri, schede, paginazione): il disegno dell'editor non si vedeva mai. **Attenzione**: l'installatore e ogni kit creano la
+pagina Blog **con l'editor** (`includes/kit-partenza.php:253`, un solo widget Titolo "Blog", "l'elenco lo disegna il sito"): mostrare
+sempre il disegno avrebbe cambiato il blog di tutti i siti. Per questo la regola tiene fuori la pagina di partenza.
+
+**La mappa** (`sito_mappa()`, `includes/sito-mappa.php:47`). Per la pagina del blog fatta con l'editor `sito_blog_per_widget()` (`:127`)
+legge lo stesso albero che esce sul sito (`struttura`, oppure `struttura_bozza` in anteprima se non è mai stata pubblicata, come
+`sito_pagina_editor()`) e risponde:
+- `null` se il disegno ha zero widget o uno solo di tipo `titolo` (la pagina Blog di partenza), oppure se l'albero non si legge: la
+  voce della mappa resta quella di prima (niente `per_widget`) e il blog esce con `vista_blog()`, uguale al byte alla 2.39.2 (tolte
+  le righe Open Graph, 54.3);
+- il "per pagina" del **primo** widget che elenca tutti gli articoli (`sito_blog_widget_per()`, `:107`): **Ultimi articoli**
+  (`articoli`) senza categoria e con "Solo i pillar" spento, per pagina il suo "Quanti" (1-12; attenzione: "Solo i pillar" è
+  acceso di partenza); **Griglia di articoli** (`griglia_contenuti`) con fonte articoli o tutti, senza categoria, tag, "Solo i
+  pillar" e "Salta i primi", ordine dal più recente, per pagina il suo "Per pagina" (1-30) se ha la paginazione, altrimenti il suo
+  "Quanti" (1-60);
+- `0` se il disegno è vero ma non ha un widget così.
+
+Le pagine si contano con quel numero (`sito_pagine($nel, $perWidget ?: 12)`), sugli stessi articoli del blog classico (pubblicati,
+indicizzati, che possono uscire in un elenco), e la voce prende `per_widget`. Così `totale`, page/1/ in 301, page/N+1/ in 404 e la
+"Pagina N di M." della descrizione seguono il widget.
+
+**L'uscita** (`sito/index.php:375`). Con `per_widget` la voce va in `$GLOBALS['sito_blog_elenco']`, il disegno esce con
+`vista_pagina_editor()` (CSS, fogli e script dei widget come le altre pagine dell'editor) e la variabile si toglie subito dopo.
+Durante il disegno il widget chiama `sito_blog_elenco_prendi()` (`includes/sito-mappa.php:153`): il primo che soddisfa
+`sito_blog_widget_per()` prende la voce (`preso`), solo sul sito (mai nella tela, `editor_ctx['anteprima']`) e solo se il disegno è
+quello della pagina del blog (`editor_percorso === SITO_PAGINA_BLOG`). Ultimi articoli (`includes/editor-widget.php:713`) mostra le
+schede della pagina N (`vista_scheda`) e `vista_paginazione(SITO_PAGINA_BLOG, N, M)` (`nav.paginazione`, link `page/N/` veri);
+la Griglia (`includes/editor-widget-extra-c.php:521`) usa gli articoli della pagina N con il suo aspetto e mette la stessa paginazione
+al posto di quella nel browser (`data-ew-pagina` non c'è). Gli altri widget elenco della pagina restano come sempre. Con `per_widget`
+uguale a 0 sotto il disegno esce `vista_blog_sotto()` (`sito/viste.php:489`): la vista standard intera se il disegno non ha un H1,
+altrimenti senza il suo titolo (filtri, schede, paginazione), così la pagina ha un H1 solo. Le FAQ del disegno vanno nel JSON-LD solo
+della pagina 1; il WebPage è quello di sempre con l'indirizzo della pagina N.
+
+**Meta** (`sito_meta()`, `includes/sito-seo.php:67`): invariati per il blog fatto con l'editor (stesso ramo `blog`), più l'Open Graph.
+**Nell'editor** (`admin/editor.php:77` e `:189`) sulla pagina del blog un avviso nel pannello dei widget (`.ed-aiuto-blog`) spiega
+la regola. **Temi**: il disegno dell'editor vince sulla vista `blog` di un tema, come per le altre pagine dell'editor; con la pagina
+di partenza o il blog classico la vista del tema resta.
+
+### 54.2 La descrizione della categoria (P2)
+
+`sito_meta()` per l'archivio (`includes/sito-seo.php:81`): con `tassonomia` `category` la descrizione della mappa (`categories.description`)
+passa da `sito_descrizione_breve()` (`:114`: via il contenuto di `script` e `style`, `strip_tags`, entità decodificate, spazi uniti,
+taglio all'ultima parola intera prima di 160 caratteri con i puntini) e diventa la meta description; dalla pagina 2
+`sito_meta_paginata()` aggiunge "Pagina N di M.". Senza descrizione resta vuota. I **tag** non hanno una colonna descrizione
+(`schema-base.php:78`) e gli **archivi per data** nemmeno: per loro niente. Il testo dentro la pagina della categoria
+(`vista_archivio()`) non cambia.
+
+### 54.3 Open Graph di blog, categorie e tag (P3)
+
+`sito_og_elenco()` (`includes/sito-seo.php:101`), chiamata dal ramo `blog` e dall'archivio con tassonomia `category` o `tag`:
+`og:type` website, `og:url` uguale al canonical (assente se manca: il tag noindex non ha canonical), `og:title`, `og:locale` it_IT,
+`og:site_name`, `og:description` se c'è, `og:image`: per il blog l'immagine della scheda della pagina del blog (`immagine_url`, la
+stessa regola di articoli e pagine), altrimenti `seo_og_immagine_predefinita()`; per categorie e tag la predefinita. Con `og:title`
+`vista_pagina()` scrive anche `twitter:card` e, con l'immagine, `twitter:image`, `og:image:secure_url` e le misure, come per articoli e
+pagine. Dalla pagina 2 `sito_meta_paginata()` aggiorna `og:title`, `og:description` e `og:url`. Gli archivi per data (noindex) non
+cambiano.
+
+### 54.4 La sitemap degli addon (P4)
+
+Con il filtro `sitemap_voci` (`includes/seo.php:912`), nello stesso formato dei prodotti della Vetrina:
+- **Eventi** (`addon/eventi-iscrizione/modulo.php:46`, `evi_sitemap_voci()` in `includes/eventi.php:185`): gli eventi `pubblicato`
+  con inizio da meno di 30 giorni o futuro, la stessa regola del robots della pagina (`includes/sito.php:53`: dopo 30 giorni
+  `noindex`). Annullati, bozze, `/evento-iscrizione/...` fuori. `lastmod` = `aggiornato`, immagine = la foto se c'è;
+- **Test** (`addon/test/modulo.php:59`): i test pubblicati (`test_tutti(true)`), `lastmod` = `aggiornato`. Bozze e
+  `/fai-il-test/<nome>/risultato/` (noindex) fuori;
+- **Vetrina** (`addon/vetrina/includes/vetrina.php:487`): `/negozio/condizioni/` se il testo delle condizioni c'è (senza data: è
+  un'impostazione). La pagina ha ora una descrizione presa dal testo e l'Open Graph (`includes/sito.php`, `vt_pagina_condizioni()`).
+
+Il `loc` è uguale al canonical delle pagine (`cms_url_sito()`, con la cartella una volta sola). Controllato: titoli diversi
+("<nome> - <sito>"), descrizioni dal testo dell'evento o della presentazione del test. Da sapere, non cambiato: un evento **annullato**
+resta indicizzabile (la pagina dice che è annullato) ma non entra nella sitemap; la pagina di un test con un invio sbagliato esce
+noindex (giusto).
+
+Prove: `prove/prova-seo-proposte.js` (con `prove/seo-proposte-cli.php`), gruppo 56 degli attacchi; `prove/prova-paginazione-seo.js`
+della 2.39.2 resta 92/92 (la sua pagina del blog ha titolo e Ultimi articoli con "Solo i pillar": esce il disegno con l'elenco sotto).
 
 ## Appendice A. Dove i documenti vecchi non corrispondono al codice
 
