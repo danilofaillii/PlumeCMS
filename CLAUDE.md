@@ -109,7 +109,7 @@ Sono gli unici in `cms/docs/`, nello zip, nel sito di plumeCMS e nella pagina Do
 - **Pacchetto di aggiornamento** per un'installazione esistente:
   `python3 tools/cms-pacchetto.py --aggiornamento`. Si carica dal pannello,
   Impostazioni, Aggiornamenti.
-- **Versione**: `cms/VERSIONE` (oggi 2.39.1; sempre tre numeri: "beta" va nel CHANGELOG, mai nel nome dello zip, se no la serie "ultima" del Download non lo riconosce) e una voce in `cms/CHANGELOG.md` a ogni
+- **Versione**: `cms/VERSIONE` (oggi 2.39.2; sempre tre numeri: "beta" va nel CHANGELOG, mai nel nome dello zip, se no la serie "ultima" del Download non lo riconosce) e una voce in `cms/CHANGELOG.md` a ogni
   zip con contenuto diverso. Mai cambiare il contenuto di una versione già data.
 - **Prove** prima di dire finito:
   - `php -n -d short_open_tag=1 -l` su ogni file PHP toccato, `node --check` sui js;
@@ -167,6 +167,23 @@ Le decisioni complete, con data e perché, stanno nel second brain, `plumecms/de
 - **Nome: plumeCMS** (26 ottobre 2026).
 
 ## Stato al 31 ottobre 2026
+
+Fatto: plumeCMS 2.39.2 (19 novembre, 10:31-11:35): **paginazione per i motori di ricerca e controllo SEO profondo** (segnalazione portata da Danilo, letta
+su un sito vero 2.39.1: le pagine page/N/ del blog avevano canonical verso la prima, index,follow e titolo e descrizione uguali alla prima; "fai un check più
+profondo"). Agente nella worktree `/home/user/wt-pag`, ramo `paginazione-seo` (10:33-11:14), unito da me con un fast-forward. `includes/sito-seo.php`:
+`sito_meta()` blog e archivi con canonical della pagina stessa, `sito_meta_paginata()` ("Pagina N" nel titolo col separatore di SEO e AEO, "Pagina N di M."
+nella descrizione, og coerenti), robots invariato con `robots_per_tipo.paginazione`; il tag ha il canonical quando è indicizzato. `sito/index.php`: JSON-LD
+WebPage del blog con l'indirizzo della pagina N, `page/1/` in 301, oltre l'ultima, 0, testo, negativi e enormi 404 vera; doppie barre (`//servizi/` era
+letto come un dominio e dava la home con 200) in 301 sullo stesso sito. `includes/seo.php`: sitemap senza gli indirizzi noindex del robots per tipo,
+`seo_titolo_home()` toglie "Nome - Nome" nel titolo della home (cambia il `<title>` della home in quel caso). og:url = canonical. La Griglia di articoli
+dell'editor pagina solo nel browser (niente indirizzi). Rapporto del controllo in `docs-sviluppo/controllo-seo-2026-11-19.md` con 8 proposte non toccate
+(P1: la pagina dell'editor scelta come blog esce con la vista standard; P2 descrizione della categoria non usata come meta; P3 blog e archivi senza Open
+Graph; P4 eventi, test e condizioni della Vetrina indicizzabili ma fuori dalla sitemap; P5 categoria vuota 200 noindex; P6 titolo della conferma newsletter
+con link non valido; P7 llms.txt e robots per tipo; P8 pagine del glossario uguali). Manuale tecnico 4.2, 13, 16.6 e capitolo 53, `prove/prova-paginazione-seo.js`
+92 (con `prove/paginazione-cli.php`; la 2.39.1 dà 52/92), gruppo 55 degli attacchi (15). Prove mie sullo zip del ramo principale (`$S/v24/batteria.sh`,
+11:16-11:29): install 38/38 radice e cartella, kit 34/34 e 44/44, paginazione 92/92 radice, cartella e sito aggiornato, 2.39.1 52/92, aggiornamento 2.39.1 ->
+2.39.2 13/13 con 0 foto su 20, strumenti SEO 71/71, attacchi 607/607, pacchetto unico 13/13, sito di plumeCMS 137/137, zero errori fatali. **Non provato**:
+Apache vero, validatori di Google, Search Console vera, temi con meta propri nella vista blog.
 
 Fatto: plumeCMS 2.39.1 (12 novembre, 15:54-16:50): **la pagina per scegliere la password nuova** (segnalazione di un utente: dal link dell'email
 "password dimenticata" la pagina mostrava titolo e "Almeno 12 caratteri" ma non i campi né il pulsante). Causa: `admin/password-reimposta.php` caricava solo
