@@ -9,8 +9,12 @@
  *                                                                  con titolo e descrizione per Google
  *      php prove/paginazione-cli.php <cartella CMS> seo <gruppo> <chiave> <valore>   un valore di SEO e AEO (per esempio robots
  *                                                                  paginazione noindex, titolo sep |); "azzera" toglie il gruppo
+ *      php prove/paginazione-cli.php <cartella CMS> seo-salva | seo-rimetti [fine]   mette da parte la configurazione SEO di prima e la
+ *                                                                  rimette (con "fine" dimentica la copia)
  *      php prove/paginazione-cli.php <cartella CMS> audit           i doppioni di titolo e descrizione della Tabella SEO e di
  *                                                                  site_audit (AI collegate): percorsi con un problema "uguale a"
+ *      php prove/paginazione-cli.php <cartella CMS> titolo-blog <testo>  il titolo per Google della pagina del blog ("" lo toglie)
+ *      php prove/paginazione-cli.php <cartella CMS> doppio 1|0       l'articolo 30 con la descrizione del 29 (1) o con la sua (0)
  *      php prove/paginazione-cli.php <cartella CMS> pulisci         toglie articoli, categoria, tag, pagina e rimette il blog su /blog/
  */
 $_SERVER['HTTP_HOST'] = '127.0.0.1'; $_SERVER['REQUEST_URI'] = '/';
@@ -59,7 +63,21 @@ switch ($cmd) {
         if ($k === 'azzera') unset($s[$g]); else $s[$g][$k] = $v;
         save_setting('seo_config', json_encode($s, JSON_UNESCAPED_UNICODE));
         $esci(['seo' => $s[$g] ?? null]);
+    case 'seo-salva':
+        if (get_setting('prova_paginazione_seo', '') === '') save_setting('prova_paginazione_seo', 'x' . (string)get_setting('seo_config', ''));
+        $esci(['salvato' => true]);
+    case 'seo-rimetti':
+        $v = (string)get_setting('prova_paginazione_seo', '');
+        if ($v !== '') save_setting('seo_config', substr($v, 1));
+        if ($cmd === 'seo-rimetti' && ($argv[3] ?? '') === 'fine') $pdo->prepare('DELETE FROM ' . tbl('settings') . " WHERE setting_key = 'prova_paginazione_seo'")->execute();
+        $esci(['rimesso' => $v !== '']);
     case 'audit':
+        require_once $dir . '/includes/editor-controlli.php';
+        require_once $dir . '/includes/editor.php';
+        editor_carica_widget_esterni();
+        require_once $dir . '/includes/moduli.php';
+        require_once $dir . '/sito/viste.php';
+        require_once $dir . '/includes/media-alt.php';
         require_once $dir . '/includes/seo-tabella.php';
         $out = ['tabella' => [], 'site_audit' => [], 'percorsi_paginati' => 0];
         foreach (seo_tabella_righe() as $r) {
@@ -78,6 +96,14 @@ switch ($cmd) {
             $out['site_audit_totali'] = $a['totali'];
         }
         $esci($out);
+    case 'titolo-blog':
+        $pdo->prepare("UPDATE $pag SET seo_title = ? WHERE slug = 'blog-di-prova'")->execute([(string)($argv[3] ?? '')]);
+        $esci(['titolo' => (string)($argv[3] ?? '')]);
+    case 'doppio':
+        // Due articoli con la stessa descrizione: l'audit deve vederli (la prova controlla che il controllo dei doppioni funzioni).
+        $acceso = ($argv[3] ?? '1') === '1';
+        $pdo->prepare("UPDATE $art SET meta_description = ? WHERE slug = 'articolo-paginato-30'")->execute([$acceso ? "La descrizione dell'articolo di prova numero 29, diversa da tutte le altre." : "La descrizione dell'articolo di prova numero 30, diversa da tutte le altre."]);
+        $esci(['doppio' => $acceso]);
     case 'pulisci':
         $pdo->prepare("DELETE FROM $art WHERE slug LIKE 'articolo-paginato-%'")->execute();
         $pdo->prepare("DELETE FROM $cat WHERE slug = 'pagine-prova'")->execute();
