@@ -109,7 +109,7 @@ Sono gli unici in `cms/docs/`, nello zip, nel sito di plumeCMS e nella pagina Do
 - **Pacchetto di aggiornamento** per un'installazione esistente:
   `python3 tools/cms-pacchetto.py --aggiornamento`. Si carica dal pannello,
   Impostazioni, Aggiornamenti.
-- **Versione**: `cms/VERSIONE` (oggi 2.39.2; sempre tre numeri: "beta" va nel CHANGELOG, mai nel nome dello zip, se no la serie "ultima" del Download non lo riconosce) e una voce in `cms/CHANGELOG.md` a ogni
+- **Versione**: `cms/VERSIONE` (oggi 2.40.0; sempre tre numeri: "beta" va nel CHANGELOG, mai nel nome dello zip, se no la serie "ultima" del Download non lo riconosce) e una voce in `cms/CHANGELOG.md` a ogni
   zip con contenuto diverso. Mai cambiare il contenuto di una versione già data.
 - **Prove** prima di dire finito:
   - `php -n -d short_open_tag=1 -l` su ogni file PHP toccato, `node --check` sui js;
@@ -167,6 +167,24 @@ Le decisioni complete, con data e perché, stanno nel second brain, `plumecms/de
 - **Nome: plumeCMS** (26 ottobre 2026).
 
 ## Stato al 31 ottobre 2026
+
+Fatto: plumeCMS 2.40.0 (19 novembre, 13:17-14:20): **le proposte P1-P4 del controllo SEO** (Danilo: "falle tutte"). Agente nella worktree
+`/home/user/wt-prop`, ramo `seo-proposte` (13:19-13:59), unito da me con un fast-forward. **P1** la pagina Blog fatta con l'editor mostra il suo disegno
+(`includes/sito-mappa.php`: `sito_blog_widget_per`, `sito_blog_per_widget`, `sito_blog_elenco_prendi`; caso `blog` di `sito/index.php`; `vista_blog_sotto` in
+`sito/viste.php`): il primo widget Ultimi articoli (senza categoria e con "Solo i pillar" spento) o Griglia di articoli (fonte tutti, senza filtri) prende
+page/N/ con i link veri e tutte le regole della 2.39.2; senza un widget così l'elenco esce sotto il disegno. **Scelta dell'agente**: un disegno vuoto o con
+il solo Titolo (quello che installatore e kit creano, `includes/kit-partenza.php:253`) resta con la vista standard, identica al byte, altrimenti cambiava il
+blog di tutti i siti. Nel pannello non c'è un'impostazione per scegliere la pagina del blog: è sempre la pagina Blog (`pagina_blog` = `/blog/`). Avviso
+nell'editor sulla pagina del blog. **P2** descrizione della categoria come meta description (`sito_descrizione_breve`, 160 caratteri, "Pagina N di M." dalla 2);
+tag e archivi per data non hanno descrizione. **P3** Open Graph e twitter su blog, categorie e tag (`sito_og_elenco`), og:url = canonical, immagine della
+scheda della pagina Blog o quella predefinita. **P4** sitemap con eventi pubblicati futuri o iniziati da meno di 30 giorni, test pubblicati e condizioni del
+negozio (con descrizione e Open Graph); un evento annullato resta indicizzabile ma fuori dalla sitemap. Manuale d'uso capitoli 6 e 9 ("Esempio: il blog
+costruito con l'editor", senza schermate), tecnico 4.2, 16.6, 25, 53 e capitolo 54, rapporto del controllo con P1-P4 segnate fatte, `prove/prova-seo-proposte.js`
+242 (con `prove/seo-proposte-cli.php`; la 2.39.2 dà 131/232), gruppo 56 degli attacchi (12). Prove mie sullo zip del ramo principale (`$S/v25/batteria.sh`,
+13:59-14:17): install 38/38 radice e cartella, kit 34/34 e 44/44, proposte 242/242 radice e cartella e 237/237 sul sito aggiornato, paginazione 92/92 radice,
+cartella e sito aggiornato, 2.39.2 131/232, aggiornamento 2.39.2 -> 2.40.0 13/13 con 0 foto su 20, strumenti SEO 71/71, seo-plume 42/42, addon tutti 88/88,
+attacchi 619/619, pacchetto unico 13/13, sito di plumeCMS 139/139, zero errori fatali. PDF 13687 KB (tetto 14336: margine 650 KB). **Non provato**: Apache
+vero, validatori di Google e Facebook, un tema con vista `blog` insieme a una pagina Blog dell'editor, la Griglia "Schede del sito" sulla pagina del blog.
 
 Fatto: plumeCMS 2.39.2 (19 novembre, 10:31-11:35): **paginazione per i motori di ricerca e controllo SEO profondo** (segnalazione portata da Danilo, letta
 su un sito vero 2.39.1: le pagine page/N/ del blog avevano canonical verso la prima, index,follow e titolo e descrizione uguali alla prima; "fai un check più
