@@ -33,7 +33,7 @@ function seo_tabella_titolo_effettivo(string $tipo, array $r): string {
     if ($suo !== '') return $suo;
     $tipoSeo = seo_tabella_tipo_seo($tipo, $r);
     $base = $tipoSeo === 'home' ? (string)cms_impostazione('home_titolo', cms_impostazione('sito_nome', CMS_NOME)) : (string)$r['title'];
-    return seo_titolo($base, $tipoSeo);
+    return $tipoSeo === 'home' && function_exists('seo_titolo_home') ? seo_titolo_home($base) : seo_titolo($base, $tipoSeo);
 }
 
 /** La descrizione che il sito usa (sito-dati.php: seo_description, altrimenti meta_description) e in quale colonna sta. */

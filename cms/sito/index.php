@@ -123,6 +123,13 @@ function cms_origine_o_sito(): string {
 // ------------------------------------------------------------
 
 $uri = $_SERVER['REQUEST_URI'] ?? '/';
+// 2.39.2: le barre doppie (//servizi/, /servizi//) vanno all'indirizzo con le barre singole con un 301. Prima "//servizi/" era
+// letto come un nome di dominio e rispondeva 200 con la home (un doppione), "/servizi//" dava 404.
+$uriPercorso = explode('?', $uri, 2)[0];
+if (str_contains($uriPercorso, '//') && in_array($_SERVER['REQUEST_METHOD'] ?? 'GET', ['GET', 'HEAD'], true)) {
+    $uriQuery = str_contains($uri, '?') ? '?' . explode('?', $uri, 2)[1] : '';
+    sito_vai(cms_origine_o_sito() . preg_replace('~/{2,}~', '/', $uriPercorso) . $uriQuery);
+}
 $percorso = rawurldecode(parse_url($uri, PHP_URL_PATH) ?: '/');
 // Sito in una cartella (https://esempio.it/test): da qui in poi i percorsi sono quelli dalla radice del sito ("/blog/").
 if (($cartella = cms_sito_base()) !== '' && ($percorso === $cartella || str_starts_with($percorso, $cartella . '/'))) {

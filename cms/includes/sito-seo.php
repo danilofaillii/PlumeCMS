@@ -44,7 +44,8 @@ function sito_meta(string $percorso, array $v): array {
     if (in_array($v['genere'], ['home', 'contenuto', 'test'], true)) {
         $c = $v['c'];
         $tipoSeo = $v['genere'] === 'home' ? 'home' : sito_tipo_seo($c);
-        $titolo = $c['seo']['titolo'] ?: seo_titolo($v['genere'] === 'home' ? (string)cms_impostazione('home_titolo', cms_impostazione('sito_nome', CMS_NOME)) : $c['titolo'], $tipoSeo);
+        $titolo = $c['seo']['titolo'] ?: ($v['genere'] === 'home' && function_exists('seo_titolo_home') ? seo_titolo_home((string)cms_impostazione('home_titolo', cms_impostazione('sito_nome', CMS_NOME)))
+            : seo_titolo($v['genere'] === 'home' ? (string)cms_impostazione('home_titolo', cms_impostazione('sito_nome', CMS_NOME)) : $c['titolo'], $tipoSeo));
         $immagine = $c['seo']['immagine_social'] ?: ($c['immagine']['url'] ?? seo_og_immagine_predefinita());
         $robots = $c['seo']['robots'];
         if ($v['genere'] === 'contenuto') $robots = seo_robots_tipo(sito_robots_chiave($tipoSeo), $robots);

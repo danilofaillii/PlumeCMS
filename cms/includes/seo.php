@@ -782,6 +782,19 @@ function seo_titolo(string $titolo, string $tipo = 'altro'): string {
     return trim(preg_replace('/\s+/u', ' ', $out));
 }
 
+/**
+ * 2.39.2: il titolo della home. Quando il titolo della home è il nome del sito (il caso di partenza: nessun titolo scritto per la
+ * home) il formato "%titolo% %sep% %sito%" dava il nome due volte ("Studio - Studio"): resta il nome una volta sola. Con un titolo
+ * diverso dal nome, o un formato della home cambiato nel pannello, esce com'era.
+ */
+function seo_titolo_home(string $base): string {
+    $t = seo_titolo($base, 'home');
+    $c = seo_cfg()['titolo'];
+    $b = trim(preg_replace('/\s+/u', ' ', $base));
+    if ($b !== '' && mb_strtolower($b) === mb_strtolower(trim((string)$c['sito'])) && $t === trim(preg_replace('/\s+/u', ' ', $b . ' ' . $c['sep'] . ' ' . $c['sito']))) return $b;
+    return $t;
+}
+
 /** Il contenuto del meta robots: index con le direttive avanzate (come oggi) oppure senza. */
 function seo_robots_meta(string $r): string {
     if ($r !== 'index') return 'noindex, follow';
@@ -880,15 +893,18 @@ function seo_sitemap_voci(): array {
     $articoli = array_values(array_filter($attivi, fn($c) => $c['tipo'] === 'post'));
     $redirectDa = array_flip(array_column(sito_redirect(), 'da'));
     $voci = [['loc' => SITO_URL . '/', 'lastmod' => $articoli[0]['modificato'] ?? '', 'tipo' => 'pagine', 'immagine' => '']];
+    // 2.39.2: conta anche il robots per tipo scelto in SEO e AEO (Indicizzazione): con "Articoli: noindex" gli articoli uscivano
+    // noindex ma restavano nella sitemap. Con "auto" (il predefinito) la sitemap è identica a prima.
+    $rob = fn(array $c) => (defined('SITO_PAGINA_BLOG') && $c['percorso'] === SITO_PAGINA_BLOG) ? $c['seo']['robots'] : (function_exists('sito_robots_chiave') && function_exists('sito_tipo_seo') ? seo_robots_tipo(sito_robots_chiave(sito_tipo_seo($c)), $c['seo']['robots']) : $c['seo']['robots']);
     foreach ($attivi as $c) {
-        if ($c['seo']['robots'] !== 'index' || $c['percorso'] === '/') continue;
+        if ($rob($c) !== 'index' || $c['percorso'] === '/') continue;
         if ($c['tipo'] === 'page' && empty($s['pagine'])) continue;
         $voci[] = ['loc' => SITO_URL . $c['percorso'], 'lastmod' => $c['modificato'], 'tipo' => $c['tipo'] === 'post' ? 'articoli' : 'pagine',
             'immagine' => !empty($s['immagini']) && $c['immagine'] ? $c['immagine']['url'] : ''];
     }
     if (!empty($s['categorie'])) {
         foreach (sito_categorie() as $c) {
-            if ($c['robots'] !== 'index' || isset($redirectDa["/category/{$c['slug']}/"])) continue;
+            if (seo_robots_tipo('categorie', $c['robots']) !== 'index' || isset($redirectDa["/category/{$c['slug']}/"])) continue;
             foreach ($articoli as $a) if (in_array($c['slug'], $a['categorie'], true)) { $voci[] = ['loc' => SITO_URL . "/category/{$c['slug']}/", 'lastmod' => $a['modificato'], 'tipo' => 'categorie', 'immagine' => '']; break; }
         }
     }
