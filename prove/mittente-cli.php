@@ -16,6 +16,7 @@
  *                                 visitatore; la posta resta quella scelta dal pannello. Stampa gli esiti
  *   newsletter <mittente> <campo A>  un'email della newsletter come la compone una campagna (newsletter_email()), con il mittente
  *                                 confermato notizie@esempio.it chiamato <mittente> e il campo "A" <campo A>, a iscritto@esempio.it
+ *   oggetto <testo> [a]           un'email con quell'oggetto (anche con gli a capo dentro) all'indirizzo degli avvisi, o ad <a>
  */
 [$dir, $cmd] = array_pad(array_slice($argv, 1, 2), 2, '');
 $arg = array_slice($argv, 3);
@@ -171,6 +172,11 @@ switch ($cmd) {
             'campo_a' => (string)($arg[1] ?? ''), 'mittente_id' => $mid, 'rispondi_a' => ''];
         [$ogg, $html, $intest] = newsletter_email($c, ['id' => 0, 'nome' => 'Giulia', 'email' => 'iscritto@esempio.it'], []);
         $ok = posta_invia('iscritto@esempio.it', $ogg, $html, $intest, 'campagna');
+        $out = [$ok, posta_esito(), posta_errore()];
+        break;
+    case 'oggetto':
+        $a = (string)($arg[1] ?? '') ?: posta_notifica_email();
+        $ok = posta_invia($a, (string)($arg[0] ?? ''), '<p>Prova</p>', moduli_intestazioni(), 'prova');
         $out = [$ok, posta_esito(), posta_errore()];
         break;
     default:

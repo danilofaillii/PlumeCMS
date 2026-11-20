@@ -3817,6 +3817,61 @@ echo json_encode($o);
     cli56('seo-proposte-cli.php', 'pulisci'); cli56('paginazione-cli.php', 'pulisci');
   } else console.log('--  Blog dell\'editor e descrizioni delle categorie (2.40.0): saltato (serve CMS_DIR)');
 
+  // === 57. (2.40.1) Iniezione di intestazioni nelle email: a capo (CR, LF, CRLF, %0d%0a scritto come testo, U+2028, U+0085)
+  //          nel nome del mittente salvato dal pannello (Impostazioni > Configurazione email), nel nome del visitatore di un form
+  //          (Reply-To degli avvisi, dalle funzioni vere con prove/mittente-cli.php) e nell'oggetto. Nel messaggio arrivato al server
+  //          di posta finto: nessuna intestazione in più (Bcc, Cc, un secondo To o Content-Type), un solo From, il nome salvato senza
+  //          a capo, nessun errore fatale. Alla fine la posta torna com'era. Serve CMS_DIR; server finto su SIC_SMTP (di partenza 9318).
+  if (DIR) {
+    const cp57 = require('child_process'), fs57 = require('fs'), os57 = require('os');
+    const PORTA57 = process.env.SIC_SMTP || '9318';
+    const POSTA57 = fs57.mkdtempSync(path.join(os57.tmpdir(), 'sic57-'));
+    const smtp57 = cp57.spawn('python3', ['-I', path.join(__dirname, '..', 'prove', 'smtp-finto.py'), PORTA57, POSTA57], { stdio: 'ignore' });
+    await new Promise(r => setTimeout(r, 1200));
+    const cli57 = (...a) => { try { return JSON.parse(cp57.execFileSync('php', [path.join(__dirname, '..', 'prove', 'mittente-cli.php'), DIR, ...a], { encoding: 'utf8' }).trim().split('\n').pop()); } catch (e) { return { errore: String(e.message).slice(0, 200) }; } };
+    const prima57 = cli57('impostazione', 'posta_smtp'), notificaPrima57 = cli57('impostazione', 'notifica_email');
+    const msg57 = () => fs57.readdirSync(POSTA57).filter(f => f.endsWith('.eml')).sort((a, b) => parseInt(a) - parseInt(b)).map(f => fs57.readFileSync(path.join(POSTA57, f), 'utf8'));
+    const aspetta57 = async (quanti) => { for (let i = 0; i < 40 && msg57().length < quanti; i++) await new Promise(r => setTimeout(r, 250)); return msg57()[quanti - 1] || ''; };
+    // Le intestazioni del messaggio (senza la riga X-Destinatari del server finto): nomi delle righe che non sono continuazioni.
+    const testa57 = (eml) => eml.split(/\r?\n\r?\n/)[0].split(/\r?\n/).filter(r => !/^X-Destinatari:/i.test(r));
+    const nomi57 = (eml) => testa57(eml).filter(r => r && !/^[ \t]/.test(r)).map(r => r.split(':')[0].toLowerCase());
+    const pulito57 = (eml, cosa) => { const nn = nomi57(eml); return eml !== '' && !nn.includes('bcc') && !nn.includes('cc') && nn.filter(x => x === 'to').length === 1 && nn.filter(x => x === 'from').length === 1 && nn.filter(x => x === 'content-type').length === 1 && !nn.some(x => /^(spia|x-spia)/.test(x)) && !/^X-Destinatari:.*spia/im.test(eml); };
+    const ATTACCHI57 = [['CRLF', '\r\nBcc: spia1@esempio.it'], ['LF', '\nBcc: spia2@esempio.it'], ['CR', '\rBcc: spia3@esempio.it'],
+      ['%0d%0a come testo', '%0d%0aBcc: spia4@esempio.it'], ['U+2028', '\u2028Bcc: spia5@esempio.it'], ['U+0085', '\u0085Bcc: spia6@esempio.it'],
+      ['CRLF con To e Content-Type', '\r\nTo: spia7@esempio.it\r\nContent-Type: text/html\r\n\r\n<b>spia</b>'], ['CRLF e spazio (continuazione)', '\r\n Bcc: spia8@esempio.it']];
+    let quanti57 = msg57().length;
+    for (const [tipo, coda] of ATTACCHI57) {
+      const nome = 'Cucina' + coda;
+      const t = await tokenDi(admin.p, ADMIN + '/impostazioni.php');
+      await post(admin.p, ADMIN + '/impostazioni.php', new URLSearchParams({ _csrf: t, action: 'save_posta', smtp_host: '127.0.0.1', smtp_porta: PORTA57, smtp_sicurezza: 'nessuna', smtp_utente: '', smtp_password: '', smtp_mittente: 'sic57@esempio.it', smtp_nome: nome, notification_email: 'avvisi57@esempio.it' }).toString(), { 'Content-Type': 'application/x-www-form-urlencoded' });
+      const salvato = (JSON.parse(cli57('impostazione', 'posta_smtp') || '{}') || {}).nome || '';
+      ok(`2.40.1: nome del mittente con ${tipo} salvato dal pannello: niente a capo nel nome salvato`, salvato !== '' && !/[\r\n\u2028\u0085]/.test(salvato), salvato);
+      const t2 = await tokenDi(admin.p, ADMIN + '/impostazioni.php');
+      await post(admin.p, ADMIN + '/impostazioni.php', new URLSearchParams({ _csrf: t2, action: 'prova_posta', prova_a: 'avvisi57@esempio.it' }).toString(), { 'Content-Type': 'application/x-www-form-urlencoded' });
+      const eml = await aspetta57(++quanti57);
+      ok(`2.40.1: nome del mittente con ${tipo}: nel messaggio nessuna intestazione in più (Bcc, Cc, To, Content-Type), un solo From`, pulito57(eml), nomi57(eml));
+    }
+    for (const [tipo, coda] of ATTACCHI57) {
+      const r = cli57('avvisi', 'Maria' + coda, '10.57.' + Math.floor(Math.random() * 250) + '.' + (ATTACCHI57.findIndex(x => x[0] === tipo) + 1));
+      const fatti = ['form', 'richiesta', 'prenotazioni', 'vetrina', 'eventi'].filter(k => r && r[k] === '').length;
+      const arrivati = []; for (let i = 0; i < fatti; i++) arrivati.push(await aspetta57(++quanti57));
+      ok(`2.40.1: nome del visitatore con ${tipo} (form, richiesta di prenotazione, Prenotazioni, Vetrina, Eventi): cinque avvisi senza intestazioni in più, Reply-To una riga sola`, fatti === 5 && arrivati.every(e => pulito57(e) && nomi57(e).filter(x => x === 'reply-to').length === 1), [r, arrivati.map(nomi57)[0]]);
+    }
+    for (const [tipo, coda] of ATTACCHI57) {
+      const r = cli57('oggetto', 'Nuova richiesta' + coda);
+      const eml = await aspetta57(++quanti57);
+      ok(`2.40.1: oggetto con ${tipo}: nessuna intestazione in più, un solo Subject`, Array.isArray(r) && r[0] === true && pulito57(eml) && nomi57(eml).filter(x => x === 'subject').length === 1, [r, nomi57(eml)]);
+    }
+    const r57 = cli57('oggetto', 'Ciao', 'vittima@esempio.it\r\nBcc: spia9@esempio.it');
+    ok('2.40.1: destinatario con a capo: non parte (niente RCPT né intestazioni in più)', Array.isArray(r57) && r57[0] === false && !msg57().some(e => /spia9/.test(e)), r57);
+    const log57 = path.join(DIR, 'logs', 'php-errori.log');
+    ok('2.40.1: nessun errore fatale nel log dopo gli attacchi alle intestazioni', !fs57.existsSync(log57) || !/Fatal error|Uncaught/i.test(fs57.readFileSync(log57, 'utf8').split('\n').slice(-200).join('\n')));
+    try { smtp57.kill(); } catch (e) {}
+    // la posta torna com'era
+    cp57.execFileSync('php', ['-r', `$_SERVER['HTTP_HOST']='127.0.0.1'; require '${DIR}/includes/config.php'; require_once '${DIR}/includes/db.php'; save_setting('posta_smtp', ${JSON.stringify(String(prima57 === null ? '' : prima57)).replace(/\$/g, '\\$')}); save_setting('notifica_email', ${JSON.stringify(String(notificaPrima57 === null ? '' : notificaPrima57)).replace(/\$/g, '\\$')});`]);
+    fs57.rmSync(POSTA57, { recursive: true, force: true });
+  } else console.log('--  Iniezione di intestazioni nelle email (2.40.1): saltato (serve CMS_DIR)');
+
   // === pulizia: elimina il redattore di prova
   {
     await admin.p.goto(ADMIN + '/utenti.php', { waitUntil: 'networkidle' });
