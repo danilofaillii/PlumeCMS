@@ -1089,7 +1089,10 @@ nessun difetto di lettura, parole codificate di 75 caratteri al massimo, righe s
    Accende da sé il server di posta finto e le API finte, scrive `CMS_POSTA_API_PROVA` nel `config.local.php` e lo toglie alla fine
    (toglie anche il blocco "prove della consegna" lasciato da `prova-consegna-email.js`);
    lascia un form "Prova mittente", invii, un mittente confermato `notizie@esempio.it` e la posta sul server finto (sito da buttare).
-3. Atteso (2.40.1): RISULTATO_KIT in radice e in cartella e sul sito aggiornato dalla 2.40.0. Sulla 2.40.0: RISULTATO_2400.
+3. Atteso (2.40.1): 2144 su 2144 in radice e in cartella (kit Attività) e sul sito aggiornato dalla 2.40.0. Sulla 2.40.0 (kit in
+   radice): 1771 su 2116 (345 KO: le funzioni nuove mancano, i nomi con `[ ] , : "` riletti male o senza indirizzo, le virgolette
+   tolte, i Reply-To senza il nome del visitatore, Brevo con il nome senza virgolette). Se `prova-consegna-email.js` gira sullo stesso
+   sito, va lanciata prima: questa prova manda centinaia di email, che contano nel limite orario della newsletter.
 
 Gruppo 57 di `tools/sicurezza-prova.js` (serve `CMS_DIR`; server di posta finto su `SIC_SMTP`, di partenza 9318): a capo (CR, LF,
 CRLF, `%0d%0a` scritto come testo, U+2028, U+0085, CRLF con To e Content-Type, CRLF con spazio) nel nome del mittente salvato dal
