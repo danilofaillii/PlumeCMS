@@ -1097,4 +1097,5 @@ nessun difetto di lettura, parole codificate di 75 caratteri al massimo, righe s
 Gruppo 57 di `tools/sicurezza-prova.js` (serve `CMS_DIR`; server di posta finto su `SIC_SMTP`, di partenza 9318): a capo (CR, LF,
 CRLF, `%0d%0a` scritto come testo, U+2028, U+0085, CRLF con To e Content-Type, CRLF con spazio) nel nome del mittente salvato dal
 pannello, nel nome del visitatore dei cinque avvisi e nell'oggetto; un destinatario con a capo. Atteso: 34 controlli OK (16 sul nome del mittente, 8 sul visitatore, 8 sull'oggetto, il destinatario, il log), alla
-fine la posta torna com'era.
+fine la posta torna com'era. Sulla 2.40.0 (gruppo da solo): 7 KO, tutti sul nome salvato con gli a capo dentro; nei messaggi
+nessuna intestazione in più anche lì (il nome con un a capo usciva codificato), quindi il gruppo 57 nella 2.40.1 è una difesa in più.
