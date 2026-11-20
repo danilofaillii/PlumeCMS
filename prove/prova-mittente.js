@@ -138,8 +138,8 @@ function python(attesi, titolo) {
         const visti = [];
         for (const x of f) {
           const grezzo = fs.readFileSync(x, 'utf8');
-          const chi = via === 'brevo' ? (((JSON.parse(grezzo).replyTo || {}).email) || '') : ((grezzo.split(/\r?\n\r?\n/)[0].match(/^Reply-To:.*?(cliente\.[a-z]+@esempio\.it|negozio@esempio\.it)/mi) || [])[1] || '');
-          visti.push(chi);
+          const chi = via === 'brevo' ? (((JSON.parse(grezzo).replyTo || {}).email) || '') : ((grezzo.split(/\r?\n\r?\n/)[0].replace(/\r?\n[ \t]+/g, ' ').match(/^Reply-To:.*?(cliente\.[a-z]+@esempio\.it|negozio@esempio\.it)/mi) || [])[1] || '');
+          visti.push(chi); // (il .eml di Mailgun lo riscrive il server finto con Python, che piega le righe lunghe: si stendono prima)
           if (chi === 'negozio@esempio.it') { attesi.push({ file: x, from: da, reply_to: ['', 'negozio@esempio.it'] }); brevo.push({ file: x, sender: nome }); }
           else { attesi.push({ file: x, from: da, reply_to: [vis, chi] }); brevo.push({ file: x, sender: nome, reply: vis }); }
         }

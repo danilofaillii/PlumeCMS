@@ -1064,3 +1064,33 @@ Alla fine toglie quello che ha seminato, rimette gli addon come erano e il blog 
    il disegno del blog che non si vede e gli articoli 12 per pagina invece di quelli del widget, la paginazione della Griglia,
    l'elenco sotto il disegno, Open Graph e twitter:card assenti su blog, categorie e tag, la descrizione della categoria, la
    sitemap senza evento, test e condizioni, i due controlli nel browser).
+
+## prova-mittente.js e il gruppo 57 degli attacchi (2.40.1)
+
+Il nome del mittente nelle email deve arrivare al programma di posta esattamente come lo scrive chi usa il pannello. Ogni messaggio
+si rilegge con la libreria standard di Python (`prove/leggi-mittente.py`: `email.policy.default`, `email.headerregistry`), come un
+programma di posta: nome di From, To e Reply-To identico carattere per carattere, indirizzo giusto, nessun `MISSING_MAILBOX`,
+nessun difetto di lettura, parole codificate di 75 caratteri al massimo, righe sotto 998, nessun Bcc, Cc o secondo To o Content-Type.
+- A. unità (`prove/mittente-cli.php unita`): `posta_nome_indirizzo()`, `posta_leggi_indirizzo()`, `posta_oggetto()` e i messaggi
+  composti dalle funzioni vere (`consegna_mime_intero()` e `posta_mime()`) con `[Cucina Creativa]`, `Rossi, Mario`,
+  `Caffè "Da Mario"`, `Cucina Creativa`, `Pasta & Vino: il laboratorio`, un nome lungo non ASCII e uno con l'a capo dentro;
+- B. per ogni via (SMTP verso `prove/smtp-finto.py`, `mail()` verso `prove/sendmail-finto.py`, Brevo, Amazon SES e Mailgun verso
+  `prove/api-posta-finta.py`) e per ognuno dei cinque nomi scritti nel pannello come un utente (Impostazioni > Configurazione email):
+  il nome salvato resta quello scritto; l'email di prova e l'avviso di prova; l'avviso "Accesso amministratore da un indirizzo nuovo"
+  con un accesso vero (`mittente-cli.php nuovo-ip` fa sembrare nuovo 127.0.0.1); i cinque avvisi con il Reply-To del visitatore
+  (`mittente-cli.php avvisi`: form, richiesta di prenotazione, Prenotazioni, Vetrina, che manda anche il riepilogo al cliente, e
+  Iscrizioni agli eventi) con un nome del visitatore con caratteri speciali; la newsletter (`mittente-cli.php newsletter`:
+  `newsletter_email()` con un mittente confermato e il campo "A"). Con Brevo si leggono `sender.name`, `replyTo.name`, `to[].name`.
+
+1. Un CMS installato col kit Attività, radice o cartella. Il server del sito acceso con `sendmail_path` verso `prove/sendmail-finto.py`
+   e la cartella `<lavoro>/mail`; senza spazi nel valore conviene uno script: `printf '#!/bin/sh\nexec python3 -I
+   prove/sendmail-finto.py <lavoro>/mail "$@"\n' > sm.sh`, poi `php -d sendmail_path=$PWD/sm.sh -S ...`.
+2. `node prove/prova-mittente.js <base> <utente> <password> <cartella del CMS> <porta smtp libera> <porta api libera> <lavoro>`.
+   Accende da sé il server di posta finto e le API finte, scrive `CMS_POSTA_API_PROVA` nel `config.local.php` e lo toglie alla fine;
+   lascia un form "Prova mittente", invii, un mittente confermato `notizie@esempio.it` e la posta sul server finto (sito da buttare).
+3. Atteso (2.40.1): RISULTATO_KIT in radice e in cartella e sul sito aggiornato dalla 2.40.0. Sulla 2.40.0: RISULTATO_2400.
+
+Gruppo 57 di `tools/sicurezza-prova.js` (serve `CMS_DIR`; server di posta finto su `SIC_SMTP`, di partenza 9318): a capo (CR, LF,
+CRLF, `%0d%0a` scritto come testo, U+2028, U+0085, CRLF con To e Content-Type, CRLF con spazio) nel nome del mittente salvato dal
+pannello, nel nome del visitatore dei cinque avvisi e nell'oggetto; un destinatario con a capo. Atteso: 34 controlli OK (16 sul nome del mittente, 8 sul visitatore, 8 sull'oggetto, il destinatario, il log), alla
+fine la posta torna com'era.
