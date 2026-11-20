@@ -84,6 +84,7 @@ function python(attesi, titolo) {
     const nuovi = async (via, prima, quanti) => {
       const est = via === 'brevo' ? '-brevo.json' : (['ses', 'mailgun'].includes(via) ? '-' + via + '.eml' : '.eml');
       for (let i = 0; i < 60; i++) { if (files(cartella(via), est).length >= prima + quanti) break; await dorme(250); }
+      await dorme(400); // l'ultimo file può essere ancora a metà della scrittura
       return files(cartella(via), est).slice(prima);
     };
     const conta = via => files(cartella(via), via === 'brevo' ? '-brevo.json' : (['ses', 'mailgun'].includes(via) ? '-' + via + '.eml' : '.eml')).length;
@@ -131,9 +132,18 @@ function python(attesi, titolo) {
         prima = conta(via);
         const esiti = cli('avvisi', vis, '10.' + (k + 1) + '.' + Math.floor(Math.random() * 250) + '.' + (VIE.indexOf(via) + 1));
         ok(`${t}: i cinque avvisi sono partiti`, esiti && AVVISI.every(a => esiti[a] === ''), esiti);
-        f = await nuovi(via, prima, 5);
-        ok(`${t}: cinque messaggi arrivati`, f.length === 5, f.length);
-        f.forEach((x, i) => { attesi.push({ file: x, from: da, reply_to: [vis, 'cliente.' + AVVISI[i] + '@esempio.it'] }); brevo.push({ file: x, sender: nome, reply: vis }); });
+        // Sei messaggi: la Vetrina manda anche il riepilogo al cliente (Reply-To il negozio, senza nome).
+        f = await nuovi(via, prima, 6);
+        ok(`${t}: sei messaggi arrivati (cinque avvisi e il riepilogo della Vetrina al cliente)`, f.length === 6, f.length);
+        const visti = [];
+        for (const x of f) {
+          const grezzo = fs.readFileSync(x, 'utf8');
+          const chi = via === 'brevo' ? (((JSON.parse(grezzo).replyTo || {}).email) || '') : ((grezzo.split(/\r?\n\r?\n/)[0].match(/^Reply-To:.*?(cliente\.[a-z]+@esempio\.it|negozio@esempio\.it)/mi) || [])[1] || '');
+          visti.push(chi);
+          if (chi === 'negozio@esempio.it') { attesi.push({ file: x, from: da, reply_to: ['', 'negozio@esempio.it'] }); brevo.push({ file: x, sender: nome }); }
+          else { attesi.push({ file: x, from: da, reply_to: [vis, chi] }); brevo.push({ file: x, sender: nome, reply: vis }); }
+        }
+        ok(`${t}: un avviso per ognuno dei cinque, con il Reply-To del visitatore`, AVVISI.every(a => visti.includes('cliente.' + a + '@esempio.it')), visti);
         // 4. La newsletter: mittente confermato con lo stesso nome, campo "A" col nome del visitatore.
         prima = conta(via);
         const r = cli('newsletter', nome, vis);

@@ -3854,13 +3854,14 @@ echo json_encode($o);
     for (const [tipo, coda] of ATTACCHI57) {
       const r = cli57('avvisi', 'Maria' + coda, '10.57.' + Math.floor(Math.random() * 250) + '.' + (ATTACCHI57.findIndex(x => x[0] === tipo) + 1));
       const fatti = ['form', 'richiesta', 'prenotazioni', 'vetrina', 'eventi'].filter(k => r && r[k] === '').length;
-      const arrivati = []; for (let i = 0; i < fatti; i++) arrivati.push(await aspetta57(++quanti57));
-      ok(`2.40.1: nome del visitatore con ${tipo} (form, richiesta di prenotazione, Prenotazioni, Vetrina, Eventi): cinque avvisi senza intestazioni in più, Reply-To una riga sola`, fatti === 5 && arrivati.every(e => pulito57(e) && nomi57(e).filter(x => x === 'reply-to').length === 1), [r, arrivati.map(nomi57)[0]]);
+      // sei messaggi: la Vetrina manda anche il riepilogo al cliente
+      const arrivati = []; for (let i = 0; i < fatti + (r && r.vetrina === '' ? 1 : 0); i++) arrivati.push(await aspetta57(++quanti57));
+      ok(`2.40.1: nome del visitatore con ${tipo} (form, richiesta di prenotazione, Prenotazioni, Vetrina, Eventi): cinque avvisi senza intestazioni in più, Reply-To una riga sola`, fatti === 5 && arrivati.length === 6 && arrivati.every(e => pulito57(e) && nomi57(e).filter(x => x === 'reply-to').length === 1), [r, arrivati.map(nomi57)[0]]);
     }
     for (const [tipo, coda] of ATTACCHI57) {
       const r = cli57('oggetto', 'Nuova richiesta' + coda);
       const eml = await aspetta57(++quanti57);
-      ok(`2.40.1: oggetto con ${tipo}: nessuna intestazione in più, un solo Subject`, Array.isArray(r) && r[0] === true && pulito57(eml) && nomi57(eml).filter(x => x === 'subject').length === 1, [r, nomi57(eml)]);
+      ok(`2.40.1: oggetto con ${tipo}: nessuna intestazione in più, un solo Subject`, Array.isArray(r) && r[0] === true && /Nuova richiesta|=\?UTF-8\?B\?/i.test(eml) && pulito57(eml) && nomi57(eml).filter(x => x === 'subject').length === 1, [r, nomi57(eml)]);
     }
     const r57 = cli57('oggetto', 'Ciao', 'vittima@esempio.it\r\nBcc: spia9@esempio.it');
     ok('2.40.1: destinatario con a capo: non parte (niente RCPT né intestazioni in più)', Array.isArray(r57) && r57[0] === false && !msg57().some(e => /spia9/.test(e)), r57);
