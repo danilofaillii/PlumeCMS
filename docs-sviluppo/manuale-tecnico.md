@@ -7567,8 +7567,8 @@ nel From di SMTP: una riga `Bcc:` in più.
 - `posta_parole_codificate($s)` (`:328`): parole codificate RFC 2047 `=?UTF-8?B?...?=` da 45 byte di testo l'una (75 caratteri al
   massimo), senza spezzare un carattere UTF-8 (`mb_str_split`), separate da uno spazio. Niente righe piegate con CRLF: chi compone
   le intestazioni le divide per righe, e le righe restano molto sotto i 998 caratteri (i nomi sono lunghi al massimo 100-150).
-- `posta_nome_indirizzo($nome, $email)` (`:347`), una sola per tutto il CMS. Nome vuoto: solo l'indirizzo (`a@b.it`, la forma che
-  ogni programma di posta e `mail()` accettano). Un nome fatto solo di "atom" (lettere, cifre e `! # $ % & ' * + - / = ? ^ _` più
+- `posta_nome_indirizzo($nome, $email)` (`:347`), una sola per tutto il CMS. Nome vuoto: solo l'indirizzo fra parentesi angolari
+  (`<a@b.it>`, come prima; il destinatario di `mail()` e un Reply-To senza nome restano l'indirizzo nudo, come prima). Un nome fatto solo di "atom" (lettere, cifre e `! # $ % & ' * + - / = ? ^ _` più
   apice inverso, graffe, barra verticale e tilde) separati da uno spazio: com'è (`Cucina Creativa <a@b.it>`). Un nome ASCII con
   altri segni, spazi doppi o in testa: fra virgolette, con `\` e `"` protetti (`"[Cucina Creativa]" <a@b.it>`,
   `"Rossi, Mario" <a@b.it>`). Un nome con lettere non ASCII o con `=?` (che un programma leggerebbe come parola codificata): tutto

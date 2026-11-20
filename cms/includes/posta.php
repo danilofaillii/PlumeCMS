@@ -181,7 +181,7 @@ function posta_mime(string $corpo, string $intestazioni, array $allegati = [], ?
         if (preg_match('/^(From|Reply-To)$/i', $hm[1])) {
             $ind = posta_leggi_indirizzo($hm[2]);
             if ($ind === null) continue;
-            $h = $hm[1] . ': ' . posta_nome_indirizzo($ind[0], $ind[1]);
+            $h = $hm[1] . ': ' . ($ind[0] === '' ? $ind[1] : posta_nome_indirizzo($ind[0], $ind[1])); // senza nome: l'indirizzo com'era
         }
         $tenute[] = $h;
     }
@@ -257,7 +257,7 @@ function posta_invia(string $a, string $oggetto, string $corpo, string $intestaz
         $testa = implode("\r\n", array_merge($tenute, $contenuto));
         $ok = false;
         // Return-Path con -f: alcuni server lo rifiutano, e allora si riprova senza.
-        $aMail = posta_nome_indirizzo($int['a'], $a);
+        $aMail = $int['a'] !== '' ? posta_nome_indirizzo($int['a'], $a) : $a; // senza nome l'indirizzo nudo, come prima (mail() su Windows)
         if ($mittente !== '' && preg_match('/^[A-Za-z0-9._%+@-]+$/', $mittente)) $ok = @mail($aMail, posta_oggetto($oggetto), $testo, $testa, '-f' . $mittente);
         if (!$ok) $ok = @mail($aMail, posta_oggetto($oggetto), $testo, $testa);
         if (!$ok) posta_errore('mail() di PHP ha rifiutato il messaggio: il server non spedisce posta da PHP. Compila i dati SMTP.');
@@ -306,7 +306,7 @@ function posta_interne(string &$intestazioni): array {
     return $out;
 }
 
-/** Il destinatario per l'intestazione To: "Nome <a>" con il nome del campo "A", altrimenti solo l'indirizzo. */
+/** Il destinatario per l'intestazione To: "Nome <a>" con il nome del campo "A", altrimenti "<a>". */
 function posta_to(string $a, string $nome): string {
     return posta_nome_indirizzo($nome, $a);
 }
@@ -337,7 +337,7 @@ function posta_parole_codificate(string $s): string {
 
 /**
  * 2.40.1: "nome <indirizzo>" per From, To, Reply-To, senza cambiare il nome (RFC 5322 e 2047). Una funzione sola per tutto il CMS.
- *  - nome vuoto: solo l'indirizzo (a@b.it), la forma che ogni programma di posta e mail() di PHP accettano;
+ *  - nome vuoto: solo l'indirizzo fra parentesi angolari (<a@b.it>), come le versioni di prima;
  *  - solo lettere, cifre, spazi singoli e i segni ammessi in un "atom": com'è (Cucina Creativa <a@b.it>);
  *  - ASCII con caratteri speciali ( ) < > [ ] : ; @ \ , . " o spazi doppi, in testa o in coda: fra virgolette, con \ e " protetti
  *    ("[Cucina Creativa]" <a@b.it>);
@@ -347,7 +347,7 @@ function posta_parole_codificate(string $s): string {
 function posta_nome_indirizzo(string $nome, string $email): string {
     $email = str_replace(' ', '', posta_nome_pulito($email));
     $nome = posta_nome_pulito($nome);
-    if ($nome === '') return $email;
+    if ($nome === '') return '<' . $email . '>';
     if (preg_match('/[^\x20-\x7E]/', $nome) || str_contains($nome, '=?')) $frase = posta_parole_codificate($nome);
     elseif (preg_match('/^[A-Za-z0-9!#$%&\'*+\/=?^_`{|}~-]+( [A-Za-z0-9!#$%&\'*+\/=?^_`{|}~-]+)*$/', $nome)) $frase = $nome;
     else $frase = '"' . addcslashes($nome, '"\\') . '"';

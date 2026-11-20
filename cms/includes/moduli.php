@@ -145,7 +145,7 @@ const MODULI_ERRORI = [
 function moduli_intestazioni(string $rispondiA = '', string $nome = ''): string {
     $rispondiA = trim($rispondiA);
     if ($rispondiA !== '' && (preg_match('/[\x00-\x1F\x7F]/', $rispondiA) || !filter_var($rispondiA, FILTER_VALIDATE_EMAIL))) $rispondiA = '';
-    $rispondi = $rispondiA === '' ? '' : (function_exists('posta_nome_indirizzo') ? posta_nome_indirizzo($nome, $rispondiA) : $rispondiA);
+    $rispondi = $rispondiA === '' || trim($nome) === '' || !function_exists('posta_nome_indirizzo') ? $rispondiA : posta_nome_indirizzo($nome, $rispondiA);
     return "MIME-Version: 1.0\r\nContent-Type: text/html; charset=UTF-8\r\n" . ($rispondi !== '' ? "Reply-To: $rispondi\r\n" : '');
 }
 

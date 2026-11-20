@@ -441,7 +441,7 @@ function consegna_intestazioni_mittente(int $id): string {
     // 2.40.1: il nome com'è scritto (virgolette comprese), scritto da posta_nome_indirizzo().
     if (function_exists('posta_nome_indirizzo')) {
         return 'From: ' . posta_nome_indirizzo((string)$m['nome'], (string)$m['email']) . "\r\n"
-            . ($m['rispondi_a'] !== '' ? 'Reply-To: ' . posta_nome_indirizzo('', (string)$m['rispondi_a']) . "\r\n" : '');
+            . ($m['rispondi_a'] !== '' ? 'Reply-To: ' . str_replace(["\r", "\n"], '', (string)$m['rispondi_a']) . "\r\n" : '');
     }
     $nome = str_replace(['"', "\r", "\n"], '', (string)$m['nome']);
     return 'From: ' . ($nome !== '' ? posta_oggetto($nome) . ' ' : '') . '<' . $m['email'] . ">\r\n"

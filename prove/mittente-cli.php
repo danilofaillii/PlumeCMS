@@ -76,7 +76,7 @@ switch ($cmd) {
             }
         }
         // nome vuoto: solo l'indirizzo
-        if ($ha) $controlli[] = ['ok' => posta_nome_indirizzo('', 'a@esempio.it') === 'a@esempio.it', 'cosa' => 'nome vuoto: solo l\'indirizzo'];
+        if ($ha) $controlli[] = ['ok' => posta_nome_indirizzo('', 'a@esempio.it') === '<a@esempio.it>', 'cosa' => 'nome vuoto: solo l\'indirizzo fra parentesi angolari, come prima'];
         // oggetto lungo con lettere accentate: parole da 75 caratteri al massimo
         $og = posta_oggetto(str_repeat('Più è lungo, più si spezza: ', 6));
         $max = max(array_map('strlen', preg_split('/\s+/', $og)));
