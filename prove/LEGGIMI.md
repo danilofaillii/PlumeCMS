@@ -1064,3 +1064,21 @@ Alla fine toglie quello che ha seminato, rimette gli addon come erano e il blog 
    il disegno del blog che non si vede e gli articoli 12 per pagina invece di quelli del widget, la paginazione della Griglia,
    l'elenco sotto il disegno, Open Graph e twitter:card assenti su blog, categorie e tag, la descrizione della categoria, la
    sitemap senza evento, test e condizioni, i due controlli nel browser).
+
+## prova-posta-nomi.py
+
+I nomi nel From, nel To e nel Reply-To delle email (2.40.1; segnalazione dal sito di Cucina Creativa: Apple Mail mostrava il mittente
+`MISSING_MAILBOX@MISSING_DOMAIN per conto di [ Cucina Creativa ]`). Accende da sé il server di posta finto, il sendmail finto e le
+API finte di Brevo, Amazon SES e Mailgun; con `prove/posta-nomi-cli.php` manda le email dalle funzioni vere del CMS per 14 nomi (i
+quattro della segnalazione `[Cucina Creativa]`, `Rossi, Mario`, `Caffè "Da Mario"`, `Cucina Creativa`, poi quelli cattivi: spazi
+dentro le parentesi, `\` e `"`, nome lungo con accenti, nome che sembra un indirizzo o ne finge un altro, parola codificata finta, a
+capo con un Bcc, carattere a 4 byte, `: ; .`), da SMTP, dal mittente scelto di Consegna delle email, da `mail()` di PHP, da Brevo,
+SES e Mailgun, e dagli avvisi del form e della richiesta di prenotazione. Ogni messaggio si legge con il parser rigoroso di Python
+(`email.policy.default`, `email.headerregistry`): un indirizzo solo e quello giusto, il nome uguale a quello scritto, nessun difetto
+dell'intestazione, nessun Bcc, righe sotto i 998 caratteri, parole codificate sotto i 75; per Brevo i campi `name` del JSON in chiaro.
+
+1. Un CMS installato (anche nuovo, senza kit), due porte libere.
+2. `python3 -I prove/prova-posta-nomi.py <cartella del CMS> <porta smtp> <porta api>`. Lascia mittenti `@nomi-prova.it` e un form
+   "Prova nomi": sito da buttare.
+3. Atteso (2.40.1): 342 su 342. Sulla 2.40.0: 140 su 308 (manca la parte delle funzioni; From e To dei nomi con gli speciali si
+   leggono con un indirizzo vuoto, `<>`, o con due indirizzi, il Reply-To senza nome, e con SMTP l'a capo nel nome aggiunge un Bcc).

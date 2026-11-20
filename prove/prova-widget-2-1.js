@@ -163,7 +163,7 @@ const domani = (g = 1) => { const d = new Date(Date.now() + g * 86400000); retur
   await Promise.all([p.waitForNavigation(), p.click('form:has(input[value=save_posta]) button[type=submit]')]);
   const m1 = await prenota(0, { data: domani(3), ora: '20:30', persone: '4', nome: 'Giulia Rossi', email: 'giulia@persona.it', telefono: '+39 333 1234567', note: 'Un seggiolone, grazie' });
   ok('prenotazione tavolo: dopo l\'invio il messaggio di conferma al posto del modulo', /abbiamo ricevuto la tua richiesta/.test(await p.locator('.ew-rp-ok').first().innerText()) && p.url().includes('prenota=ok'));
-  ok('prenotazione tavolo: l\'email arriva all\'attività (solo a lei), con data, ora, persone e note, "Rispondi" a chi ha chiesto', m1.length === 1 && /X-Destinatari: ristorante@esempio\.it/.test(m1[0]) && /Reply-To: giulia@persona\.it/.test(m1[0]), m1.map(x => x.slice(0, 300)));
+  ok('prenotazione tavolo: l\'email arriva all\'attività (solo a lei), con data, ora, persone e note, "Rispondi" a chi ha chiesto, con il suo nome (2.40.1)', m1.length === 1 && /X-Destinatari: ristorante@esempio\.it/.test(m1[0]) && /Reply-To: Giulia Rossi <giulia@persona\.it>/.test(m1[0]), m1.map(x => x.slice(0, 300)));
   const inv = cli('invii', '1')[0];
   ok('prenotazione tavolo: la richiesta è anche nel pannello, sotto "Richieste di prenotazione"', inv.modulo === 'Richieste di prenotazione' && inv.dati.Ora === '20:30' && inv.dati.Persone === '4' && inv.dati.Note === 'Un seggiolone, grazie', inv);
   const m2 = await prenota(1, { data: domani(10), partenza: domani(8), persone: '2', nome: 'Luca', email: 'luca@persona.it', telefono: '+39 333 7654321' }, true);

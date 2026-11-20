@@ -137,7 +137,15 @@ const MODULI_ERRORI = [
 // Email
 // ------------------------------------------------------------
 
-function moduli_intestazioni(string $rispondiA = ''): string {
+/**
+ * Le intestazioni delle email del sito. $rispondiA è un indirizzo (il visitatore, l'attività); 2.40.1: con $nome il
+ * Reply-To porta anche il nome, scritto come vuole la RFC 5322 (posta_nome_indirizzo(): virgolette, parole codificate).
+ */
+function moduli_intestazioni(string $rispondiA = '', string $nome = ''): string {
+    $rispondiA = trim(str_replace(["\r", "\n"], '', $rispondiA));
+    if ($rispondiA !== '' && $nome !== '' && filter_var($rispondiA, FILTER_VALIDATE_EMAIL)) {
+        $rispondiA = posta_nome_indirizzo($nome, $rispondiA);
+    }
     return "MIME-Version: 1.0\r\nContent-Type: text/html; charset=UTF-8\r\n" . ($rispondiA !== '' ? "Reply-To: $rispondiA\r\n" : '');
 }
 

@@ -252,11 +252,16 @@ function consegna_invia_api(string $servizio, string $a, string $oggetto, string
     $rif = (string)($altre['X-Plume-Rif'] ?? '');
     if ($servizio === 'brevo') {
         $html = stripos($intestazioni, 'text/html') !== false;
-        $aNome = (string)($int['a'] ?? ''); // 2.11.0: il nome nel campo "A" della campagna
+        // 2.11.0: il nome nel campo "A" della campagna. 2.40.1: i nomi vanno puliti ma non codificati: li codifica Brevo.
+        $aNome = posta_nome_pulito((string)($int['a'] ?? ''));
+        $nome = posta_nome_pulito($nome);
         $dati = ['sender' => ['email' => $email] + ($nome !== '' ? ['name' => $nome] : []), 'to' => [['email' => $a] + ($aNome !== '' ? ['name' => $aNome] : [])], 'subject' => $oggetto];
         if ($html) { $dati['htmlContent'] = $corpo; $dati['textContent'] = $int['testo'] ?? posta_testo_da_html($corpo); }
         else $dati['textContent'] = $corpo;
-        if ($rispondi !== '' && preg_match('/<?([^<>\s]+@[^<>\s]+)>?\s*$/', $rispondi, $m)) $dati['replyTo'] = ['email' => $m[1]];
+        if ($rispondi !== '' && preg_match('/<?([^<>\s]+@[^<>\s]+)>?\s*$/', $rispondi, $m)) {
+            [, $rNome] = posta_nome_da_intestazione($rispondi); // 2.40.1: anche il nome di chi riceve le risposte
+            $dati['replyTo'] = ['email' => $m[1]] + ($rNome !== '' ? ['name' => $rNome] : []);
+        }
         if ($rif !== '') $altre['X-Mailin-custom'] = $rif;
         if ($altre) $dati['headers'] = $altre;
         if ($rif !== '') $dati['tags'] = ['plumecms'];
@@ -322,8 +327,8 @@ function consegna_mime_intero(string $a, string $oggetto, string $corpo, string 
     $tenute = array_values(array_filter($tenute, fn($h) => !preg_match('/^(From|To|Subject|Date|Message-ID):/i', $h)));
     $testa = array_merge([
         'Date: ' . date('r'),
-        'From: ' . ($nome !== '' ? posta_oggetto($nome) . ' ' : '') . "<$email>",
-        'To: ' . (function_exists('posta_to') ? posta_to($a, (string)($int['a'] ?? '')) : "<$a>"),
+        'From: ' . posta_nome_indirizzo($nome, $email), // 2.40.1: nome scritto come vuole la RFC 5322
+        'To: ' . posta_to($a, (string)($int['a'] ?? '')),
         'Subject: ' . posta_oggetto($oggetto),
         'Message-ID: <' . bin2hex(random_bytes(12)) . '@' . substr((string)strrchr($email, '@'), 1) . '>',
     ], $tenute, $contenuto);
@@ -411,8 +416,8 @@ function consegna_mittente_permesso(string $email): bool {
 function consegna_mittente_per(string $intestazioni, array $base): array {
     [, , $from] = consegna_intestazioni($intestazioni);
     if ($from !== '' && preg_match('/^(.*?)\s*<([^<>\s]+)>\s*$/', $from, $m)) {
-        $nome = trim(str_replace('"', '', $m[1]));
-        if (str_starts_with($nome, '=?UTF-8?B?')) $nome = (string)base64_decode(substr($nome, 10, -2));
+        // 2.40.1: il nome torna in chiaro anche fra virgolette (con \" e \\) o in più parole codificate.
+        [, $nome] = posta_nome_da_intestazione($from);
         if (consegna_mittente_permesso($m[2])) return [mb_strtolower($m[2]), $nome !== '' ? $nome : $base[1]];
     } elseif ($from !== '' && consegna_mittente_permesso($from)) {
         return [mb_strtolower($from), $base[1]];
@@ -425,8 +430,8 @@ function consegna_mittente_per(string $intestazioni, array $base): array {
 function consegna_intestazioni_mittente(int $id): string {
     $m = consegna_mittente($id);
     if (!$m || !$m['verificato_at']) return '';
-    $nome = str_replace(['"', "\r", "\n"], '', (string)$m['nome']);
-    return 'From: ' . ($nome !== '' ? posta_oggetto($nome) . ' ' : '') . '<' . $m['email'] . ">\r\n"
+    // 2.40.1: il nome con le virgolette e gli speciali scritti come vuole la RFC 5322.
+    return 'From: ' . posta_nome_indirizzo((string)$m['nome'], (string)$m['email']) . "\r\n"
         . ($m['rispondi_a'] !== '' ? 'Reply-To: ' . $m['rispondi_a'] . "\r\n" : '');
 }
 
@@ -435,7 +440,8 @@ function consegna_mittente_aggiungi(string $email, string $nome, string $rispond
     consegna_schema();
     $email = mb_strtolower(trim($email));
     $rispondi = mb_strtolower(trim($rispondi));
-    $nome = mb_substr(trim(preg_replace('/[\x{10000}-\x{10FFFF}\r\n"<>]/u', '', $nome)), 0, 100);
+    // 2.40.1: le virgolette restano (Caffè "Da Mario"): posta_nome_indirizzo() le scrive come vuole la RFC 5322.
+    $nome = mb_substr(trim(preg_replace('/[\x{10000}-\x{10FFFF}\r\n<>]/u', '', $nome)), 0, 100);
     if (!filter_var($email, FILTER_VALIDATE_EMAIL) || strlen($email) > 190) return 'L\'indirizzo del mittente non è valido.';
     if ($rispondi !== '' && !filter_var($rispondi, FILTER_VALIDATE_EMAIL)) return 'L\'indirizzo per le risposte non è valido.';
     $st = db()->prepare('SELECT id FROM ' . tbl('posta_mittenti') . ' WHERE email = ?');

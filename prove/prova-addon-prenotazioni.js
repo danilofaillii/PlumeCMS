@@ -139,7 +139,7 @@ const norma = h => h.replace(/nonce="[^"]+"/g, '').replace(/name="_csrf" value="
   let em = await C.nuove(POSTA, quante, 2);
   const cliente1 = em.find(e => e.a === 'giulia@cliente.it'), salone1 = em.find(e => e.a === 'salone@esempio.it');
   ok('al cliente arriva "Prenotazione confermata" con il link personale e il file per il calendario', cliente1 && /Prenotazione confermata/.test(cliente1.oggetto) && C.link(cliente1).some(l => /\/prenotazione\/gestisci\/\?p=\d+&t=[a-f0-9]{40}/.test(l)) && C.link(cliente1).some(l => /\/prenotazione\/calendario\//.test(l)), cliente1 && cliente1.oggetto);
-  ok('all\'attività arriva l\'avviso, con la risposta al cliente', salone1 && /Nuova prenotazione: Giulia Rossi/.test(salone1.oggetto) && /Reply-To: giulia@cliente\.it/.test(salone1.grezza) && /Indipendenza 10, Bologna/.test(salone1.html), salone1 && salone1.oggetto);
+  ok('all\'attività arriva l\'avviso, con la risposta al cliente', salone1 && /Nuova prenotazione: Giulia Rossi/.test(salone1.oggetto) && /Reply-To: Giulia Rossi <giulia@cliente\.it>/.test(salone1.grezza) && /Indipendenza 10, Bologna/.test(salone1.html), salone1 && salone1.oggetto);
   const gestisci = C.link(cliente1).find(l => /gestisci/.test(l));
   const ics = await v.request.get(C.link(cliente1).find(l => /calendario/.test(l)));
   const icsT = await ics.text();

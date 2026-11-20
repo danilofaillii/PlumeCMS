@@ -210,7 +210,7 @@ const UA = 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Geck
   const m1 = posta().slice(quante);
   const aCliente = m1.find(x => /X-Destinatari: marta@cliente\.it/.test(x)), aNegozio = m1.find(x => /X-Destinatari: negozio@esempio\.it/.test(x));
   ok('email al cliente: riepilogo, totale 62,00 e IBAN', aCliente && /62,00/.test(corpo(aCliente)) && /IT60X0542811101000000123456/.test(corpo(aCliente)) && corpo(aCliente).includes(num1), m1.map(x => x.slice(0, 80)));
-  ok('email al negozio: avviso con nome, telefono e note, Reply-To del cliente', aNegozio && /Marta Bianchi/.test(corpo(aNegozio)) && /333 1234567/.test(corpo(aNegozio)) && /Citofono/.test(corpo(aNegozio)) && /Reply-To: marta@cliente\.it/i.test(aNegozio));
+  ok('email al negozio: avviso con nome, telefono e note, Reply-To del cliente', aNegozio && /Marta Bianchi/.test(corpo(aNegozio)) && /333 1234567/.test(corpo(aNegozio)) && /Citofono/.test(corpo(aNegozio)) && /Reply-To: Marta Bianchi <marta@cliente\.it>/i.test(aNegozio));
 
   // Le scorte sono scese: tazza 3 -> 1, taglia S 1 -> 0.
   await vai('/admin/addon-pagina.php?a=vetrina&p=prodotti');

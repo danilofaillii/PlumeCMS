@@ -120,13 +120,14 @@ function posta_pulisci_registro(int $giorni = 60): int {
 function posta_mittente(): array {
     // 2.1.0: il mittente predefinito di Consegna delle email, se è confermato.
     if ($p = consegna_mittente_predefinito()) {
-        $nome = str_replace(['"', "\r", "\n"], '', (string)$p['nome']) ?: (string)cms_impostazione('sito_nome', CMS_NOME);
+        // 2.40.1: le virgolette restano: posta_nome_indirizzo() le scrive come vuole la RFC 5322.
+        $nome = posta_nome_pulito((string)$p['nome']) ?: posta_nome_pulito((string)cms_impostazione('sito_nome', CMS_NOME));
         return [(string)$p['email'], $nome];
     }
     $c = json_decode((string)get_setting('posta_smtp', ''), true);
     $c = is_array($c) ? $c : [];
     $nome = trim((string)($c['nome'] ?? '')) ?: (string)cms_impostazione('sito_nome', CMS_NOME);
-    $nome = str_replace(['"', "\r", "\n"], '', $nome);
+    $nome = posta_nome_pulito($nome);
     $ind = trim((string)($c['mittente'] ?? '')) ?: trim((string)($c['utente'] ?? ''));
     if (!filter_var($ind, FILTER_VALIDATE_EMAIL)) {
         $host = preg_replace('/^www\./i', '', (string)(parse_url(cms_url_sito(), PHP_URL_HOST) ?: ''));
@@ -238,11 +239,11 @@ function posta_invia(string $a, string $oggetto, string $corpo, string $intestaz
         [$mittente, $nome] = posta_mittente();
         // Il From di chi chiama vince; senza, quello del sito. To e Subject li scrive mail().
         $tenute = array_values(array_filter($tenute, fn($h) => !preg_match('/^(To|Subject):/i', $h)));
-        if ($mittente !== '' && !preg_grep('/^From:/i', $tenute)) array_unshift($tenute, 'From: ' . posta_oggetto($nome) . " <$mittente>");
+        if ($mittente !== '' && !preg_grep('/^From:/i', $tenute)) array_unshift($tenute, 'From: ' . posta_nome_indirizzo($nome, $mittente));
         $testa = implode("\r\n", array_merge($tenute, $contenuto));
         $ok = false;
         // Return-Path con -f: alcuni server lo rifiutano, e allora si riprova senza.
-        $aMail = $int['a'] !== '' ? posta_oggetto($int['a']) . " <$a>" : $a;
+        $aMail = $int['a'] !== '' ? posta_nome_indirizzo($int['a'], $a) : $a;
         if ($mittente !== '' && preg_match('/^[A-Za-z0-9._%+@-]+$/', $mittente)) $ok = @mail($aMail, posta_oggetto($oggetto), $testo, $testa, '-f' . $mittente);
         if (!$ok) $ok = @mail($aMail, posta_oggetto($oggetto), $testo, $testa);
         if (!$ok) posta_errore('mail() di PHP ha rifiutato il messaggio: il server non spedisce posta da PHP. Compila i dati SMTP.');
@@ -292,7 +293,70 @@ function posta_interne(string &$intestazioni): array {
 
 /** Il destinatario per l'intestazione To: "Nome <a>" con il nome del campo "A", altrimenti "<a>". */
 function posta_to(string $a, string $nome): string {
-    return $nome !== '' ? posta_oggetto($nome) . " <$a>" : "<$a>";
+    return posta_nome_indirizzo($nome, $a);
+}
+
+/**
+ * 2.40.1: il nome da mostrare, pulito: niente a capo né caratteri di controllo (diventano spazi), spazi ripetuti
+ * stretti, al massimo 150 caratteri. Così va anche nei campi "name" delle API (Brevo), che lo codificano da sé.
+ */
+function posta_nome_pulito(string $nome): string {
+    if (!mb_check_encoding($nome, 'UTF-8')) $nome = mb_convert_encoding($nome, 'UTF-8', 'ISO-8859-1');
+    $nome = trim((string)preg_replace('/[\x00-\x1F\x7F\s]+/u', ' ', $nome));
+    return mb_substr($nome, 0, 150);
+}
+
+/**
+ * 2.40.1: "Nome <indirizzo>" per From, To e Reply-To, scritto come vuole la RFC 5322. Prima il nome passava com'era:
+ * con uno dei caratteri speciali ( ) < > [ ] : ; @ \ , . " l'intestazione non era valida (From: [Cucina Creativa] <a@b.it>)
+ * e Apple Mail e Gmail mostravano MISSING_MAILBOX@MISSING_DOMAIN. Ora:
+ *  - ASCII senza speciali: resta com'è (Cucina Creativa <a@b.it>);
+ *  - ASCII con speciali: fra virgolette, con \ e " protetti ("[Cucina Creativa]" <a@b.it>, "Rossi, Mario" <a@b.it>);
+ *  - con lettere accentate o altri caratteri non ASCII, o con "=?" (Gmail e altri decodificano una parola codificata
+ *    finta anche fra virgolette): parole codificate RFC 2047 in UTF-8, ognuna sotto i 75 caratteri, separate da uno
+ *    spazio (=?UTF-8?B?...?= <a@b.it>).
+ * Senza nome: "<indirizzo>".
+ */
+function posta_nome_indirizzo(string $nome, string $email): string {
+    $email = trim(str_replace(["\r", "\n", '<', '>'], '', $email));
+    $nome = posta_nome_pulito($nome);
+    if ($nome === '') return "<$email>";
+    return posta_nome_frase($nome) . " <$email>";
+}
+
+/** 2.40.1: il nome come "phrase" della RFC 5322 (vedi posta_nome_indirizzo()); $nome è già pulito. */
+function posta_nome_frase(string $nome): string {
+    if (preg_match('/[^\x20-\x7E]/', $nome) || str_contains($nome, '=?')) {
+        $parole = []; $pezzo = '';
+        foreach (mb_str_split($nome) as $car) {
+            // 45 byte diventano 60 caratteri di base64: con =?UTF-8?B? e ?= la parola resta sotto i 75 caratteri.
+            if (strlen($pezzo . $car) > 45) { $parole[] = '=?UTF-8?B?' . base64_encode($pezzo) . '?='; $pezzo = ''; }
+            $pezzo .= $car;
+        }
+        if ($pezzo !== '') $parole[] = '=?UTF-8?B?' . base64_encode($pezzo) . '?=';
+        return implode(' ', $parole);
+    }
+    if (preg_match('/^[A-Za-z0-9!#$%&\'*+\/=?^_`{|}~ -]+$/', $nome)) return $nome;
+    return '"' . addcslashes($nome, '\\"') . '"';
+}
+
+/**
+ * 2.40.1: il contrario di posta_nome_indirizzo(): da "Nome <a>" (anche fra virgolette o codificato) a [indirizzo, nome].
+ * Senza parentesi angolari l'intero testo è l'indirizzo e il nome è ''.
+ */
+function posta_nome_da_intestazione(string $valore): array {
+    $valore = trim($valore);
+    if (!preg_match('/^(.*?)\s*<([^<>\s]+)>\s*$/s', $valore, $m)) return [$valore, ''];
+    $nome = trim($m[1]);
+    if (preg_match('/^"((?:[^"\\\\]|\\\\.)*)"$/s', $nome, $q)) {
+        $nome = (string)preg_replace('/\\\\(.)/s', '$1', $q[1]);
+    } elseif (str_contains($nome, '=?')) {
+        $dec = function_exists('iconv_mime_decode') ? @iconv_mime_decode($nome, ICONV_MIME_DECODE_CONTINUE_ON_ERROR, 'UTF-8') : false;
+        $nome = $dec !== false ? $dec : (string)preg_replace_callback('/=\?UTF-8\?B\?([A-Za-z0-9+\/=]*)\?=\s*/i', fn($p) => (string)base64_decode($p[1]), $nome);
+    } else {
+        $nome = str_replace('"', '', $nome);
+    }
+    return [$m[2], posta_nome_pulito($nome)];
 }
 
 /** Oggetto in UTF-8 per l'intestazione: se è già codificato resta com'è. */
@@ -372,7 +436,7 @@ function posta_smtp(array $c, string $a, string $oggetto, string $corpo, string 
         $tenute = array_values(array_filter($tenute, fn($h) => !preg_match('/^(From|To|Subject|Date|Message-ID):/i', $h)));
         $testa = array_merge([
             'Date: ' . date('r'),
-            'From: ' . posta_oggetto($nomeMitt) . " <$mittente>",
+            'From: ' . posta_nome_indirizzo($nomeMitt, $mittente),
             'To: ' . posta_to($a, (string)($int['a'] ?? '')),
             'Subject: ' . posta_oggetto($oggetto),
             'Message-ID: <' . bin2hex(random_bytes(12)) . '@' . substr(strrchr($mittente, '@') ?: '@' . (parse_url(cms_url_sito(), PHP_URL_HOST) ?: 'localhost'), 1) . '>',

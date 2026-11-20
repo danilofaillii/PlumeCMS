@@ -65,6 +65,7 @@ pagine, gestire il sito) c'è il manuale d'uso, `docs/manuale-uso.md`, con le sc
 52. Popup costruiti con l'editor visuale (dalla 2.39.0)
 53. Le pagine degli elenchi per i motori di ricerca e il controllo SEO (dalla 2.39.2)
 54. Il blog fatto con l'editor, la descrizione e l'Open Graph degli elenchi, la sitemap degli addon (dalla 2.40.0)
+55. I nomi nelle intestazioni delle email: From, To e Reply-To (dalla 2.40.1)
 
 Appendice A. Dove i documenti vecchi non corrispondono al codice
 
@@ -1727,7 +1728,9 @@ formule, capitolo 18.10).
   lista degli allegati. **Dalla 2.1.0** con un servizio scelto in Consegna delle email (Brevo, Amazon SES, Mailgun) l'email
   parte dalle sue API (`consegna_servizio_attivo()`, `:219`; capitolo 35) e SMTP e `mail()` non si usano. Con SMTP il From
   è il mittente chiesto da chi chiama se è confermato, altrimenti il predefinito, altrimenti quello di Configurazione email
-  (`consegna_mittente_per()`, `:324`): anche l'envelope (`MAIL FROM`) usa quell'indirizzo.
+  (`consegna_mittente_per()`, `includes/consegna.php:416`): anche l'envelope (`MAIL FROM`) usa quell'indirizzo.
+- **Nomi nelle intestazioni (dalla 2.40.1).** From, To e Reply-To li scrive `posta_nome_indirizzo()` (`includes/posta.php:320`):
+  virgolette per i nomi ASCII con speciali, parole codificate per quelli non ASCII. Capitolo 55.
 - **Registro della posta (dalla 2.0.0).** Ogni spedizione lascia una riga in `posta_registro` (quando, tipo, esito,
   errore; nessun indirizzo), tabella creata da `posta_registro_schema()` (`:58`). `posta_inviate($secondi)` (`:90`) conta
   le email partite: è il conto dei limiti della newsletter (15.5). Il cron toglie le righe oltre 60 giorni
@@ -4347,6 +4350,7 @@ può stare dentro una pagina che risponde 200.
 | `scaricabili_elenco()`, `scaricabili_carica($file, $info, $sostituisci)`, `scaricabili_salva_info()`, `scaricabili_elimina()` | download manager |
 | `media_elimina($url)` | cancellazione |
 | `posta_invia(...)` | invio di un'email (SMTP o `mail()`) |
+| `posta_nome_indirizzo($nome, $email)` | `Nome <indirizzo>` valido per From, To e Reply-To (2.40.1, capitolo 55) |
 
 
 **Novità della 1.3.0** (`includes/sezioni-pronte.php`, `includes/kit-partenza.php`, `includes/versione-nuova.php`, `includes/copia-sito.php`)
@@ -7507,6 +7511,77 @@ noindex (giusto).
 
 Prove: `prove/prova-seo-proposte.js` (con `prove/seo-proposte-cli.php`), gruppo 56 degli attacchi; `prove/prova-paginazione-seo.js`
 della 2.39.2 resta 92/92 (la sua pagina del blog ha titolo e Ultimi articoli con "Solo i pillar": esce il disegno con l'elenco sotto).
+
+## 55. I nomi nelle intestazioni delle email: From, To e Reply-To (dalla 2.40.1)
+
+Segnalazione del proprietario dal sito di Cucina Creativa (2.39.0): Apple Mail mostrava l'email "Accesso amministratore da un
+indirizzo nuovo" con il mittente `MISSING_MAILBOX@MISSING_DOMAIN <MISSING_MAILBOX@MISSING_DOMAIN> per conto di [ Cucina Creativa ]
+<prenotazioni@cucinacreativalatina.it>`.
+
+**Causa.** Il nome nelle intestazioni lo scriveva `posta_oggetto()` (`includes/posta.php:363`), fatta per l'oggetto: codifica in
+`=?UTF-8?B?...?=` solo il testo non ASCII, quello ASCII passa com'è. Un nome ASCII con uno dei caratteri speciali della RFC 5322
+(`( ) < > [ ] : ; @ \ , . "`) dava un'intestazione non valida: `From: [Cucina Creativa] <a@b.it>`. I programmi di posta non la
+leggono e mettono al posto dell'indirizzo `MISSING_MAILBOX@MISSING_DOMAIN` (Apple Mail; Python legge un indirizzo vuoto `<>`);
+`Rossi, Mario <a@b.it>` diventa due indirizzi (`Rossi` e `Mario <a@b.it>`). Il nome del sito lo toglieva solo delle virgolette
+e degli a capo (`posta_mittente()`), il nome di Configurazione email con SMTP passava intero, a capo compresi (`posta_smtp()`
+leggeva `$c['nome']` così com'era: con un a capo nel nome si potevano aggiungere intestazioni, per esempio un `Bcc`; il campo
+lo scrive solo l'amministratore).
+
+**Le funzioni** (`includes/posta.php`):
+- `posta_nome_pulito($nome)` (`:303`): a capo, tabulazioni e caratteri di controllo diventano uno spazio, gli spazi ripetuti uno
+  solo, al massimo 150 caratteri; un testo che non è UTF-8 si converte da ISO-8859-1. È il nome per i campi `name` delle API;
+- `posta_nome_indirizzo($nome, $email)` (`:320`): `Nome <indirizzo>` per From, To e Reply-To. Il nome come "phrase" lo scrive
+  `posta_nome_frase()` (`:328`):
+  - ASCII con soli caratteri di `atext` e spazi: com'è (`Cucina Creativa <a@b.it>`);
+  - ASCII con speciali: quoted-string, fra virgolette con `\` e `"` protetti da `\` (`"[Cucina Creativa]" <a@b.it>`,
+    `"Rossi, Mario" <a@b.it>`, `"Studio \"Il Punto\" \\ Roma" <a@b.it>`);
+  - non ASCII, **o con `=?`**: parole codificate RFC 2047 `=?UTF-8?B?...?=`, al massimo 45 byte di testo ciascuna (la parola
+    resta sotto i 75 caratteri), separate da uno spazio e mai spezzate dentro un carattere (`Caffè "Da Mario"` diventa
+    `=?UTF-8?B?Q2FmZsOoICJEYSBNYXJpbyI=?=`). Il caso `=?`: Gmail e Python decodificano una parola codificata finta anche fra
+    virgolette, quindi un nome come `=?UTF-8?B?PHNwaWFAY2F0dGl2by5pdD4=?=` si codifica a sua volta e si legge com'è scritto;
+  - senza nome: `<indirizzo>`. Dall'indirizzo si tolgono a capo e `< >`.
+- `posta_nome_da_intestazione($valore)` (`:347`): il contrario, da `Nome <a>` a `[indirizzo, nome]`: toglie le virgolette e le
+  protezioni `\`, decodifica una o più parole codificate (`iconv_mime_decode()`, altrimenti solo il B in UTF-8).
+
+**Dove si usano.**
+- `mail()`: From (`includes/posta.php:242`) e il destinatario con il nome del campo "A" (`:246`);
+- SMTP: From (`:439`), To con `posta_to()` (`:295`, che ora chiama `posta_nome_indirizzo()`);
+- Consegna delle email: il MIME intero di Amazon SES e Mailgun (`consegna_mime_intero()`, `includes/consegna.php:325`); Brevo
+  riceve i nomi in chiaro nei campi `sender.name`, `to[].name` e, novità, `replyTo.name` (`consegna_invia_api()`, `:256`),
+  puliti con `posta_nome_pulito()` e non codificati: li codifica Brevo; il From del mittente scelto per campagne e flussi
+  (`consegna_intestazioni_mittente()`, `:430`) e la sua rilettura (`consegna_mittente_per()`, `:416`, con
+  `posta_nome_da_intestazione()`: prima toglieva tutte le virgolette e decodificava solo una parola codificata);
+- il From dell'email del mattino (`social_invia()`, `includes/social.php:369`);
+- il Reply-To degli avvisi: `moduli_intestazioni($rispondiA, $nome)` (`includes/moduli.php:144`) ha il secondo argomento
+  facoltativo; con un nome e un indirizzo valido il Reply-To diventa `Nome <indirizzo>`. Lo passano gli avvisi con il visitatore
+  come Reply-To: form (`includes/form.php:742`, il nome intero di chi ha compilato), richiesta di prenotazione
+  (`includes/richiesta-prenotazione.php:131`), addon Prenotazioni (`pren_email_attivita()`), Vetrina (l'email al negozio,
+  `vt_email_ordine()`) e Iscrizioni agli eventi (`evi_email_attivita()`). Senza nome resta l'indirizzo nudo, come prima.
+
+**Le virgolette restano nel nome.** `posta_mittente()` non toglie più `"` dal nome del mittente predefinito e da quello di
+Configurazione email (usa `posta_nome_pulito()`), `social_invia()` nemmeno, e `consegna_mittente_aggiungi()` (`includes/consegna.php:439`) salva i
+nomi dei mittenti con le virgolette (toglie ancora a capo, `< >` e i caratteri a 4 byte: la colonna `nome` di `posta_mittenti`
+è utf8mb3). Un nome salvato prima della 2.40.1 resta com'è.
+
+**Cosa cambia nelle email.** Solo l'intestazione dei nomi con speciali, virgolette o `=?` (prima non valida o storpiata) e il
+Reply-To degli avvisi qui sopra, che ora ha il nome. I nomi ASCII semplici e quelli con accenti fino a 45 byte escono uguali al
+byte; un nome con accenti più lungo esce in più parole codificate (prima una sola, oltre i 75 caratteri della RFC 2047). Senza
+nome il From di `mail()` è `From: <indirizzo>` (prima `From:  <indirizzo>`, con due spazi). L'oggetto (`posta_oggetto()`) non
+cambia.
+
+**Prove.** `prove/prova-posta-nomi.py` (con `prove/posta-nomi-cli.php`): accende `smtp-finto.py`, `sendmail-finto.py` e
+`api-posta-finta.py`, manda le email dalle funzioni vere per 14 nomi (i quattro della segnalazione, `[ Cucina Creativa ]`, `\` e
+`"` insieme, un nome lungo con accenti, uno che sembra un indirizzo, uno che finge un secondo indirizzo, una parola codificata
+finta, un a capo con un Bcc dietro, un carattere a 4 byte, `: ; .`) da sei strade (SMTP, mittente scelto, `mail()`, Brevo, SES,
+Mailgun) più form e richiesta di prenotazione, e le legge con il parser rigoroso di Python (`email.policy.default`,
+`email.headerregistry`): un indirizzo solo e quello giusto, il nome uguale a quello scritto, nessun difetto, nessun Bcc, righe
+sotto i 998 caratteri, parole codificate sotto i 75. 342 controlli; la 2.40.0 ne passa 140 su 308 (manca la parte delle
+funzioni). Gruppo 57 degli attacchi: nomi cattivi da visitatore nel form e nella richiesta di prenotazione, e nel nome del
+mittente con `mail()`. Aggiornate `prova-addon-prenotazioni.js`, `prova-addon-vetrina.js` e `prova-widget-2-1.js`, che ora vogliono
+il nome nel Reply-To.
+
+**Non provato**: Apple Mail e Gmail veri (al loro posto il parser di Python, che con l'intestazione della 2.40.0 legge proprio
+l'indirizzo vuoto che Apple Mail mostra come MISSING_MAILBOX), la codifica dei nomi fatta da Brevo vero.
 
 ## Appendice A. Dove i documenti vecchi non corrispondono al codice
 

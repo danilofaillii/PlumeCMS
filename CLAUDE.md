@@ -109,7 +109,7 @@ Sono gli unici in `cms/docs/`, nello zip, nel sito di plumeCMS e nella pagina Do
 - **Pacchetto di aggiornamento** per un'installazione esistente:
   `python3 tools/cms-pacchetto.py --aggiornamento`. Si carica dal pannello,
   Impostazioni, Aggiornamenti.
-- **Versione**: `cms/VERSIONE` (oggi 2.40.0; sempre tre numeri: "beta" va nel CHANGELOG, mai nel nome dello zip, se no la serie "ultima" del Download non lo riconosce) e una voce in `cms/CHANGELOG.md` a ogni
+- **Versione**: `cms/VERSIONE` (oggi 2.40.1; sempre tre numeri: "beta" va nel CHANGELOG, mai nel nome dello zip, se no la serie "ultima" del Download non lo riconosce) e una voce in `cms/CHANGELOG.md` a ogni
   zip con contenuto diverso. Mai cambiare il contenuto di una versione già data.
 - **Prove** prima di dire finito:
   - `php -n -d short_open_tag=1 -l` su ogni file PHP toccato, `node --check` sui js;
@@ -167,6 +167,24 @@ Le decisioni complete, con data e perché, stanno nel second brain, `plumecms/de
 - **Nome: plumeCMS** (26 ottobre 2026).
 
 ## Stato al 31 ottobre 2026
+
+Fatto: plumeCMS 2.40.1 (20 novembre, 19:07-19:56): **i nomi nelle intestazioni delle email** (segnalazione di Danilo dal sito di Cucina Creativa,
+2.39.0: Apple Mail mostrava "MISSING_MAILBOX@MISSING_DOMAIN per conto di [ Cucina Creativa ] <prenotazioni@...>"). Causa: il nome passava da
+`posta_oggetto()`, che codifica solo il non ASCII: un nome ASCII con gli speciali della RFC 5322 dava `From: [Cucina Creativa] <a@b.it>`, non valido
+(Python lo legge con l'indirizzo vuoto `<>`; `Rossi, Mario` diventava due indirizzi); con SMTP il nome di Configurazione email passava intero, a capo
+compresi (un a capo aggiungeva un Bcc). Nuove `posta_nome_pulito()`, `posta_nome_indirizzo()` (atom com'è, virgolette con `\` e `"` protetti, parole
+codificate sotto i 75 caratteri per il non ASCII e per i nomi con `=?`, che Gmail e Python decodificano anche fra virgolette),
+`posta_nome_da_intestazione()`; usate in From e To di `mail()` e SMTP, MIME di SES e Mailgun, `name` di Brevo (in chiaro, anche `replyTo.name`),
+mittente scelto di Consegna e sua rilettura, email del mattino; `moduli_intestazioni($rispondiA, $nome)` mette il nome nel Reply-To degli avvisi di
+form, richiesta di prenotazione, Prenotazioni, Vetrina, Iscrizioni agli eventi. Le virgolette nei nomi ora restano. Manuale tecnico 15.3 e capitolo
+55, `prove/prova-posta-nomi.py` 342 (con `prove/posta-nomi-cli.php`; parser rigoroso di Python, 14 nomi, sei strade più gli avvisi; la 2.40.0 dà
+140/308), gruppo 57 degli attacchi, aggiornate `prova-addon-prenotazioni.js`, `prova-addon-vetrina.js`, `prova-widget-2-1.js` (vogliono il nome nel
+Reply-To). Prove mie (contenitore: MySQL 8.0 in Docker, PHP 8.3.6, `php -S` con `prove/router-php-s.php`): install 38/38, kit 34/34, posta-nomi
+342/342 sul sito nuovo e sul sito aggiornato, 2.40.0 140/308, aggiornamento 2.40.0 -> 2.40.1 13/13 (con `upload_max_filesize` alzato: il pacchetto è
+2,7 MB), avvisi del pannello 36/36, form-avviso 13/13, Vetrina 60/60, Prenotazioni 86/87 (il KO "promemoria a ore fisse" è della prova, che usa
+date fisse del 2 novembre mentre `pren_prenota()` scrive `creato` con l'ora vera: da correggere a parte), widget-2-1 49/49 fino alla riga 189 (si
+ferma sul pulsante "+ Aggiungi un campo" dell'editor dei form, non toccato), attacchi 677/677 (gruppo 57: 58), pacchetto unico 13/13 su un 2.40.0 con il sito di
+plumeCMS 139/139. PDF rifatti, contenuto uguale. **Non provato**: Apple Mail e Gmail veri, Brevo vero, Apache vero, PHP 8.4.27.
 
 Fatto: plumeCMS 2.40.0 (19 novembre, 13:17-14:20): **le proposte P1-P4 del controllo SEO** (Danilo: "falle tutte"). Agente nella worktree
 `/home/user/wt-prop`, ramo `seo-proposte` (13:19-13:59), unito da me con un fast-forward. **P1** la pagina Blog fatta con l'editor mostra il suo disegno

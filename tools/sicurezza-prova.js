@@ -3817,6 +3817,58 @@ echo json_encode($o);
     cli56('seo-proposte-cli.php', 'pulisci'); cli56('paginazione-cli.php', 'pulisci');
   } else console.log('--  Blog dell\'editor e descrizioni delle categorie (2.40.0): saltato (serve CMS_DIR)');
 
+  // === 57. (2.40.1) I nomi nelle intestazioni delle email. Un visitatore compila il form e la richiesta di prenotazione (le funzioni
+  //          vere, form_ricevi() e rp_ricevi(), da prove/posta-nomi-cli.php) con nomi cattivi: a capo con Bcc o To dietro, un
+  //          secondo indirizzo fra < >, una parola codificata finta che si decodifica in un indirizzo, \ e " sciolti, 5.000
+  //          caratteri. Le email arrivano al server di posta finto: nessuna intestazione in più, la busta solo verso il negozio,
+  //          il Reply-To con un indirizzo solo (quello del visitatore), righe sotto i 998 caratteri. Poi il nome del mittente con
+  //          un a capo, con mail() di PHP (sendmail finto). Serve CMS_DIR.
+  if (DIR) {
+    const cp57 = require('child_process'), os57 = require('os');
+    const T57 = fs.mkdtempSync(path.join(os57.tmpdir(), 'sic57-'));
+    const posta57 = path.join(T57, 'posta'), sm57 = path.join(T57, 'sendmail'), fnomi57 = path.join(T57, 'nomi.json');
+    const porta57 = String(27000 + Math.floor(Math.random() * 2000));
+    const cliPhp = path.join(__dirname, '..', 'prove', 'posta-nomi-cli.php');
+    const cli57 = (php, ...a) => { try { return JSON.parse(cp57.execFileSync('php', [...php, cliPhp, DIR, ...a], { encoding: 'utf8', timeout: 120000 }).trim().split('\n').pop()); } catch (e) { return { errore: String(e.message).slice(0, 200) }; } };
+    const cattivi = ['Mario\r\nBcc: spia@cattivo.it', 'Mario\nTo: altro@cattivo.it', 'Mario <spia@cattivo.it>', '"Mario" <spia@cattivo.it>, Luigi',
+      '=?UTF-8?B?PHNwaWFAY2F0dGl2by5pdD4=?=', 'Mario\\', '\\"', 'x'.repeat(5000), '\u0000Mario\u0007'];
+    fs.writeFileSync(fnomi57, JSON.stringify(cattivi));
+    const sm = cp57.spawn('python3', ['-I', path.join(__dirname, '..', 'prove', 'smtp-finto.py'), porta57, posta57], { stdio: 'ignore' });
+    await new Promise(r => setTimeout(r, 1000));
+    const testa57 = (eml) => eml.split(/\r?\n\r?\n/)[0];
+    const righe57 = (eml) => testa57(eml).replace(/\r?\n[ \t]+/g, ' ').split(/\r?\n/);
+    const leggi57 = (d) => (fs.existsSync(d) ? fs.readdirSync(d) : []).filter(f => f.endsWith('.eml')).map(f => fs.readFileSync(path.join(d, f), 'utf8'));
+    try {
+      const r = cli57([], 'form', porta57, fnomi57);
+      ok('2.40.1: form e richiesta di prenotazione con i nomi cattivi ricevuti (controllo)', Array.isArray(r) && r.length === 2 * cattivi.length && r.every(x => / ok$/.test(x)), r);
+      const arrivate = leggi57(posta57);
+      ok('2.40.1: arriva un avviso per ogni invio (controllo)', arrivate.length === 2 * cattivi.length, arrivate.length);
+      for (const eml of arrivate) {
+        const rr = righe57(eml);
+        const reply = (rr.find(x => /^Reply-To:/i.test(x)) || '');
+        const chi = (reply.match(/<((?:form|richiesta)\d+)@nomi-prova\.it>\s*$/) || [])[1] || '?';
+        ok(`2.40.1: avviso ${chi}: nessun Bcc, un To solo, la busta solo verso il negozio`, !rr.some(x => /^Bcc:/i.test(x)) && rr.filter(x => /^To:/i.test(x)).length === 1
+          && /^X-Destinatari: negozio@nomi-prova\.it\s*$/m.test(eml), rr.filter(x => /^(Bcc|To|X-Destinatari):/i.test(x)));
+        // L'indirizzo è l'ultimo <...>; prima ci sono solo il nome fra virgolette (con \ e " protetti) o parole codificate.
+        const nome = reply.replace(/^Reply-To:\s*/i, '').replace(/\s*<[^<>]+>\s*$/, '');
+        const nomeBuono = nome === '' || /^"(?:[^"\\]|\\.)*"$/.test(nome) || /^(=\?UTF-8\?B\?[A-Za-z0-9+/=]*\?=\s?)+$/.test(nome) || /^[A-Za-z0-9!#$%&'*+/=?^_`{|}~ -]+$/.test(nome);
+        ok(`2.40.1: avviso ${chi}: Reply-To con un indirizzo solo, il nome intero fra virgolette o codificato`, chi !== '?' && nomeBuono, reply.slice(0, 160));
+        ok(`2.40.1: avviso ${chi}: righe dell'intestazione sotto i 998 caratteri, nessun carattere di controllo`, testa57(eml).split(/\r?\n/).every(x => x.length <= 998 && !/[\x00-\x08\x0b\x0c\x0e-\x1f\x7f]/.test(x)));
+      }
+      // Il nome del mittente con un a capo (Configurazione email), con mail() di PHP.
+      const rm = cli57(['-d', `sendmail_path=python3 -I ${path.join(__dirname, '..', 'prove', 'sendmail-finto.py')} ${sm57}`], 'mail', '-', fnomi57);
+      const viaMail = leggi57(sm57);
+      ok('2.40.1: mail() di PHP con i nomi cattivi nel From, nel To e nel Reply-To: tutte spedite (controllo)', Array.isArray(rm) && viaMail.length === cattivi.length, rm);
+      ok('2.40.1: mail() di PHP: nessun Bcc né To in più, un From solo, nessun a capo dentro un nome', viaMail.every(eml => { const rr = righe57(eml);
+        return !rr.some(x => /^Bcc:/i.test(x)) && rr.filter(x => /^To:/i.test(x)).length === 1 && rr.filter(x => /^From:/i.test(x)).length === 1 && rr.filter(x => /^From:/i.test(x))[0].trim().endsWith('<sito@nomi-prova.it>'); }),
+        viaMail.map(e => righe57(e).filter(x => /^(Bcc|To|From):/i.test(x)).join(' | ').slice(0, 120)).slice(0, 3));
+    } finally {
+      cli57([], 'pulisci');
+      sm.kill();
+      fs.rmSync(T57, { recursive: true, force: true });
+    }
+  } else console.log('--  Nomi nelle intestazioni delle email (2.40.1): saltato (serve CMS_DIR)');
+
   // === pulizia: elimina il redattore di prova
   {
     await admin.p.goto(ADMIN + '/utenti.php', { waitUntil: 'networkidle' });

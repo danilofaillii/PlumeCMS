@@ -363,9 +363,10 @@ function social_email_pagina(string $titolo, string $corpo): string {
 
 function social_invia(string $a, string $oggetto, string $html): bool {
     require_once __DIR__ . '/posta.php';
-    $nome = str_replace(['"', "\r", "\n"], '', (string)cms_impostazione('sito_nome', CMS_NOME));
+    $nome = (string)cms_impostazione('sito_nome', CMS_NOME);
     $mitt = (string)(posta_config()['mittente'] ?? '');
-    $intest = "MIME-Version: 1.0\r\nContent-Type: text/html; charset=UTF-8\r\n" . ($mitt !== '' ? 'From: ' . posta_oggetto($nome) . " <$mitt>\r\n" : '');
+    // 2.40.1: il nome del sito scritto come vuole la RFC 5322 (con [ ] , . e simili era un From non valido).
+    $intest = "MIME-Version: 1.0\r\nContent-Type: text/html; charset=UTF-8\r\n" . ($mitt !== '' ? 'From: ' . posta_nome_indirizzo($nome, $mitt) . "\r\n" : '');
     return posta_invia($a, posta_oggetto($oggetto), $html, $intest, 'social');
 }
 

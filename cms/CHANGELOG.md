@@ -2,6 +2,26 @@
 
 Il prodotto si chiama **plumeCMS** (nome scelto il 26 ottobre 2026; prima, per poche ore, "CarbonaraCMS", e ancora prima il provvisorio "Officina": gli zip vecchi si chiamavano `officina-*` e `carbonaracms-*`).
 
+## 2.40.1 (20 novembre 2026) - Il nome del mittente con parentesi, virgole e virgolette
+
+Segnalazione dal sito di un cliente: Apple Mail mostrava le email del sito con il mittente `MISSING_MAILBOX@MISSING_DOMAIN per
+conto di [ Cucina Creativa ]`.
+
+- **Il nome del mittente si legge sempre**: un nome con parentesi quadre o tonde, virgole, punti, due punti, chiocciole o virgolette
+  (per esempio `[Cucina Creativa]` o `Rossi, Mario`) usciva in un'intestazione che i programmi di posta non sanno leggere: al posto
+  del mittente Apple Mail mostrava `MISSING_MAILBOX@MISSING_DOMAIN`, Gmail un indirizzo storpiato. Ora il nome si scrive fra
+  virgolette o codificato come vuole lo standard, e arriva `[Cucina Creativa] <indirizzo>`.
+- Vale per il mittente, per il destinatario con il nome (il campo "A" delle campagne) e per l'indirizzo delle risposte, con il
+  server di posta, con la posta di PHP e con Brevo, Amazon SES e Mailgun.
+- **Le virgolette restano**: un nome come `Caffè "Da Mario"` non perde più le virgolette, nemmeno quando si aggiunge un mittente in
+  Consegna delle email.
+- **"Rispondi" con il nome**: negli avvisi di form, richiesta di prenotazione, Prenotazioni, Vetrina e Iscrizioni agli eventi
+  l'indirizzo delle risposte porta anche il nome di chi ha scritto (`Maria Rossi <maria@...>`), anche quando le email partono
+  con Brevo.
+- Un a capo nel nome del mittente non può più aggiungere intestazioni all'email.
+- Le email con nomi semplici escono uguali a prima.
+- Prove nuove: `prove/prova-posta-nomi.py` (con `prove/posta-nomi-cli.php`) e il gruppo 57 degli attacchi.
+
 ## 2.40.0 (19 novembre 2026) - Blog fatto con l'editor e SEO di categorie, eventi e test
 
 Le quattro proposte del controllo SEO della 2.39.2, tutte fatte.

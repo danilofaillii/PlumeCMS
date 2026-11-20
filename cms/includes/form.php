@@ -739,7 +739,7 @@ function form_ricevi(array $m, array $p, string $pagina, array $file = []): stri
             // 2.31.0: il pulsante del pannello solo se acceso in Configurazione email (il Reply-To è chi ha compilato).
             $testo = $righe . $notaFile . '<p style="color:#888;font-size:13px">Dalla pagina ' . h($pagina) . ', il ' . date('d/m/Y H:i') . '.</p>';
             [$oggetto, $corpo] = ['Nuova compilazione: ' . $m['nome'], function_exists('moduli_email_avviso') ? moduli_email_avviso('Form «' . $m['nome'] . '»', $testo, 'Apri nel pannello', cms_url_pannello() . 'form-submissions.php?modulo=' . (int)$m['id']) : moduli_email_html('Form «' . $m['nome'] . '»', $testo)];
-            if (!posta_invia($a, $oggetto, $corpo, moduli_intestazioni($email), 'avviso_form', $daAllegare)) error_log('form: avviso non partito: ' . posta_errore());
+            if (!posta_invia($a, $oggetto, $corpo, moduli_intestazioni($email, $nomeIntero), 'avviso_form', $daAllegare)) error_log('form: avviso non partito: ' . posta_errore());
         }
     }
     // L'innesco "Compila un form": subito per chi è attivo; per chi deve ancora confermare si ricorda e parte alla conferma.
