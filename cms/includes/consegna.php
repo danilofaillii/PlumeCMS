@@ -253,10 +253,17 @@ function consegna_invia_api(string $servizio, string $a, string $oggetto, string
     if ($servizio === 'brevo') {
         $html = stripos($intestazioni, 'text/html') !== false;
         $aNome = (string)($int['a'] ?? ''); // 2.11.0: il nome nel campo "A" della campagna
-        $dati = ['sender' => ['email' => $email] + ($nome !== '' ? ['name' => $nome] : []), 'to' => [['email' => $a] + ($aNome !== '' ? ['name' => $aNome] : [])], 'subject' => $oggetto];
+        // 2.40.1: i nomi vanno a Brevo intatti, senza virgolette messe a mano (le intestazioni le scrive Brevo); via solo a capo e controlli.
+        $nomeP = function_exists('posta_nome_pulito') ? posta_nome_pulito($nome) : trim(str_replace(["\r", "\n"], ' ', $nome));
+        $aNome = function_exists('posta_nome_pulito') ? posta_nome_pulito($aNome) : trim(str_replace(["\r", "\n"], ' ', $aNome));
+        $dati = ['sender' => ['email' => $email] + ($nomeP !== '' ? ['name' => $nomeP] : []), 'to' => [['email' => $a] + ($aNome !== '' ? ['name' => $aNome] : [])],
+            'subject' => function_exists('posta_nome_pulito') ? posta_nome_pulito($oggetto) : $oggetto];
         if ($html) { $dati['htmlContent'] = $corpo; $dati['textContent'] = $int['testo'] ?? posta_testo_da_html($corpo); }
         else $dati['textContent'] = $corpo;
-        if ($rispondi !== '' && preg_match('/<?([^<>\s]+@[^<>\s]+)>?\s*$/', $rispondi, $m)) $dati['replyTo'] = ['email' => $m[1]];
+        // 2.40.1: il Reply-To con il suo nome (per esempio il visitatore che ha compilato il form).
+        $ri = $rispondi !== '' && function_exists('posta_leggi_indirizzo') ? posta_leggi_indirizzo($rispondi) : null;
+        if ($ri !== null) $dati['replyTo'] = ['email' => $ri[1]] + ($ri[0] !== '' ? ['name' => $ri[0]] : []);
+        elseif ($rispondi !== '' && preg_match('/<?([^<>\s]+@[^<>\s]+)>?\s*$/', $rispondi, $m)) $dati['replyTo'] = ['email' => $m[1]];
         if ($rif !== '') $altre['X-Mailin-custom'] = $rif;
         if ($altre) $dati['headers'] = $altre;
         if ($rif !== '') $dati['tags'] = ['plumecms'];
@@ -322,7 +329,7 @@ function consegna_mime_intero(string $a, string $oggetto, string $corpo, string 
     $tenute = array_values(array_filter($tenute, fn($h) => !preg_match('/^(From|To|Subject|Date|Message-ID):/i', $h)));
     $testa = array_merge([
         'Date: ' . date('r'),
-        'From: ' . ($nome !== '' ? posta_oggetto($nome) . ' ' : '') . "<$email>",
+        'From: ' . (function_exists('posta_nome_indirizzo') ? posta_nome_indirizzo($nome, $email) : ($nome !== '' ? posta_oggetto($nome) . ' ' : '') . "<$email>"),
         'To: ' . (function_exists('posta_to') ? posta_to($a, (string)($int['a'] ?? '')) : "<$a>"),
         'Subject: ' . posta_oggetto($oggetto),
         'Message-ID: <' . bin2hex(random_bytes(12)) . '@' . substr((string)strrchr($email, '@'), 1) . '>',
@@ -410,10 +417,16 @@ function consegna_mittente_permesso(string $email): bool {
  */
 function consegna_mittente_per(string $intestazioni, array $base): array {
     [, , $from] = consegna_intestazioni($intestazioni);
-    if ($from !== '' && preg_match('/^(.*?)\s*<([^<>\s]+)>\s*$/', $from, $m)) {
+    // 2.40.1: il From letto con posta_leggi_indirizzo(): virgolette, barre e parole codificate tornano il nome scritto.
+    $ind = $from !== '' && function_exists('posta_leggi_indirizzo') ? posta_leggi_indirizzo($from) : null;
+    if ($ind !== null && $ind[0] !== '') {
+        if (consegna_mittente_permesso($ind[1])) return [mb_strtolower($ind[1]), $ind[0]];
+    } elseif ($ind === null && $from !== '' && preg_match('/^(.*?)\s*<([^<>\s]+)>\s*$/', $from, $m)) {
         $nome = trim(str_replace('"', '', $m[1]));
         if (str_starts_with($nome, '=?UTF-8?B?')) $nome = (string)base64_decode(substr($nome, 10, -2));
         if (consegna_mittente_permesso($m[2])) return [mb_strtolower($m[2]), $nome !== '' ? $nome : $base[1]];
+    } elseif ($ind !== null && consegna_mittente_permesso($ind[1])) {
+        return [mb_strtolower($ind[1]), $base[1]];
     } elseif ($from !== '' && consegna_mittente_permesso($from)) {
         return [mb_strtolower($from), $base[1]];
     }
@@ -425,6 +438,11 @@ function consegna_mittente_per(string $intestazioni, array $base): array {
 function consegna_intestazioni_mittente(int $id): string {
     $m = consegna_mittente($id);
     if (!$m || !$m['verificato_at']) return '';
+    // 2.40.1: il nome com'è scritto (virgolette comprese), scritto da posta_nome_indirizzo().
+    if (function_exists('posta_nome_indirizzo')) {
+        return 'From: ' . posta_nome_indirizzo((string)$m['nome'], (string)$m['email']) . "\r\n"
+            . ($m['rispondi_a'] !== '' ? 'Reply-To: ' . posta_nome_indirizzo('', (string)$m['rispondi_a']) . "\r\n" : '');
+    }
     $nome = str_replace(['"', "\r", "\n"], '', (string)$m['nome']);
     return 'From: ' . ($nome !== '' ? posta_oggetto($nome) . ' ' : '') . '<' . $m['email'] . ">\r\n"
         . ($m['rispondi_a'] !== '' ? 'Reply-To: ' . $m['rispondi_a'] . "\r\n" : '');
@@ -435,7 +453,10 @@ function consegna_mittente_aggiungi(string $email, string $nome, string $rispond
     consegna_schema();
     $email = mb_strtolower(trim($email));
     $rispondi = mb_strtolower(trim($rispondi));
-    $nome = mb_substr(trim(preg_replace('/[\x{10000}-\x{10FFFF}\r\n"<>]/u', '', $nome)), 0, 100);
+    // 2.40.1: il nome resta com'è scritto (virgolette e parentesi comprese). Via gli a capo e i caratteri di controllo e i
+    // caratteri a 4 byte, che la tabella (utf8 a 3 byte) non può tenere.
+    $nome = (string)preg_replace('/[\x{10000}-\x{10FFFF}]/u', '', function_exists('posta_nome_pulito') ? posta_nome_pulito($nome) : str_replace(["\r", "\n"], ' ', $nome));
+    $nome = mb_substr(trim($nome), 0, 100);
     if (!filter_var($email, FILTER_VALIDATE_EMAIL) || strlen($email) > 190) return 'L\'indirizzo del mittente non è valido.';
     if ($rispondi !== '' && !filter_var($rispondi, FILTER_VALIDATE_EMAIL)) return 'L\'indirizzo per le risposte non è valido.';
     $st = db()->prepare('SELECT id FROM ' . tbl('posta_mittenti') . ' WHERE email = ?');

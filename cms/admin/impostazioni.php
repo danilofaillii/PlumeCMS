@@ -77,7 +77,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             // Il campo mostra asterischi: se non lo tocchi, resta la password di prima.
             'password' => ($pw === '' || $pw === '********') ? ($vecchia['password'] ?? '') : $pw,
             'mittente' => trim($_POST['smtp_mittente'] ?? ''),
-            'nome' => trim($_POST['smtp_nome'] ?? '') ?: (string)cms_impostazione('sito_nome', CMS_NOME),
+            // 2.40.1: il nome resta com'è scritto (virgolette e parentesi comprese); via solo a capo e caratteri di controllo.
+            'nome' => (function_exists('posta_nome_pulito') ? posta_nome_pulito(is_string($_POST['smtp_nome'] ?? null) ? $_POST['smtp_nome'] : '') : trim((string)($_POST['smtp_nome'] ?? ''))) ?: (string)cms_impostazione('sito_nome', CMS_NOME),
         ];
         save_setting('posta_smtp', json_encode($posta, JSON_UNESCAPED_UNICODE));
         save_setting('notifica_email', trim($_POST['notification_email'] ?? ''));

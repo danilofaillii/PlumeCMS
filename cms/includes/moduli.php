@@ -137,8 +137,16 @@ const MODULI_ERRORI = [
 // Email
 // ------------------------------------------------------------
 
-function moduli_intestazioni(string $rispondiA = ''): string {
-    return "MIME-Version: 1.0\r\nContent-Type: text/html; charset=UTF-8\r\n" . ($rispondiA !== '' ? "Reply-To: $rispondiA\r\n" : '');
+/**
+ * Le intestazioni delle email HTML del sito. 2.40.1: $nome (facoltativo) è il nome di chi riceverà la risposta (il visitatore che ha
+ * compilato il form, il cliente): il Reply-To esce "nome <indirizzo>" con posta_nome_indirizzo(), il nome com'è scritto. Un indirizzo
+ * non valido o con a capo non diventa Reply-To.
+ */
+function moduli_intestazioni(string $rispondiA = '', string $nome = ''): string {
+    $rispondiA = trim($rispondiA);
+    if ($rispondiA !== '' && (preg_match('/[\x00-\x1F\x7F]/', $rispondiA) || !filter_var($rispondiA, FILTER_VALIDATE_EMAIL))) $rispondiA = '';
+    $rispondi = $rispondiA === '' ? '' : (function_exists('posta_nome_indirizzo') ? posta_nome_indirizzo($nome, $rispondiA) : $rispondiA);
+    return "MIME-Version: 1.0\r\nContent-Type: text/html; charset=UTF-8\r\n" . ($rispondi !== '' ? "Reply-To: $rispondi\r\n" : '');
 }
 
 /**

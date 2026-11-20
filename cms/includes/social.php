@@ -363,10 +363,13 @@ function social_email_pagina(string $titolo, string $corpo): string {
 
 function social_invia(string $a, string $oggetto, string $html): bool {
     require_once __DIR__ . '/posta.php';
-    $nome = str_replace(['"', "\r", "\n"], '', (string)cms_impostazione('sito_nome', CMS_NOME));
+    // 2.40.1: il nome com'è scritto (posta_nome_indirizzo()) e l'oggetto in chiaro: lo codifica posta_invia() (prima arrivava
+    // codificato due volte a Brevo e in una parola sola oltre i 75 caratteri).
+    $nome = (string)cms_impostazione('sito_nome', CMS_NOME);
     $mitt = (string)(posta_config()['mittente'] ?? '');
-    $intest = "MIME-Version: 1.0\r\nContent-Type: text/html; charset=UTF-8\r\n" . ($mitt !== '' ? 'From: ' . posta_oggetto($nome) . " <$mitt>\r\n" : '');
-    return posta_invia($a, posta_oggetto($oggetto), $html, $intest, 'social');
+    $da = $mitt === '' ? '' : (function_exists('posta_nome_indirizzo') ? posta_nome_indirizzo($nome, $mitt) : posta_oggetto(str_replace(['"', "\r", "\n"], '', $nome)) . " <$mitt>");
+    $intest = "MIME-Version: 1.0\r\nContent-Type: text/html; charset=UTF-8\r\n" . ($da !== '' ? 'From: ' . $da . "\r\n" : '');
+    return posta_invia($a, $oggetto, $html, $intest, 'social');
 }
 
 /** I contenuti da leggere (non le pagine) che escono il giorno $data: [[tipo, riga], ...], in ordine di ora. */

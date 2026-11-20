@@ -128,7 +128,7 @@ function rp_ricevi(array $p, string $pagina): string {
     $testo = $righe . '<p>Rispondi a questa email per scrivere a ' . h($nome) . ': la richiesta non è ancora confermata.</p><p style="color:#888;font-size:13px">Dalla pagina ' . h($pagina) . ', il ' . date('d/m/Y H:i') . '.</p>';
     $corpo = function_exists('moduli_email_avviso') ? moduli_email_avviso('Nuova richiesta di prenotazione', $testo, 'Apri nel pannello', cms_url_pannello() . 'form-submissions.php?modulo=' . rp_form_id()) : moduli_email_html('Nuova richiesta di prenotazione', $testo);
     foreach ($a as $x) {
-        if (!posta_invia($x, $oggetto, $corpo, moduli_intestazioni($email), 'avviso_form')) error_log('richiesta di prenotazione: avviso non partito: ' . posta_errore());
+        if (!posta_invia($x, $oggetto, $corpo, moduli_intestazioni($email, $nome), 'avviso_form')) error_log('richiesta di prenotazione: avviso non partito: ' . posta_errore());
     }
     return '';
 }
