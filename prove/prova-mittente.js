@@ -59,7 +59,9 @@ function python(attesi, titolo) {
 
   // I server finti e le costanti delle prove nel config.
   const cfg = path.join(CMS, 'includes', 'config.local.php');
-  let s = fs.readFileSync(cfg, 'utf8').replace(/\n\/\/ prove del mittente: inizio[\s\S]*?\/\/ prove del mittente: fine\n/, '\n');
+  // Anche il blocco di prova-consegna-email.js, se c'è: la sua CMS_POSTA_API_PROVA verso un'altra porta vincerebbe sulla nostra.
+  let s = fs.readFileSync(cfg, 'utf8').replace(/\n\/\/ prove del mittente: inizio[\s\S]*?\/\/ prove del mittente: fine\n/, '\n')
+    .replace(/\n\/\/ prove della consegna: inizio[\s\S]*?\/\/ prove della consegna: fine\n/, '\n');
   fs.writeFileSync(cfg, s + `\n// prove del mittente: inizio\ndefine('CMS_POSTA_API_PROVA', 'http://127.0.0.1:${PORTA_API}');\n// prove del mittente: fine\n`);
   const smtp = spawn('python3', ['-I', path.join(__dirname, 'smtp-finto.py'), PORTA_SMTP, SMTP], { stdio: 'ignore' });
   const api = spawn('python3', ['-I', path.join(__dirname, 'api-posta-finta.py'), PORTA_API, API, 'xkeysib-' + 'a1b2c3d4'.repeat(8) + '-ProvaBrevo123456',

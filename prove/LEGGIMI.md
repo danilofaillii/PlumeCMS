@@ -1086,7 +1086,8 @@ nessun difetto di lettura, parole codificate di 75 caratteri al massimo, righe s
    e la cartella `<lavoro>/mail`; senza spazi nel valore conviene uno script: `printf '#!/bin/sh\nexec python3 -I
    prove/sendmail-finto.py <lavoro>/mail "$@"\n' > sm.sh`, poi `php -d sendmail_path=$PWD/sm.sh -S ...`.
 2. `node prove/prova-mittente.js <base> <utente> <password> <cartella del CMS> <porta smtp libera> <porta api libera> <lavoro>`.
-   Accende da sé il server di posta finto e le API finte, scrive `CMS_POSTA_API_PROVA` nel `config.local.php` e lo toglie alla fine;
+   Accende da sé il server di posta finto e le API finte, scrive `CMS_POSTA_API_PROVA` nel `config.local.php` e lo toglie alla fine
+   (toglie anche il blocco "prove della consegna" lasciato da `prova-consegna-email.js`);
    lascia un form "Prova mittente", invii, un mittente confermato `notizie@esempio.it` e la posta sul server finto (sito da buttare).
 3. Atteso (2.40.1): RISULTATO_KIT in radice e in cartella e sul sito aggiornato dalla 2.40.0. Sulla 2.40.0: RISULTATO_2400.
 
