@@ -109,7 +109,7 @@ Sono gli unici in `cms/docs/`, nello zip, nel sito di plumeCMS e nella pagina Do
 - **Pacchetto di aggiornamento** per un'installazione esistente:
   `python3 tools/cms-pacchetto.py --aggiornamento`. Si carica dal pannello,
   Impostazioni, Aggiornamenti.
-- **Versione**: `cms/VERSIONE` (oggi 2.40.0; sempre tre numeri: "beta" va nel CHANGELOG, mai nel nome dello zip, se no la serie "ultima" del Download non lo riconosce) e una voce in `cms/CHANGELOG.md` a ogni
+- **Versione**: `cms/VERSIONE` (oggi 2.40.1; sempre tre numeri: "beta" va nel CHANGELOG, mai nel nome dello zip, se no la serie "ultima" del Download non lo riconosce) e una voce in `cms/CHANGELOG.md` a ogni
   zip con contenuto diverso. Mai cambiare il contenuto di una versione già data.
 - **Prove** prima di dire finito:
   - `php -n -d short_open_tag=1 -l` su ogni file PHP toccato, `node --check` sui js;
@@ -167,6 +167,25 @@ Le decisioni complete, con data e perché, stanno nel second brain, `plumecms/de
 - **Nome: plumeCMS** (26 ottobre 2026).
 
 ## Stato al 31 ottobre 2026
+
+Fatto: plumeCMS 2.40.1 (20 novembre, 19:15-21:40): **il nome del mittente nelle email** (segnalazione di Danilo: con il nome "[Cucina Creativa]" Apple Mail
+mostrava `MISSING_MAILBOX@MISSING_DOMAIN ... per conto di [ Cucina Creativa ]`). Causa: `posta_oggetto()` codificava solo il non ASCII, quindi un nome ASCII con
+`( ) < > [ ] : ; @ \ , . "` usciva senza virgolette e l'intestazione non era valida; `posta_mittente()`, `consegna_intestazioni_mittente()`,
+`consegna_mittente_aggiungi()` e `posta_interne()` toglievano virgolette e `< >`. Agente nella worktree `/home/user/wt-mitt`, ramo `mittente-email`
+(19:16-20:49), unito da me con un fast-forward. `posta_nome_indirizzo()` (`includes/posta.php`): nome semplice com'è, ASCII con speciali fra virgolette con `\` e
+`"` protetti, non ASCII o con `=?` in parole RFC 2047 da 75 caratteri; nome vuoto come prima (`<a@b.it>` nelle intestazioni, indirizzo nudo per mail() e
+Reply-To). `posta_nome_pulito()` toglie solo a capo e caratteri di controllo (anche U+0085, U+2028, U+2029); `posta_mime()` toglie Bcc e Cc e riscrive From e
+Reply-To; `posta_invia()` rifiuta un destinatario con un a capo. From, To, Reply-To dei cinque avvisi (ora con il nome del visitatore), newsletter, social,
+Brevo (nomi intatti in sender, to e replyTo), SES e Mailgun (MIME con la funzione); `admin/impostazioni.php` salva il nome com'è. Manuale tecnico 55,
+`prove/prova-mittente.js` 2144 (con `prove/mittente-cli.php`, `prove/leggi-mittente.py`, `prove/sendmail-finto.py`; la 2.40.0 dà 1771/2116), gruppo 57 degli
+attacchi. Prove mie sullo zip del ramo principale (`$S/v26/batteria.sh`, 20:58-21:17, rifatta dopo aver spento i server di prova lasciati accesi dall'agente
+sulle stesse porte): install 38/38 radice e cartella, kit 34/34 e 44/44, mittente 2144/2144 radice, cartella e sito aggiornato, 2.40.0 1771/2116,
+aggiornamento 2.40.0 -> 2.40.1 13/13 con 0 foto su 20, avvisi senza pannello 36/36, password 25/25, avviso dei form 13/13, social 29/29, email di conferma
+44/44, newsletter 37/37, campagne 100/100, consegna delle email 71/73 (**gli stessi 2 KO sulla 2.40.0**: il mittente scelto in un flusso delle automazioni
+non si salva; difetto vecchio, da fare a parte), attacchi 652/653 sul sito pieno delle altre prove (gruppo 2.15.0 vuole form inesistenti: limite della prova)
+e 653/653 su un kit appena installato, pacchetto unico 13/13, sito di plumeCMS 140/140; l'unico errore fatale nei log viene da `prove/newsletter-cli.php`
+(iscritto doppio nella semina), non dal CMS. **Non provato**: Apple Mail, Gmail e Outlook veri (lettura con la libreria standard di Python), le API vere di
+Brevo, SES e Mailgun, PHP 8.4.27 e Apache veri.
 
 Fatto: plumeCMS 2.40.0 (19 novembre, 13:17-14:20): **le proposte P1-P4 del controllo SEO** (Danilo: "falle tutte"). Agente nella worktree
 `/home/user/wt-prop`, ramo `seo-proposte` (13:19-13:59), unito da me con un fast-forward. **P1** la pagina Blog fatta con l'editor mostra il suo disegno
