@@ -226,6 +226,7 @@ async function contrastoParole(pg) {
     if ((([a, b, c]) => a > 2 || (a === 2 && (b > 39 || (b === 39 && c >= 1))))(V.split('.').map(Number))) ok('Scarica (2.39.1): fra le novità la pagina per scegliere la password nuova', r && r.voci.some(x => /^2\.39\.1: La pagina per scegliere la password nuova/.test(x)), r && r.voci);
     if ((([a, b, c]) => a > 2 || (a === 2 && (b > 39 || (b === 39 && c >= 2))))(V.split('.').map(Number))) ok('Scarica (2.39.2): fra le novità le pagine degli elenchi chiare per i motori di ricerca', r && r.voci.some(x => /^2\.39\.2: Pagine degli elenchi chiare per i motori di ricerca/.test(x)), r && r.voci);
     if ((([a, b]) => a > 2 || (a === 2 && b >= 40))(V.split('.').map(Number))) ok('Scarica (2.40.0): fra le novità il blog disegnato con l\'editor', r && r.voci.some(x => /^2\.40\.0: Il blog disegnato con l'editor/.test(x)), r && r.voci);
+    if ((([a, b, c]) => a > 2 || (a === 2 && (b > 40 || (b === 40 && c >= 1))))(V.split('.').map(Number))) ok('Scarica (2.40.1): fra le novità il nome del mittente com\'è scritto', r && r.voci.some(x => /^2\.40\.1: Il nome del mittente com'è scritto/.test(x)), r && r.voci);
     ok('Scarica: le novità finiscono non oltre il riquadro Cosa serve', r && r.fondo <= r.sinistra + 2, r && { fondo: r.fondo, sinistra: r.sinistra }); }
   // 2.6.0: il blocco del pannello più chiaro in Funzionalità, con la sua schermata caricata; il logo di header e footer dallo Stile.
   await v.goto(B + '/funzionalita/', { waitUntil: 'networkidle' });

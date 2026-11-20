@@ -65,6 +65,7 @@ pagine, gestire il sito) c'è il manuale d'uso, `docs/manuale-uso.md`, con le sc
 52. Popup costruiti con l'editor visuale (dalla 2.39.0)
 53. Le pagine degli elenchi per i motori di ricerca e il controllo SEO (dalla 2.39.2)
 54. Il blog fatto con l'editor, la descrizione e l'Open Graph degli elenchi, la sitemap degli addon (dalla 2.40.0)
+55. Il nome del mittente nelle email (dalla 2.40.1)
 
 Appendice A. Dove i documenti vecchi non corrispondono al codice
 
@@ -1722,16 +1723,19 @@ formule, capitolo 18.10).
   (`includes/posta.php:139`: paragrafi a capo, link come "testo (indirizzo)", niente immagini né testo di anteprima
   nascosto), il corpo MIME lo compone `posta_mime()` (`:172`), tutto in base64, uguale per SMTP, `mail()` e le API di SES e
   Mailgun. Dalla 2.0.3 `posta_mime()` accetta gli allegati (`multipart/mixed`).
-- `posta_invia($a, $oggetto, $corpo, $intestazioni, $tipo, $allegati)` (`includes/posta.php:215`): il quinto argomento è il
+- `posta_invia($a, $oggetto, $corpo, $intestazioni, $tipo, $allegati)` (`includes/posta.php:223`): il quinto argomento è il
   tipo per il registro (`campagna`, `flusso`, `conferma`, `avviso_form`, `prova`, `social`; `altro` di partenza), il sesto la
   lista degli allegati. **Dalla 2.1.0** con un servizio scelto in Consegna delle email (Brevo, Amazon SES, Mailgun) l'email
   parte dalle sue API (`consegna_servizio_attivo()`, `:219`; capitolo 35) e SMTP e `mail()` non si usano. Con SMTP il From
   è il mittente chiesto da chi chiama se è confermato, altrimenti il predefinito, altrimenti quello di Configurazione email
-  (`consegna_mittente_per()`, `:324`): anche l'envelope (`MAIL FROM`) usa quell'indirizzo.
+  (`consegna_mittente_per()`, `includes/consegna.php:418`): anche l'envelope (`MAIL FROM`) usa quell'indirizzo.
 - **Registro della posta (dalla 2.0.0).** Ogni spedizione lascia una riga in `posta_registro` (quando, tipo, esito,
   errore; nessun indirizzo), tabella creata da `posta_registro_schema()` (`:58`). `posta_inviate($secondi)` (`:90`) conta
   le email partite: è il conto dei limiti della newsletter (15.5). Il cron toglie le righe oltre 60 giorni
   (`posta_pulisci_registro()`, `:105`).
+- **Nomi e oggetto nelle intestazioni (dalla 2.40.1).** Ogni "nome <indirizzo>" di From, To e Reply-To lo scrive
+  `posta_nome_indirizzo()` (`includes/posta.php:347`), l'oggetto `posta_oggetto()` (`:392`): il nome arriva al programma di posta
+  com'è scritto nel pannello. Dettaglio nel capitolo 55.
 - **Esito (dalla 2.0.0).** Dopo `posta_invia()`, `posta_esito()` (`:45`) dice `ok`, `rimbalzo` (il server SMTP ha
   rifiutato il destinatario al `RCPT TO` con un 5xx), `temporaneo` (4xx al `RCPT TO`) o `errore` (connessione, accesso,
   server). Il rifiuto del destinatario è l'eccezione `PostaRifiutata` (`:52`) con il codice SMTP; con `mail()` e con le API l'esito
@@ -2352,11 +2356,12 @@ semplice: con `link_web` una riga "Vedi questa email nel browser" sopra la sched
 se il link di uscita non c'è si aggiunge un piede con lui e l'indirizzo; il testo di anteprima e il link della versione web
 vanno subito dopo `<body>`. UTM (`nl_camp_utm()`, `:553`): solo i link verso il sito stesso, senza toccare quelli che hanno
 già `utm_source` e i link firmati; prima del tracciamento, che li avvolge. Intestazioni: `rispondi_a` della campagna vince su
-quello del mittente e delle impostazioni; il campo "A" (personalizzato con i segnaposti, senza a capo né `< > "`) e il testo
+quello del mittente e delle impostazioni; il campo "A" (personalizzato con i segnaposti, senza a capo; dalla 2.40.1 virgolette e
+parentesi angolari restano, le protegge `posta_nome_indirizzo()`, capitolo 55) e il testo
 semplice scritto a mano (`nl_camp_testo()`, `:569`: segnaposti, link speciali, link di uscita e indirizzo aggiunti se
 mancano) viaggiano nelle intestazioni interne `X-Plume-A` e `X-Plume-Testo` (base64) che `posta_interne()`
-(`includes/posta.php:272`) toglie in `posta_invia()` (`:218`) prima di qualunque spedizione: diventano il `To: Nome <a>`
-(`posta_to()`, `:294`; anche nel MIME di SES e Mailgun e nel `to.name` di Brevo, `includes/consegna.php`) e la parte
+(`includes/posta.php:287`) toglie in `posta_invia()` (`:233`) prima di qualunque spedizione: diventano il `To: Nome <a>`
+(`posta_to()`, `:310`; anche nel MIME di SES e Mailgun e nel `to.name` di Brevo, `includes/consegna.php`) e la parte
 `text/plain` (`posta_mime()`, quarto argomento). `newsletter.php` le scrive solo se `posta_interne` esiste (opcache).
 `newsletter_traccia()` lascia diretti anche i link delle preferenze e della versione web (`newsletter-flussi.php:129`).
 
@@ -4347,6 +4352,10 @@ può stare dentro una pagina che risponde 200.
 | `scaricabili_elenco()`, `scaricabili_carica($file, $info, $sostituisci)`, `scaricabili_salva_info()`, `scaricabili_elimina()` | download manager |
 | `media_elimina($url)` | cancellazione |
 | `posta_invia(...)` | invio di un'email (SMTP o `mail()`) |
+| `posta_nome_indirizzo($nome, $email)` | 2.40.1: "nome <indirizzo>" per From, To e Reply-To con il nome com'è scritto (RFC 5322 e 2047) |
+| `posta_leggi_indirizzo($valore)` | 2.40.1: rilegge "nome <indirizzo>" in `[nome, indirizzo]` (virgolette, barre, parole codificate) |
+| `posta_nome_pulito($testo)` | 2.40.1: toglie da un nome o da un oggetto solo a capo e caratteri di controllo |
+| `posta_oggetto($oggetto)` | l'oggetto per l'intestazione Subject (2.40.1: parole codificate da 75 caratteri al massimo) |
 
 
 **Novità della 1.3.0** (`includes/sezioni-pronte.php`, `includes/kit-partenza.php`, `includes/versione-nuova.php`, `includes/copia-sito.php`)
@@ -4986,9 +4995,9 @@ con `CMS_DNS_PROVA` un file JSON di record finti) e ritorna una voce per SPF, DK
 
 ### 35.4 Spedire con le API
 
-`posta_invia()` (`includes/posta.php:215`) chiede `consegna_servizio_attivo()` (`:138`: il servizio scelto **e** con i dati
+`posta_invia()` (`includes/posta.php:223`) chiede `consegna_servizio_attivo()` (`:138`: il servizio scelto **e** con i dati
 completi, altrimenti `''` e si spedisce come prima) e chiama `consegna_invia_api()` (`:247`). Il mittente lo sceglie
-`consegna_mittente_per()` (`:410`). Gli indirizzi veri delle API passano da `consegna_url_api()` (`:163`): con
+`consegna_mittente_per()` (`:418`; dalla 2.40.1 legge il From con `posta_leggi_indirizzo()`, capitolo 55). Gli indirizzi veri delle API passano da `consegna_url_api()` (`:163`): con
 `CMS_POSTA_API_PROVA` nel config (solo prove) schema e host diventano quelli del server finto. HTTP con curl, o con gli stream
 di PHP se curl manca (`consegna_http()`, `:171`), certificati controllati, niente rimandi seguiti.
 - **Brevo**: `POST https://api.brevo.com/v3/smtp/email`, intestazione `api-key`, JSON con `sender`, `to`, `subject`,
@@ -5022,7 +5031,7 @@ Chi può comparire nel From: l'indirizzo di Configurazione email e i mittenti co
 `posta_mittente()` (`includes/posta.php:120`) dà prima il predefinito confermato. Campagne (`admin/newsletter-campagna.php:35`)
 e flussi (`admin/newsletter-flussi.php:110`, salvato da `newsletter_flusso_salva()`) scelgono fra i confermati
 (`consegna_mittenti_scelta()`, `:378`); un id non confermato si salva come 0. `newsletter_email()` aggiunge From e Reply-To
-del mittente scelto (`consegna_intestazioni_mittente()`, `:424`). Togliere un mittente rimette 0 dove era usato.
+del mittente scelto (`consegna_intestazioni_mittente()`, `:438`; dalla 2.40.1 con `posta_nome_indirizzo()`). Togliere un mittente rimette 0 dove era usato.
 
 ### 35.6 Avvisi dei servizi (webhook)
 
@@ -7533,6 +7542,80 @@ avviso, non un rifiuto). Restano:
   costringe `tools/consegna.py` a dare due pacchetti (19.8); va sistemato insieme alla prossima modifica vera del motore;
 - l'evento `upload_rifiutato` del registro della sicurezza (`includes/sicurezza.php:213`) esiste ma nessuno lo scrive.
 
+
+## 55. Il nome del mittente nelle email (dalla 2.40.1)
+
+**Il problema** (segnalazione da un sito vero con la 2.39.0). Con il nome del mittente "[Cucina Creativa]" un programma di posta
+mostrava l'email "Accesso amministratore da un indirizzo nuovo" con il mittente `MISSING_MAILBOX@MISSING_DOMAIN
+<MISSING_MAILBOX@MISSING_DOMAIN> per conto di [ Cucina Creativa ] <indirizzo>`. Richiesta del proprietario: "il nome deve arrivare
+al programma di posta esattamente come lo scrive chi usa il pannello".
+
+**La causa.** Fino alla 2.40.0 il From era `'From: ' . posta_oggetto($nome) . " <$mittente>"` (con `mail()` e con SMTP, e uguale
+in `consegna_mime_intero()` per SES e Mailgun). `posta_oggetto()` codificava solo un testo non ASCII; un nome tutto ASCII usciva
+senza virgolette, e con i caratteri speciali della RFC 5322 (`( ) < > [ ] : ; @ \ , . "`) l'intestazione non era valida: le
+parentesi quadre sono un "domain literal", la virgola separa due indirizzi, i due punti aprono un gruppo. Il programma di posta
+non trovava l'indirizzo e scriveva `MISSING_MAILBOX@MISSING_DOMAIN`. In più `posta_mittente()`,
+`consegna_intestazioni_mittente()` e `consegna_mittente_aggiungi()` toglievano dal nome le virgolette (e `< >`), e `posta_interne()`
+toglieva `" < >` dal campo "A": il nome non restava quello scritto. Il Reply-To degli avvisi aveva solo l'indirizzo del visitatore.
+E un nome salvato con un a capo dentro (da una richiesta fatta a mano, il campo del pannello non lo permette) finiva tale e quale
+nel From di SMTP: una riga `Bcc:` in più.
+
+**Le funzioni** (`includes/posta.php`):
+- `posta_nome_pulito($s)` (`:319`): toglie solo gli a capo e i caratteri di controllo (`\x00-\x1F`, `\x7F`, `U+0080-U+009F` con
+  `U+0085`, `U+2028`, `U+2029`), che servirebbero a iniettare intestazioni: ogni gruppo diventa uno spazio, poi `trim`. I byte non
+  UTF-8 diventano "?" (`mb_scrub`). Virgolette, barre, parentesi e ogni altro segno restano.
+- `posta_parole_codificate($s)` (`:328`): parole codificate RFC 2047 `=?UTF-8?B?...?=` da 45 byte di testo l'una (75 caratteri al
+  massimo), senza spezzare un carattere UTF-8 (`mb_str_split`), separate da uno spazio. Niente righe piegate con CRLF: chi compone
+  le intestazioni le divide per righe, e le righe restano molto sotto i 998 caratteri (i nomi sono lunghi al massimo 100-150).
+- `posta_nome_indirizzo($nome, $email)` (`:347`), una sola per tutto il CMS. Nome vuoto: solo l'indirizzo (`a@b.it`, la forma che
+  ogni programma di posta e `mail()` accettano). Un nome fatto solo di "atom" (lettere, cifre e `! # $ % & ' * + - / = ? ^ _` più
+  apice inverso, graffe, barra verticale e tilde) separati da uno spazio: com'è (`Cucina Creativa <a@b.it>`). Un nome ASCII con
+  altri segni, spazi doppi o in testa: fra virgolette, con `\` e `"` protetti (`"[Cucina Creativa]" <a@b.it>`,
+  `"Rossi, Mario" <a@b.it>`). Un nome con lettere non ASCII o con `=?` (che un programma leggerebbe come parola codificata): tutto
+  in parole codificate (`Caffè "Da Mario"` diventa `=?UTF-8?B?Q2FmZsOoICJEYSBNYXJpbyI=?= <a@b.it>`).
+- `posta_leggi_indirizzo($v)` (`:361`) e `posta_leggi_frase($f)` (`:369`): rileggono "nome <indirizzo>" in `[nome, indirizzo]`
+  (stringhe fra virgolette con le barre, parole codificate B e Q in UTF-8 o in un'altra codifica, lo spazio fra due parole
+  codificate tolto, parole semplici), anche nelle forme scritte dalle versioni di prima; `null` se non c'è un indirizzo.
+- `posta_oggetto($s)` (`:392`): l'oggetto senza a capo e caratteri di controllo; con lettere non ASCII o con `=?` in parole
+  codificate da 75 caratteri. Non accetta più un oggetto già codificato: chi chiama passa sempre l'oggetto in chiaro
+  (`social_invia()` lo codificava prima di `posta_invia()`, e a Brevo arrivava codificato e in una parola sola oltre i 75 caratteri).
+
+**Dove passano** (ogni intestazione con un nome):
+- `posta_mime()` (`:172`): dalle intestazioni di chi chiama tiene solo le righe "Nome: valore", toglie `Bcc` e `Cc`, e riscrive
+  `From` e `Reply-To` con `posta_leggi_indirizzo()` e `posta_nome_indirizzo()` (illeggibili: tolte). Vale per SMTP, `mail()` e il
+  MIME di SES e Mailgun.
+- `posta_invia()` (`:223`): un destinatario con a capo o caratteri di controllo non parte ("Indirizzo del destinatario non
+  valido.", esito `errore`), contro l'iniezione nelle intestazioni e nei comandi SMTP (`RCPT TO`). Con `mail()`: From
+  `posta_nome_indirizzo($nome, $mittente)` (`:256`), destinatario `posta_nome_indirizzo($int['a'], $a)` (`:260`).
+- `posta_smtp()`: From `posta_nome_indirizzo($nomeMitt, $mittente)` (`:469`), To `posta_to()` (`:310`, che chiama
+  `posta_nome_indirizzo()`), Subject `posta_oggetto()`.
+- `posta_mittente()` (`:120`) e `posta_interne()` (`:287`, il campo "A"): `posta_nome_pulito()` al posto di togliere le virgolette.
+- `includes/consegna.php`: Brevo riceve i nomi intatti nei campi `sender.name`, `to[].name` e, dalla 2.40.1, `replyTo.name`
+  (`:256` e `:263`; solo `posta_nome_pulito()`, nessuna virgoletta messa a mano: le intestazioni le scrive Brevo) e l'oggetto senza
+  a capo. SES e Mailgun ricevono il MIME intero di `consegna_mime_intero()` (`:327`, From con `posta_nome_indirizzo()`).
+  `consegna_mittente_per()` (`:418`) rilegge il From con `posta_leggi_indirizzo()`; `consegna_intestazioni_mittente()` (`:438`)
+  scrive From e Reply-To con `posta_nome_indirizzo()`; `consegna_mittente_aggiungi()` (`:452`) tiene il nome com'è (via a capo,
+  controlli e i caratteri a 4 byte, che la tabella utf8 a 3 byte non tiene). Tutte con `function_exists` e la riserva di prima
+  (la trappola di opcache dopo l'aggiornamento).
+- `moduli_intestazioni($rispondiA, $nome = '')` (`includes/moduli.php:145`): il Reply-To "nome del visitatore <indirizzo>"; un
+  indirizzo non valido o con a capo non diventa Reply-To. Il nome lo passano i cinque avvisi con il visitatore: `form_ricevi()`
+  (`includes/form.php:742`, nome e cognome dei campi legati al contatto), `rp_ricevi()` (`includes/richiesta-prenotazione.php:131`),
+  `pren_email_attivita()` (`addon/prenotazioni/includes/prenotazioni.php:585`), l'email al negozio di `vt_email_ordine()`
+  (`addon/vetrina/includes/vetrina.php:891`), `evi_email_attivita()` (`addon/eventi-iscrizione/includes/eventi.php:405`).
+- `social_invia()` (`includes/social.php:366`): From con `posta_nome_indirizzo()`, oggetto in chiaro.
+- Pannello: Impostazioni > Configurazione email salva il nome del mittente con `posta_nome_pulito()` (`admin/impostazioni.php:81`):
+  il nome salvato resta quello scritto. Nessun limite nuovo sui caratteri, niente di diverso in quello che si vede.
+
+**Prove.** `prove/prova-mittente.js` (con `prove/mittente-cli.php` e `prove/leggi-mittente.py`, che rilegge ogni messaggio con
+`email.policy.default` della libreria standard di Python): unità sui nomi `[Cucina Creativa]`, `Rossi, Mario`, `Caffè "Da Mario"`,
+`Cucina Creativa`, `Pasta & Vino: il laboratorio`, uno lungo non ASCII e uno con l'a capo dentro; poi per SMTP
+(`prove/smtp-finto.py`), `mail()` (`prove/sendmail-finto.py`), Brevo, Amazon SES e Mailgun (`prove/api-posta-finta.py`) e per
+ognuno dei cinque nomi scritti nel pannello: email di prova, avviso di prova, avviso "Accesso amministratore da un indirizzo nuovo"
+con un accesso vero, i cinque avvisi con il Reply-To del visitatore, la newsletter con il mittente confermato e il campo "A".
+Gruppo 57 degli attacchi: a capo (CR, LF, CRLF, `%0d%0a` scritto, `U+2028`, `U+0085`, CRLF con spazio) nel nome del mittente
+salvato dal pannello, nel nome del visitatore e nell'oggetto: nessuna intestazione in più. **Non provato**: i programmi di posta
+veri (Apple Mail, Gmail, Outlook), non raggiungibili dalla sessione; la lettura è quella della libreria standard di Python, severa
+sulla RFC 5322.
 
 ## Aggiunte della 2.18.0 fuori dal passo Email
 

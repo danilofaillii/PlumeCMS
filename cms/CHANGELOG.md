@@ -2,6 +2,26 @@
 
 Il prodotto si chiama **plumeCMS** (nome scelto il 26 ottobre 2026; prima, per poche ore, "CarbonaraCMS", e ancora prima il provvisorio "Officina": gli zip vecchi si chiamavano `officina-*` e `carbonaracms-*`).
 
+## 2.40.1 (20 novembre 2026) - Il nome del mittente nelle email
+
+Il nome del mittente arriva al programma di posta esattamente come lo scrivi nel pannello.
+
+- **Cosa si vedeva**: con un nome del mittente come "[Cucina Creativa]" il programma di posta mostrava come mittente
+  `MISSING_MAILBOX@MISSING_DOMAIN per conto di [ Cucina Creativa ]`, per esempio nell'email "Accesso amministratore da un indirizzo
+  nuovo". Succedeva con tutti i nomi che hanno dentro parentesi, virgole, due punti, punti e virgola, chiocciole o virgolette
+  ("Rossi, Mario", "Pasta & Vino: il laboratorio").
+- **Perché**: questi segni nell'intestazione del mittente hanno un significato preciso (la virgola separa due indirizzi, le
+  parentesi quadre e i due punti ne cambiano la lettura) e vanno messi fra virgolette. Il CMS non lo faceva: il programma di posta
+  non trovava più l'indirizzo. In più il CMS toglieva dal nome le virgolette.
+- **Cosa cambia**: il nome esce fra virgolette quando serve, e con le lettere accentate nella forma che tutti i programmi di posta
+  leggono. Vale dappertutto: email di prova, avvisi dei form e delle prenotazioni, avvisi di sicurezza, newsletter e campagne
+  (anche il mittente scelto e il nome nel campo "A"), email degli addon, con il server di posta, con la posta del server e con
+  Brevo, Amazon SES e Mailgun. Le virgolette nel nome restano. Il nome salvato nel pannello resta quello scritto.
+- Negli avvisi dei form, della richiesta di prenotazione, di Prenotazioni, Vetrina e Iscrizioni agli eventi, "Rispondi" scrive al
+  visitatore con il suo nome, non solo con il suo indirizzo.
+- Più sicurezza: un a capo nascosto nel nome del mittente, nel nome di chi compila un form o nell'oggetto non può più aggiungere
+  destinatari nascosti all'email; un indirizzo del destinatario con un a capo non parte.
+
 ## 2.40.0 (19 novembre 2026) - Blog fatto con l'editor e SEO di categorie, eventi e test
 
 Le quattro proposte del controllo SEO della 2.39.2, tutte fatte.
