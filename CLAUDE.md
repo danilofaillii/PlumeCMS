@@ -168,7 +168,7 @@ Le decisioni complete, con data e perché, stanno nel second brain, `plumecms/de
 
 ## Stato al 31 ottobre 2026
 
-Fatto: plumeCMS 2.40.1 (20 novembre, 19:15-21:40): **il nome del mittente nelle email** (segnalazione di Danilo: con il nome "[Cucina Creativa]" Apple Mail
+Fatto: plumeCMS 2.40.1 (20 novembre, 19:15-21:28): **il nome del mittente nelle email** (segnalazione di Danilo: con il nome "[Cucina Creativa]" Apple Mail
 mostrava `MISSING_MAILBOX@MISSING_DOMAIN ... per conto di [ Cucina Creativa ]`). Causa: `posta_oggetto()` codificava solo il non ASCII, quindi un nome ASCII con
 `( ) < > [ ] : ; @ \ , . "` usciva senza virgolette e l'intestazione non era valida; `posta_mittente()`, `consegna_intestazioni_mittente()`,
 `consegna_mittente_aggiungi()` e `posta_interne()` toglievano virgolette e `< >`. Agente nella worktree `/home/user/wt-mitt`, ramo `mittente-email`
