@@ -3594,6 +3594,14 @@ attesa.
 Prova: `prove/agg-scrittura-cli.php <cartella CMS> <cartella di prova>` (vuole root per `chattr +i`: file nuovo, uguale,
 permessi tenuti, blocco di due secondi superato, blocco fisso con il motivo, nessun temporaneo rimasto).
 
+**Snapshot solo dei file che cambiano** (2.40.3): prima dello snapshot `agg_applica()` confronta ogni file del pacchetto con quello
+sul sito (misura e sha256) e passa ad `agg_crea_snapshot()` solo quelli diversi o nuovi, più gli `elimina`; nel log "File che cambiano:
+N su M". La causa vera del blocco di plumecms.it (21 novembre 2026): l'antivirus Imunify360 dell'hosting segnava `api/nl.php` come
+backdoor (firma SMW-SA-05542-mlw.bkdr-4, falso allarme sulla forma del codice: funzione anonima su `$_GET`, nomi di una lettera,
+`base64_decode` stampato) anche nella copia dello snapshot, e subito dopo il server rifiutava la scrittura del file seguente.
+`api/nl.php` dalla 2.40.3 è scritto in forma piana (`nl_parametro()`, nomi interi, pixel da numeri). Lo strumento
+`tools/diagnosi-scrittura.php` (da caricare a mano con la chiave, mai nello zip) prova la scrittura dei file fuori dall'aggiornamento.
+
 Il motore nuovo vale dal pacchetto **dopo** quello che lo porta. Su un sito con il blocco del secondo file il motore si porta da
 solo, in un pacchetto con il solo `new/includes/aggiornamenti.php` (il primo file si scrive sempre), e poi si applica il resto.
 

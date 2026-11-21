@@ -772,9 +772,26 @@ function agg_applica(string $id): array {
         agg_progresso($id, ++$passo, $totale, 'Pacchetto letto: ' . count($m['file']) . ' file, ' . count($m['sql']) . ' file SQL, ' . count($m['articoli']) . ' articoli');
         $log[] = 'Pacchetto letto: ' . count($m['file']) . ' file, ' . count($m['sql']) . ' file SQL, ' . count($m['articoli']) . ' articoli, ' . count($m['redirect']) . ' redirect.';
 
-        // 1. snapshot
+        // 1. snapshot. 2.40.3: dei file del pacchetto si copiano solo quelli che cambiano davvero (gli altri il passo 2 non li
+        // tocca): un pacchetto unico porta più di 500 file e di solito ne cambiano poche decine. Copiare centinaia di file PHP
+        // nello snapshot è anche quello che, su un hosting con l'antivirus Imunify360, faceva scattare il blocco (plumecms.it,
+        // 21 novembre 2026: la copia di api/nl.php nello snapshot segnata come backdoor e il file dopo rifiutato).
+        $zipPrima = new ZipArchive();
+        $cambiano = [];
+        if ($zipPrima->open($zipPath) === true) {
+            foreach ($m['file'] as $f) {
+                $abs = agg_dest_path($f['a']);
+                $dati = $zipPrima->getFromName($f['da']);
+                if ($dati !== false && is_file($abs) && filesize($abs) === strlen($dati) && hash_file('sha256', $abs) === hash('sha256', $dati)) continue;
+                $cambiano[] = $f['a'];
+            }
+            $zipPrima->close();
+        } else {
+            $cambiano = array_column($m['file'], 'a');
+        }
+        $log[] = 'File che cambiano: ' . count($cambiano) . ' su ' . count($m['file']) . '.';
         agg_progresso($id, $passo, $totale, 'Creo lo snapshot del database, e il passo più lento');
-        $snapshotId = agg_crea_snapshot($m['nome'], array_merge(array_column($m['file'], 'a'), $m['elimina']));
+        $snapshotId = agg_crea_snapshot($m['nome'], array_merge($cambiano, $m['elimina']));
         $snap = agg_leggi_snapshot($snapshotId);
         $log[] = 'Snapshot creato: ' . $snapshotId . ' (' . $snap['db']['tabelle'] . ' tabelle, ' . $snap['db']['righe'] . ' righe, ' . agg_fmt_bytes($snap['db']['dimensione']) . ').';
         $stato['snapshot'] = $snapshotId;

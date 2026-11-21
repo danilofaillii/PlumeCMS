@@ -2,6 +2,17 @@
 
 Il prodotto si chiama **plumeCMS** (nome scelto il 26 ottobre 2026; prima, per poche ore, "CarbonaraCMS", e ancora prima il provvisorio "Officina": gli zip vecchi si chiamavano `officina-*` e `carbonaracms-*`).
 
+## 2.40.3 (21 novembre 2026) - Niente più falsi allarmi dell'antivirus dell'hosting
+
+- **Cosa si vedeva**: su un hosting con l'antivirus Imunify360 l'aggiornamento si fermava ancora con "Impossibile scrivere
+  new/includes/aggiornamenti.php", e l'antivirus segnava come infetto il file `api/nl.php` (quello che conta aperture e clic delle
+  newsletter) in tutti i siti e in tutti gli snapshot, con la firma SMW-SA-05542-mlw.bkdr-4.
+- **Perché**: `api/nl.php` era scritto in un modo che somiglia a una backdoor (una funzione senza nome che legge l'indirizzo, nomi di
+  una lettera, un'immagine decodificata e stampata). Il file non ha mai fatto niente di male, ma l'antivirus lo ha segnato appena ha
+  avuto la firma nuova. Lo snapshot dell'aggiornamento ne faceva una copia, l'antivirus la segnava, e il file successivo veniva rifiutato.
+- **Cosa cambia**: `api/nl.php` è riscritto in forma piana, con lo stesso comportamento (stesse firme, stessi rimandi, stessa immagine
+  di un pixel). Lo snapshot copia solo i file che l'aggiornamento cambia davvero, non più tutti i file del pacchetto.
+
 ## 2.40.2 (21 novembre 2026) - Aggiornamenti che reggono gli hosting più severi
 
 Il pannello Aggiornamenti scrive i file in un modo più robusto e, se non ci riesce, dice perché.
