@@ -161,7 +161,7 @@ def main():
             errore(f'{s}: contiene caratteri a 4 byte (emoji). La colonna content e utf8 a 3 byte: '
                    f'MySQL taglia il testo a quel punto invece di rifiutarlo, e il guasto si vede settimane dopo')
         dentro.append(s)
-    for f in m.get('file', []):
+    for f in m.get('file', []) + m.get('file_dopo_motore', []):  # 2.40.4: anche i file del secondo tempo
         if not isinstance(f, dict) or 'da' not in f or 'a' not in f:
             errore('ogni voce di "file" deve avere "da" e "a"')
         if not os.path.exists(os.path.join(cartella, f['da'])):
@@ -244,7 +244,7 @@ def main():
     for r in m.get('redirect', []):
         if not isinstance(r, dict) or 'da' not in r or 'a' not in r:
             errore('ogni redirect deve avere "da" e "a"')
-    for e in m.get('elimina', []):
+    for e in m.get('elimina', []) + m.get('elimina_dopo_motore', []):
         controlla_dest(e)
     argomenti = [a for a in sys.argv[2:] if not a.startswith('--')]
     nome_zip = argomenti[0] if argomenti else re.sub(r'[^a-z0-9]+', '-', m['nome'].lower()).strip('-') + '.zip'
@@ -266,7 +266,7 @@ def main():
             z.write(os.path.join(cartella, d), d)
     dim = os.path.getsize(nome_zip)
     print(f'Pacchetto scritto: {nome_zip} ({dim // 1024} KB)' + (' firmato' if firma else ''))
-    print(f'  {len(m.get("pagine", []))} pagine, {len(m.get("articoli", []))} articoli, {len(m.get("file", []))} file, {len(m.get("sql", []))} SQL, {len(m.get("redirect", []))} redirect, {len(m.get("elimina", []))} da togliere' + (f', applica dal {m["applica_dal"]}' if m.get('applica_dal') else ''))
+    print(f'  {len(m.get("pagine", []))} pagine, {len(m.get("articoli", []))} articoli, {len(m.get("file", [])) + len(m.get("file_dopo_motore", []))} file, {len(m.get("sql", []))} SQL, {len(m.get("redirect", []))} redirect, {len(m.get("elimina", [])) + len(m.get("elimina_dopo_motore", []))} da togliere' + (f', applica dal {m["applica_dal"]}' if m.get('applica_dal') else ''))
 
 
 if __name__ == '__main__':
