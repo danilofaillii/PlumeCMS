@@ -59,7 +59,7 @@ async function contrastoParole(pg) {
     // Il nome con cui il pannello lo elenca è quello del suo manifest.
     const man = JSON.parse(execFileSync('python3', ['-I', '-c', 'import sys,zipfile;print(zipfile.ZipFile(sys.argv[1]).read("manifest.json").decode())', z], { encoding: 'utf8' }));
     const nome = man.nome;
-    if ((man.file || []).some(f => f.a === 'new/VERSIONE')) cmsNelPacchetto = true;
+    if ((man.file || []).concat(man.file_dopo_motore || []).some(f => f.a === 'new/VERSIONE')) cmsNelPacchetto = true;
     if ((man.pagine || []).some(x => /(^|\/)pagine\/home\.json$/.test(x))) conHome = true; // 2.18.0: costruisci.py --senza-home la lascia fuori
     await p.goto(B + '/admin/aggiornamenti.php', { waitUntil: 'networkidle' });
     await p.setInputFiles('input[name=pacchetto]', z);

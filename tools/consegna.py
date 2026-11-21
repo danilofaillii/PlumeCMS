@@ -43,7 +43,10 @@ V = open(os.path.join(RADICE, 'cms', 'VERSIONE'), encoding='utf-8').read().strip
 MOTORE = 'includes/aggiornamenti.php'
 # Le voci del manifest che il motore installato conosce (agg_leggi_manifest, dalla 1.2.3) e le azioni che accetta.
 VOCI_NOTE = {'nome', 'descrizione', 'creato', 'applica_dal', 'sql', 'file', 'redirect', 'elimina', 'articoli', 'test', 'azioni',
-             'pagine', 'editor', 'editor_ambiti', 'impostazioni', 'note', 'firma'}
+             'pagine', 'editor', 'editor_ambiti', 'impostazioni', 'note', 'firma',
+             # 2.40.4: le voci del pacchetto in due tempi. Un motore vecchio le salta apposta (scrive solo il motore nuovo in "file"):
+             # il resto lo scrive il motore nuovo al secondo Applica ora.
+             'file_dopo_motore', 'elimina_dopo_motore'}
 AZIONI_NOTE = {'attiva-sito-nuovo', 'sito-pagine-e-stile'}
 
 
@@ -89,7 +92,9 @@ def estrai(zip_path, dove):
 def prefissa(m, pre):
     """Le voci di un manifest con i file spostati sotto <pre>/ (dentro il pacchetto unito)."""
     m = dict(m)
-    m['file'] = [{'da': f'{pre}/{f["da"]}', 'a': f['a']} for f in m.get('file', [])]
+    for k in ('file', 'file_dopo_motore'):
+        if k in m:
+            m[k] = [{'da': f'{pre}/{f["da"]}', 'a': f['a']} for f in m.get(k, [])]
     for k in ('pagine', 'sql', 'articoli', 'test'):
         if m.get(k):
             m[k] = [f'{pre}/{x}' for x in m[k]]
@@ -107,11 +112,14 @@ def unisci(cms, sito, senza_pagine):
                         'header, footer, menu, immagini; in Download gli zip del CMS e i manuali).') if not senza_pagine else
                        (f'Il CMS passa alla versione {V} e in Download arrivano gli zip del CMS e i manuali. Pagine, stile e menu restano come sono.'),
         'creato': cms.get('creato') or sito.get('creato'),
-        'file': cms['file'] + sito['file'],
-        'elimina': cms.get('elimina', []) + sito.get('elimina', []),
+        # 2.40.4: in due tempi, come lo zip di aggiornamento: in "file" solo il motore, tutto il resto dopo il motore.
+        'file': cms['file'],
+        'file_dopo_motore': cms.get('file_dopo_motore', []) + sito['file'],
+        'elimina': cms.get('elimina', []),
+        'elimina_dopo_motore': cms.get('elimina_dopo_motore', []) + sito.get('elimina', []),
         'redirect': sito.get('redirect', []),
         'note': f'Solo per il sito ufficiale di plumeCMS. Prima di cambiare qualcosa il pannello fa lo snapshot: se un passo non va, '
-                f'rimette tutto com\'era. Dentro: {len(cms["file"])} file del CMS, {len(sito["file"])} file del sito'
+                f'rimette tutto com\'era. Dentro: {len(cms["file"]) + len(cms.get("file_dopo_motore", []))} file del CMS, {len(sito["file"])} file del sito'
                 + ('' if senza_pagine else f', {len(sito.get("pagine", []))} pagine') + '.',
     }
     if not senza_pagine:
@@ -122,7 +130,7 @@ def unisci(cms, sito, senza_pagine):
                 m[k] = sito[k]
     # due voci con la stessa destinazione: vince l'ultima, ma è quasi sempre un errore di costruzione
     viste = {}
-    for f in m['file']:
+    for f in m['file'] + m.get('file_dopo_motore', []):
         if f['a'] in viste:
             errore(f'due file per la stessa destinazione {f["a"]}: {viste[f["a"]]} e {f["da"]}')
         viste[f['a']] = f['da']

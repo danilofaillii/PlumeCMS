@@ -2,6 +2,17 @@
 
 Il prodotto si chiama **plumeCMS** (nome scelto il 26 ottobre 2026; prima, per poche ore, "CarbonaraCMS", e ancora prima il provvisorio "Officina": gli zip vecchi si chiamavano `officina-*` e `carbonaracms-*`).
 
+## 2.40.4 (21 novembre 2026) - Aggiornamenti in due tempi, senza toccare il server a mano
+
+- **Cosa si vedeva**: sui siti fermi alla 2.39.2 o prima, su un hosting che rifiuta il secondo file PHP scritto di fila, ogni
+  aggiornamento (anche "Installa ora") si fermava con "Impossibile scrivere new/includes/aggiornamenti.php". La correzione della
+  2.40.2 e della 2.40.3 c'era, ma un pacchetto lo applica il motore già installato, e quello vecchio si fermava prima di installarla.
+- **Cosa cambia**: il pacchetto di aggiornamento è in due tempi. Il motore vecchio scrive solo il primo file, che è il motore nuovo
+  (il primo file passa sempre), e salta il resto. Appena il pannello carica il motore nuovo, il pacchetto torna "in attesa" con la
+  riga "Primo tempo fatto": si preme **Applica ora** una seconda volta (oppure lo fa il cron) e il motore nuovo installa il resto.
+  Niente da caricare a mano dal pannello dell'hosting.
+- Da questa versione in poi un sito con il motore nuovo applica tutto in un tempo solo, come prima.
+
 ## 2.40.3 (21 novembre 2026) - Niente più falsi allarmi dell'antivirus dell'hosting
 
 - **Cosa si vedeva**: su un hosting con l'antivirus Imunify360 l'aggiornamento si fermava ancora con "Impossibile scrivere

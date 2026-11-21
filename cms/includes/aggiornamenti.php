@@ -203,6 +203,13 @@ function agg_leggi_manifest(string $zipPath): array {
         if ($zip->locateName($s) === false) { $zip->close(); throw new RuntimeException("File SQL assente nello zip: $s"); }
         $out['sql'][] = $s;
     }
+    // 2.40.4: "file_dopo_motore" ed "elimina_dopo_motore" sono i file del pacchetto in due tempi. Un motore fino alla 2.40.3 non
+    // conosce queste voci e le salta: scrive solo "file" (il motore nuovo, un file solo, che si scrive anche sugli hosting che
+    // rifiutano il secondo file PHP di fila) e il pacchetto risulta applicato. Il motore nuovo le legge insieme a "file" e
+    // "elimina" e scrive tutto: con un motore vecchio basta premere Applica ora una seconda volta (agg_secondo_tempo()).
+    $out['due_tempi'] = isset($m['file_dopo_motore']) || isset($m['elimina_dopo_motore']);
+    $m['file'] = array_merge((array)($m['file'] ?? []), (array)($m['file_dopo_motore'] ?? []));
+    $m['elimina'] = array_merge((array)($m['elimina'] ?? []), (array)($m['elimina_dopo_motore'] ?? []));
     foreach ((array)($m['file'] ?? []) as $f) {
         if (!is_array($f) || empty($f['da']) || empty($f['a'])) { $zip->close(); throw new RuntimeException('Ogni voce di "file" deve avere "da" e "a".'); }
         if ($zip->locateName($f['da']) === false) { $zip->close(); throw new RuntimeException("File assente nello zip: {$f['da']}"); }
@@ -890,6 +897,7 @@ function agg_applica(string $id): array {
         agg_progresso($id, ++$passo, $totale, 'Quasi fatto');
 
         $stato['stato'] = 'applicato';
+        if (!empty($m['due_tempi'])) $stato['secondo_tempo'] = true; // 2.40.4: questo motore ha scritto anche i file dopo il motore
         $stato['applicato'] = date('Y-m-d H:i:s');
         if (function_exists('sicurezza_log')) sicurezza_log('pacchetto', (string)($_SESSION['admin_username'] ?? 'cron'), (int)($_SESSION['admin_user_id'] ?? 0), $m['nome'] . ' (' . count($m['file']) . ' file, ' . count($m['sql']) . ' sql' . ($m['firmato'] ? ', firmato' : ', senza firma') . ')');
         $stato['log'] = $log;
@@ -958,3 +966,34 @@ function agg_controlli(): array {
         . ($limB > 0 && $limB < 8 * 1048576 ? ' (serve almeno 8 MB: si alza da cPanel, MultiPHP INI Editor, upload_max_filesize e post_max_size a 8M)' : '')];
     return $c;
 }
+
+/**
+ * 2.40.4: il secondo tempo di un pacchetto in due tempi. Se un motore fino alla 2.40.3 ha applicato un pacchetto con
+ * "file_dopo_motore", ha scritto solo questo file (il motore nuovo) e ha segnato il pacchetto come applicato. Appena questo
+ * file viene caricato (pagina Aggiornamenti, Installa ora), il pacchetto torna "in attesa" con una riga nel log: si preme
+ * Applica ora e questo motore scrive il resto. Lo fa una volta sola per pacchetto (secondo_tempo nello stato).
+ */
+function agg_secondo_tempo(): void {
+    try {
+        $dir = agg_dir('pacchetti');
+        foreach (glob($dir . '/*.json') ?: [] as $f) {
+            $st = json_decode((string)@file_get_contents($f), true);
+            if (!is_array($st) || ($st['stato'] ?? '') !== 'applicato' || !empty($st['secondo_tempo']) || empty($st['id'])) continue;
+            $zipPath = $dir . '/' . basename((string)$st['id']) . '.zip';
+            if (!is_file($zipPath)) continue;
+            $z = new ZipArchive();
+            if ($z->open($zipPath) !== true) continue;
+            $man = json_decode((string)$z->getFromName('manifest.json'), true);
+            $z->close();
+            if (!is_array($man) || (empty($man['file_dopo_motore']) && empty($man['elimina_dopo_motore']))) continue;
+            $st['stato'] = 'in_attesa';
+            $st['secondo_tempo'] = false;
+            $st['applicato'] = null;
+            $st['log'] = array_merge((array)($st['log'] ?? []), ['Primo tempo fatto: il motore degli aggiornamenti è nuovo. Premi Applica ora per installare il resto della versione.']);
+            agg_salva_stato($st);
+        }
+    } catch (Throwable $e) {
+        error_log('agg_secondo_tempo: ' . $e->getMessage());
+    }
+}
+if (function_exists('agg_dir')) agg_secondo_tempo();

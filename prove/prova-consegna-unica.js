@@ -33,7 +33,7 @@ const py = (codice, ...arg) => execFileSync('python3', ['-I', '-c', codice, ...a
   // 2.36.0: "seo" la conosce il motore dalla 2.35.0 (consegna.py la mette nel pacchetto unico solo sopra quella versione).
   ok('manifest: solo voci che il motore installato conosce', Object.keys(m).every(k => note.includes(k)), Object.keys(m));
   ok('manifest: azioni conosciute (sito-pagine-e-stile)', (m.azioni || []).every(a => ['attiva-sito-nuovo', 'sito-pagine-e-stile'].includes(a)), m.azioni);
-  const dest = m.file.map(f => f.a);
+  const dest = m.file.concat(m.file_dopo_motore || []).map(f => f.a);
   ok('manifest: nessuna destinazione doppia', new Set(dest).size === dest.length);
   ok('manifest: il codice del CMS (new/, con il motore e VERSIONE)', dest.includes('new/includes/aggiornamenti.php') && dest.includes('new/VERSIONE') && dest.includes('new/admin/assets/pannello.js'));
   ok('manifest: in Download gli zip del CMS e i due manuali, non più quello degli addon', [`uploads/scaricabili/plumecms-${V}.zip`, `uploads/scaricabili/plumecms-${V}-aggiornamento.zip`, 'uploads/scaricabili/manuale-uso.pdf', 'uploads/scaricabili/manuale-temi.pdf'].every(x => dest.includes(x))

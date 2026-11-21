@@ -171,8 +171,14 @@ def scrivi_aggiornamento(versione, file, dest):
     manifest = {
         'nome': f'{NOME_PRODOTTO} {versione}', 'descrizione': f'Aggiornamento del CMS alla versione {versione}: tutti i file del nucleo.',
         'creato': __import__('datetime').date.today().isoformat(),
-        'file': [{'da': f'file/{rel}', 'a': f'new/{rel}'} for rel in file if rel != 'README.md' and rel != 'INSTALLA.md'],
-        'elimina': [f'new/{rel}' for rel in TOLTI if rel not in file],
+        # 2.40.4: pacchetto in due tempi. In "file" solo il motore degli aggiornamenti: un motore fino alla 2.40.3 scrive solo
+        # quello (il primo file passa anche sugli hosting che rifiutano il secondo file PHP di fila) e salta le voci *_dopo_motore,
+        # che non conosce. Il motore nuovo le legge e scrive il resto (al secondo Applica ora, o subito se è già lui il motore).
+        'file': [{'da': f'file/{rel}', 'a': f'new/{rel}'} for rel in file if rel == 'includes/aggiornamenti.php'],
+        'file_dopo_motore': [{'da': f'file/{rel}', 'a': f'new/{rel}'} for rel in file
+                             if rel not in ('README.md', 'INSTALLA.md', 'includes/aggiornamenti.php')],
+        'elimina': [],
+        'elimina_dopo_motore': [f'new/{rel}' for rel in TOLTI if rel not in file],
         'note': f'Versione {versione}. Il pacchetto sostituisce i file del CMS e lascia moduli, immagini, configurazione e database.',
     }
     with zipfile.ZipFile(dest, 'w', zipfile.ZIP_DEFLATED, compresslevel=9) as z:

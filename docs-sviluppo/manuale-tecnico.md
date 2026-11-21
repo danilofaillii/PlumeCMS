@@ -3602,6 +3602,15 @@ backdoor (firma SMW-SA-05542-mlw.bkdr-4, falso allarme sulla forma del codice: f
 `api/nl.php` dalla 2.40.3 è scritto in forma piana (`nl_parametro()`, nomi interi, pixel da numeri). Lo strumento
 `tools/diagnosi-scrittura.php` (da caricare a mano con la chiave, mai nello zip) prova la scrittura dei file fuori dall'aggiornamento.
 
+**Pacchetti in due tempi** (2.40.4): lo zip di aggiornamento (`tools/cms-pacchetto.py`) e il pacchetto unico (`tools/consegna.py`)
+hanno in `file` solo `new/includes/aggiornamenti.php` e tutto il resto in `file_dopo_motore` ed `elimina_dopo_motore`. Un motore fino
+alla 2.40.3 costruisce il manifest solo con le voci che conosce (`agg_leggi_manifest()`): scrive il motore nuovo, salta il resto e
+segna il pacchetto applicato. Il motore nuovo, in fondo al file, chiama `agg_secondo_tempo()` ogni volta che viene incluso (pannello,
+dashboard, cron, Installa ora): un pacchetto applicato con le voci `*_dopo_motore` e senza `secondo_tempo` nello stato torna
+`in_attesa` con la riga "Primo tempo fatto"; Applica ora (o il cron, che applica i pacchetti in attesa senza data) lo rifà con il motore
+nuovo, che legge `file` + `file_dopo_motore` insieme e segna `secondo_tempo`. Con il motore nuovo già installato tutto avviene in un tempo.
+Un `.php` in `root/` resta soggetto alla firma anche in `file_dopo_motore` (le voci si uniscono prima dei controlli).
+
 Il motore nuovo vale dal pacchetto **dopo** quello che lo porta. Su un sito con il blocco del secondo file il motore si porta da
 solo, in un pacchetto con il solo `new/includes/aggiornamenti.php` (il primo file si scrive sempre), e poi si applica il resto.
 
