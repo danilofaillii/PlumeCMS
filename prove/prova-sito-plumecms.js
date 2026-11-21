@@ -79,7 +79,7 @@ async function contrastoParole(pg) {
     // 2.1.0, il pacchetto unico: nello stesso giro anche il codice del CMS.
     ok(`pacchetto unico: il CMS è passato alla ${V} (VERSIONE e pannello Informazioni)`, fs.readFileSync(path.join(DIR, 'VERSIONE'), 'utf8').trim() === V
       && (await (async () => { await p.goto(B + '/admin/informazioni.php', { waitUntil: 'networkidle' }); return (await p.locator('body').innerText()).includes(V); })()));
-    ok('pacchetto unico: il resoconto ha i file del CMS e le pagine del sito', /File (scritto|uguale, lasciato com.era): new\/includes\/aggiornamenti\.php/.test(log) && /File scritto: uploads\/scaricabili\/manuale-uso\.pdf/.test(log));
+    ok('pacchetto unico: il resoconto ha i file del CMS e le pagine del sito', /File (scritto|uguale, lasciato com.era): new\/includes\/aggiornamenti\.php/.test(log) && /File (scritto|uguale, lasciato com.era): uploads\/scaricabili\/manuale-uso\.pdf/.test(log));
   }
   ok('nessun errore JavaScript nel pannello', err.length === 0, err);
 
@@ -222,7 +222,9 @@ async function contrastoParole(pg) {
     ok('Scarica: nelle novità nessun nome di aziende terze', r && terzi.length === 0, terzi);
     // 2.39.2: con sei novità mostrate la 2.36.0 esce dall'elenco dalla 2.39.2 in poi.
     if ((([a, b, c]) => a === 2 && b >= 36 && (b < 39 || (b === 39 && c <= 1)))(V.split('.').map(Number))) ok('Scarica (2.36.0): fra le novità le pagine per zona senza limite', r && r.voci.some(x => /^2\.36\.0: Pagine per zona senza limite/.test(x)), r && r.voci);
-    if ((([a, b]) => a > 2 || (a === 2 && b >= 39))(V.split('.').map(Number))) ok('Scarica (2.39.0): fra le novità i popup costruiti con l\'editor visuale', r && r.voci.some(x => /^2\.39\.0: Popup costruiti con l'editor visuale/.test(x)), r && r.voci);
+    if ((([a, b, c]) => a > 2 || (a === 2 && (b > 40 || (b === 40 && c >= 3))))(V.split('.').map(Number))) ok('Scarica (2.40.3): fra le novità quella degli antivirus', r && r.voci.some(x => /^2\.40\.3: Niente falsi allarmi degli antivirus/.test(x)), r && r.voci);
+    // 2.40.3: con sei novità mostrate la 2.39.0 esce dall'elenco dalla 2.40.2; al suo posto si guarda la 2.40.3.
+    if ((([a, b, c]) => a === 2 && (b === 39 || (b === 40 && c < 2)))(V.split('.').map(Number))) ok('Scarica (2.39.0): fra le novità i popup costruiti con l\'editor visuale', r && r.voci.some(x => /^2\.39\.0: Popup costruiti con l'editor visuale/.test(x)), r && r.voci);
     if ((([a, b, c]) => a > 2 || (a === 2 && (b > 39 || (b === 39 && c >= 1))))(V.split('.').map(Number))) ok('Scarica (2.39.1): fra le novità la pagina per scegliere la password nuova', r && r.voci.some(x => /^2\.39\.1: La pagina per scegliere la password nuova/.test(x)), r && r.voci);
     if ((([a, b, c]) => a > 2 || (a === 2 && (b > 39 || (b === 39 && c >= 2))))(V.split('.').map(Number))) ok('Scarica (2.39.2): fra le novità le pagine degli elenchi chiare per i motori di ricerca', r && r.voci.some(x => /^2\.39\.2: Pagine degli elenchi chiare per i motori di ricerca/.test(x)), r && r.voci);
     if ((([a, b]) => a > 2 || (a === 2 && b >= 40))(V.split('.').map(Number))) ok('Scarica (2.40.0): fra le novità il blog disegnato con l\'editor', r && r.voci.some(x => /^2\.40\.0: Il blog disegnato con l'editor/.test(x)), r && r.voci);

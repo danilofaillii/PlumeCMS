@@ -109,7 +109,7 @@ Sono gli unici in `cms/docs/`, nello zip, nel sito di plumeCMS e nella pagina Do
 - **Pacchetto di aggiornamento** per un'installazione esistente:
   `python3 tools/cms-pacchetto.py --aggiornamento`. Si carica dal pannello,
   Impostazioni, Aggiornamenti.
-- **Versione**: `cms/VERSIONE` (oggi 2.40.2; sempre tre numeri: "beta" va nel CHANGELOG, mai nel nome dello zip, se no la serie "ultima" del Download non lo riconosce) e una voce in `cms/CHANGELOG.md` a ogni
+- **Versione**: `cms/VERSIONE` (oggi 2.40.3; sempre tre numeri: "beta" va nel CHANGELOG, mai nel nome dello zip, se no la serie "ultima" del Download non lo riconosce) e una voce in `cms/CHANGELOG.md` a ogni
   zip con contenuto diverso. Mai cambiare il contenuto di una versione già data.
 - **Prove** prima di dire finito:
   - `php -n -d short_open_tag=1 -l` su ogni file PHP toccato, `node --check` sui js;
@@ -167,6 +167,19 @@ Le decisioni complete, con data e perché, stanno nel second brain, `plumecms/de
 - **Nome: plumeCMS** (26 ottobre 2026).
 
 ## Stato al 31 ottobre 2026
+
+Fatto: plumeCMS 2.40.3 (21 novembre, 17:28-18:20): **la causa vera del blocco di plumecms.it**. Pagina di diagnosi `tools/diagnosi-scrittura.php`
+(caricata a mano con chiave, si cancella da sola; mai nello zip): da ferma tutte le scritture passano, utente fidesdo, server LiteSpeed con CageFS e
+**Imunify360**. Lo scanner di Imunify360 (schermata di Danilo) segnava `api/nl.php` come backdoor, firma `SMW-SA-05542-mlw.bkdr-4`, in tutti i siti
+dell'account e in ogni snapshot; le copie negli snapshot delle 17:24 e 17:25 coincidono con i due tentativi falliti. Falso allarme sulla forma del codice
+(funzione anonima su `$_GET`, nomi di una lettera, `base64_decode` stampato): `api/nl.php` riscritto in forma piana con lo stesso comportamento
+(`nl_parametro()`, pixel da numeri, identico al byte). Il motore fa lo snapshot solo dei file che cambiano ("File che cambiano: N su M"). Consegna per
+plumecms.it in **tre pacchetti**: `-passo-1-motore.zip`, `-passo-2-newsletter.zip` (solo `new/api/nl.php`), poi il pacchetto unico. Detto a Danilo:
+**non premere "Pulisci tutto"** in Imunify360 (toglierebbe nl.php e le copie). Prove (`$S/v31/prova.sh`, dopo un riavvio del contenitore delle 17:26):
+2.39.2 installata 38/38, pacchetto 2.39.2 137/138, passo 1 + passo 2 + unico 2.40.3 143/144 (il KO era il controllo della novità 2.39.0, uscita
+dall'elenco di sei: prova corretta, poi 139/140 con un KO voluto dal secondo giro sullo stesso sito, file tutti uguali; regex corretta), pixel identico,
+rimando con firma falsa verso fuori va alla home, attacchi 653/653. **Non provato**: lo scanner vero di Imunify360 sul file nuovo (non so quale tratto
+facesse scattare la firma).
 
 Fatto: plumeCMS 2.40.2 (21 novembre, 01:01-11:12): **aggiornamenti che reggono gli hosting severi** (segnalazione di Danilo: il pacchetto unico 2.40.1 su
 plumecms.it falliva con "Impossibile scrivere new/includes/aggiornamenti.php"; `logs/php-errori.log`: "Permission denied" su quel file; permessi 0644 e spazio a
@@ -1096,6 +1109,7 @@ Errori veri, già pagati. Non ripeterli.
 | Una funzione di un'estensione PHP non richiesta dall'installatore (`iconv()`) chiamata senza `function_exists` | su un hosting che non ce l'ha (Hostcare) l'installazione si ferma a metà con "Call to undefined function" (2.29.1). Le estensioni fuori dalla lista dei requisiti si usano solo con una riserva; si prova con `php -d disable_functions=<funzione>` |
 | Un agente in sottofondo quando il contenitore si riavvia | l'agente muore senza resoconto e non riparte da solo (8 novembre, 15:10: la 2.32.0 ferma un'ora). Nel compito: commit di lavoro ogni 20-30 minuti e un file di avanzamento (`$S/ai/AVANZAMENTO.md`); e un controllo programmato con `send_later` ogni 40 minuti che salva, rilancia un agente nuovo dall'ultimo commit e lo dice a Danilo |
 | Un hosting che rifiuta il secondo file PHP scritto di fila (plumecms.it, 21 novembre 2026) | "Permission denied" con permessi e spazio a posto: il pacchetto si ferma e torna indietro. Dalla 2.40.2 il motore salta i file uguali, scrive con temporaneo e rinomina e riprova; un motore nuovo si porta da solo in un pacchetto con il solo `aggiornamenti.php` |
+| Un antivirus dell'hosting (Imunify360) che segna come backdoor un file del CMS (`api/nl.php`, 21 novembre 2026) | ogni aggiornamento ne copia una versione nello snapshot, lo scanner la segna e il file dopo viene rifiutato con "Permission denied". Il codice dei file pubblici si scrive in forma piana: niente funzioni anonime su `$_GET`, nomi di una lettera, `base64_decode` stampato; per capire cosa succede su un hosting, `tools/diagnosi-scrittura.php` |
 | Fidarsi del resoconto di un agente | è successo che un agente dichiarasse lavoro mai scritto su disco. Si controllano i file veri e si rifanno le prove |
 
 ## Tono con l'utente
