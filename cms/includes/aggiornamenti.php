@@ -596,8 +596,10 @@ function agg_ripristina(string $id): array {
         if ($f['esisteva']) {
             $copia = $dir . '/files/' . $f['dest'];
             @mkdir(dirname($abs), 0755, true);
-            if (copy($copia, $abs)) { agg_opcache_dimentica($abs); $log[] = 'File rimesso: ' . $f['dest']; }
-            else $log[] = 'ATTENZIONE, file non rimesso: ' . $f['dest'];
+            $dati = @file_get_contents($copia);
+            $esito = $dati === false ? 'la copia nello snapshot non si legge' : agg_scrivi_file($abs, $dati);
+            if ($esito === 'scritto' || $esito === 'uguale') { agg_opcache_dimentica($abs); $log[] = 'File rimesso: ' . $f['dest']; }
+            else $log[] = 'ATTENZIONE, file non rimesso: ' . $f['dest'] . ' (' . $esito . ')';
         } else {
             if (file_exists($abs)) { @unlink($abs); $log[] = 'File rimosso (prima non esisteva): ' . $f['dest']; }
         }
@@ -669,6 +671,47 @@ function agg_split_sql(string $sql): array {
  * validate_timestamps spento, su alcuni hosting) la prima visita dopo l'aggiornamento poteva usare un file vecchio insieme a
  * uno nuovo: "Call to undefined function" e pagina in 500 (trovato dalla prova del pacchetto unico della 2.5.0).
  */
+/**
+ * 2.40.2: scrive un file del pacchetto (o dello snapshot) al suo posto.
+ * - Se il file c'è già con lo stesso contenuto non lo tocca ('uguale'): un pacchetto unico porta tutti i file del CMS, e riscrivere
+ *   quelli che non cambiano è solo un rischio in più.
+ * - Scrive prima un file temporaneo nella stessa cartella e poi lo mette al posto di quello vecchio con una rinomina: il file non
+ *   resta mai a metà, e un file che il server non lascia riaprire in scrittura si sostituisce lo stesso (basta poter scrivere nella
+ *   cartella). Se la rinomina non riesce, prova a scrivere il file direttamente, come fino alla 2.40.1.
+ * - Su certi hosting il server rifiuta per un momento la scrittura di un file PHP subito dopo un altro (plumecms.it, 21 novembre
+ *   2026: "Permission denied" sempre sul secondo file del pacchetto, mentre il ripristino pochi secondi dopo lo scriveva): riprova
+ *   fino a sei volte, aspettando 1, 2, 3, 4 e 5 secondi.
+ * Restituisce 'scritto', 'uguale' o il motivo dell'errore in parole (con il messaggio di PHP).
+ */
+function agg_scrivi_file(string $abs, string $data): string {
+    if (is_file($abs) && filesize($abs) === strlen($data) && hash_file('sha256', $abs) === hash('sha256', $data)) return 'uguale';
+    $dir = dirname($abs);
+    if (!is_dir($dir)) @mkdir($dir, 0755, true);
+    $pause = defined('CMS_AGG_PAUSE') ? (array)CMS_AGG_PAUSE : [1, 2, 3, 4, 5];
+    $motivo = '';
+    for ($giro = 0; $giro <= count($pause); $giro++) {
+        if ($giro > 0) { clearstatcache(); sleep((int)$pause[$giro - 1]); }
+        error_clear_last();
+        $tmp = $dir . '/.' . basename($abs) . '.plume-' . bin2hex(random_bytes(4));
+        if (@file_put_contents($tmp, $data) === strlen($data)) {
+            @chmod($tmp, is_file($abs) ? (fileperms($abs) & 0777) : 0644);
+            if (@rename($tmp, $abs)) return 'scritto';
+        }
+        $e = error_get_last();
+        @unlink($tmp);
+        error_clear_last();
+        if (@file_put_contents($abs, $data) === strlen($data)) return 'scritto';
+        $e = error_get_last() ?: $e;
+        $motivo = $e ? preg_replace('/^[a-z_]+\([^)]*\): /i', '', (string)$e['message']) : 'motivo sconosciuto';
+    }
+    $spiega = [];
+    if (!is_writable($dir)) $spiega[] = 'la cartella non è scrivibile';
+    elseif (is_file($abs) && !is_writable($abs)) $spiega[] = 'il file non è scrivibile (permessi o proprietario)';
+    $libero = @disk_free_space($dir);
+    if ($libero !== false && $libero < strlen($data) + 1048576) $spiega[] = 'lo spazio sul disco è finito';
+    return $motivo . ($spiega ? ' (' . implode(', ', $spiega) . ')' : '') . ', riprovato ' . (count($pause) + 1) . ' volte';
+}
+
 function agg_opcache_dimentica(string $abs): void {
     if (str_ends_with($abs, '.php') && function_exists('opcache_invalidate')) @opcache_invalidate($abs, true);
 }
@@ -751,10 +794,10 @@ function agg_applica(string $id): array {
             $data = $zip->getFromName($f['da']);
             if ($data === false) throw new RuntimeException('File non leggibile nello zip: ' . $f['da']);
             $abs = agg_dest_path($f['a']);
-            @mkdir(dirname($abs), 0755, true);
-            if (file_put_contents($abs, $data) === false) throw new RuntimeException('Impossibile scrivere ' . $f['a']);
-            agg_opcache_dimentica($abs);
-            $log[] = 'File scritto: ' . $f['a'] . ' (' . agg_fmt_bytes(strlen($data)) . ')';
+            $esito = agg_scrivi_file($abs, $data);
+            if ($esito !== 'scritto' && $esito !== 'uguale') throw new RuntimeException('Impossibile scrivere ' . $f['a'] . ': ' . $esito);
+            if ($esito === 'uguale') $log[] = 'File uguale, lasciato com\'era: ' . $f['a'];
+            else { agg_opcache_dimentica($abs); $log[] = 'File scritto: ' . $f['a'] . ' (' . agg_fmt_bytes(strlen($data)) . ')'; }
             agg_progresso($id, ++$passo, $totale, 'Copio i file: ' . basename($f['a']));
         }
 

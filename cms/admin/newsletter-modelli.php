@@ -54,11 +54,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             if (strlen($hh) > 1500000) { flash('error', 'Il codice HTML è troppo lungo (più di 1,5 MB): togli le immagini incorporate e usa i loro indirizzi.'); $vai = 'newsletter-modelli.php?codice=' . $id; break; }
             if (trim($hh) === '') { flash('error', 'Il codice HTML è vuoto: incolla l\'email, oppure elimina il modello.'); $vai = 'newsletter-modelli.php?codice=' . $id; break; }
             nd_modello_cambia($id, ['html' => newsletter_4byte_dentro($hh), 'oggetto' => nd_nome($_POST['oggetto'] ?? ''), 'anteprima' => nd_anteprima($_POST['anteprima'] ?? '')]);
-            flash('success', "Modello «$nomeM» salvato" . (($usati[$id] ?? []) ? ': le automazioni che lo richiamano mandano da adesso questa versione.' : '.'));
+            flash('success', "Modello «{$nomeM}» salvato" . (($usati[$id] ?? []) ? ': le automazioni che lo richiamano mandano da adesso questa versione.' : '.'));
             $vai = 'newsletter-modelli.php?codice=' . $id . ($flussoTorna ? '&flusso=' . $flussoTorna : '');
             break;
         case 'attiva':
-            if ($m) { nd_modello_cambia($id, ['attivo' => empty($_POST['si']) ? 0 : 1]); flash('success', empty($_POST['si']) ? "«$nomeM» non è più attivo: non compare più fra i modelli delle campagne." . (($usati[$id] ?? []) ? ' Le automazioni che lo richiamano continuano a mandarlo.' : '') : "«$nomeM» è attivo: lo scegli nella sezione Design di ogni campagna."); }
+            if ($m) { nd_modello_cambia($id, ['attivo' => empty($_POST['si']) ? 0 : 1]); flash('success', empty($_POST['si']) ? "«{$nomeM}» non è più attivo: non compare più fra i modelli delle campagne." . (($usati[$id] ?? []) ? ' Le automazioni che lo richiamano continuano a mandarlo.' : '') : "«{$nomeM}» è attivo: lo scegli nella sezione Design di ogni campagna."); }
             break;
         case 'rinomina':
             $n = nd_nome($_POST['nome'] ?? '');
@@ -67,17 +67,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         case 'oggetto':
             if (!$m) break;
             // 2.18.0: un modello richiamato dalle automazioni non diventa l'email di conferma (quei passi si fermerebbero).
-            if (!empty($_POST['optin']) && $m['tag'] !== 'optin' && ($usati[$id] ?? [])) { flash('error', "«$nomeM» è usato da " . $doveUsato($id) . ': non può diventare l\'email di conferma. Duplicalo e spunta la copia.'); break; }
+            if (!empty($_POST['optin']) && $m['tag'] !== 'optin' && ($usati[$id] ?? [])) { flash('error', "«{$nomeM}» è usato da " . $doveUsato($id) . ': non può diventare l\'email di conferma. Duplicalo e spunta la copia.'); break; }
             nd_modello_cambia($id, ['oggetto' => nd_nome($_POST['oggetto'] ?? ''), 'anteprima' => nd_anteprima($_POST['anteprima'] ?? ''), 'tag' => !empty($_POST['optin']) ? 'optin' : '']);
             flash('success', 'Modello salvato.');
             break;
         case 'duplica':
             $n = $m ? nd_modello_duplica($id) : 0;
-            $n ? flash('success', "Copia di «$nomeM» creata: nasce inattiva.") : flash('error', 'Modello sconosciuto.');
+            $n ? flash('success', "Copia di «{$nomeM}» creata: nasce inattiva.") : flash('error', 'Modello sconosciuto.');
             break;
         case 'elimina':
             $u = $doveUsato($id);
-            $m && nd_modello_elimina($id) ? flash($u !== '' ? 'error' : 'success', "Modello «$nomeM» eliminato. Le campagne che lo hanno usato tengono il loro design." . ($u !== '' ? " Attenzione: lo richiamava $u. Quelle email non partono e le persone si fermano lì finché non scegli un altro modello nel passo." : '')) : flash('error', 'Modello sconosciuto.');
+            $m && nd_modello_elimina($id) ? flash($u !== '' ? 'error' : 'success', "Modello «{$nomeM}» eliminato. Le campagne che lo hanno usato tengono il loro design." . ($u !== '' ? " Attenzione: lo richiamava $u. Quelle email non partono e le persone si fermano lì finché non scegli un altro modello nel passo." : '')) : flash('error', 'Modello sconosciuto.');
             break;
         case 'galleria':
             $slug = (string)($_POST['slug'] ?? '');
