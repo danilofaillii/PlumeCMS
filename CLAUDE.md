@@ -109,7 +109,7 @@ Sono gli unici in `cms/docs/`, nello zip, nel sito di plumeCMS e nella pagina Do
 - **Pacchetto di aggiornamento** per un'installazione esistente:
   `python3 tools/cms-pacchetto.py --aggiornamento`. Si carica dal pannello,
   Impostazioni, Aggiornamenti.
-- **Versione**: `cms/VERSIONE` (oggi 2.40.3; sempre tre numeri: "beta" va nel CHANGELOG, mai nel nome dello zip, se no la serie "ultima" del Download non lo riconosce) e una voce in `cms/CHANGELOG.md` a ogni
+- **Versione**: `cms/VERSIONE` (oggi 2.40.4; sempre tre numeri: "beta" va nel CHANGELOG, mai nel nome dello zip, se no la serie "ultima" del Download non lo riconosce) e una voce in `cms/CHANGELOG.md` a ogni
   zip con contenuto diverso. Mai cambiare il contenuto di una versione già data.
 - **Prove** prima di dire finito:
   - `php -n -d short_open_tag=1 -l` su ogni file PHP toccato, `node --check` sui js;
@@ -167,6 +167,17 @@ Le decisioni complete, con data e perché, stanno nel second brain, `plumecms/de
 - **Nome: plumeCMS** (26 ottobre 2026).
 
 ## Stato al 31 ottobre 2026
+
+Fatto: plumeCMS 2.40.4 (21 novembre, 18:20-18:40): **pacchetti in due tempi** (Danilo: su cucinacreativalatina.it, stesso hosting, "Installa ora" della 2.40.3
+falliva come su plumecms.it; caricare il motore a mano da cPanel "non posso farlo, non tutti i siti sono i miei"). Lo zip di aggiornamento
+(`cms-pacchetto.py`) e il pacchetto unico (`consegna.py`, `pacchetto.py`) hanno in `file` solo `new/includes/aggiornamenti.php` e il resto in
+`file_dopo_motore` ed `elimina_dopo_motore`: un motore fino alla 2.40.3 scrive solo il motore nuovo (il primo file passa sempre) e salta le voci che
+non conosce; il motore nuovo in fondo al file chiama `agg_secondo_tempo()` quando viene incluso (pannello, dashboard, cron, Installa ora) e rimette
+il pacchetto `in_attesa` con "Primo tempo fatto"; al secondo Applica ora (o dal cron) scrive il resto e segna `secondo_tempo`. Con il motore nuovo
+già installato tutto in un tempo. Prove (`$S/v32/prova.sh`, `$S/v32/unico.sh`, con il blocco simulato): 2.39.2 installata 38/38, 2.40.3 col motore
+vecchio fallisce, 2.40.4 primo tempo ok (versione resta 2.39.2, motore nuovo scritto), stato in attesa dopo il caricamento, secondo tempo ok, 2.40.4,
+nessun temporaneo; pacchetto unico su un sito 2.40.3 in due tempi, Download con la 2.40.4. **Non provato**: l'hosting vero, il flusso "Installa ora"
+nel browser (provato da riga di comando con le stesse funzioni del motore).
 
 Fatto: plumeCMS 2.40.3 (21 novembre, 17:28-18:04): **la causa vera del blocco di plumecms.it**. Pagina di diagnosi `tools/diagnosi-scrittura.php`
 (caricata a mano con chiave, si cancella da sola; mai nello zip): da ferma tutte le scritture passano, utente fidesdo, server LiteSpeed con CageFS e
