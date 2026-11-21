@@ -168,7 +168,7 @@ Le decisioni complete, con data e perché, stanno nel second brain, `plumecms/de
 
 ## Stato al 31 ottobre 2026
 
-Fatto: plumeCMS 2.40.2 (21 novembre, 01:01-11:30): **aggiornamenti che reggono gli hosting severi** (segnalazione di Danilo: il pacchetto unico 2.40.1 su
+Fatto: plumeCMS 2.40.2 (21 novembre, 01:01-11:12): **aggiornamenti che reggono gli hosting severi** (segnalazione di Danilo: il pacchetto unico 2.40.1 su
 plumecms.it falliva con "Impossibile scrivere new/includes/aggiornamenti.php"; `logs/php-errori.log`: "Permission denied" su quel file; permessi 0644 e spazio a
 posto). Il server di Danilo (CloudLinux, LiteSpeed) rifiuta sempre il **secondo** file PHP scritto di fila: `addon.php` sì, `aggiornamenti.php` no; con un
 pacchetto ridotto di 28 file `consegna.php` sì, `editor-widget-extra-c.php` no; il ripristino, pochi secondi dopo, riscrive gli stessi file. `agg_scrivi_file()`
@@ -178,7 +178,7 @@ valido nei nomi di variabile PHP, ora `{$nomeM}`). Consegna per plumecms.it in *
 `new/includes/aggiornamenti.php`: il primo file si scrive sempre) e poi il pacchetto unico (`consegna.py --uno`). Prove: `prove/agg-scrittura-cli.php` 12/12
 (chattr +i), `$S/v29/prova.sh` con `$S/v29/blocca.py` che imita l'hosting (dopo un file PHP cambiato blocca gli altri di includes/ per 3 s): 2.39.2 installata 38/38,
 pacchetto 2.39.2 137/138 (il KO vuole la riga della 2.40.0), pacchetto 2.40.1 col blocco fallisce come da Danilo, motore + unico 2.40.2 142/142, nessun
-temporaneo rimasto. **Non provato**: l'hosting vero di Danilo.
+temporaneo rimasto, attacchi 653/653. **Non provato**: l'hosting vero di Danilo.
 
 Fatto: plumeCMS 2.40.1 (20 novembre, 19:15-21:28): **il nome del mittente nelle email** (segnalazione di Danilo: con il nome "[Cucina Creativa]" Apple Mail
 mostrava `MISSING_MAILBOX@MISSING_DOMAIN ... per conto di [ Cucina Creativa ]`). Causa: `posta_oggetto()` codificava solo il non ASCII, quindi un nome ASCII con
