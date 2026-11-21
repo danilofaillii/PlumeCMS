@@ -179,7 +179,9 @@ plumecms.it in **tre pacchetti**: `-passo-1-motore.zip`, `-passo-2-newsletter.zi
 2.39.2 installata 38/38, pacchetto 2.39.2 137/138, passo 1 + passo 2 + unico 2.40.3 143/144 (il KO era il controllo della novità 2.39.0, uscita
 dall'elenco di sei: prova corretta, poi 139/140 con un KO voluto dal secondo giro sullo stesso sito, file tutti uguali; regex corretta), pixel identico,
 rimando con firma falsa verso fuori va alla home, attacchi 653/653. **Non provato**: lo scanner vero di Imunify360 sul file nuovo (non so quale tratto
-facesse scattare la firma).
+facesse scattare la firma). **Esito su plumecms.it (21 novembre, 18:15)**: Danilo caricava sempre il pacchetto unico e lo applicava il motore vecchio
+(tutti gli errori del registro alla riga 755 della 2.39.2); con `includes/aggiornamenti.php` 2.40.3 caricato a mano da cPanel e poi "Applica ora" il sito
+è passato alla 2.40.3 ("ora è ok"). Per i siti sullo stesso hosting: prima il motore a mano da cPanel, poi il pacchetto.
 
 Fatto: plumeCMS 2.40.2 (21 novembre, 01:01-11:12): **aggiornamenti che reggono gli hosting severi** (segnalazione di Danilo: il pacchetto unico 2.40.1 su
 plumecms.it falliva con "Impossibile scrivere new/includes/aggiornamenti.php"; `logs/php-errori.log`: "Permission denied" su quel file; permessi 0644 e spazio a
