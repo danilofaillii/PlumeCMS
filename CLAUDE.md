@@ -109,7 +109,7 @@ Sono gli unici in `cms/docs/`, nello zip, nel sito di plumeCMS e nella pagina Do
 - **Pacchetto di aggiornamento** per un'installazione esistente:
   `python3 tools/cms-pacchetto.py --aggiornamento`. Si carica dal pannello,
   Impostazioni, Aggiornamenti.
-- **Versione**: `cms/VERSIONE` (oggi 2.40.1; sempre tre numeri: "beta" va nel CHANGELOG, mai nel nome dello zip, se no la serie "ultima" del Download non lo riconosce) e una voce in `cms/CHANGELOG.md` a ogni
+- **Versione**: `cms/VERSIONE` (oggi 2.40.2; sempre tre numeri: "beta" va nel CHANGELOG, mai nel nome dello zip, se no la serie "ultima" del Download non lo riconosce) e una voce in `cms/CHANGELOG.md` a ogni
   zip con contenuto diverso. Mai cambiare il contenuto di una versione già data.
 - **Prove** prima di dire finito:
   - `php -n -d short_open_tag=1 -l` su ogni file PHP toccato, `node --check` sui js;
@@ -167,6 +167,18 @@ Le decisioni complete, con data e perché, stanno nel second brain, `plumecms/de
 - **Nome: plumeCMS** (26 ottobre 2026).
 
 ## Stato al 31 ottobre 2026
+
+Fatto: plumeCMS 2.40.2 (21 novembre, 01:01-11:30): **aggiornamenti che reggono gli hosting severi** (segnalazione di Danilo: il pacchetto unico 2.40.1 su
+plumecms.it falliva con "Impossibile scrivere new/includes/aggiornamenti.php"; `logs/php-errori.log`: "Permission denied" su quel file; permessi 0644 e spazio a
+posto). Il server di Danilo (CloudLinux, LiteSpeed) rifiuta sempre il **secondo** file PHP scritto di fila: `addon.php` sì, `aggiornamenti.php` no; con un
+pacchetto ridotto di 28 file `consegna.php` sì, `editor-widget-extra-c.php` no; il ripristino, pochi secondi dopo, riscrive gli stessi file. `agg_scrivi_file()`
+(`includes/aggiornamenti.php`): file uguali saltati ("File uguale, lasciato com'era"), file temporaneo `.<nome>.plume-<hex>` più `rename()`, riprova con pause
+1-5 s (`CMS_AGG_PAUSE`), motivo nell'errore; anche nel ripristino. Corretti i messaggi di Newsletter > Modelli senza nome (`"«$nomeM»"`: `»` è un carattere
+valido nei nomi di variabile PHP, ora `{$nomeM}`). Consegna per plumecms.it in **due pacchetti**: `plumecms-2.40.2-passo-1-motore.zip` (solo
+`new/includes/aggiornamenti.php`: il primo file si scrive sempre) e poi il pacchetto unico (`consegna.py --uno`). Prove: `prove/agg-scrittura-cli.php` 12/12
+(chattr +i), `$S/v29/prova.sh` con `$S/v29/blocca.py` che imita l'hosting (dopo un file PHP cambiato blocca gli altri di includes/ per 3 s): 2.39.2 installata 38/38,
+pacchetto 2.39.2 137/138 (il KO vuole la riga della 2.40.0), pacchetto 2.40.1 col blocco fallisce come da Danilo, motore + unico 2.40.2 142/142, nessun
+temporaneo rimasto. **Non provato**: l'hosting vero di Danilo.
 
 Fatto: plumeCMS 2.40.1 (20 novembre, 19:15-21:28): **il nome del mittente nelle email** (segnalazione di Danilo: con il nome "[Cucina Creativa]" Apple Mail
 mostrava `MISSING_MAILBOX@MISSING_DOMAIN ... per conto di [ Cucina Creativa ]`). Causa: `posta_oggetto()` codificava solo il non ASCII, quindi un nome ASCII con
@@ -1083,6 +1095,7 @@ Errori veri, già pagati. Non ripeterli.
 | Due batterie di attacchi lanciate insieme sullo stesso contenitore | il gruppo 37 (webhook) accende due server finti sulle porte 9296 e 9297 (`SIC_WEBHOOK`): la seconda batteria trova le porte prese e "il servizio non risponde" (5 novembre, sito aggiornato). E il controllo del gruppo 44 contava le righe di `media_alt`, tabella che nasce al primo uso: su un sito dove nessun alt è mai stato salvato la query falliva (ora la prova crea prima la tabella). Gli attacchi si lanciano uno alla volta, o con `SIC_WEBHOOK` diverso |
 | Una funzione di un'estensione PHP non richiesta dall'installatore (`iconv()`) chiamata senza `function_exists` | su un hosting che non ce l'ha (Hostcare) l'installazione si ferma a metà con "Call to undefined function" (2.29.1). Le estensioni fuori dalla lista dei requisiti si usano solo con una riserva; si prova con `php -d disable_functions=<funzione>` |
 | Un agente in sottofondo quando il contenitore si riavvia | l'agente muore senza resoconto e non riparte da solo (8 novembre, 15:10: la 2.32.0 ferma un'ora). Nel compito: commit di lavoro ogni 20-30 minuti e un file di avanzamento (`$S/ai/AVANZAMENTO.md`); e un controllo programmato con `send_later` ogni 40 minuti che salva, rilancia un agente nuovo dall'ultimo commit e lo dice a Danilo |
+| Un hosting che rifiuta il secondo file PHP scritto di fila (plumecms.it, 21 novembre 2026) | "Permission denied" con permessi e spazio a posto: il pacchetto si ferma e torna indietro. Dalla 2.40.2 il motore salta i file uguali, scrive con temporaneo e rinomina e riprova; un motore nuovo si porta da solo in un pacchetto con il solo `aggiornamenti.php` |
 | Fidarsi del resoconto di un agente | è successo che un agente dichiarasse lavoro mai scritto su disco. Si controllano i file veri e si rifanno le prove |
 
 ## Tono con l'utente
