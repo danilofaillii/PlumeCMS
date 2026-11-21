@@ -1,0 +1,8 @@
+/* Aria: chiaro e pulito. Solo ritocchi: i colori stanno in stile.json. */
+:root{--r:14px;--vetro:#fff;--vetro-2:#f3f4f6}
+.top,.ed-testata{background:rgba(255,255,255,.86)}
+.btn-viola,.btn-ciano{box-shadow:0 1px 2px rgba(17,24,39,.08),0 6px 18px rgba(37,99,235,.16)}
+.btn-filo{box-shadow:none}
+h1,h2,.sez-titolo{letter-spacing:-.02em}
+.card,.servizio,.ew-post{box-shadow:0 1px 2px rgba(17,24,39,.04)}
+.card:hover,.ew-post:hover{box-shadow:0 10px 28px rgba(17,24,39,.08)}

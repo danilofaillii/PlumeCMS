@@ -1,0 +1,177 @@
+/* Disposizioni dell'Apertura del gruppo C (2.17.0): prospettiva, dispositivi, pila, orbita, terminale, nastro, traforata, faro.
+   Stessa lingua delle undici: finestra di vetro con il velo (.finestra), riquadri di vetro (.chip, .onda, .barra), occhiello,
+   titolo con l'evidenza sfumata. Colori solo dalle variabili del sito, cosi seguono lo Stile del sito e i temi chiari e scuri.
+   Dove serve scavalcare hero-base.css o .ed-w-hero .hero di sito.css, il selettore comincia con .ed-hero.ed-hero-<id>. */
+
+/* I riquadri di vetro prendono il fondo del sito (come nel gruppo A): leggibili anche con i temi chiari. */
+.ed-hero-prospettiva.ed-hero-v .chip,.ed-hero-pila.ed-hero-v .chip,.ed-hero-orbita.ed-hero-v .chip{background:rgba(var(--bg-rgb),.86);border:1px solid var(--bordo);color:var(--testo-2);box-shadow:0 14px 34px rgba(0,0,0,.22)}
+.ed-hero-prospettiva .barra div,.ed-hero-pila .barra div,.ed-hero-orbita .barra div{background:rgba(var(--inchiostro-rgb),.1)}
+
+/* Le parole nelle disposizioni a due colonne: come il mosaico e l'inclinata. */
+.ed-hero-prospettiva h1,.ed-hero-dispositivi h1,.ed-hero-pila h1,.ed-hero-orbita h1,.ed-hero-terminale h1{font-size:clamp(36px,4.6vw,62px)}
+.ed-hpr-parole,.ed-hdv-parole,.ed-hpi-parole,.ed-hor-parole,.ed-hte-parole{position:relative;z-index:2;min-width:0}
+
+/* 1. Prospettiva: la finestra ruotata in 3D che entra dal bordo destro; al passaggio del mouse si raddrizza piano. */
+.ed-hero.ed-hero-prospettiva{overflow-x:clip}
+.ed-hpr-griglia{display:grid;grid-template-columns:1fr 1.15fr;gap:clamp(24px,4vw,56px);align-items:center;padding:clamp(16px,3vw,40px) 0}
+.ed-hpr-solo{grid-template-columns:1fr}
+.ed-hpr-scena{position:relative;perspective:1400px;min-width:0}
+.ed-hpr-giro{transform:rotateY(-26deg) rotateX(7deg) scale(1.04);transform-origin:0% 50%;transition:transform 1.4s cubic-bezier(.2,.7,.2,1)}
+.ed-hpr-scena:hover .ed-hpr-giro{transform:none}
+.ed-hero.ed-hero-prospettiva .finestra.ed-hpr-foto{aspect-ratio:16/10;border-radius:calc(var(--r,18px) + 4px)}
+.ed-hpr-chip{position:absolute;left:-7%;bottom:-4%;z-index:3}
+.ed-hero-prospettiva.ed-hero-v .chip-onda{width:190px}
+@media (prefers-reduced-motion:reduce){.ed-hpr-giro{transition:none}}
+@media (max-width:860px){
+  .ed-hpr-griglia{grid-template-columns:1fr;gap:36px}
+  .ed-hpr-scena{order:-1;margin-bottom:12px}
+  .ed-hpr-giro{transform:rotateY(-14deg) rotateX(4deg)}
+  .ed-hpr-chip{left:12px;bottom:-26px}
+  .ed-hero-prospettiva.ed-hero-v .chip-onda{width:160px;padding:12px}
+  .ed-hero-prospettiva.ed-hero-v .chip-onda .onda{height:28px}
+}
+
+/* 2. Computer e telefono: la stessa foto nello schermo del computer e nel telefono davanti. */
+.ed-hdv-griglia{display:grid;grid-template-columns:1fr 1.1fr;gap:clamp(28px,4vw,56px);align-items:center;padding:clamp(16px,3vw,40px) 0}
+.ed-hdv-solo{grid-template-columns:1fr}
+.ed-hdv-scena{position:relative;padding:0 7% 11% 0;min-width:0}
+.ed-hdv-pc{position:relative}
+.ed-hero.ed-hero-dispositivi .finestra.ed-hdv-schermo{aspect-ratio:16/10;border-radius:16px 16px 6px 6px}
+.ed-hdv-base{display:block;height:14px;margin:0 -6%;border:1px solid var(--bordo);border-top:0;border-radius:0 0 16px 16px;
+  background:linear-gradient(rgba(var(--inchiostro-rgb),.16),rgba(var(--inchiostro-rgb),.05));box-shadow:0 18px 30px rgba(0,0,0,.3)}
+.ed-hdv-tel{position:absolute;right:0;bottom:0;z-index:2;width:25%;padding:5px;border-radius:24px;background:var(--bg-2);border:1px solid rgba(160,200,255,.3);
+  box-shadow:0 0 0 1px rgba(var(--viola-rgb),.15),0 24px 50px rgba(0,0,0,.5),0 0 40px rgba(var(--viola-rgb),.22)}
+.ed-hero.ed-hero-dispositivi .finestra.ed-hdv-schermo-tel{aspect-ratio:9/19;border:0;border-radius:19px;box-shadow:none}
+.ed-hero.ed-hero-dispositivi .finestra.ed-hdv-schermo-tel img{object-position:12% 0}
+@media (max-width:860px){
+  .ed-hdv-griglia{grid-template-columns:1fr;gap:32px}
+  .ed-hdv-scena{padding:0;display:flex;justify-content:center}
+  .ed-hdv-pc{display:none}
+  .ed-hdv-tel{position:relative;width:min(46%,190px)}
+}
+
+/* 3. Pila di finestre: tre finestre sfalsate, sempre più chiare, con tre tagli della stessa foto. */
+.ed-hpi-griglia{display:grid;grid-template-columns:1fr 1.1fr;gap:clamp(28px,4vw,56px);align-items:center;padding:clamp(16px,3vw,40px) 0}
+.ed-hpi-solo{grid-template-columns:1fr}
+.ed-hpi-scena{position:relative;aspect-ratio:16/12;min-width:0}
+.ed-hero.ed-hero-pila .finestra.ed-hpi-f1,.ed-hero.ed-hero-pila .finestra.ed-hpi-f2,.ed-hero.ed-hero-pila .finestra.ed-hpi-f3{position:absolute;width:76%;aspect-ratio:16/10}
+.ed-hero.ed-hero-pila .finestra.ed-hpi-f1{left:0;top:2%;opacity:.5;transform:scale(.9);transform-origin:0 0}
+.ed-hero.ed-hero-pila .finestra.ed-hpi-f2{left:11%;top:16%;opacity:.78;transform:scale(.95);transform-origin:0 0}
+.ed-hero.ed-hero-pila .finestra.ed-hpi-f3{left:22%;top:32%}
+.ed-hero.ed-hero-pila .finestra.ed-hpi-f1 img{object-position:0 70%}
+.ed-hero.ed-hero-pila .finestra.ed-hpi-f2 img{object-position:100% 0}
+.ed-hero.ed-hero-pila .ed-hpi-barre{position:absolute;right:0;top:0;bottom:auto;z-index:3;width:230px}
+.ed-hero.ed-hero-pila .ed-hpi-barre .barra:first-child{margin-top:0}
+.ed-hpi-senza-foto{aspect-ratio:auto}
+.ed-hero.ed-hero-pila .ed-hpi-senza-foto .ed-hpi-barre{position:static}
+@media (max-width:860px){
+  .ed-hpi-griglia{grid-template-columns:1fr;gap:28px}
+  .ed-hpi-scena{order:-1;width:100%;max-width:440px;justify-self:center}
+  .ed-hero.ed-hero-pila .ed-hpi-barre{width:170px;padding:12px}
+}
+
+/* 4. Orbita: la foto in un cerchio, due orbite, il riquadro dell'onda che gira piano e un pianeta ciano. */
+.ed-hero.ed-hero-orbita{overflow-x:clip}
+.ed-hor-griglia{display:grid;grid-template-columns:1fr 1fr;gap:clamp(28px,4vw,56px);align-items:center;padding:clamp(16px,3vw,40px) 0}
+.ed-hor-scena{position:relative;width:100%;max-width:480px;aspect-ratio:1;justify-self:center}
+.ed-hor-anello{position:absolute;border-radius:50%;border:1px solid rgba(var(--ciano-rgb),.3);pointer-events:none}
+.ed-hor-a2{inset:0;border-style:dashed;border-color:rgba(var(--ciano-rgb),.24)}
+.ed-hor-a1{inset:12%}
+.ed-hero.ed-hero-orbita .finestra.ed-hor-foto{position:absolute;inset:24%;width:auto;aspect-ratio:auto;border-radius:50%}
+.ed-hor-giro{position:absolute;inset:8%;z-index:3;pointer-events:none;animation:ed-hor-gira 34s linear infinite}
+.ed-hor-chip{position:absolute;left:50%;top:0;transform:translate(-50%,-50%);pointer-events:auto}
+.ed-hero-orbita.ed-hero-v .chip-onda{width:170px;animation:ed-hor-gira 34s linear infinite reverse}
+.ed-hor-pianeta{position:absolute;left:9%;bottom:16%;width:12px;height:12px;border-radius:50%;background:var(--ciano);box-shadow:0 0 18px var(--ciano)}
+@keyframes ed-hor-gira{to{transform:rotate(360deg)}}
+@media (prefers-reduced-motion:reduce){.ed-hor-giro,.ed-hero-orbita.ed-hero-v .chip-onda{animation:none}}
+@media (max-width:860px){
+  .ed-hor-griglia{grid-template-columns:1fr;gap:36px}
+  .ed-hor-scena{order:-1;max-width:300px;margin-top:36px}
+  .ed-hor-giro{inset:14%}
+  .ed-hero-orbita.ed-hero-v .chip-onda{width:132px;padding:10px 12px}
+  .ed-hero-orbita.ed-hero-v .chip-onda .onda{height:24px}
+}
+
+/* 5. Terminale: davanti alla finestra una riga di comando che scrive le righe una alla volta (solo CSS: --n lettere, --t inizio). */
+.ed-hte-griglia{display:grid;grid-template-columns:1fr 1.1fr;gap:clamp(28px,4vw,56px);align-items:center;padding:clamp(16px,3vw,40px) 0}
+.ed-hte-solo{grid-template-columns:1fr}
+.ed-hte-scena{position:relative;padding:0 0 56px;min-width:0}
+.ed-hero.ed-hero-terminale .finestra.ed-hte-foto{aspect-ratio:16/10;width:94%}
+.ed-hte-cmd{position:absolute;right:0;bottom:0;z-index:3;width:min(72%,400px);padding:16px 18px;border:1px solid rgba(var(--ciano-rgb),.4);border-radius:14px;
+  background:rgba(var(--bg-rgb),.95);color:var(--testo-2);font:500 13.5px/1.75 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  box-shadow:0 0 40px rgba(var(--ciano-rgb),.18),0 22px 44px rgba(0,0,0,.35)}
+.ed-hte-cmd b{color:var(--ciano);font-weight:600}
+.ed-hte-cmd i{font-style:normal;color:var(--successo)}
+.ed-hte-riga{display:block;overflow-wrap:anywhere;animation:ed-hte-batti calc(var(--n) * 45ms) steps(var(--n),end) var(--t) both}
+.ed-hte-cursore{display:inline-block;width:.62em;height:1.1em;vertical-align:-.18em;background:var(--ciano);animation:ed-hte-appare 0s var(--fine) both,ed-hte-lampeggia 1s steps(1) var(--fine) infinite}
+@keyframes ed-hte-batti{from{clip-path:inset(0 100% 0 0)}to{clip-path:inset(0 0 0 0)}}
+@keyframes ed-hte-appare{from{visibility:hidden}to{visibility:visible}}
+@keyframes ed-hte-lampeggia{50%{opacity:0}}
+.ed-hte-senza-foto{padding:0}
+.ed-hte-senza-foto .ed-hte-cmd{position:static;width:100%}
+@media (prefers-reduced-motion:reduce){.ed-hte-riga,.ed-hte-cursore{animation:none}}
+@media (max-width:860px){
+  .ed-hte-griglia{grid-template-columns:1fr;gap:32px}
+  .ed-hte-scena{padding:0}
+  .ed-hero.ed-hero-terminale .finestra.ed-hte-foto{width:100%}
+  .ed-hte-cmd{position:relative;width:auto;margin-top:14px;font-size:13px}
+}
+
+/* 6. Nastro di schermate: parole al centro, sotto una fila di finestre che scorre piano e sfuma ai lati. */
+.ed-hero.ed-hero-nastro{text-align:center;padding:16px 0 0}
+.ed-hna-parole{max-width:960px;margin:0 auto;position:relative;z-index:2}
+.ed-hero-nastro h1{font-size:clamp(36px,5.4vw,70px);margin:18px auto 20px}
+.ed-hero-nastro p.lead{margin:0 auto 30px;max-width:640px}
+.ed-hero-nastro .azioni{justify-content:center}
+.ed-hna-nastro{margin-top:clamp(28px,4vw,52px);padding:16px 0 44px;overflow:hidden;
+  -webkit-mask:linear-gradient(90deg,transparent,#000 13%,#000 87%,transparent);mask:linear-gradient(90deg,transparent,#000 13%,#000 87%,transparent)}
+.ed-hna-fila{display:flex;gap:24px;width:max-content;animation:ed-hna-scorri 70s linear infinite}
+.ed-hero.ed-hero-nastro .finestra.ed-hna-foto{flex:none;width:clamp(220px,24vw,320px);aspect-ratio:16/10;box-shadow:0 0 0 1px rgba(var(--viola-rgb),.15),0 18px 40px rgba(0,0,0,.4),0 0 40px rgba(var(--viola-rgb),.2)}
+.ed-hero.ed-hero-nastro .finestra.ed-hna-t1 img{object-position:100% 30%}
+.ed-hero.ed-hero-nastro .finestra.ed-hna-t2 img{object-position:0 85%}
+.ed-hero.ed-hero-nastro .finestra.ed-hna-t3 img{object-position:65% 0}
+@keyframes ed-hna-scorri{to{transform:translateX(calc(-50% - 12px))}}
+@media (prefers-reduced-motion:reduce){.ed-hna-fila{animation:none}}
+@media (max-width:760px){
+  .ed-hna-fila{gap:16px;animation-duration:50s}
+  .ed-hero.ed-hero-nastro .finestra.ed-hna-foto{width:200px}
+  @keyframes ed-hna-scorri{to{transform:translateX(calc(-50% - 8px))}}
+}
+
+/* 7. Titolo traforato: una parola gigante con la foto e il velo dentro le lettere; il titolo intero sotto, piu piccolo.
+   I colori del velo (scheda Stile) arrivano su .finestra come --velo-1..3; senza, il ciano e il viola del sito. */
+.ed-hero.ed-hero-traforata{text-align:center;padding:clamp(20px,4vw,64px) 0 clamp(12px,2vw,28px)}
+.ed-htr-corpo{max-width:1040px;margin:0 auto}
+.ed-hero-traforata h1{margin:14px auto 24px;line-height:1}
+.ed-hero.ed-hero-traforata .finestra.ed-htr-velo{position:static;display:block;inset:auto;border:0;border-radius:0;background:none;box-shadow:none;overflow:visible}
+.ed-hero.ed-hero-traforata .finestra.ed-htr-velo::before,.ed-hero.ed-hero-traforata .finestra.ed-htr-velo::after{display:none}
+.ed-htr-parola{display:block;padding:.03em 0;font:700 clamp(60px,calc(84vw / var(--n)),calc(960px / var(--n)))/.88 var(--f-titolo);letter-spacing:-.035em;text-transform:uppercase;
+  color:transparent;-webkit-background-clip:text;background-clip:text;background-size:cover;background-position:50% 20%;
+  background-image:linear-gradient(165deg,rgba(var(--ciano-rgb),.74),rgba(var(--viola-rgb),.74)),var(--foto);
+  background-image:linear-gradient(165deg,color-mix(in srgb,var(--velo-1,rgb(var(--ciano-rgb))) 74%,transparent),color-mix(in srgb,var(--velo-2,rgb(var(--viola-rgb))) 74%,transparent)),var(--foto);
+  -webkit-text-stroke:1px rgba(var(--inchiostro-rgb),.22);filter:drop-shadow(0 0 26px rgba(var(--viola-rgb),.35))}
+.ed-htr-velo.ed-foto-bn .ed-htr-parola{background-image:linear-gradient(rgba(var(--inchiostro-rgb),.28),rgba(var(--inchiostro-rgb),.28)),linear-gradient(#808080,#808080),var(--foto);background-blend-mode:normal,color,normal}
+.ed-htr-velo.ed-foto-naturale .ed-htr-parola{background-image:linear-gradient(rgba(var(--inchiostro-rgb),.18),rgba(var(--inchiostro-rgb),.18)),var(--foto)}
+.ed-htr-velo.ed-htr-senza-foto .ed-htr-parola{background-image:var(--grad)}
+.ed-htr-titolo{display:block;margin-top:.35em;font-size:clamp(20px,2.4vw,30px);line-height:1.15;letter-spacing:0}
+.ed-hero-traforata p.lead{margin:0 auto 32px;max-width:640px}
+.ed-hero-traforata .azioni{justify-content:center}
+
+/* 8. Faro: un cono di luce viola e ciano dall'alto, le parole nel fascio, la finestra che sale dal fondo. */
+.ed-hero.ed-hero-faro{position:relative;isolation:isolate;overflow:hidden;text-align:center;padding:clamp(20px,3vw,40px) 0 0}
+.ed-hfa-cono{position:absolute;left:50%;top:0;z-index:-1;width:max(140%,900px);height:100%;transform:translateX(-50%);pointer-events:none;filter:blur(10px);
+  background:radial-gradient(ellipse 18% 22% at 50% 0%,rgba(var(--ciano-rgb),.3),transparent 70%),
+    conic-gradient(from 150deg at 50% 0%,transparent 0deg,rgba(var(--viola-rgb),.55) 10deg,rgba(var(--ciano-rgb),.42) 30deg,rgba(var(--viola-rgb),.55) 50deg,transparent 60deg)}
+.ed-hfa-parole{position:relative;z-index:2;max-width:940px;margin:0 auto}
+.ed-hero-faro h1{font-size:clamp(34px,5vw,66px);margin:18px auto 20px}
+.ed-hero-faro p.lead{margin:0 auto 30px;max-width:640px}
+.ed-hero-faro .azioni{justify-content:center}
+.ed-hfa-scena{position:relative;width:min(86%,820px);height:clamp(190px,24vw,320px);margin:clamp(36px,5vw,64px) auto 0;padding:24px 36px 0;clip-path:inset(-400px -600px 0 -600px)}
+.ed-hfa-pavimento{position:absolute;left:50%;bottom:-30%;width:110%;height:90%;transform:translateX(-50%);border-radius:50%;pointer-events:none;background:radial-gradient(rgba(var(--viola-rgb),.45),transparent 70%)}
+.ed-hero.ed-hero-faro .finestra.ed-hfa-foto{aspect-ratio:16/9;z-index:1;animation:ed-hfa-sale 1.6s cubic-bezier(.2,.7,.2,1) .2s both}
+@keyframes ed-hfa-sale{from{transform:translateY(60px);opacity:.4}}
+@media (prefers-reduced-motion:reduce){.ed-hero.ed-hero-faro .finestra.ed-hfa-foto{animation:none}}
+@media (max-width:760px){
+  .ed-hfa-cono{width:260%}
+  .ed-hfa-scena{width:100%;height:190px;padding:16px 12px 0}
+}

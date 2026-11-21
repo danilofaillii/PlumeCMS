@@ -1,0 +1,41 @@
+{
+  "nome": "Estate",
+  "versione": "1.0",
+  "autore": "plumeCMS",
+  "anteprima": "anteprima.webp",
+  "css": "tema.css",
+  "stile": "stile.json",
+  "modelli": "modelli.json",
+  "descrizione": "Luce di mare: sabbia chiara, corallo e blu del largo, angoli morbidi e pulsanti a pillola. Per chi vuole un sito solare e accogliente.",
+  "infografiche": {
+    "sfondo": "#fffaf1",
+    "bianco": "#ffffff",
+    "bordo": "#f1dcbc",
+    "riga": "#f7e8d2",
+    "titolo": "#16263a",
+    "testo": "#3d4b5e",
+    "muto": "#5c6b7f",
+    "situazione": "#fdf1e0",
+    "su_scuro": "#d9e3ec",
+    "voci": {
+      "rosso": "#b03a0a",
+      "oro": "#e0a83a",
+      "verde": "#0f766e",
+      "ciano": "#0b5f7a",
+      "viola": "#6d4bb0",
+      "scuro": "#16263a"
+    },
+    "variabili": {
+      "rosso-chiaro": "#f7ebe6",
+      "verde-chiaro": "#e7f1f0",
+      "ciano-chiaro": "#e7eff2",
+      "viola-chiaro": "#f0edf7",
+      "oro-chiaro": "#f7e9ce",
+      "oro-scuro": "#7f5900",
+      "oro-scuro-2": "#6b4b00",
+      "oro-scuro-chiaro": "#f6ecd6",
+      "mattone-chiaro": "#f7ebe6",
+      "lilla": "#f0edf7"
+    }
+  }
+}

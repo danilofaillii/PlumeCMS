@@ -1,0 +1,85 @@
+{
+  "colori": {
+    "sistema": {
+      "primario": "#b8336a",
+      "secondario": "#215c39",
+      "testo": "#1d2b22",
+      "accento": "#e6a800",
+      "sfondo": "#f8fbf4"
+    },
+    "personalizzati": [
+      {
+        "id": "sfondo-2",
+        "nome": "Sfondo secondario",
+        "valore": "#fdf0f3"
+      },
+      {
+        "id": "testo-2",
+        "nome": "Testo attenuato",
+        "valore": "#3f5045"
+      },
+      {
+        "id": "testo-3",
+        "nome": "Testo discreto",
+        "valore": "#52645a"
+      },
+      {
+        "id": "bordo",
+        "nome": "Bordi",
+        "valore": "rgba(29,43,34,.12)"
+      }
+    ]
+  },
+  "font": {
+    "sistema": {
+      "primario": {
+        "famiglia": "Georgia"
+      },
+      "secondario": {
+        "famiglia": "Georgia"
+      },
+      "testo": {
+        "famiglia": "Inter"
+      },
+      "accento": {
+        "famiglia": "Inter"
+      }
+    },
+    "personalizzati": []
+  },
+  "sfondo": {
+    "sfumature_sito": false
+  },
+  "tipografia": {
+    "h1": {
+      "colore": "",
+      "tipografia": {
+        "peso": "400",
+        "stile": "italic"
+      }
+    },
+    "h2": {
+      "colore": "",
+      "tipografia": {
+        "peso": "400",
+        "stile": "italic"
+      }
+    }
+  },
+  "pulsanti": {
+    "raggio": "999px",
+    "padding": "15px 26px"
+  },
+  "campi": {
+    "campo": {
+      "sfondo": "#ffffff",
+      "colore": "#1d2b22",
+      "bordo_colore": "rgba(29,43,34,.26)",
+      "raggio": "16px"
+    },
+    "fuoco": {
+      "bordo_colore": "#215c39",
+      "contorno": "#215c39"
+    }
+  }
+}

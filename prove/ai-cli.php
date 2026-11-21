@@ -1,0 +1,258 @@
+<?php
+// Comandi da riga di comando per le prove dell'addon AI collegate (2.32.0: prova-ai-collegate.js, gruppo 46 di
+// tools/sicurezza-prova.js). Stampa JSON.
+// uso: php prove/ai-cli.php <cartella CMS> <comando> [argomenti]
+//   accendi | spegni            accende o spegne l'addon (moduli/addon-attivi.json) e crea le tabelle
+//   statistiche <accendi|spegni> accende o spegne l'addon Statistiche (per lo strumento get_stats)
+//   chiave <permessi> [nome]    una chiave personale con quei permessi (separati da virgola); stampa la chiave in chiaro
+//   token-scaduto <chiave>      fa scadere tutti i token della connessione di quella chiave (o token di accesso)
+//   token-altro-sito <chiave>   cambia l'audience dei token di quella connessione in un altro sito
+//   sql <query>                 una query con {p} al posto del prefisso (SELECT stampa le righe)
+//   redattore <crea|elimina>    l'utente redattore "ai_prova_red" (password Red-AI-Prova-2026)
+//   admin2fa <crea|elimina>     un amministratore "ai_prova_2fa" (password Adm-AI-Prova-2026) con il secondo fattore acceso; stampa il segreto
+//   totp <segreto>              il codice a sei cifre di adesso per quel segreto
+//   pagina-pubblicata <slug>    una pagina pubblicata fatta con l'editor (titolo e testo), per le proposte; stampa id e id dei widget
+//   pulisci                     toglie connessioni, token, codici, client, proposte, registro, foto dell'addon e i contenuti "ai-prova-*"
+//   tentativi                   svuota la tabella dei tentativi (limiti di velocità e forza bruta)
+//   config-foto <url>           aggiunge CMS_AI_FOTO_PROVA al config.local.php (il server finto delle foto)
+//   nav-prepara                 2.33.0: rovina apposta il menu Principale (voce verso una bozza, voce doppia, etichetta lunga e
+//                               maiuscole miste) e crea una pagina orfana pubblicata; salva le voci di prima; stampa gli id
+//   nav-ripristina              rimette le voci di prima del menu Principale e toglie le pagine "ai-prova-nav-*"
+//   menu-cambia <id>            aggiunge una voce al menu (per la prova del conflitto: il menu è cambiato dopo la proposta)
+//   menu <id>                   stampa le voci del menu
+//   nav-molte <n>               n pagine pubblicate "ai-prova-nav-m-*" e quattro menu "AI prova *" da 40 voci (prova dei tempi)
+//   articolo-prova <slug>       un articolo pubblicato fatto con l'editor, con parola chiave, attacco che non risponde, salto
+//                               H2 > H4, un paragrafo lungo, frasi datate e un'immagine senza alt; stampa id e id dei widget
+//   stile-semina                2.34.0: dieci articoli pubblicati "ai-prova-stile-*" con uno stile riconoscibile (frasi brevi
+//                               in seconda persona, una domanda nell'attacco, due H2, un elenco, un link interno; metà con
+//                               l'editor, metà classici), categorie "Orto" (nove) e "Balcone" (una), il tag "Lumache" su un solo
+//                               articolo e il buco voluto: "concime naturale" fra le parole correlate e nel testo di quattro
+//                               articoli, senza un articolo dedicato. Stampa gli id
+//   stile-molti <n>             n articoli pubblicati "ai-prova-stile-m-*" (prova dei tempi)
+//   stile-pulisci               toglie gli articoli "ai-prova-stile-*", le categorie e il tag di prova, profilo e idee
+$_SERVER['HTTP_HOST'] = '127.0.0.1'; $_SERVER['REQUEST_URI'] = '/';
+$dir = $argv[1];
+require $dir . '/includes/config.php';
+require_once $dir . '/includes/sito-seo.php';
+require_once $dir . '/includes/moduli.php';
+$cmd = $argv[2] ?? '';
+$esci = function ($x) { echo json_encode($x, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES), "\n"; exit; };
+$addon = $dir . '/addon/ai-collegate/includes/ai.php';
+switch ($cmd) {
+    case 'accendi':
+    case 'spegni':
+        require_once $dir . '/includes/addon.php';
+        $att = cms_addon_attivi();
+        $att = $cmd === 'accendi' ? array_values(array_unique(array_merge($att, ['ai-collegate']))) : array_values(array_diff($att, ['ai-collegate']));
+        addon_scrivi($att);
+        if ($cmd === 'accendi') { require_once $addon; aic_installa(); }
+        $esci(['attivi' => $att]);
+    case 'statistiche':
+        require_once $dir . '/includes/addon.php';
+        $att = cms_addon_attivi();
+        $su = ($argv[3] ?? '') === 'accendi';
+        addon_scrivi($su ? array_values(array_unique(array_merge($att, ['statistiche']))) : array_values(array_diff($att, ['statistiche'])));
+        if ($su) { $def = require $dir . '/addon/statistiche/modulo.php'; ($def['installa'])(); }
+        $esci(['attivi' => cms_addon_attivi()]);
+    case 'chiave':
+        require_once $addon;
+        $perm = aic_scope_pulito(explode(',', (string)($argv[3] ?? '')));
+        $admin = (int)db()->query('SELECT id FROM ' . tbl('users') . " WHERE role = 'admin' ORDER BY id LIMIT 1")->fetchColumn();
+        $c = aic_connessione_crea('chiave', '', (string)($argv[4] ?? 'Chiave di prova'), $admin, $perm);
+        $esci(['connessione' => $c, 'chiave' => aic_token_crea($c, 'chiave', null), 'permessi' => $perm]);
+    case 'token-scaduto':
+    case 'token-altro-sito':
+        require_once $addon;
+        $st = db()->prepare('SELECT connessione_id FROM ' . tbl('ai_token') . ' WHERE hash = ?');
+        $st->execute([aic_hash((string)($argv[3] ?? ''))]);
+        $c = (int)$st->fetchColumn();
+        if ($cmd === 'token-scaduto') db()->prepare('UPDATE ' . tbl('ai_token') . ' SET scade = DATE_SUB(NOW(), INTERVAL 1 MINUTE) WHERE connessione_id = ?')->execute([$c]);
+        else db()->prepare('UPDATE ' . tbl('ai_token') . " SET audience = 'https://altro-sito.example/api/mcp' WHERE connessione_id = ?")->execute([$c]);
+        $esci(['connessione' => $c]);
+    case 'sql':
+        $q = str_replace('{p}', DB_PREFIX, (string)($argv[3] ?? ''));
+        $st = db()->query($q);
+        $esci($st && preg_match('/^\s*(SELECT|SHOW)/i', $q) ? $st->fetchAll(PDO::FETCH_ASSOC) : ['ok' => true]);
+    case 'redattore':
+        db()->prepare('DELETE FROM ' . tbl('users') . ' WHERE username = ?')->execute(['ai_prova_red']);
+        if (($argv[3] ?? '') === 'crea') {
+            $cols = array_column(db()->query('SHOW COLUMNS FROM ' . tbl('users'))->fetchAll(), 'Field');
+            $v = ['username' => 'ai_prova_red', 'password_hash' => password_hash('Red-AI-Prova-2026', PASSWORD_DEFAULT), 'role' => 'editor', 'email' => 'red@ai-prova.it'];
+            if (in_array('display_name', $cols, true)) $v['display_name'] = 'Redattore AI';
+            $v = array_intersect_key($v, array_flip($cols));
+            db()->prepare('INSERT INTO ' . tbl('users') . ' (' . implode(',', array_keys($v)) . ') VALUES (' . implode(',', array_fill(0, count($v), '?')) . ')')->execute(array_values($v));
+        }
+        $esci(['ok' => true]);
+    case 'admin2fa':
+        require_once $dir . '/includes/sicurezza.php';
+        sicurezza_schema();
+        db()->prepare('DELETE FROM ' . tbl('users') . ' WHERE username = ?')->execute(['ai_prova_2fa']);
+        $segreto = '';
+        if (($argv[3] ?? '') === 'crea') {
+            $segreto = sicurezza_totp_segreto();
+            $cols = array_column(db()->query('SHOW COLUMNS FROM ' . tbl('users'))->fetchAll(), 'Field');
+            $v = ['username' => 'ai_prova_2fa', 'password_hash' => password_hash('Adm-AI-Prova-2026', PASSWORD_DEFAULT), 'role' => 'admin', 'email' => 'admin2fa@ai-prova.it', 'totp_segreto' => $segreto, 'totp_attivo' => 1, 'totp_recupero' => '[]'];
+            $v = array_intersect_key($v, array_flip($cols));
+            db()->prepare('INSERT INTO ' . tbl('users') . ' (' . implode(',', array_keys($v)) . ') VALUES (' . implode(',', array_fill(0, count($v), '?')) . ')')->execute(array_values($v));
+        }
+        $esci(['segreto' => $segreto]);
+    case 'totp':
+        require_once $dir . '/includes/sicurezza.php';
+        $esci(['codice' => sicurezza_totp_codice((string)($argv[3] ?? ''), (int)floor(time() / 30))]);
+    case 'pagina-pubblicata':
+        require_once $dir . '/includes/editor-controlli.php';
+        require_once $dir . '/includes/editor.php';
+        require_once $dir . '/includes/contenuti.php';
+        editor_carica_widget_esterni();
+        $slug = (string)($argv[3] ?? 'ai-prova-pubblicata');
+        db()->prepare('DELETE FROM ' . tbl('pages') . ' WHERE slug = ?')->execute([$slug]);
+        $id = contenuti_salva('pagine', 0, ['title' => 'Pagina pubblicata di prova', 'slug' => $slug, 'stato' => 'pubblicato', 'contenuto' => '', 'seo_title' => 'Titolo vecchio', 'seo_description' => 'Descrizione vecchia della pagina di prova.']);
+        $t = editor_widget('titolo', ['testo' => 'Titolo vecchio della pagina', 'livello' => 'h1']);
+        $x = editor_widget('testo', ['contenuto' => '<p>Testo vecchio della pagina.</p>']);
+        editor_salva($id, editor_valida(['elementi' => [editor_sezione([$t, $x])]]), true, 'prova');
+        $esci(['id' => $id, 'titolo_id' => $t['id'], 'testo_id' => $x['id']]);
+    case 'pulisci':
+        require_once $addon;
+        aic_schema();
+        foreach (['ai_connessioni', 'ai_token', 'ai_codici', 'ai_client', 'ai_proposte', 'ai_registro', 'ai_foto', 'ai_richieste'] as $t) db()->exec('DELETE FROM ' . tbl($t));
+        foreach (['pages', 'articles'] as $t) db()->exec('DELETE FROM ' . tbl($t) . " WHERE slug LIKE 'ai-prova%'");
+        db()->exec('DELETE FROM ' . tbl('settings') . " WHERE setting_key = 'aic_impostazioni'");
+        $esci(['ok' => true]);
+    case 'tentativi':
+        db()->exec('DELETE FROM ' . tbl('sicurezza_tentativi'));
+        $esci(['ok' => true]);
+    case 'config-foto':
+        $f = $dir . '/includes/config.local.php';
+        $c = (string)file_get_contents($f);
+        $c = preg_replace("/\ndefine\('CMS_AI_FOTO_PROVA'[^\n]*/", '', $c);
+        $c .= "\ndefine('CMS_AI_FOTO_PROVA', " . var_export((string)($argv[3] ?? ''), true) . ");\n";
+        file_put_contents($f, $c);
+        if (function_exists('opcache_reset')) @opcache_reset();
+        $esci(['ok' => true]);
+    case 'stile-semina':
+    case 'stile-molti':
+    case 'stile-pulisci':
+        require_once $dir . '/includes/editor-controlli.php';
+        require_once $dir . '/includes/editor.php';
+        require_once $dir . '/includes/contenuti.php';
+        editor_carica_widget_esterni();
+        require_once $addon;
+        aic_schema();
+        if ($cmd === 'stile-pulisci') {
+            db()->exec('DELETE FROM ' . tbl('articles') . " WHERE slug LIKE 'ai-prova-stile-%'");
+            db()->exec('DELETE a FROM ' . tbl('articles') . ' a JOIN ' . tbl('ai_idee') . ' i ON i.articolo_id = a.id'); // le bozze scritte dalle idee
+            db()->exec('DELETE FROM ' . tbl('categories') . " WHERE slug IN ('orto-prova', 'balcone-prova')");
+            db()->exec('DELETE FROM ' . tbl('tags') . " WHERE slug IN ('lumache-prova', 'estate-prova')");
+            db()->exec('DELETE FROM ' . tbl('ai_stile'));
+            db()->exec('DELETE FROM ' . tbl('ai_idee'));
+            $esci(['ok' => true]);
+        }
+        $titoli = ['Come seminare i pomodori', 'Annaffiare l\'orto d\'estate', 'Le erbe aromatiche in vaso', 'Potare la salvia', 'Il compost in giardino',
+            'Coltivare le fragole in vaso', 'Difendere l\'orto dalle lumache', 'Raccogliere il basilico', 'Preparare il terreno in autunno', 'Scegliere i semi giusti'];
+        $testo = function (int $i, string $titolo, bool $concime) {
+            $t = mb_strtolower($titolo);
+            return '<p>Vuoi sapere ' . $t . '? Ti spiego tutto. Bastano pochi passi. Non serve esperienza.</p>'
+                . '<h2>Cosa ti serve</h2><p>Prendi una vanga. Scegli un angolo al sole. Tieni a portata un annaffiatoio. ' . ($concime ? 'Aggiungi un po\' di concime naturale al terreno. ' : '') . 'Il resto lo impari strada facendo.</p>'
+                . '<ul><li>Una vanga piccola</li><li>Semi freschi</li><li>Acqua tiepida</li></ul>'
+                . '<h2>Come fare</h2><p>Scava piano. Metti i semi. Copri con la terra. Annaffia ogni mattina. Guarda le foglie crescere. ' . ($concime ? 'Il concime naturale fa il resto. ' : '') . 'Hai dubbi? Leggi anche <a href="/ai-prova-stile-' . ($i === 1 ? 2 : $i - 1) . '/">la guida di prima</a>.</p>'
+                . '<p>Sbagli? Nessun problema. Riprova la settimana dopo. Ogni orto è diverso. Il tuo ti insegnerà molto.</p>'
+                . '<p>Ora tocca a te. Prova e raccontami com\'è andata.</p>';
+        };
+        if ($cmd === 'stile-molti') {
+            $n = max(1, min(1000, (int)($argv[3] ?? 300)));
+            for ($i = 1; $i <= $n; $i++) contenuti_salva('articoli', 0, ['title' => 'Articolo di prova numero ' . $i, 'slug' => 'ai-prova-stile-m-' . $i, 'stato' => 'pubblicato', 'data' => date('Y-m-d', time() - (400 + $i) * 86400), 'ora' => '07:00',
+                'contenuto' => str_repeat($testo($i, 'il tema numero ' . $i, $i % 3 === 0), 8), /* circa 800 parole, come un articolo vero */ 'keyword_target' => 'tema ' . $i, 'keywords_secondarie' => $i % 3 === 0 ? 'concime naturale' : '']);
+            $esci(['articoli' => $n]);
+        }
+        $orto = contenuti_categoria_crea('Orto prova'); $balcone = contenuti_categoria_crea('Balcone prova');
+        $ids = [];
+        foreach ($titoli as $k => $titolo) {
+            $i = $k + 1;
+            $slug = 'ai-prova-stile-' . $i;
+            db()->prepare('DELETE FROM ' . tbl('articles') . ' WHERE slug = ?')->execute([$slug]);
+            $concime = in_array($i, [2, 4, 6, 8], true);
+            $faq = $i % 2 ? json_encode([['domanda' => 'Quanto tempo serve per ' . mb_strtolower($titolo) . '?', 'risposta' => 'Bastano pochi minuti al giorno.']], JSON_UNESCAPED_UNICODE) : '';
+            $html = $testo($i, $titolo, $concime);
+            $editor = $i % 2 === 0;
+            $id = contenuti_salva('articoli', 0, ['title' => $titolo, 'slug' => $slug, 'stato' => 'pubblicato', 'data' => date('Y-m-d', time() - (20 - $i) * 86400), 'ora' => '08:00',
+                'contenuto' => $editor ? '' : $html, 'keyword_target' => mb_strtolower($titolo), 'keywords_secondarie' => $concime ? 'concime naturale, orto biologico' : 'orto biologico',
+                'seo_title' => $titolo . ': la guida facile', 'seo_description' => 'Ti spiego ' . mb_strtolower($titolo) . ' in pochi passi, senza esperienza: cosa ti serve e come fare.',
+                'faq' => $faq, 'categorie' => [$i === 3 ? $balcone : $orto], 'tags' => $i === 7 ? 'Lumache prova, Estate prova' : 'Estate prova']);
+            if ($editor) editor_salva($id, editor_valida(['elementi' => [editor_sezione([editor_widget('testo', ['contenuto' => $html]), editor_widget('immagine', ['immagine' => '/uploads/segnaposto/nessuna.jpg', 'alt' => 'Orto'])])]]), true, 'prova', '', 'articoli');
+            $ids[] = $id;
+        }
+        $esci(['ids' => $ids, 'categoria_povera' => $balcone, 'tag_uno' => 'lumache-prova']);
+    case 'nav-prepara':
+    case 'nav-ripristina':
+    case 'menu-cambia':
+    case 'menu':
+    case 'articolo-prova':
+    case 'nav-molte':
+        require_once $dir . '/includes/editor-controlli.php';
+        require_once $dir . '/includes/editor.php';
+        require_once $dir . '/includes/contenuti.php';
+        require_once $dir . '/includes/menu-nav.php';
+        editor_carica_widget_esterni();
+        $pagina = function (string $slug, string $titolo, string $stato, array $widget) {
+            db()->prepare('DELETE FROM ' . tbl('pages') . ' WHERE slug = ?')->execute([$slug]);
+            $id = contenuti_salva('pagine', 0, ['title' => $titolo, 'slug' => $slug, 'stato' => $stato, 'contenuto' => '']);
+            editor_salva($id, editor_valida(['elementi' => [editor_sezione($widget)]]), $stato === 'pubblicato', 'prova');
+            return $id;
+        };
+        $principale = menu_per_posizione('principale');
+        if ($cmd === 'menu') { $st = db()->prepare('SELECT voci FROM ' . tbl('menu') . ' WHERE id = ?'); $st->execute([(int)($argv[3] ?? 0)]); $esci(json_decode((string)$st->fetchColumn(), true)); }
+        if ($cmd === 'menu-cambia') {
+            $st = db()->prepare('SELECT * FROM ' . tbl('menu') . ' WHERE id = ?'); $st->execute([(int)($argv[3] ?? 0)]); $m = $st->fetch();
+            $v = json_decode((string)$m['voci'], true); $v[] = ['etichetta' => 'Aggiunta a mano', 'tipo' => 'link', 'url' => '/', 'figli' => []];
+            menu_salva((int)$m['id'], $m['nome'], $m['posizione'], $v);
+            $esci(['ok' => true]);
+        }
+        if ($cmd === 'nav-ripristina') {
+            $prima = json_decode((string)get_setting('aic_prova_menu', ''), true);
+            if (is_array($prima) && $principale) menu_salva((int)$principale['id'], $principale['nome'], $principale['posizione'], $prima);
+            db()->exec('DELETE FROM ' . tbl('pages') . " WHERE slug LIKE 'ai-prova-nav-%'");
+            db()->exec('DELETE FROM ' . tbl('articles') . " WHERE slug LIKE 'ai-prova-art-%'");
+            db()->exec('DELETE FROM ' . tbl('menu') . " WHERE nome LIKE 'AI prova %'");
+            db()->exec('DELETE FROM ' . tbl('settings') . " WHERE setting_key = 'aic_prova_menu'");
+            $esci(['ok' => true]);
+        }
+        if ($cmd === 'nav-molte') {
+            $n = max(1, min(1000, (int)($argv[3] ?? 300)));
+            $ids = [];
+            for ($i = 1; $i <= $n; $i++) {
+                $id = contenuti_salva('pagine', 0, ['title' => 'Pagina di prova ' . $i, 'slug' => 'ai-prova-nav-m-' . $i, 'stato' => 'pubblicato', 'contenuto' => '']);
+                $alb = editor_valida(['elementi' => [editor_sezione([editor_widget('titolo', ['testo' => 'Pagina ' . $i, 'livello' => 'h1']), editor_widget('testo', ['contenuto' => '<p>Vedi <a href="/ai-prova-nav-m-' . ($i % $n + 1) . '/">la prossima</a>.</p>'])])]]);
+                editor_salva($id, $alb, true, 'prova');
+                $ids[] = $i;
+            }
+            foreach ([1, 2, 3, 4] as $k) {
+                $voci = [];
+                foreach (array_slice($ids, ($k - 1) * 40, 40) as $i) $voci[] = ['etichetta' => 'Voce ' . $i, 'tipo' => 'pagina', 'rif' => 'ai-prova-nav-m-' . $i, 'figli' => []];
+                menu_salva(0, 'AI prova ' . $k, $k === 1 ? 'piede-1' : '', $voci);
+            }
+            $esci(['pagine' => $n]);
+        }
+        if ($cmd === 'articolo-prova') {
+            $slug = (string)($argv[3] ?? 'ai-prova-art-1');
+            db()->prepare('DELETE FROM ' . tbl('articles') . ' WHERE slug = ?')->execute([$slug]);
+            $id = contenuti_salva('articoli', 0, ['title' => 'Potare le rose in inverno', 'slug' => $slug, 'stato' => 'pubblicato', 'data' => date('Y-m-d', time() - 86400), 'ora' => '08:00', 'contenuto' => '',
+                'keyword_target' => 'potare le rose', 'seo_title' => 'Rose', 'seo_description' => 'Una guida.']);
+            $lungo = str_repeat('Le rose hanno bisogno di cure costanti durante tutto il periodo freddo e la potatura va fatta con attrezzi puliti e affilati. ', 9);
+            $t1 = editor_widget('testo', ['contenuto' => '<p>Il giardino è un posto bellissimo dove passare il tempo libero con la famiglia, quest\'anno più che mai.</p><h2>Gli attrezzi</h2><p>' . $lungo . '</p><h4>Le forbici</h4><p>Recentemente sono uscite forbici nuove, come nel ' . (date('Y') - 2) . '.</p>']);
+            $im = editor_widget('immagine', ['immagine' => '/uploads/segnaposto/nessuna.jpg', 'alt' => '']);
+            editor_salva($id, editor_valida(['elementi' => [editor_sezione([$t1, $im])]]), true, 'prova', '', 'articoli');
+            $esci(['id' => $id, 'testo_id' => $t1['id']]);
+        }
+        // nav-prepara
+        if (!$principale) $esci(['errore' => 'manca il menu principale']);
+        if (get_setting('aic_prova_menu', '') === '') save_setting('aic_prova_menu', json_encode($principale['voci'], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES));
+        $orfana = $pagina('ai-prova-nav-orfana', 'Lavora con noi', 'pubblicato', [editor_widget('titolo', ['testo' => 'Lavora con noi', 'livello' => 'h1']), editor_widget('testo', ['contenuto' => '<p>Cerchiamo persone.</p>'])]);
+        $bozza = $pagina('ai-prova-nav-bozza', 'Offerte', 'bozza', [editor_widget('titolo', ['testo' => 'Offerte', 'livello' => 'h1'])]);
+        $voci = json_decode((string)get_setting('aic_prova_menu', ''), true);
+        $voci[] = ['etichetta' => 'Offerte', 'tipo' => 'link', 'url' => '/ai-prova-nav-bozza/', 'figli' => []];
+        $voci[] = ['etichetta' => 'Servizi', 'tipo' => 'link', 'url' => '/servizi/', 'figli' => []];
+        $voci[] = ['etichetta' => 'Tutte Le Nostre Domande Frequenti', 'tipo' => 'link', 'url' => '/inesistente-ai-prova/', 'figli' => []];
+        menu_salva((int)$principale['id'], $principale['nome'], $principale['posizione'], $voci);
+        $esci(['menu' => (int)$principale['id'], 'orfana' => $orfana, 'bozza' => $bozza]);
+}
+$esci(['errore' => 'comando sconosciuto']);

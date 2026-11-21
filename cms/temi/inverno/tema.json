@@ -1,0 +1,41 @@
+{
+  "nome": "Inverno",
+  "versione": "1.0",
+  "autore": "plumeCMS",
+  "anteprima": "anteprima.webp",
+  "css": "tema.css",
+  "stile": "stile.json",
+  "modelli": "modelli.json",
+  "descrizione": "Aria di neve: bianco ghiaccio, blu profondo e grigio ardesia, titoli sottili, linee nette e un velo di brina. Per chi vuole un sito limpido ed elegante.",
+  "infografiche": {
+    "sfondo": "#f7fafc",
+    "bianco": "#ffffff",
+    "bordo": "#d5e1eb",
+    "riga": "#e6eef4",
+    "titolo": "#0f2133",
+    "testo": "#34495d",
+    "muto": "#536678",
+    "situazione": "#edf3f8",
+    "su_scuro": "#c9d8e5",
+    "voci": {
+      "rosso": "#a3324f",
+      "oro": "#e0a83a",
+      "verde": "#2f6b5d",
+      "ciano": "#2b6688",
+      "viola": "#4f4e9a",
+      "scuro": "#0f2133"
+    },
+    "variabili": {
+      "rosso-chiaro": "#f6eaed",
+      "verde-chiaro": "#eaf0ef",
+      "ciano-chiaro": "#eaf0f3",
+      "viola-chiaro": "#ededf5",
+      "oro-chiaro": "#f7e9ce",
+      "oro-scuro": "#7f5900",
+      "oro-scuro-2": "#6b4b00",
+      "oro-scuro-chiaro": "#f6ecd6",
+      "mattone-chiaro": "#f6eaed",
+      "lilla": "#ededf5"
+    }
+  }
+}

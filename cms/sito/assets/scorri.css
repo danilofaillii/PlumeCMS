@@ -1,0 +1,133 @@
+/* 2.25.0: il widget "Scorri di lato" (includes/editor-widget-scorri.php). Classi sdl-*.
+   Senza .sdl-vivo (senza JavaScript, chi chiede meno movimento, tela dell'editor) le pagine stanno una sotto l'altra e si leggono.
+   Con .sdl-vivo (lo mette sito/assets/scorri.js) la scena si ferma alta uno schermo e le pagine scorrono di lato.
+   Colori solo dalle variabili del sito: con gli altri temi seguono il tema. Trasparenze con rgba(var(--x-rgb),a). */
+
+/* Il contenitore del widget prende sempre la larghezza della colonna (anche con la colonna centrata): la radice a tutta
+   larghezza si misura da lì. */
+.ed-widget.ed-w-scorri_lato{align-self:stretch;max-width:none}
+.sdl{position:relative;--sdl-gap:clamp(18px,3vw,28px);--sdl-alto:0px;color:var(--testo)}
+.sdl .sdl-scena{position:relative;display:grid;gap:var(--sdl-gap)}
+.sdl .sdl-testa{display:grid;gap:10px;justify-items:start}
+.sdl .sdl-titolo-sez{font:700 clamp(26px,4vw,44px)/1.05 var(--f-titolo);text-transform:uppercase;margin:0;text-wrap:balance;color:var(--testo)}
+.sdl .sdl-titolo{font-family:var(--f-titolo);font-weight:700;text-transform:uppercase;line-height:1.05;margin:0;text-wrap:balance;color:var(--testo)}
+.sdl h2.sdl-titolo{font-size:clamp(28px,4.2vw,54px)}
+.sdl h3.sdl-titolo{font-size:clamp(22px,2.4vw,30px)}
+.sdl .sdl-titolo em,.sdl .sdl-titolo-sez em{font-style:normal;background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent}
+.sdl .sdl-lead{color:var(--testo-2);max-width:60ch;font-size:17px;line-height:1.6}
+.sdl .sdl-lead p{margin:0}
+.sdl .sdl-lead p+p{margin-top:.6em}
+.sdl .sdl-azioni{display:flex;gap:12px;flex-wrap:wrap;margin-top:4px}
+.sdl .sdl-binario{position:relative;display:grid;gap:var(--sdl-gap)}
+.sdl .sdl-pagina{position:relative;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:clamp(20px,4vw,48px);align-items:center;padding:clamp(20px,3vw,36px);border:1px solid var(--bordo);border-radius:calc(var(--r,18px) + 4px);background:var(--sdl-sfondo,var(--vetro));min-width:0}
+.sdl .sdl-testo{display:grid;gap:14px;justify-items:start;min-width:0}
+.sdl .sdl-finestra{position:relative;margin:0;aspect-ratio:4/3;width:100%;border-radius:var(--r,18px);overflow:hidden;border:1px solid rgba(160,200,255,.28);
+  background:radial-gradient(40% 50% at 30% 40%,rgba(var(--ciano-rgb),.32),transparent 70%),radial-gradient(35% 45% at 75% 65%,rgba(var(--viola-rgb),.38),transparent 70%),linear-gradient(160deg,rgba(var(--inchiostro-rgb),.08),rgba(var(--inchiostro-rgb),.02)),var(--bg-2,var(--bg));
+  box-shadow:0 0 0 1px rgba(var(--viola-rgb),.12),0 24px 60px rgba(0,0,0,.35)}
+.sdl .sdl-pagina:nth-child(5n+2) .sdl-finestra.sdl-senza{background:repeating-linear-gradient(90deg,rgba(var(--inchiostro-rgb),.05) 0 1px,transparent 1px 40px),radial-gradient(45% 45% at 60% 45%,rgba(var(--ciano-rgb),.35),transparent 72%),var(--bg-2,var(--bg))}
+.sdl .sdl-pagina:nth-child(5n+3) .sdl-finestra.sdl-senza{background:conic-gradient(from 210deg at 50% 60%,rgba(var(--viola-rgb),.18),rgba(var(--viola-rgb),.42),rgba(var(--ciano-rgb),.3),rgba(var(--viola-rgb),.18)),var(--bg-2,var(--bg))}
+.sdl .sdl-pagina:nth-child(5n+4) .sdl-finestra.sdl-senza{background:radial-gradient(20% 25% at 25% 30%,rgba(var(--ciano-rgb),.4),transparent 75%),radial-gradient(25% 30% at 70% 70%,rgba(var(--viola-rgb),.45),transparent 75%),radial-gradient(18% 22% at 80% 25%,rgba(var(--ciano-rgb),.32),transparent 75%),var(--bg-2,var(--bg))}
+.sdl .sdl-pagina:nth-child(5n) .sdl-finestra.sdl-senza{background:linear-gradient(115deg,transparent 0 40%,rgba(var(--ciano-rgb),.22) 40% 55%,rgba(var(--viola-rgb),.3) 55% 70%,transparent 70%),var(--bg-2,var(--bg))}
+.sdl .sdl-finestra img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block}
+.sdl.sdl-foto-velo .sdl-finestra img{filter:grayscale(1) contrast(1.2)}
+.sdl.sdl-foto-velo .sdl-finestra:not(.sdl-senza)::after{content:"";position:absolute;inset:0;background:linear-gradient(165deg,#1aa7c4 0%,#5b21b6 70%,#2e1065 100%);mix-blend-mode:multiply;pointer-events:none}
+.sdl.sdl-foto-bn .sdl-finestra img{filter:grayscale(1)}
+.sdl .sdl-data{grid-column:1/-1;font:700 13px/1 var(--f-titolo);letter-spacing:.14em;text-transform:uppercase;color:var(--ciano)}
+.sdl .sdl-data:empty{display:none}
+.sdl .sdl-lineette,.sdl .sdl-contatore,.sdl .sdl-linea,.sdl .sdl-punto{display:none}
+.sdl .sdl-btn:focus-visible{outline:3px solid var(--ciano);outline-offset:3px}
+
+/* Carte e profondità con la foto: la foto fa da fondo, sotto un velo scuro, testo bianco (come l'Apertura Copertina). */
+.sdl-d-carte .sdl-pagina,.sdl-d-profondita .sdl-pagina{grid-template-columns:minmax(0,1fr);overflow:hidden;isolation:isolate}
+.sdl-d-carte .sdl-pagina{align-content:end;min-height:340px}
+.sdl-d-profondita .sdl-pagina{min-height:min(70vh,560px);align-content:center}
+.sdl.sdl-d-carte .sdl-finestra,.sdl.sdl-d-profondita .sdl-finestra{position:absolute;inset:0;z-index:-2;aspect-ratio:auto;width:auto;height:auto;max-height:none;border:0;border-radius:0;box-shadow:none}
+.sdl-d-carte .sdl-con-foto::before,.sdl-d-profondita .sdl-con-foto::before{content:"";position:absolute;inset:0;z-index:-1;pointer-events:none;background:linear-gradient(0deg,rgba(0,0,0,.88) 0%,rgba(0,0,0,.72) 45%,rgba(0,0,0,.4) 100%)}
+.sdl-d-carte .sdl-con-foto .sdl-titolo,.sdl-d-profondita .sdl-con-foto .sdl-titolo,.sdl-d-carte .sdl-con-foto .sdl-lead,.sdl-d-profondita .sdl-con-foto .sdl-lead,
+.sdl-d-carte .sdl-con-foto .occhiello,.sdl-d-profondita .sdl-con-foto .occhiello{color:#fff;text-shadow:0 1px 10px rgba(0,0,0,.45)}
+.sdl-d-carte .sdl-con-foto .sdl-titolo em,.sdl-d-profondita .sdl-con-foto .sdl-titolo em{background:none;-webkit-background-clip:border-box;background-clip:border-box;color:#fff;box-shadow:inset 0 -.09em 0 rgba(var(--ciano-rgb),.9)}
+.sdl-d-carte .sdl-con-foto .btn-filo,.sdl-d-profondita .sdl-con-foto .btn-filo{border-color:#fff;color:#fff;box-shadow:none;background:rgba(0,0,0,.2)}
+.sdl-d-carte .sdl-binario{grid-template-columns:repeat(auto-fit,minmax(min(100%,280px),1fr))}
+.sdl-d-profondita .sdl-testo{position:relative;max-width:900px}
+
+/* Linea del tempo senza scena: data e punto sopra, poi testo e immagine. */
+.sdl-d-tempo .sdl-pagina{align-items:start}
+
+@media (max-width:760px){
+  .sdl .sdl-pagina{grid-template-columns:minmax(0,1fr)}
+  .sdl .sdl-finestra{aspect-ratio:16/10}
+  .sdl .sdl-lead{font-size:16px}
+}
+
+/* Nella tela dell'editor: le pagine in una fila che si scorre a mano, tutte visibili. */
+.sdl-nota-tela{margin:0 0 10px;padding:8px 12px;border:1px dashed var(--bordo);border-radius:10px;font:500 13px/1.4 var(--f-testo);color:var(--testo-2)}
+.sdl.sdl-tela .sdl-binario{display:flex;overflow-x:auto;gap:16px;padding-bottom:10px;scroll-snap-type:x proximity}
+.sdl.sdl-tela .sdl-pagina{flex:0 0 min(86%,760px);scroll-snap-align:start}
+.sdl.sdl-tela.sdl-d-carte .sdl-pagina{flex-basis:min(70%,360px)}
+
+/* ============ La scena ferma (solo con .sdl-vivo) ============ */
+.sdl.sdl-vivo{overflow:visible}
+.sdl.sdl-vivo .sdl-scena{position:sticky;top:var(--sdl-alto);height:calc(100vh - var(--sdl-alto));height:calc(100svh - var(--sdl-alto));overflow:hidden;display:block;gap:0}
+.sdl.sdl-vivo .sdl-binario{display:flex;height:100%;gap:0;will-change:transform}
+.sdl.sdl-vivo .sdl-lineette{display:flex;position:absolute;left:50%;bottom:22px;transform:translateX(-50%);gap:8px;z-index:5;pointer-events:none}
+.sdl.sdl-vivo .sdl-lineette i{display:block;width:28px;height:4px;border-radius:4px;background:rgba(var(--inchiostro-rgb),.22);overflow:hidden;position:relative}
+.sdl.sdl-vivo .sdl-lineette b{position:absolute;inset:0;background:var(--grad);transform-origin:left;transform:scaleX(0)}
+
+/* A. Pellicola: ogni pagina larga quanto la scena, testo da una parte e immagine dall'altra. */
+.sdl-d-pellicola.sdl-vivo .sdl-pagina{flex:0 0 100%;height:100%;border:0;border-radius:0;background:var(--sdl-sfondo,transparent);padding:0 7% 56px;gap:5%;align-content:center}
+.sdl-d-pellicola.sdl-vivo .sdl-finestra{max-height:68vh}
+
+/* B. Carte: titolo fermo in alto, una fila di carte; quella al centro si alza un poco (scorri.js). */
+.sdl-d-carte.sdl-vivo .sdl-scena{display:grid;grid-template-rows:auto minmax(0,1fr);padding-top:clamp(20px,6vh,64px)}
+.sdl-d-carte.sdl-vivo .sdl-testa{padding:0 7% 3vh}
+.sdl-d-carte.sdl-vivo .sdl-binario{align-items:center;gap:22px;padding:0 7%;height:auto;grid-template-columns:none}
+.sdl-d-carte.sdl-vivo .sdl-pagina{flex:0 0 min(400px,76vw);height:min(60vh,520px);min-height:0;padding:26px;transform-origin:center bottom;transition:transform .15s linear;align-content:end}
+
+/* C. Titolo fermo: a sinistra il testo della pagina corrente, a destra scorrono solo le immagini. */
+.sdl-d-fermo{--sdl-fw:min(40vw,520px)}
+.sdl-d-fermo.sdl-vivo .sdl-binario{position:static;margin-left:46%;height:100%;overflow:hidden;align-items:center;gap:26px;will-change:auto;transform:none}
+/* Il binario non deve diventare il contenitore del testo (will-change o transform lo farebbero, e lo taglierebbe): il testo si
+   posiziona sulla scena, fuori dal binario che taglia le immagini. */
+.sdl-d-fermo.sdl-vivo .sdl-pagina{position:static;display:block;flex:0 0 var(--sdl-fw);padding:0;border:0;border-radius:0;background:none}
+.sdl-d-fermo.sdl-vivo .sdl-testo{position:absolute;left:7%;width:min(36%,480px);top:50%;transform:translateY(calc(-50% + 16px));opacity:0;pointer-events:none;transition:opacity .12s,transform .12s}
+.sdl-d-fermo.sdl-vivo .sdl-pagina.sdl-on .sdl-testo{opacity:1;transform:translateY(-50%);pointer-events:auto;transition:opacity .35s .12s,transform .35s .12s}
+.sdl-d-fermo.sdl-vivo .sdl-finestra{aspect-ratio:3/4;max-height:72vh;transform:translate3d(var(--sdl-x,0px),0,0);will-change:transform}
+.sdl-d-fermo.sdl-vivo .sdl-contatore{display:block;position:absolute;left:7%;bottom:9vh;font:700 14px/1 var(--f-titolo);letter-spacing:.06em;color:var(--testo-2)}
+.sdl-d-fermo.sdl-vivo .sdl-contatore b{color:var(--ciano)}
+
+/* D. Linea del tempo: una linea che si colora, i punti che si accendono, ogni pagina una tappa. */
+.sdl-d-tempo.sdl-vivo .sdl-scena{display:grid;grid-template-rows:auto minmax(0,1fr);padding-top:clamp(20px,7vh,72px)}
+.sdl-d-tempo.sdl-vivo .sdl-testa{padding:0 7%}
+.sdl-d-tempo.sdl-vivo .sdl-binario{align-self:center;align-items:flex-start;padding:0 7%;height:auto}
+.sdl-d-tempo.sdl-vivo .sdl-linea{display:block;position:absolute;left:0;top:32px;height:2px;width:var(--sdl-lw,100%);background:rgba(var(--inchiostro-rgb),.16)}
+.sdl-d-tempo.sdl-vivo .sdl-linea b{position:absolute;inset:0;background:var(--grad);transform-origin:left;transform:scaleX(0)}
+.sdl-d-tempo.sdl-vivo .sdl-pagina{flex:0 0 min(420px,78vw);display:flex;flex-direction:column;align-items:stretch;gap:12px;padding:0 40px 0 0;border:0;border-radius:0;background:none}
+.sdl-d-tempo.sdl-vivo .sdl-data{display:block;min-height:13px;color:var(--testo-2);transition:color .3s}
+.sdl-d-tempo.sdl-vivo .sdl-punto{display:block;flex:none;width:16px;height:16px;border-radius:50%;border:2px solid rgba(var(--inchiostro-rgb),.4);background:var(--bg);margin:0;transition:.3s}
+.sdl-d-tempo.sdl-vivo .sdl-pagina.sdl-raggiunta .sdl-punto{border-color:var(--ciano);background:var(--ciano);box-shadow:0 0 0 6px rgba(var(--ciano-rgb),.18)}
+.sdl-d-tempo.sdl-vivo .sdl-pagina.sdl-raggiunta .sdl-data{color:var(--ciano)}
+.sdl-d-tempo.sdl-vivo .sdl-finestra{aspect-ratio:16/10;max-height:30vh}
+
+/* E. Profondità: lo sfondo si muove più piano del testo, il testo entra da destra e sfuma (scorri.js). */
+.sdl-d-profondita.sdl-vivo .sdl-pagina{flex:0 0 100%;height:100%;min-height:0;border:0;border-radius:0;padding:0 9% 56px;background:var(--sdl-sfondo,var(--bg))}
+.sdl.sdl-d-profondita.sdl-vivo .sdl-finestra{inset:-10% -20%;will-change:transform}
+.sdl-d-profondita.sdl-vivo .sdl-senza{background:radial-gradient(45% 55% at 30% 40%,rgba(var(--viola-rgb),.35),transparent 70%),radial-gradient(40% 50% at 75% 60%,rgba(var(--ciano-rgb),.28),transparent 70%),var(--bg)}
+.sdl-d-profondita.sdl-vivo .sdl-testo{will-change:transform,opacity}
+.sdl-d-profondita.sdl-vivo h2.sdl-titolo{font-size:clamp(36px,7vw,84px)}
+
+@media (max-width:760px){
+  .sdl-d-pellicola.sdl-vivo .sdl-pagina{grid-template-columns:minmax(0,1fr);align-content:center;gap:20px;padding:0 20px 56px}
+  .sdl-d-pellicola.sdl-vivo .sdl-finestra{max-height:34vh}
+  .sdl-d-carte.sdl-vivo .sdl-testa,.sdl-d-tempo.sdl-vivo .sdl-testa{padding-left:20px;padding-right:20px}
+  .sdl-d-carte.sdl-vivo .sdl-binario,.sdl-d-tempo.sdl-vivo .sdl-binario{padding:0 20px}
+  .sdl-d-fermo{--sdl-fw:70vw}
+  .sdl-d-fermo.sdl-vivo .sdl-scena{display:flex;flex-direction:column;justify-content:flex-end}
+  .sdl-d-fermo.sdl-vivo .sdl-binario{margin-left:0;flex:none;height:52%;padding-left:20px}
+  .sdl-d-fermo.sdl-vivo .sdl-testo{left:20px;right:20px;width:auto;top:16px;transform:translateY(16px);max-height:44%;overflow:hidden}
+  .sdl-d-fermo.sdl-vivo .sdl-pagina.sdl-on .sdl-testo{transform:none}
+  .sdl-d-fermo.sdl-vivo .sdl-finestra{max-height:44vh}
+  .sdl-d-fermo.sdl-vivo .sdl-contatore{left:auto;right:20px;bottom:auto;top:16px}
+  .sdl-d-profondita.sdl-vivo .sdl-pagina{padding:0 20px 56px}
+}
+
+/* Chi chiede meno movimento: scorri.js non accende .sdl-vivo (e lo spegne se la scelta cambia): le pagine restano una sotto l'altra. */

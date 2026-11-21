@@ -1,0 +1,7 @@
+{"nome":"Nuovo articolo","descrizione":"Per far leggere un articolo appena pubblicato: titolo, inizio e pulsante.","oggetto":"Appena pubblicato: il titolo dell'articolo",
+"design":{"stile":{"fondo":"#f5f5f4","titoli":"#1c1917","link":"#9a3412","btn_fondo":"#1c1917","btn_raggio":4,"font_titoli":"georgia","raggio":0},"sezioni":[
+{"spazio":22,"colonne":[[{"t":"titolo","testo":"Il nome del tuo sito","livello":"h3","allinea":"center","spazio":0}]]},
+{"spazio":0,"colonne":[[{"t":"divisore","colore":"#d6d3d1","spazio":0}]]},
+{"spazio":36,"colonne":[[{"t":"testo","html":"<p>NUOVO SUL BLOG</p>","colore":"#9a3412","dim":12,"spazio":8},{"t":"titolo","testo":"Il titolo dell'articolo"},{"t":"testo","html":"<p>Le prime righe dell'articolo: la domanda a cui risponde, o la cosa che chi legge scopre. Due o tre frasi bastano per far venire voglia di continuare.</p>","spazio":24},{"t":"pulsante","testo":"Leggi l'articolo","link":"/","allinea":"left"}]]},
+{"fondo":"#fafaf9","spazio":24,"colonne":[[{"t":"testo","allinea":"center","html":"<p>Ti è piaciuto? Condividilo:</p>","dim":14,"spazio":10},{"t":"social","reti":[{"r":"facebook","url":"https://www.facebook.com/"},{"r":"linkedin","url":"https://www.linkedin.com/"},{"r":"whatsapp","url":"https://wa.me/"}],"stile":"scuro","dim":28,"spazio":0}]]},
+{"spazio":20,"colonne":[[{"t":"piede"}]]}]}}

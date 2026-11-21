@@ -1,0 +1,40 @@
+/* Estate: sabbia, corallo e mare. Solo forme e luce: i colori stanno in stile.json. */
+:root{--r:22px;--vetro:#fff;--vetro-2:#fff4e3;--velo-1:#0b5f7a;--velo-2:#c2410c;--velo-3:#7c2d12}
+body{background:radial-gradient(1100px 520px at 100% -12%,rgba(255,196,92,.30),transparent 62%),radial-gradient(900px 480px at -10% 105%,rgba(14,110,140,.10),transparent 60%),var(--bg);background-attachment:fixed}
+.top,.ed-testata{background:rgba(255,248,236,.9)}
+.btn{letter-spacing:.04em}
+.btn-viola{background:linear-gradient(180deg,#c2410c,#9a3412);box-shadow:0 8px 22px rgba(194,65,12,.25)}
+.btn-ciano{box-shadow:0 8px 22px rgba(14,110,140,.22)}
+.btn-filo{box-shadow:none;border-width:2px}
+h1,h2,.sez-titolo{letter-spacing:-.02em}
+.card,.servizio,.ew-post{box-shadow:0 2px 0 rgba(22,38,58,.04),0 12px 30px rgba(194,65,12,.07)}
+.card:hover,.ew-post:hover{box-shadow:0 16px 40px rgba(194,65,12,.14)}
+.ed-piede{border-top:0;position:relative}
+.ed-piede::before{content:"";position:absolute;left:0;right:0;top:-14px;height:14px;background:radial-gradient(circle at 14px 14px,var(--g-colore-sfondo-2,#fdebd0) 13px,transparent 14px) 0 0/28px 28px repeat-x}
+
+/* Leggibilità dei widget (uguale nei temi della 2.5.0, cambiano solo i colori): testo dei pulsanti, pulsanti dentro
+   un articolo (.corpo colora i link), messaggi, mappa, slider, infografiche su testata scura. */
+:root{--grad:linear-gradient(100deg,#0a566f,#9a3412);--primario-chiaro:#c2410c;--primario-scuro:#9a3412;--secondario-chiaro:#0a566f;--secondario-scuro:#084a5f;--su-secondario:#ffffff;
+  --errore:#b42318;--errore-chiaro:#b42318;--errore-testo:#b42318;--errore-rgb:180,35,24;--successo:#15703d;--successo-chiaro:#15703d;--successo-rgb:21,112,61}
+.btn-viola,:where(.corpo) a.btn-viola{color:#ffffff}
+:where(.corpo) a.btn-ciano{color:var(--su-secondario)}
+:where(.corpo) a.btn-filo{color:var(--ciano)}
+.ew-btn.btn-viola,:where(.corpo) a.ew-btn.btn-viola{color:var(--ew-bc,#ffffff)}
+.ew-btn.btn-ciano,:where(.corpo) a.ew-btn.btn-ciano{color:var(--ew-bc,var(--su-secondario))}
+.ew-prezzo-pulsante.btn-viola,:where(.corpo) a.ew-prezzo-pulsante{color:var(--ew-btc,#ffffff)}
+:where(.corpo) a.ew-cond-voce{color:var(--ew-c2,#fff)}
+.ew-col-ufficiali .ew-social-voce.ew-social-whatsapp{--ew-uff:#0f7a3c}.ew-col-ufficiali .ew-social-voce.ew-social-youtube{--ew-uff:#cc0000}.ew-col-ufficiali .ew-social-voce.ew-social-telegram{--ew-uff:#1a6fa0}
+.ew-col-ufficiali .ew-social-voce.ew-social-spotify{--ew-uff:#137a3a}.ew-col-ufficiali .ew-social-voce.ew-social-telefono{--ew-uff:#15803d}.ew-col-ufficiali .ew-social-voce.ew-social-rss{--ew-uff:#b8460f}.ew-col-ufficiali .ew-social-voce.ew-social-facebook{--ew-uff:#1465d0}
+.ew-col-ufficiali .ew-cond-voce.ew-social-whatsapp{--ew-uff:#0f7a3c}.ew-col-ufficiali .ew-cond-voce.ew-social-youtube{--ew-uff:#cc0000}.ew-col-ufficiali .ew-cond-voce.ew-social-telegram{--ew-uff:#1a6fa0}.ew-col-ufficiali .ew-cond-voce.ew-social-facebook{--ew-uff:#1465d0}
+body .ew-mappa-avvia{background:var(--bg-2);color:var(--testo)}
+body .ew-sl{background:linear-gradient(120deg,#7c2d12,#084a5f)}
+body .ed-hero.ed-hero-copertina{background-color:#7c2d12;background-image:radial-gradient(120% 90% at 85% 0%,rgba(255,255,255,.10),transparent 60%),linear-gradient(160deg,#7c2d12,#084a5f)}
+body .ed-hdi-fondo{background-color:#7c2d12;background-image:linear-gradient(120deg,#7c2d12 0%,#7c2d12 45%,#084a5f 100%)}
+body .ed-hero-diagonale .btn-viola{color:#7c2d12}
+body .ew-cta-pulsante{color:var(--ew-pc,#ffffff)}
+body .ew-ev-data{color:var(--ew-c1,#ffffff)}
+body .ew-barra-riempi{background:var(--ew-c1,#0a566f);color:var(--ew-ic,#ffffff)}
+.igx .igx-c-oro{--c:var(--ig-oro-scuro);--c2:var(--ig-oro-scuro-2)}
+body .ew-sl-occhiello{color:var(--ew-ac,rgba(255,255,255,.9))}
+:where(.corpo) h2.ew-sl-titolo,:where(.corpo) h3.ew-sl-titolo{color:var(--ew-tc,#fff)}
+.igx-occhiello-auto[class*="igx-testata-scuro"]{--occ:var(--ig-oro-chiaro)}

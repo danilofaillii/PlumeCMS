@@ -1,0 +1,16 @@
+/* Lavagna: i colori stanno in stile.json; qui solo i ritocchi che lo Stile del sito non copre. */
+
+/* I pulsanti gialli vogliono il testo scuro (il CMS lo mette bianco sul colore primario). */
+:root{--su-secondario:#1f2a26}
+.btn-viola,.ed-video button span{color:#1f2a26}
+.btn-viola,.btn-ciano{box-shadow:none}
+
+/* Una riga di gesso sotto l'header, al posto del vetro. */
+.top,.ed-testata{background:#1f2a26;border-bottom:2px solid rgba(241,239,230,.22)}
+
+/* Titoli un po' più stretti, occhielli color menta. */
+h1,h2,.sez-titolo{letter-spacing:-.01em}
+.occhiello{color:var(--ciano)}
+
+/* Le card come fogli appoggiati sulla lavagna. */
+.card,.servizio,.ew-post{background:#26332e}

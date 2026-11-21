@@ -1,0 +1,17 @@
+/* Widget Download (1.2.4): i file del download manager. Colori dalle variabili del sito, quindi seguono Stile e tema. */
+.ed-dl-griglia{display:grid;gap:14px}
+.ed-dl-elenco{grid-template-columns:1fr}
+.ed-dl-schede{grid-template-columns:repeat(3,minmax(0,1fr))}
+.ed-dl-voce{display:flex;align-items:center;gap:16px;padding:16px 18px;background:var(--vetro,rgba(255,255,255,.05));border:1px solid var(--bordo,rgba(160,200,255,.18));border-radius:var(--r,14px)}
+.ed-dl-schede .ed-dl-voce{flex-direction:column;align-items:flex-start;padding:20px}
+.ed-dl-icona{position:relative;flex:0 0 auto;display:grid;place-items:center;width:52px;height:52px;border-radius:12px;color:var(--viola);background:rgba(var(--viola-rgb),.12)}
+.ed-dl-icona svg{width:26px;height:26px}
+.ed-dl-icona b{position:absolute;bottom:-6px;right:-8px;padding:1px 5px;border-radius:6px;font:700 9px/1.4 var(--f-testo);letter-spacing:.06em;text-transform:uppercase;color:#fff;background:var(--viola)}
+.ed-dl-testi{flex:1;min-width:0}
+.ed-dl-titolo{margin:0;font-size:1.05rem;line-height:1.3}
+.ed-dl-desc{margin:.35rem 0 0;color:var(--testo-2);font-size:.92rem;line-height:1.5}
+.ed-dl-meta{display:flex;flex-wrap:wrap;gap:4px 14px;margin:.45rem 0 0;color:var(--testo-3);font-size:.8rem}
+.ed-dl-btn{flex:0 0 auto;white-space:nowrap}
+.ed-dl-schede .ed-dl-btn{margin-top:auto}
+.ed-dl-mancante{color:var(--testo-3);font-size:.9rem}
+@media (max-width:767px){.ed-dl-schede{grid-template-columns:1fr}.ed-dl-elenco .ed-dl-voce{flex-wrap:wrap}.ed-dl-elenco .ed-dl-btn{width:100%;text-align:center}}

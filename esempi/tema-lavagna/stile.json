@@ -1,0 +1,31 @@
+{
+  "colori": {
+    "sistema": {
+      "primario": "#f2c94c",
+      "secondario": "#7fb7a4",
+      "testo": "#f1efe6",
+      "accento": "#e4785b",
+      "sfondo": "#1f2a26"
+    },
+    "personalizzati": [
+      { "id": "sfondo-2", "nome": "Sfondo secondario", "valore": "#26332e" },
+      { "id": "testo-2", "nome": "Testo attenuato", "valore": "#c9c6b8" },
+      { "id": "testo-3", "nome": "Testo discreto", "valore": "#a8a597" },
+      { "id": "bordo", "nome": "Bordi", "valore": "rgba(241,239,230,.16)" }
+    ]
+  },
+  "font": {
+    "sistema": {
+      "primario": { "famiglia": "Trebuchet MS" },
+      "secondario": { "famiglia": "Trebuchet MS" },
+      "testo": { "famiglia": "Inter" },
+      "accento": { "famiglia": "Inter" }
+    }
+  },
+  "pulsanti": {
+    "raggio": "4px"
+  },
+  "sfondo": {
+    "sfumature_sito": false
+  }
+}

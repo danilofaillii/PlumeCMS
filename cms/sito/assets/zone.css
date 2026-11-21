@@ -1,0 +1,15 @@
+/* 2.28.0: il widget Altre zone (includes/editor-widget-zone.php). Classi ew-zone*. Si carica solo nelle pagine che hanno il
+   widget. Colori solo dalle variabili del sito: con i temi seguono il tema. Niente JavaScript. */
+
+.ew-zone{display:grid;gap:14px;min-width:0}
+.ew-zone-titolo{margin:0;font:700 1.15rem/1.3 var(--f-titolo);color:var(--ew-ttc,var(--testo))}
+p.ew-zone-titolo{font:inherit;color:var(--ew-ttc,var(--testo-2))}
+.ew-zone-elenco{list-style:none;margin:0;padding:0;display:flex;flex-wrap:wrap;gap:10px}
+.ew-zone-link{display:inline-flex;align-items:center;min-height:44px;padding:8px 16px;border:1px solid var(--bordo);border-radius:999px;background:var(--ew-lb,var(--vetro));color:var(--ew-lc,var(--testo));text-decoration:none;line-height:1.3}
+.ew-zone-link:hover,.ew-zone-link:focus-visible{border-color:var(--ciano);color:var(--ew-lc,var(--testo));background:var(--ew-lb,var(--vetro))}
+.ew-zone-link:focus-visible{outline:2px solid var(--ciano);outline-offset:2px}
+.ew-zone-elenco.ew-zone-elenco{min-width:0}
+.ew-zone-elenco .ew-zone-link{max-width:100%}
+.ew-zone.ew-zone-elenco .ew-zone-elenco{flex-direction:column;gap:0}
+.ew-zone.ew-zone-elenco .ew-zone-link{border:0;border-bottom:1px solid var(--bordo);border-radius:0;padding:10px 0;background:none;width:100%}
+.ew-zone.ew-zone-elenco .ew-zone-link::before{content:"";width:8px;height:8px;border-radius:50%;background:var(--ciano);margin-right:12px;flex:none}

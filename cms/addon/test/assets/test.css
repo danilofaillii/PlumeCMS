@@ -1,0 +1,83 @@
+/* Addon Test e questionari: la pagina del test, le domande, il risultato con il grafico. Sopra i fogli del sito, con le sue variabili. */
+.tq-pagina [hidden],.tq-app[hidden],.tq-avvia[hidden]{display:none!important}
+.tq-pagina{max-width:860px} /* come le sezioni strette dell'editor (.ed-stretta): la presentazione resta allineata */
+.tq-testa{margin:0 0 18px}
+.tq-testa h1{margin:10px 0 10px;overflow-wrap:anywhere}
+.tq-numeri{color:var(--testo-2);margin:0}
+.tq-presentazione{margin:0 0 8px}
+.tq-avvia{margin:18px 0 28px}
+.tq-riprendi{border:1px solid var(--bordo);border-radius:var(--r,16px);padding:16px 18px;margin:18px 0 28px;background:var(--vetro,transparent)}
+.tq-riprendi p{margin:0 0 10px}
+.tq-azioni{display:flex;flex-wrap:wrap;gap:12px}
+.tq-modulo{margin:0 0 24px}
+.tq-domanda{border:1px solid var(--bordo);border-radius:var(--r,16px);padding:20px 22px;margin:0 0 18px;min-width:0;background:var(--vetro,transparent)}
+.tq-domanda:focus{outline:2px solid var(--ciano);outline-offset:3px}
+.tq-domanda legend{padding:0;margin:0 0 12px;font-size:clamp(19px,2.4vw,23px);font-weight:700;line-height:1.35;color:var(--testo);float:left;width:100%}
+.tq-domanda legend+*{clear:both}
+.tq-num{display:block;font-size:13px;letter-spacing:.08em;text-transform:uppercase;color:var(--ciano);font-weight:700;margin-bottom:6px}
+.tq-num small{font-size:inherit;color:var(--testo-2);text-transform:none;letter-spacing:0}
+.tq-testo-domanda{display:block}
+.tq-aiuto{color:var(--testo-2);margin:0 0 12px;font-size:15px;clear:both}
+.tq-se{display:block;font-weight:600}
+.tq-opzioni{display:grid;gap:10px;clear:both}
+.tq-opzioni-scala{grid-template-columns:repeat(auto-fit,minmax(min(100%,120px),1fr))}
+.tq-opz{display:flex;align-items:center;gap:12px;min-height:48px;padding:10px 14px;border:1px solid var(--bordo);border-radius:12px;cursor:pointer;font-size:17px;color:var(--testo)}
+.tq-opz input{width:22px;height:22px;flex:none;margin:0;accent-color:var(--viola)}
+.tq-opz:hover{border-color:var(--ciano)}
+.tq-opz:has(input:checked){border-color:var(--ciano);background:rgba(var(--ciano-rgb),.10)}
+.tq-opz input:focus-visible{outline:2px solid var(--ciano);outline-offset:2px}
+.tq-cursore{display:flex;align-items:center;gap:12px;clear:both;font-size:16px;color:var(--testo-2)}
+.tq-cursore input{flex:1;min-width:0;height:44px;accent-color:var(--viola)}
+.tq-cursore input:focus-visible{outline:2px solid var(--ciano);outline-offset:2px}
+.tq-valore{min-width:2.4em;text-align:center;font-size:22px;font-weight:700;color:var(--testo)}
+.tq-domanda.errato{border-color:var(--errore-testo)}
+.tq-pagina .errore-campo{color:var(--errore-testo);margin:10px 0 0;font-weight:600}
+.tq-progresso{margin:0 0 16px}
+.tq-barra{height:10px;border-radius:999px;background:rgba(var(--viola-rgb),.18);overflow:hidden}
+.tq-barra span{display:block;height:100%;width:0;background:var(--grad,var(--ciano));transition:width .25s}
+.tq-passo{margin:8px 0 0;color:var(--testo-2);font-size:14px}
+.tq-nav{display:flex;flex-wrap:wrap;justify-content:space-between;gap:12px;margin:0 0 18px}
+.tq-nav [data-avanti]{margin-left:auto}
+.tq-pagina .btn{min-height:44px}
+.tq-fine{border:1px solid var(--bordo);border-radius:var(--r,16px);padding:20px 22px;background:var(--vetro,transparent)}
+.tq-fine:focus{outline:2px solid var(--ciano);outline-offset:3px}
+.tq-nota{color:var(--testo-2);font-size:14px;margin:0 0 14px}
+.tq-avvertenza{border-left:3px solid var(--ciano);padding:6px 0 6px 14px;color:var(--testo-2);font-size:15px;margin:24px 0}
+/* Risultato */
+.tq-punteggio{margin:6px 0 10px;font-family:var(--f-titolo);color:var(--testo)}
+.tq-punteggio b{font-size:clamp(44px,7vw,64px);line-height:1}
+.tq-punteggio span{color:var(--testo-2);font-size:18px}
+.tq-risultato .tq-barra{height:14px;max-width:560px}
+.tq-testo{margin:18px 0}
+.tq-ok{background:rgba(var(--successo-rgb),.12);border:1px solid rgba(var(--successo-rgb),.5);border-radius:12px;padding:12px 16px;margin:0 0 18px}
+.tq-aree{margin:28px 0}
+.tq-aree h2,.tq-condividi h2{font-size:clamp(20px,2.6vw,26px);margin:0 0 12px}
+.tq-grafico{display:block;width:100%;height:auto;max-width:680px;overflow:visible}
+.tq-g-nome{fill:var(--testo);font:600 17px var(--f-testo,sans-serif)}
+.tq-g-pct{fill:var(--testo);font:700 18px var(--f-testo,sans-serif)}
+.tq-g-fondo{fill:rgba(var(--viola-rgb),.18)}
+.tq-g-barra{fill:var(--ciano)}
+.tq-aree-testi{margin:18px 0 0}
+.tq-aree-testi dt{font-weight:700;margin:12px 0 2px;color:var(--testo)}
+.tq-aree-testi dd{margin:0;color:var(--testo-2)}
+.tq-aree-testi dd p{margin:0 0 6px}
+.tq-azione{margin:22px 0}
+.tq-condividi{margin:28px 0}
+.tq-link{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+.tq-link input{flex:1 1 260px;min-width:0;min-height:44px;padding:10px 12px;border:1px solid var(--bordo-c,var(--bordo));border-radius:10px;background:transparent;color:var(--testo);font:inherit;font-size:14px}
+.tq-link input:focus-visible{outline:2px solid var(--ciano);outline-offset:2px}
+.tq-rifai{margin:24px 0}
+.tq-rifai a{color:var(--ciano)}
+.tq-email .modulo-campi{grid-template-columns:1fr}
+.sr-solo{position:absolute!important;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+@media (max-width:600px){.tq-domanda,.tq-fine{padding:16px 14px}.tq-opz{font-size:16px}.tq-nav .btn{flex:1 1 auto;justify-content:center}}
+/* 2.23.0: le domande sulla persona (tante risposte su due colonne dove c'è posto), la risposta breve, il riquadro dell'email del risultato completo */
+.tq-opzioni-tante{grid-template-columns:repeat(auto-fill,minmax(min(100%,260px),1fr))}
+.tq-opz-nr{border-style:dashed}
+.tq-persona .tq-aiuto .tq-se{display:inline}
+.tq-breve{font-size:1.05em}
+.tq-email-completo{border-color:var(--ciano)}
+/* 2.24.0: il test a pagine. Il titolo della pagina sta sopra le sue domande (senza JavaScript: intestazioni nella pagina unica). */
+.tq-pagina-titolo{font-size:clamp(20px,2.6vw,26px);margin:8px 0 14px;color:var(--testo);overflow-wrap:anywhere}
+.tq-pagina-titolo:focus{outline:2px solid var(--ciano);outline-offset:3px}
+.tq-modulo[data-modo] .tq-domanda+.tq-domanda{margin-top:0}
