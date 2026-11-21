@@ -168,7 +168,7 @@ Le decisioni complete, con data e perché, stanno nel second brain, `plumecms/de
 
 ## Stato al 31 ottobre 2026
 
-Fatto: plumeCMS 2.40.3 (21 novembre, 17:28-18:20): **la causa vera del blocco di plumecms.it**. Pagina di diagnosi `tools/diagnosi-scrittura.php`
+Fatto: plumeCMS 2.40.3 (21 novembre, 17:28-18:04): **la causa vera del blocco di plumecms.it**. Pagina di diagnosi `tools/diagnosi-scrittura.php`
 (caricata a mano con chiave, si cancella da sola; mai nello zip): da ferma tutte le scritture passano, utente fidesdo, server LiteSpeed con CageFS e
 **Imunify360**. Lo scanner di Imunify360 (schermata di Danilo) segnava `api/nl.php` come backdoor, firma `SMW-SA-05542-mlw.bkdr-4`, in tutti i siti
 dell'account e in ogni snapshot; le copie negli snapshot delle 17:24 e 17:25 coincidono con i due tentativi falliti. Falso allarme sulla forma del codice
