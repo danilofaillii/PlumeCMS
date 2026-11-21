@@ -3577,6 +3577,26 @@ della 1.2.3 non la conosce e rifiuta il pacchetto, invece di saltare in silenzio
 Se un passo fallisce, il CMS **ripristina lo snapshot** e il pacchetto resta "fallito"; si può rimettere in
 attesa.
 
+**Come si scrive un file** (2.40.2, `agg_scrivi_file()` in `includes/aggiornamenti.php`, usata dal passo 3 e dal ripristino):
+- un file che c'è già con lo stesso contenuto (stessa misura e stessa impronta sha256) non si tocca: nel log "File uguale,
+  lasciato com'era". Un pacchetto unico porta tutti i file del CMS e di solito ne cambiano poche decine;
+- il contenuto va prima in un file temporaneo della stessa cartella (`.<nome>.plume-<8 esadecimali>`, che non finisce in `.php`),
+  con i permessi del file di prima (0644 se è nuovo), e poi prende il posto del vecchio con una `rename()`: il file non resta mai
+  a metà e basta poter scrivere nella cartella. Se la rinomina non riesce si scrive il file direttamente, come fino alla 2.40.1;
+- se nemmeno così riesce, riprova fino a sei volte con pause di 1, 2, 3, 4 e 5 secondi (`CMS_AGG_PAUSE` nel config le cambia,
+  per le prove). Il caso vero: plumecms.it, 21 novembre 2026, hosting CloudLinux con LiteSpeed, "Permission denied" sempre sul
+  **secondo** file PHP del pacchetto (`addon.php` scritto, `aggiornamenti.php` no; con un pacchetto di 28 file `consegna.php`
+  scritto, `editor-widget-extra-c.php` no), mentre il ripristino pochi secondi dopo riscriveva gli stessi file;
+- l'errore dice il motivo di PHP e, se li trova, la cartella non scrivibile, il file non scrivibile o lo spazio finito:
+  "Impossibile scrivere new/includes/x.php: Permission denied; il file non è scrivibile (permessi o proprietario); riprovato 6 volte".
+  Nel ripristino un file non rimesso dice il motivo fra parentesi.
+
+Prova: `prove/agg-scrittura-cli.php <cartella CMS> <cartella di prova>` (vuole root per `chattr +i`: file nuovo, uguale,
+permessi tenuti, blocco di due secondi superato, blocco fisso con il motivo, nessun temporaneo rimasto).
+
+Il motore nuovo vale dal pacchetto **dopo** quello che lo porta. Su un sito con il blocco del secondo file il motore si porta da
+solo, in un pacchetto con il solo `new/includes/aggiornamenti.php` (il primo file si scrive sempre), e poi si applica il resto.
+
 Due trappole già pagate:
 - un apostrofo dentro un commento `/* */` di un file SQL fa fallire lo spezzatore delle istruzioni;
 - un pacchetto che porta un motore nuovo e insieme usa le sue voci nuove lo applica il motore vecchio: servono

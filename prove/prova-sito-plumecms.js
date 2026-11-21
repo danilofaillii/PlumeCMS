@@ -79,7 +79,7 @@ async function contrastoParole(pg) {
     // 2.1.0, il pacchetto unico: nello stesso giro anche il codice del CMS.
     ok(`pacchetto unico: il CMS è passato alla ${V} (VERSIONE e pannello Informazioni)`, fs.readFileSync(path.join(DIR, 'VERSIONE'), 'utf8').trim() === V
       && (await (async () => { await p.goto(B + '/admin/informazioni.php', { waitUntil: 'networkidle' }); return (await p.locator('body').innerText()).includes(V); })()));
-    ok('pacchetto unico: il resoconto ha i file del CMS e le pagine del sito', /File scritto: new\/includes\/aggiornamenti\.php/.test(log) && /File scritto: uploads\/scaricabili\/manuale-uso\.pdf/.test(log));
+    ok('pacchetto unico: il resoconto ha i file del CMS e le pagine del sito', /File (scritto|uguale, lasciato com.era): new\/includes\/aggiornamenti\.php/.test(log) && /File scritto: uploads\/scaricabili\/manuale-uso\.pdf/.test(log));
   }
   ok('nessun errore JavaScript nel pannello', err.length === 0, err);
 

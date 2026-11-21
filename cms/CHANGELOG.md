@@ -2,6 +2,20 @@
 
 Il prodotto si chiama **plumeCMS** (nome scelto il 26 ottobre 2026; prima, per poche ore, "CarbonaraCMS", e ancora prima il provvisorio "Officina": gli zip vecchi si chiamavano `officina-*` e `carbonaracms-*`).
 
+## 2.40.2 (21 novembre 2026) - Aggiornamenti che reggono gli hosting più severi
+
+Il pannello Aggiornamenti scrive i file in un modo più robusto e, se non ci riesce, dice perché.
+
+- **Cosa si vedeva**: su un hosting il pacchetto si fermava con "Impossibile scrivere new/includes/aggiornamenti.php" e il sito
+  tornava com'era. Il registro degli errori diceva "Permission denied", anche se permessi e spazio erano a posto: il server
+  rifiutava per un momento il secondo file PHP scritto di fila.
+- **Cosa cambia**: i file uguali a quelli che ci sono già non si riscrivono più (di solito un aggiornamento ne cambia poche decine
+  su più di 500); ogni file si scrive prima a parte e poi prende il posto del vecchio, così non resta mai a metà; se il server
+  rifiuta, il pannello riprova per qualche secondo prima di arrendersi.
+- Quando un file proprio non si scrive, l'errore dice il motivo (per esempio "Permission denied" o lo spazio finito) e quante volte
+  ha riprovato. Anche il ripristino dice perché un file non è stato rimesso.
+- Newsletter > Modelli: i messaggi dopo Salva, Attiva, Duplica ed Elimina mostrano di nuovo il nome del modello.
+
 ## 2.40.1 (20 novembre 2026) - Il nome del mittente nelle email
 
 Il nome del mittente arriva al programma di posta esattamente come lo scrivi nel pannello.

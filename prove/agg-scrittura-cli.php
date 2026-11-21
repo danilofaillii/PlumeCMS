@@ -40,6 +40,7 @@ if ($rc === 0) {
     ok('bloccato per sempre: nessun file temporaneo rimasto', glob($prova . '/.*plume-*') === []);
 } else ok('chattr disponibile (serve root su ext4 o overlay)', false);
 // cartella non scrivibile da un utente qualsiasi: la prova con root non si può fare, si controlla la parola
+@unlink($prova . '/grande.bin');
 ok('file grande: scritto intero', agg_scrivi_file($prova . '/grande.bin', str_repeat('a', 3 << 20)) === 'scritto' && filesize($prova . '/grande.bin') === 3 << 20);
 echo ($n - $ko) . " su $n OK\n";
 exit($ko ? 1 : 0);

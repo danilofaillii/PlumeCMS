@@ -752,6 +752,7 @@ def zip_lavagna(dest):
 # Regola di Danilo (1 novembre 2026): solo i punti salienti, una riga per versione, mai nomi di aziende o servizi di terzi.
 # Le novità per chi scarica: brevi, scritte qui (il CHANGELOG è per chi sviluppa). Da aggiornare a ogni versione.
 NOVITA = [
+    ('2.40.2', 'Aggiornamenti più robusti', ['Il pannello Aggiornamenti non riscrive i file che non cambiano, riprova se il server rifiuta un file per un momento e, se non ci riesce, dice il motivo.']),
     ('2.40.1', 'Il nome del mittente com\'è scritto', ['Il nome del mittente arriva al programma di posta esattamente come lo scrivi nel pannello, anche con parentesi quadre, virgole, due punti o virgolette; negli avvisi dei form, Rispondi scrive al visitatore con il suo nome.']),
     ('2.40.0', 'Il blog disegnato con l\'editor', ['La pagina del blog si costruisce con l\'editor visuale e gli articoli si dividono in pagine da soli; la descrizione delle categorie vale anche per i motori di ricerca, i link condivisi di blog e categorie hanno l\'anteprima, e eventi e test entrano nella mappa del sito.']),
     ('2.39.2', 'Pagine degli elenchi chiare per i motori di ricerca', ['Ogni pagina del blog, delle categorie e dei tag indica sé stessa, con "Pagina 2" nel titolo e nella descrizione; una pagina che non esiste risponde "non trovata".']),

@@ -709,7 +709,7 @@ function agg_scrivi_file(string $abs, string $data): string {
     elseif (is_file($abs) && !is_writable($abs)) $spiega[] = 'il file non è scrivibile (permessi o proprietario)';
     $libero = @disk_free_space($dir);
     if ($libero !== false && $libero < strlen($data) + 1048576) $spiega[] = 'lo spazio sul disco è finito';
-    return $motivo . ($spiega ? ' (' . implode(', ', $spiega) . ')' : '') . ', riprovato ' . (count($pause) + 1) . ' volte';
+    return $motivo . ($spiega ? '; ' . implode('; ', $spiega) : '') . '; riprovato ' . (count($pause) + 1) . ' volte';
 }
 
 function agg_opcache_dimentica(string $abs): void {
